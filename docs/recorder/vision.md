@@ -229,7 +229,10 @@ const generateThumbnail = async (blob: Blob): Promise<Blob> => {
 ### Storage Quota Detection
 
 ```typescript
-const getStorageInfo = async (): Promise<{ used: number; available: number }> => {
+const getStorageInfo = async (): Promise<{
+  used: number;
+  available: number;
+}> => {
   if (navigator.storage?.estimate) {
     const estimate = await navigator.storage.estimate();
     return {

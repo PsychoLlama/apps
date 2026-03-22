@@ -6,4 +6,5 @@
 
 ## Testing
 
-- Co-locate tests with the code they cover. Place a `__tests__/` directory as a sibling of the module under test (e.g., `app/machines/__tests__/counter.test.ts` tests `app/machines/counter.ts`).
+- Co-locate tests with the code they cover. Example: `foo.ts` and `__tests__/foo.test.ts`.
+- Use vitest globals (`test`, `expect`, etc.) not imports.

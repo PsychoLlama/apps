@@ -17,4 +17,5 @@ check:
     just fmt-check || failed=1
     pnpm lint || failed=1
     pnpm typecheck || failed=1
+    pnpm test || failed=1
     exit $failed
