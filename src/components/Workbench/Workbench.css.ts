@@ -12,7 +12,6 @@ export const container = style({
   padding: 0,
 });
 
-
 export const subheader = style({
   color: palette.text.secondary,
   fontWeight: 400,
