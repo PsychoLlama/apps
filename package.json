@@ -7,40 +7,22 @@
   "homepage": "https://tools.psychollama.io",
   "repository": "github:PsychoLlama/workbench",
   "scripts": {
-    "build": "gatsby build",
-    "develop": "gatsby develop",
-    "serve": "gatsby serve",
-    "clean": "gatsby clean",
     "typecheck": "tsc",
-    "test": "./bin/run-tests",
-    "lint": "eslint src --color"
+    "lint": "eslint --color"
   },
   "prettier": {
     "singleQuote": true,
     "trailingComma": "all"
   },
   "dependencies": {
-    "@fontsource-variable/inter": "^5.2.8",
-    "@holz/logger": "^0.8.2",
-    "@infolektuell/noto-color-emoji": "^0.2.0",
-    "classnames": "^2.5.1",
-    "gatsby": "^5.16.1",
-    "immer": "^11.1.4",
-    "prettier": "^3.8.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-icons": "^5.5.0"
+    "prettier": "^3.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@types/eslint__js": "^8.42.3",
-    "@types/react": "^19.2.14",
-    "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@vanilla-extract/css": "^1.18.0",
-    "@vanilla-extract/webpack-plugin": "^2.3.25",
+    "@types/eslint__js": "^8.42.3",
+    "@typescript-eslint/eslint-plugin": "^8.55.0",
     "eslint": "^9.39.2",
-    "eslint-plugin-react": "^7.37.2",
-    "gatsby-plugin-vanilla-extract": "^4.0.2",
     "typescript": "^5.3.3",
     "typescript-eslint": "^8.55.0",
     "wrangler": "^4.65.0"

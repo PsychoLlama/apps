@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -e
-
-npm run lint || fail=1
-npm run typecheck || fail=1
-
-if [[ -n "$fail" ]]; then
-  exit 1
-fi

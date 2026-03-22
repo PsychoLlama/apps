@@ -6,7 +6,6 @@
     "lib": ["ESNext", "DOM"],
     "moduleResolution": "Bundler",
     "strict": true,
-    "jsx": "preserve",
     "isolatedModules": true,
     "noEmit": true,
     "noUnusedLocals": true,
