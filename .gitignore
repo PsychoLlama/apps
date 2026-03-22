@@ -3,5 +3,11 @@ node_modules/
 *.log
 .cache
 .direnv
-public
+.output
+.vinxi
+.wrangler
+dist
+app.config.timestamp_*.js
+.env
+.env*.local
 .aider*
