@@ -1,0 +1,5 @@
+- `palette/`: Raw Radix color scales. One file per color. Edit via codemods, never by hand.
+- `tokens/`: Semantic token contracts (`createThemeContract`). One file per token type.
+- `theme-globals.css.ts`: Applies concrete light/dark palette values to token contracts.
+- `index.ts`: The only public API. Exports flat destructured token names. Imports contracts from `theme-globals.css`, applying its side effects.
+- Token names are semantic (`neutral` not `gray`, `accent` not `blue`).
