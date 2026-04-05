@@ -7,25 +7,30 @@ import {
   blueLightAlpha,
 } from './palette/blue.css';
 import {
-  grayDark,
-  grayDarkAlpha,
-  grayLight,
-  grayLightAlpha,
-} from './palette/gray.css';
+  slateDark,
+  slateDarkAlpha,
+  slateLight,
+  slateLightAlpha,
+} from './palette/slate.css';
 import { colorContract } from './tokens/color.css';
+
+/**
+ * Follow this guide to choose a color palette:
+ * https://www.radix-ui.com/colors/docs/palette-composition/composing-a-palette
+ */
 
 const lightColorVars = assignVars(colorContract, {
   accent: blueLight,
   accentAlpha: blueLightAlpha,
-  gray: grayLight,
-  grayAlpha: grayLightAlpha,
+  gray: slateLight,
+  grayAlpha: slateLightAlpha,
 });
 
 const darkColorVars = assignVars(colorContract, {
   accent: blueDark,
   accentAlpha: blueDarkAlpha,
-  gray: grayDark,
-  grayAlpha: grayDarkAlpha,
+  gray: slateDark,
+  grayAlpha: slateDarkAlpha,
 });
 
 // System preference
