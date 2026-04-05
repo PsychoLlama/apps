@@ -1,3 +1,6 @@
+[global]
+excludes = [".nitro/**", ".output/**", "dist/**"]
+
 [formatter.prettier]
 command = "pnpm"
 options = ["exec", "prettier", "--write"]

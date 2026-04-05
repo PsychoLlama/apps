@@ -3,6 +3,7 @@ node_modules/
 *.log
 .cache
 .direnv
+.nitro
 .output
 .vinxi
 .wrangler
