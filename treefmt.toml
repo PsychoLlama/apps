@@ -1,5 +1,5 @@
 [global]
-excludes = [".nitro/**", ".output/**", "dist/**"]
+excludes = [".nitro/**", ".output/**", "dist/**", "pnpm-lock.yaml"]
 
 [formatter.prettier]
 command = "pnpm"
