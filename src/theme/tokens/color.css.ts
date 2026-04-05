@@ -78,20 +78,19 @@ const assignLightDark = (
   contract: ReturnType<typeof createThemeContract<typeof colorScaleShape>>,
   light: ColorScale,
   dark: ColorScale,
-): Record<string, string> => {
-  const keys = Object.keys(light).map(Number) as Array<keyof ColorScale>;
-  const merged = structuredClone(colorScaleShape);
+): Record<`var(--${string})`, string> => {
+  const themedValues = structuredClone(colorScaleShape);
 
-  for (const key of keys) {
-    merged[key] = lightDark(light[key], dark[key]);
-  }
+  colorScaleIds.forEach((scale) => {
+    themedValues[scale] = lightDark(light[scale], dark[scale]);
+  });
 
-  return assignVars(contract, merged);
+  return assignVars(contract, themedValues);
 };
 
-const lightDark = (light: string, dark: string): string => {
-  return `light-dark(${light}, ${dark})`;
-};
+/** CSS `light-dark(...)` shorthand. */
+const lightDark = (light: string, dark: string): string =>
+  `light-dark(${light}, ${dark})`;
 
 globalStyle(':root', {
   colorScheme: 'light dark',
@@ -112,6 +111,6 @@ globalStyle(':root', {
   },
 });
 
-// Explicit overrides
-globalStyle(':root[color-scheme="light"]', { colorScheme: 'light' });
-globalStyle(':root[color-scheme="dark"]', { colorScheme: 'dark' });
+// Support overriding the color scheme through application code.
+globalStyle(':root[data-color-scheme="light"]', { colorScheme: 'light' });
+globalStyle(':root[data-color-scheme="dark"]', { colorScheme: 'dark' });
