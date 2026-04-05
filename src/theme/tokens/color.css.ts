@@ -24,9 +24,9 @@ export const colorContract = createThemeContract({
   /** Semi-transparent variants of the accent. */
   accentAlpha: scale,
 
-  /** Grayscale, partially tinted to match accent. */
-  gray: scale,
+  /** Neutral scale, partially tinted to match accent. */
+  neutral: scale,
 
-  /** Semi-transparent grayscale variants. */
-  grayAlpha: scale,
+  /** Semi-transparent neutral variants. */
+  neutralAlpha: scale,
 });

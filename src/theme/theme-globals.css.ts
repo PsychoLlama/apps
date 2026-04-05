@@ -22,15 +22,15 @@ import { colorContract } from './tokens/color.css';
 const lightColorVars = assignVars(colorContract, {
   accent: blueLight,
   accentAlpha: blueLightAlpha,
-  gray: slateLight,
-  grayAlpha: slateLightAlpha,
+  neutral: slateLight,
+  neutralAlpha: slateLightAlpha,
 });
 
 const darkColorVars = assignVars(colorContract, {
   accent: blueDark,
   accentAlpha: blueDarkAlpha,
-  gray: slateDark,
-  grayAlpha: slateDarkAlpha,
+  neutral: slateDark,
+  neutralAlpha: slateDarkAlpha,
 });
 
 // System preference
