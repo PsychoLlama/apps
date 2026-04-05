@@ -1,10 +1,5 @@
 import { globalStyle, style } from '@vanilla-extract/css';
 
-globalStyle('body', {
-  fontFamily:
-    "Gordita, Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
-});
-
 globalStyle('a', {
   marginRight: '1rem',
 });

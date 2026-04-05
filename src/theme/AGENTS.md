@@ -1,4 +1,5 @@
 - `palette/`: Raw Radix color scales. One file per color. Edit via codemods, never by hand.
 - `tokens/color.css.ts`: All semantic token contracts, palette assignments, and `globalStyle` side effects. Uses `light-dark()` so each var is declared once for both modes.
+- `tokens/typography.css.ts`: Type scale, font family, and font weight tokens. Applies body typography defaults.
 - `index.ts`: The only public API. Exports flat destructured token names. Imports from `tokens/color.css`, applying its side effects.
 - Token names are semantic (`neutral` not `gray`, `accent` not `blue`).
