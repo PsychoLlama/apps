@@ -30,5 +30,3 @@ export const colorContract = createThemeContract({
   /** Semi-transparent grayscale variants. */
   grayAlpha: scale,
 });
-
-export const { accent, accentAlpha, gray, grayAlpha } = colorContract;

@@ -41,3 +41,5 @@ globalStyle(':root', {
 // Explicit overrides
 globalStyle(':root[data-theme="dark"]', { vars: darkColorVars });
 globalStyle(':root[data-theme="light"]', { vars: lightColorVars });
+
+export { colorContract };
