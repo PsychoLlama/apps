@@ -13,6 +13,13 @@ import {
   slateLight,
   slateLightAlpha,
 } from './palette/slate.css';
+import {
+  backgroundContract,
+  overlayDark,
+  overlayLight,
+  surfaceDark,
+  surfaceLight,
+} from './tokens/background.css';
 import { colorContract } from './tokens/color.css';
 import { textContract } from './tokens/text.css';
 
@@ -32,6 +39,13 @@ const lightThemeVars = {
     lowContrast: grayLight[11],
     highContrast: grayLight[12],
   }),
+  ...assignVars(backgroundContract, {
+    page: colorContract.neutral[1],
+    panelSolid: colorContract.neutral[2],
+    panelTranslucent: colorContract.neutralAlpha[2],
+    surface: surfaceLight,
+    overlay: overlayLight,
+  }),
 };
 
 const darkThemeVars = {
@@ -44,6 +58,13 @@ const darkThemeVars = {
   ...assignVars(textContract, {
     lowContrast: grayDark[11],
     highContrast: grayDark[12],
+  }),
+  ...assignVars(backgroundContract, {
+    page: colorContract.neutral[1],
+    panelSolid: colorContract.neutral[2],
+    panelTranslucent: colorContract.neutralAlpha[2],
+    surface: surfaceDark,
+    overlay: overlayDark,
   }),
 };
 
@@ -61,4 +82,4 @@ globalStyle(':root', {
 globalStyle(':root[data-theme="dark"]', { vars: darkThemeVars });
 globalStyle(':root[data-theme="light"]', { vars: lightThemeVars });
 
-export { colorContract, textContract };
+export { backgroundContract, colorContract, textContract };
