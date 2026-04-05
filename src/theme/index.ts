@@ -1,4 +1,4 @@
-// Side effect: apply theme globals.
+import './reset.css';
 import {
   accent,
   accentAlpha,
