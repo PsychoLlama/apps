@@ -1,9 +1,10 @@
 // @ts-check
+import { includeIgnoreFile } from '@eslint/compat';
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
-  { ignores: ['.nitro/**', '.output/**', 'dist/**'] },
+export default [
+  includeIgnoreFile(import.meta.dirname + '/.gitignore'),
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -25,4 +26,4 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
-);
+];

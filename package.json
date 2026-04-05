@@ -39,6 +39,7 @@
     ]
   },
   "devDependencies": {
+    "@eslint/compat": "^2.0.4",
     "@eslint/js": "^9.39.2",
     "@solidjs/testing-library": "^0.8.10",
     "@types/eslint__js": "^8.42.3",
