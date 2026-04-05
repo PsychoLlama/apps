@@ -1,13 +1,17 @@
 // Side effect: apply theme globals.
 import {
-  backgroundContract,
-  colorContract,
-  textContract,
-} from './theme-globals.css';
+  accent,
+  accentAlpha,
+  background,
+  neutral,
+  neutralAlpha,
+  text,
+} from './tokens/color.css';
 
-export const { accent, accentAlpha, neutral, neutralAlpha } = colorContract;
+export { accent, accentAlpha, neutral, neutralAlpha };
+
 export const { lowContrast: textLowContrast, highContrast: textHighContrast } =
-  textContract;
+  text;
 
 export const {
   page: bgPage,
@@ -15,4 +19,4 @@ export const {
   panelTranslucent: bgPanelTranslucent,
   surface: bgSurface,
   overlay: bgOverlay,
-} = backgroundContract;
+} = background;
