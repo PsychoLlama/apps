@@ -114,3 +114,8 @@ globalStyle(':root', {
 // Support overriding the color scheme through application code.
 globalStyle(':root[data-color-scheme="light"]', { colorScheme: 'light' });
 globalStyle(':root[data-color-scheme="dark"]', { colorScheme: 'dark' });
+
+/** Accent-tinted text selection highlight. */
+globalStyle('::selection', {
+  backgroundColor: accentAlpha[5],
+});
