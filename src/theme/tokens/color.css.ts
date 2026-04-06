@@ -94,6 +94,7 @@ const lightDark = (light: string, dark: string): string =>
 
 globalStyle(':root', {
   colorScheme: 'light dark',
+  backgroundColor: background.page,
   vars: {
     ...assignLightDark(accent, blueLight, blueDark),
     ...assignLightDark(accentAlpha, blueLightAlpha, blueDarkAlpha),

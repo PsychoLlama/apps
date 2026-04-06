@@ -1,3 +1,4 @@
+import '#theme';
 import { globalStyle, style } from '@vanilla-extract/css';
 
 globalStyle('a', {
