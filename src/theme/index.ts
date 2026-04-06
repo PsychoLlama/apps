@@ -8,6 +8,7 @@ import {
   neutralAlpha,
   text,
 } from './tokens/color.css';
+import { space } from './tokens/space.css';
 import { fontFamily, fontWeight, typeScale } from './tokens/typography.css';
 
 export { accent, accentAlpha, neutral, neutralAlpha };
@@ -23,4 +24,4 @@ export const {
   overlay: bgOverlay,
 } = background;
 
-export { fontFamily, fontWeight, typeScale };
+export { fontFamily, fontWeight, typeScale, space };
