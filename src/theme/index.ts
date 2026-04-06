@@ -1,27 +1,17 @@
 import '@fontsource-variable/ibm-plex-sans';
 import './reset.css';
-import {
+
+export { fontFamily, fontWeight, typeScale } from './tokens/typography.css';
+export { breakpoint } from './tokens/breakpoint.css';
+export { radius } from './tokens/radius.css';
+export { shadow } from './tokens/shadow.css';
+export { space } from './tokens/space.css';
+
+export {
   accent,
   accentAlpha,
-  background,
   neutral,
   neutralAlpha,
   text,
+  background,
 } from './tokens/color.css';
-import { space } from './tokens/space.css';
-import { fontFamily, fontWeight, typeScale } from './tokens/typography.css';
-
-export { accent, accentAlpha, neutral, neutralAlpha };
-
-export const { lowContrast: textLowContrast, highContrast: textHighContrast } =
-  text;
-
-export const {
-  page: bgPage,
-  panelSolid: bgPanelSolid,
-  panelTranslucent: bgPanelTranslucent,
-  surface: bgSurface,
-  overlay: bgOverlay,
-} = background;
-
-export { fontFamily, fontWeight, typeScale, space };

@@ -4,6 +4,7 @@ import {
   globalStyle,
 } from '@vanilla-extract/css';
 
+import { darkSelector, lightSelector } from '../color-scheme.css';
 import {
   blueDark,
   blueDarkAlpha,
@@ -113,8 +114,8 @@ globalStyle(':root', {
 });
 
 // Support overriding the color scheme through application code.
-globalStyle(':root[data-color-scheme="light"]', { colorScheme: 'light' });
-globalStyle(':root[data-color-scheme="dark"]', { colorScheme: 'dark' });
+globalStyle(lightSelector, { colorScheme: 'light' });
+globalStyle(darkSelector, { colorScheme: 'dark' });
 
 /** Accent-tinted text selection highlight. */
 globalStyle('::selection', {
