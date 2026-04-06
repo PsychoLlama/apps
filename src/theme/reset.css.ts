@@ -32,6 +32,7 @@ globalStyle('*, *::before, *::after', {
 globalStyle(':root', {
   touchAction: 'manipulation',
   WebkitFontSmoothing: 'antialiased',
+  MozOsxFontSmoothing: 'grayscale',
   textSizeAdjust: 'none',
   WebkitTextSizeAdjust: 'none',
   overflowWrap: 'break-word',
