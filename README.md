@@ -1,3 +1,3 @@
-# [Workbench](https://tools.psychollama.io/)
+# [Apps](https://apps.psychollama.io/)
 
-A collection of tools I yeeted onto the internet. Mostly AI generated, because honestly it's not worth the effort to do it manually.
+I bucket of random productivity tools.

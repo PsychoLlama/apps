@@ -1,12 +1,12 @@
 {
-  "name": "@psychollama/workbench",
+  "name": "@psychollama/apps",
   "private": true,
   "type": "module",
   "version": "0.0.0",
   "description": "Miscellaneous tools",
   "author": "Jesse Gibson <JesseTheGibson@gmail.com>",
-  "homepage": "https://tools.psychollama.io",
-  "repository": "github:PsychoLlama/workbench",
+  "homepage": "https://apps.psychollama.io",
+  "repository": "github:PsychoLlama/apps",
   "imports": {
     "#design-system": "./src/design-system/index.css.ts"
   },
