@@ -8,7 +8,17 @@
 - `tokens/shadow.css.ts`: 6-level elevation scale. Levels with identical geometry in both modes are plain constants using `light-dark()` on colors. Levels where Radix uses structurally different shadows per mode (shadow 1, shadow 3) are CSS custom properties assigned via `prefers-color-scheme` media queries with `data-color-scheme` attribute overrides.
 - `tokens/breakpoint.css.ts`: 5 mobile-first media query conditions (xs–xl). Plain constants for use in Vanilla Extract `@media` blocks.
 - `index.ts`: The only public API. Imports side-effect files (`reset.css`, `tokens/color.css`, `tokens/typography.css`). Re-exports all tokens (re-exporting `tokens/shadow.css` also triggers its side effects).
+- `color-scheme.css.ts`: Shared selectors and media queries for color-scheme-aware tokens.
 - Token names are semantic (`neutral` not `gray`, `accent` not `blue`).
+
+## Color scheme strategy
+
+- Default mode is system-managed via `prefers-color-scheme`.
+- Application code can force a mode by setting `data-color-scheme="light|dark"` on `:root`.
+- Tokens that differ only in color use `light-dark()`. The browser resolves them from the `color-scheme` property.
+- Tokens that differ in structure (e.g. shadow geometry) use CSS custom properties assigned per mode.
+- Each permutation (system-light, system-dark, forced-light, forced-dark) must be targeted by exactly one CSS rule. No duplicates in the inspector.
+- `color-scheme.css.ts` exports the selectors and media queries that enforce this. Use them instead of hardcoding selectors.
 
 ## Deviations from Radix UI
 
