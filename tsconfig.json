@@ -20,5 +20,6 @@
     "paths": {
       "#design-system": ["./src/design-system/index.css.ts"]
     }
-  }
+  },
+  "include": ["src", ".storybook/*.ts", "*.ts", "*.mjs"]
 }

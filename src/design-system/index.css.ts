@@ -16,3 +16,6 @@ export {
   text,
   background,
 } from './tokens/color.css';
+
+export { black } from './palette/black.css';
+export { white } from './palette/white.css';

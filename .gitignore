@@ -12,3 +12,4 @@ app.config.timestamp_*.js
 .env
 .env*.local
 .aider*
+storybook-static

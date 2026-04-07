@@ -9,6 +9,10 @@ fmt:
 fmt-check:
     treefmt --ci
 
+# Launch Storybook dev server
+storybook:
+    pnpm storybook
+
 # Run all checks
 check:
     #!/usr/bin/env bash
