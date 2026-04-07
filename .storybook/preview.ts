@@ -1,5 +1,6 @@
 import type { Preview } from 'storybook-solidjs-vite';
 import { withThemeByDataAttribute } from '@storybook/addon-themes';
+import '@fontsource-variable/ibm-plex-sans';
 import '#design-system';
 
 const preview: Preview = {
