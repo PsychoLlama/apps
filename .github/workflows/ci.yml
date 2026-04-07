@@ -10,8 +10,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/magic-nix-cache-action@v13
-      - name: Activate flake environment
-        run: nix develop --command bash -c 'echo "$PATH" >> "$GITHUB_PATH"'
       - name: Restore pnpm store
         uses: actions/cache@v4
         with:
@@ -19,15 +17,17 @@ jobs:
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
-      - run: pnpm install --frozen-lockfile
-      - run: just check
-      - run: just build
+      - run: nix develop --command pnpm install --frozen-lockfile
+      - run: nix develop --command just check
+      - run: nix develop --command just build
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: .output/public
 
+  # Deploys to production on pushes to main. Secrets are scoped to the
+  # "production" GitHub environment, which is restricted to the main branch.
   deploy:
     needs: check
     if: github.ref == 'refs/heads/main'
@@ -38,22 +38,35 @@ jobs:
       deployments: write
     steps:
       - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      # Wrangler runs as a standalone command and needs pnpm on PATH to
+      # resolve the project dependency. Hydrate PATH from the flake.
+      - name: Activate flake environment
+        run: nix develop --command bash -c 'echo "$PATH" >> "$GITHUB_PATH"'
+      - name: Restore pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+      - run: pnpm install --frozen-lockfile
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-output
           path: .output/public
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          packageManager: npm
-          command: deploy
+      - run: pnpm wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
+  # Uploads a preview version on pull requests without promoting to
+  # production. Secrets are scoped to the "preview" GitHub environment.
   preview:
     needs: check
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     environment: preview
     permissions:
@@ -61,15 +74,24 @@ jobs:
       deployments: write
     steps:
       - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Activate flake environment
+        run: nix develop --command bash -c 'echo "$PATH" >> "$GITHUB_PATH"'
+      - name: Restore pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+      - run: pnpm install --frozen-lockfile
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-output
           path: .output/public
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          packageManager: npm
-          command: versions upload
+      - run: pnpm wrangler versions upload
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
