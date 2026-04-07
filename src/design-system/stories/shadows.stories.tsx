@@ -24,7 +24,7 @@ export const Shadows: Story = {
     <div class={css.shadowGrid}>
       <For each={Object.entries(shadow)}>
         {([step, value]) => (
-          <div style={{ 'text-align': 'center' }}>
+          <div class={css.shadowItem}>
             <div class={css.shadowCard} style={{ 'box-shadow': value }}>
               <span class={css.shadowLabel}>shadow[{step}]</span>
             </div>

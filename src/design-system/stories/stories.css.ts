@@ -176,19 +176,23 @@ export const radiusLabel = style({
 // --- Shadows ---
 
 export const shadowGrid = style({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
+  display: 'flex',
+  flexWrap: 'wrap',
   gap: space[6],
   padding: space[6],
 });
 
+export const shadowItem = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: space[2],
+});
+
 export const shadowCard = style({
-  aspectRatio: '3 / 2',
+  padding: `${space[7]} ${space[8]}`,
   backgroundColor: background.panelSolid,
   borderRadius: radius[4],
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
 });
 
 export const shadowLabel = style({
@@ -202,35 +206,4 @@ export const shadowCaption = style({
   lineHeight: typeScale[1].lineHeight,
   color: text.lowContrast,
   marginTop: space[2],
-});
-
-// --- Breakpoints ---
-
-export const table = style({
-  borderCollapse: 'collapse',
-  width: '100%',
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-});
-
-export const th = style({
-  textAlign: 'left',
-  padding: `${space[3]} ${space[4]}`,
-  borderBottom: `1px solid ${neutral[6]}`,
-  color: text.lowContrast,
-  fontWeight: fontWeight.medium,
-});
-
-export const td = style({
-  padding: `${space[3]} ${space[4]}`,
-  borderBottom: `1px solid ${neutral[4]}`,
-  color: text.highContrast,
-  fontWeight: fontWeight.medium,
-});
-
-export const tdMono = style({
-  padding: `${space[3]} ${space[4]}`,
-  borderBottom: `1px solid ${neutral[4]}`,
-  color: text.lowContrast,
-  fontFamily: 'monospace',
 });
