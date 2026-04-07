@@ -1,5 +1,6 @@
 import '@fontsource-variable/ibm-plex-sans';
 import './reset.css';
+import './globals.css';
 
 export { fontFamily, fontWeight, typeScale } from './tokens/typography.css';
 export { breakpoint } from './tokens/breakpoint.css';

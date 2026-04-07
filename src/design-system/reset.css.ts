@@ -22,30 +22,6 @@ globalStyle('*, *::before, *::after', {
   boxSizing: 'border-box',
 });
 
-/**
- * Root baseline:
- * - manipulation: disable double-tap zoom for faster taps
- * - font smoothing: consistent antialiased rendering
- * - text-size-adjust: prevent mobile browsers from inflating font sizes
- * - overflow-wrap: break long words rather than overflow containers
- */
-globalStyle(':root', {
-  touchAction: 'manipulation',
-  WebkitFontSmoothing: 'antialiased',
-  MozOsxFontSmoothing: 'grayscale',
-  textSizeAdjust: 'none',
-  WebkitTextSizeAdjust: 'none',
-  overflowWrap: 'break-word',
-});
-
-/** Full-height flex column. vh fallback for browsers without dvh support. */
-globalStyle('body', {
-  margin: 0,
-  minHeight: ['100vh', '100dvh'],
-  display: 'flex',
-  flexDirection: 'column',
-});
-
 /** Replaced/embedded elements: block display, respect container width. */
 globalStyle('img, picture, video, svg, canvas', {
   display: 'block',

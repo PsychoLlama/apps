@@ -3,8 +3,6 @@ import {
   createThemeContract,
   globalStyle,
 } from '@vanilla-extract/css';
-
-import { darkSelector, lightSelector } from '../color-scheme.css';
 import {
   blueDark,
   blueDarkAlpha,
@@ -94,8 +92,6 @@ const lightDark = (light: string, dark: string): string =>
   `light-dark(${light}, ${dark})`;
 
 globalStyle(':root', {
-  colorScheme: 'light dark',
-  backgroundColor: background.page,
   vars: {
     ...assignLightDark(accent, blueLight, blueDark),
     ...assignLightDark(accentAlpha, blueLightAlpha, blueDarkAlpha),
@@ -111,13 +107,4 @@ globalStyle(':root', {
     [background.surface]: lightDark(surfaceLight, surfaceDark),
     [background.overlay]: lightDark(overlayLight, overlayDark),
   },
-});
-
-// Support overriding the color scheme through application code.
-globalStyle(lightSelector, { colorScheme: 'light' });
-globalStyle(darkSelector, { colorScheme: 'dark' });
-
-/** Accent-tinted text selection highlight. */
-globalStyle('::selection', {
-  backgroundColor: accentAlpha[5],
 });
