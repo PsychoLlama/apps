@@ -6,6 +6,8 @@ const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(ts|tsx)'],
   addons: ['@storybook/addon-themes'],
   framework: { name: 'storybook-solidjs-vite', options: {} },
+  core: { disableWhatsNewNotifications: true },
+  features: { sidebarOnboardingChecklist: false },
   viteFinal: (config) =>
     mergeConfig(config, {
       base: '/__storybook/',

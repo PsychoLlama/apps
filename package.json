@@ -18,7 +18,7 @@
     "typecheck": "tsc",
     "lint": "eslint --color",
     "test": "vitest run",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "storybook dev -p 6006 --no-open",
     "storybook:build": "storybook build"
   },
   "prettier": {
