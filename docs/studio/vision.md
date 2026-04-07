@@ -79,7 +79,7 @@ A free, open-source, client-side web application for screen recording. Built for
 
 ### Route
 
-Single route: `/record`. Recording is a UI state, not a separate page — a recording URL has no meaning to someone who didn't start the session.
+Single route: `/studio`. Recording is a UI state, not a separate page — a recording URL has no meaning to someone who didn't start the session.
 
 ### States
 
@@ -250,7 +250,7 @@ const getStorageInfo = async (): Promise<{
 
 ```
 src/
-├── apps/recorder/
+├── apps/studio/
 │   ├── recording/
 │   │   ├── StartButton.tsx           # Primary CTA to begin recording
 │   │   ├── RecordingControls.tsx     # Pause/Resume/Stop buttons
@@ -271,7 +271,7 @@ src/
 │   └── layout/
 │       └── AppHeader.tsx             # Minimal header/navigation
 └── routes/
-    └── record.tsx                    # Single route; idle and recording are UI states
+    └── studio.tsx                    # Single route; idle and recording are UI states
 ```
 
 ---
@@ -353,11 +353,11 @@ Implement all P0 requirements.
 **Deliverables:**
 
 1. SolidStart project setup with Vanilla Extract design tokens
-2. `/record` page with Start Recording button and recording library
+2. `/studio` page with Start Recording button and recording library
 3. Recording flow with getDisplayMedia
 4. Recording state with timer and stop button (pause can be Phase 1 or early Phase 2)
 5. IndexedDB storage for recordings
-6. Library integrated into `/record` with list, download, delete
+6. Library integrated into `/studio` with list, download, delete
 7. Basic error handling (permission denied, storage full)
 
 ### Phase 2: Usability Polish
