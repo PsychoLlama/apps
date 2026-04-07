@@ -8,6 +8,7 @@
 
 - Usage guide: `src/design-system/docs/usage.md`.
 - Import tokens from `#design-system`. NEVER hard-code colors, spacing, radius, shadows, or typography values.
+- Use `space` tokens instead of absolute units for sizing.
 
 ## Testing
 
