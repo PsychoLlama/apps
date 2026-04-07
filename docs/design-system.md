@@ -2,7 +2,7 @@
 
 Our design system closely follows [Radix Themes](https://www.radix-ui.com/themes/docs/theme/overview), reimplemented in Vanilla Extract. We're building our own tokens and utilities rather than consuming Radix packages.
 
-Theme tokens and utilities live in `src/theme/`, organized by concept and importable via `#theme`.
+Theme tokens and utilities live in `src/design-system/`, organized by concept and importable via `#design-system`.
 
 ### Concepts
 

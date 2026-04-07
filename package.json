@@ -8,7 +8,7 @@
   "homepage": "https://tools.psychollama.io",
   "repository": "github:PsychoLlama/workbench",
   "imports": {
-    "#theme": "./src/theme/index.ts"
+    "#design-system": "./src/design-system/index.ts"
   },
   "scripts": {
     "dev": "vite dev",

@@ -18,7 +18,7 @@
     "allowSyntheticDefaultImports": true,
     "types": ["vite/client", "vitest/globals"],
     "paths": {
-      "#theme": ["./src/theme/index.ts"]
+      "#design-system": ["./src/design-system/index.ts"]
     }
   }
 }
