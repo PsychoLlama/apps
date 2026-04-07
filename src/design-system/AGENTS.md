@@ -1,3 +1,7 @@
+## Conventions
+
+- Use `.css.ts` as the default file extension in this directory. Everything here is processed by Vanilla Extract.
+
 ## File map
 
 - `palette/`: Raw Radix color scales. One file per color. Edit via codemods, never by hand.
@@ -8,7 +12,7 @@
 - `tokens/shadow.css.ts`: 6-level elevation scale. Levels with identical geometry in both modes are plain constants using `light-dark()` on colors. Levels where Radix uses structurally different shadows per mode (shadow 1, shadow 3) are CSS custom properties assigned via `prefers-color-scheme` media queries with `data-color-scheme` attribute overrides.
 - `tokens/breakpoint.css.ts`: 5 mobile-first media query conditions (xs–xl). Plain constants for use in Vanilla Extract `@media` blocks.
 - `globals.css.ts`: Design opinions applied to elements. Collects root baseline (color-scheme, background, font smoothing, etc.), body layout and typography defaults, color-scheme overrides, and selection highlight. Imports tokens but does not define them.
-- `index.ts`: The only public API. Imports side-effect files (`reset.css`, `globals.css`). Re-exports all tokens (re-exporting token modules also triggers their `globalStyle` var assignments).
+- `index.css.ts`: The only public API. Imports side-effect files (`reset.css`, `globals.css`). Re-exports all tokens (re-exporting token modules also triggers their `globalStyle` var assignments).
 - `color-scheme.css.ts`: Shared selectors and media queries for color-scheme-aware tokens.
 - Token names are semantic (`neutral` not `gray`, `accent` not `blue`).
 
