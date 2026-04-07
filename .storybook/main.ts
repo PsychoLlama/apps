@@ -7,7 +7,10 @@ const config: StorybookConfig = {
   addons: ['@storybook/addon-themes'],
   framework: { name: 'storybook-solidjs-vite', options: {} },
   viteFinal: (config) =>
-    mergeConfig(config, { plugins: [vanillaExtractPlugin()] }),
+    mergeConfig(config, {
+      base: '/__storybook/',
+      plugins: [vanillaExtractPlugin()],
+    }),
 };
 
 export default config;
