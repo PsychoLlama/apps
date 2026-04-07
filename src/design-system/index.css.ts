@@ -1,4 +1,3 @@
-import '@fontsource-variable/ibm-plex-sans';
 import './reset.css';
 import './globals.css';
 

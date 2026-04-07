@@ -1,4 +1,3 @@
-import '#design-system';
 import { globalStyle, style } from '@vanilla-extract/css';
 
 globalStyle('a', {
