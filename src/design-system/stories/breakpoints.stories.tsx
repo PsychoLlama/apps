@@ -4,13 +4,13 @@ import { breakpoint } from '#design-system';
 import * as css from './stories.css';
 
 const meta = {
-  title: 'Design System/Breakpoints',
+  title: 'Design System',
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const BreakpointReference: Story = {
+export const Breakpoints: Story = {
   render: () => (
     <table class={css.table}>
       <thead>

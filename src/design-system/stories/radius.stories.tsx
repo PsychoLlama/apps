@@ -4,13 +4,13 @@ import { radius } from '#design-system';
 import * as css from './stories.css';
 
 const meta = {
-  title: 'Design System/Radius',
+  title: 'Design System',
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const RadiusScale: Story = {
+export const Radius: Story = {
   render: () => (
     <div class={css.radiusGrid}>
       <For each={Object.entries(radius)}>

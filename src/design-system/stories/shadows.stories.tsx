@@ -4,7 +4,7 @@ import { shadow } from '#design-system';
 import * as css from './stories.css';
 
 const meta = {
-  title: 'Design System/Shadows',
+  title: 'Design System',
 } satisfies Meta;
 
 export default meta;
@@ -19,7 +19,7 @@ const labels: Record<string, string> = {
   6: 'Maximum (modals, dialogs)',
 };
 
-export const ShadowScale: Story = {
+export const Shadows: Story = {
   render: () => (
     <div class={css.shadowGrid}>
       <For each={Object.entries(shadow)}>

@@ -4,13 +4,13 @@ import { space } from '#design-system';
 import * as css from './stories.css';
 
 const meta = {
-  title: 'Design System/Spacing',
+  title: 'Design System',
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const SpacingScale: Story = {
+export const Spacing: Story = {
   render: () => (
     <div class={css.spacingGrid}>
       <For each={Object.entries(space)}>
