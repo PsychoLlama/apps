@@ -9,17 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
-      - name: Restore npm cache
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Restore pnpm store
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-node-
-      - run: nix develop --command npm clean-install
-      - run: nix develop --command npm run build
-      - run: nix develop --command npm run test
-      - name: Publish to Cloudflare Pages
+            ${{ runner.os }}-pnpm-
+      - run: nix develop --command pnpm install --frozen-lockfile
+      - run: nix develop --command just check
+      - run: nix develop --command just build
+      - name: Deploy to Cloudflare
+        if: github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}

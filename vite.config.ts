@@ -4,5 +4,14 @@ import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 
 export default defineConfig({
-  plugins: [solidStart(), nitro(), vanillaExtractPlugin()],
+  plugins: [
+    solidStart(),
+    nitro({
+      preset: 'static',
+      prerender: {
+        crawlLinks: true,
+      },
+    }),
+    vanillaExtractPlugin(),
+  ],
 });

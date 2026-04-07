@@ -13,6 +13,17 @@ fmt-check:
 storybook:
     pnpm storybook
 
+# Build the Solid app
+build-app:
+    pnpm build
+
+# Build Storybook
+build-storybook:
+    pnpm storybook:build
+
+# Build everything
+build: build-app build-storybook
+
 # Run all checks
 check:
     #!/usr/bin/env bash
