@@ -43,7 +43,13 @@ import {
   createThemeContract,
   globalStyle,
 } from '@vanilla-extract/css';
-import { darkMedia, darkSelector, lightSelector } from '../color-scheme.css';
+import {
+  systemSelector,
+  darkMedia,
+  darkSelector,
+  lightMedia,
+  lightSelector,
+} from '../color-scheme.css';
 import { neutralAlpha } from './color.css';
 import { black } from '../palette/black.css';
 
@@ -92,12 +98,10 @@ const darkVars = assignVars(shadowTheme, {
   3: shadow3Dark,
 });
 
-globalStyle(':root', {
-  vars: lightVars,
+globalStyle(systemSelector, {
   '@media': {
-    [darkMedia]: {
-      vars: darkVars,
-    },
+    [lightMedia]: { vars: lightVars },
+    [darkMedia]: { vars: darkVars },
   },
 });
 
