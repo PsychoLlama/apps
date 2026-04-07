@@ -4,6 +4,11 @@
 - Run `just fmt` to format and `just check` to validate. All checks must pass before committing.
 - Write commit messages that explain _why_, not just _what_.
 
+## Design System
+
+- Usage guide: `src/design-system/docs/usage.md`.
+- Import tokens from `#design-system`. NEVER hard-code colors, spacing, radius, shadows, or typography values.
+
 ## Testing
 
 - Co-locate tests with the code they cover. Example: `foo.ts` and `__tests__/foo.test.ts`.
