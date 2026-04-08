@@ -57,10 +57,12 @@ jobs:
         with:
           name: build-output
           path: .output/public
-      - run: pnpm wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          command: deploy
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
   # Uploads a preview version on pull requests without promoting to
   # production. Secrets are scoped to the "preview" GitHub environment.
@@ -91,7 +93,9 @@ jobs:
         with:
           name: build-output
           path: .output/public
-      - run: pnpm wrangler versions upload
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          command: versions upload
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
