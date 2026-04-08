@@ -18,6 +18,7 @@
     "allowSyntheticDefaultImports": true,
     "types": ["vite/client", "vitest/globals", "unplugin-icons/types/solid"],
     "paths": {
+      "#ui": ["./src/ui/index.ts"],
       "#design-system": ["./src/design-system/index.css.ts"]
     }
   },

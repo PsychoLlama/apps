@@ -8,6 +8,7 @@
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
   "imports": {
+    "#ui": "./src/ui/index.ts",
     "#design-system": "./src/design-system/index.css.ts"
   },
   "scripts": {
