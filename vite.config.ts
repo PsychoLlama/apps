@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
+import Icons from 'unplugin-icons/vite';
 
 export default defineConfig({
   plugins: [
@@ -13,5 +14,8 @@ export default defineConfig({
       },
     }),
     vanillaExtractPlugin(),
+    Icons({
+      compiler: 'solid',
+    }),
   ],
 });

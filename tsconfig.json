@@ -16,7 +16,7 @@
     "noUnusedParameters": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["vite/client", "vitest/globals"],
+    "types": ["vite/client", "vitest/globals", "unplugin-icons/types/solid"],
     "paths": {
       "#design-system": ["./src/design-system/index.css.ts"]
     }

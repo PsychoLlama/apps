@@ -18,6 +18,17 @@ export default [
     },
     rules: {
       '@typescript-eslint/no-use-before-define': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['~icons/*'],
+              message: 'Use virtual:icons/* instead.',
+            },
+          ],
+        },
+      ],
     },
   },
   {
