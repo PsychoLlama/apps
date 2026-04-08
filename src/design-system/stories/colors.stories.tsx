@@ -5,6 +5,9 @@ import {
   accentAlpha,
   neutral,
   neutralAlpha,
+  danger,
+  warning,
+  success,
   text,
   background,
 } from '#design-system';
@@ -50,10 +53,13 @@ type Story = StoryObj<typeof meta>;
 export const Scales: Story = {
   render: () => (
     <div class={css.stack.lg}>
-      <ScaleRow name="accent" scale={accent} />
-      <ScaleRow name="accentAlpha" scale={accentAlpha} alpha />
       <ScaleRow name="neutral" scale={neutral} />
       <ScaleRow name="neutralAlpha" scale={neutralAlpha} alpha />
+      <ScaleRow name="accent" scale={accent} />
+      <ScaleRow name="accentAlpha" scale={accentAlpha} alpha />
+      <ScaleRow name="danger" scale={danger} />
+      <ScaleRow name="warning" scale={warning} />
+      <ScaleRow name="success" scale={success} />
     </div>
   ),
 };

@@ -12,6 +12,9 @@ export {
   accentAlpha,
   neutral,
   neutralAlpha,
+  danger,
+  warning,
+  success,
   text,
   background,
 } from './tokens/color.css';

@@ -3,6 +3,7 @@ import {
   createThemeContract,
   globalStyle,
 } from '@vanilla-extract/css';
+import { amberDark, amberLight } from '../palette/amber.css';
 import {
   blueDark,
   blueDarkAlpha,
@@ -11,6 +12,8 @@ import {
 } from '../palette/blue.css';
 import type { ColorScale } from '../palette/color-palette';
 import { grayDark, grayLight } from '../palette/gray.css';
+import { grassDark, grassLight } from '../palette/grass.css';
+import { redDark, redLight } from '../palette/red.css';
 import {
   slateDark,
   slateDarkAlpha,
@@ -44,6 +47,15 @@ export const neutral = createThemeContract(colorScaleShape);
 
 /** Semi-transparent neutral variants. */
 export const neutralAlpha = createThemeContract(colorScaleShape);
+
+/** Destructive actions and error states. */
+export const danger = createThemeContract(colorScaleShape);
+
+/** Caution and warning states. */
+export const warning = createThemeContract(colorScaleShape);
+
+/** Positive outcomes and active status. */
+export const success = createThemeContract(colorScaleShape);
 
 export const text = createThemeContract({
   /** Low-contrast text (neutral step 11). */
@@ -97,6 +109,9 @@ globalStyle(':root', {
     ...assignLightDark(accentAlpha, blueLightAlpha, blueDarkAlpha),
     ...assignLightDark(neutral, slateLight, slateDark),
     ...assignLightDark(neutralAlpha, slateLightAlpha, slateDarkAlpha),
+    ...assignLightDark(danger, redLight, redDark),
+    ...assignLightDark(warning, amberLight, amberDark),
+    ...assignLightDark(success, grassLight, grassDark),
 
     [text.lowContrast]: lightDark(grayLight[11], grayDark[11]),
     [text.highContrast]: lightDark(grayLight[12], grayDark[12]),
