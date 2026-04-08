@@ -20,7 +20,7 @@
 const attr = 'data-color-scheme';
 
 /** Selector for system-managed mode — no application override. */
-export const systemSelector = `:root:not([${attr}])`;
+export const systemSelector = `:root:not([${attr}="light"], [${attr}="dark"])`;
 
 /** Selector for application-forced light mode. */
 export const lightSelector = `:root[${attr}="light"]`;
