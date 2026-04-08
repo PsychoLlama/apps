@@ -10,7 +10,7 @@ import {
   success,
   text,
   background,
-} from '#design-system';
+} from '#design';
 import * as css from './stories.css';
 
 type ColorScale = Record<number, string>;

@@ -19,7 +19,7 @@
     "types": ["vite/client", "vitest/globals", "unplugin-icons/types/solid"],
     "paths": {
       "#ui": ["./src/ui/index.ts"],
-      "#design-system": ["./src/design-system/index.css.ts"]
+      "#design": ["./src/design/index.css.ts"]
     }
   },
   "include": ["src", ".storybook/*.ts", "*.ts", "*.mjs"]

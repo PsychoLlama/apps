@@ -1,6 +1,6 @@
 # Design System Usage
 
-- Single entry point: `#design-system`.
+- Single entry point: `#design`.
 - Never hard-code a value when a token exists.
 
 ## Colors

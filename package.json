@@ -9,7 +9,7 @@
   "repository": "github:PsychoLlama/apps",
   "imports": {
     "#ui": "./src/ui/index.ts",
-    "#design-system": "./src/design-system/index.css.ts"
+    "#design": "./src/design/index.css.ts"
   },
   "scripts": {
     "dev": "vite dev",

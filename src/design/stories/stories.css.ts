@@ -8,7 +8,7 @@ import {
   fontWeight,
   space,
   radius,
-} from '#design-system';
+} from '#design';
 
 // --- Shared ---
 

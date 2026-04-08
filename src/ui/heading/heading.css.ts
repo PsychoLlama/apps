@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { fontFamily } from '#design-system';
+import { fontFamily } from '#design';
 
 export { size, weight, align, color } from '../text/text.css';
 

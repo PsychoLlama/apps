@@ -1,5 +1,5 @@
 import { style, styleVariants } from '@vanilla-extract/css';
-import { typeScale, fontFamily, fontWeight, text } from '#design-system';
+import { typeScale, fontFamily, fontWeight, text } from '#design';
 
 export const base = style({
   fontFamily: fontFamily.body,

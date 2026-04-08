@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
-import { typeScale, fontFamily, fontWeight } from '#design-system';
+import { typeScale, fontFamily, fontWeight } from '#design';
 import * as css from './stories.css';
 
 const meta = {
