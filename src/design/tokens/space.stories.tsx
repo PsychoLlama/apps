@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { space } from '#design';
-import * as css from '../stories/stories.css';
+import * as css from './space.stories.css';
+import { muted } from './_stories.css';
 
 const meta = {
   title: 'Design System',
@@ -17,7 +18,7 @@ export const Spacing: Story = {
         {([step, value]) => (
           <>
             <div class={css.spacingLabel}>
-              space[{step}] <span class={css.muted}>({value})</span>
+              space[{step}] <span class={muted}>({value})</span>
             </div>
             <div class={css.spacingBar} style={{ width: value }} />
           </>

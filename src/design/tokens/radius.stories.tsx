@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { radius } from '#design';
-import * as css from '../stories/stories.css';
+import * as css from './radius.stories.css';
+import { muted } from './_stories.css';
 
 const meta = {
   title: 'Design System',
@@ -18,7 +19,7 @@ export const Radius: Story = {
           <div class={css.radiusItem}>
             <div class={css.radiusBox} style={{ 'border-radius': value }} />
             <div class={css.radiusLabel}>radius.{step}</div>
-            <div class={`${css.radiusLabel} ${css.muted}`}>{value}</div>
+            <div class={`${css.radiusLabel} ${muted}`}>{value}</div>
           </div>
         )}
       </For>

@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { typeScale, fontFamily, fontWeight } from '#design';
-import * as css from '../stories/stories.css';
+import * as css from './typography.stories.css';
+import { stack } from './_stories.css';
 
 const meta = {
   title: 'Design System/Typography',
@@ -12,7 +13,7 @@ type Story = StoryObj<typeof meta>;
 
 export const TypeScale: Story = {
   render: () => (
-    <div class={css.stack.md}>
+    <div class={stack.md}>
       <For each={[1, 2, 3, 4, 5, 6, 7, 8, 9] as const}>
         {(step) => {
           const scale = typeScale[step];
@@ -39,7 +40,7 @@ export const TypeScale: Story = {
 
 export const FontFamilies: Story = {
   render: () => (
-    <div class={css.stack.lg}>
+    <div class={stack.lg}>
       <For
         each={[
           { name: 'fontFamily.body', value: fontFamily.body },
@@ -64,7 +65,7 @@ export const FontFamilies: Story = {
 
 export const FontWeights: Story = {
   render: () => (
-    <div class={css.stack.md}>
+    <div class={stack.md}>
       <For
         each={
           Object.entries(fontWeight) as Array<

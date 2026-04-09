@@ -11,7 +11,8 @@ import {
   text,
   background,
 } from '#design';
-import * as css from '../stories/stories.css';
+import * as css from './color.stories.css';
+import { stack } from './_stories.css';
 
 type ColorScale = Record<number, string>;
 
@@ -52,7 +53,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Scales: Story = {
   render: () => (
-    <div class={css.stack.lg}>
+    <div class={stack.lg}>
       <ScaleRow name="neutral" scale={neutral} />
       <ScaleRow name="neutralAlpha" scale={neutralAlpha} alpha />
       <ScaleRow name="accent" scale={accent} />
@@ -66,7 +67,7 @@ export const Scales: Story = {
 
 export const TextColors: Story = {
   render: () => (
-    <div class={css.stack.md}>
+    <div class={stack.md}>
       <For
         each={[
           { name: 'text.lowContrast', value: text.lowContrast },
@@ -94,7 +95,7 @@ export const TextColors: Story = {
 
 export const BackgroundColors: Story = {
   render: () => (
-    <div class={css.stack.sm}>
+    <div class={stack.sm}>
       <For
         each={[
           { name: 'background.page', value: background.page },
