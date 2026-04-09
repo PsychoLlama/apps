@@ -29,12 +29,14 @@ export const Radius: Story = {
           <Flex as="div" align="center" gap={4}>
             <Box
               as="div"
+              background="panelSolid"
+              shadow={2}
               class={css.radiusBox}
               style={{ 'border-radius': value }}
             />
             <Box as="div">
               <Heading as="h3" size={2} weight="medium">
-                radius.{step}
+                {step === 'full' ? 'radius.full' : `radius[${step}]`}
               </Heading>
               <Text as="p" size={2} color="lowContrast">
                 {labels[step]}
