@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { radius } from '#design';
-import { Box, Flex, Grid, Text } from '#ui';
+import { Box, Flex, Heading, Text } from '#ui';
 import * as css from './radius.stories.css';
 
 const meta = {
@@ -11,34 +11,38 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const labels: Record<string, string> = {
+  1: 'Compact controls',
+  2: 'Default interactive',
+  3: 'Small containers',
+  4: 'Standard containers',
+  5: 'Large containers',
+  6: 'Maximum rounding',
+  full: 'Pill shape',
+};
+
 export const Radius: Story = {
   render: () => (
-    <Grid as="div" gap={5} align="end" class={css.radiusGrid}>
+    <Flex as="div" direction="column" gap={5}>
       <For each={Object.entries(radius)}>
         {([step, value]) => (
-          <Flex as="div" direction="column" gap={2}>
+          <Flex as="div" align="center" gap={4}>
             <Box
               as="div"
               class={css.radiusBox}
               style={{ 'border-radius': value }}
             />
             <Box as="div">
-              <Text as="p" size={1} color="lowContrast" align="center">
+              <Heading as="h3" size={2} weight="medium">
                 radius.{step}
-              </Text>
-              <Text
-                as="p"
-                size={1}
-                color="lowContrast"
-                align="center"
-                style={{ opacity: 0.6 }}
-              >
-                {value}
+              </Heading>
+              <Text as="p" size={2} color="lowContrast">
+                {labels[step]}
               </Text>
             </Box>
           </Flex>
         )}
       </For>
-    </Grid>
+    </Flex>
   ),
 };

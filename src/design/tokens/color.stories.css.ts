@@ -30,11 +30,8 @@ export const textSwatch = style({
   height: space[8],
 });
 
-export const bgRow = style({
-  gridTemplateColumns: `${space[9]} 1fr`,
-});
-
 export const bgSwatch = style({
-  aspectRatio: '2 / 1',
+  width: space[8],
+  height: space[8],
   border: `1px solid ${neutral[6]}`,
 });

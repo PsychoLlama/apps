@@ -107,31 +107,53 @@ export const TextColors: Story = {
 
 export const BackgroundColors: Story = {
   render: () => (
-    <Flex as="div" direction="column" gap={3}>
+    <Flex as="div" direction="column" gap={5}>
       <For
         each={[
-          { name: 'background.page', value: background.page },
-          { name: 'background.panelSolid', value: background.panelSolid },
+          {
+            name: 'background.page',
+            value: background.page,
+            desc: 'App canvas',
+          },
+          {
+            name: 'background.panelSolid',
+            value: background.panelSolid,
+            desc: 'Opaque elevated containers',
+          },
           {
             name: 'background.panelTranslucent',
             value: background.panelTranslucent,
+            desc: 'Semi-transparent elevated containers',
           },
-          { name: 'background.surface', value: background.surface },
-          { name: 'background.overlay', value: background.overlay },
+          {
+            name: 'background.surface',
+            value: background.surface,
+            desc: 'Recessed interactive surfaces',
+          },
+          {
+            name: 'background.overlay',
+            value: background.overlay,
+            desc: 'Modal backdrops',
+          },
         ]}
       >
         {(item) => (
-          <Grid as="div" gap={4} align="center" class={css.bgRow}>
+          <Flex as="div" align="center" gap={4}>
             <Box
               as="div"
               radius={3}
               class={css.bgSwatch}
               style={{ 'background-color': item.value }}
             />
-            <Text as="p" size={2} color="highContrast">
-              {item.name}
-            </Text>
-          </Grid>
+            <Box as="div">
+              <Heading as="h3" size={2} weight="medium">
+                {item.name}
+              </Heading>
+              <Text as="p" size={2} color="lowContrast">
+                {item.desc}
+              </Text>
+            </Box>
+          </Flex>
         )}
       </For>
     </Flex>

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { shadow } from '#design';
-import { Box, Flex, Text } from '#ui';
+import { Box, Flex, Heading, Text } from '#ui';
 
 const meta = {
   title: 'Design System',
@@ -21,25 +21,25 @@ const labels: Record<string, string> = {
 
 export const Shadows: Story = {
   render: () => (
-    <Flex as="div" wrap="wrap" gap={6}>
+    <Flex as="div" direction="column" gap={5}>
       <For each={Object.entries(shadow)}>
         {([step, value]) => (
-          <Flex as="div" direction="column" align="center" gap={2}>
+          <Flex as="div" align="center" gap={4}>
             <Box
               as="div"
-              px={6}
-              py={5}
+              p={5}
               background="panelSolid"
               radius={4}
               style={{ 'box-shadow': value }}
-            >
-              <Text as="span" size={2} color="lowContrast">
+            />
+            <Box as="div">
+              <Heading as="h3" size={2} weight="medium">
                 shadow[{step}]
+              </Heading>
+              <Text as="p" size={2} color="lowContrast">
+                {labels[step]}
               </Text>
             </Box>
-            <Text as="p" size={1} color="lowContrast">
-              {labels[step]}
-            </Text>
           </Flex>
         )}
       </For>
