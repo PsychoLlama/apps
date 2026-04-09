@@ -3,11 +3,13 @@ import {
   accent,
   background,
   danger,
+  fast,
   fontFamily,
   fontWeight,
   neutral,
   radius,
   space,
+  standard,
   typeScale,
   white,
 } from '#design';
@@ -21,8 +23,8 @@ export const base = style({
   fontWeight: fontWeight.medium,
   flexShrink: 0,
   transitionProperty: 'background-color, color, box-shadow',
-  transitionDuration: '120ms',
-  transitionTimingFunction: 'ease',
+  transitionDuration: fast[2],
+  transitionTimingFunction: standard.productive,
 
   ':disabled': {
     opacity: 0.5,

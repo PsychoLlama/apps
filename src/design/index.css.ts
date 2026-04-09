@@ -6,6 +6,14 @@ export { breakpoint } from './tokens/breakpoint.css';
 export { radius } from './tokens/radius.css';
 export { shadow } from './tokens/shadow.css';
 export { space } from './tokens/space.css';
+export {
+  fast,
+  moderate,
+  slow,
+  standard,
+  entrance,
+  exit,
+} from './tokens/motion.css';
 
 export {
   accent,

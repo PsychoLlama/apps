@@ -10,6 +10,7 @@
 - `tokens/space.css.ts`: 9-step spacing scale (4px base, rem units). Plain constants, no CSS variables.
 - `tokens/radius.css.ts`: 6-step border radius scale (3–16px) plus `full` for pills. Plain constants.
 - `tokens/shadow.css.ts`: 6-level elevation scale. Levels with identical geometry in both modes are plain constants using `light-dark()` on colors. Levels where Radix uses structurally different shadows per mode (shadow 1, shadow 3) are CSS custom properties assigned via `prefers-color-scheme` media queries with `data-color-scheme` attribute overrides.
+- `tokens/motion.css.ts`: Animation tokens.
 - `tokens/breakpoint.css.ts`: 5 mobile-first media query conditions (xs–xl). Plain constants for use in Vanilla Extract `@media` blocks.
 - `stories/`: Shared Vanilla Extract styles for design system stories. Stories themselves are co-located with their token files in `tokens/`.
 - `globals.css.ts`: Design opinions applied to elements. Collects root baseline (color-scheme, background, font smoothing, etc.), body layout and typography defaults, color-scheme overrides, and selection highlight. Imports tokens but does not define them.

@@ -36,6 +36,21 @@
 
 - `shadow[1-6]`: Elevation scale. 1 inset (inputs), 2–3 raised surfaces, 4–5 floating layers, 6 modals.
 
+## Motion
+
+Adapted from IBM Carbon (Apache-2.0). Compose a duration + easing per transition.
+
+### Duration
+
+- `fast[1]` (70ms), `fast[2]` (110ms): Micro-interactions.
+- `moderate[1]` (150ms), `moderate[2]` (240ms): Standard transitions.
+- `slow[1]` (400ms), `slow[2]` (700ms): Large/ambient motion.
+
+### Easing
+
+- `standard`: Element visible throughout. `entrance`: appearing. `exit`: leaving.
+- `.productive` (default) or `.expressive` (significant moments).
+
 ## Breakpoints
 
 - `breakpoint.xs` (520), `.sm` (768), `.md` (1024), `.lg` (1280), `.xl` (1640): Mobile-first `min-width` queries.
