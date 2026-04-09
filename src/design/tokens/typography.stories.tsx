@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { typeScale, fontFamily, fontWeight } from '#design';
-import * as css from './typography.stories.css';
-import { stack } from './_stories.css';
+import { Flex, Text } from '#ui';
 
 const meta = {
   title: 'Design System/Typography',
@@ -13,15 +12,18 @@ type Story = StoryObj<typeof meta>;
 
 export const TypeScale: Story = {
   render: () => (
-    <div class={stack.md}>
+    <Flex as="div" direction="column" gap={5}>
       <For each={[1, 2, 3, 4, 5, 6, 7, 8, 9] as const}>
         {(step) => {
           const scale = typeScale[step];
           return (
             <div>
-              <div class={css.label}>typeScale[{step}]</div>
-              <div
-                class={css.sampleText}
+              <Text as="div" size={1} color="lowContrast">
+                typeScale[{step}]
+              </Text>
+              <Text
+                as="div"
+                color="highContrast"
                 style={{
                   'font-size': scale.fontSize,
                   'line-height': scale.lineHeight,
@@ -29,18 +31,18 @@ export const TypeScale: Story = {
                 }}
               >
                 The quick brown fox jumps over the lazy dog
-              </div>
+              </Text>
             </div>
           );
         }}
       </For>
-    </div>
+    </Flex>
   ),
 };
 
 export const FontFamilies: Story = {
   render: () => (
-    <div class={stack.lg}>
+    <Flex as="div" direction="column" gap={6}>
       <For
         each={[
           { name: 'fontFamily.body', value: fontFamily.body },
@@ -49,23 +51,27 @@ export const FontFamilies: Story = {
       >
         {(item) => (
           <div>
-            <div class={css.label}>{item.name}</div>
-            <div
-              class={css.typeSample}
+            <Text as="div" size={1} color="lowContrast">
+              {item.name}
+            </Text>
+            <Text
+              as="div"
+              size={6}
+              color="highContrast"
               style={{ 'font-family': item.value }}
             >
               The quick brown fox jumps over the lazy dog
-            </div>
+            </Text>
           </div>
         )}
       </For>
-    </div>
+    </Flex>
   ),
 };
 
 export const FontWeights: Story = {
   render: () => (
-    <div class={stack.md}>
+    <Flex as="div" direction="column" gap={5}>
       <For
         each={
           Object.entries(fontWeight) as Array<
@@ -75,15 +81,20 @@ export const FontWeights: Story = {
       >
         {([name, value]) => (
           <div>
-            <div class={css.label}>
+            <Text as="div" size={1} color="lowContrast">
               fontWeight.{name} ({value})
-            </div>
-            <div class={css.typeSample} style={{ 'font-weight': value }}>
+            </Text>
+            <Text
+              as="div"
+              size={6}
+              color="highContrast"
+              style={{ 'font-weight': value }}
+            >
               The quick brown fox jumps over the lazy dog
-            </div>
+            </Text>
           </div>
         )}
       </For>
-    </div>
+    </Flex>
   ),
 };

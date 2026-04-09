@@ -1,20 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { text, neutral, typeScale, fontWeight, space, radius } from '#design';
-
-export const heading = style({
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  fontWeight: fontWeight.medium,
-  color: text.highContrast,
-  marginBottom: space[2],
-});
-
-export const row = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: space[4],
-});
+import { neutral, space, radius } from '#design';
 
 export const scaleGrid = style({
   display: 'grid',
@@ -44,24 +29,10 @@ export const swatchOverlay = style({
   borderRadius: radius[3],
 });
 
-export const swatchLabel = style({
-  fontSize: typeScale[1].fontSize,
-  lineHeight: typeScale[1].lineHeight,
-  textAlign: 'center',
-  marginTop: space[1],
-  color: text.lowContrast,
-});
-
 export const textSwatch = style({
   width: space[8],
   height: space[8],
   borderRadius: radius[3],
-});
-
-export const textSample = style({
-  fontSize: typeScale[5].fontSize,
-  lineHeight: typeScale[5].lineHeight,
-  letterSpacing: typeScale[5].letterSpacing,
 });
 
 export const bgRow = style({
@@ -75,10 +46,4 @@ export const bgSwatch = style({
   aspectRatio: '2 / 1',
   borderRadius: radius[3],
   border: `1px solid ${neutral[6]}`,
-});
-
-export const bgLabel = style({
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  color: text.highContrast,
 });

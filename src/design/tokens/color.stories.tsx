@@ -11,8 +11,8 @@ import {
   text,
   background,
 } from '#design';
+import { Flex, Heading, Text } from '#ui';
 import * as css from './color.stories.css';
-import { stack } from './_stories.css';
 
 type ColorScale = Record<number, string>;
 
@@ -22,7 +22,9 @@ function ScaleRow(props: { name: string; scale: ColorScale; alpha?: boolean }) {
 
   return (
     <div>
-      <div class={css.heading}>{props.name}</div>
+      <Heading as="h3" size={2} weight="medium">
+        {props.name}
+      </Heading>
       <div class={css.scaleGrid}>
         <For each={steps()}>
           {(item) => (
@@ -35,7 +37,9 @@ function ScaleRow(props: { name: string; scale: ColorScale; alpha?: boolean }) {
                   style={{ 'background-color': item.value }}
                 />
               </div>
-              <div class={css.swatchLabel}>{item.step}</div>
+              <Text as="div" size={1} color="lowContrast" align="center">
+                {item.step}
+              </Text>
             </div>
           )}
         </For>
@@ -53,7 +57,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Scales: Story = {
   render: () => (
-    <div class={stack.lg}>
+    <Flex as="div" direction="column" gap={6}>
       <ScaleRow name="neutral" scale={neutral} />
       <ScaleRow name="neutralAlpha" scale={neutralAlpha} alpha />
       <ScaleRow name="accent" scale={accent} />
@@ -61,13 +65,13 @@ export const Scales: Story = {
       <ScaleRow name="danger" scale={danger} />
       <ScaleRow name="warning" scale={warning} />
       <ScaleRow name="success" scale={success} />
-    </div>
+    </Flex>
   ),
 };
 
 export const TextColors: Story = {
   render: () => (
-    <div class={stack.md}>
+    <Flex as="div" direction="column" gap={5}>
       <For
         each={[
           { name: 'text.lowContrast', value: text.lowContrast },
@@ -75,27 +79,29 @@ export const TextColors: Story = {
         ]}
       >
         {(item) => (
-          <div class={css.row}>
+          <Flex as="div" align="center" gap={4}>
             <div
               class={css.textSwatch}
               style={{ 'background-color': item.value }}
             />
             <div>
-              <div class={css.heading}>{item.name}</div>
-              <div class={css.textSample} style={{ color: item.value }}>
+              <Heading as="h3" size={2} weight="medium">
+                {item.name}
+              </Heading>
+              <Text as="div" size={5} style={{ color: item.value }}>
                 The quick brown fox jumps over the lazy dog
-              </div>
+              </Text>
             </div>
-          </div>
+          </Flex>
         )}
       </For>
-    </div>
+    </Flex>
   ),
 };
 
 export const BackgroundColors: Story = {
   render: () => (
-    <div class={stack.sm}>
+    <Flex as="div" direction="column" gap={3}>
       <For
         each={[
           { name: 'background.page', value: background.page },
@@ -114,10 +120,12 @@ export const BackgroundColors: Story = {
               class={css.bgSwatch}
               style={{ 'background-color': item.value }}
             />
-            <div class={css.bgLabel}>{item.name}</div>
+            <Text as="div" size={2} color="highContrast">
+              {item.name}
+            </Text>
           </div>
         )}
       </For>
-    </div>
+    </Flex>
   ),
 };
