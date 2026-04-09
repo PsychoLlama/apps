@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { typeScale, fontFamily, fontWeight } from '#design';
-import { Flex, Text } from '#ui';
+import { Box, Flex, Text } from '#ui';
 
 const meta = {
   title: 'Design System/Typography',
@@ -17,12 +17,12 @@ export const TypeScale: Story = {
         {(step) => {
           const scale = typeScale[step];
           return (
-            <div>
-              <Text as="div" size={1} color="lowContrast">
+            <Box as="div">
+              <Text as="p" size={1} color="lowContrast">
                 typeScale[{step}]
               </Text>
               <Text
-                as="div"
+                as="p"
                 color="highContrast"
                 style={{
                   'font-size': scale.fontSize,
@@ -32,7 +32,7 @@ export const TypeScale: Story = {
               >
                 The quick brown fox jumps over the lazy dog
               </Text>
-            </div>
+            </Box>
           );
         }}
       </For>
@@ -50,19 +50,19 @@ export const FontFamilies: Story = {
         ]}
       >
         {(item) => (
-          <div>
-            <Text as="div" size={1} color="lowContrast">
+          <Box as="div">
+            <Text as="p" size={1} color="lowContrast">
               {item.name}
             </Text>
             <Text
-              as="div"
+              as="p"
               size={6}
               color="highContrast"
               style={{ 'font-family': item.value }}
             >
               The quick brown fox jumps over the lazy dog
             </Text>
-          </div>
+          </Box>
         )}
       </For>
     </Flex>
@@ -80,19 +80,19 @@ export const FontWeights: Story = {
         }
       >
         {([name, value]) => (
-          <div>
-            <Text as="div" size={1} color="lowContrast">
+          <Box as="div">
+            <Text as="p" size={1} color="lowContrast">
               fontWeight.{name} ({value})
             </Text>
             <Text
-              as="div"
+              as="p"
               size={6}
               color="highContrast"
               style={{ 'font-weight': value }}
             >
               The quick brown fox jumps over the lazy dog
             </Text>
-          </div>
+          </Box>
         )}
       </For>
     </Flex>

@@ -11,7 +11,7 @@ import {
   text,
   background,
 } from '#design';
-import { Flex, Heading, Text } from '#ui';
+import { Box, Flex, Grid, Heading, Text } from '#ui';
 import * as css from './color.stories.css';
 
 type ColorScale = Record<number, string>;
@@ -21,30 +21,34 @@ function ScaleRow(props: { name: string; scale: ColorScale; alpha?: boolean }) {
     Object.entries(props.scale).map(([step, value]) => ({ step, value }));
 
   return (
-    <div>
+    <Box as="section">
       <Heading as="h3" size={2} weight="medium">
         {props.name}
       </Heading>
-      <div class={css.scaleGrid}>
+      <Grid as="div" gap={1} class={css.scaleGrid}>
         <For each={steps()}>
           {(item) => (
-            <div>
-              <div
+            <Box as="div">
+              <Box
+                as="div"
+                radius={3}
                 class={`${css.swatch} ${props.alpha ? css.checkerboard : ''}`}
               >
-                <div
+                <Box
+                  as="div"
+                  radius={3}
                   class={css.swatchOverlay}
                   style={{ 'background-color': item.value }}
                 />
-              </div>
-              <Text as="div" size={1} color="lowContrast" align="center">
+              </Box>
+              <Text as="p" size={1} color="lowContrast" align="center">
                 {item.step}
               </Text>
-            </div>
+            </Box>
           )}
         </For>
-      </div>
-    </div>
+      </Grid>
+    </Box>
   );
 }
 
@@ -80,18 +84,20 @@ export const TextColors: Story = {
       >
         {(item) => (
           <Flex as="div" align="center" gap={4}>
-            <div
+            <Box
+              as="div"
+              radius={3}
               class={css.textSwatch}
               style={{ 'background-color': item.value }}
             />
-            <div>
+            <Box as="div">
               <Heading as="h3" size={2} weight="medium">
                 {item.name}
               </Heading>
-              <Text as="div" size={5} style={{ color: item.value }}>
+              <Text as="p" size={5} style={{ color: item.value }}>
                 The quick brown fox jumps over the lazy dog
               </Text>
-            </div>
+            </Box>
           </Flex>
         )}
       </For>
@@ -115,15 +121,17 @@ export const BackgroundColors: Story = {
         ]}
       >
         {(item) => (
-          <div class={css.bgRow}>
-            <div
+          <Grid as="div" gap={4} align="center" class={css.bgRow}>
+            <Box
+              as="div"
+              radius={3}
               class={css.bgSwatch}
               style={{ 'background-color': item.value }}
             />
-            <Text as="div" size={2} color="highContrast">
+            <Text as="p" size={2} color="highContrast">
               {item.name}
             </Text>
-          </div>
+          </Grid>
         )}
       </For>
     </Flex>

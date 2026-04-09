@@ -37,7 +37,7 @@ export const Shadows: Story = {
                 shadow[{step}]
               </Text>
             </Box>
-            <Text as="div" size={1} color="lowContrast">
+            <Text as="p" size={1} color="lowContrast">
               {labels[step]}
             </Text>
           </Flex>
