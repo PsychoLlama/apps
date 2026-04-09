@@ -30,7 +30,7 @@ export const TypeScale: Story = {
                   'letter-spacing': scale.letterSpacing,
                 }}
               >
-                The quick brown fox jumps over the lazy dog
+                Sphinx of black quartz, judge my vow
               </Text>
             </Box>
           );
@@ -60,7 +60,7 @@ export const FontFamilies: Story = {
               color="highContrast"
               style={{ 'font-family': item.value }}
             >
-              The quick brown fox jumps over the lazy dog
+              Sphinx of black quartz, judge my vow
             </Text>
           </Box>
         )}
@@ -90,7 +90,7 @@ export const FontWeights: Story = {
               color="highContrast"
               style={{ 'font-weight': value }}
             >
-              The quick brown fox jumps over the lazy dog
+              Sphinx of black quartz, judge my vow
             </Text>
           </Box>
         )}
