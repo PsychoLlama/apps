@@ -87,7 +87,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Scales: Story = {
+export const Semantic: Story = {
   render: () => (
     <Grid as="div" gap={3} align="center" class={css.scaleRow}>
       <Box as="div" />
