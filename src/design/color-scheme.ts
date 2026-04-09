@@ -16,7 +16,14 @@
  *   application has forced a scheme via `data-color-scheme`.
  */
 
-import { globalStyle, type GlobalStyleRule } from '@vanilla-extract/css';
+import {
+  assignVars,
+  createThemeContract,
+  globalStyle,
+  type GlobalStyleRule,
+} from '@vanilla-extract/css';
+
+import type { ColorScale } from './palette/color-palette';
 
 /** Attribute set on `:root` to force a specific color scheme. */
 const attr = 'data-color-scheme';
@@ -61,4 +68,64 @@ export function assignColorSchemeVars(
 
   globalStyle(darkSelector, { vars: dark });
   globalStyle(lightSelector, { vars: light });
+}
+
+/** CSS `light-dark(...)` shorthand. */
+export const lightDark = (light: string, dark: string): string =>
+  `light-dark(${light}, ${dark})`;
+
+export const colorScaleIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
+
+export const colorScaleShape = Object.fromEntries(
+  colorScaleIds.map((id) => [id, '']),
+) as Record<keyof ColorScale, string>;
+
+/** A 1-12 color scale backed by CSS custom properties. */
+export type ColorContract = Record<keyof ColorScale, string>;
+
+/**
+ * Map one color contract's vars to another's values.
+ *
+ * Unlike `assignVars`, this works across independently created
+ * contracts by matching on the scale key (1-12) rather than
+ * requiring structurally identical VE contracts.
+ */
+export function aliasVars(
+  contract: ColorContract,
+  source: ColorContract,
+): Record<string, string> {
+  const vars: Record<string, string> = {};
+  colorScaleIds.forEach((id) => {
+    vars[contract[id]] = source[id];
+  });
+  return vars;
+}
+
+/**
+ * Register a color palette as CSS custom properties on `:root`.
+ *
+ * Creates a 1-12 theme contract and assigns `light-dark()` values via
+ * `globalStyle`. The side effect fires on import — palettes that are
+ * never imported produce no CSS.
+ *
+ * Call once for solid colors and once for alpha:
+ * ```ts
+ * export const blue = createPalette(blueLight, blueDark);
+ * export const blueAlpha = createPalette(blueLightAlpha, blueDarkAlpha);
+ * ```
+ */
+export function createPalette(
+  light: ColorScale,
+  dark: ColorScale,
+): ColorContract {
+  const contract = createThemeContract(colorScaleShape);
+  const values = structuredClone(colorScaleShape);
+
+  colorScaleIds.forEach((id) => {
+    values[id] = lightDark(light[id], dark[id]);
+  });
+
+  globalStyle(':root', { vars: assignVars(contract, values) });
+
+  return contract as ColorContract;
 }
