@@ -17,3 +17,14 @@ Button hardcodes `120ms` for transition duration with no shared constant.
 Add a motion token file (`src/design/tokens/motion.css.ts`) with duration
 and easing tokens so interactive components share consistent timing. The
 solid active filter work above would also benefit from this.
+
+## Callout component
+
+Non-dismissible message banner with icon, title, and description.
+Warning/error/info intents. Radix UI is the reference implementation.
+
+## Icons
+
+- **Warning** — Alert/exclamation indicator for callouts.
+- **Play** — Playback triangle for recording thumbnails.
+- **Close** — × mark for dismiss and remove actions.
