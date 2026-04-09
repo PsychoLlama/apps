@@ -22,9 +22,10 @@ function ScaleRow(props: { name: string; scale: ColorScale; alpha?: boolean }) {
 
   return (
     <>
-      <Heading as="h3" size={2} weight="medium">
+      <Heading as="h3" size={2} color="lowContrast" weight="medium">
         {props.name}
       </Heading>
+
       <Grid as="div" gap={3} class={css.scaleGrid}>
         <For each={steps()}>
           {(item) => (
@@ -61,12 +62,19 @@ export const Scales: Story = {
       <Grid as="div" gap={3} class={css.scaleGrid}>
         <For each={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}>
           {(step) => (
-            <Text as="p" size={1} color="lowContrast" align="center">
-              {step}
-            </Text>
+            <Heading
+              as="h4"
+              size={2}
+              color="lowContrast"
+              weight="medium"
+              align="center"
+            >
+              scale[{step}]
+            </Heading>
           )}
         </For>
       </Grid>
+
       <ScaleRow name="neutral" scale={neutral} />
       <ScaleRow name="neutralAlpha" scale={neutralAlpha} alpha />
       <ScaleRow name="accent" scale={accent} />
