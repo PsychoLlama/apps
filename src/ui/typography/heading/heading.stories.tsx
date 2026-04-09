@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import Heading, { type HeadingProps } from '../heading/heading';
+import HeadingComponent, { type HeadingProps } from './heading';
 
 const meta = {
-  title: 'UI/Heading',
-  component: Heading,
+  title: 'UI/Typography',
+  component: HeadingComponent,
   args: {
     children: 'Sphinx of black quartz, judge my vow',
     as: 'h1',
@@ -37,4 +37,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Heading: Story = {};

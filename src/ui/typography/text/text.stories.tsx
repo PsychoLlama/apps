@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import Text, { type TextProps } from '../text/text';
+import TextComponent, { type TextProps } from './text';
 
 const meta = {
-  title: 'UI/Text',
-  component: Text,
+  title: 'UI/Typography',
+  component: TextComponent,
   args: {
     children: 'Sphinx of black quartz, judge my vow',
     as: 'span',
@@ -36,4 +36,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Text: Story = {};
