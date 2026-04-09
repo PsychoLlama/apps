@@ -1,5 +1,6 @@
 // @refresh reload
 import { createHandler, StartServer } from '@solidjs/start/server';
+import * as css from './app.css';
 
 export default createHandler(() => (
   <StartServer
@@ -11,7 +12,7 @@ export default createHandler(() => (
 {assets}
         </head>
         <body>
-          <div id="app">{children}</div>
+          <div id="app" class={css.shell}>{children}</div>
           {scripts}
         </body>
       </html>
