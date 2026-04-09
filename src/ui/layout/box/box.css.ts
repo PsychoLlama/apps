@@ -1,17 +1,5 @@
 import { styleVariants } from '@vanilla-extract/css';
-import { space, radius, shadow, background } from '#design';
-
-export const p = styleVariants(space, (value) => ({ padding: value }));
-
-export const px = styleVariants(space, (value) => ({
-  paddingLeft: value,
-  paddingRight: value,
-}));
-
-export const py = styleVariants(space, (value) => ({
-  paddingTop: value,
-  paddingBottom: value,
-}));
+import { radius, shadow, background } from '#design';
 
 export const bg = styleVariants({
   page: { background: background.page },

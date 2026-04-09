@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
+import { paddingArgTypes } from '../../props/padding';
+import { marginArgTypes } from '../../props/margin';
 import BoxComponent, { type BoxProps } from './box';
 
 export const boxArgTypes = {
@@ -25,18 +27,8 @@ export const boxArgTypes = {
       'li',
     ],
   },
-  p: {
-    control: 'select' as const,
-    options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-  },
-  px: {
-    control: 'select' as const,
-    options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-  },
-  py: {
-    control: 'select' as const,
-    options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-  },
+  ...paddingArgTypes,
+  ...marginArgTypes,
   background: {
     control: 'inline-radio' as const,
     options: ['page', 'panelSolid', 'panelTranslucent', 'surface'],

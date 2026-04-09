@@ -1,8 +1,20 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
-import type { space, radius, shadow, background } from '#design';
+import type { radius, shadow, background } from '#design';
+import {
+  paddingPropKeys,
+  resolvePaddingClasses,
+  type PaddingProps,
+} from '../../props/padding';
+import {
+  marginPropKeys,
+  resolveMarginClasses,
+  type MarginProps,
+} from '../../props/margin';
 import * as css from './box.css';
+
+export type { SpaceScale } from '../../props/padding';
 
 export type BoxElement =
   | 'div'
@@ -24,17 +36,10 @@ export type BoxElement =
   | 'ul'
   | 'li';
 
-export type SpaceScale = keyof typeof space;
-
-export interface BoxProps extends JSX.HTMLAttributes<HTMLElement> {
+export interface BoxProps
+  extends PaddingProps, MarginProps, JSX.HTMLAttributes<HTMLElement> {
   /** The HTML element to render. Use semantic elements where possible. */
   as: BoxElement;
-  /** Uniform padding on all sides. */
-  p?: SpaceScale;
-  /** Horizontal (inline) padding. */
-  px?: SpaceScale;
-  /** Vertical (block) padding. */
-  py?: SpaceScale;
   /** Surface background color from the design token palette. */
   background?: Exclude<keyof typeof background, 'overlay'>;
   /** Border radius from the design token scale. */
@@ -44,10 +49,9 @@ export interface BoxProps extends JSX.HTMLAttributes<HTMLElement> {
 }
 
 export const boxPropKeys = [
+  ...paddingPropKeys,
+  ...marginPropKeys,
   'as',
-  'p',
-  'px',
-  'py',
   'background',
   'radius',
   'shadow',
@@ -57,19 +61,20 @@ export const boxPropKeys = [
 
 /** Resolve Box surface/spacing props to CSS class names. */
 export function resolveBoxClasses(
-  props: Pick<BoxProps, 'p' | 'px' | 'py' | 'background' | 'radius' | 'shadow'>,
+  props: PaddingProps &
+    MarginProps &
+    Pick<BoxProps, 'background' | 'radius' | 'shadow'>,
 ): (string | false | undefined)[] {
   return [
-    props.p && css.p[props.p],
-    props.px && css.px[props.px],
-    props.py && css.py[props.py],
+    ...resolvePaddingClasses(props),
+    ...resolveMarginClasses(props),
     props.background && css.bg[props.background],
     props.radius && css.r[props.radius],
     props.shadow && css.s[props.shadow],
   ];
 }
 
-/** Polymorphic surface primitive. Applies padding, background, radius, and shadow from design tokens. */
+/** Polymorphic surface primitive. Applies padding, margin, background, radius, and shadow from design tokens. */
 const Box: ParentComponent<BoxProps> = (props) => {
   const [local, rest] = splitProps(props, boxPropKeys);
 
