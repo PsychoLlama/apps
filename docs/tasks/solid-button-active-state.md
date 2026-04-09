@@ -10,14 +10,3 @@ component via `globalStyle` + the color-scheme selectors from
 `#design/color-scheme.css`. Apply it in `solidStyle`'s `:active` rule.
 This keeps the filter out of the global design system while only paying
 the cost when the button component is used.
-
-## Callout component
-
-Non-dismissible message banner with icon, title, and description.
-Warning/error/info intents. Radix UI is the reference implementation.
-
-## Icons
-
-- **Warning** — Alert/exclamation indicator for callouts.
-- **Play** — Playback triangle for recording thumbnails.
-- **Close** — × mark for dismiss and remove actions.
