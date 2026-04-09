@@ -11,13 +11,6 @@ component via `globalStyle` + the color-scheme selectors from
 This keeps the filter out of the global design system while only paying
 the cost when the button component is used.
 
-## Motion design tokens
-
-Button hardcodes `120ms` for transition duration with no shared constant.
-Add a motion token file (`src/design/tokens/motion.css.ts`) with duration
-and easing tokens so interactive components share consistent timing. The
-solid active filter work above would also benefit from this.
-
 ## Callout component
 
 Non-dismissible message banner with icon, title, and description.
