@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { shadow } from '#design';
-import * as css from './stories.css';
+import * as css from '../stories/stories.css';
 
 const meta = {
   title: 'Design System',

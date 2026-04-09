@@ -11,7 +11,7 @@ import {
   text,
   background,
 } from '#design';
-import * as css from './stories.css';
+import * as css from '../stories/stories.css';
 
 type ColorScale = Record<number, string>;
 
