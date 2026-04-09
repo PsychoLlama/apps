@@ -16,6 +16,8 @@
  *   application has forced a scheme via `data-color-scheme`.
  */
 
+import { globalStyle, type GlobalStyleRule } from '@vanilla-extract/css';
+
 /** Attribute set on `:root` to force a specific color scheme. */
 const attr = 'data-color-scheme';
 
@@ -33,3 +35,30 @@ export const lightMedia = '(prefers-color-scheme: light)';
 
 /** Media query for system-level dark mode preference. */
 export const darkMedia = '(prefers-color-scheme: dark)';
+
+/**
+ * Assign CSS custom properties that branch on light/dark mode.
+ *
+ * Emits the three `globalStyle` rules needed to cover every
+ * permutation (system-light, system-dark, forced-light, forced-dark)
+ * without duplicate declarations.
+ *
+ * Only needed when light and dark modes require structurally different
+ * CSS (e.g. different shadow geometry). Tokens that differ only in
+ * color values should use `light-dark()` instead, which handles theme
+ * switching natively without var duplication.
+ */
+export function assignColorSchemeVars(
+  light: GlobalStyleRule['vars'],
+  dark: GlobalStyleRule['vars'],
+): void {
+  globalStyle(systemSelector, {
+    '@media': {
+      [lightMedia]: { vars: light },
+      [darkMedia]: { vars: dark },
+    },
+  });
+
+  globalStyle(darkSelector, { vars: dark });
+  globalStyle(lightSelector, { vars: light });
+}

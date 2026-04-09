@@ -38,18 +38,8 @@
  *   https://github.com/radix-ui/themes/blob/3d286ce/packages/radix-ui-themes/src/components/slider.css
  *   https://github.com/radix-ui/themes/blob/3d286ce/packages/radix-ui-themes/src/components/kbd.css
  */
-import {
-  assignVars,
-  createThemeContract,
-  globalStyle,
-} from '@vanilla-extract/css';
-import {
-  systemSelector,
-  darkMedia,
-  darkSelector,
-  lightMedia,
-  lightSelector,
-} from '../color-scheme.css';
+import { assignVars, createThemeContract } from '@vanilla-extract/css';
+import { assignColorSchemeVars } from '../color-scheme.css';
 import { neutralAlpha } from './color.css';
 import { black } from '../palette/black.css';
 
@@ -98,15 +88,7 @@ const darkVars = assignVars(shadowTheme, {
   3: shadow3Dark,
 });
 
-globalStyle(systemSelector, {
-  '@media': {
-    [lightMedia]: { vars: lightVars },
-    [darkMedia]: { vars: darkVars },
-  },
-});
-
-globalStyle(darkSelector, { vars: darkVars });
-globalStyle(lightSelector, { vars: lightVars });
+assignColorSchemeVars(lightVars, darkVars);
 
 // --- Levels with identical geometry in both modes (plain constants) ---
 
