@@ -27,12 +27,19 @@ export type BoxElement =
 export type SpaceScale = keyof typeof space;
 
 export interface BoxProps extends JSX.HTMLAttributes<HTMLElement> {
+  /** The HTML element to render. Use semantic elements where possible. */
   as: BoxElement;
+  /** Uniform padding on all sides. */
   p?: SpaceScale;
+  /** Horizontal (inline) padding. */
   px?: SpaceScale;
+  /** Vertical (block) padding. */
   py?: SpaceScale;
+  /** Surface background color from the design token palette. */
   background?: Exclude<keyof typeof background, 'overlay'>;
+  /** Border radius from the design token scale. */
   radius?: keyof typeof radius;
+  /** Box shadow elevation from the design token scale. */
   shadow?: keyof typeof shadow;
 }
 
