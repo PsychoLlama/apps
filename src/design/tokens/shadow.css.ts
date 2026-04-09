@@ -39,13 +39,9 @@
  *   https://github.com/radix-ui/themes/blob/3d286ce/packages/radix-ui-themes/src/components/kbd.css
  */
 import { assignVars, createThemeContract } from '@vanilla-extract/css';
-import { assignColorSchemeVars } from '../color-scheme.css';
+import { assignColorSchemeVars, lightDark } from '../color-scheme';
 import { neutralAlpha } from './color.css';
-import { black } from '../palette/black.css';
-
-/** Shorthand for `light-dark(light, dark)`. */
-const ld = (light: string, dark: string): string =>
-  `light-dark(${light}, ${dark})`;
+import { black } from '../palette/black';
 
 // --- Levels with mode-dependent geometry (CSS custom properties) ---
 
@@ -97,17 +93,17 @@ export const shadow = {
   1: shadowTheme[1],
 
   /** Slight elevation — floating indicators, segmented controls. */
-  2: `0 0 0 1px ${ld(neutralAlpha[3], neutralAlpha[6])}, 0 0 0 0.5px ${ld(black[1], black[3])}, 0 1px 1px 0 ${ld(neutralAlpha[2], black[6])}, 0 2px 1px -1px ${ld(black[1], black[6])}, 0 1px 3px 0 ${ld(black[1], black[5])}`,
+  2: `0 0 0 1px ${lightDark(neutralAlpha[3], neutralAlpha[6])}, 0 0 0 0.5px ${lightDark(black[1], black[3])}, 0 1px 1px 0 ${lightDark(neutralAlpha[2], black[6])}, 0 2px 1px -1px ${lightDark(black[1], black[6])}, 0 1px 3px 0 ${lightDark(black[1], black[5])}`,
 
   /** Medium elevation — general-purpose raised surface. */
   3: shadowTheme[3],
 
   /** High elevation — hover cards, tooltips. */
-  4: `0 0 0 1px ${ld(neutralAlpha[3], neutralAlpha[6])}, 0 8px 40px ${ld(black[1], black[3])}, 0 12px 32px -16px ${ld(neutralAlpha[3], black[5])}`,
+  4: `0 0 0 1px ${lightDark(neutralAlpha[3], neutralAlpha[6])}, 0 8px 40px ${lightDark(black[1], black[3])}, 0 12px 32px -16px ${lightDark(neutralAlpha[3], black[5])}`,
 
   /** Higher elevation — selects, popovers, dropdown menus. */
-  5: `0 0 0 1px ${ld(neutralAlpha[3], neutralAlpha[6])}, 0 12px 60px ${ld(black[3], black[5])}, 0 12px 32px -16px ${ld(neutralAlpha[5], black[7])}`,
+  5: `0 0 0 1px ${lightDark(neutralAlpha[3], neutralAlpha[6])}, 0 12px 60px ${lightDark(black[3], black[5])}, 0 12px 32px -16px ${lightDark(neutralAlpha[5], black[7])}`,
 
   /** Maximum elevation — dialogs, modal layers. */
-  6: `0 0 0 1px ${ld(neutralAlpha[3], neutralAlpha[6])}, 0 12px 60px ${ld(black[3], black[4])}, 0 16px 64px ${ld(neutralAlpha[2], black[6])}, 0 16px 36px -20px ${ld(neutralAlpha[7], black[11])}`,
+  6: `0 0 0 1px ${lightDark(neutralAlpha[3], neutralAlpha[6])}, 0 12px 60px ${lightDark(black[3], black[4])}, 0 16px 64px ${lightDark(neutralAlpha[2], black[6])}, 0 16px 36px -20px ${lightDark(neutralAlpha[7], black[11])}`,
 } as const;

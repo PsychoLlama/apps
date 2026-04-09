@@ -7,7 +7,7 @@
  */
 import { globalStyle } from '@vanilla-extract/css';
 
-import { darkSelector, lightSelector } from './color-scheme.css';
+import { darkSelector, lightSelector } from './color-scheme';
 import { accentAlpha, background } from './tokens/color.css';
 import { fontFamily, fontWeight, typeScale } from './tokens/typography.css';
 

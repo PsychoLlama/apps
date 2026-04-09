@@ -19,7 +19,8 @@
     "types": ["vite/client", "vitest/globals", "unplugin-icons/types/solid"],
     "paths": {
       "#ui": ["./src/ui/index.ts"],
-      "#design": ["./src/design/index.css.ts"]
+      "#design": ["./src/design/index.css.ts"],
+      "#design/color-scheme": ["./src/design/color-scheme.ts"]
     }
   },
   "include": ["src", ".storybook/*.ts", "*.ts", "*.mjs"]

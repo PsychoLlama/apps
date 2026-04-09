@@ -10,7 +10,7 @@
   "imports": {
     "#ui": "./src/ui/index.ts",
     "#design": "./src/design/index.css.ts",
-    "#design/color-scheme": "./src/design/color-scheme.css.ts"
+    "#design/color-scheme": "./src/design/color-scheme.ts"
   },
   "scripts": {
     "dev": "vite dev",

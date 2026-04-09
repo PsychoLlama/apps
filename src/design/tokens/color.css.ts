@@ -1,38 +1,16 @@
-import {
-  assignVars,
-  createThemeContract,
-  globalStyle,
-} from '@vanilla-extract/css';
-import { amberDark, amberLight } from '../palette/amber.css';
-import {
-  blueDark,
-  blueDarkAlpha,
-  blueLight,
-  blueLightAlpha,
-} from '../palette/blue.css';
-import type { ColorScale } from '../palette/color-palette';
-import { grayDark, grayLight } from '../palette/gray.css';
-import { grassDark, grassLight } from '../palette/grass.css';
-import { redDark, redLight } from '../palette/red.css';
-import {
-  slateDark,
-  slateDarkAlpha,
-  slateLight,
-  slateLightAlpha,
-} from '../palette/slate.css';
+import { createThemeContract, globalStyle } from '@vanilla-extract/css';
+import { aliasVars, colorScaleShape, lightDark } from '../color-scheme';
+import { grayDark, grayLight } from '../palette/gray';
+import { amber } from '../palette/amber.css';
+import { blue, blueAlpha } from '../palette/blue.css';
+import { grass } from '../palette/grass.css';
+import { red } from '../palette/red.css';
+import { slate, slateAlpha } from '../palette/slate.css';
 
 /**
  * Follow this guide to choose a color palette:
  * https://www.radix-ui.com/colors/docs/palette-composition/composing-a-palette
  */
-
-const colorScaleIds = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-] as const satisfies Array<keyof ColorScale>;
-
-const colorScaleShape = Object.fromEntries(
-  colorScaleIds.map((id) => [id, '']),
-) as Record<keyof ColorScale, string>;
 
 // --- Contracts ---
 
@@ -84,34 +62,15 @@ export const background = createThemeContract({
 
 // --- Assignment ---
 
-/** Zip two color scales into `light-dark()` var assignments against a contract. */
-const assignLightDark = (
-  contract: ReturnType<typeof createThemeContract<typeof colorScaleShape>>,
-  light: ColorScale,
-  dark: ColorScale,
-): Record<`var(--${string})`, string> => {
-  const themedValues = structuredClone(colorScaleShape);
-
-  colorScaleIds.forEach((scale) => {
-    themedValues[scale] = lightDark(light[scale], dark[scale]);
-  });
-
-  return assignVars(contract, themedValues);
-};
-
-/** CSS `light-dark(...)` shorthand. */
-const lightDark = (light: string, dark: string): string =>
-  `light-dark(${light}, ${dark})`;
-
 globalStyle(':root', {
   vars: {
-    ...assignLightDark(accent, blueLight, blueDark),
-    ...assignLightDark(accentAlpha, blueLightAlpha, blueDarkAlpha),
-    ...assignLightDark(neutral, slateLight, slateDark),
-    ...assignLightDark(neutralAlpha, slateLightAlpha, slateDarkAlpha),
-    ...assignLightDark(danger, redLight, redDark),
-    ...assignLightDark(warning, amberLight, amberDark),
-    ...assignLightDark(success, grassLight, grassDark),
+    ...aliasVars(accent, blue),
+    ...aliasVars(accentAlpha, blueAlpha),
+    ...aliasVars(neutral, slate),
+    ...aliasVars(neutralAlpha, slateAlpha),
+    ...aliasVars(danger, red),
+    ...aliasVars(warning, amber),
+    ...aliasVars(success, grass),
 
     [text.lowContrast]: lightDark(grayLight[11], grayDark[11]),
     [text.highContrast]: lightDark(grayLight[12], grayDark[12]),

@@ -27,5 +27,5 @@ export {
   background,
 } from './tokens/color.css';
 
-export { black } from './palette/black.css';
-export { white } from './palette/white.css';
+export { black } from './palette/black';
+export { white } from './palette/white';

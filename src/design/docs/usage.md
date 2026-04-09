@@ -10,6 +10,7 @@
 - `neutral[1-12]`, `neutralAlpha[1-12]`: Grayscale tinted toward accent.
 - `text.lowContrast`, `text.highContrast`: Text colors.
 - `background.page`, `background.panelSolid`, `background.panelTranslucent`, `background.surface`, `background.overlay`: Surface layers.
+- Semantic tokens alias palette CSS vars (`accent` → `blue`, `danger` → `red`, etc.).
 - Scale semantics (applies to accent and neutral):
   - 1–2: Backgrounds.
   - 3–5: Component fills (idle, hover, active).
