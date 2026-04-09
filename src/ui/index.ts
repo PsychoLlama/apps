@@ -12,3 +12,7 @@ export { default as Flex, type FlexProps } from './layout/flex/flex';
 export { default as Grid, type GridProps } from './layout/grid/grid';
 export type { SpaceScale, PaddingProps } from './props/padding';
 export type { MarginProps } from './props/margin';
+export {
+  default as Button,
+  type ButtonProps,
+} from './components/button/button';
