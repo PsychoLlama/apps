@@ -1,4 +1,4 @@
-import { style, styleVariants } from '@vanilla-extract/css';
+import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
   background,
@@ -13,6 +13,7 @@ import {
   typeScale,
   white,
 } from '#design';
+import { assignColorSchemeVars } from '#design/color-scheme';
 
 export const base = style({
   display: 'inline-flex',
@@ -22,7 +23,7 @@ export const base = style({
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.medium,
   flexShrink: 0,
-  transitionProperty: 'background-color, color, box-shadow',
+  transitionProperty: 'background-color, color, box-shadow, filter',
   transitionDuration: fast[2],
   transitionTimingFunction: standard.productive,
 
@@ -36,6 +37,18 @@ export const base = style({
     outlineOffset: '2px',
   },
 });
+
+/**
+ * CSS filter applied on :active for solid-variant buttons. Light mode
+ * darkens slightly; dark mode brightens. Scoped to the button so the
+ * var only exists when the component is used.
+ */
+const solidActiveFilter = createVar();
+
+assignColorSchemeVars(
+  { [solidActiveFilter]: 'brightness(0.92) saturate(1.1)' },
+  { [solidActiveFilter]: 'brightness(1.08)' },
+);
 
 const sizes = [1, 2, 3, 4] as const;
 
@@ -113,6 +126,7 @@ function solidStyle(color: ColorName) {
     selectors: {
       '&:active:not(:disabled)': {
         backgroundColor: scale[10],
+        filter: solidActiveFilter,
       },
     },
   });
