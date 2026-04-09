@@ -1,11 +1,7 @@
 import { style } from '@vanilla-extract/css';
-import { neutral, space } from '#design';
-
-export const spacingGrid = style({
-  gridTemplateColumns: 'auto 1fr',
-});
+import { space } from '#design';
 
 export const spacingBar = style({
-  height: space[5],
-  backgroundColor: neutral[9],
+  height: space[8],
+  flexShrink: 0,
 });
