@@ -2,7 +2,6 @@ import { style } from '@vanilla-extract/css';
 import {
   text,
   neutral,
-  accent,
   background,
   typeScale,
   fontWeight,
@@ -144,7 +143,7 @@ export const spacingLabel = style({
 
 export const spacingBar = style({
   height: space[5],
-  backgroundColor: accent[9],
+  backgroundColor: neutral[9],
   borderRadius: radius[1],
 });
 
@@ -163,7 +162,7 @@ export const radiusItem = style({
 
 export const radiusBox = style({
   aspectRatio: '1',
-  backgroundColor: accent[9],
+  backgroundColor: neutral[9],
 });
 
 export const radiusLabel = style({
@@ -179,7 +178,6 @@ export const shadowGrid = style({
   display: 'flex',
   flexWrap: 'wrap',
   gap: space[6],
-  padding: space[6],
 });
 
 export const shadowItem = style({
@@ -190,7 +188,7 @@ export const shadowItem = style({
 });
 
 export const shadowCard = style({
-  padding: `${space[7]} ${space[8]}`,
+  padding: `${space[5]} ${space[6]}`,
   backgroundColor: background.panelSolid,
   borderRadius: radius[4],
 });

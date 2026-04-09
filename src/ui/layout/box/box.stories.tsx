@@ -26,13 +26,16 @@ export const boxArgTypes = {
     ],
   },
   p: {
-    control: { type: 'range' as const, min: 1, max: 9, step: 1 },
+    control: 'select' as const,
+    options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
   },
   px: {
-    control: { type: 'range' as const, min: 1, max: 9, step: 1 },
+    control: 'select' as const,
+    options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
   },
   py: {
-    control: { type: 'range' as const, min: 1, max: 9, step: 1 },
+    control: 'select' as const,
+    options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
   },
   background: {
     control: 'inline-radio' as const,
@@ -43,7 +46,8 @@ export const boxArgTypes = {
     options: [1, 2, 3, 4, 5, 6, 'full'],
   },
   shadow: {
-    control: { type: 'range' as const, min: 1, max: 6, step: 1 },
+    control: 'select' as const,
+    options: [1, 2, 3, 4, 5, 6],
   },
 };
 

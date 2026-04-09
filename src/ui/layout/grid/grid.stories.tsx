@@ -1,32 +1,17 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { type GridProps } from './grid';
-import BoxComponent from '../box/box';
 import GridComponent from './grid';
 import { boxArgTypes } from '../box/box.stories';
-
-const Swatch = () => (
-  <BoxComponent as="div" p={3} background="panelSolid" radius={2}>
-    Item
-  </BoxComponent>
-);
+import { swatches } from '../../stories/swatch';
 
 const meta = {
   title: 'UI/Layout',
   component: GridComponent,
   args: {
     as: 'div',
-    columns: 3,
+    columns: 4,
     gap: 3,
-    children: (
-      <>
-        <Swatch />
-        <Swatch />
-        <Swatch />
-        <Swatch />
-        <Swatch />
-        <Swatch />
-      </>
-    ),
+    children: swatches(9),
   },
   argTypes: {
     ...boxArgTypes,
@@ -34,7 +19,8 @@ const meta = {
       control: { type: 'range', min: 1, max: 6, step: 1 },
     },
     rows: {
-      control: { type: 'range', min: 1, max: 6, step: 1 },
+      control: 'select',
+      options: [1, 2, 3, 4, 5, 6],
     },
     align: {
       control: 'inline-radio',
@@ -45,13 +31,16 @@ const meta = {
       options: ['start', 'center', 'end', 'stretch'],
     },
     gap: {
-      control: { type: 'range', min: 1, max: 9, step: 1 },
+      control: 'select',
+      options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     },
     gapX: {
-      control: { type: 'range', min: 1, max: 9, step: 1 },
+      control: 'select',
+      options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     },
     gapY: {
-      control: { type: 'range', min: 1, max: 9, step: 1 },
+      control: 'select',
+      options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     },
   },
 } satisfies Meta<GridProps>;

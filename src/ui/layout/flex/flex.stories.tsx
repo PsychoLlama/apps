@@ -1,14 +1,8 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { type FlexProps } from './flex';
-import BoxComponent from '../box/box';
 import FlexComponent from './flex';
 import { boxArgTypes } from '../box/box.stories';
-
-const Swatch = () => (
-  <BoxComponent as="div" p={3} background="panelSolid" radius={2}>
-    Item
-  </BoxComponent>
-);
+import { swatches } from '../../stories/swatch';
 
 const meta = {
   title: 'UI/Layout',
@@ -17,13 +11,7 @@ const meta = {
     as: 'div',
     direction: 'row',
     gap: 3,
-    children: (
-      <>
-        <Swatch />
-        <Swatch />
-        <Swatch />
-      </>
-    ),
+    children: swatches(6),
   },
   argTypes: {
     ...boxArgTypes,
@@ -44,7 +32,8 @@ const meta = {
       options: ['nowrap', 'wrap', 'wrap-reverse'],
     },
     gap: {
-      control: { type: 'range', min: 1, max: 9, step: 1 },
+      control: 'select',
+      options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     },
     grow: {
       control: 'boolean',
