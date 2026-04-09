@@ -69,6 +69,7 @@ export function resolveBoxClasses(
   ];
 }
 
+/** Polymorphic surface primitive. Applies padding, background, radius, and shadow from design tokens. */
 const Box: ParentComponent<BoxProps> = (props) => {
   const [local, rest] = splitProps(props, boxPropKeys);
 

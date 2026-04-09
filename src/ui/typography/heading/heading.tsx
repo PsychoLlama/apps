@@ -18,6 +18,7 @@ export interface HeadingProps extends JSX.HTMLAttributes<HTMLHeadingElement> {
   color?: 'highContrast' | 'lowContrast';
 }
 
+/** Semantic heading with size independent of level. Pick the `as` level for document hierarchy and `size` for visual weight. */
 const Heading: ParentComponent<HeadingProps> = (rawProps) => {
   const props = mergeProps(
     { size: 6 as Size, weight: 'bold' as const },

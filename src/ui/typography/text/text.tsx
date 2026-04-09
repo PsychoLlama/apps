@@ -18,6 +18,7 @@ export interface TextProps extends JSX.HTMLAttributes<HTMLElement> {
   color?: 'highContrast' | 'lowContrast';
 }
 
+/** General-purpose text component for body copy, labels, and inline text. */
 const Text: ParentComponent<TextProps> = (rawProps) => {
   const props = mergeProps({ size: 3 as Size }, rawProps);
   const [local, rest] = splitProps(props, [

@@ -24,6 +24,7 @@ export interface FlexProps extends BoxProps {
   grow?: boolean;
 }
 
+/** Flexbox layout container. Extends {@link Box} with direction, alignment, wrapping, and gap controls. */
 const Flex: ParentComponent<FlexProps> = (props) => {
   const [local, boxAndRest] = splitProps(props, [
     'direction',

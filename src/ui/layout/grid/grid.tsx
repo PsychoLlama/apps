@@ -26,6 +26,7 @@ export interface GridProps extends BoxProps {
   gapY?: SpaceScale;
 }
 
+/** CSS Grid layout container. Extends {@link Box} with column, row, alignment, and gap controls. */
 const Grid: ParentComponent<GridProps> = (props) => {
   const [local, boxAndRest] = splitProps(props, [
     'columns',
