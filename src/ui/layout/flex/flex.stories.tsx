@@ -46,6 +46,9 @@ const meta = {
     gap: {
       control: { type: 'range', min: 1, max: 9, step: 1 },
     },
+    grow: {
+      control: 'boolean',
+    },
   },
 } satisfies Meta<FlexProps>;
 

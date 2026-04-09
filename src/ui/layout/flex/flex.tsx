@@ -15,6 +15,7 @@ export interface FlexProps extends BoxProps {
   justify?: 'start' | 'center' | 'end' | 'between';
   wrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
   gap?: SpaceScale;
+  grow?: boolean;
 }
 
 const Flex: ParentComponent<FlexProps> = (props) => {
@@ -24,6 +25,7 @@ const Flex: ParentComponent<FlexProps> = (props) => {
     'justify',
     'wrap',
     'gap',
+    'grow',
   ]);
   const [box, rest] = splitProps(boxAndRest, boxPropKeys);
 
@@ -36,6 +38,7 @@ const Flex: ParentComponent<FlexProps> = (props) => {
       local.justify && css.justify[local.justify],
       local.wrap && css.wrap[local.wrap],
       local.gap && css.gap[local.gap],
+      local.grow && css.grow,
       box.class,
     ]
       .filter(Boolean)

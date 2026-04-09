@@ -34,3 +34,7 @@ export const wrap = styleVariants({
 });
 
 export const gap = styleVariants(space, (value) => ({ gap: value }));
+
+export const grow = style({
+  flexGrow: 1,
+});

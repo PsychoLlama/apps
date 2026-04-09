@@ -1,6 +1,6 @@
 // @refresh reload
 import { createHandler, StartServer } from '@solidjs/start/server';
-import * as css from './app.css';
+import { Flex } from '#ui';
 
 export default createHandler(() => (
   <StartServer
@@ -12,7 +12,7 @@ export default createHandler(() => (
 {assets}
         </head>
         <body>
-          <div id="app" class={css.shell}>{children}</div>
+          <Flex as="div" id="app" direction="column" grow>{children}</Flex>
           {scripts}
         </body>
       </html>
