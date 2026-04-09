@@ -21,34 +21,29 @@ function ScaleRow(props: { name: string; scale: ColorScale; alpha?: boolean }) {
     Object.entries(props.scale).map(([step, value]) => ({ step, value }));
 
   return (
-    <Box as="section">
+    <>
       <Heading as="h3" size={2} weight="medium">
         {props.name}
       </Heading>
-      <Grid as="div" gap={1} class={css.scaleGrid}>
+      <Grid as="div" gap={3} class={css.scaleGrid}>
         <For each={steps()}>
           {(item) => (
-            <Box as="div">
+            <Box
+              as="div"
+              radius={3}
+              class={`${css.swatch} ${props.alpha ? css.checkerboard : ''}`}
+            >
               <Box
                 as="div"
                 radius={3}
-                class={`${css.swatch} ${props.alpha ? css.checkerboard : ''}`}
-              >
-                <Box
-                  as="div"
-                  radius={3}
-                  class={css.swatchOverlay}
-                  style={{ 'background-color': item.value }}
-                />
-              </Box>
-              <Text as="p" size={1} color="lowContrast" align="center">
-                {item.step}
-              </Text>
+                class={css.swatchOverlay}
+                style={{ 'background-color': item.value }}
+              />
             </Box>
           )}
         </For>
       </Grid>
-    </Box>
+    </>
   );
 }
 
@@ -61,7 +56,17 @@ type Story = StoryObj<typeof meta>;
 
 export const Scales: Story = {
   render: () => (
-    <Flex as="div" direction="column" gap={6}>
+    <Grid as="div" gap={3} align="center" class={css.scaleRow}>
+      <Box as="div" />
+      <Grid as="div" gap={3} class={css.scaleGrid}>
+        <For each={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}>
+          {(step) => (
+            <Text as="p" size={1} color="lowContrast" align="center">
+              {step}
+            </Text>
+          )}
+        </For>
+      </Grid>
       <ScaleRow name="neutral" scale={neutral} />
       <ScaleRow name="neutralAlpha" scale={neutralAlpha} alpha />
       <ScaleRow name="accent" scale={accent} />
@@ -69,7 +74,7 @@ export const Scales: Story = {
       <ScaleRow name="danger" scale={danger} />
       <ScaleRow name="warning" scale={warning} />
       <ScaleRow name="success" scale={success} />
-    </Flex>
+    </Grid>
   ),
 };
 

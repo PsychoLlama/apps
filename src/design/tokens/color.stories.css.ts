@@ -1,6 +1,10 @@
 import { style } from '@vanilla-extract/css';
 import { neutral, space } from '#design';
 
+export const scaleRow = style({
+  gridTemplateColumns: 'max-content 1fr',
+});
+
 export const scaleGrid = style({
   gridTemplateColumns: 'repeat(12, 1fr)',
 });
