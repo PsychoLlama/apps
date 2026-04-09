@@ -10,6 +10,12 @@
 - Import tokens from `#design`. NEVER hard-code colors, spacing, radius, shadows, or typography values.
 - Use `space` tokens instead of absolute units for sizing.
 
+## UI Components
+
+- Import from `#ui`. Prefer `Box`, `Flex`, `Grid`, `Text`, and `Heading` over raw HTML elements.
+- Use semantic elements via the `as` prop: `nav`, `main`, `section`, `aside`, `article`, `header`, `footer` — not just `div`.
+- Design mobile-first. Use `breakpoint` tokens in `@media` blocks for responsive overrides.
+
 ## Icons
 
 - Import icons from `virtual:icons/{collection}/{icon}`.
