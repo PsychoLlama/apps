@@ -1,5 +1,10 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import {
+  marginPropKeys,
+  resolveMarginClasses,
+  type MarginProps,
+} from '../../props/margin';
 import * as css from './button.css';
 
 type Size = 1 | 2 | 3 | 4;
@@ -7,7 +12,8 @@ type Variant = 'solid' | 'soft' | 'outline' | 'ghost';
 type Color = 'accent' | 'neutral' | 'danger';
 
 export interface ButtonProps
-  extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
+  extends MarginProps,
+    JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual size on a 1-4 scale. @default 2 */
   size?: Size;
   /** Visual treatment. @default 'solid' */
@@ -22,7 +28,8 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
     { size: 2 as Size, variant: 'solid' as Variant, color: 'accent' as Color },
     rawProps,
   );
-  const [local, rest] = splitProps(props, [
+  const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
+  const [local, rest] = splitProps(withoutMargin, [
     'size',
     'variant',
     'color',
@@ -32,6 +39,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
 
   const className = () =>
     [
+      ...resolveMarginClasses(margin),
       css.base,
       css.size[local.size],
       css.variantColor[local.variant][local.color],

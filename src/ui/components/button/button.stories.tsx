@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
+import { marginArgTypes } from '../../props/margin';
 import ButtonComponent, { type ButtonProps } from './button';
 
 const meta = {
@@ -11,6 +12,7 @@ const meta = {
     color: 'accent',
   },
   argTypes: {
+    ...marginArgTypes,
     size: {
       control: { type: 'range', min: 1, max: 4, step: 1 },
     },
