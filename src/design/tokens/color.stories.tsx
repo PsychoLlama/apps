@@ -12,6 +12,7 @@ import {
   background,
 } from '#design';
 import { Box, Flex, Grid, Heading, Text } from '#ui';
+import TokenRow from '../stories/token-row';
 import * as css from './color.stories.css';
 
 type ColorScale = Record<number, string>;
@@ -151,22 +152,14 @@ export const BackgroundColors: Story = {
         ]}
       >
         {(item) => (
-          <Flex as="div" align="center" gap={4}>
+          <TokenRow name={item.name} description={item.desc}>
             <Box
               as="div"
               radius={3}
               class={css.bgSwatch}
               style={{ 'background-color': item.value }}
             />
-            <Box as="div">
-              <Heading as="h3" size={2} weight="medium">
-                {item.name}
-              </Heading>
-              <Text as="p" size={2} color="lowContrast">
-                {item.desc}
-              </Text>
-            </Box>
-          </Flex>
+          </TokenRow>
         )}
       </For>
     </Flex>

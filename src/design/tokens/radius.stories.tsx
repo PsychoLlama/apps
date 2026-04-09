@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { radius } from '#design';
-import { Box, Flex, Heading, Text } from '#ui';
+import { Box, Flex } from '#ui';
+import TokenRow from '../stories/token-row';
 import * as css from './radius.stories.css';
 
 const meta = {
@@ -26,7 +27,10 @@ export const Radius: Story = {
     <Flex as="div" direction="column" gap={5}>
       <For each={Object.entries(radius)}>
         {([step, value]) => (
-          <Flex as="div" align="center" gap={4}>
+          <TokenRow
+            name={step === 'full' ? 'radius.full' : `radius[${step}]`}
+            description={labels[step]}
+          >
             <Box
               as="div"
               background="panelSolid"
@@ -34,15 +38,7 @@ export const Radius: Story = {
               class={css.radiusBox}
               style={{ 'border-radius': value }}
             />
-            <Box as="div">
-              <Heading as="h3" size={2} weight="medium">
-                {step === 'full' ? 'radius.full' : `radius[${step}]`}
-              </Heading>
-              <Text as="p" size={2} color="lowContrast">
-                {labels[step]}
-              </Text>
-            </Box>
-          </Flex>
+          </TokenRow>
         )}
       </For>
     </Flex>
