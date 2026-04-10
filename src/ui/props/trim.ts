@@ -10,8 +10,10 @@ export interface TrimProps {
 
 export const trimPropKeys = ['trim'] as const;
 
-export function resolveTrimClass(props: TrimProps): string | false | undefined {
-  return props.trim && css.trim[props.trim];
+export function resolveTrimClass({
+  trim,
+}: TrimProps): string | false | undefined {
+  return trim && css.trim[trim];
 }
 
 export const trimArgTypes: ArgTypes<TrimProps> = {

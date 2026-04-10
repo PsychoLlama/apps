@@ -15,12 +15,12 @@ export interface MarginProps {
 export const marginPropKeys = ['m', 'mx', 'my'] as const;
 
 export function resolveMarginClasses(
-  props: MarginProps,
+  margin: MarginProps,
 ): (string | false | undefined)[] {
   return [
-    props.m && css.m[props.m],
-    props.mx && css.mx[props.mx],
-    props.my && css.my[props.my],
+    margin.m && css.m[margin.m],
+    margin.mx && css.mx[margin.mx],
+    margin.my && css.my[margin.my],
   ];
 }
 

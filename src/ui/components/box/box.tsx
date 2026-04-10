@@ -42,22 +42,20 @@ export const boxPropKeys = [
   'children',
 ] as const;
 
-/* eslint-disable solid/reactivity -- called from reactive contexts in components */
 /** Resolve Box surface/spacing props to CSS class names. */
 export function resolveBoxClasses(
-  props: PaddingProps &
+  box: PaddingProps &
     MarginProps &
     Pick<BoxBaseProps, 'background' | 'radius' | 'shadow'>,
 ): (string | false | undefined)[] {
   return [
-    ...resolvePaddingClasses(props),
-    ...resolveMarginClasses(props),
-    props.background && css.bg[props.background],
-    props.radius && css.r[props.radius],
-    props.shadow && css.s[props.shadow],
+    ...resolvePaddingClasses(box),
+    ...resolveMarginClasses(box),
+    box.background && css.bg[box.background],
+    box.radius && css.r[box.radius],
+    box.shadow && css.s[box.shadow],
   ];
 }
-/* eslint-enable solid/reactivity */
 
 /** Polymorphic surface primitive. Applies padding, margin, background, radius, and shadow from design tokens. */
 function Box<const T extends HtmlBoxTag>(props: BoxProps<T>): JSX.Element;

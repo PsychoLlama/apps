@@ -59,12 +59,6 @@ export default [
     },
   },
   {
-    files: ['src/ui/props/*.ts'],
-    rules: {
-      'solid/reactivity': 'off',
-    },
-  },
-  {
     files: ['src/**/*.css.ts'],
     ignores: ['src/design/**'],
     rules: {

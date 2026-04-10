@@ -22,12 +22,12 @@ export interface PaddingProps {
 export const paddingPropKeys = ['p', 'px', 'py'] as const;
 
 export function resolvePaddingClasses(
-  props: PaddingProps,
+  padding: PaddingProps,
 ): (string | false | undefined)[] {
   return [
-    props.p && css.p[props.p],
-    props.px && css.px[props.px],
-    props.py && css.py[props.py],
+    padding.p && css.p[padding.p],
+    padding.px && css.px[padding.px],
+    padding.py && css.py[padding.py],
   ];
 }
 

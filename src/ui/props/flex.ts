@@ -28,16 +28,16 @@ export const flexPropKeys = [
 ] as const;
 
 export function resolveFlexClasses(
-  props: FlexProps,
+  flex: FlexProps,
 ): (string | false | undefined)[] {
   return [
     css.base,
-    props.direction && css.direction[props.direction],
-    props.align && css.align[props.align],
-    props.justify && css.justify[props.justify],
-    props.wrap && css.wrap[props.wrap],
-    props.gap && css.gap[props.gap],
-    props.grow && css.grow,
+    flex.direction && css.direction[flex.direction],
+    flex.align && css.align[flex.align],
+    flex.justify && css.justify[flex.justify],
+    flex.wrap && css.wrap[flex.wrap],
+    flex.gap && css.gap[flex.gap],
+    flex.grow && css.grow,
   ];
 }
 
