@@ -35,6 +35,25 @@ export default [
     },
   },
   {
+    files: ['src/**/*.css.ts'],
+    ignores: ['src/design/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@vanilla-extract/css',
+              importNames: ['globalStyle'],
+              message:
+                'globalStyle is restricted to #design. The global CSS reset (all: unset) strips UA defaults, so component styles should not need global overrides.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['./**/__tests__/*.ts{x,}'],
     rules: {
       'no-restricted-imports': [
