@@ -1,12 +1,8 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
-import {
-  boxPropKeys,
-  resolveBoxClasses,
-  type BoxBaseProps,
-  type SpaceScale,
-} from '../box/box';
+import type { SpaceScale } from '#design';
+import { boxPropKeys, resolveBoxClasses, type BoxBaseProps } from '../box/box';
 import {
   type HtmlBoxTag,
   type PolymorphicProps,

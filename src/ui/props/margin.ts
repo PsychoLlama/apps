@@ -1,5 +1,6 @@
 import type { ArgTypes } from 'storybook-solidjs-vite';
-import { spaceArgType, type SpaceScale } from './padding';
+import type { SpaceScale } from '#design';
+import { spaceArgType } from './padding';
 import * as css from './margin.css';
 
 export interface MarginProps {

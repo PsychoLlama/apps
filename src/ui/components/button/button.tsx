@@ -24,7 +24,7 @@ export interface ButtonProps
 /** Interactive button for triggering actions. */
 const Button: ParentComponent<ButtonProps> = (rawProps) => {
   const props = mergeProps(
-    { size: 2 as Size, variant: 'solid' as Variant, color: 'accent' as Color },
+    { size: 2 as const, variant: 'solid' as const, color: 'accent' as const },
     rawProps,
   );
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);

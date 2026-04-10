@@ -42,6 +42,8 @@ export const text = createThemeContract({
   highContrast: null,
 });
 
+export type TextColor = keyof typeof text;
+
 const surfaceLight = 'rgba(255, 255, 255, 0.85)';
 const surfaceDark = 'rgba(0, 0, 0, 0.25)';
 const overlayLight = 'rgba(0, 0, 0, 0.38)';
@@ -59,6 +61,8 @@ export const background = createThemeContract({
   /** Modal scrim behind dialogs and drawers. */
   overlay: null,
 });
+
+export type BackgroundColor = keyof typeof background;
 
 // --- Assignment ---
 

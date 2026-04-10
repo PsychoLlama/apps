@@ -61,3 +61,5 @@ export const radius = {
   /** 9999px pill shape for tags, badges, avatars, and similar. */
   full: '9999px',
 } as const;
+
+export type RadiusScale = keyof typeof radius;

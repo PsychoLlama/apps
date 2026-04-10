@@ -1,24 +1,23 @@
 import { Dynamic } from 'solid-js/web';
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
+import type { TypeScale, FontWeight, TextColor } from '#design';
 import {
   type HtmlHeadingTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
 import * as css from './heading.css';
 
-type Size = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-
 /** Heading-specific props, independent of the rendered element. */
 interface HeadingOwnProps {
   /** Visual size on a 1–9 scale, independent of the heading level. @default 6 */
-  size?: Size;
+  size?: TypeScale;
   /** Font weight. @default 'bold' */
-  weight?: 'light' | 'regular' | 'medium' | 'bold';
+  weight?: FontWeight;
   /** Text alignment. */
   align?: 'left' | 'center' | 'right';
   /** Text color emphasis. High contrast for primary content, low for secondary. */
-  color?: 'highContrast' | 'lowContrast';
+  color?: TextColor;
 }
 
 /** Heading props for a specific heading level. */
@@ -34,7 +33,7 @@ function Heading(
     JSX.HTMLAttributes<HTMLHeadingElement>,
 ) {
   const props = mergeProps(
-    { size: 6 as Size, weight: 'bold' as const },
+    { size: 6 as const, weight: 'bold' as const },
     rawProps,
   );
   const [local, rest] = splitProps(props, [

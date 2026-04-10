@@ -1,7 +1,7 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
-import type { radius, shadow, background } from '#design';
+import type { RadiusScale, ShadowLevel, BackgroundColor } from '#design';
 import {
   paddingPropKeys,
   resolvePaddingClasses,
@@ -18,16 +18,14 @@ import {
 } from '../../props/polymorphic';
 import * as css from './box.css';
 
-export type { SpaceScale } from '../../props/padding';
-
 /** Design token props shared across all Box element variants. */
 export interface BoxBaseProps extends PaddingProps, MarginProps {
   /** Surface background color from the design token palette. */
-  background?: Exclude<keyof typeof background, 'overlay'>;
+  background?: Exclude<BackgroundColor, 'overlay'>;
   /** Border radius from the design token scale. */
-  radius?: keyof typeof radius;
+  radius?: RadiusScale;
   /** Box shadow elevation from the design token scale. */
-  shadow?: keyof typeof shadow;
+  shadow?: ShadowLevel;
 }
 
 /** Box props for a specific element tag. */

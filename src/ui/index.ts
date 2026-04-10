@@ -14,7 +14,7 @@ export type {
 } from './props/polymorphic';
 export { default as Flex, type FlexProps } from './components/flex/flex';
 export { default as Grid, type GridProps } from './components/grid/grid';
-export type { SpaceScale, PaddingProps } from './props/padding';
+export type { PaddingProps } from './props/padding';
 export type { MarginProps } from './props/margin';
 export {
   default as Button,

@@ -22,3 +22,5 @@ export const space = {
   8: '3rem',
   9: '4rem',
 } as const;
+
+export type SpaceScale = keyof typeof space;

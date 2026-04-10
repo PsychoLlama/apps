@@ -34,6 +34,8 @@ export const fontWeight = {
   bold: '700',
 } as const;
 
+export type FontWeight = keyof typeof fontWeight;
+
 /**
  * 9-step coordinated type scale. Each step bundles fontSize, lineHeight, and
  * letterSpacing so they stay in sync — you always consume a full step, never
@@ -55,6 +57,8 @@ export const typeScale = createThemeContract({
   8: stepShape,
   9: stepShape,
 });
+
+export type TypeScale = keyof typeof typeScale;
 
 // --- Assignment ---
 

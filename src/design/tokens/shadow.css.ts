@@ -107,3 +107,5 @@ export const shadow = {
   /** Maximum elevation — dialogs, modal layers. */
   6: `0 0 0 1px ${lightDark(neutralAlpha[3], neutralAlpha[6])}, 0 12px 60px ${lightDark(black[3], black[4])}, 0 16px 64px ${lightDark(neutralAlpha[2], black[6])}, 0 16px 36px -20px ${lightDark(neutralAlpha[7], black[11])}`,
 } as const;
+
+export type ShadowLevel = keyof typeof shadow;
