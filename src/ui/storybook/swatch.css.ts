@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutralAlpha, space } from '#design';
+import { neutralAlpha, radius, space } from '#design';
 
 const stripes = [
   `repeating-linear-gradient(`,
@@ -17,6 +17,6 @@ export const swatch = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderRadius: '4px',
+  borderRadius: radius[2],
   background: stripes,
 });

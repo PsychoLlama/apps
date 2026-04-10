@@ -49,6 +49,7 @@ export default [
       'no-console': 'error',
       eqeqeq: 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
+      'custom/no-static-style-prop': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
         'error',
@@ -62,6 +63,7 @@ export default [
     files: ['src/**/*.css.ts'],
     ignores: ['src/design/**'],
     rules: {
+      'custom/require-design-tokens': 'error',
       'no-restricted-imports': [
         'error',
         {
@@ -76,6 +78,14 @@ export default [
           ],
         },
       ],
+    },
+  },
+  {
+    // Stories use inline static styles to demo design tokens (swatches, spacing
+    // previews, etc.). These are presentational, not production UI.
+    files: ['./**/*.stories.tsx'],
+    rules: {
+      'custom/no-static-style-prop': 'off',
     },
   },
   {
