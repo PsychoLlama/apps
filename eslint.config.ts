@@ -3,6 +3,21 @@ import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import customRules from './src/eslint-plugin';
 
+const restrictedImportPatterns = [
+  {
+    group: ['~icons/*'],
+    message: 'Use virtual:icons/* instead.',
+  },
+  {
+    group: ['**/design/**'],
+    message: 'Use #design instead.',
+  },
+  {
+    group: ['**/ui/**'],
+    message: 'Use #ui instead.',
+  },
+];
+
 export default [
   includeIgnoreFile(import.meta.dirname + '/.gitignore'),
   eslint.configs.recommended,
@@ -20,16 +35,14 @@ export default [
       custom: customRules,
     },
     rules: {
+      'no-console': 'error',
+      eqeqeq: 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
         'error',
         {
-          patterns: [
-            {
-              group: ['~icons/*'],
-              message: 'Use virtual:icons/* instead.',
-            },
-          ],
+          patterns: restrictedImportPatterns,
         },
       ],
     },
@@ -41,6 +54,7 @@ export default [
       'no-restricted-imports': [
         'error',
         {
+          patterns: restrictedImportPatterns,
           paths: [
             {
               name: '@vanilla-extract/css',
@@ -59,6 +73,7 @@ export default [
       'no-restricted-imports': [
         'error',
         {
+          patterns: restrictedImportPatterns,
           paths: [
             {
               name: 'vitest',
