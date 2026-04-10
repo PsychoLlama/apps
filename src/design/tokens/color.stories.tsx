@@ -43,7 +43,7 @@ import { teal, tealAlpha } from '../palette/teal.css';
 import { tomato, tomatoAlpha } from '../palette/tomato.css';
 import { violet, violetAlpha } from '../palette/violet.css';
 import { yellow, yellowAlpha } from '../palette/yellow.css';
-import TokenRow from '../stories/token-row';
+import TokenRow from '../storybook/token-row';
 import * as css from './color.stories.css';
 
 type ColorScale = Record<number, string>;

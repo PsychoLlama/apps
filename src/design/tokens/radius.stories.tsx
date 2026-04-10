@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { radius } from '#design';
 import { Box, Flex } from '#ui';
-import TokenRow from '../stories/token-row';
+import TokenRow from '../storybook/token-row';
 import * as css from './radius.stories.css';
 
 const meta = {

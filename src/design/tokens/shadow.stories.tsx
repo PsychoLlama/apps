@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { shadow } from '#design';
 import { Box, Flex } from '#ui';
-import TokenRow from '../stories/token-row';
+import TokenRow from '../storybook/token-row';
 
 const meta = {
   title: 'Design System',
