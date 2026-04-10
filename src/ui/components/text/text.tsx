@@ -11,6 +11,11 @@ import {
   marginPropKeys,
   resolveMarginClasses,
 } from '../../props/margin';
+import {
+  type TrimProps,
+  trimPropKeys,
+  resolveTrimClass,
+} from '../../props/trim';
 import * as css from './text.css';
 
 /** Text-specific props, independent of the rendered element. */
@@ -28,12 +33,14 @@ interface TextOwnProps {
 /** Text props for a specific element tag. */
 export type TextProps<T extends HtmlTextTag> = PolymorphicProps<T> &
   TextOwnProps &
+  TrimProps &
   MarginProps;
 
 /** General-purpose text component for body copy, labels, and inline text. */
 function Text<const T extends HtmlTextTag>(props: TextProps<T>): JSX.Element;
 function Text(
   rawProps: { as: HtmlTextTag } & TextOwnProps &
+    TrimProps &
     MarginProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
@@ -46,6 +53,7 @@ function Text(
     'color',
     'class',
     'children',
+    ...trimPropKeys,
     ...marginPropKeys,
   ]);
 
@@ -56,6 +64,7 @@ function Text(
       local.weight && css.weight[local.weight],
       local.align && css.align[local.align],
       local.color && css.color[local.color],
+      resolveTrimClass(local),
       ...resolveMarginClasses(local),
       local.class,
     ]

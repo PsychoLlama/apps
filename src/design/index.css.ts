@@ -2,6 +2,7 @@ import './reset.css';
 import './globals.css';
 
 export {
+  baselineOffset,
   fontFamily,
   fontWeight,
   typeScale,

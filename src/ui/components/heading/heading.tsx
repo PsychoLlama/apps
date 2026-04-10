@@ -11,6 +11,11 @@ import {
   marginPropKeys,
   resolveMarginClasses,
 } from '../../props/margin';
+import {
+  type TrimProps,
+  trimPropKeys,
+  resolveTrimClass,
+} from '../../props/trim';
 import * as css from './heading.css';
 
 /** Heading-specific props, independent of the rendered element. */
@@ -28,6 +33,7 @@ interface HeadingOwnProps {
 /** Heading props for a specific heading level. */
 export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<T> &
   HeadingOwnProps &
+  TrimProps &
   MarginProps;
 
 /** Semantic heading with size independent of level. Pick the `as` level for document hierarchy and `size` for visual weight. */
@@ -36,6 +42,7 @@ function Heading<const T extends HtmlHeadingTag>(
 ): JSX.Element;
 function Heading(
   rawProps: { as: HtmlHeadingTag } & HeadingOwnProps &
+    TrimProps &
     MarginProps &
     JSX.HTMLAttributes<HTMLHeadingElement>,
 ) {
@@ -51,6 +58,7 @@ function Heading(
     'color',
     'class',
     'children',
+    ...trimPropKeys,
     ...marginPropKeys,
   ]);
 
@@ -61,6 +69,7 @@ function Heading(
       css.weight[local.weight],
       local.align && css.align[local.align],
       local.color && css.color[local.color],
+      resolveTrimClass(local),
       ...resolveMarginClasses(local),
       local.class,
     ]

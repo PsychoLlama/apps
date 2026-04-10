@@ -5,7 +5,8 @@
  * Key differences from Radix:
  * - Uses rem instead of calc(px * var(--scaling)). This respects browser
  *   font-size preferences instead of requiring a separate scaling knob.
- * - No leading-trim polyfill (text-box-trim is gaining native support).
+ * - The `baselineOffset` constant below is derived from this font's metrics.
+ *   Update it if the font family changes.
  * - No per-element font-size-adjust (unnecessary with a single font family).
  * - Loads IBM Plex Sans via @fontsource-variable instead of system font stacks.
  */
@@ -59,6 +60,17 @@ export const typeScale = createThemeContract({
 });
 
 export type TypeScale = keyof typeof typeScale;
+
+// --- Leading trim ---
+
+/**
+ * Distance from the alphabetic baseline to the center of the content area,
+ * i.e. (ascent - |descent|) / (2 * UPM). Used by the leading-trim polyfill
+ * to compute negative margins that remove half-leading whitespace.
+ *
+ * IBM Plex Sans: (1025 - 275) / 2000 = 0.375em
+ */
+export const baselineOffset = '0.375em';
 
 // --- Assignment ---
 
