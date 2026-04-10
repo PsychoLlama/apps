@@ -1,18 +1,19 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import TextComponent, { type TextProps } from './text';
+import { marginArgTypes } from '../../props/margin';
 
 const meta = {
   title: 'UI/Typography',
   component: TextComponent,
   args: {
     children: 'Sphinx of black quartz, judge my vow',
-    as: 'span',
+    as: 'p',
     size: 3,
   },
   argTypes: {
     as: {
       control: 'inline-radio',
-      options: ['span', 'p', 'div', 'label'],
+      options: ['p', 'span', 'label', 'blockquote'],
     },
     size: {
       control: { type: 'range', min: 1, max: 9, step: 1 },
@@ -30,8 +31,9 @@ const meta = {
       options: ['highContrast', 'lowContrast'],
     },
     children: { control: 'text' },
+    ...marginArgTypes,
   },
-} satisfies Meta<TextProps<'span'>>;
+} satisfies Meta<TextProps<'p'>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

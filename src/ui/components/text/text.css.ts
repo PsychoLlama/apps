@@ -3,7 +3,6 @@ import { typeScale, fontFamily, fontWeight, text } from '#design';
 
 export const base = style({
   fontFamily: fontFamily.body,
-  margin: 0,
 });
 
 const steps = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;

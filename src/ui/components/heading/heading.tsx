@@ -6,6 +6,11 @@ import {
   type HtmlHeadingTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import {
+  type MarginProps,
+  marginPropKeys,
+  resolveMarginClasses,
+} from '../../props/margin';
 import * as css from './heading.css';
 
 /** Heading-specific props, independent of the rendered element. */
@@ -22,7 +27,8 @@ interface HeadingOwnProps {
 
 /** Heading props for a specific heading level. */
 export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<T> &
-  HeadingOwnProps;
+  HeadingOwnProps &
+  MarginProps;
 
 /** Semantic heading with size independent of level. Pick the `as` level for document hierarchy and `size` for visual weight. */
 function Heading<const T extends HtmlHeadingTag>(
@@ -30,6 +36,7 @@ function Heading<const T extends HtmlHeadingTag>(
 ): JSX.Element;
 function Heading(
   rawProps: { as: HtmlHeadingTag } & HeadingOwnProps &
+    MarginProps &
     JSX.HTMLAttributes<HTMLHeadingElement>,
 ) {
   const props = mergeProps(
@@ -44,6 +51,7 @@ function Heading(
     'color',
     'class',
     'children',
+    ...marginPropKeys,
   ]);
 
   const className = () =>
@@ -53,6 +61,7 @@ function Heading(
       css.weight[local.weight],
       local.align && css.align[local.align],
       local.color && css.color[local.color],
+      ...resolveMarginClasses(local),
       local.class,
     ]
       .filter(Boolean)

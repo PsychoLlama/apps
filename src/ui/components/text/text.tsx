@@ -6,6 +6,11 @@ import {
   type HtmlTextTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import {
+  type MarginProps,
+  marginPropKeys,
+  resolveMarginClasses,
+} from '../../props/margin';
 import * as css from './text.css';
 
 /** Text-specific props, independent of the rendered element. */
@@ -22,12 +27,14 @@ interface TextOwnProps {
 
 /** Text props for a specific element tag. */
 export type TextProps<T extends HtmlTextTag> = PolymorphicProps<T> &
-  TextOwnProps;
+  TextOwnProps &
+  MarginProps;
 
 /** General-purpose text component for body copy, labels, and inline text. */
 function Text<const T extends HtmlTextTag>(props: TextProps<T>): JSX.Element;
 function Text(
   rawProps: { as: HtmlTextTag } & TextOwnProps &
+    MarginProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
   const props = mergeProps({ size: 3 as const }, rawProps);
@@ -39,6 +46,7 @@ function Text(
     'color',
     'class',
     'children',
+    ...marginPropKeys,
   ]);
 
   const className = () =>
@@ -48,6 +56,7 @@ function Text(
       local.weight && css.weight[local.weight],
       local.align && css.align[local.align],
       local.color && css.color[local.color],
+      ...resolveMarginClasses(local),
       local.class,
     ]
       .filter(Boolean)
