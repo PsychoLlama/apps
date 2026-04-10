@@ -3,11 +3,8 @@ export {
   default as Heading,
   type HeadingProps,
 } from './components/heading/heading';
-export {
-  default as Box,
-  type BoxProps,
-  type BoxElement,
-} from './components/box/box';
+export { default as Box, type BoxProps } from './components/box/box';
+export type { HtmlTagName, PolymorphicProps } from './props/polymorphic';
 export { default as Flex, type FlexProps } from './components/flex/flex';
 export { default as Grid, type GridProps } from './components/grid/grid';
 export type { SpaceScale, PaddingProps } from './props/padding';

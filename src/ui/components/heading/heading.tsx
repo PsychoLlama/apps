@@ -1,13 +1,13 @@
 import { Dynamic } from 'solid-js/web';
 import { mergeProps, splitProps } from 'solid-js';
-import type { JSX, ParentComponent } from 'solid-js';
+import type { JSX } from 'solid-js';
+import { type PolymorphicProps } from '../../props/polymorphic';
 import * as css from './heading.css';
 
 type Size = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
-export interface HeadingProps extends JSX.HTMLAttributes<HTMLHeadingElement> {
-  /** The heading level element to render. Choose based on document hierarchy. */
-  as: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+/** Heading-specific props, independent of the rendered element. */
+interface HeadingOwnProps {
   /** Visual size on a 1–9 scale, independent of the heading level. @default 6 */
   size?: Size;
   /** Font weight. @default 'bold' */
@@ -18,8 +18,21 @@ export interface HeadingProps extends JSX.HTMLAttributes<HTMLHeadingElement> {
   color?: 'highContrast' | 'lowContrast';
 }
 
+/** Valid heading level elements. */
+export type HeadingTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+
+/** Heading props for a specific heading level. */
+export type HeadingProps<T extends HeadingTag> = PolymorphicProps<T> &
+  HeadingOwnProps;
+
 /** Semantic heading with size independent of level. Pick the `as` level for document hierarchy and `size` for visual weight. */
-const Heading: ParentComponent<HeadingProps> = (rawProps) => {
+function Heading<const T extends HeadingTag>(
+  props: HeadingProps<T>,
+): JSX.Element;
+function Heading(
+  rawProps: { as: HeadingTag } & HeadingOwnProps &
+    JSX.HTMLAttributes<HTMLHeadingElement>,
+) {
   const props = mergeProps(
     { size: 6 as Size, weight: 'bold' as const },
     rawProps,
@@ -51,6 +64,6 @@ const Heading: ParentComponent<HeadingProps> = (rawProps) => {
       {local.children}
     </Dynamic>
   );
-};
+}
 
 export default Heading;

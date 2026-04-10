@@ -5,27 +5,7 @@ import BoxComponent, { type BoxProps } from './box';
 
 export const boxArgTypes = {
   as: {
-    control: 'select' as const,
-    options: [
-      'div',
-      'span',
-      'nav',
-      'main',
-      'section',
-      'aside',
-      'header',
-      'footer',
-      'article',
-      'figure',
-      'figcaption',
-      'details',
-      'summary',
-      'fieldset',
-      'form',
-      'ol',
-      'ul',
-      'li',
-    ],
+    control: 'text' as const,
   },
   ...paddingArgTypes,
   ...marginArgTypes,
@@ -58,7 +38,7 @@ const meta = {
     ...boxArgTypes,
     children: { control: 'text' },
   },
-} satisfies Meta<BoxProps>;
+} satisfies Meta<BoxProps<'div'>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

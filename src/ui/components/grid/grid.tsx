@@ -1,15 +1,20 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
-import type { ParentComponent } from 'solid-js';
+import type { JSX } from 'solid-js';
 import {
   boxPropKeys,
   resolveBoxClasses,
-  type BoxProps,
+  type BoxBaseProps,
   type SpaceScale,
 } from '../box/box';
+import {
+  type HtmlTagName,
+  type PolymorphicProps,
+} from '../../props/polymorphic';
 import * as css from './grid.css';
 
-export interface GridProps extends BoxProps {
+/** Grid-specific layout props, independent of the target element. */
+interface GridOwnProps {
   /** Number of equal-width columns. */
   columns?: 1 | 2 | 3 | 4 | 5 | 6;
   /** Number of equal-height rows. */
@@ -26,17 +31,29 @@ export interface GridProps extends BoxProps {
   gapY?: SpaceScale;
 }
 
-/** CSS Grid layout container. Extends {@link Box} with column, row, alignment, and gap controls. */
-const Grid: ParentComponent<GridProps> = (props) => {
-  const [local, boxAndRest] = splitProps(props, [
-    'columns',
-    'rows',
-    'align',
-    'justify',
-    'gap',
-    'gapX',
-    'gapY',
-  ]);
+/** Grid props for a specific element tag. */
+export type GridProps<T extends HtmlTagName> = PolymorphicProps<T> &
+  GridOwnProps &
+  BoxBaseProps;
+
+const gridOwnPropKeys = [
+  'columns',
+  'rows',
+  'align',
+  'justify',
+  'gap',
+  'gapX',
+  'gapY',
+] as const;
+
+/** CSS Grid layout container. Extends Box with column, row, alignment, and gap controls. */
+function Grid<const T extends HtmlTagName>(props: GridProps<T>): JSX.Element;
+function Grid(
+  props: { as: HtmlTagName } & GridOwnProps &
+    BoxBaseProps &
+    JSX.HTMLAttributes<HTMLElement>,
+) {
+  const [local, boxAndRest] = splitProps(props, gridOwnPropKeys);
   const [box, rest] = splitProps(boxAndRest, boxPropKeys);
 
   const className = () =>
@@ -60,6 +77,6 @@ const Grid: ParentComponent<GridProps> = (props) => {
       {box.children}
     </Dynamic>
   );
-};
+}
 
 export default Grid;

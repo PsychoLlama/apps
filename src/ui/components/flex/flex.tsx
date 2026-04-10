@@ -1,15 +1,20 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
-import type { ParentComponent } from 'solid-js';
+import type { JSX } from 'solid-js';
 import {
   boxPropKeys,
   resolveBoxClasses,
-  type BoxProps,
+  type BoxBaseProps,
   type SpaceScale,
 } from '../box/box';
+import {
+  type HtmlTagName,
+  type PolymorphicProps,
+} from '../../props/polymorphic';
 import * as css from './flex.css';
 
-export interface FlexProps extends BoxProps {
+/** Flex-specific layout props, independent of the target element. */
+interface FlexOwnProps {
   /** Main-axis direction of flex children. */
   direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
   /** Cross-axis alignment of flex children. */
@@ -24,16 +29,28 @@ export interface FlexProps extends BoxProps {
   grow?: boolean;
 }
 
-/** Flexbox layout container. Extends {@link Box} with direction, alignment, wrapping, and gap controls. */
-const Flex: ParentComponent<FlexProps> = (props) => {
-  const [local, boxAndRest] = splitProps(props, [
-    'direction',
-    'align',
-    'justify',
-    'wrap',
-    'gap',
-    'grow',
-  ]);
+/** Flex props for a specific element tag. */
+export type FlexProps<T extends HtmlTagName> = PolymorphicProps<T> &
+  FlexOwnProps &
+  BoxBaseProps;
+
+const flexOwnPropKeys = [
+  'direction',
+  'align',
+  'justify',
+  'wrap',
+  'gap',
+  'grow',
+] as const;
+
+/** Flexbox layout container. Extends Box with direction, alignment, wrapping, and gap controls. */
+function Flex<const T extends HtmlTagName>(props: FlexProps<T>): JSX.Element;
+function Flex(
+  props: { as: HtmlTagName } & FlexOwnProps &
+    BoxBaseProps &
+    JSX.HTMLAttributes<HTMLElement>,
+) {
+  const [local, boxAndRest] = splitProps(props, flexOwnPropKeys);
   const [box, rest] = splitProps(boxAndRest, boxPropKeys);
 
   const className = () =>
@@ -56,6 +73,6 @@ const Flex: ParentComponent<FlexProps> = (props) => {
       {box.children}
     </Dynamic>
   );
-};
+}
 
 export default Flex;

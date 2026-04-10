@@ -32,7 +32,7 @@ const meta = {
     },
     children: { control: 'text' },
   },
-} satisfies Meta<HeadingProps>;
+} satisfies Meta<HeadingProps<'h1'>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

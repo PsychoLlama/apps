@@ -1,13 +1,16 @@
 import { Dynamic } from 'solid-js/web';
 import { mergeProps, splitProps } from 'solid-js';
-import type { JSX, ParentComponent } from 'solid-js';
+import type { JSX } from 'solid-js';
+import {
+  type HtmlTagName,
+  type PolymorphicProps,
+} from '../../props/polymorphic';
 import * as css from './text.css';
 
 type Size = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
-export interface TextProps extends JSX.HTMLAttributes<HTMLElement> {
-  /** The HTML element to render. Use `p` for paragraphs, `label` for form labels, `span` for inline text. */
-  as: 'span' | 'div' | 'label' | 'p';
+/** Text-specific props, independent of the rendered element. */
+interface TextOwnProps {
   /** Visual size on a 1–9 scale. @default 3 */
   size?: Size;
   /** Font weight. */
@@ -18,8 +21,16 @@ export interface TextProps extends JSX.HTMLAttributes<HTMLElement> {
   color?: 'highContrast' | 'lowContrast';
 }
 
+/** Text props for a specific element tag. */
+export type TextProps<T extends HtmlTagName> = PolymorphicProps<T> &
+  TextOwnProps;
+
 /** General-purpose text component for body copy, labels, and inline text. */
-const Text: ParentComponent<TextProps> = (rawProps) => {
+function Text<const T extends HtmlTagName>(props: TextProps<T>): JSX.Element;
+function Text(
+  rawProps: { as: HtmlTagName } & TextOwnProps &
+    JSX.HTMLAttributes<HTMLElement>,
+) {
   const props = mergeProps({ size: 3 as Size }, rawProps);
   const [local, rest] = splitProps(props, [
     'as',
@@ -48,6 +59,6 @@ const Text: ParentComponent<TextProps> = (rawProps) => {
       {local.children}
     </Dynamic>
   );
-};
+}
 
 export default Text;

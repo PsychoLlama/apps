@@ -39,7 +39,7 @@ const meta = {
       control: 'boolean',
     },
   },
-} satisfies Meta<FlexProps>;
+} satisfies Meta<FlexProps<'div'>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

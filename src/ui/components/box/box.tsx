@@ -1,6 +1,6 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
-import type { JSX, ParentComponent } from 'solid-js';
+import type { JSX } from 'solid-js';
 import type { radius, shadow, background } from '#design';
 import {
   paddingPropKeys,
@@ -12,34 +12,16 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type HtmlTagName,
+  type PolymorphicProps,
+} from '../../props/polymorphic';
 import * as css from './box.css';
 
 export type { SpaceScale } from '../../props/padding';
 
-export type BoxElement =
-  | 'div'
-  | 'span'
-  | 'nav'
-  | 'main'
-  | 'section'
-  | 'aside'
-  | 'header'
-  | 'footer'
-  | 'article'
-  | 'figure'
-  | 'figcaption'
-  | 'details'
-  | 'summary'
-  | 'fieldset'
-  | 'form'
-  | 'ol'
-  | 'ul'
-  | 'li';
-
-export interface BoxProps
-  extends PaddingProps, MarginProps, JSX.HTMLAttributes<HTMLElement> {
-  /** The HTML element to render. Use semantic elements where possible. */
-  as: BoxElement;
+/** Design token props shared across all Box element variants. */
+export interface BoxBaseProps extends PaddingProps, MarginProps {
   /** Surface background color from the design token palette. */
   background?: Exclude<keyof typeof background, 'overlay'>;
   /** Border radius from the design token scale. */
@@ -47,6 +29,10 @@ export interface BoxProps
   /** Box shadow elevation from the design token scale. */
   shadow?: keyof typeof shadow;
 }
+
+/** Box props for a specific element tag. */
+export type BoxProps<T extends HtmlTagName> = PolymorphicProps<T> &
+  BoxBaseProps;
 
 export const boxPropKeys = [
   ...paddingPropKeys,
@@ -63,7 +49,7 @@ export const boxPropKeys = [
 export function resolveBoxClasses(
   props: PaddingProps &
     MarginProps &
-    Pick<BoxProps, 'background' | 'radius' | 'shadow'>,
+    Pick<BoxBaseProps, 'background' | 'radius' | 'shadow'>,
 ): (string | false | undefined)[] {
   return [
     ...resolvePaddingClasses(props),
@@ -75,7 +61,10 @@ export function resolveBoxClasses(
 }
 
 /** Polymorphic surface primitive. Applies padding, margin, background, radius, and shadow from design tokens. */
-const Box: ParentComponent<BoxProps> = (props) => {
+function Box<const T extends HtmlTagName>(props: BoxProps<T>): JSX.Element;
+function Box(
+  props: { as: HtmlTagName } & BoxBaseProps & JSX.HTMLAttributes<HTMLElement>,
+) {
   const [local, rest] = splitProps(props, boxPropKeys);
 
   const className = () =>
@@ -86,6 +75,6 @@ const Box: ParentComponent<BoxProps> = (props) => {
       {local.children}
     </Dynamic>
   );
-};
+}
 
 export default Box;

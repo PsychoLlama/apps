@@ -31,7 +31,7 @@ const meta = {
     },
     children: { control: 'text' },
   },
-} satisfies Meta<TextProps>;
+} satisfies Meta<TextProps<'span'>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
