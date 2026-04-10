@@ -6,9 +6,11 @@ command = "pnpm"
 options = ["exec", "prettier", "--write"]
 includes = [
   "*.js",
+  "*.jsx",
   "*.mjs",
   "*.cjs",
   "*.ts",
+  "*.tsx",
   "*.json",
   "*.md",
   "*.yaml",

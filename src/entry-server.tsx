@@ -9,10 +9,12 @@ export default createHandler(() => (
         <head>
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-{assets}
+          {assets}
         </head>
         <body>
-          <Flex as="div" id="app" direction="column" grow>{children}</Flex>
+          <Flex as="div" id="app" direction="column" grow>
+            {children}
+          </Flex>
           {scripts}
         </body>
       </html>

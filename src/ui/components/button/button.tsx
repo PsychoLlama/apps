@@ -12,8 +12,7 @@ type Variant = 'solid' | 'soft' | 'outline' | 'ghost';
 type Color = 'accent' | 'neutral' | 'danger';
 
 export interface ButtonProps
-  extends MarginProps,
-    JSX.ButtonHTMLAttributes<HTMLButtonElement> {
+  extends MarginProps, JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual size on a 1-4 scale. @default 2 */
   size?: Size;
   /** Visual treatment. @default 'solid' */

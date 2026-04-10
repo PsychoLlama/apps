@@ -2,7 +2,14 @@ import { Flex, Heading, Text } from '#ui';
 
 export default function Home() {
   return (
-    <Flex as="main" direction="column" align="center" justify="center" gap={3} grow>
+    <Flex
+      as="main"
+      direction="column"
+      align="center"
+      justify="center"
+      gap={3}
+      grow
+    >
       <Heading as="h1" size={8}>
         Apps
       </Heading>

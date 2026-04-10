@@ -74,9 +74,7 @@ export const FontWeights: Story = {
     <Flex as="div" direction="column" gap={5}>
       <For
         each={
-          Object.entries(fontWeight) as Array<
-            [keyof typeof fontWeight, string]
-          >
+          Object.entries(fontWeight) as Array<[keyof typeof fontWeight, string]>
         }
       >
         {([name, value]) => (
