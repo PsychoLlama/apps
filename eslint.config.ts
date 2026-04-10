@@ -1,7 +1,7 @@
-// @ts-check
 import { includeIgnoreFile } from '@eslint/compat';
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import customRules from './src/eslint-plugin';
 
 export default [
   includeIgnoreFile(import.meta.dirname + '/.gitignore'),
@@ -16,7 +16,11 @@ export default [
         sourceType: 'module',
       },
     },
+    plugins: {
+      custom: customRules,
+    },
     rules: {
+      'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
         'error',
         {

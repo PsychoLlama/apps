@@ -23,5 +23,5 @@
       "#design/color-scheme": ["./src/design/color-scheme.ts"]
     }
   },
-  "include": ["src", ".storybook/*.ts", "*.ts", "*.mjs"]
+  "include": ["src", ".storybook/*.ts", "*.ts"]
 }
