@@ -1,5 +1,6 @@
 import { includeIgnoreFile } from '@eslint/compat';
 import eslint from '@eslint/js';
+import solid from 'eslint-plugin-solid/configs/typescript';
 import tseslint from 'typescript-eslint';
 import customRules from './src/eslint-plugin';
 
@@ -23,6 +24,7 @@ export default [
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
+  solid,
   {
     languageOptions: {
       parserOptions: {
@@ -35,6 +37,15 @@ export default [
       custom: customRules,
     },
     rules: {
+      'solid/components-return-once': 'error',
+      'solid/reactivity': 'error',
+      'solid/event-handlers': 'error',
+      'solid/imports': 'error',
+      'solid/style-prop': 'error',
+      'solid/no-react-deps': 'error',
+      'solid/no-react-specific-props': 'error',
+      'solid/self-closing-comp': 'error',
+      'solid/no-array-handlers': 'error',
       'no-console': 'error',
       eqeqeq: 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
@@ -45,6 +56,12 @@ export default [
           patterns: restrictedImportPatterns,
         },
       ],
+    },
+  },
+  {
+    files: ['src/ui/props/*.ts'],
+    rules: {
+      'solid/reactivity': 'off',
     },
   },
   {

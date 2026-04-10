@@ -42,6 +42,7 @@ export const boxPropKeys = [
   'children',
 ] as const;
 
+/* eslint-disable solid/reactivity -- called from reactive contexts in components */
 /** Resolve Box surface/spacing props to CSS class names. */
 export function resolveBoxClasses(
   props: PaddingProps &
@@ -56,6 +57,7 @@ export function resolveBoxClasses(
     props.shadow && css.s[props.shadow],
   ];
 }
+/* eslint-enable solid/reactivity */
 
 /** Polymorphic surface primitive. Applies padding, margin, background, radius, and shadow from design tokens. */
 function Box<const T extends HtmlBoxTag>(props: BoxProps<T>): JSX.Element;
