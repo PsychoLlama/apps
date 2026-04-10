@@ -2,7 +2,7 @@ import { Dynamic } from 'solid-js/web';
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
 import {
-  type HtmlTagName,
+  type HtmlTextTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
 import * as css from './text.css';
@@ -22,13 +22,13 @@ interface TextOwnProps {
 }
 
 /** Text props for a specific element tag. */
-export type TextProps<T extends HtmlTagName> = PolymorphicProps<T> &
+export type TextProps<T extends HtmlTextTag> = PolymorphicProps<T> &
   TextOwnProps;
 
 /** General-purpose text component for body copy, labels, and inline text. */
-function Text<const T extends HtmlTagName>(props: TextProps<T>): JSX.Element;
+function Text<const T extends HtmlTextTag>(props: TextProps<T>): JSX.Element;
 function Text(
-  rawProps: { as: HtmlTagName } & TextOwnProps &
+  rawProps: { as: HtmlTextTag } & TextOwnProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
   const props = mergeProps({ size: 3 as Size }, rawProps);

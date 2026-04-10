@@ -7,6 +7,9 @@ export { default as Box, type BoxProps } from './components/box/box';
 export type {
   TagName,
   HtmlTagName,
+  HtmlTextTag,
+  HtmlHeadingTag,
+  HtmlBoxTag,
   PolymorphicProps,
 } from './props/polymorphic';
 export { default as Flex, type FlexProps } from './components/flex/flex';

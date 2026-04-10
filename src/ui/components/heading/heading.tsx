@@ -1,7 +1,10 @@
 import { Dynamic } from 'solid-js/web';
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
-import { type PolymorphicProps } from '../../props/polymorphic';
+import {
+  type HtmlHeadingTag,
+  type PolymorphicProps,
+} from '../../props/polymorphic';
 import * as css from './heading.css';
 
 type Size = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
@@ -18,19 +21,16 @@ interface HeadingOwnProps {
   color?: 'highContrast' | 'lowContrast';
 }
 
-/** Valid heading level elements. */
-export type HeadingTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-
 /** Heading props for a specific heading level. */
-export type HeadingProps<T extends HeadingTag> = PolymorphicProps<T> &
+export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<T> &
   HeadingOwnProps;
 
 /** Semantic heading with size independent of level. Pick the `as` level for document hierarchy and `size` for visual weight. */
-function Heading<const T extends HeadingTag>(
+function Heading<const T extends HtmlHeadingTag>(
   props: HeadingProps<T>,
 ): JSX.Element;
 function Heading(
-  rawProps: { as: HeadingTag } & HeadingOwnProps &
+  rawProps: { as: HtmlHeadingTag } & HeadingOwnProps &
     JSX.HTMLAttributes<HTMLHeadingElement>,
 ) {
   const props = mergeProps(

@@ -13,7 +13,7 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import {
-  type HtmlTagName,
+  type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
 import * as css from './box.css';
@@ -31,8 +31,7 @@ export interface BoxBaseProps extends PaddingProps, MarginProps {
 }
 
 /** Box props for a specific element tag. */
-export type BoxProps<T extends HtmlTagName> = PolymorphicProps<T> &
-  BoxBaseProps;
+export type BoxProps<T extends HtmlBoxTag> = PolymorphicProps<T> & BoxBaseProps;
 
 export const boxPropKeys = [
   ...paddingPropKeys,
@@ -61,9 +60,9 @@ export function resolveBoxClasses(
 }
 
 /** Polymorphic surface primitive. Applies padding, margin, background, radius, and shadow from design tokens. */
-function Box<const T extends HtmlTagName>(props: BoxProps<T>): JSX.Element;
+function Box<const T extends HtmlBoxTag>(props: BoxProps<T>): JSX.Element;
 function Box(
-  props: { as: HtmlTagName } & BoxBaseProps & JSX.HTMLAttributes<HTMLElement>,
+  props: { as: HtmlBoxTag } & BoxBaseProps & JSX.HTMLAttributes<HTMLElement>,
 ) {
   const [local, rest] = splitProps(props, boxPropKeys);
 

@@ -8,7 +8,7 @@ import {
   type SpaceScale,
 } from '../box/box';
 import {
-  type HtmlTagName,
+  type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
 import * as css from './grid.css';
@@ -32,7 +32,7 @@ interface GridOwnProps {
 }
 
 /** Grid props for a specific element tag. */
-export type GridProps<T extends HtmlTagName> = PolymorphicProps<T> &
+export type GridProps<T extends HtmlBoxTag> = PolymorphicProps<T> &
   GridOwnProps &
   BoxBaseProps;
 
@@ -47,9 +47,9 @@ const gridOwnPropKeys = [
 ] as const;
 
 /** CSS Grid layout container. Extends Box with column, row, alignment, and gap controls. */
-function Grid<const T extends HtmlTagName>(props: GridProps<T>): JSX.Element;
+function Grid<const T extends HtmlBoxTag>(props: GridProps<T>): JSX.Element;
 function Grid(
-  props: { as: HtmlTagName } & GridOwnProps &
+  props: { as: HtmlBoxTag } & GridOwnProps &
     BoxBaseProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {

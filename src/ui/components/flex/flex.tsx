@@ -8,7 +8,7 @@ import {
   type SpaceScale,
 } from '../box/box';
 import {
-  type HtmlTagName,
+  type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
 import * as css from './flex.css';
@@ -30,7 +30,7 @@ interface FlexOwnProps {
 }
 
 /** Flex props for a specific element tag. */
-export type FlexProps<T extends HtmlTagName> = PolymorphicProps<T> &
+export type FlexProps<T extends HtmlBoxTag> = PolymorphicProps<T> &
   FlexOwnProps &
   BoxBaseProps;
 
@@ -44,9 +44,9 @@ const flexOwnPropKeys = [
 ] as const;
 
 /** Flexbox layout container. Extends Box with direction, alignment, wrapping, and gap controls. */
-function Flex<const T extends HtmlTagName>(props: FlexProps<T>): JSX.Element;
+function Flex<const T extends HtmlBoxTag>(props: FlexProps<T>): JSX.Element;
 function Flex(
-  props: { as: HtmlTagName } & FlexOwnProps &
+  props: { as: HtmlBoxTag } & FlexOwnProps &
     BoxBaseProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
