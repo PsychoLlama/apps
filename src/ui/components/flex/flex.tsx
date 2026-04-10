@@ -1,47 +1,21 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
+import { boxPropKeys, resolveBoxClasses, type BoxBaseProps } from '../box/box';
 import {
-  boxPropKeys,
-  resolveBoxClasses,
-  type BoxBaseProps,
-  type SpaceScale,
-} from '../box/box';
+  flexPropKeys,
+  resolveFlexClasses,
+  type FlexProps as FlexOwnProps,
+} from '../../props/flex';
 import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
-import * as css from './flex.css';
-
-/** Flex-specific layout props, independent of the target element. */
-interface FlexOwnProps {
-  /** Main-axis direction of flex children. */
-  direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
-  /** Cross-axis alignment of flex children. */
-  align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
-  /** Main-axis distribution of flex children. */
-  justify?: 'start' | 'center' | 'end' | 'between';
-  /** Whether flex children wrap onto multiple lines. */
-  wrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
-  /** Spacing between flex children. */
-  gap?: SpaceScale;
-  /** When true, the container expands to fill available space (`flex-grow: 1`). */
-  grow?: boolean;
-}
 
 /** Flex props for a specific element tag. */
 export type FlexProps<T extends HtmlBoxTag> = PolymorphicProps<T> &
   FlexOwnProps &
   BoxBaseProps;
-
-const flexOwnPropKeys = [
-  'direction',
-  'align',
-  'justify',
-  'wrap',
-  'gap',
-  'grow',
-] as const;
 
 /** Flexbox layout container. Extends Box with direction, alignment, wrapping, and gap controls. */
 function Flex<const T extends HtmlBoxTag>(props: FlexProps<T>): JSX.Element;
@@ -50,21 +24,11 @@ function Flex(
     BoxBaseProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
-  const [local, boxAndRest] = splitProps(props, flexOwnPropKeys);
+  const [local, boxAndRest] = splitProps(props, flexPropKeys);
   const [box, rest] = splitProps(boxAndRest, boxPropKeys);
 
   const className = () =>
-    [
-      ...resolveBoxClasses(box),
-      css.base,
-      local.direction && css.direction[local.direction],
-      local.align && css.align[local.align],
-      local.justify && css.justify[local.justify],
-      local.wrap && css.wrap[local.wrap],
-      local.gap && css.gap[local.gap],
-      local.grow && css.grow,
-      box.class,
-    ]
+    [...resolveBoxClasses(box), ...resolveFlexClasses(local), box.class]
       .filter(Boolean)
       .join(' ');
 
