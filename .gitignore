@@ -5,11 +5,10 @@ node_modules/
 .direnv
 .nitro
 .output
-.vinxi
 .wrangler
 dist
 app.config.timestamp_*.js
 .env
 .env*.local
-.aider*
+.claude/worktrees
 storybook-static
