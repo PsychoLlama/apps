@@ -1,6 +1,5 @@
 import type { ParentComponent } from 'solid-js';
-import Box from '../layout/box/box';
-import Text from '../typography/text/text';
+import { Text, Box } from '#ui';
 import * as css from './swatch.css';
 
 /** Decorative placeholder for layout stories. Diagonal neutral stripes with a centered label. */
