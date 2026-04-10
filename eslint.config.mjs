@@ -17,7 +17,6 @@ export default [
       },
     },
     rules: {
-      '@typescript-eslint/no-use-before-define': 'off',
       'no-restricted-imports': [
         'error',
         {
@@ -34,7 +33,18 @@ export default [
   {
     files: ['./**/__tests__/*.ts{x,}'],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'vitest',
+              importNames: ['test', 'it'],
+              message: 'Always prefer vitest globals.',
+            },
+          ],
+        },
+      ],
     },
   },
 ];
