@@ -21,3 +21,7 @@ export {
   default as Button,
   type ButtonProps,
 } from './components/button/button';
+export {
+  default as Callout,
+  type CalloutProps,
+} from './components/callout/callout';
