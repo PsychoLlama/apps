@@ -1,37 +1,44 @@
+import { Box, Flex, Heading, Text } from '#ui';
 import SiteHeader from '../components/site-header';
 import * as css from './index.css';
 
 export default function Launcher() {
   return (
-    <div class={css.page}>
+    <Flex as="main" direction="column" class={css.page}>
       <SiteHeader title="Apps" />
-      <div class={css.content}>
-        <div class={css.column}>
-          <h1 class={css.heading}>Apps</h1>
+      <Flex as="section" align="center" justify="center" grow p={5}>
+        <Flex as="div" direction="column" gap={5} class={css.column}>
+          <Heading as="h1" size={2} weight="medium" color="lowContrast">
+            Apps
+          </Heading>
 
-          <div class={css.list}>
+          <Flex as="nav" direction="column" gap={3}>
             <a href="/studio" class={css.link}>
-              <span class={css.indicator} />
-              <div class={css.appInfo}>
-                <span class={css.appName}>Recording Studio</span>
-                <span class={css.appDescription}>
+              <Box as="div" class={css.indicator} />
+              <Flex as="div" direction="column" gap={1}>
+                <Text as="span" size={3} weight="medium">
+                  Recording Studio
+                </Text>
+                <Text as="span" size={2} color="lowContrast">
                   Record your screen from the browser
-                </span>
-              </div>
+                </Text>
+              </Flex>
             </a>
 
             <a href="/favicon" class={css.link}>
-              <span class={css.indicator} />
-              <div class={css.appInfo}>
-                <span class={css.appName}>Favicon Generator</span>
-                <span class={css.appDescription}>
+              <Box as="div" class={css.indicator} />
+              <Flex as="div" direction="column" gap={1}>
+                <Text as="span" size={3} weight="medium">
+                  Favicon Generator
+                </Text>
+                <Text as="span" size={2} color="lowContrast">
                   Create favicons from free icon sets
-                </span>
-              </div>
+                </Text>
+              </Flex>
             </a>
-          </div>
-        </div>
-      </div>
-    </div>
+          </Flex>
+        </Flex>
+      </Flex>
+    </Flex>
   );
 }

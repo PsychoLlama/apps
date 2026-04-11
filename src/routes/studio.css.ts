@@ -1,25 +1,19 @@
 import { keyframes, style } from '@vanilla-extract/css';
 import {
-  accent,
   background,
   breakpoint,
+  danger,
   fontWeight,
   neutral,
   neutralAlpha,
   radius,
   shadow,
   space,
+  success,
   text,
   typeScale,
-  white,
-} from '#design-system';
-import { redLight, redDark } from '../design-system/palette/red.css';
-import { greenLight, greenDark } from '../design-system/palette/green.css';
-import { amberLight, amberDark } from '../design-system/palette/amber.css';
-
-const redSolid = `light-dark(${redLight[9]}, ${redDark[9]})`;
-const greenSolid = `light-dark(${greenLight[9]}, ${greenDark[9]})`;
-const amberSolid = `light-dark(${amberLight[9]}, ${amberDark[9]})`;
+  warning,
+} from '#design';
 
 const pulse = keyframes({
   '0%, 100%': { opacity: '1' },
@@ -29,8 +23,6 @@ const pulse = keyframes({
 // --- Shell ---
 
 export const shell = style({
-  display: 'flex',
-  flexDirection: 'column',
   height: '100dvh',
   overflow: 'hidden',
 });
@@ -67,12 +59,8 @@ export const main = style({
 });
 
 export const mainContent = style({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: space[5],
-  width: '100%',
   maxWidth: '560px',
+  width: '100%',
 });
 
 // --- Panel (RHS on desktop, bottom on mobile) ---
@@ -96,10 +84,6 @@ export const panel = style({
 });
 
 export const panelHeader = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: `${space[2]} ${space[4]}`,
   cursor: 'pointer',
   transition: 'background-color 0.12s ease',
   ':hover': {
@@ -115,14 +99,6 @@ export const panelHeader = style({
   },
 });
 
-export const panelHeading = style({
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  fontWeight: fontWeight.medium,
-  color: text.lowContrast,
-});
-
 export const panelBody = style({
   flex: 1,
   overflowY: 'auto',
@@ -135,13 +111,6 @@ export const panelBody = style({
 });
 
 export const panelFooter = style({
-  display: 'flex',
-  justifyContent: 'space-between',
-  fontSize: typeScale[1].fontSize,
-  lineHeight: typeScale[1].lineHeight,
-  letterSpacing: typeScale[1].letterSpacing,
-  color: text.lowContrast,
-  padding: `${space[2]} ${space[4]}`,
   borderTop: `1px solid ${neutral[6]}`,
 });
 
@@ -178,70 +147,19 @@ export const entryThumbIcon = style({
   fontSize: typeScale[3].fontSize,
 });
 
-export const entryInfo = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: space[1],
-  minWidth: 0,
-});
-
-export const entryName = style({
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  fontWeight: fontWeight.medium,
-  color: text.highContrast,
+export const truncate = style({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
 });
 
-export const entryMeta = style({
-  fontSize: typeScale[1].fontSize,
-  lineHeight: typeScale[1].lineHeight,
-  letterSpacing: typeScale[1].letterSpacing,
-  color: text.lowContrast,
-});
-
-// --- Idle state ---
-
-export const startButton = style({
-  backgroundColor: accent[9],
-  color: white[12],
-  border: 'none',
-  borderRadius: radius[2],
-  fontSize: typeScale[3].fontSize,
-  lineHeight: typeScale[3].lineHeight,
-  letterSpacing: typeScale[3].letterSpacing,
-  fontWeight: fontWeight.medium,
-  padding: `${space[3]} ${space[7]}`,
-  cursor: 'pointer',
-  transition: 'background-color 0.12s ease',
-  ':hover': {
-    backgroundColor: accent[10],
-  },
-});
-
-export const subtitle = style({
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  color: text.lowContrast,
-});
-
 // --- Recording state ---
-
-export const statusRow = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: space[2],
-});
 
 export const recordingDot = style({
   width: space[2],
   height: space[2],
   borderRadius: radius.full,
-  backgroundColor: redSolid,
+  backgroundColor: danger[9],
   animation: `${pulse} 1.5s ease-in-out infinite`,
 });
 
@@ -250,14 +168,6 @@ export const recordingDotPaused = style({
   height: space[2],
   borderRadius: radius.full,
   backgroundColor: neutral[8],
-});
-
-export const statusLabel = style({
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  fontWeight: fontWeight.medium,
-  color: text.highContrast,
 });
 
 export const timer = style({
@@ -277,37 +187,10 @@ export const timer = style({
 
 // --- Active tracks ---
 
-export const trackSection = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: space[3],
-  width: '100%',
-});
-
-export const trackSectionLabel = style({
-  fontSize: typeScale[1].fontSize,
-  lineHeight: typeScale[1].lineHeight,
-  letterSpacing: typeScale[1].letterSpacing,
-  fontWeight: fontWeight.medium,
-  color: text.lowContrast,
-  textAlign: 'center',
-});
-
-export const trackList = style({
-  display: 'flex',
-  gap: space[2],
-  flexWrap: 'wrap',
-  justifyContent: 'center',
-});
-
 export const trackPill = style({
   display: 'flex',
   alignItems: 'center',
   gap: space[2],
-  fontSize: typeScale[1].fontSize,
-  lineHeight: typeScale[1].lineHeight,
-  letterSpacing: typeScale[1].letterSpacing,
-  color: text.highContrast,
   padding: `${space[1]} ${space[3]}`,
   borderRadius: radius.full,
   backgroundColor: neutralAlpha[3],
@@ -321,7 +204,7 @@ export const trackDotLive = style({
   width: space[1],
   height: space[1],
   borderRadius: radius.full,
-  backgroundColor: greenSolid,
+  backgroundColor: success[9],
   animation: `${pulse} 2s ease-in-out infinite`,
 });
 
@@ -338,81 +221,17 @@ export const trackStopButton = style({
   color: text.lowContrast,
   cursor: 'pointer',
   fontSize: typeScale[1].fontSize,
-  lineHeight: '1',
-  padding: 0,
+  lineHeight: typeScale[1].lineHeight,
   marginLeft: space[1],
   transition: 'color 0.12s ease',
   ':hover': {
-    color: redSolid,
+    color: danger[9],
   },
-});
-
-// --- Controls ---
-
-export const controlsRow = style({
-  display: 'flex',
-  gap: space[3],
-  flexWrap: 'wrap',
-  justifyContent: 'center',
-});
-
-export const ghostButton = style({
-  backgroundColor: 'transparent',
-  color: text.highContrast,
-  border: `1px solid ${neutral[6]}`,
-  borderRadius: radius[2],
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  fontWeight: fontWeight.medium,
-  padding: `${space[2]} ${space[5]}`,
-  cursor: 'pointer',
-  transition: 'background-color 0.12s ease',
-  ':hover': {
-    backgroundColor: neutral[3],
-  },
-});
-
-export const solidButton = style({
-  backgroundColor: accent[9],
-  color: white[12],
-  border: 'none',
-  borderRadius: radius[2],
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  fontWeight: fontWeight.medium,
-  padding: `${space[2]} ${space[5]}`,
-  cursor: 'pointer',
-  transition: 'background-color 0.12s ease',
-  ':hover': {
-    backgroundColor: accent[10],
-  },
-});
-
-export const dangerButton = style({
-  backgroundColor: redSolid,
-  color: white[12],
-  border: 'none',
-  borderRadius: radius[2],
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  fontWeight: fontWeight.medium,
-  padding: `${space[2]} ${space[5]}`,
-  cursor: 'pointer',
 });
 
 // --- Error banner ---
 
 export const errorBanner = style({
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: space[3],
-  backgroundColor: background.panelSolid,
-  boxShadow: shadow[3],
-  borderRadius: radius[4],
-  padding: space[4],
   width: '100%',
 });
 
@@ -425,30 +244,8 @@ export const errorIcon = style({
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
-  color: amberSolid,
+  color: warning[9],
   fontSize: typeScale[5].fontSize,
-});
-
-export const errorBody = style({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: space[1],
-});
-
-export const errorTitle = style({
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  fontWeight: fontWeight.medium,
-  color: text.highContrast,
-});
-
-export const errorText = style({
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  color: text.lowContrast,
 });
 
 export const dismissButton = style({
@@ -457,7 +254,7 @@ export const dismissButton = style({
   color: text.lowContrast,
   cursor: 'pointer',
   fontSize: typeScale[3].fontSize,
-  lineHeight: '1',
+  lineHeight: typeScale[3].lineHeight,
   padding: space[1],
   flexShrink: 0,
   borderRadius: radius[1],
@@ -470,30 +267,7 @@ export const dismissButton = style({
 
 // --- Unsupported ---
 
-export const unsupported = style({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  height: '100dvh',
-  padding: space[6],
-  textAlign: 'center',
-  gap: space[4],
-});
-
-export const unsupportedTitle = style({
-  fontSize: typeScale[5].fontSize,
-  lineHeight: typeScale[5].lineHeight,
-  letterSpacing: typeScale[5].letterSpacing,
-  fontWeight: fontWeight.medium,
-  color: text.highContrast,
-});
-
 export const unsupportedText = style({
-  fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
-  letterSpacing: typeScale[2].letterSpacing,
-  color: text.lowContrast,
   maxWidth: '320px',
 });
 
@@ -514,9 +288,6 @@ export const stateSwitcher = style({
 });
 
 export const switcherButton = style({
-  fontSize: typeScale[1].fontSize,
-  lineHeight: typeScale[1].lineHeight,
-  letterSpacing: typeScale[1].letterSpacing,
   backgroundColor: 'transparent',
   color: text.lowContrast,
   border: 'none',

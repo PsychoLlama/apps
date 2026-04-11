@@ -1,4 +1,5 @@
 import { Show } from 'solid-js';
+import { Box, Flex, Text } from '#ui';
 import * as css from './site-header.css';
 
 function Logo() {
@@ -23,14 +24,16 @@ function Logo() {
 
 export default function SiteHeader(props: { title?: string }) {
   return (
-    <header class={css.header}>
+    <Flex as="header" align="center" gap={4} px={4} py={2} class={css.header}>
       <a href="/" class={css.logoLink}>
         <Logo />
       </a>
       <Show when={props.title}>
-        <span class={css.divider} />
-        <span class={css.title}>{props.title}</span>
+        <Box as="div" class={css.divider} />
+        <Text as="span" size={2} weight="medium" color="lowContrast">
+          {props.title}
+        </Text>
       </Show>
-    </header>
+    </Flex>
   );
 }

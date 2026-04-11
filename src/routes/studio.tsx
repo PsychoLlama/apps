@@ -1,4 +1,5 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
+import { Box, Button, Flex, Heading, Text } from '#ui';
 import SiteHeader from '../components/site-header';
 import * as css from './studio.css';
 
@@ -32,8 +33,6 @@ const sessionTracks: Track[] = [
   { id: '4', type: 'microphone', label: 'Blue Yeti', live: false },
 ];
 
-// --- Logo SVG ---
-
 // --- Warning icon for error state ---
 
 function WarningIcon() {
@@ -59,30 +58,56 @@ function WarningIcon() {
 
 function LibraryPanel() {
   return (
-    <aside class={css.panel}>
-      <div class={css.panelHeader}>
-        <h2 class={css.panelHeading}>Recordings</h2>
-      </div>
+    <Box as="aside" class={css.panel}>
+      <Flex
+        as="div"
+        align="center"
+        justify="between"
+        px={4}
+        py={2}
+        class={css.panelHeader}
+      >
+        <Heading as="h2" size={2} weight="medium" color="lowContrast">
+          Recordings
+        </Heading>
+      </Flex>
 
-      <div class={css.panelBody}>
-        {library.map((rec) => (
-          <div class={css.entryLink}>
-            <div class={css.entryThumb}>
-              <span class={css.entryThumbIcon}>&#9654;</span>
-            </div>
-            <div class={css.entryInfo}>
-              <div class={css.entryName}>{rec.name}</div>
-              <div class={css.entryMeta}>{rec.duration}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <Box as="div" class={css.panelBody}>
+        <For each={library}>
+          {(rec) => (
+            <Flex as="div" align="center" gap={3} class={css.entryLink}>
+              <Flex
+                as="div"
+                align="center"
+                justify="center"
+                class={css.entryThumb}
+              >
+                <Text as="span" class={css.entryThumbIcon}>
+                  &#9654;
+                </Text>
+              </Flex>
+              <Flex as="div" direction="column" gap={1}>
+                <Text as="span" size={2} weight="medium" class={css.truncate}>
+                  {rec.name}
+                </Text>
+                <Text as="span" size={1} color="lowContrast">
+                  {rec.duration}
+                </Text>
+              </Flex>
+            </Flex>
+          )}
+        </For>
+      </Box>
 
-      <div class={css.panelFooter}>
-        <span>{library.length} recordings</span>
-        <span>1.2 GB used</span>
-      </div>
-    </aside>
+      <Flex as="div" justify="between" px={4} py={2} class={css.panelFooter}>
+        <Text as="span" size={1} color="lowContrast">
+          {library.length} recordings
+        </Text>
+        <Text as="span" size={1} color="lowContrast">
+          1.2 GB used
+        </Text>
+      </Flex>
+    </Box>
   );
 }
 
@@ -90,22 +115,37 @@ function LibraryPanel() {
 
 function ActiveTracks() {
   return (
-    <div class={css.trackSection}>
-      <div class={css.trackSectionLabel}>Active Tracks</div>
-      <div class={css.trackList}>
-        {sessionTracks.map((t) => (
-          <span
-            class={`${css.trackPill} ${!t.live ? css.trackPillStopped : ''}`}
-          >
-            <span class={t.live ? css.trackDotLive : css.trackDotStopped} />
-            {t.label}
-            <Show when={t.live}>
-              <button class={css.trackStopButton}>&times;</button>
-            </Show>
-          </span>
-        ))}
-      </div>
-    </div>
+    <Flex as="div" direction="column" gap={3}>
+      <Text
+        as="span"
+        size={1}
+        weight="medium"
+        color="lowContrast"
+        align="center"
+      >
+        Active Tracks
+      </Text>
+      <Flex as="div" gap={2} wrap="wrap" justify="center">
+        <For each={sessionTracks}>
+          {(t) => (
+            <Text
+              as="span"
+              size={1}
+              class={`${css.trackPill} ${!t.live ? css.trackPillStopped : ''}`}
+            >
+              <Box
+                as="div"
+                class={t.live ? css.trackDotLive : css.trackDotStopped}
+              />
+              {t.label}
+              <Show when={t.live}>
+                <button class={css.trackStopButton}>&times;</button>
+              </Show>
+            </Text>
+          )}
+        </For>
+      </Flex>
+    </Flex>
   );
 }
 
@@ -113,46 +153,84 @@ function ActiveTracks() {
 
 function IdleState() {
   return (
-    <div class={css.mainContent}>
-      <button class={css.startButton}>Start Recording</button>
-      <p class={css.subtitle}>Record your screen, window, or tab</p>
-    </div>
+    <Flex
+      as="div"
+      direction="column"
+      align="center"
+      gap={5}
+      class={css.mainContent}
+    >
+      <Button size={3}>Start Recording</Button>
+      <Text as="p" size={2} color="lowContrast">
+        Record your screen, window, or tab
+      </Text>
+    </Flex>
   );
 }
 
 function RecordingState() {
   return (
-    <div class={css.mainContent}>
-      <div class={css.statusRow}>
-        <span class={css.recordingDot} />
-        <span class={css.statusLabel}>Recording</span>
-      </div>
-      <div class={css.timer}>00:12:34</div>
+    <Flex
+      as="div"
+      direction="column"
+      align="center"
+      gap={5}
+      class={css.mainContent}
+    >
+      <Flex as="div" align="center" gap={2}>
+        <Box as="div" class={css.recordingDot} />
+        <Text as="span" size={2} weight="medium">
+          Recording
+        </Text>
+      </Flex>
+      <Text as="span" class={css.timer}>
+        00:12:34
+      </Text>
       <ActiveTracks />
-      <div class={css.controlsRow}>
-        <button class={css.ghostButton}>Add Track</button>
-        <button class={css.ghostButton}>Pause All</button>
-        <button class={css.dangerButton}>Stop All</button>
-      </div>
-    </div>
+      <Flex as="div" gap={3} wrap="wrap" justify="center">
+        <Button variant="outline" color="neutral">
+          Add Track
+        </Button>
+        <Button variant="outline" color="neutral">
+          Pause All
+        </Button>
+        <Button variant="solid" color="danger">
+          Stop All
+        </Button>
+      </Flex>
+    </Flex>
   );
 }
 
 function PausedState() {
   return (
-    <div class={css.mainContent}>
-      <div class={css.statusRow}>
-        <span class={css.recordingDotPaused} />
-        <span class={css.statusLabel}>Paused</span>
-      </div>
-      <div class={css.timer}>00:12:34</div>
+    <Flex
+      as="div"
+      direction="column"
+      align="center"
+      gap={5}
+      class={css.mainContent}
+    >
+      <Flex as="div" align="center" gap={2}>
+        <Box as="div" class={css.recordingDotPaused} />
+        <Text as="span" size={2} weight="medium">
+          Paused
+        </Text>
+      </Flex>
+      <Text as="span" class={css.timer}>
+        00:12:34
+      </Text>
       <ActiveTracks />
-      <div class={css.controlsRow}>
-        <button class={css.ghostButton}>Add Track</button>
-        <button class={css.solidButton}>Resume All</button>
-        <button class={css.dangerButton}>Stop All</button>
-      </div>
-    </div>
+      <Flex as="div" gap={3} wrap="wrap" justify="center">
+        <Button variant="outline" color="neutral">
+          Add Track
+        </Button>
+        <Button variant="solid">Resume All</Button>
+        <Button variant="solid" color="danger">
+          Stop All
+        </Button>
+      </Flex>
+    </Flex>
   );
 }
 
@@ -160,42 +238,64 @@ function ErrorState() {
   const [dismissed, setDismissed] = createSignal(false);
 
   return (
-    <div class={css.mainContent}>
+    <Flex
+      as="div"
+      direction="column"
+      align="center"
+      gap={5}
+      class={css.mainContent}
+    >
       <Show when={!dismissed()}>
-        <div class={css.errorBanner}>
-          <div class={css.errorIcon}>
+        <Flex as="div" align="start" gap={3} class={css.errorBanner}>
+          <Flex as="div" align="center" justify="center" class={css.errorIcon}>
             <WarningIcon />
-          </div>
-          <div class={css.errorBody}>
-            <div class={css.errorTitle}>Permission denied</div>
-            <div class={css.errorText}>
+          </Flex>
+          <Flex as="div" direction="column" gap={1} grow>
+            <Text as="p" size={2} weight="medium">
+              Permission denied
+            </Text>
+            <Text as="p" size={2} color="lowContrast">
               Screen capture access was blocked. Click "Start Recording" to try
               again.
-            </div>
-          </div>
-          <button
-            class={css.dismissButton}
-            onClick={() => setDismissed(true)}
-          >
+            </Text>
+          </Flex>
+          <button class={css.dismissButton} onClick={() => setDismissed(true)}>
             &times;
           </button>
-        </div>
+        </Flex>
       </Show>
-      <button class={css.startButton}>Start Recording</button>
-      <p class={css.subtitle}>Record your screen, window, or tab</p>
-    </div>
+      <Button size={3}>Start Recording</Button>
+      <Text as="p" size={2} color="lowContrast">
+        Record your screen, window, or tab
+      </Text>
+    </Flex>
   );
 }
 
 function UnsupportedState() {
   return (
-    <div class={css.unsupported}>
-      <h1 class={css.unsupportedTitle}>Screen recording unavailable</h1>
-      <p class={css.unsupportedText}>
+    <Flex
+      as="div"
+      direction="column"
+      align="center"
+      justify="center"
+      p={6}
+      gap={4}
+    >
+      <Heading as="h1" size={5} weight="medium" align="center">
+        Screen recording unavailable
+      </Heading>
+      <Text
+        as="p"
+        size={2}
+        color="lowContrast"
+        align="center"
+        class={css.unsupportedText}
+      >
         Your browser doesn't support screen capture. Try a desktop browser like
         Chrome, Edge, or Firefox.
-      </p>
-    </div>
+      </Text>
+    </Flex>
   );
 }
 
@@ -221,16 +321,18 @@ function StateSwitcher(props: {
   };
 
   return (
-    <div class={css.stateSwitcher}>
-      {states.map((s) => (
-        <button
-          class={`${css.switcherButton} ${props.state === s ? css.switcherButtonActive : ''}`}
-          onClick={() => props.onChange(s)}
-        >
-          {labels[s]}
-        </button>
-      ))}
-    </div>
+    <Flex as="div" class={css.stateSwitcher}>
+      <For each={states}>
+        {(s) => (
+          <button
+            class={`${css.switcherButton} ${props.state === s ? css.switcherButtonActive : ''}`}
+            onClick={() => props.onChange(s)}
+          >
+            {labels[s]}
+          </button>
+        )}
+      </For>
+    </Flex>
   );
 }
 
@@ -246,10 +348,10 @@ export default function StudioC() {
         <UnsupportedState />
       </Show>
       <Show when={state() !== 'unsupported'}>
-        <div class={css.shell}>
+        <Flex as="div" direction="column" class={css.shell}>
           <SiteHeader title="Recording Studio" />
-          <div class={css.body}>
-            <div class={css.main}>
+          <Box as="div" class={css.body}>
+            <Box as="main" class={css.main}>
               <Show when={state() === 'idle'}>
                 <IdleState />
               </Show>
@@ -262,10 +364,10 @@ export default function StudioC() {
               <Show when={state() === 'error'}>
                 <ErrorState />
               </Show>
-            </div>
+            </Box>
             <LibraryPanel />
-          </div>
-        </div>
+          </Box>
+        </Flex>
       </Show>
     </>
   );
