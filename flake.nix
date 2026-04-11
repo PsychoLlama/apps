@@ -31,6 +31,9 @@
               pkgs.pnpm
               pkgs.treefmt
             ];
+
+            # Supports vitest+storybook headless testing.
+            CHROMIUM_PATH = "${pkgs.chromium}/bin/chromium";
           };
         }
       );

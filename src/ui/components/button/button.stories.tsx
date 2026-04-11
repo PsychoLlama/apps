@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
 import { marginArgTypes } from '../../props/margin';
 import ButtonComponent, { type ButtonProps } from './button';
 
@@ -10,6 +11,7 @@ const meta = {
     size: 2,
     variant: 'solid',
     color: 'accent',
+    onClick: fn(),
   },
   argTypes: {
     ...marginArgTypes,
@@ -34,4 +36,18 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Button: Story = {};
+export const Button: Story = {
+  play: async ({
+    args,
+    canvasElement,
+  }: {
+    args: typeof meta.args;
+    canvasElement: HTMLElement;
+  }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button');
+
+    await userEvent.click(button);
+    await expect(args.onClick).toHaveBeenCalledOnce();
+  },
+};

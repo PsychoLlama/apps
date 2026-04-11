@@ -20,6 +20,7 @@
     "typecheck": "tsc",
     "lint": "eslint --color",
     "test": "vitest run",
+    "test:storybook": "vitest run --config vitest.storybook.config.ts",
     "storybook": "storybook dev -p 6006 --no-open",
     "storybook:build": "storybook build"
   },
@@ -50,11 +51,14 @@
     "@iconify/json": "^2.2.460",
     "@solidjs/testing-library": "^0.8.10",
     "@storybook/addon-themes": "^10.3.5",
+    "@storybook/addon-vitest": "^10.3.5",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/eslint__js": "^8.42.3",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@vanilla-extract/css": "^1.18.0",
     "@vanilla-extract/vite-plugin": "^5.2.1",
+    "@vitest/browser": "^4.1.4",
+    "@vitest/browser-playwright": "^4.1.4",
     "eslint": "^9.39.2",
     "eslint-plugin-solid": "^0.14.5",
     "jsdom": "^29.0.1",
@@ -64,7 +68,7 @@
     "typescript-eslint": "^8.55.0",
     "unplugin-icons": "^23.0.1",
     "vite-plugin-solid": "^2.11.11",
-    "vitest": "^4.1.0",
+    "vitest": "^4.1.4",
     "wrangler": "^4.65.0"
   }
 }

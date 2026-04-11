@@ -4,13 +4,13 @@ import { mergeConfig } from 'vite';
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(ts|tsx)'],
-  addons: ['@storybook/addon-themes'],
+  addons: ['@storybook/addon-themes', '@storybook/addon-vitest'],
   framework: { name: 'storybook-solidjs-vite', options: {} },
   core: { disableWhatsNewNotifications: true },
   features: { sidebarOnboardingChecklist: false },
   viteFinal: (config) =>
     mergeConfig(config, {
-      base: '/__storybook/',
+      ...(process.env.NODE_ENV === 'production' && { base: '/__storybook/' }),
       plugins: [vanillaExtractPlugin()],
     }),
 };
