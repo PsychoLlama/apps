@@ -38,10 +38,10 @@ export const lightSelector = `:root[${attr}="light"]`;
 export const darkSelector = `:root[${attr}="dark"]`;
 
 /** Media query for system-level light mode preference. */
-export const lightMedia = '(prefers-color-scheme: light)';
+const lightMedia = '(prefers-color-scheme: light)';
 
 /** Media query for system-level dark mode preference. */
-export const darkMedia = '(prefers-color-scheme: dark)';
+const darkMedia = '(prefers-color-scheme: dark)';
 
 /**
  * Assign CSS custom properties that branch on light/dark mode.

@@ -31,6 +31,7 @@ check:
     set -uo pipefail
     failed=0
     just fmt-check || failed=1
+    pnpm knip || failed=1
     pnpm lint || failed=1
     pnpm typecheck || failed=1
     pnpm test || failed=1
