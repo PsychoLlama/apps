@@ -3,12 +3,14 @@ import {
   background,
   breakpoint,
   danger,
+  fast,
   fontWeight,
   neutral,
   neutralAlpha,
   radius,
   shadow,
   space,
+  standard,
   success,
   text,
   typeScale,
@@ -85,7 +87,7 @@ export const panel = style({
 
 export const panelHeader = style({
   cursor: 'pointer',
-  transition: 'background-color 0.12s ease',
+  transition: `background-color ${fast[2]} ${standard.productive}`,
   ':hover': {
     backgroundColor: neutral[3],
   },
@@ -123,7 +125,7 @@ export const entryLink = style({
   padding: `${space[2]} ${space[4]}`,
   textDecoration: 'none',
   cursor: 'pointer',
-  transition: 'background-color 0.12s ease',
+  transition: `background-color ${fast[2]} ${standard.productive}`,
   ':hover': {
     backgroundColor: neutral[3],
   },
@@ -223,7 +225,7 @@ export const trackStopButton = style({
   fontSize: typeScale[1].fontSize,
   lineHeight: typeScale[1].lineHeight,
   marginLeft: space[1],
-  transition: 'color 0.12s ease',
+  transition: `color ${fast[2]} ${standard.productive}`,
   ':hover': {
     color: danger[9],
   },
@@ -258,7 +260,7 @@ export const dismissButton = style({
   padding: space[1],
   flexShrink: 0,
   borderRadius: radius[1],
-  transition: 'color 0.12s ease, background-color 0.12s ease',
+  transition: `color ${fast[2]} ${standard.productive}, background-color ${fast[2]} ${standard.productive}`,
   ':hover': {
     color: text.highContrast,
     backgroundColor: neutral[3],
@@ -294,7 +296,7 @@ export const switcherButton = style({
   borderRadius: radius[2],
   padding: `${space[1]} ${space[2]}`,
   cursor: 'pointer',
-  transition: 'background-color 0.12s ease, color 0.12s ease',
+  transition: `background-color ${fast[2]} ${standard.productive}, color ${fast[2]} ${standard.productive}`,
   ':hover': {
     backgroundColor: neutral[3],
   },

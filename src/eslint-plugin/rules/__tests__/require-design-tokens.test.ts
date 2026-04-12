@@ -41,6 +41,21 @@ tester.run('require-design-tokens', rule as never, {
     // Null values (createThemeContract) are allowed.
     { code: 'const x = { color: null }' },
     { code: 'const x = { padding: null }' },
+
+    // Motion — token references are fine.
+    { code: 'const x = { transitionDuration: fast[1] }' },
+    { code: 'const x = { transitionTimingFunction: standard.productive }' },
+    { code: 'const x = { animationDuration: moderate[2] }' },
+    { code: 'const x = { animationTimingFunction: entrance.expressive }' },
+
+    // Motion — template literals composing tokens are fine.
+    {
+      code: 'const x = { transition: `color ${fast[1]} ${standard.productive}` }',
+    },
+
+    // Motion — CSS keywords are fine.
+    { code: 'const x = { transition: "none" }' },
+    { code: 'const x = { animation: "none" }' },
   ],
 
   invalid: [
@@ -165,6 +180,72 @@ tester.run('require-design-tokens', rule as never, {
       ],
     },
 
+    // Motion — hard-coded duration.
+    {
+      code: 'const x = { transitionDuration: "120ms" }',
+      errors: [
+        {
+          messageId: 'hardcoded' as const,
+          data: { property: 'transitionDuration', token: 'motion' },
+        },
+      ],
+    },
+
+    // Motion — hard-coded easing.
+    {
+      code: 'const x = { transitionTimingFunction: "ease-in-out" }',
+      errors: [
+        {
+          messageId: 'hardcoded' as const,
+          data: { property: 'transitionTimingFunction', token: 'motion' },
+        },
+      ],
+    },
+
+    // Motion — hard-coded shorthand.
+    {
+      code: 'const x = { transition: "color 120ms ease-in-out" }',
+      errors: [
+        {
+          messageId: 'hardcoded' as const,
+          data: { property: 'transition', token: 'motion' },
+        },
+      ],
+    },
+
+    // Motion — hard-coded animation duration.
+    {
+      code: 'const x = { animationDuration: "300ms" }',
+      errors: [
+        {
+          messageId: 'hardcoded' as const,
+          data: { property: 'animationDuration', token: 'motion' },
+        },
+      ],
+    },
+
+    // Motion — hard-coded animation easing.
+    {
+      code: 'const x = { animationTimingFunction: "linear" }',
+      errors: [
+        {
+          messageId: 'hardcoded' as const,
+          data: { property: 'animationTimingFunction', token: 'motion' },
+        },
+      ],
+    },
+
+    // Motion — hard-coded animation shorthand.
+    {
+      code: 'const x = { animation: "slide 300ms ease-in" }',
+      errors: [
+        {
+          messageId: 'hardcoded' as const,
+          data: { property: 'animation', token: 'motion' },
+        },
+      ],
+    },
+
     // Redundant zero — padding.
     {
       code: 'const x = { padding: 0 }',
@@ -222,6 +303,12 @@ describe('propertyToToken', () => {
     ['fontWeight', 'fontWeight'],
     ['borderRadius', 'radius'],
     ['boxShadow', 'shadow'],
+    ['transitionDuration', 'motion'],
+    ['transitionTimingFunction', 'motion'],
+    ['animationDuration', 'motion'],
+    ['animationTimingFunction', 'motion'],
+    ['transition', 'motion'],
+    ['animation', 'motion'],
   ])('maps %s → %s', (prop, token) => {
     expect(propertyToToken.get(prop)).toBe(token);
   });

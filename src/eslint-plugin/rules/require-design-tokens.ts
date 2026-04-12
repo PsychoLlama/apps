@@ -77,6 +77,17 @@ for (const [token, properties] of [
     ],
   ],
   ['shadow', ['boxShadow']],
+  [
+    'motion',
+    [
+      'transition',
+      'transitionDuration',
+      'transitionTimingFunction',
+      'animation',
+      'animationDuration',
+      'animationTimingFunction',
+    ],
+  ],
 ] as const) {
   for (const prop of properties) {
     propertyToToken.set(prop, token);

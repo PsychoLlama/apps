@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { accent, neutral, radius, space } from '#design';
+import { accent, fast, neutral, radius, space, standard } from '#design';
 
 export const page = style({
   height: '100dvh',
@@ -17,7 +17,7 @@ export const link = style({
   textDecoration: 'none',
   padding: space[4],
   borderRadius: radius[4],
-  transition: 'background-color 0.12s ease',
+  transition: `background-color ${fast[2]} ${standard.productive}`,
   ':hover': {
     backgroundColor: neutral[3],
   },
