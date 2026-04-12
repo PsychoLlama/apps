@@ -25,3 +25,7 @@ export {
   default as Callout,
   type CalloutProps,
 } from './components/callout/callout';
+export {
+  default as LinkButton,
+  type LinkButtonProps,
+} from './components/link-button/link-button';
