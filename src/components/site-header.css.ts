@@ -10,7 +10,7 @@ export const logoLink = style({
   display: 'flex',
   alignItems: 'center',
   textDecoration: 'none',
-  color: text.highContrast,
+  color: text.lowContrast,
   flexShrink: 0,
 });
 
