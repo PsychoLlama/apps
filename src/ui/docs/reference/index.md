@@ -1,6 +1,7 @@
-Component index. Definitions at `src/ui/components/{name}/{name}.tsx`.
+# Component Library
 
-Shared prop groups are defined in [standard props](./standard-props.md).
+- Shared prop groups are defined in [standard props](./standard-props.md).
+- Source code at `src/ui/components/{name}/{name}.tsx`.
 
 ## Layout
 
