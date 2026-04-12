@@ -1,4 +1,4 @@
-import { Box, Flex, Heading, Text } from '#ui';
+import { Box, Flex, Heading, Link, Text } from '#ui';
 import SiteHeader from '../components/site-header';
 import * as css from './index.css';
 
@@ -13,7 +13,7 @@ export default function Launcher() {
           </Heading>
 
           <Flex as="nav" direction="column" gap={3}>
-            <a href="/studio" class={css.link}>
+            <Link href="/studio" underline="none" class={css.link}>
               <Box as="div" class={css.indicator} />
               <Flex as="div" direction="column" gap={1}>
                 <Text as="span" size={3} weight="medium">
@@ -23,9 +23,9 @@ export default function Launcher() {
                   Record your screen from the browser
                 </Text>
               </Flex>
-            </a>
+            </Link>
 
-            <a href="/favicon" class={css.link}>
+            <Link href="/favicon" underline="none" class={css.link}>
               <Box as="div" class={css.indicator} />
               <Flex as="div" direction="column" gap={1}>
                 <Text as="span" size={3} weight="medium">
@@ -35,7 +35,7 @@ export default function Launcher() {
                   Create favicons from free icon sets
                 </Text>
               </Flex>
-            </a>
+            </Link>
           </Flex>
         </Flex>
       </Flex>

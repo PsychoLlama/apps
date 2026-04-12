@@ -23,8 +23,6 @@ tester.run('require-ui-primitives', rule as never, {
     { code: '<button>click</button>' },
     { code: '<input />' },
     { code: '<img />' },
-    { code: '<a href="#">link</a>' },
-
     // Document structure is allowed.
     { code: '<html><body></body></html>' },
   ],
