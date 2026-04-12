@@ -1,11 +1,23 @@
 # Standard Props
 
-Shared prop groups used across components.
+Shared prop groups used across components. Values use `space` tokens from `#design`.
+
+`SpaceScale`: `1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9`.
 
 ## Margin Props
-
-Spacing utilities. Values use `space` tokens from `#design`.
 
 - `m`: Margin on all sides.
 - `mx`: Horizontal margin.
 - `my`: Vertical margin.
+
+## Padding Props
+
+- `p`: Padding on all sides.
+- `px`: Horizontal padding.
+- `py`: Vertical padding.
+
+## Trim Props
+
+Remove extra whitespace caused by line-height.
+
+- `trim`: Side to trim. `'start' | 'end' | 'both'`.

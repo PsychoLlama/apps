@@ -1,5 +1,7 @@
 Component index. Definitions at `src/ui/components/{name}/{name}.tsx`.
 
+Shared prop groups are defined in [standard props](./standard-props.md).
+
 ## Layout
 
 - [Flex](./flex.md): Flexbox container.
