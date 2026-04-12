@@ -17,14 +17,11 @@ import {
 } from '../../props/margin';
 import Flex from '../flex/flex';
 import Grid from '../grid/grid';
-import Text from '../text/text';
 import * as css from './callout.css';
 
 type Size = 1 | 2 | 3;
 type Variant = 'soft' | 'surface' | 'outline';
 type Color = 'accent' | 'neutral';
-
-const sizeToTextSize = { 1: 2, 2: 2, 3: 3 } as const;
 
 export interface CalloutProps
   extends MarginProps, JSX.HTMLAttributes<HTMLDivElement> {
@@ -40,7 +37,7 @@ export interface CalloutProps
   icon?: JSX.Element;
 }
 
-/** Short informational message with an optional icon. */
+/** Informational container with an optional icon. Content is not wrapped — consumers control their own text layout. */
 const Callout: ParentComponent<CalloutProps> = (rawProps) => {
   const props = mergeProps(
     {
@@ -80,14 +77,7 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
       <Flex as="div" align="center" class={css.iconSize[local.size]}>
         {local.icon ?? <IconInformation />}
       </Flex>
-      <Text
-        as="p"
-        size={sizeToTextSize[local.size]}
-        trim="both"
-        class={css.inheritColor}
-      >
-        {local.children}
-      </Text>
+      {local.children}
     </Grid>
   );
 };

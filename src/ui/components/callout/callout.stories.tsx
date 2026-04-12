@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { marginArgTypes } from '../../props/margin';
+import Text from '../text/text';
 import CalloutComponent, { type CalloutProps } from './callout';
 
 const meta = {
   title: 'UI/Components',
   component: CalloutComponent,
   args: {
-    children: 'Happenings have transpired! Prepare for events.',
     size: 2,
     variant: 'soft',
     color: 'accent',
@@ -28,8 +28,14 @@ const meta = {
     highContrast: {
       control: 'boolean',
     },
-    children: { control: 'text' },
   },
+  render: (props) => (
+    <CalloutComponent {...props}>
+      <Text as="p" size={2}>
+        Happenings have transpired! Prepare for events.
+      </Text>
+    </CalloutComponent>
+  ),
 } satisfies Meta<CalloutProps>;
 
 export default meta;

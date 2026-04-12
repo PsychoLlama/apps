@@ -224,8 +224,10 @@ function ErrorState() {
       class={css.mainContent}
     >
       <Callout icon={<IconAlertCircleOutline />}>
-        Permission denied — screen capture access was blocked. Click "Start
-        Recording" to try again.
+        <Text as="p" size={2}>
+          Permission denied — screen capture access was blocked. Click "Start
+          Recording" to try again.
+        </Text>
       </Callout>
       <Button size={3}>Start Recording</Button>
       <Text as="p" size={2} color="lowContrast">

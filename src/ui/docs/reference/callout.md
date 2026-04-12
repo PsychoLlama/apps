@@ -1,5 +1,7 @@
 # Callout
 
+Informational container with an optional icon. Content is not wrapped — consumers control their own text layout.
+
 ## Props
 
 Base: `<div>` attributes, margin props.

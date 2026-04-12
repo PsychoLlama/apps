@@ -98,9 +98,3 @@ export const iconSize = styleVariants({
   2: { height: typeScale[2].lineHeight },
   3: { height: typeScale[3].lineHeight },
 });
-
-// --- Text (color: inherit override) ---
-
-export const inheritColor = style({
-  color: 'inherit',
-});
