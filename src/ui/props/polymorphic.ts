@@ -46,7 +46,7 @@ export type HtmlTextTag =
 export type HtmlBoxTag = Exclude<HtmlTagName, HtmlTextTag | HtmlHeadingTag>;
 
 /** Polymorphic props: a literal `as` tag merged with the element's native attributes. Component props take precedence over native attributes. */
-export type PolymorphicProps<T extends TagName, Own = {}> = { as: T } & Omit<
+export type PolymorphicProps<T extends TagName, Own> = { as: T } & Omit<
   ComponentProps<T>,
   keyof Own
 > &

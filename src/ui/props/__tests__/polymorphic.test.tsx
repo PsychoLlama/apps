@@ -7,29 +7,49 @@ import type {
   HtmlBoxTag,
 } from '../polymorphic';
 
+interface TestOwn {
+  custom: string;
+}
+
 describe('PolymorphicProps', () => {
   it('includes element-specific attributes for form', () => {
-    expectTypeOf<PolymorphicProps<'form'>>().toHaveProperty('action');
-    expectTypeOf<PolymorphicProps<'form'>>().toHaveProperty('method');
+    expectTypeOf<PolymorphicProps<'form', TestOwn>>().toHaveProperty('action');
+    expectTypeOf<PolymorphicProps<'form', TestOwn>>().toHaveProperty('method');
   });
 
   it('excludes element-specific attributes from unrelated elements', () => {
-    expectTypeOf<PolymorphicProps<'div'>>().not.toHaveProperty('action');
-    expectTypeOf<PolymorphicProps<'div'>>().not.toHaveProperty('start');
+    expectTypeOf<PolymorphicProps<'div', TestOwn>>().not.toHaveProperty(
+      'action',
+    );
+    expectTypeOf<PolymorphicProps<'div', TestOwn>>().not.toHaveProperty(
+      'start',
+    );
   });
 
   it('includes element-specific attributes for ol', () => {
-    expectTypeOf<PolymorphicProps<'ol'>>().toHaveProperty('start');
+    expectTypeOf<PolymorphicProps<'ol', TestOwn>>().toHaveProperty('start');
   });
 
   it('accepts any HTML element', () => {
-    expectTypeOf<PolymorphicProps<'address'>>().toHaveProperty('as');
-    expectTypeOf<PolymorphicProps<'blockquote'>>().toHaveProperty('cite');
+    expectTypeOf<PolymorphicProps<'address', TestOwn>>().toHaveProperty('as');
+    expectTypeOf<PolymorphicProps<'blockquote', TestOwn>>().toHaveProperty(
+      'cite',
+    );
   });
 
   it('rejects invalid element names', () => {
     // @ts-expect-error — not a valid HTML element.
-    expectTypeOf<PolymorphicProps<'fake-element'>>().toBeObject();
+    expectTypeOf<PolymorphicProps<'fake-element', TestOwn>>().toBeObject();
+  });
+
+  it('lets component props override native attributes', () => {
+    interface Override {
+      action: number;
+    }
+
+    type Props = PolymorphicProps<'form', Override>;
+
+    expectTypeOf<Props['action']>().toEqualTypeOf<number>();
   });
 });
 
