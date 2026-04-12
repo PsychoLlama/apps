@@ -14,7 +14,6 @@ import {
   success,
   text,
   typeScale,
-  warning,
 } from '#design';
 
 const pulse = keyframes({
@@ -228,42 +227,6 @@ export const trackStopButton = style({
   transition: `color ${fast[2]} ${standard.productive}`,
   ':hover': {
     color: danger[9],
-  },
-});
-
-// --- Error banner ---
-
-export const errorBanner = style({
-  width: '100%',
-});
-
-export const errorIcon = style({
-  width: space[7],
-  height: space[7],
-  borderRadius: radius[3],
-  backgroundColor: neutralAlpha[3],
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-  color: warning[9],
-  fontSize: typeScale[5].fontSize,
-});
-
-export const dismissButton = style({
-  background: 'none',
-  border: 'none',
-  color: text.lowContrast,
-  cursor: 'pointer',
-  fontSize: typeScale[3].fontSize,
-  lineHeight: typeScale[3].lineHeight,
-  padding: space[1],
-  flexShrink: 0,
-  borderRadius: radius[1],
-  transition: `color ${fast[2]} ${standard.productive}, background-color ${fast[2]} ${standard.productive}`,
-  ':hover': {
-    color: text.highContrast,
-    backgroundColor: neutral[3],
   },
 });
 

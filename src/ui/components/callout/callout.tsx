@@ -80,7 +80,12 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
       <Flex as="div" align="center" class={css.iconSize[local.size]}>
         {local.icon ?? <IconInformation />}
       </Flex>
-      <Text as="p" size={sizeToTextSize[local.size]} class={css.inheritColor}>
+      <Text
+        as="p"
+        size={sizeToTextSize[local.size]}
+        trim="both"
+        class={css.inheritColor}
+      >
         {local.children}
       </Text>
     </Grid>

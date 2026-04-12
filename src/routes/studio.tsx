@@ -1,5 +1,6 @@
 import { createSignal, For, Show } from 'solid-js';
-import { Box, Button, Flex, Heading, Text } from '#ui';
+import { Box, Button, Callout, Flex, Heading, Text } from '#ui';
+import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import SiteHeader from '../components/site-header';
 import * as css from './studio.css';
 
@@ -32,27 +33,6 @@ const sessionTracks: Track[] = [
   { id: '3', type: 'tab', label: 'Chrome Tab — Figma', live: true },
   { id: '4', type: 'microphone', label: 'Blue Yeti', live: false },
 ];
-
-// --- Warning icon for error state ---
-
-function WarningIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M10 6v5M10 13.5v.5"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-      />
-    </svg>
-  );
-}
 
 // --- Library panel ---
 
@@ -235,8 +215,6 @@ function PausedState() {
 }
 
 function ErrorState() {
-  const [dismissed, setDismissed] = createSignal(false);
-
   return (
     <Flex
       as="div"
@@ -245,25 +223,10 @@ function ErrorState() {
       gap={5}
       class={css.mainContent}
     >
-      <Show when={!dismissed()}>
-        <Flex as="div" align="start" gap={3} class={css.errorBanner}>
-          <Flex as="div" align="center" justify="center" class={css.errorIcon}>
-            <WarningIcon />
-          </Flex>
-          <Flex as="div" direction="column" gap={1} grow>
-            <Text as="p" size={2} weight="medium">
-              Permission denied
-            </Text>
-            <Text as="p" size={2} color="lowContrast">
-              Screen capture access was blocked. Click "Start Recording" to try
-              again.
-            </Text>
-          </Flex>
-          <button class={css.dismissButton} onClick={() => setDismissed(true)}>
-            &times;
-          </button>
-        </Flex>
-      </Show>
+      <Callout icon={<IconAlertCircleOutline />}>
+        Permission denied — screen capture access was blocked. Click "Start
+        Recording" to try again.
+      </Callout>
       <Button size={3}>Start Recording</Button>
       <Text as="p" size={2} color="lowContrast">
         Record your screen, window, or tab
