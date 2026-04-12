@@ -55,64 +55,64 @@ describe('PolymorphicProps', () => {
 
 describe('HtmlTagName', () => {
   it('accepts valid HTML tag names', () => {
-    expectTypeOf<'div'>().toMatchTypeOf<HtmlTagName>();
-    expectTypeOf<'form'>().toMatchTypeOf<HtmlTagName>();
-    expectTypeOf<'address'>().toMatchTypeOf<HtmlTagName>();
+    expectTypeOf<'div'>().toExtend<HtmlTagName>();
+    expectTypeOf<'form'>().toExtend<HtmlTagName>();
+    expectTypeOf<'address'>().toExtend<HtmlTagName>();
   });
 
   it('rejects non-HTML strings', () => {
-    expectTypeOf<'fake-element'>().not.toMatchTypeOf<HtmlTagName>();
+    expectTypeOf<'fake-element'>().not.toExtend<HtmlTagName>();
   });
 });
 
 describe('HtmlTextTag', () => {
   it('includes inline text elements', () => {
-    expectTypeOf<'span'>().toMatchTypeOf<HtmlTextTag>();
-    expectTypeOf<'em'>().toMatchTypeOf<HtmlTextTag>();
-    expectTypeOf<'code'>().toMatchTypeOf<HtmlTextTag>();
+    expectTypeOf<'span'>().toExtend<HtmlTextTag>();
+    expectTypeOf<'em'>().toExtend<HtmlTextTag>();
+    expectTypeOf<'code'>().toExtend<HtmlTextTag>();
   });
 
   it('includes block text elements', () => {
-    expectTypeOf<'p'>().toMatchTypeOf<HtmlTextTag>();
-    expectTypeOf<'blockquote'>().toMatchTypeOf<HtmlTextTag>();
-    expectTypeOf<'pre'>().toMatchTypeOf<HtmlTextTag>();
+    expectTypeOf<'p'>().toExtend<HtmlTextTag>();
+    expectTypeOf<'blockquote'>().toExtend<HtmlTextTag>();
+    expectTypeOf<'pre'>().toExtend<HtmlTextTag>();
   });
 
   it('excludes layout and heading elements', () => {
-    expectTypeOf<'div'>().not.toMatchTypeOf<HtmlTextTag>();
-    expectTypeOf<'h1'>().not.toMatchTypeOf<HtmlTextTag>();
-    expectTypeOf<'nav'>().not.toMatchTypeOf<HtmlTextTag>();
+    expectTypeOf<'div'>().not.toExtend<HtmlTextTag>();
+    expectTypeOf<'h1'>().not.toExtend<HtmlTextTag>();
+    expectTypeOf<'nav'>().not.toExtend<HtmlTextTag>();
   });
 });
 
 describe('HtmlHeadingTag', () => {
   it('includes all heading levels', () => {
-    expectTypeOf<'h1'>().toMatchTypeOf<HtmlHeadingTag>();
-    expectTypeOf<'h6'>().toMatchTypeOf<HtmlHeadingTag>();
+    expectTypeOf<'h1'>().toExtend<HtmlHeadingTag>();
+    expectTypeOf<'h6'>().toExtend<HtmlHeadingTag>();
   });
 
   it('excludes non-heading elements', () => {
-    expectTypeOf<'p'>().not.toMatchTypeOf<HtmlHeadingTag>();
-    expectTypeOf<'div'>().not.toMatchTypeOf<HtmlHeadingTag>();
+    expectTypeOf<'p'>().not.toExtend<HtmlHeadingTag>();
+    expectTypeOf<'div'>().not.toExtend<HtmlHeadingTag>();
   });
 });
 
 describe('HtmlBoxTag', () => {
   it('includes layout elements', () => {
-    expectTypeOf<'div'>().toMatchTypeOf<HtmlBoxTag>();
-    expectTypeOf<'section'>().toMatchTypeOf<HtmlBoxTag>();
-    expectTypeOf<'nav'>().toMatchTypeOf<HtmlBoxTag>();
-    expectTypeOf<'form'>().toMatchTypeOf<HtmlBoxTag>();
+    expectTypeOf<'div'>().toExtend<HtmlBoxTag>();
+    expectTypeOf<'section'>().toExtend<HtmlBoxTag>();
+    expectTypeOf<'nav'>().toExtend<HtmlBoxTag>();
+    expectTypeOf<'form'>().toExtend<HtmlBoxTag>();
   });
 
   it('excludes text elements', () => {
-    expectTypeOf<'span'>().not.toMatchTypeOf<HtmlBoxTag>();
-    expectTypeOf<'p'>().not.toMatchTypeOf<HtmlBoxTag>();
-    expectTypeOf<'em'>().not.toMatchTypeOf<HtmlBoxTag>();
+    expectTypeOf<'span'>().not.toExtend<HtmlBoxTag>();
+    expectTypeOf<'p'>().not.toExtend<HtmlBoxTag>();
+    expectTypeOf<'em'>().not.toExtend<HtmlBoxTag>();
   });
 
   it('excludes heading elements', () => {
-    expectTypeOf<'h1'>().not.toMatchTypeOf<HtmlBoxTag>();
-    expectTypeOf<'h3'>().not.toMatchTypeOf<HtmlBoxTag>();
+    expectTypeOf<'h1'>().not.toExtend<HtmlBoxTag>();
+    expectTypeOf<'h3'>().not.toExtend<HtmlBoxTag>();
   });
 });
