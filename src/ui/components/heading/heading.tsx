@@ -31,10 +31,10 @@ interface HeadingOwnProps {
 }
 
 /** Heading props for a specific heading level. */
-export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<T> &
-  HeadingOwnProps &
-  TrimProps &
-  MarginProps;
+export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<
+  T,
+  HeadingOwnProps & TrimProps & MarginProps
+>;
 
 /** Semantic heading with size independent of level. Pick the `as` level for document hierarchy and `size` for visual weight. */
 function Heading<const T extends HtmlHeadingTag>(

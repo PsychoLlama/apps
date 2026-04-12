@@ -31,10 +31,10 @@ interface TextOwnProps {
 }
 
 /** Text props for a specific element tag. */
-export type TextProps<T extends HtmlTextTag> = PolymorphicProps<T> &
-  TextOwnProps &
-  TrimProps &
-  MarginProps;
+export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
+  T,
+  TextOwnProps & TrimProps & MarginProps
+>;
 
 /** General-purpose text component for body copy, labels, and inline text. */
 function Text<const T extends HtmlTextTag>(props: TextProps<T>): JSX.Element;

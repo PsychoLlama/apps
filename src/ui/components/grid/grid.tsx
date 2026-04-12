@@ -28,9 +28,10 @@ interface GridOwnProps {
 }
 
 /** Grid props for a specific element tag. */
-export type GridProps<T extends HtmlBoxTag> = PolymorphicProps<T> &
-  GridOwnProps &
-  BoxBaseProps;
+export type GridProps<T extends HtmlBoxTag> = PolymorphicProps<
+  T,
+  GridOwnProps & BoxBaseProps
+>;
 
 const gridOwnPropKeys = [
   'columns',

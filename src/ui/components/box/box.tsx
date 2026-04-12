@@ -29,7 +29,7 @@ export interface BoxBaseProps extends PaddingProps, MarginProps {
 }
 
 /** Box props for a specific element tag. */
-export type BoxProps<T extends HtmlBoxTag> = PolymorphicProps<T> & BoxBaseProps;
+export type BoxProps<T extends HtmlBoxTag> = PolymorphicProps<T, BoxBaseProps>;
 
 export const boxPropKeys = [
   ...paddingPropKeys,

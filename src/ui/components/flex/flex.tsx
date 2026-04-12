@@ -13,9 +13,10 @@ import {
 } from '../../props/polymorphic';
 
 /** Flex props for a specific element tag. */
-export type FlexProps<T extends HtmlBoxTag> = PolymorphicProps<T> &
-  FlexOwnProps &
-  BoxBaseProps;
+export type FlexProps<T extends HtmlBoxTag> = PolymorphicProps<
+  T,
+  FlexOwnProps & BoxBaseProps
+>;
 
 /** Flexbox layout container. Extends Box with direction, alignment, wrapping, and gap controls. */
 function Flex<const T extends HtmlBoxTag>(props: FlexProps<T>): JSX.Element;
