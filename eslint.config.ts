@@ -49,6 +49,7 @@ export default [
       'no-console': 'error',
       eqeqeq: 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-deprecated': 'error',
       'custom/no-static-style-prop': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
