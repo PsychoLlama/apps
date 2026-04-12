@@ -13,6 +13,7 @@ export type {
   PolymorphicProps,
 } from './props/polymorphic';
 export { default as Flex, type FlexProps } from './components/flex/flex';
+export { default as Link, type LinkProps } from './components/link/link';
 export { default as Grid, type GridProps } from './components/grid/grid';
 export type { PaddingProps } from './props/padding';
 export type { MarginProps } from './props/margin';
