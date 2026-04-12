@@ -1,25 +1,28 @@
+/**
+ * Button-styled anchor built on {@link https://docs.solidjs.com/solid-router/reference/components/a | \<A\>}
+ * from `@solidjs/router`.
+ */
+
+import { A, type AnchorProps } from '@solidjs/router';
 import { mergeProps, splitProps } from 'solid-js';
-import type { JSX, ParentComponent } from 'solid-js';
-import {
-  marginPropKeys,
-  resolveMarginClasses,
-  type MarginProps,
-} from '../../props/margin';
+import type { ParentComponent } from 'solid-js';
 import {
   buttonStyleDefaults,
   buttonStylePropKeys,
   resolveButtonStyleClasses,
   type ButtonStyleProps,
 } from '../../props/button';
+import {
+  marginPropKeys,
+  resolveMarginClasses,
+  type MarginProps,
+} from '../../props/margin';
 
-export interface ButtonProps
-  extends
-    MarginProps,
-    ButtonStyleProps,
-    JSX.ButtonHTMLAttributes<HTMLButtonElement> {}
+export interface LinkButtonProps
+  extends MarginProps, ButtonStyleProps, AnchorProps {}
 
-/** Interactive button for triggering actions. */
-const Button: ParentComponent<ButtonProps> = (rawProps) => {
+/** Anchor element styled as a button for navigation actions. */
+const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
   const props = mergeProps(buttonStyleDefaults, rawProps);
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [local, rest] = splitProps(withoutMargin, [
@@ -38,10 +41,10 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <button class={className()} {...rest}>
+    <A class={className()} {...rest}>
       {local.children}
-    </button>
+    </A>
   );
 };
 
-export default Button;
+export default LinkButton;

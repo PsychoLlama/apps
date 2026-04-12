@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
+import { buttonStyleArgTypes } from '../../props/button';
 import { marginArgTypes } from '../../props/margin';
 import ButtonComponent, { type ButtonProps } from './button';
 
@@ -15,17 +16,7 @@ const meta = {
   },
   argTypes: {
     ...marginArgTypes,
-    size: {
-      control: { type: 'range', min: 1, max: 4, step: 1 },
-    },
-    variant: {
-      control: 'inline-radio',
-      options: ['solid', 'soft', 'outline', 'ghost'],
-    },
-    color: {
-      control: 'inline-radio',
-      options: ['accent', 'neutral', 'danger'],
-    },
+    ...buttonStyleArgTypes,
     disabled: {
       control: 'boolean',
     },
