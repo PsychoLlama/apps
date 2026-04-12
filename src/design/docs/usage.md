@@ -8,10 +8,14 @@
 - Light/dark mode is automatic.
 - `accent[1-12]`, `accentAlpha[1-12]`: Brand color scale and alpha variant.
 - `neutral[1-12]`, `neutralAlpha[1-12]`: Grayscale tinted toward accent.
+- `danger[1-12]`: Destructive actions and error states.
+- `warning[1-12]`: Caution and warning states.
+- `success[1-12]`: Positive outcomes and active status.
 - `text.lowContrast`, `text.highContrast`: Text colors.
 - `background.page`, `background.panelSolid`, `background.panelTranslucent`, `background.surface`, `background.overlay`: Surface layers.
-- Semantic tokens alias palette CSS vars (`accent` → `blue`, `danger` → `red`, etc.).
-- Scale semantics (applies to accent and neutral):
+- `black[1-12]`, `white[1-12]`: Pure black/white alpha scales (transparent → opaque).
+- Semantic tokens alias palette CSS vars (`accent` → `blue`, `danger` → `red`, `warning` → `amber`, `success` → `grass`, `neutral` → `slate`).
+- Scale semantics (applies to accent, neutral, danger, warning, success):
   - 1–2: Backgrounds.
   - 3–5: Component fills (idle, hover, active).
   - 6–8: Borders (subtle, default, strong).
@@ -23,6 +27,7 @@
 - `typeScale[1-9]`: Each step bundles `fontSize`, `lineHeight`, `letterSpacing`. Always consume a full step.
 - `fontFamily.body`, `fontFamily.heading`: Font stacks.
 - `fontWeight.light`, `.regular`, `.medium`, `.bold`: Numeric weights.
+- `baselineOffset`: Leading-trim polyfill offset for IBM Plex Sans (`0.375em`).
 
 ## Space
 
@@ -39,7 +44,7 @@
 
 ## Motion
 
-Adapted from IBM Carbon (Apache-2.0). Compose a duration + easing per transition.
+Adapted from IBM Carbon (Apache-2.0). Compose a duration + easing per transition. Durations collapse to `0s` when `prefers-reduced-motion: reduce` is active.
 
 ### Duration
 

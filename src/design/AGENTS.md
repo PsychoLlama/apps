@@ -17,6 +17,11 @@
 - `assignColorSchemeVars(light, dark)` emits the three `globalStyle` rules for mode-dependent vars. Only use it when light/dark modes need structurally different CSS; prefer `light-dark()` for color-only differences.
 - Semantic color tokens alias palette CSS vars. Changing a palette assignment (e.g. `danger` → a different hue) updates all downstream references.
 
+## Usage Doc
+
+- Located at `docs/usage.md`.
+- Keep updated when tokens are added, removed, or renamed.
+
 ## Deviations from Radix UI
 
 - **No `--scaling` variable.** We use `rem` instead.

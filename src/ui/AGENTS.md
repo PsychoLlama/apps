@@ -18,3 +18,9 @@
 - Use `meta.title` to group (e.g. `UI/Layout`). Options: Layout, Typography, Components, Utilities
 - The named export is the story name.
 - Keep `argTypes` in sync with component props.
+
+## Reference Docs
+
+- Located at `docs/reference/`. One file per component, plus `index.md` and `standard-props.md`.
+- Optimized for token efficiency. No examples, no usage guides — props and descriptions only.
+- Keep docs updated with components and standard props.

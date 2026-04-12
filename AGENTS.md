@@ -14,15 +14,17 @@
 
 ## UI Components
 
-- Import from `#ui`. Prefer `Box`, `Flex`, `Grid`, `Text`, and `Heading` over raw HTML elements.
-- Use semantic elements via the `as` prop: `nav`, `main`, `section`, `aside`, `article`, `header`, `footer` — not just `div`.
+- Reference docs: ./src/ui/docs/reference/index.md
+- Import from `#ui`.
+- Prefer semantic elements via the `as` prop (`p`, `main`, `footer`, etc). Avoid `div`.
 - Design mobile-first. Use `breakpoint` tokens in `@media` blocks for responsive overrides.
+- Avoid needless wrapper elements.
 
 ## Design System
 
-- Usage guide: `src/design/docs/usage.md`.
-- Import tokens from `#design`. NEVER hard-code colors, spacing, radius, shadows, or typography values.
-- Use `space` tokens instead of absolute units for sizing.
+- Reference docs: ./src/design/docs/usage.md
+- Import tokens from `#design`. NEVER hard-code colors, spacing, radius, shadows, motion, or typography values.
+- Avoid needless CSS reset rules. We use `the-new-css-reset`. It is thorough.
 
 ## Icons
 
