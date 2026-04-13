@@ -16,6 +16,11 @@ import {
   trimPropKeys,
   resolveTrimClass,
 } from '../../props/trim';
+import {
+  type SelectableProps,
+  selectablePropKeys,
+  resolveSelectableClass,
+} from '../../props/selectable';
 import * as css from './text.css';
 
 /** Text-specific props, independent of the rendered element. */
@@ -33,7 +38,7 @@ interface TextOwnProps {
 /** Text props for a specific element tag. */
 export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
   T,
-  TextOwnProps & TrimProps & MarginProps
+  TextOwnProps & TrimProps & MarginProps & SelectableProps
 >;
 
 /** General-purpose text component for body copy, labels, and inline text. */
@@ -42,6 +47,7 @@ function Text(
   rawProps: { as: HtmlTextTag } & TextOwnProps &
     TrimProps &
     MarginProps &
+    SelectableProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
   const props = mergeProps({ size: 3 as const }, rawProps);
@@ -55,6 +61,7 @@ function Text(
     'children',
     ...trimPropKeys,
     ...marginPropKeys,
+    ...selectablePropKeys,
   ]);
 
   const className = () =>
@@ -65,6 +72,7 @@ function Text(
       local.align && css.align[local.align],
       local.color && css.color[local.color],
       resolveTrimClass(local),
+      resolveSelectableClass(local),
       ...resolveMarginClasses(local),
       local.class,
     ]

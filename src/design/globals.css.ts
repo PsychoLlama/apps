@@ -21,6 +21,7 @@ import { fontFamily, fontWeight, typeScale } from './tokens/typography.css';
  * - font smoothing: consistent antialiased rendering
  * - text-size-adjust: prevent mobile browsers from inflating font sizes
  * - overflow-wrap: break long words rather than overflow containers
+ * - user-select: disable text selection globally (opt-in per component)
  */
 globalStyle(':root', {
   colorScheme: 'light dark',
@@ -31,6 +32,7 @@ globalStyle(':root', {
   textSizeAdjust: 'none',
   WebkitTextSizeAdjust: 'none',
   overflowWrap: 'break-word',
+  userSelect: 'none',
 });
 
 // Support overriding the color scheme through application code.

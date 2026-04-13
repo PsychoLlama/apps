@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import HeadingComponent, { type HeadingProps } from './heading';
 import { marginArgTypes } from '../../props/margin';
 import { trimArgTypes } from '../../props/trim';
+import { selectableArgTypes } from '../../props/selectable';
 
 const meta = {
   title: 'UI/Typography',
@@ -35,6 +36,7 @@ const meta = {
     children: { control: 'text' },
     ...trimArgTypes,
     ...marginArgTypes,
+    ...selectableArgTypes,
   },
 } satisfies Meta<HeadingProps<'h1'>>;
 

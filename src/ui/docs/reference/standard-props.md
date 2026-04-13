@@ -21,3 +21,9 @@ Shared prop groups used across components. Values use `space` tokens from `#desi
 Remove extra whitespace caused by line-height.
 
 - `trim`: Side to trim. `'start' | 'end' | 'both'`.
+
+## Selectable Props
+
+Override the global `user-select: none` default.
+
+- `selectable`: Allow text selection. `boolean`.

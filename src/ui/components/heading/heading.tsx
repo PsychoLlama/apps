@@ -16,6 +16,11 @@ import {
   trimPropKeys,
   resolveTrimClass,
 } from '../../props/trim';
+import {
+  type SelectableProps,
+  selectablePropKeys,
+  resolveSelectableClass,
+} from '../../props/selectable';
 import * as css from './heading.css';
 
 /** Heading-specific props, independent of the rendered element. */
@@ -33,7 +38,7 @@ interface HeadingOwnProps {
 /** Heading props for a specific heading level. */
 export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<
   T,
-  HeadingOwnProps & TrimProps & MarginProps
+  HeadingOwnProps & TrimProps & MarginProps & SelectableProps
 >;
 
 /** Semantic heading with size independent of level. Pick the `as` level for document hierarchy and `size` for visual weight. */
@@ -44,6 +49,7 @@ function Heading(
   rawProps: { as: HtmlHeadingTag } & HeadingOwnProps &
     TrimProps &
     MarginProps &
+    SelectableProps &
     JSX.HTMLAttributes<HTMLHeadingElement>,
 ) {
   const props = mergeProps(
@@ -60,6 +66,7 @@ function Heading(
     'children',
     ...trimPropKeys,
     ...marginPropKeys,
+    ...selectablePropKeys,
   ]);
 
   const className = () =>
@@ -70,6 +77,7 @@ function Heading(
       local.align && css.align[local.align],
       local.color && css.color[local.color],
       resolveTrimClass(local),
+      resolveSelectableClass(local),
       ...resolveMarginClasses(local),
       local.class,
     ]
