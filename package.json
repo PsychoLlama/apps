@@ -22,7 +22,7 @@
     "lint": "eslint --color",
     "test": "vitest run",
     "test:storybook": "vitest run --config vitest.storybook.config.ts",
-    "storybook": "storybook dev -p 6006 --no-open",
+    "storybook": "storybook dev -p 6006 --ci",
     "storybook:build": "storybook build"
   },
   "prettier": {
