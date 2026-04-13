@@ -4,6 +4,11 @@ import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 
 export default defineConfig({
   plugins: [solid(), vanillaExtractPlugin()],
+  server: {
+    watch: {
+      ignored: ['**/.direnv/**'],
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,
