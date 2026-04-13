@@ -1,6 +1,7 @@
 import type { StorybookConfig } from 'storybook-solidjs-vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import { mergeConfig } from 'vite';
+import { watchIgnore } from '../vite-ignored.ts';
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(ts|tsx)'],
@@ -11,6 +12,7 @@ const config: StorybookConfig = {
   viteFinal: (config) =>
     mergeConfig(config, {
       ...(process.env.NODE_ENV === 'production' && { base: '/__storybook/' }),
+      server: { watch: { ignored: watchIgnore } },
       plugins: [vanillaExtractPlugin()],
     }),
 };

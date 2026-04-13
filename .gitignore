@@ -12,3 +12,4 @@ app.config.timestamp_*.js
 .env*.local
 .claude/worktrees
 storybook-static
+result*

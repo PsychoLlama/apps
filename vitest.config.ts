@@ -1,12 +1,13 @@
 import { defineConfig } from 'vitest/config';
 import solid from 'vite-plugin-solid';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
+import { watchIgnore } from './vite-ignored';
 
 export default defineConfig({
   plugins: [solid(), vanillaExtractPlugin()],
   server: {
     watch: {
-      ignored: ['**/.direnv/**'],
+      ignored: watchIgnore,
     },
   },
   test: {
