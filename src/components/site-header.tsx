@@ -12,7 +12,13 @@ export default function SiteHeader(props: { title?: string }) {
 
       <Show when={props.title}>
         <Box as="div" class={css.divider} />
-        <Text as="span" size={2} weight="medium" color="lowContrast">
+        <Text
+          as="span"
+          size={2}
+          weight="medium"
+          color="lowContrast"
+          selectable={false}
+        >
           {props.title}
         </Text>
       </Show>

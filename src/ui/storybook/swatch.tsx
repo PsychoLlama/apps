@@ -5,7 +5,13 @@ import * as css from './swatch.css';
 /** Decorative placeholder for layout stories. Diagonal neutral stripes with a centered label. */
 const Swatch: ParentComponent = (props) => (
   <Box as="div" class={css.swatch}>
-    <Text as="span" size={2} weight="bold" color="lowContrast">
+    <Text
+      as="span"
+      size={2}
+      weight="bold"
+      color="lowContrast"
+      selectable={false}
+    >
       {props.children}
     </Text>
   </Box>

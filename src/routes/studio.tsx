@@ -67,10 +67,16 @@ function LibraryPanel() {
                 </Text>
               </Flex>
               <Flex as="div" direction="column" gap={1}>
-                <Text as="span" size={2} weight="medium" class={css.truncate}>
+                <Text
+                  as="span"
+                  size={2}
+                  weight="medium"
+                  class={css.truncate}
+                  selectable={false}
+                >
                   {rec.name}
                 </Text>
-                <Text as="span" size={1} color="lowContrast">
+                <Text as="span" size={1} color="lowContrast" selectable={false}>
                   {rec.duration}
                 </Text>
               </Flex>
@@ -80,7 +86,7 @@ function LibraryPanel() {
       </Box>
 
       <Flex as="div" justify="between" px={4} py={2} class={css.panelFooter}>
-        <Text as="span" size={1} color="lowContrast">
+        <Text as="span" size={1} color="lowContrast" selectable={false}>
           {library.length} recordings
         </Text>
         <Text as="span" size={1} color="lowContrast">
@@ -111,6 +117,7 @@ function ActiveTracks() {
             <Text
               as="span"
               size={1}
+              selectable={false}
               class={`${css.trackPill} ${!t.live ? css.trackPillStopped : ''}`}
             >
               <Box

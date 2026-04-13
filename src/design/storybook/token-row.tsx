@@ -9,11 +9,11 @@ const TokenRow: ParentComponent<{ name: string; description: string }> = (
     {props.children}
 
     <Box as="div">
-      <Heading as="h3" size={2} weight="medium">
+      <Heading as="h3" size={2} weight="medium" selectable={false}>
         {props.name}
       </Heading>
 
-      <Text as="p" size={2} color="lowContrast">
+      <Text as="p" size={2} color="lowContrast" selectable={false}>
         {props.description}
       </Text>
     </Box>
