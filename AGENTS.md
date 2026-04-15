@@ -26,6 +26,12 @@
 - Import tokens from `#design`. NEVER hard-code colors, spacing, radius, shadows, motion, or typography values.
 - Avoid needless CSS reset rules. We use `the-new-css-reset`. It is thorough.
 
+## State Management
+
+- Reference docs: ./src/state/docs/usage.md
+- Import from `#state`.
+- Side effects belong in activities, not workflows or stores.
+
 ## Icons
 
 - Import SVG icon components from `virtual:icons/mdi/*`.
