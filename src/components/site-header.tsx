@@ -6,7 +6,7 @@ import * as css from './site-header.css';
 export default function SiteHeader(props: { title?: string }) {
   return (
     <Flex as="header" align="center" gap={4} px={4} py={2} class={css.header}>
-      <LinkButton href="/" variant="ghost" color="neutral">
+      <LinkButton testId="home" href="/" variant="ghost" color="neutral">
         <IconApps width="24" height="24" />
       </LinkButton>
 

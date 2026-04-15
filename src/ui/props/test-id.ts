@@ -5,6 +5,9 @@ export interface TestIdProps {
   testId?: string;
 }
 
+/** TestIdProps with `testId` required. Used by interactive components. */
+export type RequiredTestIdProps = Required<TestIdProps>;
+
 export const testIdPropKeys = ['testId'] as const;
 
 export function resolveTestIdAttr({ testId }: TestIdProps) {

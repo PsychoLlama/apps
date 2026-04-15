@@ -14,14 +14,14 @@ import {
 import {
   testIdPropKeys,
   resolveTestIdAttr,
-  type TestIdProps,
+  type RequiredTestIdProps,
 } from '../../props/test-id';
 
 export interface ButtonProps
   extends
     MarginProps,
     ButtonStyleProps,
-    TestIdProps,
+    RequiredTestIdProps,
     JSX.ButtonHTMLAttributes<HTMLButtonElement> {}
 
 /** Interactive button for triggering actions. */

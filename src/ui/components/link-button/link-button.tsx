@@ -20,11 +20,11 @@ import {
 import {
   testIdPropKeys,
   resolveTestIdAttr,
-  type TestIdProps,
+  type RequiredTestIdProps,
 } from '../../props/test-id';
 
 export interface LinkButtonProps
-  extends MarginProps, ButtonStyleProps, TestIdProps, AnchorProps {}
+  extends MarginProps, ButtonStyleProps, RequiredTestIdProps, AnchorProps {}
 
 /** Anchor element styled as a button for navigation actions. */
 const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {

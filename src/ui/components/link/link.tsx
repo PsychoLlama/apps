@@ -25,7 +25,7 @@ import {
 import {
   testIdPropKeys,
   resolveTestIdAttr,
-  type TestIdProps,
+  type RequiredTestIdProps,
 } from '../../props/test-id';
 import * as css from './link.css';
 
@@ -33,7 +33,7 @@ type LinkColor = 'accent' | 'neutral';
 type Underline = 'auto' | 'always' | 'hover' | 'none';
 
 export interface LinkProps
-  extends MarginProps, TrimProps, TestIdProps, AnchorProps {
+  extends MarginProps, TrimProps, RequiredTestIdProps, AnchorProps {
   /** Visual size on a 1–9 scale. Inherits from parent when omitted. */
   size?: TypeScale;
   /** Font weight. */

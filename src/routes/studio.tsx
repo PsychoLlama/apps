@@ -147,7 +147,9 @@ function IdleState() {
       gap={5}
       class={css.mainContent}
     >
-      <Button size={3}>Start Recording</Button>
+      <Button testId="start-recording" size={3}>
+        Start Recording
+      </Button>
       <Text as="p" size={2} color="lowContrast">
         Record your screen, window, or tab
       </Text>
@@ -175,13 +177,13 @@ function RecordingState() {
       </Text>
       <ActiveTracks />
       <Flex as="div" gap={3} wrap="wrap" justify="center">
-        <Button variant="outline" color="neutral">
+        <Button testId="add-track" variant="outline" color="neutral">
           Add Track
         </Button>
-        <Button variant="outline" color="neutral">
+        <Button testId="pause-all" variant="outline" color="neutral">
           Pause All
         </Button>
-        <Button variant="solid" color="danger">
+        <Button testId="stop-all" variant="solid" color="danger">
           Stop All
         </Button>
       </Flex>
@@ -209,11 +211,13 @@ function PausedState() {
       </Text>
       <ActiveTracks />
       <Flex as="div" gap={3} wrap="wrap" justify="center">
-        <Button variant="outline" color="neutral">
+        <Button testId="add-track" variant="outline" color="neutral">
           Add Track
         </Button>
-        <Button variant="solid">Resume All</Button>
-        <Button variant="solid" color="danger">
+        <Button testId="resume-all" variant="solid">
+          Resume All
+        </Button>
+        <Button testId="stop-all" variant="solid" color="danger">
           Stop All
         </Button>
       </Flex>
@@ -236,7 +240,9 @@ function ErrorState() {
           Recording" to try again.
         </Text>
       </Callout>
-      <Button size={3}>Start Recording</Button>
+      <Button testId="start-recording" size={3}>
+        Start Recording
+      </Button>
       <Text as="p" size={2} color="lowContrast">
         Record your screen, window, or tab
       </Text>

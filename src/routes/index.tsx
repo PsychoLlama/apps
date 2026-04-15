@@ -13,7 +13,12 @@ export default function Launcher() {
           </Heading>
 
           <Flex as="nav" direction="column" gap={3}>
-            <Link href="/studio" underline="none" class={css.link}>
+            <Link
+              testId="studio-link"
+              href="/studio"
+              underline="none"
+              class={css.link}
+            >
               <Flex as="div" class={css.indicator} />
               <Flex as="div" direction="column" gap={1}>
                 <Text as="span" size={3} weight="medium">
@@ -25,7 +30,12 @@ export default function Launcher() {
               </Flex>
             </Link>
 
-            <Link href="/favicon" underline="none" class={css.link}>
+            <Link
+              testId="favicon-link"
+              href="/favicon"
+              underline="none"
+              class={css.link}
+            >
               <Flex as="div" class={css.indicator} />
               <Flex as="div" direction="column" gap={1}>
                 <Text as="span" size={3} weight="medium">
