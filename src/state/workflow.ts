@@ -45,21 +45,10 @@ export function defineWorkflow<Input, RawReturn>(
   };
 }
 
-function createWorkflowContext(): WorkflowContext {
-  return {
-    run: executeActivity,
-  };
-}
+const ctx: WorkflowContext = { run: executeActivity };
 
-function resolve<T>(value: T): Result<T> {
-  return { type: RESOLVED, value };
-}
-
-function reject<T>(error: unknown): Result<T> {
-  return {
-    type: REJECTED,
-    value: error instanceof Error ? error : new Error(String(error)),
-  };
+function toError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
 }
 
 type WorkflowRunner<Input, RawReturn> = (
@@ -71,9 +60,9 @@ export function useWorkflow<Input, RawReturn>(
   workflow: WorkflowDef<Input, RawReturn>,
   eventBus: EventBus = GLOBAL_EVENT_BUS,
 ): WorkflowRunner<Input, RawReturn> {
-  return ((...args: unknown[]) => {
-    type Settled = Result<Awaited<RawReturn>>;
+  type Settled = Result<Awaited<RawReturn>>;
 
+  return ((...args: unknown[]) => {
     const input = args[0] as Input;
     publish(
       eventBus,
@@ -81,28 +70,33 @@ export function useWorkflow<Input, RawReturn>(
       ...(args as void extends Input ? [] : [Input]),
     );
 
-    const settle = (result: Settled) =>
-      publish(eventBus, workflow.settled, result);
+    try {
+      const result = workflow[WORKFLOW_EXECUTOR](ctx, input);
 
-    function execute(): void | Promise<void> {
-      const ctx = createWorkflowContext();
-
-      try {
-        const result = workflow[WORKFLOW_EXECUTOR](ctx, input);
-
-        if (result instanceof Promise) {
-          return result.then(
-            (value) => settle(resolve(value) as Settled),
-            (error) => settle(reject(error)),
-          );
-        }
-
-        settle(resolve(result) as Settled);
-      } catch (error) {
-        settle(reject(error));
+      if (result instanceof Promise) {
+        return result.then(
+          (value: Awaited<RawReturn>) =>
+            publish(eventBus, workflow.settled, {
+              type: RESOLVED,
+              value,
+            } as Settled),
+          (error: unknown) =>
+            publish(eventBus, workflow.settled, {
+              type: REJECTED,
+              value: toError(error),
+            } as Settled),
+        );
       }
-    }
 
-    return execute();
+      publish(eventBus, workflow.settled, {
+        type: RESOLVED,
+        value: result,
+      } as Settled);
+    } catch (error) {
+      publish(eventBus, workflow.settled, {
+        type: REJECTED,
+        value: toError(error),
+      } as Settled);
+    }
   }) as unknown as WorkflowRunner<Input, RawReturn>;
 }
