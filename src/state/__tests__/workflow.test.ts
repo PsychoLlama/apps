@@ -7,7 +7,7 @@ import { defineStore } from '../store';
 
 describe('defineWorkflow', () => {
   it('exposes started and settled topics', () => {
-    const workflow = defineWorkflow((_ctx) => 'done');
+    const workflow = defineWorkflow(() => 'done');
 
     expect(typeof workflow.started).toBe('symbol');
     expect(typeof workflow.settled).toBe('symbol');
@@ -18,7 +18,7 @@ describe('defineWorkflow', () => {
 describe('run', () => {
   it('publishes started with the input', () => {
     const eventBus = createEventBus();
-    const workflow = defineWorkflow((_ctx, userId: string) => `user-${userId}`);
+    const workflow = defineWorkflow((_, userId: string) => `user-${userId}`);
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.started], handler);
@@ -29,7 +29,7 @@ describe('run', () => {
 
   it('publishes settled with resolved value on success', () => {
     const eventBus = createEventBus();
-    const workflow = defineWorkflow((_ctx, n: number) => n * 2);
+    const workflow = defineWorkflow((_, n: number) => n * 2);
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.settled], handler);
@@ -43,7 +43,7 @@ describe('run', () => {
 
   it('publishes settled with rejected value on sync throw', () => {
     const eventBus = createEventBus();
-    const workflow = defineWorkflow((_ctx): string => {
+    const workflow = defineWorkflow((): string => {
       throw new Error('boom');
     });
     const handler = vi.fn();
@@ -59,10 +59,9 @@ describe('run', () => {
 
   it('publishes settled with resolved value on async success', async () => {
     const eventBus = createEventBus();
-    const workflow = defineWorkflow(async (_ctx, id: string) => ({
-      id,
-      name: 'test',
-    }));
+    const workflow = defineWorkflow((_, id: string) =>
+      Promise.resolve({ id, name: 'test' }),
+    );
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.settled], handler);
@@ -76,7 +75,8 @@ describe('run', () => {
 
   it('publishes settled with rejected value on async throw', async () => {
     const eventBus = createEventBus();
-    const workflow = defineWorkflow(async (_ctx) => {
+    const workflow = defineWorkflow(async () => {
+      await Promise.resolve();
       throw new Error('async boom');
     });
     const handler = vi.fn();
@@ -92,7 +92,8 @@ describe('run', () => {
 
   it('wraps non-Error throws in an Error', () => {
     const eventBus = createEventBus();
-    const workflow = defineWorkflow((_ctx): never => {
+    const workflow = defineWorkflow((): never => {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw 'string error';
     });
     const handler = vi.fn();
@@ -100,7 +101,7 @@ describe('run', () => {
     subscribe(eventBus, [workflow.settled], handler);
     run(eventBus, workflow);
 
-    const result = handler.mock.calls[0][1];
+    const result = handler.mock.calls[0][1] as Result<never>;
     expect(result.type).toBe(REJECTED);
     expect(result.value).toBeInstanceOf(Error);
     expect(result.value.message).toBe('string error');
@@ -188,7 +189,7 @@ describe('run', () => {
 describe('type inference', () => {
   it('sync workflow returns void', () => {
     const eventBus = createEventBus();
-    const workflow = defineWorkflow((_ctx) => 42);
+    const workflow = defineWorkflow(() => 42);
     const result = run(eventBus, workflow);
 
     expectTypeOf(result).toEqualTypeOf<void>();
@@ -196,33 +197,33 @@ describe('type inference', () => {
 
   it('async workflow returns Promise<void>', () => {
     const eventBus = createEventBus();
-    const workflow = defineWorkflow(async (_ctx) => 42);
+    const workflow = defineWorkflow(() => Promise.resolve(42));
     const result = run(eventBus, workflow);
 
     expectTypeOf(result).toEqualTypeOf<Promise<void>>();
   });
 
   it('infers started topic payload from input type', () => {
-    const workflow = defineWorkflow((_ctx, userId: string) => userId);
+    const workflow = defineWorkflow((_, userId: string) => userId);
 
     expectTypeOf(workflow.started).toEqualTypeOf<Topic<string>>();
   });
 
   it('infers settled topic payload from return type', () => {
-    const workflow = defineWorkflow((_ctx) => 42);
+    const workflow = defineWorkflow(() => 42);
 
     expectTypeOf(workflow.settled).toEqualTypeOf<Topic<Result<number>>>();
   });
 
   it('infers settled topic payload from async return type (unwrapped)', () => {
-    const workflow = defineWorkflow(async (_ctx) => 42);
+    const workflow = defineWorkflow(() => Promise.resolve(42));
 
     expectTypeOf(workflow.settled).toEqualTypeOf<Topic<Result<number>>>();
   });
 
   it('void input workflow requires no args', () => {
     const eventBus = createEventBus();
-    const workflow = defineWorkflow((_ctx) => 'done');
+    const workflow = defineWorkflow(() => 'done');
 
     // @ts-expect-error — should not accept an argument
     run(eventBus, workflow, 'extra');

@@ -12,7 +12,7 @@ describe('defineActivity', () => {
   });
 
   it('supports async activities', async () => {
-    const fetch = defineActivity({}, async (id: string) => ({ id }));
+    const fetch = defineActivity({}, (id: string) => Promise.resolve({ id }));
     const result = await executeActivity(fetch, 'abc');
     expect(result).toEqual({ id: 'abc' });
   });
