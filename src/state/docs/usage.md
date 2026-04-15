@@ -36,6 +36,7 @@
 - `defineTopic<Payload>()` creates a typed event identity. Runtime value is a `Symbol`.
 - Payload defaults to `void` when omitted.
 - Workflows create lifecycle topics automatically. Define custom topics for application-level events.
+- `useTopic(topic, bus?)` binds a topic to a bus and returns a callable. Void topics return `() => void`, typed topics return `(payload) => void`.
 
 ## Event Bus
 

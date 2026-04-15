@@ -1,4 +1,4 @@
-export { defineTopic, type Topic } from './topic';
+export { defineTopic, useTopic, type Topic } from './topic';
 export {
   createEventBus,
   publish,

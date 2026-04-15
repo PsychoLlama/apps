@@ -1,6 +1,6 @@
 import { For, Show, onCleanup } from 'solid-js';
 import { Button, Callout, Flex, Heading, Text } from '#ui';
-import { createEventBus, defineStore, defineTopic, publish } from '#state';
+import { createEventBus, defineStore, defineTopic, useTopic } from '#state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import SiteHeader from '../components/site-header';
 import * as css from './studio.css';
@@ -331,14 +331,12 @@ function StateSwitcher(props: {
 export default function StudioC() {
   const bus = createEventBus();
   const [store, dispose] = createStudioStore(bus);
+  const setSwitchState = useTopic(switchState, bus);
   onCleanup(dispose);
 
   return (
     <>
-      <StateSwitcher
-        state={store.current}
-        onChange={(s) => publish(bus, switchState, s)}
-      />
+      <StateSwitcher state={store.current} onChange={setSwitchState} />
       <Show when={store.current === 'unsupported'}>
         <UnsupportedState />
       </Show>
