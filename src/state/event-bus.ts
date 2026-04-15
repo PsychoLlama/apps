@@ -2,7 +2,7 @@ import type { Topic } from './topic';
 
 const listenersKey: unique symbol = Symbol();
 
-type Handler = (topic: symbol, payload: unknown) => void;
+type Handler = (topic: Topic<unknown>, payload: unknown) => void;
 
 export interface EventBus {
   readonly [listenersKey]: Map<symbol, Set<Handler>>;
@@ -32,7 +32,7 @@ export function subscribe(
       listeners.set(topic, set);
     }
 
-    set.add(handler as Handler);
+    set.add(handler);
     registered.push(topic);
   }
 
@@ -40,23 +40,32 @@ export function subscribe(
     for (const topic of registered) {
       const set = listeners.get(topic);
       if (set) {
-        set.delete(handler as Handler);
+        set.delete(handler);
         if (set.size === 0) listeners.delete(topic);
       }
     }
   };
 }
 
-/** Publish to a topic, notifying all subscribers on the bus. */
+/** Publish to a void topic (no payload). */
+export function publish(eventBus: EventBus, topic: Topic<void>): void;
+
+/** Publish to a typed topic with a payload. */
 export function publish<Payload>(
   eventBus: EventBus,
   topic: Topic<Payload>,
-  ...args: void extends Payload ? [] : [Payload]
+  payload: Payload,
+): void;
+
+export function publish(
+  eventBus: EventBus,
+  topic: Topic<unknown>,
+  payload?: unknown,
 ): void {
   const set = eventBus[listenersKey].get(topic);
   if (!set) return;
   for (const handler of set) {
-    handler(topic, args[0]);
+    handler(topic, payload);
   }
 }
 

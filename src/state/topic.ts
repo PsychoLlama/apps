@@ -5,6 +5,7 @@ export type Topic<Payload = void> = symbol & {
   readonly [PHANTOM_FIELD]: Payload;
 };
 
-/** Create a typed topic. Alias for `Symbol()` with phantom type branding. */
-export const defineTopic: <Payload = void>() => Topic<Payload> =
-  Symbol as never;
+/** Create a typed topic. Returns a `Symbol()` with phantom type branding. */
+export function defineTopic<Payload = void>(): Topic<Payload> {
+  return Symbol() as Topic<Payload>;
+}
