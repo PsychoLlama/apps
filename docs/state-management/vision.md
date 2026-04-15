@@ -32,23 +32,41 @@ This observability benefits humans and agents alike. An LLM debugging a failure 
 
 ## Design
 
-### Events
+### Topics
 
-Events are typed signals. They carry a payload type but have no coupling to the state they affect.
+Topics are typed pub-sub channels. They carry a payload type but have no coupling to the state they affect.
 
 ```ts
-const trackAdded = defineEvent<MediaStreamTrack>();
-const recordingStarted = defineEvent();
+const trackAdded = defineTopic<MediaStreamTrack>();
+const recordingStarted = defineTopic();
 ```
 
-Under the hood, events are branded symbols. They do not need to be `unique symbol` because type safety comes from the `on` callback's generic signature, not from symbol key identity.
+`defineTopic` is aliased to `Symbol` — zero runtime overhead, no function call. Type safety is purely phantom: `Topic<T>` is `symbol & { [PHANTOM_FIELD]: T }`, where `PHANTOM_FIELD` is a declared-but-never-assigned unique symbol. The payload type is recovered through the generic on `subscribe` and `on`, not through the symbol's identity.
 
-### State
+### Event Bus
 
-State is defined independently of the component tree. There is no setter — state is updated exclusively through event handlers.
+The event bus is a null object with private symbol state. Free functions operate on it.
 
 ```ts
-const recording = defineState<RecordingState>(
+const eventBus = createEventBus();
+
+publish(eventBus, trackAdded, track);
+
+subscribe(eventBus, [topicA, topicB], (topic, payload) => {
+  // topic identifies which fired, payload is the data
+});
+```
+
+`subscribe` accepts an iterable of topics and registers a single handler for all of them. The handler receives the topic that fired alongside the payload. This allows stores to subscribe once for all their topics instead of N times.
+
+A global bus (`GLOBAL_EVENT_BUS`) is the default for production. Local buses provide test isolation.
+
+### Stores
+
+Store definition is separate from store construction. `defineStore` captures the transition logic; the returned factory creates instances bound to a bus.
+
+```ts
+const createRecording = defineStore<RecordingState>(
   () => ({
     tracks: new Set(),
     state: IDLE,
@@ -63,26 +81,40 @@ const recording = defineState<RecordingState>(
     });
   },
 );
+
+const [state, dispose] = createRecording(eventBus);
 ```
 
-`defineState` takes an initializer and a setup callback. The `on` function binds events to state mutations. Handlers receive the current state (wrapped in Solid's `produce`) and the event payload, both fully inferred.
+Internally, the factory collects topic-to-handler bindings in a `Map`, then issues a single `subscribe` call for all topics. On publish, the handler Map lookup narrows to the right transition and runs one `produce` call. Duplicate handlers for the same topic throw.
 
-The `on` callback API was chosen over computed-key syntax (`{ [event](payload) {} }`) because TypeScript collapses symbol index signatures to `[key: symbol]: V`, erasing payload types. The generic `on<T>(event: EventDef<T>, handler)` preserves full inference.
+Handlers receive the current state (wrapped in Solid's `produce`) and the event payload, both fully inferred. The `on` callback API was chosen over computed-key syntax (`{ [topic](payload) {} }`) because TypeScript collapses symbol index signatures to `[key: symbol]: V`, erasing payload types. The generic `on<T>(topic: Topic<T>, handler)` preserves full inference.
 
-### Workflows
+Dispose is idempotent and cleans up all subscriptions. The bus removes empty listener sets on unsubscribe.
 
-Workflows are higher-level primitives that tie effects together in a cancelable, observable form. They define their own lifecycle events.
+### Testing
+
+The event bus is the isolation seam. No DOM, no component rendering, no simulated clicks.
+
+```ts
+const eventBus = createEventBus();
+const [state, dispose] = createRecording(eventBus);
+
+publish(eventBus, trackAdded, track);
+expect(state.tracks.size).toBe(1);
+```
+
+Each test creates its own bus. Parallel tests don't leak state.
+
+### Workflows (future)
+
+Workflows are higher-level primitives that tie effects together in a cancelable, observable form. They define their own lifecycle topics as properties.
 
 ```ts
 const getUser = defineWorkflow(async (ctx, userId: string): Promise<User> => {
   return await ctx.run(Http.GET, `/users/${userId}`);
 });
-```
 
-Workflow lifecycle events are properties on the workflow object. State handlers subscribe to them through the same `on` function used for plain events.
-
-```ts
-defineState<UsersState>(
+const createUsers = defineStore<UsersState>(
   () => ({ users: new Map(), loading: false }),
   (on) => {
     on(getUser.started, (state, userId) => {
@@ -99,42 +131,8 @@ defineState<UsersState>(
 );
 ```
 
-The workflow owns its event definitions. `getUser.started` is an `EventDef<string>` (inferred from the workflow's input type) and `getUser.settled` is an `EventDef<Result<User>>` (inferred from its output type). No separate event declarations needed — the workflow's type signature drives everything.
+The workflow owns its topic definitions. `getUser.started` is a `Topic<string>` and `getUser.settled` is a `Topic<Result<User>>`, both inferred from the workflow's type signature. Not yet implemented.
 
-### Dispatch
+### Open questions
 
-Events are dispatched through a central event bus. The bus is the connective tissue — it routes events to every store that subscribes to them, and it's the single point of observability for the entire system.
-
-```ts
-import { dispatch } from '#state';
-
-dispatch(trackAdded, track);
-```
-
-Stores bind to a global bus by default. This makes stores importable as module-level singletons — no provider wrappers, no context lookups.
-
-```ts
-import { users } from './stores/users';
-
-// Read state directly — reactive in components, snapshot outside
-users.state.loading;
-```
-
-#### Testing
-
-Global state is bad for tests. The event bus is the isolation seam: stores accept a local bus, overriding the global default.
-
-```ts
-const bus = createEventBus();
-const store = users.create(bus);
-
-bus.dispatch(getUser.started, 'user-123');
-expect(store.state.loading).toBe(true);
-```
-
-No DOM, no component rendering, no simulated clicks. The store is a pure function of events. The bus scopes the test so parallel tests don't leak state into each other.
-
-#### Open questions
-
-- **Store initialization timing.** `defineState` returns a definition. When does the Solid store get created? Eagerly on import (simple, predictable) or lazily on first access (avoids unused stores)? Eager is simpler. Lazy is more efficient. Leaning eager — unused stores are a code smell, not a performance problem.
-- **Bus as the observability surface.** The global bus is where dev tools, logging, and debugging tap in. A structured event log of every dispatch — event identity, payload, which stores handled it, what state changed — falls out naturally. This is the answer to Problem 3.
+- **Observability surface.** The global bus is the natural tap point for dev tools, logging, and debugging. A structured log of every publish — topic identity, payload, which stores handled it, what state changed — falls out naturally.
