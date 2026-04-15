@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { marginArgTypes } from '../../props/margin';
+import { testIdArgTypes } from '../../props/test-id';
 import Text from '../text/text';
 import CalloutComponent, { type CalloutProps } from './callout';
 
@@ -14,6 +15,7 @@ const meta = {
   },
   argTypes: {
     ...marginArgTypes,
+    ...testIdArgTypes,
     size: {
       control: { type: 'range', min: 1, max: 3, step: 1 },
     },

@@ -27,3 +27,9 @@ Remove extra whitespace caused by line-height.
 Override the global `user-select: none` default.
 
 - `selectable`: Allow text selection. `boolean`.
+
+## Test ID Props
+
+Attach a test identifier to the underlying DOM node.
+
+- `testId`: Renders as `data-testid`. `string`.

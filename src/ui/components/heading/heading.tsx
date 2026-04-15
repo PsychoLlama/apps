@@ -21,6 +21,11 @@ import {
   selectablePropKeys,
   resolveSelectableClass,
 } from '../../props/selectable';
+import {
+  testIdPropKeys,
+  resolveTestIdAttr,
+  type TestIdProps,
+} from '../../props/test-id';
 import * as css from './heading.css';
 
 /** Heading-specific props, independent of the rendered element. */
@@ -38,7 +43,7 @@ interface HeadingOwnProps {
 /** Heading props for a specific heading level. */
 export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<
   T,
-  HeadingOwnProps & TrimProps & MarginProps & SelectableProps
+  HeadingOwnProps & TrimProps & MarginProps & SelectableProps & TestIdProps
 >;
 
 /** Semantic heading with size independent of level. Pick the `as` level for document hierarchy and `size` for visual weight. */
@@ -50,6 +55,7 @@ function Heading(
     TrimProps &
     MarginProps &
     SelectableProps &
+    TestIdProps &
     JSX.HTMLAttributes<HTMLHeadingElement>,
 ) {
   const props = mergeProps(
@@ -67,6 +73,7 @@ function Heading(
     ...trimPropKeys,
     ...marginPropKeys,
     ...selectablePropKeys,
+    ...testIdPropKeys,
   ]);
 
   const className = () =>
@@ -85,7 +92,12 @@ function Heading(
       .join(' ');
 
   return (
-    <Dynamic component={local.as} class={className()} {...rest}>
+    <Dynamic
+      component={local.as}
+      class={className()}
+      {...resolveTestIdAttr(local)}
+      {...rest}
+    >
       {local.children}
     </Dynamic>
   );

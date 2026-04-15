@@ -15,6 +15,11 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  testIdPropKeys,
+  resolveTestIdAttr,
+  type TestIdProps,
+} from '../../props/test-id';
 import Flex from '../flex/flex';
 import Grid from '../grid/grid';
 import * as css from './callout.css';
@@ -24,7 +29,7 @@ type Variant = 'soft' | 'surface' | 'outline';
 type Color = 'accent' | 'neutral';
 
 export interface CalloutProps
-  extends MarginProps, JSX.HTMLAttributes<HTMLDivElement> {
+  extends MarginProps, TestIdProps, JSX.HTMLAttributes<HTMLDivElement> {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: Size;
   /** Visual treatment. @default 'soft' */
@@ -49,7 +54,8 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
     rawProps,
   );
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
-  const [local, rest] = splitProps(withoutMargin, [
+  const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
+  const [local, rest] = splitProps(withoutTid, [
     'size',
     'variant',
     'color',
@@ -73,7 +79,14 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <Grid as="div" align="start" class={className()} role="note" {...rest}>
+    <Grid
+      as="div"
+      align="start"
+      class={className()}
+      role="note"
+      {...resolveTestIdAttr(tid)}
+      {...rest}
+    >
       <Flex as="div" align="center" class={css.iconSize[local.size]}>
         {local.icon ?? <IconInformation />}
       </Flex>

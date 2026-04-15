@@ -22,12 +22,18 @@ import {
   trimPropKeys,
   resolveTrimClass,
 } from '../../props/trim';
+import {
+  testIdPropKeys,
+  resolveTestIdAttr,
+  type TestIdProps,
+} from '../../props/test-id';
 import * as css from './link.css';
 
 type LinkColor = 'accent' | 'neutral';
 type Underline = 'auto' | 'always' | 'hover' | 'none';
 
-export interface LinkProps extends MarginProps, TrimProps, AnchorProps {
+export interface LinkProps
+  extends MarginProps, TrimProps, TestIdProps, AnchorProps {
   /** Visual size on a 1–9 scale. Inherits from parent when omitted. */
   size?: TypeScale;
   /** Font weight. */
@@ -51,7 +57,8 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     rawProps,
   );
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
-  const [local, rest] = splitProps(withoutMargin, [
+  const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
+  const [local, rest] = splitProps(withoutTid, [
     'size',
     'weight',
     'underline',
@@ -84,7 +91,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <A class={className()} {...rest}>
+    <A class={className()} {...resolveTestIdAttr(tid)} {...rest}>
       {local.children}
     </A>
   );

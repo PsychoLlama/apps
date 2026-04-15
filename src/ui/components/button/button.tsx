@@ -11,18 +11,25 @@ import {
   resolveButtonStyleClasses,
   type ButtonStyleProps,
 } from '../../props/button';
+import {
+  testIdPropKeys,
+  resolveTestIdAttr,
+  type TestIdProps,
+} from '../../props/test-id';
 
 export interface ButtonProps
   extends
     MarginProps,
     ButtonStyleProps,
+    TestIdProps,
     JSX.ButtonHTMLAttributes<HTMLButtonElement> {}
 
 /** Interactive button for triggering actions. */
 const Button: ParentComponent<ButtonProps> = (rawProps) => {
   const props = mergeProps(buttonStyleDefaults, rawProps);
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
-  const [local, rest] = splitProps(withoutMargin, [
+  const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
+  const [local, rest] = splitProps(withoutTid, [
     ...buttonStylePropKeys,
     'class',
     'children',
@@ -38,7 +45,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <button class={className()} {...rest}>
+    <button class={className()} {...resolveTestIdAttr(tid)} {...rest}>
       {local.children}
     </button>
   );

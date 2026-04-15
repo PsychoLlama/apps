@@ -17,15 +17,21 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  testIdPropKeys,
+  resolveTestIdAttr,
+  type TestIdProps,
+} from '../../props/test-id';
 
 export interface LinkButtonProps
-  extends MarginProps, ButtonStyleProps, AnchorProps {}
+  extends MarginProps, ButtonStyleProps, TestIdProps, AnchorProps {}
 
 /** Anchor element styled as a button for navigation actions. */
 const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
   const props = mergeProps(buttonStyleDefaults, rawProps);
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
-  const [local, rest] = splitProps(withoutMargin, [
+  const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
+  const [local, rest] = splitProps(withoutTid, [
     ...buttonStylePropKeys,
     'class',
     'children',
@@ -41,7 +47,7 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <A class={className()} {...rest}>
+    <A class={className()} {...resolveTestIdAttr(tid)} {...rest}>
       {local.children}
     </A>
   );

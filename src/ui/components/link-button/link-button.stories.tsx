@@ -2,6 +2,7 @@ import { MemoryRouter, Route } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { buttonStyleArgTypes } from '../../props/button';
 import { marginArgTypes } from '../../props/margin';
+import { testIdArgTypes } from '../../props/test-id';
 import LinkButtonComponent, { type LinkButtonProps } from './link-button';
 
 const meta = {
@@ -17,6 +18,7 @@ const meta = {
   argTypes: {
     ...marginArgTypes,
     ...buttonStyleArgTypes,
+    ...testIdArgTypes,
     children: { control: 'text' },
     href: { control: 'text' },
   },

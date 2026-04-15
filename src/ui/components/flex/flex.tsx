@@ -15,6 +15,7 @@ import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import { resolveTestIdAttr } from '../../props/test-id';
 
 /** Flex props for a specific element tag. */
 export type FlexProps<T extends HtmlBoxTag> = PolymorphicProps<
@@ -38,7 +39,12 @@ function Flex(
       .join(' ');
 
   return (
-    <Dynamic component={box.as} class={className()} {...rest}>
+    <Dynamic
+      component={box.as}
+      class={className()}
+      {...resolveTestIdAttr(box)}
+      {...rest}
+    >
       {box.children}
     </Dynamic>
   );

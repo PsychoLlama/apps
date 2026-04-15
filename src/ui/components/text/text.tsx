@@ -21,6 +21,11 @@ import {
   selectablePropKeys,
   resolveSelectableClass,
 } from '../../props/selectable';
+import {
+  testIdPropKeys,
+  resolveTestIdAttr,
+  type TestIdProps,
+} from '../../props/test-id';
 import * as css from './text.css';
 
 /** Text-specific props, independent of the rendered element. */
@@ -38,7 +43,7 @@ interface TextOwnProps {
 /** Text props for a specific element tag. */
 export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
   T,
-  TextOwnProps & TrimProps & MarginProps & SelectableProps
+  TextOwnProps & TrimProps & MarginProps & SelectableProps & TestIdProps
 >;
 
 /** General-purpose text component for body copy, labels, and inline text. */
@@ -48,6 +53,7 @@ function Text(
     TrimProps &
     MarginProps &
     SelectableProps &
+    TestIdProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
   const props = mergeProps({ size: 3 as const }, rawProps);
@@ -62,6 +68,7 @@ function Text(
     ...trimPropKeys,
     ...marginPropKeys,
     ...selectablePropKeys,
+    ...testIdPropKeys,
   ]);
 
   const className = () =>
@@ -80,7 +87,12 @@ function Text(
       .join(' ');
 
   return (
-    <Dynamic component={local.as} class={className()} {...rest}>
+    <Dynamic
+      component={local.as}
+      class={className()}
+      {...resolveTestIdAttr(local)}
+      {...rest}
+    >
       {local.children}
     </Dynamic>
   );

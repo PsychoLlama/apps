@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 import { buttonStyleArgTypes } from '../../props/button';
 import { marginArgTypes } from '../../props/margin';
+import { testIdArgTypes } from '../../props/test-id';
 import ButtonComponent, { type ButtonProps } from './button';
 
 const meta = {
@@ -17,6 +18,7 @@ const meta = {
   argTypes: {
     ...marginArgTypes,
     ...buttonStyleArgTypes,
+    ...testIdArgTypes,
     disabled: {
       control: 'boolean',
     },

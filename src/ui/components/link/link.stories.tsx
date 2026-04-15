@@ -1,6 +1,7 @@
 import { MemoryRouter } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { marginArgTypes } from '../../props/margin';
+import { testIdArgTypes } from '../../props/test-id';
 import { trimArgTypes } from '../../props/trim';
 import LinkComponent, { type LinkProps } from './link';
 
@@ -38,6 +39,7 @@ const meta = {
     children: { control: 'text' },
     ...trimArgTypes,
     ...marginArgTypes,
+    ...testIdArgTypes,
   },
 } satisfies Meta<LinkProps>;
 

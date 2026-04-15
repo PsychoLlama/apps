@@ -11,6 +11,7 @@ import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import { resolveTestIdAttr } from '../../props/test-id';
 import * as css from './grid.css';
 
 /** Grid-specific layout props, independent of the target element. */
@@ -74,7 +75,12 @@ function Grid(
       .join(' ');
 
   return (
-    <Dynamic component={box.as} class={className()} {...rest}>
+    <Dynamic
+      component={box.as}
+      class={className()}
+      {...resolveTestIdAttr(box)}
+      {...rest}
+    >
       {box.children}
     </Dynamic>
   );

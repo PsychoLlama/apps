@@ -3,6 +3,7 @@ import TextComponent, { type TextProps } from './text';
 import { marginArgTypes } from '../../props/margin';
 import { trimArgTypes } from '../../props/trim';
 import { selectableArgTypes } from '../../props/selectable';
+import { testIdArgTypes } from '../../props/test-id';
 
 const meta = {
   title: 'UI/Typography',
@@ -36,6 +37,7 @@ const meta = {
     ...trimArgTypes,
     ...marginArgTypes,
     ...selectableArgTypes,
+    ...testIdArgTypes,
   },
 } satisfies Meta<TextProps<'p'>>;
 

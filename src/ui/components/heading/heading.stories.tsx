@@ -3,6 +3,7 @@ import HeadingComponent, { type HeadingProps } from './heading';
 import { marginArgTypes } from '../../props/margin';
 import { trimArgTypes } from '../../props/trim';
 import { selectableArgTypes } from '../../props/selectable';
+import { testIdArgTypes } from '../../props/test-id';
 
 const meta = {
   title: 'UI/Typography',
@@ -37,6 +38,7 @@ const meta = {
     ...trimArgTypes,
     ...marginArgTypes,
     ...selectableArgTypes,
+    ...testIdArgTypes,
   },
 } satisfies Meta<HeadingProps<'h1'>>;
 

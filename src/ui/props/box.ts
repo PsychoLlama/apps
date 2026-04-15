@@ -12,10 +12,11 @@ import {
   marginArgTypes,
   type MarginProps,
 } from './margin';
+import { testIdPropKeys, testIdArgTypes, type TestIdProps } from './test-id';
 import * as css from './box.css';
 
 /** Surface props shared across layout primitives. */
-export interface BoxBaseProps extends PaddingProps, MarginProps {
+export interface BoxBaseProps extends PaddingProps, MarginProps, TestIdProps {
   /** Surface background color from the design token palette. */
   background?: Exclude<BackgroundColor, 'overlay'>;
   /** Border radius from the design token scale. */
@@ -27,6 +28,7 @@ export interface BoxBaseProps extends PaddingProps, MarginProps {
 export const boxPropKeys = [
   ...paddingPropKeys,
   ...marginPropKeys,
+  ...testIdPropKeys,
   'as',
   'background',
   'radius',
@@ -53,6 +55,7 @@ export function resolveBoxClasses(
 export const boxArgTypes: ArgTypes<BoxBaseProps> = {
   ...paddingArgTypes,
   ...marginArgTypes,
+  ...testIdArgTypes,
   background: {
     control: 'inline-radio' as const,
     options: ['page', 'panelSolid', 'panelTranslucent', 'surface'],
