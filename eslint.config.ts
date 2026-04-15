@@ -19,6 +19,18 @@ const restrictedImportPatterns = [
   },
 ];
 
+const restrictedStatePaths = [
+  {
+    name: 'solid-js',
+    importNames: ['createSignal', 'createResource'],
+    message: 'Use #state for state management.',
+  },
+  {
+    name: 'solid-js/store',
+    message: 'Use #state for state management.',
+  },
+];
+
 export default [
   includeIgnoreFile(import.meta.dirname + '/.gitignore'),
   eslint.configs.recommended,
@@ -57,6 +69,7 @@ export default [
         'error',
         {
           patterns: restrictedImportPatterns,
+          paths: restrictedStatePaths,
         },
       ],
     },
@@ -71,6 +84,7 @@ export default [
         {
           patterns: restrictedImportPatterns,
           paths: [
+            ...restrictedStatePaths,
             {
               name: '@vanilla-extract/css',
               importNames: ['globalStyle'],
@@ -99,12 +113,25 @@ export default [
         {
           patterns: restrictedImportPatterns,
           paths: [
+            ...restrictedStatePaths,
             {
               name: 'vitest',
               importNames: ['test', 'it'],
               message: 'Always prefer vitest globals.',
             },
           ],
+        },
+      ],
+    },
+  },
+  {
+    // #state internals may use solid-js/store directly.
+    files: ['src/state/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: restrictedImportPatterns,
         },
       ],
     },
