@@ -60,6 +60,7 @@
     "@vanilla-extract/vite-plugin": "^5.2.1",
     "@vitest/browser": "^4.1.4",
     "@vitest/browser-playwright": "^4.1.4",
+    "@vitest/coverage-v8": "^4.1.4",
     "eslint": "^9.39.2",
     "eslint-plugin-solid": "^0.14.5",
     "jsdom": "^29.0.1",

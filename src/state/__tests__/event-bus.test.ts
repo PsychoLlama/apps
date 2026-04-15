@@ -88,4 +88,19 @@ describe('subscribe', () => {
 
     expect(handler).not.toHaveBeenCalled();
   });
+
+  it('retains other subscribers when one unsubscribes', () => {
+    const eventBus = createEventBus();
+    const topic = defineTopic();
+    const remaining = vi.fn();
+
+    subscribe(eventBus, [topic], vi.fn());
+    const unsub = subscribe(eventBus, [topic], vi.fn());
+    subscribe(eventBus, [topic], remaining);
+
+    unsub();
+    publish(eventBus, topic);
+
+    expect(remaining).toHaveBeenCalledTimes(1);
+  });
 });
