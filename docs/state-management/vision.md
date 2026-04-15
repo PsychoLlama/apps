@@ -105,15 +105,38 @@ expect(state.tracks.size).toBe(1);
 
 Each test creates its own bus. Parallel tests don't leak state.
 
-### Workflows (future)
+### Activities
 
-Workflows are higher-level primitives that tie effects together in a cancelable, observable form. They define their own lifecycle topics as properties.
+Activities are impure — side effects live here. They are opaque handles created with `defineActivity`, which takes an options object (empty for now, will support retries and timeouts later) and an executor function.
+
+```ts
+const fetchUser = defineActivity({}, async (userId: string): Promise<User> => {
+  const res = await fetch(`/users/${userId}`);
+  return res.json();
+});
+```
+
+The implementation is stored behind a private symbol. Activities are executed indirectly through `ctx.run` inside workflows — never called directly.
+
+### Workflows
+
+Workflows are pure orchestrators, inspired by Temporal. They tie effects together in an observable form, running activities through `ctx.run`. Workflows define their own lifecycle topics automatically.
 
 ```ts
 const getUser = defineWorkflow(async (ctx, userId: string): Promise<User> => {
-  return await ctx.run(Http.GET, `/users/${userId}`);
+  return await ctx.run(fetchUser, userId);
 });
+```
 
+`defineWorkflow` returns an opaque handle with `.started` and `.settled` topics, both inferred from the workflow's type signature. `getUser.started` is `Topic<string>`, `getUser.settled` is `Topic<Result<User>>`.
+
+`run(eventBus, workflow, ...args)` executes a workflow: publishes `started`, runs the function, publishes `settled` with the result. Errors propagate into the workflow for try/catch; unhandled errors settle with `REJECTED`. The return type is polymorphic — `void` for sync workflows, `Promise<void>` for async.
+
+#### Results
+
+`Result<T>` is a discriminated union using unique symbol constants (`RESOLVED`/`REJECTED`) instead of strings. No string literals in the bundle. Callers must handle both cases.
+
+```ts
 const createUsers = defineStore<UsersState>(
   () => ({ users: new Map(), loading: false }),
   (on) => {
@@ -122,17 +145,17 @@ const createUsers = defineStore<UsersState>(
     });
 
     on(getUser.settled, (state, result) => {
-      if (result.type === 'resolve') {
+      state.loading = false;
+      if (result.type === RESOLVED) {
         state.users.set(result.value.id, result.value);
       }
-      state.loading = false;
     });
   },
 );
 ```
 
-The workflow owns its topic definitions. `getUser.started` is a `Topic<string>` and `getUser.settled` is a `Topic<Result<User>>`, both inferred from the workflow's type signature. Not yet implemented.
-
 ### Open questions
 
 - **Observability surface.** The global bus is the natural tap point for dev tools, logging, and debugging. A structured log of every publish — topic identity, payload, which stores handled it, what state changed — falls out naturally.
+- **Activity options.** Retries, timeouts, and backoff policies. The `defineActivity({}, executor)` signature is ready — just needs fields.
+- **Workflow cancellation.** Not yet implemented. Temporal-style cancellation via `CancellationError` is the likely direction.
