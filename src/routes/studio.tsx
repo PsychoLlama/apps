@@ -1,10 +1,22 @@
-import { createSignal, For, Show } from 'solid-js';
+import { For, Show, onCleanup } from 'solid-js';
 import { Button, Callout, Flex, Heading, Text } from '#ui';
+import { createEventBus, defineStore, defineTopic, publish } from '#state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import SiteHeader from '../components/site-header';
 import * as css from './studio.css';
 
 type State = 'idle' | 'recording' | 'paused' | 'error' | 'unsupported';
+
+const switchState = defineTopic<State>();
+
+const createStudioStore = defineStore<{ current: State }>(
+  () => ({ current: 'idle' }),
+  (on) => {
+    on(switchState, (state, next) => {
+      state.current = next;
+    });
+  },
+);
 
 // --- Fake data ---
 
@@ -317,15 +329,20 @@ function StateSwitcher(props: {
 // --- Root ---
 
 export default function StudioC() {
-  const [state, setState] = createSignal<State>('idle');
+  const bus = createEventBus();
+  const [store, dispose] = createStudioStore(bus);
+  onCleanup(dispose);
 
   return (
     <>
-      <StateSwitcher state={state()} onChange={setState} />
-      <Show when={state() === 'unsupported'}>
+      <StateSwitcher
+        state={store.current}
+        onChange={(s) => publish(bus, switchState, s)}
+      />
+      <Show when={store.current === 'unsupported'}>
         <UnsupportedState />
       </Show>
-      <Show when={state() !== 'unsupported'}>
+      <Show when={store.current !== 'unsupported'}>
         <Flex as="div" direction="column" class={css.shell}>
           <SiteHeader title="Recording Studio" />
           <Flex as="div" grow class={css.body}>
@@ -336,16 +353,16 @@ export default function StudioC() {
               grow
               class={css.main}
             >
-              <Show when={state() === 'idle'}>
+              <Show when={store.current === 'idle'}>
                 <IdleState />
               </Show>
-              <Show when={state() === 'recording'}>
+              <Show when={store.current === 'recording'}>
                 <RecordingState />
               </Show>
-              <Show when={state() === 'paused'}>
+              <Show when={store.current === 'paused'}>
                 <PausedState />
               </Show>
-              <Show when={state() === 'error'}>
+              <Show when={store.current === 'error'}>
                 <ErrorState />
               </Show>
             </Flex>
