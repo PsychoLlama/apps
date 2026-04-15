@@ -2,7 +2,7 @@ import { defineActivity } from '../activity';
 import { createEventBus, subscribe } from '../event-bus';
 import { REJECTED, RESOLVED, type Result } from '../result';
 import type { Topic } from '../topic';
-import { defineWorkflow, run } from '../workflow';
+import { defineWorkflow, useWorkflow } from '../workflow';
 import { defineStore } from '../store';
 
 describe('defineWorkflow', () => {
@@ -15,14 +15,15 @@ describe('defineWorkflow', () => {
   });
 });
 
-describe('run', () => {
+describe('useWorkflow', () => {
   it('publishes started with the input', () => {
     const eventBus = createEventBus();
     const workflow = defineWorkflow((_, userId: string) => `user-${userId}`);
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.started], handler);
-    run(eventBus, workflow, 'abc');
+    const run = useWorkflow(workflow, eventBus);
+    run('abc');
 
     expect(handler).toHaveBeenCalledWith(workflow.started, 'abc');
   });
@@ -33,7 +34,8 @@ describe('run', () => {
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.settled], handler);
-    run(eventBus, workflow, 5);
+    const run = useWorkflow(workflow, eventBus);
+    run(5);
 
     expect(handler).toHaveBeenCalledWith(workflow.settled, {
       type: RESOLVED,
@@ -49,7 +51,8 @@ describe('run', () => {
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.settled], handler);
-    run(eventBus, workflow);
+    const run = useWorkflow(workflow, eventBus);
+    run();
 
     expect(handler).toHaveBeenCalledWith(workflow.settled, {
       type: REJECTED,
@@ -65,7 +68,8 @@ describe('run', () => {
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.settled], handler);
-    await run(eventBus, workflow, 'abc');
+    const run = useWorkflow(workflow, eventBus);
+    await run('abc');
 
     expect(handler).toHaveBeenCalledWith(workflow.settled, {
       type: RESOLVED,
@@ -82,7 +86,8 @@ describe('run', () => {
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.settled], handler);
-    await run(eventBus, workflow);
+    const run = useWorkflow(workflow, eventBus);
+    await run();
 
     expect(handler).toHaveBeenCalledWith(workflow.settled, {
       type: REJECTED,
@@ -99,7 +104,8 @@ describe('run', () => {
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.settled], handler);
-    run(eventBus, workflow);
+    const run = useWorkflow(workflow, eventBus);
+    run();
 
     const result = handler.mock.calls[0][1] as Result<never>;
     expect(result.type).toBe(REJECTED);
@@ -114,7 +120,8 @@ describe('run', () => {
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.settled], handler);
-    run(eventBus, workflow, 5);
+    const run = useWorkflow(workflow, eventBus);
+    run(5);
 
     expect(handler).toHaveBeenCalledWith(workflow.settled, {
       type: RESOLVED,
@@ -139,7 +146,8 @@ describe('run', () => {
     const handler = vi.fn();
 
     subscribe(eventBus, [workflow.settled], handler);
-    run(eventBus, workflow);
+    const run = useWorkflow(workflow, eventBus);
+    run();
 
     expect(handler).toHaveBeenCalledWith(workflow.settled, {
       type: RESOLVED,
@@ -179,7 +187,8 @@ describe('run', () => {
     const eventBus = createEventBus();
     const [state] = createUsers(eventBus);
 
-    run(eventBus, getUser, 'user-1');
+    const run = useWorkflow(getUser, eventBus);
+    run('user-1');
 
     expect(state.loading).toBe(false);
     expect(state.user).toEqual({ id: 'user-1', name: 'Alice' });
@@ -190,7 +199,8 @@ describe('type inference', () => {
   it('sync workflow returns void', () => {
     const eventBus = createEventBus();
     const workflow = defineWorkflow(() => 42);
-    const result = run(eventBus, workflow);
+    const run = useWorkflow(workflow, eventBus);
+    const result = run();
 
     expectTypeOf(result).toEqualTypeOf<void>();
   });
@@ -198,7 +208,8 @@ describe('type inference', () => {
   it('async workflow returns Promise<void>', () => {
     const eventBus = createEventBus();
     const workflow = defineWorkflow(() => Promise.resolve(42));
-    const result = run(eventBus, workflow);
+    const run = useWorkflow(workflow, eventBus);
+    const result = run();
 
     expectTypeOf(result).toEqualTypeOf<Promise<void>>();
   });
@@ -221,11 +232,19 @@ describe('type inference', () => {
     expectTypeOf(workflow.settled).toEqualTypeOf<Topic<Result<number>>>();
   });
 
-  it('void input workflow requires no args', () => {
+  it('void input requires no arguments', () => {
     const eventBus = createEventBus();
     const workflow = defineWorkflow(() => 'done');
+    const run = useWorkflow(workflow, eventBus);
 
-    // @ts-expect-error — should not accept an argument
-    run(eventBus, workflow, 'extra');
+    expectTypeOf(run).toEqualTypeOf<() => void>();
+  });
+
+  it('typed input requires the argument', () => {
+    const eventBus = createEventBus();
+    const workflow = defineWorkflow((_, n: number) => n);
+    const run = useWorkflow(workflow, eventBus);
+
+    expectTypeOf(run).toEqualTypeOf<(input: number) => void>();
   });
 });

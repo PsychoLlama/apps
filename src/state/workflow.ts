@@ -1,6 +1,6 @@
 import type { ActivityDef } from './activity';
 import { executeActivity } from './activity';
-import { type EventBus, publish } from './event-bus';
+import { type EventBus, GLOBAL_EVENT_BUS, publish } from './event-bus';
 import { REJECTED, RESOLVED, type Result } from './result';
 import { defineTopic, type Topic } from './topic';
 
@@ -62,41 +62,47 @@ function reject<T>(error: unknown): Result<T> {
   };
 }
 
-type RunReturn<RawReturn> =
-  RawReturn extends Promise<unknown> ? Promise<void> : void;
-
-/** Run a workflow, publishing started/settled topics to the bus. */
-export function run<Input, RawReturn>(
-  eventBus: EventBus,
-  workflow: WorkflowDef<Input, RawReturn>,
+type WorkflowRunner<Input, RawReturn> = (
   ...args: void extends Input ? [] : [Input]
-): RunReturn<RawReturn> {
-  type Settled = Result<Awaited<RawReturn>>;
+) => RawReturn extends Promise<unknown> ? Promise<void> : void;
 
-  const input = args[0] as Input;
-  publish(eventBus, workflow.started, ...args);
+/** Bind a workflow to an event bus, returning a callable function. */
+export function useWorkflow<Input, RawReturn>(
+  workflow: WorkflowDef<Input, RawReturn>,
+  eventBus: EventBus = GLOBAL_EVENT_BUS,
+): WorkflowRunner<Input, RawReturn> {
+  return ((...args: unknown[]) => {
+    type Settled = Result<Awaited<RawReturn>>;
 
-  const settle = (result: Settled) =>
-    publish(eventBus, workflow.settled, result);
+    const input = args[0] as Input;
+    publish(
+      eventBus,
+      workflow.started,
+      ...(args as void extends Input ? [] : [Input]),
+    );
 
-  function execute(): void | Promise<void> {
-    const ctx = createWorkflowContext();
+    const settle = (result: Settled) =>
+      publish(eventBus, workflow.settled, result);
 
-    try {
-      const result = workflow[WORKFLOW_EXECUTOR](ctx, input);
+    function execute(): void | Promise<void> {
+      const ctx = createWorkflowContext();
 
-      if (result instanceof Promise) {
-        return result.then(
-          (value) => settle(resolve(value) as Settled),
-          (error) => settle(reject(error)),
-        );
+      try {
+        const result = workflow[WORKFLOW_EXECUTOR](ctx, input);
+
+        if (result instanceof Promise) {
+          return result.then(
+            (value) => settle(resolve(value) as Settled),
+            (error) => settle(reject(error)),
+          );
+        }
+
+        settle(resolve(result) as Settled);
+      } catch (error) {
+        settle(reject(error));
       }
-
-      settle(resolve(result) as Settled);
-    } catch (error) {
-      settle(reject(error));
     }
-  }
 
-  return execute() as RunReturn<RawReturn>;
+    return execute();
+  }) as unknown as WorkflowRunner<Input, RawReturn>;
 }

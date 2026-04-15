@@ -10,7 +10,7 @@ export { defineStore } from './store';
 export { defineActivity } from './activity';
 export {
   defineWorkflow,
-  run,
+  useWorkflow,
   type WorkflowContext,
   type WorkflowDef,
 } from './workflow';
