@@ -10,10 +10,6 @@ export type RequiredTestIdProps = Required<TestIdProps>;
 
 export const testIdPropKeys = ['testId'] as const;
 
-export function resolveTestIdAttr({ testId }: TestIdProps) {
-  return testId ? { 'data-testid': testId } : undefined;
-}
-
 export const testIdArgTypes: ArgTypes<TestIdProps> = {
   testId: {
     control: 'text',

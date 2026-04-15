@@ -11,11 +11,7 @@ import {
   resolveButtonStyleClasses,
   type ButtonStyleProps,
 } from '../../props/button';
-import {
-  testIdPropKeys,
-  resolveTestIdAttr,
-  type RequiredTestIdProps,
-} from '../../props/test-id';
+import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
 export interface ButtonProps
   extends
@@ -45,7 +41,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <button class={className()} {...resolveTestIdAttr(tid)} {...rest}>
+    <button class={className()} data-testid={tid.testId} {...rest}>
       {local.children}
     </button>
   );

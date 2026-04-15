@@ -21,11 +21,7 @@ import {
   selectablePropKeys,
   resolveSelectableClass,
 } from '../../props/selectable';
-import {
-  testIdPropKeys,
-  resolveTestIdAttr,
-  type TestIdProps,
-} from '../../props/test-id';
+import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './heading.css';
 
 /** Heading-specific props, independent of the rendered element. */
@@ -95,7 +91,7 @@ function Heading(
     <Dynamic
       component={local.as}
       class={className()}
-      {...resolveTestIdAttr(local)}
+      data-testid={local.testId}
       {...rest}
     >
       {local.children}

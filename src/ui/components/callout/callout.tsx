@@ -15,11 +15,7 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
-import {
-  testIdPropKeys,
-  resolveTestIdAttr,
-  type TestIdProps,
-} from '../../props/test-id';
+import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import Flex from '../flex/flex';
 import Grid from '../grid/grid';
 import * as css from './callout.css';
@@ -84,7 +80,7 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
       align="start"
       class={className()}
       role="note"
-      {...resolveTestIdAttr(tid)}
+      testId={tid.testId}
       {...rest}
     >
       <Flex as="div" align="center" class={css.iconSize[local.size]}>

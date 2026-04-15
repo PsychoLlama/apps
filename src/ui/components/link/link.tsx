@@ -22,11 +22,7 @@ import {
   trimPropKeys,
   resolveTrimClass,
 } from '../../props/trim';
-import {
-  testIdPropKeys,
-  resolveTestIdAttr,
-  type RequiredTestIdProps,
-} from '../../props/test-id';
+import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import * as css from './link.css';
 
 type LinkColor = 'accent' | 'neutral';
@@ -91,7 +87,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <A class={className()} {...resolveTestIdAttr(tid)} {...rest}>
+    <A class={className()} data-testid={tid.testId} {...rest}>
       {local.children}
     </A>
   );

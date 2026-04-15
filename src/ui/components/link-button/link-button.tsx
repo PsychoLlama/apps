@@ -17,11 +17,7 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
-import {
-  testIdPropKeys,
-  resolveTestIdAttr,
-  type RequiredTestIdProps,
-} from '../../props/test-id';
+import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
 export interface LinkButtonProps
   extends MarginProps, ButtonStyleProps, RequiredTestIdProps, AnchorProps {}
@@ -47,7 +43,7 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <A class={className()} {...resolveTestIdAttr(tid)} {...rest}>
+    <A class={className()} data-testid={tid.testId} {...rest}>
       {local.children}
     </A>
   );
