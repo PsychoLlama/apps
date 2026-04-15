@@ -7,3 +7,11 @@ export {
   type EventBus,
 } from './event-bus';
 export { defineStore } from './store';
+export { defineActivity } from './activity';
+export {
+  defineWorkflow,
+  run,
+  type WorkflowContext,
+  type WorkflowDef,
+} from './workflow';
+export { RESOLVED, REJECTED, type Result } from './result';
