@@ -158,4 +158,3 @@ const createUsers = defineStore<UsersState>(
 
 - **Observability surface.** The global bus is the natural tap point for dev tools, logging, and debugging. A structured log of every publish — topic identity, payload, which stores handled it, what state changed — falls out naturally.
 - **Activity options.** Retries, timeouts, and backoff policies. The `defineActivity({}, executor)` signature is ready — just needs fields.
-- **Workflow cancellation.** Not yet implemented. Temporal-style cancellation via `CancellationError` is the likely direction.
