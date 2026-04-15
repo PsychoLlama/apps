@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { type FlexProps } from './flex';
 import FlexComponent from './flex';
-import { boxArgTypes } from '../box/box.stories';
+import { boxArgTypes } from '../../props/box';
 import { flexArgTypes } from '../../props/flex';
 import { swatches } from '../../storybook/swatch';
 

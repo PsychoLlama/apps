@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { type GridProps } from './grid';
 import GridComponent from './grid';
-import { boxArgTypes } from '../box/box.stories';
+import { boxArgTypes } from '../../props/box';
 import { swatches } from '../../storybook/swatch';
 
 const meta = {

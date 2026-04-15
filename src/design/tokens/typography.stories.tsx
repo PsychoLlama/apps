@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { typeScale, fontFamily, fontWeight } from '#design';
-import { Box, Flex, Text } from '#ui';
+import { Flex, Text } from '#ui';
 
 const meta = {
   title: 'Design System/Typography',
@@ -17,7 +17,7 @@ export const TypeScale: Story = {
         {(step) => {
           const scale = typeScale[step];
           return (
-            <Box as="div">
+            <Flex as="div" direction="column">
               <Text as="p" size={1} color="lowContrast">
                 typeScale[{step}]
               </Text>
@@ -32,7 +32,7 @@ export const TypeScale: Story = {
               >
                 Sphinx of black quartz, judge my vow
               </Text>
-            </Box>
+            </Flex>
           );
         }}
       </For>
@@ -50,7 +50,7 @@ export const FontFamilies: Story = {
         ]}
       >
         {(item) => (
-          <Box as="div">
+          <Flex as="div" direction="column">
             <Text as="p" size={1} color="lowContrast">
               {item.name}
             </Text>
@@ -62,7 +62,7 @@ export const FontFamilies: Story = {
             >
               Sphinx of black quartz, judge my vow
             </Text>
-          </Box>
+          </Flex>
         )}
       </For>
     </Flex>
@@ -78,7 +78,7 @@ export const FontWeights: Story = {
         }
       >
         {([name, value]) => (
-          <Box as="div">
+          <Flex as="div" direction="column">
             <Text as="p" size={1} color="lowContrast">
               fontWeight.{name} ({value})
             </Text>
@@ -90,7 +90,7 @@ export const FontWeights: Story = {
             >
               Sphinx of black quartz, judge my vow
             </Text>
-          </Box>
+          </Flex>
         )}
       </For>
     </Flex>

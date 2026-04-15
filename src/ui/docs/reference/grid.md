@@ -4,7 +4,7 @@ Polymorphic (`as` required).
 
 ## Props
 
-Base: all [Box](./box.md) props.
+Base: rendered element attributes, margin props, padding props, `background`, `radius`, `shadow`.
 
 - `columns`: Equal-width columns. `1 | 2 | 3 | 4 | 5 | 6`.
 - `rows`: Equal-height rows. `1 | 2 | 3 | 4 | 5 | 6`.

@@ -31,7 +31,6 @@ export const shell = style({
 // --- Body layout ---
 
 export const body = style({
-  display: 'flex',
   flexDirection: 'column',
   flex: 1,
   minHeight: 0,
@@ -45,10 +44,6 @@ export const body = style({
 // --- Main area ---
 
 export const main = style({
-  flex: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
   padding: space[5],
   minHeight: 0,
   order: 1,
@@ -69,8 +64,6 @@ export const mainContent = style({
 export const panel = style({
   backgroundColor: background.panelSolid,
   borderTop: `1px solid ${neutral[6]}`,
-  display: 'flex',
-  flexDirection: 'column',
   minHeight: 0,
   order: 2,
   '@media': {
@@ -118,9 +111,6 @@ export const panelFooter = style({
 // --- Recording entries ---
 
 export const entryLink = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: space[3],
   padding: `${space[2]} ${space[4]}`,
   textDecoration: 'none',
   cursor: 'pointer',
@@ -137,9 +127,6 @@ export const entryThumb = style({
   backgroundColor: neutral[2],
   border: `1px solid ${neutral[6]}`,
   flexShrink: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
   overflow: 'hidden',
 });
 
@@ -243,7 +230,6 @@ export const stateSwitcher = style({
   bottom: space[3],
   left: '50%',
   transform: 'translateX(-50%)',
-  display: 'flex',
   gap: space[1],
   zIndex: 100,
   backgroundColor: background.panelSolid,

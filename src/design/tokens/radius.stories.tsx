@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { radius } from '#design';
-import { Box, Flex } from '#ui';
+import { Flex } from '#ui';
 import TokenRow from '../storybook/token-row';
 import * as css from './radius.stories.css';
 
@@ -31,7 +31,7 @@ export const Radius: Story = {
             name={step === 'full' ? 'radius.full' : `radius[${step}]`}
             description={labels[step]}
           >
-            <Box
+            <Flex
               as="div"
               background="panelSolid"
               shadow={2}

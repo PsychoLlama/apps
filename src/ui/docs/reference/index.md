@@ -7,7 +7,6 @@
 
 - [Flex](./flex.md): Flexbox container.
 - [Grid](./grid.md): CSS Grid container.
-- [Box](./box.md): Surface primitive used by Flex/Grid.
 
 ## Typography
 

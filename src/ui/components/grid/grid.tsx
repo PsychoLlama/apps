@@ -2,7 +2,11 @@ import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { SpaceScale } from '#design';
-import { boxPropKeys, resolveBoxClasses, type BoxBaseProps } from '../box/box';
+import {
+  boxPropKeys,
+  resolveBoxClasses,
+  type BoxBaseProps,
+} from '../../props/box';
 import {
   type HtmlBoxTag,
   type PolymorphicProps,
@@ -43,7 +47,7 @@ const gridOwnPropKeys = [
   'gapY',
 ] as const;
 
-/** CSS Grid layout container. Extends Box with column, row, alignment, and gap controls. */
+/** CSS Grid layout container with column, row, alignment, and gap controls. */
 function Grid<const T extends HtmlBoxTag>(props: GridProps<T>): JSX.Element;
 function Grid(
   props: { as: HtmlBoxTag } & GridOwnProps &

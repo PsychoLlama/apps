@@ -1,7 +1,11 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
-import { boxPropKeys, resolveBoxClasses, type BoxBaseProps } from '../box/box';
+import {
+  boxPropKeys,
+  resolveBoxClasses,
+  type BoxBaseProps,
+} from '../../props/box';
 import {
   flexPropKeys,
   resolveFlexClasses,
@@ -18,7 +22,7 @@ export type FlexProps<T extends HtmlBoxTag> = PolymorphicProps<
   FlexOwnProps & BoxBaseProps
 >;
 
-/** Flexbox layout container. Extends Box with direction, alignment, wrapping, and gap controls. */
+/** Flexbox layout container with direction, alignment, wrapping, and gap controls. */
 function Flex<const T extends HtmlBoxTag>(props: FlexProps<T>): JSX.Element;
 function Flex(
   props: { as: HtmlBoxTag } & FlexOwnProps &

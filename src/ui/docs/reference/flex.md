@@ -4,7 +4,7 @@ Polymorphic (`as` required).
 
 ## Props
 
-Base: all [Box](./box.md) props.
+Base: rendered element attributes, margin props, padding props, `background`, `radius`, `shadow`.
 
 - `direction`: Main-axis direction. `'row' | 'column' | 'row-reverse' | 'column-reverse'`.
 - `align`: Cross-axis alignment. `'start' | 'center' | 'end' | 'stretch' | 'baseline'`.

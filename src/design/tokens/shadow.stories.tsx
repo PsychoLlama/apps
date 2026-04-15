@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { shadow } from '#design';
-import { Box, Flex } from '#ui';
+import { Flex } from '#ui';
 import TokenRow from '../storybook/token-row';
 
 const meta = {
@@ -26,7 +26,7 @@ export const Shadows: Story = {
       <For each={Object.entries(shadow)}>
         {([step, value]) => (
           <TokenRow name={`shadow[${step}]`} description={labels[step]}>
-            <Box
+            <Flex
               as="div"
               p={5}
               background="panelSolid"

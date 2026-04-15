@@ -14,9 +14,6 @@ const stripes = [
 export const swatch = style({
   aspectRatio: '1 / 1',
   minWidth: space[9],
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
   borderRadius: radius[2],
   background: stripes,
 });

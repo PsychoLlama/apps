@@ -1,5 +1,5 @@
 import type { ParentComponent } from 'solid-js';
-import { Box, Flex, Heading, Text } from '#ui';
+import { Flex, Heading, Text } from '#ui';
 
 /** Label + description beside a visual swatch preview. */
 const TokenRow: ParentComponent<{ name: string; description: string }> = (
@@ -8,7 +8,7 @@ const TokenRow: ParentComponent<{ name: string; description: string }> = (
   <Flex as="div" align="center" gap={4}>
     {props.children}
 
-    <Box as="div">
+    <Flex as="div" direction="column">
       <Heading as="h3" size={2} weight="medium" selectable={false}>
         {props.name}
       </Heading>
@@ -16,7 +16,7 @@ const TokenRow: ParentComponent<{ name: string; description: string }> = (
       <Text as="p" size={2} color="lowContrast" selectable={false}>
         {props.description}
       </Text>
-    </Box>
+    </Flex>
   </Flex>
 );
 

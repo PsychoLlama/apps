@@ -1,4 +1,4 @@
-import { Box, Flex, Heading, Link, Text } from '#ui';
+import { Flex, Heading, Link, Text } from '#ui';
 import SiteHeader from '../components/site-header';
 import * as css from './index.css';
 
@@ -14,7 +14,7 @@ export default function Launcher() {
 
           <Flex as="nav" direction="column" gap={3}>
             <Link href="/studio" underline="none" class={css.link}>
-              <Box as="div" class={css.indicator} />
+              <Flex as="div" class={css.indicator} />
               <Flex as="div" direction="column" gap={1}>
                 <Text as="span" size={3} weight="medium">
                   Recording Studio
@@ -26,7 +26,7 @@ export default function Launcher() {
             </Link>
 
             <Link href="/favicon" underline="none" class={css.link}>
-              <Box as="div" class={css.indicator} />
+              <Flex as="div" class={css.indicator} />
               <Flex as="div" direction="column" gap={1}>
                 <Text as="span" size={3} weight="medium">
                   Favicon Generator

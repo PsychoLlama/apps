@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { space } from '#design';
-import { Box, Flex } from '#ui';
+import { Flex } from '#ui';
 import TokenRow from '../storybook/token-row';
 import * as css from './space.stories.css';
 
@@ -30,7 +30,7 @@ export const Spacing: Story = {
       <For each={Object.entries(space)}>
         {([step, value]) => (
           <TokenRow name={`space[${step}]`} description={labels[step]}>
-            <Box
+            <Flex
               as="div"
               background="panelSolid"
               shadow={2}

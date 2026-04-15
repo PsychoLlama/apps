@@ -1,24 +1,20 @@
-import { Dynamic } from 'solid-js/web';
-import { splitProps } from 'solid-js';
-import type { JSX } from 'solid-js';
+import type { ArgTypes } from 'storybook-solidjs-vite';
 import type { RadiusScale, ShadowLevel, BackgroundColor } from '#design';
 import {
   paddingPropKeys,
   resolvePaddingClasses,
+  paddingArgTypes,
   type PaddingProps,
-} from '../../props/padding';
+} from './padding';
 import {
   marginPropKeys,
   resolveMarginClasses,
+  marginArgTypes,
   type MarginProps,
-} from '../../props/margin';
-import {
-  type HtmlBoxTag,
-  type PolymorphicProps,
-} from '../../props/polymorphic';
+} from './margin';
 import * as css from './box.css';
 
-/** Design token props shared across all Box element variants. */
+/** Surface props shared across layout primitives. */
 export interface BoxBaseProps extends PaddingProps, MarginProps {
   /** Surface background color from the design token palette. */
   background?: Exclude<BackgroundColor, 'overlay'>;
@@ -27,9 +23,6 @@ export interface BoxBaseProps extends PaddingProps, MarginProps {
   /** Box shadow elevation from the design token scale. */
   shadow?: ShadowLevel;
 }
-
-/** Box props for a specific element tag. */
-export type BoxProps<T extends HtmlBoxTag> = PolymorphicProps<T, BoxBaseProps>;
 
 export const boxPropKeys = [
   ...paddingPropKeys,
@@ -42,7 +35,7 @@ export const boxPropKeys = [
   'children',
 ] as const;
 
-/** Resolve Box surface/spacing props to CSS class names. */
+/** Resolve surface/spacing props to CSS class names. */
 export function resolveBoxClasses(
   box: PaddingProps &
     MarginProps &
@@ -57,21 +50,19 @@ export function resolveBoxClasses(
   ];
 }
 
-/** Polymorphic surface primitive. Applies padding, margin, background, radius, and shadow from design tokens. */
-function Box<const T extends HtmlBoxTag>(props: BoxProps<T>): JSX.Element;
-function Box(
-  props: { as: HtmlBoxTag } & BoxBaseProps & JSX.HTMLAttributes<HTMLElement>,
-) {
-  const [local, rest] = splitProps(props, boxPropKeys);
-
-  const className = () =>
-    [...resolveBoxClasses(local), local.class].filter(Boolean).join(' ');
-
-  return (
-    <Dynamic component={local.as} class={className()} {...rest}>
-      {local.children}
-    </Dynamic>
-  );
-}
-
-export default Box;
+export const boxArgTypes: ArgTypes<BoxBaseProps> = {
+  ...paddingArgTypes,
+  ...marginArgTypes,
+  background: {
+    control: 'inline-radio' as const,
+    options: ['page', 'panelSolid', 'panelTranslucent', 'surface'],
+  },
+  radius: {
+    control: 'select' as const,
+    options: [1, 2, 3, 4, 5, 6, 'full'],
+  },
+  shadow: {
+    control: 'select' as const,
+    options: [1, 2, 3, 4, 5, 6],
+  },
+};

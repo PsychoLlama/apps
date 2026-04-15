@@ -3,7 +3,6 @@ export {
   default as Heading,
   type HeadingProps,
 } from './components/heading/heading';
-export { default as Box, type BoxProps } from './components/box/box';
 export type {
   TagName,
   HtmlTagName,

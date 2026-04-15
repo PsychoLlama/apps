@@ -9,7 +9,7 @@ import {
   entrance,
   exit,
 } from '#design';
-import { Box, Flex, Grid, Heading, Text } from '#ui';
+import { Flex, Grid, Heading, Text } from '#ui';
 import * as css from './motion.stories.css';
 
 const meta = {
@@ -57,13 +57,13 @@ function ColorSwatch(props: { duration: string }) {
   });
 
   return (
-    <Box
+    <Flex
       as="div"
       radius={2}
-      ref={ref}
-      class={css.swatch}
       background="panelSolid"
       shadow={2}
+      ref={ref}
+      class={css.swatch}
     />
   );
 }
@@ -96,14 +96,14 @@ function EasingTrack(props: { duration: string; easing: string }) {
   });
 
   return (
-    <Box
+    <Flex
       as="div"
       radius="full"
       shadow={1}
-      class={css.track}
       background="panelSolid"
+      class={css.track}
     >
-      <Box
+      <Flex
         as="div"
         radius="full"
         shadow={3}
@@ -114,7 +114,7 @@ function EasingTrack(props: { duration: string; easing: string }) {
           'animation-timing-function': props.easing,
         }}
       />
-    </Box>
+    </Flex>
   );
 }
 

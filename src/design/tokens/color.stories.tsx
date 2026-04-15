@@ -11,7 +11,7 @@ import {
   text,
   background,
 } from '#design';
-import { Box, Flex, Grid, Heading, Text } from '#ui';
+import { Flex, Grid, Heading, Text } from '#ui';
 import { amber, amberAlpha } from '../palette/amber.css';
 import { blue, blueAlpha } from '../palette/blue.css';
 import { bronze, bronzeAlpha } from '../palette/bronze.css';
@@ -61,18 +61,18 @@ function ScaleRow(props: { name: string; scale: ColorScale; alpha?: boolean }) {
       <Grid as="div" gap={3} class={css.scaleGrid}>
         <For each={steps()}>
           {(item) => (
-            <Box
+            <Flex
               as="div"
               radius={3}
               class={`${css.swatch} ${props.alpha ? css.checkerboard : ''}`}
             >
-              <Box
+              <Flex
                 as="div"
                 radius={3}
                 class={css.swatchOverlay}
                 style={{ 'background-color': item.value }}
               />
-            </Box>
+            </Flex>
           )}
         </For>
       </Grid>
@@ -90,7 +90,7 @@ type Story = StoryObj<typeof meta>;
 export const Semantic: Story = {
   render: () => (
     <Grid as="div" gap={3} align="center" class={css.scaleRow}>
-      <Box as="div" />
+      <Flex as="div" />
       <Grid as="div" gap={3} class={css.scaleGrid}>
         <For each={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}>
           {(step) => (
@@ -129,20 +129,20 @@ export const TextColors: Story = {
       >
         {(item) => (
           <Flex as="div" align="center" gap={4}>
-            <Box
+            <Flex
               as="div"
               radius={3}
               class={css.textSwatch}
               style={{ 'background-color': item.value }}
             />
-            <Box as="div">
+            <Flex as="div" direction="column">
               <Heading as="h3" size={2} weight="medium">
                 {item.name}
               </Heading>
               <Text as="p" size={5} style={{ color: item.value }}>
                 The quick brown fox jumps over the lazy dog
               </Text>
-            </Box>
+            </Flex>
           </Flex>
         )}
       </For>
@@ -184,7 +184,7 @@ export const BackgroundColors: Story = {
       >
         {(item) => (
           <TokenRow name={item.name} description={item.desc}>
-            <Box
+            <Flex
               as="div"
               radius={3}
               class={css.bgSwatch}
@@ -234,7 +234,7 @@ const palettes = [
 export const Palettes: Story = {
   render: () => (
     <Grid as="div" gap={3} align="center" class={css.scaleRow}>
-      <Box as="div" />
+      <Flex as="div" />
       <Grid as="div" gap={3} class={css.scaleGrid}>
         <For each={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}>
           {(step) => (

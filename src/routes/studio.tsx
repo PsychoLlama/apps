@@ -1,5 +1,5 @@
 import { createSignal, For, Show } from 'solid-js';
-import { Box, Button, Callout, Flex, Heading, Text } from '#ui';
+import { Button, Callout, Flex, Heading, Text } from '#ui';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import SiteHeader from '../components/site-header';
 import * as css from './studio.css';
@@ -38,7 +38,7 @@ const sessionTracks: Track[] = [
 
 function LibraryPanel() {
   return (
-    <Box as="aside" class={css.panel}>
+    <Flex as="aside" direction="column" class={css.panel}>
       <Flex
         as="div"
         align="center"
@@ -52,7 +52,7 @@ function LibraryPanel() {
         </Heading>
       </Flex>
 
-      <Box as="div" class={css.panelBody}>
+      <Flex as="div" direction="column" class={css.panelBody}>
         <For each={library}>
           {(rec) => (
             <Flex as="div" align="center" gap={3} class={css.entryLink}>
@@ -83,7 +83,7 @@ function LibraryPanel() {
             </Flex>
           )}
         </For>
-      </Box>
+      </Flex>
 
       <Flex as="div" justify="between" px={4} py={2} class={css.panelFooter}>
         <Text as="span" size={1} color="lowContrast" selectable={false}>
@@ -93,7 +93,7 @@ function LibraryPanel() {
           1.2 GB used
         </Text>
       </Flex>
-    </Box>
+    </Flex>
   );
 }
 
@@ -120,7 +120,7 @@ function ActiveTracks() {
               selectable={false}
               class={`${css.trackPill} ${!t.live ? css.trackPillStopped : ''}`}
             >
-              <Box
+              <Flex
                 as="div"
                 class={t.live ? css.trackDotLive : css.trackDotStopped}
               />
@@ -165,7 +165,7 @@ function RecordingState() {
       class={css.mainContent}
     >
       <Flex as="div" align="center" gap={2}>
-        <Box as="div" class={css.recordingDot} />
+        <Flex as="div" class={css.recordingDot} />
         <Text as="span" size={2} weight="medium">
           Recording
         </Text>
@@ -199,7 +199,7 @@ function PausedState() {
       class={css.mainContent}
     >
       <Flex as="div" align="center" gap={2}>
-        <Box as="div" class={css.recordingDotPaused} />
+        <Flex as="div" class={css.recordingDotPaused} />
         <Text as="span" size={2} weight="medium">
           Paused
         </Text>
@@ -322,8 +322,14 @@ export default function StudioC() {
       <Show when={state() !== 'unsupported'}>
         <Flex as="div" direction="column" class={css.shell}>
           <SiteHeader title="Recording Studio" />
-          <Box as="div" class={css.body}>
-            <Box as="main" class={css.main}>
+          <Flex as="div" grow class={css.body}>
+            <Flex
+              as="main"
+              align="center"
+              justify="center"
+              grow
+              class={css.main}
+            >
               <Show when={state() === 'idle'}>
                 <IdleState />
               </Show>
@@ -336,9 +342,9 @@ export default function StudioC() {
               <Show when={state() === 'error'}>
                 <ErrorState />
               </Show>
-            </Box>
+            </Flex>
             <LibraryPanel />
-          </Box>
+          </Flex>
         </Flex>
       </Show>
     </>

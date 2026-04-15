@@ -1,10 +1,10 @@
 import type { ParentComponent } from 'solid-js';
-import { Text, Box } from '#ui';
+import { Flex, Text } from '#ui';
 import * as css from './swatch.css';
 
 /** Decorative placeholder for layout stories. Diagonal neutral stripes with a centered label. */
 const Swatch: ParentComponent = (props) => (
-  <Box as="div" class={css.swatch}>
+  <Flex as="div" align="center" justify="center" class={css.swatch}>
     <Text
       as="span"
       size={2}
@@ -14,7 +14,7 @@ const Swatch: ParentComponent = (props) => (
     >
       {props.children}
     </Text>
-  </Box>
+  </Flex>
 );
 
 /** Generate `count` numbered swatches. */

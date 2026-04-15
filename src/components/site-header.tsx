@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { Box, Flex, LinkButton, Text } from '#ui';
+import { Flex, LinkButton, Text } from '#ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import * as css from './site-header.css';
 
@@ -11,7 +11,7 @@ export default function SiteHeader(props: { title?: string }) {
       </LinkButton>
 
       <Show when={props.title}>
-        <Box as="div" class={css.divider} />
+        <Flex as="div" class={css.divider} />
         <Text
           as="span"
           size={2}
