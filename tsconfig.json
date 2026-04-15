@@ -22,7 +22,9 @@
     "paths": {
       "#ui": ["./src/ui/index.ts"],
       "#design": ["./src/design/index.css.ts"],
-      "#design/color-scheme": ["./src/design/color-scheme.ts"]
+      "#design/color-scheme": ["./src/design/color-scheme.ts"],
+      "#design/theme": ["./src/design/theme.ts"],
+      "#design/palette/*": ["./src/design/palette/*.css.ts"]
     }
   },
   "include": ["src", ".storybook/*.ts", "*.ts"]

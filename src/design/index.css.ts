@@ -36,5 +36,7 @@ export {
   type BackgroundColor,
 } from './tokens/color.css';
 
+export type { ThemeColorConfig } from './theme';
+
 export { black } from './palette/black';
 export { white } from './palette/white';

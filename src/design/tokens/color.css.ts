@@ -1,11 +1,5 @@
-import { createThemeContract, globalStyle } from '@vanilla-extract/css';
-import { aliasVars, colorScaleShape, lightDark } from '../color-scheme';
-import { grayDark, grayLight } from '../palette/gray';
-import { amber } from '../palette/amber.css';
-import { blue, blueAlpha } from '../palette/blue.css';
-import { grass } from '../palette/grass.css';
-import { red } from '../palette/red.css';
-import { slate, slateAlpha } from '../palette/slate.css';
+import { createThemeContract } from '@vanilla-extract/css';
+import { colorScaleShape } from '../color-scheme';
 
 /**
  * Follow this guide to choose a color palette:
@@ -44,11 +38,6 @@ export const text = createThemeContract({
 
 export type TextColor = keyof typeof text;
 
-const surfaceLight = 'rgba(255, 255, 255, 0.85)';
-const surfaceDark = 'rgba(0, 0, 0, 0.25)';
-const overlayLight = 'rgba(0, 0, 0, 0.38)';
-const overlayDark = 'rgba(0, 0, 0, 0.6)';
-
 export const background = createThemeContract({
   /** App canvas. The lowest layer, applied to the page body. */
   page: null,
@@ -63,26 +52,3 @@ export const background = createThemeContract({
 });
 
 export type BackgroundColor = keyof typeof background;
-
-// --- Assignment ---
-
-globalStyle(':root', {
-  vars: {
-    ...aliasVars(accent, blue),
-    ...aliasVars(accentAlpha, blueAlpha),
-    ...aliasVars(neutral, slate),
-    ...aliasVars(neutralAlpha, slateAlpha),
-    ...aliasVars(danger, red),
-    ...aliasVars(warning, amber),
-    ...aliasVars(success, grass),
-
-    [text.lowContrast]: lightDark(grayLight[11], grayDark[11]),
-    [text.highContrast]: lightDark(grayLight[12], grayDark[12]),
-
-    [background.page]: neutral[1],
-    [background.panelSolid]: neutral[2],
-    [background.panelTranslucent]: neutralAlpha[2],
-    [background.surface]: lightDark(surfaceLight, surfaceDark),
-    [background.overlay]: lightDark(overlayLight, overlayDark),
-  },
-});
