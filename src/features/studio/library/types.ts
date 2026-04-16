@@ -3,4 +3,5 @@ export interface Recording {
   name: string;
   duration: number;
   createdAt: number;
+  url: string;
 }

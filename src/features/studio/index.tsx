@@ -1,5 +1,5 @@
 import { For, Show, onCleanup, onMount } from 'solid-js';
-import { Button, Callout, Flex, Heading, Text } from '#ui';
+import { Button, Callout, Flex, Heading, Link, Text } from '#ui';
 import { useTopic, useWorkflow } from '#state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconPlayOutline from 'virtual:icons/mdi/play-outline';
@@ -41,7 +41,7 @@ const durationFormat = new Intl.DurationFormat('en', {
 // --- Library panel ---
 
 function LibraryPanel(props: {
-  recordings: { name: string; duration: number; id: string }[];
+  recordings: { name: string; duration: number; id: string; url: string }[];
 }) {
   return (
     <Flex as="aside" direction="column" class={css.panel}>
@@ -75,35 +75,42 @@ function LibraryPanel(props: {
         >
           <For each={props.recordings}>
             {(rec) => (
-              <Flex as="div" align="center" gap={3} class={css.entryLink}>
-                <Flex
-                  as="div"
-                  align="center"
-                  justify="center"
-                  class={css.entryThumb}
-                >
-                  <IconPlayOutline class={css.entryThumbIcon} />
-                </Flex>
-                <Flex as="div" direction="column" gap={1}>
-                  <Text
-                    as="span"
-                    size={2}
-                    weight="medium"
-                    class={css.truncate}
-                    selectable={false}
+              <Link
+                testId="recording-entry"
+                class={css.entryLink}
+                href={rec.url}
+                download={`${rec.name}.webm`}
+              >
+                <Flex as="div" align="center" gap={3}>
+                  <Flex
+                    as="div"
+                    align="center"
+                    justify="center"
+                    class={css.entryThumb}
                   >
-                    {rec.name}
-                  </Text>
-                  <Text
-                    as="span"
-                    size={1}
-                    color="lowContrast"
-                    selectable={false}
-                  >
-                    {durationFormat.format(secondsToDuration(rec.duration))}
-                  </Text>
+                    <IconPlayOutline class={css.entryThumbIcon} />
+                  </Flex>
+                  <Flex as="div" direction="column" gap={1}>
+                    <Text
+                      as="span"
+                      size={2}
+                      weight="medium"
+                      class={css.truncate}
+                      selectable={false}
+                    >
+                      {rec.name}
+                    </Text>
+                    <Text
+                      as="span"
+                      size={1}
+                      color="lowContrast"
+                      selectable={false}
+                    >
+                      {durationFormat.format(secondsToDuration(rec.duration))}
+                    </Text>
+                  </Flex>
                 </Flex>
-              </Flex>
+              </Link>
             )}
           </For>
         </Show>
@@ -361,6 +368,20 @@ export default function Studio() {
   const checkSupport = useWorkflow(checkSupportWorkflow);
   const publishTick = useTopic(tick);
 
+  function handleStart() {
+    void startRecording(() => {
+      void stopRecording(timer.elapsed);
+    });
+  }
+
+  function handleStop() {
+    void stopRecording(timer.elapsed);
+  }
+
+  function handleAddTrack() {
+    void addTrack('microphone');
+  }
+
   onMount(() => {
     checkSupport();
   });
@@ -390,15 +411,15 @@ export default function Studio() {
               class={css.main}
             >
               <Show when={session.status === 'idle'}>
-                <IdleState onStart={startRecording} />
+                <IdleState onStart={handleStart} />
               </Show>
               <Show when={session.status === 'recording'}>
                 <RecordingState
                   elapsed={timer.elapsed}
                   tracks={session.tracks}
                   onPause={pauseRecording}
-                  onStop={() => stopRecording(timer.elapsed)}
-                  onAddTrack={() => addTrack('microphone')}
+                  onStop={handleStop}
+                  onAddTrack={handleAddTrack}
                   onRemoveTrack={removeTrack}
                 />
               </Show>
@@ -407,13 +428,13 @@ export default function Studio() {
                   elapsed={timer.elapsed}
                   tracks={session.tracks}
                   onResume={resumeRecording}
-                  onStop={() => stopRecording(timer.elapsed)}
-                  onAddTrack={() => addTrack('microphone')}
+                  onStop={handleStop}
+                  onAddTrack={handleAddTrack}
                   onRemoveTrack={removeTrack}
                 />
               </Show>
               <Show when={session.status === 'error'}>
-                <ErrorState error={session.error} onRetry={startRecording} />
+                <ErrorState error={session.error} onRetry={handleStart} />
               </Show>
             </Flex>
             <LibraryPanel recordings={[...library.recordings].reverse()} />

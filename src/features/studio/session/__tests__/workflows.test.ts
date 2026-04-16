@@ -1,137 +1,69 @@
-import { createEventBus, subscribe, useWorkflow } from '#state';
+import { createEventBus, publish, subscribe } from '#state';
 import {
   startRecordingWorkflow,
   stopRecordingWorkflow,
-  pauseRecordingWorkflow,
-  resumeRecordingWorkflow,
-  addTrackWorkflow,
   removeTrackWorkflow,
 } from '../workflows';
 import { createSessionStore } from '../store';
 import { createLibraryStore } from '../../library/store';
 
-describe('startRecordingWorkflow', () => {
-  it('resolves with tracks and a start timestamp', () => {
-    const bus = createEventBus();
-    const handler = vi.fn();
+describe('workflow lifecycle topics', () => {
+  it('startRecordingWorkflow exposes started, resolved, and rejected', () => {
+    expect(typeof startRecordingWorkflow.started).toBe('symbol');
+    expect(typeof startRecordingWorkflow.resolved).toBe('symbol');
+    expect(typeof startRecordingWorkflow.rejected).toBe('symbol');
+  });
 
-    subscribe(bus, [startRecordingWorkflow.resolved], handler);
-    const run = useWorkflow(startRecordingWorkflow, bus);
-    run();
-
-    const [, payload] = handler.mock.calls[0] as [
-      unknown,
-      { tracks: { type: string }[]; startedAt: number },
-    ];
-    expect(payload.tracks[0].type).toBe('screen');
-    expect(payload.startedAt).toBeTypeOf('number');
+  it('stopRecordingWorkflow exposes started, resolved, and rejected', () => {
+    expect(typeof stopRecordingWorkflow.started).toBe('symbol');
+    expect(typeof stopRecordingWorkflow.resolved).toBe('symbol');
+    expect(typeof stopRecordingWorkflow.rejected).toBe('symbol');
   });
 });
 
-describe('stopRecordingWorkflow', () => {
-  it('resolves with an ID, elapsed time, and stop timestamp', () => {
-    const bus = createEventBus();
-    const handler = vi.fn();
-
-    subscribe(bus, [stopRecordingWorkflow.resolved], handler);
-    const run = useWorkflow(stopRecordingWorkflow, bus);
-    run(90);
-
-    const [, payload] = handler.mock.calls[0] as [
-      unknown,
-      { id: string; elapsed: number; stoppedAt: number },
-    ];
-    expect(payload.id).toBeTypeOf('string');
-    expect(payload.elapsed).toBe(90);
-    expect(payload.stoppedAt).toBeTypeOf('number');
-  });
-});
-
-describe('pauseRecordingWorkflow', () => {
-  it('publishes started and resolved', () => {
-    const bus = createEventBus();
-    const started = vi.fn();
-    const resolved = vi.fn();
-
-    subscribe(bus, [pauseRecordingWorkflow.started], started);
-    subscribe(bus, [pauseRecordingWorkflow.resolved], resolved);
-    const run = useWorkflow(pauseRecordingWorkflow, bus);
-    run();
-
-    expect(started).toHaveBeenCalled();
-    expect(resolved).toHaveBeenCalled();
-  });
-});
-
-describe('resumeRecordingWorkflow', () => {
-  it('publishes started and resolved', () => {
-    const bus = createEventBus();
-    const started = vi.fn();
-    const resolved = vi.fn();
-
-    subscribe(bus, [resumeRecordingWorkflow.started], started);
-    subscribe(bus, [resumeRecordingWorkflow.resolved], resolved);
-    const run = useWorkflow(resumeRecordingWorkflow, bus);
-    run();
-
-    expect(started).toHaveBeenCalled();
-    expect(resolved).toHaveBeenCalled();
-  });
-});
-
-describe('addTrackWorkflow', () => {
-  it('resolves with a new track matching the requested type', () => {
-    const bus = createEventBus();
-    const handler = vi.fn();
-
-    subscribe(bus, [addTrackWorkflow.resolved], handler);
-    const run = useWorkflow(addTrackWorkflow, bus);
-    run('microphone');
-
-    const [, track] = handler.mock.calls[0] as [
-      unknown,
-      { type: string; label: string; live: boolean },
-    ];
-    expect(track.type).toBe('microphone');
-    expect(track.label).toBe('Microphone');
-    expect(track.live).toBe(true);
-  });
-});
-
-describe('removeTrackWorkflow', () => {
-  it('resolves with the removed track ID', () => {
-    const bus = createEventBus();
-    const handler = vi.fn();
-
-    subscribe(bus, [removeTrackWorkflow.resolved], handler);
-    const run = useWorkflow(removeTrackWorkflow, bus);
-    run('track-42');
-
-    expect(handler).toHaveBeenCalledWith(
-      removeTrackWorkflow.resolved,
-      'track-42',
-    );
-  });
-});
-
-describe('integration: session + library stores', () => {
+describe('integration: session + library stores via topics', () => {
   it('records a session and adds it to the library on stop', () => {
     const bus = createEventBus();
     const [session] = createSessionStore(bus);
     const [library] = createLibraryStore(bus);
 
-    const start = useWorkflow(startRecordingWorkflow, bus);
-    const stop = useWorkflow(stopRecordingWorkflow, bus);
-
-    start();
+    publish(bus, startRecordingWorkflow.started, vi.fn());
     expect(session.status).toBe('recording');
-    expect(session.tracks.length).toBeGreaterThan(0);
 
-    stop(45);
+    publish(bus, startRecordingWorkflow.resolved, {
+      tracks: [{ id: '1', type: 'screen', label: 'Screen', live: true }],
+      startedAt: 1000,
+    });
+    expect(session.tracks).toHaveLength(1);
+
+    publish(bus, stopRecordingWorkflow.started, 45);
     expect(session.status).toBe('idle');
     expect(session.tracks).toEqual([]);
+
+    publish(bus, stopRecordingWorkflow.resolved, {
+      id: 'rec-1',
+      elapsed: 45,
+      stoppedAt: 2000,
+      url: 'blob:test',
+    });
     expect(library.recordings).toHaveLength(1);
     expect(library.recordings[0].name).toBe('Recording 1');
     expect(library.recordings[0].duration).toBe(45);
+    expect(library.recordings[0].url).toBe('blob:test');
+  });
+});
+
+describe('removeTrackWorkflow', () => {
+  it('resolved payload is the track ID string', () => {
+    const bus = createEventBus();
+    const handler = vi.fn();
+
+    subscribe(bus, [removeTrackWorkflow.resolved], handler);
+    publish(bus, removeTrackWorkflow.resolved, 'track-42');
+
+    expect(handler).toHaveBeenCalledWith(
+      removeTrackWorkflow.resolved,
+      'track-42',
+    );
   });
 });

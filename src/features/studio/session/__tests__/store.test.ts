@@ -1,4 +1,4 @@
-import { createEventBus, publish, useWorkflow } from '#state';
+import { type EventBus, createEventBus, publish, type Topic } from '#state';
 import { createSessionStore } from '../store';
 import {
   startRecordingWorkflow,
@@ -11,15 +11,21 @@ import {
 } from '../workflows';
 import type { Track } from '../types';
 
+/** Publish a void lifecycle topic from a workflow with no input. */
+function fire(bus: EventBus, topic: Topic<unknown>) {
+  publish(bus, topic as Topic<void>);
+}
+
 function setup() {
   const bus = createEventBus();
   const [state, dispose] = createSessionStore(bus);
-  const start = useWorkflow(startRecordingWorkflow, bus);
-  const stop = useWorkflow(stopRecordingWorkflow, bus);
-  const pause = useWorkflow(pauseRecordingWorkflow, bus);
-  const resume = useWorkflow(resumeRecordingWorkflow, bus);
-  return { state, dispose, bus, start, stop, pause, resume };
+  return { state, dispose, bus };
 }
+
+const fakeTracks: Track[] = [
+  { id: '1', type: 'screen', label: 'Screen', live: true },
+  { id: '2', type: 'system-audio', label: 'Audio', live: true },
+];
 
 describe('createSessionStore', () => {
   it('initializes as idle with no tracks', () => {
@@ -31,36 +37,32 @@ describe('createSessionStore', () => {
   });
 
   describe('startRecordingWorkflow', () => {
-    it('transitions to recording', () => {
-      const { state, start } = setup();
+    it('transitions to recording on started', () => {
+      const { state, bus } = setup();
 
-      start();
+      publish(bus, startRecordingWorkflow.started, vi.fn());
 
       expect(state.status).toBe('recording');
     });
 
-    it('clears any previous error', () => {
-      const { state, bus, start } = setup();
-      publish(
-        bus,
-        startRecordingWorkflow.rejected,
-        new Error('earlier failure'),
-      );
+    it('clears any previous error on started', () => {
+      const { state, bus } = setup();
+      publish(bus, startRecordingWorkflow.rejected, new Error('earlier'));
 
-      start();
+      publish(bus, startRecordingWorkflow.started, vi.fn());
 
       expect(state.error).toBeNull();
     });
 
-    it('sets tracks from the capture activity', () => {
-      const { state, start } = setup();
+    it('sets tracks on resolved', () => {
+      const { state, bus } = setup();
 
-      start();
+      publish(bus, startRecordingWorkflow.resolved, {
+        tracks: fakeTracks,
+        startedAt: 1000,
+      });
 
-      expect(state.tracks.length).toBeGreaterThan(0);
-      expect(state.tracks[0]).toEqual(
-        expect.objectContaining({ type: 'screen' }),
-      );
+      expect(state.tracks).toEqual(fakeTracks);
     });
 
     it('transitions to error on rejection', () => {
@@ -79,20 +81,23 @@ describe('createSessionStore', () => {
 
   describe('stopRecordingWorkflow', () => {
     it('transitions to idle and clears tracks', () => {
-      const { state, start, stop } = setup();
-      start();
+      const { state, bus } = setup();
+      publish(bus, startRecordingWorkflow.resolved, {
+        tracks: fakeTracks,
+        startedAt: 1000,
+      });
 
-      stop(60);
+      publish(bus, stopRecordingWorkflow.started, 60);
 
       expect(state.status).toBe('idle');
       expect(state.tracks).toEqual([]);
     });
 
     it('clears error state', () => {
-      const { state, bus, stop } = setup();
+      const { state, bus } = setup();
       publish(bus, startRecordingWorkflow.rejected, new Error('oops'));
 
-      stop(0);
+      publish(bus, stopRecordingWorkflow.started, 0);
 
       expect(state.error).toBeNull();
     });
@@ -100,10 +105,10 @@ describe('createSessionStore', () => {
 
   describe('pauseRecordingWorkflow', () => {
     it('transitions to paused', () => {
-      const { state, start, pause } = setup();
-      start();
+      const { state, bus } = setup();
+      publish(bus, startRecordingWorkflow.started, vi.fn());
 
-      pause();
+      fire(bus, pauseRecordingWorkflow.started);
 
       expect(state.status).toBe('paused');
     });
@@ -111,11 +116,11 @@ describe('createSessionStore', () => {
 
   describe('resumeRecordingWorkflow', () => {
     it('transitions back to recording', () => {
-      const { state, start, pause, resume } = setup();
-      start();
-      pause();
+      const { state, bus } = setup();
+      publish(bus, startRecordingWorkflow.started, vi.fn());
+      fire(bus, pauseRecordingWorkflow.started);
 
-      resume();
+      fire(bus, resumeRecordingWorkflow.started);
 
       expect(state.status).toBe('recording');
     });
@@ -188,20 +193,20 @@ describe('createSessionStore', () => {
 
   describe('full lifecycle', () => {
     it('idle → recording → paused → recording → idle', () => {
-      const { state, start, stop, pause, resume } = setup();
+      const { state, bus } = setup();
 
       expect(state.status).toBe('idle');
 
-      start();
+      publish(bus, startRecordingWorkflow.started, vi.fn());
       expect(state.status).toBe('recording');
 
-      pause();
+      fire(bus, pauseRecordingWorkflow.started);
       expect(state.status).toBe('paused');
 
-      resume();
+      fire(bus, resumeRecordingWorkflow.started);
       expect(state.status).toBe('recording');
 
-      stop(120);
+      publish(bus, stopRecordingWorkflow.started, 120);
       expect(state.status).toBe('idle');
     });
   });

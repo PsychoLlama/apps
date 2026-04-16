@@ -22,6 +22,7 @@ describe('createLibraryStore', () => {
       id: 'rec-1',
       elapsed: 120,
       stoppedAt: 1000,
+      url: 'blob:test',
     });
 
     expect(state.recordings).toHaveLength(1);
@@ -30,6 +31,7 @@ describe('createLibraryStore', () => {
       name: 'Recording 1',
       duration: 120,
       createdAt: 1000,
+      url: 'blob:test',
     });
   });
 
@@ -40,16 +42,19 @@ describe('createLibraryStore', () => {
       id: 'a',
       elapsed: 60,
       stoppedAt: 1000,
+      url: 'blob:a',
     });
     publish(bus, stopRecordingWorkflow.resolved, {
       id: 'b',
       elapsed: 90,
       stoppedAt: 2000,
+      url: 'blob:b',
     });
     publish(bus, stopRecordingWorkflow.resolved, {
       id: 'c',
       elapsed: 30,
       stoppedAt: 3000,
+      url: 'blob:c',
     });
 
     expect(state.recordings.map((r) => r.name)).toEqual([
@@ -59,16 +64,18 @@ describe('createLibraryStore', () => {
     ]);
   });
 
-  it('preserves elapsed and timestamp from the workflow', () => {
+  it('preserves elapsed, timestamp, and url from the workflow', () => {
     const { state, bus } = setup();
 
     publish(bus, stopRecordingWorkflow.resolved, {
       id: 'rec-1',
       elapsed: 300,
       stoppedAt: 1713200000000,
+      url: 'blob:download',
     });
 
     expect(state.recordings[0].duration).toBe(300);
     expect(state.recordings[0].createdAt).toBe(1713200000000);
+    expect(state.recordings[0].url).toBe('blob:download');
   });
 });

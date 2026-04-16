@@ -9,13 +9,17 @@ export interface LibraryState {
 export const createLibraryStore = defineStore<LibraryState>(
   () => ({ recordings: [] }),
   (on) => {
-    on(stopRecordingWorkflow.resolved, (state, { id, elapsed, stoppedAt }) => {
-      state.recordings.push({
-        id,
-        name: `Recording ${state.recordings.length + 1}`,
-        duration: elapsed,
-        createdAt: stoppedAt,
-      });
-    });
+    on(
+      stopRecordingWorkflow.resolved,
+      (state, { id, elapsed, stoppedAt, url }) => {
+        state.recordings.push({
+          id,
+          name: `Recording ${state.recordings.length + 1}`,
+          duration: elapsed,
+          createdAt: stoppedAt,
+          url,
+        });
+      },
+    );
   },
 );
