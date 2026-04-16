@@ -1,5 +1,4 @@
 import { defineStore, type Ref } from '#state';
-import { registerSession } from './ambient';
 import type { SessionStatus, Track } from './types';
 import {
   startRecordingWorkflow,
@@ -88,5 +87,14 @@ export const createSessionStore = defineStore<SessionState>(
   },
 );
 
-export const [session] = createSessionStore();
-registerSession(session);
+/**
+ * Accessor for the module-level session singleton. Lazy so that
+ * `defineStore`'s deferred transitions callback runs only *after* every
+ * module in the import cycle (store ↔ workflows ↔ activities) has
+ * finished evaluating.
+ */
+let instance: SessionState | null = null;
+export const session = (): SessionState => {
+  if (instance === null) [instance] = createSessionStore();
+  return instance;
+};

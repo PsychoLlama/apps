@@ -22,23 +22,25 @@ export function defineStore<State extends object>(
   init: () => State,
   transitions: (on: OnFn<State>) => void,
 ): (eventBus?: EventBus) => [state: State, dispose: () => void] {
-  const handlers = new Map<Topic<unknown>, TransitionHandler<State, unknown>>();
-
-  const on: OnFn<State> = (topic, handler) => {
-    if (handlers.has(topic)) {
-      throw new Error('Duplicate handler for topic');
-    }
-
-    handlers.set(topic, handler as TransitionHandler<State, unknown>);
-  };
-
-  transitions(on);
-
-  let _handler: TransitionHandler<State, unknown>;
-  let _payload: unknown;
-  const updater = produce<State>((draft) => _handler(draft, _payload));
-
   return (eventBus = GLOBAL_EVENT_BUS) => {
+    const handlers = new Map<
+      Topic<unknown>,
+      TransitionHandler<State, unknown>
+    >();
+
+    const on: OnFn<State> = (topic, handler) => {
+      if (handlers.has(topic)) {
+        throw new Error('Duplicate handler for topic');
+      }
+      handlers.set(topic, handler as TransitionHandler<State, unknown>);
+    };
+
+    transitions(on);
+
+    let _handler: TransitionHandler<State, unknown>;
+    let _payload: unknown;
+    const updater = produce<State>((draft) => _handler(draft, _payload));
+
     const [state, setState] = createStore<State>(init());
 
     const unsub = subscribe(eventBus, handlers.keys(), (topic, payload) => {

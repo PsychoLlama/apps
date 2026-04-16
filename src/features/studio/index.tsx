@@ -420,10 +420,10 @@ export default function Studio() {
 
   return (
     <>
-      <Show when={session.status === 'unsupported'}>
+      <Show when={session().status === 'unsupported'}>
         <UnsupportedState />
       </Show>
-      <Show when={session.status !== 'unsupported'}>
+      <Show when={session().status !== 'unsupported'}>
         <Flex as="div" direction="column" class={css.shell}>
           <SiteHeader title="Recording Studio" />
           <Flex as="div" grow class={css.body}>
@@ -434,31 +434,31 @@ export default function Studio() {
               grow
               class={css.main}
             >
-              <Show when={session.status === 'idle'}>
+              <Show when={session().status === 'idle'}>
                 <IdleState onStart={handleStart} />
               </Show>
-              <Show when={session.status === 'recording'}>
+              <Show when={session().status === 'recording'}>
                 <RecordingState
                   elapsed={timer.elapsed}
-                  tracks={session.tracks}
+                  tracks={session().tracks}
                   onPause={pauseRecording}
                   onStop={handleStop}
                   onAddTrack={handleAddTrack}
                   onRemoveTrack={removeTrack}
                 />
               </Show>
-              <Show when={session.status === 'paused'}>
+              <Show when={session().status === 'paused'}>
                 <PausedState
                   elapsed={timer.elapsed}
-                  tracks={session.tracks}
+                  tracks={session().tracks}
                   onResume={resumeRecording}
                   onStop={handleStop}
                   onAddTrack={handleAddTrack}
                   onRemoveTrack={removeTrack}
                 />
               </Show>
-              <Show when={session.status === 'error'}>
-                <ErrorState error={session.error} onRetry={handleStart} />
+              <Show when={session().status === 'error'}>
+                <ErrorState error={session().error} onRetry={handleStart} />
               </Show>
             </Flex>
             <LibraryPanel

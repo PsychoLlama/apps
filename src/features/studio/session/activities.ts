@@ -1,6 +1,6 @@
 import { defineActivity, ref, type Ref } from '#state';
 import type { Track } from './types';
-import { useSession } from './ambient';
+import { session } from './store';
 
 /** Returns the current timestamp. */
 export const currentTime = defineActivity({}, () => Date.now());
@@ -108,18 +108,18 @@ export const createRecorder = defineActivity(
 
 /** Pauses the active MediaRecorder. */
 export const pauseRecorder = defineActivity({}, () => {
-  useSession().recorder?.current.pause();
+  session().recorder?.current.pause();
 });
 
 /** Resumes the active MediaRecorder. */
 export const resumeRecorder = defineActivity({}, () => {
-  useSession().recorder?.current.resume();
+  session().recorder?.current.resume();
 });
 
 /** Stops the MediaRecorder and produces a Blob from collected chunks. */
 export const stopRecorder = defineActivity({}, (): Promise<Blob> => {
-  const recorder = useSession().recorder?.current;
-  const chunks = useSession().chunks?.current;
+  const recorder = session().recorder?.current;
+  const chunks = session().chunks?.current;
   if (!recorder || !chunks) throw new Error('No active recorder');
 
   return new Promise<Blob>((resolve) => {
@@ -137,7 +137,7 @@ export const createBlobUrl = defineActivity({}, (blob: Blob) =>
 
 /** Stops all tracks in every session stream. */
 export const releaseSession = defineActivity({}, () => {
-  for (const streamRef of Object.values(useSession().streams)) {
+  for (const streamRef of Object.values(session().streams)) {
     for (const track of streamRef.current.getTracks()) {
       track.stop();
     }
@@ -146,7 +146,7 @@ export const releaseSession = defineActivity({}, () => {
 
 /** Stops a specific stream's tracks. */
 export const stopStream = defineActivity({}, (trackId: string) => {
-  const streamRef = useSession().streams[trackId];
+  const streamRef = session().streams[trackId];
   if (!streamRef) return;
   for (const track of streamRef.current.getTracks()) {
     track.stop();

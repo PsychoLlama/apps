@@ -93,20 +93,19 @@ describe('defineStore', () => {
 
   it('throws on duplicate handlers for the same topic', () => {
     const topic = defineTopic();
+    const create = defineStore<{ count: number }>(
+      () => ({ count: 0 }),
+      (on) => {
+        on(topic, (state) => {
+          state.count += 1;
+        });
+        on(topic, (state) => {
+          state.count += 2;
+        });
+      },
+    );
 
-    expect(() =>
-      defineStore<{ count: number }>(
-        () => ({ count: 0 }),
-        (on) => {
-          on(topic, (state) => {
-            state.count += 1;
-          });
-          on(topic, (state) => {
-            state.count += 2;
-          });
-        },
-      ),
-    ).toThrow('Duplicate handler');
+    expect(() => create()).toThrow('Duplicate handler');
   });
 
   it('creates independent instances from the same definition', () => {
