@@ -2,6 +2,7 @@ import { For, Show, onCleanup, onMount } from 'solid-js';
 import { Button, Callout, Flex, Heading, Link, Text } from '#ui';
 import { useTopic, useWorkflow } from '#state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
+import IconClose from 'virtual:icons/mdi/close';
 import IconPlayOutline from 'virtual:icons/mdi/play-outline';
 import IconTrashCanOutline from 'virtual:icons/mdi/trash-can-outline';
 import SiteHeader from '../../components/site-header';
@@ -121,15 +122,16 @@ function LibraryPanel(props: {
                     </Text>
                   </Flex>
                 </Link>
-                <button
-                  type="button"
+                <Button
+                  testId="delete-recording"
                   aria-label={`Delete ${rec.name}`}
-                  data-testid="delete-recording"
-                  class={css.entryDelete}
+                  size={1}
+                  variant="ghost"
+                  color="danger"
                   onClick={() => props.onDelete(rec)}
                 >
                   <IconTrashCanOutline />
-                </button>
+                </Button>
               </Flex>
             )}
           </For>
@@ -177,12 +179,16 @@ function ActiveTracks(props: {
               />
               {t.label}
               <Show when={t.live}>
-                <button
-                  class={css.trackStopButton}
+                <Button
+                  testId="remove-track"
+                  aria-label={`Remove ${t.label}`}
+                  size={1}
+                  variant="ghost"
+                  color="neutral"
                   onClick={() => props.onRemove(t.id)}
                 >
-                  &times;
-                </button>
+                  <IconClose />
+                </Button>
               </Show>
             </Text>
           )}

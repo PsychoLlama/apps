@@ -136,4 +136,12 @@ export default [
       ],
     },
   },
+  {
+    // #ui primitives implement the components the rule redirects everyone
+    // else toward — they have to use raw elements.
+    files: ['src/ui/components/**/*.tsx'],
+    rules: {
+      'custom/require-ui-primitives': 'off',
+    },
+  },
 ];

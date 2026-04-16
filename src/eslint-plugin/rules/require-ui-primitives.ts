@@ -22,6 +22,7 @@ export const bannedElements = new Set<HtmlTag>([
   'ul',
   'li',
   'a',
+  'button',
   'p',
   'label',
   'h1',

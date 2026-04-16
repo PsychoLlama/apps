@@ -20,7 +20,6 @@ tester.run('require-ui-primitives', rule as never, {
     { code: '<Heading as="h1">title</Heading>' },
 
     // Elements without a #ui equivalent are allowed.
-    { code: '<button>click</button>' },
     { code: '<input />' },
     { code: '<img />' },
     // Document structure is allowed.

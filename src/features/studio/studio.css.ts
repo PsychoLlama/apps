@@ -125,22 +125,6 @@ export const entryLink = style({
   cursor: 'pointer',
 });
 
-export const entryDelete = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: space[6],
-  height: space[6],
-  borderRadius: radius[2],
-  color: text.lowContrast,
-  cursor: 'pointer',
-  transition: `background-color ${fast[2]} ${standard.productive}, color ${fast[2]} ${standard.productive}`,
-  ':hover': {
-    color: danger[9],
-    backgroundColor: neutralAlpha[3],
-  },
-});
-
 export const entryThumb = style({
   width: space[9],
   height: space[7],
@@ -222,20 +206,6 @@ export const trackDotStopped = style({
   height: space[1],
   borderRadius: radius.full,
   backgroundColor: neutral[7],
-});
-
-export const trackStopButton = style({
-  background: 'none',
-  border: 'none',
-  color: text.lowContrast,
-  cursor: 'pointer',
-  fontSize: typeScale[1].fontSize,
-  lineHeight: typeScale[1].lineHeight,
-  marginLeft: space[1],
-  transition: `color ${fast[2]} ${standard.productive}`,
-  ':hover': {
-    color: danger[9],
-  },
 });
 
 // --- Unsupported ---
