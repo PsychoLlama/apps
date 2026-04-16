@@ -39,3 +39,5 @@ export const createTimerStore = defineStore<TimerState>(
     });
   },
 );
+
+export const [timer] = createTimerStore();

@@ -109,13 +109,35 @@ export const panelFooter = style({
 
 // --- Recording entries ---
 
-export const entryLink = style({
-  padding: `${space[2]} ${space[4]}`,
-  textDecoration: 'none',
-  cursor: 'pointer',
+export const entryRow = style({
   transition: `background-color ${fast[2]} ${standard.productive}`,
   ':hover': {
     backgroundColor: neutral[3],
+  },
+});
+
+export const entryLink = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: space[3],
+  flex: 1,
+  minWidth: 0,
+  cursor: 'pointer',
+});
+
+export const entryDelete = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: space[6],
+  height: space[6],
+  borderRadius: radius[2],
+  color: text.lowContrast,
+  cursor: 'pointer',
+  transition: `background-color ${fast[2]} ${standard.productive}, color ${fast[2]} ${standard.productive}`,
+  ':hover': {
+    color: danger[9],
+    backgroundColor: neutralAlpha[3],
   },
 });
 

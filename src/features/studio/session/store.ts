@@ -61,3 +61,5 @@ export const createSessionStore = defineStore<SessionState>(
     });
   },
 );
+
+export const [session] = createSessionStore();

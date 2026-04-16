@@ -1,5 +1,6 @@
 import { createEventBus, publish } from '#state';
 import { createLibraryStore } from '../store';
+import { deleteRecordingWorkflow, renameRecordingWorkflow } from '../workflows';
 import { stopRecordingWorkflow } from '../../session/workflows';
 
 function setup() {
@@ -77,5 +78,77 @@ describe('createLibraryStore', () => {
     expect(state.recordings[0].duration).toBe(300);
     expect(state.recordings[0].createdAt).toBe(1713200000000);
     expect(state.recordings[0].url).toBe('blob:download');
+  });
+
+  describe('deleteRecordingWorkflow', () => {
+    it('removes a recording by id when resolved', () => {
+      const { state, bus } = setup();
+      publish(bus, stopRecordingWorkflow.resolved, {
+        id: 'a',
+        elapsed: 1,
+        stoppedAt: 1,
+        url: 'blob:a',
+      });
+      publish(bus, stopRecordingWorkflow.resolved, {
+        id: 'b',
+        elapsed: 2,
+        stoppedAt: 2,
+        url: 'blob:b',
+      });
+
+      publish(bus, deleteRecordingWorkflow.resolved, 'a');
+
+      expect(state.recordings.map((r) => r.id)).toEqual(['b']);
+    });
+
+    it('is a no-op when the id is unknown', () => {
+      const { state, bus } = setup();
+      publish(bus, stopRecordingWorkflow.resolved, {
+        id: 'a',
+        elapsed: 1,
+        stoppedAt: 1,
+        url: 'blob:a',
+      });
+
+      publish(bus, deleteRecordingWorkflow.resolved, 'nope');
+
+      expect(state.recordings).toHaveLength(1);
+    });
+  });
+
+  describe('renameRecordingWorkflow', () => {
+    it('updates the recording name by id when resolved', () => {
+      const { state, bus } = setup();
+      publish(bus, stopRecordingWorkflow.resolved, {
+        id: 'a',
+        elapsed: 1,
+        stoppedAt: 1,
+        url: 'blob:a',
+      });
+
+      publish(bus, renameRecordingWorkflow.resolved, {
+        id: 'a',
+        name: 'Demo',
+      });
+
+      expect(state.recordings[0].name).toBe('Demo');
+    });
+
+    it('is a no-op when the id is unknown', () => {
+      const { state, bus } = setup();
+      publish(bus, stopRecordingWorkflow.resolved, {
+        id: 'a',
+        elapsed: 1,
+        stoppedAt: 1,
+        url: 'blob:a',
+      });
+
+      publish(bus, renameRecordingWorkflow.resolved, {
+        id: 'nope',
+        name: 'Demo',
+      });
+
+      expect(state.recordings[0].name).toBe('Recording 1');
+    });
   });
 });

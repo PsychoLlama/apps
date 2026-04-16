@@ -3,6 +3,7 @@ import { Button, Callout, Flex, Heading, Link, Text } from '#ui';
 import { useTopic, useWorkflow } from '#state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconPlayOutline from 'virtual:icons/mdi/play-outline';
+import IconTrashCanOutline from 'virtual:icons/mdi/trash-can-outline';
 import SiteHeader from '../../components/site-header';
 import {
   startRecordingWorkflow,
@@ -13,10 +14,12 @@ import {
   removeTrackWorkflow,
   checkSupportWorkflow,
 } from './session/workflows';
-import { createSessionStore } from './session/store';
-import { createLibraryStore } from './library/store';
-import { createTimerStore } from './timer/store';
+import { deleteRecordingWorkflow } from './library/workflows';
+import { session } from './session/store';
+import { library } from './library/store';
+import { timer } from './timer/store';
 import { tick } from './timer/topics';
+import type { Recording } from './library/types';
 import * as css from './studio.css';
 
 // --- Timer display ---
@@ -41,7 +44,8 @@ const durationFormat = new Intl.DurationFormat('en', {
 // --- Library panel ---
 
 function LibraryPanel(props: {
-  recordings: { name: string; duration: number; id: string; url: string }[];
+  recordings: Recording[];
+  onDelete: (recording: Recording) => void;
 }) {
   return (
     <Flex as="aside" direction="column" class={css.panel}>
@@ -75,13 +79,20 @@ function LibraryPanel(props: {
         >
           <For each={props.recordings}>
             {(rec) => (
-              <Link
-                testId="recording-entry"
-                class={css.entryLink}
-                href={rec.url}
-                download={`${rec.name}.webm`}
+              <Flex
+                as="div"
+                align="center"
+                gap={3}
+                px={4}
+                py={2}
+                class={css.entryRow}
               >
-                <Flex as="div" align="center" gap={3}>
+                <Link
+                  testId="recording-entry"
+                  class={css.entryLink}
+                  href={`/studio/${rec.id}`}
+                  underline="none"
+                >
                   <Flex
                     as="div"
                     align="center"
@@ -90,7 +101,7 @@ function LibraryPanel(props: {
                   >
                     <IconPlayOutline class={css.entryThumbIcon} />
                   </Flex>
-                  <Flex as="div" direction="column" gap={1}>
+                  <Flex as="div" direction="column" gap={1} grow>
                     <Text
                       as="span"
                       size={2}
@@ -109,8 +120,17 @@ function LibraryPanel(props: {
                       {durationFormat.format(secondsToDuration(rec.duration))}
                     </Text>
                   </Flex>
-                </Flex>
-              </Link>
+                </Link>
+                <button
+                  type="button"
+                  aria-label={`Delete ${rec.name}`}
+                  data-testid="delete-recording"
+                  class={css.entryDelete}
+                  onClick={() => props.onDelete(rec)}
+                >
+                  <IconTrashCanOutline />
+                </button>
+              </Flex>
             )}
           </For>
         </Show>
@@ -355,10 +375,6 @@ function UnsupportedState() {
 // --- Root ---
 
 export default function Studio() {
-  const [session, disposeSession] = createSessionStore();
-  const [library, disposeLibrary] = createLibraryStore();
-  const [timer, disposeTimer] = createTimerStore();
-
   const startRecording = useWorkflow(startRecordingWorkflow);
   const stopRecording = useWorkflow(stopRecordingWorkflow);
   const pauseRecording = useWorkflow(pauseRecordingWorkflow);
@@ -366,6 +382,7 @@ export default function Studio() {
   const addTrack = useWorkflow(addTrackWorkflow);
   const removeTrack = useWorkflow(removeTrackWorkflow);
   const checkSupport = useWorkflow(checkSupportWorkflow);
+  const deleteRecording = useWorkflow(deleteRecordingWorkflow);
   const publishTick = useTopic(tick);
 
   function handleStart() {
@@ -382,6 +399,10 @@ export default function Studio() {
     void addTrack('microphone');
   }
 
+  function handleDelete(recording: Recording) {
+    deleteRecording({ id: recording.id, url: recording.url });
+  }
+
   onMount(() => {
     checkSupport();
   });
@@ -389,9 +410,6 @@ export default function Studio() {
 
   onCleanup(() => {
     clearInterval(tickInterval);
-    disposeSession();
-    disposeLibrary();
-    disposeTimer();
   });
 
   return (
@@ -437,7 +455,10 @@ export default function Studio() {
                 <ErrorState error={session.error} onRetry={handleStart} />
               </Show>
             </Flex>
-            <LibraryPanel recordings={[...library.recordings].reverse()} />
+            <LibraryPanel
+              recordings={[...library.recordings].reverse()}
+              onDelete={handleDelete}
+            />
           </Flex>
         </Flex>
       </Show>
