@@ -1,4 +1,4 @@
-import { createEventBus, publish, subscribe } from '#state';
+import { createEventBus, publish, ref, subscribe } from '#state';
 import {
   startRecordingWorkflow,
   stopRecordingWorkflow,
@@ -32,6 +32,9 @@ describe('integration: session + library stores via topics', () => {
 
     publish(bus, startRecordingWorkflow.resolved, {
       tracks: [{ id: '1', type: 'screen', label: 'Screen', live: true }],
+      streams: { '1': ref({} as MediaStream) },
+      recorder: ref({} as MediaRecorder),
+      chunks: ref([] as Blob[]),
       startedAt: 1000,
     });
     expect(session.tracks).toHaveLength(1);

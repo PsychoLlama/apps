@@ -8,25 +8,26 @@ import {
   currentTime,
   generateId,
   pauseRecorder,
-  removeMediaStream,
+  releaseSession,
   resumeRecorder,
   stopRecorder,
+  stopStream,
   watchStreamEnd,
 } from './activities';
 
 /** Starts a recording session. Acquires screen capture, starts the recorder. */
 export const startRecordingWorkflow = defineWorkflow(
   async (ctx, onStreamEnded: () => void) => {
-    const tracks = await ctx.run(captureScreen);
+    const { tracks, streams } = await ctx.run(captureScreen);
     const startedAt = ctx.run(currentTime);
-    ctx.run(createRecorder);
+    const { recorder, chunks } = ctx.run(createRecorder, streams);
 
     const videoTrack = tracks.find((t) => t.type === 'screen');
     if (videoTrack) {
-      ctx.run(watchStreamEnd, videoTrack.id, onStreamEnded);
+      ctx.run(watchStreamEnd, streams[videoTrack.id], onStreamEnded);
     }
 
-    return { tracks, startedAt };
+    return { tracks, streams, recorder, chunks, startedAt };
   },
 );
 
@@ -34,6 +35,7 @@ export const startRecordingWorkflow = defineWorkflow(
 export const stopRecordingWorkflow = defineWorkflow(
   async (ctx, elapsed: number) => {
     const blob = await ctx.run(stopRecorder);
+    ctx.run(releaseSession);
     const url = ctx.run(createBlobUrl, blob);
     const id = ctx.run(generateId);
     const stoppedAt = ctx.run(currentTime);
@@ -58,7 +60,7 @@ export const addTrackWorkflow = defineWorkflow(
 
 /** Removes a track from the active session by ID. */
 export const removeTrackWorkflow = defineWorkflow((ctx, trackId: string) => {
-  ctx.run(removeMediaStream, trackId);
+  ctx.run(stopStream, trackId);
   return trackId;
 });
 

@@ -1,4 +1,10 @@
-import { type EventBus, createEventBus, publish, type Topic } from '#state';
+import {
+  type EventBus,
+  createEventBus,
+  publish,
+  ref,
+  type Topic,
+} from '#state';
 import { createSessionStore } from '../store';
 import {
   startRecordingWorkflow,
@@ -26,6 +32,22 @@ const fakeTracks: Track[] = [
   { id: '1', type: 'screen', label: 'Screen', live: true },
   { id: '2', type: 'system-audio', label: 'Audio', live: true },
 ];
+
+function startedPayload(tracks: Track[]) {
+  return {
+    tracks,
+    streams: Object.fromEntries(
+      tracks.map((t) => [t.id, ref({} as MediaStream)]),
+    ),
+    recorder: ref({} as MediaRecorder),
+    chunks: ref([] as Blob[]),
+    startedAt: 1000,
+  };
+}
+
+function addTrackPayload(track: Track) {
+  return { track, streamRef: ref({} as MediaStream) };
+}
 
 describe('createSessionStore', () => {
   it('initializes as idle with no tracks', () => {
@@ -57,10 +79,7 @@ describe('createSessionStore', () => {
     it('sets tracks on resolved', () => {
       const { state, bus } = setup();
 
-      publish(bus, startRecordingWorkflow.resolved, {
-        tracks: fakeTracks,
-        startedAt: 1000,
-      });
+      publish(bus, startRecordingWorkflow.resolved, startedPayload(fakeTracks));
 
       expect(state.tracks).toEqual(fakeTracks);
     });
@@ -82,15 +101,28 @@ describe('createSessionStore', () => {
   describe('stopRecordingWorkflow', () => {
     it('transitions to idle and clears tracks', () => {
       const { state, bus } = setup();
-      publish(bus, startRecordingWorkflow.resolved, {
-        tracks: fakeTracks,
-        startedAt: 1000,
-      });
+      publish(bus, startRecordingWorkflow.resolved, startedPayload(fakeTracks));
 
       publish(bus, stopRecordingWorkflow.started, 60);
 
       expect(state.status).toBe('idle');
       expect(state.tracks).toEqual([]);
+    });
+
+    it('clears refs on resolved', () => {
+      const { state, bus } = setup();
+      publish(bus, startRecordingWorkflow.resolved, startedPayload(fakeTracks));
+
+      publish(bus, stopRecordingWorkflow.resolved, {
+        id: 'r1',
+        elapsed: 10,
+        stoppedAt: 2000,
+        url: 'blob:test',
+      });
+
+      expect(state.streams).toEqual({});
+      expect(state.recorder).toBeNull();
+      expect(state.chunks).toBeNull();
     });
 
     it('clears error state', () => {
@@ -136,22 +168,38 @@ describe('createSessionStore', () => {
         live: true,
       };
 
-      publish(bus, addTrackWorkflow.resolved, track);
+      publish(bus, addTrackWorkflow.resolved, addTrackPayload(track));
 
       expect(state.tracks).toEqual([track]);
+    });
+
+    it('stores the stream ref alongside the track', () => {
+      const { state, bus } = setup();
+      const track: Track = {
+        id: '3',
+        type: 'microphone',
+        label: 'Microphone',
+        live: true,
+      };
+      const payload = addTrackPayload(track);
+
+      publish(bus, addTrackWorkflow.resolved, payload);
+
+      expect(state.streams['3']).toBe(payload.streamRef);
     });
   });
 
   describe('removeTrackWorkflow', () => {
     it('removes a track by ID', () => {
       const { state, bus } = setup();
-      publish(bus, startRecordingWorkflow.resolved, {
-        tracks: [
+      publish(
+        bus,
+        startRecordingWorkflow.resolved,
+        startedPayload([
           { id: '1', type: 'screen', label: 'Screen', live: true },
           { id: '2', type: 'microphone', label: 'Mic', live: true },
-        ],
-        startedAt: 1000,
-      });
+        ]),
+      );
 
       publish(bus, removeTrackWorkflow.resolved, '1');
 
@@ -162,14 +210,32 @@ describe('createSessionStore', () => {
 
     it('does nothing for an unknown track ID', () => {
       const { state, bus } = setup();
-      publish(bus, startRecordingWorkflow.resolved, {
-        tracks: [{ id: '1', type: 'screen', label: 'Screen', live: true }],
-        startedAt: 1000,
-      });
+      publish(
+        bus,
+        startRecordingWorkflow.resolved,
+        startedPayload([
+          { id: '1', type: 'screen', label: 'Screen', live: true },
+        ]),
+      );
 
       publish(bus, removeTrackWorkflow.resolved, 'unknown');
 
       expect(state.tracks).toHaveLength(1);
+    });
+
+    it('drops the stream ref', () => {
+      const { state, bus } = setup();
+      publish(
+        bus,
+        startRecordingWorkflow.resolved,
+        startedPayload([
+          { id: '1', type: 'screen', label: 'Screen', live: true },
+        ]),
+      );
+
+      publish(bus, removeTrackWorkflow.resolved, '1');
+
+      expect(state.streams['1']).toBeUndefined();
     });
   });
 

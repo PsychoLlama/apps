@@ -2,6 +2,7 @@ import {
   type EventBus,
   createEventBus,
   publish,
+  ref,
   useTopic,
   type Topic,
 } from '#state';
@@ -29,6 +30,9 @@ function setup() {
 function publishStarted(bus: ReturnType<typeof createEventBus>) {
   publish(bus, startRecordingWorkflow.resolved, {
     tracks: [],
+    streams: {},
+    recorder: ref({} as MediaRecorder),
+    chunks: ref([] as Blob[]),
     startedAt: 1000,
   });
 }

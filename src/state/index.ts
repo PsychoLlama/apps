@@ -8,6 +8,7 @@ export {
 } from './event-bus';
 export { defineStore } from './store';
 export { defineActivity } from './activity';
+export { ref, Ref } from './ref';
 export {
   defineWorkflow,
   useWorkflow,

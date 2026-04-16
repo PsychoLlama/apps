@@ -41,6 +41,13 @@
 - `subscribe(bus, topics, handler)` listens to multiple topics with one handler. Returns an unsubscribe function.
 - The handler receives `(topic, payload)`. The topic identifies which subscription fired.
 
+## Refs
+
+- `ref(value)` wraps a value in an opaque `Ref<T>` with a `.current` property.
+- Use for host objects (media streams, recorders) that must live inside a store without proxy descent.
+- Refs are immutable. Swap by reassigning: `state.recorder = ref(next)`.
+- No automatic release. Clean up the held value explicitly before dropping the ref.
+
 ## Testing
 
 - Create an isolated `EventBus` per test to prevent shared state.
