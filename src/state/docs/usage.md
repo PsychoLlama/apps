@@ -5,11 +5,12 @@
 
 ## Workflows
 
-- `defineWorkflow((ctx, input) => result)` creates a workflow with `started` and `settled` lifecycle topics.
+- `defineWorkflow((ctx, input) => result)` creates a workflow with `started`, `resolved`, and `rejected` lifecycle topics.
 - Omit `input` for workflows that take no arguments.
 - `useWorkflow(workflow, bus?)` binds a workflow to a bus and returns a callable runner.
-- Calling the runner publishes `started`, executes the workflow, then publishes `settled` with a `Result`.
-- Sync runners return `void`. Async runners return `Promise<void>`. The return value is delivered through `settled`.
+- Calling the runner publishes `started`, executes the workflow, then publishes `resolved` with the return value or `rejected` with an `Error`.
+- Sync runners return `void`. Async runners return `Promise<void>`. The return value is delivered through `resolved`.
+- Unhandled rejections (no subscriber on `rejected`) re-throw the error.
 - `ctx.run(activity, ...args)` is how workflows invoke activities.
 
 ## Activities
@@ -26,11 +27,6 @@
 - The factory returns `[state, dispose]`. `state` is a SolidJS reactive store with fine-grained reactivity.
 - `dispose` unsubscribes from all topics.
 
-## Results
-
-- `Result<T>`: `{ type: RESOLVED, value: T }` or `{ type: REJECTED, value: Error }`.
-- `RESOLVED` and `REJECTED` are unique symbols. Discriminate with `result.type === RESOLVED`.
-
 ## Topics
 
 - `defineTopic<Payload>()` creates a typed event identity. Runtime value is a `Symbol`.
@@ -41,7 +37,7 @@
 ## Event Bus
 
 - `createEventBus()` creates an isolated bus. Stores and workflows default to `GLOBAL_EVENT_BUS`.
-- `publish(bus, topic)` for void topics. `publish(bus, topic, payload)` for typed topics.
+- `publish(bus, topic)` for void topics. `publish(bus, topic, payload)` for typed topics. Returns `true` if any handler was called.
 - `subscribe(bus, topics, handler)` listens to multiple topics with one handler. Returns an unsubscribe function.
 - The handler receives `(topic, payload)`. The topic identifies which subscription fired.
 

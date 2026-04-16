@@ -1,17 +1,16 @@
 import { defineActivity } from '../activity';
 import { createEventBus, subscribe } from '../event-bus';
-import { REJECTED, RESOLVED, type Result } from '../result';
 import type { Topic } from '../topic';
 import { defineWorkflow, useWorkflow } from '../workflow';
 import { defineStore } from '../store';
 
 describe('defineWorkflow', () => {
-  it('exposes started and settled topics', () => {
+  it('exposes started, resolved, and rejected topics', () => {
     const workflow = defineWorkflow(() => 'done');
 
     expect(typeof workflow.started).toBe('symbol');
-    expect(typeof workflow.settled).toBe('symbol');
-    expect(workflow.started).not.toBe(workflow.settled);
+    expect(typeof workflow.resolved).toBe('symbol');
+    expect(typeof workflow.rejected).toBe('symbol');
   });
 });
 
@@ -28,56 +27,50 @@ describe('useWorkflow', () => {
     expect(handler).toHaveBeenCalledWith(workflow.started, 'abc');
   });
 
-  it('publishes settled with resolved value on success', () => {
+  it('publishes resolved with the value on success', () => {
     const eventBus = createEventBus();
     const workflow = defineWorkflow((_, n: number) => n * 2);
     const handler = vi.fn();
 
-    subscribe(eventBus, [workflow.settled], handler);
+    subscribe(eventBus, [workflow.resolved], handler);
     const run = useWorkflow(workflow, eventBus);
     run(5);
 
-    expect(handler).toHaveBeenCalledWith(workflow.settled, {
-      type: RESOLVED,
-      value: 10,
-    });
+    expect(handler).toHaveBeenCalledWith(workflow.resolved, 10);
   });
 
-  it('publishes settled with rejected value on sync throw', () => {
+  it('publishes rejected with error on sync throw', () => {
     const eventBus = createEventBus();
     const workflow = defineWorkflow((): string => {
       throw new Error('boom');
     });
     const handler = vi.fn();
 
-    subscribe(eventBus, [workflow.settled], handler);
+    subscribe(eventBus, [workflow.rejected], handler);
     const run = useWorkflow(workflow, eventBus);
     run();
 
-    expect(handler).toHaveBeenCalledWith(workflow.settled, {
-      type: REJECTED,
-      value: new Error('boom'),
-    });
+    expect(handler).toHaveBeenCalledWith(workflow.rejected, new Error('boom'));
   });
 
-  it('publishes settled with resolved value on async success', async () => {
+  it('publishes resolved with the value on async success', async () => {
     const eventBus = createEventBus();
     const workflow = defineWorkflow((_, id: string) =>
       Promise.resolve({ id, name: 'test' }),
     );
     const handler = vi.fn();
 
-    subscribe(eventBus, [workflow.settled], handler);
+    subscribe(eventBus, [workflow.resolved], handler);
     const run = useWorkflow(workflow, eventBus);
     await run('abc');
 
-    expect(handler).toHaveBeenCalledWith(workflow.settled, {
-      type: RESOLVED,
-      value: { id: 'abc', name: 'test' },
+    expect(handler).toHaveBeenCalledWith(workflow.resolved, {
+      id: 'abc',
+      name: 'test',
     });
   });
 
-  it('publishes settled with rejected value on async throw', async () => {
+  it('publishes rejected with error on async throw', async () => {
     const eventBus = createEventBus();
     const workflow = defineWorkflow(async () => {
       await Promise.resolve();
@@ -85,14 +78,14 @@ describe('useWorkflow', () => {
     });
     const handler = vi.fn();
 
-    subscribe(eventBus, [workflow.settled], handler);
+    subscribe(eventBus, [workflow.rejected], handler);
     const run = useWorkflow(workflow, eventBus);
     await run();
 
-    expect(handler).toHaveBeenCalledWith(workflow.settled, {
-      type: REJECTED,
-      value: new Error('async boom'),
-    });
+    expect(handler).toHaveBeenCalledWith(
+      workflow.rejected,
+      new Error('async boom'),
+    );
   });
 
   it('wraps non-Error throws in an Error', () => {
@@ -103,14 +96,48 @@ describe('useWorkflow', () => {
     });
     const handler = vi.fn();
 
-    subscribe(eventBus, [workflow.settled], handler);
+    subscribe(eventBus, [workflow.rejected], handler);
     const run = useWorkflow(workflow, eventBus);
     run();
 
-    const result = handler.mock.calls[0][1] as Result<never>;
-    expect(result.type).toBe(REJECTED);
-    expect(result.value).toBeInstanceOf(Error);
-    expect(result.value.message).toBe('string error');
+    const error = handler.mock.calls[0][1] as Error;
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('string error');
+  });
+
+  it('re-throws sync errors when rejected has no subscribers', () => {
+    const eventBus = createEventBus();
+    const workflow = defineWorkflow((): never => {
+      throw new Error('unhandled');
+    });
+
+    const run = useWorkflow(workflow, eventBus);
+
+    expect(() => run()).toThrow('unhandled');
+  });
+
+  it('rejects the promise when async rejected has no subscribers', async () => {
+    const eventBus = createEventBus();
+    const workflow = defineWorkflow(async () => {
+      await Promise.resolve();
+      throw new Error('unhandled async');
+    });
+
+    const run = useWorkflow(workflow, eventBus);
+
+    await expect(run()).rejects.toThrow('unhandled async');
+  });
+
+  it('does not re-throw when rejected has a subscriber', () => {
+    const eventBus = createEventBus();
+    const workflow = defineWorkflow((): never => {
+      throw new Error('handled');
+    });
+
+    subscribe(eventBus, [workflow.rejected], vi.fn());
+    const run = useWorkflow(workflow, eventBus);
+
+    expect(() => run()).not.toThrow();
   });
 
   it('runs activities through ctx.run', () => {
@@ -119,14 +146,11 @@ describe('useWorkflow', () => {
     const workflow = defineWorkflow((ctx, n: number) => ctx.run(double, n));
     const handler = vi.fn();
 
-    subscribe(eventBus, [workflow.settled], handler);
+    subscribe(eventBus, [workflow.resolved], handler);
     const run = useWorkflow(workflow, eventBus);
     run(5);
 
-    expect(handler).toHaveBeenCalledWith(workflow.settled, {
-      type: RESOLVED,
-      value: 10,
-    });
+    expect(handler).toHaveBeenCalledWith(workflow.resolved, 10);
   });
 
   it('propagates activity errors to the workflow', () => {
@@ -145,14 +169,11 @@ describe('useWorkflow', () => {
     });
     const handler = vi.fn();
 
-    subscribe(eventBus, [workflow.settled], handler);
+    subscribe(eventBus, [workflow.resolved], handler);
     const run = useWorkflow(workflow, eventBus);
     run();
 
-    expect(handler).toHaveBeenCalledWith(workflow.settled, {
-      type: RESOLVED,
-      value: 'caught',
-    });
+    expect(handler).toHaveBeenCalledWith(workflow.resolved, 'caught');
   });
 
   it('integrates with stores via lifecycle topics', () => {
@@ -175,11 +196,9 @@ describe('useWorkflow', () => {
           state.loading = true;
         });
 
-        on(getUser.settled, (state, result) => {
+        on(getUser.resolved, (state, user) => {
           state.loading = false;
-          if (result.type === RESOLVED) {
-            state.user = result.value;
-          }
+          state.user = user;
         });
       },
     );
@@ -220,16 +239,22 @@ describe('type inference', () => {
     expectTypeOf(workflow.started).toEqualTypeOf<Topic<string>>();
   });
 
-  it('infers settled topic payload from return type', () => {
+  it('infers resolved topic payload from return type', () => {
     const workflow = defineWorkflow(() => 42);
 
-    expectTypeOf(workflow.settled).toEqualTypeOf<Topic<Result<number>>>();
+    expectTypeOf(workflow.resolved).toEqualTypeOf<Topic<number>>();
   });
 
-  it('infers settled topic payload from async return type (unwrapped)', () => {
+  it('infers resolved topic payload from async return type (unwrapped)', () => {
     const workflow = defineWorkflow(() => Promise.resolve(42));
 
-    expectTypeOf(workflow.settled).toEqualTypeOf<Topic<Result<number>>>();
+    expectTypeOf(workflow.resolved).toEqualTypeOf<Topic<number>>();
+  });
+
+  it('rejected topic is always Topic<Error>', () => {
+    const workflow = defineWorkflow(() => 42);
+
+    expectTypeOf(workflow.rejected).toEqualTypeOf<Topic<Error>>();
   });
 
   it('void input requires no arguments', () => {

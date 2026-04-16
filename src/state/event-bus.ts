@@ -47,26 +47,27 @@ export function subscribe(
   };
 }
 
-/** Publish to a void topic (no payload). */
-export function publish(eventBus: EventBus, topic: Topic<void>): void;
+/** Publish to a void topic (no payload). Returns true if any handler was called. */
+export function publish(eventBus: EventBus, topic: Topic<void>): boolean;
 
-/** Publish to a typed topic with a payload. */
+/** Publish to a typed topic with a payload. Returns true if any handler was called. */
 export function publish<Payload>(
   eventBus: EventBus,
   topic: Topic<Payload>,
   payload: Payload,
-): void;
+): boolean;
 
 export function publish(
   eventBus: EventBus,
   topic: Topic<unknown>,
   payload?: unknown,
-): void {
+): boolean {
   const set = eventBus[listenersKey].get(topic);
-  if (!set) return;
+  if (!set) return false;
   for (const handler of set) {
     handler(topic, payload);
   }
+  return true;
 }
 
 /** Global event bus used by stores by default. */

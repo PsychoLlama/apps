@@ -1,7 +1,6 @@
 import type { ActivityDef } from './activity';
 import { executeActivity } from './activity';
 import { type EventBus, GLOBAL_EVENT_BUS, publish } from './event-bus';
-import { REJECTED, RESOLVED, type Result } from './result';
 import { defineTopic, type Topic } from './topic';
 
 const WORKFLOW_EXECUTOR: unique symbol = Symbol();
@@ -18,7 +17,8 @@ export interface WorkflowContext {
 /** Opaque handle to a workflow definition with lifecycle topics. */
 export interface WorkflowDef<Input, RawReturn> {
   readonly started: Topic<Input>;
-  readonly settled: Topic<Result<Awaited<RawReturn>>>;
+  readonly resolved: Topic<Awaited<RawReturn>>;
+  readonly rejected: Topic<Error>;
   readonly [WORKFLOW_EXECUTOR]: (
     ctx: WorkflowContext,
     input: Input,
@@ -40,22 +40,21 @@ export function defineWorkflow<Input, RawReturn>(
 ): WorkflowDef<Input, RawReturn> {
   return {
     started: defineTopic(),
-    settled: defineTopic(),
+    resolved: defineTopic(),
+    rejected: defineTopic(),
     [WORKFLOW_EXECUTOR]: execute,
   };
 }
 
 const ctx: WorkflowContext = { run: executeActivity };
 
-function resolved<T>(value: T): Result<T> {
-  return { type: RESOLVED, value };
+function toError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
 }
 
-function rejected(error: unknown): Result<never> {
-  return {
-    type: REJECTED,
-    value: error instanceof Error ? error : new Error(String(error)),
-  };
+function reject(eventBus: EventBus, topic: Topic<Error>, error: unknown): void {
+  const err = toError(error);
+  if (!publish(eventBus, topic, err)) throw err;
 }
 
 type WorkflowRunner<Input, RawReturn> = (
@@ -76,19 +75,14 @@ export function useWorkflow<Input, RawReturn>(
       if (result instanceof Promise) {
         return result.then(
           (value: Awaited<RawReturn>) =>
-            publish(eventBus, workflow.settled, resolved(value)),
-          (error: unknown) =>
-            publish(eventBus, workflow.settled, rejected(error)),
+            publish(eventBus, workflow.resolved, value),
+          (error: unknown) => reject(eventBus, workflow.rejected, error),
         );
       }
 
-      publish(
-        eventBus,
-        workflow.settled,
-        resolved(result as Awaited<RawReturn>),
-      );
+      publish(eventBus, workflow.resolved, result as Awaited<RawReturn>);
     } catch (error) {
-      publish(eventBus, workflow.settled, rejected(error));
+      reject(eventBus, workflow.rejected, error);
     }
   }) as unknown as WorkflowRunner<Input, RawReturn>;
 }
