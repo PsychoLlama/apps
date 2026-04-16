@@ -8,7 +8,6 @@ import {
   neutral,
   neutralAlpha,
   radius,
-  shadow,
   space,
   standard,
   success,
@@ -223,35 +222,8 @@ export const unsupportedText = style({
   maxWidth: '320px',
 });
 
-// --- State switcher (prototype only) ---
+// --- Empty library ---
 
-export const stateSwitcher = style({
-  position: 'fixed',
-  bottom: space[3],
-  left: '50%',
-  transform: 'translateX(-50%)',
-  gap: space[1],
-  zIndex: 100,
-  backgroundColor: background.panelSolid,
-  boxShadow: shadow[5],
-  borderRadius: radius[3],
-  padding: space[1],
-});
-
-export const switcherButton = style({
-  backgroundColor: 'transparent',
-  color: text.lowContrast,
-  border: 'none',
-  borderRadius: radius[2],
-  padding: `${space[1]} ${space[2]}`,
-  cursor: 'pointer',
-  transition: `background-color ${fast[2]} ${standard.productive}, color ${fast[2]} ${standard.productive}`,
-  ':hover': {
-    backgroundColor: neutral[3],
-  },
-});
-
-export const switcherButtonActive = style({
-  backgroundColor: neutral[3],
-  color: text.highContrast,
+export const emptyLibrary = style({
+  padding: `${space[5]} ${space[4]}`,
 });

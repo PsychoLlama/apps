@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext", "DOM", "ES2025.Intl"],
     "moduleResolution": "Bundler",
     "strict": true,
     "jsx": "preserve",
