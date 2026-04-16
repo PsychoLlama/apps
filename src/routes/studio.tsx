@@ -1,1 +1,3 @@
-export { default } from '../features/studio';
+import Studio from '../features/studio';
+
+export default Studio;
