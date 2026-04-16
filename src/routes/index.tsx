@@ -30,22 +30,20 @@ export default function Launcher() {
               </Flex>
             </Link>
 
-            <Link
-              testId="favicon-link"
-              href="/favicon"
-              underline="none"
-              class={css.link}
-            >
-              <Flex as="div" class={css.indicator} />
-              <Flex as="div" direction="column" gap={1}>
-                <Text as="span" size={3} weight="medium">
+            <Flex as="div" class={`${css.link} ${css.linkDisabled}`}>
+              <Flex as="div" class={css.indicatorDisabled} />
+              <Flex as="div" direction="column" gap={1} grow>
+                <Text as="span" size={3} weight="medium" color="lowContrast">
                   Favicon Generator
                 </Text>
                 <Text as="span" size={2} color="lowContrast">
                   Create favicons from free icon sets
                 </Text>
               </Flex>
-            </Link>
+              <Text as="span" size={1} color="lowContrast">
+                Coming soon
+              </Text>
+            </Flex>
           </Flex>
         </Flex>
       </Flex>
