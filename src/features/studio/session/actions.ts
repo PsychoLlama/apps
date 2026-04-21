@@ -1,5 +1,5 @@
 import { type Ref } from '#state';
-import { defineAction } from '#state/next';
+import { defineAction } from '#state';
 import { libraryStore } from '../library/store';
 import { timerStore } from '../timer/store';
 import { sessionStore } from './store';

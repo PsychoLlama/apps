@@ -1,54 +1,58 @@
-import { createStore, produce } from 'solid-js/store';
-import type { Topic } from './topic';
-import { type EventBus, GLOBAL_EVENT_BUS, subscribe } from './event-bus';
+import { createMutable } from 'solid-js/store';
+import { ENTRIES, INIT, type Registry, type StoreRef } from './internal';
 
-/** Handler that transitions store state in response to a topic payload. */
-type TransitionHandler<State, Payload> = (
-  state: State,
-  payload: Payload,
-) => void;
-
-/** Registers a topic handler during store definition. */
-type OnFn<State> = <Payload>(
-  topic: Topic<Payload>,
-  handler: TransitionHandler<State, Payload>,
-) => void;
+export type { StoreRef };
 
 /**
- * Define a store. Returns a factory that creates isolated instances
- * bound to an event bus.
+ * Recursively marks every property of `T` as `readonly`. Functions pass
+ * through untouched; arrays become `ReadonlyArray<DeepReadonly<U>>`.
  */
-export function defineStore<State extends object>(
-  init: () => State,
-  transitions: (on: OnFn<State>) => void,
-): (eventBus?: EventBus) => [state: State, dispose: () => void] {
-  return (eventBus = GLOBAL_EVENT_BUS) => {
-    const handlers = new Map<
-      Topic<unknown>,
-      TransitionHandler<State, unknown>
-    >();
+export type DeepReadonly<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends ReadonlyArray<infer U>
+    ? ReadonlyArray<DeepReadonly<U>>
+    : T extends object
+      ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+      : T;
 
-    const on: OnFn<State> = (topic, handler) => {
-      if (handlers.has(topic)) {
-        throw new Error('Duplicate handler for topic');
-      }
-      handlers.set(topic, handler as TransitionHandler<State, unknown>);
-    };
+/** Define a store as an opaque handle. No state is created until `createStore`. */
+export function defineStore<T extends object>(init: () => T): StoreRef<T> {
+  return { [INIT]: init };
+}
 
-    transitions(on);
+/** Materialize a store in a registry. Returns a readonly view. */
+export function createStore<T extends object>(
+  registry: Registry,
+  ref: StoreRef<T>,
+): DeepReadonly<T> {
+  const entries = registry[ENTRIES];
+  const key = ref as StoreRef<object>;
+  if (entries.has(key)) {
+    throw new Error('Store already created in this registry');
+  }
+  const state = createMutable<T>(ref[INIT]());
+  entries.set(key, state);
+  return state as DeepReadonly<T>;
+}
 
-    let _handler: TransitionHandler<State, unknown>;
-    let _payload: unknown;
-    const updater = produce<State>((draft) => _handler(draft, _payload));
+/** Tear down a store in a registry. Throws if not created. */
+export function destroyStore<T extends object>(
+  registry: Registry,
+  ref: StoreRef<T>,
+): void {
+  if (!registry[ENTRIES].delete(ref as StoreRef<object>)) {
+    throw new Error('Store not created in this registry');
+  }
+}
 
-    const [state, setState] = createStore<State>(init());
-
-    const unsub = subscribe(eventBus, handlers.keys(), (topic, payload) => {
-      _handler = handlers.get(topic)!;
-      _payload = payload;
-      setState(updater);
-    });
-
-    return [state, unsub];
-  };
+/** Internal: resolve a ref's mutable state. Throws if not created. */
+export function getMutable<T extends object>(
+  registry: Registry,
+  ref: StoreRef<T>,
+): T {
+  const state = registry[ENTRIES].get(ref as StoreRef<object>);
+  if (!state) {
+    throw new Error('Store not created in this registry');
+  }
+  return state as T;
 }

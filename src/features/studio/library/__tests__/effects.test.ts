@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { bindRegistry, createRegistry, createStore } from '#state/next';
+import { bindRegistry, createRegistry, createStore } from '#state';
 import { addRecording } from '../actions';
 import { deleteRecordingEffect } from '../effects';
 import { libraryStore } from '../store';

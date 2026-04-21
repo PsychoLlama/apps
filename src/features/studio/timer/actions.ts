@@ -1,4 +1,4 @@
-import { defineAction } from '#state/next';
+import { defineAction } from '#state';
 import { timerStore } from './store';
 
 /** Mark the timer as running and zero the elapsed counter. */

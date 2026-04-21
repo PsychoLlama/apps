@@ -1,5 +1,5 @@
 import { ref } from '#state';
-import { bindRegistry, createRegistry, createStore } from '#state/next';
+import { bindRegistry, createRegistry, createStore } from '#state';
 import { libraryStore } from '../../library/store';
 import { timerStore } from '../../timer/store';
 import {

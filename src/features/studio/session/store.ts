@@ -1,4 +1,4 @@
-import { createStore, defineStore, GLOBAL_REGISTRY } from '#state/next';
+import { createStore, defineStore, GLOBAL_REGISTRY } from '#state';
 import { type Ref } from '#state';
 import type { SessionStatus, Track } from './types';
 

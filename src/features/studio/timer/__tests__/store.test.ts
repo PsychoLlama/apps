@@ -1,4 +1,4 @@
-import { bindRegistry, createRegistry, createStore } from '#state/next';
+import { bindRegistry, createRegistry, createStore } from '#state';
 import {
   pauseTimer,
   resumeTimer,

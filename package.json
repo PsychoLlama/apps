@@ -13,8 +13,7 @@
     "#design/color-scheme": "./src/design/color-scheme.ts",
     "#design/theme": "./src/design/theme.ts",
     "#design/palette/*": "./src/design/palette/*.css.ts",
-    "#state": "./src/state/index.ts",
-    "#state/next": "./src/state/next/index.ts"
+    "#state": "./src/state/index.ts"
   },
   "scripts": {
     "dev": "vite dev",

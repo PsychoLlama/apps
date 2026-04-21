@@ -1,4 +1,4 @@
-import { defineAction } from '#state/next';
+import { defineAction } from '#state';
 import { libraryStore } from './store';
 
 export interface AddRecordingInput {

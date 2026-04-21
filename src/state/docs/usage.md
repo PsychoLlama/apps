@@ -1,54 +1,50 @@
 # State Management
 
 - Import from `#state`.
-- Pub-sub architecture. Workflows orchestrate side effects, stores react to them.
-
-## Workflows
-
-- `defineWorkflow((ctx, input) => result)` creates a workflow with `started`, `resolved`, and `rejected` lifecycle topics.
-- Omit `input` for workflows that take no arguments.
-- `useWorkflow(workflow, bus?)` binds a workflow to a bus and returns a callable runner.
-- Calling the runner publishes `started`, executes the workflow, then publishes `resolved` with the return value or `rejected` with an `Error`.
-- Sync runners return `void`. Async runners return `Promise<void>`. The return value is delivered through `resolved`.
-- Unhandled rejections (no subscriber on `rejected`) re-throw the error.
-- `ctx.run(activity, ...args)` is how workflows invoke activities.
-
-## Activities
-
-- `defineActivity({}, executor)` wraps an impure function in an opaque `ActivityDef`.
-- Activities are the boundary for side effects: network calls, DOM access, timers.
-- Executed through `ctx.run(activity, ...args)` inside workflows.
+- Stores are opaque handles materialized in a registry. Actions mutate state. Effects wrap impure work and dispatch actions.
 
 ## Stores
 
-- `defineStore(init, transitions)` returns a factory. Call the factory to create an instance.
-- `init` returns the initial state object.
-- `transitions(on)` registers topic handlers. `on(topic, (state, payload) => void)` mutates state directly (SolidJS `produce`).
-- The factory returns `[state, dispose]`. `state` is a SolidJS reactive store with fine-grained reactivity.
-- `dispose` unsubscribes from all topics.
+- `defineStore(init)` returns a `StoreRef<T>`. No state is created until `createStore` runs.
+- `createStore(registry, ref)` materializes the store in the registry and returns a `DeepReadonly<T>` view.
+- `destroyStore(registry, ref)` tears it down. Double-create or destroy-missing throws.
+- Module-level `const state = createStore(GLOBAL_REGISTRY, storeRef)` is the conventional bootstrap.
 
-## Topics
+## Actions
 
-- `defineTopic<Payload>()` creates a typed event identity. Runtime value is a `Symbol`.
-- Payload defaults to `void` when omitted.
-- Workflows create lifecycle topics automatically. Define custom topics for application-level events.
-- `useTopic(topic, bus?)` binds a topic to a bus and returns a callable. Void topics return `() => void`, typed topics return `(payload) => void`.
+- `defineAction([StoreA, StoreB], (a, b, input) => { ... })` binds one or more stores to a synchronous handler.
+- Handler drafts are writable; all writes batch into one reactive flush.
+- The input argument is always required at the call site — pass `undefined` when the action takes no input.
 
-## Event Bus
+## Effects
 
-- `createEventBus()` creates an isolated bus. Stores and workflows default to `GLOBAL_EVENT_BUS`.
-- `publish(bus, topic)` for void topics. `publish(bus, topic, payload)` for typed topics. Returns `true` if any handler was called.
-- `subscribe(bus, topics, handler)` listens to multiple topics with one handler. Returns an unsubscribe function.
-- The handler receives `(topic, payload)`. The topic identifies which subscription fired.
+- `defineEffect(fn, { onStart?, onSuccess?, onFailure? })` wraps a side-effecting callback with lifecycle actions.
+- `onStart` runs before the callback with the effect's input. `onSuccess` runs after with the resolved value. `onFailure` runs on thrown/rejected errors.
+- Without `onFailure`, sync throws bubble and async rejections reject the returned promise.
+- Callback returns `Output | Promise<Output>`. `perform` returns `void` for sync effects and `Promise<void>` for async.
+
+## Registry
+
+- `createRegistry()` creates an isolated registry. Tests should build one per case.
+- `GLOBAL_REGISTRY` is the singleton used by app code.
+
+## Hooks
+
+- `bindRegistry(registry)` returns `{ useStore, useAction, useEffect }` bound to that registry.
+- Module-level `useStore`, `useAction`, `useEffect` exports are bound to `GLOBAL_REGISTRY`.
+- `useStore(ref)` returns the readonly state. `useAction(action)` and `useEffect(effect)` return callables that dispatch against the bound registry.
+
+## Raw dispatch
+
+- `invoke(registry, action, input)` and `perform(registry, effect, input)` are the underlying primitives the hooks wrap.
 
 ## Refs
 
-- `ref(value)` wraps a value in an opaque `Ref<T>` with a `.current` property.
-- Use for host objects (media streams, recorders) that must live inside a store without proxy descent.
+- `ref(value)` wraps a host object (media streams, recorders) in an opaque `Ref<T>` with a `.current` property.
+- `createMutable` leaves class instances alone, so refs bypass proxy descent.
 - Refs are immutable. Swap by reassigning: `state.recorder = ref(next)`.
 - No automatic release. Clean up the held value explicitly before dropping the ref.
 
 ## Testing
 
-- Create an isolated `EventBus` per test to prevent shared state.
-- Wire stores and workflows to the same bus, then assert against store state after running workflows.
+- Per-test registry via `createRegistry()`. Materialize required stores, bind the registry, drive actions and effects through the hooks.

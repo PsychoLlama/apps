@@ -1,131 +1,185 @@
-import { defineTopic } from '../topic';
-import { createEventBus, publish } from '../event-bus';
-import { defineStore } from '../store';
+import { createEffect, createRoot } from 'solid-js';
+import { vi } from 'vitest';
+import { ref, type Ref } from '../ref';
+import { bindRegistry } from '../bindings';
+import { createRegistry, GLOBAL_REGISTRY } from '../registry';
+import { createStore, defineStore, destroyStore } from '../store';
 
-const increment = defineTopic();
-const add = defineTopic<number>();
-const reset = defineTopic();
-
-function createCounter(eventBus = createEventBus()) {
-  const createStore = defineStore<{ count: number }>(
-    () => ({ count: 0 }),
-    (on) => {
-      on(increment, (state) => {
-        state.count += 1;
-      });
-
-      on(add, (state, amount) => {
-        state.count += amount;
-      });
-
-      on(reset, (state) => {
-        state.count = 0;
-      });
-    },
-  );
-
-  const [state, dispose] = createStore(eventBus);
-  return { state, dispose, eventBus };
+interface Counter {
+  count: number;
 }
 
+const counterStore = defineStore<Counter>(() => ({ count: 0 }));
+
 describe('defineStore', () => {
-  it('initializes with the provided state', () => {
-    const { state } = createCounter();
-    expect(state.count).toBe(0);
+  it('does not construct state at define time', () => {
+    const init = vi.fn(() => ({ count: 0 }) satisfies Counter);
+    const store = defineStore<Counter>(init);
+
+    expect(init).not.toHaveBeenCalled();
+    createStore(createRegistry(), store);
+    expect(init).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('createStore', () => {
+  it('returns the initial state', () => {
+    const registry = createRegistry();
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, counterStore);
+    expect(useStore(counterStore).count).toBe(0);
   });
 
-  it('updates state in response to topics', () => {
-    const { state, eventBus } = createCounter();
+  it('types the returned state as deeply readonly', () => {
+    const store = defineStore(() => ({ nested: { value: 1 } }));
+    const registry = createRegistry();
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, store);
+    const state = useStore(store);
 
-    publish(eventBus, increment);
-    expect(state.count).toBe(1);
+    // Assignments below are checked by the type system only — they are
+    // never executed. `@ts-expect-error` fails the build if DeepReadonly
+    // regresses and allows the mutation.
+    const mutate = (): void => {
+      // @ts-expect-error — top-level reassignment is forbidden.
+      state.nested = { value: 2 };
+      // @ts-expect-error — nested reassignment is forbidden.
+      state.nested.value = 3;
+    };
+    void mutate;
+
+    expect(state.nested.value).toBe(1);
   });
 
-  it('passes topic payload to handlers', () => {
-    const { state, eventBus } = createCounter();
+  it('leaves Ref<T> values opaque to Solid reactivity', () => {
+    interface Host {
+      handle: Ref<{ value: number }> | null;
+    }
+    const hostStore = defineStore<Host>(() => ({ handle: ref({ value: 1 }) }));
+    const registry = createRegistry();
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, hostStore);
+    const state = useStore(hostStore);
 
-    publish(eventBus, add, 10);
-    expect(state.count).toBe(10);
+    // Ref is a plain class — Solid must not proxy its fields. Reading
+    // `.current` should return the exact object passed to `ref(...)`.
+    const current = state.handle?.current;
+    expect(current).toBeDefined();
+    expect(current?.value).toBe(1);
   });
 
-  it('handles multiple topics on the same store', () => {
-    const { state, eventBus } = createCounter();
-
-    publish(eventBus, increment);
-    publish(eventBus, increment);
-    publish(eventBus, add, 5);
-    expect(state.count).toBe(7);
-
-    publish(eventBus, reset);
-    expect(state.count).toBe(0);
+  it('throws on double create in the same registry', () => {
+    const registry = createRegistry();
+    createStore(registry, counterStore);
+    expect(() => createStore(registry, counterStore)).toThrow(
+      /already created/i,
+    );
   });
 
-  it('isolates store instances across buses', () => {
-    const busA = createEventBus();
-    const busB = createEventBus();
-    const { state: a } = createCounter(busA);
-    const { state: b } = createCounter(busB);
+  it('isolates state across registries', () => {
+    const a = createRegistry();
+    const b = createRegistry();
+    const boundA = bindRegistry(a);
+    const boundB = bindRegistry(b);
+    createStore(a, counterStore);
+    createStore(b, counterStore);
 
-    publish(busA, increment);
-
-    expect(a.count).toBe(1);
-    expect(b.count).toBe(0);
+    const stateA = boundA.useStore(counterStore);
+    const stateB = boundB.useStore(counterStore);
+    expect(stateA).not.toBe(stateB);
+    expect(stateA.count).toBe(0);
+    expect(stateB.count).toBe(0);
   });
 
-  it('stops handling topics after dispose', () => {
-    const { state, dispose, eventBus } = createCounter();
+  it('returns a reactive store', () => {
+    const registry = createRegistry();
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, counterStore);
+    const state = useStore(counterStore);
 
-    publish(eventBus, increment);
-    expect(state.count).toBe(1);
+    const values: number[] = [];
+    const dispose = createRoot((dispose) => {
+      createEffect(() => values.push(state.count));
+      return dispose;
+    });
+    expect(values).toEqual([0]);
+    dispose();
+  });
+
+  it('tracks fields independently for fine-grained reactivity', () => {
+    interface Shape {
+      a: number;
+      b: number;
+    }
+    const store = defineStore<Shape>(() => ({ a: 0, b: 0 }));
+    const registry = createRegistry();
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, store);
+    const state = useStore(store);
+
+    let aRuns = 0;
+    let bRuns = 0;
+    const dispose = createRoot((dispose) => {
+      createEffect(() => {
+        void state.a;
+        aRuns += 1;
+      });
+      createEffect(() => {
+        void state.b;
+        bRuns += 1;
+      });
+      return dispose;
+    });
+
+    expect(aRuns).toBe(1);
+    expect(bRuns).toBe(1);
+
+    // Mutate `a` only — `b`'s effect should not rerun.
+    const writable = state as Shape;
+    writable.a = 5;
+    expect(aRuns).toBe(2);
+    expect(bRuns).toBe(1);
 
     dispose();
-
-    publish(eventBus, increment);
-    expect(state.count).toBe(1);
   });
 
-  it('is safe to dispose twice', () => {
-    const { dispose } = createCounter();
+  it('is backed by a mutable proxy (convention, not runtime enforcement, routes writes through actions)', () => {
+    const registry = createRegistry();
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, counterStore);
+    const state = useStore(counterStore);
 
-    dispose();
-    expect(() => dispose()).not.toThrow();
+    // `createMutable` returns a directly-writable proxy. Mutations are
+    // expected to flow through `invoke` for auditability — `DeepReadonly`
+    // signals that at the type level — but nothing at runtime rejects a
+    // direct write. This test pins that behavior so we notice if the
+    // underlying primitive ever changes.
+    const writable = state as Counter;
+    writable.count = 42;
+    expect(state.count).toBe(42);
+  });
+});
+
+describe('destroyStore', () => {
+  it('removes a store so it can be re-created', () => {
+    const registry = createRegistry();
+    createStore(registry, counterStore);
+    destroyStore(registry, counterStore);
+    expect(() => createStore(registry, counterStore)).not.toThrow();
   });
 
-  it('throws on duplicate handlers for the same topic', () => {
-    const topic = defineTopic();
-    const create = defineStore<{ count: number }>(
-      () => ({ count: 0 }),
-      (on) => {
-        on(topic, (state) => {
-          state.count += 1;
-        });
-        on(topic, (state) => {
-          state.count += 2;
-        });
-      },
-    );
-
-    expect(() => create()).toThrow('Duplicate handler');
+  it('throws if the store was never created', () => {
+    const registry = createRegistry();
+    expect(() => destroyStore(registry, counterStore)).toThrow(/not created/i);
   });
+});
 
-  it('creates independent instances from the same definition', () => {
-    const create = defineStore<{ count: number }>(
-      () => ({ count: 0 }),
-      (on) => {
-        on(increment, (state) => {
-          state.count += 1;
-        });
-      },
-    );
-
-    const busA = createEventBus();
-    const busB = createEventBus();
-    const [a] = create(busA);
-    const [b] = create(busB);
-
-    publish(busA, increment);
-
-    expect(a.count).toBe(1);
-    expect(b.count).toBe(0);
+describe('GLOBAL_REGISTRY', () => {
+  it('supports create and destroy like any other registry', () => {
+    const oneOffStore = defineStore<Counter>(() => ({ count: 7 }));
+    const { useStore } = bindRegistry(GLOBAL_REGISTRY);
+    createStore(GLOBAL_REGISTRY, oneOffStore);
+    expect(useStore(oneOffStore).count).toBe(7);
+    destroyStore(GLOBAL_REGISTRY, oneOffStore);
   });
 });

@@ -1,7 +1,7 @@
 import { Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { Button, Callout, Flex, Heading, Link, LinkButton, Text } from '#ui';
-import { useEffect } from '#state/next';
+import { useEffect } from '#state';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import IconTrashCan from 'virtual:icons/mdi/trash-can-outline';
 import IconAlertCircle from 'virtual:icons/mdi/alert-circle-outline';

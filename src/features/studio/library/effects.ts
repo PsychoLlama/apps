@@ -1,4 +1,4 @@
-import { defineEffect } from '#state/next';
+import { defineEffect } from '#state';
 import { deleteRecording } from './actions';
 
 /**
