@@ -8,3 +8,8 @@
   - Audience: expert frontend devs unfamiliar with this library.
   - Happy path only. No edge cases, error behavior, or implementation details.
   - Raw facts under markdown headers, 1-2 sentences max, few-to-no examples.
+
+## Authoring Stores
+
+- Every store-state interface and every field gets a doc comment. Same for any types the state references (status unions, entity shapes, etc).
+- Doc comments describe the role of the value, not its TypeScript type. One sentence is usually enough.

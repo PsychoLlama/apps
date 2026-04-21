@@ -1,7 +1,9 @@
 import { createStore, defineStore } from '#state';
 import type { Recording } from './types';
 
+/** Catalog of recordings captured during this session. */
 export interface LibraryState {
+  /** Recordings in capture order. Most-recent first is a view concern. */
   recordings: Recording[];
 }
 
