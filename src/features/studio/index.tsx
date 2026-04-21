@@ -15,7 +15,7 @@ import {
   startRecordingEffect,
   stopRecordingEffect,
 } from './session/bindings';
-import { deleteRecordingEffect } from './library/effects';
+import { deleteRecordingEffect } from './library/bindings';
 import { session } from './session/store';
 import { library } from './library/store';
 import { timer } from './timer/store';

@@ -7,7 +7,7 @@ import IconTrashCan from 'virtual:icons/mdi/trash-can-outline';
 import IconAlertCircle from 'virtual:icons/mdi/alert-circle-outline';
 import SiteHeader from '../../../components/site-header';
 import { library } from '../library/store';
-import { deleteRecordingEffect } from '../library/effects';
+import { deleteRecordingEffect } from '../library/bindings';
 import type { Recording } from '../library/types';
 import * as css from './playback.css';
 
