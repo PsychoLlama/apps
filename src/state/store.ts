@@ -31,12 +31,11 @@ export const createStore = <T extends object>(
   ref: StoreRef<T>,
 ): DeepReadonly<T> => {
   const entries = registry[ENTRIES];
-  const key = ref as StoreRef<object>;
-  if (entries.has(key)) {
+  if (entries.has(ref)) {
     throw new Error('Store already created in this registry');
   }
   const state = createMutable<T>(ref[INIT]());
-  entries.set(key, state);
+  entries.set(ref, state);
   return state as DeepReadonly<T>;
 };
 
@@ -45,7 +44,7 @@ export const destroyStore = <T extends object>(
   registry: Registry,
   ref: StoreRef<T>,
 ): void => {
-  if (!registry[ENTRIES].delete(ref as StoreRef<object>)) {
+  if (!registry[ENTRIES].delete(ref)) {
     throw new Error('Store not created in this registry');
   }
 };
@@ -55,9 +54,32 @@ export const getMutable = <T extends object>(
   registry: Registry,
   ref: StoreRef<T>,
 ): T => {
-  const state = registry[ENTRIES].get(ref as StoreRef<object>);
+  const state = registry[ENTRIES].get(ref);
   if (!state) {
     throw new Error('Store not created in this registry');
   }
   return state as T;
+};
+
+/**
+ * Internal: marshal store drafts plus a trailing input into a single args
+ * array. Shared by `invoke` and `perform` so the hot path has one shared
+ * loop and one array allocation per dispatch.
+ */
+export const collectArgs = (
+  registry: Registry,
+  stores: readonly StoreRef<object>[],
+  input: unknown,
+): unknown[] => {
+  const entries = registry[ENTRIES];
+  const args: unknown[] = [];
+  for (const store of stores) {
+    const state = entries.get(store);
+    if (!state) {
+      throw new Error('Store not created in this registry');
+    }
+    args.push(state);
+  }
+  args.push(input);
+  return args;
 };

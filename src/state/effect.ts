@@ -1,6 +1,6 @@
 import { invoke, type Action, type AnyAction } from './action';
 import type { Registry } from './internal';
-import { getMutable, type DeepReadonly, type StoreRef } from './store';
+import { collectArgs, type DeepReadonly, type StoreRef } from './store';
 
 // `invoke` wants a fully-typed Action; we have `AnyAction` (brand-only).
 // The brand is the identity layer — the runtime value is still the real
@@ -89,6 +89,19 @@ export type PerformReturn<Output> =
 const toError = (error: unknown): Error =>
   error instanceof Error ? error : new Error(String(error));
 
+const handleFailure = (
+  registry: Registry,
+  onFailure: AnyAction<Error> | undefined,
+  error: unknown,
+): void => {
+  const err = toError(error);
+  if (onFailure) {
+    invoke(registry, onFailure as unknown as LooseAction, err);
+    return;
+  }
+  throw err;
+};
+
 /**
  * Perform an effect against a registry. Synchronous effects return `void`;
  * effects whose callback returns a `Promise` return `Promise<void>`.
@@ -108,36 +121,33 @@ export const perform = <
 
   if (onStart) invoke(registry, onStart as unknown as LooseAction, input);
 
-  const succeed = (value: Awaited<Output>): void => {
-    if (onSuccess) invoke(registry, onSuccess as unknown as LooseAction, value);
-  };
-
-  const fail = (error: unknown): void => {
-    const err = toError(error);
-    if (onFailure) {
-      invoke(registry, onFailure as unknown as LooseAction, err);
-      return;
-    }
-    throw err;
-  };
-
-  const reads: object[] = [];
-  for (const ref of stores) {
-    reads.push(getMutable(registry, ref));
-  }
+  const args = collectArgs(registry, stores, input);
 
   let result: Output;
   try {
-    result = (fn as (...args: unknown[]) => Output)(...reads, input);
+    result = (fn as (...args: unknown[]) => Output)(...args);
   } catch (error) {
-    fail(error);
+    handleFailure(registry, onFailure, error);
     return undefined as PerformReturn<Output>;
   }
 
   if (result instanceof Promise) {
-    return result.then(succeed, fail) as PerformReturn<Output>;
+    return result.then(
+      (value: Awaited<Output>) => {
+        if (onSuccess) {
+          invoke(registry, onSuccess as unknown as LooseAction, value);
+        }
+      },
+      (error: unknown) => handleFailure(registry, onFailure, error),
+    ) as PerformReturn<Output>;
   }
 
-  succeed(result as Awaited<Output>);
+  if (onSuccess) {
+    invoke(
+      registry,
+      onSuccess as unknown as LooseAction,
+      result as Awaited<Output>,
+    );
+  }
   return undefined as PerformReturn<Output>;
 };

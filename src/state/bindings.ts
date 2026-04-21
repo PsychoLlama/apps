@@ -54,14 +54,14 @@ export const bindRegistry = (registry: Registry): RegistryBindings => {
       return getMutable(registry, ref) as DeepReadonly<T>;
     },
     useAction<S extends readonly StoreRef<object>[], I>(action: Action<S, I>) {
-      return ((...args: [I?]) => {
-        invoke(registry, action, args[0] as I);
+      return ((input?: I) => {
+        invoke(registry, action, input as I);
       }) as (...args: CallArgs<I>) => void;
     },
     useEffect<S extends readonly StoreRef<object>[], I, O>(
       effect: Effect<S, I, O>,
     ) {
-      return ((...args: [I?]) => perform(registry, effect, args[0] as I)) as (
+      return ((input?: I) => perform(registry, effect, input as I)) as (
         ...args: CallArgs<I>
       ) => PerformReturn<O>;
     },
@@ -69,13 +69,13 @@ export const bindRegistry = (registry: Registry): RegistryBindings => {
       action: Action<S, I>,
       ...args: CallArgs<I>
     ): void {
-      invoke(registry, action, (args as [I?])[0] as I);
+      invoke(registry, action, args[0] as I);
     },
     perform<S extends readonly StoreRef<object>[], I, O>(
       effect: Effect<S, I, O>,
       ...args: CallArgs<I>
     ): PerformReturn<O> {
-      return perform(registry, effect, (args as [I?])[0] as I);
+      return perform(registry, effect, args[0] as I);
     },
   };
 };

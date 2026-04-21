@@ -1,6 +1,6 @@
 import { batch } from 'solid-js';
 import type { Registry } from './internal';
-import { getMutable, type StoreRef } from './store';
+import { collectArgs, type StoreRef } from './store';
 
 type StateOf<R> = R extends StoreRef<infer T> ? T : never;
 
@@ -66,13 +66,8 @@ export const invoke = <Stores extends readonly StoreRef<object>[], Input>(
   input: Input,
 ): void => {
   const [stores, handler] = action;
-
-  const drafts: object[] = [];
-  for (const ref of stores) {
-    drafts.push(getMutable(registry, ref));
-  }
-
+  const args = collectArgs(registry, stores, input);
   batch(() => {
-    (handler as (...args: unknown[]) => void)(...drafts, input);
+    (handler as (...args: unknown[]) => void)(...args);
   });
 };
