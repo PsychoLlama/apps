@@ -322,7 +322,7 @@ const StoppingState = (props: { elapsed: number }) => {
   );
 };
 
-const ErrorState = (props: { error: string | null; onRetry: () => void }) => {
+const ErrorState = (props: { error: string; onRetry: () => void }) => {
   return (
     <Flex
       as="div"
@@ -333,12 +333,11 @@ const ErrorState = (props: { error: string | null; onRetry: () => void }) => {
     >
       <Callout icon={<IconAlertCircleOutline />}>
         <Text as="p" size={2} selectable={false}>
-          {props.error ??
-            'Permission denied — screen capture access was blocked.'}
+          {props.error}
         </Text>
       </Callout>
       <Button testId="start-recording" size={3} onClick={props.onRetry}>
-        Start Recording
+        Try Again
       </Button>
       <Text as="p" size={2} color="lowContrast">
         Record your screen, window, or tab
@@ -431,8 +430,8 @@ export default function Studio() {
               <Match when={session.status === 'stopping'}>
                 <StoppingState elapsed={timer.elapsed} />
               </Match>
-              <Match when={session.status === 'error'}>
-                <ErrorState error={session.error} onRetry={handleStart} />
+              <Match when={session.status === 'error' && session.error} keyed>
+                {(error) => <ErrorState error={error} onRetry={handleStart} />}
               </Match>
             </Switch>
           </Flex>
