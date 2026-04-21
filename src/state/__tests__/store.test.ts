@@ -1,5 +1,4 @@
 import { createEffect, createRoot } from 'solid-js';
-import { vi } from 'vitest';
 import { ref, type Ref } from '../ref';
 import { bindRegistry } from '../bindings';
 import { createRegistry } from '../registry';

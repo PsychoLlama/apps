@@ -1,4 +1,3 @@
-import { expectTypeOf } from 'vitest';
 import type {
   PolymorphicProps,
   HtmlTagName,

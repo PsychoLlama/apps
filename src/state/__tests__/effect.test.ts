@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import { defineAction } from '../action';
 import { createTestBindings } from '../bindings';
 import { defineEffect } from '../effect';

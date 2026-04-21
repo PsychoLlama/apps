@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import { createTestBindings, defineAction } from '#state';
 import { libraryStore } from '../../library/store';
 import { timerStore } from '../../timer/store';

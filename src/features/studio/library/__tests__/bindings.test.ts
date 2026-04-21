@@ -1,4 +1,3 @@
-import { vi } from 'vitest';
 import { createTestBindings } from '#state';
 import * as capabilities from '../capabilities';
 import { deleteRecording, deleteRecordingEffect } from '../bindings';
