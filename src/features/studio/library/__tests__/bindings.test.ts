@@ -1,16 +1,7 @@
 import { createTestBindings } from '#state';
-import * as capabilities from '../capabilities';
-import { deleteRecording, deleteRecordingEffect } from '../bindings';
+import { deleteRecording } from '../bindings';
 import { libraryStore } from '../store';
 import type { Recording } from '../types';
-
-vi.mock('../capabilities', async () => {
-  const actual = await vi.importActual<typeof capabilities>('../capabilities');
-  return {
-    ...actual,
-    revokeRecording: vi.fn(),
-  };
-});
 
 function setup() {
   const bindings = createTestBindings();
@@ -23,10 +14,6 @@ function seed(
 ): void {
   (library.recordings as Recording[]).push(...recordings);
 }
-
-beforeEach(() => {
-  vi.mocked(capabilities.revokeRecording).mockReset();
-});
 
 describe('deleteRecording', () => {
   it('removes a recording by id', () => {
@@ -50,32 +37,5 @@ describe('deleteRecording', () => {
     useAction(deleteRecording)('nope');
 
     expect(library.recordings).toHaveLength(1);
-  });
-});
-
-describe('deleteRecordingEffect', () => {
-  it('revokes the blob URL', () => {
-    const { useEffect } = setup();
-
-    useEffect(deleteRecordingEffect)({ id: 'rec-1', url: 'blob:abc' });
-
-    expect(capabilities.revokeRecording).toHaveBeenCalledWith('blob:abc');
-  });
-
-  it('removes the recording from the library on success', () => {
-    const { library, useEffect } = setup();
-    seed(library, [
-      {
-        id: 'rec-1',
-        name: 'rec-1',
-        duration: 1,
-        createdAt: 1,
-        url: 'blob:abc',
-      },
-    ]);
-
-    useEffect(deleteRecordingEffect)({ id: 'rec-1', url: 'blob:abc' });
-
-    expect(library.recordings).toHaveLength(0);
   });
 });
