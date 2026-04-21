@@ -9,7 +9,7 @@ import SiteHeader from '../../../components/site-header';
 import { library } from '../library/store';
 import { deleteRecordingEffect } from '../library/bindings';
 import type { Recording } from '../library/types';
-import { formatDuration } from '../format';
+import { filenameSlug, formatDuration } from '../format';
 import * as css from './playback.css';
 
 const NotFound = () => {
@@ -54,7 +54,7 @@ const Player = (props: { recording: Recording; onDelete: () => void }) => {
             testId="download-recording"
             class={css.downloadLink}
             href={props.recording.url}
-            download={`${props.recording.name}.webm`}
+            download={`${filenameSlug(props.recording.createdAt)}.webm`}
             underline="none"
           >
             <IconDownload />

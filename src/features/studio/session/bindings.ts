@@ -15,10 +15,12 @@ import {
 import { sessionStore } from './store';
 import type { Track } from './types';
 
-// Recording names are built from when the recording ended.
+// Recording names are built from when the recording ended. `medium`
+// time style includes seconds so two recordings finalized in the same
+// minute don't collide.
 const recordingNameFormat = new Intl.DateTimeFormat('en', {
   dateStyle: 'medium',
-  timeStyle: 'short',
+  timeStyle: 'medium',
 });
 
 // --- Actions ---
