@@ -146,29 +146,19 @@ const ActiveTracks = (props: {
       <Flex as="div" gap={2} wrap="wrap" justify="center">
         <For each={props.tracks}>
           {(track) => (
-            <Text
-              as="span"
-              size={1}
-              selectable={false}
-              class={`${css.trackPill} ${!track.live ? css.trackPillStopped : ''}`}
-            >
-              <Flex
-                as="div"
-                class={track.live ? css.trackDotLive : css.trackDotStopped}
-              />
+            <Text as="span" size={1} selectable={false} class={css.trackPill}>
+              <Flex as="div" class={css.trackDot} />
               {track.label}
-              <Show when={track.live}>
-                <Button
-                  testId="remove-track"
-                  aria-label={`Remove ${track.label}`}
-                  size={1}
-                  variant="ghost"
-                  color="neutral"
-                  onClick={() => props.onRemove(track.id)}
-                >
-                  <IconClose />
-                </Button>
-              </Show>
+              <Button
+                testId="remove-track"
+                aria-label={`Remove ${track.label}`}
+                size={1}
+                variant="ghost"
+                color="neutral"
+                onClick={() => props.onRemove(track.id)}
+              >
+                <IconClose />
+              </Button>
             </Text>
           )}
         </For>

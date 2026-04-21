@@ -25,6 +25,4 @@ export interface Track {
   readonly type: 'screen' | 'tab' | 'microphone' | 'system-audio';
   /** Human-readable label surfaced in the UI. */
   readonly label: string;
-  /** `true` while the track is still producing data. */
-  readonly live: boolean;
 }

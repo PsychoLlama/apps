@@ -69,7 +69,7 @@ export const startRecording = async (
     const label =
       mediaTrack.label || (type === 'screen' ? 'Screen' : 'System Audio');
     streams[id] = new MediaStream([mediaTrack]);
-    tracks.push({ id, type, label, live: true });
+    tracks.push({ id, type, label });
   }
 
   const { recorder, chunks } = createRecorder(streams);
@@ -147,7 +147,7 @@ export const captureTrack = async (
   const id = crypto.randomUUID();
   const label = mediaTrack.label || 'Microphone';
   return {
-    track: { id, type: 'microphone', label, live: true },
+    track: { id, type: 'microphone', label },
     stream,
   };
 };

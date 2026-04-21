@@ -189,23 +189,12 @@ export const trackPill = style({
   backgroundColor: neutralAlpha[3],
 });
 
-export const trackPillStopped = style({
-  color: text.lowContrast,
-});
-
-export const trackDotLive = style({
+export const trackDot = style({
   width: space[1],
   height: space[1],
   borderRadius: radius.full,
   backgroundColor: success[9],
   animation: `${pulse} 2s ease-in-out infinite`,
-});
-
-export const trackDotStopped = style({
-  width: space[1],
-  height: space[1],
-  borderRadius: radius.full,
-  backgroundColor: neutral[7],
 });
 
 // --- Unsupported ---

@@ -142,7 +142,6 @@ describe('startRecording', () => {
     expect(result.tracks[0]).toMatchObject({
       type: 'screen',
       label: 'Screen 1',
-      live: true,
     });
     expect(result.tracks[1]).toMatchObject({
       type: 'system-audio',
@@ -271,7 +270,6 @@ describe('captureTrack', () => {
     expect(result.track).toMatchObject({
       type: 'microphone',
       label: 'Internal Mic',
-      live: true,
     });
     expect(result.stream).toBe(stream as unknown as MediaStream);
   });

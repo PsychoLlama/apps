@@ -85,9 +85,7 @@ describe('beginRecording', () => {
 describe('setRecordingContext', () => {
   it('populates tracks, recorder, chunks, and streams', () => {
     const { session, useAction } = setup();
-    const result = makeResult([
-      { id: '1', type: 'screen', label: 'Screen', live: true },
-    ]);
+    const result = makeResult([{ id: '1', type: 'screen', label: 'Screen' }]);
 
     useAction(setRecordingContext)(result);
 
@@ -185,7 +183,6 @@ describe('appendTrack', () => {
       id: '3',
       type: 'microphone',
       label: 'Mic',
-      live: true,
     };
 
     useAction(appendTrack)({ track, stream });
@@ -200,8 +197,8 @@ describe('removeTrackFromState', () => {
     const { session, useAction } = setup();
     useAction(setRecordingContext)(
       makeResult([
-        { id: '1', type: 'screen', label: 'Screen', live: true },
-        { id: '2', type: 'microphone', label: 'Mic', live: true },
+        { id: '1', type: 'screen', label: 'Screen' },
+        { id: '2', type: 'microphone', label: 'Mic' },
       ]),
     );
 
@@ -215,7 +212,7 @@ describe('removeTrackFromState', () => {
   it('is a no-op on an unknown id', () => {
     const { session, useAction } = setup();
     useAction(setRecordingContext)(
-      makeResult([{ id: '1', type: 'screen', label: 'Screen', live: true }]),
+      makeResult([{ id: '1', type: 'screen', label: 'Screen' }]),
     );
 
     useAction(removeTrackFromState)('nope');
