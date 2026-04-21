@@ -1,13 +1,13 @@
 import { Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { Button, Callout, Flex, Heading, Link, LinkButton, Text } from '#ui';
-import { useWorkflow } from '#state';
+import { useEffect } from '#state/next';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import IconTrashCan from 'virtual:icons/mdi/trash-can-outline';
 import IconAlertCircle from 'virtual:icons/mdi/alert-circle-outline';
 import SiteHeader from '../../../components/site-header';
 import { library } from '../library/store';
-import { deleteRecordingWorkflow } from '../library/workflows';
+import { deleteRecordingEffect } from '../library/effects';
 import type { Recording } from '../library/types';
 import * as css from './playback.css';
 
@@ -97,7 +97,7 @@ function Player(props: { recording: Recording; onDelete: () => void }) {
 export default function Playback() {
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const deleteRecording = useWorkflow(deleteRecordingWorkflow);
+  const deleteRecording = useEffect(deleteRecordingEffect);
 
   const recording = () => library.recordings.find((r) => r.id === params.id);
 

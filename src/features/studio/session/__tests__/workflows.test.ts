@@ -5,7 +5,6 @@ import {
   removeTrackWorkflow,
 } from '../workflows';
 import { createSessionStore } from '../store';
-import { createLibraryStore } from '../../library/store';
 
 describe('workflow lifecycle topics', () => {
   it('startRecordingWorkflow exposes started, resolved, and rejected', () => {
@@ -21,11 +20,10 @@ describe('workflow lifecycle topics', () => {
   });
 });
 
-describe('integration: session + library stores via topics', () => {
-  it('records a session and adds it to the library on stop', () => {
+describe('session store through workflow lifecycle', () => {
+  it('transitions session state across the recording lifecycle', () => {
     const bus = createEventBus();
     const [session] = createSessionStore(bus);
-    const [library] = createLibraryStore(bus);
 
     publish(bus, startRecordingWorkflow.started, vi.fn());
     expect(session.status).toBe('recording');
@@ -42,17 +40,6 @@ describe('integration: session + library stores via topics', () => {
     publish(bus, stopRecordingWorkflow.started, 45);
     expect(session.status).toBe('idle');
     expect(session.tracks).toEqual([]);
-
-    publish(bus, stopRecordingWorkflow.resolved, {
-      id: 'rec-1',
-      elapsed: 45,
-      stoppedAt: 2000,
-      url: 'blob:test',
-    });
-    expect(library.recordings).toHaveLength(1);
-    expect(library.recordings[0].name).toBe('Recording 1');
-    expect(library.recordings[0].duration).toBe(45);
-    expect(library.recordings[0].url).toBe('blob:test');
   });
 });
 

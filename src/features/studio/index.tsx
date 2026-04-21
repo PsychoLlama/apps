@@ -1,7 +1,7 @@
 import { For, Show, onCleanup, onMount } from 'solid-js';
 import { Button, Callout, Flex, Heading, Link, Text } from '#ui';
 import { useWorkflow } from '#state';
-import { useAction } from '#state/next';
+import { useAction, useEffect } from '#state/next';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconClose from 'virtual:icons/mdi/close';
 import IconPlayOutline from 'virtual:icons/mdi/play-outline';
@@ -16,8 +16,9 @@ import {
   removeTrackWorkflow,
   checkSupportWorkflow,
 } from './session/workflows';
-import { deleteRecordingWorkflow } from './library/workflows';
+import { deleteRecordingEffect } from './library/effects';
 import { session } from './session/store';
+import './library/bridge'; // Activates old→new session/library bridge.
 import { library } from './library/store';
 import './timer/bridge'; // Activates old→new session/timer bridge.
 import { timer } from './timer/store';
@@ -390,7 +391,7 @@ export default function Studio() {
   const addTrack = useWorkflow(addTrackWorkflow);
   const removeTrack = useWorkflow(removeTrackWorkflow);
   const checkSupport = useWorkflow(checkSupportWorkflow);
-  const deleteRecording = useWorkflow(deleteRecordingWorkflow);
+  const deleteRecording = useEffect(deleteRecordingEffect);
   const publishTick = useAction(tick);
 
   function handleStart() {
