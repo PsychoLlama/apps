@@ -38,7 +38,8 @@ export function defineEffect<Input, Output>(
   return [fn, handlers.onStart, handlers.onSuccess, handlers.onFailure];
 }
 
-type PerformReturn<Output> =
+/** Return type of {@link perform} based on whether the effect callback is async. */
+export type PerformReturn<Output> =
   Output extends Promise<unknown> ? Promise<void> : void;
 
 const toError = (error: unknown): Error =>

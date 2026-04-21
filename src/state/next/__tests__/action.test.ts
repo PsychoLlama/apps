@@ -1,5 +1,6 @@
 import { createEffect, createRoot } from 'solid-js';
-import { defineAction, invoke } from '../action';
+import { defineAction } from '../action';
+import { bindRegistry } from '../bindings';
 import { createRegistry } from '../registry';
 import { createStore, defineStore } from '../store';
 
@@ -30,36 +31,44 @@ const incrementAndLog = defineAction(
   },
 );
 
-describe('defineAction / invoke', () => {
+function bootstrap() {
+  const registry = createRegistry();
+  const bound = bindRegistry(registry);
+  createStore(registry, counterStore);
+  createStore(registry, logStore);
+  return { registry, ...bound };
+}
+
+describe('defineAction / useAction', () => {
   it('mutates a single store via its draft', () => {
-    const registry = createRegistry();
-    const counter = createStore(registry, counterStore);
-    invoke(registry, increment, undefined);
+    const { useStore, useAction } = bootstrap();
+    const counter = useStore(counterStore);
+    useAction(increment)(undefined);
     expect(counter.count).toBe(1);
   });
 
   it('passes input as the trailing handler argument', () => {
-    const registry = createRegistry();
-    const counter = createStore(registry, counterStore);
-    invoke(registry, addN, 5);
-    invoke(registry, addN, 3);
+    const { useStore, useAction } = bootstrap();
+    const counter = useStore(counterStore);
+    useAction(addN)(5);
+    useAction(addN)(3);
     expect(counter.count).toBe(8);
   });
 
   it('mutates multiple stores in one handler', () => {
-    const registry = createRegistry();
-    const counter = createStore(registry, counterStore);
-    const log = createStore(registry, logStore);
-    invoke(registry, incrementAndLog, 'hi');
-    invoke(registry, incrementAndLog, 'again');
+    const { useStore, useAction } = bootstrap();
+    const counter = useStore(counterStore);
+    const log = useStore(logStore);
+    useAction(incrementAndLog)('hi');
+    useAction(incrementAndLog)('again');
     expect(counter.count).toBe(2);
     expect(log.entries).toEqual(['hi:1', 'again:2']);
   });
 
   it('sees earlier writes in the same handler across stores', () => {
-    const registry = createRegistry();
-    const counter = createStore(registry, counterStore);
-    const log = createStore(registry, logStore);
+    const { useStore, useAction } = bootstrap();
+    const counter = useStore(counterStore);
+    const log = useStore(logStore);
 
     // Writes to counter must be visible to subsequent reads in the same
     // handler, including from a different store's logic.
@@ -73,15 +82,15 @@ describe('defineAction / invoke', () => {
       },
     );
 
-    invoke(registry, crossStore, 10);
+    useAction(crossStore)(10);
     expect(counter.count).toBe(11);
     expect(log.entries).toEqual(['counter=10', 'counter=11']);
   });
 
   it('batches multi-store updates into one reactive flush', () => {
-    const registry = createRegistry();
-    const counter = createStore(registry, counterStore);
-    const log = createStore(registry, logStore);
+    const { useStore, useAction } = bootstrap();
+    const counter = useStore(counterStore);
+    const log = useStore(logStore);
 
     let effectRuns = 0;
     const dispose = createRoot((dispose) => {
@@ -94,15 +103,14 @@ describe('defineAction / invoke', () => {
     });
 
     const baseline = effectRuns;
-    invoke(registry, incrementAndLog, 'once');
+    useAction(incrementAndLog)('once');
     expect(effectRuns).toBe(baseline + 1);
     dispose();
   });
 
   it('throws when a required store is not created in the registry', () => {
     const registry = createRegistry();
-    expect(() => invoke(registry, increment, undefined)).toThrow(
-      /not created/i,
-    );
+    const { useAction } = bindRegistry(registry);
+    expect(() => useAction(increment)(undefined)).toThrow(/not created/i);
   });
 });

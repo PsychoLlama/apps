@@ -1,6 +1,7 @@
 import { createEffect, createRoot } from 'solid-js';
 import { vi } from 'vitest';
 import { ref, type Ref } from '../../ref';
+import { bindRegistry } from '../bindings';
 import { createRegistry, GLOBAL_REGISTRY } from '../registry';
 import { createStore, defineStore, destroyStore } from '../store';
 
@@ -24,13 +25,17 @@ describe('defineStore', () => {
 describe('createStore', () => {
   it('returns the initial state', () => {
     const registry = createRegistry();
-    const state = createStore(registry, counterStore);
-    expect(state.count).toBe(0);
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, counterStore);
+    expect(useStore(counterStore).count).toBe(0);
   });
 
   it('types the returned state as deeply readonly', () => {
     const store = defineStore(() => ({ nested: { value: 1 } }));
-    const state = createStore(createRegistry(), store);
+    const registry = createRegistry();
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, store);
+    const state = useStore(store);
 
     // Assignments below are checked by the type system only — they are
     // never executed. `@ts-expect-error` fails the build if DeepReadonly
@@ -51,7 +56,10 @@ describe('createStore', () => {
       handle: Ref<{ value: number }> | null;
     }
     const hostStore = defineStore<Host>(() => ({ handle: ref({ value: 1 }) }));
-    const state = createStore(createRegistry(), hostStore);
+    const registry = createRegistry();
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, hostStore);
+    const state = useStore(hostStore);
 
     // Ref is a plain class — Solid must not proxy its fields. Reading
     // `.current` should return the exact object passed to `ref(...)`.
@@ -71,8 +79,13 @@ describe('createStore', () => {
   it('isolates state across registries', () => {
     const a = createRegistry();
     const b = createRegistry();
-    const stateA = createStore(a, counterStore);
-    const stateB = createStore(b, counterStore);
+    const boundA = bindRegistry(a);
+    const boundB = bindRegistry(b);
+    createStore(a, counterStore);
+    createStore(b, counterStore);
+
+    const stateA = boundA.useStore(counterStore);
+    const stateB = boundB.useStore(counterStore);
     expect(stateA).not.toBe(stateB);
     expect(stateA.count).toBe(0);
     expect(stateB.count).toBe(0);
@@ -80,7 +93,10 @@ describe('createStore', () => {
 
   it('returns a reactive store', () => {
     const registry = createRegistry();
-    const state = createStore(registry, counterStore);
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, counterStore);
+    const state = useStore(counterStore);
+
     const values: number[] = [];
     const dispose = createRoot((dispose) => {
       createEffect(() => values.push(state.count));
@@ -97,7 +113,9 @@ describe('createStore', () => {
     }
     const store = defineStore<Shape>(() => ({ a: 0, b: 0 }));
     const registry = createRegistry();
-    const state = createStore(registry, store);
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, store);
+    const state = useStore(store);
 
     let aRuns = 0;
     let bRuns = 0;
@@ -127,7 +145,9 @@ describe('createStore', () => {
 
   it('is backed by a mutable proxy (convention, not runtime enforcement, routes writes through actions)', () => {
     const registry = createRegistry();
-    const state = createStore(registry, counterStore);
+    const { useStore } = bindRegistry(registry);
+    createStore(registry, counterStore);
+    const state = useStore(counterStore);
 
     // `createMutable` returns a directly-writable proxy. Mutations are
     // expected to flow through `invoke` for auditability — `DeepReadonly`
@@ -157,8 +177,9 @@ describe('destroyStore', () => {
 describe('GLOBAL_REGISTRY', () => {
   it('supports create and destroy like any other registry', () => {
     const oneOffStore = defineStore<Counter>(() => ({ count: 7 }));
-    const state = createStore(GLOBAL_REGISTRY, oneOffStore);
-    expect(state.count).toBe(7);
+    const { useStore } = bindRegistry(GLOBAL_REGISTRY);
+    createStore(GLOBAL_REGISTRY, oneOffStore);
+    expect(useStore(oneOffStore).count).toBe(7);
     destroyStore(GLOBAL_REGISTRY, oneOffStore);
   });
 });
