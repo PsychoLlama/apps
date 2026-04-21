@@ -165,9 +165,6 @@ export const timer = style({
 // --- Active tracks ---
 
 export const trackPill = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: space[2],
   padding: `${space[1]} ${space[3]}`,
   borderRadius: radius.full,
   backgroundColor: neutralAlpha[3],
