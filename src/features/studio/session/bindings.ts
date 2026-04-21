@@ -155,7 +155,7 @@ export const resumeRecordingEffect = defineEffect(
 );
 
 /** Capture a new track mid-session and append it to state. */
-export const addTrackEffect = defineEffect([], captureTrack, {
+export const addTrackEffect = defineEffect([sessionStore], captureTrack, {
   onSuccess: appendTrack,
 });
 

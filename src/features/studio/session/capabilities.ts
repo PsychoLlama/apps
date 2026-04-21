@@ -129,13 +129,21 @@ export const resumeRecording = (session: DeepReadonly<SessionState>): void => {
   session.recorder?.resume();
 };
 
-/** Capture a new microphone track. */
-export const captureTrack = async (): Promise<{
-  track: Track;
-  stream: MediaStream;
-}> => {
+/**
+ * Capture a new microphone track and splice it into the live recorder's
+ * combined stream so the new audio actually lands in the output blob.
+ * Without the splice, the track would only show up in the UI.
+ */
+export const captureTrack = async (
+  session: DeepReadonly<SessionState>,
+): Promise<{ track: Track; stream: MediaStream }> => {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const mediaTrack = stream.getTracks()[0];
+  if (session.recorder) {
+    for (const liveTrack of stream.getTracks()) {
+      session.recorder.stream.addTrack(liveTrack);
+    }
+  }
   const id = crypto.randomUUID();
   const label = mediaTrack.label || 'Microphone';
   return {
@@ -144,7 +152,10 @@ export const captureTrack = async (): Promise<{
   };
 };
 
-/** Stop a track's stream and return the id for lifecycle chaining. */
+/**
+ * Detach a track from the recorder's combined stream and stop its source.
+ * Returns the id so the success action can drop it from state.
+ */
 export const stopTrackStream = (
   session: DeepReadonly<SessionState>,
   trackId: string,
@@ -152,6 +163,7 @@ export const stopTrackStream = (
   const stream = session.streams[trackId];
   if (stream) {
     for (const track of stream.getTracks()) {
+      session.recorder?.stream.removeTrack(track);
       track.stop();
     }
   }

@@ -42,6 +42,10 @@ class FakeMediaStream {
   addTrack(track: FakeTrack): void {
     this.tracks.push(track);
   }
+  removeTrack(track: FakeTrack): void {
+    const index = this.tracks.indexOf(track);
+    if (index !== -1) this.tracks.splice(index, 1);
+  }
 }
 
 class FakeMediaRecorder {
@@ -261,7 +265,7 @@ describe('captureTrack', () => {
     const stream = new FakeMediaStream([micTrack]);
     mediaDevices.getUserMedia.mockResolvedValue(stream);
 
-    const result = await captureTrack();
+    const result = await captureTrack(asSession({}));
 
     expect(mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true });
     expect(result.track).toMatchObject({
@@ -277,9 +281,32 @@ describe('captureTrack', () => {
       new FakeMediaStream([new FakeTrack('audio', '')]),
     );
 
-    const result = await captureTrack();
+    const result = await captureTrack(asSession({}));
 
     expect(result.track.label).toBe('Microphone');
+  });
+
+  it('attaches the new media track to the live recorder stream', async () => {
+    const recorderStream = new FakeMediaStream();
+    const recorder = new FakeMediaRecorder(recorderStream);
+    const micTrack = new FakeTrack('audio', 'Mic');
+    mediaDevices.getUserMedia.mockResolvedValue(
+      new FakeMediaStream([micTrack]),
+    );
+
+    await captureTrack(
+      asSession({ recorder: recorder as unknown as MediaRecorder }),
+    );
+
+    expect(recorderStream.getTracks()).toContain(micTrack);
+  });
+
+  it('is safe when no recorder is active yet', async () => {
+    mediaDevices.getUserMedia.mockResolvedValue(
+      new FakeMediaStream([new FakeTrack('audio')]),
+    );
+
+    await expect(captureTrack(asSession({}))).resolves.toBeDefined();
   });
 });
 
@@ -296,6 +323,23 @@ describe('stopTrackStream', () => {
 
     expect(track.stop).toHaveBeenCalled();
     expect(id).toBe('track-1');
+  });
+
+  it('detaches the track from the recorder stream before stopping', () => {
+    const track = new FakeTrack();
+    const recorderStream = new FakeMediaStream([track]);
+    const recorder = new FakeMediaRecorder(recorderStream);
+    const session = asSession({
+      recorder: recorder as unknown as MediaRecorder,
+      streams: {
+        'track-1': new FakeMediaStream([track]) as unknown as MediaStream,
+      },
+    });
+
+    stopTrackStream(session, 'track-1');
+
+    expect(recorderStream.getTracks()).not.toContain(track);
+    expect(track.stop).toHaveBeenCalled();
   });
 
   it('is a no-op on an unknown id', () => {
