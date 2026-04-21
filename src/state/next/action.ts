@@ -10,6 +10,15 @@ type DraftsOf<Refs extends readonly StoreRef<object>[]> = {
 };
 
 /**
+ * Carries Input contravariantly without the variadic-tuple mismatch that
+ * `[...DraftsOf<Stores>, Input]` produces when `Stores` is widened. Purely
+ * a type-level brand — never accessed at runtime.
+ */
+interface InputBrand<Input> {
+  readonly __input?: (x: Input) => void;
+}
+
+/**
  * Binds a tuple of stores to a handler. Tuple layout (stores then handler)
  * keeps field positions minifiable. Create via {@link defineAction}.
  */
@@ -19,7 +28,14 @@ export type Action<
 > = readonly [
   stores: Stores,
   handler: (...args: [...DraftsOf<Stores>, Input]) => void,
-];
+] &
+  InputBrand<Input>;
+
+/**
+ * Type-erased `Action` keyed only on its Input. Lets effect handler slots
+ * accept any `Action<*, Input>` regardless of the store tuple's shape.
+ */
+export type AnyAction<Input> = readonly unknown[] & InputBrand<Input>;
 
 /**
  * Define an action over one or more stores. The handler receives writable
