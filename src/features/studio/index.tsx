@@ -410,9 +410,9 @@ export default function Studio() {
   }
 
   onMount(() => {
-    checkSupport(undefined);
+    checkSupport();
   });
-  const tickInterval = setInterval(() => publishTick(undefined), 1000);
+  const tickInterval = setInterval(() => publishTick(), 1000);
 
   onCleanup(() => {
     clearInterval(tickInterval);
@@ -441,7 +441,7 @@ export default function Studio() {
                 <RecordingState
                   elapsed={timer.elapsed}
                   tracks={[...session.tracks]}
-                  onPause={() => pauseRecording(undefined)}
+                  onPause={() => pauseRecording()}
                   onStop={handleStop}
                   onAddTrack={handleAddTrack}
                   onRemoveTrack={removeTrack}
@@ -451,7 +451,7 @@ export default function Studio() {
                 <PausedState
                   elapsed={timer.elapsed}
                   tracks={[...session.tracks]}
-                  onResume={() => resumeRecording(undefined)}
+                  onResume={() => resumeRecording()}
                   onStop={handleStop}
                   onAddTrack={handleAddTrack}
                   onRemoveTrack={removeTrack}

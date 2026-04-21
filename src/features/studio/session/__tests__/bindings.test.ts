@@ -73,7 +73,7 @@ describe('actions', () => {
     it('transitions to recording and resets the timer', () => {
       const { session, timer, useAction } = setup();
 
-      useAction(beginRecording)(undefined);
+      useAction(beginRecording)();
 
       expect(session.status).toBe('recording');
       expect(session.error).toBeNull();
@@ -85,7 +85,7 @@ describe('actions', () => {
       const { session, useAction } = setup();
       useAction(markError)(new Error('earlier'));
 
-      useAction(beginRecording)(undefined);
+      useAction(beginRecording)();
 
       expect(session.error).toBeNull();
     });
@@ -125,9 +125,9 @@ describe('actions', () => {
         { id: '1', type: 'screen', label: 'Screen', live: true },
       ]);
       useAction(setRecordingContext)(result);
-      useAction(beginRecording)(undefined);
+      useAction(beginRecording)();
 
-      useAction(beginStop)(undefined);
+      useAction(beginStop)();
 
       expect(session.status).toBe('idle');
       expect(session.tracks).toEqual([]);
@@ -167,9 +167,9 @@ describe('actions', () => {
   describe('beginPause', () => {
     it('transitions to paused and freezes the timer', () => {
       const { session, timer, useAction } = setup();
-      useAction(beginRecording)(undefined);
+      useAction(beginRecording)();
 
-      useAction(beginPause)(undefined);
+      useAction(beginPause)();
 
       expect(session.status).toBe('paused');
       expect(timer.running).toBe(false);
@@ -179,10 +179,10 @@ describe('actions', () => {
   describe('beginResume', () => {
     it('transitions to recording and restarts the timer', () => {
       const { session, timer, useAction } = setup();
-      useAction(beginRecording)(undefined);
-      useAction(beginPause)(undefined);
+      useAction(beginRecording)();
+      useAction(beginPause)();
 
-      useAction(beginResume)(undefined);
+      useAction(beginResume)();
 
       expect(session.status).toBe('recording');
       expect(timer.running).toBe(true);
@@ -322,7 +322,7 @@ describe('checkSupportEffect', () => {
     vi.mocked(capabilities.checkSupport).mockReturnValue(false);
     const { session, useEffect } = setup();
 
-    useEffect(checkSupportEffect)(undefined);
+    useEffect(checkSupportEffect)();
 
     expect(session.status).toBe('unsupported');
   });
@@ -331,7 +331,7 @@ describe('checkSupportEffect', () => {
     vi.mocked(capabilities.checkSupport).mockReturnValue(true);
     const { session, useEffect } = setup();
 
-    useEffect(checkSupportEffect)(undefined);
+    useEffect(checkSupportEffect)();
 
     expect(session.status).toBe('idle');
   });

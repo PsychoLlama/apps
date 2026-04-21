@@ -27,7 +27,7 @@ describe('bindRegistry', () => {
     const counter = bound.createStore(counterStore);
     expect(counter.count).toBe(0);
 
-    bound.useAction(increment)(undefined);
+    bound.useAction(increment)();
     expect(counter.count).toBe(1);
   });
 
@@ -37,7 +37,7 @@ describe('bindRegistry', () => {
     const counterA = a.createStore(counterStore);
     const counterB = b.createStore(counterStore);
 
-    a.useAction(increment)(undefined);
+    a.useAction(increment)();
     expect(counterA.count).toBe(1);
     expect(counterB.count).toBe(0);
   });
@@ -85,7 +85,7 @@ describe('module-level bindings (global registry)', () => {
     try {
       const counter = globalUseStore(oneOff);
       expect(counter.count).toBe(0);
-      globalUseAction(bumpOneOff)(undefined);
+      globalUseAction(bumpOneOff)();
       expect(counter.count).toBe(2);
     } finally {
       destroyStore(oneOff);

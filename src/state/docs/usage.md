@@ -14,12 +14,14 @@
 
 - `defineAction([timerStore, sessionStore], (timer, session, input) => { ... })`: Binds one or more stores to a synchronous handler.
 - Handler drafts are writable; writes batch into one reactive flush.
-- `input` is always present at the call site — pass `undefined` when the action takes none.
+- Omit the trailing `input` parameter when the handler doesn't need it — the call site becomes zero-arg.
+- Typed-input actions require the input at the call site: `useAction(addN)(5)`.
 
 ## Effects
 
 - `defineEffect(fn, { onStart?, onSuccess?, onFailure? })`: Wraps a side-effecting callback with lifecycle actions.
 - `onStart` fires with the effect's input before the callback. `onSuccess` fires with the resolved value. `onFailure` fires with the caught error.
+- Lifecycle slots accept named actions or inline `defineAction(...)` calls.
 - Callback returns `Output | Promise<Output>`. Dispatch returns `void` (sync) or `Promise<void>` (async).
 
 ## Capabilities and Bindings

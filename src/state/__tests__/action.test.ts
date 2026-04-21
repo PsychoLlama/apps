@@ -41,7 +41,7 @@ function bootstrap() {
 describe('defineAction / useAction', () => {
   it('mutates a single store via its draft', () => {
     const { counter, useAction } = bootstrap();
-    useAction(increment)(undefined);
+    useAction(increment)();
     expect(counter.count).toBe(1);
   });
 
@@ -101,6 +101,6 @@ describe('defineAction / useAction', () => {
 
   it('throws when a required store is not created in the registry', () => {
     const { useAction } = bindRegistry(createRegistry());
-    expect(() => useAction(increment)(undefined)).toThrow(/not created/i);
+    expect(() => useAction(increment)()).toThrow(/not created/i);
   });
 });

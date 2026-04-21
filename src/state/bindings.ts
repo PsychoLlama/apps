@@ -9,6 +9,13 @@ import {
   type StoreRef,
 } from './store';
 
+/**
+ * Empty when `I` is `unknown` (the default for no-input actions), otherwise
+ * `[input: I]`. Lets `useAction(foo)()` work for no-input actions while
+ * forcing `useAction(foo)(value)` for typed input.
+ */
+type CallArgs<I> = unknown extends I ? [] : [input: I];
+
 /** Registry-scoped API returned by {@link bindRegistry}. */
 export interface RegistryBindings {
   readonly createStore: <T extends object>(ref: StoreRef<T>) => DeepReadonly<T>;
@@ -16,15 +23,18 @@ export interface RegistryBindings {
   readonly useStore: <T extends object>(ref: StoreRef<T>) => DeepReadonly<T>;
   readonly useAction: <S extends readonly StoreRef<object>[], I>(
     action: Action<S, I>,
-  ) => (input: I) => void;
+  ) => (...args: CallArgs<I>) => void;
   readonly useEffect: <I, O>(
     effect: Effect<I, O>,
-  ) => (input: I) => PerformReturn<O>;
+  ) => (...args: CallArgs<I>) => PerformReturn<O>;
   readonly invoke: <S extends readonly StoreRef<object>[], I>(
     action: Action<S, I>,
-    input: I,
+    ...args: CallArgs<I>
   ) => void;
-  readonly perform: <I, O>(effect: Effect<I, O>, input: I) => PerformReturn<O>;
+  readonly perform: <I, O>(
+    effect: Effect<I, O>,
+    ...args: CallArgs<I>
+  ) => PerformReturn<O>;
 }
 
 /**
@@ -43,24 +53,27 @@ export function bindRegistry(registry: Registry): RegistryBindings {
     useStore<T extends object>(ref: StoreRef<T>): DeepReadonly<T> {
       return getMutable(registry, ref) as DeepReadonly<T>;
     },
-    useAction<S extends readonly StoreRef<object>[], I>(
-      action: Action<S, I>,
-    ): (input: I) => void {
-      return (input) => {
-        invoke(registry, action, input);
-      };
+    useAction<S extends readonly StoreRef<object>[], I>(action: Action<S, I>) {
+      return ((...args: [I?]) => {
+        invoke(registry, action, args[0] as I);
+      }) as (...args: CallArgs<I>) => void;
     },
-    useEffect<I, O>(effect: Effect<I, O>): (input: I) => PerformReturn<O> {
-      return (input) => perform(registry, effect, input);
+    useEffect<I, O>(effect: Effect<I, O>) {
+      return ((...args: [I?]) => perform(registry, effect, args[0] as I)) as (
+        ...args: CallArgs<I>
+      ) => PerformReturn<O>;
     },
     invoke<S extends readonly StoreRef<object>[], I>(
       action: Action<S, I>,
-      input: I,
+      ...args: CallArgs<I>
     ): void {
-      invoke(registry, action, input);
+      invoke(registry, action, (args as [I?])[0] as I);
     },
-    perform<I, O>(effect: Effect<I, O>, input: I): PerformReturn<O> {
-      return perform(registry, effect, input);
+    perform<I, O>(
+      effect: Effect<I, O>,
+      ...args: CallArgs<I>
+    ): PerformReturn<O> {
+      return perform(registry, effect, (args as [I?])[0] as I);
     },
   };
 }

@@ -17,10 +17,10 @@ const sessionStore = defineStore<Session>(() => ({
   error: null,
 }));
 
-// Accepts `unknown` so the action works as `onStart` for effects with any
-// input type. Function parameter contravariance: an action that accepts
-// unknown assigns to one that expects a narrower input.
-const markPending = defineAction([sessionStore], (session, _: unknown) => {
+// No input parameter — defineAction's default `Input = unknown` lets this
+// assign to any effect's `onStart` slot via contravariance of the phantom
+// `(x: Input) => void`.
+const markPending = defineAction([sessionStore], (session) => {
   session.status = 'pending';
   session.error = null;
 });
@@ -166,5 +166,32 @@ describe('defineEffect / useEffect', () => {
 
     // sessionStore was never created in this registry.
     expect(() => useEffect(effect)(1)).toThrow(/not created/i);
+  });
+
+  it('accepts inline defineAction in every lifecycle slot', () => {
+    const { useEffect, session } = bootstrap();
+    const effect = defineEffect(
+      (x: number): number => {
+        if (x < 0) throw new Error('negative');
+        return x + 1;
+      },
+      {
+        onStart: defineAction([sessionStore], (s) => {
+          s.status = 'pending';
+        }),
+        onSuccess: defineAction([sessionStore], (s, value: number) => {
+          s.status = 'ready';
+          s.value = value;
+        }),
+        onFailure: defineAction([sessionStore], (s, error: Error) => {
+          s.status = 'failed';
+          s.error = error.message;
+        }),
+      },
+    );
+
+    useEffect(effect)(4);
+    expect(session.status).toBe('ready');
+    expect(session.value).toBe(5);
   });
 });

@@ -24,11 +24,11 @@ describe('timerStore', () => {
   describe('tick', () => {
     it('increments elapsed when running', () => {
       const { state, useAction } = setup();
-      useAction(startTimer)(undefined);
+      useAction(startTimer)();
 
-      useAction(tick)(undefined);
-      useAction(tick)(undefined);
-      useAction(tick)(undefined);
+      useAction(tick)();
+      useAction(tick)();
+      useAction(tick)();
 
       expect(state.elapsed).toBe(3);
     });
@@ -36,20 +36,20 @@ describe('timerStore', () => {
     it('does not increment when stopped', () => {
       const { state, useAction } = setup();
 
-      useAction(tick)(undefined);
-      useAction(tick)(undefined);
+      useAction(tick)();
+      useAction(tick)();
 
       expect(state.elapsed).toBe(0);
     });
 
     it('does not increment when paused', () => {
       const { state, useAction } = setup();
-      useAction(startTimer)(undefined);
-      useAction(tick)(undefined);
-      useAction(pauseTimer)(undefined);
+      useAction(startTimer)();
+      useAction(tick)();
+      useAction(pauseTimer)();
 
-      useAction(tick)(undefined);
-      useAction(tick)(undefined);
+      useAction(tick)();
+      useAction(tick)();
 
       expect(state.elapsed).toBe(1);
     });
@@ -59,7 +59,7 @@ describe('timerStore', () => {
     it('startTimer starts running and resets elapsed', () => {
       const { state, useAction } = setup();
 
-      useAction(startTimer)(undefined);
+      useAction(startTimer)();
 
       expect(state.running).toBe(true);
       expect(state.elapsed).toBe(0);
@@ -67,39 +67,39 @@ describe('timerStore', () => {
 
     it('startTimer resets elapsed on a fresh run', () => {
       const { state, useAction } = setup();
-      useAction(startTimer)(undefined);
-      useAction(tick)(undefined);
-      useAction(tick)(undefined);
+      useAction(startTimer)();
+      useAction(tick)();
+      useAction(tick)();
 
-      useAction(startTimer)(undefined);
+      useAction(startTimer)();
 
       expect(state.elapsed).toBe(0);
     });
 
     it('pauseTimer stops the timer', () => {
       const { state, useAction } = setup();
-      useAction(startTimer)(undefined);
+      useAction(startTimer)();
 
-      useAction(pauseTimer)(undefined);
+      useAction(pauseTimer)();
 
       expect(state.running).toBe(false);
     });
 
     it('resumeTimer resumes a paused timer', () => {
       const { state, useAction } = setup();
-      useAction(startTimer)(undefined);
-      useAction(pauseTimer)(undefined);
+      useAction(startTimer)();
+      useAction(pauseTimer)();
 
-      useAction(resumeTimer)(undefined);
+      useAction(resumeTimer)();
 
       expect(state.running).toBe(true);
     });
 
     it('stopTimer stops the timer', () => {
       const { state, useAction } = setup();
-      useAction(startTimer)(undefined);
+      useAction(startTimer)();
 
-      useAction(stopTimer)(undefined);
+      useAction(stopTimer)();
 
       expect(state.running).toBe(false);
     });
@@ -109,22 +109,22 @@ describe('timerStore', () => {
     it('accumulates time across pause/resume', () => {
       const { state, useAction } = setup();
 
-      useAction(startTimer)(undefined);
-      useAction(tick)(undefined);
-      useAction(tick)(undefined);
+      useAction(startTimer)();
+      useAction(tick)();
+      useAction(tick)();
       expect(state.elapsed).toBe(2);
 
-      useAction(pauseTimer)(undefined);
-      useAction(tick)(undefined);
+      useAction(pauseTimer)();
+      useAction(tick)();
       expect(state.elapsed).toBe(2);
 
-      useAction(resumeTimer)(undefined);
-      useAction(tick)(undefined);
-      useAction(tick)(undefined);
-      useAction(tick)(undefined);
+      useAction(resumeTimer)();
+      useAction(tick)();
+      useAction(tick)();
+      useAction(tick)();
       expect(state.elapsed).toBe(5);
 
-      useAction(stopTimer)(undefined);
+      useAction(stopTimer)();
       expect(state.running).toBe(false);
     });
   });

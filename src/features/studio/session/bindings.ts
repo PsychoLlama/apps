@@ -16,14 +16,12 @@ import { session, sessionStore } from './store';
 import type { Track } from './types';
 
 // --- Actions ---
-// TS can't infer the `Stores` tuple when `defineAction` is called as an
-// argument to `defineEffect`, so each action is a named const referenced
-// by the effect below. Exported so action-level tests can exercise state
-// transitions directly.
+// Each action is named and exported so tests can exercise state
+// transitions directly, independent of the effect wrapper.
 
 export const beginRecording = defineAction(
   [sessionStore, timerStore],
-  (s, t, _: unknown) => {
+  (s, t) => {
     s.status = 'recording';
     s.error = null;
     t.running = true;
@@ -48,15 +46,12 @@ export const markError = defineAction([sessionStore], (s, error: Error) => {
   s.error = error.message;
 });
 
-export const beginStop = defineAction(
-  [sessionStore, timerStore],
-  (s, t, _: unknown) => {
-    s.status = 'idle';
-    s.tracks = [];
-    s.error = null;
-    t.running = false;
-  },
-);
+export const beginStop = defineAction([sessionStore, timerStore], (s, t) => {
+  s.status = 'idle';
+  s.tracks = [];
+  s.error = null;
+  t.running = false;
+});
 
 export const finalizeRecording = defineAction(
   [sessionStore, libraryStore],

@@ -33,17 +33,22 @@ export type Action<
 /**
  * Type-erased `Action` keyed only on its Input. Lets effect handler slots
  * accept any `Action<*, Input>` regardless of the store tuple's shape.
+ * Brand-only: a structural constraint like `readonly unknown[]` would
+ * disrupt `Stores` tuple inference when `defineAction` is called inline.
  */
-export type AnyAction<Input> = readonly unknown[] & InputBrand<Input>;
+export type AnyAction<Input> = InputBrand<Input>;
 
 /**
  * Define an action over one or more stores. The handler receives writable
- * drafts for each store in order, plus the input as the last argument. Must
- * be synchronous.
+ * drafts for each store in order, plus the input as the last argument —
+ * which can be omitted entirely. Must be synchronous.
+ *
+ * `Input` defaults to `unknown` so a no-input action assigns to any
+ * lifecycle slot via contravariance of the phantom `(x: Input) => void`.
  */
 export function defineAction<
   const Stores extends readonly [StoreRef<object>, ...StoreRef<object>[]],
-  Input = undefined,
+  Input = unknown,
 >(
   stores: Stores,
   handler: (...args: [...DraftsOf<Stores>, Input]) => void,
