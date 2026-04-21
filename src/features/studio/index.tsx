@@ -19,7 +19,7 @@ import { deleteRecordingEffect } from './library/bindings';
 import { session } from './session/store';
 import { library } from './library/store';
 import { timer } from './timer/store';
-import { tick } from './timer/actions';
+import { tick } from './timer/bindings';
 import type { Recording } from './library/types';
 import * as css from './studio.css';
 

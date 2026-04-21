@@ -5,7 +5,7 @@ import {
   startTimer,
   stopTimer,
   tick,
-} from '../actions';
+} from '../bindings';
 import { timerStore } from '../store';
 
 function setup() {
