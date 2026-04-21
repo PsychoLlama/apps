@@ -39,14 +39,7 @@ const LibraryPanel = (props: {
 }) => {
   return (
     <Flex as="aside" direction="column" class={css.panel}>
-      <Flex
-        as="div"
-        align="center"
-        justify="between"
-        px={4}
-        py={2}
-        class={css.panelHeader}
-      >
+      <Flex as="div" align="center" justify="between" px={4} py={2}>
         <Heading as="h2" size={2} weight="medium" color="lowContrast">
           Recordings
         </Heading>

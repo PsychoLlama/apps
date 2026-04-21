@@ -76,22 +76,6 @@ export const panel = style({
   },
 });
 
-export const panelHeader = style({
-  cursor: 'pointer',
-  transition: `background-color ${fast[2]} ${standard.productive}`,
-  ':hover': {
-    backgroundColor: neutral[3],
-  },
-  '@media': {
-    [breakpoint.sm]: {
-      cursor: 'default',
-      ':hover': {
-        backgroundColor: 'transparent',
-      },
-    },
-  },
-});
-
 export const panelBody = style({
   flex: 1,
   overflowY: 'auto',
