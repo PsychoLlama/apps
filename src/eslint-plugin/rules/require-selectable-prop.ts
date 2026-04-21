@@ -16,15 +16,15 @@ interface JSXOpeningElement {
   attributes: JSXAttribute[];
 }
 
-function hasDynamicChildren(children: JSXChild[]): boolean {
+const hasDynamicChildren = (children: JSXChild[]): boolean => {
   return children.some((child) => child.type === 'JSXExpressionContainer');
-}
+};
 
-function hasSelectableProp(attributes: JSXAttribute[]): boolean {
+const hasSelectableProp = (attributes: JSXAttribute[]): boolean => {
   return attributes.some(
     (attr) => attr.type === 'JSXAttribute' && attr.name.name === 'selectable',
   );
-}
+};
 
 const rule: Rule.RuleModule = {
   meta: {

@@ -3,17 +3,17 @@ import { deleteRecording } from '../bindings';
 import { libraryStore } from '../store';
 import type { Recording } from '../types';
 
-function setup() {
+const setup = () => {
   const bindings = createTestBindings();
   return { ...bindings, library: bindings.createStore(libraryStore) };
-}
+};
 
-function seed(
+const seed = (
   library: { recordings: readonly Recording[] },
   recordings: Recording[],
-): void {
+): void => {
   (library.recordings as Recording[]).push(...recordings);
-}
+};
 
 describe('deleteRecording', () => {
   it('removes a recording by id', () => {

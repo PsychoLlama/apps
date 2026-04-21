@@ -31,12 +31,12 @@ const incrementAndLog = defineAction(
   },
 );
 
-function bootstrap() {
+const bootstrap = () => {
   const bound = bindRegistry(createRegistry());
   const counter = bound.createStore(counterStore);
   const log = bound.createStore(logStore);
   return { ...bound, counter, log };
-}
+};
 
 describe('defineAction / useAction', () => {
   it('mutates a single store via its draft', () => {

@@ -48,7 +48,11 @@ import * as css from './color.stories.css';
 
 type ColorScale = Record<number, string>;
 
-function ScaleRow(props: { name: string; scale: ColorScale; alpha?: boolean }) {
+const ScaleRow = (props: {
+  name: string;
+  scale: ColorScale;
+  alpha?: boolean;
+}) => {
   const steps = () =>
     Object.entries(props.scale).map(([step, value]) => ({ step, value }));
 
@@ -78,7 +82,7 @@ function ScaleRow(props: { name: string; scale: ColorScale; alpha?: boolean }) {
       </Grid>
     </>
   );
-}
+};
 
 const meta = {
   title: 'Design System/Colors',

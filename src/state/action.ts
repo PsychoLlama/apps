@@ -46,25 +46,25 @@ export type AnyAction<Input> = InputBrand<Input>;
  * `Input` defaults to `unknown` so a no-input action assigns to any
  * lifecycle slot via contravariance of the phantom `(x: Input) => void`.
  */
-export function defineAction<
+export const defineAction = <
   const Stores extends readonly [StoreRef<object>, ...StoreRef<object>[]],
   Input = unknown,
 >(
   stores: Stores,
   handler: (...args: [...DraftsOf<Stores>, Input]) => void,
-): Action<Stores, Input> {
+): Action<Stores, Input> => {
   return [stores, handler];
-}
+};
 
 /**
  * Invoke an action against a registry. Multi-store updates batch into a
  * single reactive flush. All stores in the action must already be created.
  */
-export function invoke<Stores extends readonly StoreRef<object>[], Input>(
+export const invoke = <Stores extends readonly StoreRef<object>[], Input>(
   registry: Registry,
   action: Action<Stores, Input>,
   input: Input,
-): void {
+): void => {
   const [stores, handler] = action;
 
   const drafts: object[] = [];
@@ -75,4 +75,4 @@ export function invoke<Stores extends readonly StoreRef<object>[], Input>(
   batch(() => {
     (handler as (...args: unknown[]) => void)(...drafts, input);
   });
-}
+};

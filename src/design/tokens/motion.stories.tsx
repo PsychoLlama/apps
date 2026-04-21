@@ -38,7 +38,7 @@ const easings = [
 ];
 
 /** Square swatch that transitions between neutral and accent on a loop. */
-function ColorSwatch(props: { duration: string }) {
+const ColorSwatch = (props: { duration: string }) => {
   let ref!: HTMLDivElement;
 
   onMount(() => {
@@ -66,10 +66,10 @@ function ColorSwatch(props: { duration: string }) {
       class={css.swatch}
     />
   );
-}
+};
 
 /** Pill thumb that slides across a track, pausing 1s at each end. */
-function EasingTrack(props: { duration: string; easing: string }) {
+const EasingTrack = (props: { duration: string; easing: string }) => {
   let ref!: HTMLDivElement;
 
   onMount(() => {
@@ -116,7 +116,7 @@ function EasingTrack(props: { duration: string; easing: string }) {
       />
     </Flex>
   );
-}
+};
 
 export const Motion: Story = {
   render: () => (

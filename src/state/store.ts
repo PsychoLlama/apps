@@ -21,15 +21,15 @@ export type DeepReadonly<T> = T extends (...args: never[]) => unknown
         : T;
 
 /** Define a store as an opaque handle. No state is created until `createStore`. */
-export function defineStore<T extends object>(init: () => T): StoreRef<T> {
+export const defineStore = <T extends object>(init: () => T): StoreRef<T> => {
   return { [INIT]: init };
-}
+};
 
 /** Materialize a store in a registry. Returns a readonly view. */
-export function createStore<T extends object>(
+export const createStore = <T extends object>(
   registry: Registry,
   ref: StoreRef<T>,
-): DeepReadonly<T> {
+): DeepReadonly<T> => {
   const entries = registry[ENTRIES];
   const key = ref as StoreRef<object>;
   if (entries.has(key)) {
@@ -38,26 +38,26 @@ export function createStore<T extends object>(
   const state = createMutable<T>(ref[INIT]());
   entries.set(key, state);
   return state as DeepReadonly<T>;
-}
+};
 
 /** Tear down a store in a registry. Throws if not created. */
-export function destroyStore<T extends object>(
+export const destroyStore = <T extends object>(
   registry: Registry,
   ref: StoreRef<T>,
-): void {
+): void => {
   if (!registry[ENTRIES].delete(ref as StoreRef<object>)) {
     throw new Error('Store not created in this registry');
   }
-}
+};
 
 /** Internal: resolve a ref's mutable state. Throws if not created. */
-export function getMutable<T extends object>(
+export const getMutable = <T extends object>(
   registry: Registry,
   ref: StoreRef<T>,
-): T {
+): T => {
   const state = registry[ENTRIES].get(ref as StoreRef<object>);
   if (!state) {
     throw new Error('Store not created in this registry');
   }
   return state as T;
-}
+};

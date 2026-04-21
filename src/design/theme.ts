@@ -36,7 +36,7 @@ let assigned = false;
  * are derived from the neutral/neutralAlpha scales. Surface and overlay
  * are constants.
  */
-export function setThemeColors(config: ThemeColorConfig): void {
+export const setThemeColors = (config: ThemeColorConfig): void => {
   if (assigned) {
     throw new Error(
       'setThemeColors() has already been called. Theme colors can only be set once.',
@@ -70,4 +70,4 @@ export function setThemeColors(config: ThemeColorConfig): void {
       ),
     },
   });
-}
+};

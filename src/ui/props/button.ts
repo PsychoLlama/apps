@@ -22,13 +22,13 @@ export const buttonStyleDefaults = {
   color: 'accent' as const,
 } satisfies Required<ButtonStyleProps>;
 
-export function resolveButtonStyleClasses(
+export const resolveButtonStyleClasses = (
   size: ButtonSize,
   variant: ButtonVariant,
   color: ButtonColor,
-): string[] {
+): string[] => {
   return [css.base, css.size[size], css.variantColor[variant][color]];
-}
+};
 
 export const buttonStyleArgTypes: ArgTypes<ButtonStyleProps> = {
   size: {

@@ -36,7 +36,7 @@ class FakeStream {
   }
 }
 
-function setup() {
+const setup = () => {
   const bindings = createTestBindings();
   return {
     ...bindings,
@@ -44,9 +44,9 @@ function setup() {
     timer: bindings.createStore(timerStore),
     library: bindings.createStore(libraryStore),
   };
-}
+};
 
-function makeResult(tracks: Track[] = []): RecordingResult {
+const makeResult = (tracks: Track[] = []): RecordingResult => {
   return {
     tracks,
     streams: Object.fromEntries(
@@ -58,7 +58,7 @@ function makeResult(tracks: Track[] = []): RecordingResult {
     recorder: new FakeRecorder() as unknown as MediaRecorder,
     chunks: [],
   };
-}
+};
 
 describe('beginRecording', () => {
   it('transitions to recording and resets the timer', () => {

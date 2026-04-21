@@ -38,11 +38,11 @@ export const boxPropKeys = [
 ] as const;
 
 /** Resolve surface/spacing props to CSS class names. */
-export function resolveBoxClasses(
+export const resolveBoxClasses = (
   box: PaddingProps &
     MarginProps &
     Pick<BoxBaseProps, 'background' | 'radius' | 'shadow'>,
-): (string | false | undefined)[] {
+): (string | false | undefined)[] => {
   return [
     ...resolvePaddingClasses(box),
     ...resolveMarginClasses(box),
@@ -50,7 +50,7 @@ export function resolveBoxClasses(
     box.radius && css.radiusVariants[box.radius],
     box.shadow && css.shadowVariants[box.shadow],
   ];
-}
+};
 
 export const boxArgTypes: ArgTypes<BoxBaseProps> = {
   ...paddingArgTypes,

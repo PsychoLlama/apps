@@ -95,7 +95,7 @@ const toError = (error: unknown): Error =>
  * `onStart` runs before the callback; `onSuccess` or `onFailure` runs
  * after. Errors re-throw when no `onFailure` is declared.
  */
-export function perform<
+export const perform = <
   Stores extends readonly StoreRef<object>[],
   Input,
   Output,
@@ -103,7 +103,7 @@ export function perform<
   registry: Registry,
   effect: Effect<Stores, Input, Output>,
   input: Input,
-): PerformReturn<Output> {
+): PerformReturn<Output> => {
   const [stores, fn, onStart, onSuccess, onFailure] = effect;
 
   if (onStart) invoke(registry, onStart as unknown as LooseAction, input);
@@ -140,4 +140,4 @@ export function perform<
 
   succeed(result as Awaited<Output>);
   return undefined as PerformReturn<Output>;
-}
+};

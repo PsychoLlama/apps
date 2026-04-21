@@ -75,22 +75,22 @@ const colorScales = {
   neutral: { solid: neutral, alpha: neutralAlpha },
 } as const;
 
-function colorStyle(color: ColorName, highContrast: boolean) {
+const colorStyle = (color: ColorName, highContrast: boolean) => {
   const { solid, alpha } = colorScales[color];
   return style({
     color: highContrast ? solid[12] : solid[11],
     textDecorationColor: highContrast ? alpha[6] : alpha[5],
   });
-}
+};
 
-function buildContrast(
+const buildContrast = (
   fn: (color: ColorName, highContrast: boolean) => string,
-) {
+) => {
   return {
     accent: { normal: fn('accent', false), high: fn('accent', true) },
     neutral: { normal: fn('neutral', false), high: fn('neutral', true) },
   };
-}
+};
 
 export const color = buildContrast(colorStyle);
 

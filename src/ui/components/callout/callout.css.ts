@@ -51,39 +51,39 @@ const colors = {
 } as const;
 type ColorName = keyof typeof colors;
 
-function softStyle(color: ColorName, highContrast: boolean) {
+const softStyle = (color: ColorName, highContrast: boolean) => {
   const { alpha, solid } = colors[color];
   return style({
     backgroundColor: alpha[3],
     color: highContrast ? solid[12] : alpha[11],
   });
-}
+};
 
-function surfaceStyle(color: ColorName, highContrast: boolean) {
+const surfaceStyle = (color: ColorName, highContrast: boolean) => {
   const { alpha, solid } = colors[color];
   return style({
     backgroundColor: alpha[2],
     boxShadow: `inset 0 0 0 1px ${alpha[6]}`,
     color: highContrast ? solid[12] : alpha[11],
   });
-}
+};
 
-function outlineStyle(color: ColorName, highContrast: boolean) {
+const outlineStyle = (color: ColorName, highContrast: boolean) => {
   const { alpha, solid } = colors[color];
   return style({
     boxShadow: `inset 0 0 0 1px ${alpha[7]}`,
     color: highContrast ? solid[12] : alpha[11],
   });
-}
+};
 
-function buildContrast(
+const buildContrast = (
   fn: (color: ColorName, highContrast: boolean) => string,
-) {
+) => {
   return {
     accent: { normal: fn('accent', false), high: fn('accent', true) },
     neutral: { normal: fn('neutral', false), high: fn('neutral', true) },
   };
-}
+};
 
 export const variantColor = {
   soft: buildContrast(softStyle),

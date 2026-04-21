@@ -36,11 +36,11 @@ export const redundantZeroProperties = new Set([
 
 const ZERO_RE = /^0(px|rem|em|%)?$/;
 
-export function isZeroValue(value: unknown): boolean {
+export const isZeroValue = (value: unknown): boolean => {
   if (value === 0) return true;
   if (typeof value === 'string') return ZERO_RE.test(value);
   return false;
-}
+};
 
 export const redundantZeroMessage =
   '{{property}}: 0 is unnecessary — the global CSS reset (all: unset) already removes this default.';

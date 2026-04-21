@@ -27,9 +27,9 @@ export const flexPropKeys = [
   'grow',
 ] as const;
 
-export function resolveFlexClasses(
+export const resolveFlexClasses = (
   flex: FlexProps,
-): (string | false | undefined)[] {
+): (string | false | undefined)[] => {
   return [
     css.base,
     flex.direction && css.direction[flex.direction],
@@ -39,7 +39,7 @@ export function resolveFlexClasses(
     flex.gap && css.gap[flex.gap],
     flex.grow && css.grow,
   ];
-}
+};
 
 export const flexArgTypes: ArgTypes<FlexProps> = {
   direction: {

@@ -21,15 +21,15 @@ export interface PaddingProps {
 
 export const paddingPropKeys = ['p', 'px', 'py'] as const;
 
-export function resolvePaddingClasses(
+export const resolvePaddingClasses = (
   padding: PaddingProps,
-): (string | false | undefined)[] {
+): (string | false | undefined)[] => {
   return [
     padding.p && css.padding[padding.p],
     padding.px && css.paddingX[padding.px],
     padding.py && css.paddingY[padding.py],
   ];
-}
+};
 
 export const paddingArgTypes: ArgTypes<PaddingProps> = {
   p: spaceArgType,

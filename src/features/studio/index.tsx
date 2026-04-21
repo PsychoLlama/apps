@@ -25,10 +25,10 @@ import type { Recording } from './library/types';
 import { formatDuration, formatElapsed } from './format';
 import * as css from './studio.css';
 
-function LibraryPanel(props: {
+const LibraryPanel = (props: {
   recordings: ReadonlyArray<Recording>;
   onDelete: (recording: Recording) => void;
-}) {
+}) => {
   return (
     <Flex as="aside" direction="column" class={css.panel}>
       <Flex
@@ -126,12 +126,12 @@ function LibraryPanel(props: {
       </Flex>
     </Flex>
   );
-}
+};
 
-function ActiveTracks(props: {
+const ActiveTracks = (props: {
   tracks: ReadonlyArray<Track>;
   onRemove: (trackId: string) => void;
-}) {
+}) => {
   return (
     <Flex as="div" direction="column" gap={3}>
       <Text
@@ -175,9 +175,9 @@ function ActiveTracks(props: {
       </Flex>
     </Flex>
   );
-}
+};
 
-function IdleState(props: { onStart: () => void }) {
+const IdleState = (props: { onStart: () => void }) => {
   return (
     <Flex
       as="div"
@@ -194,16 +194,16 @@ function IdleState(props: { onStart: () => void }) {
       </Text>
     </Flex>
   );
-}
+};
 
-function RecordingState(props: {
+const RecordingState = (props: {
   elapsed: number;
   tracks: ReadonlyArray<Track>;
   onPause: () => void;
   onStop: () => void;
   onAddTrack: () => void;
   onRemoveTrack: (trackId: string) => void;
-}) {
+}) => {
   return (
     <Flex
       as="div"
@@ -250,16 +250,16 @@ function RecordingState(props: {
       </Flex>
     </Flex>
   );
-}
+};
 
-function PausedState(props: {
+const PausedState = (props: {
   elapsed: number;
   tracks: ReadonlyArray<Track>;
   onResume: () => void;
   onStop: () => void;
   onAddTrack: () => void;
   onRemoveTrack: (trackId: string) => void;
-}) {
+}) => {
   return (
     <Flex
       as="div"
@@ -301,9 +301,9 @@ function PausedState(props: {
       </Flex>
     </Flex>
   );
-}
+};
 
-function StoppingState(props: { elapsed: number }) {
+const StoppingState = (props: { elapsed: number }) => {
   return (
     <Flex
       as="div"
@@ -320,9 +320,9 @@ function StoppingState(props: { elapsed: number }) {
       </Text>
     </Flex>
   );
-}
+};
 
-function ErrorState(props: { error: string | null; onRetry: () => void }) {
+const ErrorState = (props: { error: string | null; onRetry: () => void }) => {
   return (
     <Flex
       as="div"
@@ -345,9 +345,9 @@ function ErrorState(props: { error: string | null; onRetry: () => void }) {
       </Text>
     </Flex>
   );
-}
+};
 
-function UnsupportedState() {
+const UnsupportedState = () => {
   return (
     <Flex
       as="div"
@@ -372,7 +372,7 @@ function UnsupportedState() {
       </Text>
     </Flex>
   );
-}
+};
 
 export default function Studio() {
   const startRecording = useEffect(startRecordingEffect);
@@ -385,9 +385,9 @@ export default function Studio() {
   const deleteRecording = useEffect(deleteRecordingEffect);
   const publishTick = useAction(tick);
 
-  function handleStart() {
+  const handleStart = () => {
     void startRecording(() => void stopRecording());
-  }
+  };
 
   onMount(() => {
     checkSupport();

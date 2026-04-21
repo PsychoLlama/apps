@@ -8,11 +8,11 @@ export interface SelectableProps {
 
 export const selectablePropKeys = ['selectable'] as const;
 
-export function resolveSelectableClass({
+export const resolveSelectableClass = ({
   selectable,
-}: SelectableProps): string | false | undefined {
+}: SelectableProps): string | false | undefined => {
   return selectable && css.selectable;
-}
+};
 
 export const selectableArgTypes: ArgTypes<SelectableProps> = {
   selectable: {

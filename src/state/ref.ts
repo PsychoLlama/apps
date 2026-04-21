@@ -15,6 +15,6 @@ export class Ref<T> {
 }
 
 /** Wrap a value in a {@link Ref}. */
-export function ref<T>(value: T): Ref<T> {
+export const ref = <T>(value: T): Ref<T> => {
   return new Ref(value);
-}
+};

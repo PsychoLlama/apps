@@ -11,17 +11,17 @@ import { deleteRecordingEffect } from '../library/bindings';
 import type { Recording } from '../library/types';
 import * as css from './playback.css';
 
-function secondsToDuration(totalSeconds: number) {
+const secondsToDuration = (totalSeconds: number) => {
   return {
     hours: Math.floor(totalSeconds / 3600),
     minutes: Math.floor((totalSeconds % 3600) / 60),
     seconds: totalSeconds % 60,
   };
-}
+};
 
 const durationFormat = new Intl.DurationFormat('en', { style: 'digital' });
 
-function NotFound() {
+const NotFound = () => {
   return (
     <Flex
       as="div"
@@ -44,9 +44,9 @@ function NotFound() {
       </Flex>
     </Flex>
   );
-}
+};
 
-function Player(props: { recording: Recording; onDelete: () => void }) {
+const Player = (props: { recording: Recording; onDelete: () => void }) => {
   return (
     <Flex as="main" direction="column" align="center" grow class={css.main}>
       <Flex as="div" class={css.metaRow}>
@@ -92,7 +92,7 @@ function Player(props: { recording: Recording; onDelete: () => void }) {
       </Flex>
     </Flex>
   );
-}
+};
 
 export default function Playback() {
   const params = useParams<{ id: string }>();
@@ -102,12 +102,12 @@ export default function Playback() {
   const recording = () =>
     library.recordings.find((entry) => entry.id === params.id);
 
-  function handleDelete() {
+  const handleDelete = () => {
     const rec = recording();
     if (!rec) return;
     deleteRecording({ id: rec.id, url: rec.url });
     navigate('/studio');
-  }
+  };
 
   return (
     <Flex as="div" direction="column" class={css.shell}>

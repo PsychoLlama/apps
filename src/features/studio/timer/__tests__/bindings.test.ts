@@ -8,10 +8,10 @@ import {
 } from '../bindings';
 import { timerStore } from '../store';
 
-function setup() {
+const setup = () => {
   const bindings = createTestBindings();
   return { ...bindings, state: bindings.createStore(timerStore) };
-}
+};
 
 describe('timerStore', () => {
   it('initializes as stopped with zero elapsed', () => {

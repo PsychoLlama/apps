@@ -22,10 +22,12 @@ const preferredMimeType = (): string =>
     ? 'video/webm;codecs=vp9'
     : 'video/webm';
 
-function createRecorder(streams: Record<string, MediaStream>): {
+const createRecorder = (
+  streams: Record<string, MediaStream>,
+): {
   recorder: MediaRecorder;
   chunks: Blob[];
-} {
+} => {
   const combined = new MediaStream();
   for (const stream of Object.values(streams)) {
     for (const track of stream.getTracks()) {
@@ -43,16 +45,16 @@ function createRecorder(streams: Record<string, MediaStream>): {
   recorder.start(1000);
 
   return { recorder, chunks };
-}
+};
 
 /**
  * Start screen capture and build a recorder. Arms an `ended` listener on
  * the primary video track so the caller can react to the user clicking
  * the browser's "Stop sharing" affordance.
  */
-export async function startRecording(
+export const startRecording = async (
   onStreamEnded: () => void,
-): Promise<RecordingResult> {
+): Promise<RecordingResult> => {
   const stream = await navigator.mediaDevices.getDisplayMedia({
     video: true,
     audio: true,
@@ -80,17 +82,17 @@ export async function startRecording(
   }
 
   return { tracks, streams, recorder, chunks };
-}
+};
 
 /**
  * Drain the active recorder into a Blob, release every stream, and
  * produce a blob URL. Pulls recorder/chunks/streams and elapsed directly
  * off the state views handed in by the effect.
  */
-export async function stopRecording(
+export const stopRecording = async (
   session: DeepReadonly<SessionState>,
   timer: DeepReadonly<TimerState>,
-): Promise<FinalizedRecording> {
+): Promise<FinalizedRecording> => {
   const { recorder, chunks, streams } = session;
   if (!recorder || !chunks) throw new Error('No active recorder');
 
@@ -115,23 +117,23 @@ export async function stopRecording(
     stoppedAt: Date.now(),
     url: URL.createObjectURL(blob),
   };
-}
+};
 
 /** Pause the active recorder. No-op when none is running. */
-export function pauseRecording(session: DeepReadonly<SessionState>): void {
+export const pauseRecording = (session: DeepReadonly<SessionState>): void => {
   session.recorder?.pause();
-}
+};
 
 /** Resume the active recorder. No-op when none is running. */
-export function resumeRecording(session: DeepReadonly<SessionState>): void {
+export const resumeRecording = (session: DeepReadonly<SessionState>): void => {
   session.recorder?.resume();
-}
+};
 
 /** Capture a new microphone track. */
-export async function captureTrack(): Promise<{
+export const captureTrack = async (): Promise<{
   track: Track;
   stream: MediaStream;
-}> {
+}> => {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const mediaTrack = stream.getTracks()[0];
   const id = crypto.randomUUID();
@@ -140,13 +142,13 @@ export async function captureTrack(): Promise<{
     track: { id, type: 'microphone', label, live: true },
     stream,
   };
-}
+};
 
 /** Stop a track's stream and return the id for lifecycle chaining. */
-export function stopTrackStream(
+export const stopTrackStream = (
   session: DeepReadonly<SessionState>,
   trackId: string,
-): string {
+): string => {
   const stream = session.streams[trackId];
   if (stream) {
     for (const track of stream.getTracks()) {
@@ -154,13 +156,13 @@ export function stopTrackStream(
     }
   }
   return trackId;
-}
+};
 
 /** Probe whether the browser supports screen capture. */
-export function checkSupport(): boolean {
+export const checkSupport = (): boolean => {
   return (
     typeof navigator !== 'undefined' &&
     'mediaDevices' in navigator &&
     'getDisplayMedia' in navigator.mediaDevices
   );
-}
+};

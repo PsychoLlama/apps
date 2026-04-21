@@ -14,15 +14,15 @@ export interface MarginProps {
 
 export const marginPropKeys = ['m', 'mx', 'my'] as const;
 
-export function resolveMarginClasses(
+export const resolveMarginClasses = (
   margin: MarginProps,
-): (string | false | undefined)[] {
+): (string | false | undefined)[] => {
   return [
     margin.m && css.margin[margin.m],
     margin.mx && css.marginX[margin.mx],
     margin.my && css.marginY[margin.my],
   ];
-}
+};
 
 export const marginArgTypes: ArgTypes<MarginProps> = {
   m: spaceArgType,

@@ -60,6 +60,7 @@ export default [
       'solid/no-array-handlers': 'error',
       'no-console': 'error',
       eqeqeq: 'error',
+      'func-style': ['error', 'expression'],
       'id-length': ['error', { min: 2, properties: 'never' }],
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-deprecated': 'error',

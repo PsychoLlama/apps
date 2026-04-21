@@ -52,6 +52,14 @@ assignColorSchemeVars(
 
 const sizes = [1, 2, 3, 4] as const;
 
+const typeScaleProps = (step: 1 | 2 | 3 | 4) => {
+  return {
+    fontSize: typeScale[step].fontSize,
+    lineHeight: typeScale[step].lineHeight,
+    letterSpacing: typeScale[step].letterSpacing,
+  };
+};
+
 const sizeMap = {
   1: {
     ...typeScaleProps(1),
@@ -94,20 +102,12 @@ export const size = styleVariants(
   >,
 );
 
-function typeScaleProps(step: 1 | 2 | 3 | 4) {
-  return {
-    fontSize: typeScale[step].fontSize,
-    lineHeight: typeScale[step].lineHeight,
-    letterSpacing: typeScale[step].letterSpacing,
-  };
-}
-
 // --- Variant x Color matrix ---
 
 const colorScales = { accent, neutral, danger } as const;
 type ColorName = keyof typeof colorScales;
 
-function solidStyle(color: ColorName) {
+const solidStyle = (color: ColorName) => {
   const scale = colorScales[color];
   const textColor = color === 'neutral' ? background.page : white[12];
 
@@ -130,9 +130,9 @@ function solidStyle(color: ColorName) {
       },
     },
   });
-}
+};
 
-function softStyle(color: ColorName) {
+const softStyle = (color: ColorName) => {
   const scale = colorScales[color];
 
   return style({
@@ -153,9 +153,9 @@ function softStyle(color: ColorName) {
       },
     },
   });
-}
+};
 
-function outlineStyle(color: ColorName) {
+const outlineStyle = (color: ColorName) => {
   const scale = colorScales[color];
 
   return style({
@@ -178,9 +178,9 @@ function outlineStyle(color: ColorName) {
       },
     },
   });
-}
+};
 
-function ghostStyle(color: ColorName) {
+const ghostStyle = (color: ColorName) => {
   const scale = colorScales[color];
 
   return style({
@@ -201,7 +201,7 @@ function ghostStyle(color: ColorName) {
       },
     },
   });
-}
+};
 
 export const variantColor = {
   solid: {

@@ -33,11 +33,11 @@ const markFailed = defineAction([sessionStore], (session, error: Error) => {
   session.error = error.message;
 });
 
-function bootstrap() {
+const bootstrap = () => {
   const bindings = createTestBindings();
   const session = bindings.createStore(sessionStore);
   return { ...bindings, session };
-}
+};
 
 describe('defineEffect / useEffect', () => {
   it('calls onStart before running the effect', () => {

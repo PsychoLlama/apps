@@ -42,7 +42,7 @@ export interface RegistryBindings {
  * per case via {@link createTestBindings}; app code uses the module-level
  * exports bound to the global registry.
  */
-export function bindRegistry(registry: Registry): RegistryBindings {
+export const bindRegistry = (registry: Registry): RegistryBindings => {
   return {
     createStore<T extends object>(ref: StoreRef<T>): DeepReadonly<T> {
       return createStoreInternal(registry, ref);
@@ -78,16 +78,16 @@ export function bindRegistry(registry: Registry): RegistryBindings {
       return perform(registry, effect, (args as [I?])[0] as I);
     },
   };
-}
+};
 
 /**
  * Build bindings against a fresh isolated registry. One call per test
  * keeps state from leaking across cases and removes the
  * `bindRegistry(createRegistry())` boilerplate.
  */
-export function createTestBindings(): RegistryBindings {
+export const createTestBindings = (): RegistryBindings => {
   return bindRegistry(createRegistry());
-}
+};
 
 /** Helpers bound to the global registry. */
 export const { createStore, destroyStore, useStore, useAction, useEffect } =

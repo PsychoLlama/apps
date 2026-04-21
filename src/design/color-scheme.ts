@@ -55,10 +55,10 @@ const darkMedia = '(prefers-color-scheme: dark)';
  * color values should use `light-dark()` instead, which handles theme
  * switching natively without var duplication.
  */
-export function assignColorSchemeVars(
+export const assignColorSchemeVars = (
   light: GlobalStyleRule['vars'],
   dark: GlobalStyleRule['vars'],
-): void {
+): void => {
   globalStyle(systemSelector, {
     '@media': {
       [lightMedia]: { vars: light },
@@ -68,7 +68,7 @@ export function assignColorSchemeVars(
 
   globalStyle(darkSelector, { vars: dark });
   globalStyle(lightSelector, { vars: light });
-}
+};
 
 /** CSS `light-dark(...)` shorthand. */
 export const lightDark = (light: string, dark: string): string =>
@@ -90,16 +90,16 @@ export type ColorContract = Record<keyof ColorScale, string>;
  * contracts by matching on the scale key (1-12) rather than
  * requiring structurally identical VE contracts.
  */
-export function aliasVars(
+export const aliasVars = (
   contract: ColorContract,
   source: ColorContract,
-): Record<string, string> {
+): Record<string, string> => {
   const vars: Record<string, string> = {};
   colorScaleIds.forEach((id) => {
     vars[contract[id]] = source[id];
   });
   return vars;
-}
+};
 
 /**
  * Register a color palette as CSS custom properties on `:root`.
@@ -114,10 +114,10 @@ export function aliasVars(
  * export const blueAlpha = createPalette(blueLightAlpha, blueDarkAlpha);
  * ```
  */
-export function createPalette(
+export const createPalette = (
   light: ColorScale,
   dark: ColorScale,
-): ColorContract {
+): ColorContract => {
   const contract = createThemeContract(colorScaleShape);
   const values = structuredClone(colorScaleShape);
 
@@ -128,4 +128,4 @@ export function createPalette(
   globalStyle(':root', { vars: assignVars(contract, values) });
 
   return contract as ColorContract;
-}
+};
