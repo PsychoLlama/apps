@@ -137,31 +137,33 @@ export const startRecordingEffect = defineEffect([], startRecording, {
 export const stopRecordingEffect = defineEffect(
   [sessionStore, timerStore],
   stopRecording,
-  { onStart: beginStop, onSuccess: finalizeRecording },
+  { onStart: beginStop, onSuccess: finalizeRecording, onFailure: markError },
 );
 
 /** Pause the recorder and freeze the timer. */
 export const pauseRecordingEffect = defineEffect(
   [sessionStore],
   pauseRecording,
-  { onStart: beginPause },
+  { onStart: beginPause, onFailure: markError },
 );
 
 /** Resume the recorder without resetting elapsed. */
 export const resumeRecordingEffect = defineEffect(
   [sessionStore],
   resumeRecording,
-  { onStart: beginResume },
+  { onStart: beginResume, onFailure: markError },
 );
 
 /** Capture a new track mid-session and append it to state. */
 export const addTrackEffect = defineEffect([sessionStore], captureTrack, {
   onSuccess: appendTrack,
+  onFailure: markError,
 });
 
 /** Stop a track's stream and drop it from state. */
 export const removeTrackEffect = defineEffect([sessionStore], stopTrackStream, {
   onSuccess: removeTrackFromState,
+  onFailure: markError,
 });
 
 /** Probe screen-capture support once and mark the session unsupported if missing. */
