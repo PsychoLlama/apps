@@ -1,4 +1,4 @@
-import { defineAction, defineEffect, type Ref } from '#state';
+import { defineAction, defineEffect, ref, type Ref } from '#state';
 import { libraryStore } from '../library/store';
 import { timerStore } from '../timer/store';
 import {
@@ -10,7 +10,7 @@ import {
   stopRecording,
   stopTrackStream,
   type FinalizedRecording,
-  type RecordingContext,
+  type RecordingResult,
 } from './capabilities';
 import { session, sessionStore } from './store';
 import type { Track } from './types';
@@ -19,14 +19,11 @@ import type { Track } from './types';
 // TS can't infer the `Stores` tuple when `defineAction` is called as an
 // argument to `defineEffect`, so each action is a named const referenced
 // by the effect below. Exported so action-level tests can exercise state
-// transitions directly without routing through the effect's impure
-// callback (which often closes over the module-level `session` view on
-// GLOBAL_REGISTRY and fails against a per-test registry).
+// transitions directly.
 
 export const beginRecording = defineAction(
   [sessionStore, timerStore],
-  (s, t, input: unknown) => {
-    void input;
+  (s, t, _: unknown) => {
     s.status = 'recording';
     s.error = null;
     t.running = true;
@@ -36,11 +33,13 @@ export const beginRecording = defineAction(
 
 export const setRecordingContext = defineAction(
   [sessionStore],
-  (s, context: RecordingContext) => {
-    s.tracks = context.tracks;
-    s.streams = context.streams;
-    s.recorder = context.recorder;
-    s.chunks = context.chunks;
+  (s, result: RecordingResult) => {
+    s.tracks = result.tracks;
+    s.streams = Object.fromEntries(
+      Object.entries(result.streams).map(([id, stream]) => [id, ref(stream)]),
+    );
+    s.recorder = ref(result.recorder);
+    s.chunks = ref(result.chunks);
   },
 );
 
@@ -51,8 +50,7 @@ export const markError = defineAction([sessionStore], (s, error: Error) => {
 
 export const beginStop = defineAction(
   [sessionStore, timerStore],
-  (s, t, input: unknown) => {
-    void input;
+  (s, t, _: unknown) => {
     s.status = 'idle';
     s.tracks = [];
     s.error = null;
@@ -88,9 +86,9 @@ export const beginResume = defineAction([sessionStore, timerStore], (s, t) => {
 
 export const appendTrack = defineAction(
   [sessionStore],
-  (s, input: { track: Track; streamRef: Ref<MediaStream> }) => {
+  (s, input: { track: Track; stream: MediaStream }) => {
     s.tracks.push(input.track);
-    s.streams[input.track.id] = input.streamRef;
+    s.streams[input.track.id] = ref(input.stream);
   },
 );
 
@@ -112,6 +110,17 @@ export const markUnsupportedIf = defineAction(
 
 // --- Effects ---
 
+function unwrapStreams(
+  streams: Record<string, unknown>,
+): Record<string, MediaStream> {
+  return Object.fromEntries(
+    Object.entries(streams).map(([id, r]) => [
+      id,
+      (r as Ref<MediaStream>).current,
+    ]),
+  );
+}
+
 /** Start screen capture and wire the session + timer into recording state. */
 export const startRecordingEffect = defineEffect(startRecording, {
   onStart: beginRecording,
@@ -122,16 +131,14 @@ export const startRecordingEffect = defineEffect(startRecording, {
 /** Stop the active recording. Success appends to library and clears refs. */
 export const stopRecordingEffect = defineEffect(
   async (elapsed: number): Promise<FinalizedRecording> => {
-    // Cast through DeepReadonly: `Ref<MediaRecorder>` holds a live host
-    // object, and the capability needs to mutate `onstop` and splice the
-    // chunks buffer.
+    // Cast through DeepReadonly — Ref holds live host objects.
     const recorder = session.recorder?.current as MediaRecorder | undefined;
     const chunks = session.chunks?.current as Blob[] | undefined;
     if (!recorder || !chunks) throw new Error('No active recorder');
     return stopRecording(
       recorder,
       chunks,
-      session.streams as Record<string, Ref<MediaStream>>,
+      unwrapStreams(session.streams),
       elapsed,
     );
   },
@@ -161,8 +168,9 @@ export const addTrackEffect = defineEffect(captureTrack, {
 /** Stop a track's stream and drop it from state. */
 export const removeTrackEffect = defineEffect(
   (trackId: string): string => {
-    const streamRef = session.streams[trackId] as Ref<MediaStream> | undefined;
-    return stopTrackStream(streamRef, trackId);
+    const stream = (session.streams[trackId] as Ref<MediaStream> | undefined)
+      ?.current;
+    return stopTrackStream(stream, trackId);
   },
   { onSuccess: removeTrackFromState },
 );

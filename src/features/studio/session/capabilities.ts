@@ -1,11 +1,10 @@
-import { ref, type Ref } from '#state';
 import type { Track } from './types';
 
-export interface RecordingContext {
+export interface RecordingResult {
   readonly tracks: Track[];
-  readonly streams: Record<string, Ref<MediaStream>>;
-  readonly recorder: Ref<MediaRecorder>;
-  readonly chunks: Ref<Blob[]>;
+  readonly streams: Record<string, MediaStream>;
+  readonly recorder: MediaRecorder;
+  readonly chunks: Blob[];
 }
 
 export interface FinalizedRecording {
@@ -20,13 +19,13 @@ const preferredMimeType = (): string =>
     ? 'video/webm;codecs=vp9'
     : 'video/webm';
 
-function createRecorder(streams: Record<string, Ref<MediaStream>>): {
-  recorder: Ref<MediaRecorder>;
-  chunks: Ref<Blob[]>;
+function createRecorder(streams: Record<string, MediaStream>): {
+  recorder: MediaRecorder;
+  chunks: Blob[];
 } {
   const combined = new MediaStream();
-  for (const streamRef of Object.values(streams)) {
-    for (const track of streamRef.current.getTracks()) {
+  for (const stream of Object.values(streams)) {
+    for (const track of stream.getTracks()) {
       combined.addTrack(track);
     }
   }
@@ -40,7 +39,7 @@ function createRecorder(streams: Record<string, Ref<MediaStream>>): {
   };
   recorder.start(1000);
 
-  return { recorder: ref(recorder), chunks: ref(chunks) };
+  return { recorder, chunks };
 }
 
 /**
@@ -50,21 +49,21 @@ function createRecorder(streams: Record<string, Ref<MediaStream>>): {
  */
 export async function startRecording(
   onStreamEnded: () => void,
-): Promise<RecordingContext> {
+): Promise<RecordingResult> {
   const stream = await navigator.mediaDevices.getDisplayMedia({
     video: true,
     audio: true,
   });
 
   const tracks: Track[] = [];
-  const streams: Record<string, Ref<MediaStream>> = {};
+  const streams: Record<string, MediaStream> = {};
 
   for (const mediaTrack of stream.getTracks()) {
     const id = crypto.randomUUID();
     const type = mediaTrack.kind === 'video' ? 'screen' : 'system-audio';
     const label =
       mediaTrack.label || (type === 'screen' ? 'Screen' : 'System Audio');
-    streams[id] = ref(new MediaStream([mediaTrack]));
+    streams[id] = new MediaStream([mediaTrack]);
     tracks.push({ id, type, label, live: true });
   }
 
@@ -72,7 +71,7 @@ export async function startRecording(
 
   const videoTrack = tracks.find((t) => t.type === 'screen');
   if (videoTrack) {
-    streams[videoTrack.id].current
+    streams[videoTrack.id]
       .getVideoTracks()[0]
       ?.addEventListener('ended', onStreamEnded, { once: true });
   }
@@ -84,7 +83,7 @@ export async function startRecording(
 export async function stopRecording(
   recorder: MediaRecorder,
   chunks: Blob[],
-  streams: Record<string, Ref<MediaStream>>,
+  streams: Record<string, MediaStream>,
   elapsed: number,
 ): Promise<FinalizedRecording> {
   const blob = await new Promise<Blob>((resolve) => {
@@ -94,8 +93,8 @@ export async function stopRecording(
     recorder.stop();
   });
 
-  for (const streamRef of Object.values(streams)) {
-    for (const track of streamRef.current.getTracks()) {
+  for (const stream of Object.values(streams)) {
+    for (const track of stream.getTracks()) {
       track.stop();
     }
   }
@@ -121,7 +120,7 @@ export function resumeRecording(recorder: MediaRecorder | undefined): void {
 /** Capture an additional media track (microphone or tab audio). */
 export async function captureTrack(
   type: 'microphone' | 'tab',
-): Promise<{ track: Track; streamRef: Ref<MediaStream> }> {
+): Promise<{ track: Track; stream: MediaStream }> {
   const stream =
     type === 'microphone'
       ? await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -137,17 +136,17 @@ export async function captureTrack(
 
   return {
     track: { id, type, label, live: true },
-    streamRef: ref(stream),
+    stream,
   };
 }
 
 /** Stop all tracks on a stream. Returns the id for lifecycle chaining. */
 export function stopTrackStream(
-  streamRef: Ref<MediaStream> | undefined,
+  stream: MediaStream | undefined,
   trackId: string,
 ): string {
-  if (streamRef) {
-    for (const track of streamRef.current.getTracks()) {
+  if (stream) {
+    for (const track of stream.getTracks()) {
       track.stop();
     }
   }

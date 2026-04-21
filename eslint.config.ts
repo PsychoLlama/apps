@@ -62,6 +62,10 @@ export default [
       eqeqeq: 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-deprecated': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       'custom/no-static-style-prop': 'error',
       'custom/require-selectable-prop': 'error',
       'custom/require-ui-primitives': 'error',

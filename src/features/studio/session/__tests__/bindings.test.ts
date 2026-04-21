@@ -1,9 +1,9 @@
 import { vi } from 'vitest';
-import { bindRegistry, createRegistry, createStore, ref } from '#state';
+import { bindRegistry, createRegistry, createStore } from '#state';
 import { libraryStore } from '../../library/store';
 import { timerStore } from '../../timer/store';
 import * as capabilities from '../capabilities';
-import type { RecordingContext } from '../capabilities';
+import type { RecordingResult } from '../capabilities';
 import {
   addTrackEffect,
   appendTrack,
@@ -50,14 +50,12 @@ function setup() {
   };
 }
 
-function makeContext(tracks: Track[] = []): RecordingContext {
+function makeResult(tracks: Track[] = []): RecordingResult {
   return {
     tracks,
-    streams: Object.fromEntries(
-      tracks.map((t) => [t.id, ref({} as MediaStream)]),
-    ),
-    recorder: ref({} as MediaRecorder),
-    chunks: ref([] as Blob[]),
+    streams: Object.fromEntries(tracks.map((t) => [t.id, {} as MediaStream])),
+    recorder: {} as MediaRecorder,
+    chunks: [] as Blob[],
   };
 }
 
@@ -98,17 +96,18 @@ describe('actions', () => {
   });
 
   describe('setRecordingContext', () => {
-    it('populates tracks, streams, recorder, chunks', () => {
+    it('populates tracks and wraps recorder / chunks / streams in refs', () => {
       const { session, useAction } = setup();
-      const ctx = makeContext([
+      const result = makeResult([
         { id: '1', type: 'screen', label: 'Screen', live: true },
       ]);
 
-      useAction(setRecordingContext)(ctx);
+      useAction(setRecordingContext)(result);
 
-      expect(session.tracks).toEqual(ctx.tracks);
-      expect(session.recorder).toBe(ctx.recorder);
-      expect(session.chunks).toBe(ctx.chunks);
+      expect(session.tracks).toEqual(result.tracks);
+      expect(session.recorder?.current).toBe(result.recorder);
+      expect(session.chunks?.current).toBe(result.chunks);
+      expect(session.streams['1']?.current).toBe(result.streams['1']);
     });
   });
 
@@ -126,10 +125,10 @@ describe('actions', () => {
   describe('beginStop', () => {
     it('transitions to idle, clears tracks, stops timer — preserves refs', () => {
       const { session, timer, useAction } = setup();
-      const ctx = makeContext([
+      const result = makeResult([
         { id: '1', type: 'screen', label: 'Screen', live: true },
       ]);
-      useAction(setRecordingContext)(ctx);
+      useAction(setRecordingContext)(result);
       useAction(beginRecording)(undefined);
 
       useAction(beginStop)(undefined);
@@ -137,15 +136,15 @@ describe('actions', () => {
       expect(session.status).toBe('idle');
       expect(session.tracks).toEqual([]);
       expect(timer.running).toBe(false);
-      expect(session.recorder).toBe(ctx.recorder);
-      expect(session.chunks).toBe(ctx.chunks);
+      expect(session.recorder?.current).toBe(result.recorder);
+      expect(session.chunks?.current).toBe(result.chunks);
     });
   });
 
   describe('finalizeRecording', () => {
     it('clears refs and appends the recording to the library', () => {
       const { session, library, useAction } = setup();
-      useAction(setRecordingContext)(makeContext());
+      useAction(setRecordingContext)(makeResult());
 
       useAction(finalizeRecording)({
         id: 'rec-1',
@@ -195,9 +194,9 @@ describe('actions', () => {
   });
 
   describe('appendTrack', () => {
-    it('appends the track and stores its stream ref', () => {
+    it('appends the track and wraps the stream in a ref', () => {
       const { session, useAction } = setup();
-      const streamRef = ref({} as MediaStream);
+      const stream = {} as MediaStream;
       const track: Track = {
         id: '3',
         type: 'microphone',
@@ -205,10 +204,10 @@ describe('actions', () => {
         live: true,
       };
 
-      useAction(appendTrack)({ track, streamRef });
+      useAction(appendTrack)({ track, stream });
 
       expect(session.tracks).toEqual([track]);
-      expect(session.streams['3']).toBe(streamRef);
+      expect(session.streams['3']?.current).toBe(stream);
     });
   });
 
@@ -216,7 +215,7 @@ describe('actions', () => {
     it('removes the track and drops its stream ref', () => {
       const { session, useAction } = setup();
       useAction(setRecordingContext)(
-        makeContext([
+        makeResult([
           { id: '1', type: 'screen', label: 'Screen', live: true },
           { id: '2', type: 'microphone', label: 'Mic', live: true },
         ]),
@@ -232,7 +231,7 @@ describe('actions', () => {
     it('is a no-op on an unknown id', () => {
       const { session, useAction } = setup();
       useAction(setRecordingContext)(
-        makeContext([{ id: '1', type: 'screen', label: 'Screen', live: true }]),
+        makeResult([{ id: '1', type: 'screen', label: 'Screen', live: true }]),
       );
 
       useAction(removeTrackFromState)('nope');
@@ -278,16 +277,16 @@ describe('startRecordingEffect', () => {
   });
 
   it('onSuccess populates context', async () => {
-    const ctx = makeContext([
+    const result = makeResult([
       { id: '1', type: 'screen', label: 'Screen', live: true },
     ]);
-    vi.mocked(capabilities.startRecording).mockResolvedValue(ctx);
+    vi.mocked(capabilities.startRecording).mockResolvedValue(result);
     const { session, useEffect } = setup();
 
     await useEffect(startRecordingEffect)(() => undefined);
 
-    expect(session.tracks).toEqual(ctx.tracks);
-    expect(session.recorder).toBe(ctx.recorder);
+    expect(session.tracks).toEqual(result.tracks);
+    expect(session.recorder?.current).toBe(result.recorder);
   });
 
   it('onFailure surfaces the error', async () => {
@@ -305,23 +304,20 @@ describe('startRecordingEffect', () => {
 
 describe('addTrackEffect', () => {
   it('onSuccess appends the captured track', async () => {
-    const streamRef = ref({} as MediaStream);
+    const stream = {} as MediaStream;
     const track: Track = {
       id: '3',
       type: 'microphone',
       label: 'Mic',
       live: true,
     };
-    vi.mocked(capabilities.captureTrack).mockResolvedValue({
-      track,
-      streamRef,
-    });
+    vi.mocked(capabilities.captureTrack).mockResolvedValue({ track, stream });
     const { session, useEffect } = setup();
 
     await useEffect(addTrackEffect)('microphone');
 
     expect(session.tracks).toEqual([track]);
-    expect(session.streams['3']).toBe(streamRef);
+    expect(session.streams['3']?.current).toBe(stream);
   });
 });
 
