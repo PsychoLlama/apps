@@ -1,7 +1,6 @@
 import { batch } from 'solid-js';
-import { produce, type SetStoreFunction } from 'solid-js/store';
 import type { Registry } from './internal';
-import { getSetter, type StoreRef } from './store';
+import { getMutable, type StoreRef } from './store';
 
 type StateOf<R> = R extends StoreRef<infer T> ? T : never;
 
@@ -63,26 +62,12 @@ export function invoke<Stores extends readonly StoreRef<object>[], Input>(
 ): void {
   const [stores, handler] = action;
 
-  const setters: SetStoreFunction<object>[] = [];
+  const drafts: object[] = [];
   for (const ref of stores) {
-    setters.push(getSetter(registry, ref));
+    drafts.push(getMutable(registry, ref));
   }
 
-  const drafts: object[] = Array.from({ length: stores.length });
-
-  const run = (depth: number): void => {
-    if (depth === stores.length) {
-      (handler as (...args: unknown[]) => void)(...drafts, input);
-      return;
-    }
-
-    setters[depth](
-      produce((draft: object) => {
-        drafts[depth] = draft;
-        run(depth + 1);
-      }),
-    );
-  };
-
-  batch(() => run(0));
+  batch(() => {
+    (handler as (...args: unknown[]) => void)(...drafts, input);
+  });
 }

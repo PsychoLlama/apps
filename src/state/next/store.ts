@@ -1,7 +1,4 @@
-import {
-  createStore as solidCreateStore,
-  type SetStoreFunction,
-} from 'solid-js/store';
+import { createMutable } from 'solid-js/store';
 import { ENTRIES, INIT, type Registry, type StoreRef } from './internal';
 
 export type { StoreRef };
@@ -33,8 +30,8 @@ export function createStore<T extends object>(
   if (entries.has(key)) {
     throw new Error('Store already created in this registry');
   }
-  const [state, setState] = solidCreateStore<T>(ref[INIT]());
-  entries.set(key, setState as unknown as SetStoreFunction<object>);
+  const state = createMutable<T>(ref[INIT]());
+  entries.set(key, state);
   return state as DeepReadonly<T>;
 }
 
@@ -48,14 +45,14 @@ export function destroyStore<T extends object>(
   }
 }
 
-/** Internal: resolve a ref's setter. Throws if not created. */
-export function getSetter<T extends object>(
+/** Internal: resolve a ref's mutable state. Throws if not created. */
+export function getMutable<T extends object>(
   registry: Registry,
   ref: StoreRef<T>,
-): SetStoreFunction<T> {
-  const setter = registry[ENTRIES].get(ref as StoreRef<object>);
-  if (!setter) {
+): T {
+  const state = registry[ENTRIES].get(ref as StoreRef<object>);
+  if (!state) {
     throw new Error('Store not created in this registry');
   }
-  return setter as unknown as SetStoreFunction<T>;
+  return state as T;
 }

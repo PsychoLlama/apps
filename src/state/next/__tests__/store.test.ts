@@ -89,6 +89,55 @@ describe('createStore', () => {
     expect(values).toEqual([0]);
     dispose();
   });
+
+  it('tracks fields independently for fine-grained reactivity', () => {
+    interface Shape {
+      a: number;
+      b: number;
+    }
+    const store = defineStore<Shape>(() => ({ a: 0, b: 0 }));
+    const registry = createRegistry();
+    const state = createStore(registry, store);
+
+    let aRuns = 0;
+    let bRuns = 0;
+    const dispose = createRoot((dispose) => {
+      createEffect(() => {
+        void state.a;
+        aRuns += 1;
+      });
+      createEffect(() => {
+        void state.b;
+        bRuns += 1;
+      });
+      return dispose;
+    });
+
+    expect(aRuns).toBe(1);
+    expect(bRuns).toBe(1);
+
+    // Mutate `a` only — `b`'s effect should not rerun.
+    const writable = state as Shape;
+    writable.a = 5;
+    expect(aRuns).toBe(2);
+    expect(bRuns).toBe(1);
+
+    dispose();
+  });
+
+  it('is backed by a mutable proxy (convention, not runtime enforcement, routes writes through actions)', () => {
+    const registry = createRegistry();
+    const state = createStore(registry, counterStore);
+
+    // `createMutable` returns a directly-writable proxy. Mutations are
+    // expected to flow through `invoke` for auditability — `DeepReadonly`
+    // signals that at the type level — but nothing at runtime rejects a
+    // direct write. This test pins that behavior so we notice if the
+    // underlying primitive ever changes.
+    const writable = state as Counter;
+    writable.count = 42;
+    expect(state.count).toBe(42);
+  });
 });
 
 describe('destroyStore', () => {

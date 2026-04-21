@@ -56,6 +56,28 @@ describe('defineAction / invoke', () => {
     expect(log.entries).toEqual(['hi:1', 'again:2']);
   });
 
+  it('sees earlier writes in the same handler across stores', () => {
+    const registry = createRegistry();
+    const counter = createStore(registry, counterStore);
+    const log = createStore(registry, logStore);
+
+    // Writes to counter must be visible to subsequent reads in the same
+    // handler, including from a different store's logic.
+    const crossStore = defineAction(
+      [counterStore, logStore],
+      (c, l, amount: number) => {
+        c.count += amount;
+        l.entries.push(`counter=${c.count}`);
+        c.count += 1;
+        l.entries.push(`counter=${c.count}`);
+      },
+    );
+
+    invoke(registry, crossStore, 10);
+    expect(counter.count).toBe(11);
+    expect(log.entries).toEqual(['counter=10', 'counter=11']);
+  });
+
   it('batches multi-store updates into one reactive flush', () => {
     const registry = createRegistry();
     const counter = createStore(registry, counterStore);
