@@ -1,3 +1,6 @@
+import type { DeepReadonly } from '#state';
+import type { SessionState } from './store';
+import type { TimerState } from '../timer/store';
 import type { Track } from './types';
 
 export interface RecordingResult {
@@ -79,17 +82,24 @@ export async function startRecording(
   return { tracks, streams, recorder, chunks };
 }
 
-/** Drain the recorder into a Blob, release every stream, produce a blob URL. */
+/**
+ * Drain the active recorder into a Blob, release every stream, and
+ * produce a blob URL. Pulls recorder/chunks/streams and elapsed directly
+ * off the state views handed in by the effect.
+ */
 export async function stopRecording(
-  recorder: MediaRecorder,
-  chunks: Blob[],
-  streams: Record<string, MediaStream>,
-  elapsed: number,
+  session: DeepReadonly<SessionState>,
+  timer: DeepReadonly<TimerState>,
 ): Promise<FinalizedRecording> {
+  const { recorder, chunks, streams } = session;
+  if (!recorder || !chunks) throw new Error('No active recorder');
+
   const blob = await new Promise<Blob>((resolve) => {
-    recorder.onstop = () => {
-      resolve(new Blob([...chunks], { type: recorder.mimeType }));
-    };
+    recorder.addEventListener(
+      'stop',
+      () => resolve(new Blob([...chunks], { type: recorder.mimeType })),
+      { once: true },
+    );
     recorder.stop();
   });
 
@@ -101,50 +111,43 @@ export async function stopRecording(
 
   return {
     id: crypto.randomUUID(),
-    elapsed,
+    elapsed: timer.elapsed,
     stoppedAt: Date.now(),
     url: URL.createObjectURL(blob),
   };
 }
 
-/** Pause the recorder. No-op when missing. */
-export function pauseRecording(recorder: MediaRecorder | undefined): void {
-  recorder?.pause();
+/** Pause the active recorder. No-op when none is running. */
+export function pauseRecording(session: DeepReadonly<SessionState>): void {
+  session.recorder?.pause();
 }
 
-/** Resume the recorder. No-op when missing. */
-export function resumeRecording(recorder: MediaRecorder | undefined): void {
-  recorder?.resume();
+/** Resume the active recorder. No-op when none is running. */
+export function resumeRecording(session: DeepReadonly<SessionState>): void {
+  session.recorder?.resume();
 }
 
-/** Capture an additional media track (microphone or tab audio). */
-export async function captureTrack(
-  type: 'microphone' | 'tab',
-): Promise<{ track: Track; stream: MediaStream }> {
-  const stream =
-    type === 'microphone'
-      ? await navigator.mediaDevices.getUserMedia({ audio: true })
-      : await navigator.mediaDevices.getDisplayMedia({
-          video: false,
-          audio: true,
-        });
-
+/** Capture a new microphone track. */
+export async function captureTrack(): Promise<{
+  track: Track;
+  stream: MediaStream;
+}> {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const mediaTrack = stream.getTracks()[0];
   const id = crypto.randomUUID();
-  const label =
-    mediaTrack.label || (type === 'microphone' ? 'Microphone' : 'Tab Audio');
-
+  const label = mediaTrack.label || 'Microphone';
   return {
-    track: { id, type, label, live: true },
+    track: { id, type: 'microphone', label, live: true },
     stream,
   };
 }
 
-/** Stop all tracks on a stream. Returns the id for lifecycle chaining. */
+/** Stop a track's stream and return the id for lifecycle chaining. */
 export function stopTrackStream(
-  stream: MediaStream | undefined,
+  session: DeepReadonly<SessionState>,
   trackId: string,
 ): string {
+  const stream = session.streams[trackId];
   if (stream) {
     for (const track of stream.getTracks()) {
       track.stop();

@@ -1,4 +1,4 @@
-import { bindRegistry, createRegistry } from '#state';
+import { createTestBindings } from '#state';
 import {
   pauseTimer,
   resumeTimer,
@@ -9,8 +9,8 @@ import {
 import { timerStore } from '../store';
 
 function setup() {
-  const bound = bindRegistry(createRegistry());
-  return { ...bound, state: bound.createStore(timerStore) };
+  const bindings = createTestBindings();
+  return { ...bindings, state: bindings.createStore(timerStore) };
 }
 
 describe('timerStore', () => {

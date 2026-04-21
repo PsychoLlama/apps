@@ -1,7 +1,6 @@
 import { defineAction } from '../action';
-import { bindRegistry } from '../bindings';
+import { createTestBindings } from '../bindings';
 import { defineEffect } from '../effect';
-import { createRegistry } from '../registry';
 import { defineStore } from '../store';
 
 // Compile-time assertions. The `@ts-expect-error` directives below fail
@@ -26,11 +25,11 @@ const withError = defineAction([counterStore], (counter, error: Error) => {
   counter.count += error.message.length;
 });
 
-const numberEffect = defineEffect((value: number) => value);
+const numberEffect = defineEffect([], (value: number) => value);
 
 // Expressions below are type-checked but never executed.
 const check = (): void => {
-  const { useAction, useEffect } = bindRegistry(createRegistry());
+  const { useAction, useEffect } = createTestBindings();
 
   // Call-site: no-input action accepts zero args, rejects extras.
   useAction(noInput)();
@@ -51,31 +50,51 @@ const check = (): void => {
 
   // Lifecycle slots: an action with Input = unknown reuses across any
   // effect (intended pattern, via contravariance on the phantom brand).
-  defineEffect((value: number) => value, { onStart: noInput });
-  defineEffect((value: string) => value, { onStart: noInput });
+  defineEffect([], (value: number) => value, { onStart: noInput });
+  defineEffect([], (value: string) => value, { onStart: noInput });
 
   // Lifecycle slots: a narrower Input can't accept a wider slot's input.
-  defineEffect((value: number) => value, {
-    // @ts-expect-error — onStart expects number; action accepts Error.
-    onStart: withError,
-  });
-  defineEffect((value: number) => value, {
-    // @ts-expect-error — onSuccess expects number; action accepts Error.
-    onSuccess: withError,
-  });
-  defineEffect((value: number) => value, {
-    // @ts-expect-error — onFailure expects Error; action accepts number.
-    onFailure: withNumber,
-  });
+  // @ts-expect-error — onStart expects number; action accepts Error.
+  defineEffect([], (value: number) => value, { onStart: withError });
+  // @ts-expect-error — onSuccess expects number; action accepts Error.
+  defineEffect([], (value: number) => value, { onSuccess: withError });
+  // @ts-expect-error — onFailure expects Error; action accepts number.
+  defineEffect([], (value: number) => value, { onFailure: withNumber });
 
   // Inline defineAction: Stores and draft types still flow through.
-  defineEffect((value: number) => value, {
+  defineEffect([], (value: number) => value, {
     onStart: defineAction([counterStore], (counter) => {
       // @ts-expect-error — `missing` is not on Counter.
       counter.missing = true;
       counter.count += 1;
     }),
   });
+
+  // Read deps: the callback receives readonly views per store.
+  defineEffect([counterStore], (counter) => {
+    // @ts-expect-error — readonly views reject mutation.
+    counter.count = 1;
+    return counter.count;
+  });
+
+  // No-input overload: a callback whose arity matches the store count
+  // stays zero-arg at the call site.
+  const zeroArgEffect = defineEffect(
+    [counterStore],
+    (counter) => counter.count,
+  );
+  useEffect(zeroArgEffect)();
+  // @ts-expect-error — no-input effect rejects an argument.
+  useEffect(zeroArgEffect)(42);
+
+  // With-input overload: the trailing parameter pins Input.
+  const typedInputEffect = defineEffect(
+    [counterStore],
+    (_counter, amount: number) => amount + 1,
+  );
+  useEffect(typedInputEffect)(3);
+  // @ts-expect-error — typed-input effect rejects the wrong type.
+  useEffect(typedInputEffect)('nope');
 };
 
 describe('type safety', () => {

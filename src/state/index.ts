@@ -2,6 +2,7 @@ export { defineAction, type Action, type AnyAction } from './action';
 export {
   bindRegistry,
   createStore,
+  createTestBindings,
   destroyStore,
   useAction,
   useEffect,

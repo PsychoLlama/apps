@@ -2,12 +2,13 @@ export type SessionStatus =
   | 'idle'
   | 'recording'
   | 'paused'
+  | 'stopping'
   | 'error'
   | 'unsupported';
 
 export interface Track {
-  id: string;
-  type: 'screen' | 'tab' | 'microphone' | 'system-audio';
-  label: string;
-  live: boolean;
+  readonly id: string;
+  readonly type: 'screen' | 'tab' | 'microphone' | 'system-audio';
+  readonly label: string;
+  readonly live: boolean;
 }

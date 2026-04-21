@@ -1,6 +1,6 @@
 import { invoke, type Action } from './action';
 import { perform, type Effect, type PerformReturn } from './effect';
-import { GLOBAL_REGISTRY, type Registry } from './registry';
+import { createRegistry, GLOBAL_REGISTRY, type Registry } from './registry';
 import {
   createStore as createStoreInternal,
   destroyStore as destroyStoreInternal,
@@ -24,23 +24,23 @@ export interface RegistryBindings {
   readonly useAction: <S extends readonly StoreRef<object>[], I>(
     action: Action<S, I>,
   ) => (...args: CallArgs<I>) => void;
-  readonly useEffect: <I, O>(
-    effect: Effect<I, O>,
+  readonly useEffect: <S extends readonly StoreRef<object>[], I, O>(
+    effect: Effect<S, I, O>,
   ) => (...args: CallArgs<I>) => PerformReturn<O>;
   readonly invoke: <S extends readonly StoreRef<object>[], I>(
     action: Action<S, I>,
     ...args: CallArgs<I>
   ) => void;
-  readonly perform: <I, O>(
-    effect: Effect<I, O>,
+  readonly perform: <S extends readonly StoreRef<object>[], I, O>(
+    effect: Effect<S, I, O>,
     ...args: CallArgs<I>
   ) => PerformReturn<O>;
 }
 
 /**
  * Bind a registry and return the full registry-scoped API. Tests build one
- * per case; app code uses the module-level exports bound to the global
- * registry.
+ * per case via {@link createTestBindings}; app code uses the module-level
+ * exports bound to the global registry.
  */
 export function bindRegistry(registry: Registry): RegistryBindings {
   return {
@@ -58,7 +58,9 @@ export function bindRegistry(registry: Registry): RegistryBindings {
         invoke(registry, action, args[0] as I);
       }) as (...args: CallArgs<I>) => void;
     },
-    useEffect<I, O>(effect: Effect<I, O>) {
+    useEffect<S extends readonly StoreRef<object>[], I, O>(
+      effect: Effect<S, I, O>,
+    ) {
       return ((...args: [I?]) => perform(registry, effect, args[0] as I)) as (
         ...args: CallArgs<I>
       ) => PerformReturn<O>;
@@ -69,13 +71,22 @@ export function bindRegistry(registry: Registry): RegistryBindings {
     ): void {
       invoke(registry, action, (args as [I?])[0] as I);
     },
-    perform<I, O>(
-      effect: Effect<I, O>,
+    perform<S extends readonly StoreRef<object>[], I, O>(
+      effect: Effect<S, I, O>,
       ...args: CallArgs<I>
     ): PerformReturn<O> {
       return perform(registry, effect, (args as [I?])[0] as I);
     },
   };
+}
+
+/**
+ * Build bindings against a fresh isolated registry. One call per test
+ * keeps state from leaking across cases and removes the
+ * `bindRegistry(createRegistry())` boilerplate.
+ */
+export function createTestBindings(): RegistryBindings {
+  return bindRegistry(createRegistry());
 }
 
 /** Helpers bound to the global registry. */

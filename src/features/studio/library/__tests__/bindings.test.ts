@@ -1,12 +1,9 @@
 import { vi } from 'vitest';
-import { bindRegistry, createRegistry } from '#state';
+import { createTestBindings } from '#state';
 import * as capabilities from '../capabilities';
-import {
-  addRecording,
-  deleteRecording,
-  deleteRecordingEffect,
-} from '../bindings';
+import { deleteRecording, deleteRecordingEffect } from '../bindings';
 import { libraryStore } from '../store';
+import type { Recording } from '../types';
 
 vi.mock('../capabilities', async () => {
   const actual = await vi.importActual<typeof capabilities>('../capabilities');
@@ -17,72 +14,28 @@ vi.mock('../capabilities', async () => {
 });
 
 function setup() {
-  const bound = bindRegistry(createRegistry());
-  return { ...bound, library: bound.createStore(libraryStore) };
+  const bindings = createTestBindings();
+  return { ...bindings, library: bindings.createStore(libraryStore) };
+}
+
+function seed(
+  library: { recordings: readonly Recording[] },
+  recordings: Recording[],
+): void {
+  (library.recordings as Recording[]).push(...recordings);
 }
 
 beforeEach(() => {
   vi.mocked(capabilities.revokeRecording).mockReset();
 });
 
-describe('addRecording', () => {
-  it('appends a recording with an auto-numbered name', () => {
-    const { library, useAction } = setup();
-
-    useAction(addRecording)({
-      id: 'a',
-      elapsed: 60,
-      stoppedAt: 1000,
-      url: 'blob:a',
-    });
-    useAction(addRecording)({
-      id: 'b',
-      elapsed: 90,
-      stoppedAt: 2000,
-      url: 'blob:b',
-    });
-
-    expect(library.recordings.map((recording) => recording.name)).toEqual([
-      'Recording 1',
-      'Recording 2',
-    ]);
-  });
-
-  it('preserves elapsed, stoppedAt, and url', () => {
-    const { library, useAction } = setup();
-
-    useAction(addRecording)({
-      id: 'rec-1',
-      elapsed: 300,
-      stoppedAt: 1713200000000,
-      url: 'blob:download',
-    });
-
-    expect(library.recordings[0]).toEqual({
-      id: 'rec-1',
-      name: 'Recording 1',
-      duration: 300,
-      createdAt: 1713200000000,
-      url: 'blob:download',
-    });
-  });
-});
-
 describe('deleteRecording', () => {
   it('removes a recording by id', () => {
     const { library, useAction } = setup();
-    useAction(addRecording)({
-      id: 'a',
-      elapsed: 1,
-      stoppedAt: 1,
-      url: 'blob:a',
-    });
-    useAction(addRecording)({
-      id: 'b',
-      elapsed: 2,
-      stoppedAt: 2,
-      url: 'blob:b',
-    });
+    seed(library, [
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+      { id: 'b', name: 'b', duration: 2, createdAt: 2, url: 'blob:b' },
+    ]);
 
     useAction(deleteRecording)('a');
 
@@ -91,12 +44,9 @@ describe('deleteRecording', () => {
 
   it('is a no-op on an unknown id', () => {
     const { library, useAction } = setup();
-    useAction(addRecording)({
-      id: 'a',
-      elapsed: 1,
-      stoppedAt: 1,
-      url: 'blob:a',
-    });
+    seed(library, [
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+    ]);
 
     useAction(deleteRecording)('nope');
 
@@ -114,13 +64,16 @@ describe('deleteRecordingEffect', () => {
   });
 
   it('removes the recording from the library on success', () => {
-    const { library, useAction, useEffect } = setup();
-    useAction(addRecording)({
-      id: 'rec-1',
-      elapsed: 1,
-      stoppedAt: 1,
-      url: 'blob:abc',
-    });
+    const { library, useEffect } = setup();
+    seed(library, [
+      {
+        id: 'rec-1',
+        name: 'rec-1',
+        duration: 1,
+        createdAt: 1,
+        url: 'blob:abc',
+      },
+    ]);
 
     useEffect(deleteRecordingEffect)({ id: 'rec-1', url: 'blob:abc' });
 

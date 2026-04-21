@@ -1,14 +1,13 @@
 import { defineAction } from '../action';
 import {
-  bindRegistry,
   createStore,
+  createTestBindings,
   destroyStore,
   useAction as globalUseAction,
   useEffect as globalUseEffect,
   useStore as globalUseStore,
 } from '../bindings';
 import { defineEffect } from '../effect';
-import { createRegistry } from '../registry';
 import { defineStore } from '../store';
 
 interface Counter {
@@ -21,9 +20,9 @@ const increment = defineAction([counterStore], (counter) => {
   counter.count += 1;
 });
 
-describe('bindRegistry', () => {
-  it('returns helpers bound to the provided registry', () => {
-    const bound = bindRegistry(createRegistry());
+describe('createTestBindings', () => {
+  it('returns helpers bound to a fresh registry', () => {
+    const bound = createTestBindings();
     const counter = bound.createStore(counterStore);
     expect(counter.count).toBe(0);
 
@@ -31,9 +30,9 @@ describe('bindRegistry', () => {
     expect(counter.count).toBe(1);
   });
 
-  it('isolates state across registries', () => {
-    const first = bindRegistry(createRegistry());
-    const second = bindRegistry(createRegistry());
+  it('isolates state across calls', () => {
+    const first = createTestBindings();
+    const second = createTestBindings();
     const counterA = first.createStore(counterStore);
     const counterB = second.createStore(counterStore);
 
@@ -43,31 +42,33 @@ describe('bindRegistry', () => {
   });
 
   it('wraps perform for async effects', async () => {
-    const { useEffect } = bindRegistry(createRegistry());
+    const { useEffect } = createTestBindings();
 
     const effect = defineEffect(
+      [],
       (value: number): Promise<number> => Promise.resolve(value * 2),
     );
     await expect(useEffect(effect)(3)).resolves.toBeUndefined();
   });
 
   it('wraps perform for sync effects', () => {
-    const { useEffect } = bindRegistry(createRegistry());
+    const { useEffect } = createTestBindings();
 
     const fn = (value: number): number => value + 1;
-    const effect = defineEffect(fn);
+    const effect = defineEffect([], fn);
     const result: void = useEffect(effect)(1);
     expect(result).toBeUndefined();
   });
 
   it('exposes raw invoke and perform', async () => {
-    const bound = bindRegistry(createRegistry());
+    const bound = createTestBindings();
     const counter = bound.createStore(counterStore);
 
     bound.invoke(increment);
     expect(counter.count).toBe(1);
 
     const effect = defineEffect(
+      [],
       (value: number): Promise<number> => Promise.resolve(value),
     );
     await expect(bound.perform(effect, 5)).resolves.toBeUndefined();
@@ -97,6 +98,7 @@ describe('module-level bindings (global registry)', () => {
     createStore(oneOff);
     try {
       const effect = defineEffect(
+        [],
         (value: number): Promise<number> => Promise.resolve(value),
       );
       await expect(globalUseEffect(effect)(1)).resolves.toBeUndefined();

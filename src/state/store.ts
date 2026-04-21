@@ -1,19 +1,24 @@
 import { createMutable } from 'solid-js/store';
 import { ENTRIES, INIT, type Registry, type StoreRef } from './internal';
+import type { Ref } from './ref';
 
 export type { StoreRef };
 
 /**
- * Recursively marks every property of `T` as `readonly`. Functions pass
- * through untouched; arrays become `ReadonlyArray<DeepReadonly<U>>`.
+ * Recursively marks every property of `T` as `readonly`. Functions and
+ * `Ref<T>` pass through untouched; arrays become
+ * `ReadonlyArray<DeepReadonly<U>>`. Short-circuiting on `Ref` keeps
+ * `.current` typed as the held value so consumers don't need to cast.
  */
 export type DeepReadonly<T> = T extends (...args: never[]) => unknown
   ? T
-  : T extends ReadonlyArray<infer U>
-    ? ReadonlyArray<DeepReadonly<U>>
-    : T extends object
-      ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-      : T;
+  : T extends Ref<unknown>
+    ? T
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepReadonly<U>>
+      : T extends object
+        ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+        : T;
 
 /** Define a store as an opaque handle. No state is created until `createStore`. */
 export function defineStore<T extends object>(init: () => T): StoreRef<T> {

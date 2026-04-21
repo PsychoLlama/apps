@@ -1,8 +1,7 @@
 import { vi } from 'vitest';
 import { defineAction } from '../action';
-import { bindRegistry } from '../bindings';
+import { createTestBindings } from '../bindings';
 import { defineEffect } from '../effect';
-import { createRegistry } from '../registry';
 import { defineStore } from '../store';
 
 interface Session {
@@ -36,9 +35,9 @@ const markFailed = defineAction([sessionStore], (session, error: Error) => {
 });
 
 function bootstrap() {
-  const bound = bindRegistry(createRegistry());
-  const session = bound.createStore(sessionStore);
-  return { ...bound, session };
+  const bindings = createTestBindings();
+  const session = bindings.createStore(sessionStore);
+  return { ...bindings, session };
 }
 
 describe('defineEffect / useEffect', () => {
@@ -46,7 +45,7 @@ describe('defineEffect / useEffect', () => {
     const { useEffect, session } = bootstrap();
     const fn = vi.fn((value: number) => value * 2);
 
-    const effect = defineEffect(fn, { onStart: markPending });
+    const effect = defineEffect([], fn, { onStart: markPending });
 
     useEffect(effect)(21);
     expect(fn).toHaveBeenCalledWith(21);
@@ -55,7 +54,7 @@ describe('defineEffect / useEffect', () => {
 
   it('runs onSuccess with the resolved value on sync effects', () => {
     const { useEffect, session } = bootstrap();
-    const effect = defineEffect((value: number) => value + 1, {
+    const effect = defineEffect([], (value: number) => value + 1, {
       onSuccess: markReady,
     });
 
@@ -67,6 +66,7 @@ describe('defineEffect / useEffect', () => {
   it('runs onSuccess with the resolved value on async effects', async () => {
     const { useEffect, session } = bootstrap();
     const effect = defineEffect(
+      [],
       (value: number): Promise<number> => Promise.resolve(value * 10),
       { onSuccess: markReady },
     );
@@ -78,7 +78,8 @@ describe('defineEffect / useEffect', () => {
 
   it('routes sync throws to onFailure', () => {
     const { useEffect, session } = bootstrap();
-    const effect = defineEffect<number, number>(
+    const effect = defineEffect<readonly [], number, number>(
+      [],
       () => {
         throw new Error('nope');
       },
@@ -92,7 +93,8 @@ describe('defineEffect / useEffect', () => {
 
   it('routes async rejections to onFailure', async () => {
     const { useEffect, session } = bootstrap();
-    const effect = defineEffect<number, Promise<number>>(
+    const effect = defineEffect<readonly [], number, Promise<number>>(
+      [],
       () => Promise.reject(new Error('async fail')),
       { onFailure: markFailed },
     );
@@ -104,7 +106,8 @@ describe('defineEffect / useEffect', () => {
 
   it('wraps non-Error throws into Error before dispatching onFailure', () => {
     const { useEffect, session } = bootstrap();
-    const effect = defineEffect<number, number>(
+    const effect = defineEffect<readonly [], number, number>(
+      [],
       () => {
         // eslint-disable-next-line @typescript-eslint/only-throw-error -- Exercising the non-Error code path.
         throw 'plain string';
@@ -119,7 +122,7 @@ describe('defineEffect / useEffect', () => {
 
   it('re-throws sync errors when onFailure is absent', () => {
     const { useEffect } = bootstrap();
-    const effect = defineEffect<number, number>(() => {
+    const effect = defineEffect<readonly [], number, number>([], () => {
       throw new Error('boom');
     });
 
@@ -128,7 +131,7 @@ describe('defineEffect / useEffect', () => {
 
   it('rejects the returned promise when async errors have no onFailure', async () => {
     const { useEffect } = bootstrap();
-    const effect = defineEffect<number, Promise<number>>(() =>
+    const effect = defineEffect<readonly [], number, Promise<number>>([], () =>
       Promise.reject(new Error('async boom')),
     );
 
@@ -137,8 +140,9 @@ describe('defineEffect / useEffect', () => {
 
   it('returns void for sync effects and Promise<void> for async effects', async () => {
     const { useEffect } = bootstrap();
-    const syncEffect = defineEffect((value: number) => value);
+    const syncEffect = defineEffect([], (value: number) => value);
     const asyncEffect = defineEffect(
+      [],
       (value: number): Promise<number> => Promise.resolve(value),
     );
 
@@ -153,6 +157,7 @@ describe('defineEffect / useEffect', () => {
   it('skips missing lifecycle handlers without error', async () => {
     const { useEffect, session } = bootstrap();
     const effect = defineEffect(
+      [],
       (value: number): Promise<number> => Promise.resolve(value),
     );
 
@@ -161,8 +166,8 @@ describe('defineEffect / useEffect', () => {
   });
 
   it('bubbles errors from onStart itself (programmer error, not effect failure)', () => {
-    const { useEffect } = bindRegistry(createRegistry());
-    const effect = defineEffect((value: number) => value, {
+    const { useEffect } = createTestBindings();
+    const effect = defineEffect([], (value: number) => value, {
       onStart: markPending,
     });
 
@@ -173,6 +178,7 @@ describe('defineEffect / useEffect', () => {
   it('accepts inline defineAction in every lifecycle slot', () => {
     const { useEffect, session } = bootstrap();
     const effect = defineEffect(
+      [],
       (value: number): number => {
         if (value < 0) throw new Error('negative');
         return value + 1;
@@ -195,5 +201,18 @@ describe('defineEffect / useEffect', () => {
     useEffect(effect)(4);
     expect(session.status).toBe('ready');
     expect(session.value).toBe(5);
+  });
+
+  it('passes readonly store views to the callback', () => {
+    const { useEffect, session, useAction } = bootstrap();
+    useAction(defineAction([sessionStore], (draft) => (draft.value = 42)))();
+
+    const seen: number[] = [];
+    const effect = defineEffect([sessionStore], (view) => {
+      seen.push(view.value);
+    });
+
+    useEffect(effect)();
+    expect(seen).toEqual([session.value]);
   });
 });

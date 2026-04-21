@@ -1,4 +1,4 @@
-import { For, Show, onCleanup, onMount } from 'solid-js';
+import { For, Match, Show, Switch, onCleanup, onMount } from 'solid-js';
 import { Button, Callout, Flex, Heading, Link, Text } from '#ui';
 import { useAction, useEffect } from '#state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
@@ -20,32 +20,13 @@ import { session } from './session/store';
 import { library } from './library/store';
 import { timer } from './timer/store';
 import { tick } from './timer/bindings';
+import type { Track } from './session/types';
 import type { Recording } from './library/types';
+import { formatDuration, formatElapsed } from './format';
 import * as css from './studio.css';
 
-// --- Timer display ---
-
-function secondsToDuration(totalSeconds: number) {
-  return {
-    hours: Math.floor(totalSeconds / 3600),
-    minutes: Math.floor((totalSeconds % 3600) / 60),
-    seconds: totalSeconds % 60,
-  };
-}
-
-const elapsedFormat = new Intl.DurationFormat('en', {
-  style: 'digital',
-  hours: '2-digit',
-});
-
-const durationFormat = new Intl.DurationFormat('en', {
-  style: 'digital',
-});
-
-// --- Library panel ---
-
 function LibraryPanel(props: {
-  recordings: Recording[];
+  recordings: ReadonlyArray<Recording>;
   onDelete: (recording: Recording) => void;
 }) {
   return (
@@ -118,7 +99,7 @@ function LibraryPanel(props: {
                       color="lowContrast"
                       selectable={false}
                     >
-                      {durationFormat.format(secondsToDuration(rec.duration))}
+                      {formatDuration(rec.duration)}
                     </Text>
                   </Flex>
                 </Link>
@@ -147,10 +128,8 @@ function LibraryPanel(props: {
   );
 }
 
-// --- Track list during recording ---
-
 function ActiveTracks(props: {
-  tracks: { id: string; type: string; label: string; live: boolean }[];
+  tracks: ReadonlyArray<Track>;
   onRemove: (trackId: string) => void;
 }) {
   return (
@@ -198,8 +177,6 @@ function ActiveTracks(props: {
   );
 }
 
-// --- States ---
-
 function IdleState(props: { onStart: () => void }) {
   return (
     <Flex
@@ -221,7 +198,7 @@ function IdleState(props: { onStart: () => void }) {
 
 function RecordingState(props: {
   elapsed: number;
-  tracks: { id: string; type: string; label: string; live: boolean }[];
+  tracks: ReadonlyArray<Track>;
   onPause: () => void;
   onStop: () => void;
   onAddTrack: () => void;
@@ -242,7 +219,7 @@ function RecordingState(props: {
         </Text>
       </Flex>
       <Text as="span" class={css.timer} selectable={false}>
-        {elapsedFormat.format(secondsToDuration(props.elapsed))}
+        {formatElapsed(props.elapsed)}
       </Text>
       <ActiveTracks tracks={props.tracks} onRemove={props.onRemoveTrack} />
       <Flex as="div" gap={3} wrap="wrap" justify="center">
@@ -277,7 +254,7 @@ function RecordingState(props: {
 
 function PausedState(props: {
   elapsed: number;
-  tracks: { id: string; type: string; label: string; live: boolean }[];
+  tracks: ReadonlyArray<Track>;
   onResume: () => void;
   onStop: () => void;
   onAddTrack: () => void;
@@ -298,7 +275,7 @@ function PausedState(props: {
         </Text>
       </Flex>
       <Text as="span" class={css.timer} selectable={false}>
-        {elapsedFormat.format(secondsToDuration(props.elapsed))}
+        {formatElapsed(props.elapsed)}
       </Text>
       <ActiveTracks tracks={props.tracks} onRemove={props.onRemoveTrack} />
       <Flex as="div" gap={3} wrap="wrap" justify="center">
@@ -322,6 +299,25 @@ function PausedState(props: {
           Stop All
         </Button>
       </Flex>
+    </Flex>
+  );
+}
+
+function StoppingState(props: { elapsed: number }) {
+  return (
+    <Flex
+      as="div"
+      direction="column"
+      align="center"
+      gap={5}
+      class={css.mainContent}
+    >
+      <Text as="span" size={2} weight="medium" color="lowContrast">
+        Stopping…
+      </Text>
+      <Text as="span" class={css.timer} selectable={false}>
+        {formatElapsed(props.elapsed)}
+      </Text>
     </Flex>
   );
 }
@@ -378,8 +374,6 @@ function UnsupportedState() {
   );
 }
 
-// --- Root ---
-
 export default function Studio() {
   const startRecording = useEffect(startRecordingEffect);
   const stopRecording = useEffect(stopRecordingEffect);
@@ -392,82 +386,62 @@ export default function Studio() {
   const publishTick = useAction(tick);
 
   function handleStart() {
-    void startRecording(() => {
-      void stopRecording(timer.elapsed);
-    });
-  }
-
-  function handleStop() {
-    void stopRecording(timer.elapsed);
-  }
-
-  function handleAddTrack() {
-    void addTrack('microphone');
-  }
-
-  function handleDelete(recording: Recording) {
-    deleteRecording({ id: recording.id, url: recording.url });
+    void startRecording(() => void stopRecording());
   }
 
   onMount(() => {
     checkSupport();
-  });
-  const tickInterval = setInterval(() => publishTick(), 1000);
-
-  onCleanup(() => {
-    clearInterval(tickInterval);
+    const tickInterval = setInterval(() => publishTick(), 1000);
+    onCleanup(() => clearInterval(tickInterval));
   });
 
   return (
-    <>
-      <Show when={session.status === 'unsupported'}>
-        <UnsupportedState />
-      </Show>
-      <Show when={session.status !== 'unsupported'}>
-        <Flex as="div" direction="column" class={css.shell}>
-          <SiteHeader title="Recording Studio" />
-          <Flex as="div" grow class={css.body}>
-            <Flex
-              as="main"
-              align="center"
-              justify="center"
-              grow
-              class={css.main}
-            >
-              <Show when={session.status === 'idle'}>
+    <Show
+      when={session.status !== 'unsupported'}
+      fallback={<UnsupportedState />}
+    >
+      <Flex as="div" direction="column" class={css.shell}>
+        <SiteHeader title="Recording Studio" />
+        <Flex as="div" grow class={css.body}>
+          <Flex as="main" align="center" justify="center" grow class={css.main}>
+            <Switch>
+              <Match when={session.status === 'idle'}>
                 <IdleState onStart={handleStart} />
-              </Show>
-              <Show when={session.status === 'recording'}>
+              </Match>
+              <Match when={session.status === 'recording'}>
                 <RecordingState
                   elapsed={timer.elapsed}
-                  tracks={[...session.tracks]}
+                  tracks={session.tracks}
                   onPause={() => pauseRecording()}
-                  onStop={handleStop}
-                  onAddTrack={handleAddTrack}
+                  onStop={() => void stopRecording()}
+                  onAddTrack={() => void addTrack()}
                   onRemoveTrack={removeTrack}
                 />
-              </Show>
-              <Show when={session.status === 'paused'}>
+              </Match>
+              <Match when={session.status === 'paused'}>
                 <PausedState
                   elapsed={timer.elapsed}
-                  tracks={[...session.tracks]}
+                  tracks={session.tracks}
                   onResume={() => resumeRecording()}
-                  onStop={handleStop}
-                  onAddTrack={handleAddTrack}
+                  onStop={() => void stopRecording()}
+                  onAddTrack={() => void addTrack()}
                   onRemoveTrack={removeTrack}
                 />
-              </Show>
-              <Show when={session.status === 'error'}>
+              </Match>
+              <Match when={session.status === 'stopping'}>
+                <StoppingState elapsed={timer.elapsed} />
+              </Match>
+              <Match when={session.status === 'error'}>
                 <ErrorState error={session.error} onRetry={handleStart} />
-              </Show>
-            </Flex>
-            <LibraryPanel
-              recordings={[...library.recordings].reverse()}
-              onDelete={handleDelete}
-            />
+              </Match>
+            </Switch>
           </Flex>
+          <LibraryPanel
+            recordings={library.recordings.slice().reverse()}
+            onDelete={(rec) => deleteRecording({ id: rec.id, url: rec.url })}
+          />
         </Flex>
-      </Show>
-    </>
+      </Flex>
+    </Show>
   );
 }

@@ -1,11 +1,18 @@
 import { invoke, type Action, type AnyAction } from './action';
 import type { Registry } from './internal';
-import type { StoreRef } from './store';
+import { getMutable, type DeepReadonly, type StoreRef } from './store';
 
 // `invoke` wants a fully-typed Action; we have `AnyAction` (brand-only).
 // The brand is the identity layer — the runtime value is still the real
 // action tuple, so cast at the boundary.
 type LooseAction = Action<readonly StoreRef<object>[], unknown>;
+
+type StateOf<R> = R extends StoreRef<infer T> ? T : never;
+
+/** Readonly views for each store in the tuple, mirroring `createStore`'s return. */
+type ReadsOf<Refs extends readonly StoreRef<object>[]> = {
+  [K in keyof Refs]: DeepReadonly<StateOf<Refs[K]>>;
+};
 
 /** Optional lifecycle actions for a {@link defineEffect}. */
 export interface EffectHandlers<Input, Output> {
@@ -18,9 +25,18 @@ export interface EffectHandlers<Input, Output> {
  * Bundles a side-effect function with its lifecycle actions. Stored as a
  * tuple so the lifecycle slots occupy minifiable positions rather than
  * named keys in the bundle.
+ *
+ * The callback receives a readonly view for each declared store followed
+ * by the input, so effects can pass straight through to their capability
+ * without a re-reading wrapper.
  */
-export type Effect<Input, Output> = readonly [
-  fn: (input: Input) => Output,
+export type Effect<
+  Stores extends readonly StoreRef<object>[],
+  Input,
+  Output,
+> = readonly [
+  stores: Stores,
+  fn: (...args: [...ReadsOf<Stores>, Input]) => Output,
   onStart: AnyAction<Input> | undefined,
   onSuccess: AnyAction<Awaited<Output>> | undefined,
   onFailure: AnyAction<Error> | undefined,
@@ -28,14 +44,42 @@ export type Effect<Input, Output> = readonly [
 
 /**
  * Define an effect that wraps a side-effecting callback with lifecycle
- * actions. Every handler field is optional. Without `onFailure`, any
- * thrown error or rejected promise bubbles up from {@link perform}.
+ * actions. The store tuple lists read dependencies; the callback receives
+ * a readonly view per store plus the trailing input. Pass `[]` when the
+ * callback reads no state.
+ *
+ * The no-input overload is picked when the callback's arity matches the
+ * number of declared stores, fixing `Input` at `unknown` so call sites
+ * stay zero-arg. The with-input overload infers `Input` from the trailing
+ * callback parameter.
  */
-export function defineEffect<Input, Output>(
-  fn: (input: Input) => Output,
+export function defineEffect<
+  const Stores extends readonly StoreRef<object>[],
+  Output = void,
+>(
+  stores: Stores,
+  fn: (...args: ReadsOf<Stores>) => Output,
+  handlers?: EffectHandlers<unknown, Output>,
+): Effect<Stores, unknown, Output>;
+export function defineEffect<
+  const Stores extends readonly StoreRef<object>[],
+  Input,
+  Output = void,
+>(
+  stores: Stores,
+  fn: (...args: [...ReadsOf<Stores>, Input]) => Output,
+  handlers?: EffectHandlers<Input, Output>,
+): Effect<Stores, Input, Output>;
+export function defineEffect<
+  Stores extends readonly StoreRef<object>[],
+  Input,
+  Output,
+>(
+  stores: Stores,
+  fn: (...args: [...ReadsOf<Stores>, Input]) => Output,
   handlers: EffectHandlers<Input, Output> = {},
-): Effect<Input, Output> {
-  return [fn, handlers.onStart, handlers.onSuccess, handlers.onFailure];
+): Effect<Stores, Input, Output> {
+  return [stores, fn, handlers.onStart, handlers.onSuccess, handlers.onFailure];
 }
 
 /** Return type of {@link perform} based on whether the effect callback is async. */
@@ -51,12 +95,16 @@ const toError = (error: unknown): Error =>
  * `onStart` runs before the callback; `onSuccess` or `onFailure` runs
  * after. Errors re-throw when no `onFailure` is declared.
  */
-export function perform<Input, Output>(
+export function perform<
+  Stores extends readonly StoreRef<object>[],
+  Input,
+  Output,
+>(
   registry: Registry,
-  effect: Effect<Input, Output>,
+  effect: Effect<Stores, Input, Output>,
   input: Input,
 ): PerformReturn<Output> {
-  const [fn, onStart, onSuccess, onFailure] = effect;
+  const [stores, fn, onStart, onSuccess, onFailure] = effect;
 
   if (onStart) invoke(registry, onStart as unknown as LooseAction, input);
 
@@ -73,9 +121,14 @@ export function perform<Input, Output>(
     throw err;
   };
 
+  const reads: object[] = [];
+  for (const ref of stores) {
+    reads.push(getMutable(registry, ref));
+  }
+
   let result: Output;
   try {
-    result = fn(input);
+    result = (fn as (...args: unknown[]) => Output)(...reads, input);
   } catch (error) {
     fail(error);
     return undefined as PerformReturn<Output>;

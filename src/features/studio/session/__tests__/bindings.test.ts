@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { bindRegistry, createRegistry } from '#state';
+import { createTestBindings, defineAction } from '#state';
 import { libraryStore } from '../../library/store';
 import { timerStore } from '../../timer/store';
 import * as capabilities from '../capabilities';
@@ -14,10 +14,14 @@ import {
   checkSupportEffect,
   finalizeRecording,
   markError,
-  markUnsupportedIf,
+  markSupport,
+  pauseRecordingEffect,
+  removeTrackEffect,
   removeTrackFromState,
+  resumeRecordingEffect,
   setRecordingContext,
   startRecordingEffect,
+  stopRecordingEffect,
 } from '../bindings';
 import { sessionStore } from '../store';
 import type { Track } from '../types';
@@ -27,48 +31,83 @@ vi.mock('../capabilities', async () => {
   return {
     ...actual,
     startRecording: vi.fn(),
-    stopRecording: vi.fn(),
-    pauseRecording: vi.fn(),
-    resumeRecording: vi.fn(),
     captureTrack: vi.fn(),
-    stopTrackStream: vi.fn(),
     checkSupport: vi.fn(),
   };
 });
 
 function setup() {
-  const bound = bindRegistry(createRegistry());
+  const bindings = createTestBindings();
   return {
-    ...bound,
-    session: bound.createStore(sessionStore),
-    timer: bound.createStore(timerStore),
-    library: bound.createStore(libraryStore),
+    ...bindings,
+    session: bindings.createStore(sessionStore),
+    timer: bindings.createStore(timerStore),
+    library: bindings.createStore(libraryStore),
   };
+}
+
+// Class-instance stubs so Solid's `createMutable` leaves them unproxied,
+// matching the runtime behavior of real `MediaRecorder` / `MediaStream`.
+class FakeRecorder {
+  pause = vi.fn();
+  resume = vi.fn();
+  stop = vi.fn();
+  mimeType = 'video/webm';
+  addEventListener = vi.fn();
+}
+class FakeStream {
+  tracks: Array<{ stop: () => void }>;
+  constructor(tracks: Array<{ stop: () => void }> = []) {
+    this.tracks = tracks;
+  }
+  getTracks(): Array<{ stop: () => void }> {
+    return this.tracks;
+  }
 }
 
 function makeResult(tracks: Track[] = []): RecordingResult {
   return {
     tracks,
     streams: Object.fromEntries(
-      tracks.map((track) => [track.id, {} as MediaStream]),
+      tracks.map((track) => [
+        track.id,
+        new FakeStream() as unknown as MediaStream,
+      ]),
     ),
-    recorder: {} as MediaRecorder,
-    chunks: [] as Blob[],
+    recorder: new FakeRecorder() as unknown as MediaRecorder,
+    chunks: [],
   };
+}
+
+// Internal helper: drive the session into a recording state with a
+// controlled recorder mock so the pause/resume/stop effects have
+// something to call into.
+function arm(bindings: ReturnType<typeof setup>) {
+  const recorder = new FakeRecorder();
+  const trackStop = vi.fn();
+  const stream = new FakeStream([{ stop: trackStop }]);
+
+  // Mutate state directly via the test-only bootstrap action. Writing
+  // through an action keeps state consistent with the reactive proxy.
+  bindings.useAction(
+    defineAction([sessionStore], (session) => {
+      session.status = 'recording';
+      session.tracks = [
+        { id: '1', type: 'screen', label: 'Screen', live: true },
+      ];
+      session.streams = { '1': stream as unknown as MediaStream };
+      session.recorder = recorder as unknown as MediaRecorder;
+      session.chunks = [];
+    }),
+  )();
+  return { recorder, stream, trackStop };
 }
 
 beforeEach(() => {
   vi.mocked(capabilities.startRecording).mockReset();
-  vi.mocked(capabilities.stopRecording).mockReset();
   vi.mocked(capabilities.captureTrack).mockReset();
-  vi.mocked(capabilities.stopTrackStream).mockReset();
   vi.mocked(capabilities.checkSupport).mockReset();
 });
-
-// Effects whose callbacks close over module-level `session` (bound to
-// GLOBAL_REGISTRY) can't satisfy their reads against a per-test
-// registry. For those, we test the lifecycle actions directly; the
-// effect/action wiring is smoke-tested against the real app.
 
 describe('actions', () => {
   describe('beginRecording', () => {
@@ -94,7 +133,7 @@ describe('actions', () => {
   });
 
   describe('setRecordingContext', () => {
-    it('populates tracks and wraps recorder / chunks / streams in refs', () => {
+    it('populates tracks, recorder, chunks, and streams', () => {
       const { session, useAction } = setup();
       const result = makeResult([
         { id: '1', type: 'screen', label: 'Screen', live: true },
@@ -103,9 +142,11 @@ describe('actions', () => {
       useAction(setRecordingContext)(result);
 
       expect(session.tracks).toEqual(result.tracks);
-      expect(session.recorder?.current).toBe(result.recorder);
-      expect(session.chunks?.current).toBe(result.chunks);
-      expect(session.streams['1']?.current).toBe(result.streams['1']);
+      expect(session.recorder).toBe(result.recorder);
+      // Arrays are wrapped by Solid's mutable proxy, so identity compare
+      // would fail; structural equality is what we want to pin.
+      expect(session.chunks).toEqual(result.chunks);
+      expect(session.streams['1']).toBe(result.streams['1']);
     });
   });
 
@@ -121,48 +162,43 @@ describe('actions', () => {
   });
 
   describe('beginStop', () => {
-    it('transitions to idle, clears tracks, stops timer — preserves refs', () => {
+    it('transitions to stopping and freezes the timer', () => {
       const { session, timer, useAction } = setup();
-      const result = makeResult([
-        { id: '1', type: 'screen', label: 'Screen', live: true },
-      ]);
-      useAction(setRecordingContext)(result);
+      useAction(setRecordingContext)(makeResult());
       useAction(beginRecording)();
 
       useAction(beginStop)();
 
-      expect(session.status).toBe('idle');
-      expect(session.tracks).toEqual([]);
+      expect(session.status).toBe('stopping');
       expect(timer.running).toBe(false);
-      expect(session.recorder?.current).toBe(result.recorder);
-      expect(session.chunks?.current).toBe(result.chunks);
     });
   });
 
   describe('finalizeRecording', () => {
-    it('clears refs and appends the recording to the library', () => {
+    it('clears session fields and appends the recording to the library', () => {
       const { session, library, useAction } = setup();
       useAction(setRecordingContext)(makeResult());
 
       useAction(finalizeRecording)({
         id: 'rec-1',
         elapsed: 45,
-        stoppedAt: 2000,
+        stoppedAt: 1745250120000,
         url: 'blob:test',
       });
 
+      expect(session.status).toBe('idle');
       expect(session.recorder).toBeNull();
       expect(session.chunks).toBeNull();
       expect(session.streams).toEqual({});
-      expect(library.recordings).toEqual([
-        {
-          id: 'rec-1',
-          name: 'Recording 1',
-          duration: 45,
-          createdAt: 2000,
-          url: 'blob:test',
-        },
-      ]);
+      expect(library.recordings).toHaveLength(1);
+      expect(library.recordings[0]).toMatchObject({
+        id: 'rec-1',
+        duration: 45,
+        createdAt: 1745250120000,
+        url: 'blob:test',
+      });
+      // Name is a formatted timestamp; pin that it's a non-empty string.
+      expect(library.recordings[0].name).toMatch(/\w+/);
     });
   });
 
@@ -192,9 +228,9 @@ describe('actions', () => {
   });
 
   describe('appendTrack', () => {
-    it('appends the track and wraps the stream in a ref', () => {
+    it('appends the track and stores its stream', () => {
       const { session, useAction } = setup();
-      const stream = {} as MediaStream;
+      const stream = new FakeStream() as unknown as MediaStream;
       const track: Track = {
         id: '3',
         type: 'microphone',
@@ -205,12 +241,12 @@ describe('actions', () => {
       useAction(appendTrack)({ track, stream });
 
       expect(session.tracks).toEqual([track]);
-      expect(session.streams['3']?.current).toBe(stream);
+      expect(session.streams['3']).toBe(stream);
     });
   });
 
   describe('removeTrackFromState', () => {
-    it('removes the track and drops its stream ref', () => {
+    it('removes the track and drops its stream', () => {
       const { session, useAction } = setup();
       useAction(setRecordingContext)(
         makeResult([
@@ -238,11 +274,11 @@ describe('actions', () => {
     });
   });
 
-  describe('markUnsupportedIf', () => {
+  describe('markSupport', () => {
     it('transitions to unsupported when false', () => {
       const { session, useAction } = setup();
 
-      useAction(markUnsupportedIf)(false);
+      useAction(markSupport)(false);
 
       expect(session.status).toBe('unsupported');
     });
@@ -250,28 +286,24 @@ describe('actions', () => {
     it('stays idle when true', () => {
       const { session, useAction } = setup();
 
-      useAction(markUnsupportedIf)(true);
+      useAction(markSupport)(true);
 
       expect(session.status).toBe('idle');
     });
   });
 });
 
-// Effects whose callbacks do NOT close over `session` can be exercised
-// end-to-end against a per-test registry. The capability is mocked;
-// onStart / onSuccess / onFailure are verified through state.
-
 describe('startRecordingEffect', () => {
   it('onStart runs before the capability resolves', () => {
     vi.mocked(capabilities.startRecording).mockImplementation(
       () => new Promise(() => undefined),
     );
-    const { session, timer, useEffect } = setup();
+    const bindings = setup();
 
-    void useEffect(startRecordingEffect)(() => undefined);
+    void bindings.useEffect(startRecordingEffect)(() => undefined);
 
-    expect(session.status).toBe('recording');
-    expect(timer.running).toBe(true);
+    expect(bindings.session.status).toBe('recording');
+    expect(bindings.timer.running).toBe(true);
   });
 
   it('onSuccess populates context', async () => {
@@ -279,30 +311,101 @@ describe('startRecordingEffect', () => {
       { id: '1', type: 'screen', label: 'Screen', live: true },
     ]);
     vi.mocked(capabilities.startRecording).mockResolvedValue(result);
-    const { session, useEffect } = setup();
+    const bindings = setup();
 
-    await useEffect(startRecordingEffect)(() => undefined);
+    await bindings.useEffect(startRecordingEffect)(() => undefined);
 
-    expect(session.tracks).toEqual(result.tracks);
-    expect(session.recorder?.current).toBe(result.recorder);
+    expect(bindings.session.tracks).toEqual(result.tracks);
+    expect(bindings.session.recorder).toBe(result.recorder);
   });
 
   it('onFailure surfaces the error', async () => {
     vi.mocked(capabilities.startRecording).mockRejectedValue(
       new Error('Permission denied'),
     );
-    const { session, useEffect } = setup();
+    const bindings = setup();
 
-    await useEffect(startRecordingEffect)(() => undefined);
+    await bindings.useEffect(startRecordingEffect)(() => undefined);
 
-    expect(session.status).toBe('error');
-    expect(session.error).toBe('Permission denied');
+    expect(bindings.session.status).toBe('error');
+    expect(bindings.session.error).toBe('Permission denied');
+  });
+});
+
+describe('pauseRecordingEffect', () => {
+  it('pauses the recorder and flips to paused', () => {
+    const bindings = setup();
+    const { recorder } = arm(bindings);
+
+    bindings.useEffect(pauseRecordingEffect)();
+
+    expect(recorder.pause).toHaveBeenCalled();
+    expect(bindings.session.status).toBe('paused');
+    expect(bindings.timer.running).toBe(false);
+  });
+});
+
+describe('resumeRecordingEffect', () => {
+  it('resumes the recorder and flips back to recording', () => {
+    const bindings = setup();
+    const { recorder } = arm(bindings);
+    bindings.useEffect(pauseRecordingEffect)();
+
+    bindings.useEffect(resumeRecordingEffect)();
+
+    expect(recorder.resume).toHaveBeenCalled();
+    expect(bindings.session.status).toBe('recording');
+    expect(bindings.timer.running).toBe(true);
+  });
+});
+
+describe('stopRecordingEffect', () => {
+  it('drains the recorder, stops streams, and appends to the library', async () => {
+    const bindings = setup();
+    const trackStop = vi.fn();
+    // Arrange a recorder whose addEventListener invokes the stop handler
+    // synchronously, driving the promise to resolution.
+    const recorder = {
+      pause: vi.fn(),
+      resume: vi.fn(),
+      stop: vi.fn(),
+      mimeType: 'video/webm',
+      addEventListener: (
+        _event: string,
+        handler: EventListenerOrEventListenerObject,
+      ) => {
+        queueMicrotask(() => (handler as EventListener)(new Event('stop')));
+      },
+    } as unknown as MediaRecorder;
+    const stream = {
+      getTracks: () => [{ stop: trackStop }],
+    } as unknown as MediaStream;
+
+    bindings.useAction(
+      defineAction([sessionStore, timerStore], (session, timer) => {
+        session.status = 'recording';
+        session.recorder = recorder;
+        session.chunks = [];
+        session.streams = { '1': stream };
+        timer.elapsed = 12;
+      }),
+    )();
+
+    await bindings.useEffect(stopRecordingEffect)();
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- vi.fn has no `this` binding.
+    expect(recorder.stop).toHaveBeenCalled();
+    expect(trackStop).toHaveBeenCalled();
+    expect(bindings.session.status).toBe('idle');
+    expect(bindings.session.recorder).toBeNull();
+    expect(bindings.library.recordings).toHaveLength(1);
+    expect(bindings.library.recordings[0].duration).toBe(12);
   });
 });
 
 describe('addTrackEffect', () => {
   it('onSuccess appends the captured track', async () => {
-    const stream = {} as MediaStream;
+    const stream = new FakeStream() as unknown as MediaStream;
     const track: Track = {
       id: '3',
       type: 'microphone',
@@ -310,31 +413,44 @@ describe('addTrackEffect', () => {
       live: true,
     };
     vi.mocked(capabilities.captureTrack).mockResolvedValue({ track, stream });
-    const { session, useEffect } = setup();
+    const bindings = setup();
 
-    await useEffect(addTrackEffect)('microphone');
+    await bindings.useEffect(addTrackEffect)();
 
-    expect(session.tracks).toEqual([track]);
-    expect(session.streams['3']?.current).toBe(stream);
+    expect(bindings.session.tracks).toEqual([track]);
+    expect(bindings.session.streams['3']).toBe(stream);
+  });
+});
+
+describe('removeTrackEffect', () => {
+  it('stops the track stream and drops it from state', () => {
+    const bindings = setup();
+    const { trackStop } = arm(bindings);
+
+    bindings.useEffect(removeTrackEffect)('1');
+
+    expect(trackStop).toHaveBeenCalled();
+    expect(bindings.session.tracks).toHaveLength(0);
+    expect(bindings.session.streams['1']).toBeUndefined();
   });
 });
 
 describe('checkSupportEffect', () => {
   it('transitions to unsupported when the capability returns false', () => {
     vi.mocked(capabilities.checkSupport).mockReturnValue(false);
-    const { session, useEffect } = setup();
+    const bindings = setup();
 
-    useEffect(checkSupportEffect)();
+    bindings.useEffect(checkSupportEffect)();
 
-    expect(session.status).toBe('unsupported');
+    expect(bindings.session.status).toBe('unsupported');
   });
 
   it('stays idle when the capability returns true', () => {
     vi.mocked(capabilities.checkSupport).mockReturnValue(true);
-    const { session, useEffect } = setup();
+    const bindings = setup();
 
-    useEffect(checkSupportEffect)();
+    bindings.useEffect(checkSupportEffect)();
 
-    expect(session.status).toBe('idle');
+    expect(bindings.session.status).toBe('idle');
   });
 });

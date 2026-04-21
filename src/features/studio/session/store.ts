@@ -1,13 +1,13 @@
-import { createStore, defineStore, type Ref } from '#state';
+import { defineStore, createStore } from '#state';
 import type { SessionStatus, Track } from './types';
 
 export interface SessionState {
   status: SessionStatus;
   tracks: Track[];
   error: string | null;
-  streams: Record<string, Ref<MediaStream>>;
-  recorder: Ref<MediaRecorder> | null;
-  chunks: Ref<Blob[]> | null;
+  streams: Record<string, MediaStream>;
+  recorder: MediaRecorder | null;
+  chunks: Blob[] | null;
 }
 
 export const sessionStore = defineStore<SessionState>(() => ({
