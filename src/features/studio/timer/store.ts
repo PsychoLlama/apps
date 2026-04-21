@@ -1,4 +1,4 @@
-import { createStore, defineStore, GLOBAL_REGISTRY } from '#state';
+import { createStore, defineStore } from '#state';
 
 export interface TimerState {
   running: boolean;
@@ -10,6 +10,5 @@ export const timerStore = defineStore<TimerState>(() => ({
   elapsed: 0,
 }));
 
-// Self-bootstrap against the global registry so module imports give
-// callers a live readonly view.
-export const timer = createStore(GLOBAL_REGISTRY, timerStore);
+// Self-bootstrap so module imports give callers a live readonly view.
+export const timer = createStore(timerStore);

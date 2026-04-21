@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { bindRegistry, createRegistry, createStore } from '#state';
+import { bindRegistry, createRegistry } from '#state';
 import * as capabilities from '../capabilities';
 import {
   addRecording,
@@ -17,10 +17,8 @@ vi.mock('../capabilities', async () => {
 });
 
 function setup() {
-  const registry = createRegistry();
-  const bound = bindRegistry(registry);
-  createStore(registry, libraryStore);
-  return { ...bound, library: bound.useStore(libraryStore) };
+  const bound = bindRegistry(createRegistry());
+  return { ...bound, library: bound.createStore(libraryStore) };
 }
 
 beforeEach(() => {

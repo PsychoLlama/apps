@@ -3,7 +3,7 @@ import { defineAction } from '../action';
 import { bindRegistry } from '../bindings';
 import { defineEffect } from '../effect';
 import { createRegistry } from '../registry';
-import { createStore, defineStore } from '../store';
+import { defineStore } from '../store';
 
 interface Session {
   status: 'idle' | 'pending' | 'ready' | 'failed';
@@ -20,8 +20,7 @@ const sessionStore = defineStore<Session>(() => ({
 // Accepts `unknown` so the action works as `onStart` for effects with any
 // input type. Function parameter contravariance: an action that accepts
 // unknown assigns to one that expects a narrower input.
-const markPending = defineAction([sessionStore], (session, input: unknown) => {
-  void input;
+const markPending = defineAction([sessionStore], (session, _: unknown) => {
   session.status = 'pending';
   session.error = null;
 });
@@ -37,10 +36,9 @@ const markFailed = defineAction([sessionStore], (session, error: Error) => {
 });
 
 function bootstrap() {
-  const registry = createRegistry();
-  const bound = bindRegistry(registry);
-  createStore(registry, sessionStore);
-  return { registry, ...bound, session: bound.useStore(sessionStore) };
+  const bound = bindRegistry(createRegistry());
+  const session = bound.createStore(sessionStore);
+  return { ...bound, session };
 }
 
 describe('defineEffect / useEffect', () => {
@@ -81,8 +79,7 @@ describe('defineEffect / useEffect', () => {
   it('routes sync throws to onFailure', () => {
     const { useEffect, session } = bootstrap();
     const effect = defineEffect(
-      (input: number): number => {
-        void input;
+      (_: number): number => {
         throw new Error('nope');
       },
       { onFailure: markFailed },
@@ -96,10 +93,7 @@ describe('defineEffect / useEffect', () => {
   it('routes async rejections to onFailure', async () => {
     const { useEffect, session } = bootstrap();
     const effect = defineEffect(
-      (input: number): Promise<number> => {
-        void input;
-        return Promise.reject(new Error('async fail'));
-      },
+      (_: number): Promise<number> => Promise.reject(new Error('async fail')),
       { onFailure: markFailed },
     );
 
@@ -111,8 +105,7 @@ describe('defineEffect / useEffect', () => {
   it('wraps non-Error throws into Error before dispatching onFailure', () => {
     const { useEffect, session } = bootstrap();
     const effect = defineEffect(
-      (input: number): number => {
-        void input;
+      (_: number): number => {
         // eslint-disable-next-line @typescript-eslint/only-throw-error -- Exercising the non-Error code path.
         throw 'plain string';
       },
@@ -126,8 +119,7 @@ describe('defineEffect / useEffect', () => {
 
   it('re-throws sync errors when onFailure is absent', () => {
     const { useEffect } = bootstrap();
-    const effect = defineEffect((input: number): number => {
-      void input;
+    const effect = defineEffect((_: number): number => {
       throw new Error('boom');
     });
 
@@ -136,10 +128,9 @@ describe('defineEffect / useEffect', () => {
 
   it('rejects the returned promise when async errors have no onFailure', async () => {
     const { useEffect } = bootstrap();
-    const effect = defineEffect((input: number): Promise<number> => {
-      void input;
-      return Promise.reject(new Error('async boom'));
-    });
+    const effect = defineEffect(
+      (_: number): Promise<number> => Promise.reject(new Error('async boom')),
+    );
 
     await expect(useEffect(effect)(0)).rejects.toThrow(/async boom/);
   });
@@ -170,8 +161,7 @@ describe('defineEffect / useEffect', () => {
   });
 
   it('bubbles errors from onStart itself (programmer error, not effect failure)', () => {
-    const registry = createRegistry();
-    const { useEffect } = bindRegistry(registry);
+    const { useEffect } = bindRegistry(createRegistry());
     const effect = defineEffect((x: number) => x, { onStart: markPending });
 
     // sessionStore was never created in this registry.

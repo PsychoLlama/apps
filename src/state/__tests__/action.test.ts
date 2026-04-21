@@ -2,7 +2,7 @@ import { createEffect, createRoot } from 'solid-js';
 import { defineAction } from '../action';
 import { bindRegistry } from '../bindings';
 import { createRegistry } from '../registry';
-import { createStore, defineStore } from '../store';
+import { defineStore } from '../store';
 
 interface Counter {
   count: number;
@@ -32,33 +32,28 @@ const incrementAndLog = defineAction(
 );
 
 function bootstrap() {
-  const registry = createRegistry();
-  const bound = bindRegistry(registry);
-  createStore(registry, counterStore);
-  createStore(registry, logStore);
-  return { registry, ...bound };
+  const bound = bindRegistry(createRegistry());
+  const counter = bound.createStore(counterStore);
+  const log = bound.createStore(logStore);
+  return { ...bound, counter, log };
 }
 
 describe('defineAction / useAction', () => {
   it('mutates a single store via its draft', () => {
-    const { useStore, useAction } = bootstrap();
-    const counter = useStore(counterStore);
+    const { counter, useAction } = bootstrap();
     useAction(increment)(undefined);
     expect(counter.count).toBe(1);
   });
 
   it('passes input as the trailing handler argument', () => {
-    const { useStore, useAction } = bootstrap();
-    const counter = useStore(counterStore);
+    const { counter, useAction } = bootstrap();
     useAction(addN)(5);
     useAction(addN)(3);
     expect(counter.count).toBe(8);
   });
 
   it('mutates multiple stores in one handler', () => {
-    const { useStore, useAction } = bootstrap();
-    const counter = useStore(counterStore);
-    const log = useStore(logStore);
+    const { counter, log, useAction } = bootstrap();
     useAction(incrementAndLog)('hi');
     useAction(incrementAndLog)('again');
     expect(counter.count).toBe(2);
@@ -66,9 +61,7 @@ describe('defineAction / useAction', () => {
   });
 
   it('sees earlier writes in the same handler across stores', () => {
-    const { useStore, useAction } = bootstrap();
-    const counter = useStore(counterStore);
-    const log = useStore(logStore);
+    const { counter, log, useAction } = bootstrap();
 
     // Writes to counter must be visible to subsequent reads in the same
     // handler, including from a different store's logic.
@@ -88,9 +81,7 @@ describe('defineAction / useAction', () => {
   });
 
   it('batches multi-store updates into one reactive flush', () => {
-    const { useStore, useAction } = bootstrap();
-    const counter = useStore(counterStore);
-    const log = useStore(logStore);
+    const { counter, log, useAction } = bootstrap();
 
     let effectRuns = 0;
     const dispose = createRoot((dispose) => {
@@ -109,8 +100,7 @@ describe('defineAction / useAction', () => {
   });
 
   it('throws when a required store is not created in the registry', () => {
-    const registry = createRegistry();
-    const { useAction } = bindRegistry(registry);
+    const { useAction } = bindRegistry(createRegistry());
     expect(() => useAction(increment)(undefined)).toThrow(/not created/i);
   });
 });

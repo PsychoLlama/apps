@@ -1,4 +1,4 @@
-import { bindRegistry, createRegistry, createStore } from '#state';
+import { bindRegistry, createRegistry } from '#state';
 import {
   pauseTimer,
   resumeTimer,
@@ -9,10 +9,8 @@ import {
 import { timerStore } from '../store';
 
 function setup() {
-  const registry = createRegistry();
-  const bound = bindRegistry(registry);
-  createStore(registry, timerStore);
-  return { ...bound, state: bound.useStore(timerStore) };
+  const bound = bindRegistry(createRegistry());
+  return { ...bound, state: bound.createStore(timerStore) };
 }
 
 describe('timerStore', () => {

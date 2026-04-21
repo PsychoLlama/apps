@@ -1,5 +1,4 @@
-import { createStore, defineStore, GLOBAL_REGISTRY } from '#state';
-import { type Ref } from '#state';
+import { createStore, defineStore, type Ref } from '#state';
 import type { SessionStatus, Track } from './types';
 
 export interface SessionState {
@@ -20,6 +19,5 @@ export const sessionStore = defineStore<SessionState>(() => ({
   chunks: null,
 }));
 
-// Self-bootstrap against the global registry so module imports give
-// callers a live readonly view.
-export const session = createStore(GLOBAL_REGISTRY, sessionStore);
+// Self-bootstrap so module imports give callers a live readonly view.
+export const session = createStore(sessionStore);

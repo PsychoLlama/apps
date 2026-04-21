@@ -1,50 +1,47 @@
 # State Management
 
-- Import from `#state`.
-- Stores are opaque handles materialized in a registry. Actions mutate state. Effects wrap impure work and dispatch actions.
+- Single entry point: `#state`.
+- Stores hold state. Actions mutate it. Effects wrap impure work and dispatch actions at lifecycle boundaries.
+- Naming convention: a store named `timerStore` is referred to as `timer` inside action handlers.
 
 ## Stores
 
-- `defineStore(init)` returns a `StoreRef<T>`. No state is created until `createStore` runs.
-- `createStore(registry, ref)` materializes the store in the registry and returns a `DeepReadonly<T>` view.
-- `destroyStore(registry, ref)` tears it down. Double-create or destroy-missing throws.
-- Module-level `const state = createStore(GLOBAL_REGISTRY, storeRef)` is the conventional bootstrap.
+- `defineStore(init)`: Returns a `StoreRef<T>` — an opaque handle, no state yet.
+- `createStore(storeRef)`: Materializes the store and returns a `DeepReadonly<T>` view for reads.
+- Bootstrap a feature at module load: `export const timer = createStore(timerStore)`.
 
 ## Actions
 
-- `defineAction([StoreA, StoreB], (a, b, input) => { ... })` binds one or more stores to a synchronous handler.
-- Handler drafts are writable; all writes batch into one reactive flush.
-- The input argument is always required at the call site — pass `undefined` when the action takes no input.
+- `defineAction([timerStore, sessionStore], (timer, session, input) => { ... })`: Binds one or more stores to a synchronous handler.
+- Handler drafts are writable; writes batch into one reactive flush.
+- `input` is always present at the call site — pass `undefined` when the action takes none.
 
 ## Effects
 
-- `defineEffect(fn, { onStart?, onSuccess?, onFailure? })` wraps a side-effecting callback with lifecycle actions.
-- `onStart` runs before the callback with the effect's input. `onSuccess` runs after with the resolved value. `onFailure` runs on thrown/rejected errors.
-- Without `onFailure`, sync throws bubble and async rejections reject the returned promise.
-- Callback returns `Output | Promise<Output>`. `perform` returns `void` for sync effects and `Promise<void>` for async.
+- `defineEffect(fn, { onStart?, onSuccess?, onFailure? })`: Wraps a side-effecting callback with lifecycle actions.
+- `onStart` fires with the effect's input before the callback. `onSuccess` fires with the resolved value. `onFailure` fires with the caught error.
+- Callback returns `Output | Promise<Output>`. Dispatch returns `void` (sync) or `Promise<void>` (async).
 
-## Registry
+## Capabilities and Bindings
 
-- `createRegistry()` creates an isolated registry. Tests should build one per case.
-- `GLOBAL_REGISTRY` is the singleton used by app code.
+- Capabilities are low-level side-effect functions (e.g. `startRecording`, `captureTrack`). They know nothing about stores.
+- Bindings layer `defineAction` and `defineEffect` on top, wrapping capabilities with the state transitions that surround them.
+- `ref()` only appears in bindings; capabilities never know about refs.
 
 ## Hooks
 
-- `bindRegistry(registry)` returns `{ useStore, useAction, useEffect }` bound to that registry.
-- Module-level `useStore`, `useAction`, `useEffect` exports are bound to `GLOBAL_REGISTRY`.
-- `useStore(ref)` returns the readonly state. `useAction(action)` and `useEffect(effect)` return callables that dispatch against the bound registry.
-
-## Raw dispatch
-
-- `invoke(registry, action, input)` and `perform(registry, effect, input)` are the underlying primitives the hooks wrap.
+- `useStore(storeRef)`: Returns the readonly state.
+- `useAction(action)`: Returns a callable that dispatches the action.
+- `useEffect(effect)`: Returns a callable that runs the effect.
 
 ## Refs
 
-- `ref(value)` wraps a host object (media streams, recorders) in an opaque `Ref<T>` with a `.current` property.
-- `createMutable` leaves class instances alone, so refs bypass proxy descent.
-- Refs are immutable. Swap by reassigning: `state.recorder = ref(next)`.
-- No automatic release. Clean up the held value explicitly before dropping the ref.
+- `ref(value)`: Wraps a host object (media stream, recorder, etc.) in an opaque `Ref<T>` with a `.current` property.
+- The ref is opaque to reactivity — fields underneath are not tracked.
+- Swap by reassigning: `state.recorder = ref(next)`.
 
 ## Testing
 
-- Per-test registry via `createRegistry()`. Materialize required stores, bind the registry, drive actions and effects through the hooks.
+- Every test builds its own registry via `bindRegistry(createRegistry())`.
+- The bound object exposes the full registry-scoped API: `createStore`, `destroyStore`, `useStore`, `useAction`, `useEffect`, `invoke`, `perform`.
+- Materialize required stores with `bound.createStore(storeRef)`, then drive state through the hooks.

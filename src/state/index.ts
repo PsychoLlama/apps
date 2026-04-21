@@ -1,6 +1,8 @@
-export { defineAction, invoke, type Action, type AnyAction } from './action';
+export { defineAction, type Action, type AnyAction } from './action';
 export {
   bindRegistry,
+  createStore,
+  destroyStore,
   useAction,
   useEffect,
   useStore,
@@ -8,17 +10,10 @@ export {
 } from './bindings';
 export {
   defineEffect,
-  perform,
   type Effect,
   type EffectHandlers,
   type PerformReturn,
 } from './effect';
 export { ref, Ref } from './ref';
-export { createRegistry, GLOBAL_REGISTRY, type Registry } from './registry';
-export {
-  createStore,
-  defineStore,
-  destroyStore,
-  type DeepReadonly,
-  type StoreRef,
-} from './store';
+export { createRegistry } from './registry';
+export { defineStore, type DeepReadonly, type StoreRef } from './store';

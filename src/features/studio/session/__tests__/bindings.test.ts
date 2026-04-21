@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { bindRegistry, createRegistry, createStore } from '#state';
+import { bindRegistry, createRegistry } from '#state';
 import { libraryStore } from '../../library/store';
 import { timerStore } from '../../timer/store';
 import * as capabilities from '../capabilities';
@@ -37,16 +37,12 @@ vi.mock('../capabilities', async () => {
 });
 
 function setup() {
-  const registry = createRegistry();
-  const bound = bindRegistry(registry);
-  createStore(registry, sessionStore);
-  createStore(registry, timerStore);
-  createStore(registry, libraryStore);
+  const bound = bindRegistry(createRegistry());
   return {
     ...bound,
-    session: bound.useStore(sessionStore),
-    timer: bound.useStore(timerStore),
-    library: bound.useStore(libraryStore),
+    session: bound.createStore(sessionStore),
+    timer: bound.createStore(timerStore),
+    library: bound.createStore(libraryStore),
   };
 }
 
