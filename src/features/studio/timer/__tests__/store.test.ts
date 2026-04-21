@@ -1,43 +1,21 @@
+import { bindRegistry, createRegistry, createStore } from '#state/next';
 import {
-  type EventBus,
-  createEventBus,
-  publish,
-  ref,
-  useTopic,
-  type Topic,
-} from '#state';
-import { createTimerStore } from '../store';
-import { tick } from '../topics';
-import {
-  startRecordingWorkflow,
-  stopRecordingWorkflow,
-  pauseRecordingWorkflow,
-  resumeRecordingWorkflow,
-} from '../../session/workflows';
-
-/** Publish a void lifecycle topic from a workflow with no input. */
-function fire(bus: EventBus, topic: Topic<unknown>) {
-  publish(bus, topic as Topic<void>);
-}
+  pauseTimer,
+  resumeTimer,
+  startTimer,
+  stopTimer,
+  tick,
+} from '../actions';
+import { timerStore } from '../store';
 
 function setup() {
-  const bus = createEventBus();
-  const [state, dispose] = createTimerStore(bus);
-  const publishTick = useTopic(tick, bus);
-  return { state, dispose, bus, publishTick };
+  const registry = createRegistry();
+  const bound = bindRegistry(registry);
+  createStore(registry, timerStore);
+  return { ...bound, state: bound.useStore(timerStore) };
 }
 
-function publishStarted(bus: ReturnType<typeof createEventBus>) {
-  publish(bus, startRecordingWorkflow.resolved, {
-    tracks: [],
-    streams: {},
-    recorder: ref({} as MediaRecorder),
-    chunks: ref([] as Blob[]),
-    startedAt: 1000,
-  });
-}
-
-describe('createTimerStore', () => {
+describe('timerStore', () => {
   it('initializes as stopped with zero elapsed', () => {
     const { state } = setup();
 
@@ -47,83 +25,83 @@ describe('createTimerStore', () => {
 
   describe('tick', () => {
     it('increments elapsed when running', () => {
-      const { state, bus, publishTick } = setup();
-      publishStarted(bus);
+      const { state, useAction } = setup();
+      useAction(startTimer)(undefined);
 
-      publishTick();
-      publishTick();
-      publishTick();
+      useAction(tick)(undefined);
+      useAction(tick)(undefined);
+      useAction(tick)(undefined);
 
       expect(state.elapsed).toBe(3);
     });
 
     it('does not increment when stopped', () => {
-      const { state, publishTick } = setup();
+      const { state, useAction } = setup();
 
-      publishTick();
-      publishTick();
+      useAction(tick)(undefined);
+      useAction(tick)(undefined);
 
       expect(state.elapsed).toBe(0);
     });
 
     it('does not increment when paused', () => {
-      const { state, bus, publishTick } = setup();
-      publishStarted(bus);
-      publishTick();
-      fire(bus, pauseRecordingWorkflow.started);
+      const { state, useAction } = setup();
+      useAction(startTimer)(undefined);
+      useAction(tick)(undefined);
+      useAction(pauseTimer)(undefined);
 
-      publishTick();
-      publishTick();
+      useAction(tick)(undefined);
+      useAction(tick)(undefined);
 
       expect(state.elapsed).toBe(1);
     });
   });
 
-  describe('session lifecycle', () => {
-    it('starts running and resets on startRecordingWorkflow.resolved', () => {
-      const { state, bus } = setup();
+  describe('lifecycle actions', () => {
+    it('startTimer starts running and resets elapsed', () => {
+      const { state, useAction } = setup();
 
-      publishStarted(bus);
+      useAction(startTimer)(undefined);
 
       expect(state.running).toBe(true);
       expect(state.elapsed).toBe(0);
     });
 
-    it('resets elapsed when a new recording starts', () => {
-      const { state, bus, publishTick } = setup();
-      publishStarted(bus);
-      publishTick();
-      publishTick();
+    it('startTimer resets elapsed on a fresh run', () => {
+      const { state, useAction } = setup();
+      useAction(startTimer)(undefined);
+      useAction(tick)(undefined);
+      useAction(tick)(undefined);
 
-      publishStarted(bus);
+      useAction(startTimer)(undefined);
 
       expect(state.elapsed).toBe(0);
     });
 
-    it('stops on pauseRecordingWorkflow', () => {
-      const { state, bus } = setup();
-      publishStarted(bus);
+    it('pauseTimer stops the timer', () => {
+      const { state, useAction } = setup();
+      useAction(startTimer)(undefined);
 
-      fire(bus, pauseRecordingWorkflow.started);
+      useAction(pauseTimer)(undefined);
 
       expect(state.running).toBe(false);
     });
 
-    it('resumes on resumeRecordingWorkflow', () => {
-      const { state, bus } = setup();
-      publishStarted(bus);
-      fire(bus, pauseRecordingWorkflow.started);
+    it('resumeTimer resumes a paused timer', () => {
+      const { state, useAction } = setup();
+      useAction(startTimer)(undefined);
+      useAction(pauseTimer)(undefined);
 
-      fire(bus, resumeRecordingWorkflow.started);
+      useAction(resumeTimer)(undefined);
 
       expect(state.running).toBe(true);
     });
 
-    it('stops on stopRecordingWorkflow', () => {
-      const { state, bus } = setup();
-      publishStarted(bus);
+    it('stopTimer stops the timer', () => {
+      const { state, useAction } = setup();
+      useAction(startTimer)(undefined);
 
-      publish(bus, stopRecordingWorkflow.started, 60);
+      useAction(stopTimer)(undefined);
 
       expect(state.running).toBe(false);
     });
@@ -131,25 +109,24 @@ describe('createTimerStore', () => {
 
   describe('full cycle', () => {
     it('accumulates time across pause/resume', () => {
-      const { state, bus, publishTick } = setup();
+      const { state, useAction } = setup();
 
-      publishStarted(bus);
-
-      publishTick();
-      publishTick();
+      useAction(startTimer)(undefined);
+      useAction(tick)(undefined);
+      useAction(tick)(undefined);
       expect(state.elapsed).toBe(2);
 
-      fire(bus, pauseRecordingWorkflow.started);
-      publishTick();
+      useAction(pauseTimer)(undefined);
+      useAction(tick)(undefined);
       expect(state.elapsed).toBe(2);
 
-      fire(bus, resumeRecordingWorkflow.started);
-      publishTick();
-      publishTick();
-      publishTick();
+      useAction(resumeTimer)(undefined);
+      useAction(tick)(undefined);
+      useAction(tick)(undefined);
+      useAction(tick)(undefined);
       expect(state.elapsed).toBe(5);
 
-      publish(bus, stopRecordingWorkflow.started, 5);
+      useAction(stopTimer)(undefined);
       expect(state.running).toBe(false);
     });
   });

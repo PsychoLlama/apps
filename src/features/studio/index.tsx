@@ -1,6 +1,7 @@
 import { For, Show, onCleanup, onMount } from 'solid-js';
 import { Button, Callout, Flex, Heading, Link, Text } from '#ui';
-import { useTopic, useWorkflow } from '#state';
+import { useWorkflow } from '#state';
+import { useAction } from '#state/next';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconClose from 'virtual:icons/mdi/close';
 import IconPlayOutline from 'virtual:icons/mdi/play-outline';
@@ -18,8 +19,9 @@ import {
 import { deleteRecordingWorkflow } from './library/workflows';
 import { session } from './session/store';
 import { library } from './library/store';
+import './timer/bridge'; // Activates old→new session/timer bridge.
 import { timer } from './timer/store';
-import { tick } from './timer/topics';
+import { tick } from './timer/actions';
 import type { Recording } from './library/types';
 import * as css from './studio.css';
 
@@ -389,7 +391,7 @@ export default function Studio() {
   const removeTrack = useWorkflow(removeTrackWorkflow);
   const checkSupport = useWorkflow(checkSupportWorkflow);
   const deleteRecording = useWorkflow(deleteRecordingWorkflow);
-  const publishTick = useTopic(tick);
+  const publishTick = useAction(tick);
 
   function handleStart() {
     void startRecording(() => {
@@ -412,7 +414,7 @@ export default function Studio() {
   onMount(() => {
     checkSupport();
   });
-  const tickInterval = setInterval(publishTick, 1000);
+  const tickInterval = setInterval(() => publishTick(undefined), 1000);
 
   onCleanup(() => {
     clearInterval(tickInterval);
