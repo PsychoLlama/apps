@@ -88,7 +88,7 @@ const sizeMap = {
 } as const;
 
 export const size = styleVariants(
-  Object.fromEntries(sizes.map((s) => [s, sizeMap[s]])) as Record<
+  Object.fromEntries(sizes.map((key) => [key, sizeMap[key]])) as Record<
     (typeof sizes)[number],
     (typeof sizeMap)[1]
   >,

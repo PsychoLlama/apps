@@ -25,9 +25,9 @@ export function resolvePaddingClasses(
   padding: PaddingProps,
 ): (string | false | undefined)[] {
   return [
-    padding.p && css.p[padding.p],
-    padding.px && css.px[padding.px],
-    padding.py && css.py[padding.py],
+    padding.p && css.padding[padding.p],
+    padding.px && css.paddingX[padding.px],
+    padding.py && css.paddingY[padding.py],
   ];
 }
 

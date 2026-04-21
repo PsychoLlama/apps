@@ -34,8 +34,8 @@ function createRecorder(streams: Record<string, MediaStream>): {
   const recorder = new MediaRecorder(combined, {
     mimeType: preferredMimeType(),
   });
-  recorder.ondataavailable = (e) => {
-    if (e.data.size > 0) chunks.push(e.data);
+  recorder.ondataavailable = (event) => {
+    if (event.data.size > 0) chunks.push(event.data);
   };
   recorder.start(1000);
 
@@ -69,7 +69,7 @@ export async function startRecording(
 
   const { recorder, chunks } = createRecorder(streams);
 
-  const videoTrack = tracks.find((t) => t.type === 'screen');
+  const videoTrack = tracks.find((track) => track.type === 'screen');
   if (videoTrack) {
     streams[videoTrack.id]
       .getVideoTracks()[0]

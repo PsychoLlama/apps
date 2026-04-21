@@ -67,11 +67,11 @@ describe('defineAction / useAction', () => {
     // handler, including from a different store's logic.
     const crossStore = defineAction(
       [counterStore, logStore],
-      (c, l, amount: number) => {
-        c.count += amount;
-        l.entries.push(`counter=${c.count}`);
-        c.count += 1;
-        l.entries.push(`counter=${c.count}`);
+      (counter, log, amount: number) => {
+        counter.count += amount;
+        log.entries.push(`counter=${counter.count}`);
+        counter.count += 1;
+        log.entries.push(`counter=${counter.count}`);
       },
     );
 

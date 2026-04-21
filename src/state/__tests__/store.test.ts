@@ -70,10 +70,10 @@ describe('createStore', () => {
   });
 
   it('isolates state across registries', () => {
-    const a = bindRegistry(createRegistry());
-    const b = bindRegistry(createRegistry());
-    const stateA = a.createStore(counterStore);
-    const stateB = b.createStore(counterStore);
+    const first = bindRegistry(createRegistry());
+    const second = bindRegistry(createRegistry());
+    const stateA = first.createStore(counterStore);
+    const stateB = second.createStore(counterStore);
     expect(stateA).not.toBe(stateB);
     expect(stateA.count).toBe(0);
     expect(stateB.count).toBe(0);
@@ -94,35 +94,35 @@ describe('createStore', () => {
 
   it('tracks fields independently for fine-grained reactivity', () => {
     interface Shape {
-      a: number;
-      b: number;
+      first: number;
+      second: number;
     }
-    const store = defineStore<Shape>(() => ({ a: 0, b: 0 }));
+    const store = defineStore<Shape>(() => ({ first: 0, second: 0 }));
     const { createStore } = bindRegistry(createRegistry());
     const state = createStore(store);
 
-    let aRuns = 0;
-    let bRuns = 0;
+    let firstRuns = 0;
+    let secondRuns = 0;
     const dispose = createRoot((dispose) => {
       createEffect(() => {
-        void state.a;
-        aRuns += 1;
+        void state.first;
+        firstRuns += 1;
       });
       createEffect(() => {
-        void state.b;
-        bRuns += 1;
+        void state.second;
+        secondRuns += 1;
       });
       return dispose;
     });
 
-    expect(aRuns).toBe(1);
-    expect(bRuns).toBe(1);
+    expect(firstRuns).toBe(1);
+    expect(secondRuns).toBe(1);
 
-    // Mutate `a` only — `b`'s effect should not rerun.
+    // Mutate `first` only — `second`'s effect should not rerun.
     const writable = state as Shape;
-    writable.a = 5;
-    expect(aRuns).toBe(2);
-    expect(bRuns).toBe(1);
+    writable.first = 5;
+    expect(firstRuns).toBe(2);
+    expect(secondRuns).toBe(1);
 
     dispose();
   });

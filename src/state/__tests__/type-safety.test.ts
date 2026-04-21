@@ -14,17 +14,19 @@ interface Counter {
 
 const counterStore = defineStore<Counter>(() => ({ count: 0 }));
 
-const noInput = defineAction([counterStore], (c) => {
-  c.count += 1;
+const noInput = defineAction([counterStore], (counter) => {
+  counter.count += 1;
 });
 
-const withNumber = defineAction([counterStore], (c, n: number) => {
-  c.count += n;
+const withNumber = defineAction([counterStore], (counter, amount: number) => {
+  counter.count += amount;
 });
 
-const withError = defineAction([counterStore], (_c, _e: Error) => {});
+const withError = defineAction([counterStore], (counter, error: Error) => {
+  counter.count += error.message.length;
+});
 
-const numberEffect = defineEffect((x: number) => x);
+const numberEffect = defineEffect((value: number) => value);
 
 // Expressions below are type-checked but never executed.
 const check = (): void => {
@@ -49,29 +51,29 @@ const check = (): void => {
 
   // Lifecycle slots: an action with Input = unknown reuses across any
   // effect (intended pattern, via contravariance on the phantom brand).
-  defineEffect((x: number) => x, { onStart: noInput });
-  defineEffect((x: string) => x, { onStart: noInput });
+  defineEffect((value: number) => value, { onStart: noInput });
+  defineEffect((value: string) => value, { onStart: noInput });
 
   // Lifecycle slots: a narrower Input can't accept a wider slot's input.
-  defineEffect((x: number) => x, {
+  defineEffect((value: number) => value, {
     // @ts-expect-error — onStart expects number; action accepts Error.
     onStart: withError,
   });
-  defineEffect((x: number) => x, {
+  defineEffect((value: number) => value, {
     // @ts-expect-error — onSuccess expects number; action accepts Error.
     onSuccess: withError,
   });
-  defineEffect((x: number) => x, {
+  defineEffect((value: number) => value, {
     // @ts-expect-error — onFailure expects Error; action accepts number.
     onFailure: withNumber,
   });
 
   // Inline defineAction: Stores and draft types still flow through.
-  defineEffect((x: number) => x, {
-    onStart: defineAction([counterStore], (c) => {
+  defineEffect((value: number) => value, {
+    onStart: defineAction([counterStore], (counter) => {
       // @ts-expect-error — `missing` is not on Counter.
-      c.missing = true;
-      c.count += 1;
+      counter.missing = true;
+      counter.count += 1;
     }),
   });
 };

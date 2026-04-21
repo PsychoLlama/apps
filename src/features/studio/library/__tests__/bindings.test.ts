@@ -42,7 +42,7 @@ describe('addRecording', () => {
       url: 'blob:b',
     });
 
-    expect(library.recordings.map((r) => r.name)).toEqual([
+    expect(library.recordings.map((recording) => recording.name)).toEqual([
       'Recording 1',
       'Recording 2',
     ]);
@@ -86,7 +86,7 @@ describe('deleteRecording', () => {
 
     useAction(deleteRecording)('a');
 
-    expect(library.recordings.map((r) => r.id)).toEqual(['b']);
+    expect(library.recordings.map((recording) => recording.id)).toEqual(['b']);
   });
 
   it('is a no-op on an unknown id', () => {

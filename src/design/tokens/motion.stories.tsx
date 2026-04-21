@@ -128,14 +128,14 @@ export const Motion: Story = {
 
         <Grid as="div" gap={3} align="center" class={css.easingGrid}>
           <For each={easings}>
-            {(e) => (
+            {(easing) => (
               <>
                 <Text as="span" size={2} color="lowContrast">
-                  {e.label}
+                  {easing.label}
                 </Text>
                 <EasingTrack
                   duration={`calc(${slow[2]} * 2)`}
-                  easing={e.value}
+                  easing={easing.value}
                 />
               </>
             )}
@@ -150,11 +150,11 @@ export const Motion: Story = {
 
         <Flex as="div" wrap="wrap" gap={5}>
           <For each={durations}>
-            {(d) => (
+            {(duration) => (
               <Flex as="div" direction="column" gap={1}>
-                <ColorSwatch duration={d.value} />
+                <ColorSwatch duration={duration.value} />
                 <Text as="p" size={1} color="lowContrast" align="center">
-                  {d.label}
+                  {duration.label}
                 </Text>
               </Flex>
             )}

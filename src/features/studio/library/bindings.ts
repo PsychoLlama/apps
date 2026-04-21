@@ -10,9 +10,7 @@ export interface AddRecordingInput {
 }
 
 // --- Actions ---
-// Named consts because TS can't infer the `Stores` tuple when
-// `defineAction` is called as an argument to `defineEffect`. Exported
-// so tests can drive state transitions directly.
+// Named and exported so tests can drive state transitions directly.
 
 export const addRecording = defineAction(
   [libraryStore],
@@ -30,7 +28,9 @@ export const addRecording = defineAction(
 export const deleteRecording = defineAction(
   [libraryStore],
   (library, id: string) => {
-    const index = library.recordings.findIndex((r) => r.id === id);
+    const index = library.recordings.findIndex(
+      (recording) => recording.id === id,
+    );
     if (index !== -1) library.recordings.splice(index, 1);
   },
 );

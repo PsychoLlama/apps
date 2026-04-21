@@ -18,9 +18,9 @@ export function resolveMarginClasses(
   margin: MarginProps,
 ): (string | false | undefined)[] {
   return [
-    margin.m && css.m[margin.m],
-    margin.mx && css.mx[margin.mx],
-    margin.my && css.my[margin.my],
+    margin.m && css.margin[margin.m],
+    margin.mx && css.marginX[margin.mx],
+    margin.my && css.marginY[margin.my],
   ];
 }
 

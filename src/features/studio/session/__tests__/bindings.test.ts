@@ -49,7 +49,9 @@ function setup() {
 function makeResult(tracks: Track[] = []): RecordingResult {
   return {
     tracks,
-    streams: Object.fromEntries(tracks.map((t) => [t.id, {} as MediaStream])),
+    streams: Object.fromEntries(
+      tracks.map((track) => [track.id, {} as MediaStream]),
+    ),
     recorder: {} as MediaRecorder,
     chunks: [] as Blob[],
   };

@@ -32,12 +32,12 @@ describe('bindRegistry', () => {
   });
 
   it('isolates state across registries', () => {
-    const a = bindRegistry(createRegistry());
-    const b = bindRegistry(createRegistry());
-    const counterA = a.createStore(counterStore);
-    const counterB = b.createStore(counterStore);
+    const first = bindRegistry(createRegistry());
+    const second = bindRegistry(createRegistry());
+    const counterA = first.createStore(counterStore);
+    const counterB = second.createStore(counterStore);
 
-    a.useAction(increment)();
+    first.useAction(increment)();
     expect(counterA.count).toBe(1);
     expect(counterB.count).toBe(0);
   });
@@ -46,7 +46,7 @@ describe('bindRegistry', () => {
     const { useEffect } = bindRegistry(createRegistry());
 
     const effect = defineEffect(
-      (x: number): Promise<number> => Promise.resolve(x * 2),
+      (value: number): Promise<number> => Promise.resolve(value * 2),
     );
     await expect(useEffect(effect)(3)).resolves.toBeUndefined();
   });
@@ -54,7 +54,7 @@ describe('bindRegistry', () => {
   it('wraps perform for sync effects', () => {
     const { useEffect } = bindRegistry(createRegistry());
 
-    const fn = (x: number): number => x + 1;
+    const fn = (value: number): number => value + 1;
     const effect = defineEffect(fn);
     const result: void = useEffect(effect)(1);
     expect(result).toBeUndefined();
@@ -64,11 +64,11 @@ describe('bindRegistry', () => {
     const bound = bindRegistry(createRegistry());
     const counter = bound.createStore(counterStore);
 
-    bound.invoke(increment, undefined);
+    bound.invoke(increment);
     expect(counter.count).toBe(1);
 
     const effect = defineEffect(
-      (x: number): Promise<number> => Promise.resolve(x),
+      (value: number): Promise<number> => Promise.resolve(value),
     );
     await expect(bound.perform(effect, 5)).resolves.toBeUndefined();
   });
@@ -77,8 +77,8 @@ describe('bindRegistry', () => {
 describe('module-level bindings (global registry)', () => {
   it('read and mutate the global registry', () => {
     const oneOff = defineStore<Counter>(() => ({ count: 0 }));
-    const bumpOneOff = defineAction([oneOff], (c) => {
-      c.count += 2;
+    const bumpOneOff = defineAction([oneOff], (counter) => {
+      counter.count += 2;
     });
 
     createStore(oneOff);
@@ -97,7 +97,7 @@ describe('module-level bindings (global registry)', () => {
     createStore(oneOff);
     try {
       const effect = defineEffect(
-        (x: number): Promise<number> => Promise.resolve(x),
+        (value: number): Promise<number> => Promise.resolve(value),
       );
       await expect(globalUseEffect(effect)(1)).resolves.toBeUndefined();
     } finally {

@@ -99,7 +99,8 @@ export default function Playback() {
   const navigate = useNavigate();
   const deleteRecording = useEffect(deleteRecordingEffect);
 
-  const recording = () => library.recordings.find((r) => r.id === params.id);
+  const recording = () =>
+    library.recordings.find((entry) => entry.id === params.id);
 
   function handleDelete() {
     const rec = recording();

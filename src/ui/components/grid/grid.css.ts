@@ -5,7 +5,7 @@ export const base = style({
   display: 'grid',
 });
 
-const repeat = (n: number) => `repeat(${n}, minmax(0, 1fr))`;
+const repeat = (count: number) => `repeat(${count}, minmax(0, 1fr))`;
 
 export const columns = styleVariants({
   1: { gridTemplateColumns: repeat(1) },

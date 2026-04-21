@@ -21,47 +21,53 @@ import type { Track } from './types';
 
 export const beginRecording = defineAction(
   [sessionStore, timerStore],
-  (s, t) => {
-    s.status = 'recording';
-    s.error = null;
-    t.running = true;
-    t.elapsed = 0;
+  (session, timer) => {
+    session.status = 'recording';
+    session.error = null;
+    timer.running = true;
+    timer.elapsed = 0;
   },
 );
 
 export const setRecordingContext = defineAction(
   [sessionStore],
-  (s, result: RecordingResult) => {
-    s.tracks = result.tracks;
-    s.streams = Object.fromEntries(
+  (session, result: RecordingResult) => {
+    session.tracks = result.tracks;
+    session.streams = Object.fromEntries(
       Object.entries(result.streams).map(([id, stream]) => [id, ref(stream)]),
     );
-    s.recorder = ref(result.recorder);
-    s.chunks = ref(result.chunks);
+    session.recorder = ref(result.recorder);
+    session.chunks = ref(result.chunks);
   },
 );
 
-export const markError = defineAction([sessionStore], (s, error: Error) => {
-  s.status = 'error';
-  s.error = error.message;
-});
+export const markError = defineAction(
+  [sessionStore],
+  (session, error: Error) => {
+    session.status = 'error';
+    session.error = error.message;
+  },
+);
 
-export const beginStop = defineAction([sessionStore, timerStore], (s, t) => {
-  s.status = 'idle';
-  s.tracks = [];
-  s.error = null;
-  t.running = false;
-});
+export const beginStop = defineAction(
+  [sessionStore, timerStore],
+  (session, timer) => {
+    session.status = 'idle';
+    session.tracks = [];
+    session.error = null;
+    timer.running = false;
+  },
+);
 
 export const finalizeRecording = defineAction(
   [sessionStore, libraryStore],
-  (s, l, result: FinalizedRecording) => {
-    s.streams = {};
-    s.recorder = null;
-    s.chunks = null;
-    l.recordings.push({
+  (session, library, result: FinalizedRecording) => {
+    session.streams = {};
+    session.recorder = null;
+    session.chunks = null;
+    library.recordings.push({
       id: result.id,
-      name: `Recording ${l.recordings.length + 1}`,
+      name: `Recording ${library.recordings.length + 1}`,
       duration: result.elapsed,
       createdAt: result.stoppedAt,
       url: result.url,
@@ -69,37 +75,43 @@ export const finalizeRecording = defineAction(
   },
 );
 
-export const beginPause = defineAction([sessionStore, timerStore], (s, t) => {
-  s.status = 'paused';
-  t.running = false;
-});
+export const beginPause = defineAction(
+  [sessionStore, timerStore],
+  (session, timer) => {
+    session.status = 'paused';
+    timer.running = false;
+  },
+);
 
-export const beginResume = defineAction([sessionStore, timerStore], (s, t) => {
-  s.status = 'recording';
-  t.running = true;
-});
+export const beginResume = defineAction(
+  [sessionStore, timerStore],
+  (session, timer) => {
+    session.status = 'recording';
+    timer.running = true;
+  },
+);
 
 export const appendTrack = defineAction(
   [sessionStore],
-  (s, input: { track: Track; stream: MediaStream }) => {
-    s.tracks.push(input.track);
-    s.streams[input.track.id] = ref(input.stream);
+  (session, input: { track: Track; stream: MediaStream }) => {
+    session.tracks.push(input.track);
+    session.streams[input.track.id] = ref(input.stream);
   },
 );
 
 export const removeTrackFromState = defineAction(
   [sessionStore],
-  (s, trackId: string) => {
-    const index = s.tracks.findIndex((t) => t.id === trackId);
-    if (index !== -1) s.tracks.splice(index, 1);
-    delete s.streams[trackId];
+  (session, trackId: string) => {
+    const index = session.tracks.findIndex((track) => track.id === trackId);
+    if (index !== -1) session.tracks.splice(index, 1);
+    delete session.streams[trackId];
   },
 );
 
 export const markUnsupportedIf = defineAction(
   [sessionStore],
-  (s, supported: boolean) => {
-    if (!supported) s.status = 'unsupported';
+  (session, supported: boolean) => {
+    if (!supported) session.status = 'unsupported';
   },
 );
 
@@ -109,9 +121,9 @@ function unwrapStreams(
   streams: Record<string, unknown>,
 ): Record<string, MediaStream> {
   return Object.fromEntries(
-    Object.entries(streams).map(([id, r]) => [
+    Object.entries(streams).map(([id, wrapped]) => [
       id,
-      (r as Ref<MediaStream>).current,
+      (wrapped as Ref<MediaStream>).current,
     ]),
   );
 }

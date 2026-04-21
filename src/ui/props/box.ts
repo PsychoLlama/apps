@@ -47,8 +47,8 @@ export function resolveBoxClasses(
     ...resolvePaddingClasses(box),
     ...resolveMarginClasses(box),
     box.background && css.bg[box.background],
-    box.radius && css.r[box.radius],
-    box.shadow && css.s[box.shadow],
+    box.radius && css.radiusVariants[box.radius],
+    box.shadow && css.shadowVariants[box.shadow],
   ];
 }
 

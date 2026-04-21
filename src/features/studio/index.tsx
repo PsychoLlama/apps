@@ -166,26 +166,26 @@ function ActiveTracks(props: {
       </Text>
       <Flex as="div" gap={2} wrap="wrap" justify="center">
         <For each={props.tracks}>
-          {(t) => (
+          {(track) => (
             <Text
               as="span"
               size={1}
               selectable={false}
-              class={`${css.trackPill} ${!t.live ? css.trackPillStopped : ''}`}
+              class={`${css.trackPill} ${!track.live ? css.trackPillStopped : ''}`}
             >
               <Flex
                 as="div"
-                class={t.live ? css.trackDotLive : css.trackDotStopped}
+                class={track.live ? css.trackDotLive : css.trackDotStopped}
               />
-              {t.label}
-              <Show when={t.live}>
+              {track.label}
+              <Show when={track.live}>
                 <Button
                   testId="remove-track"
-                  aria-label={`Remove ${t.label}`}
+                  aria-label={`Remove ${track.label}`}
                   size={1}
                   variant="ghost"
                   color="neutral"
-                  onClick={() => props.onRemove(t.id)}
+                  onClick={() => props.onRemove(track.id)}
                 >
                   <IconClose />
                 </Button>

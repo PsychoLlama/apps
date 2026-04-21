@@ -8,6 +8,10 @@ export const bg = styleVariants({
   surface: { background: background.surface },
 });
 
-export const r = styleVariants(radius, (value) => ({ borderRadius: value }));
+export const radiusVariants = styleVariants(radius, (value) => ({
+  borderRadius: value,
+}));
 
-export const s = styleVariants(shadow, (value) => ({ boxShadow: value }));
+export const shadowVariants = styleVariants(shadow, (value) => ({
+  boxShadow: value,
+}));

@@ -19,4 +19,6 @@ const Swatch: ParentComponent = (props) => (
 
 /** Generate `count` numbered swatches. */
 export const swatches = (count: number) =>
-  Array.from({ length: count }, (_, i) => <Swatch>{i + 1}</Swatch>);
+  Array.from({ length: count }, (_value, index) => (
+    <Swatch>{index + 1}</Swatch>
+  ));
