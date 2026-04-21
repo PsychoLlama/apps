@@ -1,31 +1,34 @@
+import { ref } from '#state';
+import { bindRegistry, createRegistry, createStore } from '#state/next';
+import { libraryStore } from '../../library/store';
+import { timerStore } from '../../timer/store';
 import {
-  type EventBus,
-  createEventBus,
-  publish,
-  ref,
-  type Topic,
-} from '#state';
-import { createSessionStore } from '../store';
-import {
-  startRecordingWorkflow,
-  stopRecordingWorkflow,
-  pauseRecordingWorkflow,
-  resumeRecordingWorkflow,
-  addTrackWorkflow,
-  removeTrackWorkflow,
-  checkSupportWorkflow,
-} from '../workflows';
+  appendTrack,
+  beginPause,
+  beginRecording,
+  beginResume,
+  beginStop,
+  finalizeRecording,
+  markError,
+  markUnsupportedIf,
+  removeTrackFromState,
+  setRecordingContext,
+} from '../actions';
+import { sessionStore } from '../store';
 import type { Track } from '../types';
 
-/** Publish a void lifecycle topic from a workflow with no input. */
-function fire(bus: EventBus, topic: Topic<unknown>) {
-  publish(bus, topic as Topic<void>);
-}
-
 function setup() {
-  const bus = createEventBus();
-  const [state, dispose] = createSessionStore(bus);
-  return { state, dispose, bus };
+  const registry = createRegistry();
+  const bound = bindRegistry(registry);
+  createStore(registry, sessionStore);
+  createStore(registry, timerStore);
+  createStore(registry, libraryStore);
+  return {
+    ...bound,
+    session: bound.useStore(sessionStore),
+    timer: bound.useStore(timerStore),
+    library: bound.useStore(libraryStore),
+  };
 }
 
 const fakeTracks: Track[] = [
@@ -33,7 +36,7 @@ const fakeTracks: Track[] = [
   { id: '2', type: 'system-audio', label: 'Audio', live: true },
 ];
 
-function startedPayload(tracks: Track[]) {
+function context(tracks: Track[] = fakeTracks) {
   return {
     tracks,
     streams: Object.fromEntries(
@@ -41,239 +44,224 @@ function startedPayload(tracks: Track[]) {
     ),
     recorder: ref({} as MediaRecorder),
     chunks: ref([] as Blob[]),
-    startedAt: 1000,
   };
 }
 
-function addTrackPayload(track: Track) {
-  return { track, streamRef: ref({} as MediaStream) };
-}
+describe('session actions', () => {
+  it('session starts idle', () => {
+    const { session } = setup();
 
-describe('createSessionStore', () => {
-  it('initializes as idle with no tracks', () => {
-    const { state } = setup();
-
-    expect(state.status).toBe('idle');
-    expect(state.tracks).toEqual([]);
-    expect(state.error).toBeNull();
+    expect(session.status).toBe('idle');
+    expect(session.tracks).toEqual([]);
+    expect(session.error).toBeNull();
   });
 
-  describe('startRecordingWorkflow', () => {
-    it('transitions to recording on started', () => {
-      const { state, bus } = setup();
+  describe('beginRecording', () => {
+    it('transitions session to recording and resets the timer', () => {
+      const { session, timer, useAction } = setup();
 
-      publish(bus, startRecordingWorkflow.started, vi.fn());
+      useAction(beginRecording)(undefined);
 
-      expect(state.status).toBe('recording');
+      expect(session.status).toBe('recording');
+      expect(session.error).toBeNull();
+      expect(timer.running).toBe(true);
+      expect(timer.elapsed).toBe(0);
     });
 
-    it('clears any previous error on started', () => {
-      const { state, bus } = setup();
-      publish(bus, startRecordingWorkflow.rejected, new Error('earlier'));
+    it('clears any previous error', () => {
+      const { session, useAction } = setup();
+      useAction(markError)(new Error('earlier'));
 
-      publish(bus, startRecordingWorkflow.started, vi.fn());
+      useAction(beginRecording)(undefined);
 
-      expect(state.error).toBeNull();
-    });
-
-    it('sets tracks on resolved', () => {
-      const { state, bus } = setup();
-
-      publish(bus, startRecordingWorkflow.resolved, startedPayload(fakeTracks));
-
-      expect(state.tracks).toEqual(fakeTracks);
-    });
-
-    it('transitions to error on rejection', () => {
-      const { state, bus } = setup();
-
-      publish(
-        bus,
-        startRecordingWorkflow.rejected,
-        new Error('Permission denied'),
-      );
-
-      expect(state.status).toBe('error');
-      expect(state.error).toBe('Permission denied');
+      expect(session.error).toBeNull();
     });
   });
 
-  describe('stopRecordingWorkflow', () => {
-    it('transitions to idle and clears tracks', () => {
-      const { state, bus } = setup();
-      publish(bus, startRecordingWorkflow.resolved, startedPayload(fakeTracks));
+  describe('setRecordingContext', () => {
+    it('populates tracks, streams, recorder, chunks', () => {
+      const { session, useAction } = setup();
+      const ctx = context();
 
-      publish(bus, stopRecordingWorkflow.started, 60);
+      useAction(setRecordingContext)(ctx);
 
-      expect(state.status).toBe('idle');
-      expect(state.tracks).toEqual([]);
+      expect(session.tracks).toEqual(fakeTracks);
+      expect(session.streams['1']).toBe(ctx.streams['1']);
+      expect(session.recorder).toBe(ctx.recorder);
+      expect(session.chunks).toBe(ctx.chunks);
+    });
+  });
+
+  describe('markError', () => {
+    it('sets status and error message', () => {
+      const { session, useAction } = setup();
+
+      useAction(markError)(new Error('Permission denied'));
+
+      expect(session.status).toBe('error');
+      expect(session.error).toBe('Permission denied');
+    });
+  });
+
+  describe('beginStop', () => {
+    it('transitions session to idle, clears tracks, stops timer', () => {
+      const { session, timer, useAction } = setup();
+      useAction(beginRecording)(undefined);
+      useAction(setRecordingContext)(context());
+
+      useAction(beginStop)(undefined);
+
+      expect(session.status).toBe('idle');
+      expect(session.tracks).toEqual([]);
+      expect(timer.running).toBe(false);
     });
 
-    it('clears refs on resolved', () => {
-      const { state, bus } = setup();
-      publish(bus, startRecordingWorkflow.resolved, startedPayload(fakeTracks));
+    it('preserves refs so the stop effect can still reach them', () => {
+      const { session, useAction } = setup();
+      const ctx = context();
+      useAction(setRecordingContext)(ctx);
 
-      publish(bus, stopRecordingWorkflow.resolved, {
-        id: 'r1',
-        elapsed: 10,
+      useAction(beginStop)(undefined);
+
+      expect(session.recorder).toBe(ctx.recorder);
+      expect(session.chunks).toBe(ctx.chunks);
+    });
+  });
+
+  describe('finalizeRecording', () => {
+    it('clears refs and appends the recording to the library', () => {
+      const { session, library, useAction } = setup();
+      useAction(setRecordingContext)(context());
+
+      useAction(finalizeRecording)({
+        id: 'rec-1',
+        elapsed: 45,
         stoppedAt: 2000,
         url: 'blob:test',
       });
 
-      expect(state.streams).toEqual({});
-      expect(state.recorder).toBeNull();
-      expect(state.chunks).toBeNull();
-    });
-
-    it('clears error state', () => {
-      const { state, bus } = setup();
-      publish(bus, startRecordingWorkflow.rejected, new Error('oops'));
-
-      publish(bus, stopRecordingWorkflow.started, 0);
-
-      expect(state.error).toBeNull();
-    });
-  });
-
-  describe('pauseRecordingWorkflow', () => {
-    it('transitions to paused', () => {
-      const { state, bus } = setup();
-      publish(bus, startRecordingWorkflow.started, vi.fn());
-
-      fire(bus, pauseRecordingWorkflow.started);
-
-      expect(state.status).toBe('paused');
+      expect(session.streams).toEqual({});
+      expect(session.recorder).toBeNull();
+      expect(session.chunks).toBeNull();
+      expect(library.recordings).toHaveLength(1);
+      expect(library.recordings[0]).toEqual({
+        id: 'rec-1',
+        name: 'Recording 1',
+        duration: 45,
+        createdAt: 2000,
+        url: 'blob:test',
+      });
     });
   });
 
-  describe('resumeRecordingWorkflow', () => {
-    it('transitions back to recording', () => {
-      const { state, bus } = setup();
-      publish(bus, startRecordingWorkflow.started, vi.fn());
-      fire(bus, pauseRecordingWorkflow.started);
+  describe('beginPause', () => {
+    it('pauses session and freezes the timer', () => {
+      const { session, timer, useAction } = setup();
+      useAction(beginRecording)(undefined);
 
-      fire(bus, resumeRecordingWorkflow.started);
+      useAction(beginPause)(undefined);
 
-      expect(state.status).toBe('recording');
+      expect(session.status).toBe('paused');
+      expect(timer.running).toBe(false);
     });
   });
 
-  describe('addTrackWorkflow', () => {
-    it('appends a track on resolved', () => {
-      const { state, bus } = setup();
+  describe('beginResume', () => {
+    it('resumes session and restarts the timer', () => {
+      const { session, timer, useAction } = setup();
+      useAction(beginRecording)(undefined);
+      useAction(beginPause)(undefined);
+
+      useAction(beginResume)(undefined);
+
+      expect(session.status).toBe('recording');
+      expect(timer.running).toBe(true);
+    });
+  });
+
+  describe('appendTrack', () => {
+    it('adds a track and stores its stream ref', () => {
+      const { session, useAction } = setup();
+      const streamRef = ref({} as MediaStream);
       const track: Track = {
         id: '3',
         type: 'microphone',
-        label: 'Microphone',
+        label: 'Mic',
         live: true,
       };
 
-      publish(bus, addTrackWorkflow.resolved, addTrackPayload(track));
+      useAction(appendTrack)({ track, streamRef });
 
-      expect(state.tracks).toEqual([track]);
-    });
-
-    it('stores the stream ref alongside the track', () => {
-      const { state, bus } = setup();
-      const track: Track = {
-        id: '3',
-        type: 'microphone',
-        label: 'Microphone',
-        live: true,
-      };
-      const payload = addTrackPayload(track);
-
-      publish(bus, addTrackWorkflow.resolved, payload);
-
-      expect(state.streams['3']).toBe(payload.streamRef);
+      expect(session.tracks).toEqual([track]);
+      expect(session.streams['3']).toBe(streamRef);
     });
   });
 
-  describe('removeTrackWorkflow', () => {
-    it('removes a track by ID', () => {
-      const { state, bus } = setup();
-      publish(
-        bus,
-        startRecordingWorkflow.resolved,
-        startedPayload([
+  describe('removeTrackFromState', () => {
+    it('removes a track by id and drops its stream ref', () => {
+      const { session, useAction } = setup();
+      useAction(setRecordingContext)(
+        context([
           { id: '1', type: 'screen', label: 'Screen', live: true },
           { id: '2', type: 'microphone', label: 'Mic', live: true },
         ]),
       );
 
-      publish(bus, removeTrackWorkflow.resolved, '1');
+      useAction(removeTrackFromState)('1');
 
-      expect(state.tracks).toEqual([
+      expect(session.tracks).toEqual([
         { id: '2', type: 'microphone', label: 'Mic', live: true },
       ]);
+      expect(session.streams['1']).toBeUndefined();
     });
 
-    it('does nothing for an unknown track ID', () => {
-      const { state, bus } = setup();
-      publish(
-        bus,
-        startRecordingWorkflow.resolved,
-        startedPayload([
-          { id: '1', type: 'screen', label: 'Screen', live: true },
-        ]),
+    it('is a no-op when the id is unknown', () => {
+      const { session, useAction } = setup();
+      useAction(setRecordingContext)(
+        context([{ id: '1', type: 'screen', label: 'Screen', live: true }]),
       );
 
-      publish(bus, removeTrackWorkflow.resolved, 'unknown');
+      useAction(removeTrackFromState)('unknown');
 
-      expect(state.tracks).toHaveLength(1);
-    });
-
-    it('drops the stream ref', () => {
-      const { state, bus } = setup();
-      publish(
-        bus,
-        startRecordingWorkflow.resolved,
-        startedPayload([
-          { id: '1', type: 'screen', label: 'Screen', live: true },
-        ]),
-      );
-
-      publish(bus, removeTrackWorkflow.resolved, '1');
-
-      expect(state.streams['1']).toBeUndefined();
+      expect(session.tracks).toHaveLength(1);
     });
   });
 
-  describe('checkSupportWorkflow', () => {
-    it('transitions to unsupported when not supported', () => {
-      const { state, bus } = setup();
+  describe('markUnsupportedIf', () => {
+    it('transitions to unsupported when called with false', () => {
+      const { session, useAction } = setup();
 
-      publish(bus, checkSupportWorkflow.resolved, false);
+      useAction(markUnsupportedIf)(false);
 
-      expect(state.status).toBe('unsupported');
+      expect(session.status).toBe('unsupported');
     });
 
-    it('stays idle when supported', () => {
-      const { state, bus } = setup();
+    it('stays idle when called with true', () => {
+      const { session, useAction } = setup();
 
-      publish(bus, checkSupportWorkflow.resolved, true);
+      useAction(markUnsupportedIf)(true);
 
-      expect(state.status).toBe('idle');
+      expect(session.status).toBe('idle');
     });
   });
 
   describe('full lifecycle', () => {
     it('idle → recording → paused → recording → idle', () => {
-      const { state, bus } = setup();
+      const { session, useAction } = setup();
 
-      expect(state.status).toBe('idle');
+      expect(session.status).toBe('idle');
 
-      publish(bus, startRecordingWorkflow.started, vi.fn());
-      expect(state.status).toBe('recording');
+      useAction(beginRecording)(undefined);
+      expect(session.status).toBe('recording');
 
-      fire(bus, pauseRecordingWorkflow.started);
-      expect(state.status).toBe('paused');
+      useAction(beginPause)(undefined);
+      expect(session.status).toBe('paused');
 
-      fire(bus, resumeRecordingWorkflow.started);
-      expect(state.status).toBe('recording');
+      useAction(beginResume)(undefined);
+      expect(session.status).toBe('recording');
 
-      publish(bus, stopRecordingWorkflow.started, 120);
-      expect(state.status).toBe('idle');
+      useAction(beginStop)(undefined);
+      expect(session.status).toBe('idle');
     });
   });
 });

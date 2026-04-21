@@ -1,6 +1,5 @@
 import { For, Show, onCleanup, onMount } from 'solid-js';
 import { Button, Callout, Flex, Heading, Link, Text } from '#ui';
-import { useWorkflow } from '#state';
 import { useAction, useEffect } from '#state/next';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconClose from 'virtual:icons/mdi/close';
@@ -8,19 +7,17 @@ import IconPlayOutline from 'virtual:icons/mdi/play-outline';
 import IconTrashCanOutline from 'virtual:icons/mdi/trash-can-outline';
 import SiteHeader from '../../components/site-header';
 import {
-  startRecordingWorkflow,
-  stopRecordingWorkflow,
-  pauseRecordingWorkflow,
-  resumeRecordingWorkflow,
-  addTrackWorkflow,
-  removeTrackWorkflow,
-  checkSupportWorkflow,
-} from './session/workflows';
+  addTrackEffect,
+  checkSupportEffect,
+  pauseRecordingEffect,
+  removeTrackEffect,
+  resumeRecordingEffect,
+  startRecordingEffect,
+  stopRecordingEffect,
+} from './session/effects';
 import { deleteRecordingEffect } from './library/effects';
 import { session } from './session/store';
-import './library/bridge'; // Activates old→new session/library bridge.
 import { library } from './library/store';
-import './timer/bridge'; // Activates old→new session/timer bridge.
 import { timer } from './timer/store';
 import { tick } from './timer/actions';
 import type { Recording } from './library/types';
@@ -384,13 +381,13 @@ function UnsupportedState() {
 // --- Root ---
 
 export default function Studio() {
-  const startRecording = useWorkflow(startRecordingWorkflow);
-  const stopRecording = useWorkflow(stopRecordingWorkflow);
-  const pauseRecording = useWorkflow(pauseRecordingWorkflow);
-  const resumeRecording = useWorkflow(resumeRecordingWorkflow);
-  const addTrack = useWorkflow(addTrackWorkflow);
-  const removeTrack = useWorkflow(removeTrackWorkflow);
-  const checkSupport = useWorkflow(checkSupportWorkflow);
+  const startRecording = useEffect(startRecordingEffect);
+  const stopRecording = useEffect(stopRecordingEffect);
+  const pauseRecording = useEffect(pauseRecordingEffect);
+  const resumeRecording = useEffect(resumeRecordingEffect);
+  const addTrack = useEffect(addTrackEffect);
+  const removeTrack = useEffect(removeTrackEffect);
+  const checkSupport = useEffect(checkSupportEffect);
   const deleteRecording = useEffect(deleteRecordingEffect);
   const publishTick = useAction(tick);
 
@@ -413,7 +410,7 @@ export default function Studio() {
   }
 
   onMount(() => {
-    checkSupport();
+    checkSupport(undefined);
   });
   const tickInterval = setInterval(() => publishTick(undefined), 1000);
 
@@ -423,10 +420,10 @@ export default function Studio() {
 
   return (
     <>
-      <Show when={session().status === 'unsupported'}>
+      <Show when={session.status === 'unsupported'}>
         <UnsupportedState />
       </Show>
-      <Show when={session().status !== 'unsupported'}>
+      <Show when={session.status !== 'unsupported'}>
         <Flex as="div" direction="column" class={css.shell}>
           <SiteHeader title="Recording Studio" />
           <Flex as="div" grow class={css.body}>
@@ -437,31 +434,31 @@ export default function Studio() {
               grow
               class={css.main}
             >
-              <Show when={session().status === 'idle'}>
+              <Show when={session.status === 'idle'}>
                 <IdleState onStart={handleStart} />
               </Show>
-              <Show when={session().status === 'recording'}>
+              <Show when={session.status === 'recording'}>
                 <RecordingState
                   elapsed={timer.elapsed}
-                  tracks={session().tracks}
-                  onPause={pauseRecording}
+                  tracks={[...session.tracks]}
+                  onPause={() => pauseRecording(undefined)}
                   onStop={handleStop}
                   onAddTrack={handleAddTrack}
                   onRemoveTrack={removeTrack}
                 />
               </Show>
-              <Show when={session().status === 'paused'}>
+              <Show when={session.status === 'paused'}>
                 <PausedState
                   elapsed={timer.elapsed}
-                  tracks={session().tracks}
-                  onResume={resumeRecording}
+                  tracks={[...session.tracks]}
+                  onResume={() => resumeRecording(undefined)}
                   onStop={handleStop}
                   onAddTrack={handleAddTrack}
                   onRemoveTrack={removeTrack}
                 />
               </Show>
-              <Show when={session().status === 'error'}>
-                <ErrorState error={session().error} onRetry={handleStart} />
+              <Show when={session.status === 'error'}>
+                <ErrorState error={session.error} onRetry={handleStart} />
               </Show>
             </Flex>
             <LibraryPanel

@@ -1,14 +1,6 @@
-import { defineStore, type Ref } from '#state';
+import { createStore, defineStore, GLOBAL_REGISTRY } from '#state/next';
+import { type Ref } from '#state';
 import type { SessionStatus, Track } from './types';
-import {
-  startRecordingWorkflow,
-  stopRecordingWorkflow,
-  pauseRecordingWorkflow,
-  resumeRecordingWorkflow,
-  addTrackWorkflow,
-  removeTrackWorkflow,
-  checkSupportWorkflow,
-} from './workflows';
 
 export interface SessionState {
   status: SessionStatus;
@@ -19,82 +11,15 @@ export interface SessionState {
   chunks: Ref<Blob[]> | null;
 }
 
-export const createSessionStore = defineStore<SessionState>(
-  () => ({
-    status: 'idle',
-    tracks: [],
-    error: null,
-    streams: {},
-    recorder: null,
-    chunks: null,
-  }),
-  (on) => {
-    on(startRecordingWorkflow.started, (state) => {
-      state.status = 'recording';
-      state.error = null;
-    });
+export const sessionStore = defineStore<SessionState>(() => ({
+  status: 'idle',
+  tracks: [],
+  error: null,
+  streams: {},
+  recorder: null,
+  chunks: null,
+}));
 
-    on(
-      startRecordingWorkflow.resolved,
-      (state, { tracks, streams, recorder, chunks }) => {
-        state.tracks = tracks;
-        state.streams = streams;
-        state.recorder = recorder;
-        state.chunks = chunks;
-      },
-    );
-
-    on(startRecordingWorkflow.rejected, (state, error) => {
-      state.status = 'error';
-      state.error = error.message;
-    });
-
-    on(stopRecordingWorkflow.started, (state) => {
-      state.status = 'idle';
-      state.tracks = [];
-      state.error = null;
-    });
-
-    // Refs clear on resolved so stop/release activities still see them.
-    on(stopRecordingWorkflow.resolved, (state) => {
-      state.streams = {};
-      state.recorder = null;
-      state.chunks = null;
-    });
-
-    on(pauseRecordingWorkflow.started, (state) => {
-      state.status = 'paused';
-    });
-
-    on(resumeRecordingWorkflow.started, (state) => {
-      state.status = 'recording';
-    });
-
-    on(addTrackWorkflow.resolved, (state, { track, streamRef }) => {
-      state.tracks.push(track);
-      state.streams[track.id] = streamRef;
-    });
-
-    on(removeTrackWorkflow.resolved, (state, trackId) => {
-      const index = state.tracks.findIndex((t) => t.id === trackId);
-      if (index !== -1) state.tracks.splice(index, 1);
-      delete state.streams[trackId];
-    });
-
-    on(checkSupportWorkflow.resolved, (state, supported) => {
-      if (!supported) state.status = 'unsupported';
-    });
-  },
-);
-
-/**
- * Accessor for the module-level session singleton. Lazy so that
- * `defineStore`'s deferred transitions callback runs only *after* every
- * module in the import cycle (store ↔ workflows ↔ activities) has
- * finished evaluating.
- */
-let instance: SessionState | null = null;
-export const session = (): SessionState => {
-  if (instance === null) [instance] = createSessionStore();
-  return instance;
-};
+// Self-bootstrap against the global registry so module imports give
+// callers a live readonly view.
+export const session = createStore(GLOBAL_REGISTRY, sessionStore);
