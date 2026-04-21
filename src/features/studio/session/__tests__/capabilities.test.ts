@@ -203,7 +203,7 @@ describe('startRecording', () => {
 describe('stopRecording', () => {
   it('throws when no recorder is active', async () => {
     await expect(
-      stopRecording(asSession({}), { running: false, elapsed: 0 }),
+      stopRecording(asSession({}), { startedAt: null, elapsed: 0 }),
     ).rejects.toThrow(/no active recorder/i);
   });
 
@@ -217,7 +217,7 @@ describe('stopRecording', () => {
     });
 
     const result = await stopRecording(session, {
-      running: false,
+      startedAt: null,
       elapsed: 42,
     });
 

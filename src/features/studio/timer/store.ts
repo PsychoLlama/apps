@@ -2,15 +2,19 @@ import { createStore, defineStore } from '#state';
 
 /** Elapsed-time counter driving the studio's recording display. */
 export interface TimerState {
-  /** `true` while `tick` should advance `elapsed`. */
-  running: boolean;
-  /** Seconds accumulated since the current run started. */
+  /** Seconds accumulated for the current recording run. */
   elapsed: number;
+  /**
+   * Wall-clock anchor (epoch ms) for the current run. `tick` derives
+   * `elapsed` against it. `null` when the timer is paused or stopped —
+   * `elapsed` then holds the captured value.
+   */
+  startedAt: number | null;
 }
 
 export const timerStore = defineStore<TimerState>(() => ({
-  running: false,
   elapsed: 0,
+  startedAt: null,
 }));
 
 // Self-bootstrap so module imports give callers a live readonly view.

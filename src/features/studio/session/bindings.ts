@@ -30,8 +30,8 @@ export const beginRecording = defineAction(
   (session, timer) => {
     session.status = 'recording';
     session.error = null;
-    timer.running = true;
     timer.elapsed = 0;
+    timer.startedAt = Date.now();
   },
 );
 
@@ -53,11 +53,24 @@ export const markError = defineAction(
   },
 );
 
+// `Date.now()` reads here let the timer freeze at the precise wall-clock
+// moment the user paused/stopped, instead of relying on the next tick to
+// land. The reads stay scoped to where the lifecycle decision happens.
+const captureElapsed = (timer: {
+  elapsed: number;
+  startedAt: number | null;
+}): void => {
+  if (timer.startedAt !== null) {
+    timer.elapsed = Math.floor((Date.now() - timer.startedAt) / 1000);
+  }
+  timer.startedAt = null;
+};
+
 export const beginStop = defineAction(
   [sessionStore, timerStore],
   (session, timer) => {
     session.status = 'stopping';
-    timer.running = false;
+    captureElapsed(timer);
   },
 );
 
@@ -84,7 +97,7 @@ export const beginPause = defineAction(
   [sessionStore, timerStore],
   (session, timer) => {
     session.status = 'paused';
-    timer.running = false;
+    captureElapsed(timer);
   },
 );
 
@@ -92,7 +105,7 @@ export const beginResume = defineAction(
   [sessionStore, timerStore],
   (session, timer) => {
     session.status = 'recording';
-    timer.running = true;
+    timer.startedAt = Date.now() - timer.elapsed * 1000;
   },
 );
 

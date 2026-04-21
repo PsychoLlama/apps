@@ -2,12 +2,15 @@ import { createTestBindings, defineAction } from '#state';
 import { tick } from '../bindings';
 import { timerStore } from '../store';
 
-// Session bindings own the start/pause/resume mutations; the timer
-// module just exposes `tick`. Tests fabricate a local setter to drive
-// the store into the configurations `tick` cares about.
-const setRunning = defineAction([timerStore], (timer, running: boolean) => {
-  timer.running = running;
-});
+// Session bindings own the start/pause/resume/stop mutations; the timer
+// module just exposes `tick`. Tests fabricate a local anchor setter to
+// drive the store into the configurations `tick` cares about.
+const setStartedAt = defineAction(
+  [timerStore],
+  (timer, startedAt: number | null) => {
+    timer.startedAt = startedAt;
+  },
+);
 
 const setup = () => {
   const bindings = createTestBindings();
@@ -15,44 +18,38 @@ const setup = () => {
 };
 
 describe('timerStore', () => {
-  it('initializes as stopped with zero elapsed', () => {
+  it('initializes with no anchor and zero elapsed', () => {
     const { state } = setup();
 
-    expect(state.running).toBe(false);
+    expect(state.startedAt).toBeNull();
     expect(state.elapsed).toBe(0);
   });
 
   describe('tick', () => {
-    it('increments elapsed when running', () => {
+    it('computes elapsed against the wall-clock anchor', () => {
       const { state, useAction } = setup();
-      useAction(setRunning)(true);
+      useAction(setStartedAt)(1000);
 
-      useAction(tick)();
-      useAction(tick)();
-      useAction(tick)();
+      useAction(tick)(4500);
 
       expect(state.elapsed).toBe(3);
     });
 
-    it('does not increment when stopped', () => {
+    it('floors fractional seconds', () => {
       const { state, useAction } = setup();
+      useAction(setStartedAt)(0);
 
-      useAction(tick)();
-      useAction(tick)();
+      useAction(tick)(2999);
 
-      expect(state.elapsed).toBe(0);
+      expect(state.elapsed).toBe(2);
     });
 
-    it('does not increment when paused', () => {
+    it('does not touch elapsed when stopped', () => {
       const { state, useAction } = setup();
-      useAction(setRunning)(true);
-      useAction(tick)();
-      useAction(setRunning)(false);
 
-      useAction(tick)();
-      useAction(tick)();
+      useAction(tick)(123456);
 
-      expect(state.elapsed).toBe(1);
+      expect(state.elapsed).toBe(0);
     });
   });
 });

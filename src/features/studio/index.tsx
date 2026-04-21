@@ -1,4 +1,12 @@
-import { For, Match, Show, Switch, onCleanup, onMount } from 'solid-js';
+import {
+  For,
+  Match,
+  Show,
+  Switch,
+  createEffect,
+  onCleanup,
+  onMount,
+} from 'solid-js';
 import { Button, Callout, Flex, Heading, Link, Text } from '#ui';
 import { useAction, useEffect } from '#state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
@@ -380,7 +388,13 @@ export default function Studio() {
 
   onMount(() => {
     checkSupport();
-    const tickInterval = setInterval(() => publishTick(), 1000);
+  });
+
+  // Tick only while a recording is actively advancing. Pausing or
+  // stopping cleans up the interval; resuming spins a new one.
+  createEffect(() => {
+    if (session.status !== 'recording') return;
+    const tickInterval = setInterval(() => publishTick(Date.now()), 1000);
     onCleanup(() => clearInterval(tickInterval));
   });
 

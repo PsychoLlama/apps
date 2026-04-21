@@ -61,14 +61,14 @@ const makeResult = (tracks: Track[] = []): RecordingResult => {
 };
 
 describe('beginRecording', () => {
-  it('transitions to recording and resets the timer', () => {
+  it('transitions to recording and anchors the timer', () => {
     const { session, timer, useAction } = setup();
 
     useAction(beginRecording)();
 
     expect(session.status).toBe('recording');
     expect(session.error).toBeNull();
-    expect(timer.running).toBe(true);
+    expect(timer.startedAt).not.toBeNull();
     expect(timer.elapsed).toBe(0);
   });
 
@@ -110,7 +110,7 @@ describe('markError', () => {
 });
 
 describe('beginStop', () => {
-  it('transitions to stopping and freezes the timer', () => {
+  it('transitions to stopping and captures the elapsed time', () => {
     const { session, timer, useAction } = setup();
     useAction(setRecordingContext)(makeResult());
     useAction(beginRecording)();
@@ -118,7 +118,7 @@ describe('beginStop', () => {
     useAction(beginStop)();
 
     expect(session.status).toBe('stopping');
-    expect(timer.running).toBe(false);
+    expect(timer.startedAt).toBeNull();
   });
 });
 
@@ -151,19 +151,19 @@ describe('finalizeRecording', () => {
 });
 
 describe('beginPause', () => {
-  it('transitions to paused and freezes the timer', () => {
+  it('transitions to paused and clears the timer anchor', () => {
     const { session, timer, useAction } = setup();
     useAction(beginRecording)();
 
     useAction(beginPause)();
 
     expect(session.status).toBe('paused');
-    expect(timer.running).toBe(false);
+    expect(timer.startedAt).toBeNull();
   });
 });
 
 describe('beginResume', () => {
-  it('transitions to recording and restarts the timer', () => {
+  it('transitions to recording and re-anchors the timer', () => {
     const { session, timer, useAction } = setup();
     useAction(beginRecording)();
     useAction(beginPause)();
@@ -171,7 +171,7 @@ describe('beginResume', () => {
     useAction(beginResume)();
 
     expect(session.status).toBe('recording');
-    expect(timer.running).toBe(true);
+    expect(timer.startedAt).not.toBeNull();
   });
 });
 
