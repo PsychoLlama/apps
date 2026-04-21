@@ -9,17 +9,8 @@ import SiteHeader from '../../../components/site-header';
 import { library } from '../library/store';
 import { deleteRecordingEffect } from '../library/bindings';
 import type { Recording } from '../library/types';
+import { formatDuration } from '../format';
 import * as css from './playback.css';
-
-const secondsToDuration = (totalSeconds: number) => {
-  return {
-    hours: Math.floor(totalSeconds / 3600),
-    minutes: Math.floor((totalSeconds % 3600) / 60),
-    seconds: totalSeconds % 60,
-  };
-};
-
-const durationFormat = new Intl.DurationFormat('en', { style: 'digital' });
 
 const NotFound = () => {
   return (
@@ -55,7 +46,7 @@ const Player = (props: { recording: Recording; onDelete: () => void }) => {
             {props.recording.name}
           </Heading>
           <Text as="span" class={css.duration} selectable={false}>
-            {durationFormat.format(secondsToDuration(props.recording.duration))}
+            {formatDuration(props.recording.duration)}
           </Text>
         </Flex>
         <Flex as="div" class={css.actions}>
