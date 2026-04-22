@@ -1,15 +1,15 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
 project:
-  name: 'main'
+  name: '@app/main'
   description: 'SolidStart host app'
 
 dependsOn:
-  - 'design'
-  - 'shell'
-  - 'state'
-  - 'studio'
-  - 'ui'
+  - '@app/studio'
+  - '@lib/design'
+  - '@lib/shell'
+  - '@lib/state'
+  - '@lib/ui'
 
 tasks:
   dev:
