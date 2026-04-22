@@ -1,5 +1,11 @@
 $schema: './cache/schemas/tasks.json'
 
+# Buffer each task's output and only print it on failure. Keeps the
+# signal-to-noise ratio high for both humans and agents — successful
+# tasks show a one-line summary; only failures get the full log.
+taskOptions:
+  outputStyle: 'buffer-only-failure'
+
 implicitInputs:
   - 'package.json'
   # Every package's manifest invalidates every task. Root holistic
