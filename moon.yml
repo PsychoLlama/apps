@@ -64,3 +64,6 @@ tasks:
       - '/packages/**/src/**/*'
       - '/packages/**/package.json'
       - '/knip.config.ts'
+      # Root `*.ts` files (eslint.config, vitest.config, knip.config)
+      # are scanned by the `.` workspace's `project: ['*.ts']` pattern.
+      - '/*.ts'
