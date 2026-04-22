@@ -21,6 +21,10 @@ jobs:
           fetch-depth: 0
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          # Skip FlakeHub auth — we're not paying for it. Falls back to
+          # the GitHub Actions cache, which is what we want anyway.
+          use-flakehub: false
       # Hydrate PATH from the flake so subsequent steps can find
       # pnpm/moon/treefmt without wrapping each command in `nix develop`.
       - name: Activate flake environment
