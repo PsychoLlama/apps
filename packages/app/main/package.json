@@ -12,8 +12,7 @@
     "build": "vite build",
     "start": "vite start",
     "preview": "vite preview",
-    "typecheck": "tsc",
-    "knip": "knip"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@app/studio": "workspace:*",
@@ -31,7 +30,6 @@
   "devDependencies": {
     "@iconify/json": "^2.2.460",
     "@vanilla-extract/vite-plugin": "^5.2.1",
-    "knip": "catalog:",
     "typescript": "catalog:",
     "unplugin-icons": "catalog:",
     "vitest": "catalog:",

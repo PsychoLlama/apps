@@ -44,5 +44,4 @@ tasks:
     inputs:
       - '/packages/**/src/**/*'
       - '/packages/**/package.json'
-      - '/packages/app/main/knip.config.ts'
-      - '/packages/dev/storybook/knip.config.ts'
+      - '/knip.config.ts'

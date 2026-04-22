@@ -8,8 +8,7 @@
     "dev": "storybook dev -p 6006 --ci",
     "build": "storybook build",
     "smoke-test": "vitest run --config smoke-test.config.ts",
-    "typecheck": "tsc",
-    "knip": "knip"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@app/studio": "workspace:*",
@@ -29,7 +28,6 @@
     "@vanilla-extract/vite-plugin": "^5.2.1",
     "@vitest/browser": "^4.1.4",
     "@vitest/browser-playwright": "^4.1.4",
-    "knip": "catalog:",
     "playwright": "^1.59.1",
     "storybook": "catalog:",
     "storybook-solidjs-vite": "catalog:",

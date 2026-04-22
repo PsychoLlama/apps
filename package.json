@@ -13,7 +13,7 @@
     "storybook": "pnpm --filter @dev/storybook dev",
     "storybook:build": "pnpm --filter @dev/storybook build",
     "typecheck": "tsc && pnpm -r typecheck",
-    "knip": "pnpm -r knip",
+    "knip": "knip",
     "lint": "eslint --color",
     "test": "vitest run",
     "smoke-test": "pnpm --filter @dev/storybook smoke-test"
