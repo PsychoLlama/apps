@@ -22,12 +22,12 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['packages/**/*.test.{ts,tsx}', 'apps/**/src/**/*.test.{ts,tsx}'],
+    include: ['packages/**/*.test.{ts,tsx}'],
     typecheck: {
       enabled: true,
     },
     coverage: {
-      include: ['packages/state/src/**/*.ts'],
+      include: ['packages/lib/state/src/**/*.ts'],
       thresholds: {
         lines: 100,
         functions: 100,

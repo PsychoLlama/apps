@@ -13,7 +13,7 @@ import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconClose from 'virtual:icons/mdi/close';
 import IconPlayOutline from 'virtual:icons/mdi/play-outline';
 import IconTrashCanOutline from 'virtual:icons/mdi/trash-can-outline';
-import SiteHeader from '../../components/site-header';
+import { SiteHeader } from '@lib/shell';
 import {
   addTrackEffect,
   checkSupportEffect,

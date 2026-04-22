@@ -1,5 +1,5 @@
 import { Flex, Heading, Link, Text } from '@lib/ui';
-import SiteHeader from '../components/site-header';
+import { SiteHeader } from '@lib/shell';
 import * as css from './index.css';
 
 export default function Launcher() {

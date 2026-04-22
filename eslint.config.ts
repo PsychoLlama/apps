@@ -2,7 +2,7 @@ import { includeIgnoreFile } from '@eslint/compat';
 import eslint from '@eslint/js';
 import solid from 'eslint-plugin-solid/configs/typescript';
 import tseslint from 'typescript-eslint';
-import customRules from '@lib/eslint-plugin';
+import customRules from '@dev/eslint-plugin';
 
 const restrictedImportPatterns = [
   {
@@ -70,8 +70,8 @@ export default [
     },
   },
   {
-    files: ['{packages,apps}/**/*.css.ts'],
-    ignores: ['packages/design/src/**'],
+    files: ['packages/**/*.css.ts'],
+    ignores: ['packages/lib/design/src/**'],
     rules: {
       'custom/require-design-tokens': 'error',
       'no-restricted-imports': [
@@ -134,7 +134,7 @@ export default [
   },
   {
     // @lib/state internals may use solid-js/store directly.
-    files: ['packages/state/src/**/*.ts'],
+    files: ['packages/lib/state/src/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -147,7 +147,7 @@ export default [
   {
     // @lib/ui primitives implement the components the rule redirects
     // everyone else toward — they have to use raw elements.
-    files: ['packages/ui/src/components/**/*.tsx'],
+    files: ['packages/lib/ui/src/components/**/*.tsx'],
     rules: {
       'custom/require-ui-primitives': 'off',
     },

@@ -1,5 +1,5 @@
 {
-  "name": "@app/web",
+  "name": "@app/main",
   "private": true,
   "type": "module",
   "version": "0.0.0",
@@ -19,9 +19,10 @@
     "storybook:build": "storybook build"
   },
   "dependencies": {
+    "@app/studio": "workspace:*",
     "@fontsource-variable/ibm-plex-sans": "^5.2.8",
     "@lib/design": "workspace:*",
-    "@lib/state": "workspace:*",
+    "@lib/shell": "workspace:*",
     "@lib/ui": "workspace:*",
     "@solidjs/router": "catalog:",
     "@solidjs/start": "2.0.0-alpha.2",

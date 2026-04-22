@@ -1,0 +1,23 @@
+{
+  "name": "@lib/shell",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/design": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
+  },
+  "devDependencies": {
+    "unplugin-icons": "catalog:"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
+  }
+}

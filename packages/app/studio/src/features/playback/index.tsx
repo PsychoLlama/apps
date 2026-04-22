@@ -13,7 +13,7 @@ import { useEffect } from '@lib/state';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import IconTrashCan from 'virtual:icons/mdi/trash-can-outline';
 import IconAlertCircle from 'virtual:icons/mdi/alert-circle-outline';
-import SiteHeader from '../../../components/site-header';
+import { SiteHeader } from '@lib/shell';
 import { library } from '../library/store';
 import { deleteRecordingEffect } from '../library/bindings';
 import type { Recording } from '../library/types';
