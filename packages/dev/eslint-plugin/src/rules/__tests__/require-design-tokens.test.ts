@@ -3,7 +3,7 @@ import rule, { propertyToToken } from '../require-design-tokens';
 
 const tester = new RuleTester();
 
-tester.run('require-design-tokens', rule as never, {
+tester.run('require-design-tokens', rule, {
   valid: [
     // Token references (MemberExpression) are fine.
     { code: 'const x = { padding: space[1] }' },
