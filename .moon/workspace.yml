@@ -1,7 +1,7 @@
 $schema: './cache/schemas/workspace.json'
 
 projects:
-  '@app/apps': '.'
+  root: '.'
   '@app/main': 'packages/app/main'
   '@app/studio': 'packages/app/studio'
   '@dev/eslint-plugin': 'packages/dev/eslint-plugin'

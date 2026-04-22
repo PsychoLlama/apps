@@ -43,7 +43,7 @@ jobs:
           key: ${{ runner.os }}-moon-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-moon-
-      - run: moon run '@app/apps:check' '@app/main:build'
+      - run: moon run root:check '@app/main:build'
       # Deploys to production on pushes to main.
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'

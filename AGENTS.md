@@ -21,7 +21,7 @@ Each `@app/*` package exports top-level components. `@app/main` owns routing —
 
 ## Dev
 
-- `moon run '@app/apps:check'` to validate. Must pass before committing.
+- `moon run root:check` to validate. Must pass before committing.
 - Tasks are defined in `moon.yml` (root) and `packages/app/main/moon.yml`.
 - All routes are file-based: `packages/app/main/src/routes/**/*.tsx`.
 
