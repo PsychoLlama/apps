@@ -12,6 +12,12 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+      # Force ANSI color in tools that gate on TTY detection. `FORCE_COLOR`
+      # covers the node ecosystem (chalk, picocolors, kleur, supports-color)
+      # plus moon and wrangler; `CLICOLOR_FORCE` covers Go tools like
+      # treefmt that follow the BSD convention.
+      FORCE_COLOR: '3'
+      CLICOLOR_FORCE: '1'
     # Run every shell step inside the flake's devShell so CI stays in
     # sync with local dev (single source of truth in flake.nix).
     defaults:
