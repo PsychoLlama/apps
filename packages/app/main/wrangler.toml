@@ -1,5 +1,8 @@
 name = "apps"
 compatibility_date = "2025-04-20"
+# Enables `<version>-apps.<account>.workers.dev` URLs for `versions upload`.
+# Production traffic still goes through the custom domain below.
+preview_urls = true
 
 [assets]
 directory = ".output/public"
