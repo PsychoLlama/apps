@@ -10,13 +10,13 @@
   "scripts": {
     "dev": "pnpm --filter @app/main dev",
     "build": "pnpm --filter @app/main build",
-    "storybook": "pnpm --filter @app/main storybook",
-    "storybook:build": "pnpm --filter @app/main storybook:build",
+    "storybook": "pnpm --filter @app/storybook dev",
+    "storybook:build": "pnpm --filter @app/storybook build",
     "typecheck": "tsc && pnpm -r typecheck",
-    "knip": "pnpm --filter @app/main knip",
+    "knip": "pnpm -r knip",
     "lint": "eslint --color",
     "test": "vitest run",
-    "test:storybook": "pnpm --filter @app/main test:storybook"
+    "test:storybook": "pnpm --filter @app/storybook test:storybook"
   },
   "prettier": {
     "singleQuote": true,

@@ -5,6 +5,7 @@ project:
   description: 'SolidStart host app'
 
 dependsOn:
+  - '@app/storybook'
   - '@app/studio'
   - '@lib/design'
   - '@lib/shell'
@@ -15,11 +16,6 @@ tasks:
   dev:
     command: 'pnpm'
     args: ['dev']
-    local: true
-
-  storybook:
-    command: 'pnpm'
-    args: ['storybook']
     local: true
 
   build-app:
@@ -35,46 +31,17 @@ tasks:
     outputs:
       - '.output'
 
-  # Storybook reads stories from every package via
-  # `.storybook/main.ts`'s `packages/*/*/src/**/*.stories.*` glob, so
-  # any story (or any source a story imports) must invalidate the
-  # build cache.
-  build-storybook:
-    command: 'pnpm'
-    args: ['storybook:build']
-    inputs:
-      - 'src/**/*'
-      - '.storybook/**/*'
-      - 'vite.config.ts'
-      - 'vite-ignored.ts'
-      - '/packages/**/*.stories.*'
-      - '/packages/app/studio/src/**/*'
-      - '/packages/lib/**/src/**/*'
-    outputs:
-      - 'storybook-static'
-
   build:
     command: 'cp'
-    args: ['-r', 'storybook-static', '.output/public/__storybook']
+    args:
+      - '-r'
+      - '../storybook/storybook-static'
+      - '.output/public/__storybook'
     deps:
       - '~:build-app'
-      - '~:build-storybook'
+      - '@app/storybook:build'
     inputs:
-      - 'storybook-static/**/*'
+      - '/packages/app/storybook/storybook-static/**/*'
       - '.output/**/*'
     outputs:
       - '.output/public/__storybook'
-
-  # Mirrors `build-storybook`'s inputs — both tasks render every
-  # story from every package through the same storybook config.
-  test-storybook:
-    command: 'pnpm'
-    args: ['test:storybook']
-    inputs:
-      - 'src/**/*'
-      - '.storybook/**/*'
-      - 'vite-ignored.ts'
-      - 'vitest.storybook.config.ts'
-      - '/packages/**/*.stories.*'
-      - '/packages/app/studio/src/**/*'
-      - '/packages/lib/**/src/**/*'

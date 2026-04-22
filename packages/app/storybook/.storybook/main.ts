@@ -5,10 +5,7 @@ import { mergeConfig } from 'vite';
 import { watchIgnore } from '../vite-ignored.ts';
 
 const config: StorybookConfig = {
-  stories: [
-    '../src/**/*.stories.@(ts|tsx)',
-    '../../../../packages/*/*/src/**/*.stories.@(ts|tsx)',
-  ],
+  stories: ['../../../../packages/*/*/src/**/*.stories.@(ts|tsx)'],
   addons: ['@storybook/addon-themes', '@storybook/addon-vitest'],
   framework: {
     name: 'storybook-solidjs-vite',

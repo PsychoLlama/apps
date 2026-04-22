@@ -6,7 +6,6 @@ const config: KnipConfig = {
     'src/app.tsx',
     'src/entry-{client,server}.tsx',
     'src/**/*.test.{ts,tsx}',
-    '.storybook/*.ts',
   ],
   project: ['src/**/*.{ts,tsx}'],
   ignoreDependencies: [

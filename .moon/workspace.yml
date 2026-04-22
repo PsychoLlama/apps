@@ -3,6 +3,7 @@ $schema: './cache/schemas/workspace.json'
 projects:
   root: '.'
   '@app/main': 'packages/app/main'
+  '@app/storybook': 'packages/app/storybook'
   '@app/studio': 'packages/app/studio'
   '@dev/eslint-plugin': 'packages/dev/eslint-plugin'
   '@lib/design': 'packages/lib/design'
