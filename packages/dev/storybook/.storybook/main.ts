@@ -4,10 +4,17 @@ import Icons from 'unplugin-icons/vite';
 import { mergeConfig } from 'vite';
 import { watchIgnore } from '../vite-ignored.ts';
 
+// Stories live in sibling workspace packages, not this one. Point
+// storybook at the workspace `packages/` directory and let it crawl
+// every category/name/src tree.
+const workspacePackages = '../../../../packages';
+
 const config: StorybookConfig = {
   stories: [
-    '../src/**/*.stories.@(ts|tsx)',
-    '../../../../packages/*/*/src/**/*.stories.@(ts|tsx)',
+    {
+      directory: workspacePackages,
+      files: '*/*/src/**/*.stories.@(ts|tsx)',
+    },
   ],
   addons: ['@storybook/addon-themes', '@storybook/addon-vitest'],
   framework: {

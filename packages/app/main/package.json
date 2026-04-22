@@ -7,16 +7,18 @@
   "author": "Jesse Gibson <JesseTheGibson@gmail.com>",
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
+  "exports": {
+    "./theme": {
+      "types": "./src/vendor.d.ts",
+      "default": "./src/theme.ts"
+    }
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
     "start": "vite start",
     "preview": "vite preview",
-    "typecheck": "tsc",
-    "knip": "knip",
-    "test:storybook": "vitest run --config vitest.storybook.config.ts",
-    "storybook": "storybook dev -p 6006 --ci",
-    "storybook:build": "storybook build"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@app/studio": "workspace:*",
@@ -33,15 +35,7 @@
   },
   "devDependencies": {
     "@iconify/json": "^2.2.460",
-    "@storybook/addon-themes": "^10.3.5",
-    "@storybook/addon-vitest": "^10.3.5",
     "@vanilla-extract/vite-plugin": "^5.2.1",
-    "@vitest/browser": "^4.1.4",
-    "@vitest/browser-playwright": "^4.1.4",
-    "knip": "catalog:",
-    "playwright": "^1.59.1",
-    "storybook": "catalog:",
-    "storybook-solidjs-vite": "catalog:",
     "typescript": "catalog:",
     "unplugin-icons": "catalog:",
     "vitest": "catalog:",

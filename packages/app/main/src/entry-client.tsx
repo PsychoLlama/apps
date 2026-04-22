@@ -1,5 +1,5 @@
 // @refresh reload
-import '@fontsource-variable/ibm-plex-sans';
+import './theme';
 import '@lib/design';
 import { mount, StartClient } from '@solidjs/start/client';
 

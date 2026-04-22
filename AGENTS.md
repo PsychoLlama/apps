@@ -14,6 +14,7 @@
 - `packages/lib/shell` — site chrome (`@lib/shell`)
 - `packages/lib/state` — state primitives (`@lib/state`)
 - `packages/dev/eslint-plugin` — custom lint rules (`@dev/eslint-plugin`)
+- `packages/dev/storybook` — Storybook workbench (`@dev/storybook`)
 - `packages/app/main` — SolidStart host (`@app/main`)
 - `packages/app/studio` — recording studio app (`@app/studio`)
 

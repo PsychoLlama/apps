@@ -5,6 +5,28 @@ project:
   description: 'Workspace-wide checks'
 
 tasks:
+  # Assembles the deploy artifact. `@app/main:build` writes the
+  # solidstart bundle to `packages/app/main/.output`; storybook's
+  # static bundle layers on at `/__storybook`. Wrangler picks up the
+  # blended `.output/public` tree via `workingDirectory`.
+  # Cache invalidation rides entirely on `deps` — moon re-runs this
+  # task whenever either upstream produces new outputs. Listing the
+  # upstream outputs as `inputs` here would be redundant, and worse,
+  # this task's own output sits inside `@app/main`'s `.output` tree,
+  # so a self-referential input would invalidate the cache on every
+  # run.
+  build:
+    command: 'cp'
+    args:
+      - '-r'
+      - 'packages/dev/storybook/storybook-static'
+      - 'packages/app/main/.output/public/__storybook'
+    deps:
+      - '@app/main:build'
+      - '@dev/storybook:build'
+    outputs:
+      - '/packages/app/main/.output/public/__storybook'
+
   fmt:
     command: 'treefmt'
     local: true
@@ -44,4 +66,7 @@ tasks:
     inputs:
       - '/packages/**/src/**/*'
       - '/packages/**/package.json'
-      - '/packages/app/main/knip.config.ts'
+      - '/knip.config.ts'
+      # Root `*.ts` files (eslint.config, vitest.config, knip.config)
+      # are scanned by the `.` workspace's `project: ['*.ts']` pattern.
+      - '/*.ts'

@@ -39,8 +39,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
-      # Needed for `main:test-storybook`. Local dev uses the nix-provided
-      # chromium via `CHROMIUM_PATH`; CI uses playwright's own binary.
+      # Needed for `@dev/storybook:smoke-test`. Local dev uses the
+      # nix-provided chromium via `CHROMIUM_PATH`; CI uses
+      # playwright's own binary.
       - name: Restore playwright cache
         id: playwright-cache
         uses: actions/cache@v5
@@ -48,10 +49,10 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
       - name: Install playwright system deps
-        run: pnpm --filter @app/main exec playwright install-deps chromium
+        run: pnpm --filter @dev/storybook exec playwright install-deps chromium
       - name: Install playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter @app/main exec playwright install chromium
+        run: pnpm --filter @dev/storybook exec playwright install chromium
       - name: Restore moon cache
         uses: actions/cache@v5
         with:
@@ -60,11 +61,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-moon-
       # `moon ci` runs every non-local, affected task. The explicit
-      # `@app/main:build` after ensures `.output` exists for the
-      # wrangler deploy step even on PRs that don't touch the app —
-      # hits moon's cache when unchanged.
+      # `root:build` after ensures `.output` exists for the wrangler
+      # deploy step even on PRs that don't touch the app — hits
+      # moon's cache when unchanged.
       - run: moon ci
-      - run: moon run '@app/main:build'
+      - run: moon run root:build
 
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'

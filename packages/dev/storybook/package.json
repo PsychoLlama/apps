@@ -1,0 +1,38 @@
+{
+  "name": "@dev/storybook",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Storybook workbench for every package",
+  "scripts": {
+    "dev": "storybook dev -p 6006 --ci",
+    "build": "storybook build",
+    "smoke-test": "vitest run --config smoke-test.config.ts",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@app/main": "workspace:*",
+    "@app/studio": "workspace:*",
+    "@lib/design": "workspace:*",
+    "@lib/shell": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@solidjs/router": "catalog:",
+    "@vanilla-extract/css": "catalog:",
+    "solid-js": "catalog:",
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@iconify/json": "^2.2.460",
+    "@storybook/addon-themes": "^10.3.5",
+    "@storybook/addon-vitest": "^10.3.5",
+    "@vanilla-extract/vite-plugin": "^5.2.1",
+    "@vitest/browser": "^4.1.4",
+    "@vitest/browser-playwright": "^4.1.4",
+    "playwright": "^1.59.1",
+    "storybook": "catalog:",
+    "storybook-solidjs-vite": "catalog:",
+    "typescript": "catalog:",
+    "unplugin-icons": "catalog:",
+    "vitest": "catalog:"
+  }
+}

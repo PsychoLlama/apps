@@ -10,13 +10,12 @@
   "scripts": {
     "dev": "pnpm --filter @app/main dev",
     "build": "pnpm --filter @app/main build",
-    "storybook": "pnpm --filter @app/main storybook",
-    "storybook:build": "pnpm --filter @app/main storybook:build",
+    "storybook": "pnpm --filter @dev/storybook dev",
+    "storybook:build": "pnpm --filter @dev/storybook build",
     "typecheck": "tsc && pnpm -r typecheck",
-    "knip": "pnpm --filter @app/main knip",
+    "knip": "knip",
     "lint": "eslint --color",
-    "test": "vitest run",
-    "test:storybook": "pnpm --filter @app/main test:storybook"
+    "test": "vitest run"
   },
   "prettier": {
     "singleQuote": true,
@@ -28,7 +27,10 @@
       "esbuild",
       "sharp",
       "workerd"
-    ]
+    ],
+    "overrides": {
+      "vite": "^7.0.0"
+    }
   },
   "devDependencies": {
     "@dev/eslint-plugin": "workspace:*",
