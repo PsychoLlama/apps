@@ -13,7 +13,6 @@
   "dependencies": {
     "@app/main": "workspace:*",
     "@app/studio": "workspace:*",
-    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/ui": "workspace:*",

@@ -208,9 +208,6 @@ importers:
       '@app/studio':
         specifier: workspace:*
         version: link:../../app/studio
-      '@fontsource-variable/ibm-plex-sans':
-        specifier: ^5.2.8
-        version: 5.2.8
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
