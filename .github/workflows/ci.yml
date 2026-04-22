@@ -66,8 +66,8 @@ jobs:
         run: pnpm exec wrangler deploy
 
       # Uploads a preview version on same-repo pull requests without
-      # promoting to production. Captures the preview URL so the next
-      # step can post it as a sticky PR comment.
+      # promoting to production. Captures the preview URL so subsequent
+      # steps can advertise it on the PR.
       - name: Upload preview version
         id: preview
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
@@ -82,10 +82,48 @@ jobs:
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
+      # Records a GitHub Deployment so the PR sidebar shows a "preview"
+      # tile linking to the workers.dev URL. `wrangler-action` claimed
+      # to do this but only fired for `deploy`, never `versions upload`.
+      - name: Record preview deployment
+        if: steps.preview.outputs.url
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          URL: ${{ steps.preview.outputs.url }}
+        run: |
+          deployment_id=$(gh api "repos/$REPO/deployments" \
+            -f ref="$SHA" \
+            -f environment=preview \
+            -F auto_merge=false \
+            -f required_contexts:='[]' \
+            -F transient_environment=true \
+            -F production_environment=false \
+            --jq .id)
+          gh api "repos/$REPO/deployments/$deployment_id/statuses" \
+            -f state=success \
+            -f environment_url="$URL" \
+            -f log_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+      # Posts (or updates) a sticky PR comment with the preview link.
+      # The HTML marker lets us find the existing comment to edit
+      # instead of spamming a new one each push.
       - name: Comment preview URL
         if: steps.preview.outputs.url
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: cf-preview
-          message: |
-            Preview: ${{ steps.preview.outputs.url }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.preview.outputs.url }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          marker='<!-- cf-preview -->'
+          body="$marker"$'\n'"Preview: $URL (\`${SHA:0:7}\`)"
+          existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq "map(select(.body | startswith(\"$marker\"))) | .[0].id")
+          if [ -n "$existing" ] && [ "$existing" != "null" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$existing" -f body="$body"
+          else
+            gh api "repos/$REPO/issues/$PR/comments" -f body="$body"
+          fi
