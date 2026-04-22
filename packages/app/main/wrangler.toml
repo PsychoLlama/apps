@@ -1,5 +1,6 @@
 name = "apps"
 compatibility_date = "2025-04-20"
+preview_urls = true
 
 [assets]
 directory = ".output/public"

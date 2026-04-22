@@ -9,6 +9,14 @@ jobs:
     permissions:
       contents: read
       deployments: write
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    # Run every shell step inside the flake's devShell so CI stays in
+    # sync with local dev (single source of truth in flake.nix).
+    defaults:
+      run:
+        shell: nix develop --command bash -eo pipefail {0}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,9 +25,12 @@ jobs:
           fetch-depth: 0
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/magic-nix-cache-action@v13
-      # Hydrate PATH from the flake so wrangler-action can find pnpm.
-      - name: Activate flake environment
-        run: nix develop --command bash -c 'echo "$PATH" >> "$GITHUB_PATH"'
+        with:
+          use-flakehub: false
+      # No-op that absorbs the first `nix develop` evaluation so its
+      # cost shows up here instead of inflating the next real step.
+      - name: Warm devShell
+        run: 'true'
       - name: Restore pnpm store
         uses: actions/cache@v4
         with:
@@ -31,11 +42,16 @@ jobs:
       # Needed for `main:test-storybook`. Local dev uses the nix-provided
       # chromium via `CHROMIUM_PATH`; CI uses playwright's own binary.
       - name: Restore playwright cache
+        id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - run: pnpm --filter @app/main exec playwright install chromium --with-deps
+      - name: Install playwright system deps
+        run: pnpm --filter @app/main exec playwright install-deps chromium
+      - name: Install playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @app/main exec playwright install chromium
       - name: Restore moon cache
         uses: actions/cache@v4
         with:
@@ -49,25 +65,48 @@ jobs:
       # hits moon's cache when unchanged.
       - run: moon ci
       - run: moon run '@app/main:build'
-      # Deploys to production on pushes to main.
+
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          workingDirectory: packages/app/main
-          command: deploy
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: packages/app/main
+        run: pnpm exec wrangler deploy
 
       # Uploads a preview version on same-repo pull requests without
-      # promoting to production.
+      # promoting to production. Captures the preview URL so the next
+      # step can record a GitHub Deployment pointing at it.
       - name: Upload preview version
+        id: preview
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: cloudflare/wrangler-action@v3
-        with:
-          workingDirectory: packages/app/main
-          command: versions upload
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: packages/app/main
+        run: |
+          pnpm exec wrangler versions upload | tee /tmp/wrangler.log
+          # `|| true` so a missing URL doesn't trip `set -e`/`pipefail`.
+          url=$(grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev' /tmp/wrangler.log | head -n1 || true)
+          if [ -n "$url" ]; then
+            echo "url=$url" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No preview URL in wrangler output."
+          fi
+
+      # Records a GitHub Deployment so the PR sidebar shows a "preview"
+      # tile linking to the workers.dev URL.
+      - name: Record preview deployment
+        if: steps.preview.outputs.url
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          URL: ${{ steps.preview.outputs.url }}
+        run: |
+          deployment_id=$(gh api "repos/$REPO/deployments" \
+            -f ref="$SHA" \
+            -f environment=preview \
+            -F auto_merge=false \
+            -f required_contexts:='[]' \
+            -F transient_environment=true \
+            -F production_environment=false \
+            --jq .id)
+          gh api "repos/$REPO/deployments/$deployment_id/statuses" \
+            -f state=success \
+            -f environment_url="$URL" \
+            -f log_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
