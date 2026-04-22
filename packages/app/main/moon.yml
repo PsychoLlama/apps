@@ -1,0 +1,67 @@
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+project:
+  name: 'main'
+  description: 'SolidStart host app'
+
+dependsOn:
+  - 'design'
+  - 'shell'
+  - 'state'
+  - 'studio'
+  - 'ui'
+
+tasks:
+  dev:
+    command: 'pnpm'
+    args: ['dev']
+    local: true
+
+  storybook:
+    command: 'pnpm'
+    args: ['storybook']
+    local: true
+
+  build-app:
+    command: 'pnpm'
+    args: ['build']
+    inputs:
+      - 'src/**/*'
+      - 'vite.config.ts'
+      - 'wrangler.toml'
+      - '/packages/app/studio/src/**/*'
+      - '/packages/lib/**/src/**/*'
+    outputs:
+      - '.output'
+
+  build-storybook:
+    command: 'pnpm'
+    args: ['storybook:build']
+    inputs:
+      - 'src/**/*'
+      - 'vite.config.ts'
+      - '/packages/app/studio/src/**/*'
+      - '/packages/lib/**/src/**/*'
+    outputs:
+      - 'storybook-static'
+
+  build:
+    command: 'cp'
+    args: ['-r', 'storybook-static', '.output/public/__storybook']
+    deps:
+      - '~:build-app'
+      - '~:build-storybook'
+    inputs:
+      - 'storybook-static/**/*'
+      - '.output/**/*'
+    outputs:
+      - '.output/public/__storybook'
+
+  test-storybook:
+    command: 'pnpm'
+    args: ['test:storybook']
+    inputs:
+      - 'src/**/*'
+      - 'vitest.storybook.config.ts'
+      - '/packages/lib/design/src/**/*'
+      - '/packages/lib/ui/src/**/*'

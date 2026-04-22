@@ -1,0 +1,56 @@
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+project:
+  name: 'root'
+  description: 'Workspace-wide checks'
+
+tasks:
+  fmt:
+    command: 'treefmt'
+    local: true
+
+  fmt-check:
+    command: 'treefmt'
+    args: ['--ci']
+    inputs:
+      - '/**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yaml,yml,css,html}'
+      - '/treefmt.toml'
+
+  lint:
+    command: 'pnpm'
+    args: ['lint']
+    inputs:
+      - '/**/*.{ts,tsx,js,jsx,mjs,cjs}'
+      - '/eslint.config.ts'
+      - '/packages/dev/eslint-plugin/src/**/*'
+
+  typecheck:
+    command: 'pnpm'
+    args: ['typecheck']
+    inputs:
+      - '/**/*.{ts,tsx}'
+      - '/**/tsconfig*.json'
+
+  test:
+    command: 'pnpm'
+    args: ['test']
+    inputs:
+      - '/packages/**/src/**/*'
+      - '/vitest.config.ts'
+
+  knip:
+    command: 'pnpm'
+    args: ['knip']
+    inputs:
+      - '/packages/**/src/**/*'
+      - '/packages/**/package.json'
+      - '/packages/app/main/knip.config.ts'
+
+  check:
+    deps:
+      - '~:fmt-check'
+      - '~:lint'
+      - '~:typecheck'
+      - '~:test'
+      - '~:knip'
+      - 'main:test-storybook'

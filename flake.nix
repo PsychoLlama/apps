@@ -26,7 +26,7 @@
         system: pkgs: rec {
           default = pkgs.mkShell {
             packages = [
-              pkgs.just
+              pkgs.moon
               pkgs.nodejs
               pkgs.pnpm
               pkgs.treefmt
