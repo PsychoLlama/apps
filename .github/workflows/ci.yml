@@ -27,6 +27,10 @@ jobs:
       - uses: DeterminateSystems/magic-nix-cache-action@v13
         with:
           use-flakehub: false
+      # No-op that absorbs the first `nix develop` evaluation so its
+      # cost shows up here instead of inflating the next real step.
+      - name: Warm devShell
+        run: 'true'
       - name: Restore pnpm store
         uses: actions/cache@v4
         with:
