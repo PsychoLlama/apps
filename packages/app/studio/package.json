@@ -13,7 +13,8 @@
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
-    "@lib/ui": "workspace:*"
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
     "storybook": "catalog:",

@@ -20,5 +20,8 @@
     "storybook": "catalog:",
     "storybook-solidjs-vite": "catalog:",
     "unplugin-icons": "catalog:"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
   }
 }
