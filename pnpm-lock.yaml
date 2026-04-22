@@ -53,6 +53,9 @@ importers:
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.3
+      '@solidjs/router':
+        specifier: 'catalog:'
+        version: 0.16.1(solid-js@1.9.12)
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -80,6 +83,9 @@ importers:
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
+      solid-js:
+        specifier: 'catalog:'
+        version: 1.9.12
       typescript:
         specifier: 'catalog:'
         version: 6.0.2
