@@ -32,7 +32,7 @@ jobs:
       - name: Warm devShell
         run: 'true'
       - name: Restore pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.local/share/pnpm/store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -43,7 +43,7 @@ jobs:
       # chromium via `CHROMIUM_PATH`; CI uses playwright's own binary.
       - name: Restore playwright cache
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -53,7 +53,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter @app/main exec playwright install chromium
       - name: Restore moon cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .moon/cache
           key: ${{ runner.os }}-moon-${{ github.sha }}
