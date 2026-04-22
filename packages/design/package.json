@@ -1,0 +1,22 @@
+{
+  "name": "@psychollama/design",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "exports": {
+    ".": "./src/index.css.ts",
+    "./color-scheme": "./src/color-scheme.ts",
+    "./theme": "./src/theme.ts",
+    "./palette/*": "./src/palette/*.css.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@vanilla-extract/css": "^1.18.0"
+  },
+  "devDependencies": {
+    "@psychollama/ui": "workspace:*",
+    "unplugin-icons": "^23.0.1"
+  }
+}

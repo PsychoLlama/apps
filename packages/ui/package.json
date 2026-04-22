@@ -1,0 +1,22 @@
+{
+  "name": "@psychollama/ui",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@psychollama/design": "workspace:*",
+    "@vanilla-extract/css": "^1.18.0"
+  },
+  "devDependencies": {
+    "unplugin-icons": "^23.0.1"
+  },
+  "peerDependencies": {
+    "solid-js": "^1.9.5"
+  }
+}

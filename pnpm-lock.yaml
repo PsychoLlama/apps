@@ -7,28 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@fontsource-variable/ibm-plex-sans':
-        specifier: ^5.2.8
-        version: 5.2.8
-      '@solidjs/router':
-        specifier: ^0.16.1
-        version: 0.16.1(solid-js@1.9.12)
-      '@solidjs/start':
-        specifier: 2.0.0-alpha.2
-        version: 2.0.0-alpha.2(@testing-library/jest-dom@6.9.1)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
-      '@solidjs/vite-plugin-nitro-2':
-        specifier: ^0.1.0
-        version: 0.1.0(rolldown@1.0.0-rc.10)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
-      prettier:
-        specifier: ^3.8.1
-        version: 3.8.1
-      solid-js:
-        specifier: ^1.9.5
-        version: 1.9.12
-      vite:
-        specifier: ^7.0.0
-        version: 7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
     devDependencies:
       '@eslint/compat':
         specifier: ^2.0.4
@@ -36,30 +14,15 @@ importers:
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.3
-      '@iconify/json':
-        specifier: ^2.2.460
-        version: 2.2.460
-      '@storybook/addon-themes':
-        specifier: ^10.3.5
-        version: 10.3.5(storybook@10.3.5(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
-      '@storybook/addon-vitest':
-        specifier: ^10.3.5
-        version: 10.3.5(@vitest/browser-playwright@4.1.4)(@vitest/browser@4.1.4)(@vitest/runner@4.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.3.5(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(vitest@4.1.4)
+      '@psychollama/eslint-plugin':
+        specifier: workspace:*
+        version: link:packages/eslint-plugin
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
       '@vanilla-extract/css':
         specifier: ^1.18.0
         version: 1.18.0(babel-plugin-macros@3.1.0)
-      '@vanilla-extract/vite-plugin':
-        specifier: ^5.2.1
-        version: 5.2.1(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild@0.27.4)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)
-      '@vitest/browser':
-        specifier: ^4.1.4
-        version: 4.1.4(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))(vitest@4.1.4)
-      '@vitest/browser-playwright':
-        specifier: ^4.1.4
-        version: 4.1.4(playwright@1.59.1)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))(vitest@4.1.4)
       '@vitest/coverage-v8':
         specifier: ^4.1.4
         version: 4.1.4(@vitest/browser@4.1.4)(vitest@4.1.4)
@@ -75,6 +38,76 @@ importers:
       knip:
         specifier: ^6.4.1
         version: 6.4.1
+      prettier:
+        specifier: ^3.8.1
+        version: 3.8.1
+      typescript:
+        specifier: ^6.0.2
+        version: 6.0.2
+      typescript-eslint:
+        specifier: ^8.58.2
+        version: 8.58.2(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
+      vite:
+        specifier: ^7.0.0
+        version: 7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
+      vitest:
+        specifier: ^4.1.4
+        version: 4.1.4(@types/node@25.5.0)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(jsdom@29.0.2)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
+
+  apps/web:
+    dependencies:
+      '@fontsource-variable/ibm-plex-sans':
+        specifier: ^5.2.8
+        version: 5.2.8
+      '@psychollama/design':
+        specifier: workspace:*
+        version: link:../../packages/design
+      '@psychollama/state':
+        specifier: workspace:*
+        version: link:../../packages/state
+      '@psychollama/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@solidjs/router':
+        specifier: ^0.16.1
+        version: 0.16.1(solid-js@1.9.12)
+      '@solidjs/start':
+        specifier: 2.0.0-alpha.2
+        version: 2.0.0-alpha.2(@testing-library/jest-dom@6.9.1)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
+      '@solidjs/vite-plugin-nitro-2':
+        specifier: ^0.1.0
+        version: 0.1.0(rolldown@1.0.0-rc.10)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
+      '@vanilla-extract/css':
+        specifier: ^1.18.0
+        version: 1.20.0(babel-plugin-macros@3.1.0)
+      solid-js:
+        specifier: ^1.9.5
+        version: 1.9.12
+      vite:
+        specifier: ^7.0.0
+        version: 7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
+    devDependencies:
+      '@iconify/json':
+        specifier: ^2.2.460
+        version: 2.2.460
+      '@storybook/addon-themes':
+        specifier: ^10.3.5
+        version: 10.3.5(storybook@10.3.5(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+      '@storybook/addon-vitest':
+        specifier: ^10.3.5
+        version: 10.3.5(@vitest/browser-playwright@4.1.4)(@vitest/browser@4.1.4)(@vitest/runner@4.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(storybook@10.3.5(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(vitest@4.1.4)
+      '@vanilla-extract/vite-plugin':
+        specifier: ^5.2.1
+        version: 5.2.1(@types/node@25.5.0)(babel-plugin-macros@3.1.0)(esbuild@0.27.4)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))(yaml@2.8.3)
+      '@vitest/browser':
+        specifier: ^4.1.4
+        version: 4.1.4(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))(vitest@4.1.4)
+      '@vitest/browser-playwright':
+        specifier: ^4.1.4
+        version: 4.1.4(playwright@1.59.1)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))(vitest@4.1.4)
+      knip:
+        specifier: ^6.4.1
+        version: 6.4.1
       storybook:
         specifier: ^10.3.5
         version: 10.3.5(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -84,21 +117,56 @@ importers:
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
-      typescript-eslint:
-        specifier: ^8.58.2
-        version: 8.58.2(eslint@9.39.2(jiti@2.6.1))(typescript@6.0.2)
       unplugin-icons:
         specifier: ^23.0.1
         version: 23.0.1
-      vite-plugin-solid:
-        specifier: ^2.11.11
-        version: 2.11.11(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
       vitest:
         specifier: ^4.1.4
         version: 4.1.4(@types/node@25.5.0)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(jsdom@29.0.2)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
       wrangler:
         specifier: ^4.65.0
         version: 4.70.0
+
+  packages/design:
+    dependencies:
+      '@vanilla-extract/css':
+        specifier: ^1.18.0
+        version: 1.20.0(babel-plugin-macros@3.1.0)
+    devDependencies:
+      '@psychollama/ui':
+        specifier: workspace:*
+        version: link:../ui
+      unplugin-icons:
+        specifier: ^23.0.1
+        version: 23.0.1
+
+  packages/eslint-plugin:
+    dependencies:
+      eslint:
+        specifier: ^9.39.2
+        version: 9.39.2(jiti@2.6.1)
+
+  packages/state:
+    dependencies:
+      solid-js:
+        specifier: ^1.9.5
+        version: 1.9.12
+
+  packages/ui:
+    dependencies:
+      '@psychollama/design':
+        specifier: workspace:*
+        version: link:../design
+      '@vanilla-extract/css':
+        specifier: ^1.18.0
+        version: 1.20.0(babel-plugin-macros@3.1.0)
+      solid-js:
+        specifier: ^1.9.5
+        version: 1.9.12
+    devDependencies:
+      unplugin-icons:
+        specifier: ^23.0.1
+        version: 23.0.1
 
 packages:
 
@@ -3931,21 +3999,11 @@ packages:
     resolution: {integrity: sha512-DuGdB+Po43Q5Jxwpzt1lhyFSYKryqoNjQSA9M92tyw0lyHIOur+XCalOUe0KTJpyqzT8+fQ5A0Jf7vCx/NKmIg==}
     engines: {node: '>=20.0.0'}
 
-  seroval-plugins@1.5.1:
-    resolution: {integrity: sha512-4FbuZ/TMl02sqv0RTFexu0SP6V+ywaIe5bAWCCEik0fk17BhALgwvUDVF7e3Uvf9pxmwCEJsRPmlkUE6HdzLAw==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      seroval: ^1.0
-
   seroval-plugins@1.5.2:
     resolution: {integrity: sha512-qpY0Cl+fKYFn4GOf3cMiq6l72CpuVaawb6ILjubOQ+diJ54LfOWaSSPsaswN8DRPIPW4Yq+tE1k5aKd7ILyaFg==}
     engines: {node: '>=10'}
     peerDependencies:
       seroval: ^1.0
-
-  seroval@1.5.1:
-    resolution: {integrity: sha512-OwrZRZAfhHww0WEnKHDY8OM0U/Qs8OTfIDWhUD4BLpNJUfXK4cGmjiagGze086m+mhI+V2nD0gfbHEnJjb9STA==}
-    engines: {node: '>=10'}
 
   seroval@1.5.2:
     resolution: {integrity: sha512-xcRN39BdsnO9Tf+VzsE7b3JyTJASItIV1FVFewJKCFcW4s4haIKS3e6vj8PGB9qBwC7tnuOywQMdv5N4qkzi7Q==}
@@ -6035,8 +6093,8 @@ snapshots:
       path-to-regexp: 8.3.0
       pathe: 2.0.3
       radix3: 1.1.2
-      seroval: 1.5.1
-      seroval-plugins: 1.5.1(seroval@1.5.1)
+      seroval: 1.5.2
+      seroval-plugins: 1.5.2(seroval@1.5.2)
       shiki: 1.29.2
       solid-js: 1.9.12
       source-map-js: 1.2.1
@@ -6517,8 +6575,8 @@ snapshots:
     dependencies:
       '@mapbox/node-pre-gyp': 2.0.3
       '@rollup/pluginutils': 5.3.0(rollup@4.60.0)
-      acorn: 8.15.0
-      acorn-import-attributes: 1.9.5(acorn@8.15.0)
+      acorn: 8.16.0
+      acorn-import-attributes: 1.9.5(acorn@8.16.0)
       async-sema: 3.1.1
       bindings: 1.5.0
       estree-walker: 2.0.2
@@ -6649,9 +6707,9 @@ snapshots:
     dependencies:
       event-target-shim: 5.0.1
 
-  acorn-import-attributes@1.9.5(acorn@8.15.0):
+  acorn-import-attributes@1.9.5(acorn@8.16.0):
     dependencies:
-      acorn: 8.15.0
+      acorn: 8.16.0
 
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:
@@ -8533,15 +8591,9 @@ snapshots:
 
   serialize-javascript@7.0.4: {}
 
-  seroval-plugins@1.5.1(seroval@1.5.1):
-    dependencies:
-      seroval: 1.5.1
-
   seroval-plugins@1.5.2(seroval@1.5.2):
     dependencies:
       seroval: 1.5.2
-
-  seroval@1.5.1: {}
 
   seroval@1.5.2: {}
 
@@ -8702,7 +8754,7 @@ snapshots:
       recast: 0.23.11
       semver: 7.7.4
       use-sync-external-store: 1.6.0(react@19.2.4)
-      ws: 8.18.0
+      ws: 8.20.0
     optionalDependencies:
       prettier: 3.8.1
     transitivePeerDependencies:
@@ -8826,7 +8878,7 @@ snapshots:
   terser@5.46.1:
     dependencies:
       '@jridgewell/source-map': 0.3.11
-      acorn: 8.15.0
+      acorn: 8.16.0
       commander: 2.20.3
       source-map-support: 0.5.21
 
@@ -8922,7 +8974,7 @@ snapshots:
 
   unctx@2.5.0:
     dependencies:
-      acorn: 8.15.0
+      acorn: 8.16.0
       estree-walker: 3.0.3
       magic-string: 0.30.21
       unplugin: 2.3.11

@@ -2,20 +2,12 @@ import { includeIgnoreFile } from '@eslint/compat';
 import eslint from '@eslint/js';
 import solid from 'eslint-plugin-solid/configs/typescript';
 import tseslint from 'typescript-eslint';
-import customRules from './src/eslint-plugin';
+import customRules from '@psychollama/eslint-plugin';
 
 const restrictedImportPatterns = [
   {
     group: ['~icons/*'],
     message: 'Use virtual:icons/* instead.',
-  },
-  {
-    group: ['**/design/**'],
-    message: 'Use #design instead.',
-  },
-  {
-    group: ['**/ui/**'],
-    message: 'Use #ui instead.',
   },
 ];
 
@@ -23,11 +15,11 @@ const restrictedStatePaths = [
   {
     name: 'solid-js',
     importNames: ['createSignal', 'createResource'],
-    message: 'Use #state for state management.',
+    message: 'Use @psychollama/state for state management.',
   },
   {
     name: 'solid-js/store',
-    message: 'Use #state for state management.',
+    message: 'Use @psychollama/state for state management.',
   },
 ];
 
@@ -40,7 +32,7 @@ export default [
   {
     languageOptions: {
       parserOptions: {
-        project: true,
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
         sourceType: 'module',
       },
@@ -78,8 +70,8 @@ export default [
     },
   },
   {
-    files: ['src/**/*.css.ts'],
-    ignores: ['src/design/**'],
+    files: ['{packages,apps}/**/*.css.ts'],
+    ignores: ['packages/design/src/**'],
     rules: {
       'custom/require-design-tokens': 'error',
       'no-restricted-imports': [
@@ -92,7 +84,7 @@ export default [
               name: '@vanilla-extract/css',
               importNames: ['globalStyle'],
               message:
-                'globalStyle is restricted to #design. The global CSS reset (all: unset) strips UA defaults, so component styles should not need global overrides.',
+                'globalStyle is restricted to @psychollama/design. The global CSS reset (all: unset) strips UA defaults, so component styles should not need global overrides.',
             },
           ],
         },
@@ -102,14 +94,14 @@ export default [
   {
     // Stories use inline static styles to demo design tokens (swatches, spacing
     // previews, etc.). These are presentational, not production UI.
-    files: ['./**/*.stories.tsx'],
+    files: ['**/*.stories.tsx'],
     rules: {
       'custom/no-static-style-prop': 'off',
       'custom/require-selectable-prop': 'off',
     },
   },
   {
-    files: ['./**/__tests__/*.ts{x,}'],
+    files: ['**/__tests__/*.ts{x,}'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -141,8 +133,8 @@ export default [
     },
   },
   {
-    // #state internals may use solid-js/store directly.
-    files: ['src/state/**/*.ts'],
+    // @psychollama/state internals may use solid-js/store directly.
+    files: ['packages/state/src/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -153,9 +145,9 @@ export default [
     },
   },
   {
-    // #ui primitives implement the components the rule redirects everyone
-    // else toward — they have to use raw elements.
-    files: ['src/ui/components/**/*.tsx'],
+    // @psychollama/ui primitives implement the components the rule redirects
+    // everyone else toward — they have to use raw elements.
+    files: ['packages/ui/src/components/**/*.tsx'],
     rules: {
       'custom/require-ui-primitives': 'off',
     },
