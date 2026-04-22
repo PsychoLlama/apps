@@ -15,8 +15,7 @@
     "typecheck": "tsc && pnpm -r typecheck",
     "knip": "knip",
     "lint": "eslint --color",
-    "test": "vitest run",
-    "smoke-test": "pnpm --filter @dev/storybook smoke-test"
+    "test": "vitest run"
   },
   "prettier": {
     "singleQuote": true,
