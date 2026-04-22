@@ -6,7 +6,6 @@ project:
 
 dependsOn:
   - '@app/studio'
-  - '@dev/storybook'
   - '@lib/design'
   - '@lib/shell'
   - '@lib/state'
@@ -18,7 +17,7 @@ tasks:
     args: ['dev']
     local: true
 
-  build-app:
+  build:
     command: 'pnpm'
     args: ['build']
     inputs:
@@ -30,18 +29,3 @@ tasks:
       - '/packages/lib/**/src/**/*'
     outputs:
       - '.output'
-
-  build:
-    command: 'cp'
-    args:
-      - '-r'
-      - '../../dev/storybook/storybook-static'
-      - '.output/public/__storybook'
-    deps:
-      - '~:build-app'
-      - '@dev/storybook:build'
-    inputs:
-      - '/packages/dev/storybook/storybook-static/**/*'
-      - '.output/**/*'
-    outputs:
-      - '.output/public/__storybook'

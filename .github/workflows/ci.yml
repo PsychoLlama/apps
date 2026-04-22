@@ -61,11 +61,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-moon-
       # `moon ci` runs every non-local, affected task. The explicit
-      # `@app/main:build` after ensures `.output` exists for the
-      # wrangler deploy step even on PRs that don't touch the app —
-      # hits moon's cache when unchanged.
+      # `root:build` after ensures `.output` exists for the wrangler
+      # deploy step even on PRs that don't touch the app — hits
+      # moon's cache when unchanged.
       - run: moon ci
-      - run: moon run '@app/main:build'
+      - run: moon run root:build
 
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'

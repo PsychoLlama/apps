@@ -5,6 +5,25 @@ project:
   description: 'Workspace-wide checks'
 
 tasks:
+  # Assembles the deploy artifact. `@app/main:build` writes the
+  # solidstart bundle to `packages/app/main/.output`; storybook's
+  # static bundle layers on at `/__storybook`. Wrangler picks up the
+  # blended `.output/public` tree via `workingDirectory`.
+  build:
+    command: 'cp'
+    args:
+      - '-r'
+      - 'packages/dev/storybook/storybook-static'
+      - 'packages/app/main/.output/public/__storybook'
+    deps:
+      - '@app/main:build'
+      - '@dev/storybook:build'
+    inputs:
+      - '/packages/dev/storybook/storybook-static/**/*'
+      - '/packages/app/main/.output/**/*'
+    outputs:
+      - '/packages/app/main/.output/public/__storybook'
+
   fmt:
     command: 'treefmt'
     local: true
