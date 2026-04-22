@@ -45,4 +45,4 @@ tasks:
       - '/packages/**/src/**/*'
       - '/packages/**/package.json'
       - '/packages/app/main/knip.config.ts'
-      - '/packages/app/storybook/knip.config.ts'
+      - '/packages/dev/storybook/knip.config.ts'

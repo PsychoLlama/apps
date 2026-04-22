@@ -5,8 +5,8 @@ project:
   description: 'SolidStart host app'
 
 dependsOn:
-  - '@app/storybook'
   - '@app/studio'
+  - '@dev/storybook'
   - '@lib/design'
   - '@lib/shell'
   - '@lib/state'
@@ -35,13 +35,13 @@ tasks:
     command: 'cp'
     args:
       - '-r'
-      - '../storybook/storybook-static'
+      - '../../dev/storybook/storybook-static'
       - '.output/public/__storybook'
     deps:
       - '~:build-app'
-      - '@app/storybook:build'
+      - '@dev/storybook:build'
     inputs:
-      - '/packages/app/storybook/storybook-static/**/*'
+      - '/packages/dev/storybook/storybook-static/**/*'
       - '.output/**/*'
     outputs:
       - '.output/public/__storybook'

@@ -163,11 +163,48 @@ importers:
         specifier: ^4.65.0
         version: 4.70.0
 
-  packages/app/storybook:
+  packages/app/studio:
+    dependencies:
+      '@lib/design':
+        specifier: workspace:*
+        version: link:../../lib/design
+      '@lib/shell':
+        specifier: workspace:*
+        version: link:../../lib/shell
+      '@lib/state':
+        specifier: workspace:*
+        version: link:../../lib/state
+      '@lib/ui':
+        specifier: workspace:*
+        version: link:../../lib/ui
+      '@solidjs/router':
+        specifier: '*'
+        version: 0.16.1(solid-js@1.9.12)
+      solid-js:
+        specifier: '*'
+        version: 1.9.12
+    devDependencies:
+      storybook:
+        specifier: 'catalog:'
+        version: 10.3.5(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      storybook-solidjs-vite:
+        specifier: 'catalog:'
+        version: 10.0.12(@testing-library/jest-dom@6.9.1)(esbuild@0.27.7)(rollup@4.60.2)(solid-js@1.9.12)(storybook@10.3.5(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)(vite@8.0.1(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))
+      unplugin-icons:
+        specifier: 'catalog:'
+        version: 23.0.1
+
+  packages/dev/eslint-plugin:
+    dependencies:
+      eslint:
+        specifier: '*'
+        version: 9.39.2(jiti@2.6.1)
+
+  packages/dev/storybook:
     dependencies:
       '@app/studio':
         specifier: workspace:*
-        version: link:../studio
+        version: link:../../app/studio
       '@fontsource-variable/ibm-plex-sans':
         specifier: ^5.2.8
         version: 5.2.8
@@ -232,46 +269,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.4(@types/node@25.5.0)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(jsdom@29.0.2)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
-
-  packages/app/studio:
-    dependencies:
-      '@lib/design':
-        specifier: workspace:*
-        version: link:../../lib/design
-      '@lib/shell':
-        specifier: workspace:*
-        version: link:../../lib/shell
-      '@lib/state':
-        specifier: workspace:*
-        version: link:../../lib/state
-      '@lib/ui':
-        specifier: workspace:*
-        version: link:../../lib/ui
-      '@solidjs/router':
-        specifier: '*'
-        version: 0.16.1(solid-js@1.9.12)
-      '@vanilla-extract/css':
-        specifier: 'catalog:'
-        version: 1.20.0(babel-plugin-macros@3.1.0)
-      solid-js:
-        specifier: '*'
-        version: 1.9.12
-    devDependencies:
-      storybook:
-        specifier: 'catalog:'
-        version: 10.3.5(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      storybook-solidjs-vite:
-        specifier: 'catalog:'
-        version: 10.0.12(@testing-library/jest-dom@6.9.1)(esbuild@0.27.7)(rollup@4.60.2)(solid-js@1.9.12)(storybook@10.3.5(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.2)(vite@7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
-      unplugin-icons:
-        specifier: 'catalog:'
-        version: 23.0.1
-
-  packages/dev/eslint-plugin:
-    dependencies:
-      eslint:
-        specifier: '*'
-        version: 9.39.2(jiti@2.6.1)
 
   packages/lib/design:
     dependencies:
