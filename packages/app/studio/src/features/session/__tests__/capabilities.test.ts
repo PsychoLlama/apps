@@ -77,16 +77,15 @@ const mediaDevices = {
 
 const asSession = (
   overrides: Partial<SessionState>,
-): DeepReadonly<SessionState> =>
-  ({
-    status: 'recording',
-    tracks: [],
-    error: null,
-    streams: {},
-    recorder: null,
-    chunks: null,
-    ...overrides,
-  }) as DeepReadonly<SessionState>;
+): DeepReadonly<SessionState> => ({
+  status: 'recording',
+  tracks: [],
+  error: null,
+  streams: {},
+  recorder: null,
+  chunks: null,
+  ...overrides,
+});
 
 beforeEach(() => {
   Object.defineProperty(navigator, 'mediaDevices', {

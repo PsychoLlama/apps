@@ -7,7 +7,7 @@ const tester = new RuleTester({
   },
 });
 
-tester.run('no-static-style-prop', rule as never, {
+tester.run('no-static-style-prop', rule, {
   valid: [
     // Dynamic values are fine.
     { code: '<div style={{ color: someVar() }} />' },

@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@iconify/json": "^2.2.460",
-    "@vanilla-extract/vite-plugin": "^5.2.1",
+    "@vanilla-extract/vite-plugin": "^5.2.2",
     "typescript": "catalog:",
     "unplugin-icons": "catalog:",
     "vitest": "catalog:",

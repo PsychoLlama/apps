@@ -12,7 +12,7 @@ const invalid = [...bannedElements].map((element) => ({
   errors: [{ messageId: 'banned' as const, data: { element } }],
 }));
 
-tester.run('require-ui-primitives', rule as never, {
+tester.run('require-ui-primitives', rule, {
   valid: [
     // @lib/ui components are fine.
     { code: '<Flex as="div" />' },

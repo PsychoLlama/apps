@@ -127,5 +127,5 @@ export const createPalette = (
 
   globalStyle(':root', { vars: assignVars(contract, values) });
 
-  return contract as ColorContract;
+  return contract;
 };

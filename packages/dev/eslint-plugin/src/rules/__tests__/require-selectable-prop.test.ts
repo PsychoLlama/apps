@@ -7,7 +7,7 @@ const tester = new RuleTester({
   },
 });
 
-tester.run('require-selectable-prop', rule as never, {
+tester.run('require-selectable-prop', rule, {
   valid: [
     // Static children: no prop required.
     { code: '<Text as="p">Hello world</Text>' },
