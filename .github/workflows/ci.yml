@@ -11,6 +11,10 @@ jobs:
       deployments: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Moon needs full history to detect touched files for
+          # affected checks.
+          fetch-depth: 0
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/magic-nix-cache-action@v13
       # Hydrate PATH from the flake so wrangler-action can find pnpm.
@@ -24,6 +28,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
+      # Needed for `main:test-storybook`. Local dev uses the nix-provided
+      # chromium via `CHROMIUM_PATH`; CI uses playwright's own binary.
+      - name: Restore playwright cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+      - run: pnpm exec playwright install chromium --with-deps
       - name: Restore moon cache
         uses: actions/cache@v4
         with:
