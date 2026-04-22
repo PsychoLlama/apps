@@ -9,6 +9,12 @@ tasks:
   # solidstart bundle to `packages/app/main/.output`; storybook's
   # static bundle layers on at `/__storybook`. Wrangler picks up the
   # blended `.output/public` tree via `workingDirectory`.
+  # Cache invalidation rides entirely on `deps` — moon re-runs this
+  # task whenever either upstream produces new outputs. Listing the
+  # upstream outputs as `inputs` here would be redundant, and worse,
+  # this task's own output sits inside `@app/main`'s `.output` tree,
+  # so a self-referential input would invalidate the cache on every
+  # run.
   build:
     command: 'cp'
     args:
@@ -18,9 +24,6 @@ tasks:
     deps:
       - '@app/main:build'
       - '@dev/storybook:build'
-    inputs:
-      - '/packages/dev/storybook/storybook-static/**/*'
-      - '/packages/app/main/.output/**/*'
     outputs:
       - '/packages/app/main/.output/public/__storybook'
 
