@@ -98,11 +98,14 @@ jobs:
           SHA: ${{ github.event.pull_request.head.sha }}
           URL: ${{ steps.preview.outputs.url }}
         run: |
+          # `required_contexts[]` (no value) sends an empty JSON
+          # array — without it GitHub enforces commit status checks
+          # against the PR's still-running CI run and 409s.
           deployment_id=$(gh api "repos/$REPO/deployments" \
             -f ref="$SHA" \
             -f environment=preview \
             -F auto_merge=false \
-            -f required_contexts:='[]' \
+            -f required_contexts[] \
             -F transient_environment=true \
             -F production_environment=false \
             --jq .id)
