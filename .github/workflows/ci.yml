@@ -24,9 +24,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
-      - run: just check
-      - run: just build
-
+      - name: Restore moon cache
+        uses: actions/cache@v4
+        with:
+          path: .moon/cache
+          key: ${{ runner.os }}-moon-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-moon-
+      - run: moon run root:check main:build
       # Deploys to production on pushes to main.
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'
