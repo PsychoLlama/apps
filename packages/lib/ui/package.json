@@ -1,0 +1,25 @@
+{
+  "name": "@lib/ui",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/design": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
+  },
+  "devDependencies": {
+    "storybook": "catalog:",
+    "storybook-solidjs-vite": "catalog:",
+    "unplugin-icons": "catalog:"
+  },
+  "peerDependencies": {
+    "@solidjs/router": "*",
+    "solid-js": "*"
+  }
+}

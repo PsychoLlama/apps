@@ -1,5 +1,5 @@
 {
-  "name": "@psychollama/apps",
+  "name": "@app/apps",
   "private": true,
   "type": "module",
   "version": "0.0.0",
@@ -7,39 +7,20 @@
   "author": "Jesse Gibson <JesseTheGibson@gmail.com>",
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
-  "imports": {
-    "#ui": "./src/ui/index.ts",
-    "#design": "./src/design/index.css.ts",
-    "#design/color-scheme": "./src/design/color-scheme.ts",
-    "#design/theme": "./src/design/theme.ts",
-    "#design/palette/*": "./src/design/palette/*.css.ts",
-    "#state": "./src/state/index.ts"
-  },
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "start": "vite start",
-    "preview": "vite preview",
-    "typecheck": "tsc",
-    "knip": "knip",
+    "dev": "pnpm --filter @app/main dev",
+    "build": "pnpm --filter @app/main build",
+    "storybook": "pnpm --filter @app/main storybook",
+    "storybook:build": "pnpm --filter @app/main storybook:build",
+    "typecheck": "tsc && pnpm -r typecheck",
+    "knip": "pnpm --filter @app/main knip",
     "lint": "eslint --color",
     "test": "vitest run",
-    "test:storybook": "vitest run --config vitest.storybook.config.ts",
-    "storybook": "storybook dev -p 6006 --ci",
-    "storybook:build": "storybook build"
+    "test:storybook": "pnpm --filter @app/main test:storybook"
   },
   "prettier": {
     "singleQuote": true,
     "trailingComma": "all"
-  },
-  "dependencies": {
-    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
-    "@solidjs/router": "^0.16.1",
-    "@solidjs/start": "2.0.0-alpha.2",
-    "@solidjs/vite-plugin-nitro-2": "^0.1.0",
-    "prettier": "^3.8.1",
-    "solid-js": "^1.9.5",
-    "vite": "^7.0.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -52,26 +33,22 @@
   "devDependencies": {
     "@eslint/compat": "^2.0.4",
     "@eslint/js": "^9.39.2",
-    "@iconify/json": "^2.2.460",
-    "@storybook/addon-themes": "^10.3.5",
-    "@storybook/addon-vitest": "^10.3.5",
+    "@dev/eslint-plugin": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
-    "@vanilla-extract/css": "^1.18.0",
+    "@solidjs/router": "catalog:",
+    "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.1",
-    "@vitest/browser": "^4.1.4",
-    "@vitest/browser-playwright": "^4.1.4",
     "@vitest/coverage-v8": "^4.1.4",
-    "eslint": "^9.39.2",
+    "eslint": "catalog:",
     "eslint-plugin-solid": "^0.14.5",
     "jsdom": "^29.0.1",
-    "knip": "^6.4.1",
-    "storybook": "^10.3.5",
-    "storybook-solidjs-vite": "^10.0.12",
-    "typescript": "^6.0.2",
+    "knip": "catalog:",
+    "prettier": "^3.8.1",
+    "solid-js": "catalog:",
+    "typescript": "catalog:",
     "typescript-eslint": "^8.58.2",
-    "unplugin-icons": "^23.0.1",
+    "vite": "catalog:",
     "vite-plugin-solid": "^2.11.11",
-    "vitest": "^4.1.4",
-    "wrangler": "^4.65.0"
+    "vitest": "catalog:"
   }
 }

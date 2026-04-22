@@ -1,0 +1,15 @@
+{
+  "name": "@lib/state",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
+  }
+}

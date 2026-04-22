@@ -23,7 +23,7 @@ build-storybook:
 
 # Build everything
 build: build-app build-storybook
-    cp -r storybook-static .output/public/__storybook
+    cp -r packages/app/main/storybook-static packages/app/main/.output/public/__storybook
 
 # Run all checks
 check:

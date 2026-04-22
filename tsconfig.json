@@ -17,16 +17,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "types": ["vite/client", "vitest/globals", "unplugin-icons/types/solid"],
-    "paths": {
-      "#ui": ["./src/ui/index.ts"],
-      "#design": ["./src/design/index.css.ts"],
-      "#design/color-scheme": ["./src/design/color-scheme.ts"],
-      "#design/theme": ["./src/design/theme.ts"],
-      "#design/palette/*": ["./src/design/palette/*.css.ts"],
-      "#state": ["./src/state/index.ts"]
-    }
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["src", ".storybook/*.ts", "*.ts"]
+  "include": ["*.ts"]
 }
