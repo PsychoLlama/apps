@@ -76,11 +76,15 @@ jobs:
           set -o pipefail
           pnpm exec wrangler versions upload | tee /tmp/wrangler.log
           url=$(grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev' /tmp/wrangler.log | head -n1)
-          if [ -z "$url" ]; then
-            echo "::error::Could not find preview URL in wrangler output"
-            exit 1
+          if [ -n "$url" ]; then
+            echo "url=$url" >> "$GITHUB_OUTPUT"
+          else
+            # `preview_urls` is a non-versioned setting; it only takes
+            # effect on the worker after the next `wrangler deploy`.
+            # Until then, `versions upload` won't print a preview URL,
+            # and the comment/deployment steps below skip silently.
+            echo "::warning::No preview URL in wrangler output — \`preview_urls\` may not be live on the worker yet."
           fi
-          echo "url=$url" >> "$GITHUB_OUTPUT"
 
       # Records a GitHub Deployment so the PR sidebar shows a "preview"
       # tile linking to the workers.dev URL. `wrangler-action` claimed
