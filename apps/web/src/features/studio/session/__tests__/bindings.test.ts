@@ -1,4 +1,4 @@
-import { createTestBindings } from '@psychollama/state';
+import { createTestBindings } from '@lib/state';
 import { libraryStore } from '../../library/store';
 import { timerStore } from '../../timer/store';
 import type { RecordingResult } from '../capabilities';

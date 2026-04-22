@@ -1,4 +1,4 @@
-import { Flex, Heading, Link, Text } from '@psychollama/ui';
+import { Flex, Heading, Link, Text } from '@lib/ui';
 import SiteHeader from '../components/site-header';
 import * as css from './index.css';
 

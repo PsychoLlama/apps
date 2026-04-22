@@ -12,8 +12,8 @@ import {
   standard,
   typeScale,
   white,
-} from '@psychollama/design';
-import { assignColorSchemeVars } from '@psychollama/design/color-scheme';
+} from '@lib/design';
+import { assignColorSchemeVars } from '@lib/design/color-scheme';
 
 export const base = style({
   display: 'inline-flex',

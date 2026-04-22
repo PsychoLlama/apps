@@ -7,8 +7,8 @@ import {
   onCleanup,
   onMount,
 } from 'solid-js';
-import { Button, Callout, Flex, Heading, Link, Text } from '@psychollama/ui';
-import { useAction, useEffect } from '@psychollama/state';
+import { Button, Callout, Flex, Heading, Link, Text } from '@lib/ui';
+import { useAction, useEffect } from '@lib/state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconClose from 'virtual:icons/mdi/close';
 import IconPlayOutline from 'virtual:icons/mdi/play-outline';

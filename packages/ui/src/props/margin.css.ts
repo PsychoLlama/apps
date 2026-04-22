@@ -1,5 +1,5 @@
 import { styleVariants } from '@vanilla-extract/css';
-import { space } from '@psychollama/design';
+import { space } from '@lib/design';
 
 export const margin = styleVariants(space, (value) => ({ margin: value }));
 

@@ -1,5 +1,5 @@
 import { styleVariants } from '@vanilla-extract/css';
-import { radius, shadow, background } from '@psychollama/design';
+import { radius, shadow, background } from '@lib/design';
 
 export const bg = styleVariants({
   page: { background: background.page },

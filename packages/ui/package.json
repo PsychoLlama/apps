@@ -1,5 +1,5 @@
 {
-  "name": "@psychollama/ui",
+  "name": "@lib/ui",
   "private": true,
   "type": "module",
   "version": "0.0.0",
@@ -10,7 +10,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@psychollama/design": "workspace:*",
+    "@lib/design": "workspace:*",
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {

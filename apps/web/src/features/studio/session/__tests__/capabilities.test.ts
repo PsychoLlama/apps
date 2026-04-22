@@ -1,4 +1,4 @@
-import type { DeepReadonly } from '@psychollama/state';
+import type { DeepReadonly } from '@lib/state';
 import {
   captureTrack,
   checkSupport,

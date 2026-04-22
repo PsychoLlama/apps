@@ -1,5 +1,5 @@
 {
-  "name": "@psychollama/web",
+  "name": "@app/web",
   "private": true,
   "type": "module",
   "version": "0.0.0",
@@ -20,9 +20,9 @@
   },
   "dependencies": {
     "@fontsource-variable/ibm-plex-sans": "^5.2.8",
-    "@psychollama/design": "workspace:*",
-    "@psychollama/state": "workspace:*",
-    "@psychollama/ui": "workspace:*",
+    "@lib/design": "workspace:*",
+    "@lib/state": "workspace:*",
+    "@lib/ui": "workspace:*",
     "@solidjs/router": "catalog:",
     "@solidjs/start": "2.0.0-alpha.2",
     "@solidjs/vite-plugin-nitro-2": "^0.1.0",

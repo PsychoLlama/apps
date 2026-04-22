@@ -1,5 +1,5 @@
 import type { ArgTypes } from 'storybook-solidjs-vite';
-import type { SpaceScale } from '@psychollama/design';
+import type { SpaceScale } from '@lib/design';
 import { spaceArgType } from './padding';
 import * as css from './margin.css';
 

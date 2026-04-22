@@ -1,5 +1,5 @@
 import type { ParentComponent } from 'solid-js';
-import { Flex, Heading, Text } from '@psychollama/ui';
+import { Flex, Heading, Text } from '@lib/ui';
 
 /** Label + description beside a visual swatch preview. */
 const TokenRow: ParentComponent<{ name: string; description: string }> = (

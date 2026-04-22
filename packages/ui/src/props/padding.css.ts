@@ -1,5 +1,5 @@
 import { styleVariants } from '@vanilla-extract/css';
-import { space } from '@psychollama/design';
+import { space } from '@lib/design';
 
 export const padding = styleVariants(space, (value) => ({ padding: value }));
 

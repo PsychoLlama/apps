@@ -1,5 +1,5 @@
 import { style, styleVariants } from '@vanilla-extract/css';
-import { typeScale, fontFamily, fontWeight, text } from '@psychollama/design';
+import { typeScale, fontFamily, fontWeight, text } from '@lib/design';
 
 export const base = style({
   fontFamily: fontFamily.body,

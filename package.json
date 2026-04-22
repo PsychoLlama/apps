@@ -1,5 +1,5 @@
 {
-  "name": "@psychollama/apps",
+  "name": "@app/apps",
   "private": true,
   "type": "module",
   "version": "0.0.0",
@@ -8,15 +8,15 @@
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
   "scripts": {
-    "dev": "pnpm --filter @psychollama/web dev",
-    "build": "pnpm --filter @psychollama/web build",
-    "storybook": "pnpm --filter @psychollama/web storybook",
-    "storybook:build": "pnpm --filter @psychollama/web storybook:build",
+    "dev": "pnpm --filter @app/web dev",
+    "build": "pnpm --filter @app/web build",
+    "storybook": "pnpm --filter @app/web storybook",
+    "storybook:build": "pnpm --filter @app/web storybook:build",
     "typecheck": "tsc && pnpm -r typecheck",
-    "knip": "pnpm --filter @psychollama/web knip",
+    "knip": "pnpm --filter @app/web knip",
     "lint": "eslint --color",
     "test": "vitest run",
-    "test:storybook": "pnpm --filter @psychollama/web test:storybook"
+    "test:storybook": "pnpm --filter @app/web test:storybook"
   },
   "prettier": {
     "singleQuote": true,
@@ -33,7 +33,7 @@
   "devDependencies": {
     "@eslint/compat": "^2.0.4",
     "@eslint/js": "^9.39.2",
-    "@psychollama/eslint-plugin": "workspace:*",
+    "@lib/eslint-plugin": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
     "@vanilla-extract/css": "catalog:",
     "@vitest/coverage-v8": "^4.1.4",

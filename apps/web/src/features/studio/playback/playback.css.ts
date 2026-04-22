@@ -10,7 +10,7 @@ import {
   standard,
   text,
   typeScale,
-} from '@psychollama/design';
+} from '@lib/design';
 
 export const shell = style({
   height: '100dvh',

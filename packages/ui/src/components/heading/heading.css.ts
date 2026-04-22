@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { fontFamily } from '@psychollama/design';
+import { fontFamily } from '@lib/design';
 
 export { size, weight, align, color } from '../text/text.css';
 

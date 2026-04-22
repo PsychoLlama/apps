@@ -1,7 +1,7 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
-import type { SpaceScale } from '@psychollama/design';
+import type { SpaceScale } from '@lib/design';
 import {
   boxPropKeys,
   resolveBoxClasses,

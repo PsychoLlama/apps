@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
-import { shadow } from '@psychollama/design';
-import { Flex } from '@psychollama/ui';
+import { shadow } from '@lib/design';
+import { Flex } from '@lib/ui';
 import TokenRow from '../storybook/token-row';
 
 const meta = {

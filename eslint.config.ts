@@ -2,7 +2,7 @@ import { includeIgnoreFile } from '@eslint/compat';
 import eslint from '@eslint/js';
 import solid from 'eslint-plugin-solid/configs/typescript';
 import tseslint from 'typescript-eslint';
-import customRules from '@psychollama/eslint-plugin';
+import customRules from '@lib/eslint-plugin';
 
 const restrictedImportPatterns = [
   {
@@ -15,11 +15,11 @@ const restrictedStatePaths = [
   {
     name: 'solid-js',
     importNames: ['createSignal', 'createResource'],
-    message: 'Use @psychollama/state for state management.',
+    message: 'Use @lib/state for state management.',
   },
   {
     name: 'solid-js/store',
-    message: 'Use @psychollama/state for state management.',
+    message: 'Use @lib/state for state management.',
   },
 ];
 
@@ -84,7 +84,7 @@ export default [
               name: '@vanilla-extract/css',
               importNames: ['globalStyle'],
               message:
-                'globalStyle is restricted to @psychollama/design. The global CSS reset (all: unset) strips UA defaults, so component styles should not need global overrides.',
+                'globalStyle is restricted to @lib/design. The global CSS reset (all: unset) strips UA defaults, so component styles should not need global overrides.',
             },
           ],
         },
@@ -133,7 +133,7 @@ export default [
     },
   },
   {
-    // @psychollama/state internals may use solid-js/store directly.
+    // @lib/state internals may use solid-js/store directly.
     files: ['packages/state/src/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -145,7 +145,7 @@ export default [
     },
   },
   {
-    // @psychollama/ui primitives implement the components the rule redirects
+    // @lib/ui primitives implement the components the rule redirects
     // everyone else toward — they have to use raw elements.
     files: ['packages/ui/src/components/**/*.tsx'],
     rules: {

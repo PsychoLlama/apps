@@ -1,4 +1,4 @@
-import { createStore, defineStore } from '@psychollama/state';
+import { createStore, defineStore } from '@lib/state';
 import type { Recording } from './types';
 
 /** Catalog of recordings captured during this session. */

@@ -1,4 +1,4 @@
-import type { DeepReadonly } from '@psychollama/state';
+import type { DeepReadonly } from '@lib/state';
 import type { SessionState } from './store';
 import type { TimerState } from '../timer/store';
 import type { Track } from './types';

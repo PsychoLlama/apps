@@ -1,4 +1,4 @@
-import { defineAction, defineEffect } from '@psychollama/state';
+import { defineAction, defineEffect } from '@lib/state';
 import { revokeRecording } from './capabilities';
 import { libraryStore } from './store';
 

@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { Flex, LinkButton, Text } from '@psychollama/ui';
+import { Flex, LinkButton, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import * as css from './site-header.css';
 

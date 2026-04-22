@@ -1,4 +1,4 @@
-import { createTestBindings, defineAction } from '@psychollama/state';
+import { createTestBindings, defineAction } from '@lib/state';
 import { tick } from '../bindings';
 import { timerStore } from '../store';
 

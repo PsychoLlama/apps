@@ -17,7 +17,7 @@ import {
   neutralAlpha,
   radius,
   typeScale,
-} from '@psychollama/design';
+} from '@lib/design';
 
 // --- Base ---
 

@@ -1,5 +1,5 @@
 {
-  "name": "@psychollama/design",
+  "name": "@lib/design",
   "private": true,
   "type": "module",
   "version": "0.0.0",
@@ -16,7 +16,7 @@
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
-    "@psychollama/ui": "workspace:*",
+    "@lib/ui": "workspace:*",
     "storybook": "catalog:",
     "storybook-solidjs-vite": "catalog:",
     "unplugin-icons": "catalog:"

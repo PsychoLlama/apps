@@ -1,5 +1,5 @@
 import type { ParentComponent } from 'solid-js';
-import { Flex, Text } from '@psychollama/ui';
+import { Flex, Text } from '@lib/ui';
 import * as css from './swatch.css';
 
 /** Decorative placeholder for layout stories. Diagonal neutral stripes with a centered label. */

@@ -15,7 +15,7 @@ import {
   radius,
   space,
   typeScale,
-} from '@psychollama/design';
+} from '@lib/design';
 
 // --- Root ---
 

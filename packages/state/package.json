@@ -1,5 +1,5 @@
 {
-  "name": "@psychollama/state",
+  "name": "@lib/state",
   "private": true,
   "type": "module",
   "version": "0.0.0",

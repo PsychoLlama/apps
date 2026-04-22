@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutral, space } from '@psychollama/design';
+import { neutral, space } from '@lib/design';
 
 export const header = style({
   borderBottom: `1px solid ${neutral[6]}`,

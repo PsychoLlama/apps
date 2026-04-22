@@ -8,8 +8,8 @@ import {
   Link,
   LinkButton,
   Text,
-} from '@psychollama/ui';
-import { useEffect } from '@psychollama/state';
+} from '@lib/ui';
+import { useEffect } from '@lib/state';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import IconTrashCan from 'virtual:icons/mdi/trash-can-outline';
 import IconAlertCircle from 'virtual:icons/mdi/alert-circle-outline';

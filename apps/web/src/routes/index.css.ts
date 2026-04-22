@@ -1,12 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import {
-  accent,
-  fast,
-  neutral,
-  radius,
-  space,
-  standard,
-} from '@psychollama/design';
+import { accent, fast, neutral, radius, space, standard } from '@lib/design';
 
 export const page = style({
   height: '100dvh',

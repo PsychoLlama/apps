@@ -1,7 +1,7 @@
 import { Dynamic } from 'solid-js/web';
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
-import type { TypeScale, FontWeight, TextColor } from '@psychollama/design';
+import type { TypeScale, FontWeight, TextColor } from '@lib/design';
 import {
   type HtmlTextTag,
   type PolymorphicProps,

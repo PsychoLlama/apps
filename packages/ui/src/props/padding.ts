@@ -1,6 +1,6 @@
 import type { ArgTypes } from 'storybook-solidjs-vite';
-import type { SpaceScale } from '@psychollama/design';
-import { space } from '@psychollama/design';
+import type { SpaceScale } from '@lib/design';
+import { space } from '@lib/design';
 import * as css from './padding.css';
 
 const spaceScaleOptions = Object.keys(space).map(Number);

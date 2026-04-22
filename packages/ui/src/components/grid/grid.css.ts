@@ -1,5 +1,5 @@
 import { style, styleVariants } from '@vanilla-extract/css';
-import { space } from '@psychollama/design';
+import { space } from '@lib/design';
 
 export const base = style({
   display: 'grid',

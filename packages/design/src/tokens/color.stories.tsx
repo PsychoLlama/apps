@@ -10,8 +10,8 @@ import {
   success,
   text,
   background,
-} from '@psychollama/design';
-import { Flex, Grid, Heading, Text } from '@psychollama/ui';
+} from '@lib/design';
+import { Flex, Grid, Heading, Text } from '@lib/ui';
 import { amber, amberAlpha } from '../palette/amber.css';
 import { blue, blueAlpha } from '../palette/blue.css';
 import { bronze, bronzeAlpha } from '../palette/bronze.css';

@@ -50,7 +50,7 @@ importers:
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.3
-      '@psychollama/eslint-plugin':
+      '@lib/eslint-plugin':
         specifier: workspace:*
         version: link:packages/eslint-plugin
       '@testing-library/jest-dom':
@@ -95,13 +95,13 @@ importers:
       '@fontsource-variable/ibm-plex-sans':
         specifier: ^5.2.8
         version: 5.2.8
-      '@psychollama/design':
+      '@lib/design':
         specifier: workspace:*
         version: link:../../packages/design
-      '@psychollama/state':
+      '@lib/state':
         specifier: workspace:*
         version: link:../../packages/state
-      '@psychollama/ui':
+      '@lib/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@solidjs/router':
@@ -169,7 +169,7 @@ importers:
         specifier: 'catalog:'
         version: 1.20.0(babel-plugin-macros@3.1.0)
     devDependencies:
-      '@psychollama/ui':
+      '@lib/ui':
         specifier: workspace:*
         version: link:../ui
       storybook:
@@ -196,7 +196,7 @@ importers:
 
   packages/ui:
     dependencies:
-      '@psychollama/design':
+      '@lib/design':
         specifier: workspace:*
         version: link:../design
       '@solidjs/router':

@@ -1,9 +1,5 @@
 import type { ArgTypes } from 'storybook-solidjs-vite';
-import type {
-  RadiusScale,
-  ShadowLevel,
-  BackgroundColor,
-} from '@psychollama/design';
+import type { RadiusScale, ShadowLevel, BackgroundColor } from '@lib/design';
 import {
   paddingPropKeys,
   resolvePaddingClasses,

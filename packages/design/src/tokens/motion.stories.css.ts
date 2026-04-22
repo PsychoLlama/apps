@@ -1,5 +1,5 @@
 import { keyframes, style } from '@vanilla-extract/css';
-import { accent, space } from '@psychollama/design';
+import { accent, space } from '@lib/design';
 
 // --- Duration swatch ---
 

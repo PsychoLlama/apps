@@ -1,4 +1,4 @@
-import { createStore, defineStore } from '@psychollama/state';
+import { createStore, defineStore } from '@lib/state';
 
 /** Elapsed-time counter driving the studio's recording display. */
 export interface TimerState {

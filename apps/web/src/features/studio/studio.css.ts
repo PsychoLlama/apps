@@ -13,7 +13,7 @@ import {
   success,
   text,
   typeScale,
-} from '@psychollama/design';
+} from '@lib/design';
 
 const pulse = keyframes({
   '0%, 100%': { opacity: '1' },

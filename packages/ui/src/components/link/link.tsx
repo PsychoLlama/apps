@@ -11,7 +11,7 @@
 import { A, type AnchorProps } from '@solidjs/router';
 import { mergeProps, splitProps } from 'solid-js';
 import type { ParentComponent } from 'solid-js';
-import type { FontWeight, TypeScale } from '@psychollama/design';
+import type { FontWeight, TypeScale } from '@lib/design';
 import {
   type MarginProps,
   marginPropKeys,

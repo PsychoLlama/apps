@@ -1,4 +1,4 @@
-import { defineStore, createStore } from '@psychollama/state';
+import { defineStore, createStore } from '@lib/state';
 import type { SessionStatus, Track } from './types';
 
 /** Live state of the in-progress recording session. */

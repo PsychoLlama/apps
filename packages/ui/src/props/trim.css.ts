@@ -11,7 +11,7 @@
  * https://developer.mozilla.org/en-US/docs/Web/CSS/text-box-trim
  */
 import { styleVariants } from '@vanilla-extract/css';
-import { baselineOffset } from '@psychollama/design';
+import { baselineOffset } from '@lib/design';
 
 const trimStart = `calc(1cap - ${baselineOffset} - 0.5lh)`;
 const trimEnd = `calc(${baselineOffset} - 0.5lh)`;

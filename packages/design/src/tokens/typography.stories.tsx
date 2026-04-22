@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
-import { typeScale, fontFamily, fontWeight } from '@psychollama/design';
-import { Flex, Text } from '@psychollama/ui';
+import { typeScale, fontFamily, fontWeight } from '@lib/design';
+import { Flex, Text } from '@lib/ui';
 
 const meta = {
   title: 'Design System/Typography',

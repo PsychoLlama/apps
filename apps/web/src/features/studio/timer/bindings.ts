@@ -1,4 +1,4 @@
-import { defineAction } from '@psychollama/state';
+import { defineAction } from '@lib/state';
 import { timerStore } from './store';
 
 /**

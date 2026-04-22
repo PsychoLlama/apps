@@ -1,6 +1,6 @@
 // @refresh reload
 import { createHandler, StartServer } from '@solidjs/start/server';
-import { Flex } from '@psychollama/ui';
+import { Flex } from '@lib/ui';
 
 export default createHandler(() => (
   <StartServer

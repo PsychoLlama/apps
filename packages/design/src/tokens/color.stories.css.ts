@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutral, space } from '@psychollama/design';
+import { neutral, space } from '@lib/design';
 
 export const scaleRow = style({
   gridTemplateColumns: 'max-content 1fr',

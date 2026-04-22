@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutralAlpha, radius, space } from '@psychollama/design';
+import { neutralAlpha, radius, space } from '@lib/design';
 
 const stripes = [
   `repeating-linear-gradient(`,

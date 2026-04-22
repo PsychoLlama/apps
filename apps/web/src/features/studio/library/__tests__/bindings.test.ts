@@ -1,4 +1,4 @@
-import { createTestBindings } from '@psychollama/state';
+import { createTestBindings } from '@lib/state';
 import { deleteRecording } from '../bindings';
 import { libraryStore } from '../store';
 import type { Recording } from '../types';

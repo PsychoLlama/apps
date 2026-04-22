@@ -8,8 +8,8 @@ import {
   standard,
   entrance,
   exit,
-} from '@psychollama/design';
-import { Flex, Grid, Heading, Text } from '@psychollama/ui';
+} from '@lib/design';
+import { Flex, Grid, Heading, Text } from '@lib/ui';
 import * as css from './motion.stories.css';
 
 const meta = {
