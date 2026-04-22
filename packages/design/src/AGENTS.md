@@ -4,8 +4,8 @@
 - `palette/*.ts`: Raw Radix color scales. Edit via codemods, never by hand.
 - `palette/*.css.ts`: Registered palettes. Each calls `createPalette()` to define CSS custom properties on `:root`. Importing a palette triggers the side effect; unused palettes produce no CSS.
 - `index.css.ts`: The public API for runtime tokens. Do not import other files directly.
-- `#design/color-scheme`: Build-time utilities (`assignColorSchemeVars`, `createPalette`, `lightDark`). Import in `.css.ts` files. This is a plain `.ts` file — not `.css.ts` — because it exports functions.
-- `tokens/*.stories.css.ts`: Co-located story styles for layout that `#ui` components cannot express. Stories prefer `#ui` components over custom CSS.
+- `@lib/design/color-scheme`: Build-time utilities (`assignColorSchemeVars`, `createPalette`, `lightDark`). Import in `.css.ts` files. This is a plain `.ts` file — not `.css.ts` — because it exports functions.
+- `tokens/*.stories.css.ts`: Co-located story styles for layout that `@lib/ui` components cannot express. Stories prefer `@lib/ui` components over custom CSS.
 
 ## Color scheme strategy
 

@@ -1,6 +1,6 @@
 # Standard Props
 
-Shared prop groups used across components. Values use `space` tokens from `#design`.
+Shared prop groups used across components. Values use `space` tokens from `@lib/design`.
 
 `SpaceScale`: `1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9`.
 

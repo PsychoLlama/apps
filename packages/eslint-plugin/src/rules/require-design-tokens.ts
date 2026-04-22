@@ -125,7 +125,7 @@ const rule: Rule.RuleModule = {
     },
     messages: {
       hardcoded:
-        'Hard-coded {{property}} value. Use a {{token}} token from #design instead.',
+        'Hard-coded {{property}} value. Use a {{token}} token from @lib/design instead.',
       redundantZero: redundantZeroMessage,
     },
     schema: [],

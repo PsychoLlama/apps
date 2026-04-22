@@ -1,6 +1,6 @@
 # State Management
 
-- Single entry point: `#state`.
+- Single entry point: `@lib/state`.
 - Stores hold state. Actions mutate it. Effects wrap impure work and dispatch actions at lifecycle boundaries.
 - Naming convention: a store named `timerStore` is referred to as `timer` inside action handlers.
 

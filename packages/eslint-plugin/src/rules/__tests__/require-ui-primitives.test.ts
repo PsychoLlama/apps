@@ -14,12 +14,12 @@ const invalid = [...bannedElements].map((element) => ({
 
 tester.run('require-ui-primitives', rule as never, {
   valid: [
-    // #ui components are fine.
+    // @lib/ui components are fine.
     { code: '<Flex as="div" />' },
     { code: '<Text as="p">hello</Text>' },
     { code: '<Heading as="h1">title</Heading>' },
 
-    // Elements without a #ui equivalent are allowed.
+    // Elements without a @lib/ui equivalent are allowed.
     { code: '<input />' },
     { code: '<img />' },
     // Document structure is allowed.

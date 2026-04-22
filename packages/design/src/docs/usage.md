@@ -1,6 +1,6 @@
 # Design System Usage
 
-- Single entry point: `#design`.
+- Single entry point: `@lib/design`.
 - Never hard-code a value when a token exists.
 
 ## Colors

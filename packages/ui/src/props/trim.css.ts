@@ -5,7 +5,7 @@
  * The start trim uses the `cap` CSS unit (Baseline 2023) so it adapts
  * automatically to font changes. The baseline offset — the only
  * hardcoded constant — is co-located with the font definition in
- * #design/tokens/typography.css.ts.
+ * @lib/design/tokens/typography.css.ts.
  *
  * Native replacement (limited availability):
  * https://developer.mozilla.org/en-US/docs/Web/CSS/text-box-trim

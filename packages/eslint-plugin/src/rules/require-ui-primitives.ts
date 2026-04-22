@@ -38,10 +38,10 @@ const rule: Rule.RuleModule = {
     type: 'suggestion',
     docs: {
       description:
-        'Ban raw HTML elements that have a #ui component equivalent.',
+        'Ban raw HTML elements that have a @lib/ui component equivalent.',
     },
     messages: {
-      banned: 'Use a #ui primitive instead of <{{element}}>.',
+      banned: 'Use a @lib/ui primitive instead of <{{element}}>.',
     },
     schema: [],
   },

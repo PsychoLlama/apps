@@ -1,7 +1,7 @@
 ## Guidance
 
-- `index.ts` is the only public API. All exports go through it. Imported as `#ui`.
-- Never hard-code colors, spacing, radius, shadows, motion, or typography values. Use `#design` tokens.
+- `index.ts` is the only public API. All exports go through it. Imported as `@lib/ui`.
+- Never hard-code colors, spacing, radius, shadows, motion, or typography values. Use `@lib/design` tokens.
 - Polymorphic components must require the `as` prop.
 
 ## Doc Comments
