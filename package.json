@@ -16,7 +16,7 @@
     "knip": "pnpm -r knip",
     "lint": "eslint --color",
     "test": "vitest run",
-    "test:storybook": "pnpm --filter @dev/storybook test:storybook"
+    "smoke-test": "pnpm --filter @dev/storybook smoke-test"
   },
   "prettier": {
     "singleQuote": true,

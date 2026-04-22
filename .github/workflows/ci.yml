@@ -39,8 +39,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
-      # Needed for `@dev/storybook:test-storybook`. Local dev uses
-      # the nix-provided chromium via `CHROMIUM_PATH`; CI uses
+      # Needed for `@dev/storybook:smoke-test`. Local dev uses the
+      # nix-provided chromium via `CHROMIUM_PATH`; CI uses
       # playwright's own binary.
       - name: Restore playwright cache
         id: playwright-cache

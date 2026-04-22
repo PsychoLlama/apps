@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "storybook dev -p 6006 --ci",
     "build": "storybook build",
-    "test:storybook": "vitest run --config vitest.storybook.config.ts",
+    "smoke-test": "vitest run --config smoke-test.config.ts",
     "typecheck": "tsc",
     "knip": "knip"
   },

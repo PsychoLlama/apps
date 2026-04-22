@@ -34,16 +34,17 @@ tasks:
     outputs:
       - 'storybook-static'
 
-  # Mirrors `build`'s inputs — both tasks render every story from
-  # every package through the same storybook config.
-  test-storybook:
+  # Browser-renders every story in every package to catch runtime
+  # regressions. Mirrors `build`'s inputs since both tasks drive the
+  # same stories through the same storybook config.
+  smoke-test:
     command: 'pnpm'
-    args: ['test:storybook']
+    args: ['smoke-test']
     inputs:
       - 'src/**/*'
       - '.storybook/**/*'
       - 'vite-ignored.ts'
-      - 'vitest.storybook.config.ts'
+      - 'smoke-test.config.ts'
       - '/packages/**/*.stories.*'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'
