@@ -1,7 +1,7 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
 project:
-  name: 'root'
+  name: '@app/apps'
   description: 'Workspace-wide checks'
 
 tasks:
@@ -53,4 +53,4 @@ tasks:
       - '~:typecheck'
       - '~:test'
       - '~:knip'
-      - 'main:test-storybook'
+      - '@app/main:test-storybook'

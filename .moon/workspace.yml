@@ -1,18 +1,23 @@
 $schema: './cache/schemas/workspace.json'
 
 projects:
-  root: '.'
-  main: 'packages/app/main'
-  studio: 'packages/app/studio'
-  eslint-plugin: 'packages/dev/eslint-plugin'
-  design: 'packages/lib/design'
-  shell: 'packages/lib/shell'
-  state: 'packages/lib/state'
-  ui: 'packages/lib/ui'
+  '@app/apps': '.'
+  '@app/main': 'packages/app/main'
+  '@app/studio': 'packages/app/studio'
+  '@dev/eslint-plugin': 'packages/dev/eslint-plugin'
+  '@lib/design': 'packages/lib/design'
+  '@lib/shell': 'packages/lib/shell'
+  '@lib/state': 'packages/lib/state'
+  '@lib/ui': 'packages/lib/ui'
 
 vcs:
   manager: 'git'
   defaultBranch: 'main'
+
+# Nix supplies every binary we run (node, pnpm, treefmt, playwright, etc.).
+# Declaring no `toolchain` plugins here keeps moon out of the toolchain
+# business — it never downloads or manages runtimes itself. `moon query
+# projects` will show every project on the `system` toolchain.
 
 # Keep all execution local: no Moonbase, no remote cache, no telemetry.
 telemetry: false
