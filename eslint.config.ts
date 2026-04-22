@@ -59,6 +59,7 @@ export default [
       'import/no-useless-path-segments': 'error',
       'import/no-self-import': 'error',
       'import/no-mutable-exports': 'error',
+      'import/no-extraneous-dependencies': 'error',
       'no-console': 'error',
       eqeqeq: 'error',
       'func-style': ['error', 'expression'],
