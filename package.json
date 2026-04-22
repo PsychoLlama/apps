@@ -36,6 +36,7 @@
     "@dev/eslint-plugin": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
     "@vanilla-extract/css": "catalog:",
+    "@vanilla-extract/vite-plugin": "^5.2.1",
     "@vitest/coverage-v8": "^4.1.4",
     "eslint": "catalog:",
     "eslint-plugin-solid": "^0.14.5",
@@ -45,6 +46,7 @@
     "typescript": "catalog:",
     "typescript-eslint": "^8.58.2",
     "vite": "catalog:",
+    "vite-plugin-solid": "^2.11.11",
     "vitest": "catalog:"
   }
 }
