@@ -2,5 +2,10 @@ $schema: './cache/schemas/tasks.json'
 
 implicitInputs:
   - 'package.json'
+  # Every package's manifest invalidates every task. Root holistic
+  # tasks (typecheck, test, lint via `pnpm -r`) depend on script and
+  # dep declarations across the workspace; catching those via the
+  # lockfile alone misses no-op bumps and script-only edits.
+  - '/packages/*/*/package.json'
   - '/pnpm-lock.yaml'
   - '/pnpm-workspace.yaml'
