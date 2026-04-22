@@ -14,9 +14,12 @@
     "@vanilla-extract/css": "^1.18.0"
   },
   "devDependencies": {
+    "storybook": "^10.3.5",
+    "storybook-solidjs-vite": "^10.0.12",
     "unplugin-icons": "^23.0.1"
   },
   "peerDependencies": {
+    "@solidjs/router": "^0.16.1",
     "solid-js": "^1.9.5"
   }
 }

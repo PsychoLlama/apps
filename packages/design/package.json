@@ -17,6 +17,8 @@
   },
   "devDependencies": {
     "@psychollama/ui": "workspace:*",
+    "storybook": "^10.3.5",
+    "storybook-solidjs-vite": "^10.0.12",
     "unplugin-icons": "^23.0.1"
   }
 }
