@@ -18,7 +18,7 @@ jobs:
       run:
         shell: nix develop --command bash -eo pipefail {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Moon needs full history to detect touched files for
           # affected checks.
