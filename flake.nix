@@ -23,7 +23,7 @@
 
     {
       devShells = eachSystem (
-        system: pkgs: {
+        system: pkgs: rec {
           default = pkgs.mkShell {
             packages = [
               pkgs.just
@@ -31,8 +31,15 @@
               pkgs.pnpm
               pkgs.treefmt
             ];
+          };
 
-            # Supports vitest+storybook headless testing.
+          # Playwright ships its own chromium, but the prebuilt binary can't
+          # run on NixOS. This shell layers on a nixpkgs chromium for local
+          # storybook browser tests. CI sticks with the default shell to
+          # keep chromium out of the nix cache closure.
+          nixos = pkgs.mkShell {
+            inputsFrom = [ default ];
+            packages = [ pkgs.chromium ];
             CHROMIUM_PATH = "${pkgs.chromium}/bin/chromium";
           };
         }
