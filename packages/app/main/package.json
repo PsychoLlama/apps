@@ -7,6 +7,9 @@
   "author": "Jesse Gibson <JesseTheGibson@gmail.com>",
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
+  "exports": {
+    "./theme": "./src/app.css.ts"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",

@@ -5,6 +5,7 @@ project:
   description: 'Storybook workbench for every package'
 
 dependsOn:
+  - '@app/main'
   - '@app/studio'
   - '@lib/design'
   - '@lib/shell'
@@ -29,6 +30,7 @@ tasks:
       - '.storybook/**/*'
       - 'vite-ignored.ts'
       - '/packages/**/*.stories.*'
+      - '/packages/app/main/src/app.css.ts'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'
     outputs:
@@ -46,5 +48,6 @@ tasks:
       - 'vite-ignored.ts'
       - 'smoke-test.config.ts'
       - '/packages/**/*.stories.*'
+      - '/packages/app/main/src/app.css.ts'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'

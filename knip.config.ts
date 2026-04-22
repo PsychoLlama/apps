@@ -39,7 +39,7 @@ const config: KnipConfig = {
       vite: false,
     },
     'packages/dev/storybook': {
-      entry: ['.storybook/*.ts', 'src/**/*.css.ts'],
+      entry: ['.storybook/*.ts'],
       project: ['src/**/*.{ts,tsx}'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons

@@ -199,6 +199,9 @@ importers:
 
   packages/dev/storybook:
     dependencies:
+      '@app/main':
+        specifier: workspace:*
+        version: link:../../app/main
       '@app/studio':
         specifier: workspace:*
         version: link:../../app/studio
