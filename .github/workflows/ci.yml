@@ -129,9 +129,13 @@ jobs:
         run: |
           marker='<!-- cf-preview -->'
           body="$marker"$'\n'"Preview: $URL (\`${SHA:0:7}\`)"
+          # `gh api --paginate --jq` runs the filter once per page, so
+          # the result stacks when a PR's comment list spans multiple
+          # pages. Slurp all pages first (`jq -s add`), then filter.
           existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
-            --jq "map(select(.body | startswith(\"$marker\"))) | .[0].id")
-          if [ -n "$existing" ] && [ "$existing" != "null" ]; then
+            | jq -rs --arg m "$marker" \
+                'add | map(select(.body | startswith($m))) | first.id // empty')
+          if [ -n "$existing" ]; then
             gh api -X PATCH "repos/$REPO/issues/comments/$existing" -f body="$body"
           else
             gh api "repos/$REPO/issues/$PR/comments" -f body="$body"
