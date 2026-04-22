@@ -60,6 +60,7 @@ export default [
       'import/no-self-import': 'error',
       'import/no-mutable-exports': 'error',
       'import/no-extraneous-dependencies': 'error',
+      'import/no-relative-packages': 'error',
       'no-console': 'error',
       eqeqeq: 'error',
       'func-style': ['error', 'expression'],
