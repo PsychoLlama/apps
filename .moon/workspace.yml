@@ -1,0 +1,18 @@
+$schema: './cache/schemas/workspace.json'
+
+projects:
+  root: '.'
+  main: 'packages/app/main'
+  studio: 'packages/app/studio'
+  eslint-plugin: 'packages/dev/eslint-plugin'
+  design: 'packages/lib/design'
+  shell: 'packages/lib/shell'
+  state: 'packages/lib/state'
+  ui: 'packages/lib/ui'
+
+vcs:
+  manager: 'git'
+  defaultBranch: 'main'
+
+# Keep all execution local: no Moonbase, no remote cache, no telemetry.
+telemetry: false

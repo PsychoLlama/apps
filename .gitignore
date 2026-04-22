@@ -14,3 +14,7 @@ app.config.timestamp_*.js
 storybook-static
 coverage
 /result*
+
+# moon
+.moon/cache
+.moon/docker
