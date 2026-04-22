@@ -75,7 +75,8 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec wrangler versions upload | tee /tmp/wrangler.log
-          url=$(grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev' /tmp/wrangler.log | head -n1)
+          # `|| true` so a missing URL doesn't trip `set -e`/`pipefail`.
+          url=$(grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev' /tmp/wrangler.log | head -n1 || true)
           if [ -n "$url" ]; then
             echo "url=$url" >> "$GITHUB_OUTPUT"
           else
