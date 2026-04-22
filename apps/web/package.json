@@ -23,12 +23,12 @@
     "@psychollama/design": "workspace:*",
     "@psychollama/state": "workspace:*",
     "@psychollama/ui": "workspace:*",
-    "@solidjs/router": "^0.16.1",
+    "@solidjs/router": "catalog:",
     "@solidjs/start": "2.0.0-alpha.2",
     "@solidjs/vite-plugin-nitro-2": "^0.1.0",
-    "@vanilla-extract/css": "^1.18.0",
-    "solid-js": "^1.9.5",
-    "vite": "^7.0.0"
+    "@vanilla-extract/css": "catalog:",
+    "solid-js": "catalog:",
+    "vite": "catalog:"
   },
   "devDependencies": {
     "@iconify/json": "^2.2.460",
@@ -37,12 +37,12 @@
     "@vanilla-extract/vite-plugin": "^5.2.1",
     "@vitest/browser": "^4.1.4",
     "@vitest/browser-playwright": "^4.1.4",
-    "knip": "^6.4.1",
-    "storybook": "^10.3.5",
-    "storybook-solidjs-vite": "^10.0.12",
-    "typescript": "^6.0.2",
-    "unplugin-icons": "^23.0.1",
-    "vitest": "^4.1.4",
+    "knip": "catalog:",
+    "storybook": "catalog:",
+    "storybook-solidjs-vite": "catalog:",
+    "typescript": "catalog:",
+    "unplugin-icons": "catalog:",
+    "vitest": "catalog:",
     "wrangler": "^4.65.0"
   }
 }
