@@ -9,10 +9,14 @@ jobs:
     permissions:
       contents: read
       deployments: write
-      pull-requests: write
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+    # Run every shell step inside the flake's devShell so CI stays in
+    # sync with local dev (single source of truth in flake.nix).
+    defaults:
+      run:
+        shell: nix develop --command bash -eo pipefail {0}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,13 +26,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/magic-nix-cache-action@v13
         with:
-          # Skip FlakeHub auth — we're not paying for it. Falls back to
-          # the GitHub Actions cache, which is what we want anyway.
           use-flakehub: false
-      # Hydrate PATH from the flake so subsequent steps can find
-      # pnpm/moon/treefmt without wrapping each command in `nix develop`.
-      - name: Activate flake environment
-        run: nix develop --command bash -c 'echo "$PATH" >> "$GITHUB_PATH"'
       - name: Restore pnpm store
         uses: actions/cache@v4
         with:
@@ -63,37 +61,31 @@ jobs:
       # hits moon's cache when unchanged.
       - run: moon ci
       - run: moon run '@app/main:build'
-      # Deploys to production on pushes to main.
+
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'
         working-directory: packages/app/main
         run: pnpm exec wrangler deploy
 
       # Uploads a preview version on same-repo pull requests without
-      # promoting to production. Captures the preview URL so subsequent
-      # steps can advertise it on the PR.
+      # promoting to production. Captures the preview URL so the next
+      # step can record a GitHub Deployment pointing at it.
       - name: Upload preview version
         id: preview
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         working-directory: packages/app/main
         run: |
-          set -o pipefail
           pnpm exec wrangler versions upload | tee /tmp/wrangler.log
           # `|| true` so a missing URL doesn't trip `set -e`/`pipefail`.
           url=$(grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev' /tmp/wrangler.log | head -n1 || true)
           if [ -n "$url" ]; then
             echo "url=$url" >> "$GITHUB_OUTPUT"
           else
-            # `preview_urls` is a non-versioned setting; it only takes
-            # effect on the worker after the next `wrangler deploy`.
-            # Until then, `versions upload` won't print a preview URL,
-            # and the comment/deployment steps below skip silently.
-            echo "::warning::No preview URL in wrangler output — \`preview_urls\` may not be live on the worker yet."
+            echo "::warning::No preview URL in wrangler output."
           fi
 
       # Records a GitHub Deployment so the PR sidebar shows a "preview"
-      # tile linking to the workers.dev URL. `wrangler-action` claimed
-      # to do this but only fired for `deploy`, never `versions upload`.
+      # tile linking to the workers.dev URL.
       - name: Record preview deployment
         if: steps.preview.outputs.url
         env:
@@ -114,29 +106,3 @@ jobs:
             -f state=success \
             -f environment_url="$URL" \
             -f log_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-
-      # Posts (or updates) a sticky PR comment with the preview link.
-      # The HTML marker lets us find the existing comment to edit
-      # instead of spamming a new one each push.
-      - name: Comment preview URL
-        if: steps.preview.outputs.url
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
-          URL: ${{ steps.preview.outputs.url }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          marker='<!-- cf-preview -->'
-          body="$marker"$'\n'"Preview: $URL (\`${SHA:0:7}\`)"
-          # `gh api --paginate --jq` runs the filter once per page, so
-          # the result stacks when a PR's comment list spans multiple
-          # pages. Slurp all pages first (`jq -s add`), then filter.
-          existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
-            | jq -rs --arg m "$marker" \
-                'add | map(select(.body | startswith($m))) | first.id // empty')
-          if [ -n "$existing" ]; then
-            gh api -X PATCH "repos/$REPO/issues/comments/$existing" -f body="$body"
-          else
-            gh api "repos/$REPO/issues/$PR/comments" -f body="$body"
-          fi
