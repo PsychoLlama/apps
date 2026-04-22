@@ -31,15 +31,16 @@
     ]
   },
   "devDependencies": {
+    "@dev/eslint-plugin": "workspace:*",
     "@eslint/compat": "^2.0.4",
     "@eslint/js": "^9.39.2",
-    "@dev/eslint-plugin": "workspace:*",
-    "@testing-library/jest-dom": "^6.9.1",
     "@solidjs/router": "catalog:",
+    "@testing-library/jest-dom": "^6.9.1",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.1",
     "@vitest/coverage-v8": "^4.1.4",
     "eslint": "catalog:",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-solid": "^0.14.5",
     "jsdom": "^29.0.1",
     "knip": "catalog:",

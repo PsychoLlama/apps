@@ -1,5 +1,6 @@
 import { includeIgnoreFile } from '@eslint/compat';
 import eslint from '@eslint/js';
+import importPlugin from 'eslint-plugin-import';
 import solid from 'eslint-plugin-solid/configs/typescript';
 import tseslint from 'typescript-eslint';
 import customRules from '@dev/eslint-plugin';
@@ -39,6 +40,7 @@ export default [
     },
     plugins: {
       custom: customRules,
+      import: importPlugin,
     },
     rules: {
       'solid/components-return-once': 'error',
@@ -50,6 +52,11 @@ export default [
       'solid/no-react-specific-props': 'error',
       'solid/self-closing-comp': 'error',
       'solid/no-array-handlers': 'error',
+      'import/first': 'error',
+      'import/newline-after-import': 'error',
+      'import/no-duplicates': 'error',
+      'import/no-empty-named-blocks': 'error',
+      'import/no-useless-path-segments': 'error',
       'no-console': 'error',
       eqeqeq: 'error',
       'func-style': ['error', 'expression'],
