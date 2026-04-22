@@ -9,6 +9,10 @@ jobs:
     permissions:
       contents: read
       deployments: write
+      pull-requests: write
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,7 +21,8 @@ jobs:
           fetch-depth: 0
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/magic-nix-cache-action@v13
-      # Hydrate PATH from the flake so wrangler-action can find pnpm.
+      # Hydrate PATH from the flake so subsequent steps can find
+      # pnpm/moon/treefmt without wrapping each command in `nix develop`.
       - name: Activate flake environment
         run: nix develop --command bash -c 'echo "$PATH" >> "$GITHUB_PATH"'
       - name: Restore pnpm store
@@ -31,11 +36,16 @@ jobs:
       # Needed for `main:test-storybook`. Local dev uses the nix-provided
       # chromium via `CHROMIUM_PATH`; CI uses playwright's own binary.
       - name: Restore playwright cache
+        id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - run: pnpm --filter @app/main exec playwright install chromium --with-deps
+      - name: Install playwright system deps
+        run: pnpm --filter @app/main exec playwright install-deps chromium
+      - name: Install playwright browser
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @app/main exec playwright install chromium
       - name: Restore moon cache
         uses: actions/cache@v4
         with:
@@ -52,22 +62,30 @@ jobs:
       # Deploys to production on pushes to main.
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          workingDirectory: packages/app/main
-          command: deploy
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: packages/app/main
+        run: pnpm exec wrangler deploy
 
       # Uploads a preview version on same-repo pull requests without
-      # promoting to production.
+      # promoting to production. Captures the preview URL so the next
+      # step can post it as a sticky PR comment.
       - name: Upload preview version
+        id: preview
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: cloudflare/wrangler-action@v3
+        working-directory: packages/app/main
+        run: |
+          set -o pipefail
+          pnpm exec wrangler versions upload | tee /tmp/wrangler.log
+          url=$(grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev' /tmp/wrangler.log | head -n1)
+          if [ -z "$url" ]; then
+            echo "::error::Could not find preview URL in wrangler output"
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment preview URL
+        if: steps.preview.outputs.url
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          workingDirectory: packages/app/main
-          command: versions upload
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          header: cf-preview
+          message: |
+            Preview: ${{ steps.preview.outputs.url }}
