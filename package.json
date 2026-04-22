@@ -27,7 +27,10 @@
       "esbuild",
       "sharp",
       "workerd"
-    ]
+    ],
+    "overrides": {
+      "vite": "^7.0.0"
+    }
   },
   "devDependencies": {
     "@dev/eslint-plugin": "workspace:*",
