@@ -31,6 +31,12 @@ interface InsetOwnProps {
   side?: InsetSide;
   /** Overflow clipping region. @default 'border-box' */
   clip?: InsetClip;
+  /**
+   * Reserve the parent card's padding on the sides that aren't bled,
+   * so following content keeps its rhythm. Set false for media that
+   * should flow flush into the next element. @default true
+   */
+  pad?: boolean;
 }
 
 /** Inset props for a specific element tag. */
@@ -48,7 +54,7 @@ function Inset(
     JSX.HTMLAttributes<HTMLElement>,
 ) {
   const props = mergeProps(
-    { side: 'all' as const, clip: 'border-box' as const },
+    { side: 'all' as const, clip: 'border-box' as const, pad: true },
     rawProps,
   );
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
@@ -57,6 +63,7 @@ function Inset(
     'as',
     'side',
     'clip',
+    'pad',
     'class',
     'children',
   ]);
@@ -67,6 +74,7 @@ function Inset(
       css.base,
       css.side[local.side],
       css.clip[local.clip],
+      local.pad === false && css.padOff,
       local.class,
     ]
       .filter(Boolean)

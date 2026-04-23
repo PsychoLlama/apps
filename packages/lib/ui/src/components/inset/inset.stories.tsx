@@ -14,6 +14,7 @@ const meta = {
     as: 'div',
     side: 'top',
     clip: 'border-box',
+    pad: true,
   },
   argTypes: {
     ...marginArgTypes,
@@ -25,6 +26,9 @@ const meta = {
     clip: {
       control: 'inline-radio',
       options: ['border-box', 'padding-box'],
+    },
+    pad: {
+      control: 'boolean',
     },
   },
   render: (props) => (
