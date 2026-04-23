@@ -4,6 +4,8 @@ import {
   deleteRecordingEffect,
   hydrateLibrary,
   loadRecordingsEffect,
+  markLibraryLoadFailed,
+  markRecordingDeleteFailed,
 } from '../bindings';
 import * as capabilities from '../capabilities';
 import { libraryStore } from '../store';
@@ -30,8 +32,10 @@ const seed = (
 
 beforeEach(() => {
   vi.mocked(capabilities.loadRecordings).mockReset();
-  vi.mocked(capabilities.removePersistedRecording).mockClear();
-  vi.mocked(capabilities.revokeRecording).mockClear();
+  vi.mocked(capabilities.removePersistedRecording)
+    .mockReset()
+    .mockResolvedValue(undefined);
+  vi.mocked(capabilities.revokeRecording).mockReset();
 });
 
 describe('deleteRecording', () => {
@@ -73,7 +77,7 @@ describe('deleteRecordingEffect', () => {
     expect(library.recordings).toHaveLength(0);
   });
 
-  it('leaves state alone when persistent deletion fails', async () => {
+  it('leaves state alone and surfaces a warning when persistent deletion fails', async () => {
     const { library, useEffect } = setup();
     seed(library, [
       { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
@@ -81,41 +85,45 @@ describe('deleteRecordingEffect', () => {
     vi.mocked(capabilities.removePersistedRecording).mockRejectedValueOnce(
       new Error('disk-fail'),
     );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-    await expect(
-      useEffect(deleteRecordingEffect)({ id: 'a', url: 'blob:a' }),
-    ).rejects.toThrow('disk-fail');
+    // Resolves cleanly thanks to onFailure — no unhandled rejection.
+    await useEffect(deleteRecordingEffect)({ id: 'a', url: 'blob:a' });
 
     expect(capabilities.revokeRecording).not.toHaveBeenCalled();
     expect(library.recordings).toHaveLength(1);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('delete'),
+      expect.any(Error),
+    );
+    warn.mockRestore();
+  });
+});
+
+describe('markRecordingDeleteFailed', () => {
+  it('logs the failure without touching state', () => {
+    const { library, useAction } = setup();
+    seed(library, [
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+    ]);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    useAction(markRecordingDeleteFailed)(new Error('disk-fail'));
+
+    expect(library.recordings).toHaveLength(1);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('delete'),
+      expect.any(Error),
+    );
+    warn.mockRestore();
   });
 });
 
 describe('hydrateLibrary', () => {
-  it('seeds the recordings array and marks the library loaded', () => {
+  it('appends the persisted set, sorts by createdAt, and marks loaded', () => {
     const { library, useAction } = setup();
-    const recordings: Recording[] = [
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
-    ];
-
-    useAction(hydrateLibrary)(recordings);
-
-    expect(library.recordings).toEqual(recordings);
-    expect(library.loaded).toBe(true);
-  });
-
-  it('preserves recordings appended while the IDB read was in flight', () => {
-    const { library, useAction } = setup();
-    // Simulate a recording captured + added to state before the
-    // hydrate snapshot resolves.
     seed(library, [
-      {
-        id: 'mid-flight',
-        name: 'live',
-        duration: 5,
-        createdAt: 200,
-        url: 'blob:live',
-      },
+      { id: 'mid', name: 'mid', duration: 5, createdAt: 200, url: 'blob:mid' },
     ]);
 
     useAction(hydrateLibrary)([
@@ -130,31 +138,16 @@ describe('hydrateLibrary', () => {
 
     expect(library.recordings.map((entry) => entry.id)).toEqual([
       'older',
-      'mid-flight',
+      'mid',
     ]);
     expect(library.loaded).toBe(true);
   });
 
-  it('does not duplicate recordings that already exist in state', () => {
-    const { library, useAction } = setup();
-    seed(library, [
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:fresh' },
-    ]);
-
-    useAction(hydrateLibrary)([
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:stale' },
-    ]);
-
-    expect(library.recordings).toHaveLength(1);
-    expect(library.recordings[0].url).toBe('blob:fresh');
-  });
-
   it('skips when the library is already loaded', () => {
     const { library, useAction } = setup();
-    const initial: Recording[] = [
+    useAction(hydrateLibrary)([
       { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
-    ];
-    useAction(hydrateLibrary)(initial);
+    ]);
 
     useAction(hydrateLibrary)([
       { id: 'b', name: 'b', duration: 2, createdAt: 2, url: 'blob:b' },
@@ -170,6 +163,23 @@ describe('hydrateLibrary', () => {
 
     expect(library.recordings).toEqual([]);
     expect(library.loaded).toBe(false);
+  });
+});
+
+describe('markLibraryLoadFailed', () => {
+  it('logs the failure and marks the library loaded so we stop retrying', () => {
+    const { library, useAction } = setup();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    useAction(markLibraryLoadFailed)(new Error('idb-blocked'));
+
+    expect(library.loaded).toBe(true);
+    expect(library.recordings).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('hydrate'),
+      expect.any(Error),
+    );
+    warn.mockRestore();
   });
 });
 
@@ -196,5 +206,60 @@ describe('loadRecordingsEffect', () => {
     await useEffect(loadRecordingsEffect)();
 
     expect(capabilities.loadRecordings).toHaveBeenCalledOnce();
+  });
+
+  it('revokes the freshly-minted URL for any recording already in state', async () => {
+    const { library, useEffect } = setup();
+    seed(library, [
+      {
+        id: 'mid',
+        name: 'mid',
+        duration: 5,
+        createdAt: 200,
+        url: 'blob:in-memory',
+      },
+    ]);
+    vi.mocked(capabilities.loadRecordings).mockResolvedValueOnce([
+      {
+        id: 'mid',
+        name: 'mid',
+        duration: 5,
+        createdAt: 200,
+        url: 'blob:from-disk',
+      },
+      {
+        id: 'older',
+        name: 'older',
+        duration: 3,
+        createdAt: 100,
+        url: 'blob:older',
+      },
+    ]);
+
+    await useEffect(loadRecordingsEffect)();
+
+    expect(capabilities.revokeRecording).toHaveBeenCalledWith('blob:from-disk');
+    expect(library.recordings.map((entry) => entry.url)).toEqual([
+      'blob:older',
+      'blob:in-memory',
+    ]);
+  });
+
+  it('marks loaded and logs when IndexedDB read fails', async () => {
+    const { library, useEffect } = setup();
+    vi.mocked(capabilities.loadRecordings).mockRejectedValueOnce(
+      new Error('idb-blocked'),
+    );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await useEffect(loadRecordingsEffect)();
+
+    expect(library.loaded).toBe(true);
+    expect(library.recordings).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('hydrate'),
+      expect.any(Error),
+    );
+    warn.mockRestore();
   });
 });

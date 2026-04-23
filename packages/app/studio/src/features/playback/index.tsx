@@ -103,11 +103,16 @@ export default function Playback() {
   const recording = () =>
     library.recordings.find((entry) => entry.id === params.id);
 
-  const handleDelete = () => {
+  // The effect's onFailure swallows IDB errors and leaves the entry in
+  // state, so checking `recording()` after awaiting tells us whether
+  // the delete actually went through. On failure we stay put so the
+  // user can retry instead of bouncing to a library that still shows
+  // the recording.
+  const handleDelete = async () => {
     const rec = recording();
     if (!rec) return;
-    void deleteRecording({ id: rec.id, url: rec.url });
-    navigate('/studio');
+    await deleteRecording({ id: rec.id, url: rec.url });
+    if (!recording()) navigate('/studio');
   };
 
   onMount(() => {
@@ -119,7 +124,9 @@ export default function Playback() {
       <SiteHeader title="Playback" />
       <Flex as="div" direction="column" grow class={css.body}>
         <Show when={recording()} fallback={<NotFound />} keyed>
-          {(rec) => <Player recording={rec} onDelete={handleDelete} />}
+          {(rec) => (
+            <Player recording={rec} onDelete={() => void handleDelete()} />
+          )}
         </Show>
       </Flex>
     </Flex>
