@@ -15,7 +15,7 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && node scripts/flatten-404.mjs",
+    "build": "vite build",
     "start": "vite start",
     "preview": "vite preview",
     "typecheck": "tsc"

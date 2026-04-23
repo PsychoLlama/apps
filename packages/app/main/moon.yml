@@ -22,7 +22,6 @@ tasks:
     args: ['build']
     inputs:
       - 'src/**/*'
-      - 'scripts/**/*'
       - 'vite.config.ts'
       - 'wrangler.toml'
       - '/packages/app/studio/src/**/*'
