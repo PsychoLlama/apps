@@ -21,6 +21,7 @@ export default defineConfig({
       preset: 'static',
       prerender: {
         crawlLinks: true,
+        routes: ['/404'],
       },
     }),
     vanillaExtractPlugin(),
