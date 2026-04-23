@@ -26,6 +26,10 @@ const restrictedStatePaths = [
 
 export default [
   includeIgnoreFile(import.meta.dirname + '/.gitignore'),
+  {
+    // Node utility scripts run outside the workspace TS projects.
+    ignores: ['scripts/**'],
+  },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

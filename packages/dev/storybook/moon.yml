@@ -26,7 +26,6 @@ tasks:
     command: 'pnpm'
     args: ['build']
     inputs:
-      - 'src/**/*'
       - '.storybook/**/*'
       - 'vite-ignored.ts'
       - '/packages/**/*.stories.*'
@@ -43,7 +42,6 @@ tasks:
     command: 'pnpm'
     args: ['smoke-test']
     inputs:
-      - 'src/**/*'
       - '.storybook/**/*'
       - 'vite-ignored.ts'
       - 'smoke-test.config.ts'
