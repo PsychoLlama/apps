@@ -379,17 +379,17 @@ export default function Studio() {
   const publishTick = useAction(tick);
   const navigate = useNavigate();
 
-  // Hop to playback for the just-finalized recording. `stopRecording`'s
-  // `onSuccess` appends to the library, so the newest entry afterward
-  // is this session's output. A no-growth result means stop errored,
-  // in which case the error state handles the UI and we stay put.
+  // Hop to playback for the just-finalized recording. `finalizeRecording`
+  // records the new id on `session.lastFinalizedId`; we snapshot it
+  // before the await so an incidental library mutation (e.g. a late
+  // hydrate) can't trick us into navigating to the wrong recording.
+  // No change in id means stop errored — the error state handles the
+  // UI and we stay put.
   const handleStop = async () => {
-    const prevCount = library.recordings.length;
+    const before = session.lastFinalizedId;
     await stopRecording();
-    if (library.recordings.length > prevCount) {
-      const newest = library.recordings[library.recordings.length - 1];
-      navigate(`/studio/${newest.id}`);
-    }
+    const finalized = session.lastFinalizedId;
+    if (finalized && finalized !== before) navigate(`/studio/${finalized}`);
   };
 
   const handleStart = () => {

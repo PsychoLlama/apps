@@ -40,6 +40,29 @@ const NotFound = () => {
   );
 };
 
+const Loading = () => {
+  return (
+    <Flex
+      as="div"
+      direction="column"
+      align="center"
+      justify="center"
+      grow
+      p={6}
+    >
+      <Text
+        as="p"
+        size={2}
+        color="lowContrast"
+        selectable={false}
+        data-testid="playback-loading"
+      >
+        Loading recording…
+      </Text>
+    </Flex>
+  );
+};
+
 const Player = (props: { recording: Recording; onDelete: () => void }) => {
   return (
     <Flex as="main" direction="column" align="center" grow class={css.main}>
@@ -123,7 +146,11 @@ export default function Playback() {
     <Flex as="div" direction="column" class={css.shell}>
       <SiteHeader title="Playback" />
       <Flex as="div" direction="column" grow class={css.body}>
-        <Show when={recording()} fallback={<NotFound />} keyed>
+        <Show
+          when={recording()}
+          fallback={library.loaded ? <NotFound /> : <Loading />}
+          keyed
+        >
           {(rec) => (
             <Player recording={rec} onDelete={() => void handleDelete()} />
           )}

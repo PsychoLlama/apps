@@ -90,6 +90,7 @@ const asSession = (
   streams: {},
   recorder: null,
   chunks: null,
+  lastFinalizedId: null,
   ...overrides,
 });
 

@@ -82,6 +82,7 @@ export const finalizeRecording = defineAction(
     session.streams = {};
     session.recorder = null;
     session.chunks = null;
+    session.lastFinalizedId = result.id;
     library.recordings.push({
       id: result.id,
       name: result.name,

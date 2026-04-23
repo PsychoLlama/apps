@@ -141,6 +141,21 @@ describe('finalizeRecording', () => {
       url: 'blob:test',
     });
   });
+
+  it('records the finalized id so the stop handler can navigate without racing the library', () => {
+    const { session, useAction } = setup();
+    useAction(setRecordingContext)(makeResult());
+
+    useAction(finalizeRecording)({
+      id: 'rec-1',
+      name: 'Test recording',
+      duration: 1,
+      createdAt: 0,
+      url: 'blob:test',
+    });
+
+    expect(session.lastFinalizedId).toBe('rec-1');
+  });
 });
 
 describe('beginPause', () => {
