@@ -7,8 +7,8 @@ import {
   beginPause,
   beginResume,
   beginStop,
-  clearStartFailure,
   finalizeRecording,
+  markStarting,
   markError,
   markSupport,
   removeTrackFromState,
@@ -60,14 +60,14 @@ const makeResult = (tracks: Track[] = []): RecordingResult => {
   };
 };
 
-describe('clearStartFailure', () => {
-  it('drops the prior error and reverts status to idle without starting the timer', () => {
+describe('markStarting', () => {
+  it('drops the prior error and parks status at starting without anchoring the timer', () => {
     const { session, timer, useAction } = setup();
     useAction(markError)(new Error('earlier'));
 
-    useAction(clearStartFailure)();
+    useAction(markStarting)();
 
-    expect(session.status).toBe('idle');
+    expect(session.status).toBe('starting');
     expect(session.error).toBeNull();
     expect(timer.startedAt).toBeNull();
   });

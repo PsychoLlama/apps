@@ -296,6 +296,25 @@ const PausedState = (props: {
   );
 };
 
+const StartingState = () => {
+  return (
+    <Flex
+      as="div"
+      direction="column"
+      align="center"
+      gap={5}
+      class={css.mainContent}
+    >
+      <Text as="span" size={2} weight="medium" color="lowContrast">
+        Starting…
+      </Text>
+      <Text as="p" size={2} color="lowContrast">
+        Pick a screen, window, or tab in the browser prompt
+      </Text>
+    </Flex>
+  );
+};
+
 const StoppingState = (props: { elapsed: number }) => {
   return (
     <Flex
@@ -405,6 +424,9 @@ export default function Studio() {
             <Switch>
               <Match when={session.status === 'idle'}>
                 <IdleState onStart={handleStart} />
+              </Match>
+              <Match when={session.status === 'starting'}>
+                <StartingState />
               </Match>
               <Match when={session.status === 'recording'}>
                 <RecordingState

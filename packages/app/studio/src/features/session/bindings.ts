@@ -28,12 +28,14 @@ const recordingNameFormat = new Intl.DateTimeFormat('en', {
 // transitions directly, independent of the effect wrapper.
 
 // Runs as `onStart` of the start-recording effect — before the picker
-// dialog opens. Falls back to `idle` so a retry from the error screen
-// dismisses that UI immediately, instead of leaving stale text behind
-// the dialog. Capture itself happens in the capability; the recording
-// state is set up in `setRecordingContext` (onSuccess).
-export const clearStartFailure = defineAction([sessionStore], (session) => {
-  session.status = 'idle';
+// dialog opens. Moves into the transient `starting` state so the UI
+// can lock the start button while `getDisplayMedia` is pending; that
+// keeps a slow dialog or double-click from spawning a second start
+// effect whose handlers would race the first. Capture itself happens
+// in the capability; the recording state is set up in
+// `setRecordingContext` (onSuccess).
+export const markStarting = defineAction([sessionStore], (session) => {
+  session.status = 'starting';
   session.error = null;
 });
 
@@ -146,7 +148,7 @@ export const markSupport = defineAction(
 
 /** Start screen capture and wire the session + timer into recording state. */
 export const startRecordingEffect = defineEffect([], startRecording, {
-  onStart: clearStartFailure,
+  onStart: markStarting,
   onSuccess: setRecordingContext,
   onFailure: markError,
 });
