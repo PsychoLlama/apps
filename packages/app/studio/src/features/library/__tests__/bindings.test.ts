@@ -5,7 +5,6 @@ import {
   hydrateLibrary,
   loadRecordingsEffect,
   markLibraryLoadFailed,
-  markRecordingDeleteFailed,
 } from '../bindings';
 import * as capabilities from '../capabilities';
 import { libraryStore } from '../store';
@@ -61,6 +60,28 @@ describe('deleteRecording', () => {
 
     expect(library.recordings).toHaveLength(1);
   });
+
+  it('tombstones the id while the library is still loading', () => {
+    const { library, useAction } = setup();
+    seed(library, [
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+    ]);
+
+    useAction(deleteRecording)('a');
+
+    expect(library.tombstones).toContain('a');
+  });
+
+  it('does not tombstone once the library has hydrated', () => {
+    const { library, useAction } = setup();
+    useAction(hydrateLibrary)([
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+    ]);
+
+    useAction(deleteRecording)('a');
+
+    expect(library.tombstones).toEqual([]);
+  });
 });
 
 describe('deleteRecordingEffect', () => {
@@ -77,7 +98,7 @@ describe('deleteRecordingEffect', () => {
     expect(library.recordings).toHaveLength(0);
   });
 
-  it('leaves state alone and surfaces a warning when persistent deletion fails', async () => {
+  it('still drops state and revokes the URL when persistent deletion fails', async () => {
     const { library, useEffect } = setup();
     seed(library, [
       { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
@@ -87,32 +108,15 @@ describe('deleteRecordingEffect', () => {
     );
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-    // Resolves cleanly thanks to onFailure — no unhandled rejection.
     await useEffect(deleteRecordingEffect)({ id: 'a', url: 'blob:a' });
 
-    expect(capabilities.revokeRecording).not.toHaveBeenCalled();
-    expect(library.recordings).toHaveLength(1);
+    // In-memory fallback recordings (created when IDB was unavailable
+    // for the persist) must still be deletable. State is the user's
+    // intent; the warning surfaces the persist-side miss.
+    expect(library.recordings).toHaveLength(0);
+    expect(capabilities.revokeRecording).toHaveBeenCalledWith('blob:a');
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('delete'),
-      expect.any(Error),
-    );
-    warn.mockRestore();
-  });
-});
-
-describe('markRecordingDeleteFailed', () => {
-  it('logs the failure without touching state', () => {
-    const { library, useAction } = setup();
-    seed(library, [
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
-    ]);
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-
-    useAction(markRecordingDeleteFailed)(new Error('disk-fail'));
-
-    expect(library.recordings).toHaveLength(1);
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('delete'),
+      expect.stringContaining('remove'),
       expect.any(Error),
     );
     warn.mockRestore();
@@ -243,6 +247,31 @@ describe('loadRecordingsEffect', () => {
       'blob:older',
       'blob:in-memory',
     ]);
+  });
+
+  it('skips and revokes recordings tombstoned during the in-flight load', async () => {
+    const { library, useEffect, useAction } = setup();
+    // Simulate: hydrate begins, then user deletes 'gone' before the
+    // IDB read resolves with a snapshot that still includes it.
+    useAction(deleteRecording)('gone');
+    vi.mocked(capabilities.loadRecordings).mockResolvedValueOnce([
+      {
+        id: 'gone',
+        name: 'gone',
+        duration: 1,
+        createdAt: 1,
+        url: 'blob:resurrected',
+      },
+      { id: 'kept', name: 'kept', duration: 2, createdAt: 2, url: 'blob:kept' },
+    ]);
+
+    await useEffect(loadRecordingsEffect)();
+
+    expect(capabilities.revokeRecording).toHaveBeenCalledWith(
+      'blob:resurrected',
+    );
+    expect(library.recordings.map((entry) => entry.id)).toEqual(['kept']);
+    expect(library.tombstones).toEqual([]);
   });
 
   it('marks loaded and logs when IndexedDB read fails', async () => {
