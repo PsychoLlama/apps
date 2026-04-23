@@ -1,4 +1,5 @@
 import { Show } from 'solid-js';
+import { Title } from '@solidjs/meta';
 import { Flex, LinkButton, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import * as css from './site-header.css';
@@ -11,16 +12,21 @@ export default function SiteHeader(props: { title?: string }) {
       </LinkButton>
 
       <Show when={props.title}>
-        <Flex as="div" class={css.divider} />
-        <Text
-          as="span"
-          size={2}
-          weight="medium"
-          color="lowContrast"
-          selectable={false}
-        >
-          {props.title}
-        </Text>
+        {(title) => (
+          <>
+            <Title>{title()}</Title>
+            <Flex as="div" class={css.divider} />
+            <Text
+              as="span"
+              size={2}
+              weight="medium"
+              color="lowContrast"
+              selectable={false}
+            >
+              {title()}
+            </Text>
+          </>
+        )}
       </Show>
     </Flex>
   );
