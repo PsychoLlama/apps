@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { Show, onMount } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { Button, Callout, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { useEffect } from '@lib/state';
@@ -7,7 +7,10 @@ import IconTrashCan from 'virtual:icons/mdi/trash-can-outline';
 import IconAlertCircle from 'virtual:icons/mdi/alert-circle-outline';
 import { SiteHeader } from '@lib/shell';
 import { library } from '../library/store';
-import { deleteRecordingEffect } from '../library/bindings';
+import {
+  deleteRecordingEffect,
+  loadRecordingsEffect,
+} from '../library/bindings';
 import type { Recording } from '../library/types';
 import { filenameSlug, formatDuration } from '../format';
 import * as css from './playback.css';
@@ -95,6 +98,7 @@ export default function Playback() {
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
   const deleteRecording = useEffect(deleteRecordingEffect);
+  const loadRecordings = useEffect(loadRecordingsEffect);
 
   const recording = () =>
     library.recordings.find((entry) => entry.id === params.id);
@@ -102,9 +106,13 @@ export default function Playback() {
   const handleDelete = () => {
     const rec = recording();
     if (!rec) return;
-    deleteRecording({ id: rec.id, url: rec.url });
+    void deleteRecording({ id: rec.id, url: rec.url });
     navigate('/studio');
   };
+
+  onMount(() => {
+    void loadRecordings();
+  });
 
   return (
     <Flex as="div" direction="column" class={css.shell}>

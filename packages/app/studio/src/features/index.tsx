@@ -25,6 +25,7 @@ import {
 } from './session/bindings';
 import { session } from './session/store';
 import { library } from './library/store';
+import { loadRecordingsEffect } from './library/bindings';
 import { timer } from './timer/store';
 import { tick } from './timer/bindings';
 import type { Track } from './session/types';
@@ -374,6 +375,7 @@ export default function Studio() {
   const addTrack = useEffect(addTrackEffect);
   const removeTrack = useEffect(removeTrackEffect);
   const checkSupport = useEffect(checkSupportEffect);
+  const loadRecordings = useEffect(loadRecordingsEffect);
   const publishTick = useAction(tick);
   const navigate = useNavigate();
 
@@ -396,6 +398,7 @@ export default function Studio() {
 
   onMount(() => {
     checkSupport();
+    void loadRecordings();
   });
 
   // Tick only while a recording is actively advancing. Pausing or

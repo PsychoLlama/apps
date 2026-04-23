@@ -1,4 +1,5 @@
 import type { DeepReadonly } from '@lib/state';
+import { persistRecording } from '../../library/capabilities';
 import {
   captureTrack,
   checkSupport,
@@ -9,6 +10,10 @@ import {
   stopTrackStream,
 } from '../capabilities';
 import type { SessionState } from '../store';
+
+vi.mock('../../library/capabilities', () => ({
+  persistRecording: vi.fn().mockResolvedValue(undefined),
+}));
 
 // --- Fakes ---
 //
@@ -206,7 +211,7 @@ describe('stopRecording', () => {
     ).rejects.toThrow(/no active recorder/i);
   });
 
-  it('stops the recorder, releases every track, and returns a finalized recording', async () => {
+  it('stops the recorder, releases every track, persists the blob, and returns a finalized recording', async () => {
     const recorder = new FakeMediaRecorder(new FakeMediaStream());
     const track = new FakeTrack();
     const session = asSession({
@@ -222,10 +227,20 @@ describe('stopRecording', () => {
 
     expect(recorder.stop).toHaveBeenCalled();
     expect(track.stop).toHaveBeenCalled();
-    expect(result.elapsed).toBe(42);
+    expect(result.duration).toBe(42);
     expect(result.url).toBe('blob:mock');
     expect(result.id).toMatch(/\S/);
-    expect(typeof result.stoppedAt).toBe('number');
+    expect(result.name).toMatch(/\w+/);
+    expect(typeof result.createdAt).toBe('number');
+    expect(persistRecording).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: result.id,
+        name: result.name,
+        duration: 42,
+        createdAt: result.createdAt,
+        blob: expect.any(Blob) as Blob,
+      }),
+    );
   });
 });
 

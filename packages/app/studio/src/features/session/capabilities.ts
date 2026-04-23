@@ -1,4 +1,6 @@
 import type { DeepReadonly } from '@lib/state';
+import { persistRecording } from '../library/capabilities';
+import { formatRecordingName } from '../format';
 import type { SessionState } from './store';
 import type { TimerState } from '../timer/store';
 import type { Track } from './types';
@@ -12,8 +14,9 @@ export interface RecordingResult {
 
 export interface FinalizedRecording {
   readonly id: string;
-  readonly elapsed: number;
-  readonly stoppedAt: number;
+  readonly name: string;
+  readonly duration: number;
+  readonly createdAt: number;
   readonly url: string;
 }
 
@@ -85,9 +88,11 @@ export const startRecording = async (
 };
 
 /**
- * Drain the active recorder into a Blob, release every stream, and
- * produce a blob URL. Pulls recorder/chunks/streams and elapsed directly
- * off the state views handed in by the effect.
+ * Drain the active recorder into a Blob, release every stream, persist
+ * the recording to IndexedDB, and produce a blob URL for playback.
+ * Persistence runs before the URL is minted so a save failure surfaces
+ * via the recorder's own failure path instead of leaving an orphaned
+ * URL in the library.
  */
 export const stopRecording = async (
   session: DeepReadonly<SessionState>,
@@ -111,10 +116,18 @@ export const stopRecording = async (
     }
   }
 
+  const id = crypto.randomUUID();
+  const createdAt = Date.now();
+  const name = formatRecordingName(createdAt);
+  const duration = timer.elapsed;
+
+  await persistRecording({ id, name, duration, createdAt, blob });
+
   return {
-    id: crypto.randomUUID(),
-    elapsed: timer.elapsed,
-    stoppedAt: Date.now(),
+    id,
+    name,
+    duration,
+    createdAt,
     url: URL.createObjectURL(blob),
   };
 };

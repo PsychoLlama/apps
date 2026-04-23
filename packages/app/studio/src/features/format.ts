@@ -5,6 +5,14 @@ const elapsedFormat = new Intl.DurationFormat('en', {
 
 const durationFormat = new Intl.DurationFormat('en', { style: 'digital' });
 
+// Recording names are built from when the recording ended. `medium`
+// time style includes seconds so two recordings finalized in the same
+// minute don't collide.
+const recordingNameFormat = new Intl.DateTimeFormat('en', {
+  dateStyle: 'medium',
+  timeStyle: 'medium',
+});
+
 const toDuration = (totalSeconds: number) => {
   return {
     hours: Math.floor(totalSeconds / 3600),
@@ -20,6 +28,10 @@ export const formatElapsed = (seconds: number): string =>
 /** Format a duration in a compact form for recording metadata. */
 export const formatDuration = (seconds: number): string =>
   durationFormat.format(toDuration(seconds));
+
+/** Format a recording's display name from when capture ended. */
+export const formatRecordingName = (epochMs: number): string =>
+  recordingNameFormat.format(new Date(epochMs));
 
 const pad = (value: number): string => String(value).padStart(2, '0');
 

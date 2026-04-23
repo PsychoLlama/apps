@@ -15,14 +15,6 @@ import {
 import { sessionStore } from './store';
 import type { Track } from './types';
 
-// Recording names are built from when the recording ended. `medium`
-// time style includes seconds so two recordings finalized in the same
-// minute don't collide.
-const recordingNameFormat = new Intl.DateTimeFormat('en', {
-  dateStyle: 'medium',
-  timeStyle: 'medium',
-});
-
 // --- Actions ---
 // Each action is named and exported so tests can exercise state
 // transitions directly, independent of the effect wrapper.
@@ -92,9 +84,9 @@ export const finalizeRecording = defineAction(
     session.chunks = null;
     library.recordings.push({
       id: result.id,
-      name: recordingNameFormat.format(new Date(result.stoppedAt)),
-      duration: result.elapsed,
-      createdAt: result.stoppedAt,
+      name: result.name,
+      duration: result.duration,
+      createdAt: result.createdAt,
       url: result.url,
     });
   },

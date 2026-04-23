@@ -18,6 +18,9 @@ catalogs:
     eslint:
       specifier: ^9.39.4
       version: 9.39.4
+    idb:
+      specifier: ^8.0.3
+      version: 8.0.3
     knip:
       specifier: ^6.6.1
       version: 6.6.1
@@ -189,6 +192,9 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1(babel-plugin-macros@3.1.0)
+      idb:
+        specifier: 'catalog:'
+        version: 8.0.3
       solid-js:
         specifier: '*'
         version: 1.9.12
@@ -3719,6 +3725,9 @@ packages:
   human-signals@5.0.0:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
+
+  idb@8.0.3:
+    resolution: {integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -8957,6 +8966,8 @@ snapshots:
   httpxy@0.3.1: {}
 
   human-signals@5.0.0: {}
+
+  idb@8.0.3: {}
 
   ieee754@1.2.1: {}
 
