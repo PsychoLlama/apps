@@ -67,8 +67,10 @@ export const panel = style({
   order: 2,
   '@media': {
     [breakpoint.sm]: {
-      width: '300px',
-      minWidth: '300px',
+      // Grows with the viewport on wide displays, stays readable at
+      // any size. Caps so the panel never dwarfs the main stage.
+      width: 'clamp(300px, 20vw, 480px)',
+      flexShrink: 0,
       borderTop: 'none',
       borderLeft: `1px solid ${neutral[6]}`,
       order: 1,
@@ -93,20 +95,17 @@ export const panelFooter = style({
 
 // --- Recording entries ---
 
-export const entryRow = style({
-  transition: `background-color ${fast[2]} ${standard.productive}`,
-  ':hover': {
-    backgroundColor: neutral[3],
-  },
-});
-
 export const entryLink = style({
   display: 'flex',
   alignItems: 'center',
   gap: space[3],
-  flex: 1,
   minWidth: 0,
+  padding: `${space[2]} ${space[4]}`,
   cursor: 'pointer',
+  transition: `background-color ${fast[2]} ${standard.productive}`,
+  ':hover': {
+    backgroundColor: neutral[3],
+  },
 });
 
 export const entryThumb = style({
@@ -187,5 +186,9 @@ export const unsupportedText = style({
 // --- Empty library ---
 
 export const emptyLibrary = style({
+  flex: 1,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   padding: `${space[5]} ${space[4]}`,
 });
