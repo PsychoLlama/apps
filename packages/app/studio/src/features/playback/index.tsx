@@ -57,7 +57,7 @@ const Player = (props: { recording: Recording; onDelete: () => void }) => {
             {formatDuration(props.recording.duration)}
           </Text>
         </Flex>
-        <Flex as="div" class={css.actions}>
+        <Flex as="div" align="center" wrap="wrap" gap={2}>
           <Link
             testId="download-recording"
             class={css.downloadLink}

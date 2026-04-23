@@ -3,6 +3,9 @@
  * renders and which controls are enabled.
  *
  * - `idle`: no active capture; ready to start.
+ * - `starting`: start requested, waiting on the screen-picker dialog
+ *   to resolve. Locks the start button so the user can't queue a
+ *   second `getDisplayMedia` call that would race the first.
  * - `recording`: capture is live.
  * - `paused`: capture is frozen, elapsed holds.
  * - `stopping`: stop requested, waiting for the recorder to drain.
@@ -11,6 +14,7 @@
  */
 export type SessionStatus =
   | 'idle'
+  | 'starting'
   | 'recording'
   | 'paused'
   | 'stopping'
