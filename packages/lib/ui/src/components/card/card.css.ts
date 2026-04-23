@@ -50,9 +50,11 @@ export const base = style({
 
 /** Applied by the component when `as` is an interactive tag. */
 export const interactive = style({
-  cursor: 'pointer',
   selectors: {
-    '&:focus-visible': {
+    '&:not(:disabled)': {
+      cursor: 'pointer',
+    },
+    '&:not(:disabled):focus-visible': {
       outline: `2px solid ${accent[8]}`,
       outlineOffset: '2px',
     },
@@ -87,21 +89,25 @@ export const variant = styleVariants({
     backgroundColor: background.panelTranslucent,
     boxShadow: `inset 0 0 0 1px ${neutralAlpha[6]}`,
     selectors: {
-      [`&.${interactive}:hover`]: { backgroundColor: neutralAlpha[3] },
+      [`&.${interactive}:not(:disabled):hover`]: {
+        backgroundColor: neutralAlpha[3],
+      },
     },
   },
   classic: {
     backgroundColor: background.panelSolid,
     boxShadow: `${shadow[3]}, inset 0 0 0 1px ${neutralAlpha[6]}`,
     selectors: {
-      [`&.${interactive}:hover`]: {
+      [`&.${interactive}:not(:disabled):hover`]: {
         boxShadow: `${shadow[4]}, inset 0 0 0 1px ${neutralAlpha[6]}`,
       },
     },
   },
   ghost: {
     selectors: {
-      [`&.${interactive}:hover`]: { backgroundColor: neutralAlpha[3] },
+      [`&.${interactive}:not(:disabled):hover`]: {
+        backgroundColor: neutralAlpha[3],
+      },
     },
   },
 });

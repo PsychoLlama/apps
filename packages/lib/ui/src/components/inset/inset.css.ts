@@ -22,9 +22,16 @@ export const base = style({
   overflow: 'hidden',
 });
 
+// Each side variant both breaks out margins and rounds the corners
+// that now sit flush with the card's outer edge. Corners that remain
+// inside the card body keep their initial 0 radius.
 export const side = styleVariants({
   all: {
     margin: `${neg(cardPaddingTop)} ${neg(cardPaddingRight)} ${neg(cardPaddingBottom)} ${neg(cardPaddingLeft)}`,
+    borderTopLeftRadius: cardBorderRadius,
+    borderTopRightRadius: cardBorderRadius,
+    borderBottomLeftRadius: cardBorderRadius,
+    borderBottomRightRadius: cardBorderRadius,
   },
   x: {
     marginLeft: neg(cardPaddingLeft),
@@ -38,21 +45,31 @@ export const side = styleVariants({
     marginTop: neg(cardPaddingTop),
     marginLeft: neg(cardPaddingLeft),
     marginRight: neg(cardPaddingRight),
+    borderTopLeftRadius: cardBorderRadius,
+    borderTopRightRadius: cardBorderRadius,
   },
   bottom: {
     marginBottom: neg(cardPaddingBottom),
     marginLeft: neg(cardPaddingLeft),
     marginRight: neg(cardPaddingRight),
+    borderBottomLeftRadius: cardBorderRadius,
+    borderBottomRightRadius: cardBorderRadius,
   },
   left: {
     marginLeft: neg(cardPaddingLeft),
+    borderTopLeftRadius: cardBorderRadius,
+    borderBottomLeftRadius: cardBorderRadius,
   },
   right: {
     marginRight: neg(cardPaddingRight),
+    borderTopRightRadius: cardBorderRadius,
+    borderBottomRightRadius: cardBorderRadius,
   },
 });
 
+// Declared after `side` so its rule wins on equal specificity when
+// `padding-box` flattens the per-side rounding above.
 export const clip = styleVariants({
-  'border-box': { borderRadius: cardBorderRadius },
-  'padding-box': {},
+  'border-box': {},
+  'padding-box': { borderRadius: 'unset' },
 });
