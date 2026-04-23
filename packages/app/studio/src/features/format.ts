@@ -33,6 +33,26 @@ export const formatDuration = (seconds: number): string =>
 export const formatRecordingName = (epochMs: number): string =>
   recordingNameFormat.format(new Date(epochMs));
 
+// Decimal (SI) units so the rendered number matches what `Intl` knows
+// how to label. Most consumer file managers display the same way.
+const byteUnits = ['byte', 'kilobyte', 'megabyte', 'gigabyte'] as const;
+
+/** Compact byte count for storage readouts. Picks unit by magnitude. */
+export const formatBytes = (bytes: number): string => {
+  let value = bytes;
+  let unitIdx = 0;
+  while (value >= 1000 && unitIdx < byteUnits.length - 1) {
+    value /= 1000;
+    unitIdx += 1;
+  }
+  return new Intl.NumberFormat('en', {
+    style: 'unit',
+    unit: byteUnits[unitIdx],
+    unitDisplay: 'short',
+    maximumFractionDigits: value >= 10 || unitIdx === 0 ? 0 : 1,
+  }).format(value);
+};
+
 const pad = (value: number): string => String(value).padStart(2, '0');
 
 /**

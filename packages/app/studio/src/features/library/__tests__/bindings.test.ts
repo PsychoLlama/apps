@@ -41,8 +41,8 @@ describe('deleteRecording', () => {
   it('removes a recording by id', () => {
     const { library, useAction } = setup();
     seed(library, [
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
-      { id: 'b', name: 'b', duration: 2, createdAt: 2, url: 'blob:b' },
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, size: 0, url: 'blob:a' },
+      { id: 'b', name: 'b', duration: 2, createdAt: 2, size: 0, url: 'blob:b' },
     ]);
 
     useAction(deleteRecording)('a');
@@ -53,7 +53,7 @@ describe('deleteRecording', () => {
   it('is a no-op on an unknown id', () => {
     const { library, useAction } = setup();
     seed(library, [
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, size: 0, url: 'blob:a' },
     ]);
 
     useAction(deleteRecording)('nope');
@@ -64,7 +64,7 @@ describe('deleteRecording', () => {
   it('tombstones the id while the library is still loading', () => {
     const { library, useAction } = setup();
     seed(library, [
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, size: 0, url: 'blob:a' },
     ]);
 
     useAction(deleteRecording)('a');
@@ -75,7 +75,7 @@ describe('deleteRecording', () => {
   it('does not tombstone once the library has hydrated', () => {
     const { library, useAction } = setup();
     useAction(hydrateLibrary)([
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, size: 0, url: 'blob:a' },
     ]);
 
     useAction(deleteRecording)('a');
@@ -88,7 +88,7 @@ describe('deleteRecordingEffect', () => {
   it('removes the persisted entry, revokes the URL, and drops state', async () => {
     const { library, useEffect } = setup();
     seed(library, [
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, size: 0, url: 'blob:a' },
     ]);
 
     await useEffect(deleteRecordingEffect)({ id: 'a', url: 'blob:a' });
@@ -101,7 +101,7 @@ describe('deleteRecordingEffect', () => {
   it('still drops state and revokes the URL when persistent deletion fails', async () => {
     const { library, useEffect } = setup();
     seed(library, [
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, size: 0, url: 'blob:a' },
     ]);
     vi.mocked(capabilities.removePersistedRecording).mockRejectedValueOnce(
       new Error('disk-fail'),
@@ -127,7 +127,14 @@ describe('hydrateLibrary', () => {
   it('appends the persisted set, sorts by createdAt, and marks loaded', () => {
     const { library, useAction } = setup();
     seed(library, [
-      { id: 'mid', name: 'mid', duration: 5, createdAt: 200, url: 'blob:mid' },
+      {
+        id: 'mid',
+        name: 'mid',
+        duration: 5,
+        createdAt: 200,
+        size: 0,
+        url: 'blob:mid',
+      },
     ]);
 
     useAction(hydrateLibrary)([
@@ -136,6 +143,7 @@ describe('hydrateLibrary', () => {
         name: 'older',
         duration: 3,
         createdAt: 100,
+        size: 0,
         url: 'blob:older',
       },
     ]);
@@ -150,11 +158,18 @@ describe('hydrateLibrary', () => {
   it('skips when the library is already loaded and revokes the dropped URLs', () => {
     const { library, useAction } = setup();
     useAction(hydrateLibrary)([
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, size: 0, url: 'blob:a' },
     ]);
 
     useAction(hydrateLibrary)([
-      { id: 'b', name: 'b', duration: 2, createdAt: 2, url: 'blob:dropped' },
+      {
+        id: 'b',
+        name: 'b',
+        duration: 2,
+        createdAt: 2,
+        size: 0,
+        url: 'blob:dropped',
+      },
     ]);
 
     expect(library.recordings.map((entry) => entry.id)).toEqual(['a']);
@@ -195,7 +210,7 @@ describe('loadRecordingsEffect', () => {
   it('reads from disk on the first call and dispatches hydrate', async () => {
     const { library, useEffect } = setup();
     const persisted: Recording[] = [
-      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, size: 0, url: 'blob:a' },
     ];
     vi.mocked(capabilities.loadRecordings).mockResolvedValueOnce(persisted);
 
@@ -224,6 +239,7 @@ describe('loadRecordingsEffect', () => {
         name: 'mid',
         duration: 5,
         createdAt: 200,
+        size: 0,
         url: 'blob:in-memory',
       },
     ]);
@@ -233,6 +249,7 @@ describe('loadRecordingsEffect', () => {
         name: 'mid',
         duration: 5,
         createdAt: 200,
+        size: 0,
         url: 'blob:from-disk',
       },
       {
@@ -240,6 +257,7 @@ describe('loadRecordingsEffect', () => {
         name: 'older',
         duration: 3,
         createdAt: 100,
+        size: 0,
         url: 'blob:older',
       },
     ]);
@@ -264,9 +282,17 @@ describe('loadRecordingsEffect', () => {
         name: 'gone',
         duration: 1,
         createdAt: 1,
+        size: 0,
         url: 'blob:resurrected',
       },
-      { id: 'kept', name: 'kept', duration: 2, createdAt: 2, url: 'blob:kept' },
+      {
+        id: 'kept',
+        name: 'kept',
+        duration: 2,
+        createdAt: 2,
+        size: 0,
+        url: 'blob:kept',
+      },
     ]);
 
     await useEffect(loadRecordingsEffect)();

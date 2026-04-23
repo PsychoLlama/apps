@@ -267,6 +267,22 @@ describe('stopRecording', () => {
     expect(result.duration).toBe(42);
   });
 
+  it('reports the blob size so the library can render storage usage', async () => {
+    const recorder = new FakeMediaRecorder(new FakeMediaStream());
+    const session = asSession({
+      recorder: recorder as unknown as MediaRecorder,
+      chunks: [new Blob(['1234567890'])],
+      streams: {},
+    });
+
+    const result = await stopRecording(session, {
+      startedAt: null,
+      elapsed: 0,
+    });
+
+    expect(result.size).toBe(10);
+  });
+
   it('mints a UUID for the recording id', async () => {
     const recorder = new FakeMediaRecorder(new FakeMediaStream());
     const session = asSession({

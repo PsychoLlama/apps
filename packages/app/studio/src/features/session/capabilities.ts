@@ -17,6 +17,7 @@ export interface FinalizedRecording {
   readonly name: string;
   readonly duration: number;
   readonly createdAt: number;
+  readonly size: number;
   readonly url: string;
 }
 
@@ -122,6 +123,7 @@ export const stopRecording = async (
   const createdAt = Date.now();
   const name = formatRecordingName(createdAt);
   const duration = timer.elapsed;
+  const size = blob.size;
   const url = URL.createObjectURL(blob);
 
   try {
@@ -131,7 +133,7 @@ export const stopRecording = async (
     console.warn('Failed to persist recording to IndexedDB', error);
   }
 
-  return { id, name, duration, createdAt, url };
+  return { id, name, duration, createdAt, size, url };
 };
 
 /** Pause the active recorder. No-op when none is running. */

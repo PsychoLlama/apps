@@ -32,7 +32,7 @@ const NotFound = () => {
             this session.
           </Text>
         </Callout>
-        <LinkButton testId="back-to-studio" href="/studio" variant="solid">
+        <LinkButton testId="back-to-studio" href="/studio" variant="outline">
           Back to Studio
         </LinkButton>
       </Flex>
@@ -144,7 +144,12 @@ export default function Playback() {
 
   return (
     <Flex as="div" direction="column" class={css.shell}>
-      <SiteHeader title="Playback" />
+      <SiteHeader
+        trail={[
+          { label: 'Studio', href: '/studio', testId: 'breadcrumb-studio' },
+          { label: 'Playback' },
+        ]}
+      />
       <Flex as="div" direction="column" grow class={css.body}>
         <Show
           when={recording()}

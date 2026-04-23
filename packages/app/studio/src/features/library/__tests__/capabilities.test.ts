@@ -92,7 +92,9 @@ describe('loadRecordings', () => {
 
   it('returns persisted recordings in capture order with minted blob URLs', async () => {
     await persistRecording(sample({ id: 'b', createdAt: 200 }));
-    await persistRecording(sample({ id: 'a', createdAt: 100 }));
+    await persistRecording(
+      sample({ id: 'a', createdAt: 100, blob: new Blob(['hello']) }),
+    );
 
     const recordings = await loadRecordings();
 
@@ -102,6 +104,7 @@ describe('loadRecordings', () => {
       name: 'Sample',
       duration: 10,
       createdAt: 100,
+      size: 5,
       url: 'blob:mock',
     });
   });

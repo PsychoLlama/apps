@@ -92,6 +92,7 @@ export const loadRecordings = async (): Promise<Recording[]> => {
     .sort((left, right) => left.createdAt - right.createdAt)
     .map(({ blob, ...meta }) => ({
       ...meta,
+      size: blob.size,
       url: URL.createObjectURL(blob),
     }));
 };

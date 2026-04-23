@@ -88,6 +88,7 @@ export const finalizeRecording = defineAction(
       name: result.name,
       duration: result.duration,
       createdAt: result.createdAt,
+      size: result.size,
       url: result.url,
     });
   },

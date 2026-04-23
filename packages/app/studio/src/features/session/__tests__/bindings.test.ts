@@ -125,6 +125,7 @@ describe('finalizeRecording', () => {
       name: 'Test recording',
       duration: 45,
       createdAt: 1745250120000,
+      size: 1024,
       url: 'blob:test',
     });
 
@@ -138,6 +139,7 @@ describe('finalizeRecording', () => {
       name: 'Test recording',
       duration: 45,
       createdAt: 1745250120000,
+      size: 1024,
       url: 'blob:test',
     });
   });
@@ -151,6 +153,7 @@ describe('finalizeRecording', () => {
       name: 'Test recording',
       duration: 1,
       createdAt: 0,
+      size: 0,
       url: 'blob:test',
     });
 

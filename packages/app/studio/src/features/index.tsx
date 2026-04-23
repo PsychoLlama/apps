@@ -12,7 +12,6 @@ import { Button, Callout, Flex, Heading, Link, Text } from '@lib/ui';
 import { useAction, useEffect } from '@lib/state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconClose from 'virtual:icons/mdi/close';
-import IconPlayOutline from 'virtual:icons/mdi/play-outline';
 import { SiteHeader } from '@lib/shell';
 import {
   addTrackEffect,
@@ -30,7 +29,7 @@ import { timer } from './timer/store';
 import { tick } from './timer/bindings';
 import type { Track } from './session/types';
 import type { Recording } from './library/types';
-import { formatDuration, formatElapsed } from './format';
+import { formatBytes, formatDuration, formatElapsed } from './format';
 import * as css from './studio.css';
 
 const LibraryPanel = (props: { recordings: ReadonlyArray<Recording> }) => {
@@ -65,14 +64,6 @@ const LibraryPanel = (props: { recordings: ReadonlyArray<Recording> }) => {
                 href={`/studio/${rec.id}`}
                 underline="none"
               >
-                <Flex
-                  as="div"
-                  align="center"
-                  justify="center"
-                  class={css.entryThumb}
-                >
-                  <IconPlayOutline class={css.entryThumbIcon} />
-                </Flex>
                 <Flex as="div" direction="column" gap={1} grow>
                   <Text
                     as="span"
@@ -101,6 +92,17 @@ const LibraryPanel = (props: { recordings: ReadonlyArray<Recording> }) => {
       <Flex as="footer" justify="between" px={4} py={2} class={css.panelFooter}>
         <Text as="span" size={1} color="lowContrast" selectable={false}>
           {props.recordings.length} recordings
+        </Text>
+        <Text
+          as="span"
+          size={1}
+          color="lowContrast"
+          selectable={false}
+          data-testid="library-storage"
+        >
+          {formatBytes(
+            props.recordings.reduce((sum, rec) => sum + rec.size, 0),
+          )}
         </Text>
       </Flex>
     </Flex>

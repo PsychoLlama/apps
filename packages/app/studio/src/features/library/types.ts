@@ -8,6 +8,8 @@ export interface Recording {
   duration: number;
   /** Epoch milliseconds of when the recording ended. */
   createdAt: number;
+  /** Blob size in bytes. Drives the library's storage-usage readout. */
+  size: number;
   /** Blob URL pointing at the captured video. */
   url: string;
 }
