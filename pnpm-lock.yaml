@@ -141,6 +141,9 @@ importers:
         specifier: ^7.3.2
         version: 7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3)
     devDependencies:
+      '@dev/build':
+        specifier: workspace:*
+        version: link:../../dev/build
       '@iconify/json':
         specifier: ^2.2.460
         version: 2.2.465
@@ -204,6 +207,9 @@ importers:
       '@app/studio':
         specifier: workspace:*
         version: link:../../app/studio
+      '@dev/build':
+        specifier: workspace:*
+        version: link:../build
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design

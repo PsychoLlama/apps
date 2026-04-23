@@ -13,6 +13,7 @@
   "dependencies": {
     "@app/main": "workspace:*",
     "@app/studio": "workspace:*",
+    "@dev/build": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/ui": "workspace:*",

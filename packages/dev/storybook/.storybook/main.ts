@@ -2,26 +2,13 @@ import type { StorybookConfig } from 'storybook-solidjs-vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
 import { mergeConfig } from 'vite';
-import { existsSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { generatedArtifacts } from '@dev/build/ignore';
 
-// Walk up from the config dir until we find the pnpm workspace
-// manifest, then emit a relative path to `packages/`. Relative
-// because storybook's vitest plugin rejects absolute `directory`
-// values.
-const findWorkspaceRoot = (start: string): string => {
-  let dir = start;
-  while (dir !== dirname(dir)) {
-    if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) return dir;
-    dir = dirname(dir);
-  }
-  throw new Error(`pnpm-workspace.yaml not found above ${start}`);
-};
-
-const workspacePackages = relative(
-  import.meta.dirname,
-  resolve(findWorkspaceRoot(import.meta.dirname), 'packages'),
-);
+// Stories live in sibling workspace packages, not this one. Point
+// storybook at the workspace `packages/` directory and let it crawl
+// every category/name/src tree. Relative because storybook's vitest
+// plugin rejects absolute `directory` values.
+const workspacePackages = '../../../../packages';
 
 const config: StorybookConfig = {
   stories: [
@@ -42,17 +29,10 @@ const config: StorybookConfig = {
       ...(process.env.NODE_ENV === 'production' && { base: '/__storybook/' }),
       server: {
         watch: {
-          // Vite's chokidar watcher does not respect .gitignore. Build
-          // artifacts and tool directories must be excluded explicitly.
-          ignored: [
-            '**/.direnv/**',
-            '**/.claude/**',
-            '**/.nitro/**',
-            '**/.output/**',
-            '**/.wrangler/**',
-            '**/storybook-static/**',
-            '**/result*/**',
-          ],
+          // Vite's chokidar watcher doesn't respect .gitignore. `.claude`
+          // is a worktree-scratch dir, not a generated artifact, so it
+          // sits alongside the shared list.
+          ignored: [...generatedArtifacts, '**/.claude/**'],
         },
       },
       plugins: [vanillaExtractPlugin(), Icons({ compiler: 'solid' })],

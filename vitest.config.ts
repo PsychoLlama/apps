@@ -1,22 +1,16 @@
 import { defineConfig } from 'vitest/config';
 import solid from 'vite-plugin-solid';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
+import { generatedArtifacts } from '@dev/build/ignore';
 
 export default defineConfig({
   plugins: [solid(), vanillaExtractPlugin()],
   server: {
     watch: {
-      // Vite's chokidar watcher does not respect .gitignore. Build
-      // artifacts and tool directories must be excluded explicitly.
-      ignored: [
-        '**/.direnv/**',
-        '**/.claude/**',
-        '**/.nitro/**',
-        '**/.output/**',
-        '**/.wrangler/**',
-        '**/storybook-static/**',
-        '**/result*/**',
-      ],
+      // Vite's chokidar watcher doesn't respect .gitignore. `.claude`
+      // is a worktree-scratch dir, not a generated artifact, so it
+      // sits alongside the shared list.
+      ignored: [...generatedArtifacts, '**/.claude/**'],
     },
   },
   test: {

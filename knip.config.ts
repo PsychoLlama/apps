@@ -9,9 +9,6 @@ const config: KnipConfig = {
       ignoreDependencies: [
         'prettier', // invoked by treefmt
         '@vanilla-extract/css', // referenced by name in eslint.config.ts
-        // Pulled in at root so moon can resolve the CLI via the package
-        // exports map instead of digging into `src/`.
-        '@dev/build',
       ],
     },
     'packages/app/main': {
