@@ -82,7 +82,7 @@ export default [
   },
   {
     files: ['packages/**/*.css.ts'],
-    ignores: ['packages/lib/design/src/**'],
+    ignores: ['packages/lib/design/src/**', '**/*.stories.css.ts'],
     rules: {
       'custom/require-design-tokens': 'error',
       'no-restricted-imports': [

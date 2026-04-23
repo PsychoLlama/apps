@@ -15,6 +15,10 @@ const config: StorybookConfig = {
       directory: workspacePackages,
       files: '*/*/src/**/*.stories.@(ts|tsx)',
     },
+    {
+      directory: '../stories',
+      files: '**/*.stories.@(ts|tsx)',
+    },
   ],
   addons: ['@storybook/addon-themes', '@storybook/addon-vitest'],
   framework: {

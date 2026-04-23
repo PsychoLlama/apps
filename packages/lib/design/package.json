@@ -15,12 +15,6 @@
   "dependencies": {
     "@vanilla-extract/css": "catalog:"
   },
-  "devDependencies": {
-    "@lib/ui": "workspace:*",
-    "storybook": "catalog:",
-    "storybook-solidjs-vite": "catalog:",
-    "unplugin-icons": "catalog:"
-  },
   "peerDependencies": {
     "solid-js": "*"
   }
