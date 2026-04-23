@@ -19,6 +19,11 @@ const config: KnipConfig = {
         '@vanilla-extract/css', // referenced by name in eslint.config.ts
       ],
     },
+    'packages/dev/build': {
+      // `validate-moon.ts` is invoked by moon, not imported.
+      entry: ['src/validate-moon.ts'],
+      project: ['src/**/*.ts'],
+    },
     'packages/app/main': {
       entry: [
         'src/routes/**/*.tsx',

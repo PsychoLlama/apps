@@ -1,0 +1,24 @@
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+project:
+  name: '@dev/build'
+  description: 'Shared workspace tooling — static checks, ignore patterns, etc.'
+
+tasks:
+  # Fails if any task `inputs:` glob matches no files, or any literal
+  # file input is missing. Moon happily caches past a stale glob, so
+  # a rename elsewhere in the repo can silently orphan a declaration
+  # — affected-task detection then skips work it should be running.
+  # The cache key is the set of moon configs: a filesystem rename
+  # without a moon-config change won't re-trigger this, but that's
+  # fine — next moon edit will catch it.
+  validate-moon:
+    command: 'node'
+    args: ['$projectRoot/src/validate-moon.ts']
+    inputs:
+      - 'src/**/*'
+      - '/moon.yml'
+      - '/.moon/*.yml'
+      - '/packages/*/*/moon.yml'
+    options:
+      runFromWorkspaceRoot: true

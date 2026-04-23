@@ -165,7 +165,7 @@ export default [
   },
   {
     // CLI tooling legitimately writes to stdout/stderr.
-    files: ['packages/dev/moon-lint/src/**/*.ts'],
+    files: ['packages/dev/build/src/**/*.ts'],
     rules: {
       'no-console': 'off',
     },

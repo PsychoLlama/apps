@@ -13,6 +13,7 @@
 - `packages/lib/ui` — component library (`@lib/ui`)
 - `packages/lib/shell` — site chrome (`@lib/shell`)
 - `packages/lib/state` — state primitives (`@lib/state`)
+- `packages/dev/build` — shared workspace tooling and ignore patterns (`@dev/build`)
 - `packages/dev/eslint-plugin` — custom lint rules (`@dev/eslint-plugin`)
 - `packages/dev/storybook` — Storybook workbench (`@dev/storybook`)
 - `packages/app/main` — SolidStart host (`@app/main`)
@@ -23,7 +24,7 @@ Each `@app/*` package exports top-level components. `@app/main` owns routing —
 ## Dev
 
 - `moon check --all` to validate. Must pass before committing.
-- Tasks are defined in `moon.yml` (root) and `packages/app/main/moon.yml`.
+- Tasks are defined in `moon.yml` (root) and per-package `moon.yml` files under `packages/**`.
 - All routes are file-based: `packages/app/main/src/routes/**/*.tsx`.
 
 ## Dependencies
@@ -60,3 +61,9 @@ Each `@app/*` package exports top-level components. `@app/main` owns routing —
 ## Testing
 
 - Co-locate tests. Example: `foo.ts` and `__tests__/foo.test.ts`.
+
+## Doc Comments
+
+- Default to JSDoc (`/** … */`) on modules, exported types, and exported fields. Consumers read it as intrinsic documentation — it belongs to the API.
+- Drop to plain `//` comments when the note is an internal aside (implementation context, a nearby warning) that shouldn't leak into tooling surfaces like hover popups or generated docs.
+- Lean brief. A good doc comment answers "what is this and when would I reach for it?" — not "how does it work line by line."

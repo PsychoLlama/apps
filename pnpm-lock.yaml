@@ -194,13 +194,13 @@ importers:
         specifier: 'catalog:'
         version: 23.0.1
 
+  packages/dev/build: {}
+
   packages/dev/eslint-plugin:
     dependencies:
       eslint:
         specifier: '*'
         version: 9.39.2(jiti@2.6.1)
-
-  packages/dev/moon-lint: {}
 
   packages/dev/storybook:
     dependencies:
