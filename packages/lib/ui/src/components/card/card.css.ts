@@ -2,12 +2,15 @@
  * Card styles.
  *
  * Ported from Radix UI Themes Card. Deviations:
- * - Single-element render (no `::before`/`::after`); we use `inset box-shadow`
- *   for the border and rely on `panelTranslucent` tokens for translucent fills.
  * - Neutral only (no color scales).
  * - Interactive states are gated by an `interactive` class set by the
  *   component when `as` is `'a' | 'button' | 'label'`, instead of selecting
  *   on those element names.
+ * - The border is drawn on an `::after` pseudo-element (above children)
+ *   so an `Inset` bleeding to an edge cannot cover it. The card's
+ *   translucent/solid fill stays on the root element itself; we don't
+ *   need Radix's `::before` for background layering since our
+ *   `panelTranslucent` token already handles that case.
  *
  * @see https://www.radix-ui.com/themes/docs/components/card
  */
@@ -35,6 +38,9 @@ import {
 
 // --- Root ---
 
+// The border overlay sits on `::after`, which paints above non-positioned
+// children (the default stacking for an absolutely-positioned pseudo-element).
+// That keeps the card outline visible even when an Inset bleeds to the edge.
 export const base = style({
   position: 'relative',
   display: 'block',
@@ -46,6 +52,18 @@ export const base = style({
   transitionProperty: 'background-color, box-shadow',
   transitionDuration: fast[2],
   transitionTimingFunction: standard.productive,
+  selectors: {
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      pointerEvents: 'none',
+      borderRadius: cardBorderRadius,
+      transitionProperty: 'box-shadow',
+      transitionDuration: fast[2],
+      transitionTimingFunction: standard.productive,
+    },
+  },
 });
 
 /** Applied by the component when `as` is an interactive tag. */
@@ -84,11 +102,13 @@ export const size = styleVariants({
 // --- Variant ---
 
 // Variant-specific hover styles only engage when `interactive` is also applied.
+const borderShadow = `inset 0 0 0 1px ${neutralAlpha[6]}`;
+
 export const variant = styleVariants({
   surface: {
     backgroundColor: background.panelTranslucent,
-    boxShadow: `inset 0 0 0 1px ${neutralAlpha[6]}`,
     selectors: {
+      '&::after': { boxShadow: borderShadow },
       [`&.${interactive}:not(:disabled):hover`]: {
         backgroundColor: neutralAlpha[3],
       },
@@ -96,10 +116,11 @@ export const variant = styleVariants({
   },
   classic: {
     backgroundColor: background.panelSolid,
-    boxShadow: `${shadow[3]}, inset 0 0 0 1px ${neutralAlpha[6]}`,
+    boxShadow: shadow[3],
     selectors: {
+      '&::after': { boxShadow: borderShadow },
       [`&.${interactive}:not(:disabled):hover`]: {
-        boxShadow: `${shadow[4]}, inset 0 0 0 1px ${neutralAlpha[6]}`,
+        boxShadow: shadow[4],
       },
     },
   },
