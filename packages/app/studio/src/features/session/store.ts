@@ -15,6 +15,12 @@ export interface SessionState {
   recorder: MediaRecorder | null;
   /** Data chunks the recorder has emitted so far, drained on stop. */
   chunks: Blob[] | null;
+  /**
+   * Id of the most recently finalized recording, used by the stop
+   * handler to navigate to the just-captured playback view without
+   * relying on incidental library mutations.
+   */
+  lastFinalizedId: string | null;
 }
 
 export const sessionStore = defineStore<SessionState>(() => ({
@@ -24,6 +30,7 @@ export const sessionStore = defineStore<SessionState>(() => ({
   streams: {},
   recorder: null,
   chunks: null,
+  lastFinalizedId: null,
 }));
 
 // Self-bootstrap so module imports give callers a live readonly view.

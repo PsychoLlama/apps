@@ -12,7 +12,6 @@ import { Button, Callout, Flex, Heading, Link, Text } from '@lib/ui';
 import { useAction, useEffect } from '@lib/state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconClose from 'virtual:icons/mdi/close';
-import IconPlayOutline from 'virtual:icons/mdi/play-outline';
 import { SiteHeader } from '@lib/shell';
 import {
   addTrackEffect,
@@ -25,11 +24,12 @@ import {
 } from './session/bindings';
 import { session } from './session/store';
 import { library } from './library/store';
+import { loadRecordingsEffect } from './library/bindings';
 import { timer } from './timer/store';
 import { tick } from './timer/bindings';
 import type { Track } from './session/types';
 import type { Recording } from './library/types';
-import { formatDuration, formatElapsed } from './format';
+import { formatBytes, formatDuration, formatElapsed } from './format';
 import * as css from './studio.css';
 
 const LibraryPanel = (props: { recordings: ReadonlyArray<Recording> }) => {
@@ -64,14 +64,6 @@ const LibraryPanel = (props: { recordings: ReadonlyArray<Recording> }) => {
                 href={`/studio/${rec.id}`}
                 underline="none"
               >
-                <Flex
-                  as="div"
-                  align="center"
-                  justify="center"
-                  class={css.entryThumb}
-                >
-                  <IconPlayOutline class={css.entryThumbIcon} />
-                </Flex>
                 <Flex as="div" direction="column" gap={1} grow>
                   <Text
                     as="span"
@@ -100,6 +92,17 @@ const LibraryPanel = (props: { recordings: ReadonlyArray<Recording> }) => {
       <Flex as="footer" justify="between" px={4} py={2} class={css.panelFooter}>
         <Text as="span" size={1} color="lowContrast" selectable={false}>
           {props.recordings.length} recordings
+        </Text>
+        <Text
+          as="span"
+          size={1}
+          color="lowContrast"
+          selectable={false}
+          data-testid="library-storage"
+        >
+          {formatBytes(
+            props.recordings.reduce((sum, rec) => sum + rec.size, 0),
+          )}
         </Text>
       </Flex>
     </Flex>
@@ -374,20 +377,21 @@ export default function Studio() {
   const addTrack = useEffect(addTrackEffect);
   const removeTrack = useEffect(removeTrackEffect);
   const checkSupport = useEffect(checkSupportEffect);
+  const loadRecordings = useEffect(loadRecordingsEffect);
   const publishTick = useAction(tick);
   const navigate = useNavigate();
 
-  // Hop to playback for the just-finalized recording. `stopRecording`'s
-  // `onSuccess` appends to the library, so the newest entry afterward
-  // is this session's output. A no-growth result means stop errored,
-  // in which case the error state handles the UI and we stay put.
+  // Hop to playback for the just-finalized recording. `finalizeRecording`
+  // records the new id on `session.lastFinalizedId`; we snapshot it
+  // before the await so an incidental library mutation (e.g. a late
+  // hydrate) can't trick us into navigating to the wrong recording.
+  // No change in id means stop errored — the error state handles the
+  // UI and we stay put.
   const handleStop = async () => {
-    const prevCount = library.recordings.length;
+    const before = session.lastFinalizedId;
     await stopRecording();
-    if (library.recordings.length > prevCount) {
-      const newest = library.recordings[library.recordings.length - 1];
-      navigate(`/studio/${newest.id}`);
-    }
+    const finalized = session.lastFinalizedId;
+    if (finalized && finalized !== before) navigate(`/studio/${finalized}`);
   };
 
   const handleStart = () => {
@@ -396,6 +400,7 @@ export default function Studio() {
 
   onMount(() => {
     checkSupport();
+    void loadRecordings();
   });
 
   // Tick only while a recording is actively advancing. Pausing or

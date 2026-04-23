@@ -1,4 +1,6 @@
 import type { DeepReadonly } from '@lib/state';
+import { persistRecording } from '../library/capabilities';
+import { formatRecordingName } from '../format';
 import type { SessionState } from './store';
 import type { TimerState } from '../timer/store';
 import type { Track } from './types';
@@ -12,8 +14,10 @@ export interface RecordingResult {
 
 export interface FinalizedRecording {
   readonly id: string;
-  readonly elapsed: number;
-  readonly stoppedAt: number;
+  readonly name: string;
+  readonly duration: number;
+  readonly createdAt: number;
+  readonly size: number;
   readonly url: string;
 }
 
@@ -85,9 +89,13 @@ export const startRecording = async (
 };
 
 /**
- * Drain the active recorder into a Blob, release every stream, and
- * produce a blob URL. Pulls recorder/chunks/streams and elapsed directly
- * off the state views handed in by the effect.
+ * Drain the active recorder into a Blob, release every stream, mint a
+ * blob URL, and best-effort persist the recording to IndexedDB. The
+ * URL is minted before the persist so a save failure (e.g. quota) does
+ * not throw away a finished capture — the user keeps an in-session
+ * playable recording even when disk is unavailable. Persist errors are
+ * surfaced through the console; subsequent reloads will simply not see
+ * the recording in the library.
  */
 export const stopRecording = async (
   session: DeepReadonly<SessionState>,
@@ -111,12 +119,21 @@ export const stopRecording = async (
     }
   }
 
-  return {
-    id: crypto.randomUUID(),
-    elapsed: timer.elapsed,
-    stoppedAt: Date.now(),
-    url: URL.createObjectURL(blob),
-  };
+  const id = crypto.randomUUID();
+  const createdAt = Date.now();
+  const name = formatRecordingName(createdAt);
+  const duration = timer.elapsed;
+  const size = blob.size;
+  const url = URL.createObjectURL(blob);
+
+  try {
+    await persistRecording({ id, name, duration, createdAt, blob });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to persist recording to IndexedDB', error);
+  }
+
+  return { id, name, duration, createdAt, size, url };
 };
 
 /** Pause the active recorder. No-op when none is running. */

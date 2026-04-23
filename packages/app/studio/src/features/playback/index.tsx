@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { Show, onMount } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { Button, Callout, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { useEffect } from '@lib/state';
@@ -7,7 +7,10 @@ import IconTrashCan from 'virtual:icons/mdi/trash-can-outline';
 import IconAlertCircle from 'virtual:icons/mdi/alert-circle-outline';
 import { SiteHeader } from '@lib/shell';
 import { library } from '../library/store';
-import { deleteRecordingEffect } from '../library/bindings';
+import {
+  deleteRecordingEffect,
+  loadRecordingsEffect,
+} from '../library/bindings';
 import type { Recording } from '../library/types';
 import { filenameSlug, formatDuration } from '../format';
 import * as css from './playback.css';
@@ -29,10 +32,33 @@ const NotFound = () => {
             this session.
           </Text>
         </Callout>
-        <LinkButton testId="back-to-studio" href="/studio" variant="solid">
+        <LinkButton testId="back-to-studio" href="/studio" variant="outline">
           Back to Studio
         </LinkButton>
       </Flex>
+    </Flex>
+  );
+};
+
+const Loading = () => {
+  return (
+    <Flex
+      as="div"
+      direction="column"
+      align="center"
+      justify="center"
+      grow
+      p={6}
+    >
+      <Text
+        as="p"
+        size={2}
+        color="lowContrast"
+        selectable={false}
+        data-testid="playback-loading"
+      >
+        Loading recording…
+      </Text>
     </Flex>
   );
 };
@@ -95,23 +121,44 @@ export default function Playback() {
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
   const deleteRecording = useEffect(deleteRecordingEffect);
+  const loadRecordings = useEffect(loadRecordingsEffect);
 
   const recording = () =>
     library.recordings.find((entry) => entry.id === params.id);
 
-  const handleDelete = () => {
+  // The effect's onFailure swallows IDB errors and leaves the entry in
+  // state, so checking `recording()` after awaiting tells us whether
+  // the delete actually went through. On failure we stay put so the
+  // user can retry instead of bouncing to a library that still shows
+  // the recording.
+  const handleDelete = async () => {
     const rec = recording();
     if (!rec) return;
-    deleteRecording({ id: rec.id, url: rec.url });
-    navigate('/studio');
+    await deleteRecording({ id: rec.id, url: rec.url });
+    if (!recording()) navigate('/studio');
   };
+
+  onMount(() => {
+    void loadRecordings();
+  });
 
   return (
     <Flex as="div" direction="column" class={css.shell}>
-      <SiteHeader title="Playback" />
+      <SiteHeader
+        trail={[
+          { label: 'Studio', href: '/studio', testId: 'breadcrumb-studio' },
+          { label: 'Playback' },
+        ]}
+      />
       <Flex as="div" direction="column" grow class={css.body}>
-        <Show when={recording()} fallback={<NotFound />} keyed>
-          {(rec) => <Player recording={rec} onDelete={handleDelete} />}
+        <Show
+          when={recording()}
+          fallback={library.loaded ? <NotFound /> : <Loading />}
+          keyed
+        >
+          {(rec) => (
+            <Player recording={rec} onDelete={() => void handleDelete()} />
+          )}
         </Show>
       </Flex>
     </Flex>

@@ -122,8 +122,10 @@ describe('finalizeRecording', () => {
 
     useAction(finalizeRecording)({
       id: 'rec-1',
-      elapsed: 45,
-      stoppedAt: 1745250120000,
+      name: 'Test recording',
+      duration: 45,
+      createdAt: 1745250120000,
+      size: 1024,
       url: 'blob:test',
     });
 
@@ -132,14 +134,30 @@ describe('finalizeRecording', () => {
     expect(session.chunks).toBeNull();
     expect(session.streams).toEqual({});
     expect(library.recordings).toHaveLength(1);
-    expect(library.recordings[0]).toMatchObject({
+    expect(library.recordings[0]).toEqual({
       id: 'rec-1',
+      name: 'Test recording',
       duration: 45,
       createdAt: 1745250120000,
+      size: 1024,
       url: 'blob:test',
     });
-    // Name is a formatted timestamp; pin that it's a non-empty string.
-    expect(library.recordings[0].name).toMatch(/\w+/);
+  });
+
+  it('records the finalized id so the stop handler can navigate without racing the library', () => {
+    const { session, useAction } = setup();
+    useAction(setRecordingContext)(makeResult());
+
+    useAction(finalizeRecording)({
+      id: 'rec-1',
+      name: 'Test recording',
+      duration: 1,
+      createdAt: 0,
+      size: 0,
+      url: 'blob:test',
+    });
+
+    expect(session.lastFinalizedId).toBe('rec-1');
   });
 });
 

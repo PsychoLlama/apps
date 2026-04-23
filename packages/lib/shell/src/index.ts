@@ -1,1 +1,1 @@
-export { default as SiteHeader } from './site-header';
+export { default as SiteHeader, type SiteHeaderCrumb } from './site-header';

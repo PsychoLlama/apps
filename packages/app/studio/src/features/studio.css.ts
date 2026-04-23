@@ -108,21 +108,6 @@ export const entryLink = style({
   },
 });
 
-export const entryThumb = style({
-  width: space[9],
-  height: space[7],
-  borderRadius: radius[2],
-  backgroundColor: neutral[2],
-  border: `1px solid ${neutral[6]}`,
-  flexShrink: 0,
-  overflow: 'hidden',
-});
-
-export const entryThumbIcon = style({
-  color: neutral[8],
-  fontSize: typeScale[3].fontSize,
-});
-
 export const truncate = style({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
