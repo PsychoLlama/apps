@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@solidjs/meta':
+      specifier: ^0.29.4
+      version: 0.29.4
     '@solidjs/router':
       specifier: ^0.16.1
       version: 0.16.1
@@ -122,6 +125,9 @@ importers:
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
+      '@solidjs/meta':
+        specifier: 'catalog:'
+        version: 0.29.4(solid-js@1.9.12)
       '@solidjs/router':
         specifier: 'catalog:'
         version: 0.16.1(solid-js@1.9.12)
@@ -299,6 +305,9 @@ importers:
       '@lib/ui':
         specifier: workspace:*
         version: link:../ui
+      '@solidjs/meta':
+        specifier: '*'
+        version: 0.29.4(solid-js@1.9.12)
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1(babel-plugin-macros@3.1.0)
