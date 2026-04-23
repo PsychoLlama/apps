@@ -9,9 +9,8 @@ tasks:
   # file input is missing. Moon happily caches past a stale glob, so
   # a rename elsewhere in the repo can silently orphan a declaration
   # — affected-task detection then skips work it should be running.
-  # The cache key is the set of moon configs: a filesystem rename
-  # without a moon-config change won't re-trigger this, but that's
-  # fine — next moon edit will catch it.
+  # Wired as an `implicitDeps` entry in `.moon/tasks.yml`, so every
+  # task runs this first; CI runs it fresh regardless of cache.
   validate-moon:
     command: 'node'
     args: ['$projectRoot/src/validate-moon.ts']
@@ -22,3 +21,4 @@ tasks:
       - '/packages/*/*/moon.yml'
     options:
       runFromWorkspaceRoot: true
+      runInCI: 'always'
