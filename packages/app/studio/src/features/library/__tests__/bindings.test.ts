@@ -147,17 +147,21 @@ describe('hydrateLibrary', () => {
     expect(library.loaded).toBe(true);
   });
 
-  it('skips when the library is already loaded', () => {
+  it('skips when the library is already loaded and revokes the dropped URLs', () => {
     const { library, useAction } = setup();
     useAction(hydrateLibrary)([
       { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
     ]);
 
     useAction(hydrateLibrary)([
-      { id: 'b', name: 'b', duration: 2, createdAt: 2, url: 'blob:b' },
+      { id: 'b', name: 'b', duration: 2, createdAt: 2, url: 'blob:dropped' },
     ]);
 
     expect(library.recordings.map((entry) => entry.id)).toEqual(['a']);
+    // Plugs the microtask race where two hydrates resolve before
+    // either dispatches; the loser's filter saw stale empty state and
+    // would otherwise stash its URLs here on the floor.
+    expect(capabilities.revokeRecording).toHaveBeenCalledWith('blob:dropped');
   });
 
   it('ignores a null payload from a short-circuited effect', () => {

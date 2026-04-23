@@ -52,13 +52,20 @@ export const deleteRecordingEffect = defineEffect(
  * release the tombstone list. Append (not replace) so a recording
  * captured while the IDB read was in flight isn't clobbered by the
  * older snapshot — duplicate and tombstone filtering happen upstream
- * in `loadRecordingsEffect` so this stays a pure mutation. Idempotent
- * on `loaded` so re-mounts don't double-append.
+ * in `loadRecordingsEffect`. The `loaded` early-return revokes the
+ * dropped URLs first to plug a microtask race: when two hydrates
+ * resolve before either dispatches, the second's filter sees a stale
+ * empty state, so its array reaches us with URLs that would otherwise
+ * leak.
  */
 export const hydrateLibrary = defineAction(
   [libraryStore],
   (library, recordings: Recording[] | null) => {
-    if (recordings === null || library.loaded) return;
+    if (recordings === null) return;
+    if (library.loaded) {
+      for (const entry of recordings) revokeRecording(entry.url);
+      return;
+    }
     library.recordings.push(...recordings);
     library.recordings.sort((left, right) => left.createdAt - right.createdAt);
     library.tombstones = [];
