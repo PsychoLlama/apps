@@ -29,7 +29,7 @@
       "workerd"
     ],
     "overrides": {
-      "vite": "^7.0.0"
+      "vite": "catalog:"
     }
   },
   "devDependencies": {
@@ -37,7 +37,6 @@
     "@dev/eslint-plugin": "workspace:*",
     "@eslint/compat": "^2.0.4",
     "@eslint/js": "^9.39.4",
-    "@solidjs/router": "catalog:",
     "@testing-library/jest-dom": "^6.9.1",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.2",

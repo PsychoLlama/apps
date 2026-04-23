@@ -2,21 +2,21 @@ import { defineConfig } from 'vitest/config';
 import solid from 'vite-plugin-solid';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 
-const watchIgnore = [
-  '**/.direnv/**',
-  '**/.claude/**',
-  '**/.nitro/**',
-  '**/.output/**',
-  '**/.wrangler/**',
-  '**/storybook-static/**',
-  '**/result*/**',
-];
-
 export default defineConfig({
   plugins: [solid(), vanillaExtractPlugin()],
   server: {
     watch: {
-      ignored: watchIgnore,
+      // Vite's chokidar watcher does not respect .gitignore. Build
+      // artifacts and tool directories must be excluded explicitly.
+      ignored: [
+        '**/.direnv/**',
+        '**/.claude/**',
+        '**/.nitro/**',
+        '**/.output/**',
+        '**/.wrangler/**',
+        '**/storybook-static/**',
+        '**/result*/**',
+      ],
     },
   },
   test: {

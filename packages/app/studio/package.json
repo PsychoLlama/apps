@@ -17,8 +17,6 @@
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
-    "storybook": "catalog:",
-    "storybook-solidjs-vite": "catalog:",
     "unplugin-icons": "catalog:"
   },
   "peerDependencies": {

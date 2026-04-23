@@ -27,7 +27,6 @@ tasks:
     args: ['build']
     inputs:
       - '.storybook/**/*'
-      - 'vite-ignored.ts'
       - '/packages/**/*.stories.*'
       - '/packages/app/main/src/{app.css,theme}.ts'
       - '/packages/app/studio/src/**/*'
@@ -43,7 +42,6 @@ tasks:
     args: ['smoke-test']
     inputs:
       - '.storybook/**/*'
-      - 'vite-ignored.ts'
       - 'smoke-test.config.ts'
       - '/packages/**/*.stories.*'
       - '/packages/app/main/src/{app.css,theme}.ts'

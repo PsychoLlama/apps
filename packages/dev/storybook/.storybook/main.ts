@@ -2,12 +2,26 @@ import type { StorybookConfig } from 'storybook-solidjs-vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
 import { mergeConfig } from 'vite';
-import { watchIgnore } from '../vite-ignored.ts';
+import { existsSync } from 'node:fs';
+import { dirname, relative, resolve } from 'node:path';
 
-// Stories live in sibling workspace packages, not this one. Point
-// storybook at the workspace `packages/` directory and let it crawl
-// every category/name/src tree.
-const workspacePackages = '../../../../packages';
+// Walk up from the config dir until we find the pnpm workspace
+// manifest, then emit a relative path to `packages/`. Relative
+// because storybook's vitest plugin rejects absolute `directory`
+// values.
+const findWorkspaceRoot = (start: string): string => {
+  let dir = start;
+  while (dir !== dirname(dir)) {
+    if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) return dir;
+    dir = dirname(dir);
+  }
+  throw new Error(`pnpm-workspace.yaml not found above ${start}`);
+};
+
+const workspacePackages = relative(
+  import.meta.dirname,
+  resolve(findWorkspaceRoot(import.meta.dirname), 'packages'),
+);
 
 const config: StorybookConfig = {
   stories: [
@@ -26,7 +40,21 @@ const config: StorybookConfig = {
   viteFinal: (config) =>
     mergeConfig(config, {
       ...(process.env.NODE_ENV === 'production' && { base: '/__storybook/' }),
-      server: { watch: { ignored: watchIgnore } },
+      server: {
+        watch: {
+          // Vite's chokidar watcher does not respect .gitignore. Build
+          // artifacts and tool directories must be excluded explicitly.
+          ignored: [
+            '**/.direnv/**',
+            '**/.claude/**',
+            '**/.nitro/**',
+            '**/.output/**',
+            '**/.wrangler/**',
+            '**/storybook-static/**',
+            '**/result*/**',
+          ],
+        },
+      },
       plugins: [vanillaExtractPlugin(), Icons({ compiler: 'solid' })],
     }),
 };
