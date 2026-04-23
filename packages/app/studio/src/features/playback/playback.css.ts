@@ -63,13 +63,6 @@ export const video = style({
   display: 'block',
 });
 
-// `<Grid>` defaults to row flow with explicit columns; here we want
-// content-sized columns laid out left-to-right.
-export const actions = style({
-  gridAutoFlow: 'column',
-  gridAutoColumns: 'max-content',
-});
-
 export const downloadLink = style({
   display: 'inline-flex',
   alignItems: 'center',
