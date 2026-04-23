@@ -1,7 +1,7 @@
 import { defineAction, defineEffect } from '@lib/state';
 import {
-  loadRecordings,
-  removePersistedRecording,
+  discardRecording,
+  reconcilePersistedRecordings,
   revokeRecording,
 } from './capabilities';
 import { libraryStore } from './store';
@@ -32,20 +32,9 @@ export const deleteRecording = defineAction(
  * failure logs a warning; the entry will reappear on the next reload
  * if it was actually on disk, and the user can re-delete then.
  */
-export const deleteRecordingEffect = defineEffect(
-  [],
-  async (input: { id: string; url: string }): Promise<string> => {
-    try {
-      await removePersistedRecording(input.id);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn('Failed to remove recording from IndexedDB', error);
-    }
-    revokeRecording(input.url);
-    return input.id;
-  },
-  { onSuccess: deleteRecording },
-);
+export const deleteRecordingEffect = defineEffect([], discardRecording, {
+  onSuccess: deleteRecording,
+});
 
 /**
  * Append the persisted set into the live library, mark it loaded, and
@@ -99,18 +88,6 @@ export const markLibraryLoadFailed = defineAction(
  */
 export const loadRecordingsEffect = defineEffect(
   [libraryStore],
-  async (library): Promise<Recording[] | null> => {
-    if (library.loaded) return null;
-    const persisted = await loadRecordings();
-    const seen = new Set(library.recordings.map((entry) => entry.id));
-    const tombstoned = new Set(library.tombstones);
-    return persisted.filter((entry) => {
-      if (seen.has(entry.id) || tombstoned.has(entry.id)) {
-        revokeRecording(entry.url);
-        return false;
-      }
-      return true;
-    });
-  },
+  reconcilePersistedRecordings,
   { onSuccess: hydrateLibrary, onFailure: markLibraryLoadFailed },
 );

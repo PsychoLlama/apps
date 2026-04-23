@@ -1,4 +1,6 @@
+import type { DeepReadonly } from '@lib/state';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import type { LibraryState } from './store';
 import type { Recording } from './types';
 
 /** Persisted shape for a recording — Recording metadata plus the raw blob. */
@@ -95,4 +97,49 @@ export const loadRecordings = async (): Promise<Recording[]> => {
       size: blob.size,
       url: URL.createObjectURL(blob),
     }));
+};
+
+/**
+ * Drop a recording from IndexedDB and release its blob URL. Persist-side
+ * failures are logged but swallowed — state is cleared on the user's
+ * delete intent regardless, so an IDB-unavailable environment still
+ * releases in-memory entries, and a transient failure surfaces again on
+ * the next reload. Returns the id so the success action can drop it
+ * from state.
+ */
+export const discardRecording = async (input: {
+  id: string;
+  url: string;
+}): Promise<string> => {
+  try {
+    await removePersistedRecording(input.id);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to remove recording from IndexedDB', error);
+  }
+  revokeRecording(input.url);
+  return input.id;
+};
+
+/**
+ * Hydrate persisted recordings against the live library: short-circuit
+ * when the library is already loaded, otherwise return the persisted
+ * set filtered against recordings already in state and any tombstoned
+ * ids. Freshly-minted URLs for filtered entries are revoked so the
+ * browser's reference count doesn't leak.
+ */
+export const reconcilePersistedRecordings = async (
+  library: DeepReadonly<LibraryState>,
+): Promise<Recording[] | null> => {
+  if (library.loaded) return null;
+  const persisted = await loadRecordings();
+  const seen = new Set(library.recordings.map((entry) => entry.id));
+  const tombstoned = new Set(library.tombstones);
+  return persisted.filter((entry) => {
+    if (seen.has(entry.id) || tombstoned.has(entry.id)) {
+      revokeRecording(entry.url);
+      return false;
+    }
+    return true;
+  });
 };
