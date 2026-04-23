@@ -27,6 +27,12 @@ export {
   type CalloutProps,
 } from './components/callout/callout';
 export {
+  default as Card,
+  type CardProps,
+  type CardTag,
+} from './components/card/card';
+export { default as Inset, type InsetProps } from './components/inset/inset';
+export {
   default as LinkButton,
   type LinkButtonProps,
 } from './components/link-button/link-button';
