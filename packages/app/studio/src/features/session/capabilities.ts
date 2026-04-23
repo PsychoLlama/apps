@@ -88,11 +88,13 @@ export const startRecording = async (
 };
 
 /**
- * Drain the active recorder into a Blob, release every stream, persist
- * the recording to IndexedDB, and produce a blob URL for playback.
- * Persistence runs before the URL is minted so a save failure surfaces
- * via the recorder's own failure path instead of leaving an orphaned
- * URL in the library.
+ * Drain the active recorder into a Blob, release every stream, mint a
+ * blob URL, and best-effort persist the recording to IndexedDB. The
+ * URL is minted before the persist so a save failure (e.g. quota) does
+ * not throw away a finished capture — the user keeps an in-session
+ * playable recording even when disk is unavailable. Persist errors are
+ * surfaced through the console; subsequent reloads will simply not see
+ * the recording in the library.
  */
 export const stopRecording = async (
   session: DeepReadonly<SessionState>,
@@ -120,16 +122,16 @@ export const stopRecording = async (
   const createdAt = Date.now();
   const name = formatRecordingName(createdAt);
   const duration = timer.elapsed;
+  const url = URL.createObjectURL(blob);
 
-  await persistRecording({ id, name, duration, createdAt, blob });
+  try {
+    await persistRecording({ id, name, duration, createdAt, blob });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to persist recording to IndexedDB', error);
+  }
 
-  return {
-    id,
-    name,
-    duration,
-    createdAt,
-    url: URL.createObjectURL(blob),
-  };
+  return { id, name, duration, createdAt, url };
 };
 
 /** Pause the active recorder. No-op when none is running. */

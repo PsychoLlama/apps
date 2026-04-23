@@ -1,5 +1,6 @@
 import type { DeepReadonly } from '@lib/state';
 import { persistRecording } from '../../library/capabilities';
+import { formatRecordingName } from '../../format';
 import {
   captureTrack,
   checkSupport,
@@ -108,6 +109,7 @@ beforeEach(() => {
   mediaDevices.getUserMedia.mockReset();
   FakeMediaRecorder.isTypeSupported.mockReset();
   FakeMediaRecorder.isTypeSupported.mockReturnValue(true);
+  vi.mocked(persistRecording).mockReset().mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -211,13 +213,47 @@ describe('stopRecording', () => {
     ).rejects.toThrow(/no active recorder/i);
   });
 
-  it('stops the recorder, releases every track, persists the blob, and returns a finalized recording', async () => {
-    const recorder = new FakeMediaRecorder(new FakeMediaStream());
-    const track = new FakeTrack();
+  it('drains chunks into a single mime-typed blob', async () => {
+    const recorder = new FakeMediaRecorder(new FakeMediaStream(), {
+      mimeType: 'video/webm;codecs=vp9',
+    });
     const session = asSession({
       recorder: recorder as unknown as MediaRecorder,
-      chunks: [new Blob(['a'])],
-      streams: { '1': new FakeMediaStream([track]) as unknown as MediaStream },
+      chunks: [new Blob(['hello']), new Blob([' world'])],
+      streams: {},
+    });
+
+    await stopRecording(session, { startedAt: null, elapsed: 0 });
+
+    const blob = vi.mocked(persistRecording).mock.calls[0][0].blob;
+    expect(blob.type).toBe('video/webm;codecs=vp9');
+    expect(await blob.text()).toBe('hello world');
+  });
+
+  it('persists the same blob it hands to URL.createObjectURL', async () => {
+    const createObjectURL = vi.fn(() => 'blob:mock');
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL: vi.fn() });
+    const recorder = new FakeMediaRecorder(new FakeMediaStream());
+    const session = asSession({
+      recorder: recorder as unknown as MediaRecorder,
+      chunks: [new Blob(['x'])],
+      streams: {},
+    });
+
+    await stopRecording(session, { startedAt: null, elapsed: 0 });
+
+    const persistedBlob = vi.mocked(persistRecording).mock.calls[0][0].blob;
+    expect(createObjectURL).toHaveBeenCalledWith(persistedBlob);
+  });
+
+  it('derives createdAt from the wall clock and name from createdAt', async () => {
+    const stoppedAt = 1745250000000;
+    vi.spyOn(Date, 'now').mockReturnValue(stoppedAt);
+    const recorder = new FakeMediaRecorder(new FakeMediaStream());
+    const session = asSession({
+      recorder: recorder as unknown as MediaRecorder,
+      chunks: [new Blob(['x'])],
+      streams: {},
     });
 
     const result = await stopRecording(session, {
@@ -225,22 +261,72 @@ describe('stopRecording', () => {
       elapsed: 42,
     });
 
-    expect(recorder.stop).toHaveBeenCalled();
-    expect(track.stop).toHaveBeenCalled();
+    expect(result.createdAt).toBe(stoppedAt);
+    expect(result.name).toBe(formatRecordingName(stoppedAt));
     expect(result.duration).toBe(42);
-    expect(result.url).toBe('blob:mock');
-    expect(result.id).toMatch(/\S/);
-    expect(result.name).toMatch(/\w+/);
-    expect(typeof result.createdAt).toBe('number');
-    expect(persistRecording).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: result.id,
-        name: result.name,
-        duration: 42,
-        createdAt: result.createdAt,
-        blob: expect.any(Blob) as Blob,
-      }),
+  });
+
+  it('mints a UUID for the recording id', async () => {
+    const recorder = new FakeMediaRecorder(new FakeMediaStream());
+    const session = asSession({
+      recorder: recorder as unknown as MediaRecorder,
+      chunks: [new Blob(['x'])],
+      streams: {},
+    });
+
+    const result = await stopRecording(session, {
+      startedAt: null,
+      elapsed: 0,
+    });
+
+    expect(result.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
+  });
+
+  it('stops the recorder and releases every captured track', async () => {
+    const recorder = new FakeMediaRecorder(new FakeMediaStream());
+    const screenTrack = new FakeTrack();
+    const audioTrack = new FakeTrack('audio');
+    const session = asSession({
+      recorder: recorder as unknown as MediaRecorder,
+      chunks: [new Blob(['x'])],
+      streams: {
+        '1': new FakeMediaStream([screenTrack]) as unknown as MediaStream,
+        '2': new FakeMediaStream([audioTrack]) as unknown as MediaStream,
+      },
+    });
+
+    await stopRecording(session, { startedAt: null, elapsed: 0 });
+
+    expect(recorder.stop).toHaveBeenCalled();
+    expect(screenTrack.stop).toHaveBeenCalled();
+    expect(audioTrack.stop).toHaveBeenCalled();
+  });
+
+  it('still returns a playable recording when persistence fails', async () => {
+    const createObjectURL = vi.fn(() => 'blob:mock');
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL: vi.fn() });
+    vi.mocked(persistRecording).mockRejectedValueOnce(new Error('disk-fail'));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const recorder = new FakeMediaRecorder(new FakeMediaStream());
+    const session = asSession({
+      recorder: recorder as unknown as MediaRecorder,
+      chunks: [new Blob(['x'])],
+      streams: {},
+    });
+
+    const result = await stopRecording(session, {
+      startedAt: null,
+      elapsed: 0,
+    });
+
+    expect(result.url).toBe('blob:mock');
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('persist'),
+      expect.any(Error),
+    );
+    warn.mockRestore();
   });
 });
 

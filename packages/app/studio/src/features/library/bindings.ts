@@ -34,15 +34,21 @@ export const deleteRecordingEffect = defineEffect(
 );
 
 /**
- * Replace the live library with the hydrated set from disk. Idempotent:
- * skips when state is already loaded so re-mounts don't orphan the blob
- * URLs the first hydration handed out.
+ * Merge the persisted set into the live library and mark it loaded.
+ * Merge (not replace) so a recording captured while the IDB read was
+ * in flight isn't clobbered by the older snapshot. Idempotent on
+ * `loaded` so re-mounts don't orphan blob URLs the first hydration
+ * handed out.
  */
 export const hydrateLibrary = defineAction(
   [libraryStore],
   (library, recordings: Recording[] | null) => {
     if (recordings === null || library.loaded) return;
-    library.recordings = recordings;
+    const seen = new Set(library.recordings.map((entry) => entry.id));
+    for (const recording of recordings) {
+      if (!seen.has(recording.id)) library.recordings.push(recording);
+    }
+    library.recordings.sort((left, right) => left.createdAt - right.createdAt);
     library.loaded = true;
   },
 );

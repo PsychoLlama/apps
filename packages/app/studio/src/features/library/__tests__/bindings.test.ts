@@ -92,7 +92,7 @@ describe('deleteRecordingEffect', () => {
 });
 
 describe('hydrateLibrary', () => {
-  it('replaces the recordings array and marks the library loaded', () => {
+  it('seeds the recordings array and marks the library loaded', () => {
     const { library, useAction } = setup();
     const recordings: Recording[] = [
       { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:a' },
@@ -102,6 +102,51 @@ describe('hydrateLibrary', () => {
 
     expect(library.recordings).toEqual(recordings);
     expect(library.loaded).toBe(true);
+  });
+
+  it('preserves recordings appended while the IDB read was in flight', () => {
+    const { library, useAction } = setup();
+    // Simulate a recording captured + added to state before the
+    // hydrate snapshot resolves.
+    seed(library, [
+      {
+        id: 'mid-flight',
+        name: 'live',
+        duration: 5,
+        createdAt: 200,
+        url: 'blob:live',
+      },
+    ]);
+
+    useAction(hydrateLibrary)([
+      {
+        id: 'older',
+        name: 'older',
+        duration: 3,
+        createdAt: 100,
+        url: 'blob:older',
+      },
+    ]);
+
+    expect(library.recordings.map((entry) => entry.id)).toEqual([
+      'older',
+      'mid-flight',
+    ]);
+    expect(library.loaded).toBe(true);
+  });
+
+  it('does not duplicate recordings that already exist in state', () => {
+    const { library, useAction } = setup();
+    seed(library, [
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:fresh' },
+    ]);
+
+    useAction(hydrateLibrary)([
+      { id: 'a', name: 'a', duration: 1, createdAt: 1, url: 'blob:stale' },
+    ]);
+
+    expect(library.recordings).toHaveLength(1);
+    expect(library.recordings[0].url).toBe('blob:fresh');
   });
 
   it('skips when the library is already loaded', () => {
