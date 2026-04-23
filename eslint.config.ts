@@ -26,10 +26,6 @@ const restrictedStatePaths = [
 
 export default [
   includeIgnoreFile(import.meta.dirname + '/.gitignore'),
-  {
-    // Node utility scripts run outside the workspace TS projects.
-    ignores: ['scripts/**'],
-  },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -165,6 +161,13 @@ export default [
     files: ['packages/lib/ui/src/components/**/*.tsx'],
     rules: {
       'custom/require-ui-primitives': 'off',
+    },
+  },
+  {
+    // CLI tooling legitimately writes to stdout/stderr.
+    files: ['packages/dev/moon-lint/src/**/*.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
 ];

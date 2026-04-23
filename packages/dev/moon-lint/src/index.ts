@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Verifies every `inputs:` declaration in every moon task still
 // resolves. Moon silently tolerates globs that match nothing and
 // literal files that don't exist — a rename elsewhere in the repo
@@ -10,21 +9,44 @@ import { existsSync, globSync } from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 
-const query = (cmd) =>
-  JSON.parse(execSync(`moon query ${cmd} --json`, { encoding: 'utf8' }));
+interface MoonInput {
+  file?: string;
+  glob?: string;
+  optional?: boolean;
+}
 
-const projectSources = Object.fromEntries(
-  query('projects').projects.map((p) => [p.id, p.source]),
+interface MoonTask {
+  inputs?: MoonInput[];
+}
+
+interface Issue {
+  target: string;
+  kind: 'missing file' | 'empty glob';
+  value: string;
+}
+
+const query = <T>(cmd: string): T =>
+  JSON.parse(execSync(`moon query ${cmd} --json`, { encoding: 'utf8' })) as T;
+
+const projectsResult = query<{
+  projects: Array<{ id: string; source: string }>;
+}>('projects');
+const tasksResult = query<{ tasks: Record<string, Record<string, MoonTask>> }>(
+  'tasks',
 );
 
-const resolveToWorkspace = (projectSource, raw) => {
+const projectSources = Object.fromEntries(
+  projectsResult.projects.map(({ id, source }) => [id, source]),
+);
+
+const resolveToWorkspace = (projectSource: string, raw: string): string => {
   if (raw.startsWith('/')) return raw.slice(1);
   if (projectSource === '.') return raw;
   return path.posix.join(projectSource, raw);
 };
 
-const issues = [];
-for (const [project, tasks] of Object.entries(query('tasks').tasks)) {
+const issues: Issue[] = [];
+for (const [project, tasks] of Object.entries(tasksResult.tasks)) {
   const source = projectSources[project];
   for (const [taskId, task] of Object.entries(tasks)) {
     for (const input of task.inputs ?? []) {

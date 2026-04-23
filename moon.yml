@@ -70,16 +70,3 @@ tasks:
       # Root `*.ts` files (eslint.config, vitest.config, knip.config)
       # are scanned by the `.` workspace's `project: ['*.ts']` pattern.
       - '/*.ts'
-
-  # Fails if any task `inputs:` glob matches no files, or any literal
-  # file input is missing. Moon happily caches past a stale glob, so
-  # a rename elsewhere in the repo can silently orphan a declaration
-  # — affected-task detection then skips work it should be running.
-  # Runs uncached and unconditionally in CI because filesystem
-  # renames outside moon configs don't register as input changes.
-  validate-config:
-    command: 'node'
-    args: ['scripts/validate-moon-config.mjs']
-    options:
-      cache: false
-      runInCI: 'always'

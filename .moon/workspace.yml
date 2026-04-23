@@ -5,6 +5,7 @@ projects:
   '@app/main': 'packages/app/main'
   '@app/studio': 'packages/app/studio'
   '@dev/eslint-plugin': 'packages/dev/eslint-plugin'
+  '@dev/moon-lint': 'packages/dev/moon-lint'
   '@dev/storybook': 'packages/dev/storybook'
   '@lib/design': 'packages/lib/design'
   '@lib/shell': 'packages/lib/shell'
