@@ -1,3 +1,4 @@
+import { openDB } from 'idb';
 import {
   loadRecordings,
   persistRecording,
@@ -29,6 +30,7 @@ vi.mock('idb', () => ({
 
 beforeEach(() => {
   store.clear();
+  vi.mocked(openDB).mockClear();
 });
 
 describe('revokeRecording', () => {
@@ -106,5 +108,21 @@ describe('loadRecordings', () => {
 
   it('returns an empty array when nothing is persisted', async () => {
     expect(await loadRecordings()).toEqual([]);
+  });
+
+  it('mints a fresh URL per call so concurrent revokes do not alias', async () => {
+    await persistRecording(sample());
+    let counter = 0;
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => `blob:mock-${counter++}`),
+      revokeObjectURL: vi.fn(),
+    });
+
+    const [first, second] = await Promise.all([
+      loadRecordings(),
+      loadRecordings(),
+    ]);
+
+    expect(first[0].url).not.toBe(second[0].url);
   });
 });

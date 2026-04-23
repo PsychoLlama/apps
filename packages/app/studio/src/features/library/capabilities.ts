@@ -23,16 +23,43 @@ const STORE = 'recordings';
 
 // Module-singleton: one open() per page, shared across every capability
 // call. The IDB connection is cheap to keep around and far cheaper than
-// the ceremony of opening per request.
+// the ceremony of opening per request. The cached promise self-evicts
+// on rejection so a transient failure (storage briefly blocked, etc.)
+// doesn't poison every later persist/load for the lifetime of the page.
 let dbPromise: Promise<IDBPDatabase<StudioSchema>> | null = null;
 
 const getDB = (): Promise<IDBPDatabase<StudioSchema>> => {
-  dbPromise ??= openDB<StudioSchema>(DB_NAME, DB_VERSION, {
+  if (dbPromise) return dbPromise;
+  const promise = openDB<StudioSchema>(DB_NAME, DB_VERSION, {
     upgrade(db) {
       db.createObjectStore(STORE, { keyPath: 'id' });
     },
   });
-  return dbPromise;
+  dbPromise = promise;
+  void promise.catch(() => {
+    if (dbPromise === promise) dbPromise = null;
+  });
+  return promise;
+};
+
+// Dedupe concurrent reads at the IDB layer so two hydrates kicked off
+// by overlapping route mounts share fate — one can't fail while the
+// other succeeds and gets dropped by the action's `loaded` guard.
+// URL.createObjectURL still runs per call so the duplicate filter in
+// `loadRecordingsEffect` can revoke its own URLs without aliasing.
+let persistedFetch: Promise<PersistedRecording[]> | null = null;
+
+const fetchPersisted = (): Promise<PersistedRecording[]> => {
+  if (persistedFetch) return persistedFetch;
+  const promise = (async () => {
+    const db = await getDB();
+    return db.getAll(STORE);
+  })();
+  persistedFetch = promise;
+  void promise.finally(() => {
+    if (persistedFetch === promise) persistedFetch = null;
+  });
+  return promise;
 };
 
 /** Release the browser's reference to a blob URL. */
@@ -60,8 +87,7 @@ export const removePersistedRecording = async (id: string): Promise<void> => {
  * the recordings are dropped.
  */
 export const loadRecordings = async (): Promise<Recording[]> => {
-  const db = await getDB();
-  const persisted = await db.getAll(STORE);
+  const persisted = await fetchPersisted();
   return persisted
     .sort((left, right) => left.createdAt - right.createdAt)
     .map(({ blob, ...meta }) => ({
