@@ -7,12 +7,12 @@ import {
   onCleanup,
   onMount,
 } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { Button, Callout, Flex, Heading, Link, Text } from '@lib/ui';
 import { useAction, useEffect } from '@lib/state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconClose from 'virtual:icons/mdi/close';
 import IconPlayOutline from 'virtual:icons/mdi/play-outline';
-import IconTrashCanOutline from 'virtual:icons/mdi/trash-can-outline';
 import { SiteHeader } from '@lib/shell';
 import {
   addTrackEffect,
@@ -23,7 +23,6 @@ import {
   startRecordingEffect,
   stopRecordingEffect,
 } from './session/bindings';
-import { deleteRecordingEffect } from './library/bindings';
 import { session } from './session/store';
 import { library } from './library/store';
 import { timer } from './timer/store';
@@ -33,13 +32,10 @@ import type { Recording } from './library/types';
 import { formatDuration, formatElapsed } from './format';
 import * as css from './studio.css';
 
-const LibraryPanel = (props: {
-  recordings: ReadonlyArray<Recording>;
-  onDelete: (recording: Recording) => void;
-}) => {
+const LibraryPanel = (props: { recordings: ReadonlyArray<Recording> }) => {
   return (
     <Flex as="aside" direction="column" class={css.panel}>
-      <Flex as="div" align="center" justify="between" px={4} py={2}>
+      <Flex as="header" align="center" justify="between" px={4} py={2}>
         <Heading as="h2" size={2} weight="medium" color="lowContrast">
           Recordings
         </Heading>
@@ -62,65 +58,46 @@ const LibraryPanel = (props: {
         >
           <For each={props.recordings}>
             {(rec) => (
-              <Flex
-                as="div"
-                align="center"
-                gap={3}
-                px={4}
-                py={2}
-                class={css.entryRow}
+              <Link
+                testId="recording-entry"
+                class={css.entryLink}
+                href={`/studio/${rec.id}`}
+                underline="none"
               >
-                <Link
-                  testId="recording-entry"
-                  class={css.entryLink}
-                  href={`/studio/${rec.id}`}
-                  underline="none"
+                <Flex
+                  as="div"
+                  align="center"
+                  justify="center"
+                  class={css.entryThumb}
                 >
-                  <Flex
-                    as="div"
-                    align="center"
-                    justify="center"
-                    class={css.entryThumb}
+                  <IconPlayOutline class={css.entryThumbIcon} />
+                </Flex>
+                <Flex as="div" direction="column" gap={1} grow>
+                  <Text
+                    as="span"
+                    size={2}
+                    weight="medium"
+                    class={css.truncate}
+                    selectable={false}
                   >
-                    <IconPlayOutline class={css.entryThumbIcon} />
-                  </Flex>
-                  <Flex as="div" direction="column" gap={1} grow>
-                    <Text
-                      as="span"
-                      size={2}
-                      weight="medium"
-                      class={css.truncate}
-                      selectable={false}
-                    >
-                      {rec.name}
-                    </Text>
-                    <Text
-                      as="span"
-                      size={1}
-                      color="lowContrast"
-                      selectable={false}
-                    >
-                      {formatDuration(rec.duration)}
-                    </Text>
-                  </Flex>
-                </Link>
-                <Button
-                  testId="delete-recording"
-                  aria-label={`Delete ${rec.name}`}
-                  size={1}
-                  variant="ghost"
-                  color="danger"
-                  onClick={() => props.onDelete(rec)}
-                >
-                  <IconTrashCanOutline />
-                </Button>
-              </Flex>
+                    {rec.name}
+                  </Text>
+                  <Text
+                    as="span"
+                    size={1}
+                    color="lowContrast"
+                    selectable={false}
+                  >
+                    {formatDuration(rec.duration)}
+                  </Text>
+                </Flex>
+              </Link>
             )}
           </For>
         </Show>
       </Flex>
 
-      <Flex as="div" justify="between" px={4} py={2} class={css.panelFooter}>
+      <Flex as="footer" justify="between" px={4} py={2} class={css.panelFooter}>
         <Text as="span" size={1} color="lowContrast" selectable={false}>
           {props.recordings.length} recordings
         </Text>
@@ -360,27 +337,31 @@ const ErrorState = (props: { error: string; onRetry: () => void }) => {
 
 const UnsupportedState = () => {
   return (
-    <Flex
-      as="div"
-      direction="column"
-      align="center"
-      justify="center"
-      p={6}
-      gap={4}
-    >
-      <Heading as="h1" size={5} weight="medium" align="center">
-        Screen recording unavailable
-      </Heading>
-      <Text
-        as="p"
-        size={2}
-        color="lowContrast"
+    <Flex as="div" direction="column" class={css.shell}>
+      <SiteHeader title="Recording Studio" />
+      <Flex
+        as="main"
+        direction="column"
         align="center"
-        class={css.unsupportedText}
+        justify="center"
+        grow
+        p={6}
+        gap={4}
       >
-        Your browser doesn't support screen capture. Try a desktop browser like
-        Chrome, Edge, or Firefox.
-      </Text>
+        <Heading as="h1" size={5} weight="medium" align="center">
+          Screen recording unavailable
+        </Heading>
+        <Text
+          as="p"
+          size={2}
+          color="lowContrast"
+          align="center"
+          class={css.unsupportedText}
+        >
+          Your browser doesn't support screen capture. Try a desktop browser
+          like Chrome, Edge, or Firefox.
+        </Text>
+      </Flex>
     </Flex>
   );
 };
@@ -393,11 +374,24 @@ export default function Studio() {
   const addTrack = useEffect(addTrackEffect);
   const removeTrack = useEffect(removeTrackEffect);
   const checkSupport = useEffect(checkSupportEffect);
-  const deleteRecording = useEffect(deleteRecordingEffect);
   const publishTick = useAction(tick);
+  const navigate = useNavigate();
+
+  // Hop to playback for the just-finalized recording. `stopRecording`'s
+  // `onSuccess` appends to the library, so the newest entry afterward
+  // is this session's output. A no-growth result means stop errored,
+  // in which case the error state handles the UI and we stay put.
+  const handleStop = async () => {
+    const prevCount = library.recordings.length;
+    await stopRecording();
+    if (library.recordings.length > prevCount) {
+      const newest = library.recordings[library.recordings.length - 1];
+      navigate(`/studio/${newest.id}`);
+    }
+  };
 
   const handleStart = () => {
-    void startRecording(() => void stopRecording());
+    void startRecording(() => void handleStop());
   };
 
   onMount(() => {
@@ -433,7 +427,7 @@ export default function Studio() {
                   elapsed={timer.elapsed}
                   tracks={session.tracks}
                   onPause={() => pauseRecording()}
-                  onStop={() => void stopRecording()}
+                  onStop={() => void handleStop()}
                   onAddTrack={() => void addTrack()}
                   onRemoveTrack={removeTrack}
                 />
@@ -443,7 +437,7 @@ export default function Studio() {
                   elapsed={timer.elapsed}
                   tracks={session.tracks}
                   onResume={() => resumeRecording()}
-                  onStop={() => void stopRecording()}
+                  onStop={() => void handleStop()}
                   onAddTrack={() => void addTrack()}
                   onRemoveTrack={removeTrack}
                 />
@@ -456,10 +450,7 @@ export default function Studio() {
               </Match>
             </Switch>
           </Flex>
-          <LibraryPanel
-            recordings={library.recordings.slice().reverse()}
-            onDelete={(rec) => deleteRecording({ id: rec.id, url: rec.url })}
-          />
+          <LibraryPanel recordings={library.recordings.slice().reverse()} />
         </Flex>
       </Flex>
     </Show>

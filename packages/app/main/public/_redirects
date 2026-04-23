@@ -1,0 +1,10 @@
+# Cloudflare Workers Assets rewrite rules.
+# Format: <source> <destination> <status>. Status 200 = rewrite
+# (serve the target's content, keep the original URL).
+#
+# Dynamic client routes aren't prerendered, so a direct hit would
+# miss the asset lookup and fall through to the 404 page. Rewrite
+# each dynamic tree to its matching prerendered shell; SolidStart's
+# client router picks up the real path on hydration.
+
+/studio/:id  /studio  200

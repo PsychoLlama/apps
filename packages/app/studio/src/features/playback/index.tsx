@@ -1,14 +1,6 @@
 import { Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import {
-  Button,
-  Callout,
-  Flex,
-  Heading,
-  Link,
-  LinkButton,
-  Text,
-} from '@lib/ui';
+import { Button, Callout, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { useEffect } from '@lib/state';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import IconTrashCan from 'virtual:icons/mdi/trash-can-outline';
@@ -58,16 +50,22 @@ const Player = (props: { recording: Recording; onDelete: () => void }) => {
           </Text>
         </Flex>
         <Flex as="div" align="center" wrap="wrap" gap={2}>
-          <Link
-            testId="download-recording"
+          {/*
+            Raw anchor: solid-router's A rewrites `href` through
+            resolvePath, which mangles non-//-scheme URLs like `blob:`
+            into bogus relative paths. @lib/ui/Link wraps A, so it has
+            the same bug for blob downloads.
+          */}
+          {/* eslint-disable-next-line custom/require-ui-primitives */}
+          <a
+            data-testid="download-recording"
             class={css.downloadLink}
             href={props.recording.url}
             download={`${filenameSlug(props.recording.createdAt)}.webm`}
-            underline="none"
           >
             <IconDownload />
             Download
-          </Link>
+          </a>
           <Button
             testId="delete-recording"
             variant="ghost"
