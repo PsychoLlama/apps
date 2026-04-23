@@ -1,14 +1,16 @@
+import { resolve } from 'node:path';
 import type { StorybookConfig } from 'storybook-solidjs-vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
 import { mergeConfig } from 'vite';
-import { generatedArtifacts } from '@dev/build/ignore';
+import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
 
 // Stories live in sibling workspace packages, not this one. Point
 // storybook at the workspace `packages/` directory and let it crawl
 // every category/name/src tree. Relative because storybook's vitest
 // plugin rejects absolute `directory` values.
 const workspacePackages = '../../../../packages';
+const workspaceRoot = resolve(import.meta.dirname, '../../../..');
 
 const config: StorybookConfig = {
   stories: [
@@ -29,10 +31,8 @@ const config: StorybookConfig = {
       ...(process.env.NODE_ENV === 'production' && { base: '/__storybook/' }),
       server: {
         watch: {
-          // Vite's chokidar watcher doesn't respect .gitignore. `.claude`
-          // is a worktree-scratch dir, not a generated artifact, so it
-          // sits alongside the shared list.
-          ignored: [...generatedArtifacts, '**/.claude/**'],
+          // Vite's chokidar watcher doesn't respect .gitignore.
+          ignored: [...generatedArtifacts, scratchDir(workspaceRoot)],
         },
       },
       plugins: [vanillaExtractPlugin(), Icons({ compiler: 'solid' })],
