@@ -14,3 +14,18 @@ export const generatedArtifacts: readonly string[] = [
   '**/result*/**',
   '**/storybook-static/**',
 ];
+
+/**
+ * Absolute-path glob for the workspace's `.claude` scratch directory
+ * (agent settings, skills, worktrees). Intended for chokidar-style
+ * `ignored` lists in vite / vitest configs.
+ *
+ * Takes the caller's workspace root so the pattern only matches that
+ * workspace's own `.claude`, not every ancestor. A free-floating
+ * globstar would filter out every path when the config runs from
+ * inside a worktree checkout at `<root>/.claude/worktrees/<name>/`.
+ *
+ * @param workspaceRoot - absolute path to the workspace root.
+ */
+export const scratchDir = (workspaceRoot: string): string =>
+  `${workspaceRoot}/.claude/**`;
