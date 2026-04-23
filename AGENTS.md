@@ -1,6 +1,7 @@
 ## Stack
 
 - pnpm workspaces
+- moon (task runner)
 - SolidStart
 - Vanilla Extract
 - Storybook
@@ -9,17 +10,12 @@
 
 ## Layout
 
-- `packages/lib/design` — design tokens (`@lib/design`)
-- `packages/lib/ui` — component library (`@lib/ui`)
-- `packages/lib/shell` — site chrome (`@lib/shell`)
-- `packages/lib/state` — state primitives (`@lib/state`)
-- `packages/dev/build` — shared workspace tooling and ignore patterns (`@dev/build`)
-- `packages/dev/eslint-plugin` — custom lint rules (`@dev/eslint-plugin`)
-- `packages/dev/storybook` — Storybook workbench (`@dev/storybook`)
-- `packages/app/main` — SolidStart host (`@app/main`)
-- `packages/app/studio` — recording studio app (`@app/studio`)
-
-Each `@app/*` package exports top-level components. `@app/main` owns routing — its `src/routes/**/*.tsx` files import from `@app/*` packages and export the component as the route's default.
+- Packages live at `packages/{app,lib,dev}/<name>` and publish as `@<tier>/<name>`.
+  - `@app/*` — shipped apps.
+  - `@lib/*` — shared libraries.
+  - `@dev/*` — internal tooling.
+- Enumerate packages and their purpose: `jq -r '[.name, .description] | @tsv' packages/*/*/package.json`.
+- `@app/*` packages export top-level components. `@app/main` owns routing — its `src/routes/**/*.tsx` files import from `@app/*` packages and export the component as the route's default.
 
 ## Dev
 
