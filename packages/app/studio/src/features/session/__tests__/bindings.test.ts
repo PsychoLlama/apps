@@ -5,9 +5,9 @@ import type { RecordingResult } from '../capabilities';
 import {
   appendTrack,
   beginPause,
-  beginRecording,
   beginResume,
   beginStop,
+  clearStartFailure,
   finalizeRecording,
   markError,
   markSupport,
@@ -60,35 +60,29 @@ const makeResult = (tracks: Track[] = []): RecordingResult => {
   };
 };
 
-describe('beginRecording', () => {
-  it('transitions to recording and anchors the timer', () => {
+describe('clearStartFailure', () => {
+  it('drops the prior error and reverts status to idle without starting the timer', () => {
     const { session, timer, useAction } = setup();
-
-    useAction(beginRecording)();
-
-    expect(session.status).toBe('recording');
-    expect(session.error).toBeNull();
-    expect(timer.startedAt).not.toBeNull();
-    expect(timer.elapsed).toBe(0);
-  });
-
-  it('clears previous error', () => {
-    const { session, useAction } = setup();
     useAction(markError)(new Error('earlier'));
 
-    useAction(beginRecording)();
+    useAction(clearStartFailure)();
 
+    expect(session.status).toBe('idle');
     expect(session.error).toBeNull();
+    expect(timer.startedAt).toBeNull();
   });
 });
 
 describe('setRecordingContext', () => {
-  it('populates tracks, recorder, chunks, and streams', () => {
-    const { session, useAction } = setup();
+  it('flips to recording, anchors the timer, and populates session refs', () => {
+    const { session, timer, useAction } = setup();
     const result = makeResult([{ id: '1', type: 'screen', label: 'Screen' }]);
 
     useAction(setRecordingContext)(result);
 
+    expect(session.status).toBe('recording');
+    expect(timer.startedAt).not.toBeNull();
+    expect(timer.elapsed).toBe(0);
     expect(session.tracks).toEqual(result.tracks);
     expect(session.recorder).toBe(result.recorder);
     // Arrays are wrapped by Solid's mutable proxy, so identity compare
@@ -113,7 +107,6 @@ describe('beginStop', () => {
   it('transitions to stopping and captures the elapsed time', () => {
     const { session, timer, useAction } = setup();
     useAction(setRecordingContext)(makeResult());
-    useAction(beginRecording)();
 
     useAction(beginStop)();
 
@@ -153,7 +146,7 @@ describe('finalizeRecording', () => {
 describe('beginPause', () => {
   it('transitions to paused and clears the timer anchor', () => {
     const { session, timer, useAction } = setup();
-    useAction(beginRecording)();
+    useAction(setRecordingContext)(makeResult());
 
     useAction(beginPause)();
 
@@ -165,7 +158,7 @@ describe('beginPause', () => {
 describe('beginResume', () => {
   it('transitions to recording and re-anchors the timer', () => {
     const { session, timer, useAction } = setup();
-    useAction(beginRecording)();
+    useAction(setRecordingContext)(makeResult());
     useAction(beginPause)();
 
     useAction(beginResume)();

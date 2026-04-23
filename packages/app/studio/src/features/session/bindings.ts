@@ -27,23 +27,26 @@ const recordingNameFormat = new Intl.DateTimeFormat('en', {
 // Each action is named and exported so tests can exercise state
 // transitions directly, independent of the effect wrapper.
 
-export const beginRecording = defineAction(
-  [sessionStore, timerStore],
-  (session, timer) => {
-    session.status = 'recording';
-    session.error = null;
-    timer.elapsed = 0;
-    timer.startedAt = Date.now();
-  },
-);
+// Runs as `onStart` of the start-recording effect — before the picker
+// dialog opens. Falls back to `idle` so a retry from the error screen
+// dismisses that UI immediately, instead of leaving stale text behind
+// the dialog. Capture itself happens in the capability; the recording
+// state is set up in `setRecordingContext` (onSuccess).
+export const clearStartFailure = defineAction([sessionStore], (session) => {
+  session.status = 'idle';
+  session.error = null;
+});
 
 export const setRecordingContext = defineAction(
-  [sessionStore],
-  (session, result: RecordingResult) => {
+  [sessionStore, timerStore],
+  (session, timer, result: RecordingResult) => {
+    session.status = 'recording';
     session.tracks = result.tracks;
     session.streams = result.streams;
     session.recorder = result.recorder;
     session.chunks = result.chunks;
+    timer.elapsed = 0;
+    timer.startedAt = Date.now();
   },
 );
 
@@ -143,7 +146,7 @@ export const markSupport = defineAction(
 
 /** Start screen capture and wire the session + timer into recording state. */
 export const startRecordingEffect = defineEffect([], startRecording, {
-  onStart: beginRecording,
+  onStart: clearStartFailure,
   onSuccess: setRecordingContext,
   onFailure: markError,
 });

@@ -4,6 +4,7 @@ import {
   Button,
   Callout,
   Flex,
+  Grid,
   Heading,
   Link,
   LinkButton,
@@ -57,7 +58,7 @@ const Player = (props: { recording: Recording; onDelete: () => void }) => {
             {formatDuration(props.recording.duration)}
           </Text>
         </Flex>
-        <Flex as="div" class={css.actions}>
+        <Grid as="div" align="center" gap={2} class={css.actions}>
           <Link
             testId="download-recording"
             class={css.downloadLink}
@@ -77,7 +78,7 @@ const Player = (props: { recording: Recording; onDelete: () => void }) => {
             <IconTrashCan />
             Delete
           </Button>
-        </Flex>
+        </Grid>
       </Flex>
 
       <Flex as="div" class={css.stage}>

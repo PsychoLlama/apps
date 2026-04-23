@@ -63,17 +63,19 @@ export const video = style({
   display: 'block',
 });
 
+// `<Grid>` defaults to row flow with explicit columns; here we want
+// content-sized columns laid out left-to-right.
 export const actions = style({
-  gap: space[2],
-  flexWrap: 'wrap',
+  gridAutoFlow: 'column',
+  gridAutoColumns: 'max-content',
 });
 
 export const downloadLink = style({
   display: 'inline-flex',
   alignItems: 'center',
   gap: space[2],
-  height: space[7],
-  paddingInline: space[4],
+  height: space[6],
+  paddingInline: space[3],
   borderRadius: radius[2],
   backgroundColor: 'transparent',
   boxShadow: `inset 0 0 0 1px ${neutral[7]}`,
