@@ -69,6 +69,7 @@ export default [
       '@typescript-eslint/no-deprecated': 'error',
       '@typescript-eslint/no-unused-vars': 'error',
       'custom/no-static-style-prop': 'error',
+      'custom/require-externalized-effects': 'error',
       'custom/require-selectable-prop': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
@@ -161,6 +162,14 @@ export default [
     files: ['packages/lib/ui/src/components/**/*.tsx'],
     rules: {
       'custom/require-ui-primitives': 'off',
+    },
+  },
+  {
+    // @lib/state tests exercise defineEffect itself, so inline callbacks
+    // are expected. The separation rule applies to consumers.
+    files: ['packages/lib/state/src/__tests__/**/*.ts'],
+    rules: {
+      'custom/require-externalized-effects': 'off',
     },
   },
 ];

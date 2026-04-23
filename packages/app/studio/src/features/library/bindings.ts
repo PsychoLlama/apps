@@ -34,6 +34,7 @@ export const deleteRecording = defineAction(
  */
 export const deleteRecordingEffect = defineEffect(
   [],
+  // eslint-disable-next-line custom/require-externalized-effects -- refactor in follow-up commit.
   async (input: { id: string; url: string }): Promise<string> => {
     try {
       await removePersistedRecording(input.id);
@@ -99,6 +100,7 @@ export const markLibraryLoadFailed = defineAction(
  */
 export const loadRecordingsEffect = defineEffect(
   [libraryStore],
+  // eslint-disable-next-line custom/require-externalized-effects -- refactor in follow-up commit.
   async (library): Promise<Recording[] | null> => {
     if (library.loaded) return null;
     const persisted = await loadRecordings();
