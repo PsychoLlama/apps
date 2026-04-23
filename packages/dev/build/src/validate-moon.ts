@@ -8,6 +8,8 @@
  * directly via `node src/validate-moon.ts`.
  */
 
+/* eslint-disable no-console -- stdout/stderr are this CLI's output surface. */
+
 import { existsSync, globSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import {

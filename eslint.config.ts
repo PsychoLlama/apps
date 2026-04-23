@@ -163,11 +163,4 @@ export default [
       'custom/require-ui-primitives': 'off',
     },
   },
-  {
-    // CLI tooling legitimately writes to stdout/stderr.
-    files: ['packages/dev/build/src/**/*.ts'],
-    rules: {
-      'no-console': 'off',
-    },
-  },
 ];

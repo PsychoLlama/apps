@@ -44,6 +44,9 @@ importers:
 
   .:
     devDependencies:
+      '@dev/build':
+        specifier: workspace:*
+        version: link:packages/dev/build
       '@dev/eslint-plugin':
         specifier: workspace:*
         version: link:packages/dev/eslint-plugin

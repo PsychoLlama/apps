@@ -12,8 +12,11 @@ tasks:
   # Wired as an `implicitDeps` entry in `.moon/tasks.yml`, so every
   # task runs this first; CI runs it fresh regardless of cache.
   validate-moon:
+    # `--import` loads `validate-moon` via the package's exports
+    # map — no reaching into `src/`. The `--eval ''` is a no-op
+    # main script; node would otherwise drop into a REPL.
     command: 'node'
-    args: ['$projectRoot/src/validate-moon.ts']
+    args: ['--import', '@dev/build/validate-moon', '--eval', '']
     inputs:
       - 'src/**/*'
       - '/moon.yml'

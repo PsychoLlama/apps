@@ -33,6 +33,7 @@
     }
   },
   "devDependencies": {
+    "@dev/build": "workspace:*",
     "@dev/eslint-plugin": "workspace:*",
     "@eslint/compat": "^2.0.4",
     "@eslint/js": "^9.39.4",

@@ -4,7 +4,8 @@
   "type": "module",
   "version": "0.0.0",
   "exports": {
-    "./ignore": "./src/ignore.ts"
+    "./ignore": "./src/ignore.ts",
+    "./validate-moon": "./src/validate-moon.ts"
   },
   "scripts": {
     "typecheck": "tsc"
