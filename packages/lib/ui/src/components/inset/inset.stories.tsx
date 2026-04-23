@@ -33,7 +33,9 @@ const meta = {
   },
   render: (props) => (
     <Card as="div" size={2}>
-      <InsetComponent {...props} class={css.media} />
+      <InsetComponent {...props}>
+        <div class={css.media} />
+      </InsetComponent>
       <Heading as="h3" size={3}>
         Insets bleed past padding
       </Heading>
