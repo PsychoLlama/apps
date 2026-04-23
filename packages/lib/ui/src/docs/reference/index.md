@@ -7,6 +7,7 @@
 
 - [Flex](./flex.md): Flexbox container.
 - [Grid](./grid.md): CSS Grid container.
+- [Inset](./inset.md): Bleed content past a Card's padding.
 
 ## Typography
 
@@ -17,3 +18,4 @@
 
 - [Button](./button.md): Styled button.
 - [Callout](./callout.md): Informational message.
+- [Card](./card.md): Surface container.
