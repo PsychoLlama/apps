@@ -23,7 +23,6 @@ tasks:
     inputs:
       - 'src/**/*'
       - 'vite.config.ts'
-      - 'vite-ignored.ts'
       - 'wrangler.toml'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'

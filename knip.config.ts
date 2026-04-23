@@ -2,24 +2,13 @@ import type { KnipConfig } from 'knip';
 
 const config: KnipConfig = {
   ignoreExportsUsedInFile: true,
-  // Scope matches the pre-consolidation per-package configs. The
-  // other workspaces have latent issues (unused storybook devDeps,
-  // etc.) worth addressing, but that's not this PR's job.
-  ignoreWorkspaces: [
-    'packages/app/studio',
-    'packages/dev/eslint-plugin',
-    'packages/lib/*',
-  ],
-  ignore: ['packages/lib/**'],
   workspaces: {
     '.': {
+      entry: ['*.ts'],
       project: ['*.ts'],
       ignoreDependencies: [
         'prettier', // invoked by treefmt
         '@vanilla-extract/css', // referenced by name in eslint.config.ts
-        // Pulled in at root so moon can resolve the CLI via the package
-        // exports map instead of digging into `src/`.
-        '@dev/build',
       ],
     },
     'packages/app/main': {
@@ -29,7 +18,6 @@ const config: KnipConfig = {
         'src/entry-{client,server}.tsx',
         'src/**/*.test.{ts,tsx}',
         'vite.config.ts',
-        'vite-ignored.ts',
       ],
       project: ['src/**/*.{ts,tsx}'],
       ignoreDependencies: [
