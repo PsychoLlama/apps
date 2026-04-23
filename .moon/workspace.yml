@@ -4,6 +4,7 @@ projects:
   root: '.'
   '@app/main': 'packages/app/main'
   '@app/studio': 'packages/app/studio'
+  '@dev/build': 'packages/dev/build'
   '@dev/eslint-plugin': 'packages/dev/eslint-plugin'
   '@dev/storybook': 'packages/dev/storybook'
   '@lib/design': 'packages/lib/design'
