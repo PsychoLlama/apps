@@ -7,10 +7,10 @@ import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
 
 // Stories live in sibling workspace packages, not this one. Point
 // storybook at the workspace `packages/` directory and let it crawl
-// every category/name/src tree. Relative because storybook's vitest
-// plugin rejects absolute `directory` values.
-const workspacePackages = '../../../../packages';
-const workspaceRoot = resolve(import.meta.dirname, '../../../..');
+// every category/name/src tree. Relative because storybook's story
+// indexer rejects absolute `directory` values.
+const workspaceRoot = '../../../..';
+const workspacePackages = `${workspaceRoot}/packages`;
 
 const config: StorybookConfig = {
   stories: [
@@ -32,7 +32,10 @@ const config: StorybookConfig = {
       server: {
         watch: {
           // Vite's chokidar watcher doesn't respect .gitignore.
-          ignored: [...generatedArtifacts, scratchDir(workspaceRoot)],
+          ignored: [
+            ...generatedArtifacts,
+            scratchDir(resolve(import.meta.dirname, workspaceRoot)),
+          ],
         },
       },
       plugins: [vanillaExtractPlugin(), Icons({ compiler: 'solid' })],
