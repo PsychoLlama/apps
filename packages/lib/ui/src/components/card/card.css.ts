@@ -69,10 +69,10 @@ export const base = style({
 /** Applied by the component when `as` is an interactive tag. */
 export const interactive = style({
   selectors: {
-    '&:not(:disabled)': {
+    '&:where(:not(:disabled))': {
       cursor: 'pointer',
     },
-    '&:not(:disabled):focus-visible': {
+    '&:where(:not(:disabled):focus-visible)': {
       outline: `2px solid ${accent[8]}`,
       outlineOffset: '2px',
     },
@@ -101,7 +101,7 @@ export const size = styleVariants({
 
 // --- Variant ---
 
-// Variant-specific hover styles only engage when `interactive` is also applied.
+// Variant-specific hover/active styles only engage when `interactive` is also applied.
 const borderShadow = `inset 0 0 0 1px ${neutralAlpha[6]}`;
 
 export const variant = styleVariants({
@@ -109,8 +109,11 @@ export const variant = styleVariants({
     backgroundColor: background.panelTranslucent,
     selectors: {
       '&::after': { boxShadow: borderShadow },
-      [`&.${interactive}:not(:disabled):hover`]: {
+      [`&:where(.${interactive}:not(:disabled):hover)`]: {
         backgroundColor: neutralAlpha[3],
+      },
+      [`&:where(.${interactive}:not(:disabled):active)`]: {
+        backgroundColor: neutralAlpha[4],
       },
     },
   },
@@ -119,15 +122,21 @@ export const variant = styleVariants({
     boxShadow: shadow[3],
     selectors: {
       '&::after': { boxShadow: borderShadow },
-      [`&.${interactive}:not(:disabled):hover`]: {
+      [`&:where(.${interactive}:not(:disabled):hover)`]: {
         boxShadow: shadow[4],
+      },
+      [`&:where(.${interactive}:not(:disabled):active)`]: {
+        boxShadow: shadow[2],
       },
     },
   },
   ghost: {
     selectors: {
-      [`&.${interactive}:not(:disabled):hover`]: {
+      [`&:where(.${interactive}:not(:disabled):hover)`]: {
         backgroundColor: neutralAlpha[3],
+      },
+      [`&:where(.${interactive}:not(:disabled):active)`]: {
+        backgroundColor: neutralAlpha[4],
       },
     },
   },
