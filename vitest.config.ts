@@ -16,9 +16,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['packages/**/*.test.{ts,tsx}'],
-    // Solid ecosystem packages ship raw .jsx in their "solid" export
-    // condition, which Node can't load. Inline them so Vite transforms
-    // them first.
+    // Inline `@solidjs/*` so vite compiles the raw `.jsx` they publish
+    // under their `"solid"` export condition. Upstream:
+    // https://github.com/solidjs/vite-plugin-solid/issues/157
     server: {
       deps: {
         inline: [/@solidjs\//],
