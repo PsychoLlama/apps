@@ -64,7 +64,7 @@ importers:
         version: 9.39.4
       '@iconify/json':
         specifier: ^2.2.460
-        version: 2.2.465
+        version: 2.2.466
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
