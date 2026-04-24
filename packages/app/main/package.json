@@ -38,6 +38,7 @@
     "@dev/build": "workspace:*",
     "@iconify/json": "^2.2.460",
     "@solidjs/testing-library": "^0.8.10",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/user-event": "^14.6.1",
     "@vanilla-extract/vite-plugin": "^5.2.2",
     "typescript": "catalog:",

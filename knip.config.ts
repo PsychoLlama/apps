@@ -18,6 +18,7 @@ const config: KnipConfig = {
         'src/app.tsx',
         'src/entry-{client,server}.tsx',
         'src/**/*.test.{ts,tsx}',
+        'src/__tests__/test-utils.tsx',
         'vite.config.ts',
       ],
       project: ['src/**/*.{ts,tsx}'],
