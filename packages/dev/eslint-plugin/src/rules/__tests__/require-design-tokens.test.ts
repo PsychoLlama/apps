@@ -1,4 +1,4 @@
-import { RuleTester } from 'eslint';
+import { RuleTester } from '@typescript-eslint/rule-tester';
 import rule, { propertyToToken } from '../require-design-tokens';
 
 const tester = new RuleTester();

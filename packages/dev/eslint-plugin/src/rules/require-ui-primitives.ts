@@ -1,4 +1,4 @@
-import type { Rule } from 'eslint';
+import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
 type HtmlTag = keyof HTMLElementTagNameMap;
 
@@ -33,7 +33,9 @@ export const bannedElements = new Set<HtmlTag>([
   'h6',
 ]);
 
-const rule: Rule.RuleModule = {
+const createRule = ESLintUtils.RuleCreator.withoutDocs;
+
+const rule = createRule({
   meta: {
     type: 'suggestion',
     docs: {
@@ -45,24 +47,21 @@ const rule: Rule.RuleModule = {
     },
     schema: [],
   },
-
+  defaultOptions: [],
   create(context) {
     return {
-      JSXOpeningElement(node: Rule.Node) {
-        const name = (
-          node as unknown as { name: { type: string; name: string } }
-        ).name;
-        if (name.type !== 'JSXIdentifier') return;
-        if (!bannedElements.has(name.name as HtmlTag)) return;
+      JSXOpeningElement(node) {
+        if (node.name.type !== AST_NODE_TYPES.JSXIdentifier) return;
+        if (!bannedElements.has(node.name.name as HtmlTag)) return;
 
         context.report({
           node,
           messageId: 'banned',
-          data: { element: name.name },
+          data: { element: node.name.name },
         });
       },
     };
   },
-};
+});
 
 export default rule;

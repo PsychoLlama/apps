@@ -1,4 +1,4 @@
-import { RuleTester } from 'eslint';
+import { RuleTester } from '@typescript-eslint/rule-tester';
 import rule, { bannedElements } from '../require-ui-primitives';
 
 const tester = new RuleTester({

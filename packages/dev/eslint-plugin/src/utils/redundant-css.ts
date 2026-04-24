@@ -1,3 +1,5 @@
+import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
+
 /** Properties where 0 is the initial value after `all: unset`. */
 export const redundantZeroProperties = new Set([
   'padding',
@@ -66,20 +68,21 @@ const isFullViewportString = (value: unknown): value is string =>
  * rule can't be bypassed by wrapping the offending value in the same
  * array syntax the body reset uses.
  */
-export const findFullViewportValue = (node: {
-  type: string;
-  value?: unknown;
-  elements?: ReadonlyArray<{ type: string; value?: unknown } | null>;
-}): string | null => {
-  if (node.type === 'Literal' && isFullViewportString(node.value)) {
+export const findFullViewportValue = (
+  node: TSESTree.Property['value'],
+): string | null => {
+  if (
+    node.type === AST_NODE_TYPES.Literal &&
+    isFullViewportString(node.value)
+  ) {
     return node.value;
   }
 
-  if (node.type === 'ArrayExpression' && node.elements) {
+  if (node.type === AST_NODE_TYPES.ArrayExpression) {
     for (const element of node.elements) {
       if (
         element &&
-        element.type === 'Literal' &&
+        element.type === AST_NODE_TYPES.Literal &&
         isFullViewportString(element.value)
       ) {
         return element.value;

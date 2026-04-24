@@ -1,4 +1,4 @@
-import { RuleTester } from 'eslint';
+import { RuleTester } from '@typescript-eslint/rule-tester';
 import rule from '../require-selectable-prop';
 
 const tester = new RuleTester({

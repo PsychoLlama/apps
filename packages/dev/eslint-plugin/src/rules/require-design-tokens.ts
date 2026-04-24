@@ -1,4 +1,4 @@
-import type { Rule } from 'eslint';
+import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 import { getPropertyName } from '../utils/ast';
 import {
   findFullViewportValue,
@@ -119,7 +119,9 @@ const cssKeywords = new Set([
 // Rule
 // ---------------------------------------------------------------------------
 
-const rule: Rule.RuleModule = {
+const createRule = ESLintUtils.RuleCreator.withoutDocs;
+
+const rule = createRule({
   meta: {
     type: 'suggestion',
     docs: {
@@ -134,20 +136,11 @@ const rule: Rule.RuleModule = {
     },
     schema: [],
   },
-
+  defaultOptions: [],
   create(context) {
     return {
-      Property(node: Rule.Node) {
-        const prop = node as unknown as {
-          key: { type: string; name?: string; value?: string };
-          value: {
-            type: string;
-            value?: unknown;
-            elements?: ReadonlyArray<{ type: string; value?: unknown } | null>;
-          };
-        };
-
-        const name = getPropertyName(prop.key);
+      Property(node) {
+        const name = getPropertyName(node.key);
         if (!name) return;
 
         const token = propertyToToken.get(name);
@@ -164,7 +157,7 @@ const rule: Rule.RuleModule = {
         // (e.g. `minHeight: ['100vh', '100dvh']`), which is the exact
         // pattern the body reset itself uses.
         if (isRedundantFullViewportProp) {
-          const offender = findFullViewportValue(prop.value);
+          const offender = findFullViewportValue(node.value);
           if (offender !== null) {
             context.report({
               node,
@@ -175,8 +168,8 @@ const rule: Rule.RuleModule = {
           }
         }
 
-        if (prop.value.type !== 'Literal') return;
-        const value = prop.value.value;
+        if (node.value.type !== AST_NODE_TYPES.Literal) return;
+        const value = node.value.value;
 
         // Null values appear in createThemeContract — always allowed.
         if (value === null) return;
@@ -202,6 +195,6 @@ const rule: Rule.RuleModule = {
       },
     };
   },
-};
+});
 
 export default rule;

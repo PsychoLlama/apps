@@ -1,4 +1,4 @@
-import { RuleTester } from 'eslint';
+import { RuleTester } from '@typescript-eslint/rule-tester';
 import rule from '../no-static-style-prop';
 
 const tester = new RuleTester({
