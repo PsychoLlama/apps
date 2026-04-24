@@ -3,8 +3,4 @@
 # router picks up the real path from the URL. Status 200 = rewrite
 # (proxy target's content, keep original URL).
 
-# Probe: confirms _redirects is reaching prod. Remove once the studio
-# rewrite is verified working.
-/__probe-redirects  /studio/  302
-
 /studio/*  /studio/  200
