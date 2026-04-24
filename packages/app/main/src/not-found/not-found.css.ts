@@ -1,10 +1,6 @@
 import { style } from '@vanilla-extract/css';
 import { accent, accentAlpha, radius, space } from '@lib/design';
 
-export const page = style({
-  minHeight: '100dvh',
-});
-
 export const iconHalo = style({
   width: space[9],
   height: space[9],

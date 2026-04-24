@@ -13,7 +13,8 @@ import {
 } from '@lib/design';
 
 export const shell = style({
-  height: '100dvh',
+  flex: 1,
+  minHeight: 0,
   overflow: 'hidden',
 });
 

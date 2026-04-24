@@ -1,7 +1,10 @@
 import type { Rule } from 'eslint';
 import { getPropertyName } from '../utils/ast';
 import {
+  findFullViewportValue,
   isZeroValue,
+  redundantFullViewportMessage,
+  redundantFullViewportProperties,
   redundantZeroMessage,
   redundantZeroProperties,
 } from '../utils/redundant-css';
@@ -127,6 +130,7 @@ const rule: Rule.RuleModule = {
       hardcoded:
         'Hard-coded {{property}} value. Use a {{token}} token from @lib/design instead.',
       redundantZero: redundantZeroMessage,
+      redundantFullViewport: redundantFullViewportMessage,
     },
     schema: [],
   },
@@ -136,7 +140,11 @@ const rule: Rule.RuleModule = {
       Property(node: Rule.Node) {
         const prop = node as unknown as {
           key: { type: string; name?: string; value?: string };
-          value: { type: string; value?: unknown };
+          value: {
+            type: string;
+            value?: unknown;
+            elements?: ReadonlyArray<{ type: string; value?: unknown } | null>;
+          };
         };
 
         const name = getPropertyName(prop.key);
@@ -144,8 +152,28 @@ const rule: Rule.RuleModule = {
 
         const token = propertyToToken.get(name);
         const isRedundantZeroProp = redundantZeroProperties.has(name);
+        const isRedundantFullViewportProp =
+          redundantFullViewportProperties.has(name);
 
-        if (!token && !isRedundantZeroProp) return;
+        if (!token && !isRedundantZeroProp && !isRedundantFullViewportProp) {
+          return;
+        }
+
+        // Viewport-redundancy check runs before the Literal-only guard so
+        // it can also catch the vanilla-extract fallback array form
+        // (e.g. `minHeight: ['100vh', '100dvh']`), which is the exact
+        // pattern the body reset itself uses.
+        if (isRedundantFullViewportProp) {
+          const offender = findFullViewportValue(prop.value);
+          if (offender !== null) {
+            context.report({
+              node,
+              messageId: 'redundantFullViewport',
+              data: { property: name, value: offender },
+            });
+            return;
+          }
+        }
 
         if (prop.value.type !== 'Literal') return;
         const value = prop.value.value;

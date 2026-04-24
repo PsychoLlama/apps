@@ -10,7 +10,7 @@ import * as css from './not-found.css';
  */
 export default function NotFound() {
   return (
-    <Flex as="main" direction="column" class={css.page}>
+    <Flex as="main" direction="column" grow>
       <SiteHeader title="Lost" />
 
       <Flex as="section" align="center" justify="center" grow p={5}>

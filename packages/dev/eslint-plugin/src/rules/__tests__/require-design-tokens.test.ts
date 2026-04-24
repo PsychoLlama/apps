@@ -30,6 +30,19 @@ tester.run('require-design-tokens', rule, {
     { code: 'const x = { zIndex: 1 }' },
     { code: 'const x = { opacity: 0.5 }' },
 
+    // Height properties with non-viewport values are fine.
+    { code: 'const x = { height: "100%" }' },
+    { code: 'const x = { minHeight: "100%" }' },
+    { code: 'const x = { height: "50vh" }' },
+    { code: 'const x = { minHeight: "calc(100dvh - 40px)" }' },
+    { code: 'const x = { height: "auto" }' },
+
+    // Array fallbacks without a full-viewport value are fine (the
+    // body-reset pattern itself is exempt via eslint config, so this
+    // rule only needs to flag the offending *shape* in app code).
+    { code: "const x = { minHeight: ['50vh', '75%'] }" },
+    { code: "const x = { height: [myVar, '100%'] }" },
+
     // CSS keywords are allowed on token properties.
     { code: 'const x = { color: "inherit" }' },
     { code: 'const x = { color: "transparent" }' },
@@ -283,6 +296,97 @@ tester.run('require-design-tokens', rule, {
         {
           messageId: 'redundantZero' as const,
           data: { property: 'borderWidth' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — minHeight: 100dvh (the original case).
+    {
+      code: "const x = { minHeight: '100dvh' }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'minHeight', value: '100dvh' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — minHeight: 100vh.
+    {
+      code: "const x = { minHeight: '100vh' }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'minHeight', value: '100vh' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — minHeight: 100svh.
+    {
+      code: "const x = { minHeight: '100svh' }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'minHeight', value: '100svh' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — minHeight: 100lvh.
+    {
+      code: "const x = { minHeight: '100lvh' }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'minHeight', value: '100lvh' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — height: 100dvh.
+    {
+      code: "const x = { height: '100dvh' }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'height', value: '100dvh' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — height: 100vh.
+    {
+      code: "const x = { height: '100vh' }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'height', value: '100vh' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — array fallback (the canonical
+    // vanilla-extract pattern the body reset uses). Flagging arrays
+    // prevents this rule from being bypassed by restating the body's
+    // exact shape in a descendant.
+    {
+      code: "const x = { minHeight: ['100vh', '100dvh'] }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'minHeight', value: '100vh' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — array fallback with only the new unit.
+    {
+      code: "const x = { height: ['50vh', '100dvh'] }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'height', value: '100dvh' },
         },
       ],
     },
