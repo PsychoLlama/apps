@@ -20,6 +20,7 @@
   },
   "peerDependencies": {
     "@solidjs/meta": "*",
+    "@solidjs/router": "*",
     "solid-js": "*"
   }
 }

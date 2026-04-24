@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
 import { Button, Card, Flex, Heading, LinkButton, Text } from '@lib/ui';
-import { SiteHeader } from '@lib/shell';
+import SiteHeader from './site-header';
 import IconAlert from 'virtual:icons/mdi/alert-circle-outline';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import IconHome from 'virtual:icons/mdi/home-outline';

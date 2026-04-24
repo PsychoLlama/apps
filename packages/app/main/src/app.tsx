@@ -2,7 +2,7 @@ import { MetaProvider } from '@solidjs/meta';
 import { Router } from '@solidjs/router';
 import { FileRoutes } from '@solidjs/start/router';
 import { ErrorBoundary, Suspense } from 'solid-js';
-import ErrorBoundaryFallback from './error-boundary';
+import { ErrorBoundaryFallback } from '@lib/shell';
 
 export default function App() {
   return (
