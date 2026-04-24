@@ -9,6 +9,7 @@ const config: KnipConfig = {
       ignoreDependencies: [
         'prettier', // invoked by treefmt
         '@vanilla-extract/css', // referenced by name in eslint.config.ts
+        '@iconify/json', // resolved at runtime by unplugin-icons in vitest.config.ts
       ],
     },
     'packages/app/main': {
@@ -17,6 +18,7 @@ const config: KnipConfig = {
         'src/app.tsx',
         'src/entry-{client,server}.tsx',
         'src/**/*.test.{ts,tsx}',
+        'src/__tests__/test-utils.tsx',
         'vite.config.ts',
       ],
       project: ['src/**/*.{ts,tsx}'],
