@@ -82,6 +82,7 @@ export default function ErrorBoundaryFallback(
               Go home
             </LinkButton>
             <Button
+              as="button"
               testId="recover-reload"
               variant="solid"
               color="accent"
@@ -93,19 +94,28 @@ export default function ErrorBoundaryFallback(
           </Flex>
 
           <Flex as="details" direction="column" gap={3} class={css.details}>
-            <Flex as="summary" align="center" gap={2} class={css.summary}>
+            <Button
+              as="summary"
+              testId="error-details-toggle"
+              variant="ghost"
+              color="neutral"
+            >
               <IconChevron width="14" height="14" class={css.summaryChevron} />
-              <Text as="span" size={2} weight="medium" color="lowContrast">
-                Show error details
-              </Text>
-            </Flex>
+              Show error details
+            </Button>
 
             <Card as="div" size={2}>
               <Flex as="div" direction="column" gap={3}>
                 <Flex as="div" direction="column" gap={1}>
-                  <Text as="span" size={1} color="lowContrast" selectable>
+                  <Heading
+                    as="h2"
+                    size={1}
+                    weight="medium"
+                    color="lowContrast"
+                    selectable
+                  >
                     {details().name}
-                  </Text>
+                  </Heading>
                   <Text as="p" size={2} weight="medium" selectable>
                     {details().message}
                   </Text>

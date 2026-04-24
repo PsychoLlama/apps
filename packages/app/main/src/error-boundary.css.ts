@@ -27,26 +27,7 @@ export const details = style({
   width: '100%',
 });
 
-export const summary = style({
-  cursor: 'pointer',
-  alignSelf: 'center',
-  paddingBlock: space[2],
-  paddingInline: space[3],
-  borderRadius: radius[3],
-  transitionProperty: 'background-color, color',
-  transitionDuration: fast[2],
-  transitionTimingFunction: standard.productive,
-  ':hover': {
-    backgroundColor: neutralAlpha[3],
-  },
-  ':focus-visible': {
-    outline: `2px solid ${accent[8]}`,
-    outlineOffset: '2px',
-  },
-});
-
 export const summaryChevron = style({
-  color: neutral[11],
   transitionProperty: 'transform',
   transitionDuration: fast[2],
   transitionTimingFunction: standard.productive,
