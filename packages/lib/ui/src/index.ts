@@ -21,7 +21,6 @@ export type { TestIdProps, RequiredTestIdProps } from './props/test-id';
 export {
   default as Button,
   type ButtonProps,
-  type ButtonTag,
 } from './components/button/button';
 export {
   default as Callout,

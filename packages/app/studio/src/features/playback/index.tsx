@@ -93,7 +93,6 @@ const Player = (props: { recording: Recording; onDelete: () => void }) => {
             Download
           </a>
           <Button
-            as="button"
             testId="delete-recording"
             variant="ghost"
             color="danger"

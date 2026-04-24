@@ -133,7 +133,6 @@ const ActiveTracks = (props: {
                 {track.label}
               </Text>
               <Button
-                as="button"
                 testId="remove-track"
                 aria-label={`Remove ${track.label}`}
                 size={1}
@@ -160,12 +159,7 @@ const IdleState = (props: { onStart: () => void }) => {
       gap={5}
       class={css.mainContent}
     >
-      <Button
-        as="button"
-        testId="start-recording"
-        size={3}
-        onClick={props.onStart}
-      >
+      <Button testId="start-recording" size={3} onClick={props.onStart}>
         Start Recording
       </Button>
       <Text as="p" size={2} color="lowContrast">
@@ -203,7 +197,6 @@ const RecordingState = (props: {
       <ActiveTracks tracks={props.tracks} onRemove={props.onRemoveTrack} />
       <Flex as="div" gap={3} wrap="wrap" justify="center">
         <Button
-          as="button"
           testId="add-track"
           variant="outline"
           color="neutral"
@@ -212,7 +205,6 @@ const RecordingState = (props: {
           Add Track
         </Button>
         <Button
-          as="button"
           testId="pause-all"
           variant="outline"
           color="neutral"
@@ -221,7 +213,6 @@ const RecordingState = (props: {
           Pause All
         </Button>
         <Button
-          as="button"
           testId="stop-all"
           variant="solid"
           color="danger"
@@ -262,7 +253,6 @@ const PausedState = (props: {
       <ActiveTracks tracks={props.tracks} onRemove={props.onRemoveTrack} />
       <Flex as="div" gap={3} wrap="wrap" justify="center">
         <Button
-          as="button"
           testId="add-track"
           variant="outline"
           color="neutral"
@@ -270,16 +260,10 @@ const PausedState = (props: {
         >
           Add Track
         </Button>
-        <Button
-          as="button"
-          testId="resume-all"
-          variant="solid"
-          onClick={props.onResume}
-        >
+        <Button testId="resume-all" variant="solid" onClick={props.onResume}>
           Resume All
         </Button>
         <Button
-          as="button"
           testId="stop-all"
           variant="solid"
           color="danger"
@@ -344,12 +328,7 @@ const ErrorState = (props: { error: string; onRetry: () => void }) => {
           {props.error}
         </Text>
       </Callout>
-      <Button
-        as="button"
-        testId="start-recording"
-        size={3}
-        onClick={props.onRetry}
-      >
+      <Button testId="start-recording" size={3} onClick={props.onRetry}>
         Try Again
       </Button>
       <Text as="p" size={2} color="lowContrast">

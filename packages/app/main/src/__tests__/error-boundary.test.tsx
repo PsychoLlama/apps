@@ -2,7 +2,7 @@ import { MetaProvider } from '@solidjs/meta';
 import { MemoryRouter, Route } from '@solidjs/router';
 import { render, screen } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
-import ErrorBoundaryFallback from '../error-boundary';
+import ErrorBoundaryFallback from '../error-boundary/error-boundary';
 
 const mount = (error: unknown, reset?: () => void) => {
   return render(() => (

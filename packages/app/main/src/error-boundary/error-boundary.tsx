@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
 import { Button, Card, Flex, Heading, LinkButton, Text } from '@lib/ui';
-import SiteHeader from './site-header';
+import { SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-circle-outline';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import IconHome from 'virtual:icons/mdi/home-outline';
@@ -82,7 +82,6 @@ export default function ErrorBoundaryFallback(
               Go home
             </LinkButton>
             <Button
-              as="button"
               testId="recover-reload"
               variant="solid"
               color="accent"

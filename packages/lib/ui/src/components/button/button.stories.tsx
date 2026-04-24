@@ -9,7 +9,6 @@ const meta = {
   title: 'UI/Components',
   component: ButtonComponent,
   args: {
-    as: 'button',
     children: 'Button',
     size: 2,
     variant: 'solid',
@@ -25,7 +24,7 @@ const meta = {
     },
     children: { control: 'text' },
   },
-} satisfies Meta<ButtonProps<'button'>>;
+} satisfies Meta<ButtonProps>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
