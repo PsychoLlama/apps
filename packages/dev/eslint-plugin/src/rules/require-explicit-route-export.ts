@@ -1,5 +1,4 @@
 import type { Rule } from 'eslint';
-import type { ExportSpecifier } from 'estree';
 
 // SolidStart's lazy route loader (@solidjs/start/src/config/lazy.ts around
 // lines 92 and 96) decides whether to rewrite a route source by searching
@@ -33,7 +32,13 @@ const rule: Rule.RuleModule = {
   create(context) {
     return {
       ExportNamedDeclaration(node) {
-        if (!node.specifiers.some(exportsAsDefault)) return;
+        const routesDefault = node.specifiers.some(
+          (spec) =>
+            spec.exported.type === 'Identifier' &&
+            spec.exported.name === 'default',
+        );
+
+        if (!routesDefault) return;
 
         if (node.source) {
           context.report({
@@ -48,8 +53,5 @@ const rule: Rule.RuleModule = {
     };
   },
 };
-
-const exportsAsDefault = (spec: ExportSpecifier): boolean =>
-  spec.exported.type === 'Identifier' && spec.exported.name === 'default';
 
 export default rule;
