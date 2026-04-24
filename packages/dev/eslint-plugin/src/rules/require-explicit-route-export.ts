@@ -23,7 +23,9 @@ const rule: Rule.RuleModule = {
     },
     messages: {
       reexport:
-        "Route files must use an explicit `import X from '{{source}}'; export default X;`. `export { default } from '...'` trips SolidStart's substring-based detection, which skips CSS/JS preloads (FOUC on hydration, broken no-JS).",
+        "Route files must use an explicit `import X from '{{source}}'; export default X;`. `export { ... as default } from '...'` trips SolidStart's substring-based detection, which skips CSS/JS preloads (FOUC on hydration, broken no-JS).",
+      localAsDefault:
+        "Route files must use an explicit `export default X;`. `export { X as default };` trips SolidStart's substring-based detection, which skips CSS/JS preloads (FOUC on hydration, broken no-JS).",
     },
     schema: [],
   },
@@ -31,20 +33,23 @@ const rule: Rule.RuleModule = {
   create(context) {
     return {
       ExportNamedDeclaration(node) {
-        if (!node.source) return;
-        if (!node.specifiers.some(reexportsAsDefault)) return;
+        if (!node.specifiers.some(exportsAsDefault)) return;
 
-        context.report({
-          node,
-          messageId: 'reexport',
-          data: { source: String(node.source.value) },
-        });
+        if (node.source) {
+          context.report({
+            node,
+            messageId: 'reexport',
+            data: { source: String(node.source.value) },
+          });
+        } else {
+          context.report({ node, messageId: 'localAsDefault' });
+        }
       },
     };
   },
 };
 
-const reexportsAsDefault = (spec: ExportSpecifier): boolean =>
+const exportsAsDefault = (spec: ExportSpecifier): boolean =>
   spec.exported.type === 'Identifier' && spec.exported.name === 'default';
 
 export default rule;

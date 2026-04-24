@@ -23,8 +23,9 @@ tester.run('require-explicit-route-export', rule, {
     // and the right rewrite isn't obvious.
     { code: "export * from './lib';" },
 
-    // Local exports with no source module.
+    // Local exports that don't route anything through the `default` slot.
     { code: 'const value = 1; export { value };' },
+    { code: 'const value = 1; export { value as renamed };' },
   ],
 
   invalid: [
@@ -42,6 +43,12 @@ tester.run('require-explicit-route-export', rule, {
     {
       code: "export { default, Helper } from '../foo';",
       errors: [{ messageId: 'reexport' as const }],
+    },
+    // Local `as default` — also lacks the literal `export default`
+    // substring SolidStart scans for.
+    {
+      code: "import Route from './route';\nexport { Route as default };",
+      errors: [{ messageId: 'localAsDefault' as const }],
     },
   ],
 });
