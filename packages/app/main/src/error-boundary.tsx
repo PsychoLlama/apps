@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { Button, Flex, Heading, LinkButton, Text } from '@lib/ui';
+import { Button, Card, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-circle-outline';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
@@ -92,7 +92,7 @@ export default function ErrorBoundaryFallback(
             </Button>
           </Flex>
 
-          <Flex as="details" direction="column" class={css.details}>
+          <Flex as="details" direction="column" gap={3} class={css.details}>
             <Flex as="summary" align="center" gap={2} class={css.summary}>
               <IconChevron width="14" height="14" class={css.summaryChevron} />
               <Text as="span" size={2} weight="medium" color="lowContrast">
@@ -100,34 +100,30 @@ export default function ErrorBoundaryFallback(
               </Text>
             </Flex>
 
-            <Flex
-              as="div"
-              direction="column"
-              gap={3}
-              p={4}
-              class={css.detailsBody}
-            >
-              <Flex as="div" direction="column" gap={1}>
-                <Text as="span" size={1} color="lowContrast" selectable>
-                  {details().name}
-                </Text>
-                <Text as="p" size={2} weight="medium" selectable>
-                  {details().message}
-                </Text>
-              </Flex>
+            <Card as="div" size={2}>
+              <Flex as="div" direction="column" gap={3}>
+                <Flex as="div" direction="column" gap={1}>
+                  <Text as="span" size={1} color="lowContrast" selectable>
+                    {details().name}
+                  </Text>
+                  <Text as="p" size={2} weight="medium" selectable>
+                    {details().message}
+                  </Text>
+                </Flex>
 
-              <Show when={details().stack}>
-                <Text
-                  as="pre"
-                  size={1}
-                  color="lowContrast"
-                  selectable
-                  class={css.stack}
-                >
-                  {details().stack}
-                </Text>
-              </Show>
-            </Flex>
+                <Show when={details().stack}>
+                  <Text
+                    as="pre"
+                    size={1}
+                    color="lowContrast"
+                    selectable
+                    class={css.stack}
+                  >
+                    {details().stack}
+                  </Text>
+                </Show>
+              </Flex>
+            </Card>
           </Flex>
         </Flex>
       </Flex>

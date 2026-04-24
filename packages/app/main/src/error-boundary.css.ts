@@ -57,12 +57,6 @@ export const summaryChevron = style({
   },
 });
 
-export const detailsBody = style({
-  marginTop: space[3],
-  borderRadius: radius[4],
-  boxShadow: `inset 0 0 0 1px ${neutral[6]}`,
-});
-
 export const stack = style({
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
