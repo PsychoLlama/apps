@@ -95,49 +95,43 @@ export default function ErrorBoundaryFallback(
             </Button>
           </Flex>
 
-          <Show when={import.meta.env.DEV}>
-            <Flex as="details" direction="column" class={css.details}>
-              <Flex as="summary" align="center" gap={2} class={css.summary}>
-                <IconChevron
-                  width="14"
-                  height="14"
-                  class={css.summaryChevron}
-                />
-                <Text as="span" size={2} weight="medium" color="lowContrast">
-                  Show error details
+          <Flex as="details" direction="column" class={css.details}>
+            <Flex as="summary" align="center" gap={2} class={css.summary}>
+              <IconChevron width="14" height="14" class={css.summaryChevron} />
+              <Text as="span" size={2} weight="medium" color="lowContrast">
+                Show error details
+              </Text>
+            </Flex>
+
+            <Flex
+              as="div"
+              direction="column"
+              gap={3}
+              p={4}
+              class={css.detailsBody}
+            >
+              <Flex as="div" direction="column" gap={1}>
+                <Text as="span" size={1} color="lowContrast" selectable>
+                  {details().name}
+                </Text>
+                <Text as="p" size={2} weight="medium" selectable>
+                  {details().message}
                 </Text>
               </Flex>
 
-              <Flex
-                as="div"
-                direction="column"
-                gap={3}
-                p={4}
-                class={css.detailsBody}
-              >
-                <Flex as="div" direction="column" gap={1}>
-                  <Text as="span" size={1} color="lowContrast" selectable>
-                    {details().name}
-                  </Text>
-                  <Text as="p" size={2} weight="medium" selectable>
-                    {details().message}
-                  </Text>
-                </Flex>
-
-                <Show when={details().stack}>
-                  <Text
-                    as="pre"
-                    size={1}
-                    color="lowContrast"
-                    selectable
-                    class={css.stack}
-                  >
-                    {details().stack}
-                  </Text>
-                </Show>
-              </Flex>
+              <Show when={details().stack}>
+                <Text
+                  as="pre"
+                  size={1}
+                  color="lowContrast"
+                  selectable
+                  class={css.stack}
+                >
+                  {details().stack}
+                </Text>
+              </Show>
             </Flex>
-          </Show>
+          </Flex>
         </Flex>
       </Flex>
     </Flex>
