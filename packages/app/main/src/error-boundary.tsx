@@ -38,17 +38,14 @@ const reloadPage = () => {
   if (typeof window !== 'undefined') window.location.reload();
 };
 
-/**
- * Fallback rendered when the global `<ErrorBoundary>` catches an
- * uncaught error. Mirrors the `/error-boundary` preview route.
- */
+/** Fallback rendered when the global `<ErrorBoundary>` catches an uncaught error. */
 export default function ErrorBoundaryFallback(
   props: ErrorBoundaryFallbackProps,
 ) {
   const details = () => normalizeError(props.error);
 
   return (
-    <Flex as="main" direction="column" class={css.page}>
+    <Flex as="main" direction="column" grow>
       <SiteHeader title="Error" />
 
       <Flex as="section" align="center" justify="center" grow p={5}>

@@ -10,10 +10,6 @@ import {
   standard,
 } from '@lib/design';
 
-export const page = style({
-  minHeight: '100dvh',
-});
-
 export const column = style({
   maxWidth: '480px',
   width: '100%',
@@ -29,7 +25,6 @@ export const icon = style({
 
 export const details = style({
   width: '100%',
-  borderRadius: radius[4],
 });
 
 export const summary = style({
