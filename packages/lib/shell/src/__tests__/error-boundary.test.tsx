@@ -1,72 +1,47 @@
 import { MetaProvider } from '@solidjs/meta';
 import { MemoryRouter, Route } from '@solidjs/router';
-import { render } from 'solid-js/web';
+import { render, screen } from '@solidjs/testing-library';
+import userEvent from '@testing-library/user-event';
 import ErrorBoundaryFallback from '../error-boundary';
 
-interface Mounted {
-  container: HTMLDivElement;
-  cleanup: () => void;
-}
-
-const mount = (error: unknown, reset?: () => void): Mounted => {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-
-  const dispose = render(
-    () => (
-      <MetaProvider>
-        <MemoryRouter>
-          <Route
-            path="*"
-            component={() => (
-              <ErrorBoundaryFallback error={error} reset={reset} />
-            )}
-          />
-        </MemoryRouter>
-      </MetaProvider>
-    ),
-    container,
-  );
-
-  return {
-    container,
-    cleanup: () => {
-      dispose();
-      container.remove();
-    },
-  };
+const mount = (error: unknown, reset?: () => void) => {
+  return render(() => (
+    <MetaProvider>
+      <MemoryRouter>
+        <Route
+          path="*"
+          component={() => (
+            <ErrorBoundaryFallback error={error} reset={reset} />
+          )}
+        />
+      </MemoryRouter>
+    </MetaProvider>
+  ));
 };
 
 describe('ErrorBoundaryFallback', () => {
-  let mounted: Mounted | null = null;
-
   afterEach(() => {
-    mounted?.cleanup();
-    mounted = null;
     vi.restoreAllMocks();
   });
 
   it('renders the hero heading and supporting copy', () => {
-    mounted = mount(new Error('boom'));
+    mount(new Error('boom'));
 
-    const heading = mounted.container.querySelector('h1');
-    expect(heading?.textContent).toBe('Something went wrong');
-    expect(mounted.container.textContent).toContain("couldn't render");
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Something went wrong',
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText(/couldn't render/i)).toBeTruthy();
   });
 
   it('wires up both recovery actions with the expected semantics', () => {
-    mounted = mount(new Error('boom'));
+    mount(new Error('boom'));
 
-    const reload = mounted.container.querySelector<HTMLButtonElement>(
-      '[data-testid="recover-reload"]',
-    );
-    const home = mounted.container.querySelector<HTMLAnchorElement>(
-      '[data-testid="recover-home"]',
-    );
-
-    expect(reload?.tagName).toBe('BUTTON');
-    expect(home?.tagName).toBe('A');
-    expect(home?.getAttribute('href')).toBe('/');
+    expect(screen.getByRole('button', { name: /Reload page/ })).toBeTruthy();
+    const home = screen.getByRole('link', { name: /Go home/ });
+    expect(home.getAttribute('href')).toBe('/');
   });
 
   it('exposes the name, message, and stack of an Error instance', () => {
@@ -75,67 +50,63 @@ describe('ErrorBoundaryFallback', () => {
     );
     err.stack = 'TypeError: x\n    at thing (file.ts:1:1)';
 
-    mounted = mount(err);
+    const result = mount(err);
 
-    expect(mounted.container.textContent).toContain('TypeError');
-    expect(mounted.container.textContent).toContain(
-      "Cannot read properties of undefined (reading 'x')",
-    );
-    expect(mounted.container.querySelector('pre')?.textContent).toContain(
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'TypeError' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Cannot read properties of undefined (reading 'x')"),
+    ).toBeTruthy();
+    expect(result.container.querySelector('pre')?.textContent).toContain(
       'at thing (file.ts:1:1)',
     );
   });
 
   it('falls back to "Unknown error" when an Error carries no message', () => {
-    mounted = mount(new Error());
+    mount(new Error());
 
-    expect(mounted.container.textContent).toContain('Unknown error');
+    expect(screen.getByText('Unknown error')).toBeTruthy();
   });
 
   it('omits the stack block when the Error has no stack trace', () => {
     const err = new Error('boom');
     err.stack = undefined;
 
-    mounted = mount(err);
+    const result = mount(err);
 
-    expect(mounted.container.querySelector('pre')).toBeNull();
+    expect(result.container.querySelector('pre')).toBeNull();
   });
 
   it('normalizes non-Error throws into a generic name with stringified value', () => {
-    mounted = mount('literal string');
+    const result = mount('literal string');
 
-    expect(mounted.container.textContent).toContain('Error');
-    expect(mounted.container.textContent).toContain('literal string');
-    expect(mounted.container.querySelector('pre')).toBeNull();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Error' }),
+    ).toBeTruthy();
+    expect(screen.getByText('literal string')).toBeTruthy();
+    expect(result.container.querySelector('pre')).toBeNull();
   });
 
-  const clickHome = (container: HTMLElement) => {
-    const home = container.querySelector<HTMLAnchorElement>(
-      '[data-testid="recover-home"]',
-    );
-    home?.dispatchEvent(
-      new MouseEvent('click', { bubbles: true, cancelable: true }),
-    );
-  };
-
-  it('calls reset() when the user clicks "Go home"', () => {
+  it('calls reset() when the user clicks "Go home"', async () => {
+    const user = userEvent.setup();
     const reset = vi.fn();
-    mounted = mount(new Error('boom'), reset);
+    mount(new Error('boom'), reset);
 
-    clickHome(mounted.container);
+    await user.click(screen.getByRole('link', { name: /Go home/ }));
 
     expect(reset).toHaveBeenCalledOnce();
   });
 
-  it('tolerates a missing reset callback', () => {
-    mounted = mount(new Error('boom'));
+  it('tolerates a missing reset callback', async () => {
+    const user = userEvent.setup();
+    mount(new Error('boom'));
 
-    expect(() => {
-      clickHome(mounted!.container);
-    }).not.toThrow();
+    await user.click(screen.getByRole('link', { name: /Go home/ }));
   });
 
-  it('requests a full page reload when the user clicks "Reload page"', () => {
+  it('requests a full page reload when the user clicks "Reload page"', async () => {
+    const user = userEvent.setup();
     const reload = vi.fn();
     const originalLocation = window.location;
     Object.defineProperty(window, 'location', {
@@ -144,10 +115,8 @@ describe('ErrorBoundaryFallback', () => {
     });
 
     try {
-      mounted = mount(new Error('boom'));
-      mounted.container
-        .querySelector<HTMLButtonElement>('[data-testid="recover-reload"]')
-        ?.click();
+      mount(new Error('boom'));
+      await user.click(screen.getByRole('button', { name: /Reload page/ }));
       expect(reload).toHaveBeenCalledOnce();
     } finally {
       Object.defineProperty(window, 'location', {

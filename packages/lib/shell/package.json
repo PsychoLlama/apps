@@ -16,6 +16,8 @@
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
+    "@solidjs/testing-library": "^0.8.10",
+    "@testing-library/user-event": "^14.6.1",
     "unplugin-icons": "catalog:"
   },
   "peerDependencies": {
