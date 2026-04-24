@@ -1,0 +1,17 @@
+{
+  "name": "@lib/observability",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Observability primitives. Wraps the canonical OpenTelemetry surface.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/api-logs": "^0.215.0"
+  }
+}

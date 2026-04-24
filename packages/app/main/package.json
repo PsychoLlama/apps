@@ -25,6 +25,7 @@
     "@app/studio": "workspace:*",
     "@fontsource-variable/ibm-plex-sans": "^5.2.8",
     "@lib/design": "workspace:*",
+    "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/ui": "workspace:*",
     "@solidjs/meta": "catalog:",
