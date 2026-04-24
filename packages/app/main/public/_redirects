@@ -6,4 +6,4 @@
 # directory form triggers Workers Assets' trailing-slash redirect,
 # which escapes the rewrite and clobbers the original URL.
 
-/studio/:id  /studio/index.html  200
+/studio/*  /studio/  200
