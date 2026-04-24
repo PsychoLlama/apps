@@ -22,6 +22,7 @@ export {
   default as Button,
   type ButtonProps,
 } from './components/button/button';
+export { default as Badge, type BadgeProps } from './components/badge/badge';
 export {
   default as Callout,
   type CalloutProps,
