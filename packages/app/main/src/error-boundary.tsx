@@ -72,7 +72,7 @@ export default function ErrorBoundaryFallback(
 
           <Flex as="div" gap={3} wrap="wrap" justify="center">
             <LinkButton
-              testId="home"
+              testId="recover-home"
               href="/"
               variant="soft"
               color="neutral"
@@ -82,7 +82,7 @@ export default function ErrorBoundaryFallback(
               Go home
             </LinkButton>
             <Button
-              testId="reload"
+              testId="recover-reload"
               variant="solid"
               color="accent"
               onClick={reloadPage}

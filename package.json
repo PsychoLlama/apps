@@ -37,6 +37,7 @@
     "@dev/eslint-plugin": "workspace:*",
     "@eslint/compat": "^2.0.4",
     "@eslint/js": "^9.39.4",
+    "@iconify/json": "^2.2.460",
     "@testing-library/jest-dom": "^6.9.1",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.2",
@@ -50,6 +51,7 @@
     "solid-js": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "^8.59.0",
+    "unplugin-icons": "catalog:",
     "vite": "catalog:",
     "vite-plugin-solid": "^2.11.11",
     "vitest": "catalog:"
