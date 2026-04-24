@@ -1,32 +1,33 @@
-import type { Rule } from 'eslint';
+import {
+  AST_NODE_TYPES,
+  ESLintUtils,
+  type TSESTree,
+} from '@typescript-eslint/utils';
 
 const components = new Set(['Text', 'Heading']);
 
-interface JSXChild {
-  type: string;
-}
-
-interface JSXAttribute {
-  type: string;
-  name: { type: string; name: string };
-}
-
-interface JSXOpeningElement {
-  name: { type: string; name: string };
-  attributes: JSXAttribute[];
-}
-
-const hasDynamicChildren = (children: JSXChild[]): boolean => {
-  return children.some((child) => child.type === 'JSXExpressionContainer');
-};
-
-const hasSelectableProp = (attributes: JSXAttribute[]): boolean => {
-  return attributes.some(
-    (attr) => attr.type === 'JSXAttribute' && attr.name.name === 'selectable',
+const hasDynamicChildren = (
+  children: readonly TSESTree.JSXChild[],
+): boolean => {
+  return children.some(
+    (child) => child.type === AST_NODE_TYPES.JSXExpressionContainer,
   );
 };
 
-const rule: Rule.RuleModule = {
+const hasSelectableProp = (
+  attributes: readonly (TSESTree.JSXAttribute | TSESTree.JSXSpreadAttribute)[],
+): boolean => {
+  return attributes.some(
+    (attr) =>
+      attr.type === AST_NODE_TYPES.JSXAttribute &&
+      attr.name.type === AST_NODE_TYPES.JSXIdentifier &&
+      attr.name.name === 'selectable',
+  );
+};
+
+const createRule = ESLintUtils.RuleCreator.withoutDocs;
+
+const rule = createRule({
   meta: {
     type: 'suggestion',
     docs: {
@@ -42,28 +43,20 @@ const rule: Rule.RuleModule = {
     },
     schema: [],
   },
-
+  defaultOptions: [],
   create(context) {
     return {
-      JSXElement(node: Rule.Node) {
-        const element = node as unknown as {
-          openingElement: JSXOpeningElement;
-          children: JSXChild[];
-        };
-
-        const { openingElement, children } = element;
-        if (openingElement.name.type !== 'JSXIdentifier') return;
+      JSXElement(node) {
+        const { openingElement, children } = node;
+        if (openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier) return;
         if (!components.has(openingElement.name.name)) return;
         if (!hasDynamicChildren(children)) return;
         if (hasSelectableProp(openingElement.attributes)) return;
 
-        context.report({
-          node: node,
-          messageId: 'missing',
-        });
+        context.report({ node, messageId: 'missing' });
       },
     };
   },
-};
+});
 
 export default rule;

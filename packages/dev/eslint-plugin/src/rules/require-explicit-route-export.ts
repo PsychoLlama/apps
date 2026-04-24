@@ -1,4 +1,4 @@
-import type { Rule } from 'eslint';
+import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
 // SolidStart's lazy route loader (@solidjs/start/src/config/lazy.ts around
 // lines 92 and 96) decides whether to rewrite a route source by searching
@@ -13,7 +13,9 @@ import type { Rule } from 'eslint';
 // check is a naive stand-in for real import/export analysis. If it is
 // fixed upstream, this rule can be deleted.
 
-const rule: Rule.RuleModule = {
+const createRule = ESLintUtils.RuleCreator.withoutDocs;
+
+const rule = createRule({
   meta: {
     type: 'problem',
     docs: {
@@ -28,13 +30,13 @@ const rule: Rule.RuleModule = {
     },
     schema: [],
   },
-
+  defaultOptions: [],
   create(context) {
     return {
       ExportNamedDeclaration(node) {
         const routesDefault = node.specifiers.some(
           (spec) =>
-            spec.exported.type === 'Identifier' &&
+            spec.exported.type === AST_NODE_TYPES.Identifier &&
             spec.exported.name === 'default',
         );
 
@@ -52,6 +54,6 @@ const rule: Rule.RuleModule = {
       },
     };
   },
-};
+});
 
 export default rule;

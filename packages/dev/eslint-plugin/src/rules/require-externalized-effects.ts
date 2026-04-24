@@ -1,6 +1,8 @@
-import type { Rule } from 'eslint';
+import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
-const rule: Rule.RuleModule = {
+const createRule = ESLintUtils.RuleCreator.withoutDocs;
+
+const rule = createRule({
   meta: {
     type: 'suggestion',
     docs: {
@@ -13,33 +15,30 @@ const rule: Rule.RuleModule = {
     },
     schema: [],
   },
-
+  defaultOptions: [],
   create(context) {
     return {
-      CallExpression(node: Rule.Node) {
-        const call = node as unknown as {
-          callee: { type: string; name?: string };
-          arguments: Array<{ type: string }>;
-        };
+      CallExpression(node) {
+        if (node.callee.type !== AST_NODE_TYPES.Identifier) return;
+        if (node.callee.name !== 'defineEffect') return;
 
-        if (call.callee.type !== 'Identifier') return;
-        if (call.callee.name !== 'defineEffect') return;
-
-        const fn = call.arguments[1];
+        const fn = node.arguments[1];
         if (!fn) return;
 
         // Only direct references are allowed — named capability or a
         // dotted path into a module namespace. Anything else (inline
         // function, bound call, ternary, etc.) is a structural no.
-        if (fn.type === 'Identifier' || fn.type === 'MemberExpression') return;
+        if (
+          fn.type === AST_NODE_TYPES.Identifier ||
+          fn.type === AST_NODE_TYPES.MemberExpression
+        ) {
+          return;
+        }
 
-        context.report({
-          node: fn as unknown as Rule.Node,
-          messageId: 'inline',
-        });
+        context.report({ node: fn, messageId: 'inline' });
       },
     };
   },
-};
+});
 
 export default rule;

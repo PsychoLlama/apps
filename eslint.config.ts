@@ -82,6 +82,17 @@ export default [
     },
   },
   {
+    // Rule files should rely on ESLint's built-in listener narrowing and
+    // `TSESTree` node types instead of reaching for `as unknown as {...}`.
+    // Tests under `__tests__/` exercise rules through fixtures, where
+    // escape hatches are sometimes legitimate — so this is scoped to the
+    // rule sources themselves.
+    files: ['packages/dev/eslint-plugin/src/rules/*.ts'],
+    rules: {
+      'custom/no-unsafe-node-cast': 'error',
+    },
+  },
+  {
     // SolidStart's lazy loader needs a literal `import` and `export default`
     // in route sources. `_`-prefixed files are ignored by the router, so
     // the rule doesn't apply there.

@@ -1,4 +1,4 @@
-import type { Rule } from 'eslint';
+import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 import { getPropertyName } from '../utils/ast';
 import {
   isZeroValue,
@@ -6,24 +6,9 @@ import {
   redundantZeroProperties,
 } from '../utils/redundant-css';
 
-interface JSXProperty {
-  type: string;
-  key: { type: string; name?: string; value?: string };
-  value: { type: string; value?: unknown };
-}
+const createRule = ESLintUtils.RuleCreator.withoutDocs;
 
-interface JSXAttribute {
-  name: { name: string };
-  value?: {
-    type: string;
-    expression: {
-      type: string;
-      properties: JSXProperty[];
-    };
-  };
-}
-
-const rule: Rule.RuleModule = {
+const rule = createRule({
   meta: {
     type: 'suggestion',
     docs: {
@@ -37,20 +22,20 @@ const rule: Rule.RuleModule = {
     },
     schema: [],
   },
-
+  defaultOptions: [],
   create(context) {
     return {
-      JSXAttribute(node: Rule.Node) {
-        const attr = node as unknown as JSXAttribute;
-        if (attr.name.name !== 'style') return;
-        if (attr.value?.type !== 'JSXExpressionContainer') return;
+      JSXAttribute(node) {
+        if (node.name.type !== AST_NODE_TYPES.JSXIdentifier) return;
+        if (node.name.name !== 'style') return;
+        if (node.value?.type !== AST_NODE_TYPES.JSXExpressionContainer) return;
 
-        const expr = attr.value.expression;
-        if (expr.type !== 'ObjectExpression') return;
+        const expr = node.value.expression;
+        if (expr.type !== AST_NODE_TYPES.ObjectExpression) return;
 
         for (const prop of expr.properties) {
-          if (prop.type !== 'Property') continue;
-          if (prop.value.type !== 'Literal') continue;
+          if (prop.type !== AST_NODE_TYPES.Property) continue;
+          if (prop.value.type !== AST_NODE_TYPES.Literal) continue;
 
           const name = getPropertyName(prop.key);
 
@@ -60,21 +45,18 @@ const rule: Rule.RuleModule = {
             isZeroValue(prop.value.value)
           ) {
             context.report({
-              node: prop as unknown as Rule.Node,
+              node: prop,
               messageId: 'redundantZero',
               data: { property: name },
             });
             continue;
           }
 
-          context.report({
-            node: prop as unknown as Rule.Node,
-            messageId: 'static',
-          });
+          context.report({ node: prop, messageId: 'static' });
         }
       },
     };
   },
-};
+});
 
 export default rule;
