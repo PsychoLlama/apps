@@ -1,7 +1,10 @@
 import type { Rule } from 'eslint';
 import { getPropertyName } from '../utils/ast';
 import {
+  isFullViewportValue,
   isZeroValue,
+  redundantFullViewportMessage,
+  redundantFullViewportProperties,
   redundantZeroMessage,
   redundantZeroProperties,
 } from '../utils/redundant-css';
@@ -127,6 +130,7 @@ const rule: Rule.RuleModule = {
       hardcoded:
         'Hard-coded {{property}} value. Use a {{token}} token from @lib/design instead.',
       redundantZero: redundantZeroMessage,
+      redundantFullViewport: redundantFullViewportMessage,
     },
     schema: [],
   },
@@ -144,8 +148,12 @@ const rule: Rule.RuleModule = {
 
         const token = propertyToToken.get(name);
         const isRedundantZeroProp = redundantZeroProperties.has(name);
+        const isRedundantFullViewportProp =
+          redundantFullViewportProperties.has(name);
 
-        if (!token && !isRedundantZeroProp) return;
+        if (!token && !isRedundantZeroProp && !isRedundantFullViewportProp) {
+          return;
+        }
 
         if (prop.value.type !== 'Literal') return;
         const value = prop.value.value;
@@ -154,6 +162,15 @@ const rule: Rule.RuleModule = {
         if (value === null) return;
 
         if (typeof value === 'string' && cssKeywords.has(value)) return;
+
+        if (isRedundantFullViewportProp && isFullViewportValue(value)) {
+          context.report({
+            node,
+            messageId: 'redundantFullViewport',
+            data: { property: name, value },
+          });
+          return;
+        }
 
         if (isRedundantZeroProp && isZeroValue(value)) {
           context.report({

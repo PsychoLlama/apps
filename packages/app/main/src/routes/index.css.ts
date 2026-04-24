@@ -1,10 +1,6 @@
 import { style } from '@vanilla-extract/css';
 import { accent, fast, neutral, radius, space, standard } from '@lib/design';
 
-export const page = style({
-  height: '100dvh',
-});
-
 export const column = style({
   maxWidth: '480px',
   width: '100%',

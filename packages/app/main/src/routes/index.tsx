@@ -4,7 +4,7 @@ import * as css from './index.css';
 
 export default function Launcher() {
   return (
-    <Flex as="main" direction="column" class={css.page}>
+    <Flex as="main" direction="column" grow>
       <SiteHeader title="Apps" />
       <Flex as="section" align="center" justify="center" grow p={5}>
         <Flex as="div" direction="column" gap={5} class={css.column}>
