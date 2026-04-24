@@ -1,9 +1,10 @@
 # Serve the prerendered shell for dynamic client routes so a direct
 # hit (refresh, shared link) hydrates instead of 404ing; SolidStart's
-# router picks up the real path from the URL. Format is
-# `<source> <destination> <status>`, status 200 = rewrite. Target
-# the literal `<route>/index.html` file: any bare or slashed
-# directory form triggers Workers Assets' trailing-slash redirect,
-# which escapes the rewrite and clobbers the original URL.
+# router picks up the real path from the URL. Status 200 = rewrite
+# (proxy target's content, keep original URL).
+
+# Probe: confirms _redirects is reaching prod. Remove once the studio
+# rewrite is verified working.
+/__probe-redirects  /studio/  302
 
 /studio/*  /studio/  200
