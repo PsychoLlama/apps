@@ -56,9 +56,38 @@ export const redundantFullViewportProperties = new Set(['height', 'minHeight']);
 /** Matches `100vh`, `100dvh`, `100svh`, `100lvh` (case-insensitive). */
 const FULL_VIEWPORT_RE = /^100(d|s|l)?vh$/i;
 
-export const isFullViewportValue = (value: unknown): value is string => {
-  if (typeof value !== 'string') return false;
-  return FULL_VIEWPORT_RE.test(value);
+const isFullViewportString = (value: unknown): value is string =>
+  typeof value === 'string' && FULL_VIEWPORT_RE.test(value);
+
+/**
+ * Inspects a vanilla-extract property value node and returns the first
+ * full-viewport string it finds, or `null`. Handles both plain literals
+ * (`'100dvh'`) and fallback array forms (`['100vh', '100dvh']`) so the
+ * rule can't be bypassed by wrapping the offending value in the same
+ * array syntax the body reset uses.
+ */
+export const findFullViewportValue = (node: {
+  type: string;
+  value?: unknown;
+  elements?: ReadonlyArray<{ type: string; value?: unknown } | null>;
+}): string | null => {
+  if (node.type === 'Literal' && isFullViewportString(node.value)) {
+    return node.value;
+  }
+
+  if (node.type === 'ArrayExpression' && node.elements) {
+    for (const element of node.elements) {
+      if (
+        element &&
+        element.type === 'Literal' &&
+        isFullViewportString(element.value)
+      ) {
+        return element.value;
+      }
+    }
+  }
+
+  return null;
 };
 
 export const redundantFullViewportMessage =

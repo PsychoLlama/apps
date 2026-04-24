@@ -37,9 +37,11 @@ tester.run('require-design-tokens', rule, {
     { code: 'const x = { minHeight: "calc(100dvh - 40px)" }' },
     { code: 'const x = { height: "auto" }' },
 
-    // Array fallbacks (vanilla-extract) bypass the literal check —
-    // the body reset itself uses `['100vh', '100dvh']`.
-    { code: "const x = { minHeight: ['100vh', '100dvh'] }" },
+    // Array fallbacks without a full-viewport value are fine (the
+    // body-reset pattern itself is exempt via eslint config, so this
+    // rule only needs to flag the offending *shape* in app code).
+    { code: "const x = { minHeight: ['50vh', '75%'] }" },
+    { code: "const x = { height: [myVar, '100%'] }" },
 
     // CSS keywords are allowed on token properties.
     { code: 'const x = { color: "inherit" }' },
@@ -360,6 +362,31 @@ tester.run('require-design-tokens', rule, {
         {
           messageId: 'redundantFullViewport' as const,
           data: { property: 'height', value: '100vh' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — array fallback (the canonical
+    // vanilla-extract pattern the body reset uses). Flagging arrays
+    // prevents this rule from being bypassed by restating the body's
+    // exact shape in a descendant.
+    {
+      code: "const x = { minHeight: ['100vh', '100dvh'] }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'minHeight', value: '100vh' },
+        },
+      ],
+    },
+
+    // Redundant full viewport — array fallback with only the new unit.
+    {
+      code: "const x = { height: ['50vh', '100dvh'] }",
+      errors: [
+        {
+          messageId: 'redundantFullViewport' as const,
+          data: { property: 'height', value: '100dvh' },
         },
       ],
     },
