@@ -6,5 +6,16 @@
       "WebFetch(domain:storybook.js.org)",
       "WebFetch(domain:docs.solidjs.com)"
     ]
+  },
+  "extraKnownMarketplaces": {
+    "cloudflare": {
+      "source": {
+        "source": "github",
+        "repo": "cloudflare/skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "cloudflare@cloudflare": true
   }
 }
