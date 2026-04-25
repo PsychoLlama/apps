@@ -1,14 +1,19 @@
 ## Guidance
 
 - `index.ts` is the only public API. Imported as `@lib/observability`.
-- Re-export the canonical OpenTelemetry surface (`@opentelemetry/api-logs`) so callers use standard shapes.
-- Provider implementations live in `internal/`. Public API surface stays OTel-shaped.
+- Public API is the ergonomic wrappers (`getLogger`, `createTracer`). The raw OTel surface (`logs`, `trace`, `context`, etc.) is re-exported as an escape hatch.
+- Provider implementations live in `internal/`. Public API surface stays OTel-shaped underneath.
 - `configure()` is the single wire-up point. Entry points call it once before any module emits telemetry.
-- Co-locate tests. Example: `setup.ts` and `__tests__/setup.test.ts`.
+- Co-locate tests. Example: `log.ts` and `__tests__/log.test.ts`.
 - Reference docs at `./docs/usage.md`. Keep them updated when the API changes.
   - Audience: expert frontend devs unfamiliar with this library.
   - Happy path only. No edge cases, error behavior, or implementation details.
   - Raw facts under markdown headers, 1-2 sentences max, few-to-no examples.
+
+## Style
+
+- Functional and closure-based. Avoid classes (heavier minified output, no win over closures here).
+- Single signatures over overloads. Drop callers to the raw OTel API when they need the rare advanced shape.
 
 ## Adding a Provider
 

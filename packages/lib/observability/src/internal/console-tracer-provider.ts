@@ -17,17 +17,10 @@ import {
   type TracerProvider,
 } from '@opentelemetry/api';
 
-const HEX = '0123456789abcdef';
-
-const randomHex = (bytes: number): string => {
-  const buf = new Uint8Array(bytes);
-  crypto.getRandomValues(buf);
-  let out = '';
-  for (const byte of buf) {
-    out += HEX[byte >> 4] + HEX[byte & 0x0f];
-  }
-  return out;
-};
+const randomHex = (bytes: number): string =>
+  [...crypto.getRandomValues(new Uint8Array(bytes))]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
 
 interface RecordedEvent {
   name: string;
@@ -37,14 +30,11 @@ interface RecordedEvent {
 
 const isAttributes = (
   value: Attributes | TimeInput | undefined,
-): value is Attributes => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    !(value instanceof Date) &&
-    !Array.isArray(value)
-  );
-};
+): value is Attributes =>
+  typeof value === 'object' &&
+  value !== null &&
+  !(value instanceof Date) &&
+  !Array.isArray(value);
 
 const exceptionMessage = (exception: Exception): string => {
   if (typeof exception === 'string') return exception;
@@ -57,102 +47,83 @@ const exceptionMessage = (exception: Exception): string => {
   return JSON.stringify(exception);
 };
 
-class ConsoleSpan implements Span {
-  readonly #context: SpanContext;
-  readonly #parentSpanId: string | undefined;
-  readonly #attributes: Record<string, AttributeValue> = {};
-  readonly #events: RecordedEvent[] = [];
-  readonly #scope: string;
-  readonly #start: number;
-  #name: string;
-  #status: SpanStatus = { code: SpanStatusCode.UNSET };
-  #end: number | undefined;
+const createConsoleSpan = (
+  scope: string,
+  name: string,
+  parent: SpanContext | undefined,
+): Span => {
+  const ctx: SpanContext = {
+    traceId: parent?.traceId ?? randomHex(16),
+    spanId: randomHex(8),
+    traceFlags: TraceFlags.SAMPLED,
+  };
+  const parentSpanId = parent?.spanId;
+  const attributes: Record<string, AttributeValue> = {};
+  const events: RecordedEvent[] = [];
+  const start = performance.now();
+  let currentName = name;
+  let status: SpanStatus = { code: SpanStatusCode.UNSET };
+  let endTime: number | undefined;
 
-  constructor(scope: string, name: string, parent: SpanContext | undefined) {
-    this.#scope = scope;
-    this.#name = name;
-    this.#context = {
-      traceId: parent?.traceId ?? randomHex(16),
-      spanId: randomHex(8),
-      traceFlags: TraceFlags.SAMPLED,
-    };
-    this.#parentSpanId = parent?.spanId;
-    this.#start = performance.now();
-  }
+  const span: Span = {
+    spanContext: () => ctx,
+    setAttribute: (key, value) => {
+      attributes[key] = value;
+      return span;
+    },
+    setAttributes: (next) => {
+      for (const [key, value] of Object.entries(next)) {
+        if (value !== undefined) attributes[key] = value;
+      }
+      return span;
+    },
+    addEvent: (eventName, attributesOrStartTime) => {
+      events.push({
+        name: eventName,
+        attributes: isAttributes(attributesOrStartTime)
+          ? attributesOrStartTime
+          : undefined,
+        time: performance.now(),
+      });
+      return span;
+    },
+    addLink: () => span,
+    addLinks: () => span,
+    setStatus: (next) => {
+      status = next;
+      return span;
+    },
+    updateName: (next) => {
+      currentName = next;
+      return span;
+    },
+    recordException: (exception) => {
+      events.push({
+        name: 'exception',
+        attributes: { 'exception.message': exceptionMessage(exception) },
+        time: performance.now(),
+      });
+    },
+    isRecording: () => endTime === undefined,
+    end: () => {
+      if (endTime !== undefined) return;
+      endTime = performance.now();
+      const duration = (endTime - start).toFixed(1);
+      const fn =
+        status.code === SpanStatusCode.ERROR ? console.error : console.info;
+      fn(`[SPAN] ${scope} ${currentName} (${duration}ms)`, {
+        traceId: ctx.traceId,
+        spanId: ctx.spanId,
+        parentSpanId,
+        attributes,
+        events,
+        status,
+      });
+    },
+  };
 
-  spanContext(): SpanContext {
-    return this.#context;
-  }
-
-  setAttribute(key: string, value: AttributeValue): this {
-    this.#attributes[key] = value;
-    return this;
-  }
-
-  setAttributes(attributes: Attributes): this {
-    for (const [key, value] of Object.entries(attributes)) {
-      if (value !== undefined) this.#attributes[key] = value;
-    }
-    return this;
-  }
-
-  addEvent(name: string, attributesOrStartTime?: Attributes | TimeInput): this {
-    this.#events.push({
-      name,
-      attributes: isAttributes(attributesOrStartTime)
-        ? attributesOrStartTime
-        : undefined,
-      time: performance.now(),
-    });
-    return this;
-  }
-
-  addLink(): this {
-    return this;
-  }
-
-  addLinks(): this {
-    return this;
-  }
-
-  setStatus(status: SpanStatus): this {
-    this.#status = status;
-    return this;
-  }
-
-  updateName(name: string): this {
-    this.#name = name;
-    return this;
-  }
-
-  recordException(exception: Exception): void {
-    this.#events.push({
-      name: 'exception',
-      attributes: { 'exception.message': exceptionMessage(exception) },
-      time: performance.now(),
-    });
-  }
-
-  isRecording(): boolean {
-    return this.#end === undefined;
-  }
-
-  end(): void {
-    if (this.#end !== undefined) return;
-    this.#end = performance.now();
-    const duration = (this.#end - this.#start).toFixed(1);
-    const fn =
-      this.#status.code === SpanStatusCode.ERROR ? console.error : console.info;
-    fn(`[SPAN] ${this.#scope} ${this.#name} (${duration}ms)`, {
-      traceId: this.#context.traceId,
-      spanId: this.#context.spanId,
-      parentSpanId: this.#parentSpanId,
-      attributes: this.#attributes,
-      events: this.#events,
-      status: this.#status,
-    });
-  }
-}
+  return span;
+};
 
 const createConsoleTracer = (scope: string): Tracer => {
   const startSpan = (
@@ -163,7 +134,7 @@ const createConsoleTracer = (scope: string): Tracer => {
     const parent = options?.root
       ? undefined
       : trace.getSpan(ctx ?? context.active())?.spanContext();
-    const span = new ConsoleSpan(scope, name, parent);
+    const span = createConsoleSpan(scope, name, parent);
     if (options?.attributes) span.setAttributes(options.attributes);
     return span;
   };

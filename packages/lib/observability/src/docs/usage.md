@@ -1,37 +1,35 @@
 # Observability
 
 - Single entry point: `@lib/observability`.
-- Re-exports the canonical `@opentelemetry/api-logs` surface so logs follow OTel shape.
+- The package wraps `@opentelemetry/api` and `@opentelemetry/api-logs` with ergonomic facades. The raw OTel surface is re-exported as an escape hatch.
 
 ## Setup
 
-- `configure({ logs })`: Registers providers for the current runtime. Call once per entry point before any module emits telemetry.
-- `logs` defaults to `'console'`, which prints records to the host console.
-- Pass any `LoggerProvider` to swap in an exporter (e.g. OTLP).
+- `configure({ logs, traces })`: Registers providers for the current runtime. Call once per entry point before any module emits telemetry.
+- Both `logs` and `traces` default to `'console'`, which prints records to the host console.
+- Pass any `LoggerProvider` / `TracerProvider` to swap in an exporter (e.g. OTLP).
 
 ## Logging
 
-- `logs.getLogger(name)`: Returns a `Logger` for the given instrumentation scope. Names are dot-separated (`app.router`, `lib.ui.button`).
-- `logger.emit({ severityNumber, body, attributes? })`: Records a log entry.
-- `SeverityNumber.{TRACE,DEBUG,INFO,WARN,ERROR,FATAL}`: Standard severity levels (with `2`–`4` sub-levels per OTel spec).
-
-## Console Logging
-
-- Default provider routes by severity: `ERROR+` → `console.error`, `WARN+` → `console.warn`, `INFO+` → `console.info`, lower → `console.debug`.
-- Output format: `[<LEVEL>] <name>`, then body and attributes.
+- `getLogger(name)`: Returns an `AppLogger` for the given instrumentation scope. Names are dot-separated (`app.studio.recorder`, `lib.ui.button`).
+- `logger.{debug,info,warn,error}(body, attributes?)`: Emits at the matching severity.
 
 ## Tracing
 
-- `trace.getTracer(name)`: Returns a `Tracer` for the given instrumentation scope.
-- `tracer.startSpan(name, options?, context?)`: Creates a span. Pass `{ root: true }` in options to detach from any parent context.
-- `tracer.startActiveSpan(name, fn)` (with optional `options` and `context` arguments): Creates a span and runs `fn` with it as the active span.
-- `span.setAttribute / setAttributes / addEvent / setStatus / recordException / updateName / end`: Standard OTel span surface.
+- `createTracer(name)`: Returns an `AppTracer` for the given instrumentation scope.
+- `tracer.span(name, fn)`: Runs `fn` inside a span. The span is passed to `fn` as its only argument. `end()` and exception recording are automatic.
+- Sync and async callbacks both work — `span()` returns whatever `fn` returns (or a `Promise` of it).
+- On thrown or rejected errors: `recordException` is called and status is set to `ERROR` before the span ends and the error re-throws.
+- No async context propagation. Pass spans explicitly into nested async work that needs them.
 
-## Console Tracing
+## Console Output
 
-- Default provider prints completed spans on `span.end()`. `ERROR` status → `console.error`, otherwise `console.info`.
-- Output format: `[SPAN] <scope> <name> (<duration>ms)`, then a payload with `traceId`, `spanId`, `parentSpanId`, `attributes`, `events`, `status`.
-- No async context propagation: spans created across `await` boundaries may appear orphaned. Swap in `sdk-trace-web` when this matters.
+- Logs route by severity: `ERROR+` → `console.error`, `WARN+` → `console.warn`, `INFO+` → `console.info`, lower → `console.debug`. Format: `[<LEVEL>] <name>`, then body and attributes.
+- Spans print on `end()`. `ERROR` status → `console.error`, otherwise `console.info`. Format: `[SPAN] <scope> <name> (<duration>ms)`, then a payload with `traceId`, `spanId`, `parentSpanId`, `attributes`, `events`, `status`.
+
+## Escape Hatch
+
+- `logs`, `trace`, `context`, `SeverityNumber`, `SpanStatusCode`, etc. are re-exported from `@opentelemetry/api`/`api-logs` for advanced use (custom providers, raw `Span.startSpan`, manual context propagation).
 
 ## Resetting
 

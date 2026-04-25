@@ -1,3 +1,7 @@
+export { getLogger, type AppLogger } from './log';
+export { createTracer, type AppTracer } from './trace';
+export { configure, type ConfigureOptions } from './setup';
+
 export { trace, context, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 export type {
   AttributeValue,
@@ -24,4 +28,3 @@ export type {
   LoggerProvider,
   LogRecord,
 } from '@opentelemetry/api-logs';
-export { configure, type ConfigureOptions } from './setup';
