@@ -8,4 +8,4 @@
 # too. Status 200 = rewrite (proxy target's content, keep original
 # URL).
 
-/studio/*  /studio/__landing  200
+/studio/:id  /studio/__landing  200
