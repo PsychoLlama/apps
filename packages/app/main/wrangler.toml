@@ -12,3 +12,6 @@ not_found_handling = "404-page"
 [[routes]]
 pattern = "apps.psychollama.io"
 custom_domain = true
+
+[observability]
+enabled = true
