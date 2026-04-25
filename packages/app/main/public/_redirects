@@ -1,6 +1,11 @@
-# Serve the prerendered shell for dynamic client routes so a direct
-# hit (refresh, shared link) hydrates instead of 404ing; SolidStart's
-# router picks up the real path from the URL. Status 200 = rewrite
-# (proxy target's content, keep original URL).
+# Serve a route-shaped prerendered shell for dynamic client routes so
+# a direct hit (refresh, shared link) hydrates instead of 404ing.
+# Target must match the *route* the client will mount, not the URL
+# tree's index — otherwise hydration walks SSR DOM produced by a
+# different route and blows up. `/studio/__landing` resolves to the
+# `[id]` route with id `__landing`; the page renders its loading
+# fallback during prerender, which is what the client first paints
+# too. Status 200 = rewrite (proxy target's content, keep original
+# URL).
 
-/studio/*  /studio/  200
+/studio/:id  /studio/__landing  200

@@ -21,7 +21,13 @@ export default defineConfig({
       preset: 'static',
       prerender: {
         crawlLinks: true,
-        routes: ['/404'],
+        // `__landing` is a sentinel id used by `_redirects` to send every
+        // direct hit on `/studio/:id` to a Playback-shaped shell. Without
+        // it those hits land on the prerendered Studio index, and the
+        // client tries to hydrate Playback's tree onto Studio's DOM —
+        // which crashes. Double underscore signals "synthetic, not a
+        // real id."
+        routes: ['/404', '/studio/__landing'],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file
