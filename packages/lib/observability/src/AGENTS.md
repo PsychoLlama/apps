@@ -1,7 +1,7 @@
 ## Guidance
 
 - `index.ts` is the only public API. Imported as `@lib/observability`.
-- Public API is the ergonomic wrappers (`getLogger`, `createTracer`). The raw OTel surface (`logs`, `trace`, `context`, etc.) is re-exported as an escape hatch.
+- Public API is the ergonomic wrappers (`createLogger`, `createTracer`). The raw OTel surface (`logs`, `trace`, `context`, etc.) is re-exported as an escape hatch.
 - Provider implementations live in `internal/`. Public API surface stays OTel-shaped underneath.
 - `configure()` is the single wire-up point. Entry points call it once before any module emits telemetry.
 - Co-locate tests. Example: `log.ts` and `__tests__/log.test.ts`.

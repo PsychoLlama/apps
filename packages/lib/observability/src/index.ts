@@ -1,4 +1,4 @@
-export { getLogger, type AppLogger } from './log';
+export { createLogger, type AppLogger } from './logging';
 export { createTracer, type AppTracer } from './trace';
 export { configure, type ConfigureOptions } from './setup';
 

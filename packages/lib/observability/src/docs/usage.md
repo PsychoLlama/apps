@@ -11,7 +11,7 @@
 
 ## Logging
 
-- `getLogger(name)`: Returns an `AppLogger` for the given instrumentation scope. Names are dot-separated (`app.studio.recorder`, `lib.ui.button`).
+- `createLogger(name)`: Returns an `AppLogger` for the given instrumentation scope. Names are dot-separated (`app.studio.recorder`, `lib.ui.button`).
 - `logger.{debug,info,warn,error}(body, attributes?)`: Emits at the matching severity.
 
 ## Tracing

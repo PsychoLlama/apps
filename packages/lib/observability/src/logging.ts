@@ -30,7 +30,7 @@ const wrap =
  * (`app.studio.recorder`, `lib.ui.button`). Multiple calls with the same
  * name share an underlying OTel logger.
  */
-export const getLogger = (name: string): AppLogger => {
+export const createLogger = (name: string): AppLogger => {
   const logger = logs.getLogger(name);
   return {
     debug: wrap(logger, SeverityNumber.DEBUG),

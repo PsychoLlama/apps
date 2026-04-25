@@ -1,5 +1,5 @@
 import { logs } from '@opentelemetry/api-logs';
-import { getLogger } from '../log';
+import { createLogger } from '../logging';
 import { configure } from '../setup';
 
 beforeEach(() => {
@@ -8,14 +8,14 @@ beforeEach(() => {
   configure({ logs: 'console' });
 });
 
-describe('getLogger', () => {
+describe('createLogger', () => {
   it('routes each level method to the matching console method', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const info = vi.spyOn(console, 'info').mockImplementation(() => {});
     const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
-    const log = getLogger('test');
+    const log = createLogger('test');
     log.error('e');
     log.warn('w');
     log.info('i');
@@ -29,7 +29,7 @@ describe('getLogger', () => {
 
   it('passes the body and attributes through to the underlying emit', () => {
     const spy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    getLogger('app.test').info('hello', { user: 'alice' });
+    createLogger('app.test').info('hello', { user: 'alice' });
     const args = spy.mock.calls[0] as [string, string, Record<string, unknown>];
     expect(args[0]).toBe('[INFO] app.test');
     expect(args[1]).toBe('hello');
@@ -38,7 +38,7 @@ describe('getLogger', () => {
 
   it('omits attributes when none given', () => {
     const spy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    getLogger('test').info('hello');
+    createLogger('test').info('hello');
     const args = spy.mock.calls[0] as [string, string, undefined];
     expect(args[2]).toBeUndefined();
   });
