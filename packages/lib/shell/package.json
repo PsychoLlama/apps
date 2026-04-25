@@ -4,6 +4,7 @@
   "type": "module",
   "version": "0.0.0",
   "description": "Site chrome (nav, layout frame) shared across apps.",
+  "license": "MIT",
   "exports": {
     ".": "./src/index.ts"
   },

@@ -4,6 +4,7 @@
   "type": "module",
   "version": "0.0.0",
   "description": "Component library.",
+  "license": "MIT",
   "exports": {
     ".": "./src/index.ts"
   },

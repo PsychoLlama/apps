@@ -4,6 +4,7 @@
   "type": "module",
   "version": "0.0.0",
   "description": "Design tokens (color, spacing, typography, motion).",
+  "license": "MIT",
   "exports": {
     ".": "./src/index.css.ts",
     "./color-scheme": "./src/color-scheme.ts",

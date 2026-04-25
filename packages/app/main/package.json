@@ -4,6 +4,7 @@
   "type": "module",
   "version": "0.0.0",
   "description": "SolidStart host. Owns routing and the top-level app.",
+  "license": "MIT",
   "author": "Jesse Gibson <JesseTheGibson@gmail.com>",
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
