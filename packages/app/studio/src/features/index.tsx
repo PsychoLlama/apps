@@ -341,7 +341,7 @@ const ErrorState = (props: { error: string; onRetry: () => void }) => {
 const UnsupportedState = () => {
   return (
     <Flex as="div" direction="column" class={css.shell}>
-      <SiteHeader title="Recording Studio" />
+      <SiteHeader title="Studio" />
       <Flex
         as="main"
         direction="column"
@@ -417,7 +417,7 @@ export default function Studio() {
       fallback={<UnsupportedState />}
     >
       <Flex as="div" direction="column" class={css.shell}>
-        <SiteHeader title="Recording Studio" />
+        <SiteHeader title="Studio" />
         <Flex as="div" grow class={css.body}>
           <Flex as="main" align="center" justify="center" grow class={css.main}>
             <Switch>
