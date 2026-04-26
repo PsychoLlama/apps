@@ -33,6 +33,7 @@ export {
   type CardTag,
 } from './components/card/card';
 export { default as Inset, type InsetProps } from './components/inset/inset';
+export { default as Kbd, type KbdProps } from './components/kbd/kbd';
 export {
   default as LinkButton,
   type LinkButtonProps,
