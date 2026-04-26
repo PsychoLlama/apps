@@ -19,11 +19,11 @@
  */
 
 import {
+  createEffect,
   createMemo,
   createUniqueId,
   mergeProps,
   onCleanup,
-  onMount,
   Show,
   splitProps,
   type JSX,
@@ -100,8 +100,12 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
     activationMode: () => local.activationMode,
     loop: () => local.loop,
     triggers: new Map(),
-    triggerId: (value) => `${baseId}-trigger-${value}`,
-    contentId: (value) => `${baseId}-content-${value}`,
+    // `value` is consumer-supplied and may contain whitespace or other
+    // characters that aren't valid in space-separated IDREF lists like
+    // `aria-controls`. Percent-encode to keep IDs deterministic on both
+    // sides (Trigger and Content) without a registration race.
+    triggerId: (value) => `${baseId}-trigger-${encodeURIComponent(value)}`,
+    contentId: (value) => `${baseId}-content-${encodeURIComponent(value)}`,
   };
 
   const className = () =>
@@ -240,16 +244,21 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
 
   let buttonRef: HTMLButtonElement | undefined;
 
-  onMount(() => {
+  // `createEffect` (not `onMount`) so that re-using the same trigger
+  // instance with a different `value` re-keys the registry under the
+  // new value and cleans up the old key.
+  createEffect(() => {
     if (!buttonRef) return;
+    const currentValue = local.value;
     const record: TabsTriggerRecord = {
       el: buttonRef,
       disabled: isDisabled,
     };
-    ctx.triggers.set(local.value, record);
+    ctx.triggers.set(currentValue, record);
     onCleanup(() => {
-      const current = ctx.triggers.get(local.value);
-      if (current === record) ctx.triggers.delete(local.value);
+      if (ctx.triggers.get(currentValue) === record) {
+        ctx.triggers.delete(currentValue);
+      }
     });
   });
 
@@ -419,8 +428,9 @@ const neighbor = (
 const firstEnabledTrigger = (
   triggers: Map<string, TabsTriggerRecord>,
 ): string | undefined => {
-  for (const [value, record] of triggers) {
-    if (!record.disabled()) return value;
+  for (const value of orderedValues(triggers)) {
+    const record = triggers.get(value);
+    if (record && !record.disabled()) return value;
   }
   return undefined;
 };
@@ -428,9 +438,11 @@ const firstEnabledTrigger = (
 const lastEnabledTrigger = (
   triggers: Map<string, TabsTriggerRecord>,
 ): string | undefined => {
-  let last: string | undefined;
-  for (const [value, record] of triggers) {
-    if (!record.disabled()) last = value;
+  const order = orderedValues(triggers);
+  for (let idx = order.length - 1; idx >= 0; idx--) {
+    const value = order[idx];
+    const record = triggers.get(value);
+    if (record && !record.disabled()) return value;
   }
-  return last;
+  return undefined;
 };

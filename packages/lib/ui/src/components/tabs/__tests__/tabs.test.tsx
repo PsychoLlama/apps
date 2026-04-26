@@ -235,6 +235,25 @@ describe('Tabs', () => {
     expect(document.activeElement).toBe(first);
   });
 
+  it('produces valid IDREFs even when the value contains whitespace', () => {
+    const { state, setValue } = setup('team settings');
+    const { container } = render(() => (
+      <Tabs.Root value={state.value} onValueChange={setValue}>
+        <Tabs.List>
+          <Tabs.Trigger value="team settings">Team Settings</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="team settings">Panel</Tabs.Content>
+      </Tabs.Root>
+    ));
+
+    const trigger = container.querySelector<HTMLButtonElement>('[role="tab"]');
+    const panel = container.querySelector<HTMLElement>('[role="tabpanel"]');
+    expect(trigger?.id).not.toContain(' ');
+    expect(panel?.id).not.toContain(' ');
+    expect(trigger?.getAttribute('aria-controls')).toBe(panel?.id);
+    expect(panel?.getAttribute('aria-labelledby')).toBe(trigger?.id);
+  });
+
   it('renders a button with the disabled attribute when disabled', () => {
     const { container } = render(() => (
       <Harness initialValue="one" disabledValue="two" />
