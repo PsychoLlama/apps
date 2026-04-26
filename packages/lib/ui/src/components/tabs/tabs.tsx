@@ -34,7 +34,7 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
-import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
+import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import {
   TabsContext,
   useTabsContext,
@@ -49,7 +49,7 @@ import * as css from './tabs.css';
 // --- Root ---
 
 /** `Tabs.Root` props. Controlled — `value` and `onValueChange` are required. */
-export interface TabsRootProps extends MarginProps, TestIdProps {
+export interface TabsRootProps extends MarginProps, RequiredTestIdProps {
   /** The active tab value. */
   value: string;
   /** Called when the user activates a different tab. */
@@ -135,7 +135,7 @@ type TabsListJustify = 'start' | 'center' | 'end';
 type TabsListWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
 /** `Tabs.List` props. Visual configuration for the trigger row. */
-export interface TabsListProps extends TestIdProps {
+export interface TabsListProps extends RequiredTestIdProps {
   /** Visual size on a 1–2 scale. @default 2 */
   size?: TabsListSize;
   /** Indicator and active-text color. @default 'accent' */
@@ -206,7 +206,7 @@ export const TabsList: ParentComponent<TabsListProps> = (rawProps) => {
 // --- Trigger ---
 
 /** `Tabs.Trigger` props. Always renders a `<button>`. */
-export interface TabsTriggerProps extends TestIdProps {
+export interface TabsTriggerProps extends RequiredTestIdProps {
   /** Identifier matched against `Tabs.Root`'s `value`. */
   value: string;
   /** Disable the trigger. Skipped during keyboard navigation. */
@@ -343,7 +343,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
 
 /** `Tabs.Content` props. Always renders a `<div role="tabpanel">`. */
 export interface TabsContentProps
-  extends TestIdProps, JSX.HTMLAttributes<HTMLDivElement> {
+  extends RequiredTestIdProps, JSX.HTMLAttributes<HTMLDivElement> {
   /** Identifier matched against `Tabs.Root`'s `value`. Only the active panel renders. */
   value: string;
 }

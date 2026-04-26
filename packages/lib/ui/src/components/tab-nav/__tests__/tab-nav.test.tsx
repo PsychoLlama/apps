@@ -1,5 +1,5 @@
 import { MemoryRouter, Route } from '@solidjs/router';
-import { render } from '@solidjs/testing-library';
+import { render, screen } from '@solidjs/testing-library';
 import type { Component } from 'solid-js';
 import { TabNavLink, TabNavRoot, type TabNavRootProps } from '../tab-nav';
 
@@ -12,68 +12,75 @@ const mount = (page: Component) =>
 
 describe('TabNav', () => {
   it('renders a navigation landmark with the supplied aria-label', () => {
-    const { container } = mount(() => (
-      <TabNavRoot aria-label="Primary">
-        <TabNavLink href="/">Home</TabNavLink>
+    mount(() => (
+      <TabNavRoot testId="nav" aria-label="Primary">
+        <TabNavLink testId="nav-home" href="/">
+          Home
+        </TabNavLink>
       </TabNavRoot>
     ));
 
-    const nav = container.querySelector('nav')!;
-    expect(nav.getAttribute('aria-label')).toBe('Primary');
+    expect(screen.getByTestId('nav')).toHaveAttribute('aria-label', 'Primary');
   });
 
   it('wraps each link in its own <li>', () => {
-    const { container } = mount(() => (
-      <TabNavRoot aria-label="Primary">
-        <TabNavLink href="/a">A</TabNavLink>
-        <TabNavLink href="/b">B</TabNavLink>
+    mount(() => (
+      <TabNavRoot testId="nav" aria-label="Primary">
+        <TabNavLink testId="nav-a" href="/a">
+          A
+        </TabNavLink>
+        <TabNavLink testId="nav-b" href="/b">
+          B
+        </TabNavLink>
       </TabNavRoot>
     ));
 
-    const items = container.querySelectorAll('li');
-    expect(items.length).toBe(2);
-    items.forEach((li) => {
-      expect(li.querySelector('a')).toBeTruthy();
-    });
+    const linkA = screen.getByTestId('nav-a');
+    const linkB = screen.getByTestId('nav-b');
+    expect(linkA.parentElement?.tagName).toBe('LI');
+    expect(linkB.parentElement?.tagName).toBe('LI');
   });
 
   it('marks only the active link with aria-current="page"', () => {
-    const { container } = mount(() => (
-      <TabNavRoot aria-label="Primary">
-        <TabNavLink href="/a">A</TabNavLink>
-        <TabNavLink href="/b" active>
+    mount(() => (
+      <TabNavRoot testId="nav" aria-label="Primary">
+        <TabNavLink testId="nav-a" href="/a">
+          A
+        </TabNavLink>
+        <TabNavLink testId="nav-b" href="/b" active>
           B
         </TabNavLink>
-        <TabNavLink href="/c">C</TabNavLink>
+        <TabNavLink testId="nav-c" href="/c">
+          C
+        </TabNavLink>
       </TabNavRoot>
     ));
 
-    const links = Array.from(container.querySelectorAll('a'));
-    const currents = links.filter(
-      (link) => link.getAttribute('aria-current') === 'page',
-    );
-    expect(currents.length).toBe(1);
-    expect(currents[0]?.getAttribute('href')).toBe('/b');
+    expect(screen.getByTestId('nav-a')).not.toHaveAttribute('aria-current');
+    expect(screen.getByTestId('nav-b')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('nav-c')).not.toHaveAttribute('aria-current');
   });
 
   it('renders each link with the expected href on the underlying anchor', () => {
-    const { container } = mount(() => (
-      <TabNavRoot aria-label="Primary">
-        <TabNavLink href="/one">One</TabNavLink>
-        <TabNavLink href="/two">Two</TabNavLink>
+    mount(() => (
+      <TabNavRoot testId="nav" aria-label="Primary">
+        <TabNavLink testId="nav-one" href="/one">
+          One
+        </TabNavLink>
+        <TabNavLink testId="nav-two" href="/two">
+          Two
+        </TabNavLink>
       </TabNavRoot>
     ));
 
-    const hrefs = Array.from(container.querySelectorAll('a')).map((link) =>
-      link.getAttribute('href'),
-    );
-    expect(hrefs).toEqual(['/one', '/two']);
+    expect(screen.getByTestId('nav-one')).toHaveAttribute('href', '/one');
+    expect(screen.getByTestId('nav-two')).toHaveAttribute('href', '/two');
   });
 
   it('requires aria-label at the type level', () => {
     expectTypeOf<TabNavRootProps>().toHaveProperty('aria-label');
     // @ts-expect-error — `aria-label` is required.
-    const _missing: TabNavRootProps = { children: null };
+    const _missing: TabNavRootProps = { testId: 'nav', children: null };
     void _missing;
   });
 });

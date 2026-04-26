@@ -31,6 +31,7 @@ const meta = {
   title: 'UI/Components',
   component: TabsRoot,
   args: {
+    testId: 'tabs',
     value: 'overview',
     onValueChange: () => {},
     orientation: 'horizontal',
@@ -75,6 +76,7 @@ const meta = {
     const { state, setValue } = useTabsHarness(untrack(() => props.value));
     return (
       <TabsRoot
+        testId={props.testId}
         value={state.value}
         onValueChange={setValue}
         orientation={props.orientation}
@@ -82,29 +84,62 @@ const meta = {
         loop={props.loop}
       >
         <TabsList
+          testId={`${props.testId}-list`}
           size={props.size}
           color={props.color}
           highContrast={props.highContrast}
           justify={props.justify}
           wrap={props.wrap}
         >
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="analytics" disabled>
+          <TabsTrigger
+            testId={`${props.testId}-trigger-overview`}
+            value="overview"
+          >
+            Overview
+          </TabsTrigger>
+          <TabsTrigger
+            testId={`${props.testId}-trigger-settings`}
+            value="settings"
+          >
+            Settings
+          </TabsTrigger>
+          <TabsTrigger
+            testId={`${props.testId}-trigger-analytics`}
+            value="analytics"
+            disabled
+          >
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
+          <TabsTrigger
+            testId={`${props.testId}-trigger-billing`}
+            value="billing"
+          >
+            Billing
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="overview">
+        <TabsContent
+          testId={`${props.testId}-content-overview`}
+          value="overview"
+        >
           The overview panel. Switch tabs with mouse, touch, or keyboard
           (arrows, Home, End).
         </TabsContent>
-        <TabsContent value="settings">Settings panel.</TabsContent>
-        <TabsContent value="analytics">
+        <TabsContent
+          testId={`${props.testId}-content-settings`}
+          value="settings"
+        >
+          Settings panel.
+        </TabsContent>
+        <TabsContent
+          testId={`${props.testId}-content-analytics`}
+          value="analytics"
+        >
           You can't actually see this — Analytics is disabled in the trigger
           row.
         </TabsContent>
-        <TabsContent value="billing">Billing panel.</TabsContent>
+        <TabsContent testId={`${props.testId}-content-billing`} value="billing">
+          Billing panel.
+        </TabsContent>
       </TabsRoot>
     );
   },

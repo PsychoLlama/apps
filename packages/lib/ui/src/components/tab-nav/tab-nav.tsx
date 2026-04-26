@@ -26,7 +26,7 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
-import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
+import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import * as shared from '../tabs/shared.css';
 import * as css from './tab-nav.css';
 
@@ -38,7 +38,7 @@ type TabNavJustify = 'start' | 'center' | 'end';
 type TabNavWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
 /** `TabNav.Root` props. Wraps a `<nav>` with an inner `<ul>` styled like a tab list. */
-export interface TabNavRootProps extends MarginProps, TestIdProps {
+export interface TabNavRootProps extends MarginProps, RequiredTestIdProps {
   /**
    * Accessible name for the navigation landmark. Required so assistive
    * tech can disambiguate this nav from any other on the page.
@@ -117,7 +117,7 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
 // --- Link ---
 
 /** `TabNav.Link` props. Renders `<li><A href=...>` from `@solidjs/router`. */
-export interface TabNavLinkProps extends TestIdProps, AnchorProps {
+export interface TabNavLinkProps extends RequiredTestIdProps, AnchorProps {
   /**
    * Mark the link as the current page. Sets `aria-current="page"` and
    * applies the active visual indicator. Consumers compute this from

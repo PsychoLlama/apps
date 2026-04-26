@@ -1,18 +1,23 @@
-import { createSignal } from 'solid-js';
-import { render } from '@solidjs/testing-library';
+import { createSignal, untrack } from 'solid-js';
+import { render, screen } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '../tabs';
 
 const Harness = (overrides: {
+  prefix?: string;
   initialValue?: string;
   activationMode?: 'automatic' | 'manual';
   loop?: boolean;
   disabledValue?: string;
   onValueChange?: (value: string) => void;
 }) => {
-  const [value, setValue] = createSignal(overrides.initialValue ?? 'one');
+  const prefix = untrack(() => overrides.prefix ?? 'tabs');
+  const [value, setValue] = createSignal(
+    untrack(() => overrides.initialValue ?? 'one'),
+  );
   return (
     <TabsRoot
+      testId={`${prefix}-root`}
       value={value()}
       onValueChange={(next) => {
         overrides.onValueChange?.(next);
@@ -21,97 +26,107 @@ const Harness = (overrides: {
       activationMode={overrides.activationMode}
       loop={overrides.loop}
     >
-      <TabsList>
-        <TabsTrigger value="one">One</TabsTrigger>
-        <TabsTrigger value="two" disabled={overrides.disabledValue === 'two'}>
+      <TabsList testId={`${prefix}-list`}>
+        <TabsTrigger testId={`${prefix}-trigger-one`} value="one">
+          One
+        </TabsTrigger>
+        <TabsTrigger
+          testId={`${prefix}-trigger-two`}
+          value="two"
+          disabled={overrides.disabledValue === 'two'}
+        >
           Two
         </TabsTrigger>
         <TabsTrigger
+          testId={`${prefix}-trigger-three`}
           value="three"
           disabled={overrides.disabledValue === 'three'}
         >
           Three
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="one">Panel one</TabsContent>
-      <TabsContent value="two">Panel two</TabsContent>
-      <TabsContent value="three">Panel three</TabsContent>
+      <TabsContent testId={`${prefix}-content-one`} value="one">
+        Panel one
+      </TabsContent>
+      <TabsContent testId={`${prefix}-content-two`} value="two">
+        Panel two
+      </TabsContent>
+      <TabsContent testId={`${prefix}-content-three`} value="three">
+        Panel three
+      </TabsContent>
     </TabsRoot>
   );
 };
 
-const triggers = (container: HTMLElement) =>
-  Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
-
 describe('Tabs', () => {
   it('renders the active panel and hides the others', () => {
-    const { container } = render(() => <Harness initialValue="two" />);
+    render(() => <Harness initialValue="two" />);
 
-    const panels = container.querySelectorAll('[role="tabpanel"]');
-    expect(panels.length).toBe(1);
-    expect(panels[0]?.textContent).toBe('Panel two');
+    expect(screen.getByTestId('tabs-content-two')).toBeInTheDocument();
+    expect(screen.getByTestId('tabs-content-two')).toHaveTextContent(
+      'Panel two',
+    );
+    expect(screen.queryByTestId('tabs-content-one')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tabs-content-three')).not.toBeInTheDocument();
   });
 
   it('wires aria-controls / aria-labelledby between trigger and panel', () => {
-    const { container } = render(() => <Harness initialValue="one" />);
+    render(() => <Harness initialValue="one" />);
 
-    const trigger = container.querySelector<HTMLButtonElement>(
-      '[role="tab"][aria-selected="true"]',
-    );
-    const panel = container.querySelector<HTMLElement>('[role="tabpanel"]');
+    const trigger = screen.getByTestId('tabs-trigger-one');
+    const panel = screen.getByTestId('tabs-content-one');
 
-    expect(trigger?.id).toBeTruthy();
-    expect(panel?.id).toBeTruthy();
-    expect(trigger?.getAttribute('aria-controls')).toBe(panel?.id);
-    expect(panel?.getAttribute('aria-labelledby')).toBe(trigger?.id);
+    expect(trigger).toHaveAttribute('aria-controls', panel.id);
+    expect(panel).toHaveAttribute('aria-labelledby', trigger.id);
   });
 
   it('mints unique ids per <TabsRoot> instance', () => {
-    const { container } = render(() => (
+    render(() => (
       <>
-        <Harness initialValue="one" />
-        <Harness initialValue="one" />
+        <Harness prefix="a" initialValue="one" />
+        <Harness prefix="b" initialValue="one" />
       </>
     ));
 
-    const triggerIds = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(
-        '[role="tab"][aria-selected="true"]',
-      ),
-    ).map((el) => el.id);
-
-    expect(triggerIds.length).toBe(2);
-    expect(new Set(triggerIds).size).toBe(2);
+    const triggerA = screen.getByTestId('a-trigger-one');
+    const triggerB = screen.getByTestId('b-trigger-one');
+    expect(triggerA.id).not.toBe(triggerB.id);
   });
 
   it('applies aria-orientation from the orientation prop', () => {
-    const { container } = render(() => {
+    render(() => {
       const [value, setValue] = createSignal('one');
       return (
         <TabsRoot
+          testId="tabs-root"
           value={value()}
           onValueChange={setValue}
           orientation="vertical"
         >
-          <TabsList>
-            <TabsTrigger value="one">One</TabsTrigger>
+          <TabsList testId="tabs-list">
+            <TabsTrigger testId="tabs-trigger-one" value="one">
+              One
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="one">Panel</TabsContent>
+          <TabsContent testId="tabs-content-one" value="one">
+            Panel
+          </TabsContent>
         </TabsRoot>
       );
     });
 
-    const list = container.querySelector('[role="tablist"]');
-    expect(list?.getAttribute('aria-orientation')).toBe('vertical');
+    expect(screen.getByTestId('tabs-list')).toHaveAttribute(
+      'aria-orientation',
+      'vertical',
+    );
   });
 
   it('fires onValueChange when a trigger is clicked', async () => {
     const handler = vi.fn();
     const user = userEvent.setup();
-    const { container } = render(() => <Harness onValueChange={handler} />);
+    render(() => <Harness onValueChange={handler} />);
 
-    const [, secondTrigger] = triggers(container);
-    if (secondTrigger) await user.click(secondTrigger);
+    await user.click(screen.getByTestId('tabs-trigger-two'));
 
     expect(handler).toHaveBeenCalledWith('two');
   });
@@ -119,28 +134,24 @@ describe('Tabs', () => {
   it('moves focus and activates next trigger on ArrowRight (automatic)', async () => {
     const handler = vi.fn();
     const user = userEvent.setup();
-    const { container } = render(() => <Harness onValueChange={handler} />);
+    render(() => <Harness onValueChange={handler} />);
 
-    const [first, second] = triggers(container);
-    first?.focus();
+    screen.getByTestId('tabs-trigger-one').focus();
     await user.keyboard('{ArrowRight}');
 
-    expect(document.activeElement).toBe(second);
+    expect(screen.getByTestId('tabs-trigger-two')).toHaveFocus();
     expect(handler).toHaveBeenLastCalledWith('two');
   });
 
   it('moves focus only (no activation) on ArrowRight in manual mode', async () => {
     const handler = vi.fn();
     const user = userEvent.setup();
-    const { container } = render(() => (
-      <Harness onValueChange={handler} activationMode="manual" />
-    ));
+    render(() => <Harness onValueChange={handler} activationMode="manual" />);
 
-    const [first, second] = triggers(container);
-    first?.focus();
+    screen.getByTestId('tabs-trigger-one').focus();
     await user.keyboard('{ArrowRight}');
 
-    expect(document.activeElement).toBe(second);
+    expect(screen.getByTestId('tabs-trigger-two')).toHaveFocus();
     expect(handler).not.toHaveBeenCalled();
 
     await user.keyboard(' ');
@@ -149,104 +160,113 @@ describe('Tabs', () => {
 
   it('jumps to first/last enabled trigger on Home/End', async () => {
     const user = userEvent.setup();
-    const { container } = render(() => <Harness initialValue="two" />);
+    render(() => <Harness initialValue="two" />);
 
-    const [first, second, third] = triggers(container);
-    second?.focus();
+    screen.getByTestId('tabs-trigger-two').focus();
 
     await user.keyboard('{End}');
-    expect(document.activeElement).toBe(third);
+    expect(screen.getByTestId('tabs-trigger-three')).toHaveFocus();
 
     await user.keyboard('{Home}');
-    expect(document.activeElement).toBe(first);
+    expect(screen.getByTestId('tabs-trigger-one')).toHaveFocus();
   });
 
   it('skips disabled triggers during keyboard nav', async () => {
     const user = userEvent.setup();
-    const { container } = render(() => (
-      <Harness initialValue="one" disabledValue="two" />
-    ));
+    render(() => <Harness initialValue="one" disabledValue="two" />);
 
-    const [first, , third] = triggers(container);
-    first?.focus();
+    screen.getByTestId('tabs-trigger-one').focus();
     await user.keyboard('{ArrowRight}');
 
-    expect(document.activeElement).toBe(third);
+    expect(screen.getByTestId('tabs-trigger-three')).toHaveFocus();
   });
 
   it('wraps when loop=true and stops at the end when loop=false', async () => {
     const user = userEvent.setup();
     const looping = render(() => <Harness initialValue="three" />);
-    const loopingTriggers = triggers(looping.container);
-    const [first] = loopingTriggers;
-    const last = loopingTriggers[loopingTriggers.length - 1];
-    last?.focus();
+    screen.getByTestId('tabs-trigger-three').focus();
     await user.keyboard('{ArrowRight}');
-    expect(document.activeElement).toBe(first);
+    expect(screen.getByTestId('tabs-trigger-one')).toHaveFocus();
     looping.unmount();
 
-    const noLoop = render(() => <Harness initialValue="three" loop={false} />);
-    const noLoopTriggers = triggers(noLoop.container);
-    const noLoopLast = noLoopTriggers[noLoopTriggers.length - 1];
-    noLoopLast?.focus();
+    render(() => <Harness prefix="noloop" initialValue="three" loop={false} />);
+    const last = screen.getByTestId('noloop-trigger-three');
+    last.focus();
     await user.keyboard('{ArrowRight}');
-    expect(document.activeElement).toBe(noLoopLast);
+    expect(last).toHaveFocus();
   });
 
   it('roving tabindex follows the active value', () => {
-    const { container } = render(() => <Harness initialValue="two" />);
+    render(() => <Harness initialValue="two" />);
 
-    const [first, second, third] = triggers(container);
-    expect(first?.tabIndex).toBe(-1);
-    expect(second?.tabIndex).toBe(0);
-    expect(third?.tabIndex).toBe(-1);
+    expect(screen.getByTestId('tabs-trigger-one')).toHaveAttribute(
+      'tabindex',
+      '-1',
+    );
+    expect(screen.getByTestId('tabs-trigger-two')).toHaveAttribute(
+      'tabindex',
+      '0',
+    );
+    expect(screen.getByTestId('tabs-trigger-three')).toHaveAttribute(
+      'tabindex',
+      '-1',
+    );
   });
 
   it('does not move DOM focus when the consumer changes value externally', () => {
     const [value, setValue] = createSignal('one');
-    const { container } = render(() => (
-      <TabsRoot value={value()} onValueChange={setValue}>
-        <TabsList>
-          <TabsTrigger value="one">One</TabsTrigger>
-          <TabsTrigger value="two">Two</TabsTrigger>
+    render(() => (
+      <TabsRoot testId="root" value={value()} onValueChange={setValue}>
+        <TabsList testId="list">
+          <TabsTrigger testId="trigger-one" value="one">
+            One
+          </TabsTrigger>
+          <TabsTrigger testId="trigger-two" value="two">
+            Two
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="one">Panel one</TabsContent>
-        <TabsContent value="two">Panel two</TabsContent>
+        <TabsContent testId="content-one" value="one">
+          Panel one
+        </TabsContent>
+        <TabsContent testId="content-two" value="two">
+          Panel two
+        </TabsContent>
       </TabsRoot>
     ));
 
-    const [first] = triggers(container);
-    first?.focus();
+    const first = screen.getByTestId('trigger-one');
+    first.focus();
     setValue('two');
 
-    expect(document.activeElement).toBe(first);
+    expect(first).toHaveFocus();
   });
 
   it('produces valid IDREFs even when the value contains whitespace', () => {
     const [value, setValue] = createSignal('team settings');
-    const { container } = render(() => (
-      <TabsRoot value={value()} onValueChange={setValue}>
-        <TabsList>
-          <TabsTrigger value="team settings">Team Settings</TabsTrigger>
+    render(() => (
+      <TabsRoot testId="root" value={value()} onValueChange={setValue}>
+        <TabsList testId="list">
+          <TabsTrigger testId="trigger" value="team settings">
+            Team Settings
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="team settings">Panel</TabsContent>
+        <TabsContent testId="content" value="team settings">
+          Panel
+        </TabsContent>
       </TabsRoot>
     ));
 
-    const trigger = container.querySelector<HTMLButtonElement>('[role="tab"]');
-    const panel = container.querySelector<HTMLElement>('[role="tabpanel"]');
-    expect(trigger?.id).not.toContain(' ');
-    expect(panel?.id).not.toContain(' ');
-    expect(trigger?.getAttribute('aria-controls')).toBe(panel?.id);
-    expect(panel?.getAttribute('aria-labelledby')).toBe(trigger?.id);
+    const trigger = screen.getByTestId('trigger');
+    const panel = screen.getByTestId('content');
+    expect(trigger.id).not.toContain(' ');
+    expect(panel.id).not.toContain(' ');
+    expect(trigger).toHaveAttribute('aria-controls', panel.id);
+    expect(panel).toHaveAttribute('aria-labelledby', trigger.id);
   });
 
   it('renders a button with the disabled attribute when disabled', () => {
-    const { container } = render(() => (
-      <Harness initialValue="one" disabledValue="two" />
-    ));
+    render(() => <Harness initialValue="one" disabledValue="two" />);
 
-    const [, second] = triggers(container);
-    expect(second?.disabled).toBe(true);
+    expect(screen.getByTestId('tabs-trigger-two')).toBeDisabled();
   });
 });

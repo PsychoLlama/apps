@@ -1,7 +1,12 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "types": ["vite/client", "vitest/globals", "unplugin-icons/types/solid"]
+    "types": [
+      "vite/client",
+      "vitest/globals",
+      "unplugin-icons/types/solid",
+      "@testing-library/jest-dom"
+    ]
   },
   "include": ["src"]
 }

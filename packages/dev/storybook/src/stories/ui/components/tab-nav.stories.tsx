@@ -8,6 +8,7 @@ const meta = {
   title: 'UI/Navigation',
   component: TabNavRoot,
   args: {
+    testId: 'tab-nav',
     'aria-label': 'Primary navigation',
     size: 2,
     color: 'accent',
@@ -45,12 +46,18 @@ const meta = {
   ],
   render: (props: TabNavRootProps) => (
     <TabNavRoot {...props}>
-      <TabNavLink href="/" active>
+      <TabNavLink testId={`${props.testId}-home`} href="/" active>
         Home
       </TabNavLink>
-      <TabNavLink href="/projects">Projects</TabNavLink>
-      <TabNavLink href="/team">Team</TabNavLink>
-      <TabNavLink href="/settings">Settings</TabNavLink>
+      <TabNavLink testId={`${props.testId}-projects`} href="/projects">
+        Projects
+      </TabNavLink>
+      <TabNavLink testId={`${props.testId}-team`} href="/team">
+        Team
+      </TabNavLink>
+      <TabNavLink testId={`${props.testId}-settings`} href="/settings">
+        Settings
+      </TabNavLink>
     </TabNavRoot>
   ),
 } satisfies Meta<TabNavRootProps>;
