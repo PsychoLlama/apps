@@ -59,3 +59,12 @@ export const jadeDarkAlpha: ColorScale = {
   11: '#21fec0d6',
   12: '#b8ffe1ef',
 };
+
+/** Legible text color paired with `jade[9]`. Mode-invariant. */
+export const jadeContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `jade[2]`. Light mode. */
+export const jadeLightSurface = '#f1faf5cc';
+
+/** Translucent panel-ish background, distinct from `jade[2]`. Dark mode. */
+export const jadeDarkSurface = '#13271f80';

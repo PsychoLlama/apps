@@ -59,3 +59,12 @@ export const tomatoDarkAlpha: ColorScale = {
   11: '#ff977d',
   12: '#ffd6cefb',
 };
+
+/** Legible text color paired with `tomato[9]`. Mode-invariant. */
+export const tomatoContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `tomato[2]`. Light mode. */
+export const tomatoLightSurface = '#fff6f5cc';
+
+/** Translucent panel-ish background, distinct from `tomato[2]`. Dark mode. */
+export const tomatoDarkSurface = '#2d191580';

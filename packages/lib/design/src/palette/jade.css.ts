@@ -1,5 +1,25 @@
-import { createPalette } from '../color-scheme';
-import { jadeDark, jadeDarkAlpha, jadeLight, jadeLightAlpha } from './jade';
+import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  jadeContrast,
+  jadeDark,
+  jadeDarkAlpha,
+  jadeDarkSurface,
+  jadeLight,
+  jadeLightAlpha,
+  jadeLightSurface,
+} from './jade';
 
-export const jade = createPalette(jadeLight, jadeDark);
-export const jadeAlpha = createPalette(jadeLightAlpha, jadeDarkAlpha);
+const solid = createColorScale(jadeLight, jadeDark);
+
+export const jade: ColorPalette = {
+  solid,
+  alpha: createColorScale(jadeLightAlpha, jadeDarkAlpha),
+  contrast: createColorVar(jadeContrast),
+  surface: createColorVar(jadeLightSurface, jadeDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};

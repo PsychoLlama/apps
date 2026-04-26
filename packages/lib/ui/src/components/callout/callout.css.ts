@@ -7,15 +7,8 @@
  */
 
 import { style, styleVariants } from '@vanilla-extract/css';
-import {
-  accent,
-  accentAlpha,
-  neutral,
-  neutralAlpha,
-  radius,
-  space,
-  typeScale,
-} from '@lib/design';
+import { accent, neutral, radius, space, typeScale } from '@lib/design';
+import type { ColorPalette } from '@lib/design';
 
 // --- Root ---
 
@@ -45,34 +38,31 @@ export const size = styleVariants({
 
 // --- Variant x Color matrix ---
 
-const colors = {
-  accent: { alpha: accentAlpha, solid: accent },
-  neutral: { alpha: neutralAlpha, solid: neutral },
-} as const;
-type ColorName = keyof typeof colors;
+const palettes = { accent, neutral } as const;
+type ColorName = keyof typeof palettes;
 
 const softStyle = (color: ColorName, highContrast: boolean) => {
-  const { alpha, solid } = colors[color];
+  const palette: ColorPalette = palettes[color];
   return style({
-    backgroundColor: alpha[3],
-    color: highContrast ? solid[12] : alpha[11],
+    backgroundColor: palette.alpha[3],
+    color: highContrast ? palette.solid[12] : palette.alpha[11],
   });
 };
 
 const surfaceStyle = (color: ColorName, highContrast: boolean) => {
-  const { alpha, solid } = colors[color];
+  const palette: ColorPalette = palettes[color];
   return style({
-    backgroundColor: alpha[2],
-    boxShadow: `inset 0 0 0 1px ${alpha[6]}`,
-    color: highContrast ? solid[12] : alpha[11],
+    backgroundColor: palette.alpha[2],
+    boxShadow: `inset 0 0 0 1px ${palette.alpha[6]}`,
+    color: highContrast ? palette.solid[12] : palette.alpha[11],
   });
 };
 
 const outlineStyle = (color: ColorName, highContrast: boolean) => {
-  const { alpha, solid } = colors[color];
+  const palette: ColorPalette = palettes[color];
   return style({
-    boxShadow: `inset 0 0 0 1px ${alpha[7]}`,
-    color: highContrast ? solid[12] : alpha[11],
+    boxShadow: `inset 0 0 0 1px ${palette.alpha[7]}`,
+    color: highContrast ? palette.solid[12] : palette.alpha[11],
   });
 };
 

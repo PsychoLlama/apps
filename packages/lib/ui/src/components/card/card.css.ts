@@ -20,7 +20,7 @@ import {
   accent,
   background,
   fast,
-  neutralAlpha,
+  neutral,
   radius,
   type RadiusScale,
   shadow,
@@ -73,7 +73,7 @@ export const interactive = style({
       cursor: 'pointer',
     },
     '&:where(:not(:disabled):focus-visible)': {
-      outline: `2px solid ${accent[8]}`,
+      outline: `2px solid ${accent.solid[8]}`,
       outlineOffset: '2px',
     },
   },
@@ -102,7 +102,7 @@ export const size = styleVariants({
 // --- Variant ---
 
 // Variant-specific hover/active styles only engage when `interactive` is also applied.
-const borderShadow = `inset 0 0 0 1px ${neutralAlpha[6]}`;
+const borderShadow = `inset 0 0 0 1px ${neutral.alpha[6]}`;
 
 export const variant = styleVariants({
   surface: {
@@ -110,10 +110,10 @@ export const variant = styleVariants({
     selectors: {
       '&::after': { boxShadow: borderShadow },
       [`&:where(.${interactive}:not(:disabled):hover)`]: {
-        backgroundColor: neutralAlpha[3],
+        backgroundColor: neutral.alpha[3],
       },
       [`&:where(.${interactive}:not(:disabled):active)`]: {
-        backgroundColor: neutralAlpha[4],
+        backgroundColor: neutral.alpha[4],
       },
     },
   },
@@ -133,10 +133,10 @@ export const variant = styleVariants({
   ghost: {
     selectors: {
       [`&:where(.${interactive}:not(:disabled):hover)`]: {
-        backgroundColor: neutralAlpha[3],
+        backgroundColor: neutral.alpha[3],
       },
       [`&:where(.${interactive}:not(:disabled):active)`]: {
-        backgroundColor: neutralAlpha[4],
+        backgroundColor: neutral.alpha[4],
       },
     },
   },

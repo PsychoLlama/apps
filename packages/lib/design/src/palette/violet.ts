@@ -59,3 +59,12 @@ export const violetDarkAlpha: ColorScale = {
   11: '#baa7ff',
   12: '#e3defffe',
 };
+
+/** Legible text color paired with `violet[9]`. Mode-invariant. */
+export const violetContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `violet[2]`. Light mode. */
+export const violetLightSurface = '#f9f6ffcc';
+
+/** Translucent panel-ish background, distinct from `violet[2]`. Dark mode. */
+export const violetDarkSurface = '#25193980';

@@ -33,7 +33,7 @@ export const base = style({
   },
 
   ':focus-visible': {
-    outline: `2px solid ${accent[8]}`,
+    outline: `2px solid ${accent.solid[8]}`,
     outlineOffset: '2px',
   },
 });
@@ -112,20 +112,20 @@ const solidStyle = (color: ColorName) => {
   const textColor = color === 'neutral' ? background.page : white[12];
 
   return style({
-    backgroundColor: scale[9],
+    backgroundColor: scale.solid[9],
     color: textColor,
     '@media': {
       '(hover: hover)': {
         selectors: {
           '&:hover:not(:disabled)': {
-            backgroundColor: scale[10],
+            backgroundColor: scale.solid[10],
           },
         },
       },
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: scale[10],
+        backgroundColor: scale.solid[10],
         filter: solidActiveFilter,
       },
     },
@@ -136,20 +136,20 @@ const softStyle = (color: ColorName) => {
   const scale = colorScales[color];
 
   return style({
-    backgroundColor: scale[3],
-    color: scale[11],
+    backgroundColor: scale.solid[3],
+    color: scale.solid[11],
     '@media': {
       '(hover: hover)': {
         selectors: {
           '&:hover:not(:disabled)': {
-            backgroundColor: scale[4],
+            backgroundColor: scale.solid[4],
           },
         },
       },
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: scale[5],
+        backgroundColor: scale.solid[5],
       },
     },
   });
@@ -160,21 +160,21 @@ const outlineStyle = (color: ColorName) => {
 
   return style({
     backgroundColor: 'transparent',
-    color: scale[11],
-    boxShadow: `inset 0 0 0 1px ${scale[7]}`,
+    color: scale.solid[11],
+    boxShadow: `inset 0 0 0 1px ${scale.solid[7]}`,
     '@media': {
       '(hover: hover)': {
         selectors: {
           '&:hover:not(:disabled)': {
-            backgroundColor: scale[3],
-            boxShadow: `inset 0 0 0 1px ${scale[8]}`,
+            backgroundColor: scale.solid[3],
+            boxShadow: `inset 0 0 0 1px ${scale.solid[8]}`,
           },
         },
       },
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: scale[4],
+        backgroundColor: scale.solid[4],
       },
     },
   });
@@ -185,19 +185,19 @@ const ghostStyle = (color: ColorName) => {
 
   return style({
     backgroundColor: 'transparent',
-    color: scale[11],
+    color: scale.solid[11],
     '@media': {
       '(hover: hover)': {
         selectors: {
           '&:hover:not(:disabled)': {
-            backgroundColor: scale[3],
+            backgroundColor: scale.solid[3],
           },
         },
       },
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: scale[4],
+        backgroundColor: scale.solid[4],
       },
     },
   });

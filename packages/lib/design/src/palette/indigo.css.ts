@@ -1,10 +1,25 @@
-import { createPalette } from '../color-scheme';
 import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  indigoContrast,
   indigoDark,
   indigoDarkAlpha,
+  indigoDarkSurface,
   indigoLight,
   indigoLightAlpha,
+  indigoLightSurface,
 } from './indigo';
 
-export const indigo = createPalette(indigoLight, indigoDark);
-export const indigoAlpha = createPalette(indigoLightAlpha, indigoDarkAlpha);
+const solid = createColorScale(indigoLight, indigoDark);
+
+export const indigo: ColorPalette = {
+  solid,
+  alpha: createColorScale(indigoLightAlpha, indigoDarkAlpha),
+  contrast: createColorVar(indigoContrast),
+  surface: createColorVar(indigoLightSurface, indigoDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};

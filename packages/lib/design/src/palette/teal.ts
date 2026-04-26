@@ -59,3 +59,12 @@ export const tealDarkAlpha: ColorScale = {
   11: '#0afed5d6',
   12: '#b8ffebef',
 };
+
+/** Legible text color paired with `teal[9]`. Mode-invariant. */
+export const tealContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `teal[2]`. Light mode. */
+export const tealLightSurface = '#f0faf8cc';
+
+/** Translucent panel-ish background, distinct from `teal[2]`. Dark mode. */
+export const tealDarkSurface = '#13272580';

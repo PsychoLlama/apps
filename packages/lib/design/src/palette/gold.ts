@@ -59,3 +59,12 @@ export const goldDarkAlpha: ColorScale = {
   11: '#fee7c6c8',
   12: '#fef7ede7',
 };
+
+/** Legible text color paired with `gold[9]`. Mode-invariant. */
+export const goldContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `gold[2]`. Light mode. */
+export const goldLightSurface = '#f9f8efcc';
+
+/** Translucent panel-ish background, distinct from `gold[2]`. Dark mode. */
+export const goldDarkSurface = '#25231d80';

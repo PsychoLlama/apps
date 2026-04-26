@@ -59,3 +59,12 @@ export const rubyDarkAlpha: ColorScale = {
   11: '#ff949d',
   12: '#ffd3e2fe',
 };
+
+/** Legible text color paired with `ruby[9]`. Mode-invariant. */
+export const rubyContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `ruby[2]`. Light mode. */
+export const rubyLightSurface = '#fff5f6cc';
+
+/** Translucent panel-ish background, distinct from `ruby[2]`. Dark mode. */
+export const rubyDarkSurface = '#2b191d80';

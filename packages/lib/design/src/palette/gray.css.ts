@@ -1,5 +1,25 @@
-import { createPalette } from '../color-scheme';
-import { grayDark, grayDarkAlpha, grayLight, grayLightAlpha } from './gray';
+import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  grayContrast,
+  grayDark,
+  grayDarkAlpha,
+  grayDarkSurface,
+  grayLight,
+  grayLightAlpha,
+  grayLightSurface,
+} from './gray';
 
-export const gray = createPalette(grayLight, grayDark);
-export const grayAlpha = createPalette(grayLightAlpha, grayDarkAlpha);
+const solid = createColorScale(grayLight, grayDark);
+
+export const gray: ColorPalette = {
+  solid,
+  alpha: createColorScale(grayLightAlpha, grayDarkAlpha),
+  contrast: createColorVar(grayContrast),
+  surface: createColorVar(grayLightSurface, grayDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};

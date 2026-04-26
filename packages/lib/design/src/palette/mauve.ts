@@ -59,3 +59,12 @@ export const mauveDarkAlpha: ColorScale = {
   11: '#f5f1ffb7',
   12: '#fdfdffef',
 };
+
+/** Legible text color paired with `mauve[9]`. Mode-invariant. */
+export const mauveContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `mauve[2]`. Light mode. */
+export const mauveLightSurface = '#ffffffcc';
+
+/** Translucent panel-ish background, distinct from `mauve[2]`. Dark mode. */
+export const mauveDarkSurface = '#22212380';

@@ -30,7 +30,7 @@ export const slide = keyframes({
 export const bar = style({
   width: space[4],
   height: '100%',
-  backgroundColor: accent[9],
+  backgroundColor: accent.solid[9],
   animationName: slide,
   animationFillMode: 'forwards',
 });

@@ -15,10 +15,10 @@ export const link = style({
   borderRadius: radius[4],
   transition: `background-color ${fast[2]} ${standard.productive}`,
   ':hover': {
-    backgroundColor: neutral[3],
+    backgroundColor: neutral.solid[3],
   },
   ':active': {
-    backgroundColor: neutral[4],
+    backgroundColor: neutral.solid[4],
   },
 });
 
@@ -27,7 +27,7 @@ export const indicator = style({
   height: space[2],
   minWidth: space[2],
   borderRadius: radius.full,
-  backgroundColor: accent[9],
+  backgroundColor: accent.solid[9],
 });
 
 export const linkDisabled = style({
@@ -45,5 +45,5 @@ export const indicatorDisabled = style({
   height: space[2],
   minWidth: space[2],
   borderRadius: radius.full,
-  backgroundColor: neutral[7],
+  backgroundColor: neutral.solid[7],
 });

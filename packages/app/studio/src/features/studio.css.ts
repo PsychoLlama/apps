@@ -6,7 +6,6 @@ import {
   fast,
   fontWeight,
   neutral,
-  neutralAlpha,
   radius,
   space,
   standard,
@@ -63,7 +62,7 @@ export const mainContent = style({
 
 export const panel = style({
   backgroundColor: background.panelSolid,
-  borderTop: `1px solid ${neutral[6]}`,
+  borderTop: `1px solid ${neutral.solid[6]}`,
   minHeight: 0,
   order: 2,
   '@media': {
@@ -73,7 +72,7 @@ export const panel = style({
       width: 'clamp(300px, 20vw, 480px)',
       flexShrink: 0,
       borderTop: 'none',
-      borderLeft: `1px solid ${neutral[6]}`,
+      borderLeft: `1px solid ${neutral.solid[6]}`,
       order: 1,
     },
   },
@@ -91,7 +90,7 @@ export const panelBody = style({
 });
 
 export const panelFooter = style({
-  borderTop: `1px solid ${neutral[6]}`,
+  borderTop: `1px solid ${neutral.solid[6]}`,
 });
 
 // --- Recording entries ---
@@ -105,7 +104,7 @@ export const entryLink = style({
   cursor: 'pointer',
   transition: `background-color ${fast[2]} ${standard.productive}`,
   ':hover': {
-    backgroundColor: neutral[3],
+    backgroundColor: neutral.solid[3],
   },
 });
 
@@ -121,7 +120,7 @@ export const recordingDot = style({
   width: space[2],
   height: space[2],
   borderRadius: radius.full,
-  backgroundColor: danger[9],
+  backgroundColor: danger.solid[9],
   animation: `${pulse} 1.5s ease-in-out infinite`,
 });
 
@@ -129,7 +128,7 @@ export const recordingDotPaused = style({
   width: space[2],
   height: space[2],
   borderRadius: radius.full,
-  backgroundColor: neutral[8],
+  backgroundColor: neutral.solid[8],
 });
 
 export const timer = style({
@@ -152,14 +151,14 @@ export const timer = style({
 export const trackPill = style({
   padding: `${space[1]} ${space[3]}`,
   borderRadius: radius.full,
-  backgroundColor: neutralAlpha[3],
+  backgroundColor: neutral.alpha[3],
 });
 
 export const trackDot = style({
   width: space[1],
   height: space[1],
   borderRadius: radius.full,
-  backgroundColor: success[9],
+  backgroundColor: success.solid[9],
   animation: `${pulse} 2s ease-in-out infinite`,
 });
 

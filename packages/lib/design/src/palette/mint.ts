@@ -59,3 +59,12 @@ export const mintDarkAlpha: ColorScale = {
   11: '#67ffded2',
   12: '#cbfee9f5',
 };
+
+/** Legible text color paired with `mint[9]`. Mode-invariant. */
+export const mintContrast = '#1a211e';
+
+/** Translucent panel-ish background, distinct from `mint[2]`. Light mode. */
+export const mintLightSurface = '#effaf8cc';
+
+/** Translucent panel-ish background, distinct from `mint[2]`. Dark mode. */
+export const mintDarkSurface = '#15272780';

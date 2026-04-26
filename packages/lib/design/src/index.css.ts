@@ -24,9 +24,7 @@ export {
 
 export {
   accent,
-  accentAlpha,
   neutral,
-  neutralAlpha,
   danger,
   warning,
   success,
@@ -35,6 +33,7 @@ export {
   type TextColor,
   type BackgroundColor,
 } from './tokens/color.css';
+export type { ColorPalette } from './color-scheme';
 
 export type { ThemeColorConfig } from './theme';
 

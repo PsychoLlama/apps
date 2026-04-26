@@ -1,5 +1,25 @@
-import { createPalette } from '../color-scheme';
-import { cyanDark, cyanDarkAlpha, cyanLight, cyanLightAlpha } from './cyan';
+import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  cyanContrast,
+  cyanDark,
+  cyanDarkAlpha,
+  cyanDarkSurface,
+  cyanLight,
+  cyanLightAlpha,
+  cyanLightSurface,
+} from './cyan';
 
-export const cyan = createPalette(cyanLight, cyanDark);
-export const cyanAlpha = createPalette(cyanLightAlpha, cyanDarkAlpha);
+const solid = createColorScale(cyanLight, cyanDark);
+
+export const cyan: ColorPalette = {
+  solid,
+  alpha: createColorScale(cyanLightAlpha, cyanDarkAlpha),
+  contrast: createColorVar(cyanContrast),
+  surface: createColorVar(cyanLightSurface, cyanDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};

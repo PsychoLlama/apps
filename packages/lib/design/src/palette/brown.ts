@@ -59,3 +59,12 @@ export const brownDarkAlpha: ColorScale = {
   11: '#fed1aad9',
   12: '#feecd4f2',
 };
+
+/** Legible text color paired with `brown[9]`. Mode-invariant. */
+export const brownContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `brown[2]`. Light mode. */
+export const brownLightSurface = '#fbf8f4cc';
+
+/** Translucent panel-ish background, distinct from `brown[2]`. Dark mode. */
+export const brownDarkSurface = '#271f1b80';

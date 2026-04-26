@@ -59,3 +59,12 @@ export const slateDarkAlpha: ColorScale = {
   11: '#f1f7feb5',
   12: '#fcfdffef',
 };
+
+/** Legible text color paired with `slate[9]`. Mode-invariant. */
+export const slateContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `slate[2]`. Light mode. */
+export const slateLightSurface = '#ffffffcc';
+
+/** Translucent panel-ish background, distinct from `slate[2]`. Dark mode. */
+export const slateDarkSurface = '#1f212380';

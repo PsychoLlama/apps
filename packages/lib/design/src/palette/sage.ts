@@ -59,3 +59,12 @@ export const sageDarkAlpha: ColorScale = {
   11: '#f4fefbb0',
   12: '#fdfffeed',
 };
+
+/** Legible text color paired with `sage[9]`. Mode-invariant. */
+export const sageContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `sage[2]`. Light mode. */
+export const sageLightSurface = '#ffffffcc';
+
+/** Translucent panel-ish background, distinct from `sage[2]`. Dark mode. */
+export const sageDarkSurface = '#1e201f80';

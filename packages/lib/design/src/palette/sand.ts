@@ -59,3 +59,12 @@ export const sandDarkAlpha: ColorScale = {
   11: '#fffcf4b0',
   12: '#fffffded',
 };
+
+/** Legible text color paired with `sand[9]`. Mode-invariant. */
+export const sandContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `sand[2]`. Light mode. */
+export const sandLightSurface = '#ffffffcc';
+
+/** Translucent panel-ish background, distinct from `sand[2]`. Dark mode. */
+export const sandDarkSurface = '#21212080';

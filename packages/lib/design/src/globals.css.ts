@@ -8,7 +8,7 @@
 import { globalStyle } from '@vanilla-extract/css';
 
 import { darkSelector, lightSelector } from './color-scheme';
-import { accentAlpha, background } from './tokens/color.css';
+import { accent, background } from './tokens/color.css';
 import { fontFamily, fontWeight, typeScale } from './tokens/typography.css';
 
 // --- Root ---
@@ -58,5 +58,5 @@ globalStyle('body', {
 
 /** Accent-tinted text selection highlight. */
 globalStyle('::selection', {
-  backgroundColor: accentAlpha[5],
+  backgroundColor: accent.alpha[5],
 });

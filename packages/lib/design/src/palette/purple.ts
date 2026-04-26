@@ -59,3 +59,12 @@ export const purpleDarkAlpha: ColorScale = {
   11: '#d19dff',
   12: '#f1ddfffa',
 };
+
+/** Legible text color paired with `purple[9]`. Mode-invariant. */
+export const purpleContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `purple[2]`. Light mode. */
+export const purpleLightSurface = '#faf5fecc';
+
+/** Translucent panel-ish background, distinct from `purple[2]`. Dark mode. */
+export const purpleDarkSurface = '#2b173580';

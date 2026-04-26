@@ -59,3 +59,12 @@ export const plumDarkAlpha: ColorScale = {
   11: '#f19cfef3',
   12: '#feddfef4',
 };
+
+/** Legible text color paired with `plum[9]`. Mode-invariant. */
+export const plumContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `plum[2]`. Light mode. */
+export const plumLightSurface = '#fdf5fdcc';
+
+/** Translucent panel-ish background, distinct from `plum[2]`. Dark mode. */
+export const plumDarkSurface = '#2f152f80';

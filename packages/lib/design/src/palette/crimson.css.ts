@@ -1,10 +1,25 @@
-import { createPalette } from '../color-scheme';
 import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  crimsonContrast,
   crimsonDark,
   crimsonDarkAlpha,
+  crimsonDarkSurface,
   crimsonLight,
   crimsonLightAlpha,
+  crimsonLightSurface,
 } from './crimson';
 
-export const crimson = createPalette(crimsonLight, crimsonDark);
-export const crimsonAlpha = createPalette(crimsonLightAlpha, crimsonDarkAlpha);
+const solid = createColorScale(crimsonLight, crimsonDark);
+
+export const crimson: ColorPalette = {
+  solid,
+  alpha: createColorScale(crimsonLightAlpha, crimsonDarkAlpha),
+  contrast: createColorVar(crimsonContrast),
+  surface: createColorVar(crimsonLightSurface, crimsonDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};

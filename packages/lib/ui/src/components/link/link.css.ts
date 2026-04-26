@@ -10,11 +10,9 @@
 import { style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
-  accentAlpha,
   fontFamily,
   fontWeight,
   neutral,
-  neutralAlpha,
   radius,
   typeScale,
 } from '@lib/design';
@@ -31,7 +29,7 @@ export const base = style({
 
   ':focus-visible': {
     borderRadius: radius[1],
-    outline: `2px solid ${accent[8]}`,
+    outline: `2px solid ${accent.solid[8]}`,
     outlineOffset: '2px',
     textDecorationLine: 'none',
   },
@@ -70,13 +68,10 @@ export const weight = styleVariants({
 
 type ColorName = 'accent' | 'neutral';
 
-const colorScales = {
-  accent: { solid: accent, alpha: accentAlpha },
-  neutral: { solid: neutral, alpha: neutralAlpha },
-} as const;
+const palettes = { accent, neutral } as const;
 
 const colorStyle = (color: ColorName, highContrast: boolean) => {
-  const { solid, alpha } = colorScales[color];
+  const { solid, alpha } = palettes[color];
   return style({
     color: highContrast ? solid[12] : solid[11],
     textDecorationColor: highContrast ? alpha[6] : alpha[5],

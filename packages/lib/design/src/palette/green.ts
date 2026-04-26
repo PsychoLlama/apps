@@ -59,3 +59,12 @@ export const greenDarkAlpha: ColorScale = {
   11: '#46fea5d4',
   12: '#bbffd7f0',
 };
+
+/** Legible text color paired with `green[9]`. Mode-invariant. */
+export const greenContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `green[2]`. Light mode. */
+export const greenLightSurface = '#f1faf4cc';
+
+/** Translucent panel-ish background, distinct from `green[2]`. Dark mode. */
+export const greenDarkSurface = '#15251d80';

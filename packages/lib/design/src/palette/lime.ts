@@ -59,3 +59,12 @@ export const limeDarkAlpha: ColorScale = {
   11: '#d1fe77e4',
   12: '#e9febff7',
 };
+
+/** Legible text color paired with `lime[9]`. Mode-invariant. */
+export const limeContrast = '#1d211c';
+
+/** Translucent panel-ish background, distinct from `lime[2]`. Light mode. */
+export const limeLightSurface = '#f6f9f0cc';
+
+/** Translucent panel-ish background, distinct from `lime[2]`. Dark mode. */
+export const limeDarkSurface = '#1b211580';

@@ -59,3 +59,12 @@ export const crimsonDarkAlpha: ColorScale = {
   11: '#ff92ad',
   12: '#ffd5eafd',
 };
+
+/** Legible text color paired with `crimson[9]`. Mode-invariant. */
+export const crimsonContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `crimson[2]`. Light mode. */
+export const crimsonLightSurface = '#fef5f8cc';
+
+/** Translucent panel-ish background, distinct from `crimson[2]`. Dark mode. */
+export const crimsonDarkSurface = '#2f151f80';

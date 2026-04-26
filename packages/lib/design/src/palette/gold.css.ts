@@ -1,5 +1,25 @@
-import { createPalette } from '../color-scheme';
-import { goldDark, goldDarkAlpha, goldLight, goldLightAlpha } from './gold';
+import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  goldContrast,
+  goldDark,
+  goldDarkAlpha,
+  goldDarkSurface,
+  goldLight,
+  goldLightAlpha,
+  goldLightSurface,
+} from './gold';
 
-export const gold = createPalette(goldLight, goldDark);
-export const goldAlpha = createPalette(goldLightAlpha, goldDarkAlpha);
+const solid = createColorScale(goldLight, goldDark);
+
+export const gold: ColorPalette = {
+  solid,
+  alpha: createColorScale(goldLightAlpha, goldDarkAlpha),
+  contrast: createColorVar(goldContrast),
+  surface: createColorVar(goldLightSurface, goldDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};
