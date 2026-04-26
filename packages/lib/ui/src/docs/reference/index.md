@@ -20,3 +20,4 @@
 - [Button](./button.md): Styled button.
 - [Callout](./callout.md): Informational message.
 - [Card](./card.md): Surface container.
+- [Kbd](./kbd.md): Inline keyboard input.
