@@ -20,6 +20,7 @@
     "@dev/build": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
+    "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",
     "@solidjs/router": "catalog:",
     "@vanilla-extract/css": "catalog:",

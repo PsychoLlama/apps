@@ -38,3 +38,21 @@ export {
   default as LinkButton,
   type LinkButtonProps,
 } from './components/link-button/link-button';
+export {
+  Tabs,
+  TabsRoot,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  type TabsRootProps,
+  type TabsListProps,
+  type TabsTriggerProps,
+  type TabsContentProps,
+} from './components/tabs/tabs';
+export {
+  TabNav,
+  TabNavRoot,
+  TabNavLink,
+  type TabNavRootProps,
+  type TabNavLinkProps,
+} from './components/tab-nav/tab-nav';
