@@ -6,7 +6,8 @@
   "description": "Component library.",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./props/*": "./src/props/*.ts"
   },
   "scripts": {
     "typecheck": "tsc"
@@ -16,7 +17,6 @@
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
-    "storybook": "catalog:",
     "storybook-solidjs-vite": "catalog:",
     "unplugin-icons": "catalog:"
   },

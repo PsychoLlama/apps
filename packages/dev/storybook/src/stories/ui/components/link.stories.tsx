@@ -1,9 +1,9 @@
 import { MemoryRouter } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { marginArgTypes } from '../../props/margin';
-import { testIdArgTypes } from '../../props/test-id';
-import { trimArgTypes } from '../../props/trim';
-import LinkComponent, { type LinkProps } from './link';
+import { Link as LinkComponent, type LinkProps } from '@lib/ui';
+import { marginArgTypes } from '@lib/ui/props/margin';
+import { testIdArgTypes } from '@lib/ui/props/test-id';
+import { trimArgTypes } from '@lib/ui/props/trim';
 
 const meta = {
   title: 'UI/Components',

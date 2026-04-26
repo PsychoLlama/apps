@@ -1,9 +1,8 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { type FlexProps } from './flex';
-import FlexComponent from './flex';
-import { boxArgTypes } from '../../props/box';
-import { flexArgTypes } from '../../props/flex';
-import { swatches } from '../../storybook/swatch';
+import { Flex as FlexComponent, type FlexProps } from '@lib/ui';
+import { boxArgTypes } from '@lib/ui/props/box';
+import { flexArgTypes } from '@lib/ui/props/flex';
+import { swatches } from '../../../swatch';
 
 const meta = {
   title: 'UI/Layout',

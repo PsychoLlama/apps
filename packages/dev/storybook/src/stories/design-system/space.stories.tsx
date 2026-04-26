@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import { space } from '@lib/design';
 import { Flex } from '@lib/ui';
-import TokenRow from '../storybook/token-row';
+import TokenRow from '../../token-row';
 import * as css from './space.stories.css';
 
 const meta = {

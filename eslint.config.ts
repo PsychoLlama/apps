@@ -107,7 +107,7 @@ export default [
   },
   {
     files: ['packages/**/*.css.ts'],
-    ignores: ['packages/lib/design/src/**'],
+    ignores: ['packages/lib/design/src/**', '**/*.stories.css.ts'],
     rules: {
       'custom/require-design-tokens': 'error',
       'no-restricted-imports': [
@@ -129,11 +129,13 @@ export default [
   },
   {
     // Stories use inline static styles to demo design tokens (swatches, spacing
-    // previews, etc.). These are presentational, not production UI.
+    // previews, etc.) and may need raw elements to demonstrate behaviors that
+    // primitives don't expose. These are presentational, not production UI.
     files: ['**/*.stories.tsx'],
     rules: {
       'custom/no-static-style-prop': 'off',
       'custom/require-selectable-prop': 'off',
+      'custom/require-ui-primitives': 'off',
     },
   },
   {

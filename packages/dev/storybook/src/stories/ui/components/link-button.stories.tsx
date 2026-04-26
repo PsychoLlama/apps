@@ -1,9 +1,12 @@
 import { MemoryRouter, Route } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { buttonStyleArgTypes } from '../../props/button';
-import { marginArgTypes } from '../../props/margin';
-import { testIdArgTypes } from '../../props/test-id';
-import LinkButtonComponent, { type LinkButtonProps } from './link-button';
+import {
+  LinkButton as LinkButtonComponent,
+  type LinkButtonProps,
+} from '@lib/ui';
+import { buttonStyleArgTypes } from '@lib/ui/props/button';
+import { marginArgTypes } from '@lib/ui/props/margin';
+import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
   title: 'UI/Components',

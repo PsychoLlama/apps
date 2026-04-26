@@ -5,20 +5,10 @@ import Icons from 'unplugin-icons/vite';
 import { mergeConfig } from 'vite';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
 
-// Stories live in sibling workspace packages, not this one. Point
-// storybook at the workspace `packages/` directory and let it crawl
-// every category/name/src tree. Relative because storybook's story
-// indexer rejects absolute `directory` values.
 const workspaceRoot = '../../../..';
-const workspacePackages = `${workspaceRoot}/packages`;
 
 const config: StorybookConfig = {
-  stories: [
-    {
-      directory: workspacePackages,
-      files: '*/*/src/**/*.stories.@(ts|tsx)',
-    },
-  ],
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
   addons: ['@storybook/addon-themes', '@storybook/addon-vitest'],
   framework: {
     name: 'storybook-solidjs-vite',

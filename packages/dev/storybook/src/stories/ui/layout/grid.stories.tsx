@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { type GridProps } from './grid';
-import GridComponent from './grid';
-import { boxArgTypes } from '../../props/box';
-import { swatches } from '../../storybook/swatch';
+import { Grid as GridComponent, type GridProps } from '@lib/ui';
+import { boxArgTypes } from '@lib/ui/props/box';
+import { swatches } from '../../../swatch';
 
 const meta = {
   title: 'UI/Layout',

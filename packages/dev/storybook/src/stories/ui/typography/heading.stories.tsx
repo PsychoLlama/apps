@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import HeadingComponent, { type HeadingProps } from './heading';
-import { marginArgTypes } from '../../props/margin';
-import { trimArgTypes } from '../../props/trim';
-import { selectableArgTypes } from '../../props/selectable';
-import { testIdArgTypes } from '../../props/test-id';
+import { Heading as HeadingComponent, type HeadingProps } from '@lib/ui';
+import { marginArgTypes } from '@lib/ui/props/margin';
+import { trimArgTypes } from '@lib/ui/props/trim';
+import { selectableArgTypes } from '@lib/ui/props/selectable';
+import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
   title: 'UI/Typography',

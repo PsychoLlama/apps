@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { marginArgTypes } from '../../props/margin';
-import { testIdArgTypes } from '../../props/test-id';
-import Text from '../text/text';
-import CalloutComponent, { type CalloutProps } from './callout';
+import { Callout as CalloutComponent, type CalloutProps, Text } from '@lib/ui';
+import { marginArgTypes } from '@lib/ui/props/margin';
+import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
   title: 'UI/Components',

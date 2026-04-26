@@ -58,6 +58,13 @@
 
 - Co-locate tests. Example: `foo.ts` and `__tests__/foo.test.ts`.
 
+## Stories
+
+- Stories live in `@dev/storybook` (`packages/dev/storybook/src/stories/`),
+  never co-located with their subjects. Co-located stories caused `@lib/design`
+  to dev-depend on `@lib/ui`, which already runtime-depends on `@lib/design` —
+  centralizing breaks that cycle.
+
 ## Doc Comments
 
 - Default to JSDoc (`/** … */`) on modules, exported types, and exported fields. Consumers read it as intrinsic documentation — it belongs to the API.

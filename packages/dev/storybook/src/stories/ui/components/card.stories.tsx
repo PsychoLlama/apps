@@ -1,9 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { marginArgTypes } from '../../props/margin';
-import { testIdArgTypes } from '../../props/test-id';
-import Heading from '../heading/heading';
-import Text from '../text/text';
-import CardComponent, { type CardProps } from './card';
+import { Card as CardComponent, type CardProps, Heading, Text } from '@lib/ui';
+import { marginArgTypes } from '@lib/ui/props/margin';
+import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
   title: 'UI/Components',
