@@ -11,7 +11,7 @@ import { testIdArgTypes } from '@lib/ui/props/test-id';
 import * as css from './inset.stories.css';
 
 const meta = {
-  title: 'UI/Layout',
+  title: 'UI/Components',
   component: InsetComponent,
   args: {
     as: 'div',
