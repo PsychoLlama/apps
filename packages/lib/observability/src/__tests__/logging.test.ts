@@ -1,3 +1,4 @@
+import { context, trace } from '@opentelemetry/api';
 import { logs } from '@opentelemetry/api-logs';
 import { createLogger } from '../logging';
 import { configure } from '../setup';
@@ -5,6 +6,8 @@ import { configure } from '../setup';
 beforeEach(() => {
   vi.restoreAllMocks();
   logs.disable();
+  trace.disable();
+  context.disable();
   configure({ logs: 'console' });
 });
 

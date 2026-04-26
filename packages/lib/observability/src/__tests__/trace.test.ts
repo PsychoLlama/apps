@@ -1,10 +1,11 @@
-import { SpanStatusCode, trace } from '@opentelemetry/api';
+import { context, SpanStatusCode, trace } from '@opentelemetry/api';
 import { configure } from '../setup';
 import { createTracer } from '../trace';
 
 beforeEach(() => {
   vi.restoreAllMocks();
   trace.disable();
+  context.disable();
   configure({ traces: 'console' });
 });
 
@@ -52,6 +53,39 @@ describe('createTracer', () => {
     };
     expect(payload.status.code).toBe(SpanStatusCode.ERROR);
     expect(payload.events[0]?.name).toBe('exception');
+  });
+
+  it('propagates parent context to nested span() calls', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const tracer = createTracer('test');
+
+    tracer.span('outer', () => {
+      tracer.span('inner', () => {});
+    });
+
+    // Inner ends first (LIFO via try/finally), outer second.
+    expect(info).toHaveBeenCalledTimes(2);
+    const inner = info.mock.calls[0] as [
+      string,
+      { traceId: string; parentSpanId?: string },
+    ];
+    const outer = info.mock.calls[1] as [
+      string,
+      { traceId: string; spanId: string },
+    ];
+    expect(inner[1].traceId).toBe(outer[1].traceId);
+    expect(inner[1].parentSpanId).toBe(outer[1].spanId);
+  });
+
+  it('exposes the active span via trace.getActiveSpan inside the callback', () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    const tracer = createTracer('test');
+
+    tracer.span('outer', (outer) => {
+      expect(trace.getActiveSpan()?.spanContext().spanId).toBe(
+        outer.spanContext().spanId,
+      );
+    });
   });
 
   it('records exceptions and sets ERROR status on async reject', async () => {

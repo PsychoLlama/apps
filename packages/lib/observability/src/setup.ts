@@ -13,10 +13,10 @@
  * - `@opentelemetry/api-logs` is on the `0.x` channel and is slated to fold
  *   into `@opentelemetry/api` once the Logs API stabilizes. Pin both packages
  *   to the same minor and expect a small migration when that happens.
- * - The console tracer has no async context propagation. Spans created across
- *   `await` boundaries will appear orphaned because there is no global
- *   context manager — `trace.getActiveSpan()` from outside the
- *   `startActiveSpan` callback will not see the span.
+ * - The console tracer's context manager is sync-only. Sync nesting works
+ *   (`tracer.span('outer', () => tracer.span('inner', ...))` produces a real
+ *   parent/child tree). Spans created across `await` boundaries do NOT
+ *   inherit context — pass spans explicitly into nested async work.
  * - No batching, sampling, retry, or backpressure. `end()` writes
  *   synchronously to `console.*`. Fine for dev, hostile to any real
  *   export pipeline.
@@ -33,10 +33,11 @@
  * Because callers only see the canonical OTel API surface, the swap is a
  * one-line change in this file — no caller migration needed.
  */
-import { trace, type TracerProvider } from '@opentelemetry/api';
+import { context, trace, type TracerProvider } from '@opentelemetry/api';
 import { logs, type LoggerProvider } from '@opentelemetry/api-logs';
 import { createConsoleLoggerProvider } from './internal/console-provider';
 import { createConsoleTracerProvider } from './internal/console-tracer-provider';
+import { createSyncContextManager } from './internal/sync-context-manager';
 
 /** Options for {@link configure}. */
 export interface ConfigureOptions {
@@ -60,7 +61,8 @@ export interface ConfigureOptions {
  * entry point (e.g. `entry-client.tsx`) before any module emits telemetry.
  *
  * Idempotent within a runtime: the underlying OTel API ignores subsequent
- * calls. Use `logs.disable()` / `trace.disable()` to reset in tests.
+ * calls. Use `logs.disable()`, `trace.disable()`, and `context.disable()`
+ * to reset in tests.
  */
 export const configure = (options: ConfigureOptions = {}): void => {
   const logsSink = options.logs ?? 'console';
@@ -71,4 +73,5 @@ export const configure = (options: ConfigureOptions = {}): void => {
   trace.setGlobalTracerProvider(
     tracesSink === 'console' ? createConsoleTracerProvider() : tracesSink,
   );
+  context.setGlobalContextManager(createSyncContextManager());
 };

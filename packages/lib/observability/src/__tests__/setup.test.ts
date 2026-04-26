@@ -1,9 +1,12 @@
+import { context, trace } from '@opentelemetry/api';
 import { logs, SeverityNumber, type Logger } from '@opentelemetry/api-logs';
 import { configure } from '../setup';
 
 beforeEach(() => {
   vi.restoreAllMocks();
   logs.disable();
+  trace.disable();
+  context.disable();
 });
 
 describe('configure', () => {

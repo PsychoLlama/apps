@@ -20,7 +20,8 @@
 - `tracer.span(name, fn)`: Runs `fn` inside a span. The span is passed to `fn` as its only argument. `end()` and exception recording are automatic.
 - Sync and async callbacks both work — `span()` returns whatever `fn` returns (or a `Promise` of it).
 - On thrown or rejected errors: `recordException` is called and status is set to `ERROR` before the span ends and the error re-throws.
-- No async context propagation. Pass spans explicitly into nested async work that needs them.
+- Sync nesting propagates: `tracer.span('outer', () => tracer.span('inner', ...))` produces a real parent/child tree, and `trace.getActiveSpan()` returns the current span inside the callback.
+- Async nesting does NOT propagate. Pass spans explicitly into nested async work when correlation matters.
 
 ## Console Output
 
@@ -33,4 +34,4 @@
 
 ## Resetting
 
-- `logs.disable()` and `trace.disable()`: Clear the registered providers. Useful in tests; never call from app code.
+- `logs.disable()`, `trace.disable()`, and `context.disable()`: Clear the registered providers and context manager. Useful in tests; never call from app code.

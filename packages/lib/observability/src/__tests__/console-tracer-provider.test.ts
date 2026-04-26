@@ -10,6 +10,7 @@ import { configure } from '../setup';
 beforeEach(() => {
   vi.restoreAllMocks();
   trace.disable();
+  context.disable();
   configure({ traces: 'console' });
 });
 

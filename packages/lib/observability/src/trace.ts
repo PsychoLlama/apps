@@ -28,29 +28,29 @@ const finishWithError = (span: Span, error: unknown): void => {
 export const createTracer = (name: string): AppTracer => {
   const tracer = trace.getTracer(name);
   return {
-    span: <T>(spanName: string, fn: (span: Span) => T): T => {
-      const span = tracer.startSpan(spanName);
-      try {
-        const result = fn(span);
-        if (result instanceof Promise) {
-          const settled = (result as Promise<unknown>).then(
-            (value) => {
-              span.end();
-              return value;
-            },
-            (error: unknown) => {
-              finishWithError(span, error);
-              throw error;
-            },
-          );
-          return settled as T;
+    span: <T>(spanName: string, fn: (span: Span) => T): T =>
+      tracer.startActiveSpan(spanName, (span): T => {
+        try {
+          const result = fn(span);
+          if (result instanceof Promise) {
+            const settled = (result as Promise<unknown>).then(
+              (value) => {
+                span.end();
+                return value;
+              },
+              (error: unknown) => {
+                finishWithError(span, error);
+                throw error;
+              },
+            );
+            return settled as T;
+          }
+          span.end();
+          return result;
+        } catch (error) {
+          finishWithError(span, error);
+          throw error;
         }
-        span.end();
-        return result;
-      } catch (error) {
-        finishWithError(span, error);
-        throw error;
-      }
-    },
+      }),
   };
 };
