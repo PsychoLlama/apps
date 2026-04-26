@@ -22,7 +22,7 @@ import * as css from './callout.css';
 
 type Size = 1 | 2 | 3;
 type Variant = 'soft' | 'surface' | 'outline';
-type Color = 'accent' | 'neutral';
+type Color = 'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 export interface CalloutProps
   extends MarginProps, TestIdProps, JSX.HTMLAttributes<HTMLDivElement> {

@@ -9,7 +9,9 @@ import {
   radius,
   space,
   standard,
+  success,
   typeScale,
+  warning,
 } from '@lib/design';
 import { assignColorSchemeVars } from '@lib/design/color-scheme';
 
@@ -102,7 +104,7 @@ export const size = styleVariants(
 
 // --- Variant x Color matrix ---
 
-const colorScales = { accent, neutral, danger } as const;
+const colorScales = { accent, neutral, danger, warning, success } as const;
 type ColorName = keyof typeof colorScales;
 
 const solidStyle = (color: ColorName) => {
@@ -205,20 +207,28 @@ export const variantColor = {
     accent: solidStyle('accent'),
     neutral: solidStyle('neutral'),
     danger: solidStyle('danger'),
+    warning: solidStyle('warning'),
+    success: solidStyle('success'),
   },
   soft: {
     accent: softStyle('accent'),
     neutral: softStyle('neutral'),
     danger: softStyle('danger'),
+    warning: softStyle('warning'),
+    success: softStyle('success'),
   },
   outline: {
     accent: outlineStyle('accent'),
     neutral: outlineStyle('neutral'),
     danger: outlineStyle('danger'),
+    warning: outlineStyle('warning'),
+    success: outlineStyle('success'),
   },
   ghost: {
     accent: ghostStyle('accent'),
     neutral: ghostStyle('neutral'),
     danger: ghostStyle('danger'),
+    warning: ghostStyle('warning'),
+    success: ghostStyle('success'),
   },
 } as const;

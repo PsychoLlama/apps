@@ -3,11 +3,19 @@
  *
  * Ported from Radix UI Themes Callout. Deviations:
  * - Single component instead of compound Root/Icon/Text.
- * - Only accent and neutral colors (no full palette).
  */
 
 import { style, styleVariants } from '@vanilla-extract/css';
-import { accent, neutral, radius, space, typeScale } from '@lib/design';
+import {
+  accent,
+  danger,
+  neutral,
+  radius,
+  space,
+  success,
+  typeScale,
+  warning,
+} from '@lib/design';
 import type { ColorPalette } from '@lib/design';
 
 // --- Root ---
@@ -38,7 +46,7 @@ export const size = styleVariants({
 
 // --- Variant x Color matrix ---
 
-const palettes = { accent, neutral } as const;
+const palettes = { accent, neutral, danger, warning, success } as const;
 type ColorName = keyof typeof palettes;
 
 const softStyle = (color: ColorName, highContrast: boolean) => {
@@ -72,6 +80,9 @@ const buildContrast = (
   return {
     accent: { normal: fn('accent', false), high: fn('accent', true) },
     neutral: { normal: fn('neutral', false), high: fn('neutral', true) },
+    danger: { normal: fn('danger', false), high: fn('danger', true) },
+    warning: { normal: fn('warning', false), high: fn('warning', true) },
+    success: { normal: fn('success', false), high: fn('success', true) },
   };
 };
 
