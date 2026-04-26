@@ -5,6 +5,9 @@
   "version": "0.0.0",
   "description": "Component library.",
   "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./props/*": "./src/props/*.ts"
