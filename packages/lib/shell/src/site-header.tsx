@@ -2,6 +2,7 @@ import { For, Show } from 'solid-js';
 import { Title } from '@solidjs/meta';
 import { Flex, Link, LinkButton, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
+import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import * as css from './site-header.css';
 
 /**
@@ -46,9 +47,19 @@ export default function SiteHeader(props: {
       </Show>
 
       <For each={crumbs()}>
-        {(crumb) => (
+        {(crumb, index) => (
           <>
-            <Flex as="div" class={css.divider} />
+            <Show
+              when={index() > 0}
+              fallback={<Flex as="div" class={css.divider} />}
+            >
+              <IconChevronRight
+                width="16"
+                height="16"
+                aria-hidden="true"
+                class={css.separator}
+              />
+            </Show>
             <Show
               when={crumb.href}
               fallback={
