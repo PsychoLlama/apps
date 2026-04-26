@@ -25,7 +25,7 @@ const meta = {
     },
     color: {
       control: 'inline-radio',
-      options: ['accent', 'neutral'],
+      options: ['accent', 'neutral', 'danger', 'warning', 'success'],
     },
     highContrast: {
       control: 'boolean',
