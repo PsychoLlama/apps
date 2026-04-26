@@ -5,6 +5,9 @@
   "version": "0.0.0",
   "description": "Design tokens (color, spacing, typography, motion).",
   "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
   "exports": {
     ".": "./src/index.css.ts",
     "./color-scheme": "./src/color-scheme.ts",

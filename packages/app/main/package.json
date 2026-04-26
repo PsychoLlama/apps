@@ -8,6 +8,10 @@
   "author": "Jesse Gibson <JesseTheGibson@gmail.com>",
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
+  "sideEffects": [
+    "**/*.css.ts",
+    "src/theme.ts"
+  ],
   "exports": {
     "./theme": {
       "types": "./src/vendor.d.ts",
