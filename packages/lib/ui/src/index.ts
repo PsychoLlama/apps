@@ -39,7 +39,6 @@ export {
   type LinkButtonProps,
 } from './components/link-button/link-button';
 export {
-  Tabs,
   TabsRoot,
   TabsList,
   TabsTrigger,
@@ -50,7 +49,6 @@ export {
   type TabsContentProps,
 } from './components/tabs/tabs';
 export {
-  TabNav,
   TabNavRoot,
   TabNavLink,
   type TabNavRootProps,

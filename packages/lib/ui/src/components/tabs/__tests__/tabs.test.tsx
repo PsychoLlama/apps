@@ -1,20 +1,7 @@
+import { createSignal } from 'solid-js';
 import { render } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
-import { createTestBindings, defineAction, defineStore } from '@lib/state';
-import { Tabs } from '../tabs';
-
-const valueStore = defineStore<{ value: string }>(() => ({ value: '' }));
-const setStoreValue = defineAction([valueStore], (state, next: string) => {
-  state.value = next;
-});
-
-const setup = (initial: string) => {
-  const bindings = createTestBindings();
-  const state = bindings.createStore(valueStore);
-  const setValue = bindings.useAction(setStoreValue);
-  setValue(initial);
-  return { state, setValue };
-};
+import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '../tabs';
 
 const Harness = (overrides: {
   initialValue?: string;
@@ -23,10 +10,10 @@ const Harness = (overrides: {
   disabledValue?: string;
   onValueChange?: (value: string) => void;
 }) => {
-  const { state, setValue } = setup(overrides.initialValue ?? 'one');
+  const [value, setValue] = createSignal(overrides.initialValue ?? 'one');
   return (
-    <Tabs.Root
-      value={state.value}
+    <TabsRoot
+      value={value()}
       onValueChange={(next) => {
         overrides.onValueChange?.(next);
         setValue(next);
@@ -34,22 +21,22 @@ const Harness = (overrides: {
       activationMode={overrides.activationMode}
       loop={overrides.loop}
     >
-      <Tabs.List>
-        <Tabs.Trigger value="one">One</Tabs.Trigger>
-        <Tabs.Trigger value="two" disabled={overrides.disabledValue === 'two'}>
+      <TabsList>
+        <TabsTrigger value="one">One</TabsTrigger>
+        <TabsTrigger value="two" disabled={overrides.disabledValue === 'two'}>
           Two
-        </Tabs.Trigger>
-        <Tabs.Trigger
+        </TabsTrigger>
+        <TabsTrigger
           value="three"
           disabled={overrides.disabledValue === 'three'}
         >
           Three
-        </Tabs.Trigger>
-      </Tabs.List>
-      <Tabs.Content value="one">Panel one</Tabs.Content>
-      <Tabs.Content value="two">Panel two</Tabs.Content>
-      <Tabs.Content value="three">Panel three</Tabs.Content>
-    </Tabs.Root>
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="one">Panel one</TabsContent>
+      <TabsContent value="two">Panel two</TabsContent>
+      <TabsContent value="three">Panel three</TabsContent>
+    </TabsRoot>
   );
 };
 
@@ -79,7 +66,7 @@ describe('Tabs', () => {
     expect(panel?.getAttribute('aria-labelledby')).toBe(trigger?.id);
   });
 
-  it('mints unique ids per <Tabs.Root> instance', () => {
+  it('mints unique ids per <TabsRoot> instance', () => {
     const { container } = render(() => (
       <>
         <Harness initialValue="one" />
@@ -99,18 +86,18 @@ describe('Tabs', () => {
 
   it('applies aria-orientation from the orientation prop', () => {
     const { container } = render(() => {
-      const { state, setValue } = setup('one');
+      const [value, setValue] = createSignal('one');
       return (
-        <Tabs.Root
-          value={state.value}
+        <TabsRoot
+          value={value()}
           onValueChange={setValue}
           orientation="vertical"
         >
-          <Tabs.List>
-            <Tabs.Trigger value="one">One</Tabs.Trigger>
-          </Tabs.List>
-          <Tabs.Content value="one">Panel</Tabs.Content>
-        </Tabs.Root>
+          <TabsList>
+            <TabsTrigger value="one">One</TabsTrigger>
+          </TabsList>
+          <TabsContent value="one">Panel</TabsContent>
+        </TabsRoot>
       );
     });
 
@@ -216,16 +203,16 @@ describe('Tabs', () => {
   });
 
   it('does not move DOM focus when the consumer changes value externally', () => {
-    const { state, setValue } = setup('one');
+    const [value, setValue] = createSignal('one');
     const { container } = render(() => (
-      <Tabs.Root value={state.value} onValueChange={setValue}>
-        <Tabs.List>
-          <Tabs.Trigger value="one">One</Tabs.Trigger>
-          <Tabs.Trigger value="two">Two</Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content value="one">Panel one</Tabs.Content>
-        <Tabs.Content value="two">Panel two</Tabs.Content>
-      </Tabs.Root>
+      <TabsRoot value={value()} onValueChange={setValue}>
+        <TabsList>
+          <TabsTrigger value="one">One</TabsTrigger>
+          <TabsTrigger value="two">Two</TabsTrigger>
+        </TabsList>
+        <TabsContent value="one">Panel one</TabsContent>
+        <TabsContent value="two">Panel two</TabsContent>
+      </TabsRoot>
     ));
 
     const [first] = triggers(container);
@@ -236,14 +223,14 @@ describe('Tabs', () => {
   });
 
   it('produces valid IDREFs even when the value contains whitespace', () => {
-    const { state, setValue } = setup('team settings');
+    const [value, setValue] = createSignal('team settings');
     const { container } = render(() => (
-      <Tabs.Root value={state.value} onValueChange={setValue}>
-        <Tabs.List>
-          <Tabs.Trigger value="team settings">Team Settings</Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content value="team settings">Panel</Tabs.Content>
-      </Tabs.Root>
+      <TabsRoot value={value()} onValueChange={setValue}>
+        <TabsList>
+          <TabsTrigger value="team settings">Team Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="team settings">Panel</TabsContent>
+      </TabsRoot>
     ));
 
     const trigger = container.querySelector<HTMLButtonElement>('[role="tab"]');

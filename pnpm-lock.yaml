@@ -364,9 +364,6 @@ importers:
         specifier: 'catalog:'
         version: 1.20.1(babel-plugin-macros@3.1.0)
     devDependencies:
-      '@lib/state':
-        specifier: workspace:*
-        version: link:../state
       '@solidjs/router':
         specifier: 'catalog:'
         version: 0.16.1(solid-js@1.9.12)

@@ -1,10 +1,10 @@
 # TabNav
 
-Horizontal navigation strip of routing links styled to match `Tabs.List`. Compound API: `TabNav.Root`, `TabNav.Link`. Also exported as flat `TabNavRoot` / `TabNavLink`.
+Horizontal navigation strip of routing links styled to match `TabsList`. Composed from two flat components: `TabNavRoot` and `TabNavLink`.
 
 Renders semantic `<nav><ul><li><a>`. Each link is wrapped in its own `<li>`. The active link receives `aria-current="page"`. The active state is explicit — consumers compute it from their router (e.g. `useMatch(href)`).
 
-## TabNav.Root
+## TabNavRoot
 
 Renders `<nav>` with an inner `<ul role="list">`.
 
@@ -17,7 +17,7 @@ Base: margin props.
 - `justify` (=`'start'`): Link alignment. `'start' | 'center' | 'end'`.
 - `wrap` (=`'nowrap'`): Flex-wrap behavior. `'nowrap' | 'wrap' | 'wrap-reverse'`.
 
-## TabNav.Link
+## TabNavLink
 
 Wraps `<A>` from `@solidjs/router` inside an `<li>`.
 

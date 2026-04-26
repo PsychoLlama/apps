@@ -20,7 +20,6 @@
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
-    "@lib/state": "workspace:*",
     "@solidjs/router": "catalog:",
     "@solidjs/testing-library": "^0.8.10",
     "@testing-library/user-event": "^14.6.1",

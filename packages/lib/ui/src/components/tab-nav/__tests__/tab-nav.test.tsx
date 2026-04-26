@@ -1,7 +1,7 @@
 import { MemoryRouter, Route } from '@solidjs/router';
 import { render } from '@solidjs/testing-library';
 import type { Component } from 'solid-js';
-import { TabNav, type TabNavRootProps } from '../tab-nav';
+import { TabNavLink, TabNavRoot, type TabNavRootProps } from '../tab-nav';
 
 const mount = (page: Component) =>
   render(() => (
@@ -13,9 +13,9 @@ const mount = (page: Component) =>
 describe('TabNav', () => {
   it('renders a navigation landmark with the supplied aria-label', () => {
     const { container } = mount(() => (
-      <TabNav.Root aria-label="Primary">
-        <TabNav.Link href="/">Home</TabNav.Link>
-      </TabNav.Root>
+      <TabNavRoot aria-label="Primary">
+        <TabNavLink href="/">Home</TabNavLink>
+      </TabNavRoot>
     ));
 
     const nav = container.querySelector('nav')!;
@@ -24,10 +24,10 @@ describe('TabNav', () => {
 
   it('wraps each link in its own <li>', () => {
     const { container } = mount(() => (
-      <TabNav.Root aria-label="Primary">
-        <TabNav.Link href="/a">A</TabNav.Link>
-        <TabNav.Link href="/b">B</TabNav.Link>
-      </TabNav.Root>
+      <TabNavRoot aria-label="Primary">
+        <TabNavLink href="/a">A</TabNavLink>
+        <TabNavLink href="/b">B</TabNavLink>
+      </TabNavRoot>
     ));
 
     const items = container.querySelectorAll('li');
@@ -39,13 +39,13 @@ describe('TabNav', () => {
 
   it('marks only the active link with aria-current="page"', () => {
     const { container } = mount(() => (
-      <TabNav.Root aria-label="Primary">
-        <TabNav.Link href="/a">A</TabNav.Link>
-        <TabNav.Link href="/b" active>
+      <TabNavRoot aria-label="Primary">
+        <TabNavLink href="/a">A</TabNavLink>
+        <TabNavLink href="/b" active>
           B
-        </TabNav.Link>
-        <TabNav.Link href="/c">C</TabNav.Link>
-      </TabNav.Root>
+        </TabNavLink>
+        <TabNavLink href="/c">C</TabNavLink>
+      </TabNavRoot>
     ));
 
     const links = Array.from(container.querySelectorAll('a'));
@@ -58,10 +58,10 @@ describe('TabNav', () => {
 
   it('renders each link with the expected href on the underlying anchor', () => {
     const { container } = mount(() => (
-      <TabNav.Root aria-label="Primary">
-        <TabNav.Link href="/one">One</TabNav.Link>
-        <TabNav.Link href="/two">Two</TabNav.Link>
-      </TabNav.Root>
+      <TabNavRoot aria-label="Primary">
+        <TabNavLink href="/one">One</TabNavLink>
+        <TabNavLink href="/two">Two</TabNavLink>
+      </TabNavRoot>
     ));
 
     const hrefs = Array.from(container.querySelectorAll('a')).map((link) =>

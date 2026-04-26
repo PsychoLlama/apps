@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { untrack } from 'solid-js';
 import { createTestBindings, defineAction, defineStore } from '@lib/state';
-import { Tabs, type TabsListProps, type TabsRootProps } from '@lib/ui';
+import {
+  TabsContent,
+  TabsList,
+  TabsRoot,
+  TabsTrigger,
+  type TabsListProps,
+  type TabsRootProps,
+} from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
@@ -22,7 +29,7 @@ const useTabsHarness = (initial: string) => {
 
 const meta = {
   title: 'UI/Components',
-  component: Tabs.Root,
+  component: TabsRoot,
   args: {
     value: 'overview',
     onValueChange: () => {},
@@ -67,38 +74,38 @@ const meta = {
   render: (props: TabsArgs) => {
     const { state, setValue } = useTabsHarness(untrack(() => props.value));
     return (
-      <Tabs.Root
+      <TabsRoot
         value={state.value}
         onValueChange={setValue}
         orientation={props.orientation}
         activationMode={props.activationMode}
         loop={props.loop}
       >
-        <Tabs.List
+        <TabsList
           size={props.size}
           color={props.color}
           highContrast={props.highContrast}
           justify={props.justify}
           wrap={props.wrap}
         >
-          <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-          <Tabs.Trigger value="settings">Settings</Tabs.Trigger>
-          <Tabs.Trigger value="analytics" disabled>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="analytics" disabled>
             Analytics
-          </Tabs.Trigger>
-          <Tabs.Trigger value="billing">Billing</Tabs.Trigger>
-        </Tabs.List>
-        <Tabs.Content value="overview">
+          </TabsTrigger>
+          <TabsTrigger value="billing">Billing</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
           The overview panel. Switch tabs with mouse, touch, or keyboard
           (arrows, Home, End).
-        </Tabs.Content>
-        <Tabs.Content value="settings">Settings panel.</Tabs.Content>
-        <Tabs.Content value="analytics">
+        </TabsContent>
+        <TabsContent value="settings">Settings panel.</TabsContent>
+        <TabsContent value="analytics">
           You can't actually see this — Analytics is disabled in the trigger
           row.
-        </Tabs.Content>
-        <Tabs.Content value="billing">Billing panel.</Tabs.Content>
-      </Tabs.Root>
+        </TabsContent>
+        <TabsContent value="billing">Billing panel.</TabsContent>
+      </TabsRoot>
     );
   },
 } satisfies Meta<TabsArgs>;
@@ -106,4 +113,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Tabs_: Story = { name: 'Tabs' };
+export const Tabs: Story = {};

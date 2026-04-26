@@ -2,8 +2,8 @@
  * Tabs component.
  *
  * Ported from Radix UI Themes Tabs (which wraps the Tabs primitive).
- * Compound API: `Tabs.Root`, `Tabs.List`, `Tabs.Trigger`, `Tabs.Content`,
- * also exported as flat `TabsRoot` etc. for HMR + tree-shaking.
+ * Exported as four flat components — `TabsRoot`, `TabsList`, `TabsTrigger`,
+ * `TabsContent` — composed by the consumer.
  *
  * Deviations from Radix:
  * - Fully controlled — `value` and `onValueChange` are required. No
@@ -376,16 +376,6 @@ export const TabsContent: ParentComponent<TabsContentProps> = (rawProps) => {
       </div>
     </Show>
   );
-};
-
-// --- Compound namespace ---
-
-/** Compound `<Tabs.Root>` / `<Tabs.List>` / `<Tabs.Trigger>` / `<Tabs.Content>`. */
-export const Tabs = {
-  Root: TabsRoot,
-  List: TabsList,
-  Trigger: TabsTrigger,
-  Content: TabsContent,
 };
 
 // --- Helpers ---

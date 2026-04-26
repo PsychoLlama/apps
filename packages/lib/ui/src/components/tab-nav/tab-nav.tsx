@@ -2,17 +2,15 @@
  * TabNav component.
  *
  * Ported from Radix UI Themes TabNav. A horizontal navigation strip of
- * routing links styled to match `Tabs.List`. Visual scaffolding is shared
- * with Tabs via `../tabs/shared.css.ts`.
- *
- * Compound API: `TabNav.Root`, `TabNav.Link`, also exported as flat
- * `TabNavRoot` / `TabNavLink` for HMR + tree-shaking.
+ * routing links styled to match `TabsList`. Exported as two flat
+ * components — `TabNavRoot` and `TabNavLink` — composed by the consumer.
+ * Visual scaffolding is shared with Tabs via `../tabs/shared.css.ts`.
  *
  * Deviations from Radix:
  * - Accent and neutral palettes only.
- * - `aria-label` on `Root` is required.
- * - Active state is driven by an explicit `active` prop on `Link`. We
- *   don't auto-detect from the current route — consumers wire
+ * - `aria-label` on `TabNavRoot` is required.
+ * - Active state is driven by an explicit `active` prop on `TabNavLink`.
+ *   We don't auto-detect from the current route — consumers wire
  *   `useMatch()` themselves to keep matching semantics in their hands.
  * - Built on plain `<nav><ul><li><a>` (no Radix NavigationMenu primitive).
  *   Active link receives `aria-current="page"`.
@@ -156,12 +154,4 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
       </A>
     </li>
   );
-};
-
-// --- Compound namespace ---
-
-/** Compound `<TabNav.Root>` / `<TabNav.Link>`. */
-export const TabNav = {
-  Root: TabNavRoot,
-  Link: TabNavLink,
 };

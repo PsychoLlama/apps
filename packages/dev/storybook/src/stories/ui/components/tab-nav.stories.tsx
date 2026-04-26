@@ -1,12 +1,12 @@
 import { MemoryRouter, Route } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { TabNav, type TabNavRootProps } from '@lib/ui';
+import { TabNavLink, TabNavRoot, type TabNavRootProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
   title: 'UI/Navigation',
-  component: TabNav.Root,
+  component: TabNavRoot,
   args: {
     'aria-label': 'Primary navigation',
     size: 2,
@@ -44,18 +44,18 @@ const meta = {
     ),
   ],
   render: (props: TabNavRootProps) => (
-    <TabNav.Root {...props}>
-      <TabNav.Link href="/" active>
+    <TabNavRoot {...props}>
+      <TabNavLink href="/" active>
         Home
-      </TabNav.Link>
-      <TabNav.Link href="/projects">Projects</TabNav.Link>
-      <TabNav.Link href="/team">Team</TabNav.Link>
-      <TabNav.Link href="/settings">Settings</TabNav.Link>
-    </TabNav.Root>
+      </TabNavLink>
+      <TabNavLink href="/projects">Projects</TabNavLink>
+      <TabNavLink href="/team">Team</TabNavLink>
+      <TabNavLink href="/settings">Settings</TabNavLink>
+    </TabNavRoot>
   ),
 } satisfies Meta<TabNavRootProps>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const TabNav_: Story = { name: 'TabNav' };
+export const TabNav: Story = {};
