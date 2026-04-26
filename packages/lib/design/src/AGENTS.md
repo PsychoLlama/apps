@@ -5,7 +5,7 @@
 - `palette/*.css.ts`: Registered palettes. Each calls `createPalette()` to define CSS custom properties on `:root`. Importing a palette triggers the side effect; unused palettes produce no CSS.
 - `index.css.ts`: The public API for runtime tokens. Do not import other files directly.
 - `@lib/design/color-scheme`: Build-time utilities (`assignColorSchemeVars`, `createPalette`, `lightDark`). Import in `.css.ts` files. This is a plain `.ts` file — not `.css.ts` — because it exports functions.
-- Token stories live in `@dev/storybook/src/stories/design-system/`, not here.
+- Keep token stories in sync with `packages/dev/storybook`.
 
 ## Color scheme strategy
 

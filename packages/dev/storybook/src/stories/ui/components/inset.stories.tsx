@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import {
   Card,
+  Flex,
   Heading,
   Inset as InsetComponent,
   type InsetProps,
@@ -37,7 +38,7 @@ const meta = {
   render: (props) => (
     <Card as="div" size={2}>
       <InsetComponent {...props}>
-        <div class={css.media} />
+        <Flex as="div" class={css.media} />
       </InsetComponent>
       <Heading as="h3" size={3}>
         Insets bleed past padding

@@ -14,11 +14,7 @@
 
 ## Storybook
 
-- Stories live in `@dev/storybook/src/stories/ui/`, not here.
-- Components must have at least one story.
-- Use `meta.title` to group (e.g. `UI/Layout`). Options: Layout, Typography, Components, Utilities
-- The named export is the story name.
-- Keep `argTypes` in sync with component props.
+- Keep stories in sync with `packages/dev/storybook`.
 
 ## Reference Docs
 
