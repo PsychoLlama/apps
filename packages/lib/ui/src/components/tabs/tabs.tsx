@@ -309,7 +309,14 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   };
 
   const className = () =>
-    [shared.trigger, isActive() && shared.triggerActive, local.class]
+    [
+      shared.trigger,
+      isActive() && shared.triggerActive,
+      isActive() &&
+        ctx.orientation() === 'vertical' &&
+        css.triggerActiveVertical,
+      local.class,
+    ]
       .filter(Boolean)
       .join(' ');
 

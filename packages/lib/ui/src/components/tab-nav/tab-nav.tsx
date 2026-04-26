@@ -18,7 +18,6 @@
  * @see https://www.radix-ui.com/themes/docs/components/tab-nav
  */
 
-import { A, type AnchorProps } from '@solidjs/router';
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import {
@@ -116,8 +115,13 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
 
 // --- Link ---
 
-/** `TabNav.Link` props. Renders `<li><A href=...>` from `@solidjs/router`. */
-export interface TabNavLinkProps extends RequiredTestIdProps, AnchorProps {
+/**
+ * `TabNavLink` props. Renders `<li><a>` with the routing `link` attribute
+ * so `@solidjs/router`'s delegated click handler intercepts navigation
+ * for in-app routing.
+ */
+export interface TabNavLinkProps
+  extends RequiredTestIdProps, JSX.AnchorHTMLAttributes<HTMLAnchorElement> {
   /**
    * Mark the link as the current page. Sets `aria-current="page"` and
    * applies the active visual indicator. Consumers compute this from
@@ -125,9 +129,17 @@ export interface TabNavLinkProps extends RequiredTestIdProps, AnchorProps {
    * @default false
    */
   active?: boolean;
+  /** Destination URL. */
+  href: string;
 }
 
-/** A single nav link. Always renders a routing `<A>` inside an `<li>`. */
+/**
+ * A single nav link. Renders a plain `<a attr:link="">` rather than
+ * `<A>` from `@solidjs/router` so the consumer's explicit `active` prop
+ * stays the sole source of truth for `aria-current` (Solid Router's
+ * `<A>` auto-injects `aria-current="page"` on a route match, with no
+ * way to suppress it).
+ */
 export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(rawProps, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, ['active', 'class', 'children']);
@@ -141,7 +153,11 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
 
   return (
     <li class={css.item}>
-      <A
+      <a
+        // The `link` attribute opts the anchor into solid-router's
+        // delegated click handler, giving us in-app routing without
+        // `<A>`'s auto `aria-current` injection.
+        ref={(el) => el.setAttribute('link', '')}
         class={className()}
         aria-current={isActive() ? 'page' : undefined}
         data-testid={tid.testId}
@@ -151,7 +167,7 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
         <span aria-hidden="true" class={shared.triggerInnerHidden}>
           {local.children}
         </span>
-      </A>
+      </a>
     </li>
   );
 };
