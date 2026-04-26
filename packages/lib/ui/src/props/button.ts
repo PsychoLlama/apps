@@ -3,7 +3,12 @@ import * as css from './button.css';
 
 export type ButtonSize = 1 | 2 | 3 | 4;
 export type ButtonVariant = 'solid' | 'soft' | 'outline' | 'ghost';
-export type ButtonColor = 'accent' | 'neutral' | 'danger';
+export type ButtonColor =
+  | 'accent'
+  | 'neutral'
+  | 'danger'
+  | 'warning'
+  | 'success';
 
 export interface ButtonStyleProps {
   /** Visual size on a 1-4 scale. @default 2 */
@@ -40,6 +45,6 @@ export const buttonStyleArgTypes: ArgTypes<ButtonStyleProps> = {
   },
   color: {
     control: 'inline-radio',
-    options: ['accent', 'neutral', 'danger'],
+    options: ['accent', 'neutral', 'danger', 'warning', 'success'],
   },
 };
