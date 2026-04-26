@@ -2,55 +2,54 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
 import {
   accent,
-  accentAlpha,
   neutral,
-  neutralAlpha,
   danger,
   warning,
   success,
   text,
   background,
+  type ColorPalette,
 } from '@lib/design';
 import { Flex, Grid, Heading, Text } from '@lib/ui';
-import { amber, amberAlpha } from '../palette/amber.css';
-import { blue, blueAlpha } from '../palette/blue.css';
-import { bronze, bronzeAlpha } from '../palette/bronze.css';
-import { brown, brownAlpha } from '../palette/brown.css';
-import { crimson, crimsonAlpha } from '../palette/crimson.css';
-import { cyan, cyanAlpha } from '../palette/cyan.css';
-import { gold, goldAlpha } from '../palette/gold.css';
-import { grass, grassAlpha } from '../palette/grass.css';
-import { gray, grayAlpha } from '../palette/gray.css';
-import { green, greenAlpha } from '../palette/green.css';
-import { indigo, indigoAlpha } from '../palette/indigo.css';
-import { iris, irisAlpha } from '../palette/iris.css';
-import { jade, jadeAlpha } from '../palette/jade.css';
-import { lime, limeAlpha } from '../palette/lime.css';
-import { mauve, mauveAlpha } from '../palette/mauve.css';
-import { mint, mintAlpha } from '../palette/mint.css';
-import { olive, oliveAlpha } from '../palette/olive.css';
-import { orange, orangeAlpha } from '../palette/orange.css';
-import { pink, pinkAlpha } from '../palette/pink.css';
-import { plum, plumAlpha } from '../palette/plum.css';
-import { purple, purpleAlpha } from '../palette/purple.css';
-import { red, redAlpha } from '../palette/red.css';
-import { ruby, rubyAlpha } from '../palette/ruby.css';
-import { sage, sageAlpha } from '../palette/sage.css';
-import { sand, sandAlpha } from '../palette/sand.css';
-import { sky, skyAlpha } from '../palette/sky.css';
-import { slate, slateAlpha } from '../palette/slate.css';
-import { teal, tealAlpha } from '../palette/teal.css';
-import { tomato, tomatoAlpha } from '../palette/tomato.css';
-import { violet, violetAlpha } from '../palette/violet.css';
-import { yellow, yellowAlpha } from '../palette/yellow.css';
+import { amber } from '../palette/amber.css';
+import { blue } from '../palette/blue.css';
+import { bronze } from '../palette/bronze.css';
+import { brown } from '../palette/brown.css';
+import { crimson } from '../palette/crimson.css';
+import { cyan } from '../palette/cyan.css';
+import { gold } from '../palette/gold.css';
+import { grass } from '../palette/grass.css';
+import { gray } from '../palette/gray.css';
+import { green } from '../palette/green.css';
+import { indigo } from '../palette/indigo.css';
+import { iris } from '../palette/iris.css';
+import { jade } from '../palette/jade.css';
+import { lime } from '../palette/lime.css';
+import { mauve } from '../palette/mauve.css';
+import { mint } from '../palette/mint.css';
+import { olive } from '../palette/olive.css';
+import { orange } from '../palette/orange.css';
+import { pink } from '../palette/pink.css';
+import { plum } from '../palette/plum.css';
+import { purple } from '../palette/purple.css';
+import { red } from '../palette/red.css';
+import { ruby } from '../palette/ruby.css';
+import { sage } from '../palette/sage.css';
+import { sand } from '../palette/sand.css';
+import { sky } from '../palette/sky.css';
+import { slate } from '../palette/slate.css';
+import { teal } from '../palette/teal.css';
+import { tomato } from '../palette/tomato.css';
+import { violet } from '../palette/violet.css';
+import { yellow } from '../palette/yellow.css';
 import TokenRow from '../storybook/token-row';
 import * as css from './color.stories.css';
 
-type ColorScale = Record<number, string>;
+type ColorScaleVars = Record<number, string>;
 
 const ScaleRow = (props: {
   name: string;
-  scale: ColorScale;
+  scale: ColorScaleVars;
   alpha?: boolean;
 }) => {
   const steps = () =>
@@ -91,6 +90,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const renderPalette = (name: string, palette: ColorPalette) => (
+  <>
+    <ScaleRow name={name} scale={palette.solid} />
+    <ScaleRow name={`${name}Alpha`} scale={palette.alpha} alpha />
+  </>
+);
+
 export const Semantic: Story = {
   render: () => (
     <Grid as="div" gap={3} align="center" class={css.scaleRow}>
@@ -111,13 +117,11 @@ export const Semantic: Story = {
         </For>
       </Grid>
 
-      <ScaleRow name="neutral" scale={neutral} />
-      <ScaleRow name="neutralAlpha" scale={neutralAlpha} alpha />
-      <ScaleRow name="accent" scale={accent} />
-      <ScaleRow name="accentAlpha" scale={accentAlpha} alpha />
-      <ScaleRow name="danger" scale={danger} />
-      <ScaleRow name="warning" scale={warning} />
-      <ScaleRow name="success" scale={success} />
+      {renderPalette('neutral', neutral)}
+      {renderPalette('accent', accent)}
+      {renderPalette('danger', danger)}
+      {renderPalette('warning', warning)}
+      {renderPalette('success', success)}
     </Grid>
   ),
 };
@@ -201,39 +205,39 @@ export const BackgroundColors: Story = {
   ),
 };
 
-const palettes = [
-  { name: 'amber', solid: amber, alpha: amberAlpha },
-  { name: 'blue', solid: blue, alpha: blueAlpha },
-  { name: 'bronze', solid: bronze, alpha: bronzeAlpha },
-  { name: 'brown', solid: brown, alpha: brownAlpha },
-  { name: 'crimson', solid: crimson, alpha: crimsonAlpha },
-  { name: 'cyan', solid: cyan, alpha: cyanAlpha },
-  { name: 'gold', solid: gold, alpha: goldAlpha },
-  { name: 'grass', solid: grass, alpha: grassAlpha },
-  { name: 'gray', solid: gray, alpha: grayAlpha },
-  { name: 'green', solid: green, alpha: greenAlpha },
-  { name: 'indigo', solid: indigo, alpha: indigoAlpha },
-  { name: 'iris', solid: iris, alpha: irisAlpha },
-  { name: 'jade', solid: jade, alpha: jadeAlpha },
-  { name: 'lime', solid: lime, alpha: limeAlpha },
-  { name: 'mauve', solid: mauve, alpha: mauveAlpha },
-  { name: 'mint', solid: mint, alpha: mintAlpha },
-  { name: 'olive', solid: olive, alpha: oliveAlpha },
-  { name: 'orange', solid: orange, alpha: orangeAlpha },
-  { name: 'pink', solid: pink, alpha: pinkAlpha },
-  { name: 'plum', solid: plum, alpha: plumAlpha },
-  { name: 'purple', solid: purple, alpha: purpleAlpha },
-  { name: 'red', solid: red, alpha: redAlpha },
-  { name: 'ruby', solid: ruby, alpha: rubyAlpha },
-  { name: 'sage', solid: sage, alpha: sageAlpha },
-  { name: 'sand', solid: sand, alpha: sandAlpha },
-  { name: 'sky', solid: sky, alpha: skyAlpha },
-  { name: 'slate', solid: slate, alpha: slateAlpha },
-  { name: 'teal', solid: teal, alpha: tealAlpha },
-  { name: 'tomato', solid: tomato, alpha: tomatoAlpha },
-  { name: 'violet', solid: violet, alpha: violetAlpha },
-  { name: 'yellow', solid: yellow, alpha: yellowAlpha },
-] as const;
+const palettes: { name: string; palette: ColorPalette }[] = [
+  { name: 'amber', palette: amber },
+  { name: 'blue', palette: blue },
+  { name: 'bronze', palette: bronze },
+  { name: 'brown', palette: brown },
+  { name: 'crimson', palette: crimson },
+  { name: 'cyan', palette: cyan },
+  { name: 'gold', palette: gold },
+  { name: 'grass', palette: grass },
+  { name: 'gray', palette: gray },
+  { name: 'green', palette: green },
+  { name: 'indigo', palette: indigo },
+  { name: 'iris', palette: iris },
+  { name: 'jade', palette: jade },
+  { name: 'lime', palette: lime },
+  { name: 'mauve', palette: mauve },
+  { name: 'mint', palette: mint },
+  { name: 'olive', palette: olive },
+  { name: 'orange', palette: orange },
+  { name: 'pink', palette: pink },
+  { name: 'plum', palette: plum },
+  { name: 'purple', palette: purple },
+  { name: 'red', palette: red },
+  { name: 'ruby', palette: ruby },
+  { name: 'sage', palette: sage },
+  { name: 'sand', palette: sand },
+  { name: 'sky', palette: sky },
+  { name: 'slate', palette: slate },
+  { name: 'teal', palette: teal },
+  { name: 'tomato', palette: tomato },
+  { name: 'violet', palette: violet },
+  { name: 'yellow', palette: yellow },
+];
 
 export const Palettes: Story = {
   render: () => (
@@ -256,16 +260,7 @@ export const Palettes: Story = {
       </Grid>
 
       <For each={palettes}>
-        {(palette) => (
-          <>
-            <ScaleRow name={palette.name} scale={palette.solid} />
-            <ScaleRow
-              name={`${palette.name}Alpha`}
-              scale={palette.alpha}
-              alpha
-            />
-          </>
-        )}
+        {(item) => renderPalette(item.name, item.palette)}
       </For>
     </Grid>
   ),

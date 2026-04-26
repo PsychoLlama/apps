@@ -59,3 +59,12 @@ export const grassDarkAlpha: ColorScale = {
   11: '#89ff9fcd',
   12: '#ceffceef',
 };
+
+/** Legible text color paired with `grass[9]`. Mode-invariant. */
+export const grassContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `grass[2]`. Light mode. */
+export const grassLightSurface = '#f3faf3cc';
+
+/** Translucent panel-ish background, distinct from `grass[2]`. Dark mode. */
+export const grassDarkSurface = '#19231b80';

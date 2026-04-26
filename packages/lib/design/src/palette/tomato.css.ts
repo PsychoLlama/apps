@@ -1,10 +1,25 @@
-import { createPalette } from '../color-scheme';
 import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  tomatoContrast,
   tomatoDark,
   tomatoDarkAlpha,
+  tomatoDarkSurface,
   tomatoLight,
   tomatoLightAlpha,
+  tomatoLightSurface,
 } from './tomato';
 
-export const tomato = createPalette(tomatoLight, tomatoDark);
-export const tomatoAlpha = createPalette(tomatoLightAlpha, tomatoDarkAlpha);
+const solid = createColorScale(tomatoLight, tomatoDark);
+
+export const tomato: ColorPalette = {
+  solid,
+  alpha: createColorScale(tomatoLightAlpha, tomatoDarkAlpha),
+  contrast: createColorVar(tomatoContrast),
+  surface: createColorVar(tomatoLightSurface, tomatoDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};

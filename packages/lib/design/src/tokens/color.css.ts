@@ -1,5 +1,5 @@
-import { createThemeContract } from '@vanilla-extract/css';
-import { colorScaleShape } from '../color-scheme';
+import { createThemeContract, createVar } from '@vanilla-extract/css';
+import { colorScaleShape, type ColorPalette } from '../color-scheme';
 
 /**
  * Follow this guide to choose a color palette:
@@ -8,26 +8,33 @@ import { colorScaleShape } from '../color-scheme';
 
 // --- Contracts ---
 
-/** Brand color. There is no secondary/tertiary. */
-export const accent = createThemeContract(colorScaleShape);
+/**
+ * Empty `ColorPalette` contract for one semantic role. Each call creates
+ * fresh CSS-var refs that `setThemeColors` aliases to a concrete palette.
+ */
+const createPaletteContract = (): ColorPalette => ({
+  solid: createThemeContract(colorScaleShape),
+  alpha: createThemeContract(colorScaleShape),
+  contrast: createVar(),
+  surface: createVar(),
+  indicator: createVar(),
+  track: createVar(),
+});
 
-/** Semi-transparent variants of the accent. */
-export const accentAlpha = createThemeContract(colorScaleShape);
+/** Brand color. There is no secondary/tertiary. */
+export const accent = createPaletteContract();
 
 /** Neutral scale, partially tinted to match accent. */
-export const neutral = createThemeContract(colorScaleShape);
-
-/** Semi-transparent neutral variants. */
-export const neutralAlpha = createThemeContract(colorScaleShape);
+export const neutral = createPaletteContract();
 
 /** Destructive actions and error states. */
-export const danger = createThemeContract(colorScaleShape);
+export const danger = createPaletteContract();
 
 /** Caution and warning states. */
-export const warning = createThemeContract(colorScaleShape);
+export const warning = createPaletteContract();
 
 /** Positive outcomes and active status. */
-export const success = createThemeContract(colorScaleShape);
+export const success = createPaletteContract();
 
 export const text = createThemeContract({
   /** Low-contrast text (neutral step 11). */

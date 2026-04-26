@@ -4,7 +4,6 @@ import {
   breakpoint,
   fast,
   neutral,
-  neutralAlpha,
   radius,
   space,
   standard,
@@ -55,7 +54,7 @@ export const stage = style({
   borderRadius: radius[4],
   overflow: 'hidden',
   backgroundColor: background.panelSolid,
-  border: `1px solid ${neutral[6]}`,
+  border: `1px solid ${neutral.solid[6]}`,
 });
 
 export const video = style({
@@ -72,12 +71,12 @@ export const downloadLink = style({
   paddingInline: space[3],
   borderRadius: radius[2],
   backgroundColor: 'transparent',
-  boxShadow: `inset 0 0 0 1px ${neutral[7]}`,
+  boxShadow: `inset 0 0 0 1px ${neutral.solid[7]}`,
   color: text.highContrast,
   textDecoration: 'none',
   transition: `background-color ${fast[2]} ${standard.productive}`,
   ':hover': {
-    backgroundColor: neutralAlpha[3],
+    backgroundColor: neutral.alpha[3],
   },
 });
 

@@ -1,7 +1,6 @@
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
-  background,
   danger,
   fast,
   fontFamily,
@@ -11,7 +10,6 @@ import {
   space,
   standard,
   typeScale,
-  white,
 } from '@lib/design';
 import { assignColorSchemeVars } from '@lib/design/color-scheme';
 
@@ -33,7 +31,7 @@ export const base = style({
   },
 
   ':focus-visible': {
-    outline: `2px solid ${accent[8]}`,
+    outline: `2px solid ${accent.solid[8]}`,
     outlineOffset: '2px',
   },
 });
@@ -108,24 +106,23 @@ const colorScales = { accent, neutral, danger } as const;
 type ColorName = keyof typeof colorScales;
 
 const solidStyle = (color: ColorName) => {
-  const scale = colorScales[color];
-  const textColor = color === 'neutral' ? background.page : white[12];
+  const palette = colorScales[color];
 
   return style({
-    backgroundColor: scale[9],
-    color: textColor,
+    backgroundColor: palette.solid[9],
+    color: palette.contrast,
     '@media': {
       '(hover: hover)': {
         selectors: {
           '&:hover:not(:disabled)': {
-            backgroundColor: scale[10],
+            backgroundColor: palette.solid[10],
           },
         },
       },
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: scale[10],
+        backgroundColor: palette.solid[10],
         filter: solidActiveFilter,
       },
     },
@@ -133,71 +130,71 @@ const solidStyle = (color: ColorName) => {
 };
 
 const softStyle = (color: ColorName) => {
-  const scale = colorScales[color];
+  const palette = colorScales[color];
 
   return style({
-    backgroundColor: scale[3],
-    color: scale[11],
+    backgroundColor: palette.alpha[3],
+    color: palette.alpha[11],
     '@media': {
       '(hover: hover)': {
         selectors: {
           '&:hover:not(:disabled)': {
-            backgroundColor: scale[4],
+            backgroundColor: palette.alpha[4],
           },
         },
       },
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: scale[5],
+        backgroundColor: palette.alpha[5],
       },
     },
   });
 };
 
 const outlineStyle = (color: ColorName) => {
-  const scale = colorScales[color];
+  const palette = colorScales[color];
 
   return style({
     backgroundColor: 'transparent',
-    color: scale[11],
-    boxShadow: `inset 0 0 0 1px ${scale[7]}`,
+    color: palette.alpha[11],
+    boxShadow: `inset 0 0 0 1px ${palette.alpha[7]}`,
     '@media': {
       '(hover: hover)': {
         selectors: {
           '&:hover:not(:disabled)': {
-            backgroundColor: scale[3],
-            boxShadow: `inset 0 0 0 1px ${scale[8]}`,
+            backgroundColor: palette.alpha[3],
+            boxShadow: `inset 0 0 0 1px ${palette.alpha[8]}`,
           },
         },
       },
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: scale[4],
+        backgroundColor: palette.alpha[4],
       },
     },
   });
 };
 
 const ghostStyle = (color: ColorName) => {
-  const scale = colorScales[color];
+  const palette = colorScales[color];
 
   return style({
     backgroundColor: 'transparent',
-    color: scale[11],
+    color: palette.alpha[11],
     '@media': {
       '(hover: hover)': {
         selectors: {
           '&:hover:not(:disabled)': {
-            backgroundColor: scale[3],
+            backgroundColor: palette.alpha[3],
           },
         },
       },
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: scale[4],
+        backgroundColor: palette.alpha[4],
       },
     },
   });

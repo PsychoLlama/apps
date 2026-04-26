@@ -59,3 +59,12 @@ export const indigoDarkAlpha: ColorScale = {
   11: '#9eb1ff',
   12: '#d6e1ff',
 };
+
+/** Legible text color paired with `indigo[9]`. Mode-invariant. */
+export const indigoContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `indigo[2]`. Light mode. */
+export const indigoLightSurface = '#f5f8ffcc';
+
+/** Translucent panel-ish background, distinct from `indigo[2]`. Dark mode. */
+export const indigoDarkSurface = '#171d3b80';

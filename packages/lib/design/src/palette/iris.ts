@@ -59,3 +59,12 @@ export const irisDarkAlpha: ColorScale = {
   11: '#b1a9ff',
   12: '#e1e0fffe',
 };
+
+/** Legible text color paired with `iris[9]`. Mode-invariant. */
+export const irisContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `iris[2]`. Light mode. */
+export const irisLightSurface = '#f6f6ffcc';
+
+/** Translucent panel-ish background, distinct from `iris[2]`. Dark mode. */
+export const irisDarkSurface = '#1d1b3980';

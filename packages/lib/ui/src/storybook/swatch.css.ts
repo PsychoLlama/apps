@@ -1,13 +1,13 @@
 import { style } from '@vanilla-extract/css';
-import { neutralAlpha, radius, space } from '@lib/design';
+import { neutral, radius, space } from '@lib/design';
 
 const stripes = [
   `repeating-linear-gradient(`,
   `-45deg,`,
-  `${neutralAlpha[3]},`,
-  `${neutralAlpha[3]} 5px,`,
-  `${neutralAlpha[4]} 5px,`,
-  `${neutralAlpha[4]} 10px`,
+  `${neutral.alpha[3]},`,
+  `${neutral.alpha[3]} 5px,`,
+  `${neutral.alpha[4]} 5px,`,
+  `${neutral.alpha[4]} 10px`,
   `)`,
 ].join(' ');
 

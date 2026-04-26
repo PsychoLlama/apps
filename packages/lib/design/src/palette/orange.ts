@@ -59,3 +59,12 @@ export const orangeDarkAlpha: ColorScale = {
   11: '#ffa057',
   12: '#ffe0c2',
 };
+
+/** Legible text color paired with `orange[9]`. Mode-invariant. */
+export const orangeContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `orange[2]`. Light mode. */
+export const orangeLightSurface = '#fff5e9cc';
+
+/** Translucent panel-ish background, distinct from `orange[2]`. Dark mode. */
+export const orangeDarkSurface = '#271d1380';

@@ -59,3 +59,12 @@ export const oliveDarkAlpha: ColorScale = {
   11: '#f6fef4b0',
   12: '#fdfffded',
 };
+
+/** Legible text color paired with `olive[9]`. Mode-invariant. */
+export const oliveContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `olive[2]`. Light mode. */
+export const oliveLightSurface = '#ffffffcc';
+
+/** Translucent panel-ish background, distinct from `olive[2]`. Dark mode. */
+export const oliveDarkSurface = '#1f201e80';

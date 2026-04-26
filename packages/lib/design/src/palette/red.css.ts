@@ -1,5 +1,25 @@
-import { createPalette } from '../color-scheme';
-import { redDark, redDarkAlpha, redLight, redLightAlpha } from './red';
+import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  redContrast,
+  redDark,
+  redDarkAlpha,
+  redDarkSurface,
+  redLight,
+  redLightAlpha,
+  redLightSurface,
+} from './red';
 
-export const red = createPalette(redLight, redDark);
-export const redAlpha = createPalette(redLightAlpha, redDarkAlpha);
+const solid = createColorScale(redLight, redDark);
+
+export const red: ColorPalette = {
+  solid,
+  alpha: createColorScale(redLightAlpha, redDarkAlpha),
+  contrast: createColorVar(redContrast),
+  surface: createColorVar(redLightSurface, redDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};

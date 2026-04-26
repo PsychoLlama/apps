@@ -48,7 +48,7 @@ const ColorSwatch = (props: { duration: string }) => {
     const toggle = () => {
       on = !on;
       ref.style.transitionDuration = props.duration;
-      ref.style.backgroundColor = on ? accent[9] : '';
+      ref.style.backgroundColor = on ? accent.solid[9] : '';
       timer = setTimeout(toggle, on ? 1500 : 1000);
     };
 

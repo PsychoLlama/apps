@@ -1,5 +1,25 @@
-import { createPalette } from '../color-scheme';
-import { tealDark, tealDarkAlpha, tealLight, tealLightAlpha } from './teal';
+import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  tealContrast,
+  tealDark,
+  tealDarkAlpha,
+  tealDarkSurface,
+  tealLight,
+  tealLightAlpha,
+  tealLightSurface,
+} from './teal';
 
-export const teal = createPalette(tealLight, tealDark);
-export const tealAlpha = createPalette(tealLightAlpha, tealDarkAlpha);
+const solid = createColorScale(tealLight, tealDark);
+
+export const teal: ColorPalette = {
+  solid,
+  alpha: createColorScale(tealLightAlpha, tealDarkAlpha),
+  contrast: createColorVar(tealContrast),
+  surface: createColorVar(tealLightSurface, tealDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};

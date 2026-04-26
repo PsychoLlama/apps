@@ -15,10 +15,10 @@ export const swatch = style({
 
 export const checkerboard = style({
   backgroundImage: [
-    `linear-gradient(45deg, ${neutral[3]} 25%, transparent 25%)`,
-    `linear-gradient(-45deg, ${neutral[3]} 25%, transparent 25%)`,
-    `linear-gradient(45deg, transparent 75%, ${neutral[3]} 75%)`,
-    `linear-gradient(-45deg, transparent 75%, ${neutral[3]} 75%)`,
+    `linear-gradient(45deg, ${neutral.solid[3]} 25%, transparent 25%)`,
+    `linear-gradient(-45deg, ${neutral.solid[3]} 25%, transparent 25%)`,
+    `linear-gradient(45deg, transparent 75%, ${neutral.solid[3]} 75%)`,
+    `linear-gradient(-45deg, transparent 75%, ${neutral.solid[3]} 75%)`,
   ].join(', '),
   backgroundSize: '12px 12px',
   backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0',
@@ -37,5 +37,5 @@ export const textSwatch = style({
 export const bgSwatch = style({
   width: space[8],
   height: space[8],
-  border: `1px solid ${neutral[6]}`,
+  border: `1px solid ${neutral.solid[6]}`,
 });

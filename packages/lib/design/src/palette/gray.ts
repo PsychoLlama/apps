@@ -59,3 +59,12 @@ export const grayDarkAlpha: ColorScale = {
   11: '#ffffffaf',
   12: '#ffffffed',
 };
+
+/** Legible text color paired with `gray[9]`. Mode-invariant. */
+export const grayContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `gray[2]`. Light mode. */
+export const grayLightSurface = '#ffffffcc';
+
+/** Translucent panel-ish background, distinct from `gray[2]`. Dark mode. */
+export const grayDarkSurface = '#21212180';

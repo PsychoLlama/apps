@@ -59,3 +59,12 @@ export const skyDarkAlpha: ColorScale = {
   11: '#7cd3ffef',
   12: '#c2f3ff',
 };
+
+/** Legible text color paired with `sky[9]`. Mode-invariant. */
+export const skyContrast = '#1c2024';
+
+/** Translucent panel-ish background, distinct from `sky[2]`. Light mode. */
+export const skyLightSurface = '#eef9fdcc';
+
+/** Translucent panel-ish background, distinct from `sky[2]`. Dark mode. */
+export const skyDarkSurface = '#13233b80';

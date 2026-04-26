@@ -59,3 +59,12 @@ export const bronzeDarkAlpha: ColorScale = {
   11: '#ffd7c6d1',
   12: '#fff1e9ec',
 };
+
+/** Legible text color paired with `bronze[9]`. Mode-invariant. */
+export const bronzeContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `bronze[2]`. Light mode. */
+export const bronzeLightSurface = '#fdf5f3cc';
+
+/** Translucent panel-ish background, distinct from `bronze[2]`. Dark mode. */
+export const bronzeDarkSurface = '#27211d80';

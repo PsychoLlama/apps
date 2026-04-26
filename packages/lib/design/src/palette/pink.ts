@@ -59,3 +59,12 @@ export const pinkDarkAlpha: ColorScale = {
   11: '#ff8dcc',
   12: '#ffd3ecfd',
 };
+
+/** Legible text color paired with `pink[9]`. Mode-invariant. */
+export const pinkContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `pink[2]`. Light mode. */
+export const pinkLightSurface = '#fef5facc';
+
+/** Translucent panel-ish background, distinct from `pink[2]`. Dark mode. */
+export const pinkDarkSurface = '#31132980';

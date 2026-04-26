@@ -59,3 +59,12 @@ export const amberDarkAlpha: ColorScale = {
   11: '#ffca16',
   12: '#ffe7b3',
 };
+
+/** Legible text color paired with `amber[9]`. Mode-invariant. */
+export const amberContrast = '#21201c';
+
+/** Translucent panel-ish background, distinct from `amber[2]`. Light mode. */
+export const amberLightSurface = '#fefae4cc';
+
+/** Translucent panel-ish background, distinct from `amber[2]`. Dark mode. */
+export const amberDarkSurface = '#271f1380';

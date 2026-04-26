@@ -59,3 +59,12 @@ export const cyanDarkAlpha: ColorScale = {
   11: '#52e1fee5',
   12: '#bbf3fef7',
 };
+
+/** Legible text color paired with `cyan[9]`. Mode-invariant. */
+export const cyanContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `cyan[2]`. Light mode. */
+export const cyanLightSurface = '#eff9facc';
+
+/** Translucent panel-ish background, distinct from `cyan[2]`. Dark mode. */
+export const cyanDarkSurface = '#11252d80';

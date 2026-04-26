@@ -59,3 +59,12 @@ export const blueDarkAlpha: ColorScale = {
   11: '#70b8ff',
   12: '#c2e6ff',
 };
+
+/** Legible text color paired with `blue[9]`. Mode-invariant. */
+export const blueContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `blue[2]`. Light mode. */
+export const blueLightSurface = '#f1f9ffcc';
+
+/** Translucent panel-ish background, distinct from `blue[2]`. Dark mode. */
+export const blueDarkSurface = '#11213d80';

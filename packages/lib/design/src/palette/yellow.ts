@@ -59,3 +59,12 @@ export const yellowDarkAlpha: ColorScale = {
   11: '#fee949f5',
   12: '#fef6baf6',
 };
+
+/** Legible text color paired with `yellow[9]`. Mode-invariant. */
+export const yellowContrast = '#21201c';
+
+/** Translucent panel-ish background, distinct from `yellow[2]`. Light mode. */
+export const yellowLightSurface = '#fefbe4cc';
+
+/** Translucent panel-ish background, distinct from `yellow[2]`. Dark mode. */
+export const yellowDarkSurface = '#231f1380';

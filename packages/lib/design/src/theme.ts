@@ -1,28 +1,24 @@
 import { globalStyle } from '@vanilla-extract/css';
 
-import { aliasVars, lightDark, type ColorContract } from './color-scheme';
+import { aliasPalette, lightDark, type ColorPalette } from './color-scheme';
 import {
   accent,
-  accentAlpha,
   background,
   danger,
   neutral,
-  neutralAlpha,
   success,
   text,
   warning,
 } from './tokens/color.css';
 
 export interface ThemeColorConfig {
-  accent: ColorContract;
-  accentAlpha: ColorContract;
-  neutral: ColorContract;
-  neutralAlpha: ColorContract;
-  danger: ColorContract;
-  warning: ColorContract;
-  success: ColorContract;
-  /** Scale used for text colors (steps 11 and 12). */
-  text: ColorContract;
+  accent: ColorPalette;
+  neutral: ColorPalette;
+  danger: ColorPalette;
+  warning: ColorPalette;
+  success: ColorPalette;
+  /** Source for `text.lowContrast` and `text.highContrast` (steps 11–12). */
+  text: Pick<ColorPalette['solid'], 11 | 12>;
 }
 
 let assigned = false;
@@ -31,10 +27,10 @@ let assigned = false;
  * Bind concrete palettes to the color theme. Call exactly once from a
  * `.css.ts` file. Throws if called more than once.
  *
- * Scales (accent, neutral, danger, etc.) are aliased 1-12. Text is
- * derived from steps 11–12 of the provided scale. Background tokens
- * are derived from the neutral/neutralAlpha scales. Surface and overlay
- * are constants.
+ * Each semantic role (`accent`, `neutral`, `danger`, `warning`, `success`)
+ * takes one full `ColorPalette` covering solid + alpha + meta tokens.
+ * Text comes from steps 11–12 of an untinted scale. Background tokens
+ * are derived from the neutral palette. Surface and overlay are constants.
  */
 export const setThemeColors = (config: ThemeColorConfig): void => {
   if (assigned) {
@@ -46,20 +42,18 @@ export const setThemeColors = (config: ThemeColorConfig): void => {
 
   globalStyle(':root', {
     vars: {
-      ...aliasVars(accent, config.accent),
-      ...aliasVars(accentAlpha, config.accentAlpha),
-      ...aliasVars(neutral, config.neutral),
-      ...aliasVars(neutralAlpha, config.neutralAlpha),
-      ...aliasVars(danger, config.danger),
-      ...aliasVars(warning, config.warning),
-      ...aliasVars(success, config.success),
+      ...aliasPalette(accent, config.accent),
+      ...aliasPalette(neutral, config.neutral),
+      ...aliasPalette(danger, config.danger),
+      ...aliasPalette(warning, config.warning),
+      ...aliasPalette(success, config.success),
 
       [text.lowContrast]: config.text[11],
       [text.highContrast]: config.text[12],
 
-      [background.page]: config.neutral[1],
-      [background.panelSolid]: config.neutral[2],
-      [background.panelTranslucent]: config.neutralAlpha[2],
+      [background.page]: config.neutral.solid[1],
+      [background.panelSolid]: config.neutral.solid[2],
+      [background.panelTranslucent]: config.neutral.alpha[2],
       [background.surface]: lightDark(
         'rgba(255, 255, 255, 0.85)',
         'rgba(0, 0, 0, 0.25)',

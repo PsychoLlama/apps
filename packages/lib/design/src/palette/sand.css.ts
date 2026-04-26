@@ -1,5 +1,25 @@
-import { createPalette } from '../color-scheme';
-import { sandDark, sandDarkAlpha, sandLight, sandLightAlpha } from './sand';
+import {
+  createColorScale,
+  createColorVar,
+  type ColorPalette,
+} from '../color-scheme';
+import {
+  sandContrast,
+  sandDark,
+  sandDarkAlpha,
+  sandDarkSurface,
+  sandLight,
+  sandLightAlpha,
+  sandLightSurface,
+} from './sand';
 
-export const sand = createPalette(sandLight, sandDark);
-export const sandAlpha = createPalette(sandLightAlpha, sandDarkAlpha);
+const solid = createColorScale(sandLight, sandDark);
+
+export const sand: ColorPalette = {
+  solid,
+  alpha: createColorScale(sandLightAlpha, sandDarkAlpha),
+  contrast: createColorVar(sandContrast),
+  surface: createColorVar(sandLightSurface, sandDarkSurface),
+  indicator: createColorVar(solid[9]),
+  track: createColorVar(solid[9]),
+};

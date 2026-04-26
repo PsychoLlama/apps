@@ -59,3 +59,12 @@ export const redDarkAlpha: ColorScale = {
   11: '#ff9592',
   12: '#ffd1d9',
 };
+
+/** Legible text color paired with `red[9]`. Mode-invariant. */
+export const redContrast = 'white';
+
+/** Translucent panel-ish background, distinct from `red[2]`. Light mode. */
+export const redLightSurface = '#fff5f5cc';
+
+/** Translucent panel-ish background, distinct from `red[2]`. Dark mode. */
+export const redDarkSurface = '#2f151780';

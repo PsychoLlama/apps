@@ -19,6 +19,7 @@
 import {
   assignVars,
   createThemeContract,
+  createVar,
   globalStyle,
   type GlobalStyleRule,
 } from '@vanilla-extract/css';
@@ -102,19 +103,19 @@ export const aliasVars = (
 };
 
 /**
- * Register a color palette as CSS custom properties on `:root`.
+ * Register a 12-step color scale as CSS custom properties on `:root`.
  *
  * Creates a 1-12 theme contract and assigns `light-dark()` values via
- * `globalStyle`. The side effect fires on import — palettes that are
+ * `globalStyle`. The side effect fires on import — scales that are
  * never imported produce no CSS.
  *
- * Call once for solid colors and once for alpha:
+ * Used as a building block for `ColorPalette` in `palette/<color>.css.ts`:
  * ```ts
- * export const blue = createPalette(blueLight, blueDark);
- * export const blueAlpha = createPalette(blueLightAlpha, blueDarkAlpha);
+ * solid: createColorScale(blueLight, blueDark),
+ * alpha: createColorScale(blueLightAlpha, blueDarkAlpha),
  * ```
  */
-export const createPalette = (
+export const createColorScale = (
   light: ColorScale,
   dark: ColorScale,
 ): ColorContract => {
@@ -129,3 +130,63 @@ export const createPalette = (
 
   return contract;
 };
+
+/**
+ * Register a single color value on `:root`. Mode-aware when `dark` is
+ * provided, mode-invariant otherwise. Returns a CSS-var ref that
+ * resolves to the registered value.
+ */
+export const createColorVar = (light: string, dark?: string): string => {
+  const cssVar = createVar();
+  const value = dark === undefined ? light : lightDark(light, dark);
+  globalStyle(':root', { vars: { [cssVar]: value } });
+  return cssVar;
+};
+
+/**
+ * Composite of every CSS-var ref a Radix-style color palette exposes.
+ *
+ * One palette is the unit-of-binding: `setThemeColors({ accent: blue })`
+ * swaps every blue token at once instead of forcing a quartet of
+ * `accent`/`accentAlpha`/etc. fields.
+ *
+ * Field semantics mirror Radix Themes' per-color tokens:
+ * - `solid`/`alpha` — the 12-step opaque and translucent scales.
+ * - `contrast` — legible text color paired with `solid[9]`.
+ * - `surface` — translucent panel-ish background, distinct from `solid[2]`.
+ * - `indicator` — form-control fill marker (radio dot, checkbox check).
+ * - `track` — form-control filled track (slider rail, progress bar).
+ */
+export interface ColorPalette {
+  /** Opaque 12-step scale. */
+  solid: ColorContract;
+  /** Translucent 12-step companion. */
+  alpha: ColorContract;
+  /** Legible text color paired with `solid[9]`. */
+  contrast: string;
+  /** Translucent panel-ish background, distinct from `solid[2]`. */
+  surface: string;
+  /** Form-control fill marker. Usually aliases `solid[9]`. */
+  indicator: string;
+  /** Form-control filled-track portion. Usually aliases `solid[9]`. */
+  track: string;
+}
+
+/**
+ * Map a target palette contract's vars to a source palette's values.
+ *
+ * Used by `setThemeColors` to bind a concrete palette (e.g. `blue`) into
+ * a semantic role contract (e.g. `accent`). Copies every facet:
+ * solid + alpha scales plus the four meta tokens.
+ */
+export const aliasPalette = (
+  target: ColorPalette,
+  source: ColorPalette,
+): Record<string, string> => ({
+  ...aliasVars(target.solid, source.solid),
+  ...aliasVars(target.alpha, source.alpha),
+  [target.contrast]: source.contrast,
+  [target.surface]: source.surface,
+  [target.indicator]: source.indicator,
+  [target.track]: source.track,
+});

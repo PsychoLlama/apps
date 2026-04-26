@@ -16,6 +16,7 @@
 
 ## Components
 
+- [Badge](./badge.md): Compact label or status indicator.
 - [Button](./button.md): Styled button.
 - [Callout](./callout.md): Informational message.
 - [Card](./card.md): Surface container.
