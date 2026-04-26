@@ -13,11 +13,9 @@
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import {
   black,
-  fast,
   fontFamily,
   fontWeight,
   neutral,
-  standard,
   typeScale,
   white,
 } from '@lib/design';
@@ -88,9 +86,6 @@ export const variant = styleVariants({
   classic: {
     backgroundColor: neutral.solid[1],
     boxShadow: kbdBoxShadow,
-    transitionProperty: 'box-shadow, background-color',
-    transitionDuration: fast[2],
-    transitionTimingFunction: standard.productive,
   },
   soft: {
     backgroundColor: neutral.alpha[3],
