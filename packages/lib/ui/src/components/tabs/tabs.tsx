@@ -10,10 +10,11 @@
  *   internal signal, no `defaultValue`. Consumers own the source of truth.
  * - Accent and neutral palettes only.
  * - Inactive panels are unmounted via `<Show>`. No `forceMount`.
- * - No `data-state` / `data-orientation` / `data-disabled` attributes —
- *   internal styling uses VE class variants. No public context hook;
- *   consumers drive their own animations from the same `value` signal.
- * - No PageUp/PageDown keyboard handling. No RTL (`dir`) support.
+ * - No `data-state` / `data-disabled` attributes — internal styling uses
+ *   VE class variants. No public context hook; consumers drive their own
+ *   animations from the same `value` signal.
+ * - Horizontal-only (matches Radix Themes; vertical is in the primitive
+ *   only). No PageUp/PageDown keyboard handling. No RTL (`dir`) support.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tabs
  */
@@ -40,7 +41,6 @@ import {
   useTabsContext,
   type TabsActivationMode,
   type TabsContextValue,
-  type TabsOrientation,
   type TabsTriggerRecord,
 } from './context';
 import * as shared from './shared.css';
@@ -54,8 +54,6 @@ export interface TabsRootProps extends MarginProps, RequiredTestIdProps {
   value: string;
   /** Called when the user activates a different tab. */
   onValueChange: (value: string) => void;
-  /** Tab orientation. Affects keyboard navigation and visual layout. @default 'horizontal' */
-  orientation?: TabsOrientation;
   /**
    * `'automatic'` activates the tab on focus; `'manual'` requires Space or
    * Enter. @default 'automatic'
@@ -73,7 +71,6 @@ export interface TabsRootProps extends MarginProps, RequiredTestIdProps {
 export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
   const props = mergeProps(
     {
-      orientation: 'horizontal' as const,
       activationMode: 'automatic' as const,
       loop: true,
     },
@@ -84,7 +81,6 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
   const [local] = splitProps(withoutTid, [
     'value',
     'onValueChange',
-    'orientation',
     'activationMode',
     'loop',
     'class',
@@ -96,7 +92,6 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
     baseId,
     value: () => local.value,
     setValue: (next) => local.onValueChange(next),
-    orientation: () => local.orientation,
     activationMode: () => local.activationMode,
     loop: () => local.loop,
     triggers: new Map(),
@@ -109,14 +104,7 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
   };
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
-      css.root,
-      local.orientation === 'vertical' && css.rootVertical,
-      local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    [...resolveMarginClasses(margin), local.class].filter(Boolean).join(' ');
 
   return (
     <TabsContext.Provider value={ctx}>
@@ -154,7 +142,9 @@ export interface TabsListProps extends RequiredTestIdProps {
 
 /** Container for `Tabs.Trigger` elements. Renders `<div role="tablist">`. */
 export const TabsList: ParentComponent<TabsListProps> = (rawProps) => {
-  const ctx = useTabsContext();
+  // Subscribes to context just to enforce the "must be inside <TabsRoot>"
+  // invariant; doesn't actually need the value.
+  useTabsContext();
   const props = mergeProps(
     {
       size: 2 as const,
@@ -181,7 +171,6 @@ export const TabsList: ParentComponent<TabsListProps> = (rawProps) => {
   const className = () =>
     [
       shared.list,
-      ctx.orientation() === 'vertical' && css.listVertical,
       shared.size[local.size],
       shared.justify[local.justify],
       shared.wrap[local.wrap],
@@ -194,7 +183,7 @@ export const TabsList: ParentComponent<TabsListProps> = (rawProps) => {
   return (
     <div
       role="tablist"
-      aria-orientation={ctx.orientation()}
+      aria-orientation="horizontal"
       class={className()}
       data-testid={tid.testId}
     >
@@ -277,11 +266,6 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.defaultPrevented) return;
 
-    const orientation = ctx.orientation();
-    const isHorizontal = orientation === 'horizontal';
-    const next = isHorizontal ? 'ArrowRight' : 'ArrowDown';
-    const prev = isHorizontal ? 'ArrowLeft' : 'ArrowUp';
-
     if (event.key === ' ' || event.key === 'Enter') {
       if (isDisabled()) return;
       event.preventDefault();
@@ -290,9 +274,9 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
     }
 
     let target: string | undefined;
-    if (event.key === next) {
+    if (event.key === 'ArrowRight') {
       target = neighbor(ctx, local.value, 1);
-    } else if (event.key === prev) {
+    } else if (event.key === 'ArrowLeft') {
       target = neighbor(ctx, local.value, -1);
     } else if (event.key === 'Home') {
       target = firstEnabledTrigger(ctx.triggers);
@@ -309,14 +293,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   };
 
   const className = () =>
-    [
-      shared.trigger,
-      isActive() && shared.triggerActive,
-      isActive() &&
-        ctx.orientation() === 'vertical' &&
-        css.triggerActiveVertical,
-      local.class,
-    ]
+    [shared.trigger, isActive() && shared.triggerActive, local.class]
       .filter(Boolean)
       .join(' ');
 

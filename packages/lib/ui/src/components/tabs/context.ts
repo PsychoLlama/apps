@@ -7,7 +7,6 @@
 
 import { createContext, useContext, type Accessor } from 'solid-js';
 
-export type TabsOrientation = 'horizontal' | 'vertical';
 export type TabsActivationMode = 'automatic' | 'manual';
 
 /** Per-trigger registration kept in a mutable Map (intentionally not reactive). */
@@ -20,7 +19,6 @@ export interface TabsContextValue {
   baseId: string;
   value: Accessor<string>;
   setValue: (next: string) => void;
-  orientation: Accessor<TabsOrientation>;
   activationMode: Accessor<TabsActivationMode>;
   loop: Accessor<boolean>;
   triggers: Map<string, TabsTriggerRecord>;

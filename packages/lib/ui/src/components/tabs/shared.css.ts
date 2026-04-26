@@ -82,9 +82,16 @@ export const trigger = style({
   },
 });
 
-/** Visible inner span. Inherits color/weight from the trigger. */
+/**
+ * Visible inner span. Positioned absolutely on top of `triggerInnerHidden`
+ * so its width doesn't contribute to the trigger's intrinsic size — that
+ * job belongs to the hidden mirror, which always reserves the active
+ * (bold) width. Without this, both spans would stack horizontally and
+ * the trigger would render at twice its real content width.
+ */
 export const triggerInner = style({
-  display: 'inline-flex',
+  position: 'absolute',
+  display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   borderRadius: radius[1],
@@ -112,17 +119,21 @@ export const triggerInner = style({
 });
 
 /**
- * Hidden mirror of the inner span, always rendered at the active weight,
- * so the trigger's intrinsic width never shifts when activating. Held in
- * place by `visibility: hidden` and `aria-hidden` on the element itself.
+ * Hidden mirror of the inner span — rendered at the active (bold) weight
+ * so its width is constant regardless of which trigger is active. Drives
+ * the trigger's intrinsic dimensions; the visible `triggerInner` overlays
+ * on top.
  */
 export const triggerInnerHidden = style({
-  display: 'inline-block',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   visibility: 'hidden',
-  height: 0,
   fontWeight: fontWeight.medium,
   paddingLeft: innerPaddingX,
   paddingRight: innerPaddingX,
+  paddingTop: innerPaddingY,
+  paddingBottom: innerPaddingY,
 });
 
 /** Applied when the trigger represents the active tab/link. */

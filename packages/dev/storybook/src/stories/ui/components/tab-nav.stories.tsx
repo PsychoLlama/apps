@@ -5,7 +5,7 @@ import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Navigation',
+  title: 'UI/Components',
   component: TabNavRoot,
   args: {
     testId: 'tab-nav',

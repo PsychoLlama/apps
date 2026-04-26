@@ -12,13 +12,12 @@ Base: margin props.
 
 - `value` (required): Active tab value.
 - `onValueChange` (required): Called when the user activates a different tab. `(value: string) => void`.
-- `orientation` (=`'horizontal'`): Affects keyboard nav and visual layout. `'horizontal' | 'vertical'`.
 - `activationMode` (=`'automatic'`): `'automatic'` activates on focus; `'manual'` requires Space or Enter.
 - `loop` (=`true`): Wrap focus around the ends with arrow keys.
 
 ## TabsList
 
-Trigger row. Renders `<div role="tablist">` with `aria-orientation` set from `TabsRoot`.
+Trigger row. Renders `<div role="tablist">`. Horizontal-only.
 
 - `size` (=`2`): `1 | 2`.
 - `color` (=`'accent'`): Active indicator color. `'accent' | 'neutral'`.

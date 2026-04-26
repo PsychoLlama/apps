@@ -93,34 +93,6 @@ describe('Tabs', () => {
     expect(triggerA.id).not.toBe(triggerB.id);
   });
 
-  it('applies aria-orientation from the orientation prop', () => {
-    render(() => {
-      const [value, setValue] = createSignal('one');
-      return (
-        <TabsRoot
-          testId="tabs-root"
-          value={value()}
-          onValueChange={setValue}
-          orientation="vertical"
-        >
-          <TabsList testId="tabs-list">
-            <TabsTrigger testId="tabs-trigger-one" value="one">
-              One
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent testId="tabs-content-one" value="one">
-            Panel
-          </TabsContent>
-        </TabsRoot>
-      );
-    });
-
-    expect(screen.getByTestId('tabs-list')).toHaveAttribute(
-      'aria-orientation',
-      'vertical',
-    );
-  });
-
   it('fires onValueChange when a trigger is clicked', async () => {
     const handler = vi.fn();
     const user = userEvent.setup();

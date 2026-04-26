@@ -34,7 +34,6 @@ const meta = {
     testId: 'tabs',
     value: 'overview',
     onValueChange: () => {},
-    orientation: 'horizontal',
     activationMode: 'automatic',
     loop: true,
     size: 2,
@@ -46,10 +45,6 @@ const meta = {
   argTypes: {
     ...marginArgTypes,
     ...testIdArgTypes,
-    orientation: {
-      control: 'inline-radio',
-      options: ['horizontal', 'vertical'],
-    },
     activationMode: {
       control: 'inline-radio',
       options: ['automatic', 'manual'],
@@ -79,7 +74,6 @@ const meta = {
         testId={props.testId}
         value={state.value}
         onValueChange={setValue}
-        orientation={props.orientation}
         activationMode={props.activationMode}
         loop={props.loop}
       >
