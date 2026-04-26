@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["vite/client", "vitest/globals", "unplugin-icons/types/solid"]
   },
-  "include": [".storybook/*.ts", "*.ts"]
+  "include": [".storybook/*.ts", "*.ts", "src"]
 }

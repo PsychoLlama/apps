@@ -18,32 +18,30 @@ tasks:
     args: ['dev']
     local: true
 
-  # Storybook reads stories from every package via
-  # `.storybook/main.ts`'s `packages/*/*/src/**/*.stories.*` glob, so
-  # any story (or any source a story imports) must invalidate the
-  # build cache.
+  # Stories now live in this package's `src/`. Source files in the
+  # libraries they exercise still need to invalidate the build cache.
   build:
     command: 'pnpm'
     args: ['build']
     inputs:
       - '.storybook/**/*'
-      - '/packages/**/*.stories.*'
+      - 'src/**/*'
       - '/packages/app/main/src/{app.css,theme}.ts'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'
     outputs:
       - 'storybook-static'
 
-  # Browser-renders every story in every package to catch runtime
-  # regressions. Mirrors `build`'s inputs since both tasks drive the
-  # same stories through the same storybook config.
+  # Browser-renders every story to catch runtime regressions. Mirrors
+  # `build`'s inputs since both tasks drive the same stories through
+  # the same storybook config.
   smoke-test:
     command: 'pnpm'
     args: ['smoke-test']
     inputs:
       - '.storybook/**/*'
       - 'smoke-test.config.ts'
-      - '/packages/**/*.stories.*'
+      - 'src/**/*'
       - '/packages/app/main/src/{app.css,theme}.ts'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'

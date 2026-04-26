@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
-import { buttonStyleArgTypes } from '../../props/button';
-import { marginArgTypes } from '../../props/margin';
-import { testIdArgTypes } from '../../props/test-id';
-import ButtonComponent, { type ButtonProps } from './button';
+import { Button as ButtonComponent, type ButtonProps } from '@lib/ui';
+import { buttonStyleArgTypes } from '@lib/ui/props/button';
+import { marginArgTypes } from '@lib/ui/props/margin';
+import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
   title: 'UI/Components',

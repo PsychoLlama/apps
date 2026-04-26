@@ -1,14 +1,18 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { marginArgTypes } from '../../props/margin';
-import { testIdArgTypes } from '../../props/test-id';
-import Card from '../card/card';
-import Heading from '../heading/heading';
-import Text from '../text/text';
-import InsetComponent, { type InsetProps } from './inset';
+import {
+  Card,
+  Flex,
+  Heading,
+  Inset as InsetComponent,
+  type InsetProps,
+  Text,
+} from '@lib/ui';
+import { marginArgTypes } from '@lib/ui/props/margin';
+import { testIdArgTypes } from '@lib/ui/props/test-id';
 import * as css from './inset.stories.css';
 
 const meta = {
-  title: 'UI/Layout',
+  title: 'UI/Components',
   component: InsetComponent,
   args: {
     as: 'div',
@@ -34,7 +38,7 @@ const meta = {
   render: (props) => (
     <Card as="div" size={2}>
       <InsetComponent {...props}>
-        <div class={css.media} />
+        <Flex as="div" class={css.media} />
       </InsetComponent>
       <Heading as="h3" size={3}>
         Insets bleed past padding

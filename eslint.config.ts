@@ -107,7 +107,10 @@ export default [
   },
   {
     files: ['packages/**/*.css.ts'],
-    ignores: ['packages/lib/design/src/**'],
+    ignores: [
+      'packages/lib/design/src/**',
+      'packages/dev/storybook/src/stories/**/*.stories.css.ts',
+    ],
     rules: {
       'custom/require-design-tokens': 'error',
       'no-restricted-imports': [
