@@ -1,6 +1,9 @@
 // @refresh reload
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
+import { configure } from '@lib/observability';
+
+configure();
 
 export default createHandler(() => (
   <StartServer
