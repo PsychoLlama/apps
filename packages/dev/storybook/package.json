@@ -5,6 +5,9 @@
   "version": "0.0.0",
   "description": "Storybook workbench for every package",
   "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
   "scripts": {
     "dev": "storybook dev -p 6006 --ci",
     "build": "storybook build",

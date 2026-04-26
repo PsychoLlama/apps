@@ -5,6 +5,7 @@
   "version": "0.0.0",
   "description": "State primitives (stores, workflows, activities).",
   "license": "MIT",
+  "sideEffects": false,
   "exports": {
     ".": "./src/index.ts"
   },

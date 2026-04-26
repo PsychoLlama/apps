@@ -5,6 +5,9 @@
   "version": "0.0.0",
   "description": "Recording studio app.",
   "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
   "exports": {
     ".": "./src/index.tsx"
   },

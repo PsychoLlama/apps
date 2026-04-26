@@ -5,6 +5,9 @@
   "version": "0.0.0",
   "description": "Site chrome (nav, layout frame) shared across apps.",
   "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
   "exports": {
     ".": "./src/index.ts"
   },

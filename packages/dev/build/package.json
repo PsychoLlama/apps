@@ -5,6 +5,9 @@
   "version": "0.0.0",
   "description": "Shared workspace tooling and ignore patterns.",
   "license": "MIT",
+  "sideEffects": [
+    "src/validate-moon.ts"
+  ],
   "exports": {
     "./ignore": "./src/ignore.ts",
     "./validate-moon": "./src/validate-moon.ts"
