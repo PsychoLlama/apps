@@ -52,7 +52,7 @@ const softStyle = (color: ColorName, highContrast: boolean) => {
 const surfaceStyle = (color: ColorName, highContrast: boolean) => {
   const palette: ColorPalette = palettes[color];
   return style({
-    backgroundColor: palette.alpha[2],
+    backgroundColor: palette.surface,
     boxShadow: `inset 0 0 0 1px ${palette.alpha[6]}`,
     color: highContrast ? palette.solid[12] : palette.alpha[11],
   });
