@@ -23,7 +23,6 @@
     "@solidjs/router": "catalog:",
     "@solidjs/testing-library": "catalog:",
     "@testing-library/jest-dom": "catalog:",
-    "@testing-library/user-event": "catalog:",
     "solid-js": "catalog:",
     "storybook-solidjs-vite": "catalog:",
     "unplugin-icons": "catalog:"

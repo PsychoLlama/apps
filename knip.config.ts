@@ -36,14 +36,11 @@ const config: KnipConfig = {
       project: ['.storybook/*.ts'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
-        // Stories live in sibling packages and pull these in via
-        // `packages/*/*/src/**/*.stories.*`. They must be declared
-        // here so pnpm installs them into this package's
-        // node_modules, where vite looks when transforming stories.
+        // Some sibling packages are pulled in indirectly (e.g. via
+        // theme imports in `.storybook/preview.ts`) rather than by
+        // direct story imports.
         '@app/studio',
         '@lib/shell',
-        '@lib/ui',
-        '@solidjs/router',
         '@vanilla-extract/css',
       ],
     },

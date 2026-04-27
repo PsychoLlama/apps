@@ -1,3 +1,14 @@
+/**
+ * Unit tests for TabNav.
+ *
+ * Scope: DOM-shape and type-level assertions. TabNav is a routing strip
+ * with no internal interaction beyond what the anchor + router give
+ * you, so there's nothing to move to Storybook today. If we ever add
+ * keyboard-driven behavior (e.g. arrow nav between links), that goes
+ * to a Storybook play function — see `packages/dev/storybook/src/
+ * stories/ui/components/tabs.stories.tsx` for the pattern.
+ */
+
 import { MemoryRouter, Route } from '@solidjs/router';
 import { render, screen } from '@solidjs/testing-library';
 import type { Component } from 'solid-js';

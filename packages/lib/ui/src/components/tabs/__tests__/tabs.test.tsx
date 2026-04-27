@@ -1,16 +1,25 @@
+/**
+ * Unit tests for Tabs.
+ *
+ * Scope: DOM-shape assertions — ARIA wiring, ID minting, hidden-panel
+ * state, roving tabindex on initial render, IDREF validity. These run
+ * fast in JSDOM and don't depend on real layout or focus semantics.
+ *
+ * Interaction lives in Storybook (`packages/dev/storybook/src/stories/
+ * ui/components/tabs.stories.tsx`). Anything that needs real browser
+ * focus, the actual mouse-button event model, `:focus-visible`, or
+ * roving-focus traversal goes there: keyboard nav (arrows / Home / End
+ * / PageUp / PageDown), loop wrap-around, skip-disabled, manual vs
+ * automatic activation, and the mousedown right-click / ctrl-click
+ * filter. JSDOM approximates all of those well enough to *almost*
+ * pass — which is the worst kind of test coverage.
+ */
+
 import { createSignal, untrack } from 'solid-js';
 import { render, screen } from '@solidjs/testing-library';
-import userEvent from '@testing-library/user-event';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '../tabs';
 
-const Harness = (overrides: {
-  prefix?: string;
-  initialValue?: string;
-  activationMode?: 'automatic' | 'manual';
-  loop?: boolean;
-  disabledValue?: string;
-  onValueChange?: (value: string) => void;
-}) => {
+const Harness = (overrides: { initialValue?: string; prefix?: string }) => {
   const prefix = untrack(() => overrides.prefix ?? 'tabs');
   const [value, setValue] = createSignal(
     untrack(() => overrides.initialValue ?? 'one'),
@@ -19,28 +28,16 @@ const Harness = (overrides: {
     <TabsRoot
       testId={`${prefix}-root`}
       value={value()}
-      onValueChange={(next) => {
-        overrides.onValueChange?.(next);
-        setValue(next);
-      }}
-      activationMode={overrides.activationMode}
+      onValueChange={setValue}
     >
-      <TabsList testId={`${prefix}-list`} loop={overrides.loop}>
+      <TabsList testId={`${prefix}-list`}>
         <TabsTrigger testId={`${prefix}-trigger-one`} value="one">
           One
         </TabsTrigger>
-        <TabsTrigger
-          testId={`${prefix}-trigger-two`}
-          value="two"
-          disabled={overrides.disabledValue === 'two'}
-        >
+        <TabsTrigger testId={`${prefix}-trigger-two`} value="two" disabled>
           Two
         </TabsTrigger>
-        <TabsTrigger
-          testId={`${prefix}-trigger-three`}
-          value="three"
-          disabled={overrides.disabledValue === 'three'}
-        >
+        <TabsTrigger testId={`${prefix}-trigger-three`} value="three">
           Three
         </TabsTrigger>
       </TabsList>
@@ -59,18 +56,18 @@ const Harness = (overrides: {
 
 describe('Tabs', () => {
   it('renders the active panel visible and others mounted but hidden', () => {
-    render(() => <Harness initialValue="two" />);
+    render(() => <Harness initialValue="three" />);
 
-    const active = screen.getByTestId('tabs-content-two');
+    const active = screen.getByTestId('tabs-content-three');
     const inactiveOne = screen.getByTestId('tabs-content-one');
-    const inactiveThree = screen.getByTestId('tabs-content-three');
+    const inactiveTwo = screen.getByTestId('tabs-content-two');
 
     expect(active).toBeVisible();
-    expect(active).toHaveTextContent('Panel two');
+    expect(active).toHaveTextContent('Panel three');
     expect(inactiveOne).not.toBeVisible();
     expect(inactiveOne).toBeEmptyDOMElement();
-    expect(inactiveThree).not.toBeVisible();
-    expect(inactiveThree).toBeEmptyDOMElement();
+    expect(inactiveTwo).not.toBeVisible();
+    expect(inactiveTwo).toBeEmptyDOMElement();
   });
 
   it('keeps every trigger pointing at a panel that exists in the DOM', () => {
@@ -107,96 +104,8 @@ describe('Tabs', () => {
     expect(triggerA.id).not.toBe(triggerB.id);
   });
 
-  it('fires onValueChange when a trigger is clicked', async () => {
-    const handler = vi.fn();
-    const user = userEvent.setup();
-    render(() => <Harness onValueChange={handler} />);
-
-    await user.click(screen.getByTestId('tabs-trigger-two'));
-
-    expect(handler).toHaveBeenCalledWith('two');
-  });
-
-  it('moves focus and activates next trigger on ArrowRight (automatic)', async () => {
-    const handler = vi.fn();
-    const user = userEvent.setup();
-    render(() => <Harness onValueChange={handler} />);
-
-    screen.getByTestId('tabs-trigger-one').focus();
-    await user.keyboard('{ArrowRight}');
-
-    expect(screen.getByTestId('tabs-trigger-two')).toHaveFocus();
-    expect(handler).toHaveBeenLastCalledWith('two');
-  });
-
-  it('moves focus only (no activation) on ArrowRight in manual mode', async () => {
-    const handler = vi.fn();
-    const user = userEvent.setup();
-    render(() => <Harness onValueChange={handler} activationMode="manual" />);
-
-    screen.getByTestId('tabs-trigger-one').focus();
-    await user.keyboard('{ArrowRight}');
-
-    expect(screen.getByTestId('tabs-trigger-two')).toHaveFocus();
-    expect(handler).not.toHaveBeenCalled();
-
-    await user.keyboard(' ');
-    expect(handler).toHaveBeenCalledWith('two');
-  });
-
-  it('jumps to first/last enabled trigger on Home/End', async () => {
-    const user = userEvent.setup();
-    render(() => <Harness initialValue="two" />);
-
-    screen.getByTestId('tabs-trigger-two').focus();
-
-    await user.keyboard('{End}');
-    expect(screen.getByTestId('tabs-trigger-three')).toHaveFocus();
-
-    await user.keyboard('{Home}');
-    expect(screen.getByTestId('tabs-trigger-one')).toHaveFocus();
-  });
-
-  it('treats PageUp/PageDown like Home/End', async () => {
-    const user = userEvent.setup();
-    render(() => <Harness initialValue="two" />);
-
-    screen.getByTestId('tabs-trigger-two').focus();
-
-    await user.keyboard('{PageDown}');
-    expect(screen.getByTestId('tabs-trigger-three')).toHaveFocus();
-
-    await user.keyboard('{PageUp}');
-    expect(screen.getByTestId('tabs-trigger-one')).toHaveFocus();
-  });
-
-  it('skips disabled triggers during keyboard nav', async () => {
-    const user = userEvent.setup();
-    render(() => <Harness initialValue="one" disabledValue="two" />);
-
-    screen.getByTestId('tabs-trigger-one').focus();
-    await user.keyboard('{ArrowRight}');
-
-    expect(screen.getByTestId('tabs-trigger-three')).toHaveFocus();
-  });
-
-  it('wraps when loop=true and stops at the end when loop=false', async () => {
-    const user = userEvent.setup();
-    const looping = render(() => <Harness initialValue="three" />);
-    screen.getByTestId('tabs-trigger-three').focus();
-    await user.keyboard('{ArrowRight}');
-    expect(screen.getByTestId('tabs-trigger-one')).toHaveFocus();
-    looping.unmount();
-
-    render(() => <Harness prefix="noloop" initialValue="three" loop={false} />);
-    const last = screen.getByTestId('noloop-trigger-three');
-    last.focus();
-    await user.keyboard('{ArrowRight}');
-    expect(last).toHaveFocus();
-  });
-
-  it('roving tabindex follows the active value', () => {
-    render(() => <Harness initialValue="two" />);
+  it('roving tabindex follows the active value, skipping disabled', () => {
+    render(() => <Harness initialValue="three" />);
 
     expect(screen.getByTestId('tabs-trigger-one')).toHaveAttribute(
       'tabindex',
@@ -204,40 +113,12 @@ describe('Tabs', () => {
     );
     expect(screen.getByTestId('tabs-trigger-two')).toHaveAttribute(
       'tabindex',
-      '0',
+      '-1',
     );
     expect(screen.getByTestId('tabs-trigger-three')).toHaveAttribute(
       'tabindex',
-      '-1',
+      '0',
     );
-  });
-
-  it('does not move DOM focus when the consumer changes value externally', () => {
-    const [value, setValue] = createSignal('one');
-    render(() => (
-      <TabsRoot testId="root" value={value()} onValueChange={setValue}>
-        <TabsList testId="list">
-          <TabsTrigger testId="trigger-one" value="one">
-            One
-          </TabsTrigger>
-          <TabsTrigger testId="trigger-two" value="two">
-            Two
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent testId="content-one" value="one">
-          Panel one
-        </TabsContent>
-        <TabsContent testId="content-two" value="two">
-          Panel two
-        </TabsContent>
-      </TabsRoot>
-    ));
-
-    const first = screen.getByTestId('trigger-one');
-    first.focus();
-    setValue('two');
-
-    expect(first).toHaveFocus();
   });
 
   it('produces valid IDREFs even when the value contains whitespace', () => {
@@ -264,60 +145,8 @@ describe('Tabs', () => {
   });
 
   it('renders a button with the disabled attribute when disabled', () => {
-    render(() => <Harness initialValue="one" disabledValue="two" />);
+    render(() => <Harness initialValue="one" />);
 
     expect(screen.getByTestId('tabs-trigger-two')).toBeDisabled();
-  });
-
-  it('does not activate on right-click', () => {
-    const handler = vi.fn();
-    render(() => <Harness onValueChange={handler} />);
-
-    const trigger = screen.getByTestId('tabs-trigger-two');
-    trigger.dispatchEvent(
-      new MouseEvent('mousedown', { bubbles: true, button: 2 }),
-    );
-
-    expect(handler).not.toHaveBeenCalled();
-  });
-
-  it('does not activate on ctrl+click (macOS context menu)', () => {
-    const handler = vi.fn();
-    render(() => <Harness onValueChange={handler} />);
-
-    const trigger = screen.getByTestId('tabs-trigger-two');
-    trigger.dispatchEvent(
-      new MouseEvent('mousedown', { bubbles: true, button: 0, ctrlKey: true }),
-    );
-
-    expect(handler).not.toHaveBeenCalled();
-  });
-
-  it('passes consumer-supplied event handlers and HTML attributes through', async () => {
-    const onMouseDown = vi.fn();
-    const user = userEvent.setup();
-    render(() => (
-      <TabsRoot testId="root" value="one" onValueChange={() => {}}>
-        <TabsList testId="list">
-          <TabsTrigger
-            testId="trigger-one"
-            value="one"
-            data-custom="hello"
-            onMouseDown={onMouseDown}
-          >
-            One
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent testId="content-one" value="one">
-          Panel
-        </TabsContent>
-      </TabsRoot>
-    ));
-
-    const trigger = screen.getByTestId('trigger-one');
-    expect(trigger).toHaveAttribute('data-custom', 'hello');
-
-    await user.click(trigger);
-    expect(onMouseDown).toHaveBeenCalled();
   });
 });
