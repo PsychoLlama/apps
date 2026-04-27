@@ -21,14 +21,19 @@ import {
   space,
   standard,
   typeScale,
+  type RadiusScale,
 } from '@lib/design';
 
 /** Set on the list element by the `color` variants; read by `triggerActive`. */
 export const activeIndicator = createVar();
+/** Set on the list element by the `size` variants; read by `trigger`. */
+export const outerPaddingX = createVar();
 /** Set on the list element by the `size` variants; read by `triggerInner`/`triggerInnerHidden`. */
 export const innerPaddingX = createVar();
 /** Set on the list element by the `size` variants; read by `triggerInner`/`triggerInnerHidden`. */
 export const innerPaddingY = createVar();
+/** Set on the list element by the `size` variants; read by `triggerInner`/`triggerInnerHidden`. */
+export const innerBorderRadius = createVar();
 
 // --- List ---
 
@@ -60,6 +65,8 @@ export const trigger = style({
   cursor: 'pointer',
   userSelect: 'none',
   background: 'none',
+  paddingLeft: outerPaddingX,
+  paddingRight: outerPaddingX,
   transitionProperty: 'color',
   transitionDuration: fast[2],
   transitionTimingFunction: standard.productive,
@@ -94,7 +101,7 @@ export const triggerInner = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderRadius: radius[1],
+  borderRadius: innerBorderRadius,
   paddingLeft: innerPaddingX,
   paddingRight: innerPaddingX,
   paddingTop: innerPaddingY,
@@ -156,28 +163,44 @@ export const triggerActive = style({
 
 // --- Size ---
 
-const sizeStyle = (
-  innerPx: keyof typeof space,
-  innerPy: keyof typeof space,
-  outerPx: keyof typeof space,
-  height: keyof typeof space,
-  step: keyof typeof typeScale,
-) => ({
-  height: space[height],
-  fontSize: typeScale[step].fontSize,
-  lineHeight: typeScale[step].lineHeight,
-  letterSpacing: typeScale[step].letterSpacing,
-  paddingLeft: space[outerPx],
-  paddingRight: space[outerPx],
+const sizeStyle = (config: {
+  outerPx: keyof typeof space;
+  innerPx: keyof typeof space;
+  /** CSS value (token or calc); size 1's inner-py is half of `space[1]`. */
+  innerPy: string;
+  innerRadius: RadiusScale;
+  height: keyof typeof space;
+  step: keyof typeof typeScale;
+}) => ({
+  height: space[config.height],
+  fontSize: typeScale[config.step].fontSize,
+  lineHeight: typeScale[config.step].lineHeight,
+  letterSpacing: typeScale[config.step].letterSpacing,
   vars: {
-    [innerPaddingX]: space[innerPx],
-    [innerPaddingY]: space[innerPy],
+    [outerPaddingX]: space[config.outerPx],
+    [innerPaddingX]: space[config.innerPx],
+    [innerPaddingY]: config.innerPy,
+    [innerBorderRadius]: radius[config.innerRadius],
   },
 });
 
 export const size = styleVariants({
-  1: sizeStyle(2, 1, 2, 6, 1),
-  2: sizeStyle(3, 2, 3, 7, 2),
+  1: sizeStyle({
+    outerPx: 1,
+    innerPx: 1,
+    innerPy: `calc(${space[1]} * 0.5)`,
+    innerRadius: 1,
+    height: 6,
+    step: 1,
+  }),
+  2: sizeStyle({
+    outerPx: 2,
+    innerPx: 2,
+    innerPy: space[1],
+    innerRadius: 2,
+    height: 7,
+    step: 2,
+  }),
 });
 
 // --- Justify ---
