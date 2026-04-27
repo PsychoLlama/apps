@@ -391,6 +391,14 @@ export const TabsContent: ParentComponent<TabsContentProps> = (rawProps) => {
 
 // --- Helpers ---
 
+/**
+ * Invokes a consumer-supplied Solid event handler (function or
+ * `[fn, data]` bound-handler tuple) before our internal logic runs.
+ * Call sites then check `event.defaultPrevented` and bail on true —
+ * mirroring Radix's `composeEventHandlers`. This lets a consumer
+ * suppress activation/arrow nav/etc. by calling `preventDefault()`.
+ * Don't invert the call order or drop the tuple branch.
+ */
 const callConsumerHandler = <E extends Event>(
   handler:
     | JSX.EventHandlerUnion<
@@ -406,7 +414,6 @@ const callConsumerHandler = <E extends Event>(
     handler(event);
     return;
   }
-  // Solid bound-handler form: `[handler, data]`.
   handler[0](handler[1], event);
 };
 
