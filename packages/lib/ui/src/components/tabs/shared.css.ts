@@ -57,7 +57,7 @@ export const list = style({
 export const trigger = style({
   position: 'relative',
   display: 'flex',
-  alignItems: 'stretch',
+  alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
   fontFamily: fontFamily.body,
@@ -169,10 +169,11 @@ const sizeStyle = (config: {
   /** CSS value (token or calc); size 1's inner-py is half of `space[1]`. */
   innerPy: string;
   innerRadius: RadiusScale;
-  height: keyof typeof space;
+  /** CSS value; Radix uses 24px / 28px which our space scale doesn't include verbatim at the same indices. */
+  height: string;
   step: keyof typeof typeScale;
 }) => ({
-  height: space[config.height],
+  height: config.height,
   fontSize: typeScale[config.step].fontSize,
   lineHeight: typeScale[config.step].lineHeight,
   letterSpacing: typeScale[config.step].letterSpacing,
@@ -190,7 +191,7 @@ export const size = styleVariants({
     innerPx: 1,
     innerPy: `calc(${space[1]} * 0.5)`,
     innerRadius: 1,
-    height: 6,
+    height: '1.5rem',
     step: 1,
   }),
   2: sizeStyle({
@@ -198,7 +199,7 @@ export const size = styleVariants({
     innerPx: 2,
     innerPy: space[1],
     innerRadius: 2,
-    height: 7,
+    height: '1.75rem',
     step: 2,
   }),
 });
