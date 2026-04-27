@@ -9,12 +9,16 @@
  * - Fully controlled — `value` and `onValueChange` are required. No
  *   internal signal, no `defaultValue`. Consumers own the source of truth.
  * - Accent and neutral palettes only.
- * - Inactive panels are unmounted via `<Show>`. No `forceMount`.
+ * - Inactive panels stay mounted with `hidden` (matching Radix), but their
+ *   children only render while active so consumer effects don't run in the
+ *   background. No `forceMount`.
  * - No `data-state` / `data-disabled` attributes — internal styling uses
  *   VE class variants. No public context hook; consumers drive their own
  *   animations from the same `value` signal.
- * - Horizontal-only (matches Radix Themes; vertical is in the primitive
- *   only). No PageUp/PageDown keyboard handling. No RTL (`dir`) support.
+ * - Horizontal-only. No vertical layout, no PageUp/PageDown asymmetry.
+ *   No RTL (`dir`) support.
+ * - No CSS transitions on the active/inactive switch — color and indicator
+ *   flip instantly.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tabs
  */
@@ -25,7 +29,6 @@ import {
   createUniqueId,
   mergeProps,
   onCleanup,
-  Show,
   splitProps,
   type JSX,
   type ParentComponent,
@@ -38,9 +41,12 @@ import {
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import {
   TabsContext,
+  TabsListContext,
   useTabsContext,
+  useTabsListContext,
   type TabsActivationMode,
   type TabsContextValue,
+  type TabsListContextValue,
   type TabsTriggerRecord,
 } from './context';
 import * as shared from './shared.css';
@@ -48,8 +54,12 @@ import * as css from './tabs.css';
 
 // --- Root ---
 
-/** `Tabs.Root` props. Controlled — `value` and `onValueChange` are required. */
-export interface TabsRootProps extends MarginProps, RequiredTestIdProps {
+/** `TabsRoot` props. Controlled — `value` and `onValueChange` are required. */
+export interface TabsRootProps
+  extends
+    MarginProps,
+    RequiredTestIdProps,
+    Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** The active tab value. */
   value: string;
   /** Called when the user activates a different tab. */
@@ -59,12 +69,6 @@ export interface TabsRootProps extends MarginProps, RequiredTestIdProps {
    * Enter. @default 'automatic'
    */
   activationMode?: TabsActivationMode;
-  /** Wrap focus around the ends of the list with arrow keys. @default true */
-  loop?: boolean;
-  /** Additional class for the root element. */
-  class?: string;
-  /** Tab list and panel(s). */
-  children?: JSX.Element;
 }
 
 /** Container that owns the tabs context. */
@@ -72,17 +76,15 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
   const props = mergeProps(
     {
       activationMode: 'automatic' as const,
-      loop: true,
     },
     rawProps,
   );
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
-  const [local] = splitProps(withoutTid, [
+  const [local, rest] = splitProps(withoutTid, [
     'value',
     'onValueChange',
     'activationMode',
-    'loop',
     'class',
     'children',
   ]);
@@ -93,8 +95,6 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
     value: () => local.value,
     setValue: (next) => local.onValueChange(next),
     activationMode: () => local.activationMode,
-    loop: () => local.loop,
-    triggers: new Map(),
     // `value` is consumer-supplied and may contain whitespace or other
     // characters that aren't valid in space-separated IDREF lists like
     // `aria-controls`. Percent-encode to keep IDs deterministic on both
@@ -108,7 +108,7 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
 
   return (
     <TabsContext.Provider value={ctx}>
-      <div class={className()} data-testid={tid.testId}>
+      <div {...rest} class={className()} data-testid={tid.testId}>
         {local.children}
       </div>
     </TabsContext.Provider>
@@ -122,8 +122,9 @@ type TabsListColor = 'accent' | 'neutral';
 type TabsListJustify = 'start' | 'center' | 'end';
 type TabsListWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
-/** `Tabs.List` props. Visual configuration for the trigger row. */
-export interface TabsListProps extends RequiredTestIdProps {
+/** `TabsList` props. Visual configuration for the trigger row. */
+export interface TabsListProps
+  extends RequiredTestIdProps, JSX.HTMLAttributes<HTMLDivElement> {
   /** Visual size on a 1–2 scale. @default 2 */
   size?: TabsListSize;
   /** Indicator and active-text color. @default 'accent' */
@@ -134,13 +135,11 @@ export interface TabsListProps extends RequiredTestIdProps {
   justify?: TabsListJustify;
   /** Flex-wrap behavior. @default 'nowrap' */
   wrap?: TabsListWrap;
-  /** Additional class for the list element. */
-  class?: string;
-  /** Triggers. */
-  children?: JSX.Element;
+  /** Wrap focus around the ends of the list with arrow keys. @default true */
+  loop?: boolean;
 }
 
-/** Container for `Tabs.Trigger` elements. Renders `<div role="tablist">`. */
+/** Container for `TabsTrigger` elements. Renders `<div role="tablist">`. */
 export const TabsList: ParentComponent<TabsListProps> = (rawProps) => {
   // Subscribes to context just to enforce the "must be inside <TabsRoot>"
   // invariant; doesn't actually need the value.
@@ -152,16 +151,18 @@ export const TabsList: ParentComponent<TabsListProps> = (rawProps) => {
       highContrast: false,
       justify: 'start' as const,
       wrap: 'nowrap' as const,
+      loop: true,
     },
     rawProps,
   );
   const [tid, withoutTid] = splitProps(props, [...testIdPropKeys]);
-  const [local] = splitProps(withoutTid, [
+  const [local, rest] = splitProps(withoutTid, [
     'size',
     'color',
     'highContrast',
     'justify',
     'wrap',
+    'loop',
     'class',
     'children',
   ]);
@@ -180,41 +181,50 @@ export const TabsList: ParentComponent<TabsListProps> = (rawProps) => {
       .filter(Boolean)
       .join(' ');
 
+  const listCtx: TabsListContextValue = {
+    loop: () => local.loop,
+    triggers: new Map(),
+  };
+
   return (
-    <div
-      role="tablist"
-      aria-orientation="horizontal"
-      class={className()}
-      data-testid={tid.testId}
-    >
-      {local.children}
-    </div>
+    <TabsListContext.Provider value={listCtx}>
+      <div
+        {...rest}
+        role="tablist"
+        aria-orientation="horizontal"
+        class={className()}
+        data-testid={tid.testId}
+      >
+        {local.children}
+      </div>
+    </TabsListContext.Provider>
   );
 };
 
 // --- Trigger ---
 
-/** `Tabs.Trigger` props. Always renders a `<button>`. */
-export interface TabsTriggerProps extends RequiredTestIdProps {
-  /** Identifier matched against `Tabs.Root`'s `value`. */
+/** `TabsTrigger` props. Always renders a `<button>`. */
+export interface TabsTriggerProps
+  extends RequiredTestIdProps, JSX.ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Identifier matched against `TabsRoot`'s `value`. */
   value: string;
   /** Disable the trigger. Skipped during keyboard navigation. */
   disabled?: boolean;
-  /** Additional class for the button. */
-  class?: string;
-  /** Trigger label. Rendered twice (visible + width-reservation) via the dual-span trick. */
-  children?: JSX.Element;
 }
 
 /** A single tab control. Renders `<button role="tab">`. */
 export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   const ctx = useTabsContext();
+  const listCtx = useTabsListContext();
   const [tid, withoutTid] = splitProps(rawProps, [...testIdPropKeys]);
-  const [local] = splitProps(withoutTid, [
+  const [local, rest] = splitProps(withoutTid, [
     'value',
     'disabled',
     'class',
     'children',
+    'onMouseDown',
+    'onKeyDown',
+    'onFocus',
   ]);
 
   const isActive = () => ctx.value() === local.value;
@@ -224,10 +234,10 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   // `tabindex=0` so Tab into the list never lands on a disabled control.
   const isFocusableTarget = createMemo(() => {
     if (isActive() && !isDisabled()) return true;
-    const active = ctx.triggers.get(ctx.value());
+    const active = listCtx.triggers.get(ctx.value());
     if (active && !active.disabled()) return false;
     if (isDisabled()) return false;
-    const firstEnabled = firstEnabledTrigger(ctx.triggers);
+    const firstEnabled = firstEnabledTrigger(listCtx.triggers);
     return firstEnabled === local.value;
   });
 
@@ -243,27 +253,43 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
       el: buttonRef,
       disabled: isDisabled,
     };
-    ctx.triggers.set(currentValue, record);
+    listCtx.triggers.set(currentValue, record);
     onCleanup(() => {
-      if (ctx.triggers.get(currentValue) === record) {
-        ctx.triggers.delete(currentValue);
+      if (listCtx.triggers.get(currentValue) === record) {
+        listCtx.triggers.delete(currentValue);
       }
     });
   });
 
-  const onClick = () => {
+  const onMouseDown: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (
+    event,
+  ) => {
+    callConsumerHandler(local.onMouseDown, event);
+    if (event.defaultPrevented) return;
     if (isDisabled()) return;
-    ctx.setValue(local.value);
+    // Match Radix: only activate on a plain left-click. Right-click and
+    // ctrl-click (macOS context menu) preventDefault to avoid stealing
+    // focus, which would otherwise activate the tab in `automatic` mode.
+    if (event.button === 0 && !event.ctrlKey) {
+      ctx.setValue(local.value);
+    } else {
+      event.preventDefault();
+    }
   };
 
-  const onFocus = () => {
+  const onFocus: JSX.EventHandler<HTMLButtonElement, FocusEvent> = (event) => {
+    callConsumerHandler(local.onFocus, event);
+    if (event.defaultPrevented) return;
     if (isDisabled()) return;
     if (ctx.activationMode() === 'automatic' && !isActive()) {
       ctx.setValue(local.value);
     }
   };
 
-  const onKeyDown = (event: KeyboardEvent) => {
+  const onKeyDown: JSX.EventHandler<HTMLButtonElement, KeyboardEvent> = (
+    event,
+  ) => {
+    callConsumerHandler(local.onKeyDown, event);
     if (event.defaultPrevented) return;
 
     if (event.key === ' ' || event.key === 'Enter') {
@@ -275,20 +301,20 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
 
     let target: string | undefined;
     if (event.key === 'ArrowRight') {
-      target = neighbor(ctx, local.value, 1);
+      target = neighbor(listCtx, local.value, 1);
     } else if (event.key === 'ArrowLeft') {
-      target = neighbor(ctx, local.value, -1);
-    } else if (event.key === 'Home') {
-      target = firstEnabledTrigger(ctx.triggers);
-    } else if (event.key === 'End') {
-      target = lastEnabledTrigger(ctx.triggers);
+      target = neighbor(listCtx, local.value, -1);
+    } else if (event.key === 'Home' || event.key === 'PageUp') {
+      target = firstEnabledTrigger(listCtx.triggers);
+    } else if (event.key === 'End' || event.key === 'PageDown') {
+      target = lastEnabledTrigger(listCtx.triggers);
     } else {
       return;
     }
 
     if (!target) return;
     event.preventDefault();
-    const record = ctx.triggers.get(target);
+    const record = listCtx.triggers.get(target);
     record?.el.focus();
   };
 
@@ -299,6 +325,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
 
   return (
     <button
+      {...rest}
       type="button"
       role="tab"
       ref={(el) => {
@@ -311,30 +338,31 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
       disabled={local.disabled}
       class={className()}
       data-testid={tid.testId}
-      onClick={onClick}
+      onMouseDown={onMouseDown}
       onFocus={onFocus}
       onKeyDown={onKeyDown}
     >
       <span class={shared.triggerInner}>{local.children}</span>
-      <span aria-hidden="true" class={shared.triggerInnerHidden}>
-        {local.children}
-      </span>
     </button>
   );
 };
 
 // --- Content ---
 
-/** `Tabs.Content` props. Always renders a `<div role="tabpanel">`. */
+/** `TabsContent` props. Always renders a `<div role="tabpanel">`. */
 export interface TabsContentProps
   extends RequiredTestIdProps, JSX.HTMLAttributes<HTMLDivElement> {
-  /** Identifier matched against `Tabs.Root`'s `value`. Only the active panel renders. */
+  /**
+   * Identifier matched against `TabsRoot`'s `value`. The panel always
+   * mounts but is `hidden` while inactive.
+   */
   value: string;
 }
 
 /**
- * Tab panel. Renders only while active (`<Show>`-gated). The active panel
- * always carries `tabIndex={0}` so screen-reader users can Tab into it.
+ * Tab panel. Always rendered (so trigger `aria-controls` resolves), but
+ * `hidden` while inactive. Children only render while active so consumer
+ * effects don't run in the background.
  */
 export const TabsContent: ParentComponent<TabsContentProps> = (rawProps) => {
   const ctx = useTabsContext();
@@ -346,23 +374,41 @@ export const TabsContent: ParentComponent<TabsContentProps> = (rawProps) => {
   const className = () => [css.content, local.class].filter(Boolean).join(' ');
 
   return (
-    <Show when={isActive()}>
-      <div
-        role="tabpanel"
-        id={ctx.contentId(local.value)}
-        aria-labelledby={ctx.triggerId(local.value)}
-        tabIndex={0}
-        class={className()}
-        data-testid={tid.testId}
-        {...rest}
-      >
-        {local.children}
-      </div>
-    </Show>
+    <div
+      {...rest}
+      role="tabpanel"
+      id={ctx.contentId(local.value)}
+      aria-labelledby={ctx.triggerId(local.value)}
+      tabIndex={0}
+      hidden={!isActive()}
+      class={className()}
+      data-testid={tid.testId}
+    >
+      {isActive() && local.children}
+    </div>
   );
 };
 
 // --- Helpers ---
+
+const callConsumerHandler = <E extends Event>(
+  handler:
+    | JSX.EventHandlerUnion<
+        HTMLButtonElement,
+        E,
+        JSX.EventHandler<HTMLButtonElement, E>
+      >
+    | undefined,
+  event: E & { currentTarget: HTMLButtonElement; target: Element },
+): void => {
+  if (handler === undefined) return;
+  if (typeof handler === 'function') {
+    handler(event);
+    return;
+  }
+  // Solid bound-handler form: `[handler, data]`.
+  handler[0](handler[1], event);
+};
 
 const orderedValues = (triggers: Map<string, TabsTriggerRecord>): string[] => {
   // Map preserves insertion order; triggers register in mount order, which
@@ -379,21 +425,21 @@ const orderedValues = (triggers: Map<string, TabsTriggerRecord>): string[] => {
 };
 
 const neighbor = (
-  ctx: TabsContextValue,
+  listCtx: TabsListContextValue,
   from: string,
   step: 1 | -1,
 ): string | undefined => {
-  const order = orderedValues(ctx.triggers);
+  const order = orderedValues(listCtx.triggers);
   if (order.length === 0) return undefined;
   const startIdx = order.indexOf(from);
   if (startIdx === -1) return undefined;
   const len = order.length;
   for (let offset = 1; offset <= len; offset++) {
     const rawIdx = startIdx + step * offset;
-    if (!ctx.loop() && (rawIdx < 0 || rawIdx >= len)) return undefined;
+    if (!listCtx.loop() && (rawIdx < 0 || rawIdx >= len)) return undefined;
     const idx = ((rawIdx % len) + len) % len;
     const value = order[idx];
-    const record = ctx.triggers.get(value);
+    const record = listCtx.triggers.get(value);
     if (record && !record.disabled()) return value;
   }
   return undefined;

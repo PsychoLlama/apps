@@ -8,7 +8,7 @@ Renders semantic `<nav><ul><li><a>`. Each link is wrapped in its own `<li>`. The
 
 Renders `<nav>` with an inner `<ul role="list">`.
 
-Base: margin props.
+Base: margin props, `<nav>` attributes.
 
 - `aria-label` (required): Accessible name for the nav landmark.
 - `size` (=`2`): `1 | 2`.
@@ -19,9 +19,9 @@ Base: margin props.
 
 ## TabNavLink
 
-Wraps `<A>` from `@solidjs/router` inside an `<li>`.
+Renders `<li><a link>`. The `link` attribute opts the anchor into solid-router's delegated click handler for in-app routing without auto-injecting `aria-current`.
 
-Base: `AnchorProps` from `@solidjs/router`.
+Base: `<a>` attributes.
 
-- `href` (required): Inherited from `AnchorProps`.
+- `href` (required): Destination URL.
 - `active` (=`false`): Mark as the current page. Sets `aria-current="page"` and the visual indicator.

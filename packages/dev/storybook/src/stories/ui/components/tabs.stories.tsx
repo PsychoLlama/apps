@@ -75,7 +75,6 @@ const meta = {
         value={state.value}
         onValueChange={setValue}
         activationMode={props.activationMode}
-        loop={props.loop}
       >
         <TabsList
           testId={`${props.testId}-list`}
@@ -84,6 +83,7 @@ const meta = {
           highContrast={props.highContrast}
           justify={props.justify}
           wrap={props.wrap}
+          loop={props.loop}
         >
           <TabsTrigger
             testId={`${props.testId}-trigger-overview`}

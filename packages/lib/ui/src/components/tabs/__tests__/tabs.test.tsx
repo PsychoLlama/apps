@@ -24,9 +24,8 @@ const Harness = (overrides: {
         setValue(next);
       }}
       activationMode={overrides.activationMode}
-      loop={overrides.loop}
     >
-      <TabsList testId={`${prefix}-list`}>
+      <TabsList testId={`${prefix}-list`} loop={overrides.loop}>
         <TabsTrigger testId={`${prefix}-trigger-one`} value="one">
           One
         </TabsTrigger>
@@ -59,15 +58,30 @@ const Harness = (overrides: {
 };
 
 describe('Tabs', () => {
-  it('renders the active panel and hides the others', () => {
+  it('renders the active panel visible and others mounted but hidden', () => {
     render(() => <Harness initialValue="two" />);
 
-    expect(screen.getByTestId('tabs-content-two')).toBeInTheDocument();
-    expect(screen.getByTestId('tabs-content-two')).toHaveTextContent(
-      'Panel two',
-    );
-    expect(screen.queryByTestId('tabs-content-one')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('tabs-content-three')).not.toBeInTheDocument();
+    const active = screen.getByTestId('tabs-content-two');
+    const inactiveOne = screen.getByTestId('tabs-content-one');
+    const inactiveThree = screen.getByTestId('tabs-content-three');
+
+    expect(active).toBeVisible();
+    expect(active).toHaveTextContent('Panel two');
+    expect(inactiveOne).not.toBeVisible();
+    expect(inactiveOne).toBeEmptyDOMElement();
+    expect(inactiveThree).not.toBeVisible();
+    expect(inactiveThree).toBeEmptyDOMElement();
+  });
+
+  it('keeps every trigger pointing at a panel that exists in the DOM', () => {
+    render(() => <Harness initialValue="one" />);
+
+    for (const value of ['one', 'two', 'three']) {
+      const trigger = screen.getByTestId(`tabs-trigger-${value}`);
+      const panelId = trigger.getAttribute('aria-controls');
+      expect(panelId).toBeTruthy();
+      expect(document.getElementById(panelId!)).not.toBeNull();
+    }
   });
 
   it('wires aria-controls / aria-labelledby between trigger and panel', () => {
@@ -140,6 +154,19 @@ describe('Tabs', () => {
     expect(screen.getByTestId('tabs-trigger-three')).toHaveFocus();
 
     await user.keyboard('{Home}');
+    expect(screen.getByTestId('tabs-trigger-one')).toHaveFocus();
+  });
+
+  it('treats PageUp/PageDown like Home/End', async () => {
+    const user = userEvent.setup();
+    render(() => <Harness initialValue="two" />);
+
+    screen.getByTestId('tabs-trigger-two').focus();
+
+    await user.keyboard('{PageDown}');
+    expect(screen.getByTestId('tabs-trigger-three')).toHaveFocus();
+
+    await user.keyboard('{PageUp}');
     expect(screen.getByTestId('tabs-trigger-one')).toHaveFocus();
   });
 
@@ -240,5 +267,57 @@ describe('Tabs', () => {
     render(() => <Harness initialValue="one" disabledValue="two" />);
 
     expect(screen.getByTestId('tabs-trigger-two')).toBeDisabled();
+  });
+
+  it('does not activate on right-click', () => {
+    const handler = vi.fn();
+    render(() => <Harness onValueChange={handler} />);
+
+    const trigger = screen.getByTestId('tabs-trigger-two');
+    trigger.dispatchEvent(
+      new MouseEvent('mousedown', { bubbles: true, button: 2 }),
+    );
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('does not activate on ctrl+click (macOS context menu)', () => {
+    const handler = vi.fn();
+    render(() => <Harness onValueChange={handler} />);
+
+    const trigger = screen.getByTestId('tabs-trigger-two');
+    trigger.dispatchEvent(
+      new MouseEvent('mousedown', { bubbles: true, button: 0, ctrlKey: true }),
+    );
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('passes consumer-supplied event handlers and HTML attributes through', async () => {
+    const onMouseDown = vi.fn();
+    const user = userEvent.setup();
+    render(() => (
+      <TabsRoot testId="root" value="one" onValueChange={() => {}}>
+        <TabsList testId="list">
+          <TabsTrigger
+            testId="trigger-one"
+            value="one"
+            data-custom="hello"
+            onMouseDown={onMouseDown}
+          >
+            One
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent testId="content-one" value="one">
+          Panel
+        </TabsContent>
+      </TabsRoot>
+    ));
+
+    const trigger = screen.getByTestId('trigger-one');
+    expect(trigger).toHaveAttribute('data-custom', 'hello');
+
+    await user.click(trigger);
+    expect(onMouseDown).toHaveBeenCalled();
   });
 });

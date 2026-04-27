@@ -36,8 +36,9 @@ type TabNavColor = 'accent' | 'neutral';
 type TabNavJustify = 'start' | 'center' | 'end';
 type TabNavWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
-/** `TabNav.Root` props. Wraps a `<nav>` with an inner `<ul>` styled like a tab list. */
-export interface TabNavRootProps extends MarginProps, RequiredTestIdProps {
+/** `TabNavRoot` props. Wraps a `<nav>` with an inner `<ul>` styled like a tab list. */
+export interface TabNavRootProps
+  extends MarginProps, RequiredTestIdProps, JSX.HTMLAttributes<HTMLElement> {
   /**
    * Accessible name for the navigation landmark. Required so assistive
    * tech can disambiguate this nav from any other on the page.
@@ -53,10 +54,6 @@ export interface TabNavRootProps extends MarginProps, RequiredTestIdProps {
   justify?: TabNavJustify;
   /** Flex-wrap behavior. @default 'nowrap' */
   wrap?: TabNavWrap;
-  /** Additional class for the `<nav>` element. */
-  class?: string;
-  /** `TabNav.Link` children. */
-  children?: JSX.Element;
 }
 
 /** Navigation strip styled like a tab list. Renders `<nav><ul role="list">`. */
@@ -73,8 +70,7 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
   );
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
-  const [local] = splitProps(withoutTid, [
-    'aria-label',
+  const [local, rest] = splitProps(withoutTid, [
     'size',
     'color',
     'highContrast',
@@ -101,11 +97,7 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <nav
-      aria-label={local['aria-label']}
-      class={navClassName()}
-      data-testid={tid.testId}
-    >
+    <nav {...rest} class={navClassName()} data-testid={tid.testId}>
       <ul role="list" class={listClassName()}>
         {local.children}
       </ul>
@@ -154,6 +146,7 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
   return (
     <li class={css.item}>
       <a
+        {...rest}
         // The `link` attribute opts the anchor into solid-router's
         // delegated click handler, giving us in-app routing without
         // `<A>`'s auto `aria-current` injection.
@@ -161,12 +154,8 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
         class={className()}
         aria-current={isActive() ? 'page' : undefined}
         data-testid={tid.testId}
-        {...rest}
       >
         <span class={shared.triggerInner}>{local.children}</span>
-        <span aria-hidden="true" class={shared.triggerInnerHidden}>
-          {local.children}
-        </span>
       </a>
     </li>
   );

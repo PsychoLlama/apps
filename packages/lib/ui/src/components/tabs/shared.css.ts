@@ -1,25 +1,26 @@
 /**
  * Base styles shared by Tabs and TabNav.
  *
- * Tabs.List / TabNav.Root render the `list`; their child triggers/links
- * render the `trigger` plus the dual-span inner pair. The active state
- * applies `triggerActive`; the indicator color is fed in via the
- * `--tab-active-indicator` custom property assigned by the `color`
- * variants on the list. Inner padding is fed in via per-size custom
- * properties so the variants on the parent list reach inner spans
- * without needing nested-class selectors.
+ * `TabsList` / `TabNavRoot` render the `list`; their child triggers/links
+ * render the `trigger` plus a single `triggerInner` span that holds the
+ * rounded hover/focus surface. The active state applies `triggerActive`;
+ * the indicator color is fed in via `--tab-active-indicator` set by the
+ * `color` variants on the list. Inner padding is fed in via per-size
+ * custom properties so the variants on the parent list reach the inner
+ * span without nested-class selectors.
+ *
+ * No font-weight or letter-spacing change between active and inactive —
+ * IBM Plex Sans's weight delta makes the flicker too jarring, and color
+ * + the bottom indicator already differentiate active state strongly.
  */
 
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
-  fast,
   fontFamily,
-  fontWeight,
   neutral,
   radius,
   space,
-  standard,
   typeScale,
   type RadiusScale,
 } from '@lib/design';
@@ -28,11 +29,11 @@ import {
 export const activeIndicator = createVar();
 /** Set on the list element by the `size` variants; read by `trigger`. */
 export const outerPaddingX = createVar();
-/** Set on the list element by the `size` variants; read by `triggerInner`/`triggerInnerHidden`. */
+/** Set on the list element by the `size` variants; read by `triggerInner`. */
 export const innerPaddingX = createVar();
-/** Set on the list element by the `size` variants; read by `triggerInner`/`triggerInnerHidden`. */
+/** Set on the list element by the `size` variants; read by `triggerInner`. */
 export const innerPaddingY = createVar();
-/** Set on the list element by the `size` variants; read by `triggerInner`/`triggerInnerHidden`. */
+/** Set on the list element by the `size` variants; read by `triggerInner`. */
 export const innerBorderRadius = createVar();
 
 // --- List ---
@@ -61,20 +62,17 @@ export const trigger = style({
   justifyContent: 'center',
   flexShrink: 0,
   fontFamily: fontFamily.body,
-  color: neutral.solid[11],
+  color: neutral.alpha[11],
   cursor: 'pointer',
   userSelect: 'none',
   background: 'none',
   paddingLeft: outerPaddingX,
   paddingRight: outerPaddingX,
-  transitionProperty: 'color',
-  transitionDuration: fast[2],
-  transitionTimingFunction: standard.productive,
 
   selectors: {
     '&:disabled': {
+      color: neutral.alpha[8],
       cursor: 'not-allowed',
-      opacity: 0.5,
     },
   },
 
@@ -90,14 +88,11 @@ export const trigger = style({
 });
 
 /**
- * Visible inner span. Positioned absolutely on top of `triggerInnerHidden`
- * so its width doesn't contribute to the trigger's intrinsic size — that
- * job belongs to the hidden mirror, which always reserves the active
- * (bold) width. Without this, both spans would stack horizontally and
- * the trigger would render at twice its real content width.
+ * Inner span. Carries the hover/focus rounded surface. Sized by intrinsic
+ * content — no dual-span trick, since active and inactive share font weight
+ * and letter-spacing.
  */
 export const triggerInner = style({
-  position: 'absolute',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -120,33 +115,17 @@ export const triggerInner = style({
         [`${trigger}:where(:not(:disabled)):hover &`]: {
           backgroundColor: neutral.alpha[3],
         },
+        [`${trigger}:where(:focus-visible:hover) &`]: {
+          backgroundColor: accent.alpha[3],
+        },
       },
     },
   },
 });
 
-/**
- * Hidden mirror of the inner span — rendered at the active (bold) weight
- * so its width is constant regardless of which trigger is active. Drives
- * the trigger's intrinsic dimensions; the visible `triggerInner` overlays
- * on top.
- */
-export const triggerInnerHidden = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  visibility: 'hidden',
-  fontWeight: fontWeight.medium,
-  paddingLeft: innerPaddingX,
-  paddingRight: innerPaddingX,
-  paddingTop: innerPaddingY,
-  paddingBottom: innerPaddingY,
-});
-
 /** Applied when the trigger represents the active tab/link. */
 export const triggerActive = style({
   color: neutral.solid[12],
-  fontWeight: fontWeight.medium,
 
   selectors: {
     '&::before': {
