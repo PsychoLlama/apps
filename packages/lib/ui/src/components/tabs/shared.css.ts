@@ -163,17 +163,19 @@ export const triggerActive = style({
 
 // --- Size ---
 
+// Radix's tab heights deliberately exceed the inner content's height
+// so the hover/focus bg sits centered with breathing room above and
+// below — for size 2 that's a 40px trigger holding a 28px inner.
 const sizeStyle = (config: {
   outerPx: keyof typeof space;
   innerPx: keyof typeof space;
   /** CSS value (token or calc); size 1's inner-py is half of `space[1]`. */
   innerPy: string;
   innerRadius: RadiusScale;
-  /** CSS value; Radix uses 24px / 28px which our space scale doesn't include verbatim at the same indices. */
-  height: string;
+  height: keyof typeof space;
   step: keyof typeof typeScale;
 }) => ({
-  height: config.height,
+  height: space[config.height],
   fontSize: typeScale[config.step].fontSize,
   lineHeight: typeScale[config.step].lineHeight,
   letterSpacing: typeScale[config.step].letterSpacing,
@@ -191,7 +193,7 @@ export const size = styleVariants({
     innerPx: 1,
     innerPy: `calc(${space[1]} * 0.5)`,
     innerRadius: 1,
-    height: '1.5rem',
+    height: 6,
     step: 1,
   }),
   2: sizeStyle({
@@ -199,7 +201,7 @@ export const size = styleVariants({
     innerPx: 2,
     innerPy: space[1],
     innerRadius: 2,
-    height: '1.75rem',
+    height: 7,
     step: 2,
   }),
 });
