@@ -23,6 +23,17 @@ tester.run('no-derived-token-types', rule, {
     {
       code: "import { space } from 'somewhere-else'; type X = keyof typeof space;",
     },
+
+    // Import shadowed by a parameter — `space` here is the parameter, not
+    // the design token.
+    {
+      code: "import { space } from '@lib/design'; void space; const fn = (space: { a: number }) => { type X = keyof typeof space; return null as unknown as X; }; void fn;",
+    },
+
+    // Import shadowed by an inner block-scoped const.
+    {
+      code: "import { space } from '@lib/design'; void space; { const space = { a: 1 } as const; type X = keyof typeof space; void (null as unknown as X); }",
+    },
   ],
 
   invalid: [

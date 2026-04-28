@@ -1,4 +1,9 @@
-import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
+import {
+  AST_NODE_TYPES,
+  ASTUtils,
+  ESLintUtils,
+  TSESLint,
+} from '@typescript-eslint/utils';
 
 /**
  * Design tokens that already publish a `keyof`-equivalent type alias from
@@ -32,27 +37,7 @@ const rule = createRule({
   },
   defaultOptions: [],
   create(context) {
-    /** Local-binding name → canonical token name (handles `import { space as s }`). */
-    const tokenLocals = new Map<string, keyof typeof tokenToType>();
-
     return {
-      ImportDeclaration(node) {
-        if (node.source.value !== '@lib/design') return;
-
-        for (const specifier of node.specifiers) {
-          if (specifier.type !== AST_NODE_TYPES.ImportSpecifier) continue;
-          if (specifier.imported.type !== AST_NODE_TYPES.Identifier) continue;
-
-          const importedName = specifier.imported.name;
-          if (importedName in tokenToType) {
-            tokenLocals.set(
-              specifier.local.name,
-              importedName as keyof typeof tokenToType,
-            );
-          }
-        }
-      },
-
       TSTypeOperator(node) {
         if (node.operator !== 'keyof') return;
         if (node.typeAnnotation?.type !== AST_NODE_TYPES.TSTypeQuery) return;
@@ -60,8 +45,25 @@ const rule = createRule({
         const { exprName } = node.typeAnnotation;
         if (exprName.type !== AST_NODE_TYPES.Identifier) return;
 
-        const canonical = tokenLocals.get(exprName.name);
-        if (!canonical) return;
+        // Resolve the identifier through scope so a closer binding (a
+        // parameter, inner `const`, etc.) shadowing the import wins. The
+        // file-level import name is not enough on its own.
+        const scope = context.sourceCode.getScope(node);
+        const variable = ASTUtils.findVariable(scope, exprName.name);
+        if (!variable) return;
+
+        const def = variable.defs[0];
+        if (!def || def.type !== TSESLint.Scope.DefinitionType.ImportBinding)
+          return;
+        if (def.parent?.type !== AST_NODE_TYPES.ImportDeclaration) return;
+        if (def.parent.source.value !== '@lib/design') return;
+        if (def.node.type !== AST_NODE_TYPES.ImportSpecifier) return;
+        if (def.node.imported.type !== AST_NODE_TYPES.Identifier) return;
+
+        const importedName = def.node.imported.name;
+        if (!(importedName in tokenToType)) return;
+
+        const canonical = importedName as keyof typeof tokenToType;
 
         context.report({
           node,
