@@ -1,12 +1,10 @@
 import { composeStories as base } from 'storybook/preview-api';
-import {
-  setProjectAnnotations,
-  type SolidRenderer,
-} from 'storybook-solidjs-vite';
-import type { ComposedStoryFn } from 'storybook/internal/types';
-import projectAnnotations from '../.storybook/preview';
-
-const annotations = setProjectAnnotations([projectAnnotations]);
+import type { SolidRenderer } from 'storybook-solidjs-vite';
+import type {
+  ComposedStoryFn,
+  ProjectAnnotations,
+  Renderer,
+} from 'storybook/internal/types';
 
 type Composed<TModule> = {
   [K in Exclude<keyof TModule, 'default' | '__esModule'> &
@@ -14,18 +12,27 @@ type Composed<TModule> = {
 };
 
 /**
- * Compose every story in a `*.stories.tsx` module with this project's
+ * Compose every story in a `*.stories.tsx` module with the project's
  * annotations applied. Returns a record of `ComposedStoryFn`s keyed by
  * the story export name; each entry exposes `.run()`, `.args`, and the
- * other portable-story affordances documented in Storybook.
+ * other portable-story affordances.
  *
- * `storybook-solidjs-vite` doesn't ship its own typed `composeStories`,
- * so this wrapper just narrows the renderer to `SolidRenderer`. We
- * deliberately erase the per-story args type — TypeScript can resolve
- * the conditional inference through `StoriesWithPartialProps`, but
- * `typescript-eslint` reports it as unresolvable.
+ * `@storybook/addon-vitest` (≥10.3) auto-installs the project's preview
+ * annotations onto `globalThis` before any test file loads, so we read
+ * from there instead of calling `setProjectAnnotations` ourselves.
+ *
+ * `composeStories` from `storybook/preview-api` returns `{}` regardless
+ * of input, and `storybook-solidjs-vite` doesn't ship its own typed
+ * `composeStories`, so this wrapper threads `SolidRenderer` through.
+ * Per-story args types are erased — `tsc` resolves the
+ * `StoriesWithPartialProps` mapped type, but `typescript-eslint`
+ * reports it as unresolvable, which forces `.run` and `.args` calls
+ * into `no-unsafe-*` violations at every test site.
  */
 export const composeStories = <TModule extends object>(
   stories: TModule,
 ): Composed<TModule> =>
-  base(stories as never, annotations) as Composed<TModule>;
+  base(
+    stories as never,
+    globalThis.globalProjectAnnotations as ProjectAnnotations<Renderer>,
+  ) as Composed<TModule>;
