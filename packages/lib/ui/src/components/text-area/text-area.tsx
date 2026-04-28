@@ -3,8 +3,8 @@
  *
  * Ported from Radix UI Themes TextArea. Deviations:
  * - No `color` prop. `soft` styles against the configured `accent`.
- * - Locks to `<textarea>`. The wrapping `<div>` carries the resize
- *   handle; the textarea itself has `resize: none`.
+ * - Locks to `<textarea>`. The wrapping `<div>` carries padding and
+ *   the resize handle; the textarea itself has `resize: none`.
  *
  * @see https://www.radix-ui.com/themes/docs/components/text-area
  */
@@ -17,6 +17,7 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
+import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './text-area.css';
 
 /** Visual size on a 1–3 scale. */
@@ -30,13 +31,19 @@ export type TextAreaResize = 'none' | 'vertical' | 'horizontal' | 'both';
 
 /**
  * `TextArea` props. Surfaces every native `<textarea>` attribute apart
- * from `color`, which collides with our prop scheme.
+ * from `color` (collides with our prop scheme) and `onPointerDown`
+ * (overridden so it fires for clicks on the entire wrapper, not only
+ * the inner textarea — call `event.preventDefault()` to suppress the
+ * built-in focus delegation).
  */
 export interface TextAreaProps
   extends
     MarginProps,
     RequiredTestIdProps,
-    Omit<JSX.TextareaHTMLAttributes<HTMLTextAreaElement>, 'color'> {
+    Omit<
+      JSX.TextareaHTMLAttributes<HTMLTextAreaElement>,
+      'color' | 'onPointerDown'
+    > {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: TextAreaSize;
   /** Visual treatment. @default 'surface' */
@@ -49,6 +56,12 @@ export interface TextAreaProps
    * @default 'none'
    */
   resize?: TextAreaResize;
+  /**
+   * Fires for pointerdown anywhere on the wrapper (including the
+   * padding around the textarea). Call `preventDefault()` to skip
+   * the built-in click-to-focus delegation.
+   */
+  onPointerDown?: JSX.EventHandlerUnion<HTMLDivElement, PointerEvent>;
 }
 
 /**
@@ -75,7 +88,42 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
     'radius',
     'resize',
     'class',
+    'ref',
+    'onPointerDown',
   ]);
+
+  let textareaEl: HTMLTextAreaElement | undefined;
+
+  const setTextareaRef = (el: HTMLTextAreaElement) => {
+    textareaEl = el;
+    const consumerRef = local.ref;
+    if (typeof consumerRef === 'function') consumerRef(el);
+  };
+
+  // Padding lives on the wrapper so the resize handle reshapes the
+  // entire surface — but `<div>` doesn't propagate click-to-focus the
+  // way `<label for=>` does, so without delegation a click on the
+  // padding would do nothing.
+  const onPointerDown: JSX.EventHandler<HTMLDivElement, PointerEvent> = (
+    event,
+  ) => {
+    callConsumerHandler(local.onPointerDown, event);
+    if (event.defaultPrevented) return;
+    const textarea = textareaEl;
+    if (!textarea || textarea.disabled || textarea.readOnly) return;
+
+    // Clicks on the textarea itself (or on intrinsically interactive
+    // descendants, if a future iteration adds slots) keep their own
+    // focus semantics.
+    if (event.target.closest('textarea, input, button, a, select')) return;
+
+    requestAnimationFrame(() => {
+      if (textarea.contains(document.activeElement)) return;
+      textarea.focus();
+      const cursor = textarea.value.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  };
 
   const className = () =>
     [
@@ -91,8 +139,12 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <div class={className()} data-testid={tid.testId}>
-      <textarea {...rest} class={css.input} />
+    <div
+      class={className()}
+      data-testid={tid.testId}
+      onPointerDown={onPointerDown}
+    >
+      <textarea {...rest} ref={(el) => setTextareaRef(el)} class={css.input} />
     </div>
   );
 };

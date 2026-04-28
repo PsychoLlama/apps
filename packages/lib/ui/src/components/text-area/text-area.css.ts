@@ -37,6 +37,11 @@ export const root = style({
   // Wrapping the `resize` handle requires `overflow: hidden`, otherwise
   // the textarea pokes out of the wrapper while the user drags.
   overflow: 'hidden',
+  // Padding is applied here (not on the inner textarea) so dragging
+  // the resize handle reshapes the entire visual surface and the
+  // wrapper's onPointerDown handler can delegate clicks on the
+  // padding to the textarea.
+  cursor: 'text',
 
   selectors: {
     '&:has(textarea:focus-visible)': {
