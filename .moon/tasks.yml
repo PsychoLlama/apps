@@ -16,9 +16,10 @@ implicitInputs:
   - '/pnpm-lock.yaml'
   - '/pnpm-workspace.yaml'
 
-# Every task depends on a successful moon-config check. With moon's
-# own caching this is near-free locally after the first run, and
-# CI runs it fresh (see `@dev/workspace-cli:check-moon`'s `runInCI:
-# always`). Makes the validator impossible to accidentally skip.
+# Every task depends on the workspace-cli validators. The single
+# `:check` task aggregates every subcheck the CLI exposes; see
+# `packages/dev/workspace-cli/moon.yml` for why it has to be one
+# task and not one per check. Cached on its declared inputs, so
+# this is near-free after the first run.
 implicitDeps:
-  - '@dev/workspace-cli:check-moon'
+  - '@dev/workspace-cli:check'

@@ -4,7 +4,7 @@ import {
   type FsProbes,
   type ProjectSources,
   type TaskIndex,
-} from '../moon-input-check.ts';
+} from '../moon.ts';
 
 const alwaysExists: FsProbes = {
   exists: () => Promise.resolve(true),
