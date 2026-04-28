@@ -122,13 +122,22 @@ export const slot = style({
   gap: slotGap,
 });
 
+// Negative margins pull the slot one border-width past the wrapper's
+// padding so slot content sits flush with the visual border (matching
+// Radix). Soft has no border to overlap, but the 1px shift is
+// imperceptible there and keeping the rule single makes the intent
+// clearer than gating on variant.
+/* eslint-disable custom/require-design-tokens */
 export const slotLeft = style({
   paddingRight: slotGap,
+  marginLeft: '-1px',
 });
 
 export const slotRight = style({
   paddingLeft: slotGap,
+  marginRight: '-1px',
 });
+/* eslint-enable custom/require-design-tokens */
 
 // --- Size ---
 
