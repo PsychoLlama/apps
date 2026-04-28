@@ -82,6 +82,32 @@ export const input = style({
     '&:disabled': {
       cursor: 'not-allowed',
     },
+
+    // Hide the native chrome browsers paint inside the input — number
+    // spinner, search cancel, Edge password reveal — so it doesn't fight
+    // the design system. The picker indicator on date/time stays.
+    '&::-webkit-inner-spin-button, &::-webkit-outer-spin-button': {
+      WebkitAppearance: 'none',
+    },
+    '&[type="number"]': {
+      MozAppearance: 'textfield',
+    },
+    '&::-webkit-search-cancel-button': {
+      WebkitAppearance: 'none',
+    },
+    '&::-ms-reveal': {
+      display: 'none',
+    },
+
+    // Autofill (Chrome's `:autofill`, 1Password's marker attribute)
+    // forces a yellow background and dark text color regardless of
+    // page styles. Restore the field's intended foreground via
+    // `-webkit-text-fill-color`; cover the yellow in `surface` and
+    // `classic` via a `background-image` overlay applied on the root
+    // (the input itself is transparent, so the overlay belongs there).
+    '&:where(:autofill, [data-com-onepassword-filled])': {
+      WebkitTextFillColor: text.highContrast,
+    },
   },
 });
 
@@ -141,14 +167,28 @@ export const size = styleVariants({
 
 // --- Variant ---
 
+// `background-color` can't be overridden inside `:autofill` (Chrome
+// forces it), but a `background-image` painted on top of the yellow
+// can. Apply it on the wrapper so it survives the input being
+// transparent.
+const autofillOverlay = (color: string) => ({
+  selectors: {
+    '&:has(input:where(:autofill, [data-com-onepassword-filled]))': {
+      backgroundImage: `linear-gradient(${color}, ${color})`,
+    },
+  },
+});
+
 export const variant = styleVariants({
   surface: {
     backgroundColor: background.surface,
     boxShadow: `inset 0 0 0 1px ${neutral.alpha[7]}`,
+    ...autofillOverlay(background.surface),
   },
   classic: {
     backgroundColor: background.surface,
     boxShadow: shadow[1],
+    ...autofillOverlay(background.surface),
   },
   soft: {
     backgroundColor: accent.alpha[3],

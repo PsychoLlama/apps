@@ -82,6 +82,13 @@ export const input = style({
     '&:disabled': {
       cursor: 'not-allowed',
     },
+
+    // Autofill (rare on textareas, but possible via password managers
+    // for "address" multi-line fields). Restore the field foreground;
+    // the wrapper paints an overlay to mask the yellow background.
+    '&:where(:autofill, [data-com-onepassword-filled])': {
+      WebkitTextFillColor: text.highContrast,
+    },
   },
 });
 
@@ -121,14 +128,26 @@ export const size = styleVariants({
 
 // --- Variant ---
 
+// Mirrors the TextField overlay: `background-color` can't override
+// `:autofill`'s yellow, but a `background-image` painted on top can.
+const autofillOverlay = (color: string) => ({
+  selectors: {
+    '&:has(textarea:where(:autofill, [data-com-onepassword-filled]))': {
+      backgroundImage: `linear-gradient(${color}, ${color})`,
+    },
+  },
+});
+
 export const variant = styleVariants({
   surface: {
     backgroundColor: background.surface,
     boxShadow: `inset 0 0 0 1px ${neutral.alpha[7]}`,
+    ...autofillOverlay(background.surface),
   },
   classic: {
     backgroundColor: background.surface,
     boxShadow: shadow[1],
+    ...autofillOverlay(background.surface),
   },
   soft: {
     backgroundColor: accent.alpha[3],
