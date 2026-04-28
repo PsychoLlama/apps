@@ -28,8 +28,8 @@ import {
 } from '../../props/margin';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { callConsumerHandler } from '../compose-event-handler';
+import Flex from '../flex/flex';
 import * as shared from '../tabs/shared.css';
-import * as css from './tab-nav.css';
 
 // --- Root ---
 
@@ -159,7 +159,7 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
   };
 
   return (
-    <li class={css.item}>
+    <Flex as="li">
       <a
         {...rest}
         // The `link` attribute opts the anchor into solid-router's
@@ -173,7 +173,7 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
       >
         <span class={shared.triggerInner}>{local.children}</span>
       </a>
-    </li>
+    </Flex>
   );
 };
 

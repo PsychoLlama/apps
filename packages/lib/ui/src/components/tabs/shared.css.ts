@@ -23,6 +23,8 @@ import {
   space,
   typeScale,
   type RadiusScale,
+  type SpaceScale,
+  type TypeScale,
 } from '@lib/design';
 
 /** Set on the list element by the `color` variants; read by `triggerActive`. */
@@ -146,13 +148,13 @@ export const triggerActive = style({
 // so the hover/focus bg sits centered with breathing room above and
 // below — for size 2 that's a 40px trigger holding a 28px inner.
 const sizeStyle = (config: {
-  outerPx: keyof typeof space;
-  innerPx: keyof typeof space;
+  outerPx: SpaceScale;
+  innerPx: SpaceScale;
   /** CSS value (token or calc); size 1's inner-py is half of `space[1]`. */
   innerPy: string;
   innerRadius: RadiusScale;
-  height: keyof typeof space;
-  step: keyof typeof typeScale;
+  height: SpaceScale;
+  step: TypeScale;
 }) => ({
   height: space[config.height],
   fontSize: typeScale[config.step].fontSize,
