@@ -142,21 +142,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Default Tabs. Behavioral coverage lives in `__tests__/tabs.stories.test.tsx`. */
+/**
+ * Tabs. All variants (manual activation, no looping, etc.) are
+ * reachable through the controls panel; behavioral coverage lives in
+ * `__tests__/tabs.stories.test.tsx`.
+ */
 export const Tabs: Story = {};
-
-/**
- * Manual activation mode. Arrow keys move focus only; the consumer must
- * press Space or Enter to activate the focused tab.
- */
-export const TabsManualActivation: Story = {
-  args: { activationMode: 'manual' },
-};
-
-/**
- * `loop=false`. Arrow navigation stops at the boundary instead of
- * wrapping around.
- */
-export const TabsNoLoop: Story = {
-  args: { loop: false },
-};

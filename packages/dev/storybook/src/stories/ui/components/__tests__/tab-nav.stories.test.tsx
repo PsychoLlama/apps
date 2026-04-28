@@ -16,40 +16,74 @@ const { TabNav } = composeStories(stories as never, annotations) as unknown as {
 };
 
 describe('TabNav', () => {
-  it('keyboard navigation: arrow keys, Home/End, no looping', async () => {
+  it('ArrowRight and ArrowDown move focus forward', async () => {
     const { container } = render(() => <TabNav />);
     const canvas = within(container);
     const home = canvas.getByTestId('tab-nav-home');
     const projects = canvas.getByTestId('tab-nav-projects');
     const team = canvas.getByTestId('tab-nav-team');
-    const settings = canvas.getByTestId('tab-nav-settings');
 
     home.focus();
-    await expect(home).toHaveFocus();
-
     await userEvent.keyboard('{ArrowRight}');
     await expect(projects).toHaveFocus();
 
     await userEvent.keyboard('{ArrowDown}');
     await expect(team).toHaveFocus();
+  });
 
-    await userEvent.keyboard('{End}');
-    await expect(settings).toHaveFocus();
+  it('ArrowLeft and ArrowUp move focus backward', async () => {
+    const { container } = render(() => <TabNav />);
+    const canvas = within(container);
+    const projects = canvas.getByTestId('tab-nav-projects');
+    const team = canvas.getByTestId('tab-nav-team');
+    const settings = canvas.getByTestId('tab-nav-settings');
 
-    // No loop: ArrowRight at the end stays put.
-    await userEvent.keyboard('{ArrowRight}');
-    await expect(settings).toHaveFocus();
-
+    settings.focus();
     await userEvent.keyboard('{ArrowLeft}');
     await expect(team).toHaveFocus();
 
     await userEvent.keyboard('{ArrowUp}');
     await expect(projects).toHaveFocus();
+  });
 
+  it('Home jumps to the first link', async () => {
+    const { container } = render(() => <TabNav />);
+    const canvas = within(container);
+    const home = canvas.getByTestId('tab-nav-home');
+    const settings = canvas.getByTestId('tab-nav-settings');
+
+    settings.focus();
     await userEvent.keyboard('{Home}');
     await expect(home).toHaveFocus();
+  });
 
-    // No loop: ArrowLeft at the start stays put.
+  it('End jumps to the last link', async () => {
+    const { container } = render(() => <TabNav />);
+    const canvas = within(container);
+    const home = canvas.getByTestId('tab-nav-home');
+    const settings = canvas.getByTestId('tab-nav-settings');
+
+    home.focus();
+    await userEvent.keyboard('{End}');
+    await expect(settings).toHaveFocus();
+  });
+
+  it('ArrowRight at the last link stays put — no looping', async () => {
+    const { container } = render(() => <TabNav />);
+    const canvas = within(container);
+    const settings = canvas.getByTestId('tab-nav-settings');
+
+    settings.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(settings).toHaveFocus();
+  });
+
+  it('ArrowLeft at the first link stays put — no looping', async () => {
+    const { container } = render(() => <TabNav />);
+    const canvas = within(container);
+    const home = canvas.getByTestId('tab-nav-home');
+
+    home.focus();
     await userEvent.keyboard('{ArrowLeft}');
     await expect(home).toHaveFocus();
   });
