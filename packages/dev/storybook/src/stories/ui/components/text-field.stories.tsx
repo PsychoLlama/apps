@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
+import { splitProps } from 'solid-js';
 import IconMagnify from 'virtual:icons/mdi/magnify';
 import IconClose from 'virtual:icons/mdi/close';
 import { Button, TextField, type TextFieldProps } from '@lib/ui';
@@ -46,30 +47,30 @@ const meta = {
     readOnly: { control: 'boolean' },
     placeholder: { control: 'text' },
   },
-  render: (props: TextFieldArgs) => (
-    <TextField
-      testId={props.testId}
-      size={props.size}
-      variant={props.variant}
-      radius={props.radius}
-      placeholder={props.placeholder}
-      disabled={props.disabled}
-      readOnly={props.readOnly}
-      left={props.hasLeft ? <IconMagnify /> : undefined}
-      right={
-        props.hasRight ? (
-          <Button
-            testId={`${props.testId}-clear`}
-            size={1}
-            variant="ghost"
-            color="neutral"
-          >
-            <IconClose />
-          </Button>
-        ) : undefined
-      }
-    />
-  ),
+  render: (props: TextFieldArgs) => {
+    const [storyOnly, textFieldProps] = splitProps(props, [
+      'hasLeft',
+      'hasRight',
+    ]);
+    return (
+      <TextField
+        {...textFieldProps}
+        left={storyOnly.hasLeft ? <IconMagnify /> : undefined}
+        right={
+          storyOnly.hasRight ? (
+            <Button
+              testId={`${textFieldProps.testId}-clear`}
+              size={1}
+              variant="ghost"
+              color="neutral"
+            >
+              <IconClose />
+            </Button>
+          ) : undefined
+        }
+      />
+    );
+  },
 } satisfies Meta<TextFieldArgs>;
 
 export default meta;
