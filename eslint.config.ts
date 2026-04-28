@@ -68,6 +68,7 @@ export default [
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-deprecated': 'error',
       '@typescript-eslint/no-unused-vars': 'error',
+      'custom/no-derived-token-types': 'error',
       'custom/no-static-style-prop': 'error',
       'custom/require-externalized-effects': 'error',
       'custom/require-selectable-prop': 'error',
