@@ -10,4 +10,4 @@ Base: `<textarea>` attributes (except `color`), margin props.
 - `size` (=`2`): Visual size. `1 | 2 | 3`.
 - `variant` (=`'surface'`): Visual treatment. `'classic' | 'surface' | 'soft'`.
 - `radius` (=`'medium'`): Corner rounding. `'none' | 'small' | 'medium' | 'large' | 'full'`.
-- `resize`: Resize handle behavior. `'none' | 'vertical' | 'horizontal' | 'both'`. Omit to honor the user-agent default.
+- `resize` (=`'none'`): Resize handle behavior. `'none' | 'vertical' | 'horizontal' | 'both'`.

@@ -168,6 +168,39 @@ describe('TextField', () => {
     expect(input).not.toHaveFocus();
   });
 
+  it('fires consumer onPointerDown for clicks anywhere on the wrapper', () => {
+    const handler = vi.fn();
+    render(() => (
+      <TextField
+        testId="field"
+        left={<span data-testid="icon">L</span>}
+        onPointerDown={handler}
+      />
+    ));
+    const wrapper = screen.getByTestId('field');
+    const rect = wrapper.getBoundingClientRect();
+
+    dispatchPointerDownAt(wrapper, rect.left + 2, rect.top + rect.height / 2);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the consumer suppress delegation via preventDefault', async () => {
+    render(() => (
+      <TextField
+        testId="field"
+        onPointerDown={(event) => event.preventDefault()}
+      />
+    ));
+    const wrapper = screen.getByTestId('field');
+    const input = wrapper.querySelector('input')!;
+    const rect = wrapper.getBoundingClientRect();
+
+    dispatchPointerDownAt(wrapper, rect.left + 4, rect.top + rect.height / 2);
+    await waitFrame();
+
+    expect(input).not.toHaveFocus();
+  });
+
   // --- Keyboard focus ring ---
 
   it('keyboard-focusing the input matches the wrapper :has(:focus-visible) selector', async () => {

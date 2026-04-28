@@ -43,7 +43,11 @@ export interface TextAreaProps
   variant?: TextAreaVariant;
   /** Corner rounding. @default 'medium' */
   radius?: TextAreaRadius;
-  /** Resize handle behavior. Omit to honor the user agent default. */
+  /**
+   * Resize handle behavior. Defaults to `'none'` (matching Radix);
+   * pass another value to opt back into a resize handle.
+   * @default 'none'
+   */
   resize?: TextAreaResize;
 }
 
@@ -59,6 +63,7 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
       size: 2 as const,
       variant: 'surface' as const,
       radius: 'medium' as const,
+      resize: 'none' as const,
     },
     rawProps,
   );
@@ -79,7 +84,7 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
       css.size[local.size],
       css.variant[local.variant],
       css.radiusVariant[local.radius],
-      local.resize && css.resize[local.resize],
+      css.resize[local.resize],
       local.class,
     ]
       .filter(Boolean)

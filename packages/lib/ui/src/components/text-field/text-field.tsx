@@ -19,6 +19,7 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
+import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './text-field.css';
 
 /** Visual size on a 1–3 scale. */
@@ -29,14 +30,21 @@ export type TextFieldVariant = 'classic' | 'surface' | 'soft';
 export type TextFieldRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
 
 /**
- * `TextField` props. Surfaces every native `<input>` attribute apart from
- * the visual `size` and `color`, which collide with our props.
+ * `TextField` props. Surfaces every native `<input>` attribute apart
+ * from the visual `size` and `color`, which collide with our props,
+ * and `onPointerDown`, which is overridden so it fires for clicks on
+ * the entire field surface (including slot padding) rather than only
+ * the inner input — calling `event.preventDefault()` suppresses the
+ * built-in focus delegation.
  */
 export interface TextFieldProps
   extends
     MarginProps,
     RequiredTestIdProps,
-    Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'color'> {
+    Omit<
+      JSX.InputHTMLAttributes<HTMLInputElement>,
+      'size' | 'color' | 'onPointerDown'
+    > {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: TextFieldSize;
   /** Visual treatment. @default 'surface' */
@@ -47,6 +55,12 @@ export interface TextFieldProps
   left?: JSX.Element;
   /** Content rendered after the input — typically an icon or action button. */
   right?: JSX.Element;
+  /**
+   * Fires for pointerdown on the field's entire visual surface
+   * (wrapper, slot padding, input). Call `preventDefault()` to skip
+   * the built-in click-to-focus delegation.
+   */
+  onPointerDown?: JSX.EventHandlerUnion<HTMLDivElement, PointerEvent>;
 }
 
 /**
@@ -73,6 +87,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
     'right',
     'class',
     'ref',
+    'onPointerDown',
   ]);
 
   let inputEl: HTMLInputElement | undefined;
@@ -86,12 +101,11 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
   // Clicks on the wrapper's empty space (slot padding, edges) need to
   // delegate to the input — `<div>` doesn't propagate click-to-focus
   // the way `<label for=>` does, and the wrapper isn't a label.
-  // A consumer-supplied `onPointerDown` fires independently on the
-  // inner `<input>` via the spread below, so this handler doesn't need
-  // to compose with it.
   const onPointerDown: JSX.EventHandler<HTMLDivElement, PointerEvent> = (
     event,
   ) => {
+    callConsumerHandler(local.onPointerDown, event);
+    if (event.defaultPrevented) return;
     const input = inputEl;
     if (!input || input.disabled || input.readOnly) return;
 
