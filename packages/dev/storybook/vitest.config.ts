@@ -6,7 +6,7 @@ import path from 'node:path';
 
 // Eagerly resolve component-test paths so the storybookTest plugin can
 // pick them up via `STORYBOOK_COMPONENT_PATHS` and merge them with the
-// auto-discovered `*.stories.tsx` smoke tests.
+// auto-discovered `*.stories.tsx` story-mount tests.
 const srcDir = path.join(import.meta.dirname, 'src');
 const componentTestPaths = readdirSync(srcDir, { recursive: true })
   .filter(
@@ -20,7 +20,6 @@ process.env.STORYBOOK_COMPONENT_PATHS = componentTestPaths.join(';');
 
 export default defineConfig({
   test: {
-    name: 'smoke',
     globals: true,
     browser: {
       enabled: true,

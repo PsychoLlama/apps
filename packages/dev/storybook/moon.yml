@@ -32,15 +32,16 @@ tasks:
     outputs:
       - 'storybook-static'
 
-  # Browser-renders every story to catch runtime regressions. Mirrors
+  # Browser-renders every story to catch runtime regressions, then runs
+  # the composed-story interaction tests under `__tests__/`. Mirrors
   # `build`'s inputs since both tasks drive the same stories through
   # the same storybook config.
-  smoke-test:
+  test:
     command: 'pnpm'
-    args: ['smoke-test']
+    args: ['test']
     inputs:
       - '.storybook/**/*'
-      - 'smoke-test.config.ts'
+      - 'vitest.config.ts'
       - 'src/**/*'
       - '/packages/app/main/src/{app.css,theme}.ts'
       - '/packages/app/studio/src/**/*'
