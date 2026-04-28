@@ -45,9 +45,7 @@ export default defineConfig({
           globals: true,
           include: ['packages/**/*.test.{ts,tsx}'],
           server: { deps: sharedServer.deps },
-          typecheck: {
-            enabled: true,
-          },
+          typecheck: { enabled: true },
         },
       },
       {
@@ -56,8 +54,9 @@ export default defineConfig({
         test: {
           name: 'browser',
           globals: true,
-          include: ['packages/lib/**/*.test.browser.{ts,tsx}'],
+          include: ['packages/**/*.test.browser.{ts,tsx}'],
           server: { deps: sharedServer.deps },
+          typecheck: { enabled: true },
           browser: {
             enabled: true,
             provider: playwright({

@@ -16,7 +16,8 @@
     "typecheck": "tsc && pnpm -r typecheck",
     "knip": "knip",
     "lint": "eslint --color",
-    "test": "vitest run"
+    "test": "vitest run --project unit",
+    "test:browser": "vitest run --project browser"
   },
   "prettier": {
     "singleQuote": true,

@@ -31,7 +31,6 @@
     "@iconify/json": "^2.2.460",
     "@storybook/addon-themes": "^10.3.5",
     "@storybook/addon-vitest": "^10.3.5",
-    "@testing-library/jest-dom": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.2",
     "@vitest/browser": "catalog:",
     "@vitest/browser-playwright": "catalog:",
