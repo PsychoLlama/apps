@@ -392,19 +392,31 @@ export const TabsContent: ParentComponent<TabsContentProps> = (rawProps) => {
 
 // --- Helpers ---
 
-const orderedValues = (triggers: Map<string, TabsTriggerRecord>): string[] => {
-  // Map preserves insertion order; triggers register in mount order, which
-  // for static JSX matches DOM order. Re-sort by DOM position to stay
-  // correct when triggers are conditionally rendered.
-  const entries = Array.from(triggers.entries());
-  entries.sort((left, right) => {
-    const cmp = left[1].el.compareDocumentPosition(right[1].el);
-    if (cmp & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
-    if (cmp & Node.DOCUMENT_POSITION_PRECEDING) return 1;
-    return 0;
-  });
-  return entries.map(([value]) => value);
-};
+type Triggers = Map<string, TabsTriggerRecord>;
+
+const isEnabled = (triggers: Triggers, value: string): boolean =>
+  triggers.get(value)?.disabled() === false;
+
+/**
+ * Trigger values in DOM order. Map insertion order matches mount order,
+ * which matches DOM order for static JSX — but conditional triggers can
+ * mount out of order, so re-sort by DOM position.
+ */
+const orderedValues = (triggers: Triggers): string[] =>
+  [...triggers.entries()]
+    .sort(([, left], [, right]) =>
+      left.el.compareDocumentPosition(right.el) &
+      Node.DOCUMENT_POSITION_FOLLOWING
+        ? -1
+        : 1,
+    )
+    .map(([value]) => value);
+
+const firstEnabledTrigger = (triggers: Triggers): string | undefined =>
+  orderedValues(triggers).find((value) => isEnabled(triggers, value));
+
+const lastEnabledTrigger = (triggers: Triggers): string | undefined =>
+  orderedValues(triggers).findLast((value) => isEnabled(triggers, value));
 
 const neighbor = (
   listCtx: TabsListContextValue,
@@ -412,39 +424,16 @@ const neighbor = (
   step: 1 | -1,
 ): string | undefined => {
   const order = orderedValues(listCtx.triggers);
-  if (order.length === 0) return undefined;
-  const startIdx = order.indexOf(from);
-  if (startIdx === -1) return undefined;
-  const len = order.length;
-  for (let offset = 1; offset <= len; offset++) {
-    const rawIdx = startIdx + step * offset;
-    if (!listCtx.loop() && (rawIdx < 0 || rawIdx >= len)) return undefined;
-    const idx = ((rawIdx % len) + len) % len;
-    const value = order[idx];
-    const record = listCtx.triggers.get(value);
-    if (record && !record.disabled()) return value;
-  }
-  return undefined;
-};
+  const start = order.indexOf(from);
+  if (start === -1) return undefined;
+  const enabled = (value: string) => isEnabled(listCtx.triggers, value);
 
-const firstEnabledTrigger = (
-  triggers: Map<string, TabsTriggerRecord>,
-): string | undefined => {
-  for (const value of orderedValues(triggers)) {
-    const record = triggers.get(value);
-    if (record && !record.disabled()) return value;
-  }
-  return undefined;
-};
+  const forward =
+    step === 1 ? order.slice(start + 1) : order.slice(0, start).reverse();
+  const next = forward.find(enabled);
+  if (next || !listCtx.loop()) return next;
 
-const lastEnabledTrigger = (
-  triggers: Map<string, TabsTriggerRecord>,
-): string | undefined => {
-  const order = orderedValues(triggers);
-  for (let idx = order.length - 1; idx >= 0; idx--) {
-    const value = order[idx];
-    const record = triggers.get(value);
-    if (record && !record.disabled()) return value;
-  }
-  return undefined;
+  const wrap =
+    step === 1 ? order.slice(0, start) : order.slice(start + 1).reverse();
+  return wrap.find(enabled);
 };
