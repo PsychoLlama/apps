@@ -54,3 +54,19 @@ export {
   type TabNavRootProps,
   type TabNavLinkProps,
 } from './components/tab-nav/tab-nav';
+export {
+  default as TextField,
+  type TextFieldProps,
+  type TextFieldSize,
+  type TextFieldVariant,
+  type TextFieldRadius,
+  type TextFieldType,
+} from './components/text-field/text-field';
+export {
+  default as TextArea,
+  type TextAreaProps,
+  type TextAreaSize,
+  type TextAreaVariant,
+  type TextAreaRadius,
+  type TextAreaResize,
+} from './components/text-area/text-area';
