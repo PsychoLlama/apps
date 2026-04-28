@@ -1,12 +1,12 @@
 # TabNav
 
-Horizontal navigation strip of routing links styled to match `TabsList`. Composed from two flat components: `TabNavRoot` and `TabNavLink`.
+Horizontal navigation strip of routing links. Composed from two flat components: `TabNavRoot` and `TabNavLink`.
 
-Renders semantic `<nav><ul><li><a>`. Each link is wrapped in its own `<li>`. The active link receives `aria-current="page"`. The active state is required and explicit — consumers compute it from their router (e.g. `useMatch(href)`). Arrow keys and Home/End move focus between links.
+The active link receives `aria-current="page"`. Compute `active` from your router (e.g. `useMatch(href)`). Arrow keys and Home/End move focus between links.
 
 ## TabNavRoot
 
-Renders `<nav>` with an inner `<ul role="list">`.
+Renders `<nav>` containing a `<ul>` of links.
 
 Base: margin props, `<nav>` attributes.
 
@@ -19,7 +19,7 @@ Base: margin props, `<nav>` attributes.
 
 ## TabNavLink
 
-Renders `<li><a link>`. The `link` attribute opts the anchor into solid-router's delegated click handler for in-app routing without auto-injecting `aria-current`.
+Renders `<a>` inside an `<li>`. Routes through `@solidjs/router`.
 
 Base: `<a>` attributes.
 

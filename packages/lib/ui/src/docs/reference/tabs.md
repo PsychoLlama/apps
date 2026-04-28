@@ -2,11 +2,11 @@
 
 Switch between panels under a row of triggers. Composed from four flat components: `TabsRoot`, `TabsList`, `TabsTrigger`, `TabsContent`.
 
-Fully controlled — `value` and `onValueChange` are required on `TabsRoot`. Inactive panels stay mounted with `hidden` (so trigger `aria-controls` always resolves), but their children only render while active. The active panel always carries `tabIndex={0}`.
+Fully controlled — `value` and `onValueChange` are required on `TabsRoot`. Inactive panel children do not render while their tab is inactive, so consumer effects don't run in the background.
 
 ## TabsRoot
 
-Owns context. Renders a `<div>`.
+Renders a `<div>`.
 
 Base: margin props, `<div>` attributes.
 
@@ -42,4 +42,4 @@ Tab panel. Renders `<div role="tabpanel">`. Not polymorphic — wrap your own se
 
 Base: `<div>` attributes.
 
-- `value` (required): Identifier matched against `TabsRoot`'s `value`. The panel mounts always; its children only render while active.
+- `value` (required): Identifier matched against `TabsRoot`'s `value`.
