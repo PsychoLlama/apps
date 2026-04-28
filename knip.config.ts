@@ -10,6 +10,7 @@ const config: KnipConfig = {
         'prettier', // invoked by treefmt
         '@vanilla-extract/css', // referenced by name in eslint.config.ts
         '@iconify/json', // resolved at runtime by unplugin-icons in vitest.config.ts
+        '@dev/workspace-cli', // declared so pnpm links the `workspace` bin into node_modules/.bin
       ],
     },
     'packages/app/main': {

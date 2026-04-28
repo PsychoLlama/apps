@@ -7,13 +7,13 @@ import {
 } from '../moon-input-check.ts';
 
 const alwaysExists: FsProbes = {
-  exists: () => true,
-  globMatches: () => ['match'],
+  exists: () => Promise.resolve(true),
+  globMatches: () => Promise.resolve(['match']),
 };
 
 const noneExist: FsProbes = {
-  exists: () => false,
-  globMatches: () => [],
+  exists: () => Promise.resolve(false),
+  globMatches: () => Promise.resolve([]),
 };
 
 const sources: ProjectSources = {
@@ -42,7 +42,7 @@ describe('resolveToWorkspace', () => {
 });
 
 describe('checkMoonInputs', () => {
-  it('returns no issues when every input resolves', () => {
+  it('returns no issues when every input resolves', async () => {
     const tasks: TaskIndex = {
       '@app/main': {
         build: {
@@ -51,17 +51,19 @@ describe('checkMoonInputs', () => {
       },
     };
 
-    expect(checkMoonInputs(sources, tasks, alwaysExists)).toEqual([]);
+    await expect(
+      checkMoonInputs(sources, tasks, alwaysExists),
+    ).resolves.toEqual([]);
   });
 
-  it('flags a literal input whose file is missing', () => {
+  it('flags a literal input whose file is missing', async () => {
     const tasks: TaskIndex = {
       '@app/main': {
         build: { inputs: [{ file: 'wrangler.toml' }] },
       },
     };
 
-    expect(checkMoonInputs(sources, tasks, noneExist)).toEqual([
+    await expect(checkMoonInputs(sources, tasks, noneExist)).resolves.toEqual([
       {
         target: '@app/main:build',
         kind: 'missing file',
@@ -70,14 +72,14 @@ describe('checkMoonInputs', () => {
     ]);
   });
 
-  it('flags a glob that matches nothing', () => {
+  it('flags a glob that matches nothing', async () => {
     const tasks: TaskIndex = {
       '@app/main': {
         build: { inputs: [{ glob: 'src/**/*' }] },
       },
     };
 
-    expect(checkMoonInputs(sources, tasks, noneExist)).toEqual([
+    await expect(checkMoonInputs(sources, tasks, noneExist)).resolves.toEqual([
       {
         target: '@app/main:build',
         kind: 'empty glob',
@@ -86,7 +88,7 @@ describe('checkMoonInputs', () => {
     ]);
   });
 
-  it('skips entries marked optional', () => {
+  it('skips entries marked optional', async () => {
     const tasks: TaskIndex = {
       '@app/main': {
         build: {
@@ -98,10 +100,12 @@ describe('checkMoonInputs', () => {
       },
     };
 
-    expect(checkMoonInputs(sources, tasks, noneExist)).toEqual([]);
+    await expect(checkMoonInputs(sources, tasks, noneExist)).resolves.toEqual(
+      [],
+    );
   });
 
-  it('resolves workspace-rooted paths against the workspace root', () => {
+  it('resolves workspace-rooted paths against the workspace root', async () => {
     const captured: string[] = [];
     const tasks: TaskIndex = {
       '@app/main': {
@@ -109,18 +113,18 @@ describe('checkMoonInputs', () => {
       },
     };
 
-    checkMoonInputs(sources, tasks, {
+    await checkMoonInputs(sources, tasks, {
       exists: (rel) => {
         captured.push(rel);
-        return true;
+        return Promise.resolve(true);
       },
-      globMatches: () => [],
+      globMatches: () => Promise.resolve([]),
     });
 
     expect(captured).toEqual(['pnpm-lock.yaml']);
   });
 
-  it('resolves project-relative paths against the project source', () => {
+  it('resolves project-relative paths against the project source', async () => {
     const captured: string[] = [];
     const tasks: TaskIndex = {
       '@app/main': {
@@ -128,24 +132,26 @@ describe('checkMoonInputs', () => {
       },
     };
 
-    checkMoonInputs(sources, tasks, {
-      exists: () => true,
+    await checkMoonInputs(sources, tasks, {
+      exists: () => Promise.resolve(true),
       globMatches: (pattern) => {
         captured.push(pattern);
-        return ['match'];
+        return Promise.resolve(['match']);
       },
     });
 
     expect(captured).toEqual(['packages/app/main/src/**/*']);
   });
 
-  it('skips tasks from unknown projects rather than crashing', () => {
+  it('skips tasks from unknown projects rather than crashing', async () => {
     const tasks: TaskIndex = {
       '@ghost/pkg': {
         build: { inputs: [{ file: 'missing.ts' }] },
       },
     };
 
-    expect(checkMoonInputs(sources, tasks, noneExist)).toEqual([]);
+    await expect(checkMoonInputs(sources, tasks, noneExist)).resolves.toEqual(
+      [],
+    );
   });
 });

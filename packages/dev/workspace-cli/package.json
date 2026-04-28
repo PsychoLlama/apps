@@ -1,0 +1,17 @@
+{
+  "name": "@dev/workspace-cli",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Internal workspace tooling CLI.",
+  "license": "MIT",
+  "bin": {
+    "workspace": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "citty": "catalog:"
+  }
+}

@@ -5,7 +5,7 @@
  * synthetic data and fake filesystem probes — no shelling out to
  * `moon query`, no real filesystem, no globbing on the host.
  *
- * The CLI wrapper in `validate-moon.ts` is the only caller that
+ * The CLI wrapper in `commands/check-moon.ts` is the only caller that
  * feeds real data in.
  */
 
@@ -47,9 +47,9 @@ export type ProjectSources = Record<string, string>;
  */
 export interface FsProbes {
   /** Returns true if the workspace-relative path exists. */
-  exists: (workspaceRelative: string) => boolean;
+  exists: (workspaceRelative: string) => Promise<boolean>;
   /** Returns the paths that match `pattern` (workspace-relative). */
-  globMatches: (workspaceRelative: string) => string[];
+  globMatches: (workspaceRelative: string) => Promise<string[]>;
 }
 
 /** A single stale-input finding surfaced to the user. */
@@ -81,11 +81,11 @@ export const resolveToWorkspace = (
  * longer resolve. `file` entries must exist; `glob` entries must
  * match at least one file. `optional: true` entries are skipped.
  */
-export const checkMoonInputs = (
+export const checkMoonInputs = async (
   projectSources: ProjectSources,
   tasks: TaskIndex,
   fs: FsProbes,
-): Issue[] => {
+): Promise<Issue[]> => {
   const issues: Issue[] = [];
 
   for (const [project, projectTasks] of Object.entries(tasks)) {
@@ -99,14 +99,14 @@ export const checkMoonInputs = (
 
         if (input.file !== undefined) {
           const rel = resolveToWorkspace(source, input.file);
-          if (!fs.exists(rel)) {
+          if (!(await fs.exists(rel))) {
             issues.push({ target, kind: 'missing file', value: input.file });
           }
         }
 
         if (input.glob !== undefined) {
           const rel = resolveToWorkspace(source, input.glob);
-          if (fs.globMatches(rel).length === 0) {
+          if ((await fs.globMatches(rel)).length === 0) {
             issues.push({ target, kind: 'empty glob', value: input.glob });
           }
         }

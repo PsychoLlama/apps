@@ -3,14 +3,10 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Shared workspace tooling and ignore patterns.",
+  "description": "Shared workspace ignore patterns.",
   "license": "MIT",
-  "sideEffects": [
-    "src/validate-moon.ts"
-  ],
   "exports": {
-    "./ignore": "./src/ignore.ts",
-    "./validate-moon": "./src/validate-moon.ts"
+    "./ignore": "./src/ignore.ts"
   },
   "scripts": {
     "typecheck": "tsc"

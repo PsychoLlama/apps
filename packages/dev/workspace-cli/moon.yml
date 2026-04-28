@@ -1,8 +1,8 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
 project:
-  name: '@dev/build'
-  description: 'Shared workspace tooling — static checks, ignore patterns, etc.'
+  name: '@dev/workspace-cli'
+  description: 'Internal workspace tooling CLI — static checks, etc.'
 
 tasks:
   # Fails if any task `inputs:` glob matches no files, or any literal
@@ -11,12 +11,9 @@ tasks:
   # — affected-task detection then skips work it should be running.
   # Wired as an `implicitDeps` entry in `.moon/tasks.yml`, so every
   # task runs this first; CI runs it fresh regardless of cache.
-  validate-moon:
-    # `--import` loads `validate-moon` via the package's exports
-    # map — no reaching into `src/`. The `--eval ''` is a no-op
-    # main script; node would otherwise drop into a REPL.
+  check-moon:
     command: 'node'
-    args: ['--import', '@dev/build/validate-moon', '--eval', '']
+    args: ['packages/dev/workspace-cli/src/cli.ts', 'check', 'moon']
     inputs:
       - 'src/**/*'
       - '/moon.yml'
