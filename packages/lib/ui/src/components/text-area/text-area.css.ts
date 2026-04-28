@@ -14,14 +14,12 @@ import { style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
   background,
-  fast,
   fontFamily,
   fontWeight,
   neutral,
   radius,
   shadow,
   space,
-  standard,
   text,
   typeScale,
 } from '@lib/design';
@@ -39,9 +37,6 @@ export const root = style({
   // Wrapping the `resize` handle requires `overflow: hidden`, otherwise
   // the textarea pokes out of the wrapper while the user drags.
   overflow: 'hidden',
-  transitionProperty: 'box-shadow, background-color',
-  transitionDuration: fast[2],
-  transitionTimingFunction: standard.productive,
 
   selectors: {
     '&:has(textarea:focus-visible)': {

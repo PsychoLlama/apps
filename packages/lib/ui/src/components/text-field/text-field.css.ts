@@ -17,14 +17,12 @@ import { style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
   background,
-  fast,
   fontFamily,
   fontWeight,
   neutral,
   radius,
   shadow,
   space,
-  standard,
   text,
   typeScale,
 } from '@lib/design';
@@ -48,9 +46,6 @@ export const root = style({
   fontWeight: fontWeight.regular,
   textAlign: 'start',
   cursor: 'text',
-  transitionProperty: 'box-shadow, background-color',
-  transitionDuration: fast[2],
-  transitionTimingFunction: standard.productive,
 
   selectors: {
     '&:has(input:focus-visible)': {
