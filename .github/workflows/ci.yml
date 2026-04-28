@@ -92,9 +92,10 @@ jobs:
         working-directory: packages/app/main
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          SUBDOMAIN: ${{ vars.WORKERS_DEV_SUBDOMAIN }}
         run: |
           pnpm exec wrangler versions upload --preview-alias "pr-$PR_NUMBER"
-          echo "url=https://pr-$PR_NUMBER-apps.gibson.workers.dev" >> "$GITHUB_OUTPUT"
+          echo "url=https://pr-$PR_NUMBER-apps.$SUBDOMAIN.workers.dev" >> "$GITHUB_OUTPUT"
 
       # Records a GitHub Deployment so the PR sidebar shows a "preview"
       # tile linking to the workers.dev URL.
