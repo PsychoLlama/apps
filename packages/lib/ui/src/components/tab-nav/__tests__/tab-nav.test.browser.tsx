@@ -1,73 +1,103 @@
-import { expect, screen, userEvent } from 'storybook/test';
-import { composeStories } from '../../../../compose-stories';
-import * as stories from '../tab-nav.stories';
+/**
+ * Behavioral tests for TabNav. Runs in a real browser via
+ * `@vitest/browser` so focus and keyboard semantics match production.
+ * DOM-shape coverage stays in the sibling `tab-nav.test.tsx` (jsdom).
+ */
 
-const { TabNav } = composeStories(stories);
+import { MemoryRouter, Route } from '@solidjs/router';
+import { render, screen } from '@solidjs/testing-library';
+import { userEvent } from 'vitest/browser';
+import type { JSX } from 'solid-js';
+import { TabNavLink, TabNavRoot } from '../tab-nav';
+
+const mount = (page: () => JSX.Element) =>
+  render(() => (
+    <MemoryRouter>
+      <Route path="*" component={page} />
+    </MemoryRouter>
+  ));
+
+const Nav = () => (
+  <TabNavRoot testId="tab-nav" aria-label="Primary navigation">
+    <TabNavLink testId="tab-nav-home" href="/" active>
+      Home
+    </TabNavLink>
+    <TabNavLink testId="tab-nav-projects" href="/projects" active={false}>
+      Projects
+    </TabNavLink>
+    <TabNavLink testId="tab-nav-team" href="/team" active={false}>
+      Team
+    </TabNavLink>
+    <TabNavLink testId="tab-nav-settings" href="/settings" active={false}>
+      Settings
+    </TabNavLink>
+  </TabNavRoot>
+);
 
 describe('TabNav', () => {
   it('ArrowRight and ArrowDown move focus forward', async () => {
-    await TabNav.run();
+    mount(() => <Nav />);
     const home = screen.getByTestId('tab-nav-home');
     const projects = screen.getByTestId('tab-nav-projects');
     const team = screen.getByTestId('tab-nav-team');
 
     home.focus();
     await userEvent.keyboard('{ArrowRight}');
-    await expect(projects).toHaveFocus();
+    expect(projects).toHaveFocus();
 
     await userEvent.keyboard('{ArrowDown}');
-    await expect(team).toHaveFocus();
+    expect(team).toHaveFocus();
   });
 
   it('ArrowLeft and ArrowUp move focus backward', async () => {
-    await TabNav.run();
+    mount(() => <Nav />);
     const projects = screen.getByTestId('tab-nav-projects');
     const team = screen.getByTestId('tab-nav-team');
     const settings = screen.getByTestId('tab-nav-settings');
 
     settings.focus();
     await userEvent.keyboard('{ArrowLeft}');
-    await expect(team).toHaveFocus();
+    expect(team).toHaveFocus();
 
     await userEvent.keyboard('{ArrowUp}');
-    await expect(projects).toHaveFocus();
+    expect(projects).toHaveFocus();
   });
 
   it('Home jumps to the first link', async () => {
-    await TabNav.run();
+    mount(() => <Nav />);
     const home = screen.getByTestId('tab-nav-home');
     const settings = screen.getByTestId('tab-nav-settings');
 
     settings.focus();
     await userEvent.keyboard('{Home}');
-    await expect(home).toHaveFocus();
+    expect(home).toHaveFocus();
   });
 
   it('End jumps to the last link', async () => {
-    await TabNav.run();
+    mount(() => <Nav />);
     const home = screen.getByTestId('tab-nav-home');
     const settings = screen.getByTestId('tab-nav-settings');
 
     home.focus();
     await userEvent.keyboard('{End}');
-    await expect(settings).toHaveFocus();
+    expect(settings).toHaveFocus();
   });
 
   it('ArrowRight at the last link stays put — no looping', async () => {
-    await TabNav.run();
+    mount(() => <Nav />);
     const settings = screen.getByTestId('tab-nav-settings');
 
     settings.focus();
     await userEvent.keyboard('{ArrowRight}');
-    await expect(settings).toHaveFocus();
+    expect(settings).toHaveFocus();
   });
 
   it('ArrowLeft at the first link stays put — no looping', async () => {
-    await TabNav.run();
+    mount(() => <Nav />);
     const home = screen.getByTestId('tab-nav-home');
 
     home.focus();
     await userEvent.keyboard('{ArrowLeft}');
-    await expect(home).toHaveFocus();
+    expect(home).toHaveFocus();
   });
 });

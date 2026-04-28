@@ -31,6 +31,13 @@ const config: KnipConfig = {
       // auto-discovery; the entry list above is the source of truth.
       vite: false,
     },
+    'packages/lib/ui': {
+      // Co-located behavior tests run against a real browser via the
+      // root vitest config's `browser` project (playwright). The
+      // default knip detection only picks up `*.test.{ts,tsx}` files.
+      entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
+      project: ['src/**/*.{ts,tsx}'],
+    },
     'packages/dev/storybook': {
       entry: [
         '.storybook/*.ts',
