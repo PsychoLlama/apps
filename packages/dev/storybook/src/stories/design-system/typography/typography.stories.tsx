@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For } from 'solid-js';
-import { typeScale, fontFamily, fontWeight } from '@lib/design';
+import {
+  typeScale,
+  fontFamily,
+  fontWeight,
+  type FontWeight,
+} from '@lib/design';
 import { Flex, Text } from '@lib/ui';
 
 const meta = {
@@ -72,11 +77,7 @@ export const FontFamilies: Story = {
 export const FontWeights: Story = {
   render: () => (
     <Flex as="div" direction="column" gap={5}>
-      <For
-        each={
-          Object.entries(fontWeight) as Array<[keyof typeof fontWeight, string]>
-        }
-      >
+      <For each={Object.entries(fontWeight) as Array<[FontWeight, string]>}>
         {([name, value]) => (
           <Flex as="div" direction="column">
             <Text as="p" size={1} color="lowContrast">
