@@ -61,6 +61,14 @@ export const root = style({
 // --- Input ---
 
 export const input = style({
+  // `display: flex; align-items: center` is the canonical fix for
+  // `<input type="date|time|datetime-local|month|week">` in Chrome
+  // and Safari — those types render multiple sub-fields plus a
+  // picker icon inside the input, and without this rule the
+  // segments sit on the baseline instead of vertically centered.
+  // No-op for plain text inputs.
+  display: 'flex',
+  alignItems: 'center',
   flex: '1 1 auto',
   minWidth: 0,
   background: 'transparent',
