@@ -1,10 +1,3 @@
-/**
- * Tests for TextArea. Runs in a real browser via `@vitest/browser` —
- * focus delegation depends on real `getBoundingClientRect()` and
- * pointer coordinates. DOM-shape coverage rides along since we're
- * already paying the browser-spin-up cost.
- */
-
 import { render, screen } from '@solidjs/testing-library';
 import TextArea from '../text-area';
 

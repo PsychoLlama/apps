@@ -1,10 +1,3 @@
-/**
- * Tests for TextField. Runs in a real browser via `@vitest/browser` —
- * focus delegation depends on real `getBoundingClientRect()` and pointer
- * coordinates, and DOM-shape coverage rides along since we're already
- * paying the browser-spin-up cost.
- */
-
 import { render, screen } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import TextField from '../text-field';
