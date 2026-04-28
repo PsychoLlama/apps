@@ -34,11 +34,11 @@ const config: KnipConfig = {
     'packages/dev/storybook': {
       entry: [
         '.storybook/*.ts',
-        // `*.story-test.tsx` files run via storybook addon-vitest in
+        // `*.test.browser.tsx` files run via storybook addon-vitest in
         // Playwright, not the root jsdom vitest pass.
-        'src/**/__tests__/*.story-test.{ts,tsx}',
+        'src/**/__tests__/*.test.browser.{ts,tsx}',
       ],
-      project: ['.storybook/*.ts', 'src/**/__tests__/*.story-test.{ts,tsx}'],
+      project: ['.storybook/*.ts', 'src/**/__tests__/*.test.browser.{ts,tsx}'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
         // `storybook/test`'s `.d.ts` re-exports `TestingLibraryMatchers`

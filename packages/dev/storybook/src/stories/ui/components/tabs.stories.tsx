@@ -145,6 +145,6 @@ type Story = StoryObj<typeof meta>;
 /**
  * Tabs. All variants (manual activation, no looping, etc.) are
  * reachable through the controls panel; behavioral coverage lives in
- * `__tests__/tabs.story-test.tsx`.
+ * `__tests__/tabs.test.browser.tsx`.
  */
 export const Tabs: Story = {};
