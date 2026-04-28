@@ -10,5 +10,6 @@ Base: `<input>` attributes (except `size`, `color`), margin props.
 - `size` (=`2`): Visual size. `1 | 2 | 3`.
 - `variant` (=`'surface'`): Visual treatment. `'classic' | 'surface' | 'soft'`.
 - `radius` (=`'medium'`): Corner rounding. `'none' | 'small' | 'medium' | 'large' | 'full'`.
+- `type` (=`'text'`): `<input>` type — narrowed to `'text' | 'password' | 'email' | 'number' | 'tel' | 'url' | 'search' | 'date' | 'datetime-local' | 'month' | 'time' | 'week'`. Button-like and non-text types are excluded.
 - `left`: Content rendered before the input — typically an icon or prefix.
 - `right`: Content rendered after the input — typically an icon or action button.

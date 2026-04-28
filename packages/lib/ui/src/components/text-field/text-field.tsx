@@ -28,13 +28,33 @@ export type TextFieldSize = 1 | 2 | 3;
 export type TextFieldVariant = 'classic' | 'surface' | 'soft';
 /** Corner rounding. */
 export type TextFieldRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+/**
+ * `<input>` types TextField accepts. Excludes button-like types
+ * (`submit`, `button`, `reset`, `image`) and non-text controls
+ * (`checkbox`, `radio`, `color`, `file`, `range`, `hidden`) — those
+ * have their own components or don't make sense as a text field.
+ */
+export type TextFieldType =
+  | 'text'
+  | 'password'
+  | 'email'
+  | 'number'
+  | 'tel'
+  | 'url'
+  | 'search'
+  | 'date'
+  | 'datetime-local'
+  | 'month'
+  | 'time'
+  | 'week';
 
 /**
  * `TextField` props. Surfaces every native `<input>` attribute apart
  * from the visual `size` and `color`, which collide with our props,
- * and `onPointerDown`, which is overridden so it fires for clicks on
- * the entire field surface (including slot padding) rather than only
- * the inner input — calling `event.preventDefault()` suppresses the
+ * `type`, which is narrowed to text-input types only, and
+ * `onPointerDown`, which is overridden so it fires for clicks on the
+ * entire field surface (including slot padding) rather than only the
+ * inner input — calling `event.preventDefault()` suppresses the
  * built-in focus delegation.
  */
 export interface TextFieldProps
@@ -43,7 +63,7 @@ export interface TextFieldProps
     RequiredTestIdProps,
     Omit<
       JSX.InputHTMLAttributes<HTMLInputElement>,
-      'size' | 'color' | 'onPointerDown'
+      'size' | 'color' | 'type' | 'onPointerDown'
     > {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: TextFieldSize;
@@ -51,6 +71,8 @@ export interface TextFieldProps
   variant?: TextFieldVariant;
   /** Corner rounding. @default 'medium' */
   radius?: TextFieldRadius;
+  /** `<input>` type. Narrowed to text-input types. @default 'text' */
+  type?: TextFieldType;
   /** Content rendered before the input — typically an icon or prefix. */
   left?: JSX.Element;
   /** Content rendered after the input — typically an icon or action button. */

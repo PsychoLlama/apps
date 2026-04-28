@@ -60,6 +60,7 @@ export {
   type TextFieldSize,
   type TextFieldVariant,
   type TextFieldRadius,
+  type TextFieldType,
 } from './components/text-field/text-field';
 export {
   default as TextArea,
