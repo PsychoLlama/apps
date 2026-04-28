@@ -1,3 +1,4 @@
+import noDerivedTokenTypes from './rules/no-derived-token-types';
 import noStaticStyleProp from './rules/no-static-style-prop';
 import noUnsafeNodeCast from './rules/no-unsafe-node-cast';
 import requireDesignTokens from './rules/require-design-tokens';
@@ -13,6 +14,7 @@ import requireUiPrimitives from './rules/require-ui-primitives';
 // double-cast here.
 const plugin = {
   rules: {
+    'no-derived-token-types': noDerivedTokenTypes,
     'no-static-style-prop': noStaticStyleProp,
     'no-unsafe-node-cast': noUnsafeNodeCast,
     'require-design-tokens': requireDesignTokens,
