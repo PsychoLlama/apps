@@ -73,27 +73,28 @@ jobs:
       - run: moon ci
       - run: moon run root:build
 
+      # Single-step `wrangler deploy` works but bypasses the version
+      # model. Splitting into `wrangler versions upload` +
+      # `wrangler versions deploy` would unlock `wrangler rollback` and
+      # gradual rollouts — worth doing if this app ever needs a safety
+      # net beyond "redeploy the previous commit".
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'
         working-directory: packages/app/main
         run: pnpm exec wrangler deploy
 
       # Uploads a preview version on same-repo pull requests without
-      # promoting to production. Captures the preview URL so the next
-      # step can record a GitHub Deployment pointing at it.
+      # promoting to production. The `--preview-alias` pins the URL to
+      # the PR number so reviewers get a stable link across pushes.
       - name: Upload preview version
         id: preview
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         working-directory: packages/app/main
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          pnpm exec wrangler versions upload | tee /tmp/wrangler.log
-          # `|| true` so a missing URL doesn't trip `set -e`/`pipefail`.
-          url=$(grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev' /tmp/wrangler.log | head -n1 || true)
-          if [ -n "$url" ]; then
-            echo "url=$url" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::No preview URL in wrangler output."
-          fi
+          pnpm exec wrangler versions upload --preview-alias "pr-$PR_NUMBER"
+          echo "url=https://pr-$PR_NUMBER-apps.gibson.workers.dev" >> "$GITHUB_OUTPUT"
 
       # Records a GitHub Deployment so the PR sidebar shows a "preview"
       # tile linking to the workers.dev URL.

@@ -24,7 +24,7 @@ tasks:
       - 'src/**/*'
       - 'public/**/*'
       - 'vite.config.ts'
-      - 'wrangler.toml'
+      - 'wrangler.jsonc'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'
     outputs:
