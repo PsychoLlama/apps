@@ -88,17 +88,8 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
     'radius',
     'resize',
     'class',
-    'ref',
     'onPointerDown',
   ]);
-
-  let textareaEl: HTMLTextAreaElement | undefined;
-
-  const setTextareaRef = (el: HTMLTextAreaElement) => {
-    textareaEl = el;
-    const consumerRef = local.ref;
-    if (typeof consumerRef === 'function') consumerRef(el);
-  };
 
   // Padding lives on the wrapper so the resize handle reshapes the
   // entire surface — but `<div>` doesn't propagate click-to-focus the
@@ -109,7 +100,7 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
   ) => {
     callConsumerHandler(local.onPointerDown, event);
     if (event.defaultPrevented) return;
-    const textarea = textareaEl;
+    const textarea = event.currentTarget.querySelector('textarea');
     if (!textarea || textarea.disabled || textarea.readOnly) return;
 
     // Clicks on the textarea itself (or on intrinsically interactive
@@ -144,7 +135,7 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
       data-testid={tid.testId}
       onPointerDown={onPointerDown}
     >
-      <textarea {...rest} ref={(el) => setTextareaRef(el)} class={css.input} />
+      <textarea {...rest} class={css.input} />
     </div>
   );
 };

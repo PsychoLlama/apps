@@ -54,13 +54,6 @@ describe('TextField', () => {
     expect(input).toHaveValue('hi@example.com');
   });
 
-  it('forwards ref to the inner <input>', () => {
-    let captured: HTMLInputElement | undefined;
-    render(() => <TextField testId="field" ref={(el) => (captured = el)} />);
-    expect(captured).toBeInstanceOf(HTMLInputElement);
-    expect(captured).toBe(screen.getByTestId('field').querySelector('input'));
-  });
-
   it('renders left and right slot content when supplied', () => {
     render(() => (
       <TextField

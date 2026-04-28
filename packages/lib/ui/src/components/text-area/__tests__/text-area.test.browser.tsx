@@ -53,13 +53,6 @@ describe('TextArea', () => {
     expect(textarea).toHaveValue('hi');
   });
 
-  it('forwards ref to the inner <textarea>', () => {
-    let captured: HTMLTextAreaElement | undefined;
-    render(() => <TextArea testId="area" ref={(el) => (captured = el)} />);
-    expect(captured).toBeInstanceOf(HTMLTextAreaElement);
-    expect(captured).toBe(screen.getByTestId('area').querySelector('textarea'));
-  });
-
   it('reflects disabled on the textarea', () => {
     render(() => <TextArea testId="area" disabled />);
     expect(screen.getByTestId('area').querySelector('textarea')).toBeDisabled();

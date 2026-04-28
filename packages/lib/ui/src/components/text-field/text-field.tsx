@@ -86,17 +86,8 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
     'left',
     'right',
     'class',
-    'ref',
     'onPointerDown',
   ]);
-
-  let inputEl: HTMLInputElement | undefined;
-
-  const setInputRef = (el: HTMLInputElement) => {
-    inputEl = el;
-    const consumerRef = local.ref;
-    if (typeof consumerRef === 'function') consumerRef(el);
-  };
 
   // Clicks on the wrapper's empty space (slot padding, edges) need to
   // delegate to the input — `<div>` doesn't propagate click-to-focus
@@ -106,7 +97,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
   ) => {
     callConsumerHandler(local.onPointerDown, event);
     if (event.defaultPrevented) return;
-    const input = inputEl;
+    const input = event.currentTarget.querySelector('input');
     if (!input || input.disabled || input.readOnly) return;
 
     // Clicks on intrinsically interactive descendants get their own
@@ -149,7 +140,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
       {local.left !== undefined && (
         <span class={`${css.slot} ${css.slotLeft}`}>{local.left}</span>
       )}
-      <input {...rest} ref={(el) => setInputRef(el)} class={css.input} />
+      <input {...rest} class={css.input} />
       {local.right !== undefined && (
         <span class={`${css.slot} ${css.slotRight}`}>{local.right}</span>
       )}
