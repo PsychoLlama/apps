@@ -40,11 +40,37 @@ export type HtmlTextTag =
   | 'pre';
 
 /**
- * Layout and structural elements. Excludes text and heading tags. Includes
- * list-item tags (`li`, `dt`, `dd`) — they're structural containers that
- * may hold any layout, not text-only elements.
+ * Form-control elements. Each is owned by a dedicated component
+ * (`TextField`, `TextArea`, future `Select`/`Checkbox`/etc.) and
+ * carries non-trivial behavior — focus delegation, value semantics,
+ * accessibility wiring — that doesn't survive being slotted into a
+ * generic layout primitive. Excluded from `HtmlBoxTag` so a stray
+ * `<Flex as="input">` is rejected at the type level.
  */
-export type HtmlBoxTag = Exclude<HtmlTagName, HtmlTextTag | HtmlHeadingTag>;
+export type HtmlFormControlTag =
+  | 'input'
+  | 'textarea'
+  | 'select'
+  | 'option'
+  | 'optgroup'
+  | 'button'
+  | 'fieldset'
+  | 'legend'
+  | 'datalist'
+  | 'meter'
+  | 'progress'
+  | 'output';
+
+/**
+ * Layout and structural elements. Excludes text, heading, and
+ * form-control tags. Includes list-item tags (`li`, `dt`, `dd`) —
+ * they're structural containers that may hold any layout, not
+ * text-only elements.
+ */
+export type HtmlBoxTag = Exclude<
+  HtmlTagName,
+  HtmlTextTag | HtmlHeadingTag | HtmlFormControlTag
+>;
 
 /** Polymorphic props: a literal `as` tag merged with the element's native attributes. Component props take precedence over native attributes. */
 export type PolymorphicProps<T extends TagName, Own> = { as: T } & Omit<

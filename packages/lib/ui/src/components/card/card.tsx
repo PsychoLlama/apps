@@ -27,8 +27,8 @@ import * as css from './card.css';
 type CardSize = 1 | 2 | 3 | 4 | 5;
 type CardVariant = 'surface' | 'classic' | 'ghost';
 
-/** Tags Card may render as. Widens `HtmlBoxTag` with the interactive text tags `a` and `label`. */
-export type CardTag = HtmlBoxTag | 'a' | 'label';
+/** Tags Card may render as. Widens `HtmlBoxTag` with the interactive tags `a`, `button`, and `label` — the form-control tags are otherwise excluded from `HtmlBoxTag`, so Card opts back in for the cases where it serves as the click target itself. */
+export type CardTag = HtmlBoxTag | 'a' | 'button' | 'label';
 
 /** Card-specific layout props, independent of the target element. */
 interface CardOwnProps {
