@@ -32,10 +32,20 @@ const config: KnipConfig = {
       vite: false,
     },
     'packages/dev/storybook': {
-      entry: ['.storybook/*.ts'],
-      project: ['.storybook/*.ts'],
+      entry: [
+        '.storybook/*.ts',
+        // `*.story-test.tsx` files run via storybook addon-vitest in
+        // Playwright, not the root jsdom vitest pass.
+        'src/**/__tests__/*.story-test.{ts,tsx}',
+      ],
+      project: ['.storybook/*.ts', 'src/**/__tests__/*.story-test.{ts,tsx}'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
+        // `storybook/test`'s `.d.ts` re-exports `TestingLibraryMatchers`
+        // from `@testing-library/jest-dom/matchers` for matchers like
+        // `.toHaveFocus()`. Needed at type-check time even though no
+        // source imports it directly.
+        '@testing-library/jest-dom',
         // Some sibling packages are pulled in indirectly (e.g. via
         // theme imports in `.storybook/preview.ts`) rather than by
         // direct story imports.
