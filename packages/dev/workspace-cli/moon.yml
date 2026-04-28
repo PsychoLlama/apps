@@ -22,3 +22,19 @@ tasks:
     options:
       runFromWorkspaceRoot: true
       runInCI: 'always'
+
+  # Fails if any package declares a dependency that's also listed
+  # in `pnpm-workspace.yaml`'s catalog without using the `catalog:`
+  # protocol — that path silently bypasses the catalog and lets
+  # versions drift. pnpm's `catalogMode: strict` only fires on
+  # `pnpm add`, not on existing manifests, so this fills the gap.
+  check-catalog:
+    command: 'node'
+    args: ['packages/dev/workspace-cli/src/cli.ts', 'check', 'catalog']
+    inputs:
+      - 'src/**/*'
+      - '/pnpm-workspace.yaml'
+      - '/packages/*/*/package.json'
+    options:
+      runFromWorkspaceRoot: true
+      runInCI: 'always'

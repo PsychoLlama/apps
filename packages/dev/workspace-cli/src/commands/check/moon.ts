@@ -1,15 +1,26 @@
 /**
- * Pure validation core for moon task `inputs:` declarations.
+ * `check moon` subcommand. Verifies that every moon task `inputs:`
+ * declaration still resolves to a real file or non-empty glob.
  *
- * Separated from the CLI so tests can drive it directly with
- * synthetic data and fake filesystem probes — no shelling out to
- * `moon query`, no real filesystem, no globbing on the host.
+ * Moon happily caches past a stale glob, so a rename elsewhere in
+ * the repo can silently orphan a declaration — affected-task
+ * detection then skips work it should be running. This check is
+ * wired as an `implicitDeps` entry in `.moon/tasks.yml`, so every
+ * task runs it first; CI runs it fresh regardless of cache.
  *
- * The CLI wrapper in `commands/check-moon.ts` is the only caller that
- * feeds real data in.
+ * The pure validator and its types are exported alongside the
+ * command so tests can drive it with synthetic data via the
+ * `FsProbes` injection — no real filesystem, no shellouts to
+ * `moon query`.
  */
 
+/* eslint-disable no-console -- stdout/stderr are this CLI's output surface. */
+
+import { access, glob } from 'node:fs/promises';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { defineCommand } from 'citty';
 
 /**
  * One entry from a task's `inputs:` list as moon emits it in
@@ -122,3 +133,83 @@ export const checkMoonInputs = async (
 
   return issues;
 };
+
+interface ProjectsResult {
+  projects: Array<{ id: string; source: string }>;
+}
+
+interface TasksResult {
+  tasks: TaskIndex;
+}
+
+const query = async <T>(subcommand: string): Promise<T> => {
+  const child = spawn('moon', ['query', subcommand, '--json'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stdout = '';
+  let stderr = '';
+
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
+  child.stdout.on('data', (chunk: string) => {
+    stdout += chunk;
+  });
+  child.stderr.on('data', (chunk: string) => {
+    stderr += chunk;
+  });
+
+  const [code] = (await once(child, 'close')) as [number | null];
+
+  if (code !== 0 || stdout.length === 0) {
+    throw new Error(stderr || `moon query ${subcommand} failed`);
+  }
+
+  return JSON.parse(stdout) as T;
+};
+
+const printReport = (issues: Issue[]): void => {
+  console.error(`Found ${issues.length} stale moon input(s):\n`);
+  for (const { target, kind, value } of issues) {
+    console.error(`  ${target}  [${kind}]  ${value}`);
+  }
+  console.error(
+    '\nFix: update the task `inputs:` declaration, or mark the entry ' +
+      '`{ ..., optional: true }` if its absence is expected.',
+  );
+};
+
+export default defineCommand({
+  meta: {
+    name: 'moon',
+    description:
+      'Check that every moon task `inputs:` entry still resolves to a real file or non-empty glob.',
+  },
+  async run() {
+    const projectSources: ProjectSources = Object.fromEntries(
+      (await query<ProjectsResult>('projects')).projects.map(
+        ({ id, source }) => [id, source],
+      ),
+    );
+    const tasks = (await query<TasksResult>('tasks')).tasks;
+
+    const issues = await checkMoonInputs(projectSources, tasks, {
+      exists: async (target) => {
+        try {
+          await access(target);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      globMatches: async (pattern) => Array.fromAsync(glob(pattern)),
+    });
+
+    if (issues.length === 0) {
+      console.log('All moon task inputs resolve.');
+      return;
+    }
+
+    printReport(issues);
+    process.exitCode = 1;
+  },
+});
