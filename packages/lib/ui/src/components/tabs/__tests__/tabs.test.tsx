@@ -121,6 +121,29 @@ describe('Tabs', () => {
     );
   });
 
+  it('falls back to the first enabled trigger when the active value points at a disabled one', () => {
+    // Initial render walks every trigger's focusable memo while the
+    // registry is still empty, so each one sees `firstEnabled =
+    // undefined` and bails to `tabindex=-1`. The list context bumps a
+    // version signal as triggers register, which re-runs the memo and
+    // promotes the first enabled trigger to `tabindex=0`. Without
+    // that, the tablist becomes keyboard-unreachable.
+    render(() => <Harness initialValue="two" />);
+
+    expect(screen.getByTestId('tabs-trigger-one')).toHaveAttribute(
+      'tabindex',
+      '0',
+    );
+    expect(screen.getByTestId('tabs-trigger-two')).toHaveAttribute(
+      'tabindex',
+      '-1',
+    );
+    expect(screen.getByTestId('tabs-trigger-three')).toHaveAttribute(
+      'tabindex',
+      '-1',
+    );
+  });
+
   it('produces valid IDREFs even when the value contains whitespace', () => {
     const [value, setValue] = createSignal('team settings');
     render(() => (

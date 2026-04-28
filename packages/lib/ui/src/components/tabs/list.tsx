@@ -1,4 +1,5 @@
 import {
+  createSignal,
   mergeProps,
   splitProps,
   type JSX,
@@ -9,6 +10,7 @@ import {
   TabsListContext,
   useTabsContext,
   type TabsListContextValue,
+  type TabsTriggerRecord,
 } from './context';
 import * as shared from './shared.css';
 
@@ -76,9 +78,24 @@ export const TabsList: ParentComponent<TabsListProps> = (rawProps) => {
       .filter(Boolean)
       .join(' ');
 
+  const triggers = new Map<string, TabsTriggerRecord>();
+  const [version, setVersion] = createSignal(0);
+  const bump = () => setVersion((current) => current + 1);
+
   const listCtx: TabsListContextValue = {
     loop: () => local.loop,
-    triggers: new Map(),
+    triggers,
+    version,
+    registerTrigger: (value, record) => {
+      triggers.set(value, record);
+      bump();
+      return () => {
+        if (triggers.get(value) === record) {
+          triggers.delete(value);
+          bump();
+        }
+      };
+    },
   };
 
   return (

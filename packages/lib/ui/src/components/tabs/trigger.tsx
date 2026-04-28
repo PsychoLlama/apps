@@ -49,7 +49,12 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
 
   // Active wins; otherwise the first enabled trigger gets the roving
   // `tabindex=0` so Tab into the list never lands on a disabled control.
+  // Reads `listCtx.version()` so that each new trigger registration
+  // re-runs this memo — without it, a `value` that points at a disabled
+  // (or not-yet-mounted) trigger would leave every trigger with
+  // `tabindex=-1` permanently, since plain Map mutations aren't tracked.
   const isFocusableTarget = createMemo(() => {
+    listCtx.version();
     if (isActive() && !isDisabled()) return true;
     const active = listCtx.triggers.get(ctx.value());
     if (active && !active.disabled()) return false;
@@ -65,17 +70,11 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   // new value and cleans up the old key.
   createEffect(() => {
     if (!buttonRef) return;
-    const currentValue = local.value;
     const record: TabsTriggerRecord = {
       el: buttonRef,
       disabled: isDisabled,
     };
-    listCtx.triggers.set(currentValue, record);
-    onCleanup(() => {
-      if (listCtx.triggers.get(currentValue) === record) {
-        listCtx.triggers.delete(currentValue);
-      }
-    });
+    onCleanup(listCtx.registerTrigger(local.value, record));
   });
 
   const onMouseDown: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (
