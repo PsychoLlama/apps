@@ -81,7 +81,7 @@ export const trigger = style({
   '@media': {
     '(hover: hover)': {
       selectors: {
-        '&:where(:not(:disabled)):hover': {
+        '&:where(:not(:disabled):hover)': {
           color: neutral.solid[12],
         },
       },
@@ -114,7 +114,9 @@ export const triggerInner = style({
   '@media': {
     '(hover: hover)': {
       selectors: {
-        [`${trigger}:where(:not(:disabled)):hover &`]: {
+        // Specificity must equal the focus-visible:hover rule below so
+        // source order decides the winner — keep `:hover` inside `:where()`.
+        [`${trigger}:where(:not(:disabled):hover) &`]: {
           backgroundColor: neutral.alpha[3],
         },
         [`${trigger}:where(:focus-visible:hover) &`]: {
