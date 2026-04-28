@@ -5,7 +5,7 @@ projects:
   '@app/main': 'packages/app/main'
   '@app/studio': 'packages/app/studio'
   '@dev/build': 'packages/dev/build'
-  '@dev/cli': 'packages/dev/cli'
+  '@dev/workspace-cli': 'packages/dev/workspace-cli'
   '@dev/eslint-plugin': 'packages/dev/eslint-plugin'
   '@dev/storybook': 'packages/dev/storybook'
   '@lib/design': 'packages/lib/design'

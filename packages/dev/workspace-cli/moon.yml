@@ -1,7 +1,7 @@
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
 project:
-  name: '@dev/cli'
+  name: '@dev/workspace-cli'
   description: 'Internal workspace tooling CLI — static checks, etc.'
 
 tasks:
@@ -11,9 +11,9 @@ tasks:
   # — affected-task detection then skips work it should be running.
   # Wired as an `implicitDeps` entry in `.moon/tasks.yml`, so every
   # task runs this first; CI runs it fresh regardless of cache.
-  validate-moon:
+  check-moon:
     command: 'node'
-    args: ['packages/dev/cli/src/cli.ts', 'validate-moon']
+    args: ['packages/dev/workspace-cli/src/cli.ts', 'check', 'moon']
     inputs:
       - 'src/**/*'
       - '/moon.yml'

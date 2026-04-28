@@ -56,6 +56,9 @@ importers:
       '@dev/build':
         specifier: workspace:*
         version: link:packages/dev/build
+      '@dev/workspace-cli':
+        specifier: workspace:*
+        version: link:packages/dev/workspace-cli
       '@dev/eslint-plugin':
         specifier: workspace:*
         version: link:packages/dev/eslint-plugin
@@ -223,7 +226,7 @@ importers:
 
   packages/dev/build: {}
 
-  packages/dev/cli:
+  packages/dev/workspace-cli:
     dependencies:
       citty:
         specifier: 'catalog:'
