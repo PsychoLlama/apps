@@ -1,0 +1,14 @@
+{
+  "name": "@dev/cli",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Internal workspace tooling CLI.",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "citty": "catalog:"
+  }
+}

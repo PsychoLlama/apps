@@ -15,6 +15,9 @@ catalogs:
     '@vanilla-extract/css':
       specifier: ^1.20.1
       version: 1.20.1
+    citty:
+      specifier: ^0.2.2
+      version: 0.2.2
     eslint:
       specifier: ^9.39.4
       version: 9.39.4
@@ -219,6 +222,12 @@ importers:
         version: 23.0.1
 
   packages/dev/build: {}
+
+  packages/dev/cli:
+    dependencies:
+      citty:
+        specifier: 'catalog:'
+        version: 0.2.2
 
   packages/dev/eslint-plugin:
     dependencies:
@@ -2766,6 +2775,9 @@ packages:
 
   citty@0.2.1:
     resolution: {integrity: sha512-kEV95lFBhQgtogAPlQfJJ0WGVSokvLr/UEoFPiKKOXF7pl98HfUVUD0ejsuTCld/9xH9vogSywZ5KqHzXrZpqg==}
+
+  citty@0.2.2:
+    resolution: {integrity: sha512-+6vJA3L98yv+IdfKGZHBNiGW5KHn22e/JwID0Strsz8h4S/csAu/OuICwxrg44k5MRiZHWIo8XXuJgQTriRP4w==}
 
   clipboardy@4.0.0:
     resolution: {integrity: sha512-5mOlNS0mhX0707P2I0aZ2V/cmHUEO/fL7VFLqszkhUsxt7RwnmrInf/eEQKlf5GzvYeHIjT+Ov1HRfNmymlG0w==}
@@ -7658,6 +7670,8 @@ snapshots:
       consola: 3.4.2
 
   citty@0.2.1: {}
+
+  citty@0.2.2: {}
 
   clipboardy@4.0.0:
     dependencies:

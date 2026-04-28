@@ -18,7 +18,7 @@ implicitInputs:
 
 # Every task depends on a successful moon-config check. With moon's
 # own caching this is near-free locally after the first run, and
-# CI runs it fresh (see `@dev/build:validate-moon`'s `runInCI:
+# CI runs it fresh (see `@dev/cli:validate-moon`'s `runInCI:
 # always`). Makes the validator impossible to accidentally skip.
 implicitDeps:
-  - '@dev/build:validate-moon'
+  - '@dev/cli:validate-moon'
