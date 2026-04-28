@@ -36,13 +36,14 @@ export type HtmlTextTag =
   | 'var'
   | 'del'
   | 'ins'
-  | 'li'
-  | 'dt'
-  | 'dd'
   | 'blockquote'
   | 'pre';
 
-/** Layout and structural elements. Excludes text and heading tags. */
+/**
+ * Layout and structural elements. Excludes text and heading tags. Includes
+ * list-item tags (`li`, `dt`, `dd`) — they're structural containers that
+ * may hold any layout, not text-only elements.
+ */
 export type HtmlBoxTag = Exclude<HtmlTagName, HtmlTextTag | HtmlHeadingTag>;
 
 /** Polymorphic props: a literal `as` tag merged with the element's native attributes. Component props take precedence over native attributes. */

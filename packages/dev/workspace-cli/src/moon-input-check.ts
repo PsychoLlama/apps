@@ -105,6 +105,12 @@ export const checkMoonInputs = async (
         }
 
         if (input.glob !== undefined) {
+          // Negative globs (`!…`) subtract from another input's match
+          // set rather than naming files of their own. They're allowed
+          // to match nothing — checking them would just flag a no-op
+          // exclusion as stale.
+          if (input.glob.startsWith('!')) continue;
+
           const rel = resolveToWorkspace(source, input.glob);
           if ((await fs.globMatches(rel)).length === 0) {
             issues.push({ target, kind: 'empty glob', value: input.glob });

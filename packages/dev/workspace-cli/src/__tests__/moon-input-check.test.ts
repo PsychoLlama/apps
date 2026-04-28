@@ -88,6 +88,20 @@ describe('checkMoonInputs', () => {
     ]);
   });
 
+  it('skips negative-glob entries (they subtract from other matches)', async () => {
+    const tasks: TaskIndex = {
+      '@app/main': {
+        build: {
+          inputs: [{ glob: 'src/**/*' }, { glob: '!src/**/*.test.tsx' }],
+        },
+      },
+    };
+
+    await expect(checkMoonInputs(sources, tasks, noneExist)).resolves.toEqual([
+      { target: '@app/main:build', kind: 'empty glob', value: 'src/**/*' },
+    ]);
+  });
+
   it('skips entries marked optional', async () => {
     const tasks: TaskIndex = {
       '@app/main': {

@@ -31,19 +31,23 @@ const config: KnipConfig = {
       // auto-discovery; the entry list above is the source of truth.
       vite: false,
     },
+    'packages/lib/ui': {
+      // Co-located behavior tests run against a real browser via the
+      // root vitest config's `browser` project (playwright). The
+      // default knip detection only picks up `*.test.{ts,tsx}` files.
+      entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
+      project: ['src/**/*.{ts,tsx}'],
+    },
     'packages/dev/storybook': {
       entry: ['.storybook/*.ts'],
       project: ['.storybook/*.ts'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
-        // Stories live in sibling packages and pull these in via
-        // `packages/*/*/src/**/*.stories.*`. They must be declared
-        // here so pnpm installs them into this package's
-        // node_modules, where vite looks when transforming stories.
+        // Some sibling packages are pulled in indirectly (e.g. via
+        // theme imports in `.storybook/preview.ts`) rather than by
+        // direct story imports.
         '@app/studio',
         '@lib/shell',
-        '@lib/ui',
-        '@solidjs/router',
         '@vanilla-extract/css',
       ],
     },

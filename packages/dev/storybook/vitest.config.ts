@@ -5,7 +5,7 @@ import path from 'node:path';
 
 export default defineConfig({
   test: {
-    name: 'smoke',
+    globals: true,
     browser: {
       enabled: true,
       provider: playwright({

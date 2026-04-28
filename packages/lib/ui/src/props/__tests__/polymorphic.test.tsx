@@ -104,6 +104,12 @@ describe('HtmlBoxTag', () => {
     expectTypeOf<'form'>().toExtend<HtmlBoxTag>();
   });
 
+  it('includes list-item elements', () => {
+    expectTypeOf<'li'>().toExtend<HtmlBoxTag>();
+    expectTypeOf<'dt'>().toExtend<HtmlBoxTag>();
+    expectTypeOf<'dd'>().toExtend<HtmlBoxTag>();
+  });
+
   it('excludes text elements', () => {
     expectTypeOf<'span'>().not.toExtend<HtmlBoxTag>();
     expectTypeOf<'p'>().not.toExtend<HtmlBoxTag>();

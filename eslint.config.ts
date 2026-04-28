@@ -200,4 +200,22 @@ export default [
       'custom/require-externalized-effects': 'off',
     },
   },
+  {
+    // @lib/ui and @lib/design are foundation libraries, not application
+    // surfaces. The state-management framework is heavyweight and exists
+    // for application state — the wrong fit for primitive components'
+    // local UI state or design-token internals.
+    files: [
+      'packages/lib/ui/**/*.{ts,tsx}',
+      'packages/lib/design/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: restrictedImportPatterns,
+        },
+      ],
+    },
+  },
 ];

@@ -58,6 +58,18 @@ tasks:
     args: ['test']
     inputs:
       - '/packages/**/src/**/*'
+      - '!/packages/**/*.test.browser.{ts,tsx}'
+      - '/vitest.config.ts'
+
+  # Real-browser pass for `*.test.browser.{ts,tsx}` files (playwright +
+  # chromium). Separate task / script so a casual `pnpm test` stays
+  # jsdom-only; chromium only spins up via `pnpm test:browser` (or
+  # `moon run :test-browser`).
+  test-browser:
+    command: 'pnpm'
+    args: ['test:browser']
+    inputs:
+      - '/packages/**/src/**/*'
       - '/vitest.config.ts'
 
   knip:

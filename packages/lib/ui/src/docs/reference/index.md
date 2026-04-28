@@ -21,3 +21,5 @@
 - [Callout](./callout.md): Informational message.
 - [Card](./card.md): Surface container.
 - [Kbd](./kbd.md): Inline keyboard input.
+- [TabNav](./tab-nav.md): Horizontal nav strip of routing links.
+- [Tabs](./tabs.md): Switch between panels under a row of triggers.
