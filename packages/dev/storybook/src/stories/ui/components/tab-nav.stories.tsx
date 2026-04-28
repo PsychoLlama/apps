@@ -1,5 +1,6 @@
 import { MemoryRouter, Route } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { TabNavLink, TabNavRoot, type TabNavRootProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -49,13 +50,21 @@ const meta = {
       <TabNavLink testId={`${props.testId}-home`} href="/" active>
         Home
       </TabNavLink>
-      <TabNavLink testId={`${props.testId}-projects`} href="/projects">
+      <TabNavLink
+        testId={`${props.testId}-projects`}
+        href="/projects"
+        active={false}
+      >
         Projects
       </TabNavLink>
-      <TabNavLink testId={`${props.testId}-team`} href="/team">
+      <TabNavLink testId={`${props.testId}-team`} href="/team" active={false}>
         Team
       </TabNavLink>
-      <TabNavLink testId={`${props.testId}-settings`} href="/settings">
+      <TabNavLink
+        testId={`${props.testId}-settings`}
+        href="/settings"
+        active={false}
+      >
         Settings
       </TabNavLink>
     </TabNavRoot>
@@ -66,3 +75,46 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const TabNav: Story = {};
+
+/**
+ * Keyboard nav. Arrow keys move focus between links; Home/End jump to
+ * the ends. No looping at the boundary, matching Radix's NavigationMenu.
+ */
+export const TabNavKeyboard: Story = {
+  play: async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+    const canvas = within(canvasElement);
+    const home = canvas.getByTestId('tab-nav-home');
+    const projects = canvas.getByTestId('tab-nav-projects');
+    const team = canvas.getByTestId('tab-nav-team');
+    const settings = canvas.getByTestId('tab-nav-settings');
+
+    home.focus();
+    await expect(home).toHaveFocus();
+
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(projects).toHaveFocus();
+
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(team).toHaveFocus();
+
+    await userEvent.keyboard('{End}');
+    await expect(settings).toHaveFocus();
+
+    // No loop: ArrowRight at the end stays put.
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(settings).toHaveFocus();
+
+    await userEvent.keyboard('{ArrowLeft}');
+    await expect(team).toHaveFocus();
+
+    await userEvent.keyboard('{ArrowUp}');
+    await expect(projects).toHaveFocus();
+
+    await userEvent.keyboard('{Home}');
+    await expect(home).toHaveFocus();
+
+    // No loop: ArrowLeft at the start stays put.
+    await userEvent.keyboard('{ArrowLeft}');
+    await expect(home).toHaveFocus();
+  },
+};

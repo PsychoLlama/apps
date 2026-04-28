@@ -2,7 +2,7 @@
 
 Horizontal navigation strip of routing links styled to match `TabsList`. Composed from two flat components: `TabNavRoot` and `TabNavLink`.
 
-Renders semantic `<nav><ul><li><a>`. Each link is wrapped in its own `<li>`. The active link receives `aria-current="page"`. The active state is explicit — consumers compute it from their router (e.g. `useMatch(href)`).
+Renders semantic `<nav><ul><li><a>`. Each link is wrapped in its own `<li>`. The active link receives `aria-current="page"`. The active state is required and explicit — consumers compute it from their router (e.g. `useMatch(href)`). Arrow keys and Home/End move focus between links.
 
 ## TabNavRoot
 
@@ -24,4 +24,4 @@ Renders `<li><a link>`. The `link` attribute opts the anchor into solid-router's
 Base: `<a>` attributes.
 
 - `href` (required): Destination URL.
-- `active` (=`false`): Mark as the current page. Sets `aria-current="page"` and the visual indicator.
+- `active` (required): Whether this link represents the current page. Sets `aria-current="page"` and the visual indicator when `true`.

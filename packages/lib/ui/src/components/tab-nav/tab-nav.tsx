@@ -9,11 +9,12 @@
  * Deviations from Radix:
  * - Accent and neutral palettes only.
  * - `aria-label` on `TabNavRoot` is required.
- * - Active state is driven by an explicit `active` prop on `TabNavLink`.
- *   We don't auto-detect from the current route — consumers wire
- *   `useMatch()` themselves to keep matching semantics in their hands.
+ * - Active state is required and explicit — consumers compute it from
+ *   their router. Defaulting it would silently strip `aria-current`
+ *   from the nav whenever a consumer forgot to wire it up.
  * - Built on plain `<nav><ul><li><a>` (no Radix NavigationMenu primitive).
- *   Active link receives `aria-current="page"`.
+ *   Active link receives `aria-current="page"`. Arrow keys and Home/End
+ *   move focus between links (no looping, matching Radix).
  *
  * @see https://www.radix-ui.com/themes/docs/components/tab-nav
  */
@@ -26,6 +27,7 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
+import { callConsumerHandler } from '../compose-event-handler';
 import * as shared from '../tabs/shared.css';
 import * as css from './tab-nav.css';
 
@@ -115,12 +117,11 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
 export interface TabNavLinkProps
   extends RequiredTestIdProps, JSX.AnchorHTMLAttributes<HTMLAnchorElement> {
   /**
-   * Mark the link as the current page. Sets `aria-current="page"` and
-   * applies the active visual indicator. Consumers compute this from
-   * their router (e.g. `useMatch(href)`).
-   * @default false
+   * Whether this link represents the current page. When `true`, sets
+   * `aria-current="page"` and applies the active visual indicator.
+   * Compute from your router (e.g. `useMatch(href)`).
    */
-  active?: boolean;
+  active: boolean;
   /** Destination URL. */
   href: string;
 }
@@ -134,14 +135,28 @@ export interface TabNavLinkProps
  */
 export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(rawProps, [...testIdPropKeys]);
-  const [local, rest] = splitProps(withoutTid, ['active', 'class', 'children']);
-
-  const isActive = () => local.active === true;
+  const [local, rest] = splitProps(withoutTid, [
+    'active',
+    'class',
+    'children',
+    'onKeyDown',
+  ]);
 
   const className = () =>
-    [shared.trigger, isActive() && shared.triggerActive, local.class]
+    [shared.trigger, local.active && shared.triggerActive, local.class]
       .filter(Boolean)
       .join(' ');
+
+  const onKeyDown: JSX.EventHandler<HTMLAnchorElement, KeyboardEvent> = (
+    event,
+  ) => {
+    callConsumerHandler(local.onKeyDown, event);
+    if (event.defaultPrevented) return;
+    const target = neighborLink(event.currentTarget, event.key);
+    if (!target) return;
+    event.preventDefault();
+    target.focus();
+  };
 
   return (
     <li class={css.item}>
@@ -152,11 +167,41 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
         // `<A>`'s auto `aria-current` injection.
         ref={(el) => el.setAttribute('link', '')}
         class={className()}
-        aria-current={isActive() ? 'page' : undefined}
+        aria-current={local.active ? 'page' : undefined}
         data-testid={tid.testId}
+        onKeyDown={onKeyDown}
       >
         <span class={shared.triggerInner}>{local.children}</span>
       </a>
     </li>
   );
+};
+
+// --- Helpers ---
+
+const NEXT_KEYS = new Set(['ArrowRight', 'ArrowDown']);
+const PREV_KEYS = new Set(['ArrowLeft', 'ArrowUp']);
+
+/**
+ * Resolve the link to focus next, given the current link and a keyboard
+ * key. Walks the parent `<ul>` for siblings and skips no items — Radix's
+ * NavigationMenu treats every link as a focus group member without a
+ * skip-disabled rule. Returns `undefined` when the key isn't a focus
+ * navigation key or the move would step past either end (no looping).
+ */
+const neighborLink = (
+  current: HTMLAnchorElement,
+  key: string,
+): HTMLAnchorElement | undefined => {
+  const list = current.closest('ul');
+  if (!list) return undefined;
+  const links = Array.from(list.querySelectorAll<HTMLAnchorElement>('a[link]'));
+  const idx = links.indexOf(current);
+  if (idx === -1) return undefined;
+
+  if (key === 'Home') return links[0];
+  if (key === 'End') return links[links.length - 1];
+  if (NEXT_KEYS.has(key)) return links[idx + 1];
+  if (PREV_KEYS.has(key)) return links[idx - 1];
+  return undefined;
 };

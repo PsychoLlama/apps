@@ -39,6 +39,7 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
+import { callConsumerHandler } from '../compose-event-handler';
 import {
   TabsContext,
   TabsListContext,
@@ -390,32 +391,6 @@ export const TabsContent: ParentComponent<TabsContentProps> = (rawProps) => {
 };
 
 // --- Helpers ---
-
-/**
- * Invokes a consumer-supplied Solid event handler (function or
- * `[fn, data]` bound-handler tuple) before our internal logic runs.
- * Call sites then check `event.defaultPrevented` and bail on true —
- * mirroring Radix's `composeEventHandlers`. This lets a consumer
- * suppress activation/arrow nav/etc. by calling `preventDefault()`.
- * Don't invert the call order or drop the tuple branch.
- */
-const callConsumerHandler = <E extends Event>(
-  handler:
-    | JSX.EventHandlerUnion<
-        HTMLButtonElement,
-        E,
-        JSX.EventHandler<HTMLButtonElement, E>
-      >
-    | undefined,
-  event: E & { currentTarget: HTMLButtonElement; target: Element },
-): void => {
-  if (handler === undefined) return;
-  if (typeof handler === 'function') {
-    handler(event);
-    return;
-  }
-  handler[0](handler[1], event);
-};
 
 const orderedValues = (triggers: Map<string, TabsTriggerRecord>): string[] => {
   // Map preserves insertion order; triggers register in mount order, which

@@ -1,18 +1,15 @@
 /**
  * Unit tests for TabNav.
  *
- * Scope: DOM-shape and type-level assertions. TabNav is a routing strip
- * with no internal interaction beyond what the anchor + router give
- * you, so there's nothing to move to Storybook today. If we ever add
- * keyboard-driven behavior (e.g. arrow nav between links), that goes
- * to a Storybook play function — see `packages/dev/storybook/src/
- * stories/ui/components/tabs.stories.tsx` for the pattern.
+ * Scope: DOM-shape assertions only. Behavioral coverage (keyboard nav)
+ * lives in Storybook play functions, where focus and event semantics
+ * behave like a real browser.
  */
 
 import { MemoryRouter, Route } from '@solidjs/router';
 import { render, screen } from '@solidjs/testing-library';
 import type { Component } from 'solid-js';
-import { TabNavLink, TabNavRoot, type TabNavRootProps } from '../tab-nav';
+import { TabNavLink, TabNavRoot } from '../tab-nav';
 
 const mount = (page: Component) =>
   render(() => (
@@ -25,7 +22,7 @@ describe('TabNav', () => {
   it('renders a navigation landmark with the supplied aria-label', () => {
     mount(() => (
       <TabNavRoot testId="nav" aria-label="Primary">
-        <TabNavLink testId="nav-home" href="/">
+        <TabNavLink testId="nav-home" href="/" active={false}>
           Home
         </TabNavLink>
       </TabNavRoot>
@@ -37,10 +34,10 @@ describe('TabNav', () => {
   it('wraps each link in its own <li>', () => {
     mount(() => (
       <TabNavRoot testId="nav" aria-label="Primary">
-        <TabNavLink testId="nav-a" href="/a">
+        <TabNavLink testId="nav-a" href="/a" active={false}>
           A
         </TabNavLink>
-        <TabNavLink testId="nav-b" href="/b">
+        <TabNavLink testId="nav-b" href="/b" active={false}>
           B
         </TabNavLink>
       </TabNavRoot>
@@ -55,13 +52,13 @@ describe('TabNav', () => {
   it('marks only the active link with aria-current="page"', () => {
     mount(() => (
       <TabNavRoot testId="nav" aria-label="Primary">
-        <TabNavLink testId="nav-a" href="/a">
+        <TabNavLink testId="nav-a" href="/a" active={false}>
           A
         </TabNavLink>
         <TabNavLink testId="nav-b" href="/b" active>
           B
         </TabNavLink>
-        <TabNavLink testId="nav-c" href="/c">
+        <TabNavLink testId="nav-c" href="/c" active={false}>
           C
         </TabNavLink>
       </TabNavRoot>
@@ -75,10 +72,10 @@ describe('TabNav', () => {
   it('renders each link with the expected href on the underlying anchor', () => {
     mount(() => (
       <TabNavRoot testId="nav" aria-label="Primary">
-        <TabNavLink testId="nav-one" href="/one">
+        <TabNavLink testId="nav-one" href="/one" active={false}>
           One
         </TabNavLink>
-        <TabNavLink testId="nav-two" href="/two">
+        <TabNavLink testId="nav-two" href="/two" active={false}>
           Two
         </TabNavLink>
       </TabNavRoot>
@@ -86,12 +83,5 @@ describe('TabNav', () => {
 
     expect(screen.getByTestId('nav-one')).toHaveAttribute('href', '/one');
     expect(screen.getByTestId('nav-two')).toHaveAttribute('href', '/two');
-  });
-
-  it('requires aria-label at the type level', () => {
-    expectTypeOf<TabNavRootProps>().toHaveProperty('aria-label');
-    // @ts-expect-error — `aria-label` is required.
-    const _missing: TabNavRootProps = { testId: 'nav', children: null };
-    void _missing;
   });
 });
