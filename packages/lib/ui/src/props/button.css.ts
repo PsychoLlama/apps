@@ -9,6 +9,7 @@
 
 import {
   createVar,
+  // eslint-disable-next-line no-restricted-imports -- `globalStyle` is required for the descendant rule on `buttonNonGhostSvg`; VE's `selectors` field forbids descending past `&`. See the call site below.
   globalStyle,
   style,
   styleVariants,
