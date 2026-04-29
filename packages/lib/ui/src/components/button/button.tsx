@@ -20,7 +20,9 @@ interface ButtonOwnProps
 /**
  * Button props. `as` defaults to `'button'`; set it to `'summary'` when
  * using the button inside a `<details>` disclosure so the native toggle
- * semantics survive.
+ * semantics survive. When rendering a `<button>`, `type` defaults to
+ * `'button'` to avoid accidental form submissions; pass `type="submit"`
+ * to opt in.
  */
 export type ButtonProps =
   | ({ as?: 'button' } & ButtonOwnProps &
@@ -55,6 +57,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
   return (
     <Dynamic
       component={local.as}
+      type={local.as === 'button' ? 'button' : undefined}
       class={className()}
       data-testid={tid.testId}
       {...rest}

@@ -1,23 +1,27 @@
 /**
- * IconButton component. A compact, square button intended to host a
- * single icon (no label).
+ * IconButton component. A square button intended to host a single icon
+ * (no label).
  *
  * Ported from Radix UI Themes IconButton. Deviations:
- * - No `radius` prop. The corner radius tracks size like our other
+ * - No `radius` prop. Corner radius tracks `size` like our other
  *   components rather than cascading from a theme-level data attribute.
- * - No `loading`, `highContrast`, or `color` accent variants.
- * - `as` is restricted to `'button' | 'summary'` (mirroring Button) so
- *   the same visuals can drive a `<details>` toggle.
- * - When rendering a `<button>`, `type` defaults to `"button"`. The
- *   common IconButton actions (clear, toggle, like) are not form
- *   submitters; opt in explicitly with `type="submit"` if needed.
+ * - No `loading`, `highContrast`, or 26-accent `color` prop.
+ * - No `asChild` / `as`. The component owns the `<button>` tag —
+ *   wrapping an icon in `<details><summary>…</summary></details>` for a
+ *   disclosure toggle is a job for `Button as="summary"`, not
+ *   IconButton.
+ * - Ghost variant keeps the square footprint instead of expanding via
+ *   padding + negative-margin compensation. Our margin system is
+ *   class-based, not CSS-variable-based, so the Radix trick doesn't fit
+ *   cleanly. Hit target equals visual size at every variant.
+ * - `type` defaults to `"button"` so an IconButton inside a `<form>`
+ *   doesn't silently submit. Override with `type="submit"` to opt in.
  *
  * @see https://www.radix-ui.com/themes/docs/components/icon-button
  */
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
-import { Dynamic } from 'solid-js/web';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -26,40 +30,22 @@ import {
 import {
   buttonStyleDefaults,
   buttonStylePropKeys,
-  type ButtonColor,
-  type ButtonSize,
+  resolveIconButtonStyleClasses,
   type ButtonStyleProps,
-  type ButtonVariant,
 } from '../../props/button';
-import { base, variantColor } from '../../props/button.css';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import * as css from './icon-button.css';
 
-const resolveIconButtonStyleClasses = (
-  size: ButtonSize,
-  variant: ButtonVariant,
-  color: ButtonColor,
-): string[] => {
-  return [base, css.size[size], variantColor[variant][color]];
-};
-
-interface IconButtonOwnProps
-  extends ButtonStyleProps, MarginProps, RequiredTestIdProps {}
-
-/**
- * IconButton props. `as` defaults to `'button'`; set it to `'summary'`
- * when using the button inside a `<details>` disclosure so the native
- * toggle semantics survive.
- */
-export type IconButtonProps =
-  | ({ as?: 'button' } & IconButtonOwnProps &
-      JSX.ButtonHTMLAttributes<HTMLButtonElement>)
-  | ({ as: 'summary' } & IconButtonOwnProps & JSX.HTMLAttributes<HTMLElement>);
+export interface IconButtonProps
+  extends
+    ButtonStyleProps,
+    MarginProps,
+    RequiredTestIdProps,
+    JSX.ButtonHTMLAttributes<HTMLButtonElement> {}
 
 /** Square button sized to host a single icon. */
 const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
   const props = mergeProps(
-    { as: 'button' as const },
+    { type: 'button' as const },
     buttonStyleDefaults,
     rawProps,
   );
@@ -67,7 +53,6 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
     ...buttonStylePropKeys,
-    'as',
     'class',
     'children',
   ]);
@@ -82,15 +67,9 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <Dynamic
-      component={local.as}
-      type={local.as === 'button' ? 'button' : undefined}
-      class={className()}
-      data-testid={tid.testId}
-      {...rest}
-    >
+    <button class={className()} data-testid={tid.testId} {...rest}>
       {local.children}
-    </Dynamic>
+    </button>
   );
 };
 

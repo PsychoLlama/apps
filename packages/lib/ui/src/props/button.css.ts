@@ -102,6 +102,40 @@ export const size = styleVariants(
   >,
 );
 
+const iconSizeMap = {
+  1: {
+    ...typeScaleProps(1),
+    width: space[5],
+    height: space[5],
+    borderRadius: radius[1],
+  },
+  2: {
+    ...typeScaleProps(2),
+    width: space[6],
+    height: space[6],
+    borderRadius: radius[2],
+  },
+  3: {
+    ...typeScaleProps(3),
+    width: space[7],
+    height: space[7],
+    borderRadius: radius[3],
+  },
+  4: {
+    ...typeScaleProps(4),
+    width: space[8],
+    height: space[8],
+    borderRadius: radius[4],
+  },
+} as const;
+
+export const iconSize = styleVariants(
+  Object.fromEntries(sizes.map((key) => [key, iconSizeMap[key]])) as Record<
+    (typeof sizes)[number],
+    (typeof iconSizeMap)[1]
+  >,
+);
+
 // --- Variant x Color matrix ---
 
 const colorScales = { accent, neutral, danger, warning, success } as const;

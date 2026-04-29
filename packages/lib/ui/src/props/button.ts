@@ -35,6 +35,14 @@ export const resolveButtonStyleClasses = (
   return [css.base, css.size[size], css.variantColor[variant][color]];
 };
 
+export const resolveIconButtonStyleClasses = (
+  size: ButtonSize,
+  variant: ButtonVariant,
+  color: ButtonColor,
+): string[] => {
+  return [css.base, css.iconSize[size], css.variantColor[variant][color]];
+};
+
 export const buttonStyleArgTypes: ArgTypes<ButtonStyleProps> = {
   size: {
     control: { type: 'range', min: 1, max: 4, step: 1 },
