@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { untrack } from 'solid-js';
+import { fn } from 'storybook/test';
 import { createTestBindings, defineAction, defineStore } from '@lib/state';
 import {
   TabsContent,
@@ -33,7 +34,7 @@ const meta = {
   args: {
     testId: 'tabs',
     value: 'overview',
-    onValueChange: () => {},
+    onValueChange: fn(),
     activationMode: 'automatic',
     loop: true,
     size: 2,
@@ -73,7 +74,10 @@ const meta = {
       <TabsRoot
         testId={props.testId}
         value={state.value}
-        onValueChange={setValue}
+        onValueChange={(next) => {
+          props.onValueChange(next);
+          setValue(next);
+        }}
         activationMode={props.activationMode}
       >
         <TabsList

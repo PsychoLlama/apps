@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { splitProps } from 'solid-js';
+import { fn } from 'storybook/test';
 import IconMagnify from 'virtual:icons/mdi/magnify';
 import IconClose from 'virtual:icons/mdi/close';
 import { Button, TextField, type TextFieldProps } from '@lib/ui';
@@ -27,6 +28,7 @@ const meta = {
     hasRight: false,
     disabled: false,
     readOnly: false,
+    onInput: fn(),
   },
   argTypes: {
     ...marginArgTypes,

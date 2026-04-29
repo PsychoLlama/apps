@@ -1,5 +1,6 @@
 import { MemoryRouter } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
+import { fn } from 'storybook/test';
 import { Link as LinkComponent, type LinkProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -16,6 +17,7 @@ const meta = {
     color: 'accent',
     highContrast: false,
     size: 3,
+    onClick: fn(),
   },
   argTypes: {
     size: {

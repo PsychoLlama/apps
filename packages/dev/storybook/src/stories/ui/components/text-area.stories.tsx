@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
+import { fn } from 'storybook/test';
 import { TextArea, type TextAreaProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -15,6 +16,7 @@ const meta = {
     placeholder: 'Tell us what you think…',
     disabled: false,
     readOnly: false,
+    onInput: fn(),
   },
   argTypes: {
     ...marginArgTypes,
