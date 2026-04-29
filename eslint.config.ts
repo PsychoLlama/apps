@@ -213,6 +213,10 @@ export default [
       'packages/lib/ui/**/*.{ts,tsx}',
       'packages/lib/design/**/*.{ts,tsx}',
     ],
+    // `.css.ts` files are governed by the `packages/**/*.css.ts` block
+    // above (which carries the globalStyle ban). Without this ignore,
+    // this override would clobber that rule and silently drop the ban.
+    ignores: ['**/*.css.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
