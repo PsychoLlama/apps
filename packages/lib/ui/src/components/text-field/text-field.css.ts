@@ -107,6 +107,21 @@ export const input = style({
       display: 'none',
     },
 
+    // Style the date/time picker icon Chrome paints at the right of
+    // those inputs. Sized in `em` so it tracks the field's font-size
+    // (matches Radix's per-size 12/14/16px exactly). Hover bg matches
+    // the field's hover affordances.
+    '&::-webkit-calendar-picker-indicator': {
+      width: '1em',
+      height: '1em',
+      color: 'inherit',
+      cursor: 'pointer',
+      borderRadius: radius[1],
+    },
+    '&::-webkit-calendar-picker-indicator:hover': {
+      backgroundColor: neutral.alpha[3],
+    },
+
     // Autofill (Chrome's `:autofill`, 1Password's marker attribute)
     // forces a yellow background and dark text color regardless of
     // page styles. Restore the field's intended foreground via
