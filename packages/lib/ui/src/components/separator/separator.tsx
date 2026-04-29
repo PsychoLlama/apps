@@ -4,8 +4,9 @@
  * Ported from Radix UI Themes Separator. Deviations:
  * - Renders an `<hr>` so the implicit `role="separator"` and the
  *   `aria-orientation` default come from the platform.
- * - `color` is restricted to `accent` and `neutral`.
  * - `size` and `orientation` are static — no responsive object props.
+ * - `decorative` is required, not defaulted, so accessibility intent is
+ *   declared at the call site.
  * - No `asChild`; Separator owns its tag.
  *
  * @see https://www.radix-ui.com/themes/docs/components/separator
@@ -23,7 +24,7 @@ import * as css from './separator.css';
 
 type Orientation = 'horizontal' | 'vertical';
 type Size = 1 | 2 | 3 | 4;
-type Color = 'accent' | 'neutral';
+type Color = 'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 export interface SeparatorProps
   extends
@@ -35,15 +36,15 @@ export interface SeparatorProps
     > {
   /** Axis along which the separator is drawn. @default 'horizontal' */
   orientation?: Orientation;
-  /** Length along the major axis. `4` stretches to fill. @default '1' */
+  /** Length along the major axis. `4` stretches to fill. @default 1 */
   size?: Size;
   /** Semantic color drawn at alpha step 6. @default 'neutral' */
   color?: Color;
   /**
    * Marks the separator as decorative. Decorative separators are removed
-   * from the accessibility tree. @default true
+   * from the accessibility tree.
    */
-  decorative?: boolean;
+  decorative: boolean;
 }
 
 /** Visual divider between sibling content. */
@@ -53,7 +54,6 @@ const Separator: Component<SeparatorProps> = (rawProps) => {
       orientation: 'horizontal' as const,
       size: 1 as const,
       color: 'neutral' as const,
-      decorative: true,
     },
     rawProps,
   );
@@ -72,7 +72,7 @@ const Separator: Component<SeparatorProps> = (rawProps) => {
       ...resolveMarginClasses(margin),
       css.base,
       css.orientation[local.orientation],
-      css.size[local.size],
+      css.size[local.orientation][local.size],
       css.color[local.color],
       local.class,
     ]

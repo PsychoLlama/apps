@@ -2,10 +2,7 @@
  * Separator styles.
  *
  * Ported from Radix UI Themes Separator. Deviations:
- * - `color` is restricted to `accent` and `neutral`.
  * - `size` is a static class, not a responsive `data-*` cascade.
- * - Orientation hands its size off via a `createVar()` shared with `size`,
- *   instead of duplicating the matrix per orientation.
  * - Adds `flex-shrink: 0` so the separator keeps its target size in flex
  *   parents. Matches the rest of `@lib/ui` (Badge, Kbd) but isn't in the
  *   upstream rule.
@@ -13,37 +10,42 @@
  * @see https://www.radix-ui.com/themes/docs/components/separator
  */
 
-import { createVar, style, styleVariants } from '@vanilla-extract/css';
-import { accent, neutral, space } from '@lib/design';
-
-const separatorColor = createVar();
-const separatorSize = createVar();
+import { style, styleVariants } from '@vanilla-extract/css';
+import { accent, danger, neutral, space, success, warning } from '@lib/design';
 
 export const base = style({
   display: 'block',
   flexShrink: 0,
-  backgroundColor: separatorColor,
 });
 
 export const orientation = styleVariants({
-  horizontal: {
-    width: separatorSize,
-    height: '1px',
-  },
-  vertical: {
-    width: '1px',
-    height: separatorSize,
-  },
+  horizontal: { height: '1px' },
+  vertical: { width: '1px' },
 });
 
-export const size = styleVariants({
-  1: { vars: { [separatorSize]: space[4] } },
-  2: { vars: { [separatorSize]: space[6] } },
-  3: { vars: { [separatorSize]: space[9] } },
-  4: { vars: { [separatorSize]: '100%' } },
+const horizontalSize = styleVariants({
+  1: { width: space[4] },
+  2: { width: space[6] },
+  3: { width: space[9] },
+  4: { width: '100%' },
 });
+
+const verticalSize = styleVariants({
+  1: { height: space[4] },
+  2: { height: space[6] },
+  3: { height: space[9] },
+  4: { height: '100%' },
+});
+
+export const size = {
+  horizontal: horizontalSize,
+  vertical: verticalSize,
+} as const;
 
 export const color = styleVariants({
-  accent: { vars: { [separatorColor]: accent.alpha[6] } },
-  neutral: { vars: { [separatorColor]: neutral.alpha[6] } },
+  accent: { backgroundColor: accent.alpha[6] },
+  neutral: { backgroundColor: neutral.alpha[6] },
+  danger: { backgroundColor: danger.alpha[6] },
+  warning: { backgroundColor: warning.alpha[6] },
+  success: { backgroundColor: success.alpha[6] },
 });
