@@ -31,6 +31,9 @@ export default [
   ...tseslint.configs.recommendedTypeChecked,
   solid,
   {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
     languageOptions: {
       parserOptions: {
         projectService: true,
