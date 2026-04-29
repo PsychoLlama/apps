@@ -141,9 +141,8 @@ export const iconSize = styleVariants(
 // Declared after `size` / `iconSize` so the `borderRadius` rule wins
 // on equal specificity when both are present in the class list.
 export const cornerRadius = styleVariants({
-  // `unset` resolves to the initial value (0) — used instead of a
-  // hard-coded `0` so the design-token lint rule stays happy.
-  none: { borderRadius: 'unset' },
+  // eslint-disable-next-line custom/require-design-tokens -- intentional zero radius; Radix exposes "none" as a theme-level preset, not a token in the scale.
+  none: { borderRadius: 0 },
   small: { borderRadius: radius[1] },
   medium: { borderRadius: radius[2] },
   large: { borderRadius: radius[3] },
