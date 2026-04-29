@@ -19,6 +19,12 @@ import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './inset.css';
 
@@ -42,7 +48,7 @@ interface InsetOwnProps {
 /** Inset props for a specific element tag. */
 export type InsetProps<T extends HtmlBoxTag> = PolymorphicProps<
   T,
-  InsetOwnProps & MarginProps & TestIdProps
+  InsetOwnProps & MarginProps & SkeletonProps & TestIdProps
 >;
 
 /** Bleeds content past the parent Card's padding to its edges. */
@@ -50,6 +56,7 @@ function Inset<const T extends HtmlBoxTag>(props: InsetProps<T>): JSX.Element;
 function Inset(
   rawProps: { as: HtmlBoxTag } & InsetOwnProps &
     MarginProps &
+    SkeletonProps &
     TestIdProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
@@ -66,6 +73,7 @@ function Inset(
     'pad',
     'class',
     'children',
+    ...skeletonPropKeys,
   ]);
 
   const className = () =>
@@ -75,17 +83,20 @@ function Inset(
       css.side[local.side],
       css.clip[local.clip],
       local.pad === false && css.padOff,
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
+
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
 
   return (
     <Dynamic
       component={local.as}
       class={className()}
       data-testid={tid.testId}
-      {...rest}
+      {...merged}
     >
       {local.children}
     </Dynamic>

@@ -15,6 +15,7 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import { type SkeletonProps, skeletonPropKeys } from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import Flex from '../flex/flex';
 import Grid from '../grid/grid';
@@ -25,7 +26,11 @@ type Variant = 'soft' | 'surface' | 'outline';
 type Color = 'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 export interface CalloutProps
-  extends MarginProps, TestIdProps, JSX.HTMLAttributes<HTMLDivElement> {
+  extends
+    MarginProps,
+    SkeletonProps,
+    TestIdProps,
+    JSX.HTMLAttributes<HTMLDivElement> {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: Size;
   /** Visual treatment. @default 'soft' */
@@ -51,7 +56,8 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
   );
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
-  const [local, rest] = splitProps(withoutTid, [
+  const [skel, withoutSkel] = splitProps(withoutTid, [...skeletonPropKeys]);
+  const [local, rest] = splitProps(withoutSkel, [
     'size',
     'variant',
     'color',
@@ -81,6 +87,7 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
       class={className()}
       role="note"
       testId={tid.testId}
+      skeleton={skel.skeleton}
       {...rest}
     >
       <Flex as="div" align="center" class={css.iconSize[local.size]}>

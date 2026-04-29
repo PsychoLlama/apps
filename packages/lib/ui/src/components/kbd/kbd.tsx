@@ -17,13 +17,23 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './kbd.css';
 
 type Variant = 'classic' | 'soft';
 
 export interface KbdProps
-  extends MarginProps, TestIdProps, JSX.HTMLAttributes<HTMLElement> {
+  extends
+    MarginProps,
+    SkeletonProps,
+    TestIdProps,
+    JSX.HTMLAttributes<HTMLElement> {
   /** Visual size on a 1–9 scale. Falls back to 0.75× the parent font-size when omitted. */
   size?: TypeScale;
   /** Visual treatment. @default 'classic' */
@@ -40,6 +50,7 @@ const Kbd: ParentComponent<KbdProps> = (rawProps) => {
     'variant',
     'class',
     'children',
+    ...skeletonPropKeys,
   ]);
 
   const className = () =>
@@ -48,13 +59,16 @@ const Kbd: ParentComponent<KbdProps> = (rawProps) => {
       css.base,
       css.variant[local.variant],
       local.size && css.size[local.size],
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+
   return (
-    <kbd class={className()} data-testid={tid.testId} {...rest}>
+    <kbd class={className()} data-testid={tid.testId} {...merged}>
       {local.children}
     </kbd>
   );
