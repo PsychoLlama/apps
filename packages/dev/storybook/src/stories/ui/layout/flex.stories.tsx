@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { Flex as FlexComponent, type FlexProps } from '@lib/ui';
 import { boxArgTypes } from '@lib/ui/props/box';
 import { flexArgTypes } from '@lib/ui/props/flex';
+import { skeletonArgs } from '@lib/ui/props/skeleton';
 import { swatches } from '../../../swatch';
 
 const meta = {
@@ -12,6 +13,7 @@ const meta = {
     direction: 'row',
     gap: 3,
     children: swatches(6),
+    ...skeletonArgs,
   },
   argTypes: {
     ...boxArgTypes,

@@ -3,7 +3,7 @@ import { Text as TextComponent, type TextProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { trimArgTypes } from '@lib/ui/props/trim';
 import { selectableArgTypes } from '@lib/ui/props/selectable';
-import { skeletonArgTypes } from '@lib/ui/props/skeleton';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
@@ -13,6 +13,7 @@ const meta = {
     children: 'Sphinx of black quartz, judge my vow',
     as: 'p',
     size: 3,
+    ...skeletonArgs,
   },
   argTypes: {
     as: {

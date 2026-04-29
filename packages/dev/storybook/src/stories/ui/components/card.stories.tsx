@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { Card as CardComponent, type CardProps, Heading, Text } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
-import { skeletonArgTypes } from '@lib/ui/props/skeleton';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
@@ -11,6 +11,7 @@ const meta = {
     as: 'div',
     size: 1,
     variant: 'surface',
+    ...skeletonArgs,
   },
   argTypes: {
     ...marginArgTypes,

@@ -41,3 +41,13 @@ export const skeletonArgTypes: ArgTypes<SkeletonProps> = {
     control: 'boolean',
   },
 };
+
+/**
+ * Default `args` for stories that opt in to the skeleton control.
+ * Spread alongside the rest of `meta.args` so the boolean starts
+ * off — otherwise the control renders unchecked but the prop is
+ * undefined, which Storybook treats as a third indeterminate state.
+ */
+export const skeletonArgs = {
+  skeleton: false,
+} as const satisfies Required<SkeletonProps>;

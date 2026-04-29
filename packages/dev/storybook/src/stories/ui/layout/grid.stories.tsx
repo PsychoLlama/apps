@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { Grid as GridComponent, type GridProps } from '@lib/ui';
 import { boxArgTypes } from '@lib/ui/props/box';
+import { skeletonArgs } from '@lib/ui/props/skeleton';
 import { swatches } from '../../../swatch';
 
 const meta = {
@@ -11,6 +12,7 @@ const meta = {
     columns: 4,
     gap: 3,
     children: swatches(9),
+    ...skeletonArgs,
   },
   argTypes: {
     ...boxArgTypes,

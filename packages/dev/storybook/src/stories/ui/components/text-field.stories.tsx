@@ -5,6 +5,7 @@ import IconMagnify from 'virtual:icons/mdi/magnify';
 import IconClose from 'virtual:icons/mdi/close';
 import { IconButton, TextField, type TextFieldProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 interface TextFieldArgs extends TextFieldProps {
@@ -29,9 +30,11 @@ const meta = {
     disabled: false,
     readOnly: false,
     onInput: fn(),
+    ...skeletonArgs,
   },
   argTypes: {
     ...marginArgTypes,
+    ...skeletonArgTypes,
     ...testIdArgTypes,
     size: {
       control: { type: 'range', min: 1, max: 3, step: 1 },

@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { fn } from 'storybook/test';
 import { Link as LinkComponent, type LinkProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { trimArgTypes } from '@lib/ui/props/trim';
 
@@ -18,6 +19,7 @@ const meta = {
     highContrast: false,
     size: 3,
     onClick: fn(),
+    ...skeletonArgs,
   },
   argTypes: {
     size: {
@@ -41,6 +43,7 @@ const meta = {
     children: { control: 'text' },
     ...trimArgTypes,
     ...marginArgTypes,
+    ...skeletonArgTypes,
     ...testIdArgTypes,
   },
 } satisfies Meta<LinkProps>;
