@@ -1,0 +1,50 @@
+import type { Meta, StoryObj } from 'storybook-solidjs-vite';
+import { expect, fn, userEvent, within } from 'storybook/test';
+import IconHeart from 'virtual:icons/mdi/heart';
+import {
+  IconButton as IconButtonComponent,
+  type IconButtonProps,
+} from '@lib/ui';
+import { buttonStyleArgTypes } from '@lib/ui/props/button';
+import { marginArgTypes } from '@lib/ui/props/margin';
+import { testIdArgTypes } from '@lib/ui/props/test-id';
+
+const meta = {
+  title: 'UI/Components',
+  component: IconButtonComponent,
+  args: {
+    'aria-label': 'Like',
+    children: <IconHeart />,
+    size: 2,
+    variant: 'solid',
+    color: 'accent',
+    onClick: fn(),
+  },
+  argTypes: {
+    ...marginArgTypes,
+    ...buttonStyleArgTypes,
+    ...testIdArgTypes,
+    disabled: {
+      control: 'boolean',
+    },
+  },
+} satisfies Meta<IconButtonProps>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const IconButton: Story = {
+  play: async ({
+    args,
+    canvasElement,
+  }: {
+    args: typeof meta.args;
+    canvasElement: HTMLElement;
+  }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button');
+
+    await userEvent.click(button);
+    await expect(args.onClick).toHaveBeenCalledOnce();
+  },
+};

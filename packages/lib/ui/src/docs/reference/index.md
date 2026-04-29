@@ -20,6 +20,7 @@
 - [Button](./button.md): Styled button.
 - [Callout](./callout.md): Informational message.
 - [Card](./card.md): Surface container.
+- [IconButton](./icon-button.md): Square button for a single icon.
 - [Kbd](./kbd.md): Inline keyboard input.
 - [TabNav](./tab-nav.md): Horizontal nav strip of routing links.
 - [Tabs](./tabs.md): Switch between panels under a row of triggers.
