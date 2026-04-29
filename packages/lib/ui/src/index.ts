@@ -35,6 +35,10 @@ export {
 export { default as Inset, type InsetProps } from './components/inset/inset';
 export { default as Kbd, type KbdProps } from './components/kbd/kbd';
 export {
+  default as Separator,
+  type SeparatorProps,
+} from './components/separator/separator';
+export {
   default as LinkButton,
   type LinkButtonProps,
 } from './components/link-button/link-button';
