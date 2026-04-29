@@ -213,6 +213,31 @@ const outlineStyle = (color: ColorName) => {
   });
 };
 
+const surfaceStyle = (color: ColorName) => {
+  const palette = colorScales[color];
+
+  return style({
+    backgroundColor: palette.surface,
+    color: palette.alpha[11],
+    boxShadow: `inset 0 0 0 1px ${palette.alpha[7]}`,
+    '@media': {
+      '(hover: hover)': {
+        selectors: {
+          '&:hover:not(:disabled):not(:active)': {
+            boxShadow: `inset 0 0 0 1px ${palette.alpha[8]}`,
+          },
+        },
+      },
+    },
+    selectors: {
+      '&:active:not(:disabled)': {
+        backgroundColor: palette.alpha[3],
+        boxShadow: `inset 0 0 0 1px ${palette.alpha[8]}`,
+      },
+    },
+  });
+};
+
 const ghostStyle = (color: ColorName) => {
   const palette = colorScales[color];
 
@@ -250,6 +275,13 @@ export const variantColor = {
     danger: softStyle('danger'),
     warning: softStyle('warning'),
     success: softStyle('success'),
+  },
+  surface: {
+    accent: surfaceStyle('accent'),
+    neutral: surfaceStyle('neutral'),
+    danger: surfaceStyle('danger'),
+    warning: surfaceStyle('warning'),
+    success: surfaceStyle('success'),
   },
   outline: {
     accent: outlineStyle('accent'),

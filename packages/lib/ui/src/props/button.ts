@@ -2,7 +2,7 @@ import type { ArgTypes } from 'storybook-solidjs-vite';
 import * as css from './button.css';
 
 export type ButtonSize = 1 | 2 | 3 | 4;
-export type ButtonVariant = 'solid' | 'soft' | 'outline' | 'ghost';
+export type ButtonVariant = 'solid' | 'soft' | 'surface' | 'outline' | 'ghost';
 export type ButtonColor =
   | 'accent'
   | 'neutral'
@@ -49,7 +49,7 @@ export const buttonStyleArgTypes: ArgTypes<ButtonStyleProps> = {
   },
   variant: {
     control: 'inline-radio',
-    options: ['solid', 'soft', 'outline', 'ghost'],
+    options: ['solid', 'soft', 'surface', 'outline', 'ghost'],
   },
   color: {
     control: 'inline-radio',
