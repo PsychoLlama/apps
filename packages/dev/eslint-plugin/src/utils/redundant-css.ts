@@ -123,6 +123,12 @@ export const isInsideSpecialization = (node: TSESTree.Node): boolean => {
  * Maps a property name to its "family" — the group whose declarations can
  * affect the same visual outcome. Used to decide whether a redundant-reset
  * value inside a specialization has anything outer to undo.
+ *
+ * Width and style properties share a family for borders and outlines: a
+ * `borderWidth: 0` inside a specialization is a real override if the
+ * outer scope enabled the stroke via `borderStyle: 'solid'` — even
+ * though no outer `borderWidth` exists, the inner `0` removes a
+ * visible border.
  */
 const propertyFamily = (name: string): string | null => {
   if (name.startsWith('padding')) return 'padding';
@@ -130,8 +136,8 @@ const propertyFamily = (name: string): string | null => {
   if (name === 'gap' || name === 'rowGap' || name === 'columnGap') {
     return 'gap';
   }
-  if (/^border([A-Z][a-zA-Z]*)?Width$/.test(name)) return 'borderWidth';
-  if (name === 'outlineWidth') return 'outlineWidth';
+  if (/^border([A-Z][a-zA-Z]*)?(Width|Style)$/.test(name)) return 'border';
+  if (name === 'outlineWidth' || name === 'outlineStyle') return 'outline';
   if (name === 'outlineOffset') return 'outlineOffset';
   return null;
 };
@@ -184,6 +190,11 @@ const isSpecializationContainer = (obj: TSESTree.ObjectExpression): boolean => {
  * inspected — those rules apply in different element states, so a
  * declaration on one isn't a target for the other.
  *
+ * Inside `node`'s own scope, only declarations that come *before* it
+ * count: a later same-family declaration overrides this one within the
+ * same CSS rule, leaving this one as dead code rather than an
+ * override.
+ *
  * The walk stops at any ObjectExpression that isn't a style scope —
  * variants records from `styleVariants` or `recipe`'s `variants:` —
  * since sibling variants are mutually-exclusive classes at runtime.
@@ -199,23 +210,16 @@ export const hasOverrideTarget = (
   const family = propertyFamily(name);
   if (!family) return false;
 
-  const scopeHasOverride = (scope: TSESTree.ObjectExpression): boolean => {
-    for (const prop of scope.properties) {
-      if (prop.type !== AST_NODE_TYPES.Property) continue;
-      if (prop === node) continue;
-      const propName = getPropertyName(prop.key);
-      if (!propName || propertyFamily(propName) !== family) continue;
-      if (prop.value.type === AST_NODE_TYPES.ObjectExpression) continue;
-      if (prop.value.type === AST_NODE_TYPES.Literal) {
-        if (!isRedundantResetValue(propName, prop.value.value)) return true;
-        continue;
-      }
-      // Identifier, MemberExpression, ArrayExpression (CSS fallback),
-      // TemplateLiteral, CallExpression, etc. — treat as a real
-      // override target.
-      return true;
+  const isOverrideTarget = (prop: TSESTree.Property): boolean => {
+    const propName = getPropertyName(prop.key);
+    if (!propName || propertyFamily(propName) !== family) return false;
+    if (prop.value.type === AST_NODE_TYPES.ObjectExpression) return false;
+    if (prop.value.type === AST_NODE_TYPES.Literal) {
+      return !isRedundantResetValue(propName, prop.value.value);
     }
-    return false;
+    // Identifier, MemberExpression, ArrayExpression (CSS fallback),
+    // TemplateLiteral, CallExpression, etc.
+    return true;
   };
 
   let current: TSESTree.Node | undefined = node.parent;
@@ -225,7 +229,18 @@ export const hasOverrideTarget = (
         // Selectors / at-rule blocks aren't scopes themselves; their
         // sub-keys' values are. Step through transparently.
       } else if (isStyleScope(current)) {
-        if (scopeHasOverride(current)) return true;
+        const isInnerScope = current === node.parent;
+        for (const prop of current.properties) {
+          if (prop.type !== AST_NODE_TYPES.Property) continue;
+          if (prop === node) {
+            // Inside `node`'s own scope, only earlier siblings count
+            // — anything after `node` overrides it within the same
+            // CSS rule and leaves `node` as dead code.
+            if (isInnerScope) break;
+            continue;
+          }
+          if (isOverrideTarget(prop)) return true;
+        }
       } else {
         // Variant record (or other non-style ObjectExpression). Don't
         // cross — siblings here are independent classes.

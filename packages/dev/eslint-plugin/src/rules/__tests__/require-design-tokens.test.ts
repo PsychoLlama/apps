@@ -115,6 +115,20 @@ tester.run('require-design-tokens', rule, {
     {
       code: "const x = styleVariants({ secondary: { padding: pad, selectors: { '&:hover': { padding: 0 } } } })",
     },
+    // Same-scope earlier sibling counts as an override target — the
+    // shorthand sets all sides, then the longhand undoes one of them.
+    {
+      code: "const x = { selectors: { '&:hover': { padding: pad, paddingTop: 0 } } }",
+    },
+    // Width / style share a family for borders and outlines — `0` on a
+    // width inside a specialization is a real override when the outer
+    // scope enabled the stroke via `*-style: solid`.
+    {
+      code: "const x = { borderStyle: 'solid', selectors: { '&:hover': { borderWidth: 0 } } }",
+    },
+    {
+      code: "const x = { outlineStyle: 'solid', selectors: { '&:focus-visible': { outlineWidth: 0 } } }",
+    },
     // Recipe-style: base + variants. An override target in the base
     // scope counts only for a redundant reset *inside that base*.
     {
@@ -467,6 +481,18 @@ tester.run('require-design-tokens', rule, {
         {
           messageId: 'redundantReset' as const,
           data: { property: 'padding', value: '0' },
+        },
+      ],
+    },
+    // Same-scope later siblings don't count: `paddingTop: 0` is dead
+    // code because the following `padding: pad` overrides it within
+    // the same CSS rule.
+    {
+      code: "const x = { selectors: { '&:hover': { paddingTop: 0, padding: pad } } }",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'paddingTop', value: '0' },
         },
       ],
     },
