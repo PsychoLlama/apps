@@ -74,3 +74,10 @@ export {
   type TextAreaRadius,
   type TextAreaResize,
 } from './components/text-area/text-area';
+export {
+  default as Switch,
+  type SwitchProps,
+  type SwitchSize,
+  type SwitchVariant,
+  type SwitchRadius,
+} from './components/switch/switch';
