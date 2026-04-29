@@ -10,10 +10,9 @@
  *   wrapping an icon in `<details><summary>…</summary></details>` for a
  *   disclosure toggle is a job for `Button as="summary"`, not
  *   IconButton.
- * - Ghost variant keeps the square footprint instead of expanding via
- *   padding + negative-margin compensation. Our margin system is
- *   class-based, not CSS-variable-based, so the Radix trick doesn't fit
- *   cleanly. Hit target equals visual size at every variant.
+ * - Ghost negative margin doesn't compose with user margin props the way
+ *   Radix's CSS-var arithmetic does — see `props/button.css.ts` for the
+ *   shared treatment.
  * - `type` defaults to `"button"` so an IconButton inside a `<form>`
  *   doesn't silently submit. Override with `type="submit"` to opt in.
  *

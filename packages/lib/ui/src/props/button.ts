@@ -44,6 +44,9 @@ export const resolveButtonStyleClasses = (
   return [
     css.base,
     css.size[size],
+    variant === 'ghost'
+      ? css.buttonGhostSize[size]
+      : css.buttonNonGhostSize[size],
     css.variantColor[variant][color],
     radius && css.cornerRadius[radius],
   ];
@@ -57,7 +60,10 @@ export const resolveIconButtonStyleClasses = (
 ): (string | undefined)[] => {
   return [
     css.base,
-    css.iconSize[size],
+    css.size[size],
+    variant === 'ghost'
+      ? css.iconButtonGhostSize[size]
+      : css.iconButtonNonGhostSize[size],
     css.variantColor[variant][color],
     radius && css.cornerRadius[radius],
   ];
