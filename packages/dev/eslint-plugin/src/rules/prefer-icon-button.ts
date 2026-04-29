@@ -22,10 +22,7 @@ const incompatibleProps = new Set(['as']);
 const resolveImportSource = (
   context: TSESLint.RuleContext<string, []>,
   identifier: TSESTree.JSXIdentifier,
-): {
-  source: string;
-  importDecl: TSESTree.ImportDeclaration;
-} | null => {
+): string | null => {
   const scope = context.sourceCode.getScope(identifier);
   const variable = ASTUtils.findVariable(scope, identifier.name);
   if (!variable) return null;
@@ -39,7 +36,7 @@ const resolveImportSource = (
   const source = def.parent.source.value;
   if (typeof source !== 'string') return null;
 
-  return { source, importDecl: def.parent };
+  return source;
 };
 
 const isMeaningfulChild = (child: TSESTree.JSXChild): boolean => {
@@ -58,7 +55,6 @@ const isMeaningfulChild = (child: TSESTree.JSXChild): boolean => {
 const rule = createRule({
   meta: {
     type: 'suggestion',
-    fixable: 'code',
     docs: {
       description:
         'Use <IconButton> for buttons whose only child is an icon. <Button> is sized for a text label; an icon-only label belongs in the square IconButton primitive.',
@@ -77,8 +73,8 @@ const rule = createRule({
         if (opening.name.type !== AST_NODE_TYPES.JSXIdentifier) return;
         if (opening.name.name !== 'Button') return;
 
-        const buttonImport = resolveImportSource(context, opening.name);
-        if (!buttonImport || buttonImport.source !== UI_IMPORT_SOURCE) return;
+        const buttonSource = resolveImportSource(context, opening.name);
+        if (buttonSource !== UI_IMPORT_SOURCE) return;
 
         for (const attr of opening.attributes) {
           if (attr.type !== AST_NODE_TYPES.JSXAttribute) continue;
@@ -95,45 +91,12 @@ const rule = createRule({
         const childOpening = only.openingElement;
         if (childOpening.name.type !== AST_NODE_TYPES.JSXIdentifier) return;
 
-        const iconImport = resolveImportSource(context, childOpening.name);
-        if (!iconImport) return;
-        if (!iconImport.source.startsWith(ICON_IMPORT_PREFIX)) return;
+        const iconSource = resolveImportSource(context, childOpening.name);
+        if (!iconSource || !iconSource.startsWith(ICON_IMPORT_PREFIX)) return;
 
         context.report({
           node: opening,
           messageId: 'preferIconButton',
-          fix(fixer) {
-            const fixes: TSESLint.RuleFix[] = [
-              fixer.replaceText(opening.name, 'IconButton'),
-            ];
-
-            if (
-              node.closingElement?.name.type === AST_NODE_TYPES.JSXIdentifier
-            ) {
-              fixes.push(
-                fixer.replaceText(node.closingElement.name, 'IconButton'),
-              );
-            }
-
-            const hasIconButton = buttonImport.importDecl.specifiers.some(
-              (spec) =>
-                spec.type === AST_NODE_TYPES.ImportSpecifier &&
-                spec.local.name === 'IconButton',
-            );
-
-            if (!hasIconButton) {
-              const buttonSpec = buttonImport.importDecl.specifiers.find(
-                (spec): spec is TSESTree.ImportSpecifier =>
-                  spec.type === AST_NODE_TYPES.ImportSpecifier &&
-                  spec.local.name === 'Button',
-              );
-              if (buttonSpec) {
-                fixes.push(fixer.insertTextBefore(buttonSpec, 'IconButton, '));
-              }
-            }
-
-            return fixes;
-          },
         });
       },
     };

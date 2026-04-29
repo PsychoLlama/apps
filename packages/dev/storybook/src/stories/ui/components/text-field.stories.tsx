@@ -80,6 +80,7 @@ const meta = {
           storyOnly.hasRight ? (
             <IconButton
               testId={`${textFieldProps.testId}-clear`}
+              aria-label="Clear"
               size={1}
               variant="ghost"
               color="neutral"
