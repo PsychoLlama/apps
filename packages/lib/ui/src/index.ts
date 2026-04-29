@@ -80,4 +80,5 @@ export {
   type SwitchSize,
   type SwitchVariant,
   type SwitchRadius,
+  type SwitchColor,
 } from './components/switch/switch';

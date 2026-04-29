@@ -3,31 +3,24 @@
  *
  * Ported from Radix UI Themes Switch and Radix UI Primitives Switch.
  * Deviations:
- * - No `color` prop. The "on" track always uses the configured `accent`.
  * - No `asChild` polymorphism — locks to `<button role="switch">`.
- * - No high-contrast variant.
- * - Form integration via a sibling `<input type="hidden">` rendered only
- *   when `name` is set, the switch is checked, and the button is enabled
- *   — disabled controls are excluded from FormData like native checkboxes.
- *   The hidden input mirrors the button's `form="..."` attribute so an
- *   externally-associated switch still submits its value. Uncontrolled
- *   switches subscribe to the host form's `reset` event so they restore
- *   `defaultChecked`. Simpler than the React port's synthetic-bubble
- *   strategy; consumers that observe form `change` events should listen
- *   to `onCheckedChange` on the Switch directly.
+ * - Controlled-only API. Radix's `defaultChecked` opt-in to uncontrolled
+ *   state is dropped: pair `checked` with `onCheckedChange` and own the
+ *   value at the call site. Form-reset semantics belong to the parent.
+ * - Form integration via a sibling `<input type="hidden">` rendered
+ *   only when `name` is set, the switch is checked, and the button is
+ *   enabled — disabled controls are excluded from FormData like native
+ *   checkboxes. The hidden input mirrors the button's `form="..."`
+ *   attribute so an externally-associated switch still submits its
+ *   value. Simpler than the React port's synthetic-bubble strategy;
+ *   consumers that watch the form's own `change` event should listen
+ *   to `onCheckedChange` directly.
  *
  * @see https://www.radix-ui.com/themes/docs/components/switch
  * @see https://www.radix-ui.com/primitives/docs/components/switch
  */
 
-import {
-  createSignal,
-  mergeProps,
-  onCleanup,
-  onMount,
-  Show,
-  splitProps,
-} from 'solid-js';
+import { mergeProps, Show, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import {
   marginPropKeys,
@@ -44,6 +37,13 @@ export type SwitchSize = 1 | 2 | 3;
 export type SwitchVariant = 'classic' | 'surface' | 'soft';
 /** Corner rounding. */
 export type SwitchRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+/** Semantic color palette for the checked track. */
+export type SwitchColor =
+  | 'accent'
+  | 'neutral'
+  | 'danger'
+  | 'warning'
+  | 'success';
 
 /**
  * `Switch` props. Surfaces native `<button>` attributes apart from
@@ -66,12 +66,12 @@ export interface SwitchProps
   variant?: SwitchVariant;
   /** Corner rounding. @default 'full' */
   radius?: SwitchRadius;
-  /** Controlled checked state. Pair with `onCheckedChange`. */
-  checked?: boolean;
-  /** Initial checked state when uncontrolled. @default false */
-  defaultChecked?: boolean;
+  /** Semantic color palette for the checked track. @default 'accent' */
+  color?: SwitchColor;
+  /** Controlled checked state. */
+  checked: boolean;
   /** Fires after the user toggles the switch with the next state. */
-  onCheckedChange?: (checked: boolean) => void;
+  onCheckedChange: (checked: boolean) => void;
   /**
    * Value submitted with the form when checked. When unchecked, the
    * field is omitted from FormData entirely (matches `<input
@@ -92,7 +92,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       size: 2 as const,
       variant: 'surface' as const,
       radius: 'full' as const,
-      defaultChecked: false,
+      color: 'accent' as const,
       value: 'on',
     },
     rawProps,
@@ -103,8 +103,8 @@ const Switch: Component<SwitchProps> = (rawProps) => {
     'size',
     'variant',
     'radius',
+    'color',
     'checked',
-    'defaultChecked',
     'onCheckedChange',
     'value',
     'name',
@@ -114,18 +114,10 @@ const Switch: Component<SwitchProps> = (rawProps) => {
     'onClick',
   ]);
 
-  const [internal, setInternal] = createSignal(local.defaultChecked);
-  const isControlled = () => local.checked !== undefined;
-  // Non-null assertion is sound: `isControlled()` only returns true when
-  // `checked` is defined, and Solid re-evaluates on prop change.
-  const checked = () => (isControlled() ? local.checked! : internal());
-
   const onClick: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
     callConsumerHandler(local.onClick, event);
     if (event.defaultPrevented) return;
-    const next = !checked();
-    if (!isControlled()) setInternal(next);
-    local.onCheckedChange?.(next);
+    local.onCheckedChange(!local.checked);
   };
 
   const className = () =>
@@ -133,6 +125,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       ...resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
+      css.color[local.color],
       css.variant[local.variant],
       css.radiusVariant[local.radius],
       local.class,
@@ -140,28 +133,13 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       .filter(Boolean)
       .join(' ');
 
-  let buttonRef: HTMLButtonElement | undefined;
-
-  // Mirror native checkbox behavior: when the host form resets, an
-  // uncontrolled switch returns to `defaultChecked`. Controlled mode
-  // delegates reset to the parent.
-  onMount(() => {
-    if (isControlled()) return;
-    const form = buttonRef?.form ?? buttonRef?.closest('form');
-    if (!form) return;
-    const onReset = () => setInternal(local.defaultChecked);
-    form.addEventListener('reset', onReset);
-    onCleanup(() => form.removeEventListener('reset', onReset));
-  });
-
   return (
     <>
       <button
         {...rest}
-        ref={buttonRef}
         type="button"
         role="switch"
-        aria-checked={checked()}
+        aria-checked={local.checked}
         class={className()}
         data-testid={tid.testId}
         disabled={local.disabled}
@@ -170,7 +148,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       >
         <span class={css.thumb} aria-hidden="true" />
       </button>
-      <Show when={local.name && checked() && !local.disabled}>
+      <Show when={local.name && local.checked && !local.disabled}>
         <input
           type="hidden"
           name={local.name}

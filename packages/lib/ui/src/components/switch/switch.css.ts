@@ -2,22 +2,21 @@
  * Switch styles.
  *
  * Ported from Radix UI Themes Switch. Deviations:
- * - No `color` prop; the "on" track uses the configured `accent`.
- * - No high-contrast variant.
  * - State driven by `aria-checked` and `:disabled` on the button rather
  *   than `data-state` data-attrs — same selectors, fewer attributes,
  *   and the predicates stay tied to the ARIA contract.
  * - Track durations consolidate Radix's hand-tuned 120/140/160ms
  *   values onto `moderate[1]` (with `fast[1]` for `:active` snap) so
  *   timings ride the design-system motion scale.
+ * - Drops the high-contrast variant.
  *
  * @see https://www.radix-ui.com/themes/docs/components/switch
  */
 
-import { style, styleVariants } from '@vanilla-extract/css';
+import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
-  background,
+  danger,
   fast,
   moderate,
   neutral,
@@ -25,22 +24,35 @@ import {
   shadow,
   space,
   standard,
+  success,
+  warning,
+  white,
 } from '@lib/design';
-import {
-  thumbInset,
-  thumbSize,
-  thumbTranslateX,
-  trackBorderRadius,
-  trackHeight,
-  trackWidth,
-} from './switch.vars.css';
 
-// --- Root (the `<button role="switch">`) ---
+// Vars set by the size, radius, and color variants — every other rule
+// reads them, so a single variant assignment reaches the whole switch.
+const trackHeight = createVar();
+const trackBorderRadius = createVar();
+const colorTrack = createVar();
+const colorAlpha4 = createVar();
+const colorFocus = createVar();
 
-// `1px` thumb inset and `1.75x` track aspect match Radix exactly. Both
-// are visual constants of the control, not themeable values.
+// Visual constants of the control. `1px` thumb inset and `1.75x` track
+// aspect match Radix exactly. White thumb in every mode is the
+// canonical switch affordance.
 const THUMB_INSET = '1px';
 const TRACK_ASPECT = 1.75;
+const THUMB_COLOR = 'white';
+
+// Derived geometry. Composing the calcs once here keeps the rules below
+// readable; nothing here needs its own CSS var since they're all
+// functions of `trackHeight` and stay pinned to it as size changes.
+const trackWidth = `calc(${trackHeight} * ${TRACK_ASPECT})`;
+const thumbSize = `calc(${trackHeight} - ${THUMB_INSET} * 2)`;
+const thumbTranslateX = `calc(${trackWidth} - ${trackHeight})`;
+const trackBackgroundSize = `calc(${trackWidth} * 2 + ${trackHeight}) 100%`;
+
+// --- Root (the `<button role="switch">`) ---
 
 export const root = style({
   position: 'relative',
@@ -53,13 +65,6 @@ export const root = style({
   borderRadius: trackBorderRadius,
   cursor: 'pointer',
 
-  vars: {
-    [thumbInset]: THUMB_INSET,
-    [trackWidth]: `calc(${trackHeight} * ${TRACK_ASPECT})`,
-    [thumbSize]: `calc(${trackHeight} - ${thumbInset} * 2)`,
-    [thumbTranslateX]: `calc(${trackWidth} - ${trackHeight})`,
-  },
-
   // The visible track. Sliding `background-position` between 0% and 100%
   // reveals either the accent-track portion (checked) or the neutral
   // portion (unchecked) of an oversized horizontal gradient.
@@ -70,7 +75,7 @@ export const root = style({
     height: trackHeight,
     borderRadius: 'inherit',
     backgroundRepeat: 'no-repeat',
-    backgroundSize: `calc(${trackWidth} * 2 + ${trackHeight}) 100%`,
+    backgroundSize: trackBackgroundSize,
     transitionProperty:
       'background-position, background-color, box-shadow, filter',
     transitionTimingFunction: standard.productive,
@@ -88,7 +93,7 @@ export const root = style({
       transitionDuration: fast[1],
     },
     '&:where(:focus-visible)::before': {
-      outline: `2px solid ${accent.solid[8]}`,
+      outline: `2px solid ${colorFocus}`,
       outlineOffset: '2px',
     },
     '&:where(:disabled)': {
@@ -99,19 +104,15 @@ export const root = style({
 
 // --- Thumb ---
 
-// White even in dark mode — a solid white knob is the canonical
-// switch affordance regardless of color scheme. Matches Radix.
-const THUMB_COLOR = 'white';
-
 export const thumb = style({
   position: 'absolute',
-  left: thumbInset,
+  left: THUMB_INSET,
   width: thumbSize,
   height: thumbSize,
   // Thumb radius scales with the track radius minus the inset, so a
   // pill track gets a circular thumb and a square track gets a square
   // thumb with matching corners.
-  borderRadius: `calc(${trackBorderRadius} - ${thumbInset})`,
+  borderRadius: `calc(${trackBorderRadius} - ${THUMB_INSET})`,
   backgroundColor: THUMB_COLOR,
   transitionProperty: 'transform, box-shadow',
   transitionTimingFunction: standard.productive,
@@ -141,6 +142,51 @@ export const size = styleVariants({
   },
 });
 
+// --- Color ---
+//
+// Each variant binds the three palette refs the rest of the stylesheet
+// reads. The `track` color is the checked-state fill; `alpha[4]` drives
+// the soft-variant gradient; `solid[8]` paints the focus outline so it
+// tracks the active color.
+
+export const color = styleVariants({
+  accent: {
+    vars: {
+      [colorTrack]: accent.track,
+      [colorAlpha4]: accent.alpha[4],
+      [colorFocus]: accent.solid[8],
+    },
+  },
+  neutral: {
+    vars: {
+      [colorTrack]: neutral.track,
+      [colorAlpha4]: neutral.alpha[4],
+      [colorFocus]: neutral.solid[8],
+    },
+  },
+  danger: {
+    vars: {
+      [colorTrack]: danger.track,
+      [colorAlpha4]: danger.alpha[4],
+      [colorFocus]: danger.solid[8],
+    },
+  },
+  warning: {
+    vars: {
+      [colorTrack]: warning.track,
+      [colorAlpha4]: warning.alpha[4],
+      [colorFocus]: warning.solid[8],
+    },
+  },
+  success: {
+    vars: {
+      [colorTrack]: success.track,
+      [colorAlpha4]: success.alpha[4],
+      [colorFocus]: success.solid[8],
+    },
+  },
+});
+
 // --- Variant ---
 
 export const variant = styleVariants({
@@ -148,7 +194,7 @@ export const variant = styleVariants({
     selectors: {
       '&::before': {
         backgroundColor: neutral.alpha[3],
-        backgroundImage: `linear-gradient(to right, ${accent.track} 40%, transparent 60%)`,
+        backgroundImage: `linear-gradient(to right, ${colorTrack} 40%, transparent 60%)`,
         boxShadow: `inset 0 0 0 1px ${neutral.alpha[5]}`,
       },
       '&:where(:active)::before': {
@@ -166,7 +212,7 @@ export const variant = styleVariants({
     selectors: {
       '&::before': {
         backgroundColor: neutral.alpha[4],
-        backgroundImage: `linear-gradient(to right, ${accent.track} 40%, transparent 60%)`,
+        backgroundImage: `linear-gradient(to right, ${colorTrack} 40%, transparent 60%)`,
         boxShadow: shadow[1],
       },
       '&:where([aria-checked="false"]:active)::before': {
@@ -183,14 +229,15 @@ export const variant = styleVariants({
 
   // Soft layers four gradients so the unchecked track shows neutral and
   // the checked track shows a translucent accent — the same trick Radix
-  // uses to keep the soft variant readable in both modes.
+  // uses to keep the soft variant readable in both modes. The `white[1]`
+  // blend keeps the unchecked side legible against dark backgrounds.
   soft: {
     selectors: {
       '&::before': {
         backgroundImage: [
-          `linear-gradient(to right, ${accent.alpha[4]} 40%, transparent 60%)`,
-          `linear-gradient(to right, ${accent.alpha[4]} 40%, transparent 60%)`,
-          `linear-gradient(to right, ${accent.alpha[4]} 40%, ${background.surface} 60%)`,
+          `linear-gradient(to right, ${colorAlpha4} 40%, transparent 60%)`,
+          `linear-gradient(to right, ${colorAlpha4} 40%, transparent 60%)`,
+          `linear-gradient(to right, ${colorAlpha4} 40%, ${white[1]} 60%)`,
           `linear-gradient(to right, ${neutral.alpha[2]} 40%, ${neutral.alpha[3]} 60%)`,
         ].join(', '),
       },

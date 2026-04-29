@@ -2,11 +2,13 @@ import { render, screen } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import Switch from '../switch';
 
+const noop = () => {};
+
 describe('Switch', () => {
   // --- DOM shape & forwarding ---
 
   it('renders a <button role="switch">', () => {
-    render(() => <Switch testId="sw" />);
+    render(() => <Switch testId="sw" checked={false} onCheckedChange={noop} />);
     const button = screen.getByTestId('sw');
     expect(button.tagName).toBe('BUTTON');
     expect(button).toHaveAttribute('role', 'switch');
@@ -14,70 +16,60 @@ describe('Switch', () => {
   });
 
   it('forwards native button attributes', () => {
-    render(() => <Switch testId="sw" aria-label="Wifi" disabled />);
+    render(() => (
+      <Switch
+        testId="sw"
+        aria-label="Wifi"
+        disabled
+        checked={false}
+        onCheckedChange={noop}
+      />
+    ));
     const button = screen.getByTestId('sw');
     expect(button).toHaveAttribute('aria-label', 'Wifi');
     expect(button).toBeDisabled();
   });
 
   it('renders a thumb child', () => {
-    render(() => <Switch testId="sw" />);
+    render(() => <Switch testId="sw" checked={false} onCheckedChange={noop} />);
     const button = screen.getByTestId('sw');
     expect(button.children).toHaveLength(1);
     expect(button.children[0].tagName).toBe('SPAN');
   });
 
-  // --- State & ARIA ---
+  // --- ARIA & state forwarding ---
 
-  it('starts unchecked by default', () => {
-    render(() => <Switch testId="sw" />);
+  it('reflects checked={false} in aria-checked', () => {
+    render(() => <Switch testId="sw" checked={false} onCheckedChange={noop} />);
     expect(screen.getByTestId('sw')).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('respects defaultChecked', () => {
-    render(() => <Switch testId="sw" defaultChecked />);
+  it('reflects checked={true} in aria-checked', () => {
+    render(() => <Switch testId="sw" checked onCheckedChange={noop} />);
     expect(screen.getByTestId('sw')).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('toggles when clicked (uncontrolled)', async () => {
-    render(() => <Switch testId="sw" />);
+  it('does not change state on click — parent owns the value', async () => {
+    render(() => <Switch testId="sw" checked={false} onCheckedChange={noop} />);
     const button = screen.getByTestId('sw');
-
-    await userEvent.click(button);
-    expect(button).toHaveAttribute('aria-checked', 'true');
 
     await userEvent.click(button);
     expect(button).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('forwards toggles to onCheckedChange in controlled mode', async () => {
-    let last: boolean | undefined;
+  it('fires onCheckedChange with the inverted value', async () => {
+    const handler = vi.fn();
     render(() => (
-      <Switch
-        testId="sw"
-        checked={false}
-        onCheckedChange={(next) => (last = next)}
-      />
+      <Switch testId="sw" checked={false} onCheckedChange={handler} />
     ));
 
     await userEvent.click(screen.getByTestId('sw'));
-    expect(last).toBe(true);
-  });
-
-  it('does not update internal state when controlled and parent ignores onCheckedChange', async () => {
-    render(() => <Switch testId="sw" checked={false} />);
-    const button = screen.getByTestId('sw');
-
-    await userEvent.click(button);
-    expect(button).toHaveAttribute('aria-checked', 'false');
-  });
-
-  it('fires onCheckedChange with the next state', async () => {
-    const handler = vi.fn();
-    render(() => <Switch testId="sw" onCheckedChange={handler} />);
-
-    await userEvent.click(screen.getByTestId('sw'));
     expect(handler).toHaveBeenCalledWith(true);
+  });
+
+  it('fires onCheckedChange with the inverted value when initially checked', async () => {
+    const handler = vi.fn();
+    render(() => <Switch testId="sw" checked onCheckedChange={handler} />);
 
     await userEvent.click(screen.getByTestId('sw'));
     expect(handler).toHaveBeenCalledWith(false);
@@ -88,6 +80,7 @@ describe('Switch', () => {
     render(() => (
       <Switch
         testId="sw"
+        checked={false}
         onClick={(event) => event.preventDefault()}
         onCheckedChange={onCheckedChange}
       />
@@ -95,28 +88,30 @@ describe('Switch', () => {
 
     await userEvent.click(screen.getByTestId('sw'));
     expect(onCheckedChange).not.toHaveBeenCalled();
-    expect(screen.getByTestId('sw')).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('does not toggle when disabled', async () => {
+  it('does not fire onCheckedChange when disabled', async () => {
     const handler = vi.fn();
-    render(() => <Switch testId="sw" disabled onCheckedChange={handler} />);
+    render(() => (
+      <Switch testId="sw" disabled checked={false} onCheckedChange={handler} />
+    ));
 
     await userEvent.click(screen.getByTestId('sw')).catch(() => {});
     expect(handler).not.toHaveBeenCalled();
-    expect(screen.getByTestId('sw')).toHaveAttribute('aria-checked', 'false');
   });
 
   it('toggles via keyboard activation', async () => {
-    render(() => <Switch testId="sw" />);
-    const button = screen.getByTestId('sw');
+    const handler = vi.fn();
+    render(() => (
+      <Switch testId="sw" checked={false} onCheckedChange={handler} />
+    ));
 
-    button.focus();
+    screen.getByTestId('sw').focus();
     await userEvent.keyboard(' ');
-    expect(button).toHaveAttribute('aria-checked', 'true');
+    expect(handler).toHaveBeenLastCalledWith(true);
 
     await userEvent.keyboard('{Enter}');
-    expect(button).toHaveAttribute('aria-checked', 'false');
+    expect(handler).toHaveBeenCalledTimes(2);
   });
 
   // --- Form integration ---
@@ -124,7 +119,7 @@ describe('Switch', () => {
   it('does not render the hidden input without a name', () => {
     render(() => (
       <form data-testid="form">
-        <Switch testId="sw" defaultChecked />
+        <Switch testId="sw" checked onCheckedChange={noop} />
       </form>
     ));
     const form = screen.getByTestId('form');
@@ -134,7 +129,12 @@ describe('Switch', () => {
   it('omits the hidden input when unchecked, even with a name', () => {
     render(() => (
       <form data-testid="form">
-        <Switch testId="sw" name="wifi" />
+        <Switch
+          testId="sw"
+          name="wifi"
+          checked={false}
+          onCheckedChange={noop}
+        />
       </form>
     ));
     const form = screen.getByTestId('form');
@@ -144,7 +144,7 @@ describe('Switch', () => {
   it('renders the hidden input with name + value when checked', () => {
     render(() => (
       <form data-testid="form">
-        <Switch testId="sw" name="wifi" defaultChecked />
+        <Switch testId="sw" name="wifi" checked onCheckedChange={noop} />
       </form>
     ));
     const input = screen
@@ -157,7 +157,13 @@ describe('Switch', () => {
   it('uses a custom value when provided', () => {
     render(() => (
       <form data-testid="form">
-        <Switch testId="sw" name="wifi" value="enabled" defaultChecked />
+        <Switch
+          testId="sw"
+          name="wifi"
+          value="enabled"
+          checked
+          onCheckedChange={noop}
+        />
       </form>
     ));
     expect(
@@ -168,7 +174,13 @@ describe('Switch', () => {
   it('omits the hidden input when checked but disabled', () => {
     render(() => (
       <form data-testid="form">
-        <Switch testId="sw" name="wifi" defaultChecked disabled />
+        <Switch
+          testId="sw"
+          name="wifi"
+          disabled
+          checked
+          onCheckedChange={noop}
+        />
       </form>
     ));
     expect(
@@ -180,45 +192,17 @@ describe('Switch', () => {
     render(() => (
       <>
         <form id="external" data-testid="external" />
-        <Switch testId="sw" name="wifi" defaultChecked form="external" />
+        <Switch
+          testId="sw"
+          name="wifi"
+          checked
+          onCheckedChange={noop}
+          form="external"
+        />
       </>
     ));
     expect(screen.getByTestId('sw')).toHaveAttribute('form', 'external');
     const hidden = document.querySelector('input[type="hidden"][name="wifi"]')!;
     expect(hidden).toHaveAttribute('form', 'external');
-  });
-
-  it('restores defaultChecked when the form resets (uncontrolled)', async () => {
-    render(() => (
-      <form data-testid="form">
-        <Switch testId="sw" name="wifi" defaultChecked />
-        <button type="reset" data-testid="reset">
-          reset
-        </button>
-      </form>
-    ));
-
-    await userEvent.click(screen.getByTestId('sw'));
-    expect(screen.getByTestId('sw')).toHaveAttribute('aria-checked', 'false');
-
-    await userEvent.click(screen.getByTestId('reset'));
-    expect(screen.getByTestId('sw')).toHaveAttribute('aria-checked', 'true');
-  });
-
-  it('reflects toggling into FormData', async () => {
-    render(() => (
-      <form data-testid="form">
-        <Switch testId="sw" name="wifi" />
-      </form>
-    ));
-    const form = screen.getByTestId<HTMLFormElement>('form');
-
-    expect(new FormData(form).get('wifi')).toBeNull();
-
-    await userEvent.click(screen.getByTestId('sw'));
-    expect(new FormData(form).get('wifi')).toBe('on');
-
-    await userEvent.click(screen.getByTestId('sw'));
-    expect(new FormData(form).get('wifi')).toBeNull();
   });
 });
