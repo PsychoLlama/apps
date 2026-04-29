@@ -70,28 +70,47 @@ tester.run('require-design-tokens', rule, {
     { code: 'const x = { transition: "none" }' },
     { code: 'const x = { animation: "none" }' },
 
-    // Redundant-reset values are allowed inside specialization blocks —
-    // there the author is undoing their own styles, not restating the
-    // global reset's default.
+    // Redundant-reset values are allowed inside specialization blocks
+    // *only when* the same style object declares a same-family property
+    // elsewhere — that's the author's own style being undone.
     {
-      code: "const x = { selectors: { '&:hover': { padding: 0 } } }",
+      code: "const x = { padding: pad, selectors: { '&:hover': { padding: 0 } } }",
     },
     {
-      code: "const x = { selectors: { '&:hover': { margin: '0px' } } }",
+      code: "const x = { margin: m, selectors: { '&:hover': { margin: '0px' } } }",
     },
     {
-      code: "const x = { '@media': { '(min-width: 600px)': { padding: 0 } } }",
+      code: "const x = { padding: pad, '@media': { '(min-width: 600px)': { padding: 0 } } }",
     },
     {
-      code: "const x = { '@supports': { '(display: grid)': { gap: 0 } } }",
+      code: "const x = { gap: g, '@supports': { '(display: grid)': { gap: 0 } } }",
     },
     {
-      code: "const x = { '@container': { '(min-width: 400px)': { padding: 'unset' } } }",
+      code: "const x = { padding: pad, '@container': { '(min-width: 400px)': { padding: 'unset' } } }",
     },
-    // Specialization exemption applies even when nested several levels deep.
+    // Longhand can override a shorthand from the outer scope.
     {
-      code: "const x = { '@media': { '(min-width: 600px)': { selectors: { '&:hover': { padding: 0 } } } } }",
+      code: "const x = { padding: pad, selectors: { '&:hover': { paddingTop: 0 } } }",
     },
+    // Specialization exemption works through several nesting levels.
+    {
+      code: "const x = { padding: pad, '@media': { '(min-width: 600px)': { selectors: { '&:hover': { padding: 0 } } } } }",
+    },
+    // `'&'` is a sibling-selector form of the top-level scope; padding set
+    // there counts as an override target for `&:hover`.
+    {
+      code: "const x = { selectors: { '&': { padding: pad }, '&:hover': { padding: 0 } } }",
+    },
+
+    // `unset` on properties whose spec initial value is *not* `0`
+    // (`border-width: medium`, `gap: normal`, `outline-width: medium`)
+    // is meaningful — it doesn't equal `0`, so it isn't a redundant
+    // reset even though `0` itself is.
+    { code: 'const x = { borderWidth: "unset" }' },
+    { code: 'const x = { borderTopWidth: "unset" }' },
+    { code: 'const x = { outlineWidth: "unset" }' },
+    { code: 'const x = { gap: "unset" }' },
+    { code: 'const x = { rowGap: "unset" }' },
   ],
 
   invalid: [
@@ -346,6 +365,52 @@ tester.run('require-design-tokens', rule, {
         {
           messageId: 'redundantReset' as const,
           data: { property: 'marginInline', value: 'unset' },
+        },
+      ],
+    },
+
+    // Specialization without a matching outer declaration is *still*
+    // redundant — there's nothing local to override, so the inner value
+    // is just restating the global reset.
+    {
+      code: "const x = { selectors: { '&:hover': { padding: 0 } } }",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
+        },
+      ],
+    },
+    {
+      code: "const x = { '@media': { '(min-width: 600px)': { padding: 0 } } }",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
+        },
+      ],
+    },
+    // Sibling outer property of a *different* family doesn't count.
+    {
+      code: "const x = { color: c, selectors: { '&:hover': { padding: 0 } } }",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
+        },
+      ],
+    },
+    // Two redundant resets next to each other don't mutually exempt.
+    {
+      code: "const x = { selectors: { '&:hover': { padding: 0, paddingTop: 0 } } }",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
+        },
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'paddingTop', value: '0' },
         },
       ],
     },

@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 import { getPropertyName } from '../utils/ast';
 import {
-  isResetValue,
+  isRedundantResetValue,
   redundantResetMessage,
   redundantResetProperties,
 } from '../utils/redundant-css';
@@ -43,7 +43,7 @@ const rule = createRule({
           if (
             name &&
             redundantResetProperties.has(name) &&
-            isResetValue(value)
+            isRedundantResetValue(name, value)
           ) {
             context.report({
               node: prop,

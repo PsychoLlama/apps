@@ -2,10 +2,10 @@ import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
 import { getPropertyName } from './ast';
 
 /**
- * Properties whose initial value after `all: unset` is `0`. Restating the
- * default — whether numerically (`0`, `'0px'`) or via the `unset` keyword —
- * is a reliable signal the author didn't realize the global reset already
- * cleared it.
+ * Properties where `0` is functionally redundant after the global reset.
+ * Some have non-zero spec initials (e.g. `border-width: medium`) but the
+ * reset zeros out a related property (`border-style: none`) so any width
+ * is invisible — a literal `0` adds no new behavior.
  */
 export const redundantResetProperties = new Set([
   'padding',
@@ -42,6 +42,39 @@ export const redundantResetProperties = new Set([
   'outlineOffset',
 ]);
 
+/**
+ * Subset of the above where `'unset'` is also redundant: the spec initial
+ * value is exactly `0`, so `unset` resolves to `0`. Excludes properties
+ * whose initial is `medium` (`border-width`, `outline-width`) or `normal`
+ * (`gap` family) — there `unset` does *not* equal `0`, even if the
+ * post-reset rendering looks the same.
+ */
+const unsetRedundantProperties = new Set([
+  'padding',
+  'paddingTop',
+  'paddingRight',
+  'paddingBottom',
+  'paddingLeft',
+  'paddingBlock',
+  'paddingBlockStart',
+  'paddingBlockEnd',
+  'paddingInline',
+  'paddingInlineStart',
+  'paddingInlineEnd',
+  'margin',
+  'marginTop',
+  'marginRight',
+  'marginBottom',
+  'marginLeft',
+  'marginBlock',
+  'marginBlockStart',
+  'marginBlockEnd',
+  'marginInline',
+  'marginInlineStart',
+  'marginInlineEnd',
+  'outlineOffset',
+]);
+
 const ZERO_RE = /^0(px|rem|em|%)?$/;
 
 const isZeroValue = (value: unknown): boolean => {
@@ -50,9 +83,17 @@ const isZeroValue = (value: unknown): boolean => {
   return false;
 };
 
-/** Values that re-assert the post-reset default for the properties above. */
-export const isResetValue = (value: unknown): boolean =>
-  isZeroValue(value) || value === 'unset';
+/**
+ * Whether `value` is a redundant reset for `name`. Caller has already
+ * confirmed `name ∈ redundantResetProperties`.
+ */
+export const isRedundantResetValue = (
+  name: string,
+  value: unknown,
+): boolean => {
+  if (isZeroValue(value)) return true;
+  return value === 'unset' && unsetRedundantProperties.has(name);
+};
 
 export const redundantResetMessage =
   '{{property}}: {{value}} is unnecessary — the global CSS reset (all: unset) already removes this default.';
@@ -61,8 +102,8 @@ export const redundantResetMessage =
  * Walks ancestors looking for a vanilla-extract block that scopes the
  * declaration to a specialization (`selectors`, `@media`, `@supports`,
  * `@container`, `@layer`, …). Inside one of these, restating the default
- * is interpreted as undoing the author's own styles, not ignorance of the
- * reset.
+ * is *potentially* undoing the author's own styles — pair with
+ * `hasOverrideTarget` to confirm there's actually something to undo.
  */
 export const isInsideSpecialization = (node: TSESTree.Node): boolean => {
   let current: TSESTree.Node | undefined = node.parent;
@@ -76,6 +117,73 @@ export const isInsideSpecialization = (node: TSESTree.Node): boolean => {
     current = current.parent;
   }
   return false;
+};
+
+/**
+ * Maps a property name to its "family" — the group whose declarations can
+ * affect the same visual outcome. Used to decide whether a redundant-reset
+ * value inside a specialization has anything outer to undo.
+ */
+const propertyFamily = (name: string): string | null => {
+  if (name.startsWith('padding')) return 'padding';
+  if (name.startsWith('margin')) return 'margin';
+  if (name === 'gap' || name === 'rowGap' || name === 'columnGap') {
+    return 'gap';
+  }
+  if (/^border([A-Z][a-zA-Z]*)?Width$/.test(name)) return 'borderWidth';
+  if (name === 'outlineWidth') return 'outlineWidth';
+  if (name === 'outlineOffset') return 'outlineOffset';
+  return null;
+};
+
+/**
+ * Whether the surrounding style object declares a same-family property
+ * that `node` could plausibly be overriding. Walks the outermost
+ * containing ObjectExpression and recurses through nested specializations,
+ * looking for any other Property in the same family whose value is *not*
+ * itself a redundant reset (otherwise two redundant resets next to each
+ * other would mutually exempt themselves).
+ *
+ * Cross-class composition (`styleVariants`, multiple `style()` classes
+ * applied together) is invisible to this check — the rule can only see
+ * one root at a time. Genuine cross-class overrides need an explicit
+ * eslint-disable.
+ */
+export const hasOverrideTarget = (
+  node: TSESTree.Property,
+  name: string,
+): boolean => {
+  const family = propertyFamily(name);
+  if (!family) return false;
+
+  let root: TSESTree.ObjectExpression | undefined;
+  let current: TSESTree.Node | undefined = node.parent;
+  while (current) {
+    if (current.type === AST_NODE_TYPES.ObjectExpression) root = current;
+    current = current.parent;
+  }
+  if (!root) return false;
+
+  const visit = (obj: TSESTree.ObjectExpression): boolean => {
+    for (const prop of obj.properties) {
+      if (prop.type !== AST_NODE_TYPES.Property) continue;
+      if (prop === node) continue;
+      const propName = getPropertyName(prop.key);
+      if (propName && propertyFamily(propName) === family) {
+        if (prop.value.type === AST_NODE_TYPES.Literal) {
+          if (!isRedundantResetValue(propName, prop.value.value)) return true;
+        } else {
+          return true;
+        }
+      }
+      if (prop.value.type === AST_NODE_TYPES.ObjectExpression) {
+        if (visit(prop.value)) return true;
+      }
+    }
+    return false;
+  };
+
+  return visit(root);
 };
 
 /**
