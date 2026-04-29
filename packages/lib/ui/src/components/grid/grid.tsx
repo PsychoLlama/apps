@@ -1,5 +1,5 @@
 import { Dynamic } from 'solid-js/web';
-import { splitProps } from 'solid-js';
+import { mergeProps, splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { SpaceScale } from '@lib/design';
 import {
@@ -11,6 +11,10 @@ import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import {
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import * as css from './grid.css';
 
 /** Grid-specific layout props, independent of the target element. */
@@ -68,17 +72,20 @@ function Grid(
       local.gap && css.gap[local.gap],
       local.gapX && css.gapX[local.gapX],
       local.gapY && css.gapY[local.gapY],
+      resolveSkeletonClass(box),
       box.class,
     ]
       .filter(Boolean)
       .join(' ');
+
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(box));
 
   return (
     <Dynamic
       component={box.as}
       class={className()}
       data-testid={box.testId}
-      {...rest}
+      {...merged}
     >
       {box.children}
     </Dynamic>
