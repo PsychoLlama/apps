@@ -137,16 +137,59 @@ const propertyFamily = (name: string): string | null => {
 };
 
 /**
+ * Whether `obj` is a vanilla-extract style scope (the kind of object you'd
+ * pass to `style()`) rather than a variants record (the kind you'd pass to
+ * `styleVariants()` or use under `recipe()`'s `variants:` key). Detected
+ * structurally: a style scope has at least one direct CSS-declaration or
+ * specialization-gate child; a variants record only has variant-name keys
+ * mapping to nested objects.
+ */
+const isStyleScope = (obj: TSESTree.ObjectExpression): boolean => {
+  for (const prop of obj.properties) {
+    if (prop.type !== AST_NODE_TYPES.Property) continue;
+    const key = getPropertyName(prop.key);
+    if (key === 'selectors' || (key !== null && key.startsWith('@'))) {
+      return true;
+    }
+    // Any non-object value indicates a CSS declaration. Variant records
+    // only contain Property children whose values are ObjectExpression.
+    if (prop.value.type !== AST_NODE_TYPES.ObjectExpression) return true;
+  }
+  return false;
+};
+
+/**
+ * Whether `obj`'s parent Property is a specialization gate (`selectors`
+ * or an `@`-prefixed at-rule). Such an object isn't itself a style scope
+ * — it's a transparent container holding selector/query sub-keys whose
+ * values are the real scopes. Walks should pass through it.
+ */
+const isSpecializationContainer = (obj: TSESTree.ObjectExpression): boolean => {
+  const parent = obj.parent;
+  if (!parent || parent.type !== AST_NODE_TYPES.Property) return false;
+  const key = getPropertyName(parent.key);
+  return key === 'selectors' || (key !== null && key.startsWith('@'));
+};
+
+/**
  * Whether the surrounding style object declares a same-family property
- * that `node` could plausibly be overriding. Walks the outermost
- * containing ObjectExpression and recurses through nested specializations,
- * looking for any other Property in the same family whose value is *not*
- * itself a redundant reset (otherwise two redundant resets next to each
- * other would mutually exempt themselves).
+ * that `node` could plausibly be overriding.
  *
- * Cross-class composition (`styleVariants`, multiple `style()` classes
- * applied together) is invisible to this check — the rule can only see
- * one root at a time. Genuine cross-class overrides need an explicit
+ * Walks ancestors looking for the outermost *style scope* enclosing
+ * `node`. Specialization containers (the value of `selectors` / `@media`
+ * / etc.) are transparent — we step through them. The walk stops at the
+ * first non-style-scope ObjectExpression (a variants record from
+ * `styleVariants` or `recipe`'s `variants:`), so a redundant reset in
+ * one variant can't be silently exempted by a same-family property in a
+ * sibling variant — those classes don't share state at runtime.
+ *
+ * Inside the resolved scope, recurses through nested specializations
+ * looking for any other same-family Property whose value isn't itself a
+ * redundant reset (two such values next to each other shouldn't mutually
+ * exempt themselves).
+ *
+ * Cross-class composition (multiple `style()` classes applied together)
+ * stays invisible — genuine composition overrides need an explicit
  * eslint-disable.
  */
 export const hasOverrideTarget = (
@@ -156,13 +199,24 @@ export const hasOverrideTarget = (
   const family = propertyFamily(name);
   if (!family) return false;
 
-  let root: TSESTree.ObjectExpression | undefined;
+  let scope: TSESTree.ObjectExpression | undefined;
   let current: TSESTree.Node | undefined = node.parent;
   while (current) {
-    if (current.type === AST_NODE_TYPES.ObjectExpression) root = current;
+    if (current.type === AST_NODE_TYPES.ObjectExpression) {
+      if (isSpecializationContainer(current)) {
+        // Selectors / at-rule blocks aren't scopes themselves; their
+        // sub-keys' values are. Step through transparently.
+      } else if (isStyleScope(current)) {
+        scope = current;
+      } else {
+        // Variant record (or other non-style ObjectExpression). Don't
+        // cross — siblings here are independent classes.
+        break;
+      }
+    }
     current = current.parent;
   }
-  if (!root) return false;
+  if (!scope) return false;
 
   const visit = (obj: TSESTree.ObjectExpression): boolean => {
     for (const prop of obj.properties) {
@@ -183,7 +237,7 @@ export const hasOverrideTarget = (
     return false;
   };
 
-  return visit(root);
+  return visit(scope);
 };
 
 /**

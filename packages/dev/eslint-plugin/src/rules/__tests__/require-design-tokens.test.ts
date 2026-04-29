@@ -111,6 +111,16 @@ tester.run('require-design-tokens', rule, {
     { code: 'const x = { outlineWidth: "unset" }' },
     { code: 'const x = { gap: "unset" }' },
     { code: 'const x = { rowGap: "unset" }' },
+
+    // Override target inside the *same* variant scope is exempt.
+    {
+      code: "const x = styleVariants({ secondary: { padding: pad, selectors: { '&:hover': { padding: 0 } } } })",
+    },
+    // Recipe-style: base + variants. An override target in the base
+    // scope counts only for a redundant reset *inside that base*.
+    {
+      code: "const x = recipe({ base: { padding: pad, selectors: { '&:hover': { padding: 0 } } } })",
+    },
   ],
 
   invalid: [
@@ -411,6 +421,29 @@ tester.run('require-design-tokens', rule, {
         {
           messageId: 'redundantReset' as const,
           data: { property: 'paddingTop', value: '0' },
+        },
+      ],
+    },
+
+    // Variant boundary: a same-family property in a *sibling* variant
+    // doesn't count as an override target — those classes don't share
+    // state at runtime. styleVariants:
+    {
+      code: "const x = styleVariants({ primary: { padding: pad }, secondary: { selectors: { '&:hover': { padding: 0 } } } })",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
+        },
+      ],
+    },
+    // Same boundary applies under recipe()'s variants record.
+    {
+      code: "const x = recipe({ variants: { size: { small: { padding: pad }, large: { selectors: { '&:hover': { padding: 0 } } } } } })",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
         },
       ],
     },
