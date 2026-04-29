@@ -20,6 +20,10 @@
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/skeleton.css
  */
 
+// `globalStyle` is banned outside @lib/design, but this file pays the
+// exception cost intentionally — see the `globalStyle` call below for
+// the trade-off rationale.
+// eslint-disable-next-line no-restricted-imports
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
 import { neutral, slow, standard } from '@lib/design';
 
@@ -31,7 +35,6 @@ const pulse = keyframes({
 // `background: none`, `boxShadow: none`, `color: transparent` are
 // deliberate cascade overrides, not design intent. The animation
 // supplies the pulsing background-color.
-/* eslint-disable custom/require-design-tokens */
 export const skeleton = style({
   selectors: {
     '&&': {
@@ -49,27 +52,31 @@ export const skeleton = style({
       // Repaints the bg-box across line breaks for inline text wrappers.
       boxDecorationBreak: 'clone',
     },
+
+    // Suppress painted styles on the host's own pseudo-elements (e.g.
+    // Card's `::after` border) without using `visibility: hidden` —
+    // the trim helper uses `::before`/`::after` with negative margins
+    // to remove leading whitespace, and that geometry needs to keep
+    // applying while the skeleton is on. Compound class for 0,2,1
+    // specificity to beat `.card-variant-surface::after` and friends.
+    '&&::before, &&::after': {
+      background: 'none',
+      backgroundImage: 'none',
+      border: 'none',
+      boxShadow: 'none',
+    },
   },
 });
-/* eslint-enable custom/require-design-tokens */
 
-// Direct children only contribute layout, not paint.
+// The descendant rule below targets nested children, which `selectors:`
+// forbids — VE only allows same-element styling there. `globalStyle`
+// is the only mechanism that fits, and the rule is required for
+// skeleton on container components like Card to actually paint as a
+// placeholder. Without it, a `<Heading>` inside a skeletonized Card
+// keeps its high-contrast color and shows through the pulse.
+//
+// The selector is scoped to the skeleton class (a hashed VE name), so
+// it can't leak to anything that doesn't opt in via `skeleton={true}`.
 globalStyle(`.${skeleton} > *`, {
   visibility: 'hidden',
 });
-
-// Suppress painted styles on the host's own pseudo-elements (e.g. Card's
-// `::after` border) without using `visibility: hidden` — the trim helper
-// uses `::before`/`::after` with negative margins to remove leading
-// whitespace, and that geometry needs to keep applying while the
-// skeleton is on. Compound class for 0,2,1 specificity to beat
-// single-class component variants like `.card-variant-surface::after`.
-globalStyle(
-  `.${skeleton}.${skeleton}::before, .${skeleton}.${skeleton}::after`,
-  {
-    background: 'none',
-    backgroundImage: 'none',
-    border: 'none',
-    boxShadow: 'none',
-  },
-);
