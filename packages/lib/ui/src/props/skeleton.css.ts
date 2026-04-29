@@ -20,9 +20,7 @@
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/skeleton.css
  */
 
-// `globalStyle` is banned outside @lib/design, but this file pays the
-// exception cost intentionally — see the `globalStyle` call below for
-// the trade-off rationale.
+// eslint-disable-next-line no-restricted-imports -- `globalStyle` is required for the `.skeleton > *` descendant rule; VE's `selectors` field only allows same-element styling. See the call site below.
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
 import { neutral, slow, standard } from '@lib/design';
 
