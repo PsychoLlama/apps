@@ -115,144 +115,23 @@ const isSpecializationKey = (key: string | null): boolean => {
 
 /**
  * Walks ancestors looking for a vanilla-extract specialization block.
- * Inside one of these, restating the post-reset default is *potentially*
- * undoing the author's own styles — pair with `hasOverrideTarget` to
- * confirm there's actually something to undo.
+ * Inside one of these, restating the post-reset default is treated as
+ * undoing the author's own styles — exempted from the redundant-reset
+ * check.
+ *
+ * This is a deliberately coarse heuristic. We don't try to verify that
+ * the inner reset has a real same-family target in an outer scope: the
+ * trade-off is some false negatives (a bare `style({ '@media': { ...:
+ * { padding: 0 } } })` with nothing outer to override slips through) in
+ * exchange for a maintainable rule. The dominant case the rule is meant
+ * to catch — top-level `padding: 0` written without realising the reset
+ * already cleared it — is unaffected.
  */
 export const isInsideSpecialization = (node: TSESTree.Node): boolean => {
   let current: TSESTree.Node | undefined = node.parent;
   while (current) {
     if (current.type === AST_NODE_TYPES.Property) {
       if (isSpecializationKey(getPropertyName(current.key))) return true;
-    }
-    current = current.parent;
-  }
-  return false;
-};
-
-/**
- * Maps a property name to its "family" — the group whose declarations can
- * affect the same visual outcome. Used to decide whether a redundant-reset
- * value inside a specialization has anything outer to undo.
- *
- * Width and style properties share a family for borders and outlines: a
- * `borderWidth: 0` inside a specialization is a real override if the
- * outer scope enabled the stroke via `borderStyle: 'solid'` — even
- * though no outer `borderWidth` exists, the inner `0` removes a
- * visible border.
- */
-const propertyFamily = (name: string): string | null => {
-  if (name.startsWith('padding')) return 'padding';
-  if (name.startsWith('margin')) return 'margin';
-  if (name === 'gap' || name === 'rowGap' || name === 'columnGap') {
-    return 'gap';
-  }
-  if (/^border([A-Z][a-zA-Z]*)?(Width|Style)$/.test(name)) return 'border';
-  if (name === 'outlineWidth' || name === 'outlineStyle') return 'outline';
-  if (name === 'outlineOffset') return 'outlineOffset';
-  return null;
-};
-
-/**
- * Whether `obj` is a vanilla-extract style scope (the kind of object you'd
- * pass to `style()`) rather than a variants record (the kind you'd pass to
- * `styleVariants()` or use under `recipe()`'s `variants:` key). Detected
- * structurally: a style scope has at least one direct CSS-declaration or
- * specialization-gate child; a variants record only has variant-name keys
- * mapping to nested objects.
- */
-const isStyleScope = (obj: TSESTree.ObjectExpression): boolean => {
-  for (const prop of obj.properties) {
-    if (prop.type !== AST_NODE_TYPES.Property) continue;
-    if (isSpecializationKey(getPropertyName(prop.key))) return true;
-    // Any non-object value indicates a CSS declaration. Variant records
-    // only contain Property children whose values are ObjectExpression.
-    if (prop.value.type !== AST_NODE_TYPES.ObjectExpression) return true;
-  }
-  return false;
-};
-
-/**
- * Whether `obj`'s parent Property is a specialization gate (`selectors`
- * or an `@`-prefixed at-rule). Such an object isn't itself a style scope
- * — it's a transparent container holding selector/query sub-keys whose
- * values are the real scopes. Walks should pass through it.
- */
-const isSpecializationContainer = (obj: TSESTree.ObjectExpression): boolean => {
-  const parent = obj.parent;
-  if (!parent || parent.type !== AST_NODE_TYPES.Property) return false;
-  return isSpecializationKey(getPropertyName(parent.key));
-};
-
-/**
- * Whether the surrounding style object declares a same-family property
- * that `node` could plausibly be overriding.
- *
- * Walks the *active ancestor path* of style scopes — starting at the
- * scope directly enclosing `node`, stepping through specialization
- * containers transparently, and continuing up through outer style
- * scopes. At each scope, only that scope's direct CSS-property children
- * count as override targets. Sibling specialization branches (e.g.,
- * `selectors: { '&:focus': ..., '&:hover': ... }`) are *not* mutually
- * inspected — those rules apply in different element states, so a
- * declaration on one isn't a target for the other.
- *
- * Inside `node`'s own scope, only declarations that come *before* it
- * count: a later same-family declaration overrides this one within the
- * same CSS rule, leaving this one as dead code rather than an
- * override.
- *
- * The walk stops at any ObjectExpression that isn't a style scope —
- * variants records from `styleVariants` or `recipe`'s `variants:` —
- * since sibling variants are mutually-exclusive classes at runtime.
- *
- * Cross-class composition (multiple `style()` classes applied together)
- * stays invisible. Genuine composition overrides need an explicit
- * eslint-disable.
- */
-export const hasOverrideTarget = (
-  node: TSESTree.Property,
-  name: string,
-): boolean => {
-  const family = propertyFamily(name);
-  if (!family) return false;
-
-  const isOverrideTarget = (prop: TSESTree.Property): boolean => {
-    const propName = getPropertyName(prop.key);
-    if (!propName || propertyFamily(propName) !== family) return false;
-    if (prop.value.type === AST_NODE_TYPES.ObjectExpression) return false;
-    if (prop.value.type === AST_NODE_TYPES.Literal) {
-      return !isRedundantResetValue(propName, prop.value.value);
-    }
-    // Identifier, MemberExpression, ArrayExpression (CSS fallback),
-    // TemplateLiteral, CallExpression, etc.
-    return true;
-  };
-
-  let current: TSESTree.Node | undefined = node.parent;
-  while (current) {
-    if (current.type === AST_NODE_TYPES.ObjectExpression) {
-      if (isSpecializationContainer(current)) {
-        // Selectors / at-rule blocks aren't scopes themselves; their
-        // sub-keys' values are. Step through transparently.
-      } else if (isStyleScope(current)) {
-        const isInnerScope = current === node.parent;
-        for (const prop of current.properties) {
-          if (prop.type !== AST_NODE_TYPES.Property) continue;
-          if (prop === node) {
-            // Inside `node`'s own scope, only earlier siblings count
-            // — anything after `node` overrides it within the same
-            // CSS rule and leaves `node` as dead code.
-            if (isInnerScope) break;
-            continue;
-          }
-          if (isOverrideTarget(prop)) return true;
-        }
-      } else {
-        // Variant record (or other non-style ObjectExpression). Don't
-        // cross — siblings here are independent classes.
-        return false;
-      }
     }
     current = current.parent;
   }

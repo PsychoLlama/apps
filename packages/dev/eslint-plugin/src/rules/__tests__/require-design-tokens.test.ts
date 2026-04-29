@@ -71,8 +71,9 @@ tester.run('require-design-tokens', rule, {
     { code: 'const x = { animation: "none" }' },
 
     // Redundant-reset values are allowed inside specialization blocks
-    // *only when* the same style object declares a same-family property
-    // elsewhere — that's the author's own style being undone.
+    // (`selectors`, `@media`, `@supports`, `@container`). The
+    // assumption is the author is undoing their own outer styles. We
+    // don't try to verify that — see `isInsideSpecialization`.
     {
       code: "const x = { padding: pad, selectors: { '&:hover': { padding: 0 } } }",
     },
@@ -88,18 +89,6 @@ tester.run('require-design-tokens', rule, {
     {
       code: "const x = { padding: pad, '@container': { '(min-width: 400px)': { padding: 'unset' } } }",
     },
-    // Longhand can override a shorthand from the outer scope.
-    {
-      code: "const x = { padding: pad, selectors: { '&:hover': { paddingTop: 0 } } }",
-    },
-    // Specialization exemption works through several nesting levels.
-    {
-      code: "const x = { padding: pad, '@media': { '(min-width: 600px)': { selectors: { '&:hover': { padding: 0 } } } } }",
-    },
-    // Override target can live on an outer specialization scope.
-    {
-      code: "const x = { '@media': { '(min-width: 600px)': { padding: pad, selectors: { '&:hover': { padding: 0 } } } } }",
-    },
 
     // `unset` on properties whose spec initial value is *not* `0`
     // (`border-width: medium`, `gap: normal`, `outline-width: medium`)
@@ -110,30 +99,6 @@ tester.run('require-design-tokens', rule, {
     { code: 'const x = { outlineWidth: "unset" }' },
     { code: 'const x = { gap: "unset" }' },
     { code: 'const x = { rowGap: "unset" }' },
-
-    // Override target inside the *same* variant scope is exempt.
-    {
-      code: "const x = styleVariants({ secondary: { padding: pad, selectors: { '&:hover': { padding: 0 } } } })",
-    },
-    // Same-scope earlier sibling counts as an override target — the
-    // shorthand sets all sides, then the longhand undoes one of them.
-    {
-      code: "const x = { selectors: { '&:hover': { padding: pad, paddingTop: 0 } } }",
-    },
-    // Width / style share a family for borders and outlines — `0` on a
-    // width inside a specialization is a real override when the outer
-    // scope enabled the stroke via `*-style: solid`.
-    {
-      code: "const x = { borderStyle: 'solid', selectors: { '&:hover': { borderWidth: 0 } } }",
-    },
-    {
-      code: "const x = { outlineStyle: 'solid', selectors: { '&:focus-visible': { outlineWidth: 0 } } }",
-    },
-    // Recipe-style: base + variants. An override target in the base
-    // scope counts only for a redundant reset *inside that base*.
-    {
-      code: "const x = recipe({ base: { padding: pad, selectors: { '&:hover': { padding: 0 } } } })",
-    },
   ],
 
   invalid: [
@@ -392,113 +357,9 @@ tester.run('require-design-tokens', rule, {
       ],
     },
 
-    // Specialization without a matching outer declaration is *still*
-    // redundant — there's nothing local to override, so the inner value
-    // is just restating the global reset.
-    {
-      code: "const x = { selectors: { '&:hover': { padding: 0 } } }",
-      errors: [
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'padding', value: '0' },
-        },
-      ],
-    },
-    {
-      code: "const x = { '@media': { '(min-width: 600px)': { padding: 0 } } }",
-      errors: [
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'padding', value: '0' },
-        },
-      ],
-    },
-    // Sibling outer property of a *different* family doesn't count.
-    {
-      code: "const x = { color: c, selectors: { '&:hover': { padding: 0 } } }",
-      errors: [
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'padding', value: '0' },
-        },
-      ],
-    },
-    // Two redundant resets next to each other don't mutually exempt.
-    {
-      code: "const x = { selectors: { '&:hover': { padding: 0, paddingTop: 0 } } }",
-      errors: [
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'padding', value: '0' },
-        },
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'paddingTop', value: '0' },
-        },
-      ],
-    },
-
-    // Variant boundary: a same-family property in a *sibling* variant
-    // doesn't count as an override target — those classes don't share
-    // state at runtime. styleVariants:
-    {
-      code: "const x = styleVariants({ primary: { padding: pad }, secondary: { selectors: { '&:hover': { padding: 0 } } } })",
-      errors: [
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'padding', value: '0' },
-        },
-      ],
-    },
-    // Same boundary applies under recipe()'s variants record.
-    {
-      code: "const x = recipe({ variants: { size: { small: { padding: pad }, large: { selectors: { '&:hover': { padding: 0 } } } } } })",
-      errors: [
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'padding', value: '0' },
-        },
-      ],
-    },
-    // Sibling specialization branches don't exempt each other:
-    // `&:focus` and `&:hover` can apply independently, so a declaration
-    // on one isn't a target for the other.
-    {
-      code: "const x = { selectors: { '&:focus': { padding: pad }, '&:hover': { padding: 0 } } }",
-      errors: [
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'padding', value: '0' },
-        },
-      ],
-    },
-    // Recipe config with `compoundVariants` (an ArrayExpression) doesn't
-    // turn the recipe object into a style scope — a redundant reset in
-    // `base` can't be exempted by a sibling `variants.*` declaration.
-    {
-      code: "const x = recipe({ base: { selectors: { '&:hover': { padding: 0 } } }, variants: { size: { large: { padding: pad } } }, compoundVariants: [] })",
-      errors: [
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'padding', value: '0' },
-        },
-      ],
-    },
-    // Same-scope later siblings don't count: `paddingTop: 0` is dead
-    // code because the following `padding: pad` overrides it within
-    // the same CSS rule.
-    {
-      code: "const x = { selectors: { '&:hover': { paddingTop: 0, padding: pad } } }",
-      errors: [
-        {
-          messageId: 'redundantReset' as const,
-          data: { property: 'paddingTop', value: '0' },
-        },
-      ],
-    },
-    // `@layer` demotes its declarations in the cascade — an unlayered
-    // outer `padding` always wins, so an inner reset under `@layer`
-    // has nothing to override even when same-family sibling exists.
+    // `@layer` demotes its declarations in the cascade rather than
+    // specializing them, so the exemption doesn't apply: an inner
+    // reset under `@layer` is still just restating the global default.
     {
       code: "const x = { padding: pad, '@layer': { utilities: { padding: 0 } } }",
       errors: [

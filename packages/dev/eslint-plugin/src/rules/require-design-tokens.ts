@@ -2,7 +2,6 @@ import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 import { getPropertyName } from '../utils/ast';
 import {
   findFullViewportValue,
-  hasOverrideTarget,
   isInsideSpecialization,
   isRedundantResetValue,
   redundantFullViewportMessage,
@@ -177,14 +176,12 @@ const rule = createRule({
         if (value === null) return;
 
         // Restating the post-reset default is the targeted smell. Inside
-        // a specialization (`selectors`, `@media`, …) the same value is
-        // legitimate *only* if some same-family property is declared
-        // elsewhere in this style object — otherwise the inner branch is
-        // still just restating the global reset.
+        // a specialization (`selectors`, `@media`, …) the value is
+        // assumed to be undoing the author's own outer styles, so the
+        // check is suppressed — see `isInsideSpecialization` for the
+        // trade-off.
         if (isRedundantResetProp && isRedundantResetValue(name, value)) {
-          if (isInsideSpecialization(node) && hasOverrideTarget(node, name)) {
-            return;
-          }
+          if (isInsideSpecialization(node)) return;
           context.report({
             node,
             messageId: 'redundantReset',
