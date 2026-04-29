@@ -96,10 +96,9 @@ tester.run('require-design-tokens', rule, {
     {
       code: "const x = { padding: pad, '@media': { '(min-width: 600px)': { selectors: { '&:hover': { padding: 0 } } } } }",
     },
-    // `'&'` is a sibling-selector form of the top-level scope; padding set
-    // there counts as an override target for `&:hover`.
+    // Override target can live on an outer specialization scope.
     {
-      code: "const x = { selectors: { '&': { padding: pad }, '&:hover': { padding: 0 } } }",
+      code: "const x = { '@media': { '(min-width: 600px)': { padding: pad, selectors: { '&:hover': { padding: 0 } } } } }",
     },
 
     // `unset` on properties whose spec initial value is *not* `0`
@@ -440,6 +439,30 @@ tester.run('require-design-tokens', rule, {
     // Same boundary applies under recipe()'s variants record.
     {
       code: "const x = recipe({ variants: { size: { small: { padding: pad }, large: { selectors: { '&:hover': { padding: 0 } } } } } })",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
+        },
+      ],
+    },
+    // Sibling specialization branches don't exempt each other:
+    // `&:focus` and `&:hover` can apply independently, so a declaration
+    // on one isn't a target for the other.
+    {
+      code: "const x = { selectors: { '&:focus': { padding: pad }, '&:hover': { padding: 0 } } }",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
+        },
+      ],
+    },
+    // Recipe config with `compoundVariants` (an ArrayExpression) doesn't
+    // turn the recipe object into a style scope — a redundant reset in
+    // `base` can't be exempted by a sibling `variants.*` declaration.
+    {
+      code: "const x = recipe({ base: { selectors: { '&:hover': { padding: 0 } } }, variants: { size: { large: { padding: pad } } }, compoundVariants: [] })",
       errors: [
         {
           messageId: 'redundantReset' as const,

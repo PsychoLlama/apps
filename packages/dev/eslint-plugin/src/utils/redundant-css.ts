@@ -175,21 +175,21 @@ const isSpecializationContainer = (obj: TSESTree.ObjectExpression): boolean => {
  * Whether the surrounding style object declares a same-family property
  * that `node` could plausibly be overriding.
  *
- * Walks ancestors looking for the outermost *style scope* enclosing
- * `node`. Specialization containers (the value of `selectors` / `@media`
- * / etc.) are transparent — we step through them. The walk stops at the
- * first non-style-scope ObjectExpression (a variants record from
- * `styleVariants` or `recipe`'s `variants:`), so a redundant reset in
- * one variant can't be silently exempted by a same-family property in a
- * sibling variant — those classes don't share state at runtime.
+ * Walks the *active ancestor path* of style scopes — starting at the
+ * scope directly enclosing `node`, stepping through specialization
+ * containers transparently, and continuing up through outer style
+ * scopes. At each scope, only that scope's direct CSS-property children
+ * count as override targets. Sibling specialization branches (e.g.,
+ * `selectors: { '&:focus': ..., '&:hover': ... }`) are *not* mutually
+ * inspected — those rules apply in different element states, so a
+ * declaration on one isn't a target for the other.
  *
- * Inside the resolved scope, recurses through nested specializations
- * looking for any other same-family Property whose value isn't itself a
- * redundant reset (two such values next to each other shouldn't mutually
- * exempt themselves).
+ * The walk stops at any ObjectExpression that isn't a style scope —
+ * variants records from `styleVariants` or `recipe`'s `variants:` —
+ * since sibling variants are mutually-exclusive classes at runtime.
  *
  * Cross-class composition (multiple `style()` classes applied together)
- * stays invisible — genuine composition overrides need an explicit
+ * stays invisible. Genuine composition overrides need an explicit
  * eslint-disable.
  */
 export const hasOverrideTarget = (
@@ -199,7 +199,25 @@ export const hasOverrideTarget = (
   const family = propertyFamily(name);
   if (!family) return false;
 
-  let scope: TSESTree.ObjectExpression | undefined;
+  const scopeHasOverride = (scope: TSESTree.ObjectExpression): boolean => {
+    for (const prop of scope.properties) {
+      if (prop.type !== AST_NODE_TYPES.Property) continue;
+      if (prop === node) continue;
+      const propName = getPropertyName(prop.key);
+      if (!propName || propertyFamily(propName) !== family) continue;
+      if (prop.value.type === AST_NODE_TYPES.ObjectExpression) continue;
+      if (prop.value.type === AST_NODE_TYPES.Literal) {
+        if (!isRedundantResetValue(propName, prop.value.value)) return true;
+        continue;
+      }
+      // Identifier, MemberExpression, ArrayExpression (CSS fallback),
+      // TemplateLiteral, CallExpression, etc. — treat as a real
+      // override target.
+      return true;
+    }
+    return false;
+  };
+
   let current: TSESTree.Node | undefined = node.parent;
   while (current) {
     if (current.type === AST_NODE_TYPES.ObjectExpression) {
@@ -207,37 +225,16 @@ export const hasOverrideTarget = (
         // Selectors / at-rule blocks aren't scopes themselves; their
         // sub-keys' values are. Step through transparently.
       } else if (isStyleScope(current)) {
-        scope = current;
+        if (scopeHasOverride(current)) return true;
       } else {
         // Variant record (or other non-style ObjectExpression). Don't
         // cross — siblings here are independent classes.
-        break;
+        return false;
       }
     }
     current = current.parent;
   }
-  if (!scope) return false;
-
-  const visit = (obj: TSESTree.ObjectExpression): boolean => {
-    for (const prop of obj.properties) {
-      if (prop.type !== AST_NODE_TYPES.Property) continue;
-      if (prop === node) continue;
-      const propName = getPropertyName(prop.key);
-      if (propName && propertyFamily(propName) === family) {
-        if (prop.value.type === AST_NODE_TYPES.Literal) {
-          if (!isRedundantResetValue(propName, prop.value.value)) return true;
-        } else {
-          return true;
-        }
-      }
-      if (prop.value.type === AST_NODE_TYPES.ObjectExpression) {
-        if (visit(prop.value)) return true;
-      }
-    }
-    return false;
-  };
-
-  return visit(scope);
+  return false;
 };
 
 /**
