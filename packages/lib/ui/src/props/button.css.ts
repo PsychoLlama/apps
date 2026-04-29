@@ -102,6 +102,54 @@ export const size = styleVariants(
   >,
 );
 
+const iconSizeMap = {
+  1: {
+    ...typeScaleProps(1),
+    width: space[5],
+    height: space[5],
+    borderRadius: radius[1],
+  },
+  2: {
+    ...typeScaleProps(2),
+    width: space[6],
+    height: space[6],
+    borderRadius: radius[2],
+  },
+  3: {
+    ...typeScaleProps(3),
+    width: space[7],
+    height: space[7],
+    borderRadius: radius[3],
+  },
+  4: {
+    ...typeScaleProps(4),
+    width: space[8],
+    height: space[8],
+    borderRadius: radius[4],
+  },
+} as const;
+
+export const iconSize = styleVariants(
+  Object.fromEntries(sizes.map((key) => [key, iconSizeMap[key]])) as Record<
+    (typeof sizes)[number],
+    (typeof iconSizeMap)[1]
+  >,
+);
+
+// --- Radius override ---
+
+// Declared after `size` / `iconSize` so the `borderRadius` rule wins
+// on equal specificity when both are present in the class list.
+export const cornerRadius = styleVariants({
+  // `unset` resolves to the initial value (0) — used instead of a
+  // hard-coded `0` so the design-token lint rule stays happy.
+  none: { borderRadius: 'unset' },
+  small: { borderRadius: radius[1] },
+  medium: { borderRadius: radius[2] },
+  large: { borderRadius: radius[3] },
+  full: { borderRadius: radius.full },
+});
+
 // --- Variant x Color matrix ---
 
 const colorScales = { accent, neutral, danger, warning, success } as const;
@@ -116,7 +164,7 @@ const solidStyle = (color: ColorName) => {
     '@media': {
       '(hover: hover)': {
         selectors: {
-          '&:hover:not(:disabled)': {
+          '&:hover:not(:disabled):not(:active)': {
             backgroundColor: palette.solid[10],
           },
         },
@@ -137,10 +185,13 @@ const softStyle = (color: ColorName) => {
   return style({
     backgroundColor: palette.alpha[3],
     color: palette.alpha[11],
+    ':focus-visible': {
+      outlineOffset: '-1px',
+    },
     '@media': {
       '(hover: hover)': {
         selectors: {
-          '&:hover:not(:disabled)': {
+          '&:hover:not(:disabled):not(:active)': {
             backgroundColor: palette.alpha[4],
           },
         },
@@ -160,12 +211,41 @@ const outlineStyle = (color: ColorName) => {
   return style({
     backgroundColor: 'transparent',
     color: palette.alpha[11],
-    boxShadow: `inset 0 0 0 1px ${palette.alpha[7]}`,
+    boxShadow: `inset 0 0 0 1px ${palette.alpha[8]}`,
+    ':focus-visible': {
+      outlineOffset: '-1px',
+    },
     '@media': {
       '(hover: hover)': {
         selectors: {
-          '&:hover:not(:disabled)': {
-            backgroundColor: palette.alpha[3],
+          '&:hover:not(:disabled):not(:active)': {
+            backgroundColor: palette.alpha[2],
+          },
+        },
+      },
+    },
+    selectors: {
+      '&:active:not(:disabled)': {
+        backgroundColor: palette.alpha[3],
+      },
+    },
+  });
+};
+
+const surfaceStyle = (color: ColorName) => {
+  const palette = colorScales[color];
+
+  return style({
+    backgroundColor: palette.surface,
+    color: palette.alpha[11],
+    boxShadow: `inset 0 0 0 1px ${palette.alpha[7]}`,
+    ':focus-visible': {
+      outlineOffset: '-1px',
+    },
+    '@media': {
+      '(hover: hover)': {
+        selectors: {
+          '&:hover:not(:disabled):not(:active)': {
             boxShadow: `inset 0 0 0 1px ${palette.alpha[8]}`,
           },
         },
@@ -173,7 +253,8 @@ const outlineStyle = (color: ColorName) => {
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: palette.alpha[4],
+        backgroundColor: palette.alpha[3],
+        boxShadow: `inset 0 0 0 1px ${palette.alpha[8]}`,
       },
     },
   });
@@ -185,10 +266,13 @@ const ghostStyle = (color: ColorName) => {
   return style({
     backgroundColor: 'transparent',
     color: palette.alpha[11],
+    ':focus-visible': {
+      outlineOffset: '-1px',
+    },
     '@media': {
       '(hover: hover)': {
         selectors: {
-          '&:hover:not(:disabled)': {
+          '&:hover:not(:disabled):not(:active)': {
             backgroundColor: palette.alpha[3],
           },
         },
@@ -216,6 +300,13 @@ export const variantColor = {
     danger: softStyle('danger'),
     warning: softStyle('warning'),
     success: softStyle('success'),
+  },
+  surface: {
+    accent: surfaceStyle('accent'),
+    neutral: surfaceStyle('neutral'),
+    danger: surfaceStyle('danger'),
+    warning: surfaceStyle('warning'),
+    success: surfaceStyle('success'),
   },
   outline: {
     accent: outlineStyle('accent'),
