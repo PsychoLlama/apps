@@ -35,12 +35,24 @@ import {
 } from '../../props/button';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
-export interface IconButtonProps
-  extends
-    ButtonStyleProps,
-    MarginProps,
-    RequiredTestIdProps,
-    JSX.ButtonHTMLAttributes<HTMLButtonElement> {}
+type IconButtonBase = ButtonStyleProps &
+  MarginProps &
+  RequiredTestIdProps &
+  Omit<
+    JSX.ButtonHTMLAttributes<HTMLButtonElement>,
+    'aria-label' | 'aria-labelledby'
+  >;
+
+/**
+ * IconButton props. Either `aria-label` or `aria-labelledby` is required —
+ * an icon-only control has no visible text, so it needs an explicit
+ * accessible name. Use `aria-label` for a literal string; reach for
+ * `aria-labelledby` when the name already lives in another element
+ * (a sibling heading, a row label, etc.).
+ */
+export type IconButtonProps =
+  | (IconButtonBase & { 'aria-label': string; 'aria-labelledby'?: string })
+  | (IconButtonBase & { 'aria-label'?: string; 'aria-labelledby': string });
 
 /** Square button sized to host a single icon. */
 const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
