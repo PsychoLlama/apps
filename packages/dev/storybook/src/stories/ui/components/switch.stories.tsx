@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { splitProps, untrack } from 'solid-js';
+import { createSignal, splitProps, untrack } from 'solid-js';
 import { fn } from 'storybook/test';
-import { createTestBindings, defineAction, defineStore } from '@lib/state';
 import { Switch, type SwitchProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -10,21 +9,6 @@ interface SwitchArgs extends SwitchProps {
   /** Initial controlled value the wrapper starts with. */
   initialChecked?: boolean;
 }
-
-const checkedStore = defineStore<{ checked: boolean }>(() => ({
-  checked: false,
-}));
-const setStoreChecked = defineAction([checkedStore], (state, next: boolean) => {
-  state.checked = next;
-});
-
-const useSwitchHarness = (initial: boolean) => {
-  const bindings = createTestBindings();
-  const state = bindings.createStore(checkedStore);
-  const setChecked = bindings.useAction(setStoreChecked);
-  setChecked(initial);
-  return { state, setChecked };
-};
 
 const meta = {
   title: 'UI/Components',
@@ -73,13 +57,13 @@ const meta = {
       'checked',
       'onCheckedChange',
     ]);
-    const { state, setChecked } = useSwitchHarness(
+    const [checked, setChecked] = createSignal(
       untrack(() => storyOnly.initialChecked ?? false),
     );
     return (
       <Switch
         {...switchProps}
-        checked={state.checked}
+        checked={checked()}
         onCheckedChange={(next) => {
           storyOnly.onCheckedChange(next);
           setChecked(next);

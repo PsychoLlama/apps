@@ -9,7 +9,6 @@ dependsOn:
   - '@app/studio'
   - '@lib/design'
   - '@lib/shell'
-  - '@lib/state'
   - '@lib/ui'
 
 tasks:
