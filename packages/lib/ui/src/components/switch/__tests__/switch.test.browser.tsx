@@ -188,6 +188,18 @@ describe('Switch', () => {
     ).toBeNull();
   });
 
+  it('does not set aria-required by default', () => {
+    render(() => <Switch testId="sw" checked={false} onCheckedChange={noop} />);
+    expect(screen.getByTestId('sw')).not.toHaveAttribute('aria-required');
+  });
+
+  it('sets aria-required="true" when required', () => {
+    render(() => (
+      <Switch testId="sw" required checked={false} onCheckedChange={noop} />
+    ));
+    expect(screen.getByTestId('sw')).toHaveAttribute('aria-required', 'true');
+  });
+
   it('forwards the form attribute to the hidden input', () => {
     render(() => (
       <>

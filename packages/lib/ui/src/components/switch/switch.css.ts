@@ -16,6 +16,7 @@
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
+  black,
   danger,
   fast,
   moderate,
@@ -28,14 +29,33 @@ import {
   warning,
   white,
 } from '@lib/design';
+import { assignColorSchemeVars } from '@lib/design/color-scheme';
 
 // Vars set by the size, radius, and color variants — every other rule
 // reads them, so a single variant assignment reaches the whole switch.
 const trackHeight = createVar();
 const trackBorderRadius = createVar();
 const colorTrack = createVar();
+const colorAlpha3 = createVar();
 const colorAlpha4 = createVar();
 const colorFocus = createVar();
+
+// Mode-aware refinements that Radix swaps per color scheme. The values
+// are assigned at `:root` via `assignColorSchemeVars` so each rule
+// below reads a single var and the cascade picks light vs dark.
+const pressFilter = createVar();
+const disabledBlendMode = createVar();
+
+assignColorSchemeVars(
+  {
+    [pressFilter]: 'brightness(0.92) saturate(1.1)',
+    [disabledBlendMode]: 'multiply',
+  },
+  {
+    [pressFilter]: 'brightness(1.08)',
+    [disabledBlendMode]: 'screen',
+  },
+);
 
 // Visual constants of the control. `1px` thumb inset and `1.75x` track
 // aspect match Radix exactly. White thumb in every mode is the
@@ -51,6 +71,11 @@ const trackWidth = `calc(${trackHeight} * ${TRACK_ASPECT})`;
 const thumbSize = `calc(${trackHeight} - ${THUMB_INSET} * 2)`;
 const thumbTranslateX = `calc(${trackWidth} - ${trackHeight})`;
 const trackBackgroundSize = `calc(${trackWidth} * 2 + ${trackHeight}) 100%`;
+
+// Compose multi-layer drop-shadow values. The plain string return
+// dodges vanilla-extract's template-literal narrowing across variant
+// rules.
+const layeredShadow = (...layers: string[]): string => layers.join(', ');
 
 // --- Root (the `<button role="switch">`) ---
 
@@ -102,29 +127,6 @@ export const root = style({
   },
 });
 
-// --- Thumb ---
-
-export const thumb = style({
-  position: 'absolute',
-  left: THUMB_INSET,
-  width: thumbSize,
-  height: thumbSize,
-  // Thumb radius scales with the track radius minus the inset, so a
-  // pill track gets a circular thumb and a square track gets a square
-  // thumb with matching corners.
-  borderRadius: `calc(${trackBorderRadius} - ${THUMB_INSET})`,
-  backgroundColor: THUMB_COLOR,
-  transitionProperty: 'transform, box-shadow',
-  transitionTimingFunction: standard.productive,
-  transitionDuration: moderate[1],
-
-  selectors: {
-    [`${root}:where([aria-checked="true"]) &`]: {
-      transform: `translateX(${thumbTranslateX})`,
-    },
-  },
-});
-
 // --- Size ---
 
 // Size 2 lands between `space[4]` (1rem) and `space[5]` (1.5rem); the
@@ -144,15 +146,16 @@ export const size = styleVariants({
 
 // --- Color ---
 //
-// Each variant binds the three palette refs the rest of the stylesheet
-// reads. The `track` color is the checked-state fill; `alpha[4]` drives
-// the soft-variant gradient; `solid[8]` paints the focus outline so it
-// tracks the active color.
+// Each variant binds the four palette refs the rest of the stylesheet
+// reads. `track` is the checked-state fill; `alpha[3]` and `alpha[4]`
+// drive the soft-variant gradient and the soft thumb's outer shadow;
+// `solid[8]` paints the focus outline so it tracks the active color.
 
 export const color = styleVariants({
   accent: {
     vars: {
       [colorTrack]: accent.track,
+      [colorAlpha3]: accent.alpha[3],
       [colorAlpha4]: accent.alpha[4],
       [colorFocus]: accent.solid[8],
     },
@@ -160,6 +163,7 @@ export const color = styleVariants({
   neutral: {
     vars: {
       [colorTrack]: neutral.track,
+      [colorAlpha3]: neutral.alpha[3],
       [colorAlpha4]: neutral.alpha[4],
       [colorFocus]: neutral.solid[8],
     },
@@ -167,6 +171,7 @@ export const color = styleVariants({
   danger: {
     vars: {
       [colorTrack]: danger.track,
+      [colorAlpha3]: danger.alpha[3],
       [colorAlpha4]: danger.alpha[4],
       [colorFocus]: danger.solid[8],
     },
@@ -174,6 +179,7 @@ export const color = styleVariants({
   warning: {
     vars: {
       [colorTrack]: warning.track,
+      [colorAlpha3]: warning.alpha[3],
       [colorAlpha4]: warning.alpha[4],
       [colorFocus]: warning.solid[8],
     },
@@ -181,13 +187,20 @@ export const color = styleVariants({
   success: {
     vars: {
       [colorTrack]: success.track,
+      [colorAlpha3]: success.alpha[3],
       [colorAlpha4]: success.alpha[4],
       [colorFocus]: success.solid[8],
     },
   },
 });
 
-// --- Variant ---
+// --- Variant (track) ---
+//
+// The checked-track press filter and disabled blend mode read
+// `pressFilter` / `disabledBlendMode`, which `assignColorSchemeVars`
+// flips between light and dark values at `:root`. Per-variant per-state
+// thumb shadows live in the `thumb` style block below — vanilla-extract
+// requires each style to own its own selectors.
 
 export const variant = styleVariants({
   surface: {
@@ -199,6 +212,12 @@ export const variant = styleVariants({
       },
       '&:where(:active)::before': {
         backgroundColor: neutral.alpha[4],
+      },
+      '&:where([aria-checked="true"]:active)::before': {
+        filter: pressFilter,
+      },
+      '&:where(:disabled)': {
+        mixBlendMode: disabledBlendMode,
       },
       '&:where(:disabled)::before': {
         backgroundImage: 'none',
@@ -215,12 +234,26 @@ export const variant = styleVariants({
         backgroundImage: `linear-gradient(to right, ${colorTrack} 40%, transparent 60%)`,
         boxShadow: shadow[1],
       },
+      '&:where([aria-checked="true"])::before': {
+        boxShadow: layeredShadow(
+          `inset 0 0 0 1px ${neutral.alpha[3]}`,
+          `inset 0 0 0 1px ${colorAlpha4}`,
+          `inset 0 0 0 1px ${black[1]}`,
+          `inset 0 1.5px 2px 0 ${black[2]}`,
+        ),
+      },
       '&:where([aria-checked="false"]:active)::before': {
         backgroundColor: neutral.alpha[5],
       },
+      '&:where([aria-checked="true"]:active)::before': {
+        filter: pressFilter,
+      },
+      '&:where(:disabled)': {
+        mixBlendMode: disabledBlendMode,
+      },
       '&:where(:disabled)::before': {
         backgroundImage: 'none',
-        backgroundColor: neutral.alpha[4],
+        backgroundColor: neutral.alpha[5],
         boxShadow: shadow[1],
         opacity: 0.5,
       },
@@ -247,10 +280,122 @@ export const variant = styleVariants({
       '&:where(:active)::before': {
         backgroundColor: neutral.alpha[4],
       },
+      '&:where(:disabled)': {
+        mixBlendMode: disabledBlendMode,
+      },
       '&:where(:disabled)::before': {
         backgroundImage: 'none',
         backgroundColor: neutral.alpha[4],
       },
+    },
+  },
+});
+
+// --- Thumb ---
+//
+// Per-variant per-state shadows give the knob real depth. The selectors
+// reach back up to the variant class on the parent root because
+// vanilla-extract requires each style to own its own selectors —
+// putting these inside the variant block would target a sibling class.
+// The disabled thumb fill (`neutral.solid[2]`) and `transition: none`
+// match Radix; the latter dodges Chrome's P3 red-channel artifact when
+// flipping color schemes mid-transition.
+
+const surfaceThumbDisabled = layeredShadow(
+  `0 0 0 1px ${neutral.alpha[2]}`,
+  `0 1px 3px ${black[1]}`,
+);
+
+export const thumb = style({
+  position: 'absolute',
+  left: THUMB_INSET,
+  width: thumbSize,
+  height: thumbSize,
+  // Thumb radius scales with the track radius minus the inset, so a
+  // pill track gets a circular thumb and a square track gets a square
+  // thumb with matching corners.
+  borderRadius: `calc(${trackBorderRadius} - ${THUMB_INSET})`,
+  backgroundColor: THUMB_COLOR,
+  transitionProperty: 'transform, box-shadow',
+  transitionTimingFunction: standard.productive,
+  transitionDuration: moderate[1],
+
+  selectors: {
+    [`${root}:where([aria-checked="true"]) &`]: {
+      transform: `translateX(${thumbTranslateX})`,
+    },
+
+    // Surface
+    [`${variant.surface}:where([aria-checked="false"]) &`]: {
+      boxShadow: layeredShadow(
+        `0 0 1px 1px ${black[2]}`,
+        `0 1px 1px ${black[1]}`,
+        `0 2px 4px -1px ${black[1]}`,
+      ),
+    },
+    [`${variant.surface}:where([aria-checked="true"]) &`]: {
+      boxShadow: layeredShadow(
+        `0 1px 3px ${black[2]}`,
+        `0 2px 4px -1px ${black[1]}`,
+        `0 0 0 1px ${black[1]}`,
+        `0 0 0 1px ${colorAlpha4}`,
+        `-1px 0 1px ${black[2]}`,
+      ),
+    },
+    [`${variant.surface}:where(:disabled) &`]: {
+      backgroundColor: neutral.solid[2],
+      boxShadow: surfaceThumbDisabled,
+      transition: 'none',
+    },
+
+    // Classic
+    [`${variant.classic}:where([aria-checked="false"]) &`]: {
+      boxShadow: layeredShadow(
+        `0 1px 3px ${black[3]}`,
+        `0 2px 4px -1px ${black[1]}`,
+        `0 0 0 1px ${black[2]}`,
+      ),
+    },
+    [`${variant.classic}:where([aria-checked="true"]) &`]: {
+      boxShadow: layeredShadow(
+        `0 1px 3px ${black[2]}`,
+        `0 2px 4px -1px ${black[1]}`,
+        `0 0 0 1px ${black[1]}`,
+        `0 0 0 1px ${colorAlpha4}`,
+        `-1px 0 1px ${black[2]}`,
+      ),
+    },
+    [`${variant.classic}:where(:disabled) &`]: {
+      backgroundColor: neutral.solid[2],
+      boxShadow: surfaceThumbDisabled,
+      transition: 'none',
+    },
+
+    // Soft — desaturated knob so it doesn't pop out of the muted track.
+    [`${variant.soft} &`]: {
+      filter: 'saturate(0.45)',
+    },
+    [`${variant.soft}:where([aria-checked="false"]) &`]: {
+      boxShadow: layeredShadow(
+        `0 0 0 1px ${black[1]}`,
+        `0 1px 3px ${black[1]}`,
+        `0 1px 3px ${black[1]}`,
+        `0 2px 4px -1px ${black[1]}`,
+      ),
+    },
+    [`${variant.soft}:where([aria-checked="true"]) &`]: {
+      boxShadow: layeredShadow(
+        `0 0 0 1px ${black[1]}`,
+        `0 1px 3px ${black[2]}`,
+        `0 1px 3px ${colorAlpha3}`,
+        `0 2px 4px -1px ${colorAlpha3}`,
+      ),
+    },
+    [`${variant.soft}:where(:disabled) &`]: {
+      filter: 'none',
+      backgroundColor: neutral.solid[2],
+      boxShadow: surfaceThumbDisabled,
+      transition: 'none',
     },
   },
 });

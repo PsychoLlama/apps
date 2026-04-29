@@ -68,6 +68,14 @@ export interface SwitchProps
   radius?: SwitchRadius;
   /** Semantic color palette for the checked track. @default 'accent' */
   color?: SwitchColor;
+  /**
+   * Marks the switch as required for assistive technology. Surfaces as
+   * `aria-required="true"` on the button. Native HTML5 form validation
+   * isn't enforced — the hidden input is `type="hidden"` and doesn't
+   * participate in client-side validation; gate the form submit yourself.
+   * @default false
+   */
+  required?: boolean;
   /** Controlled checked state. */
   checked: boolean;
   /** Fires after the user toggles the switch with the next state. */
@@ -104,6 +112,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
     'variant',
     'radius',
     'color',
+    'required',
     'checked',
     'onCheckedChange',
     'value',
@@ -140,6 +149,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
         type="button"
         role="switch"
         aria-checked={local.checked}
+        aria-required={local.required ? true : undefined}
         class={className()}
         data-testid={tid.testId}
         disabled={local.disabled}
