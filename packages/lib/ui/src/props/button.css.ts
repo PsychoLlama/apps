@@ -187,6 +187,10 @@ export const iconButtonGhostSize = styleVariants(
   }),
 );
 
+// Setting a custom property to `initial` resolves it to the
+// guaranteed-invalid value, which makes `var(--x, fallback)` use the
+// fallback. The reset cascades through wrappers so descendants at any
+// depth fall back to their own user margin var.
 const overrideReset = {
   [marginTopOverride]: 'initial',
   [marginRightOverride]: 'initial',
