@@ -17,6 +17,10 @@ Read upstream before writing anything. Expected repos:
 
 If the user hasn't said where they're cloned, stop and ask. Don't search the filesystem.
 
+## Module documentation
+
+- Open each ported `.tsx` and `.css.ts` with a JSDoc module block: `@see` the upstream Radix URL, then a bulleted list of intentional deviations.
+
 ## Guiding principle
 
 - Treat Radix as the ground truth for UX, accessibility, and behavior; balance fidelity against the strengths of our platform.
@@ -25,6 +29,9 @@ If the user hasn't said where they're cloned, stop and ask. Don't search the fil
 - Reach for `<Flex>` to compose internal structure of complex components.
 - We use a global CSS reset, so built-in elements (`<button>`, `<ul>`, etc.) render like bare `<div>`s. Style intentionally; don't lean on user-agent defaults.
 - Wrap state predicates (`:not(:disabled):hover`, `:focus-visible`), pseudo-class alternations, and class compounds in `:where(...)` so competing rules stay equal-specificity and the cascade resolves by source order.
+- For multi-part components, hand off size/color from parent variants to nested elements via `createVar()` + `vars: { ... }` in `styleVariants` instead of nested-class selectors.
+- Couple wrapper styles to inner-element state with `:has(...)` — e.g. `:has(input:focus-visible)` paints the focus outline on the wrapper.
+- Reach for `::before`/`::after` for borders (so `Inset` can't cover them), active indicators, and overlays.
 
 ## Polymorphism: `as` instead of `asChild`
 
