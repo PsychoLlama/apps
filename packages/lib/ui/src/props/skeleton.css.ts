@@ -12,7 +12,7 @@
  */
 
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
-import { neutral, radius, slow, standard } from '@lib/design';
+import { neutral, slow, standard } from '@lib/design';
 
 const pulse = keyframes({
   from: { backgroundColor: neutral.alpha[3] },
@@ -22,7 +22,9 @@ const pulse = keyframes({
 export const skeleton = style({
   selectors: {
     '&&': {
-      borderRadius: radius[1],
+      // `border-radius` is intentionally left untouched so each host
+      // component's own corner shape (pill badge, large card, etc.)
+      // shows through the placeholder.
       animation: `${pulse} ${slow[2]} ${standard.productive} infinite alternate`,
       background: 'none',
       backgroundColor: neutral.alpha[3],
