@@ -29,10 +29,17 @@ import {
   resolveIconButtonStyleClasses,
   type ButtonStyleProps,
 } from '../../props/button';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
 type IconButtonBase = ButtonStyleProps &
   MarginProps &
+  SkeletonProps &
   RequiredTestIdProps &
   Omit<
     JSX.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -61,6 +68,7 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
     ...buttonStylePropKeys,
+    ...skeletonPropKeys,
     'class',
     'children',
   ]);
@@ -74,13 +82,16 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
         local.color,
         local.radius,
       ),
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+
   return (
-    <button class={className()} data-testid={tid.testId} {...rest}>
+    <button class={className()} data-testid={tid.testId} {...merged}>
       {local.children}
     </button>
   );

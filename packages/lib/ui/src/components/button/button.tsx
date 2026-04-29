@@ -12,10 +12,16 @@ import {
   resolveButtonStyleClasses,
   type ButtonStyleProps,
 } from '../../props/button';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
 interface ButtonOwnProps
-  extends ButtonStyleProps, MarginProps, RequiredTestIdProps {}
+  extends ButtonStyleProps, MarginProps, SkeletonProps, RequiredTestIdProps {}
 
 /**
  * Button props. `as` defaults to `'button'`; set it to `'summary'` when
@@ -40,6 +46,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
     ...buttonStylePropKeys,
+    ...skeletonPropKeys,
     'as',
     'class',
     'children',
@@ -54,10 +61,13 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
         local.color,
         local.radius,
       ),
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
+
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
 
   return (
     <Dynamic
@@ -65,7 +75,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
       type={local.as === 'button' ? 'button' : undefined}
       class={className()}
       data-testid={tid.testId}
-      {...rest}
+      {...merged}
     >
       {local.children}
     </Dynamic>

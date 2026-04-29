@@ -17,10 +17,21 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
 export interface LinkButtonProps
-  extends MarginProps, ButtonStyleProps, RequiredTestIdProps, AnchorProps {}
+  extends
+    MarginProps,
+    ButtonStyleProps,
+    SkeletonProps,
+    RequiredTestIdProps,
+    AnchorProps {}
 
 /** Anchor element styled as a button for navigation actions. */
 const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
@@ -29,6 +40,7 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
     ...buttonStylePropKeys,
+    ...skeletonPropKeys,
     'class',
     'children',
   ]);
@@ -42,13 +54,16 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
         local.color,
         local.radius,
       ),
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+
   return (
-    <A class={className()} data-testid={tid.testId} {...rest}>
+    <A class={className()} data-testid={tid.testId} {...merged}>
       {local.children}
     </A>
   );
