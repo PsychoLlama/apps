@@ -19,3 +19,7 @@ coverage
 # moon
 .moon/cache
 .moon/docker
+
+# vitest screenshot/attachment artifacts
+.vitest-attachments
+**/__screenshots__

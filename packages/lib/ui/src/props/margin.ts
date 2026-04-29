@@ -18,6 +18,7 @@ export const resolveMarginClasses = (
   margin: MarginProps,
 ): (string | false | undefined)[] => {
   return [
+    css.marginBase,
     margin.m && css.margin[margin.m],
     margin.mx && css.marginX[margin.mx],
     margin.my && css.marginY[margin.my],

@@ -5,14 +5,6 @@
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/_internal/base-button.css
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/button.css
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/icon-button.css
- *
- * Deviations:
- * - User margin classes (`m`/`mx`/`my`) replace the ghost negative
- *   margin instead of composing with it. Radix uses CSS-var arithmetic
- *   (`calc(var(--margin-top) - var(--button-ghost-padding-y))`); our
- *   margin system is class-based, so the ghost negative margin is wrapped
- *   in `:where(...)` to drop its specificity to 0 and let any user
- *   margin class win outright.
  */
 
 import {
@@ -21,6 +13,16 @@ import {
   style,
   styleVariants,
 } from '@vanilla-extract/css';
+import {
+  marginTopOverride,
+  marginRightOverride,
+  marginBottomOverride,
+  marginLeftOverride,
+  userMarginTop,
+  userMarginRight,
+  userMarginBottom,
+  userMarginLeft,
+} from './margin.css';
 import {
   accent,
   danger,
@@ -129,16 +131,19 @@ export const iconButtonNonGhostSize = styleVariants(
 
 // --- Ghost dimensional rules ---
 //
-// Ghost variants drop the fixed height and replace it with padding so the
-// hover background and focus ring extend past the visual content. A
-// matching negative margin retracts the layout box to the content edge,
-// keeping the button visually flush with surrounding text. The negative
-// margin is emitted via `globalStyle` wrapped in `:where(...)` so it has
-// specificity 0 — any user-supplied margin class wins.
-
+// Ghost variants drop the fixed height and replace it with padding so
+// the hover background and focus ring extend past the visual content.
+// The override-margin vars from `margin.css.ts` resolve to
+// `calc(userMargin - ghostPadding)`, so the layout box retracts to the
+// content edge while still composing with any caller-supplied
+// `m`/`mx`/`my`. A direct-child reset on `--margin-{side}-override`
+// stops the parent's calc'd value from cascading into nested
+// margin-aware components — same defense Radix uses.
+//
 // Half-step values (`calc(${space[1]} * 1.5)`) come straight from
 // Radix's button.css/icon-button.css — they fall between our scale
 // steps to keep the ghost variant's progression smooth.
+
 const buttonGhostSizeMap = {
   1: { paddingBlock: space[1], paddingInline: space[2] },
   2: { paddingBlock: space[1], paddingInline: space[2] },
@@ -152,16 +157,14 @@ export const buttonGhostSize = styleVariants(
     paddingBlock,
     paddingInline,
     height: 'fit-content',
+    vars: {
+      [marginTopOverride]: `calc(${userMarginTop} - ${paddingBlock})`,
+      [marginRightOverride]: `calc(${userMarginRight} - ${paddingInline})`,
+      [marginBottomOverride]: `calc(${userMarginBottom} - ${paddingBlock})`,
+      [marginLeftOverride]: `calc(${userMarginLeft} - ${paddingInline})`,
+    },
   }),
 );
-
-sizes.forEach((key) => {
-  const { paddingBlock, paddingInline } = buttonGhostSizeMap[key];
-  globalStyle(`:where(.${buttonGhostSize[key]})`, {
-    marginBlock: `calc(-1 * ${paddingBlock})`,
-    marginInline: `calc(-1 * ${paddingInline})`,
-  });
-});
 
 const iconButtonGhostSizeMap = {
   1: space[1],
@@ -175,13 +178,25 @@ export const iconButtonGhostSize = styleVariants(
   (padding) => ({
     padding,
     height: 'fit-content',
+    vars: {
+      [marginTopOverride]: `calc(${userMarginTop} - ${padding})`,
+      [marginRightOverride]: `calc(${userMarginRight} - ${padding})`,
+      [marginBottomOverride]: `calc(${userMarginBottom} - ${padding})`,
+      [marginLeftOverride]: `calc(${userMarginLeft} - ${padding})`,
+    },
   }),
 );
 
+const overrideReset = {
+  [marginTopOverride]: 'initial',
+  [marginRightOverride]: 'initial',
+  [marginBottomOverride]: 'initial',
+  [marginLeftOverride]: 'initial',
+};
+
 sizes.forEach((key) => {
-  globalStyle(`:where(.${iconButtonGhostSize[key]})`, {
-    margin: `calc(-1 * ${iconButtonGhostSizeMap[key]})`,
-  });
+  globalStyle(`.${buttonGhostSize[key]} > *`, { vars: overrideReset });
+  globalStyle(`.${iconButtonGhostSize[key]} > *`, { vars: overrideReset });
 });
 
 // --- Radius override ---
