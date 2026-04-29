@@ -39,6 +39,6 @@ export const skeleton = style({
 });
 
 // Painted child content stays invisible so children only contribute layout.
-globalStyle(`${skeleton} > *, ${skeleton}::before, ${skeleton}::after`, {
+globalStyle(`.${skeleton} > *, .${skeleton}::before, .${skeleton}::after`, {
   visibility: 'hidden',
 });
