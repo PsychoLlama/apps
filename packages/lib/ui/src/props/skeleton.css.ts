@@ -40,12 +40,13 @@ export const skeleton = style({
       // `border-radius` is intentionally left untouched so each host
       // component's own corner shape (pill badge, large card, etc.)
       // shows through the placeholder.
-      animation: `${pulse} ${slow[2]} ${standard.productive} infinite alternate`,
+      animation: `${pulse} ${slow[2]} ${standard.productive} infinite alternate-reverse`,
       background: 'none',
       border: 'none',
       boxShadow: 'none',
       color: 'transparent',
       cursor: 'default',
+      outline: 'none',
       pointerEvents: 'none',
       userSelect: 'none',
       // Repaints the bg-box across line breaks for inline text wrappers.
