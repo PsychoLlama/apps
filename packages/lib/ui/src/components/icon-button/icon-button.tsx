@@ -51,8 +51,8 @@ type IconButtonBase = ButtonStyleProps &
  * (a sibling heading, a row label, etc.).
  */
 export type IconButtonProps =
-  | (IconButtonBase & { 'aria-label': string; 'aria-labelledby'?: string })
-  | (IconButtonBase & { 'aria-label'?: string; 'aria-labelledby': string });
+  | (IconButtonBase & { 'aria-label': string; 'aria-labelledby'?: never })
+  | (IconButtonBase & { 'aria-label'?: never; 'aria-labelledby': string });
 
 /** Square button sized to host a single icon. */
 const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
