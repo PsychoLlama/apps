@@ -23,7 +23,6 @@
 // `globalStyle` is banned outside @lib/design, but this file pays the
 // exception cost intentionally — see the `globalStyle` call below for
 // the trade-off rationale.
-// eslint-disable-next-line no-restricted-imports
 import { globalStyle, keyframes, style } from '@vanilla-extract/css';
 import { neutral, slow, standard } from '@lib/design';
 
