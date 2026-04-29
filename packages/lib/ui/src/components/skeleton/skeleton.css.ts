@@ -6,6 +6,9 @@
  *   `prefers-reduced-motion` automatically.
  * - One styling path: there's no `data-inline-skeleton` branch because
  *   the component always renders its own wrapper <span>.
+ * - Inherits the ambient font instead of pinning to Arial. Inline text
+ *   placeholders measure with the same metrics as the eventual text,
+ *   so the swap doesn't shift surrounding layout.
  *
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/skeleton.css
  */
@@ -18,10 +21,10 @@ const pulse = keyframes({
   to: { backgroundColor: neutral.alpha[4] },
 });
 
-// Stable bg-box height when wrapping inline text — strip line-height
-// and pin the fallback font to Arial so the placeholder doesn't grow
-// with the ambient font's ascent/descent. Radix's Skeleton does the
-// same; they're escape hatches, not theme tokens.
+// `inline-block` accommodates both standalone (sized) placeholders and
+// children that bring their own dimensions (e.g. inline icons). For
+// text wrapping the bg-box fits the glyphs because `line-height: 0`
+// collapses the surrounding leading.
 /* eslint-disable custom/require-design-tokens */
 export const base = style({
   display: 'inline-block',
@@ -32,8 +35,7 @@ export const base = style({
   userSelect: 'none',
   cursor: 'default',
   lineHeight: 0,
-  fontFamily: 'Arial, sans-serif',
-  // Standalone skeletons (no children) need an intrinsic height since
+  // Standalone skeletons (no children) need an intrinsic size since
   // there's no content to derive one from. Consumers override via
   // `style={{ width, height }}`.
   selectors: {

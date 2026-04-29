@@ -6,13 +6,16 @@
  *   <span>; size standalone placeholders via `style={{ width, height }}`.
  * - Drops the `width`/`height` shorthand props — pass standard CSS
  *   values through `style` instead.
+ * - The wrapper persists when `loading` is false. Margin, class, style,
+ *   and test ids stay attached so toggling `loading` doesn't drop
+ *   layout or test hooks.
  * - Pulse uses motion tokens (`slow[2]`) and respects
  *   `prefers-reduced-motion` automatically.
  *
  * @see https://www.radix-ui.com/themes/docs/components/skeleton
  */
 
-import { mergeProps, splitProps, Show } from 'solid-js';
+import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import {
   marginPropKeys,
@@ -25,8 +28,8 @@ import * as css from './skeleton.css';
 export interface SkeletonProps
   extends MarginProps, TestIdProps, JSX.HTMLAttributes<HTMLSpanElement> {
   /**
-   * Render the placeholder when true; render children unchanged when
-   * false. @default true
+   * Render the placeholder when true; render children unchanged inside
+   * the wrapper when false. @default true
    */
   loading?: boolean;
 }
@@ -47,23 +50,21 @@ const Skeleton: ParentComponent<SkeletonProps> = (rawProps) => {
   ]);
 
   const className = () =>
-    [...resolveMarginClasses(margin), css.base, local.class]
+    [...resolveMarginClasses(margin), local.loading && css.base, local.class]
       .filter(Boolean)
       .join(' ');
 
   return (
-    <Show when={local.loading} fallback={<>{local.children}</>}>
-      <span
-        aria-hidden
-        inert
-        tabindex={-1}
-        class={className()}
-        data-testid={tid.testId}
-        {...rest}
-      >
-        {local.children}
-      </span>
-    </Show>
+    <span
+      class={className()}
+      data-testid={tid.testId}
+      aria-hidden={local.loading || undefined}
+      inert={local.loading || undefined}
+      tabindex={local.loading ? -1 : undefined}
+      {...rest}
+    >
+      {local.children}
+    </span>
   );
 };
 
