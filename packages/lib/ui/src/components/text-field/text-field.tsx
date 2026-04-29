@@ -18,6 +18,12 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './text-field.css';
@@ -60,6 +66,7 @@ export type TextFieldType =
 export interface TextFieldProps
   extends
     MarginProps,
+    SkeletonProps,
     RequiredTestIdProps,
     Omit<
       JSX.InputHTMLAttributes<HTMLInputElement>,
@@ -109,6 +116,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
     'right',
     'class',
     'onPointerDown',
+    ...skeletonPropKeys,
   ]);
 
   // Clicks on the wrapper's empty space (slot padding, edges) need to
@@ -148,16 +156,20 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
       css.size[local.size],
       css.variant[local.variant],
       css.radiusVariant[local.radius],
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
+
+  const wrapperAttrs = () => resolveSkeletonAttrs(local);
 
   return (
     <div
       class={className()}
       data-testid={tid.testId}
       onPointerDown={onPointerDown}
+      {...wrapperAttrs()}
     >
       {local.left !== undefined && (
         <span class={`${css.slot} ${css.slotLeft}`}>{local.left}</span>

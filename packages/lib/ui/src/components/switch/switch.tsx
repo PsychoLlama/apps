@@ -27,6 +27,12 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './switch.css';
@@ -55,6 +61,7 @@ export type SwitchColor =
 export interface SwitchProps
   extends
     MarginProps,
+    SkeletonProps,
     RequiredTestIdProps,
     Omit<
       JSX.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -121,6 +128,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
     'form',
     'class',
     'onClick',
+    ...skeletonPropKeys,
   ]);
 
   const onClick: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
@@ -137,15 +145,18 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       css.color[local.color],
       css.variant[local.variant],
       css.radiusVariant[local.radius],
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+
   return (
     <>
       <button
-        {...rest}
+        {...merged}
         type="button"
         role="switch"
         aria-checked={local.checked}
