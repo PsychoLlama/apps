@@ -8,6 +8,9 @@
  * - No `loading`, `highContrast`, or `color` accent variants.
  * - `as` is restricted to `'button' | 'summary'` (mirroring Button) so
  *   the same visuals can drive a `<details>` toggle.
+ * - When rendering a `<button>`, `type` defaults to `"button"`. The
+ *   common IconButton actions (clear, toggle, like) are not form
+ *   submitters; opt in explicitly with `type="submit"` if needed.
  *
  * @see https://www.radix-ui.com/themes/docs/components/icon-button
  */
@@ -81,6 +84,7 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
   return (
     <Dynamic
       component={local.as}
+      type={local.as === 'button' ? 'button' : undefined}
       class={className()}
       data-testid={tid.testId}
       {...rest}
