@@ -136,10 +136,13 @@ export const iconButtonNonGhostSize = styleVariants(
 // margin is emitted via `globalStyle` wrapped in `:where(...)` so it has
 // specificity 0 — any user-supplied margin class wins.
 
+// Half-step values (`calc(${space[1]} * 1.5)`) come straight from
+// Radix's button.css/icon-button.css — they fall between our scale
+// steps to keep the ghost variant's progression smooth.
 const buttonGhostSizeMap = {
   1: { paddingBlock: space[1], paddingInline: space[2] },
   2: { paddingBlock: space[1], paddingInline: space[2] },
-  3: { paddingBlock: space[2], paddingInline: space[3] },
+  3: { paddingBlock: `calc(${space[1]} * 1.5)`, paddingInline: space[3] },
   4: { paddingBlock: space[2], paddingInline: space[4] },
 } as const;
 
@@ -162,7 +165,7 @@ sizes.forEach((key) => {
 
 const iconButtonGhostSizeMap = {
   1: space[1],
-  2: space[1],
+  2: `calc(${space[1]} * 1.5)`,
   3: space[2],
   4: space[3],
 } as const;
