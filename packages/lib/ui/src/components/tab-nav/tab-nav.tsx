@@ -26,6 +26,12 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { callConsumerHandler } from '../compose-event-handler';
 import Flex from '../flex/flex';
@@ -40,7 +46,11 @@ type TabNavWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
 /** `TabNavRoot` props. Wraps a `<nav>` with an inner `<ul>` styled like a tab list. */
 export interface TabNavRootProps
-  extends MarginProps, RequiredTestIdProps, JSX.HTMLAttributes<HTMLElement> {
+  extends
+    MarginProps,
+    SkeletonProps,
+    RequiredTestIdProps,
+    JSX.HTMLAttributes<HTMLElement> {
   /**
    * Accessible name for the navigation landmark. Required so assistive
    * tech can disambiguate this nav from any other on the page.
@@ -80,12 +90,15 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
     'wrap',
     'class',
     'children',
+    ...skeletonPropKeys,
   ]);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
   const navClassName = () =>
-    [...resolveMarginClasses(margin), local.class].filter(Boolean).join(' ');
+    [...resolveMarginClasses(margin), resolveSkeletonClass(local), local.class]
+      .filter(Boolean)
+      .join(' ');
 
   const listClassName = () =>
     [
@@ -98,8 +111,10 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
       .filter(Boolean)
       .join(' ');
 
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+
   return (
-    <nav {...rest} class={navClassName()} data-testid={tid.testId}>
+    <nav {...merged} class={navClassName()} data-testid={tid.testId}>
       <ul role="list" class={listClassName()}>
         {local.children}
       </ul>
