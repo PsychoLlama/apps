@@ -101,13 +101,14 @@ function Heading(
       .filter(Boolean)
       .join(' ');
 
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+
   return (
     <Dynamic
       component={local.as}
       class={className()}
       data-testid={local.testId}
-      {...rest}
-      {...resolveSkeletonAttrs(() => local.skeleton)}
+      {...merged}
     >
       {local.children}
     </Dynamic>

@@ -15,22 +15,26 @@ export const resolveSkeletonClass = ({
   return skeleton && css.skeleton;
 };
 
+interface SkeletonAttrs {
+  'aria-hidden'?: true;
+  inert?: true;
+  tabindex?: -1;
+}
+
 /**
- * Reactive a11y attrs to apply when `skeleton` is true. Returns an
- * object with getters so spreading (`{...resolveSkeletonAttrs(...)}`)
- * stays reactive in Solid JSX.
+ * A11y attrs to apply while `skeleton` is true; an empty object
+ * otherwise. Pair with Solid's `mergeProps` and a wrapping arrow so
+ * the keys only appear in the spread while loading — without the
+ * conditional, the spread would otherwise clear consumer-supplied
+ * `aria-hidden` / `inert` on every non-skeleton render:
+ *
+ *   const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+ *   return <Dynamic ... {...merged} />;
  */
-export const resolveSkeletonAttrs = (skeleton: () => boolean | undefined) => ({
-  get 'aria-hidden'(): true | undefined {
-    return skeleton() ? true : undefined;
-  },
-  get inert(): true | undefined {
-    return skeleton() ? true : undefined;
-  },
-  get tabindex(): -1 | undefined {
-    return skeleton() ? -1 : undefined;
-  },
-});
+export const resolveSkeletonAttrs = ({
+  skeleton,
+}: SkeletonProps): SkeletonAttrs =>
+  skeleton ? { 'aria-hidden': true, inert: true, tabindex: -1 } : {};
 
 export const skeletonArgTypes: ArgTypes<SkeletonProps> = {
   skeleton: {

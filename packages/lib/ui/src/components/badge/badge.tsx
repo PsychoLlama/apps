@@ -88,13 +88,10 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
       .filter(Boolean)
       .join(' ');
 
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+
   return (
-    <span
-      class={className()}
-      data-testid={tid.testId}
-      {...rest}
-      {...resolveSkeletonAttrs(() => local.skeleton)}
-    >
+    <span class={className()} data-testid={tid.testId} {...merged}>
       {local.children}
     </span>
   );
