@@ -78,11 +78,13 @@ export const side = styleVariants({
 });
 
 /** Applied by the component when `pad={false}` to remove inverse-side padding. */
+// eslint-disable-next-line custom/require-design-tokens -- composes with `side` to undo the padding it sets; not a redundant reset.
 export const padOff = style({ padding: 'unset' });
 
 // Declared after `side` so its rule wins on equal specificity when
 // `padding-box` flattens the per-side rounding above.
 export const clip = styleVariants({
   'border-box': {},
-  'padding-box': { borderRadius: 'unset' },
+  // eslint-disable-next-line custom/require-design-tokens -- flattens the per-corner radii from `side` via the shorthand; intentional zero, no matching token.
+  'padding-box': { borderRadius: 0 },
 });

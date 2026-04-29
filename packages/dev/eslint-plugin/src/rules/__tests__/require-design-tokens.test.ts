@@ -69,6 +69,36 @@ tester.run('require-design-tokens', rule, {
     // Motion — CSS keywords are fine.
     { code: 'const x = { transition: "none" }' },
     { code: 'const x = { animation: "none" }' },
+
+    // Redundant-reset values are allowed inside specialization blocks
+    // (`selectors`, `@media`, `@supports`, `@container`). The
+    // assumption is the author is undoing their own outer styles. We
+    // don't try to verify that — see `isInsideSpecialization`.
+    {
+      code: "const x = { padding: pad, selectors: { '&:hover': { padding: 0 } } }",
+    },
+    {
+      code: "const x = { margin: m, selectors: { '&:hover': { margin: '0px' } } }",
+    },
+    {
+      code: "const x = { padding: pad, '@media': { '(min-width: 600px)': { padding: 0 } } }",
+    },
+    {
+      code: "const x = { gap: g, '@supports': { '(display: grid)': { gap: 0 } } }",
+    },
+    {
+      code: "const x = { padding: pad, '@container': { '(min-width: 400px)': { padding: 'unset' } } }",
+    },
+
+    // `unset` on properties whose spec initial value is *not* `0`
+    // (`border-width: medium`, `gap: normal`, `outline-width: medium`)
+    // is meaningful — it doesn't equal `0`, so it isn't a redundant
+    // reset even though `0` itself is.
+    { code: 'const x = { borderWidth: "unset" }' },
+    { code: 'const x = { borderTopWidth: "unset" }' },
+    { code: 'const x = { outlineWidth: "unset" }' },
+    { code: 'const x = { gap: "unset" }' },
+    { code: 'const x = { rowGap: "unset" }' },
   ],
 
   invalid: [
@@ -259,43 +289,83 @@ tester.run('require-design-tokens', rule, {
       ],
     },
 
-    // Redundant zero — padding.
+    // Redundant reset — padding.
     {
       code: 'const x = { padding: 0 }',
       errors: [
         {
-          messageId: 'redundantZero' as const,
-          data: { property: 'padding' },
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
         },
       ],
     },
 
-    // Redundant zero — margin string.
+    // Redundant reset — margin string.
     {
       code: 'const x = { margin: "0px" }',
       errors: [
         {
-          messageId: 'redundantZero' as const,
-          data: { property: 'margin' },
+          messageId: 'redundantReset' as const,
+          data: { property: 'margin', value: '0px' },
         },
       ],
     },
 
-    // Redundant zero — gap.
+    // Redundant reset — gap.
     {
       code: 'const x = { gap: 0 }',
       errors: [
-        { messageId: 'redundantZero' as const, data: { property: 'gap' } },
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'gap', value: '0' },
+        },
       ],
     },
 
-    // Redundant zero — borderWidth.
+    // Redundant reset — borderWidth.
     {
       code: 'const x = { borderWidth: "0" }',
       errors: [
         {
-          messageId: 'redundantZero' as const,
-          data: { property: 'borderWidth' },
+          messageId: 'redundantReset' as const,
+          data: { property: 'borderWidth', value: '0' },
+        },
+      ],
+    },
+
+    // Redundant reset — `unset` is the same smell as `0`. The
+    // post-reset default for padding/margin/gap/etc. is already 0;
+    // restating it via `unset` is the author saying "set this to
+    // whatever the reset already produced."
+    {
+      code: 'const x = { padding: "unset" }',
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: 'unset' },
+        },
+      ],
+    },
+
+    {
+      code: 'const x = { marginInline: "unset" }',
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'marginInline', value: 'unset' },
+        },
+      ],
+    },
+
+    // `@layer` demotes its declarations in the cascade rather than
+    // specializing them, so the exemption doesn't apply: an inner
+    // reset under `@layer` is still just restating the global default.
+    {
+      code: "const x = { padding: pad, '@layer': { utilities: { padding: 0 } } }",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
         },
       ],
     },

@@ -1,9 +1,9 @@
 import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 import { getPropertyName } from '../utils/ast';
 import {
-  isZeroValue,
-  redundantZeroMessage,
-  redundantZeroProperties,
+  isRedundantResetValue,
+  redundantResetMessage,
+  redundantResetProperties,
 } from '../utils/redundant-css';
 
 const createRule = ESLintUtils.RuleCreator.withoutDocs;
@@ -18,7 +18,7 @@ const rule = createRule({
     messages: {
       static:
         'Static styles belong in vanilla-extract. Only use the style prop for dynamic runtime values.',
-      redundantZero: redundantZeroMessage,
+      redundantReset: redundantResetMessage,
     },
     schema: [],
   },
@@ -38,16 +38,17 @@ const rule = createRule({
           if (prop.value.type !== AST_NODE_TYPES.Literal) continue;
 
           const name = getPropertyName(prop.key);
+          const value = prop.value.value;
 
           if (
             name &&
-            redundantZeroProperties.has(name) &&
-            isZeroValue(prop.value.value)
+            redundantResetProperties.has(name) &&
+            isRedundantResetValue(name, value)
           ) {
             context.report({
               node: prop,
-              messageId: 'redundantZero',
-              data: { property: name },
+              messageId: 'redundantReset',
+              data: { property: name, value: String(value) },
             });
             continue;
           }

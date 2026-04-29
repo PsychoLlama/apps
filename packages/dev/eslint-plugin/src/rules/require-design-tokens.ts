@@ -2,11 +2,12 @@ import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 import { getPropertyName } from '../utils/ast';
 import {
   findFullViewportValue,
-  isZeroValue,
+  isInsideSpecialization,
+  isRedundantResetValue,
   redundantFullViewportMessage,
   redundantFullViewportProperties,
-  redundantZeroMessage,
-  redundantZeroProperties,
+  redundantResetMessage,
+  redundantResetProperties,
 } from '../utils/redundant-css';
 
 // ---------------------------------------------------------------------------
@@ -131,7 +132,7 @@ const rule = createRule({
     messages: {
       hardcoded:
         'Hard-coded {{property}} value. Use a {{token}} token from @lib/design instead.',
-      redundantZero: redundantZeroMessage,
+      redundantReset: redundantResetMessage,
       redundantFullViewport: redundantFullViewportMessage,
     },
     schema: [],
@@ -144,11 +145,11 @@ const rule = createRule({
         if (!name) return;
 
         const token = propertyToToken.get(name);
-        const isRedundantZeroProp = redundantZeroProperties.has(name);
+        const isRedundantResetProp = redundantResetProperties.has(name);
         const isRedundantFullViewportProp =
           redundantFullViewportProperties.has(name);
 
-        if (!token && !isRedundantZeroProp && !isRedundantFullViewportProp) {
+        if (!token && !isRedundantResetProp && !isRedundantFullViewportProp) {
           return;
         }
 
@@ -174,16 +175,22 @@ const rule = createRule({
         // Null values appear in createThemeContract — always allowed.
         if (value === null) return;
 
-        if (typeof value === 'string' && cssKeywords.has(value)) return;
-
-        if (isRedundantZeroProp && isZeroValue(value)) {
+        // Restating the post-reset default is the targeted smell. Inside
+        // a specialization (`selectors`, `@media`, …) the value is
+        // assumed to be undoing the author's own outer styles, so the
+        // check is suppressed — see `isInsideSpecialization` for the
+        // trade-off.
+        if (isRedundantResetProp && isRedundantResetValue(name, value)) {
+          if (isInsideSpecialization(node)) return;
           context.report({
             node,
-            messageId: 'redundantZero',
-            data: { property: name },
+            messageId: 'redundantReset',
+            data: { property: name, value: String(value) },
           });
           return;
         }
+
+        if (typeof value === 'string' && cssKeywords.has(value)) return;
 
         if (token) {
           context.report({
