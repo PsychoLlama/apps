@@ -70,6 +70,7 @@ export default [
       '@typescript-eslint/no-unused-vars': 'error',
       'custom/no-derived-token-types': 'error',
       'custom/no-static-style-prop': 'error',
+      'custom/prefer-icon-button': 'error',
       'custom/require-externalized-effects': 'error',
       'custom/require-selectable-prop': 'error',
       'custom/require-ui-primitives': 'error',
