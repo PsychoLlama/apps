@@ -166,6 +166,13 @@ export const variant = styleVariants({
   },
   soft: {
     backgroundColor: accent.alpha[3],
+    selectors: {
+      // Drop the accent tint when the field can't be edited so the
+      // disabled/readonly state reads as inert rather than highlighted.
+      '&:has(textarea:where(:disabled, :read-only))': {
+        backgroundColor: neutral.alpha[3],
+      },
+    },
   },
 });
 

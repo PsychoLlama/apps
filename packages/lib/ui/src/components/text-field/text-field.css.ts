@@ -228,6 +228,11 @@ export const variant = styleVariants({
       '&:has(input:focus-visible)': {
         outlineColor: accent.solid[8],
       },
+      // Drop the accent tint when the field can't be edited so the
+      // disabled/readonly state reads as inert rather than highlighted.
+      '&:has(input:where(:disabled, :read-only))': {
+        backgroundColor: neutral.alpha[3],
+      },
     },
   },
 });
