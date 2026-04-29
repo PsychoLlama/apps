@@ -7,16 +7,27 @@
  * - No `asChild` polymorphism — locks to `<button role="switch">`.
  * - No high-contrast variant.
  * - Form integration via a sibling `<input type="hidden">` rendered only
- *   when `name` is set and the switch is checked. Simpler than the React
- *   port's synthetic-bubble strategy and sufficient for native FormData.
- *   Consumers that observe form `change` events should listen to
- *   `onCheckedChange` on the Switch directly.
+ *   when `name` is set, the switch is checked, and the button is enabled
+ *   — disabled controls are excluded from FormData like native checkboxes.
+ *   The hidden input mirrors the button's `form="..."` attribute so an
+ *   externally-associated switch still submits its value. Uncontrolled
+ *   switches subscribe to the host form's `reset` event so they restore
+ *   `defaultChecked`. Simpler than the React port's synthetic-bubble
+ *   strategy; consumers that observe form `change` events should listen
+ *   to `onCheckedChange` on the Switch directly.
  *
  * @see https://www.radix-ui.com/themes/docs/components/switch
  * @see https://www.radix-ui.com/primitives/docs/components/switch
  */
 
-import { createSignal, mergeProps, Show, splitProps } from 'solid-js';
+import {
+  createSignal,
+  mergeProps,
+  onCleanup,
+  onMount,
+  Show,
+  splitProps,
+} from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import {
   marginPropKeys,
@@ -97,6 +108,8 @@ const Switch: Component<SwitchProps> = (rawProps) => {
     'onCheckedChange',
     'value',
     'name',
+    'disabled',
+    'form',
     'class',
     'onClick',
   ]);
@@ -127,21 +140,43 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       .filter(Boolean)
       .join(' ');
 
+  let buttonRef: HTMLButtonElement | undefined;
+
+  // Mirror native checkbox behavior: when the host form resets, an
+  // uncontrolled switch returns to `defaultChecked`. Controlled mode
+  // delegates reset to the parent.
+  onMount(() => {
+    if (isControlled()) return;
+    const form = buttonRef?.form ?? buttonRef?.closest('form');
+    if (!form) return;
+    const onReset = () => setInternal(local.defaultChecked);
+    form.addEventListener('reset', onReset);
+    onCleanup(() => form.removeEventListener('reset', onReset));
+  });
+
   return (
     <>
       <button
         {...rest}
+        ref={buttonRef}
         type="button"
         role="switch"
         aria-checked={checked()}
         class={className()}
         data-testid={tid.testId}
+        disabled={local.disabled}
+        form={local.form}
         onClick={onClick}
       >
         <span class={css.thumb} aria-hidden="true" />
       </button>
-      <Show when={local.name && checked()}>
-        <input type="hidden" name={local.name} value={local.value} />
+      <Show when={local.name && checked() && !local.disabled}>
+        <input
+          type="hidden"
+          name={local.name}
+          value={local.value}
+          form={local.form}
+        />
       </Show>
     </>
   );

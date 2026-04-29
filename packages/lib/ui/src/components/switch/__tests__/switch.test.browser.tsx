@@ -165,6 +165,46 @@ describe('Switch', () => {
     ).toHaveAttribute('value', 'enabled');
   });
 
+  it('omits the hidden input when checked but disabled', () => {
+    render(() => (
+      <form data-testid="form">
+        <Switch testId="sw" name="wifi" defaultChecked disabled />
+      </form>
+    ));
+    expect(
+      screen.getByTestId('form').querySelector('input[type="hidden"]'),
+    ).toBeNull();
+  });
+
+  it('forwards the form attribute to the hidden input', () => {
+    render(() => (
+      <>
+        <form id="external" data-testid="external" />
+        <Switch testId="sw" name="wifi" defaultChecked form="external" />
+      </>
+    ));
+    expect(screen.getByTestId('sw')).toHaveAttribute('form', 'external');
+    const hidden = document.querySelector('input[type="hidden"][name="wifi"]')!;
+    expect(hidden).toHaveAttribute('form', 'external');
+  });
+
+  it('restores defaultChecked when the form resets (uncontrolled)', async () => {
+    render(() => (
+      <form data-testid="form">
+        <Switch testId="sw" name="wifi" defaultChecked />
+        <button type="reset" data-testid="reset">
+          reset
+        </button>
+      </form>
+    ));
+
+    await userEvent.click(screen.getByTestId('sw'));
+    expect(screen.getByTestId('sw')).toHaveAttribute('aria-checked', 'false');
+
+    await userEvent.click(screen.getByTestId('reset'));
+    expect(screen.getByTestId('sw')).toHaveAttribute('aria-checked', 'true');
+  });
+
   it('reflects toggling into FormData', async () => {
     render(() => (
       <form data-testid="form">
