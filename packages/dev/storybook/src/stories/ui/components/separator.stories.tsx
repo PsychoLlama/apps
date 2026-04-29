@@ -7,7 +7,6 @@ import {
   type SeparatorProps,
 } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
-import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
@@ -18,11 +17,9 @@ const meta = {
     size: 1,
     color: 'neutral',
     decorative: true,
-    ...skeletonArgs,
   },
   argTypes: {
     ...marginArgTypes,
-    ...skeletonArgTypes,
     ...testIdArgTypes,
     orientation: {
       control: 'inline-radio',

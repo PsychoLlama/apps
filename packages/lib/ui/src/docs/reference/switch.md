@@ -4,7 +4,7 @@ Two-state toggle. Renders a `<button role="switch">` with a sliding thumb. Contr
 
 ## Props
 
-Base: `<button>` attributes (except `type`, `role`, `size`, `color`, `value`, `children`), margin props.
+Base: `<button>` attributes (except `type`, `role`, `size`, `color`, `value`, `children`), margin props, skeleton props.
 
 - `testId` (required): Test identifier rendered as `data-testid` on the button.
 - `checked` (required): Controlled checked state.

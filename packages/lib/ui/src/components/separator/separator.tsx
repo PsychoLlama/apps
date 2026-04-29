@@ -19,12 +19,6 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
-import {
-  type SkeletonProps,
-  skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
-} from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './separator.css';
 
@@ -35,7 +29,6 @@ type Color = 'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 export interface SeparatorProps
   extends
     MarginProps,
-    SkeletonProps,
     TestIdProps,
     Omit<
       JSX.HTMLAttributes<HTMLHRElement>,
@@ -72,7 +65,6 @@ const Separator: Component<SeparatorProps> = (rawProps) => {
     'color',
     'decorative',
     'class',
-    ...skeletonPropKeys,
   ]);
 
   const className = () =>
@@ -82,13 +74,10 @@ const Separator: Component<SeparatorProps> = (rawProps) => {
       css.orientation[local.orientation],
       css.size[local.orientation][local.size],
       css.color[local.color],
-      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
-
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
 
   return (
     <hr
@@ -100,7 +89,7 @@ const Separator: Component<SeparatorProps> = (rawProps) => {
           ? 'vertical'
           : undefined
       }
-      {...merged}
+      {...rest}
     />
   );
 };

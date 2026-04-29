@@ -78,7 +78,7 @@ export const Skeleton: Story = {
             Manage your profile, see recent activity, and configure how the
             workspace notifies you.
           </Text>
-          <Separator decorative my={3} skeleton={props.loading} />
+          <Separator decorative my={3} />
           <Flex as="div" gap={3} align="center">
             <Button testId="primary" skeleton={props.loading}>
               Save changes

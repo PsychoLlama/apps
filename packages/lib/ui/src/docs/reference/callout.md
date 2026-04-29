@@ -4,7 +4,7 @@ Informational container with an optional icon. Content is not wrapped — consum
 
 ## Props
 
-Base: `<div>` attributes, margin props.
+Base: `<div>` attributes, margin props, skeleton props.
 
 - `size` (=`2`): Visual size. `1 | 2 | 3`.
 - `variant` (=`'soft'`): Visual treatment. `'soft' | 'surface' | 'outline'`.

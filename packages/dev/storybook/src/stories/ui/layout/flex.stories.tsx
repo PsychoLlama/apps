@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { Flex as FlexComponent, type FlexProps } from '@lib/ui';
 import { boxArgTypes } from '@lib/ui/props/box';
 import { flexArgTypes } from '@lib/ui/props/flex';
-import { skeletonArgs } from '@lib/ui/props/skeleton';
 import { swatches } from '../../../swatch';
 
 const meta = {
@@ -13,11 +12,16 @@ const meta = {
     direction: 'row',
     gap: 3,
     children: swatches(6),
-    ...skeletonArgs,
   },
   argTypes: {
     ...boxArgTypes,
     ...flexArgTypes,
+    // The `skeleton` prop is real, but a layout primitive with no
+    // visual treatment of its own just turns into a featureless
+    // pulsing block when you flip it on — there's nothing left to
+    // demonstrate. The showcase at `UI/Patterns/Skeleton` exercises
+    // skeleton wrapping a real layout instead.
+    skeleton: { table: { disable: true } },
   },
 } satisfies Meta<FlexProps<'div'>>;
 
