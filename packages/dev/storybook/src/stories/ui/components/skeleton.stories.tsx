@@ -59,7 +59,7 @@ const meta = {
       </SkeletonComponent>
     </Flex>
   ),
-} satisfies Meta<SkeletonProps>;
+} satisfies Meta<SkeletonProps<'span'>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

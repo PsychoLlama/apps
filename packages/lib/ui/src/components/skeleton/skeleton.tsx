@@ -2,9 +2,10 @@
  * Skeleton component.
  *
  * Ported from Radix UI Themes Skeleton. Deviations:
- * - Polymorphic via `as` (default `'span'`). Pick a block tag (e.g.
- *   `'div'`) when wrapping block-level children — Radix's React build
- *   sidesteps this with Slot-based prop merging, which we don't have.
+ * - Polymorphic via `as`. Pick `'span'` for inline placeholders and a
+ *   block tag (`'div'`, `'li'`, etc.) when the children are block-level
+ *   — Radix's React build sidesteps this with Slot-based prop merging,
+ *   which we don't have.
  * - The wrapper persists when `loading` is false. Margin, class, style,
  *   and test ids stay attached so toggling `loading` doesn't drop
  *   layout or test hooks.
@@ -31,7 +32,7 @@ import {
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './skeleton.css';
 
-/** Tags Skeleton may render as. Default is `'span'`. */
+/** Tags Skeleton may render as. */
 export type SkeletonTag = 'span' | HtmlBoxTag;
 
 interface SkeletonOwnProps {
@@ -43,7 +44,7 @@ interface SkeletonOwnProps {
 }
 
 /** Skeleton props for a specific element tag. */
-export type SkeletonProps<T extends SkeletonTag = 'span'> = PolymorphicProps<
+export type SkeletonProps<T extends SkeletonTag> = PolymorphicProps<
   T,
   SkeletonOwnProps & MarginProps & TestIdProps
 >;
@@ -53,16 +54,16 @@ export type SkeletonProps<T extends SkeletonTag = 'span'> = PolymorphicProps<
  * data is loading. Toggle `loading` to swap between placeholder and
  * real content without changing the surrounding layout.
  */
-function Skeleton<const T extends SkeletonTag = 'span'>(
+function Skeleton<const T extends SkeletonTag>(
   props: SkeletonProps<T>,
 ): JSX.Element;
 function Skeleton(
-  rawProps: { as?: SkeletonTag } & SkeletonOwnProps &
+  rawProps: { as: SkeletonTag } & SkeletonOwnProps &
     MarginProps &
     TestIdProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
-  const props = mergeProps({ as: 'span' as const, loading: true }, rawProps);
+  const props = mergeProps({ loading: true }, rawProps);
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [

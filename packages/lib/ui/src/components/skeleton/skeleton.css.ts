@@ -26,7 +26,11 @@ const pulse = keyframes({
 // clone` so the bg-box repaints across line breaks) and a block tag
 // hosts block children naturally. `:empty` falls back to a sized block
 // for standalone placeholders.
-/* eslint-disable custom/require-design-tokens */
+//
+// `line-height` is left alone so wrapping a whole sentence doesn't
+// collapse the placeholder height — Radix only zeros line-height
+// inside its inline-skeleton branch (text wrapped mid-line), which
+// our single styling path can't tell apart.
 export const base = style({
   borderRadius: radius[1],
   animation: `${pulse} ${slow[2]} ${standard.productive} infinite alternate`,
@@ -34,7 +38,6 @@ export const base = style({
   pointerEvents: 'none',
   userSelect: 'none',
   cursor: 'default',
-  lineHeight: 0,
   boxDecorationBreak: 'clone',
   // Standalone skeletons (no children) need an intrinsic size since
   // there's no content to derive one from. Consumers override via
@@ -42,11 +45,11 @@ export const base = style({
   selectors: {
     '&:where(:empty)': {
       display: 'block',
+      /* eslint-disable-next-line custom/require-design-tokens */
       minHeight: '1em',
     },
   },
 });
-/* eslint-enable custom/require-design-tokens */
 
 // Hide painted content so children only contribute layout.
 globalStyle(`${base} > *, ${base}::before, ${base}::after`, {
