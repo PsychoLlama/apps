@@ -40,7 +40,19 @@ export const skeleton = style({
   },
 });
 
-// Painted child content stays invisible so children only contribute layout.
-globalStyle(`.${skeleton} > *, .${skeleton}::before, .${skeleton}::after`, {
+// Direct children only contribute layout, not paint.
+globalStyle(`.${skeleton} > *`, {
   visibility: 'hidden',
+});
+
+// Suppress painted styles on the host's own pseudo-elements (e.g. Card's
+// `::after` border) without using `visibility: hidden` — the trim helper
+// uses `::before`/`::after` with negative margins to remove leading
+// whitespace, and that geometry needs to keep applying while the
+// skeleton is on.
+globalStyle(`.${skeleton}::before, .${skeleton}::after`, {
+  background: 'none',
+  backgroundImage: 'none',
+  border: 'none',
+  boxShadow: 'none',
 });
