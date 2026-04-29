@@ -4,7 +4,7 @@ Compact label or status indicator. Inline; pill-shaped by default.
 
 ## Props
 
-Base: `<span>` attributes, margin props.
+Base: `<span>` attributes, margin props, skeleton props.
 
 - `size` (=`1`): Visual size. `1 | 2 | 3`.
 - `variant` (=`'soft'`): Visual treatment. `'solid' | 'soft' | 'surface' | 'outline'`.

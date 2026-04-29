@@ -21,6 +21,12 @@ import {
   selectablePropKeys,
   resolveSelectableClass,
 } from '../../props/selectable';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './text.css';
 
@@ -39,7 +45,12 @@ interface TextOwnProps {
 /** Text props for a specific element tag. */
 export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
   T,
-  TextOwnProps & TrimProps & MarginProps & SelectableProps & TestIdProps
+  TextOwnProps &
+    TrimProps &
+    MarginProps &
+    SelectableProps &
+    SkeletonProps &
+    TestIdProps
 >;
 
 /** General-purpose text component for body copy, labels, and inline text. */
@@ -49,6 +60,7 @@ function Text(
     TrimProps &
     MarginProps &
     SelectableProps &
+    SkeletonProps &
     TestIdProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
@@ -64,6 +76,7 @@ function Text(
     ...trimPropKeys,
     ...marginPropKeys,
     ...selectablePropKeys,
+    ...skeletonPropKeys,
     ...testIdPropKeys,
   ]);
 
@@ -76,18 +89,21 @@ function Text(
       local.color && css.color[local.color],
       resolveTrimClass(local),
       resolveSelectableClass(local),
+      resolveSkeletonClass(local),
       ...resolveMarginClasses(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+
   return (
     <Dynamic
       component={local.as}
       class={className()}
       data-testid={local.testId}
-      {...rest}
+      {...merged}
     >
       {local.children}
     </Dynamic>

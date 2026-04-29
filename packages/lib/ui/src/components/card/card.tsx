@@ -21,6 +21,12 @@ import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './card.css';
 
@@ -41,7 +47,7 @@ interface CardOwnProps {
 /** Card props for a specific element tag. */
 export type CardProps<T extends CardTag> = PolymorphicProps<
   T,
-  CardOwnProps & MarginProps & TestIdProps
+  CardOwnProps & MarginProps & SkeletonProps & TestIdProps
 >;
 
 const interactiveTags = new Set<CardTag>(['a', 'button', 'label']);
@@ -51,6 +57,7 @@ function Card<const T extends CardTag>(props: CardProps<T>): JSX.Element;
 function Card(
   rawProps: { as: CardTag } & CardOwnProps &
     MarginProps &
+    SkeletonProps &
     TestIdProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
@@ -66,6 +73,7 @@ function Card(
     'variant',
     'class',
     'children',
+    ...skeletonPropKeys,
   ]);
 
   const className = () =>
@@ -75,17 +83,20 @@ function Card(
       css.size[local.size],
       css.variant[local.variant],
       interactiveTags.has(local.as) && css.interactive,
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
+
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
 
   return (
     <Dynamic
       component={local.as}
       class={className()}
       data-testid={tid.testId}
-      {...rest}
+      {...merged}
     >
       {local.children}
     </Dynamic>

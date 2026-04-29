@@ -21,6 +21,12 @@ import {
   selectablePropKeys,
   resolveSelectableClass,
 } from '../../props/selectable';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './heading.css';
 
@@ -39,7 +45,12 @@ interface HeadingOwnProps {
 /** Heading props for a specific heading level. */
 export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<
   T,
-  HeadingOwnProps & TrimProps & MarginProps & SelectableProps & TestIdProps
+  HeadingOwnProps &
+    TrimProps &
+    MarginProps &
+    SelectableProps &
+    SkeletonProps &
+    TestIdProps
 >;
 
 /** Semantic heading with size independent of level. Pick the `as` level for document hierarchy and `size` for visual weight. */
@@ -51,6 +62,7 @@ function Heading(
     TrimProps &
     MarginProps &
     SelectableProps &
+    SkeletonProps &
     TestIdProps &
     JSX.HTMLAttributes<HTMLHeadingElement>,
 ) {
@@ -69,6 +81,7 @@ function Heading(
     ...trimPropKeys,
     ...marginPropKeys,
     ...selectablePropKeys,
+    ...skeletonPropKeys,
     ...testIdPropKeys,
   ]);
 
@@ -81,18 +94,21 @@ function Heading(
       local.color && css.color[local.color],
       resolveTrimClass(local),
       resolveSelectableClass(local),
+      resolveSkeletonClass(local),
       ...resolveMarginClasses(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
+
   return (
     <Dynamic
       component={local.as}
       class={className()}
       data-testid={local.testId}
-      {...rest}
+      {...merged}
     >
       {local.children}
     </Dynamic>
