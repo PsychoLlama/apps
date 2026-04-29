@@ -16,6 +16,12 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './badge.css';
 
@@ -25,7 +31,11 @@ type Color = 'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 type Radius = 'none' | 'small' | 'medium' | 'large' | 'full';
 
 export interface BadgeProps
-  extends MarginProps, TestIdProps, JSX.HTMLAttributes<HTMLSpanElement> {
+  extends
+    MarginProps,
+    SkeletonProps,
+    TestIdProps,
+    JSX.HTMLAttributes<HTMLSpanElement> {
   /** Visual size on a 1–3 scale. @default 1 */
   size?: Size;
   /** Visual treatment. @default 'soft' */
@@ -60,6 +70,7 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
     'highContrast',
     'class',
     'children',
+    ...skeletonPropKeys,
   ]);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
@@ -71,13 +82,19 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
       css.size[local.size],
       css.cornerRadius[local.radius],
       css.variantColor[local.variant][local.color][contrast()],
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
   return (
-    <span class={className()} data-testid={tid.testId} {...rest}>
+    <span
+      class={className()}
+      data-testid={tid.testId}
+      {...rest}
+      {...resolveSkeletonAttrs(() => local.skeleton)}
+    >
       {local.children}
     </span>
   );

@@ -1,65 +1,53 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import {
-  Flex,
-  Heading,
-  Skeleton as SkeletonComponent,
-  type SkeletonProps,
-  Text,
-} from '@lib/ui';
-import { marginArgTypes } from '@lib/ui/props/margin';
-import { testIdArgTypes } from '@lib/ui/props/test-id';
+import { Badge, Card, Flex, Heading, Text } from '@lib/ui';
+import { skeletonArgTypes, type SkeletonProps } from '@lib/ui/props/skeleton';
 
 const meta = {
-  title: 'UI/Components',
-  component: SkeletonComponent,
+  title: 'UI/Patterns',
   args: {
-    as: 'span',
-    loading: true,
+    skeleton: true,
   },
-  argTypes: {
-    ...marginArgTypes,
-    ...testIdArgTypes,
-    as: {
-      control: 'inline-radio',
-      options: ['span', 'div'],
-    },
-    loading: {
-      control: 'boolean',
-    },
-  },
+  argTypes: skeletonArgTypes,
   render: (props) => (
     <Flex as="div" direction="column" gap={4} style={{ 'max-width': '32rem' }}>
-      <Heading as="h3" size={4}>
-        Wrapping inline text
+      <Heading as="h1" size={6} skeleton={props.skeleton}>
+        Page title
       </Heading>
-      <Text as="p" size={3}>
-        Lorem ipsum dolor sit{' '}
-        <SkeletonComponent {...props}>amet, consectetur</SkeletonComponent>{' '}
-        adipiscing elit, sed do eiusmod{' '}
-        <SkeletonComponent {...props}>tempor</SkeletonComponent> incididunt ut
-        labore et dolore magna aliqua.
+
+      <Text as="p" size={3} skeleton={props.skeleton}>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+        tempor incididunt ut labore et dolore magna aliqua.
       </Text>
 
-      <Heading as="h3" size={4}>
-        Standalone block
-      </Heading>
-      <SkeletonComponent
-        as="div"
-        loading={props.loading}
-        style={{ width: '100%', height: '8rem' }}
-      />
+      <Text as="p" size={3}>
+        Inline placeholder mid-sentence:{' '}
+        <Text as="span" skeleton={props.skeleton}>
+          loading value
+        </Text>{' '}
+        followed by more text.
+      </Text>
 
-      <Heading as="h3" size={4}>
-        Wrapping a block element
-      </Heading>
-      <SkeletonComponent as="div" loading={props.loading}>
-        <Heading as="h2" size={6}>
-          Loaded title goes here
+      <Flex as="div" gap={2}>
+        <Badge skeleton={props.skeleton}>Active</Badge>
+        <Badge color="success" skeleton={props.skeleton}>
+          Healthy
+        </Badge>
+        <Badge color="danger" skeleton={props.skeleton}>
+          Error
+        </Badge>
+      </Flex>
+
+      <Card as="div" size={3} skeleton={props.skeleton}>
+        <Heading as="h2" size={4}>
+          Card title
         </Heading>
-      </SkeletonComponent>
+        <Text as="p">
+          Card body copy that the skeleton hides while loading.
+        </Text>
+      </Card>
     </Flex>
   ),
-} satisfies Meta<SkeletonProps<'span'>>;
+} satisfies Meta<SkeletonProps>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
