@@ -29,7 +29,10 @@ export interface SeparatorProps
   extends
     MarginProps,
     TestIdProps,
-    Omit<JSX.HTMLAttributes<HTMLHRElement>, 'role' | 'aria-orientation'> {
+    Omit<
+      JSX.HTMLAttributes<HTMLHRElement>,
+      'role' | 'aria-orientation' | 'children'
+    > {
   /** Axis along which the separator is drawn. @default 'horizontal' */
   orientation?: Orientation;
   /** Length along the major axis. `4` stretches to fill. @default '1' */
@@ -79,7 +82,6 @@ const Separator: Component<SeparatorProps> = (rawProps) => {
   return (
     <hr
       class={className()}
-      data-orientation={local.orientation}
       data-testid={tid.testId}
       role={local.decorative ? 'none' : undefined}
       aria-orientation={

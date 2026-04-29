@@ -6,6 +6,9 @@
  * - `size` is a static class, not a responsive `data-*` cascade.
  * - Orientation hands its size off via a `createVar()` shared with `size`,
  *   instead of duplicating the matrix per orientation.
+ * - Adds `flex-shrink: 0` so the separator keeps its target size in flex
+ *   parents. Matches the rest of `@lib/ui` (Badge, Kbd) but isn't in the
+ *   upstream rule.
  *
  * @see https://www.radix-ui.com/themes/docs/components/separator
  */
