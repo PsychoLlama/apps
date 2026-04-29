@@ -39,6 +39,10 @@ export {
   type LinkButtonProps,
 } from './components/link-button/link-button';
 export {
+  default as Skeleton,
+  type SkeletonProps,
+} from './components/skeleton/skeleton';
+export {
   TabsRoot,
   TabsList,
   TabsTrigger,
