@@ -69,6 +69,29 @@ tester.run('require-design-tokens', rule, {
     // Motion — CSS keywords are fine.
     { code: 'const x = { transition: "none" }' },
     { code: 'const x = { animation: "none" }' },
+
+    // Redundant-reset values are allowed inside specialization blocks —
+    // there the author is undoing their own styles, not restating the
+    // global reset's default.
+    {
+      code: "const x = { selectors: { '&:hover': { padding: 0 } } }",
+    },
+    {
+      code: "const x = { selectors: { '&:hover': { margin: '0px' } } }",
+    },
+    {
+      code: "const x = { '@media': { '(min-width: 600px)': { padding: 0 } } }",
+    },
+    {
+      code: "const x = { '@supports': { '(display: grid)': { gap: 0 } } }",
+    },
+    {
+      code: "const x = { '@container': { '(min-width: 400px)': { padding: 'unset' } } }",
+    },
+    // Specialization exemption applies even when nested several levels deep.
+    {
+      code: "const x = { '@media': { '(min-width: 600px)': { selectors: { '&:hover': { padding: 0 } } } } }",
+    },
   ],
 
   invalid: [
@@ -259,43 +282,70 @@ tester.run('require-design-tokens', rule, {
       ],
     },
 
-    // Redundant zero — padding.
+    // Redundant reset — padding.
     {
       code: 'const x = { padding: 0 }',
       errors: [
         {
-          messageId: 'redundantZero' as const,
-          data: { property: 'padding' },
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
         },
       ],
     },
 
-    // Redundant zero — margin string.
+    // Redundant reset — margin string.
     {
       code: 'const x = { margin: "0px" }',
       errors: [
         {
-          messageId: 'redundantZero' as const,
-          data: { property: 'margin' },
+          messageId: 'redundantReset' as const,
+          data: { property: 'margin', value: '0px' },
         },
       ],
     },
 
-    // Redundant zero — gap.
+    // Redundant reset — gap.
     {
       code: 'const x = { gap: 0 }',
       errors: [
-        { messageId: 'redundantZero' as const, data: { property: 'gap' } },
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'gap', value: '0' },
+        },
       ],
     },
 
-    // Redundant zero — borderWidth.
+    // Redundant reset — borderWidth.
     {
       code: 'const x = { borderWidth: "0" }',
       errors: [
         {
-          messageId: 'redundantZero' as const,
-          data: { property: 'borderWidth' },
+          messageId: 'redundantReset' as const,
+          data: { property: 'borderWidth', value: '0' },
+        },
+      ],
+    },
+
+    // Redundant reset — `unset` is the same smell as `0`. The
+    // post-reset default for padding/margin/gap/etc. is already 0;
+    // restating it via `unset` is the author saying "set this to
+    // whatever the reset already produced."
+    {
+      code: 'const x = { padding: "unset" }',
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: 'unset' },
+        },
+      ],
+    },
+
+    {
+      code: 'const x = { marginInline: "unset" }',
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'marginInline', value: 'unset' },
         },
       ],
     },

@@ -1,7 +1,13 @@
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils';
+import { getPropertyName } from './ast';
 
-/** Properties where 0 is the initial value after `all: unset`. */
-export const redundantZeroProperties = new Set([
+/**
+ * Properties whose initial value after `all: unset` is `0`. Restating the
+ * default — whether numerically (`0`, `'0px'`) or via the `unset` keyword —
+ * is a reliable signal the author didn't realize the global reset already
+ * cleared it.
+ */
+export const redundantResetProperties = new Set([
   'padding',
   'paddingTop',
   'paddingRight',
@@ -38,14 +44,39 @@ export const redundantZeroProperties = new Set([
 
 const ZERO_RE = /^0(px|rem|em|%)?$/;
 
-export const isZeroValue = (value: unknown): boolean => {
+const isZeroValue = (value: unknown): boolean => {
   if (value === 0) return true;
   if (typeof value === 'string') return ZERO_RE.test(value);
   return false;
 };
 
-export const redundantZeroMessage =
-  '{{property}}: 0 is unnecessary — the global CSS reset (all: unset) already removes this default.';
+/** Values that re-assert the post-reset default for the properties above. */
+export const isResetValue = (value: unknown): boolean =>
+  isZeroValue(value) || value === 'unset';
+
+export const redundantResetMessage =
+  '{{property}}: {{value}} is unnecessary — the global CSS reset (all: unset) already removes this default.';
+
+/**
+ * Walks ancestors looking for a vanilla-extract block that scopes the
+ * declaration to a specialization (`selectors`, `@media`, `@supports`,
+ * `@container`, `@layer`, …). Inside one of these, restating the default
+ * is interpreted as undoing the author's own styles, not ignorance of the
+ * reset.
+ */
+export const isInsideSpecialization = (node: TSESTree.Node): boolean => {
+  let current: TSESTree.Node | undefined = node.parent;
+  while (current) {
+    if (current.type === AST_NODE_TYPES.Property) {
+      const key = getPropertyName(current.key);
+      if (key === 'selectors' || (key !== null && key.startsWith('@'))) {
+        return true;
+      }
+    }
+    current = current.parent;
+  }
+  return false;
+};
 
 /**
  * Properties where a full-viewport height is redundant because the body

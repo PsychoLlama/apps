@@ -54,48 +54,68 @@ tester.run('no-static-style-prop', rule, {
       errors: [{ messageId: 'static' as const }],
     },
 
-    // Redundant zero — padding.
+    // Redundant reset — padding.
     {
       code: '<div style={{ padding: 0 }} />',
       errors: [
-        { messageId: 'redundantZero' as const, data: { property: 'padding' } },
-      ],
-    },
-
-    // Redundant zero — margin.
-    {
-      code: '<div style={{ margin: 0 }} />',
-      errors: [
-        { messageId: 'redundantZero' as const, data: { property: 'margin' } },
-      ],
-    },
-
-    // Redundant zero — string "0px".
-    {
-      code: '<div style={{ gap: "0px" }} />',
-      errors: [
-        { messageId: 'redundantZero' as const, data: { property: 'gap' } },
-      ],
-    },
-
-    // Redundant zero — borderWidth.
-    {
-      code: '<div style={{ borderWidth: 0 }} />',
-      errors: [
         {
-          messageId: 'redundantZero' as const,
-          data: { property: 'borderWidth' },
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
         },
       ],
     },
 
-    // Non-zero on a redundant-zero property is still static (not the special message).
+    // Redundant reset — margin.
+    {
+      code: '<div style={{ margin: 0 }} />',
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'margin', value: '0' },
+        },
+      ],
+    },
+
+    // Redundant reset — string "0px".
+    {
+      code: '<div style={{ gap: "0px" }} />',
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'gap', value: '0px' },
+        },
+      ],
+    },
+
+    // Redundant reset — borderWidth.
+    {
+      code: '<div style={{ borderWidth: 0 }} />',
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'borderWidth', value: '0' },
+        },
+      ],
+    },
+
+    // Redundant reset — `unset` carries the same smell as `0`.
+    {
+      code: '<div style={{ padding: "unset" }} />',
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: 'unset' },
+        },
+      ],
+    },
+
+    // Non-zero on a redundant-reset property is still static (not the special message).
     {
       code: '<div style={{ padding: 10 }} />',
       errors: [{ messageId: 'static' as const }],
     },
 
-    // Zero on a non-redundant property is static (not the special message).
+    // Zero on a non-reset property is static (not the special message).
     {
       code: '<div style={{ opacity: 0 }} />',
       errors: [{ messageId: 'static' as const }],
