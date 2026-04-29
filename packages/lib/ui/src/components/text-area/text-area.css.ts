@@ -89,6 +89,21 @@ export const input = style({
     '&:where(:autofill, [data-com-onepassword-filled])': {
       WebkitTextFillColor: text.highContrast,
     },
+
+    // Style the WebKit scrollbar that appears when content overflows.
+    // The OS default is wide and unstyled — visually heavy inside a
+    // small textarea. Match the field's design with a slim track and
+    // a neutral-alpha thumb that picks up theme colors.
+    '&::-webkit-scrollbar': {
+      width: space[3],
+      height: space[3],
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: neutral.alpha[8],
+    },
+    '&::-webkit-scrollbar-thumb:hover': {
+      backgroundColor: neutral.alpha[9],
+    },
   },
 });
 
@@ -151,6 +166,13 @@ export const variant = styleVariants({
   },
   soft: {
     backgroundColor: accent.alpha[3],
+    selectors: {
+      // Drop the accent tint when the field can't be edited so the
+      // disabled/readonly state reads as inert rather than highlighted.
+      '&:has(textarea:where(:disabled, :read-only))': {
+        backgroundColor: neutral.alpha[3],
+      },
+    },
   },
 });
 

@@ -61,6 +61,14 @@ export const root = style({
 // --- Input ---
 
 export const input = style({
+  // `display: flex; align-items: center` is the canonical fix for
+  // `<input type="date|time|datetime-local|month|week">` in Chrome
+  // and Safari — those types render multiple sub-fields plus a
+  // picker icon inside the input, and without this rule the
+  // segments sit on the baseline instead of vertically centered.
+  // No-op for plain text inputs.
+  display: 'flex',
+  alignItems: 'center',
   flex: '1 1 auto',
   minWidth: 0,
   background: 'transparent',
@@ -99,6 +107,21 @@ export const input = style({
       display: 'none',
     },
 
+    // Style the date/time picker icon Chrome paints at the right of
+    // those inputs. Sized in `em` so it tracks the field's font-size
+    // (matches Radix's per-size 12/14/16px exactly). Hover bg matches
+    // the field's hover affordances.
+    '&::-webkit-calendar-picker-indicator': {
+      width: '1em',
+      height: '1em',
+      color: 'inherit',
+      cursor: 'pointer',
+      borderRadius: radius[1],
+    },
+    '&::-webkit-calendar-picker-indicator:hover': {
+      backgroundColor: neutral.alpha[3],
+    },
+
     // Autofill (Chrome's `:autofill`, 1Password's marker attribute)
     // forces a yellow background and dark text color regardless of
     // page styles. Restore the field's intended foreground via
@@ -122,13 +145,22 @@ export const slot = style({
   gap: slotGap,
 });
 
+// Negative margins pull the slot one border-width past the wrapper's
+// padding so slot content sits flush with the visual border (matching
+// Radix). Soft has no border to overlap, but the 1px shift is
+// imperceptible there and keeping the rule single makes the intent
+// clearer than gating on variant.
+/* eslint-disable custom/require-design-tokens */
 export const slotLeft = style({
   paddingRight: slotGap,
+  marginLeft: '-1px',
 });
 
 export const slotRight = style({
   paddingLeft: slotGap,
+  marginRight: '-1px',
 });
+/* eslint-enable custom/require-design-tokens */
 
 // --- Size ---
 
@@ -195,6 +227,11 @@ export const variant = styleVariants({
     selectors: {
       '&:has(input:focus-visible)': {
         outlineColor: accent.solid[8],
+      },
+      // Drop the accent tint when the field can't be edited so the
+      // disabled/readonly state reads as inert rather than highlighted.
+      '&:has(input:where(:disabled, :read-only))': {
+        backgroundColor: neutral.alpha[3],
       },
     },
   },
