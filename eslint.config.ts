@@ -111,6 +111,17 @@ export default [
     },
   },
   {
+    // `!important` and `z-index` are banned across every stylesheet,
+    // including `@lib/design` and stories — we control the entire
+    // codebase, so the legitimate workarounds (raising specificity,
+    // document order, portals, `isolation`) are always available.
+    files: ['packages/**/*.css.ts'],
+    rules: {
+      'custom/no-important': 'error',
+      'custom/no-z-index': 'error',
+    },
+  },
+  {
     files: ['packages/**/*.css.ts'],
     ignores: [
       'packages/lib/design/src/**',
