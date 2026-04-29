@@ -219,4 +219,18 @@ export default [
       ],
     },
   },
+  {
+    // Storybook stories demo components in isolation. Local UI state
+    // belongs to the story wrapper, not application state, so plain
+    // Solid primitives are the right fit.
+    files: ['packages/dev/storybook/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: restrictedImportPatterns,
+        },
+      ],
+    },
+  },
 ];

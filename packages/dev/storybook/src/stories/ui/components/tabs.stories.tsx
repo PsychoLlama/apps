@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { untrack } from 'solid-js';
+import { createSignal, untrack } from 'solid-js';
 import { fn } from 'storybook/test';
-import { createTestBindings, defineAction, defineStore } from '@lib/state';
 import {
   TabsContent,
   TabsList,
@@ -14,19 +13,6 @@ import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 interface TabsArgs extends TabsRootProps, TabsListProps {}
-
-const valueStore = defineStore<{ value: string }>(() => ({ value: '' }));
-const setStoreValue = defineAction([valueStore], (state, next: string) => {
-  state.value = next;
-});
-
-const useTabsHarness = (initial: string) => {
-  const bindings = createTestBindings();
-  const state = bindings.createStore(valueStore);
-  const setValue = bindings.useAction(setStoreValue);
-  setValue(initial);
-  return { state, setValue };
-};
 
 const meta = {
   title: 'UI/Components',
@@ -69,11 +55,11 @@ const meta = {
     },
   },
   render: (props: TabsArgs) => {
-    const { state, setValue } = useTabsHarness(untrack(() => props.value));
+    const [value, setValue] = createSignal(untrack(() => props.value));
     return (
       <TabsRoot
         testId={props.testId}
-        value={state.value}
+        value={value()}
         onValueChange={(next) => {
           props.onValueChange(next);
           setValue(next);
