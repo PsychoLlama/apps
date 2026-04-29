@@ -22,6 +22,7 @@
 - [Card](./card.md): Surface container.
 - [Kbd](./kbd.md): Inline keyboard input.
 - [Separator](./separator.md): Visual divider between sibling content.
+- [Switch](./switch.md): Two-state toggle button.
 - [TabNav](./tab-nav.md): Horizontal nav strip of routing links.
 - [Tabs](./tabs.md): Switch between panels under a row of triggers.
 - [TextArea](./text-area.md): Multi-line text input.
