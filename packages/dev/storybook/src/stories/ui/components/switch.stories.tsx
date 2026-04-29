@@ -37,8 +37,10 @@ const meta = {
     color: 'accent',
     initialChecked: false,
     disabled: false,
-    // The wrapper owns `checked`; this seed only exists to satisfy
-    // SwitchProps' required type. Render uses `initialChecked`.
+    // `checked` is required on SwitchProps, but the wrapper drives the
+    // value from `initialChecked`. Seeded here only to satisfy the type
+    // — hidden from the controls panel via argTypes below so it doesn't
+    // surface as a fake toggle.
     checked: false,
     onCheckedChange: fn(),
   },
@@ -62,6 +64,8 @@ const meta = {
     },
     initialChecked: { control: 'boolean' },
     disabled: { control: 'boolean' },
+    checked: { table: { disable: true } },
+    onCheckedChange: { table: { disable: true } },
   },
   render: (args: SwitchArgs) => {
     const [storyOnly, switchProps] = splitProps(args, [
