@@ -99,20 +99,31 @@ export const redundantResetMessage =
   '{{property}}: {{value}} is unnecessary — the global CSS reset (all: unset) already removes this default.';
 
 /**
- * Walks ancestors looking for a vanilla-extract block that scopes the
- * declaration to a specialization (`selectors`, `@media`, `@supports`,
- * `@container`, `@layer`, …). Inside one of these, restating the default
- * is *potentially* undoing the author's own styles — pair with
- * `hasOverrideTarget` to confirm there's actually something to undo.
+ * Whether `key` names a vanilla-extract block whose contents apply
+ * conditionally on top of the surrounding scope's cascade — `selectors`,
+ * `@media`, `@supports`, `@container`, etc. Excludes `@layer`, which
+ * *demotes* its declarations in the cascade rather than specializing
+ * them: an inner reset under `@layer` doesn't override an unlayered
+ * outer declaration, so the same exemption logic doesn't apply.
+ */
+const isSpecializationKey = (key: string | null): boolean => {
+  if (key === null) return false;
+  if (key === 'selectors') return true;
+  if (!key.startsWith('@')) return false;
+  return key !== '@layer';
+};
+
+/**
+ * Walks ancestors looking for a vanilla-extract specialization block.
+ * Inside one of these, restating the post-reset default is *potentially*
+ * undoing the author's own styles — pair with `hasOverrideTarget` to
+ * confirm there's actually something to undo.
  */
 export const isInsideSpecialization = (node: TSESTree.Node): boolean => {
   let current: TSESTree.Node | undefined = node.parent;
   while (current) {
     if (current.type === AST_NODE_TYPES.Property) {
-      const key = getPropertyName(current.key);
-      if (key === 'selectors' || (key !== null && key.startsWith('@'))) {
-        return true;
-      }
+      if (isSpecializationKey(getPropertyName(current.key))) return true;
     }
     current = current.parent;
   }
@@ -153,10 +164,7 @@ const propertyFamily = (name: string): string | null => {
 const isStyleScope = (obj: TSESTree.ObjectExpression): boolean => {
   for (const prop of obj.properties) {
     if (prop.type !== AST_NODE_TYPES.Property) continue;
-    const key = getPropertyName(prop.key);
-    if (key === 'selectors' || (key !== null && key.startsWith('@'))) {
-      return true;
-    }
+    if (isSpecializationKey(getPropertyName(prop.key))) return true;
     // Any non-object value indicates a CSS declaration. Variant records
     // only contain Property children whose values are ObjectExpression.
     if (prop.value.type !== AST_NODE_TYPES.ObjectExpression) return true;
@@ -173,8 +181,7 @@ const isStyleScope = (obj: TSESTree.ObjectExpression): boolean => {
 const isSpecializationContainer = (obj: TSESTree.ObjectExpression): boolean => {
   const parent = obj.parent;
   if (!parent || parent.type !== AST_NODE_TYPES.Property) return false;
-  const key = getPropertyName(parent.key);
-  return key === 'selectors' || (key !== null && key.startsWith('@'));
+  return isSpecializationKey(getPropertyName(parent.key));
 };
 
 /**

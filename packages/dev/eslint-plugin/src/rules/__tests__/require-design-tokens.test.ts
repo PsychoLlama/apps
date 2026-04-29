@@ -496,6 +496,18 @@ tester.run('require-design-tokens', rule, {
         },
       ],
     },
+    // `@layer` demotes its declarations in the cascade — an unlayered
+    // outer `padding` always wins, so an inner reset under `@layer`
+    // has nothing to override even when same-family sibling exists.
+    {
+      code: "const x = { padding: pad, '@layer': { utilities: { padding: 0 } } }",
+      errors: [
+        {
+          messageId: 'redundantReset' as const,
+          data: { property: 'padding', value: '0' },
+        },
+      ],
+    },
 
     // Redundant full viewport — minHeight: 100dvh (the original case).
     {
