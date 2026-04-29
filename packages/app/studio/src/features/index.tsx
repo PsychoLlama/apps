@@ -8,7 +8,15 @@ import {
   onMount,
 } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { Button, Callout, Flex, Heading, Link, Text } from '@lib/ui';
+import {
+  Button,
+  Callout,
+  Flex,
+  Heading,
+  IconButton,
+  Link,
+  Text,
+} from '@lib/ui';
 import { useAction, useEffect } from '@lib/state';
 import IconAlertCircleOutline from 'virtual:icons/mdi/alert-circle-outline';
 import IconClose from 'virtual:icons/mdi/close';
@@ -132,7 +140,7 @@ const ActiveTracks = (props: {
               <Text as="span" size={1} selectable={false}>
                 {track.label}
               </Text>
-              <Button
+              <IconButton
                 testId="remove-track"
                 aria-label={`Remove ${track.label}`}
                 size={1}
@@ -141,7 +149,7 @@ const ActiveTracks = (props: {
                 onClick={() => props.onRemove(track.id)}
               >
                 <IconClose />
-              </Button>
+              </IconButton>
             </Flex>
           )}
         </For>

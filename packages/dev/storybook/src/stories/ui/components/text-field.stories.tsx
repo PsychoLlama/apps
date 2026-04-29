@@ -3,7 +3,7 @@ import { splitProps } from 'solid-js';
 import { fn } from 'storybook/test';
 import IconMagnify from 'virtual:icons/mdi/magnify';
 import IconClose from 'virtual:icons/mdi/close';
-import { Button, TextField, type TextFieldProps } from '@lib/ui';
+import { IconButton, TextField, type TextFieldProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
@@ -78,14 +78,15 @@ const meta = {
         left={storyOnly.hasLeft ? <IconMagnify /> : undefined}
         right={
           storyOnly.hasRight ? (
-            <Button
+            <IconButton
               testId={`${textFieldProps.testId}-clear`}
+              aria-label="Clear"
               size={1}
               variant="ghost"
               color="neutral"
             >
               <IconClose />
-            </Button>
+            </IconButton>
           ) : undefined
         }
       />

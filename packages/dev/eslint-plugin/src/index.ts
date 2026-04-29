@@ -1,6 +1,7 @@
 import noDerivedTokenTypes from './rules/no-derived-token-types';
 import noStaticStyleProp from './rules/no-static-style-prop';
 import noUnsafeNodeCast from './rules/no-unsafe-node-cast';
+import preferIconButton from './rules/prefer-icon-button';
 import requireDesignTokens from './rules/require-design-tokens';
 import requireExplicitRouteExport from './rules/require-explicit-route-export';
 import requireExternalizedEffects from './rules/require-externalized-effects';
@@ -17,6 +18,7 @@ const plugin = {
     'no-derived-token-types': noDerivedTokenTypes,
     'no-static-style-prop': noStaticStyleProp,
     'no-unsafe-node-cast': noUnsafeNodeCast,
+    'prefer-icon-button': preferIconButton,
     'require-design-tokens': requireDesignTokens,
     'require-explicit-route-export': requireExplicitRouteExport,
     'require-externalized-effects': requireExternalizedEffects,
