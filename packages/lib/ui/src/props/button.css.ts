@@ -1,4 +1,19 @@
-import { createVar, style, styleVariants } from '@vanilla-extract/css';
+/**
+ * Shared button style primitives consumed by Button, IconButton, and
+ * LinkButton.
+ *
+ * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/_internal/base-button.css
+ * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/button.css
+ * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/icon-button.css
+ */
+
+import {
+  createVar,
+  globalStyle,
+  style,
+  styleVariants,
+} from '@vanilla-extract/css';
+import { marginBlockOffset, marginInlineOffset } from './margin.css';
 import {
   accent,
   danger,
@@ -19,6 +34,7 @@ export const base = style({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
+  verticalAlign: 'top',
 
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.medium,
@@ -28,7 +44,6 @@ export const base = style({
   transitionTimingFunction: standard.productive,
 
   ':disabled': {
-    opacity: 0.5,
     cursor: 'not-allowed',
   },
 
@@ -50,8 +65,6 @@ assignColorSchemeVars(
   { [solidActiveFilter]: 'brightness(1.08)' },
 );
 
-const sizes = [1, 2, 3, 4] as const;
-
 const typeScaleProps = (step: 1 | 2 | 3 | 4) => {
   return {
     fontSize: typeScale[step].fontSize,
@@ -61,85 +74,129 @@ const typeScaleProps = (step: 1 | 2 | 3 | 4) => {
 };
 
 const sizeMap = {
+  1: { ...typeScaleProps(1), gap: space[1], borderRadius: radius[1] },
+  2: { ...typeScaleProps(2), gap: space[1], borderRadius: radius[2] },
+  3: { ...typeScaleProps(3), gap: space[2], borderRadius: radius[3] },
+  4: { ...typeScaleProps(4), gap: space[2], borderRadius: radius[4] },
+} as const;
+
+/** Per-size typescale, gap, and default border radius — applied to every variant. */
+export const size = styleVariants(sizeMap);
+
+// --- Non-ghost dimensional rules ---
+
+// Non-ghost gaps are larger than the ghost values from `sizeMap`
+// (Radix scales gap up for non-ghost; ghost stays compact for inline use).
+const buttonNonGhostSizeMap = {
   1: {
-    ...typeScaleProps(1),
     height: space[5],
     minWidth: space[5],
     paddingInline: space[2],
     gap: space[1],
-    borderRadius: radius[1],
   },
   2: {
-    ...typeScaleProps(2),
     height: space[6],
     minWidth: space[6],
     paddingInline: space[3],
-    gap: space[1],
-    borderRadius: radius[2],
+    gap: space[2],
   },
   3: {
-    ...typeScaleProps(3),
     height: space[7],
     minWidth: space[7],
     paddingInline: space[4],
-    gap: space[2],
-    borderRadius: radius[3],
+    gap: space[3],
   },
   4: {
-    ...typeScaleProps(4),
     height: space[8],
     minWidth: space[8],
     paddingInline: space[5],
-    gap: space[2],
-    borderRadius: radius[4],
+    gap: space[3],
   },
 } as const;
 
-export const size = styleVariants(
-  Object.fromEntries(sizes.map((key) => [key, sizeMap[key]])) as Record<
-    (typeof sizes)[number],
-    (typeof sizeMap)[1]
-  >,
+/** Fixed height + horizontal padding + non-ghost gap for text Button. */
+export const buttonNonGhostSize = styleVariants(buttonNonGhostSizeMap);
+
+/**
+ * Non-ghost Button SVG children render at 90% opacity to soften the
+ * inline icon against the label. Ghost has no equivalent — Radix omits
+ * it because ghost foreground colors are already alpha-blended.
+ *
+ * `globalStyle` is required because vanilla-extract's `selectors`
+ * field forbids descending past `&`.
+ */
+export const buttonNonGhostSvg = style({});
+
+globalStyle(`.${buttonNonGhostSvg} :where(svg)`, { opacity: 0.9 });
+
+const iconButtonNonGhostSizeMap = {
+  1: { width: space[5], height: space[5] },
+  2: { width: space[6], height: space[6] },
+  3: { width: space[7], height: space[7] },
+  4: { width: space[8], height: space[8] },
+} as const;
+
+/** Square dimensions for non-ghost IconButton. */
+export const iconButtonNonGhostSize = styleVariants(iconButtonNonGhostSizeMap);
+
+// --- Ghost dimensional rules ---
+//
+// Ghost variants drop the fixed height and replace it with padding so
+// the hover background and focus ring extend past the visual content.
+// They set `--margin-{side}-offset` to the padding so the user's
+// margin (default 0) gets retracted by that amount in
+// `calc(user - offset)`. With user margin = 0 the result is
+// `-padding`; with user m={N} the result is `space[N] - padding`.
+// `marginBase` re-declares the offset vars locally on every
+// margin-aware element, so descendants are automatically isolated.
+//
+// Half-step values (`calc(${space[1]} * 1.5)`) come straight from
+// Radix's button.css/icon-button.css — they fall between our scale
+// steps to keep the ghost variant's progression smooth.
+
+const buttonGhostSizeMap = {
+  1: { paddingBlock: space[1], paddingInline: space[2] },
+  2: { paddingBlock: space[1], paddingInline: space[2] },
+  3: { paddingBlock: `calc(${space[1]} * 1.5)`, paddingInline: space[3] },
+  4: { paddingBlock: space[2], paddingInline: space[4] },
+} as const;
+
+export const buttonGhostSize = styleVariants(
+  buttonGhostSizeMap,
+  ({ paddingBlock, paddingInline }) => ({
+    paddingBlock,
+    paddingInline,
+    height: 'fit-content',
+    vars: {
+      [marginBlockOffset]: paddingBlock,
+      [marginInlineOffset]: paddingInline,
+    },
+  }),
 );
 
-const iconSizeMap = {
-  1: {
-    ...typeScaleProps(1),
-    width: space[5],
-    height: space[5],
-    borderRadius: radius[1],
-  },
-  2: {
-    ...typeScaleProps(2),
-    width: space[6],
-    height: space[6],
-    borderRadius: radius[2],
-  },
-  3: {
-    ...typeScaleProps(3),
-    width: space[7],
-    height: space[7],
-    borderRadius: radius[3],
-  },
-  4: {
-    ...typeScaleProps(4),
-    width: space[8],
-    height: space[8],
-    borderRadius: radius[4],
-  },
+const iconButtonGhostSizeMap = {
+  1: space[1],
+  2: `calc(${space[1]} * 1.5)`,
+  3: space[2],
+  4: space[3],
 } as const;
 
-export const iconSize = styleVariants(
-  Object.fromEntries(sizes.map((key) => [key, iconSizeMap[key]])) as Record<
-    (typeof sizes)[number],
-    (typeof iconSizeMap)[1]
-  >,
+export const iconButtonGhostSize = styleVariants(
+  iconButtonGhostSizeMap,
+  (padding) => ({
+    padding,
+    height: 'fit-content',
+    vars: {
+      [marginBlockOffset]: padding,
+      [marginInlineOffset]: padding,
+    },
+  }),
 );
 
 // --- Radius override ---
 
-// Declared after `size` / `iconSize` so the `borderRadius` rule wins
-// on equal specificity when both are present in the class list.
+// Declared after the size variants so the `borderRadius` rule wins on
+// equal specificity when both are present in the class list.
 export const cornerRadius = styleVariants({
   // eslint-disable-next-line custom/require-design-tokens -- intentional zero radius; Radix exposes "none" as a theme-level preset, not a token in the scale.
   none: { borderRadius: 0 },
@@ -168,6 +225,16 @@ const solidStyle = (color: ColorName) => {
           },
         },
       },
+      // Larger translucent halo on touch :active gives a clear
+      // tap-target affordance — no native :hover on coarse pointers.
+      '(pointer: coarse)': {
+        selectors: {
+          '&:active:not(:disabled)': {
+            outline: `0.5em solid ${palette.alpha[4]}`,
+            outlineOffset: 0,
+          },
+        },
+      },
     },
     selectors: {
       '&:active:not(:disabled)': {
@@ -184,7 +251,10 @@ const softStyle = (color: ColorName) => {
   return style({
     backgroundColor: palette.alpha[3],
     color: palette.alpha[11],
+    // Soft is the only variant whose focus ring inherits the variant's
+    // own color (Radix uses --accent-8 here, --focus-8 elsewhere).
     ':focus-visible': {
+      outline: `2px solid ${palette.solid[8]}`,
       outlineOffset: '-1px',
     },
     '@media': {
@@ -265,6 +335,9 @@ const ghostStyle = (color: ColorName) => {
   return style({
     backgroundColor: 'transparent',
     color: palette.alpha[11],
+    // Ghost reads as inline text — inherit the surrounding weight
+    // rather than forcing the medium weight applied to other variants.
+    fontWeight: 'inherit',
     ':focus-visible': {
       outlineOffset: '-1px',
     },
@@ -321,4 +394,66 @@ export const variantColor = {
     warning: ghostStyle('warning'),
     success: ghostStyle('success'),
   },
+} as const;
+
+// --- Disabled state ---
+//
+// Per-variant `:disabled` rules. Color/background match Radix's gray
+// disabled treatment regardless of the variant's own `color` prop, so
+// these are factored per-variant (one rule × five variants) rather
+// than per-color (one rule × five variants × five colors). Declared
+// after `variantColor` so its `:disabled` selectors win the cascade.
+
+const disabledColor = neutral.alpha[8];
+const disabledBg = neutral.alpha[3];
+
+const baseDisabled = {
+  color: disabledColor,
+  outline: 'none',
+  filter: 'none',
+};
+
+export const variantDisabled = {
+  solid: style({
+    selectors: {
+      '&:disabled': {
+        ...baseDisabled,
+        backgroundColor: disabledBg,
+      },
+    },
+  }),
+  soft: style({
+    selectors: {
+      '&:disabled': {
+        ...baseDisabled,
+        backgroundColor: disabledBg,
+      },
+    },
+  }),
+  surface: style({
+    selectors: {
+      '&:disabled': {
+        ...baseDisabled,
+        backgroundColor: neutral.alpha[2],
+        boxShadow: `inset 0 0 0 1px ${neutral.alpha[6]}`,
+      },
+    },
+  }),
+  outline: style({
+    selectors: {
+      '&:disabled': {
+        ...baseDisabled,
+        backgroundColor: 'transparent',
+        boxShadow: `inset 0 0 0 1px ${neutral.alpha[7]}`,
+      },
+    },
+  }),
+  ghost: style({
+    selectors: {
+      '&:disabled': {
+        ...baseDisabled,
+        backgroundColor: 'transparent',
+      },
+    },
+  }),
 } as const;
