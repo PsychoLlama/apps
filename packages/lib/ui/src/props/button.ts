@@ -40,11 +40,15 @@ export const resolveButtonStyleClasses = (
   variant: ButtonVariant,
   color: ButtonColor,
   radius?: ButtonRadius,
-): (string | undefined)[] => {
+): (string | false | undefined)[] => {
+  const ghost = variant === 'ghost';
   return [
     css.base,
     css.size[size],
+    ghost ? css.buttonGhostSize[size] : css.buttonNonGhostSize[size],
+    !ghost && css.buttonNonGhostSvg,
     css.variantColor[variant][color],
+    css.variantDisabled[variant],
     radius && css.cornerRadius[radius],
   ];
 };
@@ -54,11 +58,14 @@ export const resolveIconButtonStyleClasses = (
   variant: ButtonVariant,
   color: ButtonColor,
   radius?: ButtonRadius,
-): (string | undefined)[] => {
+): (string | false | undefined)[] => {
+  const ghost = variant === 'ghost';
   return [
     css.base,
-    css.iconSize[size],
+    css.size[size],
+    ghost ? css.iconButtonGhostSize[size] : css.iconButtonNonGhostSize[size],
     css.variantColor[variant][color],
+    css.variantDisabled[variant],
     radius && css.cornerRadius[radius],
   ];
 };
