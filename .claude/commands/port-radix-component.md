@@ -29,9 +29,14 @@ If the user hasn't said where they're cloned, stop and ask. Don't search the fil
 - Reach for `<Flex>` to compose internal structure of complex components.
 - We use a global CSS reset, so built-in elements (`<button>`, `<ul>`, etc.) render like bare `<div>`s. Style intentionally; don't lean on user-agent defaults.
 - Wrap state predicates (`:not(:disabled):hover`, `:focus-visible`), pseudo-class alternations, and class compounds in `:where(...)` so competing rules stay equal-specificity and the cascade resolves by source order.
-- For multi-part components, hand off size/color from parent variants to nested elements via `createVar()` + `vars: { ... }` in `styleVariants` instead of nested-class selectors.
+- Prefer static rules, variants, and `:has(...)` over `createVar()`. Reach for `createVar()` + `vars: { ... }` in `styleVariants` only when a parent variant must feed a value into a descendant's style.
 - Couple wrapper styles to inner-element state with `:has(...)` — e.g. `:has(input:focus-visible)` paints the focus outline on the wrapper.
 - Reach for `::before`/`::after` for borders (so `Inset` can't cover them), active indicators, and overlays.
+
+## State and refs
+
+- Controlled inputs only. Callers pass `value` + `onChange` (or the prop pair the component owns); don't accept `defaultValue`/`defaultChecked`.
+- Don't forward refs to children. Solid drills `ref={...}` through built-in elements automatically; only manage refs the component itself needs.
 
 ## Polymorphism: `as` instead of `asChild`
 
@@ -42,9 +47,9 @@ If the user hasn't said where they're cloned, stop and ask. Don't search the fil
 
 ## Colors
 
-- We support a curated subset of colors. Map upstream references onto semantic tokens in `@lib/design`.
-- Drop Radix's `color="..."` prop entirely. We don't expose it and likely never will — stick to semantic tokens unless there's a very strong reason.
-- Never hard-code color values.
+- Map upstream references onto semantic tokens in `@lib/design`. Never hard-code color values.
+- If the component exposes a `color` prop, accept every semantic token — no hand-picked subsets. Drop the prop entirely if the component doesn't need one.
+- Skip `highContrast` styling. Record it in the module's deferred-deviations list.
 
 ## Final checks
 
