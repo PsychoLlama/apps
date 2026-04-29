@@ -150,7 +150,7 @@ const solidStyle = (color: ColorName) => {
     '@media': {
       '(hover: hover)': {
         selectors: {
-          '&:hover:not(:disabled)': {
+          '&:hover:not(:disabled):not(:active)': {
             backgroundColor: palette.solid[10],
           },
         },
@@ -174,7 +174,7 @@ const softStyle = (color: ColorName) => {
     '@media': {
       '(hover: hover)': {
         selectors: {
-          '&:hover:not(:disabled)': {
+          '&:hover:not(:disabled):not(:active)': {
             backgroundColor: palette.alpha[4],
           },
         },
@@ -198,7 +198,7 @@ const outlineStyle = (color: ColorName) => {
     '@media': {
       '(hover: hover)': {
         selectors: {
-          '&:hover:not(:disabled)': {
+          '&:hover:not(:disabled):not(:active)': {
             backgroundColor: palette.alpha[3],
             boxShadow: `inset 0 0 0 1px ${palette.alpha[8]}`,
           },
@@ -222,7 +222,7 @@ const ghostStyle = (color: ColorName) => {
     '@media': {
       '(hover: hover)': {
         selectors: {
-          '&:hover:not(:disabled)': {
+          '&:hover:not(:disabled):not(:active)': {
             backgroundColor: palette.alpha[3],
           },
         },
