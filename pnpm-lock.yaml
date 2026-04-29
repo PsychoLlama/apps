@@ -39,9 +39,6 @@ catalogs:
     idb:
       specifier: ^8.0.3
       version: 8.0.3
-    knip:
-      specifier: ^6.6.1
-      version: 6.6.3
     playwright:
       specifier: ^1.59.1
       version: 1.59.1
@@ -121,7 +118,7 @@ importers:
         version: 29.1.0
       knip:
         specifier: 'catalog:'
-        version: 6.6.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.10.0)
+        version: 6.7.0(@emnapi/core@1.9.2)(@emnapi/runtime@1.10.0)
       playwright:
         specifier: 'catalog:'
         version: 1.59.1
@@ -3881,8 +3878,8 @@ packages:
     resolution: {integrity: sha512-dhG34DXATL5hSxJbIexCft8FChFXtmskoZYnoPWjXQuebWYCNkVeV3KkGegCK9CP1oswI/vQibS2GY7Em/sJJA==}
     engines: {node: '>= 8'}
 
-  knip@6.6.3:
-    resolution: {integrity: sha512-7HSf5bLx6r66+sjXwSvSiDEE9RjRzHuAkrEFLE6XXHqaPDY97tdzNvyRVF9DeusbiV72kStAFiNnhj72rxJNGQ==}
+  knip@6.7.0:
+    resolution: {integrity: sha512-ckL51NDH1YJxnv1kNB0iUdDngB4f/e9Igz8uIqYfmNDoyOFmmk1V0WFv3LQ7/hzC63b2Z9X41gGUE9eOWrZpaA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
@@ -8889,7 +8886,7 @@ snapshots:
 
   klona@2.0.6: {}
 
-  knip@6.6.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.10.0):
+  knip@6.7.0(@emnapi/core@1.9.2)(@emnapi/runtime@1.10.0):
     dependencies:
       fdir: 6.5.0(picomatch@4.0.4)
       formatly: 0.3.0
