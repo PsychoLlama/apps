@@ -171,6 +171,9 @@ const softStyle = (color: ColorName) => {
   return style({
     backgroundColor: palette.alpha[3],
     color: palette.alpha[11],
+    ':focus-visible': {
+      outlineOffset: '-1px',
+    },
     '@media': {
       '(hover: hover)': {
         selectors: {
@@ -194,20 +197,22 @@ const outlineStyle = (color: ColorName) => {
   return style({
     backgroundColor: 'transparent',
     color: palette.alpha[11],
-    boxShadow: `inset 0 0 0 1px ${palette.alpha[7]}`,
+    boxShadow: `inset 0 0 0 1px ${palette.alpha[8]}`,
+    ':focus-visible': {
+      outlineOffset: '-1px',
+    },
     '@media': {
       '(hover: hover)': {
         selectors: {
           '&:hover:not(:disabled):not(:active)': {
-            backgroundColor: palette.alpha[3],
-            boxShadow: `inset 0 0 0 1px ${palette.alpha[8]}`,
+            backgroundColor: palette.alpha[2],
           },
         },
       },
     },
     selectors: {
       '&:active:not(:disabled)': {
-        backgroundColor: palette.alpha[4],
+        backgroundColor: palette.alpha[3],
       },
     },
   });
@@ -220,6 +225,9 @@ const surfaceStyle = (color: ColorName) => {
     backgroundColor: palette.surface,
     color: palette.alpha[11],
     boxShadow: `inset 0 0 0 1px ${palette.alpha[7]}`,
+    ':focus-visible': {
+      outlineOffset: '-1px',
+    },
     '@media': {
       '(hover: hover)': {
         selectors: {
@@ -244,6 +252,9 @@ const ghostStyle = (color: ColorName) => {
   return style({
     backgroundColor: 'transparent',
     color: palette.alpha[11],
+    ':focus-visible': {
+      outlineOffset: '-1px',
+    },
     '@media': {
       '(hover: hover)': {
         selectors: {
