@@ -13,11 +13,16 @@ const meta = {
   title: 'UI/Components',
   component: SkeletonComponent,
   args: {
+    as: 'span',
     loading: true,
   },
   argTypes: {
     ...marginArgTypes,
     ...testIdArgTypes,
+    as: {
+      control: 'inline-radio',
+      options: ['span', 'div'],
+    },
     loading: {
       control: 'boolean',
     },
@@ -38,12 +43,16 @@ const meta = {
       <Heading as="h3" size={4}>
         Standalone block
       </Heading>
-      <SkeletonComponent {...props} style={{ width: '100%', height: '8rem' }} />
+      <SkeletonComponent
+        as="div"
+        loading={props.loading}
+        style={{ width: '100%', height: '8rem' }}
+      />
 
       <Heading as="h3" size={4}>
-        Wrapping a heading
+        Wrapping a block element
       </Heading>
-      <SkeletonComponent {...props}>
+      <SkeletonComponent as="div" loading={props.loading}>
         <Heading as="h2" size={6}>
           Loaded title goes here
         </Heading>

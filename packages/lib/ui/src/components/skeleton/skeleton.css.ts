@@ -21,13 +21,13 @@ const pulse = keyframes({
   to: { backgroundColor: neutral.alpha[4] },
 });
 
-// `inline-block` accommodates both standalone (sized) placeholders and
-// children that bring their own dimensions (e.g. inline icons). For
-// text wrapping the bg-box fits the glyphs because `line-height: 0`
-// collapses the surrounding leading.
+// No explicit `display` — the underlying tag's default applies, so an
+// inline span keeps mid-line text wrapping (with `box-decoration-break:
+// clone` so the bg-box repaints across line breaks) and a block tag
+// hosts block children naturally. `:empty` falls back to a sized block
+// for standalone placeholders.
 /* eslint-disable custom/require-design-tokens */
 export const base = style({
-  display: 'inline-block',
   borderRadius: radius[1],
   animation: `${pulse} ${slow[2]} ${standard.productive} infinite alternate`,
   color: 'transparent',
@@ -35,6 +35,7 @@ export const base = style({
   userSelect: 'none',
   cursor: 'default',
   lineHeight: 0,
+  boxDecorationBreak: 'clone',
   // Standalone skeletons (no children) need an intrinsic size since
   // there's no content to derive one from. Consumers override via
   // `style={{ width, height }}`.
