@@ -48,7 +48,12 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
   const className = () =>
     [
       ...resolveMarginClasses(margin),
-      ...resolveButtonStyleClasses(local.size, local.variant, local.color),
+      ...resolveButtonStyleClasses(
+        local.size,
+        local.variant,
+        local.color,
+        local.radius,
+      ),
       local.class,
     ]
       .filter(Boolean)

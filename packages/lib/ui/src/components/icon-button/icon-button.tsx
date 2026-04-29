@@ -3,8 +3,8 @@
  * (no label).
  *
  * Ported from Radix UI Themes IconButton. Deviations:
- * - No `radius` prop. Corner radius tracks `size` like our other
- *   components rather than cascading from a theme-level data attribute.
+ * - `radius` is a per-component prop, not a theme-level
+ *   `data-radius` cascade.
  * - No `loading`, `highContrast`, or 26-accent `color` prop.
  * - No `asChild` / `as`. The component owns the `<button>` tag —
  *   wrapping an icon in `<details><summary>…</summary></details>` for a
@@ -60,7 +60,12 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
   const className = () =>
     [
       ...resolveMarginClasses(margin),
-      ...resolveIconButtonStyleClasses(local.size, local.variant, local.color),
+      ...resolveIconButtonStyleClasses(
+        local.size,
+        local.variant,
+        local.color,
+        local.radius,
+      ),
       local.class,
     ]
       .filter(Boolean)

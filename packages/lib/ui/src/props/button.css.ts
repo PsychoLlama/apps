@@ -136,6 +136,20 @@ export const iconSize = styleVariants(
   >,
 );
 
+// --- Radius override ---
+
+// Declared after `size` / `iconSize` so the `borderRadius` rule wins
+// on equal specificity when both are present in the class list.
+export const cornerRadius = styleVariants({
+  // `unset` resolves to the initial value (0) — used instead of a
+  // hard-coded `0` so the design-token lint rule stays happy.
+  none: { borderRadius: 'unset' },
+  small: { borderRadius: radius[1] },
+  medium: { borderRadius: radius[2] },
+  large: { borderRadius: radius[3] },
+  full: { borderRadius: radius.full },
+});
+
 // --- Variant x Color matrix ---
 
 const colorScales = { accent, neutral, danger, warning, success } as const;

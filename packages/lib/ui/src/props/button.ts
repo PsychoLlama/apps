@@ -9,6 +9,7 @@ export type ButtonColor =
   | 'danger'
   | 'warning'
   | 'success';
+export type ButtonRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
 
 export interface ButtonStyleProps {
   /** Visual size on a 1-4 scale. @default 2 */
@@ -17,30 +18,49 @@ export interface ButtonStyleProps {
   variant?: ButtonVariant;
   /** Semantic color. @default 'accent' */
   color?: ButtonColor;
+  /** Corner radius override. Defaults to a size-based radius. */
+  radius?: ButtonRadius;
 }
 
-export const buttonStylePropKeys = ['size', 'variant', 'color'] as const;
+export const buttonStylePropKeys = [
+  'size',
+  'variant',
+  'color',
+  'radius',
+] as const;
 
 export const buttonStyleDefaults = {
   size: 2 as const,
   variant: 'solid' as const,
   color: 'accent' as const,
-} satisfies Required<ButtonStyleProps>;
+} satisfies Omit<Required<ButtonStyleProps>, 'radius'>;
 
 export const resolveButtonStyleClasses = (
   size: ButtonSize,
   variant: ButtonVariant,
   color: ButtonColor,
-): string[] => {
-  return [css.base, css.size[size], css.variantColor[variant][color]];
+  radius?: ButtonRadius,
+): (string | undefined)[] => {
+  return [
+    css.base,
+    css.size[size],
+    css.variantColor[variant][color],
+    radius && css.cornerRadius[radius],
+  ];
 };
 
 export const resolveIconButtonStyleClasses = (
   size: ButtonSize,
   variant: ButtonVariant,
   color: ButtonColor,
-): string[] => {
-  return [css.base, css.iconSize[size], css.variantColor[variant][color]];
+  radius?: ButtonRadius,
+): (string | undefined)[] => {
+  return [
+    css.base,
+    css.iconSize[size],
+    css.variantColor[variant][color],
+    radius && css.cornerRadius[radius],
+  ];
 };
 
 export const buttonStyleArgTypes: ArgTypes<ButtonStyleProps> = {
@@ -54,5 +74,9 @@ export const buttonStyleArgTypes: ArgTypes<ButtonStyleProps> = {
   color: {
     control: 'inline-radio',
     options: ['accent', 'neutral', 'danger', 'warning', 'success'],
+  },
+  radius: {
+    control: 'inline-radio',
+    options: ['none', 'small', 'medium', 'large', 'full'],
   },
 };
