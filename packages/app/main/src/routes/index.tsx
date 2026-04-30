@@ -1,52 +1,87 @@
-import { Flex, Heading, Link, Text } from '@lib/ui';
+import { For } from 'solid-js';
+import type { Component } from 'solid-js';
+import { Card, Flex, Grid, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
+import IconRecord from 'virtual:icons/mdi/record-rec';
 import * as css from './index.css';
 
-export default function Launcher() {
-  return (
-    <Flex as="main" direction="column" grow>
-      <SiteHeader title="Apps" />
-      <Flex as="section" align="center" justify="center" grow p={5}>
-        <Flex as="div" direction="column" gap={5} class={css.column}>
-          <Heading as="h1" size={2} weight="medium" color="lowContrast">
-            Apps
-          </Heading>
-
-          <Flex as="nav" direction="column" gap={3}>
-            <Link
-              testId="studio-link"
-              href="/studio"
-              underline="none"
-              class={css.link}
-            >
-              <Flex as="div" class={css.indicator} />
-              <Flex as="div" direction="column" gap={1}>
-                <Text as="span" size={3} weight="medium">
-                  Recording Studio
-                </Text>
-                <Text as="span" size={2} color="lowContrast">
-                  Record your screen from the browser
-                </Text>
-              </Flex>
-            </Link>
-
-            <Flex as="div" class={`${css.link} ${css.linkDisabled}`}>
-              <Flex as="div" class={css.indicatorDisabled} />
-              <Flex as="div" direction="column" gap={1} grow>
-                <Text as="span" size={3} weight="medium" color="lowContrast">
-                  Favicon Generator
-                </Text>
-                <Text as="span" size={2} color="lowContrast">
-                  Create favicons from free icon sets
-                </Text>
-              </Flex>
-              <Text as="span" size={1} color="lowContrast">
-                Coming soon
-              </Text>
-            </Flex>
-          </Flex>
-        </Flex>
-      </Flex>
-    </Flex>
-  );
+interface AppEntry {
+  id: string;
+  name: string;
+  href: string;
+  description: string;
+  Icon: Component<{ width?: string; height?: string }>;
 }
+
+/**
+ * Hard-coded launcher inventory. Manually maintained per
+ * `docs/launcher/vision.md`. Add an entry only when the app is
+ * actually navigable — there is no "coming soon" tier.
+ */
+const APPS: ReadonlyArray<AppEntry> = [
+  {
+    id: 'studio',
+    name: 'Recording Studio',
+    href: '/studio',
+    description: 'Record your screen straight from the browser.',
+    Icon: IconRecord,
+  },
+];
+
+const Launcher = () => (
+  <Flex as="main" direction="column" grow>
+    <SiteHeader title="Apps" />
+
+    <Flex as="section" direction="column" align="center" grow px={5} py={6}>
+      <Grid as="ul" gap={4} class={css.grid} aria-label="Apps">
+        <For each={APPS}>
+          {(app) => (
+            <Flex as="li" class={css.item}>
+              <Card
+                as="a"
+                href={app.href}
+                size={2}
+                variant="surface"
+                class={css.card}
+              >
+                <Flex as="div" align="center" gap={3}>
+                  <Flex
+                    as="div"
+                    align="center"
+                    justify="center"
+                    class={css.iconTile}
+                    aria-hidden="true"
+                  >
+                    <app.Icon width="40" height="40" />
+                  </Flex>
+                  <Flex as="div" direction="column" gap={1} grow>
+                    <Heading
+                      as="h2"
+                      size={4}
+                      weight="medium"
+                      trim="start"
+                      selectable={false}
+                    >
+                      {app.name}
+                    </Heading>
+                    <Text
+                      as="p"
+                      size={2}
+                      color="lowContrast"
+                      trim="end"
+                      selectable={false}
+                    >
+                      {app.description}
+                    </Text>
+                  </Flex>
+                </Flex>
+              </Card>
+            </Flex>
+          )}
+        </For>
+      </Grid>
+    </Flex>
+  </Flex>
+);
+
+export default Launcher;
