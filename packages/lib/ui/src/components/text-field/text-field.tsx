@@ -11,7 +11,7 @@
  * @see https://www.radix-ui.com/themes/docs/components/text-field
  */
 
-import { mergeProps, splitProps } from 'solid-js';
+import { children, mergeProps, Show, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import {
   marginPropKeys,
@@ -149,6 +149,20 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
     });
   };
 
+  // `children()` resolves the slot JSX inside this component's
+  // reactive context, sidestepping the SolidStart hydration bug
+  // triggered by reading `local.left` / `local.right` inside a
+  // reactive conditional. The resolved accessor is safe to gate with
+  // `<Show>`.
+  const left = children(() => local.left);
+  const right = children(() => local.right);
+
+  // Match Solid's own renderable check: anything that isn't nullish
+  // or boolean produces DOM. A truthy `<Show when={left()}>` would
+  // hide a literal `0`, which is a valid renderable slot value.
+  const isRenderable = (value: unknown) =>
+    value !== null && value !== undefined && value !== false;
+
   const className = () =>
     [
       ...resolveMarginClasses(margin),
@@ -171,7 +185,9 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
       onPointerDown={onPointerDown}
       {...wrapperAttrs()}
     >
-      <span class={`${css.slot} ${css.slotLeft}`}>{local.left}</span>
+      <Show when={isRenderable(left())}>
+        <span class={`${css.slot} ${css.slotLeft}`}>{left()}</span>
+      </Show>
       {/* Wrapper `inert` hides the input from the user, but the
        * input still submits, validates, and contributes to FormData
        * unless `disabled`. Force-disable while skeleton is on so a
@@ -182,7 +198,9 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
         class={css.input}
         disabled={local.skeleton ? true : rest.disabled}
       />
-      <span class={`${css.slot} ${css.slotRight}`}>{local.right}</span>
+      <Show when={isRenderable(right())}>
+        <span class={`${css.slot} ${css.slotRight}`}>{right()}</span>
+      </Show>
     </div>
   );
 };

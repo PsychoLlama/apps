@@ -1,3 +1,4 @@
+import { createSignal, type JSX } from 'solid-js';
 import { render, screen } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import TextField from '../text-field';
@@ -59,15 +60,67 @@ describe('TextField', () => {
     expect(screen.getByTestId('right-content')).toBeInTheDocument();
   });
 
-  it('hides slot wrappers when no slot content is supplied', () => {
+  it('omits slot wrappers when no slot content is supplied', () => {
     render(() => <TextField testId="field" />);
     const wrapper = screen.getByTestId('field');
-    const slots = wrapper.querySelectorAll('span');
-    expect(slots).toHaveLength(2);
-    for (const slot of slots) {
-      expect(slot).toBeEmptyDOMElement();
-      expect(slot).not.toBeVisible();
-    }
+    expect(wrapper.querySelectorAll(':scope > span')).toHaveLength(0);
+  });
+
+  it('reactively swaps slot content when the prop is replaced', () => {
+    const [icon, setIcon] = createSignal(<span data-testid="icon-a">A</span>);
+    render(() => <TextField testId="field" left={icon()} />);
+
+    expect(screen.getByTestId('icon-a')).toBeInTheDocument();
+
+    setIcon(<span data-testid="icon-b">B</span>);
+
+    expect(screen.queryByTestId('icon-a')).toBeNull();
+    expect(screen.getByTestId('icon-b')).toBeInTheDocument();
+  });
+
+  it('reflects updates to reactive props inside slot content', () => {
+    const [label, setLabel] = createSignal('first');
+    render(() => (
+      <TextField
+        testId="field"
+        right={<span data-testid="label">{label()}</span>}
+      />
+    ));
+
+    expect(screen.getByTestId('label')).toHaveTextContent('first');
+
+    setLabel('second');
+
+    expect(screen.getByTestId('label')).toHaveTextContent('second');
+  });
+
+  it('renders a literal 0 in slot content', () => {
+    render(() => <TextField testId="field" right={0} />);
+    const wrapper = screen.getByTestId('field');
+    const slots = wrapper.querySelectorAll(':scope > span');
+    expect(slots).toHaveLength(1);
+    expect(slots[0]).toHaveTextContent('0');
+  });
+
+  it('omits the slot wrapper when content is boolean false', () => {
+    render(() => <TextField testId="field" left={false} />);
+    expect(
+      screen.getByTestId('field').querySelectorAll(':scope > span'),
+    ).toHaveLength(0);
+  });
+
+  it('removes the slot wrapper when its content becomes nullish', () => {
+    const [icon, setIcon] = createSignal<JSX.Element>(
+      <span data-testid="icon">L</span>,
+    );
+    render(() => <TextField testId="field" left={icon()} />);
+    const wrapper = screen.getByTestId('field');
+
+    expect(wrapper.querySelectorAll(':scope > span')).toHaveLength(1);
+
+    setIcon(null);
+
+    expect(wrapper.querySelectorAll(':scope > span')).toHaveLength(0);
   });
 
   it('reflects disabled on the input', () => {
