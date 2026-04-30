@@ -157,6 +157,12 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
   const left = children(() => local.left);
   const right = children(() => local.right);
 
+  // Match Solid's own renderable check: anything that isn't nullish
+  // or boolean produces DOM. A truthy `<Show when={left()}>` would
+  // hide a literal `0`, which is a valid renderable slot value.
+  const isRenderable = (value: unknown) =>
+    value !== null && value !== undefined && value !== false;
+
   const className = () =>
     [
       ...resolveMarginClasses(margin),
@@ -179,7 +185,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
       onPointerDown={onPointerDown}
       {...wrapperAttrs()}
     >
-      <Show when={left()}>
+      <Show when={isRenderable(left())}>
         <span class={`${css.slot} ${css.slotLeft}`}>{left()}</span>
       </Show>
       {/* Wrapper `inert` hides the input from the user, but the
@@ -192,7 +198,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
         class={css.input}
         disabled={local.skeleton ? true : rest.disabled}
       />
-      <Show when={right()}>
+      <Show when={isRenderable(right())}>
         <span class={`${css.slot} ${css.slotRight}`}>{right()}</span>
       </Show>
     </div>

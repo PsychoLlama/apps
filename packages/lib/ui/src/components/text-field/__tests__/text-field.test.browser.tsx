@@ -94,6 +94,21 @@ describe('TextField', () => {
     expect(screen.getByTestId('label')).toHaveTextContent('second');
   });
 
+  it('renders a literal 0 in slot content', () => {
+    render(() => <TextField testId="field" right={0} />);
+    const wrapper = screen.getByTestId('field');
+    const slots = wrapper.querySelectorAll(':scope > span');
+    expect(slots).toHaveLength(1);
+    expect(slots[0]).toHaveTextContent('0');
+  });
+
+  it('omits the slot wrapper when content is boolean false', () => {
+    render(() => <TextField testId="field" left={false} />);
+    expect(
+      screen.getByTestId('field').querySelectorAll(':scope > span'),
+    ).toHaveLength(0);
+  });
+
   it('removes the slot wrapper when its content becomes nullish', () => {
     const [icon, setIcon] = createSignal<JSX.Element>(
       <span data-testid="icon">L</span>,
