@@ -44,6 +44,7 @@ If the user hasn't said where they're cloned, stop and ask. Don't search the fil
 - Skip `as` when the component owns a tag — `Kbd` → `<kbd>`, `Badge` → `<span>`, `Code` → `<code>`.
 - Callers wrap tag-locked components; they don't swap the tag: `<button><Kbd>Esc</Kbd></button>`, never `<Kbd as="button">`.
 - A new tag-locked component must remove that tag from polymorphic siblings. Introducing `<Kbd>` means `<Flex as="kbd">` no longer typechecks.
+- Flatten compound APIs into prefixed exports — `DialogRoot`, `DialogTrigger`, `DialogContent` instead of `Dialog.Root`, `Dialog.Trigger`, `Dialog.Content`.
 
 ## Colors
 
