@@ -72,7 +72,14 @@ export const LogoEditor = () => {
     const value = searchParams[key];
     return typeof value === 'string' ? value : undefined;
   };
-  const hydrateFromParams = () => {
+
+  // Hydrate from the URL on mount and on every navigation. Runs in an
+  // effect so it executes after Solid hydration commits — synchronous
+  // body-time mutations don't propagate through hydrated DOM, since
+  // Solid binds reactive expressions to whatever the SSR HTML already
+  // says. Build-time prerender always sees a query-less URL, so this
+  // effect is the only place URL params actually land in state.
+  createEffect(() => {
     const padParam = readParam('pad');
     actions.hydrate({
       icon: readParam('icon'),
@@ -80,27 +87,7 @@ export const LogoEditor = () => {
       shape: readParam('shape'),
       padding: padParam !== undefined ? Number(padParam) : undefined,
     });
-  };
-
-  // Sync hydrate covers SSR and the first client render — `createEffect`
-  // doesn't run on the server, so the initial paint must happen here.
-  hydrateFromParams();
-
-  // Re-apply when the URL changes while the route stays mounted
-  // (browser back/forward, in-route anchor clicks). `defer: true` skips
-  // the redundant initial run since the sync hydrate above already ran.
-  createEffect(
-    on(
-      () => ({
-        icon: readParam('icon'),
-        palette: readParam('palette'),
-        shape: readParam('shape'),
-        pad: readParam('pad'),
-      }),
-      hydrateFromParams,
-      { defer: true },
-    ),
-  );
+  });
 
   // Mirror state → URL with a small debounce so each keystroke in the
   // padding slider doesn't generate its own history entry. `defer: true`
