@@ -32,13 +32,13 @@ function Flex(
 ) {
   const [local, boxAndRest] = splitProps(props, flexPropKeys);
   const [box, rest] = splitProps(boxAndRest, boxPropKeys);
-  const skel = useSkeleton(box, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(box, rest);
 
   const className = () =>
     [
       ...resolveBoxClasses(box),
       ...resolveFlexClasses(local),
-      skel.class(),
+      skeletonClass(),
       box.class,
     ]
       .filter(Boolean)
@@ -49,7 +49,7 @@ function Flex(
       component={box.as}
       class={className()}
       data-testid={box.testId}
-      {...skel.rest}
+      {...skeletonProps}
     >
       {box.children}
     </Dynamic>

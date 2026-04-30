@@ -74,7 +74,7 @@ function Inset(
     'children',
     ...skeletonPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -83,7 +83,7 @@ function Inset(
       css.side[local.side],
       css.clip[local.clip],
       local.pad === false && css.padOff,
-      skel.class(),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
@@ -94,7 +94,7 @@ function Inset(
       component={local.as}
       class={className()}
       data-testid={tid.testId}
-      {...skel.rest}
+      {...skeletonProps}
     >
       {local.children}
     </Dynamic>

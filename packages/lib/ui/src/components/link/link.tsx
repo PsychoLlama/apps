@@ -75,7 +75,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     ...trimPropKeys,
     ...skeletonPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
@@ -93,14 +93,14 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       css.underline[local.underline],
       autoAlways() && css.underlineAutoAlways,
       resolveTrimClass(local),
-      skel.class(),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
   return (
-    <A class={className()} data-testid={tid.testId} {...skel.rest}>
+    <A class={className()} data-testid={tid.testId} {...skeletonProps}>
       {local.children}
     </A>
   );

@@ -51,7 +51,7 @@ const Kbd: ParentComponent<KbdProps> = (rawProps) => {
     'children',
     ...skeletonPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -59,14 +59,14 @@ const Kbd: ParentComponent<KbdProps> = (rawProps) => {
       css.base,
       css.variant[local.variant],
       local.size && css.size[local.size],
-      skel.class(),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
   return (
-    <kbd class={className()} data-testid={tid.testId} {...skel.rest}>
+    <kbd class={className()} data-testid={tid.testId} {...skeletonProps}>
       {local.children}
     </kbd>
   );

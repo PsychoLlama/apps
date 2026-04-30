@@ -50,7 +50,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
     'class',
     'children',
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -61,7 +61,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
         local.color,
         local.radius,
       ),
-      skel.class(),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
@@ -73,7 +73,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
       type={local.as === 'button' ? 'button' : undefined}
       class={className()}
       data-testid={tid.testId}
-      {...skel.rest}
+      {...skeletonProps}
     >
       {local.children}
     </Dynamic>

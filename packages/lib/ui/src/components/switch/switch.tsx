@@ -129,7 +129,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
     'onClick',
     ...skeletonPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const onClick: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
     callConsumerHandler(local.onClick, event);
@@ -145,7 +145,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       css.color[local.color],
       css.variant[local.variant],
       css.radiusVariant[local.radius],
-      skel.class(),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
@@ -154,7 +154,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
   return (
     <>
       <button
-        {...skel.rest}
+        {...skeletonProps}
         type="button"
         role="switch"
         aria-checked={local.checked}

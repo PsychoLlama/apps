@@ -43,7 +43,7 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
     'class',
     'children',
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -54,14 +54,14 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
         local.color,
         local.radius,
       ),
-      skel.class(),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
   return (
-    <A class={className()} data-testid={tid.testId} {...skel.rest}>
+    <A class={className()} data-testid={tid.testId} {...skeletonProps}>
       {local.children}
     </A>
   );

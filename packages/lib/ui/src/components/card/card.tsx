@@ -74,7 +74,7 @@ function Card(
     'children',
     ...skeletonPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -83,7 +83,7 @@ function Card(
       css.size[local.size],
       css.variant[local.variant],
       interactiveTags.has(local.as) && css.interactive,
-      skel.class(),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
@@ -94,7 +94,7 @@ function Card(
       component={local.as}
       class={className()}
       data-testid={tid.testId}
-      {...skel.rest}
+      {...skeletonProps}
     >
       {local.children}
     </Dynamic>

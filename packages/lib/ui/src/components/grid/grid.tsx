@@ -57,7 +57,7 @@ function Grid(
 ) {
   const [local, boxAndRest] = splitProps(props, gridOwnPropKeys);
   const [box, rest] = splitProps(boxAndRest, boxPropKeys);
-  const skel = useSkeleton(box, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(box, rest);
 
   const className = () =>
     [
@@ -70,7 +70,7 @@ function Grid(
       local.gap && css.gap[local.gap],
       local.gapX && css.gapX[local.gapX],
       local.gapY && css.gapY[local.gapY],
-      skel.class(),
+      skeletonClass(),
       box.class,
     ]
       .filter(Boolean)
@@ -81,7 +81,7 @@ function Grid(
       component={box.as}
       class={className()}
       data-testid={box.testId}
-      {...skel.rest}
+      {...skeletonProps}
     >
       {box.children}
     </Dynamic>

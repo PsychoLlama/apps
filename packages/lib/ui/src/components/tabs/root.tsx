@@ -58,7 +58,7 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
     'children',
     ...skeletonPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const baseId = createUniqueId();
   const ctx: TabsContextValue = {
@@ -75,13 +75,13 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
   };
 
   const className = () =>
-    [...resolveMarginClasses(margin), skel.class(), local.class]
+    [...resolveMarginClasses(margin), skeletonClass(), local.class]
       .filter(Boolean)
       .join(' ');
 
   return (
     <TabsContext.Provider value={ctx}>
-      <div {...skel.rest} class={className()} data-testid={tid.testId}>
+      <div {...skeletonProps} class={className()} data-testid={tid.testId}>
         {local.children}
       </div>
     </TabsContext.Provider>

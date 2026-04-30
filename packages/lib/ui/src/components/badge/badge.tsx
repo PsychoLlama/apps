@@ -71,7 +71,7 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
     'children',
     ...skeletonPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
@@ -82,14 +82,14 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
       css.size[local.size],
       css.cornerRadius[local.radius],
       css.variantColor[local.variant][local.color][contrast()],
-      skel.class(),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
   return (
-    <span class={className()} data-testid={tid.testId} {...skel.rest}>
+    <span class={className()} data-testid={tid.testId} {...skeletonProps}>
       {local.children}
     </span>
   );

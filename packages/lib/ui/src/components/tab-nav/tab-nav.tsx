@@ -91,12 +91,12 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
     'children',
     ...skeletonPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
   const navClassName = () =>
-    [...resolveMarginClasses(margin), skel.class(), local.class]
+    [...resolveMarginClasses(margin), skeletonClass(), local.class]
       .filter(Boolean)
       .join(' ');
 
@@ -112,7 +112,7 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <nav {...skel.rest} class={navClassName()} data-testid={tid.testId}>
+    <nav {...skeletonProps} class={navClassName()} data-testid={tid.testId}>
       <ul role="list" class={listClassName()}>
         {local.children}
       </ul>

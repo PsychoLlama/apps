@@ -78,7 +78,7 @@ function Text(
     ...skeletonPropKeys,
     ...testIdPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -89,7 +89,7 @@ function Text(
       local.color && css.color[local.color],
       resolveTrimClass(local),
       resolveSelectableClass(local),
-      skel.class(),
+      skeletonClass(),
       ...resolveMarginClasses(local),
       local.class,
     ]
@@ -101,7 +101,7 @@ function Text(
       component={local.as}
       class={className()}
       data-testid={local.testId}
-      {...skel.rest}
+      {...skeletonProps}
     >
       {local.children}
     </Dynamic>

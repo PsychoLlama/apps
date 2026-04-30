@@ -58,24 +58,25 @@ export const skeletonArgs = {
  *
  * Pair with a parent `splitProps(..., [...skeletonPropKeys, ...])`
  * so `skeleton` lives in the same `local` bag this helper reads.
- * Returns:
- * - `class`: a `() => string | false | undefined` accessor to drop
- *   into the component's class list before `local.class`.
- * - `rest`: a Solid-merged proxy of the rest props that adds
- *   `aria-hidden`, `inert`, and `tabindex={-1}` while skeleton is
- *   on. Spread it onto the host element instead of the raw `rest`.
+ * Returns a `[skeletonClass, skeletonProps]` tuple to mirror Solid's
+ * `splitProps` shape and so the call-site names mangle freely:
+ * - `skeletonClass`: a `() => string | false | undefined` accessor
+ *   to drop into the component's class list before `local.class`.
+ * - `skeletonProps`: a Solid-merged proxy of the rest props that
+ *   adds `aria-hidden`, `inert`, and `tabindex={-1}` while skeleton
+ *   is on. Spread it onto the host element instead of the raw `rest`.
  *
- * The rest proxy uses an arrow merge so the inert keys only appear
+ * The props proxy uses an arrow merge so the inert keys only appear
  * during skeleton renders — that way consumer-supplied
  * `aria-hidden` / `inert` / `tabindex` survive non-skeleton state.
  */
 export const useSkeleton = <R extends object>(
   local: SkeletonProps,
   rest: R,
-): { class: () => string | false | undefined; rest: R } => {
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local)) as R;
-  return {
-    class: () => resolveSkeletonClass(local),
-    rest: merged,
-  };
+): readonly [() => string | false | undefined, R] => {
+  const skeletonProps = mergeProps(rest, () =>
+    resolveSkeletonAttrs(local),
+  ) as R;
+  const skeletonClass = () => resolveSkeletonClass(local);
+  return [skeletonClass, skeletonProps] as const;
 };

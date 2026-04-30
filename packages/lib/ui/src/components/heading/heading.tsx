@@ -83,7 +83,7 @@ function Heading(
     ...skeletonPropKeys,
     ...testIdPropKeys,
   ]);
-  const skel = useSkeleton(local, rest);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -94,7 +94,7 @@ function Heading(
       local.color && css.color[local.color],
       resolveTrimClass(local),
       resolveSelectableClass(local),
-      skel.class(),
+      skeletonClass(),
       ...resolveMarginClasses(local),
       local.class,
     ]
@@ -106,7 +106,7 @@ function Heading(
       component={local.as}
       class={className()}
       data-testid={local.testId}
-      {...skel.rest}
+      {...skeletonProps}
     >
       {local.children}
     </Dynamic>
