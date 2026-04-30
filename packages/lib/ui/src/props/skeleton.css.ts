@@ -67,11 +67,17 @@ export const skeleton = style({
     // to remove leading whitespace, and that geometry needs to keep
     // applying while the skeleton is on. Compound class for 0,2,1
     // specificity to beat `.card-variant-surface::after` and friends.
+    //
+    // `transition: none` matches the host rule above — Switch's track
+    // sits on `::before` with its own `background-color` / `filter`
+    // transitions, so without this the swap into skeleton interpolates
+    // visibly even when the host is transition-pinned.
     '&&::before, &&::after': {
       background: 'none',
       backgroundImage: 'none',
       border: 'none',
       boxShadow: 'none',
+      transition: 'none',
     },
   },
 });
@@ -87,4 +93,10 @@ export const skeleton = style({
 // it can't leak to anything that doesn't opt in via `skeleton={true}`.
 globalStyle(`.${skeleton} > *`, {
   visibility: 'hidden',
+  // Children stay visible to layout but invisible to paint — their
+  // own transitions on `transform`, `box-shadow`, etc. would still
+  // fire as the parent skeleton class flips on, producing a flicker.
+  // Switch's thumb is the canonical case (transitions on `transform`
+  // and `box-shadow` while sliding from on/off → hidden).
+  transition: 'none',
 });
