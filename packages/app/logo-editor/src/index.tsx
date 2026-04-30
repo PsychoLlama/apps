@@ -68,19 +68,21 @@ export const LogoEditor = () => {
   const setActiveTab = useAction(setTabAction);
   const [searchParams, setSearchParams] = useSearchParams<LogoSearchParams>();
 
-  // Hydrate before any reactive setup. Solid runs the component body
-  // exactly once per mount, so reading the search-params proxy here
-  // doesn't subscribe — the effect below is what tracks state changes.
+  // Hydrate from URL on mount and on every navigation. The search-params
+  // proxy is reactive, so wrapping the read in an effect re-applies state
+  // whenever the query changes (back/forward, in-route anchor clicks).
   const readParam = (key: LogoSearchParamKey): string | undefined => {
     const value = searchParams[key];
     return typeof value === 'string' ? value : undefined;
   };
-  const padParam = readParam('pad');
-  actions.hydrate({
-    icon: readParam('icon'),
-    palette: readParam('palette'),
-    shape: readParam('shape'),
-    padding: padParam !== undefined ? Number(padParam) : undefined,
+  createEffect(() => {
+    const padParam = readParam('pad');
+    actions.hydrate({
+      icon: readParam('icon'),
+      palette: readParam('palette'),
+      shape: readParam('shape'),
+      padding: padParam !== undefined ? Number(padParam) : undefined,
+    });
   });
 
   // Mirror state → URL with a small debounce so each keystroke in the
