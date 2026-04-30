@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js';
 import { Title } from '@solidjs/meta';
-import { Flex, Link, LinkButton, Text } from '@lib/ui';
+import { Flex, Link, LinkButton, Separator, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import * as css from './site-header.css';
@@ -51,7 +51,7 @@ export default function SiteHeader(props: {
           <>
             <Show
               when={index() > 0}
-              fallback={<Flex as="div" class={css.divider} />}
+              fallback={<Separator orientation="vertical" decorative />}
             >
               <IconChevronRight
                 width="16"
