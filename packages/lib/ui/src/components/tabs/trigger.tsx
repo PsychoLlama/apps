@@ -153,6 +153,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
       tabIndex={isFocusableTarget() ? 0 : -1}
       disabled={local.disabled}
       class={className()}
+      data-state={isActive() ? 'active' : 'inactive'}
       data-testid={tid.testId}
       onMouseDown={onMouseDown}
       onFocus={onFocus}

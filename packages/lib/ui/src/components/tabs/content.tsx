@@ -36,6 +36,7 @@ export const TabsContent: ParentComponent<TabsContentProps> = (rawProps) => {
       tabIndex={0}
       hidden={!isActive()}
       class={className()}
+      data-state={isActive() ? 'active' : 'inactive'}
       data-testid={tid.testId}
     >
       {isActive() && local.children}

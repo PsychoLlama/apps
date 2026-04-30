@@ -12,9 +12,13 @@
  * - Inactive panels stay mounted with `hidden` (matching Radix), but their
  *   children only render while active so consumer effects don't run in the
  *   background. No `forceMount`.
- * - No `data-state` / `data-disabled` attributes — internal styling uses
- *   VE class variants. No public context hook; consumers drive their own
- *   animations from the same `value` signal.
+ * - `data-state="active" | "inactive"` is exposed on `TabsTrigger` and
+ *   `TabsContent` so consumers can drive CSS-only state styling — active
+ *   panel animations, `view-transition-name`, custom indicators — without
+ *   threading the `value` signal through their styling layer. Internal
+ *   styling still uses VE class variants. No `data-disabled` (the native
+ *   `[disabled]` selector on `<button>` already covers that case) and no
+ *   public context hook.
  * - Horizontal-only. No vertical layout, no PageUp/PageDown asymmetry.
  *   No RTL (`dir`) support.
  * - No CSS transitions on the active/inactive switch — color and indicator
