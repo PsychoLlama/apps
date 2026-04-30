@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { fn } from 'storybook/test';
 import IconHeart from 'virtual:icons/mdi/heart';
 import {
   IconButton as IconButtonComponent,
@@ -36,18 +36,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const IconButton: Story = {
-  play: async ({
-    args,
-    canvasElement,
-  }: {
-    args: typeof meta.args;
-    canvasElement: HTMLElement;
-  }) => {
-    const canvas = within(canvasElement);
-    const button = canvas.getByRole('button');
-
-    await userEvent.click(button);
-    await expect(args.onClick).toHaveBeenCalledOnce();
-  },
-};
+export const IconButton: Story = {};

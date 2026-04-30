@@ -7,7 +7,8 @@ const spaceScaleOptions = Object.keys(space).map(Number);
 
 export const spaceArgType = {
   control: 'select' as const,
-  options: spaceScaleOptions,
+  // `undefined` is a clear option so consumers can return to the default.
+  options: [undefined, ...spaceScaleOptions],
 };
 
 export interface PaddingProps {
