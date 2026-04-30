@@ -49,6 +49,14 @@ export const skeleton = style({
       outline: 'none',
       pointerEvents: 'none',
       userSelect: 'none',
+      // Skeleton swaps the host's `background` / `color` / `box-shadow`
+      // / `border` properties; any `transition` rule the host carries
+      // for those would interpolate the change into a flicker as the
+      // class is added. Pin transitions off here so the skeleton snaps
+      // in instantly. The reverse direction (skeleton → loaded) still
+      // reads the host's normal transition, which is desirable — it
+      // makes the reveal feel like a deliberate fade-in.
+      transition: 'none',
       // Repaints the bg-box across line breaks for inline text wrappers.
       boxDecorationBreak: 'clone',
     },

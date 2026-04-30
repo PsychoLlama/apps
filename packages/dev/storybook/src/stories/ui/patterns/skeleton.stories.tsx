@@ -1,11 +1,10 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import IconMagnify from 'virtual:icons/mdi/magnify';
-import IconArrowRight from 'virtual:icons/mdi/arrow-right';
+import IconCheck from 'virtual:icons/mdi/check';
 import { Badge, Flex, Heading, IconButton, Text, TextField } from '@lib/ui';
 import * as css from './skeleton.stories.css';
 
 interface SkeletonShowcaseArgs {
-  /** Flips every skeleton-eligible item in the layout. */
+  /** Flips every skeleton-enabled component in the layout at once. */
   loading: boolean;
 }
 
@@ -23,50 +22,63 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Cross-component skeleton showcase. Demonstrates a partial-loading
- * page: the heading and surrounding paragraph are already loaded
- * while the inline timestamp, badge row, and form controls are still
- * resolving. Flip the `loading` arg to see them all settle at once.
+ * Cross-component skeleton showcase. The copy below is the demo —
+ * each block describes how skeleton behaves on the components it
+ * uses. Flip the `loading` arg to compare loaded and skeletonized
+ * states side-by-side.
  */
 export const Skeleton: Story = {
   render: (props: SkeletonShowcaseArgs) => (
     <Flex as="div" direction="column" gap={4} class={css.layout}>
       <Heading as="h2" size={5}>
-        Recent activity
+        The skeleton prop
       </Heading>
       <Text as="p" size={2}>
-        You last signed in{' '}
-        <Text as="span" skeleton={props.loading}>
-          2 hours ago
+        Pass{' '}
+        <Text as="span" weight="bold">
+          skeleton
         </Text>{' '}
-        from your usual device.
+        on any component to render it as{' '}
+        <Text as="span" skeleton={props.loading}>
+          a pulsing placeholder
+        </Text>{' '}
+        while the data behind it loads. Layout, margin, and corner shape survive
+        — only the variant background and text color step out of the way.
       </Text>
       <Flex as="div" gap={2}>
         <Badge color="accent" skeleton={props.loading}>
-          Verified
+          accent
         </Badge>
         <Badge color="success" skeleton={props.loading}>
-          Active
+          success
         </Badge>
         <Badge color="warning" skeleton={props.loading}>
-          Trial
+          warning
         </Badge>
       </Flex>
+      <Text as="p" size={2}>
+        Color variants collapse to the same neutral pulse, so a skeleton row
+        reads as one loading region instead of three styled chips.
+      </Text>
       <Flex as="div" gap={2} align="center">
         <TextField
-          testId="search"
-          placeholder="Search activity…"
-          left={<IconMagnify />}
+          testId="example-input"
+          placeholder="Form controls become inert"
           skeleton={props.loading}
         />
         <IconButton
-          testId="submit"
-          aria-label="Search"
+          testId="example-button"
+          aria-label="Confirm"
           skeleton={props.loading}
         >
-          <IconArrowRight />
+          <IconCheck />
         </IconButton>
       </Flex>
+      <Text as="p" size={2}>
+        Inputs and buttons are individually skeletonized. While loading, focus,
+        pointer events, and form submission are all suppressed — flip the toggle
+        and try tabbing through.
+      </Text>
     </Flex>
   ),
 };
