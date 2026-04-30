@@ -3,6 +3,7 @@ import { Title } from '@solidjs/meta';
 import { Flex, Link, LinkButton, Separator, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
+import IconGithub from 'virtual:icons/mdi/github';
 import * as css from './site-header.css';
 
 /**
@@ -91,6 +92,19 @@ export default function SiteHeader(props: {
           </>
         )}
       </For>
+
+      <LinkButton
+        testId="github"
+        href="https://github.com/PsychoLlama/apps"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub repository"
+        variant="ghost"
+        color="neutral"
+        class={css.trailing}
+      >
+        <IconGithub width="24" height="24" />
+      </LinkButton>
     </Flex>
   );
 }

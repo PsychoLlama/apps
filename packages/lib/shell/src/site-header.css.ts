@@ -10,3 +10,7 @@ export const separator = style({
   color: text.lowContrast,
   flexShrink: 0,
 });
+
+export const trailing = style({
+  marginInlineStart: 'auto',
+});
