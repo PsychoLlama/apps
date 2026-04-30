@@ -39,12 +39,18 @@ catalogs:
     idb:
       specifier: ^8.0.3
       version: 8.0.3
+    knip:
+      specifier: ^6.6.1
+      version: 6.9.0
     playwright:
       specifier: ^1.59.1
       version: 1.59.1
     solid-js:
       specifier: ^1.9.5
       version: 1.9.12
+    storybook:
+      specifier: ^10.3.5
+      version: 10.3.6
     storybook-solidjs-vite:
       specifier: ^10.0.12
       version: 10.0.12
@@ -82,7 +88,7 @@ importers:
         version: 9.39.4
       '@iconify/json':
         specifier: ^2.2.460
-        version: 2.2.467
+        version: 2.2.468
       '@testing-library/jest-dom':
         specifier: 'catalog:'
         version: 6.9.1
@@ -188,7 +194,7 @@ importers:
         version: link:../../dev/build
       '@iconify/json':
         specifier: ^2.2.460
-        version: 2.2.467
+        version: 2.2.468
       '@solidjs/testing-library':
         specifier: 'catalog:'
         version: 0.8.10(@solidjs/router@0.16.1(solid-js@1.9.12))(solid-js@1.9.12)
@@ -295,7 +301,7 @@ importers:
     devDependencies:
       '@iconify/json':
         specifier: ^2.2.460
-        version: 2.2.467
+        version: 2.2.468
       '@storybook/addon-themes':
         specifier: ^10.3.5
         version: 10.3.6(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
@@ -1221,8 +1227,8 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@iconify/json@2.2.467':
-    resolution: {integrity: sha512-vjw27l6Sp6OJnCSNAhE6PGCZFYNSp68j1xK+hws0T5mptSEez0EjmmJBQLUk4yM5nhA9G5H5mW3EF2/yRfk74Q==}
+  '@iconify/json@2.2.468':
+    resolution: {integrity: sha512-vfW6JQdYiHAFnCRZN6H5uzObcFBTaAguNaKqUpeazDLz5DO7R2UM8StyM/+v8d8KP15SfrQzG9aZy4uF9lViVQ==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -6114,7 +6120,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@iconify/json@2.2.467':
+  '@iconify/json@2.2.468':
     dependencies:
       '@iconify/types': 2.0.0
       pathe: 2.0.3
