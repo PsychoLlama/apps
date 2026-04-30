@@ -25,8 +25,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import * as css from './link.css';
@@ -76,6 +75,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     ...trimPropKeys,
     ...skeletonPropKeys,
   ]);
+  const skel = useSkeleton(local, rest);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
@@ -93,16 +93,14 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       css.underline[local.underline],
       autoAlways() && css.underlineAutoAlways,
       resolveTrimClass(local),
-      resolveSkeletonClass(local),
+      skel.class(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
-
   return (
-    <A class={className()} data-testid={tid.testId} {...merged}>
+    <A class={className()} data-testid={tid.testId} {...skel.rest}>
       {local.children}
     </A>
   );

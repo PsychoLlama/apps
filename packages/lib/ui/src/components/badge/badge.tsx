@@ -19,8 +19,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './badge.css';
@@ -72,6 +71,7 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
     'children',
     ...skeletonPropKeys,
   ]);
+  const skel = useSkeleton(local, rest);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
@@ -82,16 +82,14 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
       css.size[local.size],
       css.cornerRadius[local.radius],
       css.variantColor[local.variant][local.color][contrast()],
-      resolveSkeletonClass(local),
+      skel.class(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
-
   return (
-    <span class={className()} data-testid={tid.testId} {...merged}>
+    <span class={className()} data-testid={tid.testId} {...skel.rest}>
       {local.children}
     </span>
   );

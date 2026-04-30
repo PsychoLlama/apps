@@ -15,8 +15,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
@@ -51,6 +50,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
     'class',
     'children',
   ]);
+  const skel = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -61,13 +61,11 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
         local.color,
         local.radius,
       ),
-      resolveSkeletonClass(local),
+      skel.class(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
-
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
 
   return (
     <Dynamic
@@ -75,7 +73,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
       type={local.as === 'button' ? 'button' : undefined}
       class={className()}
       data-testid={tid.testId}
-      {...merged}
+      {...skel.rest}
     >
       {local.children}
     </Dynamic>

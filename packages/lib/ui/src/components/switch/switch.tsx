@@ -30,8 +30,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { callConsumerHandler } from '../compose-event-handler';
@@ -130,6 +129,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
     'onClick',
     ...skeletonPropKeys,
   ]);
+  const skel = useSkeleton(local, rest);
 
   const onClick: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
     callConsumerHandler(local.onClick, event);
@@ -145,18 +145,16 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       css.color[local.color],
       css.variant[local.variant],
       css.radiusVariant[local.radius],
-      resolveSkeletonClass(local),
+      skel.class(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
-
   return (
     <>
       <button
-        {...merged}
+        {...skel.rest}
         type="button"
         role="switch"
         aria-checked={local.checked}

@@ -32,8 +32,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
@@ -72,6 +71,7 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
     'class',
     'children',
   ]);
+  const skel = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -82,16 +82,14 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
         local.color,
         local.radius,
       ),
-      resolveSkeletonClass(local),
+      skel.class(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
-
   return (
-    <button class={className()} data-testid={tid.testId} {...merged}>
+    <button class={className()} data-testid={tid.testId} {...skel.rest}>
       {local.children}
     </button>
   );

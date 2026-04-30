@@ -13,8 +13,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import {
@@ -59,6 +58,7 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
     'children',
     ...skeletonPropKeys,
   ]);
+  const skel = useSkeleton(local, rest);
 
   const baseId = createUniqueId();
   const ctx: TabsContextValue = {
@@ -75,15 +75,13 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
   };
 
   const className = () =>
-    [...resolveMarginClasses(margin), resolveSkeletonClass(local), local.class]
+    [...resolveMarginClasses(margin), skel.class(), local.class]
       .filter(Boolean)
       .join(' ');
 
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
-
   return (
     <TabsContext.Provider value={ctx}>
-      <div {...merged} class={className()} data-testid={tid.testId}>
+      <div {...skel.rest} class={className()} data-testid={tid.testId}>
         {local.children}
       </div>
     </TabsContext.Provider>

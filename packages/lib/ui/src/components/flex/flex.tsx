@@ -1,5 +1,5 @@
 import { Dynamic } from 'solid-js/web';
-import { mergeProps, splitProps } from 'solid-js';
+import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
 import {
   boxPropKeys,
@@ -15,10 +15,7 @@ import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
-import {
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
-} from '../../props/skeleton';
+import { useSkeleton } from '../../props/skeleton';
 
 /** Flex props for a specific element tag. */
 export type FlexProps<T extends HtmlBoxTag> = PolymorphicProps<
@@ -35,25 +32,24 @@ function Flex(
 ) {
   const [local, boxAndRest] = splitProps(props, flexPropKeys);
   const [box, rest] = splitProps(boxAndRest, boxPropKeys);
+  const skel = useSkeleton(box, rest);
 
   const className = () =>
     [
       ...resolveBoxClasses(box),
       ...resolveFlexClasses(local),
-      resolveSkeletonClass(box),
+      skel.class(),
       box.class,
     ]
       .filter(Boolean)
       .join(' ');
-
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(box));
 
   return (
     <Dynamic
       component={box.as}
       class={className()}
       data-testid={box.testId}
-      {...merged}
+      {...skel.rest}
     >
       {box.children}
     </Dynamic>

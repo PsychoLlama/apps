@@ -1,3 +1,4 @@
+import { mergeProps } from 'solid-js';
 import type { ArgTypes } from 'storybook-solidjs-vite';
 import * as css from './skeleton.css';
 
@@ -51,3 +52,30 @@ export const skeletonArgTypes: ArgTypes<SkeletonProps> = {
 export const skeletonArgs = {
   skeleton: false,
 } as const satisfies Required<SkeletonProps>;
+
+/**
+ * Bundled skeleton plumbing for components.
+ *
+ * Pair with a parent `splitProps(..., [...skeletonPropKeys, ...])`
+ * so `skeleton` lives in the same `local` bag this helper reads.
+ * Returns:
+ * - `class`: a `() => string | false | undefined` accessor to drop
+ *   into the component's class list before `local.class`.
+ * - `rest`: a Solid-merged proxy of the rest props that adds
+ *   `aria-hidden`, `inert`, and `tabindex={-1}` while skeleton is
+ *   on. Spread it onto the host element instead of the raw `rest`.
+ *
+ * The rest proxy uses an arrow merge so the inert keys only appear
+ * during skeleton renders — that way consumer-supplied
+ * `aria-hidden` / `inert` / `tabindex` survive non-skeleton state.
+ */
+export const useSkeleton = <R extends object>(
+  local: SkeletonProps,
+  rest: R,
+): { class: () => string | false | undefined; rest: R } => {
+  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local)) as R;
+  return {
+    class: () => resolveSkeletonClass(local),
+    rest: merged,
+  };
+};

@@ -20,8 +20,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './kbd.css';
@@ -52,6 +51,7 @@ const Kbd: ParentComponent<KbdProps> = (rawProps) => {
     'children',
     ...skeletonPropKeys,
   ]);
+  const skel = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -59,16 +59,14 @@ const Kbd: ParentComponent<KbdProps> = (rawProps) => {
       css.base,
       css.variant[local.variant],
       local.size && css.size[local.size],
-      resolveSkeletonClass(local),
+      skel.class(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
-
   return (
-    <kbd class={className()} data-testid={tid.testId} {...merged}>
+    <kbd class={className()} data-testid={tid.testId} {...skel.rest}>
       {local.children}
     </kbd>
   );

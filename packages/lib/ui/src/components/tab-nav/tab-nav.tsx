@@ -29,8 +29,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { callConsumerHandler } from '../compose-event-handler';
@@ -92,11 +91,12 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
     'children',
     ...skeletonPropKeys,
   ]);
+  const skel = useSkeleton(local, rest);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
   const navClassName = () =>
-    [...resolveMarginClasses(margin), resolveSkeletonClass(local), local.class]
+    [...resolveMarginClasses(margin), skel.class(), local.class]
       .filter(Boolean)
       .join(' ');
 
@@ -111,10 +111,8 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
       .filter(Boolean)
       .join(' ');
 
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
-
   return (
-    <nav {...merged} class={navClassName()} data-testid={tid.testId}>
+    <nav {...skel.rest} class={navClassName()} data-testid={tid.testId}>
       <ul role="list" class={listClassName()}>
         {local.children}
       </ul>

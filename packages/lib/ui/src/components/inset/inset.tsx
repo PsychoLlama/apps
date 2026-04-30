@@ -22,8 +22,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './inset.css';
@@ -75,6 +74,7 @@ function Inset(
     'children',
     ...skeletonPropKeys,
   ]);
+  const skel = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -83,20 +83,18 @@ function Inset(
       css.side[local.side],
       css.clip[local.clip],
       local.pad === false && css.padOff,
-      resolveSkeletonClass(local),
+      skel.class(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
-
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
 
   return (
     <Dynamic
       component={local.as}
       class={className()}
       data-testid={tid.testId}
-      {...merged}
+      {...skel.rest}
     >
       {local.children}
     </Dynamic>
