@@ -15,6 +15,7 @@ import {
   type TabsListProps,
   type TabsRootProps,
 } from '../tabs';
+import * as fixture from './tabs.test.browser.css';
 
 const Tabs = (props: {
   activationMode?: TabsRootProps['activationMode'];
@@ -172,6 +173,49 @@ describe('Tabs', () => {
       billing.focus();
       await userEvent.keyboard('{ArrowRight}');
       expect(billing).toHaveFocus();
+    });
+  });
+
+  describe('inactive panels and consumer display styles', () => {
+    // The UA `[hidden] { display: none }` rule has specificity (0,0,1),
+    // so a consumer class that sets `display: flex` (0,1,0) used to win
+    // and keep an inactive panel claiming flex space. The primitive must
+    // out-specify a plain class so `hidden` always actually hides.
+    it('removes an inactive panel from layout even with a display class', () => {
+      const [value, setValue] = createSignal('overview');
+
+      render(() => (
+        <div class={fixture.rail}>
+          <TabsRoot testId="tabs" value={value()} onValueChange={setValue}>
+            <TabsList testId="tabs-list">
+              <TabsTrigger testId="tabs-trigger-overview" value="overview">
+                Overview
+              </TabsTrigger>
+              <TabsTrigger testId="tabs-trigger-settings" value="settings">
+                Settings
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent
+              testId="tabs-content-overview"
+              value="overview"
+              class={fixture.flexPanel}
+            >
+              Overview panel.
+            </TabsContent>
+            <TabsContent
+              testId="tabs-content-settings"
+              value="settings"
+              class={fixture.flexPanel}
+            >
+              Settings panel.
+            </TabsContent>
+          </TabsRoot>
+        </div>
+      ));
+
+      const inactive = screen.getByTestId('tabs-content-settings');
+      expect(inactive.offsetHeight).toBe(0);
+      expect(inactive.offsetWidth).toBe(0);
     });
   });
 });
