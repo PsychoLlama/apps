@@ -18,6 +18,8 @@ import { fontFamily, fontWeight, typeScale } from './tokens/typography.css';
  * - color-scheme: enable `light-dark()` resolution
  * - background-color: page canvas from color tokens
  * - manipulation: disable double-tap zoom for faster taps
+ * - tap-highlight-color: suppress the gray flash on iOS taps
+ * - touch-callout: suppress the iOS long-press preview menu
  * - font smoothing: consistent antialiased rendering
  * - text-size-adjust: prevent mobile browsers from inflating font sizes
  * - overflow-wrap: break long words rather than overflow containers
@@ -27,6 +29,8 @@ globalStyle(':root', {
   colorScheme: 'light dark',
   backgroundColor: background.page,
   touchAction: 'manipulation',
+  WebkitTapHighlightColor: 'transparent',
+  WebkitTouchCallout: 'none',
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
   textSizeAdjust: 'none',
@@ -41,12 +45,17 @@ globalStyle(darkSelector, { colorScheme: 'dark' });
 
 // --- Body ---
 
-/** Full-height flex column. vh fallback for browsers without dvh support. */
+/**
+ * Full-height flex column. vh fallback for browsers without dvh support.
+ * `overscroll-behavior: none` blocks pull-to-refresh and scroll chaining
+ * from leaking into the document.
+ */
 globalStyle('body', {
   margin: 0,
   minHeight: ['100vh', '100dvh'],
   display: 'flex',
   flexDirection: 'column',
+  overscrollBehavior: 'none',
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.regular,
   fontSize: typeScale[3].fontSize,
