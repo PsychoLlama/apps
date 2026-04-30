@@ -17,6 +17,10 @@ const meta = {
     ...marginArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,
+    as: {
+      control: 'select',
+      options: ['div', 'section', 'article', 'aside', 'a', 'button', 'label'],
+    },
     size: {
       control: { type: 'range', min: 1, max: 5, step: 1 },
     },
