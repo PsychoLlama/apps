@@ -4,6 +4,8 @@ Switch between panels under a row of triggers. Composed from four flat component
 
 Fully controlled — `value` and `onValueChange` are required on `TabsRoot`. Inactive panel children do not render while their tab is inactive, so consumer effects don't run in the background.
 
+`TabsTrigger` and `TabsContent` expose `data-state="active" | "inactive"` for CSS-only state styling.
+
 ## TabsRoot
 
 Renders a `<div>`.

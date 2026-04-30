@@ -172,4 +172,25 @@ describe('Tabs', () => {
 
     expect(screen.getByTestId('tabs-trigger-two')).toBeDisabled();
   });
+
+  it('reflects active/inactive as data-state on triggers and content', () => {
+    render(() => <Harness initialValue="three" />);
+
+    expect(screen.getByTestId('tabs-trigger-one')).toHaveAttribute(
+      'data-state',
+      'inactive',
+    );
+    expect(screen.getByTestId('tabs-trigger-three')).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+    expect(screen.getByTestId('tabs-content-one')).toHaveAttribute(
+      'data-state',
+      'inactive',
+    );
+    expect(screen.getByTestId('tabs-content-three')).toHaveAttribute(
+      'data-state',
+      'active',
+    );
+  });
 });
