@@ -1,0 +1,157 @@
+import { For, Show } from 'solid-js';
+import type { Component } from 'solid-js';
+import { createStore, defineAction, defineStore, useAction } from '@lib/state';
+import { Button, Flex, TextField } from '@lib/ui';
+import IconDownload from 'virtual:icons/mdi/download-outline';
+import { downloadPng, downloadSvg } from '../download';
+import { renderFaviconSvg } from '../svg';
+import type { FaviconState } from '../state';
+import { Field } from './field';
+import * as css from './export-actions.css';
+
+interface ExportActionsProps {
+  /** Reactive favicon state — exported on every Export click. */
+  state: FaviconState;
+}
+
+type ExportFormat = 'svg' | 'png';
+
+interface ExportPanelState {
+  /** Output format the user picked. */
+  format: ExportFormat;
+  /** Output size in pixels — only meaningful when `format === 'png'`. */
+  size: number;
+}
+
+const FORMATS: ReadonlyArray<{ value: ExportFormat; label: string }> = [
+  { value: 'svg', label: 'SVG' },
+  { value: 'png', label: 'PNG' },
+];
+
+const SIZE_PRESETS = [32, 192, 512] as const;
+const MIN_PX = 16;
+const MAX_PX = 2048;
+const DEFAULT_PX = 512;
+
+const exportStore = defineStore<ExportPanelState>(() => ({
+  format: 'png',
+  size: DEFAULT_PX,
+}));
+const exportState = createStore(exportStore);
+
+const setFormatAction = defineAction(
+  [exportStore],
+  (state, value: ExportFormat) => {
+    state.format = value;
+  },
+);
+
+const setSizeAction = defineAction([exportStore], (state, value: number) => {
+  if (Number.isFinite(value)) state.size = value;
+});
+
+const clampSize = (value: number): number =>
+  Math.max(MIN_PX, Math.min(MAX_PX, Math.round(value)));
+
+const filenameStem = (state: FaviconState) => `favicon-${state.icon.name}`;
+
+/**
+ * Compose a logo export. Format toggles between SVG (vector, single
+ * download) and PNG (rasterized at the chosen size). The PNG row
+ * surfaces three preset chips for the most common sizes plus a
+ * free-form number input — always square, since the favicon canvas
+ * itself is square.
+ */
+export const ExportActions: Component<ExportActionsProps> = (props) => {
+  const setFormat = useAction(setFormatAction);
+  const setSize = useAction(setSizeAction);
+
+  const effectiveSize = () => clampSize(exportState.size);
+  const filename = () =>
+    exportState.format === 'svg'
+      ? `${filenameStem(props.state)}.svg`
+      : `${filenameStem(props.state)}-${effectiveSize()}.png`;
+
+  const handleExport = () => {
+    const svg = renderFaviconSvg(props.state, { size: 512 });
+    if (exportState.format === 'svg') {
+      downloadSvg(svg, filename());
+    } else {
+      void downloadPng(svg, effectiveSize(), filename());
+    }
+  };
+
+  return (
+    <Flex as="div" direction="column" gap={3}>
+      <Field label="Format">
+        {/* Two-segment radiogroup; matches ShapeSelector's chip style.    */}
+        {/* eslint-disable-next-line custom/require-ui-primitives */}
+        <div class={css.formatGroup} role="radiogroup" aria-label="Format">
+          <For each={FORMATS}>
+            {(option) => {
+              const selected = () => exportState.format === option.value;
+              return (
+                // eslint-disable-next-line custom/require-ui-primitives
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={selected()}
+                  class={css.formatOption}
+                  classList={{ [css.formatOptionActive]: selected() }}
+                  onClick={() => setFormat(option.value)}
+                >
+                  {option.label}
+                </button>
+              );
+            }}
+          </For>
+        </div>
+      </Field>
+
+      <Show when={exportState.format === 'png'}>
+        <Field label="Size (px)" for="export-size">
+          <Flex as="div" direction="column" gap={2}>
+            <TextField
+              testId="export-size"
+              id="export-size"
+              type="number"
+              min={MIN_PX}
+              max={MAX_PX}
+              step={1}
+              value={String(exportState.size)}
+              onInput={(event) => {
+                const next = Number(event.currentTarget.value);
+                if (Number.isFinite(next)) setSize(next);
+              }}
+            />
+            <Flex as="div" gap={1} wrap="wrap">
+              <For each={SIZE_PRESETS}>
+                {(preset) => (
+                  <Button
+                    testId={`export-size-preset-${preset}`}
+                    size={1}
+                    variant="soft"
+                    color={effectiveSize() === preset ? 'accent' : 'neutral'}
+                    onClick={() => setSize(preset)}
+                  >
+                    {preset}
+                  </Button>
+                )}
+              </For>
+            </Flex>
+          </Flex>
+        </Field>
+      </Show>
+
+      <Button
+        testId="export"
+        size={2}
+        variant="solid"
+        color="accent"
+        onClick={handleExport}
+      >
+        <IconDownload aria-hidden /> Export {filename()}
+      </Button>
+    </Flex>
+  );
+};

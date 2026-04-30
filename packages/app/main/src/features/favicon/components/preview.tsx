@@ -1,0 +1,37 @@
+/* eslint-disable solid/no-innerhtml -- the SVG markup is built locally
+ * from trusted icon bodies; no untrusted input ever reaches innerHTML. */
+
+import type { Component } from 'solid-js';
+import { renderFaviconSvg } from '../svg';
+import type { FaviconState } from '../state';
+import * as css from './preview.css';
+
+interface PreviewProps {
+  /** Reactive favicon state to render. */
+  state: FaviconState;
+  /** Rendered display size in CSS pixels. */
+  size: number;
+}
+
+/** Live preview of the current favicon at an arbitrary display size. */
+export const Preview: Component<PreviewProps> = (props) => {
+  const svg = () =>
+    renderFaviconSvg(props.state, {
+      responsive: true,
+      // The display size is unique per Preview on the page (hero +
+      // size strip), so it doubles as a stable id discriminator that
+      // keeps each preview's `clip-path` ref pointing at its own clip.
+      idSuffix: `preview-${props.size}`,
+    });
+  return (
+    // The preview is a fixed-size SVG container; the size depends on
+    // `props.size`, so the inline style is genuinely dynamic.
+    // eslint-disable-next-line custom/require-ui-primitives
+    <div
+      class={css.frame}
+      style={{ width: `${props.size}px`, height: `${props.size}px` }}
+      aria-label={`Favicon preview at ${props.size} pixels`}
+      innerHTML={svg()}
+    />
+  );
+};
