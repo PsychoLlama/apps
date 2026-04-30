@@ -100,27 +100,43 @@ export interface LogoEditorHydrateInput {
 const isShape = (value: string): value is LogoEditorShape =>
   (SHAPES as ReadonlyArray<string>).includes(value);
 
+const clampPadding = (value: number): number =>
+  Math.max(0, Math.min(40, Math.floor(value)));
+
 /**
- * Apply each provided field to the store after lightweight validation.
- * Unrecognized fields and unparseable values are ignored — the existing
- * value wins. Used to seed the store from URL search params.
+ * Resolve a hydrate input into a complete state snapshot. Missing or
+ * unparseable fields fall back to {@link DEFAULT_LOGO_EDITOR_STATE} —
+ * the URL is the source of truth, so a clean `/logo-editor` link must
+ * render the canonical defaults regardless of what the singleton store
+ * was holding from a prior session.
+ */
+export const resolveHydrateInput = (
+  input: LogoEditorHydrateInput,
+): LogoEditorState => {
+  const icon = input.icon ? findIcon(input.icon) : undefined;
+  const palette =
+    input.palette && findPalette(input.palette) ? input.palette : undefined;
+  const shape = input.shape && isShape(input.shape) ? input.shape : undefined;
+  const padding =
+    input.padding !== undefined && Number.isFinite(input.padding)
+      ? clampPadding(input.padding)
+      : undefined;
+  return {
+    icon: icon ?? DEFAULT_LOGO_EDITOR_STATE.icon,
+    palette: palette ?? DEFAULT_LOGO_EDITOR_STATE.palette,
+    shape: shape ?? DEFAULT_LOGO_EDITOR_STATE.shape,
+    padding: padding ?? DEFAULT_LOGO_EDITOR_STATE.padding,
+  };
+};
+
+/**
+ * Replace the store with the resolved snapshot — used to seed state
+ * from URL search params on every navigation.
  */
 const hydrateAction = defineAction(
   [logoEditorStore],
   (state, input: LogoEditorHydrateInput) => {
-    if (input.icon) {
-      const found = findIcon(input.icon);
-      if (found) state.icon = found;
-    }
-    if (input.palette && findPalette(input.palette)) {
-      state.palette = input.palette;
-    }
-    if (input.shape && isShape(input.shape)) {
-      state.shape = input.shape;
-    }
-    if (input.padding !== undefined && Number.isFinite(input.padding)) {
-      state.padding = Math.max(0, Math.min(40, Math.floor(input.padding)));
-    }
+    Object.assign(state, resolveHydrateInput(input));
   },
 );
 
