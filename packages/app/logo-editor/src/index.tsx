@@ -13,21 +13,21 @@ import {
 } from '@lib/ui';
 import IconDice from 'virtual:icons/mdi/dice-multiple-outline';
 import IconReset from 'virtual:icons/mdi/restart';
+import { ExportActions } from './components/export-actions';
+import { Field } from './components/field';
+import { IconGrid } from './components/icon-grid';
+import { InlineField } from './components/inline-field';
+import { PaddingSlider } from './components/padding-slider';
+import { PalettePicker } from './components/palette-picker';
+import { Preview } from './components/preview';
+import { ShapeSelector } from './components/shape-selector';
+import { Spec } from './components/spec';
 import {
-  DEFAULT_FAVICON_STATE,
-  ExportActions,
-  Field,
-  IconGrid,
-  InlineField,
-  PaddingSlider,
-  PalettePicker,
-  Preview,
-  ShapeSelector,
-  Spec,
-  favicon,
-  useFaviconActions,
-} from '../features/favicon';
-import * as css from './logo.css';
+  DEFAULT_LOGO_EDITOR_STATE,
+  logoEditor,
+  useLogoEditorActions,
+} from './state';
+import * as css from './index.css';
 
 type InspectorTab = 'icon' | 'style' | 'export';
 
@@ -63,8 +63,8 @@ const paramOrNull = <T,>(
   encode: (value: T) => string,
 ) => (value === fallback ? null : encode(value));
 
-export default function LogoGenerator() {
-  const actions = useFaviconActions();
+export const LogoEditor = () => {
+  const actions = useLogoEditorActions();
   const setActiveTab = useAction(setTabAction);
   const [searchParams, setSearchParams] = useSearchParams<LogoSearchParams>();
 
@@ -91,10 +91,10 @@ export default function LogoGenerator() {
   createEffect(
     on(
       () => ({
-        icon: favicon.icon.name,
-        palette: favicon.palette,
-        shape: favicon.shape,
-        pad: favicon.padding,
+        icon: logoEditor.icon.name,
+        palette: logoEditor.palette,
+        shape: logoEditor.shape,
+        pad: logoEditor.padding,
       }),
       (next) => {
         if (timeoutId !== undefined) clearTimeout(timeoutId);
@@ -103,20 +103,24 @@ export default function LogoGenerator() {
             {
               icon: paramOrNull(
                 next.icon,
-                DEFAULT_FAVICON_STATE.icon.name,
+                DEFAULT_LOGO_EDITOR_STATE.icon.name,
                 identity,
               ),
               palette: paramOrNull(
                 next.palette,
-                DEFAULT_FAVICON_STATE.palette,
+                DEFAULT_LOGO_EDITOR_STATE.palette,
                 identity,
               ),
               shape: paramOrNull(
                 next.shape,
-                DEFAULT_FAVICON_STATE.shape,
+                DEFAULT_LOGO_EDITOR_STATE.shape,
                 identity,
               ),
-              pad: paramOrNull(next.pad, DEFAULT_FAVICON_STATE.padding, String),
+              pad: paramOrNull(
+                next.pad,
+                DEFAULT_LOGO_EDITOR_STATE.padding,
+                String,
+              ),
             },
             { replace: true },
           );
@@ -131,7 +135,7 @@ export default function LogoGenerator() {
 
   return (
     <Flex as="main" direction="column" grow>
-      <SiteHeader title="Logo Generator" />
+      <SiteHeader title="Logo Editor" />
 
       <Flex as="div" direction="column" class={css.workspace}>
         <Flex
@@ -168,26 +172,26 @@ export default function LogoGenerator() {
         <Flex as="div" class={css.body}>
           <Flex as="section" class={css.canvas} aria-label="Logo preview">
             <Flex as="div" class={css.canvasStage}>
-              <Preview state={favicon} size={296} />
+              <Preview state={logoEditor} size={296} />
             </Flex>
           </Flex>
 
           <TabsRoot
-            testId="logo-inspector"
+            testId="logo-editor-inspector"
             value={tabState.tab}
             onValueChange={setActiveTab}
             class={css.rail}
             aria-label="Inspector"
           >
             <TabsList
-              testId="logo-inspector-list"
+              testId="logo-editor-inspector-list"
               justify="center"
               aria-label="Inspector sections"
             >
               <For each={TABS}>
                 {(tab) => (
                   <TabsTrigger
-                    testId={`logo-inspector-trigger-${tab.id}`}
+                    testId={`logo-editor-inspector-trigger-${tab.id}`}
                     value={tab.id}
                   >
                     {tab.label}
@@ -197,7 +201,7 @@ export default function LogoGenerator() {
             </TabsList>
 
             <TabsContent
-              testId="logo-inspector-panel-icon"
+              testId="logo-editor-inspector-panel-icon"
               value="icon"
               class={`${css.tabPanel} ${css.tabPanelGrow}`}
             >
@@ -223,35 +227,38 @@ export default function LogoGenerator() {
                     class={css.sectionMeta}
                     selectable={false}
                   >
-                    {favicon.icon.name}
+                    {logoEditor.icon.name}
                   </Text>
                 </Flex>
-                <IconGrid selected={favicon.icon} onSelect={actions.setIcon} />
+                <IconGrid
+                  selected={logoEditor.icon}
+                  onSelect={actions.setIcon}
+                />
               </Flex>
             </TabsContent>
 
             <TabsContent
-              testId="logo-inspector-panel-style"
+              testId="logo-editor-inspector-panel-style"
               value="style"
               class={css.tabPanel}
             >
               <Flex as="div" direction="column" gap={3}>
                 <Field label="Palette">
                   <PalettePicker
-                    value={favicon.palette}
+                    value={logoEditor.palette}
                     onChange={actions.setPalette}
                   />
                 </Field>
                 <InlineField label="Shape">
                   <ShapeSelector
-                    value={favicon.shape}
+                    value={logoEditor.shape}
                     onChange={actions.setShape}
                   />
                 </InlineField>
-                <InlineField label="Padding" for="logo-pad">
+                <InlineField label="Padding" for="logo-editor-pad">
                   <PaddingSlider
-                    inputId="logo-pad"
-                    value={favicon.padding}
+                    inputId="logo-editor-pad"
+                    value={logoEditor.padding}
                     onInput={actions.setPadding}
                   />
                 </InlineField>
@@ -259,19 +266,21 @@ export default function LogoGenerator() {
             </TabsContent>
 
             <TabsContent
-              testId="logo-inspector-panel-export"
+              testId="logo-editor-inspector-panel-export"
               value="export"
               class={css.tabPanel}
             >
-              <ExportActions state={favicon} />
+              <ExportActions state={logoEditor} />
             </TabsContent>
           </TabsRoot>
         </Flex>
 
         <Flex as="footer" class={css.statusBar} aria-label="Status">
-          <Spec state={favicon} variant="plain" />
+          <Spec state={logoEditor} variant="plain" />
         </Flex>
       </Flex>
     </Flex>
   );
-}
+};
+
+export default LogoEditor;

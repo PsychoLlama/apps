@@ -1,16 +1,16 @@
 import type { Component } from 'solid-js';
 import { Flex, Text } from '@lib/ui';
-import type { FaviconState } from '../state';
+import type { LogoEditorState } from '../state';
 import * as css from './spec.css';
 
 interface SpecProps {
   /** Snapshot to render. */
-  state: FaviconState;
+  state: LogoEditorState;
   /** Visual treatment. `bar` paints a panel background. @default 'bar' */
   variant?: 'bar' | 'plain';
 }
 
-/** Compact one-line readout of the favicon's current settings. */
+/** Compact one-line readout of the logo's current settings. */
 export const Spec: Component<SpecProps> = (props) => {
   const variant = () => props.variant ?? 'bar';
   return (
@@ -19,7 +19,7 @@ export const Spec: Component<SpecProps> = (props) => {
       align="center"
       gap={2}
       class={variant() === 'bar' ? css.bar : ''}
-      aria-label="Current favicon spec"
+      aria-label="Current logo spec"
     >
       <Text as="span" size={1} color="lowContrast" selectable={true}>
         {props.state.icon.name}

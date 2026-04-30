@@ -10,6 +10,14 @@ import IconClose from 'virtual:icons/mdi/close';
 import { ICONS, ICON_VIEWBOX, type IconEntry } from '../icons';
 import * as css from './icon-grid.css';
 
+/**
+ * Cap the visible tile count so the DOM stays under ~250 SVGs even
+ * when the search yields thousands of matches. Beyond a few hundred
+ * tiles the grid is unscannable anyway — refining the query is the
+ * intended affordance.
+ */
+const MAX_VISIBLE = 250;
+
 interface SearchState {
   query: string;
 }
@@ -29,14 +37,24 @@ interface IconGridProps {
   gridHeight?: string;
 }
 
+interface FilterResult {
+  /** Tiles that should render. Capped at {@link MAX_VISIBLE}. */
+  visible: ReadonlyArray<IconEntry>;
+  /** Total icons matching the current query, ignoring the visible cap. */
+  total: number;
+}
+
 /** Searchable grid of MDI icons. */
 export const IconGrid: Component<IconGridProps> = (props) => {
   const setQuery = useAction(setQueryAction);
-  const filtered = createMemo(() => {
+  const filtered = createMemo<FilterResult>(() => {
     const term = search.query.trim().toLowerCase();
-    if (!term) return ICONS;
-    return ICONS.filter((icon) => icon.name.includes(term));
+    const matches = term
+      ? ICONS.filter((icon) => icon.name.includes(term))
+      : ICONS;
+    return { visible: matches.slice(0, MAX_VISIBLE), total: matches.length };
   });
+  const truncated = () => filtered().total > filtered().visible.length;
 
   return (
     <Flex as="div" direction="column" gap={3} grow class={css.root}>
@@ -64,7 +82,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
         }
       />
       <Show
-        when={filtered().length > 0}
+        when={filtered().total > 0}
         fallback={
           <Flex as="div" justify="center" class={css.empty}>
             <Text as="span" size={2} color="lowContrast" selectable={false}>
@@ -76,7 +94,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
         {/* CSS Grid with auto-fill columns has no @lib/ui equivalent. */}
         {/* eslint-disable-next-line custom/require-ui-primitives */}
         <div class={css.grid} style={{ height: props.gridHeight ?? '' }}>
-          <For each={filtered()}>
+          <For each={filtered().visible}>
             {(icon) => (
               // The tile is a custom-styled click target with no @lib/ui
               // analogue (Button enforces solid/soft/outline/ghost shapes).
@@ -101,6 +119,14 @@ export const IconGrid: Component<IconGridProps> = (props) => {
             )}
           </For>
         </div>
+        <Show when={truncated()}>
+          <Flex as="div" justify="center">
+            <Text as="span" size={1} color="lowContrast" selectable={false}>
+              Showing {filtered().visible.length} of {filtered().total} — refine
+              the search to narrow.
+            </Text>
+          </Flex>
+        </Show>
       </Show>
     </Flex>
   );

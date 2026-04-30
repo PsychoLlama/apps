@@ -4,14 +4,14 @@ import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import { Button, Flex, TextField } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { downloadPng, downloadSvg } from '../download';
-import { renderFaviconSvg } from '../svg';
-import type { FaviconState } from '../state';
+import { renderLogoSvg } from '../svg';
+import type { LogoEditorState } from '../state';
 import { Field } from './field';
 import * as css from './export-actions.css';
 
 interface ExportActionsProps {
-  /** Reactive favicon state — exported on every Export click. */
-  state: FaviconState;
+  /** Reactive logo state — exported on every Export click. */
+  state: LogoEditorState;
 }
 
 type ExportFormat = 'svg' | 'png';
@@ -33,6 +33,9 @@ const MIN_PX = 16;
 const MAX_PX = 2048;
 const DEFAULT_PX = 512;
 
+/** Canonical size for the SVG export — vector, so any value is fine. */
+const SVG_EXPORT_SIZE = 512;
+
 const exportStore = defineStore<ExportPanelState>(() => ({
   format: 'png',
   size: DEFAULT_PX,
@@ -53,14 +56,14 @@ const setSizeAction = defineAction([exportStore], (state, value: number) => {
 const clampSize = (value: number): number =>
   Math.max(MIN_PX, Math.min(MAX_PX, Math.round(value)));
 
-const filenameStem = (state: FaviconState) => `favicon-${state.icon.name}`;
+const filenameStem = (state: LogoEditorState) => `logo-${state.icon.name}`;
 
 /**
  * Compose a logo export. Format toggles between SVG (vector, single
  * download) and PNG (rasterized at the chosen size). The PNG row
  * surfaces three preset chips for the most common sizes plus a
- * free-form number input — always square, since the favicon canvas
- * itself is square.
+ * free-form number input — always square, since the canvas itself is
+ * square.
  */
 export const ExportActions: Component<ExportActionsProps> = (props) => {
   const setFormat = useAction(setFormatAction);
@@ -73,12 +76,24 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
       : `${filenameStem(props.state)}-${effectiveSize()}.png`;
 
   const handleExport = () => {
-    const svg = renderFaviconSvg(props.state, { size: 512 });
     if (exportState.format === 'svg') {
-      downloadSvg(svg, filename());
-    } else {
-      void downloadPng(svg, effectiveSize(), filename());
+      downloadSvg(
+        renderLogoSvg(props.state, { size: SVG_EXPORT_SIZE }),
+        filename(),
+      );
+      return;
     }
+    // Render the SVG at the target pixel size so the rasterized
+    // intermediate matches the canvas 1:1 — no resample step, no
+    // soft-from-upscale artifacts. The canvas backing store also
+    // matches `target`, so the PNG file dimensions are exactly
+    // `target × target` regardless of device pixel ratio.
+    const target = effectiveSize();
+    void downloadPng(
+      renderLogoSvg(props.state, { size: target }),
+      target,
+      filename(),
+    );
   };
 
   return (

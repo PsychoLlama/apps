@@ -28,9 +28,9 @@ const APPS: ReadonlyArray<AppEntry> = [
     Icon: IconRecord,
   },
   {
-    id: 'logo',
-    name: 'Logo Generator',
-    href: '/logo',
+    id: 'logo-editor',
+    name: 'Logo Editor',
+    href: '/logo-editor',
     description: 'Compose a brandmark from a free icon set.',
     Icon: IconPalette,
   },

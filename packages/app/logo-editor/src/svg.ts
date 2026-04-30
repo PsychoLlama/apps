@@ -1,16 +1,22 @@
 import { findPalette } from './palette';
-import type { FaviconShape, FaviconState } from './state';
+import type { LogoEditorShape, LogoEditorState } from './state';
 
-const SHAPE_RX_RATIO: Record<FaviconShape, number> = {
+const SHAPE_RX_RATIO: Record<LogoEditorShape, number> = {
   square: 0,
   rounded: 0.18,
   squircle: 0.32,
   circle: 0.5,
 };
 
-/** Options for {@link renderFaviconSvg}. */
+/** Options for {@link renderLogoSvg}. */
 export interface RenderOptions {
-  /** Logical canvas size in user units. @default 512 */
+  /**
+   * Logical canvas size in user units. Doubles as the `width`/`height`
+   * the rasterizer reads when the SVG is loaded as an `<img>`, so for
+   * pixel-perfect PNG export pass the desired output size here. Vector
+   * exports can pass any value — the viewBox makes them resolution
+   * independent. @default 512
+   */
   size?: number;
   /**
    * When true, the SVG fills its container via `width="100%" height="100%"`
@@ -28,7 +34,7 @@ export interface RenderOptions {
 }
 
 /**
- * Serialize a {@link FaviconState} to a self-contained SVG document.
+ * Serialize a {@link LogoEditorState} to a self-contained SVG document.
  *
  * Icon bodies use `currentColor`; the wrapping `<g>` sets `color` so a
  * single `style` carries the foreground tint without rewriting paths.
@@ -38,8 +44,8 @@ export interface RenderOptions {
  * the language/file icons) stay inside the chosen shape mask instead of
  * leaking into the corner cutouts.
  */
-export const renderFaviconSvg = (
-  state: FaviconState,
+export const renderLogoSvg = (
+  state: LogoEditorState,
   opts: RenderOptions = {},
 ): string => {
   const size = opts.size ?? 512;

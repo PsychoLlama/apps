@@ -8,7 +8,7 @@ interface FieldProps {
   for?: string;
 }
 
-/** Vertical label-over-input pair used across favicon control panels. */
+/** Vertical label-over-input pair used across logo-editor control panels. */
 export const Field: ParentComponent<FieldProps> = (props) => {
   return (
     <Flex as="div" direction="column" gap={1}>

@@ -1,5 +1,5 @@
 /**
- * Browser download helpers for the rendered favicon. Both functions
+ * Browser download helpers for the rendered logo. Both functions
  * trigger a synthetic anchor click — the browser handles the rest.
  */
 
@@ -10,7 +10,18 @@ export const downloadSvg = (svg: string, filename: string): void => {
 
 /**
  * Rasterize an SVG to PNG at the requested pixel size, then save it.
- * The SVG is loaded as an `Image` and drawn into a `<canvas>`.
+ *
+ * The SVG must declare its `width`/`height` matching `sizePx`: an
+ * `<img>`-loaded SVG is rasterized once at intrinsic dimensions, so a
+ * mismatch (e.g. a 512-wide SVG drawn into a 1024 canvas) goes through
+ * a resample step and lands soft. The caller is responsible for
+ * rendering the SVG at the target size — `renderLogoSvg(state, { size:
+ * sizePx })` does the right thing.
+ *
+ * The output canvas backing store is exactly `sizePx × sizePx`, so the
+ * PNG file dimensions match `sizePx` regardless of device pixel ratio.
+ * DPR only matters when displaying a canvas — this canvas is never
+ * shown, only `toBlob()`d.
  */
 export const downloadPng = async (
   svg: string,
@@ -39,7 +50,7 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to load favicon SVG'));
+    img.onerror = () => reject(new Error('Failed to load logo SVG'));
     img.src = url;
   });
 };

@@ -1,18 +1,18 @@
 import { For } from 'solid-js';
 import type { Component } from 'solid-js';
 import { Flex } from '@lib/ui';
-import type { FaviconShape } from '../state';
+import type { LogoEditorShape } from '../state';
 import * as css from './shape-selector.css';
 
 interface ShapeSelectorProps {
   /** Currently selected shape mask. */
-  value: FaviconShape;
+  value: LogoEditorShape;
   /** Called when the user selects a different shape. */
-  onChange: (shape: FaviconShape) => void;
+  onChange: (shape: LogoEditorShape) => void;
 }
 
 interface ShapeOption {
-  value: FaviconShape;
+  value: LogoEditorShape;
   /** Human label exposed via `aria-label`; the swatch shape carries the visual cue. */
   label: string;
   /** Border radius applied to the swatch chip, in CSS. */

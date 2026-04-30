@@ -2,21 +2,21 @@
  * from trusted icon bodies; no untrusted input ever reaches innerHTML. */
 
 import type { Component } from 'solid-js';
-import { renderFaviconSvg } from '../svg';
-import type { FaviconState } from '../state';
+import { renderLogoSvg } from '../svg';
+import type { LogoEditorState } from '../state';
 import * as css from './preview.css';
 
 interface PreviewProps {
-  /** Reactive favicon state to render. */
-  state: FaviconState;
+  /** Reactive logo state to render. */
+  state: LogoEditorState;
   /** Rendered display size in CSS pixels. */
   size: number;
 }
 
-/** Live preview of the current favicon at an arbitrary display size. */
+/** Live preview of the current logo at an arbitrary display size. */
 export const Preview: Component<PreviewProps> = (props) => {
   const svg = () =>
-    renderFaviconSvg(props.state, {
+    renderLogoSvg(props.state, {
       responsive: true,
       // The display size is unique per Preview on the page (hero +
       // size strip), so it doubles as a stable id discriminator that
@@ -30,7 +30,7 @@ export const Preview: Component<PreviewProps> = (props) => {
     <div
       class={css.frame}
       style={{ width: `${props.size}px`, height: `${props.size}px` }}
-      aria-label={`Favicon preview at ${props.size} pixels`}
+      aria-label={`Logo preview at ${props.size} pixels`}
       innerHTML={svg()}
     />
   );
