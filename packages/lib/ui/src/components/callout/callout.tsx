@@ -17,8 +17,10 @@ import {
 } from '../../props/margin';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import Flex from '../flex/flex';
-import Grid from '../grid/grid';
 import * as css from './callout.css';
+
+const rootGap = { 1: 2, 2: 3, 3: 4 } as const;
+const contentGap = { 1: 2, 2: 2, 3: 3 } as const;
 
 type Size = 1 | 2 | 3;
 type Variant = 'soft' | 'surface' | 'outline';
@@ -38,7 +40,7 @@ export interface CalloutProps
   icon?: JSX.Element;
 }
 
-/** Informational container with an optional icon. Content is not wrapped — consumers control their own text layout. */
+/** Informational container with an optional icon. Multiple children stack vertically alongside the icon. */
 const Callout: ParentComponent<CalloutProps> = (rawProps) => {
   const props = mergeProps(
     {
@@ -66,7 +68,6 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
   const className = () =>
     [
       ...resolveMarginClasses(margin),
-      css.base,
       css.size[local.size],
       css.variantColor[local.variant][local.color][contrast()],
       local.class,
@@ -75,9 +76,10 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <Grid
+    <Flex
       as="div"
       align="start"
+      gap={rootGap[local.size]}
       class={className()}
       role="note"
       testId={tid.testId}
@@ -86,8 +88,15 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
       <Flex as="div" align="center" class={css.iconSize[local.size]}>
         {local.icon ?? <IconInformation />}
       </Flex>
-      {local.children}
-    </Grid>
+      <Flex
+        as="div"
+        direction="column"
+        gap={contentGap[local.size]}
+        class={css.content}
+      >
+        {local.children}
+      </Flex>
+    </Flex>
   );
 };
 
