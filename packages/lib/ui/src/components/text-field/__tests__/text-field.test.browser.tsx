@@ -59,11 +59,15 @@ describe('TextField', () => {
     expect(screen.getByTestId('right-content')).toBeInTheDocument();
   });
 
-  it('omits slot wrappers when no slot content is supplied', () => {
+  it('hides slot wrappers when no slot content is supplied', () => {
     render(() => <TextField testId="field" />);
     const wrapper = screen.getByTestId('field');
-    expect(wrapper.children).toHaveLength(1);
-    expect(wrapper.children[0].tagName).toBe('INPUT');
+    const slots = wrapper.querySelectorAll('span');
+    expect(slots).toHaveLength(2);
+    for (const slot of slots) {
+      expect(slot).toBeEmptyDOMElement();
+      expect(slot).not.toBeVisible();
+    }
   });
 
   it('reflects disabled on the input', () => {
