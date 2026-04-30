@@ -1,8 +1,22 @@
-import { style, styleVariants } from '@vanilla-extract/css';
+import {
+  createVar,
+  fallbackVar,
+  style,
+  styleVariants,
+} from '@vanilla-extract/css';
 import { typeScale, fontFamily, fontWeight, text } from '@lib/design';
+
+// Inheritable typography metrics. Size variants assign these; the Text
+// and Heading bases read them. Inline children without an explicit
+// `size` pick up the nearest sized ancestor's metrics via
+// custom-property inheritance.
+export const lineHeight = createVar();
+export const letterSpacing = createVar();
 
 export const base = style({
   fontFamily: fontFamily.body,
+  lineHeight: fallbackVar(lineHeight, 'inherit'),
+  letterSpacing: fallbackVar(letterSpacing, 'inherit'),
 });
 
 const steps = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
@@ -13,13 +27,18 @@ export const size = styleVariants(
       step,
       {
         fontSize: typeScale[step].fontSize,
-        lineHeight: typeScale[step].lineHeight,
-        letterSpacing: typeScale[step].letterSpacing,
+        vars: {
+          [lineHeight]: typeScale[step].lineHeight,
+          [letterSpacing]: typeScale[step].letterSpacing,
+        },
       },
     ]),
   ) as Record<
     (typeof steps)[number],
-    { fontSize: string; lineHeight: string; letterSpacing: string }
+    {
+      fontSize: string;
+      vars: Record<string, string>;
+    }
   >,
 );
 

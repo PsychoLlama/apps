@@ -1,5 +1,5 @@
 import { Dynamic } from 'solid-js/web';
-import { mergeProps, splitProps } from 'solid-js';
+import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { TypeScale, FontWeight, TextColor } from '@lib/design';
 import {
@@ -31,7 +31,11 @@ import * as css from './text.css';
 
 /** Text-specific props, independent of the rendered element. */
 interface TextOwnProps {
-  /** Visual size on a 1–9 scale. @default 3 */
+  /**
+   * Visual size on a 1–9 scale. Omit to inherit font-size, line-height,
+   * and letter-spacing from the nearest sized ancestor — useful for inline
+   * `<Text as="span">` inside a sized parent.
+   */
   size?: TypeScale;
   /** Font weight. */
   weight?: FontWeight;
@@ -55,7 +59,7 @@ export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
 /** General-purpose text component for body copy, labels, and inline text. */
 function Text<const T extends HtmlTextTag>(props: TextProps<T>): JSX.Element;
 function Text(
-  rawProps: { as: HtmlTextTag } & TextOwnProps &
+  props: { as: HtmlTextTag } & TextOwnProps &
     TrimProps &
     MarginProps &
     SelectableProps &
@@ -63,7 +67,6 @@ function Text(
     TestIdProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
-  const props = mergeProps({ size: 3 as const }, rawProps);
   const [local, rest] = splitProps(props, [
     'as',
     'size',
@@ -83,7 +86,7 @@ function Text(
   const className = () =>
     [
       css.base,
-      css.size[local.size],
+      local.size && css.size[local.size],
       local.weight && css.weight[local.weight],
       local.align && css.align[local.align],
       local.color && css.color[local.color],
