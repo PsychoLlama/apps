@@ -49,14 +49,6 @@ export const skeleton = style({
       outline: 'none',
       pointerEvents: 'none',
       userSelect: 'none',
-      // Skeleton swaps the host's `background` / `color` / `box-shadow`
-      // / `border` properties; any `transition` rule the host carries
-      // for those would interpolate the change into a flicker as the
-      // class is added. Pin transitions off here so the skeleton snaps
-      // in instantly. The reverse direction (skeleton → loaded) still
-      // reads the host's normal transition, which is desirable — it
-      // makes the reveal feel like a deliberate fade-in.
-      transition: 'none',
       // Repaints the bg-box across line breaks for inline text wrappers.
       boxDecorationBreak: 'clone',
     },
@@ -67,17 +59,11 @@ export const skeleton = style({
     // to remove leading whitespace, and that geometry needs to keep
     // applying while the skeleton is on. Compound class for 0,2,1
     // specificity to beat `.card-variant-surface::after` and friends.
-    //
-    // `transition: none` matches the host rule above — Switch's track
-    // sits on `::before` with its own `background-color` / `filter`
-    // transitions, so without this the swap into skeleton interpolates
-    // visibly even when the host is transition-pinned.
     '&&::before, &&::after': {
       background: 'none',
       backgroundImage: 'none',
       border: 'none',
       boxShadow: 'none',
-      transition: 'none',
     },
   },
 });
