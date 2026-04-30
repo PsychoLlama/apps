@@ -26,6 +26,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@app/logo-editor": "workspace:*",
     "@app/studio": "workspace:*",
     "@fontsource-variable/ibm-plex-sans": "^5.2.8",
     "@lib/design": "workspace:*",

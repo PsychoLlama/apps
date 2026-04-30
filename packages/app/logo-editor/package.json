@@ -1,0 +1,32 @@
+{
+  "name": "@app/logo-editor",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Logo editor app — composes a brandmark from a curated MDI set.",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/design": "workspace:*",
+    "@lib/shell": "workspace:*",
+    "@lib/state": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
+  },
+  "devDependencies": {
+    "@iconify/json": "^2.2.460",
+    "unplugin-icons": "catalog:"
+  },
+  "peerDependencies": {
+    "@solidjs/router": "*",
+    "solid-js": "*"
+  }
+}
