@@ -20,25 +20,20 @@ import type { ColorPalette } from '@lib/design';
 
 // --- Root ---
 
-export const base = style({
-  gridTemplateColumns: 'auto 1fr',
+export const content = style({
+  flexGrow: 1,
 });
 
 export const size = styleVariants({
   1: {
-    gap: space[2],
     padding: space[3],
     borderRadius: radius[3],
   },
   2: {
-    rowGap: space[2],
-    columnGap: space[3],
     padding: space[4],
     borderRadius: radius[4],
   },
   3: {
-    rowGap: space[3],
-    columnGap: space[4],
     padding: space[5],
     borderRadius: radius[5],
   },
