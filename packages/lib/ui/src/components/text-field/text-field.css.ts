@@ -136,6 +136,12 @@ export const input = style({
 
 // --- Slots ---
 
+// Slot spans render unconditionally so the wrapper template is stable
+// across SSR and hydration — wrapping in `<Show>` (or any reactive
+// conditional) trips a SolidStart hydration bug that crashes with
+// `template2 is not a function` when the field sits inside a
+// Dynamic-based ancestor. `:empty` strips the spacing so an unused
+// slot has no visual footprint.
 export const slot = style({
   display: 'flex',
   alignItems: 'center',
@@ -143,6 +149,12 @@ export const slot = style({
   cursor: 'text',
   color: neutral.alpha[11],
   gap: slotGap,
+
+  selectors: {
+    '&:empty': {
+      display: 'none',
+    },
+  },
 });
 
 // Negative margins pull the slot one border-width past the wrapper's

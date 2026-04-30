@@ -171,9 +171,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
       onPointerDown={onPointerDown}
       {...wrapperAttrs()}
     >
-      {local.left !== undefined && (
-        <span class={`${css.slot} ${css.slotLeft}`}>{local.left}</span>
-      )}
+      <span class={`${css.slot} ${css.slotLeft}`}>{local.left}</span>
       {/* Wrapper `inert` hides the input from the user, but the
        * input still submits, validates, and contributes to FormData
        * unless `disabled`. Force-disable while skeleton is on so a
@@ -184,9 +182,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
         class={css.input}
         disabled={local.skeleton ? true : rest.disabled}
       />
-      {local.right !== undefined && (
-        <span class={`${css.slot} ${css.slotRight}`}>{local.right}</span>
-      )}
+      <span class={`${css.slot} ${css.slotRight}`}>{local.right}</span>
     </div>
   );
 };
