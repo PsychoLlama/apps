@@ -174,7 +174,16 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
       {local.left !== undefined && (
         <span class={`${css.slot} ${css.slotLeft}`}>{local.left}</span>
       )}
-      <input {...rest} class={css.input} />
+      {/* Wrapper `inert` hides the input from the user, but the
+       * input still submits, validates, and contributes to FormData
+       * unless `disabled`. Force-disable while skeleton is on so a
+       * loading field can't block submit on a `required` rule or
+       * post placeholder text. */}
+      <input
+        {...rest}
+        class={css.input}
+        disabled={local.skeleton ? true : rest.disabled}
+      />
       {local.right !== undefined && (
         <span class={`${css.slot} ${css.slotRight}`}>{local.right}</span>
       )}

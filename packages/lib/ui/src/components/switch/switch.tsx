@@ -169,7 +169,12 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       >
         <span class={css.thumb} aria-hidden="true" />
       </button>
-      <Show when={local.name && local.checked && !local.disabled}>
+      {/* The button is `inert` while skeleton, but the hidden mirror
+       * sits outside the button and would still post into FormData.
+       * Suppress it so a loading switch can't carry stale data. */}
+      <Show
+        when={local.name && local.checked && !local.disabled && !local.skeleton}
+      >
         <input
           type="hidden"
           name={local.name}
