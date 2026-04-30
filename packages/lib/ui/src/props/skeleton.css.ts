@@ -79,10 +79,4 @@ export const skeleton = style({
 // it can't leak to anything that doesn't opt in via `skeleton={true}`.
 globalStyle(`.${skeleton} > *`, {
   visibility: 'hidden',
-  // Children stay visible to layout but invisible to paint — their
-  // own transitions on `transform`, `box-shadow`, etc. would still
-  // fire as the parent skeleton class flips on, producing a flicker.
-  // Switch's thumb is the canonical case (transitions on `transform`
-  // and `box-shadow` while sliding from on/off → hidden).
-  transition: 'none',
 });
