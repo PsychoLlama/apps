@@ -68,20 +68,39 @@ export const LogoEditor = () => {
   const setActiveTab = useAction(setTabAction);
   const [searchParams, setSearchParams] = useSearchParams<LogoSearchParams>();
 
-  // Hydrate before any reactive setup. Solid runs the component body
-  // exactly once per mount, so reading the search-params proxy here
-  // doesn't subscribe — the effect below is what tracks state changes.
   const readParam = (key: LogoSearchParamKey): string | undefined => {
     const value = searchParams[key];
     return typeof value === 'string' ? value : undefined;
   };
-  const padParam = readParam('pad');
-  actions.hydrate({
-    icon: readParam('icon'),
-    palette: readParam('palette'),
-    shape: readParam('shape'),
-    padding: padParam !== undefined ? Number(padParam) : undefined,
-  });
+  const hydrateFromParams = () => {
+    const padParam = readParam('pad');
+    actions.hydrate({
+      icon: readParam('icon'),
+      palette: readParam('palette'),
+      shape: readParam('shape'),
+      padding: padParam !== undefined ? Number(padParam) : undefined,
+    });
+  };
+
+  // Sync hydrate covers SSR and the first client render — `createEffect`
+  // doesn't run on the server, so the initial paint must happen here.
+  hydrateFromParams();
+
+  // Re-apply when the URL changes while the route stays mounted
+  // (browser back/forward, in-route anchor clicks). `defer: true` skips
+  // the redundant initial run since the sync hydrate above already ran.
+  createEffect(
+    on(
+      () => ({
+        icon: readParam('icon'),
+        palette: readParam('palette'),
+        shape: readParam('shape'),
+        pad: readParam('pad'),
+      }),
+      hydrateFromParams,
+      { defer: true },
+    ),
+  );
 
   // Mirror state → URL with a small debounce so each keystroke in the
   // padding slider doesn't generate its own history entry. `defer: true`
