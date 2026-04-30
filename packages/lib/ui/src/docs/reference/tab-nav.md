@@ -8,7 +8,7 @@ The active link receives `aria-current="page"`. Compute `active` from your route
 
 Renders `<nav>` containing a `<ul>` of links.
 
-Base: margin props, `<nav>` attributes.
+Base: margin props, skeleton props, `<nav>` attributes.
 
 - `aria-label` (required): Accessible name for the nav landmark.
 - `size` (=`2`): `1 | 2`.

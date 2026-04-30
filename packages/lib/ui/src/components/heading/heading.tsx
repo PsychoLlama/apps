@@ -24,8 +24,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './heading.css';
@@ -84,6 +83,7 @@ function Heading(
     ...skeletonPropKeys,
     ...testIdPropKeys,
   ]);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -94,21 +94,19 @@ function Heading(
       local.color && css.color[local.color],
       resolveTrimClass(local),
       resolveSelectableClass(local),
-      resolveSkeletonClass(local),
+      skeletonClass(),
       ...resolveMarginClasses(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
-
   return (
     <Dynamic
       component={local.as}
       class={className()}
       data-testid={local.testId}
-      {...merged}
+      {...skeletonProps}
     >
       {local.children}
     </Dynamic>

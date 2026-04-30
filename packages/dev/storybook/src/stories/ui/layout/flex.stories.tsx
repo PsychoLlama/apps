@@ -16,6 +16,12 @@ const meta = {
   argTypes: {
     ...boxArgTypes,
     ...flexArgTypes,
+    // The `skeleton` prop is real, but a layout primitive with no
+    // visual treatment of its own just turns into a featureless
+    // pulsing block when you flip it on — there's nothing left to
+    // demonstrate. The showcase at `UI/Patterns/Skeleton` exercises
+    // skeleton wrapping a real layout instead.
+    skeleton: { table: { disable: true } },
   },
 } satisfies Meta<FlexProps<'div'>>;
 

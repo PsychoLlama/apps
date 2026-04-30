@@ -8,6 +8,7 @@ import {
   Text,
 } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import * as css from './inset.stories.css';
 
@@ -19,9 +20,11 @@ const meta = {
     side: 'top',
     clip: 'border-box',
     pad: true,
+    ...skeletonArgs,
   },
   argTypes: {
     ...marginArgTypes,
+    ...skeletonArgTypes,
     ...testIdArgTypes,
     side: {
       control: 'inline-radio',

@@ -1,3 +1,4 @@
+import { mergeProps } from 'solid-js';
 import type { ArgTypes } from 'storybook-solidjs-vite';
 import * as css from './skeleton.css';
 
@@ -40,4 +41,42 @@ export const skeletonArgTypes: ArgTypes<SkeletonProps> = {
   skeleton: {
     control: 'boolean',
   },
+};
+
+/**
+ * Default `args` for stories that opt in to the skeleton control.
+ * Spread alongside the rest of `meta.args` so the boolean starts
+ * off — otherwise the control renders unchecked but the prop is
+ * undefined, which Storybook treats as a third indeterminate state.
+ */
+export const skeletonArgs = {
+  skeleton: false,
+} as const satisfies Required<SkeletonProps>;
+
+/**
+ * Bundled skeleton plumbing for components.
+ *
+ * Pair with a parent `splitProps(..., [...skeletonPropKeys, ...])`
+ * so `skeleton` lives in the same `local` bag this helper reads.
+ * Returns a `[skeletonClass, skeletonProps]` tuple to mirror Solid's
+ * `splitProps` shape and so the call-site names mangle freely:
+ * - `skeletonClass`: a `() => string | false | undefined` accessor
+ *   to drop into the component's class list before `local.class`.
+ * - `skeletonProps`: a Solid-merged proxy of the rest props that
+ *   adds `aria-hidden`, `inert`, and `tabindex={-1}` while skeleton
+ *   is on. Spread it onto the host element instead of the raw `rest`.
+ *
+ * The props proxy uses an arrow merge so the inert keys only appear
+ * during skeleton renders — that way consumer-supplied
+ * `aria-hidden` / `inert` / `tabindex` survive non-skeleton state.
+ */
+export const useSkeleton = <R extends object>(
+  local: SkeletonProps,
+  rest: R,
+): readonly [() => string | false | undefined, R] => {
+  const skeletonProps = mergeProps(rest, () =>
+    resolveSkeletonAttrs(local),
+  ) as R;
+  const skeletonClass = () => resolveSkeletonClass(local);
+  return [skeletonClass, skeletonProps] as const;
 };

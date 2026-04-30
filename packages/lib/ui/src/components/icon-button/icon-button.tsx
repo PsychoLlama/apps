@@ -29,10 +29,16 @@ import {
   resolveIconButtonStyleClasses,
   type ButtonStyleProps,
 } from '../../props/button';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  useSkeleton,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
 type IconButtonBase = ButtonStyleProps &
   MarginProps &
+  SkeletonProps &
   RequiredTestIdProps &
   Omit<
     JSX.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -61,9 +67,11 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
     ...buttonStylePropKeys,
+    ...skeletonPropKeys,
     'class',
     'children',
   ]);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -74,13 +82,14 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
         local.color,
         local.radius,
       ),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
   return (
-    <button class={className()} data-testid={tid.testId} {...rest}>
+    <button class={className()} data-testid={tid.testId} {...skeletonProps}>
       {local.children}
     </button>
   );

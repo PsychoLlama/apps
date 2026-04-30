@@ -11,6 +11,7 @@ import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import { useSkeleton } from '../../props/skeleton';
 import * as css from './grid.css';
 
 /** Grid-specific layout props, independent of the target element. */
@@ -56,6 +57,7 @@ function Grid(
 ) {
   const [local, boxAndRest] = splitProps(props, gridOwnPropKeys);
   const [box, rest] = splitProps(boxAndRest, boxPropKeys);
+  const [skeletonClass, skeletonProps] = useSkeleton(box, rest);
 
   const className = () =>
     [
@@ -68,6 +70,7 @@ function Grid(
       local.gap && css.gap[local.gap],
       local.gapX && css.gapX[local.gapX],
       local.gapY && css.gapY[local.gapY],
+      skeletonClass(),
       box.class,
     ]
       .filter(Boolean)
@@ -78,7 +81,7 @@ function Grid(
       component={box.as}
       class={className()}
       data-testid={box.testId}
-      {...rest}
+      {...skeletonProps}
     >
       {box.children}
     </Dynamic>

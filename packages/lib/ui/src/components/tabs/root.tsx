@@ -10,6 +10,11 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  useSkeleton,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import {
   TabsContext,
@@ -21,6 +26,7 @@ import {
 export interface TabsRootProps
   extends
     MarginProps,
+    SkeletonProps,
     RequiredTestIdProps,
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** The active tab value. */
@@ -50,7 +56,9 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
     'activationMode',
     'class',
     'children',
+    ...skeletonPropKeys,
   ]);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const baseId = createUniqueId();
   const ctx: TabsContextValue = {
@@ -67,11 +75,13 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
   };
 
   const className = () =>
-    [...resolveMarginClasses(margin), local.class].filter(Boolean).join(' ');
+    [...resolveMarginClasses(margin), skeletonClass(), local.class]
+      .filter(Boolean)
+      .join(' ');
 
   return (
     <TabsContext.Provider value={ctx}>
-      <div {...rest} class={className()} data-testid={tid.testId}>
+      <div {...skeletonProps} class={className()} data-testid={tid.testId}>
         {local.children}
       </div>
     </TabsContext.Provider>

@@ -3,7 +3,7 @@ import { Heading as HeadingComponent, type HeadingProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { trimArgTypes } from '@lib/ui/props/trim';
 import { selectableArgTypes } from '@lib/ui/props/selectable';
-import { skeletonArgTypes } from '@lib/ui/props/skeleton';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
@@ -14,6 +14,7 @@ const meta = {
     as: 'h1',
     size: 6,
     weight: 'bold',
+    ...skeletonArgs,
   },
   argTypes: {
     as: {

@@ -3,6 +3,7 @@ import { createSignal, splitProps, untrack } from 'solid-js';
 import { fn } from 'storybook/test';
 import { Switch, type SwitchProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 interface SwitchArgs extends SwitchProps {
@@ -27,9 +28,11 @@ const meta = {
     // surface as a fake toggle.
     checked: false,
     onCheckedChange: fn(),
+    ...skeletonArgs,
   },
   argTypes: {
     ...marginArgTypes,
+    ...skeletonArgTypes,
     ...testIdArgTypes,
     size: {
       control: { type: 'range', min: 1, max: 3, step: 1 },

@@ -8,7 +8,7 @@ Fully controlled — `value` and `onValueChange` are required on `TabsRoot`. Ina
 
 Renders a `<div>`.
 
-Base: margin props, `<div>` attributes.
+Base: margin props, skeleton props, `<div>` attributes.
 
 - `value` (required): Active tab value.
 - `onValueChange` (required): Called when the user activates a different tab. `(value: string) => void`.

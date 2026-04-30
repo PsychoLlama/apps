@@ -4,7 +4,7 @@ Bleeds content past a parent `Card`'s padding to the card's edges. Reads CSS var
 
 ## Props
 
-Base: native attributes of the element selected by `as`, margin props.
+Base: native attributes of the element selected by `as`, margin props, skeleton props.
 
 - `as` (required): HTML tag to render (typically `'div'`, `'img'`, or `'video'`).
 - `side` (=`'all'`): Which sides to break out of. `'all' | 'x' | 'y' | 'top' | 'bottom' | 'left' | 'right'`. `'top'` / `'bottom'` also extend horizontally so media fills edge-to-edge.

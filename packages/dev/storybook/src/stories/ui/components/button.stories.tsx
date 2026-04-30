@@ -3,6 +3,7 @@ import { expect, fn, userEvent, within } from 'storybook/test';
 import { Button as ButtonComponent, type ButtonProps } from '@lib/ui';
 import { buttonStyleArgTypes } from '@lib/ui/props/button';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
@@ -14,10 +15,12 @@ const meta = {
     variant: 'solid',
     color: 'accent',
     onClick: fn(),
+    ...skeletonArgs,
   },
   argTypes: {
     ...marginArgTypes,
     ...buttonStyleArgTypes,
+    ...skeletonArgTypes,
     ...testIdArgTypes,
     disabled: {
       control: 'boolean',

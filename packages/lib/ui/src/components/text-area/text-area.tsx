@@ -16,6 +16,12 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  resolveSkeletonClass,
+  resolveSkeletonAttrs,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './text-area.css';
@@ -39,6 +45,7 @@ export type TextAreaResize = 'none' | 'vertical' | 'horizontal' | 'both';
 export interface TextAreaProps
   extends
     MarginProps,
+    SkeletonProps,
     RequiredTestIdProps,
     Omit<
       JSX.TextareaHTMLAttributes<HTMLTextAreaElement>,
@@ -89,6 +96,7 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
     'resize',
     'class',
     'onPointerDown',
+    ...skeletonPropKeys,
   ]);
 
   // Padding lives on the wrapper so the resize handle reshapes the
@@ -124,18 +132,31 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
       css.variant[local.variant],
       css.radiusVariant[local.radius],
       css.resize[local.resize],
+      resolveSkeletonClass(local),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
+
+  const wrapperAttrs = () => resolveSkeletonAttrs(local);
 
   return (
     <div
       class={className()}
       data-testid={tid.testId}
       onPointerDown={onPointerDown}
+      {...wrapperAttrs()}
     >
-      <textarea {...rest} class={css.input} />
+      {/* Wrapper `inert` hides the textarea from the user, but the
+       * textarea still submits, validates, and contributes to
+       * FormData unless `disabled`. Force-disable while skeleton is
+       * on so a loading field can't block submit on a `required`
+       * rule or post placeholder text. */}
+      <textarea
+        {...rest}
+        class={css.input}
+        disabled={local.skeleton ? true : rest.disabled}
+      />
     </div>
   );
 };

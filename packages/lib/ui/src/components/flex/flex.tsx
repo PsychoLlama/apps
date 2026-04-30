@@ -15,6 +15,7 @@ import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import { useSkeleton } from '../../props/skeleton';
 
 /** Flex props for a specific element tag. */
 export type FlexProps<T extends HtmlBoxTag> = PolymorphicProps<
@@ -31,9 +32,15 @@ function Flex(
 ) {
   const [local, boxAndRest] = splitProps(props, flexPropKeys);
   const [box, rest] = splitProps(boxAndRest, boxPropKeys);
+  const [skeletonClass, skeletonProps] = useSkeleton(box, rest);
 
   const className = () =>
-    [...resolveBoxClasses(box), ...resolveFlexClasses(local), box.class]
+    [
+      ...resolveBoxClasses(box),
+      ...resolveFlexClasses(local),
+      skeletonClass(),
+      box.class,
+    ]
       .filter(Boolean)
       .join(' ');
 
@@ -42,7 +49,7 @@ function Flex(
       component={box.as}
       class={className()}
       data-testid={box.testId}
-      {...rest}
+      {...skeletonProps}
     >
       {box.children}
     </Dynamic>

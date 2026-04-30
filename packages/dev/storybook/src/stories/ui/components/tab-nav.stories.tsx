@@ -2,6 +2,7 @@ import { MemoryRouter, Route } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { TabNavLink, TabNavRoot, type TabNavRootProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
@@ -15,9 +16,11 @@ const meta = {
     highContrast: false,
     justify: 'start',
     wrap: 'nowrap',
+    ...skeletonArgs,
   },
   argTypes: {
     ...marginArgTypes,
+    ...skeletonArgTypes,
     ...testIdArgTypes,
     'aria-label': { control: 'text' },
     size: {

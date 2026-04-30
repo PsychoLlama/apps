@@ -27,6 +27,11 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  useSkeleton,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './switch.css';
@@ -55,6 +60,7 @@ export type SwitchColor =
 export interface SwitchProps
   extends
     MarginProps,
+    SkeletonProps,
     RequiredTestIdProps,
     Omit<
       JSX.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -121,7 +127,9 @@ const Switch: Component<SwitchProps> = (rawProps) => {
     'form',
     'class',
     'onClick',
+    ...skeletonPropKeys,
   ]);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const onClick: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
     callConsumerHandler(local.onClick, event);
@@ -137,6 +145,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       css.color[local.color],
       css.variant[local.variant],
       css.radiusVariant[local.radius],
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
@@ -145,7 +154,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
   return (
     <>
       <button
-        {...rest}
+        {...skeletonProps}
         type="button"
         role="switch"
         aria-checked={local.checked}
@@ -158,7 +167,12 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       >
         <span class={css.thumb} aria-hidden="true" />
       </button>
-      <Show when={local.name && local.checked && !local.disabled}>
+      {/* The button is `inert` while skeleton, but the hidden mirror
+       * sits outside the button and would still post into FormData.
+       * Suppress it so a loading switch can't carry stale data. */}
+      <Show
+        when={local.name && local.checked && !local.disabled && !local.skeleton}
+      >
         <input
           type="hidden"
           name={local.name}

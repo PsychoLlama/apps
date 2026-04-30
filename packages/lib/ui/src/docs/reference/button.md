@@ -2,7 +2,7 @@
 
 ## Props
 
-Base: native attributes of the element selected by `as`, margin props.
+Base: native attributes of the element selected by `as`, margin props, skeleton props.
 
 - `as` (=`'button'`): HTML tag to render. `'button' | 'summary'`. Use `'summary'` inside a `<details>` to reuse the button's visuals for a disclosure toggle.
 - `type` (=`'button'` when `as` is `'button'`): HTML button type. Override with `'submit'` to use as a form submitter.

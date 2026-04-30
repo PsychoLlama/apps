@@ -22,6 +22,11 @@ import {
   trimPropKeys,
   resolveTrimClass,
 } from '../../props/trim';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  useSkeleton,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import * as css from './link.css';
 
@@ -29,7 +34,12 @@ type LinkColor = 'accent' | 'neutral';
 type Underline = 'auto' | 'always' | 'hover' | 'none';
 
 export interface LinkProps
-  extends MarginProps, TrimProps, RequiredTestIdProps, AnchorProps {
+  extends
+    MarginProps,
+    TrimProps,
+    SkeletonProps,
+    RequiredTestIdProps,
+    AnchorProps {
   /** Visual size on a 1–9 scale. Inherits from parent when omitted. */
   size?: TypeScale;
   /** Font weight. */
@@ -63,7 +73,9 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     'class',
     'children',
     ...trimPropKeys,
+    ...skeletonPropKeys,
   ]);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
@@ -81,13 +93,14 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       css.underline[local.underline],
       autoAlways() && css.underlineAutoAlways,
       resolveTrimClass(local),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
   return (
-    <A class={className()} data-testid={tid.testId} {...rest}>
+    <A class={className()} data-testid={tid.testId} {...skeletonProps}>
       {local.children}
     </A>
   );

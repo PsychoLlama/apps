@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { fn } from 'storybook/test';
 import { TextArea, type TextAreaProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
@@ -17,9 +18,11 @@ const meta = {
     disabled: false,
     readOnly: false,
     onInput: fn(),
+    ...skeletonArgs,
   },
   argTypes: {
     ...marginArgTypes,
+    ...skeletonArgTypes,
     ...testIdArgTypes,
     size: {
       control: { type: 'range', min: 1, max: 3, step: 1 },

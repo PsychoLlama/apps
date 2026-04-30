@@ -19,6 +19,11 @@ import {
   type HtmlBoxTag,
   type PolymorphicProps,
 } from '../../props/polymorphic';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  useSkeleton,
+} from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './inset.css';
 
@@ -42,7 +47,7 @@ interface InsetOwnProps {
 /** Inset props for a specific element tag. */
 export type InsetProps<T extends HtmlBoxTag> = PolymorphicProps<
   T,
-  InsetOwnProps & MarginProps & TestIdProps
+  InsetOwnProps & MarginProps & SkeletonProps & TestIdProps
 >;
 
 /** Bleeds content past the parent Card's padding to its edges. */
@@ -50,6 +55,7 @@ function Inset<const T extends HtmlBoxTag>(props: InsetProps<T>): JSX.Element;
 function Inset(
   rawProps: { as: HtmlBoxTag } & InsetOwnProps &
     MarginProps &
+    SkeletonProps &
     TestIdProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {
@@ -66,7 +72,9 @@ function Inset(
     'pad',
     'class',
     'children',
+    ...skeletonPropKeys,
   ]);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -75,6 +83,7 @@ function Inset(
       css.side[local.side],
       css.clip[local.clip],
       local.pad === false && css.padOff,
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
@@ -85,7 +94,7 @@ function Inset(
       component={local.as}
       class={className()}
       data-testid={tid.testId}
-      {...rest}
+      {...skeletonProps}
     >
       {local.children}
     </Dynamic>

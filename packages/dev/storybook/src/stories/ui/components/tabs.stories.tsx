@@ -10,6 +10,7 @@ import {
   type TabsRootProps,
 } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 interface TabsArgs extends TabsRootProps, TabsListProps {}
@@ -28,9 +29,11 @@ const meta = {
     highContrast: false,
     justify: 'start',
     wrap: 'nowrap',
+    ...skeletonArgs,
   },
   argTypes: {
     ...marginArgTypes,
+    ...skeletonArgTypes,
     ...testIdArgTypes,
     activationMode: {
       control: 'inline-radio',
@@ -65,6 +68,7 @@ const meta = {
           setValue(next);
         }}
         activationMode={props.activationMode}
+        skeleton={props.skeleton}
       >
         <TabsList
           testId={`${props.testId}-list`}

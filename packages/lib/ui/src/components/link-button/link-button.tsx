@@ -17,10 +17,20 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type SkeletonProps,
+  skeletonPropKeys,
+  useSkeleton,
+} from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 
 export interface LinkButtonProps
-  extends MarginProps, ButtonStyleProps, RequiredTestIdProps, AnchorProps {}
+  extends
+    MarginProps,
+    ButtonStyleProps,
+    SkeletonProps,
+    RequiredTestIdProps,
+    AnchorProps {}
 
 /** Anchor element styled as a button for navigation actions. */
 const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
@@ -29,9 +39,11 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
     ...buttonStylePropKeys,
+    ...skeletonPropKeys,
     'class',
     'children',
   ]);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -42,13 +54,14 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
         local.color,
         local.radius,
       ),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
 
   return (
-    <A class={className()} data-testid={tid.testId} {...rest}>
+    <A class={className()} data-testid={tid.testId} {...skeletonProps}>
       {local.children}
     </A>
   );

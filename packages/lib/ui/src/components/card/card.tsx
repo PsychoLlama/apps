@@ -24,8 +24,7 @@ import {
 import {
   type SkeletonProps,
   skeletonPropKeys,
-  resolveSkeletonClass,
-  resolveSkeletonAttrs,
+  useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './card.css';
@@ -75,6 +74,7 @@ function Card(
     'children',
     ...skeletonPropKeys,
   ]);
+  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
     [
@@ -83,20 +83,18 @@ function Card(
       css.size[local.size],
       css.variant[local.variant],
       interactiveTags.has(local.as) && css.interactive,
-      resolveSkeletonClass(local),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
       .join(' ');
-
-  const merged = mergeProps(rest, () => resolveSkeletonAttrs(local));
 
   return (
     <Dynamic
       component={local.as}
       class={className()}
       data-testid={tid.testId}
-      {...merged}
+      {...skeletonProps}
     >
       {local.children}
     </Dynamic>
