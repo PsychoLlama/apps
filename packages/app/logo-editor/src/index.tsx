@@ -282,5 +282,3 @@ export const LogoEditor = () => {
     </Flex>
   );
 };
-
-export default LogoEditor;
