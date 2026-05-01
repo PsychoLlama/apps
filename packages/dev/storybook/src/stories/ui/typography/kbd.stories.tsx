@@ -5,7 +5,7 @@ import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Components',
+  title: 'UI/Typography',
   component: KbdComponent,
   args: {
     variant: 'classic',
