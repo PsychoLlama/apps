@@ -14,6 +14,9 @@ const config: KnipConfig = {
       ],
     },
     'packages/app/main': {
+      // `!` on entries marks them as production-mode entries. These
+      // runtime files are what `knip --production` walks to find
+      // exports that are only kept alive by tests or build glue.
       entry: [
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
@@ -22,7 +25,7 @@ const config: KnipConfig = {
         'src/__tests__/test-utils.tsx',
         'vite.config.ts',
       ],
-      project: ['src/**/*.{ts,tsx}!'],
+      project: ['src/**/*.{ts,tsx}'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
       ],
@@ -36,20 +39,11 @@ const config: KnipConfig = {
       // root vitest config's `browser` project (playwright). The
       // default knip detection only picks up `*.test.{ts,tsx}` files.
       entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
-      // Exclude `__tests__/` directories from production project
-      // analysis so test-only fixtures (helpers, scoped CSS) don't
-      // get flagged as unused. They stay reachable in default mode
-      // via the entry above.
-      project: ['src/**/*.{ts,tsx}!', '!src/**/__tests__/**!'],
+      project: ['src/**/*.{ts,tsx}'],
     },
     'packages/dev/storybook': {
-      // The storybook plugin contributes entries (stories, .storybook/*)
-      // as dev-only, so `--production` filters them out and the
-      // workspace's deps appear unused. Disable the plugin and let the
-      // explicit entries below — marked with `!` — drive both modes.
-      storybook: false,
-      entry: ['.storybook/*.ts!', 'src/**/*.stories.tsx!'],
-      project: ['.storybook/*.ts!', 'src/**/*.{ts,tsx}!'],
+      entry: ['.storybook/*.ts'],
+      project: ['.storybook/*.ts', 'src/**/*.{ts,tsx}'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
         // Some sibling packages are pulled in indirectly (e.g. via
