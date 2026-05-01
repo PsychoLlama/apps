@@ -39,6 +39,8 @@ const easings = [
 
 /** Square swatch that transitions between neutral and accent on a loop. */
 const ColorSwatch = (props: { duration: string }) => {
+  // Solid's JSX compiler assigns to `ref` via the `ref={ref}` prop below.
+  // eslint-disable-next-line no-unassigned-vars
   let ref!: HTMLDivElement;
 
   onMount(() => {
@@ -70,6 +72,8 @@ const ColorSwatch = (props: { duration: string }) => {
 
 /** Pill thumb that slides across a track, pausing 1s at each end. */
 const EasingTrack = (props: { duration: string; easing: string }) => {
+  // Solid's JSX compiler assigns to `ref` via the `ref={ref}` prop below.
+  // eslint-disable-next-line no-unassigned-vars
   let ref!: HTMLDivElement;
 
   onMount(() => {
