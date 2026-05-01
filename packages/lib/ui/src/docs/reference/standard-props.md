@@ -24,7 +24,7 @@ Remove extra whitespace caused by line-height.
 
 ## Truncate Props
 
-Single-line ellipsis when text overflows. Requires a constrained width.
+Single-line ellipsis when text overflows. Requires a constrained width. No-op on inline hosts (`Link`, `<Text as="span">`); promote to `display: inline-block` or wrap in a block-level parent.
 
 - `truncate`: Truncate overflowing text. `boolean`.
 
