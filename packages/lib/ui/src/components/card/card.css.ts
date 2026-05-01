@@ -50,7 +50,6 @@ export const base = style({
   paddingLeft: cardPaddingLeft,
   borderRadius: cardBorderRadius,
   transitionProperty: 'background-color, box-shadow',
-  transitionDuration: fast[2],
   transitionTimingFunction: standard.productive,
   selectors: {
     '&::after': {
@@ -60,8 +59,19 @@ export const base = style({
       pointerEvents: 'none',
       borderRadius: cardBorderRadius,
       transitionProperty: 'box-shadow',
-      transitionDuration: fast[2],
       transitionTimingFunction: standard.productive,
+    },
+  },
+  // Only animate state changes on hover-capable pointers. On touch,
+  // `:active` sticks long enough that a duration reads as input lag.
+  '@media': {
+    '(hover: hover)': {
+      transitionDuration: fast[2],
+      selectors: {
+        '&::after': {
+          transitionDuration: fast[2],
+        },
+      },
     },
   },
 });
