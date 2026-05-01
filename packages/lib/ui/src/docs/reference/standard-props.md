@@ -22,6 +22,12 @@ Remove extra whitespace caused by line-height.
 
 - `trim`: Side to trim. `'start' | 'end' | 'both'`.
 
+## Truncate Props
+
+Single-line ellipsis when text overflows. Requires a constrained width.
+
+- `truncate`: Truncate overflowing text. `boolean`.
+
 ## Selectable Props
 
 Override the global `user-select: none` default.

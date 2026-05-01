@@ -6,6 +6,7 @@ import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { trimArgTypes } from '@lib/ui/props/trim';
+import { truncateArgTypes } from '@lib/ui/props/truncate';
 
 const meta = {
   title: 'UI/Typography',
@@ -42,6 +43,7 @@ const meta = {
     },
     children: { control: 'text' },
     ...trimArgTypes,
+    ...truncateArgTypes,
     ...marginArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,

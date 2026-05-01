@@ -17,6 +17,11 @@ import {
   resolveTrimClass,
 } from '../../props/trim';
 import {
+  type TruncateProps,
+  truncatePropKeys,
+  resolveTruncateClass,
+} from '../../props/truncate';
+import {
   type SelectableProps,
   selectablePropKeys,
   resolveSelectableClass,
@@ -50,6 +55,7 @@ export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
   T,
   TextOwnProps &
     TrimProps &
+    TruncateProps &
     MarginProps &
     SelectableProps &
     SkeletonProps &
@@ -61,6 +67,7 @@ function Text<const T extends HtmlTextTag>(props: TextProps<T>): JSX.Element;
 function Text(
   props: { as: HtmlTextTag } & TextOwnProps &
     TrimProps &
+    TruncateProps &
     MarginProps &
     SelectableProps &
     SkeletonProps &
@@ -76,6 +83,7 @@ function Text(
     'class',
     'children',
     ...trimPropKeys,
+    ...truncatePropKeys,
     ...marginPropKeys,
     ...selectablePropKeys,
     ...skeletonPropKeys,
@@ -91,6 +99,7 @@ function Text(
       local.align && css.align[local.align],
       local.color && css.color[local.color],
       resolveTrimClass(local),
+      resolveTruncateClass(local),
       resolveSelectableClass(local),
       skeletonClass(),
       ...resolveMarginClasses(local),
