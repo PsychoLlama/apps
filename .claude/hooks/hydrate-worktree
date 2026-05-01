@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Run `pnpm install` to hydrate a freshly-created git worktree.
+# Skips the main checkout (where deps are managed by the developer)
+# and skips worktrees that already have node_modules.
+
+set -euo pipefail
+
+cd "${CLAUDE_PROJECT_DIR:-.}"
+
+# In a linked worktree, `.git` is a file pointing at the gitdir.
+# In the main checkout it's a directory. Bail if we're not in a worktree.
+[[ -f .git ]] || exit 0
+
+[[ -d node_modules ]] && exit 0
+
+echo 'hydrating worktree: pnpm install...' >&2
+pnpm install

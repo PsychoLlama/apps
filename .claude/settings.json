@@ -17,5 +17,18 @@
   },
   "enabledPlugins": {
     "cloudflare@cloudflare": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/hydrate-worktree"
+          }
+        ]
+      }
+    ]
   }
 }
