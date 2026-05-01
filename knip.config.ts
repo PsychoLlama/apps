@@ -22,7 +22,7 @@ const config: KnipConfig = {
         'src/__tests__/test-utils.tsx',
         'vite.config.ts',
       ],
-      project: ['src/**/*.{ts,tsx}'],
+      project: ['src/**/*.{ts,tsx}!'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
       ],
@@ -36,7 +36,11 @@ const config: KnipConfig = {
       // root vitest config's `browser` project (playwright). The
       // default knip detection only picks up `*.test.{ts,tsx}` files.
       entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
-      project: ['src/**/*.{ts,tsx}'],
+      // Exclude `__tests__/` directories from production project
+      // analysis so test-only fixtures (helpers, scoped CSS) don't
+      // get flagged as unused. They stay reachable in default mode
+      // via the entry above.
+      project: ['src/**/*.{ts,tsx}!', '!src/**/__tests__/**!'],
     },
     'packages/dev/storybook': {
       // The storybook plugin contributes entries (stories, .storybook/*)
@@ -45,7 +49,7 @@ const config: KnipConfig = {
       // explicit entries below — marked with `!` — drive both modes.
       storybook: false,
       entry: ['.storybook/*.ts!', 'src/**/*.stories.tsx!'],
-      project: ['.storybook/*.ts', 'src/**/*.{ts,tsx}'],
+      project: ['.storybook/*.ts!', 'src/**/*.{ts,tsx}!'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
         // Some sibling packages are pulled in indirectly (e.g. via
