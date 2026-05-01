@@ -17,6 +17,11 @@ import {
   resolveTrimClass,
 } from '../../props/trim';
 import {
+  type TruncateProps,
+  truncatePropKeys,
+  resolveTruncateClass,
+} from '../../props/truncate';
+import {
   type SelectableProps,
   selectablePropKeys,
   resolveSelectableClass,
@@ -46,6 +51,7 @@ export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<
   T,
   HeadingOwnProps &
     TrimProps &
+    TruncateProps &
     MarginProps &
     SelectableProps &
     SkeletonProps &
@@ -59,6 +65,7 @@ function Heading<const T extends HtmlHeadingTag>(
 function Heading(
   rawProps: { as: HtmlHeadingTag } & HeadingOwnProps &
     TrimProps &
+    TruncateProps &
     MarginProps &
     SelectableProps &
     SkeletonProps &
@@ -78,6 +85,7 @@ function Heading(
     'class',
     'children',
     ...trimPropKeys,
+    ...truncatePropKeys,
     ...marginPropKeys,
     ...selectablePropKeys,
     ...skeletonPropKeys,
@@ -93,6 +101,7 @@ function Heading(
       local.align && css.align[local.align],
       local.color && css.color[local.color],
       resolveTrimClass(local),
+      resolveTruncateClass(local),
       resolveSelectableClass(local),
       skeletonClass(),
       ...resolveMarginClasses(local),
