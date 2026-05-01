@@ -4,11 +4,9 @@ import { space } from '@lib/design';
 export const padding = styleVariants(space, (value) => ({ padding: value }));
 
 export const paddingX = styleVariants(space, (value) => ({
-  paddingLeft: value,
-  paddingRight: value,
+  paddingInline: value,
 }));
 
 export const paddingY = styleVariants(space, (value) => ({
-  paddingTop: value,
-  paddingBottom: value,
+  paddingBlock: value,
 }));
