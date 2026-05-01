@@ -8,7 +8,7 @@ import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { trimArgTypes } from '@lib/ui/props/trim';
 
 const meta = {
-  title: 'UI/Components',
+  title: 'UI/Typography',
   component: LinkComponent,
   decorators: [(Story) => <MemoryRouter root={() => Story()} />],
   args: {
