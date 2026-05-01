@@ -15,9 +15,9 @@ const config: KnipConfig = {
     },
     'packages/app/main': {
       entry: [
-        'src/routes/**/*.tsx',
-        'src/app.tsx',
-        'src/entry-{client,server}.tsx',
+        'src/routes/**/*.tsx!',
+        'src/app.tsx!',
+        'src/entry-{client,server}.tsx!',
         'src/**/*.test.{ts,tsx}',
         'src/__tests__/test-utils.tsx',
         'vite.config.ts',
@@ -39,8 +39,13 @@ const config: KnipConfig = {
       project: ['src/**/*.{ts,tsx}'],
     },
     'packages/dev/storybook': {
-      entry: ['.storybook/*.ts'],
-      project: ['.storybook/*.ts'],
+      // The storybook plugin contributes entries (stories, .storybook/*)
+      // as dev-only, so `--production` filters them out and the
+      // workspace's deps appear unused. Disable the plugin and let the
+      // explicit entries below — marked with `!` — drive both modes.
+      storybook: false,
+      entry: ['.storybook/*.ts!', 'src/**/*.stories.tsx!'],
+      project: ['.storybook/*.ts', 'src/**/*.{ts,tsx}'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
         // Some sibling packages are pulled in indirectly (e.g. via
@@ -48,7 +53,6 @@ const config: KnipConfig = {
         // direct story imports.
         '@app/studio',
         '@lib/shell',
-        '@vanilla-extract/css',
       ],
     },
   },

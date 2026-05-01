@@ -14,7 +14,7 @@
     "storybook": "pnpm --filter @dev/storybook dev",
     "storybook:build": "pnpm --filter @dev/storybook build",
     "typecheck": "tsc && pnpm -r typecheck",
-    "knip": "knip",
+    "knip": "knip --production",
     "lint": "eslint --color",
     "test": "vitest run --project unit",
     "test:browser": "vitest run --project browser"
