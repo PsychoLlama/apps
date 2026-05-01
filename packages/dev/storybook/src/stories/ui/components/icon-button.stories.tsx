@@ -30,6 +30,7 @@ const meta = {
     disabled: {
       control: 'boolean',
     },
+    children: { table: { disable: true } },
   },
 } satisfies Meta<IconButtonProps>;
 
