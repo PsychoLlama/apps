@@ -1,4 +1,22 @@
-import { generateProblem, summarize, type Attempt } from '../state';
+import { createTestBindings } from '@lib/state';
+import {
+  ackWrongAction,
+  arithmeticStore,
+  endSessionAction,
+  generateProblem,
+  setInputAction,
+  startSessionAction,
+  submitAnswerAction,
+  summarize,
+  type Attempt,
+  type Difficulty,
+} from '../state';
+
+const DIFFICULTY_MAX: Record<Difficulty, number> = {
+  easy: 10,
+  medium: 25,
+  hard: 100,
+};
 
 const attempt = (
   op: '+' | '-' | '*' | '/',
@@ -9,6 +27,11 @@ const attempt = (
   given,
   correct,
 });
+
+const setup = () => {
+  const bindings = createTestBindings();
+  return { ...bindings, state: bindings.createStore(arithmeticStore) };
+};
 
 describe('generateProblem', () => {
   it.each(['easy', 'medium', 'hard'] as const)(
@@ -47,6 +70,52 @@ describe('generateProblem', () => {
         expect(Number.isInteger(problem.answer)).toBe(true);
       }
     }
+  });
+
+  it.each(['easy', 'medium', 'hard'] as const)(
+    'keeps division operands inside the %s difficulty bound',
+    (difficulty) => {
+      const max = DIFFICULTY_MAX[difficulty];
+      for (let iter = 0; iter < 1000; iter++) {
+        const problem = generateProblem(difficulty);
+        if (problem.op === '/') {
+          expect(problem.lhs).toBeLessThanOrEqual(max);
+          expect(problem.rhs).toBeLessThanOrEqual(max);
+          expect(problem.answer).toBeLessThanOrEqual(max);
+        }
+      }
+    },
+  );
+});
+
+describe('endSessionAction', () => {
+  it('records a pending wrong answer when ending mid-feedback', () => {
+    const { state, useAction } = setup();
+    useAction(startSessionAction)();
+    const wrongAnswer = String((state.problem?.answer ?? 0) + 1);
+    useAction(setInputAction)(wrongAnswer);
+    useAction(submitAnswerAction)();
+    expect(state.feedback).toBe('wrong-pending');
+
+    useAction(endSessionAction)();
+
+    expect(state.phase).toBe('stats');
+    expect(state.attempts).toHaveLength(1);
+    expect(state.attempts[0].correct).toBe(false);
+  });
+
+  it('does not double-count when ending after Continue', () => {
+    const { state, useAction } = setup();
+    useAction(startSessionAction)();
+    const wrongAnswer = String((state.problem?.answer ?? 0) + 1);
+    useAction(setInputAction)(wrongAnswer);
+    useAction(submitAnswerAction)();
+    useAction(ackWrongAction)();
+    expect(state.attempts).toHaveLength(1);
+
+    useAction(endSessionAction)();
+
+    expect(state.attempts).toHaveLength(1);
   });
 });
 

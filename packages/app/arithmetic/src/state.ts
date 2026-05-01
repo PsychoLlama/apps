@@ -82,8 +82,12 @@ export const generateProblem = (difficulty: Difficulty): Problem => {
       return { lhs, rhs, op, answer: lhs * rhs };
     }
     case '/': {
-      const rhs = randInt(1, Math.max(1, max));
-      const quotient = randInt(min, max);
+      // Cap the divisor so the dividend (rhs * quotient) stays in the
+      // advertised operand range. Without this, hard could mint a
+      // 100×100=10000 dividend.
+      const divisorCap = Math.max(1, Math.floor(Math.sqrt(max)));
+      const rhs = randInt(1, divisorCap);
+      const quotient = randInt(min, Math.floor(max / rhs));
       return { lhs: rhs * quotient, rhs, op, answer: quotient };
     }
   }
@@ -99,7 +103,9 @@ const initialState = (): ArithmeticState => ({
   attempts: [],
 });
 
-const arithmeticStore = defineStore<ArithmeticState>(initialState);
+/** Store handle. Exported for test bindings; production code should
+ * read state through {@link arithmetic}. */
+export const arithmeticStore = defineStore<ArithmeticState>(initialState);
 
 /** Live, readonly view of the worksheet session. */
 export const arithmetic = createStore(arithmeticStore);
@@ -176,8 +182,23 @@ export const ackWrongAction = defineAction([arithmeticStore], (state) => {
 });
 
 export const endSessionAction = defineAction([arithmeticStore], (state) => {
+  // Persist a pending wrong answer so accuracy reflects what the user
+  // actually answered when they hit End mid-feedback, instead of
+  // silently dropping the attempt.
+  if (
+    state.feedback === 'wrong-pending' &&
+    state.problem &&
+    state.lastGiven !== null
+  ) {
+    state.attempts.push({
+      problem: state.problem,
+      given: state.lastGiven,
+      correct: false,
+    });
+  }
   state.phase = 'stats';
   state.feedback = 'idle';
+  state.lastGiven = null;
 });
 
 export const resetSessionAction = defineAction([arithmeticStore], (state) => {
