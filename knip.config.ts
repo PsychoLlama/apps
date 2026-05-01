@@ -14,10 +14,13 @@ const config: KnipConfig = {
       ],
     },
     'packages/app/main': {
+      // `!` on entries marks them as production-mode entries. These
+      // runtime files are what `knip --production` walks to find
+      // exports that are only kept alive by tests or build glue.
       entry: [
-        'src/routes/**/*.tsx',
-        'src/app.tsx',
-        'src/entry-{client,server}.tsx',
+        'src/routes/**/*.tsx!',
+        'src/app.tsx!',
+        'src/entry-{client,server}.tsx!',
         'src/**/*.test.{ts,tsx}',
         'src/__tests__/test-utils.tsx',
         'vite.config.ts',
@@ -40,7 +43,7 @@ const config: KnipConfig = {
     },
     'packages/dev/storybook': {
       entry: ['.storybook/*.ts'],
-      project: ['.storybook/*.ts'],
+      project: ['.storybook/*.ts', 'src/**/*.{ts,tsx}'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
         // Some sibling packages are pulled in indirectly (e.g. via
@@ -48,7 +51,6 @@ const config: KnipConfig = {
         // direct story imports.
         '@app/studio',
         '@lib/shell',
-        '@vanilla-extract/css',
       ],
     },
   },

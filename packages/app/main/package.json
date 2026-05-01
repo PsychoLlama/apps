@@ -35,7 +35,6 @@
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
     "@solidjs/start": "2.0.0-alpha.2",
-    "@solidjs/vite-plugin-nitro-2": "^0.1.0",
     "@vanilla-extract/css": "catalog:",
     "solid-js": "catalog:",
     "vite": "catalog:"
@@ -44,6 +43,7 @@
     "@dev/build": "workspace:*",
     "@iconify/json": "^2.2.460",
     "@solidjs/testing-library": "catalog:",
+    "@solidjs/vite-plugin-nitro-2": "^0.1.0",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/user-event": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.2",

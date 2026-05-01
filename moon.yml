@@ -72,13 +72,22 @@ tasks:
       - '/packages/**/src/**/*'
       - '/vitest.config.ts'
 
-  knip:
+  # Default knip mode: walks every entry (including tests, configs, and
+  # storybook stories) and flags anything that nothing references.
+  knip-dev:
     command: 'pnpm'
-    args: ['knip']
-    inputs:
+    args: ['knip:dev']
+    inputs: &knip-inputs
       - '/packages/**/src/**/*'
       - '/packages/**/package.json'
       - '/knip.config.ts'
       # Root `*.ts` files (eslint.config, vitest.config, knip.config)
       # are scanned by the `.` workspace's `project: ['*.ts']` pattern.
       - '/*.ts'
+
+  # Stricter pass: walks only `!`-suffixed entries, so an export kept
+  # alive solely by a test or build-time config surfaces as unused.
+  knip-production:
+    command: 'pnpm'
+    args: ['knip:production']
+    inputs: *knip-inputs
