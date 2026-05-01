@@ -39,7 +39,7 @@
     "@dev/workspace-cli": "workspace:*",
     "@dev/eslint-plugin": "workspace:*",
     "@eslint/compat": "^2.0.4",
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^10.0.0",
     "@iconify/json": "^2.2.460",
     "@testing-library/jest-dom": "catalog:",
     "@vanilla-extract/css": "catalog:",
