@@ -2,6 +2,7 @@ $schema: './cache/schemas/workspace.json'
 
 projects:
   root: '.'
+  '@app/arithmetic': 'packages/app/arithmetic'
   '@app/logo-editor': 'packages/app/logo-editor'
   '@app/main': 'packages/app/main'
   '@app/studio': 'packages/app/studio'

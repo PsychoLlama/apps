@@ -1,0 +1,31 @@
+{
+  "name": "@app/arithmetic",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Arithmetic worksheet — timed drill with running tally and end-of-session stats.",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/design": "workspace:*",
+    "@lib/shell": "workspace:*",
+    "@lib/state": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
+  },
+  "devDependencies": {
+    "@iconify/json": "^2.2.460",
+    "unplugin-icons": "catalog:"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
+  }
+}

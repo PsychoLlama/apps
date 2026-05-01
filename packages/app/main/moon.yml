@@ -5,6 +5,7 @@ project:
   description: 'SolidStart host app'
 
 dependsOn:
+  - '@app/arithmetic'
   - '@app/logo-editor'
   - '@app/studio'
   - '@lib/design'
@@ -26,6 +27,7 @@ tasks:
       - 'public/**/*'
       - 'vite.config.ts'
       - 'wrangler.jsonc'
+      - '/packages/app/arithmetic/src/**/*'
       - '/packages/app/logo-editor/src/**/*'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'
