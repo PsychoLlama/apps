@@ -10,19 +10,3 @@ export const paddingX = styleVariants(space, (value) => ({
 export const paddingY = styleVariants(space, (value) => ({
   paddingBlock: value,
 }));
-
-export const paddingTop = styleVariants(space, (value) => ({
-  paddingTop: value,
-}));
-
-export const paddingRight = styleVariants(space, (value) => ({
-  paddingRight: value,
-}));
-
-export const paddingBottom = styleVariants(space, (value) => ({
-  paddingBottom: value,
-}));
-
-export const paddingLeft = styleVariants(space, (value) => ({
-  paddingLeft: value,
-}));

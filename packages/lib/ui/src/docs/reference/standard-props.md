@@ -15,10 +15,6 @@ Shared prop groups used across components. Values use `space` tokens from `@lib/
 - `p`: Padding on all sides.
 - `px`: Horizontal padding.
 - `py`: Vertical padding.
-- `pt`: Top padding.
-- `pr`: Right padding.
-- `pb`: Bottom padding.
-- `pl`: Left padding.
 
 ## Trim Props
 

@@ -21,25 +21,9 @@ export interface PaddingProps {
   px?: SpaceScale;
   /** Vertical (block) padding. */
   py?: SpaceScale;
-  /** Top padding. */
-  pt?: SpaceScale;
-  /** Right padding. */
-  pr?: SpaceScale;
-  /** Bottom padding. */
-  pb?: SpaceScale;
-  /** Left padding. */
-  pl?: SpaceScale;
 }
 
-export const paddingPropKeys = [
-  'p',
-  'px',
-  'py',
-  'pt',
-  'pr',
-  'pb',
-  'pl',
-] as const;
+export const paddingPropKeys = ['p', 'px', 'py'] as const;
 
 export const resolvePaddingClasses = (
   padding: PaddingProps,
@@ -48,10 +32,6 @@ export const resolvePaddingClasses = (
     padding.p && css.padding[padding.p],
     padding.px && css.paddingX[padding.px],
     padding.py && css.paddingY[padding.py],
-    padding.pt && css.paddingTop[padding.pt],
-    padding.pr && css.paddingRight[padding.pr],
-    padding.pb && css.paddingBottom[padding.pb],
-    padding.pl && css.paddingLeft[padding.pl],
   ];
 };
 
@@ -59,8 +39,4 @@ export const paddingArgTypes: ArgTypes<PaddingProps> = {
   p: spaceArgType,
   px: spaceArgType,
   py: spaceArgType,
-  pt: spaceArgType,
-  pr: spaceArgType,
-  pb: spaceArgType,
-  pl: spaceArgType,
 };
