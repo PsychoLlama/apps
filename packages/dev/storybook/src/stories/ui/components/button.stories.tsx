@@ -22,6 +22,10 @@ const meta = {
     ...buttonStyleArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,
+    as: {
+      control: 'inline-radio',
+      options: ['button', 'summary'],
+    },
     disabled: {
       control: 'boolean',
     },

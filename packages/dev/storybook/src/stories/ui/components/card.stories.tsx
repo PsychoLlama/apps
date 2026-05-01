@@ -18,7 +18,7 @@ const meta = {
     ...skeletonArgTypes,
     ...testIdArgTypes,
     as: {
-      control: 'select',
+      control: 'inline-radio',
       options: ['div', 'section', 'article', 'aside', 'a', 'button', 'label'],
     },
     size: {
