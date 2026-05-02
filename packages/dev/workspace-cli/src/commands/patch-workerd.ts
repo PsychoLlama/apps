@@ -11,22 +11,22 @@
 
 /* eslint-disable no-console -- stdout is this CLI's output surface. */
 
-import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import { defineCommand } from 'citty';
+import { x } from 'tinyexec';
 
 export default defineCommand({
   meta: {
     name: 'patch-workerd',
     description: 'Rewrite the workerd binary loader for NixOS hosts.',
   },
-  run() {
+  async run() {
     const loader = process.env.WORKERD_DYNAMIC_LOADER;
     const libs = process.env.WORKERD_BINARY_LIBS;
     if (!loader || !libs) return;
 
-    for (const dir of findWorkerdPackages()) {
+    for (const dir of await findWorkerdPackages()) {
       const binary = path.join(dir, 'bin', 'workerd');
       if (!existsSync(binary)) continue;
 
@@ -34,8 +34,8 @@ export default defineCommand({
       // for any `/nix/store` prefix. A flake bump produces new store
       // paths even though the old ones look "patched"; equality forces
       // a re-patch when the shell's glibc moves.
-      const currentLoader = patchelf(['--print-interpreter', binary]);
-      const currentRpath = patchelf(['--print-rpath', binary]);
+      const currentLoader = await patchelf(['--print-interpreter', binary]);
+      const currentRpath = await patchelf(['--print-rpath', binary]);
       if (currentLoader === loader && currentRpath === libs) continue;
 
       // Atomic-replace via tmp file. Modifying the binary in place
@@ -45,7 +45,7 @@ export default defineCommand({
       // the new one.
       const tmp = `${binary}.patchelf.tmp`;
       copyFileSync(binary, tmp);
-      patchelf(['--set-interpreter', loader, '--set-rpath', libs, tmp]);
+      await patchelf(['--set-interpreter', loader, '--set-rpath', libs, tmp]);
       renameSync(tmp, binary);
       console.log(`Patched ${binary}`);
     }
@@ -58,8 +58,8 @@ export default defineCommand({
  * deps that show up in `pnpm ls`'s recursive output — only the
  * platform packages themselves carry the binary we need to patch.
  */
-const findWorkerdPackages = (): string[] => {
-  const stdout = execFileSync(
+const findWorkerdPackages = async (): Promise<string[]> => {
+  const { stdout } = await x(
     'pnpm',
     [
       'ls',
@@ -70,7 +70,7 @@ const findWorkerdPackages = (): string[] => {
       '@cloudflare/workerd-linux-64',
       '@cloudflare/workerd-linux-arm64',
     ],
-    { encoding: 'utf8' },
+    { throwOnError: true },
   );
 
   return stdout
@@ -78,5 +78,7 @@ const findWorkerdPackages = (): string[] => {
     .filter((line) => line.includes('/@cloudflare/workerd-linux-'));
 };
 
-const patchelf = (args: string[]): string =>
-  execFileSync('patchelf', args, { encoding: 'utf8' }).trim();
+const patchelf = async (args: string[]): Promise<string> => {
+  const { stdout } = await x('patchelf', args, { throwOnError: true });
+  return stdout.trim();
+};

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@pnpm/workspace.read-manifest": "^1000.3.1",
-    "citty": "catalog:"
+    "citty": "catalog:",
+    "tinyexec": "^1.1.2"
   }
 }

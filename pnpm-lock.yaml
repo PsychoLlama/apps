@@ -42,6 +42,9 @@ catalogs:
     idb:
       specifier: ^8.0.3
       version: 8.0.3
+    knip:
+      specifier: ^6.6.1
+      version: 6.11.0
     playwright:
       specifier: ^1.59.1
       version: 1.59.1
@@ -364,6 +367,9 @@ importers:
       citty:
         specifier: 'catalog:'
         version: 0.2.2
+      tinyexec:
+        specifier: ^1.1.2
+        version: 1.1.2
 
   packages/lib/design:
     dependencies:
@@ -4930,6 +4936,10 @@ packages:
 
   tinyexec@1.0.4:
     resolution: {integrity: sha512-u9r3uZC0bdpGOXtlxUIdwf9pkmvhqJdrVCH9fapQtgy/OeTTMZ1nqH7agtvEfmGui6e1XxjcdrlxvxJvc3sMqw==}
+    engines: {node: '>=18'}
+
+  tinyexec@1.1.2:
+    resolution: {integrity: sha512-dAqSqE/RabpBKI8+h26GfLq6Vb3JVXs30XYQjdMjaj/c2tS8IYYMbIzP599KtRj7c57/wYApb3QjgRgXmrCukA==}
     engines: {node: '>=18'}
 
   tinyglobby@0.2.15:
@@ -10207,6 +10217,8 @@ snapshots:
   tinybench@2.9.0: {}
 
   tinyexec@1.0.4: {}
+
+  tinyexec@1.1.2: {}
 
   tinyglobby@0.2.15:
     dependencies:
