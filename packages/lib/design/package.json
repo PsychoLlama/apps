@@ -13,7 +13,7 @@
     "./color-scheme": "./src/color-scheme.ts",
     "./theme": "./src/theme.ts",
     "./palette/*": "./src/palette/*.css.ts",
-    "./palette-raw/*": "./src/palette/*.ts"
+    "./color/*": "./src/palette/*.ts"
   },
   "scripts": {
     "typecheck": "tsc"
