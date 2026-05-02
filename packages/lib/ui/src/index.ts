@@ -97,3 +97,17 @@ export {
   type SwitchRadius,
   type SwitchColor,
 } from './components/switch/switch';
+export {
+  DataListRoot,
+  DataListItem,
+  DataListLabel,
+  DataListValue,
+  type DataListRootProps,
+  type DataListItemProps,
+  type DataListLabelProps,
+  type DataListValueProps,
+  type DataListColor,
+  type DataListSize,
+  type DataListOrientation,
+  type DataListAlign,
+} from './components/data-list/data-list';
