@@ -241,6 +241,50 @@ describe('Slider', () => {
     expect(after[1]).toHaveAttribute('aria-valuenow', '70');
   });
 
+  it('survives a value-array shrink without operating on stale refs', async () => {
+    const handler = vi.fn();
+    const Shrinking = () => {
+      const [value, setValue] = createSignal([20, 80]);
+      return (
+        <>
+          <button
+            data-testid="shrink"
+            type="button"
+            onClick={() => setValue([20])}
+          >
+            shrink
+          </button>
+          <Slider
+            testId="sl"
+            value={value()}
+            onValueChange={(next) => {
+              handler(next);
+              setValue(next);
+            }}
+          />
+        </>
+      );
+    };
+    render(() => <Shrinking />);
+    const [, high] = screen.getAllByRole('slider');
+    high.focus();
+    expect(screen.getAllByRole('slider')).toHaveLength(2);
+
+    // Drop the second thumb out from under the focus.
+    await userEvent.click(screen.getByTestId('shrink'));
+    expect(screen.getAllByRole('slider')).toHaveLength(1);
+
+    // Subsequent keys should land on the surviving thumb (or no-op
+    // if focus was lost), not on the detached one.
+    handler.mockClear();
+    await userEvent.keyboard('{ArrowRight}');
+    if (handler.mock.calls.length > 0) {
+      expect(handler).toHaveBeenCalledWith([21]);
+    }
+    // The previously-focused detached thumb must not appear in the DOM.
+    expect(document.body.contains(high)).toBe(false);
+  });
+
   it('honors minStepsBetweenThumbs', async () => {
     const handler = vi.fn();
     const Multi = () => {

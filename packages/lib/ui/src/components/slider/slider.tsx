@@ -32,7 +32,7 @@
  * @see https://www.radix-ui.com/primitives/docs/components/slider
  */
 
-import { Index, mergeProps, Show, splitProps } from 'solid-js';
+import { createEffect, Index, mergeProps, Show, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import {
   marginPropKeys,
@@ -181,6 +181,14 @@ const Slider: Component<SliderProps> = (rawProps) => {
   let valuesBeforeSlideStart: number[] = [];
   let cachedRect: DOMRect | undefined;
 
+  // Trim `thumbRefs` whenever the value array shrinks. Solid's `<Index>`
+  // unmounts the trailing thumbs but doesn't clear the ref slots — left
+  // alone, the array would retain detached DOM nodes (memory) and could
+  // hand a stale element to the focus microtask below.
+  createEffect(() => {
+    thumbRefs.length = local.value.length;
+  });
+
   const isHorizontal = () => local.orientation === 'horizontal';
 
   // `direction` is `+1` when the slide axis runs in CSS-positive
@@ -259,7 +267,12 @@ const Slider: Component<SliderProps> = (rawProps) => {
     if (commit) local.onValueCommit?.(nextValues);
     // Refocus after the parent renders the sorted array — keeps focus
     // on the thumb the user is dragging even when sort order changes.
-    queueMicrotask(() => thumbRefs[valueIndexToChange]?.focus());
+    // The `isConnected` guard skips the call if the parent rejected
+    // our update or shrank `value` past `valueIndexToChange`.
+    queueMicrotask(() => {
+      const thumb = thumbRefs[valueIndexToChange];
+      if (thumb?.isConnected) thumb.focus();
+    });
   };
 
   const onPointerDown: JSX.EventHandler<HTMLSpanElement, PointerEvent> = (
@@ -329,17 +342,25 @@ const Slider: Component<SliderProps> = (rawProps) => {
     if (event.defaultPrevented) return;
     if (local.disabled) return;
 
+    // Read the active thumb from the event target rather than the
+    // `onFocus`-cached index. Keyboard events bubble from the focused
+    // thumb to the root, so `event.target` is the authoritative
+    // source. If the event arrives on the root (no thumb focused),
+    // skip — there's nothing to operate on.
+    const targetIndex = thumbRefs.indexOf(event.target as HTMLElement);
+    if (targetIndex === -1) return;
+
     // Home/End operate on the focused thumb per the W3C multi-thumb
     // slider pattern. Radix's primitive hardcodes index 0/last; we
     // diverge to match the spec — pressing End on the minimum thumb
     // shouldn't slingshot the maximum thumb.
     if (event.key === 'Home') {
-      updateValues(local.min, valueIndexToChange, true);
+      updateValues(local.min, targetIndex, true);
       event.preventDefault();
       return;
     }
     if (event.key === 'End') {
-      updateValues(local.max, valueIndexToChange, true);
+      updateValues(local.max, targetIndex, true);
       event.preventDefault();
       return;
     }
@@ -353,12 +374,11 @@ const Slider: Component<SliderProps> = (rawProps) => {
       const isSkipKey =
         isPageKey || (event.shiftKey && ARROW_KEYS.includes(event.key));
       const multiplier = isSkipKey ? 10 : 1;
-      const atIndex = valueIndexToChange;
-      const currentValue = local.value[atIndex];
+      const currentValue = local.value[targetIndex];
       if (currentValue === undefined) return;
       updateValues(
         currentValue + local.step * multiplier * stepDir,
-        atIndex,
+        targetIndex,
         true,
       );
       event.preventDefault();

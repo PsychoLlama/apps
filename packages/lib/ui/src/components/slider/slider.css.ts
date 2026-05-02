@@ -20,6 +20,11 @@
  *   Vanilla Extract requires every selector to anchor on `&` and
  *   the project blocks `globalStyle` from component code.
  * - Drops the high-contrast variant.
+ * - Focus ring rides the active `color` palette (`solid[3]` halo,
+ *   `solid[8]` outer). Radix locks both layers to accent so the
+ *   focus cue stays consistent across slider colors. Switch already
+ *   ties focus to its `color` prop, so we follow that house pattern
+ *   here rather than carve out a slider exception.
  *
  * @see https://www.radix-ui.com/themes/docs/components/slider
  */
