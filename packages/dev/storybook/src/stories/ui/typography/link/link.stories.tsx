@@ -7,6 +7,7 @@ import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { trimArgTypes } from '@lib/ui/props/trim';
 import { truncateArgTypes } from '@lib/ui/props/truncate';
+import { wrapArgTypes } from '@lib/ui/props/wrap';
 import { gallery } from '../../../../gallery';
 
 const UNDERLINES = ['auto', 'always', 'hover', 'none'] as const;
@@ -57,6 +58,7 @@ const meta = {
     children: { control: 'text' },
     ...trimArgTypes,
     ...truncateArgTypes,
+    ...wrapArgTypes,
     ...marginArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,

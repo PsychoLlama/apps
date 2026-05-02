@@ -28,6 +28,12 @@ Single-line ellipsis when text overflows. Requires a constrained width. No-op on
 
 - `truncate`: Truncate overflowing text. `boolean`.
 
+## Wrap Props
+
+Word-wrapping strategy. `pretty` and `balance` only constrain line breaks within a block formatting context, so they're no-ops on inline hosts.
+
+- `wrap`: Word-wrapping strategy. `'wrap' | 'nowrap' | 'pretty' | 'balance'`.
+
 ## Selectable Props
 
 Override the global `user-select: none` default.

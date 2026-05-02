@@ -22,6 +22,11 @@ import {
   resolveTruncateClass,
 } from '../../props/truncate';
 import {
+  type WrapProps,
+  wrapPropKeys,
+  resolveWrapClass,
+} from '../../props/wrap';
+import {
   type SelectableProps,
   selectablePropKeys,
   resolveSelectableClass,
@@ -56,6 +61,7 @@ export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
   TextOwnProps &
     TrimProps &
     TruncateProps &
+    WrapProps &
     MarginProps &
     SelectableProps &
     SkeletonProps &
@@ -68,6 +74,7 @@ function Text(
   props: { as: HtmlTextTag } & TextOwnProps &
     TrimProps &
     TruncateProps &
+    WrapProps &
     MarginProps &
     SelectableProps &
     SkeletonProps &
@@ -84,6 +91,7 @@ function Text(
     'children',
     ...trimPropKeys,
     ...truncatePropKeys,
+    ...wrapPropKeys,
     ...marginPropKeys,
     ...selectablePropKeys,
     ...skeletonPropKeys,
@@ -100,6 +108,7 @@ function Text(
       local.color && css.color[local.color],
       resolveTrimClass(local),
       resolveTruncateClass(local),
+      resolveWrapClass(local),
       resolveSelectableClass(local),
       skeletonClass(),
       ...resolveMarginClasses(local),

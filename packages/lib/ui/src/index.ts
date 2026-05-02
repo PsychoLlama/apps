@@ -18,6 +18,7 @@ export type { PaddingProps } from './props/padding';
 export type { MarginProps } from './props/margin';
 export type { TrimProps, LeadingTrim } from './props/trim';
 export type { TruncateProps } from './props/truncate';
+export type { WrapProps, WrapStrategy } from './props/wrap';
 export type { TestIdProps, RequiredTestIdProps } from './props/test-id';
 export {
   default as Button,
