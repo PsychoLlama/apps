@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*",
-    "@vanilla-extract/css": "catalog:"
+    "@vanilla-extract/css": "catalog:",
+    "@vanilla-extract/dynamic": "catalog:"
   },
   "devDependencies": {
     "@solidjs/router": "catalog:",

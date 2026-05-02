@@ -21,6 +21,7 @@
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
+import { assignInlineVars } from '@vanilla-extract/dynamic';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -147,7 +148,7 @@ const Progress: Component<ProgressProps> = (rawProps) => {
       css.size[local.size],
       css.color[local.color],
       css.variant[local.variant],
-      css.radiusVariant[local.radius],
+      css.radius[local.radius],
       skeletonClass(),
       local.class,
     ]
@@ -163,12 +164,12 @@ const Progress: Component<ProgressProps> = (rawProps) => {
     ].join(' ');
 
   // Determinate: drive scaleX from value/max. Indeterminate: hand
-  // `--progress-duration` to the keyframe schedule and let the
-  // animation own the transform.
+  // `progressDuration` to the keyframe schedule and let the animation
+  // own the transform.
   const indicatorStyle = (): JSX.CSSProperties =>
     isDeterminate()
       ? { transform: `scaleX(${(local.value as number) / local.max})` }
-      : { '--progress-duration': local.duration };
+      : assignInlineVars({ [css.progressDuration]: local.duration });
 
   return (
     <div

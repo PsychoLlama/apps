@@ -6,7 +6,7 @@
  *   not a `data-state` data-attr. Same selectors, fewer attributes.
  * - The track-fill scaleX is applied as inline `transform` from the
  *   component, so the indeterminate keyframes don't fight a CSS var.
- *   Only the indeterminate `--progress-duration` is exposed inline.
+ *   Only the indeterminate `progressDuration` var is exposed inline.
  * - The indeterminate shine layer reads a single `shineGradient` var
  *   set by `assignColorSchemeVars`, mirroring Radix's per-mode tweak
  *   to the gradient stops.
@@ -17,6 +17,7 @@
 
 import {
   createVar,
+  fallbackVar,
   keyframes,
   style,
   styleVariants,
@@ -26,7 +27,7 @@ import {
   danger,
   moderate,
   neutral,
-  radius,
+  radius as radiusToken,
   shadow,
   space,
   standard,
@@ -63,12 +64,13 @@ assignColorSchemeVars(
   },
 );
 
-// Per-instance `--progress-duration` (default 5s) controls how long the
-// initial indeterminate "grow" phase runs before the indicator settles
-// into a pulse. Authored as a plain custom property because the value
-// is per-instance, not per-variant — the component sets it via inline
-// `style` rather than a `vars: {}` block.
-const PROGRESS_DURATION = 'var(--progress-duration, 5s)';
+// Per-instance var controlling how long the initial indeterminate
+// "grow" phase runs before the indicator settles into a pulse. The
+// component supplies the value via `assignInlineVars`; `fallbackVar`
+// covers SSR / pre-hydration snapshots where the inline assignment
+// hasn't landed yet.
+export const progressDuration = createVar();
+const progressDurationCss = fallbackVar(progressDuration, '5s');
 
 // Indeterminate-loop cadence. These pace an ambient idle pulse, not a
 // productive micro-interaction, so they don't ride the `fast`/`moderate`
@@ -157,12 +159,12 @@ export const size = styleVariants({
 //
 // `full` matches Radix's pill default. Smaller steps ride the shared
 // radius scale; `none` lets a square track through.
-export const radiusVariant = styleVariants({
+export const radius = styleVariants({
   none: { vars: { [trackBorderRadius]: '0' } },
-  small: { vars: { [trackBorderRadius]: radius[1] } },
-  medium: { vars: { [trackBorderRadius]: radius[2] } },
-  large: { vars: { [trackBorderRadius]: radius[3] } },
-  full: { vars: { [trackBorderRadius]: radius.full } },
+  small: { vars: { [trackBorderRadius]: radiusToken[1] } },
+  medium: { vars: { [trackBorderRadius]: radiusToken[2] } },
+  large: { vars: { [trackBorderRadius]: radiusToken[3] } },
+  full: { vars: { [trackBorderRadius]: radiusToken.full } },
 });
 
 // --- Color ---
@@ -313,8 +315,8 @@ export const indicatorState = styleVariants({
 
   indeterminate: {
     animationName: `${grow}, ${fadeAnimation}, ${pulseAnimation}`,
-    animationDelay: `0s, calc(${PROGRESS_DURATION} + 5s), calc(${PROGRESS_DURATION} + 7.5s)`,
-    animationDuration: `${PROGRESS_DURATION}, ${FADE_DURATION}, ${PULSE_DURATION}`,
+    animationDelay: `0s, calc(${progressDurationCss} + 5s), calc(${progressDurationCss} + 7.5s)`,
+    animationDuration: `${progressDurationCss}, ${FADE_DURATION}, ${PULSE_DURATION}`,
     animationIterationCount: '1, 1, infinite',
     animationFillMode: 'both, none, none',
     animationDirection: 'normal, normal, alternate',
@@ -325,7 +327,7 @@ export const indicatorState = styleVariants({
       inset: 0,
       width: '400%',
       animationName: shine,
-      animationDelay: `calc(${PROGRESS_DURATION} + 5s)`,
+      animationDelay: `calc(${progressDurationCss} + 5s)`,
       animationDuration: SHINE_DURATION,
       animationFillMode: 'backwards',
       animationIterationCount: 'infinite',
