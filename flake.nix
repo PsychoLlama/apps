@@ -53,6 +53,18 @@
             # below.
             WORKERD_DYNAMIC_LOADER = "${pkgs.glibc}/lib/ld-linux-x86-64.so.2";
             WORKERD_BINARY_LIBS = lib.makeLibraryPath [ pkgs.glibc ];
+
+            # workerd's BoringSSL doesn't read NixOS's system CA store, so any
+            # `fetch()` from inside `wrangler dev` fails with "TLS peer's
+            # certificate is not trusted". Pointing `SSL_CERT_FILE` at the
+            # nixpkgs cacert bundle restores trust without depending on
+            # `/etc/ssl/...` being populated. Set via `shellHook` because
+            # stdenv unsets `SSL_CERT_FILE` on entry to keep builds from
+            # trusting host certs — an mkShell attribute would be wiped.
+            # https://github.com/cloudflare/workers-sdk/issues/3264
+            shellHook = ''
+              export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+            '';
           };
         }
       );
