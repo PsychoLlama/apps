@@ -23,6 +23,7 @@ const meta = {
       options: ['start', 'center', 'end'],
     },
     skeleton: { table: { disable: true } },
+    children: { table: { disable: true } },
   },
 } satisfies Meta<ContainerProps<'div'>>;
 

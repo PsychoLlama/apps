@@ -17,6 +17,7 @@ const meta = {
       options: [1, 2, 3, 4],
     },
     skeleton: { table: { disable: true } },
+    children: { table: { disable: true } },
   },
 } satisfies Meta<SectionProps>;
 
