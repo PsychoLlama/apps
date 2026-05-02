@@ -1,9 +1,3 @@
 .direnv/
 .claude/settings.local.json
 CLAUDE.local.md
-
-# Moon cache: hashes/outputs are content-addressed and path-independent,
-# so they warm new worktrees safely. Skip states/, locks/, and
-# runReport.json — those bake in absolute project roots.
-.moon/cache/hashes/
-.moon/cache/outputs/
