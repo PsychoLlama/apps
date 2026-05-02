@@ -24,6 +24,9 @@ catalogs:
     '@vanilla-extract/css':
       specifier: ^1.20.1
       version: 1.20.1
+    '@vanilla-extract/dynamic':
+      specifier: ^2.1.5
+      version: 2.1.5
     '@vitest/browser':
       specifier: ^4.1.5
       version: 4.1.5
@@ -406,6 +409,9 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1(babel-plugin-macros@3.1.0)
+      '@vanilla-extract/dynamic':
+        specifier: 'catalog:'
+        version: 2.1.5
     devDependencies:
       '@solidjs/router':
         specifier: 'catalog:'
@@ -2432,6 +2438,9 @@ packages:
 
   '@vanilla-extract/css@1.20.1':
     resolution: {integrity: sha512-5I9RNo5uZW9tsBnqrWzJqELegOqTHBrZyDFnES0gR9gJJHBB9dom1N0bwITM9tKwBcfKrTX4a6DHVeQdJ2ubQA==}
+
+  '@vanilla-extract/dynamic@2.1.5':
+    resolution: {integrity: sha512-QGIFGb1qyXQkbzx6X6i3+3LMc/iv/ZMBttMBL+Wm/DetQd36KsKsFg5CtH3qy+1hCA/5w93mEIIAiL4fkM8ycw==}
 
   '@vanilla-extract/integration@8.0.9':
     resolution: {integrity: sha512-NP+CSo5IYHDmkMMy5vAxY4R9i2+CAg4sxgvVaxuHiuY9q30i6dNUTujNNKZGW2urEkd4HVVI6NggeIyYjbGPwA==}
@@ -7191,6 +7200,10 @@ snapshots:
       picocolors: 1.1.1
     transitivePeerDependencies:
       - babel-plugin-macros
+
+  '@vanilla-extract/dynamic@2.1.5':
+    dependencies:
+      '@vanilla-extract/private': 1.0.9
 
   '@vanilla-extract/integration@8.0.9(babel-plugin-macros@3.1.0)':
     dependencies:

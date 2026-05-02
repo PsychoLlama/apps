@@ -27,6 +27,7 @@
 - [DataList](./data-list.md): Description list for label–value pairs.
 - [IconButton](./icon-button.md): Square button for a single icon.
 - [Kbd](./kbd.md): Inline keyboard input.
+- [Progress](./progress.md): Linear progress bar.
 - [Separator](./separator.md): Visual divider between sibling content.
 - [Switch](./switch.md): Two-state toggle button.
 - [TabNav](./tab-nav.md): Horizontal nav strip of routing links.

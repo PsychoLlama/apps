@@ -40,6 +40,15 @@ const config: KnipConfig = {
       // default knip detection only picks up `*.test.{ts,tsx}` files.
       entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
       project: ['src/**/*.{ts,tsx}'],
+      ignoreDependencies: [
+        // `--production` walks @lib/ui transitively via @app/main, but
+        // dep checks are per-workspace and the built-in vanilla-extract
+        // plugin only auto-credits `@vanilla-extract/css`. Spell the
+        // dynamic counterpart out so production mode doesn't see it as
+        // unused. Imported at runtime by `progress.tsx` for
+        // `assignInlineVars`.
+        '@vanilla-extract/dynamic',
+      ],
     },
     'packages/dev/storybook': {
       entry: ['.storybook/*.ts'],
