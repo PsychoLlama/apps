@@ -47,6 +47,11 @@ export {
   default as Section,
   type SectionProps,
 } from './components/section/section';
+export { default as Em, type EmProps } from './components/em/em';
+export {
+  default as Strong,
+  type StrongProps,
+} from './components/strong/strong';
 export { default as Kbd, type KbdProps } from './components/kbd/kbd';
 export {
   default as Separator,

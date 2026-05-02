@@ -13,7 +13,9 @@
 
 ## Typography
 
+- [Em](./em.md): Stress-emphasized inline text.
 - [Heading](./heading.md): Semantic headings.
+- [Strong](./strong.md): Strongly-emphasized inline text.
 - [Text](./text.md): Body copy, labels, and inline text.
 
 ## Components
