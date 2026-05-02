@@ -32,19 +32,19 @@ const Demo = (props: Partial<DataListRootProps>) => (
   <DataListRoot {...props}>
     <DataListItem>
       <DataListLabel>Status</DataListLabel>
-      <DataListValue>Authorized</DataListValue>
+      <DataListValue>Hatched</DataListValue>
     </DataListItem>
     <DataListItem>
       <DataListLabel>ID</DataListLabel>
-      <DataListValue>u_2N4o…f3kQ</DataListValue>
+      <DataListValue>egg_4f7c…a19b</DataListValue>
     </DataListItem>
     <DataListItem>
-      <DataListLabel>Email</DataListLabel>
-      <DataListValue>vlad@workos.com</DataListValue>
+      <DataListLabel>Species</DataListLabel>
+      <DataListValue>Emperor penguin</DataListValue>
     </DataListItem>
     <DataListItem>
-      <DataListLabel>Plan</DataListLabel>
-      <DataListValue>Pro</DataListValue>
+      <DataListLabel>Mass</DataListLabel>
+      <DataListValue>23 kg</DataListValue>
     </DataListItem>
   </DataListRoot>
 );
@@ -75,23 +75,23 @@ const meta = {
     <DataListRoot {...props}>
       <DataListItem>
         <DataListLabel>Status</DataListLabel>
-        <DataListValue>Authorized</DataListValue>
+        <DataListValue>Active</DataListValue>
       </DataListItem>
       <DataListItem>
         <DataListLabel>ID</DataListLabel>
-        <DataListValue>u_2N4o…f3kQ</DataListValue>
+        <DataListValue>usr_9k2x…d4mn</DataListValue>
       </DataListItem>
       <DataListItem>
         <DataListLabel>Name</DataListLabel>
-        <DataListValue>Vlad Moroz</DataListValue>
+        <DataListValue>Gill Bates</DataListValue>
       </DataListItem>
       <DataListItem>
         <DataListLabel>Email</DataListLabel>
-        <DataListValue>vlad@workos.com</DataListValue>
+        <DataListValue>gill@microhard.example</DataListValue>
       </DataListItem>
       <DataListItem>
-        <DataListLabel>Company</DataListLabel>
-        <DataListValue>WorkOS</DataListValue>
+        <DataListLabel>Reports to</DataListLabel>
+        <DataListValue>Thomas Hawking</DataListValue>
       </DataListItem>
     </DataListRoot>
   ),
