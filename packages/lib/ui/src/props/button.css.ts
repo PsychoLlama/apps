@@ -41,8 +41,15 @@ export const base = style({
   fontWeight: fontWeight.medium,
   flexShrink: 0,
   transitionProperty: 'background-color, color, box-shadow, filter',
-  transitionDuration: fast[2],
   transitionTimingFunction: standard.productive,
+
+  // Only animate state changes on hover-capable pointers. On touch,
+  // `:active` sticks long enough that a duration reads as input lag.
+  '@media': {
+    '(hover: hover)': {
+      transitionDuration: fast[2],
+    },
+  },
 
   ':disabled': {
     cursor: 'not-allowed',
