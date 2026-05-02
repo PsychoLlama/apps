@@ -104,6 +104,14 @@ export {
   type SwitchColor,
 } from './components/switch/switch';
 export {
+  default as Avatar,
+  type AvatarProps,
+  type AvatarSize,
+  type AvatarVariant,
+  type AvatarRadius,
+  type AvatarColor,
+} from './components/avatar/avatar';
+export {
   default as Progress,
   type ProgressProps,
   type ProgressSize,
