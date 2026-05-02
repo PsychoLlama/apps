@@ -175,15 +175,19 @@ const Avatar: Component<AvatarProps> = (rawProps) => {
     });
   });
 
-  // `delayMs` gates the fallback's first appearance. Once flipped on it
-  // stays on for the lifetime of the component — Radix matches this.
-  // The initial read is `untrack`'d so the lint rule sees a one-shot
-  // setup; subsequent prop changes are picked up by the effect below.
+  // `delayMs` gates the fallback's first appearance for callers that
+  // want to suppress a flash on fast loads. The gate only applies when
+  // there's actually an image to wait on — without `src`, the fallback
+  // is the only thing the component can show, so it renders right
+  // away. Once flipped on, the gate stays on for the lifetime of the
+  // component (Radix matches this). The initial read is `untrack`'d so
+  // the lint rule sees a one-shot setup; subsequent prop changes are
+  // picked up by the effect below.
   const [canRenderFallback, setCanRenderFallback] = createSignal(
-    untrack(() => local.delayMs === undefined),
+    untrack(() => local.src === undefined || local.delayMs === undefined),
   );
   createEffect(() => {
-    if (local.delayMs === undefined) {
+    if (local.src === undefined || local.delayMs === undefined) {
       setCanRenderFallback(true);
       return;
     }

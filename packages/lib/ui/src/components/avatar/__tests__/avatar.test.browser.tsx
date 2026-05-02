@@ -72,7 +72,7 @@ describe('Avatar', () => {
 
   // --- delayMs gate ---
 
-  it('hides the fallback until delayMs elapses', async () => {
+  it('hides the fallback until delayMs elapses when src is present', async () => {
     render(() => (
       <Avatar
         testId="av"
@@ -91,5 +91,13 @@ describe('Avatar', () => {
       },
       { timeout: 1000 },
     );
+  });
+
+  it('does not delay the fallback when src is absent', () => {
+    render(() => (
+      <Avatar testId="av" alt="Jane Doe" fallback="JD" delayMs={5000} />
+    ));
+    // No image to wait on — fallback should be visible immediately.
+    expect(screen.getByTestId('av')).toHaveTextContent('JD');
   });
 });
