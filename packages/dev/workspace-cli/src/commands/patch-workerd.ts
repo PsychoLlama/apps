@@ -11,7 +11,7 @@
 
 /* eslint-disable no-console -- stdout is this CLI's output surface. */
 
-import { copyFileSync, existsSync, renameSync } from 'node:fs';
+import { copyFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { defineCommand } from 'citty';
 import { x } from 'tinyexec';
@@ -28,7 +28,6 @@ export default defineCommand({
 
     for (const dir of await findWorkerdPackages()) {
       const binary = path.join(dir, 'bin', 'workerd');
-      if (!existsSync(binary)) continue;
 
       // Compare against the current env vars rather than just probing
       // for any `/nix/store` prefix. A flake bump produces new store
@@ -44,38 +43,40 @@ export default defineCommand({
       // attached to the old file and points future invocations at
       // the new one.
       const tmp = `${binary}.patchelf.tmp`;
-      copyFileSync(binary, tmp);
+      await copyFile(binary, tmp);
       await patchelf(['--set-interpreter', loader, '--set-rpath', libs, tmp]);
-      renameSync(tmp, binary);
+      await rename(tmp, binary);
       console.log(`Patched ${binary}`);
     }
   },
 });
 
+// pnpm tracks every platform-specific workerd package in the graph
+// but only extracts the tarball matching the host arch. Asking pnpm
+// about the host's package alone keeps `pnpm ls` from returning a
+// path that has no binary on disk.
+const WORKERD_PACKAGE_BY_ARCH: Record<string, string | undefined> = {
+  x64: '@cloudflare/workerd-linux-64',
+  arm64: '@cloudflare/workerd-linux-arm64',
+};
+
 /**
- * Asks pnpm where each installed `@cloudflare/workerd-linux-*`
+ * Asks pnpm where the host-arch `@cloudflare/workerd-linux-*`
  * package lives. Filters out workspace packages and intermediate
  * deps that show up in `pnpm ls`'s recursive output — only the
- * platform packages themselves carry the binary we need to patch.
+ * platform package itself carries the binary we need to patch.
  */
 const findWorkerdPackages = async (): Promise<string[]> => {
+  const pkg = WORKERD_PACKAGE_BY_ARCH[process.arch];
+  if (pkg === undefined) return [];
+
   const { stdout } = await x(
     'pnpm',
-    [
-      'ls',
-      '--parseable',
-      '--depth',
-      'Infinity',
-      '--recursive',
-      '@cloudflare/workerd-linux-64',
-      '@cloudflare/workerd-linux-arm64',
-    ],
+    ['ls', '--parseable', '--depth', 'Infinity', '--recursive', pkg],
     { throwOnError: true },
   );
 
-  return stdout
-    .split('\n')
-    .filter((line) => line.includes('/@cloudflare/workerd-linux-'));
+  return stdout.split('\n').filter((line) => line.includes(`/${pkg}`));
 };
 
 const patchelf = async (args: string[]): Promise<string> => {
