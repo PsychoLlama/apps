@@ -6,6 +6,7 @@ import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
+import * as css from './slider.stories.css';
 
 const VARIANTS = ['classic', 'surface', 'soft'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
@@ -17,7 +18,7 @@ const Demo = (props: Partial<SliderProps> & { initialValue?: number[] }) => {
     untrack(() => props.initialValue ?? [40]),
   );
   return (
-    <Flex as="div" style={{ width: '12rem' }}>
+    <Flex as="div" class={css.galleryCell}>
       <Slider
         testId="overview"
         {...props}
@@ -94,10 +95,11 @@ const meta = {
     return (
       <Flex
         as="div"
-        style={{
-          width: sliderProps.orientation === 'vertical' ? undefined : '16rem',
-          height: sliderProps.orientation === 'vertical' ? '12rem' : undefined,
-        }}
+        class={
+          sliderProps.orientation === 'vertical'
+            ? css.playgroundVertical
+            : css.playgroundHorizontal
+        }
       >
         <Slider
           {...sliderProps}
