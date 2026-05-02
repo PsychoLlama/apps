@@ -22,8 +22,7 @@
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
-    "@iconify/json": "^2.2.460",
-    "unplugin-icons": "catalog:"
+    "@iconify/json": "^2.2.460"
   },
   "peerDependencies": {
     "@solidjs/router": "*",

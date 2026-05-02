@@ -19,9 +19,6 @@
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:"
   },
-  "devDependencies": {
-    "unplugin-icons": "catalog:"
-  },
   "peerDependencies": {
     "@solidjs/meta": "*",
     "solid-js": "*"

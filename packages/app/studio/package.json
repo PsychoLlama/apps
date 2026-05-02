@@ -22,9 +22,6 @@
     "@vanilla-extract/css": "catalog:",
     "idb": "catalog:"
   },
-  "devDependencies": {
-    "unplugin-icons": "catalog:"
-  },
   "peerDependencies": {
     "@solidjs/router": "*",
     "solid-js": "*"
