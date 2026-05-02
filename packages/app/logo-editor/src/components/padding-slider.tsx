@@ -1,5 +1,5 @@
 import type { Component } from 'solid-js';
-import { Flex, Text } from '@lib/ui';
+import { Flex, Slider, Text } from '@lib/ui';
 import * as css from './padding-slider.css';
 
 interface PaddingSliderProps {
@@ -9,31 +9,29 @@ interface PaddingSliderProps {
   onInput: (value: number) => void;
   /** Maximum padding percent. @default 40 */
   max?: number;
-  /** ID assigned to the slider input — pair with a label. */
-  inputId?: string;
 }
 
-/** Range input that controls icon padding as a percentage of the canvas. */
+/** Slider that controls icon padding as a percentage of the canvas. */
 export const PaddingSlider: Component<PaddingSliderProps> = (props) => {
   const max = () => props.max ?? 40;
   return (
-    <Flex as="div" align="center" gap={3}>
-      <input
-        id={props.inputId}
-        type="range"
+    <Flex as="div" align="center" gap={3} grow>
+      <Slider
+        testId="padding-slider"
+        aria-label="Padding"
         min={0}
         max={max()}
-        step={1}
-        value={props.value}
-        class={css.slider}
-        onInput={(event) =>
-          props.onInput(Number(event.currentTarget.value) || 0)
-        }
-        aria-valuemin={0}
-        aria-valuemax={max()}
-        aria-valuenow={props.value}
+        step={5}
+        value={[props.value]}
+        onValueChange={(values) => props.onInput(values[0] ?? 0)}
       />
-      <Text as="span" size={2} class={css.value} selectable={false}>
+      <Text
+        as="span"
+        size={2}
+        class={css.value}
+        selectable={false}
+        color="lowContrast"
+      >
         {props.value}%
       </Text>
     </Flex>

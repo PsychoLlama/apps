@@ -29,7 +29,7 @@ export const DEFAULT_LOGO_EDITOR_STATE: LogoEditorState = {
   icon: findIcon('home') ?? ICONS[0],
   palette: 'blue',
   shape: 'rounded',
-  padding: 18,
+  padding: 10,
 };
 
 /** Store handle — internal so consumers reach for the materialized view. */

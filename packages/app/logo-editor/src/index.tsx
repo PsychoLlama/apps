@@ -261,9 +261,8 @@ export const LogoEditor = () => {
                     onChange={actions.setShape}
                   />
                 </InlineField>
-                <InlineField label="Padding" for="logo-editor-pad">
+                <InlineField label="Padding">
                   <PaddingSlider
-                    inputId="logo-editor-pad"
                     value={logoEditor.padding}
                     onInput={actions.setPadding}
                   />
