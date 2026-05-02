@@ -44,6 +44,8 @@ const trackBorderRadius = createVar();
 const colorTrack = createVar();
 const colorAlpha5 = createVar();
 const colorAlpha7 = createVar();
+const colorSolid5 = createVar();
+const colorSolid7 = createVar();
 const fadeAnimation = createVar();
 const pulseAnimation = createVar();
 
@@ -96,24 +98,25 @@ const shine = keyframes({
   '100%': { transform: 'translateX(0%)' },
 });
 
-// Per-variant fade and pulse — surface and classic share the accent
-// track ↔ accent[7] interpolation; soft sits on accent[5] ↔ accent[7]
-// so the pulse stays inside the muted range. These are background-
-// color animations only; the grow/shine are shared.
+// Per-variant fade and pulse — surface and classic share the
+// `track ↔ solid[7]` interpolation; soft sits on `solid[5] ↔ solid[7]`
+// so the pulse stays inside the muted range. The keyframe values read
+// the per-color CSS vars rather than `accent.*` directly so a non-
+// accent `color` prop animates inside its own palette.
 const surfaceFade = keyframes({
-  '100%': { backgroundColor: accent.solid[7] },
+  '100%': { backgroundColor: colorSolid7 },
 });
 const surfacePulse = keyframes({
-  '0%': { backgroundColor: accent.solid[7] },
-  '100%': { backgroundColor: accent.track },
+  '0%': { backgroundColor: colorSolid7 },
+  '100%': { backgroundColor: colorTrack },
 });
 
 const softFade = keyframes({
-  '100%': { backgroundColor: accent.solid[5] },
+  '100%': { backgroundColor: colorSolid5 },
 });
 const softPulse = keyframes({
-  '0%': { backgroundColor: accent.solid[5] },
-  '100%': { backgroundColor: accent.solid[7] },
+  '0%': { backgroundColor: colorSolid5 },
+  '100%': { backgroundColor: colorSolid7 },
 });
 
 // --- Root (the track) ---
@@ -166,9 +169,9 @@ export const radiusVariant = styleVariants({
 //
 // Each color binds the palette refs the rest of the stylesheet reads.
 // `track` paints surface/classic indicators; `alpha[5]`/`alpha[7]`
-// feed the soft variant's translucent fill. The indeterminate fade
-// and pulse keyframes read `accent.*` directly so they respect the
-// active color binding.
+// feed the soft variant's translucent fill; `solid[5]`/`solid[7]`
+// drive the indeterminate fade/pulse keyframes so the animation stays
+// inside the active palette.
 
 export const color = styleVariants({
   accent: {
@@ -176,6 +179,8 @@ export const color = styleVariants({
       [colorTrack]: accent.track,
       [colorAlpha5]: accent.alpha[5],
       [colorAlpha7]: accent.alpha[7],
+      [colorSolid5]: accent.solid[5],
+      [colorSolid7]: accent.solid[7],
     },
   },
   neutral: {
@@ -183,6 +188,8 @@ export const color = styleVariants({
       [colorTrack]: neutral.track,
       [colorAlpha5]: neutral.alpha[5],
       [colorAlpha7]: neutral.alpha[7],
+      [colorSolid5]: neutral.solid[5],
+      [colorSolid7]: neutral.solid[7],
     },
   },
   danger: {
@@ -190,6 +197,8 @@ export const color = styleVariants({
       [colorTrack]: danger.track,
       [colorAlpha5]: danger.alpha[5],
       [colorAlpha7]: danger.alpha[7],
+      [colorSolid5]: danger.solid[5],
+      [colorSolid7]: danger.solid[7],
     },
   },
   warning: {
@@ -197,6 +206,8 @@ export const color = styleVariants({
       [colorTrack]: warning.track,
       [colorAlpha5]: warning.alpha[5],
       [colorAlpha7]: warning.alpha[7],
+      [colorSolid5]: warning.solid[5],
+      [colorSolid7]: warning.solid[7],
     },
   },
   success: {
@@ -204,6 +215,8 @@ export const color = styleVariants({
       [colorTrack]: success.track,
       [colorAlpha5]: success.alpha[5],
       [colorAlpha7]: success.alpha[7],
+      [colorSolid5]: success.solid[5],
+      [colorSolid7]: success.solid[7],
     },
   },
 });
