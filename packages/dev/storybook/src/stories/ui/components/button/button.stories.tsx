@@ -46,29 +46,26 @@ export const Overview: Story = gallery(Button, {
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => ({
-        args: { variant, children: variant },
-      })),
+      args: VARIANTS.map((variant) => ({ variant, children: variant })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => ({ args: { color, children: color } })),
+      args: COLORS.map((color) => ({ color, children: color })),
     },
     {
       title: 'Size',
-      items: SIZES.map((size) => ({
-        args: { size, children: `Size ${size}` },
-      })),
+      args: SIZES.map((size) => ({ size, children: `Size ${size}` })),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => ({ args: { radius, children: radius } })),
+      args: RADII.map((radius) => ({ radius, children: radius })),
     },
     {
       title: 'Disabled',
-      args: { disabled: true },
-      items: VARIANTS.map((variant) => ({
-        args: { variant, children: variant },
+      args: VARIANTS.map((variant) => ({
+        variant,
+        children: variant,
+        disabled: true,
       })),
     },
   ],

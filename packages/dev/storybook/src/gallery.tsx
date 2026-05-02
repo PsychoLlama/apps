@@ -5,29 +5,16 @@ import { Flex, Heading } from '@lib/ui';
 
 type RenderableComponent<P> = (props: P) => JSX.Element;
 
-/**
- * One occurrence of the component within a section. The args are layered on
- * top of `base` and the section's `args`, so an item only needs to declare
- * what differs.
- */
-export interface GalleryItem<P> {
-  args: Partial<P>;
-}
-
-/**
- * A labeled row of components varying along a single dimension. `args` is
- * layered onto every item in the section — useful for shared overlays like
- * `{ disabled: true }`.
- */
+/** A labeled row of component instances varying along a single dimension. */
 export interface GallerySection<P> {
   title: string;
-  args?: Partial<P>;
-  items: ReadonlyArray<GalleryItem<P>>;
+  /** Per-item args. Each entry renders one component instance. */
+  args: ReadonlyArray<Partial<P>>;
 }
 
 /** Configuration for a `gallery()` story. */
 export interface GalleryConfig<P> {
-  /** Args applied as the baseline for every item. */
+  /** Args applied as the baseline for every item across all sections. */
   base?: Partial<P>;
   /** Ordered list of labeled rows. */
   sections: ReadonlyArray<GallerySection<P>>;
@@ -37,8 +24,8 @@ export interface GalleryConfig<P> {
  * Build a Storybook story that enumerates a component across labeled rows.
  *
  * Each section renders one horizontal row of the component. Args merge in
- * order: story args → `base` → `section.args` → `item.args`. Storybook
- * controls are disabled because the args are gallery-driven, not interactive.
+ * order: story args → `base` → item args. Storybook controls are disabled
+ * because the args are gallery-driven, not interactive.
  */
 export const gallery = <P,>(
   component: RenderableComponent<P>,
@@ -56,14 +43,13 @@ export const gallery = <P,>(
                 {section.title}
               </Heading>
               <Flex as="div" wrap="wrap" align="center" gap={3}>
-                <For each={section.items}>
-                  {(item) => (
+                <For each={section.args}>
+                  {(itemArgs) => (
                     <Dynamic
                       component={Comp}
                       {...(storyArgs as Record<string, unknown>)}
                       {...(config.base as Record<string, unknown> | undefined)}
-                      {...(section.args as Record<string, unknown> | undefined)}
-                      {...(item.args as Record<string, unknown>)}
+                      {...(itemArgs as Record<string, unknown>)}
                     />
                   )}
                 </For>
