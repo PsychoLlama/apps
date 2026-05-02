@@ -24,11 +24,13 @@ const containerMaxWidth = {
   4: '71rem',
 } as const;
 
+// `alignItems` is owned by the `align` variant below — the component
+// always applies one (default `center`), so leaving it off `base`
+// removes any cascade ambiguity if rule order ever shifted.
 export const base = style({
   display: 'flex',
   boxSizing: 'border-box',
   flexDirection: 'column',
-  alignItems: 'center',
   flexShrink: 0,
   flexGrow: 1,
 });
