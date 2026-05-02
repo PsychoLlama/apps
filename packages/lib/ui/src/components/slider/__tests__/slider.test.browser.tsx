@@ -36,6 +36,23 @@ describe('Slider', () => {
     expect(screen.getAllByRole('slider')).toHaveLength(2);
   });
 
+  it('forwards native span attributes to the root', () => {
+    render(() => (
+      <Slider
+        testId="sl"
+        id="vol"
+        aria-label="Volume"
+        aria-describedby="vol-desc"
+        value={[50]}
+        onValueChange={noop}
+      />
+    ));
+    const root = screen.getByTestId('sl');
+    expect(root).toHaveAttribute('id', 'vol');
+    expect(root).toHaveAttribute('aria-label', 'Volume');
+    expect(root).toHaveAttribute('aria-describedby', 'vol-desc');
+  });
+
   it('exposes ARIA range attributes on each thumb', () => {
     render(() => (
       <Slider testId="sl" min={0} max={200} value={[40]} onValueChange={noop} />
@@ -115,6 +132,31 @@ describe('Slider', () => {
     thumb.focus();
     await userEvent.keyboard('{End}');
     expect(thumb).toHaveAttribute('aria-valuenow', '100');
+  });
+
+  it('Home/End operate on the focused thumb (multi-thumb)', async () => {
+    let last: number[] = [];
+    const Multi = () => {
+      const [value, setValue] = createSignal([20, 80]);
+      return (
+        <Slider
+          testId="sl"
+          value={value()}
+          onValueChange={(next) => {
+            last = next;
+            setValue(next);
+          }}
+        />
+      );
+    };
+    render(() => <Multi />);
+    const [, high] = screen.getAllByRole('slider');
+    high.focus();
+    await userEvent.keyboard('{Home}');
+    // High (80) was focused; Home moves it to min, then sort gives
+    // [0, 20]. Radix's hardcoded `index = 0` would have left high at
+    // 80 and moved low to 0 — we follow the W3C pattern instead.
+    expect(last).toEqual([0, 20]);
   });
 
   it('respects custom step', async () => {

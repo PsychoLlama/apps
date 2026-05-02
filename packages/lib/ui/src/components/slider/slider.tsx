@@ -23,6 +23,10 @@
  *   visually centers on the percentage point and overhangs the track
  *   slightly — same affordance most modern sliders ship with. Track
  *   it as a follow-up if the overhang ever bothers a real consumer.
+ * - Home/End operate on the focused thumb. Radix's primitive
+ *   hardcodes index 0 / last, which contradicts the W3C multi-thumb
+ *   slider pattern; we follow the spec instead so pressing End on
+ *   the minimum thumb doesn't slingshot the maximum one.
  *
  * @see https://www.radix-ui.com/themes/docs/components/slider
  * @see https://www.radix-ui.com/primitives/docs/components/slider
@@ -325,13 +329,17 @@ const Slider: Component<SliderProps> = (rawProps) => {
     if (event.defaultPrevented) return;
     if (local.disabled) return;
 
+    // Home/End operate on the focused thumb per the W3C multi-thumb
+    // slider pattern. Radix's primitive hardcodes index 0/last; we
+    // diverge to match the spec — pressing End on the minimum thumb
+    // shouldn't slingshot the maximum thumb.
     if (event.key === 'Home') {
-      updateValues(local.min, 0, true);
+      updateValues(local.min, valueIndexToChange, true);
       event.preventDefault();
       return;
     }
     if (event.key === 'End') {
-      updateValues(local.max, local.value.length - 1, true);
+      updateValues(local.max, valueIndexToChange, true);
       event.preventDefault();
       return;
     }
