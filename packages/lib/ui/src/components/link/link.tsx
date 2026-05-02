@@ -28,6 +28,11 @@ import {
   resolveTruncateClass,
 } from '../../props/truncate';
 import {
+  type WrapProps,
+  wrapPropKeys,
+  resolveWrapClass,
+} from '../../props/wrap';
+import {
   type SkeletonProps,
   skeletonPropKeys,
   useSkeleton,
@@ -43,6 +48,7 @@ export interface LinkProps
     MarginProps,
     TrimProps,
     TruncateProps,
+    WrapProps,
     SkeletonProps,
     RequiredTestIdProps,
     AnchorProps {
@@ -80,6 +86,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     'children',
     ...trimPropKeys,
     ...truncatePropKeys,
+    ...wrapPropKeys,
     ...skeletonPropKeys,
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
@@ -100,6 +107,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       css.underline[local.underline],
       autoAlways() && css.underlineAutoAlways,
       resolveTrimClass(local),
+      !local.truncate && resolveWrapClass(local),
       resolveTruncateClass(local),
       skeletonClass(),
       local.class,

@@ -3,6 +3,7 @@ import { Heading, type HeadingProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { trimArgTypes } from '@lib/ui/props/trim';
 import { truncateArgTypes } from '@lib/ui/props/truncate';
+import { wrapArgTypes } from '@lib/ui/props/wrap';
 import { selectableArgTypes } from '@lib/ui/props/selectable';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -40,6 +41,7 @@ const meta = {
     children: { control: 'text' },
     ...trimArgTypes,
     ...truncateArgTypes,
+    ...wrapArgTypes,
     ...marginArgTypes,
     ...selectableArgTypes,
     ...skeletonArgTypes,

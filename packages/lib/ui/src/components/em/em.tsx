@@ -3,9 +3,8 @@
  *
  * Ported from Radix UI Themes Em. Deviations:
  * - No `asChild`. Tag-locked to `<em>`.
- * - No `truncate` / `textWrap` props. Truncation is a no-op on inline hosts;
- *   promote the parent block to truncate. Defer text-wrap until a use case
- *   surfaces.
+ * - No `truncate` prop. Truncation is a no-op on inline hosts; promote
+ *   the parent block to truncate.
  * - No font-style / font-family / font-weight theming knobs. We ship a
  *   single body font and a fixed italic treatment, so the upstream
  *   font-size-adjust trick (and the nested-em font-size guard) is moot.
@@ -26,11 +25,17 @@ import {
   useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
+import {
+  type WrapProps,
+  wrapPropKeys,
+  resolveWrapClass,
+} from '../../props/wrap';
 import * as css from './em.css';
 
 export interface EmProps
   extends
     MarginProps,
+    WrapProps,
     SkeletonProps,
     TestIdProps,
     JSX.HTMLAttributes<HTMLElement> {}
@@ -42,12 +47,19 @@ const Em: ParentComponent<EmProps> = (rawProps) => {
   const [local, rest] = splitProps(withoutTid, [
     'class',
     'children',
+    ...wrapPropKeys,
     ...skeletonPropKeys,
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [...resolveMarginClasses(margin), css.base, skeletonClass(), local.class]
+    [
+      ...resolveMarginClasses(margin),
+      css.base,
+      resolveWrapClass(local),
+      skeletonClass(),
+      local.class,
+    ]
       .filter(Boolean)
       .join(' ');
 

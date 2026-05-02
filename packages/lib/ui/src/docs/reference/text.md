@@ -4,7 +4,7 @@ Polymorphic (`as` required).
 
 ## Props
 
-Base: rendered element attributes, margin props, trim props, truncate props, selectable props, skeleton props.
+Base: rendered element attributes, margin props, trim props, truncate props, wrap props, selectable props, skeleton props.
 
 - `as`: HTML text tag. `'span' | 'p' | 'label' | 'em' | 'strong' | ...`
 - `size`: Visual size. Omit to inherit from a sized ancestor. `1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9`.
