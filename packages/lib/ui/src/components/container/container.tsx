@@ -21,15 +21,28 @@ import {
   resolveBoxClasses,
   type BoxBaseProps,
 } from '../../props/box';
-import {
-  type HtmlBoxTag,
-  type PolymorphicProps,
-} from '../../props/polymorphic';
+import { type PolymorphicProps } from '../../props/polymorphic';
 import { useSkeleton } from '../../props/skeleton';
 import * as css from './container.css';
 
 type ContainerSize = 1 | 2 | 3 | 4;
 type ContainerAlign = 'start' | 'center' | 'end';
+
+/**
+ * Tags Container may render as. Limited to flow-content containers
+ * because the component always wraps children in an inner `<div>` —
+ * `as="ul"`/`"table"`/`"tr"` would produce invalid DOM.
+ */
+export type ContainerTag =
+  | 'div'
+  | 'main'
+  | 'article'
+  | 'section'
+  | 'aside'
+  | 'header'
+  | 'footer'
+  | 'nav'
+  | 'figure';
 
 /** Container-specific layout props, independent of the target element. */
 interface ContainerOwnProps {
@@ -40,7 +53,7 @@ interface ContainerOwnProps {
 }
 
 /** Container props for a specific element tag. */
-export type ContainerProps<T extends HtmlBoxTag> = PolymorphicProps<
+export type ContainerProps<T extends ContainerTag> = PolymorphicProps<
   T,
   ContainerOwnProps & BoxBaseProps
 >;
@@ -48,11 +61,11 @@ export type ContainerProps<T extends HtmlBoxTag> = PolymorphicProps<
 const containerOwnPropKeys = ['size', 'align'] as const;
 
 /** Caps content width at a fixed max and aligns the column horizontally. */
-function Container<const T extends HtmlBoxTag>(
+function Container<const T extends ContainerTag>(
   props: ContainerProps<T>,
 ): JSX.Element;
 function Container(
-  rawProps: { as: HtmlBoxTag } & ContainerOwnProps &
+  rawProps: { as: ContainerTag } & ContainerOwnProps &
     BoxBaseProps &
     JSX.HTMLAttributes<HTMLElement>,
 ) {

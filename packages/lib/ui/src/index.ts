@@ -41,6 +41,7 @@ export { default as Inset, type InsetProps } from './components/inset/inset';
 export {
   default as Container,
   type ContainerProps,
+  type ContainerTag,
 } from './components/container/container';
 export {
   default as Section,
