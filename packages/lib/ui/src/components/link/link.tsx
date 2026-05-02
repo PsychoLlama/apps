@@ -107,8 +107,8 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       css.underline[local.underline],
       autoAlways() && css.underlineAutoAlways,
       resolveTrimClass(local),
+      !local.truncate && resolveWrapClass(local),
       resolveTruncateClass(local),
-      resolveWrapClass(local),
       skeletonClass(),
       local.class,
     ]
