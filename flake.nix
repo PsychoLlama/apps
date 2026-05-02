@@ -36,25 +36,23 @@
           # NixOS-only deps and env that don't belong in CI's closure.
           nixos = pkgs.mkShell {
             inputsFrom = [ default ];
-            packages = [
-              # Playwright ships its own chromium, but the prebuilt
-              # binary can't run on NixOS. Layered in for local
-              # storybook browser tests; consumed via CHROMIUM_PATH.
-              pkgs.chromium
 
-              # Workerd ships as a generic-Linux ELF that NixOS can't
-              # load without a real dynamic linker. The root `prepare`
-              # script (`workspace patch-workerd`) shells out to this
-              # to rewrite the binary's interpreter and rpath, sourced
-              # from the WORKERD_* vars below.
+            packages = [
               pkgs.patchelf
             ];
+
+            # Playwright ships its own chromium, but the prebuilt binary can't
+            # run on NixOS. Layered in for local storybook browser tests;
+            # consumed via CHROMIUM_PATH.
             CHROMIUM_PATH = "${pkgs.chromium}/bin/chromium";
+
+            # Workerd ships as a generic-Linux ELF that NixOS can't load
+            # without a real dynamic linker. The root `prepare` script
+            # (`workspace patch-workerd`) shells out to this to rewrite the
+            # binary's interpreter and rpath, sourced from the WORKERD_* vars
+            # below.
             WORKERD_DYNAMIC_LOADER = "${pkgs.glibc}/lib/ld-linux-x86-64.so.2";
-            WORKERD_BINARY_LIBS = lib.makeLibraryPath [
-              pkgs.glibc
-              pkgs.stdenv.cc.cc.lib
-            ];
+            WORKERD_BINARY_LIBS = lib.makeLibraryPath [ pkgs.glibc ];
           };
         }
       );
