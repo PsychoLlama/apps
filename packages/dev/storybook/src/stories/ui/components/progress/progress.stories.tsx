@@ -4,6 +4,7 @@ import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
+import * as css from './progress.stories.css';
 
 const VARIANTS = ['classic', 'surface', 'soft'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
@@ -11,7 +12,7 @@ const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 const Demo = (props: Partial<ProgressProps>) => (
-  <Flex as="div" style={{ width: '12rem' }}>
+  <Flex as="div" class={css.galleryCell}>
     <Progress testId="overview" value={60} {...props} />
   </Flex>
 );
@@ -56,7 +57,7 @@ const meta = {
   // otherwise when rendered as a story root.
   decorators: [
     (Story) => (
-      <Flex as="div" style={{ width: '20rem' }}>
+      <Flex as="div" class={css.playgroundFrame}>
         <Story />
       </Flex>
     ),
