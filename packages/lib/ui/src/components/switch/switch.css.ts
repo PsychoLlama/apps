@@ -165,7 +165,10 @@ export const color = styleVariants({
       [colorTrack]: neutral.track,
       [colorAlpha3]: neutral.alpha[3],
       [colorAlpha4]: neutral.alpha[4],
-      [colorFocus]: neutral.solid[8],
+      // Focus outline falls back to accent for the neutral palette
+      // so the focus cue stays distinct against a gray switch —
+      // same exception Radix's `--focus-8` codifies.
+      [colorFocus]: accent.solid[8],
     },
   },
   danger: {
