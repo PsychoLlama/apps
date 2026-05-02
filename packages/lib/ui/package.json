@@ -22,10 +22,8 @@
   "devDependencies": {
     "@solidjs/router": "catalog:",
     "@solidjs/testing-library": "catalog:",
-    "@testing-library/jest-dom": "catalog:",
     "solid-js": "catalog:",
-    "storybook-solidjs-vite": "catalog:",
-    "unplugin-icons": "catalog:"
+    "storybook-solidjs-vite": "catalog:"
   },
   "peerDependencies": {
     "@solidjs/router": "*",

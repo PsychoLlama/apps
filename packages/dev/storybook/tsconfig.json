@@ -1,7 +1,4 @@
 {
-  "extends": "../../../tsconfig.json",
-  "compilerOptions": {
-    "types": ["vite/client", "vitest/globals", "unplugin-icons/types/solid"]
-  },
+  "extends": "../../../tsconfig.web.json",
   "include": [".storybook/*.ts", "*.ts", "src"]
 }

@@ -177,9 +177,6 @@ importers:
       '@iconify/json':
         specifier: ^2.2.460
         version: 2.2.468
-      unplugin-icons:
-        specifier: 'catalog:'
-        version: 23.0.1
 
   packages/app/main:
     dependencies:
@@ -232,9 +229,6 @@ importers:
       '@solidjs/vite-plugin-nitro-2':
         specifier: ^0.1.0
         version: 0.1.0(rolldown@1.0.0-rc.10(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
-      '@testing-library/jest-dom':
-        specifier: 'catalog:'
-        version: 6.9.1
       '@testing-library/user-event':
         specifier: 'catalog:'
         version: 14.6.1(@testing-library/dom@10.4.1)
@@ -247,9 +241,6 @@ importers:
       unplugin-icons:
         specifier: 'catalog:'
         version: 23.0.1
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.5(@types/node@25.5.0)(@vitest/browser-playwright@4.1.5)(@vitest/coverage-v8@4.1.5)(jsdom@29.1.1)(vite@7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
       wrangler:
         specifier: ^4.65.0
         version: 4.87.0
@@ -280,10 +271,6 @@ importers:
       solid-js:
         specifier: '*'
         version: 1.9.12
-    devDependencies:
-      unplugin-icons:
-        specifier: 'catalog:'
-        version: 23.0.1
 
   packages/dev/build: {}
 
@@ -404,10 +391,6 @@ importers:
       solid-js:
         specifier: '*'
         version: 1.9.12
-    devDependencies:
-      unplugin-icons:
-        specifier: 'catalog:'
-        version: 23.0.1
 
   packages/lib/state:
     dependencies:
@@ -430,18 +413,12 @@ importers:
       '@solidjs/testing-library':
         specifier: 'catalog:'
         version: 0.8.10(@solidjs/router@0.16.1(solid-js@1.9.12))(solid-js@1.9.12)
-      '@testing-library/jest-dom':
-        specifier: 'catalog:'
-        version: 6.9.1
       solid-js:
         specifier: 'catalog:'
         version: 1.9.12
       storybook-solidjs-vite:
         specifier: 'catalog:'
         version: 10.0.12(@testing-library/jest-dom@6.9.1)(esbuild@0.27.7)(rollup@4.60.2)(solid-js@1.9.12)(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3)(vite@7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.3))
-      unplugin-icons:
-        specifier: 'catalog:'
-        version: 23.0.1
 
 packages:
 
