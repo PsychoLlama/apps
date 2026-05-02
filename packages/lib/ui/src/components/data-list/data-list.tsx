@@ -10,11 +10,18 @@
  *   props.
  * - Label `color` accepts every semantic palette (no hand-picked subset);
  *   omit to inherit the low-contrast neutral default.
- * - No `width` prop on the label; subgrid sizes the column from content.
+ * - No `width` / `minWidth` / `maxWidth` props on the label; subgrid sizes
+ *   the column from content. Style the label directly if you need a track
+ *   width.
  * - Drops the value-bleed margin trick; rows align cleanly at the baseline.
  * - Leading-trim is provided through the standard `trim` prop (the same
  *   baseline polyfill `Text` and `Heading` use). No bespoke `--data-list`
  *   trim variables.
+ * - Subcomponents are tag-locked (no `as` / `asChild`). Each subcomponent
+ *   owns its semantic element.
+ * - The label does not emit `data-accent-color`. Tint the label via the
+ *   `color` prop; consumers can't drive label color from a parent attribute
+ *   selector.
  * - No `highContrast` styling. Recorded as a deferred deviation.
  *
  * @see https://www.radix-ui.com/themes/docs/components/data-list
