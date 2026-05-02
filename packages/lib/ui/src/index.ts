@@ -92,8 +92,16 @@ export {
 export {
   default as Switch,
   type SwitchProps,
-  type SwitchSize,
   type SwitchVariant,
+  type SwitchSize,
   type SwitchRadius,
   type SwitchColor,
 } from './components/switch/switch';
+export {
+  default as Progress,
+  type ProgressProps,
+  type ProgressSize,
+  type ProgressVariant,
+  type ProgressRadius,
+  type ProgressColor,
+} from './components/progress/progress';
