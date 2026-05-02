@@ -6,16 +6,6 @@ import { truncateArgTypes } from '@lib/ui/props/truncate';
 import { selectableArgTypes } from '@lib/ui/props/selectable';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
-import { gallery } from '../../../../gallery';
-
-const TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const;
-const SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-const WEIGHTS = ['light', 'regular', 'medium', 'bold'] as const;
-const ALIGNS = ['left', 'center', 'right'] as const;
-const COLORS = ['highContrast', 'lowContrast'] as const;
-
-const defaults = { as: 'h3', testId: 'overview' } as const;
-const sample = 'Sphinx of black quartz';
 
 const meta = {
   title: 'UI/Typography/Heading',
@@ -59,55 +49,5 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-export const Overview: Story = gallery({
-  sections: [
-    {
-      title: 'Tag',
-      items: TAGS.map((as) => (
-        <Heading {...defaults} as={as}>
-          {as}
-        </Heading>
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <Heading {...defaults} size={size}>
-          {sample}
-        </Heading>
-      )),
-    },
-    {
-      title: 'Weight',
-      items: WEIGHTS.map((weight) => (
-        <Heading {...defaults} size={5} weight={weight}>
-          {weight}
-        </Heading>
-      )),
-    },
-    {
-      title: 'Align',
-      items: ALIGNS.map((align) => (
-        <Heading
-          {...defaults}
-          size={4}
-          align={align}
-          style={{ width: '14rem' }}
-        >
-          {align}
-        </Heading>
-      )),
-    },
-    {
-      title: 'Color',
-      items: COLORS.map((color) => (
-        <Heading {...defaults} size={5} color={color}>
-          {color}
-        </Heading>
-      )),
-    },
-  ],
-});
 
 export const Playground: Story = {};

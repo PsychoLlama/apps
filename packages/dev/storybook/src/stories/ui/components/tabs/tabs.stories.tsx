@@ -55,21 +55,15 @@ const Demo = (props: Partial<TabsListProps> & { id: string }) => {
       <TabsContent
         testId={`overview-${props.id}-content-overview`}
         value="overview"
-      >
-        Overview panel.
-      </TabsContent>
+      />
       <TabsContent
         testId={`overview-${props.id}-content-settings`}
         value="settings"
-      >
-        Settings panel.
-      </TabsContent>
+      />
       <TabsContent
         testId={`overview-${props.id}-content-billing`}
         value="billing"
-      >
-        Billing panel.
-      </TabsContent>
+      />
     </TabsRoot>
   );
 };

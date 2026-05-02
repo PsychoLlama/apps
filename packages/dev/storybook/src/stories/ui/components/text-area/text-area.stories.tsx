@@ -11,10 +11,7 @@ const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 const RESIZES = ['none', 'vertical', 'horizontal', 'both'] as const;
 
-const defaults = {
-  testId: 'overview',
-  placeholder: 'Tell us what you think…',
-} as const;
+const defaults = { testId: 'overview' } as const;
 
 const meta = {
   title: 'UI/Components/TextArea',
@@ -64,21 +61,25 @@ export const Overview: Story = gallery({
     {
       title: 'Variant',
       items: VARIANTS.map((variant) => (
-        <TextArea {...defaults} variant={variant} />
+        <TextArea {...defaults} variant={variant} placeholder={variant} />
       )),
     },
     {
       title: 'Size',
-      items: SIZES.map((size) => <TextArea {...defaults} size={size} />),
+      items: SIZES.map((size) => (
+        <TextArea {...defaults} size={size} placeholder={`Size ${size}`} />
+      )),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => <TextArea {...defaults} radius={radius} />),
+      items: RADII.map((radius) => (
+        <TextArea {...defaults} radius={radius} placeholder={radius} />
+      )),
     },
     {
       title: 'Resize',
       items: RESIZES.map((resize) => (
-        <TextArea {...defaults} resize={resize} />
+        <TextArea {...defaults} resize={resize} placeholder={resize} />
       )),
     },
     {

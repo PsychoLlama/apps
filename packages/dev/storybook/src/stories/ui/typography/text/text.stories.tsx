@@ -6,16 +6,6 @@ import { truncateArgTypes } from '@lib/ui/props/truncate';
 import { selectableArgTypes } from '@lib/ui/props/selectable';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
-import { gallery } from '../../../../gallery';
-
-const TAGS = ['p', 'span', 'label', 'blockquote'] as const;
-const SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-const WEIGHTS = ['light', 'regular', 'medium', 'bold'] as const;
-const ALIGNS = ['left', 'center', 'right'] as const;
-const COLORS = ['highContrast', 'lowContrast'] as const;
-
-const defaults = { as: 'p', testId: 'overview' } as const;
-const sample = 'Sphinx of black quartz, judge my vow';
 
 const meta = {
   title: 'UI/Typography/Text',
@@ -58,50 +48,5 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-export const Overview: Story = gallery({
-  sections: [
-    {
-      title: 'Tag',
-      items: TAGS.map((as) => (
-        <Text {...defaults} as={as}>
-          {as}
-        </Text>
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <Text {...defaults} size={size}>
-          {sample}
-        </Text>
-      )),
-    },
-    {
-      title: 'Weight',
-      items: WEIGHTS.map((weight) => (
-        <Text {...defaults} weight={weight}>
-          {weight}
-        </Text>
-      )),
-    },
-    {
-      title: 'Align',
-      items: ALIGNS.map((align) => (
-        <Text {...defaults} align={align} style={{ width: '14rem' }}>
-          {align}
-        </Text>
-      )),
-    },
-    {
-      title: 'Color',
-      items: COLORS.map((color) => (
-        <Text {...defaults} color={color}>
-          {color}
-        </Text>
-      )),
-    },
-  ],
-});
 
 export const Playground: Story = {};

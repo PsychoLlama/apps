@@ -13,10 +13,7 @@ const VARIANTS = ['classic', 'surface', 'soft'] as const;
 const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
-const defaults = {
-  testId: 'overview',
-  placeholder: 'Search…',
-} as const;
+const defaults = { testId: 'overview' } as const;
 
 interface TextFieldArgs extends TextFieldProps {
   /** Toggle the left slot in Storybook controls. */
@@ -115,19 +112,34 @@ export const Overview: Story = gallery({
     {
       title: 'Variant',
       items: VARIANTS.map((variant) => (
-        <TextField {...defaults} variant={variant} left={<IconMagnify />} />
+        <TextField
+          {...defaults}
+          variant={variant}
+          placeholder={variant}
+          left={<IconMagnify />}
+        />
       )),
     },
     {
       title: 'Size',
       items: SIZES.map((size) => (
-        <TextField {...defaults} size={size} left={<IconMagnify />} />
+        <TextField
+          {...defaults}
+          size={size}
+          placeholder={`Size ${size}`}
+          left={<IconMagnify />}
+        />
       )),
     },
     {
       title: 'Radius',
       items: RADII.map((radius) => (
-        <TextField {...defaults} radius={radius} left={<IconMagnify />} />
+        <TextField
+          {...defaults}
+          radius={radius}
+          placeholder={radius}
+          left={<IconMagnify />}
+        />
       )),
     },
     {
