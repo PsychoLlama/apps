@@ -6,31 +6,31 @@
  * SVG export stays portable across consumers' color schemes.
  */
 
-import { amberLight, amberContrast } from '@lib/design/palette-raw/amber';
-import { blueLight, blueContrast } from '@lib/design/palette-raw/blue';
-import { bronzeLight, bronzeContrast } from '@lib/design/palette-raw/bronze';
-import { brownLight, brownContrast } from '@lib/design/palette-raw/brown';
-import { crimsonLight, crimsonContrast } from '@lib/design/palette-raw/crimson';
-import { cyanLight, cyanContrast } from '@lib/design/palette-raw/cyan';
-import { goldLight, goldContrast } from '@lib/design/palette-raw/gold';
-import { grassLight, grassContrast } from '@lib/design/palette-raw/grass';
-import { greenLight, greenContrast } from '@lib/design/palette-raw/green';
-import { indigoLight, indigoContrast } from '@lib/design/palette-raw/indigo';
-import { irisLight, irisContrast } from '@lib/design/palette-raw/iris';
-import { jadeLight, jadeContrast } from '@lib/design/palette-raw/jade';
-import { limeLight, limeContrast } from '@lib/design/palette-raw/lime';
-import { mintLight, mintContrast } from '@lib/design/palette-raw/mint';
-import { orangeLight, orangeContrast } from '@lib/design/palette-raw/orange';
-import { pinkLight, pinkContrast } from '@lib/design/palette-raw/pink';
-import { plumLight, plumContrast } from '@lib/design/palette-raw/plum';
-import { purpleLight, purpleContrast } from '@lib/design/palette-raw/purple';
-import { redLight, redContrast } from '@lib/design/palette-raw/red';
-import { rubyLight, rubyContrast } from '@lib/design/palette-raw/ruby';
-import { skyLight, skyContrast } from '@lib/design/palette-raw/sky';
-import { tealLight, tealContrast } from '@lib/design/palette-raw/teal';
-import { tomatoLight, tomatoContrast } from '@lib/design/palette-raw/tomato';
-import { violetLight, violetContrast } from '@lib/design/palette-raw/violet';
-import { yellowLight, yellowContrast } from '@lib/design/palette-raw/yellow';
+import { amberLight, amberContrast } from '@lib/design/color/amber';
+import { blueLight, blueContrast } from '@lib/design/color/blue';
+import { bronzeLight, bronzeContrast } from '@lib/design/color/bronze';
+import { brownLight, brownContrast } from '@lib/design/color/brown';
+import { crimsonLight, crimsonContrast } from '@lib/design/color/crimson';
+import { cyanLight, cyanContrast } from '@lib/design/color/cyan';
+import { goldLight, goldContrast } from '@lib/design/color/gold';
+import { grassLight, grassContrast } from '@lib/design/color/grass';
+import { greenLight, greenContrast } from '@lib/design/color/green';
+import { indigoLight, indigoContrast } from '@lib/design/color/indigo';
+import { irisLight, irisContrast } from '@lib/design/color/iris';
+import { jadeLight, jadeContrast } from '@lib/design/color/jade';
+import { limeLight, limeContrast } from '@lib/design/color/lime';
+import { mintLight, mintContrast } from '@lib/design/color/mint';
+import { orangeLight, orangeContrast } from '@lib/design/color/orange';
+import { pinkLight, pinkContrast } from '@lib/design/color/pink';
+import { plumLight, plumContrast } from '@lib/design/color/plum';
+import { purpleLight, purpleContrast } from '@lib/design/color/purple';
+import { redLight, redContrast } from '@lib/design/color/red';
+import { rubyLight, rubyContrast } from '@lib/design/color/ruby';
+import { skyLight, skyContrast } from '@lib/design/color/sky';
+import { tealLight, tealContrast } from '@lib/design/color/teal';
+import { tomatoLight, tomatoContrast } from '@lib/design/color/tomato';
+import { violetLight, violetContrast } from '@lib/design/color/violet';
+import { yellowLight, yellowContrast } from '@lib/design/color/yellow';
 
 /** Resolve `'white'` to its hex equivalent so the SVG ships valid `#rrggbb`. */
 const normalize = (value: string): string =>
