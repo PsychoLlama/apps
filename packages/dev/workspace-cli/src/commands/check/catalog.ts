@@ -18,10 +18,9 @@
 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
-import { once } from 'node:events';
 import { defineCommand } from 'citty';
 import { readWorkspaceManifest } from '@pnpm/workspace.read-manifest';
+import { x } from 'tinyexec';
 
 /** Catalog name → (depName → version range), shaped to match `@pnpm/workspace.read-manifest`. */
 export interface Catalogs {
@@ -135,28 +134,10 @@ interface PnpmListEntry {
 const listPackages = async (
   workspaceRoot: string,
 ): Promise<PnpmListEntry[]> => {
-  const child = spawn('pnpm', ['-r', 'list', '--depth', '0', '--json'], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    cwd: workspaceRoot,
+  const { stdout } = await x('pnpm', ['-r', 'list', '--depth', '0', '--json'], {
+    nodeOptions: { cwd: workspaceRoot },
+    throwOnError: true,
   });
-  let stdout = '';
-  let stderr = '';
-
-  child.stdout.setEncoding('utf8');
-  child.stderr.setEncoding('utf8');
-  child.stdout.on('data', (chunk: string) => {
-    stdout += chunk;
-  });
-  child.stderr.on('data', (chunk: string) => {
-    stderr += chunk;
-  });
-
-  const [code] = (await once(child, 'close')) as [number | null];
-
-  if (code !== 0 || stdout.length === 0) {
-    throw new Error(stderr || 'pnpm -r list failed');
-  }
-
   return JSON.parse(stdout) as PnpmListEntry[];
 };
 

@@ -9,6 +9,7 @@
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
   "scripts": {
+    "prepare": "workspace patch-workerd",
     "dev": "pnpm --filter @app/main dev",
     "build": "pnpm --filter @app/main build",
     "storybook": "pnpm --filter @dev/storybook dev",

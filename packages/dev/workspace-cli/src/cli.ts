@@ -8,6 +8,7 @@
 
 import { defineCommand, runMain } from 'citty';
 import check from './commands/check.ts';
+import patchWorkerd from './commands/patch-workerd.ts';
 
 const main = defineCommand({
   meta: {
@@ -16,6 +17,7 @@ const main = defineCommand({
   },
   subCommands: {
     check,
+    'patch-workerd': patchWorkerd,
   },
 });
 
