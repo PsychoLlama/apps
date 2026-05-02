@@ -446,7 +446,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
             }}
             class={css.thumb}
             role="slider"
-            tabIndex={local.disabled ? -1 : 0}
+            tabIndex={local.disabled ? undefined : 0}
             aria-label={getThumbLabel(index, local.value.length)}
             aria-valuemin={local.min}
             aria-valuenow={value()}

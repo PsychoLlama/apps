@@ -198,7 +198,9 @@ describe('Slider', () => {
       <Slider testId="sl" disabled value={[50]} onValueChange={handler} />
     ));
     const thumb = screen.getByRole('slider');
-    expect(thumb).toHaveAttribute('tabindex', '-1');
+    // Disabled thumb is fully removed from focus order — no `tabindex`
+    // attribute, so a `<span>` is wholly inert (matches Radix).
+    expect(thumb).not.toHaveAttribute('tabindex');
     expect(thumb).toHaveAttribute('aria-disabled', 'true');
     await userEvent.keyboard('{ArrowRight}');
     expect(handler).not.toHaveBeenCalled();
