@@ -36,7 +36,9 @@ export const root = style({
   flexShrink: 0,
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.medium,
+  fontStyle: 'normal',
   textTransform: 'uppercase',
+  userSelect: 'none',
   overflow: 'hidden',
 });
 

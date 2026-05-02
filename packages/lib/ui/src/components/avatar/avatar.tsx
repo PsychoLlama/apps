@@ -17,6 +17,12 @@
  *   image is an accessibility regression.
  * - No `onLoadingStatusChange` callback. The state machine is internal;
  *   if a consumer needs to react to load state, they own the image.
+ * - Image attribute forwarding is limited to `referrerPolicy` and
+ *   `crossOrigin`. Radix forwards every `<img>` attribute. Our
+ *   detached-`Image` loader fights `loading="lazy"` (the network
+ *   request fires before the visible `<img>` mounts), and `srcset` /
+ *   `sizes` would split request semantics between the loader and the
+ *   visible image. Followup once a consumer actually needs them.
  *
  * @see https://www.radix-ui.com/themes/docs/components/avatar
  * @see https://www.radix-ui.com/primitives/docs/components/avatar
