@@ -20,6 +20,7 @@
 
 ## Components
 
+- [Avatar](./avatar.md): User image with initials/icon fallback.
 - [Badge](./badge.md): Compact label or status indicator.
 - [Button](./button.md): Styled button.
 - [Callout](./callout.md): Informational message.
