@@ -105,3 +105,17 @@ export {
   type ProgressRadius,
   type ProgressColor,
 } from './components/progress/progress';
+export {
+  DataListRoot,
+  DataListItem,
+  DataListLabel,
+  DataListValue,
+  type DataListRootProps,
+  type DataListItemProps,
+  type DataListLabelProps,
+  type DataListValueProps,
+  type DataListColor,
+  type DataListSize,
+  type DataListOrientation,
+  type DataListAlign,
+} from './components/data-list/data-list';
