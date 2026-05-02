@@ -4,9 +4,20 @@ import { TextArea, type TextAreaProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
+import { gallery } from '../../../../gallery';
+
+const VARIANTS = ['classic', 'surface', 'soft'] as const;
+const SIZES = [1, 2, 3] as const;
+const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
+const RESIZES = ['none', 'vertical', 'horizontal', 'both'] as const;
+
+const defaults = {
+  testId: 'overview',
+  placeholder: 'Tell us what you think…',
+} as const;
 
 const meta = {
-  title: 'UI/Components',
+  title: 'UI/Components/TextArea',
   component: TextArea,
   args: {
     testId: 'text-area',
@@ -43,10 +54,42 @@ const meta = {
     readOnly: { control: 'boolean' },
     placeholder: { control: 'text' },
   },
-  render: (props) => <TextArea {...props} />,
 } satisfies Meta<TextAreaProps>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const TextArea_: Story = { name: 'TextArea' };
+export const Overview: Story = gallery({
+  sections: [
+    {
+      title: 'Variant',
+      items: VARIANTS.map((variant) => (
+        <TextArea {...defaults} variant={variant} />
+      )),
+    },
+    {
+      title: 'Size',
+      items: SIZES.map((size) => <TextArea {...defaults} size={size} />),
+    },
+    {
+      title: 'Radius',
+      items: RADII.map((radius) => <TextArea {...defaults} radius={radius} />),
+    },
+    {
+      title: 'Resize',
+      items: RESIZES.map((resize) => (
+        <TextArea {...defaults} resize={resize} />
+      )),
+    },
+    {
+      title: 'State',
+      items: [
+        <TextArea {...defaults} placeholder="Default" />,
+        <TextArea {...defaults} placeholder="Disabled" disabled />,
+        <TextArea {...defaults} placeholder="Read-only" readOnly />,
+      ],
+    },
+  ],
+});
+
+export const Playground: Story = {};

@@ -1,20 +1,28 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import {
-  Card,
-  Flex,
-  Heading,
-  Inset as InsetComponent,
-  type InsetProps,
-  Text,
-} from '@lib/ui';
+import { Card, Flex, Heading, Inset, type InsetProps, Text } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
+import { gallery } from '../../../../gallery';
 import * as css from './inset.stories.css';
 
+const SIDES = ['all', 'x', 'y', 'top', 'bottom', 'left', 'right'] as const;
+const CLIPS = ['border-box', 'padding-box'] as const;
+
+const Demo = (props: Partial<InsetProps<'div'>>) => (
+  <Card as="div" size={1} style={{ width: '12rem' }}>
+    <Inset as="div" testId="overview" {...props}>
+      <Flex as="div" class={css.media} />
+    </Inset>
+    <Text as="p" size={1}>
+      Card body
+    </Text>
+  </Card>
+);
+
 const meta = {
-  title: 'UI/Components',
-  component: InsetComponent,
+  title: 'UI/Components/Inset',
+  component: Inset,
   args: {
     as: 'div',
     side: 'top',
@@ -34,15 +42,13 @@ const meta = {
       control: 'inline-radio',
       options: ['border-box', 'padding-box'],
     },
-    pad: {
-      control: 'boolean',
-    },
+    pad: { control: 'boolean' },
   },
   render: (props) => (
     <Card as="div" size={2}>
-      <InsetComponent {...props}>
+      <Inset {...props}>
         <Flex as="div" class={css.media} />
-      </InsetComponent>
+      </Inset>
       <Heading as="h3" size={3}>
         Insets bleed past padding
       </Heading>
@@ -57,4 +63,21 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Inset: Story = {};
+export const Overview: Story = gallery({
+  sections: [
+    {
+      title: 'Side',
+      items: SIDES.map((side) => <Demo side={side} />),
+    },
+    {
+      title: 'Clip',
+      items: CLIPS.map((clip) => <Demo side="top" clip={clip} />),
+    },
+    {
+      title: 'Pad',
+      items: [<Demo side="top" pad />, <Demo side="top" pad={false} />],
+    },
+  ],
+});
+
+export const Playground: Story = {};
