@@ -25,7 +25,13 @@ export const PaddingSlider: Component<PaddingSliderProps> = (props) => {
         value={[props.value]}
         onValueChange={(values) => props.onInput(values[0] ?? 0)}
       />
-      <Text as="span" size={2} class={css.value} selectable={false}>
+      <Text
+        as="span"
+        size={2}
+        class={css.value}
+        selectable={false}
+        color="lowContrast"
+      >
         {props.value}%
       </Text>
     </Flex>
