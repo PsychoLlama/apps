@@ -18,9 +18,8 @@
 
 import { access, glob } from 'node:fs/promises';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
-import { once } from 'node:events';
 import { defineCommand } from 'citty';
+import { x } from 'tinyexec';
 
 /**
  * One entry from a task's `inputs:` list as moon emits it in
@@ -143,27 +142,9 @@ interface TasksResult {
 }
 
 const query = async <T>(subcommand: string): Promise<T> => {
-  const child = spawn('moon', ['query', subcommand, '--json'], {
-    stdio: ['ignore', 'pipe', 'pipe'],
+  const { stdout } = await x('moon', ['query', subcommand, '--json'], {
+    throwOnError: true,
   });
-  let stdout = '';
-  let stderr = '';
-
-  child.stdout.setEncoding('utf8');
-  child.stderr.setEncoding('utf8');
-  child.stdout.on('data', (chunk: string) => {
-    stdout += chunk;
-  });
-  child.stderr.on('data', (chunk: string) => {
-    stderr += chunk;
-  });
-
-  const [code] = (await once(child, 'close')) as [number | null];
-
-  if (code !== 0 || stdout.length === 0) {
-    throw new Error(stderr || `moon query ${subcommand} failed`);
-  }
-
   return JSON.parse(stdout) as T;
 };
 
