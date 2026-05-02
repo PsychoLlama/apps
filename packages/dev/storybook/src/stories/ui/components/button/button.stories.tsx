@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import type { JSX } from 'solid-js';
 import { fn } from 'storybook/test';
 import { Button, type ButtonProps } from '@lib/ui';
 import { buttonStyleArgTypes } from '@lib/ui/props/button';
@@ -13,14 +12,7 @@ const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const SIZES = [1, 2, 3, 4] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
-type CellProps = Omit<
-  Extract<ButtonProps, { as?: 'button' }>,
-  'as' | 'testId'
-> & { children: JSX.Element };
-
-const Cell = (props: CellProps) => (
-  <Button as="button" testId="overview" {...props} />
-);
+const defaults = { as: 'button', testId: 'overview' } as const;
 
 const meta = {
   title: 'UI/Components/Button',
@@ -57,29 +49,41 @@ export const Overview: Story = gallery({
     {
       title: 'Variant',
       items: VARIANTS.map((variant) => (
-        <Button as="button" testId="overview" variant={variant}>
+        <Button {...defaults} variant={variant}>
           {variant}
         </Button>
       )),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => <Cell color={color}>{color}</Cell>),
+      items: COLORS.map((color) => (
+        <Button {...defaults} color={color}>
+          {color}
+        </Button>
+      )),
     },
     {
       title: 'Size',
-      items: SIZES.map((size) => <Cell size={size}>Size {size}</Cell>),
+      items: SIZES.map((size) => (
+        <Button {...defaults} size={size}>
+          Size {size}
+        </Button>
+      )),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => <Cell radius={radius}>{radius}</Cell>),
+      items: RADII.map((radius) => (
+        <Button {...defaults} radius={radius}>
+          {radius}
+        </Button>
+      )),
     },
     {
       title: 'Disabled',
       items: VARIANTS.map((variant) => (
-        <Cell variant={variant} disabled>
+        <Button {...defaults} variant={variant} disabled>
           {variant}
-        </Cell>
+        </Button>
       )),
     },
   ],
