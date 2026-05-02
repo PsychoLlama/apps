@@ -12,11 +12,64 @@ import {
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
+import { gallery } from '../../../../gallery';
 
 interface TabsArgs extends TabsRootProps, TabsListProps {}
 
+const SIZES = [1, 2] as const;
+const COLORS = ['accent', 'neutral'] as const;
+
+const Demo = (props: Partial<TabsListProps> & { id: string }) => {
+  const [value, setValue] = createSignal('overview');
+  return (
+    <TabsRoot
+      testId={`overview-${props.id}`}
+      value={value()}
+      onValueChange={setValue}
+    >
+      <TabsList
+        testId={`overview-${props.id}-list`}
+        size={props.size}
+        color={props.color}
+        highContrast={props.highContrast}
+      >
+        <TabsTrigger
+          testId={`overview-${props.id}-trigger-overview`}
+          value="overview"
+        >
+          Overview
+        </TabsTrigger>
+        <TabsTrigger
+          testId={`overview-${props.id}-trigger-settings`}
+          value="settings"
+        >
+          Settings
+        </TabsTrigger>
+        <TabsTrigger
+          testId={`overview-${props.id}-trigger-billing`}
+          value="billing"
+        >
+          Billing
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent
+        testId={`overview-${props.id}-content-overview`}
+        value="overview"
+      />
+      <TabsContent
+        testId={`overview-${props.id}-content-settings`}
+        value="settings"
+      />
+      <TabsContent
+        testId={`overview-${props.id}-content-billing`}
+        value="billing"
+      />
+    </TabsRoot>
+  );
+};
+
 const meta = {
-  title: 'UI/Components',
+  title: 'UI/Components/Tabs',
   component: TabsRoot,
   args: {
     testId: 'tabs',
@@ -136,9 +189,25 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/**
- * Tabs. All variants (manual activation, no looping, etc.) are
- * reachable through the controls panel; behavioral coverage lives in
- * `__tests__/tabs.test.browser.tsx`.
- */
-export const Tabs: Story = {};
+export const Overview: Story = gallery({
+  sections: [
+    {
+      title: 'Size',
+      items: SIZES.map((size) => <Demo id={`size-${size}`} size={size} />),
+    },
+    {
+      title: 'Color',
+      items: COLORS.map((color) => (
+        <Demo id={`color-${color}`} color={color} />
+      )),
+    },
+    {
+      title: 'High contrast',
+      items: COLORS.map((color) => (
+        <Demo id={`hc-${color}`} color={color} highContrast />
+      )),
+    },
+  ],
+});
+
+export const Playground: Story = {};

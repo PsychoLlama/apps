@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Grid as GridComponent, type GridProps } from '@lib/ui';
+import { Grid, type GridProps } from '@lib/ui';
 import { boxArgTypes } from '@lib/ui/props/box';
-import { swatches } from '../../../swatch';
+import { swatches } from '../../../../swatch';
 
 const meta = {
-  title: 'UI/Layout',
-  component: GridComponent,
+  title: 'UI/Layout/Grid',
+  component: Grid,
   args: {
     as: 'div',
     columns: 4,
@@ -41,11 +41,6 @@ const meta = {
       control: 'select',
       options: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     },
-    // The `skeleton` prop is real, but a layout primitive with no
-    // visual treatment of its own just turns into a featureless
-    // pulsing block when you flip it on — there's nothing left to
-    // demonstrate. The showcase at `UI/Patterns/Skeleton` exercises
-    // skeleton wrapping a real layout instead.
     skeleton: { table: { disable: true } },
   },
 } satisfies Meta<GridProps<'div'>>;
@@ -53,4 +48,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Grid: Story = {};
+export const Playground: Story = {};

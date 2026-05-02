@@ -5,6 +5,26 @@ import { Switch, type SwitchProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
+import { gallery } from '../../../../gallery';
+
+const VARIANTS = ['classic', 'surface', 'soft'] as const;
+const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
+const SIZES = [1, 2, 3] as const;
+const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
+
+const Demo = (props: Partial<SwitchProps> & { initialChecked?: boolean }) => {
+  const [checked, setChecked] = createSignal(
+    untrack(() => props.initialChecked ?? true),
+  );
+  return (
+    <Switch
+      testId="overview"
+      {...props}
+      checked={checked()}
+      onCheckedChange={setChecked}
+    />
+  );
+};
 
 interface SwitchArgs extends SwitchProps {
   /** Initial controlled value the wrapper starts with. */
@@ -12,7 +32,7 @@ interface SwitchArgs extends SwitchProps {
 }
 
 const meta = {
-  title: 'UI/Components',
+  title: 'UI/Components/Switch',
   component: Switch,
   args: {
     testId: 'switch',
@@ -79,4 +99,34 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Switch_: Story = { name: 'Switch' };
+export const Overview: Story = gallery({
+  sections: [
+    {
+      title: 'Variant',
+      items: VARIANTS.map((variant) => <Demo variant={variant} />),
+    },
+    {
+      title: 'Color',
+      items: COLORS.map((color) => <Demo color={color} />),
+    },
+    {
+      title: 'Size',
+      items: SIZES.map((size) => <Demo size={size} />),
+    },
+    {
+      title: 'Radius',
+      items: RADII.map((radius) => <Demo radius={radius} />),
+    },
+    {
+      title: 'State',
+      items: [
+        <Demo initialChecked={false} />,
+        <Demo initialChecked={true} />,
+        <Demo initialChecked={false} disabled />,
+        <Demo initialChecked={true} disabled />,
+      ],
+    },
+  ],
+});
+
+export const Playground: Story = {};

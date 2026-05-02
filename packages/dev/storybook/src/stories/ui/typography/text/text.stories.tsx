@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Heading as HeadingComponent, type HeadingProps } from '@lib/ui';
+import { Text, type TextProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { trimArgTypes } from '@lib/ui/props/trim';
 import { truncateArgTypes } from '@lib/ui/props/truncate';
@@ -8,19 +8,18 @@ import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Typography',
-  component: HeadingComponent,
+  title: 'UI/Typography/Text',
+  component: Text,
   args: {
     children: 'Sphinx of black quartz, judge my vow',
-    as: 'h1',
-    size: 6,
-    weight: 'bold',
+    as: 'p',
+    size: 3,
     ...skeletonArgs,
   },
   argTypes: {
     as: {
       control: 'inline-radio',
-      options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+      options: ['p', 'span', 'label', 'blockquote'],
     },
     size: {
       control: { type: 'range', min: 1, max: 9, step: 1 },
@@ -45,9 +44,9 @@ const meta = {
     ...skeletonArgTypes,
     ...testIdArgTypes,
   },
-} satisfies Meta<HeadingProps<'h1'>>;
+} satisfies Meta<TextProps<'p'>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Heading: Story = {};
+export const Playground: Story = {};

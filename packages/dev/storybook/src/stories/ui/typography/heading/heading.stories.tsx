@@ -1,28 +1,27 @@
-import { MemoryRouter } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { fn } from 'storybook/test';
-import { Link as LinkComponent, type LinkProps } from '@lib/ui';
+import { Heading, type HeadingProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
-import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
-import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { trimArgTypes } from '@lib/ui/props/trim';
 import { truncateArgTypes } from '@lib/ui/props/truncate';
+import { selectableArgTypes } from '@lib/ui/props/selectable';
+import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
+import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Typography',
-  component: LinkComponent,
-  decorators: [(Story) => <MemoryRouter root={() => Story()} />],
+  title: 'UI/Typography/Heading',
+  component: Heading,
   args: {
-    children: 'Click here',
-    href: '/example',
-    underline: 'auto',
-    color: 'accent',
-    highContrast: false,
-    size: 3,
-    onClick: fn(),
+    children: 'Sphinx of black quartz, judge my vow',
+    as: 'h1',
+    size: 6,
+    weight: 'bold',
     ...skeletonArgs,
   },
   argTypes: {
+    as: {
+      control: 'inline-radio',
+      options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+    },
     size: {
       control: { type: 'range', min: 1, max: 9, step: 1 },
     },
@@ -30,27 +29,25 @@ const meta = {
       control: 'inline-radio',
       options: ['light', 'regular', 'medium', 'bold'],
     },
-    underline: {
+    align: {
       control: 'inline-radio',
-      options: ['auto', 'always', 'hover', 'none'],
+      options: ['left', 'center', 'right'],
     },
     color: {
       control: 'inline-radio',
-      options: ['accent', 'neutral'],
-    },
-    highContrast: {
-      control: 'boolean',
+      options: ['highContrast', 'lowContrast'],
     },
     children: { control: 'text' },
     ...trimArgTypes,
     ...truncateArgTypes,
     ...marginArgTypes,
+    ...selectableArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,
   },
-} satisfies Meta<LinkProps>;
+} satisfies Meta<HeadingProps<'h1'>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Link: Story = {};
+export const Playground: Story = {};

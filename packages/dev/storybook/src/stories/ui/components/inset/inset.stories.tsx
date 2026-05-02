@@ -1,20 +1,13 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import {
-  Card,
-  Flex,
-  Heading,
-  Inset as InsetComponent,
-  type InsetProps,
-  Text,
-} from '@lib/ui';
+import { Card, Flex, Heading, Inset, type InsetProps, Text } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import * as css from './inset.stories.css';
 
 const meta = {
-  title: 'UI/Components',
-  component: InsetComponent,
+  title: 'UI/Components/Inset',
+  component: Inset,
   args: {
     as: 'div',
     side: 'top',
@@ -34,15 +27,13 @@ const meta = {
       control: 'inline-radio',
       options: ['border-box', 'padding-box'],
     },
-    pad: {
-      control: 'boolean',
-    },
+    pad: { control: 'boolean' },
   },
   render: (props) => (
     <Card as="div" size={2}>
-      <InsetComponent {...props}>
+      <Inset {...props}>
         <Flex as="div" class={css.media} />
-      </InsetComponent>
+      </Inset>
       <Heading as="h3" size={3}>
         Insets bleed past padding
       </Heading>
@@ -57,4 +48,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Inset: Story = {};
+export const Playground: Story = {};
