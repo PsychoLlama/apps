@@ -10,6 +10,10 @@
  * - The indeterminate shine layer reads a single `shineGradient` var
  *   set by `assignColorSchemeVars`, mirroring Radix's per-mode tweak
  *   to the gradient stops.
+ * - The determinate-fill transition rides our motion tokens
+ *   (`moderate[1]` + `standard.productive`) instead of Radix's bare
+ *   `120ms` with the browser-default `ease`. Curve is intentionally
+ *   on the design-system contract.
  * - Drops the high-contrast variant.
  *
  * @see https://www.radix-ui.com/themes/docs/components/progress
@@ -44,9 +48,9 @@ const trackHeight = createVar();
 const trackBorderRadius = createVar();
 const colorTrack = createVar();
 const colorAlpha5 = createVar();
-const colorAlpha7 = createVar();
 const colorSolid5 = createVar();
 const colorSolid7 = createVar();
+const colorSolid8 = createVar();
 const fadeAnimation = createVar();
 const pulseAnimation = createVar();
 
@@ -170,55 +174,56 @@ export const radius = styleVariants({
 // --- Color ---
 //
 // Each color binds the palette refs the rest of the stylesheet reads.
-// `track` paints surface/classic indicators; `alpha[5]`/`alpha[7]`
-// feed the soft variant's translucent fill; `solid[5]`/`solid[7]`
-// drive the indeterminate fade/pulse keyframes so the animation stays
-// inside the active palette.
+// `track` paints surface/classic indicators; `alpha[5]` overlays the
+// soft variant's translucent fill; `solid[8]` is the soft indicator's
+// opaque base; `solid[5]` and `solid[7]` drive the indeterminate
+// fade/pulse keyframes so the animation stays inside the active
+// palette.
 
 export const color = styleVariants({
   accent: {
     vars: {
       [colorTrack]: accent.track,
       [colorAlpha5]: accent.alpha[5],
-      [colorAlpha7]: accent.alpha[7],
       [colorSolid5]: accent.solid[5],
       [colorSolid7]: accent.solid[7],
+      [colorSolid8]: accent.solid[8],
     },
   },
   neutral: {
     vars: {
       [colorTrack]: neutral.track,
       [colorAlpha5]: neutral.alpha[5],
-      [colorAlpha7]: neutral.alpha[7],
       [colorSolid5]: neutral.solid[5],
       [colorSolid7]: neutral.solid[7],
+      [colorSolid8]: neutral.solid[8],
     },
   },
   danger: {
     vars: {
       [colorTrack]: danger.track,
       [colorAlpha5]: danger.alpha[5],
-      [colorAlpha7]: danger.alpha[7],
       [colorSolid5]: danger.solid[5],
       [colorSolid7]: danger.solid[7],
+      [colorSolid8]: danger.solid[8],
     },
   },
   warning: {
     vars: {
       [colorTrack]: warning.track,
       [colorAlpha5]: warning.alpha[5],
-      [colorAlpha7]: warning.alpha[7],
       [colorSolid5]: warning.solid[5],
       [colorSolid7]: warning.solid[7],
+      [colorSolid8]: warning.solid[8],
     },
   },
   success: {
     vars: {
       [colorTrack]: success.track,
       [colorAlpha5]: success.alpha[5],
-      [colorAlpha7]: success.alpha[7],
       [colorSolid5]: success.solid[5],
       [colorSolid7]: success.solid[7],
+      [colorSolid8]: success.solid[8],
     },
   },
 });
@@ -296,7 +301,7 @@ export const indicator = style({
       backgroundColor: colorTrack,
     },
     [`${variant.soft} &`]: {
-      backgroundColor: colorAlpha7,
+      backgroundColor: colorSolid8,
       backgroundImage: `linear-gradient(${colorAlpha5}, ${colorAlpha5})`,
     },
   },

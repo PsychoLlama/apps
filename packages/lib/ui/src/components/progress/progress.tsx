@@ -9,7 +9,10 @@
  *   covers the contract — no exported `ProgressIndicator`.
  * - Drops Radix's invalid-prop console warnings; TypeScript catches
  *   bad call sites at build time. `null` is the sentinel for the
- *   indeterminate state.
+ *   indeterminate state. Out-of-range or non-finite `value` and
+ *   non-positive / non-finite `max` are coerced (silently) to keep
+ *   the ARIA contract and transform math sane — same fallback shape
+ *   as Radix, minus the warnings.
  * - No `data-state`. Determinate vs. indeterminate is a class variant
  *   on the indicator, and `aria-valuenow` carries the assistive-tech
  *   contract.
@@ -70,10 +73,14 @@ export interface ProgressProps
     > {
   /**
    * Current progress value between `0` and `max`. Pass `null` (or
-   * omit) for an indeterminate, animated bar. @default null
+   * omit) for an indeterminate, animated bar. Values outside
+   * `[0, max]` (or non-finite) collapse to indeterminate. @default null
    */
   value?: number | null;
-  /** Maximum value. @default 100 */
+  /**
+   * Maximum value. Non-positive or non-finite inputs fall back to
+   * `100`. @default 100
+   */
   max?: number;
   /**
    * Format the `aria-valuetext` announcement. Receives the current
@@ -95,8 +102,32 @@ export interface ProgressProps
   duration?: `${number}s` | `${number}ms`;
 }
 
+const DEFAULT_MAX = 100;
+
 const defaultGetValueLabel = (value: number, max: number) =>
   `${Math.round((value / max) * 100)}%`;
+
+// Mirrors Radix's `isValidMaxNumber`. Drops invalid inputs back to
+// `DEFAULT_MAX` rather than warning — TypeScript already gates the
+// happy path; the runtime guard exists so a stray runtime value
+// (`0`, `NaN`, negative) doesn't poison ARIA or the transform math.
+const safeMax = (max: number): number =>
+  Number.isFinite(max) && max > 0 ? max : DEFAULT_MAX;
+
+// Mirrors Radix's `isValidValueNumber`. Anything out of `[0, max]`
+// or non-finite collapses to the indeterminate sentinel — Radix does
+// the same. Keeps `aria-valuenow ≤ aria-valuemax` an enforceable
+// invariant and guarantees the transform stays in `scaleX(0..1)`.
+const safeValue = (
+  value: number | null | undefined,
+  max: number,
+): number | null =>
+  typeof value === 'number' &&
+  Number.isFinite(value) &&
+  value >= 0 &&
+  value <= max
+    ? value
+    : null;
 
 /**
  * Linear progress bar. Renders a `<div role="progressbar">` with an
@@ -133,13 +164,13 @@ const Progress: Component<ProgressProps> = (rawProps) => {
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
-  const isDeterminate = () => typeof local.value === 'number';
-  const ariaValueNow = () =>
-    isDeterminate() ? (local.value as number) : undefined;
-  const ariaValueText = () =>
-    isDeterminate()
-      ? local.getValueLabel(local.value as number, local.max)
-      : undefined;
+  const max = () => safeMax(local.max);
+  const value = () => safeValue(local.value, max());
+  const isDeterminate = () => value() !== null;
+  const ariaValueText = () => {
+    const current = value();
+    return current === null ? undefined : local.getValueLabel(current, max());
+  };
 
   const className = () =>
     [
@@ -166,18 +197,22 @@ const Progress: Component<ProgressProps> = (rawProps) => {
   // Determinate: drive scaleX from value/max. Indeterminate: hand
   // `progressDuration` to the keyframe schedule and let the animation
   // own the transform.
-  const indicatorStyle = (): JSX.CSSProperties =>
-    isDeterminate()
-      ? { transform: `scaleX(${(local.value as number) / local.max})` }
-      : assignInlineVars({ [css.progressDuration]: local.duration });
+  const indicatorStyle = (): JSX.CSSProperties => {
+    const current = value();
+    return current === null
+      ? assignInlineVars({ [css.progressDuration]: local.duration })
+      : { transform: `scaleX(${current / max()})` };
+  };
 
   return (
     <div
       role="progressbar"
       aria-valuemin={0}
-      aria-valuemax={local.max}
-      aria-valuenow={ariaValueNow()}
+      aria-valuemax={max()}
+      aria-valuenow={value() ?? undefined}
       aria-valuetext={ariaValueText()}
+      data-value={value() ?? undefined}
+      data-max={max()}
       class={className()}
       data-testid={tid.testId}
       {...skeletonProps}
