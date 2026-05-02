@@ -124,3 +124,12 @@ export {
   type DataListOrientation,
   type DataListAlign,
 } from './components/data-list/data-list';
+export {
+  default as Slider,
+  type SliderProps,
+  type SliderSize,
+  type SliderVariant,
+  type SliderRadius,
+  type SliderColor,
+  type SliderOrientation,
+} from './components/slider/slider';

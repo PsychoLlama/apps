@@ -29,6 +29,7 @@
 - [Kbd](./kbd.md): Inline keyboard input.
 - [Progress](./progress.md): Linear progress bar.
 - [Separator](./separator.md): Visual divider between sibling content.
+- [Slider](./slider.md): Range input with one or more thumbs.
 - [Switch](./switch.md): Two-state toggle button.
 - [TabNav](./tab-nav.md): Horizontal nav strip of routing links.
 - [Tabs](./tabs.md): Switch between panels under a row of triggers.
