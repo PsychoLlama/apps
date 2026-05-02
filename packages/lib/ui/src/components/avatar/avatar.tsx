@@ -237,6 +237,7 @@ const Avatar: Component<AvatarProps> = (rawProps) => {
           class={css.image}
           src={local.src}
           alt=""
+          draggable={false}
           referrerPolicy={local.referrerPolicy}
           crossOrigin={local.crossOrigin}
         />
