@@ -55,8 +55,10 @@ export default defineCommand({
     // for any `/nix/store` prefix. A flake bump produces new store
     // paths even though the old ones look "patched"; equality forces
     // a re-patch when the shell's glibc moves.
-    const currentLoader = await patchelf(['--print-interpreter', binary]);
-    const currentRpath = await patchelf(['--print-rpath', binary]);
+    const [currentLoader, currentRpath] = await Promise.all([
+      patchelf(['--print-interpreter', binary]),
+      patchelf(['--print-rpath', binary]),
+    ]);
     if (currentLoader === loader && currentRpath === libs) return;
 
     try {
