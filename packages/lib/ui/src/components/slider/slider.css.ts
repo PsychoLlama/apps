@@ -6,10 +6,10 @@
  *   single root span. Radix splits Root/Track/Range/Thumb across
  *   primitives that each set their own data attrs; we render one
  *   element so the predicates live on it.
- * - No `--radius-thumb` indirection. The track radius rides the
- *   `radius` tokens directly; the thumb's visible knob uses
- *   `radius[1]` so it stays subtly rounded even when the track is
- *   square.
+ * - No `--radius-thumb` indirection. Track and thumb both ride
+ *   `trackBorderRadius` directly; the thumb's visible knob clamps
+ *   to `max(radius[1], trackBorderRadius)` at the consumption
+ *   site so a square track still gets a slightly rounded knob.
  * - Drops Radix's 3× hit-area pseudo on the thumb. Our visible knob
  *   (`::after`) extends past the thumb's box via negative `inset`,
  *   and pseudo-element clicks attribute back to the host — so the
@@ -43,7 +43,6 @@ import { assignColorSchemeVars } from '@lib/design/color-scheme';
 // the whole slider.
 const trackSize = createVar();
 const trackBorderRadius = createVar();
-const thumbBorderRadius = createVar();
 const colorTrack = createVar();
 const colorAlpha2 = createVar();
 const colorAlpha5 = createVar();
@@ -269,7 +268,7 @@ export const thumb = style({
     position: 'absolute',
     inset: `calc(-0.25 * ${trackSize})`,
     backgroundColor: THUMB_COLOR,
-    borderRadius: thumbBorderRadius,
+    borderRadius: `max(${radius[1]}, ${trackBorderRadius})`,
     boxShadow: thumbBoxShadow,
     cursor: 'grab',
   },
@@ -404,34 +403,9 @@ export const color = styleVariants({
 // Matches Radix's `max(--radius-1, --radius-thumb)` rule.
 
 export const radiusVariant = styleVariants({
-  none: {
-    vars: {
-      [trackBorderRadius]: '0',
-      [thumbBorderRadius]: radius[1],
-    },
-  },
-  small: {
-    vars: {
-      [trackBorderRadius]: radius[1],
-      [thumbBorderRadius]: radius[1],
-    },
-  },
-  medium: {
-    vars: {
-      [trackBorderRadius]: radius[2],
-      [thumbBorderRadius]: radius[2],
-    },
-  },
-  large: {
-    vars: {
-      [trackBorderRadius]: radius[3],
-      [thumbBorderRadius]: radius[3],
-    },
-  },
-  full: {
-    vars: {
-      [trackBorderRadius]: radius.full,
-      [thumbBorderRadius]: radius.full,
-    },
-  },
+  none: { vars: { [trackBorderRadius]: '0px' } },
+  small: { vars: { [trackBorderRadius]: radius[1] } },
+  medium: { vars: { [trackBorderRadius]: radius[2] } },
+  large: { vars: { [trackBorderRadius]: radius[3] } },
+  full: { vars: { [trackBorderRadius]: radius.full } },
 });
