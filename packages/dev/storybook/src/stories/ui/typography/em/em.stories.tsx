@@ -20,13 +20,6 @@ const meta = {
     ...testIdArgTypes,
     children: { control: 'text' },
   },
-  decorators: [
-    (Story) => (
-      <Text as="p" size={3}>
-        The quick brown fox <Story /> jumps over the lazy dog.
-      </Text>
-    ),
-  ],
 } satisfies Meta<EmProps>;
 
 export default meta;
@@ -45,4 +38,10 @@ export const Overview: Story = gallery({
   ],
 });
 
-export const Playground: Story = {};
+export const Playground: Story = {
+  render: (props: EmProps) => (
+    <Text as="p" size={3}>
+      The quick brown fox <Em {...props} /> jumps over the lazy dog.
+    </Text>
+  ),
+};
