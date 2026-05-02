@@ -5,9 +5,11 @@
 
 ## Layout
 
+- [Container](./container.md): Cap content width and align it horizontally.
 - [Flex](./flex.md): Flexbox container.
 - [Grid](./grid.md): CSS Grid container.
 - [Inset](./inset.md): Bleed content past a Card's padding.
+- [Section](./section.md): Landmark `<section>` with vertical padding.
 
 ## Typography
 
