@@ -14,9 +14,6 @@
  * - Fully controlled — `value` and `onValueChange` are required. No
  *   `defaultValue`, no internal signal. The consumer owns the source
  *   of truth.
- * - Auto-generates a stable `name` if the consumer omits one so the
- *   browser still groups items into a single radio group. Pass `name`
- *   when the form needs a deterministic field key.
  * - Items render either a bare `<input>` or a `<Text as="label">`
  *   wrapping the input plus its inline children — the same fork Radix
  *   exposes, but tag-locked (no `as` / `asChild`).
@@ -30,7 +27,6 @@
 import {
   createEffect,
   createSignal,
-  createUniqueId,
   mergeProps,
   Show,
   splitProps,
@@ -78,10 +74,10 @@ export interface RadioGroupRootProps
    */
   orientation?: 'horizontal' | 'vertical';
   /**
-   * Form-submit name for every item. Auto-generated if omitted so the
-   * browser still groups the items for native arrow-key navigation.
+   * Form-submit name applied to every item. Also groups the inputs for
+   * native arrow-key navigation in the browser.
    */
-  name?: string;
+  name: string;
   /** Disable every item in the group. @default false */
   disabled?: boolean;
   /**
@@ -132,12 +128,11 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     'children',
   ]);
 
-  const fallbackName = createUniqueId();
   const [reconcileTick, setReconcileTick] = createSignal(0);
 
   const ctx: RadioGroupContextValue = {
     get name() {
-      return local.name ?? fallbackName;
+      return local.name;
     },
     size: () => local.size,
     variant: () => local.variant,

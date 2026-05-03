@@ -9,7 +9,7 @@ Base: `<div>` attributes (except `onChange`, `role`), margin props, skeleton pro
 - `testId` (required): Test identifier rendered as `data-testid` on the root.
 - `value` (required): Currently selected value, or `null` for no selection.
 - `onValueChange` (required): Fires when the user activates a different item.
-- `name`: Form-submit name. Auto-generated if omitted so native arrow-key navigation still groups items.
+- `name` (required): Form-submit name applied to every item. Also groups the inputs for native arrow-key navigation.
 - `size` (=`2`): Visual size. `1 | 2 | 3`.
 - `variant` (=`'surface'`): Visual treatment. `'classic' | 'surface' | 'soft'`.
 - `color` (=`'accent'`): Semantic palette for the checked indicator. `'accent' | 'neutral' | 'danger' | 'warning' | 'success'`.

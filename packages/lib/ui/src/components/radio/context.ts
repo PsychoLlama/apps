@@ -12,7 +12,7 @@ import { createContext, useContext, type Accessor } from 'solid-js';
 import type { RadioColor, RadioSize, RadioVariant } from './radio';
 
 export interface RadioGroupContextValue {
-  /** Stable `name` for every input. Auto-generated if the consumer omits it. */
+  /** Shared `name` applied to every input. */
   name: string;
   size: Accessor<RadioSize>;
   variant: Accessor<RadioVariant>;

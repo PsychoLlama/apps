@@ -20,6 +20,7 @@ const Demo = (props: Partial<RadioGroupRootProps> & { id: string }) => {
   return (
     <RadioGroupRoot
       testId={`overview-${props.id}`}
+      name={`overview-${props.id}`}
       value={value()}
       onValueChange={setValue}
       size={props.size}
@@ -45,6 +46,7 @@ const meta = {
   component: RadioGroupRoot,
   args: {
     testId: 'radio-group',
+    name: 'radio-group',
     value: 'apple',
     onValueChange: fn(),
     size: 2,
@@ -81,6 +83,7 @@ const meta = {
     return (
       <RadioGroupRoot
         testId={args.testId}
+        name={args.name}
         value={value()}
         onValueChange={(next) => {
           args.onValueChange(next);

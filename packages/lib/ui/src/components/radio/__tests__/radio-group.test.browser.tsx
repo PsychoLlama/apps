@@ -10,7 +10,12 @@ describe('RadioGroup', () => {
 
   it('renders a <div role="radiogroup">', () => {
     render(() => (
-      <RadioGroupRoot testId="group" value={null} onValueChange={noop} />
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value={null}
+        onValueChange={noop}
+      />
     ));
     const group = screen.getByTestId('group');
     expect(group.tagName).toBe('DIV');
@@ -19,7 +24,12 @@ describe('RadioGroup', () => {
 
   it('wraps the radio in a <label> when an item has children', () => {
     render(() => (
-      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value={null}
+        onValueChange={noop}
+      >
         <RadioGroupItem testId="apple" value="apple">
           Apple
         </RadioGroupItem>
@@ -33,7 +43,12 @@ describe('RadioGroup', () => {
 
   it('renders a bare input when an item has no children', () => {
     render(() => (
-      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value={null}
+        onValueChange={noop}
+      >
         <RadioGroupItem testId="apple" value="apple" />
       </RadioGroupRoot>
     ));
@@ -44,20 +59,7 @@ describe('RadioGroup', () => {
 
   // --- Group wiring ---
 
-  it('shares a name across every item, even without an explicit `name`', () => {
-    render(() => (
-      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
-        <RadioGroupItem testId="ra" value="a" />
-        <RadioGroupItem testId="rb" value="b" />
-      </RadioGroupRoot>
-    ));
-    const first = screen.getByTestId('ra');
-    const second = screen.getByTestId('rb');
-    expect(first.getAttribute('name')).toBeTruthy();
-    expect(first.getAttribute('name')).toBe(second.getAttribute('name'));
-  });
-
-  it('forwards an explicit `name` to every item', () => {
+  it('forwards `name` to every item', () => {
     render(() => (
       <RadioGroupRoot
         testId="group"
@@ -75,7 +77,12 @@ describe('RadioGroup', () => {
 
   it('checks only the item whose value matches the group value', () => {
     render(() => (
-      <RadioGroupRoot testId="group" value="b" onValueChange={noop}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value="b"
+        onValueChange={noop}
+      >
         <RadioGroupItem testId="ra" value="a" />
         <RadioGroupItem testId="rb" value="b" />
         <RadioGroupItem testId="rc" value="c" />
@@ -88,7 +95,12 @@ describe('RadioGroup', () => {
 
   it('renders no item checked when value is null', () => {
     render(() => (
-      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value={null}
+        onValueChange={noop}
+      >
         <RadioGroupItem testId="ra" value="a" />
         <RadioGroupItem testId="rb" value="b" />
       </RadioGroupRoot>
@@ -102,7 +114,12 @@ describe('RadioGroup', () => {
   it('fires onValueChange with the clicked item value', async () => {
     const handler = vi.fn();
     render(() => (
-      <RadioGroupRoot testId="group" value={null} onValueChange={handler}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value={null}
+        onValueChange={handler}
+      >
         <RadioGroupItem testId="ra" value="a" />
         <RadioGroupItem testId="rb" value="b" />
       </RadioGroupRoot>
@@ -116,7 +133,12 @@ describe('RadioGroup', () => {
     const Harness = () => {
       const [value, setValue] = createSignal<string | null>(null);
       return (
-        <RadioGroupRoot testId="group" value={value()} onValueChange={setValue}>
+        <RadioGroupRoot
+          testId="group"
+          name="fruit"
+          value={value()}
+          onValueChange={setValue}
+        >
           <RadioGroupItem testId="ra" value="a" />
           <RadioGroupItem testId="rb" value="b" />
         </RadioGroupRoot>
@@ -135,7 +157,12 @@ describe('RadioGroup', () => {
 
   it('reverts the visual state when the parent ignores the change', async () => {
     render(() => (
-      <RadioGroupRoot testId="group" value="a" onValueChange={noop}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value="a"
+        onValueChange={noop}
+      >
         <RadioGroupItem testId="ra" value="a" />
         <RadioGroupItem testId="rb" value="b" />
       </RadioGroupRoot>
@@ -150,7 +177,13 @@ describe('RadioGroup', () => {
 
   it('disables every item when the group is disabled', () => {
     render(() => (
-      <RadioGroupRoot testId="group" disabled value={null} onValueChange={noop}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        disabled
+        value={null}
+        onValueChange={noop}
+      >
         <RadioGroupItem testId="ra" value="a" />
         <RadioGroupItem testId="rb" value="b" />
       </RadioGroupRoot>
@@ -163,6 +196,7 @@ describe('RadioGroup', () => {
     render(() => (
       <RadioGroupRoot
         testId="group"
+        name="fruit"
         disabled
         value={null}
         onValueChange={noop}
@@ -174,14 +208,24 @@ describe('RadioGroup', () => {
 
   it('omits data-disabled on the group when enabled', () => {
     render(() => (
-      <RadioGroupRoot testId="group" value={null} onValueChange={noop} />
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value={null}
+        onValueChange={noop}
+      />
     ));
     expect(screen.getByTestId('group')).not.toHaveAttribute('data-disabled');
   });
 
   it('lets a single item be disabled while others stay enabled', () => {
     render(() => (
-      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value={null}
+        onValueChange={noop}
+      >
         <RadioGroupItem testId="ra" value="a" />
         <RadioGroupItem testId="rb" value="b" disabled />
       </RadioGroupRoot>
@@ -196,6 +240,7 @@ describe('RadioGroup', () => {
     render(() => (
       <RadioGroupRoot
         testId="group"
+        name="fruit"
         required
         value={null}
         onValueChange={noop}
@@ -209,7 +254,13 @@ describe('RadioGroup', () => {
 
   it('marks every item as required when the group is required', () => {
     render(() => (
-      <RadioGroupRoot testId="group" required value={null} onValueChange={noop}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        required
+        value={null}
+        onValueChange={noop}
+      >
         <RadioGroupItem testId="ra" value="a" />
         <RadioGroupItem testId="rb" value="b" />
       </RadioGroupRoot>
@@ -277,7 +328,12 @@ describe('RadioGroup', () => {
 
   it('defaults to vertical orientation', () => {
     render(() => (
-      <RadioGroupRoot testId="group" value={null} onValueChange={noop} />
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value={null}
+        onValueChange={noop}
+      />
     ));
     expect(screen.getByTestId('group')).toHaveAttribute(
       'aria-orientation',
@@ -289,6 +345,7 @@ describe('RadioGroup', () => {
     render(() => (
       <RadioGroupRoot
         testId="group"
+        name="fruit"
         orientation="horizontal"
         value={null}
         onValueChange={noop}
@@ -306,7 +363,12 @@ describe('RadioGroup', () => {
     const onSubmit = vi.fn((event: SubmitEvent) => event.preventDefault());
     render(() => (
       <form data-testid="form" onSubmit={onSubmit}>
-        <RadioGroupRoot testId="group" value="a" onValueChange={noop}>
+        <RadioGroupRoot
+          testId="group"
+          name="fruit"
+          value="a"
+          onValueChange={noop}
+        >
           <RadioGroupItem testId="ra" value="a" />
           <RadioGroupItem testId="rb" value="b" />
         </RadioGroupRoot>
@@ -322,7 +384,12 @@ describe('RadioGroup', () => {
   it('lets onKeyDown consumers see Enter before suppression runs', async () => {
     const handler = vi.fn();
     render(() => (
-      <RadioGroupRoot testId="group" value="a" onValueChange={noop}>
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value="a"
+        onValueChange={noop}
+      >
         <RadioGroupItem testId="ra" value="a" onKeyDown={handler} />
       </RadioGroupRoot>
     ));
