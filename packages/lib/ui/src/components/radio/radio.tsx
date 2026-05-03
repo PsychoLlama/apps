@@ -134,17 +134,10 @@ const Radio: Component<RadioProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const onChange: JSX.ChangeEventHandler<HTMLInputElement, Event> = (event) => {
-    // Solid types `onChange` on `<input>` with `target: HTMLInputElement`
-    // (narrower than the helper's `target: Element`). The cast widens
-    // the handler back to the helper's signature; the runtime contract
-    // is identical. Note: the change event on `<input>` is not
-    // cancelable, so `preventDefault()` from a consumer handler is a
-    // no-op — the controlled `checked` prop is the only way to suppress
-    // the visual update.
-    callConsumerHandler(
-      local.onChange as JSX.EventHandlerUnion<HTMLInputElement, Event>,
-      event,
-    );
+    // The change event on `<input>` is not cancelable, so a consumer
+    // calling `preventDefault()` is a no-op — the controlled `checked`
+    // prop is the only way to suppress the visual update.
+    callConsumerHandler(local.onChange, event);
     // Only signal on transition from unchecked → checked. Browsers
     // suppress the change event on a re-click of an already-checked
     // radio, so the guard is mostly defensive — but it mirrors the

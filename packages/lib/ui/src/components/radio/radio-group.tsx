@@ -237,10 +237,7 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
     // The change event on `<input>` is not cancelable, so a consumer
     // calling `preventDefault()` is a no-op — the controlled `value`
     // on the group is the only way to suppress the visual update.
-    callConsumerHandler(
-      local.onChange as JSX.EventHandlerUnion<HTMLInputElement, Event>,
-      event,
-    );
+    callConsumerHandler(local.onChange, event);
     ctx.onValueChange(local.value);
 
     // Reconcile every input in this group against the (possibly
