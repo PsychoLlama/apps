@@ -9,7 +9,7 @@
     "**/*.css.ts"
   ],
   "scripts": {
-    "dev": "storybook dev -p 6006 --ci",
+    "dev": "storybook dev --ci",
     "build": "storybook build",
     "test": "vitest run",
     "typecheck": "tsc"
