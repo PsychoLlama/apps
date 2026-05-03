@@ -1,0 +1,13 @@
+# Long-cache content-addressed bundles. Vite hashes every emitted
+# entry, chunk, and asset under `_build/` — `assertHashedAssetNames`
+# in `vite.config.ts` fails the build if a future config tweak ever
+# drops `[hash]` from the output templates, so this prefix is safe
+# to mark `immutable`.
+#
+# Everything else inherits Cloudflare's default
+# `Cache-Control: public, max-age=0, must-revalidate`, which keeps
+# HTML shells (and anything else not under `_build/`) revalidating
+# every request.
+
+/_build/*
+  Cache-Control: public, max-age=31536000, immutable
