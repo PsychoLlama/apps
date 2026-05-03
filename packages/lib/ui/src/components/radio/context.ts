@@ -9,7 +9,7 @@
  */
 
 import { createContext, useContext, type Accessor } from 'solid-js';
-import type { RadioColor, RadioSize, RadioVariant } from './radio';
+import type { RadioColor, RadioSize, RadioVariant } from './radio-group';
 
 export interface RadioGroupContextValue {
   /** Shared `name` applied to every input. */

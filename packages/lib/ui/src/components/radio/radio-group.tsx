@@ -42,13 +42,29 @@ import {
   useRadioGroupContext,
   type RadioGroupContextValue,
 } from './context';
-import {
-  resolveRadioClasses,
-  type RadioColor,
-  type RadioSize,
-  type RadioVariant,
-} from './radio';
 import * as css from './radio-group.css';
+
+/** Visual size on a 1–3 scale. */
+export type RadioSize = 1 | 2 | 3;
+/** Visual treatment. */
+export type RadioVariant = 'classic' | 'surface' | 'soft';
+/** Semantic color palette for the checked indicator. */
+export type RadioColor =
+  | 'accent'
+  | 'neutral'
+  | 'danger'
+  | 'warning'
+  | 'success';
+
+const resolveRadioClasses = (
+  size: RadioSize,
+  variant: RadioVariant,
+  color: RadioColor,
+): string => {
+  return [css.root, css.size[size], css.color[color], css.variant[variant]]
+    .filter(Boolean)
+    .join(' ');
+};
 
 /**
  * `RadioGroupRoot` props. Renders a `<div role="radiogroup">` and
@@ -251,10 +267,8 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
     // WAI-ARIA radio group spec: Enter does not activate radios — only
     // Space does. Native `<input type="radio">` agrees on activation,
     // but inside a `<form>` Enter still bubbles up and submits. Suppress
-    // it on group items so a focused radio doesn't accidentally submit
-    // a form mid-selection. The standalone `Radio` keeps native Enter
-    // behavior (a single radio outside a group has no roving focus to
-    // protect, and Enter-to-submit is the conventional form behavior).
+    // it so a focused radio doesn't accidentally submit a form
+    // mid-selection.
     if (event.key === 'Enter') event.preventDefault();
   };
 
