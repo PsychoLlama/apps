@@ -275,7 +275,11 @@ importers:
         specifier: '*'
         version: 1.9.12
 
-  packages/dev/build: {}
+  packages/dev/build:
+    dependencies:
+      vite:
+        specifier: ^7.3.2
+        version: 7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)
 
   packages/dev/eslint-plugin:
     dependencies:

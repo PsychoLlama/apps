@@ -3,12 +3,16 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Shared workspace ignore patterns.",
+  "description": "Shared workspace ignore patterns and Vite build helpers.",
   "license": "MIT",
   "exports": {
-    "./ignore": "./src/ignore.ts"
+    "./ignore": "./src/ignore.ts",
+    "./vite-plugin": "./src/vite-plugin.ts"
   },
   "scripts": {
     "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "vite": "*"
   }
 }
