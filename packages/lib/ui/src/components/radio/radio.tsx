@@ -42,7 +42,6 @@ import {
   useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './radio.css';
 
 /** Visual size on a 1–3 scale. */
@@ -137,7 +136,7 @@ const Radio: Component<RadioProps> = (rawProps) => {
     // The change event on `<input>` is not cancelable, so a consumer
     // calling `preventDefault()` is a no-op — the controlled `checked`
     // prop is the only way to suppress the visual update.
-    callConsumerHandler(local.onChange, event);
+    if (typeof local.onChange === 'function') local.onChange(event);
     // Only signal on transition from unchecked → checked. Browsers
     // suppress the change event on a re-click of an already-checked
     // radio, so the guard is mostly defensive — but it mirrors the

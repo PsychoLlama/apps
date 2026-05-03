@@ -35,7 +35,6 @@ import type { JSX, ParentComponent } from 'solid-js';
 import { type MarginProps } from '../../props/margin';
 import { type SkeletonProps } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { callConsumerHandler } from '../compose-event-handler';
 import Flex from '../flex/flex';
 import Text from '../text/text';
 import {
@@ -236,14 +235,14 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
     // The change event on `<input>` is not cancelable, so a consumer
     // calling `preventDefault()` is a no-op — the controlled `value`
     // on the group is the only way to suppress the visual update.
-    callConsumerHandler(local.onChange, event);
+    if (typeof local.onChange === 'function') local.onChange(event);
     ctx.notifyChange(local.value);
   };
 
   const onKeyDown: JSX.EventHandler<HTMLInputElement, KeyboardEvent> = (
     event,
   ) => {
-    callConsumerHandler(local.onKeyDown, event);
+    if (typeof local.onKeyDown === 'function') local.onKeyDown(event);
     if (event.defaultPrevented) return;
     // WAI-ARIA radio group spec: Enter does not activate radios — only
     // Space does. Native `<input type="radio">` agrees on activation,

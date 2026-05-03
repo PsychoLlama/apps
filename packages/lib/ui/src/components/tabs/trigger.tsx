@@ -7,7 +7,6 @@ import {
   type ParentComponent,
 } from 'solid-js';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { callConsumerHandler } from '../compose-event-handler';
 import {
   useTabsContext,
   useTabsListContext,
@@ -80,7 +79,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   const onMouseDown: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (
     event,
   ) => {
-    callConsumerHandler(local.onMouseDown, event);
+    if (typeof local.onMouseDown === 'function') local.onMouseDown(event);
     if (event.defaultPrevented) return;
     if (isDisabled()) return;
     // Match Radix: only activate on a plain left-click. Right-click and
@@ -94,7 +93,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   };
 
   const onFocus: JSX.EventHandler<HTMLButtonElement, FocusEvent> = (event) => {
-    callConsumerHandler(local.onFocus, event);
+    if (typeof local.onFocus === 'function') local.onFocus(event);
     if (event.defaultPrevented) return;
     if (isDisabled()) return;
     if (ctx.activationMode() === 'automatic' && !isActive()) {
@@ -105,7 +104,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   const onKeyDown: JSX.EventHandler<HTMLButtonElement, KeyboardEvent> = (
     event,
   ) => {
-    callConsumerHandler(local.onKeyDown, event);
+    if (typeof local.onKeyDown === 'function') local.onKeyDown(event);
     if (event.defaultPrevented) return;
 
     if (event.key === ' ' || event.key === 'Enter') {

@@ -45,7 +45,6 @@ import {
   useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './slider.css';
 
 /** Visual size on a 1–3 scale. */
@@ -278,7 +277,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
   const onPointerDown: JSX.EventHandler<HTMLSpanElement, PointerEvent> = (
     event,
   ) => {
-    callConsumerHandler(local.onPointerDown, event);
+    if (typeof local.onPointerDown === 'function') local.onPointerDown(event);
     if (event.defaultPrevented) return;
     if (local.disabled) return;
 
@@ -307,7 +306,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
   const onPointerMove: JSX.EventHandler<HTMLSpanElement, PointerEvent> = (
     event,
   ) => {
-    callConsumerHandler(local.onPointerMove, event);
+    if (typeof local.onPointerMove === 'function') local.onPointerMove(event);
     if (event.defaultPrevented) return;
 
     const target = event.target as HTMLElement;
@@ -321,7 +320,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
   const onPointerUp: JSX.EventHandler<HTMLSpanElement, PointerEvent> = (
     event,
   ) => {
-    callConsumerHandler(local.onPointerUp, event);
+    if (typeof local.onPointerUp === 'function') local.onPointerUp(event);
     if (event.defaultPrevented) return;
 
     const target = event.target as HTMLElement;
@@ -338,7 +337,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
   const onKeyDown: JSX.EventHandler<HTMLSpanElement, KeyboardEvent> = (
     event,
   ) => {
-    callConsumerHandler(local.onKeyDown, event);
+    if (typeof local.onKeyDown === 'function') local.onKeyDown(event);
     if (event.defaultPrevented) return;
     if (local.disabled) return;
 
