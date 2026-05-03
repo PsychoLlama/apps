@@ -1,4 +1,4 @@
-import type { Plugin, ResolvedConfig } from 'vite';
+import type { Plugin } from 'vite';
 import { assertHashedAssetNames } from '../vite-plugin.ts';
 
 const goodTemplates = {
@@ -13,11 +13,6 @@ const fakeContext = {
   },
 };
 
-const callConfigResolved = (plugin: Plugin, ssr = false) => {
-  const hook = plugin.configResolved as (config: ResolvedConfig) => void;
-  hook.call(fakeContext, { build: { ssr } } as ResolvedConfig);
-};
-
 const callRenderStart = (
   plugin: Plugin,
   templates: Record<string, unknown>,
@@ -26,17 +21,20 @@ const callRenderStart = (
   hook.call(fakeContext, templates);
 };
 
+const callApplyToEnvironment = (plugin: Plugin, ssr: boolean) => {
+  const hook = plugin.applyToEnvironment as (env: unknown) => boolean;
+  return hook.call(fakeContext, { config: { build: { ssr } } });
+};
+
 describe('assertHashedAssetNames', () => {
   it('accepts templates that all contain [hash]', () => {
     const plugin = assertHashedAssetNames();
-    callConfigResolved(plugin);
 
     expect(() => callRenderStart(plugin, goodTemplates)).not.toThrow();
   });
 
   it('rejects an entry template missing [hash]', () => {
     const plugin = assertHashedAssetNames();
-    callConfigResolved(plugin);
 
     expect(() =>
       callRenderStart(plugin, {
@@ -48,7 +46,6 @@ describe('assertHashedAssetNames', () => {
 
   it('rejects a chunk template missing [hash]', () => {
     const plugin = assertHashedAssetNames();
-    callConfigResolved(plugin);
 
     expect(() =>
       callRenderStart(plugin, {
@@ -60,7 +57,6 @@ describe('assertHashedAssetNames', () => {
 
   it('rejects an asset template missing [hash]', () => {
     const plugin = assertHashedAssetNames();
-    callConfigResolved(plugin);
 
     expect(() =>
       callRenderStart(plugin, {
@@ -72,7 +68,6 @@ describe('assertHashedAssetNames', () => {
 
   it('rejects function templates (cannot statically verify)', () => {
     const plugin = assertHashedAssetNames();
-    callConfigResolved(plugin);
 
     expect(() =>
       callRenderStart(plugin, {
@@ -82,16 +77,10 @@ describe('assertHashedAssetNames', () => {
     ).toThrow(/function/);
   });
 
-  it('skips SSR builds', () => {
+  it('declines to attach to SSR environments', () => {
     const plugin = assertHashedAssetNames();
-    callConfigResolved(plugin, true);
 
-    expect(() =>
-      callRenderStart(plugin, {
-        entryFileNames: 'server/[name].js',
-        chunkFileNames: 'server/[name].js',
-        assetFileNames: 'server/[name][extname]',
-      }),
-    ).not.toThrow();
+    expect(callApplyToEnvironment(plugin, true)).toBe(false);
+    expect(callApplyToEnvironment(plugin, false)).toBe(true);
   });
 });
