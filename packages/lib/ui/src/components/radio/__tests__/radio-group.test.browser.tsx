@@ -218,6 +218,41 @@ describe('RadioGroup', () => {
     expect(new FormData(form).get('fruit')).toBe('apple');
   });
 
+  it('does not clobber a same-name group in a sibling form', async () => {
+    render(() => (
+      <>
+        <form data-testid="form-one">
+          <RadioGroupRoot
+            testId="group-one"
+            name="fruit"
+            value="apple"
+            onValueChange={noop}
+          >
+            <RadioGroupItem testId="one-apple" value="apple" />
+            <RadioGroupItem testId="one-banana" value="banana" />
+          </RadioGroupRoot>
+        </form>
+        <form data-testid="form-two">
+          <RadioGroupRoot
+            testId="group-two"
+            name="fruit"
+            value="banana"
+            onValueChange={noop}
+          >
+            <RadioGroupItem testId="two-apple" value="apple" />
+            <RadioGroupItem testId="two-banana" value="banana" />
+          </RadioGroupRoot>
+        </form>
+      </>
+    ));
+
+    // Click an item in group one. The reconciliation must scope to
+    // group one's root and leave group two's checked state alone.
+    await userEvent.click(screen.getByTestId('one-banana'));
+    expect(screen.getByTestId('two-banana')).toBeChecked();
+    expect(screen.getByTestId('two-apple')).not.toBeChecked();
+  });
+
   // --- Throws outside the root ---
 
   it('throws when an item is rendered outside RadioGroupRoot', () => {

@@ -18,6 +18,13 @@
  * - Drops the `highContrast` prop. Recorded as a deferred deviation.
  * - No `radius` prop — radios are always circular per the design.
  *
+ * Limitation: when several standalone `Radio`s share a `name` to form a
+ * custom group and the parent ignores `onCheckedChange`, the
+ * previously-checked sibling stays unchecked because each Radio only
+ * reconciles its own `<input>` after a change. Reach for `RadioGroupRoot`
+ * + `RadioGroupItem` for groups — the group reconciles every member
+ * after each change, so a rejected click restores the prior selection.
+ *
  * @see https://www.radix-ui.com/themes/docs/components/radio-group
  * @see https://www.radix-ui.com/primitives/docs/components/radio-group
  */

@@ -126,6 +126,7 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const fallbackName = createUniqueId();
+  let rootRef: HTMLDivElement | undefined;
 
   const ctx: RadioGroupContextValue = {
     get name() {
@@ -138,6 +139,7 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     disabled: () => local.disabled,
     required: () => local.required,
     onValueChange: (next) => local.onValueChange(next),
+    rootElement: () => rootRef,
   };
 
   const className = () =>
@@ -149,6 +151,9 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     <RadioGroupContext.Provider value={ctx}>
       <div
         {...skeletonProps}
+        ref={(el) => {
+          rootRef = el;
+        }}
         role="radiogroup"
         aria-required={local.required ? true : undefined}
         aria-disabled={local.disabled ? true : undefined}
@@ -215,21 +220,34 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
     );
     ctx.onValueChange(local.value);
 
-    // Reconcile every input in the group against the (possibly
+    // Reconcile every input in this group against the (possibly
     // updated) controlled value. Native radio behavior already toggled
     // the clicked input on and the previously-checked sibling off,
     // bypassing Solid's reactive bindings. If `value` didn't change
     // (parent ignored the callback), this restores the previous
     // selection; if it did change, this is a no-op since the bindings
     // would have re-applied the same checked state.
-    const ownerDocument = event.currentTarget.ownerDocument;
-    const inputs = ownerDocument.getElementsByName(
-      ctx.name,
-    ) as NodeListOf<HTMLInputElement>;
-    const next = ctx.value();
-    inputs.forEach((input) => {
-      input.checked = input.value === next;
-    });
+    //
+    // Scoped to the radiogroup root rather than `getElementsByName` so
+    // an unrelated group in a sibling form that happens to share the
+    // same `name` is not clobbered. Native radios are scoped per
+    // form-owner; mirroring that here keeps independent groups
+    // independent. Falls back to the clicked input alone if the ref
+    // has not yet been wired (e.g. inside a Suspense boundary
+    // mid-mount).
+    const root = ctx.rootElement();
+    if (root) {
+      const inputs = root.querySelectorAll<HTMLInputElement>(
+        'input[type="radio"]',
+      );
+      const next = ctx.value();
+      inputs.forEach((input) => {
+        if (input.name !== ctx.name) return;
+        input.checked = input.value === next;
+      });
+    } else {
+      event.currentTarget.checked = isChecked();
+    }
   };
 
   const inputClassName = () =>

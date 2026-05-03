@@ -21,6 +21,14 @@ export interface RadioGroupContextValue {
   disabled: Accessor<boolean>;
   required: Accessor<boolean>;
   onValueChange: (value: string) => void;
+  /**
+   * Ref to the radiogroup root element. Items use this to scope DOM
+   * reconciliation to their own group — the alternative,
+   * `document.getElementsByName(name)`, would clobber a same-named group
+   * in a sibling form (native radios are scoped per form-owner, not
+   * globally).
+   */
+  rootElement: () => HTMLDivElement | undefined;
 }
 
 export const RadioGroupContext = createContext<RadioGroupContextValue>();
