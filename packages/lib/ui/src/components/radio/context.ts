@@ -22,13 +22,17 @@ export interface RadioGroupContextValue {
   required: Accessor<boolean>;
   onValueChange: (value: string) => void;
   /**
-   * Ref to the radiogroup root element. Items use this to scope DOM
-   * reconciliation to their own group — the alternative,
-   * `document.getElementsByName(name)`, would clobber a same-named group
-   * in a sibling form (native radios are scoped per form-owner, not
-   * globally).
+   * Counter that bumps on every change event from any item. Items
+   * subscribe to this in a `createEffect` so they can re-apply their
+   * `checked` property even when `value` didn't change — which happens
+   * when the parent ignores `onValueChange`. Native radio behavior
+   * silently flips both the clicked input on and the previously-checked
+   * sibling off; only the clicked input fires `change`, so reactivity
+   * alone can't restore the sibling. Bumping this signal force-runs
+   * the per-item effect for the whole group.
    */
-  rootElement: () => HTMLDivElement | undefined;
+  reconcileTick: Accessor<number>;
+  bumpReconcile: () => void;
 }
 
 export const RadioGroupContext = createContext<RadioGroupContextValue>();

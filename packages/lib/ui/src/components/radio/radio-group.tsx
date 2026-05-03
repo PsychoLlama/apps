@@ -27,7 +27,14 @@
  * @see https://www.radix-ui.com/primitives/docs/components/radio-group
  */
 
-import { createUniqueId, mergeProps, Show, splitProps } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  createUniqueId,
+  mergeProps,
+  Show,
+  splitProps,
+} from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import { type MarginProps } from '../../props/margin';
 import { type SkeletonProps } from '../../props/skeleton';
@@ -126,7 +133,7 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
   ]);
 
   const fallbackName = createUniqueId();
-  let rootRef: HTMLDivElement | undefined;
+  const [reconcileTick, setReconcileTick] = createSignal(0);
 
   const ctx: RadioGroupContextValue = {
     get name() {
@@ -139,7 +146,8 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     disabled: () => local.disabled,
     required: () => local.required,
     onValueChange: (next) => local.onValueChange(next),
-    rootElement: () => rootRef,
+    reconcileTick,
+    bumpReconcile: () => setReconcileTick((current) => current + 1),
   };
 
   return (
@@ -147,9 +155,6 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
       <Flex
         {...rest}
         as="div"
-        ref={(el) => {
-          rootRef = el;
-        }}
         direction={local.orientation === 'horizontal' ? 'row' : 'column'}
         wrap={local.orientation === 'horizontal' ? 'wrap' : 'nowrap'}
         gap={local.orientation === 'horizontal' ? 3 : 1}
@@ -216,41 +221,33 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
   const isChecked = () => ctx.value() === local.value;
   const isDisabled = () => ctx.disabled() || local.disabled === true;
 
+  let inputRef: HTMLInputElement | undefined;
+
+  // Reconcile this input's `checked` property against the controlled
+  // value on every reactive change *and* on every change event from
+  // any item in the group. Solid's `checked={isChecked()}` JSX binding
+  // already handles the value-changed case; this effect adds coverage
+  // for the value-didn't-change case (parent rejected the click), which
+  // the JSX binding can't see — there's no reactive dep to fire on.
+  // Subscribing to `reconcileTick` runs the effect on every change in
+  // the group, restoring this input to whatever `isChecked()` says.
+  createEffect(() => {
+    ctx.reconcileTick();
+    if (inputRef) inputRef.checked = isChecked();
+  });
+
   const onChange: JSX.ChangeEventHandler<HTMLInputElement, Event> = (event) => {
     // The change event on `<input>` is not cancelable, so a consumer
     // calling `preventDefault()` is a no-op — the controlled `value`
     // on the group is the only way to suppress the visual update.
     callConsumerHandler(local.onChange, event);
     ctx.onValueChange(local.value);
-
-    // Reconcile every input in this group against the (possibly
-    // updated) controlled value. Native radio behavior already toggled
-    // the clicked input on and the previously-checked sibling off,
-    // bypassing Solid's reactive bindings. If `value` didn't change
-    // (parent ignored the callback), this restores the previous
-    // selection; if it did change, this is a no-op since the bindings
-    // would have re-applied the same checked state.
-    //
-    // Scoped to the radiogroup root rather than `getElementsByName` so
-    // an unrelated group in a sibling form that happens to share the
-    // same `name` is not clobbered. Native radios are scoped per
-    // form-owner; mirroring that here keeps independent groups
-    // independent. Falls back to the clicked input alone if the ref
-    // has not yet been wired (e.g. inside a Suspense boundary
-    // mid-mount).
-    const root = ctx.rootElement();
-    if (root) {
-      const inputs = root.querySelectorAll<HTMLInputElement>(
-        'input[type="radio"]',
-      );
-      const next = ctx.value();
-      inputs.forEach((input) => {
-        if (input.name !== ctx.name) return;
-        input.checked = input.value === next;
-      });
-    } else {
-      event.currentTarget.checked = isChecked();
-    }
+    // Bump the per-group reconcile tick so every item's effect re-runs
+    // and re-applies `checked` from the controlled value. Necessary
+    // when the parent ignores `onValueChange` — native radio behavior
+    // already toggled both the clicked input and the previously-checked
+    // sibling, but reactivity didn't fire because `value` didn't change.
+    ctx.bumpReconcile();
   };
 
   const onKeyDown: JSX.EventHandler<HTMLInputElement, KeyboardEvent> = (
@@ -286,6 +283,9 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
   const renderInput = () => (
     <input
       {...rest}
+      ref={(el) => {
+        inputRef = el;
+      }}
       type="radio"
       name={ctx.name}
       value={local.value}
