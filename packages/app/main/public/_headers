@@ -4,6 +4,11 @@
 # drops `[hash]` from the output templates, so this prefix is safe
 # to mark `immutable`.
 #
+# `Service-Worker-Allowed: /` widens the scope of the bundled
+# service worker (which Vite emits under `/_build/` with a hashed
+# name) past its default directory scope. The header is harmless on
+# non-SW responses.
+#
 # Everything else inherits Cloudflare's default
 # `Cache-Control: public, max-age=0, must-revalidate`, which keeps
 # HTML shells (and anything else not under `_build/`) revalidating
@@ -11,3 +16,4 @@
 
 /_build/*
   Cache-Control: public, max-age=31536000, immutable
+  Service-Worker-Allowed: /

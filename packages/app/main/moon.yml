@@ -6,6 +6,7 @@ project:
 
 dependsOn:
   - '@app/logo-editor'
+  - '@app/service-worker'
   - '@app/studio'
   - '@lib/design'
   - '@lib/shell'
@@ -43,6 +44,7 @@ tasks:
       - 'vite.config.ts'
       - 'wrangler.jsonc'
       - '/packages/app/logo-editor/src/**/*'
+      - '/packages/app/service-worker/src/**/*'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'
     outputs:

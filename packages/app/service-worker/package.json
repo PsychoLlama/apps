@@ -1,0 +1,14 @@
+{
+  "name": "@app/service-worker",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Browser service worker shipped by @app/main.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}
