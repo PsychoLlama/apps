@@ -29,18 +29,11 @@
 
 import { createUniqueId, mergeProps, Show, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
-import {
-  marginPropKeys,
-  resolveMarginClasses,
-  type MarginProps,
-} from '../../props/margin';
-import {
-  type SkeletonProps,
-  skeletonPropKeys,
-  useSkeleton,
-} from '../../props/skeleton';
+import { type MarginProps } from '../../props/margin';
+import { type SkeletonProps } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { callConsumerHandler } from '../compose-event-handler';
+import Flex from '../flex/flex';
 import Text from '../text/text';
 import {
   RadioGroupContext,
@@ -115,9 +108,11 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     },
     rawProps,
   );
-  const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
-  const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
-  const [local, rest] = splitProps(withoutTid, [
+  // Margin props, skeleton, testId, class, and the rest of the
+  // standard HTML attributes pass through to `<Flex>` directly — Flex
+  // already owns box props, skeleton plumbing, and class composition.
+  // The keys we extract are the radiogroup's own knobs plus children.
+  const [local, rest] = splitProps(props, [
     'size',
     'variant',
     'color',
@@ -127,11 +122,8 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     'required',
     'value',
     'onValueChange',
-    'class',
     'children',
-    ...skeletonPropKeys,
   ]);
-  const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const fallbackName = createUniqueId();
   let rootRef: HTMLDivElement | undefined;
@@ -150,24 +142,17 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     rootElement: () => rootRef,
   };
 
-  const className = () =>
-    [
-      ...resolveMarginClasses(margin),
-      css.root,
-      css.orientation[local.orientation],
-      skeletonClass(),
-      local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
-
   return (
     <RadioGroupContext.Provider value={ctx}>
-      <div
-        {...skeletonProps}
+      <Flex
+        {...rest}
+        as="div"
         ref={(el) => {
           rootRef = el;
         }}
+        direction={local.orientation === 'horizontal' ? 'row' : 'column'}
+        wrap={local.orientation === 'horizontal' ? 'wrap' : 'nowrap'}
+        gap={local.orientation === 'horizontal' ? 3 : 1}
         role="radiogroup"
         aria-orientation={local.orientation}
         aria-required={local.required ? true : undefined}
@@ -178,11 +163,9 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
         // style the disabled root via the `:where([data-disabled])`
         // attribute selector.
         data-disabled={local.disabled ? '' : undefined}
-        class={className()}
-        data-testid={tid.testId}
       >
         {local.children}
-      </div>
+      </Flex>
     </RadioGroupContext.Provider>
   );
 };

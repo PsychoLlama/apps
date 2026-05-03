@@ -1,33 +1,12 @@
 /**
- * RadioGroup layout styles.
- *
- * Ported from Radix UI Themes RadioGroup. The radio itself reuses
- * the styles in `./radio.css`; these rules govern only the flex
- * stack at the root and the inline label layout each item renders
- * when `children` are provided.
+ * RadioGroup item styles. The root layout is delegated to `<Flex>`;
+ * these rules govern only the inline label each item renders when
+ * `children` are provided.
  *
  * @see https://www.radix-ui.com/themes/docs/components/radio-group
  */
 
-import { style, styleVariants } from '@vanilla-extract/css';
-import { space } from '@lib/design';
-
-export const root = style({
-  display: 'flex',
-});
-
-export const orientation = styleVariants({
-  vertical: {
-    flexDirection: 'column',
-    gap: space[1],
-  },
-  horizontal: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    columnGap: space[4],
-    rowGap: space[1],
-  },
-});
+import { style } from '@vanilla-extract/css';
 
 export const item = style({
   display: 'flex',
