@@ -72,6 +72,12 @@ export interface RadioGroupRootProps
   /** Semantic color palette for the checked indicator. @default 'accent' */
   color?: RadioColor;
   /**
+   * Layout axis. `vertical` stacks items in a column; `horizontal`
+   * flows them in a row. Surfaces as `aria-orientation` on the
+   * radiogroup. @default 'vertical'
+   */
+  orientation?: 'horizontal' | 'vertical';
+  /**
    * Form-submit name for every item. Auto-generated if omitted so the
    * browser still groups the items for native arrow-key navigation.
    */
@@ -103,6 +109,7 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
       size: 2 as const,
       variant: 'surface' as const,
       color: 'accent' as const,
+      orientation: 'vertical' as const,
       disabled: false,
       required: false,
     },
@@ -114,6 +121,7 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     'size',
     'variant',
     'color',
+    'orientation',
     'name',
     'disabled',
     'required',
@@ -143,7 +151,13 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
   };
 
   const className = () =>
-    [...resolveMarginClasses(margin), css.root, skeletonClass(), local.class]
+    [
+      ...resolveMarginClasses(margin),
+      css.root,
+      css.orientation[local.orientation],
+      skeletonClass(),
+      local.class,
+    ]
       .filter(Boolean)
       .join(' ');
 
@@ -155,8 +169,15 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
           rootRef = el;
         }}
         role="radiogroup"
+        aria-orientation={local.orientation}
         aria-required={local.required ? true : undefined}
-        aria-disabled={local.disabled ? true : undefined}
+        // `data-disabled` (matches the upstream Radix primitive)
+        // rather than `aria-disabled`, which isn't part of the
+        // WAI-ARIA radio group pattern and may double-announce when
+        // every item is already `disabled` natively. Consumers can
+        // style the disabled root via the `:where([data-disabled])`
+        // attribute selector.
+        data-disabled={local.disabled ? '' : undefined}
         class={className()}
         data-testid={tid.testId}
       >
@@ -183,6 +204,7 @@ export interface RadioGroupItemProps
       | 'value'
       | 'checked'
       | 'defaultChecked'
+      | 'required'
     > {
   /** Value submitted when this item is checked, and matched against the group's `value`. */
   value: string;
@@ -204,6 +226,7 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
     'class',
     'children',
     'onChange',
+    'onKeyDown',
     'style',
   ]);
 
@@ -250,6 +273,21 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
     }
   };
 
+  const onKeyDown: JSX.EventHandler<HTMLInputElement, KeyboardEvent> = (
+    event,
+  ) => {
+    callConsumerHandler(local.onKeyDown, event);
+    if (event.defaultPrevented) return;
+    // WAI-ARIA radio group spec: Enter does not activate radios — only
+    // Space does. Native `<input type="radio">` agrees on activation,
+    // but inside a `<form>` Enter still bubbles up and submits. Suppress
+    // it on group items so a focused radio doesn't accidentally submit
+    // a form mid-selection. The standalone `Radio` keeps native Enter
+    // behavior (a single radio outside a group has no roving focus to
+    // protect, and Enter-to-submit is the conventional form behavior).
+    if (event.key === 'Enter') event.preventDefault();
+  };
+
   const inputClassName = () =>
     [
       resolveRadioClasses({
@@ -277,6 +315,7 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
       class={inputClassName()}
       data-testid={tid.testId}
       onChange={onChange}
+      onKeyDown={onKeyDown}
       // The wrapping label takes its own `style`, so only forward to
       // the input when there's no label.
       style={local.children === undefined ? local.style : undefined}

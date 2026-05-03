@@ -55,6 +55,14 @@ describe('Radio', () => {
     expect(handler).toHaveBeenCalledWith(true);
   });
 
+  it('does not fire onCheckedChange when re-clicked while already checked', async () => {
+    const handler = vi.fn();
+    render(() => <Radio testId="r" checked onCheckedChange={handler} />);
+
+    await userEvent.click(screen.getByTestId('r'));
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it('reverts to the controlled value when the parent ignores the change', async () => {
     render(() => <Radio testId="r" checked={false} onCheckedChange={noop} />);
     const input = screen.getByTestId<HTMLInputElement>('r');

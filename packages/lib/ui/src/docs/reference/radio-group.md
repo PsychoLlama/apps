@@ -13,6 +13,7 @@ Base: `<div>` attributes (except `onChange`, `role`), margin props, skeleton pro
 - `size` (=`2`): Visual size. `1 | 2 | 3`.
 - `variant` (=`'surface'`): Visual treatment. `'classic' | 'surface' | 'soft'`.
 - `color` (=`'accent'`): Semantic palette for the checked indicator. `'accent' | 'neutral' | 'danger' | 'warning' | 'success'`.
+- `orientation` (=`'vertical'`): Layout axis. `'vertical' | 'horizontal'`. Surfaces as `aria-orientation` on the radiogroup.
 - `disabled` (=`false`): Disable every item in the group.
 - `required` (=`false`): Mark the group as required for assistive technology and HTML5 form validation.
 

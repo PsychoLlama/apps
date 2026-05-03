@@ -145,7 +145,12 @@ const Radio: Component<RadioProps> = (rawProps) => {
       local.onChange as JSX.EventHandlerUnion<HTMLInputElement, Event>,
       event,
     );
-    local.onCheckedChange(true);
+    // Only signal on transition from unchecked → checked. Browsers
+    // suppress the change event on a re-click of an already-checked
+    // radio, so the guard is mostly defensive — but it mirrors the
+    // Radix primitive's `if (!checked) onCheck?.()` contract and
+    // protects against any edge case where the change fires twice.
+    if (!local.checked) local.onCheckedChange(true);
     // Re-sync after the consumer's handler. If the parent updated
     // state synchronously (typical Solid setSignal flow), `local.checked`
     // is now the new value and this is a no-op. If the parent ignored

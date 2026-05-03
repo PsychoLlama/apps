@@ -159,6 +159,26 @@ describe('RadioGroup', () => {
     expect(screen.getByTestId('rb')).toBeDisabled();
   });
 
+  it('exposes data-disabled on the group when disabled', () => {
+    render(() => (
+      <RadioGroupRoot
+        testId="group"
+        disabled
+        value={null}
+        onValueChange={noop}
+      />
+    ));
+    expect(screen.getByTestId('group')).toHaveAttribute('data-disabled', '');
+    expect(screen.getByTestId('group')).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('omits data-disabled on the group when enabled', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value={null} onValueChange={noop} />
+    ));
+    expect(screen.getByTestId('group')).not.toHaveAttribute('data-disabled');
+  });
+
   it('lets a single item be disabled while others stay enabled', () => {
     render(() => (
       <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
@@ -251,6 +271,65 @@ describe('RadioGroup', () => {
     await userEvent.click(screen.getByTestId('one-banana'));
     expect(screen.getByTestId('two-banana')).toBeChecked();
     expect(screen.getByTestId('two-apple')).not.toBeChecked();
+  });
+
+  // --- Orientation ---
+
+  it('defaults to vertical orientation', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value={null} onValueChange={noop} />
+    ));
+    expect(screen.getByTestId('group')).toHaveAttribute(
+      'aria-orientation',
+      'vertical',
+    );
+  });
+
+  it('forwards horizontal orientation', () => {
+    render(() => (
+      <RadioGroupRoot
+        testId="group"
+        orientation="horizontal"
+        value={null}
+        onValueChange={noop}
+      />
+    ));
+    expect(screen.getByTestId('group')).toHaveAttribute(
+      'aria-orientation',
+      'horizontal',
+    );
+  });
+
+  // --- Keyboard ---
+
+  it('does not submit a wrapping form when Enter is pressed on an item', async () => {
+    const onSubmit = vi.fn((event: SubmitEvent) => event.preventDefault());
+    render(() => (
+      <form data-testid="form" onSubmit={onSubmit}>
+        <RadioGroupRoot testId="group" value="a" onValueChange={noop}>
+          <RadioGroupItem testId="ra" value="a" />
+          <RadioGroupItem testId="rb" value="b" />
+        </RadioGroupRoot>
+        <button type="submit">Go</button>
+      </form>
+    ));
+
+    screen.getByTestId('ra').focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('lets onKeyDown consumers see Enter before suppression runs', async () => {
+    const handler = vi.fn();
+    render(() => (
+      <RadioGroupRoot testId="group" value="a" onValueChange={noop}>
+        <RadioGroupItem testId="ra" value="a" onKeyDown={handler} />
+      </RadioGroupRoot>
+    ));
+
+    screen.getByTestId('ra').focus();
+    await userEvent.keyboard('{Enter}');
+    expect(handler).toHaveBeenCalledTimes(1);
   });
 
   // --- Throws outside the root ---
