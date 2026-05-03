@@ -16,6 +16,8 @@ tasks:
     command: 'pnpm'
     args: ['dev']
     local: true
+    options:
+      outputStyle: 'stream'
 
   # Stories now live in this package's `src/`. Source files in the
   # libraries they exercise still need to invalidate the build cache.
