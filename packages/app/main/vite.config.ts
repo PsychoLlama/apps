@@ -9,18 +9,25 @@ import { assertHashedAssetNames } from '@dev/build/vite-plugin';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
 
+// The bundled service worker lives under `/_build/`, so its default
+// scope would be limited to that prefix. Both Vite servers (dev and
+// preview) need this header to honor the `scope: '/'` registration;
+// `vite preview` reads its own `preview.headers`, ignoring `server.*`.
+// Production sets the same header via `public/_headers`.
+const widenServiceWorkerScope = {
+  'Service-Worker-Allowed': '/',
+};
+
 export default defineConfig({
   server: {
     watch: {
       // Vite's chokidar watcher doesn't respect .gitignore.
       ignored: [...generatedArtifacts, scratchDir(workspaceRoot)],
     },
-    // The bundled service worker lives under `/_build/` in dev too;
-    // browsers need this header to honor the `scope: '/'` registration.
-    // Production sets the same header via `public/_headers`.
-    headers: {
-      'Service-Worker-Allowed': '/',
-    },
+    headers: widenServiceWorkerScope,
+  },
+  preview: {
+    headers: widenServiceWorkerScope,
   },
   plugins: [
     solidStart(),
