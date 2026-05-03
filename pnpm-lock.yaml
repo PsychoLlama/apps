@@ -186,6 +186,9 @@ importers:
       '@app/logo-editor':
         specifier: workspace:*
         version: link:../logo-editor
+      '@app/service-worker':
+        specifier: workspace:*
+        version: link:../service-worker
       '@app/studio':
         specifier: workspace:*
         version: link:../studio
@@ -247,6 +250,8 @@ importers:
       wrangler:
         specifier: ^4.65.0
         version: 4.87.0
+
+  packages/app/service-worker: {}
 
   packages/app/studio:
     dependencies:

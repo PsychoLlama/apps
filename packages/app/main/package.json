@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@app/logo-editor": "workspace:*",
+    "@app/service-worker": "workspace:*",
     "@app/studio": "workspace:*",
     "@fontsource-variable/ibm-plex-sans": "^5.2.8",
     "@lib/design": "workspace:*",

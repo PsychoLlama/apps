@@ -28,6 +28,9 @@ const config: KnipConfig = {
       project: ['src/**/*.{ts,tsx}'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
+        // Imported as `@app/service-worker?worker&url`; the query
+        // suffix hides the specifier from knip's resolver.
+        '@app/service-worker',
       ],
       // `@solidjs/start` reads app.tsx from cwd, which points at the
       // workspace root when knip runs holistically. Skip knip's vite

@@ -15,6 +15,12 @@ export default defineConfig({
       // Vite's chokidar watcher doesn't respect .gitignore.
       ignored: [...generatedArtifacts, scratchDir(workspaceRoot)],
     },
+    // The bundled service worker lives under `/_build/` in dev too;
+    // browsers need this header to honor the `scope: '/'` registration.
+    // Production sets the same header via `public/_headers`.
+    headers: {
+      'Service-Worker-Allowed': '/',
+    },
   },
   plugins: [
     solidStart(),

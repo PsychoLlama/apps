@@ -4,6 +4,7 @@ projects:
   root: '.'
   '@app/logo-editor': 'packages/app/logo-editor'
   '@app/main': 'packages/app/main'
+  '@app/service-worker': 'packages/app/service-worker'
   '@app/studio': 'packages/app/studio'
   '@dev/build': 'packages/dev/build'
   '@dev/workspace-cli': 'packages/dev/workspace-cli'
