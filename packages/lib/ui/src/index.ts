@@ -142,3 +142,16 @@ export {
   type SliderColor,
   type SliderOrientation,
 } from './components/slider/slider';
+export {
+  default as Radio,
+  type RadioProps,
+  type RadioSize,
+  type RadioVariant,
+  type RadioColor,
+} from './components/radio/radio';
+export {
+  RadioGroupRoot,
+  RadioGroupItem,
+  type RadioGroupRootProps,
+  type RadioGroupItemProps,
+} from './components/radio/radio-group';

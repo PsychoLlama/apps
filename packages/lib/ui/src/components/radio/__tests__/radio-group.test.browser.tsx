@@ -1,0 +1,228 @@
+import { render, screen } from '@solidjs/testing-library';
+import { createSignal } from 'solid-js';
+import { userEvent } from 'vitest/browser';
+import { RadioGroupItem, RadioGroupRoot } from '../radio-group';
+
+const noop = () => {};
+
+describe('RadioGroup', () => {
+  // --- DOM shape ---
+
+  it('renders a <div role="radiogroup">', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value={null} onValueChange={noop} />
+    ));
+    const group = screen.getByTestId('group');
+    expect(group.tagName).toBe('DIV');
+    expect(group).toHaveAttribute('role', 'radiogroup');
+  });
+
+  it('wraps the radio in a <label> when an item has children', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
+        <RadioGroupItem testId="apple" value="apple">
+          Apple
+        </RadioGroupItem>
+      </RadioGroupRoot>
+    ));
+    const input = screen.getByTestId('apple');
+    expect(input.tagName).toBe('INPUT');
+    expect(input.parentElement?.tagName).toBe('LABEL');
+    expect(input.parentElement).toHaveTextContent('Apple');
+  });
+
+  it('renders a bare input when an item has no children', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
+        <RadioGroupItem testId="apple" value="apple" />
+      </RadioGroupRoot>
+    ));
+    const input = screen.getByTestId('apple');
+    expect(input.tagName).toBe('INPUT');
+    expect(input.parentElement?.tagName).toBe('DIV');
+  });
+
+  // --- Group wiring ---
+
+  it('shares a name across every item, even without an explicit `name`', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
+        <RadioGroupItem testId="ra" value="a" />
+        <RadioGroupItem testId="rb" value="b" />
+      </RadioGroupRoot>
+    ));
+    const first = screen.getByTestId('ra');
+    const second = screen.getByTestId('rb');
+    expect(first.getAttribute('name')).toBeTruthy();
+    expect(first.getAttribute('name')).toBe(second.getAttribute('name'));
+  });
+
+  it('forwards an explicit `name` to every item', () => {
+    render(() => (
+      <RadioGroupRoot
+        testId="group"
+        name="fruit"
+        value={null}
+        onValueChange={noop}
+      >
+        <RadioGroupItem testId="ra" value="a" />
+        <RadioGroupItem testId="rb" value="b" />
+      </RadioGroupRoot>
+    ));
+    expect(screen.getByTestId('ra')).toHaveAttribute('name', 'fruit');
+    expect(screen.getByTestId('rb')).toHaveAttribute('name', 'fruit');
+  });
+
+  it('checks only the item whose value matches the group value', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value="b" onValueChange={noop}>
+        <RadioGroupItem testId="ra" value="a" />
+        <RadioGroupItem testId="rb" value="b" />
+        <RadioGroupItem testId="rc" value="c" />
+      </RadioGroupRoot>
+    ));
+    expect(screen.getByTestId('ra')).not.toBeChecked();
+    expect(screen.getByTestId('rb')).toBeChecked();
+    expect(screen.getByTestId('rc')).not.toBeChecked();
+  });
+
+  it('renders no item checked when value is null', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
+        <RadioGroupItem testId="ra" value="a" />
+        <RadioGroupItem testId="rb" value="b" />
+      </RadioGroupRoot>
+    ));
+    expect(screen.getByTestId('ra')).not.toBeChecked();
+    expect(screen.getByTestId('rb')).not.toBeChecked();
+  });
+
+  // --- Selection ---
+
+  it('fires onValueChange with the clicked item value', async () => {
+    const handler = vi.fn();
+    render(() => (
+      <RadioGroupRoot testId="group" value={null} onValueChange={handler}>
+        <RadioGroupItem testId="ra" value="a" />
+        <RadioGroupItem testId="rb" value="b" />
+      </RadioGroupRoot>
+    ));
+
+    await userEvent.click(screen.getByTestId('rb'));
+    expect(handler).toHaveBeenCalledWith('b');
+  });
+
+  it('reflects the new value through the group prop', async () => {
+    const Harness = () => {
+      const [value, setValue] = createSignal<string | null>(null);
+      return (
+        <RadioGroupRoot testId="group" value={value()} onValueChange={setValue}>
+          <RadioGroupItem testId="ra" value="a" />
+          <RadioGroupItem testId="rb" value="b" />
+        </RadioGroupRoot>
+      );
+    };
+    render(() => <Harness />);
+
+    await userEvent.click(screen.getByTestId('rb'));
+    expect(screen.getByTestId('rb')).toBeChecked();
+    expect(screen.getByTestId('ra')).not.toBeChecked();
+
+    await userEvent.click(screen.getByTestId('ra'));
+    expect(screen.getByTestId('ra')).toBeChecked();
+    expect(screen.getByTestId('rb')).not.toBeChecked();
+  });
+
+  it('reverts the visual state when the parent ignores the change', async () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value="a" onValueChange={noop}>
+        <RadioGroupItem testId="ra" value="a" />
+        <RadioGroupItem testId="rb" value="b" />
+      </RadioGroupRoot>
+    ));
+
+    await userEvent.click(screen.getByTestId('rb'));
+    expect(screen.getByTestId('ra')).toBeChecked();
+    expect(screen.getByTestId('rb')).not.toBeChecked();
+  });
+
+  // --- Disabled state ---
+
+  it('disables every item when the group is disabled', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" disabled value={null} onValueChange={noop}>
+        <RadioGroupItem testId="ra" value="a" />
+        <RadioGroupItem testId="rb" value="b" />
+      </RadioGroupRoot>
+    ));
+    expect(screen.getByTestId('ra')).toBeDisabled();
+    expect(screen.getByTestId('rb')).toBeDisabled();
+  });
+
+  it('lets a single item be disabled while others stay enabled', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" value={null} onValueChange={noop}>
+        <RadioGroupItem testId="ra" value="a" />
+        <RadioGroupItem testId="rb" value="b" disabled />
+      </RadioGroupRoot>
+    ));
+    expect(screen.getByTestId('ra')).not.toBeDisabled();
+    expect(screen.getByTestId('rb')).toBeDisabled();
+  });
+
+  // --- Required ---
+
+  it('exposes aria-required on the group when required', () => {
+    render(() => (
+      <RadioGroupRoot
+        testId="group"
+        required
+        value={null}
+        onValueChange={noop}
+      />
+    ));
+    expect(screen.getByTestId('group')).toHaveAttribute(
+      'aria-required',
+      'true',
+    );
+  });
+
+  it('marks every item as required when the group is required', () => {
+    render(() => (
+      <RadioGroupRoot testId="group" required value={null} onValueChange={noop}>
+        <RadioGroupItem testId="ra" value="a" />
+        <RadioGroupItem testId="rb" value="b" />
+      </RadioGroupRoot>
+    ));
+    expect(screen.getByTestId('ra')).toBeRequired();
+    expect(screen.getByTestId('rb')).toBeRequired();
+  });
+
+  // --- Form integration ---
+
+  it('submits the checked value under the group name', () => {
+    render(() => (
+      <form data-testid="form">
+        <RadioGroupRoot
+          testId="group"
+          name="fruit"
+          value="apple"
+          onValueChange={noop}
+        >
+          <RadioGroupItem testId="ra" value="apple" />
+          <RadioGroupItem testId="rb" value="banana" />
+        </RadioGroupRoot>
+      </form>
+    ));
+    const form = screen.getByTestId<HTMLFormElement>('form');
+    expect(new FormData(form).get('fruit')).toBe('apple');
+  });
+
+  // --- Throws outside the root ---
+
+  it('throws when an item is rendered outside RadioGroupRoot', () => {
+    expect(() =>
+      render(() => <RadioGroupItem testId="lone" value="a" />),
+    ).toThrow(/outside of <RadioGroupRoot>/);
+  });
+});
