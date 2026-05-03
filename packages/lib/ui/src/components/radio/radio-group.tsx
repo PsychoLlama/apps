@@ -260,11 +260,7 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
 
   const inputClassName = () =>
     [
-      resolveRadioClasses({
-        size: ctx.size(),
-        variant: ctx.variant(),
-        color: ctx.color(),
-      }),
+      resolveRadioClasses(ctx.size(), ctx.variant(), ctx.color()),
       // When no children are present, the consumer's `class` lands on
       // the input itself; otherwise it lands on the wrapping label
       // (set in the JSX below).

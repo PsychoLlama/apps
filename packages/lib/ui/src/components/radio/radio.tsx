@@ -93,17 +93,12 @@ export interface RadioProps
  * can stamp its own input with the same variant treatment without
  * re-rendering an extra wrapper.
  */
-export const resolveRadioClasses = (config: {
-  size: RadioSize;
-  variant: RadioVariant;
-  color: RadioColor;
-}): string => {
-  return [
-    css.root,
-    css.size[config.size],
-    css.color[config.color],
-    css.variant[config.variant],
-  ]
+export const resolveRadioClasses = (
+  size: RadioSize,
+  variant: RadioVariant,
+  color: RadioColor,
+): string => {
+  return [css.root, css.size[size], css.color[color], css.variant[variant]]
     .filter(Boolean)
     .join(' ');
 };
@@ -154,11 +149,7 @@ const Radio: Component<RadioProps> = (rawProps) => {
   const className = () =>
     [
       ...resolveMarginClasses(margin),
-      resolveRadioClasses({
-        size: local.size,
-        variant: local.variant,
-        color: local.color,
-      }),
+      resolveRadioClasses(local.size, local.variant, local.color),
       skeletonClass(),
       local.class,
     ]
