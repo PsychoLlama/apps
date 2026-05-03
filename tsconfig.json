@@ -12,6 +12,7 @@
     "esModuleInterop": true,
     "erasableSyntaxOnly": true,
     "isolatedModules": true,
+    "moduleDetection": "force",
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "noUnusedLocals": true,
