@@ -145,9 +145,11 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     value: () => local.value,
     disabled: () => local.disabled,
     required: () => local.required,
-    onValueChange: (next) => local.onValueChange(next),
     reconcileTick,
-    bumpReconcile: () => setReconcileTick((current) => current + 1),
+    notifyChange: (next) => {
+      local.onValueChange(next);
+      setReconcileTick((tick) => tick + 1);
+    },
   };
 
   return (
@@ -221,16 +223,15 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
   const isChecked = () => ctx.value() === local.value;
   const isDisabled = () => ctx.disabled() || local.disabled === true;
 
+  // Reconcile the input's `.checked` property after every change event.
+  // The default `<input checked={isChecked()}>` binding is memoized by
+  // Solid's compiler against the previous expression value — when a
+  // consumer ignores `onValueChange` and `ctx.value()` stays the same,
+  // the binding doesn't re-apply, leaving the DOM diverged after a
+  // native click. A manual effect keyed on `reconcileTick` (bumped by
+  // `ctx.notifyChange` on every change) bypasses the memoization and
+  // imperatively restores the DOM to match the controlled prop.
   let inputRef: HTMLInputElement | undefined;
-
-  // Reconcile this input's `checked` property against the controlled
-  // value on every reactive change *and* on every change event from
-  // any item in the group. Solid's `checked={isChecked()}` JSX binding
-  // already handles the value-changed case; this effect adds coverage
-  // for the value-didn't-change case (parent rejected the click), which
-  // the JSX binding can't see — there's no reactive dep to fire on.
-  // Subscribing to `reconcileTick` runs the effect on every change in
-  // the group, restoring this input to whatever `isChecked()` says.
   createEffect(() => {
     ctx.reconcileTick();
     if (inputRef) inputRef.checked = isChecked();
@@ -241,13 +242,7 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
     // calling `preventDefault()` is a no-op — the controlled `value`
     // on the group is the only way to suppress the visual update.
     callConsumerHandler(local.onChange, event);
-    ctx.onValueChange(local.value);
-    // Bump the per-group reconcile tick so every item's effect re-runs
-    // and re-applies `checked` from the controlled value. Necessary
-    // when the parent ignores `onValueChange` — native radio behavior
-    // already toggled both the clicked input and the previously-checked
-    // sibling, but reactivity didn't fire because `value` didn't change.
-    ctx.bumpReconcile();
+    ctx.notifyChange(local.value);
   };
 
   const onKeyDown: JSX.EventHandler<HTMLInputElement, KeyboardEvent> = (

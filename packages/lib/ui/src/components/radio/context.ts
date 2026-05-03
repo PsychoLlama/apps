@@ -20,19 +20,23 @@ export interface RadioGroupContextValue {
   value: Accessor<string | null>;
   disabled: Accessor<boolean>;
   required: Accessor<boolean>;
-  onValueChange: (value: string) => void;
   /**
-   * Counter that bumps on every change event from any item. Items
-   * subscribe to this in a `createEffect` so they can re-apply their
-   * `checked` property even when `value` didn't change — which happens
-   * when the parent ignores `onValueChange`. Native radio behavior
-   * silently flips both the clicked input on and the previously-checked
-   * sibling off; only the clicked input fires `change`, so reactivity
-   * alone can't restore the sibling. Bumping this signal force-runs
-   * the per-item effect for the whole group.
+   * Bumps on every change event. Items' `checked` bindings subscribe
+   * to it so Solid re-applies the controlled `checked` property on
+   * every input after a click — necessary because native radio
+   * behavior mutates two inputs (clicked + previously-checked sibling)
+   * but only fires `change` on the clicked one. When the consumer
+   * ignores `onValueChange`, `value` stays the same and Solid would
+   * otherwise not re-fire the bindings, leaving the DOM diverged from
+   * the controlled prop.
    */
   reconcileTick: Accessor<number>;
-  bumpReconcile: () => void;
+  /**
+   * Records the user's selection. Calls the consumer's
+   * `onValueChange` and bumps `reconcileTick` so every item's
+   * `checked` binding re-runs.
+   */
+  notifyChange: (value: string) => void;
 }
 
 export const RadioGroupContext = createContext<RadioGroupContextValue>();
