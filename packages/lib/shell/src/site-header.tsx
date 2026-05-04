@@ -3,6 +3,7 @@ import { Title } from '@solidjs/meta';
 import { Flex, Link, LinkButton, Separator, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
+import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconGithub from 'virtual:icons/mdi/github';
 import * as css from './site-header.css';
 
@@ -104,6 +105,16 @@ export default function SiteHeader(props: {
         class={css.trailing}
       >
         <IconGithub width="24" height="24" />
+      </LinkButton>
+
+      <LinkButton
+        testId="settings"
+        href="/settings"
+        aria-label="Settings"
+        variant="ghost"
+        color="neutral"
+      >
+        <IconCog width="24" height="24" />
       </LinkButton>
     </Flex>
   );

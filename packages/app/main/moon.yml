@@ -7,6 +7,7 @@ project:
 dependsOn:
   - '@app/logo-editor'
   - '@app/service-worker'
+  - '@app/settings'
   - '@app/studio'
   - '@lib/design'
   - '@lib/shell'
@@ -45,6 +46,7 @@ tasks:
       - 'wrangler.jsonc'
       - '/packages/app/logo-editor/src/**/*'
       - '/packages/app/service-worker/src/**/*'
+      - '/packages/app/settings/src/**/*'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'
     outputs:
