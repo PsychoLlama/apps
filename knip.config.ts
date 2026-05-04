@@ -17,10 +17,15 @@ const config: KnipConfig = {
       // `!` on entries marks them as production-mode entries. These
       // runtime files are what `knip --production` walks to find
       // exports that are only kept alive by tests or build glue.
+      // Sibling `.css.ts` files are reached via `import './foo.css'`
+      // from their `.tsx`, but knip's resolver doesn't follow the
+      // V-E `.css` -> `.css.ts` extension swap. Marking them as
+      // production entries credits the design tokens they pull in.
       entry: [
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
+        'src/**/*.css.ts!',
         'src/**/*.test.{ts,tsx}',
         'src/__tests__/test-utils.tsx',
         'vite.config.ts',
