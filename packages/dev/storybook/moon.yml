@@ -27,7 +27,6 @@ tasks:
     inputs:
       - '.storybook/**/*'
       - 'src/**/*'
-      - '/packages/app/main/src/theme.ts'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'
     outputs:
@@ -44,6 +43,5 @@ tasks:
       - '.storybook/**/*'
       - 'vitest.config.ts'
       - 'src/**/*'
-      - '/packages/app/main/src/theme.ts'
       - '/packages/app/studio/src/**/*'
       - '/packages/lib/**/src/**/*'

@@ -9,12 +9,8 @@
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
   "sideEffects": [
-    "**/*.css.ts",
-    "src/theme.ts"
+    "**/*.css.ts"
   ],
-  "exports": {
-    "./theme": "./src/theme.ts"
-  },
   "scripts": {
     "dev": "vite dev",
     "dev:wrangler": "wrangler dev",

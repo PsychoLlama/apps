@@ -1,5 +1,5 @@
 // @refresh reload
-import './theme';
+import '@lib/theme/default';
 import '@lib/design';
 import { mount, StartClient } from '@solidjs/start/client';
 import workerUrl from '@app/service-worker?worker&url';
