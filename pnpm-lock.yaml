@@ -192,9 +192,6 @@ importers:
       '@app/studio':
         specifier: workspace:*
         version: link:../studio
-      '@fontsource-variable/ibm-plex-sans':
-        specifier: ^5.2.8
-        version: 5.2.8
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -385,6 +382,9 @@ importers:
 
   packages/lib/design:
     dependencies:
+      '@fontsource-variable/ibm-plex-sans':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1(babel-plugin-macros@3.1.0)

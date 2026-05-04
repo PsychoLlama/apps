@@ -13,10 +13,7 @@
     "src/theme.ts"
   ],
   "exports": {
-    "./theme": {
-      "types": "./src/vendor.d.ts",
-      "default": "./src/theme.ts"
-    }
+    "./theme": "./src/theme.ts"
   },
   "scripts": {
     "dev": "vite dev",
@@ -30,7 +27,6 @@
     "@app/logo-editor": "workspace:*",
     "@app/service-worker": "workspace:*",
     "@app/studio": "workspace:*",
-    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/theme": "workspace:*",

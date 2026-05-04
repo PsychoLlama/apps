@@ -1,2 +1,2 @@
-import '@fontsource-variable/ibm-plex-sans';
+import '@lib/design/typography';
 import '@lib/theme/default';
