@@ -142,3 +142,12 @@ export {
   type SliderColor,
   type SliderOrientation,
 } from './components/slider/slider';
+export {
+  RadioGroupRoot,
+  RadioGroupItem,
+  type RadioGroupRootProps,
+  type RadioGroupItemProps,
+  type RadioSize,
+  type RadioVariant,
+  type RadioColor,
+} from './components/radio/radio-group';

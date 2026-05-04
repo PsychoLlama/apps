@@ -33,7 +33,6 @@ import {
   useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './switch.css';
 
 /** Visual size on a 1–3 scale. */
@@ -132,7 +131,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const onClick: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
-    callConsumerHandler(local.onClick, event);
+    if (typeof local.onClick === 'function') local.onClick(event);
     if (event.defaultPrevented) return;
     local.onCheckedChange(!local.checked);
   };

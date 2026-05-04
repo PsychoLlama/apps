@@ -25,7 +25,6 @@ import {
   resolveSkeletonAttrs,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { callConsumerHandler } from '../compose-event-handler';
 import * as css from './text-field.css';
 
 /** Visual size on a 1–3 scale. */
@@ -125,7 +124,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
   const onPointerDown: JSX.EventHandler<HTMLDivElement, PointerEvent> = (
     event,
   ) => {
-    callConsumerHandler(local.onPointerDown, event);
+    if (typeof local.onPointerDown === 'function') local.onPointerDown(event);
     if (event.defaultPrevented) return;
     const input = event.currentTarget.querySelector('input');
     if (!input || input.disabled || input.readOnly) return;

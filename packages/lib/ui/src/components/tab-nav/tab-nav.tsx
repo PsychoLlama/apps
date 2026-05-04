@@ -32,7 +32,6 @@ import {
   useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { callConsumerHandler } from '../compose-event-handler';
 import Flex from '../flex/flex';
 import * as shared from '../tabs/shared.css';
 
@@ -163,7 +162,7 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
   const onKeyDown: JSX.EventHandler<HTMLAnchorElement, KeyboardEvent> = (
     event,
   ) => {
-    callConsumerHandler(local.onKeyDown, event);
+    if (typeof local.onKeyDown === 'function') local.onKeyDown(event);
     if (event.defaultPrevented) return;
     const target = neighborLink(event.currentTarget, event.key);
     if (!target) return;

@@ -29,6 +29,7 @@
 - [IconButton](./icon-button.md): Square button for a single icon.
 - [Kbd](./kbd.md): Inline keyboard input.
 - [Progress](./progress.md): Linear progress bar.
+- [RadioGroup](./radio-group.md): Group of radios sharing a single value.
 - [Separator](./separator.md): Visual divider between sibling content.
 - [Slider](./slider.md): Range input with one or more thumbs.
 - [Switch](./switch.md): Two-state toggle button.
