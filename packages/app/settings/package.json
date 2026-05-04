@@ -1,0 +1,21 @@
+{
+  "name": "@app/settings",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "User-facing settings (theme, preferences).",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/shell": "workspace:*",
+    "@lib/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
+  }
+}

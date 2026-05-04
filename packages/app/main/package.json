@@ -22,6 +22,7 @@
   "dependencies": {
     "@app/logo-editor": "workspace:*",
     "@app/service-worker": "workspace:*",
+    "@app/settings": "workspace:*",
     "@app/studio": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
