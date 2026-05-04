@@ -15,12 +15,12 @@
     "typecheck": "tsc"
   },
   "devDependencies": {
-    "@app/main": "workspace:*",
     "@app/studio": "workspace:*",
     "@dev/build": "workspace:*",
     "@iconify/json": "^2.2.460",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
+    "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
     "@solidjs/router": "catalog:",
     "@storybook/addon-themes": "^10.3.5",

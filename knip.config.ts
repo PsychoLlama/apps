@@ -37,6 +37,13 @@ const config: KnipConfig = {
       // auto-discovery; the entry list above is the source of truth.
       vite: false,
     },
+    'packages/lib/themes': {
+      // The per-accent bundle files are only reached via
+      // `bundles/index.ts`'s `?url` imports. Mark them as production
+      // entries so knip credits them as live until a host wires them up.
+      entry: ['src/bundles/*.css.ts!'],
+      project: ['src/**/*.ts'],
+    },
     'packages/lib/ui': {
       // Co-located behavior tests run against a real browser via the
       // root vitest config's `browser` project (playwright). The

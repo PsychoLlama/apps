@@ -201,6 +201,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/theme':
+        specifier: workspace:*
+        version: link:../../lib/theme
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -301,9 +304,6 @@ importers:
 
   packages/dev/storybook:
     devDependencies:
-      '@app/main':
-        specifier: workspace:*
-        version: link:../../app/main
       '@app/studio':
         specifier: workspace:*
         version: link:../../app/studio
@@ -319,6 +319,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/theme':
+        specifier: workspace:*
+        version: link:../../lib/theme
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -412,6 +415,12 @@ importers:
       solid-js:
         specifier: '*'
         version: 1.9.12
+
+  packages/lib/theme:
+    dependencies:
+      '@lib/design':
+        specifier: workspace:*
+        version: link:../design
 
   packages/lib/ui:
     dependencies:

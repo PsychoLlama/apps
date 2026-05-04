@@ -21,11 +21,11 @@ export interface ThemeColorConfig {
   text: Pick<ColorPalette['solid'], 11 | 12>;
 }
 
-let assigned = false;
-
 /**
- * Bind concrete palettes to the color theme. Call exactly once from a
- * `.css.ts` file. Throws if called more than once.
+ * Bind concrete palettes to the color theme. Each call is intended to
+ * live in its own `.css.ts` bundle so that the host can emit one CSS
+ * file per accent and pick at load time which bundle to apply — only
+ * one bundle's `:root` rule reaches the browser per page.
  *
  * Each semantic role (`accent`, `neutral`, `danger`, `warning`, `success`)
  * takes one full `ColorPalette` covering solid + alpha + meta tokens.
@@ -33,13 +33,6 @@ let assigned = false;
  * are derived from the neutral palette. Surface and overlay are constants.
  */
 export const setThemeColors = (config: ThemeColorConfig): void => {
-  if (assigned) {
-    throw new Error(
-      'setThemeColors() has already been called. Theme colors can only be set once.',
-    );
-  }
-  assigned = true;
-
   globalStyle(':root', {
     vars: {
       ...aliasPalette(accent, config.accent),
