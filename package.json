@@ -17,7 +17,7 @@
     "typecheck": "tsc && pnpm -r typecheck",
     "knip:dev": "knip",
     "knip:production": "knip --production",
-    "lint": "eslint --color",
+    "lint": "eslint --color --cache --cache-location node_modules/.cache/eslint/",
     "test": "vitest run --project unit",
     "test:browser": "vitest run --project browser"
   },
