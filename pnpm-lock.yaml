@@ -192,15 +192,15 @@ importers:
       '@app/studio':
         specifier: workspace:*
         version: link:../studio
-      '@fontsource-variable/ibm-plex-sans':
-        specifier: ^5.2.8
-        version: 5.2.8
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/theme':
+        specifier: workspace:*
+        version: link:../../lib/theme
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -301,9 +301,6 @@ importers:
 
   packages/dev/storybook:
     devDependencies:
-      '@app/main':
-        specifier: workspace:*
-        version: link:../../app/main
       '@app/studio':
         specifier: workspace:*
         version: link:../../app/studio
@@ -319,6 +316,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/theme':
+        specifier: workspace:*
+        version: link:../../lib/theme
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -382,6 +382,9 @@ importers:
 
   packages/lib/design:
     dependencies:
+      '@fontsource-variable/ibm-plex-sans':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1(babel-plugin-macros@3.1.0)
@@ -412,6 +415,12 @@ importers:
       solid-js:
         specifier: '*'
         version: 1.9.12
+
+  packages/lib/theme:
+    dependencies:
+      '@lib/design':
+        specifier: workspace:*
+        version: link:../design
 
   packages/lib/ui:
     dependencies:

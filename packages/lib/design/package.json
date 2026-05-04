@@ -6,10 +6,11 @@
   "description": "Design tokens (color, spacing, typography, motion).",
   "license": "MIT",
   "sideEffects": [
-    "**/*.css.ts"
+    "**/*.css.ts",
+    "src/index.ts"
   ],
   "exports": {
-    ".": "./src/index.css.ts",
+    ".": "./src/index.ts",
     "./color-scheme": "./src/color-scheme.ts",
     "./theme": "./src/theme.ts",
     "./palette/*": "./src/palette/*.css.ts",
@@ -19,6 +20,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
     "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {

@@ -9,15 +9,8 @@
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
   "sideEffects": [
-    "**/*.css.ts",
-    "src/theme.ts"
+    "**/*.css.ts"
   ],
-  "exports": {
-    "./theme": {
-      "types": "./src/vendor.d.ts",
-      "default": "./src/theme.ts"
-    }
-  },
   "scripts": {
     "dev": "vite dev",
     "dev:wrangler": "wrangler dev",
@@ -30,9 +23,9 @@
     "@app/logo-editor": "workspace:*",
     "@app/service-worker": "workspace:*",
     "@app/studio": "workspace:*",
-    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
+    "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",

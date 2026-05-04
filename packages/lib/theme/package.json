@@ -1,0 +1,22 @@
+{
+  "name": "@lib/theme",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Pre-composed color palettes using `@lib/design`.",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
+  "exports": {
+    "./default": "./src/bundles/blue.css.ts",
+    "./bundles/*": "./src/bundles/*.css.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/design": "workspace:*"
+  }
+}
