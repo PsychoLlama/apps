@@ -6,7 +6,7 @@ export const Settings = () => (
     <SiteHeader title="Settings" />
 
     <Section size={3}>
-      <Container as="div" size={2}>
+      <Container as="div" size={2} px={4}>
         <Flex as="div" direction="column" gap={5}>
           <Flex as="header" direction="column" gap={2}>
             <Heading as="h1" size={6} weight="medium">
