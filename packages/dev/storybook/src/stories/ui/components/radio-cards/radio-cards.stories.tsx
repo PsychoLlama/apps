@@ -14,16 +14,21 @@ import { gallery } from '../../../../gallery';
 const VARIANTS = ['surface', 'classic'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const SIZES = [1, 2, 3] as const;
-const OPTIONS = [1, 2, 3] as const;
+const OPTIONS = [1, 2] as const;
 
 /**
- * Each gallery cell echoes the axis value being demonstrated in its
- * card labels (e.g. "surface 1 / 2 / 3", "danger 1 / 2 / 3"). The
- * second card is preselected so the checked + indicator color shows
- * up directly.
+ * Each gallery cell echoes the demoed axis value in its card labels
+ * when the value isn't already obvious from the visual treatment —
+ * the variant cell prefixes "surface" / "classic" and the color cell
+ * prefixes "accent" / "danger" / etc. Size + disabled cells skip the
+ * prefix (the size renders visibly; the disabled cell uses the
+ * disabled affordance) to avoid awkward "size 1 1" repetition.
+ *
+ * The second card is preselected so the checked + indicator color
+ * shows up directly.
  */
 const Demo = (
-  props: Partial<RadioCardsRootProps> & { id: string; label: string },
+  props: Partial<RadioCardsRootProps> & { id: string; label?: string },
 ) => {
   const [value, setValue] = createSignal<string | null>('2');
   return (
@@ -36,7 +41,7 @@ const Demo = (
       variant={props.variant}
       color={props.color}
       disabled={props.disabled}
-      columns={3}
+      columns={2}
     >
       <For each={OPTIONS}>
         {(option) => (
@@ -44,7 +49,7 @@ const Demo = (
             testId={`overview-${props.id}-${option}`}
             value={String(option)}
           >
-            {props.label} {option}
+            {props.label ? `${props.label} ${option}` : option}
           </RadioCardsItem>
         )}
       </For>
@@ -153,13 +158,11 @@ export const Overview: Story = gallery({
     },
     {
       title: 'Size',
-      items: SIZES.map((size) => (
-        <Demo id={`size-${size}`} label={`size ${size}`} size={size} />
-      )),
+      items: SIZES.map((size) => <Demo id={`size-${size}`} size={size} />),
     },
     {
       title: 'Disabled',
-      items: [<Demo id="disabled" label="disabled" disabled />],
+      items: [<Demo id="disabled" disabled />],
     },
   ],
 });
