@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
-import { RadioCardsItem, RadioCardsRoot, Text } from '@lib/ui';
+import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
 import { THEMES, type ThemeId } from '@lib/theme/catalog';
 import * as css from './theme-picker.css';
 
@@ -47,9 +47,7 @@ export const ThemePicker = () => {
             value={theme.id}
             class={`${css.swatchBase} ${css.swatchTint[theme.id]}`}
           >
-            <Text as="span" size={2} weight="medium" selectable={false}>
-              {theme.label}
-            </Text>
+            {theme.label}
           </RadioCardsItem>
         )}
       </For>
