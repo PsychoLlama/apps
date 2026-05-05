@@ -43,10 +43,12 @@ const config: KnipConfig = {
       vite: false,
     },
     'packages/lib/theme': {
-      // Each `bundles/<accent>.css.ts` is a runtime entry exposed via
-      // the `@lib/theme/bundles/*` subpath. Only `blue` is consumed
-      // today (through `@lib/theme/default`); the others stay alive
-      // in knip until a host wires them up.
+      // Each `bundles/<accent>.css.ts` is library surface — exposed
+      // through the `./bundles/*` subpath export and reached via
+      // `import url from '@lib/theme/bundles/<accent>.css.ts?css-asset'`
+      // (handled by `@dev/build/vite-plugin/css-asset`). Only the
+      // default is consumed today; keep the rest alive in knip until
+      // a host wires them up.
       entry: ['src/bundles/*.css.ts!'],
       project: ['src/**/*.ts'],
     },
