@@ -5,7 +5,8 @@ import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
-import { assertHashedAssetNames } from '@dev/build/vite-plugin';
+import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets';
+import { cssAsset } from '@dev/build/vite-plugin/css-asset';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
 
@@ -55,10 +56,11 @@ export default defineConfig({
         },
       },
     }),
+    cssAsset(),
     vanillaExtractPlugin(),
     Icons({
       compiler: 'solid',
     }),
-    assertHashedAssetNames(),
+    assertHashedAssets(),
   ],
 });

@@ -12,8 +12,8 @@ import type { Plugin } from 'vite';
  *
  * Skips SSR environments — server bundles aren't browser-cached.
  */
-export const assertHashedAssetNames = (): Plugin => ({
-  name: '@dev/build:assert-hashed-asset-names',
+export const assertHashedAssets = (): Plugin => ({
+  name: '@dev/build:assert-hashed-assets',
   apply: 'build',
 
   // Vite 6+ environment API: filter at registration so the plugin

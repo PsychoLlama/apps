@@ -9,6 +9,7 @@
     "**/*.css.ts"
   ],
   "exports": {
+    ".": "./src/index.tsx",
     "./default": "./src/bundles/blue.css.ts",
     "./bundles/*": "./src/bundles/*.css.ts",
     "./package.json": "./package.json"
@@ -18,5 +19,9 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*"
+  },
+  "peerDependencies": {
+    "@solidjs/meta": "*",
+    "solid-js": "*"
   }
 }
