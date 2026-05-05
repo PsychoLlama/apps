@@ -16,11 +16,22 @@ import { tealDark, tealLight } from '@lib/design/color/teal';
 import { violetDark, violetLight } from '@lib/design/color/violet';
 
 /**
+ * Wrap items as a flex row so each card sizes to its content rather
+ * than stretching across a grid track.
+ */
+export const root = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+});
+
+/**
  * Base for theme-tinted radio cards. Paints a circular swatch via a
  * `::before` pseudo so the visible card stays a single element — no
- * extra DOM nodes inside the `<label>`.
+ * extra DOM nodes inside the `<label>`. Overrides the upstream
+ * `justify-content: center` so the swatch sits before the label.
  */
 export const swatchBase = style({
+  justifyContent: 'flex-start',
   selectors: {
     '&::before': {
       content: '""',

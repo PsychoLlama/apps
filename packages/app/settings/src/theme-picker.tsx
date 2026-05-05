@@ -36,8 +36,8 @@ export const ThemePicker = () => {
       name="theme"
       value={themePicker.selected}
       onValueChange={(next) => selectTheme(next as ThemeId)}
-      columns={2}
       gap={3}
+      class={css.root}
     >
       <For each={THEMES}>
         {(theme) => (
