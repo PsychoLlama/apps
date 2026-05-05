@@ -11,3 +11,11 @@
 import '@fontsource-variable/ibm-plex-sans/index.css';
 
 export * from './index.css.ts';
+export {
+  hint,
+  edge,
+  tick,
+  align,
+  type HapticEffect,
+  type HapticPulse,
+} from './haptic.ts';

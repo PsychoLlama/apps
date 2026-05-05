@@ -36,6 +36,7 @@
     "typescript": "catalog:",
     "unplugin-icons": "catalog:",
     "vite": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "web-haptics": "^0.0.6"
   }
 }

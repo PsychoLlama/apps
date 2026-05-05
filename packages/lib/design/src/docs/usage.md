@@ -60,3 +60,12 @@ Adapted from IBM Carbon (Apache-2.0). Compose a duration + easing per transition
 ## Breakpoints
 
 - `breakpoint.xs` (520), `.sm` (768), `.md` (1024), `.lg` (1280), `.xl` (1640): Mobile-first `min-width` queries.
+
+## Haptics
+
+- Vocabulary tracks the MS Edge Web Haptics explainer. JS constants (not CSS) — feed to `navigator.vibrate()` or a library like `web-haptics`.
+- `hint`: Light cue on interactive surfaces.
+- `tick`: Discrete state change (list step, toggle).
+- `edge`: Heavy boundary (scroll edge, range clamp).
+- `align`: Crisp double-tap confirmation (snap, alignment).
+- Each is a `HapticPulse[]` of `{ duration, intensity?, delay? }`. Intensity is honored only when a real Web Haptics implementation is available.
