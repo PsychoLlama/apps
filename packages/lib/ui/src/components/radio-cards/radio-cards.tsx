@@ -35,8 +35,8 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import {
-  resolveSkeletonClass,
   skeletonPropKeys,
+  useSkeleton,
   type SkeletonProps,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
@@ -146,6 +146,12 @@ export const RadioCardsRoot: ParentComponent<RadioCardsRootProps> = (
     'class',
     'children',
   ]);
+  // `useSkeleton` returns the visual class plus a `mergeProps` proxy
+  // that adds `inert` / `aria-hidden` / `tabindex={-1}` while skeleton
+  // is on. `inert` propagates through the subtree, so the hidden radio
+  // inputs stop participating in form submission and validation while
+  // the placeholder is rendered.
+  const [skeletonClass, skeletonProps] = useSkeleton(skeleton, rest);
 
   const [reconcileTick, setReconcileTick] = createSignal(0);
 
@@ -172,7 +178,7 @@ export const RadioCardsRoot: ParentComponent<RadioCardsRootProps> = (
       css.root,
       local.columns && css.columns[local.columns],
       css.gap[local.gap],
-      resolveSkeletonClass(skeleton),
+      skeletonClass(),
       local.class,
     ]
       .filter(Boolean)
@@ -181,7 +187,7 @@ export const RadioCardsRoot: ParentComponent<RadioCardsRootProps> = (
   return (
     <RadioCardsContext.Provider value={ctx}>
       <div
-        {...rest}
+        {...skeletonProps}
         role="radiogroup"
         aria-required={local.required ? true : undefined}
         // `data-disabled` (matches `RadioGroup`) rather than

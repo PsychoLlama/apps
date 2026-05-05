@@ -359,6 +359,26 @@ describe('RadioCards', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
+  // --- Skeleton ---
+
+  it('makes the group inert while skeleton is on', () => {
+    render(() => (
+      <RadioCardsRoot
+        testId="group"
+        name="plan"
+        skeleton
+        value="basic"
+        onValueChange={noop}
+      >
+        <RadioCardsItem testId="ra" value="basic" />
+      </RadioCardsRoot>
+    ));
+    const group = screen.getByTestId('group');
+    expect(group).toHaveAttribute('inert');
+    expect(group).toHaveAttribute('aria-hidden', 'true');
+    expect(group).toHaveAttribute('tabindex', '-1');
+  });
+
   // --- Throws outside the root ---
 
   it('throws when an item is rendered outside RadioCardsRoot', () => {
