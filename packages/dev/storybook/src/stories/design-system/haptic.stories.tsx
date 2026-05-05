@@ -20,7 +20,7 @@ const effects: ReadonlyArray<{
   {
     name: 'hint',
     description:
-      'Light cue on interactive surfaces. Silent on the web — see haptic.ts.',
+      'Light cue on interactive surfaces. Wired to every button tap in @app/main.',
     pattern: hint,
   },
   {

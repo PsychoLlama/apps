@@ -55,17 +55,15 @@ export type HapticEffect = readonly HapticPulse[];
  * AOSP: `GESTURE_THRESHOLD_DEACTIVATE` → `PRIMITIVE_TICK` at scale
  * `0.4`, falling back to `EFFECT_TEXTURE_TICK` (10ms).
  *
- * Empty on the web. `navigator.vibrate()` is duration-only, so the
- * `0.4` intensity scale that makes this feel feather-light on real
- * hardware can't be reproduced — any pulse short enough to register
- * as "soft" is below the haptic driver's effective floor and either
- * fires at full strength or not at all. AOSP documents this same
- * fallback for the soft-tick family: "If the device can't make a
- * suitably soft vibration, then it may not make any vibration." When
- * a real Web Haptics API lands (`navigator.playHaptics('hint', 0.4)`),
- * this becomes a real PRIMITIVE_TICK @ 0.4 scale automatically.
+ * On the web this is a 2ms pulse — about as short as `navigator.vibrate()`
+ * can express predictably. Intensity is `1` (rather than `0.4` to match
+ * AOSP's primitive scale) because `web-haptics`'s PWM modulation can't
+ * meaningfully soften a sub-10ms pulse, and most Android haptic drivers
+ * fire at default strength regardless of duration. When a real Web
+ * Haptics API lands (`navigator.playHaptics('hint', 0.4)`), this can
+ * become a real PRIMITIVE_TICK @ 0.4 scale automatically.
  */
-export const hint: HapticEffect = [];
+export const hint: HapticEffect = [{ duration: 2, intensity: 1 }];
 
 /**
  * Soft pulse for discrete, frequently-repeated state changes — moving
