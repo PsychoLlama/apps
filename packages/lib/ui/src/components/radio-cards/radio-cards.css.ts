@@ -111,23 +111,18 @@ export const item = style({
   // defeat the affordance. `user-select: none` covers selection that
   // runs across the card.
   userSelect: 'none',
-  transitionProperty: 'background-color, box-shadow',
-  transitionTimingFunction: standard.productive,
-  // Duration applies to all pointer types — touch / non-hover devices
-  // still benefit from the eased transitions on checked/disabled
-  // state changes. The hover-only block below was the historical bug.
-  transitionDuration: fast[2],
 
   selectors: {
+    // The `::after` border inherits whatever transition the variant
+    // defines. Upstream's BaseCard does the same — only the classic
+    // variant transitions box-shadow; surface state changes snap.
     '&::after': {
       content: '""',
       position: 'absolute',
       inset: 0,
       pointerEvents: 'none',
       borderRadius: itemBorderRadius,
-      transitionProperty: 'box-shadow, outline-color',
-      transitionTimingFunction: standard.productive,
-      transitionDuration: fast[2],
+      transition: 'inherit',
     },
 
     // Checked outline. Comes before the focus rule below so focus
@@ -257,16 +252,24 @@ export const variant = styleVariants({
       },
     },
   },
+  // Classic is the only variant that animates state changes — matches
+  // upstream. The transition shorthand is interpolated as a string so
+  // the `::after` rule's `transition: inherit` picks up the same
+  // property + duration + timing-function in one go.
   classic: {
     backgroundColor: background.panelSolid,
     boxShadow: shadow[3],
+    transition: `box-shadow ${fast[2]} ${standard.productive}`,
     selectors: {
       '&::after': { boxShadow: borderShadow },
     },
     '@media': {
       '(hover: hover)': {
         selectors: {
-          [idleStateSelector]: { boxShadow: shadow[4] },
+          [idleStateSelector]: {
+            transitionDuration: fast[1],
+            boxShadow: shadow[4],
+          },
         },
       },
     },
