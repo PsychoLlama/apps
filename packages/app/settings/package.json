@@ -5,6 +5,9 @@
   "version": "0.0.0",
   "description": "User-facing settings (theme, preferences).",
   "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
   "exports": {
     ".": "./src/index.tsx"
   },
@@ -12,8 +15,12 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
-    "@lib/ui": "workspace:*"
+    "@lib/state": "workspace:*",
+    "@lib/theme": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {
     "solid-js": "*"

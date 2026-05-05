@@ -1,5 +1,6 @@
 import { Container, Flex, Heading, Section, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
+import { ThemePicker, themeHeadingId } from './theme-picker';
 
 export const Settings = () => (
   <Flex as="main" direction="column" grow>
@@ -17,14 +18,12 @@ export const Settings = () => (
             </Text>
           </Flex>
 
-          <Flex as="section" direction="column" gap={2}>
-            <Heading as="h2" size={4} weight="medium">
+          <Flex as="section" direction="column" gap={3}>
+            <Heading as="h2" id={themeHeadingId} size={4} weight="medium">
               Theme
             </Heading>
-            <Text as="p" size={2} color="lowContrast">
-              TODO: surface theme controls (accent, mode) once the tokens are
-              pluggable at runtime.
-            </Text>
+
+            <ThemePicker />
           </Flex>
         </Flex>
       </Container>
