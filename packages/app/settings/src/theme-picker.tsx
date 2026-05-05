@@ -38,6 +38,7 @@ export const ThemePicker = () => {
       onValueChange={(next) => selectTheme(next as ThemeId)}
       gap={3}
       class={css.root}
+      aria-labelledby="settings-theme-heading"
     >
       <For each={THEMES}>
         {(theme) => (

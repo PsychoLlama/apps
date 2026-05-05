@@ -19,14 +19,14 @@ export const Settings = () => (
           </Flex>
 
           <Flex as="section" direction="column" gap={3}>
-            <Flex as="header" direction="column" gap={1}>
-              <Heading as="h2" size={4} weight="medium">
-                Theme
-              </Heading>
-              <Text as="p" size={2} color="lowContrast">
-                Pick an accent color. Changes apply locally for now.
-              </Text>
-            </Flex>
+            <Heading
+              as="h2"
+              id="settings-theme-heading"
+              size={4}
+              weight="medium"
+            >
+              Theme
+            </Heading>
 
             <ThemePicker />
           </Flex>

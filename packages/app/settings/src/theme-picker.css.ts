@@ -17,11 +17,13 @@ import { violetDark, violetLight } from '@lib/design/color/violet';
 
 /**
  * Override for the radio group container. Replaces the default auto-
- * fit `1fr` tracks with `fit-content` tracks so each card hugs its
- * label + swatch instead of stretching to fill the column.
+ * fit `1fr` tracks with a fixed `7.5rem` track so cards stay compact
+ * and consistently sized (auto-fill needs a fixed track size; intrinsic
+ * sizing functions like `max-content` or `fit-content()` aren't valid
+ * in `repeat(auto-fill, ...)`).
  */
 export const root = style({
-  gridTemplateColumns: 'repeat(auto-fill, fit-content(8rem))',
+  gridTemplateColumns: 'repeat(auto-fill, 7.5rem)',
 });
 
 /**
