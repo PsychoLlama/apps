@@ -16,8 +16,9 @@ import { tealDark, tealLight } from '@lib/design/color/teal';
 import { violetDark, violetLight } from '@lib/design/color/violet';
 
 /**
- * Wrap items as a flex row so each card sizes to its content rather
- * than stretching across a grid track.
+ * Override for the radio group container. Drops the auto-fit grid for
+ * a content-sized wrapping flow so cards stay as wide as their label
+ * + swatch instead of stretching to fill the column.
  */
 export const root = style({
   display: 'flex',
@@ -25,10 +26,10 @@ export const root = style({
 });
 
 /**
- * Base for theme-tinted radio cards. Paints a circular swatch via a
- * `::before` pseudo so the visible card stays a single element — no
- * extra DOM nodes inside the `<label>`. Overrides the upstream
- * `justify-content: center` so the swatch sits before the label.
+ * Base for theme-tinted radio cards. Aligns content to the start so
+ * the `::before` swatch sits on the left edge of the card, and paints
+ * the swatch as a `::before` pseudo so the visible card stays a single
+ * element — no extra DOM nodes inside the `<label>`.
  */
 export const swatchBase = style({
   justifyContent: 'flex-start',
