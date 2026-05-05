@@ -15,6 +15,13 @@ const themePickerStore = defineStore<ThemePickerState>(() => ({
 /** Materialized view of the picker's local selection. */
 export const themePicker = createStore(themePickerStore);
 
+/**
+ * `id` of the heading the picker is labelled by. Shared between the
+ * heading element and the radio group's `aria-labelledby` so the two
+ * stay in sync.
+ */
+export const themeHeadingId = 'settings-theme-heading';
+
 const selectThemeAction = defineAction(
   [themePickerStore],
   (state, next: ThemeId) => {
@@ -38,7 +45,7 @@ export const ThemePicker = () => {
       onValueChange={(next) => selectTheme(next as ThemeId)}
       gap={3}
       class={css.root}
-      aria-labelledby="settings-theme-heading"
+      aria-labelledby={themeHeadingId}
     >
       <For each={THEMES}>
         {(theme) => (
