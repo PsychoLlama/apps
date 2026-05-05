@@ -126,16 +126,19 @@ export const item = style({
     },
 
     // Checked outline. Comes before the focus rule below so focus
-    // wins on `:where()` source order when both apply.
+    // wins on `:where()` source order when both apply. The `-2px`
+    // offset keeps the full 2px ring inside the label's overflow
+    // clip — `overflow: hidden` on the label would otherwise shave
+    // the outer 1px off any outline that straddled the card edge.
     '&:where(:has(input:checked))::after': {
       outline: `2px solid ${colorIndicator}`,
-      outlineOffset: '-1px',
+      outlineOffset: '-2px',
     },
 
     // Focus ring on the wrapper when the hidden input is focus-visible.
     '&:where(:has(input:focus-visible))::after': {
       outline: `2px solid ${colorFocus}`,
-      outlineOffset: '-1px',
+      outlineOffset: '-2px',
     },
 
     // Focused + checked combination. Paints a translucent focus tint
