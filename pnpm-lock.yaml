@@ -439,6 +439,12 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../design
+      '@solidjs/meta':
+        specifier: '*'
+        version: 0.29.4(solid-js@1.9.12)
+      solid-js:
+        specifier: '*'
+        version: 1.9.12
 
   packages/lib/ui:
     dependencies:
