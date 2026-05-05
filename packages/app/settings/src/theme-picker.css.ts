@@ -16,13 +16,12 @@ import { tealDark, tealLight } from '@lib/design/color/teal';
 import { violetDark, violetLight } from '@lib/design/color/violet';
 
 /**
- * Override for the radio group container. Drops the auto-fit grid for
- * a content-sized wrapping flow so cards stay as wide as their label
- * + swatch instead of stretching to fill the column.
+ * Override for the radio group container. Replaces the default auto-
+ * fit `1fr` tracks with `fit-content` tracks so each card hugs its
+ * label + swatch instead of stretching to fill the column.
  */
 export const root = style({
-  display: 'flex',
-  flexWrap: 'wrap',
+  gridTemplateColumns: 'repeat(auto-fill, fit-content(8rem))',
 });
 
 /**
