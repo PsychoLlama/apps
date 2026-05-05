@@ -7,7 +7,7 @@
   "license": "MIT",
   "exports": {
     "./ignore": "./src/ignore.ts",
-    "./vite-plugin": "./src/vite-plugin.ts"
+    "./vite-plugin/assert-hashed-assets": "./src/vite-plugin/assert-hashed-assets.ts"
   },
   "scripts": {
     "typecheck": "tsc"

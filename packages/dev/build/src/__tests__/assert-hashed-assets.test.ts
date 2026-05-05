@@ -1,5 +1,5 @@
 import type { Plugin } from 'vite';
-import { assertHashedAssetNames } from '../vite-plugin.ts';
+import { assertHashedAssets } from '../vite-plugin/assert-hashed-assets.ts';
 
 const goodTemplates = {
   entryFileNames: 'assets/[name]-[hash].js',
@@ -26,15 +26,15 @@ const callApplyToEnvironment = (plugin: Plugin, ssr: boolean) => {
   return hook.call(fakeContext, { config: { build: { ssr } } });
 };
 
-describe('assertHashedAssetNames', () => {
+describe('assertHashedAssets', () => {
   it('accepts templates that all contain [hash]', () => {
-    const plugin = assertHashedAssetNames();
+    const plugin = assertHashedAssets();
 
     expect(() => callRenderStart(plugin, goodTemplates)).not.toThrow();
   });
 
   it('rejects an entry template missing [hash]', () => {
-    const plugin = assertHashedAssetNames();
+    const plugin = assertHashedAssets();
 
     expect(() =>
       callRenderStart(plugin, {
@@ -45,7 +45,7 @@ describe('assertHashedAssetNames', () => {
   });
 
   it('rejects a chunk template missing [hash]', () => {
-    const plugin = assertHashedAssetNames();
+    const plugin = assertHashedAssets();
 
     expect(() =>
       callRenderStart(plugin, {
@@ -56,7 +56,7 @@ describe('assertHashedAssetNames', () => {
   });
 
   it('rejects an asset template missing [hash]', () => {
-    const plugin = assertHashedAssetNames();
+    const plugin = assertHashedAssets();
 
     expect(() =>
       callRenderStart(plugin, {
@@ -67,7 +67,7 @@ describe('assertHashedAssetNames', () => {
   });
 
   it('rejects function templates (cannot statically verify)', () => {
-    const plugin = assertHashedAssetNames();
+    const plugin = assertHashedAssets();
 
     expect(() =>
       callRenderStart(plugin, {
@@ -78,7 +78,7 @@ describe('assertHashedAssetNames', () => {
   });
 
   it('declines to attach to SSR environments', () => {
-    const plugin = assertHashedAssetNames();
+    const plugin = assertHashedAssets();
 
     expect(callApplyToEnvironment(plugin, true)).toBe(false);
     expect(callApplyToEnvironment(plugin, false)).toBe(true);
