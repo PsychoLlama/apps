@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { For, Show, createSignal, onCleanup, onMount } from 'solid-js';
 import { WebHaptics } from 'web-haptics';
 import { align, edge, hint, tick, type HapticEffect } from '@lib/design';
-import { Button, Callout, Flex } from '@lib/ui';
+import { Button, Callout, Flex, Text } from '@lib/ui';
 import TokenRow from '../../token-row';
 
 const meta = {
@@ -54,8 +54,10 @@ export const Haptics: Story = {
       <Flex as="div" direction="column" gap={5}>
         <Show when={!WebHaptics.isSupported}>
           <Callout color="warning">
-            This device does not expose the Vibration API. Buttons will be
-            silent — try on a mobile browser.
+            <Text as="p" trim="both">
+              This device does not expose the Vibration API. Buttons will be
+              silent — try on a mobile browser.
+            </Text>
           </Callout>
         </Show>
 
