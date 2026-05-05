@@ -103,7 +103,11 @@ export const root = style({
   // `align-items: center` re-centers them inside the taller box (the
   // thumb's static position is computed as a flex item, then frozen by
   // its abspos `top: auto`). Mirrors Radix's BaseRadio/Switch pattern.
-  height: fallbackVar(lineHeight, trackHeight),
+  //
+  // The outer `max(..., trackHeight)` guards against a smaller-text
+  // ancestor shrinking the root below the visible track — Radix has
+  // the same opportunity but doesn't take it.
+  height: `max(${fallbackVar(lineHeight, trackHeight)}, ${trackHeight})`,
   borderRadius: trackBorderRadius,
   cursor: 'pointer',
 

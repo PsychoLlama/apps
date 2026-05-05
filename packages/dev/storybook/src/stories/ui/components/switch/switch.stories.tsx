@@ -154,8 +154,8 @@ export const Overview: Story = gallery({
     },
     {
       title: 'Wrapping labels',
-      items: SIZES.map((switchSize, i) => {
-        const textSize = (4 + i) as 4 | 5 | 6;
+      items: SIZES.map((switchSize, index) => {
+        const textSize = (4 + index) as 4 | 5 | 6;
         return (
           <WrappingDemo
             id={`switch-${switchSize}-text-${textSize}`}

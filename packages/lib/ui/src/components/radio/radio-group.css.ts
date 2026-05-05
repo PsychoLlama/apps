@@ -68,7 +68,11 @@ export const root = style({
   // CSS custom-property cascade. Standalone radios fall back to
   // `radioSize`. The disc/dot below stay sized to `radioSize` so only
   // the click box stretches; the visible circle keeps its diameter.
-  height: fallbackVar(lineHeight, radioSize),
+  //
+  // The outer `max(..., radioSize)` guards against a smaller-text
+  // ancestor shrinking the root below the visible disc — Radix has
+  // the same opportunity but doesn't take it.
+  height: `max(${fallbackVar(lineHeight, radioSize)}, ${radioSize})`,
   cursor: 'pointer',
 
   // Ring. `::before` is the visible disc; the input itself is a flex
