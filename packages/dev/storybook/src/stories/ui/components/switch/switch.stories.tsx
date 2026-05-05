@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { createSignal, splitProps, untrack } from 'solid-js';
 import { fn } from 'storybook/test';
-import { Switch, type SwitchProps } from '@lib/ui';
+import { Flex, Switch, Text, type SwitchProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -23,6 +23,32 @@ const Demo = (props: Partial<SwitchProps> & { initialChecked?: boolean }) => {
       checked={checked()}
       onCheckedChange={setChecked}
     />
+  );
+};
+
+// Mismatched switch/text sizes — a small switch inside larger-text
+// copy is the case that surfaces the line-height tracking. With matched
+// sizes the switch's intrinsic track height already equals the text's
+// line-height, so the fix is invisible there.
+const WrappingDemo = (props: {
+  id: string;
+  switchSize: 1 | 2 | 3;
+  textSize: 4 | 5 | 6;
+}) => {
+  const [checked, setChecked] = createSignal(true);
+  return (
+    <Text as="label" size={props.textSize} style={{ width: '16rem' }}>
+      <Flex as="div" gap={2}>
+        <Switch
+          testId={`overview-wrap-${props.id}`}
+          size={props.switchSize}
+          checked={checked()}
+          onCheckedChange={setChecked}
+        />
+        A longer label that wraps across two or three lines so the switch stays
+        aligned with the first line of text.
+      </Flex>
+    </Text>
   );
 };
 
@@ -125,6 +151,19 @@ export const Overview: Story = gallery({
         <Demo initialChecked={false} disabled />,
         <Demo initialChecked={true} disabled />,
       ],
+    },
+    {
+      title: 'Wrapping labels',
+      items: SIZES.map((switchSize, index) => {
+        const textSize = (4 + index) as 4 | 5 | 6;
+        return (
+          <WrappingDemo
+            id={`switch-${switchSize}-text-${textSize}`}
+            switchSize={switchSize}
+            textSize={textSize}
+          />
+        );
+      }),
     },
   ],
 });

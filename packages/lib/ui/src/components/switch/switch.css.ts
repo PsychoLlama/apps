@@ -13,7 +13,12 @@
  * @see https://www.radix-ui.com/themes/docs/components/switch
  */
 
-import { createVar, style, styleVariants } from '@vanilla-extract/css';
+import {
+  createVar,
+  fallbackVar,
+  style,
+  styleVariants,
+} from '@vanilla-extract/css';
 import {
   accent,
   black,
@@ -30,6 +35,7 @@ import {
   white,
 } from '@lib/design';
 import { assignColorSchemeVars } from '@lib/design/color-scheme';
+import { lineHeight } from '../../vars/typography.css';
 
 // Vars set by the size, radius, and color variants — every other rule
 // reads them, so a single variant assignment reaches the whole switch.
@@ -86,7 +92,22 @@ export const root = style({
   flexShrink: 0,
   verticalAlign: 'top',
   width: trackWidth,
-  height: trackHeight,
+  // Track the surrounding text's line-height when present so a switch
+  // wrapped in `<Text as="label">` with multi-line copy stays aligned
+  // with the first line of text rather than drifting to the geometric
+  // center of the wrapped block. The `lineHeight` var is set by the
+  // wrapping `<Text>` (size variants) and inherits to this descendant
+  // via the CSS custom-property cascade. Standalone switches fall back
+  // to `trackHeight`. The `::before` track and absolutely-positioned
+  // thumb stay sized to `trackHeight` / `thumbSize`; root's
+  // `align-items: center` re-centers them inside the taller box (the
+  // thumb's static position is computed as a flex item, then frozen by
+  // its abspos `top: auto`). Mirrors Radix's BaseRadio/Switch pattern.
+  //
+  // The outer `max(..., trackHeight)` guards against a smaller-text
+  // ancestor shrinking the root below the visible track — Radix has
+  // the same opportunity but doesn't take it.
+  height: `max(${fallbackVar(lineHeight, trackHeight)}, ${trackHeight})`,
   borderRadius: trackBorderRadius,
   cursor: 'pointer',
 
