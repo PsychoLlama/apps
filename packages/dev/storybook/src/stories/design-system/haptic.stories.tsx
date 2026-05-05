@@ -19,7 +19,8 @@ const effects: ReadonlyArray<{
 }> = [
   {
     name: 'hint',
-    description: 'Light cue on interactive surfaces.',
+    description:
+      'Light cue on interactive surfaces. Silent on the web — see haptic.ts.',
     pattern: hint,
   },
   {
@@ -34,7 +35,7 @@ const effects: ReadonlyArray<{
   },
   {
     name: 'align',
-    description: 'Crisp double-tap confirmation (snap, alignment).',
+    description: 'Crisp confirmation (snap, alignment).',
     pattern: align,
   },
 ];
