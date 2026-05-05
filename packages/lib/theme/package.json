@@ -10,6 +10,7 @@
   ],
   "exports": {
     ".": "./src/index.tsx",
+    "./catalog": "./src/catalog.ts",
     "./default": "./src/bundles/blue.css.ts",
     "./bundles/*": "./src/bundles/*.css.ts",
     "./package.json": "./package.json"

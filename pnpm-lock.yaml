@@ -258,12 +258,24 @@ importers:
 
   packages/app/settings:
     dependencies:
+      '@lib/design':
+        specifier: workspace:*
+        version: link:../../lib/design
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/state':
+        specifier: workspace:*
+        version: link:../../lib/state
+      '@lib/theme':
+        specifier: workspace:*
+        version: link:../../lib/theme
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
+      '@vanilla-extract/css':
+        specifier: 'catalog:'
+        version: 1.20.1(babel-plugin-macros@3.1.0)
       solid-js:
         specifier: '*'
         version: 1.9.12
