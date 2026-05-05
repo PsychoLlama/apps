@@ -41,6 +41,28 @@ const Demo = (props: Partial<RadioGroupRootProps> & { id: string }) => {
   );
 };
 
+const WrappingDemo = (props: { id: string; size: 1 | 2 | 3 }) => {
+  const [value, setValue] = createSignal<string | null>('first');
+  return (
+    <RadioGroupRoot
+      testId={`overview-wrap-${props.id}`}
+      name={`overview-wrap-${props.id}`}
+      value={value()}
+      onValueChange={setValue}
+      size={props.size}
+      style={{ width: '14rem' }}
+    >
+      <RadioGroupItem testId={`overview-wrap-${props.id}-short`} value="first">
+        A short label that fits on one line.
+      </RadioGroupItem>
+      <RadioGroupItem testId={`overview-wrap-${props.id}-long`} value="second">
+        A longer label that wraps across two or three lines so the radio stays
+        aligned with the first line of text.
+      </RadioGroupItem>
+    </RadioGroupRoot>
+  );
+};
+
 const meta = {
   title: 'UI/Components/RadioGroup',
   component: RadioGroupRoot,
@@ -141,6 +163,12 @@ export const Overview: Story = gallery({
     {
       title: 'Disabled',
       items: [<Demo id="disabled" disabled />],
+    },
+    {
+      title: 'Wrapping labels',
+      items: SIZES.map((size) => (
+        <WrappingDemo id={`size-${size}`} size={size} />
+      )),
     },
   ],
 });

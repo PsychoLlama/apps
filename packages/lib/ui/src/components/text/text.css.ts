@@ -1,17 +1,6 @@
-import {
-  createVar,
-  fallbackVar,
-  style,
-  styleVariants,
-} from '@vanilla-extract/css';
+import { fallbackVar, style, styleVariants } from '@vanilla-extract/css';
 import { typeScale, fontFamily, fontWeight, text } from '@lib/design';
-
-// Inheritable typography metrics. Size variants assign these; the Text
-// and Heading bases read them. Inline children without an explicit
-// `size` pick up the nearest sized ancestor's metrics via
-// custom-property inheritance.
-export const lineHeight = createVar();
-export const letterSpacing = createVar();
+import { lineHeight, letterSpacing } from '../../vars/typography.css';
 
 export const base = style({
   fontFamily: fontFamily.body,
