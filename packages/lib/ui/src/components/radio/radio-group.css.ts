@@ -19,7 +19,12 @@
  * @see https://www.radix-ui.com/themes/docs/components/radio-group
  */
 
-import { createVar, style, styleVariants } from '@vanilla-extract/css';
+import {
+  createVar,
+  fallbackVar,
+  style,
+  styleVariants,
+} from '@vanilla-extract/css';
 import {
   accent,
   background,
@@ -33,6 +38,7 @@ import {
   warning,
   white,
 } from '@lib/design';
+import { lineHeight } from '../../vars/typography.css';
 
 // Vars set by the `size` and `color` variants and read by every other
 // rule below — assigning a single variant reaches the entire element.
@@ -54,7 +60,15 @@ export const root = style({
   flexShrink: 0,
   verticalAlign: 'top',
   width: radioSize,
-  height: radioSize,
+  // Track the surrounding text's line-height when present so the radio
+  // sits flush against the first line of a wrapping label rather than
+  // drifting to the geometric center of the wrapped block. The
+  // `lineHeight` var is set by the wrapping `<Text as="label">` (size
+  // variants in `text.css`) and inherits to this descendant via the
+  // CSS custom-property cascade. Standalone radios fall back to
+  // `radioSize`. The disc/dot below stay sized to `radioSize` so only
+  // the click box stretches; the visible circle keeps its diameter.
+  height: fallbackVar(lineHeight, radioSize),
   cursor: 'pointer',
 
   // Ring. `::before` is the visible disc; the input itself is a flex
@@ -242,7 +256,13 @@ export const variant = styleVariants({
 
 export const item = style({
   display: 'flex',
-  alignItems: 'center',
+  // Default `align-items: stretch` is intentional. Combined with the
+  // input's `height: var(--lineHeight, ...)`, it lets the radio stay
+  // pinned to the first line of a wrapping label — the input keeps
+  // its explicit cross-size and lands at the cross-axis flex-start,
+  // while a multi-line span grows downward beside it. Setting
+  // `center` here would re-center the radio on the geometric middle
+  // of the wrapped block.
   // `0.5em` matches Radix and scales the gap with the label's font
   // size — at smaller sizes the radio sits closer to the text, at
   // larger sizes the gap grows. A fixed token would drift visually

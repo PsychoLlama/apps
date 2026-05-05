@@ -1,6 +1,6 @@
 import { fallbackVar, style } from '@vanilla-extract/css';
 import { fontFamily } from '@lib/design';
-import { letterSpacing, lineHeight } from '../text/text.css';
+import { letterSpacing, lineHeight } from '../../vars/typography.css';
 
 export { size, weight, align, color } from '../text/text.css';
 

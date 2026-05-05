@@ -3,6 +3,7 @@
 - `index.ts` is the only public API. All exports go through it. Imported as `@lib/ui`.
 - Never hard-code colors, spacing, radius, shadows, motion, or typography values. Use `@lib/design` tokens.
 - Polymorphic components must require the `as` prop.
+- `vars/*.css.ts` defines `createVar()` contracts shared between components (e.g. `lineHeight` set by `<Text>` and read by aligning components). Use it when a var is assigned in one component and read in another; otherwise keep `createVar()` colocated with its style file.
 
 ## Doc Comments
 
