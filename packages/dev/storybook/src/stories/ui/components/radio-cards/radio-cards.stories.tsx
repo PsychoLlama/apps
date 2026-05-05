@@ -2,11 +2,9 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { createSignal, For, untrack } from 'solid-js';
 import { fn } from 'storybook/test';
 import {
-  Heading,
   RadioCardsItem,
   RadioCardsRoot,
   type RadioCardsRootProps,
-  Text,
 } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
@@ -16,26 +14,18 @@ import { gallery } from '../../../../gallery';
 const VARIANTS = ['surface', 'classic'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const SIZES = [1, 2, 3] as const;
+const OPTIONS = [1, 2, 3] as const;
 
-const PLANS = [
-  { value: 'basic', title: 'Basic', detail: '$0/mo' },
-  { value: 'pro', title: 'Pro', detail: '$12/mo' },
-  { value: 'team', title: 'Team', detail: '$36/mo' },
-] as const;
-
-const Body = (props: { title: string; detail: string }) => (
-  <>
-    <Heading as="h3" size={2}>
-      {props.title}
-    </Heading>
-    <Text as="p" size={1} color="lowContrast">
-      {props.detail}
-    </Text>
-  </>
-);
-
-const Demo = (props: Partial<RadioCardsRootProps> & { id: string }) => {
-  const [value, setValue] = createSignal<string | null>('pro');
+/**
+ * Each gallery cell echoes the axis value being demonstrated in its
+ * card labels (e.g. "surface 1 / 2 / 3", "danger 1 / 2 / 3"). The
+ * second card is preselected so the checked + indicator color shows
+ * up directly.
+ */
+const Demo = (
+  props: Partial<RadioCardsRootProps> & { id: string; label: string },
+) => {
+  const [value, setValue] = createSignal<string | null>('2');
   return (
     <RadioCardsRoot
       testId={`overview-${props.id}`}
@@ -46,15 +36,15 @@ const Demo = (props: Partial<RadioCardsRootProps> & { id: string }) => {
       variant={props.variant}
       color={props.color}
       disabled={props.disabled}
-      columns={2}
+      columns={3}
     >
-      <For each={PLANS}>
-        {(plan) => (
+      <For each={OPTIONS}>
+        {(option) => (
           <RadioCardsItem
-            testId={`overview-${props.id}-${plan.value}`}
-            value={plan.value}
+            testId={`overview-${props.id}-${option}`}
+            value={String(option)}
           >
-            <Body title={plan.title} detail={plan.detail} />
+            {props.label} {option}
           </RadioCardsItem>
         )}
       </For>
@@ -68,7 +58,7 @@ const meta = {
   args: {
     testId: 'radio-cards',
     name: 'radio-cards',
-    value: 'pro',
+    value: '2',
     onValueChange: fn(),
     size: 2,
     variant: 'surface',
@@ -122,13 +112,13 @@ const meta = {
         required={args.required}
         skeleton={args.skeleton}
       >
-        <For each={PLANS}>
-          {(plan) => (
+        <For each={OPTIONS}>
+          {(option) => (
             <RadioCardsItem
-              testId={`${args.testId}-${plan.value}`}
-              value={plan.value}
+              testId={`${args.testId}-${option}`}
+              value={String(option)}
             >
-              <Body title={plan.title} detail={plan.detail} />
+              Option {option}
             </RadioCardsItem>
           )}
         </For>
@@ -137,7 +127,7 @@ const meta = {
           value="disabled"
           disabled
         >
-          <Body title="Enterprise" detail="Contact us" />
+          Option 4 (disabled)
         </RadioCardsItem>
       </RadioCardsRoot>
     );
@@ -152,22 +142,24 @@ export const Overview: Story = gallery({
     {
       title: 'Variant',
       items: VARIANTS.map((variant) => (
-        <Demo id={`variant-${variant}`} variant={variant} />
+        <Demo id={`variant-${variant}`} label={variant} variant={variant} />
       )),
     },
     {
       title: 'Color',
       items: COLORS.map((color) => (
-        <Demo id={`color-${color}`} color={color} />
+        <Demo id={`color-${color}`} label={color} color={color} />
       )),
     },
     {
       title: 'Size',
-      items: SIZES.map((size) => <Demo id={`size-${size}`} size={size} />),
+      items: SIZES.map((size) => (
+        <Demo id={`size-${size}`} label={`size ${size}`} size={size} />
+      )),
     },
     {
       title: 'Disabled',
-      items: [<Demo id="disabled" disabled />],
+      items: [<Demo id="disabled" label="disabled" disabled />],
     },
   ],
 });
