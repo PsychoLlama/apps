@@ -22,6 +22,13 @@
  * - Replaces upstream's responsive size/columns/gap object props with
  *   plain enum values (Vanilla Extract pre-compiles each variant; the
  *   responsive object form would defeat that and bloat the bundle).
+ * - No `dir` / RTL arrow-key reversal. Native `<input type="radio">`
+ *   navigates arrow keys in DOM order regardless of writing direction;
+ *   matching upstream's RTL-aware roving-focus group would require
+ *   reintroducing that layer.
+ * - No `loop={false}` opt-out. Native browser radio nav already wraps
+ *   within a `name`-grouped set, matching upstream's default
+ *   `loop: true`; we don't expose a knob to disable it.
  *
  * @see https://www.radix-ui.com/themes/docs/components/radio-cards
  */
@@ -90,6 +97,13 @@ export interface RadioCardsRootProps
   /** Spacing between cards. @default 4 */
   gap?: SpaceScale;
   /**
+   * Layout axis surfaced to assistive technology as
+   * `aria-orientation`. The visual layout is independent (driven by
+   * `columns` / `gap`) — this prop only declares how the group
+   * presents semantically. @default 'vertical'
+   */
+  orientation?: 'horizontal' | 'vertical';
+  /**
    * Form-submit name applied to every item. Also groups the inputs
    * for native arrow-key navigation in the browser.
    */
@@ -122,6 +136,7 @@ export const RadioCardsRoot: ParentComponent<RadioCardsRootProps> = (
       variant: 'surface' as const,
       color: 'accent' as const,
       gap: 4 as const,
+      orientation: 'vertical' as const,
       disabled: false,
       required: false,
     },
@@ -138,6 +153,7 @@ export const RadioCardsRoot: ParentComponent<RadioCardsRootProps> = (
     'color',
     'columns',
     'gap',
+    'orientation',
     'name',
     'disabled',
     'required',
@@ -189,6 +205,7 @@ export const RadioCardsRoot: ParentComponent<RadioCardsRootProps> = (
       <div
         {...skeletonProps}
         role="radiogroup"
+        aria-orientation={local.orientation}
         aria-required={local.required ? true : undefined}
         // `data-disabled` (matches `RadioGroup`) rather than
         // `aria-disabled`, which isn't part of the WAI-ARIA radiogroup
@@ -232,6 +249,13 @@ export interface RadioCardsItemProps
   /** Disable just this card. Combines with the group's `disabled`. */
   disabled?: boolean;
   /**
+   * Override the group's `required` for this card. When omitted, the
+   * card inherits the group's value. Pass `false` to opt this card
+   * out of native HTML5 form validation while leaving the rest of
+   * the group required.
+   */
+  required?: boolean;
+  /**
    * `class` lands on the wrapping `<label>` (the visible card), not
    * the hidden input.
    */
@@ -253,6 +277,7 @@ export const RadioCardsItem: ParentComponent<RadioCardsItemProps> = (
   const [local, rest] = splitProps(withoutTid, [
     'value',
     'disabled',
+    'required',
     'class',
     'style',
     'children',
@@ -262,6 +287,7 @@ export const RadioCardsItem: ParentComponent<RadioCardsItemProps> = (
 
   const isChecked = () => ctx.value() === local.value;
   const isDisabled = () => ctx.disabled() || local.disabled === true;
+  const isRequired = () => local.required ?? ctx.required();
 
   // Same reconcile pattern as RadioGroup — see context.ts. Native radio
   // semantics flip `.checked` on two inputs (clicked + previously
@@ -313,7 +339,7 @@ export const RadioCardsItem: ParentComponent<RadioCardsItemProps> = (
         value={local.value}
         checked={isChecked()}
         disabled={isDisabled()}
-        required={ctx.required()}
+        required={isRequired()}
         class={css.input}
         data-testid={tid.testId}
         onChange={onChange}

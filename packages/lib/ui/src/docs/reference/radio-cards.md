@@ -15,6 +15,7 @@ Base: `<div>` attributes (except `onChange`, `role`), margin props, skeleton pro
 - `color` (=`'accent'`): Semantic palette for the checked outline and focus ring. `'accent' | 'neutral' | 'danger' | 'warning' | 'success'`.
 - `columns`: Fixed column count. `1 | 2 | 3 | 4 | 5 | 6`. Omit to use the auto-fit `minmax(160px, 1fr)` default.
 - `gap` (=`4`): Spacing between cards. Any `SpaceScale` value.
+- `orientation` (=`'vertical'`): Layout axis surfaced as `aria-orientation`. `'horizontal' | 'vertical'`.
 - `disabled` (=`false`): Disable every card in the group.
 - `required` (=`false`): Mark the group as required for assistive technology and HTML5 form validation.
 
@@ -25,6 +26,7 @@ Base: `<input>` attributes (except `type`, `size`, `color`, `name`, `value`, `ch
 - `testId` (required): Test identifier rendered as `data-testid` on the hidden input.
 - `value` (required): Value submitted when this card is selected, matched against the group's `value`.
 - `disabled`: Disable just this card. Combines with the group's `disabled`.
+- `required`: Override the group's `required` for this card. Omit to inherit; pass `false` to opt this card out of HTML5 form validation while leaving the rest of the group required.
 - `class`: Class applied to the wrapping `<label>` (the visible card).
 - `style`: Inline style applied to the wrapping `<label>` (the visible card).
 - `children`: Card content rendered inside the wrapping `<label>`.

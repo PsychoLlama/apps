@@ -24,6 +24,7 @@
  *   themselves.
  *
  * @see https://www.radix-ui.com/themes/docs/components/radio-cards
+ * @see https://www.radix-ui.com/primitives/docs/components/radio-group
  */
 
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
@@ -48,6 +49,13 @@ const itemPaddingY = createVar();
 const itemBorderRadius = createVar();
 const colorIndicator = createVar();
 const colorFocus = createVar();
+// Tint painted under content when the checked card is also focused —
+// matches Radix's `--focus-a3` overlay so the focused-checked state
+// reads as distinct from the non-focused-checked state.
+const colorFocusTint = createVar();
+// Stronger outline color used on the focused-checked combination.
+// Matches Radix's `--focus-10`.
+const colorFocusStrong = createVar();
 
 // --- Root (the radiogroup container, styled as a CSS Grid) ---
 
@@ -120,10 +128,25 @@ export const item = style({
       outlineOffset: '-1px',
     },
 
-    // Disabled.
+    // Focused + checked combination. Paints a translucent focus tint
+    // over the surface (so the focused-checked card reads as the one
+    // arrow keys are landing on) and bumps the outline to the deeper
+    // focus stop. `background-image` layers on top of the variant's
+    // `background-color` instead of replacing it.
+    '&:where(:has(input:checked:focus-visible))': {
+      backgroundImage: `linear-gradient(${colorFocusTint}, ${colorFocusTint})`,
+    },
+    '&:where(:has(input:checked:focus-visible))::after': {
+      outlineColor: colorFocusStrong,
+    },
+
+    // Disabled. The neutral overlay on `background-image` washes out
+    // the variant's surface fill so the card visibly recedes — matches
+    // Radix's `--gray-a2` overlay.
     '&:where(:has(input:disabled))': {
       cursor: 'not-allowed',
       color: neutral.alpha[9],
+      backgroundImage: `linear-gradient(${neutral.alpha[2]}, ${neutral.alpha[2]})`,
     },
     '&:where(:has(input:disabled))::after': {
       outlineColor: neutral.solid[8],
@@ -219,6 +242,8 @@ export const color = styleVariants({
     vars: {
       [colorIndicator]: accent.indicator,
       [colorFocus]: accent.solid[8],
+      [colorFocusTint]: accent.alpha[3],
+      [colorFocusStrong]: accent.solid[10],
     },
   },
   neutral: {
@@ -228,24 +253,32 @@ export const color = styleVariants({
       // cue stays distinct against gray ink — same exception
       // `RadioGroup` codifies for its neutral palette.
       [colorFocus]: accent.solid[8],
+      [colorFocusTint]: accent.alpha[3],
+      [colorFocusStrong]: accent.solid[10],
     },
   },
   danger: {
     vars: {
       [colorIndicator]: danger.indicator,
       [colorFocus]: danger.solid[8],
+      [colorFocusTint]: danger.alpha[3],
+      [colorFocusStrong]: danger.solid[10],
     },
   },
   warning: {
     vars: {
       [colorIndicator]: warning.indicator,
       [colorFocus]: warning.solid[8],
+      [colorFocusTint]: warning.alpha[3],
+      [colorFocusStrong]: warning.solid[10],
     },
   },
   success: {
     vars: {
       [colorIndicator]: success.indicator,
       [colorFocus]: success.solid[8],
+      [colorFocusTint]: success.alpha[3],
+      [colorFocusStrong]: success.solid[10],
     },
   },
 });

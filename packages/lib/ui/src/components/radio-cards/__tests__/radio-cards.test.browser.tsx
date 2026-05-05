@@ -257,6 +257,56 @@ describe('RadioCards', () => {
     expect(screen.getByTestId('rb')).toBeRequired();
   });
 
+  it('lets an item override the group `required` value', () => {
+    render(() => (
+      <RadioCardsRoot
+        testId="group"
+        name="plan"
+        required
+        value={null}
+        onValueChange={noop}
+      >
+        <RadioCardsItem testId="ra" value="a" />
+        <RadioCardsItem testId="rb" value="b" required={false} />
+      </RadioCardsRoot>
+    ));
+    expect(screen.getByTestId('ra')).toBeRequired();
+    expect(screen.getByTestId('rb')).not.toBeRequired();
+  });
+
+  // --- Orientation ---
+
+  it('defaults to vertical orientation', () => {
+    render(() => (
+      <RadioCardsRoot
+        testId="group"
+        name="plan"
+        value={null}
+        onValueChange={noop}
+      />
+    ));
+    expect(screen.getByTestId('group')).toHaveAttribute(
+      'aria-orientation',
+      'vertical',
+    );
+  });
+
+  it('forwards horizontal orientation', () => {
+    render(() => (
+      <RadioCardsRoot
+        testId="group"
+        name="plan"
+        orientation="horizontal"
+        value={null}
+        onValueChange={noop}
+      />
+    ));
+    expect(screen.getByTestId('group')).toHaveAttribute(
+      'aria-orientation',
+      'horizontal',
+    );
+  });
+
   // --- Form integration ---
 
   it('submits the checked value under the group name', () => {
