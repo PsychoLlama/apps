@@ -41,6 +41,8 @@ import {
   type SpaceScale,
   standard,
   success,
+  typeScale,
+  type TypeScale,
   warning,
 } from '@lib/design';
 
@@ -65,6 +67,10 @@ export const root = style({
   // single column on narrow screens and stretch to fill on wider ones.
   // The numeric `columns` variant below overrides this when set.
   gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+  // The radiogroup itself isn't interactive — only the cards inside
+  // are. Forces the default arrow cursor over grid gaps so users
+  // don't see a misleading pointer hint.
+  cursor: 'default',
 });
 
 // --- Visually-hidden `<input type="radio">`. ---
@@ -96,6 +102,10 @@ export const item = style({
   paddingBlock: itemPaddingY,
   paddingInline: itemPaddingX,
   borderRadius: itemBorderRadius,
+  // Clip overflowing content (images, long labels) to the card's
+  // rounded corners so consumers don't have to wrap their content in
+  // an `<Inset>` to keep things tidy. Matches upstream BaseCard.
+  overflow: 'hidden',
   cursor: 'pointer',
   // Labels proxy clicks to their input — selecting label text would
   // defeat the affordance. `user-select: none` covers selection that
@@ -103,6 +113,10 @@ export const item = style({
   userSelect: 'none',
   transitionProperty: 'background-color, box-shadow',
   transitionTimingFunction: standard.productive,
+  // Duration applies to all pointer types — touch / non-hover devices
+  // still benefit from the eased transitions on checked/disabled
+  // state changes. The hover-only block below was the historical bug.
+  transitionDuration: fast[2],
 
   selectors: {
     '&::after': {
@@ -113,6 +127,7 @@ export const item = style({
       borderRadius: itemBorderRadius,
       transitionProperty: 'box-shadow, outline-color',
       transitionTimingFunction: standard.productive,
+      transitionDuration: fast[2],
     },
 
     // Checked outline. Comes before the focus rule below so focus
@@ -148,35 +163,58 @@ export const item = style({
       color: neutral.alpha[9],
       backgroundImage: `linear-gradient(${neutral.alpha[2]}, ${neutral.alpha[2]})`,
     },
+    // Mute the selection highlight on disabled cards. `::selection`
+    // on the label propagates to its subtree by spec, so a consumer
+    // that opts inner content back into selection picks up the
+    // muted color.
+    '&:where(:has(input:disabled))::selection': {
+      backgroundColor: neutral.alpha[5],
+    },
     '&:where(:has(input:disabled))::after': {
       outlineColor: neutral.solid[8],
-    },
-  },
-
-  '@media': {
-    '(hover: hover)': {
-      transitionDuration: fast[2],
-      selectors: {
-        '&::after': { transitionDuration: fast[2] },
-      },
     },
   },
 });
 
 // --- Size ---
+//
+// Padding-y uses the same non-integer multipliers as upstream so the
+// card heights land on the documented 40 / 48 / 64 px targets at the
+// default scale. Each size also assigns the matching typography step
+// — without this the global `all: unset` reset on `<label>` strips
+// font-size + line-height inheritance, leaving every card at the
+// browser's medium default.
 
-const sizeStyle = (padX: SpaceScale, padY: SpaceScale, rad: RadiusScale) => ({
+interface SizeStyle {
+  /** Padding token used on the inline (X) axis. */
+  padX: SpaceScale;
+  /**
+   * Padding-y multiplier expression interpolated into a `calc()`. We
+   * keep this as a string so it tracks upstream's exact math
+   * (`space-3 / 1.2`, `space-4 * 0.875`, `space-5 / 1.2`).
+   */
+  padY: string;
+  /** Border-radius token. */
+  rad: RadiusScale;
+  /** Type scale step the card's text should render at. */
+  font: TypeScale;
+}
+
+const sizeStyle = ({ padX, padY, rad, font }: SizeStyle) => ({
+  fontSize: typeScale[font].fontSize,
+  lineHeight: typeScale[font].lineHeight,
+  letterSpacing: typeScale[font].letterSpacing,
   vars: {
     [itemPaddingX]: space[padX],
-    [itemPaddingY]: space[padY],
+    [itemPaddingY]: padY,
     [itemBorderRadius]: radius[rad],
   },
 });
 
 export const size = styleVariants({
-  1: sizeStyle(3, 2, 3),
-  2: sizeStyle(4, 3, 3),
-  3: sizeStyle(5, 4, 4),
+  1: sizeStyle({ padX: 3, padY: `calc(${space[3]} / 1.2)`, rad: 3, font: 2 }),
+  2: sizeStyle({ padX: 4, padY: `calc(${space[4]} * 0.875)`, rad: 3, font: 2 }),
+  3: sizeStyle({ padX: 5, padY: `calc(${space[5]} / 1.2)`, rad: 4, font: 3 }),
 });
 
 // --- Numeric column override ---
