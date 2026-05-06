@@ -14,10 +14,19 @@
  *   attributes — the input owns the truth, no JS-managed attrs.
  * - `color` accepts every semantic palette (accent / neutral / danger /
  *   warning / success). Drops the high-contrast variant (deferred).
+ * - The focus-ring color tracks the active palette via `colorFocus`
+ *   (same approach as `RadioCards` and `Checkbox`), where upstream
+ *   uses a dedicated `--focus-8` palette that stays constant across
+ *   colors. Intentional — keeps the cue cohesive with the card's
+ *   `color` prop.
  * - Drops Radix's `pointer-events: none` on direct children. Our
  *   `user-select: none` on the label covers text selection during
  *   click; consumers with draggable inner content can opt out
  *   themselves.
+ * - Skips upstream's `color-mix()` progressive enhancement on the
+ *   surface and classic borders, per the design package's
+ *   no-color-mix convention. We use the no-color-mix fallback values
+ *   directly (e.g. `neutral.alpha[5]` for the surface border).
  * - Forces the inner Checkbox to the surface variant (matching upstream
  *   — the card already provides the surface, so a soft fill on the
  *   indicator would clash with the card).
@@ -26,16 +35,22 @@
  * @see https://www.radix-ui.com/primitives/docs/components/checkbox
  */
 
-import { createVar, style, styleVariants } from '@vanilla-extract/css';
+import {
+  assignVars,
+  createThemeContract,
+  createVar,
+  style,
+  styleVariants,
+} from '@vanilla-extract/css';
 import {
   accent,
   background,
+  black,
   danger,
   fast,
   neutral,
   radius,
   type RadiusScale,
-  shadow,
   space,
   type SpaceScale,
   standard,
@@ -44,12 +59,124 @@ import {
   type TypeScale,
   warning,
 } from '@lib/design';
+import { assignColorSchemeVars } from '@lib/design/color-scheme';
 
 const itemPaddingX = createVar();
 const itemPaddingY = createVar();
 const itemPaddingRight = createVar();
 const itemBorderRadius = createVar();
 const colorFocus = createVar();
+
+// --- Classic variant shadow stack ---
+//
+// Upstream's classic card uses a 6-layer box-shadow split between the
+// item (outer) and `::after` (inner) so the elevation animates between
+// rest and hover via `transition: box-shadow`. CSS interpolates layered
+// shadows index-by-index, so every state needs the same layer count —
+// hence the zeroed-out layers in the rest stack that "grow" on hover.
+// Light and dark differ structurally (light is a downward drop shadow;
+// dark is a near-radial glow), so a single `light-dark()` won't cover
+// it — we register a theme contract and assign per-mode values via
+// `assignColorSchemeVars`. This is exactly the per-component shadow
+// eject the design package's `shadow.css.ts` documents (case 2:
+// animation-matched layers).
+//
+// Border colors fall back to upstream's no-color-mix branch (per the
+// project convention against `color-mix()` progressive enhancement).
+// That means hover doesn't actually shift the border color in light
+// mode; the elevation lift carries the hover cue on its own.
+//
+// Layer math copied verbatim from
+// `_internal/base-card.css` (lines 93-205) — keep in sync if Radix
+// retunes upstream.
+
+const classicShadow = createThemeContract({
+  rest: { outer: '', inner: '' },
+  hover: { outer: '', inner: '' },
+});
+
+const classicShadowsLight = {
+  rest: {
+    outer: [
+      `0 0 0 0 ${neutral.alpha[3]}`,
+      `0 0 0 0 transparent`,
+      `0 0 0 0 ${black[1]}`,
+      `0 1px 1px -1px ${neutral.alpha[2]}`,
+      `0 2px 1px -2px ${black[1]}`,
+      `0 1px 3px -1px ${black[1]}`,
+    ].join(', '),
+    inner: [
+      `0 0 0 1px ${neutral.alpha[3]}`,
+      `0 0 0 1px transparent`,
+      `0 0 0 0.5px ${black[1]}`,
+      `0 1px 1px 0 ${neutral.alpha[2]}`,
+      `0 2px 1px -1px ${black[1]}`,
+      `0 1px 3px 0 ${black[1]}`,
+    ].join(', '),
+  },
+  hover: {
+    outer: [
+      `0 0 0 0 ${neutral.alpha[3]}`,
+      `0 1px 1px 0 ${black[1]}`,
+      `0 2px 1px -2px ${neutral.alpha[3]}`,
+      `0 2px 3px -3px ${black[1]}`,
+      `0 3px 12px -5px ${neutral.alpha[3]}`,
+      `0 4px 16px -9px ${black[1]}`,
+    ].join(', '),
+    inner: [
+      `0 0 0 1px ${neutral.alpha[3]}`,
+      `0 1px 1px 1px ${black[1]}`,
+      `0 2px 1px -1px ${neutral.alpha[3]}`,
+      `0 2px 3px -2px ${black[1]}`,
+      `0 3px 12px -4px ${neutral.alpha[3]}`,
+      `0 4px 16px -8px ${black[1]}`,
+    ].join(', '),
+  },
+};
+
+const classicShadowsDark = {
+  rest: {
+    outer: [
+      `0 0 0 0 ${neutral.alpha[6]}`,
+      `0 0 0 0 transparent`,
+      `0 0 0 0 ${black[3]}`,
+      `0 1px 1px -1px ${black[6]}`,
+      `0 2px 1px -2px ${black[6]}`,
+      `0 1px 3px -1px ${black[5]}`,
+    ].join(', '),
+    inner: [
+      `0 0 0 1px ${neutral.alpha[6]}`,
+      `0 0 0 1px transparent`,
+      `0 0 0 0.5px ${black[3]}`,
+      `0 1px 1px 0 ${black[6]}`,
+      `0 2px 1px -1px ${black[6]}`,
+      `0 1px 3px 0 ${black[5]}`,
+    ].join(', '),
+  },
+  hover: {
+    outer: [
+      `0 0 0 0 ${neutral.alpha[6]}`,
+      `0 0 1px 0 ${neutral.alpha[4]}`,
+      `0 0 1px -2px ${neutral.alpha[4]}`,
+      `0 0 3px -3px ${neutral.alpha[3]}`,
+      `0 0 12px -3px ${neutral.alpha[3]}`,
+      `0 0 16px -9px ${neutral.alpha[7]}`,
+    ].join(', '),
+    inner: [
+      `0 0 0 1px ${neutral.alpha[6]}`,
+      `0 0 1px 1px ${neutral.alpha[4]}`,
+      `0 0 1px -1px ${neutral.alpha[4]}`,
+      `0 0 3px -2px ${neutral.alpha[3]}`,
+      `0 0 12px -2px ${neutral.alpha[3]}`,
+      `0 0 16px -8px ${neutral.alpha[7]}`,
+    ].join(', '),
+  },
+};
+
+assignColorSchemeVars(
+  assignVars(classicShadow, classicShadowsLight),
+  assignVars(classicShadow, classicShadowsDark),
+);
 
 // --- Root (the group container, styled as a CSS Grid) ---
 
@@ -102,11 +229,19 @@ export const item = style({
     },
 
     // Focus ring on the wrapper when the inner checkbox is
-    // focus-visible. The visible checkbox has its own focus ring; this
-    // amplifies the cue so the entire card reads as the focus target.
-    '&:where(:has(input:focus-visible))::after': {
+    // focus-visible. Two stacked outlines — one on the item at offset
+    // -1px (just inside the edge) and one on `::after` at the default
+    // offset 0 (straddling the edge). Combined they paint a ~3px-wide
+    // band that matches upstream's perceived thickness; a single
+    // `::after`-only outline reads visibly thinner. Mirrors upstream's
+    // pattern of declaring the outline on the item and re-declaring
+    // (via `outline: inherit`) on `::after`.
+    '&:where(:has(input:focus-visible))': {
       outline: `2px solid ${colorFocus}`,
       outlineOffset: '-1px',
+    },
+    '&:where(:has(input:focus-visible))::after': {
+      outline: `2px solid ${colorFocus}`,
     },
 
     // Disabled. The neutral overlay on `background-image` washes out
@@ -220,21 +355,34 @@ export const columns = styleVariants({
 export const gap = styleVariants(space, (value) => ({ gap: value }));
 
 // --- Variant ---
+//
+// `surface` paints a flat 1px outline (rest) that thickens slightly on
+// hover. `classic` animates the layered shadow stack defined above so
+// the card lifts smoothly. The hover selector excludes disabled items
+// only — there's no checked-state exclusion (unlike RadioCards) since
+// the visible inner Checkbox carries the checked cue, not a card-level
+// outline.
 
-const borderShadow = `inset 0 0 0 1px ${neutral.alpha[6]}`;
-const borderHoverShadow = `inset 0 0 0 1px ${neutral.alpha[8]}`;
+// Border alphas match upstream's no-color-mix fallback (`gray-a5` rest,
+// `gray-a7` hover) — see `_internal/base-card.css` lines 67-70. With
+// `color-mix()` upstream nudges these one alpha step heavier; we don't
+// take the progressive enhancement so the values stay at 5 / 7.
+const surfaceBorderShadow = `inset 0 0 0 1px ${neutral.alpha[5]}`;
+const surfaceBorderHoverShadow = `inset 0 0 0 1px ${neutral.alpha[7]}`;
 const idleStateSelector = '&:where(:not(:has(input:disabled)):hover)';
 
 export const variant = styleVariants({
   surface: {
     backgroundColor: background.surface,
     selectors: {
-      '&::after': { boxShadow: borderShadow },
+      '&::after': { boxShadow: surfaceBorderShadow },
     },
     '@media': {
       '(hover: hover)': {
         selectors: {
-          [`${idleStateSelector}::after`]: { boxShadow: borderHoverShadow },
+          [`${idleStateSelector}::after`]: {
+            boxShadow: surfaceBorderHoverShadow,
+          },
         },
       },
     },
@@ -243,19 +391,26 @@ export const variant = styleVariants({
   // upstream. The transition shorthand is interpolated as a string so
   // the `::after` rule's `transition: inherit` picks up the same
   // property + duration + timing-function in one go.
+  //
+  // Background stays at `--color-surface` (matches upstream classic),
+  // not `panelSolid` — the classic look comes from the shadow stack,
+  // not a heavier surface fill.
   classic: {
-    backgroundColor: background.panelSolid,
-    boxShadow: shadow[3],
+    backgroundColor: background.surface,
+    boxShadow: classicShadow.rest.outer,
     transition: `box-shadow ${fast[2]} ${standard.productive}`,
     selectors: {
-      '&::after': { boxShadow: borderShadow },
+      '&::after': { boxShadow: classicShadow.rest.inner },
     },
     '@media': {
       '(hover: hover)': {
         selectors: {
           [idleStateSelector]: {
             transitionDuration: fast[1],
-            boxShadow: shadow[4],
+            boxShadow: classicShadow.hover.outer,
+          },
+          [`${idleStateSelector}::after`]: {
+            boxShadow: classicShadow.hover.inner,
           },
         },
       },
