@@ -26,6 +26,7 @@
 - [Callout](./callout.md): Informational message.
 - [Card](./card.md): Surface container.
 - [Checkbox](./checkbox.md): Tri-state checkbox with optional inline label.
+- [CheckboxCards](./checkbox-cards.md): Group of checkbox options rendered as selectable cards.
 - [DataList](./data-list.md): Description list for label–value pairs.
 - [IconButton](./icon-button.md): Square button for a single icon.
 - [Kbd](./kbd.md): Inline keyboard input.
