@@ -14,7 +14,10 @@ import { gallery } from '../../../../gallery';
 const VARIANTS = ['surface', 'classic'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const SIZES = [1, 2, 3] as const;
-const OPTIONS = [1, 2] as const;
+const OPTIONS = [
+  { value: 'basic', label: 'Basic' },
+  { value: 'pro', label: 'Pro' },
+] as const;
 
 /**
  * Each gallery cell echoes the demoed axis value in its card labels
@@ -22,7 +25,7 @@ const OPTIONS = [1, 2] as const;
  * the variant cell prefixes "surface" / "classic" and the color cell
  * prefixes "accent" / "danger" / etc. Size + disabled cells skip the
  * prefix (the size renders visibly; the disabled cell uses the
- * disabled affordance) to avoid awkward "size 1 1" repetition.
+ * disabled affordance).
  *
  * The first card is preselected so the checked indicator color
  * shows up directly.
@@ -30,7 +33,7 @@ const OPTIONS = [1, 2] as const;
 const Demo = (
   props: Partial<CheckboxCardsRootProps> & { id: string; label?: string },
 ) => {
-  const [value, setValue] = createSignal<string[]>(['1']);
+  const [value, setValue] = createSignal<string[]>(['basic']);
   return (
     <CheckboxCardsRoot
       testId={`overview-${props.id}`}
@@ -46,10 +49,10 @@ const Demo = (
       <For each={OPTIONS}>
         {(option) => (
           <CheckboxCardsItem
-            testId={`overview-${props.id}-${option}`}
-            value={String(option)}
+            testId={`overview-${props.id}-${option.value}`}
+            value={option.value}
           >
-            {props.label ? `${props.label} ${option}` : option}
+            {props.label ? `${props.label} ${option.label}` : option.label}
           </CheckboxCardsItem>
         )}
       </For>
@@ -63,7 +66,7 @@ const meta = {
   args: {
     testId: 'checkbox-cards',
     name: 'checkbox-cards',
-    value: ['1'],
+    value: ['basic'],
     onValueChange: fn(),
     size: 2,
     variant: 'surface',
@@ -120,19 +123,19 @@ const meta = {
         <For each={OPTIONS}>
           {(option) => (
             <CheckboxCardsItem
-              testId={`${args.testId}-${option}`}
-              value={String(option)}
+              testId={`${args.testId}-${option.value}`}
+              value={option.value}
             >
-              Option {option}
+              {option.label}
             </CheckboxCardsItem>
           )}
         </For>
         <CheckboxCardsItem
-          testId={`${args.testId}-disabled`}
-          value="disabled"
+          testId={`${args.testId}-enterprise`}
+          value="enterprise"
           disabled
         >
-          Option 4 (disabled)
+          Enterprise (disabled)
         </CheckboxCardsItem>
       </CheckboxCardsRoot>
     );

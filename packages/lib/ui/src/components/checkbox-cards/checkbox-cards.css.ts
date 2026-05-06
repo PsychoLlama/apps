@@ -216,24 +216,30 @@ export const item = style({
   userSelect: 'none',
 
   selectors: {
-    // The `::after` border inherits whatever transition the variant
-    // defines. Upstream's BaseCard does the same — only the classic
-    // variant transitions box-shadow; surface state changes snap.
+    // `::after` is inset 1px from the item (matching upstream's
+    // `inset: var(--base-card-border-width)` on BaseCard) so the
+    // classic variant's first inner-shadow layer (`0 0 0 1px`) — which
+    // draws *outside* `::after`'s box — lands at the item's edge
+    // instead of past it. With `::after` flush at `inset: 0`, that
+    // layer extended beyond the item and got clipped by
+    // `overflow: hidden`, leaving the classic edge invisible. The
+    // border-radius shrinks by 1px to keep the rounded corners
+    // concentric with the item's. `transition: inherit` picks up the
+    // classic variant's `box-shadow` transition for the inner stack.
     '&::after': {
       content: '""',
       position: 'absolute',
-      inset: 0,
+      inset: '1px',
       pointerEvents: 'none',
-      borderRadius: itemBorderRadius,
+      borderRadius: `calc(${itemBorderRadius} - 1px)`,
       transition: 'inherit',
     },
 
-    // Focus ring on the wrapper when the inner checkbox is
-    // focus-visible. Two stacked outlines — one on the item at offset
-    // -1px (just inside the edge) and one on `::after` at the default
-    // offset 0 (straddling the edge). Combined they paint a ~3px-wide
-    // band that matches upstream's perceived thickness; a single
-    // `::after`-only outline reads visibly thinner. Mirrors upstream's
+    // Focus ring. Two stacked outlines — one on the item at offset
+    // -1px and one on `::after` at the default offset 0. Item's edge
+    // is at the outer boundary, ::after's edge is 1px inside; both
+    // outlines extend outward from those edges and combine into a
+    // single visible band hugging the item edge. Mirrors upstream's
     // pattern of declaring the outline on the item and re-declaring
     // (via `outline: inherit`) on `::after`.
     '&:where(:has(input:focus-visible))': {
@@ -263,9 +269,22 @@ export const item = style({
 // can grow independently; its right offset matches `itemPaddingX` so
 // the gutter between checkbox and card edge equals the gutter between
 // content and checkbox, keeping the layout symmetric.
+//
+// Suppresses the inner Checkbox's `:focus-visible::before` outline
+// (defined in `checkbox.css.ts`). The card's `:has(input:focus-visible)`
+// rule above paints the focus cue at the wrapper level — showing both
+// produces a doubled ring, where upstream's BaseCheckbox has no
+// focus rule of its own inside CheckboxCards. CheckboxCards' CSS
+// loads after the Checkbox's so this same-specificity `:where`
+// selector wins by source order.
 export const checkbox = style({
   position: 'absolute',
   right: itemPaddingX,
+  selectors: {
+    '&:where(:focus-visible)::before': {
+      outline: 'none',
+    },
+  },
 });
 
 // --- Size ---
@@ -367,8 +386,14 @@ export const gap = styleVariants(space, (value) => ({ gap: value }));
 // `gray-a7` hover) — see `_internal/base-card.css` lines 67-70. With
 // `color-mix()` upstream nudges these one alpha step heavier; we don't
 // take the progressive enhancement so the values stay at 5 / 7.
-const surfaceBorderShadow = `inset 0 0 0 1px ${neutral.alpha[5]}`;
-const surfaceBorderHoverShadow = `inset 0 0 0 1px ${neutral.alpha[7]}`;
+//
+// Non-inset (`spread` only). `::after` sits at `inset: 1px`, so the
+// shadow's 1px layer extends outward from `::after`'s edge and lands
+// at the item's edge — the visible 1px border. Inset shadows would
+// draw the line 1px *inside* `::after` instead, leaving a visible
+// gap between the painted line and the item's rounded corner.
+const surfaceBorderShadow = `0 0 0 1px ${neutral.alpha[5]}`;
+const surfaceBorderHoverShadow = `0 0 0 1px ${neutral.alpha[7]}`;
 const idleStateSelector = '&:where(:not(:has(input:disabled)):hover)';
 
 export const variant = styleVariants({
