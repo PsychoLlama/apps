@@ -104,6 +104,14 @@ export {
   type SwitchColor,
 } from './components/switch/switch';
 export {
+  default as Checkbox,
+  type CheckboxProps,
+  type CheckboxVariant,
+  type CheckboxSize,
+  type CheckboxColor,
+  type CheckboxChecked,
+} from './components/checkbox/checkbox';
+export {
   default as Avatar,
   type AvatarProps,
   type AvatarSize,
