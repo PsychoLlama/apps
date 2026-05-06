@@ -36,6 +36,12 @@
 import { createEffect, createSignal, mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import type { SpaceScale } from '@lib/design';
+import type {
+  CardsColor,
+  CardsColumns,
+  CardsSize,
+  CardsVariant,
+} from '../_internal/cards';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -55,19 +61,13 @@ import {
 import * as css from './radio-cards.css';
 
 /** Visual size on a 1–3 scale. */
-export type RadioCardsSize = 1 | 2 | 3;
+export type RadioCardsSize = CardsSize;
 /** Visual treatment. */
-export type RadioCardsVariant = 'surface' | 'classic';
+export type RadioCardsVariant = CardsVariant;
 /** Semantic color palette for the checked outline. */
-export type RadioCardsColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
-
+export type RadioCardsColor = CardsColor;
 /** Fixed column count — overrides the auto-fit default. */
-export type RadioCardsColumns = 1 | 2 | 3 | 4 | 5 | 6;
+export type RadioCardsColumns = CardsColumns;
 
 /**
  * `RadioCardsRoot` props. Renders a `<div role="radiogroup">` styled as

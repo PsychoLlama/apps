@@ -22,6 +22,10 @@
  *   `user-select: none` on the label covers text selection during
  *   click, and consumers with draggable inner content can opt out
  *   themselves.
+ * - Skips upstream's `color-mix()` progressive enhancement on the
+ *   surface and classic borders, per the design package's
+ *   no-color-mix convention. We use the no-color-mix fallback values
+ *   directly (e.g. `neutral.alpha[5]` for the surface border).
  *
  * @see https://www.radix-ui.com/themes/docs/components/radio-cards
  * @see https://www.radix-ui.com/primitives/docs/components/radio-group
@@ -36,7 +40,6 @@ import {
   neutral,
   radius,
   type RadiusScale,
-  shadow,
   space,
   type SpaceScale,
   standard,
@@ -45,6 +48,9 @@ import {
   type TypeScale,
   warning,
 } from '@lib/design';
+import { classicShadow } from '../_internal/cards.css';
+
+export { root, columns, gap } from '../_internal/cards.css';
 
 const itemPaddingX = createVar();
 const itemPaddingY = createVar();
@@ -58,20 +64,6 @@ const colorFocusTint = createVar();
 // Stronger outline color used on the focused-checked combination.
 // Matches Radix's `--focus-10`.
 const colorFocusStrong = createVar();
-
-// --- Root (the radiogroup container, styled as a CSS Grid) ---
-
-export const root = style({
-  display: 'grid',
-  // Auto-fit gives a useful mobile-first default — items collapse to a
-  // single column on narrow screens and stretch to fill on wider ones.
-  // The numeric `columns` variant below overrides this when set.
-  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-  // The radiogroup itself isn't interactive — only the cards inside
-  // are. Forces the default arrow cursor over grid gaps so users
-  // don't see a misleading pointer hint.
-  cursor: 'default',
-});
 
 // --- Visually-hidden `<input type="radio">`. ---
 //
@@ -113,32 +105,36 @@ export const item = style({
   userSelect: 'none',
 
   selectors: {
-    // The `::after` border inherits whatever transition the variant
-    // defines. Upstream's BaseCard does the same — only the classic
-    // variant transitions box-shadow; surface state changes snap.
+    // `::after` is inset 1px from the item (matching upstream's
+    // `inset: var(--base-card-border-width)` on BaseCard) so the
+    // classic variant's first inner-shadow layer (`0 0 0 1px`) — which
+    // draws *outside* `::after`'s box — lands at the item's edge
+    // instead of past it. The border-radius shrinks by 1px to keep
+    // the rounded corners concentric. `transition: inherit` picks up
+    // the classic variant's `box-shadow` transition for the inner stack.
     '&::after': {
       content: '""',
       position: 'absolute',
-      inset: 0,
+      inset: '1px',
       pointerEvents: 'none',
-      borderRadius: itemBorderRadius,
+      borderRadius: `calc(${itemBorderRadius} - 1px)`,
       transition: 'inherit',
     },
 
     // Checked outline. Comes before the focus rule below so focus
-    // wins on `:where()` source order when both apply. The `-2px`
-    // offset keeps the full 2px ring inside the label's overflow
-    // clip — `overflow: hidden` on the label would otherwise shave
-    // the outer 1px off any outline that straddled the card edge.
+    // wins on `:where()` source order when both apply. With `::after`
+    // at `inset: 1px` and `outline-offset: -1px`, the outline's outer
+    // edge lands at the item's edge — painting the outermost 2px of
+    // the card. Matches upstream's `outline-offset: -1px` geometry.
     '&:where(:has(input:checked))::after': {
       outline: `2px solid ${colorIndicator}`,
-      outlineOffset: '-2px',
+      outlineOffset: '-1px',
     },
 
     // Focus ring on the wrapper when the hidden input is focus-visible.
     '&:where(:has(input:focus-visible))::after': {
       outline: `2px solid ${colorFocus}`,
-      outlineOffset: '-2px',
+      outlineOffset: '-1px',
     },
 
     // Focused + checked combination. Paints a translucent focus tint
@@ -215,29 +211,27 @@ export const size = styleVariants({
   3: sizeStyle({ padX: 5, padY: `calc(${space[5]} / 1.2)`, rad: 4, font: 3 }),
 });
 
-// --- Numeric column override ---
-//
-// Default grid is `auto-fit minmax`; the `columns` prop swaps in a
-// fixed column count for layouts that need exact alignment.
-
-const repeat = (count: number) => `repeat(${count}, minmax(0, 1fr))`;
-export const columns = styleVariants({
-  1: { gridTemplateColumns: repeat(1) },
-  2: { gridTemplateColumns: repeat(2) },
-  3: { gridTemplateColumns: repeat(3) },
-  4: { gridTemplateColumns: repeat(4) },
-  5: { gridTemplateColumns: repeat(5) },
-  6: { gridTemplateColumns: repeat(6) },
-});
-
-// --- Gap ---
-
-export const gap = styleVariants(space, (value) => ({ gap: value }));
-
 // --- Variant ---
+//
+// `surface` paints a flat 1px border (rest) that thickens slightly on
+// hover. `classic` animates the layered shadow stack from
+// `_internal/cards.css.ts` so the card lifts smoothly. The hover
+// selector excludes both disabled and checked items — the checked
+// card's outline already provides a strong cue, so a hover lift on
+// top of it would compete.
 
-const borderShadow = `inset 0 0 0 1px ${neutral.alpha[6]}`;
-const borderHoverShadow = `inset 0 0 0 1px ${neutral.alpha[8]}`;
+// Border alphas match upstream's no-color-mix fallback (`gray-a5` rest,
+// `gray-a7` hover) — see `_internal/base-card.css` lines 67-70. With
+// `color-mix()` upstream nudges these one alpha step heavier; we don't
+// take the progressive enhancement so the values stay at 5 / 7.
+//
+// Non-inset (`spread` only). `::after` sits at `inset: 1px`, so the
+// shadow's 1px layer extends outward from `::after`'s edge and lands
+// at the item's edge — the visible 1px border. Inset shadows would
+// draw the line 1px *inside* `::after` instead, leaving a visible
+// gap between the painted line and the item's rounded corner.
+const surfaceBorderShadow = `0 0 0 1px ${neutral.alpha[5]}`;
+const surfaceBorderHoverShadow = `0 0 0 1px ${neutral.alpha[7]}`;
 const idleStateSelector =
   '&:where(:not(:has(input:disabled)):not(:has(input:checked)):hover)';
 
@@ -245,12 +239,14 @@ export const variant = styleVariants({
   surface: {
     backgroundColor: background.surface,
     selectors: {
-      '&::after': { boxShadow: borderShadow },
+      '&::after': { boxShadow: surfaceBorderShadow },
     },
     '@media': {
       '(hover: hover)': {
         selectors: {
-          [`${idleStateSelector}::after`]: { boxShadow: borderHoverShadow },
+          [`${idleStateSelector}::after`]: {
+            boxShadow: surfaceBorderHoverShadow,
+          },
         },
       },
     },
@@ -259,19 +255,26 @@ export const variant = styleVariants({
   // upstream. The transition shorthand is interpolated as a string so
   // the `::after` rule's `transition: inherit` picks up the same
   // property + duration + timing-function in one go.
+  //
+  // Background stays at `--color-surface` (matches upstream classic),
+  // not `panelSolid` — the classic look comes from the shadow stack,
+  // not a heavier surface fill.
   classic: {
-    backgroundColor: background.panelSolid,
-    boxShadow: shadow[3],
+    backgroundColor: background.surface,
+    boxShadow: classicShadow.rest.outer,
     transition: `box-shadow ${fast[2]} ${standard.productive}`,
     selectors: {
-      '&::after': { boxShadow: borderShadow },
+      '&::after': { boxShadow: classicShadow.rest.inner },
     },
     '@media': {
       '(hover: hover)': {
         selectors: {
           [idleStateSelector]: {
             transitionDuration: fast[1],
-            boxShadow: shadow[4],
+            boxShadow: classicShadow.hover.outer,
+          },
+          [`${idleStateSelector}::after`]: {
+            boxShadow: classicShadow.hover.inner,
           },
         },
       },

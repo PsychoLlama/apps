@@ -37,6 +37,12 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import type { SpaceScale } from '@lib/design';
+import type {
+  CardsColor,
+  CardsColumns,
+  CardsSize,
+  CardsVariant,
+} from '../_internal/cards';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -57,19 +63,13 @@ import {
 import * as css from './checkbox-cards.css';
 
 /** Visual size on a 1–3 scale. */
-export type CheckboxCardsSize = 1 | 2 | 3;
+export type CheckboxCardsSize = CardsSize;
 /** Visual treatment. */
-export type CheckboxCardsVariant = 'surface' | 'classic';
+export type CheckboxCardsVariant = CardsVariant;
 /** Semantic color palette for the card focus outline and checkbox indicator. */
-export type CheckboxCardsColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
-
+export type CheckboxCardsColor = CardsColor;
 /** Fixed column count — overrides the auto-fit default. */
-export type CheckboxCardsColumns = 1 | 2 | 3 | 4 | 5 | 6;
+export type CheckboxCardsColumns = CardsColumns;
 
 /**
  * `CheckboxCardsRoot` props. Renders a `<div role="group">` styled as
