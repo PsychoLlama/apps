@@ -169,3 +169,13 @@ export {
   type RadioCardsColor,
   type RadioCardsColumns,
 } from './components/radio-cards/radio-cards';
+export {
+  CheckboxCardsRoot,
+  CheckboxCardsItem,
+  type CheckboxCardsRootProps,
+  type CheckboxCardsItemProps,
+  type CheckboxCardsSize,
+  type CheckboxCardsVariant,
+  type CheckboxCardsColor,
+  type CheckboxCardsColumns,
+} from './components/checkbox-cards/checkbox-cards';
