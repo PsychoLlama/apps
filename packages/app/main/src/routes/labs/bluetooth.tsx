@@ -20,7 +20,6 @@ import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import {
   type BatteryStatus,
   type DecodedFrame,
-  type SupportedFunction,
   Command,
   DataType,
   FrameDecoder,
@@ -58,7 +57,7 @@ interface BluetoothState {
   status: ConnectionState;
   error: string | null;
   battery: BatteryStatus | null;
-  capabilities: SupportedFunction[] | null;
+  capabilities: number[] | null;
   log: LogEntry[];
   webSerial: WebSerialSupport;
 }
@@ -99,7 +98,7 @@ const setBatteryAction = defineAction(
 
 const setCapabilitiesAction = defineAction(
   [bluetoothStore],
-  (state, capabilities: SupportedFunction[] | null) => {
+  (state, capabilities: number[] | null) => {
     state.capabilities = capabilities;
   },
 );
@@ -454,11 +453,11 @@ export default function LabsBluetooth() {
                         {(entries) => (
                           <Flex as="ul" direction="column" gap={1}>
                             <For each={entries()}>
-                              {(entry) => (
+                              {(code) => (
                                 <Flex as="li">
                                   <Text as="code" size={1} selectable={true}>
-                                    {functionTypeName(entry.code) ??
-                                      `0x${entry.code.toString(16).padStart(2, '0')}`}
+                                    {functionTypeName(code) ??
+                                      `0x${code.toString(16).padStart(2, '0')}`}
                                   </Text>
                                 </Flex>
                               )}

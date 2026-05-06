@@ -148,25 +148,11 @@ describe('sony-mdr', () => {
 
   describe('decodeSupportFunctionReply', () => {
     it('parses a reply with three entries', () => {
-      // [0x07, 0x00, count=3, code, prio, code, prio, code, prio]
+      // [0x07, 0x00, count=3, code, code, code]
       const entries = decodeSupportFunctionReply(
-        hex(
-          Command.SupportFunctionReply,
-          0x00,
-          0x03,
-          0x20,
-          0x01,
-          0x6a,
-          0x02,
-          0xf6,
-          0x01,
-        ),
+        hex(Command.SupportFunctionReply, 0x00, 0x03, 0x20, 0x6a, 0xf6),
       );
-      expect(entries).toEqual([
-        { code: 0x20, priority: 0x01 },
-        { code: 0x6a, priority: 0x02 },
-        { code: 0xf6, priority: 0x01 },
-      ]);
+      expect(entries).toEqual([0x20, 0x6a, 0xf6]);
     });
 
     it('parses a reply with zero entries', () => {
@@ -176,10 +162,48 @@ describe('sony-mdr', () => {
       expect(entries).toEqual([]);
     });
 
-    it('returns null when the payload is truncated mid-entry', () => {
-      // count=2 but only one full entry's bytes are present.
+    it('parses a real WH-1000XM4 reply', () => {
+      // Captured live from a paired WH-1000XM4. count=0x17 (23 entries).
+      // Locks in the 1-byte-per-entry XM4 firmware shape.
       const entries = decodeSupportFunctionReply(
-        hex(Command.SupportFunctionReply, 0x00, 0x02, 0x20, 0x01, 0x6a),
+        hex(
+          0x07,
+          0x00,
+          0x17,
+          0x71,
+          0x38,
+          0x62,
+          0xf5,
+          0x81,
+          0x51,
+          0xa1,
+          0xe1,
+          0xe2,
+          0xd2,
+          0xf6,
+          0xd1,
+          0xf4,
+          0xf3,
+          0x39,
+          0x12,
+          0x13,
+          0x11,
+          0x30,
+          0xc1,
+          0x14,
+          0x22,
+          0x21,
+        ),
+      );
+      expect(entries).toHaveLength(23);
+      expect(entries?.[0]).toBe(0x71);
+      expect(entries?.[entries.length - 1]).toBe(0x21);
+    });
+
+    it('returns null when the payload is truncated', () => {
+      // count=4 but only 3 entry bytes follow.
+      const entries = decodeSupportFunctionReply(
+        hex(Command.SupportFunctionReply, 0x00, 0x04, 0x20, 0x6a, 0xf6),
       );
       expect(entries).toBeNull();
     });

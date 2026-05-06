@@ -81,14 +81,6 @@ export interface BatteryStatus {
   charging: boolean;
 }
 
-/** One entry in a `SupportFunctionReply`. */
-export interface SupportedFunction {
-  /** Feature code. Look up via `functionTypeName`. */
-  code: number;
-  /** Tie-breaker priority used by Sony's app. Surfaced for completeness. */
-  priority: number;
-}
-
 /** Encode a frame into the on-wire byte sequence. */
 export const encodeFrame = (frame: Frame): Uint8Array => {
   const { type, seq, payload } = frame;
@@ -174,24 +166,24 @@ export const decodeBatteryReply = (
 /**
  * Pull the supported-function table out of a `SupportFunctionReply`
  * payload, or `null` if the payload isn't one. Layout:
- * `[0x07, 0x00, count, code₀, prio₀, code₁, prio₁, …]`.
+ * `[0x07, 0x00, count, code₀, code₁, …]` — one byte per feature code.
+ *
+ * mos9527/SonyHeadphonesClient (transcribed from Sound Connect iOS
+ * 12.2.0) describes a 2-byte `{code, priority}` entry, but the
+ * WH-1000XM4 firmware predates the priority field and emits 1-byte
+ * codes. mos9527's README explicitly excludes the XM4 from "legacy
+ * support". Decode the older shape — newer Sony devices need a
+ * separate path.
  */
 export const decodeSupportFunctionReply = (
   payload: Uint8Array,
-): SupportedFunction[] | null => {
+): number[] | null => {
   if (payload.length < 3) return null;
   if (payload[0] !== Command.SupportFunctionReply) return null;
   const count = payload[2];
-  const expected = 3 + count * 2;
+  const expected = 3 + count;
   if (payload.length < expected) return null;
-  const entries: SupportedFunction[] = [];
-  for (let idx = 0; idx < count; idx++) {
-    entries.push({
-      code: payload[3 + idx * 2],
-      priority: payload[3 + idx * 2 + 1],
-    });
-  }
-  return entries;
+  return Array.from(payload.subarray(3, 3 + count));
 };
 
 /**
