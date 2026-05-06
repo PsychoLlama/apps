@@ -10,16 +10,6 @@ import {
 
 const monoStack = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
-export const codeBlock = style({
-  fontFamily: monoStack,
-  background: background.surface,
-  border: `1px solid ${neutral.solid[6]}`,
-  borderRadius: radius[3],
-  padding: `${space[2]} ${space[3]}`,
-  overflowX: 'auto',
-  whiteSpace: 'pre',
-});
-
 export const log = style({
   display: 'flex',
   flexDirection: 'column',

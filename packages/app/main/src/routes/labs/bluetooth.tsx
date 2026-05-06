@@ -3,7 +3,6 @@ import {
   Badge,
   Button,
   Callout,
-  Card,
   Container,
   DataListItem,
   DataListLabel,
@@ -15,6 +14,7 @@ import {
   Text,
 } from '@lib/ui';
 import IconCopy from 'virtual:icons/mdi/content-copy';
+import IconRefresh from 'virtual:icons/mdi/refresh';
 import { SiteHeader } from '@lib/shell';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import {
@@ -127,8 +127,6 @@ declare global {
   }
 }
 
-const HEADSET_MAC = 'AC:80:0A:83:CB:AD';
-const SONY_RFCOMM_CHANNEL = 9;
 const MDR_FRAME_TYPE = 0x0c;
 
 const formatBytes = (bytes: Uint8Array) =>
@@ -215,6 +213,13 @@ export default function LabsBluetooth() {
     }
   };
 
+  const send = async (bytes: Uint8Array, type: number) => {
+    if (!writer) return;
+    await writer.write(bytes);
+    actions.appendLog({ direction: 'tx', bytes, type, seq });
+    seq = seq === 0 ? 1 : 0;
+  };
+
   const connect = async () => {
     if (!navigator.serial) return;
     actions.setError(null);
@@ -231,6 +236,9 @@ export default function LabsBluetooth() {
       reader = selected.readable.getReader();
       actions.setStatus('connected');
       void readLoop();
+      // INIT is the mandatory protocol handshake — fire it immediately
+      // so consumers don't have to think about it.
+      void send(encodeInitRequest(seq), MDR_FRAME_TYPE);
     } catch (err) {
       actions.setError(err instanceof Error ? err.message : String(err));
       actions.setStatus('error');
@@ -253,21 +261,11 @@ export default function LabsBluetooth() {
     }
   };
 
-  const send = async (bytes: Uint8Array, type: number) => {
-    if (!writer) return;
-    await writer.write(bytes);
-    actions.appendLog({ direction: 'tx', bytes, type, seq });
-    seq = seq === 0 ? 1 : 0;
-  };
-
   const handleConnect = () => {
     void connect();
   };
   const handleDisconnect = () => {
     void disconnect();
-  };
-  const handleSendInit = () => {
-    void send(encodeInitRequest(seq), MDR_FRAME_TYPE);
   };
   const handleQueryBattery = () => {
     void send(encodeBatteryRequest(seq), MDR_FRAME_TYPE);
@@ -290,7 +288,7 @@ export default function LabsBluetooth() {
 
       <Flex as="section" direction="column" px={5} py={6}>
         <Container as="div" size={3}>
-          <Flex as="div" direction="column" gap={5}>
+          <Flex as="div" direction="column" gap={6}>
             <Flex as="div" direction="column" gap={2}>
               <Heading as="h1" size={6}>
                 Sony MDR over Web Serial
@@ -311,99 +309,60 @@ export default function LabsBluetooth() {
               </Callout>
             </Show>
 
-            <Card as="div" variant="surface" size={2}>
-              <Flex as="div" direction="column" gap={3}>
+            <Flex as="div" direction="column" gap={3}>
+              <Flex as="div" justify="between" align="center" gap={3}>
                 <Heading as="h2" size={4}>
-                  Setup
+                  Connection
                 </Heading>
-                <Text as="p" size={2} selectable={true}>
-                  Bind the Sony control RFCOMM channel as a serial tty before
-                  connecting. The MAC and channel come from{' '}
-                  <code>sdptool browse</code> against the paired device.
-                </Text>
-                <pre class={css.codeBlock}>
-                  sudo rfcomm bind 0 {HEADSET_MAC} {SONY_RFCOMM_CHANNEL}
-                </pre>
-                <Text as="p" size={2} color="lowContrast" selectable={true}>
-                  This creates <code>/dev/rfcomm0</code>. Pick it from the
-                  serial port chooser. Run <code>sudo rfcomm release 0</code>{' '}
-                  when finished.
-                </Text>
+                <Badge color={statusColor(bluetooth.status)} variant="soft">
+                  {bluetooth.status}
+                </Badge>
               </Flex>
-            </Card>
 
-            <Card as="div" variant="surface" size={2}>
-              <Flex as="div" direction="column" gap={3}>
-                <Flex as="div" justify="between" align="center" gap={3}>
-                  <Heading as="h2" size={4}>
-                    Connection
-                  </Heading>
-                  <Badge color={statusColor(bluetooth.status)} variant="soft">
-                    {bluetooth.status}
-                  </Badge>
-                </Flex>
+              <Show when={bluetooth.error}>
+                {(message) => (
+                  <Callout color="danger">
+                    <Text as="span" size={2} selectable={true}>
+                      {message()}
+                    </Text>
+                  </Callout>
+                )}
+              </Show>
 
-                <Show when={bluetooth.error}>
-                  {(message) => (
-                    <Callout color="danger">
-                      <Text as="span" size={2} selectable={true}>
-                        {message()}
-                      </Text>
-                    </Callout>
-                  )}
-                </Show>
-
-                <Flex as="div" gap={2} wrap="wrap">
-                  <Button
-                    testId="connect"
-                    onClick={handleConnect}
-                    disabled={
-                      bluetooth.status === 'connected' ||
-                      bluetooth.webSerial !== 'supported'
-                    }
-                    skeleton={bluetooth.webSerial === 'unknown'}
-                    variant="solid"
-                  >
-                    Connect
-                  </Button>
-                  <Button
-                    testId="disconnect"
-                    onClick={handleDisconnect}
-                    disabled={bluetooth.status !== 'connected'}
-                    variant="soft"
-                    color="neutral"
-                  >
-                    Disconnect
-                  </Button>
-                  <Button
-                    testId="send-init"
-                    onClick={handleSendInit}
-                    disabled={bluetooth.status !== 'connected'}
-                    variant="soft"
-                  >
-                    Send INIT
-                  </Button>
-                  <Button
-                    testId="query-battery"
-                    onClick={handleQueryBattery}
-                    disabled={bluetooth.status !== 'connected'}
-                    variant="soft"
-                  >
-                    Query battery
-                  </Button>
-                </Flex>
+              <Flex as="div" gap={2} wrap="wrap">
+                <Button
+                  testId="connect"
+                  onClick={handleConnect}
+                  disabled={
+                    bluetooth.status === 'connected' ||
+                    bluetooth.webSerial !== 'supported'
+                  }
+                  skeleton={bluetooth.webSerial === 'unknown'}
+                  variant="solid"
+                >
+                  Connect
+                </Button>
+                <Button
+                  testId="disconnect"
+                  onClick={handleDisconnect}
+                  disabled={bluetooth.status !== 'connected'}
+                  variant="soft"
+                  color="neutral"
+                >
+                  Disconnect
+                </Button>
               </Flex>
-            </Card>
+            </Flex>
 
-            <Card as="div" variant="surface" size={2}>
-              <Flex as="div" direction="column" gap={3}>
-                <Heading as="h2" size={4}>
-                  Device state
-                </Heading>
-                <DataListRoot orientation="horizontal" size={2}>
-                  <DataListItem>
-                    <DataListLabel>Battery</DataListLabel>
-                    <DataListValue>
+            <Flex as="div" direction="column" gap={3}>
+              <Heading as="h2" size={4}>
+                Device state
+              </Heading>
+              <DataListRoot orientation="horizontal" size={2}>
+                <DataListItem>
+                  <DataListLabel>Battery</DataListLabel>
+                  <DataListValue>
+                    <Flex as="div" align="center" gap={2}>
                       <Show
                         when={bluetooth.battery}
                         fallback={
@@ -419,64 +378,71 @@ export default function LabsBluetooth() {
                           </Text>
                         )}
                       </Show>
-                    </DataListValue>
-                  </DataListItem>
-                </DataListRoot>
-              </Flex>
-            </Card>
+                      <IconButton
+                        testId="refresh-battery"
+                        aria-label="Refresh battery"
+                        onClick={handleQueryBattery}
+                        disabled={bluetooth.status !== 'connected'}
+                        variant="ghost"
+                        color="neutral"
+                        size={1}
+                      >
+                        <IconRefresh width="16" height="16" />
+                      </IconButton>
+                    </Flex>
+                  </DataListValue>
+                </DataListItem>
+              </DataListRoot>
+            </Flex>
 
-            <Card as="div" variant="surface" size={2}>
-              <Flex as="div" direction="column" gap={3}>
-                <Flex as="div" justify="between" align="center" gap={3}>
-                  <Heading as="h2" size={4}>
-                    Frame log
-                  </Heading>
-                  <IconButton
-                    testId="copy-log"
-                    aria-label="Copy log to clipboard"
-                    onClick={handleCopyLog}
-                    disabled={bluetooth.log.length === 0}
-                    variant="ghost"
-                    color="neutral"
-                  >
-                    <IconCopy width="18" height="18" />
-                  </IconButton>
-                </Flex>
-                <Show
-                  when={bluetooth.log.length > 0}
-                  fallback={
-                    <Text as="p" color="lowContrast" size={2}>
-                      No frames yet. Connect and send a request.
-                    </Text>
-                  }
+            <Flex as="div" direction="column" gap={3}>
+              <Flex as="div" justify="between" align="center" gap={3}>
+                <Heading as="h2" size={4}>
+                  Frame log
+                </Heading>
+                <IconButton
+                  testId="copy-log"
+                  aria-label="Copy log to clipboard"
+                  onClick={handleCopyLog}
+                  disabled={bluetooth.log.length === 0}
+                  variant="ghost"
+                  color="neutral"
                 >
-                  <Flex as="ol" direction="column" class={css.log}>
-                    <For each={bluetooth.log}>
-                      {(entry) => (
-                        <Flex
-                          as="li"
-                          class={`${css.logRow} ${
-                            entry.direction === 'tx'
-                              ? css.logRowTx
-                              : css.logRowRx
-                          }`}
-                        >
-                          <Text as="span" aria-hidden="true" selectable={false}>
-                            {entry.direction === 'tx' ? '↑' : '↓'}
-                          </Text>
-                          <Text as="span" selectable={false}>
-                            {formatHeader(entry)}
-                          </Text>
-                          <Text as="code" selectable={true}>
-                            {formatBytes(entry.bytes)}
-                          </Text>
-                        </Flex>
-                      )}
-                    </For>
-                  </Flex>
-                </Show>
+                  <IconCopy width="18" height="18" />
+                </IconButton>
               </Flex>
-            </Card>
+              <Show
+                when={bluetooth.log.length > 0}
+                fallback={
+                  <Text as="p" color="lowContrast" size={2}>
+                    No frames yet. Connect and send a request.
+                  </Text>
+                }
+              >
+                <Flex as="ol" direction="column" class={css.log}>
+                  <For each={bluetooth.log}>
+                    {(entry) => (
+                      <Flex
+                        as="li"
+                        class={`${css.logRow} ${
+                          entry.direction === 'tx' ? css.logRowTx : css.logRowRx
+                        }`}
+                      >
+                        <Text as="span" aria-hidden="true" selectable={false}>
+                          {entry.direction === 'tx' ? '↑' : '↓'}
+                        </Text>
+                        <Text as="span" selectable={false}>
+                          {formatHeader(entry)}
+                        </Text>
+                        <Text as="code" selectable={true}>
+                          {formatBytes(entry.bytes)}
+                        </Text>
+                      </Flex>
+                    )}
+                  </For>
+                </Flex>
+              </Show>
+            </Flex>
           </Flex>
         </Container>
       </Flex>
