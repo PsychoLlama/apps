@@ -11,8 +11,10 @@ import {
   DataListValue,
   Flex,
   Heading,
+  IconButton,
   Text,
 } from '@lib/ui';
+import IconCopy from 'virtual:icons/mdi/content-copy';
 import { SiteHeader } from '@lib/shell';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import {
@@ -271,6 +273,13 @@ export default function LabsBluetooth() {
     void send(encodeBatteryRequest(seq), MDR_FRAME_TYPE);
   };
 
+  const handleCopyLog = () => {
+    const text = bluetooth.log
+      .map((entry) => formatBytes(entry.bytes))
+      .join('\n');
+    void navigator.clipboard.writeText(text);
+  };
+
   onCleanup(() => {
     void disconnect();
   });
@@ -418,9 +427,21 @@ export default function LabsBluetooth() {
 
             <Card as="div" variant="surface" size={2}>
               <Flex as="div" direction="column" gap={3}>
-                <Heading as="h2" size={4}>
-                  Frame log
-                </Heading>
+                <Flex as="div" justify="between" align="center" gap={3}>
+                  <Heading as="h2" size={4}>
+                    Frame log
+                  </Heading>
+                  <IconButton
+                    testId="copy-log"
+                    aria-label="Copy log to clipboard"
+                    onClick={handleCopyLog}
+                    disabled={bluetooth.log.length === 0}
+                    variant="ghost"
+                    color="neutral"
+                  >
+                    <IconCopy width="18" height="18" />
+                  </IconButton>
+                </Flex>
                 <Show
                   when={bluetooth.log.length > 0}
                   fallback={
