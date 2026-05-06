@@ -70,6 +70,7 @@ export default [
       'id-length': ['error', { min: 2, properties: 'never' }],
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-deprecated': 'error',
+      '@typescript-eslint/no-namespace': 'off',
       '@typescript-eslint/no-unused-vars': 'error',
       'custom/no-derived-token-types': 'error',
       'custom/no-static-style-prop': 'error',
