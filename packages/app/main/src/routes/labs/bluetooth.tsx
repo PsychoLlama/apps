@@ -20,15 +20,19 @@ import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import {
   type BatteryStatus,
   type DecodedFrame,
+  type NcAsmStatus,
   Command,
   DataType,
   FrameDecoder,
+  NcAsmInquiredType,
   commandName,
   decodeBatteryReply,
+  decodeNcAsmParam,
   decodeSupportFunctionReply,
   encodeAck,
   encodeBatteryRequest,
   encodeInitRequest,
+  encodeNcAsmGetParamRequest,
   encodeSupportFunctionRequest,
   functionTypeName,
 } from '../../labs/sony-mdr';
@@ -58,6 +62,7 @@ interface BluetoothState {
   error: string | null;
   battery: BatteryStatus | null;
   capabilities: number[] | null;
+  ncAsm: NcAsmStatus | null;
   log: LogEntry[];
   webSerial: WebSerialSupport;
 }
@@ -69,6 +74,7 @@ const bluetoothStore = defineStore<BluetoothState>(() => ({
   error: null,
   battery: null,
   capabilities: null,
+  ncAsm: null,
   log: [],
   webSerial: 'unknown',
 }));
@@ -100,6 +106,13 @@ const setCapabilitiesAction = defineAction(
   [bluetoothStore],
   (state, capabilities: number[] | null) => {
     state.capabilities = capabilities;
+  },
+);
+
+const setNcAsmAction = defineAction(
+  [bluetoothStore],
+  (state, ncAsm: NcAsmStatus | null) => {
+    state.ncAsm = ncAsm;
   },
 );
 
@@ -185,6 +198,7 @@ export default function LabsBluetooth() {
     setError: useAction(setErrorAction),
     setBattery: useAction(setBatteryAction),
     setCapabilities: useAction(setCapabilitiesAction),
+    setNcAsm: useAction(setNcAsmAction),
     appendLog: useAction(appendLogAction),
     setWebSerialSupport: useAction(setWebSerialSupportAction),
   };
@@ -227,6 +241,8 @@ export default function LabsBluetooth() {
     if (battery) actions.setBattery(battery);
     const capabilities = decodeSupportFunctionReply(frame.payload);
     if (capabilities) actions.setCapabilities(capabilities);
+    const ncAsm = decodeNcAsmParam(frame.payload);
+    if (ncAsm) actions.setNcAsm(ncAsm);
     // Auto-ACK every DATA frame. Without this the device retransmits.
     if (frame.type !== DataType.Ack) {
       await sendAck(frame.seq);
@@ -314,6 +330,13 @@ export default function LabsBluetooth() {
       encodeSupportFunctionRequest(seq),
       MDR_FRAME_TYPE,
       Command.SupportFunctionRequest,
+    );
+  };
+  const handleQueryNcAsm = () => {
+    void send(
+      encodeNcAsmGetParamRequest(seq, NcAsmInquiredType.NcOnOffAndAsmOnOff),
+      MDR_FRAME_TYPE,
+      Command.NcAsmGetParam,
     );
   };
 
@@ -469,6 +492,41 @@ export default function LabsBluetooth() {
                         testId="refresh-capabilities"
                         aria-label="Refresh capabilities"
                         onClick={handleQueryCapabilities}
+                        disabled={bluetooth.status !== 'connected'}
+                        variant="ghost"
+                        color="neutral"
+                        size={1}
+                      >
+                        <IconRefresh width="16" height="16" />
+                      </IconButton>
+                    </Flex>
+                  </DataListValue>
+                </DataListItem>
+                <DataListItem>
+                  <DataListLabel>NC / ASM</DataListLabel>
+                  <DataListValue>
+                    <Flex as="div" align="center" gap={2}>
+                      <Show
+                        when={bluetooth.ncAsm}
+                        fallback={
+                          <Text as="span" color="lowContrast">
+                            unknown
+                          </Text>
+                        }
+                      >
+                        {(status) => (
+                          <Text as="code" size={1} selectable={true}>
+                            {`type=0x${status().inquiredType.toString(16).padStart(2, '0')} ` +
+                              `effect=${status().ncAsmTotalEffect} ` +
+                              `change=${status().valueChangeStatus} ` +
+                              `rest=${formatBytes(status().rest)}`}
+                          </Text>
+                        )}
+                      </Show>
+                      <IconButton
+                        testId="refresh-ncasm"
+                        aria-label="Refresh NC/ASM"
+                        onClick={handleQueryNcAsm}
                         disabled={bluetooth.status !== 'connected'}
                         variant="ghost"
                         color="neutral"

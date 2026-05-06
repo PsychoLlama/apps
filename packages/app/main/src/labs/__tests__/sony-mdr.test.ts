@@ -3,13 +3,16 @@ import {
   Command,
   DataType,
   FrameDecoder,
+  NcAsmInquiredType,
   commandName,
   decodeBatteryReply,
+  decodeNcAsmParam,
   decodeSupportFunctionReply,
   encodeAck,
   encodeBatteryRequest,
   encodeFrame,
   encodeInitRequest,
+  encodeNcAsmGetParamRequest,
   encodeSupportFunctionRequest,
   functionTypeName,
 } from '../sony-mdr';
@@ -225,6 +228,50 @@ describe('sony-mdr', () => {
 
     it('returns null for unknown feature codes', () => {
       expect(functionTypeName(0x00)).toBeNull();
+    });
+  });
+
+  describe('encodeNcAsmGetParamRequest', () => {
+    it('encodes a GET_PARAM with the XM4 inquiredType', () => {
+      // sum: 0x0c + 0x01 + 0x00*3 + 0x02 + 0x66 + 0x11 = 0x86
+      expect(
+        encodeNcAsmGetParamRequest(1, NcAsmInquiredType.NcOnOffAndAsmOnOff),
+      ).toEqual(
+        hex(0x3e, 0x0c, 0x01, 0x00, 0x00, 0x00, 0x02, 0x66, 0x11, 0x86, 0x3c),
+      );
+    });
+  });
+
+  describe('decodeNcAsmParam', () => {
+    it('parses a RET_PARAM into base header + raw rest', () => {
+      // [cmd=0x67, inquiredType=0x11, valueChangeStatus=0x01, ncAsmTotalEffect=0x01, …shape-specific]
+      const status = decodeNcAsmParam(
+        hex(Command.NcAsmRetParam, 0x11, 0x01, 0x01, 0x02, 0x00, 0x0a),
+      );
+      expect(status).toEqual({
+        inquiredType: 0x11,
+        valueChangeStatus: 0x01,
+        ncAsmTotalEffect: 0x01,
+        rest: hex(0x02, 0x00, 0x0a),
+      });
+    });
+
+    it('parses a NTFY_PARAM the same way', () => {
+      const status = decodeNcAsmParam(
+        hex(Command.NcAsmNotifyParam, 0x11, 0x01, 0x00),
+      );
+      expect(status).toEqual({
+        inquiredType: 0x11,
+        valueChangeStatus: 0x01,
+        ncAsmTotalEffect: 0x00,
+        rest: hex(),
+      });
+    });
+
+    it('returns null for unrelated command ids', () => {
+      expect(
+        decodeNcAsmParam(hex(Command.BatteryLevelReply, 0x01, 0x64, 0x00)),
+      ).toBeNull();
     });
   });
 

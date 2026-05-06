@@ -42,6 +42,22 @@ export const Command = {
   BatteryLevelRequest: 0x10,
   BatteryLevelReply: 0x11,
   BatteryLevelNotify: 0x12,
+  /** Read live NC/ASM mode. Reply payload shape varies by inquiredType. */
+  NcAsmGetParam: 0x66,
+  NcAsmRetParam: 0x67,
+  NcAsmSetParam: 0x68,
+  NcAsmNotifyParam: 0x69,
+} as const;
+
+/**
+ * Selects the NC/ASM payload shape. The XM4 advertises
+ * `NOISE_CANCELLING_ONOFF_AND_AMBIENT_SOUND_MODE_ONOFF` in its support
+ * function reply, which maps to `NcOnOffAndAsmOnOff = 0x11`.
+ */
+export const NcAsmInquiredType = {
+  NcOnOff: 0x01,
+  NcOnOffAndAsmOnOff: 0x11,
+  AsmOnOff: 0x21,
 } as const;
 
 /**
@@ -79,6 +95,23 @@ export interface DecodedFrame extends Frame {
 export interface BatteryStatus {
   level: number;
   charging: boolean;
+}
+
+/**
+ * Decoded NC/ASM read. The first four bytes are the universal
+ * `NcAsmParamBase` header; everything beyond `ncAsmTotalEffect` is
+ * `inquiredType`-specific and surfaced as raw bytes for now since the
+ * XM4's `NC_ON_OFF_AND_ASM_ON_OFF` shape isn't documented in
+ * mos9527's transcription.
+ */
+export interface NcAsmStatus {
+  inquiredType: number;
+  /** `0`=under-changing, `1`=changed (settled). */
+  valueChangeStatus: number;
+  /** Whether either NC or ASM is currently producing an effect. */
+  ncAsmTotalEffect: number;
+  /** Trailing inquiredType-specific bytes. Decode once we have a real reply. */
+  rest: Uint8Array;
 }
 
 /** Encode a frame into the on-wire byte sequence. */
@@ -133,6 +166,20 @@ export const encodeSupportFunctionRequest = (seq: number): Uint8Array =>
     type: DataType.Mdr,
     seq,
     payload: new Uint8Array([Command.SupportFunctionRequest, 0x00]),
+  });
+
+/**
+ * Build an NC/ASM read for a specific payload shape. The XM4 wants
+ * `NcOnOffAndAsmOnOff` (0x11) per its support-function reply.
+ */
+export const encodeNcAsmGetParamRequest = (
+  seq: number,
+  inquiredType: number,
+): Uint8Array =>
+  encodeFrame({
+    type: DataType.Mdr,
+    seq,
+    payload: new Uint8Array([Command.NcAsmGetParam, inquiredType]),
   });
 
 /**
@@ -192,6 +239,26 @@ export const decodeSupportFunctionReply = (
  */
 export const functionTypeName = (code: number): string | null =>
   FUNCTION_TYPE_NAMES[code] ?? null;
+
+/**
+ * Pull an `NcAsmStatus` from a RET/NTFY param payload. Layout follows
+ * `NcAsmParamBase`: `[cmd, inquiredType, valueChangeStatus,
+ * ncAsmTotalEffect, …shape-specific]`. Returns `null` when the payload
+ * isn't an NC/ASM reply.
+ */
+export const decodeNcAsmParam = (payload: Uint8Array): NcAsmStatus | null => {
+  if (payload.length < 4) return null;
+  const cmd = payload[0];
+  const isParam =
+    cmd === Command.NcAsmRetParam || cmd === Command.NcAsmNotifyParam;
+  if (!isParam) return null;
+  return {
+    inquiredType: payload[1],
+    valueChangeStatus: payload[2],
+    ncAsmTotalEffect: payload[3],
+    rest: Uint8Array.from(payload.subarray(4)),
+  };
+};
 
 /**
  * Streaming frame parser. Feed reads from the serial port via `push`;
