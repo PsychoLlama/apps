@@ -58,7 +58,6 @@ import * as css from './checkbox.css';
 // it. Augmenting `ExplicitProperties` lets us write
 // `prop:indeterminate={...}` with full type safety.
 declare module 'solid-js' {
-  // eslint-disable-next-line @typescript-eslint/no-namespace -- Solid's JSX types are nested in a namespace; module augmentation has to follow.
   namespace JSX {
     interface ExplicitProperties {
       indeterminate: boolean;

@@ -3,6 +3,7 @@ import { Avatar, type AvatarProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
+import SAMPLE_SRC from './sample-avatar.svg?url';
 import { gallery } from '../../../../gallery';
 
 const VARIANTS = ['solid', 'soft'] as const;
@@ -10,19 +11,17 @@ const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
-// Inline 1x1 PNG that always resolves so the gallery shows the loaded
-// state without depending on a network. The error story uses a
-// guaranteed-broken URL to exercise the fallback path.
-const SAMPLE_SRC =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+// The error story uses a guaranteed-broken URL to exercise the
+// fallback path; the loaded state uses a bundled SVG so the gallery
+// renders without a network.
 const BROKEN_SRC = 'https://example.invalid/avatar.png';
 
 const meta = {
   title: 'UI/Components/Avatar',
   component: Avatar,
   args: {
-    alt: 'Jane Doe',
-    fallback: 'JD',
+    alt: 'Gill Bates',
+    fallback: 'GB',
     size: 2,
     variant: 'soft',
     color: 'accent',
@@ -52,33 +51,33 @@ export const Overview: Story = gallery({
     {
       title: 'Variant',
       items: VARIANTS.map((variant) => (
-        <Avatar alt="Jane Doe" fallback="JD" variant={variant} />
+        <Avatar alt="Gill Bates" fallback="GB" variant={variant} />
       )),
     },
     {
       title: 'Color',
       items: COLORS.map((color) => (
-        <Avatar alt="Jane Doe" fallback="JD" color={color} variant="solid" />
+        <Avatar alt="Gill Bates" fallback="GB" color={color} variant="solid" />
       )),
     },
     {
       title: 'Size',
       items: SIZES.map((size) => (
-        <Avatar alt="Jane Doe" fallback="JD" size={size} />
+        <Avatar alt="Gill Bates" fallback="GB" size={size} />
       )),
     },
     {
       title: 'Radius',
       items: RADII.map((radius) => (
-        <Avatar alt="Jane Doe" fallback="JD" radius={radius} />
+        <Avatar alt="Gill Bates" fallback="GB" radius={radius} />
       )),
     },
     {
       title: 'State',
       items: [
-        <Avatar alt="Jane Doe" fallback="JD" src={SAMPLE_SRC} />,
-        <Avatar alt="Jane Doe" fallback="JD" src={BROKEN_SRC} />,
-        <Avatar alt="Jane Doe" fallback="JD" />,
+        <Avatar alt="Gill Bates" fallback="GB" src={SAMPLE_SRC} />,
+        <Avatar alt="Gill Bates" fallback="GB" src={BROKEN_SRC} />,
+        <Avatar alt="Gill Bates" fallback="GB" />,
       ],
     },
   ],
