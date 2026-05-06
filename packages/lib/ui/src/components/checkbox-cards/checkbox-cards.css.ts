@@ -132,6 +132,24 @@ export const item = style({
       backgroundColor: neutral.alpha[5],
     },
   },
+
+  // Coarse-pointer press cue. The global `-webkit-tap-highlight-color:
+  // transparent` (set in `@lib/design`'s root rule) suppresses iOS's
+  // native gray flash on tap, so without an explicit overlay the card
+  // would have no visible press feedback while held. Mirrors upstream's
+  // `(pointer: coarse)` rule on CheckboxCards. Filtered against
+  // `:focus-visible` so keyboard activation (Space) doesn't paint the
+  // overlay, and against disabled so a no-op press doesn't either.
+  '@media': {
+    '(pointer: coarse)': {
+      selectors: {
+        '&:where(:active:not(:has(input:focus-visible)):not(:has(input:disabled)))':
+          {
+            backgroundImage: `linear-gradient(${neutral.alpha[4]}, ${neutral.alpha[4]})`,
+          },
+      },
+    },
+  },
 });
 
 // The visible checkbox pinned to the right edge of the card.
