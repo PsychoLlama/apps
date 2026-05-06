@@ -19,11 +19,24 @@
  * - `color` accepts every semantic palette token. Drops `highContrast`
  *   (recorded as a deferred deviation).
  *
+ * Deferred deviations (intentionally unaddressed for now):
+ * - No `data-state` attribute on the input. Radix exposes
+ *   `data-state="checked|unchecked|indeterminate"` for consumer CSS;
+ *   we lean on the native `:checked` / `:indeterminate` pseudo-classes
+ *   internally, but consumers writing third-party rules don't get a
+ *   `data-state` hook. Fallout from picking the native-input host.
+ * - Form-reset doesn't reconcile against the controlled prop. Radix's
+ *   primitive listens for `<form>.reset` and reapplies the initial
+ *   checked state; the browser's native reset only restores the HTML
+ *   `checked` attribute, which can drift from the controlled prop after
+ *   the parent has driven `checked` to a new value. Same gap exists in
+ *   the radio port — fix both together in a follow-up.
+ *
  * @see https://www.radix-ui.com/themes/docs/components/checkbox
  * @see https://www.radix-ui.com/primitives/docs/components/checkbox
  */
 
-import { createEffect, mergeProps, Show, splitProps } from 'solid-js';
+import { mergeProps, Show, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import {
   marginPropKeys,
@@ -38,6 +51,20 @@ import {
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import Text from '../text/text';
 import * as css from './checkbox.css';
+
+// Teach Solid's `prop:` directive about the native `indeterminate`
+// property. The DOM exposes it as a property only — there is no
+// matching HTML attribute — so the standard JSX binding can't reach
+// it. Augmenting `ExplicitProperties` lets us write
+// `prop:indeterminate={...}` with full type safety.
+declare module 'solid-js' {
+  // eslint-disable-next-line @typescript-eslint/no-namespace -- Solid's JSX types are nested in a namespace; module augmentation has to follow.
+  namespace JSX {
+    interface ExplicitProperties {
+      indeterminate: boolean;
+    }
+  }
+}
 
 /** Visual size on a 1–3 scale. */
 export type CheckboxSize = 1 | 2 | 3;
@@ -154,16 +181,6 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
-  // Native `indeterminate` is a property only — there is no matching
-  // attribute, so JSX bindings can't surface it. An effect mirrors the
-  // controlled `checked` value into `input.indeterminate` after every
-  // render, which is also what activates the `:indeterminate` selector
-  // the stylesheet uses to swap the indicator mask.
-  let inputRef: HTMLInputElement | undefined;
-  createEffect(() => {
-    if (inputRef) inputRef.indeterminate = local.checked === 'indeterminate';
-  });
-
   const onChange: JSX.ChangeEventHandler<HTMLInputElement, Event> = (event) => {
     // Indeterminate → true mirrors Radix's CheckboxTrigger semantics
     // and the browser's own indeterminate behavior on click. Once a
@@ -222,11 +239,17 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
   const renderInput = () => (
     <input
       {...skeletonProps}
-      ref={(el) => {
-        inputRef = el;
-      }}
       type="checkbox"
       checked={local.checked === true}
+      // `indeterminate` is a DOM property without a matching HTML
+      // attribute, so the standard JSX binding can't reach it. Solid's
+      // `prop:` namespace bypasses attribute reflection and assigns the
+      // expression to the property directly — and stays reactive, so
+      // changing the controlled `checked` flips indeterminate without
+      // an imperative effect (which would be orphaned for components
+      // built outside an active reactive root, e.g. story galleries
+      // that pre-evaluate their JSX cells at module load).
+      prop:indeterminate={local.checked === 'indeterminate'}
       disabled={local.disabled}
       class={inputClassName()}
       data-testid={tid.testId}
