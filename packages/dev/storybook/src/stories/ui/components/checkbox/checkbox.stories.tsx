@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { createSignal, splitProps, untrack } from 'solid-js';
+import { createEffect, createSignal, splitProps, untrack } from 'solid-js';
 import { fn } from 'storybook/test';
 import {
   Checkbox,
@@ -112,8 +112,13 @@ const meta = {
       'onCheckedChange',
     ]);
     const [checked, setChecked] = createSignal<CheckboxChecked>(
-      untrack(() => storyOnly.initialChecked ?? false),
+      storyOnly.initialChecked ?? false,
     );
+    // Re-seed the signal whenever the controls panel's `initialChecked`
+    // changes so the tri-state is reachable from the Playground. Without
+    // the effect, the args panel update would be absorbed silently —
+    // the local signal only gets read on first render.
+    createEffect(() => setChecked(storyOnly.initialChecked ?? false));
     return (
       <Checkbox
         {...checkboxProps}
