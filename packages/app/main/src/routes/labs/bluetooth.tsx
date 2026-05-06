@@ -20,14 +20,18 @@ import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import {
   type BatteryStatus,
   type DecodedFrame,
+  type SupportedFunction,
   Command,
   DataType,
   FrameDecoder,
   commandName,
   decodeBatteryReply,
+  decodeSupportFunctionReply,
   encodeAck,
   encodeBatteryRequest,
   encodeInitRequest,
+  encodeSupportFunctionRequest,
+  functionTypeName,
 } from '../../labs/sony-mdr';
 import * as css from './bluetooth.css';
 
@@ -54,6 +58,7 @@ interface BluetoothState {
   status: ConnectionState;
   error: string | null;
   battery: BatteryStatus | null;
+  capabilities: SupportedFunction[] | null;
   log: LogEntry[];
   webSerial: WebSerialSupport;
 }
@@ -64,6 +69,7 @@ const bluetoothStore = defineStore<BluetoothState>(() => ({
   status: 'idle',
   error: null,
   battery: null,
+  capabilities: null,
   log: [],
   webSerial: 'unknown',
 }));
@@ -88,6 +94,13 @@ const setBatteryAction = defineAction(
   [bluetoothStore],
   (state, battery: BatteryStatus | null) => {
     state.battery = battery;
+  },
+);
+
+const setCapabilitiesAction = defineAction(
+  [bluetoothStore],
+  (state, capabilities: SupportedFunction[] | null) => {
+    state.capabilities = capabilities;
   },
 );
 
@@ -172,6 +185,7 @@ export default function LabsBluetooth() {
     setStatus: useAction(setStatusAction),
     setError: useAction(setErrorAction),
     setBattery: useAction(setBatteryAction),
+    setCapabilities: useAction(setCapabilitiesAction),
     appendLog: useAction(appendLogAction),
     setWebSerialSupport: useAction(setWebSerialSupportAction),
   };
@@ -212,6 +226,8 @@ export default function LabsBluetooth() {
     });
     const battery = decodeBatteryReply(frame.payload);
     if (battery) actions.setBattery(battery);
+    const capabilities = decodeSupportFunctionReply(frame.payload);
+    if (capabilities) actions.setCapabilities(capabilities);
     // Auto-ACK every DATA frame. Without this the device retransmits.
     if (frame.type !== DataType.Ack) {
       await sendAck(frame.seq);
@@ -292,6 +308,13 @@ export default function LabsBluetooth() {
       encodeBatteryRequest(seq),
       MDR_FRAME_TYPE,
       Command.BatteryLevelRequest,
+    );
+  };
+  const handleQueryCapabilities = () => {
+    void send(
+      encodeSupportFunctionRequest(seq),
+      MDR_FRAME_TYPE,
+      Command.SupportFunctionRequest,
     );
   };
 
@@ -406,6 +429,47 @@ export default function LabsBluetooth() {
                         testId="refresh-battery"
                         aria-label="Refresh battery"
                         onClick={handleQueryBattery}
+                        disabled={bluetooth.status !== 'connected'}
+                        variant="ghost"
+                        color="neutral"
+                        size={1}
+                      >
+                        <IconRefresh width="16" height="16" />
+                      </IconButton>
+                    </Flex>
+                  </DataListValue>
+                </DataListItem>
+                <DataListItem>
+                  <DataListLabel>Capabilities</DataListLabel>
+                  <DataListValue>
+                    <Flex as="div" direction="column" gap={2} align="start">
+                      <Show
+                        when={bluetooth.capabilities}
+                        fallback={
+                          <Text as="span" color="lowContrast">
+                            unknown
+                          </Text>
+                        }
+                      >
+                        {(entries) => (
+                          <Flex as="ul" direction="column" gap={1}>
+                            <For each={entries()}>
+                              {(entry) => (
+                                <Flex as="li">
+                                  <Text as="code" size={1} selectable={true}>
+                                    {functionTypeName(entry.code) ??
+                                      `0x${entry.code.toString(16).padStart(2, '0')}`}
+                                  </Text>
+                                </Flex>
+                              )}
+                            </For>
+                          </Flex>
+                        )}
+                      </Show>
+                      <IconButton
+                        testId="refresh-capabilities"
+                        aria-label="Refresh capabilities"
+                        onClick={handleQueryCapabilities}
                         disabled={bluetooth.status !== 'connected'}
                         variant="ghost"
                         color="neutral"

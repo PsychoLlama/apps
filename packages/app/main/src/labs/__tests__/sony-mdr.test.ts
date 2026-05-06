@@ -5,10 +5,13 @@ import {
   FrameDecoder,
   commandName,
   decodeBatteryReply,
+  decodeSupportFunctionReply,
   encodeAck,
   encodeBatteryRequest,
   encodeFrame,
   encodeInitRequest,
+  encodeSupportFunctionRequest,
+  functionTypeName,
 } from '../sony-mdr';
 
 const hex = (...bytes: number[]) => Uint8Array.from(bytes);
@@ -131,6 +134,73 @@ describe('sony-mdr', () => {
 
     it('returns null for unknown command ids', () => {
       expect(commandName(0xff)).toBeNull();
+    });
+  });
+
+  describe('encodeSupportFunctionRequest', () => {
+    it('encodes a SUPPORT_FUNCTION query with seq=0', () => {
+      // sum: 0x0c + 0x00 + 0x00*3 + 0x02 + 0x06 + 0x00 = 0x14
+      expect(encodeSupportFunctionRequest(0)).toEqual(
+        hex(0x3e, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x02, 0x06, 0x00, 0x14, 0x3c),
+      );
+    });
+  });
+
+  describe('decodeSupportFunctionReply', () => {
+    it('parses a reply with three entries', () => {
+      // [0x07, 0x00, count=3, code, prio, code, prio, code, prio]
+      const entries = decodeSupportFunctionReply(
+        hex(
+          Command.SupportFunctionReply,
+          0x00,
+          0x03,
+          0x20,
+          0x01,
+          0x6a,
+          0x02,
+          0xf6,
+          0x01,
+        ),
+      );
+      expect(entries).toEqual([
+        { code: 0x20, priority: 0x01 },
+        { code: 0x6a, priority: 0x02 },
+        { code: 0xf6, priority: 0x01 },
+      ]);
+    });
+
+    it('parses a reply with zero entries', () => {
+      const entries = decodeSupportFunctionReply(
+        hex(Command.SupportFunctionReply, 0x00, 0x00),
+      );
+      expect(entries).toEqual([]);
+    });
+
+    it('returns null when the payload is truncated mid-entry', () => {
+      // count=2 but only one full entry's bytes are present.
+      const entries = decodeSupportFunctionReply(
+        hex(Command.SupportFunctionReply, 0x00, 0x02, 0x20, 0x01, 0x6a),
+      );
+      expect(entries).toBeNull();
+    });
+
+    it('returns null for unrelated command ids', () => {
+      expect(
+        decodeSupportFunctionReply(hex(Command.BatteryLevelReply, 0x00, 0x00)),
+      ).toBeNull();
+    });
+  });
+
+  describe('functionTypeName', () => {
+    it('maps known feature codes to readable names', () => {
+      expect(functionTypeName(0x20)).toBe('BATTERY_LEVEL_INDICATOR');
+      expect(functionTypeName(0x6a)).toBe(
+        'MODE_NC_ASM_NOISE_CANCELLING_DUAL_SINGLE_AMBIENT_SOUND_MODE_LEVEL_ADJUSTMENT',
+      );
+    });
+
+    it('returns null for unknown feature codes', () => {
+      expect(functionTypeName(0x00)).toBeNull();
     });
   });
 
