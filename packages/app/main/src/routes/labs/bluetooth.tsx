@@ -1,0 +1,420 @@
+import { For, Show, onCleanup } from 'solid-js';
+import {
+  Badge,
+  Button,
+  Callout,
+  Card,
+  Container,
+  DataListItem,
+  DataListLabel,
+  DataListRoot,
+  DataListValue,
+  Flex,
+  Heading,
+  Text,
+} from '@lib/ui';
+import { SiteHeader } from '@lib/shell';
+import { createStore, defineAction, defineStore, useAction } from '@lib/state';
+import {
+  type BatteryStatus,
+  type DecodedFrame,
+  FrameDecoder,
+  decodeBatteryReply,
+  encodeBatteryRequest,
+  encodeInitRequest,
+} from '../../labs/sony-mdr';
+import * as css from './bluetooth.css';
+
+type ConnectionState = 'idle' | 'connecting' | 'connected' | 'error';
+
+interface LogEntry {
+  id: number;
+  direction: 'tx' | 'rx';
+  bytes: Uint8Array;
+  type?: number;
+  seq?: number;
+}
+
+interface BluetoothState {
+  status: ConnectionState;
+  error: string | null;
+  battery: BatteryStatus | null;
+  log: LogEntry[];
+}
+
+const MAX_LOG_ENTRIES = 100;
+
+const bluetoothStore = defineStore<BluetoothState>(() => ({
+  status: 'idle',
+  error: null,
+  battery: null,
+  log: [],
+}));
+
+const bluetooth = createStore(bluetoothStore);
+
+const setStatusAction = defineAction(
+  [bluetoothStore],
+  (state, status: ConnectionState) => {
+    state.status = status;
+  },
+);
+
+const setErrorAction = defineAction(
+  [bluetoothStore],
+  (state, message: string | null) => {
+    state.error = message;
+  },
+);
+
+const setBatteryAction = defineAction(
+  [bluetoothStore],
+  (state, battery: BatteryStatus | null) => {
+    state.battery = battery;
+  },
+);
+
+let nextLogId = 0;
+
+const appendLogAction = defineAction(
+  [bluetoothStore],
+  (state, entry: Omit<LogEntry, 'id'>) => {
+    state.log.push({ ...entry, id: ++nextLogId });
+    if (state.log.length > MAX_LOG_ENTRIES) {
+      state.log.splice(0, state.log.length - MAX_LOG_ENTRIES);
+    }
+  },
+);
+
+// Minimal ambient Web Serial declarations. Chromium ships the API but
+// TypeScript's DOM lib doesn't include it yet; pulling
+// `@types/w3c-web-serial` in just for one consumer feels heavy. Names
+// are intentionally narrow — only what this route uses.
+interface SerialPort {
+  open(options: { baudRate: number }): Promise<void>;
+  close(): Promise<void>;
+  readonly readable: ReadableStream<Uint8Array> | null;
+  readonly writable: WritableStream<Uint8Array> | null;
+}
+
+interface NavigatorSerial {
+  requestPort(): Promise<SerialPort>;
+}
+
+declare global {
+  interface Navigator {
+    readonly serial?: NavigatorSerial;
+  }
+}
+
+const HEADSET_MAC = 'AC:80:0A:83:CB:AD';
+const SONY_RFCOMM_CHANNEL = 9;
+const MDR_FRAME_TYPE = 0x0c;
+
+const formatBytes = (bytes: Uint8Array) =>
+  Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(' ');
+
+const formatHeader = (entry: LogEntry) =>
+  entry.type !== undefined
+    ? `t=${entry.type.toString(16).padStart(2, '0')} s=${entry.seq ?? 0}`
+    : '';
+
+const supportsWebSerial = () =>
+  typeof navigator !== 'undefined' && navigator.serial !== undefined;
+
+const statusColor = (
+  status: ConnectionState,
+): 'accent' | 'success' | 'danger' | 'neutral' => {
+  if (status === 'connected') return 'success';
+  if (status === 'error') return 'danger';
+  if (status === 'connecting') return 'accent';
+  return 'neutral';
+};
+
+export default function LabsBluetooth() {
+  const actions = {
+    setStatus: useAction(setStatusAction),
+    setError: useAction(setErrorAction),
+    setBattery: useAction(setBatteryAction),
+    appendLog: useAction(appendLogAction),
+  };
+
+  let port: SerialPort | null = null;
+  let writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
+  let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  let seq = 0;
+  const decoder = new FrameDecoder();
+
+  const handleFrame = (frame: DecodedFrame) => {
+    actions.appendLog({
+      direction: 'rx',
+      bytes: frame.raw,
+      type: frame.type,
+      seq: frame.seq,
+    });
+    const battery = decodeBatteryReply(frame.payload);
+    if (battery) actions.setBattery(battery);
+  };
+
+  const readLoop = async () => {
+    if (!reader) return;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        for (const frame of decoder.push(value)) handleFrame(frame);
+      }
+    } catch (err) {
+      actions.setError(err instanceof Error ? err.message : String(err));
+      actions.setStatus('error');
+    }
+  };
+
+  const connect = async () => {
+    if (!navigator.serial) return;
+    actions.setError(null);
+    actions.setStatus('connecting');
+    try {
+      const selected = await navigator.serial.requestPort();
+      // RFCOMM ignores baudRate, but Web Serial requires the field.
+      await selected.open({ baudRate: 9600 });
+      if (!selected.readable || !selected.writable) {
+        throw new Error('Serial port opened without readable/writable streams');
+      }
+      port = selected;
+      writer = selected.writable.getWriter();
+      reader = selected.readable.getReader();
+      actions.setStatus('connected');
+      void readLoop();
+    } catch (err) {
+      actions.setError(err instanceof Error ? err.message : String(err));
+      actions.setStatus('error');
+    }
+  };
+
+  const disconnect = async () => {
+    try {
+      await reader?.cancel().catch(() => {});
+      reader?.releaseLock();
+      writer?.releaseLock();
+      await port?.close();
+    } catch (err) {
+      actions.setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      reader = null;
+      writer = null;
+      port = null;
+      actions.setStatus('idle');
+    }
+  };
+
+  const send = async (bytes: Uint8Array, type: number) => {
+    if (!writer) return;
+    await writer.write(bytes);
+    actions.appendLog({ direction: 'tx', bytes, type, seq });
+    seq = seq === 0 ? 1 : 0;
+  };
+
+  const handleConnect = () => {
+    void connect();
+  };
+  const handleDisconnect = () => {
+    void disconnect();
+  };
+  const handleSendInit = () => {
+    void send(encodeInitRequest(seq), MDR_FRAME_TYPE);
+  };
+  const handleQueryBattery = () => {
+    void send(encodeBatteryRequest(seq), MDR_FRAME_TYPE);
+  };
+
+  onCleanup(() => {
+    void disconnect();
+  });
+
+  return (
+    <Flex as="main" direction="column" grow>
+      <SiteHeader title="Bluetooth lab" />
+
+      <Flex as="section" direction="column" px={5} py={6}>
+        <Container as="div" size={3}>
+          <Flex as="div" direction="column" gap={5}>
+            <Flex as="div" direction="column" gap={2}>
+              <Heading as="h1" size={6}>
+                Sony MDR over Web Serial
+              </Heading>
+              <Text as="p" size={3} color="lowContrast">
+                Speaks Sony's reverse-engineered control protocol to a paired
+                Bluetooth Classic headset over an RFCOMM channel exposed as a
+                tty. Read-only for now.
+              </Text>
+            </Flex>
+
+            <Show when={!supportsWebSerial()}>
+              <Callout color="warning">
+                <Text as="span" size={2}>
+                  This browser doesn't expose <code>navigator.serial</code>. Use
+                  a recent Chromium-based browser.
+                </Text>
+              </Callout>
+            </Show>
+
+            <Card as="div" variant="surface" size={2}>
+              <Flex as="div" direction="column" gap={3}>
+                <Heading as="h2" size={4}>
+                  Setup
+                </Heading>
+                <Text as="p" size={2} selectable={true}>
+                  Bind the Sony control RFCOMM channel as a serial tty before
+                  connecting. The MAC and channel come from{' '}
+                  <code>sdptool browse</code> against the paired device.
+                </Text>
+                <pre class={css.codeBlock}>
+                  sudo rfcomm bind 0 {HEADSET_MAC} {SONY_RFCOMM_CHANNEL}
+                </pre>
+                <Text as="p" size={2} color="lowContrast" selectable={true}>
+                  This creates <code>/dev/rfcomm0</code>. Pick it from the
+                  serial port chooser. Run <code>sudo rfcomm release 0</code>{' '}
+                  when finished.
+                </Text>
+              </Flex>
+            </Card>
+
+            <Card as="div" variant="surface" size={2}>
+              <Flex as="div" direction="column" gap={3}>
+                <Flex as="div" justify="between" align="center" gap={3}>
+                  <Heading as="h2" size={4}>
+                    Connection
+                  </Heading>
+                  <Badge color={statusColor(bluetooth.status)} variant="soft">
+                    {bluetooth.status}
+                  </Badge>
+                </Flex>
+
+                <Show when={bluetooth.error}>
+                  {(message) => (
+                    <Callout color="danger">
+                      <Text as="span" size={2} selectable={true}>
+                        {message()}
+                      </Text>
+                    </Callout>
+                  )}
+                </Show>
+
+                <Flex as="div" gap={2} wrap="wrap">
+                  <Button
+                    testId="connect"
+                    onClick={handleConnect}
+                    disabled={
+                      bluetooth.status === 'connected' || !supportsWebSerial()
+                    }
+                    variant="solid"
+                  >
+                    Connect
+                  </Button>
+                  <Button
+                    testId="disconnect"
+                    onClick={handleDisconnect}
+                    disabled={bluetooth.status !== 'connected'}
+                    variant="soft"
+                    color="neutral"
+                  >
+                    Disconnect
+                  </Button>
+                  <Button
+                    testId="send-init"
+                    onClick={handleSendInit}
+                    disabled={bluetooth.status !== 'connected'}
+                    variant="soft"
+                  >
+                    Send INIT
+                  </Button>
+                  <Button
+                    testId="query-battery"
+                    onClick={handleQueryBattery}
+                    disabled={bluetooth.status !== 'connected'}
+                    variant="soft"
+                  >
+                    Query battery
+                  </Button>
+                </Flex>
+              </Flex>
+            </Card>
+
+            <Card as="div" variant="surface" size={2}>
+              <Flex as="div" direction="column" gap={3}>
+                <Heading as="h2" size={4}>
+                  Device state
+                </Heading>
+                <DataListRoot orientation="horizontal" size={2}>
+                  <DataListItem>
+                    <DataListLabel>Battery</DataListLabel>
+                    <DataListValue>
+                      <Show
+                        when={bluetooth.battery}
+                        fallback={
+                          <Text as="span" color="lowContrast">
+                            unknown
+                          </Text>
+                        }
+                      >
+                        {(status) => (
+                          <Text as="span" selectable={true}>
+                            {status().level}%
+                            {status().charging ? ' (charging)' : ''}
+                          </Text>
+                        )}
+                      </Show>
+                    </DataListValue>
+                  </DataListItem>
+                </DataListRoot>
+              </Flex>
+            </Card>
+
+            <Card as="div" variant="surface" size={2}>
+              <Flex as="div" direction="column" gap={3}>
+                <Heading as="h2" size={4}>
+                  Frame log
+                </Heading>
+                <Show
+                  when={bluetooth.log.length > 0}
+                  fallback={
+                    <Text as="p" color="lowContrast" size={2}>
+                      No frames yet. Connect and send a request.
+                    </Text>
+                  }
+                >
+                  <Flex as="ol" direction="column" class={css.log}>
+                    <For each={bluetooth.log}>
+                      {(entry) => (
+                        <Flex
+                          as="li"
+                          class={`${css.logRow} ${
+                            entry.direction === 'tx'
+                              ? css.logRowTx
+                              : css.logRowRx
+                          }`}
+                        >
+                          <Text as="span" aria-hidden="true" selectable={false}>
+                            {entry.direction === 'tx' ? '↑' : '↓'}
+                          </Text>
+                          <Text as="span" selectable={false}>
+                            {formatHeader(entry)}
+                          </Text>
+                          <Text as="code" selectable={true}>
+                            {formatBytes(entry.bytes)}
+                          </Text>
+                        </Flex>
+                      )}
+                    </For>
+                  </Flex>
+                </Show>
+              </Flex>
+            </Card>
+          </Flex>
+        </Container>
+      </Flex>
+    </Flex>
+  );
+}

@@ -27,6 +27,7 @@
     "@app/studio": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
+    "@lib/state": "workspace:*",
     "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
     "@solidjs/meta": "catalog:",
