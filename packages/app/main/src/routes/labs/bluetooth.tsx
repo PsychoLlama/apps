@@ -1,4 +1,4 @@
-import { For, Show, onCleanup } from 'solid-js';
+import { For, Show, onCleanup, onMount } from 'solid-js';
 import {
   Badge,
   Button,
@@ -18,14 +18,23 @@ import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import {
   type BatteryStatus,
   type DecodedFrame,
+  DataType,
   FrameDecoder,
   decodeBatteryReply,
+  encodeAck,
   encodeBatteryRequest,
   encodeInitRequest,
 } from '../../labs/sony-mdr';
 import * as css from './bluetooth.css';
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'error';
+
+/**
+ * Tri-state Web Serial detection. Stays `'unknown'` through SSR and
+ * initial hydration so the markup matches across the wire — `onMount`
+ * flips it to a concrete value once the client has a real `navigator`.
+ */
+type WebSerialSupport = 'unknown' | 'supported' | 'unsupported';
 
 interface LogEntry {
   id: number;
@@ -40,6 +49,7 @@ interface BluetoothState {
   error: string | null;
   battery: BatteryStatus | null;
   log: LogEntry[];
+  webSerial: WebSerialSupport;
 }
 
 const MAX_LOG_ENTRIES = 100;
@@ -49,6 +59,7 @@ const bluetoothStore = defineStore<BluetoothState>(() => ({
   error: null,
   battery: null,
   log: [],
+  webSerial: 'unknown',
 }));
 
 const bluetooth = createStore(bluetoothStore);
@@ -86,6 +97,13 @@ const appendLogAction = defineAction(
   },
 );
 
+const setWebSerialSupportAction = defineAction(
+  [bluetoothStore],
+  (state, support: WebSerialSupport) => {
+    state.webSerial = support;
+  },
+);
+
 // Minimal ambient Web Serial declarations. Chromium ships the API but
 // TypeScript's DOM lib doesn't include it yet; pulling
 // `@types/w3c-web-serial` in just for one consumer feels heavy. Names
@@ -119,8 +137,10 @@ const formatHeader = (entry: LogEntry) =>
     ? `t=${entry.type.toString(16).padStart(2, '0')} s=${entry.seq ?? 0}`
     : '';
 
-const supportsWebSerial = () =>
-  typeof navigator !== 'undefined' && navigator.serial !== undefined;
+const detectWebSerial = (): WebSerialSupport =>
+  typeof navigator !== 'undefined' && navigator.serial !== undefined
+    ? 'supported'
+    : 'unsupported';
 
 const statusColor = (
   status: ConnectionState,
@@ -137,7 +157,13 @@ export default function LabsBluetooth() {
     setError: useAction(setErrorAction),
     setBattery: useAction(setBatteryAction),
     appendLog: useAction(appendLogAction),
+    setWebSerialSupport: useAction(setWebSerialSupportAction),
   };
+
+  // Run on the client only. Keeping the SSR snapshot in `'unknown'`
+  // means the markup matches across hydration; the real value lands
+  // here once `navigator` exists.
+  onMount(() => actions.setWebSerialSupport(detectWebSerial()));
 
   let port: SerialPort | null = null;
   let writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
@@ -145,7 +171,19 @@ export default function LabsBluetooth() {
   let seq = 0;
   const decoder = new FrameDecoder();
 
-  const handleFrame = (frame: DecodedFrame) => {
+  const sendAck = async (forSeq: number) => {
+    if (!writer) return;
+    const bytes = encodeAck(forSeq);
+    await writer.write(bytes);
+    actions.appendLog({
+      direction: 'tx',
+      bytes,
+      type: DataType.Ack,
+      seq: forSeq === 0 ? 1 : 0,
+    });
+  };
+
+  const handleFrame = async (frame: DecodedFrame) => {
     actions.appendLog({
       direction: 'rx',
       bytes: frame.raw,
@@ -154,6 +192,10 @@ export default function LabsBluetooth() {
     });
     const battery = decodeBatteryReply(frame.payload);
     if (battery) actions.setBattery(battery);
+    // Auto-ACK every DATA frame. Without this the device retransmits.
+    if (frame.type !== DataType.Ack) {
+      await sendAck(frame.seq);
+    }
   };
 
   const readLoop = async () => {
@@ -163,7 +205,7 @@ export default function LabsBluetooth() {
         const { value, done } = await reader.read();
         if (done) break;
         if (!value) continue;
-        for (const frame of decoder.push(value)) handleFrame(frame);
+        for (const frame of decoder.push(value)) await handleFrame(frame);
       }
     } catch (err) {
       actions.setError(err instanceof Error ? err.message : String(err));
@@ -251,7 +293,7 @@ export default function LabsBluetooth() {
               </Text>
             </Flex>
 
-            <Show when={!supportsWebSerial()}>
+            <Show when={bluetooth.webSerial === 'unsupported'}>
               <Callout color="warning">
                 <Text as="span" size={2}>
                   This browser doesn't expose <code>navigator.serial</code>. Use
@@ -307,8 +349,10 @@ export default function LabsBluetooth() {
                     testId="connect"
                     onClick={handleConnect}
                     disabled={
-                      bluetooth.status === 'connected' || !supportsWebSerial()
+                      bluetooth.status === 'connected' ||
+                      bluetooth.webSerial !== 'supported'
                     }
+                    skeleton={bluetooth.webSerial === 'unknown'}
                     variant="solid"
                   >
                     Connect

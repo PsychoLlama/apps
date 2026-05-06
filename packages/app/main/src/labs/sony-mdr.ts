@@ -109,6 +109,19 @@ export const encodeBatteryRequest = (seq: number): Uint8Array =>
   });
 
 /**
+ * Build an ACK for a DATA frame received from the headset. The seq is
+ * the inverse of the received seq — that's the protocol's toggle bit.
+ * Without these, the device assumes its DATA frame was lost and
+ * retransmits it on a short timer.
+ */
+export const encodeAck = (receivedSeq: number): Uint8Array =>
+  encodeFrame({
+    type: DataType.Ack,
+    seq: receivedSeq === 0 ? 1 : 0,
+    payload: new Uint8Array(),
+  });
+
+/**
  * Pull a `BatteryStatus` from a reply or notify payload, or `null` if
  * the payload isn't a battery response.
  */

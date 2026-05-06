@@ -4,6 +4,7 @@ import {
   DataType,
   FrameDecoder,
   decodeBatteryReply,
+  encodeAck,
   encodeBatteryRequest,
   encodeFrame,
   encodeInitRequest,
@@ -102,6 +103,22 @@ describe('sony-mdr', () => {
       corrupted[corrupted.length - 2] ^= 0x01;
       const decoder = new FrameDecoder();
       expect(decoder.push(corrupted)).toEqual([]);
+    });
+  });
+
+  describe('encodeAck', () => {
+    it('flips seq=0 to a seq=1 ACK', () => {
+      // Verified against the device trace: when we send seq=0 the
+      // headset replies with `3e 01 01 00 00 00 00 02 3c`.
+      expect(encodeAck(0)).toEqual(
+        hex(0x3e, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x3c),
+      );
+    });
+
+    it('flips seq=1 to a seq=0 ACK', () => {
+      expect(encodeAck(1)).toEqual(
+        hex(0x3e, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x3c),
+      );
     });
   });
 
