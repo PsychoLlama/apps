@@ -40,6 +40,17 @@ export const Command = {
   BatteryLevelNotify: 0x12,
 } as const;
 
+/**
+ * Friendly label for a `Mdr` command id. Returns `null` for unknown
+ * codes so callers can fall back to a hex display.
+ */
+export const commandName = (cmd: number): string | null => {
+  for (const [name, code] of Object.entries(Command)) {
+    if (code === cmd) return name;
+  }
+  return null;
+};
+
 /** Sub-type for battery commands; selects which battery is being asked about. */
 export const BatteryKind = {
   /** Single battery — over-ear headsets like the WH-1000XM4. */

@@ -3,6 +3,7 @@ import {
   Command,
   DataType,
   FrameDecoder,
+  commandName,
   decodeBatteryReply,
   encodeAck,
   encodeBatteryRequest,
@@ -119,6 +120,17 @@ describe('sony-mdr', () => {
       expect(encodeAck(1)).toEqual(
         hex(0x3e, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x3c),
       );
+    });
+  });
+
+  describe('commandName', () => {
+    it('maps known command ids to names', () => {
+      expect(commandName(Command.InitRequest)).toBe('InitRequest');
+      expect(commandName(Command.BatteryLevelReply)).toBe('BatteryLevelReply');
+    });
+
+    it('returns null for unknown command ids', () => {
+      expect(commandName(0xff)).toBeNull();
     });
   });
 

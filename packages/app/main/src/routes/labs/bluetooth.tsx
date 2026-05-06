@@ -20,8 +20,10 @@ import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import {
   type BatteryStatus,
   type DecodedFrame,
+  Command,
   DataType,
   FrameDecoder,
+  commandName,
   decodeBatteryReply,
   encodeAck,
   encodeBatteryRequest,
@@ -44,6 +46,8 @@ interface LogEntry {
   bytes: Uint8Array;
   type?: number;
   seq?: number;
+  /** First payload byte of an MDR frame (the command id). */
+  command?: number;
 }
 
 interface BluetoothState {
@@ -132,10 +136,22 @@ const MDR_FRAME_TYPE = 0x0c;
 const formatBytes = (bytes: Uint8Array) =>
   Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(' ');
 
-const formatHeader = (entry: LogEntry) =>
-  entry.type !== undefined
-    ? `t=${entry.type.toString(16).padStart(2, '0')} s=${entry.seq ?? 0}`
-    : '';
+const formatLabel = (entry: LogEntry): string => {
+  if (entry.type === DataType.Ack) return 'ACK';
+  if (entry.command === undefined) {
+    return entry.type !== undefined
+      ? `type=${entry.type.toString(16).padStart(2, '0')}`
+      : '';
+  }
+  const name = commandName(entry.command);
+  return name ?? `cmd=${entry.command.toString(16).padStart(2, '0')}`;
+};
+
+const formatHeader = (entry: LogEntry): string => {
+  const label = formatLabel(entry);
+  const seq = entry.seq ?? 0;
+  return `${label} s=${seq}`;
+};
 
 const detectWebSerial = (): WebSerialSupport =>
   typeof navigator !== 'undefined' && navigator.serial !== undefined
@@ -184,11 +200,15 @@ export default function LabsBluetooth() {
   };
 
   const handleFrame = async (frame: DecodedFrame) => {
+    const isData =
+      frame.type === DataType.Mdr || frame.type === DataType.MdrNo2;
     actions.appendLog({
       direction: 'rx',
       bytes: frame.raw,
       type: frame.type,
       seq: frame.seq,
+      command:
+        isData && frame.payload.length > 0 ? frame.payload[0] : undefined,
     });
     const battery = decodeBatteryReply(frame.payload);
     if (battery) actions.setBattery(battery);
@@ -213,10 +233,10 @@ export default function LabsBluetooth() {
     }
   };
 
-  const send = async (bytes: Uint8Array, type: number) => {
+  const send = async (bytes: Uint8Array, type: number, command?: number) => {
     if (!writer) return;
     await writer.write(bytes);
-    actions.appendLog({ direction: 'tx', bytes, type, seq });
+    actions.appendLog({ direction: 'tx', bytes, type, seq, command });
     seq = seq === 0 ? 1 : 0;
   };
 
@@ -238,7 +258,7 @@ export default function LabsBluetooth() {
       void readLoop();
       // INIT is the mandatory protocol handshake — fire it immediately
       // so consumers don't have to think about it.
-      void send(encodeInitRequest(seq), MDR_FRAME_TYPE);
+      void send(encodeInitRequest(seq), MDR_FRAME_TYPE, Command.InitRequest);
     } catch (err) {
       actions.setError(err instanceof Error ? err.message : String(err));
       actions.setStatus('error');
@@ -268,7 +288,11 @@ export default function LabsBluetooth() {
     void disconnect();
   };
   const handleQueryBattery = () => {
-    void send(encodeBatteryRequest(seq), MDR_FRAME_TYPE);
+    void send(
+      encodeBatteryRequest(seq),
+      MDR_FRAME_TYPE,
+      Command.BatteryLevelRequest,
+    );
   };
 
   const handleCopyLog = () => {
