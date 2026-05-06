@@ -148,7 +148,6 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
     'children',
     'class',
     'style',
-    'onClick',
     'onKeyDown',
     'disabled',
     ...skeletonPropKeys,
@@ -196,19 +195,27 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
     if (event.key === 'Enter') event.preventDefault();
   };
 
+  // Margin / `class` / `style` follow the visual root. When children
+  // wrap the input in a `<label>`, the label is what the consumer sees
+  // as the component's outer box, so positioning props belong there;
+  // otherwise the input itself is the root.
+  const hasLabel = () => local.children !== undefined;
+
   const inputClassName = () =>
     [
-      ...resolveMarginClasses(margin),
+      ...(hasLabel() ? [] : resolveMarginClasses(margin)),
       css.root,
       css.size[local.size],
       css.color[local.color],
       css.variant[local.variant],
       skeletonClass(),
-      // When no children are present, the consumer's `class` lands on
-      // the input itself; otherwise it lands on the wrapping label
-      // (set in the JSX below).
-      local.children === undefined && local.class,
+      hasLabel() ? false : local.class,
     ]
+      .filter(Boolean)
+      .join(' ');
+
+  const labelClassName = () =>
+    [...resolveMarginClasses(margin), css.item, local.class]
       .filter(Boolean)
       .join(' ');
 
@@ -241,7 +248,7 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
         // select on the wrapping label. Consumer-supplied content
         // inside the inner span sets its own selection behavior.
         selectable={false}
-        class={[css.item, local.class].filter(Boolean).join(' ')}
+        class={labelClassName()}
         style={local.style}
       >
         {renderInput()}
