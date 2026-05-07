@@ -198,7 +198,6 @@ globalStyle(':root', {
 // opposite direction.
 
 const segoeUiOverrides = {
-  fontDisplay: 'swap',
   sizeAdjust: '103%',
   descentOverride: '35%',
   ascentOverride: '105%',
@@ -250,7 +249,6 @@ globalFontFace('Segoe UI (Custom)', {
 });
 
 const openSansOverrides = {
-  fontDisplay: 'swap',
   descentOverride: '35%',
 } as const;
 
@@ -300,7 +298,6 @@ globalFontFace('Open Sans (Custom)', {
 });
 
 const consolasOverrides = {
-  fontDisplay: 'swap',
   sizeAdjust: '110%',
   ascentOverride: '85%',
   descentOverride: '22%',
