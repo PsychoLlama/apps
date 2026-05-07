@@ -62,6 +62,9 @@ export const IconGrid: Component<IconGridProps> = (props) => {
         testId="icon-grid-search"
         type="search"
         placeholder="Search icons…"
+        autocomplete="off"
+        autocapitalize="none"
+        enterkeyhint="search"
         value={search.query}
         onInput={(event) => setQuery(event.currentTarget.value)}
         aria-label="Search icons"

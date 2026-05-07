@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { fn } from 'storybook/test';
 import { TextArea, type TextAreaProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { requiredMobileInputArgTypes } from '@lib/ui/props/mobile-input';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
@@ -11,7 +12,12 @@ const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 const RESIZES = ['none', 'vertical', 'horizontal', 'both'] as const;
 
-const defaults = { testId: 'overview' } as const;
+const defaults = {
+  testId: 'overview',
+  autocomplete: 'off',
+  autocapitalize: 'sentences',
+  enterkeyhint: undefined,
+} as const;
 
 const meta = {
   title: 'UI/Components/TextArea',
@@ -23,6 +29,9 @@ const meta = {
     radius: 'medium',
     resize: 'vertical',
     placeholder: 'Tell us what you think…',
+    autocomplete: 'off',
+    autocapitalize: 'sentences',
+    enterkeyhint: undefined,
     disabled: false,
     readOnly: false,
     onInput: fn(),
@@ -30,6 +39,7 @@ const meta = {
   },
   argTypes: {
     ...marginArgTypes,
+    ...requiredMobileInputArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,
     size: {

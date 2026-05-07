@@ -4,7 +4,7 @@ Multi-line text input. The wrapper owns the resize handle so dragging reshapes t
 
 ## Props
 
-Base: `<textarea>` attributes (except `color`), margin props, skeleton props.
+Base: `<textarea>` attributes (except `color`), margin props, skeleton props, required mobile input props.
 
 - `testId` (required): Test identifier rendered as `data-testid` on the wrapping element.
 - `size` (=`2`): Visual size. `1 | 2 | 3`.

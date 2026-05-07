@@ -51,3 +51,11 @@ Render the component as a pulsing placeholder while data loads. The component sw
 Attach a test identifier to the underlying DOM node.
 
 - `testId`: Renders as `data-testid`. `string`.
+
+## Required Mobile Input Props
+
+Forcing function for mobile-input attributes that have outsized impact on the on-screen keyboard, autofill, and password-manager experience. Required on text input components so authors actively pick a value or pass `undefined` as a deliberate "considered, no preset applies." `undefined` omits the attribute, matching the browser default.
+
+- `autocomplete` (required): Autofill semantic. Pick the most specific token (`'email'`, `'one-time-code'`, `'current-password'`, `'name'`, `'street-address'`, …), `'off'` to suppress autofill, or `undefined` if no preset applies.
+- `autocapitalize` (required): Mobile auto-capitalization. `'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters' | undefined`. `'off'` for usernames/emails/codes; `'sentences'` for prose; `'words'` for proper nouns; `'characters'` for uppercase codes.
+- `enterkeyhint` (required): On-screen Enter key label. `'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send' | undefined`. `undefined` is common on `<textarea>` — Enter inserts a newline.

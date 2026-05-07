@@ -64,6 +64,9 @@ export const Skeleton: Story = {
         <TextField
           testId="example-input"
           placeholder="Form controls become inert"
+          autocomplete={undefined}
+          autocapitalize={undefined}
+          enterkeyhint={undefined}
           skeleton={props.loading}
         />
         <IconButton
