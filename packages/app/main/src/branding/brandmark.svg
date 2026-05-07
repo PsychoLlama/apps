@@ -14,7 +14,7 @@
     <g transform="translate(25.6 25.6) scale(19.2)" style="color: #ffffff">
       <path
         fill="currentColor"
-        d="M16 20h4v-4h-4m0-2h4v-4h-4m-6-2h4V4h-4m6 4h4V4h-4m-6 10h4v-4h-4m-6 4h4v-4H4m0 10h4v-4H4m6 4h4v-4h-4M4 8h4V4H4z"
+        d="M15 18v-6h2.17L12 6.83L6.83 12H9v6zM12 4l10 10h-5v6H7v-6H2z"
       />
     </g>
   </g>
