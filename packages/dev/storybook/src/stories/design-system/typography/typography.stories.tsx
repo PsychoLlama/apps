@@ -4,7 +4,6 @@ import {
   typeScale,
   fontFamily,
   fontWeight,
-  headingLineHeight,
   type FontWeight,
 } from '@lib/design';
 import { Flex, Text } from '@lib/ui';
@@ -52,18 +51,17 @@ export const HeadingLineHeight: Story = {
       <For each={[1, 2, 3, 4, 5, 6, 7, 8, 9] as const}>
         {(step) => {
           const scale = typeScale[step];
-          const heading = headingLineHeight[step];
           return (
             <Flex as="div" direction="column">
               <Text as="p" size={1} color="lowContrast">
-                headingLineHeight[{step}] (vs body)
+                typeScale[{step}].headingLineHeight (vs body lineHeight)
               </Text>
               <Text
                 as="p"
                 color="highContrast"
                 style={{
                   'font-size': scale.fontSize,
-                  'line-height': heading,
+                  'line-height': scale.headingLineHeight,
                   'letter-spacing': scale.letterSpacing,
                 }}
               >

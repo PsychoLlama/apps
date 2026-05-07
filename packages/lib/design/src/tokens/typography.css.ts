@@ -11,6 +11,10 @@
  *   Update if the body stack changes.
  * - Strong gets bold weight via per-component CSS rather than a
  *   themeable `--strong-font-family` knob.
+ * - `typeScale` is a plain const, not a theme contract — values are
+ *   inlined into consumer CSS rather than routed through `:root` vars.
+ *   Promote back to `createThemeContract` if a future use-case needs to
+ *   override sizes at runtime.
  */
 import {
   assignVars,
@@ -48,26 +52,72 @@ export const fontWeight = {
 export type FontWeight = keyof typeof fontWeight;
 
 /**
- * 9-step coordinated type scale. Each step bundles fontSize, lineHeight, and
- * letterSpacing so they stay in sync — you always consume a full step, never
- * mix parts from different steps.
+ * 9-step coordinated type scale. Each step bundles `fontSize`,
+ * `lineHeight`, `headingLineHeight`, and `letterSpacing` so they stay
+ * in sync — consume a full step, don't mix parts from different steps.
+ * `headingLineHeight` is a tighter parallel ramp used by `<Heading>`;
+ * sizes 1 and 6–9 match `lineHeight`, sizes 2–5 trim 2px each.
  *
  * The progression is non-linear: small increments at the bottom (body text),
  * large jumps at the top (display text). Letter spacing goes from slightly
  * loose (small text) to progressively tighter (large text).
  */
-const stepShape = { fontSize: null, lineHeight: null, letterSpacing: null };
-export const typeScale = createThemeContract({
-  1: stepShape,
-  2: stepShape,
-  3: stepShape,
-  4: stepShape,
-  5: stepShape,
-  6: stepShape,
-  7: stepShape,
-  8: stepShape,
-  9: stepShape,
-});
+export const typeScale = {
+  1: {
+    fontSize: '0.75rem',
+    lineHeight: '1rem',
+    headingLineHeight: '1rem',
+    letterSpacing: '0.0025em',
+  },
+  2: {
+    fontSize: '0.875rem',
+    lineHeight: '1.25rem',
+    headingLineHeight: '1.125rem',
+    letterSpacing: '0em',
+  },
+  3: {
+    fontSize: '1rem',
+    lineHeight: '1.5rem',
+    headingLineHeight: '1.375rem',
+    letterSpacing: '0em',
+  },
+  4: {
+    fontSize: '1.125rem',
+    lineHeight: '1.625rem',
+    headingLineHeight: '1.5rem',
+    letterSpacing: '-0.0025em',
+  },
+  5: {
+    fontSize: '1.25rem',
+    lineHeight: '1.75rem',
+    headingLineHeight: '1.625rem',
+    letterSpacing: '-0.005em',
+  },
+  6: {
+    fontSize: '1.5rem',
+    lineHeight: '1.875rem',
+    headingLineHeight: '1.875rem',
+    letterSpacing: '-0.00625em',
+  },
+  7: {
+    fontSize: '1.75rem',
+    lineHeight: '2.25rem',
+    headingLineHeight: '2.25rem',
+    letterSpacing: '-0.0075em',
+  },
+  8: {
+    fontSize: '2.1875rem',
+    lineHeight: '2.5rem',
+    headingLineHeight: '2.5rem',
+    letterSpacing: '-0.01em',
+  },
+  9: {
+    fontSize: '3.75rem',
+    lineHeight: '3.75rem',
+    headingLineHeight: '3.75rem',
+    letterSpacing: '-0.025em',
+  },
+} as const;
 
 export type TypeScale = keyof typeof typeScale;
 
@@ -115,26 +165,6 @@ export const fontSizeAdjust = {
   code: '0.95',
 } as const;
 
-/**
- * Per-step line-heights used by `<Heading>`, swapped in for body
- * line-heights so headings sit tighter at sizes 2–5. Mirrors Radix's
- * `--heading-line-height-{1..9}` ramp; sizes 1 and 6–9 are equal to
- * the body ramp, sizes 2–5 trim 2px each. Applied via the `lineHeight`
- * cross-component CSS var so descendants reading `lineHeight` (e.g.
- * leading-trim) pick up the heading metric.
- */
-export const headingLineHeight = {
-  1: '1rem', // 16px
-  2: '1.125rem', // 18px
-  3: '1.375rem', // 22px
-  4: '1.5rem', // 24px
-  5: '1.625rem', // 26px
-  6: '1.875rem', // 30px
-  7: '2.25rem', // 36px
-  8: '2.5rem', // 40px
-  9: '3.75rem', // 60px
-} as const;
-
 // --- Assignment ---
 
 const sansStack = [
@@ -169,42 +199,6 @@ globalStyle(':root', {
       code: monoStack,
       em: serifItalicStack,
       quote: serifItalicStack,
-    }),
-
-    ...assignVars(typeScale, {
-      1: { fontSize: '0.75rem', lineHeight: '1rem', letterSpacing: '0.0025em' },
-      2: { fontSize: '0.875rem', lineHeight: '1.25rem', letterSpacing: '0em' },
-      3: { fontSize: '1rem', lineHeight: '1.5rem', letterSpacing: '0em' },
-      4: {
-        fontSize: '1.125rem',
-        lineHeight: '1.625rem',
-        letterSpacing: '-0.0025em',
-      },
-      5: {
-        fontSize: '1.25rem',
-        lineHeight: '1.75rem',
-        letterSpacing: '-0.005em',
-      },
-      6: {
-        fontSize: '1.5rem',
-        lineHeight: '1.875rem',
-        letterSpacing: '-0.00625em',
-      },
-      7: {
-        fontSize: '1.75rem',
-        lineHeight: '2.25rem',
-        letterSpacing: '-0.0075em',
-      },
-      8: {
-        fontSize: '2.1875rem',
-        lineHeight: '2.5rem',
-        letterSpacing: '-0.01em',
-      },
-      9: {
-        fontSize: '3.75rem',
-        lineHeight: '3.75rem',
-        letterSpacing: '-0.025em',
-      },
     }),
   },
 });

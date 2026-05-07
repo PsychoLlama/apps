@@ -6,7 +6,6 @@ export {
   fontFamily,
   fontSizeAdjust,
   fontWeight,
-  headingLineHeight,
   letterSpacingOffset,
   typeScale,
   type FontWeight,
