@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# PostToolUse hook: lint the JS/TS file Claude just touched.
+#
+# Reports problems back to Claude as `additionalContext` (non-blocking)
+# so an intermediate invalid state between consecutive edits doesn't
+# halt progress — Claude sees the feedback on the next turn instead.
+#
+# Speed comes from `eslint_d`, which keeps the eslint config + plugin
+# graph hot in a daemon, so per-file lint usually finishes in a few
+# hundred ms.
+
+set -euo pipefail
+
+# `eslint_d` and `jq` both live in the flake's `coding` devShell. If
+# we're somewhere that hasn't loaded it (CI, a stale shell, a teammate
+# without nix, or a partial install where only one of the two is on
+# PATH), the hook becomes a silent no-op rather than a noisy failure.
+for tool in eslint_d jq; do
+  command -v "$tool" >/dev/null 2>&1 || exit 0
+done
+
+cd "${CLAUDE_PROJECT_DIR:-.}"
+
+file_path=$(jq -r '.tool_input.file_path // empty')
+
+# Skip empty paths, files the edit deleted, paths outside the worktree
+# (e.g. `additionalDirectories` like the radix-ui checkout), and any
+# extension eslint isn't going to parse. Ignore patterns inside the
+# project — node_modules, .direnv, .moon, dist, .output — are owned
+# by eslint.config.ts via `includeIgnoreFile(.gitignore)`, so we don't
+# mirror them here.
+[[ -n "$file_path" && -e "$file_path" ]] || exit 0
+[[ "$file_path" == "$PWD"/* ]] || exit 0
+case "$file_path" in
+  *.ts | *.tsx | *.js | *.jsx | *.mjs | *.cjs) ;;
+  *) exit 0 ;;
+esac
+
+output=$(eslint_d --no-warn-ignored "$file_path" 2>&1) && exit 0
+
+relative=$(realpath --relative-to="$PWD" "$file_path")
+jq -n --arg ctx "eslint reported issues in $relative:
+$output" '{
+  hookSpecificOutput: {
+    hookEventName: "PostToolUse",
+    additionalContext: $ctx,
+  },
+}'

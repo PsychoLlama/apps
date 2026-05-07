@@ -33,9 +33,35 @@
             ];
           };
 
-          # NixOS-only deps and env that don't belong in CI's closure.
-          nixos = pkgs.mkShell {
+          # Tools that only matter when a human (or coding agent) is
+          # actively iterating on the source — fast linters, hooks,
+          # editor helpers. Layered on top of `default` so CI's closure
+          # stays minimal: `moon run :lint` already runs the slow
+          # full-graph eslint pass, and CI doesn't run Claude hooks.
+          coding = pkgs.mkShell {
             inputsFrom = [ default ];
+
+            packages = [
+              # Resident eslint daemon. Claude's post-edit hook
+              # (.claude/hooks/lint-on-edit) lints a single file in a
+              # few hundred ms instead of paying Node startup + config
+              # evaluation each time.
+              pkgs.eslint_d
+              # `jq` parses Claude's PostToolUse JSON payload from
+              # stdin and emits the structured `additionalContext`
+              # response back out.
+              pkgs.jq
+            ];
+          };
+
+          # NixOS-only deps and env that don't belong in CI's closure.
+          # Pulls in the coding shell so local development gets the
+          # agent tooling automatically.
+          nixos = pkgs.mkShell {
+            inputsFrom = [
+              default
+              coding
+            ];
 
             packages = [
               pkgs.patchelf
