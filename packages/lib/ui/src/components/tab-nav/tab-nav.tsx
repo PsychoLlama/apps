@@ -180,6 +180,7 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
         ref={(el) => el.setAttribute('link', '')}
         class={className()}
         aria-current={local.active ? 'page' : undefined}
+        data-active={local.active ? '' : undefined}
         data-testid={tid.testId}
         onKeyDown={onKeyDown}
       >
