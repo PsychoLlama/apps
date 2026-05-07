@@ -4,6 +4,7 @@ import { Card, Flex, Grid, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconRecord from 'virtual:icons/mdi/record-rec';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
+import IconNetwork from 'virtual:icons/mdi/lan-connect';
 import * as css from './index.css';
 
 interface AppEntry {
@@ -33,6 +34,13 @@ const APPS: ReadonlyArray<AppEntry> = [
     href: '/icon-editor',
     description: 'Compose a brandmark from a free icon set.',
     Icon: IconPalette,
+  },
+  {
+    id: 'iroh-poc',
+    name: 'Iroh P2P POC',
+    href: '/iroh-poc',
+    description: 'Run an iroh endpoint in the browser and echo over a relay.',
+    Icon: IconNetwork,
   },
 ];
 
