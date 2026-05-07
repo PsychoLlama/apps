@@ -76,9 +76,12 @@ export const root = style({
   transitionTimingFunction: standard.productive,
 
   selectors: {
-    // Modern browsers auto-promote scroll containers to focusable when
-    // there's no focusable child inside, so the area is reachable via
-    // keyboard. Paint a focus ring so it's visible when it is.
+    // Chromium 130+ and Firefox auto-promote scroll containers to
+    // focusable when there's no focusable child inside — the area is
+    // reachable via keyboard there. Safari hasn't shipped this yet
+    // (no WebKit signal as of early 2026), so the ring is dormant in
+    // Safari unless the caller passes `tabindex={0}` explicitly.
+    // Matches Radix's stance — they don't force tabindex either.
     '&:where(:focus-visible)': {
       outline: `2px solid ${accent.solid[8]}`,
       outlineOffset: '-2px',
