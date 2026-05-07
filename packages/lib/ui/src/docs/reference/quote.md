@@ -4,6 +4,6 @@ Short inline quotation. Renders a `<q>`; the browser supplies surrounding quote 
 
 ## Props
 
-Base: `<q>` attributes, margin props, truncate props, wrap props, skeleton props.
+Base: `<q>` attributes, margin props, truncate props, wrap props, selectable props, skeleton props.
 
 No component-specific props.
