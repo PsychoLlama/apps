@@ -18,10 +18,11 @@ import {
 
 // --- Contracts ---
 
-/** Font stacks for body and heading text. Heading defaults to body. */
+/** Font stacks for body, heading, and inline code text. Heading defaults to body. */
 export const fontFamily = createThemeContract({
   body: null,
   heading: null,
+  code: null,
 });
 
 /**
@@ -82,11 +83,21 @@ const sansStack = [
   'sans-serif',
 ].join(', ');
 
+const monoStack = [
+  'ui-monospace',
+  "'SF Mono'",
+  'Menlo',
+  'Consolas',
+  "'Liberation Mono'",
+  'monospace',
+].join(', ');
+
 globalStyle(':root', {
   vars: {
     ...assignVars(fontFamily, {
       body: sansStack,
       heading: sansStack,
+      code: monoStack,
     }),
 
     ...assignVars(typeScale, {

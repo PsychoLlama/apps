@@ -13,8 +13,11 @@
 
 ## Typography
 
+- [Blockquote](./blockquote.md): Block-level quotation set off by a colored leading rail.
+- [Code](./code.md): Inline monospace snippet.
 - [Em](./em.md): Stress-emphasized inline text.
 - [Heading](./heading.md): Semantic headings.
+- [Quote](./quote.md): Short inline quotation.
 - [Strong](./strong.md): Strongly-emphasized inline text.
 - [Text](./text.md): Body copy, labels, and inline text.
 
