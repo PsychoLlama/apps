@@ -18,10 +18,11 @@ import {
 
 // --- Contracts ---
 
-/** Font stacks for body and heading text. Heading defaults to body. */
+/** Font stacks for body, heading, and inline code text. Heading defaults to body. */
 export const fontFamily = createThemeContract({
   body: null,
   heading: null,
+  code: null,
 });
 
 /**
@@ -72,6 +73,21 @@ export type TypeScale = keyof typeof typeScale;
  */
 export const baselineOffset = '0.375em';
 
+/**
+ * Per-style letter-spacing offsets composed with the surrounding text's
+ * tracking. Mirrors Radix's `--code-letter-spacing` /
+ * `--quote-letter-spacing` knobs — components that opt in compose
+ * `calc(letterSpacingOffset.X + var(--letter-spacing))` so a Code or
+ * Quote nested inside a sized Text picks up both the size's tracking
+ * and its own per-style nudge.
+ */
+export const letterSpacingOffset = {
+  /** Tighten monospace; offsets the wider native tracking. */
+  code: '-0.007em',
+  /** Tighten italic quotes; offsets the loose ascent of italic glyphs. */
+  quote: '-0.025em',
+} as const;
+
 // --- Assignment ---
 
 const sansStack = [
@@ -82,11 +98,21 @@ const sansStack = [
   'sans-serif',
 ].join(', ');
 
+const monoStack = [
+  'ui-monospace',
+  "'SF Mono'",
+  'Menlo',
+  'Consolas',
+  "'Liberation Mono'",
+  'monospace',
+].join(', ');
+
 globalStyle(':root', {
   vars: {
     ...assignVars(fontFamily, {
       body: sansStack,
       heading: sansStack,
+      code: monoStack,
     }),
 
     ...assignVars(typeScale, {

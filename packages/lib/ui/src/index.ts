@@ -54,6 +54,12 @@ export {
   type StrongProps,
 } from './components/strong/strong';
 export { default as Kbd, type KbdProps } from './components/kbd/kbd';
+export { default as Code, type CodeProps } from './components/code/code';
+export { default as Quote, type QuoteProps } from './components/quote/quote';
+export {
+  default as Blockquote,
+  type BlockquoteProps,
+} from './components/blockquote/blockquote';
 export {
   default as Separator,
   type SeparatorProps,
