@@ -24,7 +24,7 @@ export const playgroundFrame = style({
 export const tallContent = style({
   padding: space[3],
   fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
+  lineHeight: typeScale[2].bodyLineHeight,
 });
 
 /** Wide content that overflows horizontally. */
@@ -32,7 +32,7 @@ export const wideContent = style({
   padding: space[3],
   width: '40rem',
   fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
+  lineHeight: typeScale[2].bodyLineHeight,
 });
 
 /** Content that overflows both axes. */
@@ -40,5 +40,5 @@ export const bothContent = style({
   padding: space[3],
   width: '40rem',
   fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
+  lineHeight: typeScale[2].bodyLineHeight,
 });
