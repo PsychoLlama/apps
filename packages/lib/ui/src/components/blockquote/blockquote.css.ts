@@ -21,7 +21,6 @@ import { fallbackVar, style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
   danger,
-  fontFamily,
   fontWeight,
   neutral,
   space,
@@ -35,8 +34,10 @@ import { lineHeight, letterSpacing } from '../../vars/typography.css';
 // `min(space-5, max(space-3, 0.5em))` indent — em-based so the chrome
 // stays proportional inside oversized type, with token caps for small
 // type. The border tint is supplied by the per-color rule below.
+//
+// `font-family` is intentionally omitted so a `<Blockquote>` inherits
+// the surrounding font stack — matches upstream Text's no-op default.
 export const base = style({
-  fontFamily: fontFamily.body,
   lineHeight: fallbackVar(lineHeight, 'inherit'),
   letterSpacing: fallbackVar(letterSpacing, 'inherit'),
   borderInlineStartStyle: 'solid',

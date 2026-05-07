@@ -5,6 +5,7 @@ export {
   baselineOffset,
   fontFamily,
   fontWeight,
+  letterSpacingOffset,
   typeScale,
   type FontWeight,
   type TypeScale,

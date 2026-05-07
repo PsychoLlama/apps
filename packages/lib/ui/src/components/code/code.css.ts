@@ -9,8 +9,8 @@
  *   is the high-contrast text rail; the `12` step is reserved for a
  *   separate prop we haven't shipped.
  * - Padding and border-radius are em-based (mirrors Radix) so the chip
- *   scales with size — but the values are inline rather than referencing
- *   `--code-padding-*` / `--radius-factor` theming knobs we don't expose.
+ *   scales with size. Radius drops upstream's `var(--radius-factor)`
+ *   multiplier — Radius scaling is a Theme-level knob we don't expose.
  * - No interactive hover states. We don't render Code as a link or
  *   button; consumers wrap with `<Link>` / `<button>` for that, and the
  *   `:hover` color shift would belong on the wrapper anyway.
@@ -18,17 +18,19 @@
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/code.css
  */
 
-import { style, styleVariants } from '@vanilla-extract/css';
+import { fallbackVar, style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
   danger,
   fontFamily,
   fontWeight,
+  letterSpacingOffset,
   neutral,
   success,
   typeScale,
   warning,
 } from '@lib/design';
+import { lineHeight, letterSpacing } from '../../vars/typography.css';
 
 // Em-based geometry. The chip sizes relative to surrounding text so a
 // `<Code>` inside a `<Text size={5}>` automatically grows. Tokens like
@@ -36,13 +38,21 @@ import {
 /* eslint-disable custom/require-design-tokens */
 export const base = style({
   fontFamily: fontFamily.code,
-  fontWeight: fontWeight.regular,
-  // Hold the line-height to surrounding text — the box gets vertical
-  // breathing room from `padding-block` instead.
-  lineHeight: 1.25,
+  // No `font-weight` default — let Code inherit weight from the
+  // surrounding text so `<Code>` inside `<Strong>` reads bold without
+  // an explicit `weight` prop. Mirrors upstream `--code-font-weight: inherit`.
+  // `line-height` reads the sized-ancestor's metric (set by Text/Heading)
+  // and falls back to a tight 1.25 when no Text wraps it. Per-size
+  // variants below override the var locally.
+  lineHeight: fallbackVar(lineHeight, '1.25'),
+  // Compose a monospace tightening with the surrounding tracking so a
+  // `<Code>` inside `<Text size={7}>` lands at
+  // `letterSpacingOffset.code + typeScale[7].letterSpacing`. Mirrors
+  // Radix's `calc(var(--code-letter-spacing) + var(--letter-spacing))`.
+  letterSpacing: `calc(${letterSpacingOffset.code} + ${fallbackVar(letterSpacing, '0em')})`,
   paddingBlock: '0.1em',
   paddingInline: '0.25em',
-  borderRadius: '0.3em',
+  borderRadius: 'calc(0.5px + 0.2em)',
 
   // Don't stretch in flex/grid parents.
   height: 'fit-content',
@@ -55,18 +65,24 @@ export const base = style({
 
 const steps = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
+// Per-size variants set the shared typography vars locally; the base
+// rule's `lineHeight` / `letterSpacing` calc reads them. fontSize is
+// painted directly because it's not vendored as a shared var.
 export const size = styleVariants(
   Object.fromEntries(
     steps.map((step) => [
       step,
       {
         fontSize: typeScale[step].fontSize,
-        letterSpacing: typeScale[step].letterSpacing,
+        vars: {
+          [lineHeight]: typeScale[step].lineHeight,
+          [letterSpacing]: typeScale[step].letterSpacing,
+        },
       },
     ]),
   ) as Record<
     (typeof steps)[number],
-    { fontSize: string; letterSpacing: string }
+    { fontSize: string; vars: Record<string, string> }
   >,
 );
 
