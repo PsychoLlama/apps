@@ -4,7 +4,7 @@ Single-line text input with optional inline content on either side.
 
 ## Props
 
-Base: `<input>` attributes (except `size`, `color`), margin props, skeleton props.
+Base: `<input>` attributes (except `size`, `color`), margin props, skeleton props, required input hint props.
 
 - `testId` (required): Test identifier rendered as `data-testid` on the wrapping element.
 - `size` (=`2`): Visual size. `1 | 2 | 3`.

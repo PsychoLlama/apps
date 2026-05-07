@@ -16,6 +16,7 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import { type RequiredInputHintProps } from '../../props/input-hints';
 import {
   type SkeletonProps,
   skeletonPropKeys,
@@ -39,16 +40,25 @@ export type TextAreaResize = 'none' | 'vertical' | 'horizontal' | 'both';
  * from `color` (collides with our prop scheme) and `onPointerDown`
  * (overridden so it fires for clicks on the entire wrapper, not only
  * the inner textarea — call `event.preventDefault()` to suppress the
- * built-in focus delegation).
+ * built-in focus delegation). Platform-hint attributes (`autocomplete`,
+ * `autocapitalize`, `enterkeyhint`) are required via
+ * `RequiredInputHintProps` to force a conscious choice — pass
+ * `undefined` if no preset applies. `enterkeyhint` is included
+ * because chat-style textareas legitimately want `'send'`.
  */
 export interface TextAreaProps
   extends
     MarginProps,
     SkeletonProps,
     RequiredTestIdProps,
+    RequiredInputHintProps,
     Omit<
       JSX.TextareaHTMLAttributes<HTMLTextAreaElement>,
-      'color' | 'onPointerDown'
+      | 'color'
+      | 'onPointerDown'
+      | 'autocomplete'
+      | 'autocapitalize'
+      | 'enterkeyhint'
     > {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: TextAreaSize;

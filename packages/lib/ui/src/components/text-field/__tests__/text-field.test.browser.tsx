@@ -3,6 +3,12 @@ import { render, screen } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import TextField from '../text-field';
 
+const mobile = {
+  autocomplete: undefined,
+  autocapitalize: undefined,
+  enterkeyhint: undefined,
+} as const;
+
 const waitFrame = () =>
   new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
@@ -25,7 +31,7 @@ describe('TextField', () => {
   // --- DOM shape & forwarding ---
 
   it('renders an <input> inside a wrapping <div>', () => {
-    render(() => <TextField testId="field" />);
+    render(() => <TextField {...mobile} testId="field" />);
     const wrapper = screen.getByTestId('field');
     expect(wrapper.tagName).toBe('DIV');
     expect(wrapper.querySelector('input')).not.toBeNull();
@@ -34,6 +40,7 @@ describe('TextField', () => {
   it('forwards native <input> attributes', () => {
     render(() => (
       <TextField
+        {...mobile}
         testId="field"
         placeholder="Email"
         name="email"
@@ -51,6 +58,7 @@ describe('TextField', () => {
   it('renders left and right slot content when supplied', () => {
     render(() => (
       <TextField
+        {...mobile}
         testId="field"
         left={<span data-testid="left-content">L</span>}
         right={<span data-testid="right-content">R</span>}
@@ -61,14 +69,14 @@ describe('TextField', () => {
   });
 
   it('omits slot wrappers when no slot content is supplied', () => {
-    render(() => <TextField testId="field" />);
+    render(() => <TextField {...mobile} testId="field" />);
     const wrapper = screen.getByTestId('field');
     expect(wrapper.querySelectorAll(':scope > span')).toHaveLength(0);
   });
 
   it('reactively swaps slot content when the prop is replaced', () => {
     const [icon, setIcon] = createSignal(<span data-testid="icon-a">A</span>);
-    render(() => <TextField testId="field" left={icon()} />);
+    render(() => <TextField {...mobile} testId="field" left={icon()} />);
 
     expect(screen.getByTestId('icon-a')).toBeInTheDocument();
 
@@ -82,6 +90,7 @@ describe('TextField', () => {
     const [label, setLabel] = createSignal('first');
     render(() => (
       <TextField
+        {...mobile}
         testId="field"
         right={<span data-testid="label">{label()}</span>}
       />
@@ -95,7 +104,7 @@ describe('TextField', () => {
   });
 
   it('renders a literal 0 in slot content', () => {
-    render(() => <TextField testId="field" right={0} />);
+    render(() => <TextField {...mobile} testId="field" right={0} />);
     const wrapper = screen.getByTestId('field');
     const slots = wrapper.querySelectorAll(':scope > span');
     expect(slots).toHaveLength(1);
@@ -103,7 +112,7 @@ describe('TextField', () => {
   });
 
   it('omits the slot wrapper when content is boolean false', () => {
-    render(() => <TextField testId="field" left={false} />);
+    render(() => <TextField {...mobile} testId="field" left={false} />);
     expect(
       screen.getByTestId('field').querySelectorAll(':scope > span'),
     ).toHaveLength(0);
@@ -113,7 +122,7 @@ describe('TextField', () => {
     const [icon, setIcon] = createSignal<JSX.Element>(
       <span data-testid="icon">L</span>,
     );
-    render(() => <TextField testId="field" left={icon()} />);
+    render(() => <TextField {...mobile} testId="field" left={icon()} />);
     const wrapper = screen.getByTestId('field');
 
     expect(wrapper.querySelectorAll(':scope > span')).toHaveLength(1);
@@ -124,12 +133,12 @@ describe('TextField', () => {
   });
 
   it('reflects disabled on the input', () => {
-    render(() => <TextField testId="field" disabled />);
+    render(() => <TextField {...mobile} testId="field" disabled />);
     expect(screen.getByTestId('field').querySelector('input')).toBeDisabled();
   });
 
   it('reflects readOnly on the input', () => {
-    render(() => <TextField testId="field" readOnly />);
+    render(() => <TextField {...mobile} testId="field" readOnly />);
     expect(screen.getByTestId('field').querySelector('input')).toHaveAttribute(
       'readonly',
     );
@@ -139,7 +148,12 @@ describe('TextField', () => {
 
   it('clicking the wrapper left edge focuses input with cursor at start', async () => {
     render(() => (
-      <TextField testId="field" value="hello world" left={<span>L</span>} />
+      <TextField
+        {...mobile}
+        testId="field"
+        value="hello world"
+        left={<span>L</span>}
+      />
     ));
     const wrapper = screen.getByTestId('field');
     const input = wrapper.querySelector('input')!;
@@ -154,7 +168,7 @@ describe('TextField', () => {
   });
 
   it('clicking the wrapper right edge focuses input with cursor at end', async () => {
-    render(() => <TextField testId="field" value="hello" />);
+    render(() => <TextField {...mobile} testId="field" value="hello" />);
     const wrapper = screen.getByTestId('field');
     const input = wrapper.querySelector('input')!;
     const rect = wrapper.getBoundingClientRect();
@@ -170,6 +184,7 @@ describe('TextField', () => {
   it('clicking a button in the right slot keeps focus on the button', async () => {
     render(() => (
       <TextField
+        {...mobile}
         testId="field"
         right={
           <button type="button" data-testid="action">
@@ -188,7 +203,7 @@ describe('TextField', () => {
   });
 
   it('does not delegate focus when the field is disabled', async () => {
-    render(() => <TextField testId="field" disabled value="x" />);
+    render(() => <TextField {...mobile} testId="field" disabled value="x" />);
     const wrapper = screen.getByTestId('field');
     const input = wrapper.querySelector('input')!;
     const rect = wrapper.getBoundingClientRect();
@@ -200,7 +215,7 @@ describe('TextField', () => {
   });
 
   it('does not delegate focus when the field is readOnly', async () => {
-    render(() => <TextField testId="field" readOnly value="x" />);
+    render(() => <TextField {...mobile} testId="field" readOnly value="x" />);
     const wrapper = screen.getByTestId('field');
     const input = wrapper.querySelector('input')!;
     const rect = wrapper.getBoundingClientRect();
@@ -215,6 +230,7 @@ describe('TextField', () => {
     const handler = vi.fn();
     render(() => (
       <TextField
+        {...mobile}
         testId="field"
         left={<span data-testid="icon">L</span>}
         onPointerDown={handler}
@@ -230,6 +246,7 @@ describe('TextField', () => {
   it('lets the consumer suppress delegation via preventDefault', async () => {
     render(() => (
       <TextField
+        {...mobile}
         testId="field"
         onPointerDown={(event) => event.preventDefault()}
       />
@@ -252,7 +269,7 @@ describe('TextField', () => {
         <button type="button" data-testid="before">
           before
         </button>
-        <TextField testId="field" />
+        <TextField {...mobile} testId="field" />
       </>
     ));
     screen.getByTestId('before').focus();

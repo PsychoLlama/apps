@@ -18,6 +18,7 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import { type RequiredInputHintProps } from '../../props/input-hints';
 import {
   type SkeletonProps,
   skeletonPropKeys,
@@ -60,16 +61,26 @@ export type TextFieldType =
  * `onPointerDown`, which is overridden so it fires for clicks on the
  * entire field surface (including slot padding) rather than only the
  * inner input — calling `event.preventDefault()` suppresses the
- * built-in focus delegation.
+ * built-in focus delegation. Platform-hint attributes (`autocomplete`,
+ * `autocapitalize`, `enterkeyhint`) are required via
+ * `RequiredInputHintProps` to force a conscious choice — pass
+ * `undefined` if no preset applies.
  */
 export interface TextFieldProps
   extends
     MarginProps,
     SkeletonProps,
     RequiredTestIdProps,
+    RequiredInputHintProps,
     Omit<
       JSX.InputHTMLAttributes<HTMLInputElement>,
-      'size' | 'color' | 'type' | 'onPointerDown'
+      | 'size'
+      | 'color'
+      | 'type'
+      | 'onPointerDown'
+      | 'autocomplete'
+      | 'autocapitalize'
+      | 'enterkeyhint'
     > {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: TextFieldSize;

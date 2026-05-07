@@ -51,3 +51,11 @@ Render the component as a pulsing placeholder while data loads. The component sw
 Attach a test identifier to the underlying DOM node.
 
 - `testId`: Renders as `data-testid`. `string`.
+
+## Required Input Hint Props
+
+Forcing function on text input components so authors actively pick platform-hint values. Pass `undefined` to deliberately skip — the attribute is omitted, matching the browser default.
+
+- `autocomplete` (required)
+- `autocapitalize` (required)
+- `enterkeyhint` (required)

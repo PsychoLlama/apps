@@ -5,6 +5,7 @@ import IconMagnify from 'virtual:icons/mdi/magnify';
 import IconClose from 'virtual:icons/mdi/close';
 import { IconButton, TextField, type TextFieldProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { requiredInputHintArgTypes } from '@lib/ui/props/input-hints';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
@@ -13,7 +14,12 @@ const VARIANTS = ['classic', 'surface', 'soft'] as const;
 const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
-const defaults = { testId: 'overview' } as const;
+const defaults = {
+  testId: 'overview',
+  autocomplete: 'off',
+  autocapitalize: 'off',
+  enterkeyhint: 'search',
+} as const;
 
 interface TextFieldArgs extends TextFieldProps {
   /** Toggle the left slot in Storybook controls. */
@@ -32,6 +38,9 @@ const meta = {
     radius: 'medium',
     type: 'text',
     placeholder: 'Search…',
+    autocomplete: 'off',
+    autocapitalize: 'off',
+    enterkeyhint: 'search',
     hasLeft: true,
     hasRight: false,
     disabled: false,
@@ -41,6 +50,7 @@ const meta = {
   },
   argTypes: {
     ...marginArgTypes,
+    ...requiredInputHintArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,
     size: {

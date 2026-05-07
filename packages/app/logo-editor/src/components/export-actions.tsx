@@ -133,6 +133,9 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
               min={MIN_PX}
               max={MAX_PX}
               step={1}
+              autocomplete="off"
+              autocapitalize="off"
+              enterkeyhint="done"
               value={String(exportState.size)}
               onInput={(event) => {
                 const next = Number(event.currentTarget.value);
