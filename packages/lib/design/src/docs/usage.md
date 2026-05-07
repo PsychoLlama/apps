@@ -25,6 +25,7 @@
 ## Typography
 
 - `typeScale[1-9]`: Each step bundles `fontSize`, `lineHeight`, `letterSpacing`. Always consume a full step.
+- `headingLineHeight[1-9]`: Heading-specific line-height ramp. Tighter than the body ramp at sizes 2–5; identical at 1 and 6–9. Reach for it when porting display/headline copy that needs Radix's heading metric.
 - `fontFamily.body`, `.heading`, `.code`, `.em`, `.quote`: Font stacks. Body/heading run system sans; code runs system mono; em/quote run a serif italic.
 - `fontWeight.light`, `.regular`, `.medium`, `.bold`: Numeric weights.
 - `baselineOffset`: Leading-trim polyfill offset for the body sans (`0.36em`).

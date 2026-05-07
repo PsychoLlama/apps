@@ -115,6 +115,26 @@ export const fontSizeAdjust = {
   code: '0.95',
 } as const;
 
+/**
+ * Per-step line-heights used by `<Heading>`, swapped in for body
+ * line-heights so headings sit tighter at sizes 2–5. Mirrors Radix's
+ * `--heading-line-height-{1..9}` ramp; sizes 1 and 6–9 are equal to
+ * the body ramp, sizes 2–5 trim 2px each. Applied via the `lineHeight`
+ * cross-component CSS var so descendants reading `lineHeight` (e.g.
+ * leading-trim) pick up the heading metric.
+ */
+export const headingLineHeight = {
+  1: '1rem', // 16px
+  2: '1.125rem', // 18px
+  3: '1.375rem', // 22px
+  4: '1.5rem', // 24px
+  5: '1.625rem', // 26px
+  6: '1.875rem', // 30px
+  7: '2.25rem', // 36px
+  8: '2.5rem', // 40px
+  9: '3.75rem', // 60px
+} as const;
+
 // --- Assignment ---
 
 const sansStack = [
