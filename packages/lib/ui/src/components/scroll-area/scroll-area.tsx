@@ -479,17 +479,24 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       if (!target.hasPointerCapture(moveEvent.pointerId)) return;
       apply(axis === 'x' ? moveEvent.clientX : moveEvent.clientY);
     };
-    const onUp = (upEvent: PointerEvent) => {
-      if (target.hasPointerCapture(upEvent.pointerId))
-        target.releasePointerCapture(upEvent.pointerId);
+    const finish = (finishEvent: PointerEvent) => {
+      if (target.hasPointerCapture(finishEvent.pointerId))
+        target.releasePointerCapture(finishEvent.pointerId);
       target.removeEventListener('pointermove', onMove);
-      target.removeEventListener('pointerup', onUp);
+      target.removeEventListener('pointerup', finish);
+      target.removeEventListener('pointercancel', finish);
+      target.removeEventListener('lostpointercapture', finish);
       bodyStyle.userSelect = prevUserSelect;
       bodyStyle.setProperty('-webkit-user-select', prevWebkitUserSelect);
       viewport.style.scrollBehavior = prevScrollBehavior;
     };
     target.addEventListener('pointermove', onMove);
-    target.addEventListener('pointerup', onUp);
+    // Bind every termination event so an interrupted drag (touch
+    // cancellation, browser tab switch, lost pointer capture) still
+    // restores the body selection state and detaches the listeners.
+    target.addEventListener('pointerup', finish);
+    target.addEventListener('pointercancel', finish);
+    target.addEventListener('lostpointercapture', finish);
   };
 
   const onScrollbarPointerEnter = () => {
