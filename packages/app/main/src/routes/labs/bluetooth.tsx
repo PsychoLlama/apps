@@ -3,6 +3,7 @@ import {
   Badge,
   Button,
   Callout,
+  Code,
   Container,
   DataListItem,
   DataListLabel,
@@ -375,9 +376,10 @@ export default function LabsBluetooth() {
 
             <Show when={bluetooth.webSerial === 'unsupported'}>
               <Callout color="warning">
-                <Text as="span" size={2}>
-                  This browser doesn't expose <code>navigator.serial</code>. Use
-                  a recent Chromium-based browser.
+                <Text as="span" size={2} selectable={false}>
+                  This browser doesn't expose{' '}
+                  <Code color="warning">navigator.serial</Code>. Use a recent
+                  Chromium-based browser.
                 </Text>
               </Callout>
             </Show>
