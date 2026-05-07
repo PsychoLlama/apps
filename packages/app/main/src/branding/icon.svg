@@ -1,0 +1,21 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  width="512"
+  height="512"
+>
+  <defs>
+    <clipPath id="logo-clip-logo">
+      <rect width="512" height="512" rx="92.16" ry="92.16" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#logo-clip-logo)">
+    <rect width="512" height="512" fill="#0090ff" />
+    <g transform="translate(25.6 25.6) scale(19.2)" style="color: #ffffff">
+      <path
+        fill="currentColor"
+        d="M16 20h4v-4h-4m0-2h4v-4h-4m-6-2h4V4h-4m6 4h4V4h-4m-6 10h4v-4h-4m-6 4h4v-4H4m0 10h4v-4H4m6 4h4v-4h-4M4 8h4V4H4z"
+      />
+    </g>
+  </g>
+</svg>
