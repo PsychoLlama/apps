@@ -155,9 +155,7 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
   ]);
 
   const className = () =>
-    [shared.trigger, local.active && shared.triggerActive, local.class]
-      .filter(Boolean)
-      .join(' ');
+    [shared.trigger, local.class].filter(Boolean).join(' ');
 
   const onKeyDown: JSX.EventHandler<HTMLAnchorElement, KeyboardEvent> = (
     event,

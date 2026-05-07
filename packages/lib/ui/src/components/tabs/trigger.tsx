@@ -134,9 +134,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
   };
 
   const className = () =>
-    [shared.trigger, isActive() && shared.triggerActive, local.class]
-      .filter(Boolean)
-      .join(' ');
+    [shared.trigger, local.class].filter(Boolean).join(' ');
 
   return (
     <button
