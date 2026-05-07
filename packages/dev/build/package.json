@@ -9,12 +9,17 @@
     "./ignore": "./src/ignore.ts",
     "./vite-plugin/assert-hashed-assets": "./src/vite-plugin/assert-hashed-assets.ts",
     "./vite-plugin/css-asset": "./src/vite-plugin/css-asset.ts",
-    "./vite-plugin/css-asset-types": "./src/vite-plugin/css-asset-types.d.ts"
+    "./vite-plugin/css-asset-types": "./src/vite-plugin/css-asset-types.d.ts",
+    "./vite-plugin/svg-to-png": "./src/vite-plugin/svg-to-png.ts",
+    "./vite-plugin/svg-to-png-types": "./src/vite-plugin/svg-to-png-types.d.ts"
   },
   "scripts": {
     "typecheck": "tsc"
   },
   "peerDependencies": {
     "vite": "*"
+  },
+  "devDependencies": {
+    "@resvg/resvg-wasm": "^2.6.2"
   }
 }
