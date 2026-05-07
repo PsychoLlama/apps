@@ -11,17 +11,12 @@ export const frame = style({
   border: `1px solid ${neutral.alpha[6]}`,
 });
 
-// Force the row of tiles to take its natural width inside the
-// ScrollArea so it overflows the frame and the horizontal scrollbar
-// has something to do.
-export const wide = style({
-  width: 'max-content',
-});
-
 // Decorative tile placeholder. `<Flex>` paints the radius and surface
 // background; this class only sets explicit dimensions and stops the
 // flex container from squeezing the tiles together when overflow
-// kicks in.
+// kicks in. The row's overall width comes from the ScrollArea's
+// children reset (`width: fit-content`) plus these flex-shrink: 0
+// children — no `width: max-content` needed on the wrapper.
 export const tile = style({
   width: '4rem',
   height: '4rem',

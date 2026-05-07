@@ -29,12 +29,33 @@
  *   `--scrollarea-scrollbar-border-radius: max(radius-1, radius-full)`
  *   resolves to `radius-full` in every size variant, so this
  *   component drops the `radius` prop and hard-codes a pill thumb.
+ * - The children reset is softer than upstream's
+ *   `display: block !important; width: fit-content; flex-grow: 1`.
+ *   We drop the `display: block !important` so callers can put a
+ *   `<Flex direction="row">` directly inside ScrollArea and still get
+ *   horizontal scrolling — Radix's reset would demote that flex to
+ *   block and stack the row vertically. `width: fit-content` and
+ *   `flex-grow: 1` survive because they only affect sizing, not
+ *   layout mode.
  *
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/scroll-area.css
  */
 
-import { createVar, style, styleVariants } from '@vanilla-extract/css';
-import { moderate, neutral, radius, space, standard } from '@lib/design';
+import {
+  createVar,
+  // eslint-disable-next-line no-restricted-imports -- needed for the children reset; V-E rejects `& > *` in regular `style()` because it acts at a distance, so a globalStyle is the only path. Scoped to `${root} > *` so the rule can't leak past this component.
+  globalStyle,
+  style,
+  styleVariants,
+} from '@vanilla-extract/css';
+import {
+  accent,
+  moderate,
+  neutral,
+  radius,
+  space,
+  standard,
+} from '@lib/design';
 
 // Scrollbar track width, fed by the `size` variant and read by the
 // WebKit pseudo-element rules. Firefox only honors `thin | auto |
@@ -42,20 +63,21 @@ import { moderate, neutral, radius, space, standard } from '@lib/design';
 const scrollbarSize = createVar();
 
 // Thumb color, parameterized so the `revealOnHover` variant can swap
-// it to transparent without re-declaring the rule. Firefox transitions
-// `scrollbar-color`, so animating this var produces a smooth fade.
+// it to transparent without re-declaring the rule. `scrollbar-color`
+// transitions, so animating this var produces a smooth fade.
 const thumbColor = createVar();
 
 export const root = style({
+  // Flex column root so the children reset's `flex-grow: 1` can fill
+  // the viewport vertically when content is short. Matches upstream.
+  display: 'flex',
+  flexDirection: 'column',
   width: '100%',
   height: '100%',
   // Firefox styling. `thin` is closest to Radix's slim scrollbar; the
   // WebKit rules below set the precise width for Chromium/Safari.
   scrollbarWidth: 'thin',
   scrollbarColor: `${thumbColor} transparent`,
-  // Stop Chrome's two-finger swipe-back gesture from intercepting
-  // horizontal scroll inside the viewport (matches upstream).
-  overscrollBehaviorX: 'contain',
   // Default thumb. `revealOnHover` overrides this to transparent and
   // swaps it back on :hover/:focus-within.
   vars: { [thumbColor]: neutral.alpha[8] },
@@ -65,6 +87,13 @@ export const root = style({
   transitionTimingFunction: standard.productive,
 
   selectors: {
+    // Modern browsers auto-promote scroll containers to focusable when
+    // there's no focusable child inside, so the area is reachable via
+    // keyboard. Paint a focus ring so it's visible when it is.
+    '&:where(:focus-visible)': {
+      outline: `2px solid ${accent.solid[8]}`,
+      outlineOffset: '-2px',
+    },
     '&::-webkit-scrollbar': {
       width: scrollbarSize,
       height: scrollbarSize,
@@ -95,6 +124,19 @@ export const root = style({
   },
 });
 
+// Children reset — applied via `globalStyle` because Vanilla Extract
+// won't compile `& > *` in a regular `style` (it's an action-at-a-
+// distance selector). `width: fit-content` lets the immediate child
+// extend past the viewport when its intrinsic min-content is wider
+// (which is how horizontal scroll works without consumer effort).
+// `flex-grow: 1` fills the viewport vertically when content is short
+// so the surface paints edge-to-edge. Display is intentionally not
+// touched — see module docstring.
+globalStyle(`${root} > *`, {
+  width: 'fit-content',
+  flexGrow: 1,
+});
+
 // Hide the scrollbar until the user hovers the viewport (or focuses
 // something inside via keyboard). The Firefox path animates via the
 // `scrollbar-color` transition declared on `root`; the WebKit path
@@ -121,9 +163,12 @@ export const size = styleVariants({
 // `scroll`, or `hidden` per axis depending on which axes the caller
 // enables and whether they want overflow-only or always-on tracks.
 
+// `overscroll-behavior-x: contain` only matters when the x-axis can
+// scroll — without it, Chrome's two-finger swipe-back gesture
+// intercepts horizontal scroll inside the viewport.
 export const overflowX = styleVariants({
-  auto: { overflowX: 'auto' },
-  scroll: { overflowX: 'scroll' },
+  auto: { overflowX: 'auto', overscrollBehaviorX: 'contain' },
+  scroll: { overflowX: 'scroll', overscrollBehaviorX: 'contain' },
   hidden: { overflowX: 'hidden' },
 });
 

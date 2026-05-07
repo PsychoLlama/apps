@@ -35,7 +35,7 @@ const VerticalContent = () => (
 );
 
 const HorizontalContent = () => (
-  <Flex as="div" direction="row" gap={3} p={4} class={css.wide}>
+  <Flex as="div" direction="row" gap={3} p={4}>
     <For each={tiles}>
       {(tile) => (
         <Flex
