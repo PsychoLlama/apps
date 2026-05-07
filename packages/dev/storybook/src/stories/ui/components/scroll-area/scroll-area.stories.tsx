@@ -92,7 +92,7 @@ export const Overview: Story = gallery({
         <Frame>
           <ScrollArea as="div" type={type}>
             <Flex as="div" direction="column" gap={2} p={4}>
-              <For each={longText.slice(0, 5)}>
+              <For each={longText}>
                 {(line) => (
                   <Text as="p" size={2}>
                     {type}: {line}
