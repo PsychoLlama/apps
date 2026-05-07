@@ -401,8 +401,11 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       const viewport = viewportEl();
       if (!viewport || (!onX && !onY)) return;
       if (onX) {
+        // A vertical mouse wheel reports motion in `deltaY` even
+        // when the user wheels over a horizontal scrollbar. Fall
+        // back to `deltaY` so the gesture still moves the viewport.
         const sx = sizesX();
-        const next = viewport.scrollLeft + event.deltaX;
+        const next = viewport.scrollLeft + (event.deltaX || event.deltaY);
         viewport.scrollLeft = next;
         const max = sx.content - sx.viewport;
         if (next > 0 && next < max) event.preventDefault();
