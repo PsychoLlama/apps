@@ -174,6 +174,12 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const sendScroll = (event: ScrollEvent) =>
     setScrollState((state) => SCROLL_TRANSITIONS[state]?.[event] ?? state);
 
+  // Cross-axis thickness of each scrollbar — width of the vertical
+  // bar, height of the horizontal bar. Drives corner clearance so the
+  // two tracks don't overlap at the bottom-right.
+  const [thicknessX, setThicknessX] = createSignal(0);
+  const [thicknessY, setThicknessY] = createSignal(0);
+
   const isOverflowingX = () => sizesX().content > sizesX().viewport;
   const isOverflowingY = () => sizesY().content > sizesY().viewport;
 
@@ -198,10 +204,11 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   };
 
   // Corner sizes feed scrollbar offsets so the two axes don't
-  // overlap. They equal the visible cross-axis scrollbar's size, or
-  // 0 when the cross-axis scrollbar is hidden.
-  const cornerWidth = () => (visibleY() ? sizesY().scrollbar.size : 0);
-  const cornerHeight = () => (visibleX() ? sizesX().scrollbar.size : 0);
+  // overlap. The horizontal scrollbar's `right` clears the vertical
+  // bar's *thickness* (its width); the vertical scrollbar's `bottom`
+  // clears the horizontal bar's *thickness* (its height).
+  const cornerWidth = () => (visibleY() ? thicknessY() : 0);
+  const cornerHeight = () => (visibleX() ? thicknessX() : 0);
 
   // Hover visibility — pointerenter shows, pointerleave starts a hide
   // timer pinned to `scrollHideDelay`.
@@ -283,6 +290,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           paddingEnd: sbStyle ? parseInt(sbStyle.paddingRight, 10) || 0 : 0,
         },
       });
+      setThicknessX(sb?.clientHeight ?? 0);
     }
     if (enableY()) {
       const sb = scrollbarYEl();
@@ -296,6 +304,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           paddingEnd: sbStyle ? parseInt(sbStyle.paddingBottom, 10) || 0 : 0,
         },
       });
+      setThicknessY(sb?.clientWidth ?? 0);
     }
   };
 
