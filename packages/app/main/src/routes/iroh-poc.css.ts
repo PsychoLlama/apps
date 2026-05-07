@@ -1,23 +1,24 @@
 import { style } from '@vanilla-extract/css';
-import { breakpoint, neutral, radius, space } from '@lib/design';
+import {
+  accent,
+  fontFamily,
+  neutral,
+  radius,
+  space,
+  typeScale,
+} from '@lib/design';
 
-export const layout = style({
-  width: '100%',
-  maxWidth: '960px',
-  alignSelf: 'center',
+export const idCode = style({
+  fontFamily: fontFamily.code,
+  fontSize: typeScale[1].fontSize,
+  padding: `${space[1]} ${space[2]}`,
+  borderRadius: radius[2],
+  background: neutral.solid[3],
+  border: `1px solid ${neutral.solid[5]}`,
+  wordBreak: 'break-all',
 });
 
-export const panels = style({
-  width: '100%',
-  gridTemplateColumns: '1fr',
-  '@media': {
-    [breakpoint.md]: {
-      gridTemplateColumns: '1fr 1fr',
-    },
-  },
-});
-
-export const log = style({
+export const messageList = style({
   width: '100%',
   minHeight: space[7],
   maxHeight: '320px',
@@ -25,20 +26,50 @@ export const log = style({
   borderRadius: radius[3],
   background: neutral.solid[2],
   border: `1px solid ${neutral.solid[5]}`,
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-  fontSize: '12px',
-  lineHeight: 1.55,
   overflowY: 'auto',
-  whiteSpace: 'pre-wrap',
-  wordBreak: 'break-word',
 });
 
-export const idCode = style({
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-  fontSize: '12px',
-  padding: `${space[1]} ${space[2]}`,
-  borderRadius: radius[2],
-  background: neutral.solid[3],
-  border: `1px solid ${neutral.solid[5]}`,
-  wordBreak: 'break-all',
+const messageRow = style({
+  maxWidth: '80%',
 });
+
+export const messageRowMe = style([messageRow, { alignSelf: 'flex-end' }]);
+export const messageRowPeer = style([messageRow, { alignSelf: 'flex-start' }]);
+export const messageRowSystem = style({
+  alignSelf: 'center',
+  maxWidth: '90%',
+});
+
+const messageBubble = style({
+  padding: `${space[2]} ${space[3]}`,
+  borderRadius: radius[3],
+  wordBreak: 'break-word',
+  whiteSpace: 'pre-wrap',
+});
+
+export const messageBubbleMe = style([
+  messageBubble,
+  {
+    background: accent.solid[9],
+    color: accent.contrast,
+  },
+]);
+
+export const messageBubblePeer = style([
+  messageBubble,
+  {
+    background: neutral.solid[4],
+    color: neutral.solid[12],
+  },
+]);
+
+export const messageBubbleSystem = style([
+  messageBubble,
+  {
+    background: 'transparent',
+    fontStyle: 'italic',
+    fontSize: typeScale[1].fontSize,
+    color: neutral.solid[11],
+    textAlign: 'center',
+  },
+]);

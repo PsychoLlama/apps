@@ -6,71 +6,42 @@ import {
   Card,
   Container,
   Flex,
-  Grid,
   Heading,
+  IconButton,
   Text,
   TextField,
 } from '@lib/ui';
+import IconClose from 'virtual:icons/mdi/close';
 import { SiteHeader } from '@lib/shell';
-import {
-  irohPoc,
-  useIrohPocActions,
-  type AcceptEvent,
-  type ConnectEvent,
+import { irohPoc, nextSessionId, useIrohPocActions } from '../iroh-poc/store';
+import type {
+  SessionDirection,
+  SessionInfo,
+  IrohPocActions,
 } from '../iroh-poc/store';
 import * as css from './iroh-poc.css';
 
 /**
- * Whatever `EchoNode.spawn()` resolves to. Imported dynamically inside
- * `onMount` so the wasm bundle never gets pulled into the SSR /
- * prerender build — Vite would happily try, and the iroh runtime
- * crashes outside a browser.
+ * Wasm `Session` shape. Imported dynamically inside `onMount`, so the
+ * type lives here as a duck-typed mirror of the wasm-bindgen surface.
  */
-type EchoNodeHandle = {
+interface WasmSession {
+  peerId: () => string;
+  send: (text: string) => Promise<void>;
+  messages: () => ReadableStream<string>;
+  closed: () => Promise<void>;
+  close: () => void;
+  free: () => void;
+}
+
+/** Mirror of `EchoNode`. */
+interface WasmEchoNode {
   endpointId: () => string;
   ticket: () => Promise<string>;
-  events: () => ReadableStream<AcceptEvent>;
-  connect: (ticket: string, payload: string) => ReadableStream<ConnectEvent>;
+  sessions: () => ReadableStream<WasmSession>;
+  connect: (ticket: string) => Promise<WasmSession>;
   free: () => void;
-};
-
-const formatAcceptEvent = (event: AcceptEvent): string => {
-  const peer = event.endpointId.slice(0, 12);
-  switch (event.type) {
-    case 'accepted':
-      return `← ${peer} connected`;
-    case 'echoed':
-      return `← ${peer} sent "${event.text ?? ''}" (echoed back)`;
-    case 'closed':
-      return event.error
-        ? `← ${peer} closed with error: ${event.error}`
-        : `← ${peer} closed cleanly`;
-  }
-};
-
-const formatConnectEvent = (event: ConnectEvent): string => {
-  switch (event.type) {
-    case 'connected':
-      return '→ connected';
-    case 'sent':
-      return `→ sent ${event.bytes ?? 0} byte(s)`;
-    case 'echoed':
-      return `→ received "${event.text ?? ''}"`;
-    case 'closed':
-      return event.error
-        ? `→ closed with error: ${event.error}`
-        : '→ closed cleanly';
-  }
-};
-
-const peerEndpointId = (ticket: string): string | null => {
-  try {
-    const parsed = JSON.parse(ticket) as { id?: unknown };
-    return typeof parsed.id === 'string' ? parsed.id.slice(0, 12) : null;
-  } catch {
-    return null;
-  }
-};
+}
 
 const describe = (value: unknown): string => {
   if (value instanceof Error) return value.message;
@@ -81,54 +52,91 @@ const describe = (value: unknown): string => {
   }
 };
 
+const truncate = (id: string): string => id.slice(0, 12);
+
 const IrohPoc: Component = () => {
   const actions = useIrohPocActions();
-  let node: EchoNodeHandle | null = null;
+  const registry = new Map<number, WasmSession>();
+  let node: WasmEchoNode | null = null;
   let disposed = false;
+
+  const adoptSession = (
+    wasmSession: WasmSession,
+    direction: SessionDirection,
+  ): number => {
+    const id = nextSessionId();
+    const peerId = wasmSession.peerId();
+    registry.set(id, wasmSession);
+    actions.addSession({ id, peerId, direction });
+    void drainMessages(id, wasmSession);
+    void watchClose(id, wasmSession);
+    return id;
+  };
+
+  const drainMessages = async (sessionId: number, session: WasmSession) => {
+    const reader = session.messages().getReader();
+    try {
+      while (!disposed) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        actions.appendMessage(sessionId, 'peer', value);
+      }
+    } catch (err) {
+      if (!disposed) {
+        actions.appendMessage(
+          sessionId,
+          'system',
+          `messages error: ${describe(err)}`,
+        );
+      }
+    }
+  };
+
+  const watchClose = async (sessionId: number, session: WasmSession) => {
+    try {
+      await session.closed();
+    } finally {
+      if (!disposed) actions.markSessionClosed(sessionId);
+    }
+  };
+
+  const drainSessions = async (
+    stream: ReadableStream<WasmSession>,
+  ): Promise<void> => {
+    const reader = stream.getReader();
+    try {
+      while (!disposed) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        adoptSession(value, 'incoming');
+      }
+    } catch (err) {
+      if (!disposed) actions.bootFailed(`sessions error: ${describe(err)}`);
+    }
+  };
 
   const boot = async () => {
     try {
       const wasm = await import('../../iroh-poc/pkg/iroh_poc.js');
       await wasm.default();
-      const spawned =
-        (await wasm.EchoNode.spawn()) as unknown as EchoNodeHandle;
+      const spawned = (await wasm.EchoNode.spawn()) as unknown as WasmEchoNode;
       if (disposed) {
         spawned.free();
         return;
       }
       node = spawned;
-      const id = spawned.endpointId();
-      actions.endpointIdReady(id);
-      actions.appendLine('incoming', `endpoint id — ${id}`);
-
-      const reader = spawned.events().getReader();
+      actions.endpointIdReady(spawned.endpointId());
+      void drainSessions(spawned.sessions());
       // `ticket()` waits for `Endpoint::online`, so the home-relay URL
       // is baked into the JSON before a remote tab tries to dial.
       spawned
         .ticket()
         .then((value) => {
-          if (disposed) return;
-          actions.ticketReady(value);
-          actions.appendLine('incoming', 'connect ticket ready');
+          if (!disposed) actions.ticketReady(value);
         })
         .catch((err: unknown) => {
           if (!disposed) actions.bootFailed(describe(err));
         });
-
-      const drainEvents = async () => {
-        try {
-          while (!disposed) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            actions.appendLine('incoming', formatAcceptEvent(value));
-          }
-        } catch (err) {
-          if (!disposed) {
-            actions.appendLine('incoming', `events error: ${describe(err)}`);
-          }
-        }
-      };
-      void drainEvents();
     } catch (err) {
       actions.bootFailed(describe(err));
     }
@@ -140,70 +148,93 @@ const IrohPoc: Component = () => {
 
   onCleanup(() => {
     disposed = true;
+    for (const session of registry.values()) {
+      try {
+        session.close();
+      } catch {
+        // Already closed; ignore.
+      }
+      session.free();
+    }
+    registry.clear();
     node?.free();
     actions.reset();
   });
 
-  const dial = async (ticket: string, payload: string) => {
-    const handle = node;
-    if (!handle) return;
-    actions.setSending(true);
-    actions.appendLine(
-      'outgoing',
-      `→ dialing ${peerEndpointId(ticket) ?? ticket.slice(0, 24) + '…'}`,
-    );
+  const dial = async (ticket: string) => {
+    if (!node) return;
+    actions.setDialing(true);
+    actions.setDialError(null);
     try {
-      const stream = handle.connect(ticket, payload);
-      const reader = stream.getReader();
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        actions.appendLine('outgoing', formatConnectEvent(value));
-      }
+      const session = await node.connect(ticket);
+      adoptSession(session, 'outgoing');
+      actions.setPeerTicket('');
     } catch (err) {
-      actions.appendLine('outgoing', `connection failed: ${describe(err)}`);
+      actions.setDialError(describe(err));
     } finally {
-      actions.setSending(false);
+      actions.setDialing(false);
     }
   };
 
   const onConnectSubmit = (event: SubmitEvent) => {
     event.preventDefault();
     const ticket = irohPoc.peerTicket.trim();
-    const message = irohPoc.payload;
-    if (!ticket || irohPoc.sending) return;
-    void dial(ticket, message);
+    if (!ticket || irohPoc.dialing) return;
+    void dial(ticket);
+  };
+
+  const sendOnSession = async (session: SessionInfo) => {
+    const handle = registry.get(session.id);
+    const text = session.draft.trim();
+    if (!handle || !text || session.status !== 'open' || session.sending)
+      return;
+    actions.setSessionSending(session.id, true);
+    try {
+      await handle.send(text);
+      actions.appendMessage(session.id, 'me', text);
+      actions.setSessionDraft(session.id, '');
+    } catch (err) {
+      actions.appendMessage(
+        session.id,
+        'system',
+        `send failed: ${describe(err)}`,
+      );
+    } finally {
+      actions.setSessionSending(session.id, false);
+    }
+  };
+
+  const closeSession = (session: SessionInfo) => {
+    const handle = registry.get(session.id);
+    handle?.close();
+    handle?.free();
+    registry.delete(session.id);
+    actions.removeSession(session.id);
   };
 
   const copyTicket = () => {
     const value = irohPoc.ticket;
     if (!value) return;
-    void navigator.clipboard
-      .writeText(value)
-      .then(() =>
-        actions.appendLine('incoming', 'connect ticket copied to clipboard'),
-      )
-      .catch(() => {
-        // Clipboard permission denied or unavailable — non-fatal.
-      });
+    void navigator.clipboard.writeText(value).catch(() => {
+      // Clipboard permission denied or unavailable — non-fatal.
+    });
   };
 
   return (
     <Flex as="main" direction="column" grow>
-      <SiteHeader title="Iroh P2P POC" />
+      <SiteHeader title="Iroh chat POC" />
 
       <Flex as="section" direction="column" align="center" px={5} py={6}>
         <Container as="div" size={3}>
           <Flex as="div" direction="column" gap={5}>
             <Flex as="header" direction="column" gap={2}>
               <Heading as="h1" size={6}>
-                Iroh in the browser
+                Iroh chat in the browser
               </Heading>
               <Text as="p" color="lowContrast">
                 Spawns an iroh endpoint inside this page (relay-only — UDP isn't
-                available from a browser sandbox), registers a tiny echo
-                protocol, and lets two tabs (or two machines) talk over n0's
-                relay.
+                available from a browser sandbox), holds connections open, and
+                multiplexes each chat message over its own short-lived stream.
               </Text>
             </Flex>
 
@@ -211,176 +242,276 @@ const IrohPoc: Component = () => {
               <Callout color="danger">{irohPoc.error}</Callout>
             </Show>
 
-            <Grid as="div" gap={4} class={css.panels}>
-              <Card as="section" size={2} variant="surface">
-                <Flex as="div" direction="column" gap={3}>
-                  <Flex as="div" align="center" justify="between" gap={3}>
-                    <Heading as="h2" size={4}>
-                      Host
-                    </Heading>
-                    <Badge
-                      color={irohPoc.status === 'ready' ? 'success' : 'neutral'}
-                    >
-                      {irohPoc.status}
-                    </Badge>
-                  </Flex>
-                  <Text as="p" size={2} color="lowContrast">
-                    Share this connect ticket with another tab or peer. It
-                    bundles the endpoint id with the assigned home-relay URL, so
-                    the dialer can reach you without waiting on DNS discovery.
+            <Card as="section" size={2} variant="surface">
+              <Flex as="div" direction="column" gap={3}>
+                <Flex as="div" align="center" justify="between" gap={3}>
+                  <Heading as="h2" size={4}>
+                    Your endpoint
+                  </Heading>
+                  <Badge
+                    color={irohPoc.status === 'ready' ? 'success' : 'neutral'}
+                  >
+                    {irohPoc.status}
+                  </Badge>
+                </Flex>
+                <Text as="p" size={2} color="lowContrast">
+                  Share this connect ticket with another tab or peer to let them
+                  dial you. It bundles your endpoint id with the assigned
+                  home-relay URL.
+                </Text>
+                <Show
+                  when={irohPoc.endpointId}
+                  fallback={
+                    <Text as="p" size={2}>
+                      Booting iroh…
+                    </Text>
+                  }
+                >
+                  <Text as="span" size={1} color="lowContrast">
+                    endpoint id
+                  </Text>
+                  <Text as="code" class={css.idCode} selectable>
+                    {irohPoc.endpointId}
                   </Text>
                   <Show
-                    when={irohPoc.endpointId}
+                    when={irohPoc.ticket}
                     fallback={
                       <Text as="p" size={2}>
-                        Booting iroh…
+                        Waiting for relay assignment…
                       </Text>
                     }
                   >
                     <Text as="span" size={1} color="lowContrast">
-                      endpoint id
+                      connect ticket
                     </Text>
                     <Text as="code" class={css.idCode} selectable>
-                      {irohPoc.endpointId}
+                      {irohPoc.ticket}
                     </Text>
-                    <Show
-                      when={irohPoc.ticket}
-                      fallback={
-                        <Text as="p" size={2}>
-                          Waiting for relay assignment…
-                        </Text>
-                      }
-                    >
-                      <Text as="span" size={1} color="lowContrast">
-                        connect ticket
-                      </Text>
-                      <Text as="code" class={css.idCode} selectable>
-                        {irohPoc.ticket}
-                      </Text>
-                      <Flex as="div" gap={2}>
-                        <Button
-                          testId="iroh-poc-copy-ticket"
-                          type="button"
-                          size={1}
-                          variant="soft"
-                          onClick={copyTicket}
-                        >
-                          Copy ticket
-                        </Button>
-                      </Flex>
-                    </Show>
+                    <Flex as="div" gap={2}>
+                      <Button
+                        testId="iroh-poc-copy-ticket"
+                        type="button"
+                        size={1}
+                        variant="soft"
+                        onClick={copyTicket}
+                      >
+                        Copy ticket
+                      </Button>
+                    </Flex>
                   </Show>
-                  <Heading as="h3" size={2} weight="medium">
-                    Inbound events
-                  </Heading>
-                  <Flex
-                    as="div"
-                    direction="column"
-                    class={css.log}
-                    aria-live="polite"
-                  >
-                    <For
-                      each={irohPoc.lines.filter(
-                        (line) => line.role === 'incoming',
-                      )}
-                      fallback="(none yet)"
-                    >
-                      {(line) => (
-                        <Text as="p" selectable>
-                          {line.time} · {line.message}
-                        </Text>
-                      )}
-                    </For>
-                  </Flex>
-                </Flex>
-              </Card>
+                </Show>
+              </Flex>
+            </Card>
 
-              <Card as="section" size={2} variant="surface">
-                <Flex
-                  as="form"
-                  direction="column"
-                  gap={3}
-                  onSubmit={onConnectSubmit}
-                >
-                  <Heading as="h2" size={4}>
-                    Client
-                  </Heading>
-                  <Text as="p" size={2} color="lowContrast">
-                    Paste a peer's connect ticket, type a message, and the host
-                    will echo it back over the relay.
+            <Card as="section" size={2} variant="surface">
+              <Flex
+                as="form"
+                direction="column"
+                gap={3}
+                onSubmit={onConnectSubmit}
+              >
+                <Heading as="h2" size={4}>
+                  Connect to a peer
+                </Heading>
+                <Text as="p" size={2} color="lowContrast">
+                  Paste a connect ticket and we'll open a fresh chat session
+                  with that peer.
+                </Text>
+                <Flex as="div" direction="column" gap={1}>
+                  <Text as="span" size={2}>
+                    Peer connect ticket
                   </Text>
-                  <Flex as="div" direction="column" gap={1}>
-                    <Text as="span" size={2}>
-                      Peer connect ticket
-                    </Text>
-                    <TextField
-                      testId="iroh-poc-peer-ticket"
-                      name="peer-ticket"
-                      value={irohPoc.peerTicket}
-                      onInput={(event) =>
-                        actions.setPeerTicket(event.currentTarget.value)
-                      }
-                      placeholder="paste connect ticket…"
-                      spellcheck={false}
-                      autocapitalize="none"
-                      autocomplete="off"
-                      required
-                    />
-                  </Flex>
-                  <Flex as="div" direction="column" gap={1}>
-                    <Text as="span" size={2}>
-                      Message
-                    </Text>
-                    <TextField
-                      testId="iroh-poc-payload"
-                      name="payload"
-                      value={irohPoc.payload}
-                      onInput={(event) =>
-                        actions.setPayload(event.currentTarget.value)
-                      }
-                      placeholder="text to send"
-                      required
-                    />
-                  </Flex>
-                  <Flex as="div" gap={2}>
-                    <Button
-                      testId="iroh-poc-send"
-                      type="submit"
-                      size={2}
-                      disabled={irohPoc.status !== 'ready' || irohPoc.sending}
-                    >
-                      {irohPoc.sending ? 'Sending…' : 'Send'}
-                    </Button>
-                  </Flex>
-                  <Heading as="h3" size={2} weight="medium">
-                    Outbound events
-                  </Heading>
-                  <Flex
-                    as="div"
-                    direction="column"
-                    class={css.log}
-                    aria-live="polite"
-                  >
-                    <For
-                      each={irohPoc.lines.filter(
-                        (line) => line.role === 'outgoing',
-                      )}
-                      fallback="(none yet)"
-                    >
-                      {(line) => (
-                        <Text as="p" selectable>
-                          {line.time} · {line.message}
-                        </Text>
-                      )}
-                    </For>
-                  </Flex>
+                  <TextField
+                    testId="iroh-poc-peer-ticket"
+                    name="peer-ticket"
+                    value={irohPoc.peerTicket}
+                    onInput={(event) =>
+                      actions.setPeerTicket(event.currentTarget.value)
+                    }
+                    placeholder="paste connect ticket…"
+                    spellcheck={false}
+                    autocapitalize="none"
+                    autocomplete="off"
+                    required
+                  />
                 </Flex>
-              </Card>
-            </Grid>
+                <Show when={irohPoc.dialError}>
+                  <Callout color="danger">{irohPoc.dialError}</Callout>
+                </Show>
+                <Flex as="div" gap={2}>
+                  <Button
+                    testId="iroh-poc-connect"
+                    type="submit"
+                    size={2}
+                    disabled={irohPoc.status !== 'ready' || irohPoc.dialing}
+                  >
+                    {irohPoc.dialing ? 'Connecting…' : 'Connect'}
+                  </Button>
+                </Flex>
+              </Flex>
+            </Card>
+
+            <Show
+              when={irohPoc.sessions.length > 0}
+              fallback={
+                <Text as="p" size={2} color="lowContrast">
+                  No open sessions. Share your ticket or paste one above to
+                  start chatting.
+                </Text>
+              }
+            >
+              <Flex as="div" direction="column" gap={4}>
+                <For each={irohPoc.sessions}>
+                  {(session) => (
+                    <SessionCard
+                      session={session}
+                      actions={actions}
+                      onSend={() => void sendOnSession(session)}
+                      onClose={() => closeSession(session)}
+                    />
+                  )}
+                </For>
+              </Flex>
+            </Show>
           </Flex>
         </Container>
       </Flex>
     </Flex>
+  );
+};
+
+interface SessionCardProps {
+  session: SessionInfo;
+  actions: IrohPocActions;
+  onSend: () => void;
+  onClose: () => void;
+}
+
+const SessionCard: Component<SessionCardProps> = (props) => {
+  const onSubmit = (event: SubmitEvent) => {
+    event.preventDefault();
+    props.onSend();
+  };
+
+  return (
+    <Card as="section" size={2} variant="surface">
+      <Flex as="div" direction="column" gap={3}>
+        <Flex as="header" align="center" justify="between" gap={3}>
+          <Flex as="div" direction="column" gap={1}>
+            <Flex as="div" align="center" gap={2}>
+              <Heading as="h3" size={3} selectable>
+                {truncate(props.session.peerId)}
+              </Heading>
+              <Badge
+                color={
+                  props.session.direction === 'outgoing' ? 'accent' : 'neutral'
+                }
+                size={1}
+              >
+                {props.session.direction}
+              </Badge>
+              <Badge
+                color={props.session.status === 'open' ? 'success' : 'neutral'}
+                size={1}
+              >
+                {props.session.status}
+              </Badge>
+            </Flex>
+            <Text as="span" size={1} color="lowContrast" selectable>
+              {props.session.peerId}
+            </Text>
+          </Flex>
+          <IconButton
+            testId={`iroh-poc-session-close-${props.session.id}`}
+            type="button"
+            size={1}
+            variant="soft"
+            color="neutral"
+            aria-label="Close session"
+            onClick={() => props.onClose()}
+          >
+            <IconClose />
+          </IconButton>
+        </Flex>
+
+        <Flex
+          as="div"
+          direction="column"
+          gap={2}
+          class={css.messageList}
+          aria-live="polite"
+        >
+          <For each={props.session.messages} fallback={null}>
+            {(message) => (
+              <Flex
+                as="div"
+                direction="column"
+                gap={1}
+                class={
+                  message.author === 'me'
+                    ? css.messageRowMe
+                    : message.author === 'peer'
+                      ? css.messageRowPeer
+                      : css.messageRowSystem
+                }
+              >
+                <Text
+                  as="p"
+                  selectable
+                  class={
+                    message.author === 'me'
+                      ? css.messageBubbleMe
+                      : message.author === 'peer'
+                        ? css.messageBubblePeer
+                        : css.messageBubbleSystem
+                  }
+                >
+                  {message.text}
+                </Text>
+                <Text as="span" size={1} color="lowContrast" selectable={false}>
+                  {message.time}
+                </Text>
+              </Flex>
+            )}
+          </For>
+        </Flex>
+
+        <Flex as="form" direction="row" gap={2} onSubmit={onSubmit}>
+          <Flex as="div" direction="column" grow>
+            <TextField
+              testId={`iroh-poc-session-draft-${props.session.id}`}
+              name={`draft-${props.session.id}`}
+              value={props.session.draft}
+              placeholder={
+                props.session.status === 'open'
+                  ? 'Type a message…'
+                  : 'Session closed'
+              }
+              disabled={props.session.status !== 'open'}
+              onInput={(event) =>
+                props.actions.setSessionDraft(
+                  props.session.id,
+                  event.currentTarget.value,
+                )
+              }
+              autocomplete="off"
+            />
+          </Flex>
+          <Button
+            testId={`iroh-poc-session-send-${props.session.id}`}
+            type="submit"
+            size={2}
+            disabled={
+              props.session.status !== 'open' ||
+              props.session.sending ||
+              props.session.draft.trim().length === 0
+            }
+          >
+            {props.session.sending ? 'Sending…' : 'Send'}
+          </Button>
+        </Flex>
+      </Flex>
+    </Card>
   );
 };
 

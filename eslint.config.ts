@@ -26,6 +26,12 @@ const restrictedStatePaths = [
 
 export default [
   includeIgnoreFile(import.meta.dirname + '/.gitignore'),
+  {
+    // Generated wasm bindings — excluded from the type-aware project
+    // service, so eslint can't parse them. Their parent gitignore is
+    // local-only, not picked up by `includeIgnoreFile` above.
+    ignores: ['packages/app/main/iroh-poc/pkg/**'],
+  },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

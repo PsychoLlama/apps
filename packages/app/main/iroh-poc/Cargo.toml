@@ -14,13 +14,12 @@ console_error_panic_hook = "0.1"
 getrandom = { version = "0.3", features = ["wasm_js"] }
 iroh = { version = "0.98", default-features = false, features = ["tls-ring"] }
 n0-future = "0.3"
-serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde-wasm-bindgen = "0.6"
-tokio = { version = "1", default-features = false, features = ["sync"] }
-tokio-stream = { version = "0.1", default-features = false, features = ["sync"] }
+# Direct dep purely to enable `release_max_level_off` — cargo's feature
+# unification turns iroh's `tracing` calls into compile-time no-ops in
+# release builds, dropping the regex/formatter machinery from the wasm.
 tracing = { version = "0.1", features = ["release_max_level_off"] }
-wasm-bindgen = "=0.2.118"
+wasm-bindgen = "=0.2.117"
 wasm-bindgen-futures = "0.4"
 wasm-streams = "0.5"
 

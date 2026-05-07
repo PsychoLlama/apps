@@ -1,13 +1,16 @@
 # iroh-poc
 
-Browser-side iroh POC. Compiles a tiny echo protocol to wasm and exposes
-it to JS via `wasm-bindgen`. The route at `/iroh-poc` (in `@app/main`)
-loads the resulting bundle dynamically inside `onMount` so the iroh
-runtime never gets pulled into SSR / prerender.
+Browser-side iroh chat POC. Compiles a small chat protocol to wasm and
+exposes it to JS via `wasm-bindgen`. The route at `/iroh-poc` (in
+`@app/main`) loads the resulting bundle dynamically inside `onMount`
+so the iroh runtime never gets pulled into SSR / prerender.
 
-The host opens an n0-relay-backed endpoint and surfaces a JSON connect
-ticket (endpoint id + home-relay URL). The client pastes the ticket,
-sends a payload, and the host echoes it back.
+The page hosts an n0-relay-backed endpoint and surfaces a JSON connect
+ticket (endpoint id + home-relay URL). Both sides use the same
+symmetric `Session` handle: dialing returns one, accepting yields one
+through `EchoNode.sessions()`. Each chat message rides its own
+short-lived unidirectional stream — `read_to_end` provides framing
+for free, and concurrent `send` calls multiplex naturally.
 
 ## Build
 

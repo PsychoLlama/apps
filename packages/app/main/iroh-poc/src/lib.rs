@@ -1,67 +1,61 @@
-//! Browser-side iroh POC: a tiny echo protocol exposed to JavaScript.
+//! Browser-side iroh chat POC. The page hosts an iroh endpoint and
+//! exposes a symmetric `Session` handle for both directions:
 //!
-//! Runs the iroh endpoint inside the page (relay-only, no UDP holepunching
-//! from the browser sandbox). Two roles share the same node:
+//! - **Accepting**: `EchoNode::sessions()` is a `ReadableStream<Session>`
+//!   that yields a fresh handle for each inbound connection.
+//! - **Dialing**: `EchoNode::connect(ticket)` resolves to the same
+//!   `Session` shape.
 //!
-//! - **Server**: builds an [`Endpoint`] with the echo ALPN registered, then
-//!   yields incoming-connection events through [`EchoNode::events`].
-//! - **Client**: dials a known endpoint id via [`EchoNode::connect`], sends
-//!   one payload, and reports back what came over the wire.
+//! Each chat message rides its own short-lived unidirectional stream,
+//! so we get framing for free — `read_to_end` returns when the sender
+//! finishes — and concurrent `send()` calls naturally multiplex.
 
 use anyhow::{Context, Result};
-use async_channel::Sender;
+use async_channel::{Receiver, Sender};
 use iroh::{
     Endpoint, EndpointAddr,
     endpoint::Connection,
     protocol::{AcceptError, ProtocolHandler, Router},
 };
-use n0_future::{Stream, StreamExt, task};
-use serde::{Deserialize, Serialize};
-use tokio::sync::broadcast;
-use tokio_stream::wrappers::BroadcastStream;
-use tracing::info;
-use wasm_bindgen::{JsError, prelude::wasm_bindgen};
+use n0_future::{StreamExt, task};
+use wasm_bindgen::{JsError, JsValue, prelude::wasm_bindgen};
 use wasm_streams::{ReadableStream, readable::sys::ReadableStream as JsReadableStream};
 
-const ECHO_ALPN: &[u8] = b"iroh-poc/echo/0";
+const CHAT_ALPN: &[u8] = b"iroh-poc/chat/0";
+const MAX_MESSAGE_BYTES: usize = 64 * 1024;
 
 #[wasm_bindgen(start)]
 fn start() {
     // Surface Rust panics in the browser console — without this, an
-    // unwinding panic just trashes the wasm instance silently. No
-    // `tracing-subscriber` setup: iroh's `tracing` calls turn into
-    // no-ops in release thanks to `release_max_level_off`, which keeps
-    // the regex/formatter machinery out of the bundle.
+    // unwinding panic just trashes the wasm instance silently.
     console_error_panic_hook::set_once();
 }
 
-/// JS-facing handle to an iroh endpoint that speaks the echo protocol.
+/// JS-facing handle to an iroh endpoint that speaks the chat protocol.
 #[wasm_bindgen]
 pub struct EchoNode {
     router: Router,
-    accept_events: broadcast::Sender<AcceptEvent>,
+    incoming: Receiver<Session>,
 }
 
 #[wasm_bindgen]
 impl EchoNode {
-    /// Bind a fresh endpoint with the n0 relay preset and start accepting
-    /// echo connections.
+    /// Bind a fresh endpoint with the n0 relay preset and start
+    /// accepting chat connections.
     pub async fn spawn() -> Result<EchoNode, JsError> {
         let endpoint = Endpoint::builder(iroh::endpoint::presets::N0)
-            .alpns(vec![ECHO_ALPN.to_vec()])
+            .alpns(vec![CHAT_ALPN.to_vec()])
             .bind()
             .await
             .map_err(to_js_err)?;
-        let (accept_events, _) = broadcast::channel(128);
-        let echo = Echo {
-            events: accept_events.clone(),
+        let (incoming_tx, incoming_rx) = async_channel::unbounded();
+        let chat = Chat {
+            incoming: incoming_tx,
         };
-        let router = Router::builder(endpoint)
-            .accept(ECHO_ALPN, echo)
-            .spawn();
+        let router = Router::builder(endpoint).accept(CHAT_ALPN, chat).spawn();
         Ok(Self {
             router,
-            accept_events,
+            incoming: incoming_rx,
         })
     }
 
@@ -72,9 +66,8 @@ impl EchoNode {
     }
 
     /// JSON-serialized [`EndpointAddr`] — endpoint id plus the assigned
-    /// home-relay URL. Awaits [`Endpoint::online`] so the relay is
-    /// resolved before serialization, which lets a remote dialer
-    /// connect without waiting for discovery to propagate.
+    /// home-relay URL. Awaits [`Endpoint::online`] so the dialer can
+    /// reach us without waiting on DNS discovery to propagate.
     pub async fn ticket(&self) -> Result<String, JsError> {
         let endpoint = self.router.endpoint();
         endpoint.online().await;
@@ -82,144 +75,125 @@ impl EchoNode {
         serde_json::to_string(&addr).map_err(to_js_err)
     }
 
-    /// `ReadableStream<AcceptEvent>` of inbound connection lifecycle events.
-    pub fn events(&self) -> JsReadableStream {
-        let receiver = self.accept_events.subscribe();
-        let stream = BroadcastStream::new(receiver).filter_map(|event| event.ok());
-        into_js_readable_stream(stream)
+    /// `ReadableStream<Session>` of inbound chat sessions. Each value
+    /// is a wasm-bindgen `Session` instance.
+    pub fn sessions(&self) -> JsReadableStream {
+        let receiver = self.incoming.clone();
+        let stream = receiver.map(|session| Ok(JsValue::from(session)));
+        ReadableStream::from_stream(stream).into_raw()
     }
 
-    /// Dial the host described by `ticket` (a JSON-encoded
-    /// [`EndpointAddr`]), send `payload` over a bidi stream, and yield
-    /// progress events back as JS objects.
-    pub fn connect(
-        &self,
-        ticket: String,
-        payload: String,
-    ) -> Result<JsReadableStream, JsError> {
+    /// Dial the peer described by `ticket` and resolve to a fresh
+    /// [`Session`] once the QUIC handshake completes.
+    pub async fn connect(&self, ticket: String) -> Result<Session, JsError> {
         let addr: EndpointAddr = serde_json::from_str(&ticket)
             .context("failed to parse connect ticket as JSON EndpointAddr")
             .map_err(to_js_err)?;
-        let endpoint = self.router.endpoint().clone();
-        let (sender, receiver) = async_channel::bounded(16);
-        task::spawn(async move {
-            let result = run_client(&endpoint, addr, payload, sender.clone()).await;
-            let error = result.as_ref().err().map(|err| err.to_string());
-            sender.send(ConnectEvent::Closed { error }).await.ok();
-        });
-        Ok(into_js_readable_stream(receiver))
+        let connection = self
+            .router
+            .endpoint()
+            .connect(addr, CHAT_ALPN)
+            .await
+            .map_err(to_js_err)?;
+        Ok(Session::from_connection(connection))
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "camelCase", rename_all_fields = "camelCase")]
-enum ConnectEvent {
-    Connected,
-    Sent { bytes: u64 },
-    Echoed { text: String },
-    Closed { error: Option<String> },
+#[derive(Clone, Debug)]
+struct Chat {
+    incoming: Sender<Session>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "camelCase", rename_all_fields = "camelCase")]
-enum AcceptEvent {
-    Accepted {
-        endpoint_id: String,
-    },
-    Echoed {
-        endpoint_id: String,
-        text: String,
-    },
-    Closed {
-        endpoint_id: String,
-        error: Option<String>,
-    },
-}
-
-#[derive(Debug, Clone)]
-struct Echo {
-    events: broadcast::Sender<AcceptEvent>,
-}
-
-impl ProtocolHandler for Echo {
+impl ProtocolHandler for Chat {
     async fn accept(&self, connection: Connection) -> std::result::Result<(), AcceptError> {
-        let endpoint_id = connection.remote_id().to_string();
-        self.events
-            .send(AcceptEvent::Accepted {
-                endpoint_id: endpoint_id.clone(),
-            })
-            .ok();
-
-        let result = run_server(&connection, &self.events, &endpoint_id).await;
-        let error = result.as_ref().err().map(|err| err.to_string());
-        self.events
-            .send(AcceptEvent::Closed {
-                endpoint_id,
-                error,
-            })
-            .ok();
-        result
+        let session = Session::from_connection(connection.clone());
+        if self.incoming.send(session).await.is_err() {
+            // Receiver dropped — node is shutting down. Bail gracefully.
+            return Ok(());
+        }
+        // Hold the accept future open so iroh keeps the connection
+        // around for the JS-owned `Session` to use.
+        connection.closed().await;
+        Ok(())
     }
 }
 
-/// Server side: read the entire payload from the bidi stream, send it
-/// back, finish the send half, then wait for the peer to close.
-async fn run_server(
-    connection: &Connection,
-    events: &broadcast::Sender<AcceptEvent>,
-    endpoint_id: &str,
-) -> std::result::Result<(), AcceptError> {
-    info!("accepted connection from {endpoint_id}");
-    let (mut send, mut recv) = connection.accept_bi().await?;
-
-    let payload = recv.read_to_end(64 * 1024).await.map_err(AcceptError::from_err)?;
-    send.write_all(&payload).await.map_err(AcceptError::from_err)?;
-    send.finish()?;
-
-    let text = String::from_utf8_lossy(&payload).into_owned();
-    events
-        .send(AcceptEvent::Echoed {
-            endpoint_id: endpoint_id.to_owned(),
-            text,
-        })
-        .ok();
-
-    connection.closed().await;
-    Ok(())
+/// JS-facing handle to a single live chat connection.
+#[wasm_bindgen]
+pub struct Session {
+    peer_id: String,
+    connection: Connection,
+    incoming: Receiver<String>,
 }
 
-/// Client side: open a bidi stream, write the payload, finish the send
-/// half, read everything echoed back, then close the connection.
-async fn run_client(
-    endpoint: &Endpoint,
-    addr: EndpointAddr,
-    payload: String,
-    events: Sender<ConnectEvent>,
-) -> Result<()> {
-    let connection = endpoint.connect(addr, ECHO_ALPN).await?;
-    events.send(ConnectEvent::Connected).await?;
-
-    let (mut send, mut recv) = connection.open_bi().await?;
-    let bytes = payload.len() as u64;
-    send.write_all(payload.as_bytes()).await?;
-    send.finish()?;
-    events.send(ConnectEvent::Sent { bytes }).await?;
-
-    let echoed = recv.read_to_end(64 * 1024).await?;
-    let text = String::from_utf8_lossy(&echoed).into_owned();
-    events.send(ConnectEvent::Echoed { text }).await?;
-
-    connection.close(0u8.into(), b"done");
-    Ok(())
+impl Session {
+    fn from_connection(connection: Connection) -> Self {
+        let peer_id = connection.remote_id().to_string();
+        let (sender, receiver) = async_channel::unbounded::<String>();
+        let conn = connection.clone();
+        task::spawn(async move {
+            // One message per uni stream. The sender finishes the
+            // stream after writing, which lets us use `read_to_end` as
+            // a natural framing boundary.
+            loop {
+                let mut recv = match conn.accept_uni().await {
+                    Ok(stream) => stream,
+                    Err(_) => break,
+                };
+                let bytes = match recv.read_to_end(MAX_MESSAGE_BYTES).await {
+                    Ok(bytes) => bytes,
+                    Err(_) => continue,
+                };
+                let text = String::from_utf8_lossy(&bytes).into_owned();
+                if sender.send(text).await.is_err() {
+                    break;
+                }
+            }
+        });
+        Self {
+            peer_id,
+            connection,
+            incoming: receiver,
+        }
+    }
 }
 
-fn to_js_err(err: impl Into<anyhow::Error>) -> JsError {
-    JsError::new(&err.into().to_string())
+#[wasm_bindgen]
+impl Session {
+    /// Stringified ed25519 public key of the remote peer.
+    #[wasm_bindgen(js_name = peerId)]
+    pub fn peer_id(&self) -> String {
+        self.peer_id.clone()
+    }
+
+    /// Send a single message. Each call opens a fresh uni stream, so
+    /// concurrent calls are safe — they multiplex over the connection.
+    pub async fn send(&self, text: String) -> Result<(), JsError> {
+        let mut send = self.connection.open_uni().await.map_err(to_js_err)?;
+        send.write_all(text.as_bytes()).await.map_err(to_js_err)?;
+        send.finish().map_err(to_js_err)?;
+        Ok(())
+    }
+
+    /// `ReadableStream<string>` of inbound messages. Should be awaited
+    /// from one consumer only — multiple readers split the stream.
+    pub fn messages(&self) -> JsReadableStream {
+        let receiver = self.incoming.clone();
+        let stream = receiver.map(|text| Ok(JsValue::from_str(&text)));
+        ReadableStream::from_stream(stream).into_raw()
+    }
+
+    /// Resolves once the connection closes from either side.
+    pub async fn closed(&self) {
+        self.connection.closed().await;
+    }
+
+    /// Tear the connection down locally.
+    pub fn close(&self) {
+        self.connection.close(0u8.into(), b"closed");
+    }
 }
 
-fn into_js_readable_stream<T: Serialize>(
-    stream: impl Stream<Item = T> + 'static,
-) -> JsReadableStream {
-    let stream = stream.map(|event| Ok(serde_wasm_bindgen::to_value(&event).unwrap()));
-    ReadableStream::from_stream(stream).into_raw()
+fn to_js_err<E: std::fmt::Display>(err: E) -> JsError {
+    JsError::new(&err.to_string())
 }
