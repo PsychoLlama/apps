@@ -1,6 +1,13 @@
-import { For } from 'solid-js';
+import { For, type JSX } from 'solid-js';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Flex, ScrollArea, Text, type ScrollAreaProps } from '@lib/ui';
+import {
+  Card,
+  Flex,
+  Inset,
+  ScrollArea,
+  Text,
+  type ScrollAreaProps,
+} from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
@@ -16,31 +23,39 @@ const longText = Array.from(
 );
 const tiles = Array.from({ length: 16 }, (_unused, index) => index);
 
-const VerticalDemo = () => (
-  <Flex as="div" class={css.frame}>
-    <ScrollArea>
-      <Flex as="div" class={css.stack}>
-        <For each={longText}>
-          {(line) => (
-            <Text as="p" size={2}>
-              {line}
-            </Text>
-          )}
-        </For>
-      </Flex>
-    </ScrollArea>
+const Frame = (props: { children: JSX.Element }) => (
+  <Card as="div" size={1} class={css.frame}>
+    <Inset as="div" side="all">
+      {props.children}
+    </Inset>
+  </Card>
+);
+
+const VerticalContent = () => (
+  <Flex as="div" direction="column" gap={2} p={4}>
+    <For each={longText}>
+      {(line) => (
+        <Text as="p" size={2}>
+          {line}
+        </Text>
+      )}
+    </For>
   </Flex>
 );
 
-const HorizontalDemo = () => (
-  <Flex as="div" class={css.frame}>
-    <ScrollArea scrollbars="horizontal">
-      <Flex as="div" class={css.wide}>
-        <For each={tiles}>
-          {(tile) => <Flex as="div" class={css.tile} data-tile={tile} />}
-        </For>
-      </Flex>
-    </ScrollArea>
+const HorizontalContent = () => (
+  <Flex as="div" direction="row" gap={3} p={4} class={css.wide}>
+    <For each={tiles}>
+      {(tile) => (
+        <Flex
+          as="div"
+          background="surface"
+          radius={2}
+          class={css.tile}
+          data-tile={tile}
+        />
+      )}
+    </For>
   </Flex>
 );
 
@@ -64,19 +79,11 @@ const meta = {
     },
   },
   render: (props) => (
-    <Flex as="div" class={css.frame}>
+    <Frame>
       <ScrollArea {...props}>
-        <Flex as="div" class={css.stack}>
-          <For each={longText}>
-            {(line) => (
-              <Text as="p" size={2}>
-                {line} — long enough to overflow horizontally when narrow.
-              </Text>
-            )}
-          </For>
-        </Flex>
+        <VerticalContent />
       </ScrollArea>
-    </Flex>
+    </Frame>
   ),
 } satisfies Meta<ScrollAreaProps>;
 
@@ -88,27 +95,19 @@ export const Overview: Story = gallery({
     {
       title: 'Size',
       items: SIZES.map((size) => (
-        <Flex as="div" class={css.frame}>
+        <Frame>
           <ScrollArea size={size}>
-            <Flex as="div" class={css.stack}>
-              <For each={longText}>
-                {(line) => (
-                  <Text as="p" size={2}>
-                    {line}
-                  </Text>
-                )}
-              </For>
-            </Flex>
+            <VerticalContent />
           </ScrollArea>
-        </Flex>
+        </Frame>
       )),
     },
     {
       title: 'Type',
       items: TYPES.map((type) => (
-        <Flex as="div" class={css.frame}>
+        <Frame>
           <ScrollArea type={type}>
-            <Flex as="div" class={css.stack}>
+            <Flex as="div" direction="column" gap={2} p={4}>
               <For each={longText.slice(0, 5)}>
                 {(line) => (
                   <Text as="p" size={2}>
@@ -118,14 +117,22 @@ export const Overview: Story = gallery({
               </For>
             </Flex>
           </ScrollArea>
-        </Flex>
+        </Frame>
       )),
     },
     {
       title: 'Scrollbars',
-      items: SCROLLBARS.map((scrollbars) =>
-        scrollbars === 'horizontal' ? <HorizontalDemo /> : <VerticalDemo />,
-      ),
+      items: SCROLLBARS.map((scrollbars) => (
+        <Frame>
+          <ScrollArea scrollbars={scrollbars}>
+            {scrollbars === 'horizontal' ? (
+              <HorizontalContent />
+            ) : (
+              <VerticalContent />
+            )}
+          </ScrollArea>
+        </Frame>
+      )),
     },
   ],
 });
