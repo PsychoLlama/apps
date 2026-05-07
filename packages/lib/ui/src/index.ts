@@ -185,3 +185,10 @@ export {
   type CheckboxCardsColor,
   type CheckboxCardsColumns,
 } from './components/checkbox-cards/checkbox-cards';
+export {
+  default as ScrollArea,
+  type ScrollAreaProps,
+  type ScrollAreaType,
+  type ScrollAreaSize,
+  type ScrollAreaScrollbars,
+} from './components/scroll-area/scroll-area';
