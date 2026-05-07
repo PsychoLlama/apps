@@ -490,14 +490,22 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     const rect = target.getBoundingClientRect();
     const thumbEl = axis === 'x' ? thumbXEl : thumbYEl;
 
-    let pointerOffset = 0;
+    // Capture the pointer's offset within the thumb when the press
+    // lands on the thumb itself — including its `::before` hit-area
+    // extension, which delegates events back to the thumb element.
+    // Detecting via event target (rather than client-rect containment)
+    // matches Radix's `onPointerDownCapture` on the thumb: clicks on
+    // the hit-area record an offset so the thumb doesn't jump under
+    // the cursor on small thumbs where the `::before` extends past
+    // the visible bounds.
+    let pointerOffset: number | null = null;
     if (thumbEl) {
-      const thumbRect = thumbEl.getBoundingClientRect();
-      const within =
-        axis === 'x'
-          ? event.clientX >= thumbRect.left && event.clientX <= thumbRect.right
-          : event.clientY >= thumbRect.top && event.clientY <= thumbRect.bottom;
-      if (within) {
+      const eventTarget = event.target as Node | null;
+      const onThumb =
+        eventTarget !== null &&
+        (eventTarget === thumbEl || thumbEl.contains(eventTarget));
+      if (onThumb) {
+        const thumbRect = thumbEl.getBoundingClientRect();
         pointerOffset =
           axis === 'x'
             ? event.clientX - thumbRect.left
@@ -708,12 +716,15 @@ const getThumbSize = (sizes: Sizes): number => {
 
 const getScrollPositionFromPointer = (
   pointerPos: number,
-  pointerOffset: number,
+  pointerOffset: number | null,
   sizes: Sizes,
 ): number => {
   const thumbSize = getThumbSize(sizes);
   const thumbCenter = thumbSize / 2;
-  const offset = pointerOffset || thumbCenter;
+  // `null` distinguishes "no offset captured" (track click — center
+  // the thumb on the cursor) from a captured `0` (cursor pressed on
+  // the thumb's leading edge — preserve the alignment).
+  const offset = pointerOffset ?? thumbCenter;
   const thumbOffsetFromEnd = thumbSize - offset;
   const minPointer = sizes.scrollbar.paddingStart + offset;
   const maxPointer =
