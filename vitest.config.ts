@@ -26,6 +26,13 @@ const sharedServer = {
 
 export default defineConfig({
   test: {
+    // Default is 15s. Tighter budget surfaces accidental slowness
+    // (e.g. tests waiting on Playwright actionability checks against
+    // an unactionable element) before it racks up wall-clock and
+    // before it starts racing other ~15s clocks. The slowest
+    // legitimate test in the suite at the time of writing is well
+    // under 1s; 5s leaves an order of magnitude of headroom.
+    testTimeout: 5_000,
     coverage: {
       include: ['packages/lib/state/src/**/*.ts'],
       thresholds: {
@@ -63,6 +70,15 @@ export default defineConfig({
               launchOptions: {
                 executablePath: process.env.CHROMIUM_PATH,
               },
+              // Cap Playwright's auto-wait loop. Default is 30s,
+              // which means an action against an unactionable element
+              // (disabled, off-screen, covered) silently retries until
+              // it eats the test budget. 2s is a multiple of any
+              // legitimate render/animation we trigger, but tight
+              // enough that a misuse fails fast with Playwright's
+              // own diagnostic ("element is not enabled", etc.) rather
+              // than as a generic vitest timeout.
+              actionTimeout: 2_000,
             }),
             headless: true,
             instances: [{ browser: 'chromium' }],
