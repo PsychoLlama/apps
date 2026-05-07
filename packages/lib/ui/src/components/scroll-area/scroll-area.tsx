@@ -2,7 +2,7 @@
  * ScrollArea component.
  *
  * Native-CSS port of Radix UI Themes ScrollArea. The viewport is a
- * single `<div>` styled with `overflow: auto` (or `scroll`) plus
+ * single element styled with `overflow: auto` (or `scroll`) plus
  * `::-webkit-scrollbar` and `scrollbar-color` rules. No JavaScript
  * scrollbar machinery.
  *
@@ -14,18 +14,22 @@
  * - No `scrollHideDelay`. The user agent owns fade timing; on
  *   `'hover'`, the fade duration is the design system's standard
  *   transition.
- * - Tag-locked to `<div>`. Wrap a different tag if you need one.
  *
  * @see https://www.radix-ui.com/themes/docs/components/scroll-area
  */
 
 import { mergeProps, splitProps } from 'solid-js';
-import type { JSX, ParentComponent } from 'solid-js';
+import type { JSX } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import {
   marginPropKeys,
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  type HtmlBoxTag,
+  type PolymorphicProps,
+} from '../../props/polymorphic';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './scroll-area.css';
 
@@ -36,8 +40,8 @@ export type ScrollAreaSize = 1 | 2 | 3;
 /** Which axes can scroll. */
 export type ScrollAreaScrollbars = 'vertical' | 'horizontal' | 'both';
 
-export interface ScrollAreaProps
-  extends MarginProps, TestIdProps, JSX.HTMLAttributes<HTMLDivElement> {
+/** ScrollArea-specific props, independent of the target element. */
+interface ScrollAreaOwnProps {
   /**
    * When the scrollbar is rendered. `'auto'` shows it only when
    * content overflows; `'always'` reserves it permanently;
@@ -50,6 +54,12 @@ export interface ScrollAreaProps
   /** Which axes can scroll. @default 'both' */
   scrollbars?: ScrollAreaScrollbars;
 }
+
+/** ScrollArea props for a specific element tag. */
+export type ScrollAreaProps<T extends HtmlBoxTag> = PolymorphicProps<
+  T,
+  ScrollAreaOwnProps & MarginProps & TestIdProps
+>;
 
 type Overflow = 'auto' | 'scroll' | 'hidden';
 
@@ -71,7 +81,15 @@ const resolveOverflow = (
  * scrollbars. Use as a drop-in scroll container around long lists,
  * code blocks, or wide tables.
  */
-const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
+function ScrollArea<const T extends HtmlBoxTag>(
+  props: ScrollAreaProps<T>,
+): JSX.Element;
+function ScrollArea(
+  rawProps: { as: HtmlBoxTag } & ScrollAreaOwnProps &
+    MarginProps &
+    TestIdProps &
+    JSX.HTMLAttributes<HTMLElement>,
+) {
   const props = mergeProps(
     {
       type: 'auto' as const,
@@ -83,6 +101,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
+    'as',
     'type',
     'size',
     'scrollbars',
@@ -104,10 +123,15 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <div {...rest} class={className()} data-testid={tid.testId}>
+    <Dynamic
+      component={local.as}
+      {...rest}
+      class={className()}
+      data-testid={tid.testId}
+    >
       {local.children}
-    </div>
+    </Dynamic>
   );
-};
+}
 
 export default ScrollArea;

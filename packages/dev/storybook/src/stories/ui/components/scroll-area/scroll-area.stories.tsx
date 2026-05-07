@@ -54,6 +54,7 @@ const meta = {
   title: 'UI/Components/ScrollArea',
   component: ScrollArea,
   args: {
+    as: 'div',
     testId: 'scroll-area',
     type: 'auto',
     size: 1,
@@ -76,7 +77,7 @@ const meta = {
       </ScrollArea>
     </Frame>
   ),
-} satisfies Meta<ScrollAreaProps>;
+} satisfies Meta<ScrollAreaProps<'div'>>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -87,7 +88,7 @@ export const Overview: Story = gallery({
       title: 'Size',
       items: SIZES.map((size) => (
         <Frame>
-          <ScrollArea size={size}>
+          <ScrollArea as="div" size={size}>
             <VerticalContent />
           </ScrollArea>
         </Frame>
@@ -97,7 +98,7 @@ export const Overview: Story = gallery({
       title: 'Type',
       items: TYPES.map((type) => (
         <Frame>
-          <ScrollArea type={type}>
+          <ScrollArea as="div" type={type}>
             <Flex as="div" direction="column" gap={2} p={4}>
               <For each={longText.slice(0, 5)}>
                 {(line) => (
@@ -115,7 +116,7 @@ export const Overview: Story = gallery({
       title: 'Scrollbars',
       items: SCROLLBARS.map((scrollbars) => (
         <Frame>
-          <ScrollArea scrollbars={scrollbars}>
+          <ScrollArea as="div" scrollbars={scrollbars}>
             {scrollbars === 'horizontal' ? (
               <HorizontalContent />
             ) : (
