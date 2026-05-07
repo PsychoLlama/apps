@@ -484,10 +484,15 @@ export default function LabsBluetooth() {
                             <For each={entries()}>
                               {(code) => (
                                 <Flex as="li">
-                                  <Text as="code" size={1} selectable={true}>
+                                  <Code
+                                    size={1}
+                                    variant="ghost"
+                                    color="neutral"
+                                    selectable
+                                  >
                                     {functionTypeName(code) ??
                                       `0x${code.toString(16).padStart(2, '0')}`}
-                                  </Text>
+                                  </Code>
                                 </Flex>
                               )}
                             </For>
@@ -582,9 +587,9 @@ export default function LabsBluetooth() {
                         <Text as="span" selectable={false}>
                           {formatHeader(entry)}
                         </Text>
-                        <Text as="code" selectable={true}>
+                        <Code variant="ghost" color="neutral" selectable>
                           {formatBytes(entry.bytes)}
-                        </Text>
+                        </Code>
                       </Flex>
                     )}
                   </For>
