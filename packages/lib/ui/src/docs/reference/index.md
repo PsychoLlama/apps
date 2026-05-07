@@ -36,6 +36,7 @@
 - [Progress](./progress.md): Linear progress bar.
 - [RadioCards](./radio-cards.md): Group of radio options rendered as selectable cards.
 - [RadioGroup](./radio-group.md): Group of radios sharing a single value.
+- [ScrollArea](./scroll-area.md): Styled overflow container with custom scrollbars.
 - [Separator](./separator.md): Visual divider between sibling content.
 - [Slider](./slider.md): Range input with one or more thumbs.
 - [Switch](./switch.md): Two-state toggle button.
