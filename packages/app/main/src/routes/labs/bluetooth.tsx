@@ -334,7 +334,10 @@ export default function LabsBluetooth() {
   };
   const handleQueryNcAsm = () => {
     void send(
-      encodeNcAsmGetParamRequest(seq, NcAsmInquiredType.NcOnOffAndAsmOnOff),
+      encodeNcAsmGetParamRequest(
+        seq,
+        NcAsmInquiredType.NoiseCancellingAndAmbientSoundMode,
+      ),
       MDR_FRAME_TYPE,
       Command.NcAsmGetParam,
     );

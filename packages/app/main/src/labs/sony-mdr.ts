@@ -50,14 +50,18 @@ export const Command = {
 } as const;
 
 /**
- * Selects the NC/ASM payload shape. The XM4 advertises
- * `NOISE_CANCELLING_ONOFF_AND_AMBIENT_SOUND_MODE_ONOFF` in its support
- * function reply, which maps to `NcOnOffAndAsmOnOff = 0x11`.
+ * Selects the NC/ASM payload shape. The XM4 uses the older
+ * Plutoberth-era enum (`NoiseCancellingAndAmbientSoundMode = 0x02` for
+ * combined NC+ASM control); the newer mos9527 enum's `0x11+` codes
+ * are silently ignored by XM4 firmware.
+ *
+ * @see ~/projects/plutoberth/SonyHeadphonesClient/Client/Constants.h:44
  */
 export const NcAsmInquiredType = {
-  NcOnOff: 0x01,
-  NcOnOffAndAsmOnOff: 0x11,
-  AsmOnOff: 0x21,
+  NoUse: 0x00,
+  NoiseCancelling: 0x01,
+  NoiseCancellingAndAmbientSoundMode: 0x02,
+  AmbientSoundMode: 0x03,
 } as const;
 
 /**
