@@ -41,7 +41,11 @@ export interface BadgeProps
   variant?: Variant;
   /** Semantic color. @default 'accent' */
   color?: Color;
-  /** Corner rounding. @default 'full' */
+  /**
+   * Corner rounding. When unset, sizes pick a sensible default
+   * (size-1 → 3px, sizes 2–3 → 4px) — mirroring Radix's Badge under
+   * its default `Theme.radius='medium'`. Pass `'full'` for pill-shaped.
+   */
   radius?: Radius;
   /** High-contrast text for stronger emphasis. @default false */
   highContrast?: boolean;
@@ -54,7 +58,6 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
       size: 1 as const,
       variant: 'soft' as const,
       color: 'accent' as const,
-      radius: 'full' as const,
       highContrast: false,
     },
     rawProps,
@@ -80,7 +83,7 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
       ...resolveMarginClasses(margin),
       css.base,
       css.size[local.size],
-      css.cornerRadius[local.radius],
+      local.radius && css.cornerRadius[local.radius],
       css.variantColor[local.variant][local.color][contrast()],
       skeletonClass(),
       local.class,
