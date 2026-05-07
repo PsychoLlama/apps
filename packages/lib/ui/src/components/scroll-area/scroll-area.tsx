@@ -110,7 +110,8 @@ export interface ScrollAreaProps
   /**
    * Hide delay in milliseconds. Used by `type='hover'` (delay before
    * fade-out on pointerleave) and `type='scroll'` (delay before
-   * fade-out after scrolling stops). @default 600
+   * fade-out after scrolling stops). Defaults to `600` for
+   * `type='scroll'` and `0` otherwise.
    */
   scrollHideDelay?: number;
   /** Visual size on a 1–3 scale. @default 1 */
@@ -131,7 +132,6 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const props = mergeProps(
     {
       type: 'hover' as const,
-      scrollHideDelay: 600,
       size: 1 as const,
       radius: 'full' as const,
       scrollbars: 'both' as const,
@@ -139,19 +139,32 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     rawProps,
   );
 
+  // `scrollHideDelay` defaults split by `type`: 600ms when scrolling
+  // is the trigger (so the bar lingers long enough to grab), 0ms
+  // otherwise (hover already paces the fade by pointer position).
+  // Mirrors Radix Themes' override of the primitive's flat 600ms.
+  const scrollHideDelay = () =>
+    props.scrollHideDelay !== undefined
+      ? props.scrollHideDelay
+      : props.type === 'scroll'
+        ? 600
+        : 0;
+
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
-  // `onScroll` doesn't bubble, so a consumer-provided scroll handler
-  // has to attach to the actual scrolling element — the viewport,
-  // not the root.
-  const [scrollHandlers, withoutScroll] = splitProps(withoutTid, ['onScroll']);
-  const [local, rest] = splitProps(withoutScroll, [
+  // Wrapper-only props (`class`, `style`) stay on the root so margin
+  // classes and consumer-supplied wrapper styles compose correctly.
+  // Everything else — `aria-*`, `role`, `tabIndex`, `id`, native
+  // event handlers like `onScroll` — forwards to the viewport so the
+  // semantic and interactive surface is the scrolling region itself.
+  const [local, viewportRest] = splitProps(withoutTid, [
     'type',
     'scrollHideDelay',
     'size',
     'radius',
     'scrollbars',
     'class',
+    'style',
     'children',
   ]);
 
@@ -186,7 +199,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     window.clearTimeout(hoverHideTimer);
     hoverHideTimer = window.setTimeout(
       () => setHoverVisible(false),
-      local.scrollHideDelay,
+      scrollHideDelay(),
     );
   };
   const cancelHoverHide = () => {
@@ -204,6 +217,18 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
 
   const isOverflowingX = () => sizesX().content > sizesX().viewport;
   const isOverflowingY = () => sizesY().content > sizesY().viewport;
+
+  // Thumb only renders when content actually overflows. Mirrors
+  // Radix's `hasThumb` gate so `type='always'` shows an empty track
+  // (rather than a min-sized nub) when there's nothing to scroll.
+  const hasThumbX = () => {
+    const ratio = getThumbRatio(sizesX().viewport, sizesX().content);
+    return ratio > 0 && ratio < 1;
+  };
+  const hasThumbY = () => {
+    const ratio = getThumbRatio(sizesY().viewport, sizesY().content);
+    return ratio > 0 && ratio < 1;
+  };
 
   const visibleX = (): boolean => {
     if (!enableX()) return false;
@@ -292,7 +317,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     if (scrollState() !== 'idle') return;
     const timer = window.setTimeout(
       () => sendScroll('HIDE'),
-      local.scrollHideDelay,
+      scrollHideDelay(),
     );
     onCleanup(() => window.clearTimeout(timer));
   });
@@ -450,7 +475,6 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     if (!viewport) return;
     target.setPointerCapture(event.pointerId);
 
-    const sizes = axis === 'x' ? sizesX() : sizesY();
     const rect = target.getBoundingClientRect();
     const thumbEl = axis === 'x' ? thumbXEl : thumbYEl;
 
@@ -485,6 +509,9 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     setIsDragging(true);
 
     const apply = (clientPos: number) => {
+      // Read sizes live each move so a mid-drag content resize
+      // doesn't desync the thumb from the cursor.
+      const sizes = axis === 'x' ? sizesX() : sizesY();
       const localPos = clientPos - (axis === 'x' ? rect.left : rect.top);
       const scrollPos = getScrollPositionFromPointer(
         localPos,
@@ -558,27 +585,26 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const dataState = (visible: boolean) => (visible ? 'visible' : 'hidden');
 
   return (
-    <div ref={setRootEl} class={className()} data-testid={tid.testId} {...rest}>
+    <div
+      ref={setRootEl}
+      class={className()}
+      style={local.style}
+      data-testid={tid.testId}
+    >
       <div
         ref={setViewportEl}
+        {...viewportRest}
         class={css.viewport}
         style={{
           'overflow-x': enableX() ? 'scroll' : 'hidden',
           'overflow-y': enableY() ? 'scroll' : 'hidden',
-        }}
-        onScroll={(event) => {
-          // Solid accepts both function handlers and bound tuples
-          // (`onScroll={[handler, data]}`); forward both shapes so
-          // the prop behaves like a passthrough on a native element.
-          const handler = scrollHandlers.onScroll;
-          if (typeof handler === 'function') handler(event);
-          else if (Array.isArray(handler)) handler[0](handler[1], event);
         }}
       >
         <div ref={setContentEl} class={css.content}>
           {local.children}
         </div>
       </div>
+      <div class={css.viewportFocusRing} aria-hidden="true" />
       <Show when={enableX()}>
         <div
           ref={(el) => {
@@ -595,12 +621,17 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           onPointerEnter={onScrollbarPointerEnter}
           onPointerLeave={onScrollbarPointerLeave}
         >
-          <div
-            ref={(el) => (thumbXEl = el)}
-            class={css.thumb}
-            data-orientation="horizontal"
-            style={{ width: `${getThumbSize(sizesX())}px` }}
-          />
+          <Show when={hasThumbX()}>
+            <div
+              ref={(el) => {
+                thumbXEl = el;
+                onCleanup(() => (thumbXEl = undefined));
+              }}
+              class={css.thumb}
+              data-orientation="horizontal"
+              style={{ width: `${getThumbSize(sizesX())}px` }}
+            />
+          </Show>
         </div>
       </Show>
       <Show when={enableY()}>
@@ -619,12 +650,17 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           onPointerEnter={onScrollbarPointerEnter}
           onPointerLeave={onScrollbarPointerLeave}
         >
-          <div
-            ref={(el) => (thumbYEl = el)}
-            class={css.thumb}
-            data-orientation="vertical"
-            style={{ height: `${getThumbSize(sizesY())}px` }}
-          />
+          <Show when={hasThumbY()}>
+            <div
+              ref={(el) => {
+                thumbYEl = el;
+                onCleanup(() => (thumbYEl = undefined));
+              }}
+              class={css.thumb}
+              data-orientation="vertical"
+              style={{ height: `${getThumbSize(sizesY())}px` }}
+            />
+          </Show>
         </div>
       </Show>
     </div>

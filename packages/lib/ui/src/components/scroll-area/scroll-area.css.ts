@@ -19,6 +19,7 @@
 
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import {
+  accent,
   fast,
   neutral,
   radius as radiusToken,
@@ -64,6 +65,10 @@ export const viewport = style({
   height: '100%',
   scrollbarWidth: 'none',
   msOverflowStyle: 'none',
+  // Restore iOS Safari momentum scrolling. Hiding the native bar
+  // suppresses the default; this property reinstates it. Deprecated
+  // but harmless on browsers that ignore it.
+  WebkitOverflowScrolling: 'touch',
 
   // Stop Chrome's two-finger trackpad swipe from triggering
   // browser back/forward navigation when the viewport is
@@ -76,6 +81,27 @@ export const viewport = style({
   selectors: {
     '&::-webkit-scrollbar': {
       display: 'none',
+    },
+  },
+});
+
+// --- Focus ring ---
+//
+// A sibling overlay paints a focus ring on top of the viewport when
+// it lands `:focus-visible` — keyboard users can tab onto scrollable
+// regions in some browsers (Firefox arrow-scroll) and need a visual
+// cue. The element is always present and positioned out of flow; the
+// outline only shows when the prior viewport is `:focus-visible`.
+
+export const viewportFocusRing = style({
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: 'none',
+
+  selectors: {
+    [`${viewport}:where(:focus-visible) + &`]: {
+      outline: `2px solid ${accent.solid[8]}`,
+      outlineOffset: '-2px',
     },
   },
 });
