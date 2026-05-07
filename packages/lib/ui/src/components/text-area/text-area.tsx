@@ -16,7 +16,7 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
-import { type RequiredMobileInputProps } from '../../props/mobile-input';
+import { type RequiredInputHintProps } from '../../props/input-hints';
 import {
   type SkeletonProps,
   skeletonPropKeys,
@@ -40,19 +40,18 @@ export type TextAreaResize = 'none' | 'vertical' | 'horizontal' | 'both';
  * from `color` (collides with our prop scheme) and `onPointerDown`
  * (overridden so it fires for clicks on the entire wrapper, not only
  * the inner textarea — call `event.preventDefault()` to suppress the
- * built-in focus delegation). Mobile-input attributes (`autocomplete`,
+ * built-in focus delegation). Platform-hint attributes (`autocomplete`,
  * `autocapitalize`, `enterkeyhint`) are required via
- * `RequiredMobileInputProps` to force a conscious mobile-UX choice.
- * `enterkeyhint` is included even though Enter typically inserts a
- * newline — chat-style textareas legitimately want `'send'` — so
- * authors must pick or pass `undefined`.
+ * `RequiredInputHintProps` to force a conscious choice — pass
+ * `undefined` if no preset applies. `enterkeyhint` is included
+ * because chat-style textareas legitimately want `'send'`.
  */
 export interface TextAreaProps
   extends
     MarginProps,
     SkeletonProps,
     RequiredTestIdProps,
-    RequiredMobileInputProps,
+    RequiredInputHintProps,
     Omit<
       JSX.TextareaHTMLAttributes<HTMLTextAreaElement>,
       | 'color'

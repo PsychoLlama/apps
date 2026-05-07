@@ -5,7 +5,7 @@ import IconMagnify from 'virtual:icons/mdi/magnify';
 import IconClose from 'virtual:icons/mdi/close';
 import { IconButton, TextField, type TextFieldProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
-import { requiredMobileInputArgTypes } from '@lib/ui/props/mobile-input';
+import { requiredInputHintArgTypes } from '@lib/ui/props/input-hints';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
@@ -50,7 +50,7 @@ const meta = {
   },
   argTypes: {
     ...marginArgTypes,
-    ...requiredMobileInputArgTypes,
+    ...requiredInputHintArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,
     size: {

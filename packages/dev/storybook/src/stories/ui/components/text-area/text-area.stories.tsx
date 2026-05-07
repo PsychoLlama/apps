@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { fn } from 'storybook/test';
 import { TextArea, type TextAreaProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
-import { requiredMobileInputArgTypes } from '@lib/ui/props/mobile-input';
+import { requiredInputHintArgTypes } from '@lib/ui/props/input-hints';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
@@ -39,7 +39,7 @@ const meta = {
   },
   argTypes: {
     ...marginArgTypes,
-    ...requiredMobileInputArgTypes,
+    ...requiredInputHintArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,
     size: {
