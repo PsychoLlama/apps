@@ -178,6 +178,20 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   // visibility timers don't fade out the bar the user is grabbing
   // when their pointer drifts off the root.
   const [isDragging, setIsDragging] = createSignal(false);
+  // Single timer for the hover-hide flow. Hoisted out of the hover
+  // effect so the post-drag cleanup can also schedule and the next
+  // pointerenter can cancel a pending hide.
+  let hoverHideTimer = 0;
+  const scheduleHoverHide = () => {
+    window.clearTimeout(hoverHideTimer);
+    hoverHideTimer = window.setTimeout(
+      () => setHoverVisible(false),
+      local.scrollHideDelay,
+    );
+  };
+  const cancelHoverHide = () => {
+    window.clearTimeout(hoverHideTimer);
+  };
   const [scrollState, setScrollState] = createSignal<ScrollState>('hidden');
   const sendScroll = (event: ScrollEvent) =>
     setScrollState((state) => SCROLL_TRANSITIONS[state]?.[event] ?? state);
@@ -224,9 +238,8 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     if (local.type !== 'hover') return;
     const root = rootEl();
     if (!root) return;
-    let hideTimer = 0;
     const onEnter = () => {
-      window.clearTimeout(hideTimer);
+      cancelHoverHide();
       setHoverVisible(true);
     };
     const onLeave = () => {
@@ -234,15 +247,12 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       // pointer wandering off the root doesn't fade out the
       // scrollbar the user is still holding.
       if (isDragging()) return;
-      hideTimer = window.setTimeout(
-        () => setHoverVisible(false),
-        local.scrollHideDelay,
-      );
+      scheduleHoverHide();
     };
     root.addEventListener('pointerenter', onEnter);
     root.addEventListener('pointerleave', onLeave);
     onCleanup(() => {
-      window.clearTimeout(hideTimer);
+      cancelHoverHide();
       root.removeEventListener('pointerenter', onEnter);
       root.removeEventListener('pointerleave', onLeave);
     });
@@ -504,8 +514,9 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       setIsDragging(false);
       // Pointer capture suppressed `pointerleave` on the root while
       // the drag was active. If the release lands outside the root,
-      // synthesize a leave so the hover timer can run; if it lands
-      // inside, the next real pointer movement re-arms the timer.
+      // schedule a hide via the shared timer so a subsequent
+      // `pointerenter` can still cancel it; if it lands inside, the
+      // next real pointer movement re-arms the timer.
       const root = rootEl();
       if (local.type === 'hover' && root) {
         const rect = root.getBoundingClientRect();
@@ -514,12 +525,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           finishEvent.clientX > rect.right ||
           finishEvent.clientY < rect.top ||
           finishEvent.clientY > rect.bottom;
-        if (outside) {
-          window.setTimeout(
-            () => setHoverVisible(false),
-            local.scrollHideDelay,
-          );
-        }
+        if (outside) scheduleHoverHide();
       }
     };
     target.addEventListener('pointermove', onMove);
@@ -561,8 +567,12 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           'overflow-y': enableY() ? 'scroll' : 'hidden',
         }}
         onScroll={(event) => {
+          // Solid accepts both function handlers and bound tuples
+          // (`onScroll={[handler, data]}`); forward both shapes so
+          // the prop behaves like a passthrough on a native element.
           const handler = scrollHandlers.onScroll;
           if (typeof handler === 'function') handler(event);
+          else if (Array.isArray(handler)) handler[0](handler[1], event);
         }}
       >
         <div ref={setContentEl} class={css.content}>
