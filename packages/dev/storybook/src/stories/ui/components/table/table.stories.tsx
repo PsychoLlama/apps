@@ -73,20 +73,28 @@ const Demo = (props: Partial<TableRootProps>) => (
   <TableRoot {...props}>
     <TableHeader>
       <TableRow>
-        <TableColumnHeaderCell>Full name</TableColumnHeaderCell>
-        <TableColumnHeaderCell>Email</TableColumnHeaderCell>
-        <TableColumnHeaderCell>Role</TableColumnHeaderCell>
-        <TableColumnHeaderCell justify="end">Status</TableColumnHeaderCell>
+        <TableColumnHeaderCell selectable={false}>
+          Full name
+        </TableColumnHeaderCell>
+        <TableColumnHeaderCell selectable={false}>Email</TableColumnHeaderCell>
+        <TableColumnHeaderCell selectable={false}>Role</TableColumnHeaderCell>
+        <TableColumnHeaderCell selectable={false} justify="end">
+          Status
+        </TableColumnHeaderCell>
       </TableRow>
     </TableHeader>
     <TableBody>
       <For each={ROWS}>
         {(row) => (
           <TableRow>
-            <TableRowHeaderCell>{row.name}</TableRowHeaderCell>
-            <TableCell>{row.email}</TableCell>
-            <TableCell>{row.role}</TableCell>
-            <TableCell justify="end">{row.status}</TableCell>
+            <TableRowHeaderCell selectable={true}>
+              {row.name}
+            </TableRowHeaderCell>
+            <TableCell selectable={true}>{row.email}</TableCell>
+            <TableCell selectable={false}>{row.role}</TableCell>
+            <TableCell selectable={false} justify="end">
+              {row.status}
+            </TableCell>
           </TableRow>
         )}
       </For>

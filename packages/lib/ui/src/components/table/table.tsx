@@ -15,6 +15,12 @@
  *   `style` if a cell needs to override the size's defaults; the
  *   var-driven cell system would otherwise compete with the user's
  *   class on equal specificity.
+ * - Cells require an explicit `selectable` boolean. Tabular data
+ *   varies cell-by-cell whether the content is meant to be copied
+ *   (emails, IDs) or chrome (counts, status labels), so the type
+ *   system forces the call site to declare intent. Static content
+ *   still gets the prompt — selectability is a meaning question, not
+ *   a "is the value dynamic" question.
  * - The root replaces upstream's ScrollArea wrapper with a plain
  *   horizontally-scrolling `<div>`. Keeps the wrapper out of the JS
  *   bundle until we own a ScrollArea component.
@@ -30,6 +36,10 @@ import {
   resolveMarginClasses,
   type MarginProps,
 } from '../../props/margin';
+import {
+  resolveSelectableClass,
+  type RequiredSelectableProps,
+} from '../../props/selectable';
 import {
   type SkeletonProps,
   skeletonPropKeys,
@@ -170,6 +180,7 @@ export const TableRow: ParentComponent<TableRowProps> = (rawProps) => {
 
 export interface TableCellProps
   extends
+    RequiredSelectableProps,
     TestIdProps,
     Omit<JSX.TdHTMLAttributes<HTMLTableCellElement>, 'width'> {
   /** Horizontal alignment of the cell's contents. */
@@ -181,12 +192,18 @@ export const TableCell: ParentComponent<TableCellProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(rawProps, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
     'justify',
+    'selectable',
     'class',
     'children',
   ]);
 
   const className = () =>
-    [css.cell, local.justify && css.justify[local.justify], local.class]
+    [
+      css.cell,
+      local.justify && css.justify[local.justify],
+      resolveSelectableClass(local),
+      local.class,
+    ]
       .filter(Boolean)
       .join(' ');
 
@@ -199,6 +216,7 @@ export const TableCell: ParentComponent<TableCellProps> = (rawProps) => {
 
 export interface TableColumnHeaderCellProps
   extends
+    RequiredSelectableProps,
     TestIdProps,
     Omit<JSX.ThHTMLAttributes<HTMLTableCellElement>, 'width' | 'scope'> {
   /** Horizontal alignment of the cell's contents. */
@@ -212,6 +230,7 @@ export const TableColumnHeaderCell: ParentComponent<
   const [tid, withoutTid] = splitProps(rawProps, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
     'justify',
+    'selectable',
     'class',
     'children',
   ]);
@@ -221,6 +240,7 @@ export const TableColumnHeaderCell: ParentComponent<
       css.cell,
       css.columnHeaderCell,
       local.justify && css.justify[local.justify],
+      resolveSelectableClass(local),
       local.class,
     ]
       .filter(Boolean)
@@ -235,6 +255,7 @@ export const TableColumnHeaderCell: ParentComponent<
 
 export interface TableRowHeaderCellProps
   extends
+    RequiredSelectableProps,
     TestIdProps,
     Omit<JSX.ThHTMLAttributes<HTMLTableCellElement>, 'width' | 'scope'> {
   /** Horizontal alignment of the cell's contents. */
@@ -248,6 +269,7 @@ export const TableRowHeaderCell: ParentComponent<TableRowHeaderCellProps> = (
   const [tid, withoutTid] = splitProps(rawProps, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
     'justify',
+    'selectable',
     'class',
     'children',
   ]);
@@ -257,6 +279,7 @@ export const TableRowHeaderCell: ParentComponent<TableRowHeaderCellProps> = (
       css.cell,
       css.rowHeaderCell,
       local.justify && css.justify[local.justify],
+      resolveSelectableClass(local),
       local.class,
     ]
       .filter(Boolean)

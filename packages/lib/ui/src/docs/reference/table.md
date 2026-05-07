@@ -38,6 +38,7 @@ Renders a `<td>`.
 
 Base: `<td>` attributes (excluding `width`), test ID props.
 
+- `selectable` (required): Allow text selection of the cell's contents. `boolean`.
 - `justify`: Horizontal alignment of the cell's contents. `'start' | 'center' | 'end'`.
 
 ## TableColumnHeaderCell
@@ -46,6 +47,7 @@ Renders a `<th scope="col">`. Labels a column.
 
 Base: `<th>` attributes (excluding `width` and `scope`), test ID props.
 
+- `selectable` (required): Allow text selection of the cell's contents. `boolean`.
 - `justify`: Horizontal alignment of the cell's contents. `'start' | 'center' | 'end'`.
 
 ## TableRowHeaderCell
@@ -54,4 +56,5 @@ Renders a `<th scope="row">`. Labels a row.
 
 Base: `<th>` attributes (excluding `width` and `scope`), test ID props.
 
+- `selectable` (required): Allow text selection of the cell's contents. `boolean`.
 - `justify`: Horizontal alignment of the cell's contents. `'start' | 'center' | 'end'`.
