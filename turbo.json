@@ -1,0 +1,112 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "globalDependencies": [
+    "tsconfig.json",
+    "tsconfig.web.json",
+    "tsconfig.node.json"
+  ],
+  "globalPassThroughEnv": [
+    "CHROMIUM_PATH",
+    "CLOUDFLARE_ACCOUNT_ID",
+    "CLOUDFLARE_API_TOKEN",
+    "FORCE_COLOR",
+    "CLICOLOR_FORCE"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^typecheck"],
+      "outputs": [".output/**", "storybook-static/**"]
+    },
+    "bundle": {
+      "dependsOn": ["build", "@dev/storybook#build"],
+      "outputs": [".output/public/__storybook/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:wrangler": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["build"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^typecheck"],
+      "outputs": []
+    },
+    "//#typecheck": {
+      "inputs": ["*.ts", "tsconfig.json"],
+      "outputs": []
+    },
+    "//#lint": {
+      "inputs": [
+        "**/*.{ts,tsx,js,jsx,mjs,cjs}",
+        "!**/node_modules/**",
+        "!**/.output/**",
+        "!**/storybook-static/**",
+        "!**/dist/**",
+        "eslint.config.ts",
+        ".gitignore"
+      ],
+      "outputs": ["node_modules/.cache/eslint/**"]
+    },
+    "//#test": {
+      "inputs": [
+        "packages/**/src/**",
+        "!packages/**/*.test.browser.{ts,tsx}",
+        "vitest.config.ts"
+      ],
+      "outputs": []
+    },
+    "//#test:browser": {
+      "inputs": [
+        "packages/**/src/**/*.test.browser.{ts,tsx}",
+        "packages/**/src/**",
+        "vitest.config.ts"
+      ],
+      "outputs": []
+    },
+    "//#knip:dev": {
+      "inputs": [
+        "packages/**/src/**",
+        "packages/*/*/package.json",
+        "knip.config.ts",
+        "*.ts"
+      ],
+      "outputs": []
+    },
+    "//#knip:production": {
+      "inputs": [
+        "packages/**/src/**",
+        "packages/*/*/package.json",
+        "knip.config.ts",
+        "*.ts"
+      ],
+      "outputs": []
+    },
+    "//#fmt-check": {
+      "inputs": [
+        "**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yaml,yml,css,html}",
+        "!**/node_modules/**",
+        "!**/.output/**",
+        "!**/storybook-static/**",
+        "treefmt.toml"
+      ],
+      "outputs": []
+    },
+    "//#workspace-check": {
+      "inputs": [
+        "packages/dev/workspace-cli/src/**",
+        "packages/*/*/package.json",
+        "pnpm-workspace.yaml",
+        "turbo.json"
+      ],
+      "outputs": []
+    }
+  }
+}

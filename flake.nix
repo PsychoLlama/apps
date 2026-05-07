@@ -60,7 +60,6 @@
         system: pkgs: rec {
           default = pkgs.mkShell {
             packages = [
-              pkgs.moon
               pkgs.nodejs
               pkgs.pnpm
               pkgs.treefmt
@@ -70,8 +69,8 @@
           # Tools that only matter when a human (or coding agent) is
           # actively iterating on the source — fast linters, hooks,
           # editor helpers. Layered on top of `default` so CI's closure
-          # stays minimal: `moon run :lint` already runs the slow
-          # full-graph eslint pass, and CI doesn't run Claude hooks.
+          # stays minimal: `pnpm lint` runs the slow full-graph eslint
+          # pass, and CI doesn't run Claude hooks.
           coding = pkgs.mkShell {
             inputsFrom = [ default ];
 

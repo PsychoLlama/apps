@@ -16,9 +16,8 @@ storybook-static
 coverage
 /result*
 
-# moon
-.moon/cache
-.moon/docker
+# turbo
+.turbo
 
 # vitest screenshot/attachment artifacts
 .vitest-attachments
