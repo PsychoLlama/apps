@@ -59,7 +59,6 @@ const meta = {
   args: {
     testId: 'scroll-area',
     type: 'hover',
-    scrollHideDelay: 600,
     size: 1,
     radius: 'full',
     scrollbars: 'both',

@@ -28,6 +28,18 @@
  *   project bans `globalStyle` in components. Consumers should wrap
  *   inline content in a block-level element if it needs to drive
  *   horizontal overflow.
+ * - Wheel-on-horizontal-scrollbar falls back to `deltaY` when
+ *   `deltaX` is zero. A vertical mouse wheel reports motion in
+ *   `deltaY` regardless of which scrollbar the cursor is over;
+ *   without the fallback, wheeling over the horizontal bar does
+ *   nothing. Radix only consumes `deltaX`.
+ * - Drag finishers also bind `pointercancel` and `lostpointercapture`
+ *   so an interrupted drag (touch cancellation, browser tab switch,
+ *   forced capture release) still restores body selection state and
+ *   detaches the move listener. Radix only listens for `pointerup`.
+ * - `type='hover'` keeps the scrollbar visible while a drag is in
+ *   progress, even if the pointer drifts off the root. Radix's hide
+ *   timer can fade the bar out from under the user mid-drag.
  *
  * @see https://www.radix-ui.com/themes/docs/components/scroll-area
  * @see https://www.radix-ui.com/primitives/docs/components/scroll-area
