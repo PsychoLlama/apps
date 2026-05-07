@@ -73,10 +73,6 @@ export const base = style({
 
   // Don't stretch in flex/grid parents.
   height: 'fit-content',
-  // Repaint the box across line breaks (Radix uses `box-decoration-break`
-  // for the same effect on its `:hover` highlight; we keep it on by
-  // default so wrapped `<Code>` stays visually contiguous).
-  boxDecorationBreak: 'clone',
   selectors: {
     // Don't compound the scale on nested `<code>`. Mirrors Radix's
     // `& :where(&) { font-size: inherit }`.

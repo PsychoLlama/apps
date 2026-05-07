@@ -92,7 +92,9 @@ export const baselineOffset = '0.36em';
 export const letterSpacingOffset = {
   /** Tighten monospace; offsets the wider native tracking. */
   code: '-0.007em',
-  /** Tighten italic quotes; offsets the loose ascent of italic glyphs. */
+  /** Tighten italic emphasis; offsets the loose ascent of italic glyphs. */
+  em: '-0.025em',
+  /** Tighten italic quotes. Same correction as `em`. */
   quote: '-0.025em',
 } as const;
 

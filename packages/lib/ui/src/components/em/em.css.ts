@@ -12,10 +12,11 @@
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/em.css
  */
 
-import { style } from '@vanilla-extract/css';
-import { fontFamily, fontSizeAdjust } from '@lib/design';
+import { fallbackVar, style } from '@vanilla-extract/css';
+import { fontFamily, fontSizeAdjust, letterSpacingOffset } from '@lib/design';
+import { letterSpacing } from '../../vars/typography.css';
 
-/* eslint-disable custom/require-design-tokens -- the 1em scaler and 1.25 line-height mirror Radix's per-style typography knobs */
+/* eslint-disable custom/require-design-tokens -- the 1em scaler, italic-tightening offset, and 1.25 line-height mirror Radix's per-style typography knobs */
 export const base = style({
   fontFamily: fontFamily.em,
   // Times italic looks ~18% smaller than the body sans at the same
@@ -24,6 +25,10 @@ export const base = style({
   fontSize: `calc(${fontSizeAdjust.em} * 1em)`,
   fontStyle: 'italic',
   lineHeight: 1.25,
+  // Compose the italic tracking nudge with the surrounding tracking so
+  // an `<Em>` inside `<Text size={7}>` lands at
+  // `letterSpacingOffset.em + typeScale[7].letterSpacing`.
+  letterSpacing: `calc(${letterSpacingOffset.em} + ${fallbackVar(letterSpacing, '0em')})`,
   selectors: {
     // Don't compound the scale on nested `<em>` — once is enough.
     // Mirrors Radix's `& :where(&) { font-size: inherit }`.
