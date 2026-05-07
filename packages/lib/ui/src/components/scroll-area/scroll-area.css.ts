@@ -10,13 +10,18 @@
  * - No JS scrollbar machinery. Behavior is whatever the platform
  *   offers natively — overlay-style scrollbars on macOS/iOS that
  *   auto-hide; persistent ones on Windows/Linux/Android.
- * - `type` collapses to `'auto'` and `'always'`. The Radix
- *   `'scroll'` (show on scroll, fade out) and `'hover'` (show on
- *   hover only) modes need JS to schedule fade timers — recorded as
- *   deferred deviations.
+ * - `type='hover'` is implemented in pure CSS by transitioning
+ *   `scrollbar-color` (Firefox/modern Chromium) and swapping
+ *   `::-webkit-scrollbar-thumb` background on `:hover` /
+ *   `:focus-within` (Chromium/Safari). The fade is smooth on
+ *   Firefox; the WebKit pseudo-element ignores `transition`, so
+ *   Chromium/Safari snap thumb visibility instantly. Visually close
+ *   enough that the platform-divergent fade is acceptable.
+ * - `type='scroll'` (show during scroll, fade after delay) still
+ *   needs JS — `@container scroll-state(scrolled: ...)` reports the
+ *   last scroll direction, not "is the user actively scrolling," and
+ *   there's no CSS-only timeout. Recorded as deferred.
  * - No `scrollHideDelay`. The user agent controls fade timing.
- * - No fade-in/fade-out animation. Native scrollbars don't expose
- *   animation hooks.
  * - No corner element. `::-webkit-scrollbar-corner` paints the
  *   intersection automatically; we just transparent it out.
  * - The thumb is pill-shaped at every size. Radix's
@@ -28,12 +33,17 @@
  */
 
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
-import { neutral, radius, space } from '@lib/design';
+import { moderate, neutral, radius, space, standard } from '@lib/design';
 
 // Scrollbar track width, fed by the `size` variant and read by the
 // WebKit pseudo-element rules. Firefox only honors `thin | auto |
 // none` for `scrollbar-width`, so size variants don't move on Firefox.
 const scrollbarSize = createVar();
+
+// Thumb color, parameterized so the `revealOnHover` variant can swap
+// it to transparent without re-declaring the rule. Firefox transitions
+// `scrollbar-color`, so animating this var produces a smooth fade.
+const thumbColor = createVar();
 
 export const root = style({
   width: '100%',
@@ -41,10 +51,20 @@ export const root = style({
   // Firefox styling. `thin` is closest to Radix's slim scrollbar; the
   // WebKit rules below set the precise width for Chromium/Safari.
   scrollbarWidth: 'thin',
-  scrollbarColor: `${neutral.alpha[8]} transparent`,
+  scrollbarColor: `${thumbColor} transparent`,
+  // Reserve gutter space so layout stays stable as content grows
+  // past the viewport. No-op on macOS/iOS overlay scrollbars.
+  scrollbarGutter: 'stable',
   // Stop Chrome's two-finger swipe-back gesture from intercepting
   // horizontal scroll inside the viewport (matches upstream).
   overscrollBehaviorX: 'contain',
+  // Default thumb. `revealOnHover` overrides this to transparent and
+  // swaps it back on :hover/:focus-within.
+  vars: { [thumbColor]: neutral.alpha[8] },
+  // `scrollbar-color` is animatable; the WebKit pseudo isn't.
+  transitionProperty: 'scrollbar-color',
+  transitionDuration: moderate[2],
+  transitionTimingFunction: standard.productive,
 
   selectors: {
     '&::-webkit-scrollbar': {
@@ -58,7 +78,7 @@ export const root = style({
       backgroundColor: 'transparent',
     },
     '&::-webkit-scrollbar-thumb': {
-      backgroundColor: neutral.alpha[8],
+      backgroundColor: thumbColor,
       borderRadius: radius.full,
       // `background-clip: padding-box` + transparent border is the
       // canonical recipe for inset scrollbar thumbs — `margin` is
@@ -73,6 +93,21 @@ export const root = style({
     },
     '&::-webkit-scrollbar-corner': {
       backgroundColor: 'transparent',
+    },
+  },
+});
+
+// Hide the scrollbar until the user hovers the viewport (or focuses
+// something inside via keyboard). The Firefox path animates via the
+// `scrollbar-color` transition declared on `root`; the WebKit path
+// snaps thumb visibility because `::-webkit-scrollbar-thumb` doesn't
+// honor `transition`.
+export const revealOnHover = style({
+  vars: { [thumbColor]: 'transparent' },
+
+  selectors: {
+    '&:where(:hover, :focus-within)': {
+      vars: { [thumbColor]: neutral.alpha[8] },
     },
   },
 });

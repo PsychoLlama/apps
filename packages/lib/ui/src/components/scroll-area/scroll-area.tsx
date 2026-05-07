@@ -7,10 +7,13 @@
  * scrollbar machinery.
  *
  * Trade-offs vs upstream:
- * - `type` is restricted to `'auto'` and `'always'`. Upstream's
- *   `'scroll'` (show on scroll, fade) and `'hover'` (show on hover)
- *   modes require JS-driven fade timers and are recorded as deferred.
- * - No `scrollHideDelay`. The user agent owns fade timing.
+ * - `type` covers `'auto'`, `'always'`, and `'hover'`. Upstream's
+ *   `'scroll'` mode (show during scroll, fade after a delay) still
+ *   needs JS — there's no CSS-only "user is actively scrolling"
+ *   signal. Recorded as deferred.
+ * - No `scrollHideDelay`. The user agent owns fade timing; on
+ *   `'hover'`, the fade duration is the design system's standard
+ *   transition.
  * - Tag-locked to `<div>`. Wrap a different tag if you need one.
  *
  * @see https://www.radix-ui.com/themes/docs/components/scroll-area
@@ -27,7 +30,7 @@ import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './scroll-area.css';
 
 /** Scrollbar visibility mode. */
-export type ScrollAreaType = 'auto' | 'always';
+export type ScrollAreaType = 'auto' | 'always' | 'hover';
 /** Visual size on a 1–3 scale. */
 export type ScrollAreaSize = 1 | 2 | 3;
 /** Which axes can scroll. */
@@ -36,8 +39,10 @@ export type ScrollAreaScrollbars = 'vertical' | 'horizontal' | 'both';
 export interface ScrollAreaProps
   extends MarginProps, TestIdProps, JSX.HTMLAttributes<HTMLDivElement> {
   /**
-   * When the scrollbar is rendered. `'auto'` shows it only when content
-   * overflows; `'always'` reserves it permanently. @default 'auto'
+   * When the scrollbar is rendered. `'auto'` shows it only when
+   * content overflows; `'always'` reserves it permanently;
+   * `'hover'` keeps it transparent until the user hovers or focuses
+   * the viewport. @default 'auto'
    */
   type?: ScrollAreaType;
   /** Visual size on a 1–3 scale. @default 1 */
@@ -92,6 +97,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       css.size[local.size],
       css.overflowX[resolveOverflow('x', local.scrollbars, local.type)],
       css.overflowY[resolveOverflow('y', local.scrollbars, local.type)],
+      local.type === 'hover' && css.revealOnHover,
       local.class,
     ]
       .filter(Boolean)

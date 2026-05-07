@@ -7,7 +7,7 @@ import { gallery } from '../../../../gallery';
 import * as css from './scroll-area.stories.css';
 
 const SIZES = [1, 2, 3] as const;
-const TYPES = ['auto', 'always'] as const;
+const TYPES = ['auto', 'always', 'hover'] as const;
 const SCROLLBARS = ['vertical', 'horizontal', 'both'] as const;
 
 const longText = Array.from(
@@ -56,7 +56,7 @@ const meta = {
   argTypes: {
     ...marginArgTypes,
     ...testIdArgTypes,
-    type: { control: 'inline-radio', options: ['auto', 'always'] },
+    type: { control: 'inline-radio', options: ['auto', 'always', 'hover'] },
     size: { control: { type: 'range', min: 1, max: 3, step: 1 } },
     scrollbars: {
       control: 'inline-radio',

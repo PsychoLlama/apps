@@ -6,6 +6,6 @@ Constrains content to a fixed footprint with native, CSS-styled scrollbars.
 
 Base: `<div>` attributes, margin props, test id props.
 
-- `type` (=`'auto'`): When the scrollbar is rendered. `'auto' | 'always'`. `'auto'` shows the scrollbar only when content overflows; `'always'` reserves it permanently.
+- `type` (=`'auto'`): When the scrollbar is rendered. `'auto' | 'always' | 'hover'`. `'auto'` shows the scrollbar only when content overflows; `'always'` reserves it permanently; `'hover'` keeps the scrollbar transparent until the viewport is hovered or focused.
 - `size` (=`1`): Visual size on a 1–3 scale. Affects WebKit scrollbar width; Firefox is fixed at `scrollbar-width: thin`.
 - `scrollbars` (=`'both'`): Which axes can scroll. `'vertical' | 'horizontal' | 'both'`.
