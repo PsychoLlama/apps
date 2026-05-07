@@ -6,7 +6,7 @@ import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
 import * as css from './scroll-area.stories.css';
 
-const SIZES = [1, 2, 3] as const;
+const SIZES = [1, 2] as const;
 const TYPES = ['auto', 'always', 'hover'] as const;
 const SCROLLBARS = ['vertical', 'horizontal', 'both'] as const;
 
@@ -64,7 +64,7 @@ const meta = {
     ...marginArgTypes,
     ...testIdArgTypes,
     type: { control: 'inline-radio', options: ['auto', 'always', 'hover'] },
-    size: { control: { type: 'range', min: 1, max: 3, step: 1 } },
+    size: { control: { type: 'range', min: 1, max: 2, step: 1 } },
     scrollbars: {
       control: 'inline-radio',
       options: ['vertical', 'horizontal', 'both'],

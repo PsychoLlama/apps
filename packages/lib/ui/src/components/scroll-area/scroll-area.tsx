@@ -35,8 +35,12 @@ import * as css from './scroll-area.css';
 
 /** Scrollbar visibility mode. */
 export type ScrollAreaType = 'auto' | 'always' | 'hover';
-/** Visual size on a 1–3 scale. */
-export type ScrollAreaSize = 1 | 2 | 3;
+/**
+ * Visual size on a 1–2 scale, mapping to the only two `scrollbar-width`
+ * keywords CSS Scrollbars Module Level 1 defines: `1` → `thin`, `2` →
+ * platform-default `auto`.
+ */
+export type ScrollAreaSize = 1 | 2;
 /** Which axes can scroll. */
 export type ScrollAreaScrollbars = 'vertical' | 'horizontal' | 'both';
 
@@ -49,7 +53,10 @@ interface ScrollAreaOwnProps {
    * the viewport. @default 'auto'
    */
   type?: ScrollAreaType;
-  /** Visual size on a 1–3 scale. @default 1 */
+  /**
+   * Visual size on a 1–2 scale. `1` is the thin scrollbar; `2` is the
+   * platform-default width. @default 1
+   */
   size?: ScrollAreaSize;
   /** Which axes can scroll. @default 'both' */
   scrollbars?: ScrollAreaScrollbars;
