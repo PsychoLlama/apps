@@ -141,7 +141,11 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
 
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
-  const [local, rest] = splitProps(withoutTid, [
+  // `onScroll` doesn't bubble, so a consumer-provided scroll handler
+  // has to attach to the actual scrolling element — the viewport,
+  // not the root.
+  const [scrollHandlers, withoutScroll] = splitProps(withoutTid, ['onScroll']);
+  const [local, rest] = splitProps(withoutScroll, [
     'type',
     'scrollHideDelay',
     'size',
@@ -517,6 +521,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           'overflow-x': enableX() ? 'scroll' : 'hidden',
           'overflow-y': enableY() ? 'scroll' : 'hidden',
         }}
+        onScroll={scrollHandlers.onScroll}
       >
         <div ref={setContentEl} class={css.content}>
           {local.children}

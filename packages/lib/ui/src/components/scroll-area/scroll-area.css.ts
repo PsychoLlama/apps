@@ -65,14 +65,17 @@ export const viewport = style({
   scrollbarWidth: 'none',
   msOverflowStyle: 'none',
 
+  // Stop Chrome's two-finger trackpad swipe from triggering
+  // browser back/forward navigation when the viewport is
+  // horizontally scrollable. Applied unconditionally — `contain`
+  // is a no-op when there's nothing to scroll, and the alternative
+  // (`:has(...)` against the sibling scrollbar) doesn't match
+  // because the scrollbar isn't a descendant of the viewport.
+  overscrollBehaviorX: 'contain',
+
   selectors: {
     '&::-webkit-scrollbar': {
       display: 'none',
-    },
-    // Stop Chrome's two-finger swipe from triggering back/forward
-    // navigation when the viewport is horizontally scrollable.
-    '&:has([data-orientation="horizontal"])': {
-      overscrollBehaviorX: 'contain',
     },
   },
 });
