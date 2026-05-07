@@ -1,13 +1,6 @@
 import { For, type JSX } from 'solid-js';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import {
-  Card,
-  Flex,
-  Inset,
-  ScrollArea,
-  Text,
-  type ScrollAreaProps,
-} from '@lib/ui';
+import { Flex, ScrollArea, Text, type ScrollAreaProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
@@ -24,11 +17,9 @@ const longText = Array.from(
 const tiles = Array.from({ length: 16 }, (_unused, index) => index);
 
 const Frame = (props: { children: JSX.Element }) => (
-  <Card as="div" size={1} class={css.frame}>
-    <Inset as="div" side="all">
-      {props.children}
-    </Inset>
-  </Card>
+  <Flex as="div" radius={3} background="surface" class={css.frame}>
+    {props.children}
+  </Flex>
 );
 
 const VerticalContent = () => (

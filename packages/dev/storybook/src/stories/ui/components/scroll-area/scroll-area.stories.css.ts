@@ -1,12 +1,14 @@
 import { style } from '@vanilla-extract/css';
+import { neutral } from '@lib/design';
 
-// Fixed-size demo viewport so overflow has somewhere to overflow into.
-// Layout primitives don't take arbitrary widths/heights; the rest of
-// the visual chrome (border, radius, surface background) comes from
-// `<Card>`.
+// Fixed-size demo viewport with a visible boundary so overflow has
+// somewhere to overflow into. Layout primitives don't take arbitrary
+// widths/heights or borders; the radius and surface background ride
+// through `<Flex>`'s box props instead.
 export const frame = style({
   width: '16rem',
   height: '12rem',
+  border: `1px solid ${neutral.alpha[6]}`,
 });
 
 // Force the row of tiles to take its natural width inside the
