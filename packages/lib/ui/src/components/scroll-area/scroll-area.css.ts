@@ -11,12 +11,13 @@
  *   offers natively — overlay-style scrollbars on macOS/iOS that
  *   auto-hide; persistent ones on Windows/Linux/Android.
  * - `type='hover'` is implemented in pure CSS by transitioning
- *   `scrollbar-color` (Firefox/modern Chromium) and swapping
- *   `::-webkit-scrollbar-thumb` background on `:hover` /
- *   `:focus-within` (Chromium/Safari). The fade is smooth on
- *   Firefox; the WebKit pseudo-element ignores `transition`, so
- *   Chromium/Safari snap thumb visibility instantly. Visually close
- *   enough that the platform-divergent fade is acceptable.
+ *   `scrollbar-color` between transparent and the thumb token. The
+ *   fade is smooth wherever the spec-tracked syntax is supported
+ *   (Chromium 121+, Firefox 64+, Safari 18.2+). The legacy
+ *   `::-webkit-scrollbar-thumb:hover` color shift (alpha[8] →
+ *   alpha[9] when the user points at the thumb itself) doesn't
+ *   transition, but the in/out fade — the thing the prop is named
+ *   after — does animate.
  * - `type='scroll'` (show during scroll, fade after delay) still
  *   needs JS — `@container scroll-state(scrolled: ...)` reports the
  *   last scroll direction, not "is the user actively scrolling," and
