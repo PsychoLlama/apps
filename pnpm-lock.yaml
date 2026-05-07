@@ -409,9 +409,6 @@ importers:
 
   packages/lib/design:
     dependencies:
-      '@fontsource-variable/ibm-plex-sans':
-        specifier: ^5.2.8
-        version: 5.2.8
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1(babel-plugin-macros@3.1.0)
@@ -1278,9 +1275,6 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
-
-  '@fontsource-variable/ibm-plex-sans@5.2.8':
-    resolution: {integrity: sha512-n5PF2iFa0CZT0QYTPzxvZ39opC9LnU0zdoRccoADbs+Dtsd+lbXOZF7RNuIPHcQX1dKjF63sxnRImQIB5eD0Ag==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -6172,8 +6166,6 @@ snapshots:
       levn: 0.4.1
 
   '@exodus/bytes@1.15.0': {}
-
-  '@fontsource-variable/ibm-plex-sans@5.2.8': {}
 
   '@humanfs/core@0.19.1': {}
 

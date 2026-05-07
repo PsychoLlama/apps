@@ -2,22 +2,28 @@
  * Base styles shared by Tabs and TabNav.
  *
  * `TabsList` / `TabNavRoot` render the `list`; their child triggers/links
- * render the `trigger` plus a single `triggerInner` span that holds the
- * rounded hover/focus surface. The active state applies `triggerActive`;
- * the indicator color is fed in via `--tab-active-indicator` set by the
- * `color` variants on the list. Inner padding is fed in via per-size
- * custom properties so the variants on the parent list reach the inner
- * span without nested-class selectors.
+ * render the `trigger` plus a `triggerInner` span (visible, absolutely
+ * positioned) and a `triggerInnerHidden` sibling (in-flow, `visibility:
+ * hidden`) that always paints active typography. The hidden sibling
+ * pre-reserves the trigger's width using the active state's metrics so
+ * activating/deactivating doesn't reflow the row.
  *
- * No font-weight or letter-spacing change between active and inactive —
- * IBM Plex Sans's weight delta makes the flicker too jarring, and color
- * + the bottom indicator already differentiate active state strongly.
+ * The active state applies `triggerActive`; the indicator color is fed
+ * in via `--tab-active-indicator` set by the `color` variants on the
+ * list. Inner padding is fed in via per-size custom properties so the
+ * variants on the parent list reach the inner span without nested-class
+ * selectors.
+ *
+ * Active typography matches Radix verbatim: medium font-weight and a
+ * `-0.01em` letter-spacing tightening. The dual-span trick is the only
+ * thing that keeps the weight delta from causing a width flicker.
  */
 
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import {
   accent,
   fontFamily,
+  fontWeight,
   neutral,
   radius,
   space,
@@ -89,12 +95,22 @@ export const trigger = style({
   },
 });
 
+// Active-state typography deltas. Radix carries these as
+// `--tab-active-letter-spacing` (-0.01em) and `--tab-active-word-spacing`
+// (0em); inactive resets both to 0em. Word-spacing is a no-op since
+// inactive is also 0em — only letter-spacing visibly shifts.
+const activeLetterSpacing = '-0.01em';
+const inactiveLetterSpacing = '0em';
+
 /**
- * Inner span. Carries the hover/focus rounded surface. Sized by intrinsic
- * content — no dual-span trick, since active and inactive share font weight
- * and letter-spacing.
+ * Inner span carrying the hover/focus rounded surface. Absolutely
+ * positioned so it overlays — but does not size — the trigger. The
+ * sibling `triggerInnerHidden` reserves the trigger's intrinsic width
+ * using the active state's metrics, keeping width stable across the
+ * inactive ↔ active flip.
  */
 export const triggerInner = style({
+  position: 'absolute',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -103,8 +119,14 @@ export const triggerInner = style({
   paddingRight: innerPaddingX,
   paddingTop: innerPaddingY,
   paddingBottom: innerPaddingY,
+  letterSpacing: inactiveLetterSpacing,
 
   selectors: {
+    // Active typography: medium weight + tightened tracking.
+    [`${trigger}:where([data-state='active'], [data-active]) &`]: {
+      fontWeight: fontWeight.medium,
+      letterSpacing: activeLetterSpacing,
+    },
     [`${trigger}:where(:focus-visible) &`]: {
       outline: `2px solid ${accent.solid[8]}`,
       outlineOffset: '-2px',
@@ -125,6 +147,26 @@ export const triggerInner = style({
       },
     },
   },
+});
+
+/**
+ * Width-reserving sibling. Always renders the trigger's content with
+ * the active typography (medium weight, tightened tracking) and stays
+ * `visibility: hidden` so it never paints. The trigger's flex container
+ * sizes itself from this sibling, which is why activating the trigger
+ * doesn't change its width.
+ */
+export const triggerInnerHidden = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  visibility: 'hidden',
+  paddingLeft: innerPaddingX,
+  paddingRight: innerPaddingX,
+  paddingTop: innerPaddingY,
+  paddingBottom: innerPaddingY,
+  fontWeight: fontWeight.medium,
+  letterSpacing: activeLetterSpacing,
 });
 
 /** Applied when the trigger represents the active tab/link. */

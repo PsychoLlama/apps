@@ -2,15 +2,12 @@
  * Code styles.
  *
  * Ported from Radix UI Themes Code. Deviations:
- * - No `--code-font-size-adjust` correction. Radix nudges monospace down
- *   ~5–10% to match the surrounding sans x-height; we ship a single
- *   monospace stack and accept its native metrics.
  * - No `highContrast` variant. Soft/outline already use alpha[11] which
  *   is the high-contrast text rail; the `12` step is reserved for a
  *   separate prop we haven't shipped.
  * - Padding and border-radius are em-based (mirrors Radix) so the chip
  *   scales with size. Radius drops upstream's `var(--radius-factor)`
- *   multiplier — Radius scaling is a Theme-level knob we don't expose.
+ *   multiplier — radius scaling is a Theme-level knob we don't expose.
  * - No interactive hover states. We don't render Code as a link or
  *   button; consumers wrap with `<Link>` / `<button>` for that, and the
  *   `:hover` color shift would belong on the wrapper anyway.
@@ -18,11 +15,17 @@
  * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/code.css
  */
 
-import { fallbackVar, style, styleVariants } from '@vanilla-extract/css';
+import {
+  createVar,
+  fallbackVar,
+  style,
+  styleVariants,
+} from '@vanilla-extract/css';
 import {
   accent,
   danger,
   fontFamily,
+  fontSizeAdjust,
   fontWeight,
   letterSpacingOffset,
   neutral,
@@ -31,6 +34,15 @@ import {
   warning,
 } from '@lib/design';
 import { lineHeight, letterSpacing } from '../../vars/typography.css';
+
+// Variant-aware font-size multiplier. Mirrors Radix's
+// `--code-variant-font-size-adjust`: chrome variants (soft/solid/outline)
+// double-discount the size to compensate for the visual weight of
+// background/border, while ghost — which has no chrome — uses the base
+// `code` adjust unmodified. Size variants below multiply the typeScale
+// fontSize by this var.
+const variantAdjust = createVar();
+const chromeAdjust = `calc(${fontSizeAdjust.code} * 0.95)`;
 
 // Em-based geometry. The chip sizes relative to surrounding text so a
 // `<Code>` inside a `<Text size={5}>` automatically grows. Tokens like
@@ -41,6 +53,11 @@ export const base = style({
   // No `font-weight` default — let Code inherit weight from the
   // surrounding text so `<Code>` inside `<Strong>` reads bold without
   // an explicit `weight` prop. Mirrors upstream `--code-font-weight: inherit`.
+  vars: { [variantAdjust]: chromeAdjust },
+  // Default size: scale `1em` (inherited from parent text) by the
+  // variant adjust. Per-size variants override below with a literal
+  // typeScale font-size pre-multiplied by the same adjust.
+  fontSize: `calc(${variantAdjust} * 1em)`,
   // `line-height` reads the sized-ancestor's metric (set by Text/Heading)
   // and falls back to a tight 1.25 when no Text wraps it. Per-size
   // variants below override the var locally.
@@ -56,10 +73,11 @@ export const base = style({
 
   // Don't stretch in flex/grid parents.
   height: 'fit-content',
-  // Repaint the box across line breaks (Radix uses `box-decoration-break`
-  // for the same effect on its `:hover` highlight; we keep it on by
-  // default so wrapped `<Code>` stays visually contiguous).
-  boxDecorationBreak: 'clone',
+  selectors: {
+    // Don't compound the scale on nested `<code>`. Mirrors Radix's
+    // `& :where(&) { font-size: inherit }`.
+    '& :where(&)': { fontSize: 'inherit' },
+  },
 });
 /* eslint-enable custom/require-design-tokens */
 
@@ -73,7 +91,7 @@ export const size = styleVariants(
     steps.map((step) => [
       step,
       {
-        fontSize: typeScale[step].fontSize,
+        fontSize: `calc(${typeScale[step].fontSize} * ${variantAdjust})`,
         vars: {
           [lineHeight]: typeScale[step].lineHeight,
           [letterSpacing]: typeScale[step].letterSpacing,
@@ -120,9 +138,11 @@ const outlineStyle = (color: ColorName) =>
 // Ghost is padding-less and transparent; only the text color flips.
 // The zero overrides reset the base rule's em-based padding — we can't
 // rely on the global reset here because the base style already painted
-// over it.
+// over it. Reset the variant adjust too, since ghost has no chrome
+// weight to compensate for.
 const ghostStyle = (color: ColorName) =>
   style({
+    vars: { [variantAdjust]: fontSizeAdjust.code },
     // eslint-disable-next-line custom/require-design-tokens -- explicit reset of base padding for the ghost variant
     paddingBlock: 0,
     // eslint-disable-next-line custom/require-design-tokens -- explicit reset of base padding for the ghost variant

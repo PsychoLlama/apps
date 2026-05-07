@@ -1,28 +1,37 @@
 /**
- * Typography tokens derived from Radix UI Themes' type scale.
+ * Typography tokens ported from Radix UI Themes' type system.
  * Source: https://github.com/radix-ui/themes (MIT)
  *
  * Key differences from Radix:
- * - Uses rem instead of calc(px * var(--scaling)). This respects browser
+ * - Uses rem instead of calc(px * var(--scaling)). Respects browser
  *   font-size preferences instead of requiring a separate scaling knob.
- * - The `baselineOffset` constant below is derived from this font's metrics.
- *   Update it if the font family changes.
- * - No per-element font-size-adjust (unnecessary with a single font family).
- * - Loads IBM Plex Sans via @fontsource-variable instead of system font stacks.
+ * - The `baselineOffset` constant below is Radix's
+ *   `--default-leading-trim-end` (0.36em), tuned to the dominant sans
+ *   metric of the system font stack (-apple-system / Segoe UI / Roboto).
+ *   Update if the body stack changes.
+ * - Strong gets bold weight via per-component CSS rather than a
+ *   themeable `--strong-font-family` knob.
  */
 import {
   assignVars,
   createThemeContract,
+  globalFontFace,
   globalStyle,
 } from '@vanilla-extract/css';
 
 // --- Contracts ---
 
-/** Font stacks for body, heading, and inline code text. Heading defaults to body. */
+/**
+ * Font stacks for body, heading, inline code, italic emphasis, and
+ * inline quotation. Heading defaults to body. Em/quote run a serif
+ * italic so emphasized text contrasts with the surrounding sans.
+ */
 export const fontFamily = createThemeContract({
   body: null,
   heading: null,
   code: null,
+  em: null,
+  quote: null,
 });
 
 /**
@@ -65,13 +74,12 @@ export type TypeScale = keyof typeof typeScale;
 // --- Leading trim ---
 
 /**
- * Distance from the alphabetic baseline to the center of the content area,
- * i.e. (ascent - |descent|) / (2 * UPM). Used by the leading-trim polyfill
- * to compute negative margins that remove half-leading whitespace.
- *
- * IBM Plex Sans: (1025 - 275) / 2000 = 0.375em
+ * Distance from the alphabetic baseline to the bottom of the content area
+ * for the body sans. Used by the leading-trim polyfill to compute negative
+ * margins that remove half-leading whitespace. Mirrors Radix's
+ * `--default-leading-trim-end`.
  */
-export const baselineOffset = '0.375em';
+export const baselineOffset = '0.36em';
 
 /**
  * Per-style letter-spacing offsets composed with the surrounding text's
@@ -84,28 +92,54 @@ export const baselineOffset = '0.375em';
 export const letterSpacingOffset = {
   /** Tighten monospace; offsets the wider native tracking. */
   code: '-0.007em',
-  /** Tighten italic quotes; offsets the loose ascent of italic glyphs. */
+  /** Tighten italic emphasis; offsets the loose ascent of italic glyphs. */
+  em: '-0.025em',
+  /** Tighten italic quotes. Same correction as `em`. */
   quote: '-0.025em',
+} as const;
+
+/**
+ * Per-element font-size multipliers that compensate for visual size
+ * differences between the body sans and the per-element family. Mirror
+ * Radix's `--em-font-size-adjust` (1.18), `--quote-font-size-adjust`
+ * (1.18), and `--code-font-size-adjust` (0.95). Applied as
+ * `font-size: calc(adjust * 1em)` (or `calc(typeScale.fontSize *
+ * adjust)` inside size variants).
+ */
+export const fontSizeAdjust = {
+  /** Times italic looks small at 1em; bump it up. */
+  em: '1.18',
+  /** Same Times italic correction as Em. */
+  quote: '1.18',
+  /** Menlo/Consolas look big at 1em; nudge down. */
+  code: '0.95',
 } as const;
 
 // --- Assignment ---
 
 const sansStack = [
-  "'IBM Plex Sans Variable'",
-  "'IBM Plex Sans'",
-  'ui-sans-serif',
+  '-apple-system',
+  'BlinkMacSystemFont',
+  "'Segoe UI (Custom)'",
+  'Roboto',
+  "'Helvetica Neue'",
+  "'Open Sans (Custom)'",
   'system-ui',
   'sans-serif',
+  "'Apple Color Emoji'",
+  "'Segoe UI Emoji'",
 ].join(', ');
 
 const monoStack = [
-  'ui-monospace',
-  "'SF Mono'",
-  'Menlo',
-  'Consolas',
-  "'Liberation Mono'",
+  "'Menlo'",
+  "'Consolas (Custom)'",
+  "'Bitstream Vera Sans Mono'",
   'monospace',
+  "'Apple Color Emoji'",
+  "'Segoe UI Emoji'",
 ].join(', ');
+
+const serifItalicStack = ["'Times New Roman'", "'Times'", 'serif'].join(', ');
 
 globalStyle(':root', {
   vars: {
@@ -113,6 +147,8 @@ globalStyle(':root', {
       body: sansStack,
       heading: sansStack,
       code: monoStack,
+      em: serifItalicStack,
+      quote: serifItalicStack,
     }),
 
     ...assignVars(typeScale, {
@@ -151,4 +187,143 @@ globalStyle(':root', {
       },
     }),
   },
+});
+
+// --- Metric-normalized @font-face overrides ---
+
+// Ported verbatim from Radix UI Themes. These declarations don't fetch
+// remote fonts — they only `local()` the system-installed copies of
+// Segoe UI, Open Sans, and Consolas, then apply size/ascent/descent
+// overrides so cross-platform line boxes stay close to -apple-system's
+// metrics. Without them, Windows users render Segoe UI with its native
+// (taller) line geometry and Linux users with Open Sans drift in the
+// opposite direction.
+
+const segoeUiOverrides = {
+  sizeAdjust: '103%',
+  descentOverride: '35%',
+  ascentOverride: '105%',
+} as const;
+
+globalFontFace('Segoe UI (Custom)', {
+  ...segoeUiOverrides,
+  fontWeight: '300',
+  src: "local('Segoe UI Semilight'), local('Segoe UI')",
+});
+globalFontFace('Segoe UI (Custom)', {
+  ...segoeUiOverrides,
+  fontWeight: '300',
+  fontStyle: 'italic',
+  src: "local('Segoe UI Semilight Italic'), local('Segoe UI Italic')",
+});
+globalFontFace('Segoe UI (Custom)', {
+  ...segoeUiOverrides,
+  fontWeight: '400',
+  src: "local('Segoe UI')",
+});
+globalFontFace('Segoe UI (Custom)', {
+  ...segoeUiOverrides,
+  fontWeight: '400',
+  fontStyle: 'italic',
+  src: "local('Segoe UI Italic')",
+});
+globalFontFace('Segoe UI (Custom)', {
+  ...segoeUiOverrides,
+  fontWeight: '500',
+  src: "local('Segoe UI Semibold'), local('Segoe UI')",
+});
+globalFontFace('Segoe UI (Custom)', {
+  ...segoeUiOverrides,
+  fontWeight: '500',
+  fontStyle: 'italic',
+  src: "local('Segoe UI Semibold Italic'), local('Segoe UI Italic')",
+});
+globalFontFace('Segoe UI (Custom)', {
+  ...segoeUiOverrides,
+  fontWeight: '700',
+  src: "local('Segoe UI Bold')",
+});
+globalFontFace('Segoe UI (Custom)', {
+  ...segoeUiOverrides,
+  fontWeight: '700',
+  fontStyle: 'italic',
+  src: "local('Segoe UI Bold Italic')",
+});
+
+const openSansOverrides = {
+  descentOverride: '35%',
+} as const;
+
+globalFontFace('Open Sans (Custom)', {
+  ...openSansOverrides,
+  fontWeight: '300',
+  src: "local('Open Sans Light'), local('Open Sans Regular')",
+});
+globalFontFace('Open Sans (Custom)', {
+  ...openSansOverrides,
+  fontWeight: '300',
+  fontStyle: 'italic',
+  src: "local('Open Sans Light Italic'), local('Open Sans Italic')",
+});
+globalFontFace('Open Sans (Custom)', {
+  ...openSansOverrides,
+  fontWeight: '400',
+  src: "local('Open Sans Regular')",
+});
+globalFontFace('Open Sans (Custom)', {
+  ...openSansOverrides,
+  fontWeight: '400',
+  fontStyle: 'italic',
+  src: "local('Open Sans Italic')",
+});
+globalFontFace('Open Sans (Custom)', {
+  ...openSansOverrides,
+  fontWeight: '500',
+  src: "local('Open Sans Medium'), local('Open Sans Regular')",
+});
+globalFontFace('Open Sans (Custom)', {
+  ...openSansOverrides,
+  fontWeight: '500',
+  fontStyle: 'italic',
+  src: "local('Open Sans Medium Italic'), local('Open Sans Italic')",
+});
+globalFontFace('Open Sans (Custom)', {
+  ...openSansOverrides,
+  fontWeight: '700',
+  src: "local('Open Sans Bold')",
+});
+globalFontFace('Open Sans (Custom)', {
+  ...openSansOverrides,
+  fontWeight: '700',
+  fontStyle: 'italic',
+  src: "local('Open Sans Bold Italic')",
+});
+
+const consolasOverrides = {
+  sizeAdjust: '110%',
+  ascentOverride: '85%',
+  descentOverride: '22%',
+} as const;
+
+globalFontFace('Consolas (Custom)', {
+  ...consolasOverrides,
+  fontWeight: '400',
+  src: "local('Consolas')",
+});
+globalFontFace('Consolas (Custom)', {
+  ...consolasOverrides,
+  fontWeight: '400',
+  fontStyle: 'italic',
+  src: "local('Consolas Italic')",
+});
+globalFontFace('Consolas (Custom)', {
+  ...consolasOverrides,
+  fontWeight: '700',
+  src: "local('Consolas Bold')",
+});
+globalFontFace('Consolas (Custom)', {
+  ...consolasOverrides,
+  fontWeight: '700',
+  fontStyle: 'italic',
+  src: "local('Consolas Bold Italic')",
 });

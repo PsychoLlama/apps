@@ -25,5 +25,4 @@
 ## Deviations from Radix UI
 
 - **No `--scaling` variable.** We use `rem` instead.
-- **Custom font.** IBM Plex Sans instead of system font stacks.
 - **No P3 colors or `color-mix()` progressive enhancement.**

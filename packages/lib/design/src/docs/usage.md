@@ -25,10 +25,11 @@
 ## Typography
 
 - `typeScale[1-9]`: Each step bundles `fontSize`, `lineHeight`, `letterSpacing`. Always consume a full step.
-- `fontFamily.body`, `fontFamily.heading`, `fontFamily.code`: Font stacks.
+- `fontFamily.body`, `.heading`, `.code`, `.em`, `.quote`: Font stacks. Body/heading run system sans; code runs system mono; em/quote run a serif italic.
 - `fontWeight.light`, `.regular`, `.medium`, `.bold`: Numeric weights.
-- `baselineOffset`: Leading-trim polyfill offset for IBM Plex Sans (`0.375em`).
+- `baselineOffset`: Leading-trim polyfill offset for the body sans (`0.36em`).
 - `letterSpacingOffset.code`, `letterSpacingOffset.quote`: Per-style tracking nudges. Compose with `var(--letter-spacing)` to keep monospace and italic flows in tracking with the surrounding text.
+- `fontSizeAdjust.em`, `.quote`, `.code`: Per-style font-size multipliers. Compose as `calc(adjust * 1em)` to compensate for visual size differences between the body sans and the per-style family.
 
 ## Space
 

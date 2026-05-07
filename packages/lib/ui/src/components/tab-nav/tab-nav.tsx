@@ -184,6 +184,9 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
         onKeyDown={onKeyDown}
       >
         <span class={shared.triggerInner}>{local.children}</span>
+        <span class={shared.triggerInnerHidden} aria-hidden="true">
+          {local.children}
+        </span>
       </a>
     </Flex>
   );
