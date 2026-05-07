@@ -24,7 +24,7 @@
 
 ## Typography
 
-- `typeScale[1-9]`: Each step bundles `fontSize`, `lineHeight`, `headingLineHeight`, `letterSpacing`. Always consume a full step. `headingLineHeight` is a tighter parallel ramp used by `<Heading>` (matches body lineHeight at 1 and 6–9; trims 2px at 2–5).
+- `typeScale[1-9]`: Each step bundles `fontSize`, `bodyLineHeight`, `headingLineHeight`, `letterSpacing`. Always consume a full step. `headingLineHeight` is a tighter parallel ramp used by `<Heading>` (matches `bodyLineHeight` at 1 and 6–9; trims 2px at 2–5).
 - `fontFamily.body`, `.heading`, `.code`, `.em`, `.quote`: Font stacks. Body/heading run system sans; code runs system mono; em/quote run a serif italic.
 - `fontWeight.light`, `.regular`, `.medium`, `.bold`: Numeric weights.
 - `baselineOffset`: Leading-trim polyfill offset for the body sans (`0.36em`).

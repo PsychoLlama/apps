@@ -53,10 +53,10 @@ export type FontWeight = keyof typeof fontWeight;
 
 /**
  * 9-step coordinated type scale. Each step bundles `fontSize`,
- * `lineHeight`, `headingLineHeight`, and `letterSpacing` so they stay
+ * `bodyLineHeight`, `headingLineHeight`, and `letterSpacing` so they stay
  * in sync — consume a full step, don't mix parts from different steps.
  * `headingLineHeight` is a tighter parallel ramp used by `<Heading>`;
- * sizes 1 and 6–9 match `lineHeight`, sizes 2–5 trim 2px each.
+ * sizes 1 and 6–9 match `bodyLineHeight`, sizes 2–5 trim 2px each.
  *
  * The progression is non-linear: small increments at the bottom (body text),
  * large jumps at the top (display text). Letter spacing goes from slightly
@@ -65,55 +65,55 @@ export type FontWeight = keyof typeof fontWeight;
 export const typeScale = {
   1: {
     fontSize: '0.75rem',
-    lineHeight: '1rem',
+    bodyLineHeight: '1rem',
     headingLineHeight: '1rem',
     letterSpacing: '0.0025em',
   },
   2: {
     fontSize: '0.875rem',
-    lineHeight: '1.25rem',
+    bodyLineHeight: '1.25rem',
     headingLineHeight: '1.125rem',
     letterSpacing: '0em',
   },
   3: {
     fontSize: '1rem',
-    lineHeight: '1.5rem',
+    bodyLineHeight: '1.5rem',
     headingLineHeight: '1.375rem',
     letterSpacing: '0em',
   },
   4: {
     fontSize: '1.125rem',
-    lineHeight: '1.625rem',
+    bodyLineHeight: '1.625rem',
     headingLineHeight: '1.5rem',
     letterSpacing: '-0.0025em',
   },
   5: {
     fontSize: '1.25rem',
-    lineHeight: '1.75rem',
+    bodyLineHeight: '1.75rem',
     headingLineHeight: '1.625rem',
     letterSpacing: '-0.005em',
   },
   6: {
     fontSize: '1.5rem',
-    lineHeight: '1.875rem',
+    bodyLineHeight: '1.875rem',
     headingLineHeight: '1.875rem',
     letterSpacing: '-0.00625em',
   },
   7: {
     fontSize: '1.75rem',
-    lineHeight: '2.25rem',
+    bodyLineHeight: '2.25rem',
     headingLineHeight: '2.25rem',
     letterSpacing: '-0.0075em',
   },
   8: {
     fontSize: '2.1875rem',
-    lineHeight: '2.5rem',
+    bodyLineHeight: '2.5rem',
     headingLineHeight: '2.5rem',
     letterSpacing: '-0.01em',
   },
   9: {
     fontSize: '3.75rem',
-    lineHeight: '3.75rem',
+    bodyLineHeight: '3.75rem',
     headingLineHeight: '3.75rem',
     letterSpacing: '-0.025em',
   },

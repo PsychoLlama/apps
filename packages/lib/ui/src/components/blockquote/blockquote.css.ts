@@ -54,7 +54,7 @@ export const size = styleVariants(
       {
         fontSize: typeScale[step].fontSize,
         vars: {
-          [lineHeight]: typeScale[step].lineHeight,
+          [lineHeight]: typeScale[step].bodyLineHeight,
           [letterSpacing]: typeScale[step].letterSpacing,
         },
       },

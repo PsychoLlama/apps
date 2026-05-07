@@ -31,37 +31,7 @@ export const TypeScale: Story = {
                 color="highContrast"
                 style={{
                   'font-size': scale.fontSize,
-                  'line-height': scale.lineHeight,
-                  'letter-spacing': scale.letterSpacing,
-                }}
-              >
-                Sphinx of black quartz, judge my vow
-              </Text>
-            </Flex>
-          );
-        }}
-      </For>
-    </Flex>
-  ),
-};
-
-export const HeadingLineHeight: Story = {
-  render: () => (
-    <Flex as="div" direction="column" gap={5}>
-      <For each={[1, 2, 3, 4, 5, 6, 7, 8, 9] as const}>
-        {(step) => {
-          const scale = typeScale[step];
-          return (
-            <Flex as="div" direction="column">
-              <Text as="p" size={1} color="lowContrast">
-                typeScale[{step}].headingLineHeight (vs body lineHeight)
-              </Text>
-              <Text
-                as="p"
-                color="highContrast"
-                style={{
-                  'font-size': scale.fontSize,
-                  'line-height': scale.headingLineHeight,
+                  'line-height': scale.bodyLineHeight,
                   'letter-spacing': scale.letterSpacing,
                 }}
               >

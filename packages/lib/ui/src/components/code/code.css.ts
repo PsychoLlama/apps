@@ -93,7 +93,7 @@ export const size = styleVariants(
       {
         fontSize: `calc(${typeScale[step].fontSize} * ${variantAdjust})`,
         vars: {
-          [lineHeight]: typeScale[step].lineHeight,
+          [lineHeight]: typeScale[step].bodyLineHeight,
           [letterSpacing]: typeScale[step].letterSpacing,
         },
       },

@@ -82,7 +82,7 @@ export const downloadLink = style({
 
 export const duration = style({
   fontSize: typeScale[2].fontSize,
-  lineHeight: typeScale[2].lineHeight,
+  lineHeight: typeScale[2].bodyLineHeight,
   letterSpacing: typeScale[2].letterSpacing,
   color: text.lowContrast,
   fontVariantNumeric: 'tabular-nums',

@@ -204,7 +204,7 @@ const sizeStyle = (config: {
 }) => ({
   height: space[config.height],
   fontSize: typeScale[config.step].fontSize,
-  lineHeight: typeScale[config.step].lineHeight,
+  lineHeight: typeScale[config.step].bodyLineHeight,
   letterSpacing: typeScale[config.step].letterSpacing,
   vars: {
     [outerPaddingX]: space[config.outerPx],

@@ -120,7 +120,7 @@ export const size = styleVariants({
     borderRadius: radius[2],
     padding: `${space[1]} ${space[2]}`,
     fontSize: typeScale[1].fontSize,
-    lineHeight: typeScale[1].lineHeight,
+    lineHeight: typeScale[1].bodyLineHeight,
     letterSpacing: typeScale[1].letterSpacing,
   },
   2: {
@@ -128,7 +128,7 @@ export const size = styleVariants({
     borderRadius: radius[2],
     padding: `${space[2]} ${space[3]}`,
     fontSize: typeScale[2].fontSize,
-    lineHeight: typeScale[2].lineHeight,
+    lineHeight: typeScale[2].bodyLineHeight,
     letterSpacing: typeScale[2].letterSpacing,
   },
   3: {
@@ -136,7 +136,7 @@ export const size = styleVariants({
     borderRadius: radius[3],
     padding: `${space[2]} ${space[3]}`,
     fontSize: typeScale[3].fontSize,
-    lineHeight: typeScale[3].lineHeight,
+    lineHeight: typeScale[3].bodyLineHeight,
     letterSpacing: typeScale[3].letterSpacing,
   },
 });

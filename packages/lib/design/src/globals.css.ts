@@ -59,7 +59,7 @@ globalStyle('body', {
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.regular,
   fontSize: typeScale[3].fontSize,
-  lineHeight: typeScale[3].lineHeight,
+  lineHeight: typeScale[3].bodyLineHeight,
   letterSpacing: typeScale[3].letterSpacing,
 });
 

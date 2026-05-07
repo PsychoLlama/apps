@@ -90,7 +90,7 @@ export const variantColor = {
 // --- Icon container ---
 
 export const iconSize = styleVariants({
-  1: { height: typeScale[2].lineHeight },
-  2: { height: typeScale[2].lineHeight },
-  3: { height: typeScale[3].lineHeight },
+  1: { height: typeScale[2].bodyLineHeight },
+  2: { height: typeScale[2].bodyLineHeight },
+  3: { height: typeScale[3].bodyLineHeight },
 });
