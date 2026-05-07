@@ -8,6 +8,7 @@ import {
   decodeBatteryReply,
   decodeNcAsmParam,
   decodeSupportFunctionReply,
+  describeNcAsm,
   encodeAck,
   encodeBatteryRequest,
   encodeFrame,
@@ -246,35 +247,70 @@ describe('sony-mdr', () => {
   });
 
   describe('decodeNcAsmParam', () => {
-    it('parses a RET_PARAM into base header + raw rest', () => {
-      // [cmd=0x67, inquiredType=0x02, valueChangeStatus=0x01, ncAsmTotalEffect=0x01, …shape-specific]
+    it('parses a real XM4 reply (NC on, DUAL mode)', () => {
+      // Captured live from a paired WH-1000XM4 with NC on.
       const status = decodeNcAsmParam(
-        hex(Command.NcAsmRetParam, 0x02, 0x01, 0x01, 0x02, 0x00, 0x0a),
+        hex(Command.NcAsmRetParam, 0x02, 0x01, 0x02, 0x02, 0x01, 0x00, 0x00),
       );
       expect(status).toEqual({
         inquiredType: 0x02,
-        valueChangeStatus: 0x01,
-        ncAsmTotalEffect: 0x01,
-        rest: hex(0x02, 0x00, 0x0a),
+        ncAsmEffect: 0x01,
+        ncAsmSettingType: 0x02,
+        dualSingleValue: 0x02,
+        asmSettingType: 0x01,
+        asmId: 0x00,
+        asmLevel: 0x00,
       });
     });
 
     it('parses a NTFY_PARAM the same way', () => {
       const status = decodeNcAsmParam(
-        hex(Command.NcAsmNotifyParam, 0x02, 0x01, 0x00),
+        hex(Command.NcAsmNotifyParam, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00),
       );
-      expect(status).toEqual({
-        inquiredType: 0x02,
-        valueChangeStatus: 0x01,
-        ncAsmTotalEffect: 0x00,
-        rest: hex(),
-      });
+      expect(status?.ncAsmEffect).toBe(0x00);
     });
 
     it('returns null for unrelated command ids', () => {
       expect(
-        decodeNcAsmParam(hex(Command.BatteryLevelReply, 0x01, 0x64, 0x00)),
+        decodeNcAsmParam(
+          hex(Command.BatteryLevelReply, 0x01, 0x64, 0x00, 0, 0, 0, 0),
+        ),
       ).toBeNull();
+    });
+
+    it('returns null for inquiredTypes we do not yet decode', () => {
+      // Newer 0x11 shape — we don't decode this; XM5+ would use it.
+      expect(
+        decodeNcAsmParam(
+          hex(Command.NcAsmRetParam, 0x11, 0x01, 0x01, 0, 0, 0, 0),
+        ),
+      ).toBeNull();
+    });
+  });
+
+  describe('describeNcAsm', () => {
+    it('labels the live XM4 reply as DUAL noise cancelling', () => {
+      const status = decodeNcAsmParam(
+        hex(Command.NcAsmRetParam, 0x02, 0x01, 0x02, 0x02, 0x01, 0x00, 0x00),
+      );
+      expect(status && describeNcAsm(status)).toBe('Noise cancelling (dual)');
+    });
+
+    it('labels Off when ncAsmEffect=0', () => {
+      const status = decodeNcAsmParam(
+        hex(Command.NcAsmRetParam, 0x02, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00),
+      );
+      expect(status && describeNcAsm(status)).toBe('Off');
+    });
+
+    it('labels ambient with focus-on-voice', () => {
+      // Hypothetical: ncAsmEffect=ON, dualSingle=OFF, asmLevel=10, asmId=VOICE.
+      const status = decodeNcAsmParam(
+        hex(Command.NcAsmRetParam, 0x02, 0x01, 0x02, 0x00, 0x01, 0x01, 0x0a),
+      );
+      expect(status && describeNcAsm(status)).toBe(
+        'Ambient sound (level 10, voice)',
+      );
     });
   });
 

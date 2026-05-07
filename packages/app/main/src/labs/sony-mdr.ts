@@ -102,21 +102,50 @@ export interface BatteryStatus {
 }
 
 /**
- * Decoded NC/ASM read. The first four bytes are the universal
- * `NcAsmParamBase` header; everything beyond `ncAsmTotalEffect` is
- * `inquiredType`-specific and surfaced as raw bytes for now since the
- * XM4's `NC_ON_OFF_AND_ASM_ON_OFF` shape isn't documented in
- * mos9527's transcription.
+ * Decoded NC/ASM read for the XM4-era
+ * `NoiseCancellingAndAmbientSoundMode` shape (8-byte payload).
+ *
+ * The XM4 RET_PARAM is symmetric to Plutoberth's SET_PARAM layout —
+ * there's no `valueChangeStatus` byte (mos9527's
+ * `NcAsmParamBase` adds it in a newer revision XM4 doesn't speak).
+ *
+ * Verified against a live device reply: `67 02 01 02 02 01 00 00`
+ * decodes to "NC on, DUAL mode, ambient off".
+ *
+ * @see ~/projects/plutoberth/SonyHeadphonesClient/Client/CommandSerializer.cpp:174
  */
 export interface NcAsmStatus {
   inquiredType: number;
-  /** `0`=under-changing, `1`=changed (settled). */
-  valueChangeStatus: number;
-  /** Whether either NC or ASM is currently producing an effect. */
-  ncAsmTotalEffect: number;
-  /** Trailing inquiredType-specific bytes. Decode once we have a real reply. */
-  rest: Uint8Array;
+  /** `0`=OFF, `1`=ON, `0x10`=adjustment-in-progress, `0x11`=adjustment-complete. */
+  ncAsmEffect: number;
+  /** `0`=ON_OFF, `1`=LEVEL_ADJUSTMENT, `2`=DUAL_SINGLE_OFF. */
+  ncAsmSettingType: number;
+  /** `0`=OFF, `1`=SINGLE, `2`=DUAL. Active NC mode when `asmLevel`=0. */
+  dualSingleValue: number;
+  /** `0`=ON_OFF, `1`=LEVEL_ADJUSTMENT. */
+  asmSettingType: number;
+  /** `0`=NORMAL, `1`=VOICE (focus-on-voice). */
+  asmId: number;
+  /** `0`=ambient disabled, `1..19`=level, `0xFF`=disabled. */
+  asmLevel: number;
 }
+
+/**
+ * Best-effort human label for an `NcAsmStatus` — what the Sony app
+ * would display: `Off`, `Noise cancelling`, `Ambient sound (level X)`,
+ * `Ambient sound (voice, level X)`. Returns `null` for shapes we
+ * haven't fingerprinted.
+ */
+export const describeNcAsm = (status: NcAsmStatus): string | null => {
+  if (status.ncAsmEffect === 0) return 'Off';
+  if (status.dualSingleValue === 2) return 'Noise cancelling (dual)';
+  if (status.dualSingleValue === 1) return 'Noise cancelling (single)';
+  if (status.asmLevel > 0 && status.asmLevel !== 0xff) {
+    const focus = status.asmId === 1 ? ', voice' : '';
+    return `Ambient sound (level ${status.asmLevel}${focus})`;
+  }
+  return null;
+};
 
 /** Encode a frame into the on-wire byte sequence. */
 export const encodeFrame = (frame: Frame): Uint8Array => {
@@ -245,22 +274,29 @@ export const functionTypeName = (code: number): string | null =>
   FUNCTION_TYPE_NAMES[code] ?? null;
 
 /**
- * Pull an `NcAsmStatus` from a RET/NTFY param payload. Layout follows
- * `NcAsmParamBase`: `[cmd, inquiredType, valueChangeStatus,
- * ncAsmTotalEffect, …shape-specific]`. Returns `null` when the payload
- * isn't an NC/ASM reply.
+ * Pull an `NcAsmStatus` from a RET/NTFY param payload of the XM4
+ * `NoiseCancellingAndAmbientSoundMode` shape. Layout (8 bytes):
+ * `[cmd, inquiredType=0x02, ncAsmEffect, ncAsmSettingType,
+ * dualSingleValue, asmSettingType, asmId, asmLevel]`.
+ * Returns `null` for any other shape or unrelated command.
  */
 export const decodeNcAsmParam = (payload: Uint8Array): NcAsmStatus | null => {
-  if (payload.length < 4) return null;
+  if (payload.length < 8) return null;
   const cmd = payload[0];
   const isParam =
     cmd === Command.NcAsmRetParam || cmd === Command.NcAsmNotifyParam;
   if (!isParam) return null;
+  if (payload[1] !== NcAsmInquiredType.NoiseCancellingAndAmbientSoundMode) {
+    return null;
+  }
   return {
     inquiredType: payload[1],
-    valueChangeStatus: payload[2],
-    ncAsmTotalEffect: payload[3],
-    rest: Uint8Array.from(payload.subarray(4)),
+    ncAsmEffect: payload[2],
+    ncAsmSettingType: payload[3],
+    dualSingleValue: payload[4],
+    asmSettingType: payload[5],
+    asmId: payload[6],
+    asmLevel: payload[7],
   };
 };
 

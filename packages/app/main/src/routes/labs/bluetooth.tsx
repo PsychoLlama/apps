@@ -29,6 +29,7 @@ import {
   decodeBatteryReply,
   decodeNcAsmParam,
   decodeSupportFunctionReply,
+  describeNcAsm,
   encodeAck,
   encodeBatteryRequest,
   encodeInitRequest,
@@ -518,11 +519,8 @@ export default function LabsBluetooth() {
                         }
                       >
                         {(status) => (
-                          <Text as="code" size={1} selectable={true}>
-                            {`type=0x${status().inquiredType.toString(16).padStart(2, '0')} ` +
-                              `effect=${status().ncAsmTotalEffect} ` +
-                              `change=${status().valueChangeStatus} ` +
-                              `rest=${formatBytes(status().rest)}`}
+                          <Text as="span" selectable={true}>
+                            {describeNcAsm(status()) ?? 'unrecognised mode'}
                           </Text>
                         )}
                       </Show>
