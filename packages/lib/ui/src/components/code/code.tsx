@@ -22,6 +22,11 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import {
+  type SelectableProps,
+  selectablePropKeys,
+  resolveSelectableClass,
+} from '../../props/selectable';
+import {
   type SkeletonProps,
   skeletonPropKeys,
   useSkeleton,
@@ -47,6 +52,7 @@ export interface CodeProps
     MarginProps,
     TruncateProps,
     WrapProps,
+    SelectableProps,
     SkeletonProps,
     TestIdProps,
     JSX.HTMLAttributes<HTMLElement> {
@@ -77,6 +83,7 @@ const Code: ParentComponent<CodeProps> = (rawProps) => {
     'children',
     ...truncatePropKeys,
     ...wrapPropKeys,
+    ...selectablePropKeys,
     ...skeletonPropKeys,
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
@@ -90,6 +97,7 @@ const Code: ParentComponent<CodeProps> = (rawProps) => {
       local.weight && css.weight[local.weight],
       !local.truncate && resolveWrapClass(local),
       resolveTruncateClass(local),
+      resolveSelectableClass(local),
       skeletonClass(),
       local.class,
     ]

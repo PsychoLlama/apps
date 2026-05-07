@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { Quote, Text, type QuoteProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { selectableArgTypes } from '@lib/ui/props/selectable';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { truncateArgTypes } from '@lib/ui/props/truncate';
@@ -20,6 +21,7 @@ const meta = {
     ...marginArgTypes,
     ...truncateArgTypes,
     ...wrapArgTypes,
+    ...selectableArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,
     children: { control: 'text' },

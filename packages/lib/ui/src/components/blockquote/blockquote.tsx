@@ -22,6 +22,11 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import {
+  type SelectableProps,
+  selectablePropKeys,
+  resolveSelectableClass,
+} from '../../props/selectable';
+import {
   type SkeletonProps,
   skeletonPropKeys,
   useSkeleton,
@@ -46,6 +51,7 @@ export interface BlockquoteProps
     MarginProps,
     TruncateProps,
     WrapProps,
+    SelectableProps,
     SkeletonProps,
     TestIdProps,
     JSX.HTMLAttributes<HTMLQuoteElement> {
@@ -70,6 +76,7 @@ const Blockquote: ParentComponent<BlockquoteProps> = (rawProps) => {
     'children',
     ...truncatePropKeys,
     ...wrapPropKeys,
+    ...selectablePropKeys,
     ...skeletonPropKeys,
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
@@ -83,6 +90,7 @@ const Blockquote: ParentComponent<BlockquoteProps> = (rawProps) => {
       css.color[local.color],
       !local.truncate && resolveWrapClass(local),
       resolveTruncateClass(local),
+      resolveSelectableClass(local),
       skeletonClass(),
       local.class,
     ]
