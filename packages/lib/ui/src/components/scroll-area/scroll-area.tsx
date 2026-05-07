@@ -174,6 +174,10 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const [sizesY, setSizesY] = createSignal<Sizes>(ZERO_SIZES);
 
   const [hoverVisible, setHoverVisible] = createSignal(false);
+  // Tracks whether a scrollbar is being dragged so hover/scroll
+  // visibility timers don't fade out the bar the user is grabbing
+  // when their pointer drifts off the root.
+  const [isDragging, setIsDragging] = createSignal(false);
   const [scrollState, setScrollState] = createSignal<ScrollState>('hidden');
   const sendScroll = (event: ScrollEvent) =>
     setScrollState((state) => SCROLL_TRANSITIONS[state]?.[event] ?? state);
@@ -226,6 +230,10 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       setHoverVisible(true);
     };
     const onLeave = () => {
+      // Skip the hide timer while a drag is in progress so the
+      // pointer wandering off the root doesn't fade out the
+      // scrollbar the user is still holding.
+      if (isDragging()) return;
       hideTimer = window.setTimeout(
         () => setHoverVisible(false),
         local.scrollHideDelay,
@@ -464,6 +472,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     bodyStyle.setProperty('-webkit-user-select', 'none');
     const prevScrollBehavior = viewport.style.scrollBehavior;
     viewport.style.scrollBehavior = 'auto';
+    setIsDragging(true);
 
     const apply = (clientPos: number) => {
       const localPos = clientPos - (axis === 'x' ? rect.left : rect.top);
@@ -492,6 +501,26 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       bodyStyle.userSelect = prevUserSelect;
       bodyStyle.setProperty('-webkit-user-select', prevWebkitUserSelect);
       viewport.style.scrollBehavior = prevScrollBehavior;
+      setIsDragging(false);
+      // Pointer capture suppressed `pointerleave` on the root while
+      // the drag was active. If the release lands outside the root,
+      // synthesize a leave so the hover timer can run; if it lands
+      // inside, the next real pointer movement re-arms the timer.
+      const root = rootEl();
+      if (local.type === 'hover' && root) {
+        const rect = root.getBoundingClientRect();
+        const outside =
+          finishEvent.clientX < rect.left ||
+          finishEvent.clientX > rect.right ||
+          finishEvent.clientY < rect.top ||
+          finishEvent.clientY > rect.bottom;
+        if (outside) {
+          window.setTimeout(
+            () => setHoverVisible(false),
+            local.scrollHideDelay,
+          );
+        }
+      }
     };
     target.addEventListener('pointermove', onMove);
     // Bind every termination event so an interrupted drag (touch
@@ -531,7 +560,10 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           'overflow-x': enableX() ? 'scroll' : 'hidden',
           'overflow-y': enableY() ? 'scroll' : 'hidden',
         }}
-        onScroll={scrollHandlers.onScroll}
+        onScroll={(event) => {
+          const handler = scrollHandlers.onScroll;
+          if (typeof handler === 'function') handler(event);
+        }}
       >
         <div ref={setContentEl} class={css.content}>
           {local.children}
