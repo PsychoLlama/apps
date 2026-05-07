@@ -90,13 +90,20 @@ describe('Switch', () => {
     expect(onCheckedChange).not.toHaveBeenCalled();
   });
 
-  it('does not fire onCheckedChange when disabled', async () => {
+  it('does not fire onCheckedChange when disabled', () => {
     const handler = vi.fn();
     render(() => (
       <Switch testId="sw" disabled checked={false} onCheckedChange={handler} />
     ));
 
-    await userEvent.click(screen.getByTestId('sw')).catch(() => {});
+    // Native `HTMLElement.click()` short-circuits on disabled form
+    // controls per spec — exactly the behavior under test. Going
+    // through `userEvent.click` instead would loop in Playwright's
+    // actionability checks until the test timeout, racing it (15s
+    // vs 15s) and intermittently failing on slow CI.
+    const button = screen.getByTestId<HTMLButtonElement>('sw');
+    expect(button).toBeDisabled();
+    button.click();
     expect(handler).not.toHaveBeenCalled();
   });
 
