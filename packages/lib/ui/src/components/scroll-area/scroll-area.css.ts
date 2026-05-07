@@ -52,9 +52,6 @@ export const root = style({
   // WebKit rules below set the precise width for Chromium/Safari.
   scrollbarWidth: 'thin',
   scrollbarColor: `${thumbColor} transparent`,
-  // Reserve gutter space so layout stays stable as content grows
-  // past the viewport. No-op on macOS/iOS overlay scrollbars.
-  scrollbarGutter: 'stable',
   // Stop Chrome's two-finger swipe-back gesture from intercepting
   // horizontal scroll inside the viewport (matches upstream).
   overscrollBehaviorX: 'contain',
@@ -129,8 +126,11 @@ export const overflowX = styleVariants({
   hidden: { overflowX: 'hidden' },
 });
 
+// Reserve gutter space only when the y-axis can actually scroll, so
+// horizontal-only viewports on classic-scrollbar platforms don't paint
+// an unused inline-end strip. No-op on macOS/iOS overlay scrollbars.
 export const overflowY = styleVariants({
-  auto: { overflowY: 'auto' },
-  scroll: { overflowY: 'scroll' },
+  auto: { overflowY: 'auto', scrollbarGutter: 'stable' },
+  scroll: { overflowY: 'scroll', scrollbarGutter: 'stable' },
   hidden: { overflowY: 'hidden' },
 });
