@@ -3,6 +3,7 @@ import { Em, Text, type EmProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
+import { truncateArgTypes } from '@lib/ui/props/truncate';
 import { wrapArgTypes } from '@lib/ui/props/wrap';
 import { gallery } from '../../../../gallery';
 
@@ -17,6 +18,7 @@ const meta = {
   },
   argTypes: {
     ...marginArgTypes,
+    ...truncateArgTypes,
     ...wrapArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,

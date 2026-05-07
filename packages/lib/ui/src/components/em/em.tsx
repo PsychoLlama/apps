@@ -3,8 +3,6 @@
  *
  * Ported from Radix UI Themes Em. Deviations:
  * - No `asChild`. Tag-locked to `<em>`.
- * - No `truncate` prop. Truncation is a no-op on inline hosts; promote
- *   the parent block to truncate.
  * - No font-style / font-family / font-weight theming knobs. We ship a
  *   single body font and a fixed italic treatment, so the upstream
  *   font-size-adjust trick (and the nested-em font-size guard) is moot.
@@ -26,6 +24,11 @@ import {
 } from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import {
+  type TruncateProps,
+  truncatePropKeys,
+  resolveTruncateClass,
+} from '../../props/truncate';
+import {
   type WrapProps,
   wrapPropKeys,
   resolveWrapClass,
@@ -35,6 +38,7 @@ import * as css from './em.css';
 export interface EmProps
   extends
     MarginProps,
+    TruncateProps,
     WrapProps,
     SkeletonProps,
     TestIdProps,
@@ -47,6 +51,7 @@ const Em: ParentComponent<EmProps> = (rawProps) => {
   const [local, rest] = splitProps(withoutTid, [
     'class',
     'children',
+    ...truncatePropKeys,
     ...wrapPropKeys,
     ...skeletonPropKeys,
   ]);
@@ -56,7 +61,8 @@ const Em: ParentComponent<EmProps> = (rawProps) => {
     [
       ...resolveMarginClasses(margin),
       css.base,
-      resolveWrapClass(local),
+      !local.truncate && resolveWrapClass(local),
+      resolveTruncateClass(local),
       skeletonClass(),
       local.class,
     ]
