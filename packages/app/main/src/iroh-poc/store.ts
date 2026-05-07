@@ -36,7 +36,7 @@ export interface SessionInfo {
   /** True while a `send()` call is in flight. */
   sending: boolean;
   /** Chat history in chronological order. */
-  messages: ReadonlyArray<ChatMessage>;
+  messages: ChatMessage[];
 }
 
 /** Top-level lifecycle of the wasm node + its relay assignment. */
@@ -62,10 +62,10 @@ export interface IrohPocState {
   /** Latest dial error, if any. Cleared on the next dial attempt. */
   dialError: string | null;
   /** Live chat sessions, oldest first. */
-  sessions: ReadonlyArray<SessionInfo>;
+  sessions: SessionInfo[];
 }
 
-const initialState: IrohPocState = {
+const buildInitialState = (): IrohPocState => ({
   status: 'booting',
   error: null,
   endpointId: '',
@@ -74,12 +74,15 @@ const initialState: IrohPocState = {
   dialing: false,
   dialError: null,
   sessions: [],
-};
+});
 
-const irohPocStore = defineStore<IrohPocState>(() => ({ ...initialState }));
+const irohPocStore = defineStore<IrohPocState>(buildInitialState);
 
 /** Live, readonly view of the POC state. */
 export const irohPoc = createStore(irohPocStore);
+
+/** Readonly per-session view as it appears in {@link irohPoc.sessions}. */
+export type SessionView = (typeof irohPoc.sessions)[number];
 
 let messageCounter = 0;
 const nextMessageId = (): number => ++messageCounter;
@@ -137,40 +140,33 @@ const addSessionAction = defineAction(
     state,
     input: { id: number; peerId: string; direction: SessionDirection },
   ) => {
-    state.sessions = [
-      ...state.sessions,
-      {
-        id: input.id,
-        peerId: input.peerId,
-        direction: input.direction,
-        status: 'open',
-        draft: '',
-        sending: false,
-        messages: [
-          {
-            id: nextMessageId(),
-            time: timestamp(),
-            author: 'system',
-            text:
-              input.direction === 'incoming'
-                ? `Connected from ${input.peerId.slice(0, 12)}`
-                : `Connected to ${input.peerId.slice(0, 12)}`,
-          },
-        ],
-      },
-    ];
+    state.sessions.push({
+      id: input.id,
+      peerId: input.peerId,
+      direction: input.direction,
+      status: 'open',
+      draft: '',
+      sending: false,
+      messages: [
+        {
+          id: nextMessageId(),
+          time: timestamp(),
+          author: 'system',
+          text:
+            input.direction === 'incoming'
+              ? `Connected from ${input.peerId.slice(0, 12)}`
+              : `Connected to ${input.peerId.slice(0, 12)}`,
+        },
+      ],
+    });
   },
 );
 
-const updateSession = (
+const findSession = (
   state: IrohPocState,
   sessionId: number,
-  updater: (session: SessionInfo) => SessionInfo,
-): void => {
-  state.sessions = state.sessions.map((session) =>
-    session.id === sessionId ? updater(session) : session,
-  );
-};
+): SessionInfo | undefined =>
+  state.sessions.find((session) => session.id === sessionId);
 
 const appendMessageAction = defineAction(
   [irohPocStore],
@@ -178,76 +174,60 @@ const appendMessageAction = defineAction(
     state,
     input: { sessionId: number; author: MessageAuthor; text: string },
   ) => {
-    updateSession(state, input.sessionId, (session) => ({
-      ...session,
-      messages: [
-        ...session.messages,
-        {
-          id: nextMessageId(),
-          time: timestamp(),
-          author: input.author,
-          text: input.text,
-        },
-      ],
-    }));
+    const session = findSession(state, input.sessionId);
+    if (!session) return;
+    session.messages.push({
+      id: nextMessageId(),
+      time: timestamp(),
+      author: input.author,
+      text: input.text,
+    });
   },
 );
 
 const setSessionDraftAction = defineAction(
   [irohPocStore],
   (state, input: { sessionId: number; draft: string }) => {
-    updateSession(state, input.sessionId, (session) => ({
-      ...session,
-      draft: input.draft,
-    }));
+    const session = findSession(state, input.sessionId);
+    if (session) session.draft = input.draft;
   },
 );
 
 const setSessionSendingAction = defineAction(
   [irohPocStore],
   (state, input: { sessionId: number; sending: boolean }) => {
-    updateSession(state, input.sessionId, (session) => ({
-      ...session,
-      sending: input.sending,
-    }));
+    const session = findSession(state, input.sessionId);
+    if (session) session.sending = input.sending;
   },
 );
 
 const markSessionClosedAction = defineAction(
   [irohPocStore],
   (state, sessionId: number) => {
-    updateSession(state, sessionId, (session) =>
-      session.status === 'closed'
-        ? session
-        : {
-            ...session,
-            status: 'closed',
-            messages: [
-              ...session.messages,
-              {
-                id: nextMessageId(),
-                time: timestamp(),
-                author: 'system',
-                text: 'Session closed',
-              },
-            ],
-          },
-    );
+    const session = findSession(state, sessionId);
+    if (!session || session.status === 'closed') return;
+    session.status = 'closed';
+    session.messages.push({
+      id: nextMessageId(),
+      time: timestamp(),
+      author: 'system',
+      text: 'Session closed',
+    });
   },
 );
 
 const removeSessionAction = defineAction(
   [irohPocStore],
   (state, sessionId: number) => {
-    state.sessions = state.sessions.filter(
-      (session) => session.id !== sessionId,
+    const index = state.sessions.findIndex(
+      (session) => session.id === sessionId,
     );
+    if (index !== -1) state.sessions.splice(index, 1);
   },
 );
 
 const resetAction = defineAction([irohPocStore], (state) => {
-  Object.assign(state, initialState);
-  state.sessions = [];
+  Object.assign(state, buildInitialState());
 });
 
 /** Shape returned by {@link useIrohPocActions}. */

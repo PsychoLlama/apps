@@ -15,9 +15,9 @@ import IconClose from 'virtual:icons/mdi/close';
 import { SiteHeader } from '@lib/shell';
 import { irohPoc, nextSessionId, useIrohPocActions } from '../iroh-poc/store';
 import type {
-  SessionDirection,
-  SessionInfo,
   IrohPocActions,
+  SessionDirection,
+  SessionView,
 } from '../iroh-poc/store';
 import * as css from './iroh-poc.css';
 
@@ -183,7 +183,7 @@ const IrohPoc: Component = () => {
     void dial(ticket);
   };
 
-  const sendOnSession = async (session: SessionInfo) => {
+  const sendOnSession = async (session: SessionView) => {
     const handle = registry.get(session.id);
     const text = session.draft.trim();
     if (!handle || !text || session.status !== 'open' || session.sending)
@@ -204,7 +204,7 @@ const IrohPoc: Component = () => {
     }
   };
 
-  const closeSession = (session: SessionInfo) => {
+  const closeSession = (session: SessionView) => {
     const handle = registry.get(session.id);
     handle?.close();
     handle?.free();
@@ -381,7 +381,7 @@ const IrohPoc: Component = () => {
 };
 
 interface SessionCardProps {
-  session: SessionInfo;
+  session: SessionView;
   actions: IrohPocActions;
   onSend: () => void;
   onClose: () => void;
