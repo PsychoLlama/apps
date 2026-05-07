@@ -11,14 +11,16 @@ export const frame = style({
   border: `1px solid ${neutral.alpha[6]}`,
 });
 
-// Decorative tile placeholder. `<Flex>` paints the radius and surface
-// background; this class only sets explicit dimensions and stops the
-// flex container from squeezing the tiles together when overflow
-// kicks in. The row's overall width comes from the ScrollArea's
-// children reset (`width: fit-content`) plus these flex-shrink: 0
-// children — no `width: max-content` needed on the wrapper.
+// Decorative tile placeholder. Uses translucent neutral fill + outline
+// instead of a `background` token so the tiles read as distinct chips
+// in both light and dark modes — the four `BackgroundColor` tokens
+// (page/panelSolid/panelTranslucent/surface) all collapse to near-equal
+// values in light mode and don't contrast well against the surface
+// frame. `flex-shrink: 0` keeps the row overflowing horizontally.
 export const tile = style({
   width: '4rem',
   height: '4rem',
   flexShrink: 0,
+  backgroundColor: neutral.alpha[4],
+  border: `1px solid ${neutral.alpha[6]}`,
 });
