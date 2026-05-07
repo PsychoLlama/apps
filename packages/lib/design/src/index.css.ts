@@ -4,6 +4,7 @@ import './globals.css';
 export {
   baselineOffset,
   fontFamily,
+  fontSizeAdjust,
   fontWeight,
   letterSpacingOffset,
   typeScale,

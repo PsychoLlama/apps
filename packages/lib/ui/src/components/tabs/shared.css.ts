@@ -10,7 +10,7 @@
  * span without nested-class selectors.
  *
  * No font-weight or letter-spacing change between active and inactive —
- * IBM Plex Sans's weight delta makes the flicker too jarring, and color
+ * the system-sans weight delta makes the flicker too jarring, and color
  * + the bottom indicator already differentiate active state strongly.
  */
 

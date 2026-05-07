@@ -20,7 +20,6 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@fontsource-variable/ibm-plex-sans": "^5.2.8",
     "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {

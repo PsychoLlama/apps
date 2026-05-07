@@ -52,6 +52,9 @@ export const FontFamilies: Story = {
         each={[
           { name: 'fontFamily.body', value: fontFamily.body },
           { name: 'fontFamily.heading', value: fontFamily.heading },
+          { name: 'fontFamily.code', value: fontFamily.code },
+          { name: 'fontFamily.em', value: fontFamily.em },
+          { name: 'fontFamily.quote', value: fontFamily.quote },
         ]}
       >
         {(item) => (
