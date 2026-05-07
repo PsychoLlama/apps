@@ -143,10 +143,24 @@ export const scrollbar = style({
 
 export const thumb = style({
   position: 'relative',
-  flexGrow: 1,
   backgroundColor: neutral.alpha[8],
   borderRadius: 'inherit',
   transition: `background-color ${fast[2]} ${standard.productive}`,
+
+  selectors: {
+    // Cross-axis dimension stretches to fill the track; the
+    // scroll-axis dimension is set inline from the computed thumb
+    // size. Without these, the flex container's `align-items:
+    // stretch` default would still size the cross axis correctly,
+    // but `flex-grow: 1` (a previous version) made the thumb
+    // expand to fill the whole track and broke the scroll ratio.
+    '&:where([data-orientation="horizontal"])': {
+      height: '100%',
+    },
+    '&:where([data-orientation="vertical"])': {
+      width: '100%',
+    },
+  },
 
   '::before': {
     content: '""',
