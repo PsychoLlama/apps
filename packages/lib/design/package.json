@@ -6,11 +6,10 @@
   "description": "Design tokens (color, spacing, typography, motion).",
   "license": "MIT",
   "sideEffects": [
-    "**/*.css.ts",
-    "src/index.ts"
+    "**/*.css.ts"
   ],
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./src/index.css.ts",
     "./color-scheme": "./src/color-scheme.ts",
     "./theme": "./src/theme.ts",
     "./palette/*": "./src/palette/*.css.ts",
