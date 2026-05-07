@@ -20,7 +20,6 @@ const meta = {
     size: 1,
     variant: 'soft',
     color: 'accent',
-    radius: 'full',
     highContrast: false,
     ...skeletonArgs,
   },

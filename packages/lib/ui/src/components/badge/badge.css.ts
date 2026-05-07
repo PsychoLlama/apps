@@ -5,8 +5,11 @@
  *
  * Deviations:
  * - `radius` is a per-component class switch, not a `data-radius` cascade.
- *   Each token maps to a single radius step and ignores Radix's
- *   `max(radius-N, radius-full)` size-aware floor.
+ *   The default is size-aware (size-1 → 3px, sizes 2–3 → 4px), baked
+ *   into the size variants — mirrors Radix's `max(radius-N, radius-full)`
+ *   under its default `Theme.radius='medium'`. Explicit `radius` values
+ *   flatten that per-token (size-3 + `radius='small'` is 3px here, vs
+ *   4px upstream).
  * - Sub-token padding/gap (Radix uses `space-1 * 0.5`, `space-1 * 1.5`,
  *   `space-2 * 1.25`) is preserved via `calc()` because our space scale
  *   has no half-step entries.
@@ -54,26 +57,30 @@ export const size = styleVariants({
     paddingBlock: `calc(${space[1]} * 0.5)`,
     paddingInline: `calc(${space[1]} * 1.5)`,
     gap: `calc(${space[1]} * 1.5)`,
+    borderRadius: radius[1],
   },
   2: {
     ...typeScaleProps(1),
     paddingBlock: space[1],
     paddingInline: space[2],
     gap: `calc(${space[1]} * 1.5)`,
+    borderRadius: radius[2],
   },
   3: {
     ...typeScaleProps(2),
     paddingBlock: space[1],
     paddingInline: `calc(${space[2]} * 1.25)`,
     gap: space[2],
+    borderRadius: radius[2],
   },
 });
 
 // --- Radius ---
 
+// Declared after `size` so the explicit override wins via source order.
 export const cornerRadius = styleVariants({
-  // Reset already zeroes border-radius; `none` is the cascade default.
-  none: {},
+  // eslint-disable-next-line custom/require-design-tokens -- intentional zero radius; Radix exposes "none" as a theme-level preset, not a token in the scale.
+  none: { borderRadius: 0 },
   small: { borderRadius: radius[1] },
   medium: { borderRadius: radius[2] },
   large: { borderRadius: radius[3] },
