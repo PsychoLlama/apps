@@ -133,14 +133,14 @@ export const recordingDotPaused = style({
 
 export const timer = style({
   fontSize: typeScale[8].fontSize,
-  lineHeight: typeScale[8].lineHeight,
+  lineHeight: typeScale[8].bodyLineHeight,
   letterSpacing: typeScale[8].letterSpacing,
   fontWeight: fontWeight.bold,
   color: text.highContrast,
   '@media': {
     [breakpoint.sm]: {
       fontSize: typeScale[9].fontSize,
-      lineHeight: typeScale[9].lineHeight,
+      lineHeight: typeScale[9].bodyLineHeight,
       letterSpacing: typeScale[9].letterSpacing,
     },
   },

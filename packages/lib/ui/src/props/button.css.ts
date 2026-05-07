@@ -76,7 +76,7 @@ assignColorSchemeVars(
 const typeScaleProps = (step: 1 | 2 | 3 | 4) => {
   return {
     fontSize: typeScale[step].fontSize,
-    lineHeight: typeScale[step].lineHeight,
+    lineHeight: typeScale[step].bodyLineHeight,
     letterSpacing: typeScale[step].letterSpacing,
   };
 };

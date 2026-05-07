@@ -47,7 +47,7 @@ export const base = style({
 
 const typeScaleProps = (step: 1 | 2) => ({
   fontSize: typeScale[step].fontSize,
-  lineHeight: typeScale[step].lineHeight,
+  lineHeight: typeScale[step].bodyLineHeight,
   letterSpacing: typeScale[step].letterSpacing,
 });
 

@@ -208,7 +208,7 @@ interface SizeStyle {
 
 const sizeStyle = ({ padX, padY, checkboxSize, rad, font }: SizeStyle) => ({
   fontSize: typeScale[font].fontSize,
-  lineHeight: typeScale[font].lineHeight,
+  lineHeight: typeScale[font].bodyLineHeight,
   letterSpacing: typeScale[font].letterSpacing,
   vars: {
     [itemPaddingX]: space[padX],

@@ -31,7 +31,7 @@ export const TypeScale: Story = {
                 color="highContrast"
                 style={{
                   'font-size': scale.fontSize,
-                  'line-height': scale.lineHeight,
+                  'line-height': scale.bodyLineHeight,
                   'letter-spacing': scale.letterSpacing,
                 }}
               >

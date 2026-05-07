@@ -8,9 +8,11 @@
  * pre-reserves the trigger's width using the active state's metrics so
  * activating/deactivating doesn't reflow the row.
  *
- * The active state applies `triggerActive`; the indicator color is fed
- * in via `--tab-active-indicator` set by the `color` variants on the
- * list. Inner padding is fed in via per-size custom properties so the
+ * The active state is keyed off `[data-state='active'], [data-active]`
+ * directly on the trigger — Tabs' button emits `data-state`, TabNav's
+ * link emits `data-active`. The indicator color is fed in via
+ * `--tab-active-indicator` set by the `color` variants on the list.
+ * Inner padding is fed in via per-size custom properties so the
  * variants on the parent list reach the inner span without nested-class
  * selectors.
  *
@@ -33,7 +35,7 @@ import {
   type TypeScale,
 } from '@lib/design';
 
-/** Set on the list element by the `color` variants; read by `triggerActive`. */
+/** Set on the list element by the `color` variants; read by the trigger's active `::before`. */
 export const activeIndicator = createVar();
 /** Set on the list element by the `size` variants; read by `trigger`. */
 export const outerPaddingX = createVar();
@@ -81,6 +83,23 @@ export const trigger = style({
     '&:disabled': {
       color: neutral.alpha[8],
       cursor: 'not-allowed',
+    },
+    // Active text color and the underline indicator. Keyed off the
+    // attributes the wrappers emit (`data-state` on TabsTrigger,
+    // `data-active` on TabNavLink) so a single rule pair drives both —
+    // matching Radix's `:where([data-state='active'], [data-active])`
+    // shorthand.
+    "&:where([data-state='active'], [data-active])": {
+      color: neutral.solid[12],
+    },
+    "&:where([data-state='active'], [data-active])::before": {
+      content: '""',
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: '2px',
+      backgroundColor: activeIndicator,
     },
   },
 
@@ -169,23 +188,6 @@ export const triggerInnerHidden = style({
   letterSpacing: activeLetterSpacing,
 });
 
-/** Applied when the trigger represents the active tab/link. */
-export const triggerActive = style({
-  color: neutral.solid[12],
-
-  selectors: {
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-      height: '2px',
-      backgroundColor: activeIndicator,
-    },
-  },
-});
-
 // --- Size ---
 
 // Radix's tab heights deliberately exceed the inner content's height
@@ -202,7 +204,7 @@ const sizeStyle = (config: {
 }) => ({
   height: space[config.height],
   fontSize: typeScale[config.step].fontSize,
-  lineHeight: typeScale[config.step].lineHeight,
+  lineHeight: typeScale[config.step].bodyLineHeight,
   letterSpacing: typeScale[config.step].letterSpacing,
   vars: {
     [outerPaddingX]: space[config.outerPx],

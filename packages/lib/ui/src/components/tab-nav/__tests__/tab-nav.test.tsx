@@ -49,7 +49,7 @@ describe('TabNav', () => {
     expect(linkB.parentElement?.tagName).toBe('LI');
   });
 
-  it('marks only the active link with aria-current="page"', () => {
+  it('marks only the active link with aria-current="page" and data-active', () => {
     mount(() => (
       <TabNavRoot testId="nav" aria-label="Primary">
         <TabNavLink testId="nav-a" href="/a" active={false}>
@@ -67,6 +67,13 @@ describe('TabNav', () => {
     expect(screen.getByTestId('nav-a')).not.toHaveAttribute('aria-current');
     expect(screen.getByTestId('nav-b')).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('nav-c')).not.toHaveAttribute('aria-current');
+
+    // `data-active` is what the shared tabs CSS keys active typography off of
+    // — Radix's `NavigationMenu.Link` emits it; we mirror the behavior so
+    // the dual-span trick can apply medium weight + tightened tracking.
+    expect(screen.getByTestId('nav-a')).not.toHaveAttribute('data-active');
+    expect(screen.getByTestId('nav-b')).toHaveAttribute('data-active', '');
+    expect(screen.getByTestId('nav-c')).not.toHaveAttribute('data-active');
   });
 
   it('renders each link with the expected href on the underlying anchor', () => {
