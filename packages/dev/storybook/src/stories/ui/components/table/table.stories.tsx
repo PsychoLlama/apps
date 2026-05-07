@@ -55,6 +55,18 @@ const ROWS: Row[] = [
     role: 'Owner',
     status: 'Active',
   },
+  {
+    name: 'Bob Robertson',
+    email: 'bob@robertson.example',
+    role: 'Editor',
+    status: 'Active',
+  },
+  {
+    name: 'Jonathan Johnson',
+    email: 'jonathan@johnson.example',
+    role: 'Viewer',
+    status: 'Invited',
+  },
 ];
 
 const Demo = (props: Partial<TableRootProps>) => (
