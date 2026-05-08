@@ -2,7 +2,15 @@
  * iconify packs, sliced and emitted as static assets at build time. No
  * untrusted input ever reaches innerHTML. */
 
-import { For, Match, Show, Switch, createEffect, createMemo } from 'solid-js';
+import {
+  For,
+  Match,
+  Show,
+  Switch,
+  createEffect,
+  createMemo,
+  on,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import {
   createStore,
@@ -45,10 +53,15 @@ interface PickerState {
   search: string;
   /** Cached pack catalog — `undefined` until the index fetch resolves. */
   packs: ReadonlyArray<IconPackSummary> | undefined;
-  /** Per-pack manifests, keyed by pack id. */
-  manifests: Map<string, IconPackManifest>;
-  /** Resolved icon SVG markup, keyed by `pack:name`. */
-  bodies: Map<string, string>;
+  /**
+   * Per-pack manifests keyed by pack id. Plain record (not `Map`) so
+   * solid-js/store's `createMutable` proxy notices the writes —
+   * `Map` mutations bypass the proxy and never trigger downstream
+   * memos.
+   */
+  manifests: { [packId: string]: IconPackManifest | undefined };
+  /** Resolved icon SVG markup, keyed by `pack:name`. Plain record for the same reactivity reason as `manifests`. */
+  bodies: { [key: string]: string | undefined };
 }
 
 const initialState = (): PickerState => ({
@@ -56,8 +69,8 @@ const initialState = (): PickerState => ({
   activePackId: 'mdi',
   search: '',
   packs: undefined,
-  manifests: new Map(),
-  bodies: new Map(),
+  manifests: {},
+  bodies: {},
 });
 
 const pickerStore = defineStore<PickerState>(initialState);
@@ -82,7 +95,7 @@ const setSearchAction = defineAction([pickerStore], (state, query: string) => {
 const seedBodyAction = defineAction(
   [pickerStore],
   (state, ref: { pack: string; name: string; body: string }) => {
-    state.bodies.set(bodyKey(ref.pack, ref.name), ref.body);
+    state.bodies[bodyKey(ref.pack, ref.name)] = ref.body;
   },
 );
 
@@ -90,7 +103,7 @@ const ingestPageAction = defineAction(
   [pickerStore],
   (state, ingest: IconPageResult) => {
     for (const entry of ingest.entries) {
-      state.bodies.set(bodyKey(ingest.packId, entry.name), entry.body);
+      state.bodies[bodyKey(ingest.packId, entry.name)] = entry.body;
     }
   },
 );
@@ -105,7 +118,7 @@ const setPacksAction = defineAction(
 const setManifestAction = defineAction(
   [pickerStore],
   (state, manifest: IconPackManifest) => {
-    state.manifests.set(manifest.id, manifest);
+    state.manifests[manifest.id] = manifest;
   },
 );
 
@@ -150,18 +163,19 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     if (!picker.packs) void loadPacks();
   });
 
-  // Sync the active pack to the currently selected icon — opening the
-  // editor at `?icon=tabler:rocket` should land on the tabler pack
-  // detail, not on mdi's. The user can still open the pack list via
-  // the back button.
-  createEffect(() => {
-    const pack = props.selected.pack;
-    if (pack !== picker.activePackId) {
-      // Direct mutation through the action keeps the search reset
-      // semantics consistent with explicit pack switching.
-      openPack(pack);
-    }
-  });
+  // Sync the active pack when the *selected* icon's pack changes —
+  // opening the editor at `?icon=tabler:rocket` should land on the
+  // tabler pack detail, not on mdi's. `on()` so the effect doesn't
+  // re-fire when the user manually switches packs (which would
+  // immediately revert their choice).
+  createEffect(
+    on(
+      () => props.selected.pack,
+      (pack) => {
+        if (pack !== picker.activePackId) openPack(pack);
+      },
+    ),
+  );
 
   // Keep the bodies map seeded with the currently selected icon —
   // even before the manifest loads, the picker knows it can render
@@ -185,12 +199,12 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   createEffect(() => {
     const pack = activePack();
     if (!pack) return;
-    if (picker.manifests.has(pack.id)) return;
+    if (picker.manifests[pack.id]) return;
     void loadManifest(pack);
   });
 
-  const activeManifest = createMemo<IconPackManifest | undefined>(() =>
-    picker.manifests.get(picker.activePackId),
+  const activeManifest = createMemo<IconPackManifest | undefined>(
+    () => picker.manifests[picker.activePackId],
   );
 
   /** Filter applied against `manifest.names` — case-insensitive substring. */
@@ -233,7 +247,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   });
 
   const handlePickIcon = (manifest: IconPackManifest, name: string) => {
-    const body = picker.bodies.get(bodyKey(manifest.id, name));
+    const body = picker.bodies[bodyKey(manifest.id, name)];
     if (!body) return;
     props.onSelect({
       pack: manifest.id,
@@ -350,7 +364,7 @@ const PackListView: Component<PackListViewProps> = (props) => (
 interface PackDetailViewProps {
   pack: IconPackSummary | undefined;
   manifest: IconPackManifest | undefined;
-  bodies: ReadonlyMap<string, string>;
+  bodies: Readonly<Record<string, string | undefined>>;
   search: string;
   onSearch: (value: string) => void;
   visible: ReadonlyArray<string>;
@@ -434,8 +448,7 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
             <div class={css.grid}>
               <For each={props.visible}>
                 {(name) => {
-                  const body = () =>
-                    props.bodies.get(bodyKey(manifest().id, name));
+                  const body = () => props.bodies[bodyKey(manifest().id, name)];
                   const isSelected = () =>
                     props.selected.pack === manifest().id &&
                     props.selected.name === name;

@@ -8,9 +8,11 @@ const RESOLVED_ID = '\0virtual:icon-packs';
 
 const DEV_URL_PREFIX = '/@icon-packs/';
 const INDEX_URL_PLACEHOLDER = '__ICON_PACKS_INDEX_URL__';
+// Per-emit placeholders use a numeric tail to avoid colliding with
+// Rollup refIds, which can contain `$` and `_` characters Rollup
+// reserves but our placeholder format would otherwise truncate.
 const REF_PLACEHOLDER_PREFIX = '__ICON_PACKS_REF_';
 const REF_PLACEHOLDER_SUFFIX = '__';
-const REF_PLACEHOLDER_REGEX = /__ICON_PACKS_REF_([A-Za-z0-9]+)__/g;
 
 /** Icons per page chunk — picked to keep wire size around 30–60 KB gzipped. */
 const DEFAULT_PAGE_SIZE = 500;
@@ -191,8 +193,18 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
   // placeholder URLs are populated.
   let indexRefId: string | undefined;
   let capturedIndexUrl: string | undefined;
-  /** refId → 1, just to recognize references that need rewriting. */
-  const knownRefIds = new Set<string>();
+  // Counter-keyed placeholders → emitted refId. Replacement walks the
+  // map and does a literal `replaceAll`, sidestepping the question of
+  // which characters Rollup permits in refIds (they can contain `$`,
+  // `_`, etc., which a regex would have to enumerate).
+  const placeholderToRefId = new Map<string, string>();
+  let nextPlaceholderId = 0;
+  const allocatePlaceholder = (refId: string): string => {
+    const placeholder = `${REF_PLACEHOLDER_PREFIX}${nextPlaceholderId}${REF_PLACEHOLDER_SUFFIX}`;
+    nextPlaceholderId += 1;
+    placeholderToRefId.set(placeholder, refId);
+    return placeholder;
+  };
 
   // Dev cache: a pack's full processed data, keyed by id.
   const devPackCache = new Map<string, PackData>();
@@ -228,17 +240,17 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
     return data;
   };
 
-  const refPlaceholder = (refId: string): string =>
-    `${REF_PLACEHOLDER_PREFIX}${refId}${REF_PLACEHOLDER_SUFFIX}`;
-
   const replaceRefs = (
     text: string,
     resolveUrl: (refId: string) => string,
   ): string => {
     if (!text.includes(REF_PLACEHOLDER_PREFIX)) return text;
-    return text.replace(REF_PLACEHOLDER_REGEX, (_match, refId: string) =>
-      resolveUrl(refId),
-    );
+    let result = text;
+    for (const [placeholder, refId] of placeholderToRefId) {
+      if (!result.includes(placeholder)) continue;
+      result = result.replaceAll(placeholder, resolveUrl(refId));
+    }
+    return result;
   };
 
   return {
@@ -378,15 +390,14 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
           const pages = sliceIntoPages(data.icons, pageSize);
 
           // Phase 1: emit pages — they have no outbound refs.
-          const pageRefIds: string[] = [];
+          const pagePlaceholders: string[] = [];
           pages.forEach((pageIcons, index) => {
             const refId = this.emitFile({
               type: 'asset',
               name: `iconpacks-${packId}-${index}.json`,
               source: JSON.stringify(pageIcons),
             });
-            pageRefIds.push(refId);
-            knownRefIds.add(refId);
+            pagePlaceholders.push(allocatePlaceholder(refId));
           });
 
           // Phase 2: build the manifest with placeholders pointing at
@@ -399,7 +410,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
             pageSize,
             total: data.total,
             names: data.icons.map((entry) => entry.name),
-            pages: pageRefIds.map(refPlaceholder),
+            pages: pagePlaceholders,
           };
           const manifestSource = JSON.stringify(manifestPayload);
 
@@ -417,14 +428,13 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
         }
 
         // Phase 3: emit manifests.
-        const manifestRefIds = packBuilds.map((build) => {
+        const manifestPlaceholders = packBuilds.map((build) => {
           const refId = this.emitFile({
             type: 'asset',
             name: `iconpacks-${build.info.id}-manifest.json`,
             source: build.manifestSource,
           });
-          knownRefIds.add(refId);
-          return refId;
+          return allocatePlaceholder(refId);
         });
 
         // Phase 4: emit the index with refs to each manifest.
@@ -436,7 +446,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
             width: build.info.width,
             height: build.info.height,
             samples: build.info.samples,
-            manifestUrl: refPlaceholder(manifestRefIds[index]),
+            manifestUrl: manifestPlaceholders[index],
           })),
         };
         indexRefId = this.emitFile({
@@ -464,10 +474,8 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
           // Resolve refs inside emitted JSON assets. We can't predict
           // which assets carry placeholders without scanning, but the
           // placeholder prefix is cheap to detect.
-          const resolveUrl = (refId: string): string => {
-            if (!knownRefIds.has(refId)) return refPlaceholder(refId);
-            return `${base}${this.getFileName(refId)}`;
-          };
+          const resolveUrl = (refId: string): string =>
+            `${base}${this.getFileName(refId)}`;
           for (const fileName of Object.keys(bundle)) {
             const asset = bundle[fileName];
             if (!asset || asset.type !== 'asset') continue;
