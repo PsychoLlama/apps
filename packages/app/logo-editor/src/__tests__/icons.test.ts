@@ -28,8 +28,11 @@ describe('parseIconRef', () => {
     });
   });
 
+  it('treats bare names as MDI — keeps pre-multipack `?icon=cog` URLs working', () => {
+    expect(parseIconRef('cog')).toEqual({ pack: 'mdi', name: 'cog' });
+  });
+
   it('returns `undefined` for malformed input — caller falls back to default', () => {
-    expect(parseIconRef('home')).toBeUndefined();
     expect(parseIconRef(':home')).toBeUndefined();
     expect(parseIconRef('mdi:')).toBeUndefined();
     expect(parseIconRef('')).toBeUndefined();

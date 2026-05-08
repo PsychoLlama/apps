@@ -142,12 +142,22 @@ export const loadIconPage = (pageUrl: string): Promise<IconEntry[]> => {
 export const encodeIconRef = (ref: { pack: string; name: string }): string =>
   `${ref.pack}:${ref.name}`;
 
-/** Parse a `pack:name` reference. Returns `undefined` for malformed input. */
+/**
+ * Parse a `pack:name` reference. Bare names without a colon are
+ * accepted as MDI icons — pre-multipack URLs encoded `?icon=cog`,
+ * and shareable links shouldn't break when readers visit them.
+ * Returns `undefined` only for empty input or partially-empty halves
+ * (e.g. `:foo`, `mdi:`).
+ */
 export const parseIconRef = (
   encoded: string,
 ): { pack: string; name: string } | undefined => {
+  if (encoded.length === 0) return undefined;
   const colon = encoded.indexOf(':');
-  if (colon <= 0 || colon >= encoded.length - 1) return undefined;
+  if (colon === -1) {
+    return { pack: 'mdi', name: encoded };
+  }
+  if (colon === 0 || colon === encoded.length - 1) return undefined;
   return {
     pack: encoded.slice(0, colon),
     name: encoded.slice(colon + 1),
