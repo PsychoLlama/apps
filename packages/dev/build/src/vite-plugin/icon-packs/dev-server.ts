@@ -68,6 +68,8 @@ export const createDevMiddleware = (
             // Samples and accurate dimensions resolve below; the
             // index itself only needs cheap metadata up front.
             samples: [] as IconEntry[],
+            author: info.author,
+            license: info.license,
             manifestUrl: `${DEV_URL_PREFIX}${id}/manifest.json`,
           }))
           .sort((left, right) => left.name.localeCompare(right.name, 'en'));

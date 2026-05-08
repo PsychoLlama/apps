@@ -45,6 +45,27 @@ export interface IconRef {
   height: number;
 }
 
+/** Pack author as iconify exposes it. */
+export interface IconPackAuthor {
+  name: string;
+  /** Optional homepage / source URL. */
+  url?: string;
+}
+
+/**
+ * Pack license as iconify exposes it. Surfaced in the picker so users
+ * see how a pack is licensed before they commit to it; included in
+ * exported SVG metadata so attribution travels with the file.
+ */
+export interface IconPackLicense {
+  /** Human-readable label, e.g. `"MIT"`. */
+  title?: string;
+  /** SPDX identifier, e.g. `"MIT"` or `"CC-BY-4.0"`. */
+  spdx?: string;
+  /** Link to the upstream license. */
+  url?: string;
+}
+
 /** Picker-level metadata for a single pack — small, baked into the index. */
 export interface IconPackSummary {
   /** Stable pack id (e.g. `mdi`, `material-symbols`). */
@@ -59,6 +80,10 @@ export interface IconPackSummary {
   height: number;
   /** A handful of icons with bodies, sufficient to render preview tiles. */
   samples: ReadonlyArray<IconEntry>;
+  /** Pack author, when iconify provides one. */
+  author?: IconPackAuthor;
+  /** Pack license, when iconify provides one. */
+  license?: IconPackLicense;
   /** URL of the pack's manifest asset — fetched on selection. */
   manifestUrl: string;
 }

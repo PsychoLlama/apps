@@ -18,7 +18,7 @@ describe('buildPackData', () => {
       third: { body: '<c/>' },
     });
 
-    const data = buildPackData(raw, 'demo', 'Demo');
+    const data = buildPackData(raw, 'demo', { name: 'Demo' });
 
     expect(data.icons.map((entry) => entry.name)).toEqual([
       'first',
@@ -34,7 +34,7 @@ describe('buildPackData', () => {
       empty: { body: '' },
     });
 
-    const data = buildPackData(raw, 'demo', 'Demo');
+    const data = buildPackData(raw, 'demo', { name: 'Demo' });
 
     expect(data.icons.map((entry) => entry.name)).toEqual(['visible']);
     expect(data.total).toBe(1);
@@ -43,15 +43,19 @@ describe('buildPackData', () => {
   it('falls back to width/height defaults when missing', () => {
     const raw = makeRaw({ a: { body: '<a/>' } });
 
-    const data = buildPackData(raw, 'demo', 'Demo');
+    const data = buildPackData(raw, 'demo', { name: 'Demo' });
 
     expect(data.width).toBe(24);
     expect(data.height).toBe(24);
   });
 
   it('mirrors width to height when only one is set', () => {
-    const wideOnly = buildPackData(makeRaw({}, { width: 32 }), 'demo', 'Demo');
-    const tallOnly = buildPackData(makeRaw({}, { height: 48 }), 'demo', 'Demo');
+    const wideOnly = buildPackData(makeRaw({}, { width: 32 }), 'demo', {
+      name: 'Demo',
+    });
+    const tallOnly = buildPackData(makeRaw({}, { height: 48 }), 'demo', {
+      name: 'Demo',
+    });
 
     expect({ width: wideOnly.width, height: wideOnly.height }).toEqual({
       width: 32,
@@ -60,6 +64,29 @@ describe('buildPackData', () => {
     expect({ width: tallOnly.width, height: tallOnly.height }).toEqual({
       width: 48,
       height: 48,
+    });
+  });
+
+  it('forwards author and license metadata into the result', () => {
+    const raw = makeRaw({ a: { body: '<a/>' } });
+    const data = buildPackData(raw, 'demo', {
+      name: 'Demo',
+      author: { name: 'Jane Doe', url: 'https://example.test' },
+      license: {
+        title: 'MIT',
+        spdx: 'MIT',
+        url: 'https://example.test/LICENSE',
+      },
+    });
+
+    expect(data.author).toEqual({
+      name: 'Jane Doe',
+      url: 'https://example.test',
+    });
+    expect(data.license).toEqual({
+      title: 'MIT',
+      spdx: 'MIT',
+      url: 'https://example.test/LICENSE',
     });
   });
 
@@ -73,7 +100,7 @@ describe('buildPackData', () => {
       { width: 24, height: 24 },
     );
 
-    const data = buildPackData(raw, 'demo', 'Demo');
+    const data = buildPackData(raw, 'demo', { name: 'Demo' });
     const byName = new Map(data.icons.map((entry) => [entry.name, entry]));
 
     expect(byName.get('same')).toEqual({ name: 'same', body: '<a/>' });

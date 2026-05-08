@@ -7,12 +7,36 @@ import path from 'node:path';
  * carries more fields than we need; declaring the surface keeps
  * `JSON.parse` honest at the type layer.
  */
+/** Author metadata as `@iconify/json` exposes it. */
+export interface PackAuthor {
+  name: string;
+  /** Optional homepage / source URL. */
+  url?: string;
+}
+
+/**
+ * License metadata as `@iconify/json` exposes it. All fields are
+ * optional in the source — packs ship at varying levels of detail —
+ * but in practice every pack we care about provides at least `title`
+ * and `spdx`.
+ */
+export interface PackLicense {
+  /** Human-readable label, e.g. `"MIT"` or `"CC BY 4.0"`. */
+  title?: string;
+  /** SPDX identifier, e.g. `"MIT"` or `"CC-BY-4.0"`. */
+  spdx?: string;
+  /** Link to the upstream license file or canonical URL. */
+  url?: string;
+}
+
 export interface CollectionsJson {
   [id: string]: {
     name: string;
     total?: number;
     height?: number;
     samples?: string[];
+    author?: PackAuthor;
+    license?: PackLicense;
   };
 }
 

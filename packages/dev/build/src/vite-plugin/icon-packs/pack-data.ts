@@ -1,4 +1,9 @@
-import type { RawPackJson } from './iconify.ts';
+import type {
+  CollectionsJson,
+  PackAuthor,
+  PackLicense,
+  RawPackJson,
+} from './iconify.ts';
 
 /**
  * A flat icon entry — the smallest unit the runtime fetches.
@@ -25,6 +30,10 @@ export interface PackInfo {
   height: number;
   total: number;
   samples: IconEntry[];
+  /** Pack author, when iconify provides one. */
+  author?: PackAuthor;
+  /** Pack license, when iconify provides one. */
+  license?: PackLicense;
 }
 
 /** Full processed pack — adds the flattened icon list to {@link PackInfo}. */
@@ -44,7 +53,7 @@ export const SAMPLE_COUNT = 5;
 export const buildPackData = (
   raw: RawPackJson,
   id: string,
-  name: string,
+  meta: CollectionsJson[string],
 ): PackData => {
   const width = raw.width ?? raw.height ?? 24;
   const height = raw.height ?? raw.width ?? 24;
@@ -61,11 +70,13 @@ export const buildPackData = (
   }
   return {
     id,
-    name,
+    name: meta.name,
     width,
     height,
     total: icons.length,
     samples: [],
+    author: meta.author,
+    license: meta.license,
     icons,
   };
 };

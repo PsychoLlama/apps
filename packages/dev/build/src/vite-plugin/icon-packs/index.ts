@@ -99,7 +99,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
     } catch {
       return undefined;
     }
-    const data = buildPackData(raw, id, meta.name);
+    const data = buildPackData(raw, id, meta);
     data.samples = pickSamples(data.icons, meta.samples);
     devPackCache.set(id, data);
     return data;
@@ -156,7 +156,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
             // occasionally lists prefixes that ship as alias-only.
             continue;
           }
-          const data = buildPackData(raw, packId, meta.name);
+          const data = buildPackData(raw, packId, meta);
           data.samples = pickSamples(data.icons, meta.samples);
           const pages = sliceIntoPages(data.icons, maxPageBytes);
 
@@ -193,6 +193,8 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
               height: data.height,
               total: data.total,
               samples: data.samples,
+              author: data.author,
+              license: data.license,
             },
             manifestSource,
           });
@@ -217,6 +219,8 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
             width: build.info.width,
             height: build.info.height,
             samples: build.info.samples,
+            author: build.info.author,
+            license: build.info.license,
             manifestUrl: manifestPlaceholders[index],
           })),
         };
