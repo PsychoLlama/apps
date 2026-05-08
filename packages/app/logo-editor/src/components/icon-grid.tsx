@@ -315,18 +315,49 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     return manifest.names.filter((name) => name.toLowerCase().includes(term));
   });
 
-  const pageCount = createMemo(() =>
-    Math.max(1, Math.ceil(matches().length / PAGE_SIZE)),
-  );
+  const isFiltered = createMemo(() => picker.search.trim().length > 0);
+
+  /**
+   * Page count + per-page slice. Two regimes:
+   *
+   * - **Unfiltered**: each UI page maps 1:1 to one asset chunk
+   *   (`manifest.pages[i]`). Clicking next loads exactly one new
+   *   chunk — predictable network cost, no over-fetch, no chunk
+   *   straddling. Page sizes vary because chunks are byte-budgeted.
+   * - **Filtered**: search hits don't honour chunk boundaries, so
+   *   fall back to a fixed `PAGE_SIZE`-tile slice over the matches.
+   */
+  const pageCount = createMemo(() => {
+    const manifest = activeManifest();
+    if (!manifest) return 1;
+    if (isFiltered())
+      return Math.max(1, Math.ceil(matches().length / PAGE_SIZE));
+    return Math.max(1, manifest.pages.length);
+  });
   /** Clamp the requested page index against the current filter — a search shrink may strand us past the last page. */
   const safePage = createMemo(() =>
     Math.min(picker.currentPage, pageCount() - 1),
   );
 
+  /** First-icon index (0-based) for the active page within `matches`. */
+  const pageStart = createMemo(() => {
+    const manifest = activeManifest();
+    if (!manifest) return 0;
+    if (isFiltered()) return safePage() * PAGE_SIZE;
+    return manifest.pageStart[safePage()] ?? 0;
+  });
+
   const visible = createMemo<ReadonlyArray<string>>(() => {
-    const list = matches();
-    const start = safePage() * PAGE_SIZE;
-    return list.slice(start, start + PAGE_SIZE);
+    const manifest = activeManifest();
+    if (!manifest) return [];
+    if (isFiltered()) {
+      const list = matches();
+      const start = pageStart();
+      return list.slice(start, start + PAGE_SIZE);
+    }
+    const start = pageStart();
+    const next = manifest.pageStart[safePage() + 1] ?? manifest.total;
+    return manifest.names.slice(start, next);
   });
 
   // Whenever the visible set changes, request the page chunks needed
@@ -374,6 +405,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
             search={picker.search}
             onSearch={setSearch}
             visible={visible()}
+            pageStart={pageStart()}
             total={matches().length}
             currentPage={safePage()}
             pageCount={pageCount()}
@@ -469,6 +501,8 @@ interface PackDetailViewProps {
   search: string;
   onSearch: (value: string) => void;
   visible: ReadonlyArray<string>;
+  /** First-icon index (0-based) of the current page within the filtered list. */
+  pageStart: number;
   total: number;
   currentPage: number;
   pageCount: number;
@@ -483,7 +517,7 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
   const goNext = () =>
     props.onPageChange(Math.min(props.pageCount - 1, props.currentPage + 1));
   const formatRange = () => {
-    const start = props.currentPage * PAGE_SIZE + 1;
+    const start = props.pageStart + 1;
     const end = start + props.visible.length - 1;
     return `${numberFormat.format(start)}–${numberFormat.format(end)} of ${numberFormat.format(props.total)}`;
   };

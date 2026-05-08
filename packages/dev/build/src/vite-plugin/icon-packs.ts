@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { Plugin, ViteDevServer } from 'vite';
 
 const VIRTUAL_ID = 'virtual:icon-packs';
-const RESOLVED_ID = '\0virtual:icon-packs';
+const RESOLVED_ID = `\0${VIRTUAL_ID}`;
 
 const DEV_URL_PREFIX = '/@icon-packs/';
 const INDEX_URL_PLACEHOLDER = '__ICON_PACKS_INDEX_URL__';
