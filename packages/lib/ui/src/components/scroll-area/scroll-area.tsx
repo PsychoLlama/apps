@@ -129,6 +129,69 @@ export interface ScrollAreaProps
   scrollbars?: ScrollAreaScrollbars;
 }
 
+/** Per-scrollbar wiring shared between the X and Y axes. */
+interface ScrollbarProps {
+  axis: 'x' | 'y';
+  /** Whether the track should fade in. */
+  visible: boolean;
+  /** Whether content overflows enough to justify a thumb. */
+  hasThumb: boolean;
+  /** Thumb length along the scroll axis in pixels. */
+  thumbSize: number;
+  /** Cross-axis clearance for the perpendicular scrollbar (px). */
+  cornerSize: number;
+  /** Hand the track element back to the parent for measurement. */
+  setScrollbarRef: (el: HTMLDivElement | null) => void;
+  /** Hand the thumb element back to the parent for transform writes. */
+  setThumbRef: (el: HTMLDivElement | undefined) => void;
+  onPointerDown: (event: PointerEvent) => void;
+  onPointerEnter: () => void;
+  onPointerLeave: () => void;
+}
+
+/**
+ * Single scrollbar track + thumb. Local to the component so it
+ * stays a private layout detail — the parent owns the signals and
+ * effects, this just paints the result and forwards events.
+ */
+const Scrollbar = (props: ScrollbarProps) => {
+  const orientation = () => (props.axis === 'x' ? 'horizontal' : 'vertical');
+  const cornerVar = () =>
+    props.axis === 'x' ? css.cornerWidth : css.cornerHeight;
+  const thumbDimensionStyle = (): JSX.CSSProperties =>
+    props.axis === 'x'
+      ? { width: `${props.thumbSize}px` }
+      : { height: `${props.thumbSize}px` };
+
+  return (
+    <div
+      ref={(el) => {
+        props.setScrollbarRef(el);
+        onCleanup(() => props.setScrollbarRef(null));
+      }}
+      class={css.scrollbar}
+      data-orientation={orientation()}
+      data-state={props.visible ? 'visible' : 'hidden'}
+      style={assignInlineVars({ [cornerVar()]: `${props.cornerSize}px` })}
+      onPointerDown={(event) => props.onPointerDown(event)}
+      onPointerEnter={() => props.onPointerEnter()}
+      onPointerLeave={() => props.onPointerLeave()}
+    >
+      <Show when={props.hasThumb}>
+        <div
+          ref={(el) => {
+            props.setThumbRef(el);
+            onCleanup(() => props.setThumbRef(undefined));
+          }}
+          class={css.thumb}
+          data-orientation={orientation()}
+          style={thumbDimensionStyle()}
+        />
+      </Show>
+    </div>
+  );
+};
+
 /**
  * Styled overflow container with custom scrollbars. Drop content of
  * any size inside; the viewport scrolls and the scrollbars track
@@ -588,8 +651,6 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       .filter(Boolean)
       .join(' ');
 
-  const dataState = (visible: boolean) => (visible ? 'visible' : 'hidden');
-
   return (
     <div
       ref={setRootEl}
@@ -612,62 +673,32 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       </div>
       <div class={css.viewportFocusRing} aria-hidden="true" />
       <Show when={enableX()}>
-        <div
-          ref={(el) => {
-            setScrollbarXEl(el);
-            onCleanup(() => setScrollbarXEl(null));
-          }}
-          class={css.scrollbar}
-          data-orientation="horizontal"
-          data-state={dataState(visibleX())}
-          style={assignInlineVars({
-            [css.cornerWidth]: `${cornerWidth()}px`,
-          })}
+        <Scrollbar
+          axis="x"
+          visible={visibleX()}
+          hasThumb={hasThumbX()}
+          thumbSize={getThumbSize(sizesX())}
+          cornerSize={cornerWidth()}
+          setScrollbarRef={setScrollbarXEl}
+          setThumbRef={(el) => (thumbXEl = el)}
           onPointerDown={(event) => startDrag('x', event)}
           onPointerEnter={onScrollbarPointerEnter}
           onPointerLeave={onScrollbarPointerLeave}
-        >
-          <Show when={hasThumbX()}>
-            <div
-              ref={(el) => {
-                thumbXEl = el;
-                onCleanup(() => (thumbXEl = undefined));
-              }}
-              class={css.thumb}
-              data-orientation="horizontal"
-              style={{ width: `${getThumbSize(sizesX())}px` }}
-            />
-          </Show>
-        </div>
+        />
       </Show>
       <Show when={enableY()}>
-        <div
-          ref={(el) => {
-            setScrollbarYEl(el);
-            onCleanup(() => setScrollbarYEl(null));
-          }}
-          class={css.scrollbar}
-          data-orientation="vertical"
-          data-state={dataState(visibleY())}
-          style={assignInlineVars({
-            [css.cornerHeight]: `${cornerHeight()}px`,
-          })}
+        <Scrollbar
+          axis="y"
+          visible={visibleY()}
+          hasThumb={hasThumbY()}
+          thumbSize={getThumbSize(sizesY())}
+          cornerSize={cornerHeight()}
+          setScrollbarRef={setScrollbarYEl}
+          setThumbRef={(el) => (thumbYEl = el)}
           onPointerDown={(event) => startDrag('y', event)}
           onPointerEnter={onScrollbarPointerEnter}
           onPointerLeave={onScrollbarPointerLeave}
-        >
-          <Show when={hasThumbY()}>
-            <div
-              ref={(el) => {
-                thumbYEl = el;
-                onCleanup(() => (thumbYEl = undefined));
-              }}
-              class={css.thumb}
-              data-orientation="vertical"
-              style={{ height: `${getThumbSize(sizesY())}px` }}
-            />
-          </Show>
-        </div>
+        />
       </Show>
     </div>
   );
