@@ -214,4 +214,183 @@ describe('ScrollArea', () => {
     viewport.focus();
     expect(viewport).toHaveFocus();
   });
+
+  // --- Drag interaction ---
+  //
+  // Drag flow synthesizes pointer events directly on the scrollbar
+  // track. The handler binds move/finish listeners to the scrollbar
+  // element (the pointerdown's `currentTarget`), so dispatching the
+  // chain on that same element matches what real pointer capture
+  // would deliver.
+
+  /** Single shared pointerId so capture state stays consistent across the chain. */
+  const POINTER_ID = 1;
+
+  const dispatchPointer = (
+    target: HTMLElement,
+    type: 'pointerdown' | 'pointermove' | 'pointerup' | 'pointercancel',
+    init: { clientX: number; clientY: number; relatedTarget?: HTMLElement },
+  ) =>
+    target.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        pointerId: POINTER_ID,
+        pointerType: 'mouse',
+        ...init,
+      }),
+    );
+
+  it('drags the vertical thumb to scroll the viewport down', async () => {
+    renderArea({ testId: 'sa', type: 'always' });
+    await flushMeasurement();
+    const viewport = getViewport();
+    const track = getScrollbar('vertical');
+    if (!track) throw new Error('vertical track missing');
+    const thumb = track.children[0];
+    if (!(thumb instanceof HTMLDivElement)) {
+      throw new Error('vertical thumb missing');
+    }
+    const thumbRect = thumb.getBoundingClientRect();
+    // Press on the thumb's center, then drag 60px downward. The
+    // exact translated scroll distance depends on track/content
+    // ratios; we only need scrollTop to have moved meaningfully.
+    const startY = thumbRect.top + thumbRect.height / 2;
+    const trackRect = track.getBoundingClientRect();
+    const trackCenterX = trackRect.left + trackRect.width / 2;
+    dispatchPointer(track, 'pointerdown', {
+      clientX: trackCenterX,
+      clientY: startY,
+    });
+    dispatchPointer(track, 'pointermove', {
+      clientX: trackCenterX,
+      clientY: startY + 60,
+    });
+    dispatchPointer(track, 'pointerup', {
+      clientX: trackCenterX,
+      clientY: startY + 60,
+    });
+    expect(viewport.scrollTop).toBeGreaterThan(0);
+  });
+
+  it('drags the horizontal thumb to scroll the viewport right', async () => {
+    renderArea({ testId: 'sa', type: 'always' });
+    await flushMeasurement();
+    const viewport = getViewport();
+    const track = getScrollbar('horizontal');
+    if (!track) throw new Error('horizontal track missing');
+    const thumb = track.children[0];
+    if (!(thumb instanceof HTMLDivElement)) {
+      throw new Error('horizontal thumb missing');
+    }
+    const thumbRect = thumb.getBoundingClientRect();
+    const startX = thumbRect.left + thumbRect.width / 2;
+    const trackRect = track.getBoundingClientRect();
+    const trackCenterY = trackRect.top + trackRect.height / 2;
+    dispatchPointer(track, 'pointerdown', {
+      clientX: startX,
+      clientY: trackCenterY,
+    });
+    dispatchPointer(track, 'pointermove', {
+      clientX: startX + 60,
+      clientY: trackCenterY,
+    });
+    dispatchPointer(track, 'pointerup', {
+      clientX: startX + 60,
+      clientY: trackCenterY,
+    });
+    expect(viewport.scrollLeft).toBeGreaterThan(0);
+  });
+
+  it('jumps the thumb to the cursor on a track click outside the thumb', async () => {
+    renderArea({ testId: 'sa', type: 'always' });
+    await flushMeasurement();
+    const viewport = getViewport();
+    const track = getScrollbar('vertical');
+    if (!track) throw new Error('vertical track missing');
+    const trackRect = track.getBoundingClientRect();
+    // Press near the bottom of the empty track. With no thumb under
+    // the cursor, `pointerOffset` stays null and the handler centers
+    // the thumb on the click — so scrollTop snaps deep into the
+    // overflow instead of inching forward.
+    const trackCenterX = trackRect.left + trackRect.width / 2;
+    const trackBottom = trackRect.bottom - 5;
+    dispatchPointer(track, 'pointerdown', {
+      clientX: trackCenterX,
+      clientY: trackBottom,
+    });
+    dispatchPointer(track, 'pointerup', {
+      clientX: trackCenterX,
+      clientY: trackBottom,
+    });
+    expect(viewport.scrollTop).toBeGreaterThan(50);
+  });
+
+  it('preserves scrollTop when the press lands on the thumb leading edge', async () => {
+    renderArea({ testId: 'sa', type: 'always' });
+    await flushMeasurement();
+    const viewport = getViewport();
+    // Pre-scroll so the thumb sits well below the track's top.
+    viewport.scrollTop = 200;
+    await flushMeasurement();
+    const track = getScrollbar('vertical');
+    if (!track) throw new Error('vertical track missing');
+    const thumb = track.children[0];
+    if (!(thumb instanceof HTMLDivElement)) {
+      throw new Error('vertical thumb missing');
+    }
+    const thumbRect = thumb.getBoundingClientRect();
+    const trackRect = track.getBoundingClientRect();
+    // Press exactly on the thumb's leading edge — dispatch on the
+    // thumb so `event.target` matches the thumb element and the
+    // handler records `pointerOffset = 0` (numeric, not the "no
+    // thumb hit" sentinel `null`). Without the `?? thumbCenter`
+    // fix, this would fall back to thumb-center alignment and snap
+    // scrollTop back by ~half a thumb.
+    const trackCenterX = trackRect.left + trackRect.width / 2;
+    const thumbTopY = thumbRect.top;
+    const before = viewport.scrollTop;
+    dispatchPointer(thumb, 'pointerdown', {
+      clientX: trackCenterX,
+      clientY: thumbTopY,
+    });
+    dispatchPointer(track, 'pointerup', {
+      clientX: trackCenterX,
+      clientY: thumbTopY,
+    });
+    // 1px tolerance for sub-pixel scroll positions.
+    expect(Math.abs(viewport.scrollTop - before)).toBeLessThan(2);
+  });
+
+  it('restores scroll-behavior on pointercancel mid-drag', async () => {
+    renderArea({ testId: 'sa', type: 'always' });
+    await flushMeasurement();
+    const viewport = getViewport();
+    // Stamp a sentinel scroll-behavior on the viewport so we can
+    // observe whether the drag teardown restored it.
+    viewport.style.scrollBehavior = 'smooth';
+    const track = getScrollbar('vertical');
+    if (!track) throw new Error('vertical track missing');
+    const thumb = track.children[0];
+    if (!(thumb instanceof HTMLDivElement)) {
+      throw new Error('vertical thumb missing');
+    }
+    const thumbRect = thumb.getBoundingClientRect();
+    const thumbCenterX = thumbRect.left + thumbRect.width / 2;
+    const thumbCenterY = thumbRect.top + thumbRect.height / 2;
+    dispatchPointer(track, 'pointerdown', {
+      clientX: thumbCenterX,
+      clientY: thumbCenterY,
+    });
+    // Mid-drag: scrollBehavior is forced to 'auto'.
+    expect(viewport.style.scrollBehavior).toBe('auto');
+    // Cancellation (touch interruption, tab switch) must still
+    // restore the prior value — not just `pointerup`.
+    dispatchPointer(track, 'pointercancel', {
+      clientX: thumbCenterX,
+      clientY: thumbCenterY,
+    });
+    expect(viewport.style.scrollBehavior).toBe('smooth');
+  });
 });

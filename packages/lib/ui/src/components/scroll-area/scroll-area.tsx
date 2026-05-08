@@ -595,11 +595,21 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
 
     apply(axis === 'x' ? event.clientX : event.clientY);
 
+    // Closure flag, not `hasPointerCapture`. The capture API is
+    // browser-stateful and refuses to track synthetic pointerIds in
+    // tests, but the gate's purpose is just to ignore stray
+    // `pointermove`s that arrive after teardown — a flag handles
+    // that without depending on the browser's capture registry.
+    // Matches Radix's `rectRef`-as-flag pattern.
+    let active = true;
+
     const onMove = (moveEvent: PointerEvent) => {
-      if (!target.hasPointerCapture(moveEvent.pointerId)) return;
+      if (!active || moveEvent.pointerId !== event.pointerId) return;
       apply(axis === 'x' ? moveEvent.clientX : moveEvent.clientY);
     };
     const finish = (finishEvent: PointerEvent) => {
+      if (finishEvent.pointerId !== event.pointerId) return;
+      active = false;
       if (target.hasPointerCapture(finishEvent.pointerId))
         target.releasePointerCapture(finishEvent.pointerId);
       target.removeEventListener('pointermove', onMove);
