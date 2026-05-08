@@ -13,11 +13,21 @@
  *   `border-radius: max(--radius-1, --radius-full)` regardless of
  *   the prop; we honor `radius` directly via a `styleVariants`
  *   block so the API isn't decorative.
+ * - Scrollbar margin contract vars live in `scroll-area.vars.css.ts`
+ *   and resolve via `fallbackVar(varName, space[1])` per side per
+ *   orientation. Radix declares the same eight names on the theme
+ *   root and reads them through raw `var()`. Same shape, exposed via
+ *   V-E so consumers don't have to know the CSS variable name string.
  *
  * @see https://www.radix-ui.com/themes/docs/components/scroll-area
  */
 
-import { createVar, style, styleVariants } from '@vanilla-extract/css';
+import {
+  createVar,
+  fallbackVar,
+  style,
+  styleVariants,
+} from '@vanilla-extract/css';
 import {
   accent,
   fast,
@@ -26,6 +36,16 @@ import {
   space,
   standard,
 } from '@lib/design';
+import {
+  horizontalScrollbarMarginBottom,
+  horizontalScrollbarMarginLeft,
+  horizontalScrollbarMarginRight,
+  horizontalScrollbarMarginTop,
+  verticalScrollbarMarginBottom,
+  verticalScrollbarMarginLeft,
+  verticalScrollbarMarginRight,
+  verticalScrollbarMarginTop,
+} from './scroll-area.vars.css';
 
 // Geometry vars filled by the `size` and `radius` blocks.
 const scrollbarSize = createVar();
@@ -35,10 +55,6 @@ const scrollbarRadius = createVar();
 // visible — keeps each scrollbar from overlapping the other.
 export const cornerWidth = createVar();
 export const cornerHeight = createVar();
-
-// Outer margin between the scrollbar and the root edge — matches
-// Radix's `space[1]` inset on every side.
-const scrollbarMargin = space[1];
 
 // --- Root ---
 
@@ -129,16 +145,23 @@ export const scrollbar = style({
   touchAction: 'none',
   backgroundColor: neutral.alpha[3],
   borderRadius: scrollbarRadius,
-  margin: scrollbarMargin,
   transition: `opacity ${fast[2]} ${standard.productive}`,
 
   selectors: {
+    // Per-side margin overrides per orientation. Each side falls
+    // back to `space[1]` — the canonical Radix default. Consumers
+    // override by setting the matching var on any ancestor (see
+    // `scroll-area.vars.css.ts`).
     '&:where([data-orientation="vertical"])': {
       top: 0,
       right: 0,
       bottom: cornerHeight,
       flexDirection: 'column',
       width: scrollbarSize,
+      marginTop: fallbackVar(verticalScrollbarMarginTop, space[1]),
+      marginRight: fallbackVar(verticalScrollbarMarginRight, space[1]),
+      marginBottom: fallbackVar(verticalScrollbarMarginBottom, space[1]),
+      marginLeft: fallbackVar(verticalScrollbarMarginLeft, space[1]),
     },
     '&:where([data-orientation="horizontal"])': {
       bottom: 0,
@@ -146,6 +169,10 @@ export const scrollbar = style({
       right: cornerWidth,
       flexDirection: 'row',
       height: scrollbarSize,
+      marginTop: fallbackVar(horizontalScrollbarMarginTop, space[1]),
+      marginRight: fallbackVar(horizontalScrollbarMarginRight, space[1]),
+      marginBottom: fallbackVar(horizontalScrollbarMarginBottom, space[1]),
+      marginLeft: fallbackVar(horizontalScrollbarMarginLeft, space[1]),
     },
     '&:where([data-state="hidden"])': {
       opacity: 0,
