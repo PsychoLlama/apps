@@ -1,14 +1,14 @@
 import { findPalette } from './palette';
-import type { LogoEditorShape, LogoEditorState } from './state';
+import type { IconEditorShape, IconEditorState } from './state';
 
-const SHAPE_RX_RATIO: Record<LogoEditorShape, number> = {
+const SHAPE_RX_RATIO: Record<IconEditorShape, number> = {
   square: 0,
   rounded: 0.18,
   squircle: 0.32,
   circle: 0.5,
 };
 
-/** Options for {@link renderLogoSvg}. */
+/** Options for {@link renderIconSvg}. */
 export interface RenderOptions {
   /**
    * Logical canvas size in user units. Doubles as the `width`/`height`
@@ -28,13 +28,13 @@ export interface RenderOptions {
    * Suffix for the SVG-internal `clipPath` id. Inline SVGs share the
    * host document's id namespace, so multiple previews on the same page
    * need distinct ids to keep `clip-path: url(#…)` references from
-   * resolving to a sibling preview's clip. @default 'logo'
+   * resolving to a sibling preview's clip. @default 'icon'
    */
   idSuffix?: string;
 }
 
 /**
- * Serialize a {@link LogoEditorState} to a self-contained SVG document.
+ * Serialize a {@link IconEditorState} to a self-contained SVG document.
  *
  * Icon bodies use `currentColor`; the wrapping `<g>` sets `color` so a
  * single `style` carries the foreground tint without rewriting paths.
@@ -49,8 +49,8 @@ export interface RenderOptions {
  * uniformly scales to fit the inner padded square and centers along
  * the off-axis when the icon's native viewBox isn't square.
  */
-export const renderLogoSvg = (
-  state: LogoEditorState,
+export const renderIconSvg = (
+  state: IconEditorState,
   opts: RenderOptions = {},
 ): string => {
   const size = opts.size ?? 512;
@@ -65,7 +65,7 @@ export const renderLogoSvg = (
   const dim = opts.responsive
     ? ' width="100%" height="100%"'
     : ` width="${size}" height="${size}"`;
-  const clipId = `logo-clip-${opts.idSuffix ?? 'logo'}`;
+  const clipId = `icon-clip-${opts.idSuffix ?? 'icon'}`;
   // `findPalette` only ever returns `undefined` for an unknown name —
   // store mutations are guarded by validation, but the `palette` field
   // is typed as a union from a curated set, so the lookup is total at

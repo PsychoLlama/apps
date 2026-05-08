@@ -32,9 +32,9 @@ import {
   type IconRef,
 } from './icons';
 import {
-  DEFAULT_LOGO_EDITOR_STATE,
-  logoEditor,
-  useLogoEditorActions,
+  DEFAULT_ICON_EDITOR_STATE,
+  iconEditor,
+  useIconEditorActions,
 } from './state';
 import * as css from './index.css';
 
@@ -52,11 +52,11 @@ const setTabAction = defineAction([tabStore], (state, tab: string) => {
   if (tab === 'icon' || tab === 'style' || tab === 'export') state.tab = tab;
 });
 
-/** Recognized search-param keys backing a shareable logo URL. */
-type LogoSearchParamKey = 'icon' | 'palette' | 'shape' | 'pad';
+/** Recognized search-param keys backing a shareable icon URL. */
+type IconSearchParamKey = 'icon' | 'palette' | 'shape' | 'pad';
 
 /** Search-param shape — index signature satisfies router's `SearchParams`. */
-type LogoSearchParams = Partial<Record<LogoSearchParamKey, string>> &
+type IconSearchParams = Partial<Record<IconSearchParamKey, string>> &
   Record<string, string | string[] | undefined>;
 
 /**
@@ -65,7 +65,7 @@ type LogoSearchParams = Partial<Record<LogoSearchParamKey, string>> &
  * already in the URL." The extra `null` slot is what the runtime
  * accepts but the public `SearchParams` type doesn't model.
  */
-type LogoMirrorParams = Partial<Record<LogoSearchParamKey, string | null>>;
+type IconMirrorParams = Partial<Record<IconSearchParamKey, string | null>>;
 
 /** Pause before flushing state changes to the URL. */
 const URL_DEBOUNCE_MS = 200;
@@ -98,12 +98,12 @@ const pickRandomIcon = async (): Promise<IconRef | undefined> => {
   return toIconRef(manifest, entry);
 };
 
-export const LogoEditor = () => {
-  const actions = useLogoEditorActions();
+export const IconEditor = () => {
+  const actions = useIconEditorActions();
   const setActiveTab = useAction(setTabAction);
-  const [searchParams, setSearchParams] = useSearchParams<LogoSearchParams>();
+  const [searchParams, setSearchParams] = useSearchParams<IconSearchParams>();
 
-  const readParam = (key: LogoSearchParamKey): string | undefined => {
+  const readParam = (key: IconSearchParamKey): string | undefined => {
     const value = searchParams[key];
     return typeof value === 'string' ? value : undefined;
   };
@@ -160,7 +160,7 @@ export const LogoEditor = () => {
     // No icon param (or malformed) — drop any pending hydration and
     // reset the icon. Style fields already reset via `actions.hydrate`.
     pendingIconRequest = undefined;
-    actions.setIcon(DEFAULT_LOGO_EDITOR_STATE.icon);
+    actions.setIcon(DEFAULT_ICON_EDITOR_STATE.icon);
   });
 
   // Mirror state → URL with a small debounce so each keystroke in the
@@ -171,10 +171,10 @@ export const LogoEditor = () => {
   createEffect(
     on(
       () => ({
-        icon: encodeIconRef(logoEditor.icon),
-        palette: logoEditor.palette,
-        shape: logoEditor.shape,
-        pad: logoEditor.padding,
+        icon: encodeIconRef(iconEditor.icon),
+        palette: iconEditor.palette,
+        shape: iconEditor.shape,
+        pad: iconEditor.padding,
       }),
       (next) => {
         if (timeoutId !== undefined) clearTimeout(timeoutId);
@@ -184,27 +184,27 @@ export const LogoEditor = () => {
           // URL's existing icon param survives until the async
           // resolve lands and the user-driven flush below writes
           // the resolved value.
-          const params: LogoMirrorParams = {
+          const params: IconMirrorParams = {
             palette: paramOrNull(
               next.palette,
-              DEFAULT_LOGO_EDITOR_STATE.palette,
+              DEFAULT_ICON_EDITOR_STATE.palette,
               identity,
             ),
             shape: paramOrNull(
               next.shape,
-              DEFAULT_LOGO_EDITOR_STATE.shape,
+              DEFAULT_ICON_EDITOR_STATE.shape,
               identity,
             ),
             pad: paramOrNull(
               next.pad,
-              DEFAULT_LOGO_EDITOR_STATE.padding,
+              DEFAULT_ICON_EDITOR_STATE.padding,
               String,
             ),
           };
           if (!pendingIconRequest) {
             params.icon = paramOrNull(
               next.icon,
-              encodeIconRef(DEFAULT_LOGO_EDITOR_STATE.icon),
+              encodeIconRef(DEFAULT_ICON_EDITOR_STATE.icon),
               identity,
             );
           }
@@ -229,7 +229,7 @@ export const LogoEditor = () => {
 
   return (
     <Flex as="main" direction="column" grow>
-      <SiteHeader title="Logo Editor" />
+      <SiteHeader title="Icon Editor" />
 
       <Flex as="div" direction="column" class={css.workspace}>
         <Flex
@@ -264,28 +264,28 @@ export const LogoEditor = () => {
         </Flex>
 
         <Flex as="div" class={css.body}>
-          <Flex as="section" class={css.canvas} aria-label="Logo preview">
+          <Flex as="section" class={css.canvas} aria-label="Icon preview">
             <Flex as="div" class={css.canvasStage}>
-              <Preview state={logoEditor} size={296} />
+              <Preview state={iconEditor} size={296} />
             </Flex>
           </Flex>
 
           <TabsRoot
-            testId="logo-editor-inspector"
+            testId="icon-editor-inspector"
             value={tabState.tab}
             onValueChange={setActiveTab}
             class={css.rail}
             aria-label="Inspector"
           >
             <TabsList
-              testId="logo-editor-inspector-list"
+              testId="icon-editor-inspector-list"
               justify="center"
               aria-label="Inspector sections"
             >
               <For each={TABS}>
                 {(tab) => (
                   <TabsTrigger
-                    testId={`logo-editor-inspector-trigger-${tab.id}`}
+                    testId={`icon-editor-inspector-trigger-${tab.id}`}
                     value={tab.id}
                   >
                     {tab.label}
@@ -295,34 +295,34 @@ export const LogoEditor = () => {
             </TabsList>
 
             <TabsContent
-              testId="logo-editor-inspector-panel-icon"
+              testId="icon-editor-inspector-panel-icon"
               value="icon"
               class={`${css.tabPanel} ${css.tabPanelGrow}`}
             >
-              <IconGrid selected={logoEditor.icon} onSelect={setIcon} />
+              <IconGrid selected={iconEditor.icon} onSelect={setIcon} />
             </TabsContent>
 
             <TabsContent
-              testId="logo-editor-inspector-panel-style"
+              testId="icon-editor-inspector-panel-style"
               value="style"
               class={css.tabPanel}
             >
               <Flex as="div" direction="column" gap={3}>
                 <Field label="Palette">
                   <PalettePicker
-                    value={logoEditor.palette}
+                    value={iconEditor.palette}
                     onChange={actions.setPalette}
                   />
                 </Field>
                 <InlineField label="Shape">
                   <ShapeSelector
-                    value={logoEditor.shape}
+                    value={iconEditor.shape}
                     onChange={actions.setShape}
                   />
                 </InlineField>
                 <InlineField label="Padding">
                   <PaddingSlider
-                    value={logoEditor.padding}
+                    value={iconEditor.padding}
                     onInput={actions.setPadding}
                   />
                 </InlineField>
@@ -330,17 +330,17 @@ export const LogoEditor = () => {
             </TabsContent>
 
             <TabsContent
-              testId="logo-editor-inspector-panel-export"
+              testId="icon-editor-inspector-panel-export"
               value="export"
               class={css.tabPanel}
             >
-              <ExportActions state={logoEditor} />
+              <ExportActions state={iconEditor} />
             </TabsContent>
           </TabsRoot>
         </Flex>
 
         <Flex as="footer" class={css.statusBar} aria-label="Status">
-          <Spec state={logoEditor} variant="plain" />
+          <Spec state={iconEditor} variant="plain" />
         </Flex>
       </Flex>
     </Flex>

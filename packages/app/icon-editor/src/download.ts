@@ -1,5 +1,5 @@
 /**
- * Browser download helpers for the rendered logo. Both functions
+ * Browser download helpers for the rendered icon. Both functions
  * trigger a synthetic anchor click — the browser handles the rest.
  */
 
@@ -15,7 +15,7 @@ export const downloadSvg = (svg: string, filename: string): void => {
  * `<img>`-loaded SVG is rasterized once at intrinsic dimensions, so a
  * mismatch (e.g. a 512-wide SVG drawn into a 1024 canvas) goes through
  * a resample step and lands soft. The caller is responsible for
- * rendering the SVG at the target size — `renderLogoSvg(state, { size:
+ * rendering the SVG at the target size — `renderIconSvg(state, { size:
  * sizePx })` does the right thing.
  *
  * The output canvas backing store is exactly `sizePx × sizePx`, so the
@@ -50,7 +50,7 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Failed to load logo SVG'));
+    img.onerror = () => reject(new Error('Failed to load icon SVG'));
     img.src = url;
   });
 };

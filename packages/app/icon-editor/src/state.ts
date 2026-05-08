@@ -2,30 +2,30 @@ import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import { DEFAULT_ICON, type IconRef } from './icons';
 import { PALETTES, findPalette, type PaletteName } from './palette';
 
-/** Available shape masks for the logo canvas. */
-export type LogoEditorShape = 'square' | 'rounded' | 'squircle' | 'circle';
+/** Available shape masks for the icon canvas. */
+export type IconEditorShape = 'square' | 'rounded' | 'squircle' | 'circle';
 
-const SHAPES: ReadonlyArray<LogoEditorShape> = [
+const SHAPES: ReadonlyArray<IconEditorShape> = [
   'square',
   'rounded',
   'squircle',
   'circle',
 ];
 
-/** Snapshot of every input that affects the rendered logo. */
-export interface LogoEditorState {
+/** Snapshot of every input that affects the rendered icon. */
+export interface IconEditorState {
   /** Selected icon — fully-qualified reference plus rendered body. */
   icon: IconRef;
   /** Active palette — drives both background and foreground via lookup. */
   palette: PaletteName;
   /** Mask applied to the canvas. */
-  shape: LogoEditorShape;
+  shape: IconEditorShape;
   /** Padding as a percentage of the canvas width (`0`–`40`). */
   padding: number;
 }
 
 /** Canonical defaults the store starts at and `reset` returns to. */
-export const DEFAULT_LOGO_EDITOR_STATE: LogoEditorState = {
+export const DEFAULT_ICON_EDITOR_STATE: IconEditorState = {
   icon: DEFAULT_ICON,
   palette: 'blue',
   shape: 'rounded',
@@ -33,43 +33,43 @@ export const DEFAULT_LOGO_EDITOR_STATE: LogoEditorState = {
 };
 
 /** Store handle — internal so consumers reach for the materialized view. */
-const logoEditorStore = defineStore<LogoEditorState>(() => ({
-  ...DEFAULT_LOGO_EDITOR_STATE,
+const iconEditorStore = defineStore<IconEditorState>(() => ({
+  ...DEFAULT_ICON_EDITOR_STATE,
 }));
 
-/** Live, readonly view of the logo under construction. */
-export const logoEditor = createStore(logoEditorStore);
+/** Live, readonly view of the icon under construction. */
+export const iconEditor = createStore(iconEditorStore);
 
 const setIconAction = defineAction(
-  [logoEditorStore],
+  [iconEditorStore],
   (state, icon: IconRef) => {
     state.icon = icon;
   },
 );
 
 const setPaletteAction = defineAction(
-  [logoEditorStore],
+  [iconEditorStore],
   (state, name: PaletteName) => {
     if (findPalette(name)) state.palette = name;
   },
 );
 
 const setShapeAction = defineAction(
-  [logoEditorStore],
-  (state, value: LogoEditorShape) => {
+  [iconEditorStore],
+  (state, value: IconEditorShape) => {
     state.shape = value;
   },
 );
 
 const setPaddingAction = defineAction(
-  [logoEditorStore],
+  [iconEditorStore],
   (state, value: number) => {
     state.padding = value;
   },
 );
 
-const resetAction = defineAction([logoEditorStore], (state) => {
-  Object.assign(state, DEFAULT_LOGO_EDITOR_STATE);
+const resetAction = defineAction([iconEditorStore], (state) => {
+  Object.assign(state, DEFAULT_ICON_EDITOR_STATE);
 });
 
 const pickFrom = <T>(arr: ReadonlyArray<T>): T =>
@@ -83,14 +83,14 @@ const PADDING_STEPS = [0, 10, 20, 30, 40] as const;
  * random icon (which is async) and dispatches `setIcon` separately —
  * actions stay synchronous, so style + icon are rolled in two steps.
  */
-const randomizeStyleAction = defineAction([logoEditorStore], (state) => {
+const randomizeStyleAction = defineAction([iconEditorStore], (state) => {
   state.palette = pickFrom(PALETTES).name;
   state.shape = pickFrom(SHAPES);
   state.padding = pickFrom(PADDING_STEPS);
 });
 
-/** Subset of {@link LogoEditorState} fields recognized by `hydrate`. */
-export interface LogoEditorHydrateInput {
+/** Subset of {@link IconEditorState} fields recognized by `hydrate`. */
+export interface IconEditorHydrateInput {
   /** Fully-resolved icon — supplied after async lookup against pack data. */
   icon?: IconRef;
   /** Palette name from the curated set. */
@@ -101,7 +101,7 @@ export interface LogoEditorHydrateInput {
   padding?: number;
 }
 
-const isShape = (value: string): value is LogoEditorShape =>
+const isShape = (value: string): value is IconEditorShape =>
   (SHAPES as ReadonlyArray<string>).includes(value);
 
 const clampPadding = (value: number): number =>
@@ -109,14 +109,14 @@ const clampPadding = (value: number): number =>
 
 /**
  * Resolve a hydrate input into a complete state snapshot. Missing or
- * unparseable fields fall back to {@link DEFAULT_LOGO_EDITOR_STATE} —
- * the URL is the source of truth, so a clean `/logo-editor` link must
+ * unparseable fields fall back to {@link DEFAULT_ICON_EDITOR_STATE} —
+ * the URL is the source of truth, so a clean `/icon-editor` link must
  * render the canonical defaults regardless of what the singleton store
  * was holding from a prior session.
  */
 export const resolveHydrateInput = (
-  input: LogoEditorHydrateInput,
-): LogoEditorState => {
+  input: IconEditorHydrateInput,
+): IconEditorState => {
   const palette =
     input.palette && findPalette(input.palette) ? input.palette : undefined;
   const shape = input.shape && isShape(input.shape) ? input.shape : undefined;
@@ -125,10 +125,10 @@ export const resolveHydrateInput = (
       ? clampPadding(input.padding)
       : undefined;
   return {
-    icon: input.icon ?? DEFAULT_LOGO_EDITOR_STATE.icon,
-    palette: palette ?? DEFAULT_LOGO_EDITOR_STATE.palette,
-    shape: shape ?? DEFAULT_LOGO_EDITOR_STATE.shape,
-    padding: padding ?? DEFAULT_LOGO_EDITOR_STATE.padding,
+    icon: input.icon ?? DEFAULT_ICON_EDITOR_STATE.icon,
+    palette: palette ?? DEFAULT_ICON_EDITOR_STATE.palette,
+    shape: shape ?? DEFAULT_ICON_EDITOR_STATE.shape,
+    padding: padding ?? DEFAULT_ICON_EDITOR_STATE.padding,
   };
 };
 
@@ -138,11 +138,11 @@ export const resolveHydrateInput = (
  * (requires fetching pack data), so callers handle it separately via
  * {@link setIconAction}. Threading the current icon through this
  * action would also create a reactive cycle in any caller that reads
- * `logoEditor.icon` to populate the input.
+ * `iconEditor.icon` to populate the input.
  */
 const hydrateAction = defineAction(
-  [logoEditorStore],
-  (state, input: LogoEditorHydrateInput) => {
+  [iconEditorStore],
+  (state, input: IconEditorHydrateInput) => {
     const resolved = resolveHydrateInput(input);
     state.palette = resolved.palette;
     state.shape = resolved.shape;
@@ -150,22 +150,22 @@ const hydrateAction = defineAction(
   },
 );
 
-/** Shape returned by {@link useLogoEditorActions}. */
-export interface LogoEditorActions {
+/** Shape returned by {@link useIconEditorActions}. */
+export interface IconEditorActions {
   setIcon: (icon: IconRef) => void;
   setPalette: (name: PaletteName) => void;
-  setShape: (value: LogoEditorShape) => void;
+  setShape: (value: IconEditorShape) => void;
   setPadding: (value: number) => void;
   /** Restore the canonical defaults. */
   reset: () => void;
   /** Roll a fresh palette/shape/padding. Icon is randomized separately. */
   randomizeStyle: () => void;
   /** Apply validated fields from a partial input (e.g. URL params). */
-  hydrate: (input: LogoEditorHydrateInput) => void;
+  hydrate: (input: IconEditorHydrateInput) => void;
 }
 
-/** Bind the logo-editor actions inside a component scope. */
-export const useLogoEditorActions = (): LogoEditorActions => ({
+/** Bind the icon-editor actions inside a component scope. */
+export const useIconEditorActions = (): IconEditorActions => ({
   setIcon: useAction(setIconAction),
   setPalette: useAction(setPaletteAction),
   setShape: useAction(setShapeAction),

@@ -1,7 +1,7 @@
 import { style } from '@vanilla-extract/css';
 
 // The frame is just a sized container — the rendered SVG carries its
-// own background fill and rounded corners (matching the logo's shape
+// own background fill and rounded corners (matching the icon's shape
 // mask), so anywhere outside the rounded shape stays transparent and
 // the parent's surface (the workspace dot grid) shows through.
 export const frame = style({

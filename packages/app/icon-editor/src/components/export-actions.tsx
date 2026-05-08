@@ -4,14 +4,14 @@ import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import { Button, Flex, TextField } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { downloadPng, downloadSvg } from '../download';
-import { renderLogoSvg } from '../svg';
-import type { LogoEditorState } from '../state';
+import { renderIconSvg } from '../svg';
+import type { IconEditorState } from '../state';
 import { Field } from './field';
 import * as css from './export-actions.css';
 
 interface ExportActionsProps {
-  /** Reactive logo state — exported on every Export click. */
-  state: LogoEditorState;
+  /** Reactive icon state — exported on every Export click. */
+  state: IconEditorState;
 }
 
 type ExportFormat = 'svg' | 'png';
@@ -56,11 +56,11 @@ const setSizeAction = defineAction([exportStore], (state, value: number) => {
 const clampSize = (value: number): number =>
   Math.max(MIN_PX, Math.min(MAX_PX, Math.round(value)));
 
-const filenameStem = (state: LogoEditorState) =>
-  `logo-${state.icon.pack}-${state.icon.name}`;
+const filenameStem = (state: IconEditorState) =>
+  `icon-${state.icon.pack}-${state.icon.name}`;
 
 /**
- * Compose a logo export. Format toggles between SVG (vector, single
+ * Compose an icon export. Format toggles between SVG (vector, single
  * download) and PNG (rasterized at the chosen size). The PNG row
  * surfaces three preset chips for the most common sizes plus a
  * free-form number input — always square, since the canvas itself is
@@ -79,7 +79,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   const handleExport = () => {
     if (exportState.format === 'svg') {
       downloadSvg(
-        renderLogoSvg(props.state, { size: SVG_EXPORT_SIZE }),
+        renderIconSvg(props.state, { size: SVG_EXPORT_SIZE }),
         filename(),
       );
       return;
@@ -91,7 +91,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
     // `target × target` regardless of device pixel ratio.
     const target = effectiveSize();
     void downloadPng(
-      renderLogoSvg(props.state, { size: target }),
+      renderIconSvg(props.state, { size: target }),
       target,
       filename(),
     );

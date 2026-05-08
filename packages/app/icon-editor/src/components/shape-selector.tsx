@@ -1,18 +1,18 @@
 import { For } from 'solid-js';
 import type { Component } from 'solid-js';
 import { Flex } from '@lib/ui';
-import type { LogoEditorShape } from '../state';
+import type { IconEditorShape } from '../state';
 import * as css from './shape-selector.css';
 
 interface ShapeSelectorProps {
   /** Currently selected shape mask. */
-  value: LogoEditorShape;
+  value: IconEditorShape;
   /** Called when the user selects a different shape. */
-  onChange: (shape: LogoEditorShape) => void;
+  onChange: (shape: IconEditorShape) => void;
 }
 
 interface ShapeOption {
-  value: LogoEditorShape;
+  value: IconEditorShape;
   /** Human label exposed via `aria-label`; the swatch shape carries the visual cue. */
   label: string;
   /** Border radius applied to the swatch chip, in CSS. */

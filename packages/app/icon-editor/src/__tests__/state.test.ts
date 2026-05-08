@@ -1,4 +1,4 @@
-import { DEFAULT_LOGO_EDITOR_STATE, resolveHydrateInput } from '../state';
+import { DEFAULT_ICON_EDITOR_STATE, resolveHydrateInput } from '../state';
 import { DEFAULT_ICON, type IconRef } from '../icons';
 
 const customIcon: IconRef = {
@@ -11,7 +11,7 @@ const customIcon: IconRef = {
 
 describe('resolveHydrateInput', () => {
   it('returns the canonical defaults for an empty input', () => {
-    expect(resolveHydrateInput({})).toEqual(DEFAULT_LOGO_EDITOR_STATE);
+    expect(resolveHydrateInput({})).toEqual(DEFAULT_ICON_EDITOR_STATE);
   });
 
   it('keeps the default icon when the caller does not supply a resolved one', () => {
@@ -25,13 +25,13 @@ describe('resolveHydrateInput', () => {
   it('falls back to the default when an unknown palette name is supplied', () => {
     const next = resolveHydrateInput({ palette: 'mauvelous' });
 
-    expect(next.palette).toBe(DEFAULT_LOGO_EDITOR_STATE.palette);
+    expect(next.palette).toBe(DEFAULT_ICON_EDITOR_STATE.palette);
   });
 
   it('falls back to the default when an unknown shape is supplied', () => {
     const next = resolveHydrateInput({ shape: 'pentagon' });
 
-    expect(next.shape).toBe(DEFAULT_LOGO_EDITOR_STATE.shape);
+    expect(next.shape).toBe(DEFAULT_ICON_EDITOR_STATE.shape);
   });
 
   it('clamps the padding into the slider range and floors fractionals', () => {
@@ -42,11 +42,11 @@ describe('resolveHydrateInput', () => {
 
   it('rejects non-finite padding values rather than poisoning the store', () => {
     expect(resolveHydrateInput({ padding: Number.NaN }).padding).toBe(
-      DEFAULT_LOGO_EDITOR_STATE.padding,
+      DEFAULT_ICON_EDITOR_STATE.padding,
     );
     expect(
       resolveHydrateInput({ padding: Number.POSITIVE_INFINITY }).padding,
-    ).toBe(DEFAULT_LOGO_EDITOR_STATE.padding);
+    ).toBe(DEFAULT_ICON_EDITOR_STATE.padding);
   });
 
   it('applies a fully-specified valid input verbatim', () => {
