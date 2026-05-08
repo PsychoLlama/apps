@@ -133,7 +133,14 @@ export const LogoEditor = () => {
   createEffect(() => {
     const padParam = readParam('pad');
     const iconParam = readParam('icon');
+    // Pass the current icon through so style hydration doesn't
+    // overwrite it with `DEFAULT_ICON` (mdi:home). The icon resolves
+    // asynchronously below; while that's pending we want to keep
+    // whatever the store already had — otherwise every URL flush
+    // (debounced ~200 ms after each pick) flashes the picker back to
+    // MDI for the few microtasks `resolveIconRef` takes to finish.
     actions.hydrate({
+      icon: logoEditor.icon,
       palette: readParam('palette'),
       shape: readParam('shape'),
       padding: padParam !== undefined ? Number(padParam) : undefined,
