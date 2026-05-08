@@ -37,9 +37,9 @@ const rowDivider = createVar();
 export const root = style({
   vars: {
     // Defaults so the cell base always has a value, even before the
-    // size variant lands.
+    // size variant lands. Mirror size-2.
     [cellPadding]: space[3],
-    [cellMinHeight]: space[8],
+    [cellMinHeight]: space[7],
     [tableBorderRadius]: radius[4],
     [rowBackground]: 'transparent',
     [rowDivider]: `inset 0 -1px ${neutral.alpha[5]}`,
@@ -85,7 +85,7 @@ export const table = style({
     // header tint and row dividers don't peek past the rounded edge.
     // The wrapper border eats one pixel; pull the inner radius in to
     // compensate so the corner highlight stays even.
-    [`${surfaceVariant} &`]: {
+    [`:where(${surfaceVariant}) &`]: {
       overflow: 'hidden',
       borderRadius: `calc(${tableBorderRadius} - 1px)`,
     },
@@ -115,10 +115,15 @@ const sizeStyle = (
   letterSpacing: type.letterSpacing,
 });
 
+// Min-heights step 32 / 40 / 48 px. Radix lands 36 / 44 / 48 px at
+// default scaling; our 9-step `space` doesn't have 36 or 44, so steps
+// 1 and 2 round down to the nearest token (4px under) and step 3
+// matches exactly. The earlier 40/48/64 progression overshot size-3
+// by 16px relative to upstream.
 export const size = styleVariants({
-  1: sizeStyle(space[2], space[7], radius[3], typeScale[2]),
-  2: sizeStyle(space[3], space[8], radius[4], typeScale[2]),
-  3: sizeStyle(`${space[3]} ${space[4]}`, space[9], radius[4], typeScale[3]),
+  1: sizeStyle(space[2], space[6], radius[3], typeScale[2]),
+  2: sizeStyle(space[3], space[7], radius[4], typeScale[2]),
+  3: sizeStyle(`${space[3]} ${space[4]}`, space[8], radius[4], typeScale[3]),
 });
 
 // --- Sections ---
@@ -128,7 +133,7 @@ export const header = style({
   selectors: {
     // Tint the header row by re-declaring the cell-background var; it
     // cascades into every header cell.
-    [`${surfaceVariant} &`]: {
+    [`:where(${surfaceVariant}) &`]: {
       vars: { [rowBackground]: neutral.alpha[2] },
     },
   },
@@ -146,7 +151,7 @@ export const row = style({
     // The last body row sits on the wrapper's bottom edge inside the
     // surface variant — drop the divider shadow so the corner stays
     // clean. Re-declaring the var cascades into the row's cells.
-    [`${surfaceVariant} ${body} &:last-child`]: {
+    [`:where(${surfaceVariant} ${body}) &:last-child`]: {
       vars: { [rowDivider]: 'none' },
     },
   },
