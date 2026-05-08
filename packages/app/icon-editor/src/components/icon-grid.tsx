@@ -22,12 +22,14 @@ import {
 } from '@lib/state';
 import {
   Badge,
+  Code,
   DataListItem,
   DataListLabel,
   DataListRoot,
   DataListValue,
   Flex,
   IconButton,
+  Link,
   Text,
   TextField,
 } from '@lib/ui';
@@ -785,43 +787,28 @@ const PackInfoView: Component<PackInfoViewProps> = (props) => {
             <DataListItem>
               <DataListLabel>ID</DataListLabel>
               <DataListValue>
-                <Text as="code" size={1} selectable>
-                  {pack().id}
-                </Text>
+                <Code>{pack().id}</Code>
               </DataListValue>
             </DataListItem>
             <DataListItem>
               <DataListLabel>Icons</DataListLabel>
-              <DataListValue>
-                <Text as="span" size={1} selectable={false}>
-                  {numberFormat.format(pack().total)}
-                </Text>
-              </DataListValue>
+              <DataListValue>{numberFormat.format(pack().total)}</DataListValue>
             </DataListItem>
             <Show when={author()}>
               {(value) => (
                 <DataListItem>
                   <DataListLabel>Author</DataListLabel>
                   <DataListValue>
-                    <Show
-                      when={value().url}
-                      fallback={
-                        <Text as="span" size={1} selectable>
-                          {value().name}
-                        </Text>
-                      }
-                    >
+                    <Show when={value().url} fallback={value().name}>
                       {(url) => (
-                        <Text
-                          as="a"
-                          size={1}
-                          selectable
+                        <Link
+                          testId="icon-grid-pack-info-author"
                           href={url()}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
                           {value().name}
-                        </Text>
+                        </Link>
                       )}
                     </Show>
                   </DataListValue>
@@ -835,23 +822,17 @@ const PackInfoView: Component<PackInfoViewProps> = (props) => {
                   <DataListValue>
                     <Show
                       when={value().url}
-                      fallback={
-                        <Text as="span" size={1} selectable>
-                          {value().title ?? value().spdx ?? 'Unknown'}
-                        </Text>
-                      }
+                      fallback={value().title ?? value().spdx ?? 'Unknown'}
                     >
                       {(url) => (
-                        <Text
-                          as="a"
-                          size={1}
-                          selectable
+                        <Link
+                          testId="icon-grid-pack-info-license"
                           href={url()}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
                           {value().title ?? value().spdx ?? 'License'}
-                        </Text>
+                        </Link>
                       )}
                     </Show>
                   </DataListValue>

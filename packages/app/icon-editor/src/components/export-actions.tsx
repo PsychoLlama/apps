@@ -1,7 +1,7 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
-import { Badge, Button, Flex, Text, TextField } from '@lib/ui';
+import { Badge, Button, Flex, Link, Text, TextField } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { downloadPng, downloadSvg } from '../download';
 import { renderIconSvg } from '../svg';
@@ -194,10 +194,8 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
               }
             >
               {(url) => (
-                <Text
-                  as="a"
-                  size={1}
-                  selectable
+                <Link
+                  testId="export-license"
                   href={url()}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -205,7 +203,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
                   <Badge size={1} variant="soft" color="neutral">
                     {spdx()}
                   </Badge>
-                </Text>
+                </Link>
               )}
             </Show>
           </Flex>
