@@ -108,7 +108,20 @@ const fetchJson = async <T>(url: string): Promise<T> => {
 
 let indexPromise: Promise<IconPackSummary[]> | undefined;
 const manifestCache = new Map<string, Promise<IconPackManifest>>();
-const pageCache = new Map<string, Promise<IconEntry[]>>();
+// Per-pack page cache so eviction is precise. Outer key is pack id;
+// inner key is page URL. A flat URL→entries map saved one indirection
+// but conflated packs — switching away from a heavy pack couldn't
+// reclaim its pages without scanning every URL.
+const pageCache = new Map<string, Map<string, Promise<IconEntry[]>>>();
+
+const pageCacheFor = (packId: string): Map<string, Promise<IconEntry[]>> => {
+  let inner = pageCache.get(packId);
+  if (!inner) {
+    inner = new Map();
+    pageCache.set(packId, inner);
+  }
+  return inner;
+};
 
 /** Load the pack catalog. Cached after the first call. */
 export const loadIconPackIndex = (): Promise<IconPackSummary[]> => {
@@ -129,13 +142,37 @@ export const loadIconPackManifest = (
   return promise;
 };
 
-/** Load a single page chunk — array of `{ name, body }`. Cached by URL. */
-export const loadIconPage = (pageUrl: string): Promise<IconEntry[]> => {
-  const cached = pageCache.get(pageUrl);
+/**
+ * Load a single page chunk — array of `{ name, body }`. Cached per
+ * `(packId, pageUrl)` so {@link releaseInactivePackCaches} can drop
+ * a whole pack's worth of pages in one shot.
+ */
+export const loadIconPage = (
+  packId: string,
+  pageUrl: string,
+): Promise<IconEntry[]> => {
+  const inner = pageCacheFor(packId);
+  const cached = inner.get(pageUrl);
   if (cached) return cached;
   const promise = fetchJson<IconEntry[]>(pageUrl);
-  pageCache.set(pageUrl, promise);
+  inner.set(pageUrl, promise);
   return promise;
+};
+
+/**
+ * Drop manifests + pages for any pack other than `activePackId`.
+ * The browser's HTTP cache covers the case where the user comes
+ * back — re-fetching is cheap, while keeping every visited pack's
+ * names array (one string per icon, ~7000 for MDI) and bodies in
+ * memory adds up fast across the catalog.
+ */
+export const releaseInactivePackCaches = (activePackId: string): void => {
+  for (const key of [...manifestCache.keys()]) {
+    if (key !== activePackId) manifestCache.delete(key);
+  }
+  for (const key of [...pageCache.keys()]) {
+    if (key !== activePackId) pageCache.delete(key);
+  }
 };
 
 /** Encode a `pack:name` reference for URL params. */
@@ -206,7 +243,7 @@ export interface IconPageResult {
 export const loadIconPageEntries = async (
   request: IconPageRequest,
 ): Promise<IconPageResult> => {
-  const entries = await loadIconPage(request.pageUrl);
+  const entries = await loadIconPage(request.packId, request.pageUrl);
   return { packId: request.packId, pageUrl: request.pageUrl, entries };
 };
 
@@ -241,7 +278,7 @@ export const resolveIconRef = async (
   const position = findIconIndex(manifest, name);
   if (position < 0) return undefined;
   const pageUrl = manifest.pages[pageIndexFor(manifest, position)];
-  const page = await loadIconPage(pageUrl);
+  const page = await loadIconPage(summary.id, pageUrl);
   const entry = page.find((icon) => icon.name === name);
   if (!entry) return undefined;
   return toIconRef(manifest, entry);
