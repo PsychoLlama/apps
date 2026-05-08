@@ -1,7 +1,7 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
-import { Button, Flex, TextField } from '@lib/ui';
+import { Badge, Button, Flex, Text, TextField } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { downloadPng, downloadSvg } from '../download';
 import { renderIconSvg } from '../svg';
@@ -172,6 +172,45 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
       >
         <IconDownload aria-hidden /> Export
       </Button>
+
+      <Show when={props.state.icon.license?.spdx}>
+        {(spdx) => (
+          <Flex
+            as="div"
+            align="center"
+            justify="between"
+            gap={2}
+            class={css.licenseRow}
+          >
+            <Text as="span" size={1} color="lowContrast" selectable={false}>
+              Icon license
+            </Text>
+            <Show
+              when={props.state.icon.license?.url}
+              fallback={
+                <Badge size={1} variant="soft" color="neutral">
+                  {spdx()}
+                </Badge>
+              }
+            >
+              {(url) => (
+                <Text
+                  as="a"
+                  size={1}
+                  selectable
+                  href={url()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Badge size={1} variant="soft" color="neutral">
+                    {spdx()}
+                  </Badge>
+                </Text>
+              )}
+            </Show>
+          </Flex>
+        )}
+      </Show>
     </Flex>
   );
 };

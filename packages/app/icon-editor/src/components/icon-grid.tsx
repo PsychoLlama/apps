@@ -395,7 +395,19 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   const handlePickIcon = (manifest: IconPackManifest, name: string) => {
     const entry = picker.entries[entryKey(manifest.id, name)];
     if (!entry) return;
-    props.onSelect(toIconRef(manifest, entry));
+    const summary = activePack();
+    props.onSelect(
+      toIconRef(
+        {
+          id: manifest.id,
+          width: manifest.width,
+          height: manifest.height,
+          license: summary?.license,
+          author: summary?.author,
+        },
+        entry,
+      ),
+    );
   };
 
   return (

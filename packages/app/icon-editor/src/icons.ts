@@ -30,7 +30,9 @@ export interface IconEntry {
 /**
  * A fully-qualified icon — a pack id + an {@link IconEntry} with the
  * effective viewBox dimensions resolved (per-icon overrides win,
- * pack defaults fill in otherwise).
+ * pack defaults fill in otherwise). License + author travel with the
+ * ref so the export panel can show attribution and the SVG metadata
+ * stamp can write it without re-fetching the index.
  */
 export interface IconRef {
   /** Pack id (matches `IconPackSummary.id`). */
@@ -43,6 +45,10 @@ export interface IconRef {
   width: number;
   /** Effective viewBox height. */
   height: number;
+  /** Pack license, when iconify provides one. */
+  license?: IconPackLicense;
+  /** Pack author, when iconify provides one. */
+  author?: IconPackAuthor;
 }
 
 /** Pack author as iconify exposes it. */
@@ -117,6 +123,15 @@ export const DEFAULT_ICON: IconRef = {
   body: '<path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8z"/>',
   width: 24,
   height: 24,
+  license: {
+    title: 'Apache 2.0',
+    spdx: 'Apache-2.0',
+    url: 'https://github.com/Templarian/MaterialDesign/blob/master/LICENSE',
+  },
+  author: {
+    name: 'Pictogrammers',
+    url: 'https://github.com/Templarian/MaterialDesign',
+  },
 };
 
 interface IndexPayload {
@@ -274,17 +289,28 @@ export const loadIconPageEntries = async (
 
 /**
  * Materialize an {@link IconRef} from an icon entry plus its host
- * manifest. Per-icon viewBox overrides win over the pack default.
+ * pack metadata. Per-icon viewBox overrides win over the pack
+ * default. Callers can pass either a manifest (no license/author) or
+ * a summary (carries both); the optional fields land on the ref when
+ * the source has them.
  */
 export const toIconRef = (
-  manifest: { id: string; width: number; height: number },
+  source: {
+    id: string;
+    width: number;
+    height: number;
+    license?: IconPackLicense;
+    author?: IconPackAuthor;
+  },
   entry: IconEntry,
 ): IconRef => ({
-  pack: manifest.id,
+  pack: source.id,
   name: entry.name,
   body: entry.body,
-  width: entry.width ?? manifest.width,
-  height: entry.height ?? manifest.height,
+  width: entry.width ?? source.width,
+  height: entry.height ?? source.height,
+  license: source.license,
+  author: source.author,
 });
 
 /**
@@ -306,5 +332,14 @@ export const resolveIconRef = async (
   const page = await loadIconPage(summary.id, pageUrl);
   const entry = page.find((icon) => icon.name === name);
   if (!entry) return undefined;
-  return toIconRef(manifest, entry);
+  return toIconRef(
+    {
+      id: manifest.id,
+      width: manifest.width,
+      height: manifest.height,
+      license: summary.license,
+      author: summary.author,
+    },
+    entry,
+  );
 };

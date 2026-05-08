@@ -95,7 +95,16 @@ const pickRandomIcon = async (): Promise<IconRef | undefined> => {
   const page = await loadIconPage(pack.id, manifest.pages[pageIndex]);
   if (page.length === 0) return undefined;
   const entry = page[Math.floor(Math.random() * page.length)];
-  return toIconRef(manifest, entry);
+  return toIconRef(
+    {
+      id: manifest.id,
+      width: manifest.width,
+      height: manifest.height,
+      license: pack.license,
+      author: pack.author,
+    },
+    entry,
+  );
 };
 
 export const IconEditor = () => {

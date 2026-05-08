@@ -48,3 +48,12 @@ export const formatOptionActive = style({
   backgroundColor: accent.alpha[3],
   color: accent.solid[11],
 });
+
+/**
+ * Footer row beneath the export button — surfaces the active pack's
+ * license SPDX so the user sees what they're committing to. Quiet
+ * styling so it reads as informational, not an action.
+ */
+export const licenseRow = style({
+  paddingTop: space[1],
+});
