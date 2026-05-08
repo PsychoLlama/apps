@@ -20,7 +20,7 @@ import {
   useAction,
   useEffect,
 } from '@lib/state';
-import { Flex, IconButton, Text, TextField } from '@lib/ui';
+import { Badge, Flex, IconButton, Text, TextField } from '@lib/ui';
 import IconBack from 'virtual:icons/mdi/arrow-left';
 import IconClose from 'virtual:icons/mdi/close';
 import IconNext from 'virtual:icons/mdi/chevron-right';
@@ -474,16 +474,25 @@ const PackListView: Component<PackListViewProps> = (props) => (
                     {numberFormat.format(pack.total)}
                   </Text>
                 </Flex>
-                <Flex as="div" align="center" gap={2}>
-                  <For each={pack.samples}>
-                    {(sample) => (
-                      <svg
-                        class={css.packSample}
-                        viewBox={`0 0 ${sample.width ?? pack.width} ${sample.height ?? pack.height}`}
-                        innerHTML={sample.body}
-                      />
+                <Flex as="div" align="center" justify="between" gap={2}>
+                  <Flex as="div" align="center" gap={2}>
+                    <For each={pack.samples}>
+                      {(sample) => (
+                        <svg
+                          class={css.packSample}
+                          viewBox={`0 0 ${sample.width ?? pack.width} ${sample.height ?? pack.height}`}
+                          innerHTML={sample.body}
+                        />
+                      )}
+                    </For>
+                  </Flex>
+                  <Show when={pack.license?.spdx}>
+                    {(spdx) => (
+                      <Badge size={1} variant="soft" color="neutral">
+                        {spdx()}
+                      </Badge>
                     )}
-                  </For>
+                  </Show>
                 </Flex>
               </Flex>
             </button>
