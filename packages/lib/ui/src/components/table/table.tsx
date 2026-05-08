@@ -21,14 +21,6 @@
  *   system forces the call site to declare intent. Static content
  *   still gets the prompt — selectability is a meaning question, not
  *   a "is the value dynamic" question.
- * - Ghost variant doesn't pull the scrollbar to the wrapper edge.
- *   Radix overrides `--scrollarea-scrollbar-horizontal-margin-*` to
- *   zero out the inset; our ScrollArea exposes no equivalent var.
- *   Scrollbar inset stays uniform until ScrollArea grows the hook.
- * - `<Inset>` inside a cell doesn't flush to the cell edge. Radix
- *   has the cell read `var(--inset-padding-{left,right})` on its
- *   first/last child; our `<Inset>` only knows about Card padding
- *   contracts and the cell has no equivalent hook yet. Deferred.
  * - No `highContrast` styling. Recorded as a deferred deviation.
  *
  * @see https://www.radix-ui.com/themes/docs/components/table
