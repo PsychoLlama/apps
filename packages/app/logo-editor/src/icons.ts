@@ -10,21 +10,38 @@
 
 import indexUrl from 'virtual:icon-packs';
 
-/** A single icon entry — name + raw inner SVG markup (uses currentColor). */
+/**
+ * A single icon entry. Most iconify packs share one viewBox across
+ * every icon, but a few (Font Awesome's wider glyphs, brand-y
+ * `logos:*` entries) override per-icon — `width`/`height` are
+ * absent when the icon uses the pack default.
+ */
 export interface IconEntry {
   /** Icon name within its pack (kebab-case). */
   name: string;
   /** Inner SVG markup. Always rendered against the pack's viewBox. */
   body: string;
+  /** Per-icon viewBox width override. */
+  width?: number;
+  /** Per-icon viewBox height override. */
+  height?: number;
 }
 
-/** A fully-qualified icon — a pack id + an {@link IconEntry}. */
-export interface IconRef extends IconEntry {
+/**
+ * A fully-qualified icon — a pack id + an {@link IconEntry} with the
+ * effective viewBox dimensions resolved (per-icon overrides win,
+ * pack defaults fill in otherwise).
+ */
+export interface IconRef {
   /** Pack id (matches `IconPackSummary.id`). */
   pack: string;
-  /** Native SVG width for this pack — drives the rendered viewBox. */
+  /** Icon name within the pack. */
+  name: string;
+  /** Inner SVG markup. */
+  body: string;
+  /** Effective viewBox width — per-icon override or pack default. */
   width: number;
-  /** Native SVG height for this pack. */
+  /** Effective viewBox height. */
   height: number;
 }
 
@@ -46,18 +63,26 @@ export interface IconPackSummary {
   manifestUrl: string;
 }
 
-/** Per-pack manifest — names plus URLs of paginated body chunks. */
+/**
+ * Per-pack manifest — names plus URLs of paginated body chunks.
+ * Pages are byte-budgeted, so each one's icon count varies;
+ * `pageStart` records the first-icon index for each page so the
+ * runtime can map a name's pack-position back to its page.
+ */
 export interface IconPackManifest {
   id: string;
   name: string;
+  /** Pack-default viewBox width — overridden per-icon when present. */
   width: number;
+  /** Pack-default viewBox height. */
   height: number;
-  pageSize: number;
   total: number;
   /** All icon names in pack order. Powers search + page lookup. */
   names: ReadonlyArray<string>;
   /** URLs of page chunks, in order. */
   pages: ReadonlyArray<string>;
+  /** First-icon index for each page — `pageStart[i]` corresponds to `pages[i]`. */
+  pageStart: ReadonlyArray<number>;
 }
 
 /** Hard-coded default — keeps the editor renderable before any fetch. */
@@ -135,9 +160,20 @@ export const findIconIndex = (
   name: string,
 ): number => manifest.names.indexOf(name);
 
-/** Page index that contains a given icon position. */
-export const pageIndexFor = (manifest: IconPackManifest, position: number) =>
-  Math.floor(position / manifest.pageSize);
+/**
+ * Page index that contains a given icon position. Walks
+ * `pageStart` from the back since most positions sit in later
+ * pages once the user has scrolled past the alphabet.
+ */
+export const pageIndexFor = (
+  manifest: IconPackManifest,
+  position: number,
+): number => {
+  for (let idx = manifest.pageStart.length - 1; idx >= 0; idx -= 1) {
+    if (position >= manifest.pageStart[idx]) return idx;
+  }
+  return 0;
+};
 
 /** Coords for fetching a single page's entries, threaded through {@link loadIconPageEntries}. */
 export interface IconPageRequest {
@@ -165,6 +201,21 @@ export const loadIconPageEntries = async (
 };
 
 /**
+ * Materialize an {@link IconRef} from an icon entry plus its host
+ * manifest. Per-icon viewBox overrides win over the pack default.
+ */
+export const toIconRef = (
+  manifest: { id: string; width: number; height: number },
+  entry: IconEntry,
+): IconRef => ({
+  pack: manifest.id,
+  name: entry.name,
+  body: entry.body,
+  width: entry.width ?? manifest.width,
+  height: entry.height ?? manifest.height,
+});
+
+/**
  * Resolve a fully-qualified `pack:name` reference, fetching whatever
  * pages and manifest are needed. Returns `undefined` when the pack
  * or icon doesn't exist.
@@ -183,11 +234,5 @@ export const resolveIconRef = async (
   const page = await loadIconPage(pageUrl);
   const entry = page.find((icon) => icon.name === name);
   if (!entry) return undefined;
-  return {
-    pack: summary.id,
-    name: entry.name,
-    body: entry.body,
-    width: manifest.width,
-    height: manifest.height,
-  };
+  return toIconRef(manifest, entry);
 };

@@ -28,6 +28,9 @@ import {
   loadIconPackIndex,
   loadIconPackManifest,
   loadIconPageEntries,
+  pageIndexFor,
+  toIconRef,
+  type IconEntry,
   type IconPackManifest,
   type IconPackSummary,
   type IconPageResult,
@@ -60,8 +63,13 @@ interface PickerState {
    * memos.
    */
   manifests: { [packId: string]: IconPackManifest | undefined };
-  /** Resolved icon SVG markup, keyed by `pack:name`. Plain record for the same reactivity reason as `manifests`. */
-  bodies: { [key: string]: string | undefined };
+  /**
+   * Resolved icon entries keyed by `pack:name`. Stores the full
+   * entry (not just body) so per-icon viewBox overrides survive a
+   * pick. Plain record for the same reactivity reason as
+   * `manifests`.
+   */
+  entries: { [key: string]: IconEntry | undefined };
 }
 
 const initialState = (): PickerState => ({
@@ -70,13 +78,13 @@ const initialState = (): PickerState => ({
   search: '',
   packs: undefined,
   manifests: {},
-  bodies: {},
+  entries: {},
 });
 
 const pickerStore = defineStore<PickerState>(initialState);
 const picker = createStore(pickerStore);
 
-const bodyKey = (pack: string, name: string): string => `${pack}:${name}`;
+const entryKey = (pack: string, name: string): string => `${pack}:${name}`;
 
 const setViewAction = defineAction([pickerStore], (state, view: View) => {
   state.view = view;
@@ -92,10 +100,15 @@ const setSearchAction = defineAction([pickerStore], (state, query: string) => {
   state.search = query;
 });
 
-const seedBodyAction = defineAction(
+interface SeedEntry {
+  pack: string;
+  entry: IconEntry;
+}
+
+const seedEntryAction = defineAction(
   [pickerStore],
-  (state, ref: { pack: string; name: string; body: string }) => {
-    state.bodies[bodyKey(ref.pack, ref.name)] = ref.body;
+  (state, seed: SeedEntry) => {
+    state.entries[entryKey(seed.pack, seed.entry.name)] = seed.entry;
   },
 );
 
@@ -103,7 +116,7 @@ const ingestPageAction = defineAction(
   [pickerStore],
   (state, ingest: IconPageResult) => {
     for (const entry of ingest.entries) {
-      state.bodies[bodyKey(ingest.packId, entry.name)] = entry.body;
+      state.entries[entryKey(ingest.packId, entry.name)] = entry;
     }
   },
 );
@@ -152,7 +165,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   const setView = useAction(setViewAction);
   const openPack = useAction(openPackAction);
   const setSearch = useAction(setSearchAction);
-  const seedBody = useAction(seedBodyAction);
+  const seedEntry = useAction(seedEntryAction);
   const loadPacks = useEffect(loadPacksEffect);
   const loadManifest = useEffect(loadManifestEffect);
   const loadPage = useEffect(loadPageEffect);
@@ -177,15 +190,19 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     ),
   );
 
-  // Keep the bodies map seeded with the currently selected icon —
+  // Keep the entries map seeded with the currently selected icon —
   // even before the manifest loads, the picker knows it can render
   // the selected tile. URL hydration sometimes resolves an icon
   // outside the active pack's loaded pages.
   createEffect(() => {
-    seedBody({
+    seedEntry({
       pack: props.selected.pack,
-      name: props.selected.name,
-      body: props.selected.body,
+      entry: {
+        name: props.selected.name,
+        body: props.selected.body,
+        width: props.selected.width,
+        height: props.selected.height,
+      },
     });
   });
 
@@ -236,7 +253,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     for (const name of visible) {
       const position = manifest.names.indexOf(name);
       if (position < 0) continue;
-      needed.add(Math.floor(position / manifest.pageSize));
+      needed.add(pageIndexFor(manifest, position));
     }
     for (const idx of needed) {
       const pageUrl = manifest.pages[idx];
@@ -247,15 +264,9 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   });
 
   const handlePickIcon = (manifest: IconPackManifest, name: string) => {
-    const body = picker.bodies[bodyKey(manifest.id, name)];
-    if (!body) return;
-    props.onSelect({
-      pack: manifest.id,
-      name,
-      body,
-      width: manifest.width,
-      height: manifest.height,
-    });
+    const entry = picker.entries[entryKey(manifest.id, name)];
+    if (!entry) return;
+    props.onSelect(toIconRef(manifest, entry));
   };
 
   return (
@@ -272,7 +283,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
           <PackDetailView
             pack={activePack()}
             manifest={activeManifest()}
-            bodies={picker.bodies}
+            entries={picker.entries}
             search={picker.search}
             onSearch={setSearch}
             visible={filtered().visible}
@@ -364,7 +375,7 @@ const PackListView: Component<PackListViewProps> = (props) => (
 interface PackDetailViewProps {
   pack: IconPackSummary | undefined;
   manifest: IconPackManifest | undefined;
-  bodies: Readonly<Record<string, string | undefined>>;
+  entries: Readonly<Record<string, IconEntry | undefined>>;
   search: string;
   onSearch: (value: string) => void;
   visible: ReadonlyArray<string>;
@@ -448,7 +459,8 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
             <div class={css.grid}>
               <For each={props.visible}>
                 {(name) => {
-                  const body = () => props.bodies[bodyKey(manifest().id, name)];
+                  const entry = () =>
+                    props.entries[entryKey(manifest().id, name)];
                   const isSelected = () =>
                     props.selected.pack === manifest().id &&
                     props.selected.name === name;
@@ -463,24 +475,27 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
                       title={name}
                       aria-label={name}
                       aria-pressed={isSelected()}
-                      disabled={!body()}
+                      disabled={!entry()}
                       onClick={() => props.onPickIcon(manifest(), name)}
                     >
                       <Show
-                        when={body()}
+                        when={entry()}
                         fallback={
                           // Skeleton block while the body fetches.
                           // eslint-disable-next-line custom/require-ui-primitives
                           <span class={css.tileSkeleton} aria-hidden />
                         }
                       >
-                        {(svgBody) => (
-                          <svg
-                            class={css.tileIcon}
-                            viewBox={`0 0 ${manifest().width} ${manifest().height}`}
-                            innerHTML={svgBody()}
-                          />
-                        )}
+                        {(loaded) => {
+                          const ref = () => toIconRef(manifest(), loaded());
+                          return (
+                            <svg
+                              class={css.tileIcon}
+                              viewBox={`0 0 ${ref().width} ${ref().height}`}
+                              innerHTML={ref().body}
+                            />
+                          );
+                        }}
                       </Show>
                     </button>
                   );

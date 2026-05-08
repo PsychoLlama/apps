@@ -14,17 +14,37 @@ const INDEX_URL_PLACEHOLDER = '__ICON_PACKS_INDEX_URL__';
 const REF_PLACEHOLDER_PREFIX = '__ICON_PACKS_REF_';
 const REF_PLACEHOLDER_SUFFIX = '__';
 
-/** Icons per page chunk — picked to keep wire size around 30–60 KB gzipped. */
-const DEFAULT_PAGE_SIZE = 500;
+/**
+ * Soft cap on the serialized size of a single page, in bytes. Packs
+ * with chunky color SVGs (Fluent Emoji, etc.) blow well past 30 KB
+ * gzipped at 500 icons per page; an icon-count budget produces
+ * multi-megabyte chunks that defeat the lazy-load goal.
+ */
+const DEFAULT_MAX_PAGE_BYTES = 200_000;
+/**
+ * Lower bound — never emit a page with fewer icons than this even if
+ * the byte budget is already blown. Keeps degenerate cases (a single
+ * giant icon) from inflating the page count by orders of magnitude.
+ */
+const MIN_PAGE_ICONS = 16;
 /** Sample previews baked into the index so the picker shows tiles up-front. */
 const SAMPLE_COUNT = 3;
 
-/** A flat icon entry — the smallest unit the runtime fetches. */
+/**
+ * A flat icon entry — the smallest unit the runtime fetches.
+ * `width`/`height` are present only when the icon overrides the
+ * pack-level viewBox; iconify packs occasionally ship oddly-sized
+ * glyphs (Font Awesome's wider icons, brand `logos:*`).
+ */
 interface IconEntry {
   /** Icon name within the pack (kebab-case). */
   name: string;
   /** Inner SVG markup, stripped to a single string. */
   body: string;
+  /** Per-icon viewBox width override. */
+  width?: number;
+  /** Per-icon viewBox height override. */
+  height?: number;
 }
 
 interface PackInfo {
@@ -42,8 +62,8 @@ interface PackData extends PackInfo {
 }
 
 interface PluginOptions {
-  /** Icons per page chunk. Smaller pages = more requests, less wasted bytes. */
-  pageSize?: number;
+  /** Soft cap on serialized page size in bytes. */
+  maxPageBytes?: number;
 }
 
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
@@ -83,7 +103,10 @@ interface RawPackJson {
   prefix: string;
   width?: number;
   height?: number;
-  icons: Record<string, { body: string; hidden?: boolean }>;
+  icons: Record<
+    string,
+    { body: string; hidden?: boolean; width?: number; height?: number }
+  >;
 }
 
 const loadCollections = async (root: string): Promise<CollectionsJson> => {
@@ -107,7 +130,16 @@ const buildPackData = (
   for (const [iconName, def] of Object.entries(raw.icons)) {
     if (def.hidden) continue;
     if (!def.body) continue;
-    icons.push({ name: iconName, body: def.body });
+    const entry: IconEntry = { name: iconName, body: def.body };
+    // Iconify lets icons override the pack viewBox — Font Awesome's
+    // wider glyphs and many `logos:*` entries do this. Only keep the
+    // override field when it differs, so the runtime falls back to
+    // the pack default for the common case.
+    if (def.width !== undefined && def.width !== width) entry.width = def.width;
+    if (def.height !== undefined && def.height !== height) {
+      entry.height = def.height;
+    }
+    icons.push(entry);
   }
   return {
     id,
@@ -141,18 +173,53 @@ const pickSamples = (
   return out;
 };
 
+/**
+ * Slice the icon list into pages whose serialized payload stays
+ * under {@link maxBytes}. Falls back to {@link MIN_PAGE_ICONS} per
+ * page when a single icon already busts the budget — page sizes are
+ * a soft target, not a hard limit.
+ */
 const sliceIntoPages = (
   icons: IconEntry[],
-  pageSize: number,
+  maxBytes: number,
 ): IconEntry[][] => {
   const pages: IconEntry[][] = [];
-  for (let start = 0; start < icons.length; start += pageSize) {
-    pages.push(icons.slice(start, start + pageSize));
+  let current: IconEntry[] = [];
+  let currentBytes = 2; // outer `[]`
+  for (const icon of icons) {
+    const entrySize = JSON.stringify(icon).length + 1; // entry + comma
+    const wouldExceed = currentBytes + entrySize > maxBytes;
+    if (wouldExceed && current.length >= MIN_PAGE_ICONS && current.length > 0) {
+      pages.push(current);
+      current = [];
+      currentBytes = 2;
+    }
+    current.push(icon);
+    currentBytes += entrySize;
   }
+  if (current.length > 0) pages.push(current);
   // Always emit at least one page so the runtime can use a
   // `pages.length === 0` precondition as "this pack is empty."
   if (pages.length === 0) pages.push([]);
+
   return pages;
+};
+
+/**
+ * For each page, the index of its first icon within the flattened
+ * pack. Lets the runtime locate which page contains a given icon
+ * without round-tripping a per-icon page index.
+ */
+const pageStartOffsets = (
+  pages: ReadonlyArray<ReadonlyArray<IconEntry>>,
+): number[] => {
+  const offsets: number[] = [];
+  let cursor = 0;
+  for (const page of pages) {
+    offsets.push(cursor);
+    cursor += page.length;
+  }
+  return offsets;
 };
 
 interface PackBuild {
@@ -183,7 +250,7 @@ interface PackBuild {
  * predictable links without a build step.
  */
 export const iconPacks = (options: PluginOptions = {}): Plugin => {
-  const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
+  const maxPageBytes = options.maxPageBytes ?? DEFAULT_MAX_PAGE_BYTES;
 
   let server: ViteDevServer | undefined;
   let base = '/';
@@ -320,18 +387,18 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
           }
 
           if (leaf === 'manifest.json') {
-            const pages = sliceIntoPages(data.icons, pageSize);
+            const pages = sliceIntoPages(data.icons, maxPageBytes);
             respondJson({
               id: data.id,
               name: data.name,
               width: data.width,
               height: data.height,
-              pageSize,
               total: data.total,
               names: data.icons.map((entry) => entry.name),
               pages: pages.map(
                 (_page, index) => `${DEV_URL_PREFIX}${packId}/${index}.json`,
               ),
+              pageStart: pageStartOffsets(pages),
             });
             return;
           }
@@ -342,7 +409,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
             return;
           }
           const pageIndex = Number(pageMatch[1]);
-          const pages = sliceIntoPages(data.icons, pageSize);
+          const pages = sliceIntoPages(data.icons, maxPageBytes);
           if (pageIndex < 0 || pageIndex >= pages.length) {
             notFound();
             return;
@@ -387,7 +454,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
           }
           const data = buildPackData(raw, packId, meta.name);
           data.samples = pickSamples(data.icons, meta.samples);
-          const pages = sliceIntoPages(data.icons, pageSize);
+          const pages = sliceIntoPages(data.icons, maxPageBytes);
 
           // Phase 1: emit pages — they have no outbound refs.
           const pagePlaceholders: string[] = [];
@@ -407,10 +474,10 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
             name: data.name,
             width: data.width,
             height: data.height,
-            pageSize,
             total: data.total,
             names: data.icons.map((entry) => entry.name),
             pages: pagePlaceholders,
+            pageStart: pageStartOffsets(pages),
           };
           const manifestSource = JSON.stringify(manifestPayload);
 
