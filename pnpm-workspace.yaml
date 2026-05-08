@@ -2,6 +2,7 @@ packages:
   - packages/*/*
 
 catalog:
+  '@iconify/json': ^2.2.470
   '@solidjs/meta': ^0.29.4
   '@solidjs/router': ^0.16.1
   '@solidjs/testing-library': ^0.8.10
