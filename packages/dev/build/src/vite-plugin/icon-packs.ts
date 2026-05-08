@@ -352,20 +352,22 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
         const handle = async () => {
           if (tail === 'index.json') {
             const collections = await getCollections();
-            const packs = Object.entries(collections).map(([id, info]) => ({
-              id,
-              name: info.name,
-              total: info.total ?? 0,
-              // Iconify metadata only carries `height`; the runtime
-              // expects both axes for sample viewBox rendering, so
-              // mirror it onto `width` when the source omits one.
-              width: info.height ?? 24,
-              height: info.height ?? 24,
-              // Samples are looked up lazily inside the dev manifest
-              // route; the index itself only needs cheap metadata.
-              samples: [] as IconEntry[],
-              manifestUrl: `${DEV_URL_PREFIX}${id}/manifest.json`,
-            }));
+            const packs = Object.entries(collections)
+              .map(([id, info]) => ({
+                id,
+                name: info.name,
+                total: info.total ?? 0,
+                // Iconify metadata only carries `height`; the runtime
+                // expects both axes for sample viewBox rendering, so
+                // mirror it onto `width` when the source omits one.
+                width: info.height ?? 24,
+                height: info.height ?? 24,
+                // Samples are looked up lazily inside the dev manifest
+                // route; the index itself only needs cheap metadata.
+                samples: [] as IconEntry[],
+                manifestUrl: `${DEV_URL_PREFIX}${id}/manifest.json`,
+              }))
+              .sort((left, right) => left.name.localeCompare(right.name));
             // Resolve sample bodies in parallel so the picker can
             // preview a few icons without a follow-up fetch per pack.
             await Promise.all(
@@ -442,7 +444,12 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
       if (!this.environment.config.build.ssr && indexRefId === undefined) {
         const root = await findIconifyJsonRoot();
         const collections = await loadCollections(root);
-        const packIds = Object.keys(collections);
+        // Sort once up front so the emitted index is alphabetical;
+        // every downstream array (manifestPlaceholders, indexPayload)
+        // inherits this order.
+        const packIds = Object.keys(collections).sort((left, right) =>
+          collections[left].name.localeCompare(collections[right].name),
+        );
 
         const packBuilds: PackBuild[] = [];
 
