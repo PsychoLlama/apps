@@ -150,6 +150,24 @@ describe('ScrollArea', () => {
     expect(getScrollbar('horizontal')).toHaveAttribute('data-state', 'hidden');
   });
 
+  it('reveals only the vertical scrollbar when type="scroll" and the user scrolls vertically', async () => {
+    renderArea({ testId: 'sa', type: 'scroll' });
+    await flushMeasurement();
+    // Both scrollbars start hidden under type="scroll".
+    expect(getScrollbar('vertical')).toHaveAttribute('data-state', 'hidden');
+    expect(getScrollbar('horizontal')).toHaveAttribute('data-state', 'hidden');
+    const viewport = getViewport();
+    viewport.scrollTop = 50;
+    // Vertical bar should fade in.
+    await waitFor(() => {
+      expect(getScrollbar('vertical')).toHaveAttribute('data-state', 'visible');
+    });
+    // Horizontal scroll didn't change, so the horizontal bar must
+    // stay hidden — only the axis the user actually touched should
+    // light up.
+    expect(getScrollbar('horizontal')).toHaveAttribute('data-state', 'hidden');
+  });
+
   // --- Prop forwarding ---
 
   it('attaches role/aria-label/tabIndex to the viewport, not the root', () => {

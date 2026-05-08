@@ -59,8 +59,6 @@ export const root = style({
 // otherwise suppress.
 
 export const viewport = style({
-  display: 'flex',
-  flexDirection: 'column',
   width: '100%',
   height: '100%',
   scrollbarWidth: 'none',
@@ -118,7 +116,6 @@ export const viewportFocusRing = style({
 export const content = style({
   display: 'table',
   minWidth: '100%',
-  flexGrow: 1,
 });
 
 // --- Scrollbar ---

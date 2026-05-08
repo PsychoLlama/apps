@@ -279,9 +279,18 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const cancelHoverHide = () => {
     window.clearTimeout(hoverHideTimer);
   };
-  const [scrollState, setScrollState] = createSignal<ScrollState>('hidden');
-  const sendScroll = (event: ScrollEvent) =>
-    setScrollState((state) => SCROLL_TRANSITIONS[state]?.[event] ?? state);
+  // Per-axis scroll-state machines. A vertical scroll must not light
+  // up the horizontal bar (and vice versa), so each axis owns its own
+  // state, SCROLL_END timer, and POINTER_* handling — mirroring
+  // Radix's per-`ScrollAreaScrollbarScroll` ownership.
+  const createAxisScrollState = () => {
+    const [state, setState] = createSignal<ScrollState>('hidden');
+    const send = (event: ScrollEvent) =>
+      setState((current) => SCROLL_TRANSITIONS[current]?.[event] ?? current);
+    return { state, send };
+  };
+  const scrollX = createAxisScrollState();
+  const scrollY = createAxisScrollState();
 
   // Cross-axis thickness of each scrollbar — width of the vertical
   // bar, height of the horizontal bar. Drives corner clearance so the
@@ -314,7 +323,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       case 'hover':
         return hoverVisible() && isOverflowingX();
       case 'scroll':
-        return scrollState() !== 'hidden' && isOverflowingX();
+        return scrollX.state() !== 'hidden' && isOverflowingX();
     }
   };
 
@@ -328,7 +337,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       case 'hover':
         return hoverVisible() && isOverflowingY();
       case 'scroll':
-        return scrollState() !== 'hidden' && isOverflowingY();
+        return scrollY.state() !== 'hidden' && isOverflowingY();
     }
   };
 
@@ -366,43 +375,63 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   });
 
   // Scroll-state machine: visibility tracks scroll activity, with a
-  // debounced SCROLL_END that kicks the state into `idle`.
+  // debounced SCROLL_END that kicks the state into `idle`. Each axis
+  // is dispatched independently so a vertical scroll never lights up
+  // the horizontal bar.
   createEffect(() => {
     if (local.type !== 'scroll') return;
     const viewport = viewportEl();
     if (!viewport) return;
-    let scrollEndTimer = 0;
+    let scrollEndTimerX = 0;
+    let scrollEndTimerY = 0;
     let prevLeft = viewport.scrollLeft;
     let prevTop = viewport.scrollTop;
     const onScroll = () => {
       const left = viewport.scrollLeft;
       const top = viewport.scrollTop;
-      if (left !== prevLeft || top !== prevTop) {
-        sendScroll('SCROLL');
-        window.clearTimeout(scrollEndTimer);
-        scrollEndTimer = window.setTimeout(() => sendScroll('SCROLL_END'), 100);
+      if (left !== prevLeft) {
+        scrollX.send('SCROLL');
+        window.clearTimeout(scrollEndTimerX);
+        scrollEndTimerX = window.setTimeout(
+          () => scrollX.send('SCROLL_END'),
+          100,
+        );
+      }
+      if (top !== prevTop) {
+        scrollY.send('SCROLL');
+        window.clearTimeout(scrollEndTimerY);
+        scrollEndTimerY = window.setTimeout(
+          () => scrollY.send('SCROLL_END'),
+          100,
+        );
       }
       prevLeft = left;
       prevTop = top;
     };
     viewport.addEventListener('scroll', onScroll);
     onCleanup(() => {
-      window.clearTimeout(scrollEndTimer);
+      window.clearTimeout(scrollEndTimerX);
+      window.clearTimeout(scrollEndTimerY);
       viewport.removeEventListener('scroll', onScroll);
     });
   });
 
-  // While the state machine sits in `idle`, queue a HIDE event so the
-  // scrollbar fades out after `scrollHideDelay`.
-  createEffect(() => {
-    if (local.type !== 'scroll') return;
-    if (scrollState() !== 'idle') return;
-    const timer = window.setTimeout(
-      () => sendScroll('HIDE'),
-      scrollHideDelay(),
-    );
-    onCleanup(() => window.clearTimeout(timer));
-  });
+  // While an axis sits in `idle`, queue a HIDE event so the scrollbar
+  // fades out after `scrollHideDelay`. One effect per axis so each
+  // axis's idle window is timed independently.
+  const trackHideTimer = (axis: typeof scrollX) => {
+    createEffect(() => {
+      if (local.type !== 'scroll') return;
+      if (axis.state() !== 'idle') return;
+      const timer = window.setTimeout(
+        () => axis.send('HIDE'),
+        scrollHideDelay(),
+      );
+      onCleanup(() => window.clearTimeout(timer));
+    });
+  };
+  trackHideTimer(scrollX);
+  trackHideTimer(scrollY);
 
   const measureSizes = () => {
     const viewport = viewportEl();
@@ -667,11 +696,15 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     target.addEventListener('lostpointercapture', finish);
   };
 
-  const onScrollbarPointerEnter = () => {
-    if (local.type === 'scroll') sendScroll('POINTER_ENTER');
+  const onScrollbarPointerEnter = (axis: 'x' | 'y') => {
+    if (local.type === 'scroll') {
+      (axis === 'x' ? scrollX : scrollY).send('POINTER_ENTER');
+    }
   };
-  const onScrollbarPointerLeave = () => {
-    if (local.type === 'scroll') sendScroll('POINTER_LEAVE');
+  const onScrollbarPointerLeave = (axis: 'x' | 'y') => {
+    if (local.type === 'scroll') {
+      (axis === 'x' ? scrollX : scrollY).send('POINTER_LEAVE');
+    }
   };
 
   const className = () =>
@@ -716,8 +749,8 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           ref={setScrollbarXEl}
           thumbRef={(el: HTMLDivElement | undefined) => (thumbXEl = el)}
           onPointerDown={(event) => startDrag('x', event)}
-          onPointerEnter={onScrollbarPointerEnter}
-          onPointerLeave={onScrollbarPointerLeave}
+          onPointerEnter={() => onScrollbarPointerEnter('x')}
+          onPointerLeave={() => onScrollbarPointerLeave('x')}
         />
       </Show>
       <Show when={enableY()}>
@@ -730,8 +763,8 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           ref={setScrollbarYEl}
           thumbRef={(el: HTMLDivElement | undefined) => (thumbYEl = el)}
           onPointerDown={(event) => startDrag('y', event)}
-          onPointerEnter={onScrollbarPointerEnter}
-          onPointerLeave={onScrollbarPointerLeave}
+          onPointerEnter={() => onScrollbarPointerEnter('y')}
+          onPointerLeave={() => onScrollbarPointerLeave('y')}
         />
       </Show>
     </div>
