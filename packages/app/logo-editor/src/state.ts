@@ -133,13 +133,20 @@ export const resolveHydrateInput = (
 };
 
 /**
- * Replace the store with the resolved snapshot — used to seed state
- * from URL search params on every navigation.
+ * Apply style fields (palette, shape, padding) from a hydrate input.
+ * The icon is intentionally not touched — it's expensive to resolve
+ * (requires fetching pack data), so callers handle it separately via
+ * {@link setIconAction}. Threading the current icon through this
+ * action would also create a reactive cycle in any caller that reads
+ * `logoEditor.icon` to populate the input.
  */
 const hydrateAction = defineAction(
   [logoEditorStore],
   (state, input: LogoEditorHydrateInput) => {
-    Object.assign(state, resolveHydrateInput(input));
+    const resolved = resolveHydrateInput(input);
+    state.palette = resolved.palette;
+    state.shape = resolved.shape;
+    state.padding = resolved.padding;
   },
 );
 

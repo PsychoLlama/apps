@@ -133,14 +133,13 @@ export const LogoEditor = () => {
   createEffect(() => {
     const padParam = readParam('pad');
     const iconParam = readParam('icon');
-    // Pass the current icon through so style hydration doesn't
-    // overwrite it with `DEFAULT_ICON` (mdi:home). The icon resolves
-    // asynchronously below; while that's pending we want to keep
-    // whatever the store already had — otherwise every URL flush
-    // (debounced ~200 ms after each pick) flashes the picker back to
-    // MDI for the few microtasks `resolveIconRef` takes to finish.
+    // `hydrate` only touches style fields — the icon is hydrated
+    // separately through the async path below (or the explicit reset
+    // in the else branch). Mixing them would either flash the icon
+    // back to `DEFAULT_ICON` for the few microtasks before
+    // `resolveIconRef` finishes, or — if we tried to thread the
+    // current icon through — create a reactive cycle on every pick.
     actions.hydrate({
-      icon: logoEditor.icon,
       palette: readParam('palette'),
       shape: readParam('shape'),
       padding: padParam !== undefined ? Number(padParam) : undefined,
