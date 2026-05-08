@@ -9,7 +9,6 @@ import {
   TabsList,
   TabsRoot,
   TabsTrigger,
-  Text,
 } from '@lib/ui';
 import IconDice from 'virtual:icons/mdi/dice-multiple-outline';
 import IconReset from 'virtual:icons/mdi/restart';
@@ -93,7 +92,7 @@ const pickRandomIcon = async (): Promise<IconRef | undefined> => {
   const manifest = await loadIconPackManifest(pack);
   if (manifest.pages.length === 0) return undefined;
   const pageIndex = Math.floor(Math.random() * manifest.pages.length);
-  const page = await loadIconPage(manifest.pages[pageIndex]);
+  const page = await loadIconPage(pack.id, manifest.pages[pageIndex]);
   if (page.length === 0) return undefined;
   const entry = page[Math.floor(Math.random() * page.length)];
   return toIconRef(manifest, entry);
@@ -294,33 +293,7 @@ export const LogoEditor = () => {
               value="icon"
               class={`${css.tabPanel} ${css.tabPanelGrow}`}
             >
-              <Flex as="div" direction="column" gap={2} grow>
-                <Flex
-                  as="div"
-                  align="baseline"
-                  justify="between"
-                  class={css.sectionRow}
-                >
-                  <Text
-                    as="span"
-                    size={1}
-                    color="lowContrast"
-                    selectable={false}
-                  >
-                    {logoEditor.icon.pack}
-                  </Text>
-                  <Text
-                    as="span"
-                    size={1}
-                    color="lowContrast"
-                    class={css.sectionMeta}
-                    selectable={false}
-                  >
-                    {logoEditor.icon.name}
-                  </Text>
-                </Flex>
-                <IconGrid selected={logoEditor.icon} onSelect={setIcon} />
-              </Flex>
+              <IconGrid selected={logoEditor.icon} onSelect={setIcon} />
             </TabsContent>
 
             <TabsContent
