@@ -130,9 +130,12 @@ export const packCardActive = style({
   },
 });
 
+// Pack sample tile — sized to make the preview row prominent on the
+// card. Each tile carries its own square footprint so non-square
+// icons (Academicons 448×512, etc.) letterbox cleanly inside.
 export const packSample = style({
-  width: '20px',
-  height: '20px',
+  width: '32px',
+  height: '32px',
   color: neutral.solid[11],
 });
 

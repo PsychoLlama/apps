@@ -447,7 +447,7 @@ const PackListView: Component<PackListViewProps> = (props) => (
                     {(sample) => (
                       <svg
                         class={css.packSample}
-                        viewBox={`0 0 ${pack.width} ${pack.height}`}
+                        viewBox={`0 0 ${sample.width ?? pack.width} ${sample.height ?? pack.height}`}
                         innerHTML={sample.body}
                       />
                     )}
