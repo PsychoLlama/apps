@@ -20,9 +20,20 @@ import {
   useAction,
   useEffect,
 } from '@lib/state';
-import { Badge, Flex, IconButton, Text, TextField } from '@lib/ui';
+import {
+  Badge,
+  DataListItem,
+  DataListLabel,
+  DataListRoot,
+  DataListValue,
+  Flex,
+  IconButton,
+  Text,
+  TextField,
+} from '@lib/ui';
 import IconBack from 'virtual:icons/mdi/arrow-left';
 import IconClose from 'virtual:icons/mdi/close';
+import IconInfo from 'virtual:icons/mdi/information-outline';
 import IconNext from 'virtual:icons/mdi/chevron-right';
 import IconPrev from 'virtual:icons/mdi/chevron-left';
 import IconSearch from 'virtual:icons/mdi/magnify';
@@ -51,7 +62,7 @@ const PAGE_SIZE = 60;
 
 const numberFormat = new Intl.NumberFormat();
 
-type View = 'packs' | 'pack-detail';
+type View = 'packs' | 'pack-detail' | 'pack-info';
 
 interface PickerState {
   /** Which surface is showing — pack list or icon grid for one pack. */
@@ -413,6 +424,14 @@ export const IconGrid: Component<IconGridProps> = (props) => {
             selected={props.selected}
             onPickIcon={handlePickIcon}
             onOpenPackList={() => setView('packs')}
+            onShowInfo={() => setView('pack-info')}
+          />
+        </Match>
+        <Match when={picker.view === 'pack-info'}>
+          <PackInfoView
+            pack={activePack()}
+            onOpenPackList={() => setView('packs')}
+            onShowIcons={() => setView('pack-detail')}
           />
         </Match>
       </Switch>
@@ -519,6 +538,15 @@ interface PackDetailViewProps {
   selected: IconRef;
   onPickIcon: (manifest: IconPackManifest, name: string) => void;
   onOpenPackList: () => void;
+  /** Switch to the in-place pack info view (DataList of metadata). */
+  onShowInfo: () => void;
+}
+
+interface PackInfoViewProps {
+  pack: IconPackSummary | undefined;
+  onOpenPackList: () => void;
+  /** Return to the icon grid for the same pack. */
+  onShowIcons: () => void;
 }
 
 const PackDetailView: Component<PackDetailViewProps> = (props) => {
@@ -544,9 +572,21 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
         >
           <IconBack aria-hidden />
         </IconButton>
-        <Text as="span" size={2} weight="medium" truncate selectable={false}>
-          {props.pack?.name ?? 'Loading…'}
-        </Text>
+        <Flex as="div" grow>
+          <Text as="span" size={2} weight="medium" truncate selectable={false}>
+            {props.pack?.name ?? 'Loading…'}
+          </Text>
+        </Flex>
+        <IconButton
+          testId="icon-grid-pack-info"
+          size={1}
+          variant="ghost"
+          color="neutral"
+          aria-label="Pack information"
+          onClick={props.onShowInfo}
+        >
+          <IconInfo aria-hidden />
+        </IconButton>
       </Flex>
 
       <TextField
@@ -680,6 +720,145 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
               </IconButton>
             </Flex>
           </Show>
+        )}
+      </Show>
+    </>
+  );
+};
+
+/**
+ * Per-pack metadata in place of the icon grid. Reached via the info
+ * button in {@link PackDetailView}'s header. Surfaces author + license
+ * up front — discoverable at the moment the user is choosing a pack
+ * rather than buried on a separate credits route.
+ */
+const PackInfoView: Component<PackInfoViewProps> = (props) => {
+  const license = () => props.pack?.license;
+  const author = () => props.pack?.author;
+
+  return (
+    <>
+      <Flex as="div" align="center" gap={2}>
+        <IconButton
+          testId="icon-grid-pack-list"
+          size={1}
+          variant="ghost"
+          color="neutral"
+          aria-label="Browse icon packs"
+          onClick={props.onOpenPackList}
+        >
+          <IconBack aria-hidden />
+        </IconButton>
+        <Flex as="div" grow>
+          <Text as="span" size={2} weight="medium" truncate selectable={false}>
+            {props.pack?.name ?? 'Loading…'}
+          </Text>
+        </Flex>
+        <IconButton
+          testId="icon-grid-pack-info-close"
+          size={1}
+          variant="ghost"
+          color="neutral"
+          aria-label="Show icons"
+          aria-pressed
+          onClick={props.onShowIcons}
+        >
+          <IconInfo aria-hidden />
+        </IconButton>
+      </Flex>
+
+      <Show when={props.pack}>
+        {(pack) => (
+          <DataListRoot orientation="horizontal" size={1}>
+            <DataListItem>
+              <DataListLabel>ID</DataListLabel>
+              <DataListValue>
+                <Text as="code" size={1} selectable>
+                  {pack().id}
+                </Text>
+              </DataListValue>
+            </DataListItem>
+            <DataListItem>
+              <DataListLabel>Icons</DataListLabel>
+              <DataListValue>
+                <Text as="span" size={1} selectable={false}>
+                  {numberFormat.format(pack().total)}
+                </Text>
+              </DataListValue>
+            </DataListItem>
+            <Show when={author()}>
+              {(value) => (
+                <DataListItem>
+                  <DataListLabel>Author</DataListLabel>
+                  <DataListValue>
+                    <Show
+                      when={value().url}
+                      fallback={
+                        <Text as="span" size={1} selectable>
+                          {value().name}
+                        </Text>
+                      }
+                    >
+                      {(url) => (
+                        <Text
+                          as="a"
+                          size={1}
+                          selectable
+                          href={url()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {value().name}
+                        </Text>
+                      )}
+                    </Show>
+                  </DataListValue>
+                </DataListItem>
+              )}
+            </Show>
+            <Show when={license()}>
+              {(value) => (
+                <DataListItem>
+                  <DataListLabel>License</DataListLabel>
+                  <DataListValue>
+                    <Show
+                      when={value().url}
+                      fallback={
+                        <Text as="span" size={1} selectable>
+                          {value().title ?? value().spdx ?? 'Unknown'}
+                        </Text>
+                      }
+                    >
+                      {(url) => (
+                        <Text
+                          as="a"
+                          size={1}
+                          selectable
+                          href={url()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {value().title ?? value().spdx ?? 'License'}
+                        </Text>
+                      )}
+                    </Show>
+                  </DataListValue>
+                </DataListItem>
+              )}
+            </Show>
+            <Show when={license()?.spdx}>
+              {(spdx) => (
+                <DataListItem>
+                  <DataListLabel>SPDX</DataListLabel>
+                  <DataListValue>
+                    <Badge size={1} variant="soft" color="neutral">
+                      {spdx()}
+                    </Badge>
+                  </DataListValue>
+                </DataListItem>
+              )}
+            </Show>
+          </DataListRoot>
         )}
       </Show>
     </>
