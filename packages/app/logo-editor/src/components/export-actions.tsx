@@ -56,7 +56,8 @@ const setSizeAction = defineAction([exportStore], (state, value: number) => {
 const clampSize = (value: number): number =>
   Math.max(MIN_PX, Math.min(MAX_PX, Math.round(value)));
 
-const filenameStem = (state: LogoEditorState) => `logo-${state.icon.name}`;
+const filenameStem = (state: LogoEditorState) =>
+  `logo-${state.icon.pack}-${state.icon.name}`;
 
 /**
  * Compose a logo export. Format toggles between SVG (vector, single

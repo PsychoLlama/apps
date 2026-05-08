@@ -1,24 +1,25 @@
 import { DEFAULT_LOGO_EDITOR_STATE, resolveHydrateInput } from '../state';
-import { findIcon } from '../icons';
+import { DEFAULT_ICON, type IconRef } from '../icons';
+
+const customIcon: IconRef = {
+  pack: 'tabler',
+  name: 'rocket',
+  body: '<path d="M0 0"/>',
+  width: 24,
+  height: 24,
+};
 
 describe('resolveHydrateInput', () => {
   it('returns the canonical defaults for an empty input', () => {
     expect(resolveHydrateInput({})).toEqual(DEFAULT_LOGO_EDITOR_STATE);
   });
 
-  it('resets each field that is absent — a clean URL must not inherit prior session state', () => {
-    const partial = resolveHydrateInput({ icon: 'cog' });
-
-    expect(partial.icon.name).toBe('cog');
-    expect(partial.palette).toBe(DEFAULT_LOGO_EDITOR_STATE.palette);
-    expect(partial.shape).toBe(DEFAULT_LOGO_EDITOR_STATE.shape);
-    expect(partial.padding).toBe(DEFAULT_LOGO_EDITOR_STATE.padding);
+  it('keeps the default icon when the caller does not supply a resolved one', () => {
+    expect(resolveHydrateInput({ palette: 'mint' }).icon).toEqual(DEFAULT_ICON);
   });
 
-  it('falls back to the default when an unknown icon name is supplied', () => {
-    const next = resolveHydrateInput({ icon: 'totally-not-an-icon' });
-
-    expect(next.icon).toEqual(DEFAULT_LOGO_EDITOR_STATE.icon);
+  it('passes a resolved icon through verbatim', () => {
+    expect(resolveHydrateInput({ icon: customIcon }).icon).toEqual(customIcon);
   });
 
   it('falls back to the default when an unknown palette name is supplied', () => {
@@ -50,13 +51,13 @@ describe('resolveHydrateInput', () => {
 
   it('applies a fully-specified valid input verbatim', () => {
     const next = resolveHydrateInput({
-      icon: 'cog',
+      icon: customIcon,
       palette: 'mint',
       shape: 'circle',
       padding: 8,
     });
 
-    expect(next.icon).toEqual(findIcon('cog'));
+    expect(next.icon).toEqual(customIcon);
     expect(next.palette).toBe('mint');
     expect(next.shape).toBe('circle');
     expect(next.padding).toBe(8);

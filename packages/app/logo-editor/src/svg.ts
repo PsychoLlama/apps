@@ -40,9 +40,14 @@ export interface RenderOptions {
  * single `style` carries the foreground tint without rewriting paths.
  *
  * The icon group is clipped to the same rounded rectangle as the
- * background fill, so glyphs that reach the 24×24 viewBox edges (e.g.
- * the language/file icons) stay inside the chosen shape mask instead of
- * leaking into the corner cutouts.
+ * background fill, so glyphs that reach the icon viewBox edges stay
+ * inside the chosen shape mask instead of leaking into the corner
+ * cutouts.
+ *
+ * Per-pack viewBox dimensions ride on `state.icon.{width,height}` —
+ * different iconify collections ship at 16, 24, 32, 48, etc. The icon
+ * uniformly scales to fit the inner padded square and centers along
+ * the off-axis when the icon's native viewBox isn't square.
  */
 export const renderLogoSvg = (
   state: LogoEditorState,
@@ -52,7 +57,11 @@ export const renderLogoSvg = (
   const rx = SHAPE_RX_RATIO[state.shape] * size;
   const pad = (state.padding / 100) * size;
   const inner = size - 2 * pad;
-  const scale = inner / 24;
+  const iconW = state.icon.width;
+  const iconH = state.icon.height;
+  const scale = inner / Math.max(iconW, iconH);
+  const offsetX = pad + (inner - iconW * scale) / 2;
+  const offsetY = pad + (inner - iconH * scale) / 2;
   const dim = opts.responsive
     ? ' width="100%" height="100%"'
     : ` width="${size}" height="${size}"`;
@@ -73,7 +82,7 @@ export const renderLogoSvg = (
     `<defs><clipPath id="${clipId}"><rect width="${size}" height="${size}" rx="${rx}" ry="${rx}"/></clipPath></defs>` +
     `<g clip-path="url(#${clipId})">` +
     `<rect width="${size}" height="${size}" fill="${bg}"/>` +
-    `<g transform="translate(${pad} ${pad}) scale(${scale})" style="color: ${fg}">${state.icon.body}</g>` +
+    `<g transform="translate(${offsetX} ${offsetY}) scale(${scale})" style="color: ${fg}">${state.icon.body}</g>` +
     `</g>` +
     `</svg>`
   );

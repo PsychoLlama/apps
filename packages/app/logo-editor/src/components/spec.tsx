@@ -22,7 +22,7 @@ export const Spec: Component<SpecProps> = (props) => {
       aria-label="Current logo spec"
     >
       <Text as="span" size={1} color="lowContrast" selectable={true}>
-        {props.state.icon.name}
+        {props.state.icon.pack}:{props.state.icon.name}
       </Text>
       <Text as="span" size={1} class={css.dot} selectable={false}>
         ·

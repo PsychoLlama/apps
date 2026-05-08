@@ -51,11 +51,23 @@ export const tile = style({
     borderColor: accent.solid[8],
     boxShadow: `0 0 0 2px ${accent.alpha[5]}`,
   },
+  ':disabled': {
+    cursor: 'default',
+  },
 });
 
 export const tileIcon = style({
   width: '100%',
   height: '100%',
+});
+
+// Body still loading — shown in place of the SVG until the page
+// chunk arrives. Keeps the grid stable so tiles don't reflow.
+export const tileSkeleton = style({
+  width: '60%',
+  height: '60%',
+  borderRadius: radius[1],
+  backgroundColor: neutral.alpha[3],
 });
 
 export const tileActive = style({
@@ -69,4 +81,57 @@ export const tileActive = style({
 export const empty = style({
   paddingBlock: space[5],
   textAlign: 'center',
+});
+
+// Pack list — vertical scroller of cards, each card showing the pack
+// name plus a few sample icons. Mirrors the icon `grid` scroll
+// behavior so it can claim the same rail space.
+export const packList = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: space[1],
+  overflowY: 'auto',
+  paddingBlock: space[1],
+  paddingInline: space[1],
+  flex: '1 1 0',
+  minHeight: 0,
+  overscrollBehavior: 'contain',
+});
+
+export const packCard = style({
+  display: 'flex',
+  alignItems: 'stretch',
+  textAlign: 'left',
+  paddingBlock: space[2],
+  paddingInline: space[2],
+  borderRadius: radius[2],
+  backgroundColor: 'transparent',
+  border: `1px solid transparent`,
+  color: neutral.solid[12],
+  cursor: 'pointer',
+  transitionProperty: 'background-color, border-color, color',
+  transitionDuration: fast[2],
+  transitionTimingFunction: standard.productive,
+  ':hover': {
+    backgroundColor: neutral.alpha[3],
+  },
+  ':focus-visible': {
+    outline: 'none',
+    borderColor: accent.solid[8],
+    boxShadow: `0 0 0 2px ${accent.alpha[5]}`,
+  },
+});
+
+export const packCardActive = style({
+  backgroundColor: accent.alpha[3],
+  color: accent.solid[11],
+  ':hover': {
+    backgroundColor: accent.alpha[4],
+  },
+});
+
+export const packSample = style({
+  width: '20px',
+  height: '20px',
+  color: neutral.solid[11],
 });

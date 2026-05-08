@@ -23,6 +23,15 @@ import { Preview } from './components/preview';
 import { ShapeSelector } from './components/shape-selector';
 import { Spec } from './components/spec';
 import {
+  encodeIconRef,
+  loadIconPackIndex,
+  loadIconPackManifest,
+  loadIconPage,
+  parseIconRef,
+  resolveIconRef,
+  type IconRef,
+} from './icons';
+import {
   DEFAULT_LOGO_EDITOR_STATE,
   logoEditor,
   useLogoEditorActions,
@@ -63,6 +72,30 @@ const paramOrNull = <T,>(
   encode: (value: T) => string,
 ) => (value === fallback ? null : encode(value));
 
+/**
+ * Roll a random icon by walking the pack catalog: pick a pack, pick a
+ * page, pick an entry. Loads everything on demand so we never have to
+ * keep the full catalog in memory.
+ */
+const pickRandomIcon = async (): Promise<IconRef | undefined> => {
+  const packs = await loadIconPackIndex();
+  if (packs.length === 0) return undefined;
+  const pack = packs[Math.floor(Math.random() * packs.length)];
+  const manifest = await loadIconPackManifest(pack);
+  if (manifest.pages.length === 0) return undefined;
+  const pageIndex = Math.floor(Math.random() * manifest.pages.length);
+  const page = await loadIconPage(manifest.pages[pageIndex]);
+  if (page.length === 0) return undefined;
+  const entry = page[Math.floor(Math.random() * page.length)];
+  return {
+    pack: manifest.id,
+    name: entry.name,
+    body: entry.body,
+    width: manifest.width,
+    height: manifest.height,
+  };
+};
+
 export const LogoEditor = () => {
   const actions = useLogoEditorActions();
   const setActiveTab = useAction(setTabAction);
@@ -73,20 +106,27 @@ export const LogoEditor = () => {
     return typeof value === 'string' ? value : undefined;
   };
 
-  // Hydrate from the URL on mount and on every navigation. Runs in an
-  // effect so it executes after Solid hydration commits — synchronous
-  // body-time mutations don't propagate through hydrated DOM, since
-  // Solid binds reactive expressions to whatever the SSR HTML already
-  // says. Build-time prerender always sees a query-less URL, so this
-  // effect is the only place URL params actually land in state.
+  // Hydrate from the URL on mount and on every navigation. Style
+  // fields apply synchronously; the icon param requires a pack fetch,
+  // so it's resolved in the background. Until that lands, the store
+  // keeps its existing icon (default at first paint, cached on
+  // subsequent visits).
   createEffect(() => {
     const padParam = readParam('pad');
+    const iconParam = readParam('icon');
     actions.hydrate({
-      icon: readParam('icon'),
       palette: readParam('palette'),
       shape: readParam('shape'),
       padding: padParam !== undefined ? Number(padParam) : undefined,
     });
+    if (iconParam) {
+      const parsed = parseIconRef(iconParam);
+      if (parsed) {
+        void resolveIconRef(parsed.pack, parsed.name).then((icon) => {
+          if (icon) actions.setIcon(icon);
+        });
+      }
+    }
   });
 
   // Mirror state → URL with a small debounce so each keystroke in the
@@ -97,7 +137,7 @@ export const LogoEditor = () => {
   createEffect(
     on(
       () => ({
-        icon: logoEditor.icon.name,
+        icon: encodeIconRef(logoEditor.icon),
         palette: logoEditor.palette,
         shape: logoEditor.shape,
         pad: logoEditor.padding,
@@ -109,7 +149,7 @@ export const LogoEditor = () => {
             {
               icon: paramOrNull(
                 next.icon,
-                DEFAULT_LOGO_EDITOR_STATE.icon.name,
+                encodeIconRef(DEFAULT_LOGO_EDITOR_STATE.icon),
                 identity,
               ),
               palette: paramOrNull(
@@ -138,6 +178,13 @@ export const LogoEditor = () => {
   onCleanup(() => {
     if (timeoutId !== undefined) clearTimeout(timeoutId);
   });
+
+  const handleRandomize = () => {
+    actions.randomizeStyle();
+    void pickRandomIcon().then((icon) => {
+      if (icon) actions.setIcon(icon);
+    });
+  };
 
   return (
     <Flex as="main" direction="column" grow>
@@ -169,7 +216,7 @@ export const LogoEditor = () => {
             color="neutral"
             mx={2}
             my={1}
-            onClick={actions.randomize}
+            onClick={handleRandomize}
           >
             <IconDice aria-hidden /> Randomize
           </Button>
@@ -224,7 +271,7 @@ export const LogoEditor = () => {
                     color="lowContrast"
                     selectable={false}
                   >
-                    MDI
+                    {logoEditor.icon.pack}
                   </Text>
                   <Text
                     as="span"

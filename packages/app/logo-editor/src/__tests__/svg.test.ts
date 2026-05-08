@@ -1,9 +1,9 @@
 import { renderLogoSvg } from '../svg';
 import type { LogoEditorState } from '../state';
-import { findIcon } from '../icons';
+import { DEFAULT_ICON } from '../icons';
 
 const baseState: LogoEditorState = {
-  icon: findIcon('home') ?? { name: 'home', body: '<path d="M0 0"/>' },
+  icon: DEFAULT_ICON,
   palette: 'blue',
   shape: 'rounded',
   padding: 20,
@@ -38,7 +38,13 @@ describe('renderLogoSvg', () => {
   });
 
   it('inlines the icon body inside a translated/scaled group', () => {
-    const customIcon = { name: 'test', body: '<rect data-marker="hi"/>' };
+    const customIcon = {
+      pack: 'mdi',
+      name: 'test',
+      body: '<rect data-marker="hi"/>',
+      width: 24,
+      height: 24,
+    };
     const svg = renderLogoSvg(
       { ...baseState, icon: customIcon },
       { size: 100 },
@@ -46,6 +52,23 @@ describe('renderLogoSvg', () => {
 
     expect(svg).toMatch(/<rect data-marker="hi"\/>/);
     expect(svg).toMatch(/transform="translate\(20 20\) scale\(/);
+  });
+
+  it('scales against the larger native viewBox axis so non-24 packs still fit', () => {
+    const tallIcon = {
+      pack: 'fluent',
+      name: 'ribbon',
+      body: '<rect/>',
+      width: 32,
+      height: 32,
+    };
+    const svg = renderLogoSvg(
+      { ...baseState, icon: tallIcon, padding: 0 },
+      { size: 64 },
+    );
+
+    // 64 / max(32, 32) = 2 — direct unit mapping.
+    expect(svg).toMatch(/scale\(2\)/);
   });
 
   it('disambiguates clip ids per `idSuffix` so multiple inline previews do not cross-resolve', () => {
