@@ -37,7 +37,7 @@ const DEFAULT_PX = 512;
 const SVG_EXPORT_SIZE = 512;
 
 const exportStore = defineStore<ExportPanelState>(() => ({
-  format: 'png',
+  format: 'svg',
   size: DEFAULT_PX,
 }));
 const exportState = createStore(exportStore);
@@ -168,8 +168,9 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
         variant="solid"
         color="accent"
         onClick={handleExport}
+        aria-label={`Export ${filename()}`}
       >
-        <IconDownload aria-hidden /> Export {filename()}
+        <IconDownload aria-hidden /> Export
       </Button>
     </Flex>
   );
