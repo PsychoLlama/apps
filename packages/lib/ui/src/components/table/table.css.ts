@@ -4,8 +4,6 @@
  * Ported from Radix UI Themes Table. Deviations:
  * - `size`, `variant`, `layout`, row `align`, and cell `justify` are
  *   static classes — no responsive `data-*` cascade.
- * - The wrapper handles overflow with native `overflow: auto` instead of
- *   wrapping the table in a custom ScrollArea component.
  * - Row dividers are drawn with an `inset 0 -1px` shadow on each cell;
  *   the surface variant suppresses the shadow on the last body row by
  *   re-declaring the row's CSS var, which cascades into the cells.
@@ -46,7 +44,6 @@ export const root = style({
     [rowBackground]: 'transparent',
     [rowDivider]: `inset 0 -1px ${neutral.alpha[5]}`,
   },
-  overflowX: 'auto',
   // Inherit the row text color so children render against the panel.
   color: neutral.solid[12],
 });
@@ -88,7 +85,7 @@ export const table = style({
     // header tint and row dividers don't peek past the rounded edge.
     // The wrapper border eats one pixel; pull the inner radius in to
     // compensate so the corner highlight stays even.
-    [`${surfaceVariant} > &`]: {
+    [`${surfaceVariant} &`]: {
       overflow: 'hidden',
       borderRadius: `calc(${tableBorderRadius} - 1px)`,
     },

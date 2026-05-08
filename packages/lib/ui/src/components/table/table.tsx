@@ -21,9 +21,10 @@
  *   system forces the call site to declare intent. Static content
  *   still gets the prompt — selectability is a meaning question, not
  *   a "is the value dynamic" question.
- * - The root replaces upstream's ScrollArea wrapper with a plain
- *   horizontally-scrolling `<div>`. Keeps the wrapper out of the JS
- *   bundle until we own a ScrollArea component.
+ * - Ghost variant doesn't pull the scrollbar to the wrapper edge.
+ *   Radix overrides `--scrollarea-scrollbar-horizontal-margin-*` to
+ *   zero out the inset; our ScrollArea exposes no equivalent var.
+ *   Scrollbar inset stays uniform until ScrollArea grows the hook.
  * - No `highContrast` styling. Recorded as a deferred deviation.
  *
  * @see https://www.radix-ui.com/themes/docs/components/table
@@ -46,6 +47,7 @@ import {
   useSkeleton,
 } from '../../props/skeleton';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
+import ScrollArea from '../scroll-area/scroll-area';
 import * as css from './table.css';
 
 /** Visual size step. Controls cell padding, min-height, and font size. */
@@ -116,7 +118,9 @@ export const TableRoot: ParentComponent<TableRootProps> = (rawProps) => {
 
   return (
     <div class={className()} data-testid={tid.testId} {...skeletonProps}>
-      <table class={tableClassName()}>{local.children}</table>
+      <ScrollArea>
+        <table class={tableClassName()}>{local.children}</table>
+      </ScrollArea>
     </div>
   );
 };

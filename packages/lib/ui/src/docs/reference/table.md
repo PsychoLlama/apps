@@ -4,7 +4,7 @@ HTML `<table>` for tabular data. Composed from seven flat exports: `TableRoot`, 
 
 ## TableRoot
 
-Renders a horizontally-scrolling `<div>` containing a `<table>`. Owns size, variant, and layout.
+Wraps a `<table>` in a `ScrollArea` so wide content scrolls horizontally. Owns size, variant, and layout.
 
 Base: `<div>` attributes, margin props, skeleton props, test ID props.
 
