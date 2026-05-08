@@ -356,6 +356,10 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
               id,
               name: info.name,
               total: info.total ?? 0,
+              // Iconify metadata only carries `height`; the runtime
+              // expects both axes for sample viewBox rendering, so
+              // mirror it onto `width` when the source omits one.
+              width: info.height ?? 24,
               height: info.height ?? 24,
               // Samples are looked up lazily inside the dev manifest
               // route; the index itself only needs cheap metadata.

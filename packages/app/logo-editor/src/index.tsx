@@ -29,6 +29,7 @@ import {
   loadIconPage,
   parseIconRef,
   resolveIconRef,
+  toIconRef,
   type IconRef,
 } from './icons';
 import {
@@ -87,13 +88,7 @@ const pickRandomIcon = async (): Promise<IconRef | undefined> => {
   const page = await loadIconPage(manifest.pages[pageIndex]);
   if (page.length === 0) return undefined;
   const entry = page[Math.floor(Math.random() * page.length)];
-  return {
-    pack: manifest.id,
-    name: entry.name,
-    body: entry.body,
-    width: manifest.width,
-    height: manifest.height,
-  };
+  return toIconRef(manifest, entry);
 };
 
 export const LogoEditor = () => {
@@ -111,6 +106,12 @@ export const LogoEditor = () => {
   // so it's resolved in the background. Until that lands, the store
   // keeps its existing icon (default at first paint, cached on
   // subsequent visits).
+  //
+  // `pendingIconRequest` tracks the most recent in-flight resolution
+  // — if the user picks a different icon (or the URL changes again)
+  // before a slow fetch returns, the stale resolution would otherwise
+  // overwrite their pick and resurrect the param it just left.
+  let pendingIconRequest: string | undefined;
   createEffect(() => {
     const padParam = readParam('pad');
     const iconParam = readParam('icon');
@@ -122,10 +123,18 @@ export const LogoEditor = () => {
     if (iconParam) {
       const parsed = parseIconRef(iconParam);
       if (parsed) {
+        pendingIconRequest = iconParam;
+        const requestToken = iconParam;
         void resolveIconRef(parsed.pack, parsed.name).then((icon) => {
-          if (icon) actions.setIcon(icon);
+          if (!icon) return;
+          if (pendingIconRequest !== requestToken) return;
+          actions.setIcon(icon);
         });
+      } else {
+        pendingIconRequest = undefined;
       }
+    } else {
+      pendingIconRequest = undefined;
     }
   });
 
