@@ -23,12 +23,15 @@ import {
 import { Flex, IconButton, Text, TextField } from '@lib/ui';
 import IconBack from 'virtual:icons/mdi/arrow-left';
 import IconClose from 'virtual:icons/mdi/close';
+import IconNext from 'virtual:icons/mdi/chevron-right';
+import IconPrev from 'virtual:icons/mdi/chevron-left';
 import IconSearch from 'virtual:icons/mdi/magnify';
 import {
   loadIconPackIndex,
   loadIconPackManifest,
   loadIconPageEntries,
   pageIndexFor,
+  releaseInactivePackCaches,
   toIconRef,
   type IconEntry,
   type IconPackManifest,
@@ -39,11 +42,14 @@ import {
 import * as css from './icon-grid.css';
 
 /**
- * Cap the visible tile count so the DOM stays under ~250 SVGs even
- * when a pack contains thousands of icons. Refining the search is the
- * intended affordance once the grid hits the cap.
+ * Icons per visible page in the pack-detail grid. Sized so a typical
+ * inspector rail (~7-10 columns) shows ~6-9 rows before paging — wide
+ * enough to scan, short enough that scroll-then-page beats endless
+ * scrolling.
  */
-const MAX_VISIBLE = 250;
+const PAGE_SIZE = 60;
+
+const numberFormat = new Intl.NumberFormat();
 
 type View = 'packs' | 'pack-detail';
 
@@ -54,6 +60,8 @@ interface PickerState {
   activePackId: string;
   /** Current search filter applied to the active pack's name list. */
   search: string;
+  /** Zero-based page index within the filtered name list. */
+  currentPage: number;
   /** Cached pack catalog — `undefined` until the index fetch resolves. */
   packs: ReadonlyArray<IconPackSummary> | undefined;
   /**
@@ -73,9 +81,13 @@ interface PickerState {
 }
 
 const initialState = (): PickerState => ({
-  view: 'pack-detail',
+  // Land on the chooser. The pack-detail view is reached only after
+  // the user picks a pack (or a deep link forces a sync via the
+  // selected.pack effect below).
+  view: 'packs',
   activePackId: 'mdi',
   search: '',
+  currentPage: 0,
   packs: undefined,
   manifests: {},
   entries: {},
@@ -93,12 +105,23 @@ const setViewAction = defineAction([pickerStore], (state, view: View) => {
 const openPackAction = defineAction([pickerStore], (state, packId: string) => {
   state.activePackId = packId;
   state.search = '';
+  state.currentPage = 0;
   state.view = 'pack-detail';
 });
 
 const setSearchAction = defineAction([pickerStore], (state, query: string) => {
   state.search = query;
+  // Reset to the first page so search results aren't hidden behind a
+  // stale page index from the previous filter.
+  state.currentPage = 0;
 });
+
+const setCurrentPageAction = defineAction(
+  [pickerStore],
+  (state, page: number) => {
+    state.currentPage = page;
+  },
+);
 
 interface SeedEntry {
   pack: string;
@@ -108,7 +131,14 @@ interface SeedEntry {
 const seedEntryAction = defineAction(
   [pickerStore],
   (state, seed: SeedEntry) => {
-    state.entries[entryKey(seed.pack, seed.entry.name)] = seed.entry;
+    const key = entryKey(seed.pack, seed.entry.name);
+    // Skip when the entry is already cached — overwriting with a
+    // structurally equal but referentially new object would churn
+    // store identity, forcing the tile's `innerHTML` binding to
+    // re-bind and restart any CSS animations on the inner SVG nodes
+    // (visible in Material Line Icons).
+    if (state.entries[key]) return;
+    state.entries[key] = seed.entry;
   },
 );
 
@@ -116,7 +146,31 @@ const ingestPageAction = defineAction(
   [pickerStore],
   (state, ingest: IconPageResult) => {
     for (const entry of ingest.entries) {
-      state.entries[entryKey(ingest.packId, entry.name)] = entry;
+      const key = entryKey(ingest.packId, entry.name);
+      if (state.entries[key]) continue;
+      state.entries[key] = entry;
+    }
+  },
+);
+
+/**
+ * Drop manifests + entries that don't belong to `activePackId`.
+ * Called alongside the module-level cache release so the picker's
+ * proxy state and the fetcher caches stay in sync.
+ */
+const releaseInactivePacksAction = defineAction(
+  [pickerStore],
+  (state, activePackId: string) => {
+    for (const key of Object.keys(state.manifests)) {
+      if (key !== activePackId) {
+        delete state.manifests[key];
+      }
+    }
+    const prefix = `${activePackId}:`;
+    for (const key of Object.keys(state.entries)) {
+      if (!key.startsWith(prefix)) {
+        delete state.entries[key];
+      }
     }
   },
 );
@@ -165,7 +219,9 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   const setView = useAction(setViewAction);
   const openPack = useAction(openPackAction);
   const setSearch = useAction(setSearchAction);
+  const setCurrentPage = useAction(setCurrentPageAction);
   const seedEntry = useAction(seedEntryAction);
+  const releaseInactivePacks = useAction(releaseInactivePacksAction);
   const loadPacks = useEffect(loadPacksEffect);
   const loadManifest = useEffect(loadManifestEffect);
   const loadPage = useEffect(loadPageEffect);
@@ -206,6 +262,28 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     });
   });
 
+  // `loadIconPage` caches at the module level, so this Set's only job
+  // is to keep `loadPage` from re-dispatching the success action with
+  // bodies already ingested. Recreated on every pack switch so the
+  // freshly-cleared module cache and this guard stay in sync.
+  let requestedUrls = new Set<string>();
+
+  // Memory release when switching packs — drop fetcher caches plus
+  // the picker's manifests/entries for inactive packs. The active
+  // pack's data stays put. `defer: true` skips the initial run since
+  // there's nothing to release on first mount.
+  createEffect(
+    on(
+      () => picker.activePackId,
+      (activePackId) => {
+        releaseInactivePackCaches(activePackId);
+        releaseInactivePacks(activePackId);
+        requestedUrls = new Set();
+      },
+      { defer: true },
+    ),
+  );
+
   const activePack = createMemo<IconPackSummary | undefined>(() => {
     const list = picker.packs;
     if (!list) return undefined;
@@ -224,33 +302,42 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     () => picker.manifests[picker.activePackId],
   );
 
-  /** Filter applied against `manifest.names` — case-insensitive substring. */
-  const filtered = createMemo<{
-    visible: ReadonlyArray<string>;
-    total: number;
-  }>(() => {
+  /**
+   * Filtered name list — pure function of the active manifest + the
+   * trimmed search term. Pagination slices on top of this so the
+   * filter recomputes only when the manifest or search changes.
+   */
+  const matches = createMemo<ReadonlyArray<string>>(() => {
     const manifest = activeManifest();
-    if (!manifest) return { visible: [], total: 0 };
+    if (!manifest) return [];
     const term = picker.search.trim().toLowerCase();
-    const matches = term
-      ? manifest.names.filter((name) => name.toLowerCase().includes(term))
-      : manifest.names;
-    return { visible: matches.slice(0, MAX_VISIBLE), total: matches.length };
+    if (!term) return manifest.names;
+    return manifest.names.filter((name) => name.toLowerCase().includes(term));
+  });
+
+  const pageCount = createMemo(() =>
+    Math.max(1, Math.ceil(matches().length / PAGE_SIZE)),
+  );
+  /** Clamp the requested page index against the current filter — a search shrink may strand us past the last page. */
+  const safePage = createMemo(() =>
+    Math.min(picker.currentPage, pageCount() - 1),
+  );
+
+  const visible = createMemo<ReadonlyArray<string>>(() => {
+    const list = matches();
+    const start = safePage() * PAGE_SIZE;
+    return list.slice(start, start + PAGE_SIZE);
   });
 
   // Whenever the visible set changes, request the page chunks needed
-  // to render their bodies. `requestedUrls` lives in component scope —
-  // `loadIconPage` itself caches at the module level, so all this Set
-  // adds is a guard against re-firing the success action with bodies
-  // we have already ingested.
-  const requestedUrls = new Set<string>();
+  // to render their bodies.
   createEffect(() => {
     const manifest = activeManifest();
     if (!manifest) return;
-    const visible = filtered().visible;
-    if (visible.length === 0) return;
+    const names = visible();
+    if (names.length === 0) return;
     const needed = new Set<number>();
-    for (const name of visible) {
+    for (const name of names) {
       const position = manifest.names.indexOf(name);
       if (position < 0) continue;
       needed.add(pageIndexFor(manifest, position));
@@ -286,8 +373,11 @@ export const IconGrid: Component<IconGridProps> = (props) => {
             entries={picker.entries}
             search={picker.search}
             onSearch={setSearch}
-            visible={filtered().visible}
-            total={filtered().total}
+            visible={visible()}
+            total={matches().length}
+            currentPage={safePage()}
+            pageCount={pageCount()}
+            onPageChange={setCurrentPage}
             selected={props.selected}
             onPickIcon={handlePickIcon}
             onOpenPackList={() => setView('packs')}
@@ -349,7 +439,7 @@ const PackListView: Component<PackListViewProps> = (props) => (
                     color="lowContrast"
                     selectable={false}
                   >
-                    {pack.total}
+                    {numberFormat.format(pack.total)}
                   </Text>
                 </Flex>
                 <Flex as="div" align="center" gap={2}>
@@ -380,13 +470,23 @@ interface PackDetailViewProps {
   onSearch: (value: string) => void;
   visible: ReadonlyArray<string>;
   total: number;
+  currentPage: number;
+  pageCount: number;
+  onPageChange: (page: number) => void;
   selected: IconRef;
   onPickIcon: (manifest: IconPackManifest, name: string) => void;
   onOpenPackList: () => void;
 }
 
 const PackDetailView: Component<PackDetailViewProps> = (props) => {
-  const truncated = () => props.total > props.visible.length;
+  const goPrev = () => props.onPageChange(Math.max(0, props.currentPage - 1));
+  const goNext = () =>
+    props.onPageChange(Math.min(props.pageCount - 1, props.currentPage + 1));
+  const formatRange = () => {
+    const start = props.currentPage * PAGE_SIZE + 1;
+    const end = start + props.visible.length - 1;
+    return `${numberFormat.format(start)}–${numberFormat.format(end)} of ${numberFormat.format(props.total)}`;
+  };
 
   return (
     <>
@@ -502,14 +602,40 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
                 }}
               </For>
             </div>
-            <Show when={truncated()}>
-              <Flex as="div" justify="center">
-                <Text as="span" size={1} color="lowContrast" selectable={false}>
-                  Showing {props.visible.length} of {props.total} — refine the
-                  search to narrow.
-                </Text>
-              </Flex>
-            </Show>
+            <Flex
+              as="nav"
+              align="center"
+              justify="between"
+              gap={2}
+              aria-label="Pagination"
+              class={css.pager}
+            >
+              <IconButton
+                testId="icon-grid-prev-page"
+                size={1}
+                variant="ghost"
+                color="neutral"
+                aria-label="Previous page"
+                disabled={props.currentPage === 0}
+                onClick={goPrev}
+              >
+                <IconPrev aria-hidden />
+              </IconButton>
+              <Text as="span" size={1} color="lowContrast" selectable={false}>
+                {formatRange()}
+              </Text>
+              <IconButton
+                testId="icon-grid-next-page"
+                size={1}
+                variant="ghost"
+                color="neutral"
+                aria-label="Next page"
+                disabled={props.currentPage >= props.pageCount - 1}
+                onClick={goNext}
+              >
+                <IconNext aria-hidden />
+              </IconButton>
+            </Flex>
           </Show>
         )}
       </Show>

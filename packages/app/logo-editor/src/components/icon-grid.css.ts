@@ -135,3 +135,13 @@ export const packSample = style({
   height: '20px',
   color: neutral.solid[11],
 });
+
+// Pager footer — sticks to the bottom of the icon panel and tabular-
+// numbers the count text so the row width doesn't twitch as the user
+// pages through. `flexShrink: 0` keeps the grid from absorbing the
+// footer's height when scroll content is short.
+export const pager = style({
+  flexShrink: 0,
+  paddingBlock: space[1],
+  fontVariantNumeric: 'tabular-nums',
+});
