@@ -1,6 +1,70 @@
 import { findPalette } from './palette';
 import type { IconEditorShape, IconEditorState } from './state';
 
+/** Minimal XML-text escape — covers everything iconify metadata might carry. */
+const escapeXml = (value: string): string =>
+  value.replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      default:
+        return '&apos;';
+    }
+  });
+
+/**
+ * Build a Dublin Core / Creative Commons `<metadata>` block crediting
+ * the icon's source. Inkscape and the SVG-attribution community use
+ * the same shape, so consumers (file inspectors, asset pipelines)
+ * can scrape it without bespoke parsing.
+ */
+const renderAttributionMetadata = (state: IconEditorState): string => {
+  const { icon } = state;
+  const fields: string[] = [];
+  fields.push(
+    `<dc:title>${escapeXml(`${icon.pack}:${icon.name}`)}</dc:title>`,
+    `<dc:identifier>${escapeXml(`${icon.pack}:${icon.name}`)}</dc:identifier>`,
+  );
+  if (icon.author?.name) {
+    const url = icon.author.url
+      ? ` rdf:about="${escapeXml(icon.author.url)}"`
+      : '';
+    fields.push(
+      `<dc:creator><cc:Agent${url}><dc:title>${escapeXml(icon.author.name)}</dc:title></cc:Agent></dc:creator>`,
+    );
+    if (icon.author.url) {
+      fields.push(`<dc:source rdf:resource="${escapeXml(icon.author.url)}"/>`);
+    }
+  }
+  if (icon.license?.title || icon.license?.spdx) {
+    const label = icon.license.title ?? icon.license.spdx ?? 'License';
+    fields.push(
+      `<dc:rights><cc:Agent><dc:title>${escapeXml(label)}</dc:title></cc:Agent></dc:rights>`,
+    );
+  }
+  if (icon.license?.url) {
+    fields.push(`<cc:license rdf:resource="${escapeXml(icon.license.url)}"/>`);
+  }
+  if (icon.license?.spdx) {
+    fields.push(
+      `<dc:rightsHolder>${escapeXml(`SPDX:${icon.license.spdx}`)}</dc:rightsHolder>`,
+    );
+  }
+  return (
+    `<metadata>` +
+    `<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#">` +
+    `<cc:Work rdf:about="">${fields.join('')}</cc:Work>` +
+    `</rdf:RDF>` +
+    `</metadata>`
+  );
+};
+
 const SHAPE_RX_RATIO: Record<IconEditorShape, number> = {
   square: 0,
   rounded: 0.18,
@@ -31,6 +95,13 @@ export interface RenderOptions {
    * resolving to a sibling preview's clip. @default 'icon'
    */
   idSuffix?: string;
+  /**
+   * Embed an attribution `<metadata>` block (Dublin Core / Creative
+   * Commons RDF) crediting the icon's pack, author, and license.
+   * Off for inline previews (kept lean for repaint cost); on for
+   * exports so credit follows the file. @default false
+   */
+  metadata?: boolean;
 }
 
 /**
@@ -77,8 +148,10 @@ export const renderIconSvg = (
   // looks identical regardless of the host page's color scheme. The
   // fills are already literal hex, but the property forecloses any
   // inherited dark-mode adjustments to currentColor or system colors.
+  const metadata = opts.metadata ? renderAttributionMetadata(state) : '';
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"${dim} style="color-scheme: light">` +
+    metadata +
     `<defs><clipPath id="${clipId}"><rect width="${size}" height="${size}" rx="${rx}" ry="${rx}"/></clipPath></defs>` +
     `<g clip-path="url(#${clipId})">` +
     `<rect width="${size}" height="${size}" fill="${bg}"/>` +

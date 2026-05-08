@@ -79,7 +79,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   const handleExport = () => {
     if (exportState.format === 'svg') {
       downloadSvg(
-        renderIconSvg(props.state, { size: SVG_EXPORT_SIZE }),
+        renderIconSvg(props.state, { size: SVG_EXPORT_SIZE, metadata: true }),
         filename(),
       );
       return;

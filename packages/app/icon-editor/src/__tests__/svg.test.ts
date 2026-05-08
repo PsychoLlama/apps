@@ -94,6 +94,47 @@ describe('renderIconSvg', () => {
     expect(circle).toMatch(/rx="50" ry="50"/);
   });
 
+  it('omits the attribution metadata block by default', () => {
+    const svg = renderIconSvg(baseState);
+
+    expect(svg).not.toMatch(/<metadata>/);
+  });
+
+  it('embeds Dublin Core / CC attribution metadata when `metadata: true`', () => {
+    const svg = renderIconSvg(baseState, { metadata: true });
+
+    expect(svg).toMatch(/<metadata>/);
+    // Pack:name as the work's title.
+    expect(svg).toMatch(/<dc:title>mdi:home<\/dc:title>/);
+    // Author and license travel from the IconRef.
+    expect(svg).toMatch(/Pictogrammers/);
+    expect(svg).toMatch(/Apache 2\.0/);
+    // License URL is anchored as a `cc:license` resource.
+    expect(svg).toMatch(/<cc:license rdf:resource="[^"]*LICENSE/);
+    // SPDX surfaces under `dc:rightsHolder` for machine consumers.
+    expect(svg).toMatch(/SPDX:Apache-2\.0/);
+  });
+
+  it('escapes user-supplied metadata so an icon body can never break the XML', () => {
+    const naughty = {
+      pack: 'mdi',
+      name: 'home',
+      body: '<rect/>',
+      width: 24,
+      height: 24,
+      author: { name: 'A & B <C>', url: 'https://x.test/?a="b"' },
+      license: { title: 'MIT "with quotes"', spdx: 'MIT', url: undefined },
+    };
+    const svg = renderIconSvg(
+      { ...baseState, icon: naughty },
+      { metadata: true },
+    );
+
+    expect(svg).toMatch(/A &amp; B &lt;C&gt;/);
+    expect(svg).toMatch(/MIT &quot;with quotes&quot;/);
+    expect(svg).toMatch(/https:\/\/x\.test\/\?a=&quot;b&quot;/);
+  });
+
   it('falls back to a safe blue/white pair when the palette lookup misses', () => {
     // `PaletteName` types as plain `string`, so the fallback path is
     // reachable from data — store hydration is the only guard above it.
