@@ -41,6 +41,7 @@
 - [Slider](./slider.md): Range input with one or more thumbs.
 - [Switch](./switch.md): Two-state toggle button.
 - [TabNav](./tab-nav.md): Horizontal nav strip of routing links.
+- [Table](./table.md): Tabular data with optional surface chrome.
 - [Tabs](./tabs.md): Switch between panels under a row of triggers.
 - [TextArea](./text-area.md): Multi-line text input.
 - [TextField](./text-field.md): Single-line text input with optional inline slots.
