@@ -61,6 +61,13 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
+import {
+  getScrollPositionFromPointer,
+  getThumbOffsetFromScroll,
+  getThumbRatio,
+  getThumbSize,
+  type Sizes,
+} from './geometry';
 import * as css from './scroll-area.css';
 
 /** Scrollbar visibility behavior. */
@@ -72,23 +79,11 @@ export type ScrollAreaRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
 /** Which axes can scroll. */
 export type ScrollAreaScrollbars = 'vertical' | 'horizontal' | 'both';
 
-type Sizes = {
-  /** Total scrollable extent of the content along the axis. */
-  content: number;
-  /** Visible extent of the viewport along the axis. */
-  viewport: number;
-  /** Scrollbar track metrics along the axis. */
-  scrollbar: { size: number; paddingStart: number; paddingEnd: number };
-};
-
 const ZERO_SIZES: Sizes = {
   content: 0,
   viewport: 0,
   scrollbar: { size: 0, paddingStart: 0, paddingEnd: 0 },
 };
-
-// macOS minimum scrollbar thumb size — matches Radix's floor.
-const MIN_THUMB_SIZE = 18;
 
 type ScrollState = 'hidden' | 'scrolling' | 'idle' | 'interacting';
 type ScrollEvent =
@@ -679,57 +674,3 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
 };
 
 export default ScrollArea;
-
-// --- Pure helpers ---
-
-const clamp = (value: number, min: number, max: number): number =>
-  Math.min(max, Math.max(min, value));
-
-const linearScale =
-  (input: readonly [number, number], output: readonly [number, number]) =>
-  (value: number): number => {
-    if (input[0] === input[1] || output[0] === output[1]) return output[0];
-    const ratio = (output[1] - output[0]) / (input[1] - input[0]);
-    return output[0] + ratio * (value - input[0]);
-  };
-
-const getThumbRatio = (viewport: number, content: number): number => {
-  const ratio = viewport / content;
-  return Number.isNaN(ratio) || !Number.isFinite(ratio) ? 0 : ratio;
-};
-
-const getThumbSize = (sizes: Sizes): number => {
-  const ratio = getThumbRatio(sizes.viewport, sizes.content);
-  const padding = sizes.scrollbar.paddingStart + sizes.scrollbar.paddingEnd;
-  const thumb = (sizes.scrollbar.size - padding) * ratio;
-  return Math.max(thumb, MIN_THUMB_SIZE);
-};
-
-const getScrollPositionFromPointer = (
-  pointerPos: number,
-  pointerOffset: number | null,
-  sizes: Sizes,
-): number => {
-  const thumbSize = getThumbSize(sizes);
-  const thumbCenter = thumbSize / 2;
-  // `null` distinguishes "no offset captured" (track click — center
-  // the thumb on the cursor) from a captured `0` (cursor pressed on
-  // the thumb's leading edge — preserve the alignment).
-  const offset = pointerOffset ?? thumbCenter;
-  const thumbOffsetFromEnd = thumbSize - offset;
-  const minPointer = sizes.scrollbar.paddingStart + offset;
-  const maxPointer =
-    sizes.scrollbar.size - sizes.scrollbar.paddingEnd - thumbOffsetFromEnd;
-  const maxScroll = sizes.content - sizes.viewport;
-  return linearScale([minPointer, maxPointer], [0, maxScroll])(pointerPos);
-};
-
-const getThumbOffsetFromScroll = (scrollPos: number, sizes: Sizes): number => {
-  const thumbSize = getThumbSize(sizes);
-  const padding = sizes.scrollbar.paddingStart + sizes.scrollbar.paddingEnd;
-  const trackSize = sizes.scrollbar.size - padding;
-  const maxScroll = sizes.content - sizes.viewport;
-  const maxThumb = trackSize - thumbSize;
-  const clamped = clamp(scrollPos, 0, Math.max(maxScroll, 0));
-  return linearScale([0, maxScroll], [0, maxThumb])(clamped);
-};
