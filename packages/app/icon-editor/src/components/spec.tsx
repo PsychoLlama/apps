@@ -1,16 +1,16 @@
 import type { Component } from 'solid-js';
 import { Flex, Text } from '@lib/ui';
-import type { LogoEditorState } from '../state';
+import type { IconEditorState } from '../state';
 import * as css from './spec.css';
 
 interface SpecProps {
   /** Snapshot to render. */
-  state: LogoEditorState;
+  state: IconEditorState;
   /** Visual treatment. `bar` paints a panel background. @default 'bar' */
   variant?: 'bar' | 'plain';
 }
 
-/** Compact one-line readout of the logo's current settings. */
+/** Compact one-line readout of the icon's current settings. */
 export const Spec: Component<SpecProps> = (props) => {
   const variant = () => props.variant ?? 'bar';
   return (
@@ -19,7 +19,7 @@ export const Spec: Component<SpecProps> = (props) => {
       align="center"
       gap={2}
       class={variant() === 'bar' ? css.bar : ''}
-      aria-label="Current logo spec"
+      aria-label="Current icon spec"
     >
       <Text as="span" size={1} color="lowContrast" selectable={true}>
         {props.state.icon.name}

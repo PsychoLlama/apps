@@ -1,17 +1,17 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
-import { Button, Flex, TextField } from '@lib/ui';
+import { Badge, Button, Flex, Link, Text, TextField } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { downloadPng, downloadSvg } from '../download';
-import { renderLogoSvg } from '../svg';
-import type { LogoEditorState } from '../state';
+import { renderIconSvg } from '../svg';
+import type { IconEditorState } from '../state';
 import { Field } from './field';
 import * as css from './export-actions.css';
 
 interface ExportActionsProps {
-  /** Reactive logo state — exported on every Export click. */
-  state: LogoEditorState;
+  /** Reactive icon state — exported on every Export click. */
+  state: IconEditorState;
 }
 
 type ExportFormat = 'svg' | 'png';
@@ -37,7 +37,7 @@ const DEFAULT_PX = 512;
 const SVG_EXPORT_SIZE = 512;
 
 const exportStore = defineStore<ExportPanelState>(() => ({
-  format: 'png',
+  format: 'svg',
   size: DEFAULT_PX,
 }));
 const exportState = createStore(exportStore);
@@ -56,10 +56,11 @@ const setSizeAction = defineAction([exportStore], (state, value: number) => {
 const clampSize = (value: number): number =>
   Math.max(MIN_PX, Math.min(MAX_PX, Math.round(value)));
 
-const filenameStem = (state: LogoEditorState) => `logo-${state.icon.name}`;
+const filenameStem = (state: IconEditorState) =>
+  `icon-${state.icon.pack}-${state.icon.name}`;
 
 /**
- * Compose a logo export. Format toggles between SVG (vector, single
+ * Compose an icon export. Format toggles between SVG (vector, single
  * download) and PNG (rasterized at the chosen size). The PNG row
  * surfaces three preset chips for the most common sizes plus a
  * free-form number input — always square, since the canvas itself is
@@ -78,7 +79,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   const handleExport = () => {
     if (exportState.format === 'svg') {
       downloadSvg(
-        renderLogoSvg(props.state, { size: SVG_EXPORT_SIZE }),
+        renderIconSvg(props.state, { size: SVG_EXPORT_SIZE, metadata: true }),
         filename(),
       );
       return;
@@ -90,7 +91,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
     // `target × target` regardless of device pixel ratio.
     const target = effectiveSize();
     void downloadPng(
-      renderLogoSvg(props.state, { size: target }),
+      renderIconSvg(props.state, { size: target }),
       target,
       filename(),
     );
@@ -167,9 +168,47 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
         variant="solid"
         color="accent"
         onClick={handleExport}
+        aria-label={`Export ${filename()}`}
       >
-        <IconDownload aria-hidden /> Export {filename()}
+        <IconDownload aria-hidden /> Export
       </Button>
+
+      <Show when={props.state.icon.license?.spdx}>
+        {(spdx) => (
+          <Flex
+            as="div"
+            align="center"
+            justify="between"
+            gap={2}
+            class={css.licenseRow}
+          >
+            <Text as="span" size={1} color="lowContrast" selectable={false}>
+              Icon license
+            </Text>
+            <Show
+              when={props.state.icon.license?.url}
+              fallback={
+                <Badge size={1} variant="soft" color="neutral">
+                  {spdx()}
+                </Badge>
+              }
+            >
+              {(url) => (
+                <Link
+                  testId="export-license"
+                  href={url()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Badge size={1} variant="soft" color="neutral">
+                    {spdx()}
+                  </Badge>
+                </Link>
+              )}
+            </Show>
+          </Flex>
+        )}
+      </Show>
     </Flex>
   );
 };

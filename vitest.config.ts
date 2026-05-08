@@ -4,10 +4,12 @@ import solid from 'vite-plugin-solid';
 import Icons from 'unplugin-icons/vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
+import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
 
 const sharedPlugins = [
   solid(),
   Icons({ compiler: 'solid' }),
+  iconPacks(),
   vanillaExtractPlugin(),
 ];
 

@@ -101,20 +101,6 @@ export const tabPanelGrow = style({
   minHeight: 0,
 });
 
-export const sectionRow = style({
-  minHeight: space[5],
-});
-
-// Trailing meta text in a section header — truncates so long icon
-// names never push the title.
-export const sectionMeta = style({
-  minWidth: 0,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  fontVariantNumeric: 'tabular-nums',
-});
-
 // Status bar mirrors the toolbar: only the top edge is drawn. Spec
 // runs as a single nowrap row; overflow scrolls horizontally instead
 // of wrapping so the bar height stays fixed at narrow widths. The

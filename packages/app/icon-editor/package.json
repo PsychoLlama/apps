@@ -1,9 +1,9 @@
 {
-  "name": "@app/logo-editor",
+  "name": "@app/icon-editor",
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Logo editor app — composes a brandmark from a curated MDI set.",
+  "description": "Icon editor app — pick, restyle, and export icons from the iconify catalog.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts"
@@ -22,7 +22,7 @@
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
-    "@iconify/json": "^2.2.460"
+    "@dev/build": "workspace:*"
   },
   "peerDependencies": {
     "@solidjs/router": "*",

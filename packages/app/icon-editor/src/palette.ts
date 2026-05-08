@@ -1,5 +1,5 @@
 /**
- * Curated logo-editor palette set sampled from Radix's primary hues.
+ * Curated icon-editor palette set sampled from Radix's primary hues.
  * Each entry pairs a `bg` (light scale step 9) with a `fg` (the
  * palette's `contrast` value, typically white but darker for
  * high-luminance hues like yellow or sky). Shipped as raw hex so the

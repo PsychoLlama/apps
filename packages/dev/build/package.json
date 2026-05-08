@@ -10,6 +10,8 @@
     "./vite-plugin/assert-hashed-assets": "./src/vite-plugin/assert-hashed-assets.ts",
     "./vite-plugin/css-asset": "./src/vite-plugin/css-asset.ts",
     "./vite-plugin/css-asset-types": "./src/vite-plugin/css-asset-types.d.ts",
+    "./vite-plugin/icon-packs": "./src/vite-plugin/icon-packs/index.ts",
+    "./vite-plugin/icon-packs-types": "./src/vite-plugin/icon-packs-types.d.ts",
     "./vite-plugin/svg-to-png": "./src/vite-plugin/svg-to-png.ts",
     "./vite-plugin/svg-to-png-types": "./src/vite-plugin/svg-to-png-types.d.ts"
   },
@@ -20,6 +22,7 @@
     "vite": "*"
   },
   "devDependencies": {
+    "@iconify/json": "catalog:",
     "@resvg/resvg-wasm": "^2.6.2"
   }
 }
