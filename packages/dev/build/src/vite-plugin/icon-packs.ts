@@ -28,7 +28,7 @@ const DEFAULT_MAX_PAGE_BYTES = 200_000;
  */
 const MIN_PAGE_ICONS = 16;
 /** Sample previews baked into the index so the picker shows tiles up-front. */
-const SAMPLE_COUNT = 3;
+const SAMPLE_COUNT = 5;
 
 /**
  * A flat icon entry — the smallest unit the runtime fetches.
@@ -357,23 +357,31 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
                 id,
                 name: info.name,
                 total: info.total ?? 0,
-                // Iconify metadata only carries `height`; the runtime
-                // expects both axes for sample viewBox rendering, so
-                // mirror it onto `width` when the source omits one.
-                width: info.height ?? 24,
-                height: info.height ?? 24,
+                // Placeholder dimensions — overwritten by `data.width`
+                // / `data.height` from the actual pack JSON below.
+                // `collections.json` only carries `height`, and a few
+                // packs (Academicons 448×512, Ant Design 1024×1024)
+                // have non-square viewBoxes that the metadata can't
+                // express. Without the override, sample bodies render
+                // against the wrong viewBox and clip off-screen.
+                width: 24,
+                height: 24,
                 // Samples are looked up lazily inside the dev manifest
                 // route; the index itself only needs cheap metadata.
                 samples: [] as IconEntry[],
                 manifestUrl: `${DEV_URL_PREFIX}${id}/manifest.json`,
               }))
               .sort((left, right) => left.name.localeCompare(right.name));
-            // Resolve sample bodies in parallel so the picker can
-            // preview a few icons without a follow-up fetch per pack.
+            // Resolve sample bodies + accurate dimensions in parallel
+            // so the picker can preview icons without a follow-up
+            // fetch per pack.
             await Promise.all(
               packs.map(async (entry) => {
                 const data = await getPackData(entry.id);
-                if (data) entry.samples = data.samples;
+                if (!data) return;
+                entry.samples = data.samples;
+                entry.width = data.width;
+                entry.height = data.height;
               }),
             );
             respondJson({ packs });
