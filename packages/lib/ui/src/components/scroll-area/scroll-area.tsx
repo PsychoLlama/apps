@@ -35,11 +35,20 @@
  *   nothing. Radix only consumes `deltaX`.
  * - Drag finishers also bind `pointercancel` and `lostpointercapture`
  *   so an interrupted drag (touch cancellation, browser tab switch,
- *   forced capture release) still restores body selection state and
+ *   forced capture release) still restores `scroll-behavior` and
  *   detaches the move listener. Radix only listens for `pointerup`.
  * - `type='hover'` keeps the scrollbar visible while a drag is in
  *   progress, even if the pointer drifts off the root. Radix's hide
  *   timer can fade the bar out from under the user mid-drag.
+ * - Drag save/restores the viewport's prior inline `scroll-behavior`
+ *   instead of unconditionally clearing it on release. Preserves a
+ *   consumer-set `scroll-behavior: smooth` outside the drag window;
+ *   Radix overwrites it to `''`.
+ * - No `ScrollAreaCorner` element. Radix paints a real DOM box at
+ *   the bottom-right when both bars are visible; we compute corner
+ *   clearance via cross-axis thickness vars but leave the corner
+ *   transparent. Visually identical against neutral panels — drop a
+ *   styled element back in if a consumer needs to color-match it.
  *
  * @see https://www.radix-ui.com/themes/docs/components/scroll-area
  * @see https://www.radix-ui.com/primitives/docs/components/scroll-area
