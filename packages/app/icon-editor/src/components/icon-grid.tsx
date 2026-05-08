@@ -444,7 +444,6 @@ export const IconGrid: Component<IconGridProps> = (props) => {
         <Match when={picker.view === 'pack-info'}>
           <PackInfoView
             pack={activePack()}
-            onOpenPackList={() => setView('packs')}
             onShowIcons={() => setView('pack-detail')}
           />
         </Match>
@@ -558,8 +557,7 @@ interface PackDetailViewProps {
 
 interface PackInfoViewProps {
   pack: IconPackSummary | undefined;
-  onOpenPackList: () => void;
-  /** Return to the icon grid for the same pack. */
+  /** Return to the icon grid for the same pack — one step up the stack. */
   onShowIcons: () => void;
 }
 
@@ -754,12 +752,12 @@ const PackInfoView: Component<PackInfoViewProps> = (props) => {
     <>
       <Flex as="div" align="center" gap={2}>
         <IconButton
-          testId="icon-grid-pack-list"
+          testId="icon-grid-pack-info-back"
           size={1}
           variant="ghost"
           color="neutral"
-          aria-label="Browse icon packs"
-          onClick={props.onOpenPackList}
+          aria-label="Back to icons"
+          onClick={props.onShowIcons}
         >
           <IconBack aria-hidden />
         </IconButton>
@@ -768,17 +766,6 @@ const PackInfoView: Component<PackInfoViewProps> = (props) => {
             {props.pack?.name ?? 'Loading…'}
           </Text>
         </Flex>
-        <IconButton
-          testId="icon-grid-pack-info-close"
-          size={1}
-          variant="ghost"
-          color="neutral"
-          aria-label="Show icons"
-          aria-pressed
-          onClick={props.onShowIcons}
-        >
-          <IconInfo aria-hidden />
-        </IconButton>
       </Flex>
 
       <Show when={props.pack}>
