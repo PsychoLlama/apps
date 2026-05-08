@@ -126,10 +126,9 @@ export const content = style({
 export const scrollbar = style({
   position: 'absolute',
   display: 'flex',
-  // Block accidental selection of underlying content while dragging.
-  userSelect: 'none',
   // Disable browser pan/zoom gestures so a finger drag scrolls
-  // instead of scrolling the page.
+  // instead of scrolling the page. (`user-select: none` already
+  // ships from the global reset.)
   touchAction: 'none',
   backgroundColor: neutral.alpha[3],
   borderRadius: scrollbarRadius,

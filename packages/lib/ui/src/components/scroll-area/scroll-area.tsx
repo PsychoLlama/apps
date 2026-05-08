@@ -513,17 +513,10 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       }
     }
 
-    // `userSelect: 'none'` covers Chromium and Firefox; Safari
-    // historically required the `-webkit-` form to honor it during
-    // active pointer capture, so we set both. Reach for the legacy
-    // alias via `setProperty` to keep the TS deprecation lint quiet.
-    const bodyStyle = document.body.style;
-    const prevUserSelect = bodyStyle.userSelect;
-    const prevWebkitUserSelect = bodyStyle.getPropertyValue(
-      '-webkit-user-select',
-    );
-    bodyStyle.userSelect = 'none';
-    bodyStyle.setProperty('-webkit-user-select', 'none');
+    // `scrollBehavior: 'auto'` overrides any consumer-set
+    // `scroll-behavior: smooth` for the duration of the drag —
+    // smooth scroll lags the cursor and feels broken when the user
+    // is holding the thumb. Restore the prior value on release.
     const prevScrollBehavior = viewport.style.scrollBehavior;
     viewport.style.scrollBehavior = 'auto';
     setIsDragging(true);
@@ -555,8 +548,6 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       target.removeEventListener('pointerup', finish);
       target.removeEventListener('pointercancel', finish);
       target.removeEventListener('lostpointercapture', finish);
-      bodyStyle.userSelect = prevUserSelect;
-      bodyStyle.setProperty('-webkit-user-select', prevWebkitUserSelect);
       viewport.style.scrollBehavior = prevScrollBehavior;
       setIsDragging(false);
       // Pointer capture suppressed `pointerleave` on the root while
