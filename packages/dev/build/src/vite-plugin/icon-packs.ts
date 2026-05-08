@@ -371,7 +371,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
                 samples: [] as IconEntry[],
                 manifestUrl: `${DEV_URL_PREFIX}${id}/manifest.json`,
               }))
-              .sort((left, right) => left.name.localeCompare(right.name));
+              .sort((left, right) => left.name.localeCompare(right.name, 'en'));
             // Resolve sample bodies + accurate dimensions in parallel
             // so the picker can preview icons without a follow-up
             // fetch per pack.
@@ -456,7 +456,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
         // every downstream array (manifestPlaceholders, indexPayload)
         // inherits this order.
         const packIds = Object.keys(collections).sort((left, right) =>
-          collections[left].name.localeCompare(collections[right].name),
+          collections[left].name.localeCompare(collections[right].name, 'en'),
         );
 
         const packBuilds: PackBuild[] = [];
