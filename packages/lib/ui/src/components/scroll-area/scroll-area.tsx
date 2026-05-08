@@ -140,10 +140,14 @@ interface ScrollbarProps {
   thumbSize: number;
   /** Cross-axis clearance for the perpendicular scrollbar (px). */
   cornerSize: number;
-  /** Hand the track element back to the parent for measurement. */
-  setScrollbarRef: (el: HTMLDivElement | null) => void;
+  /**
+   * Hand the track element back to the parent for measurement. The
+   * cleanup pass nulls the signal so the parent's ResizeObserver
+   * effect re-runs and detaches when this scrollbar unmounts.
+   */
+  ref: (el: HTMLDivElement | null) => void;
   /** Hand the thumb element back to the parent for transform writes. */
-  setThumbRef: (el: HTMLDivElement | undefined) => void;
+  thumbRef: (el: HTMLDivElement | undefined) => void;
   onPointerDown: (event: PointerEvent) => void;
   onPointerEnter: () => void;
   onPointerLeave: () => void;
@@ -166,8 +170,8 @@ const Scrollbar = (props: ScrollbarProps) => {
   return (
     <div
       ref={(el) => {
-        props.setScrollbarRef(el);
-        onCleanup(() => props.setScrollbarRef(null));
+        props.ref(el);
+        onCleanup(() => props.ref(null));
       }}
       class={css.scrollbar}
       data-orientation={orientation()}
@@ -180,8 +184,8 @@ const Scrollbar = (props: ScrollbarProps) => {
       <Show when={props.hasThumb}>
         <div
           ref={(el) => {
-            props.setThumbRef(el);
-            onCleanup(() => props.setThumbRef(undefined));
+            props.thumbRef(el);
+            onCleanup(() => props.thumbRef(undefined));
           }}
           class={css.thumb}
           data-orientation={orientation()}
@@ -302,22 +306,30 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
 
   const visibleX = (): boolean => {
     if (!enableX()) return false;
-    if (local.type === 'always') return true;
-    if (local.type === 'auto') return isOverflowingX();
-    if (local.type === 'hover') return hoverVisible() && isOverflowingX();
-    if (local.type === 'scroll')
-      return scrollState() !== 'hidden' && isOverflowingX();
-    return false;
+    switch (local.type) {
+      case 'always':
+        return true;
+      case 'auto':
+        return isOverflowingX();
+      case 'hover':
+        return hoverVisible() && isOverflowingX();
+      case 'scroll':
+        return scrollState() !== 'hidden' && isOverflowingX();
+    }
   };
 
   const visibleY = (): boolean => {
     if (!enableY()) return false;
-    if (local.type === 'always') return true;
-    if (local.type === 'auto') return isOverflowingY();
-    if (local.type === 'hover') return hoverVisible() && isOverflowingY();
-    if (local.type === 'scroll')
-      return scrollState() !== 'hidden' && isOverflowingY();
-    return false;
+    switch (local.type) {
+      case 'always':
+        return true;
+      case 'auto':
+        return isOverflowingY();
+      case 'hover':
+        return hoverVisible() && isOverflowingY();
+      case 'scroll':
+        return scrollState() !== 'hidden' && isOverflowingY();
+    }
   };
 
   // Corner sizes feed scrollbar offsets so the two axes don't
@@ -396,32 +408,44 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     const viewport = viewportEl();
     if (!viewport) return;
     if (enableX()) {
-      const sb = scrollbarXEl();
-      const sbStyle = sb ? getComputedStyle(sb) : undefined;
+      const scrollbar = scrollbarXEl();
+      const scrollbarStyle = scrollbar
+        ? getComputedStyle(scrollbar)
+        : undefined;
       setSizesX({
         content: viewport.scrollWidth,
         viewport: viewport.offsetWidth,
         scrollbar: {
-          size: sb?.clientWidth ?? 0,
-          paddingStart: sbStyle ? parseInt(sbStyle.paddingLeft, 10) || 0 : 0,
-          paddingEnd: sbStyle ? parseInt(sbStyle.paddingRight, 10) || 0 : 0,
+          size: scrollbar?.clientWidth ?? 0,
+          paddingStart: scrollbarStyle
+            ? parseInt(scrollbarStyle.paddingLeft, 10) || 0
+            : 0,
+          paddingEnd: scrollbarStyle
+            ? parseInt(scrollbarStyle.paddingRight, 10) || 0
+            : 0,
         },
       });
-      setThicknessX(sb?.clientHeight ?? 0);
+      setThicknessX(scrollbar?.clientHeight ?? 0);
     }
     if (enableY()) {
-      const sb = scrollbarYEl();
-      const sbStyle = sb ? getComputedStyle(sb) : undefined;
+      const scrollbar = scrollbarYEl();
+      const scrollbarStyle = scrollbar
+        ? getComputedStyle(scrollbar)
+        : undefined;
       setSizesY({
         content: viewport.scrollHeight,
         viewport: viewport.offsetHeight,
         scrollbar: {
-          size: sb?.clientHeight ?? 0,
-          paddingStart: sbStyle ? parseInt(sbStyle.paddingTop, 10) || 0 : 0,
-          paddingEnd: sbStyle ? parseInt(sbStyle.paddingBottom, 10) || 0 : 0,
+          size: scrollbar?.clientHeight ?? 0,
+          paddingStart: scrollbarStyle
+            ? parseInt(scrollbarStyle.paddingTop, 10) || 0
+            : 0,
+          paddingEnd: scrollbarStyle
+            ? parseInt(scrollbarStyle.paddingBottom, 10) || 0
+            : 0,
         },
       });
-      setThicknessY(sb?.clientWidth ?? 0);
+      setThicknessY(scrollbar?.clientWidth ?? 0);
     }
   };
 
@@ -431,8 +455,8 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   createEffect(() => {
     const viewport = viewportEl();
     const content = contentEl();
-    const sbX = scrollbarXEl();
-    const sbY = scrollbarYEl();
+    const scrollbarX = scrollbarXEl();
+    const scrollbarY = scrollbarYEl();
     if (!viewport) return;
     let rAF = 0;
     const observer = new ResizeObserver(() => {
@@ -441,8 +465,8 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     });
     observer.observe(viewport);
     if (content) observer.observe(content);
-    if (sbX) observer.observe(sbX);
-    if (sbY) observer.observe(sbY);
+    if (scrollbarX) observer.observe(scrollbarX);
+    if (scrollbarY) observer.observe(scrollbarY);
     onCleanup(() => {
       cancelAnimationFrame(rAF);
       observer.disconnect();
@@ -507,26 +531,26 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   createEffect(() => {
     const handler = (event: WheelEvent) => {
       const target = event.target as Node | null;
-      const sbX = scrollbarXEl();
-      const sbY = scrollbarYEl();
-      const onX = sbX && target && sbX.contains(target);
-      const onY = sbY && target && sbY.contains(target);
+      const scrollbarX = scrollbarXEl();
+      const scrollbarY = scrollbarYEl();
+      const onX = scrollbarX && target && scrollbarX.contains(target);
+      const onY = scrollbarY && target && scrollbarY.contains(target);
       const viewport = viewportEl();
       if (!viewport || (!onX && !onY)) return;
       if (onX) {
         // A vertical mouse wheel reports motion in `deltaY` even
         // when the user wheels over a horizontal scrollbar. Fall
         // back to `deltaY` so the gesture still moves the viewport.
-        const sx = sizesX();
+        const sizes = sizesX();
         const next = viewport.scrollLeft + (event.deltaX || event.deltaY);
         viewport.scrollLeft = next;
-        const max = sx.content - sx.viewport;
+        const max = sizes.content - sizes.viewport;
         if (next > 0 && next < max) event.preventDefault();
       } else {
-        const sy = sizesY();
+        const sizes = sizesY();
         const next = viewport.scrollTop + event.deltaY;
         viewport.scrollTop = next;
-        const max = sy.content - sy.viewport;
+        const max = sizes.content - sizes.viewport;
         if (next > 0 && next < max) event.preventDefault();
       }
     };
@@ -625,12 +649,12 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       // next real pointer movement re-arms the timer.
       const root = rootEl();
       if (local.type === 'hover' && root) {
-        const rect = root.getBoundingClientRect();
+        const rootRect = root.getBoundingClientRect();
         const outside =
-          finishEvent.clientX < rect.left ||
-          finishEvent.clientX > rect.right ||
-          finishEvent.clientY < rect.top ||
-          finishEvent.clientY > rect.bottom;
+          finishEvent.clientX < rootRect.left ||
+          finishEvent.clientX > rootRect.right ||
+          finishEvent.clientY < rootRect.top ||
+          finishEvent.clientY > rootRect.bottom;
         if (outside) scheduleHoverHide();
       }
     };
@@ -689,8 +713,8 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           hasThumb={hasThumbX()}
           thumbSize={getThumbSize(sizesX())}
           cornerSize={cornerWidth()}
-          setScrollbarRef={setScrollbarXEl}
-          setThumbRef={(el) => (thumbXEl = el)}
+          ref={setScrollbarXEl}
+          thumbRef={(el: HTMLDivElement | undefined) => (thumbXEl = el)}
           onPointerDown={(event) => startDrag('x', event)}
           onPointerEnter={onScrollbarPointerEnter}
           onPointerLeave={onScrollbarPointerLeave}
@@ -703,8 +727,8 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
           hasThumb={hasThumbY()}
           thumbSize={getThumbSize(sizesY())}
           cornerSize={cornerHeight()}
-          setScrollbarRef={setScrollbarYEl}
-          setThumbRef={(el) => (thumbYEl = el)}
+          ref={setScrollbarYEl}
+          thumbRef={(el: HTMLDivElement | undefined) => (thumbYEl = el)}
           onPointerDown={(event) => startDrag('y', event)}
           onPointerEnter={onScrollbarPointerEnter}
           onPointerLeave={onScrollbarPointerLeave}
