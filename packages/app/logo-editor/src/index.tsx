@@ -60,6 +60,14 @@ type LogoSearchParamKey = 'icon' | 'palette' | 'shape' | 'pad';
 type LogoSearchParams = Partial<Record<LogoSearchParamKey, string>> &
   Record<string, string | string[] | undefined>;
 
+/**
+ * Mirror payload for `setSearchParams`. `null` is router idiom for
+ * "delete this key"; an omitted key means "preserve whatever's
+ * already in the URL." The extra `null` slot is what the runtime
+ * accepts but the public `SearchParams` type doesn't model.
+ */
+type LogoMirrorParams = Partial<Record<LogoSearchParamKey, string | null>>;
+
 /** Pause before flushing state changes to the URL. */
 const URL_DEBOUNCE_MS = 200;
 
@@ -102,16 +110,27 @@ export const LogoEditor = () => {
   };
 
   // Hydrate from the URL on mount and on every navigation. Style
-  // fields apply synchronously; the icon param requires a pack fetch,
-  // so it's resolved in the background. Until that lands, the store
-  // keeps its existing icon (default at first paint, cached on
-  // subsequent visits).
+  // fields apply synchronously; the icon param requires a pack
+  // fetch, so it's resolved in the background. While the resolution
+  // is in flight, the store's icon stays at whatever it was —
+  // touching it would let the URL-mirror effect race ahead and
+  // overwrite the URL's icon param with the placeholder default.
   //
-  // `pendingIconRequest` tracks the most recent in-flight resolution
-  // — if the user picks a different icon (or the URL changes again)
-  // before a slow fetch returns, the stale resolution would otherwise
-  // overwrite their pick and resurrect the param it just left.
+  // `pendingIconRequest` is the request token of the most recent
+  // in-flight resolution. The URL-mirror effect skips writing the
+  // icon param while pending, and the wrapper `setIcon`/`reset`
+  // helpers clear it whenever the user takes deliberate action so
+  // their pick lands in the URL even if the original async fetch is
+  // still resolving.
   let pendingIconRequest: string | undefined;
+  const setIcon = (icon: IconRef) => {
+    pendingIconRequest = undefined;
+    actions.setIcon(icon);
+  };
+  const resetState = () => {
+    pendingIconRequest = undefined;
+    actions.reset();
+  };
   createEffect(() => {
     const padParam = readParam('pad');
     const iconParam = readParam('icon');
@@ -126,16 +145,17 @@ export const LogoEditor = () => {
         pendingIconRequest = iconParam;
         const requestToken = iconParam;
         void resolveIconRef(parsed.pack, parsed.name).then((icon) => {
-          if (!icon) return;
           if (pendingIconRequest !== requestToken) return;
-          actions.setIcon(icon);
+          pendingIconRequest = undefined;
+          if (icon) actions.setIcon(icon);
         });
-      } else {
-        pendingIconRequest = undefined;
+        return;
       }
-    } else {
-      pendingIconRequest = undefined;
     }
+    // No icon param (or malformed) — drop any pending hydration and
+    // reset the icon. Style fields already reset via `actions.hydrate`.
+    pendingIconRequest = undefined;
+    actions.setIcon(DEFAULT_LOGO_EDITOR_STATE.icon);
   });
 
   // Mirror state → URL with a small debounce so each keystroke in the
@@ -154,31 +174,38 @@ export const LogoEditor = () => {
       (next) => {
         if (timeoutId !== undefined) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
-          setSearchParams(
-            {
-              icon: paramOrNull(
-                next.icon,
-                encodeIconRef(DEFAULT_LOGO_EDITOR_STATE.icon),
-                identity,
-              ),
-              palette: paramOrNull(
-                next.palette,
-                DEFAULT_LOGO_EDITOR_STATE.palette,
-                identity,
-              ),
-              shape: paramOrNull(
-                next.shape,
-                DEFAULT_LOGO_EDITOR_STATE.shape,
-                identity,
-              ),
-              pad: paramOrNull(
-                next.pad,
-                DEFAULT_LOGO_EDITOR_STATE.padding,
-                String,
-              ),
-            },
-            { replace: true },
-          );
+          // While an icon resolution is pending we omit the `icon`
+          // key — `setSearchParams` preserves omitted keys, so the
+          // URL's existing icon param survives until the async
+          // resolve lands and the user-driven flush below writes
+          // the resolved value.
+          const params: LogoMirrorParams = {
+            palette: paramOrNull(
+              next.palette,
+              DEFAULT_LOGO_EDITOR_STATE.palette,
+              identity,
+            ),
+            shape: paramOrNull(
+              next.shape,
+              DEFAULT_LOGO_EDITOR_STATE.shape,
+              identity,
+            ),
+            pad: paramOrNull(
+              next.pad,
+              DEFAULT_LOGO_EDITOR_STATE.padding,
+              String,
+            ),
+          };
+          if (!pendingIconRequest) {
+            params.icon = paramOrNull(
+              next.icon,
+              encodeIconRef(DEFAULT_LOGO_EDITOR_STATE.icon),
+              identity,
+            );
+          }
+          // `null` is the router's runtime sentinel for "delete this
+          // key"; the param type lets it through.
+          setSearchParams(params, { replace: true });
         }, URL_DEBOUNCE_MS);
       },
       { defer: true },
@@ -191,7 +218,7 @@ export const LogoEditor = () => {
   const handleRandomize = () => {
     actions.randomizeStyle();
     void pickRandomIcon().then((icon) => {
-      if (icon) actions.setIcon(icon);
+      if (icon) setIcon(icon);
     });
   };
 
@@ -214,7 +241,7 @@ export const LogoEditor = () => {
             color="neutral"
             mx={2}
             my={1}
-            onClick={actions.reset}
+            onClick={resetState}
           >
             <IconReset aria-hidden /> Reset
           </Button>
@@ -292,10 +319,7 @@ export const LogoEditor = () => {
                     {logoEditor.icon.name}
                   </Text>
                 </Flex>
-                <IconGrid
-                  selected={logoEditor.icon}
-                  onSelect={actions.setIcon}
-                />
+                <IconGrid selected={logoEditor.icon} onSelect={setIcon} />
               </Flex>
             </TabsContent>
 
