@@ -37,7 +37,6 @@
   },
   "devDependencies": {
     "@dev/build": "workspace:*",
-    "@iconify/json": "^2.2.460",
     "@solidjs/testing-library": "catalog:",
     "@solidjs/vite-plugin-nitro-2": "^0.1.0",
     "@testing-library/user-event": "catalog:",

@@ -17,7 +17,7 @@
   "devDependencies": {
     "@app/studio": "workspace:*",
     "@dev/build": "workspace:*",
-    "@iconify/json": "^2.2.460",
+    "@iconify/json": "catalog:",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/theme": "workspace:*",
