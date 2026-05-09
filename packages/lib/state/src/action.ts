@@ -1,4 +1,4 @@
-import { batch } from 'solid-js';
+import { batch, untrack } from 'solid-js';
 import type { Registry } from './internal';
 import { collectArgs, type StoreRef } from './store';
 
@@ -59,6 +59,11 @@ export const defineAction = <
 /**
  * Invoke an action against a registry. Multi-store updates batch into a
  * single reactive flush. All stores in the action must already be created.
+ *
+ * The handler runs inside `untrack` so that proxy reads inherent to
+ * read-modify-write writes (`state.count += 1` reads `count` to compute
+ * the new value) don't subscribe the calling reactive scope to the
+ * fields the action touches.
  */
 export const invoke = <Stores extends readonly StoreRef<object>[], Input>(
   registry: Registry,
@@ -67,7 +72,9 @@ export const invoke = <Stores extends readonly StoreRef<object>[], Input>(
 ): void => {
   const [stores, handler] = action;
   const args = collectArgs(registry, stores, input);
-  batch(() => {
-    (handler as (...args: unknown[]) => void)(...args);
+  untrack(() => {
+    batch(() => {
+      (handler as (...args: unknown[]) => void)(...args);
+    });
   });
 };

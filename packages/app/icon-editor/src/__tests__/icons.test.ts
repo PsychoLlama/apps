@@ -1,18 +1,12 @@
-import { DEFAULT_ICON, encodeIconRef, parseIconRef } from '../icons';
-
-describe('DEFAULT_ICON', () => {
-  it('inlines a renderable body so the editor never starts blank', () => {
-    expect(DEFAULT_ICON.pack).toBe('mdi');
-    expect(DEFAULT_ICON.name).toBe('home');
-    expect(DEFAULT_ICON.body).toContain('<path');
-    expect(DEFAULT_ICON.width).toBe(24);
-    expect(DEFAULT_ICON.height).toBe(24);
-  });
-});
+import { encodeIconRef, parseIconRef } from '../icons';
 
 describe('encodeIconRef', () => {
   it('joins pack and name with a colon — matches iconify convention', () => {
     expect(encodeIconRef({ pack: 'mdi', name: 'home' })).toBe('mdi:home');
+  });
+
+  it('returns the empty string when no icon is chosen — the URL-mirror effect treats that as "drop the param"', () => {
+    expect(encodeIconRef(undefined)).toBe('');
   });
 });
 

@@ -1,4 +1,4 @@
-import { For, createEffect, on, onCleanup } from 'solid-js';
+import { For, createEffect, on, onCleanup, untrack } from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
@@ -20,7 +20,6 @@ import { PaddingSlider } from './components/padding-slider';
 import { PalettePicker } from './components/palette-picker';
 import { Preview } from './components/preview';
 import { ShapeSelector } from './components/shape-selector';
-import { Spec } from './components/spec';
 import {
   encodeIconRef,
   loadIconPackIndex,
@@ -50,6 +49,20 @@ const tabStore = defineStore<{ tab: InspectorTab }>(() => ({ tab: 'icon' }));
 const tabState = createStore(tabStore);
 const setTabAction = defineAction([tabStore], (state, tab: string) => {
   if (tab === 'icon' || tab === 'style' || tab === 'export') state.tab = tab;
+});
+
+/**
+ * Count of in-flight icon resolutions — URL hydration, randomize.
+ * Counter (rather than a boolean) so concurrent requests stop pulsing
+ * the canvas only once *every* request has settled.
+ */
+const loadingStore = defineStore<{ pending: number }>(() => ({ pending: 0 }));
+const loadingState = createStore(loadingStore);
+const startLoadingAction = defineAction([loadingStore], (state) => {
+  state.pending += 1;
+});
+const finishLoadingAction = defineAction([loadingStore], (state) => {
+  state.pending = Math.max(0, state.pending - 1);
 });
 
 /** Recognized search-param keys backing a shareable icon URL. */
@@ -110,6 +123,9 @@ const pickRandomIcon = async (): Promise<IconRef | undefined> => {
 export const IconEditor = () => {
   const actions = useIconEditorActions();
   const setActiveTab = useAction(setTabAction);
+  const startLoading = useAction(startLoadingAction);
+  const finishLoading = useAction(finishLoadingAction);
+  const isLoading = () => loadingState.pending > 0;
   const [searchParams, setSearchParams] = useSearchParams<IconSearchParams>();
 
   const readParam = (key: IconSearchParamKey): string | undefined => {
@@ -145,7 +161,7 @@ export const IconEditor = () => {
     // `hydrate` only touches style fields — the icon is hydrated
     // separately through the async path below (or the explicit reset
     // in the else branch). Mixing them would either flash the icon
-    // back to `DEFAULT_ICON` for the few microtasks before
+    // back to `undefined` for the few microtasks before
     // `resolveIconRef` finishes, or — if we tried to thread the
     // current icon through — create a reactive cycle on every pick.
     actions.hydrate({
@@ -156,9 +172,23 @@ export const IconEditor = () => {
     if (iconParam) {
       const parsed = parseIconRef(iconParam);
       if (parsed) {
+        // The URL-mirror effect echoes every store icon write back into
+        // the search params, which retriggers this effect. Skip
+        // re-resolving when the param already matches what we hold —
+        // otherwise every pick spends a fetch round-trip (and a
+        // loading pulse) on a no-op refresh. `untrack` keeps that
+        // comparison from making `iconEditor.icon` a dependency of
+        // this effect.
+        const current = untrack(() => iconEditor.icon);
+        if (current?.pack === parsed.pack && current.name === parsed.name) {
+          pendingIconRequest = undefined;
+          return;
+        }
         pendingIconRequest = iconParam;
         const requestToken = iconParam;
+        startLoading();
         void resolveIconRef(parsed.pack, parsed.name).then((icon) => {
+          finishLoading();
           if (pendingIconRequest !== requestToken) return;
           pendingIconRequest = undefined;
           if (icon) actions.setIcon(icon);
@@ -167,7 +197,7 @@ export const IconEditor = () => {
       }
     }
     // No icon param (or malformed) — drop any pending hydration and
-    // reset the icon. Style fields already reset via `actions.hydrate`.
+    // clear the icon. Style fields already reset via `actions.hydrate`.
     pendingIconRequest = undefined;
     actions.setIcon(DEFAULT_ICON_EDITOR_STATE.icon);
   });
@@ -231,7 +261,9 @@ export const IconEditor = () => {
 
   const handleRandomize = () => {
     actions.randomizeStyle();
+    startLoading();
     void pickRandomIcon().then((icon) => {
+      finishLoading();
       if (icon) setIcon(icon);
     });
   };
@@ -275,7 +307,7 @@ export const IconEditor = () => {
         <Flex as="div" class={css.body}>
           <Flex as="section" class={css.canvas} aria-label="Icon preview">
             <Flex as="div" class={css.canvasStage}>
-              <Preview state={iconEditor} size={296} />
+              <Preview state={iconEditor} size={296} loading={isLoading()} />
             </Flex>
           </Flex>
 
@@ -346,10 +378,6 @@ export const IconEditor = () => {
               <ExportActions state={iconEditor} />
             </TabsContent>
           </TabsRoot>
-        </Flex>
-
-        <Flex as="footer" class={css.statusBar} aria-label="Status">
-          <Spec state={iconEditor} variant="plain" />
         </Flex>
       </Flex>
     </Flex>

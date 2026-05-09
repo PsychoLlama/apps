@@ -1,7 +1,16 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
-import { Badge, Button, Flex, Link, Text, TextField } from '@lib/ui';
+import {
+  Badge,
+  Button,
+  Flex,
+  Link,
+  RadioCardsItem,
+  RadioCardsRoot,
+  Text,
+  TextField,
+} from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { downloadPng, downloadSvg } from '../download';
 import { renderIconSvg } from '../svg';
@@ -56,8 +65,8 @@ const setSizeAction = defineAction([exportStore], (state, value: number) => {
 const clampSize = (value: number): number =>
   Math.max(MIN_PX, Math.min(MAX_PX, Math.round(value)));
 
-const filenameStem = (state: IconEditorState) =>
-  `icon-${state.icon.pack}-${state.icon.name}`;
+const filenameStem = (icon: NonNullable<IconEditorState['icon']>) =>
+  `icon-${icon.pack}-${icon.name}`;
 
 /**
  * Compose an icon export. Format toggles between SVG (vector, single
@@ -71,12 +80,20 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   const setSize = useAction(setSizeAction);
 
   const effectiveSize = () => clampSize(exportState.size);
-  const filename = () =>
-    exportState.format === 'svg'
-      ? `${filenameStem(props.state)}.svg`
-      : `${filenameStem(props.state)}-${effectiveSize()}.png`;
+  // Filename / aria-label are only meaningful when an icon is chosen.
+  // The Export button is disabled in the empty state, so the empty
+  // string never reaches the user — we still need *something* to plug
+  // into the aria-label template before then.
+  const filename = () => {
+    const icon = props.state.icon;
+    if (!icon) return '';
+    return exportState.format === 'svg'
+      ? `${filenameStem(icon)}.svg`
+      : `${filenameStem(icon)}-${effectiveSize()}.png`;
+  };
 
   const handleExport = () => {
+    if (!props.state.icon) return;
     if (exportState.format === 'svg') {
       downloadSvg(
         renderIconSvg(props.state, { size: SVG_EXPORT_SIZE, metadata: true }),
@@ -100,28 +117,26 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   return (
     <Flex as="div" direction="column" gap={3}>
       <Field label="Format">
-        {/* Two-segment radiogroup; matches ShapeSelector's chip style.    */}
-        {/* eslint-disable-next-line custom/require-ui-primitives */}
-        <div class={css.formatGroup} role="radiogroup" aria-label="Format">
+        <RadioCardsRoot
+          testId="export-format"
+          name="export-format"
+          size={1}
+          columns={2}
+          value={exportState.format}
+          onValueChange={(value) => setFormat(value as ExportFormat)}
+          aria-label="Format"
+        >
           <For each={FORMATS}>
-            {(option) => {
-              const selected = () => exportState.format === option.value;
-              return (
-                // eslint-disable-next-line custom/require-ui-primitives
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={selected()}
-                  class={css.formatOption}
-                  classList={{ [css.formatOptionActive]: selected() }}
-                  onClick={() => setFormat(option.value)}
-                >
-                  {option.label}
-                </button>
-              );
-            }}
+            {(option) => (
+              <RadioCardsItem
+                testId={`export-format-${option.value}`}
+                value={option.value}
+              >
+                {option.label}
+              </RadioCardsItem>
+            )}
           </For>
-        </div>
+        </RadioCardsRoot>
       </Field>
 
       <Show when={exportState.format === 'png'}>
@@ -167,13 +182,16 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
         size={2}
         variant="solid"
         color="accent"
+        disabled={!props.state.icon}
         onClick={handleExport}
-        aria-label={`Export ${filename()}`}
+        aria-label={
+          props.state.icon ? `Export ${filename()}` : 'Choose an icon to export'
+        }
       >
         <IconDownload aria-hidden /> Export
       </Button>
 
-      <Show when={props.state.icon.license?.spdx}>
+      <Show when={props.state.icon?.license?.spdx}>
         {(spdx) => (
           <Flex
             as="div"
@@ -186,7 +204,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
               Icon license
             </Text>
             <Show
-              when={props.state.icon.license?.url}
+              when={props.state.icon?.license?.url}
               fallback={
                 <Badge size={1} variant="soft" color="neutral">
                   {spdx()}

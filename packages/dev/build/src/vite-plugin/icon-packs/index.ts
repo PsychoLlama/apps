@@ -14,7 +14,7 @@ import {
   type PackInfo,
 } from './pack-data.ts';
 import {
-  DEFAULT_MAX_PAGE_BYTES,
+  DEFAULT_PAGE_SIZE,
   pageStartOffsets,
   sliceIntoPages,
 } from './pagination.ts';
@@ -23,13 +23,15 @@ import {
   REF_PLACEHOLDER_MARKER,
   createPlaceholderTable,
 } from './placeholders.ts';
+import { withoutExcludedPacks } from './excluded-packs.ts';
+import { sortedPackIds } from './order.ts';
 
 const VIRTUAL_ID = 'virtual:icon-packs';
 const RESOLVED_ID = `\0${VIRTUAL_ID}`;
 
 interface PluginOptions {
-  /** Soft cap on serialized page size in bytes. */
-  maxPageBytes?: number;
+  /** Icons per page chunk. */
+  pageSize?: number;
 }
 
 /**
@@ -66,7 +68,7 @@ interface PackBuild {
  * predictable links without a build step.
  */
 export const iconPacks = (options: PluginOptions = {}): Plugin => {
-  const maxPageBytes = options.maxPageBytes ?? DEFAULT_MAX_PAGE_BYTES;
+  const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
 
   let server: ViteDevServer | undefined;
   let base = '/';
@@ -83,7 +85,9 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
   let devCollectionsPromise: Promise<CollectionsJson> | undefined;
 
   const getCollections = async (): Promise<CollectionsJson> => {
-    devCollectionsPromise ??= loadCollections(findIconifyJsonRoot());
+    devCollectionsPromise ??= loadCollections(findIconifyJsonRoot()).then(
+      withoutExcludedPacks,
+    );
     return devCollectionsPromise;
   };
 
@@ -116,7 +120,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
     configureServer(devServer) {
       server = devServer;
       devServer.middlewares.use(
-        createDevMiddleware({ getCollections, getPackData, maxPageBytes }),
+        createDevMiddleware({ getCollections, getPackData, pageSize }),
       );
     },
 
@@ -136,13 +140,10 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
       // the URL via the placeholder rewritten in `generateBundle`.
       if (!this.environment.config.build.ssr && indexRefId === undefined) {
         const root = findIconifyJsonRoot();
-        const collections = await loadCollections(root);
-        // Sort once up front so the emitted index is alphabetical;
-        // every downstream array (manifestPlaceholders, indexPayload)
-        // inherits this order.
-        const packIds = Object.keys(collections).sort((left, right) =>
-          collections[left].name.localeCompare(collections[right].name, 'en'),
-        );
+        const collections = withoutExcludedPacks(await loadCollections(root));
+        // Sort once up front; every downstream array
+        // (manifestPlaceholders, indexPayload) inherits this order.
+        const packIds = sortedPackIds(collections);
 
         const packBuilds: PackBuild[] = [];
 
@@ -158,7 +159,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
           }
           const data = buildPackData(raw, packId, meta);
           data.samples = pickSamples(data.icons, meta.samples);
-          const pages = sliceIntoPages(data.icons, maxPageBytes);
+          const pages = sliceIntoPages(data.icons, pageSize);
 
           // Phase 1: emit pages — they have no outbound refs.
           const pagePlaceholders: string[] = [];

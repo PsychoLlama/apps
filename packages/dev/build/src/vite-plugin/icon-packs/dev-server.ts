@@ -1,6 +1,7 @@
 import type { Connect } from 'vite';
 import type { CollectionsJson } from './iconify.ts';
 import { type IconEntry, type PackData } from './pack-data.ts';
+import { sortedPackIds } from './order.ts';
 import { pageStartOffsets, sliceIntoPages } from './pagination.ts';
 
 /**
@@ -14,8 +15,8 @@ interface DevServerDeps {
   getCollections: () => Promise<CollectionsJson>;
   /** Resolve and cache one pack's processed data. */
   getPackData: (id: string) => Promise<PackData | undefined>;
-  /** Soft cap on serialized page bytes — same as the build path. */
-  maxPageBytes: number;
+  /** Icons per page chunk — same as the build path. */
+  pageSize: number;
 }
 
 /**
@@ -28,7 +29,7 @@ interface DevServerDeps {
 export const createDevMiddleware = (
   deps: DevServerDeps,
 ): Connect.NextHandleFunction => {
-  const { getCollections, getPackData, maxPageBytes } = deps;
+  const { getCollections, getPackData, pageSize } = deps;
 
   return (req, res, next) => {
     const url = req.url ?? '';
@@ -51,8 +52,9 @@ export const createDevMiddleware = (
     const handle = async () => {
       if (tail === 'index.json') {
         const collections = await getCollections();
-        const packs = Object.entries(collections)
-          .map(([id, info]) => ({
+        const packs = sortedPackIds(collections).map((id) => {
+          const info = collections[id];
+          return {
             id,
             name: info.name,
             total: info.total ?? 0,
@@ -62,17 +64,19 @@ export const createDevMiddleware = (
             // packs (Academicons 448×512, Ant Design 1024×1024) have
             // non-square viewBoxes that the metadata can't express.
             // Without the override, sample bodies render against the
-            // wrong viewBox and clip off-screen.
-            width: 24,
-            height: 24,
+            // wrong viewBox and clip off-screen. `16` matches
+            // `defaultIconDimensions` so the placeholder isn't itself
+            // misleading on the off chance the override below misses.
+            width: 16,
+            height: 16,
             // Samples and accurate dimensions resolve below; the
             // index itself only needs cheap metadata up front.
             samples: [] as IconEntry[],
             author: info.author,
             license: info.license,
             manifestUrl: `${DEV_URL_PREFIX}${id}/manifest.json`,
-          }))
-          .sort((left, right) => left.name.localeCompare(right.name, 'en'));
+          };
+        });
         await Promise.all(
           packs.map(async (entry) => {
             const data = await getPackData(entry.id);
@@ -99,7 +103,7 @@ export const createDevMiddleware = (
       }
 
       if (leaf === 'manifest.json') {
-        const pages = sliceIntoPages(data.icons, maxPageBytes);
+        const pages = sliceIntoPages(data.icons, pageSize);
         respondJson({
           id: data.id,
           name: data.name,
@@ -121,7 +125,7 @@ export const createDevMiddleware = (
         return;
       }
       const pageIndex = Number(pageMatch[1]);
-      const pages = sliceIntoPages(data.icons, maxPageBytes);
+      const pages = sliceIntoPages(data.icons, pageSize);
       if (pageIndex < 0 || pageIndex >= pages.length) {
         notFound();
         return;

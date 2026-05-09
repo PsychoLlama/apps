@@ -1,9 +1,26 @@
 import { renderIconSvg } from '../svg';
 import type { IconEditorState } from '../state';
-import { DEFAULT_ICON } from '../icons';
+import type { IconRef } from '../icons';
+
+const sampleIcon: IconRef = {
+  pack: 'mdi',
+  name: 'home',
+  body: '<path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8z"/>',
+  width: 24,
+  height: 24,
+  license: {
+    title: 'Apache 2.0',
+    spdx: 'Apache-2.0',
+    url: 'https://github.com/Templarian/MaterialDesign/blob/master/LICENSE',
+  },
+  author: {
+    name: 'Pictogrammers',
+    url: 'https://github.com/Templarian/MaterialDesign',
+  },
+};
 
 const baseState: IconEditorState = {
-  icon: DEFAULT_ICON,
+  icon: sampleIcon,
   palette: 'blue',
   shape: 'rounded',
   padding: 20,
@@ -133,6 +150,28 @@ describe('renderIconSvg', () => {
     expect(svg).toMatch(/A &amp; B &lt;C&gt;/);
     expect(svg).toMatch(/MIT &quot;with quotes&quot;/);
     expect(svg).toMatch(/https:\/\/x\.test\/\?a=&quot;b&quot;/);
+  });
+
+  it('renders the blueprint placeholder when no icon is chosen — same shape mask plus dashed inner outline and centered cross', () => {
+    const svg = renderIconSvg({ ...baseState, icon: undefined }, { size: 200 });
+
+    // Background fill from the palette still paints, so the empty state
+    // previews palette/shape/padding choices meaningfully.
+    expect(svg).toMatch(/fill="#0090ff"/);
+    // Dashed outline + cross marks the missing slot.
+    expect(svg).toMatch(/stroke-dasharray=/);
+    expect(svg).toMatch(/<line /);
+    // The icon body group is suppressed.
+    expect(svg).not.toMatch(/transform="translate/);
+  });
+
+  it('drops the attribution metadata block on the blueprint placeholder — no icon means no source to credit', () => {
+    const svg = renderIconSvg(
+      { ...baseState, icon: undefined },
+      { metadata: true },
+    );
+
+    expect(svg).not.toMatch(/<metadata>/);
   });
 
   it('falls back to a safe blue/white pair when the palette lookup misses', () => {

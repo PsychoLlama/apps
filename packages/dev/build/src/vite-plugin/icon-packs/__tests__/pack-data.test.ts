@@ -40,13 +40,38 @@ describe('buildPackData', () => {
     expect(data.total).toBe(1);
   });
 
-  it('falls back to width/height defaults when missing', () => {
+  it('drops icons whose body contains an SMIL animation tag', () => {
+    // line-md is filtered wholesale via excluded-packs, but a few mixed
+    // packs (eos-icons, codex) sneak animated entries into otherwise
+    // static catalogs. Drop them — favicons must not strobe.
+    const raw = makeRaw({
+      static: { body: '<path d="M0 0"/>' },
+      animate: { body: '<path><animate attributeName="d" to="M1 1"/></path>' },
+      animateTransform: {
+        body: '<g><animateTransform attributeName="transform"/></g>',
+      },
+      animateMotion: { body: '<g><animateMotion path="M0 0L1 1"/></g>' },
+      set: { body: '<g><set attributeName="opacity" to="0"/></g>' },
+      // Attribute values that mention the word `animate` shouldn't
+      // trip the regex — only tag openers are animations.
+      mentionsAnimate: { body: '<g class="animate-spin"/>' },
+    });
+
+    const data = buildPackData(raw, 'demo', { name: 'Demo' });
+
+    expect(data.icons.map((entry) => entry.name)).toEqual([
+      'static',
+      'mentionsAnimate',
+    ]);
+  });
+
+  it('falls back to the iconify default of 16 when both width and height are missing — packs like Vaadin and Bootstrap omit the root dimensions and rely on the spec default', () => {
     const raw = makeRaw({ a: { body: '<a/>' } });
 
     const data = buildPackData(raw, 'demo', { name: 'Demo' });
 
-    expect(data.width).toBe(24);
-    expect(data.height).toBe(24);
+    expect(data.width).toBe(16);
+    expect(data.height).toBe(16);
   });
 
   it('mirrors width to height when only one is set', () => {

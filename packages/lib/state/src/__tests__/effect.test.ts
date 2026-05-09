@@ -1,3 +1,4 @@
+import { createEffect, createRoot } from 'solid-js';
 import { defineAction } from '../action';
 import { createTestBindings } from '../bindings';
 import { defineEffect } from '../effect';
@@ -213,5 +214,33 @@ describe('defineEffect / useEffect', () => {
 
     useEffect(effect)();
     expect(seen).toEqual([session.value]);
+  });
+
+  it('does not subscribe the calling reactive scope to fields the callback reads', async () => {
+    // The capability runs synchronously inside `perform`. Reads from the
+    // store views must not track in the caller — otherwise dispatching
+    // an effect from a `createEffect` body re-subscribes the outer
+    // effect to whatever the capability inspects, and the next write
+    // retriggers it.
+    const { useEffect, useAction, session } = bootstrap();
+    const effect = defineEffect([sessionStore], (view) => {
+      // Touch the store so a missing untrack would create a dep.
+      void view.value;
+    });
+    let outerRuns = 0;
+    const dispose = createRoot((dispose) => {
+      createEffect(() => {
+        outerRuns += 1;
+        useEffect(effect)();
+      });
+      return dispose;
+    });
+    await Promise.resolve();
+    const baseline = outerRuns;
+    useAction(markReady)(99);
+    await Promise.resolve();
+    expect(outerRuns).toBe(baseline);
+    expect(session.value).toBe(99);
+    dispose();
   });
 });

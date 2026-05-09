@@ -22,10 +22,12 @@ const escapeXml = (value: string): string =>
  * Build a Dublin Core / Creative Commons `<metadata>` block crediting
  * the icon's source. Inkscape and the SVG-attribution community use
  * the same shape, so consumers (file inspectors, asset pipelines)
- * can scrape it without bespoke parsing.
+ * can scrape it without bespoke parsing. The caller is responsible
+ * for only invoking this when an icon has been chosen.
  */
-const renderAttributionMetadata = (state: IconEditorState): string => {
-  const { icon } = state;
+const renderAttributionMetadata = (
+  icon: NonNullable<IconEditorState['icon']>,
+): string => {
   const fields: string[] = [];
   fields.push(
     `<dc:title>${escapeXml(`${icon.pack}:${icon.name}`)}</dc:title>`,
@@ -104,6 +106,42 @@ export interface RenderOptions {
   metadata?: boolean;
 }
 
+/** Shared layout pulled from the shape, palette, and padding fields. */
+interface CanvasFrame {
+  size: number;
+  rx: number;
+  pad: number;
+  inner: number;
+  bg: string;
+  fg: string;
+  dim: string;
+  clipId: string;
+}
+
+const computeFrame = (
+  state: IconEditorState,
+  opts: RenderOptions,
+): CanvasFrame => {
+  const size = opts.size ?? 512;
+  // `findPalette` only ever returns `undefined` for an unknown name —
+  // store mutations are guarded by validation, but the `palette` field
+  // is typed as a union from a curated set, so the lookup is total at
+  // the type level. Fall back defensively just in case.
+  const palette = findPalette(state.palette);
+  return {
+    size,
+    rx: SHAPE_RX_RATIO[state.shape] * size,
+    pad: (state.padding / 100) * size,
+    inner: size - 2 * ((state.padding / 100) * size),
+    bg: palette?.bg ?? '#0090ff',
+    fg: palette?.fg ?? '#ffffff',
+    dim: opts.responsive
+      ? ' width="100%" height="100%"'
+      : ` width="${size}" height="${size}"`,
+    clipId: `icon-clip-${opts.idSuffix ?? 'icon'}`,
+  };
+};
+
 /**
  * Serialize a {@link IconEditorState} to a self-contained SVG document.
  *
@@ -119,44 +157,72 @@ export interface RenderOptions {
  * different iconify collections ship at 16, 24, 32, 48, etc. The icon
  * uniformly scales to fit the inner padded square and centers along
  * the off-axis when the icon's native viewBox isn't square.
+ *
+ * When `state.icon` is `undefined` the canvas falls back to a
+ * blueprint placeholder — same shape mask + palette, with a dashed
+ * inner outline and a centered `+` cross to telegraph "no icon
+ * chosen yet."
  */
 export const renderIconSvg = (
   state: IconEditorState,
   opts: RenderOptions = {},
 ): string => {
-  const size = opts.size ?? 512;
-  const rx = SHAPE_RX_RATIO[state.shape] * size;
-  const pad = (state.padding / 100) * size;
-  const inner = size - 2 * pad;
-  const iconW = state.icon.width;
-  const iconH = state.icon.height;
-  const scale = inner / Math.max(iconW, iconH);
-  const offsetX = pad + (inner - iconW * scale) / 2;
-  const offsetY = pad + (inner - iconH * scale) / 2;
-  const dim = opts.responsive
-    ? ' width="100%" height="100%"'
-    : ` width="${size}" height="${size}"`;
-  const clipId = `icon-clip-${opts.idSuffix ?? 'icon'}`;
-  // `findPalette` only ever returns `undefined` for an unknown name —
-  // store mutations are guarded by validation, but the `palette` field
-  // is typed as a union from a curated set, so the lookup is total at
-  // the type level. Fall back defensively just in case.
-  const palette = findPalette(state.palette);
-  const bg = palette?.bg ?? '#0090ff';
-  const fg = palette?.fg ?? '#ffffff';
+  const frame = computeFrame(state, opts);
   // `color-scheme: light` pins the SVG's rendering context so the icon
   // looks identical regardless of the host page's color scheme. The
   // fills are already literal hex, but the property forecloses any
   // inherited dark-mode adjustments to currentColor or system colors.
-  const metadata = opts.metadata ? renderAttributionMetadata(state) : '';
+  const metadata =
+    opts.metadata && state.icon ? renderAttributionMetadata(state.icon) : '';
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"${dim} style="color-scheme: light">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${frame.size} ${frame.size}"${frame.dim} style="color-scheme: light">` +
     metadata +
-    `<defs><clipPath id="${clipId}"><rect width="${size}" height="${size}" rx="${rx}" ry="${rx}"/></clipPath></defs>` +
-    `<g clip-path="url(#${clipId})">` +
-    `<rect width="${size}" height="${size}" fill="${bg}"/>` +
-    `<g transform="translate(${offsetX} ${offsetY}) scale(${scale})" style="color: ${fg}">${state.icon.body}</g>` +
+    `<defs><clipPath id="${frame.clipId}"><rect width="${frame.size}" height="${frame.size}" rx="${frame.rx}" ry="${frame.rx}"/></clipPath></defs>` +
+    `<g clip-path="url(#${frame.clipId})">` +
+    `<rect width="${frame.size}" height="${frame.size}" fill="${frame.bg}"/>` +
+    (state.icon ? renderIconBody(frame, state.icon) : renderBlueprint(frame)) +
     `</g>` +
     `</svg>`
+  );
+};
+
+const renderIconBody = (
+  frame: CanvasFrame,
+  icon: NonNullable<IconEditorState['icon']>,
+): string => {
+  const scale = frame.inner / Math.max(icon.width, icon.height);
+  const offsetX = frame.pad + (frame.inner - icon.width * scale) / 2;
+  const offsetY = frame.pad + (frame.inner - icon.height * scale) / 2;
+  return `<g transform="translate(${offsetX} ${offsetY}) scale(${scale})" style="color: ${frame.fg}">${icon.body}</g>`;
+};
+
+/**
+ * Blueprint placeholder rendered while the user hasn't picked an icon.
+ * Uses the active shape + padding so tweaking the style still looks
+ * meaningful, plus a dashed outline and `+` cross in the foreground
+ * tint as a "drop a glyph here" cue. Stroke widths track the canvas
+ * size so the placeholder reads cleanly at every export resolution
+ * even though the live preview only uses one.
+ */
+const renderBlueprint = (frame: CanvasFrame): string => {
+  const stroke = Math.max(1, frame.size * 0.012);
+  const dash = frame.size * 0.04;
+  const cx = frame.size / 2;
+  const cy = frame.size / 2;
+  const arm = frame.inner * 0.16;
+  // Inset by half the stroke so the dashed outline lands inside the
+  // padded inner box rather than straddling its edge.
+  const insetX = frame.pad + stroke / 2;
+  const insetY = frame.pad + stroke / 2;
+  const insetSize = frame.inner - stroke;
+  // Shrink the corner radius proportionally so the dashed rect reads as
+  // an inset of the outer shape rather than a contrasting silhouette.
+  const innerRx = Math.max(0, frame.rx - frame.pad);
+  return (
+    `<g fill="none" stroke="${frame.fg}" stroke-width="${stroke}" stroke-linecap="round" opacity="0.55">` +
+    `<rect x="${insetX}" y="${insetY}" width="${insetSize}" height="${insetSize}" rx="${innerRx}" ry="${innerRx}" stroke-dasharray="${dash} ${dash}"/>` +
+    `<line x1="${cx - arm}" y1="${cy}" x2="${cx + arm}" y2="${cy}"/>` +
+    `<line x1="${cx}" y1="${cy - arm}" x2="${cx}" y2="${cy + arm}"/>` +
+    `</g>`
   );
 };

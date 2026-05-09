@@ -1,3 +1,4 @@
+import { untrack } from 'solid-js';
 import { invoke, type Action, type AnyAction } from './action';
 import type { Registry } from './internal';
 import { collectArgs, type DeepReadonly, type StoreRef } from './store';
@@ -125,7 +126,11 @@ export const perform = <
 
   let result: Output;
   try {
-    result = (fn as (...args: unknown[]) => Output)(...args);
+    // Untrack so synchronous proxy reads in the capability don't
+    // subscribe the calling reactive scope to the fields the effect
+    // touches. Async work past the first `await` runs outside the
+    // tracking scope anyway.
+    result = untrack(() => (fn as (...args: unknown[]) => Output)(...args));
   } catch (error) {
     handleFailure(registry, onFailure, error);
     return undefined as PerformReturn<Output>;

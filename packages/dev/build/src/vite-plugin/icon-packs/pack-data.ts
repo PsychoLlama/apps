@@ -6,10 +6,19 @@ import type {
 } from './iconify.ts';
 
 /**
+ * SMIL animation elements. Bodies containing any of these strobe in
+ * favicons that haven't normalized SMIL out, so we skip them. Matches
+ * a tag opener (`<animate`, `<set …>`, etc.) to avoid false positives
+ * on icons whose attribute values happen to contain the word.
+ */
+const ANIMATION_TAG_RE =
+  /<\s*(animate|animateTransform|animateMotion|set|discard|mpath)\b/;
+
+/**
  * A flat icon entry — the smallest unit the runtime fetches.
  * `width`/`height` are present only when the icon overrides the
  * pack-level viewBox; iconify packs occasionally ship oddly-sized
- * glyphs (Font Awesome's wider icons, brand `logos:*`).
+ * glyphs (Font Awesome's wider icons).
  */
 export interface IconEntry {
   /** Icon name within the pack (kebab-case). */
@@ -49,19 +58,33 @@ export const SAMPLE_COUNT = 5;
  * Flatten a raw `@iconify/json` pack into our internal shape. Hidden
  * and body-less entries are dropped; per-icon `width`/`height` overrides
  * are kept only when they differ from the pack default.
+ *
+ * Pack-level dimension fallback is `16` — matches `@iconify/utils`'
+ * `defaultIconDimensions`. Iconify packs that omit root `width`/`height`
+ * (Vaadin, Bootstrap Icons, Octicons, others) all ship 16×16-native
+ * bodies and rely on the spec default; falling back to 24 instead
+ * would misframe those bodies in the smaller corner of a 24×24 viewBox.
  */
 export const buildPackData = (
   raw: RawPackJson,
   id: string,
   meta: CollectionsJson[string],
 ): PackData => {
-  const width = raw.width ?? raw.height ?? 24;
-  const height = raw.height ?? raw.width ?? 24;
+  const width = raw.width ?? raw.height ?? 16;
+  const height = raw.height ?? raw.width ?? 16;
   const icons: IconEntry[] = [];
   for (const [iconName, def] of Object.entries(raw.icons)) {
     if (def.hidden) continue;
     if (!def.body) continue;
-    const entry: IconEntry = { name: iconName, body: def.body };
+    // Animations belong to motion design, not favicons — drop bodies
+    // that ship SMIL elements. line-md is filtered wholesale via
+    // `excluded-packs.ts`; the handful of mixed packs (eos-icons,
+    // codex) lose the few animated entries and keep the rest.
+    if (ANIMATION_TAG_RE.test(def.body)) continue;
+    const entry: IconEntry = {
+      name: iconName,
+      body: def.body,
+    };
     if (def.width !== undefined && def.width !== width) entry.width = def.width;
     if (def.height !== undefined && def.height !== height) {
       entry.height = def.height;
