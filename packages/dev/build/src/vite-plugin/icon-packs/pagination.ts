@@ -1,48 +1,26 @@
 import type { IconEntry } from './pack-data.ts';
 
 /**
- * Soft cap on the serialized size of a single page, in bytes. Packs
- * with chunky color SVGs (Fluent Emoji, etc.) blow well past 30 KB
- * gzipped at 500 icons per page; an icon-count budget produces
- * multi-megabyte chunks that defeat the lazy-load goal.
+ * Default page size in icons. The runtime fetches one page per
+ * scroll-into-view, so this trades request count against per-request
+ * payload — 500 keeps individual responses small while letting the
+ * browser viewport pull in a comfortable chunk per fetch.
  */
-export const DEFAULT_MAX_PAGE_BYTES = 200_000;
+export const DEFAULT_PAGE_SIZE = 500;
 
 /**
- * Lower bound — never emit a page with fewer icons than this even if
- * the byte budget is already blown. Keeps degenerate cases (a single
- * giant icon) from inflating the page count by orders of magnitude.
- */
-export const MIN_PAGE_ICONS = 16;
-
-/**
- * Slice the icon list into pages whose serialized payload stays
- * under `maxBytes`. Falls back to `minIcons` per page when a single
- * icon already busts the budget — page sizes are a soft target, not
- * a hard limit. Always emits at least one page so the runtime can
- * use `pages.length === 0` as a "this pack is empty" signal at the
- * pack level instead of the page level.
+ * Slice the icon list into fixed-count pages. Always emits at least
+ * one page so the runtime can use `pages.length === 0` as a "this
+ * pack is empty" signal at the pack level instead of the page level.
  */
 export const sliceIntoPages = (
   icons: ReadonlyArray<IconEntry>,
-  maxBytes: number,
-  minIcons: number = MIN_PAGE_ICONS,
+  pageSize: number = DEFAULT_PAGE_SIZE,
 ): IconEntry[][] => {
   const pages: IconEntry[][] = [];
-  let current: IconEntry[] = [];
-  let currentBytes = 2; // outer `[]`
-  for (const icon of icons) {
-    const entrySize = JSON.stringify(icon).length + 1; // entry + comma
-    const wouldExceed = currentBytes + entrySize > maxBytes;
-    if (wouldExceed && current.length >= minIcons && current.length > 0) {
-      pages.push(current);
-      current = [];
-      currentBytes = 2;
-    }
-    current.push(icon);
-    currentBytes += entrySize;
+  for (let start = 0; start < icons.length; start += pageSize) {
+    pages.push(icons.slice(start, start + pageSize));
   }
-  if (current.length > 0) pages.push(current);
   if (pages.length === 0) pages.push([]);
   return pages;
 };

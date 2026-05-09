@@ -14,8 +14,8 @@ interface DevServerDeps {
   getCollections: () => Promise<CollectionsJson>;
   /** Resolve and cache one pack's processed data. */
   getPackData: (id: string) => Promise<PackData | undefined>;
-  /** Soft cap on serialized page bytes — same as the build path. */
-  maxPageBytes: number;
+  /** Icons per page chunk — same as the build path. */
+  pageSize: number;
 }
 
 /**
@@ -28,7 +28,7 @@ interface DevServerDeps {
 export const createDevMiddleware = (
   deps: DevServerDeps,
 ): Connect.NextHandleFunction => {
-  const { getCollections, getPackData, maxPageBytes } = deps;
+  const { getCollections, getPackData, pageSize } = deps;
 
   return (req, res, next) => {
     const url = req.url ?? '';
@@ -99,7 +99,7 @@ export const createDevMiddleware = (
       }
 
       if (leaf === 'manifest.json') {
-        const pages = sliceIntoPages(data.icons, maxPageBytes);
+        const pages = sliceIntoPages(data.icons, pageSize);
         respondJson({
           id: data.id,
           name: data.name,
@@ -121,7 +121,7 @@ export const createDevMiddleware = (
         return;
       }
       const pageIndex = Number(pageMatch[1]);
-      const pages = sliceIntoPages(data.icons, maxPageBytes);
+      const pages = sliceIntoPages(data.icons, pageSize);
       if (pageIndex < 0 || pageIndex >= pages.length) {
         notFound();
         return;

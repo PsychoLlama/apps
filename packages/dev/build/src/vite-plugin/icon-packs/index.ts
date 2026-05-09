@@ -14,7 +14,7 @@ import {
   type PackInfo,
 } from './pack-data.ts';
 import {
-  DEFAULT_MAX_PAGE_BYTES,
+  DEFAULT_PAGE_SIZE,
   pageStartOffsets,
   sliceIntoPages,
 } from './pagination.ts';
@@ -29,8 +29,8 @@ const VIRTUAL_ID = 'virtual:icon-packs';
 const RESOLVED_ID = `\0${VIRTUAL_ID}`;
 
 interface PluginOptions {
-  /** Soft cap on serialized page size in bytes. */
-  maxPageBytes?: number;
+  /** Icons per page chunk. */
+  pageSize?: number;
 }
 
 /**
@@ -67,7 +67,7 @@ interface PackBuild {
  * predictable links without a build step.
  */
 export const iconPacks = (options: PluginOptions = {}): Plugin => {
-  const maxPageBytes = options.maxPageBytes ?? DEFAULT_MAX_PAGE_BYTES;
+  const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
 
   let server: ViteDevServer | undefined;
   let base = '/';
@@ -119,7 +119,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
     configureServer(devServer) {
       server = devServer;
       devServer.middlewares.use(
-        createDevMiddleware({ getCollections, getPackData, maxPageBytes }),
+        createDevMiddleware({ getCollections, getPackData, pageSize }),
       );
     },
 
@@ -161,7 +161,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
           }
           const data = buildPackData(raw, packId, meta);
           data.samples = pickSamples(data.icons, meta.samples);
-          const pages = sliceIntoPages(data.icons, maxPageBytes);
+          const pages = sliceIntoPages(data.icons, pageSize);
 
           // Phase 1: emit pages — they have no outbound refs.
           const pagePlaceholders: string[] = [];
