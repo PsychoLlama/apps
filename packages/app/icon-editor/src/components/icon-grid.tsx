@@ -10,6 +10,7 @@ import {
   createEffect,
   createMemo,
   on,
+  onMount,
 } from 'solid-js';
 import type { Component } from 'solid-js';
 import {
@@ -496,6 +497,17 @@ const PackListView: Component<PackListViewProps> = (props) => {
     );
   });
 
+  // Captured on render via the active card's `ref`; consumed in
+  // `onMount` to land focus on the user's last-picked pack when the
+  // view is re-entered. `block: 'nearest'` keeps the page (and the
+  // ScrollArea) from jumping when the active card is already visible.
+  let activeButtonRef: HTMLButtonElement | undefined;
+  onMount(() => {
+    if (!activeButtonRef) return;
+    activeButtonRef.scrollIntoView({ block: 'nearest' });
+    activeButtonRef.focus({ preventScroll: true });
+  });
+
   return (
     <>
       <TextField
@@ -548,61 +560,70 @@ const PackListView: Component<PackListViewProps> = (props) => {
           <ScrollArea type="hover" scrollbars="vertical" class={css.scroller}>
             <Flex as="div" direction="column" gap={3} class={css.packList}>
               <For each={filtered()}>
-                {(pack) => (
-                  <Card
-                    as="button"
-                    variant="surface"
-                    class={`${css.packCard}${
-                      pack.id === props.activePackId
-                        ? ` ${css.packCardActive}`
-                        : ''
-                    }`}
-                    aria-pressed={pack.id === props.activePackId}
-                    onClick={() => props.onPick(pack.id)}
-                  >
-                    <Flex as="div" direction="column" gap={2} grow>
-                      <Flex as="div" align="baseline" justify="between" gap={2}>
-                        <Text
-                          as="span"
-                          size={2}
-                          weight="medium"
-                          truncate
-                          selectable={false}
+                {(pack) => {
+                  const isActive = () => pack.id === props.activePackId;
+                  return (
+                    <Card
+                      as="button"
+                      variant="surface"
+                      class={`${css.packCard}${
+                        isActive() ? ` ${css.packCardActive}` : ''
+                      }`}
+                      aria-pressed={isActive()}
+                      ref={(el: HTMLButtonElement) => {
+                        if (isActive()) activeButtonRef = el;
+                      }}
+                      onClick={() => props.onPick(pack.id)}
+                    >
+                      <Flex as="div" direction="column" gap={2} grow>
+                        <Flex
+                          as="div"
+                          align="baseline"
+                          justify="between"
+                          gap={2}
                         >
-                          {pack.name}
-                        </Text>
-                        <Text
-                          as="span"
-                          size={1}
-                          color="lowContrast"
-                          selectable={false}
-                        >
-                          {numberFormat.format(pack.total)}
-                        </Text>
-                      </Flex>
-                      <Flex as="div" align="center" justify="between" gap={2}>
-                        <Flex as="div" align="center" gap={2}>
-                          <For each={pack.samples}>
-                            {(sample) => (
-                              <svg
-                                class={css.packSample}
-                                viewBox={`0 0 ${sample.width ?? pack.width} ${sample.height ?? pack.height}`}
-                                innerHTML={sample.body}
-                              />
-                            )}
-                          </For>
+                          <Text
+                            as="span"
+                            size={2}
+                            weight="medium"
+                            truncate
+                            selectable={false}
+                          >
+                            {pack.name}
+                          </Text>
+                          <Text
+                            as="span"
+                            size={1}
+                            color="lowContrast"
+                            selectable={false}
+                          >
+                            {numberFormat.format(pack.total)}
+                          </Text>
                         </Flex>
-                        <Show when={pack.license?.spdx}>
-                          {(spdx) => (
-                            <Badge size={1} variant="soft" color="neutral">
-                              {spdx()}
-                            </Badge>
-                          )}
-                        </Show>
+                        <Flex as="div" align="center" justify="between" gap={2}>
+                          <Flex as="div" align="center" gap={2}>
+                            <For each={pack.samples}>
+                              {(sample) => (
+                                <svg
+                                  class={css.packSample}
+                                  viewBox={`0 0 ${sample.width ?? pack.width} ${sample.height ?? pack.height}`}
+                                  innerHTML={sample.body}
+                                />
+                              )}
+                            </For>
+                          </Flex>
+                          <Show when={pack.license?.spdx}>
+                            {(spdx) => (
+                              <Badge size={1} variant="soft" color="neutral">
+                                {spdx()}
+                              </Badge>
+                            )}
+                          </Show>
+                        </Flex>
                       </Flex>
-                    </Flex>
-                  </Card>
-                )}
+                    </Card>
+                  );
+                }}
               </For>
             </Flex>
           </ScrollArea>
