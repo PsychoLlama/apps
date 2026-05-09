@@ -129,6 +129,13 @@ interface FileMetadataProps {
   file: File | undefined;
 }
 
+// Skeleton placeholder strings sized to plausible final values so
+// the row width doesn't pop on resolve. Each is meaningless text —
+// `<Text skeleton>` paints over the glyphs.
+const SKELETON_SIZE = '12.3 KB · 12,345 bytes';
+const SKELETON_MIME = 'application/octet-stream';
+const SKELETON_DATE = 'Jan 1, 2026, 12:00:00 PM';
+
 const FileMetadata: Component<FileMetadataProps> = (props) => {
   return (
     <>
@@ -139,7 +146,7 @@ const FileMetadata: Component<FileMetadataProps> = (props) => {
             when={props.file}
             fallback={
               <Text as="span" size={2} skeleton selectable={false}>
-                placeholder placeholder
+                {SKELETON_SIZE}
               </Text>
             }
             keyed
@@ -160,9 +167,15 @@ const FileMetadata: Component<FileMetadataProps> = (props) => {
           <Show
             when={props.file}
             fallback={
-              <Text as="span" size={2} skeleton selectable={false}>
-                placeholder placeholder
-              </Text>
+              <Code
+                variant="ghost"
+                color="neutral"
+                size={2}
+                skeleton
+                selectable
+              >
+                {SKELETON_MIME}
+              </Code>
             }
             keyed
           >
@@ -181,7 +194,7 @@ const FileMetadata: Component<FileMetadataProps> = (props) => {
             when={props.file}
             fallback={
               <Text as="span" size={2} skeleton selectable={false}>
-                placeholder placeholder
+                {SKELETON_DATE}
               </Text>
             }
             keyed
