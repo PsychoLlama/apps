@@ -85,12 +85,10 @@ export const empty = style({
   textAlign: 'center',
 });
 
-// Pack list — vertical column of `<Card>`s. The cards live inside
-// a ScrollArea that claims the rail's leftover vertical space.
+// Pack list — vertical column of `<Card>`s living inside a
+// ScrollArea. Padding only; layout (display/direction/gap) comes
+// from the Flex prop bundle so the gap can be tuned in JSX.
 export const packList = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: space[1],
   paddingBlock: space[1],
   paddingInline: space[1],
 });
