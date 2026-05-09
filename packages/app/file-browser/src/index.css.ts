@@ -1,13 +1,18 @@
 import { style } from '@vanilla-extract/css';
 import { breakpoint, neutral, space } from '@lib/design';
 
-// Pin `<main>` to the viewport. Without this, the global body's
-// `min-height: 100vh` lets the document grow under a tall tree:
-// `min-height: 0` alone allows children to shrink, but content
-// visually overflows and the outer page scrolls. Clipping at the
-// host stops that leak so the leaf `ScrollArea` is the only thing
-// that scrolls.
+// Break the flex sizing cycle that keeps the host scrolling. The
+// global body is `min-height: 100vh; display: flex; flex-direction:
+// column`. With a default `flex-basis: auto`, `<main>` advertises
+// its content height as its preferred main-size — body grows to
+// match, the document scrolls, and `overflow: hidden` on a box
+// that's already content-tall changes nothing. Forcing
+// `flex-basis: 0` makes main's preferred height zero so body
+// settles at its `min-height: 100vh` floor; `flex-grow: 1` (set
+// via the `grow` prop) then expands main to that bounded height,
+// and `overflow: hidden` finally has something to clip.
 export const host = style({
+  flexBasis: 0,
   minHeight: 0,
   overflow: 'hidden',
 });
