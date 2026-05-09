@@ -72,11 +72,12 @@ export const name = style({
   whiteSpace: 'nowrap',
 });
 
-export const loading = style({
+// Skeleton row mirrors the dimensions of a real tree row so the layout
+// doesn't pop when the load resolves.
+export const skeletonRow = style({
   paddingBlock: space[1],
   paddingLeft: `calc(${space[5]} + var(--tree-depth, 0) * ${space[4]})`,
-  color: neutral.solid[10],
-  fontStyle: 'italic',
+  paddingRight: space[3],
 });
 
 export const failed = style({

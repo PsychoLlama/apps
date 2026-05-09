@@ -110,6 +110,14 @@ interface DirectoryChildrenProps {
   selection: Selection | undefined;
 }
 
+// Placeholder strings sized to feel like a realistic mix of names.
+// Length drives skeleton width via the inner `<Text skeleton>`.
+const SKELETON_NAMES: ReadonlyArray<string> = [
+  'placeholder-name',
+  'shorter',
+  'a-longer-placeholder-name',
+];
+
 /**
  * Children listing for an expanded directory. Splits the load
  * lifecycle into status-specific rows so the tree visibly settles
@@ -119,15 +127,21 @@ const DirectoryChildren: Component<DirectoryChildrenProps> = (props) => {
   return (
     <Flex as="ul" direction="column" class={css.list}>
       <Show when={props.parent.loadStatus === 'loading'}>
-        <Flex
-          as="li"
-          class={css.loading}
-          style={{ '--tree-depth': props.depth }}
-        >
-          <Text as="span" size={1} color="lowContrast" selectable={false}>
-            Loading…
-          </Text>
-        </Flex>
+        <For each={SKELETON_NAMES}>
+          {(placeholder) => (
+            <Flex
+              as="li"
+              align="center"
+              class={css.skeletonRow}
+              style={{ '--tree-depth': props.depth }}
+              aria-hidden
+            >
+              <Text as="span" size={2} skeleton selectable={false}>
+                {placeholder}
+              </Text>
+            </Flex>
+          )}
+        </For>
       </Show>
       <Show when={props.parent.loadStatus === 'failed'}>
         <Flex

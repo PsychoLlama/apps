@@ -1,4 +1,4 @@
-import { Show, type Component } from 'solid-js';
+import { Show, onMount, type Component } from 'solid-js';
 import { Button, Callout, Flex } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconFolderOpen from 'virtual:icons/mdi/folder-open-outline';
@@ -16,13 +16,6 @@ import * as css from './index.css';
 const asTreeRoot = (entry: typeof fileBrowser.rootEntry): DirNode | undefined =>
   entry as DirNode | undefined;
 
-const isFileSystemAccessSupported = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  const picker = (window as unknown as { showDirectoryPicker?: unknown })
-    .showDirectoryPicker;
-  return typeof picker === 'function';
-};
-
 /**
  * File-browser POC backed by the File System Access API. The picker
  * yields a `FileSystemDirectoryHandle`; from there the tree expands
@@ -31,7 +24,12 @@ const isFileSystemAccessSupported = (): boolean => {
  */
 export const FileBrowser: Component = () => {
   const actions = useFileBrowserActions();
-  const supported = isFileSystemAccessSupported();
+
+  // Feature detection runs on mount so the SSR pass ships with
+  // `support === 'unknown'`. Resolving on the server would bake a
+  // "not supported" warning into the static HTML that survives
+  // hydration on capable browsers.
+  onMount(() => actions.detectSupport());
 
   const handlePick = () => {
     void actions.pick();
@@ -48,7 +46,7 @@ export const FileBrowser: Component = () => {
             size={2}
             variant="soft"
             color="accent"
-            disabled={!supported}
+            disabled={fileBrowser.support !== 'supported'}
             onClick={handlePick}
           >
             <IconFolderOpen aria-hidden /> Pick directory
@@ -57,7 +55,7 @@ export const FileBrowser: Component = () => {
 
         <Flex as="div" class={css.body}>
           <Flex as="aside" direction="column" class={css.tree}>
-            <Show when={!supported}>
+            <Show when={fileBrowser.support === 'unsupported'}>
               <Callout color="warning" class={css.callout}>
                 The File System Access API isn’t available in this browser. Try
                 a Chromium-based browser on desktop.

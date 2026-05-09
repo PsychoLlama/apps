@@ -13,6 +13,12 @@ import {
 } from './capabilities';
 import { type DirNode, type Selection, type TreeEntry } from './types';
 
+/** Tri-state browser support flag. Stays at `'unknown'` through SSR
+ *  so the static HTML doesn't bake in a "not supported" warning that
+ *  would survive hydration on a Chromium client. The mount hook flips
+ *  it once the real `window` is observable. */
+export type SupportStatus = 'unknown' | 'supported' | 'unsupported';
+
 interface FileBrowserState {
   /** Lazily-grown mirror of the picked directory. `undefined` until pick. */
   rootEntry: DirNode | undefined;
@@ -20,12 +26,15 @@ interface FileBrowserState {
   selection: Selection | undefined;
   /** Surface-level error from the last picker attempt. AbortError is silent. */
   pickerError: string | undefined;
+  /** File System Access support — `'unknown'` until the client resolves it. */
+  support: SupportStatus;
 }
 
 const fileBrowserStore = defineStore<FileBrowserState>(() => ({
   rootEntry: undefined,
   selection: undefined,
   pickerError: undefined,
+  support: 'unknown',
 }));
 
 /** Live, readonly view of the file-browser state. */
@@ -44,6 +53,13 @@ const setRootAction = defineAction(
     };
     state.selection = { handle, parentPath: [], file: undefined };
     state.pickerError = undefined;
+  },
+);
+
+const setSupportAction = defineAction(
+  [fileBrowserStore],
+  (state, value: Exclude<SupportStatus, 'unknown'>) => {
+    state.support = value;
   },
 );
 
@@ -164,6 +180,8 @@ export interface FileBrowserActions {
   toggleExpand: (node: DirNode) => void;
   /** Highlight an entry. Files trigger an async metadata fetch. */
   select: (selection: Pick<Selection, 'handle' | 'parentPath'>) => void;
+  /** Run feature detection against the live `window`. Call once on mount. */
+  detectSupport: () => void;
 }
 
 export const useFileBrowserActions = (): FileBrowserActions => {
@@ -172,6 +190,7 @@ export const useFileBrowserActions = (): FileBrowserActions => {
   const fetchFile = useEffect(loadFileMetadataEffect);
   const setExpanded = useAction(setExpandedAction);
   const dispatchSelect = useAction(selectAction);
+  const setSupport = useAction(setSupportAction);
 
   return {
     pick: () => pickEffect(),
@@ -187,6 +206,11 @@ export const useFileBrowserActions = (): FileBrowserActions => {
       if (selection.handle.kind === 'file') {
         void fetchFile(selection.handle as FileSystemFileHandle);
       }
+    },
+    detectSupport: () => {
+      const picker = (window as unknown as { showDirectoryPicker?: unknown })
+        .showDirectoryPicker;
+      setSupport(typeof picker === 'function' ? 'supported' : 'unsupported');
     },
   };
 };
