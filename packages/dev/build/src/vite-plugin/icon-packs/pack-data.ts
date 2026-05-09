@@ -77,9 +77,10 @@ export const buildPackData = (
     if (def.hidden) continue;
     if (!def.body) continue;
     // Animations belong to motion design, not favicons — drop bodies
-    // that ship SMIL elements. line-md is filtered wholesale via
-    // `excluded-packs.ts`; the handful of mixed packs (eos-icons,
-    // codex) lose the few animated entries and keep the rest.
+    // that ship SMIL elements. Wholesale-animated packs (line-md,
+    // svg-spinners) are kept off the allowlist in `allowed-packs.ts`;
+    // mixed packs (eos-icons, codex) lose the animated entries and
+    // keep the rest.
     if (ANIMATION_TAG_RE.test(def.body)) continue;
     const entry: IconEntry = {
       name: iconName,

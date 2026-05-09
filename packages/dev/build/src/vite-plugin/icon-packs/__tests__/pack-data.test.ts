@@ -41,9 +41,10 @@ describe('buildPackData', () => {
   });
 
   it('drops icons whose body contains an SMIL animation tag', () => {
-    // line-md is filtered wholesale via excluded-packs, but a few mixed
-    // packs (eos-icons, codex) sneak animated entries into otherwise
-    // static catalogs. Drop them — favicons must not strobe.
+    // Wholesale-animated packs (line-md, svg-spinners) are kept off
+    // the allowlist, but a few mixed packs (eos-icons, codex) sneak
+    // animated entries into otherwise static catalogs. Drop them —
+    // favicons must not strobe.
     const raw = makeRaw({
       static: { body: '<path d="M0 0"/>' },
       animate: { body: '<path><animate attributeName="d" to="M1 1"/></path>' },

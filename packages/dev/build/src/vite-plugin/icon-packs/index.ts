@@ -23,7 +23,7 @@ import {
   REF_PLACEHOLDER_MARKER,
   createPlaceholderTable,
 } from './placeholders.ts';
-import { withoutExcludedPacks } from './excluded-packs.ts';
+import { withOnlyAllowedPacks } from './allowed-packs.ts';
 import { sortedPackIds } from './order.ts';
 
 const VIRTUAL_ID = 'virtual:icon-packs';
@@ -86,7 +86,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
 
   const getCollections = async (): Promise<CollectionsJson> => {
     devCollectionsPromise ??= loadCollections(findIconifyJsonRoot()).then(
-      withoutExcludedPacks,
+      withOnlyAllowedPacks,
     );
     return devCollectionsPromise;
   };
@@ -140,7 +140,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
       // the URL via the placeholder rewritten in `generateBundle`.
       if (!this.environment.config.build.ssr && indexRefId === undefined) {
         const root = findIconifyJsonRoot();
-        const collections = withoutExcludedPacks(await loadCollections(root));
+        const collections = withOnlyAllowedPacks(await loadCollections(root));
         // Sort once up front; every downstream array
         // (manifestPlaceholders, indexPayload) inherits this order.
         const packIds = sortedPackIds(collections);
