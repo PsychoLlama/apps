@@ -15,6 +15,21 @@ export const frame = style({
   background: neutral.solid[1],
 });
 
+// Same dimensional rules as the iframe frame, but `object-fit: contain`
+// letterboxes the picture inside instead of letting it overflow at its
+// native pixel size.
+export const image = style({
+  display: 'block',
+  width: '100%',
+  minHeight: '320px',
+  height: '60vh',
+  maxHeight: '640px',
+  objectFit: 'contain',
+  border: `1px solid ${neutral.solid[6]}`,
+  borderRadius: radius[3],
+  background: neutral.solid[1],
+});
+
 export const noPreview = style({
   width: '100%',
   minHeight: '160px',

@@ -95,37 +95,43 @@ const SelectionDetails: Component<SelectionDetailsProps> = (props) => {
         </Text>
       </Flex>
 
-      <DataListRoot orientation="horizontal" size={2}>
-        <DataListItem>
-          <DataListLabel>Name</DataListLabel>
-          <DataListValue>{props.selection.handle.name}</DataListValue>
-        </DataListItem>
-        <DataListItem align="start">
-          <DataListLabel>Path</DataListLabel>
-          <DataListValue>
-            <Code
-              variant="ghost"
-              color="neutral"
-              size={2}
-              selectable
-              class={css.path}
-            >
-              {segments().join('/') || '/'}
-            </Code>
-          </DataListValue>
-        </DataListItem>
-        <DataListItem>
-          <DataListLabel>Kind</DataListLabel>
-          <DataListValue>{props.selection.handle.kind}</DataListValue>
-        </DataListItem>
-        <Show when={!isDirectory()}>
-          <FileMetadata file={props.selection.file} />
-        </Show>
-      </DataListRoot>
+      <Flex as="div" gap={5} class={css.split}>
+        <Flex as="div" direction="column" class={css.metaCol}>
+          <DataListRoot orientation="horizontal" size={2}>
+            <DataListItem>
+              <DataListLabel>Name</DataListLabel>
+              <DataListValue>{props.selection.handle.name}</DataListValue>
+            </DataListItem>
+            <DataListItem align="start">
+              <DataListLabel>Path</DataListLabel>
+              <DataListValue>
+                <Code
+                  variant="ghost"
+                  color="neutral"
+                  size={2}
+                  selectable
+                  class={css.path}
+                >
+                  {segments().join('/') || '/'}
+                </Code>
+              </DataListValue>
+            </DataListItem>
+            <DataListItem>
+              <DataListLabel>Kind</DataListLabel>
+              <DataListValue>{props.selection.handle.kind}</DataListValue>
+            </DataListItem>
+            <Show when={!isDirectory()}>
+              <FileMetadata file={props.selection.file} />
+            </Show>
+          </DataListRoot>
+        </Flex>
 
-      <Show when={!isDirectory()}>
-        <Preview file={props.selection.file} />
-      </Show>
+        <Show when={!isDirectory()}>
+          <Flex as="div" direction="column" class={css.previewCol}>
+            <Preview file={props.selection.file} />
+          </Flex>
+        </Show>
+      </Flex>
     </>
   );
 };

@@ -16,14 +16,16 @@ interface PreviewProps {
 }
 
 /**
- * MIME types the browser handles natively in an iframe — images
- * render in the image viewer, audio/video in their elements, JSON/XML
- * get the dev formatter. Files matching this set are passed through
- * as-is. PDFs are handled by a dedicated `<embed>` path because the
- * Chromium PDF viewer doesn't bootstrap inside `sandbox=""` (it needs
- * same-origin treatment for its UI assets).
+ * MIME types the browser handles natively in an iframe — audio/video
+ * in their elements, JSON/XML get the dev formatter. Files matching
+ * this set are passed through as-is.
+ *
+ * Images get a dedicated `<img>` path so we can letterbox them
+ * (object-fit: contain) instead of the iframe's native-size scroll.
+ * PDFs get a dedicated `<embed>` path because Chromium's PDF viewer
+ * doesn't bootstrap inside `sandbox=""`.
  */
-const PASSTHROUGH_MIME = /^(image|audio|video)\/|^application\/(json|xml)$/;
+const PASSTHROUGH_MIME = /^(audio|video)\/|^application\/(json|xml)$/;
 
 /**
  * Extensions for text-format files we'll re-wrap as `text/plain` so
@@ -127,13 +129,15 @@ const looksLikeText = (name: string): boolean => {
 };
 
 /**
- * `'iframe'` paths render in a `sandbox=""` iframe (safe for
- * arbitrary HTML/SVG/text — scripts can't execute). `'embed'` paths
- * render via `<embed type="application/pdf">`, which always
- * dispatches to Chromium's PDF viewer regardless of byte contents,
- * sidestepping the sandbox-vs-PDF-viewer interaction.
+ * `'image'` renders inline `<img>` with `object-fit: contain` so the
+ * picture letterboxes inside the preview frame. `'iframe'` paths
+ * render in a `sandbox=""` iframe (safe for arbitrary HTML/SVG/text —
+ * scripts can't execute). `'embed'` paths render via
+ * `<embed type="application/pdf">`, which always dispatches to
+ * Chromium's PDF viewer regardless of byte contents, sidestepping
+ * the sandbox-vs-PDF-viewer interaction.
  */
-type PreviewKind = 'iframe' | 'embed';
+type PreviewKind = 'image' | 'iframe' | 'embed';
 
 interface PreparedPreview {
   blob: Blob;
@@ -151,6 +155,12 @@ interface PreparedPreview {
 const preparePreview = (file: File): PreparedPreview | undefined => {
   const type = file.type;
   const ext = getExtension(file.name);
+
+  // Images render as a plain `<img>` so we can letterbox via
+  // object-fit instead of the iframe's native-size scrollbars.
+  if (type.startsWith('image/')) {
+    return { blob: file, kind: 'image' };
+  }
 
   // PDF gets its own renderer. Coerce the MIME so files Chromium
   // failed to identify by extension still land in the PDF viewer.
@@ -217,6 +227,9 @@ export const Preview: Component<PreviewProps> = (props) => {
       >
         {(url) => (
           <Switch>
+            <Match when={prepared()?.kind === 'image'}>
+              <img src={url} alt={title()} class={css.image} />
+            </Match>
             <Match when={prepared()?.kind === 'embed'}>
               <embed
                 src={url}

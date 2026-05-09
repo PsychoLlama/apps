@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutral, space } from '@lib/design';
+import { breakpoint, neutral, space } from '@lib/design';
 
 // Fill the ScrollArea viewport vertically so the empty-state
 // `placeholder` (flex:1) has a definite height to grow into. Center
@@ -26,4 +26,34 @@ export const path = style({
   borderRadius: space[1],
   backgroundColor: neutral.alpha[3],
   wordBreak: 'break-all',
+});
+
+// DataList + Preview share the bottom of the metadata pane. At
+// narrow widths the preview lifts to the top so it's the first
+// thing visible when there's not enough room to fit the property
+// list beside it; at `lg` and up they go side-by-side with
+// properties on the left and preview filling the rest.
+export const split = style({
+  flexDirection: 'column-reverse',
+  alignItems: 'stretch',
+  '@media': {
+    [breakpoint.lg]: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
+  },
+});
+
+export const metaCol = style({
+  flexShrink: 0,
+  '@media': {
+    [breakpoint.lg]: {
+      width: '24rem',
+    },
+  },
+});
+
+export const previewCol = style({
+  flex: '1 1 auto',
+  minWidth: 0,
 });
