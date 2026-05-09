@@ -103,4 +103,26 @@ describe('defineAction / useAction', () => {
     const { useAction } = bindRegistry(createRegistry());
     expect(() => useAction(increment)()).toThrow(/not created/i);
   });
+
+  it('does not subscribe the calling reactive scope to fields the handler touches', async () => {
+    // `state.count += 1` reads `count` via the proxy to compute the new
+    // value. If that read tracks in the caller, dispatching the action
+    // from inside an effect adds the field as a dep of the effect — the
+    // very next write retriggers the effect, increment again, infinite
+    // loop. Guard against the regression by dispatching from inside an
+    // effect and confirming the effect runs exactly once.
+    const { counter, useAction } = bootstrap();
+    let effectRuns = 0;
+    const dispose = createRoot((dispose) => {
+      createEffect(() => {
+        effectRuns += 1;
+        useAction(increment)();
+      });
+      return dispose;
+    });
+    await Promise.resolve();
+    expect(effectRuns).toBe(1);
+    expect(counter.count).toBe(1);
+    dispose();
+  });
 });
