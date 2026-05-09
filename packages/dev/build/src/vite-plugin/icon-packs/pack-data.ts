@@ -9,7 +9,7 @@ import type {
  * A flat icon entry — the smallest unit the runtime fetches.
  * `width`/`height` are present only when the icon overrides the
  * pack-level viewBox; iconify packs occasionally ship oddly-sized
- * glyphs (Font Awesome's wider icons, brand `logos:*`).
+ * glyphs (Font Awesome's wider icons).
  */
 export interface IconEntry {
   /** Icon name within the pack (kebab-case). */

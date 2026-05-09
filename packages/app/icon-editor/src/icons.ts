@@ -12,9 +12,9 @@ import indexUrl from 'virtual:icon-packs';
 
 /**
  * A single icon entry. Most iconify packs share one viewBox across
- * every icon, but a few (Font Awesome's wider glyphs, brand-y
- * `logos:*` entries) override per-icon — `width`/`height` are
- * absent when the icon uses the pack default.
+ * every icon, but a few (Font Awesome's wider glyphs) override
+ * per-icon — `width`/`height` are absent when the icon uses the
+ * pack default.
  */
 export interface IconEntry {
   /** Icon name within its pack (kebab-case). */
