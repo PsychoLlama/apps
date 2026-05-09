@@ -19,6 +19,6 @@
 
 ## Reference Docs
 
-- Located at `docs/reference/`. One file per component, plus `index.md` and `standard-props.md`.
+- The `ui-reference` skill is the entry point. Per-component files live at `$REPO/.claude/skills/ui-reference/reference/`, alongside `standard-props.md`.
 - Optimized for token efficiency. No examples, no usage guides — props and descriptions only.
 - Keep docs updated with components and standard props.
