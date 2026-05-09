@@ -39,6 +39,9 @@ import {
 import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
 import * as css from './text.css';
 
+/** Text tags excluding `<a>`. Anchors are owned exclusively by `Link`. */
+type TextTag = Exclude<HtmlTextTag, 'a'>;
+
 /** Text-specific props, independent of the rendered element. */
 interface TextOwnProps {
   /**
@@ -56,7 +59,7 @@ interface TextOwnProps {
 }
 
 /** Text props for a specific element tag. */
-export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
+export type TextProps<T extends TextTag> = PolymorphicProps<
   T,
   TextOwnProps &
     TrimProps &
@@ -69,9 +72,9 @@ export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
 >;
 
 /** General-purpose text component for body copy, labels, and inline text. */
-function Text<const T extends HtmlTextTag>(props: TextProps<T>): JSX.Element;
+function Text<const T extends TextTag>(props: TextProps<T>): JSX.Element;
 function Text(
-  props: { as: HtmlTextTag } & TextOwnProps &
+  props: { as: TextTag } & TextOwnProps &
     TrimProps &
     TruncateProps &
     WrapProps &
