@@ -55,6 +55,7 @@
  */
 
 import {
+  batch,
   createEffect,
   createSignal,
   mergeProps,
@@ -445,46 +446,69 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const measureSizes = () => {
     const viewport = viewportEl();
     if (!viewport) return;
+    // Hoist DOM reads ahead of signal writes. The thumb-priming
+    // effect subscribes to both `sizesX` and `sizesY` and writes
+    // `transform` on the thumb — so an interleaved
+    // setSizesX/read-Y/setSizesY pattern dirties layout between the
+    // X and Y geometry reads, forcing a second sync layout flush.
+    // Collect all reads first, then commit writes inside `batch`
+    // so subscribers fire once after the read phase completes.
+    let xMetrics: { sizes: Sizes; thickness: number } | null = null;
+    let yMetrics: { sizes: Sizes; thickness: number } | null = null;
     if (enableX()) {
       const scrollbar = scrollbarXEl();
       const scrollbarStyle = scrollbar
         ? getComputedStyle(scrollbar)
         : undefined;
-      setSizesX({
-        content: viewport.scrollWidth,
-        viewport: viewport.offsetWidth,
-        scrollbar: {
-          size: scrollbar?.clientWidth ?? 0,
-          paddingStart: scrollbarStyle
-            ? parseInt(scrollbarStyle.paddingLeft, 10) || 0
-            : 0,
-          paddingEnd: scrollbarStyle
-            ? parseInt(scrollbarStyle.paddingRight, 10) || 0
-            : 0,
+      xMetrics = {
+        sizes: {
+          content: viewport.scrollWidth,
+          viewport: viewport.offsetWidth,
+          scrollbar: {
+            size: scrollbar?.clientWidth ?? 0,
+            paddingStart: scrollbarStyle
+              ? parseInt(scrollbarStyle.paddingLeft, 10) || 0
+              : 0,
+            paddingEnd: scrollbarStyle
+              ? parseInt(scrollbarStyle.paddingRight, 10) || 0
+              : 0,
+          },
         },
-      });
-      setThicknessX(scrollbar?.clientHeight ?? 0);
+        thickness: scrollbar?.clientHeight ?? 0,
+      };
     }
     if (enableY()) {
       const scrollbar = scrollbarYEl();
       const scrollbarStyle = scrollbar
         ? getComputedStyle(scrollbar)
         : undefined;
-      setSizesY({
-        content: viewport.scrollHeight,
-        viewport: viewport.offsetHeight,
-        scrollbar: {
-          size: scrollbar?.clientHeight ?? 0,
-          paddingStart: scrollbarStyle
-            ? parseInt(scrollbarStyle.paddingTop, 10) || 0
-            : 0,
-          paddingEnd: scrollbarStyle
-            ? parseInt(scrollbarStyle.paddingBottom, 10) || 0
-            : 0,
+      yMetrics = {
+        sizes: {
+          content: viewport.scrollHeight,
+          viewport: viewport.offsetHeight,
+          scrollbar: {
+            size: scrollbar?.clientHeight ?? 0,
+            paddingStart: scrollbarStyle
+              ? parseInt(scrollbarStyle.paddingTop, 10) || 0
+              : 0,
+            paddingEnd: scrollbarStyle
+              ? parseInt(scrollbarStyle.paddingBottom, 10) || 0
+              : 0,
+          },
         },
-      });
-      setThicknessY(scrollbar?.clientWidth ?? 0);
+        thickness: scrollbar?.clientWidth ?? 0,
+      };
     }
+    batch(() => {
+      if (xMetrics) {
+        setSizesX(xMetrics.sizes);
+        setThicknessX(xMetrics.thickness);
+      }
+      if (yMetrics) {
+        setSizesY(yMetrics.sizes);
+        setThicknessY(yMetrics.thickness);
+      }
+    });
   };
 
   // Observe viewport, content, and the scrollbar tracks. Any shape
@@ -527,13 +551,22 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     if (!viewport) return;
     let rAF = 0;
     const update = () => {
-      if (thumbXEl && enableX()) {
-        const offset = getThumbOffsetFromScroll(viewport.scrollLeft, sizesX());
-        thumbXEl.style.transform = `translate3d(${offset}px, 0, 0)`;
+      // Read both axes' scroll positions before writing either
+      // thumb's transform — interleaving (read X, write X, read Y,
+      // write Y) forces a second layout flush.
+      const xOffset =
+        thumbXEl && enableX()
+          ? getThumbOffsetFromScroll(viewport.scrollLeft, sizesX())
+          : null;
+      const yOffset =
+        thumbYEl && enableY()
+          ? getThumbOffsetFromScroll(viewport.scrollTop, sizesY())
+          : null;
+      if (thumbXEl && xOffset !== null) {
+        thumbXEl.style.transform = `translate3d(${xOffset}px, 0, 0)`;
       }
-      if (thumbYEl && enableY()) {
-        const offset = getThumbOffsetFromScroll(viewport.scrollTop, sizesY());
-        thumbYEl.style.transform = `translate3d(0, ${offset}px, 0)`;
+      if (thumbYEl && yOffset !== null) {
+        thumbYEl.style.transform = `translate3d(0, ${yOffset}px, 0)`;
       }
     };
     const onScroll = () => {
@@ -553,13 +586,20 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   createEffect(() => {
     const viewport = viewportEl();
     if (!viewport) return;
-    if (thumbXEl) {
-      const offset = getThumbOffsetFromScroll(viewport.scrollLeft, sizesX());
-      thumbXEl.style.transform = `translate3d(${offset}px, 0, 0)`;
+    // Read both scroll positions before writing either transform —
+    // interleaving forces a second sync layout flush each time
+    // sizes change.
+    const xOffset = thumbXEl
+      ? getThumbOffsetFromScroll(viewport.scrollLeft, sizesX())
+      : null;
+    const yOffset = thumbYEl
+      ? getThumbOffsetFromScroll(viewport.scrollTop, sizesY())
+      : null;
+    if (thumbXEl && xOffset !== null) {
+      thumbXEl.style.transform = `translate3d(${xOffset}px, 0, 0)`;
     }
-    if (thumbYEl) {
-      const offset = getThumbOffsetFromScroll(viewport.scrollTop, sizesY());
-      thumbYEl.style.transform = `translate3d(0, ${offset}px, 0)`;
+    if (thumbYEl && yOffset !== null) {
+      thumbYEl.style.transform = `translate3d(0, ${yOffset}px, 0)`;
     }
   });
 
