@@ -12,6 +12,7 @@ import {
 import IconFile from 'virtual:icons/mdi/file-outline';
 import IconFolder from 'virtual:icons/mdi/folder-outline';
 import { formatBytes, formatDate } from './format';
+import { Preview } from './preview';
 import type { Selection } from './types';
 import * as css from './metadata-panel.css';
 
@@ -121,6 +122,10 @@ const SelectionDetails: Component<SelectionDetailsProps> = (props) => {
           <FileMetadata file={props.selection.file} />
         </Show>
       </DataListRoot>
+
+      <Show when={!isDirectory()}>
+        <Preview file={props.selection.file} />
+      </Show>
     </>
   );
 };
