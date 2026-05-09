@@ -46,17 +46,6 @@ export const MetadataPanel: Component<MetadataPanelProps> = (props) => {
             <Text as="span" size={2} color="lowContrast" selectable={false}>
               Files and directories stay on your device. Nothing is uploaded.
             </Text>
-            <Text as="span" size={1} color="lowContrast" selectable={false}>
-              Heads up: the API follows symlinks transparently — a pnpm
-              <Code variant="ghost" color="neutral" size={1} selectable={false}>
-                node_modules
-              </Code>
-              walks through linked workspace packages and the
-              <Code variant="ghost" color="neutral" size={1} selectable={false}>
-                .pnpm
-              </Code>
-              store.
-            </Text>
           </Flex>
         }
         keyed

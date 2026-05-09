@@ -36,7 +36,7 @@ export const FileBrowser: Component = () => {
   };
 
   return (
-    <Flex as="main" direction="column" grow>
+    <Flex as="main" direction="column" grow class={css.host}>
       <SiteHeader title="File Browser" />
 
       <Flex as="div" direction="column" class={css.workspace}>

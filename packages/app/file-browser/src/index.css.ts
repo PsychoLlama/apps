@@ -1,6 +1,15 @@
 import { style } from '@vanilla-extract/css';
 import { breakpoint, neutral, space } from '@lib/design';
 
+// `<main>` defaults to `min-height: auto` (content height), so a
+// long tree would push the host body past 100vh and break the
+// chain that lets the inner ScrollArea constrain its viewport. The
+// `host` rule pins `min-height: 0` on `<main>` itself; `workspace`
+// keeps the same treatment for the column inside it.
+export const host = style({
+  minHeight: 0,
+});
+
 export const workspace = style({
   flex: '1 1 auto',
   minHeight: 0,
