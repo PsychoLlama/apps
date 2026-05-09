@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Hydrate a freshly-created git worktree:
-#   1. Symlink the moon cache (hashes/outputs) to the main checkout so
-#      every worktree shares one content-addressed, grow-only store
-#      instead of rebuilding from scratch.
-#   2. Run `pnpm install` if node_modules is missing.
-# Skips the main checkout, where the developer manages deps directly.
+# Hydrate a freshly-created git worktree by running `pnpm install` if
+# node_modules is missing. Skips the main checkout, where the developer
+# manages deps directly.
+#
+# Turbo handles its own cache sharing across worktrees natively — no
+# symlinking required.
 
 set -euo pipefail
 
@@ -13,36 +13,6 @@ cd "${CLAUDE_PROJECT_DIR:-.}"
 # In a linked worktree, `.git` is a file pointing at the gitdir.
 # In the main checkout it's a directory. Bail if we're not in a worktree.
 [[ -f .git ]] || exit 0
-
-main_repo=$(dirname "$(git rev-parse --git-common-dir)")
-
-# Share moon's content-addressed cache with the main checkout. States,
-# locks, and runReport.json bake in absolute project roots, so leave
-# those per-worktree.
-link_moon_cache_dir() {
-  local subdir=$1
-  local target="$main_repo/.moon/cache/$subdir"
-  local link=".moon/cache/$subdir"
-
-  mkdir -p "$target" "$(dirname "$link")"
-
-  if [[ -L "$link" ]]; then
-    return 0
-  fi
-
-  if [[ -d "$link" ]]; then
-    # Pre-existing worktree: fold any locally cached entries into the
-    # shared store (content-addressed, so collisions are byte-identical)
-    # before replacing the directory with a symlink.
-    cp -rn "$link/." "$target/"
-    rm -rf "$link"
-  fi
-
-  ln -s "$target" "$link"
-}
-
-link_moon_cache_dir hashes
-link_moon_cache_dir outputs
 
 [[ -d node_modules ]] && exit 0
 

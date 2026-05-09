@@ -26,7 +26,7 @@ file_path=$(jq -r '.tool_input.file_path // empty')
 # Skip empty paths, files the edit deleted, paths outside the worktree
 # (e.g. `additionalDirectories` like the radix-ui checkout), and any
 # extension eslint isn't going to parse. Ignore patterns inside the
-# project — node_modules, .direnv, .moon, dist, .output — are owned
+# project — node_modules, .direnv, .turbo, dist, .output — are owned
 # by eslint.config.ts via `includeIgnoreFile(.gitignore)`, so we don't
 # mirror them here.
 [[ -n "$file_path" && -e "$file_path" ]] || exit 0
