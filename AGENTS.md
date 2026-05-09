@@ -31,7 +31,7 @@
 
 ## UI Components
 
-- Reference docs: ./packages/lib/ui/src/docs/reference/index.md
+- For reference docs, load the `ui-reference` skill.
 - Import from `@lib/ui`.
 - Prefer semantic elements via the `as` prop (`p`, `main`, `footer`, etc). Avoid `div`.
 - Design mobile-first. Use `breakpoint` tokens in `@media` blocks for responsive overrides.
