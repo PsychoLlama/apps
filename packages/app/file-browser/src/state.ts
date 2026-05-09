@@ -10,8 +10,20 @@ import {
   loadDirectoryChildren,
   loadFileMetadata,
   pickDirectory,
+  restoreFromStorage,
+  resumePermission,
+  type RestoreResult,
 } from './capabilities';
+import { stashRootHandle } from './persistence';
 import { type DirNode, type Selection, type TreeEntry } from './types';
+
+/** Snapshot of a previously-picked root awaiting a re-grant gesture. */
+export interface PendingRestore {
+  /** The handle that was stashed during the prior session. */
+  handle: FileSystemDirectoryHandle;
+  /** Cached display name so the resume button can label itself. */
+  name: string;
+}
 
 /** Tri-state browser support flag. Stays at `'unknown'` through SSR
  *  so the static HTML doesn't bake in a "not supported" warning that
@@ -28,6 +40,13 @@ interface FileBrowserState {
   pickerError: string | undefined;
   /** File System Access support — `'unknown'` until the client resolves it. */
   support: SupportStatus;
+  /**
+   * Stashed handle from a prior session that needs the user to
+   * re-grant read access. Set by the restore effect when the OS
+   * reports `permission: 'prompt'`; cleared once the user resumes
+   * (or picks a different directory).
+   */
+  pendingRestore: PendingRestore | undefined;
 }
 
 const fileBrowserStore = defineStore<FileBrowserState>(() => ({
@@ -35,6 +54,7 @@ const fileBrowserStore = defineStore<FileBrowserState>(() => ({
   selection: undefined,
   pickerError: undefined,
   support: 'unknown',
+  pendingRestore: undefined,
 }));
 
 /** Live, readonly view of the file-browser state. */
@@ -53,6 +73,35 @@ const setRootAction = defineAction(
     };
     state.selection = { handle, parentPath: [], file: undefined };
     state.pickerError = undefined;
+    state.pendingRestore = undefined;
+  },
+);
+
+const routeRestoreResultAction = defineAction(
+  [fileBrowserStore],
+  (state, result: RestoreResult) => {
+    if (result.kind === 'granted') {
+      state.rootEntry = {
+        kind: 'directory',
+        handle: result.handle,
+        expanded: true,
+        loadStatus: 'idle',
+        children: [],
+        loadError: '',
+      };
+      state.selection = {
+        handle: result.handle,
+        parentPath: [],
+        file: undefined,
+      };
+      state.pickerError = undefined;
+      state.pendingRestore = undefined;
+    } else if (result.kind === 'prompt') {
+      state.pendingRestore = {
+        handle: result.handle,
+        name: result.handle.name,
+      };
+    }
   },
 );
 
@@ -172,6 +221,20 @@ const loadFileMetadataEffect = defineEffect([], loadFileMetadata, {
   onSuccess: setSelectionFileAction,
 });
 
+const restoreEffect = defineEffect([], restoreFromStorage, {
+  onSuccess: routeRestoreResultAction,
+});
+
+const resumeEffect = defineEffect([], resumePermission, {
+  onSuccess: setRootAction,
+  onFailure: setPickerErrorAction,
+});
+
+// Fire-and-forget IDB write. Wrapped as an effect so the side-effect
+// goes through the same dispatch path as everything else; no
+// lifecycle actions because there's nothing to mirror in state.
+const stashEffect = defineEffect([], stashRootHandle);
+
 /** Shape returned by {@link useFileBrowserActions}. */
 export interface FileBrowserActions {
   /** Open the platform directory picker. */
@@ -182,28 +245,40 @@ export interface FileBrowserActions {
   select: (selection: Pick<Selection, 'handle' | 'parentPath'>) => void;
   /** Run feature detection against the live `window`. Call once on mount. */
   detectSupport: () => void;
+  /** Try to revive the previously-picked root from IndexedDB. */
+  restore: () => Promise<void>;
+  /** Re-grant read access on a stashed handle. Must run from a user gesture. */
+  resume: () => Promise<void>;
 }
 
 export const useFileBrowserActions = (): FileBrowserActions => {
   const pickEffect = useEffect(pickDirectoryEffect);
   const loadChildren = useEffect(loadChildrenEffect);
   const fetchFile = useEffect(loadFileMetadataEffect);
+  const restore = useEffect(restoreEffect);
+  const resume = useEffect(resumeEffect);
+  const stash = useEffect(stashEffect);
   const setExpanded = useAction(setExpandedAction);
   const dispatchSelect = useAction(selectAction);
   const setSupport = useAction(setSupportAction);
 
+  // Shared post-install side-effects. Both pick and resume land at
+  // the same end state — a freshly-installed root that needs its
+  // children loaded and its handle stashed for next session — so
+  // factor it into one helper instead of repeating the dance.
+  const settleRoot = (): void => {
+    const root = fileBrowser.rootEntry;
+    if (!root) return;
+    if (root.loadStatus === 'idle') {
+      void loadChildren(root as DirNode);
+    }
+    void stash(root.handle);
+  };
+
   return {
     pick: async () => {
       await pickEffect();
-      // Eagerly load the root's children so the open chevron isn't a
-      // lie. `setRootAction` marks the root `expanded: true` but the
-      // load lifecycle is owned by the effect, so without this kick
-      // the first row click would just collapse the (still-empty)
-      // root instead of fetching its contents.
-      const root = fileBrowser.rootEntry;
-      if (root && root.loadStatus === 'idle') {
-        void loadChildren(root as DirNode);
-      }
+      settleRoot();
     },
     toggleExpand: (node) => {
       const next = !node.expanded;
@@ -222,6 +297,19 @@ export const useFileBrowserActions = (): FileBrowserActions => {
       const picker = (window as unknown as { showDirectoryPicker?: unknown })
         .showDirectoryPicker;
       setSupport(typeof picker === 'function' ? 'supported' : 'unsupported');
+    },
+    restore: async () => {
+      await restore();
+      // Restore may install the root (granted path) — settle it the
+      // same way pick does. The prompt path leaves rootEntry alone
+      // and `settleRoot` no-ops.
+      settleRoot();
+    },
+    resume: async () => {
+      const pending = fileBrowser.pendingRestore;
+      if (!pending) return;
+      await resume(pending.handle);
+      settleRoot();
     },
   };
 };

@@ -179,6 +179,9 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1(babel-plugin-macros@3.1.0)
+      idb:
+        specifier: 'catalog:'
+        version: 8.0.3
       solid-js:
         specifier: '*'
         version: 1.9.12

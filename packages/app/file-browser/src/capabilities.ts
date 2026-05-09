@@ -1,4 +1,21 @@
+import { clearRootHandle, loadRootHandle } from './persistence';
 import type { DirNode, TreeEntry } from './types';
+
+/**
+ * Permission API surface the File System Access spec adds to handles
+ * but TypeScript's stock DOM lib doesn't model. Inlined per call site
+ * so consumers can `as`-cast without dragging in ambient types.
+ */
+type PermissionState = 'granted' | 'denied' | 'prompt';
+type PermissionDescriptor = { mode: 'read' | 'readwrite' };
+type PermittedHandle = FileSystemHandle & {
+  queryPermission?: (
+    descriptor?: PermissionDescriptor,
+  ) => Promise<PermissionState>;
+  requestPermission?: (
+    descriptor?: PermissionDescriptor,
+  ) => Promise<PermissionState>;
+};
 
 // `FileSystemDirectoryHandle.values()` yields the parent
 // `FileSystemHandle` type even though each value is concretely one of
@@ -79,4 +96,56 @@ export const loadFileMetadata = async (
 ): Promise<{ handle: FileSystemFileHandle; file: File }> => {
   const file = await handle.getFile();
   return { handle, file };
+};
+
+/** Outcome of a session-restore attempt. Routed by the success action. */
+export type RestoreResult =
+  /** A handle was stashed and we still have read access. */
+  | { kind: 'granted'; handle: FileSystemDirectoryHandle }
+  /** A handle was stashed but the user must re-grant via a gesture. */
+  | { kind: 'prompt'; handle: FileSystemDirectoryHandle }
+  /** Nothing to restore (fresh session, denied permission, missing API). */
+  | { kind: 'none' };
+
+/**
+ * Try to restore the previously-picked root from IndexedDB. The
+ * permission state is checked passively — `queryPermission` doesn't
+ * need a user gesture, so it can run on mount. A `denied` status is
+ * treated as "forget the stash" since the OS won't let us regrant
+ * without re-picking from scratch.
+ */
+export const restoreFromStorage = async (): Promise<RestoreResult> => {
+  const handle = await loadRootHandle();
+  if (!handle) return { kind: 'none' };
+
+  const queryPermission = (handle as PermittedHandle).queryPermission;
+  if (typeof queryPermission !== 'function') return { kind: 'none' };
+
+  const status = await queryPermission.call(handle, { mode: 'read' });
+  if (status === 'granted') return { kind: 'granted', handle };
+  if (status === 'denied') {
+    await clearRootHandle();
+    return { kind: 'none' };
+  }
+  return { kind: 'prompt', handle };
+};
+
+/**
+ * Re-grant read access on a previously-stashed handle. Must be invoked
+ * from a user gesture (button click) — `requestPermission` will reject
+ * the promise otherwise. Returns the handle on success so the dispatch
+ * action can install it as the active root.
+ */
+export const resumePermission = async (
+  handle: FileSystemDirectoryHandle,
+): Promise<FileSystemDirectoryHandle> => {
+  const requestPermission = (handle as PermittedHandle).requestPermission;
+  if (typeof requestPermission !== 'function') {
+    throw new Error('Permission API unavailable on this handle.');
+  }
+  const status = await requestPermission.call(handle, { mode: 'read' });
+  if (status !== 'granted') {
+    throw new Error('Read permission was denied.');
+  }
+  return handle;
 };

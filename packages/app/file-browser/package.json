@@ -19,7 +19,8 @@
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",
-    "@vanilla-extract/css": "catalog:"
+    "@vanilla-extract/css": "catalog:",
+    "idb": "catalog:"
   },
   "peerDependencies": {
     "solid-js": "*"

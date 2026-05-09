@@ -2,6 +2,7 @@ import { Show, onMount, type Component } from 'solid-js';
 import { Button, Callout, Flex, ScrollArea } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconFolderOpen from 'virtual:icons/mdi/folder-open-outline';
+import IconHistory from 'virtual:icons/mdi/history';
 import { MetadataPanel } from './metadata-panel';
 import { TreeNode } from './tree-node';
 import { fileBrowser, useFileBrowserActions } from './state';
@@ -28,11 +29,20 @@ export const FileBrowser: Component = () => {
   // Feature detection runs on mount so the SSR pass ships with
   // `support === 'unknown'`. Resolving on the server would bake a
   // "not supported" warning into the static HTML that survives
-  // hydration on capable browsers.
-  onMount(() => actions.detectSupport());
+  // hydration on capable browsers. The restore attempt also lives
+  // here — IndexedDB doesn't exist on the server, and the permission
+  // query needs the real `window`.
+  onMount(() => {
+    actions.detectSupport();
+    void actions.restore();
+  });
 
   const handlePick = () => {
     void actions.pick();
+  };
+
+  const handleResume = () => {
+    void actions.resume();
   };
 
   return (
@@ -51,6 +61,23 @@ export const FileBrowser: Component = () => {
           >
             <IconFolderOpen aria-hidden /> Pick directory
           </Button>
+          <Show
+            when={!fileBrowser.rootEntry && fileBrowser.pendingRestore}
+            keyed
+          >
+            {(pending) => (
+              <Button
+                testId="file-browser-resume"
+                size={2}
+                variant="surface"
+                color="neutral"
+                disabled={fileBrowser.support !== 'supported'}
+                onClick={handleResume}
+              >
+                <IconHistory aria-hidden /> Resume {pending.name}
+              </Button>
+            )}
+          </Show>
         </Flex>
 
         <Flex as="div" class={css.body}>
