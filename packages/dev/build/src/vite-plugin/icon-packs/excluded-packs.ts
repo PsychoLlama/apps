@@ -26,8 +26,11 @@ export const EXCLUDED_PACKS: ReadonlySet<string> = new Set([
   'circle-flags',
   'cif',
 
-  // Animated.
+  // Animated. `line-md` ships every icon as a stroke-dashoffset
+  // animation; the per-icon filter in `pack-data.ts` would only let
+  // 2 of its 1218 glyphs through, so cut the whole pack here instead.
   'svg-spinners',
+  'line-md',
 
   // Brand / trademarked logos (monotone).
   'simple-icons',

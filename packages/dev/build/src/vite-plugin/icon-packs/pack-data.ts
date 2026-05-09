@@ -4,7 +4,15 @@ import type {
   PackLicense,
   RawPackJson,
 } from './iconify.ts';
-import { stripAnimations } from './strip-animations.ts';
+
+/**
+ * SMIL animation elements. Bodies containing any of these strobe in
+ * favicons that haven't normalized SMIL out, so we skip them. Matches
+ * a tag opener (`<animate`, `<set …>`, etc.) to avoid false positives
+ * on icons whose attribute values happen to contain the word.
+ */
+const ANIMATION_TAG_RE =
+  /<\s*(animate|animateTransform|animateMotion|set|discard|mpath)\b/;
 
 /**
  * A flat icon entry — the smallest unit the runtime fetches.
@@ -68,13 +76,14 @@ export const buildPackData = (
   for (const [iconName, def] of Object.entries(raw.icons)) {
     if (def.hidden) continue;
     if (!def.body) continue;
-    // Animations belong to motion design, not favicons. Bodies that
-    // animate (line-md ships every icon with one) get their SMIL
-    // hoisted to a static freeze pose; non-animated bodies skip the
-    // parser entirely.
+    // Animations belong to motion design, not favicons — drop bodies
+    // that ship SMIL elements. line-md is filtered wholesale via
+    // `excluded-packs.ts`; the handful of mixed packs (eos-icons,
+    // codex) lose the few animated entries and keep the rest.
+    if (ANIMATION_TAG_RE.test(def.body)) continue;
     const entry: IconEntry = {
       name: iconName,
-      body: stripAnimations(def.body),
+      body: def.body,
     };
     if (def.width !== undefined && def.width !== width) entry.width = def.width;
     if (def.height !== undefined && def.height !== height) {
