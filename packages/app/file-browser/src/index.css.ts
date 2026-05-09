@@ -1,18 +1,21 @@
 import { style } from '@vanilla-extract/css';
 import { breakpoint, neutral, space } from '@lib/design';
 
-// `<main>` defaults to `min-height: auto` (content height), so a
-// long tree would push the host body past 100vh and break the
-// chain that lets the inner ScrollArea constrain its viewport. The
-// `host` rule pins `min-height: 0` on `<main>` itself; `workspace`
-// keeps the same treatment for the column inside it.
+// Pin `<main>` to the viewport. Without this, the global body's
+// `min-height: 100vh` lets the document grow under a tall tree:
+// `min-height: 0` alone allows children to shrink, but content
+// visually overflows and the outer page scrolls. Clipping at the
+// host stops that leak so the leaf `ScrollArea` is the only thing
+// that scrolls.
 export const host = style({
   minHeight: 0,
+  overflow: 'hidden',
 });
 
 export const workspace = style({
   flex: '1 1 auto',
   minHeight: 0,
+  overflow: 'hidden',
 });
 
 export const toolbar = style({
