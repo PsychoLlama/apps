@@ -40,13 +40,13 @@ describe('buildPackData', () => {
     expect(data.total).toBe(1);
   });
 
-  it('falls back to width/height defaults when missing', () => {
+  it('falls back to the iconify default of 16 when both width and height are missing — packs like Vaadin and Bootstrap omit the root dimensions and rely on the spec default', () => {
     const raw = makeRaw({ a: { body: '<a/>' } });
 
     const data = buildPackData(raw, 'demo', { name: 'Demo' });
 
-    expect(data.width).toBe(24);
-    expect(data.height).toBe(24);
+    expect(data.width).toBe(16);
+    expect(data.height).toBe(16);
   });
 
   it('mirrors width to height when only one is set', () => {

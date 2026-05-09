@@ -64,9 +64,11 @@ export const createDevMiddleware = (
             // packs (Academicons 448×512, Ant Design 1024×1024) have
             // non-square viewBoxes that the metadata can't express.
             // Without the override, sample bodies render against the
-            // wrong viewBox and clip off-screen.
-            width: 24,
-            height: 24,
+            // wrong viewBox and clip off-screen. `16` matches
+            // `defaultIconDimensions` so the placeholder isn't itself
+            // misleading on the off chance the override below misses.
+            width: 16,
+            height: 16,
             // Samples and accurate dimensions resolve below; the
             // index itself only needs cheap metadata up front.
             samples: [] as IconEntry[],

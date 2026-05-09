@@ -49,14 +49,20 @@ export const SAMPLE_COUNT = 5;
  * Flatten a raw `@iconify/json` pack into our internal shape. Hidden
  * and body-less entries are dropped; per-icon `width`/`height` overrides
  * are kept only when they differ from the pack default.
+ *
+ * Pack-level dimension fallback is `16` — matches `@iconify/utils`'
+ * `defaultIconDimensions`. Iconify packs that omit root `width`/`height`
+ * (Vaadin, Bootstrap Icons, Octicons, others) all ship 16×16-native
+ * bodies and rely on the spec default; falling back to 24 instead
+ * would misframe those bodies in the smaller corner of a 24×24 viewBox.
  */
 export const buildPackData = (
   raw: RawPackJson,
   id: string,
   meta: CollectionsJson[string],
 ): PackData => {
-  const width = raw.width ?? raw.height ?? 24;
-  const height = raw.height ?? raw.width ?? 24;
+  const width = raw.width ?? raw.height ?? 16;
+  const height = raw.height ?? raw.width ?? 16;
   const icons: IconEntry[] = [];
   for (const [iconName, def] of Object.entries(raw.icons)) {
     if (def.hidden) continue;
