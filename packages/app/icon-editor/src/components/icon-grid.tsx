@@ -538,7 +538,7 @@ const PackListView: Component<PackListViewProps> = (props) => {
           }
         >
           <ScrollArea type="hover" scrollbars="vertical" class={css.scroller}>
-            <Flex as="div" direction="column" gap={1} class={css.packList}>
+            <Flex as="div" direction="column" gap={3} class={css.packList}>
               <For each={filtered()}>
                 {(pack) => (
                   <Card
