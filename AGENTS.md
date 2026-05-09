@@ -1,7 +1,7 @@
 ## Stack
 
 - pnpm workspaces
-- moon (task runner)
+- turbo (task runner)
 - SolidStart
 - Vanilla Extract
 - Storybook
@@ -19,8 +19,8 @@
 
 ## Dev
 
-- `moon check --all` to validate. Must pass before committing.
-- Tasks are defined in `moon.yml` (root) and per-package `moon.yml` files under `packages/**`.
+- `pnpm check` to validate. Must pass before committing.
+- Tasks are defined in `turbo.json` and dispatch to package.json scripts at the root and under `packages/**`.
 - All routes are file-based: `packages/app/main/src/routes/**/*.tsx`.
 
 ## Dependencies

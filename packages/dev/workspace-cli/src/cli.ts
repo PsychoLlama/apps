@@ -3,7 +3,7 @@
 /**
  * Entry for the `@dev/workspace-cli` tooling CLI. Subcommands live
  * in `./commands/`. Exposed as the `workspace` bin and also invoked
- * directly from moon tasks via `node`.
+ * directly from turbo tasks via `node`.
  */
 
 import { defineCommand, runMain } from 'citty';

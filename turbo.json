@@ -1,0 +1,124 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "globalDependencies": [
+    "tsconfig.json",
+    "tsconfig.web.json",
+    "tsconfig.node.json"
+  ],
+  "globalPassThroughEnv": [
+    "CHROMIUM_PATH",
+    "CLOUDFLARE_ACCOUNT_ID",
+    "CLOUDFLARE_API_TOKEN",
+    "FORCE_COLOR",
+    "CLICOLOR_FORCE"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^typecheck"],
+      "outputs": [".output/**", "storybook-static/**"],
+      "outputLogs": "errors-only"
+    },
+    "bundle": {
+      "dependsOn": ["build", "@dev/storybook#build"],
+      "outputs": [".output/public/__storybook/**"],
+      "outputLogs": "errors-only"
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:wrangler": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["build"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "test": {
+      "dependsOn": ["^typecheck"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "//#typecheck": {
+      "inputs": ["*.ts", "tsconfig.json"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "//#lint": {
+      "inputs": [
+        "**/*.{ts,tsx,js,jsx,mjs,cjs}",
+        "!**/node_modules/**",
+        "!**/.output/**",
+        "!**/storybook-static/**",
+        "!**/dist/**",
+        "eslint.config.ts",
+        ".gitignore"
+      ],
+      "outputs": ["node_modules/.cache/eslint/**"],
+      "outputLogs": "errors-only"
+    },
+    "//#test": {
+      "inputs": [
+        "packages/**/src/**",
+        "!packages/**/*.test.browser.{ts,tsx}",
+        "vitest.config.ts"
+      ],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "//#test:browser": {
+      "inputs": [
+        "packages/**/src/**/*.test.browser.{ts,tsx}",
+        "packages/**/src/**",
+        "vitest.config.ts"
+      ],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "//#knip:dev": {
+      "inputs": [
+        "packages/**/src/**",
+        "packages/*/*/package.json",
+        "knip.config.ts",
+        "*.ts"
+      ],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "//#knip:production": {
+      "inputs": [
+        "packages/**/src/**",
+        "packages/*/*/package.json",
+        "knip.config.ts",
+        "*.ts"
+      ],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "//#fmt-check": {
+      "inputs": [
+        "**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yaml,yml,css,html}",
+        "!**/node_modules/**",
+        "!**/.output/**",
+        "!**/storybook-static/**",
+        "treefmt.toml"
+      ],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "//#workspace-check": {
+      "inputs": [
+        "packages/dev/workspace-cli/src/**",
+        "packages/*/*/package.json",
+        "pnpm-workspace.yaml",
+        "turbo.json"
+      ],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    }
+  }
+}

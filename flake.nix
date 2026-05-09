@@ -16,42 +16,8 @@
     let
       inherit (nixpkgs) lib;
 
-      # eslint_d 15.0.0 (the version pinned in our nixpkgs revision) calls
-      # `require('chalk')` unconditionally in `lib/service.js`, but eslint v10
-      # dropped chalk from its dependency closure. The daemon crashes during
-      # startup with `Cannot find module 'chalk'`, which surfaces as a hang
-      # in `.claude/hooks/lint-on-edit`. Upstream patched this in 15.0.1 by
-      # gating the require behind eslint major < 10.
-      #
-      # Bumping nixpkgs would pull in rust 1.94, which fails to build
-      # moon 1.41.8 (`sdd-4.1.1` trips a tightened E0310 lifetime check).
-      # Override eslint_d alone and leave the rest of the closure pinned.
-      eslintDaemonOverlay = final: prev: {
-        eslint_d = prev.buildNpmPackage rec {
-          pname = "eslint_d";
-          version = "15.0.2";
-
-          src = prev.fetchFromGitHub {
-            owner = "mantoni";
-            repo = "eslint_d.js";
-            rev = "v${version}";
-            hash = "sha256-Q1FW/DmUyHbTYcisQ0rp/XZXxkf3c6kO7jLM4b+kYHI=";
-          };
-
-          npmDepsHash = "sha256-XFFjrAEXtNFSuIN5yn2AQeurY3cpF0silSgmIA17Wog=";
-
-          dontNpmBuild = true;
-        };
-      };
-
       eachSystem = lib.flip lib.mapAttrs (
-        lib.genAttrs (import systems) (
-          system:
-          import nixpkgs {
-            inherit system;
-            overlays = [ eslintDaemonOverlay ];
-          }
-        )
+        lib.genAttrs (import systems) (system: nixpkgs.legacyPackages.${system})
       );
     in
 
@@ -60,7 +26,6 @@
         system: pkgs: rec {
           default = pkgs.mkShell {
             packages = [
-              pkgs.moon
               pkgs.nodejs
               pkgs.pnpm
               pkgs.treefmt
@@ -70,8 +35,8 @@
           # Tools that only matter when a human (or coding agent) is
           # actively iterating on the source — fast linters, hooks,
           # editor helpers. Layered on top of `default` so CI's closure
-          # stays minimal: `moon run :lint` already runs the slow
-          # full-graph eslint pass, and CI doesn't run Claude hooks.
+          # stays minimal: `pnpm lint` runs the slow full-graph eslint
+          # pass, and CI doesn't run Claude hooks.
           coding = pkgs.mkShell {
             inputsFrom = [ default ];
 

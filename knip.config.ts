@@ -6,11 +6,13 @@ const config: KnipConfig = {
     '.': {
       entry: ['*.ts'],
       project: ['*.ts'],
+      // treefmt is provided by the nix devShell, not pnpm, but the
+      // root `fmt`/`fmt-check` scripts shell out to it.
+      ignoreBinaries: ['treefmt'],
       ignoreDependencies: [
         'prettier', // invoked by treefmt
         '@vanilla-extract/css', // referenced by name in eslint.config.ts
         '@iconify/json', // resolved at runtime by unplugin-icons in vitest.config.ts
-        '@dev/workspace-cli', // declared so pnpm links the `workspace` bin into node_modules/.bin
       ],
     },
     'packages/app/main': {

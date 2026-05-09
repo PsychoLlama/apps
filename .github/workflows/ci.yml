@@ -14,7 +14,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       # Force ANSI color in tools that gate on TTY detection. `FORCE_COLOR`
       # covers the node ecosystem (chalk, picocolors, kleur, supports-color)
-      # plus moon and wrangler; `CLICOLOR_FORCE` covers Go tools like
+      # plus turbo and wrangler; `CLICOLOR_FORCE` covers Go tools like
       # treefmt that follow the BSD convention.
       FORCE_COLOR: '3'
       CLICOLOR_FORCE: '1'
@@ -25,10 +25,6 @@ jobs:
         shell: nix develop --command bash -eo pipefail {0}
     steps:
       - uses: actions/checkout@v6
-        with:
-          # Moon needs full history to detect touched files for
-          # affected checks.
-          fetch-depth: 0
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/magic-nix-cache-action@v13
         with:
@@ -45,7 +41,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
-      # Needed for `@dev/storybook:test`. Local dev uses the
+      # Needed for `@dev/storybook#test`. Local dev uses the
       # nix-provided chromium via `CHROMIUM_PATH`; CI uses
       # playwright's own binary.
       - name: Restore playwright cache
@@ -59,19 +55,22 @@ jobs:
       - name: Install playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter @dev/storybook exec playwright install chromium
-      - name: Restore moon cache
+      # Local turbo cache lives at `.turbo/`. The cache key includes
+      # `github.sha` so each run writes a fresh entry; restore-keys
+      # falls back to the most recent prior entry on the same branch
+      # (or the default branch) for a warm start.
+      - name: Restore turbo cache
         uses: actions/cache@v5
         with:
-          path: .moon/cache
-          key: ${{ runner.os }}-moon-${{ github.sha }}
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-moon-
-      # `moon ci` runs every non-local, affected task. The explicit
-      # `root:build` after ensures `.output` exists for the wrangler
-      # deploy step even on PRs that don't touch the app — hits
-      # moon's cache when unchanged.
-      - run: moon ci
-      - run: moon run root:build
+            ${{ runner.os }}-turbo-
+      # `pnpm check` fans out every workspace check (lint, typecheck,
+      # tests, knip, fmt, workspace validators, build) through turbo.
+      # Cache hits skip work entirely. The build is part of `check`,
+      # so `.output` is populated for the wrangler deploy step below.
+      - run: pnpm check
 
       # Single-step `wrangler deploy` works but bypasses the version
       # model. Splitting into `wrangler versions upload` +
