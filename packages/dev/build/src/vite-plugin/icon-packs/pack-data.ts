@@ -4,6 +4,7 @@ import type {
   PackLicense,
   RawPackJson,
 } from './iconify.ts';
+import { stripAnimations } from './strip-animations.ts';
 
 /**
  * A flat icon entry — the smallest unit the runtime fetches.
@@ -67,7 +68,14 @@ export const buildPackData = (
   for (const [iconName, def] of Object.entries(raw.icons)) {
     if (def.hidden) continue;
     if (!def.body) continue;
-    const entry: IconEntry = { name: iconName, body: def.body };
+    // Animations belong to motion design, not favicons. Bodies that
+    // animate (line-md ships every icon with one) get their SMIL
+    // hoisted to a static freeze pose; non-animated bodies skip the
+    // parser entirely.
+    const entry: IconEntry = {
+      name: iconName,
+      body: stripAnimations(def.body),
+    };
     if (def.width !== undefined && def.width !== width) entry.width = def.width;
     if (def.height !== undefined && def.height !== height) {
       entry.height = def.height;
