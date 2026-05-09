@@ -22,6 +22,7 @@ import {
 } from '@lib/state';
 import {
   Badge,
+  Card,
   Code,
   DataListItem,
   DataListLabel,
@@ -30,6 +31,7 @@ import {
   Flex,
   IconButton,
   Link,
+  ScrollArea,
   Text,
   TextField,
 } from '@lib/ui';
@@ -73,6 +75,8 @@ interface PickerState {
   activePackId: string;
   /** Current search filter applied to the active pack's name list. */
   search: string;
+  /** Search filter applied to the pack list view. */
+  packSearch: string;
   /** Zero-based page index within the filtered name list. */
   currentPage: number;
   /** Cached pack catalog — `undefined` until the index fetch resolves. */
@@ -100,6 +104,7 @@ const initialState = (): PickerState => ({
   view: 'packs',
   activePackId: 'mdi',
   search: '',
+  packSearch: '',
   currentPage: 0,
   packs: undefined,
   manifests: {},
@@ -128,6 +133,13 @@ const setSearchAction = defineAction([pickerStore], (state, query: string) => {
   // stale page index from the previous filter.
   state.currentPage = 0;
 });
+
+const setPackSearchAction = defineAction(
+  [pickerStore],
+  (state, query: string) => {
+    state.packSearch = query;
+  },
+);
 
 const setCurrentPageAction = defineAction(
   [pickerStore],
@@ -232,6 +244,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   const setView = useAction(setViewAction);
   const openPack = useAction(openPackAction);
   const setSearch = useAction(setSearchAction);
+  const setPackSearch = useAction(setPackSearchAction);
   const setCurrentPage = useAction(setCurrentPageAction);
   const seedEntry = useAction(seedEntryAction);
   const releaseInactivePacks = useAction(releaseInactivePacksAction);
@@ -419,6 +432,8 @@ export const IconGrid: Component<IconGridProps> = (props) => {
           <PackListView
             packs={picker.packs}
             activePackId={picker.activePackId}
+            search={picker.packSearch}
+            onSearch={setPackSearch}
             onPick={openPack}
           />
         </Match>
@@ -455,85 +470,139 @@ export const IconGrid: Component<IconGridProps> = (props) => {
 interface PackListViewProps {
   packs: ReadonlyArray<IconPackSummary> | undefined;
   activePackId: string;
+  search: string;
+  onSearch: (value: string) => void;
   onPick: (id: string) => void;
 }
 
-const PackListView: Component<PackListViewProps> = (props) => (
-  <Flex as="div" direction="column" gap={2} grow class={css.root}>
-    <Show
-      when={props.packs && props.packs.length > 0}
-      fallback={
-        <Flex as="div" justify="center" class={css.empty}>
-          <Text as="span" size={2} color="lowContrast" selectable={false}>
-            Loading packs…
-          </Text>
-        </Flex>
-      }
-    >
-      {/* Vertical scroller of pack cards. No @lib/ui equivalent —
-       *  a stylized list with explicit overflow + flex behavior. */}
-      {/* eslint-disable-next-line custom/require-ui-primitives */}
-      <div class={css.packList}>
-        <For each={props.packs}>
-          {(pack) => (
-            // eslint-disable-next-line custom/require-ui-primitives
-            <button
-              type="button"
-              class={css.packCard}
-              classList={{
-                [css.packCardActive]: pack.id === props.activePackId,
-              }}
-              aria-pressed={pack.id === props.activePackId}
-              onClick={() => props.onPick(pack.id)}
+const PackListView: Component<PackListViewProps> = (props) => {
+  const filtered = createMemo<ReadonlyArray<IconPackSummary>>(() => {
+    const list = props.packs;
+    if (!list) return [];
+    const term = props.search.trim().toLowerCase();
+    if (!term) return list;
+    return list.filter(
+      (pack) =>
+        pack.name.toLowerCase().includes(term) ||
+        pack.id.toLowerCase().includes(term),
+    );
+  });
+
+  return (
+    <>
+      <TextField
+        testId="icon-grid-pack-search"
+        type="search"
+        placeholder="Search packs…"
+        autocomplete="off"
+        autocapitalize="none"
+        enterkeyhint="search"
+        value={props.search}
+        onInput={(event) => props.onSearch(event.currentTarget.value)}
+        aria-label="Search icon packs"
+        left={<IconSearch aria-hidden />}
+        right={
+          <Show when={props.search.length > 0}>
+            <IconButton
+              testId="icon-grid-pack-search-clear"
+              size={1}
+              variant="ghost"
+              color="neutral"
+              aria-label="Clear pack search"
+              onClick={() => props.onSearch('')}
             >
-              <Flex as="div" direction="column" gap={2} grow>
-                <Flex as="div" align="baseline" justify="between" gap={2}>
-                  <Text
-                    as="span"
-                    size={2}
-                    weight="medium"
-                    truncate
-                    selectable={false}
+              <IconClose aria-hidden />
+            </IconButton>
+          </Show>
+        }
+      />
+
+      <Show
+        when={props.packs && props.packs.length > 0}
+        fallback={
+          <Flex as="div" justify="center" class={css.empty}>
+            <Text as="span" size={2} color="lowContrast" selectable={false}>
+              Loading packs…
+            </Text>
+          </Flex>
+        }
+      >
+        <Show
+          when={filtered().length > 0}
+          fallback={
+            <Flex as="div" justify="center" class={css.empty}>
+              <Text as="span" size={2} color="lowContrast" selectable={false}>
+                No packs match “{props.search}”
+              </Text>
+            </Flex>
+          }
+        >
+          <ScrollArea type="hover" scrollbars="vertical" class={css.scroller}>
+            <Flex as="div" direction="column" gap={1} class={css.packList}>
+              <For each={filtered()}>
+                {(pack) => (
+                  <Card
+                    as="button"
+                    variant="surface"
+                    class={`${css.packCard}${
+                      pack.id === props.activePackId
+                        ? ` ${css.packCardActive}`
+                        : ''
+                    }`}
+                    aria-pressed={pack.id === props.activePackId}
+                    onClick={() => props.onPick(pack.id)}
                   >
-                    {pack.name}
-                  </Text>
-                  <Text
-                    as="span"
-                    size={1}
-                    color="lowContrast"
-                    selectable={false}
-                  >
-                    {numberFormat.format(pack.total)}
-                  </Text>
-                </Flex>
-                <Flex as="div" align="center" justify="between" gap={2}>
-                  <Flex as="div" align="center" gap={2}>
-                    <For each={pack.samples}>
-                      {(sample) => (
-                        <svg
-                          class={css.packSample}
-                          viewBox={`0 0 ${sample.width ?? pack.width} ${sample.height ?? pack.height}`}
-                          innerHTML={sample.body}
-                        />
-                      )}
-                    </For>
-                  </Flex>
-                  <Show when={pack.license?.spdx}>
-                    {(spdx) => (
-                      <Badge size={1} variant="soft" color="neutral">
-                        {spdx()}
-                      </Badge>
-                    )}
-                  </Show>
-                </Flex>
-              </Flex>
-            </button>
-          )}
-        </For>
-      </div>
-    </Show>
-  </Flex>
-);
+                    <Flex as="div" direction="column" gap={2} grow>
+                      <Flex as="div" align="baseline" justify="between" gap={2}>
+                        <Text
+                          as="span"
+                          size={2}
+                          weight="medium"
+                          truncate
+                          selectable={false}
+                        >
+                          {pack.name}
+                        </Text>
+                        <Text
+                          as="span"
+                          size={1}
+                          color="lowContrast"
+                          selectable={false}
+                        >
+                          {numberFormat.format(pack.total)}
+                        </Text>
+                      </Flex>
+                      <Flex as="div" align="center" justify="between" gap={2}>
+                        <Flex as="div" align="center" gap={2}>
+                          <For each={pack.samples}>
+                            {(sample) => (
+                              <svg
+                                class={css.packSample}
+                                viewBox={`0 0 ${sample.width ?? pack.width} ${sample.height ?? pack.height}`}
+                                innerHTML={sample.body}
+                              />
+                            )}
+                          </For>
+                        </Flex>
+                        <Show when={pack.license?.spdx}>
+                          {(spdx) => (
+                            <Badge size={1} variant="soft" color="neutral">
+                              {spdx()}
+                            </Badge>
+                          )}
+                        </Show>
+                      </Flex>
+                    </Flex>
+                  </Card>
+                )}
+              </For>
+            </Flex>
+          </ScrollArea>
+        </Show>
+      </Show>
+    </>
+  );
+};
 
 interface PackDetailViewProps {
   pack: IconPackSummary | undefined;
@@ -649,54 +718,56 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
               </Flex>
             }
           >
-            {/* CSS Grid with auto-fill columns has no @lib/ui equivalent. */}
-            {/* eslint-disable-next-line custom/require-ui-primitives */}
-            <div class={css.grid}>
-              <For each={props.visible}>
-                {(name) => {
-                  const entry = () =>
-                    props.entries[entryKey(manifest().id, name)];
-                  const isSelected = () =>
-                    props.selected.pack === manifest().id &&
-                    props.selected.name === name;
-                  return (
-                    // The tile is a custom-styled click target with no
-                    // @lib/ui analogue (Button enforces solid/soft/etc).
-                    // eslint-disable-next-line custom/require-ui-primitives
-                    <button
-                      type="button"
-                      class={css.tile}
-                      classList={{ [css.tileActive]: isSelected() }}
-                      title={name}
-                      aria-label={name}
-                      aria-pressed={isSelected()}
-                      disabled={!entry()}
-                      onClick={() => props.onPickIcon(manifest(), name)}
-                    >
-                      <Show
-                        when={entry()}
-                        fallback={
-                          // Skeleton block while the body fetches.
-                          // eslint-disable-next-line custom/require-ui-primitives
-                          <span class={css.tileSkeleton} aria-hidden />
-                        }
+            <ScrollArea type="hover" scrollbars="vertical" class={css.scroller}>
+              {/* CSS Grid with auto-fill columns has no @lib/ui equivalent. */}
+              {/* eslint-disable-next-line custom/require-ui-primitives */}
+              <div class={css.grid}>
+                <For each={props.visible}>
+                  {(name) => {
+                    const entry = () =>
+                      props.entries[entryKey(manifest().id, name)];
+                    const isSelected = () =>
+                      props.selected.pack === manifest().id &&
+                      props.selected.name === name;
+                    return (
+                      // The tile is a custom-styled click target with no
+                      // @lib/ui analogue (Button enforces solid/soft/etc).
+                      // eslint-disable-next-line custom/require-ui-primitives
+                      <button
+                        type="button"
+                        class={css.tile}
+                        classList={{ [css.tileActive]: isSelected() }}
+                        title={name}
+                        aria-label={name}
+                        aria-pressed={isSelected()}
+                        disabled={!entry()}
+                        onClick={() => props.onPickIcon(manifest(), name)}
                       >
-                        {(loaded) => {
-                          const ref = () => toIconRef(manifest(), loaded());
-                          return (
-                            <svg
-                              class={css.tileIcon}
-                              viewBox={`0 0 ${ref().width} ${ref().height}`}
-                              innerHTML={ref().body}
-                            />
-                          );
-                        }}
-                      </Show>
-                    </button>
-                  );
-                }}
-              </For>
-            </div>
+                        <Show
+                          when={entry()}
+                          fallback={
+                            // Skeleton block while the body fetches.
+                            // eslint-disable-next-line custom/require-ui-primitives
+                            <span class={css.tileSkeleton} aria-hidden />
+                          }
+                        >
+                          {(loaded) => {
+                            const ref = () => toIconRef(manifest(), loaded());
+                            return (
+                              <svg
+                                class={css.tileIcon}
+                                viewBox={`0 0 ${ref().width} ${ref().height}`}
+                                innerHTML={ref().body}
+                              />
+                            );
+                          }}
+                        </Show>
+                      </button>
+                    );
+                  }}
+                </For>
+              </div>
+            </ScrollArea>
             <Flex
               as="nav"
               align="center"

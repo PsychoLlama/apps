@@ -1,6 +1,7 @@
 import type { Connect } from 'vite';
 import type { CollectionsJson } from './iconify.ts';
 import { type IconEntry, type PackData } from './pack-data.ts';
+import { sortedPackIds } from './order.ts';
 import { pageStartOffsets, sliceIntoPages } from './pagination.ts';
 
 /**
@@ -51,8 +52,9 @@ export const createDevMiddleware = (
     const handle = async () => {
       if (tail === 'index.json') {
         const collections = await getCollections();
-        const packs = Object.entries(collections)
-          .map(([id, info]) => ({
+        const packs = sortedPackIds(collections).map((id) => {
+          const info = collections[id];
+          return {
             id,
             name: info.name,
             total: info.total ?? 0,
@@ -71,8 +73,8 @@ export const createDevMiddleware = (
             author: info.author,
             license: info.license,
             manifestUrl: `${DEV_URL_PREFIX}${id}/manifest.json`,
-          }))
-          .sort((left, right) => left.name.localeCompare(right.name, 'en'));
+          };
+        });
         await Promise.all(
           packs.map(async (entry) => {
             const data = await getPackData(entry.id);

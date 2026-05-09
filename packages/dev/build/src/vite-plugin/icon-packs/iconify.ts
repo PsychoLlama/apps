@@ -35,6 +35,8 @@ export interface CollectionsJson {
     total?: number;
     height?: number;
     samples?: string[];
+    /** Iconify's bucket — drives in-app pack ordering. */
+    category?: string;
     author?: PackAuthor;
     license?: PackLicense;
   };

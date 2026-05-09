@@ -5,24 +5,26 @@ export const root = style({
   minHeight: 0,
 });
 
+// `ScrollArea` claims the leftover vertical space inside its column
+// flex parent. `flex: 1 1 0` keeps it from collapsing; `minHeight: 0`
+// is the standard escape from flex's content-driven minimum so the
+// inner viewport actually scrolls.
+export const scroller = style({
+  flex: '1 1 0',
+  minHeight: 0,
+});
+
 export const grid = style({
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))',
   gap: space[1],
-  overflowY: 'auto',
+  width: '100%',
   paddingBlock: space[1],
   paddingInline: space[1],
-  // Fill whatever vertical space the parent panel allocates, then
-  // scroll. The panel itself owns the dimension — on mobile it's a
-  // fixed pixel height, on desktop it's the rail's leftover space.
-  flex: '1 1 0',
-  minHeight: 0,
   // Pack rows to the top instead of stretching them across the full
   // grid height when filtering returns a partial result. Default
   // `align-content: normal` resolves to `stretch` for grid containers.
   alignContent: 'start',
-  // Tame inertia scroll when the grid is the only scroll surface.
-  overscrollBehavior: 'contain',
 });
 
 export const tile = style({
@@ -83,45 +85,26 @@ export const empty = style({
   textAlign: 'center',
 });
 
-// Pack list — vertical scroller of cards, each card showing the pack
-// name plus a few sample icons. Mirrors the icon `grid` scroll
-// behavior so it can claim the same rail space.
+// Pack list — vertical column of `<Card>`s. The cards live inside
+// a ScrollArea that claims the rail's leftover vertical space.
 export const packList = style({
   display: 'flex',
   flexDirection: 'column',
   gap: space[1],
-  overflowY: 'auto',
   paddingBlock: space[1],
   paddingInline: space[1],
-  flex: '1 1 0',
-  minHeight: 0,
-  overscrollBehavior: 'contain',
 });
 
+// Card layout overrides — `<Card>` defaults to `display: block` and
+// inherits the host button's center-aligned text. We need left-
+// aligned content so the pack name doesn't shift when the count
+// label wraps.
 export const packCard = style({
-  display: 'flex',
-  alignItems: 'stretch',
   textAlign: 'left',
-  paddingBlock: space[2],
-  paddingInline: space[2],
-  borderRadius: radius[2],
-  backgroundColor: 'transparent',
-  border: `1px solid transparent`,
-  color: neutral.solid[12],
-  cursor: 'pointer',
-  transitionProperty: 'background-color, border-color, color',
-  transitionDuration: fast[2],
-  transitionTimingFunction: standard.productive,
-  ':hover': {
-    backgroundColor: neutral.alpha[3],
-  },
-  ':focus-visible': {
-    outline: 'none',
-    borderColor: accent.solid[8],
-    boxShadow: `0 0 0 2px ${accent.alpha[5]}`,
-  },
 });
 
+// Selected pack indicator. `:where(.interactive:hover)` in Card has
+// zero specificity, so a plain class with one nested `:hover` wins.
 export const packCardActive = style({
   backgroundColor: accent.alpha[3],
   color: accent.solid[11],

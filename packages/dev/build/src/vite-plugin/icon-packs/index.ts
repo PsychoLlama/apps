@@ -24,6 +24,7 @@ import {
   createPlaceholderTable,
 } from './placeholders.ts';
 import { withoutExcludedPacks } from './excluded-packs.ts';
+import { sortedPackIds } from './order.ts';
 
 const VIRTUAL_ID = 'virtual:icon-packs';
 const RESOLVED_ID = `\0${VIRTUAL_ID}`;
@@ -140,12 +141,9 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
       if (!this.environment.config.build.ssr && indexRefId === undefined) {
         const root = findIconifyJsonRoot();
         const collections = withoutExcludedPacks(await loadCollections(root));
-        // Sort once up front so the emitted index is alphabetical;
-        // every downstream array (manifestPlaceholders, indexPayload)
-        // inherits this order.
-        const packIds = Object.keys(collections).sort((left, right) =>
-          collections[left].name.localeCompare(collections[right].name, 'en'),
-        );
+        // Sort once up front; every downstream array
+        // (manifestPlaceholders, indexPayload) inherits this order.
+        const packIds = sortedPackIds(collections);
 
         const packBuilds: PackBuild[] = [];
 
