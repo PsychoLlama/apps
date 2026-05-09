@@ -1,0 +1,27 @@
+{
+  "name": "@app/file-browser",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "File browser POC backed by the File System Access API.",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/design": "workspace:*",
+    "@lib/shell": "workspace:*",
+    "@lib/state": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
+  }
+}

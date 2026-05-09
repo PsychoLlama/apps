@@ -1,0 +1,65 @@
+import { style } from '@vanilla-extract/css';
+import { breakpoint, neutral, space } from '@lib/design';
+
+export const workspace = style({
+  flex: '1 1 auto',
+  minHeight: 0,
+});
+
+export const toolbar = style({
+  paddingBlock: space[2],
+  paddingInline: space[3],
+  borderBottom: `1px solid ${neutral.solid[4]}`,
+});
+
+export const body = style({
+  flex: '1 1 auto',
+  minHeight: 0,
+  flexDirection: 'column',
+  '@media': {
+    [breakpoint.md]: {
+      flexDirection: 'row',
+    },
+  },
+});
+
+// Tree rail. On wide viewports it sits on the left at a fixed width;
+// on mobile it stacks above the metadata pane.
+export const tree = style({
+  display: 'flex',
+  flexDirection: 'column',
+  flexShrink: 0,
+  borderBottom: `1px solid ${neutral.solid[4]}`,
+  maxHeight: '40vh',
+  '@media': {
+    [breakpoint.md]: {
+      width: '320px',
+      maxHeight: 'none',
+      minHeight: 0,
+      borderBottom: 'none',
+      borderRight: `1px solid ${neutral.solid[4]}`,
+    },
+    [breakpoint.lg]: { width: '380px' },
+    [breakpoint.xl]: { width: '440px' },
+  },
+});
+
+export const treeScroll = style({
+  flex: '1 1 auto',
+  minHeight: 0,
+  overflowY: 'auto',
+  paddingBlock: space[2],
+});
+
+// Metadata pane fills the remaining space.
+export const detail = style({
+  flex: '1 1 auto',
+  minHeight: 0,
+  minWidth: 0,
+  overflow: 'auto',
+});
+
+export const callout = style({
+  marginBlock: space[3],
+  marginInline: space[3],
+});

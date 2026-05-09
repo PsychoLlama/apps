@@ -2,6 +2,7 @@ import { For } from 'solid-js';
 import type { Component } from 'solid-js';
 import { Card, Flex, Grid, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
+import IconFolderOpen from 'virtual:icons/mdi/folder-open-outline';
 import IconRecord from 'virtual:icons/mdi/record-rec';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import * as css from './index.css';
@@ -33,6 +34,13 @@ const APPS: ReadonlyArray<AppEntry> = [
     href: '/icon-editor',
     description: 'Compose a brandmark from a free icon set.',
     Icon: IconPalette,
+  },
+  {
+    id: 'file-browser',
+    name: 'File Browser',
+    href: '/file-browser',
+    description: 'Inspect a local directory via the File System Access API.',
+    Icon: IconFolderOpen,
   },
 ];
 
