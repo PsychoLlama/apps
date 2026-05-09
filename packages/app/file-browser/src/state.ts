@@ -193,7 +193,18 @@ export const useFileBrowserActions = (): FileBrowserActions => {
   const setSupport = useAction(setSupportAction);
 
   return {
-    pick: () => pickEffect(),
+    pick: async () => {
+      await pickEffect();
+      // Eagerly load the root's children so the open chevron isn't a
+      // lie. `setRootAction` marks the root `expanded: true` but the
+      // load lifecycle is owned by the effect, so without this kick
+      // the first row click would just collapse the (still-empty)
+      // root instead of fetching its contents.
+      const root = fileBrowser.rootEntry;
+      if (root && root.loadStatus === 'idle') {
+        void loadChildren(root as DirNode);
+      }
+    },
     toggleExpand: (node) => {
       const next = !node.expanded;
       setExpanded({ node, expanded: next });
