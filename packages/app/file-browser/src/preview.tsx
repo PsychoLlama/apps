@@ -1,4 +1,11 @@
-import { Show, createMemo, onCleanup, type Component } from 'solid-js';
+import {
+  Match,
+  Show,
+  Switch,
+  createMemo,
+  onCleanup,
+  type Component,
+} from 'solid-js';
 import { Flex, Heading, Text } from '@lib/ui';
 import IconPreviewOff from 'virtual:icons/mdi/file-question-outline';
 import * as css from './preview.css';
@@ -10,11 +17,13 @@ interface PreviewProps {
 
 /**
  * MIME types the browser handles natively in an iframe — images
- * render in the image viewer, PDFs in Chromium's PDF viewer, audio
- * and video in their respective elements, JSON/XML get the dev
- * formatter. Files matching this set are passed through as-is.
+ * render in the image viewer, audio/video in their elements, JSON/XML
+ * get the dev formatter. Files matching this set are passed through
+ * as-is. PDFs are handled by a dedicated `<embed>` path because the
+ * Chromium PDF viewer doesn't bootstrap inside `sandbox=""` (it needs
+ * same-origin treatment for its UI assets).
  */
-const PASSTHROUGH_MIME = /^(image|audio|video)\/|^application\/(pdf|json|xml)$/;
+const PASSTHROUGH_MIME = /^(image|audio|video)\/|^application\/(json|xml)$/;
 
 /**
  * Extensions for text-format files we'll re-wrap as `text/plain` so
@@ -118,19 +127,53 @@ const looksLikeText = (name: string): boolean => {
 };
 
 /**
- * Build the iframe source for a selected file. Returns `undefined`
- * for opaque binary formats Chromium would only download. Text-format
- * files are re-wrapped as `text/plain` so the browser renders them
- * inline; the wrapper Blob references the original lazily, so this
- * costs nothing until the iframe pulls bytes.
+ * `'iframe'` paths render in a `sandbox=""` iframe (safe for
+ * arbitrary HTML/SVG/text — scripts can't execute). `'embed'` paths
+ * render via `<embed type="application/pdf">`, which always
+ * dispatches to Chromium's PDF viewer regardless of byte contents,
+ * sidestepping the sandbox-vs-PDF-viewer interaction.
  */
-const previewSource = (file: File): Blob | undefined => {
+type PreviewKind = 'iframe' | 'embed';
+
+interface PreparedPreview {
+  blob: Blob;
+  kind: PreviewKind;
+}
+
+/**
+ * Build the source for a selected file. Returns `undefined` for opaque
+ * binary formats Chromium would only download. Text-format files are
+ * re-wrapped as `text/plain` and PDFs as `application/pdf` so the
+ * browser always reaches the right renderer; the wrapper Blob
+ * references the original lazily, so this costs nothing until the
+ * frame pulls bytes.
+ */
+const preparePreview = (file: File): PreparedPreview | undefined => {
   const type = file.type;
-  if (PASSTHROUGH_MIME.test(type)) return file;
-  if (type === 'text/plain') return file;
-  if (type.startsWith('text/')) return new Blob([file], { type: 'text/plain' });
+  const ext = getExtension(file.name);
+
+  // PDF gets its own renderer. Coerce the MIME so files Chromium
+  // failed to identify by extension still land in the PDF viewer.
+  if (type === 'application/pdf' || ext === 'pdf') {
+    return {
+      blob: new Blob([file], { type: 'application/pdf' }),
+      kind: 'embed',
+    };
+  }
+
+  if (PASSTHROUGH_MIME.test(type)) return { blob: file, kind: 'iframe' };
+  if (type === 'text/plain') return { blob: file, kind: 'iframe' };
+  if (type.startsWith('text/')) {
+    return {
+      blob: new Blob([file], { type: 'text/plain' }),
+      kind: 'iframe',
+    };
+  }
   if (!type && looksLikeText(file.name)) {
-    return new Blob([file], { type: 'text/plain' });
+    return {
+      blob: new Blob([file], { type: 'text/plain' }),
+      kind: 'iframe',
+    };
   }
   return undefined;
 };
@@ -147,12 +190,13 @@ const previewSource = (file: File): Blob | undefined => {
  * for the iframe's loaded document.
  */
 export const Preview: Component<PreviewProps> = (props) => {
+  const prepared = createMemo<PreparedPreview | undefined>(() =>
+    props.file ? preparePreview(props.file) : undefined,
+  );
   const previewUrl = createMemo<string | undefined>((prev) => {
     if (prev) URL.revokeObjectURL(prev);
-    if (!props.file) return undefined;
-    const source = previewSource(props.file);
-    if (!source) return undefined;
-    return URL.createObjectURL(source);
+    const source = prepared();
+    return source ? URL.createObjectURL(source.blob) : undefined;
   });
   onCleanup(() => {
     const final = previewUrl();
@@ -172,7 +216,19 @@ export const Preview: Component<PreviewProps> = (props) => {
         fallback={<NoPreview file={props.file} />}
       >
         {(url) => (
-          <iframe src={url} sandbox="" title={title()} class={css.frame} />
+          <Switch>
+            <Match when={prepared()?.kind === 'embed'}>
+              <embed
+                src={url}
+                type="application/pdf"
+                title={title()}
+                class={css.frame}
+              />
+            </Match>
+            <Match when={prepared()?.kind === 'iframe'}>
+              <iframe src={url} sandbox="" title={title()} class={css.frame} />
+            </Match>
+          </Switch>
         )}
       </Show>
     </Flex>
