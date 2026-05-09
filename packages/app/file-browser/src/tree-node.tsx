@@ -4,6 +4,7 @@ import IconChevron from 'virtual:icons/mdi/chevron-right';
 import IconFolder from 'virtual:icons/mdi/folder-outline';
 import IconFolderOpen from 'virtual:icons/mdi/folder-open-outline';
 import IconFile from 'virtual:icons/mdi/file-outline';
+import IconLoading from 'virtual:icons/mdi/loading';
 import { isSameNode, type Selection, type TreeEntry } from './types';
 import { useFileBrowserActions } from './state';
 import * as css from './tree-node.css';
@@ -67,14 +68,24 @@ export const TreeNode: Component<TreeNodeProps> = (props) => {
             />
           }
         >
-          <IconChevron
-            class={`${css.chevron} ${
-              props.entry.kind === 'directory' && props.entry.expanded
-                ? css.chevronOpen
-                : ''
-            }`}
-            aria-hidden
-          />
+          <Show
+            when={
+              props.entry.kind === 'directory' &&
+              props.entry.loadStatus === 'loading'
+            }
+            fallback={
+              <IconChevron
+                class={`${css.chevron} ${
+                  props.entry.kind === 'directory' && props.entry.expanded
+                    ? css.chevronOpen
+                    : ''
+                }`}
+                aria-hidden
+              />
+            }
+          >
+            <IconLoading class={css.spinner} aria-hidden />
+          </Show>
         </Show>
         <Show
           when={props.entry.kind === 'directory'}
@@ -110,39 +121,14 @@ interface DirectoryChildrenProps {
   selection: Selection | undefined;
 }
 
-// Placeholder strings sized to feel like a realistic mix of names.
-// Length drives skeleton width via the inner `<Text skeleton>`.
-const SKELETON_NAMES: ReadonlyArray<string> = [
-  'placeholder-name',
-  'shorter',
-  'a-longer-placeholder-name',
-];
-
 /**
- * Children listing for an expanded directory. Splits the load
- * lifecycle into status-specific rows so the tree visibly settles
- * across the idle → loading → loaded/failed transitions.
+ * Children listing for an expanded directory. The loading state is
+ * surfaced on the parent's chevron, not as inline placeholder rows —
+ * the children block stays empty until `loadStatus === 'loaded'`.
  */
 const DirectoryChildren: Component<DirectoryChildrenProps> = (props) => {
   return (
     <Flex as="ul" direction="column" class={css.list}>
-      <Show when={props.parent.loadStatus === 'loading'}>
-        <For each={SKELETON_NAMES}>
-          {(placeholder) => (
-            <Flex
-              as="li"
-              align="center"
-              class={css.skeletonRow}
-              style={{ '--tree-depth': props.depth }}
-              aria-hidden
-            >
-              <Text as="span" size={2} skeleton selectable={false}>
-                {placeholder}
-              </Text>
-            </Flex>
-          )}
-        </For>
-      </Show>
       <Show when={props.parent.loadStatus === 'failed'}>
         <Flex
           as="li"

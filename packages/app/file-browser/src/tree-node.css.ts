@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css';
+import { keyframes, style } from '@vanilla-extract/css';
 import {
   accent,
   fast,
@@ -72,12 +72,21 @@ export const name = style({
   whiteSpace: 'nowrap',
 });
 
-// Skeleton row mirrors the dimensions of a real tree row so the layout
-// doesn't pop when the load resolves.
-export const skeletonRow = style({
-  paddingBlock: space[1],
-  paddingLeft: `calc(${space[5]} + var(--tree-depth, 0) * ${space[4]})`,
-  paddingRight: space[3],
+// Continuous rotation for the loading icon that replaces the chevron
+// while a directory's children are in flight. Local keyframes keep the
+// animation scoped to the file-browser; @lib/design owns timing tokens
+// but not raw `@keyframes`.
+const spinKeyframes = keyframes({
+  from: { transform: 'rotate(0deg)' },
+  to: { transform: 'rotate(360deg)' },
+});
+
+export const spinner = style({
+  width: space[3],
+  height: space[3],
+  flexShrink: 0,
+  color: neutral.solid[11],
+  animation: `${spinKeyframes} 0.8s linear infinite`,
 });
 
 export const failed = style({

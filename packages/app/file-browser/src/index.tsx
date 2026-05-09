@@ -1,5 +1,5 @@
 import { Show, onMount, type Component } from 'solid-js';
-import { Button, Callout, Flex } from '@lib/ui';
+import { Button, Callout, Flex, ScrollArea } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconFolderOpen from 'virtual:icons/mdi/folder-open-outline';
 import { MetadataPanel } from './metadata-panel';
@@ -68,9 +68,8 @@ export const FileBrowser: Component = () => {
                 </Callout>
               )}
             </Show>
-            <Flex
-              as="nav"
-              direction="column"
+            <ScrollArea
+              type="hover"
               class={css.treeScroll}
               aria-label="Picked directory"
             >
@@ -86,15 +85,19 @@ export const FileBrowser: Component = () => {
                   </Flex>
                 )}
               </Show>
-            </Flex>
+            </ScrollArea>
           </Flex>
 
-          <Flex as="section" class={css.detail} aria-label="Selection details">
+          <ScrollArea
+            type="hover"
+            class={css.detail}
+            aria-label="Selection details"
+          >
             <MetadataPanel
               selection={fileBrowser.selection}
               rootName={fileBrowser.rootEntry?.handle.name}
             />
-          </Flex>
+          </ScrollArea>
         </Flex>
       </Flex>
     </Flex>

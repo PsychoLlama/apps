@@ -44,10 +44,12 @@ export const tree = style({
   },
 });
 
+// ScrollArea owns its own overflow; we just constrain its track in
+// the surrounding flex layout. The vertical padding lands inside the
+// scrollable viewport so the first/last rows breathe past the edge.
 export const treeScroll = style({
   flex: '1 1 auto',
   minHeight: 0,
-  overflowY: 'auto',
   paddingBlock: space[2],
 });
 
@@ -56,7 +58,6 @@ export const detail = style({
   flex: '1 1 auto',
   minHeight: 0,
   minWidth: 0,
-  overflow: 'auto',
 });
 
 export const callout = style({
