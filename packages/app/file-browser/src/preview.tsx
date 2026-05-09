@@ -9,17 +9,131 @@ interface PreviewProps {
 }
 
 /**
- * MIME types we'll hand to the iframe. The browser dispatches each
- * to its own renderer (image viewer, PDF viewer, plain-text panel,
- * media element). Anything not in this set falls back to the "no
- * preview" placeholder so we don't trigger an inadvertent download
- * for binary types Chromium doesn't know how to render.
+ * MIME types the browser handles natively in an iframe — images
+ * render in the image viewer, PDFs in Chromium's PDF viewer, audio
+ * and video in their respective elements, JSON/XML get the dev
+ * formatter. Files matching this set are passed through as-is.
  */
-const PREVIEWABLE =
-  /^(image|text|audio|video)\/|^application\/(pdf|json|xml|javascript|x-yaml)$/;
+const PASSTHROUGH_MIME = /^(image|audio|video)\/|^application\/(pdf|json|xml)$/;
 
-const isPreviewable = (type: string | undefined): boolean =>
-  type !== undefined && PREVIEWABLE.test(type);
+/**
+ * Extensions for text-format files we'll re-wrap as `text/plain` so
+ * the iframe renders inline. Chromium reports an empty `File.type`
+ * for most of these because its built-in MIME map doesn't cover
+ * markdown / yaml / config / source code; without a coercion to a
+ * MIME the browser knows how to render, the iframe would fire a
+ * download instead.
+ */
+const TEXT_EXTENSIONS = new Set([
+  'md',
+  'markdown',
+  'mdx',
+  'rst',
+  'txt',
+  'log',
+  'lock',
+  'yaml',
+  'yml',
+  'toml',
+  'ini',
+  'conf',
+  'config',
+  'env',
+  'sh',
+  'bash',
+  'zsh',
+  'fish',
+  'py',
+  'rb',
+  'go',
+  'rs',
+  'java',
+  'kt',
+  'swift',
+  'c',
+  'cpp',
+  'cc',
+  'cxx',
+  'h',
+  'hpp',
+  'ts',
+  'tsx',
+  'jsx',
+  'mjs',
+  'cjs',
+  'js',
+  'css',
+  'scss',
+  'sass',
+  'less',
+  'styl',
+  'lua',
+  'nix',
+  'pl',
+  'php',
+  'ex',
+  'exs',
+  'clj',
+  'scala',
+  'sql',
+  'graphql',
+  'gql',
+  'csv',
+  'tsv',
+  'html',
+  'htm',
+  'svg',
+]);
+
+/** Filenames with no extension that are conventionally text. */
+const TEXT_BASENAMES = new Set([
+  'dockerfile',
+  'makefile',
+  'cmakelists.txt',
+  'license',
+  'readme',
+  'authors',
+  'contributors',
+  'changelog',
+  'codeowners',
+  'gitignore',
+  'gitattributes',
+  'editorconfig',
+  'env',
+]);
+
+const getExtension = (name: string): string => {
+  const dot = name.lastIndexOf('.');
+  return dot === -1 ? '' : name.slice(dot + 1).toLowerCase();
+};
+
+/** True when an extension or basename signals a renderable text file. */
+const looksLikeText = (name: string): boolean => {
+  const lower = name.toLowerCase();
+  if (TEXT_BASENAMES.has(lower)) return true;
+  // `.gitignore` and friends parse as having a leading dot — slice
+  // strips it so the basename set matches.
+  if (lower.startsWith('.') && TEXT_BASENAMES.has(lower.slice(1))) return true;
+  return TEXT_EXTENSIONS.has(getExtension(lower));
+};
+
+/**
+ * Build the iframe source for a selected file. Returns `undefined`
+ * for opaque binary formats Chromium would only download. Text-format
+ * files are re-wrapped as `text/plain` so the browser renders them
+ * inline; the wrapper Blob references the original lazily, so this
+ * costs nothing until the iframe pulls bytes.
+ */
+const previewSource = (file: File): Blob | undefined => {
+  const type = file.type;
+  if (PASSTHROUGH_MIME.test(type)) return file;
+  if (type === 'text/plain') return file;
+  if (type.startsWith('text/')) return new Blob([file], { type: 'text/plain' });
+  if (!type && looksLikeText(file.name)) {
+    return new Blob([file], { type: 'text/plain' });
+  }
+  return undefined;
+};
 
 /**
  * Sandboxed-iframe file preview. The selected `File` is exposed as a
@@ -35,8 +149,10 @@ const isPreviewable = (type: string | undefined): boolean =>
 export const Preview: Component<PreviewProps> = (props) => {
   const previewUrl = createMemo<string | undefined>((prev) => {
     if (prev) URL.revokeObjectURL(prev);
-    if (!props.file || !isPreviewable(props.file.type)) return undefined;
-    return URL.createObjectURL(props.file);
+    if (!props.file) return undefined;
+    const source = previewSource(props.file);
+    if (!source) return undefined;
+    return URL.createObjectURL(source);
   });
   onCleanup(() => {
     const final = previewUrl();
