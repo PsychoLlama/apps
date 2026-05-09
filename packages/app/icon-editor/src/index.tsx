@@ -1,4 +1,4 @@
-import { For, createEffect, on, onCleanup } from 'solid-js';
+import { For, createEffect, on, onCleanup, untrack } from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
@@ -172,6 +172,18 @@ export const IconEditor = () => {
     if (iconParam) {
       const parsed = parseIconRef(iconParam);
       if (parsed) {
+        // The URL-mirror effect echoes every store icon write back into
+        // the search params, which retriggers this effect. Skip
+        // re-resolving when the param already matches what we hold —
+        // otherwise every pick spends a fetch round-trip (and a
+        // loading pulse) on a no-op refresh. `untrack` keeps that
+        // comparison from making `iconEditor.icon` a dependency of
+        // this effect.
+        const current = untrack(() => iconEditor.icon);
+        if (current?.pack === parsed.pack && current.name === parsed.name) {
+          pendingIconRequest = undefined;
+          return;
+        }
         pendingIconRequest = iconParam;
         const requestToken = iconParam;
         startLoading();
