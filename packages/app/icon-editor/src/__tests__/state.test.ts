@@ -1,5 +1,5 @@
 import { DEFAULT_ICON_EDITOR_STATE, resolveHydrateInput } from '../state';
-import { DEFAULT_ICON, type IconRef } from '../icons';
+import { type IconRef } from '../icons';
 
 const customIcon: IconRef = {
   pack: 'tabler',
@@ -14,8 +14,8 @@ describe('resolveHydrateInput', () => {
     expect(resolveHydrateInput({})).toEqual(DEFAULT_ICON_EDITOR_STATE);
   });
 
-  it('keeps the default icon when the caller does not supply a resolved one', () => {
-    expect(resolveHydrateInput({ palette: 'mint' }).icon).toEqual(DEFAULT_ICON);
+  it('leaves the icon undefined when the caller does not supply a resolved one — the empty state renders the blueprint placeholder', () => {
+    expect(resolveHydrateInput({ palette: 'mint' }).icon).toBeUndefined();
   });
 
   it('passes a resolved icon through verbatim', () => {

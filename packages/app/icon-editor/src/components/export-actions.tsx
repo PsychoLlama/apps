@@ -65,8 +65,8 @@ const setSizeAction = defineAction([exportStore], (state, value: number) => {
 const clampSize = (value: number): number =>
   Math.max(MIN_PX, Math.min(MAX_PX, Math.round(value)));
 
-const filenameStem = (state: IconEditorState) =>
-  `icon-${state.icon.pack}-${state.icon.name}`;
+const filenameStem = (icon: NonNullable<IconEditorState['icon']>) =>
+  `icon-${icon.pack}-${icon.name}`;
 
 /**
  * Compose an icon export. Format toggles between SVG (vector, single
@@ -80,12 +80,20 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   const setSize = useAction(setSizeAction);
 
   const effectiveSize = () => clampSize(exportState.size);
-  const filename = () =>
-    exportState.format === 'svg'
-      ? `${filenameStem(props.state)}.svg`
-      : `${filenameStem(props.state)}-${effectiveSize()}.png`;
+  // Filename / aria-label are only meaningful when an icon is chosen.
+  // The Export button is disabled in the empty state, so the empty
+  // string never reaches the user — we still need *something* to plug
+  // into the aria-label template before then.
+  const filename = () => {
+    const icon = props.state.icon;
+    if (!icon) return '';
+    return exportState.format === 'svg'
+      ? `${filenameStem(icon)}.svg`
+      : `${filenameStem(icon)}-${effectiveSize()}.png`;
+  };
 
   const handleExport = () => {
+    if (!props.state.icon) return;
     if (exportState.format === 'svg') {
       downloadSvg(
         renderIconSvg(props.state, { size: SVG_EXPORT_SIZE, metadata: true }),
@@ -174,13 +182,16 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
         size={2}
         variant="solid"
         color="accent"
+        disabled={!props.state.icon}
         onClick={handleExport}
-        aria-label={`Export ${filename()}`}
+        aria-label={
+          props.state.icon ? `Export ${filename()}` : 'Choose an icon to export'
+        }
       >
         <IconDownload aria-hidden /> Export
       </Button>
 
-      <Show when={props.state.icon.license?.spdx}>
+      <Show when={props.state.icon?.license?.spdx}>
         {(spdx) => (
           <Flex
             as="div"
@@ -193,7 +204,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
               Icon license
             </Text>
             <Show
-              when={props.state.icon.license?.url}
+              when={props.state.icon?.license?.url}
               fallback={
                 <Badge size={1} variant="soft" color="neutral">
                   {spdx()}

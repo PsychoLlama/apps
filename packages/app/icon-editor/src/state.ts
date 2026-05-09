@@ -1,5 +1,5 @@
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
-import { DEFAULT_ICON, type IconRef } from './icons';
+import { type IconRef } from './icons';
 import { PALETTES, findPalette, type PaletteName } from './palette';
 
 /** Available shape masks for the icon canvas. */
@@ -14,8 +14,12 @@ const SHAPES: ReadonlyArray<IconEditorShape> = [
 
 /** Snapshot of every input that affects the rendered icon. */
 export interface IconEditorState {
-  /** Selected icon — fully-qualified reference plus rendered body. */
-  icon: IconRef;
+  /**
+   * Selected icon — fully-qualified reference plus rendered body, or
+   * `undefined` while no icon is chosen yet. The empty state renders
+   * the blueprint placeholder instead.
+   */
+  icon: IconRef | undefined;
   /** Active palette — drives both background and foreground via lookup. */
   palette: PaletteName;
   /** Mask applied to the canvas. */
@@ -26,7 +30,7 @@ export interface IconEditorState {
 
 /** Canonical defaults the store starts at and `reset` returns to. */
 export const DEFAULT_ICON_EDITOR_STATE: IconEditorState = {
-  icon: DEFAULT_ICON,
+  icon: undefined,
   palette: 'blue',
   shape: 'rounded',
   padding: 10,
@@ -42,7 +46,7 @@ export const iconEditor = createStore(iconEditorStore);
 
 const setIconAction = defineAction(
   [iconEditorStore],
-  (state, icon: IconRef) => {
+  (state, icon: IconRef | undefined) => {
     state.icon = icon;
   },
 );
@@ -152,7 +156,7 @@ const hydrateAction = defineAction(
 
 /** Shape returned by {@link useIconEditorActions}. */
 export interface IconEditorActions {
-  setIcon: (icon: IconRef) => void;
+  setIcon: (icon: IconRef | undefined) => void;
   setPalette: (name: PaletteName) => void;
   setShape: (value: IconEditorShape) => void;
   setPadding: (value: number) => void;

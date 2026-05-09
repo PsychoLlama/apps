@@ -227,8 +227,12 @@ const loadPageEffect = defineEffect([], loadIconPageEntries, {
 });
 
 interface IconGridProps {
-  /** Currently selected icon — highlights the matching tile. */
-  selected: IconRef;
+  /**
+   * Currently selected icon — highlights the matching tile. `undefined`
+   * before the user has picked anything; the picker still opens to the
+   * default pack so browsing works without a selection.
+   */
+  selected: IconRef | undefined;
   /** Called when the user picks a different icon. */
   onSelect: (icon: IconRef) => void;
 }
@@ -262,12 +266,14 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   // opening the editor at `?icon=tabler:rocket` should land on the
   // tabler pack detail, not on mdi's. `on()` so the effect doesn't
   // re-fire when the user manually switches packs (which would
-  // immediately revert their choice).
+  // immediately revert their choice). Skip while no icon is chosen
+  // yet — the picker keeps its existing `activePackId` so the user's
+  // browsing position survives selection-clearing actions like reset.
   createEffect(
     on(
-      () => props.selected.pack,
+      () => props.selected?.pack,
       (pack) => {
-        if (pack !== picker.activePackId) openPack(pack);
+        if (pack && pack !== picker.activePackId) openPack(pack);
       },
     ),
   );
@@ -277,13 +283,15 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   // the selected tile. URL hydration sometimes resolves an icon
   // outside the active pack's loaded pages.
   createEffect(() => {
+    const selected = props.selected;
+    if (!selected) return;
     seedEntry({
-      pack: props.selected.pack,
+      pack: selected.pack,
       entry: {
-        name: props.selected.name,
-        body: props.selected.body,
-        width: props.selected.width,
-        height: props.selected.height,
+        name: selected.name,
+        body: selected.body,
+        width: selected.width,
+        height: selected.height,
       },
     });
   });
@@ -617,7 +625,8 @@ interface PackDetailViewProps {
   currentPage: number;
   pageCount: number;
   onPageChange: (page: number) => void;
-  selected: IconRef;
+  /** `undefined` until the user picks an icon — no tile reads as selected. */
+  selected: IconRef | undefined;
   onPickIcon: (manifest: IconPackManifest, name: string) => void;
   onOpenPackList: () => void;
   /** Switch to the in-place pack info view (DataList of metadata). */
@@ -727,7 +736,7 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
                     const entry = () =>
                       props.entries[entryKey(manifest().id, name)];
                     const isSelected = () =>
-                      props.selected.pack === manifest().id &&
+                      props.selected?.pack === manifest().id &&
                       props.selected.name === name;
                     return (
                       // The tile is a custom-styled click target with no

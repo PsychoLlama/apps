@@ -116,24 +116,6 @@ export interface IconPackManifest {
   pageStart: ReadonlyArray<number>;
 }
 
-/** Hard-coded default — keeps the editor renderable before any fetch. */
-export const DEFAULT_ICON: IconRef = {
-  pack: 'mdi',
-  name: 'home',
-  body: '<path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8z"/>',
-  width: 24,
-  height: 24,
-  license: {
-    title: 'Apache 2.0',
-    spdx: 'Apache-2.0',
-    url: 'https://github.com/Templarian/MaterialDesign/blob/master/LICENSE',
-  },
-  author: {
-    name: 'Pictogrammers',
-    url: 'https://github.com/Templarian/MaterialDesign',
-  },
-};
-
 interface IndexPayload {
   packs: IconPackSummary[];
 }
@@ -215,9 +197,14 @@ export const releaseInactivePackCaches = (activePackId: string): void => {
   }
 };
 
-/** Encode a `pack:name` reference for URL params. */
-export const encodeIconRef = (ref: { pack: string; name: string }): string =>
-  `${ref.pack}:${ref.name}`;
+/**
+ * Encode a `pack:name` reference for URL params. Returns the empty
+ * string for an absent icon — the URL-mirror effect treats that as
+ * "drop the param" via {@link paramOrNull}.
+ */
+export const encodeIconRef = (
+  ref: { pack: string; name: string } | undefined,
+): string => (ref ? `${ref.pack}:${ref.name}` : '');
 
 /**
  * Parse a `pack:name` reference. Bare names without a colon are
