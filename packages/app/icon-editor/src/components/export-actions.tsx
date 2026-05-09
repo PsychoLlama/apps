@@ -1,7 +1,16 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
-import { Badge, Button, Flex, Link, Text, TextField } from '@lib/ui';
+import {
+  Badge,
+  Button,
+  Flex,
+  Link,
+  RadioCardsItem,
+  RadioCardsRoot,
+  Text,
+  TextField,
+} from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { downloadPng, downloadSvg } from '../download';
 import { renderIconSvg } from '../svg';
@@ -100,28 +109,26 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   return (
     <Flex as="div" direction="column" gap={3}>
       <Field label="Format">
-        {/* Two-segment radiogroup; matches ShapeSelector's chip style.    */}
-        {/* eslint-disable-next-line custom/require-ui-primitives */}
-        <div class={css.formatGroup} role="radiogroup" aria-label="Format">
+        <RadioCardsRoot
+          testId="export-format"
+          name="export-format"
+          size={1}
+          columns={2}
+          value={exportState.format}
+          onValueChange={(value) => setFormat(value as ExportFormat)}
+          aria-label="Format"
+        >
           <For each={FORMATS}>
-            {(option) => {
-              const selected = () => exportState.format === option.value;
-              return (
-                // eslint-disable-next-line custom/require-ui-primitives
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={selected()}
-                  class={css.formatOption}
-                  classList={{ [css.formatOptionActive]: selected() }}
-                  onClick={() => setFormat(option.value)}
-                >
-                  {option.label}
-                </button>
-              );
-            }}
+            {(option) => (
+              <RadioCardsItem
+                testId={`export-format-${option.value}`}
+                value={option.value}
+              >
+                {option.label}
+              </RadioCardsItem>
+            )}
           </For>
-        </div>
+        </RadioCardsRoot>
       </Field>
 
       <Show when={exportState.format === 'png'}>
