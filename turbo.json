@@ -16,11 +16,13 @@
   "tasks": {
     "build": {
       "dependsOn": ["^typecheck"],
-      "outputs": [".output/**", "storybook-static/**"]
+      "outputs": [".output/**", "storybook-static/**"],
+      "outputLogs": "errors-only"
     },
     "bundle": {
       "dependsOn": ["build", "@dev/storybook#build"],
-      "outputs": [".output/public/__storybook/**"]
+      "outputs": [".output/public/__storybook/**"],
+      "outputLogs": "errors-only"
     },
     "dev": {
       "cache": false,
@@ -33,15 +35,18 @@
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "test": {
       "dependsOn": ["^typecheck"],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "//#typecheck": {
       "inputs": ["*.ts", "tsconfig.json"],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "//#lint": {
       "inputs": [
@@ -53,7 +58,8 @@
         "eslint.config.ts",
         ".gitignore"
       ],
-      "outputs": ["node_modules/.cache/eslint/**"]
+      "outputs": ["node_modules/.cache/eslint/**"],
+      "outputLogs": "errors-only"
     },
     "//#test": {
       "inputs": [
@@ -61,7 +67,8 @@
         "!packages/**/*.test.browser.{ts,tsx}",
         "vitest.config.ts"
       ],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "//#test:browser": {
       "inputs": [
@@ -69,7 +76,8 @@
         "packages/**/src/**",
         "vitest.config.ts"
       ],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "//#knip:dev": {
       "inputs": [
@@ -78,7 +86,8 @@
         "knip.config.ts",
         "*.ts"
       ],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "//#knip:production": {
       "inputs": [
@@ -87,7 +96,8 @@
         "knip.config.ts",
         "*.ts"
       ],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "//#fmt-check": {
       "inputs": [
@@ -97,7 +107,8 @@
         "!**/storybook-static/**",
         "treefmt.toml"
       ],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     },
     "//#workspace-check": {
       "inputs": [
@@ -106,7 +117,8 @@
         "pnpm-workspace.yaml",
         "turbo.json"
       ],
-      "outputs": []
+      "outputs": [],
+      "outputLogs": "errors-only"
     }
   }
 }
