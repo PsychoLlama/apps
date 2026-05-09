@@ -20,7 +20,6 @@ import { PaddingSlider } from './components/padding-slider';
 import { PalettePicker } from './components/palette-picker';
 import { Preview } from './components/preview';
 import { ShapeSelector } from './components/shape-selector';
-import { Spec } from './components/spec';
 import {
   encodeIconRef,
   loadIconPackIndex,
@@ -346,10 +345,6 @@ export const IconEditor = () => {
               <ExportActions state={iconEditor} />
             </TabsContent>
           </TabsRoot>
-        </Flex>
-
-        <Flex as="footer" class={css.statusBar} aria-label="Status">
-          <Spec state={iconEditor} variant="plain" />
         </Flex>
       </Flex>
     </Flex>

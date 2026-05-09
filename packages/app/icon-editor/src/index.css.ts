@@ -100,20 +100,3 @@ export const tabPanelGrow = style({
   flex: '1 1 auto',
   minHeight: 0,
 });
-
-// Status bar mirrors the toolbar: only the top edge is drawn. Spec
-// runs as a single nowrap row; overflow scrolls horizontally instead
-// of wrapping so the bar height stays fixed at narrow widths. The
-// fixed min-height keeps the bar from twitching as Spec's content
-// reflows under state changes (palette name length, etc).
-export const statusBar = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-  minHeight: space[7],
-  paddingBlock: space[1],
-  paddingInline: space[3],
-  borderTop: `1px solid ${neutral.solid[4]}`,
-  overflowX: 'auto',
-});
