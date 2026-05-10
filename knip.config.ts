@@ -45,14 +45,23 @@ const config: KnipConfig = {
       vite: false,
     },
     'packages/lib/theme': {
+      // `index.ts` is auto-discovered as a non-production entry via
+      // `package.json#exports`, so dev-mode knip walks it and credits
+      // its imports. Marking it `!` to upgrade to a production entry
+      // gets deduped against the auto-discovered copy and the `!` is
+      // dropped — which means `--production` never reaches
+      // `theme-store.ts` and `@lib/state` looks unused. List
+      // `theme-store.ts!` directly so the production walker enters
+      // through the file that imports `@lib/state`.
+      //
       // Each `bundles/<accent>.css.ts` is library surface — exposed
       // through the `./bundles/*` subpath export and reached via
       // `import url from '@lib/theme/bundles/<accent>.css.ts?css-asset'`
       // (handled by `@dev/build/vite-plugin/css-asset`). Only the
       // default is consumed today; keep the rest alive in knip until
       // a host wires them up.
-      entry: ['src/bundles/*.css.ts!'],
-      project: ['src/**/*.ts'],
+      entry: ['src/theme-store.ts!', 'src/bundles/*.css.ts!'],
+      project: ['src/**/*.{ts,tsx}'],
     },
     'packages/lib/ui': {
       // Co-located behavior tests run against a real browser via the
