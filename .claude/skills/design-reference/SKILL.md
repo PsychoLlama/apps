@@ -1,4 +1,8 @@
-# Design System Usage
+---
+description: Reference docs for `@lib/design` tokens — colors, typography, space, radius, shadow, motion, breakpoints. Load when authoring or reviewing styling that consumes `@lib/design`, picking a token, or looking up token names.
+---
+
+# Design System
 
 - Single entry point: `@lib/design`.
 - Never hard-code a value when a token exists.
