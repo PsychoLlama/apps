@@ -39,7 +39,7 @@
 
 ## Design System
 
-- Reference docs: ./packages/lib/design/src/docs/usage.md
+- For reference docs, load the `design-reference` skill.
 - Import tokens from `@lib/design`. NEVER hard-code colors, spacing, radius, shadows, motion, or typography values.
 - Avoid needless CSS reset rules. We use `the-new-css-reset`. It is thorough.
 
