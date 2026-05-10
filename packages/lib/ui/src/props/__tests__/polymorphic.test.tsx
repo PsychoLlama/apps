@@ -82,6 +82,10 @@ describe('HtmlTextTag', () => {
     expectTypeOf<'h1'>().not.toExtend<HtmlTextTag>();
     expectTypeOf<'nav'>().not.toExtend<HtmlTextTag>();
   });
+
+  it('excludes anchor — consumers must use <Link>', () => {
+    expectTypeOf<'a'>().not.toExtend<HtmlTextTag>();
+  });
 });
 
 describe('HtmlHeadingTag', () => {
@@ -119,5 +123,9 @@ describe('HtmlBoxTag', () => {
   it('excludes heading elements', () => {
     expectTypeOf<'h1'>().not.toExtend<HtmlBoxTag>();
     expectTypeOf<'h3'>().not.toExtend<HtmlBoxTag>();
+  });
+
+  it('excludes anchor — consumers must use <Link>', () => {
+    expectTypeOf<'a'>().not.toExtend<HtmlBoxTag>();
   });
 });
