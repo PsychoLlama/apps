@@ -26,15 +26,18 @@ const VANILLA_VIRTUAL_EXT = '.vanilla.css';
  *
  * Build path: `load` lazily registers the entry as a Rollup chunk
  * via `this.emitFile({ type: 'chunk', id })` on the client
- * environment. Vite's CSS code splitter pulls every transitive
- * `.css.ts`/`.vanilla.css` payload into a single hashed CSS asset
- * sibling of that chunk. We then read the URL out of the chunk's
- * `viteMetadata.importedCss` in `generateBundle`, rewrite the
- * placeholder we handed to the consumer, and drop the JS sibling —
- * we only ever wanted the CSS. The SSR build sees the same import
- * (e.g. via `solid-meta`) and emits the same placeholder; SolidStart
- * builds client first, so the URL captured during the client's
- * `generateBundle` is in scope by the time SSR's runs.
+ * environment. Vite's CSS code splitter pulls each transitive
+ * `.css.ts`/`.vanilla.css` payload onto a chunk's CSS sibling, but
+ * Rollup may split shared deps (e.g. a tinted gray palette imported
+ * by several themes) into their own JS chunks with their own CSS
+ * siblings. `generateBundle` walks the entry chunk's transitive
+ * `imports` graph, concatenates every reachable CSS sibling into
+ * the entry's own CSS asset, rewrites the consumer's placeholder
+ * to that URL, and drops the JS sibling — we only ever wanted the
+ * CSS. The SSR build sees the same import (e.g. via `solid-meta`)
+ * and emits the same placeholder; SolidStart builds client first,
+ * so the URL captured during the client's `generateBundle` is in
+ * scope by the time SSR's runs.
  *
  * Dev path: `load` returns a stable URL under `/@css-asset/` keyed
  * by a hash of the entry path. A middleware walks the dev module
@@ -170,16 +173,60 @@ export const cssAsset = (): Plugin => {
         const isClient = !this.environment.config.build.ssr;
 
         if (isClient) {
+          // Rollup splits shared `.css.ts` deps (e.g. a tinted gray
+          // palette used by several themes) into their own JS chunks,
+          // each with a CSS sibling. The entry chunk's `importedCss`
+          // lists only its own sibling, so walk the JS import graph
+          // post-order to collect every transitive CSS file in
+          // dep-before-importer order — matching `@import` cascade
+          // semantics — and inline them into the entry's own CSS so
+          // the `<link>` resolves a self-contained bundle.
+          const collectTransitiveCss = (entryJs: string): string[] => {
+            const visitedChunks = new Set<string>();
+            const ordered: string[] = [];
+            const seenCss = new Set<string>();
+
+            const visit = (file: string) => {
+              if (visitedChunks.has(file)) return;
+              visitedChunks.add(file);
+              const cur = bundle[file];
+              if (!cur || cur.type !== 'chunk') return;
+              for (const imp of cur.imports) visit(imp);
+              for (const css of cur.viteMetadata?.importedCss ?? []) {
+                if (seenCss.has(css)) continue;
+                seenCss.add(css);
+                ordered.push(css);
+              }
+            };
+
+            visit(entryJs);
+            return ordered;
+          };
+
           for (const [refId, key] of refIdToKey) {
             const jsFile = this.getFileName(refId);
             const chunk = bundle[jsFile];
             if (!chunk || chunk.type !== 'chunk') continue;
 
-            const cssFile = chunk.viteMetadata?.importedCss
-              ?.values()
-              .next().value;
-            if (cssFile) {
-              buildUrls.set(key, `${base}${cssFile}`);
+            // The entry's own sibling is the last CSS file the
+            // post-order walk records, and it's the URL the `<link>`
+            // should resolve to. Concatenate every reachable CSS
+            // ahead of it into that asset.
+            const cssFiles = collectTransitiveCss(jsFile);
+            const primary = cssFiles.at(-1);
+            if (primary) {
+              const primaryAsset = bundle[primary];
+              if (primaryAsset && primaryAsset.type === 'asset') {
+                const parts: string[] = [];
+                for (const dep of cssFiles) {
+                  const depAsset = bundle[dep];
+                  if (depAsset && depAsset.type === 'asset') {
+                    parts.push(readAssetSource(depAsset));
+                  }
+                }
+                primaryAsset.source = parts.join('');
+              }
+              buildUrls.set(key, `${base}${primary}`);
             }
 
             delete bundle[jsFile];
@@ -197,6 +244,11 @@ export const cssAsset = (): Plugin => {
     },
   };
 };
+
+const readAssetSource = (asset: { source: string | Uint8Array }): string =>
+  typeof asset.source === 'string'
+    ? asset.source
+    : Buffer.from(asset.source).toString('utf8');
 
 const bundleForDev = async (
   server: ViteDevServer,
