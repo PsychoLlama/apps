@@ -9,11 +9,14 @@ export type HtmlTagName = keyof JSX.HTMLElementTags;
 /** Heading level elements. */
 export type HtmlHeadingTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
-/** Inline and block text elements. */
+/**
+ * Inline and block text elements. Excludes `'a'` — anchors must flow
+ * through `<Link>` so client-side routing, focus styling, and underline
+ * defaults stay centralized.
+ */
 export type HtmlTextTag =
   | 'span'
   | 'p'
-  | 'a'
   | 'label'
   | 'em'
   | 'strong'
@@ -62,14 +65,16 @@ export type HtmlFormControlTag =
   | 'output';
 
 /**
- * Layout and structural elements. Excludes text, heading, and
+ * Layout and structural elements. Excludes text, heading, anchor, and
  * form-control tags. Includes list-item tags (`li`, `dt`, `dd`) —
  * they're structural containers that may hold any layout, not
- * text-only elements.
+ * text-only elements. Anchor is excluded so consumers route through
+ * `<Link>`; components that legitimately render as an anchor (e.g.
+ * `Card`) widen their own tag set explicitly.
  */
 export type HtmlBoxTag = Exclude<
   HtmlTagName,
-  HtmlTextTag | HtmlHeadingTag | HtmlFormControlTag
+  HtmlTextTag | HtmlHeadingTag | HtmlFormControlTag | 'a'
 >;
 
 /** Polymorphic props: a literal `as` tag merged with the element's native attributes. Component props take precedence over native attributes. */
