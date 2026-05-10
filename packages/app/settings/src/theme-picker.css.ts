@@ -1,6 +1,6 @@
 import { style, styleVariants } from '@vanilla-extract/css';
 import { radius, space } from '@lib/design';
-import { swatch } from '@lib/theme/catalog';
+import { swatch } from '@lib/theme/swatch';
 
 /**
  * Override for the radio group container. Replaces the default auto-
@@ -34,7 +34,7 @@ export const swatchBase = style({
 
 /**
  * Per-theme background color for the `::before` swatch. Pulls each
- * theme's accent from `@lib/theme/catalog` — the colors are baked into
+ * theme's accent from `@lib/theme/swatch` — the colors are baked into
  * CSS at build time, so unselected themes don't leak into the runtime
  * bundle.
  */

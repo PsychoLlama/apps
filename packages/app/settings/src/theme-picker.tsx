@@ -1,19 +1,9 @@
 import { For } from 'solid-js';
-import { createStore, defineAction, defineStore, useAction } from '@lib/state';
+import { useAction } from '@lib/state';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
+import { setThemeAction, theme } from '@lib/theme';
 import { THEMES, type ThemeId } from '@lib/theme/catalog';
 import * as css from './theme-picker.css';
-
-interface ThemePickerState {
-  selected: ThemeId;
-}
-
-const themePickerStore = defineStore<ThemePickerState>(() => ({
-  selected: 'blue',
-}));
-
-/** Materialized view of the picker's local selection. */
-export const themePicker = createStore(themePickerStore);
 
 /**
  * `id` of the heading the picker is labelled by. Shared between the
@@ -22,39 +12,33 @@ export const themePicker = createStore(themePickerStore);
  */
 export const themeHeadingId = 'settings-theme-heading';
 
-const selectThemeAction = defineAction(
-  [themePickerStore],
-  (state, next: ThemeId) => {
-    state.selected = next;
-  },
-);
-
 /**
  * Theme picker. Renders a `RadioCards` group with one card per
- * built-in theme. Selection lives in a local store; persistence and
- * dynamic bundle loading land in a follow-up.
+ * built-in theme and dispatches the shared `setThemeAction` on
+ * change — the active theme drives `<ThemeStylesheet>`'s `href`,
+ * so swapping the selection live-swaps the stylesheet.
  */
 export const ThemePicker = () => {
-  const selectTheme = useAction(selectThemeAction);
+  const setTheme = useAction(setThemeAction);
 
   return (
     <RadioCardsRoot
       testId="theme-picker"
       name="theme"
-      value={themePicker.selected}
-      onValueChange={(next) => selectTheme(next as ThemeId)}
+      value={theme.id}
+      onValueChange={(next) => setTheme(next as ThemeId)}
       gap={3}
       class={css.root}
       aria-labelledby={themeHeadingId}
     >
       <For each={THEMES}>
-        {(theme) => (
+        {(entry) => (
           <RadioCardsItem
-            testId={`theme-picker-${theme.id}`}
-            value={theme.id}
-            class={`${css.swatchBase} ${css.swatchTint[theme.id]}`}
+            testId={`theme-picker-${entry.id}`}
+            value={entry.id}
+            class={`${css.swatchBase} ${css.swatchTint[entry.id]}`}
           >
-            {theme.label}
+            {entry.label}
           </RadioCardsItem>
         )}
       </For>
