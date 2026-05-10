@@ -10,7 +10,8 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./catalog": "./src/catalog.css.ts",
+    "./catalog": "./src/catalog.ts",
+    "./swatch": "./src/swatch.css.ts",
     "./default": "./src/bundles/blue.css.ts",
     "./bundles/*": "./src/bundles/*.css.ts",
     "./package.json": "./package.json"

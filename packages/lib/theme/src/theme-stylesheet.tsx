@@ -1,6 +1,10 @@
 import { Link } from '@solidjs/meta';
-import { bundleUrls } from './bundle-urls';
+import { THEMES } from './catalog';
 import { theme } from './theme-store';
+
+const bundleUrlById = new Map(
+  THEMES.map((entry) => [entry.id, entry.bundleUrl]),
+);
 
 /**
  * `<link>` tag pointing at the active theme's standalone CSS bundle.
@@ -12,5 +16,9 @@ import { theme } from './theme-store';
  * stylesheet.
  */
 export const ThemeStylesheet = () => (
-  <Link data-theme-stylesheet="" rel="stylesheet" href={bundleUrls[theme.id]} />
+  <Link
+    data-theme-stylesheet=""
+    rel="stylesheet"
+    href={bundleUrlById.get(theme.id)}
+  />
 );

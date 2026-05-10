@@ -12,56 +12,17 @@ import { purpleDark, purpleLight } from '@lib/design/color/purple';
 import { skyDark, skyLight } from '@lib/design/color/sky';
 import { tealDark, tealLight } from '@lib/design/color/teal';
 import { violetDark, violetLight } from '@lib/design/color/violet';
-
-/** Identifier for a built-in theme bundle. Matches `bundles/<id>.css.ts`. */
-export type ThemeId =
-  | 'blue'
-  | 'brown'
-  | 'cyan'
-  | 'indigo'
-  | 'iris'
-  | 'jade'
-  | 'orange'
-  | 'pink'
-  | 'plum'
-  | 'purple'
-  | 'sky'
-  | 'teal'
-  | 'violet';
-
-/** Display metadata for a single theme bundle. */
-export interface ThemeEntry {
-  /** Stable identifier matching the bundle filename. */
-  id: ThemeId;
-  /** Human-readable name shown in pickers. */
-  label: string;
-}
-
-/** Catalog of every built-in theme, in display order. */
-export const THEMES: readonly ThemeEntry[] = [
-  { id: 'blue', label: 'Blue' },
-  { id: 'sky', label: 'Sky' },
-  { id: 'cyan', label: 'Cyan' },
-  { id: 'teal', label: 'Teal' },
-  { id: 'jade', label: 'Jade' },
-  { id: 'indigo', label: 'Indigo' },
-  { id: 'iris', label: 'Iris' },
-  { id: 'violet', label: 'Violet' },
-  { id: 'purple', label: 'Purple' },
-  { id: 'plum', label: 'Plum' },
-  { id: 'pink', label: 'Pink' },
-  { id: 'orange', label: 'Orange' },
-  { id: 'brown', label: 'Brown' },
-];
+import type { ThemeId } from './catalog';
 
 /**
  * Per-theme accent swatch (Radix scale `9`), pre-wrapped in
  * `light-dark(...)`. Drop directly into a Vanilla Extract style value.
  *
- * Lives in a `.css.ts` file so palette imports stay compile-time
- * only. JS callers that import other catalog exports (e.g. `THEMES`)
- * without referencing `swatch` won't pull these strings — or the
- * underlying palette modules — into the runtime bundle.
+ * Lives in a `.css.ts` sibling of the catalog so palette imports stay
+ * compile-time only — `.css.ts` callers (e.g. `styleVariants(swatch,
+ * ...)`) reach this directly without dragging the runtime catalog or
+ * its `?css-asset` imports through Vanilla Extract's vite-node
+ * compiler, which doesn't load the `css-asset` plugin.
  */
 export const swatch: Record<ThemeId, string> = {
   blue: lightDark(blueLight[9], blueDark[9]),

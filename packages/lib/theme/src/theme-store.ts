@@ -1,5 +1,5 @@
 import { createStore, defineAction, defineStore } from '@lib/state';
-import type { ThemeId } from './catalog.css';
+import type { ThemeId } from './catalog';
 
 /** Active-theme state held in the shared registry. */
 interface ThemeState {
