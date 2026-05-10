@@ -177,25 +177,30 @@ export const cssAsset = (): Plugin => {
           // palette used by several themes) into their own JS chunks,
           // each with a CSS sibling. The entry chunk's `importedCss`
           // lists only its own sibling, so walk the JS import graph
-          // to collect every transitive CSS file and inline them into
-          // the primary CSS so the `<link>` resolves a self-contained
-          // bundle.
+          // post-order to collect every transitive CSS file in
+          // dep-before-importer order — matching `@import` cascade
+          // semantics — and inline them into the entry's own CSS so
+          // the `<link>` resolves a self-contained bundle.
           const collectTransitiveCss = (entryJs: string): string[] => {
             const visitedChunks = new Set<string>();
-            const cssFiles: string[] = [];
-            const queue = [entryJs];
-            while (queue.length > 0) {
-              const file = queue.shift();
-              if (!file || visitedChunks.has(file)) continue;
+            const ordered: string[] = [];
+            const seenCss = new Set<string>();
+
+            const visit = (file: string) => {
+              if (visitedChunks.has(file)) return;
               visitedChunks.add(file);
               const cur = bundle[file];
-              if (!cur || cur.type !== 'chunk') continue;
+              if (!cur || cur.type !== 'chunk') return;
+              for (const imp of cur.imports) visit(imp);
               for (const css of cur.viteMetadata?.importedCss ?? []) {
-                if (!cssFiles.includes(css)) cssFiles.push(css);
+                if (seenCss.has(css)) continue;
+                seenCss.add(css);
+                ordered.push(css);
               }
-              for (const imp of cur.imports) queue.push(imp);
-            }
-            return cssFiles;
+            };
+
+            visit(entryJs);
+            return ordered;
           };
 
           for (const [refId, key] of refIdToKey) {
@@ -203,13 +208,17 @@ export const cssAsset = (): Plugin => {
             const chunk = bundle[jsFile];
             if (!chunk || chunk.type !== 'chunk') continue;
 
+            // The entry's own sibling is the last CSS file the
+            // post-order walk records, and it's the URL the `<link>`
+            // should resolve to. Concatenate every reachable CSS
+            // ahead of it into that asset.
             const cssFiles = collectTransitiveCss(jsFile);
-            const [primary, ...rest] = cssFiles;
+            const primary = cssFiles.at(-1);
             if (primary) {
               const primaryAsset = bundle[primary];
               if (primaryAsset && primaryAsset.type === 'asset') {
-                const parts: string[] = [readAssetSource(primaryAsset)];
-                for (const dep of rest) {
+                const parts: string[] = [];
+                for (const dep of cssFiles) {
                   const depAsset = bundle[dep];
                   if (depAsset && depAsset.type === 'asset') {
                     parts.push(readAssetSource(depAsset));
