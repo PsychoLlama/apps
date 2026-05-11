@@ -4,6 +4,7 @@ import { Card, Flex, Grid, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconRecord from 'virtual:icons/mdi/record-rec';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
+import IconHeadphones from 'virtual:icons/mdi/headphones';
 import * as css from './index.css';
 
 interface AppEntry {
@@ -33,6 +34,13 @@ const APPS: ReadonlyArray<AppEntry> = [
     href: '/icon-editor',
     description: 'Compose a brandmark from a free icon set.',
     Icon: IconPalette,
+  },
+  {
+    id: 'headphones',
+    name: 'Headphones',
+    href: '/headphones',
+    description: 'Inspect Sony headset state over Web Serial.',
+    Icon: IconHeadphones,
   },
 ];
 
