@@ -6,9 +6,6 @@ settings:
 
 catalogs:
   default:
-    '@iconify/json':
-      specifier: ^2.2.470
-      version: 2.2.470
     '@solidjs/meta':
       specifier: ^0.29.4
       version: 0.29.4
@@ -30,6 +27,12 @@ catalogs:
     '@vanilla-extract/dynamic':
       specifier: ^2.1.5
       version: 2.1.5
+    '@vitest/browser':
+      specifier: ^4.1.5
+      version: 4.1.6
+    '@vitest/browser-playwright':
+      specifier: ^4.1.5
+      version: 4.1.6
     citty:
       specifier: ^0.2.2
       version: 0.2.2
@@ -63,6 +66,9 @@ catalogs:
     unplugin-icons:
       specifier: ^23.0.1
       version: 23.0.1
+    vitest:
+      specifier: ^4.1.5
+      version: 4.1.6
 
 overrides:
   vite: ^7.3.2
@@ -88,7 +94,7 @@ importers:
         version: 10.0.1(eslint@10.3.0(jiti@2.6.1))
       '@iconify/json':
         specifier: ^2.2.460
-        version: 2.2.470
+        version: 2.2.471
       '@testing-library/jest-dom':
         specifier: 'catalog:'
         version: 6.9.1
@@ -312,7 +318,7 @@ importers:
     devDependencies:
       '@iconify/json':
         specifier: 'catalog:'
-        version: 2.2.470
+        version: 2.2.471
       '@resvg/resvg-wasm':
         specifier: ^2.6.2
         version: 2.6.2
@@ -340,7 +346,7 @@ importers:
         version: link:../build
       '@iconify/json':
         specifier: 'catalog:'
-        version: 2.2.470
+        version: 2.2.471
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -1304,8 +1310,8 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@iconify/json@2.2.470':
-    resolution: {integrity: sha512-8VgSitlCUvHL1vrFvwvM3L1sHakYHFM8txGDmnTQXQ3rYtkpvdyY3L/5ew/LWPOa2/a4Fvh3O43jhi5qajySrw==}
+  '@iconify/json@2.2.471':
+    resolution: {integrity: sha512-9ZJ4l71MOGVQa/DJxPI5XJ49D5Ax+wOvCCw4ZPcGemP34rtWWFAPsfu2QyQLjEvedbrVmEJcomam3N0SsNgWDA==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -6420,7 +6426,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@iconify/json@2.2.470':
+  '@iconify/json@2.2.471':
     dependencies:
       '@iconify/types': 2.0.0
       pathe: 2.0.3
