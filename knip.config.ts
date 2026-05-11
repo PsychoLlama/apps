@@ -23,11 +23,17 @@ const config: KnipConfig = {
       // from their `.tsx`, but knip's resolver doesn't follow the
       // V-E `.css` -> `.css.ts` extension swap. Marking them as
       // production entries credits the design tokens they pull in.
+      // The production walker only credits deps imported directly
+      // from an `!` entry — transitive walks through other source
+      // files don't count. `iroh-poc/store.ts` is the sole consumer
+      // of `@lib/state`, so list it explicitly to keep that dep from
+      // looking unused.
       entry: [
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
         'src/**/*.css.ts!',
+        'src/iroh-poc/store.ts!',
         'src/**/*.test.{ts,tsx}',
         'src/__tests__/test-utils.tsx',
         'vite.config.ts',

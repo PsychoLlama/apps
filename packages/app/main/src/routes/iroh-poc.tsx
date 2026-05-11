@@ -332,6 +332,7 @@ const IrohPoc: Component = () => {
                     spellcheck={false}
                     autocapitalize="none"
                     autocomplete="off"
+                    enterkeyhint="go"
                     required
                   />
                 </Flex>
@@ -495,6 +496,8 @@ const SessionCard: Component<SessionCardProps> = (props) => {
                 )
               }
               autocomplete="off"
+              autocapitalize="sentences"
+              enterkeyhint="send"
             />
           </Flex>
           <Button
