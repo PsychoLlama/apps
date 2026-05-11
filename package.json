@@ -31,12 +31,6 @@
     "trailingComma": "all"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "esbuild",
-      "sharp",
-      "workerd"
-    ],
     "overrides": {
       "vite": "catalog:"
     }
