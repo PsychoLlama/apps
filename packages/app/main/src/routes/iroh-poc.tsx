@@ -1,4 +1,11 @@
-import { For, Show, onCleanup, onMount, type Component } from 'solid-js';
+import {
+  For,
+  Show,
+  createEffect,
+  onCleanup,
+  onMount,
+  type Component,
+} from 'solid-js';
 import {
   Badge,
   Button,
@@ -12,6 +19,7 @@ import {
   TextField,
 } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
+import { useSearchParams } from '@solidjs/router';
 import { SiteHeader } from '@lib/shell';
 import { irohPoc, nextSessionId, useIrohPocActions } from '../iroh-poc/store';
 import type {
@@ -56,9 +64,13 @@ const truncate = (id: string): string => id.slice(0, 12);
 
 const IrohPoc: Component = () => {
   const actions = useIrohPocActions();
+  const [searchParams, setSearchParams] = useSearchParams<{
+    ticket?: string;
+  }>();
   const registry = new Map<number, WasmSession>();
   let node: WasmEchoNode | null = null;
   let disposed = false;
+  let autoDialed = false;
 
   const adoptSession = (
     wasmSession: WasmSession,
@@ -215,10 +227,26 @@ const IrohPoc: Component = () => {
   const copyTicket = () => {
     const value = irohPoc.ticket;
     if (!value) return;
-    void navigator.clipboard.writeText(value).catch(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('ticket', value);
+    void navigator.clipboard.writeText(url.toString()).catch(() => {
       // Clipboard permission denied or unavailable — non-fatal.
     });
   };
+
+  // Auto-dial when a peer's `?ticket=` link brought us here. Wait for
+  // the node to be ready, then consume the param exactly once and
+  // strip it from the URL so refreshes don't keep re-dialing and the
+  // user's own copy-ticket link stays clean.
+  createEffect(() => {
+    if (autoDialed) return;
+    if (irohPoc.status !== 'ready') return;
+    const incoming = searchParams.ticket;
+    if (typeof incoming !== 'string' || !incoming) return;
+    autoDialed = true;
+    setSearchParams({ ticket: undefined }, { replace: true });
+    void dial(incoming);
+  });
 
   return (
     <Flex as="main" direction="column" grow>
@@ -255,9 +283,9 @@ const IrohPoc: Component = () => {
                   </Badge>
                 </Flex>
                 <Text as="p" size={2} color="lowContrast">
-                  Share this connect ticket with another tab or peer to let them
-                  dial you. It bundles your endpoint id with the assigned
-                  home-relay URL.
+                  Share the link below with another tab or peer to let them dial
+                  you — opening it auto-connects. The ticket bundles your
+                  endpoint id with the assigned home-relay URL.
                 </Text>
                 <Show
                   when={irohPoc.endpointId}
@@ -295,7 +323,7 @@ const IrohPoc: Component = () => {
                         variant="soft"
                         onClick={copyTicket}
                       >
-                        Copy ticket
+                        Copy share link
                       </Button>
                     </Flex>
                   </Show>
