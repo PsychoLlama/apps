@@ -37,8 +37,8 @@ import {
   encodeNcAsmGetParamRequest,
   encodeSupportFunctionRequest,
   functionTypeName,
-} from '../../labs/sony-mdr';
-import * as css from './bluetooth.css';
+} from './sony-mdr';
+import * as css from './page.css';
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -59,7 +59,7 @@ interface LogEntry {
   command?: number;
 }
 
-interface BluetoothState {
+interface HeadphonesState {
   status: ConnectionState;
   error: string | null;
   battery: BatteryStatus | null;
@@ -71,7 +71,7 @@ interface BluetoothState {
 
 const MAX_LOG_ENTRIES = 100;
 
-const bluetoothStore = defineStore<BluetoothState>(() => ({
+const headphonesStore = defineStore<HeadphonesState>(() => ({
   status: 'idle',
   error: null,
   battery: null,
@@ -81,38 +81,38 @@ const bluetoothStore = defineStore<BluetoothState>(() => ({
   webSerial: 'unknown',
 }));
 
-const bluetooth = createStore(bluetoothStore);
+const headphones = createStore(headphonesStore);
 
 const setStatusAction = defineAction(
-  [bluetoothStore],
+  [headphonesStore],
   (state, status: ConnectionState) => {
     state.status = status;
   },
 );
 
 const setErrorAction = defineAction(
-  [bluetoothStore],
+  [headphonesStore],
   (state, message: string | null) => {
     state.error = message;
   },
 );
 
 const setBatteryAction = defineAction(
-  [bluetoothStore],
+  [headphonesStore],
   (state, battery: BatteryStatus | null) => {
     state.battery = battery;
   },
 );
 
 const setCapabilitiesAction = defineAction(
-  [bluetoothStore],
+  [headphonesStore],
   (state, capabilities: number[] | null) => {
     state.capabilities = capabilities;
   },
 );
 
 const setNcAsmAction = defineAction(
-  [bluetoothStore],
+  [headphonesStore],
   (state, ncAsm: NcAsmStatus | null) => {
     state.ncAsm = ncAsm;
   },
@@ -121,7 +121,7 @@ const setNcAsmAction = defineAction(
 let nextLogId = 0;
 
 const appendLogAction = defineAction(
-  [bluetoothStore],
+  [headphonesStore],
   (state, entry: Omit<LogEntry, 'id'>) => {
     state.log.push({ ...entry, id: ++nextLogId });
     if (state.log.length > MAX_LOG_ENTRIES) {
@@ -131,7 +131,7 @@ const appendLogAction = defineAction(
 );
 
 const setWebSerialSupportAction = defineAction(
-  [bluetoothStore],
+  [headphonesStore],
   (state, support: WebSerialSupport) => {
     state.webSerial = support;
   },
@@ -194,7 +194,7 @@ const statusColor = (
   return 'neutral';
 };
 
-export default function LabsBluetooth() {
+export const Headphones = () => {
   const actions = {
     setStatus: useAction(setStatusAction),
     setError: useAction(setErrorAction),
@@ -346,7 +346,7 @@ export default function LabsBluetooth() {
   };
 
   const handleCopyLog = () => {
-    const text = bluetooth.log
+    const text = headphones.log
       .map((entry) => formatBytes(entry.bytes))
       .join('\n');
     void navigator.clipboard.writeText(text);
@@ -358,7 +358,7 @@ export default function LabsBluetooth() {
 
   return (
     <Flex as="main" direction="column" grow>
-      <SiteHeader title="Bluetooth lab" />
+      <SiteHeader title="Headphones" />
 
       <Flex as="section" direction="column" px={5} py={6}>
         <Container as="div" size={3}>
@@ -374,7 +374,7 @@ export default function LabsBluetooth() {
               </Text>
             </Flex>
 
-            <Show when={bluetooth.webSerial === 'unsupported'}>
+            <Show when={headphones.webSerial === 'unsupported'}>
               <Callout color="warning">
                 <Text as="span" size={2} selectable={false}>
                   This browser doesn't expose{' '}
@@ -389,12 +389,12 @@ export default function LabsBluetooth() {
                 <Heading as="h2" size={4}>
                   Connection
                 </Heading>
-                <Badge color={statusColor(bluetooth.status)} variant="soft">
-                  {bluetooth.status}
+                <Badge color={statusColor(headphones.status)} variant="soft">
+                  {headphones.status}
                 </Badge>
               </Flex>
 
-              <Show when={bluetooth.error}>
+              <Show when={headphones.error}>
                 {(message) => (
                   <Callout color="danger">
                     <Text as="span" size={2} selectable={true}>
@@ -409,10 +409,10 @@ export default function LabsBluetooth() {
                   testId="connect"
                   onClick={handleConnect}
                   disabled={
-                    bluetooth.status === 'connected' ||
-                    bluetooth.webSerial !== 'supported'
+                    headphones.status === 'connected' ||
+                    headphones.webSerial !== 'supported'
                   }
-                  skeleton={bluetooth.webSerial === 'unknown'}
+                  skeleton={headphones.webSerial === 'unknown'}
                   variant="solid"
                 >
                   Connect
@@ -420,7 +420,7 @@ export default function LabsBluetooth() {
                 <Button
                   testId="disconnect"
                   onClick={handleDisconnect}
-                  disabled={bluetooth.status !== 'connected'}
+                  disabled={headphones.status !== 'connected'}
                   variant="soft"
                   color="neutral"
                 >
@@ -439,7 +439,7 @@ export default function LabsBluetooth() {
                   <DataListValue>
                     <Flex as="div" align="center" gap={2}>
                       <Show
-                        when={bluetooth.battery}
+                        when={headphones.battery}
                         fallback={
                           <Text as="span" color="lowContrast">
                             unknown
@@ -457,7 +457,7 @@ export default function LabsBluetooth() {
                         testId="refresh-battery"
                         aria-label="Refresh battery"
                         onClick={handleQueryBattery}
-                        disabled={bluetooth.status !== 'connected'}
+                        disabled={headphones.status !== 'connected'}
                         variant="ghost"
                         color="neutral"
                         size={1}
@@ -472,7 +472,7 @@ export default function LabsBluetooth() {
                   <DataListValue>
                     <Flex as="div" direction="column" gap={2} align="start">
                       <Show
-                        when={bluetooth.capabilities}
+                        when={headphones.capabilities}
                         fallback={
                           <Text as="span" color="lowContrast">
                             unknown
@@ -503,7 +503,7 @@ export default function LabsBluetooth() {
                         testId="refresh-capabilities"
                         aria-label="Refresh capabilities"
                         onClick={handleQueryCapabilities}
-                        disabled={bluetooth.status !== 'connected'}
+                        disabled={headphones.status !== 'connected'}
                         variant="ghost"
                         color="neutral"
                         size={1}
@@ -518,7 +518,7 @@ export default function LabsBluetooth() {
                   <DataListValue>
                     <Flex as="div" align="center" gap={2}>
                       <Show
-                        when={bluetooth.ncAsm}
+                        when={headphones.ncAsm}
                         fallback={
                           <Text as="span" color="lowContrast">
                             unknown
@@ -535,7 +535,7 @@ export default function LabsBluetooth() {
                         testId="refresh-ncasm"
                         aria-label="Refresh NC/ASM"
                         onClick={handleQueryNcAsm}
-                        disabled={bluetooth.status !== 'connected'}
+                        disabled={headphones.status !== 'connected'}
                         variant="ghost"
                         color="neutral"
                         size={1}
@@ -557,7 +557,7 @@ export default function LabsBluetooth() {
                   testId="copy-log"
                   aria-label="Copy log to clipboard"
                   onClick={handleCopyLog}
-                  disabled={bluetooth.log.length === 0}
+                  disabled={headphones.log.length === 0}
                   variant="ghost"
                   color="neutral"
                 >
@@ -565,7 +565,7 @@ export default function LabsBluetooth() {
                 </IconButton>
               </Flex>
               <Show
-                when={bluetooth.log.length > 0}
+                when={headphones.log.length > 0}
                 fallback={
                   <Text as="p" color="lowContrast" size={2}>
                     No frames yet. Connect and send a request.
@@ -573,7 +573,7 @@ export default function LabsBluetooth() {
                 }
               >
                 <Flex as="ol" direction="column" class={css.log}>
-                  <For each={bluetooth.log}>
+                  <For each={headphones.log}>
                     {(entry) => (
                       <Flex
                         as="li"
@@ -601,4 +601,4 @@ export default function LabsBluetooth() {
       </Flex>
     </Flex>
   );
-}
+};

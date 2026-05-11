@@ -1,0 +1,28 @@
+{
+  "name": "@app/headphones",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Inspect Sony headset state (battery, NC/ASM, capabilities) over Web Serial.",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/design": "workspace:*",
+    "@lib/shell": "workspace:*",
+    "@lib/state": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
+  },
+  "peerDependencies": {
+    "@solidjs/router": "*",
+    "solid-js": "*"
+  }
+}

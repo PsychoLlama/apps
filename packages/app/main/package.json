@@ -21,13 +21,13 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@app/headphones": "workspace:*",
     "@app/icon-editor": "workspace:*",
     "@app/service-worker": "workspace:*",
     "@app/settings": "workspace:*",
     "@app/studio": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
-    "@lib/state": "workspace:*",
     "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
     "@solidjs/meta": "catalog:",
