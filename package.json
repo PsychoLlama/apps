@@ -8,7 +8,7 @@
   "author": "Jesse Gibson <JesseTheGibson@gmail.com>",
   "homepage": "https://apps.psychollama.io",
   "repository": "github:PsychoLlama/apps",
-  "packageManager": "pnpm@10.33.4",
+  "packageManager": "pnpm@11.0.9",
   "scripts": {
     "prepare": "workspace patch-workerd",
     "build": "turbo run bundle",
