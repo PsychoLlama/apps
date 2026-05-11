@@ -1,6 +1,23 @@
 packages:
   - packages/*/*
 
+# Default `pnpm add` to workspace:* for in-repo packages.
+saveWorkspaceProtocol: true
+
+# Publicly hoist `@types/*` so workspace packages with no framework
+# devDeps (e.g. `@dev/workspace-cli`, a plain node CLI) can still reach
+# the `@types/node` that Vite and SolidStart already pull in. Every
+# package still opts in explicitly via its tsconfig `types:` field,
+# so this only affects resolution, not which globals leak where.
+publicHoistPattern:
+  - '@types/*'
+
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  sharp: true
+  workerd: true
+
 catalog:
   '@iconify/json': ^2.2.470
   '@solidjs/meta': ^0.29.4
