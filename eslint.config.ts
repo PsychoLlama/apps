@@ -1,4 +1,4 @@
-import { includeIgnoreFile } from '@eslint/compat';
+import { includeIgnoreFile } from '@eslint/config-helpers';
 import eslint from '@eslint/js';
 import importPlugin from 'eslint-plugin-import';
 import solid from 'eslint-plugin-solid/configs/typescript';

@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@iconify/json':
+      specifier: ^2.2.470
+      version: 2.2.471
     '@solidjs/meta':
       specifier: ^0.29.4
       version: 0.29.4
@@ -57,6 +60,9 @@ catalogs:
     storybook-solidjs-vite:
       specifier: ^10.0.12
       version: 10.0.12
+    turbo:
+      specifier: ^2.5.8
+      version: 2.9.12
     typescript:
       specifier: ^6.0.3
       version: 6.0.3
@@ -83,9 +89,9 @@ importers:
       '@dev/workspace-cli':
         specifier: workspace:*
         version: link:packages/dev/workspace-cli
-      '@eslint/compat':
-        specifier: ^2.0.4
-        version: 2.0.5(eslint@10.3.0(jiti@2.6.1))
+      '@eslint/config-helpers':
+        specifier: ^0.6.0
+        version: 0.6.0
       '@eslint/js':
         specifier: ^10.0.0
         version: 10.0.1(eslint@10.3.0(jiti@2.6.1))
@@ -1244,21 +1250,16 @@ packages:
     resolution: {integrity: sha512-EriSTlt5OC9/7SXkRSCAhfSxxoSUgBm33OH+IkwbdpgoqsSsUg7y3uh+IICI/Qg4BBWr3U2i39RpmycbxMq4ew==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
 
-  '@eslint/compat@2.0.5':
-    resolution: {integrity: sha512-IbHDbHJfkVNv6xjlET8AIVo/K1NQt7YT4Rp6ok/clyBGcpRx1l6gv0Rq3vBvYfPJIZt6ODf66Zq08FJNDpnzgg==}
-    engines: {node: ^20.19.0 || ^22.13.0 || >=24}
-    peerDependencies:
-      eslint: ^8.40 || 9 || 10
-    peerDependenciesMeta:
-      eslint:
-        optional: true
-
   '@eslint/config-array@0.23.5':
     resolution: {integrity: sha512-Y3kKLvC1dvTOT+oGlqNQ1XLqK6D1HU2YXPc52NmAlJZbMMWDzGYXMiPRJ8TYD39muD/OTjlZmNJ4ib7dvSrMBA==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
   '@eslint/config-helpers@0.5.5':
     resolution: {integrity: sha512-eIJYKTCECbP/nsKaaruF6LW967mtbQbsw4JTtSVkUQc9MneSkbrgPJAbKl9nWr0ZeowV8BfsarBmPpBzGelA2w==}
+    engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
+  '@eslint/config-helpers@0.6.0':
+    resolution: {integrity: sha512-ii6Bw9jJ2zi2cWA2Z+9/QZ/+3DX6kwaV5Q986D/CdP3Lap3w/pgQZ373FV7byY/i7L4IRH/G43I5dz1ClsCbpA==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
   '@eslint/core@1.2.1':
@@ -6377,12 +6378,6 @@ snapshots:
 
   '@eslint-community/regexpp@4.12.2': {}
 
-  '@eslint/compat@2.0.5(eslint@10.3.0(jiti@2.6.1))':
-    dependencies:
-      '@eslint/core': 1.2.1
-    optionalDependencies:
-      eslint: 10.3.0(jiti@2.6.1)
-
   '@eslint/config-array@0.23.5':
     dependencies:
       '@eslint/object-schema': 3.0.5
@@ -6392,6 +6387,10 @@ snapshots:
       - supports-color
 
   '@eslint/config-helpers@0.5.5':
+    dependencies:
+      '@eslint/core': 1.2.1
+
+  '@eslint/config-helpers@0.6.0':
     dependencies:
       '@eslint/core': 1.2.1
 
