@@ -82,7 +82,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-iroh-poc-cargo-
       - name: Build iroh-poc wasm
-        shell: nix develop ./packages/app/main/iroh-poc --command bash -eo pipefail {0}
+        # `shell:` is evaluated _after_ `working-directory` cd's into the
+        # crate, so the flake reference has to be absolute — a relative
+        # path would resolve to `iroh-poc/iroh-poc` and fail.
+        shell: nix develop ${{ github.workspace }}/packages/app/main/iroh-poc --command bash -eo pipefail {0}
         working-directory: packages/app/main/iroh-poc
         run: |
           cargo build --release
