@@ -66,6 +66,31 @@ jobs:
           key: ${{ runner.os }}-turbo-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-turbo-
+      # The iroh chat POC compiles to wasm and is loaded by
+      # `@app/main`'s route at build time. The generated `pkg/` is
+      # gitignored, so CI rebuilds it before `pnpm check` runs vite.
+      # Uses a dedicated nix devShell (separate flake) for rust +
+      # wasm-bindgen-cli + binaryen + clang/llvm-ar for ring's C glue.
+      - name: Cache iroh-poc cargo state
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/app/main/iroh-poc/target
+          key: ${{ runner.os }}-iroh-poc-cargo-${{ hashFiles('packages/app/main/iroh-poc/Cargo.lock', 'packages/app/main/iroh-poc/rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-iroh-poc-cargo-
+      - name: Build iroh-poc wasm
+        shell: nix develop ./packages/app/main/iroh-poc --command bash -eo pipefail {0}
+        working-directory: packages/app/main/iroh-poc
+        run: |
+          cargo build --release
+          wasm-bindgen ./target/wasm32-unknown-unknown/release/iroh_poc.wasm \
+            --out-dir=pkg --weak-refs --target=web
+          wasm-opt --enable-nontrapping-float-to-int --enable-bulk-memory \
+            --strip-debug --strip-dwarf -Oz \
+            -o pkg/iroh_poc_bg.wasm pkg/iroh_poc_bg.wasm
       # `pnpm check` fans out every workspace check (lint, typecheck,
       # tests, knip, fmt, workspace validators, build) through turbo.
       # Cache hits skip work entirely. The build is part of `check`,
