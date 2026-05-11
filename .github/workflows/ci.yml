@@ -82,18 +82,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-iroh-poc-cargo-
       - name: Build iroh-poc wasm
-        # `shell:` is evaluated _after_ `working-directory` cd's into the
-        # crate, so the flake reference has to be absolute — a relative
-        # path would resolve to `iroh-poc/iroh-poc` and fail.
-        shell: nix develop ${{ github.workspace }}/packages/app/main/iroh-poc --command bash -eo pipefail {0}
-        working-directory: packages/app/main/iroh-poc
+        # Job-default shell is `nix develop --command bash` against the
+        # root flake. The crate needs a different toolchain (separate
+        # flake), so cd in and invoke `nix develop` again — nested
+        # devShells are fine, and `${{ github.workspace }}` isn't
+        # allowed in the `shell:` field, ruling out an override there.
         run: |
-          cargo build --release
-          wasm-bindgen ./target/wasm32-unknown-unknown/release/iroh_poc.wasm \
-            --out-dir=pkg --weak-refs --target=web
-          wasm-opt --enable-nontrapping-float-to-int --enable-bulk-memory \
-            --strip-debug --strip-dwarf -Oz \
-            -o pkg/iroh_poc_bg.wasm pkg/iroh_poc_bg.wasm
+          cd packages/app/main/iroh-poc
+          nix develop --command bash -eo pipefail -c '
+            cargo build --release
+            wasm-bindgen ./target/wasm32-unknown-unknown/release/iroh_poc.wasm \
+              --out-dir=pkg --weak-refs --target=web
+            wasm-opt --enable-nontrapping-float-to-int --enable-bulk-memory \
+              --strip-debug --strip-dwarf -Oz \
+              -o pkg/iroh_poc_bg.wasm pkg/iroh_poc_bg.wasm
+          '
       # `pnpm check` fans out every workspace check (lint, typecheck,
       # tests, knip, fmt, workspace validators, build) through turbo.
       # Cache hits skip work entirely. The build is part of `check`,
