@@ -422,12 +422,30 @@ const SessionCard: Component<SessionCardProps> = (props) => {
     props.onSend();
   };
 
+  let messageListEl: HTMLDivElement | undefined;
+
+  // Scroll the message list to the bottom whenever a new entry lands
+  // so the latest message is always visible without manual scroll.
+  // The `void` read tracks `messages.length`; the `scrollHeight` read
+  // happens after Solid has flushed the DOM.
+  createEffect(() => {
+    void props.session.messages.length;
+    if (messageListEl) {
+      messageListEl.scrollTop = messageListEl.scrollHeight;
+    }
+  });
+
   return (
     <Card as="section" size={2} variant="surface">
       <Flex as="div" direction="column" gap={3}>
         <Flex as="header" align="center" justify="between" gap={3}>
-          <Flex as="div" direction="column" gap={1}>
-            <Flex as="div" align="center" gap={2}>
+          <Flex
+            as="div"
+            direction="column"
+            gap={1}
+            class={css.sessionHeaderInfo}
+          >
+            <Flex as="div" align="center" gap={2} wrap="wrap">
               <Heading as="h3" size={3} selectable>
                 {truncate(props.session.peerId)}
               </Heading>
@@ -446,7 +464,13 @@ const SessionCard: Component<SessionCardProps> = (props) => {
                 {props.session.status}
               </Badge>
             </Flex>
-            <Text as="span" size={1} color="lowContrast" selectable>
+            <Text
+              as="span"
+              size={1}
+              color="lowContrast"
+              selectable
+              class={css.peerIdFull}
+            >
               {props.session.peerId}
             </Text>
           </Flex>
@@ -467,6 +491,9 @@ const SessionCard: Component<SessionCardProps> = (props) => {
           as="div"
           direction="column"
           gap={2}
+          ref={(el) => {
+            messageListEl = el;
+          }}
           class={css.messageList}
           aria-live="polite"
         >

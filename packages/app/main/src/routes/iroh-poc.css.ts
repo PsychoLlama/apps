@@ -27,6 +27,23 @@ export const messageList = style({
   background: neutral.solid[2],
   border: `1px solid ${neutral.solid[5]}`,
   overflowY: 'auto',
+  // Honor `scrollIntoView` and scrollTop writes triggered by the
+  // auto-scroll effect without yanking the page when the list is
+  // already pinned to the bottom.
+  scrollBehavior: 'smooth',
+});
+
+// Long peer ids and badges shouldn't push the session header past
+// the viewport on mobile — `min-width: 0` lets the column shrink
+// below its content's intrinsic width inside its row-flex parent.
+export const sessionHeaderInfo = style({
+  minWidth: 0,
+});
+
+// 64-char hex peer ids have no natural break points, so the browser
+// won't wrap them without an explicit hint.
+export const peerIdFull = style({
+  wordBreak: 'break-all',
 });
 
 const messageRow = style({
