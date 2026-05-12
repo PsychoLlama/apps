@@ -10,8 +10,6 @@ jobs:
       contents: read
       deployments: write
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
       # Force ANSI color in tools that gate on TTY detection. `FORCE_COLOR`
       # covers the node ecosystem (chalk, picocolors, kleur, supports-color)
       # plus turbo and wrangler; `CLICOLOR_FORCE` covers Go tools like
@@ -80,6 +78,9 @@ jobs:
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'
         working-directory: packages/app/main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: pnpm exec wrangler deploy
 
       # Uploads a preview version on same-repo pull requests without
@@ -90,6 +91,8 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         working-directory: packages/app/main
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           SUBDOMAIN: ${{ vars.WORKERS_DEV_SUBDOMAIN }}
         run: |
