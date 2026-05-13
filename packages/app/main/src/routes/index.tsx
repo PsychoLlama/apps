@@ -18,9 +18,8 @@ interface AppEntry {
 }
 
 /**
- * Hard-coded launcher inventory. Manually maintained per
- * `docs/launcher/vision.md`. Add an entry only when the app is
- * actually navigable — there is no "coming soon" tier.
+ * Hard-coded launcher inventory. Add an entry only when the target
+ * is actually navigable — there is no "coming soon" tier.
  */
 const APPS: ReadonlyArray<AppEntry> = [
   {
