@@ -10,7 +10,7 @@
   "repository": "github:PsychoLlama/apps",
   "packageManager": "pnpm@11.1.0",
   "scripts": {
-    "prepare": "workspace patch-workerd && panda codegen --silent",
+    "prepare": "workspace patch-workerd",
     "build": "turbo run bundle",
     "check": "turbo run lint typecheck test test:browser knip:dev knip:production fmt-check workspace-check bundle",
     "dev": "turbo run dev --filter=@app/main",

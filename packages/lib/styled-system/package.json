@@ -25,10 +25,6 @@
       "types": "./src/css/sva.d.ts",
       "import": "./src/css/sva.mjs"
     },
-    "./jsx": {
-      "types": "./src/jsx/index.d.ts",
-      "import": "./src/jsx/index.mjs"
-    },
     "./patterns": {
       "types": "./src/patterns/index.d.ts",
       "import": "./src/patterns/index.mjs"
@@ -43,9 +39,8 @@
     "./styles.css": "./styles.css"
   },
   "scripts": {
+    "codegen": "pnpm exec panda codegen --silent --cwd ../../..",
+    "prepare": "pnpm run codegen",
     "typecheck": "tsc"
-  },
-  "peerDependencies": {
-    "solid-js": "*"
   }
 }

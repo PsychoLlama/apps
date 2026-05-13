@@ -4,7 +4,8 @@
   "globalDependencies": [
     "tsconfig.json",
     "tsconfig.web.json",
-    "tsconfig.node.json"
+    "tsconfig.node.json",
+    "panda.config.ts"
   ],
   "globalPassThroughEnv": [
     "CHROMIUM_PATH",
@@ -14,8 +15,12 @@
     "CLICOLOR_FORCE"
   ],
   "tasks": {
+    "@lib/styled-system#codegen": {
+      "outputs": ["src/**"],
+      "outputLogs": "errors-only"
+    },
     "build": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^typecheck", "@lib/styled-system#codegen"],
       "outputs": [".output/**", "storybook-static/**"],
       "outputLogs": "errors-only"
     },
@@ -26,7 +31,8 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["@lib/styled-system#codegen"]
     },
     "dev:wrangler": {
       "cache": false,
@@ -34,7 +40,7 @@
       "dependsOn": ["build"]
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^typecheck", "@lib/styled-system#codegen"],
       "outputs": [],
       "outputLogs": "errors-only"
     },
@@ -49,6 +55,7 @@
       "outputLogs": "errors-only"
     },
     "//#lint": {
+      "dependsOn": ["@lib/styled-system#codegen"],
       "inputs": [
         "**/*.{ts,tsx,js,jsx,mjs,cjs}",
         "!**/node_modules/**",
@@ -80,6 +87,7 @@
       "outputLogs": "errors-only"
     },
     "//#knip:dev": {
+      "dependsOn": ["@lib/styled-system#codegen"],
       "inputs": [
         "packages/**/src/**",
         "packages/*/*/package.json",
@@ -90,6 +98,7 @@
       "outputLogs": "errors-only"
     },
     "//#knip:production": {
+      "dependsOn": ["@lib/styled-system#codegen"],
       "inputs": [
         "packages/**/src/**",
         "packages/*/*/package.json",

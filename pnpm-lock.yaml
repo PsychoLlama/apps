@@ -465,11 +465,7 @@ importers:
         specifier: '*'
         version: 1.9.12
 
-  packages/lib/styled-system:
-    dependencies:
-      solid-js:
-        specifier: '*'
-        version: 1.9.12
+  packages/lib/styled-system: {}
 
   packages/lib/theme:
     dependencies:

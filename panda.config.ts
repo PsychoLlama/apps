@@ -25,8 +25,11 @@ export default defineConfig({
   include: ['./packages/*/*/src/**/*.{ts,tsx}'],
   exclude: ['**/*.css.ts'],
 
-  // Emit `styled(...)` JSX helpers as Solid components.
-  jsxFramework: 'solid',
+  // No `jsxFramework` — the `<styled.div>` factory and JSX-form
+  // patterns (`<HStack>`, `<Box>`, etc.) are intentionally not
+  // generated. We keep the function-form `patterns/` API (`hstack({…})`
+  // returns a class string) so layout primitives are still available
+  // without forcing a parallel set of components alongside `@lib/ui`.
 
   // Output lives inside the workspace package; the package's `exports`
   // map points at these subpaths. Codegen drops files only — no
