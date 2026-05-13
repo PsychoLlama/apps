@@ -6,6 +6,11 @@ import { ErrorBoundary, Suspense } from 'solid-js';
 import ErrorBoundaryFallback from './error-boundary/error-boundary';
 import { Favicon } from './branding/favicon';
 
+// Panda CSS layer entry. PostCSS finds the `@layer ...;` declaration
+// inside and fills the layers with extracted atomic styles. No-op
+// until the first `css()` / `cva()` / `styled()` call site exists.
+import '@lib/styled-system/styles.css';
+
 export default function App() {
   return (
     <Router

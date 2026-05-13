@@ -10,7 +10,7 @@
   "repository": "github:PsychoLlama/apps",
   "packageManager": "pnpm@11.1.0",
   "scripts": {
-    "prepare": "workspace patch-workerd",
+    "prepare": "workspace patch-workerd && panda codegen --silent",
     "build": "turbo run bundle",
     "check": "turbo run lint typecheck test test:browser knip:dev knip:production fmt-check workspace-check bundle",
     "dev": "turbo run dev --filter=@app/main",
@@ -42,6 +42,7 @@
     "@eslint/config-helpers": "^0.6.0",
     "@eslint/js": "^10.0.0",
     "@iconify/json": "^2.2.460",
+    "@pandacss/dev": "catalog:",
     "@testing-library/jest-dom": "catalog:",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/vite-plugin": "^5.2.2",

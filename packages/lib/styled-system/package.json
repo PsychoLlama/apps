@@ -1,0 +1,51 @@
+{
+  "name": "@lib/styled-system",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Panda CSS generated style system (codegen output).",
+  "license": "MIT",
+  "sideEffects": [
+    "./styles.css"
+  ],
+  "exports": {
+    "./css": {
+      "types": "./src/css/index.d.ts",
+      "import": "./src/css/index.mjs"
+    },
+    "./cx": {
+      "types": "./src/css/cx.d.ts",
+      "import": "./src/css/cx.mjs"
+    },
+    "./cva": {
+      "types": "./src/css/cva.d.ts",
+      "import": "./src/css/cva.mjs"
+    },
+    "./sva": {
+      "types": "./src/css/sva.d.ts",
+      "import": "./src/css/sva.mjs"
+    },
+    "./jsx": {
+      "types": "./src/jsx/index.d.ts",
+      "import": "./src/jsx/index.mjs"
+    },
+    "./patterns": {
+      "types": "./src/patterns/index.d.ts",
+      "import": "./src/patterns/index.mjs"
+    },
+    "./tokens": {
+      "types": "./src/tokens/index.d.ts",
+      "import": "./src/tokens/index.mjs"
+    },
+    "./types": {
+      "types": "./src/types/index.d.ts"
+    },
+    "./styles.css": "./styles.css"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
+  }
+}

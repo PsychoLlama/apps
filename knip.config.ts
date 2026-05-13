@@ -13,6 +13,11 @@ const config: KnipConfig = {
         'prettier', // invoked by treefmt
         '@vanilla-extract/css', // referenced by name in eslint.config.ts
         '@iconify/json', // resolved at runtime by unplugin-icons in vitest.config.ts
+        // Knip's Panda plugin infers `postcss` as a runtime peer of
+        // `@pandacss/dev`. We never import it directly — the postcss
+        // plugin pulls it in transitively, so listing it would be
+        // misleading.
+        'postcss',
       ],
     },
     'packages/app/main': {
