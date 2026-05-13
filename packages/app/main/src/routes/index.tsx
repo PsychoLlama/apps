@@ -4,6 +4,7 @@ import { Card, Flex, Grid, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconRecord from 'virtual:icons/mdi/record-rec';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
+import IconStorybook from 'virtual:icons/mdi/book-open-page-variant-outline';
 import * as css from './index.css';
 
 interface AppEntry {
@@ -12,12 +13,13 @@ interface AppEntry {
   href: string;
   description: string;
   Icon: Component<{ width?: string; height?: string }>;
+  /** Bypass client-side routing — required for static asset paths like `/__storybook/`. */
+  external?: boolean;
 }
 
 /**
- * Hard-coded launcher inventory. Manually maintained per
- * `docs/launcher/vision.md`. Add an entry only when the app is
- * actually navigable — there is no "coming soon" tier.
+ * Hard-coded launcher inventory. Add an entry only when the target
+ * is actually navigable — there is no "coming soon" tier.
  */
 const APPS: ReadonlyArray<AppEntry> = [
   {
@@ -34,6 +36,14 @@ const APPS: ReadonlyArray<AppEntry> = [
     description: 'Compose a brandmark from a free icon set.',
     Icon: IconPalette,
   },
+  {
+    id: 'storybook',
+    name: 'Storybook',
+    href: '/__storybook/',
+    description: 'Browse the component library and design tokens.',
+    Icon: IconStorybook,
+    external: true,
+  },
 ];
 
 const Launcher = () => (
@@ -48,6 +58,7 @@ const Launcher = () => (
               <Card
                 as="a"
                 href={app.href}
+                rel={app.external ? 'external' : undefined}
                 size={2}
                 variant="surface"
                 class={css.card}
