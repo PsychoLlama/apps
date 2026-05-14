@@ -3,14 +3,13 @@ import { radius, space } from '@lib/design';
 import { swatch } from '@lib/theme/swatch';
 
 /**
- * Override for the radio group container. Replaces the default auto-
- * fit `1fr` tracks with a fixed `7.5rem` track so cards stay compact
- * and consistently sized (auto-fill needs a fixed track size; intrinsic
- * sizing functions like `max-content` or `fit-content()` aren't valid
- * in `repeat(auto-fill, ...)`).
+ * Override for the radio group container. Tightens the default min track
+ * size so theme cards stay compact, but keeps the `1fr` upper bound so
+ * every visible column shares the row width equally and the gallery
+ * reflows cleanly across breakpoints.
  */
 export const root = style({
-  gridTemplateColumns: 'repeat(auto-fill, 7.5rem)',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(7.5rem, 1fr))',
 });
 
 /**
