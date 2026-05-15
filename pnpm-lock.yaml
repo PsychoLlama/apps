@@ -207,6 +207,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell

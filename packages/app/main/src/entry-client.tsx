@@ -1,5 +1,6 @@
 // @refresh reload
 import { mount, StartClient } from '@solidjs/start/client';
+import { createLogger } from '@lib/observability';
 import workerUrl from '@app/service-worker?worker&url';
 
 mount(() => <StartClient />, document.getElementById('app')!);
@@ -9,8 +10,17 @@ mount(() => <StartClient />, document.getElementById('app')!);
 // and the production edge (`public/_headers`) both set
 // `Service-Worker-Allowed: /` to widen scope to the whole origin.
 if ('serviceWorker' in navigator) {
-  void navigator.serviceWorker.register(workerUrl, {
-    type: 'module',
-    scope: '/',
-  });
+  const logger = createLogger('@app/main').namespace('service-worker');
+  navigator.serviceWorker
+    .register(workerUrl, { type: 'module', scope: '/' })
+    .then(
+      (registration) => {
+        logger.info('Registered.', { scope: registration.scope });
+      },
+      (error) => {
+        logger.error('Registration failed.', {
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+      },
+    );
 }
