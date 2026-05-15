@@ -1,0 +1,20 @@
+{
+  "name": "@lib/observability",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Structured logging built on @holz/logger.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@holz/core": "^0.8.2",
+    "@holz/log-collector": "^0.8.2",
+    "@holz/logger": "^0.8.2"
+  }
+}
