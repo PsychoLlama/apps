@@ -14,7 +14,7 @@ import { theme } from './theme-store';
 export const syncThemeAttribute = (): void => {
   createRoot(() => {
     createEffect(() => {
-      document.documentElement.setAttribute(THEME_ATTRIBUTE, theme.id);
+      document.documentElement.dataset[THEME_ATTRIBUTE] = theme.id;
     });
   });
 };

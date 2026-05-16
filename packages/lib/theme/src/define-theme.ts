@@ -34,5 +34,5 @@ export const defineTheme = (
     text: { 11: gray.solid[11], 12: gray.solid[12] },
   };
 
-  setThemeColors(config, `:root[${THEME_ATTRIBUTE}="${id}"]`);
+  setThemeColors(config, `:root[data-${THEME_ATTRIBUTE}="${id}"]`);
 };
