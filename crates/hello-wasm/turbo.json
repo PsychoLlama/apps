@@ -1,0 +1,10 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": ["src/**", "Cargo.toml", "$TURBO_ROOT$/Cargo.lock"],
+      "outputs": ["dist/**"]
+    }
+  }
+}

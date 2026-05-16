@@ -15,7 +15,7 @@
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^typecheck", "^build"],
       "outputs": [".output/**", "storybook-static/**"],
       "outputLogs": "errors-only"
     },

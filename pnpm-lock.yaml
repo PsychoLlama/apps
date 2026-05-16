@@ -106,7 +106,7 @@ importers:
         version: 1.20.1
       '@vanilla-extract/vite-plugin':
         specifier: ^5.2.2
-        version: 5.2.2(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(yaml@2.8.4)
+        version: 5.2.2(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(yaml@2.8.4)
       '@vitest/browser':
         specifier: 'catalog:'
         version: 4.1.6(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(vitest@4.1.6)
@@ -161,6 +161,8 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.6(@types/node@25.5.0)(@vitest/browser-playwright@4.1.6)(@vitest/coverage-v8@4.1.6)(jsdom@29.1.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))
+
+  crates/hello-wasm: {}
 
   packages/app/experimental:
     dependencies:
@@ -267,7 +269,7 @@ importers:
         version: 14.6.1(@testing-library/dom@10.4.1)
       '@vanilla-extract/vite-plugin':
         specifier: ^5.2.2
-        version: 5.2.2(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(yaml@2.8.4)
+        version: 5.2.2(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(yaml@2.8.4)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -278,7 +280,21 @@ importers:
         specifier: ^4.65.0
         version: 4.91.0
 
-  packages/app/service-worker: {}
+  packages/app/service-worker:
+    dependencies:
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
+      '@wasm/hello':
+        specifier: workspace:*
+        version: link:../../../crates/hello-wasm
+    devDependencies:
+      '@dev/build':
+        specifier: workspace:*
+        version: link:../../dev/build
+      vite:
+        specifier: 'catalog:'
+        version: 7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)
 
   packages/app/settings:
     dependencies:
@@ -394,7 +410,7 @@ importers:
         version: 1.20.1
       '@vanilla-extract/vite-plugin':
         specifier: ^5.2.2
-        version: 5.2.2(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(yaml@2.8.4)
+        version: 5.2.2(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(yaml@2.8.4)
       '@vitest/browser':
         specifier: 'catalog:'
         version: 4.1.6(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(vitest@4.1.6)
@@ -3136,9 +3152,6 @@ packages:
 
   citty@0.1.6:
     resolution: {integrity: sha512-tskPPKEs8D2KPafUypv2gxwJP8h/OaJmC82QQGGDQcHvXX43xF2VDACcJVmZ0EuSxkpO9Kc4MlrA3q0+FG58AQ==}
-
-  citty@0.2.1:
-    resolution: {integrity: sha512-kEV95lFBhQgtogAPlQfJJ0WGVSokvLr/UEoFPiKKOXF7pl98HfUVUD0ejsuTCld/9xH9vogSywZ5KqHzXrZpqg==}
 
   citty@0.2.2:
     resolution: {integrity: sha512-+6vJA3L98yv+IdfKGZHBNiGW5KHn22e/JwID0Strsz8h4S/csAu/OuICwxrg44k5MRiZHWIo8XXuJgQTriRP4w==}
@@ -7614,11 +7627,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vanilla-extract/compiler@0.7.0(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)':
+  '@vanilla-extract/compiler@0.7.0(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)':
     dependencies:
       '@vanilla-extract/css': 1.20.1
       '@vanilla-extract/integration': 8.0.9
-      vite: 7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)
+      vite: 8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)
       vite-node: 6.0.0(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)
     transitivePeerDependencies:
       - '@types/node'
@@ -7627,7 +7640,6 @@ snapshots:
       - esbuild
       - jiti
       - less
-      - lightningcss
       - sass
       - sass-embedded
       - stylus
@@ -7675,9 +7687,9 @@ snapshots:
 
   '@vanilla-extract/private@1.0.9': {}
 
-  '@vanilla-extract/vite-plugin@5.2.2(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(yaml@2.8.4)':
+  '@vanilla-extract/vite-plugin@5.2.2(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))(yaml@2.8.4)':
     dependencies:
-      '@vanilla-extract/compiler': 0.7.0(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)
+      '@vanilla-extract/compiler': 0.7.0(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)
       '@vanilla-extract/integration': 8.0.9
       vite: 7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)
     transitivePeerDependencies:
@@ -7687,7 +7699,6 @@ snapshots:
       - esbuild
       - jiti
       - less
-      - lightningcss
       - sass
       - sass-embedded
       - stylus
@@ -8170,8 +8181,6 @@ snapshots:
   citty@0.1.6:
     dependencies:
       consola: 3.4.2
-
-  citty@0.2.1: {}
 
   citty@0.2.2: {}
 
@@ -9566,7 +9575,7 @@ snapshots:
       archiver: 7.0.1
       c12: 3.3.3(magicast@0.5.2)
       chokidar: 5.0.0
-      citty: 0.2.1
+      citty: 0.2.2
       compatx: 0.2.0
       confbox: 0.2.4
       consola: 3.4.2
@@ -9690,7 +9699,7 @@ snapshots:
 
   nypm@0.6.5:
     dependencies:
-      citty: 0.2.1
+      citty: 0.2.2
       pathe: 2.0.3
       tinyexec: 1.1.2
 
@@ -10470,7 +10479,7 @@ snapshots:
       esbuild: 0.27.7
       open: 10.2.0
       recast: 0.23.11
-      semver: 7.7.4
+      semver: 7.8.0
       use-sync-external-store: 1.6.0(react@19.2.4)
       ws: 8.20.0
     optionalDependencies:

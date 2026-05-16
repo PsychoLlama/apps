@@ -10,5 +10,13 @@
   },
   "scripts": {
     "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/observability": "workspace:*",
+    "@wasm/hello": "workspace:*"
+  },
+  "devDependencies": {
+    "@dev/build": "workspace:*",
+    "vite": "catalog:"
   }
 }
