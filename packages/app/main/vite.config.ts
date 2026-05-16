@@ -6,7 +6,6 @@ import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
 import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets';
-import { cssAsset } from '@dev/build/vite-plugin/css-asset';
 import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
 import { instrumentationScope } from '@dev/build/vite-plugin/instrumentation-scope';
 import { svgToPng } from '@dev/build/vite-plugin/svg-to-png';
@@ -60,7 +59,6 @@ export default defineConfig({
         },
       },
     }),
-    cssAsset(),
     iconPacks(),
     svgToPng(),
     vanillaExtractPlugin(),

@@ -22,18 +22,21 @@ export interface ThemeColorConfig {
 }
 
 /**
- * Bind concrete palettes to the color theme. Each call is intended to
- * live in its own `.css.ts` bundle so that the host can emit one CSS
- * file per accent and pick at load time which bundle to apply — only
- * one bundle's `:root` rule reaches the browser per page.
+ * Bind concrete palettes to the color theme. Multiple calls coexist by
+ * scoping each to a different selector — `:root` for the page default,
+ * `:root[data-theme="<id>"]` for an override that wins by specificity
+ * when the attribute is set.
  *
  * Each semantic role (`accent`, `neutral`, `danger`, `warning`, `success`)
  * takes one full `ColorPalette` covering solid + alpha + meta tokens.
  * Text comes from steps 11–12 of an untinted scale. Background tokens
  * are derived from the neutral palette. Surface and overlay are constants.
  */
-export const setThemeColors = (config: ThemeColorConfig): void => {
-  globalStyle(':root', {
+export const setThemeColors = (
+  config: ThemeColorConfig,
+  selector: string = ':root',
+): void => {
+  globalStyle(selector, {
     vars: {
       ...aliasPalette(accent, config.accent),
       ...aliasPalette(neutral, config.neutral),

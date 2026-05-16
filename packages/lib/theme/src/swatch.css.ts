@@ -16,13 +16,9 @@ import type { ThemeId } from './catalog';
 
 /**
  * Per-theme accent swatch (Radix scale `9`), pre-wrapped in
- * `light-dark(...)`. Drop directly into a Vanilla Extract style value.
- *
- * Lives in a `.css.ts` sibling of the catalog so palette imports stay
- * compile-time only — `.css.ts` callers (e.g. `styleVariants(swatch,
- * ...)`) reach this directly without dragging the runtime catalog or
- * its `?css-asset` imports through Vanilla Extract's vite-node
- * compiler, which doesn't load the `css-asset` plugin.
+ * `light-dark(...)`. Drop directly into a Vanilla Extract style value
+ * — e.g. `styleVariants(swatch, ...)` to paint a per-theme color
+ * directly into a CSS rule.
  */
 export const swatch: Record<ThemeId, string> = {
   blue: lightDark(blueLight[9], blueDark[9]),

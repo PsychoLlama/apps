@@ -1,7 +1,7 @@
 import { MetaProvider } from '@solidjs/meta';
 import { Router } from '@solidjs/router';
 import { FileRoutes } from '@solidjs/start/router';
-import { ThemeStylesheet } from '@lib/theme';
+import { ThemeAttribute } from '@lib/theme';
 import { ErrorBoundary, Suspense } from 'solid-js';
 import ErrorBoundaryFallback from './error-boundary/error-boundary';
 import { Favicon } from './branding/favicon';
@@ -11,7 +11,7 @@ export default function App() {
     <Router
       root={(props) => (
         <MetaProvider>
-          <ThemeStylesheet />
+          <ThemeAttribute />
           <Favicon />
           <ErrorBoundary
             fallback={(error: unknown, reset) => (
