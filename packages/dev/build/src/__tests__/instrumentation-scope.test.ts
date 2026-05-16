@@ -1,0 +1,175 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import type { Plugin } from 'vite';
+import { instrumentationScope } from '../vite-plugin/instrumentation-scope.ts';
+
+// Assemble the marker at runtime so this source file itself doesn't
+// contain the literal token. The Vite plugin we're testing rewrites
+// any module that matches it — including this one when vitest loads
+// it — which would mangle fixture strings before the assertions run.
+const MARKER = ['import', 'meta', 'INSTRUMENTATION_SCOPE'].join('.');
+
+const fakeContext = {
+  error: (message: string) => {
+    throw new Error(message);
+  },
+};
+
+const callTransform = (plugin: Plugin, code: string, id: string) => {
+  const hook = plugin.transform as
+    | ((this: typeof fakeContext, code: string, id: string) => unknown)
+    | {
+        handler: (
+          this: typeof fakeContext,
+          code: string,
+          id: string,
+        ) => unknown;
+      };
+  const fn = typeof hook === 'function' ? hook : hook.handler;
+  return fn.call(fakeContext, code, id) as
+    | { code: string; map: null }
+    | undefined;
+};
+
+describe('instrumentationScope', () => {
+  let tmp: string;
+
+  beforeEach(() => {
+    tmp = mkdtempSync(join(tmpdir(), 'instrumentation-scope-'));
+  });
+
+  afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true });
+  });
+
+  const seedPackage = (relPath: string, name: string): { srcDir: string } => {
+    const pkgDir = join(tmp, relPath);
+    const srcDir = join(pkgDir, 'src');
+    mkdirSync(srcDir, { recursive: true });
+    writeFileSync(
+      join(pkgDir, 'package.json'),
+      JSON.stringify({ name, private: true }),
+    );
+    return { srcDir };
+  };
+
+  it('skips modules that do not reference the marker', () => {
+    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const file = join(srcDir, 'index.ts');
+    writeFileSync(file, 'export const x = 1;');
+
+    const result = callTransform(
+      instrumentationScope(),
+      'export const x = 1;',
+      file,
+    );
+
+    expect(result).toBeUndefined();
+  });
+
+  it('injects [pkgName, ...segments] for a top-level file', () => {
+    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const file = join(srcDir, 'entry-client.tsx');
+    writeFileSync(file, 'export {};');
+
+    const result = callTransform(
+      instrumentationScope(),
+      `const s = ${MARKER};`,
+      file,
+    );
+
+    expect(result?.code).toBe('const s = ["@scope/pkg","entry-client"];');
+  });
+
+  it('emits one segment per directory under src/', () => {
+    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const file = join(srcDir, 'routes', 'about', 'index.tsx');
+    mkdirSync(join(srcDir, 'routes', 'about'), { recursive: true });
+    writeFileSync(file, 'export {};');
+
+    const result = callTransform(
+      instrumentationScope(),
+      `log(${MARKER});`,
+      file,
+    );
+
+    expect(result?.code).toBe('log(["@scope/pkg","routes","about","index"]);');
+  });
+
+  it('strips only the final extension (preserves dotted basenames)', () => {
+    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const file = join(srcDir, '__tests__', 'foo.test.ts');
+    mkdirSync(join(srcDir, '__tests__'), { recursive: true });
+    writeFileSync(file, 'export {};');
+
+    const result = callTransform(instrumentationScope(), `x(${MARKER});`, file);
+
+    expect(result?.code).toBe('x(["@scope/pkg","__tests__","foo.test"]);');
+  });
+
+  it('strips query and hash from the id before resolving', () => {
+    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const file = join(srcDir, 'entry-client.tsx');
+    writeFileSync(file, 'export {};');
+
+    const result = callTransform(
+      instrumentationScope(),
+      `x(${MARKER});`,
+      `${file}?worker&url`,
+    );
+
+    expect(result?.code).toBe('x(["@scope/pkg","entry-client"]);');
+  });
+
+  it('skips virtual modules (id starting with \\0)', () => {
+    const result = callTransform(
+      instrumentationScope(),
+      `x(${MARKER});`,
+      '\0virtual:something',
+    );
+
+    expect(result).toBeUndefined();
+  });
+
+  it('errors when the marker appears outside any package', () => {
+    expect(() =>
+      callTransform(
+        instrumentationScope(),
+        `x(${MARKER});`,
+        join(tmp, 'orphan.ts'),
+      ),
+    ).toThrow(/no package\.json/);
+  });
+
+  it('errors when the file is not under the package src/ directory', () => {
+    const pkgDir = join(tmp, 'pkg');
+    mkdirSync(pkgDir, { recursive: true });
+    writeFileSync(
+      join(pkgDir, 'package.json'),
+      JSON.stringify({ name: '@scope/pkg' }),
+    );
+    const file = join(pkgDir, 'vite.config.ts');
+    writeFileSync(file, 'export default {};');
+
+    expect(() =>
+      callTransform(instrumentationScope(), `x(${MARKER});`, file),
+    ).toThrow(/not under/);
+  });
+
+  it('replaces every occurrence in a single module', () => {
+    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const file = join(srcDir, 'index.ts');
+    writeFileSync(file, 'export {};');
+
+    const result = callTransform(
+      instrumentationScope(),
+      `a(${MARKER}); b(${MARKER});`,
+      file,
+    );
+
+    expect(result?.code).toBe(
+      'a(["@scope/pkg","index"]); b(["@scope/pkg","index"]);',
+    );
+  });
+});

@@ -20,29 +20,29 @@ describe('createLogger', () => {
     unsetGlobalLogCollector();
   });
 
-  it('tags logs with the supplied owner', () => {
+  it('tags logs with each scope segment as an origin entry', () => {
     const logs = captureLogs();
 
-    createLogger('observability-test').info('hello');
+    createLogger(['@lib/observability', 'create-logger']).info('hello');
 
     expect(logs).toHaveLength(1);
     expect(logs[0].message).toBe('hello');
-    expect(logs[0].origin).toEqual(['observability-test']);
+    expect(logs[0].origin).toEqual(['@lib/observability', 'create-logger']);
   });
 
   it('extends origin via .namespace()', () => {
     const logs = captureLogs();
 
-    createLogger('observability-test').namespace('subsystem').warn('uh oh');
+    createLogger(['@lib/observability']).namespace('subsystem').warn('uh oh');
 
-    expect(logs[0].origin).toEqual(['observability-test', 'subsystem']);
+    expect(logs[0].origin).toEqual(['@lib/observability', 'subsystem']);
     expect(logs[0].level).toBe(40);
   });
 
   it('forwards structured context', () => {
     const logs = captureLogs();
 
-    createLogger('observability-test').error('boom', { userId: 42 });
+    createLogger(['@lib/observability']).error('boom', { userId: 42 });
 
     expect(logs[0].context).toEqual({ userId: 42 });
   });

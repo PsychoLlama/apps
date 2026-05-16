@@ -10,7 +10,9 @@ mount(() => <StartClient />, document.getElementById('app')!);
 // and the production edge (`public/_headers`) both set
 // `Service-Worker-Allowed: /` to widen scope to the whole origin.
 if ('serviceWorker' in navigator) {
-  const logger = createLogger('@app/main').namespace('service-worker');
+  const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE).namespace(
+    'service-worker',
+  );
   navigator.serviceWorker
     .register(workerUrl, { type: 'module', scope: '/' })
     .then(

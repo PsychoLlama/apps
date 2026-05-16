@@ -5,8 +5,10 @@ import Icons from 'unplugin-icons/vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
 import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
+import { instrumentationScope } from '@dev/build/vite-plugin/instrumentation-scope';
 
 const sharedPlugins = [
+  instrumentationScope(),
   solid(),
   Icons({ compiler: 'solid' }),
   iconPacks(),
