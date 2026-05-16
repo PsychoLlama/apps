@@ -12,6 +12,8 @@
     "./vite-plugin/css-asset-types": "./src/vite-plugin/css-asset-types.d.ts",
     "./vite-plugin/icon-packs": "./src/vite-plugin/icon-packs/index.ts",
     "./vite-plugin/icon-packs-types": "./src/vite-plugin/icon-packs-types.d.ts",
+    "./vite-plugin/instrumentation-scope": "./src/vite-plugin/instrumentation-scope.ts",
+    "./vite-plugin/instrumentation-scope-types": "./src/vite-plugin/instrumentation-scope-types.d.ts",
     "./vite-plugin/svg-to-png": "./src/vite-plugin/svg-to-png.ts",
     "./vite-plugin/svg-to-png-types": "./src/vite-plugin/svg-to-png-types.d.ts"
   },

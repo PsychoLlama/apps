@@ -207,6 +207,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
@@ -429,6 +432,18 @@ importers:
         specifier: '*'
         version: 1.9.12
 
+  packages/lib/observability:
+    dependencies:
+      '@holz/core':
+        specifier: ^0.8.2
+        version: 0.8.2
+      '@holz/log-collector':
+        specifier: ^0.8.2
+        version: 0.8.2(@holz/core@0.8.2)
+      '@holz/logger':
+        specifier: ^0.8.2
+        version: 0.8.2
+
   packages/lib/shell:
     dependencies:
       '@lib/design':
@@ -491,7 +506,7 @@ importers:
         version: 1.9.12
       storybook-solidjs-vite:
         specifier: 'catalog:'
-        version: 10.0.12(@testing-library/jest-dom@6.9.1)(esbuild@0.27.7)(rollup@4.60.3)(solid-js@1.9.12)(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))
+        version: 10.0.12(@testing-library/jest-dom@6.9.1)(esbuild@0.27.7)(rollup@4.60.3)(solid-js@1.9.12)(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3)(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4))
 
 packages:
 
@@ -1291,6 +1306,42 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@holz/ansi-terminal-backend@0.8.2':
+    resolution: {integrity: sha512-57lVQyhYtqFDHM09KbF1rUuQHh5s9G/QlDkDKpbprSXKO80zGrYMqOIbazH0HakBOtAeXViurNWm10ilmg4+2w==}
+    peerDependencies:
+      '@holz/core': ^0.8.0
+
+  '@holz/console-backend@0.8.2':
+    resolution: {integrity: sha512-vlR0Pck5FiL9tReUXwbLtgmL/UZiPRpuuYRxJxSkZyFMBvwllfYN/o2uWsfvLxdHUDB+zm9xNuOXwlxxeIgtDA==}
+    peerDependencies:
+      '@holz/core': ^0.8.0
+
+  '@holz/core@0.8.2':
+    resolution: {integrity: sha512-UfHZ0vU7mywoeAcnEEE7rc2Y+C948EuaaWaJcpzwYqlLD/Vcv3mBpwE0xbbrRlqEOd8rz+X00GnCFJ4X8f/xJQ==}
+
+  '@holz/env-filter@0.8.2':
+    resolution: {integrity: sha512-PDWGi1DEYkXzChXM90oScrxv30YpfBJNjcyCZXMeG3P0Ff80Ro9TYSqzGZUuz5OhtH1TWXDnxTKfrmv1vzPmiA==}
+    peerDependencies:
+      '@holz/core': ^0.8.0
+
+  '@holz/log-collector@0.8.2':
+    resolution: {integrity: sha512-qNN0e93Ksjt5fKAFcyXovmyy8t1tB9dpqN0wGWzFCiAgFxku7p95GJjeFISFGlXZ3jPEbwuHzy6FIHhQEl7GPg==}
+    peerDependencies:
+      '@holz/core': ^0.8.0
+
+  '@holz/logger@0.8.2':
+    resolution: {integrity: sha512-Pdq7y9IR2oR3t1r36VVXCvHgXdsyzDR8S88VyVSOMuIm2+9zJHTadQCWMMSMUcJ7xHqlxy1YN5ETmUcrMFzxxw==}
+
+  '@holz/pattern-filter@0.8.2':
+    resolution: {integrity: sha512-MA/zqXyYjMUMozqQy80+xJtPUQ3hIGWGqfn3/IOHaGRxXp+GbHJhDVzttJupH+18Da8hoT7SPSlurQB1KKAH0w==}
+    peerDependencies:
+      '@holz/core': ^0.8.0
+
+  '@holz/stream-backend@0.8.2':
+    resolution: {integrity: sha512-soBh/0FQ9nGSpRho03N7XvuN1LpzID+ABEcCjdds62VmI2aWtNiiRwk48POx45OPuSNmrwXrQqpGDUot3xPw/A==}
+    peerDependencies:
+      '@holz/core': ^0.8.0
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -6338,6 +6389,42 @@ snapshots:
 
   '@exodus/bytes@1.15.0': {}
 
+  '@holz/ansi-terminal-backend@0.8.2(@holz/core@0.8.2)':
+    dependencies:
+      '@holz/core': 0.8.2
+
+  '@holz/console-backend@0.8.2(@holz/core@0.8.2)':
+    dependencies:
+      '@holz/core': 0.8.2
+
+  '@holz/core@0.8.2': {}
+
+  '@holz/env-filter@0.8.2(@holz/core@0.8.2)':
+    dependencies:
+      '@holz/core': 0.8.2
+      '@holz/pattern-filter': 0.8.2(@holz/core@0.8.2)
+
+  '@holz/log-collector@0.8.2(@holz/core@0.8.2)':
+    dependencies:
+      '@holz/core': 0.8.2
+
+  '@holz/logger@0.8.2':
+    dependencies:
+      '@holz/ansi-terminal-backend': 0.8.2(@holz/core@0.8.2)
+      '@holz/console-backend': 0.8.2(@holz/core@0.8.2)
+      '@holz/core': 0.8.2
+      '@holz/env-filter': 0.8.2(@holz/core@0.8.2)
+      '@holz/log-collector': 0.8.2(@holz/core@0.8.2)
+      '@holz/stream-backend': 0.8.2(@holz/core@0.8.2)
+
+  '@holz/pattern-filter@0.8.2(@holz/core@0.8.2)':
+    dependencies:
+      '@holz/core': 0.8.2
+
+  '@holz/stream-backend@0.8.2(@holz/core@0.8.2)':
+    dependencies:
+      '@holz/core': 0.8.2
+
   '@humanfs/core@0.19.1': {}
 
   '@humanfs/node@0.16.7':
@@ -6478,6 +6565,14 @@ snapshots:
       glob: 13.0.6
       react-docgen-typescript: 2.4.0(typescript@6.0.3)
       vite: 7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)
+    optionalDependencies:
+      typescript: 6.0.3
+
+  '@joshwooding/vite-plugin-react-docgen-typescript@0.7.0(typescript@6.0.3)(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4))':
+    dependencies:
+      glob: 13.0.6
+      react-docgen-typescript: 2.4.0(typescript@6.0.3)
+      vite: 8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)
     optionalDependencies:
       typescript: 6.0.3
 
@@ -7203,6 +7298,17 @@ snapshots:
       - rollup
       - webpack
 
+  '@storybook/builder-vite@10.3.5(esbuild@0.27.7)(rollup@4.60.3)(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4))':
+    dependencies:
+      '@storybook/csf-plugin': 10.3.5(esbuild@0.27.7)(rollup@4.60.3)(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4))
+      storybook: 10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      ts-dedent: 2.2.0
+      vite: 8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)
+    transitivePeerDependencies:
+      - esbuild
+      - rollup
+      - webpack
+
   '@storybook/csf-plugin@10.3.5(esbuild@0.27.7)(rollup@4.60.3)(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4))':
     dependencies:
       storybook: 10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -7211,6 +7317,15 @@ snapshots:
       esbuild: 0.27.7
       rollup: 4.60.3
       vite: 7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)
+
+  '@storybook/csf-plugin@10.3.5(esbuild@0.27.7)(rollup@4.60.3)(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4))':
+    dependencies:
+      storybook: 10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      unplugin: 2.3.11
+    optionalDependencies:
+      esbuild: 0.27.7
+      rollup: 4.60.3
+      vite: 8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)
 
   '@storybook/global@5.0.0': {}
 
@@ -10310,6 +10425,24 @@ snapshots:
       - supports-color
       - webpack
 
+  storybook-solidjs-vite@10.0.12(@testing-library/jest-dom@6.9.1)(esbuild@0.27.7)(rollup@4.60.3)(solid-js@1.9.12)(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@6.0.3)(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)):
+    dependencies:
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.7.0(typescript@6.0.3)(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4))
+      '@storybook/builder-vite': 10.3.5(esbuild@0.27.7)(rollup@4.60.3)(storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4))
+      '@storybook/global': 5.0.0
+      solid-js: 1.9.12
+      storybook: 10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      vite: 8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)
+      vite-plugin-solid: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4))
+    optionalDependencies:
+      typescript: 6.0.3
+    transitivePeerDependencies:
+      - '@testing-library/jest-dom'
+      - esbuild
+      - rollup
+      - supports-color
+      - webpack
+
   storybook@10.3.6(@testing-library/dom@10.4.1)(prettier@3.8.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@storybook/global': 5.0.0
@@ -10820,6 +10953,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  vite-plugin-solid@2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.12)(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)):
+    dependencies:
+      '@babel/core': 7.29.0
+      '@types/babel__core': 7.20.5
+      babel-preset-solid: 1.9.12(@babel/core@7.29.0)(solid-js@1.9.12)
+      merge-anything: 5.1.7
+      solid-js: 1.9.12
+      solid-refresh: 0.6.3(solid-js@1.9.12)
+      vite: 8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)
+      vitefu: 1.1.3(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4))
+    optionalDependencies:
+      '@testing-library/jest-dom': 6.9.1
+    transitivePeerDependencies:
+      - supports-color
+
   vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4):
     dependencies:
       esbuild: 0.27.7
@@ -10858,6 +11006,10 @@ snapshots:
   vitefu@1.1.3(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)):
     optionalDependencies:
       vite: 7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)
+
+  vitefu@1.1.3(vite@8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)):
+    optionalDependencies:
+      vite: 8.0.11(@types/node@25.5.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.4)
 
   vitest@4.1.6(@types/node@25.5.0)(@vitest/browser-playwright@4.1.6)(@vitest/coverage-v8@4.1.6)(jsdom@29.1.1)(vite@7.3.3(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.8.4)):
     dependencies:

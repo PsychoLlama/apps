@@ -26,6 +26,7 @@
     "@app/settings": "workspace:*",
     "@app/studio": "workspace:*",
     "@lib/design": "workspace:*",
+    "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
