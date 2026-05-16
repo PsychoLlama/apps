@@ -14,6 +14,21 @@ export type ThemeId =
   | 'teal'
   | 'violet';
 
+/**
+ * Attribute name on `:root` that selects which theme is active. The
+ * matching `:root[data-theme="<id>"]` rule emitted by each bundle wins
+ * by specificity. Shared so the CSS selector and the DOM/JSX writers
+ * stay in lockstep.
+ */
+export const THEME_ATTRIBUTE = 'data-theme';
+
+/**
+ * Theme rendered when nothing else is selected. The server entry
+ * stamps this onto `<html>` so the DOM never reaches the browser
+ * with zero (or multiple) themes active.
+ */
+export const DEFAULT_THEME_ID: ThemeId = 'blue';
+
 /** Display metadata for a single theme. */
 export interface ThemeEntry {
   /** Stable identifier matching the bundle filename. */

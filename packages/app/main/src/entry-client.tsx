@@ -1,7 +1,10 @@
 // @refresh reload
 import { mount, StartClient } from '@solidjs/start/client';
 import { createLogger } from '@lib/observability';
+import { syncThemeAttribute } from '@lib/theme';
 import workerUrl from '@app/service-worker?worker&url';
+
+syncThemeAttribute();
 
 mount(() => <StartClient />, document.getElementById('app')!);
 

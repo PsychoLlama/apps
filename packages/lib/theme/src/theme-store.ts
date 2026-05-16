@@ -1,5 +1,5 @@
 import { createStore, defineAction, defineStore } from '@lib/state';
-import type { ThemeId } from './catalog';
+import { DEFAULT_THEME_ID, type ThemeId } from './catalog';
 
 /** Active-theme state held in the shared registry. */
 interface ThemeState {
@@ -8,7 +8,7 @@ interface ThemeState {
 }
 
 const themeStore = defineStore<ThemeState>(() => ({
-  id: 'blue',
+  id: DEFAULT_THEME_ID,
 }));
 
 /** Readonly view of the active theme. */

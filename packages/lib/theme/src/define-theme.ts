@@ -4,17 +4,13 @@ import { amber } from '@lib/design/palette/amber';
 import { grass } from '@lib/design/palette/grass';
 import { gray } from '@lib/design/palette/gray';
 import { red } from '@lib/design/palette/red';
-import type { ThemeId } from './catalog';
-
-/** Selector that activates a theme by id: `:root[data-theme="<id>"]`. */
-const themeSelector = (id: ThemeId): string => `:root[data-theme="${id}"]`;
+import { THEME_ATTRIBUTE, type ThemeId } from './catalog';
 
 /**
  * Bind one accent + matching tinted neutral into the theme contract,
- * scoped under both `:root` (default) and `:root[data-theme="<id>"]`
- * (explicit override). The default-flagged call also writes to the
- * bare `:root` so the theme applies when no `data-theme` attribute
- * is present.
+ * scoped under `:root[data-theme="<id>"]`. Activation is driven by
+ * the attribute on `:root`, stamped by the server entry (initial) and
+ * the client sync (subsequent picker changes) — never by the bundle.
  *
  * Each `bundles/<accent>.css.ts` file calls this once. The semantic
  * roles (`danger`, `warning`, `success`) and grayscale text are held
@@ -28,7 +24,6 @@ export const defineTheme = (
   id: ThemeId,
   accent: ColorPalette,
   neutral: ColorPalette,
-  options: { default?: boolean } = {},
 ): void => {
   const config: ThemeColorConfig = {
     accent,
@@ -39,6 +34,5 @@ export const defineTheme = (
     text: { 11: gray.solid[11], 12: gray.solid[12] },
   };
 
-  if (options.default) setThemeColors(config);
-  setThemeColors(config, themeSelector(id));
+  setThemeColors(config, `:root[${THEME_ATTRIBUTE}="${id}"]`);
 };
