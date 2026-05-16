@@ -1,20 +1,17 @@
-import { createEffect, createRoot } from 'solid-js';
+import { createEffect } from 'solid-js';
 import { THEME_ATTRIBUTE } from './catalog';
 import { theme } from './theme-store';
 
 /**
- * Subscribe `theme.id` to `<html data-theme="...">` for the lifetime
- * of the client. The server entry stamps the initial attribute into
- * the prerendered HTML; this picks up where that leaves off, mirroring
- * subsequent picker changes to the DOM.
+ * Mirror `theme.id` onto `<html data-theme="...">` for the lifetime of
+ * the surrounding owner. The server entry stamps the initial attribute
+ * into prerendered HTML; this picks up subsequent picker changes.
  *
- * Call once from the client entry. The reactive root is intentionally
- * never disposed — the subscription lives as long as the app does.
+ * Call once from inside a Solid component (e.g. the app root). The
+ * effect is a no-op during SSR, so it's safe to invoke unconditionally.
  */
 export const syncThemeAttribute = (): void => {
-  createRoot(() => {
-    createEffect(() => {
-      document.documentElement.dataset[THEME_ATTRIBUTE] = theme.id;
-    });
+  createEffect(() => {
+    document.documentElement.dataset[THEME_ATTRIBUTE] = theme.id;
   });
 };
