@@ -101,10 +101,11 @@
     },
     "//#fmt-check": {
       "inputs": [
-        "**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yaml,yml,css,html}",
+        "**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yaml,yml,css,html,rs}",
         "!**/node_modules/**",
         "!**/.output/**",
         "!**/storybook-static/**",
+        "!target/**",
         "treefmt.toml"
       ],
       "outputs": [],
