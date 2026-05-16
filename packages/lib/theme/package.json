@@ -6,7 +6,8 @@
   "description": "Pre-composed color palettes using `@lib/design`.",
   "license": "MIT",
   "sideEffects": [
-    "**/*.css.ts"
+    "**/*.css.ts",
+    "src/index.ts"
   ],
   "exports": {
     ".": "./src/index.ts",
