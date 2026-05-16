@@ -7,3 +7,14 @@ edition = "2024"
 license = "MIT"
 authors = ["Jesse Gibson <JesseTheGibson@gmail.com>"]
 repository = "https://github.com/PsychoLlama/apps"
+
+# Tuned for wasm artifacts that ship to the browser: small first,
+# fast second. `lto` + `codegen-units = 1` let the optimizer see the
+# whole crate graph; `panic = "abort"` drops the unwinding tables;
+# `strip` removes debug symbols rustc emits even in release.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
