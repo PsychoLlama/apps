@@ -1,5 +1,5 @@
 {
-  "name": "@wasm/hello",
+  "name": "@lib/hello-wasm",
   "private": true,
   "type": "module",
   "version": "0.0.0",
@@ -9,6 +9,6 @@
     "./wasm": "./dist/hello_wasm.wasm"
   },
   "scripts": {
-    "build": "cargo build --release --target wasm32-unknown-unknown -p hello-wasm && mkdir -p dist && cp ../../target/wasm32-unknown-unknown/release/hello_wasm.wasm dist/"
+    "build": "cargo build --release --target wasm32-unknown-unknown -p hello-wasm && mkdir -p dist && cp ../../../target/wasm32-unknown-unknown/release/hello_wasm.wasm dist/"
   }
 }

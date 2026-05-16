@@ -8,7 +8,7 @@
  */
 
 import { createLogger } from '@lib/observability';
-import helloWasmUrl from '@wasm/hello/wasm?url';
+import helloWasmUrl from '@lib/hello-wasm/wasm?url';
 
 declare const self: ServiceWorkerGlobalScope;
 
