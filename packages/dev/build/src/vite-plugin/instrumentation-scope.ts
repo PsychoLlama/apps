@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { dirname, join, relative, sep } from 'node:path';
 import type { Plugin } from 'vite';
 
@@ -26,49 +26,51 @@ interface PackageInfo {
  * → `['@app/main', 'entry-client']`.
  */
 export const instrumentationScope = (): Plugin => {
-  // dir → nearest package.json info, or null if the dir is outside
-  // any package. Cached across transforms; never invalidated because
-  // package.json renames during a single dev session are vanishingly
-  // rare and would warrant a server restart anyway.
-  const packageCache = new Map<string, PackageInfo | null>();
+  // dir → in-flight or settled promise resolving to the nearest
+  // package.json info, or null if no ancestor has one. Stored as
+  // promises so concurrent transforms walking the same ancestry
+  // share a single filesystem probe per directory.
+  //
+  // Never invalidated: package.json renames during a session are
+  // vanishingly rare and would warrant a server restart anyway.
+  const packageCache = new Map<string, Promise<PackageInfo | null>>();
 
-  const resolvePackage = (file: string): PackageInfo | null => {
-    const visited: string[] = [];
-    let dir = dirname(file);
-
-    while (true) {
-      const cached = packageCache.get(dir);
-      if (cached !== undefined) {
-        for (const seen of visited) packageCache.set(seen, cached);
-        return cached;
-      }
-      visited.push(dir);
-
-      const pkgPath = join(dir, 'package.json');
-      if (existsSync(pkgPath)) {
-        const pkg: unknown = JSON.parse(readFileSync(pkgPath, 'utf8'));
-        if (
-          pkg &&
-          typeof pkg === 'object' &&
-          'name' in pkg &&
-          typeof pkg.name === 'string'
-        ) {
-          const info: PackageInfo = {
-            name: pkg.name,
-            srcDir: join(dir, 'src'),
-          };
-          for (const seen of visited) packageCache.set(seen, info);
-          return info;
-        }
-      }
-
-      const parent = dirname(dir);
-      if (parent === dir) {
-        for (const seen of visited) packageCache.set(seen, null);
-        return null;
-      }
-      dir = parent;
+  const readPackageName = async (dir: string): Promise<string | null> => {
+    let raw: string;
+    try {
+      raw = await readFile(join(dir, 'package.json'), 'utf8');
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      throw err;
     }
+    const pkg: unknown = JSON.parse(raw);
+    if (
+      pkg &&
+      typeof pkg === 'object' &&
+      'name' in pkg &&
+      typeof pkg.name === 'string'
+    ) {
+      return pkg.name;
+    }
+    return null;
+  };
+
+  const walkUp = async (dir: string): Promise<PackageInfo | null> => {
+    const name = await readPackageName(dir);
+    if (name !== null) return { name, srcDir: join(dir, 'src') };
+
+    const parent = dirname(dir);
+    if (parent === dir) return null;
+
+    return resolvePackage(parent);
+  };
+
+  const resolvePackage = (dir: string): Promise<PackageInfo | null> => {
+    const cached = packageCache.get(dir);
+    if (cached) return cached;
+    const pending = walkUp(dir);
+    packageCache.set(dir, pending);
+    return pending;
   };
 
   // Strip the final extension only; preserves dotted basenames
@@ -83,7 +85,7 @@ export const instrumentationScope = (): Plugin => {
     name: '@dev/build:instrumentation-scope',
     enforce: 'pre',
 
-    transform(code, id) {
+    async transform(code, id) {
       if (!code.includes(MARKER)) return undefined;
 
       // Virtual modules (rollup convention) don't map to disk.
@@ -92,7 +94,7 @@ export const instrumentationScope = (): Plugin => {
       // Vite appends `?query` and `#hash` to ids; strip for fs lookup.
       const file = id.split('?')[0].split('#')[0];
 
-      const pkg = resolvePackage(file);
+      const pkg = await resolvePackage(dirname(file));
       if (!pkg) {
         this.error(
           `${MARKER} used in ${id}, but no package.json was found above it.`,

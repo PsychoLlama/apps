@@ -16,20 +16,24 @@ const fakeContext = {
   },
 };
 
-const callTransform = (plugin: Plugin, code: string, id: string) => {
+const callTransform = (
+  plugin: Plugin,
+  code: string,
+  id: string,
+): Promise<{ code: string; map: null } | undefined> => {
   const hook = plugin.transform as
-    | ((this: typeof fakeContext, code: string, id: string) => unknown)
+    | ((this: typeof fakeContext, code: string, id: string) => Promise<unknown>)
     | {
         handler: (
           this: typeof fakeContext,
           code: string,
           id: string,
-        ) => unknown;
+        ) => Promise<unknown>;
       };
   const fn = typeof hook === 'function' ? hook : hook.handler;
-  return fn.call(fakeContext, code, id) as
-    | { code: string; map: null }
-    | undefined;
+  return fn.call(fakeContext, code, id) as Promise<
+    { code: string; map: null } | undefined
+  >;
 };
 
 describe('instrumentationScope', () => {
@@ -54,12 +58,12 @@ describe('instrumentationScope', () => {
     return { srcDir };
   };
 
-  it('skips modules that do not reference the marker', () => {
+  it('skips modules that do not reference the marker', async () => {
     const { srcDir } = seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'index.ts');
     writeFileSync(file, 'export const x = 1;');
 
-    const result = callTransform(
+    const result = await callTransform(
       instrumentationScope(),
       'export const x = 1;',
       file,
@@ -68,12 +72,12 @@ describe('instrumentationScope', () => {
     expect(result).toBeUndefined();
   });
 
-  it('injects [pkgName, ...segments] for a top-level file', () => {
+  it('injects [pkgName, ...segments] for a top-level file', async () => {
     const { srcDir } = seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'entry-client.tsx');
     writeFileSync(file, 'export {};');
 
-    const result = callTransform(
+    const result = await callTransform(
       instrumentationScope(),
       `const s = ${MARKER};`,
       file,
@@ -82,13 +86,13 @@ describe('instrumentationScope', () => {
     expect(result?.code).toBe('const s = ["@scope/pkg","entry-client"];');
   });
 
-  it('emits one segment per directory under src/', () => {
+  it('emits one segment per directory under src/', async () => {
     const { srcDir } = seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'routes', 'about', 'index.tsx');
     mkdirSync(join(srcDir, 'routes', 'about'), { recursive: true });
     writeFileSync(file, 'export {};');
 
-    const result = callTransform(
+    const result = await callTransform(
       instrumentationScope(),
       `log(${MARKER});`,
       file,
@@ -97,23 +101,27 @@ describe('instrumentationScope', () => {
     expect(result?.code).toBe('log(["@scope/pkg","routes","about","index"]);');
   });
 
-  it('strips only the final extension (preserves dotted basenames)', () => {
+  it('strips only the final extension (preserves dotted basenames)', async () => {
     const { srcDir } = seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, '__tests__', 'foo.test.ts');
     mkdirSync(join(srcDir, '__tests__'), { recursive: true });
     writeFileSync(file, 'export {};');
 
-    const result = callTransform(instrumentationScope(), `x(${MARKER});`, file);
+    const result = await callTransform(
+      instrumentationScope(),
+      `x(${MARKER});`,
+      file,
+    );
 
     expect(result?.code).toBe('x(["@scope/pkg","__tests__","foo.test"]);');
   });
 
-  it('strips query and hash from the id before resolving', () => {
+  it('strips query and hash from the id before resolving', async () => {
     const { srcDir } = seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'entry-client.tsx');
     writeFileSync(file, 'export {};');
 
-    const result = callTransform(
+    const result = await callTransform(
       instrumentationScope(),
       `x(${MARKER});`,
       `${file}?worker&url`,
@@ -122,8 +130,8 @@ describe('instrumentationScope', () => {
     expect(result?.code).toBe('x(["@scope/pkg","entry-client"]);');
   });
 
-  it('skips virtual modules (id starting with \\0)', () => {
-    const result = callTransform(
+  it('skips virtual modules (id starting with \\0)', async () => {
+    const result = await callTransform(
       instrumentationScope(),
       `x(${MARKER});`,
       '\0virtual:something',
@@ -132,17 +140,17 @@ describe('instrumentationScope', () => {
     expect(result).toBeUndefined();
   });
 
-  it('errors when the marker appears outside any package', () => {
-    expect(() =>
+  it('errors when the marker appears outside any package', async () => {
+    await expect(
       callTransform(
         instrumentationScope(),
         `x(${MARKER});`,
         join(tmp, 'orphan.ts'),
       ),
-    ).toThrow(/no package\.json/);
+    ).rejects.toThrow(/no package\.json/);
   });
 
-  it('errors when the file is not under the package src/ directory', () => {
+  it('errors when the file is not under the package src/ directory', async () => {
     const pkgDir = join(tmp, 'pkg');
     mkdirSync(pkgDir, { recursive: true });
     writeFileSync(
@@ -152,17 +160,17 @@ describe('instrumentationScope', () => {
     const file = join(pkgDir, 'vite.config.ts');
     writeFileSync(file, 'export default {};');
 
-    expect(() =>
+    await expect(
       callTransform(instrumentationScope(), `x(${MARKER});`, file),
-    ).toThrow(/not under/);
+    ).rejects.toThrow(/not under/);
   });
 
-  it('replaces every occurrence in a single module', () => {
+  it('replaces every occurrence in a single module', async () => {
     const { srcDir } = seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'index.ts');
     writeFileSync(file, 'export {};');
 
-    const result = callTransform(
+    const result = await callTransform(
       instrumentationScope(),
       `a(${MARKER}); b(${MARKER});`,
       file,

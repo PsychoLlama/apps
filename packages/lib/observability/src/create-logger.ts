@@ -1,21 +1,6 @@
 import baseLogger from '@holz/logger';
 import type { Logger } from '@holz/core';
 
-declare global {
-  interface ImportMeta {
-    /**
-     * Build-time scope tag injected by the `instrumentationScope`
-     * Vite plugin. Head is the importing module's
-     * `package.json#name`; remaining elements are the extensionless
-     * path relative to that package's `src/` directory, one segment
-     * per array entry.
-     *
-     * @example `['@app/main', 'entry-client']`
-     */
-    readonly INSTRUMENTATION_SCOPE: readonly string[];
-  }
-}
-
 /**
  * Create a namespaced logger. Pass `import.meta.INSTRUMENTATION_SCOPE`
  * — the build plugin fills it with `[packageName, ...modulePath]`,
