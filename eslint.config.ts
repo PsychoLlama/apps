@@ -10,6 +10,10 @@ const restrictedImportPatterns = [
     group: ['~icons/*'],
     message: 'Use virtual:icons/* instead.',
   },
+  {
+    regex: '^node:fs$',
+    message: 'Use node:fs/promises — synchronous fs is banned.',
+  },
 ];
 
 const restrictedStatePaths = [

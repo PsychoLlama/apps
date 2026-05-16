@@ -1,4 +1,4 @@
-import { promises as fs } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
@@ -67,7 +67,7 @@ export const findIconifyJsonRoot = (): string =>
 export const loadCollections = async (
   root: string,
 ): Promise<CollectionsJson> => {
-  const text = await fs.readFile(path.join(root, 'collections.json'), 'utf8');
+  const text = await readFile(path.join(root, 'collections.json'), 'utf8');
   return JSON.parse(text) as CollectionsJson;
 };
 
@@ -76,6 +76,6 @@ export const loadRawPack = async (
   root: string,
   id: string,
 ): Promise<RawPackJson> => {
-  const text = await fs.readFile(path.join(root, 'json', `${id}.json`), 'utf8');
+  const text = await readFile(path.join(root, 'json', `${id}.json`), 'utf8');
   return JSON.parse(text) as RawPackJson;
 };
