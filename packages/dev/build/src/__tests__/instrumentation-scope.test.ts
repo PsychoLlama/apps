@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Plugin } from 'vite';
@@ -39,19 +39,22 @@ const callTransform = (
 describe('instrumentationScope', () => {
   let tmp: string;
 
-  beforeEach(() => {
-    tmp = mkdtempSync(join(tmpdir(), 'instrumentation-scope-'));
+  beforeEach(async () => {
+    tmp = await mkdtemp(join(tmpdir(), 'instrumentation-scope-'));
   });
 
-  afterEach(() => {
-    rmSync(tmp, { recursive: true, force: true });
+  afterEach(async () => {
+    await rm(tmp, { recursive: true, force: true });
   });
 
-  const seedPackage = (relPath: string, name: string): { srcDir: string } => {
+  const seedPackage = async (
+    relPath: string,
+    name: string,
+  ): Promise<{ srcDir: string }> => {
     const pkgDir = join(tmp, relPath);
     const srcDir = join(pkgDir, 'src');
-    mkdirSync(srcDir, { recursive: true });
-    writeFileSync(
+    await mkdir(srcDir, { recursive: true });
+    await writeFile(
       join(pkgDir, 'package.json'),
       JSON.stringify({ name, private: true }),
     );
@@ -59,9 +62,9 @@ describe('instrumentationScope', () => {
   };
 
   it('skips modules that do not reference the marker', async () => {
-    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const { srcDir } = await seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'index.ts');
-    writeFileSync(file, 'export const x = 1;');
+    await writeFile(file, 'export const x = 1;');
 
     const result = await callTransform(
       instrumentationScope(),
@@ -73,9 +76,9 @@ describe('instrumentationScope', () => {
   });
 
   it('injects [pkgName, ...segments] for a top-level file', async () => {
-    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const { srcDir } = await seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'entry-client.tsx');
-    writeFileSync(file, 'export {};');
+    await writeFile(file, 'export {};');
 
     const result = await callTransform(
       instrumentationScope(),
@@ -87,10 +90,10 @@ describe('instrumentationScope', () => {
   });
 
   it('emits one segment per directory under src/', async () => {
-    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const { srcDir } = await seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'routes', 'about', 'index.tsx');
-    mkdirSync(join(srcDir, 'routes', 'about'), { recursive: true });
-    writeFileSync(file, 'export {};');
+    await mkdir(join(srcDir, 'routes', 'about'), { recursive: true });
+    await writeFile(file, 'export {};');
 
     const result = await callTransform(
       instrumentationScope(),
@@ -102,10 +105,10 @@ describe('instrumentationScope', () => {
   });
 
   it('strips only the final extension (preserves dotted basenames)', async () => {
-    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const { srcDir } = await seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, '__tests__', 'foo.test.ts');
-    mkdirSync(join(srcDir, '__tests__'), { recursive: true });
-    writeFileSync(file, 'export {};');
+    await mkdir(join(srcDir, '__tests__'), { recursive: true });
+    await writeFile(file, 'export {};');
 
     const result = await callTransform(
       instrumentationScope(),
@@ -117,9 +120,9 @@ describe('instrumentationScope', () => {
   });
 
   it('strips query and hash from the id before resolving', async () => {
-    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const { srcDir } = await seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'entry-client.tsx');
-    writeFileSync(file, 'export {};');
+    await writeFile(file, 'export {};');
 
     const result = await callTransform(
       instrumentationScope(),
@@ -152,13 +155,13 @@ describe('instrumentationScope', () => {
 
   it('errors when the file is not under the package src/ directory', async () => {
     const pkgDir = join(tmp, 'pkg');
-    mkdirSync(pkgDir, { recursive: true });
-    writeFileSync(
+    await mkdir(pkgDir, { recursive: true });
+    await writeFile(
       join(pkgDir, 'package.json'),
       JSON.stringify({ name: '@scope/pkg' }),
     );
     const file = join(pkgDir, 'vite.config.ts');
-    writeFileSync(file, 'export default {};');
+    await writeFile(file, 'export default {};');
 
     await expect(
       callTransform(instrumentationScope(), `x(${MARKER});`, file),
@@ -166,9 +169,9 @@ describe('instrumentationScope', () => {
   });
 
   it('replaces every occurrence in a single module', async () => {
-    const { srcDir } = seedPackage('pkg', '@scope/pkg');
+    const { srcDir } = await seedPackage('pkg', '@scope/pkg');
     const file = join(srcDir, 'index.ts');
-    writeFileSync(file, 'export {};');
+    await writeFile(file, 'export {};');
 
     const result = await callTransform(
       instrumentationScope(),
