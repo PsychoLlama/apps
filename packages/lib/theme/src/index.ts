@@ -4,6 +4,7 @@
 // CSS fetch.
 export {
   DEFAULT_THEME_ID,
+  SWATCHES,
   THEMES,
   THEME_ATTRIBUTE,
   THEME_IDS,

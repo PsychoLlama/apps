@@ -1,6 +1,6 @@
 import { style, styleVariants } from '@vanilla-extract/css';
 import { radius, space } from '@lib/design';
-import { swatch } from '@lib/theme/swatch';
+import { SWATCHES } from '@lib/theme';
 
 /**
  * Override for the radio group container. Tightens the default min track
@@ -33,11 +33,11 @@ export const swatchBase = style({
 
 /**
  * Per-theme background color for the `::before` swatch. Pulls each
- * theme's accent from `@lib/theme/swatch` — the colors are baked into
- * CSS at build time, so unselected themes don't leak into the runtime
+ * theme's accent from `@lib/theme` — the colors are baked into CSS
+ * at build time, so unselected themes don't leak into the runtime
  * bundle.
  */
-export const swatchTint = styleVariants(swatch, (color) => ({
+export const swatchTint = styleVariants(SWATCHES, (color) => ({
   selectors: {
     '&::before': { backgroundColor: color },
   },

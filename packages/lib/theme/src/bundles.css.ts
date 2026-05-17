@@ -50,18 +50,18 @@ export const { ids: THEME_IDS, themes: THEMES } = setThemeVariants({
   },
   variants: {
     blue: { accent: blue, neutral: slate, label: 'Blue' },
-    sky: { accent: sky, neutral: slate, label: 'Sky' },
+    brown: { accent: brown, neutral: sand, label: 'Brown' },
     cyan: { accent: cyan, neutral: slate, label: 'Cyan' },
-    teal: { accent: teal, neutral: sage, label: 'Teal' },
-    jade: { accent: jade, neutral: sage, label: 'Jade' },
     indigo: { accent: indigo, neutral: slate, label: 'Indigo' },
     iris: { accent: iris, neutral: slate, label: 'Iris' },
-    violet: { accent: violet, neutral: mauve, label: 'Violet' },
-    purple: { accent: purple, neutral: mauve, label: 'Purple' },
-    plum: { accent: plum, neutral: mauve, label: 'Plum' },
-    pink: { accent: pink, neutral: mauve, label: 'Pink' },
+    jade: { accent: jade, neutral: sage, label: 'Jade' },
     orange: { accent: orange, neutral: sand, label: 'Orange' },
-    brown: { accent: brown, neutral: sand, label: 'Brown' },
+    pink: { accent: pink, neutral: mauve, label: 'Pink' },
+    plum: { accent: plum, neutral: mauve, label: 'Plum' },
+    purple: { accent: purple, neutral: mauve, label: 'Purple' },
+    sky: { accent: sky, neutral: slate, label: 'Sky' },
+    teal: { accent: teal, neutral: sage, label: 'Teal' },
+    violet: { accent: violet, neutral: mauve, label: 'Violet' },
   },
 });
 
@@ -74,3 +74,24 @@ export type ThemeId = (typeof THEME_IDS)[number];
  * with zero (or multiple) themes active.
  */
 export const DEFAULT_THEME_ID: ThemeId = 'blue';
+
+/**
+ * Per-theme accent swatch (Radix scale `9`). Drop directly into a
+ * Vanilla Extract style value — e.g. `styleVariants(SWATCHES, ...)` to
+ * paint a per-theme color into a CSS rule.
+ */
+export const SWATCHES: Record<ThemeId, string> = {
+  blue: blue.solid[9],
+  brown: brown.solid[9],
+  cyan: cyan.solid[9],
+  indigo: indigo.solid[9],
+  iris: iris.solid[9],
+  jade: jade.solid[9],
+  orange: orange.solid[9],
+  pink: pink.solid[9],
+  plum: plum.solid[9],
+  purple: purple.solid[9],
+  sky: sky.solid[9],
+  teal: teal.solid[9],
+  violet: violet.solid[9],
+};
