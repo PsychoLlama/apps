@@ -44,7 +44,7 @@ export interface ThemeVariantConfig {
  * Returns the literal-typed list of variant ids so the catalog can
  * stay in lockstep without a parallel enum.
  */
-export const setThemeColors = <
+export const setThemeVariants = <
   const V extends Record<string, ThemeVariantConfig>,
 >(config: {
   attribute: string;

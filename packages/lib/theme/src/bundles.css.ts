@@ -1,4 +1,4 @@
-import { setThemeColors, type ThemeVariantConfig } from '@lib/design/theme';
+import { setThemeVariants, type ThemeVariantConfig } from '@lib/design/theme';
 import { amber } from '@lib/design/palette/amber';
 import { blue } from '@lib/design/palette/blue';
 import { brown } from '@lib/design/palette/brown';
@@ -23,7 +23,7 @@ import { violet } from '@lib/design/palette/violet';
 import { THEME_ATTRIBUTE, type ThemeId } from './catalog';
 
 /**
- * Bundle every built-in theme into a single `setThemeColors` call.
+ * Bundle every built-in theme into a single `setThemeVariants` call.
  * Each entry pairs an accent with the Radix-recommended tinted neutral
  * (https://www.radix-ui.com/colors/docs/palette-composition/composing-a-palette).
  *
@@ -35,7 +35,7 @@ import { THEME_ATTRIBUTE, type ThemeId } from './catalog';
  * `catalog.ts` — adding an id in one place without the other is a
  * type error.
  */
-setThemeColors({
+setThemeVariants({
   attribute: THEME_ATTRIBUTE,
   constants: {
     danger: red,

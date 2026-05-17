@@ -146,9 +146,9 @@ export const createColorVar = (light: string, dark?: string): string => {
 /**
  * Composite of every CSS-var ref a Radix-style color palette exposes.
  *
- * One palette is the unit-of-binding: `setThemeColors({ accent: blue })`
- * swaps every blue token at once instead of forcing a quartet of
- * `accent`/`accentAlpha`/etc. fields.
+ * One palette is the unit-of-binding: a variant declares `accent: blue`
+ * and `setThemeVariants` swaps every blue token at once instead of
+ * forcing a quartet of `accent`/`accentAlpha`/etc. fields.
  *
  * Field semantics mirror Radix Themes' per-color tokens:
  * - `solid`/`alpha` — the 12-step opaque and translucent scales.
@@ -175,8 +175,8 @@ export interface ColorPalette {
 /**
  * Map a target palette contract's vars to a source palette's values.
  *
- * Used by `setThemeColors` to bind a concrete palette (e.g. `blue`) into
- * a semantic role contract (e.g. `accent`). Copies every facet:
+ * Used by `setThemeVariants` to bind a concrete palette (e.g. `blue`)
+ * into a semantic role contract (e.g. `accent`). Copies every facet:
  * solid + alpha scales plus the four meta tokens.
  */
 export const aliasPalette = (
