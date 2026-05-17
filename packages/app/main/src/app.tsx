@@ -2,13 +2,10 @@ import { MetaProvider } from '@solidjs/meta';
 import { Router } from '@solidjs/router';
 import { FileRoutes } from '@solidjs/start/router';
 import { ErrorBoundary, Suspense } from 'solid-js';
-import { syncThemeAttribute } from '@lib/theme';
 import ErrorBoundaryFallback from './error-boundary/error-boundary';
 import { Favicon } from './branding/favicon';
 
 export default function App() {
-  syncThemeAttribute();
-
   return (
     <Router
       root={(props) => (

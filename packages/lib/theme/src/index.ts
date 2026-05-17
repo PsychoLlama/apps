@@ -4,4 +4,3 @@
 import './bundles.css';
 
 export { setThemeAction, theme } from './theme-store';
-export { syncThemeAttribute } from './sync-attribute';
