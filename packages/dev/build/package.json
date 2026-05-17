@@ -8,8 +8,6 @@
   "exports": {
     "./ignore": "./src/ignore.ts",
     "./vite-plugin/assert-hashed-assets": "./src/vite-plugin/assert-hashed-assets.ts",
-    "./vite-plugin/css-asset": "./src/vite-plugin/css-asset.ts",
-    "./vite-plugin/css-asset-types": "./src/vite-plugin/css-asset-types.d.ts",
     "./vite-plugin/icon-packs": "./src/vite-plugin/icon-packs/index.ts",
     "./vite-plugin/icon-packs-types": "./src/vite-plugin/icon-packs-types.d.ts",
     "./vite-plugin/instrumentation-scope": "./src/vite-plugin/instrumentation-scope.ts",

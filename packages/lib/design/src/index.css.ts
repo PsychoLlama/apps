@@ -37,7 +37,7 @@ export {
 } from './tokens/color.css';
 export type { ColorPalette } from './color-scheme';
 
-export type { ThemeColorConfig } from './theme';
+export type { ThemeConstants, ThemeVariantConfig } from './theme';
 
 export { black } from './palette/black';
 export { white } from './palette/white';

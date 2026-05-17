@@ -88,8 +88,7 @@ const parseImport = (source: string): SvgToPngMatch | undefined => {
  *
  * Build path: `load` rasterizes once during the client environment's
  * pass and emits the PNG via `this.emitFile`. SSR sees a placeholder
- * that `generateBundle` rewrites with the URL captured by the
- * client. Same shape as `css-asset.ts`.
+ * that `generateBundle` rewrites with the URL captured by the client.
  */
 export const svgToPng = (): Plugin => {
   let server: ViteDevServer | undefined;

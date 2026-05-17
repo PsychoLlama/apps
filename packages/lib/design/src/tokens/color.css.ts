@@ -10,7 +10,7 @@ import { colorScaleShape, type ColorPalette } from '../color-scheme';
 
 /**
  * Empty `ColorPalette` contract for one semantic role. Each call creates
- * fresh CSS-var refs that `setThemeColors` aliases to a concrete palette.
+ * fresh CSS-var refs that `setThemeVariants` aliases to a concrete palette.
  */
 const createPaletteContract = (): ColorPalette => ({
   solid: createThemeContract(colorScaleShape),

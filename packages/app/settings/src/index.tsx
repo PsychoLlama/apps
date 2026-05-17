@@ -1,4 +1,4 @@
-import { Container, Flex, Heading, Section, Text } from '@lib/ui';
+import { Callout, Container, Flex, Heading, Section, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import { ThemePicker, themeHeadingId } from './theme-picker';
 
@@ -22,6 +22,11 @@ export const Settings = () => (
             <Heading as="h2" id={themeHeadingId} size={4} weight="medium">
               Theme
             </Heading>
+
+            <Callout color="warning">
+              Heads up: this picker isn't wired up yet. Selecting a theme won't
+              change the app's appearance.
+            </Callout>
 
             <ThemePicker />
           </Flex>

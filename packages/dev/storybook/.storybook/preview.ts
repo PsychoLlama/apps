@@ -1,6 +1,8 @@
 import type { Preview } from 'storybook-solidjs-vite';
 import { withThemeByDataAttribute } from '@storybook/addon-themes';
-import '@lib/theme/default';
+import { DEFAULT_THEME_ID, THEME_ATTRIBUTE } from '@lib/theme';
+
+document.documentElement.dataset[THEME_ATTRIBUTE] = DEFAULT_THEME_ID;
 
 const preview: Preview = {
   decorators: [
