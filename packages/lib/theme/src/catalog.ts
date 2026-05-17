@@ -15,15 +15,20 @@ export const THEMES = [
   { id: 'brown', label: 'Brown' },
 ] as const;
 
-/** Identifier for a built-in theme. */
+/**
+ * Identifier for a built-in theme. The matching variant block in
+ * `bundles.css.ts` is enforced via `satisfies Record<ThemeId, …>` so
+ * adding an id here without a palette mapping (or vice versa) is a
+ * type error.
+ */
 export type ThemeId = (typeof THEMES)[number]['id'];
 
 /**
  * `dataset` key on `<html>` that selects the active theme. The matching
- * `:root[data-theme="<id>"]` rule emitted by each bundle wins by
- * specificity. Shared so the CSS selector, server stamp, and client
- * sync stay in lockstep — use as `dataset[THEME_ATTRIBUTE]` in JS and
- * pair with the `data-` prefix in CSS selectors.
+ * `:root[data-theme="<id>"]` rule emitted by the bundle wins by
+ * specificity. Shared so the CSS selector, server stamp, and storybook
+ * preview stay in lockstep — use as `dataset[THEME_ATTRIBUTE]` in JS
+ * and pair with the `data-` prefix in CSS selectors.
  */
 export const THEME_ATTRIBUTE = 'theme';
 
