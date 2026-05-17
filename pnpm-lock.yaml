@@ -166,9 +166,15 @@ importers:
 
   packages/app/experimental:
     dependencies:
+      '@lib/hello-wasm':
+        specifier: workspace:*
+        version: link:../../../crates/lib/hello-wasm
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/state':
+        specifier: workspace:*
+        version: link:../../lib/state
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -281,13 +287,6 @@ importers:
         version: 4.91.0
 
   packages/app/service-worker:
-    dependencies:
-      '@lib/hello-wasm':
-        specifier: workspace:*
-        version: link:../../../crates/lib/hello-wasm
-      '@lib/observability':
-        specifier: workspace:*
-        version: link:../../lib/observability
     devDependencies:
       '@dev/build':
         specifier: workspace:*

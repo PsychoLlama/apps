@@ -15,7 +15,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@lib/hello-wasm": "workspace:*",
     "@lib/shell": "workspace:*",
+    "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*"
   },
   "peerDependencies": {

@@ -11,10 +11,6 @@
   "scripts": {
     "typecheck": "tsc"
   },
-  "dependencies": {
-    "@lib/hello-wasm": "workspace:*",
-    "@lib/observability": "workspace:*"
-  },
   "devDependencies": {
     "@dev/build": "workspace:*",
     "vite": "catalog:"
