@@ -488,9 +488,6 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../design
-      '@lib/state':
-        specifier: workspace:*
-        version: link:../state
       solid-js:
         specifier: '*'
         version: 1.9.12

@@ -1,8 +1,7 @@
 import { For } from 'solid-js';
-import { useAction } from '@lib/state';
+import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
-import { setThemeAction, theme } from '@lib/theme';
-import { THEMES, type ThemeId } from '@lib/theme/catalog';
+import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
 import * as css from './theme-picker.css';
 
 /**
@@ -12,21 +11,37 @@ import * as css from './theme-picker.css';
  */
 export const themeHeadingId = 'settings-theme-heading';
 
+// Local-only: the picker's selection isn't observed by anything else
+// yet. When live theme switching gets wired up, lift this store into
+// a shared location and replace `DEFAULT_THEME_ID` with the source
+// of truth.
+const pickerStore = defineStore<{ id: ThemeId }>(() => ({
+  id: DEFAULT_THEME_ID,
+}));
+const picker = createStore(pickerStore);
+const setPickerThemeAction = defineAction(
+  [pickerStore],
+  (state, next: ThemeId) => {
+    state.id = next;
+  },
+);
+
 /**
  * Theme picker. Renders a `RadioCards` group with one card per
- * built-in theme and dispatches the shared `setThemeAction` on
- * change — the active theme drives `<ThemeStylesheet>`'s `href`,
- * so swapping the selection live-swaps the stylesheet.
+ * built-in theme. The selection is held in a local store — there's
+ * no shared theme state yet, so the picker reflects the user's
+ * choice visually but doesn't drive the active theme. See the
+ * callout above in the settings page.
  */
 export const ThemePicker = () => {
-  const setTheme = useAction(setThemeAction);
+  const setSelected = useAction(setPickerThemeAction);
 
   return (
     <RadioCardsRoot
       testId="theme-picker"
       name="theme"
-      value={theme.id}
-      onValueChange={(next) => setTheme(next as ThemeId)}
+      value={picker.id}
+      onValueChange={(next) => setSelected(next as ThemeId)}
       gap={3}
       class={css.root}
       aria-labelledby={themeHeadingId}

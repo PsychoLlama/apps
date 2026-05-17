@@ -26,10 +26,12 @@ export interface ThemeConstants {
   text: Pick<ColorPalette['solid'], 11 | 12>;
 }
 
-/** Per-variant palette pair. Pair `accent` with the Radix-recommended tinted gray. */
+/** Per-variant palette pair plus its display label. */
 export interface ThemeVariantConfig {
   accent: ColorPalette;
   neutral: ColorPalette;
+  /** Human-readable name, e.g. for a theme picker. */
+  label: string;
 }
 
 /**
@@ -41,8 +43,9 @@ export interface ThemeVariantConfig {
  * Variants share `constants` for the non-accent semantic roles, so
  * adding a new variant is a one-line entry under `variants`.
  *
- * Returns the literal-typed list of variant ids so the catalog can
- * stay in lockstep without a parallel enum.
+ * Returns the literal-typed id list and a labelled+ordered `themes`
+ * list (in `variants` declaration order) so consumers can iterate the
+ * registered set without redeclaring it.
  */
 export const setThemeVariants = <
   const V extends Record<string, ThemeVariantConfig>,
@@ -50,11 +53,15 @@ export const setThemeVariants = <
   attribute: string;
   constants: ThemeConstants;
   variants: V;
-}): { ids: ReadonlyArray<keyof V & string> } => {
-  const ids = Object.keys(config.variants) as Array<keyof V & string>;
+}): {
+  ids: ReadonlyArray<keyof V & string>;
+  themes: ReadonlyArray<{ id: keyof V & string; label: string }>;
+} => {
+  const entries = Object.entries(config.variants) as Array<
+    [keyof V & string, ThemeVariantConfig]
+  >;
 
-  for (const id of ids) {
-    const variant = config.variants[id];
+  for (const [id, variant] of entries) {
     globalStyle(`:root[data-${config.attribute}="${id}"]`, {
       vars: {
         ...aliasPalette(accent, variant.accent),
@@ -81,5 +88,8 @@ export const setThemeVariants = <
     });
   }
 
-  return { ids };
+  return {
+    ids: entries.map(([id]) => id),
+    themes: entries.map(([id, variant]) => ({ id, label: variant.label })),
+  };
 };

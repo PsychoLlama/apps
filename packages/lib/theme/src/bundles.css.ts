@@ -1,4 +1,4 @@
-import { setThemeVariants, type ThemeVariantConfig } from '@lib/design/theme';
+import { setThemeVariants } from '@lib/design/theme';
 import { amber } from '@lib/design/palette/amber';
 import { blue } from '@lib/design/palette/blue';
 import { brown } from '@lib/design/palette/brown';
@@ -20,22 +20,27 @@ import { sky } from '@lib/design/palette/sky';
 import { slate } from '@lib/design/palette/slate';
 import { teal } from '@lib/design/palette/teal';
 import { violet } from '@lib/design/palette/violet';
-import { THEME_ATTRIBUTE, type ThemeId } from './catalog';
+
+/**
+ * `dataset` key on `<html>` that selects the active theme. The matching
+ * `:root[data-theme="<id>"]` rule emitted by the bundle wins by
+ * specificity. Shared so the CSS selector, server stamp, and storybook
+ * preview stay in lockstep — use as `dataset[THEME_ATTRIBUTE]` in JS
+ * and pair with the `data-` prefix in CSS selectors.
+ */
+export const THEME_ATTRIBUTE = 'theme';
 
 /**
  * Bundle every built-in theme into a single `setThemeVariants` call.
  * Each entry pairs an accent with the Radix-recommended tinted neutral
- * (https://www.radix-ui.com/colors/docs/palette-composition/composing-a-palette).
+ * (https://www.radix-ui.com/colors/docs/palette-composition/composing-a-palette)
+ * and carries the display label used by theme pickers.
  *
  * The semantic roles (`danger`, `warning`, `success`) and grayscale
  * text are held constant across every variant so red/amber/green
  * keep a consistent meaning regardless of which variant is active.
- *
- * The `satisfies` constraint enforces parity with `THEMES` in
- * `catalog.ts` — adding an id in one place without the other is a
- * type error.
  */
-setThemeVariants({
+export const { ids: THEME_IDS, themes: THEMES } = setThemeVariants({
   attribute: THEME_ATTRIBUTE,
   constants: {
     danger: red,
@@ -44,18 +49,28 @@ setThemeVariants({
     text: { 11: gray.solid[11], 12: gray.solid[12] },
   },
   variants: {
-    blue: { accent: blue, neutral: slate },
-    sky: { accent: sky, neutral: slate },
-    cyan: { accent: cyan, neutral: slate },
-    teal: { accent: teal, neutral: sage },
-    jade: { accent: jade, neutral: sage },
-    indigo: { accent: indigo, neutral: slate },
-    iris: { accent: iris, neutral: slate },
-    violet: { accent: violet, neutral: mauve },
-    purple: { accent: purple, neutral: mauve },
-    plum: { accent: plum, neutral: mauve },
-    pink: { accent: pink, neutral: mauve },
-    orange: { accent: orange, neutral: sand },
-    brown: { accent: brown, neutral: sand },
-  } satisfies Record<ThemeId, ThemeVariantConfig>,
+    blue: { accent: blue, neutral: slate, label: 'Blue' },
+    sky: { accent: sky, neutral: slate, label: 'Sky' },
+    cyan: { accent: cyan, neutral: slate, label: 'Cyan' },
+    teal: { accent: teal, neutral: sage, label: 'Teal' },
+    jade: { accent: jade, neutral: sage, label: 'Jade' },
+    indigo: { accent: indigo, neutral: slate, label: 'Indigo' },
+    iris: { accent: iris, neutral: slate, label: 'Iris' },
+    violet: { accent: violet, neutral: mauve, label: 'Violet' },
+    purple: { accent: purple, neutral: mauve, label: 'Purple' },
+    plum: { accent: plum, neutral: mauve, label: 'Plum' },
+    pink: { accent: pink, neutral: mauve, label: 'Pink' },
+    orange: { accent: orange, neutral: sand, label: 'Orange' },
+    brown: { accent: brown, neutral: sand, label: 'Brown' },
+  },
 });
+
+/** Identifier for a built-in theme. */
+export type ThemeId = (typeof THEME_IDS)[number];
+
+/**
+ * Theme rendered when nothing else is selected. The server entry
+ * stamps this onto `<html>` so the DOM never reaches the browser
+ * with zero (or multiple) themes active.
+ */
+export const DEFAULT_THEME_ID: ThemeId = 'blue';

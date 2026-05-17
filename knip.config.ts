@@ -44,18 +44,6 @@ const config: KnipConfig = {
       // auto-discovery; the entry list above is the source of truth.
       vite: false,
     },
-    'packages/lib/theme': {
-      // `index.ts` is auto-discovered as a non-production entry via
-      // `package.json#exports`, so dev-mode knip walks it and credits
-      // its imports. Marking it `!` to upgrade to a production entry
-      // gets deduped against the auto-discovered copy and the `!` is
-      // dropped — which means `--production` never reaches
-      // `theme-store.ts` and `@lib/state` looks unused. List
-      // `theme-store.ts!` directly so the production walker enters
-      // through the file that imports `@lib/state`.
-      entry: ['src/theme-store.ts!'],
-      project: ['src/**/*.{ts,tsx}'],
-    },
     'packages/lib/ui': {
       // Co-located behavior tests run against a real browser via the
       // root vitest config's `browser` project (playwright). The

@@ -1,8 +1,6 @@
-import '@lib/theme';
-
 import type { Preview } from 'storybook-solidjs-vite';
 import { withThemeByDataAttribute } from '@storybook/addon-themes';
-import { DEFAULT_THEME_ID, THEME_ATTRIBUTE } from '@lib/theme/catalog';
+import { DEFAULT_THEME_ID, THEME_ATTRIBUTE } from '@lib/theme';
 
 document.documentElement.dataset[THEME_ATTRIBUTE] = DEFAULT_THEME_ID;
 

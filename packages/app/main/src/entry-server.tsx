@@ -1,7 +1,7 @@
 // @refresh reload
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
-import { DEFAULT_THEME_ID } from '@lib/theme/catalog';
+import { DEFAULT_THEME_ID } from '@lib/theme';
 
 export default createHandler(() => (
   <StartServer

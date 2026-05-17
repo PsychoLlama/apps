@@ -12,7 +12,7 @@ import { purpleDark, purpleLight } from '@lib/design/color/purple';
 import { skyDark, skyLight } from '@lib/design/color/sky';
 import { tealDark, tealLight } from '@lib/design/color/teal';
 import { violetDark, violetLight } from '@lib/design/color/violet';
-import type { ThemeId } from './catalog';
+import type { ThemeId } from './bundles.css';
 
 /**
  * Per-theme accent swatch (Radix scale `9`), pre-wrapped in
