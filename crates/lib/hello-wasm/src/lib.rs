@@ -1,4 +1,4 @@
-//! Hello-world wasm blob consumed by `@app/service-worker`.
+//! Hello-world wasm blob consumed by `@app/experimental`.
 //!
 //! No `wasm-bindgen` — the surface is intentionally tiny so the
 //! shipped artifact stays small and the JS interop stays auditable.
@@ -21,9 +21,11 @@ pub extern "C" fn message_len() -> usize {
     HELLO.len()
 }
 
-// `#![no_std]` removes the default panic handler. The crate has no
-// fallible code paths, but the compiler still requires one.
+// `#![no_std]` removes the default panic handler. Trap the VM via the
+// `unreachable` wasm opcode so the host stack reports the crash cleanly;
+// an infinite loop would hang the worker thread. No fallible paths
+// today, but the handler is required regardless.
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {}
+    core::arch::wasm32::unreachable()
 }

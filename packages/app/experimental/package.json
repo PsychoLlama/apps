@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@lib/hello-wasm": "workspace:*",
+    "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",
-    "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*"
   },
   "peerDependencies": {

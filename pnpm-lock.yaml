@@ -169,12 +169,12 @@ importers:
       '@lib/hello-wasm':
         specifier: workspace:*
         version: link:../../../crates/lib/hello-wasm
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state':
-        specifier: workspace:*
-        version: link:../../lib/state
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
