@@ -8,7 +8,7 @@
  */
 
 import { createLogger } from '@lib/observability';
-import helloWasmUrl from '@lib/hello-wasm/wasm?url';
+import init from '@lib/hello-wasm/hello.wasm?init';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -32,17 +32,15 @@ self.addEventListener('install', (event) => {
   // accessors so the JS side reads it straight out of linear memory,
   // skipping the wasm-bindgen glue.
   event.waitUntil(
-    WebAssembly.instantiateStreaming(fetch(helloWasmUrl)).then(
-      ({ instance }) => {
-        const exports = instance.exports as unknown as HelloExports;
-        const bytes = new Uint8Array(
-          exports.memory.buffer,
-          exports.message_ptr(),
-          exports.message_len(),
-        );
-        logger.info(new TextDecoder().decode(bytes));
-      },
-    ),
+    init().then((instance) => {
+      const exports = instance.exports as unknown as HelloExports;
+      const bytes = new Uint8Array(
+        exports.memory.buffer,
+        exports.message_ptr(),
+        exports.message_len(),
+      );
+      logger.info(new TextDecoder().decode(bytes));
+    }),
   );
 });
 

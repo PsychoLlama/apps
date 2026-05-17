@@ -6,7 +6,7 @@
   "description": "Hello-world wasm blob. Smallest possible crate, used to validate the wasm pipeline.",
   "license": "MIT",
   "exports": {
-    "./wasm": "./dist/hello_wasm.wasm"
+    "./hello.wasm": "./dist/hello_wasm.wasm"
   },
   "scripts": {
     "build": "cargo build --release --target wasm32-unknown-unknown -p hello-wasm && mkdir -p dist && cp ../../../target/wasm32-unknown-unknown/release/hello_wasm.wasm dist/"
