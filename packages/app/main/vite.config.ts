@@ -33,6 +33,15 @@ export default defineConfig({
   preview: {
     headers: widenServiceWorkerScope,
   },
+  worker: {
+    // Vite runs `?worker` bundles through a separate plugin pipeline
+    // that does NOT inherit the top-level `plugins` array. The SW
+    // uses `import.meta.INSTRUMENTATION_SCOPE`, so the substitution
+    // plugin has to be registered here too — otherwise the marker
+    // collapses to `undefined` and `createLogger` throws at module
+    // load time, killing the worker before any listener attaches.
+    plugins: () => [instrumentationScope()],
+  },
   plugins: [
     instrumentationScope(),
     solidStart(),

@@ -2,6 +2,7 @@
   description = "Development environment";
 
   inputs = {
+    rust-overlay.url = "github:oxalica/rust-overlay";
     systems.url = "github:nix-systems/default";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
@@ -10,14 +11,22 @@
     {
       self,
       nixpkgs,
+      rust-overlay,
       systems,
     }:
 
     let
       inherit (nixpkgs) lib;
 
+      overlays = [ (import rust-overlay) ];
+
       eachSystem = lib.flip lib.mapAttrs (
-        lib.genAttrs (import systems) (system: nixpkgs.legacyPackages.${system})
+        lib.genAttrs (import systems) (
+          system:
+          import nixpkgs {
+            inherit system overlays;
+          }
+        )
       );
     in
 
@@ -29,6 +38,11 @@
               pkgs.nodejs
               pkgs.pnpm
               pkgs.treefmt
+              # Rust toolchain pinned via ./rust-toolchain.toml. Lives in
+              # `default` so CI builds (which compile crates to wasm) and
+              # higher shells (`coding`, `nixos`) all inherit it through
+              # `inputsFrom`.
+              (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
             ];
           };
 

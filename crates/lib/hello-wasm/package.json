@@ -1,0 +1,18 @@
+{
+  "name": "@lib/hello-wasm",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Hello-world wasm blob. Smallest possible crate, used to validate the wasm pipeline.",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./dist/hello_wasm.wasm?init"
+    }
+  },
+  "scripts": {
+    "build": "cargo build --release --target wasm32-unknown-unknown -p hello-wasm && mkdir -p dist && cp ../../../target/wasm32-unknown-unknown/release/hello_wasm.wasm dist/",
+    "typecheck": "tsc"
+  }
+}

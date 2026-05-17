@@ -1,5 +1,6 @@
 packages:
   - packages/*/*
+  - crates/*/*
 
 # Default `pnpm add` to workspace:* for in-repo packages.
 saveWorkspaceProtocol: true

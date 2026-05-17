@@ -16,6 +16,7 @@
   - `@dev/*` — internal tooling.
 - Enumerate packages and their purpose: `jq -r '[.name, .description] | @tsv' packages/*/*/package.json`.
 - `@app/*` packages export top-level components. `@app/main` owns routing — its `src/routes/**/*.tsx` files import from `@app/*` packages and export the component as the route's default.
+- Rust crates live at `crates/{app,lib,dev}/<name>`, mirroring the JS taxonomy.
 
 ## Dev
 

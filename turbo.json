@@ -15,7 +15,7 @@
   ],
   "tasks": {
     "build": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^typecheck", "^build"],
       "outputs": [".output/**", "storybook-static/**"],
       "outputLogs": "errors-only"
     },
@@ -26,7 +26,8 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["^build"]
     },
     "dev:wrangler": {
       "cache": false,
@@ -101,10 +102,11 @@
     },
     "//#fmt-check": {
       "inputs": [
-        "**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yaml,yml,css,html}",
+        "**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yaml,yml,css,html,rs}",
         "!**/node_modules/**",
         "!**/.output/**",
         "!**/storybook-static/**",
+        "!target/**",
         "treefmt.toml"
       ],
       "outputs": [],

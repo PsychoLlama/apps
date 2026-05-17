@@ -10,5 +10,9 @@
   },
   "scripts": {
     "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@dev/build": "workspace:*",
+    "vite": "catalog:"
   }
 }

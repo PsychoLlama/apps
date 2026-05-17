@@ -15,6 +15,8 @@ app.config.timestamp_*.js
 storybook-static
 coverage
 /result*
+/target
+crates/*/*/dist
 
 # turbo
 .turbo

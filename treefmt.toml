@@ -1,5 +1,5 @@
 [global]
-excludes = [".nitro/**", ".output/**", "dist/**", "pnpm-lock.yaml"]
+excludes = [".nitro/**", ".output/**", "dist/**", "target/**", "pnpm-lock.yaml"]
 
 [formatter.prettier]
 command = "pnpm"
@@ -18,3 +18,7 @@ includes = [
   "*.css",
   "*.html",
 ]
+
+[formatter.rustfmt]
+command = "rustfmt"
+includes = ["*.rs"]
