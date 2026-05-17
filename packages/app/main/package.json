@@ -21,6 +21,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@app/experimental": "workspace:*",
     "@app/icon-editor": "workspace:*",
     "@app/service-worker": "workspace:*",
     "@app/settings": "workspace:*",
