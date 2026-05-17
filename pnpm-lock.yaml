@@ -254,6 +254,9 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1
+      '@vanilla-extract/dynamic':
+        specifier: 'catalog:'
+        version: 2.1.5
       solid-js:
         specifier: 'catalog:'
         version: 1.9.12

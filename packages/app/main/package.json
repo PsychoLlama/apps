@@ -35,6 +35,7 @@
     "@solidjs/router": "catalog:",
     "@solidjs/start": "2.0.0-alpha.2",
     "@vanilla-extract/css": "catalog:",
+    "@vanilla-extract/dynamic": "catalog:",
     "solid-js": "catalog:",
     "vite": "catalog:"
   },

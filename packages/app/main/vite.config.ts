@@ -22,6 +22,14 @@ const widenServiceWorkerScope = {
 };
 
 export default defineConfig({
+  // Pulled in transitively by generated `.css.ts` modules, so Vite's
+  // entry scanner misses it. Without this hint, the first cold load
+  // re-optimizes deps mid-flight and 504s any in-flight requests
+  // racing the version bump — including the service worker fetch,
+  // whose registration silently dies until the page reloads.
+  optimizeDeps: {
+    include: ['@vanilla-extract/dynamic'],
+  },
   server: {
     watch: {
       // Vite's chokidar watcher doesn't respect .gitignore.
