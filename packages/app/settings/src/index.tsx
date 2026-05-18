@@ -19,17 +19,22 @@ export const Settings = () => (
           </Flex>
 
           <Flex as="section" direction="column" gap={3}>
-            <Flex
-              as="header"
-              direction="row"
-              justify="between"
-              align="center"
-              gap={3}
-            >
-              <Heading as="h2" id={themeHeadingId} size={4} weight="medium">
-                Theme
-              </Heading>
-              <ThemeResetButton />
+            <Flex as="header" direction="column" gap={2}>
+              <Flex
+                as="div"
+                direction="row"
+                justify="between"
+                align="center"
+                gap={3}
+              >
+                <Heading as="h2" id={themeHeadingId} size={4} weight="medium">
+                  Theme
+                </Heading>
+                <ThemeResetButton />
+              </Flex>
+              <Text as="p" size={2} color="lowContrast">
+                Sets the app's primary color.
+              </Text>
             </Flex>
 
             <ThemePicker />
