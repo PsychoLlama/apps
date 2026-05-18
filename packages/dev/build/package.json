@@ -10,6 +10,7 @@
     "./vite-plugin/assert-hashed-assets": "./src/vite-plugin/assert-hashed-assets.ts",
     "./vite-plugin/icon-packs": "./src/vite-plugin/icon-packs/index.ts",
     "./vite-plugin/icon-packs-types": "./src/vite-plugin/icon-packs-types.d.ts",
+    "./vite-plugin/inline-script": "./src/vite-plugin/inline-script.ts",
     "./vite-plugin/instrumentation-scope": "./src/vite-plugin/instrumentation-scope.ts",
     "./vite-plugin/instrumentation-scope-types": "./src/vite-plugin/instrumentation-scope-types.d.ts",
     "./vite-plugin/svg-to-png": "./src/vite-plugin/svg-to-png.ts",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@iconify/json": "catalog:",
-    "@resvg/resvg-wasm": "^2.6.2"
+    "@resvg/resvg-wasm": "^2.6.2",
+    "esbuild": "catalog:"
   }
 }
