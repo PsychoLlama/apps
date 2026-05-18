@@ -13,13 +13,16 @@
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
     "./prelude": "./src/prelude.ts",
+    "./runtime": "./src/runtime.ts",
     "./package.json": "./package.json"
   },
   "scripts": {
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@lib/design": "workspace:*"
+    "@lib/design": "workspace:*",
+    "@lib/observability": "workspace:*",
+    "@lib/state": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": "*"
