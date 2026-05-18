@@ -7,7 +7,11 @@
  * bundles this module and registers the resulting URL.
  */
 
+import { createLogger } from '@lib/observability';
+
 declare const self: ServiceWorkerGlobalScope;
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 self.addEventListener('install', () => {
   // The app holds no SW-version-coupled state (no precaches keyed to
@@ -26,5 +30,6 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname !== '/api/local/health') return;
 
+  logger.info('Health check intercepted.', { url: url.pathname });
   event.respondWith(Response.json({ status: 'online' }));
 });

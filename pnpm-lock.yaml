@@ -293,6 +293,10 @@ importers:
         version: 4.92.0
 
   packages/app/service-worker:
+    dependencies:
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
     devDependencies:
       '@dev/build':
         specifier: workspace:*

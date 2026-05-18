@@ -9,6 +9,7 @@
   "exports": "./src/index.ts",
   "imports": {
     "#processor": {
+      "worker": "./src/logging/processor.worker.ts",
       "browser": "./src/logging/processor.browser.ts",
       "default": "./src/logging/processor.server.ts"
     }
