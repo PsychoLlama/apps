@@ -59,6 +59,11 @@ export default defineConfig({
       // normal import would, returning a `file://` URL string that
       // esbuild gets as an absolute path.
       entry: fileURLToPath(import.meta.resolve('@lib/theme/prelude')),
+      // Render-blocking budget. Today's IIFE sits well under this;
+      // the ceiling is a tripwire for accidental bloat — e.g. an
+      // import that pulls a `.css.ts` module's runtime registration
+      // into the head script.
+      maxBytes: 2048,
     }),
     solidStart(),
     nitro({
