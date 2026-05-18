@@ -1,9 +1,8 @@
 import {
-  type Log,
-  createLogger,
   setGlobalLogCollector,
   unsetGlobalLogCollector,
-} from '@lib/observability';
+} from '@holz/log-collector';
+import { type Log, createLogger } from '@lib/observability';
 
 const captureLogs = (): Log[] => {
   const logs: Log[] = [];

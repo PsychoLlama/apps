@@ -1,17 +1,23 @@
 import { env, stderr } from 'node:process';
 import { createAnsiTerminalBackend } from '@holz/ansi-terminal-backend';
-import { createLogger as createCoreLogger, filter } from '@holz/core';
+import {
+  type Logger,
+  createLogger as createCoreLogger,
+  filter,
+} from '@holz/core';
 import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
 import { createStreamBackend } from '@holz/stream-backend';
-import { buildCreateLogger } from './create-logger';
 
+// Cached at module load. The filter runs on every log, so we don't
+// want to re-touch `process.env` (and re-do its proxy traps) per call.
+const { NODE_ENV } = env;
 const isColorTerminal = stderr.isTTY && stderr.getColorDepth() > 1;
 
 const baseLogger = createCoreLogger(
   createLogCollector({
     fallback: filter(
-      () => env.NODE_ENV !== 'test',
+      () => NODE_ENV !== 'test',
       createEnvironmentFilter({
         defaultPattern: '',
         processor: isColorTerminal
@@ -32,15 +38,15 @@ const baseLogger = createCoreLogger(
  * Logs flow through a `log-collector` → `NODE_ENV !== 'test'` gate →
  * `env-filter` → ANSI TTY or plain `stderr` stream backend. The
  * pipeline is silent unless the `DEBUG` env var selects a matching
- * pattern. Use `setGlobalLogCollector` to intercept logs without
- * touching the env.
+ * pattern. Use `setGlobalLogCollector` from `@holz/log-collector` to
+ * intercept logs without touching the env.
  */
-export const createLogger = buildCreateLogger(baseLogger);
+export const createLogger = (scope: readonly string[]): Logger =>
+  scope.reduce<Logger>(
+    (logger, segment) => logger.namespace(segment),
+    baseLogger,
+  );
 
-export {
-  setGlobalLogCollector,
-  unsetGlobalLogCollector,
-} from '@holz/log-collector';
 export type {
   Log,
   LogContext,

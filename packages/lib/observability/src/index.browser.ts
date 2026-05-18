@@ -1,8 +1,7 @@
 import { createConsoleBackend } from '@holz/console-backend';
-import { createLogger as createCoreLogger } from '@holz/core';
+import { type Logger, createLogger as createCoreLogger } from '@holz/core';
 import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
-import { buildCreateLogger } from './create-logger';
 
 const baseLogger = createCoreLogger(
   createLogCollector({
@@ -22,15 +21,15 @@ const baseLogger = createCoreLogger(
  *
  * Logs flow through a `log-collector` → `env-filter` → `console-backend`
  * pipeline. The pipeline is silent unless the `debug` localStorage key
- * selects a matching pattern. Use `setGlobalLogCollector` to intercept
- * logs without touching the env.
+ * selects a matching pattern. Use `setGlobalLogCollector` from
+ * `@holz/log-collector` to intercept logs without touching the env.
  */
-export const createLogger = buildCreateLogger(baseLogger);
+export const createLogger = (scope: readonly string[]): Logger =>
+  scope.reduce<Logger>(
+    (logger, segment) => logger.namespace(segment),
+    baseLogger,
+  );
 
-export {
-  setGlobalLogCollector,
-  unsetGlobalLogCollector,
-} from '@holz/log-collector';
 export type {
   Log,
   LogContext,
