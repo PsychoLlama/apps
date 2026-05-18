@@ -46,9 +46,8 @@
 
 ## State Management
 
-- Reference docs: ./packages/lib/state/src/docs/usage.md
+- For reference docs, load the `state-reference` skill.
 - Import from `@lib/state`.
-- Side effects belong in activities, not workflows or stores.
 
 ## Icons
 
