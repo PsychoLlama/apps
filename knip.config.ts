@@ -38,6 +38,12 @@ const config: KnipConfig = {
         // Imported as `@app/service-worker?worker&url`; the query
         // suffix hides the specifier from knip's resolver.
         '@app/service-worker',
+        // Listed directly so Vite's dep scanner picks it up at
+        // startup; without it, the transitive import (via
+        // `@vanilla-extract/css` from `@lib/ui`) is discovered
+        // mid-load and triggers a re-optimize that 504s in-flight
+        // requests — most visibly killing the service worker fetch.
+        '@vanilla-extract/dynamic',
       ],
       // `@solidjs/start` reads app.tsx from cwd, which points at the
       // workspace root when knip runs holistically. Skip knip's vite
