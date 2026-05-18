@@ -9,8 +9,8 @@
   "exports": "./src/index.ts",
   "imports": {
     "#processor": {
-      "browser": "./src/processor.browser.ts",
-      "default": "./src/processor.server.ts"
+      "browser": "./src/logging/processor.browser.ts",
+      "default": "./src/logging/processor.server.ts"
     }
   },
   "scripts": {
