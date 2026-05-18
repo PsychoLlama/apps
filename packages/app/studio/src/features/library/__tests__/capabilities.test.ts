@@ -1,5 +1,4 @@
 import type { DeepReadonly } from '@lib/state';
-import { openDB } from 'idb';
 import {
   discardRecording,
   loadRecordings,
@@ -11,36 +10,155 @@ import {
 } from '../capabilities';
 import type { LibraryState } from '../store';
 
-// In-memory IDB stand-in. Tests of the capability layer focus on the
-// shape of calls and the round-trip — the real `idb` wrapper is a thin
-// promise adapter we don't need to exercise here. `delete` is a mock
-// function so individual tests can simulate a persist-side failure.
-const store = new Map<string, PersistedRecording>();
-const idbMocks = vi.hoisted(() => ({
-  deleteFn: vi.fn<(storeName: string, key: string) => Promise<void>>(),
-}));
+// In-memory OPFS stand-in. Tests of the capability layer focus on the
+// shape of calls and the blob+meta round-trip — the real FileSystem
+// handle API is a thin DOM wrapper we don't need to exercise here.
+// `removeEntry` on the recordings dir is a `vi.fn` so individual tests
+// can simulate a persist-side failure.
 
-vi.mock('idb', () => ({
-  openDB: vi.fn(() =>
-    Promise.resolve({
-      put: (_storeName: string, value: PersistedRecording) => {
-        store.set(value.id, value);
+class FakeFileHandle {
+  kind = 'file' as const;
+  name: string;
+  private parent: FakeDirHandle;
+
+  constructor(name: string, parent: FakeDirHandle) {
+    this.name = name;
+    this.parent = parent;
+  }
+
+  getFile(): Promise<Blob> {
+    return Promise.resolve(this.parent.fileData.get(this.name) ?? new Blob());
+  }
+
+  createWritable(): Promise<{
+    write: (data: Blob | string | BufferSource) => Promise<void>;
+    close: () => Promise<void>;
+  }> {
+    const chunks: Blob[] = [];
+    const parent = this.parent;
+    const name = this.name;
+    return Promise.resolve({
+      write(data: Blob | string | BufferSource): Promise<void> {
+        if (data instanceof Blob) chunks.push(data);
+        else if (typeof data === 'string') chunks.push(new Blob([data]));
+        else chunks.push(new Blob([data]));
         return Promise.resolve();
       },
-      delete: idbMocks.deleteFn,
-      getAll: () => Promise.resolve([...store.values()]),
-    }),
-  ),
-}));
+      close(): Promise<void> {
+        parent.fileData.set(name, new Blob(chunks));
+        return Promise.resolve();
+      },
+    });
+  }
+}
+
+class FakeDirHandle {
+  kind = 'directory' as const;
+  name: string;
+  children = new Map<string, FakeDirHandle>();
+  fileData = new Map<string, Blob>();
+  private fileHandles = new Map<string, FakeFileHandle>();
+  removeEntry =
+    vi.fn<(name: string, opts?: { recursive?: boolean }) => Promise<void>>();
+
+  constructor(name: string) {
+    this.name = name;
+  }
+
+  getDirectoryHandle(
+    name: string,
+    opts?: { create?: boolean },
+  ): Promise<FakeDirHandle> {
+    let child = this.children.get(name);
+    if (!child) {
+      if (!opts?.create) {
+        return Promise.reject(new DOMException('not found', 'NotFoundError'));
+      }
+      child = new FakeDirHandle(name);
+      this.children.set(name, child);
+    }
+    return Promise.resolve(child);
+  }
+
+  getFileHandle(
+    name: string,
+    opts?: { create?: boolean },
+  ): Promise<FakeFileHandle> {
+    let handle = this.fileHandles.get(name);
+    if (!handle) {
+      if (!opts?.create && !this.fileData.has(name)) {
+        return Promise.reject(new DOMException('not found', 'NotFoundError'));
+      }
+      handle = new FakeFileHandle(name, this);
+      this.fileHandles.set(name, handle);
+    }
+    return Promise.resolve(handle);
+  }
+
+  // Sync generator: `for await` accepts either sync or async iterables,
+  // so we don't need an async generator just to satisfy the consumer.
+  *values(): Iterable<FakeDirHandle> {
+    for (const child of this.children.values()) yield child;
+  }
+
+  clear(): void {
+    this.children.clear();
+    this.fileData.clear();
+    this.fileHandles.clear();
+  }
+}
+
+const rootDir = new FakeDirHandle('');
+const studioDir = new FakeDirHandle('studio');
+const recordingsDir = new FakeDirHandle('recordings');
+rootDir.children.set('studio', studioDir);
+studioDir.children.set('recordings', recordingsDir);
+
+const defaultRemove = (name: string): Promise<void> => {
+  if (!recordingsDir.children.delete(name)) {
+    return Promise.reject(new DOMException('not found', 'NotFoundError'));
+  }
+  return Promise.resolve();
+};
+
+Object.defineProperty(navigator, 'storage', {
+  value: { getDirectory: () => Promise.resolve(rootDir) },
+  configurable: true,
+  writable: true,
+});
 
 beforeEach(() => {
-  store.clear();
-  vi.mocked(openDB).mockClear();
-  idbMocks.deleteFn.mockReset().mockImplementation((_storeName, key) => {
-    store.delete(key);
-    return Promise.resolve();
-  });
+  recordingsDir.clear();
+  recordingsDir.removeEntry.mockReset().mockImplementation(defaultRemove);
 });
+
+const sample = (
+  overrides: Partial<PersistedRecording> = {},
+): PersistedRecording => ({
+  id: 'rec-1',
+  name: 'Sample',
+  duration: 10,
+  createdAt: 1745250000000,
+  blob: new Blob(['x']),
+  ...overrides,
+});
+
+const readPersisted = async (
+  id: string,
+): Promise<PersistedRecording | null> => {
+  const dir = recordingsDir.children.get(id);
+  if (!dir) return null;
+  const blob = dir.fileData.get('blob');
+  const metaBlob = dir.fileData.get('meta.json');
+  if (!blob || !metaBlob) return null;
+  const meta = JSON.parse(await metaBlob.text()) as {
+    id: string;
+    name: string;
+    duration: number;
+    createdAt: number;
+  };
+  return { ...meta, blob };
+};
 
 describe('revokeRecording', () => {
   it('releases the blob URL', () => {
@@ -57,24 +175,19 @@ describe('revokeRecording', () => {
   });
 });
 
-const sample = (
-  overrides: Partial<PersistedRecording> = {},
-): PersistedRecording => ({
-  id: 'rec-1',
-  name: 'Sample',
-  duration: 10,
-  createdAt: 1745250000000,
-  blob: new Blob(['x']),
-  ...overrides,
-});
-
 describe('persistRecording', () => {
-  it('writes the recording into the recordings object store', async () => {
-    const recording = sample();
+  it('writes the blob and metadata under recordings/<id>', async () => {
+    const recording = sample({ blob: new Blob(['hello']) });
 
     await persistRecording(recording);
 
-    expect(store.get('rec-1')).toEqual(recording);
+    const stored = await readPersisted('rec-1');
+    expect(stored).not.toBeNull();
+    expect(stored!.id).toBe('rec-1');
+    expect(stored!.name).toBe('Sample');
+    expect(stored!.duration).toBe(10);
+    expect(stored!.createdAt).toBe(1745250000000);
+    expect(await stored!.blob.text()).toBe('hello');
   });
 });
 
@@ -84,7 +197,13 @@ describe('removePersistedRecording', () => {
 
     await removePersistedRecording('rec-1');
 
-    expect(store.has('rec-1')).toBe(false);
+    expect(recordingsDir.children.has('rec-1')).toBe(false);
+  });
+
+  it('swallows NotFoundError so deleting an absent id is a no-op', async () => {
+    await expect(
+      removePersistedRecording('never-persisted'),
+    ).resolves.toBeUndefined();
   });
 });
 
@@ -137,6 +256,20 @@ describe('loadRecordings', () => {
 
     expect(first[0].url).not.toBe(second[0].url);
   });
+
+  it('skips entries with a missing metadata file', async () => {
+    // A persist that crashed between blob and meta writes leaves a
+    // directory with no meta.json — readRecording should drop it.
+    const orphan = await recordingsDir.getDirectoryHandle('orphan', {
+      create: true,
+    });
+    const blob = await orphan.getFileHandle('blob', { create: true });
+    const writable = await blob.createWritable();
+    await writable.write(new Blob(['x']));
+    await writable.close();
+
+    expect(await loadRecordings()).toEqual([]);
+  });
 });
 
 describe('discardRecording', () => {
@@ -155,19 +288,20 @@ describe('discardRecording', () => {
 
     const id = await discardRecording({ id: 'rec-x', url: 'blob:rec-x' });
 
-    expect(store.has('rec-x')).toBe(false);
+    expect(recordingsDir.children.has('rec-x')).toBe(false);
     expect(revoke).toHaveBeenCalledWith('blob:rec-x');
     expect(id).toBe('rec-x');
   });
 
-  it('still revokes the URL and swallows the failure when IDB delete rejects', async () => {
-    idbMocks.deleteFn.mockRejectedValueOnce(new Error('disk-fail'));
+  it('still revokes the URL and swallows the failure when the OPFS removeEntry rejects', async () => {
+    recordingsDir.removeEntry.mockRejectedValueOnce(new Error('disk-fail'));
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     // State-clearing fallback — the binding's `onSuccess` action runs
-    // regardless, so the capability must resolve even on IDB failure so
-    // an in-memory-only recording (captured when IDB was unavailable)
-    // still deletes. The warning surfaces the persist-side miss.
+    // regardless, so the capability must resolve even on OPFS failure
+    // so an in-memory-only recording (captured when OPFS was
+    // unavailable) still deletes. The warning surfaces the
+    // persist-side miss.
     const id = await discardRecording({ id: 'rec-x', url: 'blob:rec-x' });
 
     expect(revoke).toHaveBeenCalledWith('blob:rec-x');

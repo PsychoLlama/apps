@@ -90,9 +90,9 @@ export const startRecording = async (
 
 /**
  * Drain the active recorder into a Blob, release every stream, mint a
- * blob URL, and best-effort persist the recording to IndexedDB. The
- * URL is minted before the persist so a save failure (e.g. quota) does
- * not throw away a finished capture — the user keeps an in-session
+ * blob URL, and best-effort persist the recording to OPFS. The URL is
+ * minted before the persist so a save failure (e.g. quota) does not
+ * throw away a finished capture — the user keeps an in-session
  * playable recording even when disk is unavailable. Persist errors are
  * surfaced through the console; subsequent reloads will simply not see
  * the recording in the library.
@@ -130,7 +130,7 @@ export const stopRecording = async (
     await persistRecording({ id, name, duration, createdAt, blob });
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.warn('Failed to persist recording to IndexedDB', error);
+    console.warn('Failed to persist recording to OPFS', error);
   }
 
   return { id, name, duration, createdAt, size, url };
