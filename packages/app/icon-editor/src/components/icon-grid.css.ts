@@ -41,6 +41,14 @@ export const tile = style({
   transitionProperty: 'background-color, border-color, color, transform',
   transitionDuration: fast[2],
   transitionTimingFunction: standard.productive,
+  // Hundreds of tiles share this rule; letting the browser skip style
+  // and layout for off-screen ones keeps pagination-click cost near
+  // constant regardless of how far past the fold the grid extends.
+  // `contain-intrinsic-size: auto 40px 40px` matches the grid's
+  // `minmax(40px, 1fr)` minimum, with `auto` so the browser caches
+  // the actual size after first paint.
+  contentVisibility: 'auto',
+  containIntrinsicSize: 'auto 40px 40px',
   ':hover': {
     backgroundColor: neutral.alpha[3],
   },
