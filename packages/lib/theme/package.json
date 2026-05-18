@@ -19,7 +19,8 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@lib/design": "workspace:*"
+    "@lib/design": "workspace:*",
+    "@lib/state": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": "*"

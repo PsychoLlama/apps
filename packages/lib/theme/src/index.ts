@@ -10,3 +10,5 @@ export {
   THEME_STORAGE_KEY,
   type ThemeId,
 } from './constants';
+export { theme } from './store';
+export { hydrateThemeEffect, selectThemeEffect, setTheme } from './bindings';
