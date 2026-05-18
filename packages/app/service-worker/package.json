@@ -11,6 +11,9 @@
   "scripts": {
     "typecheck": "tsc"
   },
+  "dependencies": {
+    "@lib/observability": "workspace:*"
+  },
   "devDependencies": {
     "@dev/build": "workspace:*",
     "vite": "catalog:"
