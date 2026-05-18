@@ -1,4 +1,3 @@
-import { fileURLToPath } from 'node:url';
 import { build, type BuildResult } from 'esbuild';
 import type { Plugin } from 'vite';
 
@@ -10,17 +9,16 @@ interface InlineScriptOptions {
   id: string;
 
   /**
-   * TS entry point that compiles into the inline script. Accepts
-   * either an absolute filesystem path or a `file://` URL — pure-web
-   * library packages (no `@types/node`) can resolve their source via
-   * `new URL('./foo.ts', import.meta.url)` and hand the URL over
-   * directly.
+   * Absolute filesystem path to the TS entry point that compiles
+   * into the inline script. Callers holding a `file://` URL from
+   * `import.meta.resolve` should convert via `fileURLToPath` before
+   * passing it in.
    *
    * Must be self-contained: bundled by esbuild outside Vite's plugin
    * chain, so it can't use Vite-only imports (`virtual:*`, `?url`,
    * `*.css`, etc).
    */
-  entry: string | URL;
+  entry: string;
 
   /**
    * esbuild `target` for the compiled output. Defaults to a broad
@@ -45,14 +43,9 @@ export const inlineScript = (options: InlineScriptOptions): Plugin => {
   const resolved = `\0${options.id}`;
   let cached: { code: string; inputs: ReadonlySet<string> } | null = null;
 
-  const entryPath =
-    typeof options.entry === 'string'
-      ? options.entry
-      : fileURLToPath(options.entry);
-
   const compile = async () => {
     const result: BuildResult = await build({
-      entryPoints: [entryPath],
+      entryPoints: [options.entry],
       bundle: true,
       minify: true,
       format: 'iife',

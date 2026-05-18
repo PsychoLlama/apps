@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { solidStart } from '@solidjs/start/config';
@@ -54,10 +55,10 @@ export default defineConfig({
     instrumentationScope(),
     inlineScript({
       id: 'virtual:theme-prelude',
-      // Resolve `@lib/theme/prelude` to its `file://` URL so the
-      // plugin can hand the absolute path to esbuild. `import.meta.resolve`
-      // walks pnpm's symlinks the same way as a normal import would.
-      entry: new URL(import.meta.resolve('@lib/theme/prelude')),
+      // `import.meta.resolve` walks pnpm's symlinks the same way as a
+      // normal import would, returning a `file://` URL string that
+      // esbuild gets as an absolute path.
+      entry: fileURLToPath(import.meta.resolve('@lib/theme/prelude')),
     }),
     solidStart(),
     nitro({
