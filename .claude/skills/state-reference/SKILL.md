@@ -1,20 +1,25 @@
 ---
-description: Reference docs for `@lib/state` — stores, actions, effects, refs, and registry-scoped hooks. Load when authoring or reviewing code that consumes `@lib/state`, picking an API, or wiring tests against an isolated registry.
+description: Reference docs for `@lib/state` — the codebase's sanctioned state management. Built-in Solid primitives (`createSignal`, `createStore`, `createMemo`) are banned outside `@lib/ui` and storybook stories. Load when authoring or reviewing any stateful code, picking an API, or wiring tests.
 ---
 
 # State Management
 
 - Single entry point: `@lib/state`.
-- Stores hold state. Actions mutate state. Effects wrap impure work and dispatch actions at lifecycle boundaries.
-- Multi-store coordination happens inside a single action's store tuple — no pub/sub, no fan-out.
+- State updates are transactional: one action mutates all relevant stores in a single reactive flush. Don't fan out to multiple actions when one will do.
 - Side effects belong in effects, never in actions or stores.
 
 ## Guidelines
 
-- The app is statically generated (SolidStart `static` preset). State materializes at module load against a global registry, so initial render has no async gap.
-- Consider whether a loading state is meaningful: data sourced from synchronous store reads is ready on first paint, while effect-driven work (network, media, async capabilities) needs explicit status fields.
-- Naming convention: a store named `timerStore` is referred to as `timer` inside action and effect handlers.
-- Every store-state interface and every field gets a JSDoc comment describing its role, not its type. Same for any types the state references (status unions, entity shapes, etc).
+- App is SSG'd. Stores are ready on first paint; reserve loading states for effect-driven async work.
+- Naming: `timerStore` → `timer` inside handlers.
+- JSDoc every store interface, field, and referenced type (status unions, entity shapes). Describe the role, not the type.
+
+## Structure
+
+- **Stores** initialize state and own its types. Nothing else.
+- **Capabilities** are low-level side-effect functions (start recording, fetch, etc.). They may take store views as arguments but otherwise don't depend on `@lib/state`.
+- **Actions** describe state changes — synchronous handlers over store drafts.
+- **Bindings** wire capabilities to lifecycle actions via `defineEffect`. The integration point.
 
 ## Stores
 
@@ -27,28 +32,25 @@ description: Reference docs for `@lib/state` — stores, actions, effects, refs,
 ## Actions
 
 - `defineAction([storeRefs], handler)`: Binds a tuple of stores to a synchronous handler. Drafts are writable; writes batch into one reactive flush.
-- Handler signature: `(...drafts, input?) => void`. Omit the trailing `input` parameter when not needed — the call site becomes zero-arg.
+- Handler: `(...drafts, input?) => void`. Omit the trailing `input` parameter when not needed — call site becomes zero-arg.
 - Typed-input actions require the input at the call site: `useAction(addN)(5)`.
-- `Action<Stores, Input>`: Returned tuple. `AnyAction<Input>`: type-erased variant for effect lifecycle slots.
+- `Action<Stores, Input>`: returned tuple. `AnyAction<Input>`: type-erased variant for effect lifecycle slots.
 
 ## Effects
 
 - `defineEffect([storeRefs], fn, { onStart?, onSuccess?, onFailure? })`: Wraps a side-effecting callback with lifecycle actions.
 - Callback receives a readonly view per declared store followed by the input. Pass `[]` when no state is read.
-- `onStart` fires with the effect's input before the callback. `onSuccess` fires with the resolved value. `onFailure` fires with the caught `Error` — without it, errors re-throw.
+- When the capability's signature matches, use it as the callback directly — no wrapper.
+- `onStart` fires with the input before the callback. `onSuccess` fires with the resolved value. `onFailure` fires with the caught `Error` — without it, errors re-throw.
 - Lifecycle slots accept named actions or inline `defineAction(...)` calls.
-- Sync callbacks return `void`; callbacks returning a `Promise` make the dispatch return `Promise<void>` via `PerformReturn<Output>`.
-
-## Capabilities and Bindings
-
-- Capabilities are low-level side-effect functions (e.g. `startRecording`, `captureTrack`). They don't import `@lib/state`.
-- Bindings pair capabilities with lifecycle actions via `defineEffect`. When an effect needs to read state, declare the stores and use the capability directly as the callback — no wrapper.
+- Sync callbacks return `void`; `Promise`-returning callbacks make the dispatch return `Promise<void>` via `PerformReturn<Output>`.
 
 ## Hooks
 
 - `useStore(storeRef)`: Returns the readonly state from the global registry.
-- `useAction(action)`: Returns a callable that dispatches the action. Zero-arg for no-input actions, one-arg for typed input.
-- `useEffect(effect)`: Returns a callable that performs the effect. Same call-site arity rules as `useAction`.
+- `useAction(action)`: Returns a callable that dispatches the action.
+- `useEffect(effect)`: Returns a callable that performs the effect.
+- Call-site arity: zero-arg for no-input, one-arg for typed input.
 
 ## Refs
 
@@ -63,10 +65,9 @@ description: Reference docs for `@lib/state` — stores, actions, effects, refs,
 
 ## Testing
 
+- Test actions and capabilities in isolation. Bindings are rarely worth testing directly — UI tests cover the integration.
 - `createTestBindings()`: Returns `RegistryBindings` backed by a fresh registry. One call per test keeps state isolated.
-- Materialize required stores with `bindings.createStore(storeRef)`, then drive state through `useAction` / `useEffect` and assert on the readonly view.
 - Co-locate tests under `__tests__/`. Example: `foo.ts` and `__tests__/foo.test.ts`.
-- Common pattern: a `bootstrap()` helper that creates bindings, materializes the stores under test, and spreads them onto the bindings object for ergonomic destructuring.
 
 ```ts
 const bootstrap = () => {
