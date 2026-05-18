@@ -1,9 +1,14 @@
 import { createLogger } from '@lib/observability';
 import {
+  COLOR_SCHEME_ATTRIBUTE,
+  COLOR_SCHEME_IDS,
+  COLOR_SCHEME_STORAGE_KEY,
   DEFAULT_THEME_ID,
   THEME_ATTRIBUTE,
   THEME_IDS,
   THEME_STORAGE_KEY,
+  type ColorSchemeId,
+  type ColorSchemeOption,
   type ThemeId,
 } from './constants';
 
@@ -11,6 +16,10 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 const isThemeId = (value: string | undefined): value is ThemeId =>
   value !== undefined && (THEME_IDS as readonly string[]).includes(value);
+
+const isColorSchemeId = (value: string | undefined): value is ColorSchemeId =>
+  value !== undefined &&
+  (COLOR_SCHEME_IDS as readonly string[]).includes(value);
 
 /**
  * Read the active theme stamped onto `<html data-theme>`. The prelude
@@ -66,5 +75,39 @@ export const resetTheme = (): void => {
   document.documentElement.dataset[THEME_ATTRIBUTE] = DEFAULT_THEME_ID;
   guardStorageWrite('clear', () => {
     localStorage.removeItem(THEME_STORAGE_KEY);
+  });
+};
+
+/**
+ * Read the active color-scheme override stamped onto
+ * `<html data-color-scheme>`. Returns `'system'` when no override is
+ * present — that's the no-attribute state that hands control back to
+ * `@media (prefers-color-scheme)`.
+ */
+export const readActiveColorScheme = (): ColorSchemeOption => {
+  const value = document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
+  return isColorSchemeId(value) ? value : 'system';
+};
+
+/**
+ * Force a color-scheme override or hand control back to the system
+ * preference. `'system'` clears both the DOM attribute and the
+ * persisted key — a missing attribute is the canonical no-override
+ * state, and a missing key means the prelude won't restamp on reload.
+ * DOM write happens first so the visual switch survives a localStorage
+ * failure.
+ */
+export const applyColorScheme = (option: ColorSchemeOption): void => {
+  if (option === 'system') {
+    delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
+    guardStorageWrite('clear', () => {
+      localStorage.removeItem(COLOR_SCHEME_STORAGE_KEY);
+    });
+    return;
+  }
+
+  document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = option;
+  guardStorageWrite('persist', () => {
+    localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, option);
   });
 };

@@ -57,3 +57,37 @@ export const DEFAULT_THEME_ID: ThemeId = 'blue';
  * mode, motion, density) slot in alongside it.
  */
 export const THEME_STORAGE_KEY = 'preferences.appearance.theme';
+
+/**
+ * `dataset` key on `<html>` that forces a specific color scheme. Mirrors
+ * the attribute name `@lib/design/color-scheme` keys its selectors off
+ * of — keep the two in lockstep so the prelude, runtime, and CSS all
+ * agree on where the override lives. Absent attribute means
+ * "system-managed."
+ */
+export const COLOR_SCHEME_ATTRIBUTE = 'colorScheme';
+
+/**
+ * Canonical list of explicit color-scheme overrides. "system" is not
+ * here — it's represented by the absence of `<html data-color-scheme>`,
+ * which lets `@media (prefers-color-scheme)` rules take over.
+ */
+export const COLOR_SCHEME_IDS = ['light', 'dark'] as const;
+
+/** Identifier for an application-forced color scheme. */
+export type ColorSchemeId = (typeof COLOR_SCHEME_IDS)[number];
+
+/**
+ * Selectable value in the appearance picker. `'system'` is the
+ * no-override state — the store and picker share this shape so the
+ * radio group can bind directly without translation.
+ */
+export type ColorSchemeOption = ColorSchemeId | 'system';
+
+/**
+ * `localStorage` key holding the user's color-scheme override. Stored
+ * value is a `ColorSchemeId`; `'system'` is represented by the key's
+ * absence, matching the DOM convention. The head prelude reads this
+ * before paint to restamp `<html data-color-scheme>`.
+ */
+export const COLOR_SCHEME_STORAGE_KEY = 'preferences.appearance.mode';

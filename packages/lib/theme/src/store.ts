@@ -1,5 +1,5 @@
 import { createStore, defineStore } from '@lib/state';
-import type { ThemeId } from './constants';
+import type { ColorSchemeOption, ThemeId } from './constants';
 
 /** Active theme selection mirrored onto `<html data-theme>`. */
 export interface ThemeState {
@@ -24,3 +24,26 @@ export const themeStore = defineStore<ThemeState>(() => ({
 
 /** Live readonly view of the active theme. */
 export const theme = createStore(themeStore);
+
+/** Active color-scheme override mirrored onto `<html data-color-scheme>`. */
+export interface ColorSchemeState {
+  /**
+   * Selected appearance option, or `null` until the client hydrates.
+   * `'system'` is a real selection (no override); `null` is the
+   * pre-hydration state and keeps pickers from flashing the wrong
+   * card before the prelude-stamped value is read.
+   */
+  id: ColorSchemeOption | null;
+}
+
+/**
+ * Source of truth for the runtime color-scheme override.
+ * `hydrateColorSchemeEffect` seeds it from the prelude-set
+ * `<html data-color-scheme>` once the client mounts.
+ */
+export const colorSchemeStore = defineStore<ColorSchemeState>(() => ({
+  id: null,
+}));
+
+/** Live readonly view of the active color-scheme override. */
+export const colorScheme = createStore(colorSchemeStore);
