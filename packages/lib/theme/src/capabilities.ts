@@ -57,16 +57,23 @@ const guardStorageWrite = (op: StorageOp, write: () => void): void => {
  * Mirror the active theme's page-background colors into the paired
  * `<meta name="theme-color">` tags. The prelude does the same on first
  * paint; this keeps the browser chrome in sync when the user swaps
- * themes at runtime.
+ * themes or color-schemes at runtime.
+ *
+ * An explicit `scheme` override collapses both tags onto the same
+ * color — without that, the OS-level `prefers-color-scheme` query
+ * baked into each tag's `media` attribute decides which one wins, and
+ * the address bar drifts out of sync with the app's forced scheme.
  */
-const applyThemeColors = (id: ThemeId): void => {
+const syncThemeColorMeta = (id: ThemeId, scheme: ColorSchemeOption): void => {
   const colors = THEME_COLORS[id];
+  const lightContent = scheme === 'dark' ? colors.dark : colors.light;
+  const darkContent = scheme === 'light' ? colors.light : colors.dark;
   document
     .getElementById(THEME_COLOR_META_ID.light)
-    ?.setAttribute('content', colors.light);
+    ?.setAttribute('content', lightContent);
   document
     .getElementById(THEME_COLOR_META_ID.dark)
-    ?.setAttribute('content', colors.dark);
+    ?.setAttribute('content', darkContent);
 };
 
 /**
@@ -77,7 +84,7 @@ const applyThemeColors = (id: ThemeId): void => {
  */
 export const applyTheme = (id: ThemeId): void => {
   document.documentElement.dataset[THEME_ATTRIBUTE] = id;
-  applyThemeColors(id);
+  syncThemeColorMeta(id, readActiveColorScheme());
   guardStorageWrite('persist', () => {
     localStorage.setItem(THEME_STORAGE_KEY, id);
   });
@@ -92,7 +99,7 @@ export const applyTheme = (id: ThemeId): void => {
  */
 export const resetTheme = (): void => {
   document.documentElement.dataset[THEME_ATTRIBUTE] = DEFAULT_THEME_ID;
-  applyThemeColors(DEFAULT_THEME_ID);
+  syncThemeColorMeta(DEFAULT_THEME_ID, readActiveColorScheme());
   guardStorageWrite('clear', () => {
     localStorage.removeItem(THEME_STORAGE_KEY);
   });
@@ -120,6 +127,7 @@ export const readActiveColorScheme = (): ColorSchemeOption => {
 export const applyColorScheme = (option: ColorSchemeOption): void => {
   if (option === 'system') {
     delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
+    syncThemeColorMeta(readActiveTheme(), 'system');
     guardStorageWrite('clear', () => {
       localStorage.removeItem(COLOR_SCHEME_STORAGE_KEY);
     });
@@ -127,6 +135,7 @@ export const applyColorScheme = (option: ColorSchemeOption): void => {
   }
 
   document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = option;
+  syncThemeColorMeta(readActiveTheme(), option);
   guardStorageWrite('persist', () => {
     localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, option);
   });

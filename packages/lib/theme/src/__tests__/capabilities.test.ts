@@ -72,6 +72,28 @@ describe('applyTheme', () => {
     expect(dark?.getAttribute('content')).toBe(THEME_COLORS.jade.dark);
   });
 
+  it('collapses both theme-color meta tags onto the dark variant when forced dark', () => {
+    document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
+
+    applyTheme('jade');
+
+    const light = document.getElementById(THEME_COLOR_META_ID.light);
+    const dark = document.getElementById(THEME_COLOR_META_ID.dark);
+    expect(light?.getAttribute('content')).toBe(THEME_COLORS.jade.dark);
+    expect(dark?.getAttribute('content')).toBe(THEME_COLORS.jade.dark);
+  });
+
+  it('collapses both theme-color meta tags onto the light variant when forced light', () => {
+    document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'light';
+
+    applyTheme('jade');
+
+    const light = document.getElementById(THEME_COLOR_META_ID.light);
+    const dark = document.getElementById(THEME_COLOR_META_ID.dark);
+    expect(light?.getAttribute('content')).toBe(THEME_COLORS.jade.light);
+    expect(dark?.getAttribute('content')).toBe(THEME_COLORS.jade.light);
+  });
+
   it('still flips the DOM when localStorage rejects', () => {
     const setItem = vi
       .spyOn(Storage.prototype, 'setItem')
@@ -213,6 +235,46 @@ describe('applyColorScheme', () => {
     );
 
     setItem.mockRestore();
+  });
+
+  it("collapses both theme-color meta tags onto the active theme's dark variant when forced dark", () => {
+    document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
+
+    applyColorScheme('dark');
+
+    const light = document.getElementById(THEME_COLOR_META_ID.light);
+    const dark = document.getElementById(THEME_COLOR_META_ID.dark);
+    expect(light?.getAttribute('content')).toBe(THEME_COLORS.jade.dark);
+    expect(dark?.getAttribute('content')).toBe(THEME_COLORS.jade.dark);
+  });
+
+  it("collapses both theme-color meta tags onto the active theme's light variant when forced light", () => {
+    document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
+
+    applyColorScheme('light');
+
+    const light = document.getElementById(THEME_COLOR_META_ID.light);
+    const dark = document.getElementById(THEME_COLOR_META_ID.dark);
+    expect(light?.getAttribute('content')).toBe(THEME_COLORS.jade.light);
+    expect(dark?.getAttribute('content')).toBe(THEME_COLORS.jade.light);
+  });
+
+  it("restores the per-scheme theme-color split when reset to 'system'", () => {
+    document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
+    document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
+    document
+      .getElementById(THEME_COLOR_META_ID.light)
+      ?.setAttribute('content', THEME_COLORS.jade.dark);
+    document
+      .getElementById(THEME_COLOR_META_ID.dark)
+      ?.setAttribute('content', THEME_COLORS.jade.dark);
+
+    applyColorScheme('system');
+
+    const light = document.getElementById(THEME_COLOR_META_ID.light);
+    const dark = document.getElementById(THEME_COLOR_META_ID.dark);
+    expect(light?.getAttribute('content')).toBe(THEME_COLORS.jade.light);
+    expect(dark?.getAttribute('content')).toBe(THEME_COLORS.jade.dark);
   });
 
   it("still drops the attribute when localStorage rejects on 'system'", () => {
