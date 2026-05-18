@@ -42,13 +42,15 @@ describe('ErrorBoundaryFallback', () => {
 
     mount(err);
 
-    expect(
-      screen.getByRole('heading', { level: 2, name: 'TypeError' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Cannot read properties of undefined (reading 'x')"),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/at thing \(file\.ts:1:1\)/)).toBeInTheDocument();
+    expect(screen.getByText('Type').nextElementSibling).toHaveTextContent(
+      'TypeError',
+    );
+    expect(screen.getByText('Message').nextElementSibling).toHaveTextContent(
+      "Cannot read properties of undefined (reading 'x')",
+    );
+    expect(screen.getByText('Stack').nextElementSibling).toHaveTextContent(
+      /at thing \(file\.ts:1:1\)/,
+    );
   });
 
   it('falls back to "Unknown error" when an Error carries no message', () => {
@@ -69,10 +71,12 @@ describe('ErrorBoundaryFallback', () => {
   it('normalizes non-Error throws into a generic name with stringified value', () => {
     const { container } = mount('literal string');
 
-    expect(
-      screen.getByRole('heading', { level: 2, name: 'Error' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('literal string')).toBeInTheDocument();
+    expect(screen.getByText('Type').nextElementSibling).toHaveTextContent(
+      'Error',
+    );
+    expect(screen.getByText('Message').nextElementSibling).toHaveTextContent(
+      'literal string',
+    );
     expect(container.querySelector('pre')).not.toBeInTheDocument();
   });
 

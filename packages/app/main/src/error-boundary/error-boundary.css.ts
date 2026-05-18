@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { accent, fast, neutral, radius, space, standard } from '@lib/design';
+import { danger, fast, neutral, radius, space, standard } from '@lib/design';
 
 export const column = style({
   maxWidth: '480px',
@@ -10,8 +10,8 @@ export const icon = style({
   width: space[8],
   height: space[8],
   borderRadius: radius.full,
-  backgroundColor: accent.alpha[3],
-  color: accent.solid[11],
+  backgroundColor: danger.alpha[3],
+  color: danger.solid[11],
 });
 
 export const details = style({
@@ -30,6 +30,7 @@ export const summaryChevron = style({
 });
 
 export const stack = style({
+  width: '100%',
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-word',
   paddingBlock: space[3],
