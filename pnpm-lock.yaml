@@ -180,7 +180,7 @@ importers:
         version: link:../../lib/ui
       solid-js:
         specifier: '*'
-        version: 1.9.12
+        version: 1.9.13
 
   packages/app/icon-editor:
     dependencies:
@@ -198,13 +198,13 @@ importers:
         version: link:../../lib/ui
       '@solidjs/router':
         specifier: '*'
-        version: 0.16.1(solid-js@1.9.12)
+        version: 0.16.1(solid-js@1.9.13)
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1
       solid-js:
         specifier: '*'
-        version: 1.9.12
+        version: 1.9.13
     devDependencies:
       '@dev/build':
         specifier: workspace:*
@@ -320,7 +320,7 @@ importers:
         version: 1.20.1
       solid-js:
         specifier: '*'
-        version: 1.9.12
+        version: 1.9.13
 
   packages/app/studio:
     dependencies:
@@ -338,7 +338,7 @@ importers:
         version: link:../../lib/ui
       '@solidjs/router':
         specifier: '*'
-        version: 0.16.1(solid-js@1.9.12)
+        version: 0.16.1(solid-js@1.9.13)
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1
@@ -347,7 +347,7 @@ importers:
         version: 8.0.3
       solid-js:
         specifier: '*'
-        version: 1.9.12
+        version: 1.9.13
 
   packages/dev/build:
     dependencies:
@@ -466,7 +466,7 @@ importers:
         version: 1.20.1
       solid-js:
         specifier: '*'
-        version: 1.9.12
+        version: 1.9.13
 
   packages/lib/observability:
     dependencies:
@@ -490,19 +490,19 @@ importers:
         version: link:../ui
       '@solidjs/meta':
         specifier: '*'
-        version: 0.29.4(solid-js@1.9.12)
+        version: 0.29.4(solid-js@1.9.13)
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1
       solid-js:
         specifier: '*'
-        version: 1.9.12
+        version: 1.9.13
 
   packages/lib/state:
     dependencies:
       solid-js:
         specifier: '*'
-        version: 1.9.12
+        version: 1.9.13
 
   packages/lib/theme:
     dependencies:
@@ -517,7 +517,7 @@ importers:
         version: link:../state
       solid-js:
         specifier: '*'
-        version: 1.9.12
+        version: 1.9.13
 
   packages/lib/ui:
     dependencies:
@@ -5322,9 +5322,6 @@ packages:
     resolution: {integrity: sha512-dWUG8F5sIIARXih1DTaQAX4SsiTXhInKf1buxdY9DIg4ZYPZK5nGM1VRIYmEbDbsHt7USo99xSLFu5Q1IqTmsg==}
     engines: {node: '>= 18'}
 
-  solid-js@1.9.12:
-    resolution: {integrity: sha512-QzKaSJq2/iDrWR1As6MHZQ8fQkdOBf8GReYb7L5iKwMGceg7HxDcaOHk0at66tNgn9U2U7dXo8ZZpLIAmGMzgw==}
-
   solid-js@1.9.13:
     resolution: {integrity: sha512-6hJeJMOcEX8ktqjpDoJZEmld3ijvcvWBDtiXBm7f4332SiFN66QeAQI1REQshvyUoISsSeJ4PHDauKYbwao9JQ==}
 
@@ -7707,17 +7704,9 @@ snapshots:
 
   '@sindresorhus/merge-streams@4.0.0': {}
 
-  '@solidjs/meta@0.29.4(solid-js@1.9.12)':
-    dependencies:
-      solid-js: 1.9.12
-
   '@solidjs/meta@0.29.4(solid-js@1.9.13)':
     dependencies:
       solid-js: 1.9.13
-
-  '@solidjs/router@0.16.1(solid-js@1.9.12)':
-    dependencies:
-      solid-js: 1.9.12
 
   '@solidjs/router@0.16.1(solid-js@1.9.13)':
     dependencies:
@@ -10933,11 +10922,6 @@ snapshots:
 
   smol-toml@1.6.1: {}
 
-  solid-js@1.9.12:
-    dependencies:
-      csstype: 3.2.3
-      seroval: 1.5.2
-      seroval-plugins: 1.5.2(seroval@1.5.2)
 
   solid-js@1.9.13:
     dependencies:
