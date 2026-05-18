@@ -1,12 +1,21 @@
 import {
+  COLOR_SCHEME_ATTRIBUTE,
+  COLOR_SCHEME_STORAGE_KEY,
   DEFAULT_THEME_ID,
   THEME_ATTRIBUTE,
   THEME_STORAGE_KEY,
 } from '../constants';
-import { applyTheme, readActiveTheme, resetTheme } from '../capabilities';
+import {
+  applyColorScheme,
+  applyTheme,
+  readActiveColorScheme,
+  readActiveTheme,
+  resetTheme,
+} from '../capabilities';
 
 beforeEach(() => {
   delete document.documentElement.dataset[THEME_ATTRIBUTE];
+  delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
   localStorage.clear();
 });
 
@@ -98,6 +107,89 @@ describe('resetTheme', () => {
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe(
       DEFAULT_THEME_ID,
     );
+
+    removeItem.mockRestore();
+  });
+});
+
+describe('readActiveColorScheme', () => {
+  it('returns the validated value stamped on <html>', () => {
+    document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
+
+    expect(readActiveColorScheme()).toBe('dark');
+  });
+
+  it("returns 'system' when the attribute is missing", () => {
+    expect(readActiveColorScheme()).toBe('system');
+  });
+
+  it("returns 'system' when the attribute is unrecognized", () => {
+    document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'sepia';
+
+    expect(readActiveColorScheme()).toBe('system');
+  });
+});
+
+describe('applyColorScheme', () => {
+  it('flips <html data-color-scheme> to the requested override', () => {
+    applyColorScheme('dark');
+
+    expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
+      'dark',
+    );
+  });
+
+  it('persists the override to localStorage', () => {
+    applyColorScheme('light');
+
+    expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBe('light');
+  });
+
+  it("drops the attribute when set to 'system'", () => {
+    document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
+
+    applyColorScheme('system');
+
+    expect(
+      document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE],
+    ).toBeUndefined();
+  });
+
+  it("clears the persisted preference when set to 'system'", () => {
+    localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, 'dark');
+
+    applyColorScheme('system');
+
+    expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBeNull();
+  });
+
+  it('still flips the DOM when localStorage rejects', () => {
+    const setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+
+    expect(() => applyColorScheme('dark')).not.toThrow();
+    expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
+      'dark',
+    );
+
+    setItem.mockRestore();
+  });
+
+  it("still drops the attribute when localStorage rejects on 'system'", () => {
+    document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'light';
+    const removeItem = vi
+      .spyOn(Storage.prototype, 'removeItem')
+      .mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+
+    expect(() => applyColorScheme('system')).not.toThrow();
+    expect(
+      document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE],
+    ).toBeUndefined();
 
     removeItem.mockRestore();
   });

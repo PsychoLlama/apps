@@ -2,6 +2,7 @@ import { NoHydration } from 'solid-js/web';
 import { Callout, Container, Flex, Heading, Section, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
+import { AppearancePicker, appearanceHeadingId } from './appearance-picker';
 import { ThemePicker, ThemeResetButton, themeHeadingId } from './theme-picker';
 
 export const Settings = () => (
@@ -30,6 +31,24 @@ export const Settings = () => (
               </Callout>
             </noscript>
           </NoHydration>
+
+          <Flex as="section" direction="column" gap={3}>
+            <Flex as="header" direction="column" gap={2}>
+              <Heading
+                as="h2"
+                id={appearanceHeadingId}
+                size={4}
+                weight="medium"
+              >
+                Appearance
+              </Heading>
+              <Text as="p" size={2} color="lowContrast">
+                Sets the app's color scheme.
+              </Text>
+            </Flex>
+
+            <AppearancePicker />
+          </Flex>
 
           <Flex as="section" direction="column" gap={3}>
             <Flex as="header" direction="column" gap={2}>

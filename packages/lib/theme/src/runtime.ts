@@ -4,11 +4,14 @@
  * the bundle + constants) don't transitively pull `@lib/state` and
  * `@lib/observability` into Vanilla Extract's child compiler.
  */
-export { theme } from './store';
+export { colorScheme, theme } from './store';
 export {
   clearTheme,
+  hydrateColorSchemeEffect,
   hydrateThemeEffect,
   resetThemeEffect,
+  selectColorSchemeEffect,
   selectThemeEffect,
+  setColorScheme,
   setTheme,
 } from './bindings';
