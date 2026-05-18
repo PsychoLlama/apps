@@ -30,6 +30,6 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname !== '/api/local/health') return;
 
-  logger.info('Health check intercepted.', { url: url.pathname });
+  logger.info('Responding to health check.', { url: url.pathname });
   event.respondWith(Response.json({ status: 'online' }));
 });
