@@ -40,7 +40,9 @@ output=$(eslint_d --no-warn-ignored "$file_path" 2>&1) && exit 0
 
 relative=$(realpath --relative-to="$PWD" "$file_path")
 jq -n --arg ctx "eslint reported issues in $relative:
-$output" '{
+$output
+
+Stale diagnostics fixable by running \`eslint_d restart\`." '{
   hookSpecificOutput: {
     hookEventName: "PostToolUse",
     additionalContext: $ctx,
