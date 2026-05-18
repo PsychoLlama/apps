@@ -512,6 +512,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../design
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../observability
       '@lib/state':
         specifier: workspace:*
         version: link:../state

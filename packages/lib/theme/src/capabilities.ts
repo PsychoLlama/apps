@@ -1,3 +1,4 @@
+import { createLogger, type Logger } from '@lib/observability';
 import {
   DEFAULT_THEME_ID,
   THEME_ATTRIBUTE,
@@ -5,6 +6,15 @@ import {
   THEME_STORAGE_KEY,
   type ThemeId,
 } from './constants';
+
+// Lazy-init so the module load doesn't reach for
+// `import.meta.INSTRUMENTATION_SCOPE`. The barrel is imported by
+// `.css.ts` consumers via `SWATCHES`, and Vanilla Extract's child
+// compiler runs those files without the substitution plugin, so the
+// marker collapses to `undefined` at build time.
+let logger: Logger | undefined;
+const getLogger = (): Logger =>
+  (logger ??= createLogger(import.meta.INSTRUMENTATION_SCOPE));
 
 const isThemeId = (value: string | undefined): value is ThemeId =>
   value !== undefined && (THEME_IDS as readonly string[]).includes(value);
@@ -26,11 +36,12 @@ const writeStoredTheme = (id: ThemeId): void => {
   } catch (err) {
     // `SecurityError` is expected in sandboxed iframes and "block all
     // cookies" configurations — losing persistence is acceptable; the
-    // attribute write below still takes effect for the session. Anything
+    // attribute write above still takes effect for the session. Anything
     // else points to a real bug worth surfacing.
     if (!(err instanceof DOMException) || err.name !== 'SecurityError') {
-      // eslint-disable-next-line no-console
-      console.error('[theme]', err);
+      getLogger().error('Failed to persist theme preference', {
+        error: err instanceof Error ? err : new Error(String(err)),
+      });
     }
   }
 };

@@ -27,10 +27,11 @@ export const ThemePicker = () => {
   const selectTheme = useEffect(selectThemeEffect);
   const hydrateTheme = useEffect(hydrateThemeEffect);
 
-  // Sync the store with the prelude-stamped DOM value. SSR initializes
-  // the store to `DEFAULT_THEME_ID`; without this the picker would
-  // briefly mis-render the default before reflecting the persisted
-  // selection.
+  // The site is SSG'd, so the server can't know the persisted theme.
+  // The store starts unhydrated (`id: null`); `onMount` reads the
+  // prelude-stamped attribute and dispatches once the client takes
+  // over. The radio group renders disabled with no card selected
+  // until then, which beats flashing the wrong selection.
   onMount(hydrateTheme);
 
   return (
@@ -38,6 +39,7 @@ export const ThemePicker = () => {
       testId="theme-picker"
       name="theme"
       value={theme.id}
+      skeleton={theme.id === null}
       onValueChange={(next) => selectTheme(next as ThemeId)}
       gap={3}
       class={css.root}

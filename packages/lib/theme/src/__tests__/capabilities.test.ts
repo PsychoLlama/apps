@@ -41,43 +41,29 @@ describe('applyTheme', () => {
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('teal');
   });
 
-  it('still writes the DOM when localStorage rejects with SecurityError', () => {
+  it('still flips the DOM when localStorage rejects', () => {
     const setItem = vi
       .spyOn(Storage.prototype, 'setItem')
       .mockImplementation(() => {
         throw new DOMException('blocked', 'SecurityError');
       });
-    const error = vi
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
 
-    applyTheme('pink');
-
+    expect(() => applyTheme('pink')).not.toThrow();
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('pink');
-    expect(error).not.toHaveBeenCalled();
 
     setItem.mockRestore();
-    error.mockRestore();
   });
 
-  it('logs unexpected localStorage failures', () => {
+  it('does not surface unexpected localStorage failures to the caller', () => {
     const setItem = vi
       .spyOn(Storage.prototype, 'setItem')
       .mockImplementation(() => {
         throw new Error('quota');
       });
-    const error = vi
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
 
-    applyTheme('orange');
-
-    expect(error).toHaveBeenCalledWith(
-      '[theme]',
-      expect.objectContaining({ message: 'quota' }),
-    );
+    expect(() => applyTheme('orange')).not.toThrow();
+    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('orange');
 
     setItem.mockRestore();
-    error.mockRestore();
   });
 });

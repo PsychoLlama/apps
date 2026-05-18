@@ -1,7 +1,6 @@
 import { createTestBindings } from '@lib/state';
 import { hydrateThemeEffect, selectThemeEffect, setTheme } from '../bindings';
 import * as capabilities from '../capabilities';
-import { DEFAULT_THEME_ID } from '../constants';
 import { themeStore } from '../store';
 
 // Bindings tests assert on state transitions only. Capability behavior —
@@ -23,10 +22,10 @@ const setup = () => {
 };
 
 describe('themeStore', () => {
-  it('initializes to the default theme', () => {
+  it('starts unhydrated so SSG can render with no selection', () => {
     const { theme } = setup();
 
-    expect(theme.id).toBe(DEFAULT_THEME_ID);
+    expect(theme.id).toBeNull();
   });
 });
 

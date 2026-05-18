@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*",
+    "@lib/observability": "workspace:*",
     "@lib/state": "workspace:*"
   },
   "peerDependencies": {
