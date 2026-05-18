@@ -1,9 +1,8 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { initWasm, Resvg } from '@resvg/resvg-wasm';
 import type { Plugin, ViteDevServer } from 'vite';
+import { rasterizeSvg } from './resvg.ts';
 
 // `?to-png=<size>`. Plain `?png` was too generic; the verb-y form
 // reads as "import as png at <size>" and matches Vite's `?url` /
@@ -24,32 +23,6 @@ interface DevEntry {
   svgPath: string;
   size: number;
 }
-
-const WASM_PATH = fileURLToPath(
-  // The package's `./index_bg.wasm` export resolves to the wasm
-  // sibling regardless of where pnpm hoists the package.
-  import.meta.resolve('@resvg/resvg-wasm/index_bg.wasm'),
-);
-
-let wasmReady: Promise<void> | undefined;
-const ensureWasm = async (): Promise<void> => {
-  // `initWasm` is idempotent across the process — guard with a
-  // module-level promise so concurrent renders share one init.
-  wasmReady ??= readFile(WASM_PATH).then(initWasm);
-
-  return wasmReady;
-};
-
-const rasterize = async (svg: string, size: number): Promise<Uint8Array> => {
-  await ensureWasm();
-  const renderer = new Resvg(svg, {
-    fitTo: { mode: 'width', value: size },
-    // The brandmark is a flat geometric shape — no fonts to embed,
-    // no need to slow down rendering on text quality knobs.
-    font: { loadSystemFonts: false },
-  });
-  return renderer.render().asPng();
-};
 
 const stableKey = (input: string): string =>
   createHash('sha1').update(input).digest('hex').slice(0, 12);
@@ -140,7 +113,7 @@ export const svgToPng = (): Plugin => {
         }
 
         readFile(entry.svgPath, 'utf8')
-          .then((svg) => rasterize(svg, entry.size))
+          .then((svg) => rasterizeSvg(svg, entry.size))
           .then(
             (png) => {
               res.setHeader('Content-Type', 'image/png');
@@ -205,7 +178,7 @@ export const svgToPng = (): Plugin => {
       // `generateBundle`.
       if (!this.environment.config.build.ssr) {
         const svg = await readFile(svgPath, 'utf8');
-        const png = await rasterize(svg, size);
+        const png = await rasterizeSvg(svg, size);
         const refId = this.emitFile({
           type: 'asset',
           name: `${path.basename(svgPath, '.svg')}-${size}.png`,
