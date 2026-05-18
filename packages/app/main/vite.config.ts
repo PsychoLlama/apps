@@ -54,7 +54,10 @@ export default defineConfig({
     instrumentationScope(),
     inlineScript({
       id: 'virtual:theme-prelude',
-      entry: resolve(import.meta.dirname, 'src/theme-prelude.ts'),
+      // Resolve `@lib/theme/prelude` to its `file://` URL so the
+      // plugin can hand the absolute path to esbuild. `import.meta.resolve`
+      // walks pnpm's symlinks the same way as a normal import would.
+      entry: new URL(import.meta.resolve('@lib/theme/prelude')),
     }),
     solidStart(),
     nitro({

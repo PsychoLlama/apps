@@ -1,8 +1,4 @@
-import {
-  THEME_ATTRIBUTE,
-  THEME_IDS,
-  THEME_STORAGE_KEY,
-} from '@lib/theme/constants';
+import { THEME_ATTRIBUTE, THEME_IDS, THEME_STORAGE_KEY } from './constants';
 
 // Compiled to a minified IIFE by `@dev/build/vite-plugin/inline-script`
 // and inlined as a head script by `entry-server`. Runs before paint to
