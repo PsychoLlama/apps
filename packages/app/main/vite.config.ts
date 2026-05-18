@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
@@ -13,28 +13,6 @@ import { instrumentationScope } from '@dev/build/vite-plugin/instrumentation-sco
 import { svgToPng } from '@dev/build/vite-plugin/svg-to-png';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
-
-// `@lib/observability` declares a `#processor` imports map with a
-// `worker` condition pointing at a service-worker-safe variant (no
-// `localStorage`, no env filter). Vite doesn't activate a `worker`
-// condition in its SW pipeline, so intercept the resolution here and
-// force the worker variant whenever observability's internal
-// `#processor` import is seen during the worker bundle.
-const observabilityWorkerProcessor = (): Plugin => {
-  const target = resolve(
-    workspaceRoot,
-    'packages/lib/observability/src/logging/processor.worker.ts',
-  );
-  return {
-    name: '@app/main:observability-worker-processor',
-    enforce: 'pre',
-    resolveId(id, importer) {
-      if (id === '#processor' && importer?.includes('/lib/observability/')) {
-        return target;
-      }
-    },
-  };
-};
 
 // The bundled service worker lives under `/_build/`, so its default
 // scope would be limited to that prefix. Both Vite servers (dev and
@@ -71,7 +49,7 @@ export default defineConfig({
     // plugin has to be registered here too — otherwise the marker
     // collapses to `undefined` and `createLogger` throws at module
     // load time, killing the worker before any listener attaches.
-    plugins: () => [instrumentationScope(), observabilityWorkerProcessor()],
+    plugins: () => [instrumentationScope()],
   },
   plugins: [
     instrumentationScope(),

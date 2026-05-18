@@ -2,7 +2,7 @@
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "lib": ["ESNext", "WebWorker"],
-    "customConditions": ["worker"],
+    "customConditions": ["browser"],
     "types": [
       "vite/client",
       "@dev/build/vite-plugin/instrumentation-scope-types"
