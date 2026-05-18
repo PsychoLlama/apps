@@ -38,6 +38,11 @@ export default createHandler(() => (
             media="(prefers-color-scheme: dark)"
             content={defaultColors.dark}
           />
+          {/* PWA manifest. The file is emitted at a stable root path
+              by the `pwa-manifest` Vite plugin (see `vite.config.ts`),
+              not under `/_build/`, so the URL is hardcoded here rather
+              than imported as a hashed asset. */}
+          <link rel="manifest" href="/manifest.webmanifest" />
           {/* Render-blocking head script: restamps `data-theme` from
               the persisted preference before paint, falling through to
               the SSG-stamped `DEFAULT_THEME_ID` on missing/invalid

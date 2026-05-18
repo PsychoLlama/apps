@@ -17,3 +17,11 @@
 /_build/*
   Cache-Control: public, max-age=31536000, immutable
   Service-Worker-Allowed: /
+
+# The PWA manifest is emitted at the output root by the
+# `pwa-manifest` Vite plugin. Cloudflare guesses
+# `application/octet-stream` for `.webmanifest` — Chrome rejects the
+# manifest if the response Content-Type isn't
+# `application/manifest+json` (or `application/json`).
+/manifest.webmanifest
+  Content-Type: application/manifest+json

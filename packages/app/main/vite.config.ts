@@ -10,6 +10,7 @@ import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets'
 import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
 import { inlineScript } from '@dev/build/vite-plugin/inline-script';
 import { instrumentationScope } from '@dev/build/vite-plugin/instrumentation-scope';
+import { pwaManifest } from '@dev/build/vite-plugin/pwa-manifest';
 import { svgToPng } from '@dev/build/vite-plugin/svg-to-png';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
@@ -107,6 +108,27 @@ export default defineConfig({
     }),
     iconPacks(),
     svgToPng(),
+    pwaManifest({
+      icon: {
+        src: resolve(import.meta.dirname, 'src/branding/brandmark.svg'),
+        sizes: [192, 512],
+      },
+      manifest: {
+        id: '/',
+        name: 'PsychoLlama Apps',
+        short_name: 'Apps',
+        description: 'A collection of personal apps.',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        // Mirrors the SSG-seeded `theme-color` meta tag for the
+        // default `blue` theme's light scheme (`THEME_COLORS.blue.light`
+        // → slate step1). Only surfaces before the prelude swaps the
+        // tag — install splash + OS shortcut previews.
+        theme_color: '#fcfcfd',
+        background_color: '#fcfcfd',
+      },
+    }),
     vanillaExtractPlugin(),
     Icons({
       compiler: 'solid',
