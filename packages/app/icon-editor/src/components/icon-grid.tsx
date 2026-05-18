@@ -18,8 +18,10 @@ import {
   defineAction,
   defineEffect,
   defineStore,
+  ref,
   useAction,
   useEffect,
+  type Ref,
 } from '@lib/state';
 import {
   Badge,
@@ -46,7 +48,6 @@ import {
   loadIconPackIndex,
   loadIconPackManifest,
   loadIconPageEntries,
-  pageIndexFor,
   releaseInactivePackCaches,
   toIconRef,
   type IconEntry,
@@ -90,12 +91,18 @@ interface PickerState {
    */
   manifests: { [packId: string]: IconPackManifest | undefined };
   /**
-   * Resolved icon entries keyed by `pack:name`. Stores the full
-   * entry (not just body) so per-icon viewBox overrides survive a
-   * pick. Plain record for the same reactivity reason as
-   * `manifests`.
+   * Resolved icon entries keyed by `pack:name`. Held inside a
+   * `Ref` so the proxy treats the `Map` as opaque — per-tile reads
+   * stay on the bare `Map.get` fast path instead of walking
+   * `createMutable`'s tracking nodes (the hot cost when a 500-icon
+   * page re-binds). Reactivity flows through `entriesVersion`.
    */
-  entries: { [key: string]: IconEntry | undefined };
+  entries: Ref<Map<string, IconEntry>>;
+  /**
+   * Bumped on every write to `entries`. Subscribers read this to
+   * pick up new resolutions; the `Map` itself stays non-reactive.
+   */
+  entriesVersion: number;
 }
 
 const initialState = (): PickerState => ({
@@ -109,7 +116,8 @@ const initialState = (): PickerState => ({
   currentPage: 0,
   packs: undefined,
   manifests: {},
-  entries: {},
+  entries: ref(new Map<string, IconEntry>()),
+  entriesVersion: 0,
 });
 
 const pickerStore = defineStore<PickerState>(initialState);
@@ -158,24 +166,33 @@ const seedEntryAction = defineAction(
   [pickerStore],
   (state, seed: SeedEntry) => {
     const key = entryKey(seed.pack, seed.entry.name);
+    const entries = state.entries.current;
     // Skip when the entry is already cached — overwriting with a
     // structurally equal but referentially new object would churn
     // store identity, forcing the tile's `innerHTML` binding to
     // re-bind and restart any CSS animations on the inner SVG nodes
     // (visible in Material Line Icons).
-    if (state.entries[key]) return;
-    state.entries[key] = seed.entry;
+    if (entries.has(key)) return;
+    entries.set(key, seed.entry);
+    state.entriesVersion += 1;
   },
 );
 
 const ingestPageAction = defineAction(
   [pickerStore],
   (state, ingest: IconPageResult) => {
+    const entries = state.entries.current;
+    let added = false;
     for (const entry of ingest.entries) {
       const key = entryKey(ingest.packId, entry.name);
-      if (state.entries[key]) continue;
-      state.entries[key] = entry;
+      if (entries.has(key)) continue;
+      entries.set(key, entry);
+      added = true;
     }
+    // One reactive notification per chunk arrival, not per icon —
+    // every tile that read through `getEntry` re-evaluates once,
+    // not 500 times.
+    if (added) state.entriesVersion += 1;
   },
 );
 
@@ -192,12 +209,16 @@ const releaseInactivePacksAction = defineAction(
         delete state.manifests[key];
       }
     }
+    const entries = state.entries.current;
     const prefix = `${activePackId}:`;
-    for (const key of Object.keys(state.entries)) {
+    let removed = false;
+    for (const key of [...entries.keys()]) {
       if (!key.startsWith(prefix)) {
-        delete state.entries[key];
+        entries.delete(key);
+        removed = true;
       }
     }
+    if (removed) state.entriesVersion += 1;
   },
 );
 
@@ -395,6 +416,31 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     return manifest.names.slice(start, next);
   });
 
+  // Name → chunk-index lookup, built once per manifest. The naive
+  // alternative — `manifest.names.indexOf(name)` per visible name —
+  // walks the proxy-wrapped names array for every probe; with a
+  // 500-tile page over a 7k-icon pack that's millions of proxy
+  // accesses per click. The map collapses it to O(1) per lookup.
+  const nameToChunkIndex = createMemo<ReadonlyMap<string, number>>(() => {
+    const manifest = activeManifest();
+    if (!manifest) return new Map();
+    const map = new Map<string, number>();
+    let chunk = 0;
+    for (let idx = 0; idx < manifest.names.length; idx += 1) {
+      // Advance the cursor when the position crosses a chunk
+      // boundary, so the whole map builds in one linear walk
+      // instead of an O(log p) `pageIndexFor` per name.
+      while (
+        chunk + 1 < manifest.pageStart.length &&
+        idx >= manifest.pageStart[chunk + 1]
+      ) {
+        chunk += 1;
+      }
+      map.set(manifest.names[idx], chunk);
+    }
+    return map;
+  });
+
   // Whenever the visible set changes, request the page chunks needed
   // to render their bodies.
   createEffect(() => {
@@ -402,11 +448,12 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     if (!manifest) return;
     const names = visible();
     if (names.length === 0) return;
+    const lookup = nameToChunkIndex();
     const needed = new Set<number>();
     for (const name of names) {
-      const position = manifest.names.indexOf(name);
-      if (position < 0) continue;
-      needed.add(pageIndexFor(manifest, position));
+      const idx = lookup.get(name);
+      if (idx === undefined) continue;
+      needed.add(idx);
     }
     for (const idx of needed) {
       const pageUrl = manifest.pages[idx];
@@ -416,8 +463,27 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     }
   });
 
+  // Memoize the entries snapshot so the proxy hops for `entries` and
+  // `entriesVersion` happen once per chunk arrival, not once per tile
+  // per binding. `equals: false` so downstream re-runs even though the
+  // `Map` reference doesn't change between bumps. Tiles read the memo
+  // (a plain signal accessor) and walk the `Map` directly — no proxy
+  // tracking nodes per `(pack:name)` key, the dominant cost when a
+  // 500-tile page re-binds.
+  const entriesSnapshot = createMemo(
+    () => {
+      void picker.entriesVersion;
+      return picker.entries.current;
+    },
+    picker.entries.current,
+    { equals: false },
+  );
+
+  const getEntry = (pack: string, name: string): IconEntry | undefined =>
+    entriesSnapshot().get(entryKey(pack, name));
+
   const handlePickIcon = (manifest: IconPackManifest, name: string) => {
-    const entry = picker.entries[entryKey(manifest.id, name)];
+    const entry = getEntry(manifest.id, name);
     if (!entry) return;
     const summary = activePack();
     props.onSelect(
@@ -450,7 +516,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
           <PackDetailView
             pack={activePack()}
             manifest={activeManifest()}
-            entries={picker.entries}
+            getEntry={getEntry}
             search={picker.search}
             onSearch={setSearch}
             visible={visible()}
@@ -636,7 +702,12 @@ const PackListView: Component<PackListViewProps> = (props) => {
 interface PackDetailViewProps {
   pack: IconPackSummary | undefined;
   manifest: IconPackManifest | undefined;
-  entries: Readonly<Record<string, IconEntry | undefined>>;
+  /**
+   * Pull the resolved entry for `(pack, name)`. Subscribes to the
+   * entries version signal so tiles re-render once when a fetched
+   * chunk lands, without paying per-key proxy lookups.
+   */
+  getEntry: (pack: string, name: string) => IconEntry | undefined;
   search: string;
   onSearch: (value: string) => void;
   visible: ReadonlyArray<string>;
@@ -754,8 +825,7 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
               <div class={css.grid}>
                 <For each={props.visible}>
                   {(name) => {
-                    const entry = () =>
-                      props.entries[entryKey(manifest().id, name)];
+                    const entry = () => props.getEntry(manifest().id, name);
                     const isSelected = () =>
                       props.selected?.pack === manifest().id &&
                       props.selected.name === name;
