@@ -34,7 +34,7 @@ catalog:
   esbuild: ^0.28.0
   eslint: ^10.0.0
   idb: ^8.0.3
-  knip: ^6.6.1
+  knip: ^6.13.1
   playwright: ^1.59.1
   'solid-js': ^1.9.5
   storybook: ^10.3.5
