@@ -6,10 +6,11 @@
   "description": "Structured logging built on @holz/core.",
   "license": "MIT",
   "sideEffects": false,
-  "exports": {
-    ".": {
-      "browser": "./src/index.browser.ts",
-      "default": "./src/index.server.ts"
+  "exports": "./src/index.ts",
+  "imports": {
+    "#pipeline": {
+      "browser": "./src/pipeline.browser.ts",
+      "default": "./src/pipeline.server.ts"
     }
   },
   "scripts": {
