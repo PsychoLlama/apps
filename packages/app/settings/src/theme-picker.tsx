@@ -1,13 +1,12 @@
 import { For, onMount } from 'solid-js';
 import { useEffect } from '@lib/state';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
+import { THEMES, type ThemeId } from '@lib/theme';
 import {
-  THEMES,
   hydrateThemeEffect,
   selectThemeEffect,
   theme,
-  type ThemeId,
-} from '@lib/theme';
+} from '@lib/theme/runtime';
 import * as css from './theme-picker.css';
 
 /**

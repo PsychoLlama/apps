@@ -13,6 +13,7 @@
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
     "./prelude": "./src/prelude.ts",
+    "./runtime": "./src/runtime.ts",
     "./package.json": "./package.json"
   },
   "scripts": {

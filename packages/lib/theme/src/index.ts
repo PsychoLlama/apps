@@ -2,6 +2,10 @@
 // registers one `:root[data-theme="<id>"]` rule per variant. Swapping
 // themes at runtime is a `data-theme` flip on `<html>` — no extra
 // CSS fetch.
+//
+// Build-time / styling-only API. The runtime store + effects live at
+// `@lib/theme/runtime` so `.css.ts` consumers don't drag `@lib/state`
+// and `@lib/observability` through Vanilla Extract's child compiler.
 export { SWATCHES, THEMES } from './bundles.css';
 export {
   DEFAULT_THEME_ID,
@@ -10,5 +14,3 @@ export {
   THEME_STORAGE_KEY,
   type ThemeId,
 } from './constants';
-export { theme } from './store';
-export { hydrateThemeEffect, selectThemeEffect, setTheme } from './bindings';

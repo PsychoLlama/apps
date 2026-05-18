@@ -1,4 +1,4 @@
-import { createLogger, type Logger } from '@lib/observability';
+import { createLogger } from '@lib/observability';
 import {
   DEFAULT_THEME_ID,
   THEME_ATTRIBUTE,
@@ -7,14 +7,7 @@ import {
   type ThemeId,
 } from './constants';
 
-// Lazy-init so the module load doesn't reach for
-// `import.meta.INSTRUMENTATION_SCOPE`. The barrel is imported by
-// `.css.ts` consumers via `SWATCHES`, and Vanilla Extract's child
-// compiler runs those files without the substitution plugin, so the
-// marker collapses to `undefined` at build time.
-let logger: Logger | undefined;
-const getLogger = (): Logger =>
-  (logger ??= createLogger(import.meta.INSTRUMENTATION_SCOPE));
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 const isThemeId = (value: string | undefined): value is ThemeId =>
   value !== undefined && (THEME_IDS as readonly string[]).includes(value);
@@ -39,7 +32,7 @@ const writeStoredTheme = (id: ThemeId): void => {
     // attribute write above still takes effect for the session. Anything
     // else points to a real bug worth surfacing.
     if (!(err instanceof DOMException) || err.name !== 'SecurityError') {
-      getLogger().error('Failed to persist theme preference', {
+      logger.error('Failed to persist theme preference', {
         error: err instanceof Error ? err : new Error(String(err)),
       });
     }
