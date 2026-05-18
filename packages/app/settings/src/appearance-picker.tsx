@@ -9,7 +9,7 @@ import {
 } from '@lib/theme/runtime';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
-import IconAuto from 'virtual:icons/mdi/theme-light-dark';
+import IconAuto from 'virtual:icons/mdi/auto-mode';
 import * as css from './appearance-picker.css';
 
 /**

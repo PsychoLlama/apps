@@ -43,7 +43,7 @@ export const Settings = () => (
                 Appearance
               </Heading>
               <Text as="p" size={2} color="lowContrast">
-                Choose light, dark, or follow your system preference.
+                Sets the app's color scheme.
               </Text>
             </Flex>
 
