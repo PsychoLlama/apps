@@ -1,5 +1,6 @@
-import { Container, Flex, Heading, Section, Text } from '@lib/ui';
+import { Callout, Container, Flex, Heading, Section, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
+import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { ThemePicker, ThemeResetButton, themeHeadingId } from './theme-picker';
 
 export const Settings = () => (
@@ -17,6 +18,15 @@ export const Settings = () => (
               Tune how the apps look and behave.
             </Text>
           </Flex>
+
+          <noscript>
+            <Callout color="warning" icon={<IconAlert />}>
+              <Text as="span" size={2}>
+                These controls need JavaScript. Enable it to change any of the
+                settings on this page.
+              </Text>
+            </Callout>
+          </noscript>
 
           <Flex as="section" direction="column" gap={3}>
             <Flex as="header" direction="column" gap={2}>
