@@ -55,6 +55,15 @@ tester.run('no-log-interpolation', rule, {
       `,
     },
 
+    // The entry-client form: chained .namespace() directly off createLogger.
+    {
+      code: `
+        import { createLogger } from '@lib/observability';
+        const logger = createLogger(['scope']).namespace('sw');
+        logger.info('msg', { x });
+      `,
+    },
+
     // Unrelated object happens to share method names — not a logger.
     {
       code: 'const reporter = { info: (s) => s }; reporter.info(`hi ${name}`);',
@@ -114,6 +123,16 @@ tester.run('no-log-interpolation', rule, {
         const root = createLogger(['scope']);
         const child = root.namespace('child');
         child.warn(\`oops \${err}\`);
+      `,
+      errors: [{ messageId: 'interpolated' as const }],
+    },
+
+    // The entry-client form: chained .namespace() directly off createLogger.
+    {
+      code: `
+        import { createLogger } from '@lib/observability';
+        const logger = createLogger(['scope']).namespace('sw');
+        logger.info(\`hi \${name}\`);
       `,
       errors: [{ messageId: 'interpolated' as const }],
     },

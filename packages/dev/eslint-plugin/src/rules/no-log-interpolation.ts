@@ -48,25 +48,30 @@ const rootIdentifier = (node: TSESTree.Node): TSESTree.Identifier | null => {
   }
 };
 
-const isCreateLoggerCall = (
+// Decide whether an initializer expression produces a Logger. Accepts
+// `createLogger(...)`, an identifier already tracked as a logger, or
+// any `.namespace(...)` chain rooted in either. The `entry-client`
+// pattern `createLogger(scope).namespace('sw')` lives at the
+// intersection of both forms — handle it in one walk.
+const isLoggerInit = (
   node: TSESTree.Node,
   createLoggerLocals: ReadonlySet<string>,
-): boolean => {
-  if (node.type !== AST_NODE_TYPES.CallExpression) return false;
-  if (node.callee.type !== AST_NODE_TYPES.Identifier) return false;
-  return createLoggerLocals.has(node.callee.name);
-};
-
-const isNamespaceCallOnLogger = (
-  node: TSESTree.Node,
   loggerLocals: ReadonlySet<string>,
 ): boolean => {
-  if (node.type !== AST_NODE_TYPES.CallExpression) return false;
-  if (node.callee.type !== AST_NODE_TYPES.MemberExpression) return false;
-  if (node.callee.property.type !== AST_NODE_TYPES.Identifier) return false;
-  if (node.callee.property.name !== NAMESPACE_METHOD) return false;
-  const root = rootIdentifier(node.callee.object);
-  return root !== null && loggerLocals.has(root.name);
+  let cursor: TSESTree.Node = node;
+  while (cursor.type === AST_NODE_TYPES.CallExpression) {
+    if (cursor.callee.type === AST_NODE_TYPES.Identifier) {
+      return createLoggerLocals.has(cursor.callee.name);
+    }
+    if (cursor.callee.type !== AST_NODE_TYPES.MemberExpression) return false;
+    if (cursor.callee.property.type !== AST_NODE_TYPES.Identifier) return false;
+    if (cursor.callee.property.name !== NAMESPACE_METHOD) return false;
+    cursor = cursor.callee.object;
+  }
+  if (cursor.type === AST_NODE_TYPES.Identifier) {
+    return loggerLocals.has(cursor.name);
+  }
+  return false;
 };
 
 const createRule = ESLintUtils.RuleCreator.withoutDocs;
@@ -105,10 +110,7 @@ const rule = createRule({
         if (!node.init) return;
         if (node.id.type !== AST_NODE_TYPES.Identifier) return;
 
-        if (
-          isCreateLoggerCall(node.init, createLoggerLocals) ||
-          isNamespaceCallOnLogger(node.init, loggerLocals)
-        ) {
+        if (isLoggerInit(node.init, createLoggerLocals, loggerLocals)) {
           loggerLocals.add(node.id.name);
         }
       },
