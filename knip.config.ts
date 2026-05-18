@@ -27,6 +27,11 @@ const config: KnipConfig = {
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
+        // Compiled by `@dev/build/vite-plugin/inline-script` and
+        // consumed via the `virtual:theme-prelude` import in
+        // `entry-server.tsx` — knip can't see through that virtual
+        // resolution, so credit the file as a production entry.
+        'src/theme-prelude.ts!',
         'src/**/*.css.ts!',
         'src/**/*.test.{ts,tsx}',
         'src/__tests__/test-utils.tsx',

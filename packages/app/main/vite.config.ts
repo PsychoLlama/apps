@@ -7,6 +7,7 @@ import Icons from 'unplugin-icons/vite';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
 import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets';
 import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
+import { inlineScript } from '@dev/build/vite-plugin/inline-script';
 import { instrumentationScope } from '@dev/build/vite-plugin/instrumentation-scope';
 import { svgToPng } from '@dev/build/vite-plugin/svg-to-png';
 
@@ -51,6 +52,10 @@ export default defineConfig({
   },
   plugins: [
     instrumentationScope(),
+    inlineScript({
+      id: 'virtual:theme-prelude',
+      entry: resolve(import.meta.dirname, 'src/theme-prelude.ts'),
+    }),
     solidStart(),
     nitro({
       preset: 'static',
