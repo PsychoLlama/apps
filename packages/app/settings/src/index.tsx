@@ -1,6 +1,6 @@
 import { Container, Flex, Heading, Section, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
-import { ThemePicker, themeHeadingId } from './theme-picker';
+import { ThemePicker, ThemeResetButton, themeHeadingId } from './theme-picker';
 
 export const Settings = () => (
   <Flex as="main" direction="column" grow>
@@ -19,9 +19,18 @@ export const Settings = () => (
           </Flex>
 
           <Flex as="section" direction="column" gap={3}>
-            <Heading as="h2" id={themeHeadingId} size={4} weight="medium">
-              Theme
-            </Heading>
+            <Flex
+              as="header"
+              direction="row"
+              justify="between"
+              align="center"
+              gap={3}
+            >
+              <Heading as="h2" id={themeHeadingId} size={4} weight="medium">
+                Theme
+              </Heading>
+              <ThemeResetButton />
+            </Flex>
 
             <ThemePicker />
           </Flex>

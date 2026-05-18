@@ -5,4 +5,10 @@
  * `@lib/observability` into Vanilla Extract's child compiler.
  */
 export { theme } from './store';
-export { hydrateThemeEffect, selectThemeEffect, setTheme } from './bindings';
+export {
+  clearTheme,
+  hydrateThemeEffect,
+  resetThemeEffect,
+  selectThemeEffect,
+  setTheme,
+} from './bindings';

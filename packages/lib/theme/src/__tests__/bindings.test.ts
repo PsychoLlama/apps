@@ -1,6 +1,12 @@
 import { createTestBindings } from '@lib/state';
-import { hydrateThemeEffect, selectThemeEffect, setTheme } from '../bindings';
+import {
+  hydrateThemeEffect,
+  resetThemeEffect,
+  selectThemeEffect,
+  setTheme,
+} from '../bindings';
 import * as capabilities from '../capabilities';
+import { DEFAULT_THEME_ID } from '../constants';
 import { themeStore } from '../store';
 
 // Bindings tests assert on state transitions only. Capability behavior —
@@ -9,11 +15,13 @@ import { themeStore } from '../store';
 vi.mock('../capabilities', () => ({
   applyTheme: vi.fn(),
   readActiveTheme: vi.fn(),
+  resetTheme: vi.fn(),
 }));
 
 beforeEach(() => {
   vi.mocked(capabilities.applyTheme).mockReset();
   vi.mocked(capabilities.readActiveTheme).mockReset();
+  vi.mocked(capabilities.resetTheme).mockReset();
 });
 
 const setup = () => {
@@ -62,6 +70,30 @@ describe('selectThemeEffect', () => {
     useEffect(selectThemeEffect)('teal');
 
     expect(capabilities.applyTheme).toHaveBeenCalledWith('teal');
+  });
+});
+
+describe('resetThemeEffect', () => {
+  it('rewinds state to the default before the side effect runs', () => {
+    const { theme, useAction, useEffect } = setup();
+    useAction(setTheme)('jade');
+    let observed: string | null = null;
+    vi.mocked(capabilities.resetTheme).mockImplementation(() => {
+      observed = theme.id;
+    });
+
+    useEffect(resetThemeEffect)();
+
+    expect(observed).toBe(DEFAULT_THEME_ID);
+    expect(theme.id).toBe(DEFAULT_THEME_ID);
+  });
+
+  it('invokes the reset capability so the persisted preference is dropped', () => {
+    const { useEffect } = setup();
+
+    useEffect(resetThemeEffect)();
+
+    expect(capabilities.resetTheme).toHaveBeenCalledTimes(1);
   });
 });
 
