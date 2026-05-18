@@ -8,10 +8,14 @@
  * labelled `THEMES` list for picker UIs.
  */
 
-import { mauveDark, mauveLight } from '@lib/design/color/mauve';
-import { sageDark, sageLight } from '@lib/design/color/sage';
-import { sandDark, sandLight } from '@lib/design/color/sand';
-import { slateDark, slateLight } from '@lib/design/color/slate';
+import { step1 as mauveDark } from '@lib/design/color/mauve/dark';
+import { step1 as mauveLight } from '@lib/design/color/mauve/light';
+import { step1 as sageDark } from '@lib/design/color/sage/dark';
+import { step1 as sageLight } from '@lib/design/color/sage/light';
+import { step1 as sandDark } from '@lib/design/color/sand/dark';
+import { step1 as sandLight } from '@lib/design/color/sand/light';
+import { step1 as slateDark } from '@lib/design/color/slate/dark';
+import { step1 as slateLight } from '@lib/design/color/slate/light';
 
 /**
  * `dataset` key on `<html>` that selects the active theme. The matching
@@ -109,25 +113,25 @@ export const THEME_COLOR_META_ID = {
 
 /**
  * Browser-chrome color per theme: step 1 of the variant's neutral
- * palette (the resolved value of `background.page`). Sourced from
- * `@lib/design/color/*` — raw palette data, NOT the `@lib/design/palette/*`
- * `.css.ts` siblings that register CSS side effects. Keeps the prelude
- * import graph CSS-free.
+ * palette (the resolved value of `background.page`). Sourced from the
+ * per-step exports under `@lib/design/color/<hue>/{light,dark}` so the
+ * inlined prelude bundle only carries the single hex value it actually
+ * reads — not the full 12-step scale.
  *
  * Must stay in lockstep with the `neutral` assignments in `bundles.css`.
  */
 export const THEME_COLORS: Record<ThemeId, { light: string; dark: string }> = {
-  blue: { light: slateLight[1], dark: slateDark[1] },
-  brown: { light: sandLight[1], dark: sandDark[1] },
-  cyan: { light: slateLight[1], dark: slateDark[1] },
-  indigo: { light: slateLight[1], dark: slateDark[1] },
-  iris: { light: slateLight[1], dark: slateDark[1] },
-  jade: { light: sageLight[1], dark: sageDark[1] },
-  orange: { light: sandLight[1], dark: sandDark[1] },
-  pink: { light: mauveLight[1], dark: mauveDark[1] },
-  plum: { light: mauveLight[1], dark: mauveDark[1] },
-  purple: { light: mauveLight[1], dark: mauveDark[1] },
-  sky: { light: slateLight[1], dark: slateDark[1] },
-  teal: { light: sageLight[1], dark: sageDark[1] },
-  violet: { light: mauveLight[1], dark: mauveDark[1] },
+  blue: { light: slateLight, dark: slateDark },
+  brown: { light: sandLight, dark: sandDark },
+  cyan: { light: slateLight, dark: slateDark },
+  indigo: { light: slateLight, dark: slateDark },
+  iris: { light: slateLight, dark: slateDark },
+  jade: { light: sageLight, dark: sageDark },
+  orange: { light: sandLight, dark: sandDark },
+  pink: { light: mauveLight, dark: mauveDark },
+  plum: { light: mauveLight, dark: mauveDark },
+  purple: { light: mauveLight, dark: mauveDark },
+  sky: { light: slateLight, dark: slateDark },
+  teal: { light: sageLight, dark: sageDark },
+  violet: { light: mauveLight, dark: mauveDark },
 };
