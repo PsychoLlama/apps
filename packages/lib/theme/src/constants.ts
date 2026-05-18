@@ -8,6 +8,11 @@
  * labelled `THEMES` list for picker UIs.
  */
 
+import { mauveDark, mauveLight } from '@lib/design/color/mauve';
+import { sageDark, sageLight } from '@lib/design/color/sage';
+import { sandDark, sandLight } from '@lib/design/color/sand';
+import { slateDark, slateLight } from '@lib/design/color/slate';
+
 /**
  * `dataset` key on `<html>` that selects the active theme. The matching
  * `:root[data-theme="<id>"]` rule emitted by the bundle wins by
@@ -91,3 +96,38 @@ export type ColorSchemeOption = ColorSchemeId | 'system';
  * before paint to restamp `<html data-color-scheme>`.
  */
 export const COLOR_SCHEME_STORAGE_KEY = 'preferences.appearance.mode';
+
+/**
+ * `id` attribute on the per-scheme `theme-color` meta tags. The prelude
+ * looks these up to swap `content` to the active theme's page background
+ * before paint. Kept here so the server stamp and prelude can't drift.
+ */
+export const THEME_COLOR_META_ID = {
+  light: 'theme-color-light',
+  dark: 'theme-color-dark',
+} as const;
+
+/**
+ * Browser-chrome color per theme: step 1 of the variant's neutral
+ * palette (the resolved value of `background.page`). Sourced from
+ * `@lib/design/color/*` — raw palette data, NOT the `@lib/design/palette/*`
+ * `.css.ts` siblings that register CSS side effects. Keeps the prelude
+ * import graph CSS-free.
+ *
+ * Must stay in lockstep with the `neutral` assignments in `bundles.css`.
+ */
+export const THEME_COLORS: Record<ThemeId, { light: string; dark: string }> = {
+  blue: { light: slateLight[1], dark: slateDark[1] },
+  brown: { light: sandLight[1], dark: sandDark[1] },
+  cyan: { light: slateLight[1], dark: slateDark[1] },
+  indigo: { light: slateLight[1], dark: slateDark[1] },
+  iris: { light: slateLight[1], dark: slateDark[1] },
+  jade: { light: sageLight[1], dark: sageDark[1] },
+  orange: { light: sandLight[1], dark: sandDark[1] },
+  pink: { light: mauveLight[1], dark: mauveDark[1] },
+  plum: { light: mauveLight[1], dark: mauveDark[1] },
+  purple: { light: mauveLight[1], dark: mauveDark[1] },
+  sky: { light: slateLight[1], dark: slateDark[1] },
+  teal: { light: sageLight[1], dark: sageDark[1] },
+  violet: { light: mauveLight[1], dark: mauveDark[1] },
+};
