@@ -3,18 +3,25 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Structured logging built on @holz/logger.",
+  "description": "Structured logging built on @holz/core.",
   "license": "MIT",
   "sideEffects": false,
-  "exports": {
-    ".": "./src/index.ts"
+  "exports": "./src/index.ts",
+  "imports": {
+    "#processor": {
+      "browser": "./src/logging/processor.browser.ts",
+      "default": "./src/logging/processor.server.ts"
+    }
   },
   "scripts": {
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@holz/ansi-terminal-backend": "^0.8.2",
+    "@holz/console-backend": "^0.8.2",
     "@holz/core": "^0.8.2",
+    "@holz/env-filter": "^0.8.2",
     "@holz/log-collector": "^0.8.2",
-    "@holz/logger": "^0.8.2"
+    "@holz/stream-backend": "^0.8.2"
   }
 }
