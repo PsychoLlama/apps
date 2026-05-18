@@ -9,8 +9,3 @@ export const iconHalo = style({
   color: accent.solid[11],
   fontSize: space[7],
 });
-
-export const column = style({
-  maxWidth: '420px',
-  width: '100%',
-});

@@ -1,57 +1,53 @@
-import { Flex, Heading, Link, Text } from '@lib/ui';
+import { Container, Flex, Heading, Link, Section, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconCompassOff from 'virtual:icons/mdi/compass-off-outline';
 import * as css from './not-found.css';
 
 /**
  * Catch-all page rendered when no route matches. Keeps the site
- * header for orientation, then centers a quiet message with a link
- * home.
+ * header for orientation, then sits a quiet message in a capped
+ * column with a link home.
  */
 export default function NotFound() {
   return (
     <Flex as="main" direction="column" grow>
       <SiteHeader title="Lost" />
 
-      <Flex as="section" align="center" justify="center" grow p={5}>
-        <Flex
-          as="div"
-          direction="column"
-          align="center"
-          gap={5}
-          class={css.column}
-        >
-          <Flex
-            as="div"
-            align="center"
-            justify="center"
-            class={css.iconHalo}
-            aria-hidden="true"
-          >
-            <IconCompassOff />
-          </Flex>
+      <Section size={4}>
+        <Container as="div" size={1} px={4}>
+          <Flex as="div" direction="column" align="center" gap={5}>
+            <Flex
+              as="div"
+              align="center"
+              justify="center"
+              class={css.iconHalo}
+              aria-hidden="true"
+            >
+              <IconCompassOff />
+            </Flex>
 
-          <Flex as="div" direction="column" gap={3} align="center">
-            <Heading as="h1" size={6} weight="medium" align="center">
-              You're off the map
-            </Heading>
-            <Text as="p" size={3} color="lowContrast" align="center">
-              The page you're looking for doesn't exist, or it packed up and
-              moved somewhere quieter.
-            </Text>
-          </Flex>
+            <Flex as="div" direction="column" gap={3} align="center">
+              <Heading as="h1" size={6} weight="medium" align="center">
+                You're off the map
+              </Heading>
+              <Text as="p" size={3} color="lowContrast" align="center">
+                The page you're looking for doesn't exist, or it packed up and
+                moved somewhere quieter.
+              </Text>
+            </Flex>
 
-          <Link
-            testId="home-link"
-            href="/"
-            size={2}
-            color="neutral"
-            underline="hover"
-          >
-            Back to Apps
-          </Link>
-        </Flex>
-      </Flex>
+            <Link
+              testId="home-link"
+              href="/"
+              size={2}
+              color="neutral"
+              underline="hover"
+            >
+              Back to Apps
+            </Link>
+          </Flex>
+        </Container>
+      </Section>
     </Flex>
   );
 }
