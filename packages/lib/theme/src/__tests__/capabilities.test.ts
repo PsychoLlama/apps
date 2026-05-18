@@ -3,7 +3,7 @@ import {
   THEME_ATTRIBUTE,
   THEME_STORAGE_KEY,
 } from '../constants';
-import { applyTheme, readActiveTheme } from '../capabilities';
+import { applyTheme, readActiveTheme, resetTheme } from '../capabilities';
 
 beforeEach(() => {
   delete document.documentElement.dataset[THEME_ATTRIBUTE];
@@ -65,5 +65,40 @@ describe('applyTheme', () => {
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('orange');
 
     setItem.mockRestore();
+  });
+});
+
+describe('resetTheme', () => {
+  it('stamps the default onto <html data-theme>', () => {
+    document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
+
+    resetTheme();
+
+    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe(
+      DEFAULT_THEME_ID,
+    );
+  });
+
+  it('drops the persisted preference so the prelude picks up the live default', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'jade');
+
+    resetTheme();
+
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+  });
+
+  it('still stamps the DOM when localStorage rejects', () => {
+    const removeItem = vi
+      .spyOn(Storage.prototype, 'removeItem')
+      .mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+
+    expect(() => resetTheme()).not.toThrow();
+    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe(
+      DEFAULT_THEME_ID,
+    );
+
+    removeItem.mockRestore();
   });
 });

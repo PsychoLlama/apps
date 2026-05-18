@@ -1,11 +1,16 @@
 import { defineAction, defineEffect } from '@lib/state';
-import { applyTheme, readActiveTheme } from './capabilities';
-import type { ThemeId } from './constants';
+import { applyTheme, readActiveTheme, resetTheme } from './capabilities';
+import { DEFAULT_THEME_ID, type ThemeId } from './constants';
 import { themeStore } from './store';
 
 /** Update the in-memory theme selection. */
 export const setTheme = defineAction([themeStore], (theme, id: ThemeId) => {
   theme.id = id;
+});
+
+/** Rewind the in-memory theme selection to `DEFAULT_THEME_ID`. */
+export const clearTheme = defineAction([themeStore], (theme) => {
+  theme.id = DEFAULT_THEME_ID;
 });
 
 /**
@@ -24,4 +29,14 @@ export const hydrateThemeEffect = defineEffect([], readActiveTheme, {
  */
 export const selectThemeEffect = defineEffect([], applyTheme, {
   onStart: setTheme,
+});
+
+/**
+ * Forget the persisted preference and restore the default theme. Side
+ * effects mirror `selectThemeEffect`, but localStorage drops the key —
+ * so the next load picks up whatever default ships, rather than the
+ * value the user happened to land on.
+ */
+export const resetThemeEffect = defineEffect([], resetTheme, {
+  onStart: clearTheme,
 });
