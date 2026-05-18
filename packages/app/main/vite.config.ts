@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { solidStart } from '@solidjs/start/config';
@@ -7,6 +8,7 @@ import Icons from 'unplugin-icons/vite';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
 import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets';
 import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
+import { inlineScript } from '@dev/build/vite-plugin/inline-script';
 import { instrumentationScope } from '@dev/build/vite-plugin/instrumentation-scope';
 import { svgToPng } from '@dev/build/vite-plugin/svg-to-png';
 
@@ -51,6 +53,13 @@ export default defineConfig({
   },
   plugins: [
     instrumentationScope(),
+    inlineScript({
+      id: 'virtual:theme-prelude',
+      // `import.meta.resolve` walks pnpm's symlinks the same way as a
+      // normal import would, returning a `file://` URL string that
+      // esbuild gets as an absolute path.
+      entry: fileURLToPath(import.meta.resolve('@lib/theme/prelude')),
+    }),
     solidStart(),
     nitro({
       preset: 'static',
