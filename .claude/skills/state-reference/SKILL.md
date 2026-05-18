@@ -1,5 +1,5 @@
 ---
-description: Reference docs for `@lib/state` — the codebase's sanctioned state management. Built-in Solid primitives (`createSignal`, `createStore`, `createMemo`) are banned outside `@lib/ui` and storybook stories. Load when authoring or reviewing any stateful code, picking an API, or wiring tests.
+description: Reference docs for `@lib/state` — the codebase's sanctioned state management. Built-in Solid primitives (`createSignal`, `createStore`, `createMemo`) are banned outside `@lib/ui` and storybook stories. Load when authoring or reviewing any stateful code, picking an API, or wiring stateful tests.
 ---
 
 # State Management
@@ -70,14 +70,14 @@ description: Reference docs for `@lib/state` — the codebase's sanctioned state
 - Co-locate tests under `__tests__/`. Example: `foo.ts` and `__tests__/foo.test.ts`.
 
 ```ts
-const bootstrap = () => {
+const setup = () => {
   const bindings = createTestBindings();
   const counter = bindings.createStore(counterStore);
   return { ...bindings, counter };
 };
 
 it('increments', () => {
-  const { counter, useAction } = bootstrap();
+  const { counter, useAction } = setup();
   useAction(increment)();
   expect(counter.count).toBe(1);
 });
