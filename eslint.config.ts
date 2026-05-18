@@ -77,6 +77,7 @@ export default [
       '@typescript-eslint/no-namespace': 'off',
       '@typescript-eslint/no-unused-vars': 'error',
       'custom/no-derived-token-types': 'error',
+      'custom/no-log-interpolation': 'error',
       'custom/no-static-style-prop': 'error',
       'custom/prefer-icon-button': 'error',
       'custom/require-externalized-effects': 'error',
