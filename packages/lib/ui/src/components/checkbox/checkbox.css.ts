@@ -263,8 +263,8 @@ export const variant = styleVariants({
       },
       '&:where(:checked, :indeterminate)::before': {
         backgroundColor: colorIndicator,
-        backgroundImage: `linear-gradient(to bottom, ${white[3]}, transparent, ${black[3]})`,
-        boxShadow: `inset 0 0.5px 0.5px ${white[4]}, inset 0 -0.5px 0.5px ${black[4]}`,
+        backgroundImage: `linear-gradient(to bottom, ${white.step3}, transparent, ${black.step3})`,
+        boxShadow: `inset 0 0.5px 0.5px ${white.step4}, inset 0 -0.5px 0.5px ${black.step4}`,
       },
       '&:where(:checked, :indeterminate)::after': {
         backgroundColor: colorContrast,

@@ -3,23 +3,24 @@ import {
   createColorVar,
   type ColorPalette,
 } from '../color-scheme';
-import {
-  yellowContrast,
-  yellowDark,
-  yellowDarkAlpha,
-  yellowDarkSurface,
-  yellowLight,
-  yellowLightAlpha,
-  yellowLightSurface,
-} from './yellow';
+import { toColorScale } from './color-palette';
+import * as lightSrc from './yellow/light';
+import * as darkSrc from './yellow/dark';
+import * as lightAlphaSrc from './yellow/light-alpha';
+import * as darkAlphaSrc from './yellow/dark-alpha';
+import { contrast } from './yellow/contrast';
+import * as surface from './yellow/surface';
 
-const solid = createColorScale(yellowLight, yellowDark);
+const solid = createColorScale(toColorScale(lightSrc), toColorScale(darkSrc));
 
 export const yellow: ColorPalette = {
   solid,
-  alpha: createColorScale(yellowLightAlpha, yellowDarkAlpha),
-  contrast: createColorVar(yellowContrast),
-  surface: createColorVar(yellowLightSurface, yellowDarkSurface),
+  alpha: createColorScale(
+    toColorScale(lightAlphaSrc),
+    toColorScale(darkAlphaSrc),
+  ),
+  contrast: createColorVar(contrast),
+  surface: createColorVar(surface.light, surface.dark),
   indicator: createColorVar(solid[9]),
   track: createColorVar(solid[9]),
 };

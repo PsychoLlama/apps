@@ -39,5 +39,5 @@ export type { ColorPalette } from './color-scheme';
 
 export type { ThemeConstants, ThemeVariantConfig } from './theme';
 
-export { black } from './palette/black';
-export { white } from './palette/white';
+export * as black from './palette/black';
+export * as white from './palette/white';

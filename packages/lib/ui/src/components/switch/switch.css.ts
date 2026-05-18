@@ -262,8 +262,8 @@ export const variant = styleVariants({
         boxShadow: layeredShadow(
           `inset 0 0 0 1px ${neutral.alpha[3]}`,
           `inset 0 0 0 1px ${colorAlpha4}`,
-          `inset 0 0 0 1px ${black[1]}`,
-          `inset 0 1.5px 2px 0 ${black[2]}`,
+          `inset 0 0 0 1px ${black.step1}`,
+          `inset 0 1.5px 2px 0 ${black.step2}`,
         ),
       },
       '&:where([aria-checked="false"]:active)::before': {
@@ -286,7 +286,7 @@ export const variant = styleVariants({
 
   // Soft layers four gradients so the unchecked track shows neutral and
   // the checked track shows a translucent accent — the same trick Radix
-  // uses to keep the soft variant readable in both modes. The `white[1]`
+  // uses to keep the soft variant readable in both modes. The `white.step1`
   // blend keeps the unchecked side legible against dark backgrounds.
   soft: {
     selectors: {
@@ -294,7 +294,7 @@ export const variant = styleVariants({
         backgroundImage: [
           `linear-gradient(to right, ${colorAlpha4} 40%, transparent 60%)`,
           `linear-gradient(to right, ${colorAlpha4} 40%, transparent 60%)`,
-          `linear-gradient(to right, ${colorAlpha4} 40%, ${white[1]} 60%)`,
+          `linear-gradient(to right, ${colorAlpha4} 40%, ${white.step1} 60%)`,
           `linear-gradient(to right, ${neutral.alpha[2]} 40%, ${neutral.alpha[3]} 60%)`,
         ].join(', '),
       },
@@ -327,7 +327,7 @@ export const variant = styleVariants({
 
 const surfaceThumbDisabled = layeredShadow(
   `0 0 0 1px ${neutral.alpha[2]}`,
-  `0 1px 3px ${black[1]}`,
+  `0 1px 3px ${black.step1}`,
 );
 
 export const thumb = style({
@@ -352,18 +352,18 @@ export const thumb = style({
     // Surface
     [`${variant.surface}:where([aria-checked="false"]) &`]: {
       boxShadow: layeredShadow(
-        `0 0 1px 1px ${black[2]}`,
-        `0 1px 1px ${black[1]}`,
-        `0 2px 4px -1px ${black[1]}`,
+        `0 0 1px 1px ${black.step2}`,
+        `0 1px 1px ${black.step1}`,
+        `0 2px 4px -1px ${black.step1}`,
       ),
     },
     [`${variant.surface}:where([aria-checked="true"]) &`]: {
       boxShadow: layeredShadow(
-        `0 1px 3px ${black[2]}`,
-        `0 2px 4px -1px ${black[1]}`,
-        `0 0 0 1px ${black[1]}`,
+        `0 1px 3px ${black.step2}`,
+        `0 2px 4px -1px ${black.step1}`,
+        `0 0 0 1px ${black.step1}`,
         `0 0 0 1px ${colorAlpha4}`,
-        `-1px 0 1px ${black[2]}`,
+        `-1px 0 1px ${black.step2}`,
       ),
     },
     [`${variant.surface}:where(:disabled) &`]: {
@@ -375,18 +375,18 @@ export const thumb = style({
     // Classic
     [`${variant.classic}:where([aria-checked="false"]) &`]: {
       boxShadow: layeredShadow(
-        `0 1px 3px ${black[3]}`,
-        `0 2px 4px -1px ${black[1]}`,
-        `0 0 0 1px ${black[2]}`,
+        `0 1px 3px ${black.step3}`,
+        `0 2px 4px -1px ${black.step1}`,
+        `0 0 0 1px ${black.step2}`,
       ),
     },
     [`${variant.classic}:where([aria-checked="true"]) &`]: {
       boxShadow: layeredShadow(
-        `0 1px 3px ${black[2]}`,
-        `0 2px 4px -1px ${black[1]}`,
-        `0 0 0 1px ${black[1]}`,
+        `0 1px 3px ${black.step2}`,
+        `0 2px 4px -1px ${black.step1}`,
+        `0 0 0 1px ${black.step1}`,
         `0 0 0 1px ${colorAlpha4}`,
-        `-1px 0 1px ${black[2]}`,
+        `-1px 0 1px ${black.step2}`,
       ),
     },
     [`${variant.classic}:where(:disabled) &`]: {
@@ -401,16 +401,16 @@ export const thumb = style({
     },
     [`${variant.soft}:where([aria-checked="false"]) &`]: {
       boxShadow: layeredShadow(
-        `0 0 0 1px ${black[1]}`,
-        `0 1px 3px ${black[1]}`,
-        `0 1px 3px ${black[1]}`,
-        `0 2px 4px -1px ${black[1]}`,
+        `0 0 0 1px ${black.step1}`,
+        `0 1px 3px ${black.step1}`,
+        `0 1px 3px ${black.step1}`,
+        `0 2px 4px -1px ${black.step1}`,
       ),
     },
     [`${variant.soft}:where([aria-checked="true"]) &`]: {
       boxShadow: layeredShadow(
-        `0 0 0 1px ${black[1]}`,
-        `0 1px 3px ${black[2]}`,
+        `0 0 0 1px ${black.step1}`,
+        `0 1px 3px ${black.step2}`,
         `0 1px 3px ${colorAlpha3}`,
         `0 2px 4px -1px ${colorAlpha3}`,
       ),

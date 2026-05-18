@@ -3,23 +3,24 @@ import {
   createColorVar,
   type ColorPalette,
 } from '../color-scheme';
-import {
-  pinkContrast,
-  pinkDark,
-  pinkDarkAlpha,
-  pinkDarkSurface,
-  pinkLight,
-  pinkLightAlpha,
-  pinkLightSurface,
-} from './pink';
+import { toColorScale } from './color-palette';
+import * as lightSrc from './pink/light';
+import * as darkSrc from './pink/dark';
+import * as lightAlphaSrc from './pink/light-alpha';
+import * as darkAlphaSrc from './pink/dark-alpha';
+import { contrast } from './pink/contrast';
+import * as surface from './pink/surface';
 
-const solid = createColorScale(pinkLight, pinkDark);
+const solid = createColorScale(toColorScale(lightSrc), toColorScale(darkSrc));
 
 export const pink: ColorPalette = {
   solid,
-  alpha: createColorScale(pinkLightAlpha, pinkDarkAlpha),
-  contrast: createColorVar(pinkContrast),
-  surface: createColorVar(pinkLightSurface, pinkDarkSurface),
+  alpha: createColorScale(
+    toColorScale(lightAlphaSrc),
+    toColorScale(darkAlphaSrc),
+  ),
+  contrast: createColorVar(contrast),
+  surface: createColorVar(surface.light, surface.dark),
   indicator: createColorVar(solid[9]),
   track: createColorVar(solid[9]),
 };

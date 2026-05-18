@@ -1,16 +1,12 @@
-import type { ColorScale } from './color-palette';
-
-export const white: ColorScale = {
-  1: 'rgba(255, 255, 255, 0.05)',
-  2: 'rgba(255, 255, 255, 0.1)',
-  3: 'rgba(255, 255, 255, 0.15)',
-  4: 'rgba(255, 255, 255, 0.2)',
-  5: 'rgba(255, 255, 255, 0.3)',
-  6: 'rgba(255, 255, 255, 0.4)',
-  7: 'rgba(255, 255, 255, 0.5)',
-  8: 'rgba(255, 255, 255, 0.6)',
-  9: 'rgba(255, 255, 255, 0.7)',
-  10: 'rgba(255, 255, 255, 0.8)',
-  11: 'rgba(255, 255, 255, 0.9)',
-  12: 'rgba(255, 255, 255, 0.95)',
-};
+export const step1 = 'rgba(255, 255, 255, 0.05)';
+export const step2 = 'rgba(255, 255, 255, 0.1)';
+export const step3 = 'rgba(255, 255, 255, 0.15)';
+export const step4 = 'rgba(255, 255, 255, 0.2)';
+export const step5 = 'rgba(255, 255, 255, 0.3)';
+export const step6 = 'rgba(255, 255, 255, 0.4)';
+export const step7 = 'rgba(255, 255, 255, 0.5)';
+export const step8 = 'rgba(255, 255, 255, 0.6)';
+export const step9 = 'rgba(255, 255, 255, 0.7)';
+export const step10 = 'rgba(255, 255, 255, 0.8)';
+export const step11 = 'rgba(255, 255, 255, 0.9)';
+export const step12 = 'rgba(255, 255, 255, 0.95)';
