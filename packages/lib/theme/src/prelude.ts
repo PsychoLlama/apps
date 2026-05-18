@@ -43,18 +43,25 @@ try {
   }
 
   // Swap `<meta name="theme-color">` content to match the active theme's
-  // page background. The OS still picks which tag wins via the
-  // `media` queries on each — this just makes the address bar follow
-  // theme-variant changes.
+  // page background. When the user has forced a color-scheme override,
+  // collapse both tags onto that variant's color so the OS-level
+  // `prefers-color-scheme` query on each tag can't pick the wrong one.
   const activeTheme =
     (root.dataset[THEME_ATTRIBUTE] as ThemeId | undefined) ?? DEFAULT_THEME_ID;
+  const activeScheme = root.dataset[COLOR_SCHEME_ATTRIBUTE];
   const colors = THEME_COLORS[activeTheme];
   document
     .getElementById(THEME_COLOR_META_ID.light)
-    ?.setAttribute('content', colors.light);
+    ?.setAttribute(
+      'content',
+      activeScheme === 'dark' ? colors.dark : colors.light,
+    );
   document
     .getElementById(THEME_COLOR_META_ID.dark)
-    ?.setAttribute('content', colors.dark);
+    ?.setAttribute(
+      'content',
+      activeScheme === 'light' ? colors.light : colors.dark,
+    );
 } catch (err) {
   // `SecurityError` is expected in sandboxed iframes and "block all
   // cookies" configurations — keep the SSG-stamped defaults and stay
