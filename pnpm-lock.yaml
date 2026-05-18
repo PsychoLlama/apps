@@ -42,6 +42,9 @@ catalogs:
     esbuild:
       specifier: ^0.28.0
       version: 0.28.0
+    eslint:
+      specifier: ^10.0.0
+      version: 10.4.0
     idb:
       specifier: ^8.0.3
       version: 8.0.3
@@ -470,15 +473,24 @@ importers:
 
   packages/lib/observability:
     dependencies:
+      '@holz/ansi-terminal-backend':
+        specifier: ^0.8.2
+        version: 0.8.2(@holz/core@0.8.2)
+      '@holz/console-backend':
+        specifier: ^0.8.2
+        version: 0.8.2(@holz/core@0.8.2)
       '@holz/core':
         specifier: ^0.8.2
         version: 0.8.2
+      '@holz/env-filter':
+        specifier: ^0.8.2
+        version: 0.8.2(@holz/core@0.8.2)
       '@holz/log-collector':
         specifier: ^0.8.2
         version: 0.8.2(@holz/core@0.8.2)
-      '@holz/logger':
+      '@holz/stream-backend':
         specifier: ^0.8.2
-        version: 0.8.2
+        version: 0.8.2(@holz/core@0.8.2)
 
   packages/lib/shell:
     dependencies:
@@ -1523,9 +1535,6 @@ packages:
     resolution: {integrity: sha512-qNN0e93Ksjt5fKAFcyXovmyy8t1tB9dpqN0wGWzFCiAgFxku7p95GJjeFISFGlXZ3jPEbwuHzy6FIHhQEl7GPg==}
     peerDependencies:
       '@holz/core': ^0.8.0
-
-  '@holz/logger@0.8.2':
-    resolution: {integrity: sha512-Pdq7y9IR2oR3t1r36VVXCvHgXdsyzDR8S88VyVSOMuIm2+9zJHTadQCWMMSMUcJ7xHqlxy1YN5ETmUcrMFzxxw==}
 
   '@holz/pattern-filter@0.8.2':
     resolution: {integrity: sha512-MA/zqXyYjMUMozqQy80+xJtPUQ3hIGWGqfn3/IOHaGRxXp+GbHJhDVzttJupH+18Da8hoT7SPSlurQB1KKAH0w==}
@@ -6851,15 +6860,6 @@ snapshots:
   '@holz/log-collector@0.8.2(@holz/core@0.8.2)':
     dependencies:
       '@holz/core': 0.8.2
-
-  '@holz/logger@0.8.2':
-    dependencies:
-      '@holz/ansi-terminal-backend': 0.8.2(@holz/core@0.8.2)
-      '@holz/console-backend': 0.8.2(@holz/core@0.8.2)
-      '@holz/core': 0.8.2
-      '@holz/env-filter': 0.8.2(@holz/core@0.8.2)
-      '@holz/log-collector': 0.8.2(@holz/core@0.8.2)
-      '@holz/stream-backend': 0.8.2(@holz/core@0.8.2)
 
   '@holz/pattern-filter@0.8.2(@holz/core@0.8.2)':
     dependencies:
