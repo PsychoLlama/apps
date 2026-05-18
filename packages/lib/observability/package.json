@@ -8,9 +8,9 @@
   "sideEffects": false,
   "exports": "./src/index.ts",
   "imports": {
-    "#pipeline": {
-      "browser": "./src/pipeline.browser.ts",
-      "default": "./src/pipeline.server.ts"
+    "#processor": {
+      "browser": "./src/processor.browser.ts",
+      "default": "./src/processor.server.ts"
     }
   },
   "scripts": {
