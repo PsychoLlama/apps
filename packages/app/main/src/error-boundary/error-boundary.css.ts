@@ -1,11 +1,6 @@
 import { style } from '@vanilla-extract/css';
 import { danger, fast, neutral, radius, space, standard } from '@lib/design';
 
-export const column = style({
-  maxWidth: '480px',
-  width: '100%',
-});
-
 export const icon = style({
   width: space[8],
   height: space[8],
@@ -16,6 +11,7 @@ export const icon = style({
 
 export const details = style({
   width: '100%',
+  userSelect: 'text',
 });
 
 export const summaryChevron = style({

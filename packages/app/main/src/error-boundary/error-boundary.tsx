@@ -119,19 +119,11 @@ export default function ErrorBoundaryFallback(
                 <DataListRoot orientation="vertical" size={2}>
                   <DataListItem>
                     <DataListLabel>Type</DataListLabel>
-                    <DataListValue>
-                      <Text as="span" size={2} weight="medium" selectable>
-                        {details().name}
-                      </Text>
-                    </DataListValue>
+                    <DataListValue>{details().name}</DataListValue>
                   </DataListItem>
                   <DataListItem>
                     <DataListLabel>Message</DataListLabel>
-                    <DataListValue>
-                      <Text as="span" size={2} selectable>
-                        {details().message}
-                      </Text>
-                    </DataListValue>
+                    <DataListValue>{details().message}</DataListValue>
                   </DataListItem>
                   <Show when={details().stack}>
                     <DataListItem>
