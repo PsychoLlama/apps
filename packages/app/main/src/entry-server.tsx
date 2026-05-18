@@ -1,8 +1,14 @@
 // @refresh reload
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
-import { DEFAULT_THEME_ID } from '@lib/theme';
+import {
+  DEFAULT_THEME_ID,
+  THEME_COLOR_META_ID,
+  THEME_COLORS,
+} from '@lib/theme';
 import themePrelude from 'virtual:theme-prelude';
+
+const defaultColors = THEME_COLORS[DEFAULT_THEME_ID];
 
 export default createHandler(() => (
   <StartServer
@@ -13,6 +19,24 @@ export default createHandler(() => (
           <meta
             name="viewport"
             content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+          />
+          {/* Paired `theme-color` meta tags drive the browser-chrome
+              color per OS scheme. SSG-seeded with the `DEFAULT_THEME_ID`
+              variant's page background; the prelude (below) swaps both
+              `content` attributes to the active theme before paint via
+              the `id` lookup. Must render before the prelude so
+              `getElementById` finds them. */}
+          <meta
+            id={THEME_COLOR_META_ID.light}
+            name="theme-color"
+            media="(prefers-color-scheme: light)"
+            content={defaultColors.light}
+          />
+          <meta
+            id={THEME_COLOR_META_ID.dark}
+            name="theme-color"
+            media="(prefers-color-scheme: dark)"
+            content={defaultColors.dark}
           />
           {/* Render-blocking head script: restamps `data-theme` from
               the persisted preference before paint, falling through to

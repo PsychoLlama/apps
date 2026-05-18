@@ -5,6 +5,8 @@ import {
   COLOR_SCHEME_STORAGE_KEY,
   DEFAULT_THEME_ID,
   THEME_ATTRIBUTE,
+  THEME_COLOR_META_ID,
+  THEME_COLORS,
   THEME_IDS,
   THEME_STORAGE_KEY,
   type ColorSchemeId,
@@ -52,6 +54,22 @@ const guardStorageWrite = (op: StorageOp, write: () => void): void => {
 };
 
 /**
+ * Mirror the active theme's page-background colors into the paired
+ * `<meta name="theme-color">` tags. The prelude does the same on first
+ * paint; this keeps the browser chrome in sync when the user swaps
+ * themes at runtime.
+ */
+const applyThemeColors = (id: ThemeId): void => {
+  const colors = THEME_COLORS[id];
+  document
+    .getElementById(THEME_COLOR_META_ID.light)
+    ?.setAttribute('content', colors.light);
+  document
+    .getElementById(THEME_COLOR_META_ID.dark)
+    ?.setAttribute('content', colors.dark);
+};
+
+/**
  * Flip `<html data-theme>` to the requested variant and persist the
  * choice so the prelude can restore it before paint on the next load.
  * DOM write happens first so the visual switch survives a localStorage
@@ -59,6 +77,7 @@ const guardStorageWrite = (op: StorageOp, write: () => void): void => {
  */
 export const applyTheme = (id: ThemeId): void => {
   document.documentElement.dataset[THEME_ATTRIBUTE] = id;
+  applyThemeColors(id);
   guardStorageWrite('persist', () => {
     localStorage.setItem(THEME_STORAGE_KEY, id);
   });
@@ -73,6 +92,7 @@ export const applyTheme = (id: ThemeId): void => {
  */
 export const resetTheme = (): void => {
   document.documentElement.dataset[THEME_ATTRIBUTE] = DEFAULT_THEME_ID;
+  applyThemeColors(DEFAULT_THEME_ID);
   guardStorageWrite('clear', () => {
     localStorage.removeItem(THEME_STORAGE_KEY);
   });

@@ -8,6 +8,15 @@
  * labelled `THEMES` list for picker UIs.
  */
 
+import { step1 as mauveDark } from '@lib/design/color/mauve/dark';
+import { step1 as mauveLight } from '@lib/design/color/mauve/light';
+import { step1 as sageDark } from '@lib/design/color/sage/dark';
+import { step1 as sageLight } from '@lib/design/color/sage/light';
+import { step1 as sandDark } from '@lib/design/color/sand/dark';
+import { step1 as sandLight } from '@lib/design/color/sand/light';
+import { step1 as slateDark } from '@lib/design/color/slate/dark';
+import { step1 as slateLight } from '@lib/design/color/slate/light';
+
 /**
  * `dataset` key on `<html>` that selects the active theme. The matching
  * `:root[data-theme="<id>"]` rule emitted by the bundle wins by
@@ -91,3 +100,38 @@ export type ColorSchemeOption = ColorSchemeId | 'system';
  * before paint to restamp `<html data-color-scheme>`.
  */
 export const COLOR_SCHEME_STORAGE_KEY = 'preferences.appearance.mode';
+
+/**
+ * `id` attribute on the per-scheme `theme-color` meta tags. The prelude
+ * looks these up to swap `content` to the active theme's page background
+ * before paint. Kept here so the server stamp and prelude can't drift.
+ */
+export const THEME_COLOR_META_ID = {
+  light: 'theme-color-light',
+  dark: 'theme-color-dark',
+} as const;
+
+/**
+ * Browser-chrome color per theme: step 1 of the variant's neutral
+ * palette (the resolved value of `background.page`). Sourced from the
+ * per-step exports under `@lib/design/color/<hue>/{light,dark}` so the
+ * inlined prelude bundle only carries the single hex value it actually
+ * reads — not the full 12-step scale.
+ *
+ * Must stay in lockstep with the `neutral` assignments in `bundles.css`.
+ */
+export const THEME_COLORS: Record<ThemeId, { light: string; dark: string }> = {
+  blue: { light: slateLight, dark: slateDark },
+  brown: { light: sandLight, dark: sandDark },
+  cyan: { light: slateLight, dark: slateDark },
+  indigo: { light: slateLight, dark: slateDark },
+  iris: { light: slateLight, dark: slateDark },
+  jade: { light: sageLight, dark: sageDark },
+  orange: { light: sandLight, dark: sandDark },
+  pink: { light: mauveLight, dark: mauveDark },
+  plum: { light: mauveLight, dark: mauveDark },
+  purple: { light: mauveLight, dark: mauveDark },
+  sky: { light: slateLight, dark: slateDark },
+  teal: { light: sageLight, dark: sageDark },
+  violet: { light: mauveLight, dark: mauveDark },
+};
