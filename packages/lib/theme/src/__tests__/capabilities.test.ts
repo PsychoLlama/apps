@@ -3,6 +3,8 @@ import {
   COLOR_SCHEME_STORAGE_KEY,
   DEFAULT_THEME_ID,
   THEME_ATTRIBUTE,
+  THEME_COLOR_META_ID,
+  THEME_COLORS,
   THEME_STORAGE_KEY,
 } from '../constants';
 import {
@@ -13,9 +15,20 @@ import {
   resetTheme,
 } from '../capabilities';
 
+const mountMetaTag = (id: string): HTMLMetaElement => {
+  const meta = document.createElement('meta');
+  meta.id = id;
+  document.head.appendChild(meta);
+  return meta;
+};
+
 beforeEach(() => {
   delete document.documentElement.dataset[THEME_ATTRIBUTE];
   delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
+  document.getElementById(THEME_COLOR_META_ID.light)?.remove();
+  document.getElementById(THEME_COLOR_META_ID.dark)?.remove();
+  mountMetaTag(THEME_COLOR_META_ID.light);
+  mountMetaTag(THEME_COLOR_META_ID.dark);
   localStorage.clear();
 });
 
@@ -48,6 +61,15 @@ describe('applyTheme', () => {
     applyTheme('teal');
 
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('teal');
+  });
+
+  it("syncs the paired theme-color meta tags to the variant's colors", () => {
+    applyTheme('jade');
+
+    const light = document.getElementById(THEME_COLOR_META_ID.light);
+    const dark = document.getElementById(THEME_COLOR_META_ID.dark);
+    expect(light?.getAttribute('content')).toBe(THEME_COLORS.jade.light);
+    expect(dark?.getAttribute('content')).toBe(THEME_COLORS.jade.dark);
   });
 
   it('still flips the DOM when localStorage rejects', () => {
@@ -85,6 +107,21 @@ describe('resetTheme', () => {
 
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe(
       DEFAULT_THEME_ID,
+    );
+  });
+
+  it("syncs the paired theme-color meta tags to the default variant's colors", () => {
+    document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
+
+    resetTheme();
+
+    const light = document.getElementById(THEME_COLOR_META_ID.light);
+    const dark = document.getElementById(THEME_COLOR_META_ID.dark);
+    expect(light?.getAttribute('content')).toBe(
+      THEME_COLORS[DEFAULT_THEME_ID].light,
+    );
+    expect(dark?.getAttribute('content')).toBe(
+      THEME_COLORS[DEFAULT_THEME_ID].dark,
     );
   });
 
