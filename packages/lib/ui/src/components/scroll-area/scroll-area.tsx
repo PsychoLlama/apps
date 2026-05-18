@@ -33,6 +33,13 @@
  *   `deltaY` regardless of which scrollbar the cursor is over;
  *   without the fallback, wheeling over the horizontal bar does
  *   nothing. Radix only consumes `deltaX`.
+ * - Wheel listeners are bound on each scrollbar element rather than
+ *   the document. A non-passive document `wheel` listener trips
+ *   Chrome's scroll-blocking-input heuristic (visible as console
+ *   "delay" warnings) and forces every page-wide wheel event to
+ *   wait on the handler. Radix binds at the document; we localize
+ *   to the scrollbar tracks so only events that actually need
+ *   intercepting pay the cost.
  * - Drag finishers also bind `pointercancel` and `lostpointercapture`
  *   so an interrupted drag (touch cancellation, browser tab switch,
  *   forced capture release) still restores `scroll-behavior` and
@@ -603,38 +610,43 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
     }
   });
 
-  // Wheel-on-scrollbar: bind a non-passive document listener so we can
-  // both forward the delta to the viewport and `preventDefault` to
-  // stop the page from scrolling out from under the cursor.
-  createEffect(() => {
-    const handler = (event: WheelEvent) => {
-      const target = event.target as Node | null;
-      const scrollbarX = scrollbarXEl();
-      const scrollbarY = scrollbarYEl();
-      const onX = scrollbarX && target && scrollbarX.contains(target);
-      const onY = scrollbarY && target && scrollbarY.contains(target);
-      const viewport = viewportEl();
-      if (!viewport || (!onX && !onY)) return;
-      if (onX) {
-        // A vertical mouse wheel reports motion in `deltaY` even
-        // when the user wheels over a horizontal scrollbar. Fall
-        // back to `deltaY` so the gesture still moves the viewport.
-        const sizes = sizesX();
-        const next = viewport.scrollLeft + (event.deltaX || event.deltaY);
-        viewport.scrollLeft = next;
-        const max = sizes.content - sizes.viewport;
-        if (next > 0 && next < max) event.preventDefault();
-      } else {
-        const sizes = sizesY();
-        const next = viewport.scrollTop + event.deltaY;
-        viewport.scrollTop = next;
-        const max = sizes.content - sizes.viewport;
-        if (next > 0 && next < max) event.preventDefault();
-      }
-    };
-    document.addEventListener('wheel', handler, { passive: false });
-    onCleanup(() => document.removeEventListener('wheel', handler));
-  });
+  // Wheel-on-scrollbar: bind non-passive listeners on each scrollbar
+  // element so we can forward the delta to the viewport and
+  // `preventDefault` to stop the page scrolling out from under the
+  // cursor. Binding directly on the scrollbar (rather than document)
+  // keeps Chrome from flagging every page-wide wheel event against a
+  // scroll-blocking listener, since the handler only intercepts events
+  // that bubble through the track.
+  const bindScrollbarWheel = (axis: 'x' | 'y') => {
+    createEffect(() => {
+      const scrollbar = axis === 'x' ? scrollbarXEl() : scrollbarYEl();
+      if (!scrollbar) return;
+      const handler = (event: WheelEvent) => {
+        const viewport = viewportEl();
+        if (!viewport) return;
+        if (axis === 'x') {
+          // A vertical mouse wheel reports motion in `deltaY` even
+          // when the user wheels over a horizontal scrollbar. Fall
+          // back to `deltaY` so the gesture still moves the viewport.
+          const sizes = sizesX();
+          const next = viewport.scrollLeft + (event.deltaX || event.deltaY);
+          viewport.scrollLeft = next;
+          const max = sizes.content - sizes.viewport;
+          if (next > 0 && next < max) event.preventDefault();
+        } else {
+          const sizes = sizesY();
+          const next = viewport.scrollTop + event.deltaY;
+          viewport.scrollTop = next;
+          const max = sizes.content - sizes.viewport;
+          if (next > 0 && next < max) event.preventDefault();
+        }
+      };
+      scrollbar.addEventListener('wheel', handler, { passive: false });
+      onCleanup(() => scrollbar.removeEventListener('wheel', handler));
+    });
+  };
+  bindScrollbarWheel('x');
+  bindScrollbarWheel('y');
 
   // Drag-scroll: pointerdown on a scrollbar captures the pointer and
   // maps subsequent moves to viewport scroll positions. If the press
