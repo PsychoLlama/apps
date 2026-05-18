@@ -3,23 +3,24 @@ import {
   createColorVar,
   type ColorPalette,
 } from '../color-scheme';
-import {
-  skyContrast,
-  skyDark,
-  skyDarkAlpha,
-  skyDarkSurface,
-  skyLight,
-  skyLightAlpha,
-  skyLightSurface,
-} from './sky';
+import { toColorScale } from './color-palette';
+import * as lightSrc from './sky/light';
+import * as darkSrc from './sky/dark';
+import * as lightAlphaSrc from './sky/light-alpha';
+import * as darkAlphaSrc from './sky/dark-alpha';
+import { contrast } from './sky/contrast';
+import * as surface from './sky/surface';
 
-const solid = createColorScale(skyLight, skyDark);
+const solid = createColorScale(toColorScale(lightSrc), toColorScale(darkSrc));
 
 export const sky: ColorPalette = {
   solid,
-  alpha: createColorScale(skyLightAlpha, skyDarkAlpha),
-  contrast: createColorVar(skyContrast),
-  surface: createColorVar(skyLightSurface, skyDarkSurface),
+  alpha: createColorScale(
+    toColorScale(lightAlphaSrc),
+    toColorScale(darkAlphaSrc),
+  ),
+  contrast: createColorVar(contrast),
+  surface: createColorVar(surface.light, surface.dark),
   indicator: createColorVar(solid[9]),
   track: createColorVar(solid[9]),
 };

@@ -3,23 +3,24 @@ import {
   createColorVar,
   type ColorPalette,
 } from '../color-scheme';
-import {
-  violetContrast,
-  violetDark,
-  violetDarkAlpha,
-  violetDarkSurface,
-  violetLight,
-  violetLightAlpha,
-  violetLightSurface,
-} from './violet';
+import { toColorScale } from './color-palette';
+import * as lightSrc from './violet/light';
+import * as darkSrc from './violet/dark';
+import * as lightAlphaSrc from './violet/light-alpha';
+import * as darkAlphaSrc from './violet/dark-alpha';
+import { contrast } from './violet/contrast';
+import * as surface from './violet/surface';
 
-const solid = createColorScale(violetLight, violetDark);
+const solid = createColorScale(toColorScale(lightSrc), toColorScale(darkSrc));
 
 export const violet: ColorPalette = {
   solid,
-  alpha: createColorScale(violetLightAlpha, violetDarkAlpha),
-  contrast: createColorVar(violetContrast),
-  surface: createColorVar(violetLightSurface, violetDarkSurface),
+  alpha: createColorScale(
+    toColorScale(lightAlphaSrc),
+    toColorScale(darkAlphaSrc),
+  ),
+  contrast: createColorVar(contrast),
+  surface: createColorVar(surface.light, surface.dark),
   indicator: createColorVar(solid[9]),
   track: createColorVar(solid[9]),
 };

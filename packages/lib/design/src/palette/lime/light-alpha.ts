@@ -1,0 +1,12 @@
+export const step1 = '#66990005';
+export const step2 = '#6b95000c';
+export const step3 = '#96c80029';
+export const step4 = '#8fc60042';
+export const step5 = '#81bb0059';
+export const step6 = '#72aa006e';
+export const step7 = '#61990087';
+export const step8 = '#559200ab';
+export const step9 = '#93e4009c';
+export const step10 = '#8fdc00b3';
+export const step11 = '#375f00d0';
+export const step12 = '#1e2900e3';

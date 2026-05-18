@@ -61,10 +61,10 @@ const shineGradient = createVar();
 
 assignColorSchemeVars(
   {
-    [shineGradient]: `${white[5]}, ${white[9]}, ${white[5]}`,
+    [shineGradient]: `${white.step5}, ${white.step9}, ${white.step5}`,
   },
   {
-    [shineGradient]: `${white[3]}, ${white[6]}, ${white[3]}`,
+    [shineGradient]: `${white.step3}, ${white.step6}, ${white.step3}`,
   },
 );
 
@@ -264,11 +264,11 @@ export const variant = styleVariants({
   },
 
   // Soft uses an alpha-blended fill so the bar sits inside the muted
-  // track instead of on top of it. The white[1] tint matches Radix's
+  // track instead of on top of it. The white.step1 tint matches Radix's
   // dark-mode legibility trick.
   soft: {
     backgroundColor: neutral.alpha[4],
-    backgroundImage: `linear-gradient(${white[1]}, ${white[1]})`,
+    backgroundImage: `linear-gradient(${white.step1}, ${white.step1})`,
     vars: {
       [fadeAnimation]: softFade,
       [pulseAnimation]: softPulse,

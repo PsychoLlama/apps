@@ -41,7 +41,7 @@
 import { assignVars, createThemeContract } from '@vanilla-extract/css';
 import { assignColorSchemeVars, lightDark } from '../color-scheme';
 import { neutral } from './color.css';
-import { black } from '../palette/black';
+import * as black from '../palette/black';
 
 // --- Levels with mode-dependent geometry (CSS custom properties) ---
 
@@ -50,28 +50,28 @@ const shadowTheme = createThemeContract({ 1: '', 3: '' });
 const shadow1Light = [
   `inset 0 0 0 1px ${neutral.alpha[5]}`,
   `inset 0 1.5px 2px 0 ${neutral.alpha[2]}`,
-  `inset 0 1.5px 2px 0 ${black[2]}`,
+  `inset 0 1.5px 2px 0 ${black.step2}`,
 ].join(', ');
 
 const shadow1Dark = [
   `inset 0 -1px 1px 0 ${neutral.alpha[3]}`,
   `inset 0 0 0 1px ${neutral.alpha[3]}`,
-  `inset 0 3px 4px 0 ${black[5]}`,
+  `inset 0 3px 4px 0 ${black.step5}`,
   `inset 0 0 0 1px ${neutral.alpha[4]}`,
 ].join(', ');
 
 const shadow3Light = [
   `0 0 0 1px ${neutral.alpha[3]}`,
   `0 2px 3px -2px ${neutral.alpha[3]}`,
-  `0 3px 12px -4px ${black[2]}`,
-  `0 4px 16px -8px ${black[2]}`,
+  `0 3px 12px -4px ${black.step2}`,
+  `0 4px 16px -8px ${black.step2}`,
 ].join(', ');
 
 const shadow3Dark = [
   `0 0 0 1px ${neutral.alpha[6]}`,
-  `0 2px 3px -2px ${black[3]}`,
-  `0 3px 8px -2px ${black[6]}`,
-  `0 4px 12px -4px ${black[7]}`,
+  `0 2px 3px -2px ${black.step3}`,
+  `0 3px 8px -2px ${black.step6}`,
+  `0 4px 12px -4px ${black.step7}`,
 ].join(', ');
 
 const lightVars = assignVars(shadowTheme, {
@@ -93,19 +93,19 @@ export const shadow = {
   1: shadowTheme[1],
 
   /** Slight elevation — floating indicators, segmented controls. */
-  2: `0 0 0 1px ${lightDark(neutral.alpha[3], neutral.alpha[6])}, 0 0 0 0.5px ${lightDark(black[1], black[3])}, 0 1px 1px 0 ${lightDark(neutral.alpha[2], black[6])}, 0 2px 1px -1px ${lightDark(black[1], black[6])}, 0 1px 3px 0 ${lightDark(black[1], black[5])}`,
+  2: `0 0 0 1px ${lightDark(neutral.alpha[3], neutral.alpha[6])}, 0 0 0 0.5px ${lightDark(black.step1, black.step3)}, 0 1px 1px 0 ${lightDark(neutral.alpha[2], black.step6)}, 0 2px 1px -1px ${lightDark(black.step1, black.step6)}, 0 1px 3px 0 ${lightDark(black.step1, black.step5)}`,
 
   /** Medium elevation — general-purpose raised surface. */
   3: shadowTheme[3],
 
   /** High elevation — hover cards, tooltips. */
-  4: `0 0 0 1px ${lightDark(neutral.alpha[3], neutral.alpha[6])}, 0 8px 40px ${lightDark(black[1], black[3])}, 0 12px 32px -16px ${lightDark(neutral.alpha[3], black[5])}`,
+  4: `0 0 0 1px ${lightDark(neutral.alpha[3], neutral.alpha[6])}, 0 8px 40px ${lightDark(black.step1, black.step3)}, 0 12px 32px -16px ${lightDark(neutral.alpha[3], black.step5)}`,
 
   /** Higher elevation — selects, popovers, dropdown menus. */
-  5: `0 0 0 1px ${lightDark(neutral.alpha[3], neutral.alpha[6])}, 0 12px 60px ${lightDark(black[3], black[5])}, 0 12px 32px -16px ${lightDark(neutral.alpha[5], black[7])}`,
+  5: `0 0 0 1px ${lightDark(neutral.alpha[3], neutral.alpha[6])}, 0 12px 60px ${lightDark(black.step3, black.step5)}, 0 12px 32px -16px ${lightDark(neutral.alpha[5], black.step7)}`,
 
   /** Maximum elevation — dialogs, modal layers. */
-  6: `0 0 0 1px ${lightDark(neutral.alpha[3], neutral.alpha[6])}, 0 12px 60px ${lightDark(black[3], black[4])}, 0 16px 64px ${lightDark(neutral.alpha[2], black[6])}, 0 16px 36px -20px ${lightDark(neutral.alpha[7], black[11])}`,
+  6: `0 0 0 1px ${lightDark(neutral.alpha[3], neutral.alpha[6])}, 0 12px 60px ${lightDark(black.step3, black.step4)}, 0 16px 64px ${lightDark(neutral.alpha[2], black.step6)}, 0 16px 36px -20px ${lightDark(neutral.alpha[7], black.step11)}`,
 } as const;
 
 export type ShadowLevel = keyof typeof shadow;

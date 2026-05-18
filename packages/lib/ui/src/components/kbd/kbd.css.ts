@@ -27,7 +27,7 @@ assignColorSchemeVars(
   {
     [kbdBoxShadow]: [
       `inset 0 -0.05em 0.5em ${neutral.alpha[2]}`,
-      `inset 0 0.05em ${white[12]}`,
+      `inset 0 0.05em ${white.step12}`,
       `inset 0 0.25em 0.5em ${neutral.alpha[2]}`,
       `inset 0 -0.05em ${neutral.alpha[6]}`,
       `0 0 0 0.05em ${neutral.alpha[5]}`,
@@ -39,9 +39,9 @@ assignColorSchemeVars(
       `inset 0 -0.05em 0.5em ${neutral.alpha[3]}`,
       `inset 0 0.05em ${neutral.alpha[11]}`,
       `inset 0 0.25em 0.5em ${neutral.alpha[2]}`,
-      `inset 0 -0.1em ${black[11]}`,
+      `inset 0 -0.1em ${black.step11}`,
       `0 0 0 0.075em ${neutral.alpha[7]}`,
-      `0 0.08em 0.17em ${black[12]}`,
+      `0 0.08em 0.17em ${black.step12}`,
     ].join(', '),
   },
 );

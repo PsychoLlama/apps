@@ -81,14 +81,14 @@ const layeredShadow = (...layers: string[]): string => layers.join(', ');
 // binds; everything else (track/range fills, disabled overrides) is
 // expressed by descendants targeting the variant class.
 
-const surfaceThumbShadow = `0 0 0 1px ${black[4]}`;
+const surfaceThumbShadow = `0 0 0 1px ${black.step4}`;
 const classicThumbShadow = layeredShadow(
-  `0 0 0 1px ${black[3]}`,
-  `0 1px 3px ${black[1]}`,
-  `0 2px 4px -1px ${black[1]}`,
+  `0 0 0 1px ${black.step3}`,
+  `0 1px 3px ${black.step1}`,
+  `0 2px 4px -1px ${black.step1}`,
 );
 const softThumbShadow = layeredShadow(
-  `0 0 0 1px ${black[3]}`,
+  `0 0 0 1px ${black.step3}`,
   `0 0 0 1px ${neutral.alpha[2]}`,
   `0 0 0 1px ${colorAlpha2}`,
   `0 1px 2px ${neutral.alpha[4]}`,
@@ -198,8 +198,8 @@ export const track = style({
 const classicRangeBevel = layeredShadow(
   `inset 0 0 0 1px ${neutral.alpha[3]}`,
   `inset 0 0 0 1px ${colorAlpha2}`,
-  `inset 0 0 0 1px ${black[1]}`,
-  `inset 0 1.5px 2px 0 ${black[2]}`,
+  `inset 0 0 0 1px ${black.step1}`,
+  `inset 0 1.5px 2px 0 ${black.step2}`,
 );
 
 export const range = style({
