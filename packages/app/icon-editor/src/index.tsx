@@ -1,6 +1,6 @@
 import { For, createEffect, on, onCleanup, untrack } from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
-import { createStore, defineAction, defineStore, useAction } from '@lib/state';
+import { useAction, useEffect } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
 import {
   Button,
@@ -20,50 +20,31 @@ import { PaddingSlider } from './components/padding-slider';
 import { PalettePicker } from './components/palette-picker';
 import { Preview } from './components/preview';
 import { ShapeSelector } from './components/shape-selector';
-import {
-  encodeIconRef,
-  loadIconPackIndex,
-  loadIconPackManifest,
-  loadIconPage,
-  parseIconRef,
-  resolveIconRef,
-  toIconRef,
-  type IconRef,
-} from './icons';
+import { encodeIconRef, parseIconRef } from './icons';
 import {
   DEFAULT_ICON_EDITOR_STATE,
+  hydrateStyleAction,
   iconEditor,
-  useIconEditorActions,
+  inspector,
+  loading,
+  randomizeIconEffect,
+  randomizeStyleEffect,
+  resetAction,
+  resolveIconEffect,
+  setIconAction,
+  setInspectorTabAction,
+  setPaddingAction,
+  setPaletteAction,
+  setShapeAction,
+  type InspectorTab,
 } from './state';
 import * as css from './index.css';
-
-type InspectorTab = 'icon' | 'style' | 'export';
 
 const TABS: ReadonlyArray<{ id: InspectorTab; label: string }> = [
   { id: 'icon', label: 'Icon' },
   { id: 'style', label: 'Style' },
   { id: 'export', label: 'Export' },
 ];
-
-const tabStore = defineStore<{ tab: InspectorTab }>(() => ({ tab: 'icon' }));
-const tabState = createStore(tabStore);
-const setTabAction = defineAction([tabStore], (state, tab: string) => {
-  if (tab === 'icon' || tab === 'style' || tab === 'export') state.tab = tab;
-});
-
-/**
- * Count of in-flight icon resolutions — URL hydration, randomize.
- * Counter (rather than a boolean) so concurrent requests stop pulsing
- * the canvas only once *every* request has settled.
- */
-const loadingStore = defineStore<{ pending: number }>(() => ({ pending: 0 }));
-const loadingState = createStore(loadingStore);
-const startLoadingAction = defineAction([loadingStore], (state) => {
-  state.pending += 1;
-});
-const finishLoadingAction = defineAction([loadingStore], (state) => {
-  state.pending = Math.max(0, state.pending - 1);
-});
 
 /** Recognized search-param keys backing a shareable icon URL. */
 type IconSearchParamKey = 'icon' | 'palette' | 'shape' | 'pad';
@@ -93,39 +74,22 @@ const paramOrNull = <T,>(
   encode: (value: T) => string,
 ) => (value === fallback ? null : encode(value));
 
-/**
- * Roll a random icon by walking the pack catalog: pick a pack, pick a
- * page, pick an entry. Loads everything on demand so we never have to
- * keep the full catalog in memory.
- */
-const pickRandomIcon = async (): Promise<IconRef | undefined> => {
-  const packs = await loadIconPackIndex();
-  if (packs.length === 0) return undefined;
-  const pack = packs[Math.floor(Math.random() * packs.length)];
-  const manifest = await loadIconPackManifest(pack);
-  if (manifest.pages.length === 0) return undefined;
-  const pageIndex = Math.floor(Math.random() * manifest.pages.length);
-  const page = await loadIconPage(pack.id, manifest.pages[pageIndex]);
-  if (page.length === 0) return undefined;
-  const entry = page[Math.floor(Math.random() * page.length)];
-  return toIconRef(
-    {
-      id: manifest.id,
-      width: manifest.width,
-      height: manifest.height,
-      license: pack.license,
-      author: pack.author,
-    },
-    entry,
-  );
-};
+const identity = <T,>(value: T) => value;
+
+const isInspectorTab = (value: string): value is InspectorTab =>
+  value === 'icon' || value === 'style' || value === 'export';
 
 export const IconEditor = () => {
-  const actions = useIconEditorActions();
-  const setActiveTab = useAction(setTabAction);
-  const startLoading = useAction(startLoadingAction);
-  const finishLoading = useAction(finishLoadingAction);
-  const isLoading = () => loadingState.pending > 0;
+  const setIcon = useAction(setIconAction);
+  const setPalette = useAction(setPaletteAction);
+  const setShape = useAction(setShapeAction);
+  const setPadding = useAction(setPaddingAction);
+  const reset = useAction(resetAction);
+  const hydrateStyle = useAction(hydrateStyleAction);
+  const setInspectorTab = useAction(setInspectorTabAction);
+  const randomizeStyle = useEffect(randomizeStyleEffect);
+  const randomizeIcon = useEffect(randomizeIconEffect);
+  const resolveIcon = useEffect(resolveIconEffect);
   const [searchParams, setSearchParams] = useSearchParams<IconSearchParams>();
 
   const readParam = (key: IconSearchParamKey): string | undefined => {
@@ -134,37 +98,13 @@ export const IconEditor = () => {
   };
 
   // Hydrate from the URL on mount and on every navigation. Style
-  // fields apply synchronously; the icon param requires a pack
-  // fetch, so it's resolved in the background. While the resolution
-  // is in flight, the store's icon stays at whatever it was —
-  // touching it would let the URL-mirror effect race ahead and
-  // overwrite the URL's icon param with the placeholder default.
-  //
-  // `pendingIconRequest` is the request token of the most recent
-  // in-flight resolution. The URL-mirror effect skips writing the
-  // icon param while pending, and the wrapper `setIcon`/`reset`
-  // helpers clear it whenever the user takes deliberate action so
-  // their pick lands in the URL even if the original async fetch is
-  // still resolving.
-  let pendingIconRequest: string | undefined;
-  const setIcon = (icon: IconRef) => {
-    pendingIconRequest = undefined;
-    actions.setIcon(icon);
-  };
-  const resetState = () => {
-    pendingIconRequest = undefined;
-    actions.reset();
-  };
+  // fields apply synchronously; the icon param requires a pack fetch,
+  // dispatched through `resolveIconEffect` so loading + supersession
+  // bookkeeping land in the store.
   createEffect(() => {
     const padParam = readParam('pad');
     const iconParam = readParam('icon');
-    // `hydrate` only touches style fields — the icon is hydrated
-    // separately through the async path below (or the explicit reset
-    // in the else branch). Mixing them would either flash the icon
-    // back to `undefined` for the few microtasks before
-    // `resolveIconRef` finishes, or — if we tried to thread the
-    // current icon through — create a reactive cycle on every pick.
-    actions.hydrate({
+    hydrateStyle({
       palette: readParam('palette'),
       shape: readParam('shape'),
       padding: padParam !== undefined ? Number(padParam) : undefined,
@@ -172,41 +112,32 @@ export const IconEditor = () => {
     if (iconParam) {
       const parsed = parseIconRef(iconParam);
       if (parsed) {
-        // The URL-mirror effect echoes every store icon write back into
-        // the search params, which retriggers this effect. Skip
-        // re-resolving when the param already matches what we hold —
-        // otherwise every pick spends a fetch round-trip (and a
+        // Skip when the param already matches what we hold — the
+        // URL-mirror effect echoes every icon write back into the
+        // search params and retriggers this effect; without the
+        // short-circuit every pick spends a fetch round-trip (and a
         // loading pulse) on a no-op refresh. `untrack` keeps that
-        // comparison from making `iconEditor.icon` a dependency of
-        // this effect.
+        // comparison from making `iconEditor.icon` a dependency.
         const current = untrack(() => iconEditor.icon);
         if (current?.pack === parsed.pack && current.name === parsed.name) {
-          pendingIconRequest = undefined;
           return;
         }
-        pendingIconRequest = iconParam;
-        const requestToken = iconParam;
-        startLoading();
-        void resolveIconRef(parsed.pack, parsed.name).then((icon) => {
-          finishLoading();
-          if (pendingIconRequest !== requestToken) return;
-          pendingIconRequest = undefined;
-          if (icon) actions.setIcon(icon);
-        });
+        void resolveIcon({ pack: parsed.pack, name: parsed.name });
         return;
       }
     }
-    // No icon param (or malformed) — drop any pending hydration and
-    // clear the icon. Style fields already reset via `actions.hydrate`.
-    pendingIconRequest = undefined;
-    actions.setIcon(DEFAULT_ICON_EDITOR_STATE.icon);
+    // No icon param (or malformed) — clear the icon. `setIcon` zeroes
+    // pending and bumps the request id, so any in-flight resolve from
+    // a prior URL gets discarded instead of clobbering the clear.
+    setIcon(DEFAULT_ICON_EDITOR_STATE.icon);
   });
 
   // Mirror state → URL with a small debounce so each keystroke in the
   // padding slider doesn't generate its own history entry. `defer: true`
   // skips the immediate post-hydrate flush (URL would already match).
+  // Reading `loading.pending` lets the effect re-fire when a resolve
+  // settles, flushing the freshly-applied icon to the URL.
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  const identity = <T,>(value: T) => value;
   createEffect(
     on(
       () => ({
@@ -214,15 +145,17 @@ export const IconEditor = () => {
         palette: iconEditor.palette,
         shape: iconEditor.shape,
         pad: iconEditor.padding,
+        pending: loading.pending,
       }),
       (next) => {
         if (timeoutId !== undefined) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           // While an icon resolution is pending we omit the `icon`
           // key — `setSearchParams` preserves omitted keys, so the
-          // URL's existing icon param survives until the async
-          // resolve lands and the user-driven flush below writes
-          // the resolved value.
+          // URL's existing icon param survives until the resolve
+          // settles. A user pick zeroes `pending` immediately, so
+          // their choice mirrors right away even if a stale fetch
+          // is still in flight.
           const params: IconMirrorParams = {
             palette: paramOrNull(
               next.palette,
@@ -240,7 +173,7 @@ export const IconEditor = () => {
               String,
             ),
           };
-          if (!pendingIconRequest) {
+          if (next.pending === 0) {
             params.icon = paramOrNull(
               next.icon,
               encodeIconRef(DEFAULT_ICON_EDITOR_STATE.icon),
@@ -260,12 +193,8 @@ export const IconEditor = () => {
   });
 
   const handleRandomize = () => {
-    actions.randomizeStyle();
-    startLoading();
-    void pickRandomIcon().then((icon) => {
-      finishLoading();
-      if (icon) setIcon(icon);
-    });
+    randomizeStyle();
+    void randomizeIcon();
   };
 
   return (
@@ -287,7 +216,7 @@ export const IconEditor = () => {
             color="neutral"
             mx={2}
             my={1}
-            onClick={resetState}
+            onClick={reset}
           >
             <IconReset aria-hidden /> Reset
           </Button>
@@ -307,14 +236,20 @@ export const IconEditor = () => {
         <Flex as="div" class={css.body}>
           <Flex as="section" class={css.canvas} aria-label="Icon preview">
             <Flex as="div" class={css.canvasStage}>
-              <Preview state={iconEditor} size={296} loading={isLoading()} />
+              <Preview
+                state={iconEditor}
+                size={296}
+                loading={loading.pending > 0}
+              />
             </Flex>
           </Flex>
 
           <TabsRoot
             testId="icon-editor-inspector"
-            value={tabState.tab}
-            onValueChange={setActiveTab}
+            value={inspector.tab}
+            onValueChange={(value) => {
+              if (isInspectorTab(value)) setInspectorTab(value);
+            }}
             class={css.rail}
             aria-label="Inspector"
           >
@@ -352,19 +287,16 @@ export const IconEditor = () => {
                 <Field label="Palette">
                   <PalettePicker
                     value={iconEditor.palette}
-                    onChange={actions.setPalette}
+                    onChange={setPalette}
                   />
                 </Field>
                 <InlineField label="Shape">
-                  <ShapeSelector
-                    value={iconEditor.shape}
-                    onChange={actions.setShape}
-                  />
+                  <ShapeSelector value={iconEditor.shape} onChange={setShape} />
                 </InlineField>
                 <InlineField label="Padding">
                   <PaddingSlider
                     value={iconEditor.padding}
-                    onInput={actions.setPadding}
+                    onInput={setPadding}
                   />
                 </InlineField>
               </Flex>

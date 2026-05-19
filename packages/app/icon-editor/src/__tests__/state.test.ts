@@ -1,65 +1,50 @@
-import { DEFAULT_ICON_EDITOR_STATE, resolveHydrateInput } from '../state';
-import { type IconRef } from '../icons';
+import { DEFAULT_ICON_EDITOR_STATE, resolveStyleHydration } from '../state';
 
-const customIcon: IconRef = {
-  pack: 'tabler',
-  name: 'rocket',
-  body: '<path d="M0 0"/>',
-  width: 24,
-  height: 24,
+const DEFAULT_STYLE = {
+  palette: DEFAULT_ICON_EDITOR_STATE.palette,
+  shape: DEFAULT_ICON_EDITOR_STATE.shape,
+  padding: DEFAULT_ICON_EDITOR_STATE.padding,
 };
 
-describe('resolveHydrateInput', () => {
+describe('resolveStyleHydration', () => {
   it('returns the canonical defaults for an empty input', () => {
-    expect(resolveHydrateInput({})).toEqual(DEFAULT_ICON_EDITOR_STATE);
-  });
-
-  it('leaves the icon undefined when the caller does not supply a resolved one — the empty state renders the blueprint placeholder', () => {
-    expect(resolveHydrateInput({ palette: 'mint' }).icon).toBeUndefined();
-  });
-
-  it('passes a resolved icon through verbatim', () => {
-    expect(resolveHydrateInput({ icon: customIcon }).icon).toEqual(customIcon);
+    expect(resolveStyleHydration({})).toEqual(DEFAULT_STYLE);
   });
 
   it('falls back to the default when an unknown palette name is supplied', () => {
-    const next = resolveHydrateInput({ palette: 'mauvelous' });
-
-    expect(next.palette).toBe(DEFAULT_ICON_EDITOR_STATE.palette);
+    expect(resolveStyleHydration({ palette: 'mauvelous' }).palette).toBe(
+      DEFAULT_STYLE.palette,
+    );
   });
 
   it('falls back to the default when an unknown shape is supplied', () => {
-    const next = resolveHydrateInput({ shape: 'pentagon' });
-
-    expect(next.shape).toBe(DEFAULT_ICON_EDITOR_STATE.shape);
+    expect(resolveStyleHydration({ shape: 'pentagon' }).shape).toBe(
+      DEFAULT_STYLE.shape,
+    );
   });
 
   it('clamps the padding into the slider range and floors fractionals', () => {
-    expect(resolveHydrateInput({ padding: -10 }).padding).toBe(0);
-    expect(resolveHydrateInput({ padding: 9999 }).padding).toBe(40);
-    expect(resolveHydrateInput({ padding: 18.7 }).padding).toBe(18);
+    expect(resolveStyleHydration({ padding: -10 }).padding).toBe(0);
+    expect(resolveStyleHydration({ padding: 9999 }).padding).toBe(40);
+    expect(resolveStyleHydration({ padding: 18.7 }).padding).toBe(18);
   });
 
   it('rejects non-finite padding values rather than poisoning the store', () => {
-    expect(resolveHydrateInput({ padding: Number.NaN }).padding).toBe(
-      DEFAULT_ICON_EDITOR_STATE.padding,
+    expect(resolveStyleHydration({ padding: Number.NaN }).padding).toBe(
+      DEFAULT_STYLE.padding,
     );
     expect(
-      resolveHydrateInput({ padding: Number.POSITIVE_INFINITY }).padding,
-    ).toBe(DEFAULT_ICON_EDITOR_STATE.padding);
+      resolveStyleHydration({ padding: Number.POSITIVE_INFINITY }).padding,
+    ).toBe(DEFAULT_STYLE.padding);
   });
 
   it('applies a fully-specified valid input verbatim', () => {
-    const next = resolveHydrateInput({
-      icon: customIcon,
-      palette: 'mint',
-      shape: 'circle',
-      padding: 8,
-    });
-
-    expect(next.icon).toEqual(customIcon);
-    expect(next.palette).toBe('mint');
-    expect(next.shape).toBe('circle');
-    expect(next.padding).toBe(8);
+    expect(
+      resolveStyleHydration({
+        palette: 'mint',
+        shape: 'circle',
+        padding: 8,
+      }),
+    ).toEqual({ palette: 'mint', shape: 'circle', padding: 8 });
   });
 });
