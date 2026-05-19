@@ -103,6 +103,17 @@ export const IconEditor = () => {
   // fields apply synchronously; the icon param requires a pack fetch,
   // dispatched through `resolveIconEffect` so loading + supersession
   // bookkeeping land in the store.
+  //
+  // `lastIconParam` records the `icon` value seen on the previous
+  // run so the "no icon" branch can distinguish a deliberate URL
+  // clear from a URL-mirror echo of an unchanged absent param. The
+  // latter happens every Randomize: style fields update first, the
+  // mirror omits `icon` while the random fetch is pending, and the
+  // resulting navigation arrives back here with no icon param. If we
+  // unconditionally called `setIcon(undefined)` then, the pending
+  // resolve would be superseded and the user would land with new
+  // styles but no icon.
+  let lastIconParam: string | undefined;
   createEffect(() => {
     const padParam = readParam('pad');
     const iconParam = readParam('icon');
@@ -112,26 +123,27 @@ export const IconEditor = () => {
       padding: padParam !== undefined ? Number(padParam) : undefined,
     });
     if (iconParam) {
+      lastIconParam = iconParam;
       const parsed = parseIconRef(iconParam);
-      if (parsed) {
-        // Skip when the param already matches what we hold — the
-        // URL-mirror effect echoes every icon write back into the
-        // search params and retriggers this effect; without the
-        // short-circuit every pick spends a fetch round-trip (and a
-        // loading pulse) on a no-op refresh. `untrack` keeps that
-        // comparison from making `iconEditor.icon` a dependency.
-        const current = untrack(() => iconEditor.icon);
-        if (current?.pack === parsed.pack && current.name === parsed.name) {
-          return;
-        }
-        void resolveIcon({ pack: parsed.pack, name: parsed.name });
+      if (!parsed) return;
+      // Skip when the param already matches what we hold — the
+      // URL-mirror effect echoes every icon write back into the
+      // search params and retriggers this effect; without the
+      // short-circuit every pick spends a fetch round-trip (and a
+      // loading pulse) on a no-op refresh. `untrack` keeps that
+      // comparison from making `iconEditor.icon` a dependency.
+      const current = untrack(() => iconEditor.icon);
+      if (current?.pack === parsed.pack && current.name === parsed.name) {
         return;
       }
+      void resolveIcon({ pack: parsed.pack, name: parsed.name });
+      return;
     }
-    // No icon param (or malformed) — clear the icon. `setIcon` zeroes
-    // pending and bumps the request id, so any in-flight resolve from
-    // a prior URL gets discarded instead of clobbering the clear.
-    setIcon(DEFAULT_ICON_EDITOR_STATE.icon);
+    const previouslyHadIcon = lastIconParam !== undefined;
+    lastIconParam = undefined;
+    if (previouslyHadIcon) {
+      setIcon(DEFAULT_ICON_EDITOR_STATE.icon);
+    }
   });
 
   // Mirror state → URL with a small debounce so each keystroke in the
