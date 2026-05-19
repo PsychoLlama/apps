@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { Plugin, ViteDevServer } from 'vite';
+import type { WebAppManifest } from 'web-app-manifest';
 import { rasterizeSvg } from './resvg.ts';
 
 const VIRTUAL_ID = 'virtual:pwa-manifest';
@@ -24,7 +25,7 @@ interface PwaManifestConfig {
    * Manifest fields. `icons` is synthesized from `icon.sizes` and
    * merged in last, so it can't be overridden here.
    */
-  manifest: Record<string, unknown>;
+  manifest: Omit<WebAppManifest, 'icons'>;
 }
 
 /**
