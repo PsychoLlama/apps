@@ -1,9 +1,12 @@
+import { createLogger } from '@lib/observability';
 import type { DeepReadonly } from '@lib/state';
 import { persistRecording } from '../library/capabilities';
 import { formatRecordingName } from '../format';
 import type { SessionState } from './store';
 import type { TimerState } from '../timer/store';
 import type { Track } from './types';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 export interface RecordingResult {
   readonly tracks: Track[];
@@ -128,9 +131,10 @@ export const stopRecording = async (
 
   try {
     await persistRecording({ id, name, duration, createdAt, blob });
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn('Failed to persist recording to OPFS', error);
+  } catch (err) {
+    logger.warn('Failed to persist recording to OPFS', {
+      error: err instanceof Error ? err : new Error(String(err)),
+    });
   }
 
   return { id, name, duration, createdAt, size, url };

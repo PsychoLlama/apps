@@ -1,6 +1,9 @@
+import { createLogger } from '@lib/observability';
 import type { DeepReadonly } from '@lib/state';
 import type { LibraryState } from './store';
 import type { Recording } from './types';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /** Persisted shape for a recording — Recording metadata plus the raw blob. */
 export interface PersistedRecording {
@@ -166,9 +169,10 @@ export const discardRecording = async (input: {
 }): Promise<string> => {
   try {
     await removePersistedRecording(input.id);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn('Failed to remove recording from OPFS', error);
+  } catch (err) {
+    logger.warn('Failed to remove recording from OPFS', {
+      error: err instanceof Error ? err : new Error(String(err)),
+    });
   }
   revokeRecording(input.url);
   return input.id;

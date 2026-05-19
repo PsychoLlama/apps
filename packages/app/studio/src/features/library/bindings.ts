@@ -1,3 +1,4 @@
+import { createLogger } from '@lib/observability';
 import { defineAction, defineEffect } from '@lib/state';
 import {
   discardRecording,
@@ -6,6 +7,8 @@ import {
 } from './capabilities';
 import { libraryStore } from './store';
 import type { Recording } from './types';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
  * Drop a recording from the library by id and tombstone it if the
@@ -71,8 +74,7 @@ export const hydrateLibrary = defineAction(
 export const markLibraryLoadFailed = defineAction(
   [libraryStore],
   (library, error: Error) => {
-    // eslint-disable-next-line no-console
-    console.warn('Failed to hydrate library from OPFS', error);
+    logger.warn('Failed to hydrate library from OPFS', { error });
     library.tombstones = [];
     library.loaded = true;
   },

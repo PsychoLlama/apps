@@ -51,6 +51,9 @@ catalogs:
     playwright:
       specifier: ^1.59.1
       version: 1.60.0
+    solid-js:
+      specifier: ^1.9.13
+      version: 1.9.13
     storybook:
       specifier: ^10.3.5
       version: 10.4.0
@@ -328,6 +331,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
@@ -10911,7 +10917,6 @@ snapshots:
   smob@1.6.1: {}
 
   smol-toml@1.6.1: {}
-
 
   solid-js@1.9.13:
     dependencies:
