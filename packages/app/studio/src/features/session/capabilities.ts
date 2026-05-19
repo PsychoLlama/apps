@@ -96,9 +96,9 @@ export const startRecording = async (
  * blob URL, and best-effort persist the recording to OPFS. The URL is
  * minted before the persist so a save failure (e.g. quota) does not
  * throw away a finished capture — the user keeps an in-session
- * playable recording even when disk is unavailable. Persist errors are
- * surfaced through the console; subsequent reloads will simply not see
- * the recording in the library.
+ * playable recording even when disk is unavailable. Persist errors
+ * route through `@lib/observability`; subsequent reloads will simply
+ * not see the recording in the library.
  */
 export const stopRecording = async (
   session: DeepReadonly<SessionState>,

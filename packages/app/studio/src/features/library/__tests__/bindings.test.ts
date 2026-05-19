@@ -9,7 +9,7 @@ import { libraryStore } from '../store';
 import type { Recording } from '../types';
 
 // Bindings tests assert on state changes only. Capability behavior —
-// IDB I/O, URL revocation, tombstone filtering — lives in capabilities
+// OPFS I/O, URL revocation, tombstone filtering — lives in capabilities
 // tests. The mocks here just satisfy the module graph for the two
 // effects declared in bindings.ts.
 vi.mock('../capabilities', () => ({
