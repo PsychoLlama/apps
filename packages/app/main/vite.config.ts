@@ -119,6 +119,10 @@ export default defineConfig({
     pwaManifest({
       icon: {
         src: resolve(import.meta.dirname, 'src/branding/brandmark.svg'),
+        maskable: resolve(
+          import.meta.dirname,
+          'src/branding/brandmark-maskable.svg',
+        ),
         sizes: [192, 512],
       },
       manifest: {
