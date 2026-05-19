@@ -1,5 +1,5 @@
 import { renderIconSvg } from '../svg';
-import type { IconEditorState } from '../state';
+import type { IconEditorState } from '../store';
 import type { IconRef } from '../icons';
 
 const sampleIcon: IconRef = {

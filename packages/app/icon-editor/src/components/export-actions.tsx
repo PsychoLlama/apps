@@ -14,7 +14,7 @@ import {
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { downloadPng, downloadSvg } from '../download';
 import { renderIconSvg } from '../svg';
-import type { IconEditorState } from '../state';
+import type { IconEditorState } from '../store';
 import { Field } from './field';
 import * as css from './export-actions.css';
 

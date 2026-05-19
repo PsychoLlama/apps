@@ -1,4 +1,6 @@
-import { DEFAULT_ICON_EDITOR_STATE, resolveStyleHydration } from '../state';
+import { PALETTES } from '../palette';
+import { pickRandomStyle, resolveStyleHydration } from '../capabilities';
+import { DEFAULT_ICON_EDITOR_STATE } from '../store';
 
 const DEFAULT_STYLE = {
   palette: DEFAULT_ICON_EDITOR_STATE.palette,
@@ -46,5 +48,23 @@ describe('resolveStyleHydration', () => {
         padding: 8,
       }),
     ).toEqual({ palette: 'mint', shape: 'circle', padding: 8 });
+  });
+});
+
+describe('pickRandomStyle', () => {
+  const PALETTE_NAMES = new Set(PALETTES.map((entry) => entry.name));
+  const SHAPES = new Set(['square', 'rounded', 'squircle', 'circle']);
+  const PADDING_STEPS = new Set([0, 10, 20, 30, 40]);
+
+  it('draws every field from its respective canonical set', () => {
+    // 32 iterations gives the test enough coverage to surface a
+    // pickFrom that drifts off the curated lists without making the
+    // suite flaky on rare unlucky rolls.
+    for (let idx = 0; idx < 32; idx += 1) {
+      const seed = pickRandomStyle();
+      expect(PALETTE_NAMES.has(seed.palette)).toBe(true);
+      expect(SHAPES.has(seed.shape)).toBe(true);
+      expect(PADDING_STEPS.has(seed.padding)).toBe(true);
+    }
   });
 });

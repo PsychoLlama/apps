@@ -22,22 +22,24 @@ import { Preview } from './components/preview';
 import { ShapeSelector } from './components/shape-selector';
 import { encodeIconRef, parseIconRef } from './icons';
 import {
+  hydrateStyle as hydrateStyleAction,
+  randomizeIconEffect,
+  randomizeStyleEffect,
+  reset as resetAction,
+  resolveIconEffect,
+  setIcon as setIconAction,
+  setInspectorTab as setInspectorTabAction,
+  setPadding as setPaddingAction,
+  setPalette as setPaletteAction,
+  setShape as setShapeAction,
+} from './bindings';
+import {
   DEFAULT_ICON_EDITOR_STATE,
-  hydrateStyleAction,
   iconEditor,
   inspector,
   loading,
-  randomizeIconEffect,
-  randomizeStyleEffect,
-  resetAction,
-  resolveIconEffect,
-  setIconAction,
-  setInspectorTabAction,
-  setPaddingAction,
-  setPaletteAction,
-  setShapeAction,
   type InspectorTab,
-} from './state';
+} from './store';
 import * as css from './index.css';
 
 const TABS: ReadonlyArray<{ id: InspectorTab; label: string }> = [
