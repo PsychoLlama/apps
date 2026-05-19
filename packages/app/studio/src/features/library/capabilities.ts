@@ -38,10 +38,19 @@ const getRecordingsDir = (): Promise<FileSystemDirectoryHandle> => {
   const promise = (async () => {
     const root = await navigator.storage.getDirectory();
     const studio = await root.getDirectoryHandle(STUDIO_DIR, { create: true });
-    return studio.getDirectoryHandle(RECORDINGS_DIR, { create: true });
+    const recordings = await studio.getDirectoryHandle(RECORDINGS_DIR, {
+      create: true,
+    });
+    logger.debug('Resolved OPFS recordings directory', {
+      path: `${STUDIO_DIR}/${RECORDINGS_DIR}`,
+    });
+    return recordings;
   })();
   dirPromise = promise;
-  void promise.catch(() => {
+  void promise.catch((err) => {
+    logger.warn('OPFS recordings directory lookup failed', {
+      error: err instanceof Error ? err : new Error(String(err)),
+    });
     if (dirPromise === promise) dirPromise = null;
   });
   return promise;
@@ -68,9 +77,15 @@ const readRecording = async (
     ]);
     const meta = JSON.parse(await metaFile.text()) as RecordingMetadata;
     return { ...meta, blob };
-  } catch {
+  } catch (err) {
     // Skip half-written or otherwise unreadable directories. A
     // persist that crashed between blob and meta writes lands here.
+    // Surfaced at debug so a corrupted entry leaves a trace without
+    // surfacing noise on the happy path.
+    logger.debug('Skipped unreadable recording directory', {
+      entry: entry.name,
+      error: err instanceof Error ? err : new Error(String(err)),
+    });
     return null;
   }
 };
@@ -80,11 +95,17 @@ const fetchPersisted = (): Promise<PersistedRecording[]> => {
   const promise = (async () => {
     const dir = await getRecordingsDir();
     const recordings: PersistedRecording[] = [];
+    let skipped = 0;
     for await (const entry of dir.values()) {
       if (entry.kind !== 'directory') continue;
       const recording = await readRecording(entry);
       if (recording) recordings.push(recording);
+      else skipped += 1;
     }
+    logger.debug('Read persisted recordings from OPFS', {
+      total: recordings.length,
+      skipped,
+    });
     return recordings;
   })();
   persistedFetch = promise;
@@ -124,6 +145,10 @@ export const persistRecording = async (
   const metaWritable = await metaHandle.createWritable();
   await metaWritable.write(JSON.stringify(meta));
   await metaWritable.close();
+  logger.debug('Persisted recording to OPFS', {
+    id: recording.id,
+    bytes: recording.blob.size,
+  });
 };
 
 /** Drop a persisted recording from OPFS. */
@@ -131,10 +156,14 @@ export const removePersistedRecording = async (id: string): Promise<void> => {
   const dir = await getRecordingsDir();
   try {
     await dir.removeEntry(id, { recursive: true });
+    logger.debug('Removed persisted recording from OPFS', { id });
   } catch (error) {
     // Already gone (or never persisted) — treat as success so an
     // in-memory-only recording still clears state.
-    if (error instanceof DOMException && error.name === 'NotFoundError') return;
+    if (error instanceof DOMException && error.name === 'NotFoundError') {
+      logger.debug('Persisted recording already absent', { id });
+      return;
+    }
     throw error;
   }
 };
