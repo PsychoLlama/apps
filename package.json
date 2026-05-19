@@ -32,6 +32,8 @@
   },
   "pnpm": {
     "overrides": {
+      "@solidjs/meta": "catalog:",
+      "@solidjs/router": "catalog:",
       "solid-js": "catalog:",
       "vite": "catalog:"
     }
