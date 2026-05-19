@@ -27,6 +27,7 @@
   "devDependencies": {
     "@iconify/json": "catalog:",
     "@resvg/resvg-wasm": "^2.6.2",
+    "@types/web-app-manifest": "^1.0.9",
     "esbuild": "catalog:"
   }
 }

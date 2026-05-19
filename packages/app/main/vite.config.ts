@@ -12,8 +12,16 @@ import { inlineScript } from '@dev/build/vite-plugin/inline-script';
 import { instrumentationScope } from '@dev/build/vite-plugin/instrumentation-scope';
 import { pwaManifest } from '@dev/build/vite-plugin/pwa-manifest';
 import { svgToPng } from '@dev/build/vite-plugin/svg-to-png';
+import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
+
+// Manifest theme bakes in at build time — the spec has no light/dark
+// variants, and browsers ignore `<meta name="theme-color">` for the
+// install splash. Prefer the dark value: a dark-to-light flash is
+// less jarring than the inverse, and the OLED case is the one users
+// notice.
+const manifestThemeColor = THEME_COLORS[DEFAULT_THEME_ID].dark;
 
 // The bundled service worker lives under `/_build/`, so its default
 // scope would be limited to that prefix. Both Vite servers (dev and
@@ -111,6 +119,10 @@ export default defineConfig({
     pwaManifest({
       icon: {
         src: resolve(import.meta.dirname, 'src/branding/brandmark.svg'),
+        maskable: resolve(
+          import.meta.dirname,
+          'src/branding/brandmark-maskable.svg',
+        ),
         sizes: [192, 512],
       },
       manifest: {
@@ -122,6 +134,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
+        theme_color: manifestThemeColor,
+        background_color: manifestThemeColor,
       },
     }),
     vanillaExtractPlugin(),

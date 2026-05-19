@@ -1,0 +1,50 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  width="512"
+  height="512"
+  style="color-scheme: light"
+>
+  <metadata>
+    <rdf:RDF
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:cc="http://creativecommons.org/ns#"
+    >
+      <cc:Work rdf:about="">
+        <dc:title>mdi:apple-keyboard-shift</dc:title>
+        <dc:identifier>mdi:apple-keyboard-shift</dc:identifier>
+        <dc:creator>
+          <cc:Agent rdf:about="https://github.com/Templarian/MaterialDesign">
+            <dc:title>Pictogrammers</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:source rdf:resource="https://github.com/Templarian/MaterialDesign" />
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Apache 2.0</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <cc:license rdf:resource="https://github.com/Templarian/MaterialDesign/blob/master/LICENSE" />
+        <dc:rightsHolder>SPDX:Apache-2.0</dc:rightsHolder>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs>
+    <clipPath id="icon-clip-icon">
+      <rect width="512" height="512" rx="0" ry="0" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#icon-clip-icon)">
+    <rect width="512" height="512" fill="#0090ff" />
+    <g
+      transform="translate(25.60000000000003 25.60000000000003) scale(19.2)"
+      style="color: #ffffff"
+    >
+      <path
+        fill="currentColor"
+        d="M15 18v-6h2.17L12 6.83L6.83 12H9v6zM12 4l10 10h-5v6H7v-6H2z"
+      />
+    </g>
+  </g>
+</svg>
