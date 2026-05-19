@@ -6,6 +6,7 @@ import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
+import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets';
 import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
 import { inlineScript } from '@dev/build/vite-plugin/inline-script';
@@ -115,18 +116,18 @@ export default defineConfig({
       },
       manifest: {
         id: '/',
-        name: 'PsychoLlama Apps',
+        name: 'Apps',
         short_name: 'Apps',
         description: 'A collection of personal apps.',
         start_url: '/',
         scope: '/',
         display: 'standalone',
         // Mirrors the SSG-seeded `theme-color` meta tag for the
-        // default `blue` theme's light scheme (`THEME_COLORS.blue.light`
-        // → slate step1). Only surfaces before the prelude swaps the
-        // tag — install splash + OS shortcut previews.
-        theme_color: '#fcfcfd',
-        background_color: '#fcfcfd',
+        // default theme's light scheme. Only surfaces before the
+        // prelude swaps the tag — install splash + OS shortcut
+        // previews.
+        theme_color: THEME_COLORS[DEFAULT_THEME_ID].light,
+        background_color: THEME_COLORS[DEFAULT_THEME_ID].light,
       },
     }),
     vanillaExtractPlugin(),
