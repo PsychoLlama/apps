@@ -16,6 +16,7 @@ import {
 import { SiteHeader } from '@lib/shell';
 import { createLogger } from '@lib/observability';
 import IconAlert from 'virtual:icons/mdi/alert-circle-outline';
+import IconQrCode from 'virtual:icons/mdi/qrcode-scan';
 import IconRestart from 'virtual:icons/mdi/restart';
 import {
   getBarcodeDetector,
@@ -51,7 +52,7 @@ export const Experimental = () => {
   let detector: BarcodeDetectorInstance | undefined;
   let active = true;
 
-  const start = async () => {
+  const probeSupport = async () => {
     const Detector = getBarcodeDetector();
     if (!Detector) {
       actions.markUnsupported();
@@ -61,8 +62,8 @@ export const Experimental = () => {
     try {
       const formats = await Detector.getSupportedFormats();
       if (!active) return;
-      actions.markSupported(formats);
       detector = new Detector({ formats });
+      actions.markSupported(formats);
     } catch (error) {
       logger.error('failed to probe BarcodeDetector', {
         error: error instanceof Error ? error : new Error(String(error)),
@@ -72,8 +73,14 @@ export const Experimental = () => {
           ? error.message
           : 'Failed to probe BarcodeDetector.',
       );
-      return;
     }
+  };
+
+  // Triggered from the Start button — the click is what gives the page
+  // sticky user activation for `navigator.vibrate()` on later detections.
+  const startCamera = async () => {
+    if (!detector) return;
+    actions.markRequestingCamera();
 
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -169,7 +176,7 @@ export const Experimental = () => {
   };
 
   onMount(() => {
-    void start();
+    void probeSupport();
   });
 
   onCleanup(() => {
@@ -186,7 +193,7 @@ export const Experimental = () => {
       <Switch>
         <Match when={scanner.status === 'unsupported'}>
           <Section size={2}>
-            <Container as="div" size={2}>
+            <Container as="div" size={2} px={4}>
               <Callout color="warning" icon={<IconAlert />}>
                 <Text as="span" weight="medium">
                   BarcodeDetector unavailable
@@ -203,7 +210,7 @@ export const Experimental = () => {
 
         <Match when={scanner.status === 'error'}>
           <Section size={2}>
-            <Container as="div" size={2}>
+            <Container as="div" size={2} px={4}>
               <Callout color="danger" icon={<IconAlert />}>
                 <Text as="span" weight="medium">
                   Scanner error
@@ -212,6 +219,29 @@ export const Experimental = () => {
                   {scanner.errorMessage}
                 </Text>
               </Callout>
+            </Container>
+          </Section>
+        </Match>
+
+        <Match when={scanner.status === 'idle' || scanner.status === 'probing'}>
+          <Section size={2}>
+            <Container as="div" size={2} px={4}>
+              <Flex as="div" direction="column" align="center" gap={5}>
+                <Text as="p" align="center" color="lowContrast">
+                  Tap below to share your camera. The first tap also arms haptic
+                  feedback for future detections.
+                </Text>
+                <Button
+                  as="button"
+                  size={4}
+                  onClick={() => void startCamera()}
+                  testId="scanner-start"
+                  disabled={scanner.status === 'probing'}
+                >
+                  <IconQrCode />
+                  Start scanning
+                </Button>
+              </Flex>
             </Container>
           </Section>
         </Match>
@@ -225,7 +255,7 @@ export const Experimental = () => {
           }
         >
           <Flex as="div" direction="column" class={css.stage}>
-            <Flex as="div" class={css.frame}>
+            <Flex as="div" direction="column" class={css.frame}>
               <video
                 ref={(el) => (videoEl = el)}
                 class={css.video}
@@ -251,74 +281,72 @@ export const Experimental = () => {
 
             <Show when={scanner.detection} keyed>
               {(detection) => (
-                <Flex as="div" class={css.details} justify="center">
-                  <Container as="div" size={2}>
-                    <Flex as="div" direction="column" gap={4}>
-                      <Card as="div" size={2}>
-                        <Flex as="div" direction="column" gap={3}>
-                          <Heading as="h2" size={4}>
-                            Decoded payload
-                          </Heading>
-                          <ParsedPayloadView payload={detection.parsed} />
-                        </Flex>
-                      </Card>
+                <Container as="div" size={2} px={4} class={css.details}>
+                  <Flex as="div" direction="column" gap={4}>
+                    <Card as="div" size={2}>
+                      <Flex as="div" direction="column" gap={3}>
+                        <Heading as="h2" size={4}>
+                          Decoded payload
+                        </Heading>
+                        <ParsedPayloadView payload={detection.parsed} />
+                      </Flex>
+                    </Card>
 
-                      <Card as="div" size={2}>
-                        <Flex as="div" direction="column" gap={3}>
-                          <Heading as="h2" size={4}>
-                            Barcode metadata
-                          </Heading>
-                          <DataListRoot orientation="vertical" size={2}>
-                            <DataListItem>
-                              <DataListLabel>Format</DataListLabel>
-                              <DataListValue>
-                                {detection.raw.format}
-                              </DataListValue>
-                            </DataListItem>
-                            <DataListItem>
-                              <DataListLabel>Raw value</DataListLabel>
-                              <DataListValue>
-                                <Text as="span" selectable>
-                                  {detection.raw.rawValue}
-                                </Text>
-                              </DataListValue>
-                            </DataListItem>
-                            <DataListItem>
-                              <DataListLabel>Bounding box</DataListLabel>
-                              <DataListValue>
-                                {formatBoundingBox(detection.raw.boundingBox)}
-                              </DataListValue>
-                            </DataListItem>
-                            <DataListItem>
-                              <DataListLabel>Corner points</DataListLabel>
-                              <DataListValue>
-                                {detection.raw.cornerPoints
-                                  .map(formatPoint)
-                                  .join(' → ')}
-                              </DataListValue>
-                            </DataListItem>
-                            <DataListItem>
-                              <DataListLabel>Supported formats</DataListLabel>
-                              <DataListValue>
-                                {scanner.supportedFormats.join(', ')}
-                              </DataListValue>
-                            </DataListItem>
-                          </DataListRoot>
-                        </Flex>
-                      </Card>
+                    <Card as="div" size={2}>
+                      <Flex as="div" direction="column" gap={3}>
+                        <Heading as="h2" size={4}>
+                          Barcode metadata
+                        </Heading>
+                        <DataListRoot orientation="vertical" size={2}>
+                          <DataListItem>
+                            <DataListLabel>Format</DataListLabel>
+                            <DataListValue>
+                              {detection.raw.format}
+                            </DataListValue>
+                          </DataListItem>
+                          <DataListItem>
+                            <DataListLabel>Raw value</DataListLabel>
+                            <DataListValue>
+                              <Text as="span" selectable>
+                                {detection.raw.rawValue}
+                              </Text>
+                            </DataListValue>
+                          </DataListItem>
+                          <DataListItem>
+                            <DataListLabel>Bounding box</DataListLabel>
+                            <DataListValue>
+                              {formatBoundingBox(detection.raw.boundingBox)}
+                            </DataListValue>
+                          </DataListItem>
+                          <DataListItem>
+                            <DataListLabel>Corner points</DataListLabel>
+                            <DataListValue>
+                              {detection.raw.cornerPoints
+                                .map(formatPoint)
+                                .join(' → ')}
+                            </DataListValue>
+                          </DataListItem>
+                          <DataListItem>
+                            <DataListLabel>Supported formats</DataListLabel>
+                            <DataListValue>
+                              {scanner.supportedFormats.join(', ')}
+                            </DataListValue>
+                          </DataListItem>
+                        </DataListRoot>
+                      </Flex>
+                    </Card>
 
-                      <Button
-                        as="button"
-                        size={3}
-                        onClick={restart}
-                        testId="scanner-restart"
-                      >
-                        <IconRestart />
-                        Scan again
-                      </Button>
-                    </Flex>
-                  </Container>
-                </Flex>
+                    <Button
+                      as="button"
+                      size={3}
+                      onClick={restart}
+                      testId="scanner-restart"
+                    >
+                      <IconRestart />
+                      Scan again
+                    </Button>
+                  </Flex>
+                </Container>
               )}
             </Show>
           </Flex>

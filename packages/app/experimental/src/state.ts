@@ -6,6 +6,7 @@ import type { ParsedPayload } from './parsers';
 export type ScannerStatus =
   | 'probing'
   | 'unsupported'
+  | 'idle'
   | 'requesting-camera'
   | 'scanning'
   | 'detected'
@@ -59,9 +60,13 @@ const markSupportedAction = defineAction(
   [scannerStore],
   (state, formats: ReadonlyArray<string>) => {
     state.supportedFormats = formats;
-    state.status = 'requesting-camera';
+    state.status = 'idle';
   },
 );
+
+const markRequestingCameraAction = defineAction([scannerStore], (state) => {
+  state.status = 'requesting-camera';
+});
 
 const markScanningAction = defineAction([scannerStore], (state) => {
   state.status = 'scanning';
@@ -88,6 +93,7 @@ const recordErrorAction = defineAction(
 export interface ScannerActions {
   markUnsupported: () => void;
   markSupported: (formats: ReadonlyArray<string>) => void;
+  markRequestingCamera: () => void;
   markScanning: () => void;
   recordDetection: (detection: ScannerDetection) => void;
   recordError: (message: string) => void;
@@ -97,6 +103,7 @@ export interface ScannerActions {
 export const useScannerActions = (): ScannerActions => ({
   markUnsupported: useAction(markUnsupportedAction),
   markSupported: useAction(markSupportedAction),
+  markRequestingCamera: useAction(markRequestingCameraAction),
   markScanning: useAction(markScanningAction),
   recordDetection: useAction(recordDetectionAction),
   recordError: useAction(recordErrorAction),
