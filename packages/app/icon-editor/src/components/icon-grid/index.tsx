@@ -13,16 +13,7 @@ import {
   onMount,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import {
-  createStore,
-  defineAction,
-  defineEffect,
-  defineStore,
-  ref,
-  useAction,
-  useEffect,
-  type Ref,
-} from '@lib/state';
+import { useAction, useEffect } from '@lib/state';
 import {
   Badge,
   Card,
@@ -45,17 +36,26 @@ import IconNext from 'virtual:icons/mdi/chevron-right';
 import IconPrev from 'virtual:icons/mdi/chevron-left';
 import IconSearch from 'virtual:icons/mdi/magnify';
 import {
-  loadIconPackIndex,
-  loadIconPackManifest,
-  loadIconPageEntries,
   releaseInactivePackCaches,
   toIconRef,
   type IconEntry,
   type IconPackManifest,
   type IconPackSummary,
-  type IconPageResult,
   type IconRef,
-} from '../icons';
+} from '../../icons';
+import {
+  loadManifestEffect,
+  loadPacksEffect,
+  loadPageEffect,
+  openPack as openPackAction,
+  releaseInactivePacks as releaseInactivePacksAction,
+  seedEntry as seedEntryAction,
+  setCurrentPage as setCurrentPageAction,
+  setPackSearch as setPackSearchAction,
+  setSearch as setSearchAction,
+  setView as setViewAction,
+} from './bindings';
+import { entryKey, picker } from './store';
 import * as css from './icon-grid.css';
 
 /**
@@ -67,186 +67,6 @@ import * as css from './icon-grid.css';
 const PAGE_SIZE = 60;
 
 const numberFormat = new Intl.NumberFormat();
-
-type View = 'packs' | 'pack-detail' | 'pack-info';
-
-interface PickerState {
-  /** Which surface is showing — pack list or icon grid for one pack. */
-  view: View;
-  /** Pack id whose icons populate the detail grid. */
-  activePackId: string;
-  /** Current search filter applied to the active pack's name list. */
-  search: string;
-  /** Search filter applied to the pack list view. */
-  packSearch: string;
-  /** Zero-based page index within the filtered name list. */
-  currentPage: number;
-  /** Cached pack catalog — `undefined` until the index fetch resolves. */
-  packs: ReadonlyArray<IconPackSummary> | undefined;
-  /**
-   * Per-pack manifests keyed by pack id. Plain record (not `Map`) so
-   * solid-js/store's `createMutable` proxy notices the writes —
-   * `Map` mutations bypass the proxy and never trigger downstream
-   * memos.
-   */
-  manifests: { [packId: string]: IconPackManifest | undefined };
-  /**
-   * Resolved icon entries keyed by `pack:name`. Held inside a
-   * `Ref` so the proxy treats the `Map` as opaque — per-tile reads
-   * stay on the bare `Map.get` fast path instead of walking
-   * `createMutable`'s tracking nodes (the hot cost when a 500-icon
-   * page re-binds). Reactivity flows through `entriesVersion`.
-   */
-  entries: Ref<Map<string, IconEntry>>;
-  /**
-   * Bumped on every write to `entries`. Subscribers read this to
-   * pick up new resolutions; the `Map` itself stays non-reactive.
-   */
-  entriesVersion: number;
-}
-
-const initialState = (): PickerState => ({
-  // Land on the chooser. The pack-detail view is reached only after
-  // the user picks a pack (or a deep link forces a sync via the
-  // selected.pack effect below).
-  view: 'packs',
-  activePackId: 'mdi',
-  search: '',
-  packSearch: '',
-  currentPage: 0,
-  packs: undefined,
-  manifests: {},
-  entries: ref(new Map<string, IconEntry>()),
-  entriesVersion: 0,
-});
-
-const pickerStore = defineStore<PickerState>(initialState);
-const picker = createStore(pickerStore);
-
-const entryKey = (pack: string, name: string): string => `${pack}:${name}`;
-
-const setViewAction = defineAction([pickerStore], (state, view: View) => {
-  state.view = view;
-});
-
-const openPackAction = defineAction([pickerStore], (state, packId: string) => {
-  state.activePackId = packId;
-  state.search = '';
-  state.currentPage = 0;
-  state.view = 'pack-detail';
-});
-
-const setSearchAction = defineAction([pickerStore], (state, query: string) => {
-  state.search = query;
-  // Reset to the first page so search results aren't hidden behind a
-  // stale page index from the previous filter.
-  state.currentPage = 0;
-});
-
-const setPackSearchAction = defineAction(
-  [pickerStore],
-  (state, query: string) => {
-    state.packSearch = query;
-  },
-);
-
-const setCurrentPageAction = defineAction(
-  [pickerStore],
-  (state, page: number) => {
-    state.currentPage = page;
-  },
-);
-
-interface SeedEntry {
-  pack: string;
-  entry: IconEntry;
-}
-
-const seedEntryAction = defineAction(
-  [pickerStore],
-  (state, seed: SeedEntry) => {
-    const key = entryKey(seed.pack, seed.entry.name);
-    const entries = state.entries.current;
-    // Skip when the entry is already cached — overwriting with a
-    // structurally equal but referentially new object would churn
-    // store identity, forcing the tile's `innerHTML` binding to
-    // re-bind and restart any CSS animations on the inner SVG nodes
-    // (visible in Material Line Icons).
-    if (entries.has(key)) return;
-    entries.set(key, seed.entry);
-    state.entriesVersion += 1;
-  },
-);
-
-const ingestPageAction = defineAction(
-  [pickerStore],
-  (state, ingest: IconPageResult) => {
-    const entries = state.entries.current;
-    let added = false;
-    for (const entry of ingest.entries) {
-      const key = entryKey(ingest.packId, entry.name);
-      if (entries.has(key)) continue;
-      entries.set(key, entry);
-      added = true;
-    }
-    // One reactive notification per chunk arrival, not per icon —
-    // every tile that read through `getEntry` re-evaluates once,
-    // not 500 times.
-    if (added) state.entriesVersion += 1;
-  },
-);
-
-/**
- * Drop manifests + entries that don't belong to `activePackId`.
- * Called alongside the module-level cache release so the picker's
- * proxy state and the fetcher caches stay in sync.
- */
-const releaseInactivePacksAction = defineAction(
-  [pickerStore],
-  (state, activePackId: string) => {
-    for (const key of Object.keys(state.manifests)) {
-      if (key !== activePackId) {
-        delete state.manifests[key];
-      }
-    }
-    const entries = state.entries.current;
-    const prefix = `${activePackId}:`;
-    let removed = false;
-    for (const key of [...entries.keys()]) {
-      if (!key.startsWith(prefix)) {
-        entries.delete(key);
-        removed = true;
-      }
-    }
-    if (removed) state.entriesVersion += 1;
-  },
-);
-
-const setPacksAction = defineAction(
-  [pickerStore],
-  (state, packs: ReadonlyArray<IconPackSummary>) => {
-    state.packs = packs;
-  },
-);
-
-const setManifestAction = defineAction(
-  [pickerStore],
-  (state, manifest: IconPackManifest) => {
-    state.manifests[manifest.id] = manifest;
-  },
-);
-
-const loadPacksEffect = defineEffect([], loadIconPackIndex, {
-  onSuccess: setPacksAction,
-});
-
-const loadManifestEffect = defineEffect([], loadIconPackManifest, {
-  onSuccess: setManifestAction,
-});
-
-const loadPageEffect = defineEffect([], loadIconPageEntries, {
-  onSuccess: ingestPageAction,
-});
 
 interface IconGridProps {
   /**

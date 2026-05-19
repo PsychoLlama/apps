@@ -1,7 +1,7 @@
 import { For } from 'solid-js';
 import type { Component } from 'solid-js';
 import { Flex } from '@lib/ui';
-import type { IconEditorShape } from '../state';
+import type { IconEditorShape } from '../store';
 import * as css from './shape-selector.css';
 
 interface ShapeSelectorProps {
