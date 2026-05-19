@@ -1,4 +1,5 @@
 // @refresh reload
+/// <reference types="@dev/build/vite-plugin/pwa-manifest-types" />
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
 import {
@@ -7,6 +8,7 @@ import {
   THEME_COLORS,
 } from '@lib/theme';
 import themePrelude from 'virtual:theme-prelude';
+import manifestUrl from 'virtual:pwa-manifest';
 
 const defaultColors = THEME_COLORS[DEFAULT_THEME_ID];
 
@@ -38,6 +40,11 @@ export default createHandler(() => (
             media="(prefers-color-scheme: dark)"
             content={defaultColors.dark}
           />
+          {/* PWA manifest URL emitted by the `pwa-manifest` Vite
+              plugin. Hashed asset path in builds (immutable
+              long-cache); a stable `/manifest.webmanifest` in dev,
+              served by the plugin's middleware. */}
+          <link rel="manifest" href={manifestUrl} />
           {/* Render-blocking head script: restamps `data-theme` from
               the persisted preference before paint, falling through to
               the SSG-stamped `DEFAULT_THEME_ID` on missing/invalid
