@@ -51,10 +51,3 @@ export const details = style({
   paddingBlock: space[4],
   paddingInline: space[4],
 });
-
-// Compact wrapper for the unsupported/error Callout — the previous
-// Section size={3} (64px top + bottom) crowded small viewports.
-export const callout = style({
-  paddingBlock: space[5],
-  paddingInline: space[4],
-});

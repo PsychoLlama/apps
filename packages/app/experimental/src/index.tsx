@@ -10,6 +10,7 @@ import {
   DataListValue,
   Flex,
   Heading,
+  Section,
   Text,
 } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
@@ -184,7 +185,7 @@ export const Experimental = () => {
 
       <Switch>
         <Match when={scanner.status === 'unsupported'}>
-          <Flex as="div" class={css.callout} justify="center">
+          <Section size={2}>
             <Container as="div" size={2}>
               <Callout color="warning" icon={<IconAlert />}>
                 <Text as="span" weight="medium">
@@ -197,11 +198,11 @@ export const Experimental = () => {
                 </Text>
               </Callout>
             </Container>
-          </Flex>
+          </Section>
         </Match>
 
         <Match when={scanner.status === 'error'}>
-          <Flex as="div" class={css.callout} justify="center">
+          <Section size={2}>
             <Container as="div" size={2}>
               <Callout color="danger" icon={<IconAlert />}>
                 <Text as="span" weight="medium">
@@ -212,7 +213,7 @@ export const Experimental = () => {
                 </Text>
               </Callout>
             </Container>
-          </Flex>
+          </Section>
         </Match>
 
         <Match
