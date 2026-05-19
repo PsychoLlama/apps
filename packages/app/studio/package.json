@@ -16,11 +16,11 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*",
+    "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",
-    "@vanilla-extract/css": "catalog:",
-    "idb": "catalog:"
+    "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {
     "@solidjs/router": "*",

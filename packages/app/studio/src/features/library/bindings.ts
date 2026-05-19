@@ -1,3 +1,4 @@
+import { createLogger } from '@lib/observability';
 import { defineAction, defineEffect } from '@lib/state';
 import {
   discardRecording,
@@ -7,11 +8,13 @@ import {
 import { libraryStore } from './store';
 import type { Recording } from './types';
 
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+
 /**
  * Drop a recording from the library by id and tombstone it if the
  * library hasn't hydrated yet. The tombstone keeps a stale hydrate
  * snapshot from resurrecting a recording that was deleted while the
- * IDB read was still in flight.
+ * OPFS read was still in flight.
  */
 export const deleteRecording = defineAction(
   [libraryStore],
@@ -25,9 +28,9 @@ export const deleteRecording = defineAction(
 );
 
 /**
- * Drop a recording from IndexedDB, revoke its blob URL, and remove it
- * from state. State is always cleared on the user's intent — even when
- * the IDB delete rejects (which is the only way to remove an in-memory
+ * Drop a recording from OPFS, revoke its blob URL, and remove it from
+ * state. State is always cleared on the user's intent — even when the
+ * OPFS delete rejects (which is the only way to remove an in-memory
  * fallback recording when storage is unavailable). A persistent-store
  * failure logs a warning; the entry will reappear on the next reload
  * if it was actually on disk, and the user can re-delete then.
@@ -39,7 +42,7 @@ export const deleteRecordingEffect = defineEffect([], discardRecording, {
 /**
  * Append the persisted set into the live library, mark it loaded, and
  * release the tombstone list. Append (not replace) so a recording
- * captured while the IDB read was in flight isn't clobbered by the
+ * captured while the OPFS read was in flight isn't clobbered by the
  * older snapshot — duplicate and tombstone filtering happen upstream
  * in `loadRecordingsEffect`. The `loaded` early-return revokes the
  * dropped URLs first to plug a microtask race: when two hydrates
@@ -65,14 +68,13 @@ export const hydrateLibrary = defineAction(
 /**
  * Log a failed hydrate and mark the library loaded so the app falls
  * back to an in-memory-only library instead of retrying every mount.
- * Without this, an IDB-unavailable environment surfaces as an
+ * Without this, an OPFS-unavailable environment surfaces as an
  * unhandled rejection during route mount.
  */
 export const markLibraryLoadFailed = defineAction(
   [libraryStore],
   (library, error: Error) => {
-    // eslint-disable-next-line no-console
-    console.warn('Failed to hydrate library from IndexedDB', error);
+    logger.warn('Failed to hydrate library from OPFS', { error });
     library.tombstones = [];
     library.loaded = true;
   },
@@ -82,7 +84,7 @@ export const markLibraryLoadFailed = defineAction(
  * Read every persisted recording and merge it into the library on
  * first call. Recordings already in state win against their persisted
  * twin (the freshly-minted blob URL is revoked) so a capture that
- * landed while the IDB read was in flight isn't dropped; tombstoned
+ * landed while the OPFS read was in flight isn't dropped; tombstoned
  * ids are skipped likewise so a deletion during hydrate isn't
  * resurrected. Subsequent calls short-circuit on `loaded`.
  */

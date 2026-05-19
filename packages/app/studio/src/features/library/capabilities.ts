@@ -1,7 +1,9 @@
+import { createLogger } from '@lib/observability';
 import type { DeepReadonly } from '@lib/state';
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { LibraryState } from './store';
 import type { Recording } from './types';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /** Persisted shape for a recording — Recording metadata plus the raw blob. */
 export interface PersistedRecording {
@@ -12,50 +14,99 @@ export interface PersistedRecording {
   blob: Blob;
 }
 
-interface StudioSchema extends DBSchema {
-  recordings: {
-    key: string;
-    value: PersistedRecording;
-  };
+const STUDIO_DIR = 'studio';
+const RECORDINGS_DIR = 'recordings';
+const BLOB_FILE = 'blob';
+const META_FILE = 'meta.json';
+
+interface RecordingMetadata {
+  id: string;
+  name: string;
+  duration: number;
+  createdAt: number;
 }
 
-const DB_NAME = 'studio';
-const DB_VERSION = 1;
-const STORE = 'recordings';
-
-// Module-singleton: one open() per page, shared across every capability
-// call. The IDB connection is cheap to keep around and far cheaper than
-// the ceremony of opening per request. The cached promise self-evicts
+// Module-singleton: one OPFS lookup per page, shared across every
+// capability call. Resolving the directory chain isn't expensive but
+// avoiding it keeps the hot path quiet. The cached promise self-evicts
 // on rejection so a transient failure (storage briefly blocked, etc.)
 // doesn't poison every later persist/load for the lifetime of the page.
-let dbPromise: Promise<IDBPDatabase<StudioSchema>> | null = null;
+let dirPromise: Promise<FileSystemDirectoryHandle> | null = null;
 
-const getDB = (): Promise<IDBPDatabase<StudioSchema>> => {
-  if (dbPromise) return dbPromise;
-  const promise = openDB<StudioSchema>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      db.createObjectStore(STORE, { keyPath: 'id' });
-    },
-  });
-  dbPromise = promise;
-  void promise.catch(() => {
-    if (dbPromise === promise) dbPromise = null;
+const getRecordingsDir = (): Promise<FileSystemDirectoryHandle> => {
+  if (dirPromise) return dirPromise;
+  const promise = (async () => {
+    const root = await navigator.storage.getDirectory();
+    const studio = await root.getDirectoryHandle(STUDIO_DIR, { create: true });
+    const recordings = await studio.getDirectoryHandle(RECORDINGS_DIR, {
+      create: true,
+    });
+    logger.debug('Resolved OPFS recordings directory', {
+      path: `${STUDIO_DIR}/${RECORDINGS_DIR}`,
+    });
+    return recordings;
+  })();
+  dirPromise = promise;
+  void promise.catch((err) => {
+    logger.warn('OPFS recordings directory lookup failed', {
+      error: err instanceof Error ? err : new Error(String(err)),
+    });
+    if (dirPromise === promise) dirPromise = null;
   });
   return promise;
 };
 
-// Dedupe concurrent reads at the IDB layer so two hydrates kicked off
-// by overlapping route mounts share fate — one can't fail while the
-// other succeeds and gets dropped by the action's `loaded` guard.
+// Dedupe concurrent reads at the storage layer so two hydrates kicked
+// off by overlapping route mounts share fate — one can't fail while
+// the other succeeds and gets dropped by the action's `loaded` guard.
 // URL.createObjectURL still runs per call so the duplicate filter in
 // `loadRecordingsEffect` can revoke its own URLs without aliasing.
 let persistedFetch: Promise<PersistedRecording[]> | null = null;
 
+const readRecording = async (
+  entry: FileSystemDirectoryHandle,
+): Promise<PersistedRecording | null> => {
+  try {
+    const [metaHandle, blobHandle] = await Promise.all([
+      entry.getFileHandle(META_FILE),
+      entry.getFileHandle(BLOB_FILE),
+    ]);
+    const [metaFile, blob] = await Promise.all([
+      metaHandle.getFile(),
+      blobHandle.getFile(),
+    ]);
+    const meta = JSON.parse(await metaFile.text()) as RecordingMetadata;
+    return { ...meta, blob };
+  } catch (err) {
+    // Skip half-written or otherwise unreadable directories. A
+    // persist that crashed between blob and meta writes lands here.
+    // Surfaced at debug so a corrupted entry leaves a trace without
+    // surfacing noise on the happy path.
+    logger.debug('Skipped unreadable recording directory', {
+      entry: entry.name,
+      error: err instanceof Error ? err : new Error(String(err)),
+    });
+    return null;
+  }
+};
+
 const fetchPersisted = (): Promise<PersistedRecording[]> => {
   if (persistedFetch) return persistedFetch;
   const promise = (async () => {
-    const db = await getDB();
-    return db.getAll(STORE);
+    const dir = await getRecordingsDir();
+    const recordings: PersistedRecording[] = [];
+    let skipped = 0;
+    for await (const entry of dir.values()) {
+      if (entry.kind !== 'directory') continue;
+      const recording = await readRecording(entry);
+      if (recording) recordings.push(recording);
+      else skipped += 1;
+    }
+    logger.debug('Read persisted recordings from OPFS', {
+      total: recordings.length,
+      skipped,
+    });
+    return recordings;
   })();
   persistedFetch = promise;
   void promise.finally(() => {
@@ -69,18 +120,52 @@ export const revokeRecording = (url: string): void => {
   URL.revokeObjectURL(url);
 };
 
-/** Persist a finalized recording's metadata + blob to IndexedDB. */
+/**
+ * Persist a finalized recording's metadata + blob to OPFS. The blob is
+ * written first and the metadata file last so a crash mid-write leaves
+ * a recording that `readRecording` will skip — better than surfacing a
+ * recording with missing media.
+ */
 export const persistRecording = async (
   recording: PersistedRecording,
 ): Promise<void> => {
-  const db = await getDB();
-  await db.put(STORE, recording);
+  const dir = await getRecordingsDir();
+  const entry = await dir.getDirectoryHandle(recording.id, { create: true });
+  const blobHandle = await entry.getFileHandle(BLOB_FILE, { create: true });
+  const blobWritable = await blobHandle.createWritable();
+  await blobWritable.write(recording.blob);
+  await blobWritable.close();
+  const metaHandle = await entry.getFileHandle(META_FILE, { create: true });
+  const meta: RecordingMetadata = {
+    id: recording.id,
+    name: recording.name,
+    duration: recording.duration,
+    createdAt: recording.createdAt,
+  };
+  const metaWritable = await metaHandle.createWritable();
+  await metaWritable.write(JSON.stringify(meta));
+  await metaWritable.close();
+  logger.debug('Persisted recording to OPFS', {
+    id: recording.id,
+    bytes: recording.blob.size,
+  });
 };
 
-/** Drop a persisted recording from IndexedDB. */
+/** Drop a persisted recording from OPFS. */
 export const removePersistedRecording = async (id: string): Promise<void> => {
-  const db = await getDB();
-  await db.delete(STORE, id);
+  const dir = await getRecordingsDir();
+  try {
+    await dir.removeEntry(id, { recursive: true });
+    logger.debug('Removed persisted recording from OPFS', { id });
+  } catch (error) {
+    // Already gone (or never persisted) — treat as success so an
+    // in-memory-only recording still clears state.
+    if (error instanceof DOMException && error.name === 'NotFoundError') {
+      logger.debug('Persisted recording already absent', { id });
+      return;
+    }
+    throw error;
+  }
 };
 
 /**
@@ -100,9 +185,9 @@ export const loadRecordings = async (): Promise<Recording[]> => {
 };
 
 /**
- * Drop a recording from IndexedDB and release its blob URL. Persist-side
+ * Drop a recording from OPFS and release its blob URL. Persist-side
  * failures are logged but swallowed — state is cleared on the user's
- * delete intent regardless, so an IDB-unavailable environment still
+ * delete intent regardless, so a storage-unavailable environment still
  * releases in-memory entries, and a transient failure surfaces again on
  * the next reload. Returns the id so the success action can drop it
  * from state.
@@ -113,9 +198,10 @@ export const discardRecording = async (input: {
 }): Promise<string> => {
   try {
     await removePersistedRecording(input.id);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn('Failed to remove recording from IndexedDB', error);
+  } catch (err) {
+    logger.warn('Failed to remove recording from OPFS', {
+      error: err instanceof Error ? err : new Error(String(err)),
+    });
   }
   revokeRecording(input.url);
   return input.id;

@@ -66,6 +66,12 @@ const config: KnipConfig = {
         '@vanilla-extract/dynamic',
       ],
     },
+    'packages/app/studio': {
+      // Same browser-test caveat as @lib/ui — OPFS only exists in a
+      // real browser, so the library capabilities tests live under
+      // `*.test.browser.ts`.
+      entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
+    },
     'packages/dev/storybook': {
       entry: ['.storybook/*.ts'],
       project: ['.storybook/*.ts', 'src/**/*.{ts,tsx}'],

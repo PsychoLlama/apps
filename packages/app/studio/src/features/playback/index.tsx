@@ -126,7 +126,7 @@ export default function Playback() {
   const recording = () =>
     library.recordings.find((entry) => entry.id === params.id);
 
-  // The effect's onFailure swallows IDB errors and leaves the entry in
+  // The effect's onFailure swallows OPFS errors and leaves the entry in
   // state, so checking `recording()` after awaiting tells us whether
   // the delete actually went through. On failure we stay put so the
   // user can retry instead of bouncing to a library that still shows

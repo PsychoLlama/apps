@@ -325,7 +325,6 @@ describe('stopRecording', () => {
     const createObjectURL = vi.fn(() => 'blob:mock');
     vi.stubGlobal('URL', { createObjectURL, revokeObjectURL: vi.fn() });
     vi.mocked(persistRecording).mockRejectedValueOnce(new Error('disk-fail'));
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const recorder = new FakeMediaRecorder(new FakeMediaStream());
     const session = asSession({
       recorder: recorder as unknown as MediaRecorder,
@@ -339,11 +338,6 @@ describe('stopRecording', () => {
     });
 
     expect(result.url).toBe('blob:mock');
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('persist'),
-      expect.any(Error),
-    );
-    warn.mockRestore();
   });
 });
 

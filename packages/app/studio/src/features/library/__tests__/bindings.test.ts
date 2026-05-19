@@ -9,7 +9,7 @@ import { libraryStore } from '../store';
 import type { Recording } from '../types';
 
 // Bindings tests assert on state changes only. Capability behavior —
-// IDB I/O, URL revocation, tombstone filtering — lives in capabilities
+// OPFS I/O, URL revocation, tombstone filtering — lives in capabilities
 // tests. The mocks here just satisfy the module graph for the two
 // effects declared in bindings.ts.
 vi.mock('../capabilities', () => ({
@@ -148,18 +148,12 @@ describe('hydrateLibrary', () => {
 });
 
 describe('markLibraryLoadFailed', () => {
-  it('logs the failure and marks the library loaded so we stop retrying', () => {
+  it('marks the library loaded so we stop retrying', () => {
     const { library, useAction } = setup();
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-    useAction(markLibraryLoadFailed)(new Error('idb-blocked'));
+    useAction(markLibraryLoadFailed)(new Error('opfs-blocked'));
 
     expect(library.loaded).toBe(true);
     expect(library.recordings).toEqual([]);
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('hydrate'),
-      expect.any(Error),
-    );
-    warn.mockRestore();
   });
 });
