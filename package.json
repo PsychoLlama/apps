@@ -19,6 +19,7 @@
     "knip:dev": "knip",
     "knip:production": "knip --production",
     "lint": "eslint --color --cache --cache-location node_modules/.cache/eslint/",
+    "preview": "turbo run preview --filter=@app/main",
     "storybook": "turbo run dev --filter=@dev/storybook",
     "storybook:build": "turbo run build --filter=@dev/storybook",
     "test": "vitest run --project unit",
