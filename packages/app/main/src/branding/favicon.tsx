@@ -24,6 +24,11 @@ import appleTouchIcon from './brandmark.svg?to-png=180';
  * `viewport-fit=cover` viewport so the page background fills the
  * status-bar area instead of leaving a fixed black or white strip.
  *
+ * Chrome reads `display: standalone` from the manifest, but
+ * deprecates the Apple-prefixed `*-capable` tag — pair it with the
+ * standardized `mobile-web-app-capable` to silence the console
+ * warning.
+ *
  * The legacy `/favicon.ico` request is left to 404. Every browser
  * that still asks for it also reads `<link rel="icon">`, so the SVG
  * wins; serving an `.ico` only matters for tab icons in browsers
@@ -33,6 +38,7 @@ export const Favicon = () => (
   <>
     <Link rel="icon" type="image/svg+xml" href={brandmarkSvg} />
     <Link rel="apple-touch-icon" href={appleTouchIcon} />
+    <Meta name="mobile-web-app-capable" content="yes" />
     <Meta name="apple-mobile-web-app-capable" content="yes" />
     <Meta
       name="apple-mobile-web-app-status-bar-style"
