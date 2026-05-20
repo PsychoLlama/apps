@@ -74,7 +74,12 @@ export const handleNavigation = async (
   } catch (error) {
     const cache = await openCache(CACHE_NAMES.html);
     const cached = await cache.match(ctx.request);
-    if (cached) return cached;
+    if (cached) {
+      logger.info('Serving navigation from cache.', {
+        url: new URL(ctx.request.url).pathname,
+      });
+      return cached;
+    }
     throw error;
   }
 };
