@@ -29,7 +29,7 @@
       "persistent": true,
       "dependsOn": ["^build"]
     },
-    "dev:wrangler": {
+    "preview": {
       "cache": false,
       "persistent": true,
       "dependsOn": ["build"]

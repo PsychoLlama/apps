@@ -13,11 +13,10 @@
   ],
   "scripts": {
     "dev": "vite dev",
-    "dev:wrangler": "wrangler dev",
     "build": "vite build",
     "bundle": "rm -rf .output/public/__storybook && cp -r ../../dev/storybook/storybook-static .output/public/__storybook",
     "start": "vite start",
-    "preview": "vite preview",
+    "preview": "wrangler dev",
     "typecheck": "tsc"
   },
   "dependencies": {
