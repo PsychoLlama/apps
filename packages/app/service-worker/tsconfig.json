@@ -5,6 +5,7 @@
     "customConditions": ["browser"],
     "types": [
       "vite/client",
+      "vitest/globals",
       "@dev/build/vite-plugin/instrumentation-scope-types"
     ]
   },

@@ -72,6 +72,11 @@ const config: KnipConfig = {
       // `*.test.browser.ts`.
       entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
     },
+    'packages/app/service-worker': {
+      // Cache Storage + `FetchEvent` only exist in a real browser, so
+      // the SW behavior tests live under `*.test.browser.ts`.
+      entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
+    },
     'packages/dev/storybook': {
       entry: ['.storybook/*.ts'],
       project: ['.storybook/*.ts', 'src/**/*.{ts,tsx}'],
