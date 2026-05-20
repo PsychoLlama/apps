@@ -24,10 +24,10 @@ const workspaceRoot = resolve(import.meta.dirname, '../../..');
 const manifestThemeColor = THEME_COLORS[DEFAULT_THEME_ID].dark;
 
 // The bundled service worker lives under `/_build/`, so its default
-// scope would be limited to that prefix. Both Vite servers (dev and
-// preview) need this header to honor the `scope: '/'` registration;
-// `vite preview` reads its own `preview.headers`, ignoring `server.*`.
-// Production sets the same header via `public/_headers`.
+// scope would be limited to that prefix. The dev server needs this
+// header to honor the `scope: '/'` registration; production (and the
+// wrangler-based `preview` script) set the same header via
+// `public/_headers`.
 const widenServiceWorkerScope = {
   'Service-Worker-Allowed': '/',
 };
@@ -46,9 +46,6 @@ export default defineConfig({
       // Vite's chokidar watcher doesn't respect .gitignore.
       ignored: [...generatedArtifacts, scratchDir(workspaceRoot)],
     },
-    headers: widenServiceWorkerScope,
-  },
-  preview: {
     headers: widenServiceWorkerScope,
   },
   worker: {
