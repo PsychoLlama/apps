@@ -1,17 +1,16 @@
 /**
- * POC service worker. Activates immediately on install/upgrade and
- * intercepts `/api/local/health` to short-circuit a JSON response.
- * Everything else falls through to the network.
+ * Browser service worker shipped by @app/main. Activates immediately
+ * on install/upgrade and wires the `fetch` listener through
+ * `fetch-handler.ts`. Everything beyond lifecycle lives there.
  *
  * Consumed by `@app/main` via Vite's `?worker&url` import — the host
  * bundles this module and registers the resulting URL.
  */
 
-import { createLogger } from '@lib/observability';
+import { purgeStaleCaches } from './caches';
+import { handleFetch } from './fetch-handler';
 
 declare const self: ServiceWorkerGlobalScope;
-
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 self.addEventListener('install', () => {
   // The app holds no SW-version-coupled state (no precaches keyed to
@@ -22,14 +21,16 @@ self.addEventListener('install', () => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  // Claim before purging so the activate sequence reads top-to-
+  // bottom as "take ownership, then clean house." The purge only
+  // ever deletes inactive cache names, so the order doesn't affect
+  // correctness — claim-first is purely about legibility.
+  event.waitUntil(
+    (async () => {
+      await self.clients.claim();
+      await purgeStaleCaches();
+    })(),
+  );
 });
 
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
-  if (url.pathname !== '/api/local/health') return;
-
-  logger.info('Responding to health check.', { url: url.pathname });
-  event.respondWith(Response.json({ status: 'online' }));
-});
+self.addEventListener('fetch', handleFetch);
