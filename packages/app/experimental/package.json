@@ -15,10 +15,11 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@lib/hello-wasm": "workspace:*",
-    "@lib/observability": "workspace:*",
+    "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
-    "@lib/ui": "workspace:*"
+    "@lib/state": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {
     "solid-js": "*"
