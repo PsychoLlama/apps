@@ -4,6 +4,18 @@ import { cellId, COLUMNS, type CellId } from './grid';
 /** Raw textual contents of every populated cell. */
 export type CellMap = Record<CellId, string>;
 
+/**
+ * Active edit session: the cell whose textbox is open, plus how the
+ * editor should seed the selection. `selectOnOpen` is `true` for
+ * normal entry (Enter, F2, double-click) so typing replaces the
+ * current value, and `false` for "type-to-edit" so the pressed
+ * character is appended instead of being immediately replaced.
+ */
+export interface EditingState {
+  id: CellId;
+  selectOnOpen: boolean;
+}
+
 /** In-memory sheet state. Cleared on page reload by design. */
 export interface SpreadsheetState {
   /**
@@ -13,8 +25,8 @@ export interface SpreadsheetState {
   cells: CellMap;
   /** Currently focused cell, or `null` if no cell has focus. */
   selected: CellId | null;
-  /** Cell whose textbox is open for editing, or `null` if none. */
-  editing: CellId | null;
+  /** Active edit session, or `null` if no cell is being edited. */
+  editing: EditingState | null;
 }
 
 const seed = (): CellMap => {

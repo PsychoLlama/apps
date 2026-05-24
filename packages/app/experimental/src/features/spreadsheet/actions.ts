@@ -26,12 +26,19 @@ export const selectCell = defineAction(
   },
 );
 
-/** Open a cell's textbox for editing. Also selects it. */
+/**
+ * Open a cell's textbox for editing. Selection mode controls whether
+ * the editor selects the current contents (so typing replaces) or
+ * leaves the caret at the end (so type-to-edit appends).
+ */
 export const beginEdit = defineAction(
   [spreadsheetStore],
-  (sheet, id: CellId) => {
-    sheet.selected = id;
-    sheet.editing = id;
+  (sheet, payload: { id: CellId; selectOnOpen?: boolean }) => {
+    sheet.selected = payload.id;
+    sheet.editing = {
+      id: payload.id,
+      selectOnOpen: payload.selectOnOpen ?? true,
+    };
   },
 );
 

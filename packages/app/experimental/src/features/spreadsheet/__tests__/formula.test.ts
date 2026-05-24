@@ -53,6 +53,21 @@ describe('evaluateCell', () => {
     expect(evaluateCell(cells, 'B1')).toEqual({ kind: 'number', value: 5 });
   });
 
+  it('treats numeric-prefixed text as zero, not a partial parse', () => {
+    // `parseFloat("1foo")` returns 1; we want strict whole-string
+    // numeric matching so refs to text don't silently coerce.
+    const cells = sheet({ A1: '1foo', B1: '=A1+5' });
+    expect(evaluateCell(cells, 'A1')).toEqual({ kind: 'text', value: '1foo' });
+    expect(evaluateCell(cells, 'B1')).toEqual({ kind: 'number', value: 5 });
+  });
+
+  it('accepts a leading decimal point', () => {
+    expect(evaluateCell(sheet({ A1: '.5' }), 'A1')).toEqual({
+      kind: 'number',
+      value: 0.5,
+    });
+  });
+
   it('detects direct cycles', () => {
     const cells = sheet({ A1: '=A1+1' });
     expect(evaluateCell(cells, 'A1')).toEqual({

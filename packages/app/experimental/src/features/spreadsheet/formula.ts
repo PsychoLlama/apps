@@ -281,14 +281,26 @@ const expandRange = (from: CellId, to: CellId): CellId[] => {
 };
 
 /**
+ * Strict numeric check. Whole-string match so `parseFloat`-friendly
+ * strings like `"1foo"` aren't silently coerced to `1` in formula
+ * context (`evaluateCell` uses the same rule when rendering literals).
+ */
+const NUMERIC_LITERAL = /^-?\d+(\.\d+)?$|^-?\.\d+$/;
+
+const parseStrictNumber = (raw: string): number | null => {
+  if (!NUMERIC_LITERAL.test(raw.trim())) return null;
+  const numeric = Number.parseFloat(raw);
+  return Number.isFinite(numeric) ? numeric : null;
+};
+
+/**
  * Coerce a raw cell string to a number. Empty / non-numeric text reads
  * as 0 — matches the conventional spreadsheet behavior so that text
  * labels don't poison numeric formulas.
  */
 const coerceLiteral = (raw: string | undefined): number => {
   if (raw === undefined || raw === '') return 0;
-  const numeric = Number.parseFloat(raw);
-  return Number.isFinite(numeric) ? numeric : 0;
+  return parseStrictNumber(raw) ?? 0;
 };
 
 /**
@@ -308,8 +320,8 @@ export const evaluateCell = (
     return { kind: 'empty' };
   }
   if (!raw.startsWith('=')) {
-    const numeric = Number.parseFloat(raw);
-    if (Number.isFinite(numeric) && /^-?\d*(\.\d+)?$/.test(raw.trim())) {
+    const numeric = parseStrictNumber(raw);
+    if (numeric !== null) {
       return { kind: 'number', value: numeric };
     }
     return { kind: 'text', value: raw };

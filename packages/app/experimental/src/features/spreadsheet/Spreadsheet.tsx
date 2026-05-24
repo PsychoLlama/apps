@@ -28,6 +28,13 @@ interface CellProps {
   raw: string;
   selected: boolean;
   editing: boolean;
+  /**
+   * When `editing` opens the editor, controls how the input seeds its
+   * selection. `true` selects existing content (typing replaces);
+   * `false` parks the caret at the end (used by type-to-edit so the
+   * seeded character isn't immediately overwritten).
+   */
+  selectOnEdit: boolean;
   onSelect: (id: CellId) => void;
   onBeginEdit: (id: CellId) => void;
   onCommit: (id: CellId, value: string) => void;
@@ -40,7 +47,12 @@ const Cell = (props: CellProps) => {
   createEffect(() => {
     if (props.editing && inputElement) {
       inputElement.focus();
-      inputElement.select();
+      if (props.selectOnEdit) {
+        inputElement.select();
+      } else {
+        const end = inputElement.value.length;
+        inputElement.setSelectionRange(end, end);
+      }
     }
   });
 
@@ -172,7 +184,7 @@ export const Spreadsheet = () => {
     }
     if (event.key === 'Enter' || event.key === 'F2') {
       event.preventDefault();
-      openEditor(id);
+      openEditor({ id });
       return;
     }
     if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -187,10 +199,12 @@ export const Spreadsheet = () => {
       !event.altKey
     ) {
       // Start typing — clear the cell and open the editor with the
-      // pressed key as the initial character.
+      // pressed key as the initial character. `selectOnOpen: false`
+      // parks the caret after the seeded char so the next key
+      // appends instead of replacing.
       event.preventDefault();
       updateCell({ id, value: event.key });
-      openEditor(id);
+      openEditor({ id, selectOnOpen: false });
     }
   };
 
@@ -282,9 +296,12 @@ export const Spreadsheet = () => {
                             raw={spreadsheet.cells[id] ?? ''}
                             value={evaluateCell(spreadsheet.cells, id)}
                             selected={spreadsheet.selected === id}
-                            editing={spreadsheet.editing === id}
+                            editing={spreadsheet.editing?.id === id}
+                            selectOnEdit={
+                              spreadsheet.editing?.selectOnOpen ?? true
+                            }
                             onSelect={pickCell}
-                            onBeginEdit={openEditor}
+                            onBeginEdit={(target) => openEditor({ id: target })}
                             onCommit={(target, value) => {
                               updateCell({ id: target, value });
                               closeEditor();
