@@ -2,7 +2,6 @@ import { style } from '@vanilla-extract/css';
 import {
   accent,
   background,
-  breakpoint,
   danger,
   fontFamily,
   fontWeight,
@@ -27,6 +26,8 @@ export const body = style({
   minHeight: 0,
   overflow: 'auto',
 });
+
+// --- Sheet grid ---
 
 export const sheetCard = style({
   backgroundColor: background.panelSolid,
@@ -115,16 +116,11 @@ export const cellInput = style({
   outline: 'none',
 });
 
-export const inspector = style({
-  backgroundColor: background.panelSolid,
-  border: `1px solid ${neutral.solid[6]}`,
-  borderRadius: radius[4],
-  padding: space[4],
-  gap: space[3],
-});
+// --- Inspector ---
 
-export const inspectorLabel = style({
-  color: neutral.solid[11],
+export const cellTag = style({
+  fontFamily: fontFamily.code,
+  color: accent.solid[11],
 });
 
 export const formulaInput = style({
@@ -141,37 +137,50 @@ export const formulaInput = style({
   ':focus': {
     borderColor: accent.solid[8],
   },
+  ':disabled': {
+    color: neutral.solid[10],
+    cursor: 'not-allowed',
+  },
 });
 
-export const chartCard = style({
-  backgroundColor: background.panelSolid,
-  border: `1px solid ${neutral.solid[6]}`,
-  borderRadius: radius[4],
-  padding: space[4],
-  gap: space[3],
+export const hint = style({
+  color: neutral.solid[11],
 });
 
+// --- Chart ---
+
+/**
+ * Chart surface. `aspect-ratio` keeps text proportional regardless of
+ * container width — much friendlier than `preserveAspectRatio="none"`
+ * which stretches glyphs.
+ */
 export const chartSurface = style({
   width: '100%',
-  height: '240px',
-  '@media': {
-    [breakpoint.sm]: {
-      height: '280px',
-    },
-  },
+  aspectRatio: '5 / 2',
+  display: 'block',
 });
 
-export const chartBar = style({
-  fill: accent.solid[9],
-  transition: `fill ${moderate[1]} ${standard.productive}, height ${moderate[1]} ${standard.productive}, y ${moderate[1]} ${standard.productive}`,
-  ':hover': {
-    fill: accent.solid[10],
-  },
+export const chartGridline = style({
+  stroke: neutral.alpha[5],
+  strokeWidth: 1,
+  strokeDasharray: '2 4',
 });
 
 export const chartAxis = style({
   stroke: neutral.solid[7],
   strokeWidth: 1,
+});
+
+export const chartBar = style({
+  fill: accent.solid[9],
+  transition: `fill ${moderate[1]} ${standard.productive}`,
+  ':hover': {
+    fill: accent.solid[10],
+  },
+});
+
+export const chartBarNegative = style({
+  fill: danger.solid[9],
 });
 
 export const chartLabel = style({
@@ -185,14 +194,11 @@ export const chartValueLabel = style({
   fontFamily: fontFamily.body,
   fontSize: typeScale[1].fontSize,
   fontVariantNumeric: 'tabular-nums',
+  fontWeight: fontWeight.medium,
 });
 
 export const empty = style({
   fill: neutral.solid[11],
   fontFamily: fontFamily.body,
   fontSize: typeScale[2].fontSize,
-});
-
-export const hint = style({
-  color: neutral.solid[11],
 });

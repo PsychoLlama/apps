@@ -110,22 +110,29 @@ const Inspector = (props: {
   };
 
   return (
-    <Flex as="section" direction="column" class={css.inspector}>
-      <Text
-        as="span"
-        size={1}
-        weight="medium"
-        class={css.inspectorLabel}
-        selectable={false}
-      >
-        {props.selected ? `Editing ${props.selected}` : 'No cell selected'}
-      </Text>
+    <Flex as="section" direction="column" gap={2}>
+      <Flex as="div" align="baseline" justify="between" gap={3}>
+        <Text
+          as="span"
+          size={1}
+          weight="medium"
+          class={css.cellTag}
+          selectable={false}
+        >
+          {props.selected ?? '—'}
+        </Text>
+        <Show when={props.selected}>
+          <Text as="span" size={1} class={css.hint} selectable>
+            ={formatCellValue(props.value) || '∅'}
+          </Text>
+        </Show>
+      </Flex>
       <input
         ref={(element: HTMLInputElement) => {
           formulaElement = element;
         }}
         class={css.formulaInput}
-        placeholder="Enter a value or =formula"
+        placeholder="Select a cell, then type a value or =formula"
         data-testid="formula-input"
         disabled={!props.selected}
         onKeyDown={(event) => {
@@ -137,14 +144,9 @@ const Inspector = (props: {
         onBlur={commit}
       />
       <Text as="span" size={1} class={css.hint} selectable={false}>
-        Formulas start with `=`. Supports A1 refs, ranges (A1:A8), and SUM, AVG,
-        MIN, MAX, COUNT.
+        Formulas start with `=`. Supports A1 refs, ranges (A1:A8), and
+        SUM/AVG/MIN/MAX/COUNT.
       </Text>
-      <Show when={props.selected}>
-        <Text as="span" size={1} class={css.hint} selectable>
-          Evaluates to: {formatCellValue(props.value) || '(empty)'}
-        </Text>
-      </Show>
     </Flex>
   );
 };
@@ -233,6 +235,17 @@ export const Spreadsheet = () => {
           </Text>
         </Flex>
 
+        <Inspector
+          selected={spreadsheet.selected}
+          raw={
+            spreadsheet.selected
+              ? (spreadsheet.cells[spreadsheet.selected] ?? '')
+              : ''
+          }
+          value={selectedValue()}
+          onChange={(id, value) => updateCell({ id, value })}
+        />
+
         <Flex as="section" direction="column" class={css.sheetCard}>
           <Flex as="div" class={css.sheetScroll}>
             <Flex as="div" class={css.sheetGrid} style={gridStyle}>
@@ -288,18 +301,7 @@ export const Spreadsheet = () => {
           </Flex>
         </Flex>
 
-        <Inspector
-          selected={spreadsheet.selected}
-          raw={
-            spreadsheet.selected
-              ? (spreadsheet.cells[spreadsheet.selected] ?? '')
-              : ''
-          }
-          value={selectedValue()}
-          onChange={(id, value) => updateCell({ id, value })}
-        />
-
-        <Flex as="section" direction="column" class={css.chartCard}>
+        <Flex as="section" direction="column" gap={2}>
           <Heading as="h2" size={3} weight="medium">
             Column A
           </Heading>
