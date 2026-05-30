@@ -6,10 +6,30 @@
  */
 
 import { CACHE_NAMES } from '../caches';
-import { handleFetch, handleNavigation } from '../fetch-handler';
+import {
+  handleFetch,
+  handleNavigation,
+  type NavigationContext,
+} from '../fetch-handler';
 
 const sameOrigin = (path: string): string =>
   new URL(path, self.location.origin).toString();
+
+/**
+ * Builds a navigation context, defaulting the parts a given test
+ * doesn't exercise: a no-op `waitUntil` and a preload that resolves to
+ * nothing (so the handler falls back to `fetch`). Override either to
+ * drive the preload / cache-refresh paths.
+ */
+const navContext = (
+  request: Request,
+  overrides: Partial<NavigationContext> = {},
+): NavigationContext => ({
+  request,
+  waitUntil: () => {},
+  preloadResponse: Promise.resolve(undefined),
+  ...overrides,
+});
 
 const clearHtmlCache = async (): Promise<void> => {
   await caches.delete(CACHE_NAMES.html);
@@ -24,6 +44,11 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // `vi.spyOn` (used to fake `navigator.onLine`) isn't covered by
+  // `unstubAllGlobals` — without this, the offline branch sticks
+  // around and bleeds into later tests.
+  vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('handleNavigation', () => {
@@ -32,10 +57,11 @@ describe('handleNavigation', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fresh));
     const waitUntils: Array<Promise<unknown>> = [];
 
-    const response = await handleNavigation({
-      request: new Request(sameOrigin('/settings')),
-      waitUntil: (promise) => waitUntils.push(promise),
-    });
+    const response = await handleNavigation(
+      navContext(new Request(sameOrigin('/settings')), {
+        waitUntil: (promise) => waitUntils.push(promise),
+      }),
+    );
 
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('<html>fresh</html>');
@@ -51,10 +77,11 @@ describe('handleNavigation', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(notFound));
     const waitUntils: Array<Promise<unknown>> = [];
 
-    const response = await handleNavigation({
-      request: new Request(sameOrigin('/missing')),
-      waitUntil: (promise) => waitUntils.push(promise),
-    });
+    const response = await handleNavigation(
+      navContext(new Request(sameOrigin('/missing')), {
+        waitUntil: (promise) => waitUntils.push(promise),
+      }),
+    );
 
     expect(response.status).toBe(404);
     await flushWaitUntil(waitUntils);
@@ -72,24 +99,117 @@ describe('handleNavigation', () => {
     );
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Offline')));
 
-    const response = await handleNavigation({
-      request: new Request(sameOrigin('/settings')),
-      waitUntil: () => {},
-    });
+    const response = await handleNavigation(
+      navContext(new Request(sameOrigin('/settings'))),
+    );
 
     expect(await response.text()).toBe('<html>stale</html>');
   });
 
-  it('re-throws when offline and the cache has no entry', async () => {
-    const offline = new TypeError('Offline');
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(offline));
+  it('rejects when the network fails and the cache has no entry', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Offline')));
 
     await expect(
-      handleNavigation({
-        request: new Request(sameOrigin('/never-visited')),
-        waitUntil: () => {},
+      handleNavigation(navContext(new Request(sameOrigin('/never-visited')))),
+    ).rejects.toThrow();
+  });
+
+  it('serves cached navigations without fetching when the UA reports offline', async () => {
+    const cache = await caches.open(CACHE_NAMES.html);
+    await cache.put(
+      new Request(sameOrigin('/settings')),
+      new Response('<html>stale</html>', { status: 200 }),
+    );
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    vi.spyOn(self.navigator, 'onLine', 'get').mockReturnValue(false);
+
+    // A rejecting preload stands in for the doomed request the browser
+    // kicks off while offline.
+    const response = await handleNavigation(
+      navContext(new Request(sameOrigin('/settings')), {
+        preloadResponse: Promise.reject(new TypeError('Offline')),
       }),
-    ).rejects.toBe(offline);
+    );
+
+    expect(await response.text()).toBe('<html>stale</html>');
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('re-throws without fetching when the UA reports offline and the cache is empty', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    vi.spyOn(self.navigator, 'onLine', 'get').mockReturnValue(false);
+
+    await expect(
+      handleNavigation(
+        navContext(new Request(sameOrigin('/never-visited')), {
+          preloadResponse: Promise.reject(new TypeError('Offline')),
+        }),
+      ),
+    ).rejects.toThrow();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('serves the cached entry when the network is slower than the timeout', async () => {
+    vi.useFakeTimers();
+    const cache = await caches.open(CACHE_NAMES.html);
+    await cache.put(
+      new Request(sameOrigin('/settings')),
+      new Response('<html>stale</html>', { status: 200 }),
+    );
+
+    // A fetch that never settles — just needs to outlast the timeout.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockReturnValue(new Promise<Response>(() => {})),
+    );
+
+    const responsePromise = handleNavigation(
+      navContext(new Request(sameOrigin('/settings'))),
+    );
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    const response = await responsePromise;
+    expect(await response.text()).toBe('<html>stale</html>');
+  });
+
+  it('serves the navigation-preload response without issuing its own fetch', async () => {
+    const preloaded = new Response('<html>preloaded</html>', { status: 200 });
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    const waitUntils: Array<Promise<unknown>> = [];
+
+    const response = await handleNavigation(
+      navContext(new Request(sameOrigin('/settings')), {
+        waitUntil: (promise) => waitUntils.push(promise),
+        preloadResponse: Promise.resolve(preloaded),
+      }),
+    );
+
+    expect(await response.text()).toBe('<html>preloaded</html>');
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    // The preload response refreshes the cache just like a fetch win.
+    await flushWaitUntil(waitUntils);
+    const cache = await caches.open(CACHE_NAMES.html);
+    const cached = await cache.match(sameOrigin('/settings'));
+    expect(await cached?.text()).toBe('<html>preloaded</html>');
+  });
+
+  it('falls back to fetch when no preload ran for the navigation', async () => {
+    const fresh = new Response('<html>fresh</html>', { status: 200 });
+    const fetchSpy = vi.fn().mockResolvedValue(fresh);
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const response = await handleNavigation(
+      // `navContext` defaults `preloadResponse` to resolve `undefined`.
+      navContext(new Request(sameOrigin('/settings'))),
+    );
+
+    expect(await response.text()).toBe('<html>fresh</html>');
+    expect(fetchSpy).toHaveBeenCalledOnce();
   });
 });
 
@@ -97,12 +217,14 @@ interface SyntheticFetchEvent {
   request: Request;
   respondWith: ReturnType<typeof vi.fn>;
   waitUntil: ReturnType<typeof vi.fn>;
+  preloadResponse: Promise<Response | undefined>;
 }
 
 const syntheticEvent = (request: Request): SyntheticFetchEvent => ({
   request,
   respondWith: vi.fn(),
   waitUntil: vi.fn(),
+  preloadResponse: Promise.resolve(undefined),
 });
 
 describe('handleFetch', () => {
