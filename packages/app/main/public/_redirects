@@ -1,3 +1,8 @@
+# Forward PWAs still re-fetching the old hashed manifest URL (now gone)
+# to the stable path. `_redirects` fire even when no asset matches.
+# Removable in ~a month, once most installs have refreshed.
+/_build/assets/manifest-*  /manifest.webmanifest  301
+
 # Serve a route-shaped prerendered shell for dynamic client routes so
 # a direct hit (refresh, shared link) hydrates instead of 404ing.
 # Target must match the *route* the client will mount, not the URL
