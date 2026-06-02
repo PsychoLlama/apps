@@ -40,10 +40,11 @@ export default createHandler(() => (
             media="(prefers-color-scheme: dark)"
             content={defaultColors.dark}
           />
-          {/* PWA manifest URL emitted by the `pwa-manifest` Vite
-              plugin. Hashed asset path in builds (immutable
-              long-cache); a stable `/manifest.webmanifest` in dev,
-              served by the plugin's middleware. */}
+          {/* PWA manifest emitted by the `pwa-manifest` Vite plugin.
+              A stable `/manifest.webmanifest` in every environment:
+              installed PWAs persist this URL and re-fetch it directly,
+              so it must stay constant and revalidate (it lives off the
+              `immutable` `/_build/` prefix) rather than be hashed. */}
           <link rel="manifest" href={manifestUrl} />
           {/* Render-blocking head script: restamps `data-theme` from
               the persisted preference before paint, falling through to

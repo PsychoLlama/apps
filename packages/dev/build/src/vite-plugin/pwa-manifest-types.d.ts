@@ -1,9 +1,10 @@
 declare module 'virtual:pwa-manifest' {
   /**
-   * Final URL of the emitted web app manifest. In dev it resolves
-   * to the stable `/manifest.webmanifest` path served by the
-   * plugin's middleware; in builds it points at the hashed asset
-   * under `/_build/assets/`.
+   * URL of the emitted web app manifest — the stable, unhashed
+   * `/manifest.webmanifest` in every environment. Dev serves it from
+   * the plugin's middleware; builds emit it at the root (off the
+   * `immutable` `/_build/` prefix) so installed PWAs can re-fetch a
+   * constant URL and pick up updates.
    */
   const url: string;
   export default url;

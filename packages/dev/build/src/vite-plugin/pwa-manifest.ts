@@ -1,11 +1,10 @@
 import { readFile } from 'node:fs/promises';
-import type { Plugin, ViteDevServer } from 'vite';
+import type { Plugin } from 'vite';
 import type { ImageResource, WebAppManifest } from 'web-app-manifest';
 import { rasterizeSvg } from './resvg.ts';
 
 const VIRTUAL_ID = 'virtual:pwa-manifest';
 const RESOLVED_ID = '\0virtual:pwa-manifest';
-const PLACEHOLDER = '__PWA_MANIFEST_URL__';
 const MANIFEST_NAME = 'manifest.webmanifest';
 
 interface IconConfig {
@@ -58,34 +57,41 @@ const collectVariants = (icon: IconConfig): Variant[] => {
   return variants;
 };
 
-/** Stable path served by the dev middleware. Hashed in builds. */
-const devManifestPath = '/manifest.webmanifest';
+/**
+ * Stable manifest URL — constant in dev and builds alike. Installed
+ * PWAs persist the manifest URL at install time and re-fetch *that*
+ * URL on their own schedule; they never re-read the `<link>` from
+ * fresh HTML. A content-addressed URL would therefore strand every
+ * install on a hash that the next deploy deletes (→ 404). The stable
+ * path lets re-fetches land a fresh manifest, and inherits the
+ * default `max-age=0, must-revalidate` rule (it lives outside
+ * `_build/`), so updates actually propagate. See `_redirects` for the
+ * 301 that rescues installs still pinned to the old hashed path.
+ */
+const manifestPath = '/manifest.webmanifest';
 const devIconPath = (variant: Variant, size: number): string =>
   `/${variant.stem}-${size}.png`;
 
 /**
- * Emits a PWA web app manifest plus its raster icons as hashed
- * assets. Importing `virtual:pwa-manifest` returns the manifest's
- * final URL — mirrors the `?to-png=<size>` flow in `svg-to-png` so
- * the link-tag site stays declarative.
+ * Emits a PWA web app manifest plus its raster icons. Importing
+ * `virtual:pwa-manifest` returns the manifest's URL — the stable
+ * `manifestPath` in every environment.
  *
  * Build: icons emit via `name` so Rollup hashes them through
- * `assetFileNames`; the manifest JSON captures their final paths
- * via `this.getFileName`, then itself emits under the same hashed
- * template. All artifacts land under `/_build/assets/` and inherit
- * the `immutable` long-cache rule from `_headers`. The SSR pass
- * sees a placeholder that gets rewritten with the URL captured by
- * the client pass — same closure-sharing trick as `svg-to-png`.
+ * `assetFileNames` (they stay immutable — only the manifest's *own*
+ * URL must be stable, since that's the one browsers persist). The
+ * manifest JSON captures their final hashed paths via
+ * `this.getFileName`, then emits via `fileName` (verbatim, unhashed)
+ * so it lands at the root `manifestPath` rather than under the
+ * `immutable` `/_build/` prefix.
  *
  * Dev: a middleware rasterizes on demand and serves the manifest +
  * icons with `Cache-Control: no-store` so edits to the SVG surface
- * after a reload. The virtual module resolves to the stable dev
+ * after a reload. The virtual module resolves to the same stable
  * path.
  */
 export const pwaManifest = (config: PwaManifestConfig): Plugin => {
-  let server: ViteDevServer | undefined;
   let base = '/';
-  let buildUrl: string | undefined;
   const variants = collectVariants(config.icon);
 
   const buildIconList = (
@@ -110,11 +116,6 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
       icons: buildIconList(iconUrl),
     });
 
-  const replacePlaceholders = (code: string): string => {
-    if (!code.includes(PLACEHOLDER) || buildUrl === undefined) return code;
-    return code.replaceAll(PLACEHOLDER, buildUrl);
-  };
-
   return {
     name: '@dev/build:pwa-manifest',
     enforce: 'pre',
@@ -124,12 +125,10 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
     },
 
     configureServer(devServer) {
-      server = devServer;
-
       devServer.middlewares.use((req, res, next) => {
         const path = (req.url ?? '').split('?', 1)[0];
 
-        if (path === devManifestPath) {
+        if (path === manifestPath) {
           res.setHeader('Content-Type', 'application/manifest+json');
           res.setHeader('Cache-Control', 'no-store');
           res.end(buildManifestJson(devIconPath));
@@ -173,65 +172,54 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
       if (id !== RESOLVED_ID) return undefined;
       for (const variant of variants) this.addWatchFile(variant.src);
 
-      if (server) {
-        return `export default ${JSON.stringify(devManifestPath)};`;
-      }
-
-      return `export default ${JSON.stringify(PLACEHOLDER)};`;
+      // Same stable URL in dev and builds — see `manifestPath`.
+      return `export default ${JSON.stringify(manifestPath)};`;
     },
 
-    generateBundle: {
-      // Capture the manifest URL and rewrite placeholders before
-      // later plugins (analyzers, hashed-asset guards) observe the
-      // bundle.
-      order: 'pre',
-      async handler(_outputOptions, bundle) {
-        const isClient = !this.environment.config.build.ssr;
+    async generateBundle() {
+      // Only the client build ships browser assets; the SSR pass has
+      // nothing to emit.
+      if (this.environment.config.build.ssr) return;
 
-        if (isClient) {
-          const refIds = new Map<string, string>();
-          const refKey = (variant: Variant, size: number): string =>
-            `${variant.stem}@${size}`;
+      const refIds = new Map<string, string>();
+      const refKey = (variant: Variant, size: number): string =>
+        `${variant.stem}@${size}`;
 
-          for (const variant of variants) {
-            const svg = await readFile(variant.src, 'utf8');
-            for (const size of config.icon.sizes) {
-              const png = await rasterizeSvg(svg, size);
-              const refId = this.emitFile({
-                type: 'asset',
-                // `name` (not `fileName`) routes through
-                // `assetFileNames` so the path picks up a content
-                // hash and inherits the `_build/*` long-cache rule.
-                name: `${variant.stem}-${size}.png`,
-                source: Buffer.from(png),
-              });
-              refIds.set(refKey(variant, size), refId);
-            }
-          }
-
-          const manifestRefId = this.emitFile({
+      for (const variant of variants) {
+        const svg = await readFile(variant.src, 'utf8');
+        for (const size of config.icon.sizes) {
+          const png = await rasterizeSvg(svg, size);
+          const refId = this.emitFile({
             type: 'asset',
-            name: MANIFEST_NAME,
-            source: buildManifestJson((variant, size) => {
-              const refId = refIds.get(refKey(variant, size));
-              if (refId === undefined) {
-                throw new Error(
-                  `Missing emitted icon for ${variant.stem} @ ${size}`,
-                );
-              }
-              return `${base}${this.getFileName(refId)}`;
-            }),
+            // `name` (not `fileName`) routes through `assetFileNames`
+            // so icons pick up a content hash and inherit the
+            // `_build/*` long-cache rule. Icons stay immutable — the
+            // manifest references their current hashed paths, so an
+            // icon change still reaches installs through the mutable
+            // manifest.
+            name: `${variant.stem}-${size}.png`,
+            source: Buffer.from(png),
           });
-
-          buildUrl = `${base}${this.getFileName(manifestRefId)}`;
+          refIds.set(refKey(variant, size), refId);
         }
+      }
 
-        for (const fileName of Object.keys(bundle)) {
-          const chunk = bundle[fileName];
-          if (!chunk || chunk.type !== 'chunk') continue;
-          chunk.code = replacePlaceholders(chunk.code);
-        }
-      },
+      this.emitFile({
+        type: 'asset',
+        // `fileName` (not `name`) writes the manifest verbatim at the
+        // root `manifestPath`, off the `immutable` `/_build/` prefix,
+        // so re-fetches revalidate and pick up content changes.
+        fileName: MANIFEST_NAME,
+        source: buildManifestJson((variant, size) => {
+          const refId = refIds.get(refKey(variant, size));
+          if (refId === undefined) {
+            throw new Error(
+              `Missing emitted icon for ${variant.stem} @ ${size}`,
+            );
+          }
+          return `${base}${this.getFileName(refId)}`;
+        }),
+      });
     },
   };
 };
