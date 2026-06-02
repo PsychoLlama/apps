@@ -58,37 +58,21 @@ const collectVariants = (icon: IconConfig): Variant[] => {
 };
 
 /**
- * Stable manifest URL — constant in dev and builds alike. Installed
- * PWAs persist the manifest URL at install time and re-fetch *that*
- * URL on their own schedule; they never re-read the `<link>` from
- * fresh HTML. A content-addressed URL would therefore strand every
- * install on a hash that the next deploy deletes (→ 404). The stable
- * path lets re-fetches land a fresh manifest, and inherits the
- * default `max-age=0, must-revalidate` rule (it lives outside
- * `_build/`), so updates actually propagate. See `_redirects` for the
- * 301 that rescues installs still pinned to the old hashed path.
+ * Stable manifest URL, identical in dev and builds. Installed PWAs
+ * persist this URL and re-fetch it directly (never re-reading the
+ * `<link>`), so it must stay constant across deploys and revalidate —
+ * hence unhashed and off the `immutable` `/_build/` prefix. See
+ * `_redirects` for the 301 that rescues installs on the old hash.
  */
 const manifestPath = '/manifest.webmanifest';
 const devIconPath = (variant: Variant, size: number): string =>
   `/${variant.stem}-${size}.png`;
 
 /**
- * Emits a PWA web app manifest plus its raster icons. Importing
- * `virtual:pwa-manifest` returns the manifest's URL — the stable
- * `manifestPath` in every environment.
- *
- * Build: icons emit via `name` so Rollup hashes them through
- * `assetFileNames` (they stay immutable — only the manifest's *own*
- * URL must be stable, since that's the one browsers persist). The
- * manifest JSON captures their final hashed paths via
- * `this.getFileName`, then emits via `fileName` (verbatim, unhashed)
- * so it lands at the root `manifestPath` rather than under the
- * `immutable` `/_build/` prefix.
- *
- * Dev: a middleware rasterizes on demand and serves the manifest +
- * icons with `Cache-Control: no-store` so edits to the SVG surface
- * after a reload. The virtual module resolves to the same stable
- * path.
+ * Emits a PWA web app manifest plus its raster icons; importing
+ * `virtual:pwa-manifest` returns the stable `manifestPath`. Icons are
+ * hashed and immutable; the manifest is served verbatim so re-fetches
+ * pick up changes. In dev a middleware rasterizes on demand.
  */
 export const pwaManifest = (config: PwaManifestConfig): Plugin => {
   let base = '/';
@@ -177,8 +161,7 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
     },
 
     async generateBundle() {
-      // Only the client build ships browser assets; the SSR pass has
-      // nothing to emit.
+      // Only the client build ships browser assets.
       if (this.environment.config.build.ssr) return;
 
       const refIds = new Map<string, string>();
@@ -191,12 +174,8 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
           const png = await rasterizeSvg(svg, size);
           const refId = this.emitFile({
             type: 'asset',
-            // `name` (not `fileName`) routes through `assetFileNames`
-            // so icons pick up a content hash and inherit the
-            // `_build/*` long-cache rule. Icons stay immutable — the
-            // manifest references their current hashed paths, so an
-            // icon change still reaches installs through the mutable
-            // manifest.
+            // `name` hashes the icon via `assetFileNames`; it stays
+            // immutable and the manifest re-references its hashed path.
             name: `${variant.stem}-${size}.png`,
             source: Buffer.from(png),
           });
@@ -206,9 +185,8 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
 
       this.emitFile({
         type: 'asset',
-        // `fileName` (not `name`) writes the manifest verbatim at the
-        // root `manifestPath`, off the `immutable` `/_build/` prefix,
-        // so re-fetches revalidate and pick up content changes.
+        // `fileName` writes the manifest verbatim at the root — see
+        // `manifestPath`.
         fileName: MANIFEST_NAME,
         source: buildManifestJson((variant, size) => {
           const refId = refIds.get(refKey(variant, size));

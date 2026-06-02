@@ -1,11 +1,6 @@
-# Rescue PWAs installed against the old content-addressed manifest.
-# The manifest URL was once hashed under `/_build/assets/`; installed
-# clients persist that URL and re-fetch it on their own schedule, so
-# after a redeploy (new hash, old file gone) they'd 404. The manifest
-# now lives at a stable `/manifest.webmanifest`, and this 301 forwards
-# any straggler still pinned to a hashed path. `_redirects` rules fire
-# regardless of whether an asset matches, so this works even though no
-# such file exists anymore. Removable once old installs age out.
+# Forward PWAs still re-fetching the old hashed manifest URL (now gone)
+# to the stable path. `_redirects` fire even when no asset matches.
+# Removable in ~a month, once most installs have refreshed.
 /_build/assets/manifest-*  /manifest.webmanifest  301
 
 # Serve a route-shaped prerendered shell for dynamic client routes so
