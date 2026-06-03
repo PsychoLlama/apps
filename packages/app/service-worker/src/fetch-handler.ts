@@ -17,7 +17,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  * cache. Late-arriving responses still refresh the cache in the
  * background, so a slow fetch never gets wasted.
  */
-const NAVIGATION_TIMEOUT_MS = 1_500;
+export const NAVIGATION_TIMEOUT_MS = 1_500;
 
 /**
  * The slice of `FetchEvent` the navigation handler needs. `Pick`ing
@@ -66,43 +66,56 @@ export const handleFetch = (event: FetchEvent): void => {
 };
 
 /**
- * Network-first with a lazy cache fallback, bounded by a tight
- * timeout.
+ * Network-first navigation handler. Dispatches on reachability, then
+ * resolves to a `Response` — or throws a network-style error so the
+ * browser shows its own offline page.
  *
- * - Offline (`navigator.onLine === false`): skip the doomed fetch and
- *   serve cache, or reject so the browser shows its offline page. Only
- *   the negative is trustworthy — `true` is unreliable (a dead subway
- *   connection still reports online).
- * - Online: race the network against the timeout. The network leg
- *   prefers the browser's navigation-preload response (started in
- *   parallel with SW startup) and falls back to its own `fetch`. A
- *   network win returns fresh and refreshes the cache. A timeout serves
- *   the cached entry while the request keeps running in the background,
- *   so a slow response still warms the cache for next time — that's why
- *   there's no `AbortController`.
- *
- * The fetch's rejection handler collapses a network error into
- * `undefined` instead of throwing. A failed fetch then flows through
- * the same cache-fallback path as a timeout, and `waitUntil` never
- * receives a rejection (which it would count against the SW).
+ * Reachability gates the strategy: `onLine === false` is the only
+ * trustworthy signal (definitely offline), so we skip the doomed fetch
+ * and serve cache. `true` is unreliable — a dead subway connection still
+ * reports online — so the ambiguous case is treated as online and left
+ * to `networkFirst`'s timeout to sort out.
  */
 export const handleNavigation = async (
   ctx: NavigationContext,
 ): Promise<Response> => {
   // Swallow a rejected preload (offline, network error) up front so it
-  // never surfaces as an unhandled rejection, including on the offline
-  // branch below that ignores it.
+  // never surfaces as an unhandled rejection — including on the offline
+  // branch below, which ignores the preload entirely.
   void ctx.preloadResponse.catch(() => {});
 
   const cache = await openCache(CACHE_NAMES.html);
 
-  if (self.navigator.onLine === false) {
-    const cached = await readCachedNavigation(cache, ctx.request);
-    if (cached) return cached;
-    throw new TypeError('Offline with no cached navigation.');
-  }
+  const response =
+    self.navigator.onLine === false
+      ? await readCachedNavigation(cache, ctx.request)
+      : await networkFirst(ctx, cache);
 
-  const fetchPromise = networkResponse(ctx).then(
+  if (response) return response;
+
+  // Nothing to serve — an offline cache miss, or the network was
+  // exhausted while online. Surface a network-style failure so the
+  // browser shows its offline page.
+  throw new TypeError('Offline with no cached navigation.');
+};
+
+/**
+ * The online leg: race the network against a tight timeout, falling back
+ * to cache when the network is slow or fails. Resolves `undefined` when
+ * neither the network nor the cache can satisfy the request.
+ *
+ * The fetch is never aborted — it keeps running past the timeout (kept
+ * alive by `waitUntil`) so a slow response still refreshes the cache for
+ * next time, which is why there's no `AbortController`. A network error
+ * collapses to `undefined` so it flows through the same cache-fallback
+ * path as a timeout, and `waitUntil` never receives a rejection (which it
+ * would count against the SW).
+ */
+const networkFirst = async (
+  ctx: NavigationContext,
+  cache: Cache,
+): Promise<Response | undefined> => {
+  const network = fetchWithPreload(ctx).then(
     (response) => {
       if (response.ok) ctx.waitUntil(cache.put(ctx.request, response.clone()));
       return response;
@@ -110,29 +123,22 @@ export const handleNavigation = async (
     () => undefined,
   );
 
-  // Keep the SW alive for a late cache refresh even when we serve a
-  // stale response first.
-  ctx.waitUntil(fetchPromise);
+  // Keep the SW alive for a late cache refresh even when we serve stale.
+  ctx.waitUntil(network);
 
-  const timeout = new Promise<undefined>((resolve) => {
-    setTimeout(resolve, NAVIGATION_TIMEOUT_MS);
-  });
-
-  // A network win inside the timeout returns fresh. Otherwise
-  // (`undefined` from a timeout or a failed fetch) fall back to cache.
-  const winner = await Promise.race([fetchPromise, timeout]);
-  if (winner) return winner;
-
-  const cached = await readCachedNavigation(cache, ctx.request);
-  if (cached) return cached;
-
-  // No cache, and the network either failed or is still in flight. Give
-  // the fetch a last chance to land; if it can't, surface a
-  // network-style failure so the browser shows its offline page.
-  const response = await fetchPromise;
-  if (response) return response;
-  throw new TypeError('Offline with no cached navigation.');
+  // A fresh response inside the budget wins outright. Otherwise serve
+  // cache, then give a still-in-flight fetch a last chance to land.
+  const fresh = await Promise.race([network, timeout(NAVIGATION_TIMEOUT_MS)]);
+  return (
+    fresh ?? (await readCachedNavigation(cache, ctx.request)) ?? (await network)
+  );
 };
+
+/** Resolves to `undefined` after `ms` — the cache-fallback trigger. */
+const timeout = (ms: number): Promise<undefined> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 /**
  * The network leg of the navigation strategy. Prefers the browser's
@@ -141,7 +147,7 @@ export const handleNavigation = async (
  * falls back to a normal `fetch` when no preload ran for this
  * navigation.
  */
-const networkResponse = async (ctx: NavigationContext): Promise<Response> => {
+const fetchWithPreload = async (ctx: NavigationContext): Promise<Response> => {
   const preloaded = await ctx.preloadResponse;
   return preloaded ?? fetch(ctx.request);
 };

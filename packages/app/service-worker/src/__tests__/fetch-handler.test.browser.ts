@@ -11,11 +11,9 @@ import { CACHE_NAMES } from '../caches';
 import {
   handleFetch,
   handleNavigation,
+  NAVIGATION_TIMEOUT_MS,
   type NavigationContext,
 } from '../fetch-handler';
-
-/** Mirrors `NAVIGATION_TIMEOUT_MS` in the handler. */
-const NAVIGATION_TIMEOUT_MS = 1_500;
 
 const sameOrigin = (path: string): string =>
   new URL(path, self.location.origin).toString();
