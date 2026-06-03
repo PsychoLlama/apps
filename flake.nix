@@ -36,6 +36,10 @@
           default = pkgs.mkShell {
             packages = [
               pkgs.nodejs
+              # Source of truth for the pnpm version. Keep package.json's
+              # `packageManager` major in sync: turbo reads it to select the
+              # lockfile parser (pnpm9). See `managePackageManagerVersions`
+              # in pnpm-workspace.yaml.
               pkgs.pnpm
               pkgs.treefmt
               # Rust toolchain pinned via ./rust-toolchain.toml. Lives in
