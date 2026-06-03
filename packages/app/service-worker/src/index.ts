@@ -23,9 +23,6 @@ self.addEventListener('install', () => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      // Navigation preload runs a navigation's network fetch in
-      // parallel with SW startup. Enable it before claiming so the
-      // first navigation we intercept already benefits.
       await self.registration.navigationPreload.enable();
       await self.clients.claim();
       await purgeStaleCaches();
