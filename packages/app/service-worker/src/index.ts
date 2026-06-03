@@ -21,12 +21,9 @@ self.addEventListener('install', () => {
 });
 
 self.addEventListener('activate', (event) => {
-  // Claim before purging so the activate sequence reads top-to-
-  // bottom as "take ownership, then clean house." The purge only
-  // ever deletes inactive cache names, so the order doesn't affect
-  // correctness — claim-first is purely about legibility.
   event.waitUntil(
     (async () => {
+      await self.registration.navigationPreload.enable();
       await self.clients.claim();
       await purgeStaleCaches();
     })(),
