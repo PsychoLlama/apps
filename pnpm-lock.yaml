@@ -8,7 +8,7 @@ catalogs:
   default:
     '@iconify/json':
       specifier: ^2.2.470
-      version: 2.2.473
+      version: 2.2.480
     '@solidjs/meta':
       specifier: ^0.29.4
       version: 0.29.4
@@ -97,7 +97,7 @@ importers:
         version: 10.0.1(eslint@10.4.0(jiti@2.7.0))
       '@iconify/json':
         specifier: ^2.2.460
-        version: 2.2.473
+        version: 2.2.480
       '@testing-library/jest-dom':
         specifier: 'catalog:'
         version: 6.9.1
@@ -361,7 +361,7 @@ importers:
     devDependencies:
       '@iconify/json':
         specifier: 'catalog:'
-        version: 2.2.473
+        version: 2.2.480
       '@resvg/resvg-wasm':
         specifier: ^2.6.2
         version: 2.6.2
@@ -395,7 +395,7 @@ importers:
         version: link:../build
       '@iconify/json':
         specifier: 'catalog:'
-        version: 2.2.473
+        version: 2.2.480
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -1570,8 +1570,8 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@iconify/json@2.2.473':
-    resolution: {integrity: sha512-flWzgAFyF1VX83xmkd6VVHKOA22iYfjbJmPcre13ISuL+RsBooEUE6rkAuOqODylkF9mxY9XZr2kFOsq0ZpMTQ==}
+  '@iconify/json@2.2.480':
+    resolution: {integrity: sha512-wr5SImR0Gni4CLKOQ0t2NP5NgP2NIN5af07GCBVn69z2HLAsHyPZRBahLVpDpstRxSNd/sKm/NYg25dk69VYEw==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -6908,7 +6908,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@iconify/json@2.2.473':
+  '@iconify/json@2.2.480':
     dependencies:
       '@iconify/types': 2.0.0
       pathe: 2.0.3
