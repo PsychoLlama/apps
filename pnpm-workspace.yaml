@@ -5,6 +5,15 @@ packages:
 # Default `pnpm add` to workspace:* for in-repo packages.
 saveWorkspaceProtocol: true
 
+# The flake (pkgs.pnpm) is the single source of truth for the pnpm
+# version; CI runs every step inside `nix develop`. Turbo still requires a
+# `packageManager` field in package.json to detect the package manager, but
+# we don't want pnpm self-upgrading away from the nix-provided binary, so
+# disable version management here. pnpm then ignores the field's version;
+# turbo still reads its major to pick the matching lockfile parser (pnpm9),
+# so package.json must track the flake's pnpm major.
+managePackageManagerVersions: false
+
 # Publicly hoist `@types/*` so workspace packages with no framework
 # devDeps (e.g. `@dev/workspace-cli`, a plain node CLI) can still reach
 # the `@types/node` that Vite and SolidStart already pull in. Every
@@ -18,6 +27,15 @@ allowBuilds:
   esbuild: true
   sharp: true
   workerd: true
+
+# Force framework singletons to the catalog version everywhere, including
+# transitive dependents. Duplicate copies of solid-js break reactivity and
+# duplicate vite breaks plugin identity, so they must resolve once.
+overrides:
+  '@solidjs/meta': 'catalog:'
+  '@solidjs/router': 'catalog:'
+  solid-js: 'catalog:'
+  vite: 'catalog:'
 
 catalog:
   '@iconify/json': ^2.2.470
