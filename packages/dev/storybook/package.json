@@ -15,7 +15,6 @@
     "typecheck": "tsc"
   },
   "devDependencies": {
-    "@app/studio": "workspace:*",
     "@dev/build": "workspace:*",
     "@iconify/json": "catalog:",
     "@lib/design": "workspace:*",

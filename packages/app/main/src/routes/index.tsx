@@ -2,7 +2,6 @@ import { For } from 'solid-js';
 import type { Component } from 'solid-js';
 import { Card, Flex, Grid, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
-import IconRecord from 'virtual:icons/mdi/record-rec';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconStorybook from 'virtual:icons/mdi/book-open-page-variant-outline';
 import * as css from './index.css';
@@ -22,13 +21,6 @@ interface AppEntry {
  * is actually navigable — there is no "coming soon" tier.
  */
 const APPS: ReadonlyArray<AppEntry> = [
-  {
-    id: 'studio',
-    name: 'Recording Studio',
-    href: '/studio',
-    description: 'Record your screen straight from the browser.',
-    Icon: IconRecord,
-  },
   {
     id: 'icon-editor',
     name: 'Icon Editor',

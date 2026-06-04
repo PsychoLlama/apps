@@ -24,7 +24,6 @@
     "@app/icon-editor": "workspace:*",
     "@app/service-worker": "workspace:*",
     "@app/settings": "workspace:*",
-    "@app/studio": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",

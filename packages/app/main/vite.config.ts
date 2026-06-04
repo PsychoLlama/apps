@@ -79,12 +79,6 @@ export default defineConfig({
         // Manual entries for routes the crawler can't reach from `/`:
         //   - `/404`: rendered via Cloudflare's `not_found_handling`,
         //     not linked from any page.
-        //   - `/studio/__landing`: sentinel id used by `_redirects` to
-        //     send every direct hit on `/studio/:id` to a Playback-shaped
-        //     shell. Without it those hits land on the prerendered Studio
-        //     index, and the client tries to hydrate Playback's tree onto
-        //     Studio's DOM — which crashes. Double underscore signals
-        //     "synthetic, not a real id."
         //   - `/experimental`: scratchpad route, intentionally unlisted
         //     from the launcher. Only shipped to preview deploys + local
         //     builds — gating on `GITHUB_REF` matches the workflow's own
@@ -93,7 +87,6 @@ export default defineConfig({
         //     shell while PR-preview and local builds keep it reachable.
         routes: [
           '/404',
-          '/studio/__landing',
           ...(process.env.GITHUB_REF === 'refs/heads/main'
             ? []
             : ['/experimental']),
