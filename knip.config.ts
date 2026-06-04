@@ -66,12 +66,6 @@ const config: KnipConfig = {
         '@vanilla-extract/dynamic',
       ],
     },
-    'packages/app/studio': {
-      // Same browser-test caveat as @lib/ui — OPFS only exists in a
-      // real browser, so the library capabilities tests live under
-      // `*.test.browser.ts`.
-      entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
-    },
     'packages/app/service-worker': {
       // Cache Storage + `FetchEvent` only exist in a real browser, so
       // the SW behavior tests live under `*.test.browser.ts`.
@@ -82,10 +76,8 @@ const config: KnipConfig = {
       project: ['.storybook/*.ts', 'src/**/*.{ts,tsx}'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
-        // Some sibling packages are pulled in indirectly (e.g. via
-        // theme imports in `.storybook/preview.ts`) rather than by
-        // direct story imports.
-        '@app/studio',
+        // Pulled in indirectly (e.g. via theme imports in
+        // `.storybook/preview.ts`) rather than by direct story imports.
         '@lib/shell',
       ],
     },

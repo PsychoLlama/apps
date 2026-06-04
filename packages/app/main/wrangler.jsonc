@@ -5,9 +5,9 @@
   "preview_urls": true,
   "assets": {
     "directory": ".output/public",
-    // Dynamic client routes (e.g. /studio/[id]) aren't prerendered.
-    // Per-pattern rewrites live in `public/_redirects` so different URL
-    // trees can land on different prerendered shells.
+    // Unmatched paths fall back to the prerendered 404 shell. Dynamic
+    // client routes that need a route-shaped shell instead get
+    // per-pattern rewrites in `public/_redirects`.
     "not_found_handling": "404-page"
   },
   "routes": [
