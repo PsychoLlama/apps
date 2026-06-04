@@ -4,6 +4,7 @@ import { Card, Flex, Grid, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconStorybook from 'virtual:icons/mdi/book-open-page-variant-outline';
+import IconFlask from 'virtual:icons/mdi/flask-outline';
 import * as css from './index.css';
 
 interface AppEntry {
@@ -19,6 +20,12 @@ interface AppEntry {
 /**
  * Hard-coded launcher inventory. Add an entry only when the target
  * is actually navigable — there is no "coming soon" tier.
+ *
+ * The experimental entry is gated on `INCLUDE_EXPERIMENTAL_APP` (baked
+ * in by the host's vite config), so it appears only on the builds that
+ * actually ship the `/experimental` route — preview and local, never
+ * production. The constant folds to a literal at build time, so the
+ * unused branch is dead-code-eliminated.
  */
 const APPS: ReadonlyArray<AppEntry> = [
   {
@@ -36,6 +43,17 @@ const APPS: ReadonlyArray<AppEntry> = [
     Icon: IconStorybook,
     external: true,
   },
+  ...(import.meta.env.INCLUDE_EXPERIMENTAL_APP
+    ? [
+        {
+          id: 'experimental',
+          name: 'Experimental',
+          href: '/experimental',
+          description: 'Scratchpad for work-in-progress ideas.',
+          Icon: IconFlask,
+        } satisfies AppEntry,
+      ]
+    : []),
 ];
 
 const Launcher = () => (

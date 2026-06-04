@@ -6,6 +6,7 @@ import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
+import { includesExperimentalApp } from '@dev/build/release';
 import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets';
 import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
 import { inlineScript } from '@dev/build/vite-plugin/inline-script';
@@ -15,6 +16,14 @@ import { svgToPng } from '@dev/build/vite-plugin/svg-to-png';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
+
+// Single source of truth for the experimental app's release inclusion.
+// Drives both the prerendered route list (below) and the launcher link
+// — inlined into the bundle via `define` so the launcher and the route
+// gate agree without the client ever reading `process.env`. `GITHUB_REF`
+// must be declared on turbo's `build` task so it reaches this read (and
+// participates in the cache key) under turbo's strict env mode.
+const includeExperimental = includesExperimentalApp(process.env.GITHUB_REF);
 
 // Manifest theme bakes in at build time — the spec has no light/dark
 // variants, and browsers ignore `<meta name="theme-color">` for the
@@ -33,6 +42,10 @@ const widenServiceWorkerScope = {
 };
 
 export default defineConfig({
+  define: {
+    'import.meta.env.INCLUDE_EXPERIMENTAL_APP':
+      JSON.stringify(includeExperimental),
+  },
   // Pulled in transitively by generated `.css.ts` modules, so Vite's
   // entry scanner misses it. Without this hint, the first cold load
   // re-optimizes deps mid-flight and 504s any in-flight requests
@@ -81,16 +94,10 @@ export default defineConfig({
         //     not linked from any page.
         //   - `/experimental`: scratchpad route, intentionally unlisted
         //     from the launcher. Only shipped to preview deploys + local
-        //     builds — gating on `GITHUB_REF` matches the workflow's own
-        //     production-deploy condition (`github.ref == 'refs/heads/main'`),
-        //     so the build going to production omits the prerendered
-        //     shell while PR-preview and local builds keep it reachable.
-        routes: [
-          '/404',
-          ...(process.env.GITHUB_REF === 'refs/heads/main'
-            ? []
-            : ['/experimental']),
-        ],
+        //     builds (see `includesExperimentalApp`) — the production
+        //     build omits the prerendered shell while PR-preview and
+        //     local builds keep it reachable.
+        routes: ['/404', ...(includeExperimental ? ['/experimental'] : [])],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file
