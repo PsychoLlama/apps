@@ -61,6 +61,15 @@ export const handleFetch = (event: FetchEvent): void => {
   // `respondWith` must be called synchronously during dispatch, so we
   // hand it the pending promise rather than awaiting the handler first.
   if (event.request.mode === 'navigate' && event.request.method === 'GET') {
+    // Vite's dev server can take long enough to serve the first
+    // navigation that it blows our timeout, at which point we'd hand
+    // back a stale cached shell — which then mismatches the live HMR
+    // client and trips a SolidJS hydration error. So in dev we never
+    // intercept: navigations fall through to the dev server directly,
+    // and the cache can't shadow it. `import.meta.env.DEV` is replaced
+    // at build time, so this branch is dead-code-eliminated in prod.
+    if (import.meta.env.DEV) return;
+
     event.respondWith(handleNavigation(event));
   }
 };

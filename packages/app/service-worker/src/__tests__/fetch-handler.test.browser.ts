@@ -75,6 +75,7 @@ beforeEach(() => {
 afterEach(async () => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   // `vi.spyOn` getters (e.g. `navigator.onLine`) aren't reverted by
   // `unstubAllGlobals`; restore them so the offline branch doesn't leak.
   vi.restoreAllMocks();
@@ -229,6 +230,14 @@ const syntheticEvent = (request: Request): SyntheticFetchEvent => ({
 });
 
 describe('handleFetch', () => {
+  beforeEach(() => {
+    // The dev-mode bypass (see below) is the production default under
+    // Vite's dev server, but most of these cases assert the prod
+    // strategy. Pin `DEV` off so the navigation branch engages; the
+    // bypass gets its own case.
+    vi.stubEnv('DEV', false);
+  });
+
   it('ignores cross-origin requests', () => {
     const event = syntheticEvent(new Request('https://other.example/page'));
     handleFetch(event as unknown as FetchEvent);
@@ -261,6 +270,20 @@ describe('handleFetch', () => {
     const event = syntheticEvent(
       new Request(sameOrigin('/_build/asset.js'), { mode: 'cors' }),
     );
+    handleFetch(event as unknown as FetchEvent);
+    expect(event.respondWith).not.toHaveBeenCalled();
+  });
+
+  it('lets navigations fall through to the network in dev mode', () => {
+    // A slow Vite dev server can blow the navigation timeout; serving a
+    // stale cached shell then desyncs the HMR client and trips a
+    // SolidJS hydration error. So in dev the SW stays out of the way.
+    vi.stubEnv('DEV', true);
+
+    const request = new Request(sameOrigin('/icon-editor'));
+    Object.defineProperty(request, 'mode', { value: 'navigate' });
+
+    const event = syntheticEvent(request);
     handleFetch(event as unknown as FetchEvent);
     expect(event.respondWith).not.toHaveBeenCalled();
   });
