@@ -17,7 +17,8 @@
     "build": {
       "dependsOn": ["^typecheck", "^build"],
       "outputs": [".output/**", "storybook-static/**"],
-      "outputLogs": "errors-only"
+      "outputLogs": "errors-only",
+      "env": ["GITHUB_REF"]
     },
     "bundle": {
       "dependsOn": ["build", "@dev/storybook#build"],
