@@ -1,0 +1,35 @@
+[package]
+name = "qr-scanner"
+version = "0.0.0"
+publish = false
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["console_error_panic_hook"]
+# Routes Rust panics to `console.error` with a readable message. Cheap
+# and worth keeping on — without it a panic is an opaque wasm trap.
+console_error_panic_hook = ["dep:console_error_panic_hook"]
+
+[dependencies]
+# Pinned to the `wasm-bindgen-cli` version the flake pulls from nixpkgs
+# (0.2.121). The CLI refuses to process a module built against a
+# different crate version, so bump both together.
+wasm-bindgen = "=0.2.121"
+console_error_panic_hook = { version = "0.1", optional = true }
+
+# `decoders` + `qrcode` is the minimal reader set; `encoding_rs` gives
+# real charset decoding of QR payloads. `wasm_support` is just
+# `chrono/wasmbind` — rxing stamps every result with `Utc::now()`, which
+# traps on wasm without a JS-backed clock.
+rxing = { version = "0.9", default-features = false, features = [
+  "qrcode",
+  "decoders",
+  "encoding_rs",
+  "wasm_support",
+] }
