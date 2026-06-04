@@ -2,23 +2,27 @@
   description = "Development environment";
 
   inputs = {
-    rust-overlay.url = "github:oxalica/rust-overlay";
     systems.url = "github:nix-systems/default";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     {
       self,
       nixpkgs,
-      rust-overlay,
+      fenix,
       systems,
     }:
 
     let
       inherit (nixpkgs) lib;
 
-      overlays = [ (import rust-overlay) ];
+      overlays = [ fenix.overlays.default ];
 
       eachSystem = lib.flip lib.mapAttrs (
         lib.genAttrs (import systems) (
@@ -42,11 +46,14 @@
               # in pnpm-workspace.yaml.
               pkgs.pnpm
               pkgs.treefmt
-              # Rust toolchain pinned via ./rust-toolchain.toml. Lives in
-              # `default` so CI builds (which compile crates to wasm) and
-              # higher shells (`coding`, `nixos`) all inherit it through
-              # `inputsFrom`.
-              (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
+              # Rust toolchain via fenix: the stable `default` profile plus
+              # the wasm32 target CI compiles crates against. Lives in
+              # `default` so CI builds and the higher shells (`coding`,
+              # `nixos`) all inherit it through `inputsFrom`.
+              (pkgs.fenix.combine [
+                pkgs.fenix.stable.defaultToolchain
+                pkgs.fenix.targets.wasm32-unknown-unknown.stable.rust-std
+              ])
             ];
           };
 
@@ -68,6 +75,9 @@
               # stdin and emits the structured `additionalContext`
               # response back out.
               pkgs.jq
+              # Rust language server, matched to the stable channel. Kept
+              # out of `default` so CI's closure doesn't pull it in.
+              pkgs.fenix.stable.rust-analyzer
             ];
           };
 
