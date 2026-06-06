@@ -46,14 +46,20 @@ export const reticle = style({
  * right angle (an L), not a full box. Plain per-side borders; no SVG or
  * border-image needed.
  */
-const arm = `3px solid ${accent.solid[9]}`;
+const strokeWidth = '3px';
+const arm = `${strokeWidth} solid ${accent.solid[9]}`;
+
+// Nudge each bracket out by exactly its stroke width so its arms rest
+// flush just *outside* the window edges (their inner edge aligns with
+// the window), rather than overlapping or floating away from it.
+const outset = `calc(-1 * ${strokeWidth})`;
 
 /**
  * One corner angle of the scan window. Fixed-size and unrounded so it
- * reads as a targeting bracket. Inset from the window edge by a small gap
- * so the angles float just inside the scan region rather than tracing its
- * full perimeter. The variants pin each to a corner and light its two
- * inward-facing borders.
+ * reads as a targeting bracket. Sits just *outside* the window, hugging
+ * the corner: each variant offsets the element outward by the stroke
+ * width on two axes and lights the two borders facing those edges, so
+ * the L's arms run along the outside of the window's corner.
  */
 const corner = style({
   position: 'absolute',
@@ -61,28 +67,23 @@ const corner = style({
   height: space[6],
 });
 
-/** The four corner angles, each inset into its corner with its two borders lit. */
+/** The four corner angles, each hugging the outside of its corner. */
 export const corners = styleVariants({
   topLeft: [
     corner,
-    { top: space[3], left: space[3], borderTop: arm, borderLeft: arm },
+    { top: outset, left: outset, borderTop: arm, borderLeft: arm },
   ],
   topRight: [
     corner,
-    { top: space[3], right: space[3], borderTop: arm, borderRight: arm },
+    { top: outset, right: outset, borderTop: arm, borderRight: arm },
   ],
   bottomLeft: [
     corner,
-    { bottom: space[3], left: space[3], borderBottom: arm, borderLeft: arm },
+    { bottom: outset, left: outset, borderBottom: arm, borderLeft: arm },
   ],
   bottomRight: [
     corner,
-    {
-      bottom: space[3],
-      right: space[3],
-      borderBottom: arm,
-      borderRight: arm,
-    },
+    { bottom: outset, right: outset, borderBottom: arm, borderRight: arm },
   ],
 });
 

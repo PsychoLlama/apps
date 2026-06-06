@@ -28,6 +28,7 @@ export const CameraView: Component<CameraViewProps> = (props) => (
     <video
       autoplay
       playsinline
+      data-testid="camera-feed"
       aria-label="Live camera feed"
       class={css.video}
       ref={(video) => {
@@ -41,14 +42,14 @@ export const CameraView: Component<CameraViewProps> = (props) => (
       }}
     />
 
-    <Flex as="div" aria-hidden="true" class={css.reticle}>
+    <Flex as="div" testId="scan-reticle" aria-hidden="true" class={css.reticle}>
       <Flex as="div" class={css.corners.topLeft} />
       <Flex as="div" class={css.corners.topRight} />
       <Flex as="div" class={css.corners.bottomLeft} />
       <Flex as="div" class={css.corners.bottomRight} />
     </Flex>
 
-    <Flex as="div" gap={4} class={css.controls}>
+    <Flex as="div" testId="scanner-controls" gap={4} class={css.controls}>
       <IconButton
         testId="cancel-scanning"
         aria-label="Stop scanning"
