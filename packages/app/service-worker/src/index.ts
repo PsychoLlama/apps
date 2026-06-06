@@ -23,7 +23,14 @@ self.addEventListener('install', () => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      await self.registration.navigationPreload.enable();
+      // Navigation preload only feeds the prod navigation handler; in
+      // dev we never intercept navigations (see `fetch-handler.ts`), so
+      // enabling it just orphans a preload request the browser then
+      // cancels, logging a warning on every dev navigation. The guard
+      // is dead-code-eliminated in prod.
+      if (!import.meta.env.DEV) {
+        await self.registration.navigationPreload.enable();
+      }
       await self.clients.claim();
       await purgeStaleCaches();
     })(),
