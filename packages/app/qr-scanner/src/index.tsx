@@ -1,6 +1,7 @@
-import { Button, Container, Flex, Heading, Text } from '@lib/ui';
+import { Button, Callout, Container, Flex, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
+import IconProgressWrench from 'virtual:icons/mdi/progress-wrench';
 
 /**
  * Scanner landing page. Static for now: a heading plus the primary
@@ -26,6 +27,12 @@ export const QrScanner = () => (
           <IconQrcodeScan width="20" height="20" aria-hidden="true" />
           Start scanning
         </Button>
+
+        <Callout color="warning" icon={<IconProgressWrench />}>
+          <Text as="span" size={2}>
+            Work in progress. Scanning isn't wired up yet.
+          </Text>
+        </Callout>
       </Flex>
     </Container>
   </>
