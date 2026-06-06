@@ -3,6 +3,7 @@ import type { Component } from 'solid-js';
 import { Card, Flex, Grid, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
+import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconStorybook from 'virtual:icons/mdi/book-open-page-variant-outline';
 import IconFlask from 'virtual:icons/mdi/flask-outline';
 import * as css from './index.css';
@@ -34,6 +35,13 @@ const APPS: ReadonlyArray<AppEntry> = [
     href: '/icon-editor',
     description: 'Compose a brandmark from a free icon set.',
     Icon: IconPalette,
+  },
+  {
+    id: 'scanner',
+    name: 'Scanner',
+    href: '/scanner',
+    description: 'Read QR codes with your device camera.',
+    Icon: IconQrcodeScan,
   },
   {
     id: 'storybook',

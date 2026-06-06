@@ -22,6 +22,7 @@
   "dependencies": {
     "@app/experimental": "workspace:*",
     "@app/icon-editor": "workspace:*",
+    "@app/qr-scanner": "workspace:*",
     "@app/service-worker": "workspace:*",
     "@app/settings": "workspace:*",
     "@lib/design": "workspace:*",
