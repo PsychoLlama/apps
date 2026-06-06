@@ -29,6 +29,18 @@ export class CameraError extends Error {
 }
 
 /**
+ * Raised when a request is superseded while its permission prompt is
+ * still open — the resolved stream has already been stopped, so the
+ * lifecycle should unwind quietly rather than surface an error.
+ */
+export class CameraAborted extends Error {
+  constructor() {
+    super('Camera request superseded before it resolved');
+    this.name = 'CameraAborted';
+  }
+}
+
+/**
  * Open a live camera stream for scanning. Guards on `mediaDevices`
  * support first — some browsers omit the API entirely on insecure
  * origins — then requests the rear camera.
@@ -39,6 +51,29 @@ export const requestCamera = (): Promise<MediaStream> => {
   }
 
   return MediaDevices.getUserMedia(CAMERA_CONSTRAINTS);
+};
+
+/**
+ * Open a camera session, guarded against supersession. A permission
+ * prompt can stay open for seconds — long enough for the user to
+ * navigate away — and `getUserMedia` can't be cancelled. So we snapshot
+ * the session's {@link ScannerState.generation} before requesting and
+ * re-check it once the stream resolves: if it changed, the request was
+ * superseded, and we stop the now-orphaned stream rather than hand back
+ * a live (uncancellable) camera.
+ */
+export const openCameraSession = async (
+  state: DeepReadonly<ScannerState>,
+): Promise<MediaStream> => {
+  const generation = state.generation;
+  const stream = await requestCamera();
+
+  if (state.generation !== generation) {
+    stream.getTracks().forEach((track) => track.stop());
+    throw new CameraAborted();
+  }
+
+  return stream;
 };
 
 /**

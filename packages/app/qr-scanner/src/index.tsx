@@ -1,12 +1,12 @@
 import { Match, onCleanup, Show, Switch, type Component } from 'solid-js';
-import { useEffect } from '@lib/state';
+import { useAction, useEffect } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
 import { Button, Callout, Container, Flex, Heading, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconProgressWrench from 'virtual:icons/mdi/progress-wrench';
 import IconRefresh from 'virtual:icons/mdi/refresh';
 import { CameraView } from './components/camera-view';
-import { startCameraEffect, stopCameraEffect } from './bindings';
+import { abortRequest, startCameraEffect, stopCameraEffect } from './bindings';
 import { scanner, type CameraErrorKind } from './store';
 
 /** User-facing copy for each failure mode. */
@@ -90,10 +90,14 @@ const ScannerError: Component<{
 export const QrScanner = () => {
   const startCamera = useEffect(startCameraEffect);
   const stopCamera = useEffect(stopCameraEffect);
+  const abort = useAction(abortRequest);
 
-  // Release the hardware if the user navigates away mid-stream.
+  // Don't leave the camera running after we unmount. If a stream is live,
+  // stop it; if a request is still pending, abort it so the late-resolving
+  // stream gets stopped instead of orphaned.
   onCleanup(() => {
     if (scanner.status === 'streaming') stopCamera();
+    else if (scanner.status === 'requesting') abort();
   });
 
   return (

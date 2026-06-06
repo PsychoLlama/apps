@@ -37,12 +37,21 @@ export interface ScannerState {
   stream: Ref<MediaStream> | null;
   /** Failure reason while `status === 'error'`, else `null`. */
   error: CameraErrorKind | null;
+  /**
+   * Monotonic request counter, bumped whenever a request starts or is
+   * aborted. An in-flight `getUserMedia` captures the value at the start
+   * and re-checks it once the prompt resolves — a mismatch means it was
+   * superseded (e.g. the user navigated away mid-prompt), so the
+   * resolved stream is stopped instead of stored. Latest-wins.
+   */
+  generation: number;
 }
 
 export const scannerStore = defineStore<ScannerState>(() => ({
   status: 'idle',
   stream: null,
   error: null,
+  generation: 0,
 }));
 
 /** Live, readonly view of the camera session. */
