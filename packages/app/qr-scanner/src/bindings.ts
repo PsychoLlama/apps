@@ -3,7 +3,9 @@ import {
   CameraAborted,
   classifyCameraError,
   openCameraSession,
+  setTorch,
   stopStream,
+  supportsTorch,
 } from './capabilities';
 import { scannerStore } from './store';
 
@@ -14,15 +16,21 @@ export const beginRequest = defineAction([scannerStore], (state) => {
   state.generation += 1;
 });
 
-/** Attach a freshly opened stream and go live. */
+/** Attach a freshly opened stream and go live, probing it for a torch. */
 export const activateStream = defineAction(
   [scannerStore],
   (state, stream: MediaStream) => {
     state.status = 'streaming';
     state.stream = ref(stream);
     state.error = null;
+    state.torch = { supported: supportsTorch(stream), on: false };
   },
 );
+
+/** Record the torch's confirmed state after the hardware accepts the change. */
+export const setTorchOn = defineAction([scannerStore], (state, on: boolean) => {
+  state.torch.on = on;
+});
 
 /** Record a failed request, normalizing the cause for the UI. */
 export const failCamera = defineAction(
@@ -36,6 +44,7 @@ export const failCamera = defineAction(
     state.status = 'error';
     state.error = classifyCameraError(error);
     state.stream = null;
+    state.torch = { supported: false, on: false };
   },
 );
 
@@ -44,6 +53,7 @@ export const resetScanner = defineAction([scannerStore], (state) => {
   state.status = 'idle';
   state.stream = null;
   state.error = null;
+  state.torch = { supported: false, on: false };
 });
 
 /**
@@ -56,6 +66,7 @@ export const abortRequest = defineAction([scannerStore], (state) => {
   state.status = 'idle';
   state.stream = null;
   state.error = null;
+  state.torch = { supported: false, on: false };
   state.generation += 1;
 });
 
@@ -83,4 +94,15 @@ export const startCameraEffect = defineEffect(
  */
 export const stopCameraEffect = defineEffect([scannerStore], stopStream, {
   onSuccess: resetScanner,
+});
+
+/**
+ * Toggle the torch on the live stream. The `on` flag only advances once
+ * the hardware confirms via `onSuccess` — so a rejected `applyConstraints`
+ * leaves the button reflecting reality. Failures are swallowed: a torch
+ * that won't switch is a degraded nicety, not an error worth surfacing.
+ */
+export const toggleTorchEffect = defineEffect([scannerStore], setTorch, {
+  onSuccess: setTorchOn,
+  onFailure: defineAction([scannerStore], () => {}),
 });

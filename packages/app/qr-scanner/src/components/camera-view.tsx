@@ -1,6 +1,8 @@
-import type { Component } from 'solid-js';
+import { Show, type Component } from 'solid-js';
 import { Flex, IconButton } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
+import IconFlashlight from 'virtual:icons/mdi/flashlight';
+import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
 import * as css from './camera-view.css';
 
 interface CameraViewProps {
@@ -8,6 +10,12 @@ interface CameraViewProps {
   stream: MediaStream;
   /** Invoked when the user dismisses the feed. */
   onCancel: () => void;
+  /** Whether the device exposes a torch — gates the control's visibility. */
+  torchSupported: boolean;
+  /** Whether the torch is currently lit. */
+  torchOn: boolean;
+  /** Toggle the torch on or off. */
+  onToggleTorch: () => void;
 }
 
 /**
@@ -33,7 +41,7 @@ export const CameraView: Component<CameraViewProps> = (props) => (
       }}
     />
 
-    <Flex as="div" class={css.controls}>
+    <Flex as="div" gap={4} class={css.controls}>
       <IconButton
         testId="cancel-scanning"
         aria-label="Stop scanning"
@@ -45,6 +53,30 @@ export const CameraView: Component<CameraViewProps> = (props) => (
       >
         <IconClose width="24" height="24" aria-hidden="true" />
       </IconButton>
+
+      <Show when={props.torchSupported}>
+        <IconButton
+          testId="toggle-torch"
+          aria-label={
+            props.torchOn ? 'Turn off flashlight' : 'Turn on flashlight'
+          }
+          aria-pressed={props.torchOn}
+          size={4}
+          radius="full"
+          variant="solid"
+          color={props.torchOn ? 'accent' : 'neutral'}
+          onClick={() => props.onToggleTorch()}
+        >
+          <Show
+            when={props.torchOn}
+            fallback={
+              <IconFlashlightOff width="24" height="24" aria-hidden="true" />
+            }
+          >
+            <IconFlashlight width="24" height="24" aria-hidden="true" />
+          </Show>
+        </IconButton>
+      </Show>
     </Flex>
   </Flex>
 );

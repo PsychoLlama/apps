@@ -5,6 +5,7 @@ import {
   beginRequest,
   failCamera,
   resetScanner,
+  setTorchOn,
 } from '../bindings';
 import { CameraAborted } from '../capabilities';
 import { scannerStore } from '../store';
@@ -14,7 +15,17 @@ const setup = () => {
   return { ...bindings, scanner: bindings.createStore(scannerStore) };
 };
 
-const fakeStream = { getTracks: () => [] } as unknown as MediaStream;
+/** A stream with no controllable torch — the common, cross-device case. */
+const fakeStream = {
+  getTracks: () => [],
+  getVideoTracks: () => [],
+} as unknown as MediaStream;
+
+/** A stream whose video track reports a torch capability. */
+const torchStream = {
+  getTracks: () => [],
+  getVideoTracks: () => [{ getCapabilities: () => ({ torch: true }) }],
+} as unknown as MediaStream;
 
 const namedError = (name: string): Error => {
   const error = new Error(name);
@@ -53,6 +64,33 @@ describe('activateStream', () => {
     expect(scanner.stream?.current).toBe(fakeStream);
     expect(scanner.error).toBeNull();
   });
+
+  it('probes the stream for a torch, defaulting it off', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(activateStream)(torchStream);
+
+    expect(scanner.torch).toEqual({ supported: true, on: false });
+  });
+
+  it('leaves the torch unsupported when the stream has none', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(activateStream)(fakeStream);
+
+    expect(scanner.torch).toEqual({ supported: false, on: false });
+  });
+});
+
+describe('setTorchOn', () => {
+  it('records the confirmed torch state', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(activateStream)(torchStream);
+    useAction(setTorchOn)(true);
+
+    expect(scanner.torch.on).toBe(true);
+  });
 });
 
 describe('failCamera', () => {
@@ -85,12 +123,14 @@ describe('resetScanner', () => {
   it('returns to a clean idle state', () => {
     const { scanner, useAction } = setup();
 
-    useAction(activateStream)(fakeStream);
+    useAction(activateStream)(torchStream);
+    useAction(setTorchOn)(true);
     useAction(resetScanner)();
 
     expect(scanner.status).toBe('idle');
     expect(scanner.stream).toBeNull();
     expect(scanner.error).toBeNull();
+    expect(scanner.torch).toEqual({ supported: false, on: false });
   });
 });
 

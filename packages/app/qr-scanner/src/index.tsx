@@ -6,7 +6,12 @@ import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconProgressWrench from 'virtual:icons/mdi/progress-wrench';
 import IconRefresh from 'virtual:icons/mdi/refresh';
 import { CameraView } from './components/camera-view';
-import { abortRequest, startCameraEffect, stopCameraEffect } from './bindings';
+import {
+  abortRequest,
+  startCameraEffect,
+  stopCameraEffect,
+  toggleTorchEffect,
+} from './bindings';
 import { scanner, type CameraErrorKind } from './store';
 
 /** User-facing copy for each failure mode. */
@@ -90,6 +95,7 @@ const ScannerError: Component<{
 export const QrScanner = () => {
   const startCamera = useEffect(startCameraEffect);
   const stopCamera = useEffect(stopCameraEffect);
+  const toggleTorch = useEffect(toggleTorchEffect);
   const abort = useAction(abortRequest);
 
   // Don't leave the camera running after we unmount. If a stream is live,
@@ -129,7 +135,13 @@ export const QrScanner = () => {
       }
     >
       {(stream) => (
-        <CameraView stream={stream().current} onCancel={() => stopCamera()} />
+        <CameraView
+          stream={stream().current}
+          onCancel={() => stopCamera()}
+          torchSupported={scanner.torch.supported}
+          torchOn={scanner.torch.on}
+          onToggleTorch={() => void toggleTorch(!scanner.torch.on)}
+        />
       )}
     </Show>
   );
