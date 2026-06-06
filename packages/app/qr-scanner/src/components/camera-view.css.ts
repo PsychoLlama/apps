@@ -30,10 +30,20 @@ export const video = style({
  */
 export const reticle = style({
   position: 'absolute',
-  top: '50%',
-  left: '50%',
+  // Center within the *safe* area, not the raw viewport: a notch or
+  // home indicator makes the usable region asymmetric, so plain 50%
+  // would drift the window toward the intruded edge. Shifting the
+  // center point by half the difference of the opposing insets pulls it
+  // back to the optical center. Collapses to 50% when insets are 0.
+  top: 'calc(50% + (env(safe-area-inset-top) - env(safe-area-inset-bottom)) / 2)',
+  left: 'calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2)',
   transform: 'translate(-50%, -50%)',
-  width: 'min(70vw, 60vh)',
+  // Small-viewport units (`svw`/`svh`), not `vw`/`vh`: the legacy units
+  // measure against the viewport with mobile browser chrome retracted,
+  // so the window could overshoot while the URL bar is showing. `dvh`
+  // would track chrome live and make the window resize as the bar
+  // slides; `svh` picks the smallest visible area and stays put.
+  width: 'min(70svw, 60svh)',
   aspectRatio: '1',
   boxShadow: `0 0 0 100vmax ${black.step7}`,
   // Click-through so the window never steals taps from the controls.
