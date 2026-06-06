@@ -1,5 +1,5 @@
-import { style } from '@vanilla-extract/css';
-import { black, space } from '@lib/design';
+import { style, styleVariants } from '@vanilla-extract/css';
+import { accent, black, space } from '@lib/design';
 
 /**
  * Full-viewport stage for the live feed. Fixed over the page on an
@@ -19,6 +19,82 @@ export const video = style({
   width: '100%',
   height: '100%',
   objectFit: 'cover',
+});
+
+/**
+ * Centered scan-region window. Sized to a square that fits portrait or
+ * landscape, it dims everything outside itself with a single oversized
+ * box-shadow spill — cheaper and crisper than a separate mask element —
+ * so the eye lands on where the code should go. Purely decorative; it
+ * doesn't actually clip decoding (that lands with the decoder).
+ */
+export const reticle = style({
+  position: 'absolute',
+  // Center within the *safe* area, not the raw viewport: a notch or
+  // home indicator makes the usable region asymmetric, so plain 50%
+  // would drift the window toward the intruded edge. Shifting the
+  // center point by half the difference of the opposing insets pulls it
+  // back to the optical center. Collapses to 50% when insets are 0.
+  top: 'calc(50% + (env(safe-area-inset-top) - env(safe-area-inset-bottom)) / 2)',
+  left: 'calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2)',
+  transform: 'translate(-50%, -50%)',
+  // Small-viewport units (`svw`/`svh`), not `vw`/`vh`: the legacy units
+  // measure against the viewport with mobile browser chrome retracted,
+  // so the window could overshoot while the URL bar is showing. `dvh`
+  // would track chrome live and make the window resize as the bar
+  // slides; `svh` picks the smallest visible area and stays put.
+  width: 'min(70svw, 60svh)',
+  aspectRatio: '1',
+  boxShadow: `0 0 0 100vmax ${black.step7}`,
+  // Click-through so the window never steals taps from the controls.
+  pointerEvents: 'none',
+});
+
+/**
+ * A single accent stroke — the arm of a corner angle. Only the two sides
+ * that meet at a given corner carry it, so each corner draws a sharp
+ * right angle (an L), not a full box. Plain per-side borders; no SVG or
+ * border-image needed.
+ */
+const strokeWidth = '3px';
+const arm = `${strokeWidth} solid ${accent.solid[9]}`;
+
+// Nudge each bracket out by exactly its stroke width so its arms rest
+// flush just *outside* the window edges (their inner edge aligns with
+// the window), rather than overlapping or floating away from it.
+const outset = `calc(-1 * ${strokeWidth})`;
+
+/**
+ * One corner angle of the scan window. Fixed-size and unrounded so it
+ * reads as a targeting bracket. Sits just *outside* the window, hugging
+ * the corner: each variant offsets the element outward by the stroke
+ * width on two axes and lights the two borders facing those edges, so
+ * the L's arms run along the outside of the window's corner.
+ */
+const corner = style({
+  position: 'absolute',
+  width: space[6],
+  height: space[6],
+});
+
+/** The four corner angles, each hugging the outside of its corner. */
+export const corners = styleVariants({
+  topLeft: [
+    corner,
+    { top: outset, left: outset, borderTop: arm, borderLeft: arm },
+  ],
+  topRight: [
+    corner,
+    { top: outset, right: outset, borderTop: arm, borderRight: arm },
+  ],
+  bottomLeft: [
+    corner,
+    { bottom: outset, left: outset, borderBottom: arm, borderLeft: arm },
+  ],
+  bottomRight: [
+    corner,
+    { bottom: outset, right: outset, borderBottom: arm, borderRight: arm },
+  ],
 });
 
 /**
