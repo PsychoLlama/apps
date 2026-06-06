@@ -214,6 +214,9 @@ importers:
       '@app/icon-editor':
         specifier: workspace:*
         version: link:../icon-editor
+      '@app/qr-scanner':
+        specifier: workspace:*
+        version: link:../qr-scanner
       '@app/service-worker':
         specifier: workspace:*
         version: link:../service-worker
@@ -281,6 +284,18 @@ importers:
       wrangler:
         specifier: ^4.65.0
         version: 4.97.0
+
+  packages/app/qr-scanner:
+    dependencies:
+      '@lib/shell':
+        specifier: workspace:*
+        version: link:../../lib/shell
+      '@lib/ui':
+        specifier: workspace:*
+        version: link:../../lib/ui
+      solid-js:
+        specifier: ^1.9.13
+        version: 1.9.13
 
   packages/app/service-worker:
     dependencies:

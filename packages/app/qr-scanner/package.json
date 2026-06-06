@@ -1,0 +1,21 @@
+{
+  "name": "@app/qr-scanner",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "QR code scanner. Reads codes from the device camera.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/shell": "workspace:*",
+    "@lib/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
+  }
+}
