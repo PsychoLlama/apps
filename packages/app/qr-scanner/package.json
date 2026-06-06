@@ -12,8 +12,12 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
-    "@lib/ui": "workspace:*"
+    "@lib/state": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:",
+    "media-devices": "^0.5.0"
   },
   "peerDependencies": {
     "solid-js": "*"
