@@ -41,33 +41,48 @@ export const reticle = style({
 });
 
 /**
- * One corner angle of the scan window. Two adjacent borders draw a sharp
- * right angle that brackets the corner; the variants below pin it to an
- * edge and pick which two borders to light. Fixed-size, unrounded — the
- * angles read as a targeting frame, not a rounded box.
+ * A single accent stroke — the arm of a corner angle. Only the two sides
+ * that meet at a given corner carry it, so each corner draws a sharp
+ * right angle (an L), not a full box. Plain per-side borders; no SVG or
+ * border-image needed.
+ */
+const arm = `3px solid ${accent.solid[9]}`;
+
+/**
+ * One corner angle of the scan window. Fixed-size and unrounded so it
+ * reads as a targeting bracket. Inset from the window edge by a small gap
+ * so the angles float just inside the scan region rather than tracing its
+ * full perimeter. The variants pin each to a corner and light its two
+ * inward-facing borders.
  */
 const corner = style({
   position: 'absolute',
   width: space[6],
   height: space[6],
-  borderColor: accent.solid[9],
-  borderStyle: 'solid',
 });
 
-/** The four corner angles, each pinned to its edge with the right two borders lit. */
+/** The four corner angles, each inset into its corner with its two borders lit. */
 export const corners = styleVariants({
-  topLeft: [corner, { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3 }],
+  topLeft: [
+    corner,
+    { top: space[3], left: space[3], borderTop: arm, borderLeft: arm },
+  ],
   topRight: [
     corner,
-    { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3 },
+    { top: space[3], right: space[3], borderTop: arm, borderRight: arm },
   ],
   bottomLeft: [
     corner,
-    { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3 },
+    { bottom: space[3], left: space[3], borderBottom: arm, borderLeft: arm },
   ],
   bottomRight: [
     corner,
-    { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3 },
+    {
+      bottom: space[3],
+      right: space[3],
+      borderBottom: arm,
+      borderRight: arm,
+    },
   ],
 });
 
