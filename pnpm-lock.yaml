@@ -158,6 +158,8 @@ importers:
 
   crates/lib/hello-wasm: {}
 
+  crates/lib/qr-scanner: {}
+
   packages/app/experimental:
     dependencies:
       '@lib/hello-wasm':

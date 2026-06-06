@@ -66,6 +66,11 @@ const config: KnipConfig = {
         '@vanilla-extract/dynamic',
       ],
     },
+    'crates/lib/qr-scanner': {
+      // The build script shells out to `wasm-bindgen` (the CLI) to
+      // generate JS glue; it's provided by the nix devShell, not pnpm.
+      ignoreBinaries: ['wasm-bindgen'],
+    },
     'packages/app/service-worker': {
       // Cache Storage + `FetchEvent` only exist in a real browser, so
       // the SW behavior tests live under `*.test.browser.ts`.
