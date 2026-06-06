@@ -41,6 +41,13 @@ export const CameraView: Component<CameraViewProps> = (props) => (
       }}
     />
 
+    <Flex as="div" aria-hidden="true" class={css.reticle}>
+      <Flex as="div" class={css.corners.topLeft} />
+      <Flex as="div" class={css.corners.topRight} />
+      <Flex as="div" class={css.corners.bottomLeft} />
+      <Flex as="div" class={css.corners.bottomRight} />
+    </Flex>
+
     <Flex as="div" gap={4} class={css.controls}>
       <IconButton
         testId="cancel-scanning"
