@@ -287,12 +287,24 @@ importers:
 
   packages/app/qr-scanner:
     dependencies:
+      '@lib/design':
+        specifier: workspace:*
+        version: link:../../lib/design
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/state':
+        specifier: workspace:*
+        version: link:../../lib/state
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
+      '@vanilla-extract/css':
+        specifier: 'catalog:'
+        version: 1.20.1
+      media-devices:
+        specifier: ^0.5.0
+        version: 0.5.0
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
@@ -4733,6 +4745,9 @@ packages:
 
   mdn-data@2.27.1:
     resolution: {integrity: sha512-9Yubnt3e8A0OKwxYSXyhLymGW4sCufcLG6VdiDdUGVkPhpqLxlvP5vl1983gQjJl3tqbrM731mjaZaP68AgosQ==}
+
+  media-devices@0.5.0:
+    resolution: {integrity: sha512-fFc5ZqCJaGaLKv/ZPmDcfCxUqCVP6XonQVWRsNPRfUfWSus3G1YWoXn2w0c2K4S6EVhzMRhlWyLxdMaXs8+UmA==}
 
   media-query-parser@2.0.2:
     resolution: {integrity: sha512-1N4qp+jE0pL5Xv4uEcwVUhIkwdUO3S/9gML90nqKA7v7FcOS5vUtatfzok9S9U1EJU8dHWlcv95WLnKmmxZI9w==}
@@ -10152,6 +10167,8 @@ snapshots:
       vfile: 6.0.3
 
   mdn-data@2.27.1: {}
+
+  media-devices@0.5.0: {}
 
   media-query-parser@2.0.2:
     dependencies:
