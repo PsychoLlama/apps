@@ -3,6 +3,21 @@ import type { DeepReadonly } from '@lib/state';
 import type { CameraErrorKind, ScannerState } from './store';
 
 /**
+ * `torch` is a constrainable property from the MediaStream Image Capture
+ * spec — controllable on Android Chromium, but absent on iOS Safari and
+ * Firefox. The DOM lib doesn't model it, so we augment the two surfaces
+ * we touch: capability detection and the constraint we apply.
+ */
+declare global {
+  interface MediaTrackCapabilities {
+    torch?: boolean;
+  }
+  interface MediaTrackConstraintSet {
+    torch?: boolean;
+  }
+}
+
+/**
  * Constraints for the scanner feed: rear-facing camera (`environment`)
  * since you point the back of the phone at the code, and no audio — a
  * QR scanner has no use for the microphone.
@@ -83,6 +98,32 @@ export const openCameraSession = async (
  */
 export const stopStream = (state: DeepReadonly<ScannerState>): void => {
   state.stream?.current.getTracks().forEach((track) => track.stop());
+};
+
+/**
+ * Whether the live camera exposes a controllable torch. Reads the video
+ * track's reported capabilities — `getCapabilities` itself is missing on
+ * some engines (older iOS Safari), hence the optional call. False when no
+ * track, no capabilities API, or no torch.
+ */
+export const supportsTorch = (stream: MediaStream): boolean => {
+  const [track] = stream.getVideoTracks();
+  return track?.getCapabilities?.().torch === true;
+};
+
+/**
+ * Drive the torch on the active stream and resolve with the applied
+ * state. The light lives on the live track, so it goes dark on its own
+ * when the stream stops — no separate teardown. A no-op (resolving with
+ * the requested value) when nothing is streaming.
+ */
+export const setTorch = async (
+  state: DeepReadonly<ScannerState>,
+  on: boolean,
+): Promise<boolean> => {
+  const track = state.stream?.current.getVideoTracks()[0];
+  if (track) await track.applyConstraints({ advanced: [{ torch: on }] });
+  return on;
 };
 
 /**

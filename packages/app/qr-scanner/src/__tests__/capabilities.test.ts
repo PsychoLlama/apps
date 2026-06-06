@@ -5,7 +5,9 @@ import {
   CameraError,
   classifyCameraError,
   openCameraSession,
+  setTorch,
   stopStream,
+  supportsTorch,
 } from '../capabilities';
 import type { ScannerState } from '../store';
 
@@ -60,6 +62,7 @@ describe('stopStream', () => {
       status: 'streaming',
       stream: ref(fakeStream(tracks)),
       error: null,
+      torch: { supported: false, on: false },
       generation: 1,
     };
 
@@ -74,6 +77,7 @@ describe('stopStream', () => {
       status: 'idle',
       stream: null,
       error: null,
+      torch: { supported: false, on: false },
       generation: 0,
     };
     expect(() => stopStream(state)).not.toThrow();
@@ -85,6 +89,7 @@ describe('openCameraSession', () => {
     status: 'requesting',
     stream: null,
     error: null,
+    torch: { supported: false, on: false },
     generation,
   });
 
@@ -109,5 +114,65 @@ describe('openCameraSession', () => {
 
     await expect(pending).rejects.toBeInstanceOf(CameraAborted);
     expect(tracks[0].stop).toHaveBeenCalledOnce();
+  });
+});
+
+/** A stream whose sole video track reports the given capabilities. */
+const streamWithVideoTrack = (track: object): MediaStream =>
+  ({ getVideoTracks: () => [track] }) as unknown as MediaStream;
+
+describe('supportsTorch', () => {
+  it('is true when the video track reports a torch capability', () => {
+    const stream = streamWithVideoTrack({
+      getCapabilities: () => ({ torch: true }),
+    });
+    expect(supportsTorch(stream)).toBe(true);
+  });
+
+  it('is false when capabilities omit a torch', () => {
+    const stream = streamWithVideoTrack({ getCapabilities: () => ({}) });
+    expect(supportsTorch(stream)).toBe(false);
+  });
+
+  it('is false when the engine lacks getCapabilities', () => {
+    const stream = streamWithVideoTrack({});
+    expect(supportsTorch(stream)).toBe(false);
+  });
+
+  it('is false when there is no video track', () => {
+    const stream = { getVideoTracks: () => [] } as unknown as MediaStream;
+    expect(supportsTorch(stream)).toBe(false);
+  });
+});
+
+describe('setTorch', () => {
+  const streamingState = (track: object): ScannerState => ({
+    status: 'streaming',
+    stream: ref(streamWithVideoTrack(track)),
+    error: null,
+    torch: { supported: true, on: false },
+    generation: 1,
+  });
+
+  it('applies the torch constraint and resolves with the requested state', async () => {
+    const applyConstraints = vi.fn().mockResolvedValue(undefined);
+    const state = streamingState({ applyConstraints });
+
+    await expect(setTorch(state, true)).resolves.toBe(true);
+    expect(applyConstraints).toHaveBeenCalledWith({
+      advanced: [{ torch: true }],
+    });
+  });
+
+  it('is a no-op resolving with the request when no stream is open', async () => {
+    const state: ScannerState = {
+      status: 'idle',
+      stream: null,
+      error: null,
+      torch: { supported: false, on: false },
+      generation: 0,
+    };
+
+    await expect(setTorch(state, true)).resolves.toBe(true);
   });
 });

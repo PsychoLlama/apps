@@ -25,6 +25,19 @@ export type CameraErrorKind =
   /** Anything we don't specifically recognize. */
   | 'unknown';
 
+/**
+ * Torch (camera flash) control for the live stream. Populated when a
+ * stream goes live; only Android Chromium exposes a controllable torch
+ * today, so `supported` stays false everywhere else and the UI hides the
+ * control rather than offering a dead button.
+ */
+export interface TorchState {
+  /** Whether the active camera exposes a controllable torch. */
+  supported: boolean;
+  /** Whether the torch is currently lit. */
+  on: boolean;
+}
+
 /** Camera session state for the scanner. */
 export interface ScannerState {
   /** Where the session sits in its lifecycle. */
@@ -37,6 +50,8 @@ export interface ScannerState {
   stream: Ref<MediaStream> | null;
   /** Failure reason while `status === 'error'`, else `null`. */
   error: CameraErrorKind | null;
+  /** Torch availability and state for the live stream. */
+  torch: TorchState;
   /**
    * Monotonic request counter, bumped whenever a request starts or is
    * aborted. An in-flight `getUserMedia` captures the value at the start
@@ -51,6 +66,7 @@ export const scannerStore = defineStore<ScannerState>(() => ({
   status: 'idle',
   stream: null,
   error: null,
+  torch: { supported: false, on: false },
   generation: 0,
 }));
 
