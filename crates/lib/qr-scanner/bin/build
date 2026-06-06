@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# Compile the crate to wasm and generate its JS glue.
+#
+#   1. `cargo` builds `qr-scanner` for the wasm32 target.
+#   2. `wasm-bindgen` turns the raw `.wasm` into an ES module under `dist/`.
+#
+# `wasm-bindgen` (the CLI) comes from the nix devShell, not pnpm.
+
+set -euo pipefail
+
+# pnpm exports this package's manifest path; its dir is the crate root,
+# and the workspace root is three tiers up (crates/<tier>/<name>).
+crate_dir="$(cd "$(dirname "$npm_package_json")" && pwd)"
+workspace_root="$(cd "$crate_dir/../../.." && pwd)"
+wasm="$workspace_root/target/wasm32-unknown-unknown/release/qr_scanner.wasm"
+
+cargo build --release --target wasm32-unknown-unknown -p qr-scanner
+
+wasm-bindgen "$wasm" \
+  --out-dir "$crate_dir/dist" \
+  --out-name qr_scanner \
+  --target web

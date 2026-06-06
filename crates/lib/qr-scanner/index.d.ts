@@ -27,14 +27,12 @@ export function rgba_to_luma(rgba: Uint8Array | Uint8ClampedArray): Uint8Array;
 /**
  * Decode the first barcode in a `width × height` 8-bit luminance buffer.
  * Resolves to `undefined` when nothing decodes — the common "no code in
- * frame" case, not an error. `tryHarder` trades speed for a more
- * exhaustive scan; leave it off for live frames, on for stills.
+ * frame" case, not an error.
  */
 export function decode(
   luma: Uint8Array,
   width: number,
   height: number,
-  tryHarder: boolean,
 ): Scan | undefined;
 
 /** Bytes or a compiled module to instantiate the wasm from. */

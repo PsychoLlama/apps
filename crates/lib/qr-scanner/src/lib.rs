@@ -1,16 +1,10 @@
 //! Wasm bindings over [`rxing`] (a pure-Rust ZXing port) for decoding
 //! QR codes from raw image data in the browser.
 //!
-//! Unlike `hello-wasm`, this leans on `wasm-bindgen`: rxing's surface is
-//! rich (results carry text, format, and metadata) and the dependency
-//! tree already pulls in the wasm-bindgen runtime via `chrono`'s
-//! JS-backed clock, so hand-rolling linear-memory interop buys nothing.
-//! The build step runs the `wasm-bindgen` CLI to emit the JS glue.
-//!
 //! Typical flow from the host: take a canvas `ImageData`, hand its RGBA
 //! bytes to [`rgba_to_luma`], then pass the luma buffer to [`decode`].
 
-use rxing::{DecodeHints, helpers};
+use rxing::helpers;
 use wasm_bindgen::prelude::*;
 
 /// Install the panic hook once at module load so a Rust panic surfaces
@@ -68,21 +62,9 @@ pub fn rgba_to_luma(rgba: &[u8]) -> Vec<u8> {
 /// Decode the first barcode in a `width × height` 8-bit luminance buffer
 /// (see [`rgba_to_luma`]). Returns `None` when nothing decodes — the
 /// common "no code in frame" case, not an error.
-///
-/// `try_harder` trades speed for a more exhaustive scan (rotations,
-/// finer binarization); leave it off for live camera frames and on for
-/// one-shot stills.
 #[wasm_bindgen]
-pub fn decode(luma: &[u8], width: u32, height: u32, try_harder: bool) -> Option<Scan> {
-    let mut hints = DecodeHints {
-        TryHarder: Some(try_harder),
-        ..Default::default()
-    };
-
-    // `None` format: with only the `qrcode` reader compiled in, the
-    // multi-format reader is effectively QR-only, but staying unfiltered
-    // lets the crate widen to other symbologies by enabling features.
-    helpers::detect_in_luma_with_hints(luma.to_vec(), width, height, None, &mut hints)
+pub fn decode(luma: &[u8], width: u32, height: u32) -> Option<Scan> {
+    helpers::detect_in_luma(luma.to_vec(), width, height, None)
         .ok()
         .map(|r| Scan {
             text: r.getText().to_owned(),
