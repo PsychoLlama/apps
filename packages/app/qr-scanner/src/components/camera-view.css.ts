@@ -1,5 +1,5 @@
 import { style, styleVariants } from '@vanilla-extract/css';
-import { black, radius, space, white } from '@lib/design';
+import { accent, black, space } from '@lib/design';
 
 /**
  * Full-viewport stage for the live feed. Fixed over the page on an
@@ -35,66 +35,39 @@ export const reticle = style({
   transform: 'translate(-50%, -50%)',
   width: 'min(70vw, 60vh)',
   aspectRatio: '1',
-  borderRadius: radius[5],
   boxShadow: `0 0 0 100vmax ${black.step7}`,
   // Click-through so the window never steals taps from the controls.
   pointerEvents: 'none',
 });
 
 /**
- * One bracketed corner of the scan window. Two adjacent borders plus the
- * matching outer radius trace an L that hugs the reticle's rounded edge.
- * Positioned and rounded per corner by the variants below.
+ * One corner angle of the scan window. Two adjacent borders draw a sharp
+ * right angle that brackets the corner; the variants below pin it to an
+ * edge and pick which two borders to light. Fixed-size, unrounded — the
+ * angles read as a targeting frame, not a rounded box.
  */
 const corner = style({
   position: 'absolute',
   width: space[6],
   height: space[6],
-  borderColor: white.step12,
+  borderColor: accent.solid[9],
   borderStyle: 'solid',
 });
 
-/** The four corners, each pinned to its edge with the right two borders lit. */
+/** The four corner angles, each pinned to its edge with the right two borders lit. */
 export const corners = styleVariants({
-  topLeft: [
-    corner,
-    {
-      top: 0,
-      left: 0,
-      borderTopWidth: 3,
-      borderLeftWidth: 3,
-      borderTopLeftRadius: radius[5],
-    },
-  ],
+  topLeft: [corner, { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3 }],
   topRight: [
     corner,
-    {
-      top: 0,
-      right: 0,
-      borderTopWidth: 3,
-      borderRightWidth: 3,
-      borderTopRightRadius: radius[5],
-    },
+    { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3 },
   ],
   bottomLeft: [
     corner,
-    {
-      bottom: 0,
-      left: 0,
-      borderBottomWidth: 3,
-      borderLeftWidth: 3,
-      borderBottomLeftRadius: radius[5],
-    },
+    { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3 },
   ],
   bottomRight: [
     corner,
-    {
-      bottom: 0,
-      right: 0,
-      borderBottomWidth: 3,
-      borderRightWidth: 3,
-      borderBottomRightRadius: radius[5],
-    },
+    { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3 },
   ],
 });
 

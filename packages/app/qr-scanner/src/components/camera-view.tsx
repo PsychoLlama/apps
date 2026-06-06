@@ -54,7 +54,7 @@ export const CameraView: Component<CameraViewProps> = (props) => (
         aria-label="Stop scanning"
         size={4}
         radius="full"
-        variant="solid"
+        variant="ghost"
         color="neutral"
         onClick={() => props.onCancel()}
       >
@@ -70,7 +70,7 @@ export const CameraView: Component<CameraViewProps> = (props) => (
           aria-pressed={props.torchOn}
           size={4}
           radius="full"
-          variant="solid"
+          variant="ghost"
           color={props.torchOn ? 'accent' : 'neutral'}
           onClick={() => props.onToggleTorch()}
         >
