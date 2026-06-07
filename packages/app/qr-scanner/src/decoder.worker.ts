@@ -49,7 +49,7 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
   const scan = decode(data, width, height);
   // Project the wasm handle to its plain fields before it crosses back to
   // the main thread — `Scan` owns `free()` and can't be structured-cloned.
-  // `details` is already plain `{ label, value }` objects from the wasm.
+  // `details` is already plain `Detail` objects from the wasm.
   return scan
     ? {
         text: scan.text,

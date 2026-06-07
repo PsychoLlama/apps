@@ -20,18 +20,29 @@ fn start() {
     console_error_panic_hook::set_once();
 }
 
-/// One label/value row of a decoded code's parsed details, e.g.
-/// `{ label: "Network", value: "home-wifi" }`. Serialized to a plain JS
+/// One row of a decoded code's parsed details, serialized to a plain JS
 /// object so it crosses the wasm boundary as structured-clone-safe data.
+/// A tagged union: most rows are `text`, but date/time fields cross as a
+/// raw epoch (`dateTime`) so the host formats them with `Intl` in the
+/// viewer's locale and timezone rather than us baking a string here.
 #[derive(Serialize)]
-struct Detail {
-    label: String,
-    value: String,
+#[serde(tag = "type", rename_all = "camelCase")]
+enum Detail {
+    /// A plain label/value row, e.g. `{ label: "Network", value: "home" }`.
+    Text { label: String, value: String },
+    /// A timestamp row carrying epoch millis (UTC) for the host to format.
+    /// `allDay` marks date-only events, rendered without a clock time.
+    #[serde(rename_all = "camelCase")]
+    DateTime {
+        label: String,
+        epoch_millis: i64,
+        all_day: bool,
+    },
 }
 
 impl Detail {
-    fn new(label: &str, value: &str) -> Self {
-        Detail {
+    fn text(label: &str, value: &str) -> Self {
+        Detail::Text {
             label: label.to_owned(),
             value: value.to_owned(),
         }
@@ -69,8 +80,8 @@ impl Scan {
         self.kind.to_owned()
     }
 
-    /// The parsed payload as an ordered list of `{ label, value }` rows,
-    /// ready to render as a description list. Empty for opaque text.
+    /// The parsed payload as an ordered list of `Detail` rows, ready to
+    /// render as a description list. Empty for opaque text.
     #[wasm_bindgen(getter)]
     pub fn details(&self) -> JsValue {
         serde_wasm_bindgen::to_value(&self.details).unwrap_or(JsValue::NULL)
@@ -108,7 +119,7 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
             push(&mut rows, "Security", w.getNetworkEncryption());
             push(&mut rows, "Password", w.getPassword());
             if w.isHidden() {
-                rows.push(Detail::new("Hidden", "Yes"));
+                rows.push(Detail::text("Hidden", "Yes"));
             }
             push(&mut rows, "Identity", w.getIdentity());
             push(&mut rows, "Anonymous identity", w.getAnonymousIdentity());
@@ -136,10 +147,10 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
             "sms"
         }
         ParsedClientResult::GeoResult(g) => {
-            rows.push(Detail::new("Latitude", &g.getLatitude().to_string()));
-            rows.push(Detail::new("Longitude", &g.getLongitude().to_string()));
+            rows.push(Detail::text("Latitude", &g.getLatitude().to_string()));
+            rows.push(Detail::text("Longitude", &g.getLongitude().to_string()));
             if g.getAltitude() != 0.0 {
-                rows.push(Detail::new("Altitude", &format!("{} m", g.getAltitude())));
+                rows.push(Detail::text("Altitude", &format!("{} m", g.getAltitude())));
             }
             push(&mut rows, "Query", g.getQuery());
             "geo"
@@ -151,12 +162,13 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
         }
         ParsedClientResult::CalendarEventResult(c) => {
             push(&mut rows, "Summary", c.getSummary());
-            if let Some(when) = format_timestamp(c.getStartTimestamp(), c.isStartAllDay()) {
-                rows.push(Detail::new("Starts", &when));
-            }
-            if let Some(when) = format_timestamp(c.getEndTimestamp(), c.isEndAllDay()) {
-                rows.push(Detail::new("Ends", &when));
-            }
+            push_timestamp(
+                &mut rows,
+                "Starts",
+                c.getStartTimestamp(),
+                c.isStartAllDay(),
+            );
+            push_timestamp(&mut rows, "Ends", c.getEndTimestamp(), c.isEndAllDay());
             push(&mut rows, "Location", c.getLocation());
             push(&mut rows, "Organizer", c.getOrganizer());
             push_each(&mut rows, "Attendee", c.getAttendees());
@@ -184,7 +196,7 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
             push(&mut rows, "VIN", v.getVIN());
             push(&mut rows, "Country", v.getCountryCode());
             if v.getModelYear() != 0 {
-                rows.push(Detail::new("Model year", &v.getModelYear().to_string()));
+                rows.push(Detail::text("Model year", &v.getModelYear().to_string()));
             }
             "vin"
         }
@@ -202,7 +214,7 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
 /// Push a single row, skipping empties so absent fields don't render.
 fn push(rows: &mut Vec<Detail>, label: &str, value: &str) {
     if !value.is_empty() {
-        rows.push(Detail::new(label, value));
+        rows.push(Detail::text(label, value));
     }
 }
 
@@ -211,24 +223,22 @@ fn push(rows: &mut Vec<Detail>, label: &str, value: &str) {
 fn push_each(rows: &mut Vec<Detail>, label: &str, values: &[String]) {
     for value in values {
         if !value.is_empty() {
-            rows.push(Detail::new(label, value));
+            rows.push(Detail::text(label, value));
         }
     }
 }
 
-/// Render an rxing calendar timestamp (epoch millis, `-1` when unset) as
-/// a readable UTC string. Returns `None` for unset times so the row is
-/// dropped. All-day events drop the clock portion.
-fn format_timestamp(millis: i64, all_day: bool) -> Option<String> {
-    if millis < 0 {
-        return None;
+/// Push a timestamp row, skipping unset times (`-1`) so absent dates
+/// don't render. The epoch millis cross to the host untouched — it formats
+/// them with `Intl` in the viewer's locale and timezone.
+fn push_timestamp(rows: &mut Vec<Detail>, label: &str, millis: i64, all_day: bool) {
+    if millis >= 0 {
+        rows.push(Detail::DateTime {
+            label: label.to_owned(),
+            epoch_millis: millis,
+            all_day,
+        });
     }
-    let when = chrono::DateTime::from_timestamp_millis(millis)?;
-    Some(if all_day {
-        when.format("%Y-%m-%d").to_string()
-    } else {
-        when.format("%Y-%m-%d %H:%M UTC").to_string()
-    })
 }
 
 /// Convert a canvas `ImageData.data` RGBA buffer into the 8-bit

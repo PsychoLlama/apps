@@ -28,10 +28,6 @@ console_error_panic_hook = { version = "0.1", optional = true }
 # value, so the host never round-trips through a JSON string.
 serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
-# Render calendar event timestamps (epoch millis) as readable strings.
-# rxing already pulls chrono in via `wasm_support`; cargo unifies the
-# features, so this shares the same build.
-chrono = { version = "0.4", default-features = false }
 
 # `decoders` + `qrcode` is the minimal reader set; `encoding_rs` gives
 # real charset decoding of QR payloads. `client_support` adds the result

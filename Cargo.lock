@@ -383,7 +383,6 @@ dependencies = [
 name = "qr-scanner"
 version = "0.0.0"
 dependencies = [
- "chrono",
  "console_error_panic_hook",
  "rxing",
  "serde",

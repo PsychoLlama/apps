@@ -1,5 +1,9 @@
-import { type Component, For, Show } from 'solid-js';
-import type { ParsedDetail, ScanKind } from '@lib/qr-scanner';
+import { type Component, For, Match, Show, Switch } from 'solid-js';
+import type {
+  ParsedDateTimeDetail,
+  ParsedDetail,
+  ScanKind,
+} from '@lib/qr-scanner';
 import {
   Button,
   DataListItem,
@@ -29,6 +33,22 @@ const KIND_LABELS: Record<ScanKind, string> = {
   text: 'Text',
 };
 
+const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
+
+// All-day events carry a UTC-midnight epoch; format in UTC so a viewer
+// behind UTC doesn't see the date slip into the previous day.
+const allDayFormat = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeZone: 'UTC',
+});
+
+/** Render a timestamp row in the viewer's locale via `Intl`. */
+const formatTimestamp = (detail: ParsedDateTimeDetail): string =>
+  (detail.allDay ? allDayFormat : dateTimeFormat).format(detail.epochMillis);
+
 interface ScanResultProps {
   /** The raw payload decoded from the recognized code. */
   text: string;
@@ -49,7 +69,7 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
   const rows = (): ParsedDetail[] =>
     props.details.length > 0
       ? [...props.details]
-      : [{ label: 'Content', value: props.text }];
+      : [{ type: 'text', label: 'Content', value: props.text }];
 
   return (
     <Flex as="div" direction="column" gap={5}>
@@ -63,19 +83,33 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
             <DataListItem>
               <DataListLabel>{detail.label}</DataListLabel>
               <DataListValue>
-                <Show when={linkFor(detail.value)} fallback={detail.value}>
-                  {(link) => (
-                    <Link
-                      native
-                      href={link().href}
-                      target={link().newTab ? '_blank' : undefined}
-                      rel={link().newTab ? 'noopener noreferrer' : undefined}
-                      testId="scan-link"
-                    >
-                      {detail.value}
-                    </Link>
-                  )}
-                </Show>
+                <Switch>
+                  <Match when={detail.type === 'dateTime' && detail}>
+                    {(when) => formatTimestamp(when())}
+                  </Match>
+                  <Match when={detail.type === 'text' && detail}>
+                    {(text) => (
+                      <Show
+                        when={linkFor(text().value)}
+                        fallback={text().value}
+                      >
+                        {(link) => (
+                          <Link
+                            native
+                            href={link().href}
+                            target={link().newTab ? '_blank' : undefined}
+                            rel={
+                              link().newTab ? 'noopener noreferrer' : undefined
+                            }
+                            testId="scan-link"
+                          >
+                            {text().value}
+                          </Link>
+                        )}
+                      </Show>
+                    )}
+                  </Match>
+                </Switch>
               </DataListValue>
             </DataListItem>
           )}
