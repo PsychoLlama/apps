@@ -44,9 +44,9 @@ impl Scan {
 /// `ImageData.data` RGBA buffer. Returns `None` when nothing decodes —
 /// the common "no code in frame" case, not an error.
 ///
-/// The RGBA → luma conversion the readers need runs internally (see
-/// [`rgba_to_luma`]), so the host hands over the raw frame bytes and
-/// never materializes an intermediate luma buffer of its own.
+/// The RGBA → luma conversion the readers need runs internally, so the
+/// host hands over the raw frame bytes and never materializes an
+/// intermediate luma buffer of its own.
 #[wasm_bindgen]
 pub fn decode(rgba: &[u8], width: u32, height: u32) -> Option<Scan> {
     helpers::detect_in_luma(rgba_to_luma(rgba), width, height, None)
