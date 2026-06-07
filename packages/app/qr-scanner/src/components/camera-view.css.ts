@@ -1,5 +1,5 @@
 import { style, styleVariants } from '@vanilla-extract/css';
-import { accent, black, breakpoint, space } from '@lib/design';
+import { accent, black, space } from '@lib/design';
 
 /**
  * Full-viewport stage for the live feed. Fixed over the page on an
@@ -113,10 +113,5 @@ export const controls = style({
   bottom: `calc(${space[6]} + env(safe-area-inset-bottom))`,
   justifyContent: 'center',
   alignItems: 'center',
-  // Snug on a phone where the rail is cramped; loosens as the viewport
-  // earns the room.
-  columnGap: space[2],
-  '@media': {
-    [breakpoint.md]: { columnGap: space[5] },
-  },
+  columnGap: space[5],
 });
