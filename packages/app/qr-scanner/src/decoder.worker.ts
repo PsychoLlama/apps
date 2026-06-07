@@ -1,4 +1,4 @@
-import init, { decode, rgba_to_luma } from '@lib/qr-scanner';
+import init, { decode } from '@lib/qr-scanner';
 import { createLogger } from '@lib/observability';
 import type { DecodeRequest, ReadyMessage } from './decoder';
 import type { ScanResult } from './store';
@@ -46,7 +46,7 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
   // everything in view at full detail.
   context.drawImage(bitmap, 0, 0);
   const { data } = context.getImageData(0, 0, width, height);
-  const scan = decode(rgba_to_luma(data), width, height);
+  const scan = decode(data, width, height);
   return scan ? { text: scan.text, format: scan.format } : null;
 };
 
