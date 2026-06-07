@@ -66,6 +66,7 @@ describe('stopStream', () => {
       decoder: null,
       result: null,
       generation: 1,
+      decoderGeneration: 0,
     };
 
     stopStream(state);
@@ -83,6 +84,7 @@ describe('stopStream', () => {
       decoder: null,
       result: null,
       generation: 0,
+      decoderGeneration: 0,
     };
     expect(() => stopStream(state)).not.toThrow();
   });
@@ -97,6 +99,7 @@ describe('openCameraSession', () => {
     decoder: null,
     result: null,
     generation,
+    decoderGeneration: 0,
   });
 
   it('returns the stream when the request is not superseded', async () => {
@@ -160,6 +163,7 @@ describe('setTorch', () => {
     decoder: null,
     result: null,
     generation: 1,
+    decoderGeneration: 0,
   });
 
   it('applies the torch constraint and resolves with the requested state', async () => {
@@ -181,6 +185,7 @@ describe('setTorch', () => {
       decoder: null,
       result: null,
       generation: 0,
+      decoderGeneration: 0,
     };
 
     await expect(setTorch(state, true)).resolves.toBe(true);

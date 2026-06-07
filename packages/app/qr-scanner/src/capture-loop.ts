@@ -8,10 +8,15 @@ import { onVideoFrame } from './video-frames';
  * code through `onResult` — then stop sampling. The feed keeps streaming,
  * so the user stays oriented after a hit. Returns an unsubscribe that
  * halts sampling early (e.g. on unmount).
+ *
+ * The decoder is resolved per frame via `getDecoder` rather than captured
+ * up front: the worker preloads asynchronously, so it may not be ready
+ * when sampling starts. Frames sampled before it lands are skipped, and
+ * decoding begins on the first frame after the worker attaches.
  */
 export const startCaptureLoop = (
   video: HTMLVideoElement,
-  decoder: Worker,
+  getDecoder: () => Worker | undefined,
   onResult: (result: ScanResult) => void,
 ): (() => void) => {
   // Back-pressure: hold a single frame in flight so we never queue
@@ -20,7 +25,8 @@ export const startCaptureLoop = (
   let inFlight = false;
 
   const unsubscribe = onVideoFrame(video, () => {
-    if (inFlight) return;
+    const decoder = getDecoder();
+    if (inFlight || !decoder) return;
     inFlight = true;
     void (async () => {
       try {

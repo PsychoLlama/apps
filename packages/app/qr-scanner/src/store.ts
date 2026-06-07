@@ -82,6 +82,14 @@ export interface ScannerState {
    * resolved stream is stopped instead of stored. Latest-wins.
    */
   generation: number;
+  /**
+   * Monotonic counter for the decoder preload, bumped on teardown. The
+   * async `createDecoder` captures it at spawn and re-checks once the
+   * worker is ready: a mismatch means the scanner tore down mid-preload,
+   * so the resolved worker is terminated rather than attached — no
+   * orphaned worker outlives the page.
+   */
+  decoderGeneration: number;
 }
 
 export const scannerStore = defineStore<ScannerState>(() => ({
@@ -92,6 +100,7 @@ export const scannerStore = defineStore<ScannerState>(() => ({
   decoder: null,
   result: null,
   generation: 0,
+  decoderGeneration: 0,
 }));
 
 /** Live, readonly view of the camera session. */

@@ -34,9 +34,13 @@ export const CameraView: Component<CameraViewProps> = (props) => {
   let videoEl: HTMLVideoElement | undefined;
 
   onMount(() => {
-    const decoder = scanner.decoder?.current;
-    if (decoder && videoEl) {
-      onCleanup(startCaptureLoop(videoEl, decoder, record));
+    // Start sampling immediately; the loop reads the decoder per frame, so
+    // it tolerates the worker preload still being in flight and begins
+    // decoding the moment it attaches.
+    if (videoEl) {
+      onCleanup(
+        startCaptureLoop(videoEl, () => scanner.decoder?.current, record),
+      );
     }
   });
 

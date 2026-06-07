@@ -44,7 +44,7 @@ describe('startCaptureLoop', () => {
     const onResult = vi.fn();
     const { video, fire } = rvfcVideo();
 
-    startCaptureLoop(video, {} as Worker, onResult);
+    startCaptureLoop(video, () => ({}) as Worker, onResult);
     fire(0);
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(result));
 
@@ -63,7 +63,7 @@ describe('startCaptureLoop', () => {
     );
     const { video, fire } = rvfcVideo();
 
-    startCaptureLoop(video, {} as Worker, vi.fn());
+    startCaptureLoop(video, () => ({}) as Worker, vi.fn());
     fire(0);
     await vi.waitFor(() => expect(requestDecode).toHaveBeenCalledOnce());
 
@@ -78,10 +78,30 @@ describe('startCaptureLoop', () => {
   it('stops sampling once unsubscribed', () => {
     const { video, fire } = rvfcVideo();
 
-    const unsubscribe = startCaptureLoop(video, {} as Worker, vi.fn());
+    const unsubscribe = startCaptureLoop(video, () => ({}) as Worker, vi.fn());
     unsubscribe();
     fire(0);
 
     expect(requestDecode).not.toHaveBeenCalled();
+  });
+
+  it('skips frames until a decoder is available, then decodes', async () => {
+    vi.mocked(requestDecode).mockResolvedValue(null);
+    const worker = {} as Worker;
+    const slot: { decoder: Worker | undefined } = { decoder: undefined };
+    const { video, fire } = rvfcVideo();
+
+    startCaptureLoop(video, () => slot.decoder, vi.fn());
+
+    // Decoder still preloading — frames are sampled but nothing is sent.
+    fire(0);
+    await Promise.resolve();
+    expect(requestDecode).not.toHaveBeenCalled();
+
+    // Worker lands; the next frame decodes.
+    slot.decoder = worker;
+    fire(1000);
+    await vi.waitFor(() => expect(requestDecode).toHaveBeenCalledOnce());
+    expect(requestDecode).toHaveBeenCalledWith(worker, expect.anything());
   });
 });

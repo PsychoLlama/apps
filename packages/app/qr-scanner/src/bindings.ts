@@ -70,8 +70,10 @@ export const resetScanner = defineAction([scannerStore], (state) => {
  * and error, and bump the generation. The bump matters when the scanner
  * unmounts mid-prompt — it signals the pending {@link openCameraSession}
  * to stop its stream once it resolves rather than store an orphaned,
- * uncancellable camera. The matching physical teardown (stopping the
- * stream, terminating the worker) runs in {@link shutdownScannerEffect}.
+ * uncancellable camera. Bumping `decoderGeneration` likewise supersedes a
+ * decoder preload still in flight, so its worker self-terminates instead
+ * of attaching to a dead page. The matching physical teardown (stopping
+ * the stream, terminating the worker) runs in {@link shutdownScannerEffect}.
  */
 export const endSession = defineAction([scannerStore], (state) => {
   state.status = 'idle';
@@ -81,13 +83,18 @@ export const endSession = defineAction([scannerStore], (state) => {
   state.result = null;
   state.decoder = null;
   state.generation += 1;
+  state.decoderGeneration += 1;
 });
 
-/** Store the decoder worker once it's spawned and its wasm is live. */
+/**
+ * Store the decoder worker once it's spawned and its wasm is live. A
+ * `null` worker means the preload was superseded by a teardown and has
+ * already terminated itself — nothing to attach.
+ */
 export const attachDecoder = defineAction(
   [scannerStore],
-  (state, worker: Worker) => {
-    state.decoder = ref(worker);
+  (state, worker: Worker | null) => {
+    if (worker) state.decoder = ref(worker);
   },
 );
 

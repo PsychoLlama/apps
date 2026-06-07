@@ -161,16 +161,18 @@ describe('endSession', () => {
   /** A worker stand-in — `endSession` only drops the reference, never calls it. */
   const fakeWorker = { terminate: () => {} } as unknown as Worker;
 
-  it('returns to idle and bumps the generation to supersede a pending request', () => {
+  it('returns to idle and bumps both generations to supersede pending work', () => {
     const { scanner, useAction } = setup();
 
     useAction(beginRequest)();
     const pendingGeneration = scanner.generation;
+    const pendingDecoderGeneration = scanner.decoderGeneration;
     useAction(endSession)();
 
     expect(scanner.status).toBe('idle');
     expect(scanner.stream).toBeNull();
     expect(scanner.generation).toBe(pendingGeneration + 1);
+    expect(scanner.decoderGeneration).toBe(pendingDecoderGeneration + 1);
   });
 
   it('clears the decoder reference and the last result', () => {
@@ -182,5 +184,24 @@ describe('endSession', () => {
 
     expect(scanner.decoder).toBeNull();
     expect(scanner.result).toBeNull();
+  });
+});
+
+describe('attachDecoder', () => {
+  it('stores the worker behind a ref', () => {
+    const { scanner, useAction } = setup();
+    const worker = { terminate: () => {} } as unknown as Worker;
+
+    useAction(attachDecoder)(worker);
+
+    expect(scanner.decoder?.current).toBe(worker);
+  });
+
+  it('ignores a superseded (null) worker — it already self-terminated', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(attachDecoder)(null);
+
+    expect(scanner.decoder).toBeNull();
   });
 });

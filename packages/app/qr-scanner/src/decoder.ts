@@ -20,16 +20,35 @@ export interface DecodeRequest {
  * Spawn the decoder worker and resolve once its wasm module is live. The
  * worker eagerly initializes on load and posts a one-shot `ready`; we
  * await that so a caller never hands it a frame before it can decode.
+ *
+ * Guarded against teardown mid-preload: we snapshot
+ * {@link ScannerState.decoderGeneration} before spawning and re-check it
+ * once the worker is ready. If it changed, the scanner unmounted (or
+ * restarted) while we were initializing — so we terminate the now-orphaned
+ * worker and resolve `null` rather than leak a live worker into a dead
+ * page. Otherwise the worker is handed back to be attached.
  */
-export const createDecoder = (): Promise<Worker> =>
-  new Promise((resolve) => {
-    const worker = new DecoderWorker();
-    // The worker's first message is always its `ready` handshake — it
-    // posts nothing else until handed a frame, which can't happen before
-    // this resolves. So a one-shot listener needs no type guard or manual
-    // teardown: `{ once: true }` removes it after that single message.
-    worker.addEventListener('message', () => resolve(worker), { once: true });
+export const createDecoder = async (
+  state: DeepReadonly<ScannerState>,
+): Promise<Worker | null> => {
+  const generation = state.decoderGeneration;
+  const worker = new DecoderWorker();
+
+  // The worker's first message is always its `ready` handshake — it posts
+  // nothing else until handed a frame, which can't happen before this
+  // resolves. So a one-shot listener needs no type guard or manual
+  // teardown: `{ once: true }` removes it after that single message.
+  await new Promise<void>((resolve) => {
+    worker.addEventListener('message', () => resolve(), { once: true });
   });
+
+  if (state.decoderGeneration !== generation) {
+    worker.terminate();
+    return null;
+  }
+
+  return worker;
+};
 
 /** Terminate the decoder worker, if one is live. A no-op otherwise. */
 export const terminateDecoder = (state: DeepReadonly<ScannerState>): void => {
