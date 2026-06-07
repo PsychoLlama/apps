@@ -1,4 +1,5 @@
 import { defineAction, defineEffect, ref } from '@lib/state';
+import { createLogger } from '@lib/observability';
 import {
   CameraAborted,
   classifyCameraError,
@@ -7,7 +8,10 @@ import {
   stopStream,
   supportsTorch,
 } from './capabilities';
-import { scannerStore } from './store';
+import { createDecoder, terminateDecoder } from './decoder';
+import { scannerStore, type ScanResult } from './store';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /** Enter the requesting state, bumping the generation and clearing any prior error. */
 export const beginRequest = defineAction([scannerStore], (state) => {
@@ -45,6 +49,7 @@ export const failCamera = defineAction(
     state.error = classifyCameraError(error);
     state.stream = null;
     state.torch = { supported: false, on: false };
+    state.result = null;
   },
 );
 
@@ -54,6 +59,7 @@ export const resetScanner = defineAction([scannerStore], (state) => {
   state.stream = null;
   state.error = null;
   state.torch = { supported: false, on: false };
+  state.result = null;
 });
 
 /**
@@ -67,8 +73,37 @@ export const abortRequest = defineAction([scannerStore], (state) => {
   state.stream = null;
   state.error = null;
   state.torch = { supported: false, on: false };
+  state.result = null;
   state.generation += 1;
 });
+
+/** Store the decoder worker once it's spawned and its wasm is live. */
+export const attachDecoder = defineAction(
+  [scannerStore],
+  (state, worker: Worker) => {
+    state.decoder = ref(worker);
+  },
+);
+
+/** Drop the decoder reference after the worker is terminated. */
+export const clearDecoder = defineAction([scannerStore], (state) => {
+  state.decoder = null;
+});
+
+/**
+ * Record a recognized code and emit the one recognition log we keep —
+ * centralized here so it fires once per hit regardless of caller. We log
+ * the `format` (e.g. `"QR_CODE"`), never the decoded payload: in keeping
+ * with the app's "nothing leaves your device" promise, the contents stay
+ * off every diagnostic surface.
+ */
+export const recordScan = defineAction(
+  [scannerStore],
+  (state, result: ScanResult) => {
+    state.result = result;
+    logger.info('Recognized a code.', { format: result.format });
+  },
+);
 
 /**
  * Open the camera and surface the result through the session lifecycle:
@@ -106,3 +141,19 @@ export const toggleTorchEffect = defineEffect([scannerStore], setTorch, {
   onSuccess: setTorchOn,
   onFailure: defineAction([scannerStore], () => {}),
 });
+
+/**
+ * Spawn the decoder worker and store it once its wasm is live. Run
+ * eagerly on page mount so the module is warm before the camera goes
+ * live; the worker then outlives individual camera sessions.
+ */
+export const startDecodingEffect = defineEffect([scannerStore], createDecoder, {
+  onSuccess: attachDecoder,
+});
+
+/** Terminate the decoder worker and drop the reference on page unmount. */
+export const stopDecodingEffect = defineEffect(
+  [scannerStore],
+  terminateDecoder,
+  { onSuccess: clearDecoder },
+);

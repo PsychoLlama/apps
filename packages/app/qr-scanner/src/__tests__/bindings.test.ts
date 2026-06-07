@@ -4,6 +4,7 @@ import {
   activateStream,
   beginRequest,
   failCamera,
+  recordScan,
   resetScanner,
   setTorchOn,
 } from '../bindings';
@@ -131,6 +132,27 @@ describe('resetScanner', () => {
     expect(scanner.stream).toBeNull();
     expect(scanner.error).toBeNull();
     expect(scanner.torch).toEqual({ supported: false, on: false });
+  });
+});
+
+describe('recordScan', () => {
+  const result = { text: 'https://example.com', format: 'QR_CODE' };
+
+  it('records the decoded result into state', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(recordScan)(result);
+
+    expect(scanner.result).toEqual(result);
+  });
+
+  it('is cleared by a scanner reset', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(recordScan)(result);
+    useAction(resetScanner)();
+
+    expect(scanner.result).toBeNull();
   });
 });
 

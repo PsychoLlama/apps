@@ -63,6 +63,8 @@ describe('stopStream', () => {
       stream: ref(fakeStream(tracks)),
       error: null,
       torch: { supported: false, on: false },
+      decoder: null,
+      result: null,
       generation: 1,
     };
 
@@ -78,6 +80,8 @@ describe('stopStream', () => {
       stream: null,
       error: null,
       torch: { supported: false, on: false },
+      decoder: null,
+      result: null,
       generation: 0,
     };
     expect(() => stopStream(state)).not.toThrow();
@@ -90,6 +94,8 @@ describe('openCameraSession', () => {
     stream: null,
     error: null,
     torch: { supported: false, on: false },
+    decoder: null,
+    result: null,
     generation,
   });
 
@@ -151,6 +157,8 @@ describe('setTorch', () => {
     stream: ref(streamWithVideoTrack(track)),
     error: null,
     torch: { supported: true, on: false },
+    decoder: null,
+    result: null,
     generation: 1,
   });
 
@@ -170,6 +178,8 @@ describe('setTorch', () => {
       stream: null,
       error: null,
       torch: { supported: false, on: false },
+      decoder: null,
+      result: null,
       generation: 0,
     };
 

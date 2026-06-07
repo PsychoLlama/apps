@@ -1,4 +1,11 @@
-import { Match, onCleanup, Show, Switch, type Component } from 'solid-js';
+import {
+  Match,
+  onCleanup,
+  onMount,
+  Show,
+  Switch,
+  type Component,
+} from 'solid-js';
 import { useAction, useEffect } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
 import { Button, Callout, Container, Flex, Heading, Text } from '@lib/ui';
@@ -9,7 +16,9 @@ import { CameraView } from './components/camera-view';
 import {
   abortRequest,
   startCameraEffect,
+  startDecodingEffect,
   stopCameraEffect,
+  stopDecodingEffect,
   toggleTorchEffect,
 } from './bindings';
 import { scanner, type CameraErrorKind } from './store';
@@ -49,7 +58,7 @@ const Landing: Component<{ requesting: boolean; onStart: () => void }> = (
 
     <Callout color="warning" icon={<IconProgressWrench />}>
       <Text as="span" size={2}>
-        Camera preview only — code detection lands in a follow-up.
+        Detection works — on-screen results land in a follow-up.
       </Text>
     </Callout>
   </Flex>
@@ -96,14 +105,22 @@ export const QrScanner = () => {
   const startCamera = useEffect(startCameraEffect);
   const stopCamera = useEffect(stopCameraEffect);
   const toggleTorch = useEffect(toggleTorchEffect);
+  const startDecoding = useEffect(startDecodingEffect);
+  const stopDecoding = useEffect(stopDecodingEffect);
   const abort = useAction(abortRequest);
+
+  // Preload the decoder worker + wasm across the whole scanner page so
+  // the module is warm by the time the camera goes live; it outlives
+  // individual camera sessions and is torn down only on unmount.
+  onMount(() => void startDecoding());
 
   // Don't leave the camera running after we unmount. If a stream is live,
   // stop it; if a request is still pending, abort it so the late-resolving
-  // stream gets stopped instead of orphaned.
+  // stream gets stopped instead of orphaned. Always tear down the worker.
   onCleanup(() => {
     if (scanner.status === 'streaming') stopCamera();
     else if (scanner.status === 'requesting') abort();
+    stopDecoding();
   });
 
   return (

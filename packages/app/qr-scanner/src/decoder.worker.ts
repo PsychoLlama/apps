@@ -1,0 +1,56 @@
+import init, { decode, rgba_to_luma } from '@lib/qr-scanner';
+import { fitDimensions } from './frame-fit';
+import type { DecodeRequest, ReadyMessage } from './decoder';
+import type { ScanResult } from './store';
+
+// The package is typed for the DOM, so the global `self` reads as a
+// `Window`. That's fine for our two touchpoints — `postMessage(data)`
+// (no transfer back) and `onmessage` — which share the worker's shape.
+
+/**
+ * Eagerly initialize the wasm module on worker load — not lazily on the
+ * first frame — so it's warm by the time the camera goes live, then
+ * announce readiness. Every frame awaits this, so an early frame queues
+ * behind init rather than racing it.
+ */
+const ready: Promise<void> = init().then(() => {
+  self.postMessage({ type: 'ready' } satisfies ReadyMessage);
+});
+
+// One canvas for the worker's lifetime, resized lazily to each frame's
+// fitted dimensions. `willReadFrequently` keeps the backing store in CPU
+// memory — we read every pixel back each frame, so GPU upload churn is
+// pure overhead.
+let canvas: OffscreenCanvas | undefined;
+let context: OffscreenCanvasRenderingContext2D | null = null;
+
+const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
+  const { width, height } = fitDimensions(bitmap.width, bitmap.height);
+
+  if (!canvas) {
+    canvas = new OffscreenCanvas(width, height);
+    context = canvas.getContext('2d', { willReadFrequently: true });
+  }
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  if (!context) return null;
+
+  // Downscale the whole frame into the canvas — no source crop. The
+  // reticle is a UI gate, not a scan region, so we decode everything in
+  // view and leave any match-location mapping a single uniform scale.
+  context.drawImage(bitmap, 0, 0, width, height);
+  const { data } = context.getImageData(0, 0, width, height);
+  const scan = decode(rgba_to_luma(data), width, height);
+  return scan ? { text: scan.text, format: scan.format } : null;
+};
+
+self.onmessage = ({ data }: MessageEvent<DecodeRequest>) => {
+  void ready.then(() => {
+    const { bitmap } = data;
+    const result = decodeFrame(bitmap);
+    bitmap.close();
+    self.postMessage(result);
+  });
+};

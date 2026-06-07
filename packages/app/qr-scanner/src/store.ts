@@ -38,6 +38,18 @@ export interface TorchState {
   on: boolean;
 }
 
+/**
+ * A decoded barcode, mirrored into state on recognition. Mirrors the
+ * `@lib/qr-scanner` `Scan` shape, but as a plain (proxy-safe) object —
+ * the wasm `Scan` instance never leaves the worker.
+ */
+export interface ScanResult {
+  /** The decoded payload as text (UTF-8, charset-decoded by rxing). */
+  text: string;
+  /** The symbology rxing matched, e.g. `"QR_CODE"`. */
+  format: string;
+}
+
 /** Camera session state for the scanner. */
 export interface ScannerState {
   /** Where the session sits in its lifecycle. */
@@ -53,6 +65,18 @@ export interface ScannerState {
   /** Torch availability and state for the live stream. */
   torch: TorchState;
   /**
+   * The decoder worker once it's spawned and its wasm module is live,
+   * else `null`. Preloaded on page mount and outlives individual camera
+   * sessions. Held behind a {@link Ref} so the reactive store doesn't
+   * proxy the host {@link Worker}.
+   */
+  decoder: Ref<Worker> | null;
+  /**
+   * The most recently recognized code, or `null` before the first hit.
+   * Set once per session — the capture loop stops after recording.
+   */
+  result: ScanResult | null;
+  /**
    * Monotonic request counter, bumped whenever a request starts or is
    * aborted. An in-flight `getUserMedia` captures the value at the start
    * and re-checks it once the prompt resolves — a mismatch means it was
@@ -67,6 +91,8 @@ export const scannerStore = defineStore<ScannerState>(() => ({
   stream: null,
   error: null,
   torch: { supported: false, on: false },
+  decoder: null,
+  result: null,
   generation: 0,
 }));
 
