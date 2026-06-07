@@ -1,6 +1,6 @@
 import { onCleanup, onMount, Show, type Component } from 'solid-js';
 import { useEffect } from '@lib/state';
-import { Button, Flex } from '@lib/ui';
+import { Button, Flex, Grid } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
 import IconFlashlight from 'virtual:icons/mdi/flashlight';
 import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
@@ -76,18 +76,11 @@ export const CameraView: Component<CameraViewProps> = (props) => {
         <Flex as="div" class={css.corners.bottomRight} />
       </Flex>
 
-      {/*
-        Labelled controls: an icon alone doesn't say what it does, so each
-        pairs its glyph with a word. Labels are variable-width and a third
-        control (upload from photos) is coming on the left — the rail just
-        centers its cluster with an even gap, so it stays balanced as the
-        text and the control count change.
-      */}
-      <Flex as="div" testId="scanner-controls" gap={4} class={css.controls}>
+      <Grid as="div" testId="scanner-controls" class={css.controls}>
         <Button
           testId="cancel-scanning"
+          class={css.centerControl}
           size={3}
-          radius="full"
           variant="ghost"
           color="neutral"
           onClick={() => props.onCancel()}
@@ -99,9 +92,9 @@ export const CameraView: Component<CameraViewProps> = (props) => {
         <Show when={props.torchSupported}>
           <Button
             testId="toggle-torch"
+            class={css.endControl}
             aria-pressed={props.torchOn}
             size={3}
-            radius="full"
             variant="ghost"
             color={props.torchOn ? 'accent' : 'neutral'}
             onClick={() => props.onToggleTorch()}
@@ -117,7 +110,7 @@ export const CameraView: Component<CameraViewProps> = (props) => {
             Flash
           </Button>
         </Show>
-      </Flex>
+      </Grid>
     </Flex>
   );
 };
