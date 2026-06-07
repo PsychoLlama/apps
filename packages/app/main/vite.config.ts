@@ -60,6 +60,8 @@ export default defineConfig({
       ignored: [...generatedArtifacts, scratchDir(workspaceRoot)],
     },
     headers: widenServiceWorkerScope,
+    // Reached through a Cloudflare Tunnel for testing on mobile devices.
+    allowedHosts: ['apps.jessegibson.dev'],
   },
   worker: {
     // Vite runs `?worker` bundles through a separate plugin pipeline
