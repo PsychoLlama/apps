@@ -1,10 +1,122 @@
-import { startCaptureLoop } from '../capture-loop';
+import { createFrameSampler, startCaptureLoop } from '../capture-loop';
 import { requestDecode } from '../decoder';
 import type { ScanResult } from '../store';
 
 // Stub the worker round-trip — we drive decode verdicts by hand and never
 // want the real `?worker` module pulled in.
 vi.mock('../decoder', () => ({ requestDecode: vi.fn() }));
+
+const result: ScanResult = { text: 'https://example.com', format: 'QR_CODE' };
+
+/** A bare `<video>` — `createImageBitmap` is stubbed, so it's never read. */
+const fakeVideo = {} as HTMLVideoElement;
+
+beforeEach(() => {
+  vi.stubGlobal(
+    'createImageBitmap',
+    vi.fn(() => Promise.resolve({} as ImageBitmap)),
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.mocked(requestDecode).mockReset();
+});
+
+describe('createFrameSampler', () => {
+  it('reports a decoded result and signals a hit', async () => {
+    vi.mocked(requestDecode).mockResolvedValue(result);
+    const onResult = vi.fn();
+    const onHit = vi.fn();
+    const sample = createFrameSampler(
+      fakeVideo,
+      () => ({}) as Worker,
+      onResult,
+      onHit,
+    );
+
+    await sample();
+
+    expect(onResult).toHaveBeenCalledWith(result);
+    expect(onHit).toHaveBeenCalledOnce();
+  });
+
+  it('reports nothing and never signals a hit on a miss', async () => {
+    vi.mocked(requestDecode).mockResolvedValue(null);
+    const onResult = vi.fn();
+    const onHit = vi.fn();
+    const sample = createFrameSampler(
+      fakeVideo,
+      () => ({}) as Worker,
+      onResult,
+      onHit,
+    );
+
+    await sample();
+
+    expect(onResult).not.toHaveBeenCalled();
+    expect(onHit).not.toHaveBeenCalled();
+  });
+
+  it('holds a single frame in flight, skipping samples taken while busy', async () => {
+    let settle!: (decoded: ScanResult | null) => void;
+    vi.mocked(requestDecode).mockReturnValue(
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+    );
+    const sample = createFrameSampler(
+      fakeVideo,
+      () => ({}) as Worker,
+      vi.fn(),
+      vi.fn(),
+    );
+
+    const pending = sample(); // enters flight; parks on the decode
+    await sample(); // taken while busy — resolves at once, no decode
+    expect(requestDecode).toHaveBeenCalledOnce();
+
+    settle(null);
+    await pending;
+  });
+
+  it('skips sampling until a decoder is available', async () => {
+    const slot: { decoder: Worker | undefined } = { decoder: undefined };
+    const sample = createFrameSampler(
+      fakeVideo,
+      () => slot.decoder,
+      vi.fn(),
+      vi.fn(),
+    );
+
+    // Decoder still preloading — the frame is taken but nothing is sent.
+    await sample();
+    expect(requestDecode).not.toHaveBeenCalled();
+
+    // Worker lands; the next sample decodes against it.
+    slot.decoder = {} as Worker;
+    vi.mocked(requestDecode).mockResolvedValue(null);
+    await sample();
+    expect(requestDecode).toHaveBeenCalledWith(slot.decoder, expect.anything());
+  });
+
+  it('swallows a failed decode and frees the slot for the next sample', async () => {
+    vi.mocked(requestDecode).mockRejectedValueOnce(new Error('grab failed'));
+    const sample = createFrameSampler(
+      fakeVideo,
+      () => ({}) as Worker,
+      vi.fn(),
+      vi.fn(),
+    );
+
+    await expect(sample()).resolves.toBeUndefined(); // no throw escapes
+
+    // The failure cleared the in-flight guard — the next sample proceeds.
+    vi.mocked(requestDecode).mockResolvedValue(null);
+    await sample();
+    expect(requestDecode).toHaveBeenCalledTimes(2);
+  });
+});
 
 /**
  * A `<video>` exposing `requestVideoFrameCallback` whose pending callback
@@ -24,22 +136,8 @@ const rvfcVideo = () => {
   return { video, fire: (now: number) => pending?.(now) };
 };
 
-const result: ScanResult = { text: 'https://example.com', format: 'QR_CODE' };
-
-beforeEach(() => {
-  vi.stubGlobal(
-    'createImageBitmap',
-    vi.fn(() => Promise.resolve({} as ImageBitmap)),
-  );
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.mocked(requestDecode).mockReset();
-});
-
 describe('startCaptureLoop', () => {
-  it('reports the first decoded result and then stops sampling', async () => {
+  it('reports the first hit and unsubscribes so later frames are ignored', async () => {
     vi.mocked(requestDecode).mockResolvedValue(result);
     const onResult = vi.fn();
     const { video, fire } = rvfcVideo();
@@ -48,31 +146,10 @@ describe('startCaptureLoop', () => {
     fire(0);
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(result));
 
-    // The hit unsubscribed the loop — a later frame samples nothing.
+    // The hit unsubscribed the loop — `onVideoFrame` stops re-arming, so a
+    // late frame finds no live callback and samples nothing.
     fire(1000);
-    await Promise.resolve();
     expect(requestDecode).toHaveBeenCalledTimes(1);
-  });
-
-  it('holds a single frame in flight, dropping frames sampled while busy', async () => {
-    let settle!: (decoded: ScanResult | null) => void;
-    vi.mocked(requestDecode).mockReturnValue(
-      new Promise((resolve) => {
-        settle = resolve;
-      }),
-    );
-    const { video, fire } = rvfcVideo();
-
-    startCaptureLoop(video, () => ({}) as Worker, vi.fn());
-    fire(0);
-    await vi.waitFor(() => expect(requestDecode).toHaveBeenCalledOnce());
-
-    // A second frame arrives before the first decode settles — skipped.
-    fire(1000);
-    await Promise.resolve();
-    expect(requestDecode).toHaveBeenCalledTimes(1);
-
-    settle(null);
   });
 
   it('stops sampling once unsubscribed', () => {
@@ -83,25 +160,5 @@ describe('startCaptureLoop', () => {
     fire(0);
 
     expect(requestDecode).not.toHaveBeenCalled();
-  });
-
-  it('skips frames until a decoder is available, then decodes', async () => {
-    vi.mocked(requestDecode).mockResolvedValue(null);
-    const worker = {} as Worker;
-    const slot: { decoder: Worker | undefined } = { decoder: undefined };
-    const { video, fire } = rvfcVideo();
-
-    startCaptureLoop(video, () => slot.decoder, vi.fn());
-
-    // Decoder still preloading — frames are sampled but nothing is sent.
-    fire(0);
-    await Promise.resolve();
-    expect(requestDecode).not.toHaveBeenCalled();
-
-    // Worker lands; the next frame decodes.
-    slot.decoder = worker;
-    fire(1000);
-    await vi.waitFor(() => expect(requestDecode).toHaveBeenCalledOnce());
-    expect(requestDecode).toHaveBeenCalledWith(worker, expect.anything());
   });
 });
