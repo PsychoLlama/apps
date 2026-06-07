@@ -54,6 +54,15 @@ describe('beginRequest', () => {
 
     expect(scanner.generation).toBe(before + 1);
   });
+
+  it('clears a prior result so "scan again" starts clean', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(recordScan)({ text: 'https://example.com', format: 'QR_CODE' });
+    useAction(beginRequest)();
+
+    expect(scanner.result).toBeNull();
+  });
 });
 
 describe('activateStream', () => {
@@ -145,6 +154,18 @@ describe('recordScan', () => {
     useAction(recordScan)(result);
 
     expect(scanner.result).toEqual(result);
+  });
+
+  it('parks on the result: releases the stream and returns to idle', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(activateStream)(fakeStream);
+    useAction(recordScan)(result);
+
+    expect(scanner.result).toEqual(result);
+    expect(scanner.status).toBe('idle');
+    expect(scanner.stream).toBeNull();
+    expect(scanner.torch).toEqual({ supported: false, on: false });
   });
 
   it('is cleared by a scanner reset', () => {

@@ -7,6 +7,7 @@ import {
   openCameraSession,
   setTorch,
   stopStream,
+  stopStreamForResult,
   supportsTorch,
 } from '../capabilities';
 import type { ScannerState } from '../store';
@@ -87,6 +88,26 @@ describe('stopStream', () => {
       decoderGeneration: 0,
     };
     expect(() => stopStream(state)).not.toThrow();
+  });
+});
+
+describe('stopStreamForResult', () => {
+  it('releases the camera and forwards the result for recording', () => {
+    const tracks = [{ stop: vi.fn() }];
+    const state: ScannerState = {
+      status: 'streaming',
+      stream: ref(fakeStream(tracks)),
+      error: null,
+      torch: { supported: false, on: false },
+      decoder: null,
+      result: null,
+      generation: 1,
+      decoderGeneration: 0,
+    };
+    const result = { text: 'https://example.com', format: 'QR_CODE' } as const;
+
+    expect(stopStreamForResult(state, result)).toEqual(result);
+    expect(tracks[0].stop).toHaveBeenCalledOnce();
   });
 });
 

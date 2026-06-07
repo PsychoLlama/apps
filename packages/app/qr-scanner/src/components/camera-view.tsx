@@ -1,10 +1,10 @@
 import { onCleanup, onMount, Show, type Component } from 'solid-js';
-import { useAction } from '@lib/state';
+import { useEffect } from '@lib/state';
 import { Flex, IconButton } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
 import IconFlashlight from 'virtual:icons/mdi/flashlight';
 import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
-import { recordScan } from '../bindings';
+import { finishScanEffect } from '../bindings';
 import { startCaptureLoop } from '../capture-loop';
 import { scanner } from '../store';
 import * as css from './camera-view.css';
@@ -25,12 +25,12 @@ interface CameraViewProps {
 /**
  * Full-viewport live camera feed with an overlaid cancel control. Runs
  * the decode loop: each sampled frame is grabbed as an `ImageBitmap` and
- * handed to the decoder worker, one in flight at a time. On the first
- * hit it records the result and stops sampling — the feed keeps
- * streaming so the user stays oriented.
+ * handed to the decoder worker, one in flight at a time. On the first hit
+ * it finalizes the scan — recording the result and releasing the camera —
+ * which swaps the result surface in for the feed.
  */
 export const CameraView: Component<CameraViewProps> = (props) => {
-  const record = useAction(recordScan);
+  const finishScan = useEffect(finishScanEffect);
   let videoEl: HTMLVideoElement | undefined;
 
   onMount(() => {
@@ -39,7 +39,7 @@ export const CameraView: Component<CameraViewProps> = (props) => {
     // decoding the moment it attaches.
     if (videoEl) {
       onCleanup(
-        startCaptureLoop(videoEl, () => scanner.decoder?.current, record),
+        startCaptureLoop(videoEl, () => scanner.decoder?.current, finishScan),
       );
     }
   });

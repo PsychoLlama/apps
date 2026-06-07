@@ -51,9 +51,9 @@ export const createFrameSampler = (
 /**
  * Run the decode loop against a live `<video>`: sample frames, hand each
  * to the decoder worker one at a time, and report the first recognized
- * code through `onResult` — then stop sampling. The feed keeps streaming,
- * so the user stays oriented after a hit. Returns an unsubscribe that
- * halts sampling early (e.g. on unmount).
+ * code through `onResult` — then stop sampling. Returns an unsubscribe
+ * that halts sampling early (e.g. on unmount, or once the consumer tears
+ * the feed down after a hit).
  */
 export const startCaptureLoop = (
   video: HTMLVideoElement,
