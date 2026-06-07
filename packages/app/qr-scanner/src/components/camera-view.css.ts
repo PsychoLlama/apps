@@ -113,7 +113,6 @@ export const controls = style({
   position: 'absolute',
   insetInline: 0,
   bottom: `calc(${space[6]} + env(safe-area-inset-bottom))`,
-  display: 'grid',
   gridTemplateColumns: '1fr auto 1fr',
   alignItems: 'center',
   columnGap: space[4],
