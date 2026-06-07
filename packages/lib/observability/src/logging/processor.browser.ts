@@ -2,6 +2,7 @@ import { createConsoleBackend } from '@holz/console-backend';
 import type { LogProcessor } from '@holz/core';
 import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
+import { devPattern } from './dev-pattern.ts';
 
 const consoleBackend = createConsoleBackend();
 
@@ -27,6 +28,7 @@ export const processor: LogProcessor = createLogCollector({
     ? consoleBackend
     : createEnvironmentFilter({
         processor: consoleBackend,
+        pattern: devPattern,
         defaultPattern: '',
       }),
 });
