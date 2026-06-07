@@ -1,6 +1,6 @@
 import { onCleanup, onMount, Show, type Component } from 'solid-js';
 import { useEffect } from '@lib/state';
-import { Button, Flex, Grid } from '@lib/ui';
+import { Flex, IconButton } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
 import IconFlashlight from 'virtual:icons/mdi/flashlight';
 import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
@@ -76,41 +76,41 @@ export const CameraView: Component<CameraViewProps> = (props) => {
         <Flex as="div" class={css.corners.bottomRight} />
       </Flex>
 
-      <Grid as="div" testId="scanner-controls" class={css.controls}>
-        <Button
+      <Flex as="div" testId="scanner-controls" class={css.controls}>
+        <IconButton
           testId="cancel-scanning"
-          class={css.centerControl}
+          aria-label="Cancel"
           size={3}
-          variant="ghost"
+          variant="outline"
           color="neutral"
+          radius="full"
           onClick={() => props.onCancel()}
         >
-          <IconClose width="20" height="20" aria-hidden="true" />
-          Cancel
-        </Button>
+          <IconClose width="24" height="24" aria-hidden="true" />
+        </IconButton>
 
         <Show when={props.torchSupported}>
-          <Button
+          <IconButton
             testId="toggle-torch"
-            class={css.endControl}
+            aria-label="Toggle flash"
             aria-pressed={props.torchOn}
             size={3}
-            variant="ghost"
+            variant="outline"
             color={props.torchOn ? 'accent' : 'neutral'}
+            radius="full"
             onClick={() => props.onToggleTorch()}
           >
             <Show
               when={props.torchOn}
               fallback={
-                <IconFlashlightOff width="20" height="20" aria-hidden="true" />
+                <IconFlashlightOff width="24" height="24" aria-hidden="true" />
               }
             >
-              <IconFlashlight width="20" height="20" aria-hidden="true" />
+              <IconFlashlight width="24" height="24" aria-hidden="true" />
             </Show>
-            Flash
-          </Button>
+          </IconButton>
         </Show>
-      </Grid>
+      </Flex>
     </Flex>
   );
 };
