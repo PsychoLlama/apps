@@ -2,6 +2,7 @@ import { createConsoleBackend } from '@holz/console-backend';
 import type { LogProcessor } from '@holz/core';
 import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
+import { devPattern } from './dev-pattern.ts';
 
 const consoleBackend = createConsoleBackend();
 
@@ -27,9 +28,7 @@ export const processor: LogProcessor = createLogCollector({
     ? consoleBackend
     : createEnvironmentFilter({
         processor: consoleBackend,
-        // In dev, force everything on — no `debug` localStorage pattern
-        // required. In prod, fall back to it (silent unless set).
-        pattern: import.meta.env.DEV ? '*' : undefined,
+        pattern: devPattern,
         defaultPattern: '',
       }),
 });
