@@ -22,9 +22,20 @@ declare global {
  * Constraints for the scanner feed: rear-facing camera (`environment`)
  * since you point the back of the phone at the code, and no audio — a
  * QR scanner has no use for the microphone.
+ *
+ * Resolution is requested, not required (`ideal`): left unconstrained,
+ * phones hand back a low default (e.g. 480×640) that smears small or
+ * distant codes into an unreadable blur. Asking for 1080p gives the
+ * decoder real detail to work with — it scans the frame at native
+ * resolution — while `ideal` degrades gracefully to whatever the
+ * hardware actually offers rather than throwing `OverconstrainedError`.
  */
 const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
-  video: { facingMode: 'environment' },
+  video: {
+    facingMode: 'environment',
+    width: { ideal: 1920 },
+    height: { ideal: 1080 },
+  },
   audio: false,
 };
 
