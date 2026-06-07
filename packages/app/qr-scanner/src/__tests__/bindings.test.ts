@@ -10,7 +10,7 @@ import {
   setTorchOn,
 } from '../bindings';
 import { CameraAborted } from '../capabilities';
-import { scannerStore } from '../store';
+import { scannerStore, type ScanResult } from '../store';
 
 const setup = () => {
   const bindings = createTestBindings();
@@ -58,7 +58,12 @@ describe('beginRequest', () => {
   it('clears a prior result so "scan again" starts clean', () => {
     const { scanner, useAction } = setup();
 
-    useAction(recordScan)({ text: 'https://example.com', format: 'QR_CODE' });
+    useAction(recordScan)({
+      text: 'https://example.com',
+      format: 'QR_CODE',
+      kind: 'url',
+      details: [],
+    });
     useAction(beginRequest)();
 
     expect(scanner.result).toBeNull();
@@ -146,7 +151,12 @@ describe('resetScanner', () => {
 });
 
 describe('recordScan', () => {
-  const result = { text: 'https://example.com', format: 'QR_CODE' };
+  const result: ScanResult = {
+    text: 'https://example.com',
+    format: 'QR_CODE',
+    kind: 'url',
+    details: [],
+  };
 
   it('records the decoded result into state', () => {
     const { scanner, useAction } = setup();
@@ -200,7 +210,12 @@ describe('endSession', () => {
     const { scanner, useAction } = setup();
 
     useAction(attachDecoder)(fakeWorker);
-    useAction(recordScan)({ text: 'https://example.com', format: 'QR_CODE' });
+    useAction(recordScan)({
+      text: 'https://example.com',
+      format: 'QR_CODE',
+      kind: 'url',
+      details: [],
+    });
     useAction(endSession)();
 
     expect(scanner.decoder).toBeNull();

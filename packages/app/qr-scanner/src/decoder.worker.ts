@@ -47,7 +47,17 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
   context.drawImage(bitmap, 0, 0);
   const { data } = context.getImageData(0, 0, width, height);
   const scan = decode(data, width, height);
-  return scan ? { text: scan.text, format: scan.format } : null;
+  // Project the wasm handle to its plain fields before it crosses back to
+  // the main thread — `Scan` owns `free()` and can't be structured-cloned.
+  // `details` is already plain `{ label, value }` objects from the wasm.
+  return scan
+    ? {
+        text: scan.text,
+        format: scan.format,
+        kind: scan.kind,
+        details: scan.details,
+      }
+    : null;
 };
 
 self.onmessage = ({ data }: MessageEvent<DecodeRequest>) => {

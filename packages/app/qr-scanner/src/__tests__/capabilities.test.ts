@@ -10,7 +10,7 @@ import {
   stopStreamForResult,
   supportsTorch,
 } from '../capabilities';
-import type { ScannerState } from '../store';
+import type { ScannerState, ScanResult } from '../store';
 
 vi.mock('media-devices', () => ({
   default: { getUserMedia: vi.fn() },
@@ -104,7 +104,12 @@ describe('stopStreamForResult', () => {
       generation: 1,
       decoderGeneration: 0,
     };
-    const result = { text: 'https://example.com', format: 'QR_CODE' } as const;
+    const result: ScanResult = {
+      text: 'https://example.com',
+      format: 'QR_CODE',
+      kind: 'url',
+      details: [],
+    };
 
     expect(stopStreamForResult(state, result)).toEqual(result);
     expect(tracks[0].stop).toHaveBeenCalledOnce();

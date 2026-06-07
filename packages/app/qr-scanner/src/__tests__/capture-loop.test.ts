@@ -6,7 +6,12 @@ import type { ScanResult } from '../store';
 // want the real `?worker` module pulled in.
 vi.mock('../decoder', () => ({ requestDecode: vi.fn() }));
 
-const result: ScanResult = { text: 'https://example.com', format: 'QR_CODE' };
+const result: ScanResult = {
+  text: 'https://example.com',
+  format: 'QR_CODE',
+  kind: 'url',
+  details: [],
+};
 
 /** A bare `<video>` — `createImageBitmap` is stubbed, so it's never read. */
 const fakeVideo = {} as HTMLVideoElement;

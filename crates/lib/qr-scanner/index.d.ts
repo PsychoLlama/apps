@@ -5,6 +5,36 @@
  * sync with the `#[wasm_bindgen]` surface in `src/lib.rs`.
  */
 
+/**
+ * The kind of payload rxing's result parser recognized. `'text'` is the
+ * fallback for opaque payloads and anything unclassified.
+ */
+export type ScanKind =
+  | 'wifi'
+  | 'url'
+  | 'email'
+  | 'sms'
+  | 'geo'
+  | 'tel'
+  | 'calendar'
+  | 'contact'
+  | 'isbn'
+  | 'vin'
+  | 'product'
+  | 'text';
+
+/**
+ * One label/value row of a decoded code's parsed details, e.g.
+ * `{ label: 'Network', value: 'home-wifi' }`. Ready to render as a row in
+ * a description list.
+ */
+export interface ParsedDetail {
+  /** Human-readable field name, e.g. `'Password'`. */
+  label: string;
+  /** The field's value. */
+  value: string;
+}
+
 /** A successfully decoded barcode. */
 export class Scan {
   private constructor();
@@ -13,6 +43,16 @@ export class Scan {
   readonly text: string;
   /** The symbology rxing matched, e.g. `"QR_CODE"`. */
   readonly format: string;
+  /**
+   * The kind of payload rxing's result parser recognized — drives how the
+   * host labels and presents {@link Scan.details}.
+   */
+  readonly kind: ScanKind;
+  /**
+   * The parsed payload as an ordered list of label/value rows. Empty for
+   * opaque text (`kind === 'text'`).
+   */
+  readonly details: ParsedDetail[];
 }
 
 /**

@@ -26,6 +26,8 @@ describe('requestDecode', () => {
     const result: ScanResult = {
       text: 'https://example.com',
       format: 'QR_CODE',
+      kind: 'url',
+      details: [],
     };
 
     const pending = requestDecode(worker, {} as ImageBitmap);
@@ -49,8 +51,18 @@ describe('requestDecode', () => {
     // ports must keep their verdicts from crossing — even when the second
     // request is answered first.
     const { worker, reply } = fakeWorker();
-    const first: ScanResult = { text: 'first', format: 'QR_CODE' };
-    const second: ScanResult = { text: 'second', format: 'QR_CODE' };
+    const first: ScanResult = {
+      text: 'first',
+      format: 'QR_CODE',
+      kind: 'text',
+      details: [],
+    };
+    const second: ScanResult = {
+      text: 'second',
+      format: 'QR_CODE',
+      kind: 'text',
+      details: [],
+    };
 
     const firstReply = requestDecode(worker, {} as ImageBitmap);
     const secondReply = requestDecode(worker, {} as ImageBitmap);
