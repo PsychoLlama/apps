@@ -1,6 +1,6 @@
 import { onCleanup, onMount, Show, type Component } from 'solid-js';
 import { useEffect } from '@lib/state';
-import { Flex, IconButton } from '@lib/ui';
+import { Button, Flex } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
 import IconFlashlight from 'virtual:icons/mdi/flashlight';
 import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
@@ -76,27 +76,31 @@ export const CameraView: Component<CameraViewProps> = (props) => {
         <Flex as="div" class={css.corners.bottomRight} />
       </Flex>
 
+      {/*
+        Labelled controls: an icon alone doesn't say what it does, so each
+        pairs its glyph with a word. Labels are variable-width and a third
+        control (upload from photos) is coming on the left — the rail just
+        centers its cluster with an even gap, so it stays balanced as the
+        text and the control count change.
+      */}
       <Flex as="div" testId="scanner-controls" gap={4} class={css.controls}>
-        <IconButton
+        <Button
           testId="cancel-scanning"
-          aria-label="Stop scanning"
-          size={4}
+          size={3}
           radius="full"
           variant="ghost"
           color="neutral"
           onClick={() => props.onCancel()}
         >
-          <IconClose width="24" height="24" aria-hidden="true" />
-        </IconButton>
+          <IconClose width="20" height="20" aria-hidden="true" />
+          Cancel
+        </Button>
 
         <Show when={props.torchSupported}>
-          <IconButton
+          <Button
             testId="toggle-torch"
-            aria-label={
-              props.torchOn ? 'Turn off flashlight' : 'Turn on flashlight'
-            }
             aria-pressed={props.torchOn}
-            size={4}
+            size={3}
             radius="full"
             variant="ghost"
             color={props.torchOn ? 'accent' : 'neutral'}
@@ -105,12 +109,13 @@ export const CameraView: Component<CameraViewProps> = (props) => {
             <Show
               when={props.torchOn}
               fallback={
-                <IconFlashlightOff width="24" height="24" aria-hidden="true" />
+                <IconFlashlightOff width="20" height="20" aria-hidden="true" />
               }
             >
-              <IconFlashlight width="24" height="24" aria-hidden="true" />
+              <IconFlashlight width="20" height="20" aria-hidden="true" />
             </Show>
-          </IconButton>
+            Flash
+          </Button>
         </Show>
       </Flex>
     </Flex>
