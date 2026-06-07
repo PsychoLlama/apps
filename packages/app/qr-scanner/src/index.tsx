@@ -1,5 +1,12 @@
-import { Match, onCleanup, Show, Switch, type Component } from 'solid-js';
-import { useAction, useEffect } from '@lib/state';
+import {
+  Match,
+  onCleanup,
+  onMount,
+  Show,
+  Switch,
+  type Component,
+} from 'solid-js';
+import { useEffect } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
 import { Button, Callout, Container, Flex, Heading, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
@@ -7,8 +14,9 @@ import IconProgressWrench from 'virtual:icons/mdi/progress-wrench';
 import IconRefresh from 'virtual:icons/mdi/refresh';
 import { CameraView } from './components/camera-view';
 import {
-  abortRequest,
+  shutdownScannerEffect,
   startCameraEffect,
+  startDecodingEffect,
   stopCameraEffect,
   toggleTorchEffect,
 } from './bindings';
@@ -49,7 +57,7 @@ const Landing: Component<{ requesting: boolean; onStart: () => void }> = (
 
     <Callout color="warning" icon={<IconProgressWrench />}>
       <Text as="span" size={2}>
-        Camera preview only — code detection lands in a follow-up.
+        Detection works — on-screen results land in a follow-up.
       </Text>
     </Callout>
   </Flex>
@@ -96,15 +104,19 @@ export const QrScanner = () => {
   const startCamera = useEffect(startCameraEffect);
   const stopCamera = useEffect(stopCameraEffect);
   const toggleTorch = useEffect(toggleTorchEffect);
-  const abort = useAction(abortRequest);
+  const startDecoding = useEffect(startDecodingEffect);
+  const shutdown = useEffect(shutdownScannerEffect);
 
-  // Don't leave the camera running after we unmount. If a stream is live,
-  // stop it; if a request is still pending, abort it so the late-resolving
-  // stream gets stopped instead of orphaned.
-  onCleanup(() => {
-    if (scanner.status === 'streaming') stopCamera();
-    else if (scanner.status === 'requesting') abort();
-  });
+  // Preload the decoder worker + wasm across the whole scanner page so
+  // the module is warm by the time the camera goes live; it outlives
+  // individual camera sessions and is torn down only on unmount.
+  onMount(() => void startDecoding());
+
+  // Tear the whole page down in one dispatch on unmount: stop a live
+  // stream, supersede a still-pending request, and terminate the decoder
+  // worker. Safe in any state — each step no-ops when its resource is
+  // absent.
+  onCleanup(() => void shutdown());
 
   return (
     <Show

@@ -1,4 +1,5 @@
 import { defineAction, defineEffect, ref } from '@lib/state';
+import { createLogger } from '@lib/observability';
 import {
   CameraAborted,
   classifyCameraError,
@@ -6,8 +7,12 @@ import {
   setTorch,
   stopStream,
   supportsTorch,
+  teardownScanner,
 } from './capabilities';
-import { scannerStore } from './store';
+import { createDecoder } from './decoder';
+import { scannerStore, type ScanResult } from './store';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /** Enter the requesting state, bumping the generation and clearing any prior error. */
 export const beginRequest = defineAction([scannerStore], (state) => {
@@ -36,15 +41,17 @@ export const setTorchOn = defineAction([scannerStore], (state, on: boolean) => {
 export const failCamera = defineAction(
   [scannerStore],
   (state, error: Error) => {
-    // A superseded request already had its state torn down by
-    // `abortRequest` (and a newer request may now be in flight), so leave
-    // state untouched — don't clobber it with a spurious error.
+    // A superseded request already had its state torn down — by a newer
+    // request, or by `endSession` on unmount — and a newer request may
+    // now be in flight, so leave state untouched rather than clobber it
+    // with a spurious error.
     if (error instanceof CameraAborted) return;
 
     state.status = 'error';
     state.error = classifyCameraError(error);
     state.stream = null;
     state.torch = { supported: false, on: false };
+    state.result = null;
   },
 );
 
@@ -54,21 +61,57 @@ export const resetScanner = defineAction([scannerStore], (state) => {
   state.stream = null;
   state.error = null;
   state.torch = { supported: false, on: false };
+  state.result = null;
 });
 
 /**
- * Abandon an in-flight request — used when the scanner unmounts while a
- * permission prompt is still open. Bumping the generation signals the
- * pending {@link openCameraSession} to stop its stream once it resolves
- * rather than store an orphaned, uncancellable camera.
+ * Tear the whole session down to idle in a single flush: drop the
+ * stream, clear the decoder reference and last result, reset the torch
+ * and error, and bump the generation. The bump matters when the scanner
+ * unmounts mid-prompt — it signals the pending {@link openCameraSession}
+ * to stop its stream once it resolves rather than store an orphaned,
+ * uncancellable camera. Bumping `decoderGeneration` likewise supersedes a
+ * decoder preload still in flight, so its worker self-terminates instead
+ * of attaching to a dead page. The matching physical teardown (stopping
+ * the stream, terminating the worker) runs in {@link shutdownScannerEffect}.
  */
-export const abortRequest = defineAction([scannerStore], (state) => {
+export const endSession = defineAction([scannerStore], (state) => {
   state.status = 'idle';
   state.stream = null;
   state.error = null;
   state.torch = { supported: false, on: false };
+  state.result = null;
+  state.decoder = null;
   state.generation += 1;
+  state.decoderGeneration += 1;
 });
+
+/**
+ * Store the decoder worker once it's spawned and its wasm is live. A
+ * `null` worker means the preload was superseded by a teardown and has
+ * already terminated itself — nothing to attach.
+ */
+export const attachDecoder = defineAction(
+  [scannerStore],
+  (state, worker: Worker | null) => {
+    if (worker) state.decoder = ref(worker);
+  },
+);
+
+/**
+ * Record a recognized code and emit the one recognition log we keep —
+ * centralized here so it fires once per hit regardless of caller. We log
+ * the `format` (e.g. `"QR_CODE"`), never the decoded payload: in keeping
+ * with the app's "nothing leaves your device" promise, the contents stay
+ * off every diagnostic surface.
+ */
+export const recordScan = defineAction(
+  [scannerStore],
+  (state, result: ScanResult) => {
+    state.result = result;
+    logger.info('Recognized a code.', { format: result.format });
+  },
+);
 
 /**
  * Open the camera and surface the result through the session lifecycle:
@@ -106,3 +149,25 @@ export const toggleTorchEffect = defineEffect([scannerStore], setTorch, {
   onSuccess: setTorchOn,
   onFailure: defineAction([scannerStore], () => {}),
 });
+
+/**
+ * Spawn the decoder worker and store it once its wasm is live. Run
+ * eagerly on page mount so the module is warm before the camera goes
+ * live; the worker then outlives individual camera sessions.
+ */
+export const startDecodingEffect = defineEffect([scannerStore], createDecoder, {
+  onSuccess: attachDecoder,
+});
+
+/**
+ * Tear the scanner down on page unmount in one dispatch: release the
+ * camera stream (a no-op if none is open) and terminate the decoder
+ * worker, then reset state via {@link endSession}. Safe in any lifecycle
+ * state — each physical teardown step no-ops when its resource is absent,
+ * and the generation bump supersedes a request still pending mid-prompt.
+ */
+export const shutdownScannerEffect = defineEffect(
+  [scannerStore],
+  teardownScanner,
+  { onSuccess: endSession },
+);

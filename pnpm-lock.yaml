@@ -290,6 +290,12 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
+      '@lib/qr-scanner':
+        specifier: workspace:*
+        version: link:../../../crates/lib/qr-scanner
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell

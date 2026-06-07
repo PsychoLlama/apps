@@ -1,9 +1,11 @@
 import { createTestBindings } from '@lib/state';
 import {
-  abortRequest,
   activateStream,
+  attachDecoder,
   beginRequest,
+  endSession,
   failCamera,
+  recordScan,
   resetScanner,
   setTorchOn,
 } from '../bindings';
@@ -108,10 +110,10 @@ describe('failCamera', () => {
   it('leaves an aborted request alone — the abort already tore state down', () => {
     const { scanner, useAction } = setup();
 
-    // Abort moves the session back to idle; a late CameraAborted failure
-    // must not clobber that with an error.
+    // Shutdown moves the session back to idle; a late CameraAborted
+    // failure must not clobber that with an error.
     useAction(beginRequest)();
-    useAction(abortRequest)();
+    useAction(endSession)();
     useAction(failCamera)(new CameraAborted());
 
     expect(scanner.status).toBe('idle');
@@ -134,16 +136,72 @@ describe('resetScanner', () => {
   });
 });
 
-describe('abortRequest', () => {
-  it('returns to idle and bumps the generation to supersede the pending request', () => {
+describe('recordScan', () => {
+  const result = { text: 'https://example.com', format: 'QR_CODE' };
+
+  it('records the decoded result into state', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(recordScan)(result);
+
+    expect(scanner.result).toEqual(result);
+  });
+
+  it('is cleared by a scanner reset', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(recordScan)(result);
+    useAction(resetScanner)();
+
+    expect(scanner.result).toBeNull();
+  });
+});
+
+describe('endSession', () => {
+  /** A worker stand-in — `endSession` only drops the reference, never calls it. */
+  const fakeWorker = { terminate: () => {} } as unknown as Worker;
+
+  it('returns to idle and bumps both generations to supersede pending work', () => {
     const { scanner, useAction } = setup();
 
     useAction(beginRequest)();
     const pendingGeneration = scanner.generation;
-    useAction(abortRequest)();
+    const pendingDecoderGeneration = scanner.decoderGeneration;
+    useAction(endSession)();
 
     expect(scanner.status).toBe('idle');
     expect(scanner.stream).toBeNull();
     expect(scanner.generation).toBe(pendingGeneration + 1);
+    expect(scanner.decoderGeneration).toBe(pendingDecoderGeneration + 1);
+  });
+
+  it('clears the decoder reference and the last result', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(attachDecoder)(fakeWorker);
+    useAction(recordScan)({ text: 'https://example.com', format: 'QR_CODE' });
+    useAction(endSession)();
+
+    expect(scanner.decoder).toBeNull();
+    expect(scanner.result).toBeNull();
+  });
+});
+
+describe('attachDecoder', () => {
+  it('stores the worker behind a ref', () => {
+    const { scanner, useAction } = setup();
+    const worker = { terminate: () => {} } as unknown as Worker;
+
+    useAction(attachDecoder)(worker);
+
+    expect(scanner.decoder?.current).toBe(worker);
+  });
+
+  it('ignores a superseded (null) worker — it already self-terminated', () => {
+    const { scanner, useAction } = setup();
+
+    useAction(attachDecoder)(null);
+
+    expect(scanner.decoder).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import { createStore, defineStore, type Ref } from '@lib/state';
+import type { Scan } from '@lib/qr-scanner';
 
 /**
  * Lifecycle of the camera session backing the scanner.
@@ -38,6 +39,15 @@ export interface TorchState {
   on: boolean;
 }
 
+/**
+ * A decoded barcode, mirrored into state on recognition. Derived from
+ * `@lib/qr-scanner`'s {@link Scan} so the two can't drift — but picked
+ * down to its plain data fields. `Scan` itself is a wasm handle (it owns
+ * `free()` and can't cross a `postMessage` boundary), so it stays in the
+ * worker; what we surface is this structured-clone-safe projection.
+ */
+export type ScanResult = Pick<Scan, 'text' | 'format'>;
+
 /** Camera session state for the scanner. */
 export interface ScannerState {
   /** Where the session sits in its lifecycle. */
@@ -53,6 +63,18 @@ export interface ScannerState {
   /** Torch availability and state for the live stream. */
   torch: TorchState;
   /**
+   * The decoder worker once it's spawned and its wasm module is live,
+   * else `null`. Preloaded on page mount and outlives individual camera
+   * sessions. Held behind a {@link Ref} so the reactive store doesn't
+   * proxy the host {@link Worker}.
+   */
+  decoder: Ref<Worker> | null;
+  /**
+   * The most recently recognized code, or `null` before the first hit.
+   * Set once per session — the capture loop stops after recording.
+   */
+  result: ScanResult | null;
+  /**
    * Monotonic request counter, bumped whenever a request starts or is
    * aborted. An in-flight `getUserMedia` captures the value at the start
    * and re-checks it once the prompt resolves — a mismatch means it was
@@ -60,6 +82,14 @@ export interface ScannerState {
    * resolved stream is stopped instead of stored. Latest-wins.
    */
   generation: number;
+  /**
+   * Monotonic counter for the decoder preload, bumped on teardown. The
+   * async `createDecoder` captures it at spawn and re-checks once the
+   * worker is ready: a mismatch means the scanner tore down mid-preload,
+   * so the resolved worker is terminated rather than attached — no
+   * orphaned worker outlives the page.
+   */
+  decoderGeneration: number;
 }
 
 export const scannerStore = defineStore<ScannerState>(() => ({
@@ -67,7 +97,10 @@ export const scannerStore = defineStore<ScannerState>(() => ({
   stream: null,
   error: null,
   torch: { supported: false, on: false },
+  decoder: null,
+  result: null,
   generation: 0,
+  decoderGeneration: 0,
 }));
 
 /** Live, readonly view of the camera session. */
