@@ -84,9 +84,10 @@ export const CameraView: Component<CameraViewProps> = (props) => {
           size={3}
           variant="outline"
           color="neutral"
+          radius="full"
           onClick={() => props.onCancel()}
         >
-          <IconClose width="20" height="20" aria-hidden="true" />
+          <IconClose width="24" height="24" aria-hidden="true" />
         </IconButton>
 
         <Show when={props.torchSupported}>
@@ -98,15 +99,16 @@ export const CameraView: Component<CameraViewProps> = (props) => {
             size={3}
             variant="outline"
             color={props.torchOn ? 'accent' : 'neutral'}
+            radius="full"
             onClick={() => props.onToggleTorch()}
           >
             <Show
               when={props.torchOn}
               fallback={
-                <IconFlashlightOff width="20" height="20" aria-hidden="true" />
+                <IconFlashlightOff width="24" height="24" aria-hidden="true" />
               }
             >
-              <IconFlashlight width="20" height="20" aria-hidden="true" />
+              <IconFlashlight width="24" height="24" aria-hidden="true" />
             </Show>
           </IconButton>
         </Show>
