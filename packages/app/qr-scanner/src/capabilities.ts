@@ -139,6 +139,17 @@ export const setTorch = async (
 };
 
 /**
+ * Fire a haptic pulse as tactile confirmation of a recognized code.
+ * Guards on the Vibration API, which desktop browsers and iOS Safari
+ * don't implement — a silent no-op there rather than a thrown call.
+ */
+export const vibrate = (pattern: VibratePattern): void => {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate(pattern);
+  }
+};
+
+/**
  * Collapse the browser's assorted `getUserMedia` rejections into a
  * {@link CameraErrorKind}. `DOMException` names are the stable signal
  * here — messages are localized and vary by engine.

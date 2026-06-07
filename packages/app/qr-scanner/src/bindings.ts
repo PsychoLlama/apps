@@ -8,6 +8,7 @@ import {
   stopStream,
   supportsTorch,
   teardownScanner,
+  vibrate,
 } from './capabilities';
 import { createDecoder } from './decoder';
 import { scannerStore, type ScanResult } from './store';
@@ -98,17 +99,21 @@ export const attachDecoder = defineAction(
   },
 );
 
+/** A short haptic pulse (ms) confirming a recognized code. */
+const SCAN_HAPTIC_MS = 40;
+
 /**
- * Record a recognized code and emit the one recognition log we keep —
- * centralized here so it fires once per hit regardless of caller. We log
- * the `format` (e.g. `"QR_CODE"`), never the decoded payload: in keeping
- * with the app's "nothing leaves your device" promise, the contents stay
- * off every diagnostic surface.
+ * Record a recognized code, then buzz and emit the one recognition log we
+ * keep — both centralized here so they fire once per hit regardless of
+ * caller. We log the `format` (e.g. `"QR_CODE"`), never the decoded
+ * payload: in keeping with the app's "nothing leaves your device"
+ * promise, the contents stay off every diagnostic surface.
  */
 export const recordScan = defineAction(
   [scannerStore],
   (state, result: ScanResult) => {
     state.result = result;
+    vibrate(SCAN_HAPTIC_MS);
     logger.info('Recognized a code.', { format: result.format });
   },
 );
