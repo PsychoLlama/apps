@@ -26,9 +26,6 @@ afterEach(() => {
 /** A fresh, live signal — the common case where the loop hasn't torn down. */
 const liveSignal = () => new AbortController().signal;
 
-/** Flush pending microtasks so a late decode's continuation can run. */
-const flush = () => new Promise((resolve) => setTimeout(resolve));
-
 describe('createFrameSampler', () => {
   it('reports a decoded result and signals a hit', async () => {
     vi.mocked(requestDecode).mockResolvedValue(result);
@@ -218,11 +215,13 @@ describe('startCaptureLoop', () => {
 
   it('drops a hit whose decode resolves after teardown', async () => {
     let settle!: (decoded: ScanResult | null) => void;
-    vi.mocked(requestDecode).mockReturnValue(
-      new Promise((resolve) => {
-        settle = resolve;
-      }),
-    );
+    // Hold the very promise the sampler awaits, so the test can await it
+    // too — the sampler's continuation is chained ahead of ours, so once
+    // this resolves its hit-or-skip has already run. No timer guesswork.
+    const decode = new Promise<ScanResult | null>((resolve) => {
+      settle = resolve;
+    });
+    vi.mocked(requestDecode).mockReturnValue(decode);
     const onResult = vi.fn();
     const { video, fire } = rvfcVideo();
 
@@ -232,7 +231,7 @@ describe('startCaptureLoop', () => {
 
     unsubscribe(); // teardown while the decode is still in flight
     settle(result); // the verdict lands after the loop is gone
-    await flush();
+    await decode;
 
     expect(onResult).not.toHaveBeenCalled();
   });
