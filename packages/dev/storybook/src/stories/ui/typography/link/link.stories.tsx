@@ -55,6 +55,7 @@ const meta = {
       options: ['accent', 'neutral'],
     },
     highContrast: { control: 'boolean' },
+    external: { control: 'boolean' },
     children: { control: 'text' },
     ...trimArgTypes,
     ...truncateArgTypes,
@@ -109,6 +110,28 @@ export const Overview: Story = gallery({
           {color}
         </Demo>
       )),
+    },
+    {
+      // `external` renders a native `<a>` so the router doesn't resolve
+      // the href — required for other origins and `mailto:` / `tel:`.
+      title: 'External',
+      items: [
+        <Demo
+          {...defaults}
+          external
+          href="https://example.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          https://example.com
+        </Demo>,
+        <Demo {...defaults} external href="mailto:hi@example.com">
+          hi@example.com
+        </Demo>,
+        <Demo {...defaults} external href="tel:+15551234567">
+          +1 (555) 123-4567
+        </Demo>,
+      ],
     },
   ],
 });
