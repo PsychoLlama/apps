@@ -1,6 +1,9 @@
 import { onCleanup, onMount, Show, type Component } from 'solid-js';
 import { useEffect } from '@lib/state';
 import { Button, Flex, Grid } from '@lib/ui';
+import IconClose from 'virtual:icons/mdi/close';
+import IconFlashlight from 'virtual:icons/mdi/flashlight';
+import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
 import { finishScanEffect } from '../bindings';
 import { startCaptureLoop } from '../capture-loop';
 import { scanner } from '../store';
@@ -78,10 +81,11 @@ export const CameraView: Component<CameraViewProps> = (props) => {
           testId="cancel-scanning"
           class={css.centerControl}
           size={3}
-          variant="surface"
+          variant="outline"
           color="neutral"
           onClick={() => props.onCancel()}
         >
+          <IconClose width="20" height="20" aria-hidden="true" />
           Cancel
         </Button>
 
@@ -91,10 +95,18 @@ export const CameraView: Component<CameraViewProps> = (props) => {
             class={css.endControl}
             aria-pressed={props.torchOn}
             size={3}
-            variant="surface"
+            variant="outline"
             color={props.torchOn ? 'accent' : 'neutral'}
             onClick={() => props.onToggleTorch()}
           >
+            <Show
+              when={props.torchOn}
+              fallback={
+                <IconFlashlightOff width="20" height="20" aria-hidden="true" />
+              }
+            >
+              <IconFlashlight width="20" height="20" aria-hidden="true" />
+            </Show>
             Flash
           </Button>
         </Show>
