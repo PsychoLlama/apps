@@ -2,11 +2,10 @@
  * Link component.
  *
  * Ported from Radix UI Themes Link. Renders `<A>` from `@solidjs/router`
- * for client-side routing, or a native `<a>` when `external` is set — for
- * destinations the router must not resolve (other origins, and
- * non-navigational schemes like `mailto:` / `tel:`, which the router would
- * otherwise mangle into in-app paths). Only supports accent and neutral
- * colors.
+ * for client-side routing, or a native `<a>` when `native` is set — to skip
+ * the router's path resolution for destinations that aren't in-app routes
+ * (schemeless URIs like `mailto:` / `tel:`, which the router would otherwise
+ * mangle into in-app paths). Only supports accent and neutral colors.
  *
  * @see https://www.radix-ui.com/themes/docs/components/link
  */
@@ -67,12 +66,12 @@ export interface LinkProps
   /** Use high-contrast text for stronger emphasis. @default false */
   highContrast?: boolean;
   /**
-   * Render a native `<a>` instead of the router link, for destinations the
-   * router shouldn't resolve — other origins, and non-navigational schemes
-   * like `mailto:` / `tel:`. Pair with `target` / `rel` as needed; those
-   * pass straight through. @default false
+   * Render a native `<a>` instead of the router link, skipping the router's
+   * path resolution. Required for schemeless URIs like `mailto:` / `tel:`,
+   * which the router would otherwise resolve into in-app paths. Pair with
+   * `target` / `rel` as needed; those pass straight through. @default false
    */
-  external?: boolean;
+  native?: boolean;
 }
 
 /** Inline navigation link for in-app routing. */
@@ -82,7 +81,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       underline: 'auto' as const,
       color: 'accent' as const,
       highContrast: false,
-      external: false,
+      native: false,
     },
     rawProps,
   );
@@ -94,7 +93,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     'underline',
     'color',
     'highContrast',
-    'external',
+    'native',
     'class',
     'children',
     ...trimPropKeys,
@@ -130,7 +129,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
 
   return (
     <Dynamic
-      component={local.external ? 'a' : A}
+      component={local.native ? 'a' : A}
       class={className()}
       data-testid={tid.testId}
       {...skeletonProps}

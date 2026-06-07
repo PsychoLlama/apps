@@ -55,7 +55,7 @@ const meta = {
       options: ['accent', 'neutral'],
     },
     highContrast: { control: 'boolean' },
-    external: { control: 'boolean' },
+    native: { control: 'boolean' },
     children: { control: 'text' },
     ...trimArgTypes,
     ...truncateArgTypes,
@@ -112,23 +112,23 @@ export const Overview: Story = gallery({
       )),
     },
     {
-      // `external` renders a native `<a>` so the router doesn't resolve
-      // the href — required for other origins and `mailto:` / `tel:`.
-      title: 'External',
+      // `native` renders a native `<a>` so the router doesn't resolve the
+      // href — required for schemeless URIs like `mailto:` / `tel:`.
+      title: 'Native',
       items: [
         <Demo
           {...defaults}
-          external
+          native
           href="https://example.com"
           target="_blank"
           rel="noopener noreferrer"
         >
           https://example.com
         </Demo>,
-        <Demo {...defaults} external href="mailto:hi@example.com">
+        <Demo {...defaults} native href="mailto:hi@example.com">
           hi@example.com
         </Demo>,
-        <Demo {...defaults} external href="tel:+15551234567">
+        <Demo {...defaults} native href="tel:+15551234567">
           +1 (555) 123-4567
         </Demo>,
       ],

@@ -66,7 +66,7 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
                 <Show when={linkFor(detail.value)} fallback={detail.value}>
                   {(link) => (
                     <Link
-                      external
+                      native
                       href={link().href}
                       target={link().newTab ? '_blank' : undefined}
                       rel={link().newTab ? 'noopener noreferrer' : undefined}
