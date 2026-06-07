@@ -5,8 +5,9 @@ import type { DecodeRequest, ReadyMessage } from './decoder';
 import type { ScanResult } from './store';
 
 // The package is typed for the DOM, so the global `self` reads as a
-// `Window`. That's fine for our two touchpoints — `postMessage(data)`
-// (no transfer back) and `onmessage` — which share the worker's shape.
+// `Window`. That's fine for our touchpoints — `self.postMessage` (the
+// one-shot `ready` handshake), `onmessage`, and the per-request reply
+// `port` — which share the worker's shape.
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -52,7 +53,7 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
 
 self.onmessage = ({ data }: MessageEvent<DecodeRequest>) => {
   void ready.then(() => {
-    const { bitmap } = data;
+    const { bitmap, port } = data;
     let result: ScanResult | null = null;
     try {
       result = decodeFrame(bitmap);
@@ -68,6 +69,9 @@ self.onmessage = ({ data }: MessageEvent<DecodeRequest>) => {
     } finally {
       bitmap.close();
     }
-    self.postMessage(result);
+    // Reply on this request's private port, then close our end — the
+    // verdict reaches only the frame that asked for it.
+    port.postMessage(result);
+    port.close();
   });
 };
