@@ -27,6 +27,9 @@ export const processor: LogProcessor = createLogCollector({
     ? consoleBackend
     : createEnvironmentFilter({
         processor: consoleBackend,
+        // In dev, force everything on — no `debug` localStorage pattern
+        // required. In prod, fall back to it (silent unless set).
+        pattern: import.meta.env.DEV ? '*' : undefined,
         defaultPattern: '',
       }),
 });

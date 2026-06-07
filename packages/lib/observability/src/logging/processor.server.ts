@@ -14,6 +14,9 @@ export const processor: LogProcessor = createLogCollector({
   fallback: filter(
     () => NODE_ENV !== 'test',
     createEnvironmentFilter({
+      // In dev, force everything on — no `DEBUG` pattern required. In
+      // prod, fall back to the env var (silent unless explicitly set).
+      pattern: import.meta.env.DEV ? '*' : undefined,
       defaultPattern: '',
       processor: isColorTerminal
         ? createAnsiTerminalBackend()
