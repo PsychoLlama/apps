@@ -1,6 +1,5 @@
 import init, { decode, rgba_to_luma } from '@lib/qr-scanner';
 import { createLogger } from '@lib/observability';
-import { fitDimensions } from './frame-fit';
 import type { DecodeRequest, ReadyMessage } from './decoder';
 import type { ScanResult } from './store';
 
@@ -23,14 +22,14 @@ const ready: Promise<void> = init().then(() => {
 });
 
 // One canvas for the worker's lifetime, resized lazily to each frame's
-// fitted dimensions. `willReadFrequently` keeps the backing store in CPU
+// dimensions. `willReadFrequently` keeps the backing store in CPU
 // memory — we read every pixel back each frame, so GPU upload churn is
 // pure overhead.
 let canvas: OffscreenCanvas | undefined;
 let context: OffscreenCanvasRenderingContext2D | null = null;
 
 const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
-  const { width, height } = fitDimensions(bitmap.width, bitmap.height);
+  const { width, height } = bitmap;
 
   if (!canvas) {
     canvas = new OffscreenCanvas(width, height);
@@ -42,10 +41,10 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
   }
   if (!context) return null;
 
-  // Downscale the whole frame into the canvas — no source crop. The
-  // reticle is a UI gate, not a scan region, so we decode everything in
-  // view and leave any match-location mapping a single uniform scale.
-  context.drawImage(bitmap, 0, 0, width, height);
+  // Decode the whole frame at its native resolution — no downscale, no
+  // crop. The reticle is a UI gate, not a scan region, so we hand rxing
+  // everything in view at full detail.
+  context.drawImage(bitmap, 0, 0);
   const { data } = context.getImageData(0, 0, width, height);
   const scan = decode(rgba_to_luma(data), width, height);
   return scan ? { text: scan.text, format: scan.format } : null;
