@@ -1,7 +1,7 @@
 import MediaDevices, { supportsMediaDevices } from 'media-devices';
 import type { DeepReadonly } from '@lib/state';
 import { terminateDecoder } from './decoder';
-import type { CameraErrorKind, ScannerState } from './store';
+import type { CameraErrorKind, ScannerState, ScanResult } from './store';
 
 /**
  * `torch` is a constrainable property from the MediaStream Image Capture
@@ -99,6 +99,21 @@ export const openCameraSession = async (
  */
 export const stopStream = (state: DeepReadonly<ScannerState>): void => {
   state.stream?.current.getTracks().forEach((track) => track.stop());
+};
+
+/**
+ * Release the camera on a recognized hit and forward the result. Stopping
+ * the stream here — rather than holding it open behind the result surface —
+ * keeps the camera and its on-air indicator from lingering with no visible
+ * stop control. The result passes straight through so the success action
+ * can record it.
+ */
+export const stopStreamForResult = (
+  state: DeepReadonly<ScannerState>,
+  result: ScanResult,
+): ScanResult => {
+  stopStream(state);
+  return result;
 };
 
 /**

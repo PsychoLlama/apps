@@ -6,7 +6,7 @@ import {
   Switch,
   type Component,
 } from 'solid-js';
-import { useAction, useEffect } from '@lib/state';
+import { useEffect } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
 import { Button, Callout, Code, Container, Flex, Heading, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
@@ -14,7 +14,6 @@ import IconProgressWrench from 'virtual:icons/mdi/progress-wrench';
 import IconRefresh from 'virtual:icons/mdi/refresh';
 import { CameraView } from './components/camera-view';
 import {
-  resumeScanning,
   shutdownScannerEffect,
   startCameraEffect,
   startDecodingEffect,
@@ -128,7 +127,6 @@ export const QrScanner = () => {
   const toggleTorch = useEffect(toggleTorchEffect);
   const startDecoding = useEffect(startDecodingEffect);
   const shutdown = useEffect(shutdownScannerEffect);
-  const resume = useAction(resumeScanning);
 
   // Preload the decoder worker + wasm across the whole scanner page so
   // the module is warm by the time the camera goes live; it outlives
@@ -143,7 +141,7 @@ export const QrScanner = () => {
 
   return (
     <Show
-      when={scanner.status === 'streaming' && !scanner.result && scanner.stream}
+      when={scanner.status === 'streaming' && scanner.stream}
       fallback={
         <>
           <SiteHeader title="Scanner" />
@@ -152,7 +150,10 @@ export const QrScanner = () => {
             <Switch>
               <Match when={scanner.result}>
                 {(result) => (
-                  <ScanResult text={result().text} onRetry={() => resume()} />
+                  <ScanResult
+                    text={result().text}
+                    onRetry={() => void startCamera()}
+                  />
                 )}
               </Match>
               <Match when={scanner.status === 'error' && scanner.error}>

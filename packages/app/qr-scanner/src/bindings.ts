@@ -6,6 +6,7 @@ import {
   openCameraSession,
   setTorch,
   stopStream,
+  stopStreamForResult,
   supportsTorch,
   teardownScanner,
   vibrate,
@@ -15,10 +16,11 @@ import { scannerStore, type ScanResult } from './store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
-/** Enter the requesting state, bumping the generation and clearing any prior error. */
+/** Enter the requesting state, bumping the generation and clearing any prior error or result. */
 export const beginRequest = defineAction([scannerStore], (state) => {
   state.status = 'requesting';
   state.error = null;
+  state.result = null;
   state.generation += 1;
 });
 
@@ -103,15 +105,21 @@ export const attachDecoder = defineAction(
 const SCAN_HAPTIC_MS = 40;
 
 /**
- * Record a recognized code, then buzz and emit the one recognition log we
- * keep — both centralized here so they fire once per hit regardless of
- * caller. We log the `format` (e.g. `"QR_CODE"`), never the decoded
- * payload: in keeping with the app's "nothing leaves your device"
- * promise, the contents stay off every diagnostic surface.
+ * Record a recognized code and park the session on the result: the stream
+ * is already stopped by {@link finishScanEffect}, so drop it and return to
+ * idle (keeping `result` set) for the result surface to take over. Buzzes
+ * and emits the one recognition log we keep — both centralized here so
+ * they fire once per hit regardless of caller. We log the `format` (e.g.
+ * `"QR_CODE"`), never the decoded payload: in keeping with the app's
+ * "nothing leaves your device" promise, the contents stay off every
+ * diagnostic surface.
  */
 export const recordScan = defineAction(
   [scannerStore],
   (state, result: ScanResult) => {
+    state.status = 'idle';
+    state.stream = null;
+    state.torch = { supported: false, on: false };
     state.result = result;
     vibrate(SCAN_HAPTIC_MS);
     logger.info('Recognized a code.', { format: result.format });
@@ -119,13 +127,22 @@ export const recordScan = defineAction(
 );
 
 /**
- * Drop the last result so the live stream takes over again. The stream is
- * still attached behind the result view, so clearing it remounts the
- * camera feed and restarts the capture loop — no fresh permission prompt.
+ * Finalize a scan on the first hit: stop the live stream — releasing the
+ * camera and its recording indicator — then hand off to {@link recordScan}
+ * to park on the result. Holding the camera open behind the result surface
+ * would leave the hardware (and its on-air indicator) running with no
+ * visible stop control, so the hit itself releases it; "Scan again"
+ * reopens the camera from scratch. The physical stop lives here in the
+ * effect, mirroring {@link stopCameraEffect}; the state transition is the
+ * action.
  */
-export const resumeScanning = defineAction([scannerStore], (state) => {
-  state.result = null;
-});
+export const finishScanEffect = defineEffect(
+  [scannerStore],
+  stopStreamForResult,
+  {
+    onSuccess: recordScan,
+  },
+);
 
 /**
  * Open the camera and surface the result through the session lifecycle:
