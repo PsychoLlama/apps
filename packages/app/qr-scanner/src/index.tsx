@@ -1,18 +1,11 @@
-import {
-  Match,
-  onCleanup,
-  onMount,
-  Show,
-  Switch,
-  type Component,
-} from 'solid-js';
+import { Match, onCleanup, onMount, Show, Switch } from 'solid-js';
 import { useEffect } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
-import { Button, Callout, Code, Container, Flex, Heading, Text } from '@lib/ui';
-import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
-import IconProgressWrench from 'virtual:icons/mdi/progress-wrench';
-import IconRefresh from 'virtual:icons/mdi/refresh';
+import { Container } from '@lib/ui';
 import { CameraView } from './components/camera-view';
+import { Landing } from './components/landing';
+import { ScannerError } from './components/scanner-error';
+import { ScanResult } from './components/scan-result';
 import {
   shutdownScannerEffect,
   startCameraEffect,
@@ -20,99 +13,7 @@ import {
   stopCameraEffect,
   toggleTorchEffect,
 } from './bindings';
-import { scanner, type CameraErrorKind } from './store';
-
-/** User-facing copy for each failure mode. */
-const ERROR_MESSAGES: Record<CameraErrorKind, string> = {
-  'permission-denied':
-    'Camera access was blocked. Allow the camera in your browser settings, then try again.',
-  'no-camera': 'No camera found. Connect a camera and try again.',
-  unsupported: "This browser can't reach the camera. Try another browser.",
-  unknown: 'Something went wrong starting the camera. Try again.',
-};
-
-/** Landing pitch + the primary action that opens the camera. */
-const Landing: Component<{ requesting: boolean; onStart: () => void }> = (
-  props,
-) => (
-  <Flex as="div" direction="column" align="center" gap={5}>
-    <Flex as="header" direction="column" align="center" gap={2}>
-      <Heading as="h1" size={6} weight="medium" align="center">
-        Scan a QR code
-      </Heading>
-      <Text as="p" size={2} color="lowContrast" align="center">
-        Point your camera at a QR code. Nothing leaves your device.
-      </Text>
-    </Flex>
-
-    <Button
-      testId="start-scanning"
-      size={3}
-      disabled={props.requesting}
-      onClick={() => props.onStart()}
-    >
-      <IconQrcodeScan width="20" height="20" aria-hidden="true" />
-      {props.requesting ? 'Requesting camera…' : 'Start scanning'}
-    </Button>
-
-    <Callout color="warning" icon={<IconProgressWrench />}>
-      Work in progress.
-    </Callout>
-  </Flex>
-);
-
-/** Failure surface — swaps in for the landing pitch when a request fails. */
-const ScannerError: Component<{
-  kind: CameraErrorKind;
-  onRetry: () => void;
-}> = (props) => (
-  <Flex as="div" direction="column" align="center" gap={5}>
-    <Flex as="header" direction="column" align="center" gap={2}>
-      <Heading as="h1" size={6} weight="medium" align="center">
-        Camera unavailable
-      </Heading>
-      <Text
-        as="p"
-        size={2}
-        color="lowContrast"
-        align="center"
-        selectable={false}
-      >
-        {ERROR_MESSAGES[props.kind]}
-      </Text>
-    </Flex>
-
-    {/* Retrying an unsupported browser is futile — only offer it when it might help. */}
-    <Show when={props.kind !== 'unsupported'}>
-      <Button testId="retry-scanning" size={3} onClick={() => props.onRetry()}>
-        <IconRefresh width="20" height="20" aria-hidden="true" />
-        Try again
-      </Button>
-    </Show>
-  </Flex>
-);
-
-/** Recognized-code surface — shows the raw payload with a control to scan again. */
-const ScanResult: Component<{ text: string; onRetry: () => void }> = (
-  props,
-) => (
-  <Flex as="div" direction="column" align="center" gap={5}>
-    <Flex as="header" direction="column" align="center" gap={2}>
-      <Heading as="h1" size={6} weight="medium" align="center">
-        Code recognized
-      </Heading>
-    </Flex>
-
-    <Code size={2} wrap="wrap">
-      {props.text}
-    </Code>
-
-    <Button testId="scan-again" size={3} onClick={() => props.onRetry()}>
-      <IconRefresh width="20" height="20" aria-hidden="true" />
-      Scan again
-    </Button>
-  </Flex>
-);
+import { scanner } from './store';
 
 /**
  * Scanner app. Drives a camera session: the landing page opens the feed,
