@@ -1,6 +1,6 @@
 import { onCleanup, onMount, Show, type Component } from 'solid-js';
 import { useEffect } from '@lib/state';
-import { Button, Flex, Grid } from '@lib/ui';
+import { Flex, Grid, IconButton } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
 import IconFlashlight from 'virtual:icons/mdi/flashlight';
 import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
@@ -77,22 +77,23 @@ export const CameraView: Component<CameraViewProps> = (props) => {
       </Flex>
 
       <Grid as="div" testId="scanner-controls" class={css.controls}>
-        <Button
+        <IconButton
           testId="cancel-scanning"
           class={css.centerControl}
+          aria-label="Cancel"
           size={3}
           variant="outline"
           color="neutral"
           onClick={() => props.onCancel()}
         >
           <IconClose width="20" height="20" aria-hidden="true" />
-          Cancel
-        </Button>
+        </IconButton>
 
         <Show when={props.torchSupported}>
-          <Button
+          <IconButton
             testId="toggle-torch"
             class={css.endControl}
+            aria-label="Toggle flash"
             aria-pressed={props.torchOn}
             size={3}
             variant="outline"
@@ -107,8 +108,7 @@ export const CameraView: Component<CameraViewProps> = (props) => {
             >
               <IconFlashlight width="20" height="20" aria-hidden="true" />
             </Show>
-            Flash
-          </Button>
+          </IconButton>
         </Show>
       </Grid>
     </Flex>
