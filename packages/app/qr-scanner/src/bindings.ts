@@ -114,6 +114,15 @@ export const recordScan = defineAction(
 );
 
 /**
+ * Drop the last result so the live stream takes over again. The stream is
+ * still attached behind the result view, so clearing it remounts the
+ * camera feed and restarts the capture loop — no fresh permission prompt.
+ */
+export const resumeScanning = defineAction([scannerStore], (state) => {
+  state.result = null;
+});
+
+/**
  * Open the camera and surface the result through the session lifecycle:
  * `requesting` on start, `streaming` on success, `error` on failure. The
  * effect reads the store so {@link openCameraSession} can detect

@@ -6,14 +6,15 @@ import {
   Switch,
   type Component,
 } from 'solid-js';
-import { useEffect } from '@lib/state';
+import { useAction, useEffect } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
-import { Button, Callout, Container, Flex, Heading, Text } from '@lib/ui';
+import { Button, Callout, Code, Container, Flex, Heading, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconProgressWrench from 'virtual:icons/mdi/progress-wrench';
 import IconRefresh from 'virtual:icons/mdi/refresh';
 import { CameraView } from './components/camera-view';
 import {
+  resumeScanning,
   shutdownScannerEffect,
   startCameraEffect,
   startDecodingEffect,
@@ -56,9 +57,7 @@ const Landing: Component<{ requesting: boolean; onStart: () => void }> = (
     </Button>
 
     <Callout color="warning" icon={<IconProgressWrench />}>
-      <Text as="span" size={2}>
-        Detection works — on-screen results land in a follow-up.
-      </Text>
+      Work in progress.
     </Callout>
   </Flex>
 );
@@ -94,11 +93,34 @@ const ScannerError: Component<{
   </Flex>
 );
 
+/** Recognized-code surface — shows the raw payload with a control to scan again. */
+const ScanResult: Component<{ text: string; onRetry: () => void }> = (
+  props,
+) => (
+  <Flex as="div" direction="column" align="center" gap={5}>
+    <Flex as="header" direction="column" align="center" gap={2}>
+      <Heading as="h1" size={6} weight="medium" align="center">
+        Code recognized
+      </Heading>
+    </Flex>
+
+    <Code size={2} wrap="wrap">
+      {props.text}
+    </Code>
+
+    <Button testId="scan-again" size={3} onClick={() => props.onRetry()}>
+      <IconRefresh width="20" height="20" aria-hidden="true" />
+      Scan again
+    </Button>
+  </Flex>
+);
+
 /**
  * Scanner app. Drives a camera session: the landing page opens the feed,
  * which then takes over the viewport full-bleed with a cancel control.
- * Errors swap the landing copy for a recovery message. Decoding the QR
- * code itself is still out of scope — this wires up the camera only.
+ * Errors swap the landing copy for a recovery message. On a recognized
+ * code the result surface replaces the feed, showing the raw payload with
+ * a control to scan again.
  */
 export const QrScanner = () => {
   const startCamera = useEffect(startCameraEffect);
@@ -106,6 +128,7 @@ export const QrScanner = () => {
   const toggleTorch = useEffect(toggleTorchEffect);
   const startDecoding = useEffect(startDecodingEffect);
   const shutdown = useEffect(shutdownScannerEffect);
+  const resume = useAction(resumeScanning);
 
   // Preload the decoder worker + wasm across the whole scanner page so
   // the module is warm by the time the camera goes live; it outlives
@@ -120,13 +143,18 @@ export const QrScanner = () => {
 
   return (
     <Show
-      when={scanner.status === 'streaming' && scanner.stream}
+      when={scanner.status === 'streaming' && !scanner.result && scanner.stream}
       fallback={
         <>
           <SiteHeader title="Scanner" />
 
           <Container as="main" size={1} px={4} py={6}>
             <Switch>
+              <Match when={scanner.result}>
+                {(result) => (
+                  <ScanResult text={result().text} onRetry={() => resume()} />
+                )}
+              </Match>
               <Match when={scanner.status === 'error' && scanner.error}>
                 {(kind) => (
                   <ScannerError
