@@ -98,13 +98,33 @@ export const corners = styleVariants({
 });
 
 /**
- * Overlay rail for the feed's controls, pinned to the bottom-center
- * within thumb reach. Sits above the video and clears the home-bar /
- * notch via the safe-area inset.
+ * Overlay rail for the feed's controls, pinned to the bottom within
+ * thumb reach. Sits above the video and clears the home-bar / notch via
+ * the safe-area inset.
+ *
+ * A three-track grid, not a centered flex: the primary control lives in
+ * the middle `auto` track and the equal `1fr` flanks hold it at the
+ * viewport's optical center regardless of how wide the side controls'
+ * labels grow — or whether a side control is mounted at all. A flex
+ * would only center the *cluster*, letting an uneven pair drag the
+ * middle button off-axis.
  */
 export const controls = style({
   position: 'absolute',
   insetInline: 0,
   bottom: `calc(${space[6]} + env(safe-area-inset-bottom))`,
-  justifyContent: 'center',
+  gridTemplateColumns: '1fr auto 1fr',
+  alignItems: 'center',
+  columnGap: space[4],
 });
+
+/** The primary control, held dead-center by the flanking tracks. */
+export const centerControl = style({ gridColumn: 2 });
+
+/**
+ * The trailing side control (the torch). Sits in the right track, hugged
+ * up against the center button rather than flung to the viewport edge.
+ * The leading track stays free for the planned upload-from-photos
+ * control, which will mirror this with `justifySelf: 'end'`.
+ */
+export const endControl = style({ gridColumn: 3, justifySelf: 'start' });
