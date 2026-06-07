@@ -1,5 +1,5 @@
 import { style, styleVariants } from '@vanilla-extract/css';
-import { accent, black, space } from '@lib/design';
+import { accent, black, breakpoint, space } from '@lib/design';
 
 /**
  * Full-viewport stage for the live feed. Fixed over the page on an
@@ -115,7 +115,12 @@ export const controls = style({
   bottom: `calc(${space[6]} + env(safe-area-inset-bottom))`,
   gridTemplateColumns: '1fr auto 1fr',
   alignItems: 'center',
-  columnGap: space[4],
+  // Snug on a phone where the rail is cramped; loosens as the viewport
+  // earns the room.
+  columnGap: space[2],
+  '@media': {
+    [breakpoint.md]: { columnGap: space[5] },
+  },
 });
 
 /** The primary control, held dead-center by the flanking tracks. */
