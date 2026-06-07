@@ -28,8 +28,48 @@ const KIND_LABELS: Record<ScanKind, string> = {
   text: 'Text',
 };
 
-/** Whether a parsed value is a web URL worth rendering as a hyperlink. */
+/** A parsed value resolved to an anchor target. */
+interface DetailLink {
+  /** The `href` to navigate to. */
+  href: string;
+  /** Web links open in a new tab; `mailto:`/`tel:` invoke a handler. */
+  external: boolean;
+}
+
 const isWebLink = (value: string) => /^https?:\/\//i.test(value);
+
+const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+/**
+ * Heuristic phone test. Deliberately conservative: rejects values that
+ * carry letters (VINs, "100 m" altitudes), decimals (geo coordinates),
+ * or an ISO date (all-day calendar events) — each of which is otherwise
+ * digit-heavy enough to look dial-able. What's left is 7–15 digits.
+ */
+const isPhone = (value: string) => {
+  if (/[a-z]/i.test(value)) return false;
+  if (value.includes('.')) return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const digits = value.replace(/\D/g, '');
+  return digits.length >= 7 && digits.length <= 15;
+};
+
+/**
+ * Resolve a parsed value to a hyperlink, or `undefined` to render it as
+ * plain text. Value-based by design (a heuristic, not keyed to the parsed
+ * field), so a URL/email/phone is linked wherever it appears.
+ */
+const linkFor = (value: string): DetailLink | undefined => {
+  const trimmed = value.trim();
+  if (isWebLink(trimmed)) return { href: trimmed, external: true };
+  if (isEmail(trimmed)) return { href: `mailto:${trimmed}`, external: false };
+  if (isPhone(trimmed))
+    return {
+      href: `tel:${trimmed.replace(/[^\d+]/g, '')}`,
+      external: false,
+    };
+  return undefined;
+};
 
 interface ScanResultProps {
   /** The raw payload decoded from the recognized code. */
@@ -68,15 +108,17 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
             <DataListItem>
               <DataListLabel>{detail.label}</DataListLabel>
               <DataListValue>
-                <Show when={isWebLink(detail.value)} fallback={detail.value}>
-                  <Link
-                    href={detail.value}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    testId="scan-link"
-                  >
-                    {detail.value}
-                  </Link>
+                <Show when={linkFor(detail.value)} fallback={detail.value}>
+                  {(link) => (
+                    <Link
+                      href={link().href}
+                      target={link().external ? '_blank' : undefined}
+                      rel={link().external ? 'noopener noreferrer' : undefined}
+                      testId="scan-link"
+                    >
+                      {detail.value}
+                    </Link>
+                  )}
                 </Show>
               </DataListValue>
             </DataListItem>
