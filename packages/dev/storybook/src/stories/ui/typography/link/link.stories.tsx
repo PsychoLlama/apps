@@ -111,28 +111,6 @@ export const Overview: Story = gallery({
         </Demo>
       )),
     },
-    {
-      // `native` renders a native `<a>` so the router doesn't resolve the
-      // href — required for schemeless URIs like `mailto:` / `tel:`.
-      title: 'Native',
-      items: [
-        <Demo
-          {...defaults}
-          native
-          href="https://example.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          https://example.com
-        </Demo>,
-        <Demo {...defaults} native href="mailto:hi@example.com">
-          hi@example.com
-        </Demo>,
-        <Demo {...defaults} native href="tel:+15551234567">
-          +1 (555) 123-4567
-        </Demo>,
-      ],
-    },
   ],
 });
 
