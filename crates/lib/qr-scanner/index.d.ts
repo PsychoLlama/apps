@@ -16,21 +16,17 @@ export class Scan {
 }
 
 /**
- * Convert a canvas `ImageData.data` RGBA buffer into the 8-bit
- * luminance buffer {@link decode} expects (`width × height` bytes).
+ * Decode the first barcode in a `width × height` canvas `ImageData.data`
+ * RGBA buffer. Resolves to `undefined` when nothing decodes — the common
+ * "no code in frame" case, not an error.
  *
- * Accepts `Uint8ClampedArray` (the type of `ImageData.data`) as well as
- * `Uint8Array` — the wasm glue reads either byte-shaped array.
- */
-export function rgba_to_luma(rgba: Uint8Array | Uint8ClampedArray): Uint8Array;
-
-/**
- * Decode the first barcode in a `width × height` 8-bit luminance buffer.
- * Resolves to `undefined` when nothing decodes — the common "no code in
- * frame" case, not an error.
+ * The RGBA → luma conversion the readers need runs internally, so the
+ * host hands over the raw frame bytes directly. Accepts `Uint8ClampedArray`
+ * (the type of `ImageData.data`) as well as `Uint8Array` — the wasm glue
+ * reads either byte-shaped array.
  */
 export function decode(
-  luma: Uint8Array,
+  rgba: Uint8Array | Uint8ClampedArray,
   width: number,
   height: number,
 ): Scan | undefined;
@@ -46,7 +42,7 @@ export type InitInput =
 /**
  * Instantiate the module. With no argument the glue fetches the sibling
  * `.wasm`; pass bytes/a module/URL to control loading yourself. Must
- * resolve before calling {@link decode} or {@link rgba_to_luma}.
+ * resolve before calling {@link decode}.
  */
 export default function init(
   module_or_path?:

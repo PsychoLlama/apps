@@ -1,8 +1,10 @@
 //! Wasm bindings over [`rxing`] (a pure-Rust ZXing port) for decoding
 //! QR codes from raw image data in the browser.
 //!
-//! Typical flow from the host: take a canvas `ImageData`, hand its RGBA
-//! bytes to [`rgba_to_luma`], then pass the luma buffer to [`decode`].
+//! Typical flow from the host: take a canvas `ImageData` and hand its
+//! RGBA bytes straight to [`decode`] — the RGBA → luma conversion the
+//! readers need happens internally, so the host never shuttles an
+//! intermediate luma buffer across the wasm boundary.
 
 use rxing::helpers;
 use wasm_bindgen::prelude::*;
@@ -38,14 +40,31 @@ impl Scan {
     }
 }
 
+/// Decode the first barcode in a `width × height` canvas
+/// `ImageData.data` RGBA buffer. Returns `None` when nothing decodes —
+/// the common "no code in frame" case, not an error.
+///
+/// The RGBA → luma conversion the readers need runs internally (see
+/// [`rgba_to_luma`]), so the host hands over the raw frame bytes and
+/// never materializes an intermediate luma buffer of its own.
+#[wasm_bindgen]
+pub fn decode(rgba: &[u8], width: u32, height: u32) -> Option<Scan> {
+    helpers::detect_in_luma(rgba_to_luma(rgba), width, height, None)
+        .ok()
+        .map(|r| Scan {
+            text: r.getText().to_owned(),
+            format: format!("{:?}", r.getBarcodeFormat()),
+        })
+}
+
 /// Convert a canvas `ImageData.data` RGBA buffer into the 8-bit
-/// luminance buffer rxing's readers expect.
+/// luminance buffer rxing's readers expect (`width × height` bytes).
 ///
 /// Uses the same integer-approximated `0.299R + 0.587G + 0.114B`
 /// weighting rxing uses internally, and treats fully transparent pixels
-/// as white. The returned buffer is `width × height` bytes.
-#[wasm_bindgen]
-pub fn rgba_to_luma(rgba: &[u8]) -> Vec<u8> {
+/// as white. Kept internal — the wasm surface exposes only [`decode`],
+/// which folds this conversion in.
+fn rgba_to_luma(rgba: &[u8]) -> Vec<u8> {
     let mut luma = Vec::with_capacity(rgba.len() / 4);
     for px in rgba.chunks_exact(4) {
         let (r, g, b, a) = (px[0] as u32, px[1] as u32, px[2] as u32, px[3]);
@@ -57,17 +76,4 @@ pub fn rgba_to_luma(rgba: &[u8]) -> Vec<u8> {
         });
     }
     luma
-}
-
-/// Decode the first barcode in a `width × height` 8-bit luminance buffer
-/// (see [`rgba_to_luma`]). Returns `None` when nothing decodes — the
-/// common "no code in frame" case, not an error.
-#[wasm_bindgen]
-pub fn decode(luma: &[u8], width: u32, height: u32) -> Option<Scan> {
-    helpers::detect_in_luma(luma.to_vec(), width, height, None)
-        .ok()
-        .map(|r| Scan {
-            text: r.getText().to_owned(),
-            format: format!("{:?}", r.getBarcodeFormat()),
-        })
 }
