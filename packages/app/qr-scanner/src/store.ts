@@ -1,4 +1,5 @@
 import { createStore, defineStore, type Ref } from '@lib/state';
+import type { Scan } from '@lib/qr-scanner';
 
 /**
  * Lifecycle of the camera session backing the scanner.
@@ -39,16 +40,13 @@ export interface TorchState {
 }
 
 /**
- * A decoded barcode, mirrored into state on recognition. Mirrors the
- * `@lib/qr-scanner` `Scan` shape, but as a plain (proxy-safe) object —
- * the wasm `Scan` instance never leaves the worker.
+ * A decoded barcode, mirrored into state on recognition. Derived from
+ * `@lib/qr-scanner`'s {@link Scan} so the two can't drift — but picked
+ * down to its plain data fields. `Scan` itself is a wasm handle (it owns
+ * `free()` and can't cross a `postMessage` boundary), so it stays in the
+ * worker; what we surface is this structured-clone-safe projection.
  */
-export interface ScanResult {
-  /** The decoded payload as text (UTF-8, charset-decoded by rxing). */
-  text: string;
-  /** The symbology rxing matched, e.g. `"QR_CODE"`. */
-  format: string;
-}
+export type ScanResult = Pick<Scan, 'text' | 'format'>;
 
 /** Camera session state for the scanner. */
 export interface ScannerState {

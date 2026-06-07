@@ -7,8 +7,9 @@ import {
   setTorch,
   stopStream,
   supportsTorch,
+  teardownScanner,
 } from './capabilities';
-import { createDecoder, terminateDecoder } from './decoder';
+import { createDecoder } from './decoder';
 import { scannerStore, type ScanResult } from './store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -40,9 +41,10 @@ export const setTorchOn = defineAction([scannerStore], (state, on: boolean) => {
 export const failCamera = defineAction(
   [scannerStore],
   (state, error: Error) => {
-    // A superseded request already had its state torn down by
-    // `abortRequest` (and a newer request may now be in flight), so leave
-    // state untouched — don't clobber it with a spurious error.
+    // A superseded request already had its state torn down — by a newer
+    // request, or by `endSession` on unmount — and a newer request may
+    // now be in flight, so leave state untouched rather than clobber it
+    // with a spurious error.
     if (error instanceof CameraAborted) return;
 
     state.status = 'error';
@@ -63,17 +65,21 @@ export const resetScanner = defineAction([scannerStore], (state) => {
 });
 
 /**
- * Abandon an in-flight request — used when the scanner unmounts while a
- * permission prompt is still open. Bumping the generation signals the
- * pending {@link openCameraSession} to stop its stream once it resolves
- * rather than store an orphaned, uncancellable camera.
+ * Tear the whole session down to idle in a single flush: drop the
+ * stream, clear the decoder reference and last result, reset the torch
+ * and error, and bump the generation. The bump matters when the scanner
+ * unmounts mid-prompt — it signals the pending {@link openCameraSession}
+ * to stop its stream once it resolves rather than store an orphaned,
+ * uncancellable camera. The matching physical teardown (stopping the
+ * stream, terminating the worker) runs in {@link shutdownScannerEffect}.
  */
-export const abortRequest = defineAction([scannerStore], (state) => {
+export const endSession = defineAction([scannerStore], (state) => {
   state.status = 'idle';
   state.stream = null;
   state.error = null;
   state.torch = { supported: false, on: false };
   state.result = null;
+  state.decoder = null;
   state.generation += 1;
 });
 
@@ -84,11 +90,6 @@ export const attachDecoder = defineAction(
     state.decoder = ref(worker);
   },
 );
-
-/** Drop the decoder reference after the worker is terminated. */
-export const clearDecoder = defineAction([scannerStore], (state) => {
-  state.decoder = null;
-});
 
 /**
  * Record a recognized code and emit the one recognition log we keep —
@@ -151,9 +152,15 @@ export const startDecodingEffect = defineEffect([scannerStore], createDecoder, {
   onSuccess: attachDecoder,
 });
 
-/** Terminate the decoder worker and drop the reference on page unmount. */
-export const stopDecodingEffect = defineEffect(
+/**
+ * Tear the scanner down on page unmount in one dispatch: release the
+ * camera stream (a no-op if none is open) and terminate the decoder
+ * worker, then reset state via {@link endSession}. Safe in any lifecycle
+ * state — each physical teardown step no-ops when its resource is absent,
+ * and the generation bump supersedes a request still pending mid-prompt.
+ */
+export const shutdownScannerEffect = defineEffect(
   [scannerStore],
-  terminateDecoder,
-  { onSuccess: clearDecoder },
+  teardownScanner,
+  { onSuccess: endSession },
 );

@@ -24,12 +24,11 @@ export interface DecodeRequest {
 export const createDecoder = (): Promise<Worker> =>
   new Promise((resolve) => {
     const worker = new DecoderWorker();
-    const onReady = ({ data }: MessageEvent<ReadyMessage>) => {
-      if (data?.type !== 'ready') return;
-      worker.removeEventListener('message', onReady);
-      resolve(worker);
-    };
-    worker.addEventListener('message', onReady);
+    // The worker's first message is always its `ready` handshake — it
+    // posts nothing else until handed a frame, which can't happen before
+    // this resolves. So a one-shot listener needs no type guard or manual
+    // teardown: `{ once: true }` removes it after that single message.
+    worker.addEventListener('message', () => resolve(worker), { once: true });
   });
 
 /** Terminate the decoder worker, if one is live. A no-op otherwise. */
@@ -48,10 +47,13 @@ export const requestDecode = (
   bitmap: ImageBitmap,
 ): Promise<ScanResult | null> =>
   new Promise((resolve) => {
-    const onMessage = ({ data }: MessageEvent<ScanResult | null>) => {
-      worker.removeEventListener('message', onMessage);
-      resolve(data);
-    };
-    worker.addEventListener('message', onMessage);
+    // One reply per request, and back-pressure keeps just one frame in
+    // flight — so a one-shot listener can't pick up a stale or crossed
+    // reply, and frees us from manual `removeEventListener`.
+    worker.addEventListener(
+      'message',
+      ({ data }: MessageEvent<ScanResult | null>) => resolve(data),
+      { once: true },
+    );
     worker.postMessage({ bitmap } satisfies DecodeRequest, [bitmap]);
   });

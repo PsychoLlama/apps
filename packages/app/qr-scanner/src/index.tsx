@@ -6,7 +6,7 @@ import {
   Switch,
   type Component,
 } from 'solid-js';
-import { useAction, useEffect } from '@lib/state';
+import { useEffect } from '@lib/state';
 import { SiteHeader } from '@lib/shell';
 import { Button, Callout, Container, Flex, Heading, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
@@ -14,11 +14,10 @@ import IconProgressWrench from 'virtual:icons/mdi/progress-wrench';
 import IconRefresh from 'virtual:icons/mdi/refresh';
 import { CameraView } from './components/camera-view';
 import {
-  abortRequest,
+  shutdownScannerEffect,
   startCameraEffect,
   startDecodingEffect,
   stopCameraEffect,
-  stopDecodingEffect,
   toggleTorchEffect,
 } from './bindings';
 import { scanner, type CameraErrorKind } from './store';
@@ -106,22 +105,18 @@ export const QrScanner = () => {
   const stopCamera = useEffect(stopCameraEffect);
   const toggleTorch = useEffect(toggleTorchEffect);
   const startDecoding = useEffect(startDecodingEffect);
-  const stopDecoding = useEffect(stopDecodingEffect);
-  const abort = useAction(abortRequest);
+  const shutdown = useEffect(shutdownScannerEffect);
 
   // Preload the decoder worker + wasm across the whole scanner page so
   // the module is warm by the time the camera goes live; it outlives
   // individual camera sessions and is torn down only on unmount.
   onMount(() => void startDecoding());
 
-  // Don't leave the camera running after we unmount. If a stream is live,
-  // stop it; if a request is still pending, abort it so the late-resolving
-  // stream gets stopped instead of orphaned. Always tear down the worker.
-  onCleanup(() => {
-    if (scanner.status === 'streaming') stopCamera();
-    else if (scanner.status === 'requesting') abort();
-    stopDecoding();
-  });
+  // Tear the whole page down in one dispatch on unmount: stop a live
+  // stream, supersede a still-pending request, and terminate the decoder
+  // worker. Safe in any state — each step no-ops when its resource is
+  // absent.
+  onCleanup(() => void shutdown());
 
   return (
     <Show

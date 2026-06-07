@@ -1,5 +1,6 @@
 import MediaDevices, { supportsMediaDevices } from 'media-devices';
 import type { DeepReadonly } from '@lib/state';
+import { terminateDecoder } from './decoder';
 import type { CameraErrorKind, ScannerState } from './store';
 
 /**
@@ -98,6 +99,17 @@ export const openCameraSession = async (
  */
 export const stopStream = (state: DeepReadonly<ScannerState>): void => {
   state.stream?.current.getTracks().forEach((track) => track.stop());
+};
+
+/**
+ * Release every resource a scanner session holds — the camera stream and
+ * the decoder worker — in one call, so page unmount tears the session
+ * down through a single effect. Safe in any lifecycle state: each step
+ * no-ops when its resource is absent.
+ */
+export const teardownScanner = (state: DeepReadonly<ScannerState>): void => {
+  stopStream(state);
+  terminateDecoder(state);
 };
 
 /**

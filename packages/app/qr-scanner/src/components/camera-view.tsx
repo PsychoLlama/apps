@@ -5,9 +5,8 @@ import IconClose from 'virtual:icons/mdi/close';
 import IconFlashlight from 'virtual:icons/mdi/flashlight';
 import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
 import { recordScan } from '../bindings';
-import { requestDecode } from '../decoder';
+import { startCaptureLoop } from '../capture-loop';
 import { scanner } from '../store';
-import { onVideoFrame } from '../video-frames';
 import * as css from './camera-view.css';
 
 interface CameraViewProps {
@@ -36,38 +35,9 @@ export const CameraView: Component<CameraViewProps> = (props) => {
 
   onMount(() => {
     const decoder = scanner.decoder?.current;
-    if (!decoder || !videoEl) return;
-    const video = videoEl;
-
-    // Back-pressure: hold a single frame in flight so we never queue
-    // decodes faster than the worker drains them. Frames sampled while
-    // one is pending are simply skipped — the next tick grabs a fresher
-    // one anyway.
-    let inFlight = false;
-
-    const unsubscribe = onVideoFrame(video, () => {
-      if (inFlight) return;
-      inFlight = true;
-      void (async () => {
-        try {
-          const result = await requestDecode(
-            decoder,
-            await createImageBitmap(video),
-          );
-          if (result) {
-            record(result);
-            unsubscribe();
-          }
-        } catch {
-          // A dropped frame (grab failed, worker mid-teardown) is no
-          // cause for alarm — the next tick tries again.
-        } finally {
-          inFlight = false;
-        }
-      })();
-    });
-
-    onCleanup(unsubscribe);
+    if (decoder && videoEl) {
+      onCleanup(startCaptureLoop(videoEl, decoder, record));
+    }
   });
 
   return (

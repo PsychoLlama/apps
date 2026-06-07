@@ -1,4 +1,5 @@
 import init, { decode, rgba_to_luma } from '@lib/qr-scanner';
+import { createLogger } from '@lib/observability';
 import { fitDimensions } from './frame-fit';
 import type { DecodeRequest, ReadyMessage } from './decoder';
 import type { ScanResult } from './store';
@@ -7,6 +8,8 @@ import type { ScanResult } from './store';
 // `Window`. That's fine for our two touchpoints — `postMessage(data)`
 // (no transfer back) and `onmessage` — which share the worker's shape.
 
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+
 /**
  * Eagerly initialize the wasm module on worker load — not lazily on the
  * first frame — so it's warm by the time the camera goes live, then
@@ -14,6 +17,7 @@ import type { ScanResult } from './store';
  * behind init rather than racing it.
  */
 const ready: Promise<void> = init().then(() => {
+  logger.debug('Decoder wasm initialized.');
   self.postMessage({ type: 'ready' } satisfies ReadyMessage);
 });
 
@@ -49,8 +53,21 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
 self.onmessage = ({ data }: MessageEvent<DecodeRequest>) => {
   void ready.then(() => {
     const { bitmap } = data;
-    const result = decodeFrame(bitmap);
-    bitmap.close();
+    let result: ScanResult | null = null;
+    try {
+      result = decodeFrame(bitmap);
+    } catch (error) {
+      // A frame that traps the decoder (blocked canvas read, wasm panic)
+      // must not strand the request: the main thread awaits exactly one
+      // reply per frame, so a missing reply would wedge the capture loop
+      // with its in-flight slot held forever. Log it and reply `null` —
+      // the next frame tries again.
+      logger.error('Failed to decode a frame.', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+    } finally {
+      bitmap.close();
+    }
     self.postMessage(result);
   });
 };
