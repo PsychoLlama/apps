@@ -57,8 +57,8 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
   ];
 
   return (
-    <Flex as="div" direction="column" align="center" gap={5}>
-      <Heading as="h1" size={6} weight="medium" align="center">
+    <Flex as="div" direction="column" gap={5}>
+      <Heading as="h1" size={6} weight="medium">
         Code recognized
       </Heading>
 
