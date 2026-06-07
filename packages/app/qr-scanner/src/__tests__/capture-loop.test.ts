@@ -23,6 +23,12 @@ afterEach(() => {
   vi.mocked(requestDecode).mockReset();
 });
 
+/** A fresh, live signal — the common case where the loop hasn't torn down. */
+const liveSignal = () => new AbortController().signal;
+
+/** Flush pending microtasks so a late decode's continuation can run. */
+const flush = () => new Promise((resolve) => setTimeout(resolve));
+
 describe('createFrameSampler', () => {
   it('reports a decoded result and signals a hit', async () => {
     vi.mocked(requestDecode).mockResolvedValue(result);
@@ -33,6 +39,7 @@ describe('createFrameSampler', () => {
       () => ({}) as Worker,
       onResult,
       onHit,
+      liveSignal(),
     );
 
     await sample();
@@ -50,6 +57,7 @@ describe('createFrameSampler', () => {
       () => ({}) as Worker,
       onResult,
       onHit,
+      liveSignal(),
     );
 
     await sample();
@@ -70,6 +78,7 @@ describe('createFrameSampler', () => {
       () => ({}) as Worker,
       vi.fn(),
       vi.fn(),
+      liveSignal(),
     );
 
     const pending = sample(); // enters flight; parks on the decode
@@ -87,6 +96,7 @@ describe('createFrameSampler', () => {
       () => slot.decoder,
       vi.fn(),
       vi.fn(),
+      liveSignal(),
     );
 
     // Decoder still preloading — the frame is taken but nothing is sent.
@@ -107,6 +117,7 @@ describe('createFrameSampler', () => {
       () => ({}) as Worker,
       vi.fn(),
       vi.fn(),
+      liveSignal(),
     );
 
     await expect(sample()).resolves.toBeUndefined(); // no throw escapes
@@ -115,6 +126,49 @@ describe('createFrameSampler', () => {
     vi.mocked(requestDecode).mockResolvedValue(null);
     await sample();
     expect(requestDecode).toHaveBeenCalledTimes(2);
+  });
+
+  it('never decodes once its signal is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const sample = createFrameSampler(
+      fakeVideo,
+      () => ({}) as Worker,
+      vi.fn(),
+      vi.fn(),
+      controller.signal,
+    );
+
+    await sample();
+
+    expect(requestDecode).not.toHaveBeenCalled();
+  });
+
+  it('drops a verdict that lands after the loop is aborted', async () => {
+    let settle!: (decoded: ScanResult | null) => void;
+    vi.mocked(requestDecode).mockReturnValue(
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+    );
+    const onResult = vi.fn();
+    const onHit = vi.fn();
+    const controller = new AbortController();
+    const sample = createFrameSampler(
+      fakeVideo,
+      () => ({}) as Worker,
+      onResult,
+      onHit,
+      controller.signal,
+    );
+
+    const pending = sample(); // enters flight; parks on the decode
+    controller.abort(); // teardown while the worker is still chewing
+    settle(result); // the verdict lands late, against a dead loop
+    await pending;
+
+    expect(onResult).not.toHaveBeenCalled();
+    expect(onHit).not.toHaveBeenCalled();
   });
 });
 
@@ -160,5 +214,26 @@ describe('startCaptureLoop', () => {
     fire(0);
 
     expect(requestDecode).not.toHaveBeenCalled();
+  });
+
+  it('drops a hit whose decode resolves after teardown', async () => {
+    let settle!: (decoded: ScanResult | null) => void;
+    vi.mocked(requestDecode).mockReturnValue(
+      new Promise((resolve) => {
+        settle = resolve;
+      }),
+    );
+    const onResult = vi.fn();
+    const { video, fire } = rvfcVideo();
+
+    const unsubscribe = startCaptureLoop(video, () => ({}) as Worker, onResult);
+    fire(0); // a frame enters flight
+    await vi.waitFor(() => expect(requestDecode).toHaveBeenCalledOnce());
+
+    unsubscribe(); // teardown while the decode is still in flight
+    settle(result); // the verdict lands after the loop is gone
+    await flush();
+
+    expect(onResult).not.toHaveBeenCalled();
   });
 });
