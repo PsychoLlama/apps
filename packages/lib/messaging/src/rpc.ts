@@ -203,6 +203,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   async #handleRequest(
     message: RpcMessage & { type: 'request' },
   ): Promise<void> {
+    logger.trace('Inbound request', { method: message.method, id: message.id });
     const handler = findHandler(this.#requestHandlers, message.method);
     if (!handler) {
       this.#channel.send({
@@ -246,14 +247,25 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   }
 
   #handleEvent(message: RpcMessage & { type: 'event' }): void {
-    // Unknown events are dropped — fire-and-forget has no channel to
-    // report back on.
-    findHandler(this.#eventHandlers, message.method)?.(message.params as never);
+    logger.trace('Inbound event', { method: message.method });
+    const handler = findHandler(this.#eventHandlers, message.method);
+    if (!handler) {
+      // Fire-and-forget has no channel to report back on, so a missing
+      // handler is silent on the wire — warn so it isn't silent everywhere.
+      logger.warn('Unhandled event', { method: message.method });
+      return;
+    }
+    handler(message.params as never);
   }
 
   #handleResponse(message: RpcMessage & { type: 'response' }): void {
     const pending = this.#pending.get(message.id);
-    if (!pending) return; // Unknown or already-settled id; ignore.
+    if (!pending) {
+      // No request awaits this id — a duplicate, a late response after the
+      // caller gave up, or a misbehaving peer. Surface it.
+      logger.warn('Unhandled response', { id: message.id });
+      return;
+    }
     this.#pending.delete(message.id);
 
     if (message.ok) pending.resolve(message.result);

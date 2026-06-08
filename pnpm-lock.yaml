@@ -476,6 +476,10 @@ importers:
       '@lib/observability':
         specifier: workspace:*
         version: link:../observability
+    devDependencies:
+      '@holz/log-collector':
+        specifier: ^0.8.2
+        version: 0.8.2(@holz/core@0.8.2)
 
   packages/lib/observability:
     dependencies:

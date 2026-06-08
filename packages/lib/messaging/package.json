@@ -15,5 +15,8 @@
   },
   "dependencies": {
     "@lib/observability": "workspace:*"
+  },
+  "devDependencies": {
+    "@holz/log-collector": "^0.8.2"
   }
 }
