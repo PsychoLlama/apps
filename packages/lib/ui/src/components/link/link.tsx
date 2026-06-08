@@ -21,6 +21,11 @@ import {
   resolveMarginClasses,
 } from '../../props/margin';
 import {
+  type NativeProps,
+  nativePropKeys,
+  resolveNative,
+} from '../../props/native';
+import {
   type TrimProps,
   trimPropKeys,
   resolveTrimClass,
@@ -46,16 +51,6 @@ import * as css from './link.css';
 type LinkColor = 'accent' | 'neutral';
 type Underline = 'auto' | 'always' | 'hover' | 'none';
 
-/**
- * Schemes the router can't resolve — it would mangle them into in-app paths
- * — so they render a native `<a>` by default. An explicit allow-list, not a
- * "has a scheme" test: that keeps script-executing schemes (`javascript:`,
- * `data:`) off the native path entirely. Absolute `http(s)` URLs are
- * intentionally excluded too — the router handles them, and same-origin ones
- * should stay client-routed.
- */
-const NATIVE_SCHEME_PATTERN = /^(mailto|tel|sms|blob):/i;
-
 export interface LinkProps
   extends
     MarginProps,
@@ -63,6 +58,7 @@ export interface LinkProps
     TruncateProps,
     WrapProps,
     SkeletonProps,
+    NativeProps,
     RequiredTestIdProps,
     AnchorProps {
   /** Visual size on a 1–9 scale. Inherits from parent when omitted. */
@@ -75,15 +71,6 @@ export interface LinkProps
   color?: LinkColor;
   /** Use high-contrast text for stronger emphasis. @default false */
   highContrast?: boolean;
-  /**
-   * Render a native `<a>` instead of the router link, skipping the router's
-   * path resolution. When omitted, inferred from `href`: `mailto:`, `tel:`,
-   * `sms:`, and `blob:` default to native, since the router would otherwise
-   * resolve them into in-app paths; everything else (including `http(s)`
-   * URLs) defaults to the router link. Set explicitly to override. Pair with
-   * `target` / `rel` as needed; those pass straight through.
-   */
-  native?: boolean;
 }
 
 /** Inline navigation link for in-app routing. */
@@ -104,9 +91,9 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     'underline',
     'color',
     'highContrast',
-    'native',
     'class',
     'children',
+    ...nativePropKeys,
     ...trimPropKeys,
     ...truncatePropKeys,
     ...wrapPropKeys,
@@ -116,9 +103,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
-  // Honor an explicit `native`, otherwise infer it from the destination.
-  const native = () =>
-    local.native ?? NATIVE_SCHEME_PATTERN.test(props.href ?? '');
+  const native = () => resolveNative(local.native, props.href);
 
   const autoAlways = () =>
     local.underline === 'auto' &&

@@ -4,6 +4,7 @@ import { fn } from 'storybook/test';
 import { LinkButton, type LinkButtonProps } from '@lib/ui';
 import { buttonStyleArgTypes } from '@lib/ui/props/button';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { nativeArgTypes } from '@lib/ui/props/native';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { gallery } from '../../../../gallery';
@@ -39,6 +40,7 @@ const meta = {
   argTypes: {
     ...marginArgTypes,
     ...buttonStyleArgTypes,
+    ...nativeArgTypes,
     ...skeletonArgTypes,
     ...testIdArgTypes,
     children: { control: 'text' },

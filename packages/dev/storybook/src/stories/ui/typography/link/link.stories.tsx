@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { fn } from 'storybook/test';
 import { Link, type LinkProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
+import { nativeArgTypes } from '@lib/ui/props/native';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { trimArgTypes } from '@lib/ui/props/trim';
@@ -55,7 +56,7 @@ const meta = {
       options: ['accent', 'neutral'],
     },
     highContrast: { control: 'boolean' },
-    native: { control: 'boolean' },
+    ...nativeArgTypes,
     children: { control: 'text' },
     ...trimArgTypes,
     ...truncateArgTypes,

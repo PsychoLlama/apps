@@ -1,10 +1,13 @@
 /**
  * Button-styled anchor built on {@link https://docs.solidjs.com/solid-router/reference/components/a | \<A\>}
- * from `@solidjs/router`.
+ * from `@solidjs/router`. Renders a native `<a>` for the schemes the router
+ * would otherwise mangle into in-app paths; inferred from `href` by default,
+ * or override with `native`. See {@link LinkButtonProps.native}.
  */
 
 import { A, type AnchorProps } from '@solidjs/router';
 import { mergeProps, splitProps } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import type { ParentComponent } from 'solid-js';
 import {
   buttonStyleDefaults,
@@ -18,6 +21,11 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import {
+  type NativeProps,
+  nativePropKeys,
+  resolveNative,
+} from '../../props/native';
+import {
   type SkeletonProps,
   skeletonPropKeys,
   useSkeleton,
@@ -29,6 +37,7 @@ export interface LinkButtonProps
     MarginProps,
     ButtonStyleProps,
     SkeletonProps,
+    NativeProps,
     RequiredTestIdProps,
     AnchorProps {}
 
@@ -40,10 +49,13 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
   const [local, rest] = splitProps(withoutTid, [
     ...buttonStylePropKeys,
     ...skeletonPropKeys,
+    ...nativePropKeys,
     'class',
     'children',
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
+
+  const native = () => resolveNative(local.native, props.href);
 
   const className = () =>
     [
@@ -61,9 +73,14 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <A class={className()} data-testid={tid.testId} {...skeletonProps}>
+    <Dynamic
+      component={native() ? 'a' : A}
+      class={className()}
+      data-testid={tid.testId}
+      {...skeletonProps}
+    >
       {local.children}
-    </A>
+    </Dynamic>
   );
 };
 
