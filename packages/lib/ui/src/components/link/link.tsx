@@ -1,15 +1,18 @@
 /**
  * Link component.
  *
- * Ported from Radix UI Themes Link. Always renders `<A>` from
- * `@solidjs/router` for client-side routing. Only supports accent and
- * neutral colors.
+ * Ported from Radix UI Themes Link. Renders `<A>` from `@solidjs/router`
+ * for client-side routing, or a native `<a>` when `native` is set — to skip
+ * the router's path resolution for destinations that aren't in-app routes
+ * (schemeless URIs like `mailto:` / `tel:`, which the router would otherwise
+ * mangle into in-app paths). Only supports accent and neutral colors.
  *
  * @see https://www.radix-ui.com/themes/docs/components/link
  */
 
 import { A, type AnchorProps } from '@solidjs/router';
 import { mergeProps, splitProps } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import type { ParentComponent } from 'solid-js';
 import type { FontWeight, TypeScale } from '@lib/design';
 import {
@@ -62,6 +65,13 @@ export interface LinkProps
   color?: LinkColor;
   /** Use high-contrast text for stronger emphasis. @default false */
   highContrast?: boolean;
+  /**
+   * Render a native `<a>` instead of the router link, skipping the router's
+   * path resolution. Required for schemeless URIs like `mailto:` / `tel:`,
+   * which the router would otherwise resolve into in-app paths. Pair with
+   * `target` / `rel` as needed; those pass straight through. @default false
+   */
+  native?: boolean;
 }
 
 /** Inline navigation link for in-app routing. */
@@ -71,6 +81,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       underline: 'auto' as const,
       color: 'accent' as const,
       highContrast: false,
+      native: false,
     },
     rawProps,
   );
@@ -82,6 +93,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     'underline',
     'color',
     'highContrast',
+    'native',
     'class',
     'children',
     ...trimPropKeys,
@@ -116,9 +128,14 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       .join(' ');
 
   return (
-    <A class={className()} data-testid={tid.testId} {...skeletonProps}>
+    <Dynamic
+      component={local.native ? 'a' : A}
+      class={className()}
+      data-testid={tid.testId}
+      {...skeletonProps}
+    >
       {local.children}
-    </A>
+    </Dynamic>
   );
 };
 

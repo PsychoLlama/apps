@@ -45,8 +45,12 @@ export interface TorchState {
  * down to its plain data fields. `Scan` itself is a wasm handle (it owns
  * `free()` and can't cross a `postMessage` boundary), so it stays in the
  * worker; what we surface is this structured-clone-safe projection.
+ *
+ * `details` is the parsed payload (WiFi/URL/contact/…) flattened to
+ * label/value rows; `kind` says which shape it took. Both are plain data,
+ * so they cross the worker boundary alongside the raw `text`.
  */
-export type ScanResult = Pick<Scan, 'text' | 'format'>;
+export type ScanResult = Pick<Scan, 'text' | 'format' | 'kind' | 'details'>;
 
 /** Camera session state for the scanner. */
 export interface ScannerState {

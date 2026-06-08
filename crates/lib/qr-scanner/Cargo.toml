@@ -23,13 +23,23 @@ console_error_panic_hook = ["dep:console_error_panic_hook"]
 wasm-bindgen = "=0.2.121"
 console_error_panic_hook = { version = "0.1", optional = true }
 
+# Hand the parsed details (label/value pairs) across the wasm boundary as
+# plain JS objects. `serde-wasm-bindgen` serializes straight to a JS
+# value, so the host never round-trips through a JSON string.
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+
 # `decoders` + `qrcode` is the minimal reader set; `encoding_rs` gives
-# real charset decoding of QR payloads. `wasm_support` is just
-# `chrono/wasmbind` — rxing stamps every result with `Utc::now()`, which
-# traps on wasm without a JS-backed clock.
+# real charset decoding of QR payloads. `client_support` adds the result
+# parsers that turn decoded text into typed records (WiFi, URL, vCard,
+# …) — pure-Rust deps (fancy-regex, uriparse, urlencoding, chrono-tz),
+# all wasm-friendly. `wasm_support` is just `chrono/wasmbind` — rxing
+# stamps every result with `Utc::now()`, which traps on wasm without a
+# JS-backed clock.
 rxing = { version = "0.9", default-features = false, features = [
   "qrcode",
   "decoders",
+  "client_support",
   "encoding_rs",
   "wasm_support",
 ] }

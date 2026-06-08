@@ -53,6 +53,8 @@ export const QrScanner = () => {
                 {(result) => (
                   <ScanResult
                     text={result().text}
+                    kind={result().kind}
+                    details={result().details}
                     onRetry={() => void startCamera()}
                   />
                 )}

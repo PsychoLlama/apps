@@ -55,6 +55,7 @@ const meta = {
       options: ['accent', 'neutral'],
     },
     highContrast: { control: 'boolean' },
+    native: { control: 'boolean' },
     children: { control: 'text' },
     ...trimArgTypes,
     ...truncateArgTypes,
