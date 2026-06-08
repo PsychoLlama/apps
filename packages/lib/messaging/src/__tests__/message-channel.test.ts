@@ -5,12 +5,6 @@ type Wire =
   | { type: 'data'; buffer?: ArrayBuffer }
   | { type: 'tick'; count: number };
 
-// MessagePort delivers asynchronously; let queued messages drain.
-const tick = () =>
-  new Promise<void>((resolve) => {
-    setTimeout(resolve, 0);
-  });
-
 describe('fromMessagePort', () => {
   it('brands the channel as transferable', () => {
     const { port1 } = new MessageChannel();
@@ -32,32 +26,32 @@ describe('fromMessagePort', () => {
     const sender = fromMessagePort<Wire, Wire>(port1);
     const receiver = fromMessagePort<Wire, Wire>(port2);
     port2.start(); // consumer starts delivery; the adapter doesn't
-    const first: Wire[] = [];
-    const second: Wire[] = [];
-    receiver.onMessage((message) => first.push(message));
-    receiver.onMessage((message) => second.push(message));
+    const first = new Promise<Wire>((resolve) => receiver.onMessage(resolve));
+    const second = new Promise<Wire>((resolve) => receiver.onMessage(resolve));
 
     sender.send({ type: 'data' });
-    await tick();
 
-    expect(first).toEqual([{ type: 'data' }]);
-    expect(second).toEqual([{ type: 'data' }]);
+    expect(await Promise.all([first, second])).toEqual([
+      { type: 'data' },
+      { type: 'data' },
+    ]);
   });
 
   it('narrows inbound messages on the discriminant', async () => {
     const { port1, port2 } = new MessageChannel();
     const sender = fromMessagePort<Wire, Wire>(port1);
     const receiver = fromMessagePort<Wire, Wire>(port2);
-    port2.start(); // consumer starts delivery; the adapter doesn't
-    let counted: number | undefined;
-    receiver.onMessage((message) => {
-      // `count` is only reachable after narrowing on `type`.
-      if (message.type === 'tick') counted = message.count;
-    });
+    port2.start();
+    const received = new Promise<Wire>((resolve) =>
+      receiver.onMessage(resolve),
+    );
 
     sender.send({ type: 'tick', count: 7 });
-    await tick();
 
+    const message = await received;
+    let counted: number | undefined;
+    // `count` is only reachable after narrowing on `type`.
+    if (message.type === 'tick') counted = message.count;
     expect(counted).toBe(7);
   });
 
@@ -65,17 +59,18 @@ describe('fromMessagePort', () => {
     const { port1, port2 } = new MessageChannel();
     const sender = fromMessagePort<Wire, Wire>(port1);
     const receiver = fromMessagePort<Wire, Wire>(port2);
-    port2.start(); // consumer starts delivery; the adapter doesn't
-    const sizes: number[] = [];
-    receiver.onMessage((message) => {
-      if (message.type === 'data') sizes.push(message.buffer?.byteLength ?? -1);
-    });
+    port2.start();
+    const received = new Promise<Wire>((resolve) =>
+      receiver.onMessage(resolve),
+    );
 
     const buffer = new ArrayBuffer(8);
     sender.send({ type: 'data', buffer }, { transfer: [buffer] });
-    await tick();
 
-    expect(sizes).toEqual([8]);
+    const message = await received;
+    const size =
+      message.type === 'data' ? (message.buffer?.byteLength ?? -1) : -1;
+    expect(size).toBe(8);
     expect(buffer.byteLength).toBe(0); // neutered in the sender
   });
 });

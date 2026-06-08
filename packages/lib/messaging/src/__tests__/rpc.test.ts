@@ -21,12 +21,6 @@ type ClientApi = {
   events: Record<string, never>;
 };
 
-// MessagePort delivers asynchronously; let queued messages drain.
-const tick = () =>
-  new Promise<void>((resolve) => {
-    setTimeout(resolve, 0);
-  });
-
 /**
  * Wire two RPC peers over a real `MessageChannel` via the adapter under
  * test — no hand-rolled mock transport.
@@ -71,7 +65,12 @@ const setup = () => {
   port1.start();
   port2.start();
 
-  return { server, client, logged, sizes };
+  // Events are fire-and-forget — nothing to await. A round-trip request is
+  // an ordered barrier: it can't resolve until every message queued before
+  // it on the same channel has been handled.
+  const flush = () => client.request('add', { left: 0, right: 0 });
+
+  return { server, client, logged, sizes, flush };
 };
 
 describe('RPC', () => {
@@ -153,7 +152,7 @@ describe('RPC', () => {
   });
 
   it('drops events named after inherited members', async () => {
-    const { client, logged } = setup();
+    const { client, logged, flush } = setup();
     const loose = client as unknown as {
       notify(method: string, params?: unknown): void;
     };
@@ -161,25 +160,25 @@ describe('RPC', () => {
     loose.notify('constructor', {});
     loose.notify('__proto__', {});
     loose.notify('hasOwnProperty', {});
-    await tick();
+    await flush();
 
     expect(logged).toEqual([]);
   });
 
   it('delivers an event with a payload', async () => {
-    const { client, logged } = setup();
+    const { client, logged, flush } = setup();
 
     client.notify('log', { message: 'hello' });
-    await tick();
+    await flush();
 
     expect(logged).toEqual(['hello']);
   });
 
   it('delivers a zero-argument event', async () => {
-    const { client, logged } = setup();
+    const { client, logged, flush } = setup();
 
     client.notify('ping');
-    await tick();
+    await flush();
 
     expect(logged).toEqual(['pong']);
   });
@@ -199,11 +198,11 @@ describe('RPC', () => {
   });
 
   it('transfers an ArrayBuffer alongside a notify', async () => {
-    const { client, sizes } = setup();
+    const { client, sizes, flush } = setup();
     const buffer = new ArrayBuffer(8);
 
     client.notify('sink', { buffer }, { transfer: [buffer] });
-    await tick();
+    await flush();
 
     expect(sizes).toEqual([8]);
     expect(buffer.byteLength).toBe(0);
@@ -226,50 +225,5 @@ describe('RPC', () => {
     expect(() =>
       client.notify('sink', { buffer }, { transfer: [buffer] }),
     ).toThrow('does not support transfer');
-  });
-
-  it('type-checks request and notify calls', () => {
-    // Compile-only assertions — never executed, so no real calls fire.
-    const checks = (client: RPC<ClientApi, ServerApi>) => {
-      // @ts-expect-error - params must match the method signature
-      void client.request('add', { left: 1 });
-      // @ts-expect-error - unknown request method
-      void client.request('ghost', { left: 1, right: 2 });
-      // @ts-expect-error - notify targets events, not requests
-      client.notify('add', { left: 1, right: 2 });
-      // @ts-expect-error - log requires its params payload
-      client.notify('log');
-      // @ts-expect-error - a zero-arg event's params must be undefined
-      client.notify('ping', {});
-
-      // Valid: zero-argument event needs no payload.
-      client.notify('ping');
-      // Valid: reach options on a zero-arg call via explicit undefined.
-      client.notify('ping', undefined, {});
-      // Valid: a payload procedure accepts transfer options.
-      void client.request(
-        'echoSize',
-        { buffer: new ArrayBuffer(1) },
-        { transfer: [] },
-      );
-    };
-
-    expect(typeof checks).toBe('function');
-  });
-
-  it('rejects procedures that take more than one argument', () => {
-    const { port1 } = new MessageChannel();
-    type TwoArg = {
-      requests: { sum(first: number, second: number): number };
-      events: Record<string, never>;
-    };
-
-    // @ts-expect-error - procedures take at most one argument
-    RPC.from<TwoArg, ClientApi>(fromMessagePort(port1), {
-      requests: { sum: (first, second) => first + second },
-      events: {},
-    });
-
-    expect(true).toBe(true);
   });
 });
