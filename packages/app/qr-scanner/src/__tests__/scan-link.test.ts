@@ -37,6 +37,13 @@ describe('linkFor', () => {
       expect(linkFor('javascript:alert(1)')).toBeUndefined();
       expect(linkFor('data:text/html,hi')).toBeUndefined();
     });
+
+    it('refuses deceptive userinfo URLs that impersonate a host', () => {
+      // The visible prefix reads as `paypal.com`, but the browser would
+      // navigate to `evil.example` — drop it to plain text instead.
+      expect(linkFor('https://paypal.com@evil.example')).toBeUndefined();
+      expect(linkFor('https://user:pass@example.com')).toBeUndefined();
+    });
   });
 
   describe('emails', () => {

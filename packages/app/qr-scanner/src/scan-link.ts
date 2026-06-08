@@ -17,14 +17,31 @@ export interface DetailLink {
   newTab: boolean;
 }
 
-// A web link needs a scheme *and* a destination after it: bare `https://`
-// is not somewhere to go. Only `http(s)` — never `javascript:`, `data:`,
-// or other schemes that have no business being a result link.
-const isWebLink = (value: string) => /^https?:\/\/\S/i.test(value);
+// Resolve an `http(s)` value to a link, or `undefined`. Parsing (rather
+// than a regex) lets us reject the cases that matter: non-`http(s)`
+// schemes (`javascript:`, `data:`), a bare `https://` with no host, and —
+// crucially — deceptive userinfo like `https://paypal.com@evil.example`,
+// where the visible prefix impersonates a trusted host but the browser
+// navigates to whatever follows the `@`. Those drop back to plain text.
+const webLinkHref = (value: string): string | undefined => {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return undefined;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
+  if (url.username !== '' || url.password !== '') return undefined;
+  if (url.hostname === '') return undefined;
+  return value;
+};
 
 // One `@`, a dot-bearing domain, and no whitespace. Conservative — it
-// only has to be good enough to gate a `mailto:`.
-const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+// only has to be good enough to gate a `mailto:`. Excludes `/` and `:` so
+// a rejected URL with userinfo (`https://paypal.com@evil.example`) can't
+// slip through here as a bogus email.
+const isEmail = (value: string) =>
+  /^[^\s@/:]+@[^\s@/:]+\.[^\s@/:]+$/.test(value);
 
 /**
  * Heuristic phone test. Deliberately conservative: it rejects values that
@@ -60,7 +77,8 @@ const toTelHref = (value: string) => {
  */
 export const linkFor = (value: string): DetailLink | undefined => {
   const trimmed = value.trim();
-  if (isWebLink(trimmed)) return { href: trimmed, newTab: true };
+  const webHref = webLinkHref(trimmed);
+  if (webHref !== undefined) return { href: webHref, newTab: true };
   if (isEmail(trimmed)) return { href: `mailto:${trimmed}`, newTab: false };
   if (isPhone(trimmed)) return { href: toTelHref(trimmed), newTab: false };
   return undefined;
