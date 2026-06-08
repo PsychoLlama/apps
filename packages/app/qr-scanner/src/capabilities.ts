@@ -176,6 +176,23 @@ export const vibrate = (pattern: VibratePattern): void => {
 };
 
 /**
+ * Whether the app is running inside an installed PWA window rather than a
+ * browser tab. Gates the scanned-link auto-open: only in standalone does
+ * `window.open` hand the link to the real browser without replacing the
+ * app, and only there is auto-navigating sensible — in a tab the user is
+ * already browsing, we leave the result surface's link for them to tap.
+ *
+ * Tests the installable `display-mode`s the manifest can resolve to. The
+ * media feature is Baseline-wide since 2020; iOS reports it from Safari
+ * 15.4 on, so an older iOS home-screen app simply doesn't auto-open and
+ * falls back to the rendered link — a benign miss, never a wrong navigation.
+ */
+export const inStandalonePWA = (): boolean =>
+  ['standalone', 'minimal-ui', 'fullscreen'].some(
+    (mode) => window.matchMedia(`(display-mode: ${mode})`).matches,
+  );
+
+/**
  * Collapse the browser's assorted `getUserMedia` rejections into a
  * {@link CameraErrorKind}. `DOMException` names are the stable signal
  * here — messages are localized and vary by engine.

@@ -1,4 +1,5 @@
-import { linkFor } from '../scan-link';
+import { autoOpenHref, linkFor } from '../scan-link';
+import type { ScanResult } from '../store';
 
 describe('linkFor', () => {
   describe('link rows', () => {
@@ -120,5 +121,77 @@ describe('linkFor', () => {
       expect(linkFor('geo', '40.446')).toBeUndefined();
       expect(linkFor('dateTime', '1700000000000')).toBeUndefined();
     });
+  });
+});
+
+describe('autoOpenHref', () => {
+  const urlScan = (details: ScanResult['details'], text = ''): ScanResult => ({
+    text,
+    format: 'QR_CODE',
+    kind: 'url',
+    details,
+  });
+
+  it('returns the parsed link row of a url scan', () => {
+    expect(
+      autoOpenHref(
+        urlScan([{ type: 'link', label: 'URL', value: 'https://example.com' }]),
+      ),
+    ).toBe('https://example.com');
+  });
+
+  it('prefers the parsed link over the raw text', () => {
+    // rxing normalizes a bare host into a schemed URI; the raw payload had
+    // no scheme and would fail the safety check on its own.
+    expect(
+      autoOpenHref(
+        urlScan(
+          [{ type: 'link', label: 'URL', value: 'http://example.com' }],
+          'example.com',
+        ),
+      ),
+    ).toBe('http://example.com');
+  });
+
+  it('falls back to the raw text when there is no link row', () => {
+    expect(autoOpenHref(urlScan([], 'https://fallback.example'))).toBe(
+      'https://fallback.example',
+    );
+  });
+
+  it('refuses to launch a dangerous payload', () => {
+    expect(
+      autoOpenHref(
+        urlScan([{ type: 'link', label: 'URL', value: 'javascript:alert(1)' }]),
+      ),
+    ).toBeUndefined();
+    expect(
+      autoOpenHref(
+        urlScan([{ type: 'link', label: 'URL', value: 'data:text/html,hi' }]),
+      ),
+    ).toBeUndefined();
+    expect(
+      autoOpenHref(
+        urlScan([
+          {
+            type: 'link',
+            label: 'URL',
+            value: 'https://paypal.com@evil.example',
+          },
+        ]),
+      ),
+    ).toBeUndefined();
+  });
+
+  it('only auto-opens url scans, never a link buried in another kind', () => {
+    // A contact card can carry a website, but its purpose isn't to send
+    // you there — leave it for the result surface to render.
+    const contactScan: ScanResult = {
+      text: '',
+      format: 'QR_CODE',
+      kind: 'contact',
+      details: [{ type: 'link', label: 'URL', value: 'https://example.com' }],
+    };
+    expect(autoOpenHref(contactScan)).toBeUndefined();
   });
 });

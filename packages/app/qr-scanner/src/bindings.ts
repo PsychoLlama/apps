@@ -1,8 +1,9 @@
-import { defineAction, defineEffect, ref } from '@lib/state';
+import { defineAction, defineEffect, ref, type DeepReadonly } from '@lib/state';
 import { createLogger } from '@lib/observability';
 import {
   CameraAborted,
   classifyCameraError,
+  inStandalonePWA,
   openCameraSession,
   setTorch,
   stopStream,
@@ -12,7 +13,8 @@ import {
   vibrate,
 } from './capabilities';
 import { createDecoder } from './decoder';
-import { scannerStore, type ScanResult } from './store';
+import { autoOpenHref } from './scan-link';
+import { scannerStore, type ScannerState, type ScanResult } from './store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -127,22 +129,46 @@ export const recordScan = defineAction(
 );
 
 /**
- * Finalize a scan on the first hit: stop the live stream — releasing the
- * camera and its recording indicator — then hand off to {@link recordScan}
- * to park on the result. Holding the camera open behind the result surface
- * would leave the hardware (and its on-air indicator) running with no
- * visible stop control, so the hit itself releases it; "Scan again"
- * reopens the camera from scratch. The physical stop lives here in the
- * effect, mirroring {@link stopCameraEffect}; the state transition is the
- * action.
+ * Side effects of a recognized hit, run before {@link recordScan} parks on
+ * the result:
+ *
+ * 1. Stop the live stream — releasing the camera and its recording
+ *    indicator. Holding it open behind the result surface would leave the
+ *    hardware running with no visible stop control, so the hit itself
+ *    releases it; "Scan again" reopens the camera from scratch.
+ * 2. Auto-open a safe web link, but only inside an installed PWA. A
+ *    `url`-kind scan whose payload clears the {@link autoOpenHref} safety
+ *    check launches in a new tab so the common case — point, scan, go —
+ *    needs no extra tap; in standalone, `window.open` hands it to the real
+ *    browser without replacing the app. In a plain browser tab we skip the
+ *    auto-open (the user is already browsing) and leave the result
+ *    surface's link for them to tap. Anything unsafe or non-link is never
+ *    launched. Even in a PWA a popup blocker may swallow this (it fires
+ *    outside a fresh user gesture); that's fine — the link is still there.
+ *
+ * The physical work lives here in the effect, mirroring
+ * {@link stopCameraEffect}; the state transition is the action.
  */
-export const finishScanEffect = defineEffect(
-  [scannerStore],
-  stopStreamForResult,
-  {
-    onSuccess: recordScan,
-  },
-);
+const finishScan = (
+  state: DeepReadonly<ScannerState>,
+  result: ScanResult,
+): ScanResult => {
+  stopStreamForResult(state, result);
+  const href = autoOpenHref(result);
+  if (href !== undefined && inStandalonePWA()) {
+    window.open(href, '_blank', 'noopener,noreferrer');
+  }
+  return result;
+};
+
+/**
+ * Finalize a scan on the first hit: run the {@link finishScan} side effects
+ * (release the camera, auto-open a safe link), then hand off to
+ * {@link recordScan} to park on the result.
+ */
+export const finishScanEffect = defineEffect([scannerStore], finishScan, {
+  onSuccess: recordScan,
+});
 
 /**
  * Open the camera and surface the result through the session lifecycle:

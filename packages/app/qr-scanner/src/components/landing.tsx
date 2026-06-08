@@ -1,7 +1,6 @@
 import { type Component } from 'solid-js';
-import { Button, Callout, Flex, Heading, Text } from '@lib/ui';
+import { Button, Flex, Heading, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
-import IconProgressWrench from 'virtual:icons/mdi/progress-wrench';
 
 interface LandingProps {
   /** Whether a camera request is in flight — disables the start control. */
@@ -31,9 +30,5 @@ export const Landing: Component<LandingProps> = (props) => (
       <IconQrcodeScan width="20" height="20" aria-hidden="true" />
       {props.requesting ? 'Requesting camera…' : 'Start scanning'}
     </Button>
-
-    <Callout color="warning" icon={<IconProgressWrench />}>
-      Work in progress.
-    </Callout>
   </Flex>
 );
