@@ -1,9 +1,14 @@
 /**
- * Resolve a decoded QR field value to a hyperlink. Value-based by design
- * — a heuristic keyed to the shape of the value, not to which parsed
- * field it came from — so a URL/email/phone is linked wherever it shows
- * up in the result.
+ * Resolve a parsed detail row to a hyperlink. The row's `type` — assigned
+ * by rxing's parser in the wasm layer, not guessed from the value's shape
+ * — decides the scheme: `link` → the URL itself, `email` → `mailto:`,
+ * `phone` → `tel:`, `sms` → `sms:`. Everything else (plain `text`, `geo`)
+ * renders as text. The one judgment left to the host is the `link` safety
+ * check: building an `href` the browser will navigate to is security
+ * sensitive, so a declared URL still has to clear {@link webLinkHref}.
  */
+
+import type { ParsedDetail } from '@lib/qr-scanner';
 
 /** A parsed value resolved to an anchor target. */
 export interface DetailLink {
@@ -11,18 +16,20 @@ export interface DetailLink {
   href: string;
   /**
    * Whether to open in a new tab. Web links do (`target="_blank"` +
-   * `rel="noopener noreferrer"`); `mailto:`/`tel:` don't, so the browser
-   * hands them to the mail client or dialer in place.
+   * `rel="noopener noreferrer"`); `mailto:`/`tel:`/`sms:` don't, so the
+   * browser hands them to the mail client, dialer, or messaging app in place.
    */
   newTab: boolean;
 }
 
-// Resolve an `http(s)` value to a link, or `undefined`. Parsing (rather
-// than a regex) lets us reject the cases that matter: non-`http(s)`
-// schemes (`javascript:`, `data:`), a bare `https://` with no host, and —
-// crucially — deceptive userinfo like `https://paypal.com@evil.example`,
-// where the visible prefix impersonates a trusted host but the browser
-// navigates to whatever follows the `@`. Those drop back to plain text.
+// Validate an `http(s)` value as a safe link target, returning it or
+// `undefined`. rxing tags a row `link`, but a QR can still carry a hostile
+// URL, so we re-parse (rather than trust the tag) to reject the cases that
+// matter: non-`http(s)` schemes (`javascript:`, `data:`), a bare `https://`
+// with no host, and — crucially — deceptive userinfo like
+// `https://paypal.com@evil.example`, where the visible prefix impersonates
+// a trusted host but the browser navigates to whatever follows the `@`.
+// Those drop back to plain text.
 const webLinkHref = (value: string): string | undefined => {
   let url: URL;
   try {
@@ -36,50 +43,52 @@ const webLinkHref = (value: string): string | undefined => {
   return value;
 };
 
-// One `@`, a dot-bearing domain, and no whitespace. Conservative — it
-// only has to be good enough to gate a `mailto:`. Excludes `/` and `:` so
-// a rejected URL with userinfo (`https://paypal.com@evil.example`) can't
-// slip through here as a bogus email.
+// One `@`, a dot-bearing domain, and no whitespace. A safety gate on the
+// `mailto:` href, not detection — rxing already classified the value as an
+// email; this only guards against an oddly-shaped one yielding a malformed
+// or injection-prone link. Excludes `/` and `:` so userinfo can't sneak in.
 const isEmail = (value: string) =>
   /^[^\s@/:]+@[^\s@/:]+\.[^\s@/:]+$/.test(value);
 
-/**
- * Heuristic phone test. Deliberately conservative: it rejects values that
- * carry letters (VINs, "100 m" altitudes), a decimal point (geo
- * coordinates), or an ISO date (all-day calendar events) before counting
- * digits — each is otherwise digit-heavy enough to look dial-able. What
- * survives is a run of 7–15 digits, the E.164 range.
- *
- * It can't tell a bare 13-digit phone number from a bare ISBN; that's an
- * accepted limitation, and moot here since the scanner only reads QR
- * codes (ISBNs arrive on 1D barcodes).
- */
-const isPhone = (value: string) => {
-  if (/[a-z]/i.test(value)) return false;
-  if (value.includes('.')) return false;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+// Build a dialable `tel:`/`sms:` target: digits only, with a single
+// leading `+` preserved when the number was written international. Folds
+// away stray separators (and duplicate `+`). Returns `undefined` when no
+// digits remain, so a junk value falls back to plain text.
+const dialHref = (
+  scheme: 'tel' | 'sms',
+  value: string,
+): DetailLink | undefined => {
   const digits = value.replace(/\D/g, '');
-  return digits.length >= 7 && digits.length <= 15;
-};
-
-// Collapse a phone value to a dialable `tel:` target: digits only, with a
-// single leading `+` preserved when it was written international. Folds
-// away any stray separators (and duplicate `+`) the value carried.
-const toTelHref = (value: string) => {
-  const digits = value.replace(/\D/g, '');
-  return value.startsWith('+') ? `tel:+${digits}` : `tel:${digits}`;
+  if (digits.length === 0) return undefined;
+  const number = value.startsWith('+') ? `+${digits}` : digits;
+  return { href: `${scheme}:${number}`, newTab: false };
 };
 
 /**
- * Resolve a value to a {@link DetailLink}, or `undefined` to render it as
- * plain text. The value is trimmed first, so surrounding whitespace never
- * defeats a match or leaks into the `href`.
+ * Resolve a detail row's `type` and `value` to a {@link DetailLink}, or
+ * `undefined` to render it as plain text. The value is trimmed first, so
+ * surrounding whitespace never defeats a match or leaks into the `href`.
  */
-export const linkFor = (value: string): DetailLink | undefined => {
+export const linkFor = (
+  type: ParsedDetail['type'],
+  value: string,
+): DetailLink | undefined => {
   const trimmed = value.trim();
-  const webHref = webLinkHref(trimmed);
-  if (webHref !== undefined) return { href: webHref, newTab: true };
-  if (isEmail(trimmed)) return { href: `mailto:${trimmed}`, newTab: false };
-  if (isPhone(trimmed)) return { href: toTelHref(trimmed), newTab: false };
-  return undefined;
+  switch (type) {
+    case 'link': {
+      const href = webLinkHref(trimmed);
+      return href === undefined ? undefined : { href, newTab: true };
+    }
+    case 'email':
+      return isEmail(trimmed)
+        ? { href: `mailto:${trimmed}`, newTab: false }
+        : undefined;
+    case 'phone':
+      return dialHref('tel', trimmed);
+    case 'sms':
+      return dialHref('sms', trimmed);
+    default:
+      // `text`, `geo`, and `dateTime` carry no link.
+      return undefined;
+  }
 };

@@ -1,129 +1,124 @@
 import { linkFor } from '../scan-link';
 
 describe('linkFor', () => {
-  describe('web links', () => {
+  describe('link rows', () => {
     it('links http and https URLs, opening a new tab', () => {
-      expect(linkFor('https://example.com')).toEqual({
+      expect(linkFor('link', 'https://example.com')).toEqual({
         href: 'https://example.com',
         newTab: true,
       });
-      expect(linkFor('http://example.com/path?q=1#frag')).toEqual({
+      expect(linkFor('link', 'http://example.com/path?q=1#frag')).toEqual({
         href: 'http://example.com/path?q=1#frag',
         newTab: true,
       });
     });
 
     it('matches the scheme case-insensitively', () => {
-      expect(linkFor('HTTPS://Example.com')).toEqual({
+      expect(linkFor('link', 'HTTPS://Example.com')).toEqual({
         href: 'HTTPS://Example.com',
         newTab: true,
       });
     });
 
     it('trims surrounding whitespace out of the href', () => {
-      expect(linkFor('  https://trim.me  ')).toEqual({
+      expect(linkFor('link', '  https://trim.me  ')).toEqual({
         href: 'https://trim.me',
         newTab: true,
       });
     });
 
     it('rejects a bare scheme with no destination', () => {
-      expect(linkFor('https://')).toBeUndefined();
-      expect(linkFor('http://')).toBeUndefined();
+      expect(linkFor('link', 'https://')).toBeUndefined();
+      expect(linkFor('link', 'http://')).toBeUndefined();
     });
 
     it('ignores schemes that have no business being a result link', () => {
-      expect(linkFor('ftp://host/file')).toBeUndefined();
-      expect(linkFor('javascript:alert(1)')).toBeUndefined();
-      expect(linkFor('data:text/html,hi')).toBeUndefined();
+      // rxing tagged the row `link`, but the safety check still rejects a
+      // non-`http(s)` payload rather than trust the tag.
+      expect(linkFor('link', 'ftp://host/file')).toBeUndefined();
+      expect(linkFor('link', 'javascript:alert(1)')).toBeUndefined();
+      expect(linkFor('link', 'data:text/html,hi')).toBeUndefined();
     });
 
     it('refuses deceptive userinfo URLs that impersonate a host', () => {
       // The visible prefix reads as `paypal.com`, but the browser would
       // navigate to `evil.example` — drop it to plain text instead.
-      expect(linkFor('https://paypal.com@evil.example')).toBeUndefined();
-      expect(linkFor('https://user:pass@example.com')).toBeUndefined();
+      expect(
+        linkFor('link', 'https://paypal.com@evil.example'),
+      ).toBeUndefined();
+      expect(linkFor('link', 'https://user:pass@example.com')).toBeUndefined();
     });
   });
 
-  describe('emails', () => {
-    it('links a valid address as mailto, in place', () => {
-      expect(linkFor('user@example.com')).toEqual({
+  describe('email rows', () => {
+    it('links the address as mailto, in place', () => {
+      expect(linkFor('email', 'user@example.com')).toEqual({
         href: 'mailto:user@example.com',
         newTab: false,
       });
-      expect(linkFor('first.last+tag@sub.example.co.uk')).toEqual({
+      expect(linkFor('email', 'first.last+tag@sub.example.co.uk')).toEqual({
         href: 'mailto:first.last+tag@sub.example.co.uk',
         newTab: false,
       });
     });
 
-    it('rejects malformed addresses', () => {
-      expect(linkFor('not-an-email')).toBeUndefined();
-      expect(linkFor('@example.com')).toBeUndefined();
-      expect(linkFor('user@@example.com')).toBeUndefined();
-      expect(linkFor('user@example')).toBeUndefined(); // no TLD dot
-      expect(linkFor('user @ example.com')).toBeUndefined(); // whitespace
+    it('falls back to plain text for a malformed address', () => {
+      // A safety gate, not detection — rxing said it's an email, but an
+      // oddly-shaped one shouldn't yield an injection-prone `mailto:`.
+      expect(linkFor('email', 'not-an-email')).toBeUndefined();
+      expect(linkFor('email', 'user @ example.com')).toBeUndefined();
     });
   });
 
-  describe('phone numbers', () => {
+  describe('phone rows', () => {
     it('links a plain run of digits as tel, in place', () => {
-      expect(linkFor('5551234567')).toEqual({
+      expect(linkFor('phone', '5551234567')).toEqual({
         href: 'tel:5551234567',
         newTab: false,
       });
     });
 
     it('normalizes separators and preserves a leading +', () => {
-      expect(linkFor('+1 (555) 123-4567')).toEqual({
+      expect(linkFor('phone', '+1 (555) 123-4567')).toEqual({
         href: 'tel:+15551234567',
         newTab: false,
       });
     });
 
     it('collapses a stray duplicate + to a single leading one', () => {
-      expect(linkFor('++15551234567')).toEqual({
+      expect(linkFor('phone', '++15551234567')).toEqual({
         href: 'tel:+15551234567',
         newTab: false,
       });
     });
 
-    it('honors the 7–15 digit bounds', () => {
-      expect(linkFor('1234567')).toEqual({
-        href: 'tel:1234567',
+    it('falls back to plain text when no digits remain', () => {
+      expect(linkFor('phone', '+')).toBeUndefined();
+      expect(linkFor('phone', '')).toBeUndefined();
+    });
+  });
+
+  describe('sms rows', () => {
+    it('links the number as sms, in place', () => {
+      expect(linkFor('sms', '5551234567')).toEqual({
+        href: 'sms:5551234567',
         newTab: false,
       });
-      expect(linkFor('123456')).toBeUndefined(); // 6 digits
-      expect(linkFor('1234567890123456')).toBeUndefined(); // 16 digits
+      expect(linkFor('sms', '+1 (555) 123-4567')).toEqual({
+        href: 'sms:+15551234567',
+        newTab: false,
+      });
     });
   });
 
-  describe('digit-heavy values that are not phone numbers', () => {
-    it('skips geo coordinates (a decimal point)', () => {
-      expect(linkFor('40.446')).toBeUndefined();
-      expect(linkFor('-122.4194')).toBeUndefined();
-    });
-
-    it('skips ISO dates (all-day calendar events)', () => {
-      expect(linkFor('2026-06-07')).toBeUndefined();
-    });
-
-    it('skips values carrying letters', () => {
-      expect(linkFor('1HGCM82633A004352')).toBeUndefined(); // VIN
-      expect(linkFor('100 m')).toBeUndefined(); // altitude
-    });
-  });
-
-  describe('non-links', () => {
-    it('returns undefined for plain text', () => {
-      expect(linkFor('just some text')).toBeUndefined();
-    });
-
-    it('returns undefined for empty, whitespace, or a lone +', () => {
-      expect(linkFor('')).toBeUndefined();
-      expect(linkFor('   ')).toBeUndefined();
-      expect(linkFor('+')).toBeUndefined();
+  describe('unlinkable rows', () => {
+    it('renders text, geo, and dateTime as plain text', () => {
+      // Even a value that *looks* link-ish stays plain when its row isn't
+      // a linkable type — detection lives in the wasm layer, not here.
+      expect(linkFor('text', 'https://example.com')).toBeUndefined();
+      expect(linkFor('text', 'just some text')).toBeUndefined();
+      expect(linkFor('geo', '40.446')).toBeUndefined();
+      expect(linkFor('dateTime', '1700000000000')).toBeUndefined();
     });
   });
 });

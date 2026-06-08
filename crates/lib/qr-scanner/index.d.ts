@@ -25,19 +25,67 @@ export type ScanKind =
 
 /**
  * One row of a decoded code's parsed details, ready to render in a
- * description list. A discriminated union on `type`: most rows are plain
- * `text`, but date/time fields arrive as a raw epoch (`dateTime`) so the
- * host formats them with `Intl` in the viewer's locale and timezone.
+ * description list. A discriminated union on `type`, where the tag is the
+ * *semantic kind of the value* — taken from the field rxing's parser
+ * populated, not sniffed from the string. It tells the host how to resolve
+ * the value to a link: `link` → the URL, `email` → `mailto:`, `phone` →
+ * `tel:`, `sms` → `sms:`. `geo` is a hint only (rendered as plain text;
+ * no `geo:` link). `dateTime` arrives as a raw epoch so the host formats
+ * it with `Intl` in the viewer's locale and timezone. `text` is the
+ * catch-all for opaque, unlinkable values.
  */
-export type ParsedDetail = ParsedTextDetail | ParsedDateTimeDetail;
+export type ParsedDetail =
+  | ParsedTextDetail
+  | ParsedLinkDetail
+  | ParsedEmailDetail
+  | ParsedPhoneDetail
+  | ParsedSmsDetail
+  | ParsedGeoDetail
+  | ParsedDateTimeDetail;
 
-/** A plain label/value row, e.g. `{ label: 'Network', value: 'home' }`. */
-export interface ParsedTextDetail {
-  type: 'text';
+/**
+ * A label/value row whose value carries a semantic type. The shared shape
+ * behind every variant but {@link ParsedDateTimeDetail}; the `type`
+ * discriminant narrows it.
+ */
+interface LabeledValueDetail {
   /** Human-readable field name, e.g. `'Password'`. */
   label: string;
   /** The field's value. */
   value: string;
+}
+
+/** A plain, unlinkable value, e.g. `{ label: 'Network', value: 'home' }`. */
+export interface ParsedTextDetail extends LabeledValueDetail {
+  type: 'text';
+}
+
+/** A web URL. The host links it (`http(s)` only, after its own check). */
+export interface ParsedLinkDetail extends LabeledValueDetail {
+  type: 'link';
+}
+
+/** An email address. The host links it as `mailto:`. */
+export interface ParsedEmailDetail extends LabeledValueDetail {
+  type: 'email';
+}
+
+/** A phone number. The host links it as `tel:` (opens the dialer). */
+export interface ParsedPhoneDetail extends LabeledValueDetail {
+  type: 'phone';
+}
+
+/** An SMS-capable number. The host links it as `sms:` (opens messaging). */
+export interface ParsedSmsDetail extends LabeledValueDetail {
+  type: 'sms';
+}
+
+/**
+ * A geographic coordinate. A semantic hint only — rendered as plain text,
+ * not a (poorly-supported) `geo:` link.
+ */
+export interface ParsedGeoDetail extends LabeledValueDetail {
+  type: 'geo';
 }
 
 /**

@@ -87,11 +87,11 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
                   <Match when={detail.type === 'dateTime' && detail}>
                     {(when) => formatTimestamp(when())}
                   </Match>
-                  <Match when={detail.type === 'text' && detail}>
-                    {(text) => (
+                  <Match when={detail.type !== 'dateTime' && detail}>
+                    {(row) => (
                       <Show
-                        when={linkFor(text().value)}
-                        fallback={text().value}
+                        when={linkFor(row().type, row().value)}
+                        fallback={row().value}
                       >
                         {(link) => (
                           <Link
@@ -103,7 +103,7 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
                             }
                             testId="scan-link"
                           >
-                            {text().value}
+                            {row().value}
                           </Link>
                         )}
                       </Show>
