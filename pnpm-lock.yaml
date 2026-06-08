@@ -471,6 +471,8 @@ importers:
         specifier: ^1.9.13
         version: 1.9.13
 
+  packages/lib/messaging: {}
+
   packages/lib/observability:
     dependencies:
       '@holz/ansi-terminal-backend':
