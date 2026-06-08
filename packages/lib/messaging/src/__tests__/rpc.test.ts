@@ -1,10 +1,5 @@
-import {
-  RPC,
-  RpcError,
-  type Channel,
-  type MessageHandler,
-  type RpcMessage,
-} from '@lib/messaging';
+import { RPC, RpcError, type Channel, type RpcMessage } from '@lib/messaging';
+import { fromMessagePort } from '@lib/messaging/channel';
 
 type ServerApi = {
   requests: {
@@ -12,10 +7,12 @@ type ServerApi = {
     divide(params: { left: number; right: number }): Promise<number>;
     boom(params: { message: string }): number;
     denied(params: { resource: string }): number;
+    echoSize(params: { buffer: ArrayBuffer }): number;
   };
   events: {
     log(params: { message: string }): void;
     ping(): void;
+    sink(params: { buffer: ArrayBuffer }): void;
   };
 };
 
@@ -24,40 +21,22 @@ type ClientApi = {
   events: Record<string, never>;
 };
 
+// MessagePort delivers asynchronously; let queued messages drain.
+const tick = () =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
+
 /**
- * A pair of in-memory channels wired together: a message sent on one is
- * delivered synchronously to the other's handlers. Stands in for a real
- * transport (e.g. two `MessageChannel` ports).
+ * Wire two RPC peers over a real `MessageChannel` via the adapter under
+ * test — no hand-rolled mock transport.
  */
-const createLoopback = () => {
-  const aliceHandlers = new Set<MessageHandler<RpcMessage>>();
-  const bobHandlers = new Set<MessageHandler<RpcMessage>>();
-
-  const alice: Channel<RpcMessage, RpcMessage> = {
-    send: (message) => {
-      for (const handler of bobHandlers) handler(message);
-    },
-    onMessage: (handler) => {
-      aliceHandlers.add(handler);
-    },
-  };
-  const bob: Channel<RpcMessage, RpcMessage> = {
-    send: (message) => {
-      for (const handler of aliceHandlers) handler(message);
-    },
-    onMessage: (handler) => {
-      bobHandlers.add(handler);
-    },
-  };
-
-  return { alice, bob };
-};
-
 const setup = () => {
-  const { alice, bob } = createLoopback();
+  const { port1, port2 } = new MessageChannel();
   const logged: string[] = [];
+  const sizes: number[] = [];
 
-  const server = RPC.from<ServerApi, ClientApi>(alice, {
+  const server = RPC.from<ServerApi, ClientApi>(fromMessagePort(port1), {
     requests: {
       add: ({ left, right }) => left + right,
       divide: ({ left, right }) => Promise.resolve(left / right),
@@ -67,6 +46,7 @@ const setup = () => {
       denied: () => {
         throw new RpcError('no access');
       },
+      echoSize: ({ buffer }) => buffer.byteLength,
     },
     events: {
       log: ({ message }) => {
@@ -75,15 +55,18 @@ const setup = () => {
       ping: () => {
         logged.push('pong');
       },
+      sink: ({ buffer }) => {
+        sizes.push(buffer.byteLength);
+      },
     },
   });
 
-  const client = RPC.from<ClientApi, ServerApi>(bob, {
+  const client = RPC.from<ClientApi, ServerApi>(fromMessagePort(port2), {
     requests: {},
     events: {},
   });
 
-  return { server, client, logged };
+  return { server, client, logged, sizes };
 };
 
 describe('RPC', () => {
@@ -164,35 +147,80 @@ describe('RPC', () => {
     );
   });
 
-  it('drops events named after inherited members', () => {
+  it('drops events named after inherited members', async () => {
     const { client, logged } = setup();
     const loose = client as unknown as {
       notify(method: string, params?: unknown): void;
     };
 
-    // Should be silently dropped, not dispatched to Object.prototype.
-    expect(() => {
-      loose.notify('constructor', {});
-      loose.notify('__proto__', {});
-      loose.notify('hasOwnProperty', {});
-    }).not.toThrow();
+    loose.notify('constructor', {});
+    loose.notify('__proto__', {});
+    loose.notify('hasOwnProperty', {});
+    await tick();
+
     expect(logged).toEqual([]);
   });
 
-  it('delivers an event with a payload', () => {
+  it('delivers an event with a payload', async () => {
     const { client, logged } = setup();
 
     client.notify('log', { message: 'hello' });
+    await tick();
 
     expect(logged).toEqual(['hello']);
   });
 
-  it('delivers a zero-argument event', () => {
+  it('delivers a zero-argument event', async () => {
     const { client, logged } = setup();
 
     client.notify('ping');
+    await tick();
 
     expect(logged).toEqual(['pong']);
+  });
+
+  it('transfers an ArrayBuffer alongside a request', async () => {
+    const { client } = setup();
+    const buffer = new ArrayBuffer(8);
+
+    const size = await client.request(
+      'echoSize',
+      { buffer },
+      { transfer: [buffer] },
+    );
+
+    expect(size).toBe(8);
+    expect(buffer.byteLength).toBe(0); // neutered in the sender
+  });
+
+  it('transfers an ArrayBuffer alongside a notify', async () => {
+    const { client, sizes } = setup();
+    const buffer = new ArrayBuffer(8);
+
+    client.notify('sink', { buffer }, { transfer: [buffer] });
+    await tick();
+
+    expect(sizes).toEqual([8]);
+    expect(buffer.byteLength).toBe(0);
+  });
+
+  it('throws when transfer is requested on a non-transferable channel', async () => {
+    const plain: Channel<RpcMessage, RpcMessage> = {
+      send: () => undefined,
+      onMessage: () => undefined,
+    };
+    const client = RPC.from<ClientApi, ServerApi>(plain, {
+      requests: {},
+      events: {},
+    });
+    const buffer = new ArrayBuffer(8);
+
+    await expect(
+      client.request('echoSize', { buffer }, { transfer: [buffer] }),
+    ).rejects.toThrow('does not support transfer');
+    expect(() =>
+      client.notify('sink', { buffer }, { transfer: [buffer] }),
+    ).toThrow('does not support transfer');
   });
 
   it('type-checks request and notify calls', () => {
@@ -206,23 +234,31 @@ describe('RPC', () => {
       client.notify('add', { left: 1, right: 2 });
       // @ts-expect-error - log requires its params payload
       client.notify('log');
+      // @ts-expect-error - ping takes no argument (nothing to transfer)
+      client.notify('ping', {});
 
-      // Valid: a zero-argument event needs no payload.
+      // Valid: zero-argument event needs no payload.
       client.notify('ping');
+      // Valid: a payload procedure accepts transfer options.
+      void client.request(
+        'echoSize',
+        { buffer: new ArrayBuffer(1) },
+        { transfer: [] },
+      );
     };
 
     expect(typeof checks).toBe('function');
   });
 
   it('rejects procedures that take more than one argument', () => {
-    const { alice } = createLoopback();
+    const { port1 } = new MessageChannel();
     type TwoArg = {
       requests: { sum(first: number, second: number): number };
       events: Record<string, never>;
     };
 
     // @ts-expect-error - procedures take at most one argument
-    RPC.from<TwoArg, ClientApi>(alice, {
+    RPC.from<TwoArg, ClientApi>(fromMessagePort(port1), {
       requests: { sum: (first, second) => first + second },
       events: {},
     });

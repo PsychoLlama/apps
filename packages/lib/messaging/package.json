@@ -6,7 +6,10 @@
   "description": "Fully-typed messaging over bidirectional streams.",
   "license": "MIT",
   "sideEffects": false,
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./channel": "./src/message-channel.ts"
+  },
   "scripts": {
     "typecheck": "tsc"
   },

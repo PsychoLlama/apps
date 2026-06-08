@@ -1,5 +1,6 @@
 import { createLogger } from '@lib/observability';
 import type { Channel } from './channel.ts';
+import { isTransferable, type SendOptions } from './message-channel.ts';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -53,6 +54,19 @@ type ResultOf<Procedure extends RpcProcedure> = Awaited<ReturnType<Procedure>>;
 
 type RequestMethod<Api extends RpcApi> = keyof Api['requests'] & string;
 type EventMethod<Api extends RpcApi> = keyof Api['events'] & string;
+
+/**
+ * Call-site argument tuple for a procedure. A procedure with no parameter
+ * takes no further arguments; one with a `params` payload also accepts
+ * optional {@link SendOptions} (transfer is only meaningful with a payload).
+ *
+ * A procedure with an *optional* parameter is treated as having one — pass
+ * the argument explicitly (even as `undefined`) to also pass options.
+ */
+type CallArgs<Procedure extends RpcProcedure> =
+  Parameters<Procedure> extends []
+    ? []
+    : [params: Parameters<Procedure>[0], options?: SendOptions];
 
 /**
  * Resolve a handler by method name, treating the name as untrusted.
@@ -130,8 +144,9 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
    */
   request<Method extends RequestMethod<Remote>>(
     method: Method,
-    ...args: Parameters<Remote['requests'][Method]>
+    ...args: CallArgs<Remote['requests'][Method]>
   ): Promise<ResultOf<Remote['requests'][Method]>> {
+    const [params, options] = args as [params?: unknown, options?: SendOptions];
     const id = this.#nextRequestId++;
     return new Promise<ResultOf<Remote['requests'][Method]>>(
       (resolve, reject) => {
@@ -140,7 +155,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
             resolve(result as ResultOf<Remote['requests'][Method]>),
           reject: (error) => reject(error),
         });
-        this.#channel.send({ type: 'request', id, method, params: args[0] });
+        this.#send({ type: 'request', id, method, params }, options);
       },
     );
   }
@@ -148,9 +163,24 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   /** Fire a remote event. Returns once handed to the channel. */
   notify<Method extends EventMethod<Remote>>(
     method: Method,
-    ...args: Parameters<Remote['events'][Method]>
+    ...args: CallArgs<Remote['events'][Method]>
   ): void {
-    this.#channel.send({ type: 'event', method, params: args[0] });
+    const [params, options] = args as [params?: unknown, options?: SendOptions];
+    this.#send({ type: 'event', method, params }, options);
+  }
+
+  // Route a message through the channel, applying send options if given.
+  // Transfer requires a transfer-capable channel; asking for it on one
+  // that can't is a misconfiguration, not a silent copy.
+  #send(message: RpcMessage, options?: SendOptions): void {
+    if (options?.transfer && options.transfer.length > 0) {
+      if (!isTransferable(this.#channel)) {
+        throw new Error('This channel does not support transfer.');
+      }
+      this.#channel.send(message, options);
+    } else {
+      this.#channel.send(message);
+    }
   }
 
   async #dispatch(message: RpcMessage): Promise<void> {
