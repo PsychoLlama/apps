@@ -471,7 +471,11 @@ importers:
         specifier: ^1.9.13
         version: 1.9.13
 
-  packages/lib/messaging: {}
+  packages/lib/messaging:
+    dependencies:
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../observability
 
   packages/lib/observability:
     dependencies:

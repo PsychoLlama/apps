@@ -1,7 +1,6 @@
 import {
   RPC,
   RpcError,
-  RpcErrorType,
   type Channel,
   type MessageHandler,
   type RpcMessage,
@@ -16,6 +15,7 @@ type ServerApi = {
   };
   events: {
     log(params: { message: string }): void;
+    ping(): void;
   };
 };
 
@@ -65,12 +65,15 @@ const setup = () => {
         throw new Error(message);
       },
       denied: () => {
-        throw new RpcError('forbidden', 'no access');
+        throw new RpcError('no access');
       },
     },
     events: {
       log: ({ message }) => {
         logged.push(message);
+      },
+      ping: () => {
+        logged.push('pong');
       },
     },
   });
@@ -110,48 +113,51 @@ describe('RPC', () => {
     expect(quotient).toBe(3);
   });
 
-  it('rejects with an RpcError instance when a handler throws', async () => {
+  it('rejects with an RpcError when a handler throws', async () => {
     const { client } = setup();
 
     await expect(
       client.request('boom', { message: 'kaboom' }),
     ).rejects.toBeInstanceOf(RpcError);
+    await expect(client.request('boom', { message: 'kaboom' })).rejects.toThrow(
+      'kaboom',
+    );
   });
 
-  it('wraps non-RpcError throws as internal errors', async () => {
+  it('propagates a deliberately thrown RpcError message', async () => {
     const { client } = setup();
 
-    await expect(
-      client.request('boom', { message: 'kaboom' }),
-    ).rejects.toMatchObject({ type: RpcErrorType.Internal, message: 'kaboom' });
+    await expect(client.request('denied', { resource: 'db' })).rejects.toThrow(
+      'no access',
+    );
   });
 
-  it('round-trips a thrown RpcError type and message to the caller', async () => {
-    const { client } = setup();
-
-    await expect(
-      client.request('denied', { resource: 'db' }),
-    ).rejects.toMatchObject({ type: 'forbidden', message: 'no access' });
-  });
-
-  it('rejects unknown request methods with an UnknownMethod error', async () => {
+  it('rejects unknown request methods', async () => {
     const { client } = setup();
     // Bypass the type system to call an off-contract method.
     const loose = client as unknown as {
       request(method: string, params: unknown): Promise<unknown>;
     };
 
-    await expect(loose.request('ghost', {})).rejects.toMatchObject({
-      type: RpcErrorType.UnknownMethod,
-    });
+    await expect(loose.request('ghost', {})).rejects.toThrow(
+      'Unknown request method: ghost',
+    );
   });
 
-  it('delivers events without a response', () => {
+  it('delivers an event with a payload', () => {
     const { client, logged } = setup();
 
     client.notify('log', { message: 'hello' });
 
     expect(logged).toEqual(['hello']);
+  });
+
+  it('delivers a zero-argument event', () => {
+    const { client, logged } = setup();
+
+    client.notify('ping');
+
+    expect(logged).toEqual(['pong']);
   });
 
   it('type-checks request and notify calls', () => {
@@ -163,21 +169,26 @@ describe('RPC', () => {
       void client.request('ghost', { left: 1, right: 2 });
       // @ts-expect-error - notify targets events, not requests
       client.notify('add', { left: 1, right: 2 });
+      // @ts-expect-error - log requires its params payload
+      client.notify('log');
+
+      // Valid: a zero-argument event needs no payload.
+      client.notify('ping');
     };
 
     expect(typeof checks).toBe('function');
   });
 
-  it('rejects procedures that do not take exactly one argument', () => {
+  it('rejects procedures that take more than one argument', () => {
     const { alice } = createLoopback();
-    type ZeroArg = {
-      requests: { ping(): void };
+    type TwoArg = {
+      requests: { sum(first: number, second: number): number };
       events: Record<string, never>;
     };
 
-    RPC.from<ZeroArg, ClientApi>(alice, {
-      // @ts-expect-error - procedures must take exactly one argument
-      requests: { ping: () => undefined },
+    // @ts-expect-error - procedures take at most one argument
+    RPC.from<TwoArg, ClientApi>(alice, {
+      requests: { sum: (first, second) => first + second },
       events: {},
     });
 

@@ -1,10 +1,13 @@
+import { createLogger } from '@lib/observability';
 import type { Channel } from './channel.ts';
 
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+
 /**
- * A single RPC procedure: takes exactly one `params` argument and returns
+ * A single RPC procedure. Takes at most one `params` argument and returns
  * a result. Requests return a value (sync or `Promise`); events return
  * `void`. The `never` param is a constraint trick — every concrete
- * procedure signature is assignable to it.
+ * procedure of arity 0 or 1 is assignable to it, while arity 2+ is not.
  */
 export type RpcProcedure = (params: never) => unknown;
 
@@ -16,47 +19,21 @@ export type RpcProcedure = (params: never) => unknown;
  * - `events` are fire-and-forget — no response, no result.
  *
  * Use inline object types for each map; both are required (pass `{}` when
- * an endpoint exposes none). Every procedure must take exactly one
- * argument — enforced by {@link RPC.from}.
+ * an endpoint exposes none). A procedure may take zero or one argument,
+ * never more.
  */
 export interface RpcApi {
   requests: Record<string, RpcProcedure>;
   events: Record<string, RpcProcedure>;
 }
 
-/** Built-in {@link RpcError.type} values for failures raised by the layer itself. */
-export const RpcErrorType = {
-  /** The remote has no handler for the requested method. */
-  UnknownMethod: 'unknown-method',
-  /** A request handler threw a value that wasn't an {@link RpcError}. */
-  Internal: 'internal-error',
-} as const;
-
-/**
- * Error raised on the caller side when a remote request fails. `type` is a
- * discriminant callers can branch on; a handler throws its own `RpcError`
- * to send a typed failure, otherwise it surfaces as
- * {@link RpcErrorType.Internal}.
- */
+/** Error raised on the caller side when a remote request fails. */
 export class RpcError extends Error {
-  readonly type: string;
-
-  constructor(type: string, message: string) {
+  constructor(message: string) {
     super(message);
     this.name = 'RpcError';
-    this.type = type;
   }
 }
-
-/**
- * Wire discriminants. Numeric to keep the envelope small — the underlying
- * channel copies these on every message.
- */
-const Kind = {
-  Request: 0,
-  Response: 1,
-  Event: 2,
-} as const;
 
 /**
  * The wire envelope carried by the underlying {@link Channel}. An `RPC`
@@ -67,41 +44,15 @@ const Kind = {
  * because nothing awaits them.
  */
 export type RpcMessage =
-  | { type: typeof Kind.Request; id: number; method: string; params: unknown }
-  | { type: typeof Kind.Response; id: number; ok: true; result: unknown }
-  | {
-      type: typeof Kind.Response;
-      id: number;
-      ok: false;
-      error: { type: string; message: string };
-    }
-  | { type: typeof Kind.Event; method: string; params: unknown };
+  | { type: 'request'; id: number; method: string; params: unknown }
+  | { type: 'response'; id: number; ok: true; result: unknown }
+  | { type: 'response'; id: number; ok: false; error: { message: string } }
+  | { type: 'event'; method: string; params: unknown };
 
-type ParamsOf<Procedure extends RpcProcedure> = Parameters<Procedure>[0];
 type ResultOf<Procedure extends RpcProcedure> = Awaited<ReturnType<Procedure>>;
 
 type RequestMethod<Api extends RpcApi> = keyof Api['requests'] & string;
 type EventMethod<Api extends RpcApi> = keyof Api['events'] & string;
-
-/**
- * Maps each procedure to itself when it takes exactly one argument, else
- * to `never`. Applied to a handler map so a zero- or multi-argument
- * procedure fails to type-check at {@link RPC.from}.
- */
-type SingleArgument<Procedure> = Procedure extends RpcProcedure
-  ? Parameters<Procedure> extends [unknown]
-    ? Procedure
-    : never
-  : never;
-
-type EnforceArity<Api extends RpcApi> = {
-  requests: {
-    [Method in keyof Api['requests']]: SingleArgument<Api['requests'][Method]>;
-  };
-  events: {
-    [Method in keyof Api['events']]: SingleArgument<Api['events'][Method]>;
-  };
-};
 
 interface PendingRequest {
   resolve: (result: unknown) => void;
@@ -125,17 +76,16 @@ interface PendingRequest {
  * });
  *
  * const product = await peer.request('multiply', { left: 6, right: 7 });
- * peer.notify('ping', { at: 0 });
+ * peer.notify('ping');
  * ```
  */
 export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   /**
-   * Wrap a channel as an RPC endpoint. `handlers` implements `Local`;
-   * every procedure must take exactly one argument.
+   * Wrap a channel as an RPC endpoint. `handlers` implements `Local`.
    */
   static from<Local extends RpcApi, Remote extends RpcApi>(
     channel: Channel<RpcMessage, RpcMessage>,
-    handlers: Local & EnforceArity<Local>,
+    handlers: Local,
   ): RPC<Local, Remote> {
     return new RPC<Local, Remote>(channel, handlers);
   }
@@ -165,7 +115,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
    */
   request<Method extends RequestMethod<Remote>>(
     method: Method,
-    params: ParamsOf<Remote['requests'][Method]>,
+    ...args: Parameters<Remote['requests'][Method]>
   ): Promise<ResultOf<Remote['requests'][Method]>> {
     const id = this.#nextRequestId++;
     return new Promise<ResultOf<Remote['requests'][Method]>>(
@@ -175,7 +125,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
             resolve(result as ResultOf<Remote['requests'][Method]>),
           reject: (error) => reject(error),
         });
-        this.#channel.send({ type: Kind.Request, id, method, params });
+        this.#channel.send({ type: 'request', id, method, params: args[0] });
       },
     );
   }
@@ -183,38 +133,35 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   /** Fire a remote event. Returns once handed to the channel. */
   notify<Method extends EventMethod<Remote>>(
     method: Method,
-    params: ParamsOf<Remote['events'][Method]>,
+    ...args: Parameters<Remote['events'][Method]>
   ): void {
-    this.#channel.send({ type: Kind.Event, method, params });
+    this.#channel.send({ type: 'event', method, params: args[0] });
   }
 
   async #dispatch(message: RpcMessage): Promise<void> {
     switch (message.type) {
-      case Kind.Request:
+      case 'request':
         await this.#handleRequest(message);
         return;
-      case Kind.Event:
+      case 'event':
         this.#handleEvent(message);
         return;
-      case Kind.Response:
+      case 'response':
         this.#handleResponse(message);
         return;
     }
   }
 
   async #handleRequest(
-    message: RpcMessage & { type: typeof Kind.Request },
+    message: RpcMessage & { type: 'request' },
   ): Promise<void> {
     const handler = this.#requestHandlers[message.method];
     if (!handler) {
       this.#channel.send({
-        type: Kind.Response,
+        type: 'response',
         id: message.id,
         ok: false,
-        error: {
-          type: RpcErrorType.UnknownMethod,
-          message: `Unknown request method: ${message.method}`,
-        },
+        error: { message: `Unknown request method: ${message.method}` },
       });
       return;
     }
@@ -222,40 +169,46 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
     try {
       const result = await handler(message.params as never);
       this.#channel.send({
-        type: Kind.Response,
+        type: 'response',
         id: message.id,
         ok: true,
         result,
       });
-    } catch (error) {
+    } catch (thrown) {
+      const error =
+        thrown instanceof Error ? thrown : new Error(String(thrown));
+
+      // An RpcError is a deliberate, expected failure. Anything else is an
+      // internal bug in the handler — surface it to observability so it
+      // isn't lost behind the wire.
+      if (!(error instanceof RpcError)) {
+        logger.error('Request handler threw', {
+          method: message.method,
+          error,
+        });
+      }
+
       this.#channel.send({
-        type: Kind.Response,
+        type: 'response',
         id: message.id,
         ok: false,
-        error:
-          error instanceof RpcError
-            ? { type: error.type, message: error.message }
-            : {
-                type: RpcErrorType.Internal,
-                message: error instanceof Error ? error.message : String(error),
-              },
+        error: { message: error.message },
       });
     }
   }
 
-  #handleEvent(message: RpcMessage & { type: typeof Kind.Event }): void {
+  #handleEvent(message: RpcMessage & { type: 'event' }): void {
     // Unknown events are dropped — fire-and-forget has no channel to
     // report back on.
     this.#eventHandlers[message.method]?.(message.params as never);
   }
 
-  #handleResponse(message: RpcMessage & { type: typeof Kind.Response }): void {
+  #handleResponse(message: RpcMessage & { type: 'response' }): void {
     const pending = this.#pending.get(message.id);
     if (!pending) return; // Unknown or already-settled id; ignore.
     this.#pending.delete(message.id);
 
     if (message.ok) pending.resolve(message.result);
-    else
-      pending.reject(new RpcError(message.error.type, message.error.message));
+    else pending.reject(new RpcError(message.error.message));
   }
 }
