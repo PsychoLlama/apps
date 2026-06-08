@@ -207,8 +207,10 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
             );
             push_timestamp(&mut rows, "Ends", c.getEndTimestamp(), c.isEndAllDay());
             push(&mut rows, "Location", c.getLocation());
-            push(&mut rows, "Organizer", c.getOrganizer());
-            push_each(&mut rows, "Attendee", c.getAttendees());
+            // rxing strips the `mailto:` from `ORGANIZER`/`ATTENDEE`, so
+            // these arrive as bare addresses — type them so they link.
+            push_as(&mut rows, Detail::email, "Organizer", c.getOrganizer());
+            push_each_as(&mut rows, Detail::email, "Attendee", c.getAttendees());
             push(&mut rows, "Description", c.getDescription());
             "calendar"
         }
