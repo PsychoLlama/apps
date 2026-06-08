@@ -8,7 +8,8 @@
  * sensitive, so a declared URL still has to clear {@link webLinkHref}.
  */
 
-import type { ParsedDetail } from '@lib/qr-scanner';
+import type { ParsedDetail, ParsedLinkDetail } from '@lib/qr-scanner';
+import type { ScanResult } from './store';
 
 /** A parsed value resolved to an anchor target. */
 export interface DetailLink {
@@ -91,4 +92,22 @@ export const linkFor = (
       // `text`, `geo`, and `dateTime` carry no link.
       return undefined;
   }
+};
+
+/**
+ * The web URL to auto-launch for a recognized code, or `undefined` when
+ * there's nothing safe to open. Gated to `url`-kind scans — a QR whose
+ * whole purpose is a web link — so a URL buried in a contact or calendar
+ * card never triggers an unprompted navigation. The candidate is the
+ * parsed `link` row (rxing's `getURI()`, which may add a scheme the raw
+ * payload omitted), falling back to the raw text, and it still has to
+ * clear the same {@link linkFor} `link` safety check used to render it —
+ * so a `javascript:`/`data:`/deceptive-userinfo payload is never launched.
+ */
+export const autoOpenHref = (result: ScanResult): string | undefined => {
+  if (result.kind !== 'url') return undefined;
+  const link = result.details.find(
+    (detail): detail is ParsedLinkDetail => detail.type === 'link',
+  );
+  return linkFor('link', link?.value ?? result.text)?.href;
 };
