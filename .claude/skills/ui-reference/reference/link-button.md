@@ -11,3 +11,4 @@ Base: `<a>` attributes, margin props, skeleton props, testId props.
 - `variant` (=`'solid'`): Visual treatment. `'solid' | 'soft' | 'surface' | 'outline' | 'ghost'`.
 - `color` (=`'accent'`): Semantic color. `'accent' | 'neutral' | 'danger' | 'warning' | 'success'`.
 - `radius`: Corner radius override. `'none' | 'small' | 'medium' | 'large' | 'full'`. Defaults to a size-based radius.
+- `native`: Render a plain `<a>`, skipping in-app routing. Inferred from `href` when omitted — `mailto:`, `tel:`, `sms:`, and `blob:` default to native.

@@ -1,16 +1,17 @@
 /**
- * Wiring tests for Link.
+ * Wiring tests for LinkButton.
  *
  * The scheme matrix is covered in `props/__tests__/native.test.ts`; here we
- * only assert Link actually routes its `href` through that detector. A router
- * `<A>` tags itself with solid-router's `inactive` class for a non-matching
- * route; a native `<a>` never does — that's our discriminator.
+ * only assert LinkButton routes its `href` through that detector, matching
+ * Link's `native` behavior. A router `<A>` tags itself with solid-router's
+ * `inactive` class for a non-matching route; a native `<a>` never does —
+ * that's our discriminator.
  */
 
 import { MemoryRouter, Route } from '@solidjs/router';
 import { render, screen } from '@solidjs/testing-library';
 import type { Component } from 'solid-js';
-import Link from '../link';
+import LinkButton from '../link-button';
 
 const mount = (page: Component) =>
   render(() => (
@@ -22,12 +23,12 @@ const mount = (page: Component) =>
 const renderedNatively = (testId: string) =>
   !screen.getByTestId(testId).classList.contains('inactive');
 
-describe('Link', () => {
+describe('LinkButton', () => {
   it('renders a native anchor for an inferred scheme, preserving the href verbatim', () => {
     mount(() => (
-      <Link testId="link" href="mailto:hi@example.com">
+      <LinkButton testId="link" href="mailto:hi@example.com">
         Email
-      </Link>
+      </LinkButton>
     ));
 
     const link = screen.getByTestId('link');
@@ -37,9 +38,9 @@ describe('Link', () => {
 
   it('renders the router link for an in-app path', () => {
     mount(() => (
-      <Link testId="link" href="/about">
+      <LinkButton testId="link" href="/about">
         About
-      </Link>
+      </LinkButton>
     ));
 
     expect(renderedNatively('link')).toBe(false);
@@ -47,9 +48,9 @@ describe('Link', () => {
 
   it('honors an explicit `native` over the inferred default', () => {
     mount(() => (
-      <Link testId="link" href="/about" native>
+      <LinkButton testId="link" href="/about" native>
         About
-      </Link>
+      </LinkButton>
     ));
 
     expect(renderedNatively('link')).toBe(true);
