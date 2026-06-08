@@ -2,10 +2,11 @@
  * Link component.
  *
  * Ported from Radix UI Themes Link. Renders `<A>` from `@solidjs/router`
- * for client-side routing, or a native `<a>` when `native` is set — to skip
- * the router's path resolution for destinations that aren't in-app routes
- * (schemeless URIs like `mailto:` / `tel:`, which the router would otherwise
- * mangle into in-app paths). Only supports accent and neutral colors.
+ * for client-side routing, or a native `<a>` for destinations that aren't
+ * in-app routes — anything carrying a URI scheme (`mailto:`, `tel:`,
+ * `https:`) or a protocol-relative `//`, which the router would otherwise
+ * mangle into in-app paths. Inferred from `href` by default; override with
+ * `native`. Only supports accent and neutral colors.
  *
  * @see https://www.radix-ui.com/themes/docs/components/link
  */
@@ -46,6 +47,12 @@ import * as css from './link.css';
 type LinkColor = 'accent' | 'neutral';
 type Underline = 'auto' | 'always' | 'hover' | 'none';
 
+/**
+ * Destinations the router can't resolve: a leading URI scheme (`mailto:`,
+ * `tel:`, `https:`) or a protocol-relative `//`. These render a native `<a>`.
+ */
+const NON_ROUTE_PATTERN = /^([a-z][a-z\d+.-]*:|\/\/)/i;
+
 export interface LinkProps
   extends
     MarginProps,
@@ -67,9 +74,12 @@ export interface LinkProps
   highContrast?: boolean;
   /**
    * Render a native `<a>` instead of the router link, skipping the router's
-   * path resolution. Required for schemeless URIs like `mailto:` / `tel:`,
-   * which the router would otherwise resolve into in-app paths. Pair with
-   * `target` / `rel` as needed; those pass straight through. @default false
+   * path resolution. When omitted, inferred from `href`: destinations with a
+   * URI scheme (`mailto:`, `tel:`, `https:`) or a protocol-relative `//`
+   * default to native, since the router would otherwise resolve them into
+   * in-app paths; in-app paths default to the router link. Set explicitly to
+   * override. Pair with `target` / `rel` as needed; those pass straight
+   * through.
    */
   native?: boolean;
 }
@@ -81,7 +91,6 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       underline: 'auto' as const,
       color: 'accent' as const,
       highContrast: false,
-      native: false,
     },
     rawProps,
   );
@@ -104,6 +113,9 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const contrast = () => (local.highContrast ? 'high' : 'normal');
+
+  // Honor an explicit `native`, otherwise infer it from the destination.
+  const native = () => local.native ?? NON_ROUTE_PATTERN.test(props.href ?? '');
 
   const autoAlways = () =>
     local.underline === 'auto' &&
@@ -129,7 +141,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
 
   return (
     <Dynamic
-      component={local.native ? 'a' : A}
+      component={native() ? 'a' : A}
       class={className()}
       data-testid={tid.testId}
       {...skeletonProps}
