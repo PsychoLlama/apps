@@ -4,6 +4,7 @@ import {
   CameraAborted,
   CameraError,
   classifyCameraError,
+  isAndroid,
   openCameraSession,
   setTorch,
   stopStream,
@@ -26,6 +27,36 @@ const namedError = (name: string): Error => {
   error.name = name;
   return error;
 };
+
+describe('isAndroid', () => {
+  // `userAgentData` is Chromium-only and absent from jsdom; define it
+  // directly on the navigator and clear it between cases.
+  const stubPlatform = (platform: string | undefined): void => {
+    Object.defineProperty(navigator, 'userAgentData', {
+      value: platform === undefined ? undefined : { platform },
+      configurable: true,
+    });
+  };
+
+  afterEach(() => {
+    Reflect.deleteProperty(navigator, 'userAgentData');
+  });
+
+  it('is true when client hints report Android', () => {
+    stubPlatform('Android');
+    expect(isAndroid()).toBe(true);
+  });
+
+  it('is false on any other platform', () => {
+    stubPlatform('Windows');
+    expect(isAndroid()).toBe(false);
+  });
+
+  it('is false when the client-hints API is absent', () => {
+    stubPlatform(undefined);
+    expect(isAndroid()).toBe(false);
+  });
+});
 
 describe('classifyCameraError', () => {
   it('maps permission rejections to permission-denied', () => {

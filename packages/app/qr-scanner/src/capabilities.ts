@@ -16,6 +16,15 @@ declare global {
   interface MediaTrackConstraintSet {
     torch?: boolean;
   }
+
+  /**
+   * The User-Agent Client Hints surface, not yet in the DOM lib. We touch
+   * only `platform`, the low-entropy hint readable synchronously without a
+   * permission prompt.
+   */
+  interface Navigator {
+    readonly userAgentData?: { readonly platform: string };
+  }
 }
 
 /**
@@ -191,6 +200,18 @@ export const inStandalonePWA = (): boolean =>
   ['standalone', 'minimal-ui', 'fullscreen'].some(
     (mode) => window.matchMedia(`(display-mode: ${mode})`).matches,
   );
+
+/**
+ * Whether we're on Android, read from the User-Agent Client Hints
+ * `platform`. Gates the Wi-Fi-settings `intent://` shortcut on a scanned
+ * Wi-Fi code: only Chromium exposes `userAgentData` *and* honors `intent://`,
+ * so a true here doubles as "this browser can launch an Android intent."
+ * Every other engine (iOS Safari, Firefox) lacks the API and reads false —
+ * exactly right, since the intent would do nothing there anyway.
+ */
+export const isAndroid = (): boolean =>
+  typeof navigator !== 'undefined' &&
+  navigator.userAgentData?.platform === 'Android';
 
 /**
  * Collapse the browser's assorted `getUserMedia` rejections into a

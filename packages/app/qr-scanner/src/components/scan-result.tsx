@@ -13,9 +13,21 @@ import {
   Flex,
   Heading,
   Link,
+  LinkButton,
 } from '@lib/ui';
 import IconRefresh from 'virtual:icons/mdi/refresh';
+import IconWifi from 'virtual:icons/mdi/wifi';
+import { isAndroid } from '../capabilities';
 import { linkFor } from '../scan-link';
+
+/**
+ * Android intent URI that opens the system Wi-Fi settings screen. Chromium
+ * on Android parses it into a real `Intent` and fires it; other engines
+ * ignore the scheme. It only takes the user to the settings screen — it
+ * can't pre-fill or join the scanned network.
+ */
+const WIFI_SETTINGS_INTENT =
+  'intent://#Intent;action=android.settings.WIFI_SETTINGS;end';
 
 /** Friendly names for each recognized payload kind, used as the heading. */
 const KIND_LABELS: Record<ScanKind, string> = {
@@ -71,6 +83,10 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
       ? [...props.details]
       : [{ type: 'text', label: 'Content', value: props.text }];
 
+  // Offer the Wi-Fi-settings shortcut only on a Wi-Fi code and only where
+  // the `intent://` launch can actually fire (Chromium on Android).
+  const showWifiIntent = (): boolean => props.kind === 'wifi' && isAndroid();
+
   return (
     <Flex as="div" direction="column" gap={5}>
       <Heading as="h1" size={6} weight="medium" selectable={false}>
@@ -116,7 +132,24 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
         </For>
       </DataListRoot>
 
-      <Button testId="scan-again" size={3} onClick={() => props.onRetry()}>
+      <Show when={showWifiIntent()}>
+        <LinkButton
+          native
+          href={WIFI_SETTINGS_INTENT}
+          size={3}
+          testId="open-wifi-settings"
+        >
+          <IconWifi width="20" height="20" aria-hidden="true" />
+          Open Wi-Fi settings
+        </LinkButton>
+      </Show>
+
+      <Button
+        testId="scan-again"
+        size={3}
+        variant={showWifiIntent() ? 'soft' : 'solid'}
+        onClick={() => props.onRetry()}
+      >
         <IconRefresh width="20" height="20" aria-hidden="true" />
         Scan again
       </Button>
