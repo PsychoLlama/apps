@@ -4,10 +4,11 @@
  * single variant inside an `onMessage` handler (e.g. via `switch`).
  *
  * Both halves of a {@link Channel} are discriminated unions of types
- * extending this shape.
+ * extending this shape. `type` may be a number when a compact wire
+ * encoding is wanted (the RPC layer does this).
  */
 export interface Message {
-  type: string;
+  type: string | number;
 }
 
 /** Handler invoked for each message arriving on a {@link Channel}. */

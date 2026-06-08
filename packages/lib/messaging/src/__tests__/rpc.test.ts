@@ -1,6 +1,7 @@
 import {
+  RPC,
   RpcError,
-  RpcPeer,
+  RpcErrorType,
   type Channel,
   type MessageHandler,
   type RpcMessage,
@@ -11,15 +12,16 @@ type ServerApi = {
     add(params: { left: number; right: number }): number;
     divide(params: { left: number; right: number }): Promise<number>;
     boom(params: { message: string }): number;
+    denied(params: { resource: string }): number;
   };
-  notifications: {
+  events: {
     log(params: { message: string }): void;
   };
 };
 
 type ClientApi = {
   requests: Record<string, never>;
-  notifications: Record<string, never>;
+  events: Record<string, never>;
 };
 
 /**
@@ -55,30 +57,33 @@ const setup = () => {
   const { alice, bob } = createLoopback();
   const logged: string[] = [];
 
-  const server = new RpcPeer<ServerApi, ClientApi>(alice, {
+  const server = RPC.from<ServerApi, ClientApi>(alice, {
     requests: {
       add: ({ left, right }) => left + right,
       divide: ({ left, right }) => Promise.resolve(left / right),
       boom: ({ message }) => {
         throw new Error(message);
       },
+      denied: () => {
+        throw new RpcError('forbidden', 'no access');
+      },
     },
-    notifications: {
+    events: {
       log: ({ message }) => {
         logged.push(message);
       },
     },
   });
 
-  const client = new RpcPeer<ClientApi, ServerApi>(bob, {
+  const client = RPC.from<ClientApi, ServerApi>(bob, {
     requests: {},
-    notifications: {},
+    events: {},
   });
 
   return { server, client, logged };
 };
 
-describe('RpcPeer', () => {
+describe('RPC', () => {
   it('resolves a request with the remote handler result', async () => {
     const { client } = setup();
 
@@ -105,18 +110,43 @@ describe('RpcPeer', () => {
     expect(quotient).toBe(3);
   });
 
-  it('rejects with an RpcError when the remote handler throws', async () => {
+  it('rejects with an RpcError instance when a handler throws', async () => {
     const { client } = setup();
 
     await expect(
       client.request('boom', { message: 'kaboom' }),
     ).rejects.toBeInstanceOf(RpcError);
-    await expect(client.request('boom', { message: 'kaboom' })).rejects.toThrow(
-      'kaboom',
-    );
   });
 
-  it('delivers notifications without a response', () => {
+  it('wraps non-RpcError throws as internal errors', async () => {
+    const { client } = setup();
+
+    await expect(
+      client.request('boom', { message: 'kaboom' }),
+    ).rejects.toMatchObject({ type: RpcErrorType.Internal, message: 'kaboom' });
+  });
+
+  it('round-trips a thrown RpcError type and message to the caller', async () => {
+    const { client } = setup();
+
+    await expect(
+      client.request('denied', { resource: 'db' }),
+    ).rejects.toMatchObject({ type: 'forbidden', message: 'no access' });
+  });
+
+  it('rejects unknown request methods with an UnknownMethod error', async () => {
+    const { client } = setup();
+    // Bypass the type system to call an off-contract method.
+    const loose = client as unknown as {
+      request(method: string, params: unknown): Promise<unknown>;
+    };
+
+    await expect(loose.request('ghost', {})).rejects.toMatchObject({
+      type: RpcErrorType.UnknownMethod,
+    });
+  });
+
+  it('delivers events without a response', () => {
     const { client, logged } = setup();
 
     client.notify('log', { message: 'hello' });
@@ -124,31 +154,33 @@ describe('RpcPeer', () => {
     expect(logged).toEqual(['hello']);
   });
 
-  it('responds with an error for unknown request methods', () => {
-    const { alice, bob } = createLoopback();
-    new RpcPeer<ServerApi, ClientApi>(alice, {
-      requests: {
-        add: ({ left, right }) => left + right,
-        divide: ({ left, right }) => Promise.resolve(left / right),
-        boom: ({ message }) => {
-          throw new Error(message);
-        },
-      },
-      notifications: { log: () => {} },
+  it('type-checks request and notify calls', () => {
+    // Compile-only assertions — never executed, so no real calls fire.
+    const checks = (client: RPC<ClientApi, ServerApi>) => {
+      // @ts-expect-error - params must match the method signature
+      void client.request('add', { left: 1 });
+      // @ts-expect-error - unknown request method
+      void client.request('ghost', { left: 1, right: 2 });
+      // @ts-expect-error - notify targets events, not requests
+      client.notify('add', { left: 1, right: 2 });
+    };
+
+    expect(typeof checks).toBe('function');
+  });
+
+  it('rejects procedures that do not take exactly one argument', () => {
+    const { alice } = createLoopback();
+    type ZeroArg = {
+      requests: { ping(): void };
+      events: Record<string, never>;
+    };
+
+    RPC.from<ZeroArg, ClientApi>(alice, {
+      // @ts-expect-error - procedures must take exactly one argument
+      requests: { ping: () => undefined },
+      events: {},
     });
 
-    // Act as a raw peer on the other end to send an off-contract request.
-    const responses: RpcMessage[] = [];
-    bob.onMessage((message) => responses.push(message));
-    bob.send({ type: 'request', id: 1, method: 'nope', params: {} });
-
-    expect(responses).toEqual([
-      {
-        type: 'response',
-        id: 1,
-        ok: false,
-        error: { message: 'Unknown request method: nope' },
-      },
-    ]);
+    expect(true).toBe(true);
   });
 });
