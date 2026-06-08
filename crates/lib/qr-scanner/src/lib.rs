@@ -22,14 +22,33 @@ fn start() {
 
 /// One row of a decoded code's parsed details, serialized to a plain JS
 /// object so it crosses the wasm boundary as structured-clone-safe data.
-/// A tagged union: most rows are `text`, but date/time fields cross as a
-/// raw epoch (`dateTime`) so the host formats them with `Intl` in the
-/// viewer's locale and timezone rather than us baking a string here.
+///
+/// A tagged union on `type`. The tag is the *semantic kind of the value*,
+/// taken straight from the field rxing's parser populated — so it's a
+/// fact, not a guess the host has to re-derive by sniffing the string. It
+/// drives how the host resolves the value to a link: `link` → the URL
+/// itself, `email` → `mailto:`, `phone` → `tel:`, `sms` → `sms:`. `geo`
+/// is a hint only (coordinates render as plain text; no `geo:` link, whose
+/// support is patchy). `dateTime` crosses as a raw epoch so the host
+/// formats it with `Intl` in the viewer's locale and timezone rather than
+/// us baking a string here. `text` is the catch-all for opaque values.
 #[derive(Serialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 enum Detail {
-    /// A plain label/value row, e.g. `{ label: "Network", value: "home" }`.
+    /// A plain, unlinkable label/value row, e.g. a Wi-Fi password.
     Text { label: String, value: String },
+    /// A web URL — the host links it (`http(s)` only, after its own safety
+    /// check), e.g. `{ label: "URL", value: "https://example.com" }`.
+    Link { label: String, value: String },
+    /// An email address — the host links it as `mailto:`.
+    Email { label: String, value: String },
+    /// A phone number — the host links it as `tel:` (opens the dialer).
+    Phone { label: String, value: String },
+    /// An SMS-capable number — the host links it as `sms:` (opens messaging).
+    Sms { label: String, value: String },
+    /// A geographic coordinate. A semantic hint only; the host renders the
+    /// value as plain text rather than a (poorly-supported) `geo:` link.
+    Geo { label: String, value: String },
     /// A timestamp row carrying epoch millis (UTC) for the host to format.
     /// `allDay` marks date-only events, rendered without a clock time.
     #[serde(rename_all = "camelCase")]
@@ -40,13 +59,31 @@ enum Detail {
     },
 }
 
-impl Detail {
-    fn text(label: &str, value: &str) -> Self {
-        Detail::Text {
-            label: label.to_owned(),
-            value: value.to_owned(),
+// Constructors for the labeled-value variants (everything but `DateTime`),
+// so the `push*` helpers can take one as a `fn(&str, &str) -> Detail` and
+// stamp each row with the type rxing's field already implies.
+macro_rules! labeled_value_ctors {
+    ($($ctor:ident => $variant:ident),+ $(,)?) => {
+        impl Detail {
+            $(
+                fn $ctor(label: &str, value: &str) -> Self {
+                    Detail::$variant {
+                        label: label.to_owned(),
+                        value: value.to_owned(),
+                    }
+                }
+            )+
         }
-    }
+    };
+}
+
+labeled_value_ctors! {
+    text => Text,
+    link => Link,
+    email => Email,
+    phone => Phone,
+    sms => Sms,
+    geo => Geo,
 }
 
 /// A successfully decoded barcode.
@@ -128,27 +165,27 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
             "wifi"
         }
         ParsedClientResult::URIResult(u) => {
-            push(&mut rows, "URL", u.getURI());
+            push_as(&mut rows, Detail::link, "URL", u.getURI());
             push(&mut rows, "Title", u.getTitle());
             "url"
         }
         ParsedClientResult::EmailResult(e) => {
-            push_each(&mut rows, "To", e.getTos());
-            push_each(&mut rows, "Cc", e.getCCs());
-            push_each(&mut rows, "Bcc", e.getBCCs());
+            push_each_as(&mut rows, Detail::email, "To", e.getTos());
+            push_each_as(&mut rows, Detail::email, "Cc", e.getCCs());
+            push_each_as(&mut rows, Detail::email, "Bcc", e.getBCCs());
             push(&mut rows, "Subject", e.getSubject());
             push(&mut rows, "Body", e.getBody());
             "email"
         }
         ParsedClientResult::SMSResult(s) => {
-            push_each(&mut rows, "Number", s.getNumbers());
+            push_each_as(&mut rows, Detail::sms, "Number", s.getNumbers());
             push(&mut rows, "Subject", s.getSubject());
             push(&mut rows, "Message", s.getBody());
             "sms"
         }
         ParsedClientResult::GeoResult(g) => {
-            rows.push(Detail::text("Latitude", &g.getLatitude().to_string()));
-            rows.push(Detail::text("Longitude", &g.getLongitude().to_string()));
+            rows.push(Detail::geo("Latitude", &g.getLatitude().to_string()));
+            rows.push(Detail::geo("Longitude", &g.getLongitude().to_string()));
             if g.getAltitude() != 0.0 {
                 rows.push(Detail::text("Altitude", &format!("{} m", g.getAltitude())));
             }
@@ -156,7 +193,7 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
             "geo"
         }
         ParsedClientResult::TelResult(t) => {
-            push(&mut rows, "Phone", t.getNumber());
+            push_as(&mut rows, Detail::phone, "Phone", t.getNumber());
             push(&mut rows, "Title", t.getTitle());
             "tel"
         }
@@ -170,8 +207,10 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
             );
             push_timestamp(&mut rows, "Ends", c.getEndTimestamp(), c.isEndAllDay());
             push(&mut rows, "Location", c.getLocation());
-            push(&mut rows, "Organizer", c.getOrganizer());
-            push_each(&mut rows, "Attendee", c.getAttendees());
+            // rxing strips the `mailto:` from `ORGANIZER`/`ATTENDEE`, so
+            // these arrive as bare addresses — type them so they link.
+            push_as(&mut rows, Detail::email, "Organizer", c.getOrganizer());
+            push_each_as(&mut rows, Detail::email, "Attendee", c.getAttendees());
             push(&mut rows, "Description", c.getDescription());
             "calendar"
         }
@@ -180,10 +219,10 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
             push_each(&mut rows, "Nickname", a.getNicknames());
             push(&mut rows, "Title", a.getTitle());
             push(&mut rows, "Organization", a.getOrg());
-            push_each(&mut rows, "Phone", a.getPhoneNumbers());
-            push_each(&mut rows, "Email", a.getEmails());
+            push_each_as(&mut rows, Detail::phone, "Phone", a.getPhoneNumbers());
+            push_each_as(&mut rows, Detail::email, "Email", a.getEmails());
             push_each(&mut rows, "Address", a.getAddresses());
-            push_each(&mut rows, "URL", a.getURLs());
+            push_each_as(&mut rows, Detail::link, "URL", a.getURLs());
             push(&mut rows, "Birthday", a.getBirthday());
             push(&mut rows, "Note", a.getNote());
             "contact"
@@ -211,21 +250,39 @@ fn parse_details(parsed: &ParsedClientResult) -> (&'static str, Vec<Detail>) {
     (kind, rows)
 }
 
-/// Push a single row, skipping empties so absent fields don't render.
-fn push(rows: &mut Vec<Detail>, label: &str, value: &str) {
+/// Push a single row of a given variant, skipping empties so absent fields
+/// don't render. `make` is the row constructor (`Detail::link`,
+/// `Detail::email`, …), letting the caller stamp the value's semantic type.
+fn push_as(rows: &mut Vec<Detail>, make: fn(&str, &str) -> Detail, label: &str, value: &str) {
     if !value.is_empty() {
-        rows.push(Detail::text(label, value));
+        rows.push(make(label, value));
     }
 }
 
 /// Push one row per non-empty value, repeating the label (e.g. a contact
 /// with several phone numbers becomes several "Phone" rows).
-fn push_each(rows: &mut Vec<Detail>, label: &str, values: &[String]) {
+fn push_each_as(
+    rows: &mut Vec<Detail>,
+    make: fn(&str, &str) -> Detail,
+    label: &str,
+    values: &[String],
+) {
     for value in values {
         if !value.is_empty() {
-            rows.push(Detail::text(label, value));
+            rows.push(make(label, value));
         }
     }
+}
+
+/// Push a plain `text` row, skipping empties. Shorthand for the common
+/// untyped case; see [`push_as`] for typed rows.
+fn push(rows: &mut Vec<Detail>, label: &str, value: &str) {
+    push_as(rows, Detail::text, label, value);
+}
+
+/// Push one plain `text` row per non-empty value; see [`push_each_as`].
+fn push_each(rows: &mut Vec<Detail>, label: &str, values: &[String]) {
+    push_each_as(rows, Detail::text, label, values);
 }
 
 /// Push a timestamp row, skipping unset times (`-1`) so absent dates
