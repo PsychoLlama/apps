@@ -34,18 +34,10 @@ export const CameraView: Component<CameraViewProps> = (props) => {
   let videoEl: HTMLVideoElement | undefined;
 
   onMount(() => {
+    // Start sampling immediately; the loop reads the decoder per frame, so
+    // it tolerates the worker preload still being in flight and begins
+    // decoding the moment it attaches.
     if (videoEl) {
-      // Kick playback explicitly. The `autoplay` attribute is unreliable
-      // when `srcObject` is assigned as a property (its only form) —
-      // iOS Safari in particular leaves the element paused on a black
-      // frame. A muted, `playsinline` feed is allowed to autoplay, so
-      // this resolves; we swallow the rejection (e.g. a teardown race)
-      // since the attribute remains a fallback.
-      void videoEl.play().catch(() => {});
-
-      // Start sampling immediately; the loop reads the decoder per frame,
-      // so it tolerates the worker preload still being in flight and
-      // begins decoding the moment it attaches.
       onCleanup(
         startCaptureLoop(videoEl, () => scanner.decoder?.current, finishScan),
       );
