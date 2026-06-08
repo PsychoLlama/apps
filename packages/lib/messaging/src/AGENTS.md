@@ -1,15 +1,18 @@
 ## Guidance
 
 - `index.ts` is the only public API. All exports go through it. Imported as `@lib/messaging`.
-- This package defines the transport-agnostic contract for typed, bidirectional messaging — nothing more. Concrete transports live in adapters.
+- This package owns the transport-agnostic messaging contract. Keep concrete transports in adapters, not here.
+- `Channel<Inbound, Outbound>` is the base interface. New transports implement it; don't widen it for one adapter's convenience.
+- Message unions must extend `Message` (`{ type: string }`). `type` is the discriminant — always present, always literal.
 
-## Core contract
+## RPC
 
-- `Channel<Inbound, Outbound>` is the base interface every adapter implements: `send` (outbound) and `onMessage` (inbound).
-- `Inbound`/`Outbound` are discriminated unions of `Message` (`{ type: string }`). The `type` field is the discriminant handlers narrow on.
-- Directions are from the local endpoint's perspective. The peer holds the mirror: `Channel<Outbound, Inbound>`.
+- Build typed request/response on `RpcPeer`. Don't hand-roll id correlation per call site.
+- Pick the call style by semantics: `request` when you await a result, `notify` for fire-and-forget. Never fake one with the other.
+- Define an endpoint's procedures as an `RpcApi`. Use inline object types; pass `{}` for an empty side.
+- Request handlers signal failure by throwing — callers receive an `RpcError`. Don't encode errors as success values.
 
 ## Adapters (future)
 
-- First planned adapter: `MessageChannel` ports (and anything matching that shape, e.g. workers). Not yet implemented.
+- First planned adapter: `MessageChannel` ports (and worker-style equivalents). Not yet implemented.
 - An adapter wraps a concrete transport behind `Channel` so callers stay decoupled from it.
