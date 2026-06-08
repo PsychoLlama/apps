@@ -1,0 +1,22 @@
+{
+  "name": "@lib/messaging",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Fully-typed messaging over bidirectional streams.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./channel": "./src/port-rpc.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/observability": "workspace:*"
+  },
+  "devDependencies": {
+    "@holz/log-collector": "catalog:"
+  }
+}
