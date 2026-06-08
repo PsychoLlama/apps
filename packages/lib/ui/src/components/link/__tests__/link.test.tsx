@@ -32,20 +32,22 @@ describe('Link', () => {
     expect(link.classList.contains('inactive')).toBe(false);
   });
 
-  it.each(['tel:+15551234', 'https://example.com', '//cdn.example.com/x'])(
-    'infers native for %s',
-    (href) => {
-      mount(() => (
-        <Link testId="link" href={href}>
-          External
-        </Link>
-      ));
+  it.each([
+    'tel:+15551234',
+    'https://example.com',
+    '//cdn.example.com/x',
+    'blob:https://example.com/550e8400-uuid',
+  ])('infers native for %s', (href) => {
+    mount(() => (
+      <Link testId="link" href={href}>
+        External
+      </Link>
+    ));
 
-      const link = screen.getByTestId('link');
-      expect(link).toHaveAttribute('href', href);
-      expect(link.classList.contains('inactive')).toBe(false);
-    },
-  );
+    const link = screen.getByTestId('link');
+    expect(link).toHaveAttribute('href', href);
+    expect(link.classList.contains('inactive')).toBe(false);
+  });
 
   it('uses the router link for in-app paths', () => {
     mount(() => (
