@@ -1,5 +1,5 @@
 import { style, styleVariants } from '@vanilla-extract/css';
-import { accent, black, space } from '@lib/design';
+import { accent, black, breakpoint, space } from '@lib/design';
 
 /**
  * Full-viewport stage for the live feed. Fixed over the page on an
@@ -107,12 +107,18 @@ export const corners = styleVariants({
  * flanking tracks needed. Adding the planned upload-from-photos control
  * just grows the centered row symmetrically.
  *
- * In landscape the bottom rail would run under the reticle — there the
- * window is height-bound (`60svh`) and rises to meet it. So the rail
- * stands up: it unpins from the bottom, hugs the right edge, and flows
- * its buttons as a column. `justifyContent`/`alignItems` already center,
- * so the same cluster just re-centers on the vertical axis, clear of the
- * window.
+ * Bottom is the default everywhere — even landscape, where a tablet has
+ * the height to clear the reticle. Only a phone-sized landscape viewport
+ * collides: the window is height-bound there (`60svh`) and rises to meet
+ * the rail. So below the `md` breakpoint the rail stands up — unpins from
+ * the bottom, hugs the right edge, and flows its buttons as a column.
+ * `justifyContent`/`alignItems` already center, so the cluster just
+ * re-centers on the vertical axis, clear of the window.
+ *
+ * Split on the `md` token: every phone is narrower than `md` in landscape
+ * and every tablet is at least that wide, so it cleanly divides the two.
+ * Negating it (`not (min-width)`) keeps bottom as the default and scopes
+ * the column to the constrained case — no revert branch restating base.
  */
 export const controls = style({
   position: 'absolute',
@@ -122,7 +128,7 @@ export const controls = style({
   alignItems: 'center',
   columnGap: space[5],
   '@media': {
-    '(orientation: landscape)': {
+    [`(orientation: landscape) and (not ${breakpoint.md})`]: {
       // `insetBlock: 0` anchors top *and* bottom (full height, so the
       // centered cluster lands at the optical middle) and overrides the
       // portrait `bottom` offset; `insetInline: 'auto'` releases the
