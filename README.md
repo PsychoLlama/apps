@@ -19,9 +19,13 @@ Some parts are scavenged from other tools:
 - Animation tokens pulled from [IBM Carbon](https://carbondesignsystem.com/).
 - UA reset adapted from [The New CSS Reset](https://elad2412.github.io/the-new-css-reset/).
 
-### Icon Editor - [Web App](https://apps.psychollama.io/icon-editor)
+### Icon Editor - [App](https://apps.psychollama.io/icon-editor)
 
 Slap together images for favicons, app icons, readme images, or anything that needs an abstract picture representing a project.
 
 > [!NOTE]
 > Assumes non-commercial use. See license linked in each icon pack.
+
+### QR Scanner - [App](https://apps.psychollama.io/scanner)
+
+Cross-platform QR code scanner and format parser.
