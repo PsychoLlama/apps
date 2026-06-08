@@ -229,13 +229,14 @@ fn push_each(rows: &mut Vec<Detail>, label: &str, values: &[String]) {
 }
 
 /// Push a timestamp row, skipping unset times (`-1`) so absent dates
-/// don't render. The epoch millis cross to the host untouched — it formats
-/// them with `Intl` in the viewer's locale and timezone.
-fn push_timestamp(rows: &mut Vec<Detail>, label: &str, millis: i64, all_day: bool) {
-    if millis >= 0 {
+/// don't render. rxing reports calendar times in epoch *seconds*; we scale
+/// to milliseconds here so the host gets the JS-native unit and can format
+/// it with `Intl` in the viewer's locale and timezone.
+fn push_timestamp(rows: &mut Vec<Detail>, label: &str, seconds: i64, all_day: bool) {
+    if seconds >= 0 {
         rows.push(Detail::DateTime {
             label: label.to_owned(),
-            epoch_millis: millis,
+            epoch_millis: seconds * 1000,
             all_day,
         });
     }
