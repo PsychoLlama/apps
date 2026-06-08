@@ -56,16 +56,19 @@ type RequestMethod<Api extends RpcApi> = keyof Api['requests'] & string;
 type EventMethod<Api extends RpcApi> = keyof Api['events'] & string;
 
 /**
- * Call-site argument tuple for a procedure. A procedure with no parameter
- * takes no further arguments; one with a `params` payload also accepts
- * optional {@link SendOptions} (transfer is only meaningful with a payload).
+ * Call-site argument tuple for a procedure. `params` is always positional
+ * (index 0), `options` always follows (index 1) — so options stay reachable
+ * regardless of arity without runtime ambiguity.
  *
- * A procedure with an *optional* parameter is treated as having one — pass
- * the argument explicitly (even as `undefined`) to also pass options.
+ * A no-parameter procedure takes no payload: omit it (`request('ping')`) or
+ * pass `undefined` to reach options (`request('ping', undefined, opts)`).
+ * Note transfer is only meaningful with a payload. A procedure with an
+ * *optional* parameter is treated as having one — pass it explicitly (even
+ * as `undefined`) to also pass options.
  */
 type CallArgs<Procedure extends RpcProcedure> =
   Parameters<Procedure> extends []
-    ? []
+    ? [params?: undefined, options?: SendOptions]
     : [params: Parameters<Procedure>[0], options?: SendOptions];
 
 /**

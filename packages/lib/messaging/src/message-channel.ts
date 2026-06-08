@@ -57,9 +57,6 @@ export const isTransferable = <
 /**
  * The minimal `MessagePort`-shaped transport this adapter drives. A
  * `MessagePort`, `Worker`, or worker global scope all satisfy it.
- *
- * `start` is optional: ports require it before delivery begins (workers
- * don't expose it), so the adapter calls it when present.
  */
 export interface MessageEndpoint {
   postMessage(message: unknown, transfer: Transferable[]): void;
@@ -67,7 +64,6 @@ export interface MessageEndpoint {
     type: 'message',
     listener: (event: MessageEvent) => void,
   ): void;
-  start?(): void;
 }
 
 /**
@@ -75,10 +71,15 @@ export interface MessageEndpoint {
  * Supports zero-copy transfer via the endpoint's `postMessage` transfer
  * list.
  *
+ * Listens via `addEventListener`, so a `MessagePort` delivers nothing until
+ * the caller `start()`s it — starting is the consumer's to time, not this
+ * adapter's. (`Worker` endpoints deliver without starting.)
+ *
  * @example
  * ```ts
  * const { port1, port2 } = new MessageChannel();
  * const channel = fromMessagePort<Inbound, Outbound>(port1);
+ * port1.start(); // begin delivery when ready
  * worker.postMessage({ port: port2 }, [port2]);
  * ```
  */
@@ -87,10 +88,8 @@ export const fromMessagePort = <
   Outbound extends Message,
 >(
   endpoint: MessageEndpoint,
-): TransferableChannel<Inbound, Outbound> => {
-  endpoint.start?.();
-
-  return asTransferable<Inbound, Outbound>({
+): TransferableChannel<Inbound, Outbound> =>
+  asTransferable<Inbound, Outbound>({
     send(message, options) {
       endpoint.postMessage(message, options?.transfer ?? []);
     },
@@ -100,4 +99,3 @@ export const fromMessagePort = <
       });
     },
   });
-};

@@ -18,4 +18,5 @@
 
 - An adapter wraps a concrete transport behind `Channel` so callers stay decoupled from it.
 - For `MessagePort`/worker transports, wrap the endpoint with `fromMessagePort` from `@lib/messaging/channel`.
+- Start delivery yourself — the adapter listens via `addEventListener` and never calls `start()`. A `MessagePort` delivers nothing until you start it.
 - A transport supporting zero-copy transfer brands itself via `asTransferable`; detect it with `isTransferable`. Don't fabricate the brand by hand.

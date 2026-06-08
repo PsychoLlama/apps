@@ -66,6 +66,11 @@ const setup = () => {
     events: {},
   });
 
+  // The adapter listens via addEventListener; ports deliver only once
+  // started, and starting is the consumer's responsibility.
+  port1.start();
+  port2.start();
+
   return { server, client, logged, sizes };
 };
 
@@ -234,11 +239,13 @@ describe('RPC', () => {
       client.notify('add', { left: 1, right: 2 });
       // @ts-expect-error - log requires its params payload
       client.notify('log');
-      // @ts-expect-error - ping takes no argument (nothing to transfer)
+      // @ts-expect-error - a zero-arg event's params must be undefined
       client.notify('ping', {});
 
       // Valid: zero-argument event needs no payload.
       client.notify('ping');
+      // Valid: reach options on a zero-arg call via explicit undefined.
+      client.notify('ping', undefined, {});
       // Valid: a payload procedure accepts transfer options.
       void client.request(
         'echoSize',

@@ -31,6 +31,7 @@ describe('fromMessagePort', () => {
     const { port1, port2 } = new MessageChannel();
     const sender = fromMessagePort<Wire, Wire>(port1);
     const receiver = fromMessagePort<Wire, Wire>(port2);
+    port2.start(); // consumer starts delivery; the adapter doesn't
     const first: Wire[] = [];
     const second: Wire[] = [];
     receiver.onMessage((message) => first.push(message));
@@ -47,6 +48,7 @@ describe('fromMessagePort', () => {
     const { port1, port2 } = new MessageChannel();
     const sender = fromMessagePort<Wire, Wire>(port1);
     const receiver = fromMessagePort<Wire, Wire>(port2);
+    port2.start(); // consumer starts delivery; the adapter doesn't
     let counted: number | undefined;
     receiver.onMessage((message) => {
       // `count` is only reachable after narrowing on `type`.
@@ -63,6 +65,7 @@ describe('fromMessagePort', () => {
     const { port1, port2 } = new MessageChannel();
     const sender = fromMessagePort<Wire, Wire>(port1);
     const receiver = fromMessagePort<Wire, Wire>(port2);
+    port2.start(); // consumer starts delivery; the adapter doesn't
     const sizes: number[] = [];
     receiver.onMessage((message) => {
       if (message.type === 'data') sizes.push(message.buffer?.byteLength ?? -1);
