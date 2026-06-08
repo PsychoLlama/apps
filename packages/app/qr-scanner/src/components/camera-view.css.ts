@@ -106,6 +106,13 @@ export const corners = styleVariants({
  * centering the cluster keeps it on the viewport's optical axis — no
  * flanking tracks needed. Adding the planned upload-from-photos control
  * just grows the centered row symmetrically.
+ *
+ * In landscape the bottom rail would run under the reticle — there the
+ * window is height-bound (`60svh`) and rises to meet it. So the rail
+ * stands up: it unpins from the bottom, hugs the right edge, and flows
+ * its buttons as a column. `justifyContent`/`alignItems` already center,
+ * so the same cluster just re-centers on the vertical axis, clear of the
+ * window.
  */
 export const controls = style({
   position: 'absolute',
@@ -114,4 +121,19 @@ export const controls = style({
   justifyContent: 'center',
   alignItems: 'center',
   columnGap: space[5],
+  '@media': {
+    '(orientation: landscape)': {
+      // `insetBlock: 0` anchors top *and* bottom (full height, so the
+      // centered cluster lands at the optical middle) and overrides the
+      // portrait `bottom` offset; `insetInline: 'auto'` releases the
+      // horizontal stretch so `right` can pin it to the edge.
+      insetInline: 'auto',
+      insetBlock: 0,
+      right: `calc(${space[6]} + env(safe-area-inset-right))`,
+      flexDirection: 'column',
+      // Gap follows the axis: zero the inline gap, space the column rows.
+      columnGap: 0,
+      rowGap: space[5],
+    },
+  },
 });
