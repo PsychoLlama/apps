@@ -21,6 +21,7 @@ description: Reference docs for `@lib/ui` components — props, descriptions, an
 - [Code](./reference/code.md): Inline monospace snippet.
 - [Em](./reference/em.md): Stress-emphasized inline text.
 - [Heading](./reference/heading.md): Semantic headings.
+- [Link](./reference/link.md): Inline navigation link for in-app routing.
 - [Quote](./reference/quote.md): Short inline quotation.
 - [Strong](./reference/strong.md): Strongly-emphasized inline text.
 - [Text](./reference/text.md): Body copy, labels, and inline text.
@@ -37,6 +38,7 @@ description: Reference docs for `@lib/ui` components — props, descriptions, an
 - [DataList](./reference/data-list.md): Description list for label–value pairs.
 - [IconButton](./reference/icon-button.md): Square button for a single icon.
 - [Kbd](./reference/kbd.md): Inline keyboard input.
+- [LinkButton](./reference/link-button.md): Anchor styled as a button for navigation actions.
 - [Progress](./reference/progress.md): Linear progress bar.
 - [RadioCards](./reference/radio-cards.md): Group of radio options rendered as selectable cards.
 - [RadioGroup](./reference/radio-group.md): Group of radios sharing a single value.
