@@ -128,7 +128,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   readonly #pending = new Map<number, PendingRequest>();
   #nextRequestId = 1;
 
-  private constructor(
+  protected constructor(
     channel: Channel<RpcMessage, RpcMessage>,
     handlers: Local,
   ) {

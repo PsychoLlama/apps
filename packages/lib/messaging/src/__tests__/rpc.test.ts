@@ -1,5 +1,5 @@
 import { RPC, RpcError, type Channel, type RpcMessage } from '@lib/messaging';
-import { fromMessagePort } from '@lib/messaging/channel';
+import { PortRpc } from '@lib/messaging/channel';
 
 type ServerApi = {
   requests: {
@@ -30,7 +30,7 @@ const setup = () => {
   const logged: string[] = [];
   const sizes: number[] = [];
 
-  const server = RPC.from<ServerApi, ClientApi>(fromMessagePort(port1), {
+  const server = new PortRpc<ServerApi, ClientApi>(port1, {
     requests: {
       add: ({ left, right }) => left + right,
       divide: ({ left, right }) => Promise.resolve(left / right),
@@ -55,7 +55,7 @@ const setup = () => {
     },
   });
 
-  const client = RPC.from<ClientApi, ServerApi>(fromMessagePort(port2), {
+  const client = new PortRpc<ClientApi, ServerApi>(port2, {
     requests: {},
     events: {},
   });

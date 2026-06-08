@@ -5,11 +5,23 @@ type Wire =
   | { type: 'data'; buffer?: ArrayBuffer }
   | { type: 'tick'; count: number };
 
+/**
+ * Wire a sender/receiver pair over a real `MessageChannel`. Ports are
+ * started eagerly — the adapter never starts them (that's the consumer's
+ * call), so the tests stand in as the consumer.
+ */
+const setup = () => {
+  const { port1, port2 } = new MessageChannel();
+  const sender = fromMessagePort<Wire, Wire>(port1);
+  const receiver = fromMessagePort<Wire, Wire>(port2);
+  port1.start();
+  port2.start();
+  return { sender, receiver };
+};
+
 describe('fromMessagePort', () => {
   it('brands the channel as transferable', () => {
-    const { port1 } = new MessageChannel();
-
-    expect(isTransferable(fromMessagePort<Wire, Wire>(port1))).toBe(true);
+    expect(isTransferable(setup().sender)).toBe(true);
   });
 
   it('reports a plain channel as non-transferable', () => {
@@ -22,10 +34,7 @@ describe('fromMessagePort', () => {
   });
 
   it('delivers messages to every registered handler', async () => {
-    const { port1, port2 } = new MessageChannel();
-    const sender = fromMessagePort<Wire, Wire>(port1);
-    const receiver = fromMessagePort<Wire, Wire>(port2);
-    port2.start(); // consumer starts delivery; the adapter doesn't
+    const { sender, receiver } = setup();
     const first = new Promise<Wire>((resolve) => receiver.onMessage(resolve));
     const second = new Promise<Wire>((resolve) => receiver.onMessage(resolve));
 
@@ -38,10 +47,7 @@ describe('fromMessagePort', () => {
   });
 
   it('narrows inbound messages on the discriminant', async () => {
-    const { port1, port2 } = new MessageChannel();
-    const sender = fromMessagePort<Wire, Wire>(port1);
-    const receiver = fromMessagePort<Wire, Wire>(port2);
-    port2.start();
+    const { sender, receiver } = setup();
     const received = new Promise<Wire>((resolve) =>
       receiver.onMessage(resolve),
     );
@@ -56,10 +62,7 @@ describe('fromMessagePort', () => {
   });
 
   it('transfers objects by reference', async () => {
-    const { port1, port2 } = new MessageChannel();
-    const sender = fromMessagePort<Wire, Wire>(port1);
-    const receiver = fromMessagePort<Wire, Wire>(port2);
-    port2.start();
+    const { sender, receiver } = setup();
     const received = new Promise<Wire>((resolve) =>
       receiver.onMessage(resolve),
     );
