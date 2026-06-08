@@ -144,6 +144,41 @@ describe('RPC', () => {
     );
   });
 
+  it('treats inherited request method names as unknown', async () => {
+    const { client } = setup();
+    // A hostile peer could name a method after an inherited member
+    // (`constructor` resolves to a callable `Object`, `toString` to a
+    // function, etc). Only own procedures should be reachable.
+    const loose = client as unknown as {
+      request(method: string, params: unknown): Promise<unknown>;
+    };
+
+    await expect(loose.request('constructor', {})).rejects.toThrow(
+      'Unknown request method: constructor',
+    );
+    await expect(loose.request('__proto__', {})).rejects.toThrow(
+      'Unknown request method: __proto__',
+    );
+    await expect(loose.request('toString', {})).rejects.toThrow(
+      'Unknown request method: toString',
+    );
+  });
+
+  it('drops events named after inherited members', () => {
+    const { client, logged } = setup();
+    const loose = client as unknown as {
+      notify(method: string, params?: unknown): void;
+    };
+
+    // Should be silently dropped, not dispatched to Object.prototype.
+    expect(() => {
+      loose.notify('constructor', {});
+      loose.notify('__proto__', {});
+      loose.notify('hasOwnProperty', {});
+    }).not.toThrow();
+    expect(logged).toEqual([]);
+  });
+
   it('delivers an event with a payload', () => {
     const { client, logged } = setup();
 

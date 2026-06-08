@@ -54,6 +54,21 @@ type ResultOf<Procedure extends RpcProcedure> = Awaited<ReturnType<Procedure>>;
 type RequestMethod<Api extends RpcApi> = keyof Api['requests'] & string;
 type EventMethod<Api extends RpcApi> = keyof Api['events'] & string;
 
+/**
+ * Resolve a handler by method name, treating the name as untrusted.
+ *
+ * Inbound `method` strings may come from an untrusted peer (a foreign
+ * origin, the network). A bare index would let `constructor`, `__proto__`,
+ * `toString`, etc. resolve to inherited members of the handler object —
+ * invoking code the `RpcApi` never declared. Restricting to own properties
+ * means only declared procedures are reachable.
+ */
+const findHandler = (
+  handlers: Record<string, RpcProcedure | undefined>,
+  method: string,
+): RpcProcedure | undefined =>
+  Object.hasOwn(handlers, method) ? handlers[method] : undefined;
+
 interface PendingRequest {
   resolve: (result: unknown) => void;
   reject: (error: RpcError) => void;
@@ -155,7 +170,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   async #handleRequest(
     message: RpcMessage & { type: 'request' },
   ): Promise<void> {
-    const handler = this.#requestHandlers[message.method];
+    const handler = findHandler(this.#requestHandlers, message.method);
     if (!handler) {
       this.#channel.send({
         type: 'response',
@@ -200,7 +215,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   #handleEvent(message: RpcMessage & { type: 'event' }): void {
     // Unknown events are dropped — fire-and-forget has no channel to
     // report back on.
-    this.#eventHandlers[message.method]?.(message.params as never);
+    findHandler(this.#eventHandlers, message.method)?.(message.params as never);
   }
 
   #handleResponse(message: RpcMessage & { type: 'response' }): void {

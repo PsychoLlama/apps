@@ -14,6 +14,7 @@
 - Procedures take zero or one argument — never more. The single optional `params` payload is enforced at the type level.
 - Request handlers signal failure by throwing — callers receive an `RpcError`. Don't encode errors as success values.
 - Throw `RpcError` for deliberate, expected failures. Any other throw is treated as an internal bug and logged via `@lib/observability`.
+- Treat inbound `method` names as untrusted (peers may be foreign origins or the network). Resolve handlers by own property only — never let an inbound name reach inherited members like `constructor` or `__proto__`.
 
 ## Adapters (future)
 
