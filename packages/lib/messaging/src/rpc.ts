@@ -86,6 +86,10 @@ const findHandler = (
 ): RpcProcedure | undefined =>
   Object.hasOwn(handlers, method) ? handlers[method] : undefined;
 
+/** Normalize an unknown thrown value to an `Error`. */
+const toError = (thrown: unknown): Error =>
+  thrown instanceof Error ? thrown : new Error(String(thrown));
+
 interface PendingRequest {
   resolve: (result: unknown) => void;
   reject: (error: RpcError) => void;
@@ -158,7 +162,16 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
             resolve(result as ResultOf<Remote['requests'][Method]>),
           reject: (error) => reject(error),
         });
-        this.#send({ type: 'request', id, method, params }, options);
+        try {
+          this.#send({ type: 'request', id, method, params }, options);
+        } catch (thrown) {
+          // The request never left the building (e.g. transfer on a
+          // non-transferable channel, or a `DataCloneError`). Drop its
+          // pending entry so the id can't leak or later match a stray
+          // response.
+          this.#pending.delete(id);
+          reject(toError(thrown));
+        }
       },
     );
   }
@@ -192,7 +205,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
         await this.#handleRequest(message);
         return;
       case 'event':
-        this.#handleEvent(message);
+        await this.#handleEvent(message);
         return;
       case 'response':
         this.#handleResponse(message);
@@ -224,8 +237,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
         result,
       });
     } catch (thrown) {
-      const error =
-        thrown instanceof Error ? thrown : new Error(String(thrown));
+      const error = toError(thrown);
 
       // An RpcError is a deliberate, expected failure. Anything else is an
       // internal bug in the handler — surface it to observability so it
@@ -246,7 +258,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
     }
   }
 
-  #handleEvent(message: RpcMessage & { type: 'event' }): void {
+  async #handleEvent(message: RpcMessage & { type: 'event' }): Promise<void> {
     logger.trace('Inbound event', { method: message.method });
     const handler = findHandler(this.#eventHandlers, message.method);
     if (!handler) {
@@ -255,7 +267,17 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
       logger.warn('Unhandled event', { method: message.method });
       return;
     }
-    handler(message.params as never);
+    try {
+      // Events are fire-and-forget — no caller to reject. Await so a sync
+      // throw or a rejected promise is contained and logged here instead of
+      // escaping as an unhandled rejection.
+      await handler(message.params as never);
+    } catch (thrown) {
+      logger.error('Event handler threw', {
+        method: message.method,
+        error: toError(thrown),
+      });
+    }
   }
 
   #handleResponse(message: RpcMessage & { type: 'response' }): void {

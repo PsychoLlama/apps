@@ -2,12 +2,13 @@ import {
   setGlobalLogCollector,
   unsetGlobalLogCollector,
 } from '@holz/log-collector';
+import { RPC, type Channel, type RpcMessage } from '@lib/messaging';
 import type { Log } from '@lib/observability';
 import { PortRpc } from '@lib/messaging/channel';
 
 type Api = {
   requests: { add(params: { left: number; right: number }): number };
-  events: { log(params: { message: string }): void };
+  events: { log(params: { message: string }): void; boom(): void };
 };
 type Empty = { requests: Record<string, never>; events: Record<string, never> };
 
@@ -33,7 +34,12 @@ const setup = () => {
   const { port1, port2 } = new MessageChannel();
   const endpoint = new PortRpc<Api, Empty>(port2, {
     requests: { add: ({ left, right }) => left + right },
-    events: { log: () => undefined },
+    events: {
+      log: () => undefined,
+      boom: () => {
+        throw new Error('event boom');
+      },
+    },
   });
   port1.start();
   port2.start();
@@ -112,5 +118,42 @@ describe('RPC logging', () => {
     const warn = logs.find((log) => log.message === 'Unhandled response');
     expect(warn?.level).toBe(40);
     expect(warn?.context).toMatchObject({ id: 99999 });
+  });
+
+  it('contains a throwing event handler instead of crashing', async () => {
+    const logs = captureLogs();
+    const { post, flush } = setup();
+
+    post({ type: 'event', method: 'boom', params: {} });
+    await flush();
+
+    const error = logs.find((log) => log.message === 'Event handler threw');
+    expect(error?.level).toBe(50);
+    expect(error?.context).toMatchObject({ method: 'boom' });
+  });
+
+  it('drops a pending request when the send fails', async () => {
+    const logs = captureLogs();
+    let deliver: ((message: RpcMessage) => void) | undefined;
+    const channel: Channel<RpcMessage, RpcMessage> = {
+      send: () => {
+        throw new Error('send exploded');
+      },
+      onMessage: (handler) => {
+        deliver = handler;
+      },
+    };
+    const rpc = RPC.from<Empty, Api>(channel, { requests: {}, events: {} });
+
+    // The first request takes id 1 and rejects when the send throws.
+    await expect(rpc.request('add', { left: 1, right: 2 })).rejects.toThrow(
+      'send exploded',
+    );
+
+    // A late response for that id now has nothing to settle — if the pending
+    // entry had leaked it would resolve silently instead of warning.
+    deliver?.({ type: 'response', id: 1, ok: true, result: 3 });
+
+    expect(logs.some((log) => log.message === 'Unhandled response')).toBe(true);
   });
 });
