@@ -2,11 +2,10 @@
  * Link component.
  *
  * Ported from Radix UI Themes Link. Renders `<A>` from `@solidjs/router`
- * for client-side routing, or a native `<a>` for destinations that aren't
- * in-app routes — anything carrying a URI scheme (`mailto:`, `tel:`,
- * `https:`) or a protocol-relative `//`, which the router would otherwise
- * mangle into in-app paths. Inferred from `href` by default; override with
- * `native`. Only supports accent and neutral colors.
+ * for client-side routing, or a native `<a>` for the schemes the router
+ * would otherwise mangle into in-app paths (`mailto:`, `tel:`, `sms:`,
+ * `blob:`). Inferred from `href` by default; override with `native`. Only
+ * supports accent and neutral colors.
  *
  * @see https://www.radix-ui.com/themes/docs/components/link
  */
@@ -48,10 +47,14 @@ type LinkColor = 'accent' | 'neutral';
 type Underline = 'auto' | 'always' | 'hover' | 'none';
 
 /**
- * Destinations the router can't resolve: a leading URI scheme (`mailto:`,
- * `tel:`, `https:`) or a protocol-relative `//`. These render a native `<a>`.
+ * Schemes the router can't resolve — it would mangle them into in-app paths
+ * — so they render a native `<a>` by default. An explicit allow-list, not a
+ * "has a scheme" test: that keeps script-executing schemes (`javascript:`,
+ * `data:`) off the native path entirely. Absolute `http(s)` URLs are
+ * intentionally excluded too — the router handles them, and same-origin ones
+ * should stay client-routed.
  */
-const NON_ROUTE_PATTERN = /^([a-z][a-z\d+.-]*:|\/\/)/i;
+const NATIVE_SCHEME_PATTERN = /^(mailto|tel|sms|blob):/i;
 
 export interface LinkProps
   extends
@@ -74,12 +77,11 @@ export interface LinkProps
   highContrast?: boolean;
   /**
    * Render a native `<a>` instead of the router link, skipping the router's
-   * path resolution. When omitted, inferred from `href`: destinations with a
-   * URI scheme (`mailto:`, `tel:`, `https:`) or a protocol-relative `//`
-   * default to native, since the router would otherwise resolve them into
-   * in-app paths; in-app paths default to the router link. Set explicitly to
-   * override. Pair with `target` / `rel` as needed; those pass straight
-   * through.
+   * path resolution. When omitted, inferred from `href`: `mailto:`, `tel:`,
+   * `sms:`, and `blob:` default to native, since the router would otherwise
+   * resolve them into in-app paths; everything else (including `http(s)`
+   * URLs) defaults to the router link. Set explicitly to override. Pair with
+   * `target` / `rel` as needed; those pass straight through.
    */
   native?: boolean;
 }
@@ -115,7 +117,8 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
   // Honor an explicit `native`, otherwise infer it from the destination.
-  const native = () => local.native ?? NON_ROUTE_PATTERN.test(props.href ?? '');
+  const native = () =>
+    local.native ?? NATIVE_SCHEME_PATTERN.test(props.href ?? '');
 
   const autoAlways = () =>
     local.underline === 'auto' &&

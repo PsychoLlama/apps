@@ -19,8 +19,13 @@ const mount = (page: Component) =>
     </MemoryRouter>
   ));
 
+// solid-router's `<A>` tags itself with the `inactive` class for a
+// non-matching route; a native `<a>` never does. That's our discriminator.
+const renderedNatively = (testId: string) =>
+  !screen.getByTestId(testId).classList.contains('inactive');
+
 describe('Link', () => {
-  it('renders a native anchor for schemed URIs, preserving the href verbatim', () => {
+  it('renders a native anchor for allow-listed schemes, preserving the href verbatim', () => {
     mount(() => (
       <Link testId="link" href="mailto:hi@example.com">
         Email
@@ -29,38 +34,41 @@ describe('Link', () => {
 
     const link = screen.getByTestId('link');
     expect(link).toHaveAttribute('href', 'mailto:hi@example.com');
-    expect(link.classList.contains('inactive')).toBe(false);
+    expect(renderedNatively('link')).toBe(true);
   });
 
   it.each([
     'tel:+15551234',
-    'https://example.com',
-    '//cdn.example.com/x',
+    'sms:+15551234',
     'blob:https://example.com/550e8400-uuid',
   ])('infers native for %s', (href) => {
     mount(() => (
       <Link testId="link" href={href}>
-        External
+        Native
       </Link>
     ));
 
-    const link = screen.getByTestId('link');
-    expect(link).toHaveAttribute('href', href);
-    expect(link.classList.contains('inactive')).toBe(false);
+    expect(screen.getByTestId('link')).toHaveAttribute('href', href);
+    expect(renderedNatively('link')).toBe(true);
   });
 
-  it('uses the router link for in-app paths', () => {
+  it.each([
+    '/about',
+    'https://example.com',
+    '//cdn.example.com/x',
+    'javascript:alert(1)',
+    'data:text/html,<script>',
+  ])('uses the router link for %s', (href) => {
     mount(() => (
-      <Link testId="link" href="/about">
-        About
+      <Link testId="link" href={href}>
+        Routed
       </Link>
     ));
 
-    // solid-router's `<A>` tags itself with the inactive class; a native
-    // `<a>` would not.
-    expect(screen.getByTestId('link').classList.contains('inactive')).toBe(
-      true,
-    );
+    // Everything outside the allow-list — in-app paths, http(s) URLs, and
+    // script-executing schemes alike — falls to the router, which neutralizes
+    // the dangerous ones instead of rendering a clickable native anchor.
+    expect(renderedNatively('link')).toBe(false);
   });
 
   it('honors an explicit `native` over the inferred default', () => {
@@ -70,21 +78,16 @@ describe('Link', () => {
       </Link>
     ));
 
-    expect(screen.getByTestId('link').classList.contains('inactive')).toBe(
-      false,
-    );
+    expect(renderedNatively('link')).toBe(true);
   });
 
-  it('honors `native={false}` for a schemed URI', () => {
+  it('honors `native={false}` for an allow-listed scheme', () => {
     mount(() => (
       <Link testId="link" href="mailto:hi@example.com" native={false}>
         Email
       </Link>
     ));
 
-    // Forced through the router, which tags itself with the inactive class.
-    expect(screen.getByTestId('link').classList.contains('inactive')).toBe(
-      true,
-    );
+    expect(renderedNatively('link')).toBe(false);
   });
 });
