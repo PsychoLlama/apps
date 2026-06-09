@@ -1,5 +1,5 @@
 /**
- * Public types for `@lib/qr-scanner`. Mirrors the `wasm-bindgen`
+ * Public types for `@crate/qr-scanner`. Mirrors the `wasm-bindgen`
  * `--target web` output (`dist/qr_scanner.d.ts`), but is checked in so
  * consumers type-check without first running the wasm build. Keep in
  * sync with the `#[wasm_bindgen]` surface in `src/lib.rs`.

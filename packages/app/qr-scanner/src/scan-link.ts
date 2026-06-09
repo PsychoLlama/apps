@@ -8,7 +8,7 @@
  * sensitive, so a declared URL still has to clear {@link webLinkHref}.
  */
 
-import type { ParsedDetail, ParsedLinkDetail } from '@lib/qr-scanner';
+import type { ParsedDetail, ParsedLinkDetail } from '@crate/qr-scanner';
 import type { ScanResult } from './worker/rpc';
 
 /** A parsed value resolved to an anchor target. */

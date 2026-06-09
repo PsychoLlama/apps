@@ -55,7 +55,7 @@
                 pkgs.fenix.targets.wasm32-unknown-unknown.stable.rust-std
               ])
               # Generates the JS bindings for wasm crates that use
-              # `wasm-bindgen` (e.g. `@lib/qr-scanner`). The CLI refuses
+              # `wasm-bindgen` (e.g. `@crate/qr-scanner`). The CLI refuses
               # modules built against a mismatched `wasm-bindgen` crate,
               # so the crate pins `wasm-bindgen = "=0.2.121"` to match
               # the version nixpkgs ships here.

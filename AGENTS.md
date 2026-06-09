@@ -16,7 +16,9 @@
   - `@dev/*` — internal tooling.
 - Enumerate packages and their purpose: `jq -r '[.name, .description] | @tsv' packages/*/*/package.json`.
 - `@app/*` packages export top-level components. `@app/main` owns routing — its `src/routes/**/*.tsx` files import from `@app/*` packages and export the component as the route's default.
-- Rust crates live at `crates/{app,lib,dev}/<name>`, mirroring the JS taxonomy.
+- Rust crates live flat at `crates/<name>` — Cargo's namespace is global, so no tier dirs.
+- A crate that crosses into JS (wasm/napi bridge) carries a `package.json` and publishes as `@crate/<name>`; it's both a Cargo member and a pnpm workspace package. `@crate/*` is a bridge, not a tier — don't mirror the `packages/*` taxonomy.
+- A pure-Rust crate (CLI, native bin, build helper) is a Cargo member only: no `package.json`, no npm name, absent from the pnpm workspace.
 
 ## Dev
 

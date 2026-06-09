@@ -12,10 +12,10 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@crate/qr-scanner": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/messaging": "workspace:*",
     "@lib/observability": "workspace:*",
-    "@lib/qr-scanner": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",
