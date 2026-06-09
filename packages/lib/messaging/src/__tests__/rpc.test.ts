@@ -1,10 +1,4 @@
-import {
-  RPC,
-  RpcError,
-  RpcClosedError,
-  respond,
-  type RpcMessage,
-} from '@lib/messaging';
+import { RPC, RpcError, RpcClosedError, type RpcMessage } from '@lib/messaging';
 import {
   MessagePortTransport,
   type SendOptions,
@@ -45,18 +39,19 @@ const setup = () => {
     new MessagePortTransport(port1),
     {
       requests: {
-        add: ({ left, right }) => respond(left + right),
-        divide: ({ left, right }) => Promise.resolve(respond(left / right)),
+        add: ({ left, right }) => left + right,
+        divide: ({ left, right }) => Promise.resolve(left / right),
         boom: ({ message }) => {
           throw new Error(message);
         },
         denied: () => {
           throw new RpcError('no access');
         },
-        echoSize: ({ buffer }) => respond(buffer.byteLength),
-        mint: () => {
+        echoSize: ({ buffer }) => buffer.byteLength,
+        mint: (_params, options) => {
           const buffer = new ArrayBuffer(8);
-          return respond(buffer, { transfer: [buffer] });
+          options.transfer = [buffer];
+          return buffer;
         },
       },
       events: {
@@ -232,7 +227,7 @@ describe('RPC', () => {
   it('carries send options from a request handler back to the caller', async () => {
     const { client } = setup();
 
-    // `mint` replies via `respond(buffer, { transfer: [buffer] })`. Arriving
+    // `mint` sets `options.transfer = [buffer]` on its reply bag. Arriving
     // with its 8 bytes intact proves the handler's options reached `send`.
     // (Asserting `byteLength` rather than `instanceof ArrayBuffer`: the port
     // deserializes the buffer in another realm, so `instanceof` is unreliable

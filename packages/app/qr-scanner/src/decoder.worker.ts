@@ -1,6 +1,6 @@
 import init, { decode } from '@lib/qr-scanner';
 import { createLogger } from '@lib/observability';
-import { RPC, respond, type RpcMessage } from '@lib/messaging';
+import { RPC, type RpcMessage } from '@lib/messaging';
 import {
   MessagePortTransport,
   type MessageEndpoint,
@@ -91,7 +91,7 @@ const rpc = new RPC<DecoderApi, HostApi, SendOptions>(transport, {
         // regardless of verdict so its backing memory isn't pinned.
         bitmap.close();
       }
-      return respond(result);
+      return result;
     },
   },
 });

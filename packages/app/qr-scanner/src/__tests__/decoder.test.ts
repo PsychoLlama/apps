@@ -1,9 +1,4 @@
-import {
-  RPC,
-  respond,
-  type RpcHandlers,
-  type RpcMessage,
-} from '@lib/messaging';
+import { RPC, type RpcHandlers, type RpcMessage } from '@lib/messaging';
 import {
   MessagePortTransport,
   type SendOptions,
@@ -56,7 +51,7 @@ const setup = (
 
 describe('requestDecode', () => {
   it('requests a decode, transferring the bitmap, and resolves with a hit', async () => {
-    const { connection, decode } = setup(() => respond(result));
+    const { connection, decode } = setup(() => result);
     // A real transferable so the `{ transfer: [bitmap] }` send doesn't trap —
     // the host's handle neuters once posted, proving the frame moved by
     // reference rather than by copy.
@@ -71,7 +66,7 @@ describe('requestDecode', () => {
   });
 
   it('resolves with null on a miss', async () => {
-    const { connection } = setup(() => respond(null));
+    const { connection } = setup(() => null);
 
     await expect(
       requestDecode(connection, new ArrayBuffer(8) as unknown as ImageBitmap),

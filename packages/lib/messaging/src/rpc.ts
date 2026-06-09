@@ -61,33 +61,6 @@ export class RpcClosedError extends Error {
 }
 
 /**
- * A request handler's reply: the `result` returned to the caller, plus
- * optional per-send `Options` for the transport (e.g. transferables to hand
- * back by reference). Build one with {@link respond}. `Options` matches the
- * owning {@link RPC}'s option type.
- *
- * Request handlers always return an `RpcResponse` — even when they carry no
- * options. Requiring the wrapper unconditionally keeps the reply's
- * capabilities explicit at every call site rather than hiding them behind an
- * occasional bare return.
- */
-export class RpcResponse<Result, Options = never> {
-  readonly result: Result;
-  readonly options?: Options;
-
-  constructor(result: Result, options?: Options) {
-    this.result = result;
-    this.options = options;
-  }
-}
-
-/** Wrap a request handler's result, with optional transport send options. */
-export const respond = <Result, Options = never>(
-  result: Result,
-  options?: Options,
-): RpcResponse<Result, Options> => new RpcResponse(result, options);
-
-/**
  * The wire envelope carried by the underlying {@link Transport}. An `RPC`
  * owns its transport end-to-end, so the transport is always typed
  * `Transport<RpcMessage, RpcMessage>` — these are the only messages on it.
@@ -123,15 +96,16 @@ type CallArgs<Procedure extends RpcProcedure, Options> =
     : [params: Parameters<Procedure>[0], options?: Options];
 
 /**
- * The handler implementing one request procedure. Mirrors the procedure's
- * parameters, but its return is wrapped in an {@link RpcResponse} (sync or
- * `Promise`) so the reply can carry transport `Options`.
+ * The handler implementing one request procedure. Receives the call's
+ * `params` (index 0; `undefined` for a no-argument procedure) and a mutable
+ * `options` bag (index 1) carrying the transport's per-send `Options`. Set
+ * fields on `options` — e.g. `options.transfer` — to hand capabilities back
+ * with the reply. Returns the bare result (sync or `Promise`); no wrapper.
  */
 type RequestHandler<Procedure extends RpcProcedure, Options> = (
-  ...args: Parameters<Procedure>
-) =>
-  | RpcResponse<ResultOf<Procedure>, Options>
-  | Promise<RpcResponse<ResultOf<Procedure>, Options>>;
+  params: Parameters<Procedure>[0],
+  options: Options,
+) => ResultOf<Procedure> | Promise<ResultOf<Procedure>>;
 
 /** The handler implementing one event procedure. Fire-and-forget. */
 type EventHandler<Procedure extends RpcProcedure> = (
@@ -140,8 +114,9 @@ type EventHandler<Procedure extends RpcProcedure> = (
 
 /**
  * The object passed to the {@link RPC} constructor: one handler per declared
- * procedure of `Local`. Request handlers reply via {@link RpcResponse},
- * carrying the transport's `Options`; event handlers return nothing.
+ * procedure of `Local`. Request handlers return their result and may attach
+ * transport `Options` via the mutable bag they receive; event handlers return
+ * nothing.
  *
  * Each section is required only when `Local` declares it — omit `requests`
  * (or `events`) entirely when the endpoint exposes none, mirroring the
@@ -206,14 +181,15 @@ interface PendingRequest {
  * `RPC<Remote, Local, Options>`.
  *
  * `Options` is the transport's per-send option bag, threaded onto `request`,
- * `notify`, and handler replies. It defaults to `never` (no options) and is
- * fixed by the transport — e.g. `MessagePortTransport` supplies `SendOptions`
- * (transferables), so pair it with `RPC<Local, Remote, SendOptions>`.
+ * `notify`, and the mutable bag each request handler receives. It defaults to
+ * `never` (no options) and is fixed by the transport — e.g.
+ * `MessagePortTransport` supplies `SendOptions` (transferables), so pair it
+ * with `RPC<Local, Remote, SendOptions>`.
  *
  * @example
  * ```ts
  * const peer = new RPC<LocalApi, RemoteApi>(transport, {
- *   requests: { add: ({ left, right }) => respond(left + right) },
+ *   requests: { add: ({ left, right }) => left + right },
  *   events: { log: ({ message }) => console.log(message) },
  * });
  *
@@ -353,18 +329,20 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
     }
 
     try {
-      const response = (await handler(message.params as never)) as RpcResponse<
-        unknown,
-        Options
-      >;
+      // Hand the handler a fresh, mutable options bag. It may set fields on it
+      // (e.g. `options.transfer`) to attach transport send options to the
+      // reply; whatever it leaves there rides along with the response.
+      const options = {} as Options;
+      const reply = handler as (params: never, options: Options) => unknown;
+      const result = await reply(message.params as never, options);
       this.#send(
         {
           type: 'response',
           id: message.id,
           ok: true,
-          result: response.result,
+          result,
         },
-        response.options,
+        options,
       );
     } catch (thrown) {
       const error = toError(thrown);
