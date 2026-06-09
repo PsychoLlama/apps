@@ -1,5 +1,5 @@
 import { autoOpenHref, linkFor } from '../scan-link';
-import type { ScanResult } from '../store';
+import type { ScanResult } from '../worker/rpc';
 
 describe('linkFor', () => {
   describe('link rows', () => {

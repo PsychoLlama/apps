@@ -1,5 +1,5 @@
 import { requestDecode, type DecoderConnection } from './decoder';
-import type { ScanResult } from './store';
+import type { ScanResult } from './worker/rpc';
 import { onVideoFrame } from './video-frames';
 
 /**

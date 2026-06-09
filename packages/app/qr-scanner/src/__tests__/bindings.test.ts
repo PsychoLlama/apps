@@ -12,7 +12,8 @@ import {
 import { CameraAborted } from '../capabilities';
 import type { DecoderConnection } from '../decoder';
 import { decoderStore } from '../decoder-store';
-import { scannerStore, type ScanResult } from '../store';
+import { scannerStore } from '../store';
+import type { ScanResult } from '../worker/rpc';
 
 const setup = () => {
   const bindings = createTestBindings();

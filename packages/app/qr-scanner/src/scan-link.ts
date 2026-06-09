@@ -9,7 +9,7 @@
  */
 
 import type { ParsedDetail, ParsedLinkDetail } from '@lib/qr-scanner';
-import type { ScanResult } from './store';
+import type { ScanResult } from './worker/rpc';
 
 /** A parsed value resolved to an anchor target. */
 export interface DetailLink {

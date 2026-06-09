@@ -15,7 +15,8 @@ import {
 import { createDecoder, type DecoderConnection } from './decoder';
 import { decoderStore } from './decoder-store';
 import { autoOpenHref } from './scan-link';
-import { scannerStore, type ScannerState, type ScanResult } from './store';
+import { scannerStore, type ScannerState } from './store';
+import type { ScanResult } from './worker/rpc';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 

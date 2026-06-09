@@ -5,11 +5,10 @@ import {
 } from '@lib/messaging/transport';
 import {
   requestDecode,
-  type DecoderApi,
   type DecoderConnection,
   type HostApi,
 } from '../decoder';
-import type { ScanResult } from '../store';
+import type { DecoderApi, ScanResult } from '../worker/rpc';
 
 const result: ScanResult = {
   text: 'https://example.com',

@@ -4,32 +4,33 @@ import {
   type SendOptions,
 } from '@lib/messaging/transport';
 import type { DeepReadonly } from '@lib/state';
-import DecoderWorker from './decoder.worker?worker';
+import DecoderWorker from './worker/index?worker';
+import type { DecoderApi, ScanResult } from './worker/rpc';
 import type { DecoderState } from './decoder-store';
-import type { ScanResult } from './store';
 
 /**
- * The decoder worker's RPC surface: a single `decode` request that takes a
- * frame and returns its verdict — a {@link ScanResult} on a hit, `null` on
- * a miss. This is the API the worker *implements* and the main thread
- * *calls*.
+ * Build the host's RPC handlers for one decoder connection: a single `ready`
+ * event the worker fires once its wasm module is live, wired to settle this
+ * connection's readiness promise.
+ *
+ * {@link HostApi} is derived from what this returns, so the contract tracks
+ * the implementation — the host-side mirror of how the worker derives its
+ * {@link DecoderApi} from the handler value it serves.
  */
-export interface DecoderApi {
-  requests: {
-    decode(params: { bitmap: ImageBitmap }): ScanResult | null;
-  };
-}
-
-/**
- * The main thread's RPC surface, as seen by the worker. The worker fires a
- * one-shot `ready` event once its wasm module is live; nothing else flows
- * this direction.
- */
-export interface HostApi {
+const createHostHandlers = (onReady: () => void) => ({
   events: {
-    ready(): void;
-  };
-}
+    ready: onReady,
+  },
+});
+
+/**
+ * The host's RPC surface, as seen by the worker — a one-shot `ready` event,
+ * nothing else. Derived from {@link createHostHandlers} rather than restated
+ * as a hand-written interface. The worker imports this type to type its
+ * `notify('ready')`, just as the host imports {@link DecoderApi} to type its
+ * requests.
+ */
+export type HostApi = ReturnType<typeof createHostHandlers>;
 
 /**
  * The main thread's end of the decoder RPC. `SendOptions` lets a frame ride
@@ -76,7 +77,7 @@ export const createDecoder = async (
 
   const rpc: DecoderRpc = RPC.from<HostApi, DecoderApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(worker),
-    { events: { ready: () => markReady() } },
+    createHostHandlers(markReady),
   );
 
   await ready;
