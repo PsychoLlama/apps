@@ -238,6 +238,57 @@ describe('RPC', () => {
     expect(buffer.byteLength).toBe(8);
   });
 
+  it('hands the transport an options bag for every reply', async () => {
+    // The `Transport` contract is that `send` always receives an options
+    // argument, so a reply forwards the handler's bag whether or not the
+    // handler touched it — an untouched bag is simply empty. Drive a capturing
+    // transport directly to inspect the exact value handed to `send`.
+    const sent: Array<{ message: RpcMessage; options: SendOptions }> = [];
+    let deliver!: (message: RpcMessage) => void;
+    const transport: Transport<RpcMessage, RpcMessage, SendOptions> = {
+      send: (message, options) => {
+        sent.push({ message, options });
+      },
+      onMessage: (handler) => {
+        deliver = handler;
+        return () => undefined;
+      },
+    };
+    new RPC<ServerApi, ClientApi, SendOptions>(transport, {
+      requests: {
+        add: ({ left, right }) => left + right,
+        divide: ({ left, right }) => left / right,
+        boom: () => 0,
+        denied: () => 0,
+        echoSize: ({ buffer }) => buffer.byteLength,
+        mint: (_params, options) => {
+          const buffer = new ArrayBuffer(8);
+          options.transfer = [buffer];
+          return buffer;
+        },
+      },
+      events: { log: () => {}, ping: () => {}, sink: () => {} },
+    });
+
+    deliver({
+      type: 'request',
+      id: 1,
+      method: 'add',
+      params: { left: 1, right: 2 },
+    });
+    deliver({ type: 'request', id: 2, method: 'mint', params: undefined });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const reply = (id: number) =>
+      sent.find(
+        (entry) => entry.message.type === 'response' && entry.message.id === id,
+      );
+    // Bare reply: an empty (but present) options bag.
+    expect(reply(1)?.options).toEqual({});
+    // Populated reply: the handler's transfer list rides along.
+    expect(reply(2)?.options).toEqual({ transfer: [expect.any(ArrayBuffer)] });
+  });
+
   it('rejects in-flight requests with an RpcClosedError on close', async () => {
     const { client } = setup();
     // The response round-trips asynchronously over the port; closing

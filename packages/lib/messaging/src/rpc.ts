@@ -292,11 +292,12 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
     this.#send({ type: 'event', method, params }, options);
   }
 
-  // Hand a message to the transport, forwarding any send options. The
-  // transport decides what to do with them — the type system already
-  // guarantees the caller can only pass options this transport understands.
+  // Hand a message to the transport, materializing an empty options bag when
+  // the caller has none. The transport always receives a bag and decides what
+  // to do with it — the type system already guarantees the caller can only
+  // pass options this transport understands.
   #send(message: RpcMessage, options?: Options): void {
-    this.#transport.send(message, options);
+    this.#transport.send(message, options ?? ({} as Options));
   }
 
   async #dispatch(message: RpcMessage): Promise<void> {
@@ -319,7 +320,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
     logger.debug('Inbound request', { method: message.method, id: message.id });
     const handler = findHandler(this.#requestHandlers, message.method);
     if (!handler) {
-      this.#transport.send({
+      this.#send({
         type: 'response',
         id: message.id,
         ok: false,
@@ -357,7 +358,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
         });
       }
 
-      this.#transport.send({
+      this.#send({
         type: 'response',
         id: message.id,
         ok: false,
