@@ -1,4 +1,9 @@
-import { RPC, RpcError, RpcClosedError, type RpcMessage } from '@lib/messaging';
+import {
+  RPC,
+  RpcError,
+  RpcClosedError,
+  type RpcMessage,
+} from '@lib/messaging/rpc';
 import {
   MessagePortTransport,
   type SendOptions,

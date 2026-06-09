@@ -1,4 +1,4 @@
-import type { RPC, RpcApi, RpcHandlers, RpcMessage } from '@lib/messaging';
+import type { RPC, RpcApi, RpcHandlers, RpcMessage } from '@lib/messaging/rpc';
 import type { SendOptions, Transport } from '@lib/messaging/transport';
 
 // Type-level assertions for the guarantees the runtime suite can't reach:

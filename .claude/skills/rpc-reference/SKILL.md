@@ -4,7 +4,7 @@ description: Reference docs for `@lib/messaging` — the codebase's typed, bidir
 
 # Messaging / RPC
 
-- Single entry point: `@lib/messaging` (RPC core) and `@lib/messaging/transport` (transport abstraction + adapters).
+- Two entry points, no default: `@lib/messaging/rpc` (RPC core) and `@lib/messaging/transport` (transport abstraction + adapters).
 - Fully-typed, bidirectional RPC over any `Transport`. Two call styles: `request` (awaits a response) and `notify` (fire-and-forget event).
 - An `RPC` endpoint owns its transport's message stream end-to-end — the only thing on the wire is `RpcMessage`.
 
@@ -120,6 +120,7 @@ const rpc = RPC.from<DecoderApi, HostApi, SendOptions>(transport, api);
 ## Transports
 
 - `Transport<Inbound, Outbound, Options>`: the base interface every adapter implements.
+
   ```ts
   interface Transport<Inbound, Outbound, Options = never> {
     send: (message: Outbound, options: Options) => void;
@@ -130,6 +131,7 @@ const rpc = RPC.from<DecoderApi, HostApi, SendOptions>(transport, api);
   - `send`/`onMessage` are declared as **function-typed properties**, not methods, on purpose — property syntax forces contravariant param checks so `Options` stays sound (a method signature would be checked bivariantly and silently drop options).
   - `onMessage` returns an `Unsubscribe`; multiple handlers may register, each gets every message.
   - An `RPC`'s transport is always `Transport<RpcMessage, RpcMessage, Options>`.
+
 - `MessagePortTransport<Inbound, Outbound>`: adapter for any `MessagePort`-shaped carrier (a `MessagePort`, a `Worker`, or the worker global scope). Its `Options` are `SendOptions`.
   - `SendOptions { transfer?: Transferable[] }` — list objects to hand over by reference (zero-copy); transferred objects are neutered in the sender.
   - Listens via `addEventListener`, so a **`MessagePort` delivers nothing until the consumer `start()`s it** — starting is the consumer's to time. (`Worker` endpoints deliver without starting.)
@@ -151,7 +153,7 @@ The canonical setup — a host on the main thread, an impl in the worker, each o
 
 ## Public API surface
 
-From `@lib/messaging`:
+From `@lib/messaging/rpc`:
 
 - `RPC` — the endpoint class. Build via `RPC.from(...)`; methods `request`, `notify`, `close`.
 - `RpcError`, `RpcClosedError` — the two error classes.
