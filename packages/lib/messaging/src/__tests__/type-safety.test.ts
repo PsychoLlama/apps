@@ -1,4 +1,4 @@
-import type { RPC, RpcApi, RpcMessage } from '@lib/messaging';
+import type { RPC, RpcApi, RpcHandlers, RpcMessage } from '@lib/messaging';
 import type { SendOptions, Transport } from '@lib/messaging/transport';
 
 // Type-level assertions for the guarantees the runtime suite can't reach:
@@ -28,6 +28,11 @@ type TwoArgApi = {
   events: Record<string, never>;
 };
 
+// An endpoint may declare only the call style it exposes, omitting the other
+// section entirely rather than spelling out an empty map.
+type EventsOnlyApi = { events: { ping(): void } };
+type RequestsOnlyApi = { requests: { add(params: { left: number }): number } };
+
 describe('RPC type safety', () => {
   it('routes request methods to the remote request API', () => {
     expectTypeOf<Client['request']>()
@@ -47,6 +52,37 @@ describe('RPC type safety', () => {
 
   it('rejects an API whose procedure takes more than one argument', () => {
     expectTypeOf<TwoArgApi>().not.toExtend<RpcApi>();
+  });
+
+  it('accepts an RpcApi that omits a section', () => {
+    expectTypeOf<EventsOnlyApi>().toExtend<RpcApi>();
+    expectTypeOf<RequestsOnlyApi>().toExtend<RpcApi>();
+  });
+
+  it('routes calls against an API that omits a section', () => {
+    // `EventsOnlyApi` declares no requests — calling one is off-contract.
+    expectTypeOf<RPC<RpcApi, EventsOnlyApi>['request']>()
+      .parameter(0)
+      .toEqualTypeOf<never>();
+    expectTypeOf<RPC<RpcApi, EventsOnlyApi>['notify']>()
+      .parameter(0)
+      .toEqualTypeOf<'ping'>();
+  });
+
+  it('makes the handler section optional when its API section is omitted', () => {
+    // `EventsOnlyApi` declares no requests, so a `requests` handler map may be
+    // omitted — implementing just the declared `events` is enough.
+    expectTypeOf<{
+      events: { ping: () => void };
+    }>().toExtend<RpcHandlers<EventsOnlyApi>>();
+  });
+
+  it('still requires a handler for every declared procedure', () => {
+    // `events` is declared, so its handler stays mandatory — an empty object
+    // can't stand in.
+    // @ts-expect-error - missing the required `events` handler section.
+    const handlers: RpcHandlers<EventsOnlyApi> = {};
+    expect(handlers).toBeDefined();
   });
 
   it('forbids send options when the transport carries none', () => {

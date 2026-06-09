@@ -16,8 +16,10 @@ export type MessageHandler<Inbound> = (message: Inbound) => void;
  * (`Transport<Outbound, Inbound>`).
  *
  * `Options` is the per-send option bag the carrier understands (e.g.
- * transferables). It defaults to `never` — a plain transport accepts no
- * options, and `send`'s second argument is unusable until a carrier widens
+ * transferables). `send` always receives one, so a carrier can read it
+ * unconditionally; a carrier that recognizes no options ignores the (empty)
+ * bag. `Options` defaults to `never` — a plain transport's bag carries
+ * nothing, so its second argument has no usable fields until a carrier widens
  * it. Callers pair a transport with a peer that carries the same `Options`.
  *
  * Adapters wrap a concrete carrier (a `MessagePort`, a worker, a socket)
@@ -32,7 +34,7 @@ export interface Transport<Inbound, Outbound, Options = never> {
   // sound — a transport must actually accept the options a consumer can send.
 
   /** Send a message to the peer endpoint, honoring carrier-specific options. */
-  send: (message: Outbound, options?: Options) => void;
+  send: (message: Outbound, options: Options) => void;
 
   /**
    * Register a handler for inbound messages. Multiple handlers may be

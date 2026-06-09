@@ -1,10 +1,4 @@
-import {
-  RPC,
-  RpcError,
-  RpcClosedError,
-  respond,
-  type RpcMessage,
-} from '@lib/messaging';
+import { RPC, RpcError, RpcClosedError, type RpcMessage } from '@lib/messaging';
 import {
   MessagePortTransport,
   type SendOptions,
@@ -45,18 +39,19 @@ const setup = () => {
     new MessagePortTransport(port1),
     {
       requests: {
-        add: ({ left, right }) => respond(left + right),
-        divide: ({ left, right }) => Promise.resolve(respond(left / right)),
+        add: ({ left, right }) => left + right,
+        divide: ({ left, right }) => Promise.resolve(left / right),
         boom: ({ message }) => {
           throw new Error(message);
         },
         denied: () => {
           throw new RpcError('no access');
         },
-        echoSize: ({ buffer }) => respond(buffer.byteLength),
-        mint: () => {
+        echoSize: ({ buffer }) => buffer.byteLength,
+        mint: (_params, options) => {
           const buffer = new ArrayBuffer(8);
-          return respond(buffer, { transfer: [buffer] });
+          options.transfer = [buffer];
+          return buffer;
         },
       },
       events: {
@@ -232,7 +227,7 @@ describe('RPC', () => {
   it('carries send options from a request handler back to the caller', async () => {
     const { client } = setup();
 
-    // `mint` replies via `respond(buffer, { transfer: [buffer] })`. Arriving
+    // `mint` sets `options.transfer = [buffer]` on its reply bag. Arriving
     // with its 8 bytes intact proves the handler's options reached `send`.
     // (Asserting `byteLength` rather than `instanceof ArrayBuffer`: the port
     // deserializes the buffer in another realm, so `instanceof` is unreliable
@@ -241,6 +236,57 @@ describe('RPC', () => {
     const buffer = await client.request('mint');
 
     expect(buffer.byteLength).toBe(8);
+  });
+
+  it('hands the transport an options bag for every reply', async () => {
+    // The `Transport` contract is that `send` always receives an options
+    // argument, so a reply forwards the handler's bag whether or not the
+    // handler touched it — an untouched bag is simply empty. Drive a capturing
+    // transport directly to inspect the exact value handed to `send`.
+    const sent: Array<{ message: RpcMessage; options: SendOptions }> = [];
+    let deliver!: (message: RpcMessage) => void;
+    const transport: Transport<RpcMessage, RpcMessage, SendOptions> = {
+      send: (message, options) => {
+        sent.push({ message, options });
+      },
+      onMessage: (handler) => {
+        deliver = handler;
+        return () => undefined;
+      },
+    };
+    new RPC<ServerApi, ClientApi, SendOptions>(transport, {
+      requests: {
+        add: ({ left, right }) => left + right,
+        divide: ({ left, right }) => left / right,
+        boom: () => 0,
+        denied: () => 0,
+        echoSize: ({ buffer }) => buffer.byteLength,
+        mint: (_params, options) => {
+          const buffer = new ArrayBuffer(8);
+          options.transfer = [buffer];
+          return buffer;
+        },
+      },
+      events: { log: () => {}, ping: () => {}, sink: () => {} },
+    });
+
+    deliver({
+      type: 'request',
+      id: 1,
+      method: 'add',
+      params: { left: 1, right: 2 },
+    });
+    deliver({ type: 'request', id: 2, method: 'mint', params: undefined });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const reply = (id: number) =>
+      sent.find(
+        (entry) => entry.message.type === 'response' && entry.message.id === id,
+      );
+    // Bare reply: an empty (but present) options bag.
+    expect(reply(1)?.options).toEqual({});
+    // Populated reply: the handler's transfer list rides along.
+    expect(reply(2)?.options).toEqual({ transfer: [expect.any(ArrayBuffer)] });
   });
 
   it('rejects in-flight requests with an RpcClosedError on close', async () => {
