@@ -53,6 +53,32 @@ export class RpcClosedError extends Error {
 }
 
 /**
+ * A request handler's reply: the `result` returned to the caller, plus
+ * optional per-send {@link SendOptions} (e.g. transferables to hand back by
+ * reference). Build one with {@link respond}.
+ *
+ * Request handlers always return an `RpcResponse` — even when they carry no
+ * options. Requiring the wrapper unconditionally keeps the reply's
+ * capabilities explicit at every call site rather than hiding them behind an
+ * occasional bare return.
+ */
+export class RpcResponse<Result> {
+  readonly result: Result;
+  readonly options?: SendOptions;
+
+  constructor(result: Result, options?: SendOptions) {
+    this.result = result;
+    this.options = options;
+  }
+}
+
+/** Wrap a request handler's result (with optional {@link SendOptions}). */
+export const respond = <Result>(
+  result: Result,
+  options?: SendOptions,
+): RpcResponse<Result> => new RpcResponse(result, options);
+
+/**
  * The wire envelope carried by the underlying {@link Transport}. An `RPC`
  * owns its transport end-to-end, so the transport is always typed
  * `Transport<RpcMessage, RpcMessage>` — these are the only messages on it.
@@ -88,6 +114,36 @@ type CallArgs<Procedure extends RpcProcedure> =
     : [params: Parameters<Procedure>[0], options?: SendOptions];
 
 /**
+ * The handler implementing one request procedure. Mirrors the procedure's
+ * parameters, but its return is wrapped in an {@link RpcResponse} (sync or
+ * `Promise`) so the reply can carry {@link SendOptions}.
+ */
+type RequestHandler<Procedure extends RpcProcedure> = (
+  ...args: Parameters<Procedure>
+) =>
+  | RpcResponse<ResultOf<Procedure>>
+  | Promise<RpcResponse<ResultOf<Procedure>>>;
+
+/** The handler implementing one event procedure. Fire-and-forget. */
+type EventHandler<Procedure extends RpcProcedure> = (
+  ...args: Parameters<Procedure>
+) => void | Promise<void>;
+
+/**
+ * The object passed to the {@link RPC} constructor: one handler per declared
+ * procedure of `Local`. Request handlers reply via {@link RpcResponse}; event
+ * handlers return nothing.
+ */
+export interface RpcHandlers<Api extends RpcApi> {
+  requests: {
+    [Method in keyof Api['requests']]: RequestHandler<Api['requests'][Method]>;
+  };
+  events: {
+    [Method in keyof Api['events']]: EventHandler<Api['events'][Method]>;
+  };
+}
+
+/**
  * Resolve a handler by method name, treating the name as untrusted.
  *
  * Inbound `method` strings may come from an untrusted peer (a foreign
@@ -112,8 +168,7 @@ interface PendingRequest {
 }
 
 /**
- * Typed, bidirectional RPC over any {@link Transport}. Construct with
- * {@link RPC.from}.
+ * Typed, bidirectional RPC over any {@link Transport}.
  *
  * Both type parameters are {@link RpcApi} shapes: `Local` is the API this
  * peer implements (its handlers serve the remote's calls), `Remote` is the
@@ -122,8 +177,8 @@ interface PendingRequest {
  *
  * @example
  * ```ts
- * const peer = RPC.from<LocalApi, RemoteApi>(transport, {
- *   requests: { add: ({ left, right }) => left + right },
+ * const peer = new RPC<LocalApi, RemoteApi>(transport, {
+ *   requests: { add: ({ left, right }) => respond(left + right) },
  *   events: { log: ({ message }) => console.log(message) },
  * });
  *
@@ -141,10 +196,16 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   #closed = false;
 
   /** Wrap a transport as an RPC endpoint. `handlers` implements `Local`. */
-  constructor(transport: Transport<RpcMessage, RpcMessage>, handlers: Local) {
+  constructor(
+    transport: Transport<RpcMessage, RpcMessage>,
+    handlers: RpcHandlers<Local>,
+  ) {
     this.#transport = transport;
-    this.#requestHandlers = handlers.requests;
-    this.#eventHandlers = handlers.events;
+    // The public boundary (`RpcHandlers<Local>`) carries the precise per-method
+    // types; internally the dispatcher treats every handler uniformly and casts
+    // params/results at the call site, so a loose record is enough here.
+    this.#requestHandlers = handlers.requests as Record<string, RpcProcedure>;
+    this.#eventHandlers = handlers.events as Record<string, RpcProcedure>;
     this.#unsubscribe = this.#transport.onMessage((message) => {
       void this.#dispatch(message);
     });
@@ -261,13 +322,18 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
     }
 
     try {
-      const result = await handler(message.params as never);
-      this.#transport.send({
-        type: 'response',
-        id: message.id,
-        ok: true,
-        result,
-      });
+      const response = (await handler(
+        message.params as never,
+      )) as RpcResponse<unknown>;
+      this.#send(
+        {
+          type: 'response',
+          id: message.id,
+          ok: true,
+          result: response.result,
+        },
+        response.options,
+      );
     } catch (thrown) {
       const error = toError(thrown);
 

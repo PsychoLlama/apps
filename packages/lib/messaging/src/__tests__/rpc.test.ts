@@ -1,4 +1,10 @@
-import { RPC, RpcError, RpcClosedError, type RpcMessage } from '@lib/messaging';
+import {
+  RPC,
+  RpcError,
+  RpcClosedError,
+  respond,
+  type RpcMessage,
+} from '@lib/messaging';
 import { MessagePortTransport, type Transport } from '@lib/messaging/transport';
 
 type ServerApi = {
@@ -8,6 +14,7 @@ type ServerApi = {
     boom(params: { message: string }): number;
     denied(params: { resource: string }): number;
     echoSize(params: { buffer: ArrayBuffer }): number;
+    mint(): ArrayBuffer;
   };
   events: {
     log(params: { message: string }): void;
@@ -34,15 +41,19 @@ const setup = () => {
     new MessagePortTransport(port1),
     {
       requests: {
-        add: ({ left, right }) => left + right,
-        divide: ({ left, right }) => Promise.resolve(left / right),
+        add: ({ left, right }) => respond(left + right),
+        divide: ({ left, right }) => Promise.resolve(respond(left / right)),
         boom: ({ message }) => {
           throw new Error(message);
         },
         denied: () => {
           throw new RpcError('no access');
         },
-        echoSize: ({ buffer }) => buffer.byteLength,
+        echoSize: ({ buffer }) => respond(buffer.byteLength),
+        mint: () => {
+          const buffer = new ArrayBuffer(8);
+          return respond(buffer, { transfer: [buffer] });
+        },
       },
       events: {
         log: ({ message }) => {
@@ -212,6 +223,20 @@ describe('RPC', () => {
 
     expect(sizes).toEqual([8]);
     expect(buffer.byteLength).toBe(0);
+  });
+
+  it('carries send options from a request handler back to the caller', async () => {
+    const { client } = setup();
+
+    // `mint` replies via `respond(buffer, { transfer: [buffer] })`. Arriving
+    // with its 8 bytes intact proves the handler's options reached `send`.
+    // (Asserting `byteLength` rather than `instanceof ArrayBuffer`: the port
+    // deserializes the buffer in another realm, so `instanceof` is unreliable
+    // here — the request-side transfer tests check `byteLength` for the same
+    // reason.)
+    const buffer = await client.request('mint');
+
+    expect(buffer.byteLength).toBe(8);
   });
 
   it('throws when transfer is requested on a non-transferable transport', async () => {

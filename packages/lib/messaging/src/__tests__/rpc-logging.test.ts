@@ -2,7 +2,7 @@ import {
   setGlobalLogCollector,
   unsetGlobalLogCollector,
 } from '@holz/log-collector';
-import { RPC, type RpcMessage } from '@lib/messaging';
+import { RPC, respond, type RpcMessage } from '@lib/messaging';
 import type { Log } from '@lib/observability';
 import { MessagePortTransport, type Transport } from '@lib/messaging/transport';
 
@@ -33,7 +33,7 @@ const captureLogs = (): Log[] => {
 const setup = () => {
   const { port1, port2 } = new MessageChannel();
   const endpoint = new RPC<Api, Empty>(new MessagePortTransport(port2), {
-    requests: { add: ({ left, right }) => left + right },
+    requests: { add: ({ left, right }) => respond(left + right) },
     events: {
       log: () => undefined,
       boom: () => {
