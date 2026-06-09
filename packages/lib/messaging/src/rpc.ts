@@ -1,6 +1,6 @@
 import { createLogger } from '@lib/observability';
 import type { Transport, Unsubscribe } from './transport.ts';
-import { isTransferable, type SendOptions } from './message-port.ts';
+import { MessagePortTransport, type SendOptions } from './message-port.ts';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -129,16 +129,6 @@ interface PendingRequest {
  * ```
  */
 export class RPC<Local extends RpcApi, Remote extends RpcApi> {
-  /**
-   * Wrap a transport as an RPC endpoint. `handlers` implements `Local`.
-   */
-  static from<Local extends RpcApi, Remote extends RpcApi>(
-    transport: Transport<RpcMessage, RpcMessage>,
-    handlers: Local,
-  ): RPC<Local, Remote> {
-    return new RPC<Local, Remote>(transport, handlers);
-  }
-
   readonly #transport: Transport<RpcMessage, RpcMessage>;
   readonly #requestHandlers: Record<string, RpcProcedure | undefined>;
   readonly #eventHandlers: Record<string, RpcProcedure | undefined>;
@@ -147,10 +137,8 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   #nextRequestId = 1;
   #closed = false;
 
-  private constructor(
-    transport: Transport<RpcMessage, RpcMessage>,
-    handlers: Local,
-  ) {
+  /** Wrap a transport as an RPC endpoint. `handlers` implements `Local`. */
+  constructor(transport: Transport<RpcMessage, RpcMessage>, handlers: Local) {
     this.#transport = transport;
     this.#requestHandlers = handlers.requests;
     this.#eventHandlers = handlers.events;
@@ -226,11 +214,11 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   }
 
   // Route a message through the transport, applying send options if given.
-  // Transfer requires a transfer-capable transport; asking for it on one
+  // Transfer requires a transport that accepts it; asking for it on one
   // that can't is a misconfiguration, not a silent copy.
   #send(message: RpcMessage, options?: SendOptions): void {
     if (options?.transfer && options.transfer.length > 0) {
-      if (!isTransferable(this.#transport)) {
+      if (!(this.#transport instanceof MessagePortTransport)) {
         throw new Error('This transport does not support transfer.');
       }
       this.#transport.send(message, options);

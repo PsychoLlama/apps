@@ -32,7 +32,7 @@ const captureLogs = (): Log[] => {
  */
 const setup = () => {
   const { port1, port2 } = new MessageChannel();
-  const endpoint = RPC.from<Api, Empty>(new MessagePortTransport(port2), {
+  const endpoint = new RPC<Api, Empty>(new MessagePortTransport(port2), {
     requests: { add: ({ left, right }) => left + right },
     events: {
       log: () => undefined,
@@ -144,7 +144,7 @@ describe('RPC logging', () => {
         return () => undefined;
       },
     };
-    const rpc = RPC.from<Empty, Api>(transport, { requests: {}, events: {} });
+    const rpc = new RPC<Empty, Api>(transport, { requests: {}, events: {} });
 
     // The first request takes id 1 and rejects when the send throws.
     await expect(rpc.request('add', { left: 1, right: 2 })).rejects.toThrow(

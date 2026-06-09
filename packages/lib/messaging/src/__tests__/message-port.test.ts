@@ -1,8 +1,4 @@
-import {
-  MessagePortTransport,
-  isTransferable,
-  type Transport,
-} from '@lib/messaging/transport';
+import { MessagePortTransport } from '@lib/messaging/transport';
 
 type Wire =
   | { type: 'data'; buffer?: ArrayBuffer }
@@ -23,19 +19,6 @@ const setup = () => {
 };
 
 describe('MessagePortTransport', () => {
-  it('brands the transport as transferable', () => {
-    expect(isTransferable(setup().sender)).toBe(true);
-  });
-
-  it('reports a plain transport as non-transferable', () => {
-    const plain: Transport<Wire, Wire> = {
-      send: () => undefined,
-      onMessage: () => () => undefined,
-    };
-
-    expect(isTransferable(plain)).toBe(false);
-  });
-
   it('delivers messages to every registered handler', async () => {
     const { sender, receiver } = setup();
     const first = new Promise<Wire>((resolve) => receiver.onMessage(resolve));
