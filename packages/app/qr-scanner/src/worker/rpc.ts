@@ -44,17 +44,16 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
   context.drawImage(bitmap, 0, 0);
   const { data } = context.getImageData(0, 0, width, height);
   const scan = decodeImage(data, width, height);
+  if (!scan) return null;
+
   // Project the wasm handle to its plain fields before it crosses back to
   // the main thread — `Scan` owns `free()` and can't be structured-cloned.
-  // `details` is already plain `Detail` objects from the wasm.
-  return scan
-    ? {
-        text: scan.text,
-        format: scan.format,
-        kind: scan.kind,
-        details: scan.details,
-      }
-    : null;
+  // Destructuring reads every getter (`details` lands as plain `Detail`
+  // objects), so the handle's wasm memory is fully consumed and can be
+  // freed straight away rather than left to the finalizer.
+  const { text, format, kind, details } = scan;
+  scan.free();
+  return { text, format, kind, details };
 };
 
 /**
