@@ -1,12 +1,13 @@
 import type { MessageHandler, Transport, Unsubscribe } from './transport.ts';
 
 /**
- * Per-send options. A capability bag so the call signature can grow without
- * breaking — today only `transfer`.
+ * {@link MessagePortTransport}'s per-send options — the `Options` it supplies
+ * as a {@link Transport}. A capability bag so the call signature can grow
+ * without breaking; today only `transfer`.
  *
  * `transfer` lists {@link Transferable} objects to hand to the peer by
  * reference instead of by copy; transferred objects are neutered in the
- * sender. Only honored by a {@link MessagePortTransport}.
+ * sender.
  */
 export interface SendOptions {
   transfer?: Transferable[];
@@ -29,10 +30,10 @@ export interface MessageEndpoint {
 }
 
 /**
- * Wraps a `MessagePort`-shaped endpoint as a {@link Transport}. Supports
- * zero-copy transfer via the endpoint's `postMessage` transfer list — pass
- * {@link SendOptions} to {@link MessagePortTransport.send}. Consumers that
- * need to branch on this capability can test with `instanceof`.
+ * Wraps a `MessagePort`-shaped endpoint as a {@link Transport} whose
+ * `Options` are {@link SendOptions}. Supports zero-copy transfer via the
+ * endpoint's `postMessage` transfer list — pass `transfer` to
+ * {@link MessagePortTransport.send}.
  *
  * Listens via `addEventListener`, so a `MessagePort` delivers nothing until
  * the caller `start()`s it — starting is the consumer's to time, not this
@@ -48,7 +49,8 @@ export interface MessageEndpoint {
  */
 export class MessagePortTransport<Inbound, Outbound> implements Transport<
   Inbound,
-  Outbound
+  Outbound,
+  SendOptions
 > {
   readonly #endpoint: MessageEndpoint;
 

@@ -5,7 +5,11 @@ import {
   respond,
   type RpcMessage,
 } from '@lib/messaging';
-import { MessagePortTransport, type Transport } from '@lib/messaging/transport';
+import {
+  MessagePortTransport,
+  type SendOptions,
+  type Transport,
+} from '@lib/messaging/transport';
 
 type ServerApi = {
   requests: {
@@ -37,7 +41,7 @@ const setup = () => {
   const logged: string[] = [];
   const sizes: number[] = [];
 
-  const server = new RPC<ServerApi, ClientApi>(
+  const server = new RPC<ServerApi, ClientApi, SendOptions>(
     new MessagePortTransport(port1),
     {
       requests: {
@@ -69,7 +73,7 @@ const setup = () => {
     },
   );
 
-  const client = new RPC<ClientApi, ServerApi>(
+  const client = new RPC<ClientApi, ServerApi, SendOptions>(
     new MessagePortTransport(port2),
     {
       requests: {},
@@ -237,25 +241,6 @@ describe('RPC', () => {
     const buffer = await client.request('mint');
 
     expect(buffer.byteLength).toBe(8);
-  });
-
-  it('throws when transfer is requested on a non-transferable transport', async () => {
-    const plain: Transport<RpcMessage, RpcMessage> = {
-      send: () => undefined,
-      onMessage: () => () => undefined,
-    };
-    const client = new RPC<ClientApi, ServerApi>(plain, {
-      requests: {},
-      events: {},
-    });
-    const buffer = new ArrayBuffer(8);
-
-    await expect(
-      client.request('echoSize', { buffer }, { transfer: [buffer] }),
-    ).rejects.toThrow('does not support transfer');
-    expect(() =>
-      client.notify('sink', { buffer }, { transfer: [buffer] }),
-    ).toThrow('does not support transfer');
   });
 
   it('rejects in-flight requests with an RpcClosedError on close', async () => {

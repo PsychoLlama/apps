@@ -1,6 +1,5 @@
 import { createLogger } from '@lib/observability';
 import type { Transport, Unsubscribe } from './transport.ts';
-import { MessagePortTransport, type SendOptions } from './message-port.ts';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -54,29 +53,30 @@ export class RpcClosedError extends Error {
 
 /**
  * A request handler's reply: the `result` returned to the caller, plus
- * optional per-send {@link SendOptions} (e.g. transferables to hand back by
- * reference). Build one with {@link respond}.
+ * optional per-send `Options` for the transport (e.g. transferables to hand
+ * back by reference). Build one with {@link respond}. `Options` matches the
+ * owning {@link RPC}'s option type.
  *
  * Request handlers always return an `RpcResponse` — even when they carry no
  * options. Requiring the wrapper unconditionally keeps the reply's
  * capabilities explicit at every call site rather than hiding them behind an
  * occasional bare return.
  */
-export class RpcResponse<Result> {
+export class RpcResponse<Result, Options = never> {
   readonly result: Result;
-  readonly options?: SendOptions;
+  readonly options?: Options;
 
-  constructor(result: Result, options?: SendOptions) {
+  constructor(result: Result, options?: Options) {
     this.result = result;
     this.options = options;
   }
 }
 
-/** Wrap a request handler's result (with optional {@link SendOptions}). */
-export const respond = <Result>(
+/** Wrap a request handler's result, with optional transport send options. */
+export const respond = <Result, Options = never>(
   result: Result,
-  options?: SendOptions,
-): RpcResponse<Result> => new RpcResponse(result, options);
+  options?: Options,
+): RpcResponse<Result, Options> => new RpcResponse(result, options);
 
 /**
  * The wire envelope carried by the underlying {@link Transport}. An `RPC`
@@ -104,25 +104,25 @@ type EventMethod<Api extends RpcApi> = keyof Api['events'] & string;
  *
  * A no-parameter procedure takes no payload: omit it (`request('ping')`) or
  * pass `undefined` to reach options (`request('ping', undefined, opts)`).
- * Note transfer is only meaningful with a payload. A procedure with an
- * *optional* parameter is treated as having one — pass it explicitly (even
- * as `undefined`) to also pass options.
+ * Options are only meaningful with a payload. A procedure with an *optional*
+ * parameter is treated as having one — pass it explicitly (even as
+ * `undefined`) to also pass options.
  */
-type CallArgs<Procedure extends RpcProcedure> =
+type CallArgs<Procedure extends RpcProcedure, Options> =
   Parameters<Procedure> extends []
-    ? [params?: undefined, options?: SendOptions]
-    : [params: Parameters<Procedure>[0], options?: SendOptions];
+    ? [params?: undefined, options?: Options]
+    : [params: Parameters<Procedure>[0], options?: Options];
 
 /**
  * The handler implementing one request procedure. Mirrors the procedure's
  * parameters, but its return is wrapped in an {@link RpcResponse} (sync or
- * `Promise`) so the reply can carry {@link SendOptions}.
+ * `Promise`) so the reply can carry transport `Options`.
  */
-type RequestHandler<Procedure extends RpcProcedure> = (
+type RequestHandler<Procedure extends RpcProcedure, Options> = (
   ...args: Parameters<Procedure>
 ) =>
-  | RpcResponse<ResultOf<Procedure>>
-  | Promise<RpcResponse<ResultOf<Procedure>>>;
+  | RpcResponse<ResultOf<Procedure>, Options>
+  | Promise<RpcResponse<ResultOf<Procedure>, Options>>;
 
 /** The handler implementing one event procedure. Fire-and-forget. */
 type EventHandler<Procedure extends RpcProcedure> = (
@@ -131,12 +131,15 @@ type EventHandler<Procedure extends RpcProcedure> = (
 
 /**
  * The object passed to the {@link RPC} constructor: one handler per declared
- * procedure of `Local`. Request handlers reply via {@link RpcResponse}; event
- * handlers return nothing.
+ * procedure of `Local`. Request handlers reply via {@link RpcResponse},
+ * carrying the transport's `Options`; event handlers return nothing.
  */
-export interface RpcHandlers<Api extends RpcApi> {
+export interface RpcHandlers<Api extends RpcApi, Options = never> {
   requests: {
-    [Method in keyof Api['requests']]: RequestHandler<Api['requests'][Method]>;
+    [Method in keyof Api['requests']]: RequestHandler<
+      Api['requests'][Method],
+      Options
+    >;
   };
   events: {
     [Method in keyof Api['events']]: EventHandler<Api['events'][Method]>;
@@ -170,10 +173,15 @@ interface PendingRequest {
 /**
  * Typed, bidirectional RPC over any {@link Transport}.
  *
- * Both type parameters are {@link RpcApi} shapes: `Local` is the API this
+ * `Local` and `Remote` are {@link RpcApi} shapes: `Local` is the API this
  * peer implements (its handlers serve the remote's calls), `Remote` is the
  * API this peer may call. The peer on the other end is the mirror —
- * `RPC<Remote, Local>`.
+ * `RPC<Remote, Local, Options>`.
+ *
+ * `Options` is the transport's per-send option bag, threaded onto `request`,
+ * `notify`, and handler replies. It defaults to `never` (no options) and is
+ * fixed by the transport — e.g. `MessagePortTransport` supplies `SendOptions`
+ * (transferables), so pair it with `RPC<Local, Remote, SendOptions>`.
  *
  * @example
  * ```ts
@@ -186,8 +194,8 @@ interface PendingRequest {
  * peer.notify('ping');
  * ```
  */
-export class RPC<Local extends RpcApi, Remote extends RpcApi> {
-  readonly #transport: Transport<RpcMessage, RpcMessage>;
+export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
+  readonly #transport: Transport<RpcMessage, RpcMessage, Options>;
   readonly #requestHandlers: Record<string, RpcProcedure | undefined>;
   readonly #eventHandlers: Record<string, RpcProcedure | undefined>;
   readonly #pending = new Map<number, PendingRequest>();
@@ -197,8 +205,8 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
 
   /** Wrap a transport as an RPC endpoint. `handlers` implements `Local`. */
   constructor(
-    transport: Transport<RpcMessage, RpcMessage>,
-    handlers: RpcHandlers<Local>,
+    transport: Transport<RpcMessage, RpcMessage, Options>,
+    handlers: RpcHandlers<Local, Options>,
   ) {
     this.#transport = transport;
     // The public boundary (`RpcHandlers<Local>`) carries the precise per-method
@@ -239,10 +247,10 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
    */
   request<Method extends RequestMethod<Remote>>(
     method: Method,
-    ...args: CallArgs<Remote['requests'][Method]>
+    ...args: CallArgs<Remote['requests'][Method], Options>
   ): Promise<ResultOf<Remote['requests'][Method]>> {
     if (this.#closed) throw new RpcClosedError();
-    const [params, options] = args as [params?: unknown, options?: SendOptions];
+    const [params, options] = args as [params?: unknown, options?: Options];
     const id = this.#nextRequestId++;
     return new Promise<ResultOf<Remote['requests'][Method]>>(
       (resolve, reject) => {
@@ -271,25 +279,18 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
    */
   notify<Method extends EventMethod<Remote>>(
     method: Method,
-    ...args: CallArgs<Remote['events'][Method]>
+    ...args: CallArgs<Remote['events'][Method], Options>
   ): void {
     if (this.#closed) throw new RpcClosedError();
-    const [params, options] = args as [params?: unknown, options?: SendOptions];
+    const [params, options] = args as [params?: unknown, options?: Options];
     this.#send({ type: 'event', method, params }, options);
   }
 
-  // Route a message through the transport, applying send options if given.
-  // Transfer requires a transport that accepts it; asking for it on one
-  // that can't is a misconfiguration, not a silent copy.
-  #send(message: RpcMessage, options?: SendOptions): void {
-    if (options?.transfer && options.transfer.length > 0) {
-      if (!(this.#transport instanceof MessagePortTransport)) {
-        throw new Error('This transport does not support transfer.');
-      }
-      this.#transport.send(message, options);
-    } else {
-      this.#transport.send(message);
-    }
+  // Hand a message to the transport, forwarding any send options. The
+  // transport decides what to do with them — the type system already
+  // guarantees the caller can only pass options this transport understands.
+  #send(message: RpcMessage, options?: Options): void {
+    this.#transport.send(message, options);
   }
 
   async #dispatch(message: RpcMessage): Promise<void> {
@@ -322,9 +323,10 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
     }
 
     try {
-      const response = (await handler(
-        message.params as never,
-      )) as RpcResponse<unknown>;
+      const response = (await handler(message.params as never)) as RpcResponse<
+        unknown,
+        Options
+      >;
       this.#send(
         {
           type: 'response',

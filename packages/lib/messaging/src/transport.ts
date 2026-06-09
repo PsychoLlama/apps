@@ -10,20 +10,23 @@ export type MessageHandler<Inbound> = (message: Inbound) => void;
  * may be structured data, JSON, binary, or anything else. The transport
  * only describes the abstract send/receive contract.
  *
- * The two type parameters describe the traffic in each direction from this
+ * `Inbound`/`Outbound` describe the traffic in each direction from this
  * endpoint's perspective: `Inbound` is what this side receives, `Outbound`
  * is what it sends. The peer endpoint holds the mirror image
  * (`Transport<Outbound, Inbound>`).
  *
+ * `Options` is the per-send option bag the carrier understands (e.g.
+ * transferables). It defaults to `never` — a plain transport accepts no
+ * options, and `send`'s second argument is unusable until a carrier widens
+ * it. Callers pair a transport with a peer that carries the same `Options`.
+ *
  * Adapters wrap a concrete carrier (a `MessagePort`, a worker, a socket)
- * behind this shape, so callers stay decoupled from the carrier. Adapters
- * may extend it with carrier-specific capabilities behind a brand symbol
- * (see {@link TransferableTransport}) and may narrow `Inbound`/`Outbound`
- * to what their carrier can actually move.
+ * behind this shape, so callers stay decoupled from the carrier, and may
+ * narrow `Inbound`/`Outbound` to what their carrier can actually move.
  */
-export interface Transport<Inbound, Outbound> {
-  /** Send a message to the peer endpoint. */
-  send(message: Outbound): void;
+export interface Transport<Inbound, Outbound, Options = never> {
+  /** Send a message to the peer endpoint, honoring carrier-specific options. */
+  send(message: Outbound, options?: Options): void;
 
   /**
    * Register a handler for inbound messages. Multiple handlers may be
