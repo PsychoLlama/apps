@@ -37,12 +37,15 @@ export class RpcError extends Error {
 }
 
 /**
- * Rejection reason handed to every in-flight request when its {@link RPC} is
- * closed via {@link RPC.close}. A subtype of {@link RpcError} so existing
- * request-failure handling catches it, while `instanceof RpcClosedError`
- * still distinguishes a local teardown from a remote failure.
+ * Raised when an {@link RPC} is used after {@link RPC.close} — and the
+ * rejection handed to every request still in flight at close time.
+ *
+ * Deliberately *not* an {@link RpcError}: a close is a local lifecycle
+ * event, not a remote failure. Code that retries or logs remote errors must
+ * not mistake a closed endpoint for one, so callers distinguish the two by
+ * type.
  */
-export class RpcClosedError extends RpcError {
+export class RpcClosedError extends Error {
   constructor(message = 'RPC closed.') {
     super(message);
     this.name = 'RpcClosedError';
@@ -105,7 +108,7 @@ const toError = (thrown: unknown): Error =>
 
 interface PendingRequest {
   resolve: (result: unknown) => void;
-  reject: (error: RpcError) => void;
+  reject: (error: RpcError | RpcClosedError) => void;
 }
 
 /**
@@ -150,7 +153,8 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   /**
    * Tear down this endpoint: discard the transport listener and reject every
    * in-flight request with an {@link RpcClosedError}. Idempotent. Afterwards
-   * `request` rejects and `notify` is a no-op.
+   * both `request` and `notify` throw — sending on a dead endpoint is a bug,
+   * and a silent no-op would mask a leak.
    *
    * The transport itself is left untouched — this `RPC` doesn't own its
    * lifecycle. Closing the underlying carrier (e.g. `port.close()`) is the
@@ -168,15 +172,15 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
 
   /**
    * Call a remote request method and await its result. Rejects with an
-   * {@link RpcError} if the remote handler throws (or the method is
-   * unknown to the remote), or an {@link RpcClosedError} if this endpoint
-   * has been closed.
+   * {@link RpcError} if the remote handler throws (or the method is unknown
+   * to the remote). Throws an {@link RpcClosedError} if this endpoint has
+   * been closed.
    */
   request<Method extends RequestMethod<Remote>>(
     method: Method,
     ...args: CallArgs<Remote['requests'][Method]>
   ): Promise<ResultOf<Remote['requests'][Method]>> {
-    if (this.#closed) return Promise.reject(new RpcClosedError());
+    if (this.#closed) throw new RpcClosedError();
     const [params, options] = args as [params?: unknown, options?: SendOptions];
     const id = this.#nextRequestId++;
     return new Promise<ResultOf<Remote['requests'][Method]>>(
@@ -201,14 +205,14 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   }
 
   /**
-   * Fire a remote event. Returns once handed to the transport. A no-op once
-   * this endpoint has been closed.
+   * Fire a remote event. Returns once handed to the transport. Throws an
+   * {@link RpcClosedError} if this endpoint has been closed.
    */
   notify<Method extends EventMethod<Remote>>(
     method: Method,
     ...args: CallArgs<Remote['events'][Method]>
   ): void {
-    if (this.#closed) return;
+    if (this.#closed) throw new RpcClosedError();
     const [params, options] = args as [params?: unknown, options?: SendOptions];
     this.#send({ type: 'event', method, params }, options);
   }

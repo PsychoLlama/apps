@@ -245,13 +245,22 @@ describe('RPC', () => {
     await expect(pending).rejects.toBeInstanceOf(RpcClosedError);
   });
 
-  it('rejects new requests after close', async () => {
+  it('throws on request after close', () => {
     const { client } = setup();
     client.close();
 
-    await expect(
-      client.request('add', { left: 1, right: 1 }),
-    ).rejects.toBeInstanceOf(RpcClosedError);
+    expect(() => client.request('add', { left: 1, right: 1 })).toThrow(
+      RpcClosedError,
+    );
+  });
+
+  it('throws on notify after close', () => {
+    const { client } = setup();
+    client.close();
+
+    expect(() => client.notify('log', { message: 'hi' })).toThrow(
+      RpcClosedError,
+    );
   });
 
   it('discards the transport listener on close', () => {
