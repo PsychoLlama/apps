@@ -10,9 +10,9 @@
 set -euo pipefail
 
 # pnpm exports this package's manifest path; its dir is the crate root,
-# and the workspace root is three tiers up (crates/<tier>/<name>).
+# and the workspace root is two tiers up (crates/<name>).
 crate_dir="$(cd "$(dirname "$npm_package_json")" && pwd)"
-workspace_root="$(cd "$crate_dir/../../.." && pwd)"
+workspace_root="$(cd "$crate_dir/../.." && pwd)"
 wasm="$workspace_root/target/wasm32-unknown-unknown/release/qr_scanner.wasm"
 
 cargo build --release --target wasm32-unknown-unknown -p qr-scanner
