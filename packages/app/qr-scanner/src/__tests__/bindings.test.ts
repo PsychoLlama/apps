@@ -10,6 +10,7 @@ import {
   setTorchOn,
 } from '../bindings';
 import { CameraAborted } from '../capabilities';
+import type { DecoderConnection } from '../decoder';
 import { scannerStore, type ScanResult } from '../store';
 
 const setup = () => {
@@ -189,8 +190,8 @@ describe('recordScan', () => {
 });
 
 describe('endSession', () => {
-  /** A worker stand-in — `endSession` only drops the reference, never calls it. */
-  const fakeWorker = { terminate: () => {} } as unknown as Worker;
+  /** A connection stand-in — `endSession` only drops the reference, never uses it. */
+  const fakeConnection = {} as DecoderConnection;
 
   it('returns to idle and bumps both generations to supersede pending work', () => {
     const { scanner, useAction } = setup();
@@ -209,7 +210,7 @@ describe('endSession', () => {
   it('clears the decoder reference and the last result', () => {
     const { scanner, useAction } = setup();
 
-    useAction(attachDecoder)(fakeWorker);
+    useAction(attachDecoder)(fakeConnection);
     useAction(recordScan)({
       text: 'https://example.com',
       format: 'QR_CODE',
@@ -224,16 +225,16 @@ describe('endSession', () => {
 });
 
 describe('attachDecoder', () => {
-  it('stores the worker behind a ref', () => {
+  it('stores the connection behind a ref', () => {
     const { scanner, useAction } = setup();
-    const worker = { terminate: () => {} } as unknown as Worker;
+    const connection = {} as DecoderConnection;
 
-    useAction(attachDecoder)(worker);
+    useAction(attachDecoder)(connection);
 
-    expect(scanner.decoder?.current).toBe(worker);
+    expect(scanner.decoder?.current).toBe(connection);
   });
 
-  it('ignores a superseded (null) worker — it already self-terminated', () => {
+  it('ignores a superseded (null) connection — it already tore itself down', () => {
     const { scanner, useAction } = setup();
 
     useAction(attachDecoder)(null);

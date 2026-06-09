@@ -1,4 +1,4 @@
-import { requestDecode } from './decoder';
+import { requestDecode, type DecoderConnection } from './decoder';
 import type { ScanResult } from './store';
 import { onVideoFrame } from './video-frames';
 
@@ -21,7 +21,7 @@ import { onVideoFrame } from './video-frames';
  */
 export const createFrameSampler = (
   video: HTMLVideoElement,
-  getDecoder: () => Worker | undefined,
+  getDecoder: () => DecoderConnection | undefined,
   onResult: (result: ScanResult) => void,
   onHit: () => void,
   signal: AbortSignal,
@@ -77,7 +77,7 @@ export const createFrameSampler = (
  */
 export const startCaptureLoop = (
   video: HTMLVideoElement,
-  getDecoder: () => Worker | undefined,
+  getDecoder: () => DecoderConnection | undefined,
   onResult: (result: ScanResult) => void,
 ): (() => void) => {
   const controller = new AbortController();

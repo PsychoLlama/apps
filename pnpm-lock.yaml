@@ -285,6 +285,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/messaging':
+        specifier: workspace:*
+        version: link:../../lib/messaging
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -471,10 +474,6 @@ importers:
       '@lib/observability':
         specifier: workspace:*
         version: link:../observability
-    devDependencies:
-      '@holz/log-collector':
-        specifier: 'catalog:'
-        version: 0.8.2(@holz/core@0.8.2)
 
   packages/lib/observability:
     dependencies:

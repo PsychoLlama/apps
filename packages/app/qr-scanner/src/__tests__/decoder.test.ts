@@ -1,76 +1,80 @@
-import { requestDecode, type DecodeRequest } from '../decoder';
+import {
+  RPC,
+  respond,
+  type RpcHandlers,
+  type RpcMessage,
+} from '@lib/messaging';
+import {
+  MessagePortTransport,
+  type SendOptions,
+} from '@lib/messaging/transport';
+import {
+  requestDecode,
+  type DecoderApi,
+  type DecoderConnection,
+  type HostApi,
+} from '../decoder';
 import type { ScanResult } from '../store';
 
-/**
- * A worker stand-in that captures each posted request so the test can
- * reply by hand. It never transfers, so the handed-over `port` stays live
- * in this realm — exactly what we need to drive replies.
- */
-const fakeWorker = () => {
-  const inbox: DecodeRequest[] = [];
-  const worker = {
-    postMessage: (data: DecodeRequest) => void inbox.push(data),
-  } as unknown as Worker;
+const result: ScanResult = {
+  text: 'https://example.com',
+  format: 'QR_CODE',
+  kind: 'url',
+  details: [],
+};
 
-  return {
-    worker,
-    /** Reply to the Nth request received, on the port it supplied. */
-    reply: (index: number, result: ScanResult | null) =>
-      inbox[index].port.postMessage(result),
-  };
+/**
+ * Wire a real host↔worker RPC pair over a `MessageChannel`, serving `decode`
+ * from a caller-supplied handler. The returned `connection` is exactly what
+ * `requestDecode` consumes, so the request rides a genuine transport — id
+ * correlation and the transfer list included — rather than a hand-stubbed
+ * `rpc.request`.
+ */
+const setup = (
+  decode: RpcHandlers<DecoderApi, SendOptions>['requests']['decode'],
+) => {
+  const channel = new MessageChannel();
+  const handler = vi.fn(decode);
+
+  const host = new RPC<HostApi, DecoderApi, SendOptions>(
+    new MessagePortTransport<RpcMessage, RpcMessage>(channel.port1),
+    { requests: {}, events: { ready: () => {} } },
+  );
+  new RPC<DecoderApi, HostApi, SendOptions>(
+    new MessagePortTransport<RpcMessage, RpcMessage>(channel.port2),
+    { requests: { decode: handler }, events: {} },
+  );
+  // `MessagePort` endpoints stay dormant until started — without this the
+  // request would post but never reach the worker side.
+  channel.port1.start();
+  channel.port2.start();
+
+  // `requestDecode` only ever touches `rpc`; the worker handle is inert here.
+  const connection: DecoderConnection = { worker: {} as Worker, rpc: host };
+  return { connection, decode: handler };
 };
 
 describe('requestDecode', () => {
-  it('resolves with the worker verdict for a hit', async () => {
-    const { worker, reply } = fakeWorker();
-    const result: ScanResult = {
-      text: 'https://example.com',
-      format: 'QR_CODE',
-      kind: 'url',
-      details: [],
-    };
+  it('requests a decode, transferring the bitmap, and resolves with a hit', async () => {
+    const { connection, decode } = setup(() => respond(result));
+    // A real transferable so the `{ transfer: [bitmap] }` send doesn't trap —
+    // the host's handle neuters once posted, proving the frame moved by
+    // reference rather than by copy.
+    const bitmap = new ArrayBuffer(8) as unknown as ImageBitmap;
 
-    const pending = requestDecode(worker, {} as ImageBitmap);
-    reply(0, result);
+    await expect(requestDecode(connection, bitmap)).resolves.toEqual(result);
 
-    await expect(pending).resolves.toEqual(result);
+    expect(decode).toHaveBeenCalledOnce();
+    const received = decode.mock.calls[0][0].bitmap as unknown as ArrayBuffer;
+    expect(received.byteLength).toBe(8); // arrived intact on the worker side
+    expect((bitmap as unknown as ArrayBuffer).byteLength).toBe(0); // gone here
   });
 
   it('resolves with null on a miss', async () => {
-    const { worker, reply } = fakeWorker();
+    const { connection } = setup(() => respond(null));
 
-    const pending = requestDecode(worker, {} as ImageBitmap);
-    reply(0, null);
-
-    await expect(pending).resolves.toBeNull();
-  });
-
-  it('routes each reply to the request that sent it, even crossed', async () => {
-    // The decoder worker is shared across sessions; a restarted scan can
-    // have a request in flight alongside the prior one's. Private reply
-    // ports must keep their verdicts from crossing — even when the second
-    // request is answered first.
-    const { worker, reply } = fakeWorker();
-    const first: ScanResult = {
-      text: 'first',
-      format: 'QR_CODE',
-      kind: 'text',
-      details: [],
-    };
-    const second: ScanResult = {
-      text: 'second',
-      format: 'QR_CODE',
-      kind: 'text',
-      details: [],
-    };
-
-    const firstReply = requestDecode(worker, {} as ImageBitmap);
-    const secondReply = requestDecode(worker, {} as ImageBitmap);
-
-    reply(1, second); // answer the second request first
-    reply(0, first);
-
-    await expect(firstReply).resolves.toEqual(first);
-    await expect(secondReply).resolves.toEqual(second);
+    await expect(
+      requestDecode(connection, new ArrayBuffer(8) as unknown as ImageBitmap),
+    ).resolves.toBeNull();
   });
 });

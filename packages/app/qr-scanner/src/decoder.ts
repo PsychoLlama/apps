@@ -1,61 +1,107 @@
+import { RPC, type RpcMessage } from '@lib/messaging';
+import {
+  MessagePortTransport,
+  type SendOptions,
+} from '@lib/messaging/transport';
 import type { DeepReadonly } from '@lib/state';
 import DecoderWorker from './decoder.worker?worker';
 import type { ScannerState, ScanResult } from './store';
 
-/** Worker → main handshake: the wasm module is initialized and ready. */
-export interface ReadyMessage {
-  type: 'ready';
+/**
+ * The decoder worker's RPC surface: a single `decode` request that takes a
+ * frame and returns its verdict — a {@link ScanResult} on a hit, `null` on
+ * a miss. This is the API the worker *implements* and the main thread
+ * *calls*.
+ */
+export interface DecoderApi {
+  requests: {
+    decode(params: { bitmap: ImageBitmap }): ScanResult | null;
+  };
+  events: Record<string, never>;
 }
 
 /**
- * Main → worker: decode this frame. The bitmap is transferred (zero-copy)
- * and consumed (closed) by the worker, so the sender must not touch it
- * after posting. `port` is a private reply channel — the worker posts this
- * frame's verdict back on it, so a reply can only reach the request that
- * sent it (see {@link requestDecode}).
+ * The main thread's RPC surface, as seen by the worker. The worker fires a
+ * one-shot `ready` event once its wasm module is live; nothing else flows
+ * this direction.
  */
-export interface DecodeRequest {
-  bitmap: ImageBitmap;
-  port: MessagePort;
+export interface HostApi {
+  requests: Record<string, never>;
+  events: {
+    ready(): void;
+  };
+}
+
+/**
+ * The main thread's end of the decoder RPC. `SendOptions` lets a frame ride
+ * across by transfer (zero-copy) rather than by structured clone.
+ */
+export type DecoderRpc = RPC<HostApi, DecoderApi, SendOptions>;
+
+/**
+ * A live decoder: the worker plus the {@link DecoderRpc} bound to it. Held
+ * together because teardown needs both — `rpc.close()` rejects in-flight
+ * requests, then `worker.terminate()` reclaims the thread. Stashed behind a
+ * `Ref` in the store so the reactive layer doesn't proxy the host objects.
+ */
+export interface DecoderConnection {
+  worker: Worker;
+  rpc: DecoderRpc;
 }
 
 /**
  * Spawn the decoder worker and resolve once its wasm module is live. The
- * worker eagerly initializes on load and posts a one-shot `ready`; we
+ * worker eagerly initializes on load and fires a one-shot `ready` event; we
  * await that so a caller never hands it a frame before it can decode.
  *
  * Guarded against teardown mid-preload: we snapshot
  * {@link ScannerState.decoderGeneration} before spawning and re-check it
  * once the worker is ready. If it changed, the scanner unmounted (or
- * restarted) while we were initializing — so we terminate the now-orphaned
- * worker and resolve `null` rather than leak a live worker into a dead
- * page. Otherwise the worker is handed back to be attached.
+ * restarted) while we were initializing — so we tear the now-orphaned
+ * connection down and resolve `null` rather than leak a live worker into a
+ * dead page. Otherwise the connection is handed back to be attached.
  */
 export const createDecoder = async (
   state: DeepReadonly<ScannerState>,
-): Promise<Worker | null> => {
+): Promise<DecoderConnection | null> => {
   const generation = state.decoderGeneration;
   const worker = new DecoderWorker();
 
-  // The worker's first message is always its `ready` handshake — it posts
-  // nothing else until handed a frame, which can't happen before this
-  // resolves. So a one-shot listener needs no type guard or manual
-  // teardown: `{ once: true }` removes it after that single message.
-  await new Promise<void>((resolve) => {
-    worker.addEventListener('message', () => resolve(), { once: true });
+  // Resolve once the worker's `ready` event lands. The handler stays
+  // registered on the RPC afterwards, but a repeat `ready` only re-resolves
+  // an already-settled promise — a harmless no-op.
+  let markReady!: () => void;
+  const ready = new Promise<void>((resolve) => {
+    markReady = resolve;
   });
 
+  const rpc: DecoderRpc = new RPC<HostApi, DecoderApi, SendOptions>(
+    new MessagePortTransport<RpcMessage, RpcMessage>(worker),
+    {
+      requests: {},
+      events: { ready: () => markReady() },
+    },
+  );
+
+  await ready;
+
   if (state.decoderGeneration !== generation) {
+    rpc.close();
     worker.terminate();
     return null;
   }
 
-  return worker;
+  return { worker, rpc };
 };
 
-/** Terminate the decoder worker, if one is live. A no-op otherwise. */
+/** Tear down the decoder connection, if one is live. A no-op otherwise. */
 export const terminateDecoder = (state: DeepReadonly<ScannerState>): void => {
-  state.decoder?.current.terminate();
+  const connection = state.decoder?.current;
+  if (!connection) return;
+  // Close the RPC first so any frame still in flight rejects (and the
+  // capture loop drops it) before the thread is reclaimed.
+  connection.rpc.close();
+  connection.worker.terminate();
 };
 
 /**
@@ -63,33 +109,13 @@ export const terminateDecoder = (state: DeepReadonly<ScannerState>): void => {
  * on a hit, `null` on a miss. The bitmap transfers across, so it's gone
  * from this thread once posted.
  *
- * Each request opens a private {@link MessageChannel} and hands the worker
- * one end to reply on. The worker is shared and preloaded across camera
- * sessions, and `message` listeners on it *broadcast* — every attached
- * listener sees every reply. So a one-shot listener on the worker itself
- * would let a restarted session's request resolve on a prior frame's
- * reply (a crossed verdict). A per-request port makes a reply reach only
- * the request that asked for it, structurally — no ids, no crossing.
+ * The RPC correlates each request to its own response by id, so replies
+ * can't cross even when the worker is shared across camera sessions and
+ * several frames are in flight at once — no per-request ports, no manual
+ * bookkeeping.
  */
 export const requestDecode = (
-  worker: Worker,
+  connection: DecoderConnection,
   bitmap: ImageBitmap,
 ): Promise<ScanResult | null> =>
-  new Promise((resolve) => {
-    const { port1, port2 } = new MessageChannel();
-    port1.addEventListener(
-      'message',
-      ({ data }: MessageEvent<ScanResult | null>) => {
-        port1.close();
-        resolve(data);
-      },
-      { once: true },
-    );
-    // `addEventListener` on a port needs an explicit `start()`; the
-    // `onmessage` setter would auto-start, but we want the one-shot form.
-    port1.start();
-    worker.postMessage({ bitmap, port: port2 } satisfies DecodeRequest, [
-      bitmap,
-      port2,
-    ]);
-  });
+  connection.rpc.request('decode', { bitmap }, { transfer: [bitmap] });

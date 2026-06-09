@@ -310,7 +310,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
   async #handleRequest(
     message: RpcMessage & { type: 'request' },
   ): Promise<void> {
-    logger.trace('Inbound request', { method: message.method, id: message.id });
+    logger.debug('Inbound request', { method: message.method, id: message.id });
     const handler = findHandler(this.#requestHandlers, message.method);
     if (!handler) {
       this.#transport.send({
@@ -359,7 +359,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
   }
 
   async #handleEvent(message: RpcMessage & { type: 'event' }): Promise<void> {
-    logger.trace('Inbound event', { method: message.method });
+    logger.debug('Inbound event', { method: message.method });
     const handler = findHandler(this.#eventHandlers, message.method);
     if (!handler) {
       // Fire-and-forget has no response to report back on, so a missing
