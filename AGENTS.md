@@ -1,8 +1,8 @@
 ## Stack
 
-- pnpm workspaces
-- turbo (task runner)
-- SolidStart
+- pnpm
+- turbo
+- SolidStart (SSG)
 - Vanilla Extract
 - Storybook
 - Unplugin Icons
@@ -14,9 +14,10 @@
   - `@app/*` — shipped apps.
   - `@lib/*` — shared libraries.
   - `@dev/*` — internal tooling.
-- Enumerate packages and their purpose: `jq -r '[.name, .description] | @tsv' packages/*/*/package.json`.
+- To discover packages: `jq -r '[.name, .description] | @tsv' packages/*/*/package.json`
 - `@app/*` packages export top-level components. `@app/main` owns routing — its `src/routes/**/*.tsx` files import from `@app/*` packages and export the component as the route's default.
-- Rust crates live at `crates/{app,lib,dev}/<name>`, mirroring the JS taxonomy.
+- Rust crates live flat at `crates/<name>` (no tiers).
+- Crates with wasm/napi bridges carry a `package.json` following the name `@crate/<name>`, both as a Cargo member and pnpm workspace package.
 
 ## Dev
 
@@ -43,11 +44,6 @@
 - For reference docs, load the `design-reference` skill.
 - Import tokens from `@lib/design`. NEVER hard-code colors, spacing, radius, shadows, motion, or typography values.
 - Avoid needless CSS reset rules. We use `the-new-css-reset`. It is thorough.
-
-## State Management
-
-- For reference docs, load the `state-reference` skill.
-- Import from `@lib/state`.
 
 ## Icons
 

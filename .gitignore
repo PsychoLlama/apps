@@ -16,7 +16,7 @@ storybook-static
 coverage
 /result*
 /target
-crates/*/*/dist
+crates/*/dist
 
 # turbo
 .turbo

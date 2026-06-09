@@ -66,7 +66,7 @@ const config: KnipConfig = {
         '@vanilla-extract/dynamic',
       ],
     },
-    'crates/lib/qr-scanner': {
+    'crates/qr-scanner': {
       // The build script shells out to `wasm-bindgen` (the CLI) to
       // generate JS glue; it's provided by the nix devShell, not pnpm.
       ignoreBinaries: ['wasm-bindgen'],

@@ -1,5 +1,5 @@
 {
-  "name": "@lib/qr-scanner",
+  "name": "@crate/qr-scanner",
   "private": true,
   "type": "module",
   "version": "0.0.0",

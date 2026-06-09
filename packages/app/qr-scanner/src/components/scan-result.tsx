@@ -3,7 +3,7 @@ import type {
   ParsedDateTimeDetail,
   ParsedDetail,
   ScanKind,
-} from '@lib/qr-scanner';
+} from '@crate/qr-scanner';
 import {
   Button,
   DataListItem,
