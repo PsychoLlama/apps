@@ -23,31 +23,42 @@ export interface Transport<Inbound, Outbound, Options = never> {
 - Request: wait for a response.
 - Event and request handlers accept an optional payload.
 - `Options` are accepted as the final param if your transport allows it.
+- Derive the API type from a **params-only** value (`type Api = typeof api`). Procedures take ≤1 arg, so the `options` bag is a handler-only param — a handler that uses it can't double as the API source.
 
 ```ts
-const handlers = {
+// The API is the params-only contract. Derive its type; both peers share it.
+const api = {
   // requests optional
   requests: {
-    status: async (payload, options) => {
-      options.transfer = []; // Transferable[] (depending on underlying transport)
-      return 'online';
-    },
+    status: (payload: string): Promise<string> => Promise.resolve('online'),
   },
 
   // events optional
   events: {
-    ready: (payload) => {},
+    ready: (payload: string): void => {},
   },
 };
 
-export type Remote = typeof handlers; // `Local` has same shape.
+export type Remote = typeof api; // `Local` has same shape.
 ```
 
 ```ts
-const rpc = RPC.from<Local, Remote, SendOptions>(transport, handlers);
+// Handlers implement the API. A request handler may take the transport's
+// options bag as a 2nd param — it stays out of the derived API type.
+const rpc = RPC.from<Local, Remote, SendOptions>(transport, {
+  requests: {
+    status: (payload, options) => {
+      options.transfer = []; // Transferable[] (depending on underlying transport)
+      return 'online';
+    },
+  },
+  events: {
+    ready: (payload) => {},
+  },
+});
 
-rpc.notify('ready', a, options); // undefined
-rpc.request('status', b, options); // Promise<'online'>
+rpc.notify('ready', a, options); // void
+rpc.request('status', b, options); // Promise<string>
 rpc.close(); // Tear down listeners, block outbound. Transport must be closed separately.
 ```
 
