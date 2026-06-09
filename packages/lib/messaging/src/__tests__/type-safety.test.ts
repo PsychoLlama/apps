@@ -103,7 +103,7 @@ describe('RPC type safety', () => {
 
   it('forbids pairing an option-carrying RPC with a transport that has none', () => {
     // Soundness of `Options`: a no-option transport must NOT satisfy an
-    // option-carrying one — otherwise `new RPC<_, _, SendOptions>(neverTransport)`
+    // option-carrying one — otherwise `RPC.from<_, _, SendOptions>(neverTransport)`
     // would compile and drop every transfer silently. (Hinges on `Transport`'s
     // members being function-typed properties, which are checked contravariantly.)
     expectTypeOf<Transport<RpcMessage, RpcMessage>>().not.toExtend<

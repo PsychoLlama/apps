@@ -70,7 +70,7 @@ const transport = new MessagePortTransport<RpcMessage, RpcMessage>(
   self as MessageEndpoint,
 );
 
-const rpc = new RPC<DecoderApi, HostApi, SendOptions>(transport, {
+const rpc = RPC.from<DecoderApi, HostApi, SendOptions>(transport, {
   requests: {
     decode: async ({ bitmap }) => {
       await ready;

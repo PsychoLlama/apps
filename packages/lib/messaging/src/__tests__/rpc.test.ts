@@ -35,7 +35,7 @@ const setup = () => {
   const logged: string[] = [];
   const sizes: number[] = [];
 
-  const server = new RPC<ServerApi, ClientApi, SendOptions>(
+  const server = RPC.from<ServerApi, ClientApi, SendOptions>(
     new MessagePortTransport(port1),
     {
       requests: {
@@ -68,7 +68,7 @@ const setup = () => {
     },
   );
 
-  const client = new RPC<ClientApi, ServerApi, SendOptions>(
+  const client = RPC.from<ClientApi, ServerApi, SendOptions>(
     new MessagePortTransport(port2),
     {
       requests: {},
@@ -254,7 +254,7 @@ describe('RPC', () => {
         return () => undefined;
       },
     };
-    new RPC<ServerApi, ClientApi, SendOptions>(transport, {
+    RPC.from<ServerApi, ClientApi, SendOptions>(transport, {
       requests: {
         add: ({ left, right }) => left + right,
         divide: ({ left, right }) => left / right,
@@ -330,7 +330,7 @@ describe('RPC', () => {
         unsubscribed = true;
       },
     };
-    const rpc = new RPC<ClientApi, ServerApi>(transport, {
+    const rpc = RPC.from<ClientApi, ServerApi>(transport, {
       requests: {},
       events: {},
     });

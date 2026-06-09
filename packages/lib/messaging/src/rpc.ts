@@ -188,7 +188,7 @@ interface PendingRequest {
  *
  * @example
  * ```ts
- * const peer = new RPC<LocalApi, RemoteApi>(transport, {
+ * const peer = RPC.from<LocalApi, RemoteApi>(transport, {
  *   requests: { add: ({ left, right }) => left + right },
  *   events: { log: ({ message }) => console.log(message) },
  * });
@@ -206,8 +206,24 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
   #nextRequestId = 1;
   #closed = false;
 
-  /** Wrap a transport as an RPC endpoint. `handlers` implements `Local`. */
-  constructor(
+  /**
+   * Wrap a transport as an RPC endpoint. `handlers` implements `Local`.
+   *
+   * Named (rather than a bare `new`) because construction isn't inert: it
+   * eagerly subscribes to the transport. The factory makes that side effect
+   * read as an action at the call site instead of a plain allocation.
+   */
+  static from<Local extends RpcApi, Remote extends RpcApi, Options = never>(
+    transport: Transport<RpcMessage, RpcMessage, Options>,
+    handlers: RpcHandlers<Local, Options>,
+  ): RPC<Local, Remote, Options> {
+    return new RPC<Local, Remote, Options>(transport, handlers);
+  }
+
+  // Private: build through `RPC.from`. Construction subscribes to the
+  // transport (a side effect), and the named factory surfaces that at the
+  // call site where a `new` would read as inert.
+  private constructor(
     transport: Transport<RpcMessage, RpcMessage, Options>,
     handlers: RpcHandlers<Local, Options>,
   ) {

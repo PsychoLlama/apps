@@ -73,7 +73,7 @@ export const createDecoder = async (
     markReady = resolve;
   });
 
-  const rpc: DecoderRpc = new RPC<HostApi, DecoderApi, SendOptions>(
+  const rpc: DecoderRpc = RPC.from<HostApi, DecoderApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(worker),
     { events: { ready: () => markReady() } },
   );
