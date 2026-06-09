@@ -5,7 +5,8 @@ import {
 } from '@lib/messaging/transport';
 import type { DeepReadonly } from '@lib/state';
 import DecoderWorker from './decoder.worker?worker';
-import type { ScannerState, ScanResult } from './store';
+import type { DecoderState } from './decoder-store';
+import type { ScanResult } from './store';
 
 /**
  * The decoder worker's RPC surface: a single `decode` request that takes a
@@ -53,16 +54,16 @@ export interface DecoderConnection {
  * await that so a caller never hands it a frame before it can decode.
  *
  * Guarded against teardown mid-preload: we snapshot
- * {@link ScannerState.decoderGeneration} before spawning and re-check it
- * once the worker is ready. If it changed, the scanner unmounted (or
- * restarted) while we were initializing — so we tear the now-orphaned
- * connection down and resolve `null` rather than leak a live worker into a
- * dead page. Otherwise the connection is handed back to be attached.
+ * {@link DecoderState.generation} before spawning and re-check it once the
+ * worker is ready. If it changed, the scanner unmounted (or restarted)
+ * while we were initializing — so we tear the now-orphaned connection down
+ * and resolve `null` rather than leak a live worker into a dead page.
+ * Otherwise the connection is handed back to be attached.
  */
 export const createDecoder = async (
-  state: DeepReadonly<ScannerState>,
+  state: DeepReadonly<DecoderState>,
 ): Promise<DecoderConnection | null> => {
-  const generation = state.decoderGeneration;
+  const generation = state.generation;
   const worker = new DecoderWorker();
 
   // Resolve once the worker's `ready` event lands. The handler stays
@@ -80,7 +81,7 @@ export const createDecoder = async (
 
   await ready;
 
-  if (state.decoderGeneration !== generation) {
+  if (state.generation !== generation) {
     rpc.close();
     worker.terminate();
     return null;
@@ -90,8 +91,8 @@ export const createDecoder = async (
 };
 
 /** Tear down the decoder connection, if one is live. A no-op otherwise. */
-export const terminateDecoder = (state: DeepReadonly<ScannerState>): void => {
-  const connection = state.decoder?.current;
+export const terminateDecoder = (state: DeepReadonly<DecoderState>): void => {
+  const connection = state.connection?.current;
   if (!connection) return;
   // Close the RPC first so any frame still in flight rejects (and the
   // capture loop drops it) before the thread is reclaimed.

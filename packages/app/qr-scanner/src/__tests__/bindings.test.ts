@@ -11,11 +11,16 @@ import {
 } from '../bindings';
 import { CameraAborted } from '../capabilities';
 import type { DecoderConnection } from '../decoder';
+import { decoderStore } from '../decoder-store';
 import { scannerStore, type ScanResult } from '../store';
 
 const setup = () => {
   const bindings = createTestBindings();
-  return { ...bindings, scanner: bindings.createStore(scannerStore) };
+  return {
+    ...bindings,
+    scanner: bindings.createStore(scannerStore),
+    decoder: bindings.createStore(decoderStore),
+  };
 };
 
 /** A stream with no controllable torch — the common, cross-device case. */
@@ -194,21 +199,21 @@ describe('endSession', () => {
   const fakeConnection = {} as DecoderConnection;
 
   it('returns to idle and bumps both generations to supersede pending work', () => {
-    const { scanner, useAction } = setup();
+    const { scanner, decoder, useAction } = setup();
 
     useAction(beginRequest)();
     const pendingGeneration = scanner.generation;
-    const pendingDecoderGeneration = scanner.decoderGeneration;
+    const pendingDecoderGeneration = decoder.generation;
     useAction(endSession)();
 
     expect(scanner.status).toBe('idle');
     expect(scanner.stream).toBeNull();
     expect(scanner.generation).toBe(pendingGeneration + 1);
-    expect(scanner.decoderGeneration).toBe(pendingDecoderGeneration + 1);
+    expect(decoder.generation).toBe(pendingDecoderGeneration + 1);
   });
 
   it('clears the decoder reference and the last result', () => {
-    const { scanner, useAction } = setup();
+    const { scanner, decoder, useAction } = setup();
 
     useAction(attachDecoder)(fakeConnection);
     useAction(recordScan)({
@@ -219,26 +224,26 @@ describe('endSession', () => {
     });
     useAction(endSession)();
 
-    expect(scanner.decoder).toBeNull();
+    expect(decoder.connection).toBeNull();
     expect(scanner.result).toBeNull();
   });
 });
 
 describe('attachDecoder', () => {
   it('stores the connection behind a ref', () => {
-    const { scanner, useAction } = setup();
+    const { decoder, useAction } = setup();
     const connection = {} as DecoderConnection;
 
     useAction(attachDecoder)(connection);
 
-    expect(scanner.decoder?.current).toBe(connection);
+    expect(decoder.connection?.current).toBe(connection);
   });
 
   it('ignores a superseded (null) connection — it already tore itself down', () => {
-    const { scanner, useAction } = setup();
+    const { decoder, useAction } = setup();
 
     useAction(attachDecoder)(null);
 
-    expect(scanner.decoder).toBeNull();
+    expect(decoder.connection).toBeNull();
   });
 });

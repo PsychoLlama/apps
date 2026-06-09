@@ -6,7 +6,7 @@ import IconFlashlight from 'virtual:icons/mdi/flashlight';
 import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
 import { finishScanEffect } from '../bindings';
 import { startCaptureLoop } from '../capture-loop';
-import { scanner } from '../store';
+import { decoder } from '../decoder-store';
 import * as css from './camera-view.css';
 
 interface CameraViewProps {
@@ -39,7 +39,11 @@ export const CameraView: Component<CameraViewProps> = (props) => {
     // decoding the moment it attaches.
     if (videoEl) {
       onCleanup(
-        startCaptureLoop(videoEl, () => scanner.decoder?.current, finishScan),
+        startCaptureLoop(
+          videoEl,
+          () => decoder.connection?.current,
+          finishScan,
+        ),
       );
     }
   });
