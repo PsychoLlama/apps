@@ -1,5 +1,6 @@
 import type { RPC, RpcApi, RpcHandlers, RpcMessage } from '@lib/messaging/rpc';
-import type { SendOptions, Transport } from '@lib/messaging/transport';
+import type { SendOptions } from '@lib/messaging/message-port';
+import type { Transport } from '@lib/messaging/transport';
 
 // Type-level assertions for the guarantees the runtime suite can't reach:
 // method-name routing and arity enforcement. The happy-path call typing is

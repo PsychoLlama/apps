@@ -4,7 +4,7 @@ import {
   MessagePortTransport,
   type MessageEndpoint,
   type SendOptions,
-} from '@lib/messaging/transport';
+} from '@lib/messaging/message-port';
 import { createLogger, toError } from '@lib/observability';
 import type { HostApi } from '../decoder';
 import { api, type DecoderApi } from './rpc';

@@ -1,5 +1,5 @@
 import { createLogger, toError } from '@lib/observability';
-import type { Transport, Unsubscribe } from './transport.ts';
+import type { Transport, Unsubscribe } from './transport/interface.ts';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 

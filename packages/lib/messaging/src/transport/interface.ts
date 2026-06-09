@@ -43,5 +43,3 @@ export interface Transport<Inbound, Outbound, Options = never> {
    */
   onMessage: (handler: MessageHandler<Inbound>) => Unsubscribe;
 }
-
-export * from './message-port.ts';

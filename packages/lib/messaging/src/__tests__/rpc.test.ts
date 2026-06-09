@@ -7,8 +7,8 @@ import {
 import {
   MessagePortTransport,
   type SendOptions,
-  type Transport,
-} from '@lib/messaging/transport';
+} from '@lib/messaging/message-port';
+import type { Transport } from '@lib/messaging/transport';
 
 type ServerApi = {
   requests: {

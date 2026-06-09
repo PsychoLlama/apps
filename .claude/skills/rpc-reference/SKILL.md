@@ -4,7 +4,7 @@ description: Reference docs for `@lib/messaging` — the codebase's typed, bidir
 
 # Messaging / RPC
 
-- Two entry points, no default: `@lib/messaging/rpc` (RPC core) and `@lib/messaging/transport` (transport abstraction + adapters).
+- Three entry points, no default: `@lib/messaging/rpc` (RPC core), `@lib/messaging/transport` (the carrier-agnostic `Transport` interface), and `@lib/messaging/message-port` (the `MessagePort` adapter).
 - Fully-typed, bidirectional RPC over any `Transport`. Two call styles: `request` (awaits a response) and `notify` (fire-and-forget event).
 - An `RPC` endpoint owns its transport's message stream end-to-end — the only thing on the wire is `RpcMessage`.
 
@@ -119,7 +119,7 @@ const rpc = RPC.from<DecoderApi, HostApi, SendOptions>(transport, api);
 
 ## Transports
 
-- `Transport<Inbound, Outbound, Options>`: the base interface every adapter implements.
+- `Transport<Inbound, Outbound, Options>` (from `@lib/messaging/transport`): the base interface every adapter implements.
 
   ```ts
   interface Transport<Inbound, Outbound, Options = never> {
@@ -132,7 +132,7 @@ const rpc = RPC.from<DecoderApi, HostApi, SendOptions>(transport, api);
   - `onMessage` returns an `Unsubscribe`; multiple handlers may register, each gets every message.
   - An `RPC`'s transport is always `Transport<RpcMessage, RpcMessage, Options>`.
 
-- `MessagePortTransport<Inbound, Outbound>`: adapter for any `MessagePort`-shaped carrier (a `MessagePort`, a `Worker`, or the worker global scope). Its `Options` are `SendOptions`.
+- `MessagePortTransport<Inbound, Outbound>` (from `@lib/messaging/message-port`): adapter for any `MessagePort`-shaped carrier (a `MessagePort`, a `Worker`, or the worker global scope). Its `Options` are `SendOptions`.
   - `SendOptions { transfer?: Transferable[] }` — list objects to hand over by reference (zero-copy); transferred objects are neutered in the sender.
   - Listens via `addEventListener`, so a **`MessagePort` delivers nothing until the consumer `start()`s it** — starting is the consumer's to time. (`Worker` endpoints deliver without starting.)
   ```ts
@@ -159,10 +159,15 @@ From `@lib/messaging/rpc`:
 - `RpcError`, `RpcClosedError` — the two error classes.
 - types: `RpcApi`, `RpcHandlers<Api, Options>`, `RpcMessage`, `RpcProcedure`.
 
-From `@lib/messaging/transport`:
+From `@lib/messaging/transport` (the carrier-agnostic interface):
 
-- `Transport<Inbound, Outbound, Options>`, `MessagePortTransport`.
-- types/interfaces: `SendOptions`, `MessageEndpoint`, `MessageHandler<Inbound>`, `Unsubscribe`.
+- `Transport<Inbound, Outbound, Options>`.
+- types: `MessageHandler<Inbound>`, `Unsubscribe`.
+
+From `@lib/messaging/message-port` (the `MessagePort` adapter):
+
+- `MessagePortTransport`.
+- types/interfaces: `SendOptions`, `MessageEndpoint`.
 
 ## Testing
 
