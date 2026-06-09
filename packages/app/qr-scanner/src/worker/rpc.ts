@@ -29,25 +29,26 @@ export interface HostApi {
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
-// One canvas for the worker's lifetime, resized lazily to each frame's
-// dimensions. `willReadFrequently` keeps the backing store in CPU
-// memory — we read every pixel back each frame, so GPU upload churn is
-// pure overhead.
-let canvas: OffscreenCanvas | undefined;
-let context: OffscreenCanvasRenderingContext2D | null = null;
+// One canvas for the worker's lifetime, resized to each frame's dimensions.
+// Built up front rather than lazily on the first frame so the context is a
+// guaranteed value — no per-frame null check threaded through the decode hot
+// path. A worker that can't get a 2D context can't decode at all, so we fail
+// loud at load instead of folding every frame to a miss. `willReadFrequently`
+// keeps the backing store in CPU memory — we read every pixel back each
+// frame, so GPU upload churn is pure overhead.
+const canvas = new OffscreenCanvas(1, 1);
+const context = canvas.getContext('2d', { willReadFrequently: true });
+if (!context) {
+  throw new Error('Decoder worker could not acquire a 2D canvas context.');
+}
 
 const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
   const { width, height } = bitmap;
 
-  if (!canvas) {
-    canvas = new OffscreenCanvas(width, height);
-    context = canvas.getContext('2d', { willReadFrequently: true });
-  }
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
   }
-  if (!context) return null;
 
   // Decode the whole frame at its native resolution — no downscale, no
   // crop. The reticle is a UI gate, not a scan region, so we hand rxing
