@@ -1,4 +1,4 @@
-import { createLogger } from '@lib/observability';
+import { createLogger, toError } from '@lib/observability';
 import type { Transport, Unsubscribe } from './transport.ts';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -162,10 +162,6 @@ const findHandler = (
   method: string,
 ): RpcProcedure | undefined =>
   Object.hasOwn(handlers, method) ? handlers[method] : undefined;
-
-/** Normalize an unknown thrown value to an `Error`. */
-const toError = (thrown: unknown): Error =>
-  thrown instanceof Error ? thrown : new Error(String(thrown));
 
 interface PendingRequest {
   resolve: (result: unknown) => void;

@@ -1,4 +1,4 @@
-import { createLogger } from '@lib/observability';
+import { createLogger, toError } from '@lib/observability';
 import {
   COLOR_SCHEME_ATTRIBUTE,
   COLOR_SCHEME_IDS,
@@ -47,7 +47,7 @@ const guardStorageWrite = (op: StorageOp, write: () => void): void => {
     if (!(err instanceof DOMException) || err.name !== 'SecurityError') {
       logger.error('Failed to update theme preference', {
         op,
-        error: err instanceof Error ? err : new Error(String(err)),
+        error: toError(err),
       });
     }
   }
