@@ -1,4 +1,4 @@
-import init, { decode as decodeImage, type Scan } from '@lib/qr-scanner';
+import { decode as decodeImage, type Scan } from '@lib/qr-scanner';
 import { createLogger } from '@lib/observability';
 
 /**
@@ -16,21 +16,10 @@ import { createLogger } from '@lib/observability';
 export type ScanResult = Pick<Scan, 'text' | 'format' | 'kind' | 'details'>;
 
 /**
- * The decoder worker's RPC surface: a single `decode` request that takes a
- * frame and returns its verdict — a {@link ScanResult} on a hit, `null` on
- * a miss. This is the API the worker *implements* (see {@link requests}) and
- * the main thread *calls*.
- */
-export interface DecoderApi {
-  requests: {
-    decode(params: { bitmap: ImageBitmap }): ScanResult | null;
-  };
-}
-
-/**
- * The main thread's RPC surface, as seen by the worker. The worker fires a
- * one-shot `ready` event once its wasm module is live; nothing else flows
- * this direction.
+ * The main thread's RPC surface, as seen by the worker: a one-shot `ready`
+ * event the worker fires once its wasm module is live; nothing else flows
+ * this direction. The host supplies the handler, so — unlike {@link
+ * DecoderApi} — there's no implementing value here to derive the shape from.
  */
 export interface HostApi {
   events: {
@@ -39,16 +28,6 @@ export interface HostApi {
 }
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
-
-/**
- * Eagerly initialize the wasm module on worker load — not lazily on the
- * first frame — so it's warm by the time the camera goes live. Resolves
- * once the module is live; the worker awaits it to announce `ready` to the
- * host, which holds its first frame until that event lands.
- */
-export const ready: Promise<void> = init().then(() => {
-  logger.debug('Decoder wasm initialized.');
-});
 
 // One canvas for the worker's lifetime, resized lazily to each frame's
 // dimensions. `willReadFrequently` keeps the backing store in CPU
@@ -103,11 +82,7 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
  * The bitmap transfers in, so it's ours to release — closed on every path,
  * verdict or throw, so its backing memory isn't pinned.
  */
-export const decode = ({
-  bitmap,
-}: {
-  bitmap: ImageBitmap;
-}): ScanResult | null => {
+const decode = ({ bitmap }: { bitmap: ImageBitmap }): ScanResult | null => {
   try {
     return decodeFrame(bitmap);
   } catch (error) {
@@ -119,3 +94,24 @@ export const decode = ({
     bitmap.close();
   }
 };
+
+/**
+ * The worker's RPC implementation — the single source of truth for both the
+ * `decode` handler and the {@link DecoderApi} contract derived from it. The
+ * worker entry wires this onto its RPC; the host calls it.
+ *
+ * Handlers stay params-only — they don't take the RPC options bag — so the
+ * type derived from this value reads as a clean procedure contract rather
+ * than leaking handler-side parameters into the API.
+ */
+export const api = {
+  requests: { decode },
+};
+
+/**
+ * The decoder worker's RPC surface — a single `decode` request returning a
+ * {@link ScanResult} or `null` — derived straight from the {@link api}
+ * implementation so the contract can't drift from the handler that fulfills
+ * it.
+ */
+export type DecoderApi = typeof api;
