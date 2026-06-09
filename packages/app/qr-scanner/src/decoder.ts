@@ -5,8 +5,32 @@ import {
 } from '@lib/messaging/transport';
 import type { DeepReadonly } from '@lib/state';
 import DecoderWorker from './worker/index?worker';
-import type { DecoderApi, HostApi, ScanResult } from './worker/rpc';
+import type { DecoderApi, ScanResult } from './worker/rpc';
 import type { DecoderState } from './decoder-store';
+
+/**
+ * Build the host's RPC handlers for one decoder connection: a single `ready`
+ * event the worker fires once its wasm module is live, wired to settle this
+ * connection's readiness promise.
+ *
+ * {@link HostApi} is derived from what this returns, so the contract tracks
+ * the implementation — the host-side mirror of how the worker derives its
+ * {@link DecoderApi} from the handler value it serves.
+ */
+const createHostHandlers = (onReady: () => void) => ({
+  events: {
+    ready: onReady,
+  },
+});
+
+/**
+ * The host's RPC surface, as seen by the worker — a one-shot `ready` event,
+ * nothing else. Derived from {@link createHostHandlers} rather than restated
+ * as a hand-written interface. The worker imports this type to type its
+ * `notify('ready')`, just as the host imports {@link DecoderApi} to type its
+ * requests.
+ */
+export type HostApi = ReturnType<typeof createHostHandlers>;
 
 /**
  * The main thread's end of the decoder RPC. `SendOptions` lets a frame ride
@@ -53,7 +77,7 @@ export const createDecoder = async (
 
   const rpc: DecoderRpc = RPC.from<HostApi, DecoderApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(worker),
-    { events: { ready: () => markReady() } },
+    createHostHandlers(markReady),
   );
 
   await ready;

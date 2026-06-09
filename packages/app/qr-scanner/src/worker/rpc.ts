@@ -15,18 +15,6 @@ import { createLogger } from '@lib/observability';
  */
 export type ScanResult = Pick<Scan, 'text' | 'format' | 'kind' | 'details'>;
 
-/**
- * The main thread's RPC surface, as seen by the worker: a one-shot `ready`
- * event the worker fires once its wasm module is live; nothing else flows
- * this direction. The host supplies the handler, so — unlike {@link
- * DecoderApi} — there's no implementing value here to derive the shape from.
- */
-export interface HostApi {
-  events: {
-    ready(): void;
-  };
-}
-
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 // One canvas for the worker's lifetime, resized to each frame's dimensions.

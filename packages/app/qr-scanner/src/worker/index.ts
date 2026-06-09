@@ -6,7 +6,8 @@ import {
   type SendOptions,
 } from '@lib/messaging/transport';
 import { createLogger } from '@lib/observability';
-import { api, type DecoderApi, type HostApi } from './rpc';
+import type { HostApi } from '../decoder';
+import { api, type DecoderApi } from './rpc';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
