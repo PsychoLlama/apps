@@ -77,3 +77,7 @@ If you need a transport implementation and one does not yet exist, propose it to
 - Designed for same-origin messaging: workers, worklets, brokered `MessageChannel`.
 - Inappropriate for cross-origin messaging.
 - Supports transferable objects as `SendOptions['transfer']`.
+
+## Testing
+
+As a consumer, avoid testing the RPC harness. Test handlers directly.
