@@ -1,5 +1,5 @@
 import { decode as decodeImage, type Scan } from '@lib/qr-scanner';
-import { createLogger } from '@lib/observability';
+import { createLogger, toError } from '@lib/observability';
 
 /**
  * A decoded barcode — the worker's output, mirrored into host state on
@@ -74,9 +74,7 @@ const decode = ({ bitmap }: { bitmap: ImageBitmap }): ScanResult | null => {
   try {
     return decodeFrame(bitmap);
   } catch (error) {
-    logger.error('Failed to decode a frame.', {
-      error: error instanceof Error ? error : new Error(String(error)),
-    });
+    logger.error('Failed to decode a frame.', { error: toError(error) });
     return null;
   } finally {
     bitmap.close();

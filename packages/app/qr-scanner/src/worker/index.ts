@@ -5,7 +5,7 @@ import {
   type MessageEndpoint,
   type SendOptions,
 } from '@lib/messaging/transport';
-import { createLogger } from '@lib/observability';
+import { createLogger, toError } from '@lib/observability';
 import type { HostApi } from '../decoder';
 import { api, type DecoderApi } from './rpc';
 
@@ -38,7 +38,7 @@ void init().then(
   },
   (error: unknown) => {
     logger.error('Decoder wasm failed to initialize.', {
-      error: error instanceof Error ? error : new Error(String(error)),
+      error: toError(error),
     });
   },
 );

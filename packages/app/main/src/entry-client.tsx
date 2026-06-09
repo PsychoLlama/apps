@@ -1,6 +1,6 @@
 // @refresh reload
 import { mount, StartClient } from '@solidjs/start/client';
-import { createLogger } from '@lib/observability';
+import { createLogger, toError } from '@lib/observability';
 import workerUrl from '@app/service-worker?worker&url';
 
 mount(() => <StartClient />, document.getElementById('app')!);
@@ -20,9 +20,7 @@ if ('serviceWorker' in navigator) {
         logger.info('Registered.', { scope: registration.scope });
       },
       (error) => {
-        logger.error('Registration failed.', {
-          error: error instanceof Error ? error : new Error(String(error)),
-        });
+        logger.error('Registration failed.', { error: toError(error) });
       },
     );
 }
