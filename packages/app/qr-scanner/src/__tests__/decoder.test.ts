@@ -1,76 +1,46 @@
-import { requestDecode, type DecodeRequest } from '../decoder';
+import { requestDecode, type DecoderConnection } from '../decoder';
 import type { ScanResult } from '../store';
 
 /**
- * A worker stand-in that captures each posted request so the test can
- * reply by hand. It never transfers, so the handed-over `port` stays live
- * in this realm — exactly what we need to drive replies.
+ * A connection whose RPC records each `request` call and replies with a
+ * canned verdict — enough to assert `requestDecode` forwards the frame
+ * correctly. Correlation across concurrent frames is the RPC library's
+ * job (and tested there), so we don't re-litigate it here.
  */
-const fakeWorker = () => {
-  const inbox: DecodeRequest[] = [];
-  const worker = {
-    postMessage: (data: DecodeRequest) => void inbox.push(data),
-  } as unknown as Worker;
+const fakeConnection = (verdict: ScanResult | null) => {
+  const request = vi.fn().mockResolvedValue(verdict);
+  const connection = {
+    worker: {} as Worker,
+    rpc: { request },
+  } as unknown as DecoderConnection;
 
-  return {
-    worker,
-    /** Reply to the Nth request received, on the port it supplied. */
-    reply: (index: number, result: ScanResult | null) =>
-      inbox[index].port.postMessage(result),
-  };
+  return { connection, request };
 };
 
 describe('requestDecode', () => {
-  it('resolves with the worker verdict for a hit', async () => {
-    const { worker, reply } = fakeWorker();
+  it('requests a decode, transferring the bitmap, and resolves with a hit', async () => {
     const result: ScanResult = {
       text: 'https://example.com',
       format: 'QR_CODE',
       kind: 'url',
       details: [],
     };
+    const { connection, request } = fakeConnection(result);
+    const bitmap = {} as ImageBitmap;
 
-    const pending = requestDecode(worker, {} as ImageBitmap);
-    reply(0, result);
-
-    await expect(pending).resolves.toEqual(result);
+    await expect(requestDecode(connection, bitmap)).resolves.toEqual(result);
+    expect(request).toHaveBeenCalledWith(
+      'decode',
+      { bitmap },
+      { transfer: [bitmap] },
+    );
   });
 
   it('resolves with null on a miss', async () => {
-    const { worker, reply } = fakeWorker();
+    const { connection } = fakeConnection(null);
 
-    const pending = requestDecode(worker, {} as ImageBitmap);
-    reply(0, null);
-
-    await expect(pending).resolves.toBeNull();
-  });
-
-  it('routes each reply to the request that sent it, even crossed', async () => {
-    // The decoder worker is shared across sessions; a restarted scan can
-    // have a request in flight alongside the prior one's. Private reply
-    // ports must keep their verdicts from crossing — even when the second
-    // request is answered first.
-    const { worker, reply } = fakeWorker();
-    const first: ScanResult = {
-      text: 'first',
-      format: 'QR_CODE',
-      kind: 'text',
-      details: [],
-    };
-    const second: ScanResult = {
-      text: 'second',
-      format: 'QR_CODE',
-      kind: 'text',
-      details: [],
-    };
-
-    const firstReply = requestDecode(worker, {} as ImageBitmap);
-    const secondReply = requestDecode(worker, {} as ImageBitmap);
-
-    reply(1, second); // answer the second request first
-    reply(0, first);
-
-    await expect(firstReply).resolves.toEqual(first);
-    await expect(secondReply).resolves.toEqual(second);
+    await expect(
+      requestDecode(connection, {} as ImageBitmap),
+    ).resolves.toBeNull();
   });
 });

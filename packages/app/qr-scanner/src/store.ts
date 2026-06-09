@@ -1,5 +1,6 @@
 import { createStore, defineStore, type Ref } from '@lib/state';
 import type { Scan } from '@lib/qr-scanner';
+import type { DecoderConnection } from './decoder';
 
 /**
  * Lifecycle of the camera session backing the scanner.
@@ -67,12 +68,12 @@ export interface ScannerState {
   /** Torch availability and state for the live stream. */
   torch: TorchState;
   /**
-   * The decoder worker once it's spawned and its wasm module is live,
-   * else `null`. Preloaded on page mount and outlives individual camera
-   * sessions. Held behind a {@link Ref} so the reactive store doesn't
-   * proxy the host {@link Worker}.
+   * The decoder worker and its RPC binding once spawned and the wasm
+   * module is live, else `null`. Preloaded on page mount and outlives
+   * individual camera sessions. Held behind a {@link Ref} so the reactive
+   * store doesn't proxy the host {@link Worker} or its RPC.
    */
-  decoder: Ref<Worker> | null;
+  decoder: Ref<DecoderConnection> | null;
   /**
    * The most recently recognized code, or `null` before the first hit.
    * Set once per session — the capture loop stops after recording.

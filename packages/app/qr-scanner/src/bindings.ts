@@ -12,7 +12,7 @@ import {
   teardownScanner,
   vibrate,
 } from './capabilities';
-import { createDecoder } from './decoder';
+import { createDecoder, type DecoderConnection } from './decoder';
 import { autoOpenHref } from './scan-link';
 import { scannerStore, type ScannerState, type ScanResult } from './store';
 
@@ -92,14 +92,14 @@ export const endSession = defineAction([scannerStore], (state) => {
 });
 
 /**
- * Store the decoder worker once it's spawned and its wasm is live. A
- * `null` worker means the preload was superseded by a teardown and has
- * already terminated itself — nothing to attach.
+ * Store the decoder connection once it's spawned and its wasm is live. A
+ * `null` connection means the preload was superseded by a teardown and has
+ * already torn itself down — nothing to attach.
  */
 export const attachDecoder = defineAction(
   [scannerStore],
-  (state, worker: Worker | null) => {
-    if (worker) state.decoder = ref(worker);
+  (state, connection: DecoderConnection | null) => {
+    if (connection) state.decoder = ref(connection);
   },
 );
 

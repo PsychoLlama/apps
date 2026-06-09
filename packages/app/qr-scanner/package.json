@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*",
+    "@lib/messaging": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/qr-scanner": "workspace:*",
     "@lib/shell": "workspace:*",

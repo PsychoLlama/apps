@@ -285,6 +285,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/messaging':
+        specifier: workspace:*
+        version: link:../../lib/messaging
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability

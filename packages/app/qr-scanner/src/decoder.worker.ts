@@ -1,24 +1,30 @@
 import init, { decode } from '@lib/qr-scanner';
 import { createLogger } from '@lib/observability';
-import type { DecodeRequest, ReadyMessage } from './decoder';
+import { RPC, respond, type RpcMessage } from '@lib/messaging';
+import {
+  MessagePortTransport,
+  type MessageEndpoint,
+  type SendOptions,
+} from '@lib/messaging/transport';
+import type { DecoderApi, HostApi } from './decoder';
 import type { ScanResult } from './store';
 
-// The package is typed for the DOM, so the global `self` reads as a
-// `Window`. That's fine for our touchpoints — `self.postMessage` (the
-// one-shot `ready` handshake), `onmessage`, and the per-request reply
-// `port` — which share the worker's shape.
+// The package is typed for the DOM, so the worker global `self` reads as a
+// `Window` — whose `postMessage` signature doesn't match the worker's. We
+// drive it through `MessagePortTransport`, casting `self` to the minimal
+// `MessageEndpoint` the transport needs (a worker scope satisfies it at
+// runtime: `postMessage(message, transfer)` plus `add/removeEventListener`).
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
  * Eagerly initialize the wasm module on worker load — not lazily on the
- * first frame — so it's warm by the time the camera goes live, then
- * announce readiness. Every frame awaits this, so an early frame queues
- * behind init rather than racing it.
+ * first frame — so it's warm by the time the camera goes live. Every
+ * `decode` awaits this, so an early frame queues behind init rather than
+ * racing it.
  */
 const ready: Promise<void> = init().then(() => {
   logger.debug('Decoder wasm initialized.');
-  self.postMessage({ type: 'ready' } satisfies ReadyMessage);
 });
 
 // One canvas for the worker's lifetime, resized lazily to each frame's
@@ -60,27 +66,41 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
     : null;
 };
 
-self.onmessage = ({ data }: MessageEvent<DecodeRequest>) => {
-  void ready.then(() => {
-    const { bitmap, port } = data;
-    let result: ScanResult | null = null;
-    try {
-      result = decodeFrame(bitmap);
-    } catch (error) {
-      // A frame that traps the decoder (blocked canvas read, wasm panic)
-      // must not strand the request: the main thread awaits exactly one
-      // reply per frame, so a missing reply would wedge the capture loop
-      // with its in-flight slot held forever. Log it and reply `null` —
-      // the next frame tries again.
-      logger.error('Failed to decode a frame.', {
-        error: error instanceof Error ? error : new Error(String(error)),
-      });
-    } finally {
-      bitmap.close();
-    }
-    // Reply on this request's private port, then close our end — the
-    // verdict reaches only the frame that asked for it.
-    port.postMessage(result);
-    port.close();
-  });
-};
+// `self` reads as a `Window` under the DOM lib, but its `postMessage`
+// overload that takes a transfer list satisfies `MessageEndpoint`, and at
+// runtime this is the worker scope — `postMessage(message, transfer)` plus
+// `add/removeEventListener` — so the transport drives it directly.
+const transport = new MessagePortTransport<RpcMessage, RpcMessage>(
+  self as MessageEndpoint,
+);
+
+const rpc = new RPC<DecoderApi, HostApi, SendOptions>(transport, {
+  requests: {
+    decode: async ({ bitmap }) => {
+      await ready;
+      let result: ScanResult | null = null;
+      try {
+        result = decodeFrame(bitmap);
+      } catch (error) {
+        // A frame that traps the decoder (blocked canvas read, wasm panic)
+        // must not strand the request: the main thread awaits exactly one
+        // reply per frame, so a missing reply would wedge the capture loop
+        // with its in-flight slot held forever. Log it and reply `null` —
+        // the next frame tries again.
+        logger.error('Failed to decode a frame.', {
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+      } finally {
+        // The bitmap transferred in, so it's ours to release — close it
+        // regardless of verdict so its backing memory isn't pinned.
+        bitmap.close();
+      }
+      return respond(result);
+    },
+  },
+  events: {},
+});
+
+// Announce readiness so the main thread can start handing us frames. It
+// awaits this `ready` event before sending the first `decode`.
+void ready.then(() => rpc.notify('ready'));
