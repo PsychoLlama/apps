@@ -1,6 +1,6 @@
 import { createLogger } from '@lib/observability';
-import type { Channel } from './channel.ts';
-import { isTransferable, type SendOptions } from './message-channel.ts';
+import type { Transport, Unsubscribe } from './transport.ts';
+import { isTransferable, type SendOptions } from './message-port.ts';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -37,9 +37,22 @@ export class RpcError extends Error {
 }
 
 /**
- * The wire envelope carried by the underlying {@link Channel}. An `RPC`
- * owns its channel end-to-end, so the channel is always typed
- * `Channel<RpcMessage, RpcMessage>` — these are the only messages on it.
+ * Rejection reason handed to every in-flight request when its {@link RPC} is
+ * closed via {@link RPC.close}. A subtype of {@link RpcError} so existing
+ * request-failure handling catches it, while `instanceof RpcClosedError`
+ * still distinguishes a local teardown from a remote failure.
+ */
+export class RpcClosedError extends RpcError {
+  constructor(message = 'RPC closed.') {
+    super(message);
+    this.name = 'RpcClosedError';
+  }
+}
+
+/**
+ * The wire envelope carried by the underlying {@link Transport}. An `RPC`
+ * owns its transport end-to-end, so the transport is always typed
+ * `Transport<RpcMessage, RpcMessage>` — these are the only messages on it.
  *
  * `id` correlates a response back to its request. Events carry no `id`
  * because nothing awaits them.
@@ -96,7 +109,7 @@ interface PendingRequest {
 }
 
 /**
- * Typed, bidirectional RPC over any {@link Channel}. Construct with
+ * Typed, bidirectional RPC over any {@link Transport}. Construct with
  * {@link RPC.from}.
  *
  * Both type parameters are {@link RpcApi} shapes: `Local` is the API this
@@ -106,7 +119,7 @@ interface PendingRequest {
  *
  * @example
  * ```ts
- * const peer = RPC.from<LocalApi, RemoteApi>(channel, {
+ * const peer = RPC.from<LocalApi, RemoteApi>(transport, {
  *   requests: { add: ({ left, right }) => left + right },
  *   events: { log: ({ message }) => console.log(message) },
  * });
@@ -117,42 +130,65 @@ interface PendingRequest {
  */
 export class RPC<Local extends RpcApi, Remote extends RpcApi> {
   /**
-   * Wrap a channel as an RPC endpoint. `handlers` implements `Local`.
+   * Wrap a transport as an RPC endpoint. `handlers` implements `Local`.
    */
   static from<Local extends RpcApi, Remote extends RpcApi>(
-    channel: Channel<RpcMessage, RpcMessage>,
+    transport: Transport<RpcMessage, RpcMessage>,
     handlers: Local,
   ): RPC<Local, Remote> {
-    return new RPC<Local, Remote>(channel, handlers);
+    return new RPC<Local, Remote>(transport, handlers);
   }
 
-  readonly #channel: Channel<RpcMessage, RpcMessage>;
+  readonly #transport: Transport<RpcMessage, RpcMessage>;
   readonly #requestHandlers: Record<string, RpcProcedure | undefined>;
   readonly #eventHandlers: Record<string, RpcProcedure | undefined>;
   readonly #pending = new Map<number, PendingRequest>();
+  readonly #unsubscribe: Unsubscribe;
   #nextRequestId = 1;
+  #closed = false;
 
-  protected constructor(
-    channel: Channel<RpcMessage, RpcMessage>,
+  private constructor(
+    transport: Transport<RpcMessage, RpcMessage>,
     handlers: Local,
   ) {
-    this.#channel = channel;
+    this.#transport = transport;
     this.#requestHandlers = handlers.requests;
     this.#eventHandlers = handlers.events;
-    this.#channel.onMessage((message) => {
+    this.#unsubscribe = this.#transport.onMessage((message) => {
       void this.#dispatch(message);
     });
   }
 
   /**
+   * Tear down this endpoint: discard the transport listener and reject every
+   * in-flight request with an {@link RpcClosedError}. Idempotent. Afterwards
+   * `request` rejects and `notify` is a no-op.
+   *
+   * The transport itself is left untouched — this `RPC` doesn't own its
+   * lifecycle. Closing the underlying carrier (e.g. `port.close()`) is the
+   * owner's call.
+   */
+  close(): void {
+    if (this.#closed) return;
+    this.#closed = true;
+    this.#unsubscribe();
+    for (const pending of this.#pending.values()) {
+      pending.reject(new RpcClosedError());
+    }
+    this.#pending.clear();
+  }
+
+  /**
    * Call a remote request method and await its result. Rejects with an
    * {@link RpcError} if the remote handler throws (or the method is
-   * unknown to the remote).
+   * unknown to the remote), or an {@link RpcClosedError} if this endpoint
+   * has been closed.
    */
   request<Method extends RequestMethod<Remote>>(
     method: Method,
     ...args: CallArgs<Remote['requests'][Method]>
   ): Promise<ResultOf<Remote['requests'][Method]>> {
+    if (this.#closed) return Promise.reject(new RpcClosedError());
     const [params, options] = args as [params?: unknown, options?: SendOptions];
     const id = this.#nextRequestId++;
     return new Promise<ResultOf<Remote['requests'][Method]>>(
@@ -166,7 +202,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
           this.#send({ type: 'request', id, method, params }, options);
         } catch (thrown) {
           // The request never left the building (e.g. transfer on a
-          // non-transferable channel, or a `DataCloneError`). Drop its
+          // non-transferable transport, or a `DataCloneError`). Drop its
           // pending entry so the id can't leak or later match a stray
           // response.
           this.#pending.delete(id);
@@ -176,26 +212,30 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
     );
   }
 
-  /** Fire a remote event. Returns once handed to the channel. */
+  /**
+   * Fire a remote event. Returns once handed to the transport. A no-op once
+   * this endpoint has been closed.
+   */
   notify<Method extends EventMethod<Remote>>(
     method: Method,
     ...args: CallArgs<Remote['events'][Method]>
   ): void {
+    if (this.#closed) return;
     const [params, options] = args as [params?: unknown, options?: SendOptions];
     this.#send({ type: 'event', method, params }, options);
   }
 
-  // Route a message through the channel, applying send options if given.
-  // Transfer requires a transfer-capable channel; asking for it on one
+  // Route a message through the transport, applying send options if given.
+  // Transfer requires a transfer-capable transport; asking for it on one
   // that can't is a misconfiguration, not a silent copy.
   #send(message: RpcMessage, options?: SendOptions): void {
     if (options?.transfer && options.transfer.length > 0) {
-      if (!isTransferable(this.#channel)) {
-        throw new Error('This channel does not support transfer.');
+      if (!isTransferable(this.#transport)) {
+        throw new Error('This transport does not support transfer.');
       }
-      this.#channel.send(message, options);
+      this.#transport.send(message, options);
     } else {
-      this.#channel.send(message);
+      this.#transport.send(message);
     }
   }
 
@@ -219,7 +259,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
     logger.trace('Inbound request', { method: message.method, id: message.id });
     const handler = findHandler(this.#requestHandlers, message.method);
     if (!handler) {
-      this.#channel.send({
+      this.#transport.send({
         type: 'response',
         id: message.id,
         ok: false,
@@ -230,7 +270,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
 
     try {
       const result = await handler(message.params as never);
-      this.#channel.send({
+      this.#transport.send({
         type: 'response',
         id: message.id,
         ok: true,
@@ -249,7 +289,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
         });
       }
 
-      this.#channel.send({
+      this.#transport.send({
         type: 'response',
         id: message.id,
         ok: false,
@@ -262,7 +302,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi> {
     logger.trace('Inbound event', { method: message.method });
     const handler = findHandler(this.#eventHandlers, message.method);
     if (!handler) {
-      // Fire-and-forget has no channel to report back on, so a missing
+      // Fire-and-forget has no response to report back on, so a missing
       // handler is silent on the wire — warn so it isn't silent everywhere.
       logger.warn('Unhandled event', { method: message.method });
       return;

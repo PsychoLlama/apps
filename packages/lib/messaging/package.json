@@ -8,7 +8,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
-    "./channel": "./src/port-rpc.ts"
+    "./transport": "./src/transport.ts"
   },
   "scripts": {
     "typecheck": "tsc"

@@ -1,5 +1,5 @@
-import { RPC, RpcError, type Channel, type RpcMessage } from '@lib/messaging';
-import { PortRpc } from '@lib/messaging/channel';
+import { RPC, RpcError, RpcClosedError, type RpcMessage } from '@lib/messaging';
+import { MessagePortTransport, type Transport } from '@lib/messaging/transport';
 
 type ServerApi = {
   requests: {
@@ -30,35 +30,41 @@ const setup = () => {
   const logged: string[] = [];
   const sizes: number[] = [];
 
-  const server = new PortRpc<ServerApi, ClientApi>(port1, {
-    requests: {
-      add: ({ left, right }) => left + right,
-      divide: ({ left, right }) => Promise.resolve(left / right),
-      boom: ({ message }) => {
-        throw new Error(message);
+  const server = RPC.from<ServerApi, ClientApi>(
+    new MessagePortTransport(port1),
+    {
+      requests: {
+        add: ({ left, right }) => left + right,
+        divide: ({ left, right }) => Promise.resolve(left / right),
+        boom: ({ message }) => {
+          throw new Error(message);
+        },
+        denied: () => {
+          throw new RpcError('no access');
+        },
+        echoSize: ({ buffer }) => buffer.byteLength,
       },
-      denied: () => {
-        throw new RpcError('no access');
+      events: {
+        log: ({ message }) => {
+          logged.push(message);
+        },
+        ping: () => {
+          logged.push('pong');
+        },
+        sink: ({ buffer }) => {
+          sizes.push(buffer.byteLength);
+        },
       },
-      echoSize: ({ buffer }) => buffer.byteLength,
     },
-    events: {
-      log: ({ message }) => {
-        logged.push(message);
-      },
-      ping: () => {
-        logged.push('pong');
-      },
-      sink: ({ buffer }) => {
-        sizes.push(buffer.byteLength);
-      },
-    },
-  });
+  );
 
-  const client = new PortRpc<ClientApi, ServerApi>(port2, {
-    requests: {},
-    events: {},
-  });
+  const client = RPC.from<ClientApi, ServerApi>(
+    new MessagePortTransport(port2),
+    {
+      requests: {},
+      events: {},
+    },
+  );
 
   // The adapter listens via addEventListener; ports deliver only once
   // started, and starting is the consumer's responsibility.
@@ -208,10 +214,10 @@ describe('RPC', () => {
     expect(buffer.byteLength).toBe(0);
   });
 
-  it('throws when transfer is requested on a non-transferable channel', async () => {
-    const plain: Channel<RpcMessage, RpcMessage> = {
+  it('throws when transfer is requested on a non-transferable transport', async () => {
+    const plain: Transport<RpcMessage, RpcMessage> = {
       send: () => undefined,
-      onMessage: () => undefined,
+      onMessage: () => () => undefined,
     };
     const client = RPC.from<ClientApi, ServerApi>(plain, {
       requests: {},
@@ -225,5 +231,53 @@ describe('RPC', () => {
     expect(() =>
       client.notify('sink', { buffer }, { transfer: [buffer] }),
     ).toThrow('does not support transfer');
+  });
+
+  it('rejects in-flight requests with an RpcClosedError on close', async () => {
+    const { client } = setup();
+    // The response round-trips asynchronously over the port; closing
+    // synchronously after the call wins the race, so the request settles as
+    // a close rather than a result.
+    const pending = client.request('add', { left: 1, right: 1 });
+
+    client.close();
+
+    await expect(pending).rejects.toBeInstanceOf(RpcClosedError);
+  });
+
+  it('rejects new requests after close', async () => {
+    const { client } = setup();
+    client.close();
+
+    await expect(
+      client.request('add', { left: 1, right: 1 }),
+    ).rejects.toBeInstanceOf(RpcClosedError);
+  });
+
+  it('discards the transport listener on close', () => {
+    // Detaching the listener is the transport's job (it returns the
+    // unsubscribe); close's contract is simply to invoke it. Whether
+    // detaching actually halts delivery is covered in message-port.test.ts.
+    let unsubscribed = false;
+    const transport: Transport<RpcMessage, RpcMessage> = {
+      send: () => undefined,
+      onMessage: () => () => {
+        unsubscribed = true;
+      },
+    };
+    const rpc = RPC.from<ClientApi, ServerApi>(transport, {
+      requests: {},
+      events: {},
+    });
+
+    rpc.close();
+
+    expect(unsubscribed).toBe(true);
+  });
+
+  it('is idempotent across repeated close calls', () => {
+    const { client } = setup();
+    client.close();
+    expect(() => client.close()).not.toThrow();
   });
 });
