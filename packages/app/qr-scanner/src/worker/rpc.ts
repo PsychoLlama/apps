@@ -1,6 +1,42 @@
-import init, { decode as decodeImage } from '@lib/qr-scanner';
+import init, { decode as decodeImage, type Scan } from '@lib/qr-scanner';
 import { createLogger } from '@lib/observability';
-import type { ScanResult } from '../store';
+
+/**
+ * A decoded barcode — the worker's output, mirrored into host state on
+ * recognition. Derived from `@lib/qr-scanner`'s {@link Scan} so the two
+ * can't drift, but picked down to its plain data fields. `Scan` itself is a
+ * wasm handle (it owns `free()` and can't cross a `postMessage` boundary),
+ * so it never leaves the worker; what we surface is this
+ * structured-clone-safe projection.
+ *
+ * `details` is the parsed payload (WiFi/URL/contact/…) flattened to
+ * label/value rows; `kind` says which shape it took. Both are plain data,
+ * so they cross the worker boundary alongside the raw `text`.
+ */
+export type ScanResult = Pick<Scan, 'text' | 'format' | 'kind' | 'details'>;
+
+/**
+ * The decoder worker's RPC surface: a single `decode` request that takes a
+ * frame and returns its verdict — a {@link ScanResult} on a hit, `null` on
+ * a miss. This is the API the worker *implements* (see {@link requests}) and
+ * the main thread *calls*.
+ */
+export interface DecoderApi {
+  requests: {
+    decode(params: { bitmap: ImageBitmap }): ScanResult | null;
+  };
+}
+
+/**
+ * The main thread's RPC surface, as seen by the worker. The worker fires a
+ * one-shot `ready` event once its wasm module is live; nothing else flows
+ * this direction.
+ */
+export interface HostApi {
+  events: {
+    ready(): void;
+  };
+}
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 

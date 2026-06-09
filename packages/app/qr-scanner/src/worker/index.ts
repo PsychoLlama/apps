@@ -4,8 +4,8 @@ import {
   type MessageEndpoint,
   type SendOptions,
 } from '@lib/messaging/transport';
-import type { DecoderApi, HostApi } from '../decoder';
 import * as handlers from './rpc';
+import type { DecoderApi, HostApi } from './rpc';
 
 // `MessagePortTransport` drives any `MessageEndpoint`, and the worker global
 // scope is one at runtime: `postMessage(message, transfer)` plus

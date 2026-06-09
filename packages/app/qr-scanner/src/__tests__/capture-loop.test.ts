@@ -1,6 +1,6 @@
 import { createFrameSampler, startCaptureLoop } from '../capture-loop';
 import { requestDecode, type DecoderConnection } from '../decoder';
-import type { ScanResult } from '../store';
+import type { ScanResult } from '../worker/rpc';
 
 // Stub the worker round-trip — we drive decode verdicts by hand and never
 // want the real `?worker` module pulled in.

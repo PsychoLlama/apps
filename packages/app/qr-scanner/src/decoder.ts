@@ -5,31 +5,8 @@ import {
 } from '@lib/messaging/transport';
 import type { DeepReadonly } from '@lib/state';
 import DecoderWorker from './worker/index?worker';
+import type { DecoderApi, HostApi, ScanResult } from './worker/rpc';
 import type { DecoderState } from './decoder-store';
-import type { ScanResult } from './store';
-
-/**
- * The decoder worker's RPC surface: a single `decode` request that takes a
- * frame and returns its verdict — a {@link ScanResult} on a hit, `null` on
- * a miss. This is the API the worker *implements* and the main thread
- * *calls*.
- */
-export interface DecoderApi {
-  requests: {
-    decode(params: { bitmap: ImageBitmap }): ScanResult | null;
-  };
-}
-
-/**
- * The main thread's RPC surface, as seen by the worker. The worker fires a
- * one-shot `ready` event once its wasm module is live; nothing else flows
- * this direction.
- */
-export interface HostApi {
-  events: {
-    ready(): void;
-  };
-}
 
 /**
  * The main thread's end of the decoder RPC. `SendOptions` lets a frame ride

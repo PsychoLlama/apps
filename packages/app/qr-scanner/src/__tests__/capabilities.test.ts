@@ -10,7 +10,8 @@ import {
   stopStreamForResult,
   supportsTorch,
 } from '../capabilities';
-import type { ScannerState, ScanResult } from '../store';
+import type { ScannerState } from '../store';
+import type { ScanResult } from '../worker/rpc';
 
 vi.mock('media-devices', () => ({
   default: { getUserMedia: vi.fn() },

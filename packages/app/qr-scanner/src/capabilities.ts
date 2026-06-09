@@ -2,7 +2,8 @@ import MediaDevices, { supportsMediaDevices } from 'media-devices';
 import type { DeepReadonly } from '@lib/state';
 import { terminateDecoder } from './decoder';
 import type { DecoderState } from './decoder-store';
-import type { CameraErrorKind, ScannerState, ScanResult } from './store';
+import type { CameraErrorKind, ScannerState } from './store';
+import type { ScanResult } from './worker/rpc';
 
 /**
  * `torch` is a constrainable property from the MediaStream Image Capture
