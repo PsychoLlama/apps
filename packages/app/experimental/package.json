@@ -15,8 +15,6 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@lib/hello-wasm": "workspace:*",
-    "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/ui": "workspace:*"
   },
