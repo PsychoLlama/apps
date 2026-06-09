@@ -1,0 +1,1 @@
+- Reference docs live at `.claude/skills/rpc-reference/SKILL.md`. Keep it updated when the API changes.
