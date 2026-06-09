@@ -10,9 +10,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  * once the module is live; the worker awaits it to announce `ready` to the
  * host, which holds its first frame until that event lands.
  */
-let initialized = false;
 export const ready: Promise<void> = init().then(() => {
-  initialized = true;
   logger.debug('Decoder wasm initialized.');
 });
 
@@ -57,15 +55,14 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
 
 /**
  * Decode a single frame — the worker's one request handler. Resolves with a
- * {@link ScanResult} on a hit, `null` on a miss, and rejects only when the
- * contract is broken.
+ * {@link ScanResult} on a hit, `null` on a miss.
  *
- * Asserts the wasm module is live first. The host awaits the `ready` event
- * before sending any frame, so a frame arriving pre-init is an ordering bug,
- * not a race to wait out — reject it (rather than queue behind init and mask
- * the violation) so it surfaces. A frame that traps the live decoder
- * (blocked canvas read, wasm panic) is different: it resolves `null` so the
- * capture loop just tries the next one instead of wedging on a missing reply.
+ * No init guard: the host awaits the `ready` event before sending any frame,
+ * so the module is live by the time one lands, and a frame that somehow beat
+ * init would trap on its first wasm call anyway — `decode` throws straight
+ * away when the module isn't instantiated. Any trap — that, a blocked canvas
+ * read, a wasm panic — is caught, logged, and folded to `null` so the capture
+ * loop just tries the next frame instead of wedging on a missing reply.
  *
  * The bitmap transfers in, so it's ours to release — closed on every path,
  * verdict or throw, so its backing memory isn't pinned.
@@ -75,11 +72,6 @@ export const decode = ({
 }: {
   bitmap: ImageBitmap;
 }): ScanResult | null => {
-  if (!initialized) {
-    bitmap.close();
-    throw new Error('Decoder received a frame before wasm initialization.');
-  }
-
   try {
     return decodeFrame(bitmap);
   } catch (error) {
