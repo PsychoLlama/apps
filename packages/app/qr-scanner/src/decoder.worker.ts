@@ -9,12 +9,6 @@ import {
 import type { DecoderApi, HostApi } from './decoder';
 import type { ScanResult } from './store';
 
-// The package is typed for the DOM, so the worker global `self` reads as a
-// `Window` — whose `postMessage` signature doesn't match the worker's. We
-// drive it through `MessagePortTransport`, casting `self` to the minimal
-// `MessageEndpoint` the transport needs (a worker scope satisfies it at
-// runtime: `postMessage(message, transfer)` plus `add/removeEventListener`).
-
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
@@ -66,10 +60,12 @@ const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
     : null;
 };
 
-// `self` reads as a `Window` under the DOM lib, but its `postMessage`
-// overload that takes a transfer list satisfies `MessageEndpoint`, and at
-// runtime this is the worker scope — `postMessage(message, transfer)` plus
-// `add/removeEventListener` — so the transport drives it directly.
+// `MessagePortTransport` drives any `MessageEndpoint`, and the worker global
+// scope is one at runtime: `postMessage(message, transfer)` plus
+// `add/removeEventListener`. The cast is only to satisfy the type checker —
+// this package is typed for the DOM, so `self` reads as a `Window`, whose
+// `postMessage(message, targetOrigin, …)` overload doesn't match. Removing it
+// needs a worker-typed lib for `*.worker.ts` (tracked as a followup).
 const transport = new MessagePortTransport<RpcMessage, RpcMessage>(
   self as MessageEndpoint,
 );
