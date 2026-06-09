@@ -25,15 +25,21 @@ export type MessageHandler<Inbound> = (message: Inbound) => void;
  * narrow `Inbound`/`Outbound` to what their carrier can actually move.
  */
 export interface Transport<Inbound, Outbound, Options = never> {
+  // Declared as function-typed properties, not methods, on purpose: method
+  // signatures are checked bivariantly, which would let a `Transport<…, never>`
+  // pass where `Transport<…, Options>` is required and silently drop options.
+  // Property syntax forces contravariant parameter checks, so `Options` is
+  // sound — a transport must actually accept the options a consumer can send.
+
   /** Send a message to the peer endpoint, honoring carrier-specific options. */
-  send(message: Outbound, options?: Options): void;
+  send: (message: Outbound, options?: Options) => void;
 
   /**
    * Register a handler for inbound messages. Multiple handlers may be
    * registered; each receives every inbound message. Returns an
    * {@link Unsubscribe} that detaches this handler.
    */
-  onMessage(handler: MessageHandler<Inbound>): Unsubscribe;
+  onMessage: (handler: MessageHandler<Inbound>) => Unsubscribe;
 }
 
 export * from './message-port.ts';
