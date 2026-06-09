@@ -4,7 +4,7 @@ import {
   type SendOptions,
 } from '@lib/messaging/transport';
 import type { DeepReadonly } from '@lib/state';
-import DecoderWorker from './decoder.worker?worker';
+import DecoderWorker from './worker/index?worker';
 import type { DecoderState } from './decoder-store';
 import type { ScanResult } from './store';
 

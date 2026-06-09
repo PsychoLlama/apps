@@ -1,6 +1,6 @@
 import init, { decode as decodeImage } from '@lib/qr-scanner';
 import { createLogger } from '@lib/observability';
-import type { ScanResult } from './store';
+import type { ScanResult } from '../store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
