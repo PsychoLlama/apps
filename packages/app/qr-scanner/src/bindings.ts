@@ -13,6 +13,7 @@ import {
   vibrate,
 } from './capabilities';
 import { createDecoder, type DecoderConnection } from './decoder';
+import { decoderStore } from './decoder-store';
 import { autoOpenHref } from './scan-link';
 import { scannerStore, type ScannerState, type ScanResult } from './store';
 
@@ -70,26 +71,30 @@ export const resetScanner = defineAction([scannerStore], (state) => {
 });
 
 /**
- * Tear the whole session down to idle in a single flush: drop the
- * stream, clear the decoder reference and last result, reset the torch
- * and error, and bump the generation. The bump matters when the scanner
- * unmounts mid-prompt — it signals the pending {@link openCameraSession}
- * to stop its stream once it resolves rather than store an orphaned,
- * uncancellable camera. Bumping `decoderGeneration` likewise supersedes a
- * decoder preload still in flight, so its worker self-terminates instead
- * of attaching to a dead page. The matching physical teardown (stopping
- * the stream, terminating the worker) runs in {@link shutdownScannerEffect}.
+ * Tear the whole session down to idle in a single flush across both
+ * stores: drop the stream, clear the decoder reference and last result,
+ * reset the torch and error, and bump both generations. The camera bump
+ * matters when the scanner unmounts mid-prompt — it signals the pending
+ * {@link openCameraSession} to stop its stream once it resolves rather than
+ * store an orphaned, uncancellable camera. The decoder bump likewise
+ * supersedes a preload still in flight, so its worker self-terminates
+ * instead of attaching to a dead page. The matching physical teardown
+ * (stopping the stream, terminating the worker) runs in
+ * {@link shutdownScannerEffect}.
  */
-export const endSession = defineAction([scannerStore], (state) => {
-  state.status = 'idle';
-  state.stream = null;
-  state.error = null;
-  state.torch = { supported: false, on: false };
-  state.result = null;
-  state.decoder = null;
-  state.generation += 1;
-  state.decoderGeneration += 1;
-});
+export const endSession = defineAction(
+  [scannerStore, decoderStore],
+  (scanner, decoder) => {
+    scanner.status = 'idle';
+    scanner.stream = null;
+    scanner.error = null;
+    scanner.torch = { supported: false, on: false };
+    scanner.result = null;
+    scanner.generation += 1;
+    decoder.connection = null;
+    decoder.generation += 1;
+  },
+);
 
 /**
  * Store the decoder connection once it's spawned and its wasm is live. A
@@ -97,9 +102,9 @@ export const endSession = defineAction([scannerStore], (state) => {
  * already torn itself down — nothing to attach.
  */
 export const attachDecoder = defineAction(
-  [scannerStore],
-  (state, connection: DecoderConnection | null) => {
-    if (connection) state.decoder = ref(connection);
+  [decoderStore],
+  (decoder, connection: DecoderConnection | null) => {
+    if (connection) decoder.connection = ref(connection);
   },
 );
 
@@ -212,7 +217,7 @@ export const toggleTorchEffect = defineEffect([scannerStore], setTorch, {
  * eagerly on page mount so the module is warm before the camera goes
  * live; the worker then outlives individual camera sessions.
  */
-export const startDecodingEffect = defineEffect([scannerStore], createDecoder, {
+export const startDecodingEffect = defineEffect([decoderStore], createDecoder, {
   onSuccess: attachDecoder,
 });
 
@@ -224,7 +229,7 @@ export const startDecodingEffect = defineEffect([scannerStore], createDecoder, {
  * and the generation bump supersedes a request still pending mid-prompt.
  */
 export const shutdownScannerEffect = defineEffect(
-  [scannerStore],
+  [scannerStore, decoderStore],
   teardownScanner,
   { onSuccess: endSession },
 );

@@ -64,10 +64,8 @@ describe('stopStream', () => {
       stream: ref(fakeStream(tracks)),
       error: null,
       torch: { supported: false, on: false },
-      decoder: null,
       result: null,
       generation: 1,
-      decoderGeneration: 0,
     };
 
     stopStream(state);
@@ -82,10 +80,8 @@ describe('stopStream', () => {
       stream: null,
       error: null,
       torch: { supported: false, on: false },
-      decoder: null,
       result: null,
       generation: 0,
-      decoderGeneration: 0,
     };
     expect(() => stopStream(state)).not.toThrow();
   });
@@ -99,10 +95,8 @@ describe('stopStreamForResult', () => {
       stream: ref(fakeStream(tracks)),
       error: null,
       torch: { supported: false, on: false },
-      decoder: null,
       result: null,
       generation: 1,
-      decoderGeneration: 0,
     };
     const result: ScanResult = {
       text: 'https://example.com',
@@ -122,10 +116,8 @@ describe('openCameraSession', () => {
     stream: null,
     error: null,
     torch: { supported: false, on: false },
-    decoder: null,
     result: null,
     generation,
-    decoderGeneration: 0,
   });
 
   it('returns the stream when the request is not superseded', async () => {
@@ -186,10 +178,8 @@ describe('setTorch', () => {
     stream: ref(streamWithVideoTrack(track)),
     error: null,
     torch: { supported: true, on: false },
-    decoder: null,
     result: null,
     generation: 1,
-    decoderGeneration: 0,
   });
 
   it('applies the torch constraint and resolves with the requested state', async () => {
@@ -208,10 +198,8 @@ describe('setTorch', () => {
       stream: null,
       error: null,
       torch: { supported: false, on: false },
-      decoder: null,
       result: null,
       generation: 0,
-      decoderGeneration: 0,
     };
 
     await expect(setTorch(state, true)).resolves.toBe(true);

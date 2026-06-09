@@ -31,11 +31,11 @@ const setup = (
   const channel = new MessageChannel();
   const handler = vi.fn(decode);
 
-  const host = new RPC<HostApi, DecoderApi, SendOptions>(
+  const host = RPC.from<HostApi, DecoderApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(channel.port1),
     { events: { ready: () => {} } },
   );
-  new RPC<DecoderApi, HostApi, SendOptions>(
+  RPC.from<DecoderApi, HostApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(channel.port2),
     { requests: { decode: handler } },
   );
