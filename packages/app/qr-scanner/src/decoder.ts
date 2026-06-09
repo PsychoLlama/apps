@@ -17,7 +17,6 @@ export interface DecoderApi {
   requests: {
     decode(params: { bitmap: ImageBitmap }): ScanResult | null;
   };
-  events: Record<string, never>;
 }
 
 /**
@@ -26,7 +25,6 @@ export interface DecoderApi {
  * this direction.
  */
 export interface HostApi {
-  requests: Record<string, never>;
   events: {
     ready(): void;
   };
@@ -77,10 +75,7 @@ export const createDecoder = async (
 
   const rpc: DecoderRpc = new RPC<HostApi, DecoderApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(worker),
-    {
-      requests: {},
-      events: { ready: () => markReady() },
-    },
+    { events: { ready: () => markReady() } },
   );
 
   await ready;

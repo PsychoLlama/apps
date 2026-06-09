@@ -94,7 +94,6 @@ const rpc = new RPC<DecoderApi, HostApi, SendOptions>(transport, {
       return respond(result);
     },
   },
-  events: {},
 });
 
 // Announce readiness so the main thread can start handing us frames. It

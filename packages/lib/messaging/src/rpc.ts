@@ -18,14 +18,23 @@ export type RpcProcedure = (params: never) => unknown;
  *   throwing handler rejects the caller's promise.
  * - `events` are fire-and-forget — no response, no result.
  *
- * Use inline object types for each map; both are required (pass `{}` when
- * an endpoint exposes none). A procedure may take zero or one argument,
- * never more.
+ * Both sections are optional: omit the one an endpoint doesn't expose
+ * rather than spelling out an empty map. A procedure may take zero or one
+ * argument, never more.
  */
 export interface RpcApi {
-  requests: Record<string, RpcProcedure>;
-  events: Record<string, RpcProcedure>;
+  requests?: Record<string, RpcProcedure>;
+  events?: Record<string, RpcProcedure>;
 }
+
+/**
+ * An endpoint's `requests`/`events` map with its optionality stripped, so an
+ * omitted section reads as an empty map instead of `undefined`. Indexing and
+ * `keyof` then behave uniformly whether or not the {@link RpcApi} declared
+ * that section.
+ */
+type Requests<Api extends RpcApi> = NonNullable<Api['requests']>;
+type Events<Api extends RpcApi> = NonNullable<Api['events']>;
 
 /** Error raised on the caller side when a remote request fails. */
 export class RpcError extends Error {
@@ -94,8 +103,8 @@ export type RpcMessage =
 
 type ResultOf<Procedure extends RpcProcedure> = Awaited<ReturnType<Procedure>>;
 
-type RequestMethod<Api extends RpcApi> = keyof Api['requests'] & string;
-type EventMethod<Api extends RpcApi> = keyof Api['events'] & string;
+type RequestMethod<Api extends RpcApi> = keyof Requests<Api> & string;
+type EventMethod<Api extends RpcApi> = keyof Events<Api> & string;
 
 /**
  * Call-site argument tuple for a procedure. `params` is always positional
@@ -133,18 +142,36 @@ type EventHandler<Procedure extends RpcProcedure> = (
  * The object passed to the {@link RPC} constructor: one handler per declared
  * procedure of `Local`. Request handlers reply via {@link RpcResponse},
  * carrying the transport's `Options`; event handlers return nothing.
+ *
+ * Each section is required only when `Local` declares it — omit `requests`
+ * (or `events`) entirely when the endpoint exposes none, mirroring the
+ * optional sections of {@link RpcApi}.
  */
-export interface RpcHandlers<Api extends RpcApi, Options = never> {
-  requests: {
-    [Method in keyof Api['requests']]: RequestHandler<
-      Api['requests'][Method],
+export type RpcHandlers<Api extends RpcApi, Options = never> = HandlerSection<
+  'requests',
+  {
+    [Method in keyof Requests<Api>]: RequestHandler<
+      Requests<Api>[Method],
       Options
     >;
-  };
-  events: {
-    [Method in keyof Api['events']]: EventHandler<Api['events'][Method]>;
-  };
-}
+  }
+> &
+  HandlerSection<
+    'events',
+    { [Method in keyof Events<Api>]: EventHandler<Events<Api>[Method]> }
+  >;
+
+/**
+ * One `{ requests: … }` / `{ events: … }` slice of {@link RpcHandlers}. An
+ * empty section (the endpoint declares no procedures of that style) becomes
+ * an optional key — there's nothing to implement — while a populated one
+ * stays required so a declared procedure can't go unhandled.
+ */
+type HandlerSection<Key extends string, Handlers> = [keyof Handlers] extends [
+  never,
+]
+  ? { [K in Key]?: Handlers }
+  : { [K in Key]: Handlers };
 
 /**
  * Resolve a handler by method name, treating the name as untrusted.
@@ -211,9 +238,12 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
     this.#transport = transport;
     // The public boundary (`RpcHandlers<Local>`) carries the precise per-method
     // types; internally the dispatcher treats every handler uniformly and casts
-    // params/results at the call site, so a loose record is enough here.
-    this.#requestHandlers = handlers.requests as Record<string, RpcProcedure>;
-    this.#eventHandlers = handlers.events as Record<string, RpcProcedure>;
+    // params/results at the call site, so a loose record is enough here. Either
+    // section may be omitted (the API declares none) — default to empty.
+    this.#requestHandlers =
+      (handlers.requests as Record<string, RpcProcedure> | undefined) ?? {};
+    this.#eventHandlers =
+      (handlers.events as Record<string, RpcProcedure> | undefined) ?? {};
     this.#unsubscribe = this.#transport.onMessage((message) => {
       void this.#dispatch(message);
     });
@@ -247,16 +277,16 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
    */
   request<Method extends RequestMethod<Remote>>(
     method: Method,
-    ...args: CallArgs<Remote['requests'][Method], Options>
-  ): Promise<ResultOf<Remote['requests'][Method]>> {
+    ...args: CallArgs<Requests<Remote>[Method], Options>
+  ): Promise<ResultOf<Requests<Remote>[Method]>> {
     if (this.#closed) throw new RpcClosedError();
     const [params, options] = args as [params?: unknown, options?: Options];
     const id = this.#nextRequestId++;
-    return new Promise<ResultOf<Remote['requests'][Method]>>(
+    return new Promise<ResultOf<Requests<Remote>[Method]>>(
       (resolve, reject) => {
         this.#pending.set(id, {
           resolve: (result) =>
-            resolve(result as ResultOf<Remote['requests'][Method]>),
+            resolve(result as ResultOf<Requests<Remote>[Method]>),
           reject: (error) => reject(error),
         });
         try {
@@ -279,7 +309,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
    */
   notify<Method extends EventMethod<Remote>>(
     method: Method,
-    ...args: CallArgs<Remote['events'][Method], Options>
+    ...args: CallArgs<Events<Remote>[Method], Options>
   ): void {
     if (this.#closed) throw new RpcClosedError();
     const [params, options] = args as [params?: unknown, options?: Options];

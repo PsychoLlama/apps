@@ -38,11 +38,11 @@ const setup = (
 
   const host = new RPC<HostApi, DecoderApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(channel.port1),
-    { requests: {}, events: { ready: () => {} } },
+    { events: { ready: () => {} } },
   );
   new RPC<DecoderApi, HostApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(channel.port2),
-    { requests: { decode: handler }, events: {} },
+    { requests: { decode: handler } },
   );
   // `MessagePort` endpoints stay dormant until started — without this the
   // request would post but never reach the worker side.
