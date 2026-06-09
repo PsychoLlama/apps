@@ -2,9 +2,9 @@ import {
   setGlobalLogCollector,
   unsetGlobalLogCollector,
 } from '@holz/log-collector';
-import { RPC, type Channel, type RpcMessage } from '@lib/messaging';
+import { RPC, respond, type RpcMessage } from '@lib/messaging';
 import type { Log } from '@lib/observability';
-import { PortRpc } from '@lib/messaging/channel';
+import { MessagePortTransport, type Transport } from '@lib/messaging/transport';
 
 type Api = {
   requests: { add(params: { left: number; right: number }): number };
@@ -32,8 +32,8 @@ const captureLogs = (): Log[] => {
  */
 const setup = () => {
   const { port1, port2 } = new MessageChannel();
-  const endpoint = new PortRpc<Api, Empty>(port2, {
-    requests: { add: ({ left, right }) => left + right },
+  const endpoint = new RPC<Api, Empty>(new MessagePortTransport(port2), {
+    requests: { add: ({ left, right }) => respond(left + right) },
     events: {
       log: () => undefined,
       boom: () => {
@@ -135,15 +135,16 @@ describe('RPC logging', () => {
   it('drops a pending request when the send fails', async () => {
     const logs = captureLogs();
     let deliver: ((message: RpcMessage) => void) | undefined;
-    const channel: Channel<RpcMessage, RpcMessage> = {
+    const transport: Transport<RpcMessage, RpcMessage> = {
       send: () => {
         throw new Error('send exploded');
       },
       onMessage: (handler) => {
         deliver = handler;
+        return () => undefined;
       },
     };
-    const rpc = RPC.from<Empty, Api>(channel, { requests: {}, events: {} });
+    const rpc = new RPC<Empty, Api>(transport, { requests: {}, events: {} });
 
     // The first request takes id 1 and rejects when the send throws.
     await expect(rpc.request('add', { left: 1, right: 2 })).rejects.toThrow(

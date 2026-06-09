@@ -1,5 +1,4 @@
-import type { Channel } from '@lib/messaging';
-import { fromMessagePort, isTransferable } from '@lib/messaging/channel';
+import { MessagePortTransport } from '@lib/messaging/transport';
 
 type Wire =
   | { type: 'data'; buffer?: ArrayBuffer }
@@ -7,32 +6,19 @@ type Wire =
 
 /**
  * Wire a sender/receiver pair over a real `MessageChannel`. Ports are
- * started eagerly — the adapter never starts them (that's the consumer's
+ * started eagerly — the transport never starts them (that's the consumer's
  * call), so the tests stand in as the consumer.
  */
 const setup = () => {
   const { port1, port2 } = new MessageChannel();
-  const sender = fromMessagePort<Wire, Wire>(port1);
-  const receiver = fromMessagePort<Wire, Wire>(port2);
+  const sender = new MessagePortTransport<Wire, Wire>(port1);
+  const receiver = new MessagePortTransport<Wire, Wire>(port2);
   port1.start();
   port2.start();
   return { sender, receiver };
 };
 
-describe('fromMessagePort', () => {
-  it('brands the channel as transferable', () => {
-    expect(isTransferable(setup().sender)).toBe(true);
-  });
-
-  it('reports a plain channel as non-transferable', () => {
-    const plain: Channel<Wire, Wire> = {
-      send: () => undefined,
-      onMessage: () => undefined,
-    };
-
-    expect(isTransferable(plain)).toBe(false);
-  });
-
+describe('MessagePortTransport', () => {
   it('delivers messages to every registered handler', async () => {
     const { sender, receiver } = setup();
     const first = new Promise<Wire>((resolve) => receiver.onMessage(resolve));
@@ -44,6 +30,25 @@ describe('fromMessagePort', () => {
       { type: 'data' },
       { type: 'data' },
     ]);
+  });
+
+  it('stops delivering to a handler after it unsubscribes', async () => {
+    const { sender, receiver } = setup();
+    const seen: Wire[] = [];
+    const unsubscribe = receiver.onMessage((message) => {
+      seen.push(message);
+    });
+
+    // A second, persistent handler doubles as a delivery barrier: once it
+    // observes a message, anything posted before it has already been routed.
+    const settled = () =>
+      new Promise<void>((resolve) => receiver.onMessage(() => resolve()));
+
+    unsubscribe();
+    sender.send({ type: 'tick', count: 1 });
+    await settled();
+
+    expect(seen).toEqual([]);
   });
 
   it('narrows inbound messages on the discriminant', async () => {

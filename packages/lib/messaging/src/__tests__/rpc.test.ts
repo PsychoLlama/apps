@@ -1,5 +1,15 @@
-import { RPC, RpcError, type Channel, type RpcMessage } from '@lib/messaging';
-import { PortRpc } from '@lib/messaging/channel';
+import {
+  RPC,
+  RpcError,
+  RpcClosedError,
+  respond,
+  type RpcMessage,
+} from '@lib/messaging';
+import {
+  MessagePortTransport,
+  type SendOptions,
+  type Transport,
+} from '@lib/messaging/transport';
 
 type ServerApi = {
   requests: {
@@ -8,6 +18,7 @@ type ServerApi = {
     boom(params: { message: string }): number;
     denied(params: { resource: string }): number;
     echoSize(params: { buffer: ArrayBuffer }): number;
+    mint(): ArrayBuffer;
   };
   events: {
     log(params: { message: string }): void;
@@ -30,35 +41,45 @@ const setup = () => {
   const logged: string[] = [];
   const sizes: number[] = [];
 
-  const server = new PortRpc<ServerApi, ClientApi>(port1, {
-    requests: {
-      add: ({ left, right }) => left + right,
-      divide: ({ left, right }) => Promise.resolve(left / right),
-      boom: ({ message }) => {
-        throw new Error(message);
+  const server = new RPC<ServerApi, ClientApi, SendOptions>(
+    new MessagePortTransport(port1),
+    {
+      requests: {
+        add: ({ left, right }) => respond(left + right),
+        divide: ({ left, right }) => Promise.resolve(respond(left / right)),
+        boom: ({ message }) => {
+          throw new Error(message);
+        },
+        denied: () => {
+          throw new RpcError('no access');
+        },
+        echoSize: ({ buffer }) => respond(buffer.byteLength),
+        mint: () => {
+          const buffer = new ArrayBuffer(8);
+          return respond(buffer, { transfer: [buffer] });
+        },
       },
-      denied: () => {
-        throw new RpcError('no access');
+      events: {
+        log: ({ message }) => {
+          logged.push(message);
+        },
+        ping: () => {
+          logged.push('pong');
+        },
+        sink: ({ buffer }) => {
+          sizes.push(buffer.byteLength);
+        },
       },
-      echoSize: ({ buffer }) => buffer.byteLength,
     },
-    events: {
-      log: ({ message }) => {
-        logged.push(message);
-      },
-      ping: () => {
-        logged.push('pong');
-      },
-      sink: ({ buffer }) => {
-        sizes.push(buffer.byteLength);
-      },
-    },
-  });
+  );
 
-  const client = new PortRpc<ClientApi, ServerApi>(port2, {
-    requests: {},
-    events: {},
-  });
+  const client = new RPC<ClientApi, ServerApi, SendOptions>(
+    new MessagePortTransport(port2),
+    {
+      requests: {},
+      events: {},
+    },
+  );
 
   // The adapter listens via addEventListener; ports deliver only once
   // started, and starting is the consumer's responsibility.
@@ -208,22 +229,74 @@ describe('RPC', () => {
     expect(buffer.byteLength).toBe(0);
   });
 
-  it('throws when transfer is requested on a non-transferable channel', async () => {
-    const plain: Channel<RpcMessage, RpcMessage> = {
+  it('carries send options from a request handler back to the caller', async () => {
+    const { client } = setup();
+
+    // `mint` replies via `respond(buffer, { transfer: [buffer] })`. Arriving
+    // with its 8 bytes intact proves the handler's options reached `send`.
+    // (Asserting `byteLength` rather than `instanceof ArrayBuffer`: the port
+    // deserializes the buffer in another realm, so `instanceof` is unreliable
+    // here — the request-side transfer tests check `byteLength` for the same
+    // reason.)
+    const buffer = await client.request('mint');
+
+    expect(buffer.byteLength).toBe(8);
+  });
+
+  it('rejects in-flight requests with an RpcClosedError on close', async () => {
+    const { client } = setup();
+    // The response round-trips asynchronously over the port; closing
+    // synchronously after the call wins the race, so the request settles as
+    // a close rather than a result.
+    const pending = client.request('add', { left: 1, right: 1 });
+
+    client.close();
+
+    await expect(pending).rejects.toBeInstanceOf(RpcClosedError);
+  });
+
+  it('throws on request after close', () => {
+    const { client } = setup();
+    client.close();
+
+    expect(() => client.request('add', { left: 1, right: 1 })).toThrow(
+      RpcClosedError,
+    );
+  });
+
+  it('throws on notify after close', () => {
+    const { client } = setup();
+    client.close();
+
+    expect(() => client.notify('log', { message: 'hi' })).toThrow(
+      RpcClosedError,
+    );
+  });
+
+  it('discards the transport listener on close', () => {
+    // Detaching the listener is the transport's job (it returns the
+    // unsubscribe); close's contract is simply to invoke it. Whether
+    // detaching actually halts delivery is covered in message-port.test.ts.
+    let unsubscribed = false;
+    const transport: Transport<RpcMessage, RpcMessage> = {
       send: () => undefined,
-      onMessage: () => undefined,
+      onMessage: () => () => {
+        unsubscribed = true;
+      },
     };
-    const client = RPC.from<ClientApi, ServerApi>(plain, {
+    const rpc = new RPC<ClientApi, ServerApi>(transport, {
       requests: {},
       events: {},
     });
-    const buffer = new ArrayBuffer(8);
 
-    await expect(
-      client.request('echoSize', { buffer }, { transfer: [buffer] }),
-    ).rejects.toThrow('does not support transfer');
-    expect(() =>
-      client.notify('sink', { buffer }, { transfer: [buffer] }),
-    ).toThrow('does not support transfer');
+    rpc.close();
+
+    expect(unsubscribed).toBe(true);
+  });
+
+  it('is idempotent across repeated close calls', () => {
+    const { client } = setup();
+    client.close();
+    expect(() => client.close()).not.toThrow();
   });
 });

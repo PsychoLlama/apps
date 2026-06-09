@@ -1,3 +1,2 @@
-export type { Channel, Message, MessageHandler } from './channel.ts';
-export { RPC, RpcError } from './rpc.ts';
-export type { RpcApi, RpcMessage, RpcProcedure } from './rpc.ts';
+export { RPC, RpcError, RpcClosedError, RpcResponse, respond } from './rpc.ts';
+export type { RpcApi, RpcHandlers, RpcMessage, RpcProcedure } from './rpc.ts';
