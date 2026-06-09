@@ -2,6 +2,7 @@ import {
   RPC,
   RpcError,
   RpcClosedError,
+  defineContract,
   type RpcMessage,
 } from '@lib/messaging/rpc';
 import {
@@ -349,5 +350,49 @@ describe('RPC', () => {
     const { client } = setup();
     client.close();
     expect(() => client.close()).not.toThrow();
+  });
+
+  it('returns the handler object unchanged from defineContract', () => {
+    // `defineContract` is identity at runtime — it only re-types the value.
+    const handlers = { requests: { ping: () => 1 } };
+    expect(defineContract()(handlers)).toBe(handlers);
+  });
+
+  it('builds a working endpoint from a defineContract contract', async () => {
+    const { port1, port2 } = new MessageChannel();
+    const serverApi = defineContract<SendOptions>()({
+      requests: {
+        echo: (value: string) => value,
+        // A zero-payload request whose handler attaches a transfer.
+        mint: (_params: void, options) => {
+          const buffer = new ArrayBuffer(8);
+          options.transfer = [buffer];
+          return buffer;
+        },
+      },
+    });
+    type ServerApi = typeof serverApi;
+    type ClientApi = {
+      requests: Record<string, never>;
+      events: Record<string, never>;
+    };
+
+    // The same value serves as the server's handlers...
+    RPC.from<ServerApi, ClientApi, SendOptions>(
+      new MessagePortTransport(port1),
+      serverApi,
+    );
+    // ...and as the contract the client calls against.
+    const client = RPC.from<ClientApi, ServerApi, SendOptions>(
+      new MessagePortTransport(port2),
+      { requests: {}, events: {} },
+    );
+    port1.start();
+    port2.start();
+
+    await expect(client.request('echo', 'hi')).resolves.toBe('hi');
+    // The options bag a define'd handler sets still rides along with the reply.
+    const buffer = await client.request('mint');
+    expect(buffer.byteLength).toBe(8);
   });
 });

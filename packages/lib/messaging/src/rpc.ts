@@ -149,6 +149,102 @@ type HandlerSection<Key extends string, Handlers> = [keyof Handlers] extends [
   : { [K in Key]: Handlers };
 
 /**
+ * The handler object {@link defineContract} accepts — the single value from
+ * which both the runtime handlers and the API contract are taken. Mirrors
+ * {@link RpcApi}, but each request handler may additionally receive the
+ * transport's mutable `Options` bag as a 2nd argument; events stay
+ * fire-and-forget and params-only.
+ *
+ * Authors annotate `params`; `options` is typed from the `Options` handed to
+ * `defineContract`. A handler may take no more than `(params, options)` — a
+ * third argument is rejected, keeping the {@link DerivedApi derived contract}
+ * within {@link RpcApi}'s arity-≤1 bound.
+ */
+interface RpcDefinition<Options> {
+  requests?: Record<string, (params: never, options: Options) => unknown>;
+  events?: Record<string, (params: never) => void>;
+}
+
+/**
+ * One handler reduced to its API contract: the procedure with its `options`
+ * argument dropped, leaving the params-only shape a peer calls against. Arity
+ * is preserved through the params tuple — a handler whose sole payload is the
+ * options bag (first param `void`) contracts to a zero-argument procedure.
+ */
+type ContractOf<Handler> = Handler extends (...args: infer Args) => infer Result
+  ? Args extends [infer Params, ...unknown[]]
+    ? [Params] extends [void]
+      ? () => Result
+      : (params: Params) => Result
+    : () => Result
+  : never;
+
+/**
+ * Fix a procedure's result to `void`, preserving its parameters. Events are
+ * fire-and-forget — whatever a handler happens to return is discarded — so the
+ * derived event contract reads as `void` regardless of the handler's body.
+ */
+type Voidify<Procedure> = Procedure extends (...args: infer Args) => unknown
+  ? (...args: Args) => void
+  : never;
+
+/**
+ * The {@link RpcApi} derived from an {@link RpcDefinition}: each request reduced
+ * to its {@link ContractOf params-only contract}, each event likewise but with
+ * its result fixed to `void`. `typeof` the value {@link defineContract} returns
+ * resolves to this — the type a peer imports as its `Remote`.
+ */
+type DerivedApi<Definition> = {
+  [Section in keyof Definition & ('requests' | 'events')]: {
+    [Method in keyof Definition[Section]]: Section extends 'events'
+      ? Voidify<ContractOf<Definition[Section][Method]>>
+      : ContractOf<Definition[Section][Method]>;
+  };
+};
+
+/**
+ * Author an endpoint's handlers and derive its API contract from the same
+ * value. Returns `handlers` unchanged at runtime; its *type* is the params-only
+ * {@link RpcApi} a peer calls against. One definition thus serves as both the
+ * implementation passed to {@link RPC.from} and the `typeof`-derived contract
+ * shared with the other peer — no separate, dummy params-only value to keep in
+ * sync.
+ *
+ * Curried so the transport's `Options` is given explicitly while the handler
+ * shape is inferred: `defineContract<SendOptions>()({ … })`. Within the
+ * handlers each request's `options` bag is typed from that argument; set fields
+ * on it (e.g. `options.transfer`) to attach send options to the reply. The bag
+ * is dropped from the derived contract, so using it never leaks into the API.
+ *
+ * @example
+ * ```ts
+ * const api = defineContract<SendOptions>()({
+ *   requests: {
+ *     status: () => 'online',
+ *     mint: (_params: void, options) => {
+ *       const buffer = new ArrayBuffer(8);
+ *       options.transfer = [buffer]; // rides along with the reply
+ *       return buffer;
+ *     },
+ *   },
+ *   events: { ready: (info: { version: string }) => announce(info) },
+ * });
+ * export type LocalApi = typeof api; // the peer imports this as its Remote
+ *
+ * const rpc = RPC.from<LocalApi, RemoteApi, SendOptions>(transport, api);
+ * ```
+ */
+export const defineContract =
+  <Options = never>() =>
+  <const Definition extends RpcDefinition<Options>>(
+    handlers: Definition,
+  ): DerivedApi<Definition> =>
+    // Identity at runtime; the cast re-types the handlers as their derived,
+    // params-only contract so `typeof` reads as the API rather than the
+    // options-carrying handler shape.
+    handlers as unknown as DerivedApi<Definition>;
+
+/**
  * Resolve a handler by method name, treating the name as untrusted.
  *
  * Inbound `method` strings may come from an untrusted peer (a foreign
