@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { fontWeight, neutral, space, text } from '@lib/design';
+import { neutral, space, text } from '@lib/design';
 
 export const header = style({
   borderBottom: `1px solid ${neutral.solid[6]}`,
@@ -19,7 +19,6 @@ export const nav = style({
   // slot is taller than the breadcrumb text, so without a floor the
   // content height would drift a few pixels between pages.
   minHeight: space[6],
-  fontWeight: fontWeight.medium,
 });
 
 // The root link carries the wordmark glyph, and `Link` lays out as
@@ -31,9 +30,9 @@ export const home = style({
   gap: space[1],
 });
 
-// Marks the launcher as the place you're already standing. Contrast
-// follows affordance: navigable segments render as bright links, so
-// the wordmark goes muted — the one action that isn't available.
+// The launcher's wordmark glyph. Same quiet color as everything else
+// in the bar — location is signaled by weight and the absence of a
+// trail, never by contrast.
 export const brand = style({
   color: text.lowContrast,
 });

@@ -23,10 +23,13 @@ export interface SiteHeaderCrumb {
  * breadcrumb rooted at the launcher: app pages read `Apps › <page>`
  * with the root linking home, while the launcher itself (no `title`
  * or `trail`) shows the root as a static wordmark — never a link to
- * the page you're already on. Contrast follows affordance: navigable
- * segments are bright links, while the current location (with
- * `aria-current`) is muted static text — the one action that isn't
- * available.
+ * the page you're already on.
+ *
+ * The whole bar is uniformly low-contrast — it's chrome, not content.
+ * Each signal gets its own channel: weight marks location (the current
+ * segment is medium, ancestors regular, plus `aria-current`), and
+ * hover marks affordance (links underline). Rest-state contrast
+ * deliberately encodes nothing.
  */
 export default function SiteHeader(props: {
   /** Single-page label. Shorthand for `trail={[{ label: title }]}`. */
@@ -80,7 +83,13 @@ export default function SiteHeader(props: {
               class={css.brand}
             >
               <IconApps width="18" height="18" aria-hidden="true" />
-              <Text as="span" size={2} color="lowContrast" selectable={false}>
+              <Text
+                as="span"
+                size={2}
+                weight="medium"
+                color="lowContrast"
+                selectable={false}
+              >
                 Apps
               </Text>
             </Flex>
@@ -90,9 +99,7 @@ export default function SiteHeader(props: {
             testId="home"
             href="/"
             size={2}
-            weight="medium"
             color="neutral"
-            highContrast
             underline="hover"
             class={css.home}
           >
@@ -131,9 +138,7 @@ export default function SiteHeader(props: {
                     testId={crumb.testId ?? 'breadcrumb'}
                     href={href}
                     size={2}
-                    weight="medium"
                     color="neutral"
-                    highContrast
                     underline="hover"
                   >
                     {crumb.label}
