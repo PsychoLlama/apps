@@ -27,9 +27,10 @@ export interface SiteHeaderCrumb {
  *
  * The whole bar is uniformly low-contrast — it's chrome, not content.
  * Each signal gets its own channel: weight marks location (the current
- * segment is medium, ancestors regular, plus `aria-current`), and
- * hover marks affordance (links underline). Rest-state contrast
- * deliberately encodes nothing.
+ * segment is medium, ancestors regular, plus `aria-current`), and the
+ * underline marks affordance — neutral links keep the design system's
+ * default persistent underline, since without an accent hue it's their
+ * only rest-state link signal. Contrast deliberately encodes nothing.
  */
 export default function SiteHeader(props: {
   /** Single-page label. Shorthand for `trail={[{ label: title }]}`. */
@@ -100,7 +101,6 @@ export default function SiteHeader(props: {
             href="/"
             size={2}
             color="neutral"
-            underline="hover"
             class={css.home}
           >
             <IconApps width="18" height="18" aria-hidden="true" />
@@ -139,7 +139,6 @@ export default function SiteHeader(props: {
                     href={href}
                     size={2}
                     color="neutral"
-                    underline="hover"
                   >
                     {crumb.label}
                   </Link>
