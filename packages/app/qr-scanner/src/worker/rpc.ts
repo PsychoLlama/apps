@@ -1,4 +1,6 @@
 import { decode as decodeImage, type Scan } from '@crate/qr-scanner';
+import { defineContract } from '@lib/messaging/rpc';
+import type { SendOptions } from '@lib/messaging/message-port';
 import { createLogger, toError } from '@lib/observability';
 
 /**
@@ -86,13 +88,13 @@ const decode = ({ bitmap }: { bitmap: ImageBitmap }): ScanResult | null => {
  * `decode` handler and the {@link DecoderApi} contract derived from it. The
  * worker entry wires this onto its RPC; the host calls it.
  *
- * Handlers stay params-only — they don't take the RPC options bag — so the
- * type derived from this value reads as a clean procedure contract rather
- * than leaking handler-side parameters into the API.
+ * Built through {@link defineContract} so the derived contract stays
+ * params-only even if a handler reaches for the transport's {@link SendOptions}
+ * bag — the options argument never leaks into the API.
  */
-export const api = {
+export const api = defineContract<SendOptions>()({
   requests: { decode },
-};
+});
 
 /**
  * The decoder worker's RPC surface — a single `decode` request returning a

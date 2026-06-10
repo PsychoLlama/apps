@@ -1,4 +1,4 @@
-import type { MessageHandler, Transport, Unsubscribe } from './transport.ts';
+import type { MessageHandler, Transport, Unsubscribe } from './interface.ts';
 
 /**
  * {@link MessagePortTransport}'s per-send options — the `Options` it supplies

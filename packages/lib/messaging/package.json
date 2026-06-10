@@ -7,8 +7,9 @@
   "license": "MIT",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts",
-    "./transport": "./src/transport.ts"
+    "./rpc": "./src/rpc.ts",
+    "./transport": "./src/transport/interface.ts",
+    "./message-port": "./src/transport/message-port.ts"
   },
   "scripts": {
     "typecheck": "tsc"

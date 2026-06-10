@@ -1,4 +1,4 @@
-import { MessagePortTransport } from '@lib/messaging/transport';
+import { MessagePortTransport } from '@lib/messaging/message-port';
 
 type Wire =
   | { type: 'data'; buffer?: ArrayBuffer }

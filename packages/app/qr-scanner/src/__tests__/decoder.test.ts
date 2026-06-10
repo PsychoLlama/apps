@@ -1,8 +1,8 @@
-import { RPC, type RpcHandlers, type RpcMessage } from '@lib/messaging';
+import { RPC, type RpcHandlers, type RpcMessage } from '@lib/messaging/rpc';
 import {
   MessagePortTransport,
   type SendOptions,
-} from '@lib/messaging/transport';
+} from '@lib/messaging/message-port';
 import {
   requestDecode,
   type DecoderConnection,

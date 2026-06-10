@@ -1,5 +1,7 @@
-import type { RPC, RpcApi, RpcHandlers, RpcMessage } from '@lib/messaging';
-import type { SendOptions, Transport } from '@lib/messaging/transport';
+import { defineContract } from '@lib/messaging/rpc';
+import type { RPC, RpcApi, RpcHandlers, RpcMessage } from '@lib/messaging/rpc';
+import type { SendOptions } from '@lib/messaging/message-port';
+import type { Transport } from '@lib/messaging/transport';
 
 // Type-level assertions for the guarantees the runtime suite can't reach:
 // method-name routing and arity enforcement. The happy-path call typing is
@@ -114,5 +116,65 @@ describe('RPC type safety', () => {
     expectTypeOf<Transport<RpcMessage, RpcMessage, SendOptions>>().toExtend<
       Transport<RpcMessage, RpcMessage>
     >();
+  });
+});
+
+describe('defineContract', () => {
+  it('derives a params-only contract from option-taking handlers', () => {
+    const api = defineContract<SendOptions>()({
+      requests: {
+        // A handler that reads the options bag...
+        status: (info: { id: number }, options) => {
+          options.transfer = [];
+          return info.id;
+        },
+        // ...and a zero-payload request whose only argument is the bag.
+        mint: (_params: void, options) => {
+          const buffer = new ArrayBuffer(8);
+          options.transfer = [buffer];
+          return buffer;
+        },
+      },
+      events: {
+        ready: (info: { version: string }) => void info,
+        ping: () => {},
+      },
+    });
+    type Api = typeof api;
+
+    // Options are stripped; arity is preserved (`mint`/`ping` stay nullary).
+    expectTypeOf<Api['requests']['status']>().toEqualTypeOf<
+      (params: { id: number }) => number
+    >();
+    expectTypeOf<Api['requests']['mint']>().toEqualTypeOf<() => ArrayBuffer>();
+    expectTypeOf<Api['events']['ready']>().toEqualTypeOf<
+      (params: { version: string }) => void
+    >();
+    expectTypeOf<Api['events']['ping']>().toEqualTypeOf<() => void>();
+
+    // The derived value is a valid contract and stands in as its own handlers.
+    expectTypeOf<Api>().toExtend<RpcApi>();
+    expectTypeOf(api).toExtend<RpcHandlers<Api, SendOptions>>();
+  });
+
+  it('rejects a handler that exceeds (params, options)', () => {
+    defineContract<SendOptions>()({
+      requests: {
+        // @ts-expect-error - a third parameter exceeds (params, options).
+        tooMany: (_params: void, _options: SendOptions, extra: number) => extra,
+      },
+    });
+  });
+
+  it('types the options bag from the Options argument', () => {
+    defineContract<SendOptions>()({
+      requests: {
+        bad: (_params: void, options) => {
+          // @ts-expect-error - `transfer` is Transferable[], not a string.
+          options.transfer = 'nope';
+          return 1;
+        },
+      },
+    });
   });
 });
