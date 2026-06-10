@@ -1,9 +1,7 @@
 import { style } from '@vanilla-extract/css';
-import { accent, fast, space, standard, text } from '@lib/design';
+import { fast, space, standard, text } from '@lib/design';
 
 export const list = style({
-  width: '100%',
-  maxWidth: '640px',
   listStyle: 'none',
 });
 
@@ -18,12 +16,6 @@ export const card = style({
 export const icon = style({
   color: text.lowContrast,
   flexShrink: 0,
-  transition: `color ${fast[2]} ${standard.productive}`,
-  selectors: {
-    [`${card}:hover &, ${card}:focus-visible &`]: {
-      color: accent.solid[11],
-    },
-  },
 });
 
 export const chevron = style({
@@ -35,8 +27,4 @@ export const chevron = style({
       translate: `${space[1]} 0`,
     },
   },
-});
-
-export const footer = style({
-  color: text.lowContrast,
 });

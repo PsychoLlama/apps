@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
 import type { Component } from 'solid-js';
-import { Card, Flex, Heading, Link, LinkButton, Text } from '@lib/ui';
+import { Card, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
@@ -37,7 +37,7 @@ const APPS: ReadonlyArray<AppEntry> = [
     name: 'Icon Editor',
     href: '/icon-editor',
     description:
-      'Pick a glyph from the open Iconify catalog, restyle it until it feels like yours, and export the result as a brandmark.',
+      'Restyle an icon from the Iconify catalog and export it as a brandmark.',
     Icon: IconPalette,
   },
   {
@@ -45,15 +45,14 @@ const APPS: ReadonlyArray<AppEntry> = [
     name: 'Scanner',
     href: '/scanner',
     description:
-      'Point your camera at a QR code and see what it’s hiding. Decoding happens on your device — nothing is uploaded anywhere.',
+      'Scan QR codes with your camera. Decoding runs entirely on your device.',
     Icon: IconQrcodeScan,
   },
   {
     id: 'storybook',
     name: 'Storybook',
     href: '/__storybook/',
-    description:
-      'The workshop behind everything else here: every component and design token in the system, laid out for browsing.',
+    description: 'Browse the component library and design tokens.',
     Icon: IconStorybook,
     external: true,
   },
@@ -63,8 +62,7 @@ const APPS: ReadonlyArray<AppEntry> = [
           id: 'experimental',
           name: 'Experimental',
           href: '/experimental',
-          description:
-            'A scratchpad for ideas that aren’t apps yet. Expect sharp edges, dead ends, and frequent rearranging.',
+          description: 'A scratchpad for work-in-progress ideas.',
           Icon: IconFlask,
         } satisfies AppEntry,
       ]
@@ -97,10 +95,10 @@ const Launcher = () => (
       as="section"
       direction="column"
       align="center"
-      gap={7}
+      gap={6}
       grow
       px={5}
-      py={7}
+      py={6}
     >
       <Flex as="hgroup" direction="column" align="center" gap={3}>
         <Heading as="h1" size={8} trim="start" selectable={false}>
@@ -111,86 +109,80 @@ const Launcher = () => (
         </Text>
       </Flex>
 
-      <Flex
-        as="ul"
-        direction="column"
-        gap={3}
-        class={css.list}
-        aria-label="Apps"
-      >
-        <For each={APPS}>
-          {(app) => (
-            <Flex as="li" class={css.item}>
-              <Card
-                as="a"
-                href={app.href}
-                rel={app.external ? 'external' : undefined}
-                size={3}
-                variant="surface"
-                class={css.card}
-              >
-                <Flex as="div" align="center" gap={4}>
-                  <app.Icon
-                    width="24"
-                    height="24"
-                    class={css.icon}
-                    aria-hidden="true"
-                  />
-                  <Flex as="div" direction="column" gap={2} grow>
-                    <Heading
-                      as="h2"
-                      size={3}
-                      weight="medium"
-                      trim="start"
-                      selectable={false}
-                    >
-                      {app.name}
-                    </Heading>
-                    <Text
-                      as="p"
-                      size={2}
-                      color="lowContrast"
-                      trim="end"
-                      selectable={false}
-                    >
-                      {app.description}
-                    </Text>
+      <Container as="div" size={2}>
+        <Flex
+          as="ul"
+          direction="column"
+          gap={3}
+          class={css.list}
+          aria-label="Apps"
+        >
+          <For each={APPS}>
+            {(app) => (
+              <Flex as="li" class={css.item}>
+                <Card
+                  as="a"
+                  href={app.href}
+                  rel={app.external ? 'external' : undefined}
+                  size={3}
+                  variant="surface"
+                  class={css.card}
+                >
+                  <Flex as="div" align="center" gap={4}>
+                    <Flex as="div" direction="column" gap={2} grow>
+                      <Flex as="div" align="center" gap={2}>
+                        <app.Icon
+                          width="20"
+                          height="20"
+                          class={css.icon}
+                          aria-hidden="true"
+                        />
+                        <Heading
+                          as="h2"
+                          size={3}
+                          weight="medium"
+                          selectable={false}
+                        >
+                          {app.name}
+                        </Heading>
+                      </Flex>
+                      <Text
+                        as="p"
+                        size={2}
+                        color="lowContrast"
+                        trim="end"
+                        selectable={false}
+                      >
+                        {app.description}
+                      </Text>
+                    </Flex>
+                    <IconChevronRight
+                      width="20"
+                      height="20"
+                      class={css.chevron}
+                      aria-hidden="true"
+                    />
                   </Flex>
-                  <IconChevronRight
-                    width="20"
-                    height="20"
-                    class={css.chevron}
-                    aria-hidden="true"
-                  />
-                </Flex>
-              </Card>
-            </Flex>
-          )}
-        </For>
-      </Flex>
+                </Card>
+              </Flex>
+            )}
+          </For>
+        </Flex>
+      </Container>
     </Flex>
 
-    <Flex
-      as="footer"
-      align="center"
-      justify="center"
-      gap={2}
-      px={5}
-      py={5}
-      class={css.footer}
-    >
-      <IconGithub width="16" height="16" aria-hidden="true" />
-      <Link
+    <Flex as="footer" justify="center" py={3}>
+      <LinkButton
         testId="github"
         href="https://github.com/PsychoLlama/apps"
         target="_blank"
         rel="noopener noreferrer"
-        size={2}
+        aria-label="Source on GitHub"
+        variant="ghost"
         color="neutral"
-        underline="hover"
       >
-        Built in the open — source on GitHub
-      </Link>
+        <IconGithub width="20" height="20" />
+      </LinkButton>
     </Flex>
   </Flex>
 );

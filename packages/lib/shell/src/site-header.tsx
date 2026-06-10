@@ -23,7 +23,9 @@ export interface SiteHeaderCrumb {
  * breadcrumb rooted at the launcher: app pages read `Apps › <page>`
  * with the root linking home, while the launcher itself (no `title`
  * or `trail`) shows the root as a static wordmark — never a link to
- * the page you're already on.
+ * the page you're already on. Wherever you are, the current location
+ * is the high-contrast segment (with `aria-current`); everything
+ * before it is a muted link.
  */
 export default function SiteHeader(props: {
   /** Single-page label. Shorthand for `trail={[{ label: title }]}`. */
@@ -69,9 +71,15 @@ export default function SiteHeader(props: {
         <Show
           when={crumbs().length > 0}
           fallback={
-            <Flex as="div" align="center" gap={1} class={css.brand}>
+            <Flex
+              as="div"
+              align="center"
+              gap={1}
+              aria-current="page"
+              class={css.brand}
+            >
               <IconApps width="18" height="18" aria-hidden="true" />
-              <Text as="span" size={2} color="lowContrast" selectable={false}>
+              <Text as="span" size={2} color="highContrast" selectable={false}>
                 Apps
               </Text>
             </Flex>
@@ -99,7 +107,8 @@ export default function SiteHeader(props: {
                     as="span"
                     size={2}
                     weight="medium"
-                    color="lowContrast"
+                    color="highContrast"
+                    aria-current="page"
                     selectable={false}
                   >
                     {crumb.label}

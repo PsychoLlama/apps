@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { fontWeight, neutral, space, text } from '@lib/design';
+import { accent, fontWeight, neutral, space, text } from '@lib/design';
 
 export const header = style({
   borderBottom: `1px solid ${neutral.solid[6]}`,
@@ -25,8 +25,11 @@ export const nav = style({
   fontWeight: fontWeight.medium,
 });
 
+// Marks the launcher as the place you're already standing: the glyph
+// takes the accent while the label runs high-contrast, in deliberate
+// contrast to the muted link the root renders as on every other page.
 export const brand = style({
-  color: text.lowContrast,
+  color: accent.solid[11],
 });
 
 export const separator = style({
