@@ -1,7 +1,7 @@
 import { children, For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { Title } from '@solidjs/meta';
-import { Flex, Link, Text } from '@lib/ui';
+import { Flex, Link, LinkButton, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import * as css from './site-header.css';
@@ -25,12 +25,13 @@ export interface SiteHeaderCrumb {
  * or `trail`) shows the root as a static wordmark — never a link to
  * the page you're already on.
  *
- * The whole bar is uniformly low-contrast — it's chrome, not content.
- * Each signal gets its own channel: weight marks location (the current
- * segment is medium, ancestors regular, plus `aria-current`), and the
- * underline marks affordance — neutral links keep the design system's
- * default persistent underline, since without an accent hue it's their
- * only rest-state link signal. Contrast deliberately encodes nothing.
+ * The whole bar is uniformly low-contrast at rest — it's chrome, not
+ * content. Each signal gets its own channel: weight marks location
+ * (the current segment is medium, plus `aria-current`), and affordance
+ * comes from the design system's interactive treatments — the root is
+ * a ghost button (hit-area plus hover fill), and ancestor crumbs keep
+ * the persistent neutral-link underline. Contrast deliberately encodes
+ * nothing.
  */
 export default function SiteHeader(props: {
   /** Single-page label. Shorthand for `trail={[{ label: title }]}`. */
@@ -96,16 +97,10 @@ export default function SiteHeader(props: {
             </Flex>
           }
         >
-          <Link
-            testId="home"
-            href="/"
-            size={2}
-            color="neutral"
-            class={css.home}
-          >
-            <IconApps width="18" height="18" aria-hidden="true" />
+          <LinkButton testId="home" href="/" variant="ghost" color="neutral">
+            <IconApps width="18" height="18" />
             Apps
-          </Link>
+          </LinkButton>
         </Show>
 
         <For each={crumbs()}>

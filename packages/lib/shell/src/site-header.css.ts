@@ -21,15 +21,6 @@ export const nav = style({
   minHeight: space[6],
 });
 
-// The root link carries the wordmark glyph, and `Link` lays out as
-// inline text — flex alignment keeps the icon vertically centered
-// against the label instead of sitting on the baseline.
-export const home = style({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: space[1],
-});
-
 // The launcher's wordmark glyph. Same quiet color as everything else
 // in the bar — location is signaled by weight and the absence of a
 // trail, never by contrast.
