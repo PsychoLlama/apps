@@ -24,10 +24,7 @@ export interface Transport<Inbound, Outbound, Options = never> {
 - Event and request handlers accept an optional payload.
 - Request handlers may take the transport's mutable `options` bag as a 2nd param; `events` stay params-only.
 - `Options` are accepted as the final param at the call site if your transport allows it.
-- **Author with `defineContract<Options>()(handlers)`** (exported from `@lib/messaging/rpc`). It returns `handlers` unchanged; `typeof` it is the derived **params-only** `RpcApi`. One value is both the implementation you pass to `RPC.from` and the contract a peer imports — no separate dummy contract to keep in sync.
-- Curried: the transport's `Options` is explicit, handlers inferred. Each request's `options` is typed from it and stripped from the contract, so using it never leaks into the API.
-- Zero payload + options: type the first param `void` (`(_p: void, options) => …`); it contracts to a no-arg procedure.
-- A bare `typeof` a params-only object still works when no handler needs options — `defineContract` is just the option-safe upgrade.
+- Use `defineContract<Options>()(...)` to define RPC contracts.
 
 ```ts
 // One source of truth: author handlers, derive the contract from the same value.
