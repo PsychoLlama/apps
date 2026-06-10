@@ -33,8 +33,9 @@ const api = defineContract<SendOptions>()({
   requests: {
     status: (payload: string): string => 'online',
     mint: (_payload: void, options) => {
-      options.transfer = []; // Transferable[] (per the transport's Options)
-      return new ArrayBuffer(8);
+      const buffer = new ArrayBuffer(8);
+      options.transfer = [buffer]; // hand the buffer over by reference
+      return buffer;
     },
   },
   // events optional
