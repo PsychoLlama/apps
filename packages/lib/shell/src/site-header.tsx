@@ -1,10 +1,8 @@
 import { For, Show } from 'solid-js';
 import { Title } from '@solidjs/meta';
-import { Flex, Link, LinkButton, Separator, Text } from '@lib/ui';
+import { Flex, Link, LinkButton, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
-import IconCog from 'virtual:icons/mdi/cog-outline';
-import IconGithub from 'virtual:icons/mdi/github';
 import * as css from './site-header.css';
 
 /**
@@ -19,6 +17,12 @@ export interface SiteHeaderCrumb {
   testId?: string;
 }
 
+/**
+ * Top-of-page chrome for app routes. Renders a breadcrumb rooted at the
+ * launcher — `Apps › <page>` — so the way home is labeled rather than
+ * implied. Suite-level actions (settings, source) live on the launcher
+ * itself, not here; the launcher doesn't render this header at all.
+ */
 export default function SiteHeader(props: {
   /** Single-page label. Shorthand for `trail={[{ label: title }]}`. */
   title?: string;
@@ -39,83 +43,58 @@ export default function SiteHeader(props: {
   };
 
   return (
-    <Flex as="header" align="center" gap={4} px={4} class={css.header}>
-      <LinkButton testId="home" href="/" variant="ghost" color="neutral">
-        <IconApps width="24" height="24" />
-      </LinkButton>
-
+    <Flex as="header" align="center" px={4} class={css.header}>
       <Show when={documentTitle()} keyed>
         {(value) => <Title>{value}</Title>}
       </Show>
 
-      <For each={crumbs()}>
-        {(crumb, index) => (
-          <>
-            <Show
-              when={index() > 0}
-              fallback={<Separator orientation="vertical" decorative />}
-            >
+      <Flex as="nav" align="center" gap={2} aria-label="Breadcrumb">
+        <LinkButton testId="home" href="/" variant="ghost" color="neutral">
+          <IconApps width="18" height="18" />
+          Apps
+        </LinkButton>
+
+        <For each={crumbs()}>
+          {(crumb) => (
+            <>
               <IconChevronRight
                 width="16"
                 height="16"
                 aria-hidden="true"
                 class={css.separator}
               />
-            </Show>
-            <Show
-              when={crumb.href}
-              fallback={
-                <Text
-                  as="span"
-                  size={2}
-                  weight="medium"
-                  color="lowContrast"
-                  selectable={false}
-                >
-                  {crumb.label}
-                </Text>
-              }
-              keyed
-            >
-              {(href) => (
-                <Link
-                  testId={crumb.testId ?? 'breadcrumb'}
-                  href={href}
-                  size={2}
-                  weight="medium"
-                  color="neutral"
-                  underline="hover"
-                >
-                  {crumb.label}
-                </Link>
-              )}
-            </Show>
-          </>
-        )}
-      </For>
-
-      <LinkButton
-        testId="github"
-        href="https://github.com/PsychoLlama/apps"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="GitHub repository"
-        variant="ghost"
-        color="neutral"
-        class={css.trailing}
-      >
-        <IconGithub width="24" height="24" />
-      </LinkButton>
-
-      <LinkButton
-        testId="settings"
-        href="/settings"
-        aria-label="Settings"
-        variant="ghost"
-        color="neutral"
-      >
-        <IconCog width="24" height="24" />
-      </LinkButton>
+              <Show
+                when={crumb.href}
+                fallback={
+                  <Text
+                    as="span"
+                    size={2}
+                    weight="medium"
+                    color="lowContrast"
+                    selectable={false}
+                  >
+                    {crumb.label}
+                  </Text>
+                }
+                keyed
+              >
+                {(href) => (
+                  <Link
+                    testId={crumb.testId ?? 'breadcrumb'}
+                    href={href}
+                    size={2}
+                    weight="medium"
+                    color="neutral"
+                    underline="hover"
+                  >
+                    {crumb.label}
+                  </Link>
+                )}
+              </Show>
+            </>
+          )}
+        </For>
+      </Flex>
     </Flex>
   );
 }
