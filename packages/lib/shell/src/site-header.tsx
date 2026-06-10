@@ -1,4 +1,4 @@
-import { For, Show } from 'solid-js';
+import { children, For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { Title } from '@solidjs/meta';
 import { Flex, Link, LinkButton, Text } from '@lib/ui';
@@ -37,6 +37,11 @@ export default function SiteHeader(props: {
    */
   actions?: JSX.Element;
 }) {
+  // Resolve the slot once. JSX props compile to getters that build a
+  // fresh element on every access — reading `props.actions` more than
+  // once would create duplicate elements and corrupt SSR hydration.
+  const actions = children(() => props.actions);
+
   const crumbs = (): SiteHeaderCrumb[] => {
     if (props.trail && props.trail.length > 0) return props.trail;
     if (props.title) return [{ label: props.title }];
@@ -120,9 +125,9 @@ export default function SiteHeader(props: {
         </For>
       </Flex>
 
-      <Show when={props.actions}>
+      <Show when={actions()}>
         <Flex as="div" align="center" gap={2} class={css.trailing}>
-          {props.actions}
+          {actions()}
         </Flex>
       </Show>
     </Flex>
