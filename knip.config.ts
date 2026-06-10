@@ -32,7 +32,11 @@ const config: KnipConfig = {
         'src/__tests__/test-utils.tsx',
         'vite.config.ts',
       ],
-      project: ['src/**/*.{ts,tsx}'],
+      // Project files need the production marker too: without it,
+      // non-entry modules reached from production entries (e.g.
+      // `not-found/`, `error-boundary/`) are skipped by `--production`,
+      // and the dependencies only they import get reported as unused.
+      project: ['src/**/*.{ts,tsx}!'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
         // Imported as `@app/service-worker?worker&url`; the query

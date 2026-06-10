@@ -1,11 +1,8 @@
 import { style } from '@vanilla-extract/css';
-import { accent, radius, space } from '@lib/design';
+import { fast, space, standard, text } from '@lib/design';
 
-export const grid = style({
-  width: '100%',
-  maxWidth: '720px',
+export const list = style({
   listStyle: 'none',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
 });
 
 export const item = style({
@@ -13,14 +10,21 @@ export const item = style({
 });
 
 export const card = style({
-  height: '100%',
+  width: '100%',
 });
 
-export const iconTile = style({
-  width: space[8],
-  height: space[8],
-  borderRadius: radius[3],
+export const icon = style({
+  color: text.lowContrast,
   flexShrink: 0,
-  background: accent.solid[3],
-  color: accent.solid[11],
+});
+
+export const chevron = style({
+  color: text.lowContrast,
+  flexShrink: 0,
+  transition: `translate ${fast[2]} ${standard.productive}`,
+  selectors: {
+    [`${card}:hover &, ${card}:focus-visible &`]: {
+      translate: `${space[1]} 0`,
+    },
+  },
 });

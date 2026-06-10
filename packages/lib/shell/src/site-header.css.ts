@@ -14,6 +14,20 @@ export const header = style({
   paddingBottom: space[2],
 });
 
+export const nav = style({
+  // Pin the bar to one height on every route. The launcher's actions
+  // slot is taller than the breadcrumb text, so without a floor the
+  // content height would drift a few pixels between pages.
+  minHeight: space[6],
+});
+
+// The launcher's wordmark glyph. Same quiet color as everything else
+// in the bar — location is signaled by weight and the absence of a
+// trail, never by contrast.
+export const brand = style({
+  color: text.lowContrast,
+});
+
 export const separator = style({
   color: text.lowContrast,
   flexShrink: 0,
