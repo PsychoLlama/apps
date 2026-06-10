@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutral, space, text } from '@lib/design';
+import { fontWeight, neutral, space, text } from '@lib/design';
 
 export const header = style({
   borderBottom: `1px solid ${neutral.solid[6]}`,
@@ -14,7 +14,26 @@ export const header = style({
   paddingBottom: space[2],
 });
 
+export const nav = style({
+  // Pin the bar to one height on every route. Ghost buttons retract
+  // their padding via negative margins and the launcher swaps the root
+  // link for plain text, so without a floor the content height drifts
+  // a few pixels between pages.
+  minHeight: space[6],
+  // Ghost buttons inherit font weight; match the crumbs' medium so the
+  // root link reads as part of the breadcrumb.
+  fontWeight: fontWeight.medium,
+});
+
+export const brand = style({
+  color: text.lowContrast,
+});
+
 export const separator = style({
   color: text.lowContrast,
   flexShrink: 0,
+});
+
+export const trailing = style({
+  marginInlineStart: 'auto',
 });
