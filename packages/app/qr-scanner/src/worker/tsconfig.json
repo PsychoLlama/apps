@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json.schemastore.org/tsconfig",
+  // Worker entrypoints run in a worker, not the DOM. Typing them under the
+  // `WebWorker` lib (in place of `DOM`) makes `self` a
+  // `DedicatedWorkerGlobalScope`, so it satisfies `MessageEndpoint` directly —
+  // no cast. Nested here so the editor and ESLint's project service resolve
+  // worker files to this config automatically; the package `tsconfig.json`
+  // excludes `src/worker` so they don't double-check under the DOM lib.
+  "extends": "../../../../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "WebWorker", "ES2025.Intl"],
+    "customConditions": ["browser"],
+    "types": [
+      "vite/client",
+      "@dev/build/vite-plugin/instrumentation-scope-types"
+    ]
+  },
+  "include": ["."]
+}

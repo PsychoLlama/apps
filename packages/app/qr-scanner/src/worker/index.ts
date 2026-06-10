@@ -2,24 +2,19 @@ import init from '@crate/qr-scanner';
 import { RPC, type RpcMessage } from '@lib/messaging/rpc';
 import {
   MessagePortTransport,
-  type MessageEndpoint,
   type SendOptions,
 } from '@lib/messaging/message-port';
 import { createLogger, toError } from '@lib/observability';
-import type { HostApi } from '../decoder';
+import type { HostApi } from '../host-api';
 import { api, type DecoderApi } from './rpc';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
-// `MessagePortTransport` drives any `MessageEndpoint`, and the worker global
-// scope is one at runtime: `postMessage(message, transfer)` plus
-// `add/removeEventListener`. The cast is only to satisfy the type checker —
-// this package is typed for the DOM, so `self` reads as a `Window`, whose
-// `postMessage(message, targetOrigin, …)` overload doesn't match. Removing it
-// needs a worker-typed lib for `*.worker.ts` (tracked as a followup).
-const transport = new MessagePortTransport<RpcMessage, RpcMessage>(
-  self as MessageEndpoint,
-);
+// The worker global scope is a `MessageEndpoint` as-is — `postMessage(message,
+// transfer)` plus `add/removeEventListener`. This file is typed for the worker
+// (see `src/worker/tsconfig.json`), so `self` reads as a
+// `DedicatedWorkerGlobalScope` and satisfies the interface with no cast.
+const transport = new MessagePortTransport<RpcMessage, RpcMessage>(self);
 
 const rpc = RPC.from<DecoderApi, HostApi, SendOptions>(transport, api);
 
