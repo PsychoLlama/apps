@@ -15,22 +15,27 @@ export const header = style({
 });
 
 export const nav = style({
-  // Pin the bar to one height on every route. Ghost buttons retract
-  // their padding via negative margins and the launcher swaps the root
-  // link for plain text, so without a floor the content height drifts
-  // a few pixels between pages.
+  // Pin the bar to one height on every route. The launcher's actions
+  // slot is taller than the breadcrumb text, so without a floor the
+  // content height would drift a few pixels between pages.
   minHeight: space[6],
-  // Ghost buttons inherit font weight; match the crumbs' medium so the
-  // root link reads as part of the breadcrumb.
   fontWeight: fontWeight.medium,
 });
 
-// Marks the launcher as the place you're already standing: the whole
-// wordmark runs high-contrast, in deliberate contrast to the muted
-// link the root renders as on every other page. Bright = current,
-// muted = navigable.
+// The root link carries the wordmark glyph, and `Link` lays out as
+// inline text — flex alignment keeps the icon vertically centered
+// against the label instead of sitting on the baseline.
+export const home = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: space[1],
+});
+
+// Marks the launcher as the place you're already standing. Contrast
+// follows affordance: navigable segments render as bright links, so
+// the wordmark goes muted — the one action that isn't available.
 export const brand = style({
-  color: text.highContrast,
+  color: text.lowContrast,
 });
 
 export const separator = style({

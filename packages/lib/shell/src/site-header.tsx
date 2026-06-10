@@ -1,7 +1,7 @@
 import { children, For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { Title } from '@solidjs/meta';
-import { Flex, Link, LinkButton, Text } from '@lib/ui';
+import { Flex, Link, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import * as css from './site-header.css';
@@ -23,9 +23,10 @@ export interface SiteHeaderCrumb {
  * breadcrumb rooted at the launcher: app pages read `Apps › <page>`
  * with the root linking home, while the launcher itself (no `title`
  * or `trail`) shows the root as a static wordmark — never a link to
- * the page you're already on. Wherever you are, the current location
- * is the high-contrast segment (with `aria-current`); everything
- * before it is a muted link.
+ * the page you're already on. Contrast follows affordance: navigable
+ * segments are bright links, while the current location (with
+ * `aria-current`) is muted static text — the one action that isn't
+ * available.
  */
 export default function SiteHeader(props: {
   /** Single-page label. Shorthand for `trail={[{ label: title }]}`. */
@@ -79,16 +80,25 @@ export default function SiteHeader(props: {
               class={css.brand}
             >
               <IconApps width="18" height="18" aria-hidden="true" />
-              <Text as="span" size={2} color="highContrast" selectable={false}>
+              <Text as="span" size={2} color="lowContrast" selectable={false}>
                 Apps
               </Text>
             </Flex>
           }
         >
-          <LinkButton testId="home" href="/" variant="ghost" color="neutral">
-            <IconApps width="18" height="18" />
+          <Link
+            testId="home"
+            href="/"
+            size={2}
+            weight="medium"
+            color="neutral"
+            highContrast
+            underline="hover"
+            class={css.home}
+          >
+            <IconApps width="18" height="18" aria-hidden="true" />
             Apps
-          </LinkButton>
+          </Link>
         </Show>
 
         <For each={crumbs()}>
@@ -107,7 +117,7 @@ export default function SiteHeader(props: {
                     as="span"
                     size={2}
                     weight="medium"
-                    color="highContrast"
+                    color="lowContrast"
                     aria-current="page"
                     selectable={false}
                   >
@@ -123,6 +133,7 @@ export default function SiteHeader(props: {
                     size={2}
                     weight="medium"
                     color="neutral"
+                    highContrast
                     underline="hover"
                   >
                     {crumb.label}
