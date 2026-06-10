@@ -171,7 +171,7 @@ const Launcher = () => (
       </Container>
     </Flex>
 
-    <Flex as="footer" justify="center" py={3}>
+    <Flex as="footer" justify="end" px={4} py={3}>
       <LinkButton
         testId="github"
         href="https://github.com/PsychoLlama/apps"

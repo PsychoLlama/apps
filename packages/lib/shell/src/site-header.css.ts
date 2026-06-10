@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { accent, fontWeight, neutral, space, text } from '@lib/design';
+import { fontWeight, neutral, space, text } from '@lib/design';
 
 export const header = style({
   borderBottom: `1px solid ${neutral.solid[6]}`,
@@ -25,11 +25,12 @@ export const nav = style({
   fontWeight: fontWeight.medium,
 });
 
-// Marks the launcher as the place you're already standing: the glyph
-// takes the accent while the label runs high-contrast, in deliberate
-// contrast to the muted link the root renders as on every other page.
+// Marks the launcher as the place you're already standing: the whole
+// wordmark runs high-contrast, in deliberate contrast to the muted
+// link the root renders as on every other page. Bright = current,
+// muted = navigable.
 export const brand = style({
-  color: accent.solid[11],
+  color: text.highContrast,
 });
 
 export const separator = style({
