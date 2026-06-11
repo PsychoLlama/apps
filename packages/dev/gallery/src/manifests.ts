@@ -1,4 +1,4 @@
-import type { GalleryManifest } from '@app/gallery';
+import type { GalleryManifest } from './index.ts';
 
 /**
  * Every package's `src/manifest.gallery.ts`, discovered at build time. The
@@ -10,7 +10,7 @@ const modules = import.meta.glob<{ default: GalleryManifest }>(
   { eager: true },
 );
 
-/** Collected gallery manifests, ready to hand to `<Gallery>`. */
+/** Collected gallery manifests, ready to render. */
 export const galleryManifests: GalleryManifest[] = Object.values(modules).map(
   (module) => module.default,
 );

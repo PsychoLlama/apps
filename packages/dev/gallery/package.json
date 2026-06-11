@@ -1,0 +1,15 @@
+{
+  "name": "@dev/gallery",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Gallery manifest registry — discovers each package's gallery entry at build time.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./manifests": "./src/manifests.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}

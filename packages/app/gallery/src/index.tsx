@@ -1,23 +1,9 @@
 import { Container, Flex, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
+import { galleryManifests } from '@dev/gallery/manifests';
 import { For } from 'solid-js';
 
-/**
- * A package's contribution to the gallery. Packages export one as the default
- * of their `src/manifest.gallery.ts`; `@app/main` discovers them with a
- * build-time glob and hands the collected set to {@link Gallery}.
- */
-export interface GalleryManifest {
-  /** Display name for the entry. Conventionally the package's name. */
-  title: string;
-}
-
-export interface GalleryProps {
-  /** Discovered package manifests, one per gallery-enabled package. */
-  manifests: GalleryManifest[];
-}
-
-export const Gallery = (props: GalleryProps) => {
+export const Gallery = () => {
   return (
     <Flex as="main" direction="column" grow>
       <SiteHeader title="Gallery" />
@@ -35,7 +21,7 @@ export const Gallery = (props: GalleryProps) => {
           </Flex>
 
           <Flex as="ul" direction="column" gap={2}>
-            <For each={props.manifests}>
+            <For each={galleryManifests}>
               {(manifest) => (
                 <Flex as="li">
                   <Text as="span" size={3} selectable={false}>
