@@ -4,7 +4,7 @@ Inline navigation link for in-app routing. Accent and neutral colors only.
 
 ## Props
 
-Base: `<a>` attributes, margin props, trim props, truncate props, wrap props, skeleton props, testId props.
+Base: `<a>` attributes, margin props, trim props, truncate props, wrap props, selectable props, skeleton props, testId props.
 
 - `href`: Destination URL.
 - `size`: Visual size on a 1–9 scale. Inherits from the parent when omitted.

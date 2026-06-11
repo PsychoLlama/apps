@@ -30,16 +30,16 @@ type Story = StoryObj<typeof meta>;
 export const Skeleton: Story = {
   render: (props: SkeletonShowcaseArgs) => (
     <Flex as="div" direction="column" gap={4} class={css.layout}>
-      <Heading as="h2" size={5}>
+      <Heading as="h2" size={5} selectable={false}>
         The skeleton prop
       </Heading>
-      <Text as="p" size={2}>
+      <Text as="p" size={2} selectable>
         Pass{' '}
-        <Text as="span" weight="bold">
+        <Text as="span" weight="bold" selectable>
           skeleton
         </Text>{' '}
         on any component to render it as{' '}
-        <Text as="span" skeleton={props.loading}>
+        <Text as="span" skeleton={props.loading} selectable>
           a pulsing placeholder
         </Text>{' '}
         while the data behind it loads. Layout, margin, and corner shape survive
@@ -56,7 +56,7 @@ export const Skeleton: Story = {
           warning
         </Badge>
       </Flex>
-      <Text as="p" size={2}>
+      <Text as="p" size={2} selectable>
         Color variants collapse to the same neutral pulse, so a skeleton row
         reads as one loading region instead of three styled chips.
       </Text>
@@ -77,7 +77,7 @@ export const Skeleton: Story = {
           <IconCheck />
         </IconButton>
       </Flex>
-      <Text as="p" size={2}>
+      <Text as="p" size={2} selectable>
         Inputs and buttons are individually skeletonized. While loading, focus,
         pointer events, and form submission are all suppressed — flip the toggle
         and try tabbing through.

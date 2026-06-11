@@ -13,10 +13,10 @@ export const Settings = () => (
       <Container as="div" size={2} px={4}>
         <Flex as="div" direction="column" gap={5}>
           <Flex as="header" direction="column" gap={2}>
-            <Heading as="h1" size={6} weight="medium">
+            <Heading as="h1" size={6} weight="medium" selectable={false}>
               Settings
             </Heading>
-            <Text as="p" size={2} color="lowContrast">
+            <Text as="p" size={2} color="lowContrast" selectable={false}>
               Tune how the apps look and behave.
             </Text>
           </Flex>
@@ -24,7 +24,7 @@ export const Settings = () => (
           <NoHydration>
             <noscript>
               <Callout color="warning" icon={<IconAlert />}>
-                <Text as="span" size={2}>
+                <Text as="span" size={2} selectable={false}>
                   These controls need JavaScript. Enable it to change any of the
                   settings on this page.
                 </Text>
@@ -39,10 +39,11 @@ export const Settings = () => (
                 id={appearanceHeadingId}
                 size={4}
                 weight="medium"
+                selectable={false}
               >
                 Appearance
               </Heading>
-              <Text as="p" size={2} color="lowContrast">
+              <Text as="p" size={2} color="lowContrast" selectable={false}>
                 Sets the app's color scheme.
               </Text>
             </Flex>
@@ -59,12 +60,18 @@ export const Settings = () => (
                 align="center"
                 gap={3}
               >
-                <Heading as="h2" id={themeHeadingId} size={4} weight="medium">
+                <Heading
+                  as="h2"
+                  id={themeHeadingId}
+                  size={4}
+                  weight="medium"
+                  selectable={false}
+                >
                   Theme
                 </Heading>
                 <ThemeResetButton />
               </Flex>
-              <Text as="p" size={2} color="lowContrast">
+              <Text as="p" size={2} color="lowContrast" selectable={false}>
                 Sets the app's primary color.
               </Text>
             </Flex>

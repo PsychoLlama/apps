@@ -81,7 +81,6 @@ export default [
       'custom/no-static-style-prop': 'error',
       'custom/prefer-icon-button': 'error',
       'custom/require-externalized-effects': 'error',
-      'custom/require-selectable-prop': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
         'error',
@@ -158,7 +157,6 @@ export default [
     files: ['**/*.stories.tsx'],
     rules: {
       'custom/no-static-style-prop': 'off',
-      'custom/require-selectable-prop': 'off',
     },
   },
   {

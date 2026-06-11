@@ -39,6 +39,8 @@ export const base = style({
   fontWeight: fontWeight.medium,
   fontStyle: 'normal',
   whiteSpace: 'nowrap',
+  // Status chrome, not copyable content.
+  userSelect: 'none',
   // Keep the badge from stretching to fill a flex/grid row.
   height: 'fit-content',
 });

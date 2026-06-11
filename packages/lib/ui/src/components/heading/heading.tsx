@@ -27,7 +27,7 @@ import {
   resolveWrapClass,
 } from '../../props/wrap';
 import {
-  type SelectableProps,
+  type RequiredSelectableProps,
   selectablePropKeys,
   resolveSelectableClass,
 } from '../../props/selectable';
@@ -59,7 +59,7 @@ export type HeadingProps<T extends HtmlHeadingTag> = PolymorphicProps<
     TruncateProps &
     WrapProps &
     MarginProps &
-    SelectableProps &
+    RequiredSelectableProps &
     SkeletonProps &
     TestIdProps
 >;
@@ -74,7 +74,7 @@ function Heading(
     TruncateProps &
     WrapProps &
     MarginProps &
-    SelectableProps &
+    RequiredSelectableProps &
     SkeletonProps &
     TestIdProps &
     JSX.HTMLAttributes<HTMLHeadingElement>,

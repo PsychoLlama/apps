@@ -23,12 +23,13 @@ export const TypeScale: Story = {
           const scale = typeScale[step];
           return (
             <Flex as="div" direction="column">
-              <Text as="p" size={1} color="lowContrast">
+              <Text as="p" size={1} color="lowContrast" selectable={false}>
                 typeScale[{step}]
               </Text>
               <Text
                 as="p"
                 color="highContrast"
+                selectable
                 style={{
                   'font-size': scale.fontSize,
                   'line-height': scale.bodyLineHeight,
@@ -59,13 +60,14 @@ export const FontFamilies: Story = {
       >
         {(item) => (
           <Flex as="div" direction="column">
-            <Text as="p" size={1} color="lowContrast">
+            <Text as="p" size={1} color="lowContrast" selectable={false}>
               {item.name}
             </Text>
             <Text
               as="p"
               size={6}
               color="highContrast"
+              selectable
               style={{ 'font-family': item.value }}
             >
               Sphinx of black quartz, judge my vow
@@ -83,13 +85,14 @@ export const FontWeights: Story = {
       <For each={Object.entries(fontWeight) as Array<[FontWeight, string]>}>
         {([name, value]) => (
           <Flex as="div" direction="column">
-            <Text as="p" size={1} color="lowContrast">
+            <Text as="p" size={1} color="lowContrast" selectable={false}>
               fontWeight.{name} ({value})
             </Text>
             <Text
               as="p"
               size={6}
               color="highContrast"
+              selectable
               style={{ 'font-weight': value }}
             >
               Sphinx of black quartz, judge my vow

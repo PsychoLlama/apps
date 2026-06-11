@@ -34,10 +34,10 @@ const meta = {
       <Inset {...props}>
         <Flex as="div" class={css.media} />
       </Inset>
-      <Heading as="h3" size={3}>
+      <Heading as="h3" size={3} selectable>
         Insets bleed past padding
       </Heading>
-      <Text as="p" size={2}>
+      <Text as="p" size={2} selectable>
         The striped media above breaks out of the card's padding and rounds with
         the card's corners on its inset sides.
       </Text>

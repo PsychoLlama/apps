@@ -23,7 +23,13 @@ interface ScannerErrorProps {
 export const ScannerError: Component<ScannerErrorProps> = (props) => (
   <Flex as="div" direction="column" align="center" gap={5}>
     <Flex as="header" direction="column" align="center" gap={2}>
-      <Heading as="h1" size={6} weight="medium" align="center">
+      <Heading
+        as="h1"
+        size={6}
+        weight="medium"
+        align="center"
+        selectable={false}
+      >
         Camera unavailable
       </Heading>
       <Text

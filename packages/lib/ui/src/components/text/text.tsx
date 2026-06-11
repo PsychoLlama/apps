@@ -27,7 +27,7 @@ import {
   resolveWrapClass,
 } from '../../props/wrap';
 import {
-  type SelectableProps,
+  type RequiredSelectableProps,
   selectablePropKeys,
   resolveSelectableClass,
 } from '../../props/selectable';
@@ -63,7 +63,7 @@ export type TextProps<T extends HtmlTextTag> = PolymorphicProps<
     TruncateProps &
     WrapProps &
     MarginProps &
-    SelectableProps &
+    RequiredSelectableProps &
     SkeletonProps &
     TestIdProps
 >;
@@ -76,7 +76,7 @@ function Text(
     TruncateProps &
     WrapProps &
     MarginProps &
-    SelectableProps &
+    RequiredSelectableProps &
     SkeletonProps &
     TestIdProps &
     JSX.HTMLAttributes<HTMLElement>,

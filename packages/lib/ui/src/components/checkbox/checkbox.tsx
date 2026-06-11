@@ -265,11 +265,11 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
       <Text
         as="label"
         size={local.size}
-        // Labels are clickable proxies for the checkbox — selecting
-        // their text would defeat the affordance, so disable user-
-        // select on the wrapping label. Consumer-supplied content
-        // inside the inner span sets its own selection behavior.
-        selectable={false}
+        // The label carries real content, so keep it selectable. The
+        // indicator stays out of any selection via `user-select: none`
+        // on the input itself (see `checkbox.css`), so dragging across
+        // the box won't start a selection — only the label text does.
+        selectable={true}
         class={labelClassName()}
         style={local.style}
       >

@@ -110,6 +110,8 @@ export const root = style({
   height: `max(${fallbackVar(lineHeight, trackHeight)}, ${trackHeight})`,
   borderRadius: trackBorderRadius,
   cursor: 'pointer',
+  // The track is an affordance, not text.
+  userSelect: 'none',
 
   // The visible track. Sliding `background-position` between 0% and 100%
   // reveals either the accent-track portion (checked) or the neutral

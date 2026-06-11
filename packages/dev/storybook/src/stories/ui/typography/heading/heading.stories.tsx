@@ -16,6 +16,7 @@ const meta = {
     as: 'h1',
     size: 6,
     weight: 'bold',
+    selectable: true,
     ...skeletonArgs,
   },
   argTypes: {

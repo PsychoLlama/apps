@@ -126,7 +126,7 @@ export const Motion: Story = {
   render: () => (
     <Flex as="div" direction="column" gap={7}>
       <Flex as="section" direction="column" gap={1}>
-        <Heading as="h2" size={2} weight="medium">
+        <Heading as="h2" size={2} weight="medium" selectable={false}>
           Easings
         </Heading>
 
@@ -134,7 +134,7 @@ export const Motion: Story = {
           <For each={easings}>
             {(easing) => (
               <>
-                <Text as="span" size={2} color="lowContrast">
+                <Text as="span" size={2} color="lowContrast" selectable={false}>
                   {easing.label}
                 </Text>
                 <EasingTrack
@@ -148,7 +148,7 @@ export const Motion: Story = {
       </Flex>
 
       <Flex as="section" direction="column" gap={1}>
-        <Heading as="h2" size={2} weight="medium">
+        <Heading as="h2" size={2} weight="medium" selectable={false}>
           Durations
         </Heading>
 
@@ -157,7 +157,13 @@ export const Motion: Story = {
             {(duration) => (
               <Flex as="div" direction="column" gap={1}>
                 <ColorSwatch duration={duration.value} />
-                <Text as="p" size={1} color="lowContrast" align="center">
+                <Text
+                  as="p"
+                  size={1}
+                  color="lowContrast"
+                  align="center"
+                  selectable={false}
+                >
                   {duration.label}
                 </Text>
               </Flex>
