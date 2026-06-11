@@ -22,7 +22,7 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import {
-  type SelectableProps,
+  type RequiredSelectableProps,
   selectablePropKeys,
   resolveSelectableClass,
 } from '../../props/selectable';
@@ -51,7 +51,7 @@ export interface BlockquoteProps
     MarginProps,
     TruncateProps,
     WrapProps,
-    SelectableProps,
+    RequiredSelectableProps,
     SkeletonProps,
     TestIdProps,
     JSX.HTMLAttributes<HTMLQuoteElement> {

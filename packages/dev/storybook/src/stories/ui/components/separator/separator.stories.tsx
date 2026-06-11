@@ -12,11 +12,11 @@ const horizontal = (
   props: Omit<SeparatorProps, 'orientation' | 'decorative'>,
 ) => (
   <Flex as="div" direction="column" gap={2} style={{ width: '8rem' }}>
-    <Text as="span" size={1}>
+    <Text as="span" size={1} selectable={false}>
       Above
     </Text>
     <Separator orientation="horizontal" decorative {...props} />
-    <Text as="span" size={1}>
+    <Text as="span" size={1} selectable={false}>
       Below
     </Text>
   </Flex>
@@ -26,11 +26,11 @@ const vertical = (
   props: Omit<SeparatorProps, 'orientation' | 'decorative'>,
 ) => (
   <Flex as="div" align="center" gap={2} style={{ height: '3rem' }}>
-    <Text as="span" size={1}>
+    <Text as="span" size={1} selectable={false}>
       Left
     </Text>
     <Separator orientation="vertical" decorative {...props} />
-    <Text as="span" size={1}>
+    <Text as="span" size={1} selectable={false}>
       Right
     </Text>
   </Flex>
@@ -66,16 +66,24 @@ const meta = {
       when={props.orientation === 'vertical'}
       fallback={
         <Flex as="div" direction="column" gap={3} style={{ width: '16rem' }}>
-          <Text as="span">Above</Text>
+          <Text as="span" selectable={false}>
+            Above
+          </Text>
           <Separator {...props} />
-          <Text as="span">Below</Text>
+          <Text as="span" selectable={false}>
+            Below
+          </Text>
         </Flex>
       }
     >
       <Flex as="div" align="center" gap={3} style={{ height: '4rem' }}>
-        <Text as="span">Left</Text>
+        <Text as="span" selectable={false}>
+          Left
+        </Text>
         <Separator {...props} />
-        <Text as="span">Right</Text>
+        <Text as="span" selectable={false}>
+          Right
+        </Text>
       </Flex>
     </Show>
   ),

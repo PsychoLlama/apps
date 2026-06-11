@@ -15,4 +15,5 @@ Base: `<input>` attributes (except `type`, `size`, `color`, `checked`, `defaultC
 - `name`: Form-submit name. The browser includes the field in `FormData` only when checked.
 - `value` (=`'on'`): Form-submit value when checked.
 - `required` (=`false`): Marks the input as required for assistive technology.
+- `selectable` (=`false`): Allow the reader to select the label text.
 - `children`: Inline label rendered to the right of the checkbox.

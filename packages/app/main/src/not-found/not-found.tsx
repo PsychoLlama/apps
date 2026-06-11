@@ -27,10 +27,22 @@ export default function NotFound() {
             </Flex>
 
             <Flex as="div" direction="column" gap={3} align="center">
-              <Heading as="h1" size={6} weight="medium" align="center">
+              <Heading
+                as="h1"
+                size={6}
+                weight="medium"
+                align="center"
+                selectable={false}
+              >
                 You're off the map
               </Heading>
-              <Text as="p" size={3} color="lowContrast" align="center">
+              <Text
+                as="p"
+                size={3}
+                color="lowContrast"
+                align="center"
+                selectable={false}
+              >
                 The page you're looking for doesn't exist, or it packed up and
                 moved somewhere quieter.
               </Text>

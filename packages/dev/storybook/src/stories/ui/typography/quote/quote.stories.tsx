@@ -36,7 +36,7 @@ export const Overview: Story = gallery({
     {
       title: 'Inheriting size',
       items: SIZES.map((size) => (
-        <Text as="p" size={size}>
+        <Text as="p" size={size} selectable>
           Twain wrote: <Quote>cat by the tail</Quote>.
         </Text>
       )),
@@ -46,7 +46,7 @@ export const Overview: Story = gallery({
 
 export const Playground: Story = {
   render: (props: QuoteProps) => (
-    <Text as="p" size={3}>
+    <Text as="p" size={3} selectable>
       Twain wrote: <Quote {...props} />
     </Text>
   ),

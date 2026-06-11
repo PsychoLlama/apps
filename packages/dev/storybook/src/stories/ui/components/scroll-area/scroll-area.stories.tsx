@@ -13,7 +13,7 @@ const SCROLLBARS = ['vertical', 'horizontal', 'both'] as const;
 const TallContent = () => (
   <Flex as="div" direction="column" class={css.tallContent}>
     {Array.from({ length: 20 }, (_unused, index) => (
-      <Text as="p">
+      <Text as="p" selectable>
         Line {index + 1} — Lorem ipsum dolor sit amet, consectetur adipiscing
         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
       </Text>
@@ -23,7 +23,7 @@ const TallContent = () => (
 
 const WideContent = () => (
   <Flex as="div" class={css.wideContent}>
-    <Text as="p">
+    <Text as="p" selectable>
       A single very wide paragraph that overflows the viewport horizontally —
       Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
       tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
@@ -36,7 +36,7 @@ const WideContent = () => (
 const BothContent = () => (
   <Flex as="div" direction="column" class={css.bothContent}>
     {Array.from({ length: 20 }, (_unused, index) => (
-      <Text as="p">
+      <Text as="p" selectable>
         Row {index + 1} — Lorem ipsum dolor sit amet, consectetur adipiscing
         elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
         Ut enim ad minim veniam.

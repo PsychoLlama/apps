@@ -36,7 +36,7 @@ Word-wrapping strategy. `pretty` and `balance` only constrain line breaks within
 
 ## Selectable Props
 
-Override the global `user-select: none` default.
+Whether the reader can select the text. Use `true` for copyable content (data, IDs, user-generated or instructional text); `false` for UI chrome (computed labels, counts, click-target labels). Block typography requires an explicit value; inline typography makes it optional, where omitting it inherits.
 
 - `selectable`: Allow text selection. `boolean`.
 

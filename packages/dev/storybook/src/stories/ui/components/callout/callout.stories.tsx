@@ -12,7 +12,7 @@ const SIZES = [1, 2, 3] as const;
 const defaults = { testId: 'overview' } as const;
 
 const Body = (props: { label: string }) => (
-  <Text as="p" size={2}>
+  <Text as="p" size={2} selectable>
     {props.label}
   </Text>
 );

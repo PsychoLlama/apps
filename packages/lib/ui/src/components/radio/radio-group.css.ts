@@ -74,6 +74,8 @@ export const root = style({
   // the same opportunity but doesn't take it.
   height: `max(${fallbackVar(lineHeight, radioSize)}, ${radioSize})`,
   cursor: 'pointer',
+  // The indicator is an affordance — keep it out of label text selection.
+  userSelect: 'none',
 
   // Ring. `::before` is the visible disc; the input itself is a flex
   // container that holds the dot via `::after`. `radius.full` (9999px)

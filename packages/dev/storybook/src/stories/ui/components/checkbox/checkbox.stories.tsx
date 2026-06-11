@@ -44,7 +44,12 @@ const WrappingDemo = (props: {
 }) => {
   const [checked, setChecked] = createSignal(true);
   return (
-    <Text as="label" size={props.textSize} style={{ width: '16rem' }}>
+    <Text
+      as="label"
+      size={props.textSize}
+      selectable
+      style={{ width: '16rem' }}
+    >
       <Flex as="div" gap={2}>
         <Checkbox
           testId={`overview-wrap-${props.id}`}

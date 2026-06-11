@@ -57,7 +57,13 @@ const ScaleRow = (props: {
 
   return (
     <>
-      <Heading as="h3" size={2} color="lowContrast" weight="medium">
+      <Heading
+        as="h3"
+        size={2}
+        color="lowContrast"
+        weight="medium"
+        selectable={false}
+      >
         {props.name}
       </Heading>
 
@@ -110,6 +116,7 @@ export const Semantic: Story = {
               color="lowContrast"
               weight="medium"
               align="center"
+              selectable={false}
             >
               scale[{step}]
             </Heading>
@@ -144,10 +151,10 @@ export const TextColors: Story = {
               style={{ 'background-color': item.value }}
             />
             <Flex as="div" direction="column">
-              <Heading as="h3" size={2} weight="medium">
+              <Heading as="h3" size={2} weight="medium" selectable={false}>
                 {item.name}
               </Heading>
-              <Text as="p" size={5} style={{ color: item.value }}>
+              <Text as="p" size={5} selectable style={{ color: item.value }}>
                 The quick brown fox jumps over the lazy dog
               </Text>
             </Flex>
@@ -252,6 +259,7 @@ export const Palettes: Story = {
               color="lowContrast"
               weight="medium"
               align="center"
+              selectable={false}
             >
               scale[{step}]
             </Heading>

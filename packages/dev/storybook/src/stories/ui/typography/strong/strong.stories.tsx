@@ -32,7 +32,7 @@ export const Overview: Story = gallery({
     {
       title: 'Inheriting size',
       items: SIZES.map((size) => (
-        <Text as="p" size={size}>
+        <Text as="p" size={size} selectable>
           Quick <Strong>brown</Strong> fox.
         </Text>
       )),
@@ -42,7 +42,7 @@ export const Overview: Story = gallery({
 
 export const Playground: Story = {
   render: (props: StrongProps) => (
-    <Text as="p" size={3}>
+    <Text as="p" size={3} selectable>
       The quick brown fox jumps over the <Strong {...props} /> dog.
     </Text>
   ),

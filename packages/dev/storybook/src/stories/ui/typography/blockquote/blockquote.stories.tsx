@@ -21,6 +21,7 @@ const meta = {
   args: {
     children: SAMPLE,
     color: 'accent',
+    selectable: true,
     ...skeletonArgs,
   },
   argTypes: {
@@ -51,7 +52,7 @@ export const Overview: Story = gallery({
     {
       title: 'Color',
       items: COLORS.map((color) => (
-        <Blockquote {...defaults} color={color}>
+        <Blockquote {...defaults} selectable color={color}>
           {SAMPLE}
         </Blockquote>
       )),
@@ -59,7 +60,7 @@ export const Overview: Story = gallery({
     {
       title: 'Size',
       items: SIZES.map((size) => (
-        <Blockquote {...defaults} size={size}>
+        <Blockquote {...defaults} selectable size={size}>
           Size {size}: {SAMPLE}
         </Blockquote>
       )),

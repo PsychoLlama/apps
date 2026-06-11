@@ -44,6 +44,10 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import {
+  type SelectableProps,
+  selectablePropKeys,
+} from '../../props/selectable';
+import {
   type SkeletonProps,
   skeletonPropKeys,
   useSkeleton,
@@ -95,6 +99,7 @@ export interface CheckboxProps
   extends
     MarginProps,
     SkeletonProps,
+    SelectableProps,
     RequiredTestIdProps,
     Omit<
       JSX.InputHTMLAttributes<HTMLInputElement>,
@@ -143,6 +148,11 @@ export interface CheckboxProps
    * @default false
    */
   required?: boolean;
+  /**
+   * Allow the reader to select the label text. The indicator never
+   * participates in selection. @default false
+   */
+  selectable?: boolean;
   /** Inline label rendered to the right of the checkbox. */
   children?: JSX.Element;
 }
@@ -160,6 +170,7 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
       color: 'accent' as const,
       value: 'on',
       required: false,
+      selectable: false,
     },
     rawProps,
   );
@@ -176,6 +187,7 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
     'style',
     'onKeyDown',
     'disabled',
+    ...selectablePropKeys,
     ...skeletonPropKeys,
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
@@ -265,11 +277,12 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
       <Text
         as="label"
         size={local.size}
-        // Labels are clickable proxies for the checkbox — selecting
-        // their text would defeat the affordance, so disable user-
-        // select on the wrapping label. Consumer-supplied content
-        // inside the inner span sets its own selection behavior.
-        selectable={false}
+        // Label selection is opt-in (`selectable`, default false). The
+        // indicator stays out of any selection regardless via
+        // `user-select: none` on the input itself (see `checkbox.css`),
+        // so dragging across the box never starts a selection — only the
+        // label text does, and only when `selectable` is set.
+        selectable={local.selectable}
         class={labelClassName()}
         style={local.style}
       >

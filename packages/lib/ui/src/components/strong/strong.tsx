@@ -20,6 +20,11 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import {
+  type SelectableProps,
+  selectablePropKeys,
+  resolveSelectableClass,
+} from '../../props/selectable';
+import {
   type SkeletonProps,
   skeletonPropKeys,
   useSkeleton,
@@ -36,6 +41,7 @@ export interface StrongProps
   extends
     MarginProps,
     WrapProps,
+    SelectableProps,
     SkeletonProps,
     TestIdProps,
     JSX.HTMLAttributes<HTMLElement> {}
@@ -48,6 +54,7 @@ const Strong: ParentComponent<StrongProps> = (rawProps) => {
     'class',
     'children',
     ...wrapPropKeys,
+    ...selectablePropKeys,
     ...skeletonPropKeys,
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
@@ -57,6 +64,7 @@ const Strong: ParentComponent<StrongProps> = (rawProps) => {
       ...resolveMarginClasses(margin),
       css.base,
       resolveWrapClass(local),
+      resolveSelectableClass(local),
       skeletonClass(),
       local.class,
     ]

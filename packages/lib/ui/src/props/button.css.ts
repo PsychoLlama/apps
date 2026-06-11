@@ -40,6 +40,8 @@ export const base = style({
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.medium,
   flexShrink: 0,
+  // The label is action text, not content — never selectable.
+  userSelect: 'none',
   transitionProperty: 'background-color, color, box-shadow, filter',
   transitionTimingFunction: standard.productive,
 

@@ -13,10 +13,22 @@ interface LandingProps {
 export const Landing: Component<LandingProps> = (props) => (
   <Flex as="div" direction="column" align="center" gap={5}>
     <Flex as="header" direction="column" align="center" gap={2}>
-      <Heading as="h1" size={6} weight="medium" align="center">
+      <Heading
+        as="h1"
+        size={6}
+        weight="medium"
+        align="center"
+        selectable={false}
+      >
         Scan a QR code
       </Heading>
-      <Text as="p" size={2} color="lowContrast" align="center">
+      <Text
+        as="p"
+        size={2}
+        color="lowContrast"
+        align="center"
+        selectable={false}
+      >
         Point your camera at a QR code. Nothing leaves your device.
       </Text>
     </Flex>

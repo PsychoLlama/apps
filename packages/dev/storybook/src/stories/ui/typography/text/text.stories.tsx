@@ -15,6 +15,7 @@ const meta = {
     children: 'Sphinx of black quartz, judge my vow',
     as: 'p',
     size: 3,
+    selectable: true,
     ...skeletonArgs,
   },
   argTypes: {

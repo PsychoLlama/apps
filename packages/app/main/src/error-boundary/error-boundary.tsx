@@ -69,10 +69,22 @@ export default function ErrorBoundaryFallback(
             </Flex>
 
             <Flex as="div" direction="column" gap={2} align="center">
-              <Heading as="h1" size={7} weight="medium" align="center">
+              <Heading
+                as="h1"
+                size={7}
+                weight="medium"
+                align="center"
+                selectable={false}
+              >
                 Something went wrong
               </Heading>
-              <Text as="p" size={3} color="lowContrast" align="center">
+              <Text
+                as="p"
+                size={3}
+                color="lowContrast"
+                align="center"
+                selectable={false}
+              >
                 The page hit an unexpected error and couldn't render. Reload to
                 try again, or head back to safer ground.
               </Text>

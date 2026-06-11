@@ -12,10 +12,10 @@ const defaults = { as: 'div', testId: 'overview' } as const;
 
 const Body = (props: { title: string }) => (
   <>
-    <Heading as="h3" size={3}>
+    <Heading as="h3" size={3} selectable>
       {props.title}
     </Heading>
-    <Text as="p" size={2}>
+    <Text as="p" size={2} selectable>
       Cards group related content into a single surface.
     </Text>
   </>

@@ -93,6 +93,8 @@ export const root = style({
   // same opportunity but doesn't take it.
   height: `max(${fallbackVar(lineHeight, checkboxSize)}, ${checkboxSize})`,
   cursor: 'pointer',
+  // The indicator is an affordance — keep it out of label text selection.
+  userSelect: 'none',
 
   // Box. `::before` is the visible square; the input itself is a flex
   // container that holds the indicator via `::after`.

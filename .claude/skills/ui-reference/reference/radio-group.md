@@ -24,4 +24,5 @@ Base: `<input>` attributes (except `type`, `size`, `color`, `name`, `value`, `ch
 - `testId` (required): Test identifier rendered as `data-testid` on the input.
 - `value` (required): Value submitted when checked, matched against the group's `value`.
 - `disabled`: Disable just this item. Combines with the group's `disabled`.
+- `selectable` (=`false`): Allow the reader to select the label text.
 - `children`: Inline label. When provided, the input is wrapped in a `<label>` with the children to the right; otherwise the bare input is rendered.

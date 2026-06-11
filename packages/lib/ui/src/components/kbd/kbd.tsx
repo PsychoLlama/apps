@@ -18,6 +18,11 @@ import {
   type MarginProps,
 } from '../../props/margin';
 import {
+  type SelectableProps,
+  selectablePropKeys,
+  resolveSelectableClass,
+} from '../../props/selectable';
+import {
   type SkeletonProps,
   skeletonPropKeys,
   useSkeleton,
@@ -30,6 +35,7 @@ type Variant = 'classic' | 'soft';
 export interface KbdProps
   extends
     MarginProps,
+    SelectableProps,
     SkeletonProps,
     TestIdProps,
     JSX.HTMLAttributes<HTMLElement> {
@@ -49,6 +55,7 @@ const Kbd: ParentComponent<KbdProps> = (rawProps) => {
     'variant',
     'class',
     'children',
+    ...selectablePropKeys,
     ...skeletonPropKeys,
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
@@ -59,6 +66,7 @@ const Kbd: ParentComponent<KbdProps> = (rawProps) => {
       css.base,
       css.variant[local.variant],
       local.size && css.size[local.size],
+      resolveSelectableClass(local),
       skeletonClass(),
       local.class,
     ]

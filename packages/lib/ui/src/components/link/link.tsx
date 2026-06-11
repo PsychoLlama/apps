@@ -41,6 +41,11 @@ import {
   resolveWrapClass,
 } from '../../props/wrap';
 import {
+  type SelectableProps,
+  selectablePropKeys,
+  resolveSelectableClass,
+} from '../../props/selectable';
+import {
   type SkeletonProps,
   skeletonPropKeys,
   useSkeleton,
@@ -57,6 +62,7 @@ export interface LinkProps
     TrimProps,
     TruncateProps,
     WrapProps,
+    SelectableProps,
     SkeletonProps,
     NativeProps,
     RequiredTestIdProps,
@@ -97,6 +103,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     ...trimPropKeys,
     ...truncatePropKeys,
     ...wrapPropKeys,
+    ...selectablePropKeys,
     ...skeletonPropKeys,
   ]);
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
@@ -121,6 +128,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       resolveTrimClass(local),
       !local.truncate && resolveWrapClass(local),
       resolveTruncateClass(local),
+      resolveSelectableClass(local),
       skeletonClass(),
       local.class,
     ]
