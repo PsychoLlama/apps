@@ -173,6 +173,18 @@ importers:
         specifier: ^1.9.13
         version: 1.9.13
 
+  packages/app/gallery:
+    dependencies:
+      '@lib/shell':
+        specifier: workspace:*
+        version: link:../../lib/shell
+      '@lib/ui':
+        specifier: workspace:*
+        version: link:../../lib/ui
+      solid-js:
+        specifier: ^1.9.13
+        version: 1.9.13
+
   packages/app/icon-editor:
     dependencies:
       '@lib/design':
@@ -206,6 +218,9 @@ importers:
       '@app/experimental':
         specifier: workspace:*
         version: link:../experimental
+      '@app/gallery':
+        specifier: workspace:*
+        version: link:../gallery
       '@app/icon-editor':
         specifier: workspace:*
         version: link:../icon-editor

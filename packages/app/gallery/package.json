@@ -1,0 +1,24 @@
+{
+  "name": "@app/gallery",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Design system gallery — browse components and tokens. Replaces Storybook.",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/shell": "workspace:*",
+    "@lib/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
+  }
+}
