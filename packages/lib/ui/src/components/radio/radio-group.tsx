@@ -33,6 +33,10 @@ import {
 } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import { type MarginProps } from '../../props/margin';
+import {
+  type SelectableProps,
+  selectablePropKeys,
+} from '../../props/selectable';
 import { type SkeletonProps } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import Flex from '../flex/flex';
@@ -194,6 +198,7 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
  */
 export interface RadioGroupItemProps
   extends
+    SelectableProps,
     RequiredTestIdProps,
     Omit<
       JSX.InputHTMLAttributes<HTMLInputElement>,
@@ -210,6 +215,11 @@ export interface RadioGroupItemProps
   value: string;
   /** Disable just this item. Combines with the group's `disabled`. */
   disabled?: boolean;
+  /**
+   * Allow the reader to select the label text. The indicator never
+   * participates in selection. @default false
+   */
+  selectable?: boolean;
   /** Inline label rendered to the right of the radio. */
   children?: JSX.Element;
 }
@@ -228,6 +238,7 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
     'onChange',
     'onKeyDown',
     'style',
+    ...selectablePropKeys,
   ]);
 
   const isChecked = () => ctx.value() === local.value;
@@ -310,11 +321,12 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
       <Text
         as="label"
         size={ctx.size()}
-        // The label carries real content, so keep it selectable. The
-        // indicator stays out of any selection via `user-select: none`
-        // on the input itself (see `radio-group.css`), so dragging
-        // across the disc won't start a selection — only the text does.
-        selectable={true}
+        // Label selection is opt-in (`selectable`, default false). The
+        // indicator stays out of any selection regardless via
+        // `user-select: none` on the input itself (see `radio-group.css`),
+        // so dragging across the disc never starts a selection — only the
+        // label text does, and only when `selectable` is set.
+        selectable={local.selectable ?? false}
         class={[css.item, local.class].filter(Boolean).join(' ')}
         style={local.style}
       >

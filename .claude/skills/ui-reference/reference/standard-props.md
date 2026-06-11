@@ -36,7 +36,7 @@ Word-wrapping strategy. `pretty` and `balance` only constrain line breaks within
 
 ## Selectable Props
 
-Whether the reader can select (and copy) the text. `true` for copyable content (data, IDs, user-generated or instructional text); `false` for UI chrome (computed labels, counts, click-target labels). Required on block typography (Text, Heading, Blockquote) and Table cells; optional on inline typography (Code, Quote, Em, Strong, Kbd, Link), where omitting it inherits the container's selection.
+Whether the reader can select the text. Use `true` for copyable content (data, IDs, user-generated or instructional text); `false` for UI chrome (computed labels, counts, click-target labels). Block typography requires an explicit value; inline typography makes it optional, where omitting it inherits.
 
 - `selectable`: Allow text selection. `boolean`.
 
