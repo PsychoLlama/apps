@@ -5,7 +5,7 @@ import { SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconStorybook from 'virtual:icons/mdi/book-open-page-variant-outline';
-import IconGallery from 'virtual:icons/mdi/view-gallery-outline';
+import IconGallery from 'virtual:icons/mdi/brush-variant';
 import IconFlask from 'virtual:icons/mdi/flask-outline';
 import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
