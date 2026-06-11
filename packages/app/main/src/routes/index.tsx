@@ -61,7 +61,7 @@ const APPS: ReadonlyArray<AppEntry> = [
     id: 'gallery',
     name: 'Gallery',
     href: '/gallery',
-    description: 'The next-generation design system viewer. Work in progress.',
+    description: 'Browse the component library and design system.',
     Icon: IconGallery,
   },
   ...(import.meta.env.INCLUDE_EXPERIMENTAL_APP
