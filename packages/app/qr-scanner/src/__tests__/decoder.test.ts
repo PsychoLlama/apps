@@ -3,11 +3,8 @@ import {
   MessagePortTransport,
   type SendOptions,
 } from '@lib/messaging/message-port';
-import {
-  requestDecode,
-  type DecoderConnection,
-  type HostApi,
-} from '../decoder';
+import { requestDecode, type DecoderConnection } from '../decoder';
+import type { HostApi } from '../host-api';
 import type { DecoderApi, ScanResult } from '../worker/rpc';
 
 const result: ScanResult = {

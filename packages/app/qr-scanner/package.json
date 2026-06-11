@@ -9,7 +9,7 @@
     ".": "./src/index.tsx"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc && tsc -p src/worker/tsconfig.json"
   },
   "dependencies": {
     "@crate/qr-scanner": "workspace:*",
