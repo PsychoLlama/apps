@@ -214,3 +214,9 @@ export {
   type TableRowAlign,
   type TableCellJustify,
 } from './components/table/table';
+export {
+  default as Tooltip,
+  type TooltipProps,
+  type TooltipSide,
+  type TooltipAlign,
+} from './components/tooltip/tooltip';

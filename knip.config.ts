@@ -68,6 +68,11 @@ const config: KnipConfig = {
         // unused. Imported at runtime by `progress.tsx` for
         // `assignInlineVars`.
         '@vanilla-extract/dynamic',
+        // Imported by `tooltip.tsx` for anchor positioning. No
+        // production route mounts Tooltip yet, so the per-workspace
+        // `--production` walk never reaches the import; credit it
+        // explicitly until an app consumes the component.
+        '@floating-ui/dom',
       ],
     },
     'crates/qr-scanner': {

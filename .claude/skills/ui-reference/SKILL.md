@@ -51,3 +51,4 @@ description: Reference docs for `@lib/ui` components — props, descriptions, an
 - [Tabs](./reference/tabs.md): Switch between panels under a row of triggers.
 - [TextArea](./reference/text-area.md): Multi-line text input.
 - [TextField](./reference/text-field.md): Single-line text input with optional inline slots.
+- [Tooltip](./reference/tooltip.md): Floating label describing its trigger.

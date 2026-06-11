@@ -16,6 +16,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.7.6",
     "@lib/design": "workspace:*",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/dynamic": "catalog:"
