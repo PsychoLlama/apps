@@ -37,6 +37,43 @@ describe('Tooltip', () => {
     expect(trigger()).toHaveAttribute('aria-describedby', panel.id);
   });
 
+  it('appends to an existing aria-describedby and restores it on close', async () => {
+    render(() => (
+      <Tooltip content="Copy link" delayDuration={0}>
+        <button type="button" data-testid="trigger" aria-describedby="hint">
+          Trigger
+        </button>
+      </Tooltip>
+    ));
+    expect(trigger()).toHaveAttribute('aria-describedby', 'hint');
+
+    trigger().focus();
+    const panel = await screen.findByRole('tooltip');
+    expect(trigger().getAttribute('aria-describedby')?.split(/\s+/)).toEqual([
+      'hint',
+      panel.id,
+    ]);
+
+    trigger().blur();
+    await waitFor(() =>
+      expect(trigger()).toHaveAttribute('aria-describedby', 'hint'),
+    );
+  });
+
+  it('leaves a wrapped trigger data-state untouched', async () => {
+    render(() => (
+      <Tooltip content="Copy link" delayDuration={0}>
+        <button type="button" data-testid="trigger" data-state="active">
+          Trigger
+        </button>
+      </Tooltip>
+    ));
+    trigger().focus();
+    await screen.findByRole('tooltip');
+    // The tooltip must not commandeer attributes the wrapped element owns.
+    expect(trigger()).toHaveAttribute('data-state', 'active');
+  });
+
   it('marks a focus-driven open as instant', async () => {
     render(() => <Harness />);
     trigger().focus();

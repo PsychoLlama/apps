@@ -105,6 +105,26 @@ const STATIC_SIDE: Record<TooltipSide, TooltipSide> = {
   left: 'right',
 };
 
+/**
+ * Add `id` to the trigger's `aria-describedby` token list without disturbing
+ * any ids the consumer already set (external descriptions, validation text).
+ */
+const addDescribedBy = (el: HTMLElement, id: string): void => {
+  const existing = el.getAttribute('aria-describedby');
+  const ids = existing ? existing.split(/\s+/).filter(Boolean) : [];
+  if (!ids.includes(id)) ids.push(id);
+  el.setAttribute('aria-describedby', ids.join(' '));
+};
+
+/** Remove `id` from the token list, dropping the attribute only when empty. */
+const removeDescribedBy = (el: HTMLElement, id: string): void => {
+  const existing = el.getAttribute('aria-describedby');
+  if (!existing) return;
+  const ids = existing.split(/\s+/).filter((token) => token && token !== id);
+  if (ids.length) el.setAttribute('aria-describedby', ids.join(' '));
+  else el.removeAttribute('aria-describedby');
+};
+
 /** `Tooltip` props. */
 export interface TooltipProps extends TestIdProps {
   /** The label shown in the floating panel. */
@@ -243,21 +263,16 @@ export default function Tooltip(props: TooltipProps): JSX.Element {
     });
   });
 
-  // Reflect open state onto the trigger as ARIA + a `data-state` hook.
+  // Point the trigger at the panel via `aria-describedby` while open. The
+  // trigger is consumer-owned, so we append/remove our id rather than writing
+  // attributes outright — clobbering its `data-state` (e.g. a wrapped
+  // `TabsTrigger`'s active marker) or an existing description would be a
+  // regression the consumer can't see coming.
   createEffect(() => {
     const el = triggerEl();
-    if (!el) return;
-    const openNow = isOpen();
-    if (openNow) el.setAttribute('aria-describedby', contentId);
-    else el.removeAttribute('aria-describedby');
-    el.setAttribute(
-      'data-state',
-      openNow ? (wasDelayed() ? 'delayed-open' : 'instant-open') : 'closed',
-    );
-    onCleanup(() => {
-      el.removeAttribute('aria-describedby');
-      el.removeAttribute('data-state');
-    });
+    if (!el || !isOpen()) return;
+    addDescribedBy(el, contentId);
+    onCleanup(() => removeDescribedBy(el, contentId));
   });
 
   // Global dismissals while open: Escape, and scrolling any ancestor of the
@@ -298,6 +313,9 @@ export default function Tooltip(props: TooltipProps): JSX.Element {
       const desired = placement();
       const stop = autoUpdate(reference, floating, () => {
         void computePosition(reference, floating, {
+          // Match the panel's `position: fixed`; the default `absolute`
+          // strategy returns coordinates that drift on a scrolled page.
+          strategy: 'fixed',
           placement: desired,
           middleware: [
             offset(SIDE_OFFSET),
