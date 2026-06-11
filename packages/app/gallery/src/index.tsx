@@ -34,59 +34,61 @@ export const Gallery = () => {
     <Flex as="main" direction="column" grow>
       <SiteHeader title="Gallery" />
 
-      <Flex
-        as="nav"
-        direction="column"
-        gap={5}
-        px={4}
-        py={5}
-        aria-label="Gallery"
-        class={css.sidebar}
-      >
-        <For each={galleryManifests}>
-          {(manifest) => {
-            const listings = listingsOf(manifest);
-            return (
-              <Flex as="section" direction="column" gap={2}>
-                <Heading
-                  as="h2"
-                  size={1}
-                  weight="medium"
-                  color="lowContrast"
-                  selectable={false}
-                >
-                  {manifest.title}
-                </Heading>
+      <Flex as="div" direction="row" class={css.body}>
+        <Flex
+          as="nav"
+          direction="column"
+          gap={5}
+          px={4}
+          py={5}
+          aria-label="Gallery"
+          class={css.sidebar}
+        >
+          <For each={galleryManifests}>
+            {(manifest) => {
+              const listings = listingsOf(manifest);
+              return (
+                <Flex as="section" direction="column" gap={2}>
+                  <Heading
+                    as="h2"
+                    size={1}
+                    weight="medium"
+                    color="lowContrast"
+                    selectable={false}
+                  >
+                    {manifest.title}
+                  </Heading>
 
-                <Show
-                  when={listings.length > 0}
-                  fallback={
-                    <Text as="p" size={2} color="lowContrast">
-                      No listings yet
-                    </Text>
-                  }
-                >
-                  <Flex as="ul" direction="column" gap={1}>
-                    <For each={listings}>
-                      {(listing) => (
-                        <Flex as="li">
-                          <Link
-                            testId={`listing-${listing.name}`}
-                            href={listing.href}
-                            size={2}
-                            color="neutral"
-                          >
-                            {listing.name}
-                          </Link>
-                        </Flex>
-                      )}
-                    </For>
-                  </Flex>
-                </Show>
-              </Flex>
-            );
-          }}
-        </For>
+                  <Show
+                    when={listings.length > 0}
+                    fallback={
+                      <Text as="p" size={2} color="lowContrast">
+                        No listings
+                      </Text>
+                    }
+                  >
+                    <Flex as="ul" direction="column" gap={1}>
+                      <For each={listings}>
+                        {(listing) => (
+                          <Flex as="li">
+                            <Link
+                              testId={`listing-${listing.name}`}
+                              href={listing.href}
+                              size={2}
+                              color="neutral"
+                            >
+                              {listing.name}
+                            </Link>
+                          </Flex>
+                        )}
+                      </For>
+                    </Flex>
+                  </Show>
+                </Flex>
+              );
+            }}
+          </For>
+        </Flex>
       </Flex>
     </Flex>
   );
