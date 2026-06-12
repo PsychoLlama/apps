@@ -21,6 +21,9 @@
   "dependencies": {
     "@vanilla-extract/css": "catalog:"
   },
+  "devDependencies": {
+    "@dev/gallery": "workspace:*"
+  },
   "peerDependencies": {
     "solid-js": "*"
   }

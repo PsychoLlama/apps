@@ -5,6 +5,7 @@ import { SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconStorybook from 'virtual:icons/mdi/book-open-page-variant-outline';
+import IconGallery from 'virtual:icons/mdi/brush-variant';
 import IconFlask from 'virtual:icons/mdi/flask-outline';
 import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
@@ -55,6 +56,13 @@ const APPS: ReadonlyArray<AppEntry> = [
     description: 'Browse the component library and design tokens.',
     Icon: IconStorybook,
     external: true,
+  },
+  {
+    id: 'gallery',
+    name: 'Gallery',
+    href: '/gallery',
+    description: 'Browse the component library and design system.',
+    Icon: IconGallery,
   },
   ...(import.meta.env.INCLUDE_EXPERIMENTAL_APP
     ? [
