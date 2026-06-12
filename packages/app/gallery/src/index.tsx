@@ -27,28 +27,40 @@ const listingName = (path: string): string =>
     .replace(/\.gallery\.tsx$/, '');
 
 /**
+ * A URL-safe slug for a manifest title. Titles carry a slash (`@lib/ui`), and a
+ * slash can't survive a single path segment: the static prerender decodes a
+ * `%2F` back into a separator, so the route stops matching and the page renders
+ * empty. Dropping the leading `@` and swapping `/` for `-` keeps each title a
+ * stable, readable, slash-free segment (`@lib/ui` → `lib-ui`).
+ */
+const manifestSlug = (title: string): string =>
+  title.replace(/^@/, '').replaceAll('/', '-');
+
+/**
  * The manifest's listings as sorted nav entries, each linking to its own page
- * under `/gallery/{title}/{name}` with both segments percent-encoded.
+ * under `/gallery/{title-slug}/{name}`.
  */
 const listingsOf = (manifest: GalleryManifest): ListingLink[] =>
   Object.keys(manifest.listings)
     .map((path) => {
       const name = listingName(path);
-      const href = `/gallery/${encodeURIComponent(manifest.title)}/${encodeURIComponent(name)}`;
+      const href = `/gallery/${manifestSlug(manifest.title)}/${encodeURIComponent(name)}`;
       return { name, href };
     })
     .sort((left, right) => left.name.localeCompare(right.name));
 
 /**
- * The deferred loader for the listing named by `title` (a manifest title) and
- * `listing` (a listing name), or `undefined` when neither matches. Both inputs
- * are expected already decoded. Routing owns the actual `lazy`/`Suspense` load.
+ * The deferred loader for the listing under `titleSlug` (a manifest title's
+ * {@link manifestSlug}) named `listing`, or `undefined` when neither matches.
+ * Routing owns the actual `lazy`/`Suspense` load.
  */
 export const findListing = (
-  title: string,
+  titleSlug: string,
   listing: string,
 ): (() => Promise<{ default: ListingData }>) | undefined => {
-  const manifest = galleryManifests.find((entry) => entry.title === title);
+  const manifest = galleryManifests.find(
+    (entry) => manifestSlug(entry.title) === titleSlug,
+  );
   const match = Object.entries(manifest?.listings ?? {}).find(
     ([path]) => listingName(path) === listing,
   );
@@ -104,7 +116,12 @@ export const Gallery = (props: { children?: JSX.Element }) => {
                   <Show
                     when={listings.length > 0}
                     fallback={
-                      <Text as="p" size={2} color="lowContrast">
+                      <Text
+                        as="p"
+                        size={2}
+                        color="lowContrast"
+                        selectable={false}
+                      >
                         No listings
                       </Text>
                     }
@@ -138,7 +155,7 @@ export const Gallery = (props: { children?: JSX.Element }) => {
 
 /** Placeholder shown at `/gallery` before a listing is selected. */
 export const GalleryHome = () => (
-  <Text as="p" size={2} color="lowContrast">
+  <Text as="p" size={2} color="lowContrast" selectable={false}>
     Select a listing to preview it.
   </Text>
 );

@@ -5,17 +5,17 @@ import { Show, Suspense, lazy } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 
 /**
- * Renders the gallery listing named by the `title`/`listing` route params.
- * Both arrive percent-encoded, so they're decoded before lookup. Code-splits
- * the listing module behind `<Suspense>`; an unknown title or listing falls
- * back to a not-found message.
+ * Renders the gallery listing under the `title`/`listing` route params —
+ * `title` is a manifest slug, `listing` a percent-encoded listing name.
+ * Code-splits the listing module behind `<Suspense>`; an unknown title or
+ * listing falls back to a not-found message.
  */
 export default function GalleryListingRoute() {
   const params = useParams<{ title: string; listing: string }>();
 
   const loaded = () => {
     const name = decodeURIComponent(params.listing);
-    const load = findListing(decodeURIComponent(params.title), name);
+    const load = findListing(params.title, name);
     if (!load) return undefined;
 
     return lazy(() =>
@@ -28,7 +28,7 @@ export default function GalleryListingRoute() {
   return (
     <Suspense
       fallback={
-        <Text as="p" size={2} color="lowContrast">
+        <Text as="p" size={2} color="lowContrast" selectable={false}>
           Loading…
         </Text>
       }
@@ -36,7 +36,7 @@ export default function GalleryListingRoute() {
       <Show
         when={loaded()}
         fallback={
-          <Text as="p" size={2} color="lowContrast">
+          <Text as="p" size={2} color="lowContrast" selectable={false}>
             No such listing.
           </Text>
         }
