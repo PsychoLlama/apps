@@ -12,14 +12,16 @@ export const body = style({
 });
 
 /**
- * The persistent left rail. A fixed-width, full-height column that never
- * shrinks, divided from the content area by the same hairline the site header
- * uses. Scrolls within its own bounds rather than the page.
+ * The persistent right rail. A fixed-width, full-height column that never
+ * shrinks, pinned to the trailing edge and divided from the content area by
+ * the same hairline the site header uses. Scrolls within its own bounds
+ * rather than the page.
  */
 export const sidebar = style({
   flexShrink: 0,
   width: '15rem',
-  borderInlineEnd: `1px solid ${neutral.solid[6]}`,
+  marginInlineStart: 'auto',
+  borderInlineStart: `1px solid ${neutral.solid[6]}`,
   overflowY: 'auto',
   minHeight: 0,
 });
