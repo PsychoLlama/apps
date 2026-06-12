@@ -1,71 +1,13 @@
 import { Flex, Heading, Link, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
-import type {
-  GalleryListing as ListingData,
-  GalleryManifest,
-} from '@dev/gallery';
+import type { GalleryListing as ListingData } from '@dev/gallery';
 import { galleryManifests } from '@dev/gallery/manifests';
 import { For, Show, type JSX } from 'solid-js';
+import { listingsOf } from './listings';
 import * as css from './index.css';
 
-/** A single listing's entry in the sidebar nav. */
-interface ListingLink {
-  /** Basename of the `*.gallery.tsx` file, used as both label and slug. */
-  name: string;
-  /** In-app path to the listing's page. */
-  href: string;
-}
-
-/**
- * The listing's name — the basename of its module path minus the
- * `.gallery.tsx` suffix (e.g. `./components/badge/badge.gallery.tsx` → `badge`).
- */
-const listingName = (path: string): string =>
-  path
-    .split('/')
-    .pop()!
-    .replace(/\.gallery\.tsx$/, '');
-
-/**
- * A URL-safe slug for a manifest title. Titles carry a slash (`@lib/ui`), and a
- * slash can't survive a single path segment: the static prerender decodes a
- * `%2F` back into a separator, so the route stops matching and the page renders
- * empty. Dropping the leading `@` and swapping `/` for `-` keeps each title a
- * stable, readable, slash-free segment (`@lib/ui` → `lib-ui`).
- */
-const manifestSlug = (title: string): string =>
-  title.replace(/^@/, '').replaceAll('/', '-');
-
-/**
- * The manifest's listings as sorted nav entries, each linking to its own page
- * under `/gallery/{title-slug}/{name}`.
- */
-const listingsOf = (manifest: GalleryManifest): ListingLink[] =>
-  Object.keys(manifest.listings)
-    .map((path) => {
-      const name = listingName(path);
-      const href = `/gallery/${manifestSlug(manifest.title)}/${encodeURIComponent(name)}`;
-      return { name, href };
-    })
-    .sort((left, right) => left.name.localeCompare(right.name));
-
-/**
- * The deferred loader for the listing under `titleSlug` (a manifest title's
- * {@link manifestSlug}) named `listing`, or `undefined` when neither matches.
- * Routing owns the actual `lazy`/`Suspense` load.
- */
-export const findListing = (
-  titleSlug: string,
-  listing: string,
-): (() => Promise<{ default: ListingData }>) | undefined => {
-  const manifest = galleryManifests.find(
-    (entry) => manifestSlug(entry.title) === titleSlug,
-  );
-  const match = Object.entries(manifest?.listings ?? {}).find(
-    ([path]) => listingName(path) === listing,
-  );
-  return match?.[1] as (() => Promise<{ default: ListingData }>) | undefined;
-};
+export { findListing } from './listings';
+export type { ListingLink, ListingModule } from './listings';
 
 /**
  * The gallery shell: a persistent sidebar nav over every package's listings,
@@ -160,6 +102,16 @@ export const GalleryHome = () => (
   </Text>
 );
 
+/**
+ * A listing's page heading. Derived from the route param, so it renders
+ * immediately — outside the `<Suspense>` boundary that loads the listing body.
+ */
+export const ListingHeading = (props: { name: string }) => (
+  <Heading as="h1" size={5} weight="bold" selectable={false}>
+    {props.name}
+  </Heading>
+);
+
 /** A labeled row of a listing's pre-rendered component instances. */
 const ListingSection = (props: {
   title: string;
@@ -182,17 +134,49 @@ const ListingSection = (props: {
 );
 
 /**
- * A resolved listing's full page — its name over its enumerated sections.
- * Pair with a router-owned `lazy`/`Suspense` to load the listing module.
+ * A resolved listing's body — its enumerated sections. Pair with
+ * {@link ListingHeading} and a router-owned `lazy`/`Suspense` that loads the
+ * listing module.
  */
-export const ListingView = (props: { name: string; listing: ListingData }) => (
+export const ListingView = (props: { listing: ListingData }) => (
   <Flex as="div" direction="column" gap={6}>
-    <Heading as="h1" size={5} weight="bold" selectable={false}>
-      {props.name}
-    </Heading>
     <For each={props.listing.sections}>
       {(section) => (
         <ListingSection title={section.title} items={section.items} />
+      )}
+    </For>
+  </Flex>
+);
+
+/**
+ * The `<Suspense>` fallback for a listing body — a couple of pulsing section
+ * placeholders so the layout settles before the listing module resolves.
+ */
+export const ListingSkeleton = () => (
+  <Flex as="div" direction="column" gap={6} aria-hidden="true">
+    <For each={[0, 1]}>
+      {() => (
+        <Flex as="div" direction="column" gap={3}>
+          <Heading
+            as="h3"
+            size={2}
+            weight="medium"
+            color="lowContrast"
+            selectable={false}
+            skeleton
+          >
+            Loading section
+          </Heading>
+          <Flex as="div" direction="row" wrap="wrap" align="center" gap={3}>
+            <For each={[0, 1, 2]}>
+              {() => (
+                <Text as="span" size={2} selectable={false} skeleton>
+                  placeholder
+                </Text>
+              )}
+            </For>
+          </Flex>
+        </Flex>
       )}
     </For>
   </Flex>

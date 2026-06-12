@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Design system gallery — browse components and tokens. Replaces Storybook.",
+  "description": "Design system gallery — browse components and tokens.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts"
