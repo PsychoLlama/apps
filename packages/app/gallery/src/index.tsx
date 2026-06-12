@@ -147,37 +147,3 @@ export const ListingView = (props: { listing: ListingData }) => (
     </For>
   </Flex>
 );
-
-/**
- * The `<Suspense>` fallback for a listing body — a couple of pulsing section
- * placeholders so the layout settles before the listing module resolves.
- */
-export const ListingSkeleton = () => (
-  <Flex as="div" direction="column" gap={6} aria-hidden="true">
-    <For each={[0, 1]}>
-      {() => (
-        <Flex as="div" direction="column" gap={3}>
-          <Heading
-            as="h3"
-            size={2}
-            weight="medium"
-            color="lowContrast"
-            selectable={false}
-            skeleton
-          >
-            Loading section
-          </Heading>
-          <Flex as="div" direction="row" wrap="wrap" align="center" gap={3}>
-            <For each={[0, 1, 2]}>
-              {() => (
-                <Text as="span" size={2} selectable={false} skeleton>
-                  placeholder
-                </Text>
-              )}
-            </For>
-          </Flex>
-        </Flex>
-      )}
-    </For>
-  </Flex>
-);

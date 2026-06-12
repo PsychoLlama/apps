@@ -1,9 +1,4 @@
-import {
-  ListingHeading,
-  ListingSkeleton,
-  ListingView,
-  findListing,
-} from '@app/gallery';
+import { ListingHeading, ListingView, findListing } from '@app/gallery';
 import { Flex, Text } from '@lib/ui';
 import { useParams } from '@solidjs/router';
 import { Show, Suspense, lazy } from 'solid-js';
@@ -35,7 +30,7 @@ export default function GalleryListingRoute() {
     <Flex as="div" direction="column" gap={6}>
       <ListingHeading name={name()} />
 
-      <Suspense fallback={<ListingSkeleton />}>
+      <Suspense>
         <Show
           when={body()}
           fallback={
