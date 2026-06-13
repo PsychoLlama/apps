@@ -19,6 +19,13 @@
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:"
   },
+  "devDependencies": {
+    "@solidjs/meta": "catalog:",
+    "@solidjs/router": "catalog:",
+    "@solidjs/testing-library": "catalog:",
+    "@testing-library/user-event": "catalog:",
+    "solid-js": "catalog:"
+  },
   "peerDependencies": {
     "@solidjs/meta": "*",
     "solid-js": "*"

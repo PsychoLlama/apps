@@ -1,11 +1,24 @@
-import { screen } from '@solidjs/testing-library';
+import { MetaProvider } from '@solidjs/meta';
+import { MemoryRouter, Route } from '@solidjs/router';
+import { render, screen } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
-import ErrorBoundaryFallback from '../error-boundary/error-boundary';
-import { renderWithAppShell } from './test-utils';
+import type { Component } from 'solid-js';
+import ErrorBoundaryFallback from '../error-boundary';
 
+// SiteHeader writes the document title through `@solidjs/meta` and its
+// breadcrumb routes through `@solidjs/router`, so the fallback mounts
+// under both providers — the same context the host app supplies.
 const mount = (error: unknown, reset?: () => void) => {
-  return renderWithAppShell(() => (
+  const page: Component = () => (
     <ErrorBoundaryFallback error={error} reset={reset} />
+  );
+
+  return render(() => (
+    <MetaProvider>
+      <MemoryRouter>
+        <Route path="*" component={page} />
+      </MemoryRouter>
+    </MetaProvider>
   ));
 };
 

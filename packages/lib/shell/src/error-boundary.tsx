@@ -13,11 +13,11 @@ import {
   Section,
   Text,
 } from '@lib/ui';
-import { SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-circle-outline';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import IconHome from 'virtual:icons/mdi/home-outline';
 import IconRefresh from 'virtual:icons/mdi/refresh';
+import SiteHeader from './site-header';
 import * as css from './error-boundary.css';
 
 /** Props for the global error boundary fallback. */

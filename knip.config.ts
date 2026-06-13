@@ -29,13 +29,12 @@ const config: KnipConfig = {
         'src/entry-{client,server}.tsx!',
         'src/**/*.css.ts!',
         'src/**/*.test.{ts,tsx}',
-        'src/__tests__/test-utils.tsx',
         'vite.config.ts',
       ],
       // Project files need the production marker too: without it,
       // non-entry modules reached from production entries (e.g.
-      // `not-found/`, `error-boundary/`) are skipped by `--production`,
-      // and the dependencies only they import get reported as unused.
+      // `branding/`) are skipped by `--production`, and the
+      // dependencies only they import get reported as unused.
       project: ['src/**/*.{ts,tsx}!'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
