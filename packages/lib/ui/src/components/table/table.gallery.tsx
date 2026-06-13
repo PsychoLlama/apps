@@ -9,7 +9,6 @@ import {
   type TableRootProps,
   TableRow,
   TableRowHeaderCell,
-  type TableSize,
   type TableVariant,
 } from './table';
 
@@ -17,7 +16,6 @@ const VARIANTS = [
   'surface',
   'ghost',
 ] as const satisfies ReadonlyArray<TableVariant>;
-const SIZES = [1, 2, 3] as const satisfies ReadonlyArray<TableSize>;
 
 interface Row {
   name: string;
@@ -107,10 +105,6 @@ export default {
     {
       title: 'Variant',
       items: VARIANTS.map((variant) => <Demo variant={variant} />),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} variant="surface" />),
     },
   ],
 } satisfies GalleryListing;

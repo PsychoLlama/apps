@@ -64,10 +64,6 @@ export default {
       items: COLORS.map((color) => <Demo color={color} />),
     },
     {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} />),
-    },
-    {
       title: 'Radius',
       items: RADII.map((radius) => <Demo radius={radius} />),
     },

@@ -4,7 +4,6 @@ import Text from '../text/text';
 
 const VARIANTS = ['soft', 'surface', 'outline'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3] as const;
 
 const Body = (props: { label: string }) => (
   <Text as="p" size={2} selectable>
@@ -31,14 +30,6 @@ export default {
       items: COLORS.map((color) => (
         <Callout color={color}>
           <Body label={`${color} callout`} />
-        </Callout>
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <Callout size={size}>
-          <Body label={`Size ${size}`} />
         </Callout>
       )),
     },

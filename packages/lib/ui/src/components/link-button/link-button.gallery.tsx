@@ -4,7 +4,6 @@ import LinkButton, { type LinkButtonProps } from './link-button';
 
 const VARIANTS = ['solid', 'soft', 'surface', 'outline', 'ghost'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3, 4] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 const defaults = { href: '/', testId: 'link-button' } as const;
@@ -38,14 +37,6 @@ export default {
       items: COLORS.map((color) => (
         <Demo {...defaults} color={color}>
           {color}
-        </Demo>
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <Demo {...defaults} size={size}>
-          Size {size}
         </Demo>
       )),
     },

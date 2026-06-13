@@ -5,7 +5,6 @@ import * as css from './progress.gallery.css';
 
 const VARIANTS = ['classic', 'surface', 'soft'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 const Demo = (props: Partial<ProgressProps>) => (
@@ -27,10 +26,6 @@ export default {
     {
       title: 'Color',
       items: COLORS.map((color) => <Demo color={color} />),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} />),
     },
     {
       title: 'Radius',

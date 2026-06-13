@@ -4,7 +4,6 @@ import SAMPLE_SRC from './sample-avatar.svg?url';
 
 const VARIANTS = ['solid', 'soft'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 // The error cell uses a guaranteed-broken URL to exercise the fallback
@@ -28,12 +27,6 @@ export default {
       title: 'Color',
       items: COLORS.map((color) => (
         <Avatar alt="Gill Bates" fallback="GB" color={color} variant="solid" />
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <Avatar alt="Gill Bates" fallback="GB" size={size} />
       )),
     },
     {

@@ -2,7 +2,6 @@ import type { GalleryListing } from '@dev/gallery';
 import TextArea from './text-area';
 
 const VARIANTS = ['classic', 'surface', 'soft'] as const;
-const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 const RESIZES = ['none', 'vertical', 'horizontal', 'both'] as const;
 
@@ -23,12 +22,6 @@ export default {
       title: 'Variant',
       items: VARIANTS.map((variant) => (
         <TextArea {...defaults} variant={variant} placeholder={variant} />
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <TextArea {...defaults} size={size} placeholder={`Size ${size}`} />
       )),
     },
     {

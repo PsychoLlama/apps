@@ -2,8 +2,6 @@ import type { GalleryListing } from '@dev/gallery';
 import Em from './em';
 import Text from '../text/text';
 
-const SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-
 /**
  * Gallery listing for `Em`. Enumerates the component across its visual
  * axes.
@@ -11,12 +9,12 @@ const SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 export default {
   sections: [
     {
-      title: 'Inheriting size',
-      items: SIZES.map((size) => (
-        <Text as="p" size={size} selectable>
+      title: 'In context',
+      items: [
+        <Text as="p" selectable>
           Quick <Em>brown</Em> fox.
-        </Text>
-      )),
+        </Text>,
+      ],
     },
   ],
 } satisfies GalleryListing;

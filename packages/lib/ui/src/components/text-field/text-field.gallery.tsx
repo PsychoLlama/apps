@@ -5,7 +5,6 @@ import TextField from './text-field';
 import IconButton from '../icon-button/icon-button';
 
 const VARIANTS = ['classic', 'surface', 'soft'] as const;
-const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 const defaults = {
@@ -28,17 +27,6 @@ export default {
           {...defaults}
           variant={variant}
           placeholder={variant}
-          left={<IconMagnify />}
-        />
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <TextField
-          {...defaults}
-          size={size}
-          placeholder={`Size ${size}`}
           left={<IconMagnify />}
         />
       )),

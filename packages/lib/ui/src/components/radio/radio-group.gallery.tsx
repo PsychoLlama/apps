@@ -78,12 +78,6 @@ export default {
       )),
     },
     {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <Demo name={`radio-size-${size}`} size={size} />
-      )),
-    },
-    {
       title: 'Disabled',
       items: [<Demo name="radio-disabled" disabled />],
     },
