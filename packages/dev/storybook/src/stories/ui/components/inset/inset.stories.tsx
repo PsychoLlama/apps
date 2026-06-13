@@ -1,13 +1,20 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Card, Flex, Heading, Inset, type InsetProps, Text } from '@lib/ui';
+import {
+  Card,
+  Flex,
+  Heading,
+  Inset as InsetComponent,
+  type InsetProps,
+  Text,
+} from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import * as css from './inset.stories.css';
 
 const meta = {
-  title: 'UI/Components/Inset',
-  component: Inset,
+  title: 'UI/Components',
+  component: InsetComponent,
   args: {
     as: 'div',
     side: 'top',
@@ -31,9 +38,9 @@ const meta = {
   },
   render: (props) => (
     <Card as="div" size={2}>
-      <Inset {...props}>
+      <InsetComponent {...props}>
         <Flex as="div" class={css.media} />
-      </Inset>
+      </InsetComponent>
       <Heading as="h3" size={3} selectable>
         Insets bleed past padding
       </Heading>
@@ -48,4 +55,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Inset: Story = {};
