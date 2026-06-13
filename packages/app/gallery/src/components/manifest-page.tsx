@@ -36,9 +36,14 @@ export const ManifestPage = (props: {
       >
         {(found) => (
           <Flex as="div" direction="column" gap={6}>
-            <Heading as="h1" size={7} weight="bold" selectable={false}>
-              {found.title}
-            </Heading>
+            <Flex as="div" direction="column" gap={2}>
+              <Heading as="h1" size={7} weight="bold" selectable={false}>
+                {found.title}
+              </Heading>
+              <Text as="p" size={3} color="lowContrast" selectable={false}>
+                {found.description}
+              </Text>
+            </Flex>
 
             {props.renderListings(found)}
           </Flex>

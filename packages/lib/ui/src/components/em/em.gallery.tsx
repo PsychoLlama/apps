@@ -3,19 +3,14 @@ import Em from './em';
 import Text from '../text/text';
 
 /**
- * Gallery listing for `Em`. Enumerates the component across its visual
- * axes.
+ * Gallery listing for `Em`. A text-level emphasis mark with no visual axes —
+ * shown once in context.
  */
 export default {
   title: 'Em',
-  sections: [
-    {
-      title: 'In context',
-      items: [
-        <Text as="p" selectable>
-          Quick <Em>brown</Em> fox.
-        </Text>,
-      ],
-    },
-  ],
+  render: () => (
+    <Text as="p" selectable>
+      Quick <Em>brown</Em> fox.
+    </Text>
+  ),
 } satisfies GalleryListing;

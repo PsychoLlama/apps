@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import Kbd from './kbd';
 
@@ -9,10 +10,14 @@ const VARIANTS = ['classic', 'soft'] as const;
  */
 export default {
   title: 'Kbd',
+  render: (props) => <Kbd {...props} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => <Kbd variant={variant}>{variant}</Kbd>),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant, children: variant },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<ComponentProps<typeof Kbd>>;

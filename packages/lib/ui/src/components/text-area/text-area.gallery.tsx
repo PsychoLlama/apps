@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import TextArea from './text-area';
 
@@ -5,7 +6,7 @@ const VARIANTS = ['classic', 'surface', 'soft'] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 const RESIZES = ['none', 'vertical', 'horizontal', 'both'] as const;
 
-const defaults = {
+const DEFAULTS = {
   testId: 'text-area',
   autocomplete: 'off',
   autocapitalize: 'sentences',
@@ -13,37 +14,37 @@ const defaults = {
 } as const;
 
 /**
- * Gallery listing for `TextArea`. Enumerates the component across its
- * visual axes.
+ * Gallery listing for `TextArea`. The headline view crosses variant against
+ * input state; the remaining tabs enumerate the other visual axes.
  */
 export default {
   title: 'TextArea',
+  render: (props) => (
+    <TextArea {...DEFAULTS} placeholder="Message" {...props} />
+  ),
   sections: [
     {
-      title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <TextArea {...defaults} variant={variant} placeholder={variant} />
-      )),
+      title: 'Variant × State',
+      rows: VARIANTS.map((variant) => ({ title: variant, props: { variant } })),
+      columns: [
+        { title: 'Default', props: {} },
+        { title: 'Disabled', props: { disabled: true } },
+        { title: 'Read-only', props: { readOnly: true } },
+      ],
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => (
-        <TextArea {...defaults} radius={radius} placeholder={radius} />
-      )),
+      columns: RADII.map((radius) => ({
+        title: radius,
+        props: { radius, placeholder: radius },
+      })),
     },
     {
       title: 'Resize',
-      items: RESIZES.map((resize) => (
-        <TextArea {...defaults} resize={resize} placeholder={resize} />
-      )),
-    },
-    {
-      title: 'State',
-      items: [
-        <TextArea {...defaults} placeholder="Default" />,
-        <TextArea {...defaults} placeholder="Disabled" disabled />,
-        <TextArea {...defaults} placeholder="Read-only" readOnly />,
-      ],
+      columns: RESIZES.map((resize) => ({
+        title: resize,
+        props: { resize, placeholder: resize },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<ComponentProps<typeof TextArea>>;

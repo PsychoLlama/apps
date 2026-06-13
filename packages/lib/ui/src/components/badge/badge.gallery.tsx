@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import Badge from './badge';
 
@@ -11,28 +12,35 @@ const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
  */
 export default {
   title: 'Badge',
+  render: (props) => <Badge {...props} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Badge variant={variant}>{variant}</Badge>
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant, children: variant },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => <Badge color={color}>{color}</Badge>),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, children: color },
+      })),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => <Badge radius={radius}>{radius}</Badge>),
+      columns: RADII.map((radius) => ({
+        title: radius,
+        props: { radius, children: radius },
+      })),
     },
     {
       title: 'High contrast',
-      items: VARIANTS.map((variant) => (
-        <Badge variant={variant} highContrast>
-          {variant}
-        </Badge>
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant, highContrast: true, children: variant },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<ComponentProps<typeof Badge>>;

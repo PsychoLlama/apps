@@ -1,4 +1,4 @@
-import { createSignal, untrack } from 'solid-js';
+import { createSignal, Show, untrack } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import Checkbox, { type CheckboxChecked, type CheckboxProps } from './checkbox';
 import Flex from '../flex/flex';
@@ -9,9 +9,13 @@ const VARIANTS = ['classic', 'surface', 'soft'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const SIZES = [1, 2, 3] as const;
 
-const Demo = (
-  props: Partial<CheckboxProps> & { initialChecked?: CheckboxChecked },
-) => {
+/** Demo-only knobs: the initial checked state and an optional wrapping-label size. */
+type DemoProps = Partial<CheckboxProps> & {
+  initialChecked?: CheckboxChecked;
+  wrapText?: 4 | 5 | 6;
+};
+
+const Demo = (props: DemoProps) => {
   const [checked, setChecked] = createSignal<CheckboxChecked>(
     untrack(() => props.initialChecked ?? true),
   );
@@ -56,42 +60,77 @@ const WrappingDemo = (props: {
  */
 export default {
   title: 'Checkbox',
+  render: (props) => (
+    <Show when={props.wrapText} keyed fallback={<Demo {...props} />}>
+      {(textSize) => (
+        <WrappingDemo checkboxSize={props.size ?? 1} textSize={textSize} />
+      )}
+    </Show>
+  ),
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => <Demo variant={variant} />),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => <Demo color={color} />),
+      columns: COLORS.map((color) => ({ title: color, props: { color } })),
     },
     {
       title: 'State',
-      items: [
-        <Demo initialChecked={false} />,
-        <Demo initialChecked={true} />,
-        <Demo initialChecked="indeterminate" />,
-        <Demo initialChecked={false} disabled />,
-        <Demo initialChecked={true} disabled />,
-        <Demo initialChecked="indeterminate" disabled />,
+      columns: [
+        { title: 'Off', props: { initialChecked: false } },
+        { title: 'On', props: { initialChecked: true } },
+        { title: 'Mixed', props: { initialChecked: 'indeterminate' } },
+        {
+          title: 'Off disabled',
+          props: { initialChecked: false, disabled: true },
+        },
+        {
+          title: 'On disabled',
+          props: { initialChecked: true, disabled: true },
+        },
+        {
+          title: 'Mixed disabled',
+          props: { initialChecked: 'indeterminate', disabled: true },
+        },
       ],
     },
     {
       title: 'With label',
-      items: [
-        <Demo initialChecked={true}>Subscribe to updates</Demo>,
-        <Demo initialChecked="indeterminate">Some items selected</Demo>,
-        <Demo initialChecked={false} disabled>
-          Disabled option
-        </Demo>,
+      columns: [
+        {
+          title: 'Checked',
+          props: { initialChecked: true, children: 'Subscribe to updates' },
+        },
+        {
+          title: 'Mixed',
+          props: {
+            initialChecked: 'indeterminate',
+            children: 'Some items selected',
+          },
+        },
+        {
+          title: 'Disabled',
+          props: {
+            initialChecked: false,
+            disabled: true,
+            children: 'Disabled option',
+          },
+        },
       ],
     },
     {
       title: 'Wrapping labels',
-      items: SIZES.map((checkboxSize, index) => {
-        const textSize = (4 + index) as 4 | 5 | 6;
-        return <WrappingDemo checkboxSize={checkboxSize} textSize={textSize} />;
-      }),
+      columns: SIZES.map((size, index) => ({
+        title: `Size ${size}`,
+        props: { size, wrapText: (4 + index) as 4 | 5 | 6 },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<
+  CheckboxProps & { initialChecked?: CheckboxChecked; wrapText?: 4 | 5 | 6 }
+>;

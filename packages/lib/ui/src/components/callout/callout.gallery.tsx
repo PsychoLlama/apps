@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import Callout from './callout';
 import Text from '../text/text';
@@ -17,30 +18,32 @@ const Body = (props: { label: string }) => (
  */
 export default {
   title: 'Callout',
+  render: (props) => <Callout {...props} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Callout variant={variant}>
-          <Body label={`${variant} callout`} />
-        </Callout>
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant, children: <Body label={`${variant} callout`} /> },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => (
-        <Callout color={color}>
-          <Body label={`${color} callout`} />
-        </Callout>
-      )),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, children: <Body label={`${color} callout`} /> },
+      })),
     },
     {
       title: 'High contrast',
-      items: VARIANTS.map((variant) => (
-        <Callout variant={variant} highContrast>
-          <Body label={`${variant} callout`} />
-        </Callout>
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: {
+          variant,
+          highContrast: true,
+          children: <Body label={`${variant} callout`} />,
+        },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<ComponentProps<typeof Callout>>;

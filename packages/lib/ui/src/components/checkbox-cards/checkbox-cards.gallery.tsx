@@ -14,19 +14,17 @@ const OPTIONS = [
 ] as const;
 
 /**
- * Each gallery cell echoes the demoed axis value in its card labels
- * when the value isn't already obvious from the visual treatment —
- * the variant cell prefixes "surface" / "classic" and the color cell
- * prefixes "accent" / "danger" / etc. Size + disabled cells skip the
- * prefix (the size renders visibly; the disabled cell uses the
- * disabled affordance).
- *
- * The first card is preselected so the checked indicator color
- * shows up directly.
+ * Each gallery cell echoes the demoed axis value in its card labels via the
+ * `label` prefix when the value isn't already obvious from the visual
+ * treatment. `name` keeps each group isolated. The first card is preselected so
+ * the checked indicator color shows up directly.
  */
-const Demo = (
-  props: Partial<CheckboxCardsRootProps> & { name: string; label?: string },
-) => {
+type DemoProps = Partial<CheckboxCardsRootProps> & {
+  name?: string;
+  label?: string;
+};
+
+const Demo = (props: { name: string } & DemoProps) => {
   const [value, setValue] = createSignal<string[]>(['basic']);
   return (
     <CheckboxCardsRoot
@@ -60,22 +58,27 @@ const Demo = (
  */
 export default {
   title: 'CheckboxCards',
+  render: (props) => <Demo {...props} name={props.name ?? 'checkbox-cards'} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Demo name={`variant-${variant}`} label={variant} variant={variant} />
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant, label: variant, name: `variant-${variant}` },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => (
-        <Demo name={`color-${color}`} label={color} color={color} />
-      )),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, label: color, name: `color-${color}` },
+      })),
     },
     {
       title: 'Disabled',
-      items: [<Demo name="disabled" disabled />],
+      columns: [
+        { title: 'Disabled', props: { disabled: true, name: 'disabled' } },
+      ],
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<DemoProps>;

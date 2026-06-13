@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import Avatar from './avatar';
 import SAMPLE_SRC from './sample-avatar.svg?url';
@@ -17,32 +18,33 @@ const BROKEN_SRC = 'https://example.invalid/avatar.png';
  */
 export default {
   title: 'Avatar',
+  render: (props) => <Avatar alt="Gill Bates" fallback="GB" {...props} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Avatar alt="Gill Bates" fallback="GB" variant={variant} />
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => (
-        <Avatar alt="Gill Bates" fallback="GB" color={color} variant="solid" />
-      )),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, variant: 'solid' },
+      })),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => (
-        <Avatar alt="Gill Bates" fallback="GB" radius={radius} />
-      )),
+      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
     },
     {
       title: 'State',
-      items: [
-        <Avatar alt="Gill Bates" fallback="GB" src={SAMPLE_SRC} />,
-        <Avatar alt="Gill Bates" fallback="GB" src={BROKEN_SRC} />,
-        <Avatar alt="Gill Bates" fallback="GB" />,
+      columns: [
+        { title: 'Image', props: { src: SAMPLE_SRC } },
+        { title: 'Broken', props: { src: BROKEN_SRC } },
+        { title: 'Fallback', props: {} },
       ],
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<ComponentProps<typeof Avatar>>;

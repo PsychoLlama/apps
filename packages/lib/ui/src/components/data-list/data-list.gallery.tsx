@@ -21,22 +21,25 @@ const COLORS = [
   'success',
 ] as const satisfies ReadonlyArray<DataListColor>;
 
-const Demo = (props: Partial<DataListRootProps>) => (
-  <DataListRoot {...props}>
+/** The label color is per-`DataListLabel`, so it rides an extra demo-only prop. */
+type DemoProps = Partial<DataListRootProps> & { labelColor?: DataListColor };
+
+const Demo = (props: DemoProps) => (
+  <DataListRoot orientation={props.orientation}>
     <DataListItem>
-      <DataListLabel>Status</DataListLabel>
+      <DataListLabel color={props.labelColor}>Status</DataListLabel>
       <DataListValue>Hatched</DataListValue>
     </DataListItem>
     <DataListItem>
-      <DataListLabel>ID</DataListLabel>
+      <DataListLabel color={props.labelColor}>ID</DataListLabel>
       <DataListValue>egg_4f7c…a19b</DataListValue>
     </DataListItem>
     <DataListItem>
-      <DataListLabel>Species</DataListLabel>
+      <DataListLabel color={props.labelColor}>Species</DataListLabel>
       <DataListValue>Emperor penguin</DataListValue>
     </DataListItem>
     <DataListItem>
-      <DataListLabel>Mass</DataListLabel>
+      <DataListLabel color={props.labelColor}>Mass</DataListLabel>
       <DataListValue>23 kg</DataListValue>
     </DataListItem>
   </DataListRoot>
@@ -48,27 +51,21 @@ const Demo = (props: Partial<DataListRootProps>) => (
  */
 export default {
   title: 'DataList',
+  render: (props) => <Demo {...props} />,
   sections: [
     {
       title: 'Orientation',
-      items: ORIENTATIONS.map((orientation) => (
-        <Demo orientation={orientation} />
-      )),
+      columns: ORIENTATIONS.map((orientation) => ({
+        title: orientation,
+        props: { orientation },
+      })),
     },
     {
       title: 'Label color',
-      items: COLORS.map((color) => (
-        <DataListRoot>
-          <DataListItem>
-            <DataListLabel color={color}>{color}</DataListLabel>
-            <DataListValue>Tinted label</DataListValue>
-          </DataListItem>
-          <DataListItem>
-            <DataListLabel color={color}>Status</DataListLabel>
-            <DataListValue>Active</DataListValue>
-          </DataListItem>
-        </DataListRoot>
-      )),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { labelColor: color },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<DataListRootProps & { labelColor?: DataListColor }>;

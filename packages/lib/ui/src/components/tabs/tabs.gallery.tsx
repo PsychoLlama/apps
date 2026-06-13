@@ -43,14 +43,18 @@ const Demo = (props: Partial<TabsListProps>) => {
  */
 export default {
   title: 'Tabs',
+  render: (props) => <Demo {...props} />,
   sections: [
     {
       title: 'Color',
-      items: COLORS.map((color) => <Demo color={color} />),
+      columns: COLORS.map((color) => ({ title: color, props: { color } })),
     },
     {
       title: 'High contrast',
-      items: COLORS.map((color) => <Demo color={color} highContrast />),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, highContrast: true },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<TabsListProps>;

@@ -1,4 +1,4 @@
-import { createSignal, untrack } from 'solid-js';
+import { createSignal, Show, untrack } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import Switch, { type SwitchProps } from './switch';
 import Flex from '../flex/flex';
@@ -10,7 +10,13 @@ const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
-const Demo = (props: Partial<SwitchProps> & { initialChecked?: boolean }) => {
+/** Demo-only knobs: the initial checked state and an optional wrapping-label size. */
+type DemoProps = Partial<SwitchProps> & {
+  initialChecked?: boolean;
+  wrapText?: 4 | 5 | 6;
+};
+
+const Demo = (props: DemoProps) => {
   const [checked, setChecked] = createSignal(
     untrack(() => props.initialChecked ?? true),
   );
@@ -55,34 +61,52 @@ const WrappingDemo = (props: {
  */
 export default {
   title: 'Switch',
+  render: (props) => (
+    <Show when={props.wrapText} keyed fallback={<Demo {...props} />}>
+      {(textSize) => (
+        <WrappingDemo switchSize={props.size ?? 1} textSize={textSize} />
+      )}
+    </Show>
+  ),
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => <Demo variant={variant} />),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => <Demo color={color} />),
+      columns: COLORS.map((color) => ({ title: color, props: { color } })),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => <Demo radius={radius} />),
+      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
     },
     {
       title: 'State',
-      items: [
-        <Demo initialChecked={false} />,
-        <Demo initialChecked={true} />,
-        <Demo initialChecked={false} disabled />,
-        <Demo initialChecked={true} disabled />,
+      columns: [
+        { title: 'Off', props: { initialChecked: false } },
+        { title: 'On', props: { initialChecked: true } },
+        {
+          title: 'Off disabled',
+          props: { initialChecked: false, disabled: true },
+        },
+        {
+          title: 'On disabled',
+          props: { initialChecked: true, disabled: true },
+        },
       ],
     },
     {
       title: 'Wrapping labels',
-      items: SIZES.map((switchSize, index) => {
-        const textSize = (4 + index) as 4 | 5 | 6;
-        return <WrappingDemo switchSize={switchSize} textSize={textSize} />;
-      }),
+      columns: SIZES.map((size, index) => ({
+        title: `Size ${size}`,
+        props: { size, wrapText: (4 + index) as 4 | 5 | 6 },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<
+  SwitchProps & { initialChecked?: boolean; wrapText?: 4 | 5 | 6 }
+>;

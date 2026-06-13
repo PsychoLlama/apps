@@ -3,6 +3,7 @@ import Card from './card';
 import Heading from '../heading/heading';
 import Text from '../text/text';
 
+type CardVariant = 'surface' | 'classic' | 'ghost';
 const VARIANTS = ['surface', 'classic', 'ghost'] as const;
 
 const Body = (props: { title: string }) => (
@@ -22,14 +23,18 @@ const Body = (props: { title: string }) => (
  */
 export default {
   title: 'Card',
+  render: (props) => (
+    <Card as="div" variant={props.variant}>
+      <Body title={props.variant ?? 'surface'} />
+    </Card>
+  ),
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Card as="div" variant={variant}>
-          <Body title={variant} />
-        </Card>
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<{ variant?: CardVariant }>;

@@ -7,7 +7,7 @@ import { collectListings, type GalleryListing } from '@dev/gallery';
  * parallel.
  */
 export default collectListings(
-  import.meta.glob<{ default: GalleryListing }>('./**/*.gallery.tsx', {
+  import.meta.glob<{ default: GalleryListing<unknown> }>('./**/*.gallery.tsx', {
     eager: true,
   }),
 );

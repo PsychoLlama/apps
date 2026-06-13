@@ -242,6 +242,25 @@ export default [
     },
   },
   {
+    // @app/gallery renders component demos; its only local state is which
+    // permutation tab is active — demo display state, the same category as
+    // `*.gallery.tsx`. The heavyweight state framework exists for application
+    // state and is the wrong fit, so plain Solid primitives are allowed here.
+    files: ['packages/app/gallery/src/**/*.{ts,tsx}'],
+    // `.css.ts` files are governed by the `packages/**/*.css.ts` block above
+    // (which carries the globalStyle ban). Without this ignore, this override
+    // would clobber that rule and silently drop the ban for gallery styles.
+    ignores: ['**/*.css.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: restrictedImportPatterns,
+        },
+      ],
+    },
+  },
+  {
     // Storybook stories and `*.gallery.tsx` files demo components in
     // isolation. Local UI state belongs to the demo wrapper, not
     // application state, so plain Solid primitives are the right fit.

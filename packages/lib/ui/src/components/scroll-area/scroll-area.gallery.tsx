@@ -42,13 +42,12 @@ const BothContent = () => (
   </Flex>
 );
 
-const Demo = (props: Partial<ScrollAreaProps>) => (
-  <Flex as="div" class={css.galleryCell}>
-    <ScrollArea {...props}>
-      <TallContent />
-    </ScrollArea>
-  </Flex>
-);
+// Horizontal/both scrollbars need content that overflows on that axis.
+const contentFor = (scrollbars: ScrollAreaProps['scrollbars']) => {
+  if (scrollbars === 'horizontal') return <WideContent />;
+  if (scrollbars === 'both') return <BothContent />;
+  return <TallContent />;
+};
 
 /**
  * Gallery listing for `ScrollArea`. Enumerates the component across its
@@ -56,34 +55,27 @@ const Demo = (props: Partial<ScrollAreaProps>) => (
  */
 export default {
   title: 'ScrollArea',
+  render: (props) => (
+    <Flex as="div" class={css.galleryCell}>
+      <ScrollArea {...props}>{contentFor(props.scrollbars)}</ScrollArea>
+    </Flex>
+  ),
   sections: [
     {
       title: 'Type',
-      items: TYPES.map((type) => <Demo type={type} />),
+      columns: TYPES.map((type) => ({ title: type, props: { type } })),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => <Demo radius={radius} />),
+      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
     },
     {
       title: 'Scrollbars',
-      items: [
-        <Flex as="div" class={css.galleryCell}>
-          <ScrollArea scrollbars="vertical">
-            <TallContent />
-          </ScrollArea>
-        </Flex>,
-        <Flex as="div" class={css.galleryCell}>
-          <ScrollArea scrollbars="horizontal">
-            <WideContent />
-          </ScrollArea>
-        </Flex>,
-        <Flex as="div" class={css.galleryCell}>
-          <ScrollArea scrollbars="both">
-            <BothContent />
-          </ScrollArea>
-        </Flex>,
+      columns: [
+        { title: 'Vertical', props: { scrollbars: 'vertical' } },
+        { title: 'Horizontal', props: { scrollbars: 'horizontal' } },
+        { title: 'Both', props: { scrollbars: 'both' } },
       ],
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<ScrollAreaProps>;

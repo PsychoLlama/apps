@@ -8,7 +8,9 @@ const VARIANTS = ['classic', 'surface', 'soft'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
-const Demo = (props: Partial<SliderProps> & { initialValue?: number[] }) => {
+type DemoProps = Partial<SliderProps> & { initialValue?: number[] };
+
+const Demo = (props: DemoProps) => {
   const [value, setValue] = createSignal(
     untrack(() => props.initialValue ?? [40]),
   );
@@ -30,33 +32,40 @@ const Demo = (props: Partial<SliderProps> & { initialValue?: number[] }) => {
  */
 export default {
   title: 'Slider',
+  render: (props) => <Demo {...props} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => <Demo variant={variant} />),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => <Demo color={color} />),
+      columns: COLORS.map((color) => ({ title: color, props: { color } })),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => <Demo radius={radius} />),
+      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
     },
     {
       title: 'Range',
-      items: [
-        <Demo initialValue={[20, 80]} />,
-        <Demo initialValue={[10, 50, 90]} />,
+      columns: [
+        { title: 'Two thumbs', props: { initialValue: [20, 80] } },
+        { title: 'Three thumbs', props: { initialValue: [10, 50, 90] } },
       ],
     },
     {
       title: 'State',
-      items: [
-        <Demo initialValue={[50]} />,
-        <Demo initialValue={[50]} disabled />,
-        <Demo initialValue={[20, 80]} disabled />,
+      columns: [
+        { title: 'Default', props: { initialValue: [50] } },
+        { title: 'Disabled', props: { initialValue: [50], disabled: true } },
+        {
+          title: 'Disabled range',
+          props: { initialValue: [20, 80], disabled: true },
+        },
       ],
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<SliderProps & { initialValue?: number[] }>;

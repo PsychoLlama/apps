@@ -6,15 +6,11 @@ const UNDERLINES = ['auto', 'always', 'hover', 'none'] as const;
 const COLORS = ['accent', 'neutral'] as const;
 const WEIGHTS = ['light', 'regular', 'medium', 'bold'] as const;
 
-// An inert hash href keeps the showcase links from looking like real routes:
-// the static prerender crawls in-app links, and a real path here would emit a
-// bogus 200 page at that route.
-const defaults = { href: '#', testId: 'link' } as const;
-
-// Each gallery item gets its own router context so module-level JSX can call
-// Link's router primitives. `StaticRouter` (not `MemoryRouter`) keeps this
-// SSR-safe — `MemoryRouter` wires up native DOM events on setup, which throws
-// during prerender; the gallery is statically generated.
+// Each cell gets its own router context so module-level JSX can call Link's
+// router primitives. `StaticRouter` (not `MemoryRouter`) keeps this SSR-safe —
+// `MemoryRouter` wires up native DOM events on setup, which throws during
+// prerender; the gallery is statically generated. An inert hash href keeps the
+// showcase links from looking like real routes.
 const Demo = (props: LinkProps) => (
   <StaticRouter url="/" root={() => <Link {...props} />} />
 );
@@ -25,38 +21,35 @@ const Demo = (props: LinkProps) => (
  */
 export default {
   title: 'Link',
+  render: (props) => <Demo href="#" testId="link" {...props} />,
   sections: [
     {
       title: 'Underline',
-      items: UNDERLINES.map((underline) => (
-        <Demo {...defaults} underline={underline}>
-          {underline}
-        </Demo>
-      )),
+      columns: UNDERLINES.map((underline) => ({
+        title: underline,
+        props: { underline, children: underline },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => (
-        <Demo {...defaults} color={color}>
-          {color}
-        </Demo>
-      )),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, children: color },
+      })),
     },
     {
       title: 'Weight',
-      items: WEIGHTS.map((weight) => (
-        <Demo {...defaults} weight={weight}>
-          {weight}
-        </Demo>
-      )),
+      columns: WEIGHTS.map((weight) => ({
+        title: weight,
+        props: { weight, children: weight },
+      })),
     },
     {
       title: 'High contrast',
-      items: COLORS.map((color) => (
-        <Demo {...defaults} color={color} highContrast>
-          {color}
-        </Demo>
-      )),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, highContrast: true, children: color },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<LinkProps>;

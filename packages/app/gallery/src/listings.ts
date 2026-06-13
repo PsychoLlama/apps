@@ -51,7 +51,7 @@ export const findManifest = (titleSlug: string): GalleryManifest | undefined =>
  */
 export const loadListings = async (
   manifest: GalleryManifest,
-): Promise<GalleryListing[]> => {
+): Promise<GalleryListing<unknown>[]> => {
   const module = await manifest.listings();
   return [...module.default].sort((left, right) =>
     left.title.localeCompare(right.title),
