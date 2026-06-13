@@ -23,6 +23,13 @@ export default {
     {
       title: 'Theme colors',
       columns: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
+      ],
+      rows: [
         { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
         { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
         {
@@ -34,13 +41,6 @@ export default {
           props: { variant: 'outline', children: 'outline' },
         },
         { title: 'Ghost', props: { variant: 'ghost', children: 'ghost' } },
-      ],
-      rows: [
-        { title: 'None', props: { radius: 'none' } },
-        { title: 'Small', props: { radius: 'small' } },
-        { title: 'Medium', props: { radius: 'medium' } },
-        { title: 'Large', props: { radius: 'large' } },
-        { title: 'Full', props: { radius: 'full' } },
       ],
     },
     {

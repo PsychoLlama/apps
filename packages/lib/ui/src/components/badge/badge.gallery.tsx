@@ -12,20 +12,17 @@ export default {
     {
       title: 'Theme colors',
       columns: [
-        { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
-        { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
-        {
-          title: 'Surface',
-          props: { variant: 'surface', children: 'surface' },
-        },
-        {
-          title: 'Outline',
-          props: { variant: 'outline', children: 'outline' },
-        },
+        { title: 'None', props: { radius: 'none', children: 'none' } },
+        { title: 'Small', props: { radius: 'small', children: 'small' } },
+        { title: 'Medium', props: { radius: 'medium', children: 'medium' } },
+        { title: 'Large', props: { radius: 'large', children: 'large' } },
+        { title: 'Full', props: { radius: 'full', children: 'full' } },
       ],
       rows: [
-        { title: 'Default', props: {} },
-        { title: 'High contrast', props: { highContrast: true } },
+        { title: 'Solid', props: { variant: 'solid' } },
+        { title: 'Soft', props: { variant: 'soft' } },
+        { title: 'Surface', props: { variant: 'surface' } },
+        { title: 'Outline', props: { variant: 'outline' } },
       ],
     },
     {
@@ -39,13 +36,32 @@ export default {
       ],
     },
     {
-      title: 'Radius',
+      title: 'High contrast',
       columns: [
-        { title: 'None', props: { radius: 'none', children: 'none' } },
-        { title: 'Small', props: { radius: 'small', children: 'small' } },
-        { title: 'Medium', props: { radius: 'medium', children: 'medium' } },
-        { title: 'Large', props: { radius: 'large', children: 'large' } },
-        { title: 'Full', props: { radius: 'full', children: 'full' } },
+        {
+          title: 'Solid',
+          props: { variant: 'solid', highContrast: true, children: 'solid' },
+        },
+        {
+          title: 'Soft',
+          props: { variant: 'soft', highContrast: true, children: 'soft' },
+        },
+        {
+          title: 'Surface',
+          props: {
+            variant: 'surface',
+            highContrast: true,
+            children: 'surface',
+          },
+        },
+        {
+          title: 'Outline',
+          props: {
+            variant: 'outline',
+            highContrast: true,
+            children: 'outline',
+          },
+        },
       ],
     },
   ],

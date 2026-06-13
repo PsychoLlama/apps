@@ -50,6 +50,10 @@ export default {
         { title: 'Warning', props: { color: 'warning' } },
         { title: 'Success', props: { color: 'success' } },
       ],
+      rows: [
+        { title: 'Default', props: {} },
+        { title: 'Disabled', props: { disabled: true } },
+      ],
     },
     {
       title: 'State',
@@ -61,7 +65,7 @@ export default {
     },
     {
       title: 'Labeled',
-      columns: [
+      rows: [
         {
           title: 'Checked',
           props: { initialChecked: true, children: 'Subscribe to updates' },

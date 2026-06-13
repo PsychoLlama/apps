@@ -90,7 +90,7 @@ export default {
     },
     {
       title: 'Color',
-      columns: [
+      rows: [
         {
           title: 'Accent',
           props: { color: 'accent', label: 'accent', name: 'color-accent' },
@@ -111,6 +111,10 @@ export default {
           title: 'Success',
           props: { color: 'success', label: 'success', name: 'color-success' },
         },
+      ],
+      columns: [
+        { title: 'Default', props: {} },
+        { title: 'Disabled', props: { disabled: true } },
       ],
     },
   ],

@@ -18,15 +18,15 @@ export default {
     {
       title: 'Theme colors',
       columns: [
-        { title: 'Solid', props: { variant: 'solid' } },
-        { title: 'Soft', props: { variant: 'soft' } },
-      ],
-      rows: [
         { title: 'None', props: { radius: 'none' } },
         { title: 'Small', props: { radius: 'small' } },
         { title: 'Medium', props: { radius: 'medium' } },
         { title: 'Large', props: { radius: 'large' } },
         { title: 'Full', props: { radius: 'full' } },
+      ],
+      rows: [
+        { title: 'Solid', props: { variant: 'solid' } },
+        { title: 'Soft', props: { variant: 'soft' } },
       ],
     },
     {

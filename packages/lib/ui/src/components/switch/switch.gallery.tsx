@@ -62,13 +62,6 @@ export default {
       ],
     },
     {
-      title: 'State',
-      columns: [
-        { title: 'Off', props: { initialChecked: false } },
-        { title: 'On', props: { initialChecked: true } },
-      ],
-    },
-    {
       title: 'Size',
       columns: [
         { title: 'Size 1', props: { size: 1 } },

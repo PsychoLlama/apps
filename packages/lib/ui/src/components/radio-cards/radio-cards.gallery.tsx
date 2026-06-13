@@ -87,7 +87,7 @@ export default {
     },
     {
       title: 'Color',
-      columns: [
+      rows: [
         {
           title: 'Accent',
           props: { color: 'accent', label: 'accent', name: 'color-accent' },

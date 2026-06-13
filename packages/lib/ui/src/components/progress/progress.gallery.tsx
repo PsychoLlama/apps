@@ -24,13 +24,6 @@ export default {
         { title: 'Surface', props: { variant: 'surface' } },
         { title: 'Soft', props: { variant: 'soft' } },
       ],
-      rows: [
-        { title: 'None', props: { radius: 'none' } },
-        { title: 'Small', props: { radius: 'small' } },
-        { title: 'Medium', props: { radius: 'medium' } },
-        { title: 'Large', props: { radius: 'large' } },
-        { title: 'Full', props: { radius: 'full' } },
-      ],
     },
     {
       title: 'Color',
@@ -40,6 +33,16 @@ export default {
         { title: 'Danger', props: { color: 'danger' } },
         { title: 'Warning', props: { color: 'warning' } },
         { title: 'Success', props: { color: 'success' } },
+      ],
+    },
+    {
+      title: 'Radius',
+      rows: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
       ],
     },
     {
