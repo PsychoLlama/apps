@@ -4,14 +4,6 @@ import type {
 } from '@dev/gallery';
 import { galleryManifests } from '@dev/gallery/manifests';
 
-/** A single listing's entry in a manifest's link list. */
-export interface ListingLink {
-  /** Basename of the `*.gallery.tsx` file, used as both label and slug. */
-  name: string;
-  /** In-app path to the listing's page. */
-  href: string;
-}
-
 /** A manifest's card on the gallery landing page. */
 export interface ManifestLink {
   /** The manifest's display title — conventionally the package name. */
@@ -26,10 +18,18 @@ export interface ManifestLink {
 
 /**
  * A lazily-imported listing module — its default export is the listing data.
- * {@link findListing} returns the deferred loader; routing owns the actual
+ * {@link listingsOf} returns the deferred loaders; routing owns the actual
  * `lazy`/`Suspense` load.
  */
 export type ListingModule = { default: ListingData };
+
+/** A single listing within a manifest: its name and a deferred module loader. */
+export interface Listing {
+  /** Basename of the `*.gallery.tsx` file, used as the listing's heading. */
+  name: string;
+  /** Deferred import of the listing module; its default export is the data. */
+  load: () => Promise<ListingModule>;
+}
 
 /**
  * The listing's name — the basename of its module path minus the
@@ -72,31 +72,13 @@ export const findManifest = (titleSlug: string): GalleryManifest | undefined =>
   galleryManifests.find((entry) => manifestSlug(entry.title) === titleSlug);
 
 /**
- * The manifest's listings as sorted nav entries, each linking to its own page
- * under `/gallery/{title-slug}/{name}`.
+ * The manifest's listings as deferred loaders, sorted alphabetically by name.
+ * The manifest page renders each one inline, so there are no per-listing pages.
  */
-export const listingsOf = (manifest: GalleryManifest): ListingLink[] =>
-  Object.keys(manifest.listings)
-    .map((path) => {
-      const name = listingName(path);
-      const href = `/gallery/${manifestSlug(manifest.title)}/${encodeURIComponent(name)}`;
-      return { name, href };
-    })
+export const listingsOf = (manifest: GalleryManifest): Listing[] =>
+  Object.entries(manifest.listings)
+    .map(([path, load]) => ({
+      name: listingName(path),
+      load: load as () => Promise<ListingModule>,
+    }))
     .sort((left, right) => left.name.localeCompare(right.name));
-
-/**
- * The deferred loader for the listing under `titleSlug` (a manifest title's
- * {@link manifestSlug}) named `listing`, or `undefined` when neither matches.
- */
-export const findListing = (
-  titleSlug: string,
-  listing: string,
-): (() => Promise<ListingModule>) | undefined => {
-  const manifest = galleryManifests.find(
-    (entry) => manifestSlug(entry.title) === titleSlug,
-  );
-  const match = Object.entries(manifest?.listings ?? {}).find(
-    ([path]) => listingName(path) === listing,
-  );
-  return match?.[1] as (() => Promise<ListingModule>) | undefined;
-};
