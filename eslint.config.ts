@@ -247,6 +247,10 @@ export default [
     // `*.gallery.tsx`. The heavyweight state framework exists for application
     // state and is the wrong fit, so plain Solid primitives are allowed here.
     files: ['packages/app/gallery/src/**/*.{ts,tsx}'],
+    // `.css.ts` files are governed by the `packages/**/*.css.ts` block above
+    // (which carries the globalStyle ban). Without this ignore, this override
+    // would clobber that rule and silently drop the ban for gallery styles.
+    ignores: ['**/*.css.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
