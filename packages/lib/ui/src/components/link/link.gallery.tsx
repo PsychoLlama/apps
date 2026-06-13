@@ -7,7 +7,10 @@ const COLORS = ['accent', 'neutral'] as const;
 const SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 const WEIGHTS = ['light', 'regular', 'medium', 'bold'] as const;
 
-const defaults = { href: '/example', testId: 'link' } as const;
+// An inert hash href keeps the showcase links from looking like real routes:
+// the static prerender crawls in-app links, and a real path here would emit a
+// bogus 200 page at that route.
+const defaults = { href: '#', testId: 'link' } as const;
 
 // Each gallery item gets its own router context so module-level JSX can call
 // Link's router primitives. `StaticRouter` (not `MemoryRouter`) keeps this
