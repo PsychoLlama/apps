@@ -54,6 +54,7 @@ const WrappingDemo = (props: {
  * axes.
  */
 export default {
+  title: 'Switch',
   sections: [
     {
       title: 'Variant',
@@ -62,10 +63,6 @@ export default {
     {
       title: 'Color',
       items: COLORS.map((color) => <Demo color={color} />),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} />),
     },
     {
       title: 'Radius',

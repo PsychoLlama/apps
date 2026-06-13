@@ -8,7 +8,6 @@ import {
   type TabsListProps,
 } from './tabs';
 
-const SIZES = [1, 2] as const;
 const COLORS = ['accent', 'neutral'] as const;
 
 const Demo = (props: Partial<TabsListProps>) => {
@@ -43,11 +42,8 @@ const Demo = (props: Partial<TabsListProps>) => {
  * axes.
  */
 export default {
+  title: 'Tabs',
   sections: [
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} />),
-    },
     {
       title: 'Color',
       items: COLORS.map((color) => <Demo color={color} />),

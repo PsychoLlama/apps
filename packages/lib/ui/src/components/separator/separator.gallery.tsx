@@ -4,7 +4,6 @@ import Flex from '../flex/flex';
 import Text from '../text/text';
 import * as css from './separator.gallery.css';
 
-const SIZES = [1, 2, 3, 4] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 
 const horizontal = (
@@ -40,14 +39,11 @@ const vertical = (
  * visual axes.
  */
 export default {
+  title: 'Separator',
   sections: [
     {
       title: 'Orientation',
       items: [horizontal({}), vertical({})],
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => horizontal({ size })),
     },
     {
       title: 'Color',

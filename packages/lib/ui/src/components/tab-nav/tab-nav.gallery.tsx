@@ -2,7 +2,6 @@ import type { GalleryListing } from '@dev/gallery';
 import { Route, StaticRouter } from '@solidjs/router';
 import { TabNavLink, TabNavRoot, type TabNavRootProps } from './tab-nav';
 
-const SIZES = [1, 2] as const;
 const COLORS = ['accent', 'neutral'] as const;
 
 // `StaticRouter` (not `MemoryRouter`) gives each item an SSR-safe router
@@ -36,11 +35,8 @@ const Demo = (props: Partial<TabNavRootProps>) => (
  * axes.
  */
 export default {
+  title: 'TabNav',
   sections: [
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} />),
-    },
     {
       title: 'Color',
       items: COLORS.map((color) => <Demo color={color} />),

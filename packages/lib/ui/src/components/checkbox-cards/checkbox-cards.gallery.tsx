@@ -8,7 +8,6 @@ import {
 
 const VARIANTS = ['surface', 'classic'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3] as const;
 const OPTIONS = [
   { value: 'basic', label: 'Basic' },
   { value: 'pro', label: 'Pro' },
@@ -60,6 +59,7 @@ const Demo = (
  * visual axes.
  */
 export default {
+  title: 'CheckboxCards',
   sections: [
     {
       title: 'Variant',
@@ -72,10 +72,6 @@ export default {
       items: COLORS.map((color) => (
         <Demo name={`color-${color}`} label={color} color={color} />
       )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo name={`size-${size}`} size={size} />),
     },
     {
       title: 'Disabled',

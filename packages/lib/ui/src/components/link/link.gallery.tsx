@@ -4,7 +4,6 @@ import Link, { type LinkProps } from './link';
 
 const UNDERLINES = ['auto', 'always', 'hover', 'none'] as const;
 const COLORS = ['accent', 'neutral'] as const;
-const SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 const WEIGHTS = ['light', 'regular', 'medium', 'bold'] as const;
 
 // An inert hash href keeps the showcase links from looking like real routes:
@@ -25,6 +24,7 @@ const Demo = (props: LinkProps) => (
  * axes.
  */
 export default {
+  title: 'Link',
   sections: [
     {
       title: 'Underline',
@@ -39,14 +39,6 @@ export default {
       items: COLORS.map((color) => (
         <Demo {...defaults} color={color}>
           {color}
-        </Demo>
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <Demo {...defaults} size={size}>
-          Size {size}
         </Demo>
       )),
     },

@@ -55,6 +55,7 @@ const WrappingDemo = (props: {
  * visual axes.
  */
 export default {
+  title: 'Checkbox',
   sections: [
     {
       title: 'Variant',
@@ -63,10 +64,6 @@ export default {
     {
       title: 'Color',
       items: COLORS.map((color) => <Demo color={color} />),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} />),
     },
     {
       title: 'State',

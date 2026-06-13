@@ -5,7 +5,6 @@ import Text from '../text/text';
 import * as css from './scroll-area.gallery.css';
 
 const TYPES = ['auto', 'always', 'hover', 'scroll'] as const;
-const SIZES = [1, 2, 3] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 const TallContent = () => (
@@ -56,14 +55,11 @@ const Demo = (props: Partial<ScrollAreaProps>) => (
  * visual axes.
  */
 export default {
+  title: 'ScrollArea',
   sections: [
     {
       title: 'Type',
       items: TYPES.map((type) => <Demo type={type} />),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} />),
     },
     {
       title: 'Radius',

@@ -64,6 +64,7 @@ const WrappingDemo = (props: { size: 1 | 2 | 3 }) => {
  * visual axes.
  */
 export default {
+  title: 'RadioGroup',
   sections: [
     {
       title: 'Variant',
@@ -75,12 +76,6 @@ export default {
       title: 'Color',
       items: COLORS.map((color) => (
         <Demo name={`radio-color-${color}`} color={color} />
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <Demo name={`radio-size-${size}`} size={size} />
       )),
     },
     {

@@ -7,14 +7,12 @@ import {
   type DataListColor,
   type DataListOrientation,
   type DataListRootProps,
-  type DataListSize,
 } from './data-list';
 
 const ORIENTATIONS = [
   'horizontal',
   'vertical',
 ] as const satisfies ReadonlyArray<DataListOrientation>;
-const SIZES = [1, 2, 3] as const satisfies ReadonlyArray<DataListSize>;
 const COLORS = [
   'accent',
   'neutral',
@@ -49,16 +47,13 @@ const Demo = (props: Partial<DataListRootProps>) => (
  * axes.
  */
 export default {
+  title: 'DataList',
   sections: [
     {
       title: 'Orientation',
       items: ORIENTATIONS.map((orientation) => (
         <Demo orientation={orientation} />
       )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} />),
     },
     {
       title: 'Label color',

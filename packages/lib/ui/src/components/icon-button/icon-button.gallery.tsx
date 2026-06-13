@@ -4,7 +4,6 @@ import IconButton from './icon-button';
 
 const VARIANTS = ['solid', 'soft', 'surface', 'outline', 'ghost'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3, 4] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 const defaults = {
@@ -17,6 +16,7 @@ const defaults = {
  * visual axes.
  */
 export default {
+  title: 'IconButton',
   sections: [
     {
       title: 'Variant',
@@ -30,14 +30,6 @@ export default {
       title: 'Color',
       items: COLORS.map((color) => (
         <IconButton {...defaults} color={color}>
-          <IconHeart />
-        </IconButton>
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <IconButton {...defaults} size={size}>
           <IconHeart />
         </IconButton>
       )),
