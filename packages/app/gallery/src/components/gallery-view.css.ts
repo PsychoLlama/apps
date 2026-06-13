@@ -10,8 +10,3 @@ export const content = style({
   minHeight: 0,
   overflowY: 'auto',
 });
-
-/** Stretch each manifest card to fill the capped column width. */
-export const card = style({
-  width: '100%',
-});
