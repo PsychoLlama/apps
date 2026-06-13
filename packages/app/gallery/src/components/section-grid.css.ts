@@ -5,10 +5,15 @@ import { space } from '@lib/design';
  * Base grid for a permutation view. Padded on the block axis so cells clear the
  * tab switcher above them, and packed to the start (`justify-content`) so tracks
  * flow left-to-right at their intrinsic size rather than stretching to fill.
+ *
+ * Scrolls on its own x-axis: the `max-content` tracks would otherwise overflow a
+ * constrained viewport and scroll the whole document, so the grid keeps the
+ * overflow to itself and the page stays put.
  */
 export const grid = style({
   justifyContent: 'start',
   paddingBlock: space[5],
+  overflowX: 'auto',
 });
 
 /**
