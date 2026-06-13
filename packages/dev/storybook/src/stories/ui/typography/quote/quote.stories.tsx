@@ -6,9 +6,6 @@ import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { truncateArgTypes } from '@lib/ui/props/truncate';
 import { wrapArgTypes } from '@lib/ui/props/wrap';
-import { gallery } from '../../../../gallery';
-
-const SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 const meta = {
   title: 'UI/Typography/Quote',
@@ -30,19 +27,6 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-export const Overview: Story = gallery({
-  sections: [
-    {
-      title: 'Inheriting size',
-      items: SIZES.map((size) => (
-        <Text as="p" size={size} selectable>
-          Twain wrote: <Quote>cat by the tail</Quote>.
-        </Text>
-      )),
-    },
-  ],
-});
 
 export const Playground: Story = {
   render: (props: QuoteProps) => (

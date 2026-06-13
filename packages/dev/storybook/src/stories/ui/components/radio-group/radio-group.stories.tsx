@@ -9,59 +9,6 @@ import {
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
-import { gallery } from '../../../../gallery';
-
-const VARIANTS = ['classic', 'surface', 'soft'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3] as const;
-
-const Demo = (props: Partial<RadioGroupRootProps> & { id: string }) => {
-  const [value, setValue] = createSignal<string | null>('apple');
-  return (
-    <RadioGroupRoot
-      testId={`overview-${props.id}`}
-      name={`overview-${props.id}`}
-      value={value()}
-      onValueChange={setValue}
-      size={props.size}
-      variant={props.variant}
-      color={props.color}
-      disabled={props.disabled}
-    >
-      <RadioGroupItem testId={`overview-${props.id}-apple`} value="apple">
-        Apple
-      </RadioGroupItem>
-      <RadioGroupItem testId={`overview-${props.id}-banana`} value="banana">
-        Banana
-      </RadioGroupItem>
-      <RadioGroupItem testId={`overview-${props.id}-cherry`} value="cherry">
-        Cherry
-      </RadioGroupItem>
-    </RadioGroupRoot>
-  );
-};
-
-const WrappingDemo = (props: { id: string; size: 1 | 2 | 3 }) => {
-  const [value, setValue] = createSignal<string | null>('first');
-  return (
-    <RadioGroupRoot
-      testId={`overview-wrap-${props.id}`}
-      name={`overview-wrap-${props.id}`}
-      value={value()}
-      onValueChange={setValue}
-      size={props.size}
-      style={{ width: '14rem' }}
-    >
-      <RadioGroupItem testId={`overview-wrap-${props.id}-short`} value="first">
-        A short label that fits on one line.
-      </RadioGroupItem>
-      <RadioGroupItem testId={`overview-wrap-${props.id}-long`} value="second">
-        A longer label that wraps across two or three lines so the radio stays
-        aligned with the first line of text.
-      </RadioGroupItem>
-    </RadioGroupRoot>
-  );
-};
 
 const meta = {
   title: 'UI/Components/RadioGroup',
@@ -141,36 +88,5 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-export const Overview: Story = gallery({
-  sections: [
-    {
-      title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Demo id={`variant-${variant}`} variant={variant} />
-      )),
-    },
-    {
-      title: 'Color',
-      items: COLORS.map((color) => (
-        <Demo id={`color-${color}`} color={color} />
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo id={`size-${size}`} size={size} />),
-    },
-    {
-      title: 'Disabled',
-      items: [<Demo id="disabled" disabled />],
-    },
-    {
-      title: 'Wrapping labels',
-      items: SIZES.map((size) => (
-        <WrappingDemo id={`size-${size}`} size={size} />
-      )),
-    },
-  ],
-});
 
 export const Playground: Story = {};

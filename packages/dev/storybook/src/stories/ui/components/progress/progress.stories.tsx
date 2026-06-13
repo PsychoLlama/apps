@@ -3,19 +3,7 @@ import { Flex, Progress, type ProgressProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
-import { gallery } from '../../../../gallery';
 import * as css from './progress.stories.css';
-
-const VARIANTS = ['classic', 'surface', 'soft'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3] as const;
-const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
-
-const Demo = (props: Partial<ProgressProps>) => (
-  <Flex as="div" class={css.galleryCell}>
-    <Progress testId="overview" value={60} {...props} />
-  </Flex>
-);
 
 const meta = {
   title: 'UI/Components/Progress',
@@ -66,35 +54,5 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-export const Overview: Story = gallery({
-  sections: [
-    {
-      title: 'Variant',
-      items: VARIANTS.map((variant) => <Demo variant={variant} />),
-    },
-    {
-      title: 'Color',
-      items: COLORS.map((color) => <Demo color={color} />),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} />),
-    },
-    {
-      title: 'Radius',
-      items: RADII.map((radius) => <Demo radius={radius} />),
-    },
-    {
-      title: 'State',
-      items: [
-        <Demo value={0} />,
-        <Demo value={40} />,
-        <Demo value={100} />,
-        <Demo value={null} />,
-      ],
-    },
-  ],
-});
 
 export const Playground: Story = {};

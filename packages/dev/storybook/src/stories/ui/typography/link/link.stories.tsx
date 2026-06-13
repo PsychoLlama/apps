@@ -9,21 +9,6 @@ import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { trimArgTypes } from '@lib/ui/props/trim';
 import { truncateArgTypes } from '@lib/ui/props/truncate';
 import { wrapArgTypes } from '@lib/ui/props/wrap';
-import { gallery } from '../../../../gallery';
-
-const UNDERLINES = ['auto', 'always', 'hover', 'none'] as const;
-const COLORS = ['accent', 'neutral'] as const;
-const SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-const WEIGHTS = ['light', 'regular', 'medium', 'bold'] as const;
-
-const defaults = { href: '/example', testId: 'overview' } as const;
-
-// Each gallery item gets its own router context so module-level JSX
-// can call Link's router primitives without depending on the meta
-// decorator (which only wraps the rendered Story).
-const Demo = (props: LinkProps) => (
-  <MemoryRouter root={() => <Link {...props} />} />
-);
 
 const meta = {
   title: 'UI/Typography/Link',
@@ -69,50 +54,5 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-export const Overview: Story = gallery({
-  sections: [
-    {
-      title: 'Underline',
-      items: UNDERLINES.map((underline) => (
-        <Demo {...defaults} underline={underline}>
-          {underline}
-        </Demo>
-      )),
-    },
-    {
-      title: 'Color',
-      items: COLORS.map((color) => (
-        <Demo {...defaults} color={color}>
-          {color}
-        </Demo>
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <Demo {...defaults} size={size}>
-          Size {size}
-        </Demo>
-      )),
-    },
-    {
-      title: 'Weight',
-      items: WEIGHTS.map((weight) => (
-        <Demo {...defaults} weight={weight}>
-          {weight}
-        </Demo>
-      )),
-    },
-    {
-      title: 'High contrast',
-      items: COLORS.map((color) => (
-        <Demo {...defaults} color={color} highContrast>
-          {color}
-        </Demo>
-      )),
-    },
-  ],
-});
 
 export const Playground: Story = {};

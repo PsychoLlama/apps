@@ -9,19 +9,10 @@ import {
   type TableRootProps,
   TableRow,
   TableRowHeaderCell,
-  type TableSize,
-  type TableVariant,
 } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
-import { gallery } from '../../../../gallery';
-
-const VARIANTS = [
-  'surface',
-  'ghost',
-] as const satisfies ReadonlyArray<TableVariant>;
-const SIZES = [1, 2, 3] as const satisfies ReadonlyArray<TableSize>;
 
 interface Row {
   name: string;
@@ -132,18 +123,5 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-export const Overview: Story = gallery({
-  sections: [
-    {
-      title: 'Variant',
-      items: VARIANTS.map((variant) => <Demo variant={variant} />),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo size={size} variant="surface" />),
-    },
-  ],
-});
 
 export const Playground: Story = {};

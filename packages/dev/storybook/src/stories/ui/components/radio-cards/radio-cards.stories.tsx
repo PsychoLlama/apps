@@ -9,53 +9,8 @@ import {
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
-import { gallery } from '../../../../gallery';
 
-const VARIANTS = ['surface', 'classic'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3] as const;
 const OPTIONS = [1, 2] as const;
-
-/**
- * Each gallery cell echoes the demoed axis value in its card labels
- * when the value isn't already obvious from the visual treatment —
- * the variant cell prefixes "surface" / "classic" and the color cell
- * prefixes "accent" / "danger" / etc. Size + disabled cells skip the
- * prefix (the size renders visibly; the disabled cell uses the
- * disabled affordance) to avoid awkward "size 1 1" repetition.
- *
- * The second card is preselected so the checked + indicator color
- * shows up directly.
- */
-const Demo = (
-  props: Partial<RadioCardsRootProps> & { id: string; label?: string },
-) => {
-  const [value, setValue] = createSignal<string | null>('2');
-  return (
-    <RadioCardsRoot
-      testId={`overview-${props.id}`}
-      name={`overview-${props.id}`}
-      value={value()}
-      onValueChange={setValue}
-      size={props.size}
-      variant={props.variant}
-      color={props.color}
-      disabled={props.disabled}
-      columns={2}
-    >
-      <For each={OPTIONS}>
-        {(option) => (
-          <RadioCardsItem
-            testId={`overview-${props.id}-${option}`}
-            value={String(option)}
-          >
-            {props.label ? `${props.label} ${option}` : option}
-          </RadioCardsItem>
-        )}
-      </For>
-    </RadioCardsRoot>
-  );
-};
 
 const meta = {
   title: 'UI/Components/RadioCards',
@@ -141,30 +96,5 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-export const Overview: Story = gallery({
-  sections: [
-    {
-      title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Demo id={`variant-${variant}`} label={variant} variant={variant} />
-      )),
-    },
-    {
-      title: 'Color',
-      items: COLORS.map((color) => (
-        <Demo id={`color-${color}`} label={color} color={color} />
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => <Demo id={`size-${size}`} size={size} />),
-    },
-    {
-      title: 'Disabled',
-      items: [<Demo id="disabled" disabled />],
-    },
-  ],
-});
 
 export const Playground: Story = {};

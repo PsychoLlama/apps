@@ -8,18 +8,6 @@ import { marginArgTypes } from '@lib/ui/props/margin';
 import { requiredInputHintArgTypes } from '@lib/ui/props/input-hints';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
-import { gallery } from '../../../../gallery';
-
-const VARIANTS = ['classic', 'surface', 'soft'] as const;
-const SIZES = [1, 2, 3] as const;
-const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
-
-const defaults = {
-  testId: 'overview',
-  autocomplete: 'off',
-  autocapitalize: 'off',
-  enterkeyhint: 'search',
-} as const;
 
 interface TextFieldArgs extends TextFieldProps {
   /** Toggle the left slot in Storybook controls. */
@@ -116,103 +104,5 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-export const Overview: Story = gallery({
-  sections: [
-    {
-      title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <TextField
-          {...defaults}
-          variant={variant}
-          placeholder={variant}
-          left={<IconMagnify />}
-        />
-      )),
-    },
-    {
-      title: 'Size',
-      items: SIZES.map((size) => (
-        <TextField
-          {...defaults}
-          size={size}
-          placeholder={`Size ${size}`}
-          left={<IconMagnify />}
-        />
-      )),
-    },
-    {
-      title: 'Radius',
-      items: RADII.map((radius) => (
-        <TextField
-          {...defaults}
-          radius={radius}
-          placeholder={radius}
-          left={<IconMagnify />}
-        />
-      )),
-    },
-    {
-      title: 'Slots',
-      items: [
-        <TextField {...defaults} placeholder="No slots" />,
-        <TextField {...defaults} placeholder="Left" left={<IconMagnify />} />,
-        <TextField
-          {...defaults}
-          placeholder="Right"
-          right={
-            <IconButton
-              testId="overview-clear"
-              aria-label="Clear"
-              size={1}
-              variant="ghost"
-              color="neutral"
-            >
-              <IconClose />
-            </IconButton>
-          }
-        />,
-        <TextField
-          {...defaults}
-          placeholder="Both"
-          left={<IconMagnify />}
-          right={
-            <IconButton
-              testId="overview-clear"
-              aria-label="Clear"
-              size={1}
-              variant="ghost"
-              color="neutral"
-            >
-              <IconClose />
-            </IconButton>
-          }
-        />,
-      ],
-    },
-    {
-      title: 'State',
-      items: [
-        <TextField
-          {...defaults}
-          placeholder="Default"
-          left={<IconMagnify />}
-        />,
-        <TextField
-          {...defaults}
-          placeholder="Disabled"
-          left={<IconMagnify />}
-          disabled
-        />,
-        <TextField
-          {...defaults}
-          placeholder="Read-only"
-          left={<IconMagnify />}
-          readOnly
-        />,
-      ],
-    },
-  ],
-});
 
 export const Playground: Story = {};
