@@ -1,4 +1,4 @@
-import { MemoryRouter } from '@solidjs/router';
+import { StaticRouter } from '@solidjs/router';
 import type { GalleryListing } from '@dev/gallery';
 import Link, { type LinkProps } from './link';
 
@@ -7,12 +7,17 @@ const COLORS = ['accent', 'neutral'] as const;
 const SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 const WEIGHTS = ['light', 'regular', 'medium', 'bold'] as const;
 
-const defaults = { href: '/example', testId: 'link' } as const;
+// An inert hash href keeps the showcase links from looking like real routes:
+// the static prerender crawls in-app links, and a real path here would emit a
+// bogus 200 page at that route.
+const defaults = { href: '#', testId: 'link' } as const;
 
-// Each gallery item gets its own router context so module-level JSX
-// can call Link's router primitives.
+// Each gallery item gets its own router context so module-level JSX can call
+// Link's router primitives. `StaticRouter` (not `MemoryRouter`) keeps this
+// SSR-safe — `MemoryRouter` wires up native DOM events on setup, which throws
+// during prerender; the gallery is statically generated.
 const Demo = (props: LinkProps) => (
-  <MemoryRouter root={() => <Link {...props} />} />
+  <StaticRouter url="/" root={() => <Link {...props} />} />
 );
 
 /**

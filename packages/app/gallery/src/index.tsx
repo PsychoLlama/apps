@@ -1,19 +1,17 @@
-import { Callout, Card, Container, Flex, Heading, Link, Text } from '@lib/ui';
+import { Card, Container, Flex, Heading, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import type { GalleryListing as ListingData } from '@dev/gallery';
 import { For, Show, type JSX } from 'solid-js';
-import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { findManifest, listingsOf, manifestLinks } from './listings';
-import type { ListingLink } from './listings';
+import type { Listing } from './listings';
 import * as css from './index.css';
 
-export { findListing } from './listings';
-export type { ListingLink, ListingModule } from './listings';
+export type { Listing, ListingModule } from './listings';
 
 /**
  * The gallery shell: the site header over the active view. Acts as the layout
- * for all `/gallery/*` routes, which drill down from the manifest cards at
- * `/gallery` into a manifest's listings and finally a single listing.
+ * for all `/gallery/*` routes — the manifest cards at `/gallery` and each
+ * manifest's own page, which renders every listing it contributes inline.
  */
 export const Gallery = (props: { children?: JSX.Element }) => (
   <Flex as="main" direction="column" grow>
@@ -68,76 +66,6 @@ export const GalleryHome = () => (
   </Container>
 );
 
-/** A manifest's listings as a column of nav links. */
-const ListingLinks = (props: { listings: ListingLink[] }) => (
-  <Show
-    when={props.listings.length > 0}
-    fallback={
-      <Text as="p" size={2} color="lowContrast" selectable={false}>
-        No listings
-      </Text>
-    }
-  >
-    <Flex as="ul" direction="column" gap={1}>
-      <For each={props.listings}>
-        {(listing) => (
-          <Flex as="li">
-            <Link
-              testId={`listing-${listing.name}`}
-              href={listing.href}
-              size={2}
-              color="neutral"
-            >
-              {listing.name}
-            </Link>
-          </Flex>
-        )}
-      </For>
-    </Flex>
-  </Show>
-);
-
-/**
- * A manifest's page: a work-in-progress notice over links to every listing the
- * manifest contributes. Driven by a manifest slug route param.
- */
-export const ManifestPage = (props: { slug: string }) => (
-  <Show
-    when={findManifest(props.slug)}
-    fallback={
-      <Text as="p" size={2} color="lowContrast" selectable={false}>
-        No such manifest.
-      </Text>
-    }
-  >
-    {(manifest) => (
-      <Flex as="div" direction="column" gap={6}>
-        <Heading as="h1" size={5} weight="bold" selectable={false}>
-          {manifest().title}
-        </Heading>
-
-        <Callout color="warning" icon={<IconAlert />}>
-          <Text as="p" size={2} selectable={false}>
-            Work in progress.
-          </Text>
-        </Callout>
-
-        <ListingLinks listings={listingsOf(manifest())} />
-      </Flex>
-    )}
-  </Show>
-);
-
-/**
- * A listing's page heading. Derived from the route param, so it renders
- * immediately — outside the `<Suspense>` boundary that loads the listing body.
- */
-export const ListingHeading = (props: { name: string }) => (
-  <Heading as="h1" size={5} weight="bold" selectable={false}>
-    {props.name}
-  </Heading>
-);
-
 /** A labeled row of a listing's pre-rendered component instances. */
 const ListingSection = (props: {
   title: string;
@@ -160,9 +88,8 @@ const ListingSection = (props: {
 );
 
 /**
- * A resolved listing's body — its enumerated sections. Pair with
- * {@link ListingHeading} and a router-owned `lazy`/`Suspense` that loads the
- * listing module.
+ * A resolved listing's body — its enumerated sections. Routing pairs this with
+ * a `lazy`/`Suspense` load and hands it to {@link ManifestPage}'s `renderListing`.
  */
 export const ListingView = (props: { listing: ListingData }) => (
   <Flex as="div" direction="column" gap={6}>
@@ -172,4 +99,68 @@ export const ListingView = (props: { listing: ListingData }) => (
       )}
     </For>
   </Flex>
+);
+
+/**
+ * A manifest's listings, each rendered inline and sorted alphabetically. Each
+ * listing's name renders immediately; `renderListing` supplies the body — the
+ * router owns the `lazy`/`Suspense` load so listings stream in independently.
+ */
+const ManifestListings = (props: {
+  listings: Listing[];
+  renderListing: (listing: Listing) => JSX.Element;
+}) => (
+  <Show
+    when={props.listings.length > 0}
+    fallback={
+      <Text as="p" size={2} color="lowContrast" selectable={false}>
+        No listings
+      </Text>
+    }
+  >
+    <Flex as="div" direction="column" gap={8}>
+      <For each={props.listings}>
+        {(listing) => (
+          <Flex as="section" direction="column" gap={3}>
+            <Heading as="h2" size={5} weight="medium" selectable={false}>
+              {listing.name}
+            </Heading>
+            {props.renderListing(listing)}
+          </Flex>
+        )}
+      </For>
+    </Flex>
+  </Show>
+);
+
+/**
+ * A manifest's page: every listing the manifest contributes, rendered inline and
+ * sorted alphabetically. `renderListing` resolves a listing's body — routing
+ * owns the `lazy`/`Suspense` load. Driven by a manifest slug route param.
+ */
+export const ManifestPage = (props: {
+  slug: string;
+  renderListing: (listing: Listing) => JSX.Element;
+}) => (
+  <Show
+    when={findManifest(props.slug)}
+    fallback={
+      <Text as="p" size={2} color="lowContrast" selectable={false}>
+        No such manifest.
+      </Text>
+    }
+  >
+    {(manifest) => (
+      <Flex as="div" direction="column" gap={6}>
+        <Heading as="h1" size={7} weight="bold" selectable={false}>
+          {manifest().title}
+        </Heading>
+
+        <ManifestListings
+          listings={listingsOf(manifest())}
+          renderListing={props.renderListing}
+        />
+      </Flex>
+    )}
+  </Show>
 );

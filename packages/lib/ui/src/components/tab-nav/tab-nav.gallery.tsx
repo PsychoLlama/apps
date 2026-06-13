@@ -1,29 +1,34 @@
 import type { GalleryListing } from '@dev/gallery';
-import { MemoryRouter, Route } from '@solidjs/router';
+import { Route, StaticRouter } from '@solidjs/router';
 import { TabNavLink, TabNavRoot, type TabNavRootProps } from './tab-nav';
 
 const SIZES = [1, 2] as const;
 const COLORS = ['accent', 'neutral'] as const;
 
+// `StaticRouter` (not `MemoryRouter`) gives each item an SSR-safe router
+// context — `MemoryRouter` wires up native DOM events on setup, which throws
+// during prerender; the gallery is statically generated.
 const Demo = (props: Partial<TabNavRootProps>) => (
-  <MemoryRouter>
+  <StaticRouter url="/">
     <Route
       path="*"
       component={() => (
         <TabNavRoot aria-label="Demo navigation" {...props} testId="tab-nav">
-          <TabNavLink href="/" active testId="tab-nav-home">
+          {/* Inert hash hrefs: the static prerender crawls in-app links, so a
+              real path here would emit a bogus 200 page at that route. */}
+          <TabNavLink href="#" active testId="tab-nav-home">
             Home
           </TabNavLink>
-          <TabNavLink href="/projects" active={false} testId="tab-nav-projects">
+          <TabNavLink href="#" active={false} testId="tab-nav-projects">
             Projects
           </TabNavLink>
-          <TabNavLink href="/team" active={false} testId="tab-nav-team">
+          <TabNavLink href="#" active={false} testId="tab-nav-team">
             Team
           </TabNavLink>
         </TabNavRoot>
       )}
     />
-  </MemoryRouter>
+  </StaticRouter>
 );
 
 /**
