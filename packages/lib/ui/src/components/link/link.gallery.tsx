@@ -1,4 +1,4 @@
-import { MemoryRouter } from '@solidjs/router';
+import { StaticRouter } from '@solidjs/router';
 import type { GalleryListing } from '@dev/gallery';
 import Link, { type LinkProps } from './link';
 
@@ -9,10 +9,12 @@ const WEIGHTS = ['light', 'regular', 'medium', 'bold'] as const;
 
 const defaults = { href: '/example', testId: 'link' } as const;
 
-// Each gallery item gets its own router context so module-level JSX
-// can call Link's router primitives.
+// Each gallery item gets its own router context so module-level JSX can call
+// Link's router primitives. `StaticRouter` (not `MemoryRouter`) keeps this
+// SSR-safe — `MemoryRouter` wires up native DOM events on setup, which throws
+// during prerender; the gallery is statically generated.
 const Demo = (props: LinkProps) => (
-  <MemoryRouter root={() => <Link {...props} />} />
+  <StaticRouter url="/" root={() => <Link {...props} />} />
 );
 
 /**

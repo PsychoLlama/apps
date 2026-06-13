@@ -1,12 +1,15 @@
 import type { GalleryListing } from '@dev/gallery';
-import { MemoryRouter, Route } from '@solidjs/router';
+import { Route, StaticRouter } from '@solidjs/router';
 import { TabNavLink, TabNavRoot, type TabNavRootProps } from './tab-nav';
 
 const SIZES = [1, 2] as const;
 const COLORS = ['accent', 'neutral'] as const;
 
+// `StaticRouter` (not `MemoryRouter`) gives each item an SSR-safe router
+// context — `MemoryRouter` wires up native DOM events on setup, which throws
+// during prerender; the gallery is statically generated.
 const Demo = (props: Partial<TabNavRootProps>) => (
-  <MemoryRouter>
+  <StaticRouter url="/">
     <Route
       path="*"
       component={() => (
@@ -23,7 +26,7 @@ const Demo = (props: Partial<TabNavRootProps>) => (
         </TabNavRoot>
       )}
     />
-  </MemoryRouter>
+  </StaticRouter>
 );
 
 /**
