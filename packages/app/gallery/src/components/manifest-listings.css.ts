@@ -2,13 +2,13 @@ import { style, styleVariants } from '@vanilla-extract/css';
 import { space } from '@lib/design';
 
 /**
- * Base grid for a permutation view. Padded on all sides so cells clear the tab
- * switcher above them, and packed to the start (`justify-content`) so tracks
+ * Base grid for a permutation view. Padded on the block axis so cells clear the
+ * tab switcher above them, and packed to the start (`justify-content`) so tracks
  * flow left-to-right at their intrinsic size rather than stretching to fill.
  */
 export const grid = style({
   justifyContent: 'start',
-  padding: space[4],
+  paddingBlock: space[5],
 });
 
 /**
