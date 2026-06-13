@@ -1,5 +1,5 @@
 import { Card, Container, Flex, Heading, Text } from '@lib/ui';
-import { SiteHeader } from '@lib/shell';
+import { SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 import type {
   GalleryListing as ListingData,
   GalleryManifest,
@@ -11,14 +11,28 @@ import * as css from './index.css';
 export { loadListings } from './listings';
 
 /**
- * The gallery shell: the site header over the active view. Acts as the layout
- * for all `/gallery/*` routes — the manifest cards at `/gallery` and each
- * manifest's own page, which renders every listing it contributes inline.
+ * The gallery layout: the `<main>` frame shared by every `/gallery/*` route.
+ * Each route renders its own `GalleryView` inside, so the breadcrumb can name
+ * the manifest in view without the layout reverse-engineering the active route.
  */
 export const Gallery = (props: { children?: JSX.Element }) => (
   <Flex as="main" direction="column" grow>
-    <SiteHeader title="Gallery" />
+    {props.children}
+  </Flex>
+);
 
+/**
+ * A gallery view: a breadcrumb header over the scrollable content region. Each
+ * route renders one — `trail` names where you are (`Gallery` on the landing
+ * page, `Gallery › <manifest>` on a manifest page), and the content fills and
+ * scrolls below it within the `Gallery` layout's `<main>` frame.
+ */
+const GalleryView = (props: {
+  trail: SiteHeaderCrumb[];
+  children?: JSX.Element;
+}) => (
+  <>
+    <SiteHeader trail={props.trail} />
     <Flex
       as="article"
       direction="column"
@@ -29,43 +43,45 @@ export const Gallery = (props: { children?: JSX.Element }) => (
     >
       {props.children}
     </Flex>
-  </Flex>
+  </>
 );
 
 /** The gallery landing page: one card per manifest, linking to its own page. */
 export const GalleryHome = () => (
-  <Container as="div" size={2}>
-    <Flex as="ul" direction="column" gap={3} aria-label="Manifests">
-      <For each={manifestLinks}>
-        {(manifest) => (
-          <Flex as="li">
-            <Card
-              as="a"
-              href={manifest.href}
-              testId={`manifest-${manifest.slug}`}
-              size={3}
-              class={css.card}
-            >
-              <Flex as="div" direction="column" gap={1}>
-                <Heading as="h2" size={3} weight="medium" selectable={false}>
-                  {manifest.title}
-                </Heading>
-                <Text
-                  as="p"
-                  size={2}
-                  color="lowContrast"
-                  trim="end"
-                  selectable={false}
-                >
-                  {manifest.description}
-                </Text>
-              </Flex>
-            </Card>
-          </Flex>
-        )}
-      </For>
-    </Flex>
-  </Container>
+  <GalleryView trail={[{ label: 'Gallery' }]}>
+    <Container as="div" size={2}>
+      <Flex as="ul" direction="column" gap={3} aria-label="Manifests">
+        <For each={manifestLinks}>
+          {(manifest) => (
+            <Flex as="li">
+              <Card
+                as="a"
+                href={manifest.href}
+                testId={`manifest-${manifest.slug}`}
+                size={3}
+                class={css.card}
+              >
+                <Flex as="div" direction="column" gap={1}>
+                  <Heading as="h2" size={3} weight="medium" selectable={false}>
+                    {manifest.title}
+                  </Heading>
+                  <Text
+                    as="p"
+                    size={2}
+                    color="lowContrast"
+                    trim="end"
+                    selectable={false}
+                  >
+                    {manifest.description}
+                  </Text>
+                </Flex>
+              </Card>
+            </Flex>
+          )}
+        </For>
+      </Flex>
+    </Container>
+  </GalleryView>
 );
 
 /** A labeled row of a listing's pre-rendered component instances. */
@@ -129,33 +145,45 @@ export const ManifestListings = (props: { listings: ListingData[] }) => (
 );
 
 /**
- * A manifest's page: its title over every listing it contributes. The manifest
- * resolves synchronously from its slug; `renderListings` supplies the async body
- * — the router owns the `lazy`/`Suspense` load (it has the SolidStart server
- * deps that async/server boundaries need). An unknown slug falls back to a
- * not-found message.
+ * A manifest's page: its breadcrumb (`Gallery › <manifest>`, with `Gallery`
+ * linking back to the landing page) over every listing it contributes. The
+ * manifest resolves synchronously from its slug — an unknown slug keeps the raw
+ * segment in the crumb and falls back to a not-found body. `renderListings`
+ * supplies the async body; the router owns the `lazy`/`Suspense` load (it has
+ * the SolidStart server deps that async/server boundaries need).
  */
 export const ManifestPage = (props: {
   slug: string;
   renderListings: (manifest: GalleryManifest) => JSX.Element;
-}) => (
-  <Show
-    when={findManifest(props.slug)}
-    keyed
-    fallback={
-      <Text as="p" size={2} color="lowContrast" selectable={false}>
-        No such manifest.
-      </Text>
-    }
-  >
-    {(manifest) => (
-      <Flex as="div" direction="column" gap={6}>
-        <Heading as="h1" size={7} weight="bold" selectable={false}>
-          {manifest.title}
-        </Heading>
+}) => {
+  const manifest = () => findManifest(props.slug);
 
-        {props.renderListings(manifest)}
-      </Flex>
-    )}
-  </Show>
-);
+  return (
+    <GalleryView
+      trail={[
+        { label: 'Gallery', href: '/gallery' },
+        { label: manifest()?.title ?? props.slug },
+      ]}
+    >
+      <Show
+        when={manifest()}
+        keyed
+        fallback={
+          <Text as="p" size={2} color="lowContrast" selectable={false}>
+            No such manifest.
+          </Text>
+        }
+      >
+        {(found) => (
+          <Flex as="div" direction="column" gap={6}>
+            <Heading as="h1" size={7} weight="bold" selectable={false}>
+              {found.title}
+            </Heading>
+
+            {props.renderListings(found)}
+          </Flex>
+        )}
+      </Show>
+    </GalleryView>
+  );
+};
