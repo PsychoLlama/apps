@@ -22,8 +22,6 @@ export interface ManifestLink {
   slug: string;
   /** In-app path to the manifest's page. */
   href: string;
-  /** How many listings the manifest contributes. */
-  count: number;
 }
 
 /**
@@ -65,7 +63,6 @@ export const manifestLinks: ManifestLink[] = galleryManifests
       description: manifest.description,
       slug,
       href: `/gallery/${slug}`,
-      count: Object.keys(manifest.listings).length,
     };
   })
   .sort((left, right) => left.title.localeCompare(right.title));
