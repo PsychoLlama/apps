@@ -91,14 +91,14 @@ const SectionGrid = (props: { listing: Listing; section: Section }) => {
       justify="start"
       gapX={5}
       gapY={4}
-      class={
+      class={`${css.grid} ${
         css.templateColumns[
           Math.min(
             layout().tracks,
             MAX_TRACKS,
           ) as keyof typeof css.templateColumns
         ]
-      }
+      }`}
     >
       <For each={layout().nodes}>{(node) => node}</For>
     </Grid>
@@ -152,23 +152,36 @@ const NoVariant = (props: { listing: Listing }) => (
   <>{props.listing.render({})}</>
 );
 
-/** A resolved listing: its title over a tab strip of permutation grids. */
-const ListingView = (props: { listing: Listing }) => (
-  <Flex as="section" direction="column" gap={3}>
-    <Heading as="h2" size={5} weight="medium" selectable={false}>
-      {props.listing.title}
-    </Heading>
-    <Show
-      when={props.listing.sections?.length}
-      fallback={<NoVariant listing={props.listing} />}
-    >
-      <SectionTabs
-        listing={props.listing}
-        sections={props.listing.sections ?? []}
-      />
-    </Show>
-  </Flex>
-);
+/**
+ * A resolved listing: its title over its permutation grids. Multiple sections
+ * become a tab strip; a single section renders its grid directly (no tab nav
+ * for one option); a listing with no sections renders `render` once.
+ */
+const ListingView = (props: { listing: Listing }) => {
+  const sections = () => props.listing.sections ?? [];
+  return (
+    <Flex as="section" direction="column" gap={3}>
+      <Heading as="h2" size={5} weight="medium" selectable={false}>
+        {props.listing.title}
+      </Heading>
+      <Show
+        when={sections().length > 1}
+        fallback={
+          <Show
+            when={sections()[0]}
+            fallback={<NoVariant listing={props.listing} />}
+          >
+            {(section) => (
+              <SectionGrid listing={props.listing} section={section()} />
+            )}
+          </Show>
+        }
+      >
+        <SectionTabs listing={props.listing} sections={sections()} />
+      </Show>
+    </Flex>
+  );
+};
 
 /**
  * A manifest's listings, rendered inline and sorted by title. Each listing's
