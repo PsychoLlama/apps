@@ -56,10 +56,15 @@ const Demo = (props: { name: string } & DemoProps) => {
  */
 export default {
   title: 'CheckboxCards',
-  render: (props) => <Demo {...props} name={props.name ?? 'checkbox-cards'} />,
+  render: (props) => (
+    <Demo
+      {...props}
+      name={`${props.name ?? 'checkbox-cards'}${props.disabled ? '-disabled' : ''}`}
+    />
+  ),
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
         {
           title: 'Surface',
@@ -77,6 +82,10 @@ export default {
             name: 'variant-classic',
           },
         },
+      ],
+      rows: [
+        { title: 'Default', props: {} },
+        { title: 'Disabled', props: { disabled: true } },
       ],
     },
     {
@@ -102,12 +111,6 @@ export default {
           title: 'Success',
           props: { color: 'success', label: 'success', name: 'color-success' },
         },
-      ],
-    },
-    {
-      title: 'Disabled',
-      columns: [
-        { title: 'Disabled', props: { disabled: true, name: 'disabled' } },
       ],
     },
   ],
