@@ -19,27 +19,31 @@ const Demo = (props: Partial<ProgressProps>) => (
  */
 export default {
   title: 'Progress',
+  render: (props) => <Demo {...props} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => <Demo variant={variant} />),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => <Demo color={color} />),
+      columns: COLORS.map((color) => ({ title: color, props: { color } })),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => <Demo radius={radius} />),
+      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
     },
     {
       title: 'State',
-      items: [
-        <Demo value={0} />,
-        <Demo value={40} />,
-        <Demo value={100} />,
-        <Demo value={null} />,
+      columns: [
+        { title: '0%', props: { value: 0 } },
+        { title: '40%', props: { value: 40 } },
+        { title: '100%', props: { value: 100 } },
+        { title: 'Indeterminate', props: { value: null } },
       ],
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<ProgressProps>;

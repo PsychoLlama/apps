@@ -4,7 +4,7 @@ import { TabNavLink, TabNavRoot, type TabNavRootProps } from './tab-nav';
 
 const COLORS = ['accent', 'neutral'] as const;
 
-// `StaticRouter` (not `MemoryRouter`) gives each item an SSR-safe router
+// `StaticRouter` (not `MemoryRouter`) gives each cell an SSR-safe router
 // context — `MemoryRouter` wires up native DOM events on setup, which throws
 // during prerender; the gallery is statically generated.
 const Demo = (props: Partial<TabNavRootProps>) => (
@@ -36,14 +36,18 @@ const Demo = (props: Partial<TabNavRootProps>) => (
  */
 export default {
   title: 'TabNav',
+  render: (props) => <Demo {...props} />,
   sections: [
     {
       title: 'Color',
-      items: COLORS.map((color) => <Demo color={color} />),
+      columns: COLORS.map((color) => ({ title: color, props: { color } })),
     },
     {
       title: 'High contrast',
-      items: COLORS.map((color) => <Demo color={color} highContrast />),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, highContrast: true },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<TabNavRootProps>;

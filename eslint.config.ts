@@ -242,6 +242,21 @@ export default [
     },
   },
   {
+    // @app/gallery renders component demos; its only local state is which
+    // permutation tab is active — demo display state, the same category as
+    // `*.gallery.tsx`. The heavyweight state framework exists for application
+    // state and is the wrong fit, so plain Solid primitives are allowed here.
+    files: ['packages/app/gallery/src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: restrictedImportPatterns,
+        },
+      ],
+    },
+  },
+  {
     // Storybook stories and `*.gallery.tsx` files demo components in
     // isolation. Local UI state belongs to the demo wrapper, not
     // application state, so plain Solid primitives are the right fit.

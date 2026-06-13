@@ -1,6 +1,6 @@
+import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import Code from './code';
-import Text from '../text/text';
 
 const VARIANTS = ['solid', 'soft', 'outline', 'ghost'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
@@ -11,24 +11,21 @@ const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
  */
 export default {
   title: 'Code',
+  render: (props) => <Code {...props} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Code variant={variant}>{variant}</Code>
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant, children: variant },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => <Code color={color}>{color}</Code>),
-    },
-    {
-      title: 'In context',
-      items: [
-        <Text as="p" selectable>
-          Run <Code>npm install</Code> to get started.
-        </Text>,
-      ],
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, children: color },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<ComponentProps<typeof Code>>;

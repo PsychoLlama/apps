@@ -102,10 +102,14 @@ const Demo = (props: Partial<TableRootProps>) => (
  */
 export default {
   title: 'Table',
+  render: (props) => <Demo {...props} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => <Demo variant={variant} />),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<TableRootProps>;

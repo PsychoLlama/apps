@@ -6,9 +6,7 @@ const VARIANTS = ['solid', 'soft', 'surface', 'outline', 'ghost'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
-const defaults = { href: '/', testId: 'link-button' } as const;
-
-// Each gallery item gets its own router context so module-level JSX can call
+// Each cell gets its own router context so module-level JSX can call
 // LinkButton's router primitives. `StaticRouter` (not `MemoryRouter`) keeps this
 // SSR-safe — `MemoryRouter` wires up native DOM events on setup, which throws
 // during prerender; the gallery is statically generated.
@@ -24,30 +22,28 @@ const Demo = (props: LinkButtonProps) => (
  */
 export default {
   title: 'LinkButton',
+  render: (props) => <Demo href="/" testId="link-button" {...props} />,
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Demo {...defaults} variant={variant}>
-          {variant}
-        </Demo>
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant, children: variant },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => (
-        <Demo {...defaults} color={color}>
-          {color}
-        </Demo>
-      )),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, children: color },
+      })),
     },
     {
       title: 'Radius',
-      items: RADII.map((radius) => (
-        <Demo {...defaults} radius={radius}>
-          {radius}
-        </Demo>
-      )),
+      columns: RADII.map((radius) => ({
+        title: radius,
+        props: { radius, children: radius },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<LinkButtonProps>;

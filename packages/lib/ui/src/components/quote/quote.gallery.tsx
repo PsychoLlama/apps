@@ -3,19 +3,14 @@ import Quote from './quote';
 import Text from '../text/text';
 
 /**
- * Gallery listing for `Quote`. Enumerates the component across its visual
- * axes.
+ * Gallery listing for `Quote`. An inline quotation mark with no visual axes —
+ * shown once in context.
  */
 export default {
   title: 'Quote',
-  sections: [
-    {
-      title: 'In context',
-      items: [
-        <Text as="p" selectable>
-          Twain wrote: <Quote>cat by the tail</Quote>.
-        </Text>,
-      ],
-    },
-  ],
+  render: () => (
+    <Text as="p" selectable>
+      Twain wrote: <Quote>cat by the tail</Quote>.
+    </Text>
+  ),
 } satisfies GalleryListing;

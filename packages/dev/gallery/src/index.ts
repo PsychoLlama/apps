@@ -1,29 +1,6 @@
 import type { JSX } from 'solid-js';
 
 // ---------------------------------------------------------------------------
-// Legacy model — listings as pre-rendered cells. Retained while `*.gallery.tsx`
-// files and the `@app/gallery` renderer migrate to the declarative model below.
-// No current consumer imports these names directly; drop them once the
-// migration lands. (A `@deprecated` tag + export-boundary alias can be added
-// when we keep the old `GalleryListing` name working for unmigrated consumers.)
-// ---------------------------------------------------------------------------
-
-/** Legacy: a labeled row of pre-rendered component instances. */
-export interface DeprecatedGallerySection {
-  /** Heading shown above the row. */
-  title: string;
-  /** One JSX element per cell. Each tag is type-checked against its component. */
-  items: ReadonlyArray<JSX.Element>;
-}
-
-/** Legacy: a single component's listing as pre-rendered rows. */
-export interface DeprecatedGalleryListing {
-  /** Display heading. Conventionally the component's name. */
-  title: string;
-  sections: ReadonlyArray<DeprecatedGallerySection>;
-}
-
-// ---------------------------------------------------------------------------
 // Declarative model — a listing describes its permutation axes and a
 // single-cell `render`; the gallery permutes `columns` × `rows` through it.
 // ---------------------------------------------------------------------------
@@ -64,17 +41,18 @@ export type GallerySection<P> = { title: string } & (
  * aligned even when their intrinsic sizes differ.
  *
  * Bind `P` to the component's props at the `satisfies` site to type-check the
- * axis `props` and `render` — `satisfies GalleryListing<TextFieldProps>`. Two
- * sharp edges, both pinned at the call site:
+ * axis `props` and `render` — `satisfies GalleryListing<ComponentProps<typeof
+ * TextField>>`. Two sharp edges, both pinned at the call site:
  * - Union prop types (e.g. `ButtonProps`) collapse `Partial<P>` to their shared
  *   keys and break the `render` spread; pin one arm with
  *   `GalleryListing<Extract<ButtonProps, { as?: 'button' }>>`.
- * - Polymorphic props are generic over the tag; pin a concrete one with
- *   `GalleryListing<FlexProps<'div'>>`.
+ * - Polymorphic props are generic over the tag; pin a concrete one (e.g. the
+ *   subset of own props you vary) rather than the generic prop type.
  *
  * `P` is invariant — it appears in both `render`'s parameter and the axis
- * `props` — so a heterogeneous registry of listings erases it to
- * `GalleryListing<any>`; per-listing precision lives at each `satisfies` site.
+ * `props` — so the heterogeneous registry erases it to `GalleryListing<unknown>`
+ * (`Partial<unknown>` is `{}`, which every concrete listing satisfies);
+ * per-listing precision lives at each `satisfies` site.
  *
  * Omit `sections` for a component with no variants: `render` is invoked once
  * with no overrides and no tab strip is shown.
@@ -95,9 +73,9 @@ export interface GalleryListing<P = Record<string, never>> {
 }
 
 // ---------------------------------------------------------------------------
-// Registry — still on the legacy model until the `@app/gallery` renderer
-// migrates to permute `GalleryListing` axes. When it does, these flip to the
-// erased `GalleryListing<any>` (see the invariance note above).
+// Registry — the gallery collects listings from every package and renders them
+// through one renderer, so the heterogeneous set erases to
+// `GalleryListing<unknown>` (see the invariance note above).
 // ---------------------------------------------------------------------------
 
 /**
@@ -120,7 +98,7 @@ export interface GalleryManifest {
    * gallery's initial bundle.
    */
   listings: () => Promise<{
-    default: ReadonlyArray<DeprecatedGalleryListing>;
+    default: ReadonlyArray<GalleryListing<unknown>>;
   }>;
 }
 
@@ -131,6 +109,6 @@ export interface GalleryManifest {
  * single import that loads every listing at once.
  */
 export const collectListings = (
-  modules: Record<string, { default: DeprecatedGalleryListing }>,
-): DeprecatedGalleryListing[] =>
+  modules: Record<string, { default: GalleryListing<unknown> }>,
+): GalleryListing<unknown>[] =>
   Object.values(modules).map((module) => module.default);

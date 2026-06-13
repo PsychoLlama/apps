@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import {
   RadioGroupItem,
@@ -11,7 +11,13 @@ const VARIANTS = ['classic', 'surface', 'soft'] as const;
 const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const SIZES = [1, 2, 3] as const;
 
-const Demo = (props: Partial<RadioGroupRootProps> & { name: string }) => {
+/** Each radio group needs a unique `name`; `wrap` swaps in the wrapping demo. */
+type DemoProps = Partial<RadioGroupRootProps> & {
+  name?: string;
+  wrap?: boolean;
+};
+
+const Demo = (props: { name: string } & Partial<RadioGroupRootProps>) => {
   const [value, setValue] = createSignal<string | null>('apple');
   return (
     <RadioGroupRoot
@@ -65,26 +71,44 @@ const WrappingDemo = (props: { size: 1 | 2 | 3 }) => {
  */
 export default {
   title: 'RadioGroup',
+  render: (props) => (
+    <Show
+      when={props.wrap}
+      fallback={<Demo {...props} name={props.name ?? 'radio-group'} />}
+    >
+      <WrappingDemo size={props.size ?? 1} />
+    </Show>
+  ),
   sections: [
     {
       title: 'Variant',
-      items: VARIANTS.map((variant) => (
-        <Demo name={`radio-variant-${variant}`} variant={variant} />
-      )),
+      columns: VARIANTS.map((variant) => ({
+        title: variant,
+        props: { variant, name: `radio-variant-${variant}` },
+      })),
     },
     {
       title: 'Color',
-      items: COLORS.map((color) => (
-        <Demo name={`radio-color-${color}`} color={color} />
-      )),
+      columns: COLORS.map((color) => ({
+        title: color,
+        props: { color, name: `radio-color-${color}` },
+      })),
     },
     {
       title: 'Disabled',
-      items: [<Demo name="radio-disabled" disabled />],
+      columns: [
+        {
+          title: 'Disabled',
+          props: { disabled: true, name: 'radio-disabled' },
+        },
+      ],
     },
     {
       title: 'Wrapping labels',
-      items: SIZES.map((size) => <WrappingDemo size={size} />),
+      columns: SIZES.map((size) => ({
+        title: `Size ${size}`,
+        props: { size, wrap: true },
+      })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<DemoProps>;

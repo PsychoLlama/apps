@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import Blockquote from './blockquote';
 
@@ -11,14 +12,15 @@ const SAMPLE =
  */
 export default {
   title: 'Blockquote',
+  render: (props) => (
+    <Blockquote selectable {...props}>
+      {SAMPLE}
+    </Blockquote>
+  ),
   sections: [
     {
       title: 'Color',
-      items: COLORS.map((color) => (
-        <Blockquote selectable color={color}>
-          {SAMPLE}
-        </Blockquote>
-      )),
+      columns: COLORS.map((color) => ({ title: color, props: { color } })),
     },
   ],
-} satisfies GalleryListing;
+} satisfies GalleryListing<ComponentProps<typeof Blockquote>>;
