@@ -122,7 +122,7 @@ const ManifestListings = (props: {
       <For each={props.listings}>
         {(listing) => (
           <Flex as="section" direction="column" gap={3}>
-            <Heading as="h2" size={3} weight="medium" selectable={false}>
+            <Heading as="h2" size={5} weight="medium" selectable={false}>
               {listing.name}
             </Heading>
             {props.renderListing(listing)}
@@ -152,7 +152,7 @@ export const ManifestPage = (props: {
   >
     {(manifest) => (
       <Flex as="div" direction="column" gap={6}>
-        <Heading as="h1" size={5} weight="bold" selectable={false}>
+        <Heading as="h1" size={7} weight="bold" selectable={false}>
           {manifest().title}
         </Heading>
 
