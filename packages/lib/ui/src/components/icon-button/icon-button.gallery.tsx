@@ -16,13 +16,17 @@ export default {
   ),
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
         { title: 'Solid', props: { variant: 'solid' } },
         { title: 'Soft', props: { variant: 'soft' } },
         { title: 'Surface', props: { variant: 'surface' } },
         { title: 'Outline', props: { variant: 'outline' } },
         { title: 'Ghost', props: { variant: 'ghost' } },
+      ],
+      rows: [
+        { title: 'Default', props: {} },
+        { title: 'Disabled', props: { disabled: true } },
       ],
     },
     {
@@ -34,6 +38,10 @@ export default {
         { title: 'Warning', props: { color: 'warning' } },
         { title: 'Success', props: { color: 'success' } },
       ],
+      rows: [
+        { title: 'Default', props: {} },
+        { title: 'Disabled', props: { disabled: true } },
+      ],
     },
     {
       title: 'Radius',
@@ -43,16 +51,6 @@ export default {
         { title: 'Medium', props: { radius: 'medium' } },
         { title: 'Large', props: { radius: 'large' } },
         { title: 'Full', props: { radius: 'full' } },
-      ],
-    },
-    {
-      title: 'Disabled',
-      columns: [
-        { title: 'Solid', props: { variant: 'solid', disabled: true } },
-        { title: 'Soft', props: { variant: 'soft', disabled: true } },
-        { title: 'Surface', props: { variant: 'surface', disabled: true } },
-        { title: 'Outline', props: { variant: 'outline', disabled: true } },
-        { title: 'Ghost', props: { variant: 'ghost', disabled: true } },
       ],
     },
   ],

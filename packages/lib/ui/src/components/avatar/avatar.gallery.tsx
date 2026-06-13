@@ -16,10 +16,17 @@ export default {
   render: (props) => <Avatar alt="Gill Bates" fallback="GB" {...props} />,
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
         { title: 'Solid', props: { variant: 'solid' } },
         { title: 'Soft', props: { variant: 'soft' } },
+      ],
+      rows: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
       ],
     },
     {
@@ -30,16 +37,6 @@ export default {
         { title: 'Danger', props: { color: 'danger', variant: 'solid' } },
         { title: 'Warning', props: { color: 'warning', variant: 'solid' } },
         { title: 'Success', props: { color: 'success', variant: 'solid' } },
-      ],
-    },
-    {
-      title: 'Radius',
-      columns: [
-        { title: 'None', props: { radius: 'none' } },
-        { title: 'Small', props: { radius: 'small' } },
-        { title: 'Medium', props: { radius: 'medium' } },
-        { title: 'Large', props: { radius: 'large' } },
-        { title: 'Full', props: { radius: 'full' } },
       ],
     },
     {

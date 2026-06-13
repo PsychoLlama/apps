@@ -18,11 +18,18 @@ export default {
   render: (props) => <Demo {...props} />,
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
         { title: 'Classic', props: { variant: 'classic' } },
         { title: 'Surface', props: { variant: 'surface' } },
         { title: 'Soft', props: { variant: 'soft' } },
+      ],
+      rows: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
       ],
     },
     {
@@ -33,16 +40,6 @@ export default {
         { title: 'Danger', props: { color: 'danger' } },
         { title: 'Warning', props: { color: 'warning' } },
         { title: 'Success', props: { color: 'success' } },
-      ],
-    },
-    {
-      title: 'Radius',
-      columns: [
-        { title: 'None', props: { radius: 'none' } },
-        { title: 'Small', props: { radius: 'small' } },
-        { title: 'Medium', props: { radius: 'medium' } },
-        { title: 'Large', props: { radius: 'large' } },
-        { title: 'Full', props: { radius: 'full' } },
       ],
     },
     {

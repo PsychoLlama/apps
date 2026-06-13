@@ -10,7 +10,7 @@ export default {
   render: (props) => <Code {...props} />,
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
         { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
         { title: 'Soft', props: { variant: 'soft', children: 'soft' } },

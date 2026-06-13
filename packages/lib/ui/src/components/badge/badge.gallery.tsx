@@ -10,7 +10,7 @@ export default {
   render: (props) => <Badge {...props} />,
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
         { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
         { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
@@ -22,6 +22,10 @@ export default {
           title: 'Outline',
           props: { variant: 'outline', children: 'outline' },
         },
+      ],
+      rows: [
+        { title: 'Default', props: {} },
+        { title: 'High contrast', props: { highContrast: true } },
       ],
     },
     {
@@ -42,35 +46,6 @@ export default {
         { title: 'Medium', props: { radius: 'medium', children: 'medium' } },
         { title: 'Large', props: { radius: 'large', children: 'large' } },
         { title: 'Full', props: { radius: 'full', children: 'full' } },
-      ],
-    },
-    {
-      title: 'High contrast',
-      columns: [
-        {
-          title: 'Solid',
-          props: { variant: 'solid', highContrast: true, children: 'solid' },
-        },
-        {
-          title: 'Soft',
-          props: { variant: 'soft', highContrast: true, children: 'soft' },
-        },
-        {
-          title: 'Surface',
-          props: {
-            variant: 'surface',
-            highContrast: true,
-            children: 'surface',
-          },
-        },
-        {
-          title: 'Outline',
-          props: {
-            variant: 'outline',
-            highContrast: true,
-            children: 'outline',
-          },
-        },
       ],
     },
   ],
