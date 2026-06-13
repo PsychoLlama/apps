@@ -5,21 +5,8 @@ import {
   DataListRoot,
   DataListValue,
   type DataListColor,
-  type DataListOrientation,
   type DataListRootProps,
 } from './data-list';
-
-const ORIENTATIONS = [
-  'horizontal',
-  'vertical',
-] as const satisfies ReadonlyArray<DataListOrientation>;
-const COLORS = [
-  'accent',
-  'neutral',
-  'danger',
-  'warning',
-  'success',
-] as const satisfies ReadonlyArray<DataListColor>;
 
 /** The label color is per-`DataListLabel`, so it rides an extra demo-only prop. */
 type DemoProps = Partial<DataListRootProps> & { labelColor?: DataListColor };
@@ -55,17 +42,20 @@ export default {
   sections: [
     {
       title: 'Orientation',
-      columns: ORIENTATIONS.map((orientation) => ({
-        title: orientation,
-        props: { orientation },
-      })),
+      columns: [
+        { title: 'Horizontal', props: { orientation: 'horizontal' } },
+        { title: 'Vertical', props: { orientation: 'vertical' } },
+      ],
     },
     {
       title: 'Label color',
-      columns: COLORS.map((color) => ({
-        title: color,
-        props: { labelColor: color },
-      })),
+      columns: [
+        { title: 'Accent', props: { labelColor: 'accent' } },
+        { title: 'Neutral', props: { labelColor: 'neutral' } },
+        { title: 'Danger', props: { labelColor: 'danger' } },
+        { title: 'Warning', props: { labelColor: 'warning' } },
+        { title: 'Success', props: { labelColor: 'success' } },
+      ],
     },
   ],
 } satisfies GalleryListing<DataListRootProps & { labelColor?: DataListColor }>;

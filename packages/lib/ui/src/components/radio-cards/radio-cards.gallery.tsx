@@ -6,8 +6,6 @@ import {
   type RadioCardsRootProps,
 } from './radio-cards';
 
-const VARIANTS = ['surface', 'classic'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const OPTIONS = [1, 2] as const;
 
 /**
@@ -59,17 +57,49 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant, label: variant, name: `variant-${variant}` },
-      })),
+      columns: [
+        {
+          title: 'Surface',
+          props: {
+            variant: 'surface',
+            label: 'surface',
+            name: 'variant-surface',
+          },
+        },
+        {
+          title: 'Classic',
+          props: {
+            variant: 'classic',
+            label: 'classic',
+            name: 'variant-classic',
+          },
+        },
+      ],
     },
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({
-        title: color,
-        props: { color, label: color, name: `color-${color}` },
-      })),
+      columns: [
+        {
+          title: 'Accent',
+          props: { color: 'accent', label: 'accent', name: 'color-accent' },
+        },
+        {
+          title: 'Neutral',
+          props: { color: 'neutral', label: 'neutral', name: 'color-neutral' },
+        },
+        {
+          title: 'Danger',
+          props: { color: 'danger', label: 'danger', name: 'color-danger' },
+        },
+        {
+          title: 'Warning',
+          props: { color: 'warning', label: 'warning', name: 'color-warning' },
+        },
+        {
+          title: 'Success',
+          props: { color: 'success', label: 'success', name: 'color-success' },
+        },
+      ],
     },
     {
       title: 'Disabled',

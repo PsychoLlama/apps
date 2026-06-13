@@ -4,9 +4,6 @@ import Flex from '../flex/flex';
 import Text from '../text/text';
 import * as css from './scroll-area.gallery.css';
 
-const TYPES = ['auto', 'always', 'hover', 'scroll'] as const;
-const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
-
 const TallContent = () => (
   <Flex as="div" direction="column" class={css.tallContent}>
     {Array.from({ length: 20 }, (_unused, index) => (
@@ -63,11 +60,22 @@ export default {
   sections: [
     {
       title: 'Type',
-      columns: TYPES.map((type) => ({ title: type, props: { type } })),
+      columns: [
+        { title: 'Auto', props: { type: 'auto' } },
+        { title: 'Always', props: { type: 'always' } },
+        { title: 'Hover', props: { type: 'hover' } },
+        { title: 'Scroll', props: { type: 'scroll' } },
+      ],
     },
     {
       title: 'Radius',
-      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
+      columns: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
+      ],
     },
     {
       title: 'Scrollbars',

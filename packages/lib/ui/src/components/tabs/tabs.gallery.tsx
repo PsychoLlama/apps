@@ -8,8 +8,6 @@ import {
   type TabsListProps,
 } from './tabs';
 
-const COLORS = ['accent', 'neutral'] as const;
-
 const Demo = (props: Partial<TabsListProps>) => {
   const [value, setValue] = createSignal('overview');
   return (
@@ -47,14 +45,17 @@ export default {
   sections: [
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({ title: color, props: { color } })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+      ],
     },
     {
       title: 'High contrast',
-      columns: COLORS.map((color) => ({
-        title: color,
-        props: { color, highContrast: true },
-      })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent', highContrast: true } },
+        { title: 'Neutral', props: { color: 'neutral', highContrast: true } },
+      ],
     },
   ],
 } satisfies GalleryListing<TabsListProps>;

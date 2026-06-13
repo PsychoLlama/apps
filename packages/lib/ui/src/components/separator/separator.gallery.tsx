@@ -5,8 +5,6 @@ import Flex from '../flex/flex';
 import Text from '../text/text';
 import * as css from './separator.gallery.css';
 
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-
 /** Renders a separator between two labels, oriented by `props.orientation`. */
 const Demo = (props: Partial<SeparatorProps>) => (
   <Show
@@ -52,10 +50,13 @@ export default {
     },
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({
-        title: color,
-        props: { color, size: 2 },
-      })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent', size: 2 } },
+        { title: 'Neutral', props: { color: 'neutral', size: 2 } },
+        { title: 'Danger', props: { color: 'danger', size: 2 } },
+        { title: 'Warning', props: { color: 'warning', size: 2 } },
+        { title: 'Success', props: { color: 'success', size: 2 } },
+      ],
     },
   ],
 } satisfies GalleryListing<SeparatorProps>;

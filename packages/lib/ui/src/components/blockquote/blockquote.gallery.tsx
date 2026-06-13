@@ -1,8 +1,6 @@
-import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
-import Blockquote from './blockquote';
+import Blockquote, { type BlockquoteProps } from './blockquote';
 
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const SAMPLE =
   'Twenty years from now you will be more disappointed by the things you didn’t do than by the ones you did.';
 
@@ -20,7 +18,13 @@ export default {
   sections: [
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({ title: color, props: { color } })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+        { title: 'Danger', props: { color: 'danger' } },
+        { title: 'Warning', props: { color: 'warning' } },
+        { title: 'Success', props: { color: 'success' } },
+      ],
     },
   ],
-} satisfies GalleryListing<ComponentProps<typeof Blockquote>>;
+} satisfies GalleryListing<BlockquoteProps>;
