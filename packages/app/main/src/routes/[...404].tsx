@@ -1,3 +1,3 @@
-import NotFound from '../not-found/not-found';
+import { NotFound } from '@lib/shell';
 
 export default NotFound;

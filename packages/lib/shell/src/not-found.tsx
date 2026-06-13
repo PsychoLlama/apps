@@ -1,6 +1,6 @@
 import { Container, Flex, Heading, Link, Section, Text } from '@lib/ui';
-import { SiteHeader } from '@lib/shell';
 import IconCompassOff from 'virtual:icons/mdi/compass-off-outline';
+import SiteHeader from './site-header';
 import * as css from './not-found.css';
 
 /**
