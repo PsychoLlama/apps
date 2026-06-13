@@ -8,7 +8,7 @@ const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 /**
  * Gallery listing for `Badge`. Enumerates the component across its visual
- * axes — mirrors the Storybook `Overview` story.
+ * axes.
  */
 export default {
   sections: [
