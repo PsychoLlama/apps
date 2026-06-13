@@ -16,6 +16,8 @@ export interface ListingLink {
 export interface ManifestLink {
   /** The manifest's display title — conventionally the package name. */
   title: string;
+  /** One-line summary of the manifest's package. */
+  description: string;
   /** URL-safe slug for the manifest, used as its route segment. */
   slug: string;
   /** In-app path to the manifest's page. */
@@ -60,6 +62,7 @@ export const manifestLinks: ManifestLink[] = galleryManifests
     const slug = manifestSlug(manifest.title);
     return {
       title: manifest.title,
+      description: manifest.description,
       slug,
       href: `/gallery/${slug}`,
       count: Object.keys(manifest.listings).length,

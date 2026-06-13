@@ -50,6 +50,9 @@ export const GalleryHome = () => (
                 <Heading as="h2" size={3} weight="medium" selectable={false}>
                   {manifest.title}
                 </Heading>
+                <Text as="p" size={2} selectable={false}>
+                  {manifest.description}
+                </Text>
                 <Text
                   as="p"
                   size={2}
