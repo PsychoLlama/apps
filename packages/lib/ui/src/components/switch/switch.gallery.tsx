@@ -54,6 +54,7 @@ const WrappingDemo = (props: {
  * axes.
  */
 export default {
+  title: 'Switch',
   sections: [
     {
       title: 'Variant',

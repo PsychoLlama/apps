@@ -10,6 +10,7 @@ const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
  * axes.
  */
 export default {
+  title: 'Code',
   sections: [
     {
       title: 'Variant',

@@ -42,6 +42,7 @@ const Demo = (props: Partial<TabsListProps>) => {
  * axes.
  */
 export default {
+  title: 'Tabs',
   sections: [
     {
       title: 'Color',

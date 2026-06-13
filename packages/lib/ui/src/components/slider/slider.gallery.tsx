@@ -29,6 +29,7 @@ const Demo = (props: Partial<SliderProps> & { initialValue?: number[] }) => {
  * axes.
  */
 export default {
+  title: 'Slider',
   sections: [
     {
       title: 'Variant',

@@ -47,6 +47,7 @@ const Demo = (props: Partial<DataListRootProps>) => (
  * axes.
  */
 export default {
+  title: 'DataList',
   sections: [
     {
       title: 'Orientation',

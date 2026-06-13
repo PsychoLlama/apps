@@ -1,7 +1,4 @@
-import type {
-  GalleryListing as ListingData,
-  GalleryManifest,
-} from '@dev/gallery';
+import type { GalleryListing, GalleryManifest } from '@dev/gallery';
 import { galleryManifests } from '@dev/gallery/manifests';
 
 /** A manifest's card on the gallery landing page. */
@@ -15,31 +12,6 @@ export interface ManifestLink {
   /** In-app path to the manifest's page. */
   href: string;
 }
-
-/**
- * A lazily-imported listing module — its default export is the listing data.
- * {@link listingsOf} returns the deferred loaders; routing owns the actual
- * `lazy`/`Suspense` load.
- */
-export type ListingModule = { default: ListingData };
-
-/** A single listing within a manifest: its name and a deferred module loader. */
-export interface Listing {
-  /** Basename of the `*.gallery.tsx` file, used as the listing's heading. */
-  name: string;
-  /** Deferred import of the listing module; its default export is the data. */
-  load: () => Promise<ListingModule>;
-}
-
-/**
- * The listing's name — the basename of its module path minus the
- * `.gallery.tsx` suffix (e.g. `./components/badge/badge.gallery.tsx` → `badge`).
- */
-const listingName = (path: string): string =>
-  path
-    .split('/')
-    .pop()!
-    .replace(/\.gallery\.tsx$/, '');
 
 /**
  * A URL-safe slug for a manifest title. Titles carry a slash (`@lib/ui`), and a
@@ -72,13 +44,16 @@ export const findManifest = (titleSlug: string): GalleryManifest | undefined =>
   galleryManifests.find((entry) => manifestSlug(entry.title) === titleSlug);
 
 /**
- * The manifest's listings as deferred loaders, sorted alphabetically by name.
- * The manifest page renders each one inline, so there are no per-listing pages.
+ * Load every listing a manifest contributes, sorted by title. The manifest's
+ * `listings` loader resolves a single chunk holding all of them, so a manifest
+ * page's listings arrive together in one request rather than streaming in one
+ * at a time.
  */
-export const listingsOf = (manifest: GalleryManifest): Listing[] =>
-  Object.entries(manifest.listings)
-    .map(([path, load]) => ({
-      name: listingName(path),
-      load: load as () => Promise<ListingModule>,
-    }))
-    .sort((left, right) => left.name.localeCompare(right.name));
+export const loadListings = async (
+  manifest: GalleryManifest,
+): Promise<GalleryListing[]> => {
+  const module = await manifest.listings();
+  return [...module.default].sort((left, right) =>
+    left.title.localeCompare(right.title),
+  );
+};

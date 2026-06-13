@@ -59,6 +59,7 @@ const Demo = (
  * visual axes.
  */
 export default {
+  title: 'CheckboxCards',
   sections: [
     {
       title: 'Variant',

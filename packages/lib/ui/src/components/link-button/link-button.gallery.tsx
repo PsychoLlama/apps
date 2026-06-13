@@ -23,6 +23,7 @@ const Demo = (props: LinkButtonProps) => (
  * visual axes.
  */
 export default {
+  title: 'LinkButton',
   sections: [
     {
       title: 'Variant',

@@ -7,6 +7,7 @@ import Text from '../text/text';
  * axes.
  */
 export default {
+  title: 'Em',
   sections: [
     {
       title: 'In context',

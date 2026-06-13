@@ -17,6 +17,7 @@ const defaults = {
  * visual axes.
  */
 export default {
+  title: 'TextArea',
   sections: [
     {
       title: 'Variant',

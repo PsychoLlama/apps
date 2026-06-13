@@ -64,6 +64,7 @@ const WrappingDemo = (props: { size: 1 | 2 | 3 }) => {
  * visual axes.
  */
 export default {
+  title: 'RadioGroup',
   sections: [
     {
       title: 'Variant',

@@ -16,6 +16,7 @@ const Body = (props: { label: string }) => (
  * axes.
  */
 export default {
+  title: 'Callout',
   sections: [
     {
       title: 'Variant',

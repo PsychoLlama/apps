@@ -8,6 +8,7 @@ const VARIANTS = ['classic', 'soft'] as const;
  * axes.
  */
 export default {
+  title: 'Kbd',
   sections: [
     {
       title: 'Variant',

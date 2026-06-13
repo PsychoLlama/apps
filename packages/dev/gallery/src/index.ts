@@ -15,6 +15,11 @@ export interface GallerySection {
  * glob discovers them.
  */
 export interface GalleryListing {
+  /**
+   * Display heading for the listing, shown above its sections. Conventionally
+   * the component's name (e.g. `Button`).
+   */
+  title: string;
   sections: ReadonlyArray<GallerySection>;
 }
 
@@ -31,10 +36,21 @@ export interface GalleryManifest {
   description: string;
 
   /**
-   * The package's `*.gallery.tsx` listings, keyed by module path. Each value is
-   * a deferred dynamic import the gallery resolves on demand — produce this with
-   * a non-eager `import.meta.glob` so listings stay out of the initial bundle.
-   * Empty for now; listings land later.
+   * Deferred import of the package's collected listings. The sibling
+   * `gallery-listings.tsx` eagerly globs every `*.gallery.tsx` into one chunk;
+   * the manifest defers a single dynamic import of it. A manifest page loads all
+   * of its listings in one request, while the deferral keeps them out of the
+   * gallery's initial bundle.
    */
-  listings: Record<string, () => Promise<unknown>>;
+  listings: () => Promise<{ default: ReadonlyArray<GalleryListing> }>;
 }
+
+/**
+ * Collect an eager `import.meta.glob` of a package's `*.gallery.tsx` modules
+ * into a listing array — each module's default export is its
+ * {@link GalleryListing}. A package's `gallery-listings.tsx` calls this so its
+ * manifest can defer a single import that loads every listing at once.
+ */
+export const collectListings = (
+  modules: Record<string, { default: GalleryListing }>,
+): GalleryListing[] => Object.values(modules).map((module) => module.default);

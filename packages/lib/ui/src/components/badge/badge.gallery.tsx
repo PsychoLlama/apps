@@ -10,6 +10,7 @@ const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
  * axes.
  */
 export default {
+  title: 'Badge',
   sections: [
     {
       title: 'Variant',

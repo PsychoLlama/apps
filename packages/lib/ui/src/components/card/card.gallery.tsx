@@ -21,6 +21,7 @@ const Body = (props: { title: string }) => (
  * axes.
  */
 export default {
+  title: 'Card',
   sections: [
     {
       title: 'Variant',

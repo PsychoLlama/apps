@@ -18,6 +18,7 @@ const Demo = (props: Partial<ProgressProps>) => (
  * visual axes.
  */
 export default {
+  title: 'Progress',
   sections: [
     {
       title: 'Variant',

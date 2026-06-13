@@ -16,6 +16,7 @@ const defaults = {
  * visual axes.
  */
 export default {
+  title: 'IconButton',
   sections: [
     {
       title: 'Variant',

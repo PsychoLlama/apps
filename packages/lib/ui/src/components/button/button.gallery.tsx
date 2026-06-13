@@ -12,6 +12,7 @@ const defaults = { as: 'button', testId: 'button' } as const;
  * axes.
  */
 export default {
+  title: 'Button',
   sections: [
     {
       title: 'Variant',

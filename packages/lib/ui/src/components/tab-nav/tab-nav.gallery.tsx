@@ -35,6 +35,7 @@ const Demo = (props: Partial<TabNavRootProps>) => (
  * axes.
  */
 export default {
+  title: 'TabNav',
   sections: [
     {
       title: 'Color',

@@ -19,6 +19,7 @@ const defaults = {
  * visual axes.
  */
 export default {
+  title: 'TextField',
   sections: [
     {
       title: 'Variant',

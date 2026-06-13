@@ -10,6 +10,7 @@ const SAMPLE =
  * visual axes.
  */
 export default {
+  title: 'Blockquote',
   sections: [
     {
       title: 'Color',

@@ -39,6 +39,7 @@ const vertical = (
  * visual axes.
  */
 export default {
+  title: 'Separator',
   sections: [
     {
       title: 'Orientation',

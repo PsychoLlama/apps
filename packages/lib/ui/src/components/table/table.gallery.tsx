@@ -101,6 +101,7 @@ const Demo = (props: Partial<TableRootProps>) => (
  * axes.
  */
 export default {
+  title: 'Table',
   sections: [
     {
       title: 'Variant',

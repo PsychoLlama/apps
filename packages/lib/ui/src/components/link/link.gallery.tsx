@@ -24,6 +24,7 @@ const Demo = (props: LinkProps) => (
  * axes.
  */
 export default {
+  title: 'Link',
   sections: [
     {
       title: 'Underline',

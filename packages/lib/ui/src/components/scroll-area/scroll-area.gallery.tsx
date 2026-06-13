@@ -55,6 +55,7 @@ const Demo = (props: Partial<ScrollAreaProps>) => (
  * visual axes.
  */
 export default {
+  title: 'ScrollArea',
   sections: [
     {
       title: 'Type',

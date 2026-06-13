@@ -16,6 +16,7 @@ const BROKEN_SRC = 'https://example.invalid/avatar.png';
  * axes.
  */
 export default {
+  title: 'Avatar',
   sections: [
     {
       title: 'Variant',

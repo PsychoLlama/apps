@@ -56,6 +56,7 @@ const Demo = (
  * visual axes.
  */
 export default {
+  title: 'RadioCards',
   sections: [
     {
       title: 'Variant',
