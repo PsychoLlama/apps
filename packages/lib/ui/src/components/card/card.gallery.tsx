@@ -28,7 +28,7 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: [
+      rows: [
         { title: 'Surface', props: { variant: 'surface' } },
         { title: 'Classic', props: { variant: 'classic' } },
         { title: 'Ghost', props: { variant: 'ghost' } },

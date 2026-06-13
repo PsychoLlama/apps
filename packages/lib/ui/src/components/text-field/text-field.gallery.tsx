@@ -17,8 +17,8 @@ const ClearButton = () => (
 );
 
 /**
- * Gallery listing for `TextField`. The headline view crosses size against
- * radius; the remaining tabs enumerate the other visual axes.
+ * Gallery listing for `TextField`. The headline view crosses variant (rows)
+ * against radius; size and the remaining axes get their own tabs.
  */
 export default {
   title: 'TextField',
@@ -35,11 +35,11 @@ export default {
   ),
   sections: [
     {
-      title: 'Size × Radius',
+      title: 'Radius',
       rows: [
-        { title: 'Size 1', props: { size: 1 } },
-        { title: 'Size 2', props: { size: 2 } },
-        { title: 'Size 3', props: { size: 3 } },
+        { title: 'Classic', props: { variant: 'classic' } },
+        { title: 'Surface', props: { variant: 'surface' } },
+        { title: 'Soft', props: { variant: 'soft' } },
       ],
       columns: [
         { title: 'None', props: { radius: 'none' } },
@@ -50,17 +50,11 @@ export default {
       ],
     },
     {
-      title: 'Variant',
+      title: 'Size',
       columns: [
-        {
-          title: 'Classic',
-          props: { variant: 'classic', placeholder: 'classic' },
-        },
-        {
-          title: 'Surface',
-          props: { variant: 'surface', placeholder: 'surface' },
-        },
-        { title: 'Soft', props: { variant: 'soft', placeholder: 'soft' } },
+        { title: 'Size 1', props: { size: 1 } },
+        { title: 'Size 2', props: { size: 2 } },
+        { title: 'Size 3', props: { size: 3 } },
       ],
     },
     {

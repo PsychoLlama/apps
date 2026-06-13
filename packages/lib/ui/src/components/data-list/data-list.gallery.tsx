@@ -43,8 +43,8 @@ export default {
     {
       title: 'Orientation',
       columns: [
-        { title: 'Horizontal', props: { orientation: 'horizontal' } },
         { title: 'Vertical', props: { orientation: 'vertical' } },
+        { title: 'Horizontal', props: { orientation: 'horizontal' } },
       ],
     },
     {
