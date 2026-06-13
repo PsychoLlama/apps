@@ -4,12 +4,24 @@ import type {
 } from '@dev/gallery';
 import { galleryManifests } from '@dev/gallery/manifests';
 
-/** A single listing's entry in the sidebar nav. */
+/** A single listing's entry in a manifest's link list. */
 export interface ListingLink {
   /** Basename of the `*.gallery.tsx` file, used as both label and slug. */
   name: string;
   /** In-app path to the listing's page. */
   href: string;
+}
+
+/** A manifest's card on the gallery landing page. */
+export interface ManifestLink {
+  /** The manifest's display title — conventionally the package name. */
+  title: string;
+  /** URL-safe slug for the manifest, used as its route segment. */
+  slug: string;
+  /** In-app path to the manifest's page. */
+  href: string;
+  /** How many listings the manifest contributes. */
+  count: number;
 }
 
 /**
@@ -38,6 +50,26 @@ const listingName = (path: string): string =>
  */
 const manifestSlug = (title: string): string =>
   title.replace(/^@/, '').replaceAll('/', '-');
+
+/**
+ * Every manifest as a landing-page card link, sorted by title. The card routes
+ * to the manifest's own page under `/gallery/{title-slug}`.
+ */
+export const manifestLinks: ManifestLink[] = galleryManifests
+  .map((manifest) => {
+    const slug = manifestSlug(manifest.title);
+    return {
+      title: manifest.title,
+      slug,
+      href: `/gallery/${slug}`,
+      count: Object.keys(manifest.listings).length,
+    };
+  })
+  .sort((left, right) => left.title.localeCompare(right.title));
+
+/** The manifest whose title slugifies to `titleSlug`, or `undefined`. */
+export const findManifest = (titleSlug: string): GalleryManifest | undefined =>
+  galleryManifests.find((entry) => manifestSlug(entry.title) === titleSlug);
 
 /**
  * The manifest's listings as sorted nav entries, each linking to its own page

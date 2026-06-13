@@ -178,9 +178,6 @@ importers:
       '@dev/gallery':
         specifier: workspace:*
         version: link:../../dev/gallery
-      '@lib/design':
-        specifier: workspace:*
-        version: link:../../lib/design
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell

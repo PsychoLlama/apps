@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@dev/gallery": "workspace:*",
-    "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:"

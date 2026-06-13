@@ -1,105 +1,132 @@
-import { Flex, Heading, Link, Text } from '@lib/ui';
+import { Callout, Card, Container, Flex, Heading, Link, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import type { GalleryListing as ListingData } from '@dev/gallery';
-import { galleryManifests } from '@dev/gallery/manifests';
 import { For, Show, type JSX } from 'solid-js';
-import { listingsOf } from './listings';
+import IconAlert from 'virtual:icons/mdi/alert-outline';
+import { findManifest, listingsOf, manifestLinks } from './listings';
+import type { ListingLink } from './listings';
 import * as css from './index.css';
 
 export { findListing } from './listings';
 export type { ListingLink, ListingModule } from './listings';
 
 /**
- * The gallery shell: a persistent sidebar nav over every package's listings,
- * with the active listing's page rendered alongside it. Acts as the layout for
- * all `/gallery/*` routes.
+ * The gallery shell: the site header over the active view. Acts as the layout
+ * for all `/gallery/*` routes, which drill down from the manifest cards at
+ * `/gallery` into a manifest's listings and finally a single listing.
  */
-export const Gallery = (props: { children?: JSX.Element }) => {
-  return (
-    <Flex as="main" direction="column" grow>
-      <SiteHeader title="Gallery" />
+export const Gallery = (props: { children?: JSX.Element }) => (
+  <Flex as="main" direction="column" grow>
+    <SiteHeader title="Gallery" />
 
-      <Flex as="div" direction="row" class={css.body}>
-        <Flex
-          as="article"
-          direction="column"
-          gap={6}
-          px={5}
-          py={5}
-          class={css.content}
-        >
-          {props.children}
-        </Flex>
-
-        <Flex
-          as="nav"
-          direction="column"
-          gap={5}
-          px={4}
-          py={5}
-          aria-label="Gallery"
-          class={css.sidebar}
-        >
-          <For each={galleryManifests}>
-            {(manifest) => {
-              const listings = listingsOf(manifest);
-              return (
-                <Flex as="section" direction="column" gap={2}>
-                  <Heading
-                    as="h2"
-                    size={1}
-                    weight="medium"
-                    color="lowContrast"
-                    selectable={false}
-                  >
-                    {manifest.title}
-                  </Heading>
-
-                  <Show
-                    when={listings.length > 0}
-                    fallback={
-                      <Text
-                        as="p"
-                        size={2}
-                        color="lowContrast"
-                        selectable={false}
-                      >
-                        No listings
-                      </Text>
-                    }
-                  >
-                    <Flex as="ul" direction="column" gap={1}>
-                      <For each={listings}>
-                        {(listing) => (
-                          <Flex as="li">
-                            <Link
-                              testId={`listing-${listing.name}`}
-                              href={listing.href}
-                              size={2}
-                              color="neutral"
-                            >
-                              {listing.name}
-                            </Link>
-                          </Flex>
-                        )}
-                      </For>
-                    </Flex>
-                  </Show>
-                </Flex>
-              );
-            }}
-          </For>
-        </Flex>
-      </Flex>
+    <Flex
+      as="article"
+      direction="column"
+      gap={6}
+      px={5}
+      py={5}
+      class={css.content}
+    >
+      {props.children}
     </Flex>
-  );
-};
+  </Flex>
+);
 
-/** Placeholder shown at `/gallery` before a listing is selected. */
+/** The gallery landing page: one card per manifest, linking to its own page. */
 export const GalleryHome = () => (
-  <Text as="p" size={2} color="lowContrast" selectable={false}>
-    Select a listing to preview it.
-  </Text>
+  <Container as="div" size={2}>
+    <Flex as="ul" direction="column" gap={3} aria-label="Manifests">
+      <For each={manifestLinks}>
+        {(manifest) => (
+          <Flex as="li">
+            <Card
+              as="a"
+              href={manifest.href}
+              testId={`manifest-${manifest.slug}`}
+              size={3}
+              class={css.card}
+            >
+              <Flex as="div" direction="column" gap={1}>
+                <Heading as="h2" size={3} weight="medium" selectable={false}>
+                  {manifest.title}
+                </Heading>
+                <Text
+                  as="p"
+                  size={2}
+                  color="lowContrast"
+                  trim="end"
+                  selectable={false}
+                >
+                  {manifest.count}{' '}
+                  {manifest.count === 1 ? 'listing' : 'listings'}
+                </Text>
+              </Flex>
+            </Card>
+          </Flex>
+        )}
+      </For>
+    </Flex>
+  </Container>
+);
+
+/** A manifest's listings as a column of nav links. */
+const ListingLinks = (props: { listings: ListingLink[] }) => (
+  <Show
+    when={props.listings.length > 0}
+    fallback={
+      <Text as="p" size={2} color="lowContrast" selectable={false}>
+        No listings
+      </Text>
+    }
+  >
+    <Flex as="ul" direction="column" gap={1}>
+      <For each={props.listings}>
+        {(listing) => (
+          <Flex as="li">
+            <Link
+              testId={`listing-${listing.name}`}
+              href={listing.href}
+              size={2}
+              color="neutral"
+            >
+              {listing.name}
+            </Link>
+          </Flex>
+        )}
+      </For>
+    </Flex>
+  </Show>
+);
+
+/**
+ * A manifest's page: a work-in-progress notice over links to every listing the
+ * manifest contributes. Driven by a manifest slug route param.
+ */
+export const ManifestPage = (props: { slug: string }) => (
+  <Show
+    when={findManifest(props.slug)}
+    fallback={
+      <Text as="p" size={2} color="lowContrast" selectable={false}>
+        No such manifest.
+      </Text>
+    }
+  >
+    {(manifest) => (
+      <Flex as="div" direction="column" gap={6}>
+        <Heading as="h1" size={5} weight="bold" selectable={false}>
+          {manifest().title}
+        </Heading>
+
+        <Callout color="warning" icon={<IconAlert />}>
+          <Text as="p" size={2} selectable={false}>
+            Work in progress.
+          </Text>
+        </Callout>
+
+        <ListingLinks listings={listingsOf(manifest())} />
+      </Flex>
+    )}
+  </Show>
 );
 
 /**
