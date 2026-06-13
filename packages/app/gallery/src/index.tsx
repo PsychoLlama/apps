@@ -3,7 +3,6 @@ import { SiteHeader } from '@lib/shell';
 import type { GalleryListing as ListingData } from '@dev/gallery';
 import { For, Show, type JSX } from 'solid-js';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
-import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import { findManifest, listingsOf, manifestLinks } from './listings';
 import type { ListingLink } from './listings';
 import * as css from './index.css';
@@ -36,46 +35,31 @@ export const Gallery = (props: { children?: JSX.Element }) => (
 /** The gallery landing page: one card per manifest, linking to its own page. */
 export const GalleryHome = () => (
   <Container as="div" size={2}>
-    <Flex
-      as="ul"
-      direction="column"
-      gap={3}
-      aria-label="Manifests"
-      class={css.cardList}
-    >
+    <Flex as="ul" direction="column" gap={3} aria-label="Manifests">
       <For each={manifestLinks}>
         {(manifest) => (
-          <Flex as="li" class={css.cardItem}>
+          <Flex as="li">
             <Card
               as="a"
               href={manifest.href}
               testId={`manifest-${manifest.slug}`}
               size={3}
-              variant="surface"
               class={css.card}
             >
-              <Flex as="div" align="center" gap={4}>
-                <Flex as="div" direction="column" gap={1} grow>
-                  <Heading as="h2" size={3} weight="medium" selectable={false}>
-                    {manifest.title}
-                  </Heading>
-                  <Text
-                    as="p"
-                    size={2}
-                    color="lowContrast"
-                    trim="end"
-                    selectable={false}
-                  >
-                    {manifest.count}{' '}
-                    {manifest.count === 1 ? 'listing' : 'listings'}
-                  </Text>
-                </Flex>
-                <IconChevronRight
-                  width="20"
-                  height="20"
-                  class={css.chevron}
-                  aria-hidden="true"
-                />
+              <Flex as="div" direction="column" gap={1}>
+                <Heading as="h2" size={3} weight="medium" selectable={false}>
+                  {manifest.title}
+                </Heading>
+                <Text
+                  as="p"
+                  size={2}
+                  color="lowContrast"
+                  trim="end"
+                  selectable={false}
+                >
+                  {manifest.count}{' '}
+                  {manifest.count === 1 ? 'listing' : 'listings'}
+                </Text>
               </Flex>
             </Card>
           </Flex>
