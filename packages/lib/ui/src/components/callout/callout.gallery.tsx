@@ -1,10 +1,6 @@
-import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
-import Callout from './callout';
+import Callout, { type CalloutProps } from './callout';
 import Text from '../text/text';
-
-const VARIANTS = ['soft', 'surface', 'outline'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 
 const Body = (props: { label: string }) => (
   <Text as="p" size={2} selectable>
@@ -22,28 +18,95 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant, children: <Body label={`${variant} callout`} /> },
-      })),
+      columns: [
+        {
+          title: 'Soft',
+          props: { variant: 'soft', children: <Body label={`soft callout`} /> },
+        },
+        {
+          title: 'Surface',
+          props: {
+            variant: 'surface',
+            children: <Body label={`surface callout`} />,
+          },
+        },
+        {
+          title: 'Outline',
+          props: {
+            variant: 'outline',
+            children: <Body label={`outline callout`} />,
+          },
+        },
+      ],
     },
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({
-        title: color,
-        props: { color, children: <Body label={`${color} callout`} /> },
-      })),
+      columns: [
+        {
+          title: 'Accent',
+          props: {
+            color: 'accent',
+            children: <Body label={`accent callout`} />,
+          },
+        },
+        {
+          title: 'Neutral',
+          props: {
+            color: 'neutral',
+            children: <Body label={`neutral callout`} />,
+          },
+        },
+        {
+          title: 'Danger',
+          props: {
+            color: 'danger',
+            children: <Body label={`danger callout`} />,
+          },
+        },
+        {
+          title: 'Warning',
+          props: {
+            color: 'warning',
+            children: <Body label={`warning callout`} />,
+          },
+        },
+        {
+          title: 'Success',
+          props: {
+            color: 'success',
+            children: <Body label={`success callout`} />,
+          },
+        },
+      ],
     },
     {
       title: 'High contrast',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: {
-          variant,
-          highContrast: true,
-          children: <Body label={`${variant} callout`} />,
+      columns: [
+        {
+          title: 'Soft',
+          props: {
+            variant: 'soft',
+            highContrast: true,
+            children: <Body label={`soft callout`} />,
+          },
         },
-      })),
+        {
+          title: 'Surface',
+          props: {
+            variant: 'surface',
+            highContrast: true,
+            children: <Body label={`surface callout`} />,
+          },
+        },
+        {
+          title: 'Outline',
+          props: {
+            variant: 'outline',
+            highContrast: true,
+            children: <Body label={`outline callout`} />,
+          },
+        },
+      ],
     },
   ],
-} satisfies GalleryListing<ComponentProps<typeof Callout>>;
+} satisfies GalleryListing<CalloutProps>;

@@ -1,20 +1,8 @@
-import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
 import IconMagnify from 'virtual:icons/mdi/magnify';
 import IconClose from 'virtual:icons/mdi/close';
-import TextField from './text-field';
+import TextField, { type TextFieldProps } from './text-field';
 import IconButton from '../icon-button/icon-button';
-
-const VARIANTS = ['classic', 'surface', 'soft'] as const;
-const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
-const SIZES = [1, 2, 3] as const;
-
-const DEFAULTS = {
-  testId: 'text-field',
-  autocomplete: 'off',
-  autocapitalize: 'off',
-  enterkeyhint: 'search',
-} as const;
 
 const ClearButton = () => (
   <IconButton
@@ -36,7 +24,10 @@ export default {
   title: 'TextField',
   render: (props) => (
     <TextField
-      {...DEFAULTS}
+      testId="text-field"
+      autocomplete="off"
+      autocapitalize="off"
+      enterkeyhint="search"
       placeholder="Search"
       left={<IconMagnify />}
       {...props}
@@ -45,15 +36,32 @@ export default {
   sections: [
     {
       title: 'Size × Radius',
-      rows: SIZES.map((size) => ({ title: `Size ${size}`, props: { size } })),
-      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
+      rows: [
+        { title: 'Size 1', props: { size: 1 } },
+        { title: 'Size 2', props: { size: 2 } },
+        { title: 'Size 3', props: { size: 3 } },
+      ],
+      columns: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
+      ],
     },
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant, placeholder: variant },
-      })),
+      columns: [
+        {
+          title: 'Classic',
+          props: { variant: 'classic', placeholder: 'classic' },
+        },
+        {
+          title: 'Surface',
+          props: { variant: 'surface', placeholder: 'surface' },
+        },
+        { title: 'Soft', props: { variant: 'soft', placeholder: 'soft' } },
+      ],
     },
     {
       title: 'Slots',
@@ -89,4 +97,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<ComponentProps<typeof TextField>>;
+} satisfies GalleryListing<TextFieldProps>;

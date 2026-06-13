@@ -7,10 +7,6 @@ import {
 } from './radio-group';
 import * as css from './radio-group.gallery.css';
 
-const VARIANTS = ['classic', 'surface', 'soft'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3] as const;
-
 /** Each radio group needs a unique `name`; `wrap` swaps in the wrapping demo. */
 type DemoProps = Partial<RadioGroupRootProps> & {
   name?: string;
@@ -82,17 +78,45 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant, name: `radio-variant-${variant}` },
-      })),
+      columns: [
+        {
+          title: 'Classic',
+          props: { variant: 'classic', name: 'radio-variant-classic' },
+        },
+        {
+          title: 'Surface',
+          props: { variant: 'surface', name: 'radio-variant-surface' },
+        },
+        {
+          title: 'Soft',
+          props: { variant: 'soft', name: 'radio-variant-soft' },
+        },
+      ],
     },
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({
-        title: color,
-        props: { color, name: `radio-color-${color}` },
-      })),
+      columns: [
+        {
+          title: 'Accent',
+          props: { color: 'accent', name: 'radio-color-accent' },
+        },
+        {
+          title: 'Neutral',
+          props: { color: 'neutral', name: 'radio-color-neutral' },
+        },
+        {
+          title: 'Danger',
+          props: { color: 'danger', name: 'radio-color-danger' },
+        },
+        {
+          title: 'Warning',
+          props: { color: 'warning', name: 'radio-color-warning' },
+        },
+        {
+          title: 'Success',
+          props: { color: 'success', name: 'radio-color-success' },
+        },
+      ],
     },
     {
       title: 'Disabled',
@@ -105,10 +129,11 @@ export default {
     },
     {
       title: 'Wrapping labels',
-      columns: SIZES.map((size) => ({
-        title: `Size ${size}`,
-        props: { size, wrap: true },
-      })),
+      columns: [
+        { title: 'Size 1', props: { size: 1, wrap: true } },
+        { title: 'Size 2', props: { size: 2, wrap: true } },
+        { title: 'Size 3', props: { size: 3, wrap: true } },
+      ],
     },
   ],
 } satisfies GalleryListing<DemoProps>;

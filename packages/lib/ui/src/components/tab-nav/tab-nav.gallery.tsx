@@ -2,8 +2,6 @@ import type { GalleryListing } from '@dev/gallery';
 import { Route, StaticRouter } from '@solidjs/router';
 import { TabNavLink, TabNavRoot, type TabNavRootProps } from './tab-nav';
 
-const COLORS = ['accent', 'neutral'] as const;
-
 // `StaticRouter` (not `MemoryRouter`) gives each cell an SSR-safe router
 // context — `MemoryRouter` wires up native DOM events on setup, which throws
 // during prerender; the gallery is statically generated.
@@ -40,14 +38,17 @@ export default {
   sections: [
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({ title: color, props: { color } })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+      ],
     },
     {
       title: 'High contrast',
-      columns: COLORS.map((color) => ({
-        title: color,
-        props: { color, highContrast: true },
-      })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent', highContrast: true } },
+        { title: 'Neutral', props: { color: 'neutral', highContrast: true } },
+      ],
     },
   ],
 } satisfies GalleryListing<TabNavRootProps>;

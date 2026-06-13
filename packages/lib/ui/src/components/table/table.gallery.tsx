@@ -9,13 +9,7 @@ import {
   type TableRootProps,
   TableRow,
   TableRowHeaderCell,
-  type TableVariant,
 } from './table';
-
-const VARIANTS = [
-  'surface',
-  'ghost',
-] as const satisfies ReadonlyArray<TableVariant>;
 
 interface Row {
   name: string;
@@ -106,10 +100,10 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant },
-      })),
+      columns: [
+        { title: 'Surface', props: { variant: 'surface' } },
+        { title: 'Ghost', props: { variant: 'ghost' } },
+      ],
     },
   ],
 } satisfies GalleryListing<TableRootProps>;

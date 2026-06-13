@@ -1,9 +1,5 @@
-import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
-import Code from './code';
-
-const VARIANTS = ['solid', 'soft', 'outline', 'ghost'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
+import Code, { type CodeProps } from './code';
 
 /**
  * Gallery listing for `Code`. Enumerates the component across its visual
@@ -15,17 +11,25 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant, children: variant },
-      })),
+      columns: [
+        { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
+        { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
+        {
+          title: 'Outline',
+          props: { variant: 'outline', children: 'outline' },
+        },
+        { title: 'Ghost', props: { variant: 'ghost', children: 'ghost' } },
+      ],
     },
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({
-        title: color,
-        props: { color, children: color },
-      })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent', children: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral', children: 'neutral' } },
+        { title: 'Danger', props: { color: 'danger', children: 'danger' } },
+        { title: 'Warning', props: { color: 'warning', children: 'warning' } },
+        { title: 'Success', props: { color: 'success', children: 'success' } },
+      ],
     },
   ],
-} satisfies GalleryListing<ComponentProps<typeof Code>>;
+} satisfies GalleryListing<CodeProps>;

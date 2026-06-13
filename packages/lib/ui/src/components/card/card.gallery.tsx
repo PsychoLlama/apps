@@ -1,10 +1,7 @@
 import type { GalleryListing } from '@dev/gallery';
-import Card from './card';
+import Card, { type CardProps } from './card';
 import Heading from '../heading/heading';
 import Text from '../text/text';
-
-type CardVariant = 'surface' | 'classic' | 'ghost';
-const VARIANTS = ['surface', 'classic', 'ghost'] as const;
 
 const Body = (props: { title: string }) => (
   <>
@@ -31,10 +28,11 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant },
-      })),
+      columns: [
+        { title: 'Surface', props: { variant: 'surface' } },
+        { title: 'Classic', props: { variant: 'classic' } },
+        { title: 'Ghost', props: { variant: 'ghost' } },
+      ],
     },
   ],
-} satisfies GalleryListing<{ variant?: CardVariant }>;
+} satisfies GalleryListing<CardProps<'div'>>;

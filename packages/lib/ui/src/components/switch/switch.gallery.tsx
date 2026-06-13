@@ -5,11 +5,6 @@ import Flex from '../flex/flex';
 import Text from '../text/text';
 import * as css from './switch.gallery.css';
 
-const VARIANTS = ['classic', 'surface', 'soft'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const SIZES = [1, 2, 3] as const;
-const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
-
 /** Demo-only knobs: the initial checked state and an optional wrapping-label size. */
 type DemoProps = Partial<SwitchProps> & {
   initialChecked?: boolean;
@@ -71,18 +66,31 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant },
-      })),
+      columns: [
+        { title: 'Classic', props: { variant: 'classic' } },
+        { title: 'Surface', props: { variant: 'surface' } },
+        { title: 'Soft', props: { variant: 'soft' } },
+      ],
     },
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({ title: color, props: { color } })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+        { title: 'Danger', props: { color: 'danger' } },
+        { title: 'Warning', props: { color: 'warning' } },
+        { title: 'Success', props: { color: 'success' } },
+      ],
     },
     {
       title: 'Radius',
-      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
+      columns: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
+      ],
     },
     {
       title: 'State',
@@ -101,10 +109,11 @@ export default {
     },
     {
       title: 'Wrapping labels',
-      columns: SIZES.map((size, index) => ({
-        title: `Size ${size}`,
-        props: { size, wrapText: (4 + index) as 4 | 5 | 6 },
-      })),
+      columns: [
+        { title: 'Size 1', props: { size: 1, wrapText: 4 } },
+        { title: 'Size 2', props: { size: 2, wrapText: 5 } },
+        { title: 'Size 3', props: { size: 3, wrapText: 6 } },
+      ],
     },
   ],
 } satisfies GalleryListing<

@@ -1,11 +1,6 @@
-import type { ComponentProps } from 'solid-js';
 import type { GalleryListing } from '@dev/gallery';
-import Avatar from './avatar';
+import Avatar, { type AvatarProps } from './avatar';
 import SAMPLE_SRC from './sample-avatar.svg?url';
-
-const VARIANTS = ['solid', 'soft'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 // The error cell uses a guaranteed-broken URL to exercise the fallback
 // path; the loaded cell uses a bundled SVG so the gallery renders without
@@ -22,21 +17,30 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant },
-      })),
+      columns: [
+        { title: 'Solid', props: { variant: 'solid' } },
+        { title: 'Soft', props: { variant: 'soft' } },
+      ],
     },
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({
-        title: color,
-        props: { color, variant: 'solid' },
-      })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent', variant: 'solid' } },
+        { title: 'Neutral', props: { color: 'neutral', variant: 'solid' } },
+        { title: 'Danger', props: { color: 'danger', variant: 'solid' } },
+        { title: 'Warning', props: { color: 'warning', variant: 'solid' } },
+        { title: 'Success', props: { color: 'success', variant: 'solid' } },
+      ],
     },
     {
       title: 'Radius',
-      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
+      columns: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
+      ],
     },
     {
       title: 'State',
@@ -47,4 +51,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<ComponentProps<typeof Avatar>>;
+} satisfies GalleryListing<AvatarProps>;

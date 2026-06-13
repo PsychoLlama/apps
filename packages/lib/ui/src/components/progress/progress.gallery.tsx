@@ -3,10 +3,6 @@ import Progress, { type ProgressProps } from './progress';
 import Flex from '../flex/flex';
 import * as css from './progress.gallery.css';
 
-const VARIANTS = ['classic', 'surface', 'soft'] as const;
-const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
-const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
-
 const Demo = (props: Partial<ProgressProps>) => (
   <Flex as="div" class={css.galleryCell}>
     <Progress value={60} {...props} />
@@ -23,18 +19,31 @@ export default {
   sections: [
     {
       title: 'Variant',
-      columns: VARIANTS.map((variant) => ({
-        title: variant,
-        props: { variant },
-      })),
+      columns: [
+        { title: 'Classic', props: { variant: 'classic' } },
+        { title: 'Surface', props: { variant: 'surface' } },
+        { title: 'Soft', props: { variant: 'soft' } },
+      ],
     },
     {
       title: 'Color',
-      columns: COLORS.map((color) => ({ title: color, props: { color } })),
+      columns: [
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+        { title: 'Danger', props: { color: 'danger' } },
+        { title: 'Warning', props: { color: 'warning' } },
+        { title: 'Success', props: { color: 'success' } },
+      ],
     },
     {
       title: 'Radius',
-      columns: RADII.map((radius) => ({ title: radius, props: { radius } })),
+      columns: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
+      ],
     },
     {
       title: 'State',
