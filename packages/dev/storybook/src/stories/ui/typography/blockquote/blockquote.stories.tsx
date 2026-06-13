@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Blockquote, type BlockquoteProps } from '@lib/ui';
+import {
+  Blockquote as BlockquoteComponent,
+  type BlockquoteProps,
+} from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { selectableArgTypes } from '@lib/ui/props/selectable';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
@@ -11,8 +14,8 @@ const SAMPLE =
   'Twenty years from now you will be more disappointed by the things you didn’t do than by the ones you did.';
 
 const meta = {
-  title: 'UI/Typography/Blockquote',
-  component: Blockquote,
+  title: 'UI/Typography',
+  component: BlockquoteComponent,
   args: {
     children: SAMPLE,
     color: 'accent',
@@ -42,4 +45,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Blockquote: Story = {};

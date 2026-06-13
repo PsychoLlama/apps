@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { fn } from 'storybook/test';
-import { TextArea, type TextAreaProps } from '@lib/ui';
+import { TextArea as TextAreaComponent, type TextAreaProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { requiredInputHintArgTypes } from '@lib/ui/props/input-hints';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Components/TextArea',
-  component: TextArea,
+  title: 'UI/Components',
+  component: TextAreaComponent,
   args: {
     testId: 'text-area',
     size: 2,
@@ -53,4 +53,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const TextArea: Story = {};

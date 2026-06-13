@@ -3,7 +3,11 @@ import { splitProps } from 'solid-js';
 import { fn } from 'storybook/test';
 import IconMagnify from 'virtual:icons/mdi/magnify';
 import IconClose from 'virtual:icons/mdi/close';
-import { IconButton, TextField, type TextFieldProps } from '@lib/ui';
+import {
+  IconButton,
+  TextField as TextFieldComponent,
+  type TextFieldProps,
+} from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { requiredInputHintArgTypes } from '@lib/ui/props/input-hints';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
@@ -17,8 +21,8 @@ interface TextFieldArgs extends TextFieldProps {
 }
 
 const meta = {
-  title: 'UI/Components/TextField',
-  component: TextField,
+  title: 'UI/Components',
+  component: TextFieldComponent,
   args: {
     testId: 'text-field',
     size: 2,
@@ -81,7 +85,7 @@ const meta = {
       'hasRight',
     ]);
     return (
-      <TextField
+      <TextFieldComponent
         {...textFieldProps}
         left={storyOnly.hasLeft ? <IconMagnify /> : undefined}
         right={
@@ -105,4 +109,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const TextField: Story = {};

@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Badge, type BadgeProps } from '@lib/ui';
+import { Badge as BadgeComponent, type BadgeProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Components/Badge',
-  component: Badge,
+  title: 'UI/Components',
+  component: BadgeComponent,
   args: {
     children: 'Badge',
     size: 1,
@@ -42,4 +42,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Badge: Story = {};

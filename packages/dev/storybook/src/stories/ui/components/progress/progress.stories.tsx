@@ -1,13 +1,17 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Flex, Progress, type ProgressProps } from '@lib/ui';
+import {
+  Flex,
+  Progress as ProgressComponent,
+  type ProgressProps,
+} from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import * as css from './progress.stories.css';
 
 const meta = {
-  title: 'UI/Components/Progress',
-  component: Progress,
+  title: 'UI/Components',
+  component: ProgressComponent,
   args: {
     testId: 'progress',
     value: 60,
@@ -55,4 +59,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Progress: Story = {};

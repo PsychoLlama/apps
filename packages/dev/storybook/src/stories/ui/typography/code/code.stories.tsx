@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Code, Text, type CodeProps } from '@lib/ui';
+import { Code as CodeComponent, Text, type CodeProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { selectableArgTypes } from '@lib/ui/props/selectable';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
@@ -8,8 +8,8 @@ import { truncateArgTypes } from '@lib/ui/props/truncate';
 import { wrapArgTypes } from '@lib/ui/props/wrap';
 
 const meta = {
-  title: 'UI/Typography/Code',
-  component: Code,
+  title: 'UI/Typography',
+  component: CodeComponent,
   args: {
     children: 'console.log()',
     variant: 'soft',
@@ -43,10 +43,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {
+export const Code: Story = {
   render: (props: CodeProps) => (
     <Text as="p" size={3} selectable>
-      Press <Code {...props} /> to continue.
+      Press <CodeComponent {...props} /> to continue.
     </Text>
   ),
 };

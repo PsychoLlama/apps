@@ -6,7 +6,7 @@ import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Components/TabNav',
+  title: 'UI/Components',
   component: TabNavRoot,
   args: {
     testId: 'tab-nav',
@@ -76,4 +76,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const TabNav: Story = {};

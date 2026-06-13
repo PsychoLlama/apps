@@ -13,7 +13,7 @@ import { testIdArgTypes } from '@lib/ui/props/test-id';
 const OPTIONS = [1, 2] as const;
 
 const meta = {
-  title: 'UI/Components/RadioCards',
+  title: 'UI/Components',
   component: RadioCardsRoot,
   args: {
     testId: 'radio-cards',
@@ -97,4 +97,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const RadioCards: Story = {};

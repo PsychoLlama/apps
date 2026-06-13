@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Grid, type GridProps } from '@lib/ui';
+import { Grid as GridComponent, type GridProps } from '@lib/ui';
 import { boxArgTypes } from '@lib/ui/props/box';
 import { swatches } from '../../../../swatch';
 
 const meta = {
-  title: 'UI/Layout/Grid',
-  component: Grid,
+  title: 'UI/Layout',
+  component: GridComponent,
   args: {
     as: 'div',
     columns: 4,
@@ -48,4 +48,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Grid: Story = {};

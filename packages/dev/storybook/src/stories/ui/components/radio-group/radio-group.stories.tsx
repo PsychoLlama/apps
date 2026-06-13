@@ -11,7 +11,7 @@ import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Components/RadioGroup',
+  title: 'UI/Components',
   component: RadioGroupRoot,
   args: {
     testId: 'radio-group',
@@ -89,4 +89,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const RadioGroup: Story = {};

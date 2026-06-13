@@ -16,7 +16,7 @@ const OPTIONS = [
 ] as const;
 
 const meta = {
-  title: 'UI/Components/CheckboxCards',
+  title: 'UI/Components',
   component: CheckboxCardsRoot,
   args: {
     testId: 'checkbox-cards',
@@ -100,4 +100,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const CheckboxCards: Story = {};

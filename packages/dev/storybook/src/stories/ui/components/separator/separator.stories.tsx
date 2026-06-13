@@ -1,12 +1,17 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { Show } from 'solid-js';
-import { Flex, Separator, type SeparatorProps, Text } from '@lib/ui';
+import {
+  Flex,
+  Separator as SeparatorComponent,
+  type SeparatorProps,
+  Text,
+} from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Components/Separator',
-  component: Separator,
+  title: 'UI/Components',
+  component: SeparatorComponent,
   args: {
     orientation: 'horizontal',
     size: 1,
@@ -37,7 +42,7 @@ const meta = {
           <Text as="span" selectable={false}>
             Above
           </Text>
-          <Separator {...props} />
+          <SeparatorComponent {...props} />
           <Text as="span" selectable={false}>
             Below
           </Text>
@@ -48,7 +53,7 @@ const meta = {
         <Text as="span" selectable={false}>
           Left
         </Text>
-        <Separator {...props} />
+        <SeparatorComponent {...props} />
         <Text as="span" selectable={false}>
           Right
         </Text>
@@ -60,4 +65,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Separator: Story = {};

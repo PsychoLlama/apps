@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { createSignal, splitProps, untrack } from 'solid-js';
 import { fn } from 'storybook/test';
-import { Switch, type SwitchProps } from '@lib/ui';
+import { Switch as SwitchComponent, type SwitchProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -12,8 +12,8 @@ interface SwitchArgs extends SwitchProps {
 }
 
 const meta = {
-  title: 'UI/Components/Switch',
-  component: Switch,
+  title: 'UI/Components',
+  component: SwitchComponent,
   args: {
     testId: 'switch',
     size: 2,
@@ -64,7 +64,7 @@ const meta = {
       untrack(() => storyOnly.initialChecked ?? false),
     );
     return (
-      <Switch
+      <SwitchComponent
         {...switchProps}
         checked={checked()}
         onCheckedChange={(next) => {
@@ -79,4 +79,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Switch: Story = {};

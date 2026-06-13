@@ -1,5 +1,10 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Flex, ScrollArea, type ScrollAreaProps, Text } from '@lib/ui';
+import {
+  Flex,
+  ScrollArea as ScrollAreaComponent,
+  type ScrollAreaProps,
+  Text,
+} from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 import * as css from './scroll-area.stories.css';
@@ -21,8 +26,8 @@ const BothContent = () => (
 );
 
 const meta = {
-  title: 'UI/Components/ScrollArea',
-  component: ScrollArea,
+  title: 'UI/Components',
+  component: ScrollAreaComponent,
   args: {
     testId: 'scroll-area',
     type: 'hover',
@@ -41,9 +46,9 @@ const meta = {
   },
   render: (args: ScrollAreaProps) => (
     <Flex as="div" class={css.playgroundFrame}>
-      <ScrollArea {...args}>
+      <ScrollAreaComponent {...args}>
         <BothContent />
-      </ScrollArea>
+      </ScrollAreaComponent>
     </Flex>
   ),
 } satisfies Meta<ScrollAreaProps>;
@@ -51,4 +56,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const ScrollArea: Story = {};

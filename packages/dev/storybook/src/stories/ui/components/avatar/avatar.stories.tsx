@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Avatar, type AvatarProps } from '@lib/ui';
+import { Avatar as AvatarComponent, type AvatarProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -9,8 +9,8 @@ const COLORS = ['accent', 'neutral', 'danger', 'warning', 'success'] as const;
 const RADII = ['none', 'small', 'medium', 'large', 'full'] as const;
 
 const meta = {
-  title: 'UI/Components/Avatar',
-  component: Avatar,
+  title: 'UI/Components',
+  component: AvatarComponent,
   args: {
     alt: 'Gill Bates',
     fallback: 'GB',
@@ -38,4 +38,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Avatar: Story = {};

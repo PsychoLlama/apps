@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { createSignal, splitProps, untrack } from 'solid-js';
 import { fn } from 'storybook/test';
-import { Flex, Slider, type SliderProps } from '@lib/ui';
+import { Flex, Slider as SliderComponent, type SliderProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -17,8 +17,8 @@ interface SliderArgs extends SliderProps {
 }
 
 const meta = {
-  title: 'UI/Components/Slider',
-  component: Slider,
+  title: 'UI/Components',
+  component: SliderComponent,
   args: {
     testId: 'slider',
     size: 2,
@@ -83,7 +83,7 @@ const meta = {
             : css.playgroundHorizontal
         }
       >
-        <Slider
+        <SliderComponent
           {...sliderProps}
           value={value()}
           onValueChange={(next) => {
@@ -99,4 +99,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Slider: Story = {};

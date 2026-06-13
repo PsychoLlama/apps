@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { fn } from 'storybook/test';
-import { Button, type ButtonProps } from '@lib/ui';
+import { Button as ButtonComponent, type ButtonProps } from '@lib/ui';
 import { buttonStyleArgTypes } from '@lib/ui/props/button';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Components/Button',
-  component: Button,
+  title: 'UI/Components',
+  component: ButtonComponent,
   args: {
     children: 'Button',
     size: 2,
@@ -36,4 +36,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Button: Story = {};

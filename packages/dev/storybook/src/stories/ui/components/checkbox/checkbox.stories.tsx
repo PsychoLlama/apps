@@ -1,7 +1,11 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { createEffect, createSignal, splitProps } from 'solid-js';
 import { fn } from 'storybook/test';
-import { Checkbox, type CheckboxChecked, type CheckboxProps } from '@lib/ui';
+import {
+  Checkbox as CheckboxComponent,
+  type CheckboxChecked,
+  type CheckboxProps,
+} from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -12,8 +16,8 @@ interface CheckboxArgs extends CheckboxProps {
 }
 
 const meta = {
-  title: 'UI/Components/Checkbox',
-  component: Checkbox,
+  title: 'UI/Components',
+  component: CheckboxComponent,
   args: {
     testId: 'checkbox',
     size: 2,
@@ -67,7 +71,7 @@ const meta = {
     // the local signal only gets read on first render.
     createEffect(() => setChecked(storyOnly.initialChecked ?? false));
     return (
-      <Checkbox
+      <CheckboxComponent
         {...checkboxProps}
         checked={checked()}
         onCheckedChange={(next) => {
@@ -82,4 +86,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Checkbox: Story = {};

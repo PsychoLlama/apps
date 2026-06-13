@@ -16,7 +16,7 @@ import { testIdArgTypes } from '@lib/ui/props/test-id';
 interface TabsArgs extends TabsRootProps, TabsListProps {}
 
 const meta = {
-  title: 'UI/Components/Tabs',
+  title: 'UI/Components',
   component: TabsRoot,
   args: {
     testId: 'tabs',
@@ -136,4 +136,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Tabs: Story = {};

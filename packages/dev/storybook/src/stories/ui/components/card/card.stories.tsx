@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Card, type CardProps, Heading, Text } from '@lib/ui';
+import { Card as CardComponent, type CardProps, Heading, Text } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
@@ -16,8 +16,8 @@ const Body = (props: { title: string }) => (
 );
 
 const meta = {
-  title: 'UI/Components/Card',
-  component: Card,
+  title: 'UI/Components',
+  component: CardComponent,
   args: {
     as: 'div',
     children: <Body title="Card title" />,
@@ -46,4 +46,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Card: Story = {};

@@ -12,7 +12,7 @@ import { testIdArgTypes } from '@lib/ui/props/test-id';
 import { trimArgTypes } from '@lib/ui/props/trim';
 
 const meta = {
-  title: 'UI/Components/DataList',
+  title: 'UI/Components',
   component: DataListRoot,
   args: {
     testId: 'data-list',
@@ -62,4 +62,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const DataList: Story = {};

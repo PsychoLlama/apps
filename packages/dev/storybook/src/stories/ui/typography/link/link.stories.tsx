@@ -1,7 +1,7 @@
 import { MemoryRouter } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { fn } from 'storybook/test';
-import { Link, type LinkProps } from '@lib/ui';
+import { Link as LinkComponent, type LinkProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { nativeArgTypes } from '@lib/ui/props/native';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
@@ -11,8 +11,8 @@ import { truncateArgTypes } from '@lib/ui/props/truncate';
 import { wrapArgTypes } from '@lib/ui/props/wrap';
 
 const meta = {
-  title: 'UI/Typography/Link',
-  component: Link,
+  title: 'UI/Typography',
+  component: LinkComponent,
   decorators: [(Story) => <MemoryRouter root={() => Story()} />],
   args: {
     children: 'Click here',
@@ -55,4 +55,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Link: Story = {};

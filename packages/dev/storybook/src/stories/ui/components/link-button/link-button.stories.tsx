@@ -1,7 +1,10 @@
 import { MemoryRouter, Route } from '@solidjs/router';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { fn } from 'storybook/test';
-import { LinkButton, type LinkButtonProps } from '@lib/ui';
+import {
+  LinkButton as LinkButtonComponent,
+  type LinkButtonProps,
+} from '@lib/ui';
 import { buttonStyleArgTypes } from '@lib/ui/props/button';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { nativeArgTypes } from '@lib/ui/props/native';
@@ -9,8 +12,8 @@ import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Components/LinkButton',
-  component: LinkButton,
+  title: 'UI/Components',
+  component: LinkButtonComponent,
   args: {
     children: 'Link Button',
     href: '/',
@@ -41,4 +44,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const LinkButton: Story = {};

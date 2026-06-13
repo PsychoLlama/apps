@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
-import { Kbd, type KbdProps } from '@lib/ui';
+import { Kbd as KbdComponent, type KbdProps } from '@lib/ui';
 import { marginArgTypes } from '@lib/ui/props/margin';
 import { skeletonArgs, skeletonArgTypes } from '@lib/ui/props/skeleton';
 import { testIdArgTypes } from '@lib/ui/props/test-id';
 
 const meta = {
-  title: 'UI/Typography/Kbd',
-  component: Kbd,
+  title: 'UI/Typography',
+  component: KbdComponent,
   args: {
     children: 'Shift + Tab',
     variant: 'classic',
@@ -30,4 +30,4 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Playground: Story = {};
+export const Kbd: Story = {};
