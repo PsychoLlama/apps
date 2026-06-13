@@ -27,6 +27,9 @@ export interface GalleryManifest {
   /** Display name for the entry. Conventionally the package's name. */
   title: string;
 
+  /** One-line summary of the package, conventionally its `package.json` `description`. */
+  description: string;
+
   /**
    * The package's `*.gallery.tsx` listings, keyed by module path. Each value is
    * a deferred dynamic import the gallery resolves on demand — produce this with

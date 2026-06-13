@@ -57,8 +57,7 @@ export const GalleryHome = () => (
                   trim="end"
                   selectable={false}
                 >
-                  {manifest.count}{' '}
-                  {manifest.count === 1 ? 'listing' : 'listings'}
+                  {manifest.description}
                 </Text>
               </Flex>
             </Card>
