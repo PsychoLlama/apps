@@ -11,7 +11,7 @@ export default {
   render: (props) => <Button as="button" testId="button" {...props} />,
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
         { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
         { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
@@ -24,6 +24,10 @@ export default {
           props: { variant: 'outline', children: 'outline' },
         },
         { title: 'Ghost', props: { variant: 'ghost', children: 'ghost' } },
+      ],
+      rows: [
+        { title: 'Default', props: {} },
+        { title: 'Disabled', props: { disabled: true } },
       ],
     },
     {
@@ -44,31 +48,6 @@ export default {
         { title: 'Medium', props: { radius: 'medium', children: 'medium' } },
         { title: 'Large', props: { radius: 'large', children: 'large' } },
         { title: 'Full', props: { radius: 'full', children: 'full' } },
-      ],
-    },
-    {
-      title: 'Disabled',
-      columns: [
-        {
-          title: 'Solid',
-          props: { variant: 'solid', disabled: true, children: 'solid' },
-        },
-        {
-          title: 'Soft',
-          props: { variant: 'soft', disabled: true, children: 'soft' },
-        },
-        {
-          title: 'Surface',
-          props: { variant: 'surface', disabled: true, children: 'surface' },
-        },
-        {
-          title: 'Outline',
-          props: { variant: 'outline', disabled: true, children: 'outline' },
-        },
-        {
-          title: 'Ghost',
-          props: { variant: 'ghost', disabled: true, children: 'ghost' },
-        },
       ],
     },
   ],

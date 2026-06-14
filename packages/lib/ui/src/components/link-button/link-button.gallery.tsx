@@ -21,8 +21,15 @@ export default {
   render: (props) => <Demo href="/" testId="link-button" {...props} />,
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
+      ],
+      rows: [
         { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
         { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
         {
@@ -44,16 +51,6 @@ export default {
         { title: 'Danger', props: { color: 'danger', children: 'danger' } },
         { title: 'Warning', props: { color: 'warning', children: 'warning' } },
         { title: 'Success', props: { color: 'success', children: 'success' } },
-      ],
-    },
-    {
-      title: 'Radius',
-      columns: [
-        { title: 'None', props: { radius: 'none', children: 'none' } },
-        { title: 'Small', props: { radius: 'small', children: 'small' } },
-        { title: 'Medium', props: { radius: 'medium', children: 'medium' } },
-        { title: 'Large', props: { radius: 'large', children: 'large' } },
-        { title: 'Full', props: { radius: 'full', children: 'full' } },
       ],
     },
   ],

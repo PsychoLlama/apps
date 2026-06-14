@@ -49,6 +49,15 @@ export default {
       ],
     },
     {
+      title: 'Size',
+      columns: [
+        { title: 'Size 1', props: { size: 1 } },
+        { title: 'Size 2', props: { size: 2 } },
+        { title: 'Size 3', props: { size: 3 } },
+        { title: 'Size 4', props: { size: 4 } },
+      ],
+    },
+    {
       title: 'Color',
       columns: [
         { title: 'Accent', props: { color: 'accent', size: 2 } },

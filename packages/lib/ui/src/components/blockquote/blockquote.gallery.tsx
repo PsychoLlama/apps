@@ -18,7 +18,7 @@ export default {
   sections: [
     {
       title: 'Color',
-      columns: [
+      rows: [
         { title: 'Accent', props: { color: 'accent' } },
         { title: 'Neutral', props: { color: 'neutral' } },
         { title: 'Danger', props: { color: 'danger' } },

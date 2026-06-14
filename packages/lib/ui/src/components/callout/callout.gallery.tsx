@@ -17,7 +17,7 @@ export default {
   render: (props) => <Callout {...props} />,
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
         {
           title: 'Soft',
@@ -37,6 +37,10 @@ export default {
             children: <Body label={`outline callout`} />,
           },
         },
+      ],
+      rows: [
+        { title: 'Default', props: {} },
+        { title: 'High contrast', props: { highContrast: true } },
       ],
     },
     {
@@ -75,35 +79,6 @@ export default {
           props: {
             color: 'success',
             children: <Body label={`success callout`} />,
-          },
-        },
-      ],
-    },
-    {
-      title: 'High contrast',
-      columns: [
-        {
-          title: 'Soft',
-          props: {
-            variant: 'soft',
-            highContrast: true,
-            children: <Body label={`soft callout`} />,
-          },
-        },
-        {
-          title: 'Surface',
-          props: {
-            variant: 'surface',
-            highContrast: true,
-            children: <Body label={`surface callout`} />,
-          },
-        },
-        {
-          title: 'Outline',
-          props: {
-            variant: 'outline',
-            highContrast: true,
-            children: <Body label={`outline callout`} />,
           },
         },
       ],

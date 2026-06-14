@@ -18,7 +18,7 @@ export default {
   render: (props) => <Demo {...props} />,
   sections: [
     {
-      title: 'Variant',
+      title: 'Theme colors',
       columns: [
         { title: 'Classic', props: { variant: 'classic' } },
         { title: 'Surface', props: { variant: 'surface' } },
@@ -37,7 +37,7 @@ export default {
     },
     {
       title: 'Radius',
-      columns: [
+      rows: [
         { title: 'None', props: { radius: 'none' } },
         { title: 'Small', props: { radius: 'small' } },
         { title: 'Medium', props: { radius: 'medium' } },

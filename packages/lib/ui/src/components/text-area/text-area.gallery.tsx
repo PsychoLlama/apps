@@ -2,8 +2,8 @@ import type { GalleryListing } from '@dev/gallery';
 import TextArea, { type TextAreaProps } from './text-area';
 
 /**
- * Gallery listing for `TextArea`. The headline view crosses variant against
- * input state; the remaining tabs enumerate the other visual axes.
+ * Gallery listing for `TextArea`. The headline view crosses variant (rows)
+ * against input state; the remaining tabs enumerate the other visual axes.
  */
 export default {
   title: 'TextArea',
@@ -19,7 +19,7 @@ export default {
   ),
   sections: [
     {
-      title: 'Variant × State',
+      title: 'Variant',
       rows: [
         { title: 'Classic', props: { variant: 'classic' } },
         { title: 'Surface', props: { variant: 'surface' } },
