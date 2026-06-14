@@ -24,6 +24,17 @@ export const grid = style({
  * axis entry — so it's selected here rather than expressed as a single rule.
  */
 /**
+ * Pins each header to its own axis so a section's `align` only affects the axis
+ * it names. The grid's `align-items`/`justify-items` apply to every cell, which
+ * would drag a column header's vertical alignment or a row header's horizontal
+ * alignment along for the ride — a centered row label drifting off the left
+ * edge, say. Each header opts out of the cross-axis alignment back to `start`;
+ * its own-axis alignment still flows from the grid.
+ */
+export const columnHeader = style({ alignSelf: 'start' });
+export const rowHeader = style({ justifySelf: 'start' });
+
+/**
  * Gutters that hold the header labels clear of the cells when a section
  * tightens its `gap`. The grid gap is uniform — it can't separate the
  * header band from the cells on its own — so a section that packs its
