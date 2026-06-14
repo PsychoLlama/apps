@@ -128,10 +128,7 @@ export default [
   },
   {
     files: ['packages/**/*.css.ts'],
-    ignores: [
-      'packages/lib/design/src/**',
-      'packages/dev/storybook/src/stories/**/*.stories.css.ts',
-    ],
+    ignores: ['packages/lib/design/src/**'],
     rules: {
       'custom/require-design-tokens': 'error',
       'no-restricted-imports': [
@@ -149,14 +146,6 @@ export default [
           ],
         },
       ],
-    },
-  },
-  {
-    // Stories use inline static styles to demo design tokens (swatches, spacing
-    // previews, etc.). These are presentational, not production UI.
-    files: ['**/*.stories.tsx'],
-    rules: {
-      'custom/no-static-style-prop': 'off',
     },
   },
   {
@@ -270,13 +259,10 @@ export default [
     },
   },
   {
-    // Storybook stories and `*.gallery.tsx` files demo components in
-    // isolation. Local UI state belongs to the demo wrapper, not
-    // application state, so plain Solid primitives are the right fit.
-    files: [
-      'packages/dev/storybook/**/*.{ts,tsx}',
-      'packages/**/*.gallery.tsx',
-    ],
+    // `*.gallery.tsx` files demo components in isolation. Local UI state
+    // belongs to the demo wrapper, not application state, so plain Solid
+    // primitives are the right fit.
+    files: ['packages/**/*.gallery.tsx'],
     rules: {
       'no-restricted-imports': [
         'error',

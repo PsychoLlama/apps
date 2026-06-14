@@ -10,7 +10,7 @@ Bits are extracted and published independently as they mature.
 
 ## Notable Projects
 
-### Port of Radix UI - [Storybook](https://apps.psychollama.io/__storybook/)
+### Port of Radix UI - [Gallery](https://apps.psychollama.io/gallery)
 
 Translates [Radix UI](https://www.radix-ui.com/)'s design system and component library to [SolidJS](https://www.solidjs.com/) and [Vanilla Extract](https://vanilla-extract.style/).
 

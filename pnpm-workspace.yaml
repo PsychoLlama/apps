@@ -55,8 +55,6 @@ catalog:
   knip: ^6.13.1
   playwright: ^1.59.1
   'solid-js': ^1.9.13
-  storybook: ^10.3.5
-  'storybook-solidjs-vite': ^10.0.12
   turbo: ^2.5.8
   typescript: ^6.0.3
   'unplugin-icons': ^23.0.1

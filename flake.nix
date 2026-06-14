@@ -101,8 +101,8 @@
             ];
 
             # Playwright ships its own chromium, but the prebuilt binary can't
-            # run on NixOS. Layered in for local storybook browser tests;
-            # consumed via CHROMIUM_PATH.
+            # run on NixOS. Layered in for local browser tests (vitest's
+            # `browser` project); consumed via CHROMIUM_PATH.
             CHROMIUM_PATH = "${pkgs.chromium}/bin/chromium";
 
             # Workerd ships as a generic-Linux ELF that NixOS can't load

@@ -20,8 +20,8 @@ import { step1 as slateLight } from '@lib/design/color/slate/light';
 /**
  * `dataset` key on `<html>` that selects the active theme. The matching
  * `:root[data-theme="<id>"]` rule emitted by the bundle wins by
- * specificity. Shared so the CSS selector, server stamp, prelude, and
- * storybook preview stay in lockstep — use as `dataset[THEME_ATTRIBUTE]`
+ * specificity. Shared so the CSS selector, server stamp, and prelude
+ * stay in lockstep — use as `dataset[THEME_ATTRIBUTE]`
  * in JS and pair with the `data-` prefix in CSS selectors.
  */
 export const THEME_ATTRIBUTE = 'theme';

@@ -39,8 +39,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
-      # Needed for `@dev/storybook#test`. Local dev uses the
-      # nix-provided chromium via `CHROMIUM_PATH`; CI uses
+      # Needed for the browser test project (`pnpm test:browser`). Local
+      # dev uses the nix-provided chromium via `CHROMIUM_PATH`; CI uses
       # playwright's own binary.
       - name: Restore playwright cache
         id: playwright-cache
@@ -49,10 +49,10 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
       - name: Install playwright system deps
-        run: pnpm --filter @dev/storybook exec playwright install-deps chromium
+        run: pnpm exec playwright install-deps chromium
       - name: Install playwright browser
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter @dev/storybook exec playwright install chromium
+        run: pnpm exec playwright install chromium
       # Local turbo cache lives at `.turbo/`. The cache key includes
       # `github.sha` so each run writes a fresh entry; restore-keys
       # falls back to the most recent prior entry on the same branch
