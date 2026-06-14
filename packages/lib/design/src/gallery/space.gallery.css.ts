@@ -1,17 +1,33 @@
 import { createVar, style } from '@vanilla-extract/css';
-import { background, radius, shadow, space } from '@lib/design';
+import { neutral, space } from '@lib/design';
 
-/** Spacing step driving the bar's width, supplied per cell via `assignInlineVars`. */
+/** Spacing step the measure line spans, supplied per cell via `assignInlineVars`. */
 export const spaceVar = createVar();
 
 /**
- * A bar whose width equals the spacing step (via {@link spaceVar}). Fixed height
- * and a slight shadow keep each bar legible as the column tracks step wider.
+ * A dimension line the width of the spacing step (via {@link spaceVar}): two end
+ * ticks bridged by a rule. At the smallest steps the rule collapses to nothing
+ * and the ticks meet — an honest read of how little space that is.
  */
-export const bar = style({
+export const measure = style({
+  display: 'flex',
+  alignItems: 'center',
   width: spaceVar,
-  height: space[6],
-  backgroundColor: background.panelSolid,
-  boxShadow: shadow[2],
-  borderRadius: radius[1],
+  height: space[3],
+});
+
+/** End cap pinning one edge of the measured span. */
+export const tick = style({
+  flexShrink: 0,
+  width: '2px',
+  height: '100%',
+  backgroundColor: neutral.solid[9],
+});
+
+/** Hairline bridging the two ticks; shrinks to nothing at the smallest steps. */
+export const rule = style({
+  flex: 1,
+  minWidth: 0,
+  height: '2px',
+  backgroundColor: neutral.solid[9],
 });
