@@ -7,7 +7,7 @@ import Code, { type CodeProps } from './code';
  */
 export default {
   title: 'Code',
-  render: (props) => <Code {...props}>npm install</Code>,
+  render: (props) => <Code {...props}>cargo build</Code>,
   sections: [
     {
       title: 'Theme colors',

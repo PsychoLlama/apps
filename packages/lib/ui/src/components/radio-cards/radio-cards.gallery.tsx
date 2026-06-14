@@ -36,7 +36,7 @@ const Demo = (props: { name: string } & DemoProps) => {
             value={String(option)}
             testId={`${props.name}-${option}`}
           >
-            {option}
+            Option {option}
           </RadioCardsItem>
         )}
       </For>
