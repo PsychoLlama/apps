@@ -1,9 +1,9 @@
 {
-  "name": "@app/apps",
+  "name": "@dev/monorepo",
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Miscellaneous tools",
+  "description": "Productivity playground",
   "license": "MIT",
   "author": "Jesse Gibson <JesseTheGibson@gmail.com>",
   "homepage": "https://apps.psychollama.io",

@@ -13,7 +13,7 @@ import patchWorkerd from './commands/patch-workerd.ts';
 const main = defineCommand({
   meta: {
     name: 'workspace',
-    description: 'Internal workspace tooling for the @app/apps monorepo.',
+    description: 'Internal workspace tooling for the @dev/monorepo workspace.',
   },
   subCommands: {
     check,
