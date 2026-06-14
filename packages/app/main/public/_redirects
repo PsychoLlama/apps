@@ -1,4 +1,10 @@
 # Forward PWAs still re-fetching the old hashed manifest URL (now gone)
 # to the stable path. `_redirects` fire even when no asset matches.
 # Removable in ~a month, once most installs have refreshed.
-/_build/assets/manifest-*  /manifest.webmanifest  301
+#
+# Anchor the match to the `.webmanifest` extension: a bare `manifest-*`
+# splat also swallows hashed route chunks like `manifest-route-<hash>.js`
+# (301'd to JSON, they break the gallery's dynamic import). The `:hash`
+# placeholder matches any non-`/` run — hyphenated hashes included — while
+# the trailing literal keeps it scoped to the old manifest asset.
+/_build/assets/manifest-:hash.webmanifest  /manifest.webmanifest  301
