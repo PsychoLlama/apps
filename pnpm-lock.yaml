@@ -490,6 +490,9 @@ importers:
       '@lib/gallery':
         specifier: workspace:*
         version: link:../gallery
+      '@vanilla-extract/dynamic':
+        specifier: 'catalog:'
+        version: 2.1.5
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13

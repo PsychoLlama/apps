@@ -37,8 +37,8 @@ import { yellow } from '@lib/design/palette/yellow';
 // Pure black/white overlay scales. These ship as raw 12-step alpha values
 // (`step1`–`step12`) rather than registered palettes, so they're imported
 // relatively and reshaped into a `ColorContract` below.
-import * as black from './black';
-import * as white from './white';
+import * as black from '../palette/black';
+import * as white from '../palette/white';
 
 import * as css from './colors.gallery.css';
 

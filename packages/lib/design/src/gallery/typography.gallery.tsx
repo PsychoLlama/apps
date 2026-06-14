@@ -1,0 +1,114 @@
+import type { GalleryAxis, GalleryListing } from '@lib/gallery';
+import {
+  fontFamily,
+  fontWeight,
+  text,
+  typeScale,
+  type FontWeight,
+  type TypeScale,
+} from '@lib/design';
+import * as css from './typography.gallery.css';
+
+/**
+ * One specimen cell. Each section varies a different facet — the Scale section
+ * the size, Families the stack, Weights the weight, Contrast the text color —
+ * and leaves the rest to the font's defaults. Unset fields drop out of the
+ * inline style.
+ */
+interface Specimen {
+  fontSize: string;
+  lineHeight: string;
+  letterSpacing: string;
+  fontFamily: string;
+  fontWeight: string;
+  color: string;
+}
+
+/** Display size shared by the family and weight specimens. */
+const sampleSize = typeScale[6];
+
+/** Title-case a token key for a section header (`heading` → `Heading`). */
+const titleCase = (name: string): string =>
+  name.charAt(0).toUpperCase() + name.slice(1);
+
+/** One row per type-scale step, smallest to largest. */
+const scale: ReadonlyArray<GalleryAxis<Specimen>> = (
+  Object.keys(typeScale) as ReadonlyArray<`${TypeScale}`>
+).map((step) => {
+  const value = typeScale[Number(step) as TypeScale];
+  return {
+    title: step,
+    props: {
+      fontSize: value.fontSize,
+      lineHeight: value.bodyLineHeight,
+      letterSpacing: value.letterSpacing,
+    },
+  };
+});
+
+/** One row per font stack, rendered at the shared display size. */
+const families: ReadonlyArray<GalleryAxis<Specimen>> = (
+  Object.keys(fontFamily) as ReadonlyArray<keyof typeof fontFamily>
+).map((name) => ({
+  title: titleCase(name),
+  props: {
+    fontFamily: fontFamily[name],
+    fontSize: sampleSize.fontSize,
+    lineHeight: sampleSize.bodyLineHeight,
+  },
+}));
+
+/** One row per weight, rendered at the shared display size. */
+const weights: ReadonlyArray<GalleryAxis<Specimen>> = (
+  Object.entries(fontWeight) as ReadonlyArray<[FontWeight, string]>
+).map(([name, value]) => ({
+  title: titleCase(name),
+  props: {
+    fontWeight: value,
+    fontSize: sampleSize.fontSize,
+    lineHeight: sampleSize.bodyLineHeight,
+  },
+}));
+
+/** One row per text-contrast level, rendered at the shared display size. */
+const contrasts: ReadonlyArray<GalleryAxis<Specimen>> = [
+  { title: 'High', color: text.highContrast },
+  { title: 'Low', color: text.lowContrast },
+].map(({ title, color }) => ({
+  title,
+  props: {
+    color,
+    fontSize: sampleSize.fontSize,
+    lineHeight: sampleSize.bodyLineHeight,
+  },
+}));
+
+/**
+ * Gallery listing for `@lib/design`'s typography tokens. Three views, each a
+ * y-axis of pangram specimens — the size scale, the font families, and the
+ * weight ramp — since type samples read best stacked at full width.
+ */
+export default {
+  title: 'Typography',
+  render: (props) => (
+    <p
+      class={css.specimen}
+      style={{
+        'font-size': props.fontSize,
+        'line-height': props.lineHeight,
+        'letter-spacing': props.letterSpacing,
+        'font-family': props.fontFamily,
+        'font-weight': props.fontWeight,
+        color: props.color,
+      }}
+    >
+      Sphinx of black quartz, judge my vow
+    </p>
+  ),
+  sections: [
+    { title: 'Scale', align: { rows: 'center' }, rows: scale },
+    { title: 'Families', align: { rows: 'center' }, rows: families },
+    { title: 'Weights', align: { rows: 'center' }, rows: weights },
+    { title: 'Contrast', align: { rows: 'center' }, rows: contrasts },
+  ],
+} satisfies GalleryListing<Specimen>;

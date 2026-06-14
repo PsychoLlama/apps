@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@lib/gallery": "workspace:*",
+    "@vanilla-extract/dynamic": "catalog:",
     "solid-js": "catalog:"
   },
   "peerDependencies": {
