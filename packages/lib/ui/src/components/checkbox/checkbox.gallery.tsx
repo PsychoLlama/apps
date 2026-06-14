@@ -74,7 +74,7 @@ export default {
           title: 'Mixed',
           props: {
             initialChecked: 'indeterminate',
-            children: 'Some items selected',
+            children: 'Subscribe to updates',
           },
         },
         {
@@ -82,7 +82,7 @@ export default {
           props: {
             initialChecked: false,
             disabled: true,
-            children: 'Disabled option',
+            children: 'Subscribe to updates',
           },
         },
       ],

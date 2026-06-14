@@ -8,22 +8,20 @@ import Button, { type ButtonProps } from './button';
  */
 export default {
   title: 'Button',
-  render: (props) => <Button as="button" testId="button" {...props} />,
+  render: (props) => (
+    <Button as="button" testId="button" {...props}>
+      Continue
+    </Button>
+  ),
   sections: [
     {
       title: 'Theme colors',
       columns: [
-        { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
-        { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
-        {
-          title: 'Surface',
-          props: { variant: 'surface', children: 'surface' },
-        },
-        {
-          title: 'Outline',
-          props: { variant: 'outline', children: 'outline' },
-        },
-        { title: 'Ghost', props: { variant: 'ghost', children: 'ghost' } },
+        { title: 'Solid', props: { variant: 'solid' } },
+        { title: 'Soft', props: { variant: 'soft' } },
+        { title: 'Surface', props: { variant: 'surface' } },
+        { title: 'Outline', props: { variant: 'outline' } },
+        { title: 'Ghost', props: { variant: 'ghost' } },
       ],
       rows: [
         { title: 'Default', props: {} },
@@ -33,21 +31,21 @@ export default {
     {
       title: 'Color',
       columns: [
-        { title: 'Accent', props: { color: 'accent', children: 'accent' } },
-        { title: 'Neutral', props: { color: 'neutral', children: 'neutral' } },
-        { title: 'Danger', props: { color: 'danger', children: 'danger' } },
-        { title: 'Warning', props: { color: 'warning', children: 'warning' } },
-        { title: 'Success', props: { color: 'success', children: 'success' } },
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+        { title: 'Danger', props: { color: 'danger' } },
+        { title: 'Warning', props: { color: 'warning' } },
+        { title: 'Success', props: { color: 'success' } },
       ],
     },
     {
       title: 'Radius',
       columns: [
-        { title: 'None', props: { radius: 'none', children: 'none' } },
-        { title: 'Small', props: { radius: 'small', children: 'small' } },
-        { title: 'Medium', props: { radius: 'medium', children: 'medium' } },
-        { title: 'Large', props: { radius: 'large', children: 'large' } },
-        { title: 'Full', props: { radius: 'full', children: 'full' } },
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
       ],
     },
   ],

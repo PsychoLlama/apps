@@ -18,7 +18,11 @@ const Demo = (props: LinkButtonProps) => (
  */
 export default {
   title: 'LinkButton',
-  render: (props) => <Demo href="/" testId="link-button" {...props} />,
+  render: (props) => (
+    <Demo href="/" testId="link-button" {...props}>
+      Continue
+    </Demo>
+  ),
   sections: [
     {
       title: 'Theme colors',
@@ -30,27 +34,21 @@ export default {
         { title: 'Full', props: { radius: 'full' } },
       ],
       rows: [
-        { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
-        { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
-        {
-          title: 'Surface',
-          props: { variant: 'surface', children: 'surface' },
-        },
-        {
-          title: 'Outline',
-          props: { variant: 'outline', children: 'outline' },
-        },
-        { title: 'Ghost', props: { variant: 'ghost', children: 'ghost' } },
+        { title: 'Solid', props: { variant: 'solid' } },
+        { title: 'Soft', props: { variant: 'soft' } },
+        { title: 'Surface', props: { variant: 'surface' } },
+        { title: 'Outline', props: { variant: 'outline' } },
+        { title: 'Ghost', props: { variant: 'ghost' } },
       ],
     },
     {
       title: 'Color',
       columns: [
-        { title: 'Accent', props: { color: 'accent', children: 'accent' } },
-        { title: 'Neutral', props: { color: 'neutral', children: 'neutral' } },
-        { title: 'Danger', props: { color: 'danger', children: 'danger' } },
-        { title: 'Warning', props: { color: 'warning', children: 'warning' } },
-        { title: 'Success', props: { color: 'success', children: 'success' } },
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+        { title: 'Danger', props: { color: 'danger' } },
+        { title: 'Warning', props: { color: 'warning' } },
+        { title: 'Success', props: { color: 'success' } },
       ],
     },
   ],

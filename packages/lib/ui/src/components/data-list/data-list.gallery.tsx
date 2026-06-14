@@ -7,6 +7,7 @@ import {
   type DataListColor,
   type DataListRootProps,
 } from './data-list';
+import Badge from '../badge/badge';
 
 /** The label color is per-`DataListLabel`, so it rides an extra demo-only prop. */
 type DemoProps = Partial<DataListRootProps> & { labelColor?: DataListColor };
@@ -14,20 +15,22 @@ type DemoProps = Partial<DataListRootProps> & { labelColor?: DataListColor };
 const Demo = (props: DemoProps) => (
   <DataListRoot orientation={props.orientation}>
     <DataListItem>
+      <DataListLabel color={props.labelColor}>Name</DataListLabel>
+      <DataListValue>Gill Bates</DataListValue>
+    </DataListItem>
+    <DataListItem>
+      <DataListLabel color={props.labelColor}>Email</DataListLabel>
+      <DataListValue>gill@macrohard.example</DataListValue>
+    </DataListItem>
+    <DataListItem>
+      <DataListLabel color={props.labelColor}>Reports to</DataListLabel>
+      <DataListValue>Thomas Hawking</DataListValue>
+    </DataListItem>
+    <DataListItem>
       <DataListLabel color={props.labelColor}>Status</DataListLabel>
-      <DataListValue>Hatched</DataListValue>
-    </DataListItem>
-    <DataListItem>
-      <DataListLabel color={props.labelColor}>ID</DataListLabel>
-      <DataListValue>egg_4f7c…a19b</DataListValue>
-    </DataListItem>
-    <DataListItem>
-      <DataListLabel color={props.labelColor}>Species</DataListLabel>
-      <DataListValue>Emperor penguin</DataListValue>
-    </DataListItem>
-    <DataListItem>
-      <DataListLabel color={props.labelColor}>Mass</DataListLabel>
-      <DataListValue>23 kg</DataListValue>
+      <DataListValue>
+        <Badge color="neutral">Active</Badge>
+      </DataListValue>
     </DataListItem>
   </DataListRoot>
 );

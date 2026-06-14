@@ -6,24 +6,18 @@ import {
   type CheckboxCardsRootProps,
 } from './checkbox-cards';
 
-const OPTIONS = [
-  { value: 'basic', label: 'Basic' },
-  { value: 'pro', label: 'Pro' },
-] as const;
+const OPTIONS = [1, 2] as const;
 
 /**
- * Each gallery cell echoes the demoed axis value in its card labels via the
- * `label` prefix when the value isn't already obvious from the visual
- * treatment. `name` keeps each group isolated. The first card is preselected so
- * the checked indicator color shows up directly.
+ * `name` keeps each group isolated. The first card is preselected so the
+ * checked indicator color shows up directly.
  */
 type DemoProps = Partial<CheckboxCardsRootProps> & {
   name?: string;
-  label?: string;
 };
 
 const Demo = (props: { name: string } & DemoProps) => {
-  const [value, setValue] = createSignal<string[]>(['basic']);
+  const [value, setValue] = createSignal<string[]>(['1']);
   return (
     <CheckboxCardsRoot
       name={props.name}
@@ -39,10 +33,10 @@ const Demo = (props: { name: string } & DemoProps) => {
       <For each={OPTIONS}>
         {(option) => (
           <CheckboxCardsItem
-            value={option.value}
-            testId={`${props.name}-${option.value}`}
+            value={String(option)}
+            testId={`${props.name}-${option}`}
           >
-            {props.label ? `${props.label} ${option.label}` : option.label}
+            Option {option}
           </CheckboxCardsItem>
         )}
       </For>
@@ -68,19 +62,11 @@ export default {
       columns: [
         {
           title: 'Surface',
-          props: {
-            variant: 'surface',
-            label: 'surface',
-            name: 'variant-surface',
-          },
+          props: { variant: 'surface', name: 'variant-surface' },
         },
         {
           title: 'Classic',
-          props: {
-            variant: 'classic',
-            label: 'classic',
-            name: 'variant-classic',
-          },
+          props: { variant: 'classic', name: 'variant-classic' },
         },
       ],
       rows: [
@@ -93,23 +79,23 @@ export default {
       rows: [
         {
           title: 'Accent',
-          props: { color: 'accent', label: 'accent', name: 'color-accent' },
+          props: { color: 'accent', name: 'color-accent' },
         },
         {
           title: 'Neutral',
-          props: { color: 'neutral', label: 'neutral', name: 'color-neutral' },
+          props: { color: 'neutral', name: 'color-neutral' },
         },
         {
           title: 'Danger',
-          props: { color: 'danger', label: 'danger', name: 'color-danger' },
+          props: { color: 'danger', name: 'color-danger' },
         },
         {
           title: 'Warning',
-          props: { color: 'warning', label: 'warning', name: 'color-warning' },
+          props: { color: 'warning', name: 'color-warning' },
         },
         {
           title: 'Success',
-          props: { color: 'success', label: 'success', name: 'color-success' },
+          props: { color: 'success', name: 'color-success' },
         },
       ],
       columns: [

@@ -7,28 +7,25 @@ import Code, { type CodeProps } from './code';
  */
 export default {
   title: 'Code',
-  render: (props) => <Code {...props} />,
+  render: (props) => <Code {...props}>cargo build</Code>,
   sections: [
     {
       title: 'Theme colors',
       columns: [
-        { title: 'Solid', props: { variant: 'solid', children: 'solid' } },
-        { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
-        {
-          title: 'Outline',
-          props: { variant: 'outline', children: 'outline' },
-        },
-        { title: 'Ghost', props: { variant: 'ghost', children: 'ghost' } },
+        { title: 'Solid', props: { variant: 'solid' } },
+        { title: 'Soft', props: { variant: 'soft' } },
+        { title: 'Outline', props: { variant: 'outline' } },
+        { title: 'Ghost', props: { variant: 'ghost' } },
       ],
     },
     {
       title: 'Color',
       columns: [
-        { title: 'Accent', props: { color: 'accent', children: 'accent' } },
-        { title: 'Neutral', props: { color: 'neutral', children: 'neutral' } },
-        { title: 'Danger', props: { color: 'danger', children: 'danger' } },
-        { title: 'Warning', props: { color: 'warning', children: 'warning' } },
-        { title: 'Success', props: { color: 'success', children: 'success' } },
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+        { title: 'Danger', props: { color: 'danger' } },
+        { title: 'Warning', props: { color: 'warning' } },
+        { title: 'Success', props: { color: 'success' } },
       ],
     },
   ],

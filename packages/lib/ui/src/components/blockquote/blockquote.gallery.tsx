@@ -1,8 +1,7 @@
 import type { GalleryListing } from '@dev/gallery';
 import Blockquote, { type BlockquoteProps } from './blockquote';
 
-const SAMPLE =
-  'Twenty years from now you will be more disappointed by the things you didn’t do than by the ones you did.';
+const SAMPLE = 'The unexamined life is not worth living.';
 
 /**
  * Gallery listing for `Blockquote`. Enumerates the component across its
