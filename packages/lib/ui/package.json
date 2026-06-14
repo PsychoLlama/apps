@@ -10,7 +10,8 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./props/*": "./src/props/*.ts"
+    "./props/*": "./src/props/*.ts",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "typecheck": "tsc"

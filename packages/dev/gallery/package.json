@@ -3,11 +3,10 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Gallery manifest registry — discovers each package's gallery entry at build time.",
+  "description": "Gallery listing model — types and helpers each package's *.gallery.tsx files build on.",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts",
-    "./manifests": "./src/manifests.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "typecheck": "tsc"

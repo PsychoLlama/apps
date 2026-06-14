@@ -13,16 +13,14 @@
     "./color-scheme": "./src/color-scheme.ts",
     "./theme": "./src/theme.ts",
     "./palette/*": "./src/palette/*.css.ts",
-    "./color/*": "./src/palette/*.ts"
+    "./color/*": "./src/palette/*.ts",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "typecheck": "tsc"
   },
   "dependencies": {
     "@vanilla-extract/css": "catalog:"
-  },
-  "devDependencies": {
-    "@dev/gallery": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": "*"
