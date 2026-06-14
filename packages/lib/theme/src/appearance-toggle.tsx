@@ -1,7 +1,7 @@
 import { onMount, type Component, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { useEffect } from '@lib/state';
-import { IconButton } from '@lib/ui';
+import { Button } from '@lib/ui';
 import type { ColorSchemeOption } from './constants';
 import {
   colorScheme,
@@ -31,7 +31,7 @@ const CYCLE: ReadonlyArray<SchemeStep> = [
 ];
 
 /**
- * Compact light/dark/system toggle. Reads and writes through the theme
+ * Light/dark/system toggle. Reads and writes through the theme
  * runtime: pressing it cycles the color-scheme override, flipping
  * `<html data-color-scheme>` and persisting the choice — the single-button
  * counterpart to the settings page's three-card `AppearancePicker`. Drop
@@ -52,16 +52,15 @@ export const AppearanceToggle = () => {
   const next = (): SchemeStep => CYCLE[(index() + 1) % CYCLE.length];
 
   return (
-    <IconButton
+    <Button
       testId="appearance-toggle"
       variant="ghost"
       color="neutral"
       skeleton={colorScheme.id === null}
-      title={`Appearance: ${active().label}`}
-      aria-label={`Appearance: ${active().label}. Switch to ${next().label}.`}
       onClick={() => selectScheme(next().id)}
     >
       <Dynamic component={active().icon} aria-hidden="true" />
-    </IconButton>
+      {active().label}
+    </Button>
   );
 };
