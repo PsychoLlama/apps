@@ -77,6 +77,11 @@ export interface LinkProps
   color?: LinkColor;
   /** Use high-contrast text for stronger emphasis. @default false */
   highContrast?: boolean;
+  /**
+   * Allow the reader to select the link text. A link doubles as a click
+   * target, so it stays out of selection unless opted in. @default false
+   */
+  selectable?: boolean;
 }
 
 /** Inline navigation link for in-app routing. */
@@ -86,6 +91,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       underline: 'auto' as const,
       color: 'accent' as const,
       highContrast: false,
+      selectable: false,
     },
     rawProps,
   );

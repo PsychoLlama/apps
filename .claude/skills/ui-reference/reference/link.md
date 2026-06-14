@@ -12,4 +12,5 @@ Base: `<a>` attributes, margin props, trim props, truncate props, wrap props, se
 - `underline` (=`'auto'`): Underline behavior. `'auto' | 'always' | 'hover' | 'none'`. `'auto'` underlines `neutral` and high-contrast links always, others on hover.
 - `color` (=`'accent'`): Semantic color. `'accent' | 'neutral'`.
 - `highContrast` (=`false`): Use high-contrast text for stronger emphasis.
+- `selectable` (=`false`): Allow the reader to select the link text.
 - `native`: Render a plain `<a>`, skipping in-app routing. Inferred from `href` when omitted — `mailto:`, `tel:`, `sms:`, and `blob:` default to native.

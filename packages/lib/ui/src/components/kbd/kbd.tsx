@@ -43,11 +43,20 @@ export interface KbdProps
   size?: TypeScale;
   /** Visual treatment. @default 'classic' */
   variant?: Variant;
+  /**
+   * Allow the reader to select the key text. A keycap is UI chrome, not
+   * prose, so it stays out of selection even inside selectable copy
+   * unless opted in. @default false
+   */
+  selectable?: boolean;
 }
 
 /** Inline keyboard input — typically a single key or chord. */
 const Kbd: ParentComponent<KbdProps> = (rawProps) => {
-  const props = mergeProps({ variant: 'classic' as const }, rawProps);
+  const props = mergeProps(
+    { variant: 'classic' as const, selectable: false },
+    rawProps,
+  );
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, [
