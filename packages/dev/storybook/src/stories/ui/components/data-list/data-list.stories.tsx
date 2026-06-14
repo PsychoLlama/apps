@@ -49,7 +49,7 @@ const meta = {
       </DataListItem>
       <DataListItem>
         <DataListLabel>Email</DataListLabel>
-        <DataListValue>gill@microhard.example</DataListValue>
+        <DataListValue>gill@macrohard.example</DataListValue>
       </DataListItem>
       <DataListItem>
         <DataListLabel>Reports to</DataListLabel>

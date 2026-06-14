@@ -21,7 +21,7 @@ interface Row {
 const ROWS: Row[] = [
   {
     name: 'Gill Bates',
-    email: 'gill@microhard.example',
+    email: 'gill@macrohard.example',
     role: 'Admin',
     status: 'Active',
   },
