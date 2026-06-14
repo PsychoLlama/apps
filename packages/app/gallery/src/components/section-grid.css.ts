@@ -23,6 +23,15 @@ export const grid = style({
  * viewport is constrained). The count is dynamic — a header column plus one per
  * axis entry — so it's selected here rather than expressed as a single rule.
  */
+/**
+ * Gutters that hold the header labels clear of the cells when a section
+ * tightens its `gap`. The grid gap is uniform — it can't separate the
+ * header band from the cells on its own — so a section that packs its
+ * cells tight pads its headers back out to stay legible.
+ */
+export const columnHeaderGutter = style({ paddingBlockEnd: space[2] });
+export const rowHeaderGutter = style({ paddingInlineEnd: space[2] });
+
 export const templateColumns = styleVariants(
   {
     1: 1,

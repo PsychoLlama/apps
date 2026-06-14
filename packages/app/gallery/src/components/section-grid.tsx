@@ -13,13 +13,14 @@ type Section = GallerySection<unknown>;
 const MAX_TRACKS = 13;
 
 /** Axis title shown above a column or beside a row. */
-const AxisHeader = (props: { title: string }) => (
+const AxisHeader = (props: { title: string; class?: string }) => (
   <Text
     as="span"
     size={1}
     weight="medium"
     color="lowContrast"
     selectable={false}
+    class={props.class}
   >
     {props.title}
   </Text>
@@ -47,6 +48,12 @@ const trackCount = (section: Section): number => {
 export const SectionGrid = (props: { listing: Listing; section: Section }) => {
   const columns = () => props.section.columns ?? [];
   const rows = () => props.section.rows ?? [];
+  // A custom gap tightens the cells uniformly, so headers pad themselves back
+  // out to stay legible. Default sections leave these unset and look unchanged.
+  const columnGutter = () =>
+    props.section.gap === undefined ? undefined : css.columnHeaderGutter;
+  const rowGutter = () =>
+    props.section.gap === undefined ? undefined : css.rowHeaderGutter;
   const tracks = () =>
     Math.min(
       trackCount(props.section),
@@ -66,12 +73,14 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
         <Match when={columns().length > 0 && rows().length > 0}>
           <AxisHeader title="" />
           <For each={columns()}>
-            {(column) => <AxisHeader title={column.title} />}
+            {(column) => (
+              <AxisHeader title={column.title} class={columnGutter()} />
+            )}
           </For>
           <For each={rows()}>
             {(row) => (
               <>
-                <AxisHeader title={row.title} />
+                <AxisHeader title={row.title} class={rowGutter()} />
                 <For each={columns()}>
                   {(column) =>
                     props.listing.render({ ...row.props, ...column.props })
@@ -83,7 +92,9 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
         </Match>
         <Match when={columns().length > 0}>
           <For each={columns()}>
-            {(column) => <AxisHeader title={column.title} />}
+            {(column) => (
+              <AxisHeader title={column.title} class={columnGutter()} />
+            )}
           </For>
           <For each={columns()}>
             {(column) => props.listing.render(column.props)}
@@ -93,7 +104,7 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
           <For each={rows()}>
             {(row) => (
               <>
-                <AxisHeader title={row.title} />
+                <AxisHeader title={row.title} class={rowGutter()} />
                 {props.listing.render(row.props)}
               </>
             )}
