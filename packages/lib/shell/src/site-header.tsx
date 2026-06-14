@@ -56,11 +56,16 @@ export default function SiteHeader(props: {
     return [];
   };
 
-  // Document title mirrors the current page — the trailing crumb when
-  // a breadcrumb is active, otherwise the launcher's bare wordmark.
+  // Document title mirrors the current page, reading specific-to-general
+  // so the active page leads (`@lib/ui | Gallery`). Falls back to the
+  // launcher's bare wordmark when no breadcrumb is active.
   const documentTitle = (): string => {
     const list = crumbs();
-    return list.length > 0 ? list[list.length - 1].label : 'Apps';
+    if (list.length === 0) return 'Apps';
+    return list
+      .map((crumb) => crumb.label)
+      .reverse()
+      .join(' | ');
   };
 
   return (
