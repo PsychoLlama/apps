@@ -55,7 +55,7 @@ If the user hasn't said where they're cloned, stop and ask. Don't search the fil
 ## Final checks
 
 1. Run the `codex-review` skill.
-2. Boot Storybook and QA the component.
+2. QA the component in the gallery (`pnpm dev`, then `/gallery/lib-ui`).
 3. Mark the PR ready for review.
 
 If the user explicitly asks for a deep parity review, spawn a subagent to diff our implementation against the Radix source and surface any unintentional differences.
