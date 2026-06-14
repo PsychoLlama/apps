@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import Progress, { type ProgressProps } from './progress';
 import Flex from '../flex/flex';
 import * as css from './progress.gallery.css';

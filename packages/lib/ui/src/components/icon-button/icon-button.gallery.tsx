@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import IconHeart from 'virtual:icons/mdi/heart';
 import IconButton, { type IconButtonProps } from './icon-button';
 

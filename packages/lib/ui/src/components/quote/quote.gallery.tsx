@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import Quote from './quote';
 import Text from '../text/text';
 

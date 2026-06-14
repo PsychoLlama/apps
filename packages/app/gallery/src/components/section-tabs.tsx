@@ -1,10 +1,10 @@
 import { createSignal, For } from 'solid-js';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@lib/ui';
-import type { GalleryListing, GallerySection } from '@dev/gallery';
+import type { GalleryListing, GallerySection } from '@lib/gallery';
 import { SectionGrid } from './section-grid';
 import { slugify } from './slugify';
 
-/** A listing erased to the registry's shared shape (see `@dev/gallery`). */
+/** A listing erased to the registry's shared shape (see `@lib/gallery`). */
 type Listing = GalleryListing<unknown>;
 type Section = GallerySection<unknown>;
 

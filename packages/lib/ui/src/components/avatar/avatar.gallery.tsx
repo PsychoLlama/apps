@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import Avatar, { type AvatarProps } from './avatar';
 import SAMPLE_SRC from './sample-avatar.svg?url';
 

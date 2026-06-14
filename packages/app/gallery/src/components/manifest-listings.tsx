@@ -1,9 +1,9 @@
 import { For, Show } from 'solid-js';
 import { Callout, Flex } from '@lib/ui';
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import { ListingView } from './listing-view';
 
-/** A listing erased to the registry's shared shape (see `@dev/gallery`). */
+/** A listing erased to the registry's shared shape (see `@lib/gallery`). */
 type Listing = GalleryListing<unknown>;
 
 /**

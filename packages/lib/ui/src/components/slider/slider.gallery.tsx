@@ -1,5 +1,5 @@
 import { createSignal, untrack } from 'solid-js';
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import Slider, { type SliderProps } from './slider';
 import Flex from '../flex/flex';
 import * as css from './slider.gallery.css';

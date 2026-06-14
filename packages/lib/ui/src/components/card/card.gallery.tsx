@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import Card, { type CardProps } from './card';
 import Heading from '../heading/heading';
 import Text from '../text/text';

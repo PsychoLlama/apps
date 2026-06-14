@@ -1,9 +1,9 @@
 import { For, Match, Switch } from 'solid-js';
 import { Grid, Text } from '@lib/ui';
-import type { GalleryListing, GallerySection } from '@dev/gallery';
+import type { GalleryListing, GallerySection } from '@lib/gallery';
 import * as css from './section-grid.css';
 
-/** A listing erased to the registry's shared shape (see `@dev/gallery`). */
+/** A listing erased to the registry's shared shape (see `@lib/gallery`). */
 type Listing = GalleryListing<unknown>;
 type Section = GallerySection<unknown>;
 

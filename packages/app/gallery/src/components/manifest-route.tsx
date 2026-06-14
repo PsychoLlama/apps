@@ -1,7 +1,18 @@
 import { Flex, Heading, Text } from '@lib/ui';
-import { collectListings, type GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import { ManifestListings } from './manifest-listings';
 import { GalleryView } from './gallery-view';
+
+/**
+ * Collect an eager `import.meta.glob` of a package's `*.gallery.tsx` modules
+ * into a listing array — each module's default export is its listing. A
+ * package's dedicated `/gallery/<slug>` route hands its glob here so every
+ * listing renders together on one page.
+ */
+const collectListings = (
+  modules: Record<string, { default: GalleryListing<unknown> }>,
+): GalleryListing<unknown>[] =>
+  Object.values(modules).map((module) => module.default);
 
 /**
  * A manifest's page, rendered by its dedicated `/gallery/<slug>` route. The

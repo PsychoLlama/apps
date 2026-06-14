@@ -1,5 +1,5 @@
 import { Route, StaticRouter } from '@solidjs/router';
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import LinkButton, { type LinkButtonProps } from './link-button';
 
 // Each cell gets its own router context so module-level JSX can call
