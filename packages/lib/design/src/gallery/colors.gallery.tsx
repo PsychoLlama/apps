@@ -1,5 +1,6 @@
 import type { GalleryAxis, GalleryListing, GallerySection } from '@lib/gallery';
 import type { ColorPalette } from '@lib/design';
+import { accent, danger, neutral, success, warning } from '@lib/design';
 import { colorScaleIds, type ColorContract } from '@lib/design/color-scheme';
 
 import { amber } from '@lib/design/palette/amber';
@@ -51,9 +52,19 @@ interface NamedPalette {
   palette: ColorPalette;
 }
 
-/** One chart cell: a single scale's color at a single step. */
+/** Which facet of a semantic role a cell draws from. */
+type Variant = 'solid' | 'alpha';
+
+/**
+ * One chart cell: a single scale's color at a single step. The hue sections
+ * bind `scale` directly; the semantic section binds a `role` + `variant` pair
+ * instead, deferring the `role[variant]` lookup to render so a column (Solid /
+ * Alpha) and row (token name) can each contribute half the coordinate.
+ */
 interface Swatch {
-  scale: ColorContract;
+  scale?: ColorContract;
+  role?: ColorPalette;
+  variant?: Variant;
   step: Step;
 }
 
@@ -126,6 +137,39 @@ const overlayRows: ReadonlyArray<GalleryAxis<Swatch>> = [
   { title: 'Black', props: { scale: overlayScale(black) } },
 ];
 
+/**
+ * The semantic roles, in scale-semantics order. Each aliases a concrete hue at
+ * theme time, so the swatches track whichever variant is active.
+ */
+const semanticRoles: ReadonlyArray<{ name: string; role: ColorPalette }> = [
+  { name: 'Accent', role: accent },
+  { name: 'Neutral', role: neutral },
+  { name: 'Danger', role: danger },
+  { name: 'Warning', role: warning },
+  { name: 'Success', role: success },
+];
+
+/** Step 9 — the primary solid fill — is the representative step per role. */
+const primaryStep: Step = 9;
+
+/**
+ * Semantic tokens at a glance: one row per role, with its primary solid and
+ * alpha swatch side by side.
+ */
+const semanticSection: GallerySection<Swatch> = {
+  title: 'Semantic',
+  gap: 1,
+  align: { rows: 'center', columns: 'center' },
+  columns: [
+    { title: 'Solid', props: { variant: 'solid', step: primaryStep } },
+    { title: 'Alpha', props: { variant: 'alpha', step: primaryStep } },
+  ],
+  rows: semanticRoles.map(({ name, role }) => ({
+    title: name,
+    props: { role },
+  })),
+};
+
 /** A tightly-packed, axis-aligned section over the given hue rows. */
 const scaleSection = (
   title: string,
@@ -149,11 +193,16 @@ export default {
   render: (props) => (
     <div
       class={css.swatch}
-      style={{ '--swatch-color': props.scale![props.step!] }}
+      style={{
+        '--swatch-color': (props.scale ?? props.role![props.variant!])[
+          props.step!
+        ],
+      }}
     />
   ),
   sections: [
     scaleSection('Solid', paletteRows('solid')),
     scaleSection('Alpha', [...paletteRows('alpha'), ...overlayRows]),
+    semanticSection,
   ],
 } satisfies GalleryListing<Swatch>;
