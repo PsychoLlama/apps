@@ -2,13 +2,11 @@ import { createSignal, For } from 'solid-js';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@lib/ui';
 import type { GalleryListing, GallerySection } from '@dev/gallery';
 import { SectionGrid } from './section-grid';
+import { slugify } from './slugify';
 
 /** A listing erased to the registry's shared shape (see `@dev/gallery`). */
 type Listing = GalleryListing<unknown>;
 type Section = GallerySection<unknown>;
-
-const slugify = (title: string): string =>
-  title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
 /** A listing's sections as a tab strip, each panel holding its permutation grid. */
 export const SectionTabs = (props: {

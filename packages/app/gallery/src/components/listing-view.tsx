@@ -1,8 +1,9 @@
 import { Show } from 'solid-js';
-import { Flex, Heading } from '@lib/ui';
+import { Flex, Heading, Link } from '@lib/ui';
 import type { GalleryListing } from '@dev/gallery';
 import { SectionGrid } from './section-grid';
 import { SectionTabs } from './section-tabs';
+import { slugify } from './slugify';
 
 /** A listing erased to the registry's shared shape (see `@dev/gallery`). */
 type Listing = GalleryListing<unknown>;
@@ -21,8 +22,22 @@ export const ListingView = (props: { listing: Listing }) => {
   const sections = () => props.listing.sections ?? [];
   return (
     <Flex as="section" direction="column" gap={3}>
-      <Heading as="h2" size={5} weight="medium" selectable={false}>
-        {props.listing.title}
+      <Heading
+        as="h2"
+        id={props.listing.title}
+        size={5}
+        weight="medium"
+        selectable={false}
+      >
+        <Link
+          href={`#${encodeURIComponent(props.listing.title)}`}
+          color="neutral"
+          highContrast
+          underline="hover"
+          testId={`gallery-anchor-${slugify(props.listing.title)}`}
+        >
+          {props.listing.title}
+        </Link>
       </Heading>
       <Show
         when={sections().length > 1}
