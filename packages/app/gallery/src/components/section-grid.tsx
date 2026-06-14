@@ -8,8 +8,9 @@ type Listing = GalleryListing<unknown>;
 type Section = GallerySection<unknown>;
 
 // Caps the `grid-template-columns` lookup — wider sections clamp to this many
-// tracks. No current axis comes close.
-const MAX_TRACKS = 8;
+// tracks. Sized for the widest axis we render: the color scale's 12 steps plus
+// a header column.
+const MAX_TRACKS = 13;
 
 /** Axis title shown above a column or beside a row. */
 const AxisHeader = (props: { title: string }) => (
