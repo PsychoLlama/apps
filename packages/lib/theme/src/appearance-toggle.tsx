@@ -2,15 +2,15 @@ import { onMount, type Component, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { useEffect } from '@lib/state';
 import { IconButton } from '@lib/ui';
-import type { ColorSchemeOption } from '@lib/theme';
+import type { ColorSchemeOption } from './constants';
 import {
   colorScheme,
   hydrateColorSchemeEffect,
   selectColorSchemeEffect,
-} from '@lib/theme/runtime';
+} from './runtime';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
-import IconAuto from 'virtual:icons/mdi/auto-mode';
+import IconSystem from 'virtual:icons/mdi/theme-light-dark';
 
 interface SchemeStep {
   id: ColorSchemeOption;
@@ -22,21 +22,22 @@ interface SchemeStep {
  * Cycle order: System → Light → Dark → System. The button shows the
  * active step's icon and advances to the next on each press — the same
  * three options the settings appearance picker offers, compacted into a
- * single header affordance.
+ * single control.
  */
 const CYCLE: ReadonlyArray<SchemeStep> = [
-  { id: 'system', label: 'System', icon: IconAuto },
+  { id: 'system', label: 'System', icon: IconSystem },
   { id: 'light', label: 'Light', icon: IconSun },
   { id: 'dark', label: 'Dark', icon: IconMoon },
 ];
 
 /**
- * Header control for the gallery: a compact light/dark/system toggle that
- * reads and writes through `@lib/theme`. Pressing it cycles the override,
- * flipping `<html data-color-scheme>` and persisting the choice the same
- * way the settings picker does.
+ * Compact light/dark/system toggle. Reads and writes through the theme
+ * runtime: pressing it cycles the color-scheme override, flipping
+ * `<html data-color-scheme>` and persisting the choice — the single-button
+ * counterpart to the settings page's three-card `AppearancePicker`. Drop
+ * it anywhere a header or toolbar wants quick appearance control.
  */
-export const ThemeToggle = () => {
+export const AppearanceToggle = () => {
   const selectScheme = useEffect(selectColorSchemeEffect);
   const hydrateScheme = useEffect(hydrateColorSchemeEffect);
 
@@ -52,10 +53,11 @@ export const ThemeToggle = () => {
 
   return (
     <IconButton
-      testId="gallery-theme-toggle"
+      testId="appearance-toggle"
       variant="ghost"
       color="neutral"
       skeleton={colorScheme.id === null}
+      title={`Appearance: ${active().label}`}
       aria-label={`Appearance: ${active().label}. Switch to ${next().label}.`}
       onClick={() => selectScheme(next().id)}
     >

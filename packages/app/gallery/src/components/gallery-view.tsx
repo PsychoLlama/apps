@@ -1,7 +1,7 @@
 import { type JSX } from 'solid-js';
 import { Flex } from '@lib/ui';
 import { SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
-import { ThemeToggle } from './theme-toggle';
+import { AppearanceToggle } from '@lib/theme/appearance-toggle';
 import * as css from './gallery-view.css';
 
 /**
@@ -26,7 +26,7 @@ export const GalleryView = (props: {
   children?: JSX.Element;
 }) => (
   <>
-    <SiteHeader trail={props.trail} actions={<ThemeToggle />} />
+    <SiteHeader trail={props.trail} actions={<AppearanceToggle />} />
     <Flex
       as="article"
       direction="column"

@@ -184,9 +184,6 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state':
-        specifier: workspace:*
-        version: link:../../lib/state
       '@lib/theme':
         specifier: workspace:*
         version: link:../../lib/theme
@@ -571,6 +568,9 @@ importers:
       '@lib/state':
         specifier: workspace:*
         version: link:../state
+      '@lib/ui':
+        specifier: workspace:*
+        version: link:../ui
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
