@@ -58,8 +58,8 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
       as="div"
       align="start"
       justify="start"
-      gapX={5}
-      gapY={4}
+      gapX={props.section.gap ?? 5}
+      gapY={props.section.gap ?? 4}
       class={`${css.grid} ${css.templateColumns[tracks()]}`}
     >
       <Switch>

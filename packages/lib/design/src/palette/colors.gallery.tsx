@@ -99,6 +99,7 @@ export default {
   sections: [
     {
       title: 'Solid',
+      gap: 2,
       columns: colorScaleIds.map((step) => ({
         title: String(step),
         props: { step },

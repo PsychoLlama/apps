@@ -17,12 +17,28 @@ export interface GalleryAxis<P> {
 }
 
 /**
+ * Spacing step for a section's grid gap, mirroring `@lib/design`'s `SpaceScale`
+ * (1–9). Duplicated rather than imported: `@lib/design` hosts gallery listings
+ * and already depends on this package, so importing its tokens back would form a
+ * dependency cycle.
+ */
+export type SectionGap = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+/**
  * One permutation view, surfaced as a tab. The gallery permutes `columns` ×
  * `rows` through the listing's `render`. At least one axis is required — a
  * section with neither is rejected at compile time. Provide only `columns` for
  * column headers, only `rows` for row headers, or both for a full grid.
  */
-export type GallerySection<P> = { title: string } & (
+export type GallerySection<P> = {
+  title: string;
+  /**
+   * Overrides the grid gap between cells on both axes. Defaults to the
+   * gallery's standard spacing — set a tighter step for dense cells like color
+   * swatches.
+   */
+  gap?: SectionGap;
+} & (
   | {
       columns: ReadonlyArray<GalleryAxis<P>>;
       rows?: ReadonlyArray<GalleryAxis<P>>;
