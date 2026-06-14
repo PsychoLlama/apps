@@ -18,6 +18,8 @@
     "@lib/gallery": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
+    "@lib/state": "workspace:*",
+    "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:"
   },
