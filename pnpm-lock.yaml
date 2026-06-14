@@ -486,6 +486,10 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1
+    devDependencies:
+      '@lib/gallery':
+        specifier: workspace:*
+        version: link:../gallery
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13

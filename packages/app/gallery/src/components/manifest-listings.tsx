@@ -17,7 +17,7 @@ export const ManifestListings = (props: { listings: Listing[] }) => (
     fallback={
       <Flex as="div" align="start">
         <Callout color="neutral" size={1}>
-          This gallery's empty for now.
+          This gallery is empty.
         </Callout>
       </Flex>
     }

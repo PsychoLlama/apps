@@ -212,6 +212,15 @@ export default [
     },
   },
   {
+    // @lib/design sits below @lib/ui in the dependency graph, so it can't
+    // import the primitives the rule redirects toward without forming a
+    // cycle. Its gallery/demo files render raw elements instead.
+    files: ['packages/lib/design/**/*.tsx'],
+    rules: {
+      'custom/require-ui-primitives': 'off',
+    },
+  },
+  {
     // @lib/state tests exercise defineEffect itself, so inline callbacks
     // are expected. The separation rule applies to consumers.
     files: ['packages/lib/state/src/__tests__/**/*.ts'],

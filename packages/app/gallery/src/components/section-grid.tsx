@@ -8,17 +8,23 @@ type Listing = GalleryListing<unknown>;
 type Section = GallerySection<unknown>;
 
 // Caps the `grid-template-columns` lookup — wider sections clamp to this many
-// tracks. No current axis comes close.
-const MAX_TRACKS = 8;
+// tracks. Sized for the widest axis we render: the color scale's 12 steps plus
+// a header column.
+const MAX_TRACKS = 13;
+
+// Joins class names, dropping the unset ones.
+const cx = (...names: Array<string | undefined>): string =>
+  names.filter(Boolean).join(' ');
 
 /** Axis title shown above a column or beside a row. */
-const AxisHeader = (props: { title: string }) => (
+const AxisHeader = (props: { title: string; class?: string }) => (
   <Text
     as="span"
     size={1}
     weight="medium"
     color="lowContrast"
     selectable={false}
+    class={props.class}
   >
     {props.title}
   </Text>
@@ -46,6 +52,19 @@ const trackCount = (section: Section): number => {
 export const SectionGrid = (props: { listing: Listing; section: Section }) => {
   const columns = () => props.section.columns ?? [];
   const rows = () => props.section.rows ?? [];
+  // Headers pin to their own axis (see `columnHeader`/`rowHeader`) and, when a
+  // section tightens its `gap`, pad back out from the cells. Default sections
+  // leave the gutter unset and look unchanged.
+  const columnClass = () =>
+    cx(
+      css.columnHeader,
+      props.section.gap === undefined ? undefined : css.columnHeaderGutter,
+    );
+  const rowClass = () =>
+    cx(
+      css.rowHeader,
+      props.section.gap === undefined ? undefined : css.rowHeaderGutter,
+    );
   const tracks = () =>
     Math.min(
       trackCount(props.section),
@@ -55,22 +74,24 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
   return (
     <Grid
       as="div"
-      align="start"
-      justify="start"
-      gapX={5}
-      gapY={4}
+      align={props.section.align?.rows ?? 'start'}
+      justify={props.section.align?.columns ?? 'start'}
+      gapX={props.section.gap ?? 5}
+      gapY={props.section.gap ?? 4}
       class={`${css.grid} ${css.templateColumns[tracks()]}`}
     >
       <Switch>
         <Match when={columns().length > 0 && rows().length > 0}>
           <AxisHeader title="" />
           <For each={columns()}>
-            {(column) => <AxisHeader title={column.title} />}
+            {(column) => (
+              <AxisHeader title={column.title} class={columnClass()} />
+            )}
           </For>
           <For each={rows()}>
             {(row) => (
               <>
-                <AxisHeader title={row.title} />
+                <AxisHeader title={row.title} class={rowClass()} />
                 <For each={columns()}>
                   {(column) =>
                     props.listing.render({ ...row.props, ...column.props })
@@ -82,7 +103,9 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
         </Match>
         <Match when={columns().length > 0}>
           <For each={columns()}>
-            {(column) => <AxisHeader title={column.title} />}
+            {(column) => (
+              <AxisHeader title={column.title} class={columnClass()} />
+            )}
           </For>
           <For each={columns()}>
             {(column) => props.listing.render(column.props)}
@@ -92,7 +115,7 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
           <For each={rows()}>
             {(row) => (
               <>
-                <AxisHeader title={row.title} />
+                <AxisHeader title={row.title} class={rowClass()} />
                 {props.listing.render(row.props)}
               </>
             )}

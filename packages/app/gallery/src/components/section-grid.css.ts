@@ -23,7 +23,41 @@ export const grid = style({
  * viewport is constrained). The count is dynamic — a header column plus one per
  * axis entry — so it's selected here rather than expressed as a single rule.
  */
+/**
+ * Pins each header to its own axis so a section's `align` only affects the axis
+ * it names. The grid's `align-items`/`justify-items` apply to every cell, which
+ * would drag a column header's vertical alignment or a row header's horizontal
+ * alignment along for the ride — a centered row label drifting off the left
+ * edge, say. Each header opts out of the cross-axis alignment back to `start`;
+ * its own-axis alignment still flows from the grid.
+ */
+export const columnHeader = style({ alignSelf: 'start' });
+export const rowHeader = style({ justifySelf: 'start' });
+
+/**
+ * Gutters that hold the header labels clear of the cells when a section
+ * tightens its `gap`. The grid gap is uniform — it can't separate the
+ * header band from the cells on its own — so a section that packs its
+ * cells tight pads its headers back out to stay legible.
+ */
+export const columnHeaderGutter = style({ paddingBlockEnd: space[2] });
+export const rowHeaderGutter = style({ paddingInlineEnd: space[2] });
+
 export const templateColumns = styleVariants(
-  { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8 },
+  {
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+    5: 5,
+    6: 6,
+    7: 7,
+    8: 8,
+    9: 9,
+    10: 10,
+    11: 11,
+    12: 12,
+    13: 13,
+  },
   (count) => ({ gridTemplateColumns: `repeat(${count}, max-content)` }),
 );
