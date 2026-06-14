@@ -15,7 +15,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@dev/gallery": "workspace:*",
+    "@lib/gallery": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/ui": "workspace:*",

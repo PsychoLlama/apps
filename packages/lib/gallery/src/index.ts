@@ -71,20 +71,3 @@ export interface GalleryListing<P = Record<string, never>> {
   /** Render one cell from the merged column + row prop overrides. */
   render: (props: Partial<P>) => JSX.Element;
 }
-
-// ---------------------------------------------------------------------------
-// Registry — the gallery collects listings from every package and renders them
-// through one renderer, so the heterogeneous set erases to
-// `GalleryListing<unknown>` (see the invariance note above).
-// ---------------------------------------------------------------------------
-
-/**
- * Collect an eager `import.meta.glob` of a package's `*.gallery.tsx` modules
- * into a listing array — each module's default export is its listing. A
- * package's dedicated `/gallery/<slug>` route hands its glob here so every
- * listing renders together on one page.
- */
-export const collectListings = (
-  modules: Record<string, { default: GalleryListing<unknown> }>,
-): GalleryListing<unknown>[] =>
-  Object.values(modules).map((module) => module.default);

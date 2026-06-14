@@ -1,5 +1,5 @@
 import { createSignal, untrack } from 'solid-js';
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import Checkbox, { type CheckboxChecked, type CheckboxProps } from './checkbox';
 
 /** Demo-only knob: the initial checked state. */

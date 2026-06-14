@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import {
   TableBody,
   TableCell,

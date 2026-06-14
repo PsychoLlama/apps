@@ -1,5 +1,5 @@
 {
-  "name": "@dev/gallery",
+  "name": "@lib/gallery",
   "private": true,
   "type": "module",
   "version": "0.0.0",
@@ -13,5 +13,8 @@
   },
   "devDependencies": {
     "solid-js": "catalog:"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
   }
 }

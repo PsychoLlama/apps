@@ -175,12 +175,12 @@ importers:
 
   packages/app/gallery:
     dependencies:
-      '@dev/gallery':
-        specifier: workspace:*
-        version: link:../../dev/gallery
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/gallery':
+        specifier: workspace:*
+        version: link:../../lib/gallery
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
@@ -400,12 +400,6 @@ importers:
         specifier: ^8.59.0
         version: 8.60.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
 
-  packages/dev/gallery:
-    devDependencies:
-      solid-js:
-        specifier: ^1.9.13
-        version: 1.9.13
-
   packages/dev/storybook:
     devDependencies:
       '@dev/build':
@@ -489,6 +483,12 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1
+      solid-js:
+        specifier: ^1.9.13
+        version: 1.9.13
+
+  packages/lib/gallery:
+    devDependencies:
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
@@ -581,9 +581,9 @@ importers:
         specifier: 'catalog:'
         version: 2.1.5
     devDependencies:
-      '@dev/gallery':
+      '@lib/gallery':
         specifier: workspace:*
-        version: link:../../dev/gallery
+        version: link:../gallery
       '@solidjs/router':
         specifier: ^0.16.1
         version: 0.16.1(solid-js@1.9.13)

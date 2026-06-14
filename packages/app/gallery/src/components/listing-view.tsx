@@ -1,11 +1,11 @@
 import { Show } from 'solid-js';
 import { Flex, Heading, Link } from '@lib/ui';
-import type { GalleryListing } from '@dev/gallery';
+import type { GalleryListing } from '@lib/gallery';
 import { SectionGrid } from './section-grid';
 import { SectionTabs } from './section-tabs';
 import { slugify } from './slugify';
 
-/** A listing erased to the registry's shared shape (see `@dev/gallery`). */
+/** A listing erased to the registry's shared shape (see `@lib/gallery`). */
 type Listing = GalleryListing<unknown>;
 
 /** A no-variant listing's body — `render` invoked once with no overrides. */

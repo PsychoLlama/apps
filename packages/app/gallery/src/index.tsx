@@ -7,4 +7,4 @@
 export { Gallery } from './components/gallery-view';
 export { GalleryHome } from './components/gallery-home';
 export { ManifestRoute } from './components/manifest-route';
-export type { GalleryListing } from '@dev/gallery';
+export type { GalleryListing } from '@lib/gallery';

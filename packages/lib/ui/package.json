@@ -22,7 +22,7 @@
     "@vanilla-extract/dynamic": "catalog:"
   },
   "devDependencies": {
-    "@dev/gallery": "workspace:*",
+    "@lib/gallery": "workspace:*",
     "@solidjs/router": "catalog:",
     "@solidjs/testing-library": "catalog:",
     "solid-js": "catalog:",
