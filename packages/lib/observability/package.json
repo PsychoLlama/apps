@@ -17,11 +17,11 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@holz/ansi-terminal-backend": "^0.8.2",
-    "@holz/console-backend": "^0.8.2",
-    "@holz/core": "^0.8.2",
-    "@holz/env-filter": "^0.8.2",
+    "@holz/ansi-terminal-backend": "0.8.3-rc.155",
+    "@holz/console-backend": "0.8.3-rc.155",
+    "@holz/core": "0.8.3-rc.155",
+    "@holz/env-filter": "0.8.3-rc.155",
     "@holz/log-collector": "catalog:",
-    "@holz/stream-backend": "^0.8.2"
+    "@holz/stream-backend": "0.8.3-rc.155"
   }
 }
