@@ -1,14 +1,16 @@
-import { style } from '@vanilla-extract/css';
-import { background, shadow, space } from '@lib/design';
+import { createVar, style } from '@vanilla-extract/css';
+import { neutral, space } from '@lib/design';
+
+/** Corner rounding for the box, supplied per cell via `assignInlineVars`. */
+export const radiusVar = createVar();
 
 /**
- * A fixed square whose corner rounding rides in via `--radius`. Raised off the
- * page with a slight shadow so the rounded corners read against the canvas.
+ * A fixed square whose corner rounding rides in via {@link radiusVar}. Outlined
+ * with a subtle border so the rounded corners read against the canvas.
  */
 export const box = style({
   width: space[8],
   height: space[8],
-  backgroundColor: background.panelSolid,
-  boxShadow: shadow[2],
-  borderRadius: 'var(--radius)',
+  border: `1px solid ${neutral.solid[6]}`,
+  borderRadius: radiusVar,
 });

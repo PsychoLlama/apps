@@ -1,3 +1,4 @@
+import { assignInlineVars } from '@vanilla-extract/dynamic';
 import type { GalleryAxis, GalleryListing } from '@lib/gallery';
 import { shadow } from '@lib/design';
 import * as css from './shadow.gallery.css';
@@ -12,7 +13,7 @@ interface Cell {
 const levels: ReadonlyArray<GalleryAxis<Cell>> = (
   Object.entries(shadow) as ReadonlyArray<[string, string]>
 ).map(([level, value]) => ({
-  title: `shadow[${level}]`,
+  title: level,
   props: { shadow: value },
 }));
 
@@ -24,9 +25,10 @@ const levels: ReadonlyArray<GalleryAxis<Cell>> = (
 export default {
   title: 'Shadow',
   render: (props) => (
-    <div class={css.cell}>
-      <div class={css.panel} style={{ '--shadow': props.shadow }} />
-    </div>
+    <div
+      class={css.panel}
+      style={assignInlineVars({ [css.shadowVar]: props.shadow })}
+    />
   ),
   sections: [
     { title: 'Elevation', align: { columns: 'center' }, columns: levels },

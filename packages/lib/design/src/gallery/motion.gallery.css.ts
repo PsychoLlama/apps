@@ -1,4 +1,4 @@
-import { keyframes, style } from '@vanilla-extract/css';
+import { createVar, keyframes, style } from '@vanilla-extract/css';
 import {
   accent,
   background,
@@ -7,6 +7,12 @@ import {
   shadow,
   space,
 } from '@lib/design';
+
+/** Animation duration, supplied per cell via `assignInlineVars`. */
+export const durationVar = createVar();
+
+/** Easing curve for the slide thumb, supplied per cell via `assignInlineVars`. */
+export const easingVar = createVar();
 
 // --- Durations ---
 
@@ -29,7 +35,7 @@ export const swatch = style({
   boxShadow: shadow[2],
   backgroundColor: neutral.solid[3],
   animationName: pulse,
-  animationDuration: 'var(--duration)',
+  animationDuration: durationVar,
   animationTimingFunction: 'linear',
   animationDirection: 'alternate',
   animationIterationCount: 'infinite',
@@ -66,8 +72,8 @@ export const thumb = style({
   backgroundColor: accent.solid[9],
   boxShadow: shadow[3],
   animationName: slide,
-  animationDuration: 'var(--duration)',
-  animationTimingFunction: 'var(--easing)',
+  animationDuration: durationVar,
+  animationTimingFunction: easingVar,
   animationDirection: 'alternate',
   animationIterationCount: 'infinite',
   animationFillMode: 'both',

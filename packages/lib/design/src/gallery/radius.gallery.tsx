@@ -1,3 +1,4 @@
+import { assignInlineVars } from '@vanilla-extract/dynamic';
 import type { GalleryAxis, GalleryListing } from '@lib/gallery';
 import { radius } from '@lib/design';
 import * as css from './radius.gallery.css';
@@ -12,7 +13,7 @@ interface Cell {
 const steps: ReadonlyArray<GalleryAxis<Cell>> = (
   Object.entries(radius) as ReadonlyArray<[string, string]>
 ).map(([step, value]) => ({
-  title: step === 'full' ? 'radius.full' : `radius[${step}]`,
+  title: step,
   props: { radius: value },
 }));
 
@@ -24,7 +25,10 @@ const steps: ReadonlyArray<GalleryAxis<Cell>> = (
 export default {
   title: 'Radius',
   render: (props) => (
-    <div class={css.box} style={{ '--radius': props.radius }} />
+    <div
+      class={css.box}
+      style={assignInlineVars({ [css.radiusVar]: props.radius })}
+    />
   ),
   sections: [{ title: 'Scale', align: { columns: 'center' }, columns: steps }],
 } satisfies GalleryListing<Cell>;

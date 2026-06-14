@@ -1,4 +1,5 @@
 import { Show } from 'solid-js';
+import { assignInlineVars } from '@vanilla-extract/dynamic';
 import type { GalleryAxis, GalleryListing } from '@lib/gallery';
 import { entrance, exit, fast, moderate, slow, standard } from '@lib/design';
 import * as css from './motion.gallery.css';
@@ -49,13 +50,19 @@ export default {
     <Show
       when={props.easing}
       fallback={
-        <div class={css.swatch} style={{ '--duration': props.duration }} />
+        <div
+          class={css.swatch}
+          style={assignInlineVars({ [css.durationVar]: props.duration })}
+        />
       }
     >
       {(easing) => (
         <div
           class={css.track}
-          style={{ '--easing': easing(), '--duration': easeDuration }}
+          style={assignInlineVars({
+            [css.easingVar]: easing(),
+            [css.durationVar]: easeDuration,
+          })}
         >
           <div class={css.thumb} />
         </div>

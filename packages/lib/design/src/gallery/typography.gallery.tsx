@@ -24,13 +24,17 @@ interface Specimen {
 /** Display size shared by the family and weight specimens. */
 const sampleSize = typeScale[6];
 
+/** Title-case a token key for a section header (`heading` → `Heading`). */
+const titleCase = (name: string): string =>
+  name.charAt(0).toUpperCase() + name.slice(1);
+
 /** One row per type-scale step, smallest to largest. */
 const scale: ReadonlyArray<GalleryAxis<Specimen>> = (
   Object.keys(typeScale) as ReadonlyArray<`${TypeScale}`>
 ).map((step) => {
   const value = typeScale[Number(step) as TypeScale];
   return {
-    title: `typeScale[${step}]`,
+    title: step,
     props: {
       fontSize: value.fontSize,
       lineHeight: value.bodyLineHeight,
@@ -43,7 +47,7 @@ const scale: ReadonlyArray<GalleryAxis<Specimen>> = (
 const families: ReadonlyArray<GalleryAxis<Specimen>> = (
   Object.keys(fontFamily) as ReadonlyArray<keyof typeof fontFamily>
 ).map((name) => ({
-  title: `fontFamily.${name}`,
+  title: titleCase(name),
   props: {
     fontFamily: fontFamily[name],
     fontSize: sampleSize.fontSize,
@@ -55,7 +59,7 @@ const families: ReadonlyArray<GalleryAxis<Specimen>> = (
 const weights: ReadonlyArray<GalleryAxis<Specimen>> = (
   Object.entries(fontWeight) as ReadonlyArray<[FontWeight, string]>
 ).map(([name, value]) => ({
-  title: `fontWeight.${name}`,
+  title: titleCase(name),
   props: {
     fontWeight: value,
     fontSize: sampleSize.fontSize,
@@ -85,8 +89,8 @@ export default {
     </p>
   ),
   sections: [
-    { title: 'Scale', rows: scale },
-    { title: 'Families', rows: families },
-    { title: 'Weights', rows: weights },
+    { title: 'Scale', align: { rows: 'center' }, rows: scale },
+    { title: 'Families', align: { rows: 'center' }, rows: families },
+    { title: 'Weights', align: { rows: 'center' }, rows: weights },
   ],
 } satisfies GalleryListing<Specimen>;

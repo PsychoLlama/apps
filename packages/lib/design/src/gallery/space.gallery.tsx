@@ -1,3 +1,4 @@
+import { assignInlineVars } from '@vanilla-extract/dynamic';
 import type { GalleryAxis, GalleryListing } from '@lib/gallery';
 import { space } from '@lib/design';
 import * as css from './space.gallery.css';
@@ -12,7 +13,7 @@ interface Cell {
 const steps: ReadonlyArray<GalleryAxis<Cell>> = (
   Object.entries(space) as ReadonlyArray<[string, string]>
 ).map(([step, value]) => ({
-  title: `space[${step}]`,
+  title: step,
   props: { space: value },
 }));
 
@@ -23,6 +24,11 @@ const steps: ReadonlyArray<GalleryAxis<Cell>> = (
  */
 export default {
   title: 'Spacing',
-  render: (props) => <div class={css.bar} style={{ '--space': props.space }} />,
+  render: (props) => (
+    <div
+      class={css.bar}
+      style={assignInlineVars({ [css.spaceVar]: props.space })}
+    />
+  ),
   sections: [{ title: 'Scale', align: { columns: 'center' }, columns: steps }],
 } satisfies GalleryListing<Cell>;
