@@ -12,7 +12,6 @@ export const generatedArtifacts: readonly string[] = [
   '**/coverage/**',
   '**/dist/**',
   '**/result*/**',
-  '**/storybook-static/**',
 ];
 
 /**

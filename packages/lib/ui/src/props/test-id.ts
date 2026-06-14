@@ -1,5 +1,3 @@
-import type { ArgTypes } from 'storybook-solidjs-vite';
-
 export interface TestIdProps {
   /** Test identifier. Renders as `data-testid` on the underlying DOM node. */
   testId?: string;
@@ -9,9 +7,3 @@ export interface TestIdProps {
 export type RequiredTestIdProps = Required<TestIdProps>;
 
 export const testIdPropKeys = ['testId'] as const;
-
-export const testIdArgTypes: ArgTypes<TestIdProps> = {
-  testId: {
-    control: 'text',
-  },
-};

@@ -12,7 +12,6 @@ app.config.timestamp_*.js
 .env*.local
 .claude/worktrees
 .claude/*.lock
-storybook-static
 coverage
 /result*
 /target

@@ -1,23 +1,16 @@
-import type { ArgTypes } from 'storybook-solidjs-vite';
 import type { RadiusScale, ShadowLevel, BackgroundColor } from '@lib/design';
 import {
   paddingPropKeys,
   resolvePaddingClasses,
-  paddingArgTypes,
   type PaddingProps,
 } from './padding';
 import {
   marginPropKeys,
   resolveMarginClasses,
-  marginArgTypes,
   type MarginProps,
 } from './margin';
-import {
-  skeletonPropKeys,
-  skeletonArgTypes,
-  type SkeletonProps,
-} from './skeleton';
-import { testIdPropKeys, testIdArgTypes, type TestIdProps } from './test-id';
+import { skeletonPropKeys, type SkeletonProps } from './skeleton';
+import { testIdPropKeys, type TestIdProps } from './test-id';
 import * as css from './box.css';
 
 /** Surface props shared across layout primitives. */
@@ -57,23 +50,4 @@ export const resolveBoxClasses = (
     box.radius && css.radiusVariants[box.radius],
     box.shadow && css.shadowVariants[box.shadow],
   ];
-};
-
-export const boxArgTypes: ArgTypes<BoxBaseProps> = {
-  ...paddingArgTypes,
-  ...marginArgTypes,
-  ...skeletonArgTypes,
-  ...testIdArgTypes,
-  background: {
-    control: 'inline-radio' as const,
-    options: ['page', 'panelSolid', 'panelTranslucent', 'surface'],
-  },
-  radius: {
-    control: 'select' as const,
-    options: [1, 2, 3, 4, 5, 6, 'full'],
-  },
-  shadow: {
-    control: 'select' as const,
-    options: [1, 2, 3, 4, 5, 6],
-  },
 };

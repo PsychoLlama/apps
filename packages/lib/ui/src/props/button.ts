@@ -1,4 +1,3 @@
-import type { ArgTypes } from 'storybook-solidjs-vite';
 import * as css from './button.css';
 
 export type ButtonSize = 1 | 2 | 3 | 4;
@@ -68,22 +67,4 @@ export const resolveIconButtonStyleClasses = (
     css.variantDisabled[variant],
     radius && css.cornerRadius[radius],
   ];
-};
-
-export const buttonStyleArgTypes: ArgTypes<ButtonStyleProps> = {
-  size: {
-    control: { type: 'range', min: 1, max: 4, step: 1 },
-  },
-  variant: {
-    control: 'inline-radio',
-    options: ['solid', 'soft', 'surface', 'outline', 'ghost'],
-  },
-  color: {
-    control: 'inline-radio',
-    options: ['accent', 'neutral', 'danger', 'warning', 'success'],
-  },
-  radius: {
-    control: 'inline-radio',
-    options: ['none', 'small', 'medium', 'large', 'full'],
-  },
 };

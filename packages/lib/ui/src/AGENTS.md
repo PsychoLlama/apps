@@ -13,9 +13,9 @@
 - Multi-line is acceptable.
 - Include module doc comments to cite 3p sources and upstream deviations.
 
-## Storybook
+## Gallery
 
-- Keep stories in sync with `packages/dev/storybook`.
+- Keep each component's co-located `*.gallery.tsx` in sync with its props.
 
 ## Reference Docs
 

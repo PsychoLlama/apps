@@ -1,5 +1,5 @@
 ---
-description: Reference docs for `@lib/state` — the codebase's sanctioned state management. Built-in Solid primitives (`createSignal`, `createStore`, `createMemo`) are banned outside `@lib/ui` and storybook stories. Load when authoring or reviewing any stateful code, picking an API, or wiring stateful tests.
+description: Reference docs for `@lib/state` — the codebase's sanctioned state management. Built-in Solid primitives (`createSignal`, `createStore`, `createMemo`) are banned outside `@lib/ui` and gallery listings. Load when authoring or reviewing any stateful code, picking an API, or wiring stateful tests.
 ---
 
 # State Management

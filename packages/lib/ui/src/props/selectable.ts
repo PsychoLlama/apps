@@ -1,4 +1,3 @@
-import type { ArgTypes } from 'storybook-solidjs-vite';
 import * as css from './selectable.css';
 
 /**
@@ -41,10 +40,4 @@ export const resolveSelectableClass = ({
 }: SelectableProps): string | undefined => {
   if (selectable === undefined) return undefined;
   return selectable ? css.selectable : css.unselectable;
-};
-
-export const selectableArgTypes: ArgTypes<SelectableProps> = {
-  selectable: {
-    control: 'boolean',
-  },
 };

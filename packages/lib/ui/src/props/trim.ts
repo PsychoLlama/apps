@@ -1,4 +1,3 @@
-import type { ArgTypes } from 'storybook-solidjs-vite';
 import * as css from './trim.css';
 
 export type LeadingTrim = 'start' | 'end' | 'both';
@@ -14,11 +13,4 @@ export const resolveTrimClass = ({
   trim,
 }: TrimProps): string | false | undefined => {
   return trim && css.trim[trim];
-};
-
-export const trimArgTypes: ArgTypes<TrimProps> = {
-  trim: {
-    control: 'inline-radio',
-    options: ['start', 'end', 'both'],
-  },
 };

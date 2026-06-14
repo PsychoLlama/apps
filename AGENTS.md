@@ -4,7 +4,6 @@
 - turbo
 - SolidStart (SSG)
 - Vanilla Extract
-- Storybook
 - Unplugin Icons
 - Wrangler/CF Workers
 

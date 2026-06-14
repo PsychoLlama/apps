@@ -3,7 +3,6 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:www.radix-ui.com)",
-      "WebFetch(domain:storybook.js.org)",
       "WebFetch(domain:docs.solidjs.com)"
     ]
   },

@@ -16,14 +16,9 @@
   "tasks": {
     "build": {
       "dependsOn": ["^typecheck", "^build"],
-      "outputs": [".output/**", "storybook-static/**"],
+      "outputs": [".output/**"],
       "outputLogs": "errors-only",
       "env": ["GITHUB_REF"]
-    },
-    "bundle": {
-      "dependsOn": ["build", "@dev/storybook#build"],
-      "outputs": [".output/public/__storybook/**"],
-      "outputLogs": "errors-only"
     },
     "dev": {
       "cache": false,
@@ -55,7 +50,6 @@
         "**/*.{ts,tsx,js,jsx,mjs,cjs}",
         "!**/node_modules/**",
         "!**/.output/**",
-        "!**/storybook-static/**",
         "!**/dist/**",
         "eslint.config.ts",
         ".gitignore"
@@ -106,7 +100,6 @@
         "**/*.{ts,tsx,js,jsx,mjs,cjs,json,md,yaml,yml,css,html,rs}",
         "!**/node_modules/**",
         "!**/.output/**",
-        "!**/storybook-static/**",
         "!target/**",
         "treefmt.toml"
       ],

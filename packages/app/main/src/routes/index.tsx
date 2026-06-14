@@ -4,7 +4,6 @@ import { Card, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
-import IconStorybook from 'virtual:icons/mdi/book-open-page-variant-outline';
 import IconGallery from 'virtual:icons/mdi/brush-variant';
 import IconFlask from 'virtual:icons/mdi/flask-outline';
 import IconCog from 'virtual:icons/mdi/cog-outline';
@@ -18,8 +17,6 @@ interface AppEntry {
   href: string;
   description: string;
   Icon: Component<{ width?: string; height?: string; class?: string }>;
-  /** Bypass client-side routing — required for static asset paths like `/__storybook/`. */
-  external?: boolean;
 }
 
 /**
@@ -48,14 +45,6 @@ const APPS: ReadonlyArray<AppEntry> = [
     description:
       'Scan QR codes with your camera. Decoding runs entirely on your device.',
     Icon: IconQrcodeScan,
-  },
-  {
-    id: 'storybook',
-    name: 'Storybook',
-    href: '/__storybook/',
-    description: 'Browse the component library and design tokens.',
-    Icon: IconStorybook,
-    external: true,
   },
   {
     id: 'gallery',
@@ -131,7 +120,6 @@ const Launcher = () => (
                 <Card
                   as="a"
                   href={app.href}
-                  rel={app.external ? 'external' : undefined}
                   size={3}
                   variant="surface"
                   class={css.card}

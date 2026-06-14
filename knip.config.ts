@@ -79,16 +79,6 @@ const config: KnipConfig = {
       // the SW behavior tests live under `*.test.browser.ts`.
       entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
     },
-    'packages/dev/storybook': {
-      entry: ['.storybook/*.ts'],
-      project: ['.storybook/*.ts', 'src/**/*.{ts,tsx}'],
-      ignoreDependencies: [
-        '@iconify/json', // used implicitly by unplugin-icons
-        // Pulled in indirectly (e.g. via theme imports in
-        // `.storybook/preview.ts`) rather than by direct story imports.
-        '@lib/shell',
-      ],
-    },
   },
 };
 
