@@ -35,7 +35,7 @@ export default {
   ),
   sections: [
     {
-      title: 'Radius',
+      title: 'Variant',
       rows: [
         { title: 'Classic', props: { variant: 'classic' } },
         { title: 'Surface', props: { variant: 'surface' } },
