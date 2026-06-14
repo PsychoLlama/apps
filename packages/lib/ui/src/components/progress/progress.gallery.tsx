@@ -36,6 +36,15 @@ export default {
       ],
     },
     {
+      title: 'State',
+      columns: [
+        { title: '0%', props: { value: 0 } },
+        { title: '40%', props: { value: 40 } },
+        { title: '100%', props: { value: 100 } },
+        { title: 'Indeterminate', props: { value: null } },
+      ],
+    },
+    {
       title: 'Radius',
       rows: [
         { title: 'None', props: { radius: 'none' } },
@@ -43,15 +52,6 @@ export default {
         { title: 'Medium', props: { radius: 'medium' } },
         { title: 'Large', props: { radius: 'large' } },
         { title: 'Full', props: { radius: 'full' } },
-      ],
-    },
-    {
-      title: 'State',
-      columns: [
-        { title: '0%', props: { value: 0 } },
-        { title: '40%', props: { value: 40 } },
-        { title: '100%', props: { value: 100 } },
-        { title: 'Indeterminate', props: { value: null } },
       ],
     },
   ],
