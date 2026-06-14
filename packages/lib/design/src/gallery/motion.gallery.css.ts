@@ -16,17 +16,14 @@ export const easingVar = createVar();
 
 // --- Durations ---
 
-/** Loop a swatch between a neutral surface and the accent fill. */
-const pulse = keyframes({
-  from: { backgroundColor: neutral.solid[3] },
-  to: { backgroundColor: accent.solid[9] },
-});
-
 /**
- * Square that pulses its background at the cell's duration (via `--duration`).
- * The timing is linear so only the speed reads, not an easing curve. Under
- * `prefers-reduced-motion` the duration tokens collapse to `0s` and it rests on
- * the neutral base.
+ * Square that eases its background between a neutral surface and the accent fill.
+ * A shared clock toggles every swatch's {@link swatchLit} class in lockstep; each
+ * then transitions at the cell's own duration (via `--duration`), so the fast
+ * steps snap and the slow ones glide, yet all flip together and hold until the
+ * next tick. The timing is linear so only the speed reads, not an easing curve.
+ * Under `prefers-reduced-motion` the duration tokens collapse to `0s` (and the
+ * clock never starts), so it rests on the neutral base.
  */
 export const swatch = style({
   width: space[9],
@@ -34,11 +31,14 @@ export const swatch = style({
   borderRadius: radius[2],
   boxShadow: shadow[2],
   backgroundColor: neutral.solid[3],
-  animationName: pulse,
-  animationDuration: durationVar,
-  animationTimingFunction: 'linear',
-  animationDirection: 'alternate',
-  animationIterationCount: 'infinite',
+  transitionProperty: 'background-color',
+  transitionDuration: durationVar,
+  transitionTimingFunction: 'linear',
+});
+
+/** Lit state of a duration swatch, toggled in unison by the shared clock. */
+export const swatchLit = style({
+  backgroundColor: accent.solid[9],
 });
 
 // --- Easings ---

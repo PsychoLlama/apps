@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import type { GalleryAxis, GalleryListing } from '@lib/gallery';
 import { entrance, exit, fast, moderate, slow, standard } from '@lib/design';
@@ -56,6 +56,63 @@ const easingWeights: ReadonlyArray<GalleryAxis<Motion>> = (
 /** A long, fixed slide so the easing curve — not the speed — reads. */
 const easeDuration = `calc(${slow[2]} * 2)`;
 
+// --- Shared duration clock ---
+//
+// Every duration swatch reads one signal so they flip in lockstep; each then
+// transitions to the new state at its own token speed and holds until the next
+// flip. A single timer drives the signal, ref-counted across the mounted
+// swatches so it only runs while the section is on screen.
+
+const [lit, setLit] = createSignal(false);
+
+let timer: ReturnType<typeof setInterval> | undefined;
+let mounted = 0;
+
+/**
+ * Resolve the slowest duration token to milliseconds via a throwaway probe, so
+ * the clock's period tracks the tokens rather than a hard-coded constant. Doubled
+ * for breathing room — even the slowest swatch settles well before the next flip.
+ */
+const resolvePeriodMs = (): number => {
+  const probe = document.createElement('div');
+  probe.style.transitionDuration = slow[2];
+  document.body.append(probe);
+  const seconds = parseFloat(getComputedStyle(probe).transitionDuration);
+  probe.remove();
+  return seconds * 1000 * 2;
+};
+
+/** Start the shared clock on first mount. No-op under reduced motion (period 0). */
+const startClock = (): void => {
+  mounted += 1;
+  if (timer) return;
+  const period = resolvePeriodMs();
+  if (period <= 0) return;
+  timer = setInterval(() => setLit((on) => !on), period);
+};
+
+/** Stop the clock once the last swatch unmounts. */
+const stopClock = (): void => {
+  mounted -= 1;
+  if (mounted === 0 && timer) {
+    clearInterval(timer);
+    timer = undefined;
+  }
+};
+
+/** A duration swatch that eases to the shared lit state at its own token speed. */
+const DurationSwatch = (props: { duration: string }) => {
+  onMount(startClock);
+  onCleanup(stopClock);
+  return (
+    <div
+      class={css.swatch}
+      classList={{ [css.swatchLit]: lit() }}
+      style={assignInlineVars({ [css.durationVar]: props.duration })}
+    />
+  );
+};
+
 /**
  * Gallery listing for `@lib/design`'s motion tokens. Two views, each a grid of a
  * family (x-axis) against its scale (y-axis): durations pulse a swatch at
@@ -68,14 +125,12 @@ export default {
     <Show
       when={props.easingFamily}
       fallback={
-        <div
-          class={css.swatch}
-          style={assignInlineVars({
-            [css.durationVar]:
-              props.durationFamily && props.step
-                ? durationGroups[props.durationFamily][props.step]
-                : undefined,
-          })}
+        <DurationSwatch
+          duration={
+            props.durationFamily && props.step
+              ? durationGroups[props.durationFamily][props.step]
+              : ''
+          }
         />
       }
     >
