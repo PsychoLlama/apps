@@ -2,8 +2,8 @@
  * Unit tests for TabNav.
  *
  * Scope: DOM-shape assertions only. Behavioral coverage (keyboard nav)
- * lives in Storybook play functions, where focus and event semantics
- * behave like a real browser.
+ * lives in the co-located browser test (`tab-nav.test.browser.tsx`),
+ * where focus and event semantics behave like a real browser.
  */
 
 import { MemoryRouter, Route } from '@solidjs/router';

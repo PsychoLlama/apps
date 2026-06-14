@@ -1,6 +1,4 @@
-import type { ArgTypes } from 'storybook-solidjs-vite';
 import type { SpaceScale } from '@lib/design';
-import { spaceArgType } from './padding';
 import * as css from './flex.css';
 
 export interface FlexProps {
@@ -39,27 +37,4 @@ export const resolveFlexClasses = (
     flex.gap && css.gap[flex.gap],
     flex.grow && css.grow,
   ];
-};
-
-export const flexArgTypes: ArgTypes<FlexProps> = {
-  direction: {
-    control: 'inline-radio',
-    options: ['row', 'column', 'row-reverse', 'column-reverse'],
-  },
-  align: {
-    control: 'inline-radio',
-    options: ['start', 'center', 'end', 'stretch', 'baseline'],
-  },
-  justify: {
-    control: 'inline-radio',
-    options: ['start', 'center', 'end', 'between'],
-  },
-  wrap: {
-    control: 'inline-radio',
-    options: ['nowrap', 'wrap', 'wrap-reverse'],
-  },
-  gap: spaceArgType,
-  grow: {
-    control: 'boolean',
-  },
 };

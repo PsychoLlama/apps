@@ -280,7 +280,7 @@ describe('TextField', () => {
 
     expect(input).toHaveFocus();
     // Confirms the selector chain the focus-ring rule depends on. Visual
-    // verification of the resulting outline lives in Storybook QA.
+    // verification of the resulting outline lives in the gallery.
     expect(wrapper.matches(':has(input:focus-visible)')).toBe(true);
   });
 });

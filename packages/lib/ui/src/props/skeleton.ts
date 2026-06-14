@@ -1,5 +1,4 @@
 import { mergeProps } from 'solid-js';
-import type { ArgTypes } from 'storybook-solidjs-vite';
 import * as css from './skeleton.css';
 
 export interface SkeletonProps {
@@ -36,22 +35,6 @@ export const resolveSkeletonAttrs = ({
   skeleton,
 }: SkeletonProps): SkeletonAttrs =>
   skeleton ? { 'aria-hidden': true, inert: true, tabindex: -1 } : {};
-
-export const skeletonArgTypes: ArgTypes<SkeletonProps> = {
-  skeleton: {
-    control: 'boolean',
-  },
-};
-
-/**
- * Default `args` for stories that opt in to the skeleton control.
- * Spread alongside the rest of `meta.args` so the boolean starts
- * off — otherwise the control renders unchecked but the prop is
- * undefined, which Storybook treats as a third indeterminate state.
- */
-export const skeletonArgs = {
-  skeleton: false,
-} as const satisfies Required<SkeletonProps>;
 
 /**
  * Bundled skeleton plumbing for components.

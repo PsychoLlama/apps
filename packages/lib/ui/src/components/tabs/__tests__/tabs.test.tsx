@@ -5,10 +5,11 @@
  * state, roving tabindex on initial render, IDREF validity. These run
  * fast in JSDOM and don't depend on real layout or focus semantics.
  *
- * Interaction lives in Storybook (`packages/dev/storybook/src/stories/
- * ui/components/tabs.stories.tsx`). Anything that needs real browser
- * focus, the actual mouse-button event model, `:focus-visible`, or
- * roving-focus traversal goes there: keyboard nav (arrows / Home / End
+ * Interaction lives in the co-located browser test
+ * (`tabs.test.browser.tsx`), which runs against a real browser via
+ * Playwright. Anything that needs real browser focus, the actual
+ * mouse-button event model, `:focus-visible`, or roving-focus traversal
+ * goes there: keyboard nav (arrows / Home / End
  * / PageUp / PageDown), loop wrap-around, skip-disabled, manual vs
  * automatic activation, and the mousedown right-click / ctrl-click
  * filter. JSDOM approximates all of those well enough to *almost*

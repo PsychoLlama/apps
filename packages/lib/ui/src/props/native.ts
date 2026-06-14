@@ -1,5 +1,3 @@
-import type { ArgTypes } from 'storybook-solidjs-vite';
-
 /**
  * Schemes the router can't resolve — it would mangle them into in-app paths
  * — so they render a native `<a>` by default. An explicit allow-list, not a
@@ -33,9 +31,3 @@ export const resolveNative = (
   native: boolean | undefined,
   href: string | undefined,
 ): boolean => native ?? NATIVE_SCHEME_PATTERN.test(href ?? '');
-
-export const nativeArgTypes: ArgTypes<NativeProps> = {
-  native: {
-    control: 'boolean',
-  },
-};

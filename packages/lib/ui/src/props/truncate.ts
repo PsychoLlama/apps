@@ -1,4 +1,3 @@
-import type { ArgTypes } from 'storybook-solidjs-vite';
 import * as css from './truncate.css';
 
 export interface TruncateProps {
@@ -19,10 +18,4 @@ export const resolveTruncateClass = ({
   truncate,
 }: TruncateProps): string | false | undefined => {
   return truncate && css.truncate;
-};
-
-export const truncateArgTypes: ArgTypes<TruncateProps> = {
-  truncate: {
-    control: 'boolean',
-  },
 };
