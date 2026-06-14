@@ -79,34 +79,10 @@ export interface GalleryListing<P = Record<string, never>> {
 // ---------------------------------------------------------------------------
 
 /**
- * The shape every package's `src/manifest.gallery.ts` exports as its default.
- * Packages `satisfies`-constrain their literal against this; the registry
- * (`@dev/gallery/manifests`) collects them via a build-time glob.
- */
-export interface GalleryManifest {
-  /** Display name for the entry. Conventionally the package's name. */
-  title: string;
-
-  /** One-line summary of the package, conventionally its `package.json` `description`. */
-  description: string;
-
-  /**
-   * Deferred import of the package's collected listings. The sibling
-   * `gallery-listings.tsx` eagerly globs every `*.gallery.tsx` into one chunk;
-   * the manifest defers a single dynamic import of it. A manifest page loads all
-   * of its listings in one request, while the deferral keeps them out of the
-   * gallery's initial bundle.
-   */
-  listings: () => Promise<{
-    default: ReadonlyArray<GalleryListing<unknown>>;
-  }>;
-}
-
-/**
  * Collect an eager `import.meta.glob` of a package's `*.gallery.tsx` modules
  * into a listing array — each module's default export is its listing. A
- * package's `gallery-listings.tsx` calls this so its manifest can defer a
- * single import that loads every listing at once.
+ * package's dedicated `/gallery/<slug>` route hands its glob here so every
+ * listing renders together on one page.
  */
 export const collectListings = (
   modules: Record<string, { default: GalleryListing<unknown> }>,

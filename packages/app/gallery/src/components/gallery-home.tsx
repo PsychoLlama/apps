@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
 import { Card, Container, Flex, Heading, Text } from '@lib/ui';
-import { manifestLinks } from '../listings';
+import { manifestLinks } from '../manifests';
 import { GalleryView } from './gallery-view';
 import * as css from './gallery-home.css';
 

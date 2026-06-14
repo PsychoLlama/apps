@@ -492,10 +492,6 @@ importers:
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
-    devDependencies:
-      '@dev/gallery':
-        specifier: workspace:*
-        version: link:../../dev/gallery
 
   packages/lib/messaging:
     dependencies:
