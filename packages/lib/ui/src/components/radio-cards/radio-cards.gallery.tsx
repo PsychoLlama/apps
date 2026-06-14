@@ -6,7 +6,10 @@ import {
   type RadioCardsRootProps,
 } from './radio-cards';
 
-const OPTIONS = [1, 2] as const;
+const OPTIONS = [
+  { value: 'basic', label: 'Basic' },
+  { value: 'pro', label: 'Pro' },
+] as const;
 
 /**
  * `name` keeps each group's radios isolated. The second card is preselected so
@@ -17,7 +20,7 @@ type DemoProps = Partial<RadioCardsRootProps> & {
 };
 
 const Demo = (props: { name: string } & DemoProps) => {
-  const [value, setValue] = createSignal<string | null>('2');
+  const [value, setValue] = createSignal<string | null>('pro');
   return (
     <RadioCardsRoot
       name={props.name}
@@ -33,10 +36,10 @@ const Demo = (props: { name: string } & DemoProps) => {
       <For each={OPTIONS}>
         {(option) => (
           <RadioCardsItem
-            value={String(option)}
-            testId={`${props.name}-${option}`}
+            value={option.value}
+            testId={`${props.name}-${option.value}`}
           >
-            Option {option}
+            {option.label}
           </RadioCardsItem>
         )}
       </For>

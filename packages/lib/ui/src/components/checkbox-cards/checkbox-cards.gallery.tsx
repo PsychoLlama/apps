@@ -6,10 +6,7 @@ import {
   type CheckboxCardsRootProps,
 } from './checkbox-cards';
 
-const OPTIONS = [
-  { value: 'basic', label: 'Basic' },
-  { value: 'pro', label: 'Pro' },
-] as const;
+const OPTIONS = [1, 2] as const;
 
 /**
  * `name` keeps each group isolated. The first card is preselected so the
@@ -20,7 +17,7 @@ type DemoProps = Partial<CheckboxCardsRootProps> & {
 };
 
 const Demo = (props: { name: string } & DemoProps) => {
-  const [value, setValue] = createSignal<string[]>(['basic']);
+  const [value, setValue] = createSignal<string[]>(['1']);
   return (
     <CheckboxCardsRoot
       name={props.name}
@@ -36,10 +33,10 @@ const Demo = (props: { name: string } & DemoProps) => {
       <For each={OPTIONS}>
         {(option) => (
           <CheckboxCardsItem
-            value={option.value}
-            testId={`${props.name}-${option.value}`}
+            value={String(option)}
+            testId={`${props.name}-${option}`}
           >
-            {option.label}
+            Option {option}
           </CheckboxCardsItem>
         )}
       </For>
