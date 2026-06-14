@@ -2,6 +2,7 @@ import type { GalleryAxis, GalleryListing } from '@lib/gallery';
 import {
   fontFamily,
   fontWeight,
+  text,
   typeScale,
   type FontWeight,
   type TypeScale,
@@ -10,8 +11,9 @@ import * as css from './typography.gallery.css';
 
 /**
  * One specimen cell. Each section varies a different facet — the Scale section
- * the size, Families the stack, Weights the weight — and leaves the rest to the
- * font's defaults. Unset fields drop out of the inline style.
+ * the size, Families the stack, Weights the weight, Contrast the text color —
+ * and leaves the rest to the font's defaults. Unset fields drop out of the
+ * inline style.
  */
 interface Specimen {
   fontSize: string;
@@ -19,6 +21,7 @@ interface Specimen {
   letterSpacing: string;
   fontFamily: string;
   fontWeight: string;
+  color: string;
 }
 
 /** Display size shared by the family and weight specimens. */
@@ -67,6 +70,19 @@ const weights: ReadonlyArray<GalleryAxis<Specimen>> = (
   },
 }));
 
+/** One row per text-contrast level, rendered at the shared display size. */
+const contrasts: ReadonlyArray<GalleryAxis<Specimen>> = [
+  { title: 'High', color: text.highContrast },
+  { title: 'Low', color: text.lowContrast },
+].map(({ title, color }) => ({
+  title,
+  props: {
+    color,
+    fontSize: sampleSize.fontSize,
+    lineHeight: sampleSize.bodyLineHeight,
+  },
+}));
+
 /**
  * Gallery listing for `@lib/design`'s typography tokens. Three views, each a
  * y-axis of pangram specimens — the size scale, the font families, and the
@@ -83,6 +99,7 @@ export default {
         'letter-spacing': props.letterSpacing,
         'font-family': props.fontFamily,
         'font-weight': props.fontWeight,
+        color: props.color,
       }}
     >
       Sphinx of black quartz, judge my vow
@@ -92,5 +109,6 @@ export default {
     { title: 'Scale', align: { rows: 'center' }, rows: scale },
     { title: 'Families', align: { rows: 'center' }, rows: families },
     { title: 'Weights', align: { rows: 'center' }, rows: weights },
+    { title: 'Contrast', align: { rows: 'center' }, rows: contrasts },
   ],
 } satisfies GalleryListing<Specimen>;
