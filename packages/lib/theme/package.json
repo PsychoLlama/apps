@@ -11,6 +11,7 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./appearance-toggle": "./src/appearance-toggle.tsx",
     "./constants": "./src/constants.ts",
     "./prelude": "./src/prelude.ts",
     "./runtime": "./src/runtime.ts",
@@ -22,7 +23,8 @@
   "dependencies": {
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",
-    "@lib/state": "workspace:*"
+    "@lib/state": "workspace:*",
+    "@lib/ui": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": "*"
