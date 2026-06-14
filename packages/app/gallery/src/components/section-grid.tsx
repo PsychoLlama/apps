@@ -63,8 +63,8 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
   return (
     <Grid
       as="div"
-      align="start"
-      justify="start"
+      align={props.section.align?.rows ?? 'start'}
+      justify={props.section.align?.columns ?? 'start'}
       gapX={props.section.gap ?? 5}
       gapY={props.section.gap ?? 4}
       class={`${css.grid} ${css.templateColumns[tracks()]}`}

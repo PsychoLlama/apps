@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { GalleryListing, GallerySection } from '@lib/gallery';
 import type { ColorPalette } from '@lib/design';
 import { colorScaleIds, type ColorContract } from '@lib/design/color-scheme';
 
@@ -109,6 +109,19 @@ const paletteRows = (
     props: { scale: palette[variant] },
   }));
 
+/** A tightly-packed, center-aligned section over the given hues and scale. */
+const scaleSection = (
+  title: string,
+  palettes: ReadonlyArray<NamedPalette>,
+  variant: 'solid' | 'alpha',
+): GallerySection<Swatch> => ({
+  title,
+  gap: 1,
+  align: { rows: 'center', columns: 'center' },
+  columns: steps,
+  rows: paletteRows(palettes, variant),
+});
+
 /**
  * Gallery listing for `@lib/design`'s color palettes. Each section permutes its
  * hues (rows) against the full 1–12 scale (columns), drawing one swatch per
@@ -124,23 +137,8 @@ export default {
     />
   ),
   sections: [
-    {
-      title: 'Color palette',
-      gap: 1,
-      columns: steps,
-      rows: paletteRows(colors, 'solid'),
-    },
-    {
-      title: 'Alpha',
-      gap: 1,
-      columns: steps,
-      rows: paletteRows(colors, 'alpha'),
-    },
-    {
-      title: 'Grayscale',
-      gap: 1,
-      columns: steps,
-      rows: paletteRows(grays, 'solid'),
-    },
+    scaleSection('Color palette', colors, 'solid'),
+    scaleSection('Alpha', colors, 'alpha'),
+    scaleSection('Grayscale', grays, 'solid'),
   ],
 } satisfies GalleryListing<Swatch>;
