@@ -1,4 +1,4 @@
-import type { GalleryListing, GallerySection } from '@lib/gallery';
+import type { GalleryAxis, GalleryListing, GallerySection } from '@lib/gallery';
 import type { ColorPalette } from '@lib/design';
 import { colorScaleIds, type ColorContract } from '@lib/design/color-scheme';
 
@@ -34,12 +34,18 @@ import { tomato } from '@lib/design/palette/tomato';
 import { violet } from '@lib/design/palette/violet';
 import { yellow } from '@lib/design/palette/yellow';
 
+// Pure black/white overlay scales. These ship as raw 12-step alpha values
+// (`step1`–`step12`) rather than registered palettes, so they're imported
+// relatively and reshaped into a `ColorContract` below.
+import * as black from './black';
+import * as white from './white';
+
 import * as css from './colors.gallery.css';
 
 /** A scale step, 1–12. */
 type Step = (typeof colorScaleIds)[number];
 
-/** A hue paired with its display name. */
+/** A hue paired with its sentence-cased display name. */
 interface NamedPalette {
   name: string;
   palette: ColorPalette;
@@ -52,46 +58,52 @@ interface Swatch {
 }
 
 /**
- * The neutral gray scales, broken out into their own section. Importing each
- * palette also registers its `:root` CSS vars, so the swatches resolve.
+ * Every hue in chart order — neutrals first, then the chromatic scales.
+ * Importing each palette also registers its `:root` CSS vars, so the swatches
+ * resolve.
  */
-const grays: ReadonlyArray<NamedPalette> = [
-  { name: 'gray', palette: gray },
-  { name: 'mauve', palette: mauve },
-  { name: 'slate', palette: slate },
-  { name: 'sage', palette: sage },
-  { name: 'olive', palette: olive },
-  { name: 'sand', palette: sand },
+const palettes: ReadonlyArray<NamedPalette> = [
+  { name: 'Gray', palette: gray },
+  { name: 'Mauve', palette: mauve },
+  { name: 'Slate', palette: slate },
+  { name: 'Sage', palette: sage },
+  { name: 'Olive', palette: olive },
+  { name: 'Sand', palette: sand },
+  { name: 'Tomato', palette: tomato },
+  { name: 'Red', palette: red },
+  { name: 'Ruby', palette: ruby },
+  { name: 'Crimson', palette: crimson },
+  { name: 'Pink', palette: pink },
+  { name: 'Plum', palette: plum },
+  { name: 'Purple', palette: purple },
+  { name: 'Violet', palette: violet },
+  { name: 'Iris', palette: iris },
+  { name: 'Indigo', palette: indigo },
+  { name: 'Blue', palette: blue },
+  { name: 'Cyan', palette: cyan },
+  { name: 'Teal', palette: teal },
+  { name: 'Jade', palette: jade },
+  { name: 'Green', palette: green },
+  { name: 'Grass', palette: grass },
+  { name: 'Bronze', palette: bronze },
+  { name: 'Gold', palette: gold },
+  { name: 'Brown', palette: brown },
+  { name: 'Orange', palette: orange },
+  { name: 'Amber', palette: amber },
+  { name: 'Yellow', palette: yellow },
+  { name: 'Lime', palette: lime },
+  { name: 'Mint', palette: mint },
+  { name: 'Sky', palette: sky },
 ];
 
-/** The chromatic hues, in chart order. */
-const colors: ReadonlyArray<NamedPalette> = [
-  { name: 'tomato', palette: tomato },
-  { name: 'red', palette: red },
-  { name: 'ruby', palette: ruby },
-  { name: 'crimson', palette: crimson },
-  { name: 'pink', palette: pink },
-  { name: 'plum', palette: plum },
-  { name: 'purple', palette: purple },
-  { name: 'violet', palette: violet },
-  { name: 'iris', palette: iris },
-  { name: 'indigo', palette: indigo },
-  { name: 'blue', palette: blue },
-  { name: 'cyan', palette: cyan },
-  { name: 'teal', palette: teal },
-  { name: 'jade', palette: jade },
-  { name: 'green', palette: green },
-  { name: 'grass', palette: grass },
-  { name: 'bronze', palette: bronze },
-  { name: 'gold', palette: gold },
-  { name: 'brown', palette: brown },
-  { name: 'orange', palette: orange },
-  { name: 'amber', palette: amber },
-  { name: 'yellow', palette: yellow },
-  { name: 'lime', palette: lime },
-  { name: 'mint', palette: mint },
-  { name: 'sky', palette: sky },
-];
+/** Reshape a raw `step1`–`step12` overlay module into a `ColorContract`. */
+const overlayScale = (raw: Record<`step${Step}`, string>): ColorContract => {
+  const scale = {} as Record<Step, string>;
+  colorScaleIds.forEach((id) => {
+    scale[id] = raw[`step${id}`];
+  });
+  return scale;
+};
 
 /** One step column per scale id. */
 const steps = colorScaleIds.map((step) => ({
@@ -101,35 +113,39 @@ const steps = colorScaleIds.map((step) => ({
 
 /** One row per hue, bound to its solid or alpha scale. */
 const paletteRows = (
-  palettes: ReadonlyArray<NamedPalette>,
   variant: 'solid' | 'alpha',
-) =>
+): ReadonlyArray<GalleryAxis<Swatch>> =>
   palettes.map(({ name, palette }) => ({
     title: name,
     props: { scale: palette[variant] },
   }));
 
-/** A tightly-packed, center-aligned section over the given hues and scale. */
+/** The black/white overlay scales, shown alongside the alpha hues. */
+const overlayRows: ReadonlyArray<GalleryAxis<Swatch>> = [
+  { title: 'White', props: { scale: overlayScale(white) } },
+  { title: 'Black', props: { scale: overlayScale(black) } },
+];
+
+/** A tightly-packed, axis-aligned section over the given hue rows. */
 const scaleSection = (
   title: string,
-  palettes: ReadonlyArray<NamedPalette>,
-  variant: 'solid' | 'alpha',
+  rows: ReadonlyArray<GalleryAxis<Swatch>>,
 ): GallerySection<Swatch> => ({
   title,
   gap: 1,
   align: { rows: 'center', columns: 'center' },
   columns: steps,
-  rows: paletteRows(palettes, variant),
+  rows,
 });
 
 /**
  * Gallery listing for `@lib/design`'s color palettes. Each section permutes its
  * hues (rows) against the full 1–12 scale (columns), drawing one swatch per
- * cell: the chromatic hues solid, the same hues again as alpha, and the neutral
- * grays on their own.
+ * cell: the opaque solid scales, then the translucent alpha scales with the
+ * black/white overlays tacked on the end.
  */
 export default {
-  title: 'Colors',
+  title: 'Color palette',
   render: (props) => (
     <div
       class={css.swatch}
@@ -137,8 +153,7 @@ export default {
     />
   ),
   sections: [
-    scaleSection('Color palette', colors, 'solid'),
-    scaleSection('Alpha', colors, 'alpha'),
-    scaleSection('Grayscale', grays, 'solid'),
+    scaleSection('Solid', paletteRows('solid')),
+    scaleSection('Alpha', [...paletteRows('alpha'), ...overlayRows]),
   ],
 } satisfies GalleryListing<Swatch>;
