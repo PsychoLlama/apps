@@ -4,63 +4,88 @@ import type { GalleryAxis, GalleryListing } from '@lib/gallery';
 import { entrance, exit, fast, moderate, slow, standard } from '@lib/design';
 import * as css from './motion.gallery.css';
 
+/** Duration families, keyed by their x-axis title. */
+const durationGroups = { fast, moderate, slow };
+
+/** Easing families, keyed by their x-axis title. */
+const easingGroups = { standard, entrance, exit };
+
+type DurationFamily = keyof typeof durationGroups;
+type DurationStep = 1 | 2;
+type EasingFamily = keyof typeof easingGroups;
+type EasingWeight = 'productive' | 'expressive';
+
 /**
- * One animated cell. The Durations section supplies `duration` (driving the
- * pulse swatch); the Easings section supplies `easing` (driving the slide
- * thumb). `render` branches on which is present.
+ * One animated cell, located by its grid coordinates rather than a resolved
+ * token. The Durations section crosses a {@link DurationFamily} column with a
+ * {@link DurationStep} row; Easings crosses an {@link EasingFamily} column with
+ * an {@link EasingWeight} row. `render` reads whichever pair is present and looks
+ * the token up — the value is a 2D lookup, so it can't ride in on a single axis.
  */
 interface Motion {
-  /** Animation duration token for the pulse swatch. */
-  duration: string;
-  /** Easing curve token for the slide thumb. */
-  easing: string;
+  /** Durations column: the duration family. */
+  durationFamily: DurationFamily;
+  /** Durations row: the scale step within the family. */
+  step: DurationStep;
+  /** Easings column: the easing family. */
+  easingFamily: EasingFamily;
+  /** Easings row: productive vs. expressive weight. */
+  weight: EasingWeight;
 }
 
-/** One column per duration token, fastest to slowest. */
-const durations: ReadonlyArray<GalleryAxis<Motion>> = [
-  { title: 'fast[1]', props: { duration: fast[1] } },
-  { title: 'fast[2]', props: { duration: fast[2] } },
-  { title: 'moderate[1]', props: { duration: moderate[1] } },
-  { title: 'moderate[2]', props: { duration: moderate[2] } },
-  { title: 'slow[1]', props: { duration: slow[1] } },
-  { title: 'slow[2]', props: { duration: slow[2] } },
-];
+/** Duration families on the x-axis, fastest to slowest. */
+const durationFamilies: ReadonlyArray<GalleryAxis<Motion>> = (
+  Object.keys(durationGroups) as ReadonlyArray<DurationFamily>
+).map((family) => ({ title: family, props: { durationFamily: family } }));
 
-/** One column per easing curve, grouped standard → entrance → exit. */
-const easings: ReadonlyArray<GalleryAxis<Motion>> = [
-  { title: 'standard.productive', props: { easing: standard.productive } },
-  { title: 'standard.expressive', props: { easing: standard.expressive } },
-  { title: 'entrance.productive', props: { easing: entrance.productive } },
-  { title: 'entrance.expressive', props: { easing: entrance.expressive } },
-  { title: 'exit.productive', props: { easing: exit.productive } },
-  { title: 'exit.expressive', props: { easing: exit.expressive } },
-];
+/** Duration steps on the y-axis. */
+const durationSteps: ReadonlyArray<GalleryAxis<Motion>> = (
+  [1, 2] as ReadonlyArray<DurationStep>
+).map((step) => ({ title: String(step), props: { step } }));
+
+/** Easing families on the x-axis, grouped standard → entrance → exit. */
+const easingFamilies: ReadonlyArray<GalleryAxis<Motion>> = (
+  Object.keys(easingGroups) as ReadonlyArray<EasingFamily>
+).map((family) => ({ title: family, props: { easingFamily: family } }));
+
+/** Easing weights on the y-axis. */
+const easingWeights: ReadonlyArray<GalleryAxis<Motion>> = (
+  ['productive', 'expressive'] as ReadonlyArray<EasingWeight>
+).map((weight) => ({ title: weight, props: { weight } }));
 
 /** A long, fixed slide so the easing curve — not the speed — reads. */
 const easeDuration = `calc(${slow[2]} * 2)`;
 
 /**
- * Gallery listing for `@lib/design`'s motion tokens. Two x-axis views: durations
- * pulse a swatch at increasing speeds, easings slide a thumb along each curve at
- * a shared, deliberate pace.
+ * Gallery listing for `@lib/design`'s motion tokens. Two views, each a grid of a
+ * family (x-axis) against its scale (y-axis): durations pulse a swatch at
+ * increasing speeds, easings slide a thumb along each curve at a shared,
+ * deliberate pace.
  */
 export default {
   title: 'Motion',
   render: (props) => (
     <Show
-      when={props.easing}
+      when={props.easingFamily}
       fallback={
         <div
           class={css.swatch}
-          style={assignInlineVars({ [css.durationVar]: props.duration })}
+          style={assignInlineVars({
+            [css.durationVar]:
+              props.durationFamily && props.step
+                ? durationGroups[props.durationFamily][props.step]
+                : undefined,
+          })}
         />
       }
     >
-      {(easing) => (
+      {(family) => (
         <div
           class={css.track}
           style={assignInlineVars({
-            [css.easingVar]: easing(),
+            [css.easingVar]: props.weight
+              ? easingGroups[family()][props.weight]
+              : undefined,
             [css.durationVar]: easeDuration,
           })}
         >
@@ -70,7 +95,17 @@ export default {
     </Show>
   ),
   sections: [
-    { title: 'Durations', align: { columns: 'center' }, columns: durations },
-    { title: 'Easings', columns: easings },
+    {
+      title: 'Durations',
+      align: { rows: 'center', columns: 'center' },
+      columns: durationFamilies,
+      rows: durationSteps,
+    },
+    {
+      title: 'Easings',
+      align: { rows: 'center', columns: 'center' },
+      columns: easingFamilies,
+      rows: easingWeights,
+    },
   ],
 } satisfies GalleryListing<Motion>;
