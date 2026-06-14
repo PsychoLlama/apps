@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Component library.",
+  "description": "Shared component library.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts"

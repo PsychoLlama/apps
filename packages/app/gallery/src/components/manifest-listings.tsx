@@ -1,5 +1,5 @@
 import { For, Show } from 'solid-js';
-import { Flex, Text } from '@lib/ui';
+import { Callout, Flex } from '@lib/ui';
 import type { GalleryListing } from '@dev/gallery';
 import { ListingView } from './listing-view';
 
@@ -15,9 +15,11 @@ export const ManifestListings = (props: { listings: Listing[] }) => (
   <Show
     when={props.listings.length > 0}
     fallback={
-      <Text as="p" size={2} color="lowContrast" selectable={false}>
-        No listings
-      </Text>
+      <Flex as="div" align="start">
+        <Callout color="neutral" size={1}>
+          This gallery's empty for now.
+        </Callout>
+      </Flex>
     }
   >
     <Flex as="div" direction="column" gap={8}>
