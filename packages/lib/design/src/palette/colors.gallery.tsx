@@ -1,6 +1,6 @@
 import type { GalleryListing } from '@lib/gallery';
 import type { ColorPalette } from '@lib/design';
-import { colorScaleIds } from '@lib/design/color-scheme';
+import { colorScaleIds, type ColorContract } from '@lib/design/color-scheme';
 
 import { amber } from '@lib/design/palette/amber';
 import { blue } from '@lib/design/palette/blue';
@@ -39,23 +39,33 @@ import * as css from './colors.gallery.css';
 /** A scale step, 1–12. */
 type Step = (typeof colorScaleIds)[number];
 
-/** One chart cell: a single hue's solid color at a single scale step. */
-interface Swatch {
+/** A hue paired with its display name. */
+interface NamedPalette {
+  name: string;
   palette: ColorPalette;
+}
+
+/** One chart cell: a single scale's color at a single step. */
+interface Swatch {
+  scale: ColorContract;
   step: Step;
 }
 
 /**
- * Every solid hue, in chart order. Importing each palette also registers its
- * `:root` CSS vars, so the swatches resolve.
+ * The neutral gray scales, broken out into their own section. Importing each
+ * palette also registers its `:root` CSS vars, so the swatches resolve.
  */
-const hues: ReadonlyArray<{ name: string; palette: ColorPalette }> = [
+const grays: ReadonlyArray<NamedPalette> = [
   { name: 'gray', palette: gray },
   { name: 'mauve', palette: mauve },
   { name: 'slate', palette: slate },
   { name: 'sage', palette: sage },
   { name: 'olive', palette: olive },
   { name: 'sand', palette: sand },
+];
+
+/** The chromatic hues, in chart order. */
+const colors: ReadonlyArray<NamedPalette> = [
   { name: 'tomato', palette: tomato },
   { name: 'red', palette: red },
   { name: 'ruby', palette: ruby },
@@ -83,31 +93,54 @@ const hues: ReadonlyArray<{ name: string; palette: ColorPalette }> = [
   { name: 'sky', palette: sky },
 ];
 
+/** One step column per scale id. */
+const steps = colorScaleIds.map((step) => ({
+  title: String(step),
+  props: { step },
+}));
+
+/** One row per hue, bound to its solid or alpha scale. */
+const paletteRows = (
+  palettes: ReadonlyArray<NamedPalette>,
+  variant: 'solid' | 'alpha',
+) =>
+  palettes.map(({ name, palette }) => ({
+    title: name,
+    props: { scale: palette[variant] },
+  }));
+
 /**
- * Gallery listing for `@lib/design`'s color palettes. The grid permutes every
- * hue (rows) against the full 1–12 scale (columns), drawing one solid swatch per
- * cell. Alpha variants are omitted.
+ * Gallery listing for `@lib/design`'s color palettes. Each section permutes its
+ * hues (rows) against the full 1–12 scale (columns), drawing one swatch per
+ * cell: the chromatic hues solid, the same hues again as alpha, and the neutral
+ * grays on their own.
  */
 export default {
   title: 'Colors',
   render: (props) => (
     <div
       class={css.swatch}
-      style={{ 'background-color': props.palette!.solid[props.step!] }}
+      style={{ '--swatch-color': props.scale![props.step!] }}
     />
   ),
   sections: [
     {
-      title: 'Solid',
+      title: 'Color palette',
       gap: 1,
-      columns: colorScaleIds.map((step) => ({
-        title: String(step),
-        props: { step },
-      })),
-      rows: hues.map((hue) => ({
-        title: hue.name,
-        props: { palette: hue.palette },
-      })),
+      columns: steps,
+      rows: paletteRows(colors, 'solid'),
+    },
+    {
+      title: 'Alpha',
+      gap: 1,
+      columns: steps,
+      rows: paletteRows(colors, 'alpha'),
+    },
+    {
+      title: 'Grayscale',
+      gap: 1,
+      columns: steps,
+      rows: paletteRows(grays, 'solid'),
     },
   ],
 } satisfies GalleryListing<Swatch>;
