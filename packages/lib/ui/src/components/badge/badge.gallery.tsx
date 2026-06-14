@@ -7,16 +7,16 @@ import Badge, { type BadgeProps } from './badge';
  */
 export default {
   title: 'Badge',
-  render: (props) => <Badge {...props} />,
+  render: (props) => <Badge {...props}>Active</Badge>,
   sections: [
     {
       title: 'Theme colors',
       columns: [
-        { title: 'None', props: { radius: 'none', children: 'none' } },
-        { title: 'Small', props: { radius: 'small', children: 'small' } },
-        { title: 'Medium', props: { radius: 'medium', children: 'medium' } },
-        { title: 'Large', props: { radius: 'large', children: 'large' } },
-        { title: 'Full', props: { radius: 'full', children: 'full' } },
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
       ],
       rows: [
         { title: 'Solid', props: { variant: 'solid' } },
@@ -28,11 +28,11 @@ export default {
     {
       title: 'Color',
       columns: [
-        { title: 'Accent', props: { color: 'accent', children: 'accent' } },
-        { title: 'Neutral', props: { color: 'neutral', children: 'neutral' } },
-        { title: 'Danger', props: { color: 'danger', children: 'danger' } },
-        { title: 'Warning', props: { color: 'warning', children: 'warning' } },
-        { title: 'Success', props: { color: 'success', children: 'success' } },
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+        { title: 'Danger', props: { color: 'danger' } },
+        { title: 'Warning', props: { color: 'warning' } },
+        { title: 'Success', props: { color: 'success' } },
       ],
     },
     {
@@ -40,27 +40,19 @@ export default {
       columns: [
         {
           title: 'Solid',
-          props: { variant: 'solid', highContrast: true, children: 'solid' },
+          props: { variant: 'solid', highContrast: true },
         },
         {
           title: 'Soft',
-          props: { variant: 'soft', highContrast: true, children: 'soft' },
+          props: { variant: 'soft', highContrast: true },
         },
         {
           title: 'Surface',
-          props: {
-            variant: 'surface',
-            highContrast: true,
-            children: 'surface',
-          },
+          props: { variant: 'surface', highContrast: true },
         },
         {
           title: 'Outline',
-          props: {
-            variant: 'outline',
-            highContrast: true,
-            children: 'outline',
-          },
+          props: { variant: 'outline', highContrast: true },
         },
       ],
     },

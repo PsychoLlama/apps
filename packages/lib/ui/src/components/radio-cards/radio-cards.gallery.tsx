@@ -9,14 +9,11 @@ import {
 const OPTIONS = [1, 2] as const;
 
 /**
- * Each gallery cell echoes the demoed axis value in its card labels via the
- * `label` prefix when the value isn't already obvious from the visual
- * treatment. `name` keeps each group's radios isolated. The second card is
- * preselected so the checked + indicator color shows up directly.
+ * `name` keeps each group's radios isolated. The second card is preselected so
+ * the checked + indicator color shows up directly.
  */
 type DemoProps = Partial<RadioCardsRootProps> & {
   name?: string;
-  label?: string;
 };
 
 const Demo = (props: { name: string } & DemoProps) => {
@@ -39,7 +36,7 @@ const Demo = (props: { name: string } & DemoProps) => {
             value={String(option)}
             testId={`${props.name}-${option}`}
           >
-            {props.label ? `${props.label} ${option}` : option}
+            {option}
           </RadioCardsItem>
         )}
       </For>
@@ -65,19 +62,11 @@ export default {
       columns: [
         {
           title: 'Surface',
-          props: {
-            variant: 'surface',
-            label: 'surface',
-            name: 'variant-surface',
-          },
+          props: { variant: 'surface', name: 'variant-surface' },
         },
         {
           title: 'Classic',
-          props: {
-            variant: 'classic',
-            label: 'classic',
-            name: 'variant-classic',
-          },
+          props: { variant: 'classic', name: 'variant-classic' },
         },
       ],
       rows: [
@@ -90,23 +79,23 @@ export default {
       rows: [
         {
           title: 'Accent',
-          props: { color: 'accent', label: 'accent', name: 'color-accent' },
+          props: { color: 'accent', name: 'color-accent' },
         },
         {
           title: 'Neutral',
-          props: { color: 'neutral', label: 'neutral', name: 'color-neutral' },
+          props: { color: 'neutral', name: 'color-neutral' },
         },
         {
           title: 'Danger',
-          props: { color: 'danger', label: 'danger', name: 'color-danger' },
+          props: { color: 'danger', name: 'color-danger' },
         },
         {
           title: 'Warning',
-          props: { color: 'warning', label: 'warning', name: 'color-warning' },
+          props: { color: 'warning', name: 'color-warning' },
         },
         {
           title: 'Success',
-          props: { color: 'success', label: 'success', name: 'color-success' },
+          props: { color: 'success', name: 'color-success' },
         },
       ],
     },

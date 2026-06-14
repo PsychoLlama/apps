@@ -17,37 +17,35 @@ const Demo = (props: LinkProps) => (
  */
 export default {
   title: 'Link',
-  render: (props) => <Demo href="#" testId="link" {...props} />,
+  render: (props) => (
+    <Demo href="#" testId="link" {...props}>
+      Learn more
+    </Demo>
+  ),
   sections: [
     {
       title: 'Underline',
       columns: [
-        { title: 'Auto', props: { underline: 'auto', children: 'auto' } },
-        {
-          title: 'Always',
-          props: { underline: 'always', children: 'always' },
-        },
-        { title: 'Hover', props: { underline: 'hover', children: 'hover' } },
-        { title: 'None', props: { underline: 'none', children: 'none' } },
+        { title: 'Auto', props: { underline: 'auto' } },
+        { title: 'Always', props: { underline: 'always' } },
+        { title: 'Hover', props: { underline: 'hover' } },
+        { title: 'None', props: { underline: 'none' } },
       ],
     },
     {
       title: 'Color',
       columns: [
-        { title: 'Accent', props: { color: 'accent', children: 'accent' } },
-        { title: 'Neutral', props: { color: 'neutral', children: 'neutral' } },
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
       ],
     },
     {
       title: 'Weight',
       columns: [
-        { title: 'Light', props: { weight: 'light', children: 'light' } },
-        {
-          title: 'Regular',
-          props: { weight: 'regular', children: 'regular' },
-        },
-        { title: 'Medium', props: { weight: 'medium', children: 'medium' } },
-        { title: 'Bold', props: { weight: 'bold', children: 'bold' } },
+        { title: 'Light', props: { weight: 'light' } },
+        { title: 'Regular', props: { weight: 'regular' } },
+        { title: 'Medium', props: { weight: 'medium' } },
+        { title: 'Bold', props: { weight: 'bold' } },
       ],
     },
     {
@@ -55,11 +53,11 @@ export default {
       columns: [
         {
           title: 'Accent',
-          props: { color: 'accent', highContrast: true, children: 'accent' },
+          props: { color: 'accent', highContrast: true },
         },
         {
           title: 'Neutral',
-          props: { color: 'neutral', highContrast: true, children: 'neutral' },
+          props: { color: 'neutral', highContrast: true },
         },
       ],
     },

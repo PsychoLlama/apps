@@ -7,16 +7,13 @@ import Kbd, { type KbdProps } from './kbd';
  */
 export default {
   title: 'Kbd',
-  render: (props) => <Kbd {...props} />,
+  render: (props) => <Kbd {...props}>Esc</Kbd>,
   sections: [
     {
       title: 'Variant',
       columns: [
-        {
-          title: 'Classic',
-          props: { variant: 'classic', children: 'classic' },
-        },
-        { title: 'Soft', props: { variant: 'soft', children: 'soft' } },
+        { title: 'Classic', props: { variant: 'classic' } },
+        { title: 'Soft', props: { variant: 'soft' } },
       ],
     },
   ],

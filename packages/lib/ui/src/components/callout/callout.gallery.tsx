@@ -2,6 +2,8 @@ import type { GalleryListing } from '@dev/gallery';
 import Callout, { type CalloutProps } from './callout';
 import Text from '../text/text';
 
+const SAMPLE = 'Your changes have been saved.';
+
 const Body = (props: { label: string }) => (
   <Text as="p" size={2} selectable>
     {props.label}
@@ -14,29 +16,18 @@ const Body = (props: { label: string }) => (
  */
 export default {
   title: 'Callout',
-  render: (props) => <Callout {...props} />,
+  render: (props) => (
+    <Callout {...props}>
+      <Body label={SAMPLE} />
+    </Callout>
+  ),
   sections: [
     {
       title: 'Theme colors',
       columns: [
-        {
-          title: 'Soft',
-          props: { variant: 'soft', children: <Body label={`soft callout`} /> },
-        },
-        {
-          title: 'Surface',
-          props: {
-            variant: 'surface',
-            children: <Body label={`surface callout`} />,
-          },
-        },
-        {
-          title: 'Outline',
-          props: {
-            variant: 'outline',
-            children: <Body label={`outline callout`} />,
-          },
-        },
+        { title: 'Soft', props: { variant: 'soft' } },
+        { title: 'Surface', props: { variant: 'surface' } },
+        { title: 'Outline', props: { variant: 'outline' } },
       ],
       rows: [
         { title: 'Default', props: {} },
@@ -46,41 +37,11 @@ export default {
     {
       title: 'Color',
       columns: [
-        {
-          title: 'Accent',
-          props: {
-            color: 'accent',
-            children: <Body label={`accent callout`} />,
-          },
-        },
-        {
-          title: 'Neutral',
-          props: {
-            color: 'neutral',
-            children: <Body label={`neutral callout`} />,
-          },
-        },
-        {
-          title: 'Danger',
-          props: {
-            color: 'danger',
-            children: <Body label={`danger callout`} />,
-          },
-        },
-        {
-          title: 'Warning',
-          props: {
-            color: 'warning',
-            children: <Body label={`warning callout`} />,
-          },
-        },
-        {
-          title: 'Success',
-          props: {
-            color: 'success',
-            children: <Body label={`success callout`} />,
-          },
-        },
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
+        { title: 'Danger', props: { color: 'danger' } },
+        { title: 'Warning', props: { color: 'warning' } },
+        { title: 'Success', props: { color: 'success' } },
       ],
     },
   ],
