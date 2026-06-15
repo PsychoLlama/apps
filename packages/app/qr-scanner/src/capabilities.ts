@@ -83,6 +83,31 @@ export const requestCamera = (): Promise<MediaStream> => {
 };
 
 /**
+ * Whether the user has already granted camera permission, via the
+ * Permissions API. Lets the scanner skip the landing pitch and open the
+ * feed straight away on a return visit where the grant still stands.
+ *
+ * Defensive on every axis, since this only ever *upgrades* the experience:
+ * the Permissions API is absent on some engines, and even where present,
+ * querying the `camera` permission throws on Firefox (which doesn't expose
+ * that name). Any absence, rejection, or non-`granted` state resolves to
+ * `false` — we fall back to the manual landing button rather than presume
+ * a grant.
+ */
+export const cameraPermissionGranted = async (): Promise<boolean> => {
+  if (typeof navigator === 'undefined' || !navigator.permissions?.query) {
+    return false;
+  }
+
+  try {
+    const status = await navigator.permissions.query({ name: 'camera' });
+    return status.state === 'granted';
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Open a camera session, guarded against supersession. A permission
  * prompt can stay open for seconds — long enough for the user to
  * navigate away — and `getUserMedia` can't be cancelled. So we snapshot

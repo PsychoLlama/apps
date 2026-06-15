@@ -13,6 +13,7 @@ import {
   stopCameraEffect,
   toggleTorchEffect,
 } from './bindings';
+import { cameraPermissionGranted } from './capabilities';
 import { scanner } from './store';
 
 /**
@@ -32,7 +33,18 @@ export const QrScanner = () => {
   // Preload the decoder worker + wasm across the whole scanner page so
   // the module is warm by the time the camera goes live; it outlives
   // individual camera sessions and is torn down only on unmount.
-  onMount(() => void startDecoding());
+  onMount(() => {
+    void startDecoding();
+
+    // On a return visit where camera permission already stands, skip the
+    // landing pitch and open the feed straight away. The probe resolves
+    // async, so re-check `idle` before starting — the user may have tapped
+    // "Start scanning" (or hit a result/error) in the interim, and we must
+    // not start a second request over it.
+    void cameraPermissionGranted().then((granted) => {
+      if (granted && scanner.status === 'idle') void startCamera();
+    });
+  });
 
   // Tear the whole page down in one dispatch on unmount: stop a live
   // stream, supersede a still-pending request, and terminate the decoder
