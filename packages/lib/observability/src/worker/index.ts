@@ -22,25 +22,20 @@ const transport = new MessagePortTransport<RpcMessage, RpcMessage>(self);
 
 const rpc = RPC.from<WorkerApi, HostApi, SendOptions>(transport, {});
 
-// A transform pair bridges the host's writes to this worker: the host's JSON
-// backend writes UTF-8 NDJSON into `writable`, and the bytes surface on
-// `readable` here. `writable` is transferable, so it's handed over by reference
-// (and neutered locally) rather than copied.
-const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+// The sink for the host's writes: its `write` is the consumer, called once per
+// chunk as the host's JSON backend streams UTF-8 NDJSON in. A `WritableStream`
+// is transferable, so it's handed to the host by reference (and neutered
+// locally) rather than copied. Stub: report each chunk's byte length to prove
+// the bytes flow end to end. OPFS persistence replaces this later.
+const sink = new WritableStream<Uint8Array>({
+  write(chunk) {
+    // eslint-disable-next-line no-console -- stub proving the byte stream flows; OPFS persistence lands later.
+    console.log('OPFS chunk:', chunk.byteLength);
+  },
+});
 
 // Announce as soon as the worker boots, handing the host the writable end to
 // attach its sink to — carried as the `ready` payload and transferred in the
 // same send. Anything logged before the host wires this up is dropped (see the
 // backend); buffering is later work.
-rpc.notify('ready', writable, { transfer: [writable] });
-
-// Drain the chunks the host writes. Stub: report each chunk's byte length to
-// prove the bytes flow end to end. OPFS persistence replaces this later.
-const drainLogChunks = async (): Promise<void> => {
-  for await (const chunk of readable) {
-    // eslint-disable-next-line no-console -- stub proving the byte stream flows; OPFS persistence lands later.
-    console.log('OPFS chunk:', chunk.byteLength);
-  }
-};
-
-void drainLogChunks();
+rpc.notify('ready', sink, { transfer: [sink] });

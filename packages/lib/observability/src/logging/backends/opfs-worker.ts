@@ -48,13 +48,15 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
       // it just logs their size — OPFS persistence lands later).
       //
       // The transferred stream is a cross-realm writable with a high-water mark
-      // fixed at 1: each write drops its `desiredSize` to 0 until the worker
-      // acks across the thread boundary, and the JSON backend skips any log
-      // written while `desiredSize <= 0`. Writing straight to it would lose all
-      // but the first log of a burst (e.g. the flurry at startup). So interpose
-      // a host-local buffer with deep headroom for the backend to write into,
-      // and pipe it to the worker — `pipeTo` applies backpressure by queuing,
-      // never dropping.
+      // fixed at 1 by spec (`SetUpCrossRealmTransformWritable`), regardless of
+      // the strategy the worker set on its end: each write drops `desiredSize`
+      // to 0 until the worker acks across the thread boundary, and the JSON
+      // backend skips any log written while `desiredSize <= 0`. Writing straight
+      // to it loses all but the first log of a burst (e.g. the startup flurry) —
+      // verified empirically. The watermark can't be pushed across the transfer,
+      // so interpose a host-local buffer with deep headroom for the backend to
+      // write into, and pipe it to the worker — `pipeTo` applies backpressure by
+      // queuing, never dropping.
       const buffer = new TransformStream<Uint8Array, Uint8Array>(
         undefined,
         new CountQueuingStrategy({ highWaterMark: 1024 }),
