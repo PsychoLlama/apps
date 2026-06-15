@@ -66,13 +66,24 @@ export default {
           title: 'Right',
           props: {
             left: undefined,
-            right: <ClearButton />,
+            // Getter, not an eager `<ClearButton />`: the listing object is
+            // built at module load, outside any reactive root. Deferring
+            // creation until the prop is read lets it happen inside
+            // `TextField`'s owner, so the slot's computations get disposed.
+            get right() {
+              return <ClearButton />;
+            },
             placeholder: 'Right',
           },
         },
         {
           title: 'Both',
-          props: { right: <ClearButton />, placeholder: 'Both' },
+          props: {
+            get right() {
+              return <ClearButton />;
+            },
+            placeholder: 'Both',
+          },
         },
       ],
     },
