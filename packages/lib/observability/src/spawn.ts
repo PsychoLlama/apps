@@ -18,5 +18,7 @@ export const spawnObservabilityWorker = (): Worker => {
     );
   }
 
-  return new ObservabilityWorker();
+  // `name` surfaces in DevTools' thread list and is readable inside the
+  // worker as `self.name` — a stable label beats the anonymous default.
+  return new ObservabilityWorker({ name: 'Observability' });
 };
