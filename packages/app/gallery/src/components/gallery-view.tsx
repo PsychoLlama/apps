@@ -27,14 +27,7 @@ export const GalleryView = (props: {
 }) => (
   <>
     <SiteHeader trail={props.trail} actions={<AppearanceToggle />} />
-    <Flex
-      as="article"
-      direction="column"
-      gap={6}
-      px={5}
-      py={5}
-      class={css.content}
-    >
+    <Flex as="article" direction="column" gap={6} class={css.content}>
       {props.children}
     </Flex>
   </>

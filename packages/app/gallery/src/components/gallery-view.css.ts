@@ -1,5 +1,15 @@
-import { style } from '@vanilla-extract/css';
-import { background } from '@lib/design';
+import { createVar, style } from '@vanilla-extract/css';
+import { background, space } from '@lib/design';
+
+/**
+ * The inline inset every view holds off the viewport edges. Lives as a var so a
+ * horizontally scrolling listing can break flush to the edge and re-pad itself
+ * by the exact same amount — see `section-grid.css.ts`. Keeping it a single
+ * definition means the breakout can never drift wider than the inset (which
+ * would overflow `content` and force the page-level scroll this layout exists
+ * to prevent).
+ */
+export const inset = createVar();
 
 /**
  * The gallery `<main>` frame, pinned to the viewport via `inset: 0` so it
@@ -37,10 +47,20 @@ export const layout = style({
  * free; a transparent inner scroller doesn't — the compositor can't cache and
  * translate its tiles, so every frame repaints on the main thread and long
  * views scroll with visible jank. An opaque surface restores the cheap path.
+ *
+ * `overflow-x` is pinned to `hidden` rather than left to default: a non-`visible`
+ * `overflow-y` promotes the other axis to `auto`, so the page would sprout a
+ * horizontal scrollbar the moment anything overflowed. Nothing here ever scrolls
+ * horizontally by design — wide listings keep their own x-scroll — so the axis
+ * is clamped. The `inset` padding holds content off the edges; a horizontally
+ * scrolling listing breaks back out to them (see `section-grid.css.ts`).
  */
 export const content = style({
+  vars: { [inset]: space[5] },
   flex: '1 1 auto',
   minHeight: 0,
   overflowY: 'auto',
+  overflowX: 'hidden',
+  padding: inset,
   backgroundColor: background.page,
 });
