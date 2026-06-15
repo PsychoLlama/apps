@@ -32,7 +32,7 @@
     "@lib/ui": "workspace:*",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
-    "@solidjs/start": "2.0.0-alpha.2",
+    "@solidjs/start": "2.0.0-alpha.3",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/dynamic": "catalog:",
     "solid-js": "catalog:",
@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@dev/build": "workspace:*",
-    "@solidjs/vite-plugin-nitro-2": "^0.1.0",
+    "@solidjs/vite-plugin-nitro-2": "0.3.0",
     "@vanilla-extract/vite-plugin": "^5.2.2",
     "typescript": "catalog:",
     "unplugin-icons": "catalog:",

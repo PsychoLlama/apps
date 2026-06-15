@@ -5,6 +5,7 @@ node_modules/
 .direnv
 .nitro
 .output
+.solid-start
 .wrangler
 dist
 app.config.timestamp_*.js
