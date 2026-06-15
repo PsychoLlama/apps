@@ -1,5 +1,6 @@
 import { style, styleVariants } from '@vanilla-extract/css';
-import { space } from '@lib/design';
+import { background, space } from '@lib/design';
+import { inset } from './gallery-view.css';
 
 /**
  * Base grid for a permutation view. Padded on the block axis so cells clear the
@@ -9,11 +10,26 @@ import { space } from '@lib/design';
  * Scrolls on its own x-axis: the `max-content` tracks would otherwise overflow a
  * constrained viewport and scroll the whole document, so the grid keeps the
  * overflow to itself and the page stays put.
+ *
+ * Breaks flush to the viewport edges: the view (`content`) holds its children off
+ * the edges by `inset`, which on a narrow screen reads as an invisible cutoff at
+ * both ends of this scroller. A negative inline margin pulls the scrollport back
+ * out to the edges, and an equal inline padding re-pads the cells inside it — so
+ * the gutter moves *into* the scroll content where it belongs and the scroller
+ * runs edge to edge. The margin and padding both read the same `inset` var, so
+ * the breakout can never exceed the inset and overflow `content` (which clips x).
+ *
+ * The `background` makes this scrollport opaque for the same reason `content`
+ * paints one — an opaque inner scroller gets the cheap compositor-driven scroll
+ * path; a transparent one repaints on the main thread and janks.
  */
 export const grid = style({
   justifyContent: 'start',
   paddingBlock: space[5],
+  paddingInline: inset,
+  marginInline: `calc(${inset} * -1)`,
   overflowX: 'auto',
+  backgroundColor: background.page,
 });
 
 /**
