@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@dev/build": "workspace:*",
-    "@solidjs/vite-plugin-nitro-2": "^0.1.0",
+    "@solidjs/vite-plugin-nitro-2": "0.3.0",
     "@vanilla-extract/vite-plugin": "^5.2.2",
     "typescript": "catalog:",
     "unplugin-icons": "catalog:",
