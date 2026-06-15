@@ -1,7 +1,20 @@
-import { createLogger, toError } from '@lib/observability';
 import type { Transport, Unsubscribe } from './transport/interface.ts';
 
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+/**
+ * Normalize an unknown thrown value to an `Error`. A `catch` binding is typed
+ * `unknown` because anything can be thrown, but the wire envelope and a
+ * rejected request both want a real `Error` (for its `.message`). Existing
+ * errors pass through untouched; anything else is wrapped, keeping the
+ * original value on `cause`.
+ *
+ * Kept local rather than pulled from `@lib/observability`: messaging is the
+ * lower layer, and `@lib/observability`'s worker backend talks over this RPC
+ * — depending on it here would close that into a cycle.
+ */
+const toError = (thrown: unknown): Error =>
+  thrown instanceof Error
+    ? thrown
+    : new Error(String(thrown), { cause: thrown });
 
 /**
  * A single RPC procedure. Takes at most one `params` argument and returns
@@ -425,7 +438,6 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
   async #handleRequest(
     message: RpcMessage & { type: 'request' },
   ): Promise<void> {
-    logger.debug('Inbound request', { method: message.method, id: message.id });
     const handler = findHandler(this.#requestHandlers, message.method);
     if (!handler) {
       this.#send({
@@ -454,18 +466,10 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
         options,
       );
     } catch (thrown) {
+      // The handler failed — whether deliberately (an RpcError) or from an
+      // internal bug. Either way the caller's `request` promise rejects with
+      // the message below, so the failure surfaces on their end.
       const error = toError(thrown);
-
-      // An RpcError is a deliberate, expected failure. Anything else is an
-      // internal bug in the handler — surface it to observability so it
-      // isn't lost behind the wire.
-      if (!(error instanceof RpcError)) {
-        logger.error('Request handler threw', {
-          method: message.method,
-          error,
-        });
-      }
-
       this.#send({
         type: 'response',
         id: message.id,
@@ -476,24 +480,19 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
   }
 
   async #handleEvent(message: RpcMessage & { type: 'event' }): Promise<void> {
-    logger.debug('Inbound event', { method: message.method });
     const handler = findHandler(this.#eventHandlers, message.method);
-    if (!handler) {
-      // Fire-and-forget has no response to report back on, so a missing
-      // handler is silent on the wire — warn so it isn't silent everywhere.
-      logger.warn('Unhandled event', { method: message.method });
-      return;
-    }
+    // Fire-and-forget has no response to report back on, so an unknown event
+    // is simply ignored.
+    if (!handler) return;
     try {
       // Events are fire-and-forget — no caller to reject. Await so a sync
-      // throw or a rejected promise is contained and logged here instead of
-      // escaping as an unhandled rejection.
+      // throw or a rejected promise is contained here rather than escaping as
+      // an unhandled rejection; with no caller to surface it to, a failing
+      // handler is otherwise on its own to report.
       await handler(message.params as never);
-    } catch (thrown) {
-      logger.error('Event handler threw', {
-        method: message.method,
-        error: toError(thrown),
-      });
+    } catch {
+      // Swallowed: nothing waits on an event, so there's nowhere to route the
+      // error.
     }
   }
 
@@ -501,8 +500,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
     const pending = this.#pending.get(message.id);
     if (!pending) {
       // No request awaits this id — a duplicate, a late response after the
-      // caller gave up, or a misbehaving peer. Surface it.
-      logger.warn('Unhandled response', { id: message.id });
+      // caller gave up, or a misbehaving peer. Nothing to resolve, so drop it.
       return;
     }
     this.#pending.delete(message.id);

@@ -431,11 +431,7 @@ importers:
         specifier: ^1.9.13
         version: 1.9.13
 
-  packages/lib/messaging:
-    dependencies:
-      '@lib/observability':
-        specifier: workspace:*
-        version: link:../observability
+  packages/lib/messaging: {}
 
   packages/lib/observability:
     dependencies:
@@ -457,6 +453,9 @@ importers:
       '@holz/stream-backend':
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+      '@lib/messaging':
+        specifier: workspace:*
+        version: link:../messaging
 
   packages/lib/shell:
     dependencies:

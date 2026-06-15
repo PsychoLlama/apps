@@ -22,6 +22,7 @@
     "@holz/core": "0.8.3-rc.155",
     "@holz/env-filter": "0.8.3-rc.155",
     "@holz/log-collector": "catalog:",
-    "@holz/stream-backend": "0.8.3-rc.155"
+    "@holz/stream-backend": "0.8.3-rc.155",
+    "@lib/messaging": "workspace:*"
   }
 }
