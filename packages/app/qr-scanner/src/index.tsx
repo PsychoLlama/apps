@@ -9,10 +9,11 @@ import { ScanResult } from './components/scan-result';
 import {
   shutdownScannerEffect,
   startCameraEffect,
-  startDecodingEffect,
+  startDecoderEffect,
   stopCameraEffect,
   toggleTorchEffect,
 } from './bindings';
+import { cameraPermissionGranted } from './capabilities';
 import { scanner } from './store';
 
 /**
@@ -26,19 +27,43 @@ export const QrScanner = () => {
   const startCamera = useEffect(startCameraEffect);
   const stopCamera = useEffect(stopCameraEffect);
   const toggleTorch = useEffect(toggleTorchEffect);
-  const startDecoding = useEffect(startDecodingEffect);
+  const createDecoder = useEffect(startDecoderEffect);
   const shutdown = useEffect(shutdownScannerEffect);
+
+  // Latched on unmount so the async permission probe below can tell the
+  // page is gone and skip auto-starting the camera under a torn-down view.
+  let cancelled = false;
 
   // Preload the decoder worker + wasm across the whole scanner page so
   // the module is warm by the time the camera goes live; it outlives
   // individual camera sessions and is torn down only on unmount.
-  onMount(() => void startDecoding());
+  onMount(() => {
+    void createDecoder();
+
+    // On a return visit where camera permission already stands, skip the
+    // landing pitch and open the feed straight away. The probe resolves
+    // async, so latch onto this mount and the session's current generation
+    // and bail if either moved: a late resolve must not reopen the camera
+    // under an unmounted page, nor start a request over a session the user
+    // has since driven. Every request start bumps the generation (and a
+    // scan, cancel, or error is always downstream of one), so a still-
+    // matching generation means an untouched fresh mount.
+    const generation = scanner.generation;
+    void cameraPermissionGranted().then((granted) => {
+      if (granted && !cancelled && scanner.generation === generation) {
+        void startCamera();
+      }
+    });
+  });
 
   // Tear the whole page down in one dispatch on unmount: stop a live
   // stream, supersede a still-pending request, and terminate the decoder
   // worker. Safe in any state — each step no-ops when its resource is
   // absent.
-  onCleanup(() => void shutdown());
+  onCleanup(() => {
+    cancelled = true;
+    void shutdown();
+  });
 
   return (
     <Show

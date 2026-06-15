@@ -218,7 +218,7 @@ export const toggleTorchEffect = defineEffect([scannerStore], setTorch, {
  * eagerly on page mount so the module is warm before the camera goes
  * live; the worker then outlives individual camera sessions.
  */
-export const startDecodingEffect = defineEffect([decoderStore], createDecoder, {
+export const startDecoderEffect = defineEffect([decoderStore], createDecoder, {
   onSuccess: attachDecoder,
 });
 
