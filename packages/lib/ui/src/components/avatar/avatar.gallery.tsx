@@ -17,7 +17,6 @@ export default {
   sections: [
     {
       title: 'Theme colors',
-      gap: 7,
       columns: [
         { title: 'None', props: { radius: 'none' } },
         { title: 'Small', props: { radius: 'small' } },
