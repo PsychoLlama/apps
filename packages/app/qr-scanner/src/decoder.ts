@@ -42,7 +42,7 @@ export const createDecoder = async (
   state: DeepReadonly<DecoderState>,
 ): Promise<DecoderConnection | null> => {
   const generation = state.generation;
-  const worker = new DecoderWorker();
+  const worker = new DecoderWorker({ name: 'QR Decoder' });
 
   // Resolve once the worker's `ready` event lands. The handler stays
   // registered on the RPC afterwards, but a repeat `ready` only re-resolves
