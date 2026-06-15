@@ -99,9 +99,9 @@ export default {
     {
       title: 'Size',
       columns: [
-        { title: 'Size 1', props: { size: 1, name: 'radio-size-1' } },
-        { title: 'Size 2', props: { size: 2, name: 'radio-size-2' } },
-        { title: 'Size 3', props: { size: 3, name: 'radio-size-3' } },
+        { title: '1', props: { size: 1, name: 'radio-size-1' } },
+        { title: '2', props: { size: 2, name: 'radio-size-2' } },
+        { title: '3', props: { size: 3, name: 'radio-size-3' } },
       ],
     },
   ],

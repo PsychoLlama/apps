@@ -45,6 +45,7 @@ export default {
     },
     {
       title: 'Radius',
+      gap: 7,
       columns: [
         { title: 'None', props: { radius: 'none' } },
         { title: 'Small', props: { radius: 'small' } },

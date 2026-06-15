@@ -29,6 +29,7 @@ export default {
       autocapitalize="off"
       enterkeyhint="search"
       placeholder="Search"
+      value="Search"
       left={<IconMagnify />}
       {...props}
     />
@@ -60,8 +61,8 @@ export default {
     {
       title: 'Slots',
       columns: [
-        { title: 'None', props: { left: undefined, placeholder: 'No slots' } },
-        { title: 'Left', props: { placeholder: 'Left' } },
+        { title: 'None', props: { left: undefined } },
+        { title: 'Left', props: {} },
         {
           title: 'Right',
           props: {
@@ -73,7 +74,6 @@ export default {
             get right() {
               return <ClearButton />;
             },
-            placeholder: 'Right',
           },
         },
         {
@@ -82,7 +82,6 @@ export default {
             get right() {
               return <ClearButton />;
             },
-            placeholder: 'Both',
           },
         },
       ],
@@ -90,14 +89,14 @@ export default {
     {
       title: 'State',
       columns: [
-        { title: 'Default', props: { placeholder: 'Default' } },
+        { title: 'Default', props: {} },
         {
           title: 'Disabled',
-          props: { disabled: true, placeholder: 'Disabled' },
+          props: { disabled: true },
         },
         {
           title: 'Read-only',
-          props: { readOnly: true, placeholder: 'Read-only' },
+          props: { readOnly: true },
         },
       ],
     },
