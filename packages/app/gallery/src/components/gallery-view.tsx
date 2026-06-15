@@ -10,7 +10,7 @@ import * as css from './gallery-view.css';
  * the manifest in view without the layout reverse-engineering the active route.
  */
 export const Gallery = (props: { children?: JSX.Element }) => (
-  <Flex as="main" direction="column" grow>
+  <Flex as="main" direction="column" class={css.layout}>
     {props.children}
   </Flex>
 );
