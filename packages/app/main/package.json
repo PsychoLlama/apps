@@ -32,7 +32,7 @@
     "@lib/ui": "workspace:*",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
-    "@solidjs/start": "2.0.0-alpha.2",
+    "@solidjs/start": "2.0.0-alpha.3",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/dynamic": "catalog:",
     "solid-js": "catalog:",
