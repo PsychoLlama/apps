@@ -1,9 +1,18 @@
 // @refresh reload
 import { mount, StartClient } from '@solidjs/start/client';
-import { createLogger, toError } from '@lib/observability';
+import {
+  createLogger,
+  spawnObservabilityWorker,
+  toError,
+} from '@lib/observability';
 import workerUrl from '@app/service-worker?worker&url';
 
 mount(() => <StartClient />, document.getElementById('app')!);
+
+// Boot the observability worker on the main thread. It does nothing yet,
+// but owning the spawn here keeps the off-main-thread pipeline wired from
+// the client's first paint.
+spawnObservabilityWorker();
 
 // Vite emits the bundled SW under `/_build/`, so its default scope
 // would be limited to that prefix. The dev server (vite.config.ts)
