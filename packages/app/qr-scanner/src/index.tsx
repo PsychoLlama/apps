@@ -9,7 +9,7 @@ import { ScanResult } from './components/scan-result';
 import {
   shutdownScannerEffect,
   startCameraEffect,
-  startDecodingEffect,
+  startDecoderEffect,
   stopCameraEffect,
   toggleTorchEffect,
 } from './bindings';
@@ -27,7 +27,7 @@ export const QrScanner = () => {
   const startCamera = useEffect(startCameraEffect);
   const stopCamera = useEffect(stopCameraEffect);
   const toggleTorch = useEffect(toggleTorchEffect);
-  const startDecoding = useEffect(startDecodingEffect);
+  const createDecoder = useEffect(startDecoderEffect);
   const shutdown = useEffect(shutdownScannerEffect);
 
   // Latched on unmount so the async permission probe below can tell the
@@ -38,7 +38,7 @@ export const QrScanner = () => {
   // the module is warm by the time the camera goes live; it outlives
   // individual camera sessions and is torn down only on unmount.
   onMount(() => {
-    void startDecoding();
+    void createDecoder();
 
     // On a return visit where camera permission already stands, skip the
     // landing pitch and open the feed straight away. The probe resolves
