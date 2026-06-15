@@ -1,4 +1,5 @@
 import { style } from '@vanilla-extract/css';
+import { background } from '@lib/design';
 
 /**
  * The gallery `<main>` frame, pinned to the viewport via `inset: 0` so it
@@ -29,9 +30,17 @@ export const layout = style({
  * The active view. Fills the space below the site header and owns its own
  * vertical scroll — `min-height: 0` lets it shrink past its content so the
  * overflow stays here rather than growing the page.
+ *
+ * The `background` is load-bearing, not decorative: it's the same `page` color
+ * the root canvas already shows, but painting it *here* makes the scrollport
+ * opaque. The root document scroller gets a fast, compositor-driven scroll for
+ * free; a transparent inner scroller doesn't — the compositor can't cache and
+ * translate its tiles, so every frame repaints on the main thread and long
+ * views scroll with visible jank. An opaque surface restores the cheap path.
  */
 export const content = style({
   flex: '1 1 auto',
   minHeight: 0,
   overflowY: 'auto',
+  backgroundColor: background.page,
 });
