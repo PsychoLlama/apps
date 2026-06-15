@@ -24,7 +24,7 @@ const Demo = (props: DemoProps) => (
     </DataListItem>
     <DataListItem>
       <DataListLabel color={props.labelColor}>Reports to</DataListLabel>
-      <DataListValue>Thomas Hawking</DataListValue>
+      <DataListValue>Bob Robertson</DataListValue>
     </DataListItem>
     <DataListItem>
       <DataListLabel color={props.labelColor}>Status</DataListLabel>

@@ -14,6 +14,7 @@ export default {
       autocapitalize="sentences"
       enterkeyhint={undefined}
       placeholder="Message"
+      value="Message"
       {...props}
     />
   ),
@@ -34,26 +35,26 @@ export default {
     {
       title: 'Radius',
       columns: [
-        { title: 'None', props: { radius: 'none', placeholder: 'none' } },
-        { title: 'Small', props: { radius: 'small', placeholder: 'small' } },
-        { title: 'Medium', props: { radius: 'medium', placeholder: 'medium' } },
-        { title: 'Large', props: { radius: 'large', placeholder: 'large' } },
-        { title: 'Full', props: { radius: 'full', placeholder: 'full' } },
+        { title: 'None', props: { radius: 'none' } },
+        { title: 'Small', props: { radius: 'small' } },
+        { title: 'Medium', props: { radius: 'medium' } },
+        { title: 'Large', props: { radius: 'large' } },
+        { title: 'Full', props: { radius: 'full' } },
       ],
     },
     {
       title: 'Resize',
       columns: [
-        { title: 'None', props: { resize: 'none', placeholder: 'none' } },
+        { title: 'None', props: { resize: 'none' } },
         {
           title: 'Vertical',
-          props: { resize: 'vertical', placeholder: 'vertical' },
+          props: { resize: 'vertical' },
         },
         {
           title: 'Horizontal',
-          props: { resize: 'horizontal', placeholder: 'horizontal' },
+          props: { resize: 'horizontal' },
         },
-        { title: 'Both', props: { resize: 'both', placeholder: 'both' } },
+        { title: 'Both', props: { resize: 'both' } },
       ],
     },
   ],
