@@ -1,5 +1,5 @@
 import { defineAction, defineEffect, ref, type DeepReadonly } from '@lib/state';
-import { createLogger } from '@lib/observability';
+import { createLogger, toError } from '@lib/observability';
 import {
   CameraAborted,
   classifyCameraError,
@@ -36,6 +36,7 @@ export const activateStream = defineAction(
     state.stream = ref(stream);
     state.error = null;
     state.torch = { supported: supportsTorch(stream), on: false };
+    logger.debug('Camera stream went live.', { torch: state.torch.supported });
   },
 );
 
@@ -54,11 +55,13 @@ export const failCamera = defineAction(
     // with a spurious error.
     if (error instanceof CameraAborted) return;
 
+    const kind = classifyCameraError(error);
     state.status = 'error';
-    state.error = classifyCameraError(error);
+    state.error = kind;
     state.stream = null;
     state.torch = { supported: false, on: false };
     state.result = null;
+    logger.warn('Camera request failed.', { kind, error: toError(error) });
   },
 );
 
@@ -69,6 +72,9 @@ export const resetScanner = defineAction([scannerStore], (state) => {
   state.error = null;
   state.torch = { supported: false, on: false };
   state.result = null;
+  // The user dismissed a live feed; stop-on-hit and unmount are traced
+  // elsewhere (recordScan, endSession).
+  logger.debug('Camera feed stopped.');
 });
 
 /**
@@ -210,7 +216,10 @@ export const stopCameraEffect = defineEffect([scannerStore], stopStream, {
  */
 export const toggleTorchEffect = defineEffect([scannerStore], setTorch, {
   onSuccess: setTorchOn,
-  onFailure: defineAction([scannerStore], () => {}),
+  // Swallowed in the UI; logged so it isn't invisible to diagnose.
+  onFailure: defineAction([scannerStore], (_state, error: Error) => {
+    logger.debug('Torch toggle was rejected.', { error: toError(error) });
+  }),
 });
 
 /**

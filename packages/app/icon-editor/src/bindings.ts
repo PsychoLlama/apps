@@ -1,4 +1,5 @@
 import { defineAction, defineEffect } from '@lib/state';
+import { createLogger } from '@lib/observability';
 import type { IconRef } from './icons';
 import type { PaletteName } from './palette';
 import {
@@ -18,6 +19,8 @@ import {
   type IconEditorShape,
   type InspectorTab,
 } from './store';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 // --- Style + icon writes ---
 
@@ -129,8 +132,12 @@ export const applyResolvedIcon = defineAction(
   [iconEditorStore, loadingStore],
   (icon, load, payload: ResolvedIcon) => {
     load.pending = Math.max(0, load.pending - 1);
-    if (load.requestId === payload.requestId && payload.icon) {
+    if (load.requestId !== payload.requestId) return; // superseded; expected
+    if (payload.icon) {
       icon.icon = payload.icon;
+    } else {
+      // Usually a stale shared link pointing at a now-missing icon.
+      logger.debug('Resolved an icon reference that no longer exists.');
     }
   },
 );

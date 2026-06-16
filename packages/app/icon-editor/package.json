@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*",
+    "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",

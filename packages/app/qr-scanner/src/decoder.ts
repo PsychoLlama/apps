@@ -4,10 +4,13 @@ import {
   type SendOptions,
 } from '@lib/messaging/message-port';
 import type { DeepReadonly } from '@lib/state';
+import { createLogger } from '@lib/observability';
 import DecoderWorker from './worker/index?worker';
 import type { DecoderApi, ScanResult } from './worker/rpc';
 import type { DecoderState } from './decoder-store';
 import { createHostHandlers, type HostApi } from './host-api';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
  * The main thread's end of the decoder RPC. `SendOptions` lets a frame ride
@@ -62,6 +65,7 @@ export const createDecoder = async (
   if (state.generation !== generation) {
     rpc.close();
     worker.terminate();
+    logger.debug('Decoder preload superseded before ready; terminated it.');
     return null;
   }
 

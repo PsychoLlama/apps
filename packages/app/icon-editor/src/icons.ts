@@ -8,7 +8,23 @@
 
 /// <reference types="@dev/build/vite-plugin/icon-packs-types" />
 
+import { createLogger, toError } from '@lib/observability';
 import indexUrl from 'virtual:icon-packs';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+
+/** A non-OK response from an icon-asset fetch, carrying the URL and status. */
+class IconAssetError extends Error {
+  readonly url: string;
+  readonly status: number;
+
+  constructor(url: string, status: number) {
+    super(`Failed to fetch ${url}: ${status}`);
+    this.name = 'IconAssetError';
+    this.url = url;
+    this.status = status;
+  }
+}
 
 /**
  * A single icon entry. Most iconify packs share one viewBox across
@@ -121,11 +137,18 @@ interface IndexPayload {
 }
 
 const fetchJson = async <T>(url: string): Promise<T> => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status}`);
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new IconAssetError(url, response.status);
+    }
+    return (await response.json()) as T;
+  } catch (error) {
+    // The choke point for every asset fetch — otherwise these fail
+    // silently and the picker just spins on "Loading…".
+    logger.warn('Icon asset request failed.', { url, error: toError(error) });
+    throw error;
   }
-  return (await response.json()) as T;
 };
 
 let indexPromise: Promise<IconPackSummary[]> | undefined;
