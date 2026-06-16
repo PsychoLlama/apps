@@ -5,7 +5,9 @@
   "version": "0.0.0",
   "description": "Structured logging built on @holz/core.",
   "license": "MIT",
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/worker/index.ts"
+  ],
   "exports": "./src/index.ts",
   "imports": {
     "#processor": {

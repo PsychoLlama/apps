@@ -1,6 +1,8 @@
 import { type Logger, createLogger as createCoreLogger } from '@holz/core';
 import { processor } from '#processor';
 
+export { LOG_DIRECTORY, LOG_FILE_NAME } from './log-file.ts';
+
 const baseLogger = createCoreLogger(processor);
 
 /**
