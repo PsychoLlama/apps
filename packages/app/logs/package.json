@@ -15,7 +15,8 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@lib/shell": "workspace:*"
+    "@lib/shell": "workspace:*",
+    "@lib/ui": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": "*"

@@ -224,6 +224,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/ui':
+        specifier: workspace:*
+        version: link:../../lib/ui
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
