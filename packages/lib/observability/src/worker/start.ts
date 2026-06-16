@@ -5,30 +5,35 @@ import {
   type SendOptions,
 } from '@lib/messaging/message-port';
 import type { HostApi } from '../host-api.ts';
+import { createFlushScheduler } from '../logging/flush-scheduler.ts';
 import {
   createWorkerHandlers,
   type LogLocation,
   type WorkerApi,
 } from './rpc.ts';
 
-// The sink for the host's writes: a transferable `WritableStream` persisting
-// each NDJSON chunk to `access`. Flushing per write favors durability over
-// throughput — batching is a perf followup.
+// The sink for the host's writes: a transferable `WritableStream` that writes
+// each NDJSON chunk straight to `access` — keeping the file current for
+// readers — while a scheduler batches the expensive `flush()` by size and time.
 const createLogSink = (
   access: FileSystemSyncAccessHandle,
-): WritableStream<Uint8Array> =>
-  new WritableStream<Uint8Array>({
+): WritableStream<Uint8Array> => {
+  const scheduler = createFlushScheduler(() => access.flush());
+  return new WritableStream<Uint8Array>({
     write(chunk) {
       access.write(chunk);
-      access.flush();
+      scheduler.record(chunk.byteLength);
     },
     close() {
+      scheduler.flush();
       access.close();
     },
     abort() {
+      scheduler.cancel();
       access.close();
     },
   });
+};
 
 // Open the host-named log file and wrap it as the sink the host writes into.
 // The host owns the directory and file name (see `LogLocation`), so the worker
