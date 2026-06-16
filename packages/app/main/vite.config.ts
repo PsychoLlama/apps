@@ -94,12 +94,23 @@ export default defineConfig({
         // Manual entries for routes the crawler can't reach from `/`:
         //   - `/404`: rendered via Cloudflare's `not_found_handling`,
         //     not linked from any page.
+        //   - `/logs/session`: the route-shaped shell for the dynamic
+        //     `/logs/:file` viewer. Its file names only exist at runtime,
+        //     so the crawler never reaches a concrete instance; this one
+        //     shell is prerendered and `public/_redirects` rewrites every
+        //     `/logs/*` onto it, so a hard load (or refresh) of a session
+        //     URL serves a real HTML shell instead of 404ing. The client
+        //     router fills in the actual file on hydration.
         //   - `/experimental`: scratchpad route, intentionally unlisted
         //     from the launcher. Only shipped to preview deploys + local
         //     builds (see `includesExperimentalApp`) — the production
         //     build omits the prerendered shell while PR-preview and
         //     local builds keep it reachable.
-        routes: ['/404', ...(includeExperimental ? ['/experimental'] : [])],
+        routes: [
+          '/404',
+          '/logs/session',
+          ...(includeExperimental ? ['/experimental'] : []),
+        ],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file

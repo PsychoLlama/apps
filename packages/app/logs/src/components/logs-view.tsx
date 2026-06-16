@@ -1,0 +1,33 @@
+import type { JSX } from 'solid-js';
+import { Flex } from '@lib/ui';
+import { SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
+import * as css from './logs-view.css';
+
+/**
+ * The logs layout: the `<main>` frame shared by `/logs` and `/logs/:file`.
+ * Each route renders its own {@link LogsView} inside, so the breadcrumb can
+ * name the page in view without the layout reverse-engineering the route.
+ */
+export const LogsLayout = (props: { children?: JSX.Element }) => (
+  <Flex as="main" direction="column" class={css.layout}>
+    {props.children}
+  </Flex>
+);
+
+/**
+ * A logs view: the breadcrumb header over the scrollable content region. Each
+ * route renders one — `trail` names where you are (`Logs`, or `Logs › <file>`
+ * on a session page) — and the content fills and scrolls below it within the
+ * {@link LogsLayout} frame.
+ */
+export const LogsView = (props: {
+  trail: SiteHeaderCrumb[];
+  children?: JSX.Element;
+}) => (
+  <>
+    <SiteHeader trail={props.trail} />
+    <Flex as="div" direction="column" class={css.content}>
+      {props.children}
+    </Flex>
+  </>
+);

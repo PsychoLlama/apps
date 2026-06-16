@@ -8,3 +8,20 @@
 # placeholder matches any non-`/` run — hyphenated hashes included — while
 # the trailing literal keeps it scoped to the old manifest asset.
 /_build/assets/manifest-:hash.webmanifest  /manifest.webmanifest  301
+
+# The `/logs/:file` viewer is a client route — its file names only exist
+# at runtime, so no per-file HTML is prerendered. Rewrite every session
+# URL onto the one prerendered shell (`/logs/session`, see the nitro
+# `prerender.routes` list in `vite.config.ts`) so a hard load or refresh
+# serves a real route-shaped shell instead of falling through to the 404
+# page; the client router then renders the actual file. A 200 rewrite
+# (not a redirect) keeps the session URL in the address bar.
+#
+# Anchor the match to the `.ndjson` suffix every log file carries (the
+# `:file` placeholder matches the non-`/` run, the literal scopes it).
+# A bare `/logs/*` splat would also swallow the list at `/logs/` and the
+# shell itself, looping. Target the shell's canonical directory URL
+# (`/logs/session/`, not `/index.html`) — Cloudflare canonicalizes
+# `index.html` to the trailing-slash form, so aiming at the file turns
+# the in-place rewrite into a redirect that rewrites the address bar.
+/logs/:file.ndjson  /logs/session/  200

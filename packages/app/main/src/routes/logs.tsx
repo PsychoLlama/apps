@@ -1,3 +1,3 @@
-import { Logs } from '@app/logs';
+import { LogsLayout } from '@app/logs';
 
-export default Logs;
+export default LogsLayout;
