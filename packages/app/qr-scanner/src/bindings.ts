@@ -75,6 +75,12 @@ export const resetScanner = defineAction([scannerStore], (state) => {
   state.error = null;
   state.torch = { supported: false, on: false };
   state.result = null;
+  // The user dismissed a live feed — the counterpart to the
+  // `activateStream` "went live" line, closing out the session arc. The
+  // stop-on-hit path is already traced by `recordScan`, and unmount
+  // teardown runs through `endSession`, so this is the one explicit
+  // "user stopped the camera" event that would otherwise go untraced.
+  logger.debug('Camera feed stopped.');
 });
 
 /**
