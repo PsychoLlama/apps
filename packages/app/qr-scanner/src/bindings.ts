@@ -1,5 +1,5 @@
 import { defineAction, defineEffect, ref, type DeepReadonly } from '@lib/state';
-import { createLogger } from '@lib/observability';
+import { createLogger, toError } from '@lib/observability';
 import {
   CameraAborted,
   classifyCameraError,
@@ -36,6 +36,7 @@ export const activateStream = defineAction(
     state.stream = ref(stream);
     state.error = null;
     state.torch = { supported: supportsTorch(stream), on: false };
+    logger.debug('Camera stream went live.', { torch: state.torch.supported });
   },
 );
 
@@ -54,11 +55,17 @@ export const failCamera = defineAction(
     // with a spurious error.
     if (error instanceof CameraAborted) return;
 
+    const kind = classifyCameraError(error);
     state.status = 'error';
-    state.error = classifyCameraError(error);
+    state.error = kind;
     state.stream = null;
     state.torch = { supported: false, on: false };
     state.result = null;
+    // The classified `kind` and the underlying `DOMException` name are the
+    // diagnostic signal — `name` disambiguates the `unknown` bucket. The
+    // browser's message is localized and carries nothing further, so it's
+    // left off.
+    logger.warn('Camera request failed.', { kind, name: error.name });
   },
 );
 
@@ -210,7 +217,12 @@ export const stopCameraEffect = defineEffect([scannerStore], stopStream, {
  */
 export const toggleTorchEffect = defineEffect([scannerStore], setTorch, {
   onSuccess: setTorchOn,
-  onFailure: defineAction([scannerStore], () => {}),
+  // Swallowed for the UI's sake — the button just stays put — but a debug
+  // line keeps the failure from vanishing entirely, since a torch that
+  // silently refuses to switch is otherwise invisible to diagnose.
+  onFailure: defineAction([scannerStore], (_state, error: Error) => {
+    logger.debug('Torch toggle was rejected.', { error: toError(error) });
+  }),
 });
 
 /**

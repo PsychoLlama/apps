@@ -1,4 +1,5 @@
 import MediaDevices, { supportsMediaDevices } from 'media-devices';
+import { createLogger } from '@lib/observability';
 import type { DeepReadonly } from '@lib/state';
 import { terminateDecoder } from './decoder';
 import type { DecoderState } from './decoder-store';
@@ -32,6 +33,8 @@ declare global {
  * resolution — while `ideal` degrades gracefully to whatever the
  * hardware actually offers rather than throwing `OverconstrainedError`.
  */
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+
 const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
   video: {
     facingMode: 'environment',
@@ -119,6 +122,10 @@ export const openCameraSession = async (
 
   if (state.generation !== generation) {
     stream.getTracks().forEach((track) => track.stop());
+    // The grant landed under a session the user has since left — the camera
+    // briefly opened (recording indicator and all) before we stopped it, so
+    // trace the discard rather than let the orphaned stream vanish silently.
+    logger.debug('Camera request superseded mid-prompt; stopped the stream.');
     throw new CameraAborted();
   }
 
