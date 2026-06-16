@@ -12,9 +12,6 @@ export interface LogFileInfo {
    */
   name: string;
 
-  /** Size of the file on disk, in bytes. */
-  size: number;
-
   /**
    * When the owning session began, in epoch milliseconds — read from the
    * `Date.now()` prefix every name is minted with (see {@link LOG_FILE_NAME}).
@@ -35,8 +32,8 @@ const parseCreatedAt = (name: string): number | undefined => {
 
 /**
  * List the session log files the observability worker has persisted to the
- * OPFS log directory, newest first. Reads each entry's size via `getFile` —
- * cheap for the handful of files a device accumulates.
+ * OPFS log directory, newest first. Reads names only — no file is opened — so
+ * it stays cheap regardless of how much each session logged.
  *
  * Browser main thread only: it resolves entries through `navigator.storage`,
  * which workers expose too, but the codebase only ever lists from the UI. The
@@ -50,10 +47,8 @@ export const listLogFiles = async (): Promise<LogFileInfo[]> => {
   const files: LogFileInfo[] = [];
   for await (const handle of dir.values()) {
     if (handle.kind !== 'file') continue;
-    const file = await handle.getFile();
     files.push({
       name: handle.name,
-      size: file.size,
       createdAt: parseCreatedAt(handle.name),
     });
   }

@@ -10,7 +10,6 @@ const setup = () => {
 
 const file = (name: string): LogFileInfo => ({
   name,
-  size: 0,
   createdAt: undefined,
 });
 
