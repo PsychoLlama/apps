@@ -16,6 +16,10 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE).namespace(
  * client hydration, with one line per navigation after. Tracks `pathname`
  * alone: the route is the meaningful unit, and `search`/`hash` can carry
  * data we'd rather keep off a persisted log.
+ *
+ * `on` hands the previous tracked value straight to the callback, so the
+ * route we came `from` rides along for free — `null` on the entry fire,
+ * which has no prior route.
  */
 export const NavigationLogger = () => {
   const location = useLocation();
@@ -23,8 +27,8 @@ export const NavigationLogger = () => {
   createEffect(
     on(
       () => location.pathname,
-      (path) => {
-        logger.info('Navigated.', { path });
+      (to, from) => {
+        logger.info('Navigated.', { from: from ?? null, to });
       },
     ),
   );
