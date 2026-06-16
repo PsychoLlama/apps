@@ -447,6 +447,9 @@ importers:
       '@holz/env-filter':
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+      '@holz/json-backend':
+        specifier: 0.8.3-rc.155
+        version: 0.8.3-rc.155
       '@holz/log-collector':
         specifier: 'catalog:'
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
@@ -1294,6 +1297,9 @@ packages:
     resolution: {integrity: sha512-IKBJrpe3BGCOjF17s28hKiFy1PE9FvQZmPF61AZYfNE33oMshpS+Yl2OV4d1wfDLpQiC5ayR0ZWhFBaxJnHAmw==}
     peerDependencies:
       '@holz/core': ^0.8.0
+
+  '@holz/json-backend@0.8.3-rc.155':
+    resolution: {integrity: sha512-v2bl1XH0hn0QncbzAsldPpdgxNM1hCMub4dpMyy0eQQ11EbulyONaL5QqrQ4sTXVi+gH+ZJsl2NNiT0IHu3R2A==}
 
   '@holz/log-collector@0.8.3-rc.155':
     resolution: {integrity: sha512-ZXX+zrgxv+XkJgxaeFfW/psO0ycj+3djDnk/fDuBQQGlKoV6RHZSblSut2dsWNlvaifVl5NxZzVN23HXsMmP4w==}
@@ -5638,6 +5644,8 @@ snapshots:
     dependencies:
       '@holz/core': 0.8.3-rc.155
       '@holz/pattern-filter': 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+
+  '@holz/json-backend@0.8.3-rc.155': {}
 
   '@holz/log-collector@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
     dependencies:
