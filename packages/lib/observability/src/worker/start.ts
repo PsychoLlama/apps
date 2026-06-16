@@ -13,17 +13,13 @@ import {
 
 // The sink for the host's writes: a transferable `WritableStream` persisting
 // each NDJSON chunk to `access`. Flushing per write favors durability over
-// throughput — batching is a perf followup. The offset lives here because a
-// fresh file starts at zero, so accumulating each write's byte count tracks it
-// without re-querying the file size.
+// throughput — batching is a perf followup.
 const createLogSink = (
   access: FileSystemSyncAccessHandle,
-): WritableStream<Uint8Array> => {
-  let offset = 0;
-
-  return new WritableStream<Uint8Array>({
+): WritableStream<Uint8Array> =>
+  new WritableStream<Uint8Array>({
     write(chunk) {
-      offset += access.write(chunk, { at: offset });
+      access.write(chunk);
       access.flush();
     },
     close() {
@@ -33,7 +29,6 @@ const createLogSink = (
       access.close();
     },
   });
-};
 
 // Open the host-named log file and wrap it as the sink the host writes into.
 // The host owns the directory and file name (see `LogLocation`), so the worker
