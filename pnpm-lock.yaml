@@ -239,6 +239,9 @@ importers:
       '@app/icon-editor':
         specifier: workspace:*
         version: link:../icon-editor
+      '@app/logs':
+        specifier: workspace:*
+        version: link:../logs
       '@app/qr-scanner':
         specifier: workspace:*
         version: link:../qr-scanner
