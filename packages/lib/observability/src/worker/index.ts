@@ -4,37 +4,19 @@ import {
   type SendOptions,
 } from '@lib/messaging/message-port';
 import type { HostApi } from '../host-api.ts';
-import type { WorkerApi } from './rpc.ts';
+import {
+  createWorkerHandlers,
+  type LogLocation,
+  type WorkerApi,
+} from './rpc.ts';
 
 /**
  * The observability worker. Spawned on the main thread by the OPFS log
- * backend (see `../logging/backends/opfs-worker.ts`). On boot it opens a log
- * file in the origin-private file system, then hands the host the writable end
- * of a stream whose UTF-8 NDJSON chunks it persists to that file.
+ * backend (see `../logging/backends/opfs-worker.ts`). It waits for the host's
+ * `init` request, opens the named log file in the origin-private file system,
+ * then hands back the writable end of a stream whose UTF-8 NDJSON chunks it
+ * persists to that file.
  */
-
-// The worker global scope is a `MessageEndpoint` as-is — `postMessage(message,
-// transfer)` plus `add/removeEventListener`. This file is typed for the worker
-// (see `tsconfig.json`), so `self` reads as a `DedicatedWorkerGlobalScope` and
-// satisfies the interface with no cast.
-const transport = new MessagePortTransport<RpcMessage, RpcMessage>(self);
-
-const rpc = RPC.from<WorkerApi, HostApi, SendOptions>(transport, {});
-
-// A fresh, uniquely named file each boot so sessions never clobber one another,
-// even across tabs sharing this origin. `Date.now()` orders the files by
-// creation; the random suffix settles same-millisecond collisions. There's no
-// cross-thread monotonic clock to lean on instead — `performance.now()` is
-// per-worker and coarsened, so it can't guarantee ordering or uniqueness here.
-const logFileName = (): string =>
-  `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.ndjson`;
-
-const openLogFile = async (): Promise<FileSystemSyncAccessHandle> => {
-  const root = await navigator.storage.getDirectory();
-  const dir = await root.getDirectoryHandle('logs', { create: true });
-  const file = await dir.getFileHandle(logFileName(), { create: true });
-  return file.createSyncAccessHandle();
-};
 
 // The sink for the host's writes: a transferable `WritableStream` persisting
 // each NDJSON chunk to `access`. Flushing per write favors durability over
@@ -60,13 +42,28 @@ const createLogSink = (
   });
 };
 
-// Open the file before announcing: the host attaches its sink to `ready`, so
-// holding the event until writes can land avoids dropping logs on the floor.
-// (Anything logged before this point is still lost; buffering is later work.)
-const boot = async (): Promise<void> => {
-  const access = await openLogFile();
-  const sink = createLogSink(access);
-  rpc.notify('ready', sink, { transfer: [sink] });
+// Open the host-named log file and wrap it as the sink the host writes into.
+// The host owns the directory and file name (see `LogLocation`), so the worker
+// only resolves them against the OPFS root.
+const openLogStream = async ({
+  directory,
+  file,
+}: LogLocation): Promise<WritableStream<Uint8Array>> => {
+  const root = await navigator.storage.getDirectory();
+  const dir = await root.getDirectoryHandle(directory, { create: true });
+  const handle = await dir.getFileHandle(file, { create: true });
+  return createLogSink(await handle.createSyncAccessHandle());
 };
 
-void boot();
+// The worker global scope is a `MessageEndpoint` as-is — `postMessage(message,
+// transfer)` plus `add/removeEventListener`. This file is typed for the worker
+// (see `tsconfig.json`), so `self` reads as a `DedicatedWorkerGlobalScope` and
+// satisfies the interface with no cast. Subscribing synchronously at boot
+// installs the listener before the worker's event loop drains, so the host's
+// `init` request — posted while this script was still loading — can't be missed.
+const transport = new MessagePortTransport<RpcMessage, RpcMessage>(self);
+
+RPC.from<WorkerApi, HostApi, SendOptions>(
+  transport,
+  createWorkerHandlers(openLogStream),
+);

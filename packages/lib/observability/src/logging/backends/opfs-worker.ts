@@ -6,8 +6,19 @@ import {
   type SendOptions,
 } from '@lib/messaging/message-port';
 import ObservabilityWorker from '../../worker/index?worker';
-import { createHostHandlers, type HostApi } from '../../host-api.ts';
-import type { WorkerApi } from '../../worker/rpc.ts';
+import type { HostApi } from '../../host-api.ts';
+import type { LogLocation, WorkerApi } from '../../worker/rpc.ts';
+
+// The OPFS directory the worker writes session log files into, relative to the
+// origin-private file system root.
+const LOG_DIRECTORY = 'LOGS';
+
+// A fresh, uniquely named file per session so tabs sharing this origin never
+// clobber one another. `Date.now()` orders the files by creation; the random
+// suffix settles same-millisecond collisions. Derived host-side — the main
+// thread owns the wall clock and `crypto`, and hands the name to the worker.
+const logFileName = (): string =>
+  `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.ndjson`;
 
 /**
  * A log backend that will ship logs to the observability worker for
@@ -33,8 +44,8 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
   // the JSON backend skips any log written while `desiredSize <= 0`, so a burst
   // (e.g. the startup flurry) loses all but its first log — verified
   // empirically. This buffer's deep headroom absorbs those bursts, and because
-  // nothing reads its readable end until `ready` connects the pipe, it also
-  // queues everything logged during worker boot instead of dropping it. The
+  // nothing reads its readable end until the worker's `init` reply connects the
+  // pipe, it also queues everything logged during worker boot. The
   // backend writes here from the very first log; `pipeTo` later applies
   // backpressure by queuing, never dropping.
   const buffer = new TransformStream<Uint8Array, Uint8Array>(
@@ -42,22 +53,27 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
     new CountQueuingStrategy({ highWaterMark: 1024 }),
   );
 
-  // Wire the host end of the worker RPC. `RPC.from` subscribes eagerly, so
-  // doing it synchronously right after spawning attaches the listener before
-  // the worker can post: the worker fires `ready` on boot, but that can't run
-  // until its script loads (a later task), so the event can't be missed. The
-  // endpoint is intentionally not retained — the transport's listener keeps it
-  // reachable via `worker`, and the backend has no teardown.
-  RPC.from<HostApi, WorkerApi, SendOptions>(
+  // Wire the host end of the worker RPC. The host serves nothing — it drives
+  // the boundary by calling the worker's `init` request below.
+  const rpc = RPC.from<HostApi, WorkerApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(worker),
-    createHostHandlers((stream) => {
-      // The worker handed us the writable end of its log stream. Drain the
-      // buffered NDJSON into it — anything logged before now flushes, and later
-      // logs flow straight through (the worker reads the chunks off the other
-      // end; for now it just logs their size — OPFS persistence lands later).
-      void buffer.readable.pipeTo(stream);
-    }),
+    {},
   );
+
+  // Tell the worker where to persist this session's logs and await the writable
+  // end it opens there. The request rides over to the worker as soon as its
+  // script loads (a later task), so it can't outrun the worker's listener.
+  const location: LogLocation = {
+    directory: LOG_DIRECTORY,
+    file: logFileName(),
+  };
+
+  void rpc.request('init', location).then((stream) => {
+    // The worker handed back the writable end of its OPFS-backed log stream.
+    // Drain the buffered NDJSON into it — anything logged during boot flushes,
+    // and later logs flow straight through.
+    void buffer.readable.pipeTo(stream);
+  });
 
   // The closure keeps `worker` (via the RPC transport) reachable.
   return createJsonBackend({ stream: buffer.writable });
