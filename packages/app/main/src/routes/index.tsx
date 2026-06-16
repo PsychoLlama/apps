@@ -4,6 +4,7 @@ import { Card, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
+import IconTextBox from 'virtual:icons/mdi/text-box-outline';
 import IconGallery from 'virtual:icons/mdi/brush-variant';
 import IconFlask from 'virtual:icons/mdi/flask-outline';
 import IconCog from 'virtual:icons/mdi/cog-outline';
@@ -45,6 +46,14 @@ const APPS: ReadonlyArray<AppEntry> = [
     description:
       'Scan QR codes with your camera. Decoding runs entirely on your device.',
     Icon: IconQrcodeScan,
+  },
+  {
+    id: 'logs',
+    name: 'Logs',
+    href: '/logs',
+    description:
+      'Browse and export the session logs this device has saved on disk.',
+    Icon: IconTextBox,
   },
   {
     id: 'gallery',

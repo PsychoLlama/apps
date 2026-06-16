@@ -219,6 +219,18 @@ importers:
         specifier: workspace:*
         version: link:../../dev/build
 
+  packages/app/logs:
+    dependencies:
+      '@lib/shell':
+        specifier: workspace:*
+        version: link:../../lib/shell
+      '@lib/ui':
+        specifier: workspace:*
+        version: link:../../lib/ui
+      solid-js:
+        specifier: ^1.9.13
+        version: 1.9.13
+
   packages/app/main:
     dependencies:
       '@app/experimental':
@@ -230,6 +242,9 @@ importers:
       '@app/icon-editor':
         specifier: workspace:*
         version: link:../icon-editor
+      '@app/logs':
+        specifier: workspace:*
+        version: link:../logs
       '@app/qr-scanner':
         specifier: workspace:*
         version: link:../qr-scanner

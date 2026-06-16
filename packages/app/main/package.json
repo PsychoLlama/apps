@@ -22,6 +22,7 @@
     "@app/experimental": "workspace:*",
     "@app/gallery": "workspace:*",
     "@app/icon-editor": "workspace:*",
+    "@app/logs": "workspace:*",
     "@app/qr-scanner": "workspace:*",
     "@app/service-worker": "workspace:*",
     "@app/settings": "workspace:*",
