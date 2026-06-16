@@ -61,11 +61,10 @@ export const failCamera = defineAction(
     state.stream = null;
     state.torch = { supported: false, on: false };
     state.result = null;
-    // The classified `kind` and the underlying `DOMException` name are the
-    // diagnostic signal — `name` disambiguates the `unknown` bucket. The
-    // browser's message is localized and carries nothing further, so it's
-    // left off.
-    logger.warn('Camera request failed.', { kind, name: error.name });
+    // `kind` is the classified signal the UI speaks to; the raw error rides
+    // along for the `unknown` bucket, where its `name`/message is the only
+    // clue to what the browser actually rejected.
+    logger.warn('Camera request failed.', { kind, error: toError(error) });
   },
 );
 
