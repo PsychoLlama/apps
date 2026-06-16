@@ -8,7 +8,10 @@
 
 /// <reference types="@dev/build/vite-plugin/icon-packs-types" />
 
+import { createLogger, toError } from '@lib/observability';
 import indexUrl from 'virtual:icon-packs';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
  * A single icon entry. Most iconify packs share one viewBox across
@@ -121,11 +124,20 @@ interface IndexPayload {
 }
 
 const fetchJson = async <T>(url: string): Promise<T> => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status}`);
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}: ${response.status}`);
+    }
+    return (await response.json()) as T;
+  } catch (error) {
+    // Every catalog, manifest, and page fetch funnels through here, so
+    // one catch surfaces an otherwise-silent failure — a network drop, a
+    // bad status, or a malformed body all leave the picker spinning on
+    // "Loading…" with no other signal. Rethrown unchanged for callers.
+    logger.warn('Icon asset request failed.', { url, error: toError(error) });
+    throw error;
   }
-  return (await response.json()) as T;
 };
 
 let indexPromise: Promise<IconPackSummary[]> | undefined;

@@ -1,6 +1,7 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
+import { createLogger, toError } from '@lib/observability';
 import {
   Badge,
   Button,
@@ -22,6 +23,8 @@ interface ExportActionsProps {
   /** Reactive icon state — exported on every Export click. */
   state: IconEditorState;
 }
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 type ExportFormat = 'svg' | 'png';
 
@@ -93,12 +96,17 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   };
 
   const handleExport = () => {
-    if (!props.state.icon) return;
+    const icon = props.state.icon;
+    if (!icon) return;
+    // The icon's catalog id (e.g. `mdi:home`) — a public identifier, not
+    // user data — is the useful signal for "what do people export."
+    const ref = `${icon.pack}:${icon.name}`;
     if (exportState.format === 'svg') {
       downloadSvg(
         renderIconSvg(props.state, { size: SVG_EXPORT_SIZE, metadata: true }),
         filename(),
       );
+      logger.info('Exported an icon.', { icon: ref, format: 'svg' });
       return;
     }
     // Render the SVG at the target pixel size so the rasterized
@@ -111,6 +119,23 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
       renderIconSvg(props.state, { size: target }),
       target,
       filename(),
+    ).then(
+      () => {
+        logger.info('Exported an icon.', {
+          icon: ref,
+          format: 'png',
+          size: target,
+        });
+      },
+      // Rasterization is async and was previously a floating promise, so
+      // a failed canvas/encode step left the user with no file and no
+      // signal. Surface it instead of dropping it.
+      (error: unknown) => {
+        logger.error('PNG export failed.', {
+          icon: ref,
+          error: toError(error),
+        });
+      },
     );
   };
 
