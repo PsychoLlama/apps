@@ -65,6 +65,16 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
     void buffer.readable.pipeTo(stream);
   });
 
+  // The worker batches OPFS flushes by size and time for throughput, so an
+  // unflushed tail always trails the latest writes. A backgrounded page can be
+  // frozen or killed before that tail lands — `visibilitychange → hidden` is
+  // the last beat we can rely on (notably on mobile, where it supersedes the
+  // unreliable `unload`). Nudge the worker to flush it now. Fire-and-forget:
+  // the page may not outlive a round trip, and the event no-ops before `init`.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') rpc.notify('flush');
+  });
+
   // The closure keeps `worker` (via the RPC transport) reachable.
   return createJsonBackend({ stream: buffer.writable });
 };
