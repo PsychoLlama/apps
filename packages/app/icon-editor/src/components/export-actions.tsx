@@ -98,13 +98,16 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   const handleExport = () => {
     const icon = props.state.icon;
     if (!icon) return;
-    const ref = `${icon.pack}:${icon.name}`;
     if (exportState.format === 'svg') {
       downloadSvg(
         renderIconSvg(props.state, { size: SVG_EXPORT_SIZE, metadata: true }),
         filename(),
       );
-      logger.info('Exported an icon.', { icon: ref, format: 'svg' });
+      logger.info('Exported an icon.', {
+        pack: icon.pack,
+        name: icon.name,
+        format: 'svg',
+      });
       return;
     }
     // Render the SVG at the target pixel size so the rasterized
@@ -120,7 +123,8 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
     ).then(
       () => {
         logger.info('Exported an icon.', {
-          icon: ref,
+          pack: icon.pack,
+          name: icon.name,
           format: 'png',
           size: target,
         });
@@ -128,7 +132,8 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
       // Was a floating promise; a failed rasterize would silently no-op.
       (error: unknown) => {
         logger.error('PNG export failed.', {
-          icon: ref,
+          pack: icon.pack,
+          name: icon.name,
           error: toError(error),
         });
       },
