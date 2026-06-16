@@ -9,17 +9,18 @@ import { createFlushScheduler } from '../logging/flush-scheduler.ts';
 import {
   createWorkerHandlers,
   type LogLocation,
+  type LogSink,
   type WorkerApi,
 } from './rpc.ts';
 
 // The sink for the host's writes: a transferable `WritableStream` that writes
 // each NDJSON chunk straight to `access` — keeping the file current for
 // readers — while a scheduler batches the expensive `flush()` by size and time.
-const createLogSink = (
-  access: FileSystemSyncAccessHandle,
-): WritableStream<Uint8Array> => {
+// `flush` is exposed alongside the stream so the host can force the pending
+// batch to disk early (see the `flush` event in `./rpc.ts`).
+const createLogSink = (access: FileSystemSyncAccessHandle): LogSink => {
   const scheduler = createFlushScheduler(() => access.flush());
-  return new WritableStream<Uint8Array>({
+  const stream = new WritableStream<Uint8Array>({
     write(chunk) {
       access.write(chunk);
       scheduler.record(chunk.byteLength);
@@ -33,6 +34,7 @@ const createLogSink = (
       access.close();
     },
   });
+  return { stream, flush: () => scheduler.flush() };
 };
 
 // Open the host-named log file and wrap it as the sink the host writes into.
@@ -41,7 +43,7 @@ const createLogSink = (
 const openLogStream = async ({
   directory,
   file,
-}: LogLocation): Promise<WritableStream<Uint8Array>> => {
+}: LogLocation): Promise<LogSink> => {
   const root = await navigator.storage.getDirectory();
   const dir = await root.getDirectoryHandle(directory, { create: true });
   const handle = await dir.getFileHandle(file, { create: true });

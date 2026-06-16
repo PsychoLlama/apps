@@ -11,6 +11,16 @@ import type { LogLocation, WorkerApi } from '../../worker/rpc.ts';
 import { LOG_DIRECTORY, LOG_FILE_NAME } from '../log-file.ts';
 
 /**
+ * The slice of `document` this backend reads for page-lifecycle flushing. Named
+ * structurally rather than as `Document` so it resolves under the `WebWorker`
+ * lib too — consumers typecheck this module without the DOM lib (see below).
+ */
+interface PageVisibility {
+  visibilityState: string;
+  addEventListener: (type: 'visibilitychange', listener: () => void) => void;
+}
+
+/**
  * A log backend that will ship logs to the observability worker for
  * off-main-thread persistence to OPFS. Spawns the worker eagerly — the moment
  * the backend is created — so it's warm before the first log arrives.
@@ -64,6 +74,24 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
     // and later logs flow straight through.
     void buffer.readable.pipeTo(stream);
   });
+
+  // The worker batches OPFS flushes by size and time for throughput, so an
+  // unflushed tail always trails the latest writes. A backgrounded page can be
+  // frozen or killed before that tail lands — `visibilitychange → hidden` is
+  // the last beat we can rely on (notably on mobile, where it supersedes the
+  // unreliable `unload`). Nudge the worker to flush it now. Fire-and-forget:
+  // the page may not outlive a round trip, and the event no-ops before `init`.
+  //
+  // `document` is main-thread-only; consumers (e.g. `@app/service-worker`)
+  // typecheck this module under the `WebWorker` lib, where the global is absent.
+  // Reach it through a structural cast — `inMainThread` already gates this
+  // backend (see `../processor.browser.ts`), so the global is present at run.
+  const page = (globalThis as { document?: PageVisibility }).document;
+  if (page) {
+    page.addEventListener('visibilitychange', () => {
+      if (page.visibilityState === 'hidden') rpc.notify('flush');
+    });
+  }
 
   // The closure keeps `worker` (via the RPC transport) reachable.
   return createJsonBackend({ stream: buffer.writable });
