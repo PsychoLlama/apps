@@ -20,19 +20,27 @@ import type { WorkerApi } from '../../worker/rpc.ts';
  * sole guard — calling it off the main thread is a wiring bug, not a runtime
  * input to defend against.
  */
-/** A sink that discards every log. The backend starts here, before `ready`. */
-const drop: LogProcessor = () => {};
-
 export const createOpfsWorkerBackend = (): LogProcessor => {
   // `name` surfaces in DevTools' thread list and is readable inside the
   // worker as `self.name` — a stable label beats the anonymous default.
   const worker = new ObservabilityWorker({ name: 'Observability' });
 
-  // The live sink. Drops logs until the worker fires `ready` with the writable
-  // end of its log stream, at which point the JSON backend takes over.
-  // TODO: anything logged before `ready` is lost. Buffer it and flush once the
-  // JSON backend is attached.
-  let sink: LogProcessor = drop;
+  // Host-local buffer the JSON backend writes UTF-8 NDJSON into. It exists for
+  // two reasons, both rooted in the transferred stream being a cross-realm
+  // writable with a high-water mark fixed at 1 by spec
+  // (`SetUpCrossRealmTransformWritable`): writing to it directly drops
+  // `desiredSize` to 0 until the worker acks across the thread boundary, and
+  // the JSON backend skips any log written while `desiredSize <= 0`, so a burst
+  // (e.g. the startup flurry) loses all but its first log — verified
+  // empirically. This buffer's deep headroom absorbs those bursts, and because
+  // nothing reads its readable end until `ready` connects the pipe, it also
+  // queues everything logged during worker boot instead of dropping it. The
+  // backend writes here from the very first log; `pipeTo` later applies
+  // backpressure by queuing, never dropping.
+  const buffer = new TransformStream<Uint8Array, Uint8Array>(
+    undefined,
+    new CountQueuingStrategy({ highWaterMark: 1024 }),
+  );
 
   // Wire the host end of the worker RPC. `RPC.from` subscribes eagerly, so
   // doing it synchronously right after spawning attaches the listener before
@@ -43,30 +51,14 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
   RPC.from<HostApi, WorkerApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(worker),
     createHostHandlers((stream) => {
-      // The worker handed us the writable end of its log stream — write UTF-8
-      // NDJSON into it (the worker reads the chunks off the other end; for now
-      // it just logs their size — OPFS persistence lands later).
-      //
-      // The transferred stream is a cross-realm writable with a high-water mark
-      // fixed at 1 by spec (`SetUpCrossRealmTransformWritable`), regardless of
-      // the strategy the worker set on its end: each write drops `desiredSize`
-      // to 0 until the worker acks across the thread boundary, and the JSON
-      // backend skips any log written while `desiredSize <= 0`. Writing straight
-      // to it loses all but the first log of a burst (e.g. the startup flurry) —
-      // verified empirically. The watermark can't be pushed across the transfer,
-      // so interpose a host-local buffer with deep headroom for the backend to
-      // write into, and pipe it to the worker — `pipeTo` applies backpressure by
-      // queuing, never dropping.
-      const buffer = new TransformStream<Uint8Array, Uint8Array>(
-        undefined,
-        new CountQueuingStrategy({ highWaterMark: 1024 }),
-      );
+      // The worker handed us the writable end of its log stream. Drain the
+      // buffered NDJSON into it — anything logged before now flushes, and later
+      // logs flow straight through (the worker reads the chunks off the other
+      // end; for now it just logs their size — OPFS persistence lands later).
       void buffer.readable.pipeTo(stream);
-      sink = createJsonBackend({ stream: buffer.writable });
     }),
   );
 
-  // Delegate to whichever sink is live — `drop` until `ready`, then the JSON
-  // backend. The closure also keeps `worker` (via the RPC transport) reachable.
-  return (log) => sink(log);
+  // The closure keeps `worker` (via the RPC transport) reachable.
+  return createJsonBackend({ stream: buffer.writable });
 };
