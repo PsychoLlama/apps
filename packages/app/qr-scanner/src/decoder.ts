@@ -65,9 +65,6 @@ export const createDecoder = async (
   if (state.generation !== generation) {
     rpc.close();
     worker.terminate();
-    // The page tore down (or restarted) while the wasm was warming up, so
-    // the freshly-ready worker has nowhere to attach — note the discard
-    // rather than terminate it silently.
     logger.debug('Decoder preload superseded before ready; terminated it.');
     return null;
   }

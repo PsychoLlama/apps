@@ -98,8 +98,6 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   const handleExport = () => {
     const icon = props.state.icon;
     if (!icon) return;
-    // The icon's catalog id (e.g. `mdi:home`) — a public identifier, not
-    // user data — is the useful signal for "what do people export."
     const ref = `${icon.pack}:${icon.name}`;
     if (exportState.format === 'svg') {
       downloadSvg(
@@ -127,9 +125,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
           size: target,
         });
       },
-      // Rasterization is async and was previously a floating promise, so
-      // a failed canvas/encode step left the user with no file and no
-      // signal. Surface it instead of dropping it.
+      // Was a floating promise; a failed rasterize would silently no-op.
       (error: unknown) => {
         logger.error('PNG export failed.', {
           icon: ref,

@@ -61,9 +61,6 @@ export const failCamera = defineAction(
     state.stream = null;
     state.torch = { supported: false, on: false };
     state.result = null;
-    // `kind` is the classified signal the UI speaks to; the raw error rides
-    // along for the `unknown` bucket, where its `name`/message is the only
-    // clue to what the browser actually rejected.
     logger.warn('Camera request failed.', { kind, error: toError(error) });
   },
 );
@@ -75,11 +72,8 @@ export const resetScanner = defineAction([scannerStore], (state) => {
   state.error = null;
   state.torch = { supported: false, on: false };
   state.result = null;
-  // The user dismissed a live feed — the counterpart to the
-  // `activateStream` "went live" line, closing out the session arc. The
-  // stop-on-hit path is already traced by `recordScan`, and unmount
-  // teardown runs through `endSession`, so this is the one explicit
-  // "user stopped the camera" event that would otherwise go untraced.
+  // The user dismissed a live feed; stop-on-hit and unmount are traced
+  // elsewhere (recordScan, endSession).
   logger.debug('Camera feed stopped.');
 });
 
@@ -222,9 +216,7 @@ export const stopCameraEffect = defineEffect([scannerStore], stopStream, {
  */
 export const toggleTorchEffect = defineEffect([scannerStore], setTorch, {
   onSuccess: setTorchOn,
-  // Swallowed for the UI's sake — the button just stays put — but a debug
-  // line keeps the failure from vanishing entirely, since a torch that
-  // silently refuses to switch is otherwise invisible to diagnose.
+  // Swallowed in the UI; logged so it isn't invisible to diagnose.
   onFailure: defineAction([scannerStore], (_state, error: Error) => {
     logger.debug('Torch toggle was rejected.', { error: toError(error) });
   }),

@@ -131,10 +131,8 @@ const fetchJson = async <T>(url: string): Promise<T> => {
     }
     return (await response.json()) as T;
   } catch (error) {
-    // Every catalog, manifest, and page fetch funnels through here, so
-    // one catch surfaces an otherwise-silent failure — a network drop, a
-    // bad status, or a malformed body all leave the picker spinning on
-    // "Loading…" with no other signal. Rethrown unchanged for callers.
+    // The choke point for every asset fetch — otherwise these fail
+    // silently and the picker just spins on "Loading…".
     logger.warn('Icon asset request failed.', { url, error: toError(error) });
     throw error;
   }

@@ -132,15 +132,11 @@ export const applyResolvedIcon = defineAction(
   [iconEditorStore, loadingStore],
   (icon, load, payload: ResolvedIcon) => {
     load.pending = Math.max(0, load.pending - 1);
-    // A stale resolution (superseded by a newer pick/navigation) is
-    // expected churn — drop it without comment.
-    if (load.requestId !== payload.requestId) return;
+    if (load.requestId !== payload.requestId) return; // superseded; expected
     if (payload.icon) {
       icon.icon = payload.icon;
     } else {
-      // The fetch succeeded but no icon matched — almost always a
-      // shared `?icon=pack:name` link pointing at something that no
-      // longer exists, which otherwise leaves a silently blank canvas.
+      // Usually a stale shared link pointing at a now-missing icon.
       logger.debug('Resolved an icon reference that no longer exists.');
     }
   },

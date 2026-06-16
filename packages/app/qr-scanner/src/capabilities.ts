@@ -122,9 +122,6 @@ export const openCameraSession = async (
 
   if (state.generation !== generation) {
     stream.getTracks().forEach((track) => track.stop());
-    // The grant landed under a session the user has since left — the camera
-    // briefly opened (recording indicator and all) before we stopped it, so
-    // trace the discard rather than let the orphaned stream vanish silently.
     logger.debug('Camera request superseded mid-prompt; stopped the stream.');
     throw new CameraAborted();
   }
