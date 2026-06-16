@@ -8,17 +8,7 @@ import {
 import ObservabilityWorker from '../../worker/index?worker';
 import type { HostApi } from '../../host-api.ts';
 import type { LogLocation, WorkerApi } from '../../worker/rpc.ts';
-
-// The OPFS directory the worker writes session log files into, relative to the
-// origin-private file system root.
-const LOG_DIRECTORY = 'LOGS';
-
-// A fresh, uniquely named file per session so tabs sharing this origin never
-// clobber one another. `Date.now()` orders the files by creation; the random
-// suffix settles same-millisecond collisions. Derived host-side — the main
-// thread owns the wall clock and `crypto`, and hands the name to the worker.
-const logFileName = (): string =>
-  `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.ndjson`;
+import { LOG_DIRECTORY, LOG_FILE_NAME } from '../log-file.ts';
 
 /**
  * A log backend that will ship logs to the observability worker for
@@ -65,7 +55,7 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
   // script loads (a later task), so it can't outrun the worker's listener.
   const location: LogLocation = {
     directory: LOG_DIRECTORY,
-    file: logFileName(),
+    file: LOG_FILE_NAME,
   };
 
   void rpc.request('init', location).then((stream) => {
