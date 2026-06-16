@@ -219,6 +219,15 @@ importers:
         specifier: workspace:*
         version: link:../../dev/build
 
+  packages/app/logs:
+    dependencies:
+      '@lib/shell':
+        specifier: workspace:*
+        version: link:../../lib/shell
+      solid-js:
+        specifier: ^1.9.13
+        version: 1.9.13
+
   packages/app/main:
     dependencies:
       '@app/experimental':
