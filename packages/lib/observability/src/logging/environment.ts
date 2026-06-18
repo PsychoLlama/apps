@@ -16,3 +16,26 @@
  * on the next bump.
  */
 export const inMainThread = 'document' in globalThis && 'Worker' in globalThis;
+
+/**
+ * The `name` the observability worker is spawned with (see
+ * `./backends/opfs-worker.ts`). Load-bearing, not cosmetic: it's how a worker
+ * realm recognizes itself as *the* observability worker — the one that owns
+ * the OPFS log file — and so persists its own logs (see {@link
+ * inObservabilityWorker}). It doubles as the DevTools thread label. Change it
+ * in one place; both uses follow.
+ */
+export const OBSERVABILITY_WORKER_NAME = 'Observability';
+
+/**
+ * `true` only inside the observability worker itself — distinct from any other
+ * worker (the service worker, the QR scanner). Code there persists its own
+ * logs to the shared OPFS file; every other worker logs to the console alone.
+ *
+ * Keyed off `self.name`, which the runtime sets at construction, so this is
+ * available immediately and never depends on module-evaluation order. Guarded
+ * by `!inMainThread` so it never reads the unrelated `window.name` on the main
+ * thread (`self` is the worker global only in the else case).
+ */
+export const inObservabilityWorker =
+  !inMainThread && self.name === OBSERVABILITY_WORKER_NAME;

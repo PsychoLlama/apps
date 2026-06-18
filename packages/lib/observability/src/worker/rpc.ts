@@ -13,14 +13,20 @@ export interface LogLocation {
 }
 
 /**
- * One session's OPFS-backed log sink: the writable end transferred to the host
- * (its UTF-8 NDJSON chunks land in the log file) paired with a `flush` that
- * forces the unflushed tail to disk on demand. `openLogStream` yields both so
- * the worker can hand the stream over while keeping a flush handle for the
- * host's `flush` event.
+ * The worker's durable log sink, as the RPC layer drives it — the OPFS-backed
+ * file that every log source (the host, the worker's own logs, eventually
+ * other workers) writes into. Implemented by `./log-sink.ts`; the RPC handlers
+ * only `open` producers for callers and `flush` on demand.
  */
-export interface LogSink {
-  stream: WritableStream<Uint8Array>;
+export interface WorkerSink {
+  /**
+   * Open the durable log (idempotent) and mint a fresh writable producer to
+   * transfer to a caller. Each call yields an independent `WritableStream`
+   * feeding the one shared file.
+   */
+  open: (location: LogLocation) => Promise<WritableStream<Uint8Array>>;
+
+  /** Force the unflushed tail to disk now. A no-op before the first `open`. */
   flush: () => void;
 }
 
@@ -31,44 +37,35 @@ export interface LogSink {
  * writable end of a stream whose UTF-8 NDJSON chunks it persists there. The
  * host later fires `flush` to force the pending batch to disk early.
  *
- * `openLogStream` is injected rather than wired here so this module stays a
- * pure RPC contract, free of the OPFS runtime it would otherwise drag in — the
- * host imports {@link WorkerApi} from here to type its `request('init', …)`,
- * and a type-only import shouldn't reach into `navigator.storage`.
+ * The {@link WorkerSink} is injected rather than wired here so this module
+ * stays a pure RPC contract, free of the OPFS runtime it would otherwise drag
+ * in — the host imports {@link WorkerApi} from here to type its
+ * `request('init', …)`, and a type-only import shouldn't reach into
+ * `navigator.storage`.
  *
  * {@link WorkerApi} is derived from what this returns (via {@link
  * defineContract}), so the contract tracks the implementation — the worker-side
  * mirror of how the host derives its {@link HostApi} from the value it serves.
  */
-export const createWorkerHandlers = (
-  openLogStream: (location: LogLocation) => Promise<LogSink>,
-) => {
-  // The active session's flush handle, refreshed on each `init`. The `flush`
-  // event reaches through it; `undefined` until the first `init` opens a sink.
-  let flushActive: (() => void) | undefined;
-
-  return defineContract<SendOptions>()({
+export const createWorkerHandlers = (sink: WorkerSink) =>
+  defineContract<SendOptions>()({
     requests: {
-      // Open the log file and transfer the writable end back with the reply, so
-      // the host pipes straight into the worker's OPFS-backed sink.
+      // Open the log file and transfer a writable producer back with the
+      // reply, so the host pipes straight into the worker's OPFS-backed sink.
       init: async (location: LogLocation, options) => {
-        const sink = await openLogStream(location);
-        flushActive = sink.flush;
-        options.transfer = [sink.stream];
-        return sink.stream;
+        const stream = await sink.open(location);
+        options.transfer = [stream];
+        return stream;
       },
     },
     events: {
       // The host's page went hidden and may be frozen or killed before the
       // size/time ceiling fires — `visibilitychange → hidden` is the last beat
       // we can count on, notably on mobile. Force the unflushed tail to disk
-      // now. A no-op until `init` has opened a sink.
-      flush: () => {
-        flushActive?.();
-      },
+      // now. A no-op until `init` has opened the sink.
+      flush: () => sink.flush(),
     },
   });
-};
 
 /**
  * The worker's RPC surface, as seen by the host — a single `init` request
