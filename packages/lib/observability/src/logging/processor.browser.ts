@@ -5,7 +5,7 @@ import { createLogCollector } from '@holz/log-collector';
 import { createOpfsWorkerBackend } from './backends/opfs-worker.ts';
 import { devPattern } from './dev-pattern.ts';
 import { inMainThread, inObservabilityWorker } from './environment.ts';
-import { getSelfLog } from './self-log.ts';
+import { getWorkerLogBuffer } from './worker-log-buffer.ts';
 
 const consoleBackend = createConsoleBackend();
 
@@ -27,12 +27,12 @@ const selectFallback = (): LogProcessor => {
   }
 
   // Inside the observability worker: persist our own logs to the same OPFS file
-  // as the main thread. `getSelfLog().backend` buffers them; `../worker/`
-  // drains that buffer into the shared durable sink once `init` opens the file
-  // (see `./self-log.ts`). Console output too — see the note below on why it
-  // skips the env filter.
+  // as the main thread. `getWorkerLogBuffer().backend` buffers them;
+  // `../worker/` drains that buffer into the shared durable sink once `init`
+  // opens the file (see `./worker-log-buffer.ts`). Console output too — see the
+  // note below on why it skips the env filter.
   if (inObservabilityWorker) {
-    return combine([consoleBackend, getSelfLog().backend]);
+    return combine([consoleBackend, getWorkerLogBuffer().backend]);
   }
 
   // Any other worker (service, QR scanner, …): console only. They expose

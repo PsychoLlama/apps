@@ -15,4 +15,5 @@ let buffer: NdjsonBuffer | undefined;
  * the same instance, and any realm that never persists worker logs (the main
  * thread, other workers) constructs nothing.
  */
-export const getSelfLog = (): NdjsonBuffer => (buffer ??= createNdjsonBuffer());
+export const getWorkerLogBuffer = (): NdjsonBuffer =>
+  (buffer ??= createNdjsonBuffer());

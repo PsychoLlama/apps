@@ -9,30 +9,21 @@ const makeLog = (message: string): Log => ({
   context: {},
 });
 
-// Drain `count` NDJSON lines from the buffer's readable end.
-const readLines = async (
+// Drain `count` logs from the buffer's readable end. Each chunk is exactly one
+// UTF-8 NDJSON record, so decode-and-parse it directly — no line reassembly.
+const readLogs = async (
   readable: ReadableStream<Uint8Array>,
   count: number,
-): Promise<string[]> => {
-  const reader = readable.getReader();
+): Promise<Array<{ msg: string }>> => {
   const decoder = new TextDecoder();
-  const lines: string[] = [];
-  let text = '';
+  const logs: Array<{ msg: string }> = [];
 
-  while (lines.length < count) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    text += decoder.decode(value, { stream: true });
-    let newline = text.indexOf('\n');
-    while (newline !== -1) {
-      lines.push(text.slice(0, newline));
-      text = text.slice(newline + 1);
-      newline = text.indexOf('\n');
-    }
+  for await (const chunk of readable) {
+    logs.push(JSON.parse(decoder.decode(chunk)) as { msg: string });
+    if (logs.length === count) break;
   }
 
-  reader.releaseLock();
-  return lines;
+  return logs;
 };
 
 describe('createNdjsonBuffer', () => {
@@ -41,8 +32,8 @@ describe('createNdjsonBuffer', () => {
 
     backend(makeLog('hello'));
 
-    const [line] = await readLines(readable, 1);
-    expect(JSON.parse(line)).toMatchObject({ msg: 'hello' });
+    const [log] = await readLogs(readable, 1);
+    expect(log).toMatchObject({ msg: 'hello' });
   });
 
   it('buffers a burst without dropping logs', async () => {
@@ -55,11 +46,8 @@ describe('createNdjsonBuffer', () => {
       backend(makeLog(`log-${index}`));
     }
 
-    const lines = await readLines(readable, count);
-    const messages = lines.map(
-      (line) => (JSON.parse(line) as { msg: string }).msg,
-    );
-    expect(messages).toEqual(
+    const logs = await readLogs(readable, count);
+    expect(logs.map((log) => log.msg)).toEqual(
       Array.from({ length: count }, (_unused, index) => `log-${index}`),
     );
   });

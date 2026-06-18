@@ -1,5 +1,5 @@
 import { createFlushScheduler } from '../logging/flush-scheduler.ts';
-import { getSelfLog } from '../logging/self-log.ts';
+import { getWorkerLogBuffer } from '../logging/worker-log-buffer.ts';
 import type { LogLocation, WorkerSink } from './rpc.ts';
 
 /**
@@ -75,9 +75,9 @@ export const createWorkerSink = (
     (opening ??= openDurable(location).then((durable) => {
       opened = durable;
       // Tee this worker's own logs into the same durable sink. Its buffer has
-      // been absorbing them since boot (see `../logging/self-log.ts`); drain it
-      // now that the file is open.
-      void getSelfLog().readable.pipeTo(producerStream(durable));
+      // been absorbing them since boot (see `../logging/worker-log-buffer.ts`);
+      // drain it now that the file is open.
+      void getWorkerLogBuffer().readable.pipeTo(producerStream(durable));
       return durable;
     }));
 

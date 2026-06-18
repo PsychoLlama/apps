@@ -6,14 +6,14 @@ const location: LogLocation = { directory: 'logs', file: 'session.ndjson' };
 // The worker's own-log readable, swapped for a controllable source so a test
 // can assert it tees into the durable sink. Hoisted so the `vi.mock` factory
 // (which runs before the module body) can reach it.
-const mockSelfLog = vi.hoisted(() => ({ chunks: [] as Uint8Array[] }));
+const mockWorkerLog = vi.hoisted(() => ({ chunks: [] as Uint8Array[] }));
 
-vi.mock('../../logging/self-log.ts', () => ({
-  getSelfLog: () => ({
+vi.mock('../../logging/worker-log-buffer.ts', () => ({
+  getWorkerLogBuffer: () => ({
     backend: () => undefined,
     readable: new ReadableStream<Uint8Array>({
       start(controller) {
-        for (const chunk of mockSelfLog.chunks) controller.enqueue(chunk);
+        for (const chunk of mockWorkerLog.chunks) controller.enqueue(chunk);
         controller.close();
       },
     }),
@@ -41,7 +41,7 @@ const writeChunk = async (
 };
 
 beforeEach(() => {
-  mockSelfLog.chunks = [];
+  mockWorkerLog.chunks = [];
 });
 
 describe('createWorkerSink', () => {
@@ -69,7 +69,7 @@ describe('createWorkerSink', () => {
   });
 
   it("tees the worker's own logs into the durable log", async () => {
-    mockSelfLog.chunks = [new Uint8Array([9])];
+    mockWorkerLog.chunks = [new Uint8Array([9])];
     const durable = fakeDurable();
     const sink = createWorkerSink(() => Promise.resolve(durable));
 
