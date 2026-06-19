@@ -4,7 +4,7 @@ import { Badge, Callout, Container, Flex, Heading, Link, Text } from '@lib/ui';
 import { LOG_FILE_NAME, type LogFileInfo } from '@lib/observability';
 import { loadLogFilesEffect } from '../bindings';
 import { logArchive } from '../store';
-import { formatSessionTime } from '../format';
+import { formatSessionTime, groupSessionsByDay } from '../format';
 import { LogsView } from './logs-view';
 import * as css from './log-list.css';
 
@@ -24,13 +24,14 @@ const LogRow = (props: LogRowProps) => (
       href={logHref(props.file)}
       size={3}
       color="neutral"
+      selectable
       testId={`log-${props.file.name}`}
     >
       {formatSessionTime(props.file)}
     </Link>
     <Show when={props.current}>
       <Badge size={1} variant="soft" color="success">
-        This session
+        Current session
       </Badge>
     </Show>
   </Flex>
@@ -51,22 +52,23 @@ export const LogList = () => {
     if (logArchive.status === 'idle') void loadLogFiles();
   });
 
-  const current = createMemo<LogFileInfo | undefined>(() =>
-    logArchive.files.find((file) => file.name === LOG_FILE_NAME),
-  );
-
-  // Everything but the live session, which renders on its own above the rest.
-  const earlier = createMemo<ReadonlyArray<LogFileInfo>>(() =>
-    logArchive.files.filter((file) => file.name !== LOG_FILE_NAME),
-  );
+  // Sessions bucketed into per-day sections, newest day first; the live
+  // session falls into today's group and is badged in place.
+  const days = createMemo(() => groupSessionsByDay(logArchive.files));
 
   return (
     <LogsView trail={[{ label: 'Logs' }]}>
       <Container as="div" size={2}>
         <Flex as="div" direction="column" gap={6}>
-          <Heading as="h1" size={7} selectable={false}>
-            Logs
-          </Heading>
+          <Flex as="header" direction="column" gap={2}>
+            <Heading as="h1" size={7} selectable={false}>
+              Logs
+            </Heading>
+            <Text as="p" size={3} color="lowContrast" selectable={false}>
+              Session logs are stored locally on your device. They aren't shared
+              unless you explicitly allow it.
+            </Text>
+          </Flex>
 
           <Switch>
             <Match when={logArchive.status === 'error'}>
@@ -91,44 +93,35 @@ export const LogList = () => {
 
             <Match when={logArchive.files.length > 0}>
               <Flex as="div" direction="column" gap={5}>
-                <Show when={current()}>
-                  {(file) => (
-                    <Flex
-                      as="ul"
-                      direction="column"
-                      gap={2}
-                      class={css.list}
-                      aria-label="This session"
-                    >
-                      <LogRow file={file()} current />
+                <For each={days()}>
+                  {(day) => (
+                    <Flex as="section" direction="column" gap={3}>
+                      <Show when={day.label}>
+                        {(label) => (
+                          <Heading as="h2" size={4} weight="medium" selectable>
+                            {label()}
+                          </Heading>
+                        )}
+                      </Show>
+                      <Flex
+                        as="ul"
+                        direction="column"
+                        gap={2}
+                        class={css.list}
+                        aria-label={day.label}
+                      >
+                        <For each={day.files}>
+                          {(file) => (
+                            <LogRow
+                              file={file}
+                              current={file.name === LOG_FILE_NAME}
+                            />
+                          )}
+                        </For>
+                      </Flex>
                     </Flex>
                   )}
-                </Show>
-
-                <Show when={earlier().length > 0}>
-                  <Flex as="section" direction="column" gap={3}>
-                    <Heading
-                      as="h2"
-                      size={2}
-                      weight="medium"
-                      color="lowContrast"
-                      selectable={false}
-                    >
-                      Earlier sessions
-                    </Heading>
-                    <Flex
-                      as="ul"
-                      direction="column"
-                      gap={2}
-                      class={css.list}
-                      aria-label="Earlier sessions"
-                    >
-                      <For each={earlier()}>
-                        {(file) => <LogRow file={file} />}
-                      </For>
-                    </Flex>
-                  </Flex>
-                </Show>
+                </For>
               </Flex>
             </Match>
 

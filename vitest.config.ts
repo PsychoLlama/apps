@@ -30,6 +30,10 @@ const sharedServer = {
 
 export default defineConfig({
   test: {
+    // Pin the suite to UTC so anything touching `Date`/`Intl` behaves
+    // identically across dev machines and CI, independent of the host's
+    // local timezone.
+    env: { TZ: 'UTC' },
     // Default is 15s. Tighter budget surfaces accidental slowness
     // (e.g. tests waiting on Playwright actionability checks against
     // an unactionable element) before it racks up wall-clock and
