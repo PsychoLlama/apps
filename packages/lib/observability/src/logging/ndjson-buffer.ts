@@ -29,8 +29,8 @@ export interface NdjsonBuffer {
  * boundary, and the JSON backend skips any log written while `desiredSize <=
  * 0`, so a burst (e.g. the startup flurry) would lose all but its first log —
  * verified empirically. Buffering here absorbs those bursts; `pipeTo` later
- * applies backpressure by queuing, never dropping. `highWaterMark` is a knob
- * mainly for tests; production should keep the default.
+ * applies backpressure by queuing, never dropping. `highWaterMark` is exposed
+ * as a knob; production should keep the default.
  */
 export const createNdjsonBuffer = (highWaterMark = 1024): NdjsonBuffer => {
   const buffer = new TransformStream<Uint8Array, Uint8Array>(

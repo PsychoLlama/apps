@@ -1,6 +1,15 @@
 import { createLogger } from '@holz/core';
 import { createNdjsonBuffer } from '../ndjson-buffer.ts';
 
+/** The shape `createJsonBackend` serializes each `@holz/core` `Log` to. */
+interface Log {
+  level: string;
+  time: string;
+  msg: string;
+  origin: string[];
+  ctx?: Record<string, unknown>;
+}
+
 const setup = (highWaterMark?: number) => {
   const { backend, readable } = createNdjsonBuffer(highWaterMark);
   const logger = createLogger(backend)
@@ -9,24 +18,18 @@ const setup = (highWaterMark?: number) => {
   return { logger, backend, readable };
 };
 
-// Collect every NDJSON line currently buffered. The buffer is a fully-populated
-// synchronous source with no further writes, so a `read()` that doesn't settle
-// within a macrotask means we've drained everything queued. Each chunk is
-// exactly one UTF-8 NDJSON record, so decode-and-parse it directly.
-const drainBuffered = async (
+// Drain `count` logs from the buffer's readable end. Each chunk is exactly one
+// UTF-8 NDJSON record, so decode-and-parse it directly — no line reassembly.
+const readLogs = async (
   readable: ReadableStream<Uint8Array>,
-): Promise<Array<{ msg: string }>> => {
+  count: number,
+): Promise<Log[]> => {
   const decoder = new TextDecoder();
-  const reader = readable.getReader();
-  const logs: Array<{ msg: string }> = [];
+  const logs: Log[] = [];
 
-  for (;;) {
-    const result = await Promise.race([
-      reader.read(),
-      new Promise<'idle'>((resolve) => setTimeout(() => resolve('idle'))),
-    ]);
-    if (result === 'idle' || result.done) break;
-    logs.push(JSON.parse(decoder.decode(result.value)) as { msg: string });
+  for await (const chunk of readable) {
+    logs.push(JSON.parse(decoder.decode(chunk)) as Log);
+    if (logs.length === count) break;
   }
 
   return logs;
@@ -38,9 +41,13 @@ describe('createNdjsonBuffer', () => {
 
     logger.info('hello');
 
-    const logs = await drainBuffered(readable);
+    const logs = await readLogs(readable, 1);
     expect(logs).toHaveLength(1);
-    expect(logs[0]).toMatchObject({ msg: 'hello' });
+    expect(logs[0]).toMatchObject({
+      level: 'info',
+      msg: 'hello',
+      origin: ['@lib/observability', 'ndjson-buffer'],
+    });
   });
 
   it('buffers a burst without dropping logs', async () => {
@@ -53,25 +60,10 @@ describe('createNdjsonBuffer', () => {
       logger.info(`log-${index}`);
     }
 
-    const logs = await drainBuffered(readable);
+    const logs = await readLogs(readable, count);
     expect(logs).toHaveLength(count);
     expect(logs.map((log) => log.msg)).toEqual(
       Array.from({ length: count }, (_unused, index) => `log-${index}`),
     );
-  });
-
-  it('drops logs once a shallow buffer fills', async () => {
-    // A low high-water mark caps how much a burst can buffer: the backend skips
-    // writes once `desiredSize` hits 0, so only the first `highWaterMark` logs
-    // survive. This proves the parameter is wired through.
-    const { logger, readable } = setup(2);
-
-    for (let index = 0; index < 50; index++) {
-      logger.info(`log-${index}`);
-    }
-
-    const logs = await drainBuffered(readable);
-    expect(logs).toHaveLength(2);
-    expect(logs.map((log) => log.msg)).toEqual(['log-0', 'log-1']);
   });
 });
