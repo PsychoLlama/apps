@@ -30,7 +30,7 @@ const LogRow = (props: LogRowProps) => (
     </Link>
     <Show when={props.current}>
       <Badge size={1} variant="soft" color="success">
-        This session
+        Current session
       </Badge>
     </Show>
   </Flex>
