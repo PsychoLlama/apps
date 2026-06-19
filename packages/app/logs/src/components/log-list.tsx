@@ -24,6 +24,7 @@ const LogRow = (props: LogRowProps) => (
       href={logHref(props.file)}
       size={3}
       color="neutral"
+      selectable
       testId={`log-${props.file.name}`}
     >
       {formatSessionTime(props.file)}
@@ -63,7 +64,7 @@ export const LogList = () => {
             <Heading as="h1" size={7} selectable={false}>
               Logs
             </Heading>
-            <Text as="p" size={3} color="lowContrast" selectable>
+            <Text as="p" size={3} color="lowContrast" selectable={false}>
               Session logs are stored locally on your device. They aren't shared
               unless you explicitly allow it.
             </Text>
@@ -97,12 +98,7 @@ export const LogList = () => {
                     <Flex as="section" direction="column" gap={3}>
                       <Show when={day.label}>
                         {(label) => (
-                          <Heading
-                            as="h2"
-                            size={4}
-                            weight="medium"
-                            selectable={false}
-                          >
+                          <Heading as="h2" size={4} weight="medium" selectable>
                             {label()}
                           </Heading>
                         )}
