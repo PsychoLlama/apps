@@ -64,8 +64,8 @@ export const LogList = () => {
               Logs
             </Heading>
             <Text as="p" size={3} color="lowContrast" selectable>
-              Debugging logs are saved to disk. They stay on this device and are
-              never shared without your consent.
+              Session logs are stored locally on your device. They aren't shared
+              unless you explicitly allow it.
             </Text>
           </Flex>
 
