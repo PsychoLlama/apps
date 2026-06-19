@@ -1,14 +1,5 @@
-import { createLogger } from '@holz/core';
+import { type Log, createLogger } from '@holz/core';
 import { createNdjsonBuffer } from '../ndjson-buffer.ts';
-
-/** The shape `createJsonBackend` serializes each `@holz/core` `Log` to. */
-interface Log {
-  level: string;
-  time: string;
-  msg: string;
-  origin: string[];
-  ctx?: Record<string, unknown>;
-}
 
 const setup = (highWaterMark?: number) => {
   const { backend, readable } = createNdjsonBuffer(highWaterMark);
@@ -20,6 +11,9 @@ const setup = (highWaterMark?: number) => {
 
 // Drain `count` logs from the buffer's readable end. Each chunk is exactly one
 // UTF-8 NDJSON record, so decode-and-parse it directly — no line reassembly.
+// `createJsonBackend` renames a `Log`'s fields on the wire (`msg`, a string
+// `level`, `time`), so assertions go through `toMatchObject` rather than the
+// typed fields.
 const readLogs = async (
   readable: ReadableStream<Uint8Array>,
   count: number,
@@ -62,8 +56,10 @@ describe('createNdjsonBuffer', () => {
 
     const logs = await readLogs(readable, count);
     expect(logs).toHaveLength(count);
-    expect(logs.map((log) => log.msg)).toEqual(
-      Array.from({ length: count }, (_unused, index) => `log-${index}`),
+    expect(logs).toMatchObject(
+      Array.from({ length: count }, (_unused, index) => ({
+        msg: `log-${index}`,
+      })),
     );
   });
 });
