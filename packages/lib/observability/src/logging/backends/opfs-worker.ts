@@ -1,5 +1,4 @@
 import type { LogProcessor } from '@holz/core';
-import { createJsonBackend } from '@holz/json-backend';
 import { RPC, type RpcMessage } from '@lib/messaging/rpc';
 import {
   MessagePortTransport,
@@ -8,6 +7,8 @@ import {
 import ObservabilityWorker from '../../worker/index?worker';
 import type { HostApi } from '../../host-api.ts';
 import type { LogLocation, WorkerApi } from '../../worker/rpc.ts';
+import { OBSERVABILITY_WORKER_NAME } from '../environment.ts';
+import { createNdjsonBuffer } from '../ndjson-buffer.ts';
 import { LOG_DIRECTORY, LOG_FILE_NAME } from '../log-file.ts';
 
 /**
@@ -32,26 +33,15 @@ interface PageVisibility {
  * input to defend against.
  */
 export const createOpfsWorkerBackend = (): LogProcessor => {
-  // `name` surfaces in DevTools' thread list and is readable inside the
-  // worker as `self.name` — a stable label beats the anonymous default.
-  const worker = new ObservabilityWorker({ name: 'Observability' });
+  // `name` is load-bearing, not just a DevTools label: the worker reads it as
+  // `self.name` to recognize itself as the observability worker and persist its
+  // own logs (see `../environment.ts`).
+  const worker = new ObservabilityWorker({ name: OBSERVABILITY_WORKER_NAME });
 
-  // Host-local buffer the JSON backend writes UTF-8 NDJSON into. It exists for
-  // two reasons, both rooted in the transferred stream being a cross-realm
-  // writable with a high-water mark fixed at 1 by spec
-  // (`SetUpCrossRealmTransformWritable`): writing to it directly drops
-  // `desiredSize` to 0 until the worker acks across the thread boundary, and
-  // the JSON backend skips any log written while `desiredSize <= 0`, so a burst
-  // (e.g. the startup flurry) loses all but its first log — verified
-  // empirically. This buffer's deep headroom absorbs those bursts, and because
-  // nothing reads its readable end until the worker's `init` reply connects the
-  // pipe, it also queues everything logged during worker boot. The
-  // backend writes here from the very first log; `pipeTo` later applies
-  // backpressure by queuing, never dropping.
-  const buffer = new TransformStream<Uint8Array, Uint8Array>(
-    undefined,
-    new CountQueuingStrategy({ highWaterMark: 1024 }),
-  );
+  // Host-local buffer the JSON backend writes UTF-8 NDJSON into, deep enough to
+  // absorb startup bursts and queue everything logged during worker boot until
+  // the `init` reply connects the pipe (see `createNdjsonBuffer`).
+  const { backend, readable } = createNdjsonBuffer();
 
   // Wire the host end of the worker RPC. The host serves nothing — it drives
   // the boundary by calling the worker's `init` request below.
@@ -72,7 +62,7 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
     // The worker handed back the writable end of its OPFS-backed log stream.
     // Drain the buffered NDJSON into it — anything logged during boot flushes,
     // and later logs flow straight through.
-    void buffer.readable.pipeTo(stream);
+    void readable.pipeTo(stream);
   });
 
   // The worker batches OPFS flushes by size and time for throughput, so an
@@ -94,5 +84,5 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
   }
 
   // The closure keeps `worker` (via the RPC transport) reachable.
-  return createJsonBackend({ stream: buffer.writable });
+  return backend;
 };
