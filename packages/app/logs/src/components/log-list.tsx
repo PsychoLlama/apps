@@ -99,9 +99,8 @@ export const LogList = () => {
                         {(label) => (
                           <Heading
                             as="h2"
-                            size={2}
+                            size={4}
                             weight="medium"
-                            color="lowContrast"
                             selectable={false}
                           >
                             {label()}
