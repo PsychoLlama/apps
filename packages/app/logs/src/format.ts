@@ -5,6 +5,10 @@ const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
   timeStyle: 'medium',
 });
 
+const timeFormat = new Intl.DateTimeFormat(undefined, {
+  timeStyle: 'medium',
+});
+
 const dayHeadingFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'full',
 });
@@ -16,13 +20,13 @@ const parseCreatedAt = (name: string): number | undefined => {
 };
 
 /**
- * Label a log file by when its session began. Falls back to the raw file name
- * for the rare entry whose name carries no parseable timestamp.
+ * Label a log file by the time of day its session began — the archive index
+ * groups rows under a date heading, so the row itself only needs the time.
+ * Falls back to the raw file name for the rare entry whose name carries no
+ * parseable timestamp.
  */
 export const formatSessionTime = (file: LogFileInfo): string =>
-  file.createdAt === undefined
-    ? file.name
-    : dateTimeFormat.format(file.createdAt);
+  file.createdAt === undefined ? file.name : timeFormat.format(file.createdAt);
 
 /**
  * Same session label as {@link formatSessionTime}, derived from a bare file
