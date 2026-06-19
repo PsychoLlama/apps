@@ -22,19 +22,20 @@ export interface NdjsonBuffer {
  * buffer also queues everything logged before the sink connects (worker boot,
  * the `init` round trip).
  *
- * The high-water mark is deep for two reasons, both rooted in the sink often
- * being a cross-realm `WritableStream` whose high-water mark is fixed at 1 by
- * spec (`SetUpCrossRealmTransformWritable`): writing to such a stream directly
- * drops `desiredSize` to 0 until the peer acks across the thread boundary, and
- * the JSON backend skips any log written while `desiredSize <= 0`, so a burst
- * (e.g. the startup flurry) would lose all but its first log — verified
- * empirically. Buffering here absorbs those bursts; `pipeTo` later applies
- * backpressure by queuing, never dropping.
+ * The high-water mark defaults deep for two reasons, both rooted in the sink
+ * often being a cross-realm `WritableStream` whose high-water mark is fixed at
+ * 1 by spec (`SetUpCrossRealmTransformWritable`): writing to such a stream
+ * directly drops `desiredSize` to 0 until the peer acks across the thread
+ * boundary, and the JSON backend skips any log written while `desiredSize <=
+ * 0`, so a burst (e.g. the startup flurry) would lose all but its first log —
+ * verified empirically. Buffering here absorbs those bursts; `pipeTo` later
+ * applies backpressure by queuing, never dropping. `highWaterMark` is a knob
+ * mainly for tests; production should keep the default.
  */
-export const createNdjsonBuffer = (): NdjsonBuffer => {
+export const createNdjsonBuffer = (highWaterMark = 1024): NdjsonBuffer => {
   const buffer = new TransformStream<Uint8Array, Uint8Array>(
     undefined,
-    new CountQueuingStrategy({ highWaterMark: 1024 }),
+    new CountQueuingStrategy({ highWaterMark }),
   );
 
   return {

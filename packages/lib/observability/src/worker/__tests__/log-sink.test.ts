@@ -1,24 +1,24 @@
+import type { NdjsonBuffer } from '../../logging/ndjson-buffer.ts';
 import { createWorkerSink } from '../log-sink.ts';
 import type { LogLocation } from '../rpc.ts';
 
 const location: LogLocation = { directory: 'logs', file: 'session.ndjson' };
 
-// The worker's own-log readable, swapped for a controllable source so a test
-// can assert it tees into the durable sink. Hoisted so the `vi.mock` factory
-// (which runs before the module body) can reach it.
-const mockWorkerLog = vi.hoisted(() => ({ chunks: [] as Uint8Array[] }));
-
-vi.mock('../../logging/worker-log-buffer.ts', () => ({
-  getWorkerLogBuffer: () => ({
+// A worker-log buffer whose readable replays a fixed set of chunks, so a test
+// can assert the worker's own logs tee into the durable sink. Passed to
+// `createWorkerSink` as the injected buffer getter — no module mock, and a
+// fresh buffer per test.
+const workerLogBuffer =
+  (chunks: Uint8Array[] = []): (() => NdjsonBuffer) =>
+  () => ({
     backend: () => undefined,
     readable: new ReadableStream<Uint8Array>({
       start(controller) {
-        for (const chunk of mockWorkerLog.chunks) controller.enqueue(chunk);
+        for (const chunk of chunks) controller.enqueue(chunk);
         controller.close();
       },
     }),
-  }),
-}));
+  });
 
 const fakeDurable = () => {
   const writes: Uint8Array[] = [];
@@ -40,15 +40,11 @@ const writeChunk = async (
   writer.releaseLock();
 };
 
-beforeEach(() => {
-  mockWorkerLog.chunks = [];
-});
-
 describe('createWorkerSink', () => {
   it('opens the durable log once across repeated opens', async () => {
     const durable = fakeDurable();
     const openDurable = vi.fn(() => Promise.resolve(durable));
-    const sink = createWorkerSink(openDurable);
+    const sink = createWorkerSink(openDurable, workerLogBuffer());
 
     await sink.open(location);
     await sink.open(location);
@@ -58,7 +54,10 @@ describe('createWorkerSink', () => {
 
   it('routes every producer into the one durable log', async () => {
     const durable = fakeDurable();
-    const sink = createWorkerSink(() => Promise.resolve(durable));
+    const sink = createWorkerSink(
+      () => Promise.resolve(durable),
+      workerLogBuffer(),
+    );
 
     const first = await sink.open(location);
     const second = await sink.open(location);
@@ -69,9 +68,11 @@ describe('createWorkerSink', () => {
   });
 
   it("tees the worker's own logs into the durable log", async () => {
-    mockWorkerLog.chunks = [new Uint8Array([9])];
     const durable = fakeDurable();
-    const sink = createWorkerSink(() => Promise.resolve(durable));
+    const sink = createWorkerSink(
+      () => Promise.resolve(durable),
+      workerLogBuffer([new Uint8Array([9])]),
+    );
 
     await sink.open(location);
 
@@ -82,7 +83,10 @@ describe('createWorkerSink', () => {
 
   it('flushes the opened durable log', async () => {
     const durable = fakeDurable();
-    const sink = createWorkerSink(() => Promise.resolve(durable));
+    const sink = createWorkerSink(
+      () => Promise.resolve(durable),
+      workerLogBuffer(),
+    );
 
     await sink.open(location);
     sink.flush();
@@ -91,7 +95,10 @@ describe('createWorkerSink', () => {
   });
 
   it('ignores flush before the durable log opens', () => {
-    const sink = createWorkerSink(() => Promise.resolve(fakeDurable()));
+    const sink = createWorkerSink(
+      () => Promise.resolve(fakeDurable()),
+      workerLogBuffer(),
+    );
 
     expect(() => sink.flush()).not.toThrow();
   });

@@ -19,8 +19,7 @@ interface RawHandlers {
   events: { flush: () => void };
 }
 
-const stubStream = (): WritableStream<Uint8Array> =>
-  ({}) as WritableStream<Uint8Array>;
+const stubStream = (): WritableStream<Uint8Array> => new WritableStream();
 
 // Wire the handlers over a sink that hands back `streams` in order, so a test
 // can open more than one producer and check which the handlers transfer.

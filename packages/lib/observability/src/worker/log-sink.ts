@@ -1,4 +1,5 @@
 import { createFlushScheduler } from '../logging/flush-scheduler.ts';
+import type { NdjsonBuffer } from '../logging/ndjson-buffer.ts';
 import { getWorkerLogBuffer } from '../logging/worker-log-buffer.ts';
 import type { LogLocation, WorkerSink } from './rpc.ts';
 
@@ -60,10 +61,12 @@ const producerStream = (durable: DurableLog): WritableStream<Uint8Array> =>
  * every `open` mints a producer to transfer back to a caller. The sink opens
  * lazily because the file name only arrives with `init`.
  *
- * `openDurable` is injected so tests can drive the sink without OPFS.
+ * `openDurable` and `getBuffer` are injected so tests can drive the sink
+ * without OPFS or the module-level buffer singleton.
  */
 export const createWorkerSink = (
   openDurable: (location: LogLocation) => Promise<DurableLog> = openDurableLog,
+  getBuffer: () => NdjsonBuffer = getWorkerLogBuffer,
 ): WorkerSink => {
   // The opened durable, tracked both as a promise (so concurrent opens share
   // one file) and, once resolved, synchronously (so `flush` can run inline on
@@ -77,7 +80,7 @@ export const createWorkerSink = (
       // Tee this worker's own logs into the same durable sink. Its buffer has
       // been absorbing them since boot (see `../logging/worker-log-buffer.ts`);
       // drain it now that the file is open.
-      void getWorkerLogBuffer().readable.pipeTo(producerStream(durable));
+      void getBuffer().readable.pipeTo(producerStream(durable));
       return durable;
     }));
 
