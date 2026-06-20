@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@holz/log-collector':
-      specifier: 0.8.3-rc.155
-      version: 0.8.3-rc.155
+      specifier: 0.8.3-rc.160
+      version: 0.8.3-rc.160
     '@iconify/json':
       specifier: ^2.2.470
       version: 2.2.486
@@ -485,7 +485,7 @@ importers:
         version: 0.8.3-rc.155
       '@holz/log-collector':
         specifier: 'catalog:'
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        version: 0.8.3-rc.160(@holz/core@0.8.3-rc.155)
       '@holz/stream-backend':
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
@@ -1334,8 +1334,8 @@ packages:
   '@holz/json-backend@0.8.3-rc.155':
     resolution: {integrity: sha512-v2bl1XH0hn0QncbzAsldPpdgxNM1hCMub4dpMyy0eQQ11EbulyONaL5QqrQ4sTXVi+gH+ZJsl2NNiT0IHu3R2A==}
 
-  '@holz/log-collector@0.8.3-rc.155':
-    resolution: {integrity: sha512-ZXX+zrgxv+XkJgxaeFfW/psO0ycj+3djDnk/fDuBQQGlKoV6RHZSblSut2dsWNlvaifVl5NxZzVN23HXsMmP4w==}
+  '@holz/log-collector@0.8.3-rc.160':
+    resolution: {integrity: sha512-SDe0bkXByMpORaVHiXoM/qLpRmp68UI2Zg/hek5UoHbtClqztx6XkEqlPytptYR6qwAZmIr1q7NKqFboCfAJmA==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
@@ -5680,7 +5680,7 @@ snapshots:
 
   '@holz/json-backend@0.8.3-rc.155': {}
 
-  '@holz/log-collector@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/log-collector@0.8.3-rc.160(@holz/core@0.8.3-rc.155)':
     dependencies:
       '@holz/core': 0.8.3-rc.155
 

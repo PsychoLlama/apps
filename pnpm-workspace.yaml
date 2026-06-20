@@ -38,7 +38,7 @@ overrides:
   vite: 'catalog:'
 
 catalog:
-  '@holz/log-collector': 0.8.3-rc.155
+  '@holz/log-collector': 0.8.3-rc.160
   '@iconify/json': ^2.2.470
   '@solidjs/meta': ^0.29.4
   '@solidjs/router': ^0.16.1
