@@ -472,8 +472,8 @@ importers:
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
       '@holz/console-backend':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        specifier: 0.8.3-rc.160
+        version: 0.8.3-rc.160(@holz/core@0.8.3-rc.155)
       '@holz/core':
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155
@@ -1318,8 +1318,8 @@ packages:
     peerDependencies:
       '@holz/core': ^0.8.0
 
-  '@holz/console-backend@0.8.3-rc.155':
-    resolution: {integrity: sha512-bS1O+TchzthOx4AlVNm1Sjf73z2NePd34hEdOeFq/+JLpQlksKQN/BY1ULAEAzyiLRb4IsITTBrQ2/14sHgu2A==}
+  '@holz/console-backend@0.8.3-rc.160':
+    resolution: {integrity: sha512-oj1dRg4Rc+ddVi/YSUtAIABEdj3fj9j3YpkGHfJDspEbF2gSEtFVqdX2BvZgw2HnLTfWX9QocoV74D20Eu8bAw==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
@@ -5667,7 +5667,7 @@ snapshots:
     dependencies:
       '@holz/core': 0.8.3-rc.155
 
-  '@holz/console-backend@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/console-backend@0.8.3-rc.160(@holz/core@0.8.3-rc.155)':
     dependencies:
       '@holz/core': 0.8.3-rc.155
 
