@@ -469,8 +469,8 @@ importers:
   packages/lib/observability:
     dependencies:
       '@holz/ansi-terminal-backend':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        specifier: 0.8.3-rc.160
+        version: 0.8.3-rc.160(@holz/core@0.8.3-rc.155)
       '@holz/console-backend':
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
@@ -1313,8 +1313,8 @@ packages:
       '@noble/hashes':
         optional: true
 
-  '@holz/ansi-terminal-backend@0.8.3-rc.155':
-    resolution: {integrity: sha512-ONWNcWELV0Gj5PwfaXMx1OT3NEy5rJfJBbS7reTYmh9EoNOA6CIfkphsjemd5gDx914QQMqfSdm8JwCjZRLGoA==}
+  '@holz/ansi-terminal-backend@0.8.3-rc.160':
+    resolution: {integrity: sha512-LRG1EmD/uP8o0vDyCLC7z5tUh8t6Ahete2HBxChFGCT5EElgfLgtEkUizpQCSdOPTDuy31V377unV4jBkzOvDQ==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
@@ -5663,7 +5663,7 @@ snapshots:
 
   '@exodus/bytes@1.15.1': {}
 
-  '@holz/ansi-terminal-backend@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/ansi-terminal-backend@0.8.3-rc.160(@holz/core@0.8.3-rc.155)':
     dependencies:
       '@holz/core': 0.8.3-rc.155
 
