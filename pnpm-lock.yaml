@@ -478,8 +478,8 @@ importers:
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155
       '@holz/env-filter':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        specifier: 0.8.3-rc.160
+        version: 0.8.3-rc.160(@holz/core@0.8.3-rc.155)
       '@holz/json-backend':
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155
@@ -1326,8 +1326,8 @@ packages:
   '@holz/core@0.8.3-rc.155':
     resolution: {integrity: sha512-ce3Jn+XJm75AbrfReTdbTXoF0G17PCCTSMIwJpkRfWjFoNVfQNd7O3EIwcz6aybrAUswDslEnDUB7e3aUseQ8A==}
 
-  '@holz/env-filter@0.8.3-rc.155':
-    resolution: {integrity: sha512-IKBJrpe3BGCOjF17s28hKiFy1PE9FvQZmPF61AZYfNE33oMshpS+Yl2OV4d1wfDLpQiC5ayR0ZWhFBaxJnHAmw==}
+  '@holz/env-filter@0.8.3-rc.160':
+    resolution: {integrity: sha512-k4DxZURNNNH4dSDNSNahd0vh5cQIc9Lm/r0cUQIMvh4gDK7VSd1+01ctEqKaOtYXI9LFvkqAc2FGtzbTCBogVg==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
@@ -1339,8 +1339,8 @@ packages:
     peerDependencies:
       '@holz/core': ^0.8.0
 
-  '@holz/pattern-filter@0.8.3-rc.155':
-    resolution: {integrity: sha512-K6/bJ0Szhb/rkcx0iio4FCuHC8lUNSM9Y7IFs9T4gtmgFYXsBCbSkSFmMGCLC5fmRtD66tPN00n/9Uzo959m+g==}
+  '@holz/pattern-filter@0.8.3-rc.161':
+    resolution: {integrity: sha512-Y5GD07dkBs68TOunYfeUUPMbbBzXedOA2UR1WhLsUxmBNqyOqsWTPhU6T/OoHHpFqad0Pk1/sLjQbtdlysJASA==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
@@ -5673,10 +5673,10 @@ snapshots:
 
   '@holz/core@0.8.3-rc.155': {}
 
-  '@holz/env-filter@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/env-filter@0.8.3-rc.160(@holz/core@0.8.3-rc.155)':
     dependencies:
       '@holz/core': 0.8.3-rc.155
-      '@holz/pattern-filter': 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+      '@holz/pattern-filter': 0.8.3-rc.161(@holz/core@0.8.3-rc.155)
 
   '@holz/json-backend@0.8.3-rc.155': {}
 
@@ -5684,7 +5684,7 @@ snapshots:
     dependencies:
       '@holz/core': 0.8.3-rc.155
 
-  '@holz/pattern-filter@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/pattern-filter@0.8.3-rc.161(@holz/core@0.8.3-rc.155)':
     dependencies:
       '@holz/core': 0.8.3-rc.155
 
