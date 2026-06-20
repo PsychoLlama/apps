@@ -487,8 +487,8 @@ importers:
         specifier: 'catalog:'
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
       '@holz/stream-backend':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        specifier: 0.8.3-rc.160
+        version: 0.8.3-rc.160(@holz/core@0.8.3-rc.155)
       '@lib/messaging':
         specifier: workspace:*
         version: link:../messaging
@@ -1344,8 +1344,8 @@ packages:
     peerDependencies:
       '@holz/core': ^0.8.0
 
-  '@holz/stream-backend@0.8.3-rc.155':
-    resolution: {integrity: sha512-dU8f1V+YcDgD7LDuAInR2uKwdLZ14VSzwhv9fSbhxWPEgBqI7uOpBwUj1fQLsoGswKt/Jx8HrOSWoNXoDwS+Yw==}
+  '@holz/stream-backend@0.8.3-rc.160':
+    resolution: {integrity: sha512-cKXHfPJn1rlBKcd2mrnSXPwNxYGaQsF8i7c8XcwUcSUwX+uhrrel1JxVEy8tGPfnzU7FHUe+mzzNW587hbfb1w==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
@@ -5688,7 +5688,7 @@ snapshots:
     dependencies:
       '@holz/core': 0.8.3-rc.155
 
-  '@holz/stream-backend@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/stream-backend@0.8.3-rc.160(@holz/core@0.8.3-rc.155)':
     dependencies:
       '@holz/core': 0.8.3-rc.155
 
