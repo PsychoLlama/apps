@@ -28,18 +28,27 @@ const durationTheme = createThemeContract({
   slow: { 1: '', 2: '' },
 });
 
+/**
+ * Concrete duration assignments backing the {@link durationTheme} contract.
+ * Internal to the package — deliberately not re-exported from `index.css.ts`.
+ * The motion gallery renders these literals directly so its swatches keep
+ * demonstrating each duration under `prefers-reduced-motion`, where the CSS
+ * vars collapse to `0ms`.
+ */
+export const durationValues = {
+  fast: { 1: '70ms', 2: '110ms' },
+  moderate: { 1: '150ms', 2: '240ms' },
+  slow: { 1: '400ms', 2: '700ms' },
+} as const;
+
 globalStyle(':root', {
-  vars: assignVars(durationTheme, {
-    fast: { 1: '70ms', 2: '110ms' },
-    moderate: { 1: '150ms', 2: '240ms' },
-    slow: { 1: '400ms', 2: '700ms' },
-  }),
+  vars: assignVars(durationTheme, durationValues),
   '@media': {
     '(prefers-reduced-motion: reduce)': {
       vars: assignVars(durationTheme, {
-        fast: { 1: '0s', 2: '0s' },
-        moderate: { 1: '0s', 2: '0s' },
-        slow: { 1: '0s', 2: '0s' },
+        fast: { 1: '0ms', 2: '0ms' },
+        moderate: { 1: '0ms', 2: '0ms' },
+        slow: { 1: '0ms', 2: '0ms' },
       }),
     },
   },
