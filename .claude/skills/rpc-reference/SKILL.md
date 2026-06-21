@@ -75,7 +75,7 @@ If you need a transport implementation and one does not yet exist, propose it to
 ### BroadcastChannelTransport - `@lib/messaging/broadcast-channel`
 
 - Wraps `BroadcastChannel`. Pure pub/sub: no per-send options, no responses. Use `send`/`onMessage` directly — RPC's request/response can't ride a broadcast.
-- Caller owns the `BroadcastChannel` lifetime (`close()`).
+- Owns its channel: construct with a channel name; `close()` detaches every handler and closes it.
 
 ## Testing
 

@@ -31,9 +31,11 @@ export interface LogFileCreated {
  * delivery to sibling channels, and this announcer has nothing to receive.
  */
 export const announceLogFile = (file: string): void => {
-  const channel = new BroadcastChannel(LOG_FILE_CHANNEL);
-  new BroadcastChannelTransport<never, LogFileCreated>(channel).send({ file });
-  channel.close();
+  const transport = new BroadcastChannelTransport<never, LogFileCreated>(
+    LOG_FILE_CHANNEL,
+  );
+  transport.send({ file });
+  transport.close();
 };
 
 /**
@@ -46,13 +48,12 @@ export const announceLogFile = (file: string): void => {
 export const subscribeLogFiles = (
   handler: (event: LogFileCreated) => void,
 ): Unsubscribe => {
-  const channel = new BroadcastChannel(LOG_FILE_CHANNEL);
-  const detach = new BroadcastChannelTransport<LogFileCreated, never>(
-    channel,
-  ).onMessage(handler);
+  const transport = new BroadcastChannelTransport<LogFileCreated, never>(
+    LOG_FILE_CHANNEL,
+  );
+  transport.onMessage(handler);
 
-  return () => {
-    detach();
-    channel.close();
-  };
+  // `close` detaches the handler and closes the channel — this subscription
+  // owns the whole transport, so tearing it down fully is the unsubscribe.
+  return () => transport.close();
 };
