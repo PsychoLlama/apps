@@ -89,6 +89,14 @@ export default [
           paths: restrictedStatePaths,
         },
       ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'ExportAllDeclaration[exported=null]',
+          message:
+            '`export * from` is banned. It complicates discovery and leads to unintentional exports. Prefer explicit exports.',
+        },
+      ],
     },
   },
   {
