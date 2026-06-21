@@ -1,7 +1,7 @@
-import { createFlushScheduler } from '../logging/flush-scheduler.ts';
-import type { NdjsonBuffer } from '../logging/ndjson-buffer.ts';
-import { getWorkerLogBuffer } from '../logging/worker-log-buffer.ts';
-import type { LogLocation, WorkerSink } from './rpc.ts';
+import { createFlushScheduler } from './flush-scheduler';
+import type { NdjsonBuffer } from '../ndjson-buffer';
+import { getWorkerLogBuffer } from './worker-log-buffer';
+import type { LogLocation, WorkerSink } from './rpc';
 
 /**
  * The single OPFS-backed durable log for a session: one sync access handle,
@@ -78,7 +78,7 @@ export const createWorkerSink = (
     (opening ??= openDurable(location).then((durable) => {
       opened = durable;
       // Tee this worker's own logs into the same durable sink. Its buffer has
-      // been absorbing them since boot (see `../logging/worker-log-buffer.ts`);
+      // been absorbing them since boot (see `./worker-log-buffer.ts`);
       // drain it now that the file is open.
       void getBuffer().readable.pipeTo(producerStream(durable));
       return durable;

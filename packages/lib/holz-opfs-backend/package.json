@@ -1,0 +1,23 @@
+{
+  "name": "@lib/holz-opfs-backend",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Off-main-thread OPFS persistence backend for holz logs.",
+  "license": "MIT",
+  "sideEffects": [
+    "./src/worker/index.ts"
+  ],
+  "exports": "./src/index.ts",
+  "imports": {
+    "#worker": "./src/worker/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc && tsc -p src/worker/tsconfig.json"
+  },
+  "dependencies": {
+    "@holz/core": "catalog:",
+    "@holz/json-backend": "0.8.3-rc.155",
+    "@lib/messaging": "workspace:*"
+  }
+}

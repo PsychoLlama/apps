@@ -1,8 +1,8 @@
-import { start } from './start.ts';
+import { start } from './start';
 
 /**
  * The observability worker entry. Spawned on the main thread by the OPFS log
- * backend (see `../logging/backends/opfs-worker.ts`). It waits for the host's
+ * backend (see `../main/index.ts`). It waits for the host's
  * `init` request, opens the named log file in the origin-private file system,
  * then hands back the writable end of a stream whose UTF-8 NDJSON chunks it
  * persists to that file.

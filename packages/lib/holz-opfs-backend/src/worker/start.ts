@@ -4,9 +4,9 @@ import {
   MessagePortTransport,
   type SendOptions,
 } from '@lib/messaging/message-port';
-import type { HostApi } from '../host-api.ts';
-import { createWorkerSink } from './log-sink.ts';
-import { createWorkerHandlers, type WorkerApi } from './rpc.ts';
+import type { HostApi } from '../host-api';
+import { createWorkerSink } from './log-sink';
+import { createWorkerHandlers, type WorkerApi } from './rpc';
 
 /**
  * Boot the observability worker on `scope` — the worker global in production,

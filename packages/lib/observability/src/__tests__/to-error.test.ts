@@ -1,4 +1,4 @@
-import { CoercedError, toError } from '../to-error.ts';
+import { CoercedError, toError } from '../to-error';
 
 describe('toError', () => {
   it('passes existing errors through untouched', () => {

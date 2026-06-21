@@ -1,4 +1,4 @@
-import { createFlushScheduler } from '../flush-scheduler.ts';
+import { createFlushScheduler } from '../flush-scheduler';
 
 describe('createFlushScheduler', () => {
   beforeEach(() => {
