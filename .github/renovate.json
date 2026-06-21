@@ -4,6 +4,11 @@
   "platformAutomerge": true,
   "packageRules": [
     {
+      "description": "@holz/* packages use a fixed-mode versioning scheme. Update them together.",
+      "matchPackageNames": ["@holz/**"],
+      "groupName": "holz"
+    },
+    {
       "description": "The flake owns the pnpm version (managePackageManagerVersions is off); the packageManager field is only a turbo lockfile-parser hint, kept in sync by hand. Skip its bump PRs.",
       "matchDepTypes": ["packageManager"],
       "enabled": false
