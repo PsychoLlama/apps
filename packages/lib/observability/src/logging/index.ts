@@ -3,6 +3,7 @@ import { processor } from '#processor';
 
 export { LOG_DIRECTORY, LOG_FILE_NAME } from './log-file.ts';
 export { listLogFiles, type LogFileInfo } from './log-archive.ts';
+export { listActiveLogFiles } from './locks.ts';
 
 const baseLogger = createCoreLogger(processor);
 
