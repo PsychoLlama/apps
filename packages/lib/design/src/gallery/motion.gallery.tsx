@@ -5,17 +5,14 @@ import { entrance, exit, standard } from '@lib/design';
 import { durationValues } from '../tokens/motion.css';
 import * as css from './motion.gallery.css';
 
-// Render against the tokens' concrete literals, not the public CSS-var tokens:
-// under `prefers-reduced-motion` the vars collapse to `0ms`, which would make a
-// gallery whose whole job is to demonstrate durations look broken.
-
-/** Duration families, keyed by their x-axis title. */
-const durationGroups = durationValues;
+// Render against the tokens' concrete literals (`durationValues`), not the public
+// CSS-var tokens: under `prefers-reduced-motion` the vars collapse to `0ms`, which
+// would make a gallery whose whole job is to demonstrate durations look broken.
 
 /** Easing families, keyed by their x-axis title. */
 const easingGroups = { standard, entrance, exit };
 
-type DurationFamily = keyof typeof durationGroups;
+type DurationFamily = keyof typeof durationValues;
 type DurationStep = 1 | 2;
 type EasingFamily = keyof typeof easingGroups;
 type EasingWeight = 'productive' | 'expressive';
@@ -40,7 +37,7 @@ interface Motion {
 
 /** Duration families on the x-axis, fastest to slowest. */
 const durationFamilies: ReadonlyArray<GalleryAxis<Motion>> = (
-  Object.keys(durationGroups) as ReadonlyArray<DurationFamily>
+  Object.keys(durationValues) as ReadonlyArray<DurationFamily>
 ).map((family) => ({ title: family, props: { durationFamily: family } }));
 
 /** Duration steps on the y-axis. */
@@ -130,7 +127,7 @@ export default {
         <DurationSwatch
           duration={
             props.durationFamily && props.step
-              ? durationGroups[props.durationFamily][props.step]
+              ? durationValues[props.durationFamily][props.step]
               : ''
           }
         />
