@@ -1,5 +1,5 @@
 import { type JSX } from 'solid-js';
-import { Frame, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
+import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 import { AppearanceToggle } from '@lib/theme/appearance-toggle';
 
 /**
@@ -23,6 +23,6 @@ export const GalleryView = (props: {
 }) => (
   <>
     <SiteHeader trail={props.trail} actions={<AppearanceToggle />} />
-    <Frame.Body as="article">{props.children}</Frame.Body>
+    <FrameBody as="article">{props.children}</FrameBody>
   </>
 );

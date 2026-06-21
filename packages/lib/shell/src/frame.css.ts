@@ -2,7 +2,7 @@ import { createVar, style } from '@vanilla-extract/css';
 import { background, space } from '@lib/design';
 
 /**
- * The inline inset `Frame.Body` holds its content off the viewport edges.
+ * The inline inset `FrameBody` holds its content off the viewport edges.
  * Lives as a var so a horizontally scrolling region inside the body can break
  * flush to the edge and re-pad itself by the exact same amount. Keeping it a
  * single definition means the breakout can never drift wider than the inset
