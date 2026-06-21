@@ -10,6 +10,7 @@ import type { LogLocation, WorkerApi } from '../../worker/rpc.ts';
 import { OBSERVABILITY_WORKER_NAME } from '../environment.ts';
 import { createNdjsonBuffer } from '../ndjson-buffer.ts';
 import { LOG_DIRECTORY, LOG_FILE_NAME } from '../log-file.ts';
+import { holdLogFileLock } from '../locks.ts';
 
 /**
  * The slice of `document` this backend reads for page-lifecycle flushing. Named
@@ -37,6 +38,11 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
   // `self.name` to recognize itself as the observability worker and persist its
   // own logs (see `../environment.ts`).
   const worker = new ObservabilityWorker({ name: OBSERVABILITY_WORKER_NAME });
+
+  // Take a Web Lock named for this session's log file and hold it for the tab's
+  // lifetime. Other tabs query the held locks (see `listActiveLogFiles`) to tell
+  // which sessions are still streaming, and badge them active in the archive.
+  holdLogFileLock(LOG_FILE_NAME);
 
   // Host-local buffer the JSON backend writes UTF-8 NDJSON into, deep enough to
   // absorb startup bursts and queue everything logged during worker boot until

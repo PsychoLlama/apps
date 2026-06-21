@@ -14,8 +14,10 @@ const logHref = (file: LogFileInfo): string =>
 
 interface LogRowProps {
   file: LogFileInfo;
-  /** Badge the row as this device's live session. */
+  /** Badge the row as this device's current session. Wins over `active`. */
   current?: boolean;
+  /** Badge the row as a session still streaming in another tab. */
+  active?: boolean;
 }
 
 const LogRow = (props: LogRowProps) => (
@@ -29,11 +31,18 @@ const LogRow = (props: LogRowProps) => (
     >
       {formatSessionTime(props.file)}
     </Link>
-    <Show when={props.current}>
-      <Badge size={1} variant="soft" color="success">
-        Current session
-      </Badge>
-    </Show>
+    <Switch>
+      <Match when={props.current}>
+        <Badge size={1} variant="soft" color="success">
+          Current session
+        </Badge>
+      </Match>
+      <Match when={props.active}>
+        <Badge size={1} variant="soft" color="neutral">
+          Active
+        </Badge>
+      </Match>
+    </Switch>
   </Flex>
 );
 
@@ -47,7 +56,9 @@ export const LogList = () => {
   const loadLogFiles = useEffect(loadLogFilesEffect);
 
   // Read the archive on mount; the store caches it so re-entry (e.g. backing
-  // out of a session page) reuses the resolved list.
+  // out of a session page) reuses the resolved list. The same read snapshots
+  // which sessions are still active (hold their Web Lock) — a one-shot read for
+  // now; reactivity lands in a followup.
   createEffect(() => {
     if (logArchive.status === 'idle') void loadLogFiles();
   });
@@ -115,6 +126,7 @@ export const LogList = () => {
                             <LogRow
                               file={file}
                               current={file.name === LOG_FILE_NAME}
+                              active={logArchive.activeFiles.has(file.name)}
                             />
                           )}
                         </For>
