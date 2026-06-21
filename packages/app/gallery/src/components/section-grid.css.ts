@@ -1,6 +1,6 @@
 import { style, styleVariants } from '@vanilla-extract/css';
 import { background, space } from '@lib/design';
-import { inset } from './gallery-view.css';
+import { inset } from '@lib/shell/frame.css';
 
 /**
  * Base grid for a permutation view. Padded on the block axis so cells clear the

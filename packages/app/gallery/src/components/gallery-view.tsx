@@ -1,8 +1,6 @@
 import { type JSX } from 'solid-js';
-import { Flex } from '@lib/ui';
-import { SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
+import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 import { AppearanceToggle } from '@lib/theme/appearance-toggle';
-import * as css from './gallery-view.css';
 
 /**
  * The gallery layout: the `<main>` frame shared by every `/gallery/*` route.
@@ -10,9 +8,7 @@ import * as css from './gallery-view.css';
  * the manifest in view without the layout reverse-engineering the active route.
  */
 export const Gallery = (props: { children?: JSX.Element }) => (
-  <Flex as="main" direction="column" class={css.layout}>
-    {props.children}
-  </Flex>
+  <Frame>{props.children}</Frame>
 );
 
 /**
@@ -27,8 +23,6 @@ export const GalleryView = (props: {
 }) => (
   <>
     <SiteHeader trail={props.trail} actions={<AppearanceToggle />} />
-    <Flex as="article" direction="column" gap={6} class={css.content}>
-      {props.children}
-    </Flex>
+    <FrameBody as="article">{props.children}</FrameBody>
   </>
 );
