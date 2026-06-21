@@ -22,8 +22,8 @@ export const easingVar = createVar();
  * then transitions at the cell's own duration (via `--duration`), so the fast
  * steps snap and the slow ones glide, yet all flip together and hold until the
  * next tick. The timing is linear so only the speed reads, not an easing curve.
- * Under `prefers-reduced-motion` the duration tokens collapse to `0s` (and the
- * clock never starts), so it rests on the neutral base.
+ * `--duration` is fed each token's concrete literal rather than the live CSS var,
+ * so the swatch keeps demonstrating its speed even under `prefers-reduced-motion`.
  */
 export const swatch = style({
   width: space[9],

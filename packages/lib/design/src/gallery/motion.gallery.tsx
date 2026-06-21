@@ -1,11 +1,16 @@
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import type { GalleryAxis, GalleryListing } from '@lib/gallery';
-import { entrance, exit, fast, moderate, slow, standard } from '@lib/design';
+import { entrance, exit, standard } from '@lib/design';
+import { durationValues } from '../tokens/motion.css';
 import * as css from './motion.gallery.css';
 
+// Render against the tokens' concrete literals, not the public CSS-var tokens:
+// under `prefers-reduced-motion` the vars collapse to `0ms`, which would make a
+// gallery whose whole job is to demonstrate durations look broken.
+
 /** Duration families, keyed by their x-axis title. */
-const durationGroups = { fast, moderate, slow };
+const durationGroups = durationValues;
 
 /** Easing families, keyed by their x-axis title. */
 const easingGroups = { standard, entrance, exit };
@@ -54,7 +59,7 @@ const easingWeights: ReadonlyArray<GalleryAxis<Motion>> = (
 ).map((weight) => ({ title: weight, props: { weight } }));
 
 /** A long, fixed slide so the easing curve — not the speed — reads. */
-const easeDuration = `calc(${slow[2]} * 2)`;
+const easeDuration = `calc(${durationValues.slow[2]} * 2)`;
 
 // --- Shared duration clock ---
 //
@@ -69,26 +74,23 @@ let timer: ReturnType<typeof setInterval> | undefined;
 let mounted = 0;
 
 /**
- * Resolve the slowest duration token to milliseconds via a throwaway probe, so
- * the clock's period tracks the tokens rather than a hard-coded constant. Doubled
- * for breathing room — even the slowest swatch settles well before the next flip.
+ * The shared clock's flip interval, in milliseconds: the slowest duration token
+ * doubled for breathing room, so even the slowest swatch settles well before the
+ * next flip. Parsed straight from the token literals (all in `ms`), so the period
+ * tracks the tokens rather than a hard-coded constant.
  */
-const resolvePeriodMs = (): number => {
-  const probe = document.createElement('div');
-  probe.style.transitionDuration = slow[2];
-  document.body.append(probe);
-  const seconds = parseFloat(getComputedStyle(probe).transitionDuration);
-  probe.remove();
-  return seconds * 1000 * 2;
-};
+const periodMs =
+  Math.max(
+    ...Object.values(durationValues).flatMap((scale) =>
+      Object.values(scale).map((value) => parseFloat(value)),
+    ),
+  ) * 2;
 
-/** Start the shared clock on first mount. No-op under reduced motion (period 0). */
+/** Start the shared clock on first mount. */
 const startClock = (): void => {
   mounted += 1;
   if (timer) return;
-  const period = resolvePeriodMs();
-  if (period <= 0) return;
-  timer = setInterval(() => setLit((on) => !on), period);
+  timer = setInterval(() => setLit((on) => !on), periodMs);
 };
 
 /** Stop the clock once the last swatch unmounts. */
