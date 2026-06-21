@@ -1,5 +1,5 @@
 import { createTestBindings } from '@lib/state';
-import type { LogFileInfo } from '../log-archive.ts';
+import type { LogFileInfo } from '../log-archive';
 import { markError, markLoading, setFiles } from '../bindings';
 import { logArchiveStore } from '../store';
 

@@ -1,5 +1,5 @@
 import { createStore, defineStore } from '@lib/state';
-import type { LogFileInfo } from './log-archive.ts';
+import type { LogFileInfo } from './log-archive';
 
 /**
  * Where the OPFS enumeration is in its lifecycle. The list is read lazily on

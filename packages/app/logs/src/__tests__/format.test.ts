@@ -1,4 +1,4 @@
-import type { LogFileInfo } from '../log-archive.ts';
+import type { LogFileInfo } from '../log-archive';
 import {
   formatSessionLabel,
   formatSessionTime,

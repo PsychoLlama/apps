@@ -4,7 +4,7 @@ import {
   MessagePortTransport,
   type SendOptions,
 } from '@lib/messaging/message-port';
-import ObservabilityWorker from '@lib/holz-opfs-backend/worker?worker';
+import ObservabilityWorker from '#worker?worker';
 import type { HostApi } from '../host-api.ts';
 import type { LogLocation, WorkerApi } from '../worker/rpc.ts';
 import { OBSERVABILITY_WORKER_NAME } from '../environment.ts';
