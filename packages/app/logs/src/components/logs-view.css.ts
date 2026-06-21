@@ -4,7 +4,7 @@ import { background, space } from '@lib/design';
 /**
  * The logs `<main>` frame, pinned to the viewport via `inset: 0` so it owns a
  * definite height to split between the header and the scrolling content below.
- * Mirrors the gallery layout — see `gallery-view.css.ts` for why a flex chain
+ * Mirrors `@lib/shell`'s `Frame` — see its `frame.css.ts` for why a flex chain
  * off the body alone can't contain the scroll here.
  */
 export const layout = style({
