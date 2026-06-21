@@ -74,9 +74,7 @@ If you need a transport implementation and one does not yet exist, propose it to
 
 ### BroadcastChannelTransport - `@lib/messaging/broadcast-channel`
 
-- Wraps `BroadcastChannel`. Fan-out, same-origin events across tabs/workers on one named channel.
-- Pure pub/sub: no per-send options, no responses. Use `send`/`onMessage` directly — RPC's request/response can't ride a broadcast.
-- A channel never delivers to the instance that posted, but does to sibling instances in the same context. Publisher and subscriber in one tab need separate channels.
+- Wraps `BroadcastChannel`. Pure pub/sub: no per-send options, no responses. Use `send`/`onMessage` directly — RPC's request/response can't ride a broadcast.
 - Caller owns the `BroadcastChannel` lifetime (`close()`).
 
 ## Testing
