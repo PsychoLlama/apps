@@ -9,7 +9,8 @@
     "**/*.css.ts"
   ],
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./frame.css": "./src/frame.css.ts"
   },
   "scripts": {
     "typecheck": "tsc"
