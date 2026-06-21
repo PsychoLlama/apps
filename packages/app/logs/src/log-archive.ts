@@ -31,6 +31,21 @@ const parseCreatedAt = (name: string): number | undefined => {
 };
 
 /**
+ * Build the {@link LogFileInfo} for a bare file name — the listing's per-entry
+ * shape, derived without opening the file. Shared by the directory enumeration
+ * and the live broadcast path, so a row added either way carries identical
+ * metadata.
+ */
+export const describeLogFile = (name: string): LogFileInfo => ({
+  name,
+  createdAt: parseCreatedAt(name),
+});
+
+/** Order {@link LogFileInfo}s newest first; names without a timestamp sink last. */
+export const byNewest = (left: LogFileInfo, right: LogFileInfo): number =>
+  (right.createdAt ?? 0) - (left.createdAt ?? 0);
+
+/**
  * List the session log files the observability worker has persisted to the
  * OPFS log directory, newest first. Reads names only — no file is opened — so
  * it stays cheap regardless of how much each session logged.
@@ -47,14 +62,9 @@ export const listLogFiles = async (): Promise<LogFileInfo[]> => {
   const files: LogFileInfo[] = [];
   for await (const handle of dir.values()) {
     if (handle.kind !== 'file') continue;
-    files.push({
-      name: handle.name,
-      createdAt: parseCreatedAt(handle.name),
-    });
+    files.push(describeLogFile(handle.name));
   }
 
   // Newest first by encoded start time; names without a timestamp sink last.
-  return files.sort(
-    (left, right) => (right.createdAt ?? 0) - (left.createdAt ?? 0),
-  );
+  return files.sort(byNewest);
 };

@@ -1,9 +1,18 @@
-import { createEffect, createMemo, For, Match, Show, Switch } from 'solid-js';
-import { useEffect } from '@lib/state';
+import {
+  createEffect,
+  createMemo,
+  For,
+  Match,
+  onCleanup,
+  Show,
+  Switch,
+} from 'solid-js';
+import { useAction, useEffect } from '@lib/state';
 import { Badge, Callout, Container, Flex, Heading, Link, Text } from '@lib/ui';
 import { LOG_FILE_NAME } from '@lib/observability';
-import type { LogFileInfo } from '../log-archive';
-import { loadLogFilesEffect } from '../bindings';
+import { subscribeLogFiles } from '@lib/holz-opfs-backend';
+import { describeLogFile, type LogFileInfo } from '../log-archive';
+import { addFile, loadLogFilesEffect } from '../bindings';
 import { logArchive } from '../store';
 import { formatSessionTime, groupSessionsByDay } from '../format';
 import { LogsView } from './logs-view';
@@ -55,6 +64,7 @@ const LogRow = (props: LogRowProps) => (
  */
 export const LogList = () => {
   const loadLogFiles = useEffect(loadLogFilesEffect);
+  const addLogFile = useAction(addFile);
 
   // Read the archive on mount; the store caches it so re-entry (e.g. backing
   // out of a session page) reuses the resolved list. The same read snapshots
@@ -63,6 +73,13 @@ export const LogList = () => {
   createEffect(() => {
     if (logArchive.status === 'idle') void loadLogFiles();
   });
+
+  // Splice in files announced after that read — another tab opening one, or
+  // this session's own once its worker finishes booting and opens it (it can
+  // land too late for the enumeration above). Closed on unmount.
+  onCleanup(
+    subscribeLogFiles((event) => addLogFile(describeLogFile(event.file))),
+  );
 
   // Sessions bucketed into per-day sections, newest day first; the live
   // session falls into today's group and is badged in place.

@@ -1,6 +1,6 @@
 import { defineAction, defineEffect } from '@lib/state';
 import { listActiveLogFiles } from '@lib/holz-opfs-backend';
-import { listLogFiles, type LogFileInfo } from './log-archive';
+import { byNewest, listLogFiles, type LogFileInfo } from './log-archive';
 import { logArchiveStore } from './store';
 
 /** A resolved enumeration: the archive listing plus which sessions are active. */
@@ -27,6 +27,21 @@ export const setFiles = defineAction(
     state.files = snapshot.files;
     state.status = 'ready';
     if (snapshot.activeFiles) state.activeFiles = snapshot.activeFiles;
+  },
+);
+
+/**
+ * Splice a single newly-announced log file into the listing, newest-first —
+ * the live counterpart to {@link setFiles}, for a file a viewer learns about
+ * after its enumeration (another tab's, or this session's own once its worker
+ * finally opens it). A no-op if the file is already listed, so a re-enumeration
+ * and an announcement can't double a row.
+ */
+export const addFile = defineAction(
+  [logArchiveStore],
+  (state, file: LogFileInfo) => {
+    if (state.files.some((existing) => existing.name === file.name)) return;
+    state.files = [...state.files, file].sort(byNewest);
   },
 );
 
