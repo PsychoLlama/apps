@@ -92,12 +92,9 @@ export default [
       'no-restricted-syntax': [
         'error',
         {
-          // `export * from` re-exports an opaque, mutable surface — renames
-          // and additions upstream silently leak. `export * as ns from`
-          // names a single binding, so it stays explicit and is allowed.
           selector: 'ExportAllDeclaration[exported=null]',
           message:
-            'Use explicit named exports instead of `export *`. `export * as ns from` is allowed.',
+            '`export * from` is banned. It complicates discovery and leads to unintentional exports. Prefer explicit exports.',
         },
       ],
     },
