@@ -1,4 +1,4 @@
-import type { NdjsonBuffer } from '../../logging/ndjson-buffer.ts';
+import type { NdjsonBuffer } from '../../ndjson-buffer.ts';
 import { createWorkerSink } from '../log-sink.ts';
 import type { LogLocation } from '../rpc.ts';
 

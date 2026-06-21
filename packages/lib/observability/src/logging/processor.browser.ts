@@ -2,10 +2,13 @@ import { createConsoleBackend } from '@holz/console-backend';
 import { type LogProcessor, combine } from '@holz/core';
 import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
-import { createOpfsWorkerBackend } from './backends/opfs-worker.ts';
+import {
+  createOpfsWorkerBackend,
+  getWorkerLogBuffer,
+  inMainThread,
+  inObservabilityWorker,
+} from '@lib/holz-opfs-backend/main';
 import { devPattern } from './dev-pattern.ts';
-import { inMainThread, inObservabilityWorker } from './environment.ts';
-import { getWorkerLogBuffer } from './worker-log-buffer.ts';
 
 const consoleBackend = createConsoleBackend();
 
@@ -27,10 +30,10 @@ const selectFallback = (): LogProcessor => {
   }
 
   // Inside the observability worker: persist our own logs to the same OPFS file
-  // as the main thread. `getWorkerLogBuffer().backend` buffers them;
-  // `../worker/` drains that buffer into the shared durable sink once `init`
-  // opens the file (see `./worker-log-buffer.ts`). Console output too — see the
-  // note below on why it skips the env filter.
+  // as the main thread. `getWorkerLogBuffer().backend` buffers them; the
+  // `@lib/holz-opfs-backend` worker drains that buffer into the shared durable
+  // sink once `init` opens the file. Console output too — see the note below on
+  // why it skips the env filter.
   if (inObservabilityWorker) {
     return combine([consoleBackend, getWorkerLogBuffer().backend]);
   }

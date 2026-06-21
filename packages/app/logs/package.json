@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*",
-    "@lib/observability": "workspace:*",
+    "@lib/holz-opfs-backend": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",

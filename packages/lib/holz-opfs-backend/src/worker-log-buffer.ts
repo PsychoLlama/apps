@@ -6,7 +6,7 @@ let buffer: NdjsonBuffer | undefined;
  * The observability worker's buffer for *its own* logs — the logs emitted by
  * code running inside the worker, as opposed to the main-thread logs shipped
  * over RPC. Its {@link NdjsonBuffer.backend backend} feeds the worker's log
- * processor (see `./processor.browser.ts`); `../worker/log-sink.ts` drains its
+ * processor (the `@lib/observability` browser processor); `./worker/log-sink.ts` drains its
  * {@link NdjsonBuffer.readable readable} into the shared durable sink once
  * `init` opens the log file, so the worker's logs land in the same file, on
  * the same flush cadence, as the main thread's.

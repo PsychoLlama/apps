@@ -4,13 +4,25 @@ import {
   MessagePortTransport,
   type SendOptions,
 } from '@lib/messaging/message-port';
-import ObservabilityWorker from '../../worker/index?worker';
-import type { HostApi } from '../../host-api.ts';
-import type { LogLocation, WorkerApi } from '../../worker/rpc.ts';
+import ObservabilityWorker from '../worker/index?worker';
+import type { HostApi } from '../host-api.ts';
+import type { LogLocation, WorkerApi } from '../worker/rpc.ts';
 import { OBSERVABILITY_WORKER_NAME } from '../environment.ts';
 import { createNdjsonBuffer } from '../ndjson-buffer.ts';
 import { LOG_DIRECTORY, LOG_FILE_NAME } from '../log-file.ts';
 import { holdLogFileLock } from '../locks.ts';
+
+/**
+ * The backend's realm-specific wiring, re-exported for the logging host's
+ * browser processor: realm detection to pick a fallback, and the worker's own
+ * log buffer to drain. They live behind this `./main` subpath (not the
+ * package root) because `../environment.ts` reads `self` at module load — fine
+ * in a browser or worker realm, a crash under server-side rendering. The root
+ * barrel stays server-safe for log viewers; this entry is only ever reached
+ * from the browser-conditioned processor.
+ */
+export { inMainThread, inObservabilityWorker } from '../environment.ts';
+export { getWorkerLogBuffer } from '../worker-log-buffer.ts';
 
 /**
  * The slice of `document` this backend reads for page-lifecycle flushing. Named
@@ -29,9 +41,9 @@ interface PageVisibility {
  *
  * Must be created on the browser main thread: only it can construct a
  * `Worker`, and spawning from inside a worker would loop. The pipeline links
- * this in behind `inMainThread` (see `../processor.browser.ts`), which is the
- * sole guard — calling it off the main thread is a wiring bug, not a runtime
- * input to defend against.
+ * this in behind `inMainThread` (see `@lib/observability`'s browser
+ * processor), which is the sole guard — calling it off the main thread is a
+ * wiring bug, not a runtime input to defend against.
  */
 export const createOpfsWorkerBackend = (): LogProcessor => {
   // `name` is load-bearing, not just a DevTools label: the worker reads it as
@@ -81,7 +93,8 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
   // `document` is main-thread-only; consumers (e.g. `@app/service-worker`)
   // typecheck this module under the `WebWorker` lib, where the global is absent.
   // Reach it through a structural cast — `inMainThread` already gates this
-  // backend (see `../processor.browser.ts`), so the global is present at run.
+  // backend (see `@lib/observability`'s browser processor), so the global is
+  // present at run.
   const page = (globalThis as { document?: PageVisibility }).document;
   if (page) {
     page.addEventListener('visibilitychange', () => {

@@ -19,7 +19,7 @@ export const inMainThread = 'document' in globalThis && 'Worker' in globalThis;
 
 /**
  * The `name` the observability worker is spawned with (see
- * `./backends/opfs-worker.ts`). Load-bearing, not cosmetic: it's how a worker
+ * `./main/index.ts`). Load-bearing, not cosmetic: it's how a worker
  * realm recognizes itself as *the* observability worker — the one that owns
  * the OPFS log file — and so persists its own logs (see {@link
  * inObservabilityWorker}). It doubles as the DevTools thread label. Change it

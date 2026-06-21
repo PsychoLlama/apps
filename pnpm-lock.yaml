@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@holz/core':
+      specifier: 0.8.3-rc.155
+      version: 0.8.3-rc.155
     '@holz/log-collector':
       specifier: 0.8.3-rc.155
       version: 0.8.3-rc.155
@@ -227,9 +230,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
-      '@lib/observability':
+      '@lib/holz-opfs-backend':
         specifier: workspace:*
-        version: link:../../lib/observability
+        version: link:../../lib/holz-opfs-backend
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
@@ -464,6 +467,18 @@ importers:
         specifier: ^1.9.13
         version: 1.9.13
 
+  packages/lib/holz-opfs-backend:
+    dependencies:
+      '@holz/core':
+        specifier: 'catalog:'
+        version: 0.8.3-rc.155
+      '@holz/json-backend':
+        specifier: 0.8.3-rc.155
+        version: 0.8.3-rc.155
+      '@lib/messaging':
+        specifier: workspace:*
+        version: link:../messaging
+
   packages/lib/messaging: {}
 
   packages/lib/observability:
@@ -475,23 +490,20 @@ importers:
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
       '@holz/core':
-        specifier: 0.8.3-rc.155
+        specifier: 'catalog:'
         version: 0.8.3-rc.155
       '@holz/env-filter':
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
-      '@holz/json-backend':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155
       '@holz/log-collector':
         specifier: 'catalog:'
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
       '@holz/stream-backend':
         specifier: 0.8.3-rc.155
         version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
-      '@lib/messaging':
+      '@lib/holz-opfs-backend':
         specifier: workspace:*
-        version: link:../messaging
+        version: link:../holz-opfs-backend
 
   packages/lib/shell:
     dependencies:

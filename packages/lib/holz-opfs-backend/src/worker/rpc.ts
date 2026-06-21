@@ -32,7 +32,7 @@ export interface WorkerSink {
 
 /**
  * Build the worker's RPC handlers — the observability worker's end of the
- * boundary (see `../logging/backends/opfs-worker.ts`). The host calls `init`
+ * boundary (see `../main/index.ts`). The host calls `init`
  * once with where to write; the worker opens that file and replies with the
  * writable end of a stream whose UTF-8 NDJSON chunks it persists there. The
  * host later fires `flush` to force the pending batch to disk early.

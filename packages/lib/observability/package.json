@@ -5,9 +5,7 @@
   "version": "0.0.0",
   "description": "Structured logging built on @holz/core.",
   "license": "MIT",
-  "sideEffects": [
-    "./src/worker/index.ts"
-  ],
+  "sideEffects": false,
   "exports": "./src/index.ts",
   "imports": {
     "#processor": {
@@ -16,16 +14,15 @@
     }
   },
   "scripts": {
-    "typecheck": "tsc && tsc -p src/worker/tsconfig.json"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@holz/ansi-terminal-backend": "0.8.3-rc.155",
     "@holz/console-backend": "0.8.3-rc.155",
-    "@holz/core": "0.8.3-rc.155",
+    "@holz/core": "catalog:",
     "@holz/env-filter": "0.8.3-rc.155",
-    "@holz/json-backend": "0.8.3-rc.155",
     "@holz/log-collector": "catalog:",
     "@holz/stream-backend": "0.8.3-rc.155",
-    "@lib/messaging": "workspace:*"
+    "@lib/holz-opfs-backend": "workspace:*"
   }
 }

@@ -1,5 +1,5 @@
 import { createTestBindings } from '@lib/state';
-import type { LogFileInfo } from '@lib/observability';
+import type { LogFileInfo } from '@lib/holz-opfs-backend';
 import { markError, markLoading, setFiles } from '../bindings';
 import { logArchiveStore } from '../store';
 

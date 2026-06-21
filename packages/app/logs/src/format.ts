@@ -1,4 +1,4 @@
-import type { LogFileInfo } from '@lib/observability';
+import type { LogFileInfo } from '@lib/holz-opfs-backend';
 
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',

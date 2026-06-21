@@ -3,7 +3,7 @@ import {
   listLogFiles,
   listActiveLogFiles,
   type LogFileInfo,
-} from '@lib/observability';
+} from '@lib/holz-opfs-backend';
 import { logArchiveStore } from './store';
 
 /** A resolved enumeration: the archive listing plus which sessions are active. */

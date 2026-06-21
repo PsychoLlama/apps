@@ -1,5 +1,5 @@
 import { createStore, defineStore } from '@lib/state';
-import type { LogFileInfo } from '@lib/observability';
+import type { LogFileInfo } from '@lib/holz-opfs-backend';
 
 /**
  * Where the OPFS enumeration is in its lifecycle. The list is read lazily on
