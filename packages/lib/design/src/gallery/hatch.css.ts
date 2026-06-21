@@ -11,8 +11,12 @@ import { neutral, space } from '@lib/design';
  *
  * Alpha stripes over an alpha base so the fill rides on top of whatever surface
  * the cell sits on and tracks light/dark without per-mode rules.
+ *
+ * Stripes are 2px, not a 1px hairline: at fractional device-pixel ratios on
+ * large/scaled displays a 1px hard color stop antialiases unevenly across the
+ * pattern, so some lines render fatter than others. 2px lands on whole pixels.
  */
 export const hatch = style({
   backgroundColor: neutral.alpha[2],
-  backgroundImage: `repeating-linear-gradient(45deg, ${neutral.alpha[5]} 0, ${neutral.alpha[5]} 1px, transparent 1px, transparent ${space[2]})`,
+  backgroundImage: `repeating-linear-gradient(45deg, ${neutral.alpha[5]} 0, ${neutral.alpha[5]} 2px, transparent 2px, transparent ${space[2]})`,
 });
