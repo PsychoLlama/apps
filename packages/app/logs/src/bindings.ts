@@ -1,9 +1,6 @@
 import { defineAction, defineEffect } from '@lib/state';
-import {
-  listLogFiles,
-  listActiveLogFiles,
-  type LogFileInfo,
-} from '@lib/holz-opfs-backend';
+import { listActiveLogFiles } from '@lib/holz-opfs-backend';
+import { listLogFiles, type LogFileInfo } from './log-archive.ts';
 import { logArchiveStore } from './store';
 
 /** A resolved enumeration: the archive listing plus which sessions are active. */

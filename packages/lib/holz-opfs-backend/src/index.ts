@@ -1,8 +1,9 @@
-// The realm-agnostic surface for reading persisted logs: file naming, the
-// archive listing, and Web-Lock session tracking. Safe to evaluate anywhere,
-// including server-side rendering — nothing here touches a browser/worker
-// global at module load. The backend's realm-specific wiring (which does)
-// lives behind `./main`, reached only by the logging host's browser processor.
-export { LOG_DIRECTORY, LOG_FILE_NAME } from './log-file.ts';
-export { listLogFiles, type LogFileInfo } from './log-archive.ts';
-export { listActiveLogFiles } from './locks.ts';
+// The package's main-thread surface — everything the logging host wires up
+// and everything a log viewer reads. The worker entry is the one piece that
+// lives elsewhere: it's spawned, not imported, so it has its own `./worker`
+// subpath (see `./main/index.ts`, which `?worker`-imports it).
+export { createOpfsWorkerBackend } from './main/index.ts';
+export { listActiveLogFiles } from './main/locks.ts';
+export { inMainThread, inObservabilityWorker } from './environment.ts';
+export { getWorkerLogBuffer } from './worker/worker-log-buffer.ts';
+export type { LogLocation } from './worker/rpc.ts';

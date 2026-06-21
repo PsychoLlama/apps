@@ -10,7 +10,7 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./main": "./src/main/index.ts"
+    "./worker": "./src/worker/index.ts"
   },
   "scripts": {
     "typecheck": "tsc && tsc -p src/worker/tsconfig.json"

@@ -1,7 +1,8 @@
 import { createEffect, createMemo, For, Match, Show, Switch } from 'solid-js';
 import { useEffect } from '@lib/state';
 import { Badge, Callout, Container, Flex, Heading, Link, Text } from '@lib/ui';
-import { LOG_FILE_NAME, type LogFileInfo } from '@lib/holz-opfs-backend';
+import { LOG_FILE_NAME } from '@lib/observability';
+import type { LogFileInfo } from '../log-archive.ts';
 import { loadLogFilesEffect } from '../bindings';
 import { logArchive } from '../store';
 import { formatSessionTime, groupSessionsByDay } from '../format';

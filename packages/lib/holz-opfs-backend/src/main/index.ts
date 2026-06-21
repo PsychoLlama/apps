@@ -4,25 +4,12 @@ import {
   MessagePortTransport,
   type SendOptions,
 } from '@lib/messaging/message-port';
-import ObservabilityWorker from '../worker/index?worker';
+import ObservabilityWorker from '@lib/holz-opfs-backend/worker?worker';
 import type { HostApi } from '../host-api.ts';
 import type { LogLocation, WorkerApi } from '../worker/rpc.ts';
 import { OBSERVABILITY_WORKER_NAME } from '../environment.ts';
 import { createNdjsonBuffer } from '../ndjson-buffer.ts';
-import { LOG_DIRECTORY, LOG_FILE_NAME } from '../log-file.ts';
-import { holdLogFileLock } from '../locks.ts';
-
-/**
- * The backend's realm-specific wiring, re-exported for the logging host's
- * browser processor: realm detection to pick a fallback, and the worker's own
- * log buffer to drain. They live behind this `./main` subpath (not the
- * package root) because `../environment.ts` reads `self` at module load — fine
- * in a browser or worker realm, a crash under server-side rendering. The root
- * barrel stays server-safe for log viewers; this entry is only ever reached
- * from the browser-conditioned processor.
- */
-export { inMainThread, inObservabilityWorker } from '../environment.ts';
-export { getWorkerLogBuffer } from '../worker-log-buffer.ts';
+import { holdLogFileLock } from './locks.ts';
 
 /**
  * The slice of `document` this backend reads for page-lifecycle flushing. Named
@@ -39,13 +26,19 @@ interface PageVisibility {
  * off-main-thread persistence to OPFS. Spawns the worker eagerly — the moment
  * the backend is created — so it's warm before the first log arrives.
  *
+ * The caller owns the {@link LogLocation}: this package persists wherever it's
+ * told, never assuming a directory or file name of its own. The host (see
+ * `@lib/observability`) mints a session-unique name and passes it in.
+ *
  * Must be created on the browser main thread: only it can construct a
  * `Worker`, and spawning from inside a worker would loop. The pipeline links
  * this in behind `inMainThread` (see `@lib/observability`'s browser
  * processor), which is the sole guard — calling it off the main thread is a
  * wiring bug, not a runtime input to defend against.
  */
-export const createOpfsWorkerBackend = (): LogProcessor => {
+export const createOpfsWorkerBackend = (
+  location: LogLocation,
+): LogProcessor => {
   // `name` is load-bearing, not just a DevTools label: the worker reads it as
   // `self.name` to recognize itself as the observability worker and persist its
   // own logs (see `../environment.ts`).
@@ -54,7 +47,7 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
   // Take a Web Lock named for this session's log file and hold it for the tab's
   // lifetime. Other tabs query the held locks (see `listActiveLogFiles`) to tell
   // which sessions are still streaming, and badge them active in the archive.
-  holdLogFileLock(LOG_FILE_NAME);
+  holdLogFileLock(location.file);
 
   // Host-local buffer the JSON backend writes UTF-8 NDJSON into, deep enough to
   // absorb startup bursts and queue everything logged during worker boot until
@@ -71,11 +64,6 @@ export const createOpfsWorkerBackend = (): LogProcessor => {
   // Tell the worker where to persist this session's logs and await the writable
   // end it opens there. The request rides over to the worker as soon as its
   // script loads (a later task), so it can't outrun the worker's listener.
-  const location: LogLocation = {
-    directory: LOG_DIRECTORY,
-    file: LOG_FILE_NAME,
-  };
-
   void rpc.request('init', location).then((stream) => {
     // The worker handed back the writable end of its OPFS-backed log stream.
     // Drain the buffered NDJSON into it — anything logged during boot flushes,

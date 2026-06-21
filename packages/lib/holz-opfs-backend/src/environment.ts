@@ -35,7 +35,12 @@ export const OBSERVABILITY_WORKER_NAME = 'Observability';
  * Keyed off `self.name`, which the runtime sets at construction, so this is
  * available immediately and never depends on module-evaluation order. Guarded
  * by `!inMainThread` so it never reads the unrelated `window.name` on the main
- * thread (`self` is the worker global only in the else case).
+ * thread (`self` is the worker global only in the else case). The `typeof`
+ * check keeps the module load-safe off the browser entirely: this package's
+ * read surface is reachable from a server-rendered viewer, and `self` is
+ * undeclared under Node — a bare reference would throw, not read `undefined`.
  */
 export const inObservabilityWorker =
-  !inMainThread && self.name === OBSERVABILITY_WORKER_NAME;
+  !inMainThread &&
+  typeof self !== 'undefined' &&
+  self.name === OBSERVABILITY_WORKER_NAME;

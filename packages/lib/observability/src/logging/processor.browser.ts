@@ -7,8 +7,9 @@ import {
   getWorkerLogBuffer,
   inMainThread,
   inObservabilityWorker,
-} from '@lib/holz-opfs-backend/main';
+} from '@lib/holz-opfs-backend';
 import { devPattern } from './dev-pattern.ts';
+import { LOG_DIRECTORY, LOG_FILE_NAME } from './log-file.ts';
 
 const consoleBackend = createConsoleBackend();
 
@@ -25,7 +26,10 @@ const selectFallback = (): LogProcessor => {
         pattern: devPattern,
         defaultPattern: '',
       }),
-      createOpfsWorkerBackend(),
+      createOpfsWorkerBackend({
+        directory: LOG_DIRECTORY,
+        file: LOG_FILE_NAME,
+      }),
     ]);
   }
 

@@ -1,4 +1,4 @@
-import { LOG_DIRECTORY } from './log-file.ts';
+import { LOG_DIRECTORY } from '@lib/observability';
 
 /**
  * Metadata for one persisted session log file in the OPFS log directory —

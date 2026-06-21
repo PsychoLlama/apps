@@ -1,4 +1,4 @@
-import type { LogFileInfo } from '@lib/holz-opfs-backend';
+import type { LogFileInfo } from '../log-archive.ts';
 import {
   formatSessionLabel,
   formatSessionTime,
