@@ -1,7 +1,7 @@
-import { createFlushScheduler } from './flush-scheduler.ts';
-import type { NdjsonBuffer } from '../ndjson-buffer.ts';
-import { getWorkerLogBuffer } from './worker-log-buffer.ts';
-import type { LogLocation, WorkerSink } from './rpc.ts';
+import { createFlushScheduler } from './flush-scheduler';
+import type { NdjsonBuffer } from '../ndjson-buffer';
+import { getWorkerLogBuffer } from './worker-log-buffer';
+import type { LogLocation, WorkerSink } from './rpc';
 
 /**
  * The single OPFS-backed durable log for a session: one sync access handle,

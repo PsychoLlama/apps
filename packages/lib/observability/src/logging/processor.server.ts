@@ -4,7 +4,7 @@ import { type LogProcessor, filter } from '@holz/core';
 import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
 import { createStreamBackend } from '@holz/stream-backend';
-import { devPattern } from './dev-pattern.ts';
+import { devPattern } from './dev-pattern';
 
 // Cached at module load. The filter runs on every log, so we don't
 // want to re-touch `process.env` (and re-do its proxy traps) per call.

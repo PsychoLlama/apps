@@ -1,4 +1,4 @@
-import { type NdjsonBuffer, createNdjsonBuffer } from '../ndjson-buffer.ts';
+import { type NdjsonBuffer, createNdjsonBuffer } from '../ndjson-buffer';
 
 let buffer: NdjsonBuffer | undefined;
 

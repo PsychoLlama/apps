@@ -8,8 +8,8 @@ import {
   inMainThread,
   inObservabilityWorker,
 } from '@lib/holz-opfs-backend';
-import { devPattern } from './dev-pattern.ts';
-import { LOG_DIRECTORY, LOG_FILE_NAME } from './log-file.ts';
+import { devPattern } from './dev-pattern';
+import { LOG_DIRECTORY, LOG_FILE_NAME } from './log-file';
 
 const consoleBackend = createConsoleBackend();
 

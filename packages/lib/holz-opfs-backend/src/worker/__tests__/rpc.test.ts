@@ -2,7 +2,7 @@ import {
   createWorkerHandlers,
   type LogLocation,
   type WorkerSink,
-} from '../rpc.ts';
+} from '../rpc';
 
 const location: LogLocation = { directory: 'logs', file: 'session.ndjson' };
 

@@ -7,5 +7,5 @@ export {
   type Logger,
   type LogLevel,
   type LogProcessor,
-} from './logging/index.ts';
-export { CoercedError, toError } from './to-error.ts';
+} from './logging/index';
+export { CoercedError, toError } from './to-error';

@@ -1,6 +1,6 @@
-import type { NdjsonBuffer } from '../../ndjson-buffer.ts';
-import { createWorkerSink } from '../log-sink.ts';
-import type { LogLocation } from '../rpc.ts';
+import type { NdjsonBuffer } from '../../ndjson-buffer';
+import { createWorkerSink } from '../log-sink';
+import type { LogLocation } from '../rpc';
 
 const location: LogLocation = { directory: 'logs', file: 'session.ndjson' };
 

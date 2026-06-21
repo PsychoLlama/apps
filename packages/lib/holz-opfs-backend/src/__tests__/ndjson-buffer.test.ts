@@ -1,5 +1,5 @@
 import { type Log, createLogger } from '@holz/core';
-import { createNdjsonBuffer } from '../ndjson-buffer.ts';
+import { createNdjsonBuffer } from '../ndjson-buffer';
 
 const setup = (highWaterMark?: number) => {
   const { backend, readable } = createNdjsonBuffer(highWaterMark);

@@ -1,4 +1,4 @@
-import { start } from './start.ts';
+import { start } from './start';
 
 /**
  * The observability worker entry. Spawned on the main thread by the OPFS log
