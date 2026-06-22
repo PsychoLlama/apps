@@ -7,11 +7,11 @@ settings:
 catalogs:
   default:
     '@holz/core':
-      specifier: 0.8.3-rc.155
-      version: 0.8.3-rc.155
+      specifier: 0.8.3-rc.161
+      version: 0.8.3-rc.161
     '@holz/log-collector':
-      specifier: 0.8.3-rc.155
-      version: 0.8.3-rc.155
+      specifier: 0.8.3-rc.161
+      version: 0.8.3-rc.161
     '@iconify/json':
       specifier: ^2.2.470
       version: 2.2.486
@@ -474,10 +474,10 @@ importers:
     dependencies:
       '@holz/core':
         specifier: 'catalog:'
-        version: 0.8.3-rc.155
+        version: 0.8.3-rc.161
       '@holz/json-backend':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155
+        specifier: 0.8.3-rc.161
+        version: 0.8.3-rc.161
       '@lib/messaging':
         specifier: workspace:*
         version: link:../messaging
@@ -487,23 +487,23 @@ importers:
   packages/lib/observability:
     dependencies:
       '@holz/ansi-terminal-backend':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        specifier: 0.8.3-rc.161
+        version: 0.8.3-rc.161(@holz/core@0.8.3-rc.161)
       '@holz/console-backend':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        specifier: 0.8.3-rc.161
+        version: 0.8.3-rc.161(@holz/core@0.8.3-rc.161)
       '@holz/core':
         specifier: 'catalog:'
-        version: 0.8.3-rc.155
+        version: 0.8.3-rc.161
       '@holz/env-filter':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        specifier: 0.8.3-rc.161
+        version: 0.8.3-rc.161(@holz/core@0.8.3-rc.161)
       '@holz/log-collector':
         specifier: 'catalog:'
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        version: 0.8.3-rc.161(@holz/core@0.8.3-rc.161)
       '@holz/stream-backend':
-        specifier: 0.8.3-rc.155
-        version: 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+        specifier: 0.8.3-rc.161
+        version: 0.8.3-rc.161(@holz/core@0.8.3-rc.161)
       '@lib/holz-opfs-backend':
         specifier: workspace:*
         version: link:../holz-opfs-backend
@@ -1172,39 +1172,39 @@ packages:
       '@noble/hashes':
         optional: true
 
-  '@holz/ansi-terminal-backend@0.8.3-rc.155':
-    resolution: {integrity: sha512-ONWNcWELV0Gj5PwfaXMx1OT3NEy5rJfJBbS7reTYmh9EoNOA6CIfkphsjemd5gDx914QQMqfSdm8JwCjZRLGoA==}
+  '@holz/ansi-terminal-backend@0.8.3-rc.161':
+    resolution: {integrity: sha512-bUb9sYaMnc294C/PUgCvIILPXeVFsdGCj5IkxkgKaBJ5BU3i6MMoTEYqR4myCZfCcZJpkErilmdnibe7o5kG2w==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
-  '@holz/console-backend@0.8.3-rc.155':
-    resolution: {integrity: sha512-bS1O+TchzthOx4AlVNm1Sjf73z2NePd34hEdOeFq/+JLpQlksKQN/BY1ULAEAzyiLRb4IsITTBrQ2/14sHgu2A==}
+  '@holz/console-backend@0.8.3-rc.161':
+    resolution: {integrity: sha512-msI9R6cAvvxReNSCi9D1Knlmz0WgSoJB5/OVHdt8Bq9zmpN6MGVRMYDzTGeezrnil2ORrv/5uew+Lb9PIE2fHA==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
-  '@holz/core@0.8.3-rc.155':
-    resolution: {integrity: sha512-ce3Jn+XJm75AbrfReTdbTXoF0G17PCCTSMIwJpkRfWjFoNVfQNd7O3EIwcz6aybrAUswDslEnDUB7e3aUseQ8A==}
+  '@holz/core@0.8.3-rc.161':
+    resolution: {integrity: sha512-ZMK92mlvVM5tCeZ7Ll5UMSqohfIfzD/pnr6qexj9MujPw7yVRbw+RVLsAVg8OdgNjISfNEA+6w9BvYbHjr0b+g==}
 
-  '@holz/env-filter@0.8.3-rc.155':
-    resolution: {integrity: sha512-IKBJrpe3BGCOjF17s28hKiFy1PE9FvQZmPF61AZYfNE33oMshpS+Yl2OV4d1wfDLpQiC5ayR0ZWhFBaxJnHAmw==}
+  '@holz/env-filter@0.8.3-rc.161':
+    resolution: {integrity: sha512-KZ3k8KkiblDRV/GtVteZJ9ItuNBqz2AFOb4yB9HNbNYC9/B1IWsf86QLrVGfkY9k4peQHwVIIwvEePg3XqQx2w==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
-  '@holz/json-backend@0.8.3-rc.155':
-    resolution: {integrity: sha512-v2bl1XH0hn0QncbzAsldPpdgxNM1hCMub4dpMyy0eQQ11EbulyONaL5QqrQ4sTXVi+gH+ZJsl2NNiT0IHu3R2A==}
+  '@holz/json-backend@0.8.3-rc.161':
+    resolution: {integrity: sha512-CvVj2pj4oRhTfLPUBdNSirqfcm5mAjHAF2ZCqlE32aHFS+wc/gb/Cs1RTrfWL916uBQPh2+ppJQjc4EeNza3jA==}
 
-  '@holz/log-collector@0.8.3-rc.155':
-    resolution: {integrity: sha512-ZXX+zrgxv+XkJgxaeFfW/psO0ycj+3djDnk/fDuBQQGlKoV6RHZSblSut2dsWNlvaifVl5NxZzVN23HXsMmP4w==}
+  '@holz/log-collector@0.8.3-rc.161':
+    resolution: {integrity: sha512-6nCF79PuFzrJ3J6Z72+JkawunoX0JvdnZ32Ngm02bkPf/otx85uUiktBjfLDl0iQnUNxeKUOXCZ9a4RcPnwEsg==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
-  '@holz/pattern-filter@0.8.3-rc.155':
-    resolution: {integrity: sha512-K6/bJ0Szhb/rkcx0iio4FCuHC8lUNSM9Y7IFs9T4gtmgFYXsBCbSkSFmMGCLC5fmRtD66tPN00n/9Uzo959m+g==}
+  '@holz/pattern-filter@0.8.3-rc.162':
+    resolution: {integrity: sha512-pUSAu9KMfzrfUacxVK4HDhypmhEhxF8Anzf3mXpskdSFOXoshjL5OY7Ef8iamq0olIv6ZP4e6hyOOilwpKucCw==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
-  '@holz/stream-backend@0.8.3-rc.155':
-    resolution: {integrity: sha512-dU8f1V+YcDgD7LDuAInR2uKwdLZ14VSzwhv9fSbhxWPEgBqI7uOpBwUj1fQLsoGswKt/Jx8HrOSWoNXoDwS+Yw==}
+  '@holz/stream-backend@0.8.3-rc.161':
+    resolution: {integrity: sha512-s+IaWH7VHp3muP4GXXC+87EM5J3AjFSu6PK5Fdru4FRRMlsdZjdDMRbdLaKfw3lS9F+o2G8FfeO/HKp03S8KXQ==}
     peerDependencies:
       '@holz/core': ^0.8.0
 
@@ -5432,34 +5432,34 @@ snapshots:
 
   '@exodus/bytes@1.15.1': {}
 
-  '@holz/ansi-terminal-backend@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/ansi-terminal-backend@0.8.3-rc.161(@holz/core@0.8.3-rc.161)':
     dependencies:
-      '@holz/core': 0.8.3-rc.155
+      '@holz/core': 0.8.3-rc.161
 
-  '@holz/console-backend@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/console-backend@0.8.3-rc.161(@holz/core@0.8.3-rc.161)':
     dependencies:
-      '@holz/core': 0.8.3-rc.155
+      '@holz/core': 0.8.3-rc.161
 
-  '@holz/core@0.8.3-rc.155': {}
+  '@holz/core@0.8.3-rc.161': {}
 
-  '@holz/env-filter@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/env-filter@0.8.3-rc.161(@holz/core@0.8.3-rc.161)':
     dependencies:
-      '@holz/core': 0.8.3-rc.155
-      '@holz/pattern-filter': 0.8.3-rc.155(@holz/core@0.8.3-rc.155)
+      '@holz/core': 0.8.3-rc.161
+      '@holz/pattern-filter': 0.8.3-rc.162(@holz/core@0.8.3-rc.161)
 
-  '@holz/json-backend@0.8.3-rc.155': {}
+  '@holz/json-backend@0.8.3-rc.161': {}
 
-  '@holz/log-collector@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/log-collector@0.8.3-rc.161(@holz/core@0.8.3-rc.161)':
     dependencies:
-      '@holz/core': 0.8.3-rc.155
+      '@holz/core': 0.8.3-rc.161
 
-  '@holz/pattern-filter@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/pattern-filter@0.8.3-rc.162(@holz/core@0.8.3-rc.161)':
     dependencies:
-      '@holz/core': 0.8.3-rc.155
+      '@holz/core': 0.8.3-rc.161
 
-  '@holz/stream-backend@0.8.3-rc.155(@holz/core@0.8.3-rc.155)':
+  '@holz/stream-backend@0.8.3-rc.161(@holz/core@0.8.3-rc.161)':
     dependencies:
-      '@holz/core': 0.8.3-rc.155
+      '@holz/core': 0.8.3-rc.161
 
   '@humanfs/core@0.19.2':
     dependencies:

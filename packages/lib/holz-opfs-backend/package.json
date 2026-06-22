@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@holz/core": "catalog:",
-    "@holz/json-backend": "0.8.3-rc.155",
+    "@holz/json-backend": "0.8.3-rc.161",
     "@lib/messaging": "workspace:*"
   }
 }
