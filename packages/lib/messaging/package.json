@@ -9,7 +9,8 @@
   "exports": {
     "./rpc": "./src/rpc.ts",
     "./transport": "./src/transport/interface.ts",
-    "./message-port": "./src/transport/message-port.ts"
+    "./message-port": "./src/transport/message-port.ts",
+    "./broadcast-channel": "./src/transport/broadcast-channel.ts"
   },
   "scripts": {
     "typecheck": "tsc"

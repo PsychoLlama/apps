@@ -9,6 +9,7 @@ import type { HostApi } from '../host-api';
 import type { LogLocation, WorkerApi } from '../worker/rpc';
 import { OBSERVABILITY_WORKER_NAME } from '../environment';
 import { createNdjsonBuffer } from '../ndjson-buffer';
+import { announceLogFile } from './log-file-feed';
 import { holdLogFileLock } from './locks';
 
 /**
@@ -69,6 +70,12 @@ export const createOpfsWorkerBackend = (
     // Drain the buffered NDJSON into it — anything logged during boot flushes,
     // and later logs flow straight through.
     void readable.pipeTo(stream);
+
+    // The file now exists on disk (the worker created it to satisfy `init`).
+    // Announce it so any open log viewer — in another tab, or this one, where
+    // the file landed too late for the initial enumeration — adds its row
+    // without waiting to re-read the directory.
+    announceLogFile(location.file);
   });
 
   // The worker batches OPFS flushes by size and time for throughput, so an
