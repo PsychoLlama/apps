@@ -24,7 +24,12 @@ export const markLoading = defineAction([logArchiveStore], (state) => {
 export const setFiles = defineAction(
   [logArchiveStore],
   (state, snapshot: LogArchiveSnapshot) => {
-    state.files = snapshot.files;
+    // Merge, don't replace: an announcement can land between the enumeration's
+    // snapshot and this commit (see {@link addFile}). Keep any live-added file
+    // the snapshot predates so it isn't clobbered back out of the listing.
+    const enumerated = new Set(snapshot.files.map((file) => file.name));
+    const live = state.files.filter((file) => !enumerated.has(file.name));
+    state.files = [...snapshot.files, ...live].sort(byNewest);
     state.status = 'ready';
     if (snapshot.activeFiles) state.activeFiles = snapshot.activeFiles;
   },
