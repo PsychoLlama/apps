@@ -174,21 +174,21 @@ const Launcher = () => (
           </Flex>
         </Container>
       </Flex>
-    </FrameBody>
 
-    <Flex as="footer" justify="end" px={4} py={3}>
-      <LinkButton
-        testId="github"
-        href="https://github.com/PsychoLlama/apps"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Source on GitHub"
-        variant="ghost"
-        color="neutral"
-      >
-        <IconGithub width="20" height="20" />
-      </LinkButton>
-    </Flex>
+      <Flex as="footer" justify="end">
+        <LinkButton
+          testId="github"
+          href="https://github.com/PsychoLlama/apps"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Source on GitHub"
+          variant="ghost"
+          color="neutral"
+        >
+          <IconGithub width="20" height="20" />
+        </LinkButton>
+      </Flex>
+    </FrameBody>
   </Frame>
 );
 
