@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Kbd, { type KbdProps } from './kbd';
 
 /**
@@ -7,6 +7,7 @@ import Kbd, { type KbdProps } from './kbd';
  */
 export default {
   title: 'Kbd',
+  group: 'typography',
   render: (props) => <Kbd {...props}>Esc</Kbd>,
   sections: [
     {
@@ -17,4 +18,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<KbdProps>;
+} satisfies Listing<KbdProps>;

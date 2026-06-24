@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Separator, { type SeparatorProps } from './separator';
 import Flex from '../flex/flex';
 import Text from '../text/text';
@@ -39,6 +39,7 @@ const Demo = (props: Partial<SeparatorProps>) => (
  */
 export default {
   title: 'Separator',
+  group: 'display',
   render: (props) => <Demo {...props} />,
   sections: [
     {
@@ -68,4 +69,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<SeparatorProps>;
+} satisfies Listing<SeparatorProps>;

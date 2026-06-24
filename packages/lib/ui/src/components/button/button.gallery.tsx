@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Button, { type ButtonProps } from './button';
 
 /**
@@ -8,6 +8,7 @@ import Button, { type ButtonProps } from './button';
  */
 export default {
   title: 'Button',
+  group: 'form',
   render: (props) => (
     <Button as="button" testId="button" {...props}>
       Continue
@@ -49,4 +50,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<Extract<ButtonProps, { as?: 'button' }>>;
+} satisfies Listing<Extract<ButtonProps, { as?: 'button' }>>;

@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js';
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import {
   RadioGroupItem,
   RadioGroupRoot,
@@ -43,6 +43,7 @@ const Demo = (props: { name: string } & Partial<RadioGroupRootProps>) => {
  */
 export default {
   title: 'RadioGroup',
+  group: 'form',
   render: (props) => (
     <Demo
       {...props}
@@ -105,4 +106,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<DemoProps>;
+} satisfies Listing<DemoProps>;

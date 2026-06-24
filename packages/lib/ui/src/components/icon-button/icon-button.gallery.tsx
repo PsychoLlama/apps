@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import IconHeart from 'virtual:icons/mdi/heart';
 import IconButton, { type IconButtonProps } from './icon-button';
 
@@ -9,6 +9,7 @@ import IconButton, { type IconButtonProps } from './icon-button';
  */
 export default {
   title: 'IconButton',
+  group: 'form',
   render: (props) => (
     <IconButton aria-label="Like" testId="icon-button" {...props}>
       <IconHeart />
@@ -54,4 +55,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<Extract<IconButtonProps, { 'aria-label': string }>>;
+} satisfies Listing<Extract<IconButtonProps, { 'aria-label': string }>>;

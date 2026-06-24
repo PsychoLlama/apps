@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Code, { type CodeProps } from './code';
 
 /**
@@ -7,6 +7,7 @@ import Code, { type CodeProps } from './code';
  */
 export default {
   title: 'Code',
+  group: 'typography',
   render: (props) => <Code {...props}>cargo build</Code>,
   sections: [
     {
@@ -29,4 +30,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<CodeProps>;
+} satisfies Listing<CodeProps>;

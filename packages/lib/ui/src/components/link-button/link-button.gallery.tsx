@@ -1,5 +1,5 @@
 import { Route, StaticRouter } from '@solidjs/router';
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import LinkButton, { type LinkButtonProps } from './link-button';
 
 // Each cell gets its own router context so module-level JSX can call
@@ -18,6 +18,7 @@ const Demo = (props: LinkButtonProps) => (
  */
 export default {
   title: 'LinkButton',
+  group: 'navigation',
   render: (props) => (
     <Demo href="/" testId="link-button" {...props}>
       Continue
@@ -52,4 +53,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<LinkButtonProps>;
+} satisfies Listing<LinkButtonProps>;

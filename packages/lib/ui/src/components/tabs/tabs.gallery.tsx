@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import { createSignal } from 'solid-js';
 import {
   TabsContent,
@@ -41,6 +41,7 @@ const Demo = (props: Partial<TabsListProps>) => {
  */
 export default {
   title: 'Tabs',
+  group: 'navigation',
   render: (props) => <Demo {...props} />,
   sections: [
     {
@@ -58,4 +59,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<TabsListProps>;
+} satisfies Listing<TabsListProps>;

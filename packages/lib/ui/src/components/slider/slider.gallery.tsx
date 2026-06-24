@@ -1,5 +1,5 @@
 import { createSignal, untrack } from 'solid-js';
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Slider, { type SliderProps } from './slider';
 import Flex from '../flex/flex';
 import * as css from './slider.gallery.css';
@@ -28,6 +28,7 @@ const Demo = (props: DemoProps) => {
  */
 export default {
   title: 'Slider',
+  group: 'form',
   render: (props) => <Demo {...props} />,
   sections: [
     {
@@ -77,4 +78,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<SliderProps & { initialValue?: number[] }>;
+} satisfies Listing<SliderProps & { initialValue?: number[] }>;

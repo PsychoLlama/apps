@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Blockquote, { type BlockquoteProps } from './blockquote';
 
 const SAMPLE = 'The unexamined life is not worth living.';
@@ -9,6 +9,7 @@ const SAMPLE = 'The unexamined life is not worth living.';
  */
 export default {
   title: 'Blockquote',
+  group: 'typography',
   render: (props) => (
     <Blockquote selectable {...props}>
       {SAMPLE}
@@ -26,4 +27,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<BlockquoteProps>;
+} satisfies Listing<BlockquoteProps>;

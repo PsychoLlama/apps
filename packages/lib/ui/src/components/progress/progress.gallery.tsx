@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Progress, { type ProgressProps } from './progress';
 import Flex from '../flex/flex';
 import * as css from './progress.gallery.css';
@@ -15,6 +15,7 @@ const Demo = (props: Partial<ProgressProps>) => (
  */
 export default {
   title: 'Progress',
+  group: 'display',
   render: (props) => <Demo {...props} />,
   sections: [
     {
@@ -55,4 +56,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<ProgressProps>;
+} satisfies Listing<ProgressProps>;

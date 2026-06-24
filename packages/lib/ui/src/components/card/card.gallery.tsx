@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Card, { type CardProps } from './card';
 import Heading from '../heading/heading';
 import Text from '../text/text';
@@ -20,6 +20,7 @@ const Body = () => (
  */
 export default {
   title: 'Card',
+  group: 'display',
   render: (props) => (
     <Card as="div" variant={props.variant}>
       <Body />
@@ -35,4 +36,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<CardProps<'div'>>;
+} satisfies Listing<CardProps<'div'>>;

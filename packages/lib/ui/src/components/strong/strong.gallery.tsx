@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Strong from './strong';
 import Text from '../text/text';
 
@@ -8,9 +8,10 @@ import Text from '../text/text';
  */
 export default {
   title: 'Strong',
+  group: 'typography',
   render: () => (
     <Text as="p" selectable>
       Quick <Strong>brown</Strong> fox.
     </Text>
   ),
-} satisfies GalleryListing;
+} satisfies Listing;

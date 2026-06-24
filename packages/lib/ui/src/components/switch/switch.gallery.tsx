@@ -1,5 +1,5 @@
 import { createSignal, untrack } from 'solid-js';
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Switch, { type SwitchProps } from './switch';
 
 /** Demo-only knob: the initial checked state. */
@@ -27,6 +27,7 @@ const Demo = (props: DemoProps) => {
  */
 export default {
   title: 'Switch',
+  group: 'form',
   render: (props) => <Demo {...props} />,
   sections: [
     {
@@ -70,4 +71,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<SwitchProps & { initialChecked?: boolean }>;
+} satisfies Listing<SwitchProps & { initialChecked?: boolean }>;

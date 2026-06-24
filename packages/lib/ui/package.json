@@ -10,8 +10,12 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./gallery": "./src/gallery.ts",
     "./props/*": "./src/props/*.ts",
     "./package.json": "./package.json"
+  },
+  "imports": {
+    "#gallery": "./src/gallery.ts"
   },
   "scripts": {
     "typecheck": "tsc"
