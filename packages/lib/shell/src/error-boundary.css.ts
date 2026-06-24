@@ -6,6 +6,13 @@ export const details = style({
   userSelect: 'text',
 });
 
+// The details element is a full-width column, so its summary button
+// would stretch edge to edge. Shrink it to its label and center it,
+// leaving the revealed card below at full width.
+export const summary = style({
+  alignSelf: 'center',
+});
+
 export const summaryChevron = style({
   transitionProperty: 'transform',
   transitionDuration: fast[2],

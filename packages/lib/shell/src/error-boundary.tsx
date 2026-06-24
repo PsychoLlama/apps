@@ -155,6 +155,7 @@ export default function ErrorBoundaryFallback(
                 testId="error-details-toggle"
                 variant="ghost"
                 color="neutral"
+                class={css.summary}
               >
                 <IconChevron
                   width="14"
