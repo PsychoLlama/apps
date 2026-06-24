@@ -6,9 +6,7 @@ import { Frame, FrameBody } from './frame';
 import SiteHeader from './site-header';
 import * as css from './not-found.css';
 
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE).namespace(
-  'not-found',
-);
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
  * Catch-all page rendered when no route matches. Keeps the site
