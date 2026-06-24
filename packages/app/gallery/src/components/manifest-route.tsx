@@ -1,5 +1,5 @@
 import { Flex, Heading, Text } from '@lib/ui';
-import type { GalleryListing } from '@lib/gallery';
+import type { GalleryGroup, GalleryListing } from '@lib/gallery';
 import { ManifestListings } from './manifest-listings';
 import { GalleryView } from './gallery-view';
 
@@ -29,6 +29,12 @@ export const ManifestRoute = (props: {
   title: string;
   /** One-line summary, conventionally the package's `description`. */
   description: string;
+  /**
+   * The groups this manifest's listings sort into, in declaration order. Empty
+   * for a package that opts out of grouping — listings then render as one flat
+   * column.
+   */
+  groups: ReadonlyArray<GalleryGroup>;
   /** Eager `import.meta.glob` of the package's `*.gallery.tsx` modules. */
   listings: Record<string, { default: GalleryListing<unknown, string> }>;
 }) => {
@@ -51,7 +57,7 @@ export const ManifestRoute = (props: {
           </Text>
         </Flex>
 
-        <ManifestListings listings={listings()} />
+        <ManifestListings listings={listings()} groups={props.groups} />
       </Flex>
     </GalleryView>
   );
