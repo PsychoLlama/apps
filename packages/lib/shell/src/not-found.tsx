@@ -1,7 +1,6 @@
-import { Container, Flex, Heading, Link, Section, Text } from '@lib/ui';
-import IconCompassOff from 'virtual:icons/mdi/compass-off-outline';
+import { Container, Flex, Heading, Link, Text } from '@lib/ui';
+import { Frame, FrameBody } from './frame';
 import SiteHeader from './site-header';
-import * as css from './not-found.css';
 
 /**
  * Catch-all page rendered when no route matches. Keeps the site
@@ -10,22 +9,12 @@ import * as css from './not-found.css';
  */
 export default function NotFound() {
   return (
-    <Flex as="main" direction="column" grow>
+    <Frame>
       <SiteHeader title="Lost" />
 
-      <Section size={4}>
-        <Container as="div" size={1} px={4}>
+      <FrameBody as="section">
+        <Container as="div" size={1}>
           <Flex as="div" direction="column" align="center" gap={5}>
-            <Flex
-              as="div"
-              align="center"
-              justify="center"
-              class={css.iconHalo}
-              aria-hidden="true"
-            >
-              <IconCompassOff />
-            </Flex>
-
             <Flex as="div" direction="column" gap={3} align="center">
               <Heading
                 as="h1"
@@ -59,7 +48,7 @@ export default function NotFound() {
             </Link>
           </Flex>
         </Container>
-      </Section>
-    </Flex>
+      </FrameBody>
+    </Frame>
   );
 }
