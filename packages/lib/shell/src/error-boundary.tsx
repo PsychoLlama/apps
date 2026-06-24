@@ -15,7 +15,6 @@ import {
   Section,
   Text,
 } from '@lib/ui';
-import IconAlert from 'virtual:icons/mdi/alert-circle-outline';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import IconHome from 'virtual:icons/mdi/home-outline';
 import IconRefresh from 'virtual:icons/mdi/refresh';
@@ -106,10 +105,6 @@ export default function ErrorBoundaryFallback(
       <Section size={4}>
         <Container as="div" size={2} px={4}>
           <Flex as="div" direction="column" align="center" gap={6}>
-            <Flex as="div" align="center" justify="center" class={css.icon}>
-              <IconAlert width="32" height="32" />
-            </Flex>
-
             <Flex as="div" direction="column" gap={2} align="center">
               <Heading
                 as="h1"

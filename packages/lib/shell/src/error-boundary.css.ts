@@ -1,13 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { danger, fast, neutral, radius, space, standard } from '@lib/design';
-
-export const icon = style({
-  width: space[8],
-  height: space[8],
-  borderRadius: radius.full,
-  backgroundColor: danger.alpha[3],
-  color: danger.solid[11],
-});
+import { fast, neutral, radius, space, standard } from '@lib/design';
 
 export const details = style({
   width: '100%',
