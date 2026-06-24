@@ -1,7 +1,5 @@
 import type { JSX } from 'solid-js';
-import { Flex } from '@lib/ui';
-import { SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
-import * as css from './logs-view.css';
+import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 
 /**
  * The logs layout: the `<main>` frame shared by `/logs` and `/logs/:file`.
@@ -9,9 +7,7 @@ import * as css from './logs-view.css';
  * name the page in view without the layout reverse-engineering the route.
  */
 export const LogsLayout = (props: { children?: JSX.Element }) => (
-  <Flex as="main" direction="column" class={css.layout}>
-    {props.children}
-  </Flex>
+  <Frame>{props.children}</Frame>
 );
 
 /**
@@ -26,8 +22,6 @@ export const LogsView = (props: {
 }) => (
   <>
     <SiteHeader trail={props.trail} />
-    <Flex as="div" direction="column" class={css.content}>
-      {props.children}
-    </Flex>
+    <FrameBody>{props.children}</FrameBody>
   </>
 );
