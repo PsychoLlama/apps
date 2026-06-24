@@ -1,4 +1,8 @@
-import { defineGallery, type GalleryListing } from '@lib/gallery';
+import {
+  defineGallery,
+  type GalleryGroupId,
+  type GalleryListing,
+} from '@lib/gallery';
 import { name, description } from '@lib/design/package.json';
 
 // Token listings build their axes programmatically, so re-export the helper
@@ -20,7 +24,7 @@ const gallery = defineGallery({
 export default gallery;
 
 /** A group id valid for `@lib/design` listings — none are declared. */
-export type GroupId = (typeof gallery)['groups'][number]['id'];
+export type GroupId = GalleryGroupId<typeof gallery>;
 
 /**
  * A `@lib/design` gallery listing. The package declares no groups, so `group`

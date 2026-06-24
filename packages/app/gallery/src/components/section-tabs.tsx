@@ -5,7 +5,7 @@ import { SectionGrid } from './section-grid';
 import { slugify } from './slugify';
 
 /** A listing erased to the registry's shared shape (see `@lib/gallery`). */
-type Listing = GalleryListing<unknown>;
+type Listing = GalleryListing<unknown, string>;
 type Section = GallerySection<unknown>;
 
 /** A listing's sections as a tab strip, each panel holding its permutation grid. */

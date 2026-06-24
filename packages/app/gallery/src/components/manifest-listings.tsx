@@ -4,7 +4,7 @@ import type { GalleryListing } from '@lib/gallery';
 import { ListingView } from './listing-view';
 
 /** A listing erased to the registry's shared shape (see `@lib/gallery`). */
-type Listing = GalleryListing<unknown>;
+type Listing = GalleryListing<unknown, string>;
 
 /**
  * A manifest's listings, rendered inline and sorted by title. Each listing's

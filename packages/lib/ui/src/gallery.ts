@@ -1,4 +1,8 @@
-import { defineGallery, type GalleryListing } from '@lib/gallery';
+import {
+  defineGallery,
+  type GalleryGroupId,
+  type GalleryListing,
+} from '@lib/gallery';
 import { name, description } from '@lib/ui/package.json';
 
 /**
@@ -22,7 +26,7 @@ const gallery = defineGallery({
 export default gallery;
 
 /** A group id valid for `@lib/ui` listings. */
-export type GroupId = (typeof gallery)['groups'][number]['id'];
+export type GroupId = GalleryGroupId<typeof gallery>;
 
 /**
  * A `@lib/ui` gallery listing, bound to the package's group ids. Author each

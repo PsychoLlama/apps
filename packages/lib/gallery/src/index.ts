@@ -80,33 +80,30 @@ export type GallerySection<P> = {
  *   subset of own props you vary) rather than the generic prop type.
  *
  * `P` is invariant — it appears in both `render`'s parameter and the axis
- * `props` — so the heterogeneous registry erases it to `GalleryListing<unknown>`
- * (`Partial<unknown>` is `{}`, which every concrete listing satisfies);
+ * `props` — so the heterogeneous registry erases it to `GalleryListing<unknown,
+ * string>` (`Partial<unknown>` is `{}`, which every concrete listing satisfies);
  * per-listing precision lives at each `satisfies` site.
  *
  * Omit `sections` for a component with no variants: `render` is invoked once
  * with no overrides and no tab strip is shown.
  *
- * `G` is the union of group ids the listing may belong to (see {@link
- * GalleryGroup}). It defaults to `string` so the heterogeneous registry can
- * erase to `GalleryListing<unknown>`; per-package precision comes from a bound
- * alias (`GalleryListing<P, 'typography' | 'form'>`) authored against a
- * package's {@link defineGallery} groups, so renaming a group id ripples to
- * every listing in that package at compile time.
+ * `GroupIds` is the union of group ids the listing may belong to (see {@link
+ * GalleryGroup}). It defaults to `never` — the package declares no groups, so
+ * `group` is forbidden — and is bound per package by a `Listing` alias built
+ * from {@link GalleryGroupId}, which makes `group` a *required*, id-constrained
+ * field. Renaming a group id then ripples to every listing in that package at
+ * compile time. The gallery app widens it back to `string` for its
+ * heterogeneous registry.
  */
-export interface GalleryListing<
+export type GalleryListing<
   P = Record<string, never>,
-  G extends string = string,
-> {
+  GroupIds extends string = never,
+> = GalleryListingFields<P> & GalleryGroupField<GroupIds>;
+
+/** The fields every listing carries, independent of its package's groups. */
+interface GalleryListingFields<P> {
   /** Display heading. Conventionally the component's name (e.g. `TextField`). */
   title: string;
-
-  /**
-   * The package-defined group this listing belongs to, referenced by id (see
-   * {@link GalleryGroup}). Constrained to the host package's declared groups
-   * via its bound `Listing` alias; omit when the package declares none.
-   */
-  group?: G;
 
   /**
    * Permutation views, surfaced as tabs (e.g. `Theme Colors`, `All Sizes`).
@@ -118,6 +115,24 @@ export interface GalleryListing<
   /** Render one cell from the merged column + row prop overrides. */
   render: (props: Partial<P>) => JSX.Element;
 }
+
+/**
+ * A listing's `group` field, shaped by its package's declared group ids:
+ * required and constrained to those ids when the package has groups, forbidden
+ * when it declares none (`GroupIds` is `never`).
+ */
+type GalleryGroupField<GroupIds extends string> = [GroupIds] extends [never]
+  ? {
+      /** This package declares no groups, so `group` must be omitted. */
+      group?: never;
+    }
+  : {
+      /**
+       * The group this listing belongs to, referenced by id. Constrained to the
+       * host package's declared {@link GalleryGroup} ids.
+       */
+      group: GroupIds;
+    };
 
 /**
  * A named bucket a package's listings can be sorted into. Referenced by `id`
@@ -149,9 +164,18 @@ export interface GalleryManifest<
 }
 
 /**
+ * The union of group ids a {@link defineGallery} manifest declares — `never`
+ * when it declares none. Feed `GalleryGroupId<typeof gallery>` as a {@link
+ * GalleryListing}'s `GroupIds` to bind each listing's `group` to exactly this
+ * package's set.
+ */
+export type GalleryGroupId<Manifest extends GalleryManifest> =
+  Manifest['groups'][number]['id'];
+
+/**
  * Declare a package's gallery manifest. Each package owns a `gallery.ts` module
  * that calls this and default-exports the result, then derives its bound
- * listing type from the captured groups:
+ * listing type from the captured groups via {@link GalleryGroupId}:
  *
  * ```ts
  * const gallery = defineGallery({
@@ -161,7 +185,7 @@ export interface GalleryManifest<
  * });
  * export default gallery;
  * export type Listing<P = Record<string, never>> =
- *   GalleryListing<P, (typeof gallery)['groups'][number]['id']>;
+ *   GalleryListing<P, GalleryGroupId<typeof gallery>>;
  * ```
  *
  * The `const` type parameter preserves the literal group ids so the derived

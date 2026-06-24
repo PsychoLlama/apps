@@ -11,7 +11,7 @@ export default function LibDesignGallery() {
     <ManifestRoute
       title={gallery.name}
       description={gallery.description}
-      listings={import.meta.glob<{ default: GalleryListing<unknown> }>(
+      listings={import.meta.glob<{ default: GalleryListing<unknown, string> }>(
         '../../../../../lib/design/src/**/*.gallery.tsx',
         { eager: true },
       )}
