@@ -4,6 +4,7 @@ import { createLogger } from '@lib/observability';
 import { Container, Flex, Heading, Link, Text } from '@lib/ui';
 import { Frame, FrameBody } from './frame';
 import SiteHeader from './site-header';
+import * as css from './not-found.css';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE).namespace(
   'not-found',
@@ -32,7 +33,7 @@ export default function NotFound() {
       <SiteHeader title="Lost" />
 
       <FrameBody as="section">
-        <Container as="div" size={1}>
+        <Container as="div" size={1} class={css.centered}>
           <Flex as="div" direction="column" align="center" gap={5}>
             <Flex as="div" direction="column" gap={3} align="center">
               <Heading
