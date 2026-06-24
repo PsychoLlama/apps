@@ -1,11 +1,5 @@
-import {
-  name as uiName,
-  description as uiDescription,
-} from '@lib/ui/package.json';
-import {
-  name as designName,
-  description as designDescription,
-} from '@lib/design/package.json';
+import uiGallery from '@lib/ui/gallery';
+import designGallery from '@lib/design/gallery';
 
 /** A manifest's card on the gallery landing page. */
 export interface ManifestLink {
@@ -38,9 +32,9 @@ const manifest = (title: string, description: string): ManifestLink => {
  * Every manifest as a landing-page card link, sorted by title. Each entry
  * pairs with a dedicated `/gallery/<slug>` route that owns its listings — add a
  * package here and add its route file together. Titles and descriptions track
- * each package's `package.json` so the two stay in step.
+ * each package's `defineGallery` manifest so the two stay in step.
  */
 export const manifestLinks: ManifestLink[] = [
-  manifest(uiName, uiDescription),
-  manifest(designName, designDescription),
+  manifest(uiGallery.name, uiGallery.description),
+  manifest(designGallery.name, designGallery.description),
 ].sort((left, right) => left.title.localeCompare(right.title));

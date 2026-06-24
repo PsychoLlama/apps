@@ -1,4 +1,4 @@
-import { name, description } from '@lib/ui/package.json';
+import gallery from '@lib/ui/gallery';
 import { ManifestRoute, type GalleryListing } from '@app/gallery';
 
 /**
@@ -9,8 +9,8 @@ import { ManifestRoute, type GalleryListing } from '@app/gallery';
 export default function LibUiGallery() {
   return (
     <ManifestRoute
-      title={name}
-      description={description}
+      title={gallery.name}
+      description={gallery.description}
       listings={import.meta.glob<{ default: GalleryListing<unknown> }>(
         '../../../../../lib/ui/src/**/*.gallery.tsx',
         { eager: true },

@@ -1,4 +1,4 @@
-import { name, description } from '@lib/design/package.json';
+import gallery from '@lib/design/gallery';
 import { ManifestRoute, type GalleryListing } from '@app/gallery';
 
 /**
@@ -9,8 +9,8 @@ import { ManifestRoute, type GalleryListing } from '@app/gallery';
 export default function LibDesignGallery() {
   return (
     <ManifestRoute
-      title={name}
-      description={description}
+      title={gallery.name}
+      description={gallery.description}
       listings={import.meta.glob<{ default: GalleryListing<unknown> }>(
         '../../../../../lib/design/src/**/*.gallery.tsx',
         { eager: true },
