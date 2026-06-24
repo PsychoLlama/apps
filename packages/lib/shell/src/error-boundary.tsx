@@ -1,4 +1,6 @@
-import { Show } from 'solid-js';
+import { onMount, Show } from 'solid-js';
+import { useLocation } from '@solidjs/router';
+import { createLogger, toError } from '@lib/observability';
 import {
   Button,
   Card,
@@ -10,13 +12,12 @@ import {
   Flex,
   Heading,
   LinkButton,
-  Section,
   Text,
 } from '@lib/ui';
-import IconAlert from 'virtual:icons/mdi/alert-circle-outline';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import IconHome from 'virtual:icons/mdi/home-outline';
 import IconRefresh from 'virtual:icons/mdi/refresh';
+import { Frame, FrameBody } from './frame';
 import SiteHeader from './site-header';
 import * as css from './error-boundary.css';
 
@@ -51,23 +52,59 @@ const reloadPage = () => {
   if (typeof window !== 'undefined') window.location.reload();
 };
 
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE).namespace(
+  'error-boundary',
+);
+
+/** Shape of `navigator.userAgentData` — not yet in the TS DOM lib. */
+interface UserAgentData {
+  platform: string;
+  mobile: boolean;
+  brands: ReadonlyArray<{ brand: string; version: string }>;
+}
+
+/**
+ * Best-effort UA client hints. Absent on Firefox/Safari (and any
+ * non-secure context), so each field falls back to `undefined`. `brands`
+ * collapses to `"<brand> <version>"` strings — log context only carries
+ * primitives, not nested objects.
+ */
+const readClientHints = () => {
+  const data = (navigator as Navigator & { userAgentData?: UserAgentData })
+    .userAgentData;
+
+  return {
+    platform: data?.platform,
+    mobile: data?.mobile,
+    brands: data?.brands.map(({ brand, version }) => `${brand} ${version}`),
+  };
+};
+
 /** Fallback rendered when the global `<ErrorBoundary>` catches an uncaught error. */
 export default function ErrorBoundaryFallback(
   props: ErrorBoundaryFallbackProps,
 ) {
   const details = () => normalizeError(props.error);
+  const location = useLocation();
+
+  // Report the failure once the fallback mounts (client-only, so
+  // `navigator` is safe). The route and client hints are what let us
+  // correlate a production occurrence back to a page and environment.
+  onMount(() => {
+    logger.error('Uncaught render error.', {
+      error: toError(props.error),
+      route: location.pathname,
+      ...readClientHints(),
+    });
+  });
 
   return (
-    <Flex as="main" direction="column" grow>
+    <Frame>
       <SiteHeader title="Error" />
 
-      <Section size={4}>
-        <Container as="div" size={2} px={4}>
+      <FrameBody as="section">
+        <Container as="div" size={2}>
           <Flex as="div" direction="column" align="center" gap={6}>
-            <Flex as="div" align="center" justify="center" class={css.icon}>
-              <IconAlert width="32" height="32" />
-            </Flex>
-
             <Flex as="div" direction="column" gap={2} align="center">
               <Heading
                 as="h1"
@@ -118,6 +155,7 @@ export default function ErrorBoundaryFallback(
                 testId="error-details-toggle"
                 variant="ghost"
                 color="neutral"
+                class={css.summary}
               >
                 <IconChevron
                   width="14"
@@ -158,7 +196,7 @@ export default function ErrorBoundaryFallback(
             </Flex>
           </Flex>
         </Container>
-      </Section>
-    </Flex>
+      </FrameBody>
+    </Frame>
   );
 }

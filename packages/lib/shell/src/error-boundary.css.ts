@@ -1,17 +1,16 @@
 import { style } from '@vanilla-extract/css';
-import { danger, fast, neutral, radius, space, standard } from '@lib/design';
-
-export const icon = style({
-  width: space[8],
-  height: space[8],
-  borderRadius: radius.full,
-  backgroundColor: danger.alpha[3],
-  color: danger.solid[11],
-});
+import { fast, neutral, radius, space, standard } from '@lib/design';
 
 export const details = style({
   width: '100%',
   userSelect: 'text',
+});
+
+// The details element is a full-width column, so its summary button
+// would stretch edge to edge. Shrink it to its label and center it,
+// leaving the revealed card below at full width.
+export const summary = style({
+  alignSelf: 'center',
 });
 
 export const summaryChevron = style({
