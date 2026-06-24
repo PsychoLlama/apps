@@ -1,6 +1,13 @@
+import { onMount } from 'solid-js';
+import { useLocation } from '@solidjs/router';
+import { createLogger } from '@lib/observability';
 import { Container, Flex, Heading, Link, Text } from '@lib/ui';
 import { Frame, FrameBody } from './frame';
 import SiteHeader from './site-header';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE).namespace(
+  'not-found',
+);
 
 /**
  * Catch-all page rendered when no route matches. Keeps the site
@@ -8,6 +15,16 @@ import SiteHeader from './site-header';
  * column with a link home.
  */
 export default function NotFound() {
+  const location = useLocation();
+
+  // Report the miss once the fallback mounts. The full requested URL
+  // is what lets us spot dead links and stale bookmarks in the logs.
+  onMount(() => {
+    logger.warn('No route matched.', {
+      url: `${location.pathname}${location.search}${location.hash}`,
+    });
+  });
+
   return (
     <Frame>
       <SiteHeader title="Lost" />
