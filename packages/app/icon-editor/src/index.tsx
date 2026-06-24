@@ -1,7 +1,7 @@
 import { For, createEffect, on, onCleanup, untrack } from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
 import { useAction, useEffect } from '@lib/state';
-import { SiteHeader } from '@lib/shell';
+import { Frame, SiteHeader } from '@lib/shell';
 import {
   Button,
   Flex,
@@ -212,7 +212,7 @@ export const IconEditor = () => {
   };
 
   return (
-    <Flex as="main" direction="column" grow>
+    <Frame>
       <SiteHeader title="Icon Editor" />
 
       <Flex as="div" direction="column" class={css.workspace}>
@@ -326,6 +326,6 @@ export const IconEditor = () => {
           </TabsRoot>
         </Flex>
       </Flex>
-    </Flex>
+    </Frame>
   );
 };
