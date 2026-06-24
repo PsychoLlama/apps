@@ -12,12 +12,12 @@ import {
   Flex,
   Heading,
   LinkButton,
-  Section,
   Text,
 } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import IconHome from 'virtual:icons/mdi/home-outline';
 import IconRefresh from 'virtual:icons/mdi/refresh';
+import { Frame, FrameBody } from './frame';
 import SiteHeader from './site-header';
 import * as css from './error-boundary.css';
 
@@ -99,11 +99,11 @@ export default function ErrorBoundaryFallback(
   });
 
   return (
-    <Flex as="main" direction="column" grow>
+    <Frame>
       <SiteHeader title="Error" />
 
-      <Section size={4}>
-        <Container as="div" size={2} px={4}>
+      <FrameBody as="section">
+        <Container as="div" size={2}>
           <Flex as="div" direction="column" align="center" gap={6}>
             <Flex as="div" direction="column" gap={2} align="center">
               <Heading
@@ -196,7 +196,7 @@ export default function ErrorBoundaryFallback(
             </Flex>
           </Flex>
         </Container>
-      </Section>
-    </Flex>
+      </FrameBody>
+    </Frame>
   );
 }
