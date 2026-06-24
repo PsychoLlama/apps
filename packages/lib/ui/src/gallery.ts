@@ -12,10 +12,10 @@ const gallery = defineGallery({
   name,
   description,
   groups: [
-    { id: 'typography', label: 'Typography' },
     { id: 'form', label: 'Form' },
     { id: 'navigation', label: 'Navigation' },
     { id: 'display', label: 'Display' },
+    { id: 'typography', label: 'Typography' },
   ],
 });
 
