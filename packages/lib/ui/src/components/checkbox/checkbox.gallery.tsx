@@ -1,5 +1,5 @@
 import { createSignal, untrack } from 'solid-js';
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Checkbox, { type CheckboxChecked, type CheckboxProps } from './checkbox';
 
 /** Demo-only knob: the initial checked state. */
@@ -27,6 +27,7 @@ const Demo = (props: DemoProps) => {
  */
 export default {
   title: 'Checkbox',
+  group: 'form',
   render: (props) => <Demo {...props} />,
   sections: [
     {
@@ -96,6 +97,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<
-  CheckboxProps & { initialChecked?: CheckboxChecked }
->;
+} satisfies Listing<CheckboxProps & { initialChecked?: CheckboxChecked }>;

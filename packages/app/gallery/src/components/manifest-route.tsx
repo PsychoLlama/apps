@@ -10,8 +10,8 @@ import { GalleryView } from './gallery-view';
  * listing renders together on one page.
  */
 const collectListings = (
-  modules: Record<string, { default: GalleryListing<unknown> }>,
-): GalleryListing<unknown>[] =>
+  modules: Record<string, { default: GalleryListing<unknown, string> }>,
+): GalleryListing<unknown, string>[] =>
   Object.values(modules).map((module) => module.default);
 
 /**
@@ -30,7 +30,7 @@ export const ManifestRoute = (props: {
   /** One-line summary, conventionally the package's `description`. */
   description: string;
   /** Eager `import.meta.glob` of the package's `*.gallery.tsx` modules. */
-  listings: Record<string, { default: GalleryListing<unknown> }>;
+  listings: Record<string, { default: GalleryListing<unknown, string> }>;
 }) => {
   const listings = () =>
     collectListings(props.listings).sort((left, right) =>

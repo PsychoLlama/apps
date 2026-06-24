@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Quote from './quote';
 import Text from '../text/text';
 
@@ -8,9 +8,10 @@ import Text from '../text/text';
  */
 export default {
   title: 'Quote',
+  group: 'typography',
   render: () => (
     <Text as="p" selectable>
       Twain wrote: <Quote>cat by the tail</Quote>.
     </Text>
   ),
-} satisfies GalleryListing;
+} satisfies Listing;

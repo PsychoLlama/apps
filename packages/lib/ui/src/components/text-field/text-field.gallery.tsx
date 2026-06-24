@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import IconMagnify from 'virtual:icons/mdi/magnify';
 import IconClose from 'virtual:icons/mdi/close';
 import TextField, { type TextFieldProps } from './text-field';
@@ -22,6 +22,7 @@ const ClearButton = () => (
  */
 export default {
   title: 'TextField',
+  group: 'form',
   render: (props) => (
     <TextField
       testId="text-field"
@@ -101,4 +102,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<TextFieldProps>;
+} satisfies Listing<TextFieldProps>;

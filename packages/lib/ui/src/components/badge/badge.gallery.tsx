@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Badge, { type BadgeProps } from './badge';
 
 /**
@@ -7,6 +7,7 @@ import Badge, { type BadgeProps } from './badge';
  */
 export default {
   title: 'Badge',
+  group: 'display',
   render: (props) => <Badge {...props}>Active</Badge>,
   sections: [
     {
@@ -57,4 +58,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<BadgeProps>;
+} satisfies Listing<BadgeProps>;

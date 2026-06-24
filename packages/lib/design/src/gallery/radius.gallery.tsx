@@ -1,5 +1,5 @@
 import { assignInlineVars } from '@vanilla-extract/dynamic';
-import type { GalleryAxis, GalleryListing } from '@lib/gallery';
+import type { GalleryAxis, Listing } from '#gallery';
 import { radius } from '@lib/design';
 import * as css from './radius.gallery.css';
 
@@ -31,4 +31,4 @@ export default {
     />
   ),
   sections: [{ title: 'Scale', align: { columns: 'center' }, columns: steps }],
-} satisfies GalleryListing<Cell>;
+} satisfies Listing<Cell>;

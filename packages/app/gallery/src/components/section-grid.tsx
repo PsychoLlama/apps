@@ -4,7 +4,7 @@ import type { GalleryListing, GallerySection } from '@lib/gallery';
 import * as css from './section-grid.css';
 
 /** A listing erased to the registry's shared shape (see `@lib/gallery`). */
-type Listing = GalleryListing<unknown>;
+type Listing = GalleryListing<unknown, string>;
 type Section = GallerySection<unknown>;
 
 // Caps the `grid-template-columns` lookup — wider sections clamp to this many

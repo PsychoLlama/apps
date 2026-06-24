@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import {
   DataListItem,
   DataListLabel,
@@ -41,6 +41,7 @@ const Demo = (props: DemoProps) => (
  */
 export default {
   title: 'DataList',
+  group: 'display',
   render: (props) => <Demo {...props} />,
   sections: [
     {
@@ -61,4 +62,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<DataListRootProps & { labelColor?: DataListColor }>;
+} satisfies Listing<DataListRootProps & { labelColor?: DataListColor }>;

@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import { Route, StaticRouter } from '@solidjs/router';
 import { TabNavLink, TabNavRoot, type TabNavRootProps } from './tab-nav';
 
@@ -34,6 +34,7 @@ const Demo = (props: Partial<TabNavRootProps>) => (
  */
 export default {
   title: 'TabNav',
+  group: 'navigation',
   render: (props) => <Demo {...props} />,
   sections: [
     {
@@ -51,4 +52,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<TabNavRootProps>;
+} satisfies Listing<TabNavRootProps>;

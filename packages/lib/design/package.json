@@ -12,9 +12,13 @@
     ".": "./src/index.css.ts",
     "./color-scheme": "./src/color-scheme.ts",
     "./theme": "./src/theme.ts",
+    "./gallery": "./src/gallery.ts",
     "./palette/*": "./src/palette/*.css.ts",
     "./color/*": "./src/palette/*.ts",
     "./package.json": "./package.json"
+  },
+  "imports": {
+    "#gallery": "./src/gallery.ts"
   },
   "scripts": {
     "typecheck": "tsc"

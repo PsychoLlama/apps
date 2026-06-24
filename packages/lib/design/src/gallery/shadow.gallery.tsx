@@ -1,5 +1,5 @@
 import { assignInlineVars } from '@vanilla-extract/dynamic';
-import type { GalleryAxis, GalleryListing } from '@lib/gallery';
+import type { GalleryAxis, Listing } from '#gallery';
 import { shadow } from '@lib/design';
 import * as css from './shadow.gallery.css';
 
@@ -33,4 +33,4 @@ export default {
   sections: [
     { title: 'Elevation', align: { columns: 'center' }, columns: levels },
   ],
-} satisfies GalleryListing<Cell>;
+} satisfies Listing<Cell>;

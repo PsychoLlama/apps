@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import ScrollArea, { type ScrollAreaProps } from './scroll-area';
 import Flex from '../flex/flex';
 import Text from '../text/text';
@@ -52,6 +52,7 @@ const contentFor = (scrollbars: ScrollAreaProps['scrollbars']) => {
  */
 export default {
   title: 'ScrollArea',
+  group: 'display',
   render: (props) => (
     <Flex as="div" class={css.galleryCell}>
       <ScrollArea {...props}>{contentFor(props.scrollbars)}</ScrollArea>
@@ -86,4 +87,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<ScrollAreaProps>;
+} satisfies Listing<ScrollAreaProps>;

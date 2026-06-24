@@ -1,5 +1,5 @@
 import { createSignal, For } from 'solid-js';
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import {
   RadioCardsItem,
   RadioCardsRoot,
@@ -53,6 +53,7 @@ const Demo = (props: { name: string } & DemoProps) => {
  */
 export default {
   title: 'RadioCards',
+  group: 'form',
   render: (props) => (
     <Demo
       {...props}
@@ -103,4 +104,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<DemoProps>;
+} satisfies Listing<DemoProps>;

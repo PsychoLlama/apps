@@ -1,4 +1,4 @@
-import type { GalleryAxis, GalleryListing } from '@lib/gallery';
+import type { GalleryAxis, Listing } from '#gallery';
 import {
   fontFamily,
   fontWeight,
@@ -111,4 +111,4 @@ export default {
     { title: 'Weights', align: { rows: 'center' }, rows: weights },
     { title: 'Contrast', align: { rows: 'center' }, rows: contrasts },
   ],
-} satisfies GalleryListing<Specimen>;
+} satisfies Listing<Specimen>;

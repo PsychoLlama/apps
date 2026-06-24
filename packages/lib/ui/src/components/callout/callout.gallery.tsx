@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Callout, { type CalloutProps } from './callout';
 import Text from '../text/text';
 
@@ -16,6 +16,7 @@ const Body = (props: { label: string }) => (
  */
 export default {
   title: 'Callout',
+  group: 'display',
   render: (props) => (
     <Callout {...props}>
       <Body label={SAMPLE} />
@@ -45,4 +46,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<CalloutProps>;
+} satisfies Listing<CalloutProps>;

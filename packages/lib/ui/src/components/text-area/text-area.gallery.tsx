@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import TextArea, { type TextAreaProps } from './text-area';
 
 /**
@@ -7,6 +7,7 @@ import TextArea, { type TextAreaProps } from './text-area';
  */
 export default {
   title: 'TextArea',
+  group: 'form',
   render: (props) => (
     <TextArea
       testId="text-area"
@@ -58,4 +59,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<TextAreaProps>;
+} satisfies Listing<TextAreaProps>;

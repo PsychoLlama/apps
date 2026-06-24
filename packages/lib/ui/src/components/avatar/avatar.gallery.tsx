@@ -1,4 +1,4 @@
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import Avatar, { type AvatarProps } from './avatar';
 import SAMPLE_SRC from './sample-avatar.svg?url';
 
@@ -13,6 +13,7 @@ const BROKEN_SRC = 'https://example.invalid/avatar.png';
  */
 export default {
   title: 'Avatar',
+  group: 'display',
   render: (props) => <Avatar alt="Gill Bates" fallback="GB" {...props} />,
   sections: [
     {
@@ -48,4 +49,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<AvatarProps>;
+} satisfies Listing<AvatarProps>;

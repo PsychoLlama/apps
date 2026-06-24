@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import type { GalleryListing } from '@lib/gallery';
+import type { Listing } from '#gallery';
 import {
   TableBody,
   TableCell,
@@ -96,6 +96,7 @@ const Demo = (props: Partial<TableRootProps>) => (
  */
 export default {
   title: 'Table',
+  group: 'display',
   render: (props) => <Demo {...props} />,
   sections: [
     {
@@ -106,4 +107,4 @@ export default {
       ],
     },
   ],
-} satisfies GalleryListing<TableRootProps>;
+} satisfies Listing<TableRootProps>;

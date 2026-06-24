@@ -6,7 +6,7 @@ import { SectionTabs } from './section-tabs';
 import { slugify } from './slugify';
 
 /** A listing erased to the registry's shared shape (see `@lib/gallery`). */
-type Listing = GalleryListing<unknown>;
+type Listing = GalleryListing<unknown, string>;
 
 /** A no-variant listing's body — `render` invoked once with no overrides. */
 const NoVariant = (props: { listing: Listing }) => (
