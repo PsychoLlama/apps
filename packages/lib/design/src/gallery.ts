@@ -24,7 +24,7 @@ const gallery = defineGallery({
 export default gallery;
 
 /** A group id valid for `@lib/design` listings — none are declared. */
-export type GroupId = GalleryGroupId<typeof gallery>;
+type GroupId = GalleryGroupId<typeof gallery>;
 
 /**
  * A `@lib/design` gallery listing. The package declares no groups, so `group`
@@ -32,3 +32,13 @@ export type GroupId = GalleryGroupId<typeof gallery>;
  * `@lib/gallery`'s `GalleryListing`.
  */
 export type Listing<P = Record<string, never>> = GalleryListing<P, GroupId>;
+
+/**
+ * Every `@lib/design` listing, eagerly globbed. The gallery route hands this to
+ * `ManifestRoute`; eager so SolidStart bakes the listings into the route's own
+ * chunk and preloads them with it — the page paints complete instead of
+ * flashing while a deferred import resolves.
+ */
+export const listings = import.meta.glob<{
+  default: GalleryListing<unknown, string>;
+}>('./**/*.gallery.tsx', { eager: true });
