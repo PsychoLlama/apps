@@ -1,6 +1,6 @@
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
-import type { GalleryAxis, GalleryListing } from '@lib/gallery';
+import type { GalleryAxis, Listing } from '#gallery';
 import { entrance, exit, standard } from '@lib/design';
 import { durationValues } from '../tokens/motion.css';
 import * as css from './motion.gallery.css';
@@ -162,4 +162,4 @@ export default {
       rows: easingWeights,
     },
   ],
-} satisfies GalleryListing<Motion>;
+} satisfies Listing<Motion>;

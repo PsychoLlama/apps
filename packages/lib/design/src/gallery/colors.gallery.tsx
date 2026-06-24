@@ -1,4 +1,4 @@
-import type { GalleryAxis, GalleryListing, GallerySection } from '@lib/gallery';
+import type { GalleryAxis, Listing, GallerySection } from '#gallery';
 import type { ColorPalette } from '@lib/design';
 import { accent, danger, neutral, success, warning } from '@lib/design';
 import { colorScaleIds, type ColorContract } from '@lib/design/color-scheme';
@@ -205,4 +205,4 @@ export default {
     scaleSection('Alpha', [...paletteRows('alpha'), ...overlayRows]),
     semanticSection,
   ],
-} satisfies GalleryListing<Swatch>;
+} satisfies Listing<Swatch>;
