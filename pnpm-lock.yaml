@@ -227,9 +227,6 @@ importers:
 
   packages/app/logs:
     dependencies:
-      '@lib/design':
-        specifier: workspace:*
-        version: link:../../lib/design
       '@lib/holz-opfs-backend':
         specifier: workspace:*
         version: link:../../lib/holz-opfs-backend
