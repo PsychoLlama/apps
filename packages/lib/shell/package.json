@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*",
+    "@lib/observability": "workspace:*",
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:"
   },
