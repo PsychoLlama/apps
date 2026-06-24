@@ -86,10 +86,27 @@ export type GallerySection<P> = {
  *
  * Omit `sections` for a component with no variants: `render` is invoked once
  * with no overrides and no tab strip is shown.
+ *
+ * `G` is the union of group ids the listing may belong to (see {@link
+ * GalleryGroup}). It defaults to `string` so the heterogeneous registry can
+ * erase to `GalleryListing<unknown>`; per-package precision comes from a bound
+ * alias (`GalleryListing<P, 'typography' | 'form'>`) authored against a
+ * package's {@link defineGallery} groups, so renaming a group id ripples to
+ * every listing in that package at compile time.
  */
-export interface GalleryListing<P = Record<string, never>> {
+export interface GalleryListing<
+  P = Record<string, never>,
+  G extends string = string,
+> {
   /** Display heading. Conventionally the component's name (e.g. `TextField`). */
   title: string;
+
+  /**
+   * The package-defined group this listing belongs to, referenced by id (see
+   * {@link GalleryGroup}). Constrained to the host package's declared groups
+   * via its bound `Listing` alias; omit when the package declares none.
+   */
+  group?: G;
 
   /**
    * Permutation views, surfaced as tabs (e.g. `Theme Colors`, `All Sizes`).
@@ -101,3 +118,55 @@ export interface GalleryListing<P = Record<string, never>> {
   /** Render one cell from the merged column + row prop overrides. */
   render: (props: Partial<P>) => JSX.Element;
 }
+
+/**
+ * A named bucket a package's listings can be sorted into. Referenced by `id`
+ * (stable, used in each listing's `group`), rendered by `label`. Groups are
+ * scoped to the package that declares them via {@link defineGallery} — one
+ * package's ids are not valid in another.
+ */
+export interface GalleryGroup {
+  /** Stable reference key, used by a listing's `group` (e.g. `typography`). */
+  id: string;
+  /** Human-facing heading rendered for the group (e.g. `Typography`). */
+  label: string;
+}
+
+/**
+ * A package's gallery metadata: the manifest title/description the gallery app
+ * surfaces, plus the {@link GalleryGroup} set its listings may reference.
+ * Authored once per package via {@link defineGallery}.
+ */
+export interface GalleryManifest<
+  G extends ReadonlyArray<GalleryGroup> = ReadonlyArray<GalleryGroup>,
+> {
+  /** Manifest title, conventionally the package name (`@lib/ui`). */
+  name: string;
+  /** One-line summary of the package, shown on the manifest's card. */
+  description: string;
+  /** The groups this package's listings may belong to. Empty for none. */
+  groups: G;
+}
+
+/**
+ * Declare a package's gallery manifest. Each package owns a `gallery.ts` module
+ * that calls this and default-exports the result, then derives its bound
+ * listing type from the captured groups:
+ *
+ * ```ts
+ * const gallery = defineGallery({
+ *   name: '@lib/ui',
+ *   description: 'Shared component library.',
+ *   groups: [{ id: 'typography', label: 'Typography' }],
+ * });
+ * export default gallery;
+ * export type Listing<P = Record<string, never>> =
+ *   GalleryListing<P, (typeof gallery)['groups'][number]['id']>;
+ * ```
+ *
+ * The `const` type parameter preserves the literal group ids so the derived
+ * `Listing` alias constrains each `group` to exactly this package's set.
+ */
+export const defineGallery = <const G extends ReadonlyArray<GalleryGroup>>(
+  manifest: GalleryManifest<G>,
+): GalleryManifest<G> => manifest;
