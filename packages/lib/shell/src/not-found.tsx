@@ -21,7 +21,9 @@ export default function NotFound() {
   // is what lets us spot dead links and stale bookmarks in the logs.
   onMount(() => {
     logger.warn('No route matched.', {
-      url: `${location.pathname}${location.search}${location.hash}`,
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
     });
   });
 
