@@ -1,13 +1,15 @@
 import { For, Show } from 'solid-js';
 import { Callout, Flex, Heading } from '@lib/ui';
 import type { GalleryGroup, GalleryListing } from '@lib/gallery';
+import IconChevron from 'virtual:icons/mdi/chevron-right';
 import { ListingView } from './listing-view';
+import * as css from './manifest-listings.css';
 
 /** A listing erased to the registry's shared shape (see `@lib/gallery`). */
 type Listing = GalleryListing<unknown, string>;
 
 /** A group paired with the listings that declared its id. */
-interface ListingGroup {
+interface ListingBucket {
   group: GalleryGroup;
   listings: Listing[];
 }
@@ -20,7 +22,7 @@ interface ListingGroup {
 const groupListings = (
   listings: Listing[],
   groups: ReadonlyArray<GalleryGroup>,
-): ListingGroup[] =>
+): ListingBucket[] =>
   groups
     .map((group) => ({
       group,
@@ -38,9 +40,31 @@ const ListingColumn = (props: { listings: Listing[] }) => (
 );
 
 /**
+ * A collapsible group: its `label` heads a `<summary>` toggle that closes over
+ * the group's listing column. Expanded by default — every group opens on load.
+ */
+const ListingGroup = (props: { group: GalleryGroup; listings: Listing[] }) => (
+  <Flex as="details" direction="column" gap={5} open>
+    <Flex as="summary" align="center" gap={2} class={css.summary}>
+      <IconChevron
+        width="20"
+        height="20"
+        aria-hidden="true"
+        class={css.chevron}
+      />
+      <Heading as="h2" size={6} weight="bold" selectable={false}>
+        {props.group.label}
+      </Heading>
+    </Flex>
+    <ListingColumn listings={props.listings} />
+  </Flex>
+);
+
+/**
  * A manifest's listings, sorted by title. A package with no declared groups
- * renders one flat column; a package with groups buckets its listings under a
- * `group.label` heading, ordered by the manifest's group declaration.
+ * renders one flat column; a package with groups buckets its listings into a
+ * collapsible disclosure per group, ordered by the manifest's group
+ * declaration.
  */
 export const ManifestListings = (props: {
   listings: Listing[];
@@ -63,12 +87,7 @@ export const ManifestListings = (props: {
       <Flex as="div" direction="column" gap={9}>
         <For each={groupListings(props.listings, props.groups)}>
           {(bucket) => (
-            <Flex as="section" direction="column" gap={5}>
-              <Heading as="h2" size={6} weight="bold" selectable={false}>
-                {bucket.group.label}
-              </Heading>
-              <ListingColumn listings={bucket.listings} />
-            </Flex>
+            <ListingGroup group={bucket.group} listings={bucket.listings} />
           )}
         </For>
       </Flex>
