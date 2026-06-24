@@ -1,7 +1,12 @@
-import { Container, Flex, Heading, Link, Section, Text } from '@lib/ui';
-import IconCompassOff from 'virtual:icons/mdi/compass-off-outline';
+import { onMount } from 'solid-js';
+import { useLocation } from '@solidjs/router';
+import { createLogger } from '@lib/observability';
+import { Container, Flex, Heading, Link, Text } from '@lib/ui';
+import { Frame, FrameBody } from './frame';
 import SiteHeader from './site-header';
 import * as css from './not-found.css';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
  * Catch-all page rendered when no route matches. Keeps the site
@@ -9,23 +14,25 @@ import * as css from './not-found.css';
  * column with a link home.
  */
 export default function NotFound() {
+  const location = useLocation();
+
+  // Report the miss once the fallback mounts. The full requested URL
+  // is what lets us spot dead links and stale bookmarks in the logs.
+  onMount(() => {
+    logger.warn('No route matched.', {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+    });
+  });
+
   return (
-    <Flex as="main" direction="column" grow>
+    <Frame>
       <SiteHeader title="Lost" />
 
-      <Section size={4}>
-        <Container as="div" size={1} px={4}>
+      <FrameBody as="section">
+        <Container as="div" size={1} class={css.centered}>
           <Flex as="div" direction="column" align="center" gap={5}>
-            <Flex
-              as="div"
-              align="center"
-              justify="center"
-              class={css.iconHalo}
-              aria-hidden="true"
-            >
-              <IconCompassOff />
-            </Flex>
-
             <Flex as="div" direction="column" gap={3} align="center">
               <Heading
                 as="h1"
@@ -59,7 +66,7 @@ export default function NotFound() {
             </Link>
           </Flex>
         </Container>
-      </Section>
-    </Flex>
+      </FrameBody>
+    </Frame>
   );
 }

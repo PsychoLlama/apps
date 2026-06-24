@@ -1,11 +1,11 @@
 import { style } from '@vanilla-extract/css';
-import { accent, radius, space } from '@lib/design';
 
-export const iconHalo = style({
-  width: space[9],
-  height: space[9],
-  borderRadius: radius.full,
-  backgroundColor: accent.alpha[3],
-  color: accent.solid[11],
-  fontSize: space[7],
+/**
+ * Center the capped content column within the frame body's full height.
+ * `Container` already grows to fill the body and top-aligns its content;
+ * this shifts the main-axis justification to center so the message floats
+ * in the middle of the viewport.
+ */
+export const centered = style({
+  justifyContent: 'center',
 });
