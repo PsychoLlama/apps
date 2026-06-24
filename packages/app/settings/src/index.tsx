@@ -1,16 +1,16 @@
 import { NoHydration } from 'solid-js/web';
-import { Callout, Container, Flex, Heading, Section, Text } from '@lib/ui';
-import { SiteHeader } from '@lib/shell';
+import { Callout, Container, Flex, Heading, Text } from '@lib/ui';
+import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { AppearancePicker, appearanceHeadingId } from './appearance-picker';
 import { ThemePicker, ThemeResetButton, themeHeadingId } from './theme-picker';
 
 export const Settings = () => (
-  <Flex as="main" direction="column" grow>
+  <Frame>
     <SiteHeader title="Settings" />
 
-    <Section size={3}>
-      <Container as="div" size={2} px={4}>
+    <FrameBody>
+      <Container as="div" size={2}>
         <Flex as="div" direction="column" gap={5}>
           <Flex as="header" direction="column" gap={2}>
             <Heading as="h1" size={6} weight="medium" selectable={false}>
@@ -80,6 +80,6 @@ export const Settings = () => (
           </Flex>
         </Flex>
       </Container>
-    </Section>
-  </Flex>
+    </FrameBody>
+  </Frame>
 );

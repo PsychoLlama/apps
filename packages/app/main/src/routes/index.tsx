@@ -1,7 +1,7 @@
 import { For } from 'solid-js';
 import type { Component } from 'solid-js';
 import { Card, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
-import { SiteHeader } from '@lib/shell';
+import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconTextBox from 'virtual:icons/mdi/text-box-outline';
@@ -82,7 +82,7 @@ const APPS: ReadonlyArray<AppEntry> = [
  * in the footer.
  */
 const Launcher = () => (
-  <Flex as="main" direction="column" grow>
+  <Frame>
     <SiteHeader
       actions={
         <LinkButton
@@ -97,99 +97,99 @@ const Launcher = () => (
       }
     />
 
-    <Flex
-      as="section"
-      direction="column"
-      align="center"
-      gap={6}
-      grow
-      px={5}
-      py={6}
-    >
-      <Flex as="hgroup" direction="column" align="center" gap={3}>
-        <Heading as="h1" size={8} trim="start" selectable={false}>
-          Apps
-        </Heading>
-        <Text as="p" size={3} color="lowContrast" trim="end" selectable={false}>
-          A handful of small, single-purpose tools.
-        </Text>
-      </Flex>
+    <FrameBody as="section">
+      <Flex as="div" direction="column" align="center" gap={6} grow>
+        <Flex as="hgroup" direction="column" align="center" gap={3}>
+          <Heading as="h1" size={8} trim="start" selectable={false}>
+            Apps
+          </Heading>
+          <Text
+            as="p"
+            size={3}
+            color="lowContrast"
+            trim="end"
+            selectable={false}
+          >
+            A handful of small, single-purpose tools.
+          </Text>
+        </Flex>
 
-      <Container as="div" size={2}>
-        <Flex
-          as="ul"
-          direction="column"
-          gap={3}
-          class={css.list}
-          aria-label="Apps"
-        >
-          <For each={APPS}>
-            {(app) => (
-              <Flex as="li" class={css.item}>
-                <Card
-                  as="a"
-                  href={app.href}
-                  size={3}
-                  variant="surface"
-                  class={css.card}
-                >
-                  <Flex as="div" align="center" gap={4}>
-                    <Flex as="div" direction="column" gap={2} grow>
-                      <Flex as="div" align="center" gap={2}>
-                        <app.Icon
-                          width="20"
-                          height="20"
-                          class={css.icon}
-                          aria-hidden="true"
-                        />
-                        <Heading
-                          as="h2"
-                          size={3}
-                          weight="medium"
+        <Container as="div" size={2}>
+          <Flex
+            as="ul"
+            direction="column"
+            gap={3}
+            class={css.list}
+            aria-label="Apps"
+          >
+            <For each={APPS}>
+              {(app) => (
+                <Flex as="li" class={css.item}>
+                  <Card
+                    as="a"
+                    href={app.href}
+                    size={3}
+                    variant="surface"
+                    class={css.card}
+                  >
+                    <Flex as="div" align="center" gap={4}>
+                      <Flex as="div" direction="column" gap={2} grow>
+                        <Flex as="div" align="center" gap={2}>
+                          <app.Icon
+                            width="20"
+                            height="20"
+                            class={css.icon}
+                            aria-hidden="true"
+                          />
+                          <Heading
+                            as="h2"
+                            size={3}
+                            weight="medium"
+                            selectable={false}
+                          >
+                            {app.name}
+                          </Heading>
+                        </Flex>
+                        <Text
+                          as="p"
+                          size={2}
+                          color="lowContrast"
+                          trim="end"
                           selectable={false}
                         >
-                          {app.name}
-                        </Heading>
+                          {app.description}
+                        </Text>
                       </Flex>
-                      <Text
-                        as="p"
-                        size={2}
-                        color="lowContrast"
-                        trim="end"
-                        selectable={false}
-                      >
-                        {app.description}
-                      </Text>
+                      <IconChevronRight
+                        width="20"
+                        height="20"
+                        class={css.chevron}
+                        aria-hidden="true"
+                      />
                     </Flex>
-                    <IconChevronRight
-                      width="20"
-                      height="20"
-                      class={css.chevron}
-                      aria-hidden="true"
-                    />
-                  </Flex>
-                </Card>
-              </Flex>
-            )}
-          </For>
-        </Flex>
-      </Container>
-    </Flex>
+                  </Card>
+                </Flex>
+              )}
+            </For>
+          </Flex>
+        </Container>
+      </Flex>
 
-    <Flex as="footer" justify="end" px={4} py={3}>
-      <LinkButton
-        testId="github"
-        href="https://github.com/PsychoLlama/apps"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Source on GitHub"
-        variant="ghost"
-        color="neutral"
-      >
-        <IconGithub width="20" height="20" />
-      </LinkButton>
-    </Flex>
-  </Flex>
+      <Flex as="footer" justify="end">
+        <LinkButton
+          testId="github"
+          href="https://github.com/PsychoLlama/apps"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Source on GitHub"
+          variant="ghost"
+          color="neutral"
+        >
+          <IconGithub width="20" height="20" />
+        </LinkButton>
+      </Flex>
+    </FrameBody>
+  </Frame>
 );
 
 export default Launcher;

@@ -1,10 +1,10 @@
-import { Flex } from '@lib/ui';
-import { SiteHeader } from '@lib/shell';
+import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 
 export const Experimental = () => {
   return (
-    <Flex as="main" direction="column" grow>
+    <Frame>
       <SiteHeader title="Experimental" />
-    </Flex>
+      <FrameBody />
+    </Frame>
   );
 };

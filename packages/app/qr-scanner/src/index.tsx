@@ -1,6 +1,6 @@
 import { Match, onCleanup, onMount, Show, Switch } from 'solid-js';
 import { useEffect } from '@lib/state';
-import { SiteHeader } from '@lib/shell';
+import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import { Container } from '@lib/ui';
 import { CameraView } from './components/camera-view';
 import { Landing } from './components/landing';
@@ -69,38 +69,40 @@ export const QrScanner = () => {
     <Show
       when={scanner.status === 'streaming' && scanner.stream}
       fallback={
-        <>
+        <Frame>
           <SiteHeader title="Scanner" />
 
-          <Container as="main" size={1} px={4} py={6}>
-            <Switch>
-              <Match when={scanner.result}>
-                {(result) => (
-                  <ScanResult
-                    text={result().text}
-                    kind={result().kind}
-                    details={result().details}
-                    onRetry={() => void startCamera()}
+          <FrameBody>
+            <Container as="div" size={1}>
+              <Switch>
+                <Match when={scanner.result}>
+                  {(result) => (
+                    <ScanResult
+                      text={result().text}
+                      kind={result().kind}
+                      details={result().details}
+                      onRetry={() => void startCamera()}
+                    />
+                  )}
+                </Match>
+                <Match when={scanner.status === 'error' && scanner.error}>
+                  {(kind) => (
+                    <ScannerError
+                      kind={kind()}
+                      onRetry={() => void startCamera()}
+                    />
+                  )}
+                </Match>
+                <Match when={true}>
+                  <Landing
+                    requesting={scanner.status === 'requesting'}
+                    onStart={() => void startCamera()}
                   />
-                )}
-              </Match>
-              <Match when={scanner.status === 'error' && scanner.error}>
-                {(kind) => (
-                  <ScannerError
-                    kind={kind()}
-                    onRetry={() => void startCamera()}
-                  />
-                )}
-              </Match>
-              <Match when={true}>
-                <Landing
-                  requesting={scanner.status === 'requesting'}
-                  onStart={() => void startCamera()}
-                />
-              </Match>
-            </Switch>
-          </Container>
-        </>
+                </Match>
+              </Switch>
+            </Container>
+          </FrameBody>
+        </Frame>
       }
     >
       {(stream) => (
