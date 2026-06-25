@@ -2,8 +2,6 @@ import type { Listing } from '#gallery';
 import type { TypeScale } from '@lib/design';
 import Heading, { type HeadingProps } from './heading';
 
-const SAMPLE = 'Account settings';
-
 /** Type-scale steps, smallest to largest. */
 const sizes: ReadonlyArray<TypeScale> = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -17,7 +15,7 @@ export default {
   group: 'typography',
   render: (props) => (
     <Heading as="h2" selectable {...props}>
-      {SAMPLE}
+      Account settings
     </Heading>
   ),
   sections: [
