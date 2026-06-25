@@ -21,13 +21,15 @@ export default {
   ),
   sections: [
     {
-      title: 'Size',
-      align: { rows: 'center' },
-      rows: sizes.map((size) => ({ title: `${size}`, props: { size } })),
+      title: 'Color',
+      columns: [
+        { title: 'High contrast', props: { color: 'highContrast' } },
+        { title: 'Low contrast', props: { color: 'lowContrast' } },
+      ],
     },
     {
       title: 'Weight',
-      columns: [
+      rows: [
         { title: 'Light', props: { weight: 'light' } },
         { title: 'Regular', props: { weight: 'regular' } },
         { title: 'Medium', props: { weight: 'medium' } },
@@ -35,11 +37,9 @@ export default {
       ],
     },
     {
-      title: 'Color',
-      columns: [
-        { title: 'High contrast', props: { color: 'highContrast' } },
-        { title: 'Low contrast', props: { color: 'lowContrast' } },
-      ],
+      title: 'Size',
+      align: { rows: 'center' },
+      rows: sizes.map((size) => ({ title: `${size}`, props: { size } })),
     },
   ],
 } satisfies Listing<TextProps<'p'>>;
