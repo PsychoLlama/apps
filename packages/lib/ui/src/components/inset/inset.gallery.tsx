@@ -21,7 +21,7 @@ export default {
   sections: [
     {
       title: 'Side',
-      rows: [
+      columns: [
         { title: 'All', props: { side: 'all' } },
         { title: 'X', props: { side: 'x' } },
         { title: 'Y', props: { side: 'y' } },
@@ -29,13 +29,6 @@ export default {
         { title: 'Bottom', props: { side: 'bottom' } },
         { title: 'Left', props: { side: 'left' } },
         { title: 'Right', props: { side: 'right' } },
-      ],
-    },
-    {
-      title: 'Clip',
-      columns: [
-        { title: 'Rounded', props: { clip: 'border-box' } },
-        { title: 'Square', props: { clip: 'padding-box' } },
       ],
     },
     {

@@ -1,16 +1,14 @@
 import { style } from '@vanilla-extract/css';
-import { accent, space } from '@lib/design';
+import { space } from '@lib/design';
+import { hatch } from '#gallery/style';
 
 /** Fixed-width card so each inset's bleed reads consistently across the grid. */
 export const card = style({
-  width: '18rem',
+  width: '12rem',
 });
 
 /**
- * Placeholder media for the inset to bleed. A solid fill with no radius of its
- * own, so the corner rounding comes entirely from the Inset's `clip` region.
+ * Placeholder media for the inset to bleed. The shared hatch marks it as a
+ * stand-in for real content, matching the other layout listings.
  */
-export const media = style({
-  height: space[8],
-  backgroundColor: accent.solid[9],
-});
+export const media = style([hatch, { height: space[8] }]);
