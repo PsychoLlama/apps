@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css';
 import { neutral, radius, space } from '@lib/design';
-import { hatch } from '../../gallery/hatch.css';
+import { hatch } from '#gallery/style';
 
 /**
  * The available space the container lays its column out within. Pinned wider

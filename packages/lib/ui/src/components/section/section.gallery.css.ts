@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css';
 import { neutral, radius, space } from '@lib/design';
-import { hatch } from '../../gallery/hatch.css';
+import { hatch } from '#gallery/style';
 
 /**
  * Tinted surface so the section's vertical padding reads as the gap between

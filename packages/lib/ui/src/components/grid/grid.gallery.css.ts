@@ -1,6 +1,6 @@
 import { style } from '@vanilla-extract/css';
 import { fontFamily, neutral, radius, space, typeScale } from '@lib/design';
-import { hatch } from '../../gallery/hatch.css';
+import { hatch } from '#gallery/style';
 
 /**
  * Bounded surface wide enough to show several columns side by side. A step
