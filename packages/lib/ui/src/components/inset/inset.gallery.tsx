@@ -22,13 +22,8 @@ export default {
     {
       title: 'Side',
       columns: [
-        { title: 'All', props: { side: 'all' } },
         { title: 'X', props: { side: 'x' } },
         { title: 'Y', props: { side: 'y' } },
-        { title: 'Top', props: { side: 'top' } },
-        { title: 'Bottom', props: { side: 'bottom' } },
-        { title: 'Left', props: { side: 'left' } },
-        { title: 'Right', props: { side: 'right' } },
       ],
     },
     {
