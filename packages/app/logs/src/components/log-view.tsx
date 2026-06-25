@@ -2,8 +2,20 @@ import { createEffect, createMemo, onCleanup, Show } from 'solid-js';
 import { isServer } from 'solid-js/web';
 import { useParams } from '@solidjs/router';
 import { useEffect } from '@lib/state';
-import { Callout, Container, Flex, LinkButton, Text } from '@lib/ui';
+import {
+  Callout,
+  Code,
+  Container,
+  DataListItem,
+  DataListLabel,
+  DataListRoot,
+  DataListValue,
+  Flex,
+  LinkButton,
+  Text,
+} from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
+import { describeLogFile } from '../log-archive';
 import { formatSessionLabel } from '../format';
 import { loadLogFileEffect } from '../log-file/bindings';
 import { logFile } from '../log-file/store';
@@ -28,6 +40,10 @@ export const LogView = () => {
   const sessionLabel = createMemo(() =>
     isServer ? 'Session' : formatSessionLabel(fileName()),
   );
+
+  // Creation time is encoded in the file name; `undefined` for legacy names
+  // that predate the scheme, in which case the details list drops the row.
+  const createdAt = createMemo(() => describeLogFile(fileName()).createdAt);
 
   const loadLogFile = useEffect(loadLogFileEffect);
 
@@ -58,6 +74,34 @@ export const LogView = () => {
               Work in progress.
             </Text>
           </Callout>
+
+          <Show when={logFile.file}>
+            <DataListRoot orientation="horizontal" size={2}>
+              <DataListItem>
+                <DataListLabel>Name</DataListLabel>
+                <DataListValue>
+                  <Code color="neutral">{fileName()}</Code>
+                </DataListValue>
+              </DataListItem>
+
+              <Show when={createdAt()}>
+                {(ms) => (
+                  <DataListItem>
+                    <DataListLabel>Created</DataListLabel>
+                    <DataListValue>
+                      <Text
+                        as="time"
+                        datetime={new Date(ms()).toISOString()}
+                        selectable
+                      >
+                        {formatSessionLabel(fileName())}
+                      </Text>
+                    </DataListValue>
+                  </DataListItem>
+                )}
+              </Show>
+            </DataListRoot>
+          </Show>
 
           <Show when={logFile.downloadUrl}>
             {(url) => (
