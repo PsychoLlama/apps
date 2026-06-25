@@ -7,6 +7,7 @@ export default function LibUiGallery() {
     <ManifestRoute
       title={gallery.name}
       description={gallery.description}
+      groups={gallery.groups}
       listings={listings}
     />
   );
