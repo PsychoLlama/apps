@@ -5,13 +5,6 @@ import * as css from './grid.gallery.css';
 
 const CELLS = [1, 2, 3, 4, 5, 6];
 
-/** Renders a bounded grid of six numbered tiles. */
-const Demo = (props: Partial<GridProps<'div'>>) => (
-  <Grid as="div" gap={2} {...props} class={css.container}>
-    <For each={CELLS}>{(cell) => <span class={css.tile}>{cell}</span>}</For>
-  </Grid>
-);
-
 /**
  * Gallery listing for `Grid`. Enumerates the container across its track and
  * spacing axes — column count and gap.
@@ -19,7 +12,11 @@ const Demo = (props: Partial<GridProps<'div'>>) => (
 export default {
   title: 'Grid',
   group: 'layout',
-  render: (props) => <Demo {...props} />,
+  render: (props) => (
+    <Grid as="div" gap={2} {...props} class={css.container}>
+      <For each={CELLS}>{(cell) => <span class={css.tile}>{cell}</span>}</For>
+    </Grid>
+  ),
   sections: [
     {
       title: 'Columns',

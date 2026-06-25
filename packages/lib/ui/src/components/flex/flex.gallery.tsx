@@ -2,15 +2,6 @@ import type { Listing } from '#gallery';
 import Flex, { type FlexProps } from './flex';
 import * as css from './flex.gallery.css';
 
-/** Renders a bounded flex container of three numbered tiles. */
-const Demo = (props: Partial<FlexProps<'div'>>) => (
-  <Flex as="div" gap={2} {...props} class={css.container}>
-    <span class={css.tile}>1</span>
-    <span class={css.tile}>2</span>
-    <span class={css.tile}>3</span>
-  </Flex>
-);
-
 /**
  * Gallery listing for `Flex`. Enumerates the container across its layout
  * axes — direction, cross-axis alignment, main-axis distribution, and gap.
@@ -18,7 +9,13 @@ const Demo = (props: Partial<FlexProps<'div'>>) => (
 export default {
   title: 'Flex',
   group: 'layout',
-  render: (props) => <Demo {...props} />,
+  render: (props) => (
+    <Flex as="div" gap={2} {...props} class={css.container}>
+      <span class={css.tile}>1</span>
+      <span class={css.tile}>2</span>
+      <span class={css.tile}>3</span>
+    </Flex>
+  ),
   sections: [
     {
       title: 'Direction',

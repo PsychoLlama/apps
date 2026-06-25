@@ -2,13 +2,6 @@ import type { Listing } from '#gallery';
 import Section, { type SectionProps } from './section';
 import * as css from './section.gallery.css';
 
-/** Renders placeholder content wrapped in a section's vertical padding. */
-const Demo = (props: Partial<SectionProps>) => (
-  <Section {...props} class={css.frame}>
-    <div class={css.content} />
-  </Section>
-);
-
 /**
  * Gallery listing for `Section`. Enumerates the vertical padding presets —
  * the taller the surface, the more block-axis rhythm the size adds.
@@ -16,7 +9,11 @@ const Demo = (props: Partial<SectionProps>) => (
 export default {
   title: 'Section',
   group: 'layout',
-  render: (props) => <Demo {...props} />,
+  render: (props) => (
+    <Section {...props} class={css.frame}>
+      <div class={css.content} />
+    </Section>
+  ),
   sections: [
     {
       title: 'Size',

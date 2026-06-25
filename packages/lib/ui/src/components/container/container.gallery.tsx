@@ -2,13 +2,6 @@ import type { Listing } from '#gallery';
 import Container, { type ContainerProps } from './container';
 import * as css from './container.gallery.css';
 
-/** Renders a capped column inside a bounded surface wider than every preset. */
-const Demo = (props: Partial<ContainerProps<'div'>>) => (
-  <Container as="div" {...props} class={css.frame}>
-    <div class={css.column} />
-  </Container>
-);
-
 /**
  * Gallery listing for `Container`. Enumerates the max-width caps and the
  * horizontal alignment of the capped column within its available space. Rows
@@ -18,7 +11,11 @@ const Demo = (props: Partial<ContainerProps<'div'>>) => (
 export default {
   title: 'Container',
   group: 'layout',
-  render: (props) => <Demo {...props} />,
+  render: (props) => (
+    <Container as="div" {...props} class={css.frame}>
+      <div class={css.column} />
+    </Container>
+  ),
   sections: [
     {
       title: 'Size',
