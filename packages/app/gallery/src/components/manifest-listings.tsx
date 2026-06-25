@@ -1,5 +1,5 @@
 import { For, Show } from 'solid-js';
-import { Callout, Flex, Heading } from '@lib/ui';
+import { Button, Callout, Flex, Heading } from '@lib/ui';
 import type { GalleryGroup, GalleryListing } from '@lib/gallery';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import { ListingView } from './listing-view';
@@ -44,18 +44,30 @@ const ListingColumn = (props: { listings: Listing[] }) => (
  * the group's listing column. Expanded by default — every group opens on load.
  */
 const ListingGroup = (props: { group: GalleryGroup; listings: Listing[] }) => (
-  <Flex as="details" direction="column" gap={5} open>
-    <Flex as="summary" align="center" gap={2} class={css.summary}>
+  <Flex as="details" direction="column" gap={5} open class={css.group}>
+    <Button
+      as="summary"
+      variant="ghost"
+      color="neutral"
+      class={css.summary}
+      testId={`gallery-group-${props.group.id}`}
+    >
+      <Heading
+        as="h2"
+        size={6}
+        weight="bold"
+        color="highContrast"
+        selectable={false}
+      >
+        {props.group.label}
+      </Heading>
       <IconChevron
         width="20"
         height="20"
         aria-hidden="true"
         class={css.chevron}
       />
-      <Heading as="h2" size={6} weight="bold" selectable={false}>
-        {props.group.label}
-      </Heading>
-    </Flex>
+    </Button>
     <ListingColumn listings={props.listings} />
   </Flex>
 );
@@ -84,7 +96,7 @@ export const ManifestListings = (props: {
       when={props.groups.length > 0}
       fallback={<ListingColumn listings={props.listings} />}
     >
-      <Flex as="div" direction="column" gap={9}>
+      <Flex as="div" direction="column">
         <For each={groupListings(props.listings, props.groups)}>
           {(bucket) => (
             <ListingGroup group={bucket.group} listings={bucket.listings} />
