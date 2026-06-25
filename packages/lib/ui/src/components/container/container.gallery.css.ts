@@ -8,7 +8,7 @@ import { accent, neutral, radius, space } from '@lib/design';
  */
 export const frame = style({
   width: '76rem',
-  padding: space[2],
+  paddingInline: space[2],
   backgroundColor: neutral.alpha[3],
   borderRadius: radius[3],
 });

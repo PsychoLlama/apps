@@ -20,6 +20,7 @@ export default {
   sections: [
     {
       title: 'Size',
+      align: { columns: 'center' },
       columns: [
         { title: '1', props: { size: 1 } },
         { title: '2', props: { size: 2 } },

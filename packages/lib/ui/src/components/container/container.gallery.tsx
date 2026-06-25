@@ -22,6 +22,7 @@ export default {
   sections: [
     {
       title: 'Size',
+      align: { rows: 'center' },
       rows: [
         { title: '1', props: { size: 1 } },
         { title: '2', props: { size: 2 } },
@@ -31,6 +32,7 @@ export default {
     },
     {
       title: 'Alignment',
+      align: { rows: 'center' },
       rows: [
         { title: 'Start', props: { align: 'start', size: 2 } },
         { title: 'Center', props: { align: 'center', size: 2 } },
