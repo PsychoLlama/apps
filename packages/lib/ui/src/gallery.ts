@@ -18,8 +18,10 @@ const gallery = defineGallery({
   groups: [
     { id: 'form', label: 'Form' },
     { id: 'navigation', label: 'Navigation' },
+    { id: 'layout', label: 'Layout' },
     { id: 'display', label: 'Display' },
     { id: 'typography', label: 'Typography' },
+    { id: 'patterns', label: 'Patterns' },
   ],
 });
 
