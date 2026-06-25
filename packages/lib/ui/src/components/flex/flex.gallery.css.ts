@@ -4,12 +4,13 @@ import { hatch } from '#gallery/style';
 
 /**
  * Bounded surface, larger than the tiles it holds, so direction, alignment,
- * and distribution have room to read. A step lighter than the hatch base so
- * the tiles read against it.
+ * and distribution have room to read. Sized to hold the densest layout — a
+ * column of three content-height tiles — without the stack overflowing its
+ * padding. A step lighter than the hatch base so the tiles read against it.
  */
 export const container = style({
-  width: `calc(${space[9]} * 2)`,
-  height: `calc(${space[9]} * 2)`,
+  width: `calc(${space[9]} * 2 + ${space[4]})`,
+  height: `calc(${space[9]} * 2 + ${space[4]})`,
   padding: space[2],
   backgroundColor: neutral.alpha[2],
   borderRadius: radius[3],
