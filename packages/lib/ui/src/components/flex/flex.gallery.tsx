@@ -50,6 +50,7 @@ export default {
     },
     {
       title: 'Gap',
+      align: { columns: 'center' },
       columns: [
         { title: '1', props: { gap: 1 } },
         { title: '3', props: { gap: 3 } },

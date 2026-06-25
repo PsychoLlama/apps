@@ -23,6 +23,7 @@ export default {
   sections: [
     {
       title: 'Columns',
+      align: { columns: 'center' },
       columns: [
         { title: '1', props: { columns: 1 } },
         { title: '2', props: { columns: 2 } },
@@ -32,6 +33,7 @@ export default {
     },
     {
       title: 'Gap',
+      align: { columns: 'center' },
       columns: [
         { title: '1', props: { columns: 3, gap: 1 } },
         { title: '3', props: { columns: 3, gap: 3 } },
