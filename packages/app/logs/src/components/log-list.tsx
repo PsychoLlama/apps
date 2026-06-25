@@ -11,10 +11,14 @@ import { useAction, useEffect } from '@lib/state';
 import { Badge, Callout, Container, Flex, Heading, Link, Text } from '@lib/ui';
 import { LOG_FILE_NAME } from '@lib/observability';
 import { subscribeLogFiles } from '@lib/holz-opfs-backend';
-import { describeLogFile, type LogFileInfo } from '../log-archive';
-import { addFile, loadLogFilesEffect } from '../bindings';
-import { logArchive } from '../store';
-import { formatSessionTime, groupSessionsByDay } from '../format';
+import {
+  describeLogFile,
+  formatSessionTime,
+  groupSessionsByDay,
+  type LogFileInfo,
+} from '../log-archive';
+import { addFile, loadLogFilesEffect } from '../state/archive/bindings';
+import { logArchive } from '../state/archive/store';
 import { LogsView } from './logs-view';
 import * as css from './log-list.css';
 

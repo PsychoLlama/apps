@@ -1,9 +1,9 @@
-import type { LogFileInfo } from '../log-archive';
 import {
   formatSessionLabel,
   formatSessionTime,
   groupSessionsByDay,
-} from '../format';
+  type LogFileInfo,
+} from '../log-archive';
 
 describe('formatSessionLabel', () => {
   it('falls back to the raw name when there is no timestamp prefix', () => {

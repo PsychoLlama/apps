@@ -15,10 +15,9 @@ import {
   Text,
 } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
-import { describeLogFile } from '../log-archive';
-import { formatSessionLabel } from '../format';
-import { loadLogFileEffect } from '../log-file/bindings';
-import { logFile } from '../log-file/store';
+import { describeLogFile, formatSessionLabel } from '../log-archive';
+import { loadLogFileEffect } from '../state/log-file/bindings';
+import { logFile } from '../state/log-file/store';
 import { LogsView } from './logs-view';
 
 /**
