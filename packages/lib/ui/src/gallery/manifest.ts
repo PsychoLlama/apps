@@ -45,4 +45,4 @@ export type Listing<P = Record<string, never>> = GalleryListing<P, GroupId>;
  */
 export const listings = import.meta.glob<{
   default: GalleryListing<unknown, string>;
-}>('./**/*.gallery.tsx', { eager: true });
+}>('../**/*.gallery.tsx', { eager: true });

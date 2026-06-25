@@ -10,12 +10,13 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./gallery": "./src/gallery.ts",
+    "./gallery": "./src/gallery/manifest.ts",
     "./props/*": "./src/props/*.ts",
     "./package.json": "./package.json"
   },
   "imports": {
-    "#gallery": "./src/gallery.ts"
+    "#gallery": "./src/gallery/manifest.ts",
+    "#gallery/style": "./src/gallery/style.css.ts"
   },
   "scripts": {
     "typecheck": "tsc"
