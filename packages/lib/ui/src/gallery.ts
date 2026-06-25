@@ -21,6 +21,7 @@ const gallery = defineGallery({
     { id: 'layout', label: 'Layout' },
     { id: 'display', label: 'Display' },
     { id: 'typography', label: 'Typography' },
+    { id: 'patterns', label: 'Patterns' },
   ],
 });
 
