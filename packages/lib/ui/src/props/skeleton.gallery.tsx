@@ -82,9 +82,9 @@ export default {
   sections: [
     {
       title: 'State',
-      rows: [
-        { title: 'Loaded', props: { skeleton: false } },
+      columns: [
         { title: 'Loading', props: { skeleton: true } },
+        { title: 'Loaded', props: { skeleton: false } },
       ],
     },
   ],
