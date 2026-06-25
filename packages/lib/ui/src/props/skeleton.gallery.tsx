@@ -50,7 +50,7 @@ const Demo = (props: Partial<SkeletonProps>) => (
     <Flex as="div" gap={2} align="center">
       <TextField
         testId="skeleton-input"
-        placeholder="Form controls become inert"
+        placeholder="you@example.com"
         autocomplete="off"
         autocapitalize="off"
         enterkeyhint="done"
