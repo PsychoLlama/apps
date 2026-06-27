@@ -1,19 +1,6 @@
 import { defineAction, defineEffect } from '@lib/state';
-import { listActiveLogFiles } from '@lib/holz-opfs-backend';
 import { byNewest, listLogFiles, type LogFileInfo } from '../../log-archive';
 import { logArchiveStore } from './store';
-
-/** A resolved enumeration: the archive listing plus which sessions are active. */
-interface LogArchiveSnapshot {
-  /** The persisted log files, newest first. */
-  files: ReadonlyArray<LogFileInfo>;
-
-  /**
-   * Names of files whose session still holds its Web Lock, or `undefined` if
-   * the lock query failed — in which case the previous set is left in place.
-   */
-  activeFiles: ReadonlySet<string> | undefined;
-}
 
 /** Enter the loading state ahead of an enumeration so the UI can show progress. */
 export const markLoading = defineAction([logArchiveStore], (state) => {
@@ -23,15 +10,14 @@ export const markLoading = defineAction([logArchiveStore], (state) => {
 /** Commit a resolved enumeration and mark the archive ready. */
 export const setFiles = defineAction(
   [logArchiveStore],
-  (state, snapshot: LogArchiveSnapshot) => {
+  (state, files: ReadonlyArray<LogFileInfo>) => {
     // Merge, don't replace: an announcement can land between the enumeration's
     // snapshot and this commit (see {@link addFile}). Keep any live-added file
     // the snapshot predates so it isn't clobbered back out of the listing.
-    const enumerated = new Set(snapshot.files.map((file) => file.name));
+    const enumerated = new Set(files.map((file) => file.name));
     const live = state.files.filter((file) => !enumerated.has(file.name));
-    state.files = [...snapshot.files, ...live].sort(byNewest);
+    state.files = [...files, ...live].sort(byNewest);
     state.status = 'ready';
-    if (snapshot.activeFiles) state.activeFiles = snapshot.activeFiles;
   },
 );
 
@@ -55,25 +41,8 @@ export const markError = defineAction([logArchiveStore], (state) => {
   state.status = 'error';
 });
 
-/**
- * Read the OPFS log directory and the held Web Locks, folding both into the
- * archive snapshot. The lock query is best-effort: a failure leaves the active
- * set untouched rather than failing the whole enumeration.
- */
-const loadLogArchive = async (): Promise<LogArchiveSnapshot> => {
-  const [files, activeFiles] = await Promise.all([
-    listLogFiles(),
-    listActiveLogFiles().then(
-      (names) => new Set(names),
-      () => undefined,
-    ),
-  ]);
-
-  return { files, activeFiles };
-};
-
 /** Read the OPFS log directory and fold the result into the archive store. */
-export const loadLogFilesEffect = defineEffect([], loadLogArchive, {
+export const loadLogFilesEffect = defineEffect([], listLogFiles, {
   onStart: markLoading,
   onSuccess: setFiles,
   onFailure: markError,

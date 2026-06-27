@@ -28,11 +28,10 @@ describe('setFiles', () => {
     const { archive, useAction } = setup();
     const files = [file('2-b.ndjson'), file('1-a.ndjson')];
 
-    useAction(setFiles)({ files, activeFiles: new Set(['2-b.ndjson']) });
+    useAction(setFiles)(files);
 
     expect(archive.status).toBe('ready');
     expect(archive.files).toEqual(files);
-    expect(archive.activeFiles).toEqual(new Set(['2-b.ndjson']));
   });
 
   it('keeps a live-added file the enumeration snapshot missed', () => {
@@ -41,10 +40,7 @@ describe('setFiles', () => {
     useAction(addFile)(file('3-c.ndjson', 3));
 
     // The enumeration commits a snapshot taken before that file existed.
-    useAction(setFiles)({
-      files: [file('2-b.ndjson', 2), file('1-a.ndjson', 1)],
-      activeFiles: new Set(),
-    });
+    useAction(setFiles)([file('2-b.ndjson', 2), file('1-a.ndjson', 1)]);
 
     expect(archive.files).toEqual([
       file('3-c.ndjson', 3),
@@ -52,30 +48,12 @@ describe('setFiles', () => {
       file('1-a.ndjson', 1),
     ]);
   });
-
-  it('leaves the active set in place when the lock query failed', () => {
-    const { archive, useAction } = setup();
-
-    useAction(setFiles)({
-      files: [file('1-a.ndjson')],
-      activeFiles: new Set(['1-a.ndjson']),
-    });
-    useAction(setFiles)({
-      files: [file('1-a.ndjson')],
-      activeFiles: undefined,
-    });
-
-    expect(archive.activeFiles).toEqual(new Set(['1-a.ndjson']));
-  });
 });
 
 describe('addFile', () => {
   it('splices a new file in newest-first', () => {
     const { archive, useAction } = setup();
-    useAction(setFiles)({
-      files: [file('3-c.ndjson', 3), file('1-a.ndjson', 1)],
-      activeFiles: new Set(),
-    });
+    useAction(setFiles)([file('3-c.ndjson', 3), file('1-a.ndjson', 1)]);
 
     useAction(addFile)(file('2-b.ndjson', 2));
 
@@ -88,10 +66,7 @@ describe('addFile', () => {
 
   it('ignores a file already in the listing', () => {
     const { archive, useAction } = setup();
-    useAction(setFiles)({
-      files: [file('1-a.ndjson', 1)],
-      activeFiles: new Set(),
-    });
+    useAction(setFiles)([file('1-a.ndjson', 1)]);
 
     useAction(addFile)(file('1-a.ndjson', 1));
 
@@ -104,7 +79,7 @@ describe('markError', () => {
     const { archive, useAction } = setup();
     const files = [file('1-a.ndjson')];
 
-    useAction(setFiles)({ files, activeFiles: new Set() });
+    useAction(setFiles)(files);
     useAction(markError)();
 
     expect(archive.status).toBe('error');
