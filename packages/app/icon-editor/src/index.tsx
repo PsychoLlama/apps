@@ -10,7 +10,7 @@ import {
   TabsRoot,
   TabsTrigger,
 } from '@lib/ui';
-import IconDice from 'virtual:icons/mdi/dice-multiple-outline';
+import IconShuffle from 'virtual:icons/mdi/shuffle-variant';
 import IconReset from 'virtual:icons/mdi/restart';
 import { ExportActions } from './components/export-actions';
 import { Field } from './components/field';
@@ -213,40 +213,31 @@ export const IconEditor = () => {
 
   return (
     <Frame>
-      <SiteHeader title="Icon Editor" />
+      <SiteHeader
+        title="Icon Editor"
+        actions={
+          <Flex as="div" align="center" gap={4}>
+            <Button
+              testId="randomize"
+              variant="ghost"
+              color="neutral"
+              onClick={handleRandomize}
+            >
+              <IconShuffle aria-hidden /> Shuffle
+            </Button>
+            <Button
+              testId="reset"
+              variant="ghost"
+              color="neutral"
+              onClick={reset}
+            >
+              <IconReset aria-hidden /> Reset
+            </Button>
+          </Flex>
+        }
+      />
 
       <Flex as="div" direction="column" class={css.workspace}>
-        <Flex
-          as="header"
-          align="center"
-          gap={1}
-          class={css.toolbar}
-          aria-label="Quick actions"
-        >
-          <Button
-            testId="reset"
-            size={1}
-            variant="ghost"
-            color="neutral"
-            mx={2}
-            my={1}
-            onClick={reset}
-          >
-            <IconReset aria-hidden /> Reset
-          </Button>
-          <Button
-            testId="randomize"
-            size={1}
-            variant="ghost"
-            color="neutral"
-            mx={2}
-            my={1}
-            onClick={handleRandomize}
-          >
-            <IconDice aria-hidden /> Randomize
-          </Button>
-        </Flex>
-
         <Flex as="div" class={css.body}>
           <Flex as="section" class={css.canvas} aria-label="Icon preview">
             <Flex as="div" class={css.canvasStage}>

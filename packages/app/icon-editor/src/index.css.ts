@@ -2,18 +2,11 @@ import { style } from '@vanilla-extract/css';
 import { breakpoint, neutral, space } from '@lib/design';
 
 // Workspace fills the viewport edge-to-edge below the SiteHeader. No
-// outer padding or gaps — the toolbar/canvas/rail/status share a single
-// continuous slab divided only by 1px hairlines.
+// outer padding or gaps — the canvas/rail share a single continuous
+// slab divided only by 1px hairlines.
 export const workspace = style({
   flex: '1 1 auto',
   minHeight: 0,
-});
-
-// Toolbar is a flush strip; only the bottom edge is drawn.
-export const toolbar = style({
-  paddingBlock: space[1],
-  paddingInline: space[3],
-  borderBottom: `1px solid ${neutral.solid[4]}`,
 });
 
 export const body = style({
