@@ -1,8 +1,5 @@
 import type { NdjsonBuffer } from '../../ndjson-buffer';
 import { createWorkerSink } from '../log-sink';
-import type { LogLocation } from '../rpc';
-
-const location: LogLocation = { directory: 'logs', file: 'session.ndjson' };
 
 // A worker-log buffer whose readable replays a fixed set of chunks, so a test
 // can assert the worker's own logs tee into the durable sink. Passed to
@@ -38,8 +35,8 @@ describe('createWorkerSink', () => {
     const openDurable = vi.fn(() => Promise.resolve(durable));
     const sink = createWorkerSink(openDurable, workerLogBuffer());
 
-    await sink.open(location);
-    await sink.open(location);
+    await sink.open();
+    await sink.open();
 
     expect(openDurable).toHaveBeenCalledTimes(1);
   });
@@ -51,7 +48,7 @@ describe('createWorkerSink', () => {
       workerLogBuffer(),
     );
 
-    await sink.open(location);
+    await sink.open();
     sink.write(new Uint8Array([1]));
     sink.write(new Uint8Array([2]));
 
@@ -67,7 +64,7 @@ describe('createWorkerSink', () => {
 
     // Write before awaiting `open`: the durable is still opening, so the line
     // queues rather than landing — nothing is written yet.
-    const opened = sink.open(location);
+    const opened = sink.open();
     sink.write(new Uint8Array([7]));
     expect(durable.writes).toEqual([]);
 
@@ -91,7 +88,7 @@ describe('createWorkerSink', () => {
       workerLogBuffer([new Uint8Array([9])]),
     );
 
-    await sink.open(location);
+    await sink.open();
     await drained;
 
     expect(durable.writes).toContainEqual(new Uint8Array([9]));
@@ -104,7 +101,7 @@ describe('createWorkerSink', () => {
       workerLogBuffer(),
     );
 
-    await sink.open(location);
+    await sink.open();
     sink.flush();
 
     expect(durable.flush).toHaveBeenCalledTimes(1);

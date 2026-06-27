@@ -1,16 +1,10 @@
-import {
-  createWorkerHandlers,
-  type LogLocation,
-  type WorkerSink,
-} from '../rpc';
-
-const location: LogLocation = { directory: 'logs', file: 'session.ndjson' };
+import { createWorkerHandlers, type WorkerSink } from '../rpc';
 
 // `defineContract` reduces the handlers to their params-only contract. Cast
 // back to the raw handler shape so the tests can drive them the way the RPC
 // dispatcher does.
 interface RawHandlers {
-  requests: { init: (location: LogLocation) => Promise<void> };
+  requests: Record<never, never>;
   events: {
     log: (chunk: Uint8Array) => void;
     flush: () => void;
@@ -28,14 +22,6 @@ const setup = () => {
 };
 
 describe('createWorkerHandlers', () => {
-  it('opens the sink at the host-named location on init', async () => {
-    const { handlers, sink } = setup();
-
-    await handlers.requests.init(location);
-
-    expect(sink.open).toHaveBeenCalledWith(location);
-  });
-
   it('writes a streamed log line to the sink', () => {
     const { handlers, sink } = setup();
     const chunk = new Uint8Array([1, 2, 3]);

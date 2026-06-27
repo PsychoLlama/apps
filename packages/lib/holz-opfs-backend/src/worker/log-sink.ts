@@ -1,13 +1,22 @@
 import { createFlushScheduler } from './flush-scheduler';
 import type { NdjsonBuffer } from '../ndjson-buffer';
 import { getWorkerLogBuffer } from './worker-log-buffer';
-import type { LogLocation, WorkerSink } from './rpc';
+import type { WorkerSink } from './rpc';
 
 /**
- * The single OPFS-backed durable log for a session: one sync access handle,
- * one flush scheduler. Every producer — the host, this worker's own logs, and
- * (eventually) other workers — writes whole NDJSON lines through it, so they
- * all share one file and one flush cadence.
+ * The single grow-only OPFS log file every realm shares, relative to the
+ * origin-private file system root. One constant location, owned by the worker:
+ * the {@link SharedWorker} is itself the single writer, so there's no
+ * per-session name to avoid clobbering — every tab funnels into this one file.
+ */
+const LOG_DIRECTORY = 'logs';
+const LOG_FILE = 'app.ndjson';
+
+/**
+ * The single OPFS-backed durable log: one sync access handle, one flush
+ * scheduler. Every producer — each connected tab and this worker's own logs —
+ * writes whole NDJSON lines through it, so they all share one file and one
+ * flush cadence.
  */
 interface DurableLog {
   /** Append one NDJSON chunk, recording its size against the flush policy. */
@@ -17,19 +26,17 @@ interface DurableLog {
   flush: () => void;
 }
 
-// Open the host-named log file and wrap it as the session's durable log. The
-// host owns the directory and file name (see `LogLocation`), so the worker only
-// resolves them against the OPFS root. A scheduler batches the expensive
-// `flush()` by size and time; each write goes straight to `access` so readers
-// see current data.
-const openDurableLog = async ({
-  directory,
-  file,
-}: LogLocation): Promise<DurableLog> => {
+// Open the worker's single log file and wrap it as the durable log. A scheduler
+// batches the expensive `flush()` by size and time; each write goes straight to
+// `access` so readers see current data. The handle is truncated on open: it's
+// grow-only only within a worker's lifetime, so a fresh boot starts the file
+// clean rather than overwriting a longer prior tail into a torn NDJSON stream.
+const openDurableLog = async (): Promise<DurableLog> => {
   const root = await navigator.storage.getDirectory();
-  const dir = await root.getDirectoryHandle(directory, { create: true });
-  const handle = await dir.getFileHandle(file, { create: true });
+  const dir = await root.getDirectoryHandle(LOG_DIRECTORY, { create: true });
+  const handle = await dir.getFileHandle(LOG_FILE, { create: true });
   const access = await handle.createSyncAccessHandle();
+  access.truncate(0);
   const scheduler = createFlushScheduler(() => access.flush());
 
   return {
@@ -56,16 +63,15 @@ const drainInto = (durable: DurableLog): WritableStream<Uint8Array> =>
 
 /**
  * Build the worker's {@link WorkerSink}: one durable OPFS file fed by every log
- * source. {@link WorkerSink.open open} opens the file (the host owns its name,
- * delivered in `init`) and tees this worker's own logs in; {@link
- * WorkerSink.write write} appends the host's streamed lines. The sink opens
- * lazily because the file name only arrives with `init`.
+ * source. {@link WorkerSink.open open} opens the file (the worker's own
+ * constant name) and tees this worker's own logs in; {@link WorkerSink.write
+ * write} appends the lines streamed in from connected tabs.
  *
  * `openDurable` and `getBuffer` are injected so tests can drive the sink
  * without OPFS or the module-level buffer singleton.
  */
 export const createWorkerSink = (
-  openDurable: (location: LogLocation) => Promise<DurableLog> = openDurableLog,
+  openDurable: () => Promise<DurableLog> = openDurableLog,
   getBuffer: () => NdjsonBuffer = getWorkerLogBuffer,
 ): WorkerSink => {
   // The opened durable, tracked both as a promise (so concurrent opens share
@@ -74,13 +80,13 @@ export const createWorkerSink = (
   let opening: Promise<DurableLog> | undefined;
   let opened: DurableLog | undefined;
 
-  // Whole NDJSON lines that arrived before the durable finished opening. In
-  // practice the host awaits `init` before streaming, so this stays empty; it
-  // exists only to hold a racing line in order rather than drop it.
+  // Whole NDJSON lines that arrived before the durable finished opening. The
+  // worker opens the file at boot, before any tab connects, so this stays
+  // small; it exists only to hold a racing line in order rather than drop it.
   const pending: Uint8Array[] = [];
 
-  const ensure = (location: LogLocation): Promise<DurableLog> =>
-    (opening ??= openDurable(location).then((durable) => {
+  const ensure = (): Promise<DurableLog> =>
+    (opening ??= openDurable().then((durable) => {
       opened = durable;
       // Drain anything queued while the file was opening, in arrival order,
       // before the worker's own log tee starts. This runs before `ensure`
@@ -95,12 +101,12 @@ export const createWorkerSink = (
     }));
 
   return {
-    async open(location) {
-      await ensure(location);
+    async open() {
+      await ensure();
     },
     write(chunk) {
-      // The host awaits `open` before streaming, so the durable is resolved by
-      // the time its log events arrive and writes land inline, in order. A line
+      // The worker opens the file at boot, so the durable is resolved by the
+      // time tabs' log events arrive and writes land inline, in order. A line
       // that still races the open settling queues and drains when it opens.
       if (opened) opened.write(chunk);
       else pending.push(chunk);

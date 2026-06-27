@@ -1,8 +1,16 @@
-import {
-  announceLogFile,
-  type LogFileCreated,
-  subscribeLogFiles,
-} from '../log-file-feed';
+import { type LogFileCreated, subscribeLogFiles } from '../log-file-feed';
+
+// The channel name `subscribeLogFiles` listens on (mirrors the module's
+// private constant). Tests post over a raw `BroadcastChannel` to stand in for
+// an external announcer — a `BroadcastChannel` never delivers to the instance
+// that posts, so a separate one is the only way to reach the subscriber.
+const LOG_FILE_CHANNEL = 'holz-opfs:log-files';
+
+const announce = (file: string): void => {
+  const channel = new BroadcastChannel(LOG_FILE_CHANNEL);
+  channel.postMessage({ file } satisfies LogFileCreated);
+  channel.close();
+};
 
 describe('log-file feed', () => {
   it('delivers an announcement to a subscriber', async () => {
@@ -12,7 +20,7 @@ describe('log-file feed', () => {
         resolve(event);
       });
 
-      announceLogFile('1-a.ndjson');
+      announce('1-a.ndjson');
     });
 
     expect(await received).toEqual({ file: '1-a.ndjson' });
@@ -31,7 +39,7 @@ describe('log-file feed', () => {
       });
 
       unsubscribe();
-      announceLogFile('1-a.ndjson');
+      announce('1-a.ndjson');
     });
 
     await settled;
