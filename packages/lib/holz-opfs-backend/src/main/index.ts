@@ -27,6 +27,12 @@ interface PageVisibility {
  * as fast as lines are produced — and the loop ends when the buffer closes.
  * Fire-and-forget per the {@link RPC.notify} contract; ordering holds because
  * the transport delivers in send order.
+ *
+ * Each chunk's buffer is transferred, not copied — a zero-copy hand-off on this
+ * hot path. Safe because the chunk owns its buffer outright: the JSON backend
+ * mints it via `TextEncoder.encode` (a fresh, exact-sized `ArrayBuffer`) and
+ * the buffer is a pass-through `TransformStream`, so nothing else references it
+ * once we've read it. Transferring neuters our copy, which we never touch again.
  */
 const streamLogs = async (
   readable: ReadableStream<Uint8Array>,
@@ -36,7 +42,7 @@ const streamLogs = async (
   for (;;) {
     const { value, done } = await reader.read();
     if (done) return;
-    rpc.notify('log', value);
+    rpc.notify('log', value, { transfer: [value.buffer] });
   }
 };
 

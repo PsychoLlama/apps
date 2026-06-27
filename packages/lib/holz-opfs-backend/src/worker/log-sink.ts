@@ -74,9 +74,19 @@ export const createWorkerSink = (
   let opening: Promise<DurableLog> | undefined;
   let opened: DurableLog | undefined;
 
+  // Whole NDJSON lines that arrived before the durable finished opening. In
+  // practice the host awaits `init` before streaming, so this stays empty; it
+  // exists only to hold a racing line in order rather than drop it.
+  const pending: Uint8Array[] = [];
+
   const ensure = (location: LogLocation): Promise<DurableLog> =>
     (opening ??= openDurable(location).then((durable) => {
       opened = durable;
+      // Drain anything queued while the file was opening, in arrival order,
+      // before the worker's own log tee starts. This runs before `ensure`
+      // resolves, so awaiting `open` guarantees these have landed.
+      for (const chunk of pending) durable.write(chunk);
+      pending.length = 0;
       // Tee this worker's own logs into the same durable sink. Its buffer has
       // been absorbing them since boot (see `./worker-log-buffer.ts`);
       // drain it now that the file is open.
@@ -90,11 +100,10 @@ export const createWorkerSink = (
     },
     write(chunk) {
       // The host awaits `open` before streaming, so the durable is resolved by
-      // the time its log events arrive and writes land inline, in order. The
-      // `opening` fallback covers any chunk that still races the open promise
-      // settling — it queues behind that one microtask, preserving order.
+      // the time its log events arrive and writes land inline, in order. A line
+      // that still races the open settling queues and drains when it opens.
       if (opened) opened.write(chunk);
-      else void opening?.then((durable) => durable.write(chunk));
+      else pending.push(chunk);
     },
     flush() {
       opened?.flush();
