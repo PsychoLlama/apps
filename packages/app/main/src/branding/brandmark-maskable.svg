@@ -3,7 +3,6 @@
   viewBox="0 0 512 512"
   width="512"
   height="512"
-  style="color-scheme: light"
 >
   <metadata>
     <rdf:RDF
@@ -38,7 +37,7 @@
   <g clip-path="url(#icon-clip-icon)">
     <rect width="512" height="512" fill="#0090ff" />
     <g
-      transform="translate(51.2 51.2) scale(17.066666666666666)"
+      transform="translate(76.8 76.8) scale(14.933333333333332)"
       style="color: #ffffff"
     >
       <path
