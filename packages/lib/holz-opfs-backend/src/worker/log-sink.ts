@@ -41,13 +41,13 @@ const openDurableLog = async ({
   };
 };
 
-// Wrap a `DurableLog` as a fresh `WritableStream` producer. Mint one per
-// source. Whole-line NDJSON chunks from concurrent producers can't tear:
-// `access.write` is synchronous and the worker runs one thread, so each chunk
-// lands in full before the next begins. Producer `close`/`abort` deliberately
-// do nothing to the durable log — other producers keep writing, and the file's
+// Drain a `ReadableStream` of whole NDJSON lines into a `DurableLog`. Used for
+// the worker's own logs, whose buffer has been absorbing them since boot.
+// Whole-line chunks can't tear: `access.write` is synchronous and the worker
+// runs one thread, so each chunk lands in full before the next begins. The
+// stream `close`/`abort` deliberately do nothing to the durable log — its
 // lifetime is the worker's (the page going away tears both down).
-const producerStream = (durable: DurableLog): WritableStream<Uint8Array> =>
+const drainInto = (durable: DurableLog): WritableStream<Uint8Array> =>
   new WritableStream({
     write(chunk) {
       durable.write(chunk);
@@ -55,10 +55,10 @@ const producerStream = (durable: DurableLog): WritableStream<Uint8Array> =>
   });
 
 /**
- * Build the worker's {@link WorkerSink}: one durable OPFS file fed by many
- * producers. The first {@link WorkerSink.open open} opens the file (the host
- * owns its name, delivered in `init`) and tees this worker's own logs in;
- * every `open` mints a producer to transfer back to a caller. The sink opens
+ * Build the worker's {@link WorkerSink}: one durable OPFS file fed by every log
+ * source. {@link WorkerSink.open open} opens the file (the host owns its name,
+ * delivered in `init`) and tees this worker's own logs in; {@link
+ * WorkerSink.write write} appends the host's streamed lines. The sink opens
  * lazily because the file name only arrives with `init`.
  *
  * `openDurable` and `getBuffer` are injected so tests can drive the sink
@@ -69,8 +69,8 @@ export const createWorkerSink = (
   getBuffer: () => NdjsonBuffer = getWorkerLogBuffer,
 ): WorkerSink => {
   // The opened durable, tracked both as a promise (so concurrent opens share
-  // one file) and, once resolved, synchronously (so `flush` can run inline on
-  // the page-hidden beat without awaiting a microtask).
+  // one file) and, once resolved, synchronously (so `write`/`flush` can run
+  // inline without awaiting a microtask).
   let opening: Promise<DurableLog> | undefined;
   let opened: DurableLog | undefined;
 
@@ -80,13 +80,21 @@ export const createWorkerSink = (
       // Tee this worker's own logs into the same durable sink. Its buffer has
       // been absorbing them since boot (see `./worker-log-buffer.ts`);
       // drain it now that the file is open.
-      void getBuffer().readable.pipeTo(producerStream(durable));
+      void getBuffer().readable.pipeTo(drainInto(durable));
       return durable;
     }));
 
   return {
     async open(location) {
-      return producerStream(await ensure(location));
+      await ensure(location);
+    },
+    write(chunk) {
+      // The host awaits `open` before streaming, so the durable is resolved by
+      // the time its log events arrive and writes land inline, in order. The
+      // `opening` fallback covers any chunk that still races the open promise
+      // settling — it queues behind that one microtask, preserving order.
+      if (opened) opened.write(chunk);
+      else void opening?.then((durable) => durable.write(chunk));
     },
     flush() {
       opened?.flush();

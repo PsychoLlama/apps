@@ -31,15 +31,6 @@ const fakeDurable = () => {
   };
 };
 
-const writeChunk = async (
-  stream: WritableStream<Uint8Array>,
-  chunk: Uint8Array,
-): Promise<void> => {
-  const writer = stream.getWriter();
-  await writer.write(chunk);
-  writer.releaseLock();
-};
-
 describe('createWorkerSink', () => {
   it('opens the durable log once across repeated opens', async () => {
     const durable = fakeDurable();
@@ -52,19 +43,34 @@ describe('createWorkerSink', () => {
     expect(openDurable).toHaveBeenCalledTimes(1);
   });
 
-  it('routes every producer into the one durable log', async () => {
+  it('writes streamed lines into the durable log in order', async () => {
     const durable = fakeDurable();
     const sink = createWorkerSink(
       () => Promise.resolve(durable),
       workerLogBuffer(),
     );
 
-    const first = await sink.open(location);
-    const second = await sink.open(location);
-    await writeChunk(first, new Uint8Array([1]));
-    await writeChunk(second, new Uint8Array([2]));
+    await sink.open(location);
+    sink.write(new Uint8Array([1]));
+    sink.write(new Uint8Array([2]));
 
     expect(durable.writes).toEqual([new Uint8Array([1]), new Uint8Array([2])]);
+  });
+
+  it('queues a line that races ahead of the open settling', async () => {
+    const durable = fakeDurable();
+    const sink = createWorkerSink(
+      () => Promise.resolve(durable),
+      workerLogBuffer(),
+    );
+
+    // Don't await `open`: the durable is still opening when the line is written.
+    void sink.open(location);
+    sink.write(new Uint8Array([7]));
+
+    await vi.waitFor(() =>
+      expect(durable.writes).toContainEqual(new Uint8Array([7])),
+    );
   });
 
   it("tees the worker's own logs into the durable log", async () => {

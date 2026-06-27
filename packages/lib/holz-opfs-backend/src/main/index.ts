@@ -22,6 +22,25 @@ interface PageVisibility {
 }
 
 /**
+ * Drain the host's NDJSON buffer into the worker, one whole line per `log`
+ * event. The reader applies backpressure from the buffer — events go out only
+ * as fast as lines are produced — and the loop ends when the buffer closes.
+ * Fire-and-forget per the {@link RPC.notify} contract; ordering holds because
+ * the transport delivers in send order.
+ */
+const streamLogs = async (
+  readable: ReadableStream<Uint8Array>,
+  rpc: RPC<HostApi, WorkerApi, SendOptions>,
+): Promise<void> => {
+  const reader = readable.getReader();
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) return;
+    rpc.notify('log', value);
+  }
+};
+
+/**
  * A log backend that will ship logs to the observability worker for
  * off-main-thread persistence to OPFS. Spawns the worker eagerly — the moment
  * the backend is created — so it's warm before the first log arrives.
@@ -46,7 +65,7 @@ export const createOpfsWorkerBackend = (
 
   // Host-local buffer the JSON backend writes UTF-8 NDJSON into, deep enough to
   // absorb startup bursts and queue everything logged during worker boot until
-  // the `init` reply connects the pipe (see `createNdjsonBuffer`).
+  // the `init` reply lets streaming begin (see `createNdjsonBuffer`).
   const { backend, readable } = createNdjsonBuffer();
 
   // Wire the host end of the worker RPC. The host serves nothing — it drives
@@ -56,20 +75,20 @@ export const createOpfsWorkerBackend = (
     {},
   );
 
-  // Tell the worker where to persist this session's logs and await the writable
-  // end it opens there. The request rides over to the worker as soon as its
-  // script loads (a later task), so it can't outrun the worker's listener.
-  void rpc.request('init', location).then((stream) => {
-    // The worker handed back the writable end of its OPFS-backed log stream.
-    // Drain the buffered NDJSON into it — anything logged during boot flushes,
-    // and later logs flow straight through.
-    void readable.pipeTo(stream);
-
+  // Tell the worker where to persist this session's logs and wait for it to
+  // open the file. The request rides over to the worker as soon as its script
+  // loads (a later task), so it can't outrun the worker's listener.
+  void rpc.request('init', location).then(() => {
     // The file now exists on disk (the worker created it to satisfy `init`).
     // Announce it so any open log viewer — in another tab, or this one, where
     // the file landed too late for the initial enumeration — adds its row
     // without waiting to re-read the directory.
     announceLogFile(location.file);
+
+    // Stream the session's NDJSON to the worker as `log` events — the buffered
+    // boot logs first, then live ones — sequenced after `init` so every line
+    // lands in the now-open file.
+    void streamLogs(readable, rpc);
   });
 
   // The worker batches OPFS flushes by size and time for throughput, so an
