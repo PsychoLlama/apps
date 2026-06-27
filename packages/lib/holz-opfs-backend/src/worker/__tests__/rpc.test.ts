@@ -6,43 +6,43 @@ import {
 
 const location: LogLocation = { directory: 'logs', file: 'session.ndjson' };
 
-// `defineContract` reduces the handlers to their params-only contract, hiding
-// the `options` bag `init` writes `transfer` into. Cast back to the raw handler
-// shape so the tests can drive them the way the RPC dispatcher does.
+// `defineContract` reduces the handlers to their params-only contract. Cast
+// back to the raw handler shape so the tests can drive them the way the RPC
+// dispatcher does.
 interface RawHandlers {
-  requests: {
-    init: (
-      location: LogLocation,
-      options: { transfer?: unknown[] },
-    ) => Promise<WritableStream<Uint8Array>>;
+  requests: { init: (location: LogLocation) => Promise<void> };
+  events: {
+    log: (chunk: Uint8Array) => void;
+    flush: () => void;
   };
-  events: { flush: () => void };
 }
 
-const stubStream = (): WritableStream<Uint8Array> => new WritableStream();
-
-// Wire the handlers over a sink that hands back `streams` in order, so a test
-// can open more than one producer and check which the handlers transfer.
-const setup = (streams: WritableStream<Uint8Array>[] = [stubStream()]) => {
-  let index = 0;
+const setup = () => {
   const sink: WorkerSink = {
-    open: vi.fn(() => Promise.resolve(streams[index++])),
+    open: vi.fn(() => Promise.resolve()),
+    write: vi.fn(),
     flush: vi.fn(),
   };
   const handlers = createWorkerHandlers(sink) as unknown as RawHandlers;
-  return { handlers, sink, streams };
+  return { handlers, sink };
 };
 
 describe('createWorkerHandlers', () => {
-  it('opens the sink and transfers its writable stream on init', async () => {
-    const { handlers, sink, streams } = setup();
-    const options: { transfer?: unknown[] } = {};
+  it('opens the sink at the host-named location on init', async () => {
+    const { handlers, sink } = setup();
 
-    const stream = await handlers.requests.init(location, options);
+    await handlers.requests.init(location);
 
     expect(sink.open).toHaveBeenCalledWith(location);
-    expect(stream).toBe(streams[0]);
-    expect(options.transfer).toEqual([streams[0]]);
+  });
+
+  it('writes a streamed log line to the sink', () => {
+    const { handlers, sink } = setup();
+    const chunk = new Uint8Array([1, 2, 3]);
+
+    handlers.events.log(chunk);
+
+    expect(sink.write).toHaveBeenCalledWith(chunk);
   });
 
   it('forwards the flush event to the sink', () => {

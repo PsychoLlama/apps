@@ -92,6 +92,12 @@ export const LogList = () => {
             </Text>
           </Flex>
 
+          <Callout color="neutral">
+            <Text as="span" size={2} selectable={false}>
+              Work in progress.
+            </Text>
+          </Callout>
+
           <Switch>
             <Match when={logArchive.status === 'error'}>
               <Callout color="danger">

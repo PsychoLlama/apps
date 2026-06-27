@@ -16,15 +16,23 @@ export interface LogLocation {
  * The worker's durable log sink, as the RPC layer drives it — the OPFS-backed
  * file that every log source (the host, the worker's own logs, eventually
  * other workers) writes into. Implemented by `./log-sink.ts`; the RPC handlers
- * only `open` producers for callers and `flush` on demand.
+ * `open` it once, then feed it whole NDJSON lines via `write` and force a
+ * `flush` on demand.
  */
 export interface WorkerSink {
   /**
-   * Open the durable log (idempotent) and mint a fresh writable producer to
-   * transfer to a caller. Each call yields an independent `WritableStream`
-   * feeding the one shared file.
+   * Open the durable log (idempotent). The host owns the file name, delivered
+   * in `init`, and awaits this before streaming so every log lands after the
+   * file exists.
    */
-  open: (location: LogLocation) => Promise<WritableStream<Uint8Array>>;
+  open: (location: LogLocation) => Promise<void>;
+
+  /**
+   * Append one whole NDJSON line to the durable log. The host streams these in
+   * over `log` events; the worker's own logs tee in separately (see
+   * `./log-sink.ts`).
+   */
+  write: (chunk: Uint8Array) => void;
 
   /** Force the unflushed tail to disk now. A no-op before the first `open`. */
   flush: () => void;
@@ -32,10 +40,10 @@ export interface WorkerSink {
 
 /**
  * Build the worker's RPC handlers — the observability worker's end of the
- * boundary (see `../main/index.ts`). The host calls `init`
- * once with where to write; the worker opens that file and replies with the
- * writable end of a stream whose UTF-8 NDJSON chunks it persists there. The
- * host later fires `flush` to force the pending batch to disk early.
+ * boundary (see `../main/index.ts`). The host calls `init` once with where to
+ * write; the worker opens that file and replies when it's ready. The host then
+ * streams its logs in over `log` events — one whole NDJSON line each — and
+ * fires `flush` to force the pending batch to disk early.
  *
  * The {@link WorkerSink} is injected rather than wired here so this module
  * stays a pure RPC contract, free of the OPFS runtime it would otherwise drag
@@ -50,15 +58,19 @@ export interface WorkerSink {
 export const createWorkerHandlers = (sink: WorkerSink) =>
   defineContract<SendOptions>()({
     requests: {
-      // Open the log file and transfer a writable producer back with the
-      // reply, so the host pipes straight into the worker's OPFS-backed sink.
-      init: async (location: LogLocation, options) => {
-        const stream = await sink.open(location);
-        options.transfer = [stream];
-        return stream;
+      // Open the host-named log file so the sink is ready before the first log
+      // event arrives. Replies with nothing — the host waits on this only to
+      // sequence its `log` stream after the file exists.
+      init: async (location: LogLocation) => {
+        await sink.open(location);
       },
     },
     events: {
+      // One whole NDJSON line from the host. Append it to the durable log.
+      // Fire-and-forget, but ordered: the host streams these only after `init`
+      // resolves, and the transport delivers them in send order.
+      log: (chunk: Uint8Array) => sink.write(chunk),
+
       // The host's page went hidden and may be frozen or killed before the
       // size/time ceiling fires — `visibilitychange → hidden` is the last beat
       // we can count on, notably on mobile. Force the unflushed tail to disk
@@ -68,9 +80,10 @@ export const createWorkerHandlers = (sink: WorkerSink) =>
   });
 
 /**
- * The worker's RPC surface, as seen by the host — a single `init` request
- * carrying a {@link LogLocation} and replying with the worker's writable log
- * stream. Derived from {@link createWorkerHandlers} rather than restated by
- * hand, so the contract can't drift from the handler that serves it.
+ * The worker's RPC surface, as seen by the host — an `init` request carrying a
+ * {@link LogLocation}, plus `log` and `flush` events the host streams NDJSON
+ * and forces flushes over. Derived from {@link createWorkerHandlers} rather
+ * than restated by hand, so the contract can't drift from the handler that
+ * serves it.
  */
 export type WorkerApi = ReturnType<typeof createWorkerHandlers>;

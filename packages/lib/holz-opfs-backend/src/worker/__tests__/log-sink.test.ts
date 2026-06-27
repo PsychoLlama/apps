@@ -20,24 +20,16 @@ const workerLogBuffer =
     }),
   });
 
-const fakeDurable = () => {
+const fakeDurable = (onWrite?: (chunk: Uint8Array) => void) => {
   const writes: Uint8Array[] = [];
   return {
     writes,
     write: vi.fn<(chunk: Uint8Array) => void>((chunk) => {
       writes.push(chunk);
+      onWrite?.(chunk);
     }),
     flush: vi.fn<() => void>(),
   };
-};
-
-const writeChunk = async (
-  stream: WritableStream<Uint8Array>,
-  chunk: Uint8Array,
-): Promise<void> => {
-  const writer = stream.getWriter();
-  await writer.write(chunk);
-  writer.releaseLock();
 };
 
 describe('createWorkerSink', () => {
@@ -52,33 +44,57 @@ describe('createWorkerSink', () => {
     expect(openDurable).toHaveBeenCalledTimes(1);
   });
 
-  it('routes every producer into the one durable log', async () => {
+  it('writes streamed lines into the durable log in order', async () => {
     const durable = fakeDurable();
     const sink = createWorkerSink(
       () => Promise.resolve(durable),
       workerLogBuffer(),
     );
 
-    const first = await sink.open(location);
-    const second = await sink.open(location);
-    await writeChunk(first, new Uint8Array([1]));
-    await writeChunk(second, new Uint8Array([2]));
+    await sink.open(location);
+    sink.write(new Uint8Array([1]));
+    sink.write(new Uint8Array([2]));
 
     expect(durable.writes).toEqual([new Uint8Array([1]), new Uint8Array([2])]);
   });
 
-  it("tees the worker's own logs into the durable log", async () => {
+  it('queues a line that races ahead of the open, then drains it on open', async () => {
     const durable = fakeDurable();
+    const sink = createWorkerSink(
+      () => Promise.resolve(durable),
+      workerLogBuffer(),
+    );
+
+    // Write before awaiting `open`: the durable is still opening, so the line
+    // queues rather than landing — nothing is written yet.
+    const opened = sink.open(location);
+    sink.write(new Uint8Array([7]));
+    expect(durable.writes).toEqual([]);
+
+    // Opening drains the queue before it resolves, so awaiting it is an exact
+    // hook for "the queued line has landed" — no polling.
+    await opened;
+    expect(durable.writes).toEqual([new Uint8Array([7])]);
+  });
+
+  it("tees the worker's own logs into the durable log", async () => {
+    // The tee is a live stream drain we can't await through `open`. Resolve the
+    // instant the durable receives the teed line — an exact hook for "it
+    // landed" rather than polling for it to appear.
+    let teed!: () => void;
+    const drained = new Promise<void>((resolve) => {
+      teed = resolve;
+    });
+    const durable = fakeDurable(() => teed());
     const sink = createWorkerSink(
       () => Promise.resolve(durable),
       workerLogBuffer([new Uint8Array([9])]),
     );
 
     await sink.open(location);
+    await drained;
 
-    await vi.waitFor(() =>
-      expect(durable.writes).toContainEqual(new Uint8Array([9])),
-    );
+    expect(durable.writes).toContainEqual(new Uint8Array([9]));
   });
 
   it('flushes the opened durable log', async () => {
