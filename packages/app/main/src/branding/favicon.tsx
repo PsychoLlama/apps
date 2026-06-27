@@ -5,8 +5,8 @@ import appleTouchIcon from './brandmark.svg?to-png=180';
 
 /**
  * Sources:
- * - Favicon: https://apps.psychollama.io/icon-editor/?icon=mdi%3Aapple-keyboard-shift
- * - Maskable: https://apps.psychollama.io/icon-editor?icon=mdi%3Aapple-keyboard-shift&shape=square&pad=10
+ * - Favicon: https://apps.psychollama.io/icon-editor/?icon=mdi%3Aflask&pad=10
+ * - Maskable: https://apps.psychollama.io/icon-editor/?icon=mdi%3Aflask&shape=square&pad=10
  *
  * Favicon links and iOS PWA meta tags hoisted into `<head>` via
  * `@solidjs/meta`.

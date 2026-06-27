@@ -6,7 +6,7 @@ import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconTextBox from 'virtual:icons/mdi/text-box-outline';
 import IconGallery from 'virtual:icons/mdi/brush-variant';
-import IconFlask from 'virtual:icons/mdi/flask-outline';
+import IconHammerWrench from 'virtual:icons/mdi/hammer-wrench';
 import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import IconGithub from 'virtual:icons/mdi/github';
@@ -69,7 +69,7 @@ const APPS: ReadonlyArray<AppEntry> = [
           name: 'Experimental',
           href: '/experimental',
           description: 'A scratchpad for work-in-progress ideas.',
-          Icon: IconFlask,
+          Icon: IconHammerWrench,
         } satisfies AppEntry,
       ]
     : []),
