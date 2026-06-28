@@ -10,10 +10,17 @@ export const scroller = style({
   minHeight: 0,
 });
 
-// Inner padding lives on the content, not the ScrollArea root, so the
-// scrollbar tracks the rail edge while text stays clear of it.
+// Vertical padding lives on the content, not the ScrollArea root, so
+// the scrollbar tracks the rail edge while text stays clear of it.
+// Horizontal padding is deliberately omitted here and pushed down to
+// each section so the dividers between them span the full rail width.
 export const panel = style({
   paddingBlock: space[3],
+});
+
+// Per-section horizontal inset. Keeping the padding on the sections —
+// not the panel — lets the sibling `<Separator>`s reach edge-to-edge.
+export const section = style({
   paddingInline: space[3],
 });
 

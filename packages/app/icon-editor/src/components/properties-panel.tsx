@@ -30,19 +30,6 @@ interface PropertiesPanelProps {
   onBrowse: () => void;
 }
 
-/** Quiet section header that groups a stack of controls. */
-const SectionLabel: Component<{ children: string }> = (props) => (
-  <Text
-    as="span"
-    size={1}
-    weight="medium"
-    color="lowContrast"
-    selectable={false}
-  >
-    {props.children}
-  </Text>
-);
-
 /** Selected-icon chip — glyph thumbnail beside its `pack:name` identifier. */
 const IconSummary: Component<{ icon: IconEditorState['icon'] }> = (props) => (
   <Flex as="div" align="center" gap={3} class={css.summary}>
@@ -108,8 +95,13 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
   return (
     <ScrollArea type="hover" scrollbars="vertical" class={css.scroller}>
       <Flex as="div" direction="column" gap={4} class={css.panel}>
-        <Flex as="section" direction="column" gap={3} aria-label="Icon">
-          <SectionLabel>Icon</SectionLabel>
+        <Flex
+          as="section"
+          direction="column"
+          gap={3}
+          class={css.section}
+          aria-label="Icon"
+        >
           <IconSummary icon={props.state.icon} />
           <Button
             testId="icon-editor-browse"
@@ -123,8 +115,13 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
 
         <Separator decorative />
 
-        <Flex as="section" direction="column" gap={3} aria-label="Style">
-          <SectionLabel>Style</SectionLabel>
+        <Flex
+          as="section"
+          direction="column"
+          gap={3}
+          class={css.section}
+          aria-label="Style"
+        >
           <Field label="Palette">
             <PalettePicker
               value={props.state.palette}
@@ -144,8 +141,13 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
 
         <Separator decorative />
 
-        <Flex as="section" direction="column" gap={3} aria-label="Export">
-          <SectionLabel>Export</SectionLabel>
+        <Flex
+          as="section"
+          direction="column"
+          gap={3}
+          class={css.section}
+          aria-label="Export"
+        >
           <ExportActions state={props.state} />
         </Flex>
       </Flex>
