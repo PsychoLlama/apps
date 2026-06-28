@@ -3,21 +3,18 @@ import { createLogger } from '@lib/observability';
 import type { IconRef } from './icons';
 import type { PaletteName } from './palette';
 import {
-  pickRandomStyle,
   randomIconCapability,
   resolveIconCapability,
   resolveStyleHydration,
   type IconEditorStyleHydration,
-  type RandomStyleSeed,
   type ResolvedIcon,
 } from './capabilities';
 import {
   DEFAULT_ICON_EDITOR_STATE,
   iconEditorStore,
-  inspectorStore,
   loadingStore,
+  railStore,
   type IconEditorShape,
-  type InspectorTab,
 } from './store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -86,31 +83,14 @@ export const hydrateStyle = defineAction(
   },
 );
 
-export const setInspectorTab = defineAction(
-  [inspectorStore],
-  (state, tab: InspectorTab) => {
-    state.tab = tab;
-  },
-);
+/** Swap the rail to the full-rail icon browser. */
+export const openPicker = defineAction([railStore], (state) => {
+  state.view = 'picker';
+});
 
-// --- Random style ---
-
-export const applyRandomStyle = defineAction(
-  [iconEditorStore],
-  (state, seed: RandomStyleSeed) => {
-    state.palette = seed.palette;
-    state.shape = seed.shape;
-    state.padding = seed.padding;
-  },
-);
-
-/**
- * Roll a fresh palette/shape/padding. The icon is randomized
- * separately ({@link randomizeIconEffect}) — async fetches and sync
- * style updates don't share a transactional boundary.
- */
-export const randomizeStyleEffect = defineEffect([], pickRandomStyle, {
-  onSuccess: applyRandomStyle,
+/** Return the rail to the always-on properties inspector. */
+export const closePicker = defineAction([railStore], (state) => {
+  state.view = 'properties';
 });
 
 // --- Async icon resolution lifecycle ---

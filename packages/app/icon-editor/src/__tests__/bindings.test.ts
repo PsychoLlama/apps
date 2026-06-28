@@ -1,13 +1,13 @@
 import { createTestBindings } from '@lib/state';
 import {
-  applyRandomStyle,
   applyResolvedIcon,
   beginIconResolve,
+  closePicker,
   failIconResolve,
   hydrateStyle,
+  openPicker,
   reset,
   setIcon,
-  setInspectorTab,
   setPadding,
   setPalette,
   setShape,
@@ -15,8 +15,8 @@ import {
 import {
   DEFAULT_ICON_EDITOR_STATE,
   iconEditorStore,
-  inspectorStore,
   loadingStore,
+  railStore,
 } from '../store';
 import type { IconRef } from '../icons';
 
@@ -42,7 +42,7 @@ const setup = () => {
     ...bindings,
     icon: bindings.createStore(iconEditorStore),
     loading: bindings.createStore(loadingStore),
-    inspector: bindings.createStore(inspectorStore),
+    rail: bindings.createStore(railStore),
   };
 };
 
@@ -187,28 +187,14 @@ describe('failIconResolve', () => {
   });
 });
 
-describe('applyRandomStyle', () => {
-  it('writes every style field from the seed in one flush', () => {
-    const { icon, useAction } = setup();
+describe('openPicker / closePicker', () => {
+  it('swaps the rail to the icon browser and back to the properties inspector', () => {
+    const { rail, useAction } = setup();
 
-    useAction(applyRandomStyle)({
-      palette: 'mint',
-      shape: 'circle',
-      padding: 30,
-    });
+    useAction(openPicker)();
+    expect(rail.view).toBe('picker');
 
-    expect(icon.palette).toBe('mint');
-    expect(icon.shape).toBe('circle');
-    expect(icon.padding).toBe(30);
-  });
-});
-
-describe('setInspectorTab', () => {
-  it('switches the visible tab', () => {
-    const { inspector, useAction } = setup();
-
-    useAction(setInspectorTab)('style');
-
-    expect(inspector.tab).toBe('style');
+    useAction(closePicker)();
+    expect(rail.view).toBe('properties');
   });
 });

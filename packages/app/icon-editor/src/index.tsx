@@ -1,52 +1,41 @@
-import { For, createEffect, on, onCleanup, untrack } from 'solid-js';
+import {
+  Match,
+  Switch,
+  createEffect,
+  createMemo,
+  on,
+  onCleanup,
+  untrack,
+} from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
 import { useAction, useEffect } from '@lib/state';
 import { Frame, SiteHeader } from '@lib/shell';
-import {
-  Button,
-  Flex,
-  TabsContent,
-  TabsList,
-  TabsRoot,
-  TabsTrigger,
-} from '@lib/ui';
-import IconShuffle from 'virtual:icons/mdi/shuffle-variant';
-import IconReset from 'virtual:icons/mdi/restart';
-import { ExportActions } from './components/export-actions';
-import { Field } from './components/field';
+import { Flex } from '@lib/ui';
 import { IconGrid } from './components/icon-grid';
-import { InlineField } from './components/inline-field';
-import { PaddingSlider } from './components/padding-slider';
-import { PalettePicker } from './components/palette-picker';
+import {
+  loadPacksEffect,
+  openPack as openPackAction,
+  setView as setPickerViewAction,
+} from './components/icon-grid/bindings';
+import { DEFAULT_PACK_ID, picker } from './components/icon-grid/store';
 import { Preview } from './components/preview';
-import { ShapeSelector } from './components/shape-selector';
+import { PropertiesPanel } from './components/properties-panel';
 import { encodeIconRef, parseIconRef } from './icons';
 import {
+  closePicker as closePickerAction,
   hydrateStyle as hydrateStyleAction,
+  openPicker as openPickerAction,
   randomizeIconEffect,
-  randomizeStyleEffect,
   reset as resetAction,
   resolveIconEffect,
   setIcon as setIconAction,
-  setInspectorTab as setInspectorTabAction,
   setPadding as setPaddingAction,
   setPalette as setPaletteAction,
   setShape as setShapeAction,
 } from './bindings';
-import {
-  DEFAULT_ICON_EDITOR_STATE,
-  iconEditor,
-  inspector,
-  loading,
-  type InspectorTab,
-} from './store';
+import { DEFAULT_ICON_EDITOR_STATE, iconEditor, loading, rail } from './store';
+import type { IconRef } from './icons';
 import * as css from './index.css';
-
-const TABS: ReadonlyArray<{ id: InspectorTab; label: string }> = [
-  { id: 'icon', label: 'Icon' },
-  { id: 'style', label: 'Style' },
-  { id: 'export', label: 'Export' },
-];
 
 /** Recognized search-param keys backing a shareable icon URL. */
 type IconSearchParamKey = 'icon' | 'palette' | 'shape' | 'pad';
@@ -78,9 +67,6 @@ const paramOrNull = <T,>(
 
 const identity = <T,>(value: T) => value;
 
-const isInspectorTab = (value: string): value is InspectorTab =>
-  value === 'icon' || value === 'style' || value === 'export';
-
 export const IconEditor = () => {
   const setIcon = useAction(setIconAction);
   const setPalette = useAction(setPaletteAction);
@@ -88,11 +74,39 @@ export const IconEditor = () => {
   const setPadding = useAction(setPaddingAction);
   const reset = useAction(resetAction);
   const hydrateStyle = useAction(hydrateStyleAction);
-  const setInspectorTab = useAction(setInspectorTabAction);
-  const randomizeStyle = useEffect(randomizeStyleEffect);
+  const openPicker = useAction(openPickerAction);
+  const closePicker = useAction(closePickerAction);
+  const setPickerView = useAction(setPickerViewAction);
+  const openPack = useAction(openPackAction);
   const randomizeIcon = useEffect(randomizeIconEffect);
   const resolveIcon = useEffect(resolveIconEffect);
+  const loadPacks = useEffect(loadPacksEffect);
   const [searchParams, setSearchParams] = useSearchParams<IconSearchParams>();
+
+  // Fetch the pack catalog eagerly — the properties panel's pack card
+  // needs it before the picker is ever opened. The store caches the
+  // resolved list, so the picker reuses it on mount.
+  createEffect(() => {
+    if (!picker.packs) void loadPacks();
+  });
+
+  /** The selected pack's summary, surfaced as the panel's pack card. */
+  const activePack = createMemo(() =>
+    picker.packs?.find((pack) => pack.id === picker.activePackId),
+  );
+
+  // Keep the active pack in lockstep with the selected icon. A deep
+  // link or shuffle can resolve an icon from a pack other than the
+  // current one, and the panel's pack card must reflect that even while
+  // the picker is closed (so this lives here, not in the picker).
+  createEffect(
+    on(
+      () => iconEditor.icon?.pack,
+      (pack) => {
+        if (pack && pack !== picker.activePackId) openPack(pack);
+      },
+    ),
+  );
 
   const readParam = (key: IconSearchParamKey): string | undefined => {
     const value = searchParams[key];
@@ -206,36 +220,52 @@ export const IconEditor = () => {
     if (timeoutId !== undefined) clearTimeout(timeoutId);
   });
 
+  // Roll a fresh icon without leaving the active pack — style fields
+  // stay put so the user keeps refining one look.
   const handleRandomize = () => {
-    randomizeStyle();
-    void randomizeIcon();
+    void randomizeIcon(picker.activePackId);
+  };
+
+  // Reset clears the icon + style and returns the active pack to the
+  // default, so the panel's pack card matches the blank-slate state.
+  const handleReset = () => {
+    reset();
+    openPack(DEFAULT_PACK_ID);
+  };
+
+  // "Choose pack" opens the pack list; "Choose icon" jumps straight to
+  // the active pack's grid. Two entry points instead of the old
+  // packs→detail drill-down.
+  const handleChoosePack = () => {
+    setPickerView('packs');
+    openPicker();
+  };
+
+  const handleChooseIcon = () => {
+    setPickerView('pack-detail');
+    openPicker();
+  };
+
+  // Picking a pack swaps the active pack and returns to the inspector.
+  // A pack change strands the current icon (it belonged to the old
+  // pack), so clear it — the user is starting over within a new pack.
+  const handleSelectPack = (packId: string) => {
+    const current = iconEditor.icon;
+    openPack(packId);
+    if (current && current.pack !== packId) setIcon(undefined);
+    closePicker();
+  };
+
+  // Committing a pick returns the rail to the properties inspector so
+  // the chosen icon, its style, and export land back in one view.
+  const handlePick = (icon: IconRef) => {
+    setIcon(icon);
+    closePicker();
   };
 
   return (
     <Frame>
-      <SiteHeader
-        title="Icon Editor"
-        actions={
-          <Flex as="div" align="center" gap={4}>
-            <Button
-              testId="randomize"
-              variant="ghost"
-              color="neutral"
-              onClick={handleRandomize}
-            >
-              <IconShuffle aria-hidden /> Shuffle
-            </Button>
-            <Button
-              testId="reset"
-              variant="ghost"
-              color="neutral"
-              onClick={reset}
-            >
-              <IconReset aria-hidden /> Reset
-            </Button>
-          </Flex>
-        }
-      />
+      <SiteHeader title="Icon Editor" />
 
       <Flex as="div" direction="column" class={css.workspace}>
         <Flex as="div" class={css.body}>
@@ -249,72 +279,36 @@ export const IconEditor = () => {
             </Flex>
           </Flex>
 
-          <TabsRoot
-            testId="icon-editor-inspector"
-            value={inspector.tab}
-            onValueChange={(value) => {
-              if (isInspectorTab(value)) setInspectorTab(value);
-            }}
+          <Flex
+            as="aside"
+            direction="column"
             class={css.rail}
-            aria-label="Inspector"
+            aria-label="Editor panel"
           >
-            <TabsList
-              testId="icon-editor-inspector-list"
-              justify="center"
-              aria-label="Inspector sections"
-            >
-              <For each={TABS}>
-                {(tab) => (
-                  <TabsTrigger
-                    testId={`icon-editor-inspector-trigger-${tab.id}`}
-                    value={tab.id}
-                  >
-                    {tab.label}
-                  </TabsTrigger>
-                )}
-              </For>
-            </TabsList>
-
-            <TabsContent
-              testId="icon-editor-inspector-panel-icon"
-              value="icon"
-              class={`${css.tabPanel} ${css.tabPanelGrow}`}
-            >
-              <IconGrid selected={iconEditor.icon} onSelect={setIcon} />
-            </TabsContent>
-
-            <TabsContent
-              testId="icon-editor-inspector-panel-style"
-              value="style"
-              class={css.tabPanel}
-            >
-              <Flex as="div" direction="column" gap={3}>
-                <Field label="Palette">
-                  <PalettePicker
-                    value={iconEditor.palette}
-                    onChange={setPalette}
-                  />
-                </Field>
-                <InlineField label="Shape">
-                  <ShapeSelector value={iconEditor.shape} onChange={setShape} />
-                </InlineField>
-                <InlineField label="Padding">
-                  <PaddingSlider
-                    value={iconEditor.padding}
-                    onInput={setPadding}
-                  />
-                </InlineField>
-              </Flex>
-            </TabsContent>
-
-            <TabsContent
-              testId="icon-editor-inspector-panel-export"
-              value="export"
-              class={css.tabPanel}
-            >
-              <ExportActions state={iconEditor} />
-            </TabsContent>
-          </TabsRoot>
+            <Switch>
+              <Match when={rail.view === 'properties'}>
+                <PropertiesPanel
+                  state={iconEditor}
+                  activePack={activePack()}
+                  onPalette={setPalette}
+                  onShape={setShape}
+                  onPadding={setPadding}
+                  onChoosePack={handleChoosePack}
+                  onChooseIcon={handleChooseIcon}
+                  onRandomize={handleRandomize}
+                  onReset={handleReset}
+                />
+              </Match>
+              <Match when={rail.view === 'picker'}>
+                <IconGrid
+                  selected={iconEditor.icon}
+                  onSelect={handlePick}
+                  onSelectPack={handleSelectPack}
+                  onClose={closePicker}
+                />
+              </Match>
+            </Switch>
+          </Flex>
         </Flex>
       </Flex>
     </Frame>

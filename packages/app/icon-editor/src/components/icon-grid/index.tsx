@@ -16,7 +16,6 @@ import type { Component } from 'solid-js';
 import { useAction, useEffect } from '@lib/state';
 import {
   Badge,
-  Card,
   Code,
   DataListItem,
   DataListLabel,
@@ -45,9 +44,7 @@ import {
 } from '../../icons';
 import {
   loadManifestEffect,
-  loadPacksEffect,
   loadPageEffect,
-  openPack as openPackAction,
   releaseInactivePacks as releaseInactivePacksAction,
   seedEntry as seedEntryAction,
   setCurrentPage as setCurrentPageAction,
@@ -56,6 +53,7 @@ import {
   setView as setViewAction,
 } from './bindings';
 import { entryKey, picker } from './store';
+import { PackCard } from '../pack-card';
 import * as css from './icon-grid.css';
 
 /**
@@ -77,6 +75,14 @@ interface IconGridProps {
   selected: IconRef | undefined;
   /** Called when the user picks a different icon. */
   onSelect: (icon: IconRef) => void;
+  /**
+   * Called when the user picks a pack from the list. The editor swaps
+   * the active pack (clearing the selected icon if it belonged to a
+   * different one) and returns to the properties inspector.
+   */
+  onSelectPack: (packId: string) => void;
+  /** Leave the picker and return to the properties inspector. */
+  onClose: () => void;
 }
 
 /**
@@ -88,37 +94,19 @@ interface IconGridProps {
  */
 export const IconGrid: Component<IconGridProps> = (props) => {
   const setView = useAction(setViewAction);
-  const openPack = useAction(openPackAction);
   const setSearch = useAction(setSearchAction);
   const setPackSearch = useAction(setPackSearchAction);
   const setCurrentPage = useAction(setCurrentPageAction);
   const seedEntry = useAction(seedEntryAction);
   const releaseInactivePacks = useAction(releaseInactivePacksAction);
-  const loadPacks = useEffect(loadPacksEffect);
   const loadManifest = useEffect(loadManifestEffect);
   const loadPage = useEffect(loadPageEffect);
 
-  // Fetch the pack catalog once on mount. The store caches it so a
-  // re-mount (e.g. tab switching) reuses the resolved list.
-  createEffect(() => {
-    if (!picker.packs) void loadPacks();
-  });
-
-  // Sync the active pack when the *selected* icon's pack changes —
-  // opening the editor at `?icon=tabler:rocket` should land on the
-  // tabler pack detail, not on mdi's. `on()` so the effect doesn't
-  // re-fire when the user manually switches packs (which would
-  // immediately revert their choice). Skip while no icon is chosen
-  // yet — the picker keeps its existing `activePackId` so the user's
-  // browsing position survives selection-clearing actions like reset.
-  createEffect(
-    on(
-      () => props.selected?.pack,
-      (pack) => {
-        if (pack && pack !== picker.activePackId) openPack(pack);
-      },
-    ),
-  );
+  // The pack catalog is fetched eagerly by the editor (it backs the
+  // properties panel's pack card before the picker ever opens), and the
+  // editor also keeps `activePackId` in lockstep with the selected
+  // icon's pack, so the picker can assume both are already arranged on
+  // mount.
 
   // Keep the entries map seeded with the currently selected icon —
   // even before the manifest loads, the picker knows it can render
@@ -321,7 +309,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   };
 
   return (
-    <Flex as="div" direction="column" gap={3} grow class={css.root}>
+    <Flex as="div" direction="column" gap={3} class={css.root}>
       <Switch>
         <Match when={picker.view === 'packs'}>
           <PackListView
@@ -329,7 +317,8 @@ export const IconGrid: Component<IconGridProps> = (props) => {
             activePackId={picker.activePackId}
             search={picker.packSearch}
             onSearch={setPackSearch}
-            onPick={openPack}
+            onPick={props.onSelectPack}
+            onClose={props.onClose}
           />
         </Match>
         <Match when={picker.view === 'pack-detail'}>
@@ -347,7 +336,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
             onPageChange={setCurrentPage}
             selected={props.selected}
             onPickIcon={handlePickIcon}
-            onOpenPackList={() => setView('packs')}
+            onClose={props.onClose}
             onShowInfo={() => setView('pack-info')}
           />
         </Match>
@@ -368,6 +357,8 @@ interface PackListViewProps {
   search: string;
   onSearch: (value: string) => void;
   onPick: (id: string) => void;
+  /** Leave the picker and return to the properties inspector. */
+  onClose: () => void;
 }
 
 const PackListView: Component<PackListViewProps> = (props) => {
@@ -396,6 +387,24 @@ const PackListView: Component<PackListViewProps> = (props) => {
 
   return (
     <>
+      <Flex as="div" align="center" gap={2}>
+        <IconButton
+          testId="icon-grid-pack-list-close"
+          size={1}
+          variant="ghost"
+          color="neutral"
+          aria-label="Back to editor"
+          onClick={props.onClose}
+        >
+          <IconBack aria-hidden />
+        </IconButton>
+        <Flex as="div" grow>
+          <Text as="span" size={2} weight="medium" truncate selectable={false}>
+            Icon packs
+          </Text>
+        </Flex>
+      </Flex>
+
       <TextField
         testId="icon-grid-pack-search"
         type="search"
@@ -449,65 +458,14 @@ const PackListView: Component<PackListViewProps> = (props) => {
                 {(pack) => {
                   const isActive = () => pack.id === props.activePackId;
                   return (
-                    <Card
-                      as="button"
-                      variant="surface"
-                      class={`${css.packCard}${
-                        isActive() ? ` ${css.packCardActive}` : ''
-                      }`}
-                      aria-pressed={isActive()}
-                      ref={(el: HTMLButtonElement) => {
+                    <PackCard
+                      pack={pack}
+                      active={isActive()}
+                      ref={(el) => {
                         if (isActive()) activeButtonRef = el;
                       }}
                       onClick={() => props.onPick(pack.id)}
-                    >
-                      <Flex as="div" direction="column" gap={2} grow>
-                        <Flex
-                          as="div"
-                          align="baseline"
-                          justify="between"
-                          gap={2}
-                        >
-                          <Text
-                            as="span"
-                            size={2}
-                            weight="medium"
-                            truncate
-                            selectable={false}
-                          >
-                            {pack.name}
-                          </Text>
-                          <Text
-                            as="span"
-                            size={1}
-                            color="lowContrast"
-                            selectable={false}
-                          >
-                            {numberFormat.format(pack.total)}
-                          </Text>
-                        </Flex>
-                        <Flex as="div" align="center" justify="between" gap={2}>
-                          <Flex as="div" align="center" gap={2}>
-                            <For each={pack.samples}>
-                              {(sample) => (
-                                <svg
-                                  class={css.packSample}
-                                  viewBox={`0 0 ${sample.width ?? pack.width} ${sample.height ?? pack.height}`}
-                                  innerHTML={sample.body}
-                                />
-                              )}
-                            </For>
-                          </Flex>
-                          <Show when={pack.license?.spdx}>
-                            {(spdx) => (
-                              <Badge size={1} variant="soft" color="neutral">
-                                {spdx()}
-                              </Badge>
-                            )}
-                          </Show>
-                        </Flex>
-                      </Flex>
-                    </Card>
+                    />
                   );
                 }}
               </For>
@@ -540,7 +498,8 @@ interface PackDetailViewProps {
   /** `undefined` until the user picks an icon — no tile reads as selected. */
   selected: IconRef | undefined;
   onPickIcon: (manifest: IconPackManifest, name: string) => void;
-  onOpenPackList: () => void;
+  /** Leave the picker and return to the properties inspector. */
+  onClose: () => void;
   /** Switch to the in-place pack info view (DataList of metadata). */
   onShowInfo: () => void;
 }
@@ -565,12 +524,12 @@ const PackDetailView: Component<PackDetailViewProps> = (props) => {
     <>
       <Flex as="div" align="center" gap={2}>
         <IconButton
-          testId="icon-grid-pack-list"
+          testId="icon-grid-pack-detail-close"
           size={1}
           variant="ghost"
           color="neutral"
-          aria-label="Browse icon packs"
-          onClick={props.onOpenPackList}
+          aria-label="Back to editor"
+          onClick={props.onClose}
         >
           <IconBack aria-hidden />
         </IconButton>
