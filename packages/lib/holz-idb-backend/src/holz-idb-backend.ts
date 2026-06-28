@@ -1,4 +1,4 @@
-import { openDB, type DBSchema } from 'idb';
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Log, LogProcessor } from '@holz/core';
 
 /** Database holz logs are persisted to. One per origin. */
@@ -32,24 +32,44 @@ interface LogDatabase extends DBSchema {
  * in the main thread, workers, and service workers — `indexedDB` is available
  * in all three.
  */
-const openLogDatabase = () =>
-  openDB<LogDatabase>(DATABASE_NAME, 1, {
-    upgrade: (db) => {
-      const store = db.createObjectStore(STORE_NAME, { autoIncrement: true });
+const openLogDatabase = async (): Promise<IDBPDatabase<LogDatabase>> => {
+  const db = await openDB<LogDatabase>(DATABASE_NAME, 1, {
+    upgrade: (database) => {
+      const store = database.createObjectStore(STORE_NAME, {
+        autoIncrement: true,
+      });
       store.createIndex(TIMESTAMP_INDEX, 'timestamp');
     },
+    blocking: () => {
+      // Another connection wants to upgrade or delete `@holz` (a new app
+      // version, or a test resetting the store). Step aside so it isn't
+      // blocked; this connection won't be reused afterward. `blocking` only
+      // fires after this open resolves, so `db` is assigned by then.
+      db.close();
+    },
   });
+
+  return db;
+};
 
 /**
  * Create the holz backend. Opening the database up front migrates the schema
  * and surfaces quota or permission failures at construction rather than on the
  * first log.
  *
- * The returned {@link LogProcessor} is a noop for now — it accepts logs and
- * drops them. Persistence lands separately.
+ * The returned {@link LogProcessor} appends each log to the `logs` store. Holz
+ * calls processors synchronously, so the write is fire-and-forget: it can't
+ * block the calling thread, and ordering is preserved by the store's
+ * auto-incrementing key.
  */
 export const createIdbBackend = async (): Promise<LogProcessor> => {
-  await openLogDatabase();
+  const db = await openLogDatabase();
 
-  return () => {};
+  return (log) => {
+    db.add(STORE_NAME, log).catch(() => {
+      // Logging must never throw. A failed write (quota exhausted, the
+      // connection closing mid-flush) drops the log rather than surfacing —
+      // there's no safe way to report it without recursing into the logger.
+    });
+  };
 };
