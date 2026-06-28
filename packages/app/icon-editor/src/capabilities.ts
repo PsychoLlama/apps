@@ -67,35 +67,18 @@ export const resolveStyleHydration = (
   };
 };
 
-/** Style fields drawn by `randomizeStyleEffect`. */
-export interface RandomStyleSeed {
-  palette: PaletteName;
-  shape: IconEditorShape;
-  padding: number;
-}
-
-/** Padding presets {@link pickRandomStyle} draws from — 10% steps across the slider. */
-const PADDING_STEPS = [0, 10, 20, 30, 40] as const;
-
-const pickFrom = <T>(arr: ReadonlyArray<T>): T =>
-  arr[Math.floor(Math.random() * arr.length)];
-
-/** Draw a fresh palette/shape/padding combination. */
-export const pickRandomStyle = (): RandomStyleSeed => ({
-  palette: pickFrom(PALETTES).name,
-  shape: pickFrom(SHAPES),
-  padding: pickFrom(PADDING_STEPS),
-});
-
 /**
- * Walk the pack catalog and pull a random icon: pick a pack, pick a
- * page, pick an entry. Loads everything on demand so we never have to
- * keep the full catalog in memory.
+ * Pull a random icon from a single pack: pick a page, pick an entry.
+ * Scoped to `packId` so Randomize rolls a fresh glyph without leaving
+ * the pack the user picked. Loads pages on demand — we never hold the
+ * full pack in memory.
  */
-export const pickRandomIcon = async (): Promise<IconRef | undefined> => {
+export const pickRandomIcon = async (
+  packId: string,
+): Promise<IconRef | undefined> => {
   const packs = await loadIconPackIndex();
-  if (packs.length === 0) return undefined;
-  const pack = packs[Math.floor(Math.random() * packs.length)];
+  const pack = packs.find((entry) => entry.id === packId);
+  if (!pack) return undefined;
   const manifest = await loadIconPackManifest(pack);
   if (manifest.pages.length === 0) return undefined;
   const pageIndex = Math.floor(Math.random() * manifest.pages.length);
@@ -131,13 +114,14 @@ export interface ResolveIconInput {
 /**
  * Effect callback for `randomizeIconEffect`. Snapshots `requestId` so
  * the eventual `applyResolvedIcon` can detect supersession, then
- * delegates to {@link pickRandomIcon}.
+ * delegates to {@link pickRandomIcon} scoped to the active pack.
  */
 export const randomIconCapability = async (
   load: DeepReadonly<LoadingState>,
+  packId: string,
 ): Promise<ResolvedIcon> => {
   const requestId = load.requestId;
-  const icon = await pickRandomIcon();
+  const icon = await pickRandomIcon(packId);
   return { icon, requestId };
 };
 

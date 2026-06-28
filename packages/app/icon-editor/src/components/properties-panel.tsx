@@ -6,6 +6,7 @@ import { Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { Badge, Button, Flex, ScrollArea, Separator, Text } from '@lib/ui';
 import IconPlaceholder from 'virtual:icons/mdi/image-outline';
+import IconReset from 'virtual:icons/mdi/restart';
 import IconShuffle from 'virtual:icons/mdi/shuffle-variant';
 import type { IconPackSummary } from '../icons';
 import type { IconEditorShape, IconEditorState } from '../store';
@@ -34,20 +35,20 @@ interface PropertiesPanelProps {
   onChoosePack: () => void;
   /** Open the active pack's grid to choose an icon. */
   onChooseIcon: () => void;
-  /** Roll a random icon + style. */
+  /** Roll a random icon within the active pack. */
   onRandomize: () => void;
+  /** Clear the icon + style and return to the default pack. */
+  onReset: () => void;
 }
 
 /**
  * Selected-icon row — the glyph thumbnail is itself the button that
  * opens the active pack's grid, with the icon id alongside as a neutral
- * badge and a Randomize action pinned to the top-right. Empty state
- * swaps in a dashed placeholder and a prompt.
+ * badge. Empty state swaps in a dashed placeholder and a prompt.
  */
 const IconChooser: Component<{
   icon: IconEditorState['icon'];
   onClick: () => void;
-  onRandomize: () => void;
 }> = (props) => (
   <Flex as="div" align="start" gap={3}>
     <Show
@@ -102,15 +103,6 @@ const IconChooser: Component<{
         </>
       )}
     </Show>
-    <Button
-      testId="randomize"
-      size={1}
-      variant="ghost"
-      color="neutral"
-      onClick={props.onRandomize}
-    >
-      <IconShuffle aria-hidden /> Randomize
-    </Button>
   </Flex>
 );
 
@@ -131,11 +123,7 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
           class={css.section}
           aria-label="Icon"
         >
-          <IconChooser
-            icon={props.state.icon}
-            onClick={props.onChooseIcon}
-            onRandomize={props.onRandomize}
-          />
+          <IconChooser icon={props.state.icon} onClick={props.onChooseIcon} />
           <Show when={props.activePack}>
             {(pack) => (
               <PackCard
@@ -146,6 +134,26 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
               />
             )}
           </Show>
+          <Flex as="div" gap={3}>
+            <Button
+              class={css.actionButton}
+              testId="randomize"
+              variant="outline"
+              color="neutral"
+              onClick={props.onRandomize}
+            >
+              <IconShuffle aria-hidden /> Randomize
+            </Button>
+            <Button
+              class={css.actionButton}
+              testId="reset"
+              variant="outline"
+              color="neutral"
+              onClick={props.onReset}
+            >
+              <IconReset aria-hidden /> Reset
+            </Button>
+          </Flex>
         </Flex>
 
         <Separator decorative size={4} />

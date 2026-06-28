@@ -75,6 +75,14 @@ export const idSlot = style({
   minWidth: 0,
 });
 
+// Randomize / Reset share the row below the pack card at equal width.
+// `flex: 1 1 0` splits the row 50/50; `justifyContent: center` keeps
+// each label+icon centered within its half.
+export const actionButton = style({
+  flex: '1 1 0',
+  justifyContent: 'center',
+});
+
 // Icon-id badge. Names get long (e.g. "align-box-bottom-center-filled"),
 // but `<Badge>` defaults to `inline-flex` + `nowrap` + `flex-shrink: 0`,
 // so it would overflow the rail. `&&` doubles the class specificity to

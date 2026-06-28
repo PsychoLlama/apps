@@ -44,12 +44,15 @@ export interface PickerState {
 export const entryKey = (pack: string, name: string): string =>
   `${pack}:${name}`;
 
+/** Pack the editor opens to and Reset returns the active pack to. */
+export const DEFAULT_PACK_ID = 'mdi';
+
 export const pickerStore = defineStore<PickerState>(() => ({
   // Land on the chooser. The pack-detail view is reached only after
   // the user picks a pack (or a deep link forces a sync via the
   // selected.pack effect in the component).
   view: 'packs',
-  activePackId: 'mdi',
+  activePackId: DEFAULT_PACK_ID,
   search: '',
   packSearch: '',
   currentPage: 0,

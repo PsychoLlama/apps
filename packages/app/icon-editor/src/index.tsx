@@ -10,15 +10,14 @@ import {
 import { useSearchParams } from '@solidjs/router';
 import { useAction, useEffect } from '@lib/state';
 import { Frame, SiteHeader } from '@lib/shell';
-import { Button, Flex } from '@lib/ui';
-import IconReset from 'virtual:icons/mdi/restart';
+import { Flex } from '@lib/ui';
 import { IconGrid } from './components/icon-grid';
 import {
   loadPacksEffect,
   openPack as openPackAction,
   setView as setPickerViewAction,
 } from './components/icon-grid/bindings';
-import { picker } from './components/icon-grid/store';
+import { DEFAULT_PACK_ID, picker } from './components/icon-grid/store';
 import { Preview } from './components/preview';
 import { PropertiesPanel } from './components/properties-panel';
 import { encodeIconRef, parseIconRef } from './icons';
@@ -27,7 +26,6 @@ import {
   hydrateStyle as hydrateStyleAction,
   openPicker as openPickerAction,
   randomizeIconEffect,
-  randomizeStyleEffect,
   reset as resetAction,
   resolveIconEffect,
   setIcon as setIconAction,
@@ -80,7 +78,6 @@ export const IconEditor = () => {
   const closePicker = useAction(closePickerAction);
   const setPickerView = useAction(setPickerViewAction);
   const openPack = useAction(openPackAction);
-  const randomizeStyle = useEffect(randomizeStyleEffect);
   const randomizeIcon = useEffect(randomizeIconEffect);
   const resolveIcon = useEffect(resolveIconEffect);
   const loadPacks = useEffect(loadPacksEffect);
@@ -223,9 +220,17 @@ export const IconEditor = () => {
     if (timeoutId !== undefined) clearTimeout(timeoutId);
   });
 
+  // Roll a fresh icon without leaving the active pack — style fields
+  // stay put so the user keeps refining one look.
   const handleRandomize = () => {
-    randomizeStyle();
-    void randomizeIcon();
+    void randomizeIcon(picker.activePackId);
+  };
+
+  // Reset clears the icon + style and returns the active pack to the
+  // default, so the panel's pack card matches the blank-slate state.
+  const handleReset = () => {
+    reset();
+    openPack(DEFAULT_PACK_ID);
   };
 
   // "Choose pack" opens the pack list; "Choose icon" jumps straight to
@@ -260,19 +265,7 @@ export const IconEditor = () => {
 
   return (
     <Frame>
-      <SiteHeader
-        title="Icon Editor"
-        actions={
-          <Button
-            testId="reset"
-            variant="ghost"
-            color="neutral"
-            onClick={reset}
-          >
-            <IconReset aria-hidden /> Reset
-          </Button>
-        }
-      />
+      <SiteHeader title="Icon Editor" />
 
       <Flex as="div" direction="column" class={css.workspace}>
         <Flex as="div" class={css.body}>
@@ -303,6 +296,7 @@ export const IconEditor = () => {
                   onChoosePack={handleChoosePack}
                   onChooseIcon={handleChooseIcon}
                   onRandomize={handleRandomize}
+                  onReset={handleReset}
                 />
               </Match>
               <Match when={rail.view === 'picker'}>

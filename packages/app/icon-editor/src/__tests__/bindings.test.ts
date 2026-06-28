@@ -1,6 +1,5 @@
 import { createTestBindings } from '@lib/state';
 import {
-  applyRandomStyle,
   applyResolvedIcon,
   beginIconResolve,
   closePicker,
@@ -185,22 +184,6 @@ describe('failIconResolve', () => {
     useAction(failIconResolve)();
 
     expect(loading.pending).toBe(0);
-  });
-});
-
-describe('applyRandomStyle', () => {
-  it('writes every style field from the seed in one flush', () => {
-    const { icon, useAction } = setup();
-
-    useAction(applyRandomStyle)({
-      palette: 'mint',
-      shape: 'circle',
-      padding: 30,
-    });
-
-    expect(icon.palette).toBe('mint');
-    expect(icon.shape).toBe('circle');
-    expect(icon.padding).toBe(30);
   });
 });
 
