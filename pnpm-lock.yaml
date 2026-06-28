@@ -45,6 +45,9 @@ catalogs:
     eslint:
       specifier: ^10.0.0
       version: 10.5.0
+    idb:
+      specifier: ^8.0.3
+      version: 8.0.3
     knip:
       specifier: ^6.13.1
       version: 6.17.1
@@ -463,6 +466,15 @@ importers:
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
+
+  packages/lib/holz-idb-backend:
+    dependencies:
+      '@holz/core':
+        specifier: 'catalog:'
+        version: 0.8.3-rc.162
+      idb:
+        specifier: 'catalog:'
+        version: 8.0.3
 
   packages/lib/holz-opfs-backend:
     dependencies:
@@ -3376,6 +3388,9 @@ packages:
 
   httpxy@0.5.3:
     resolution: {integrity: sha512-SMS9V6Sn7VWaS11lYhoAr0ceoaiolTWf4jYdJn0NJhCdKMu9R2H9Fh0LBDWBHQF6HRLI1PmaePYsjanSpE5PEw==}
+
+  idb@8.0.3:
+    resolution: {integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -7772,6 +7787,8 @@ snapshots:
       - supports-color
 
   httpxy@0.5.3: {}
+
+  idb@8.0.3: {}
 
   ieee754@1.2.1: {}
 
