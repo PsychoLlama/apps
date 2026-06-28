@@ -32,25 +32,21 @@ export interface LogDatabase extends DBSchema {
  * in the main thread, workers, and service workers — `indexedDB` is available
  * in all three.
  */
-const openLogDatabase = async (): Promise<IDBPDatabase<LogDatabase>> => {
-  const db = await openDB<LogDatabase>(DATABASE_NAME, 1, {
+const openLogDatabase = (): Promise<IDBPDatabase<LogDatabase>> =>
+  openDB<LogDatabase>(DATABASE_NAME, 1, {
     upgrade: (database) => {
       const store = database.createObjectStore(STORE_NAME, {
         autoIncrement: true,
       });
       store.createIndex(TIMESTAMP_INDEX, 'timestamp');
     },
-    blocking: () => {
-      // Another connection wants to upgrade or delete `@holz` (a new app
-      // version, or a test resetting the store). Step aside so it isn't
-      // blocked; this connection won't be reused afterward. `blocking` only
-      // fires after this open resolves, so `db` is assigned by then.
-      db.close();
-    },
+    // Deliberately no `blocking` handler. It would fire on a version bump or
+    // `deleteDB`, and closing the connection there would silently kill logging
+    // in an already-open tab (its queued writes reject with InvalidStateError,
+    // swallowed below) with no reconnect. A graceful multi-tab handoff is a
+    // problem for whenever the schema version actually moves; until then,
+    // holding the connection open is the safe default.
   });
-
-  return db;
-};
 
 /**
  * Create the holz backend. Opening the database up front migrates the schema

@@ -4,7 +4,7 @@
  * the same path production code takes: `logger.info(...)` → processor → store.
  */
 
-import { openDB, deleteDB } from 'idb';
+import { openDB } from 'idb';
 import { createLogger, level, type Log, type Logger } from '@holz/core';
 
 import { createIdbBackend, type LogDatabase } from '../holz-idb-backend';
@@ -49,11 +49,18 @@ const makeLog = (overrides: Partial<Log>): Log => ({
 let logger: Logger;
 
 beforeEach(async () => {
-  // Start every test against an empty database. Deleting it also discards the
-  // previous test's backend connection — its `blocking` handler closes on the
-  // versionchange — so the delete never wedges behind a lingering connection.
-  await deleteDB(DATABASE_NAME);
+  // Build the backend first so the database and its store exist, then wipe the
+  // store so each test starts empty. Clearing is a plain transaction — unlike
+  // `deleteDB`, it raises no `versionchange`, so it neither disturbs nor waits
+  // on any other open connection.
   logger = createLogger(await createIdbBackend());
+
+  const db = await openDB<LogDatabase>(DATABASE_NAME);
+  try {
+    await db.clear(STORE_NAME);
+  } finally {
+    db.close();
+  }
 });
 
 it('persists a log with its level, origin, and context', async () => {
