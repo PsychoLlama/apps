@@ -40,14 +40,52 @@ export interface CreateLogValveOptions {
  * Create a {@link LogValve}. Valves start open, streaming every log straight
  * through until {@link LogValve.close} is called.
  */
-export const createLogValve = (options: CreateLogValveOptions): LogValve => {
-  const { processor } = options;
+export const createLogValve = ({
+  capacity = Infinity,
+  processor,
+}: CreateLogValveOptions): LogValve => {
+  let isOpen = true;
+  let maxCapacity = capacity;
+  const queue: Log[] = [];
 
-  // Stub: a transparent pass-through. The real implementation — buffering
-  // while closed up to `options.capacity` and flushing on open — lands next.
-  return Object.assign((log: Log) => processor(log), {
-    open: () => {},
-    close: () => {},
-    setCapacity: () => {},
+  // Drop the oldest logs until the backlog fits within `maxCapacity`. The
+  // `queue.length > 0` guard keeps a zero/negative capacity from spinning on
+  // an already-empty queue.
+  const trim = () => {
+    while (queue.length > 0 && queue.length > maxCapacity) {
+      queue.shift();
+    }
+  };
+
+  const valve = (log: Log): unknown => {
+    if (isOpen) {
+      return processor(log);
+    }
+
+    queue.push(log);
+    trim();
+    return undefined;
+  };
+
+  return Object.assign(valve, {
+    open() {
+      isOpen = true;
+
+      // Drain before forwarding: a processor that logs back through the now-open
+      // valve streams straight through instead of re-queuing behind the flush.
+      const pending = queue.splice(0);
+      for (const log of pending) {
+        processor(log);
+      }
+    },
+
+    close() {
+      isOpen = false;
+    },
+
+    setCapacity(next: number) {
+      maxCapacity = next;
+      trim();
+    },
   });
 };

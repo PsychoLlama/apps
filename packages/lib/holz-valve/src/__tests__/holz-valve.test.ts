@@ -1,0 +1,182 @@
+/**
+ * Behavioral tests for the log valve. Logs are driven through a real
+ * `@holz/core` logger so the tests exercise the production path:
+ * `logger.info(...)` → valve → downstream processor.
+ */
+
+import {
+  createLogger,
+  level,
+  type Log,
+  type Logger,
+  type LogProcessor,
+} from '@holz/core';
+
+import { createLogValve, type LogValve } from '../holz-valve';
+
+interface Harness {
+  /** Messages that reached the downstream processor, in arrival order. */
+  forwarded: string[];
+  valve: LogValve;
+  logger: Logger;
+}
+
+/** Wire a valve to a recording processor behind a real logger. */
+const setup = (capacity?: number): Harness => {
+  const forwarded: string[] = [];
+  const processor: LogProcessor = (log) => void forwarded.push(log.message);
+  const valve = createLogValve({ capacity, processor });
+  const logger = createLogger(valve);
+  return { forwarded, valve, logger };
+};
+
+/** Minimal `Log` for exercising the valve as a processor directly. */
+const makeLog = (message: string): Log => ({
+  timestamp: 0,
+  message,
+  level: level.info,
+  origin: ['test'],
+  context: {},
+});
+
+describe('createLogValve', () => {
+  it('streams logs straight through while open (the default)', () => {
+    const { forwarded, logger } = setup();
+
+    logger.info('a');
+    logger.info('b');
+
+    expect(forwarded).toEqual(['a', 'b']);
+  });
+
+  it('queues logs while closed, forwarding nothing', () => {
+    const { forwarded, valve, logger } = setup();
+
+    valve.close();
+    logger.info('a');
+    logger.info('b');
+
+    expect(forwarded).toEqual([]);
+  });
+
+  it('flushes queued logs in arrival order when reopened, then streams', () => {
+    const { forwarded, valve, logger } = setup();
+
+    valve.close();
+    logger.info('a');
+    logger.info('b');
+    expect(forwarded).toEqual([]);
+
+    valve.open();
+    expect(forwarded).toEqual(['a', 'b']);
+
+    logger.info('c');
+    expect(forwarded).toEqual(['a', 'b', 'c']);
+  });
+
+  it('drops the oldest logs once the buffer is full', () => {
+    const { forwarded, valve, logger } = setup(2);
+
+    valve.close();
+    logger.info('a');
+    logger.info('b');
+    logger.info('c');
+    logger.info('d');
+    valve.open();
+
+    expect(forwarded).toEqual(['c', 'd']);
+  });
+
+  it('keeps nothing while closed when capacity is zero', () => {
+    const { forwarded, valve, logger } = setup(0);
+
+    valve.close();
+    logger.info('a');
+    logger.info('b');
+    valve.open();
+    expect(forwarded).toEqual([]);
+
+    logger.info('c');
+    expect(forwarded).toEqual(['c']);
+  });
+
+  it('drops the oldest to fit when capacity shrinks below the backlog', () => {
+    const { forwarded, valve, logger } = setup();
+
+    valve.close();
+    logger.info('a');
+    logger.info('b');
+    logger.info('c');
+    logger.info('d');
+
+    valve.setCapacity(2);
+    valve.open();
+
+    expect(forwarded).toEqual(['c', 'd']);
+  });
+
+  it('retains more once capacity grows', () => {
+    const { forwarded, valve, logger } = setup(1);
+
+    valve.close();
+    logger.info('a');
+    logger.info('b'); // evicts 'a' under capacity 1
+
+    valve.setCapacity(3);
+    logger.info('c');
+    logger.info('d');
+    valve.open();
+
+    expect(forwarded).toEqual(['b', 'c', 'd']);
+  });
+
+  it('streams a re-entrant log cleanly during a flush', () => {
+    const forwarded: string[] = [];
+    let reentered = false;
+
+    // `processor` only reads `logger` when invoked (during the flush below),
+    // by which point the `const` is initialized.
+    const processor: LogProcessor = (log) => {
+      forwarded.push(log.message);
+      if (log.message === 'b' && !reentered) {
+        reentered = true;
+        logger.info('reentrant');
+      }
+    };
+
+    const valve = createLogValve({ processor });
+    const logger = createLogger(valve);
+
+    valve.close();
+    logger.info('a');
+    logger.info('b');
+    logger.info('c');
+    valve.open();
+
+    // 'reentrant' is logged while flushing 'b'. Since the valve is already
+    // open by then, it streams straight through rather than re-queuing.
+    expect(forwarded).toEqual(['a', 'b', 'reentrant', 'c']);
+  });
+
+  it('returns the downstream result while open and nothing while closed', () => {
+    const processor: LogProcessor = () => 'handled';
+    const valve = createLogValve({ processor });
+
+    expect(valve(makeLog('a'))).toBe('handled');
+
+    valve.close();
+    expect(valve(makeLog('b'))).toBeUndefined();
+  });
+
+  it('treats redundant open/close calls as no-ops', () => {
+    const { forwarded, valve, logger } = setup();
+
+    valve.open(); // already open
+    logger.info('a');
+    valve.close();
+    valve.close(); // already closed
+    logger.info('b');
+
+    expect(forwarded).toEqual(['a']);
+  });
+});
