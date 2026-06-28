@@ -1,0 +1,16 @@
+{
+  "name": "@lib/holz-valve",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Suspend and resume a holz log stream behind a bounded buffer.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@holz/core": "catalog:"
+  }
+}

@@ -12,6 +12,9 @@ catalogs:
     '@holz/log-collector':
       specifier: 0.8.3-rc.162
       version: 0.8.3-rc.162
+    '@iconify/json':
+      specifier: ^2.2.470
+      version: 2.2.491
     '@solidjs/testing-library':
       specifier: ^0.8.10
       version: 0.8.10
@@ -484,6 +487,12 @@ importers:
       '@lib/messaging':
         specifier: workspace:*
         version: link:../messaging
+
+  packages/lib/holz-valve:
+    dependencies:
+      '@holz/core':
+        specifier: 'catalog:'
+        version: 0.8.3-rc.162
 
   packages/lib/messaging: {}
 
