@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { breakpoint, neutral, space } from '@lib/design';
+import { breakpoint, neutral } from '@lib/design';
 
 // Workspace fills the viewport edge-to-edge below the SiteHeader. No
 // outer padding or gaps — the canvas/rail share a single continuous
@@ -52,12 +52,13 @@ export const canvasStage = style({
   justifyContent: 'center',
 });
 
-// Rail is a single bordered slab hosting the @lib/ui Tabs primitive.
-// Flex column so the active panel can fill remaining height under the
-// tab strip. On mobile it claims the majority 60% slice (matching the
-// canvas's 40%); on desktop it becomes a fixed-width side column whose
-// width steps up on wider viewports so the inspector keeps useful
-// proportions on ultrawide monitors.
+// Rail is a single bordered slab hosting the editing inspector — the
+// always-on properties panel, or the full-rail icon picker swapped in
+// via the Browse button. Flex column so whichever surface is mounted
+// can fill the rail's height. On mobile it claims the majority 60%
+// slice (matching the canvas's 40%); on desktop it becomes a fixed-
+// width side column whose width steps up on wider viewports so the
+// inspector keeps useful proportions on ultrawide monitors.
 export const rail = style({
   display: 'flex',
   flexDirection: 'column',
@@ -74,25 +75,4 @@ export const rail = style({
     [breakpoint.lg]: { width: '380px' },
     [breakpoint.xl]: { width: '440px' },
   },
-});
-
-// Tab panel runs flush against the rail edges. Padding is internal so
-// scroll content stays clear of the borders. Always a flex column so
-// children can grow/shrink predictably. The rail carries a definite
-// height on both axes now — its 60% slice on mobile, the row body on
-// desktop — so the panel inherits a stable box and switching tabs
-// doesn't reflow. The icon grid scrolls within whatever space remains
-// after the search bar — never dictates the panel size.
-export const tabPanel = style({
-  paddingBlock: space[3],
-  paddingInline: space[3],
-  display: 'flex',
-  flexDirection: 'column',
-});
-
-// Variant for the Icon panel — claims the rail's leftover height under
-// the tab strip on every viewport.
-export const tabPanelGrow = style({
-  flex: '1 1 auto',
-  minHeight: 0,
 });

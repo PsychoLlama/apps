@@ -1,8 +1,15 @@
 import { style } from '@vanilla-extract/css';
 import { accent, fast, neutral, radius, space, standard } from '@lib/design';
 
+// Fills the editing rail directly (it's no longer wrapped in a padded
+// tab panel). Owns its own internal padding so the search bar and grid
+// stay clear of the rail border, and `flex: 1 1 auto` + `minHeight: 0`
+// let the inner ScrollArea claim the leftover height.
 export const root = style({
+  flex: '1 1 auto',
   minHeight: 0,
+  paddingBlock: space[3],
+  paddingInline: space[3],
 });
 
 // `ScrollArea` claims the leftover vertical space inside its column

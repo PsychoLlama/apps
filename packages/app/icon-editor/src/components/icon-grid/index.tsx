@@ -77,6 +77,8 @@ interface IconGridProps {
   selected: IconRef | undefined;
   /** Called when the user picks a different icon. */
   onSelect: (icon: IconRef) => void;
+  /** Leave the picker and return to the properties inspector. */
+  onClose: () => void;
 }
 
 /**
@@ -104,19 +106,23 @@ export const IconGrid: Component<IconGridProps> = (props) => {
     if (!picker.packs) void loadPacks();
   });
 
-  // Sync the active pack when the *selected* icon's pack changes —
-  // opening the editor at `?icon=tabler:rocket` should land on the
-  // tabler pack detail, not on mdi's. `on()` so the effect doesn't
-  // re-fire when the user manually switches packs (which would
-  // immediately revert their choice). Skip while no icon is chosen
-  // yet — the picker keeps its existing `activePackId` so the user's
-  // browsing position survives selection-clearing actions like reset.
+  // Sync the active pack when the *selected* icon's pack changes mid-
+  // session (e.g. URL navigation while the picker is open). `on()` so
+  // the effect doesn't re-fire when the user manually switches packs
+  // (which would immediately revert their choice). `defer: true` skips
+  // the mount run so the Browse button always lands on the pack list —
+  // the picker is no longer the deep-link landing surface (the
+  // properties panel shows the selected icon regardless of pack), so
+  // there's nothing to auto-jump to on open. Skip while no icon is
+  // chosen yet — the picker keeps its existing `activePackId` so the
+  // user's browsing position survives selection-clearing actions.
   createEffect(
     on(
       () => props.selected?.pack,
       (pack) => {
         if (pack && pack !== picker.activePackId) openPack(pack);
       },
+      { defer: true },
     ),
   );
 
@@ -321,7 +327,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   };
 
   return (
-    <Flex as="div" direction="column" gap={3} grow class={css.root}>
+    <Flex as="div" direction="column" gap={3} class={css.root}>
       <Switch>
         <Match when={picker.view === 'packs'}>
           <PackListView
@@ -330,6 +336,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
             search={picker.packSearch}
             onSearch={setPackSearch}
             onPick={openPack}
+            onClose={props.onClose}
           />
         </Match>
         <Match when={picker.view === 'pack-detail'}>
@@ -368,6 +375,8 @@ interface PackListViewProps {
   search: string;
   onSearch: (value: string) => void;
   onPick: (id: string) => void;
+  /** Leave the picker and return to the properties inspector. */
+  onClose: () => void;
 }
 
 const PackListView: Component<PackListViewProps> = (props) => {
@@ -396,6 +405,24 @@ const PackListView: Component<PackListViewProps> = (props) => {
 
   return (
     <>
+      <Flex as="div" align="center" gap={2}>
+        <IconButton
+          testId="icon-grid-pack-list-close"
+          size={1}
+          variant="ghost"
+          color="neutral"
+          aria-label="Back to editor"
+          onClick={props.onClose}
+        >
+          <IconBack aria-hidden />
+        </IconButton>
+        <Flex as="div" grow>
+          <Text as="span" size={2} weight="medium" truncate selectable={false}>
+            Icon packs
+          </Text>
+        </Flex>
+      </Flex>
+
       <TextField
         testId="icon-grid-pack-search"
         type="search"

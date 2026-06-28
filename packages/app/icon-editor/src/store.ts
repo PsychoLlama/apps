@@ -36,21 +36,26 @@ export const iconEditorStore = defineStore<IconEditorState>(() => ({
 /** Live, readonly view of the icon under construction. */
 export const iconEditor = createStore(iconEditorStore);
 
-/** Inspector tab in the right rail. */
-export type InspectorTab = 'icon' | 'style' | 'export';
+/**
+ * Which surface the editing rail is showing. `properties` is the
+ * always-on inspector (selected icon + style + export); `picker` is
+ * the full-rail icon browser reached via the Browse button and left
+ * when an icon is chosen.
+ */
+export type RailView = 'properties' | 'picker';
 
-/** Inspector tab selection state. */
-export interface InspectorState {
-  /** Currently visible inspector panel. */
-  tab: InspectorTab;
+/** Editing-rail navigation state. */
+export interface RailState {
+  /** Currently visible rail surface. */
+  view: RailView;
 }
 
-export const inspectorStore = defineStore<InspectorState>(() => ({
-  tab: 'icon',
+export const railStore = defineStore<RailState>(() => ({
+  view: 'properties',
 }));
 
-/** Live, readonly view of the inspector tab selection. */
-export const inspector = createStore(inspectorStore);
+/** Live, readonly view of the editing-rail surface. */
+export const rail = createStore(railStore);
 
 /**
  * Tracks every async icon resolution. Components show a skeleton while
