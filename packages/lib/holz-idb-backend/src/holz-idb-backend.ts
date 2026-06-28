@@ -7,11 +7,23 @@ const DATABASE_NAME = '@holz';
 /** Object store every {@link Log} lands in. */
 const STORE_NAME = 'logs';
 
+/**
+ * Index over `Log.timestamp`. Insertion order (the auto-incremented key)
+ * tracks event time within one context, but several contexts — main thread,
+ * workers, service workers — write to this store, and a late or buffered
+ * producer can insert older logs after newer ones. The index restores true
+ * chronological reads and time-window range queries.
+ */
+const TIMESTAMP_INDEX = 'by-timestamp';
+
 interface LogDatabase extends DBSchema {
   [STORE_NAME]: {
     /** Auto-incremented insertion order; doubles as the read cursor. */
     key: number;
     value: Log;
+    indexes: {
+      [TIMESTAMP_INDEX]: number;
+    };
   };
 }
 
@@ -23,7 +35,8 @@ interface LogDatabase extends DBSchema {
 const openLogDatabase = () =>
   openDB<LogDatabase>(DATABASE_NAME, 1, {
     upgrade: (db) => {
-      db.createObjectStore(STORE_NAME, { autoIncrement: true });
+      const store = db.createObjectStore(STORE_NAME, { autoIncrement: true });
+      store.createIndex(TIMESTAMP_INDEX, 'timestamp');
     },
   });
 
