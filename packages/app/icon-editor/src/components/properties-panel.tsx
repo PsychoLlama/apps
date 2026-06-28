@@ -4,7 +4,7 @@
 
 import { Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { Card, Flex, ScrollArea, Separator, Text } from '@lib/ui';
+import { Badge, Flex, ScrollArea, Separator, Text } from '@lib/ui';
 import IconPlaceholder from 'virtual:icons/mdi/image-outline';
 import type { IconPackSummary } from '../icons';
 import type { IconEditorShape, IconEditorState } from '../store';
@@ -36,73 +36,66 @@ interface PropertiesPanelProps {
 }
 
 /**
- * Clickable icon chip — glyph thumbnail beside the icon name, or a
- * dashed placeholder when nothing's chosen. Activating it opens the
- * active pack's grid to pick (or swap) the icon.
+ * Selected-icon row — the glyph thumbnail is itself the button that
+ * opens the active pack's grid, with the icon id alongside as a neutral
+ * badge. Empty state swaps in a dashed placeholder and a prompt.
  */
 const IconChooser: Component<{
   icon: IconEditorState['icon'];
   onClick: () => void;
 }> = (props) => (
-  <Card
-    as="button"
-    variant="surface"
-    testId="icon-editor-choose-icon"
-    class={css.chooser}
-    aria-label={
-      props.icon ? `Change icon: ${props.icon.name}` : 'Choose an icon'
-    }
-    onClick={props.onClick}
-  >
-    <Flex as="div" align="center" gap={3}>
-      <Show
-        when={props.icon}
-        fallback={
-          <>
-            {/* Dashed glyph well; no @lib/ui analogue. */}
-            {/* eslint-disable-next-line custom/require-ui-primitives */}
-            <span class={`${css.thumb} ${css.thumbEmpty}`} aria-hidden>
-              <IconPlaceholder class={css.thumbIcon} />
-            </span>
-            <Text as="span" size={2} color="lowContrast" selectable={false}>
-              Choose an icon
-            </Text>
-          </>
-        }
-      >
-        {(icon) => (
-          <>
-            {/* eslint-disable-next-line custom/require-ui-primitives */}
-            <span class={css.thumb} aria-hidden>
-              <svg
-                class={css.thumbIcon}
-                viewBox={`0 0 ${icon().width} ${icon().height}`}
-                innerHTML={icon().body}
-              />
-            </span>
-            <Flex as="div" direction="column" grow class={css.summaryText}>
-              <Text
-                as="span"
-                size={2}
-                weight="medium"
-                truncate
-                selectable={false}
-              >
-                {icon().name}
-              </Text>
-            </Flex>
-          </>
-        )}
-      </Show>
-    </Flex>
-  </Card>
+  <Flex as="div" align="center" gap={3}>
+    <Show
+      when={props.icon}
+      fallback={
+        <>
+          {/* The thumbnail is the click target; no @lib/ui analogue
+              for a framed glyph button. */}
+          {/* eslint-disable-next-line custom/require-ui-primitives */}
+          <button
+            type="button"
+            class={`${css.thumbButton} ${css.thumbButtonEmpty}`}
+            aria-label="Choose an icon"
+            onClick={props.onClick}
+          >
+            <IconPlaceholder class={css.thumbIcon} aria-hidden />
+          </button>
+          <Text as="span" size={2} color="lowContrast" selectable={false}>
+            Choose an icon
+          </Text>
+        </>
+      }
+    >
+      {(icon) => (
+        <>
+          {/* eslint-disable-next-line custom/require-ui-primitives */}
+          <button
+            type="button"
+            class={css.thumbButton}
+            aria-label={`Change icon: ${icon().name}`}
+            onClick={props.onClick}
+          >
+            <svg
+              class={css.thumbIcon}
+              viewBox={`0 0 ${icon().width} ${icon().height}`}
+              innerHTML={icon().body}
+              aria-hidden="true"
+            />
+          </button>
+          <Badge class={css.iconBadge} size={1} variant="soft" color="neutral">
+            {icon().name}
+          </Badge>
+        </>
+      )}
+    </Show>
+  </Flex>
 );
 
 /**
- * The always-on editing inspector — the selected pack and icon, style
- * controls, and export, stacked into one scrolling column. The pack and
- * icon are each a card that swaps the whole rail to the relevant picker
- * surface (handled by the parent), so this panel never owns the picker.
+ * The always-on editing inspector — the selected icon and pack, style
+ * controls, and export, stacked into one scrolling column. The icon
+ * thumbnail and the pack card each swap the whole rail to the relevant
+ * picker surface (handled by the parent), so this panel never owns it.
  */
 export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
   return (
@@ -115,6 +108,7 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
           class={css.section}
           aria-label="Icon"
         >
+          <IconChooser icon={props.state.icon} onClick={props.onChooseIcon} />
           <Show when={props.activePack}>
             {(pack) => (
               <PackCard
@@ -125,7 +119,6 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
               />
             )}
           </Show>
-          <IconChooser icon={props.state.icon} onClick={props.onChooseIcon} />
         </Flex>
 
         <Separator decorative size={4} />

@@ -45,7 +45,6 @@ import {
 import {
   loadManifestEffect,
   loadPageEffect,
-  openPack as openPackAction,
   releaseInactivePacks as releaseInactivePacksAction,
   seedEntry as seedEntryAction,
   setCurrentPage as setCurrentPageAction,
@@ -95,7 +94,6 @@ interface IconGridProps {
  */
 export const IconGrid: Component<IconGridProps> = (props) => {
   const setView = useAction(setViewAction);
-  const openPack = useAction(openPackAction);
   const setSearch = useAction(setSearchAction);
   const setPackSearch = useAction(setPackSearchAction);
   const setCurrentPage = useAction(setCurrentPageAction);
@@ -105,28 +103,10 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   const loadPage = useEffect(loadPageEffect);
 
   // The pack catalog is fetched eagerly by the editor (it backs the
-  // properties panel's pack card before the picker ever opens), so the
-  // picker can assume `picker.packs` is already loading on mount.
-
-  // Sync the active pack when the *selected* icon's pack changes mid-
-  // session (e.g. URL navigation while the picker is open). `on()` so
-  // the effect doesn't re-fire when the user manually switches packs
-  // (which would immediately revert their choice). `defer: true` skips
-  // the mount run so the Browse button always lands on the pack list —
-  // the picker is no longer the deep-link landing surface (the
-  // properties panel shows the selected icon regardless of pack), so
-  // there's nothing to auto-jump to on open. Skip while no icon is
-  // chosen yet — the picker keeps its existing `activePackId` so the
-  // user's browsing position survives selection-clearing actions.
-  createEffect(
-    on(
-      () => props.selected?.pack,
-      (pack) => {
-        if (pack && pack !== picker.activePackId) openPack(pack);
-      },
-      { defer: true },
-    ),
-  );
+  // properties panel's pack card before the picker ever opens), and the
+  // editor also keeps `activePackId` in lockstep with the selected
+  // icon's pack, so the picker can assume both are already arranged on
+  // mount.
 
   // Keep the entries map seeded with the currently selected icon —
   // even before the manifest loads, the picker knows it can render

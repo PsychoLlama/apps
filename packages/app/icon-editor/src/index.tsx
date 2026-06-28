@@ -99,6 +99,19 @@ export const IconEditor = () => {
     picker.packs?.find((pack) => pack.id === picker.activePackId),
   );
 
+  // Keep the active pack in lockstep with the selected icon. A deep
+  // link or shuffle can resolve an icon from a pack other than the
+  // current one, and the panel's pack card must reflect that even while
+  // the picker is closed (so this lives here, not in the picker).
+  createEffect(
+    on(
+      () => iconEditor.icon?.pack,
+      (pack) => {
+        if (pack && pack !== picker.activePackId) openPack(pack);
+      },
+    ),
+  );
+
   const readParam = (key: IconSearchParamKey): string | undefined => {
     const value = searchParams[key];
     return typeof value === 'string' ? value : undefined;

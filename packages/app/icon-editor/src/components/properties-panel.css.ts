@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutral, radius, space } from '@lib/design';
+import { accent, fast, neutral, radius, space, standard } from '@lib/design';
 
 // ScrollArea claims the rail's leftover height so the whole inspector
 // scrolls as one column on short viewports. `flex: 1 1 0` keeps it
@@ -24,17 +24,10 @@ export const section = style({
   paddingInline: space[3],
 });
 
-// The icon chooser is a `<Card>` button; left-align its contents to
-// line up with the pack card stacked above it (Card otherwise inherits
-// the host button's centered text).
-export const chooser = style({
-  textAlign: 'left',
-});
-
-// Square frame holding the raw icon glyph (no palette/shape applied —
-// the canvas already shows the styled version; this reads as "the
-// icon you picked").
-export const thumb = style({
+// The 48px glyph frame is itself the "choose icon" button. It holds the
+// raw icon (no palette/shape — the canvas already shows the styled
+// version), and its interactive states echo the icon-grid tiles.
+export const thumbButton = style({
   flexShrink: 0,
   width: '48px',
   height: '48px',
@@ -45,11 +38,27 @@ export const thumb = style({
   border: `1px solid ${neutral.solid[5]}`,
   backgroundColor: neutral.alpha[2],
   color: neutral.solid[12],
+  cursor: 'pointer',
+  transitionProperty: 'background-color, border-color',
+  transitionDuration: fast[2],
+  transitionTimingFunction: standard.productive,
+  ':hover': {
+    backgroundColor: neutral.alpha[3],
+    borderColor: neutral.solid[6],
+  },
+  ':active': {
+    backgroundColor: neutral.alpha[4],
+  },
+  ':focus-visible': {
+    outline: 'none',
+    borderColor: accent.solid[8],
+    boxShadow: `0 0 0 2px ${accent.alpha[5]}`,
+  },
 });
 
 // Empty-state frame — dashed + muted so it reads as a placeholder
 // waiting to be filled rather than a real selection.
-export const thumbEmpty = style({
+export const thumbButtonEmpty = style({
   borderStyle: 'dashed',
   color: neutral.solid[9],
 });
@@ -59,8 +68,18 @@ export const thumbIcon = style({
   height: '70%',
 });
 
-// Identifier column shrinks so long pack/name pairs truncate instead
-// of shoving the thumbnail.
-export const summaryText = style({
-  minWidth: 0,
+// Icon-id badge. Names get long (e.g. "align-box-bottom-center-filled"),
+// but `<Badge>` defaults to `inline-flex` + `nowrap` + `flex-shrink: 0`,
+// so it would overflow the rail. `&&` doubles the class specificity to
+// turn the badge into a single-line, shrink-to-fit ellipsis box.
+export const iconBadge = style({
+  selectors: {
+    '&&': {
+      display: 'block',
+      minWidth: 0,
+      flexShrink: 1,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    },
+  },
 });
