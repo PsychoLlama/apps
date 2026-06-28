@@ -9,6 +9,7 @@ import type { HostApi } from '../host-api';
 import type { WorkerApi } from '../worker/rpc';
 import { OBSERVABILITY_WORKER_NAME } from '../environment';
 import { createNdjsonBuffer } from '../ndjson-buffer';
+import { streamLogs } from '../log-stream';
 
 /**
  * The slice of `document` this backend reads for page-lifecycle flushing. Named
@@ -21,40 +22,16 @@ interface PageVisibility {
 }
 
 /**
- * Drain this tab's NDJSON buffer into the worker, one whole line per `log`
- * event. The reader applies backpressure from the buffer — events go out only
- * as fast as lines are produced — and the loop ends when the buffer closes.
- * Fire-and-forget per the {@link RPC.notify} contract; ordering holds because
- * the transport delivers in send order.
- *
- * Each chunk's buffer is transferred, not copied — a zero-copy hand-off on this
- * hot path. Safe because the chunk owns its buffer outright: the JSON backend
- * mints it via `TextEncoder.encode` (a fresh, exact-sized `ArrayBuffer`) and
- * the buffer is a pass-through `TransformStream`, so nothing else references it
- * once we've read it. Transferring neuters our copy, which we never touch again.
- */
-const streamLogs = async (
-  readable: ReadableStream<Uint8Array>,
-  rpc: RPC<HostApi, WorkerApi, SendOptions>,
-): Promise<void> => {
-  const reader = readable.getReader();
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) return;
-    rpc.notify('log', value, { transfer: [value.buffer] });
-  }
-};
-
-/**
  * A log backend that ships this tab's logs to the shared observability worker
  * for off-main-thread persistence to OPFS. Connects to the worker eagerly — the
  * moment the backend is created — so it's warm before the first log arrives.
  *
  * The worker is a {@link SharedWorker}: a single instance, shared by every tab
  * on the origin, that funnels all tabs' logs into one OPFS file. This tab is
- * just one connection. The worker owns the file name and opens it itself, so
- * there's no handshake — streaming starts immediately; a line that beats the
- * worker's open queues in its sink and lands once the file is open.
+ * just one connection. From here it's a black box — it opens and owns the file
+ * itself (via a nested writer worker; see `../worker/hub.ts`), so there's no
+ * handshake. Streaming starts immediately; a line that beats the open queues in
+ * the writer's sink and lands once the file is open.
  *
  * Must be created on the browser main thread: only it should drive the page
  * lifecycle below, and the pipeline links this in behind `inMainThread` (see
