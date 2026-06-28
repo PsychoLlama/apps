@@ -1,4 +1,12 @@
-import { Match, Switch, createEffect, on, onCleanup, untrack } from 'solid-js';
+import {
+  Match,
+  Switch,
+  createEffect,
+  createMemo,
+  on,
+  onCleanup,
+  untrack,
+} from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
 import { useAction, useEffect } from '@lib/state';
 import { Frame, SiteHeader } from '@lib/shell';
@@ -6,7 +14,12 @@ import { Button, Flex } from '@lib/ui';
 import IconShuffle from 'virtual:icons/mdi/shuffle-variant';
 import IconReset from 'virtual:icons/mdi/restart';
 import { IconGrid } from './components/icon-grid';
-import { setView as setPickerViewAction } from './components/icon-grid/bindings';
+import {
+  loadPacksEffect,
+  openPack as openPackAction,
+  setView as setPickerViewAction,
+} from './components/icon-grid/bindings';
+import { picker } from './components/icon-grid/store';
 import { Preview } from './components/preview';
 import { PropertiesPanel } from './components/properties-panel';
 import { encodeIconRef, parseIconRef } from './icons';
@@ -67,10 +80,24 @@ export const IconEditor = () => {
   const openPicker = useAction(openPickerAction);
   const closePicker = useAction(closePickerAction);
   const setPickerView = useAction(setPickerViewAction);
+  const openPack = useAction(openPackAction);
   const randomizeStyle = useEffect(randomizeStyleEffect);
   const randomizeIcon = useEffect(randomizeIconEffect);
   const resolveIcon = useEffect(resolveIconEffect);
+  const loadPacks = useEffect(loadPacksEffect);
   const [searchParams, setSearchParams] = useSearchParams<IconSearchParams>();
+
+  // Fetch the pack catalog eagerly — the properties panel's pack card
+  // needs it before the picker is ever opened. The store caches the
+  // resolved list, so the picker reuses it on mount.
+  createEffect(() => {
+    if (!picker.packs) void loadPacks();
+  });
+
+  /** The selected pack's summary, surfaced as the panel's pack card. */
+  const activePack = createMemo(() =>
+    picker.packs?.find((pack) => pack.id === picker.activePackId),
+  );
 
   const readParam = (key: IconSearchParamKey): string | undefined => {
     const value = searchParams[key];
@@ -189,12 +216,27 @@ export const IconEditor = () => {
     void randomizeIcon();
   };
 
-  // Open the browser at the pack list every time — picking a different
-  // pack is the entry point, and the user explicitly chose "Browse →
-  // pack list" over reopening the last-viewed grid.
-  const handleBrowse = () => {
+  // "Choose pack" opens the pack list; "Choose icon" jumps straight to
+  // the active pack's grid. Two entry points instead of the old
+  // packs→detail drill-down.
+  const handleChoosePack = () => {
     setPickerView('packs');
     openPicker();
+  };
+
+  const handleChooseIcon = () => {
+    setPickerView('pack-detail');
+    openPicker();
+  };
+
+  // Picking a pack swaps the active pack and returns to the inspector.
+  // A pack change strands the current icon (it belonged to the old
+  // pack), so clear it — the user is starting over within a new pack.
+  const handleSelectPack = (packId: string) => {
+    const current = iconEditor.icon;
+    openPack(packId);
+    if (current && current.pack !== packId) setIcon(undefined);
+    closePicker();
   };
 
   // Committing a pick returns the rail to the properties inspector so
@@ -252,16 +294,19 @@ export const IconEditor = () => {
               <Match when={rail.view === 'properties'}>
                 <PropertiesPanel
                   state={iconEditor}
+                  activePack={activePack()}
                   onPalette={setPalette}
                   onShape={setShape}
                   onPadding={setPadding}
-                  onBrowse={handleBrowse}
+                  onChoosePack={handleChoosePack}
+                  onChooseIcon={handleChooseIcon}
                 />
               </Match>
               <Match when={rail.view === 'picker'}>
                 <IconGrid
                   selected={iconEditor.icon}
                   onSelect={handlePick}
+                  onSelectPack={handleSelectPack}
                   onClose={closePicker}
                 />
               </Match>

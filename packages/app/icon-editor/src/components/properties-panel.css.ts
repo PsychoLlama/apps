@@ -24,9 +24,11 @@ export const section = style({
   paddingInline: space[3],
 });
 
-// Selected-icon chip: square glyph thumbnail beside its identifier.
-export const summary = style({
-  minHeight: 0,
+// The icon chooser is a `<Card>` button; left-align its contents to
+// line up with the pack card stacked above it (Card otherwise inherits
+// the host button's centered text).
+export const chooser = style({
+  textAlign: 'left',
 });
 
 // Square frame holding the raw icon glyph (no palette/shape applied —

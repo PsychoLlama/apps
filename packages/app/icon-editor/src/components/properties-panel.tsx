@@ -4,15 +4,15 @@
 
 import { Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { Button, Flex, ScrollArea, Separator, Text } from '@lib/ui';
-import IconBrowse from 'virtual:icons/mdi/view-grid-outline';
+import { Card, Flex, ScrollArea, Separator, Text } from '@lib/ui';
 import IconPlaceholder from 'virtual:icons/mdi/image-outline';
+import type { IconPackSummary } from '../icons';
 import type { IconEditorShape, IconEditorState } from '../store';
 import type { PaletteName } from '../palette';
 import { ExportActions } from './export-actions';
 import { Field } from './field';
 import { InlineField } from './inline-field';
-import { LicenseBadge } from './license-badge';
+import { PackCard } from './pack-card';
 import { PaddingSlider } from './padding-slider';
 import { PalettePicker } from './palette-picker';
 import { ShapeSelector } from './shape-selector';
@@ -21,77 +21,88 @@ import * as css from './properties-panel.css';
 interface PropertiesPanelProps {
   /** Reactive icon-under-construction. */
   state: IconEditorState;
+  /** Currently selected pack — rendered as a pack card. */
+  activePack: IconPackSummary | undefined;
   /** Apply a palette pick. */
   onPalette: (name: PaletteName) => void;
   /** Apply a shape pick. */
   onShape: (shape: IconEditorShape) => void;
   /** Apply a padding change. */
   onPadding: (value: number) => void;
-  /** Open the full-rail icon browser. */
-  onBrowse: () => void;
+  /** Open the pack list to choose a different pack. */
+  onChoosePack: () => void;
+  /** Open the active pack's grid to choose an icon. */
+  onChooseIcon: () => void;
 }
 
-/** Selected-icon chip — glyph thumbnail beside its `pack:name` identifier. */
-const IconSummary: Component<{ icon: IconEditorState['icon'] }> = (props) => (
-  <Flex as="div" align="center" gap={3} class={css.summary}>
-    <Show
-      when={props.icon}
-      fallback={
-        <>
-          {/* Square placeholder frame; no @lib/ui analogue for the
-              dashed glyph well. */}
-          {/* eslint-disable-next-line custom/require-ui-primitives */}
-          <span class={`${css.thumb} ${css.thumbEmpty}`} aria-hidden>
-            <IconPlaceholder class={css.thumbIcon} />
-          </span>
-          <Text as="span" size={2} color="lowContrast" selectable={false}>
-            No icon selected
-          </Text>
-        </>
-      }
-    >
-      {(icon) => (
-        <>
-          {/* eslint-disable-next-line custom/require-ui-primitives */}
-          <span class={css.thumb} aria-hidden>
-            <svg
-              class={css.thumbIcon}
-              viewBox={`0 0 ${icon().width} ${icon().height}`}
-              innerHTML={icon().body}
-            />
-          </span>
-          <Flex as="div" direction="column" grow class={css.summaryText}>
-            <Text
-              as="span"
-              size={2}
-              weight="medium"
-              truncate
-              selectable={false}
-            >
-              {icon().name}
+/**
+ * Clickable icon chip — glyph thumbnail beside the icon name, or a
+ * dashed placeholder when nothing's chosen. Activating it opens the
+ * active pack's grid to pick (or swap) the icon.
+ */
+const IconChooser: Component<{
+  icon: IconEditorState['icon'];
+  onClick: () => void;
+}> = (props) => (
+  <Card
+    as="button"
+    variant="surface"
+    testId="icon-editor-choose-icon"
+    class={css.chooser}
+    aria-label={
+      props.icon ? `Change icon: ${props.icon.name}` : 'Choose an icon'
+    }
+    onClick={props.onClick}
+  >
+    <Flex as="div" align="center" gap={3}>
+      <Show
+        when={props.icon}
+        fallback={
+          <>
+            {/* Dashed glyph well; no @lib/ui analogue. */}
+            {/* eslint-disable-next-line custom/require-ui-primitives */}
+            <span class={`${css.thumb} ${css.thumbEmpty}`} aria-hidden>
+              <IconPlaceholder class={css.thumbIcon} />
+            </span>
+            <Text as="span" size={2} color="lowContrast" selectable={false}>
+              Choose an icon
             </Text>
-            <Text
-              as="span"
-              size={1}
-              color="lowContrast"
-              truncate
-              selectable={false}
-            >
-              {icon().pack}
-            </Text>
-          </Flex>
-          <LicenseBadge license={icon().license} />
-        </>
-      )}
-    </Show>
-  </Flex>
+          </>
+        }
+      >
+        {(icon) => (
+          <>
+            {/* eslint-disable-next-line custom/require-ui-primitives */}
+            <span class={css.thumb} aria-hidden>
+              <svg
+                class={css.thumbIcon}
+                viewBox={`0 0 ${icon().width} ${icon().height}`}
+                innerHTML={icon().body}
+              />
+            </span>
+            <Flex as="div" direction="column" grow class={css.summaryText}>
+              <Text
+                as="span"
+                size={2}
+                weight="medium"
+                truncate
+                selectable={false}
+              >
+                {icon().name}
+              </Text>
+            </Flex>
+          </>
+        )}
+      </Show>
+    </Flex>
+  </Card>
 );
 
 /**
- * The always-on editing inspector — selected icon, style controls, and
- * export, stacked into one scrolling column. Browsing for a different
- * icon swaps the whole rail to the picker (handled by the parent), so
- * this panel never owns the pack list.
+ * The always-on editing inspector — the selected pack and icon, style
+ * controls, and export, stacked into one scrolling column. The pack and
+ * icon are each a card that swaps the whole rail to the relevant picker
+ * surface (handled by the parent), so this panel never owns the picker.
  */
 export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
   return (
@@ -104,15 +115,17 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
           class={css.section}
           aria-label="Icon"
         >
-          <IconSummary icon={props.state.icon} />
-          <Button
-            testId="icon-editor-browse"
-            variant="soft"
-            color="neutral"
-            onClick={props.onBrowse}
-          >
-            <IconBrowse aria-hidden /> Browse icons
-          </Button>
+          <Show when={props.activePack}>
+            {(pack) => (
+              <PackCard
+                pack={pack()}
+                testId="icon-editor-choose-pack"
+                aria-label={`Change pack: ${pack().name}`}
+                onClick={props.onChoosePack}
+              />
+            )}
+          </Show>
+          <IconChooser icon={props.state.icon} onClick={props.onChooseIcon} />
         </Flex>
 
         <Separator decorative size={4} />

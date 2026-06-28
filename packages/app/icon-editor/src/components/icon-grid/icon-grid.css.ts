@@ -100,39 +100,12 @@ export const empty = style({
   textAlign: 'center',
 });
 
-// Pack list — vertical column of `<Card>`s living inside a
+// Pack list — vertical column of `<PackCard>`s living inside a
 // ScrollArea. Padding only; layout (display/direction/gap) comes
 // from the Flex prop bundle so the gap can be tuned in JSX.
 export const packList = style({
   paddingBlock: space[1],
   paddingInline: space[1],
-});
-
-// Card layout overrides — `<Card>` defaults to `display: block` and
-// inherits the host button's center-aligned text. We need left-
-// aligned content so the pack name doesn't shift when the count
-// label wraps.
-export const packCard = style({
-  textAlign: 'left',
-});
-
-// Selected pack indicator. `:where(.interactive:hover)` in Card has
-// zero specificity, so a plain class with one nested `:hover` wins.
-export const packCardActive = style({
-  backgroundColor: accent.alpha[3],
-  color: accent.solid[11],
-  ':hover': {
-    backgroundColor: accent.alpha[4],
-  },
-});
-
-// Pack sample tile — sized to make the preview row prominent on the
-// card. Each tile carries its own square footprint so non-square
-// icons (Academicons 448×512, etc.) letterbox cleanly inside.
-export const packSample = style({
-  width: '32px',
-  height: '32px',
-  color: neutral.solid[11],
 });
 
 // Pager footer — sticks to the bottom of the icon panel and tabular-
