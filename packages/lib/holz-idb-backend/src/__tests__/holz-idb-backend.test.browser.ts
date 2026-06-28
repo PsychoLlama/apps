@@ -7,7 +7,7 @@
 import { openDB, deleteDB } from 'idb';
 import { createLogger, level, type Log, type Logger } from '@holz/core';
 
-import { createIdbBackend } from '../holz-idb-backend';
+import { createIdbBackend, type LogDatabase } from '../holz-idb-backend';
 
 // The on-disk contract this backend promises, pinned independently of the
 // source. A rename there has to break these too — a deliberate, reviewed change
@@ -18,9 +18,9 @@ const TIMESTAMP_INDEX = 'by-timestamp';
 
 /** Reads every persisted log back in insertion (key) order. */
 const readPersistedLogs = async (): Promise<Log[]> => {
-  const db = await openDB(DATABASE_NAME);
+  const db = await openDB<LogDatabase>(DATABASE_NAME);
   try {
-    return (await db.getAll(STORE_NAME)) as Log[];
+    return await db.getAll(STORE_NAME);
   } finally {
     db.close();
   }
@@ -28,9 +28,9 @@ const readPersistedLogs = async (): Promise<Log[]> => {
 
 /** Reads persisted logs back in event-time order via the timestamp index. */
 const readLogsByTimestamp = async (): Promise<Log[]> => {
-  const db = await openDB(DATABASE_NAME);
+  const db = await openDB<LogDatabase>(DATABASE_NAME);
   try {
-    return (await db.getAllFromIndex(STORE_NAME, TIMESTAMP_INDEX)) as Log[];
+    return await db.getAllFromIndex(STORE_NAME, TIMESTAMP_INDEX);
   } finally {
     db.close();
   }

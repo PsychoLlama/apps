@@ -16,7 +16,7 @@ const STORE_NAME = 'logs';
  */
 const TIMESTAMP_INDEX = 'by-timestamp';
 
-interface LogDatabase extends DBSchema {
+export interface LogDatabase extends DBSchema {
   [STORE_NAME]: {
     /** Auto-incremented insertion order; doubles as the read cursor. */
     key: number;
