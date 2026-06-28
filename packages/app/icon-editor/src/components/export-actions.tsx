@@ -3,13 +3,10 @@ import type { Component } from 'solid-js';
 import { createStore, defineAction, defineStore, useAction } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
 import {
-  Badge,
   Button,
   Flex,
-  Link,
   RadioCardsItem,
   RadioCardsRoot,
-  Text,
   TextField,
 } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
@@ -17,7 +14,6 @@ import { downloadPng, downloadSvg } from '../download';
 import { renderIconSvg } from '../svg';
 import type { IconEditorState } from '../store';
 import { Field } from './field';
-import * as css from './export-actions.css';
 
 interface ExportActionsProps {
   /** Reactive icon state — exported on every Export click. */
@@ -216,43 +212,6 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
       >
         <IconDownload aria-hidden /> Export
       </Button>
-
-      <Show when={props.state.icon?.license?.spdx}>
-        {(spdx) => (
-          <Flex
-            as="div"
-            align="center"
-            justify="between"
-            gap={2}
-            class={css.licenseRow}
-          >
-            <Text as="span" size={1} color="lowContrast" selectable={false}>
-              Icon license
-            </Text>
-            <Show
-              when={props.state.icon?.license?.url}
-              fallback={
-                <Badge size={1} variant="soft" color="neutral">
-                  {spdx()}
-                </Badge>
-              }
-            >
-              {(url) => (
-                <Link
-                  testId="export-license"
-                  href={url()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Badge size={1} variant="soft" color="neutral">
-                    {spdx()}
-                  </Badge>
-                </Link>
-              )}
-            </Show>
-          </Flex>
-        )}
-      </Show>
     </Flex>
   );
 };

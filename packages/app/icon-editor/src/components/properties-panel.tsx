@@ -12,6 +12,7 @@ import type { PaletteName } from '../palette';
 import { ExportActions } from './export-actions';
 import { Field } from './field';
 import { InlineField } from './inline-field';
+import { LicenseBadge } from './license-badge';
 import { PaddingSlider } from './padding-slider';
 import { PalettePicker } from './palette-picker';
 import { ShapeSelector } from './shape-selector';
@@ -79,6 +80,7 @@ const IconSummary: Component<{ icon: IconEditorState['icon'] }> = (props) => (
               {icon().pack}
             </Text>
           </Flex>
+          <LicenseBadge license={icon().license} />
         </>
       )}
     </Show>
