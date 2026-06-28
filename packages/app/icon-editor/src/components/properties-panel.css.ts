@@ -68,6 +68,13 @@ export const thumbIcon = style({
   height: '70%',
 });
 
+// Holds the icon-id badge (or the empty-state prompt) and grows to fill
+// the row, pushing the Randomize action to the far right. `minWidth: 0`
+// lets the badge inside truncate instead of shoving the action off-edge.
+export const idSlot = style({
+  minWidth: 0,
+});
+
 // Icon-id badge. Names get long (e.g. "align-box-bottom-center-filled"),
 // but `<Badge>` defaults to `inline-flex` + `nowrap` + `flex-shrink: 0`,
 // so it would overflow the rail. `&&` doubles the class specificity to

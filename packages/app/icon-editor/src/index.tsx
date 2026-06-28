@@ -11,7 +11,6 @@ import { useSearchParams } from '@solidjs/router';
 import { useAction, useEffect } from '@lib/state';
 import { Frame, SiteHeader } from '@lib/shell';
 import { Button, Flex } from '@lib/ui';
-import IconShuffle from 'virtual:icons/mdi/shuffle-variant';
 import IconReset from 'virtual:icons/mdi/restart';
 import { IconGrid } from './components/icon-grid';
 import {
@@ -264,24 +263,14 @@ export const IconEditor = () => {
       <SiteHeader
         title="Icon Editor"
         actions={
-          <Flex as="div" align="center" gap={4}>
-            <Button
-              testId="randomize"
-              variant="ghost"
-              color="neutral"
-              onClick={handleRandomize}
-            >
-              <IconShuffle aria-hidden /> Shuffle
-            </Button>
-            <Button
-              testId="reset"
-              variant="ghost"
-              color="neutral"
-              onClick={reset}
-            >
-              <IconReset aria-hidden /> Reset
-            </Button>
-          </Flex>
+          <Button
+            testId="reset"
+            variant="ghost"
+            color="neutral"
+            onClick={reset}
+          >
+            <IconReset aria-hidden /> Reset
+          </Button>
         }
       />
 
@@ -313,6 +302,7 @@ export const IconEditor = () => {
                   onPadding={setPadding}
                   onChoosePack={handleChoosePack}
                   onChooseIcon={handleChooseIcon}
+                  onRandomize={handleRandomize}
                 />
               </Match>
               <Match when={rail.view === 'picker'}>

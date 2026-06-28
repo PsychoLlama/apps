@@ -4,8 +4,9 @@
 
 import { Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { Badge, Flex, ScrollArea, Separator, Text } from '@lib/ui';
+import { Badge, Button, Flex, ScrollArea, Separator, Text } from '@lib/ui';
 import IconPlaceholder from 'virtual:icons/mdi/image-outline';
+import IconShuffle from 'virtual:icons/mdi/shuffle-variant';
 import type { IconPackSummary } from '../icons';
 import type { IconEditorShape, IconEditorState } from '../store';
 import type { PaletteName } from '../palette';
@@ -33,18 +34,22 @@ interface PropertiesPanelProps {
   onChoosePack: () => void;
   /** Open the active pack's grid to choose an icon. */
   onChooseIcon: () => void;
+  /** Roll a random icon + style. */
+  onRandomize: () => void;
 }
 
 /**
  * Selected-icon row — the glyph thumbnail is itself the button that
  * opens the active pack's grid, with the icon id alongside as a neutral
- * badge. Empty state swaps in a dashed placeholder and a prompt.
+ * badge and a Randomize action pinned to the top-right. Empty state
+ * swaps in a dashed placeholder and a prompt.
  */
 const IconChooser: Component<{
   icon: IconEditorState['icon'];
   onClick: () => void;
+  onRandomize: () => void;
 }> = (props) => (
-  <Flex as="div" align="center" gap={3}>
+  <Flex as="div" align="start" gap={3}>
     <Show
       when={props.icon}
       fallback={
@@ -60,9 +65,11 @@ const IconChooser: Component<{
           >
             <IconPlaceholder class={css.thumbIcon} aria-hidden />
           </button>
-          <Text as="span" size={2} color="lowContrast" selectable={false}>
-            Choose an icon
-          </Text>
+          <Flex as="div" grow class={css.idSlot}>
+            <Text as="span" size={2} color="lowContrast" selectable={false}>
+              Choose an icon
+            </Text>
+          </Flex>
         </>
       }
     >
@@ -82,12 +89,28 @@ const IconChooser: Component<{
               aria-hidden="true"
             />
           </button>
-          <Badge class={css.iconBadge} size={1} variant="soft" color="neutral">
-            {icon().name}
-          </Badge>
+          <Flex as="div" grow class={css.idSlot}>
+            <Badge
+              class={css.iconBadge}
+              size={2}
+              variant="soft"
+              color="neutral"
+            >
+              {icon().name}
+            </Badge>
+          </Flex>
         </>
       )}
     </Show>
+    <Button
+      testId="randomize"
+      size={1}
+      variant="ghost"
+      color="neutral"
+      onClick={props.onRandomize}
+    >
+      <IconShuffle aria-hidden /> Randomize
+    </Button>
   </Flex>
 );
 
@@ -108,7 +131,11 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
           class={css.section}
           aria-label="Icon"
         >
-          <IconChooser icon={props.state.icon} onClick={props.onChooseIcon} />
+          <IconChooser
+            icon={props.state.icon}
+            onClick={props.onChooseIcon}
+            onRandomize={props.onRandomize}
+          />
           <Show when={props.activePack}>
             {(pack) => (
               <PackCard
