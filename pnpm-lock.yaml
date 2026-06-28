@@ -464,6 +464,8 @@ importers:
         specifier: ^1.9.13
         version: 1.9.13
 
+  packages/lib/holz-idb-backend: {}
+
   packages/lib/holz-opfs-backend:
     dependencies:
       '@holz/core':
