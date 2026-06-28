@@ -113,7 +113,7 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
           </Button>
         </Flex>
 
-        <Separator decorative />
+        <Separator decorative size={4} />
 
         <Flex
           as="section"
@@ -139,7 +139,7 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
           </InlineField>
         </Flex>
 
-        <Separator decorative />
+        <Separator decorative size={4} />
 
         <Flex
           as="section"
