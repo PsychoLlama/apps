@@ -40,12 +40,18 @@ const openLogDatabase = (): Promise<IDBPDatabase<LogDatabase>> =>
       });
       store.createIndex(TIMESTAMP_INDEX, 'timestamp');
     },
-    // Deliberately no `blocking` handler. It would fire on a version bump or
-    // `deleteDB`, and closing the connection there would silently kill logging
-    // in an already-open tab (its queued writes reject with InvalidStateError,
-    // swallowed below) with no reconnect. A graceful multi-tab handoff is a
-    // problem for whenever the schema version actually moves; until then,
-    // holding the connection open is the safe default.
+    // Deliberately no `blocking` handler yet. It would fire on a version bump
+    // or `deleteDB`, and naively closing the connection there silently kills
+    // logging in an already-open tab (its queued writes reject with
+    // InvalidStateError, swallowed below) with no reconnect.
+    //
+    // TODO: when the version moves, handle `blocking` by closing and *lazily
+    // reconnecting* at the new version, so the open tab keeps writing across an
+    // upgrade instead of going dark. The realistic trigger isn't the value
+    // shape (a `Log` is a `Log`) — it's reworking the indexes, which still
+    // needs a version bump. Out of scope until the tooling that reads these
+    // logs needs a new index; holding the connection open is the safe default
+    // until then.
   });
 
 /**
