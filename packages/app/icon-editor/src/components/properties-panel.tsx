@@ -142,7 +142,7 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
               color="neutral"
               onClick={props.onRandomize}
             >
-              <IconShuffle aria-hidden /> Randomize
+              <IconShuffle aria-hidden /> Random
             </Button>
             <Button
               class={css.actionButton}
