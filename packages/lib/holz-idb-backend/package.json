@@ -9,5 +9,9 @@
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@holz/core": "catalog:",
+    "idb": "catalog:"
   }
 }

@@ -53,6 +53,7 @@ catalog:
   citty: ^0.2.2
   esbuild: ^0.28.0
   eslint: ^10.0.0
+  idb: ^8.0.3
   knip: ^6.13.1
   playwright: ^1.59.1
   'solid-js': ^1.9.13
