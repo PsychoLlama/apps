@@ -35,3 +35,49 @@ describe('readEnvironment', () => {
     });
   });
 });
+
+describe('OPFS denial', () => {
+  // Safari private browsing exposes `getDirectory` but denies the call with a
+  // `SecurityError`. Force that here and assert reads degrade to defaults
+  // rather than rejecting.
+  const denyOpfs = (name: string) => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'storage');
+    Object.defineProperty(navigator, 'storage', {
+      configurable: true,
+      value: {
+        getDirectory: () => Promise.reject(new DOMException('denied', name)),
+      },
+    });
+    return () => {
+      if (original) Object.defineProperty(navigator, 'storage', original);
+      else delete (navigator as { storage?: unknown }).storage;
+    };
+  };
+
+  it.each(['SecurityError', 'NotAllowedError'])(
+    'falls back to defaults when getDirectory throws %s',
+    async (name) => {
+      const restore = denyOpfs(name);
+      try {
+        expect(await readAllEnvironments(flag('opfs-denied'))).toEqual({
+          development: { enabled: true },
+          staging: { enabled: true },
+          production: { enabled: false },
+        });
+      } finally {
+        restore();
+      }
+    },
+  );
+
+  it('rethrows an unrecognized getDirectory failure', async () => {
+    const restore = denyOpfs('AbortError');
+    try {
+      await expect(readAllEnvironments(flag('opfs-fault'))).rejects.toThrow(
+        DOMException,
+      );
+    } finally {
+      restore();
+    }
+  });
+});

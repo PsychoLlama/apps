@@ -49,6 +49,25 @@ describe('updateConfig', () => {
     });
   });
 
+  it('falls back to defaults when the stored file is corrupt', async () => {
+    const option = flag('corrupt');
+
+    // Write garbage straight into the option's file, bypassing the JSON
+    // round-trip `updateConfig` would otherwise guarantee.
+    const root = await navigator.storage.getDirectory();
+    const dir = await root.getDirectoryHandle('config', { create: true });
+    const handle = await dir.getFileHandle('corrupt.json', { create: true });
+    const writable = await handle.createWritable();
+    await writable.write('{ not json');
+    await writable.close();
+
+    expect(await readAllEnvironments(option)).toEqual({
+      development: { enabled: true },
+      staging: { enabled: true },
+      production: { enabled: false },
+    });
+  });
+
   it('merges successive patches across environments', async () => {
     const option = flag('merge');
 

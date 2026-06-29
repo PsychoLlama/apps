@@ -8,25 +8,47 @@ const fileName = (id: string): string => `${id}.json`;
 
 /**
  * The OPFS root, or `null` where OPFS is unavailable — server-side
- * rendering and any non-browser context. Callers treat `null` as "no
- * persistence": reads resolve to defaults, writes are dropped.
+ * rendering and any non-browser context, but also a browser that exposes
+ * the API yet refuses to serve it (see {@link isUnavailable}). Callers
+ * treat `null` as "no persistence": reads resolve to defaults, writes are
+ * dropped.
  */
 const opfsRoot = async (): Promise<FileSystemDirectoryHandle | null> => {
   if (typeof navigator === 'undefined' || !navigator.storage?.getDirectory) {
     return null;
   }
 
-  return navigator.storage.getDirectory();
+  try {
+    return await navigator.storage.getDirectory();
+  } catch (error) {
+    // Safari's private browsing exposes `getDirectory` but denies the call
+    // with a `SecurityError` — OPFS is walled off, not faulty. Degrade to
+    // "no persistence" rather than letting it bubble up as a crash.
+    if (isUnavailable(error)) return null;
+    throw error;
+  }
 };
 
-/** A missing directory or file — the cold-start case, not an error. */
-const isNotFound = (error: unknown): boolean =>
-  error instanceof DOMException && error.name === 'NotFoundError';
+/**
+ * Errors from an OPFS operation that mean "fall back to defaults" rather
+ * than a genuine fault to surface:
+ *
+ * - `NotFoundError` — a missing directory or file, the cold-start case.
+ * - `SecurityError` — storage walled off or unmappable, e.g. Safari private
+ *   browsing denying `getDirectory`, or the agent failing to map the dir.
+ * - `NotAllowedError` — storage access not granted.
+ */
+const isUnavailable = (error: unknown): boolean =>
+  error instanceof DOMException &&
+  (error.name === 'NotFoundError' ||
+    error.name === 'SecurityError' ||
+    error.name === 'NotAllowedError');
 
 /**
  * Read the persisted override for an option. Returns an empty override
- * when nothing has been written yet (or OPFS is unavailable), so the
- * caller falls back to defaults for every environment.
+ * when nothing has been written yet, OPFS is unavailable, or the stored
+ * file is unreadable (corrupt JSON), so the caller falls back to defaults
+ * for every environment.
  */
 export const readOverride = async <Value extends JsonValue>(
   id: string,
@@ -40,7 +62,10 @@ export const readOverride = async <Value extends JsonValue>(
     const text = await (await handle.getFile()).text();
     return text ? (JSON.parse(text) as Override<Value>) : {};
   } catch (error) {
-    if (isNotFound(error)) return {};
+    // A `SyntaxError` means the persisted file is corrupt — drop it on the
+    // floor and revert to defaults rather than wedging every read of the
+    // option; the next write replaces it.
+    if (isUnavailable(error) || error instanceof SyntaxError) return {};
     throw error;
   }
 };
@@ -69,7 +94,7 @@ export const deleteOverride = async (id: string): Promise<void> => {
     const dir = await root.getDirectoryHandle(DIRECTORY);
     await dir.removeEntry(fileName(id));
   } catch (error) {
-    if (isNotFound(error)) return;
+    if (isUnavailable(error)) return;
     throw error;
   }
 };
