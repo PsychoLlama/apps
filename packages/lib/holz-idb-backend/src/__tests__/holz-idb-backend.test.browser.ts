@@ -7,18 +7,17 @@
 import { openDB } from 'idb';
 import { createLogger, level, type Log, type Logger } from '@holz/core';
 
-import { createIdbBackend, type LogDatabase } from '../holz-idb-backend';
-
-// The on-disk contract this backend promises, pinned independently of the
-// source. A rename there has to break these too — a deliberate, reviewed change
-// rather than a silent migration.
-const DATABASE_NAME = '@holz';
-const STORE_NAME = 'logs';
-const TIMESTAMP_INDEX = 'by-timestamp';
+import { createIdbBackend } from '../holz-idb-backend';
+import {
+  DATABASE_NAME,
+  STORE_NAME,
+  TIMESTAMP_INDEX,
+  openLogDatabase,
+} from '../database';
 
 /** Reads every persisted log back in insertion (key) order. */
 const readPersistedLogs = async (): Promise<Log[]> => {
-  const db = await openDB<LogDatabase>(DATABASE_NAME);
+  const db = await openLogDatabase();
   try {
     return await db.getAll(STORE_NAME);
   } finally {
@@ -28,7 +27,7 @@ const readPersistedLogs = async (): Promise<Log[]> => {
 
 /** Reads persisted logs back in event-time order via the timestamp index. */
 const readLogsByTimestamp = async (): Promise<Log[]> => {
-  const db = await openDB<LogDatabase>(DATABASE_NAME);
+  const db = await openLogDatabase();
   try {
     return await db.getAllFromIndex(STORE_NAME, TIMESTAMP_INDEX);
   } finally {
@@ -62,7 +61,7 @@ beforeEach(async () => {
     expect(await readPersistedLogs()).not.toHaveLength(0);
   });
 
-  const db = await openDB<LogDatabase>(DATABASE_NAME);
+  const db = await openLogDatabase();
   try {
     await db.clear(STORE_NAME);
   } finally {
@@ -159,7 +158,7 @@ it('orders logs by event time through the timestamp index', async () => {
   // Stand in for interleaved contexts: a buffered producer flushes an older
   // log *after* a newer one has already been written. Insertion order and
   // event-time order diverge — the index is what recovers chronology.
-  const db = await openDB<LogDatabase>(DATABASE_NAME);
+  const db = await openLogDatabase();
   try {
     await db.add(STORE_NAME, makeLog({ message: 'newer', timestamp: 2000 }));
     await db.add(STORE_NAME, makeLog({ message: 'older', timestamp: 1000 }));

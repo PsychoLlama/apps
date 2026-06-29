@@ -1,28 +1,13 @@
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { Log, LogProcessor } from '@holz/core';
+import type { IDBPDatabase } from 'idb';
+import type { LogProcessor } from '@holz/core';
 import { createLogValve } from '@lib/holz-valve';
 
-/** Database holz logs are persisted to. One per origin. */
-const DATABASE_NAME = '@holz';
-
-/**
- * Schema version this code knows how to create. Bump it alongside an `upgrade`
- * migration whenever the indexes change. Reconnecting tabs open at whatever
- * version currently exists, so they ride past this without needing to know it.
- */
-const DATABASE_VERSION = 1;
-
-/** Object store every {@link Log} lands in. */
-const STORE_NAME = 'logs';
-
-/**
- * Index over `Log.timestamp`. Insertion order (the auto-incremented key)
- * tracks event time within one context, but several contexts — main thread,
- * workers, service workers — write to this store, and a late or buffered
- * producer can insert older logs after newer ones. The index restores true
- * chronological reads and time-window range queries.
- */
-const TIMESTAMP_INDEX = 'by-timestamp';
+import {
+  STORE_NAME,
+  migrateLogDatabase,
+  openLogDatabase,
+  type LogDatabase,
+} from './database';
 
 /**
  * Logs held while the database is unavailable — during the initial open and
@@ -32,62 +17,11 @@ const TIMESTAMP_INDEX = 'by-timestamp';
  */
 const DEFAULT_BUFFER_CAPACITY = 10_000;
 
-export interface LogDatabase extends DBSchema {
-  [STORE_NAME]: {
-    /** Auto-incremented insertion order; doubles as the read cursor. */
-    key: number;
-    value: Log;
-    indexes: {
-      [TIMESTAMP_INDEX]: number;
-    };
-  };
-}
-
-/**
- * Open the holz log database at {@link DATABASE_VERSION}, creating its schema on
- * first use. Runs the same in the main thread, workers, and service workers —
- * `indexedDB` is available in all three.
- *
- * `relinquish` is wired to both `blocking` (another context is upgrading and
- * waiting on this connection to close) and `terminated` (the browser killed the
- * connection), so the caller can step aside and reconnect rather than go dark.
- */
-const openLogDatabase = (
-  relinquish: () => void,
-): Promise<IDBPDatabase<LogDatabase>> =>
-  openDB<LogDatabase>(DATABASE_NAME, DATABASE_VERSION, {
-    upgrade: (database) => {
-      const store = database.createObjectStore(STORE_NAME, {
-        autoIncrement: true,
-      });
-
-      store.createIndex(TIMESTAMP_INDEX, 'timestamp');
-    },
-
-    blocking: relinquish,
-    terminated: relinquish,
-  });
-
-/**
- * Reconnect to the database at whatever version currently exists — another
- * context may already have migrated the schema past {@link DATABASE_VERSION}.
- * Deliberately no `upgrade`: a reconnecting tab writes to the `logs` store, it
- * doesn't migrate. Still relinquishes on `blocking`/`terminated` so it can step
- * aside again if the schema moves a second time.
- */
-const reopenLogDatabase = (
-  relinquish: () => void,
-): Promise<IDBPDatabase<LogDatabase>> =>
-  openDB<LogDatabase>(DATABASE_NAME, undefined, {
-    blocking: relinquish,
-    terminated: relinquish,
-  });
-
 /**
  * A versioned open rejects with a `VersionError` when the database already
- * exists at a higher version — a peer migrated past {@link DATABASE_VERSION}
- * before this context opened. The fix is to reconnect at the current version,
- * not give up.
+ * exists at a higher version — a peer migrated past `DATABASE_VERSION` before
+ * this context opened. The fix is to reconnect at the current version, not give
+ * up.
  */
 const isVersionError = (error: unknown): boolean =>
   error instanceof DOMException && error.name === 'VersionError';
@@ -164,12 +98,12 @@ export const createIdbBackend = (
       // version. Once migrated, reconnects skip straight to that path.
       if (!migrated) {
         try {
-          db = await openLogDatabase(relinquish);
+          db = await migrateLogDatabase(relinquish);
         } catch (error) {
           if (!isVersionError(error)) throw error;
         }
       }
-      db ??= await reopenLogDatabase(relinquish);
+      db ??= await openLogDatabase(relinquish);
 
       migrated = true;
       valve.open(); // Flush everything buffered while we were connecting.
