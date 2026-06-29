@@ -2,25 +2,23 @@ import { style } from '@vanilla-extract/css';
 import { neutral, space } from '@lib/design';
 
 /**
- * The meta fields (time, origin) read as a single token each — let them size to
- * content and never wrap, so the row spends its wrapping budget on the message.
+ * The time reads as a single token — let it size to content and never wrap, so
+ * the lead line keeps a tidy clock beside the level and origin.
  */
 export const metaCell = style({
   whiteSpace: 'nowrap',
 });
 
 /**
- * The message takes the rest of the lead line and carries any wrapping.
- * `flexBasis: 0` keeps its hypothetical size from triggering a flex-wrap, so a
- * long message grows into the remaining width and wraps *in place* — staying
- * beside the time and level rather than breaking onto a full-width row of its
- * own. `minWidth: 0` lets it shrink past its longest word so the text reflows
- * instead of overflowing.
+ * The message leads the second line; its attribute badges trail it. A short
+ * message shares the line with them, while a long one wraps to fill the width
+ * and pushes the badges below. `minWidth: 0` lets it shrink past its longest
+ * word and `overflowWrap` breaks any unbreakable token, so text reflows instead
+ * of overflowing.
  */
 export const message = style({
-  flexGrow: 1,
-  flexBasis: 0,
   minWidth: 0,
+  overflowWrap: 'anywhere',
 });
 
 /**

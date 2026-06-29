@@ -8,11 +8,11 @@ import * as css from './log-panel.css';
 
 /**
  * One entry in the day's list, up to three lines. The lead line carries the
- * essentials — time of day, severity, message — with the message taking the
- * remaining width and wrapping in place. The second line is a metadata strip:
- * the origin breadcrumb followed by a neutral badge per context attribute
- * (everything but `error`, which has its own treatment). The third line, shown
- * only when the log carries an `error`, is a danger callout of its details.
+ * locating context — time of day, severity, and the origin breadcrumb. The
+ * second line is the message itself, trailed by an outline badge per context
+ * attribute (everything but `error`, which has its own treatment). The third
+ * line, shown only when the log carries an `error`, is a danger callout of its
+ * details.
  *
  * The time shows the clock only; the day lives in the group heading above.
  */
@@ -24,11 +24,9 @@ export const LogEntry = (props: { log: Log }) => {
   const attributes = () =>
     Object.entries(props.log.context).filter(([key]) => key !== 'error');
 
-  const hasMeta = () => props.log.origin.length > 0 || attributes().length > 0;
-
   return (
     <Flex as="li" direction="column" gap={1}>
-      <Flex as="div" direction="row" align="baseline" gap={3} wrap="wrap">
+      <Flex as="div" direction="row" align="center" gap={3} wrap="wrap">
         <Text
           as="time"
           size={1}
@@ -44,44 +42,42 @@ export const LogEntry = (props: { log: Log }) => {
           {display().label}
         </Badge>
 
+        <Show when={props.log.origin.length > 0}>
+          <Flex as="div" direction="row" align="center" gap={1} wrap="wrap">
+            <For each={props.log.origin}>
+              {(segment, index) => (
+                <>
+                  <Show when={index() > 0}>
+                    <IconChevronRight
+                      width="14"
+                      height="14"
+                      aria-hidden="true"
+                      class={css.originSeparator}
+                    />
+                  </Show>
+                  <Code size={1} variant="ghost" color="neutral">
+                    {segment}
+                  </Code>
+                </>
+              )}
+            </For>
+          </Flex>
+        </Show>
+      </Flex>
+
+      <Flex as="div" direction="row" align="baseline" gap={2} wrap="wrap">
         <Text as="span" size={2} selectable class={css.message}>
           {props.log.message}
         </Text>
+
+        <For each={attributes()}>
+          {([key, value]) => (
+            <Badge size={1} variant="outline" color="neutral">
+              {key}={formatValue(value)}
+            </Badge>
+          )}
+        </For>
       </Flex>
-
-      <Show when={hasMeta()}>
-        <Flex as="div" direction="row" align="center" gap={2} wrap="wrap">
-          <Show when={props.log.origin.length > 0}>
-            <Flex as="div" direction="row" align="center" gap={1} wrap="wrap">
-              <For each={props.log.origin}>
-                {(segment, index) => (
-                  <>
-                    <Show when={index() > 0}>
-                      <IconChevronRight
-                        width="14"
-                        height="14"
-                        aria-hidden="true"
-                        class={css.originSeparator}
-                      />
-                    </Show>
-                    <Code size={1} variant="ghost" color="neutral">
-                      {segment}
-                    </Code>
-                  </>
-                )}
-              </For>
-            </Flex>
-          </Show>
-
-          <For each={attributes()}>
-            {([key, value]) => (
-              <Badge size={1} variant="soft" color="neutral">
-                {key}={formatValue(value)}
-              </Badge>
-            )}
-          </For>
-        </Flex>
-      </Show>
 
       <Show when={props.log.context.error}>
         {(error) => <ErrorDetails error={error()} />}
