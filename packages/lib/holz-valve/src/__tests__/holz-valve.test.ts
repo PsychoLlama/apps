@@ -113,6 +113,19 @@ describe('createLogValve', () => {
     expect(forwarded).toEqual(['c', 'd', 'e']);
   });
 
+  it('buffers without bound at the default (Infinity) capacity', () => {
+    const { forwarded, valve, logger } = setup(Infinity);
+    const messages = Array.from(Array(500).keys(), (index) => `log-${index}`);
+
+    valve.close();
+    for (const message of messages) {
+      logger.info(message);
+    }
+    valve.open();
+
+    expect(forwarded).toEqual(messages);
+  });
+
   it('streams a re-entrant log cleanly during a flush', () => {
     const forwarded: string[] = [];
     let reentered = false;

@@ -6,8 +6,8 @@ import type { Log, LogProcessor } from '@holz/core';
  * LogValve.close}.
  *
  * While open, logs stream straight through to the downstream processor. While
- * closed, logs are held in a fixed-size ring buffer (oldest overwritten once
- * full) and released in order the next time it opens.
+ * closed, logs are held in a ring buffer that grows to `capacity` (oldest
+ * overwritten once full) and released in order the next time it opens.
  */
 export interface LogValve {
   /**
@@ -27,10 +27,10 @@ export interface LogValve {
 export interface CreateLogValveOptions {
   /**
    * How many logs the ring buffer retains while closed. Once full, each new
-   * log overwrites the oldest. Must be a non-negative integer; `0` keeps
-   * nothing.
+   * log overwrites the oldest. A non-negative integer or `Infinity`; `0` keeps
+   * nothing, `Infinity` (the default) is unbounded.
    */
-  capacity: number;
+  capacity?: number;
 
   /** Downstream processor logs flow into once the gate is open. */
   processor: LogProcessor;
@@ -41,34 +41,34 @@ export interface CreateLogValveOptions {
  * through until {@link LogValve.close} is called.
  */
 export const createLogValve = ({
-  capacity,
+  capacity = Infinity,
   processor,
 }: CreateLogValveOptions): LogValve => {
-  // Fixed-size ring buffer. `start` points at the oldest entry; `size` counts
-  // live entries. Writes land at `(start + size) % capacity` and, once full,
-  // advance `start` to overwrite the oldest — no shifting.
-  const buffer: Log[] = new Array<Log>(capacity);
-  let start = 0;
-  let size = 0;
+  // Ring buffer that grows lazily up to `capacity`, then overwrites in place.
+  // Starting empty and pushing keeps the array packed — no holes for V8 to
+  // deopt on, and no giant up-front allocation when `capacity` is large or
+  // Infinity. `oldest` indexes the oldest entry (the next slot to overwrite
+  // once full); in the growth phase it stays 0.
+  const buffer: Log[] = [];
+  let oldest = 0;
   let isOpen = true;
 
   const enqueue = (log: Log) => {
-    if (capacity === 0) return;
-
-    buffer[(start + size) % capacity] = log;
-    if (size < capacity) {
-      size += 1;
-    } else {
-      start = (start + 1) % capacity;
+    if (buffer.length < capacity) {
+      buffer.push(log);
+    } else if (capacity > 0) {
+      buffer[oldest] = log;
+      oldest = (oldest + 1) % capacity;
     }
   };
 
   const drain = () => {
-    for (let offset = 0; offset < size; offset += 1) {
-      processor(buffer[(start + offset) % capacity]);
+    const count = buffer.length;
+    for (let offset = 0; offset < count; offset += 1) {
+      processor(buffer[(oldest + offset) % count]);
     }
-    start = 0;
-    size = 0;
+    buffer.length = 0;
+    oldest = 0;
   };
 
   const accept: LogProcessor = (log) => {
