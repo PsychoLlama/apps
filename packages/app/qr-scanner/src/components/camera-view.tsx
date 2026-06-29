@@ -8,6 +8,9 @@ import { finishScanEffect } from '../bindings';
 import { startCaptureLoop } from '../capture-loop';
 import { decoder } from '../decoder-store';
 import * as css from './camera-view.css';
+import { createLogger, toError } from '@lib/observability';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 interface CameraViewProps {
   /** The live stream to render. Stable for the life of the session. */
@@ -34,18 +37,20 @@ export const CameraView: Component<CameraViewProps> = (props) => {
   let videoEl: HTMLVideoElement | undefined;
 
   onMount(() => {
+    const video = videoEl;
+    if (!video) return;
+
+    // Attach the stream here, not in the ref: WebKit drops `srcObject` set
+    // on a detached element, leaving the feed with no source and play()
+    // rejecting. Setting it once the element is connected makes it stick.
+    video.srcObject = props.stream;
+
     // Start sampling immediately; the loop reads the decoder per frame, so
     // it tolerates the worker preload still being in flight and begins
     // decoding the moment it attaches.
-    if (videoEl) {
-      onCleanup(
-        startCaptureLoop(
-          videoEl,
-          () => decoder.connection?.current,
-          finishScan,
-        ),
-      );
-    }
+    onCleanup(
+      startCaptureLoop(video, () => decoder.connection?.current, finishScan),
+    );
   });
 
   return (
@@ -56,15 +61,28 @@ export const CameraView: Component<CameraViewProps> = (props) => {
         data-testid="camera-feed"
         aria-label="Live camera feed"
         class={css.video}
+        on:loadedmetadata={(event) => {
+          // Play once the freshly attached stream is playable. A
+          // synchronous attempt right after assigning `srcObject` loses
+          // the race on iOS — the source isn't ready yet — so wait for
+          // the metadata to land.
+          void event.currentTarget.play().then(
+            () => logger.debug('Camera feed playing.'),
+            (error) =>
+              logger.warn('Camera feed failed to play.', {
+                error: toError(error),
+              }),
+          );
+        }}
         ref={(video) => {
           videoEl = video;
-          // Both must be set as DOM properties, not attributes:
-          // `srcObject` has no attribute form, and the `muted` attribute
+          // Set as DOM properties, before insertion: the `muted` attribute
           // is ignored by autoplay gating (iOS Safari especially) — only
-          // the property mutes. Setting them here, before insertion,
-          // keeps unattended autoplay allowed.
+          // the property mutes — and both flags must be in place before the
+          // element goes live to keep unattended autoplay allowed.
           video.muted = true;
-          video.srcObject = props.stream;
+          // srcObject and play() wait for onMount, once the element is
+          // attached — WebKit drops srcObject set on a detached element.
         }}
       />
 
