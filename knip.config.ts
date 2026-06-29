@@ -84,6 +84,11 @@ const config: KnipConfig = {
       // tests live under `*.test.browser.ts`.
       entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
     },
+    'packages/lib/runtime-config': {
+      // OPFS is only real in a browser, so the persistence round-trip
+      // tests live under `*.test.browser.ts`.
+      entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
+    },
   },
 };
 

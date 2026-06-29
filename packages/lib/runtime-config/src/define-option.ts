@@ -1,5 +1,8 @@
 /** The deploy environments an option can carry distinct defaults for. */
-export type Environment = 'dev' | 'staging' | 'prod';
+export const ENVIRONMENTS = ['dev', 'staging', 'prod'] as const;
+
+/** One of the known deploy environments. */
+export type Environment = (typeof ENVIRONMENTS)[number];
 
 /** Any JSON-serializable value — the universe of legal option payloads. */
 export type JsonValue =
@@ -14,6 +17,14 @@ export type JsonValue =
 export type EnvironmentDefaults<Value extends JsonValue> = Record<
   Environment,
   Value
+>;
+
+/**
+ * A persisted override of an option's per-environment values. Partial —
+ * an environment with no entry falls back to the option's default.
+ */
+export type Override<Value extends JsonValue> = Partial<
+  EnvironmentDefaults<Value>
 >;
 
 /**

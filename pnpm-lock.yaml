@@ -496,7 +496,11 @@ importers:
         specifier: workspace:*
         version: link:../holz-idb-backend
 
-  packages/lib/runtime-config: {}
+  packages/lib/runtime-config:
+    dependencies:
+      '@lib/messaging':
+        specifier: workspace:*
+        version: link:../messaging
 
   packages/lib/shell:
     dependencies:
