@@ -18,7 +18,7 @@ interface Harness {
 /** Wire a valve to a recording processor behind a real logger. */
 const setup = ({
   capacity,
-  open,
+  open = true,
 }: {
   capacity: number;
   open?: boolean;
@@ -142,7 +142,7 @@ describe('createLogValve', () => {
       }
     };
 
-    const valve = createLogValve({ capacity: 10, processor });
+    const valve = createLogValve({ capacity: 10, open: true, processor });
     const logger = createLogger(valve.processor);
 
     valve.close();
