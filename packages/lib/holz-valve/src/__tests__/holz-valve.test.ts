@@ -22,7 +22,7 @@ interface Harness {
 }
 
 /** Wire a valve to a recording processor behind a real logger. */
-const setup = (capacity = 10): Harness => {
+const setup = ({ capacity }: { capacity: number }): Harness => {
   const forwarded: string[] = [];
   const processor: LogProcessor = (log) => void forwarded.push(log.message);
   const valve = createLogValve({ capacity, processor });
@@ -41,7 +41,7 @@ const makeLog = (message: string): Log => ({
 
 describe('createLogValve', () => {
   it('streams logs straight through while open (the default)', () => {
-    const { forwarded, logger } = setup();
+    const { forwarded, logger } = setup({ capacity: 10 });
 
     logger.info('a');
     logger.info('b');
@@ -50,7 +50,7 @@ describe('createLogValve', () => {
   });
 
   it('queues logs while closed, forwarding nothing', () => {
-    const { forwarded, valve, logger } = setup();
+    const { forwarded, valve, logger } = setup({ capacity: 10 });
 
     valve.close();
     logger.info('a');
@@ -60,7 +60,7 @@ describe('createLogValve', () => {
   });
 
   it('flushes queued logs in arrival order when reopened, then streams', () => {
-    const { forwarded, valve, logger } = setup();
+    const { forwarded, valve, logger } = setup({ capacity: 10 });
 
     valve.close();
     logger.info('a');
@@ -75,7 +75,7 @@ describe('createLogValve', () => {
   });
 
   it('drops the oldest logs once the buffer is full', () => {
-    const { forwarded, valve, logger } = setup(2);
+    const { forwarded, valve, logger } = setup({ capacity: 2 });
 
     valve.close();
     logger.info('a');
@@ -88,7 +88,7 @@ describe('createLogValve', () => {
   });
 
   it('keeps nothing while closed when capacity is zero', () => {
-    const { forwarded, valve, logger } = setup(0);
+    const { forwarded, valve, logger } = setup({ capacity: 0 });
 
     valve.close();
     logger.info('a');
@@ -101,7 +101,7 @@ describe('createLogValve', () => {
   });
 
   it('wraps the ring buffer, keeping only the newest within capacity', () => {
-    const { forwarded, valve, logger } = setup(3);
+    const { forwarded, valve, logger } = setup({ capacity: 3 });
 
     valve.close();
     // Push past capacity so the write head wraps and overwrites the oldest.
@@ -114,7 +114,7 @@ describe('createLogValve', () => {
   });
 
   it('buffers without bound at the default (Infinity) capacity', () => {
-    const { forwarded, valve, logger } = setup(Infinity);
+    const { forwarded, valve, logger } = setup({ capacity: Infinity });
     const messages = Array.from(Array(500).keys(), (index) => `log-${index}`);
 
     valve.close();
@@ -165,7 +165,7 @@ describe('createLogValve', () => {
   });
 
   it('treats redundant open/close calls as no-ops', () => {
-    const { forwarded, valve, logger } = setup();
+    const { forwarded, valve, logger } = setup({ capacity: 10 });
 
     valve.open(); // already open
     logger.info('a');
