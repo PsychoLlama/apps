@@ -16,10 +16,16 @@ interface Harness {
 }
 
 /** Wire a valve to a recording processor behind a real logger. */
-const setup = ({ capacity }: { capacity: number }): Harness => {
+const setup = ({
+  capacity,
+  open = true,
+}: {
+  capacity: number;
+  open?: boolean;
+}): Harness => {
   const forwarded: string[] = [];
   const processor: LogProcessor = (log) => void forwarded.push(log.message);
-  const valve = createLogValve({ capacity, processor });
+  const valve = createLogValve({ capacity, open, processor });
   const logger = createLogger(valve.processor);
   return { forwarded, valve, logger };
 };
@@ -31,6 +37,17 @@ describe('createLogValve', () => {
     logger.info('a');
     logger.info('b');
 
+    expect(forwarded).toEqual(['a', 'b']);
+  });
+
+  it('starts closed when told, buffering until the first open', () => {
+    const { forwarded, valve, logger } = setup({ capacity: 10, open: false });
+
+    logger.info('a');
+    logger.info('b');
+    expect(forwarded).toEqual([]);
+
+    valve.open();
     expect(forwarded).toEqual(['a', 'b']);
   });
 
@@ -125,7 +142,7 @@ describe('createLogValve', () => {
       }
     };
 
-    const valve = createLogValve({ capacity: 10, processor });
+    const valve = createLogValve({ capacity: 10, open: true, processor });
     const logger = createLogger(valve.processor);
 
     valve.close();

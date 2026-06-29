@@ -1,77 +1,128 @@
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { Log, LogProcessor } from '@holz/core';
+import type { IDBPDatabase } from 'idb';
+import type { LogProcessor } from '@holz/core';
+import { createLogValve } from '@lib/holz-valve';
 
-/** Database holz logs are persisted to. One per origin. */
-const DATABASE_NAME = '@holz';
-
-/** Object store every {@link Log} lands in. */
-const STORE_NAME = 'logs';
+import {
+  STORE_NAME,
+  migrateLogDatabase,
+  openLogDatabase,
+  type LogDatabase,
+} from './database';
 
 /**
- * Index over `Log.timestamp`. Insertion order (the auto-incremented key)
- * tracks event time within one context, but several contexts — main thread,
- * workers, service workers — write to this store, and a late or buffered
- * producer can insert older logs after newer ones. The index restores true
- * chronological reads and time-window range queries.
+ * Logs held while the database is unavailable — during the initial open and
+ * across schema upgrades. Generous enough to ride out either, bounded so a
+ * stalled connection (a peer that never closes for an upgrade, a hung open)
+ * can't grow the buffer without limit.
  */
-const TIMESTAMP_INDEX = 'by-timestamp';
+const DEFAULT_BUFFER_CAPACITY = 10_000;
 
-export interface LogDatabase extends DBSchema {
-  [STORE_NAME]: {
-    /** Auto-incremented insertion order; doubles as the read cursor. */
-    key: number;
-    value: Log;
-    indexes: {
-      [TIMESTAMP_INDEX]: number;
-    };
-  };
+/**
+ * A versioned open rejects with a `VersionError` when the database already
+ * exists at a higher version — a peer migrated past `DATABASE_VERSION` before
+ * this context opened. The fix is to reconnect at the current version, not give
+ * up.
+ */
+const isVersionError = (error: unknown): boolean =>
+  error instanceof DOMException && error.name === 'VersionError';
+
+/** Options for {@link createIdbBackend}. */
+export interface CreateIdbBackendOptions {
+  /**
+   * How many logs to retain while the database is unavailable. Once full, the
+   * oldest are dropped. Defaults to {@link DEFAULT_BUFFER_CAPACITY}; pass
+   * `Infinity` to buffer without bound, `0` to drop everything emitted before
+   * the connection is live.
+   */
+  bufferCapacity?: number;
 }
 
 /**
- * Open the holz log database, creating its schema on first use. Runs the same
- * in the main thread, workers, and service workers — `indexedDB` is available
- * in all three.
+ * Create the holz backend. Returns a {@link LogProcessor} synchronously — logs
+ * emitted before IndexedDB finishes opening are buffered and flushed once it
+ * does, so callers wire it into a pipeline without awaiting an open.
+ *
+ * Each log is appended to the `logs` store. Holz calls processors
+ * synchronously, so writes are fire-and-forget: they can't block the calling
+ * thread, and ordering is preserved by the store's auto-incrementing key.
+ *
+ * When another context upgrades the schema, this connection steps aside —
+ * closing so the upgrade can proceed, buffering in the meantime, and
+ * reconnecting at the new version on the next log instead of going dark.
  */
-const openLogDatabase = (): Promise<IDBPDatabase<LogDatabase>> =>
-  openDB<LogDatabase>(DATABASE_NAME, 1, {
-    upgrade: (database) => {
-      const store = database.createObjectStore(STORE_NAME, {
-        autoIncrement: true,
+export const createIdbBackend = (
+  options: CreateIdbBackendOptions = {},
+): LogProcessor => {
+  const { bufferCapacity = DEFAULT_BUFFER_CAPACITY } = options;
+
+  let db: IDBPDatabase<LogDatabase> | null = null;
+  let connecting = false;
+  let migrated = false;
+
+  // Logs flow downstream into whichever connection is currently live. Start
+  // closed, buffering until the first open; the valve only opens once `db` is
+  // set, so the write path normally has a connection — the `?.` is
+  // belt-and-suspenders, since logging must never throw.
+  const valve = createLogValve({
+    capacity: bufferCapacity,
+    open: false,
+    processor: (log) => {
+      db?.add(STORE_NAME, log).catch(() => {
+        // A failed write (quota exhausted, the connection closing mid-flush)
+        // drops the log rather than surfacing — there's no safe way to report
+        // it without recursing into the logger.
       });
-      store.createIndex(TIMESTAMP_INDEX, 'timestamp');
     },
-    // Deliberately no `blocking` handler yet. It would fire on a version bump
-    // or `deleteDB`, and naively closing the connection there silently kills
-    // logging in an already-open tab (its queued writes reject with
-    // InvalidStateError, swallowed below) with no reconnect.
-    //
-    // TODO: when the version moves, handle `blocking` by closing and *lazily
-    // reconnecting* at the new version, so the open tab keeps writing across an
-    // upgrade instead of going dark. The realistic trigger isn't the value
-    // shape (a `Log` is a `Log`) — it's reworking the indexes, which still
-    // needs a version bump. Out of scope until the tooling that reads these
-    // logs needs a new index; holding the connection open is the safe default
-    // until then.
   });
 
-/**
- * Create the holz backend. Opening the database up front migrates the schema
- * and surfaces quota or permission failures at construction rather than on the
- * first log.
- *
- * The returned {@link LogProcessor} appends each log to the `logs` store. Holz
- * calls processors synchronously, so the write is fire-and-forget: it can't
- * block the calling thread, and ordering is preserved by the store's
- * auto-incrementing key.
- */
-export const createIdbBackend = async (): Promise<LogProcessor> => {
-  const db = await openLogDatabase();
+  /**
+   * Step aside when another context is upgrading the schema, or the browser
+   * killed the connection. Close the gate so new logs buffer, drop the dead
+   * connection, and let the next log trigger a lazy reconnect at the current
+   * version.
+   */
+  const relinquish = () => {
+    valve.close();
+    db?.close();
+    db = null;
+  };
+
+  const connect = async () => {
+    if (connecting || db !== null) return;
+    connecting = true;
+
+    try {
+      // The first connection migrates the schema to the version this code
+      // knows. If a peer already moved it forward, that versioned open is
+      // rejected with a VersionError — fall through to reopen at the current
+      // version. Once migrated, reconnects skip straight to that path.
+      if (!migrated) {
+        try {
+          db = await migrateLogDatabase(relinquish);
+        } catch (error) {
+          if (!isVersionError(error)) throw error;
+        }
+      }
+      db ??= await openLogDatabase(relinquish);
+
+      migrated = true;
+      valve.open(); // Flush everything buffered while we were connecting.
+    } catch {
+      // The open failed (quota, permissions, a blocked upgrade that never
+      // resolved). Stay closed and buffering; the next log retries.
+    } finally {
+      connecting = false;
+    }
+  };
+
+  // The valve buffers from the first log; open eagerly so the schema migrates
+  // up front rather than waiting on traffic.
+  void connect();
 
   return (log) => {
-    db.add(STORE_NAME, log).catch(() => {
-      // Logging must never throw. A failed write (quota exhausted, the
-      // connection closing mid-flush) drops the log rather than surfacing —
-      // there's no safe way to report it without recursing into the logger.
-    });
+    // Reconnect on demand after stepping aside for an upgrade: rather than
+    // racing to reopen the moment we close, wait here for the next log.
+    if (db === null) void connect();
+    valve.processor(log);
   };
 };

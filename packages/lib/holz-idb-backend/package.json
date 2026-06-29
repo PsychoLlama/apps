@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@holz/core": "catalog:",
+    "@lib/holz-valve": "workspace:*",
     "idb": "catalog:"
   }
 }

@@ -34,15 +34,25 @@ export interface CreateLogValveOptions {
 
   /** Downstream processor logs flow into once the gate is open. */
   processor: LogProcessor;
+
+  /**
+   * Whether the valve starts open. `true` streams logs straight through from
+   * the first one; `false` starts closed, buffering until the first
+   * {@link LogValve.open} — handy when the downstream isn't ready yet. Required:
+   * the initial gate state is a decision every caller should make deliberately.
+   */
+  open: boolean;
 }
 
 /**
- * Create a {@link LogValve}. Valves start open, streaming every log straight
- * through until {@link LogValve.close} is called.
+ * Create a {@link LogValve}. Pass `open: true` to stream every log straight
+ * through until {@link LogValve.close} is called, or `open: false` to start
+ * closed and buffer until the first {@link LogValve.open}.
  */
 export const createLogValve = ({
   capacity = Infinity,
   processor: forward,
+  open: startOpen,
 }: CreateLogValveOptions): LogValve => {
   // Ring buffer that grows lazily up to `capacity`, then overwrites in place.
   // Starting empty and pushing keeps the array packed — no holes for V8 to
@@ -51,7 +61,7 @@ export const createLogValve = ({
   // once full); in the growth phase it stays 0.
   const buffer: Log[] = [];
   let oldest = 0;
-  let isOpen = true;
+  let isOpen = startOpen;
 
   const enqueue = (log: Log) => {
     if (buffer.length < capacity) {
