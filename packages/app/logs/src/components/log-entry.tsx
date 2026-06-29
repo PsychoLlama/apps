@@ -23,7 +23,10 @@ export const LogEntry = (props: { log: Log }) => {
 
   return (
     <TableRow align="baseline">
-      <TableRowHeaderCell selectable class={css.metaCell}>
+      <TableRowHeaderCell
+        selectable
+        class={`${css.metaCell} ${css.leadingGutter}`}
+      >
         <Text
           as="time"
           size={1}
@@ -49,7 +52,7 @@ export const LogEntry = (props: { log: Log }) => {
         </Show>
       </TableCell>
 
-      <TableCell selectable>
+      <TableCell selectable class={`${css.messageCell} ${css.trailingGutter}`}>
         <Text as="span" size={2} selectable>
           {props.log.message}
         </Text>
