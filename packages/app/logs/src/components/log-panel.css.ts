@@ -10,15 +10,17 @@ export const metaCell = style({
 });
 
 /**
- * The message takes the rest of the row and carries any wrapping. A min measure
- * keeps it readable: when the meta and a legible message can't share one line,
- * the row wraps the message to its own full-width line rather than shredding it
- * to a one-word sliver. Wide viewports never hit the floor, so desktop layout
- * is unchanged.
+ * The message takes the rest of the lead line and carries any wrapping.
+ * `flexBasis: 0` keeps its hypothetical size from triggering a flex-wrap, so a
+ * long message grows into the remaining width and wraps *in place* — staying
+ * beside the time and level rather than breaking onto a full-width row of its
+ * own. `minWidth: 0` lets it shrink past its longest word so the text reflows
+ * instead of overflowing.
  */
 export const message = style({
   flexGrow: 1,
-  minWidth: '32ch',
+  flexBasis: 0,
+  minWidth: 0,
 });
 
 /**
