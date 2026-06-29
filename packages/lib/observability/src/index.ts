@@ -1,5 +1,6 @@
 export {
   createLogger,
+  level,
   type Log,
   type LogContext,
   type Logger,
