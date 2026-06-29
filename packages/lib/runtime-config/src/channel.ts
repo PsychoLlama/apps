@@ -13,13 +13,12 @@ export interface ConfigMessage {
   override: Override<JsonValue>;
 }
 
-/** `BroadcastChannel` exists only in the browser; gate every use on it. */
-const available = (): boolean => typeof BroadcastChannel !== 'undefined';
-
-// One transport per context. A `BroadcastChannel` never delivers a tab's
-// own posts back to it, so the publisher and subscriber can share this
-// instance: we hear sibling tabs but not our own writes (which we've
-// already applied locally).
+// One transport per context, built on first use. `BroadcastChannel` is a
+// global in both the browser and Node, so there's nothing to feature-detect;
+// lazy construction means a context that never publishes or subscribes
+// (e.g. SSG) never opens one. A `BroadcastChannel` never delivers a tab's
+// own posts back to it, so publisher and subscriber share this instance: we
+// hear sibling tabs but not our own writes (already applied locally).
 let transport: BroadcastChannelTransport<ConfigMessage, ConfigMessage> | null =
   null;
 
@@ -28,19 +27,12 @@ const getTransport = (): BroadcastChannelTransport<
   ConfigMessage
 > => (transport ??= new BroadcastChannelTransport(CHANNEL));
 
-/** Announce an option change to other browsing contexts. No-op off-browser. */
+/** Announce an option change to other browsing contexts. */
 export const publish = (message: ConfigMessage): void => {
-  if (!available()) return;
   getTransport().send(message);
 };
 
-/**
- * Subscribe to option changes from sibling contexts. Returns an
- * unsubscribe; a no-op unsubscribe where `BroadcastChannel` is absent.
- */
+/** Subscribe to option changes from sibling contexts. Returns an unsubscribe. */
 export const onConfigMessage = (
   handler: (message: ConfigMessage) => void,
-): (() => void) => {
-  if (!available()) return () => {};
-  return getTransport().onMessage(handler);
-};
+): (() => void) => getTransport().onMessage(handler);

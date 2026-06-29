@@ -1,7 +1,7 @@
 import type { JsonValue, Override } from './define-option';
 
 /** The OPFS directory all option overrides are persisted under. */
-const DIRECTORY = 'runtime-config';
+const DIRECTORY = 'config';
 
 /** One JSON file per option, keyed by the option's ID. */
 const fileName = (id: string): string => `${id}.json`;

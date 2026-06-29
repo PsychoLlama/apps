@@ -15,9 +15,12 @@ const resolve = <Value extends JsonValue>(
   override: Override<Value>,
 ): EnvironmentDefaults<Value> => ({ ...option.defaults, ...override });
 
-// A subscriber receives the raw override; `subscribe` wraps the caller's
-// listener so it sees the resolved env map instead. Keyed by option ID so
-// a single broadcast can fan out to every local subscriber of that option.
+// In-memory fan-out for *this* context — we can't lean on BroadcastChannel
+// alone. It never echoes to the tab that posted, so the caller of
+// `updateConfig` would miss its own change. And one channel multiplexes
+// every option, so inbound messages still need routing by ID and resolving
+// against each option's defaults. Keyed by option ID; `subscribe` wraps the
+// caller's listener so it receives the resolved map, not the raw override.
 type OverrideListener = (override: Override<JsonValue>) => void;
 const listeners = new Map<string, Set<OverrideListener>>();
 

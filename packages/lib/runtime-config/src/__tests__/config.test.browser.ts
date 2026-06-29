@@ -5,7 +5,7 @@ import { read, reset, subscribe, updateConfig } from '../config';
 // config directory so persisted overrides don't leak between cases.
 afterEach(async () => {
   const root = await navigator.storage.getDirectory();
-  await root.removeEntry('runtime-config', { recursive: true }).catch(() => {});
+  await root.removeEntry('config', { recursive: true }).catch(() => {});
 });
 
 const flag = (id: string) =>
