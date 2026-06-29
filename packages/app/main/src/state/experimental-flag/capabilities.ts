@@ -1,4 +1,4 @@
-import { environment, readEnvironment, subscribe } from '@lib/runtime-config';
+import { readEnvironment, subscribe } from '@lib/runtime-config';
 import { experimentalApp } from '@app/experimental/config';
 
 /**
@@ -12,13 +12,12 @@ export const readExperimentalFlag = async (): Promise<boolean> =>
  * Watch for changes to the experimental flag, reporting the resolved
  * value for the active environment. Returns an unsubscribe.
  *
- * Only fires for changes made in *other* browsing contexts — a
- * `BroadcastChannel` never echoes a context its own posts — so a same-tab
- * write is picked up by the mount-time read, not here.
+ * Fires for changes from any browsing context, including same-tab writes,
+ * so this is the live source of truth after the mount-time read seeds it.
  */
 export const watchExperimentalFlag = (
   onChange: (enabled: boolean) => void,
 ): (() => void) =>
-  subscribe(experimentalApp, (defaults) => {
-    onChange(defaults[environment].enabled);
+  subscribe(experimentalApp, (value) => {
+    onChange(value.enabled);
   });

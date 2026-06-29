@@ -1,4 +1,5 @@
 import { defineOption } from '../define-option';
+import { channelName } from '../channel';
 import {
   readAllEnvironments,
   readEnvironment,
@@ -97,39 +98,64 @@ describe('reset', () => {
 });
 
 describe('subscribe', () => {
-  // A sibling browsing context, faked by posting on a second channel.
-  const fromSibling = (id: string, override: unknown) => {
-    const sibling = new BroadcastChannel('runtime-config');
-    sibling.postMessage({ id, override });
-    sibling.close();
-  };
-
-  it('fires with the resolved map on a change from another context', async () => {
-    const option = flag('subscribe');
-    const config = await new Promise((resolve) => {
+  // The next value handed to a subscriber, as a promise. Tests await delivery
+  // rather than racing it — cross-context posts arrive asynchronously.
+  const nextValue = (option: ReturnType<typeof flag>) =>
+    new Promise((resolve) => {
       const unsubscribe = subscribe(option, (value) => {
         unsubscribe();
         resolve(value);
       });
-      fromSibling(option.id, { staging: { enabled: false } });
     });
 
-    expect(config).toEqual({
-      development: { enabled: true },
-      staging: { enabled: false },
-      production: { enabled: false },
-    });
+  // A sibling browsing context, faked by posting on the option's channel from
+  // a second `BroadcastChannel` instance (a channel never echoes its own
+  // posts, so the post must come from a distinct instance).
+  const fromSibling = (id: string, override: unknown) => {
+    const sibling = new BroadcastChannel(channelName(id));
+    sibling.postMessage(override);
+    sibling.close();
+  };
+
+  it('reports the current environment value on a change from another context', async () => {
+    const option = flag('subscribe');
+    const value = nextValue(option);
+    fromSibling(option.id, { development: { enabled: false } });
+
+    // Resolves the override against the option, then narrows to the
+    // environment vitest runs as (development).
+    expect(await value).toEqual({ enabled: false });
   });
 
-  it('ignores changes to other options', async () => {
+  it('ignores changes to other options — each rides its own channel', async () => {
     const option = flag('subscribe-filtered');
     const calls: unknown[] = [];
     const unsubscribe = subscribe(option, (value) => calls.push(value));
 
-    fromSibling('some-other-option', { production: { enabled: true } });
+    fromSibling('some-other-option', { development: { enabled: false } });
     await new Promise((resolve) => setTimeout(resolve));
     unsubscribe();
 
     expect(calls).toHaveLength(0);
+  });
+
+  it('echoes a same-context write back to the subscriber', async () => {
+    const option = flag('subscribe-self');
+    const value = nextValue(option);
+
+    await updateConfig(option, { development: { enabled: false } });
+
+    expect(await value).toEqual({ enabled: false });
+  });
+
+  it('echoes a same-context reset back to the subscriber', async () => {
+    const option = flag('subscribe-self-reset');
+    await updateConfig(option, { development: { enabled: false } });
+
+    const value = nextValue(option);
+    await reset(option);
+
+    // Reset reverts development to its default (enabled).
+    expect(await value).toEqual({ enabled: true });
   });
 });
