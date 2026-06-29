@@ -9,12 +9,14 @@
     "**/*.css.ts"
   ],
   "exports": {
-    ".": "./src/index.tsx"
+    ".": "./src/index.tsx",
+    "./config": "./src/config.ts"
   },
   "scripts": {
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@lib/runtime-config": "workspace:*",
     "@lib/shell": "workspace:*"
   },
   "peerDependencies": {
