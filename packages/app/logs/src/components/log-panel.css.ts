@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { text } from '@lib/design';
+import { neutral } from '@lib/design';
 
 /**
  * The meta fields (time, origin) read as a single token each — let them size to
@@ -22,11 +22,12 @@ export const message = style({
 });
 
 /**
- * The chevron dividing origin segments — a quiet tick between names, matching
- * the breadcrumb separator in the site header. Low-contrast so the names lead;
- * never shrinks, so the glyph stays whole when the breadcrumb wraps.
+ * The chevron dividing origin segments — a quiet tick between names. Paints the
+ * exact color the origin `Code` segments use (`neutral` ghost is `alpha[11]`),
+ * so the glyph reads as part of the same breadcrumb rather than a hair off it.
+ * Never shrinks, so it stays whole when the breadcrumb wraps.
  */
 export const originSeparator = style({
-  color: text.lowContrast,
+  color: neutral.alpha[11],
   flexShrink: 0,
 });

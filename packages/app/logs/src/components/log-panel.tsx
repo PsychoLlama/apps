@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { Flex, Heading } from '@lib/ui';
+import { Flex, Heading, Separator } from '@lib/ui';
 import type { Log } from '@lib/observability';
 import { LogEntry } from './log-entry';
 import { groupLogsByDay } from './group-logs-by-day';
@@ -20,11 +20,12 @@ export const LogPanel = (props: { logs: readonly Log[] }) => (
             as="h2"
             size={2}
             weight="medium"
-            color="lowContrast"
+            color="highContrast"
             selectable={false}
           >
             {group.heading}
           </Heading>
+          <Separator size={4} decorative />
           <Flex as="ol" direction="column" gap={4}>
             <For each={group.logs}>{(log) => <LogEntry log={log} />}</For>
           </Flex>
