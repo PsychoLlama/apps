@@ -4,17 +4,9 @@ import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
 import { createIdbBackend } from '@lib/holz-idb-backend';
 import { devPattern } from './dev-pattern';
+import { inMainThread } from './environment';
 
 const consoleBackend = createConsoleBackend();
-
-/**
- * `true` when running on the browser's main thread. Only the `Window` global
- * exposes `document`, which separates the page from its service and dedicated
- * workers; demanding the `Worker` constructor too rules out partial DOM shims
- * (jsdom defines `document` but not `Worker`) that would otherwise read as the
- * main thread.
- */
-const inMainThread = 'document' in globalThis && 'Worker' in globalThis;
 
 // The base log destination, chosen by the realm this module loads in. A global
 // collector (`setGlobalLogCollector`) still intercepts upstream. Every browser
