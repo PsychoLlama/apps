@@ -89,21 +89,26 @@ export const openLogDatabase = (
   });
 
 /**
- * Read every persisted log in event-time order. Goes through the
+ * Read every persisted log newest-first. Goes through the
  * {@link TIMESTAMP_INDEX} rather than the insertion key, so logs from
  * interleaved producers — main thread, workers, a buffered flush landing an
- * older log after a newer one — read back in true chronological order. Opens
- * a short-lived connection (no `relinquish`) and closes it once the read
- * resolves; the writing backend keeps its own long-lived connection.
+ * older log after a newer one — read back in true chronological order. The
+ * index reads ascending (oldest-first); reverse it once so the viewer leads
+ * with the most recent log. Opens a short-lived connection (no `relinquish`)
+ * and closes it once the read resolves; the writing backend keeps its own
+ * long-lived connection.
  *
  * Reads the whole store in one shot — fine for a viewer over an on-device
- * archive. Swap to a cursor or a bounded range over the index if the store
- * grows past what's comfortable to hold in memory.
+ * archive. Swap to a `'prev'`-direction cursor or a bounded range over the
+ * index if the store grows past what's comfortable to hold in memory; a
+ * `'prev'` cursor yields newest-first natively, no reverse needed.
  */
 export const readLogsByTimestamp = async (): Promise<Log[]> => {
   const db = await openLogDatabase();
   try {
-    return await db.getAllFromIndex(STORE_NAME, TIMESTAMP_INDEX);
+    // `getAllFromIndex` hands back a fresh array, so reversing in place is safe.
+    const logs = await db.getAllFromIndex(STORE_NAME, TIMESTAMP_INDEX);
+    return logs.reverse();
   } finally {
     db.close();
   }
