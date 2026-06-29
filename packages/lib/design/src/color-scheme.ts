@@ -26,17 +26,36 @@ import {
 
 import type { ColorScale } from './palette/color-palette';
 
-/** Attribute set on `:root` to force a specific color scheme. */
+/**
+ * Attribute that forces a specific color scheme. Set on `:root` for a
+ * document-wide override, or on any element to override a subtree —
+ * both the `light-dark()` colors and the structurally-different vars
+ * (`assignColorSchemeVars`) flip together, since custom properties and
+ * the `color-scheme` property both inherit.
+ */
 const attr = 'data-color-scheme';
 
-/** Selector for system-managed mode — no application override. */
+/**
+ * Selector for system-managed mode — no application override.
+ *
+ * Stays anchored to `:root`: "system" is a document-level default, and
+ * per-subtree *reversion* to system (an override inside an override)
+ * isn't a supported case. Un-anchoring would degrade this to a
+ * near-universal `:not()` that re-declares the media-driven vars on
+ * every element — the exact cost we avoid.
+ */
 export const systemSelector = `:root:not([${attr}="light"], [${attr}="dark"])`;
 
-/** Selector for application-forced light mode. */
-export const lightSelector = `:root[${attr}="light"]`;
+/**
+ * Selector for forced light mode, at any depth. Unanchored so a subtree
+ * can override the document scheme; `systemSelector`'s `:not` excludes
+ * any element carrying the attribute, so system and the override never
+ * arbitrate against each other.
+ */
+export const lightSelector = `[${attr}="light"]`;
 
-/** Selector for application-forced dark mode. */
-export const darkSelector = `:root[${attr}="dark"]`;
+/** Selector for forced dark mode, at any depth. See `lightSelector`. */
+export const darkSelector = `[${attr}="dark"]`;
 
 /** Media query for system-level light mode preference. */
 const lightMedia = '(prefers-color-scheme: light)';

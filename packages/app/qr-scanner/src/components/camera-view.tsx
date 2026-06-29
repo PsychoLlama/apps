@@ -54,7 +54,16 @@ export const CameraView: Component<CameraViewProps> = (props) => {
   });
 
   return (
-    <Flex as="section" class={css.viewport}>
+    <Flex
+      as="section"
+      class={css.viewport}
+      // The stage is an opaque dark surface in *both* page themes (black
+      // backdrop + dimmed feed), so force the dark color scheme on the
+      // subtree. Overlay controls resolve their color *and* structural
+      // (shadow/filter) tokens to the dark-mode values and stay legible —
+      // otherwise a light-theme `neutral` button paints dark-on-dark.
+      data-color-scheme="dark"
+    >
       <video
         autoplay
         playsinline
