@@ -43,17 +43,12 @@ globalStyle(darkSelector, { colorScheme: 'dark' });
 
 // --- Body ---
 
-/**
- * Full-height flex column. vh fallback for browsers without dvh support.
- * `overscroll-behavior: none` blocks pull-to-refresh and scroll chaining
- * from leaking into the document.
- */
+/** Full-height flex column. vh fallback for browsers without dvh support. */
 globalStyle('body', {
   margin: 0,
   minHeight: ['100vh', '100dvh'],
   display: 'flex',
   flexDirection: 'column',
-  overscrollBehavior: 'none',
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.regular,
   fontSize: typeScale[3].fontSize,
