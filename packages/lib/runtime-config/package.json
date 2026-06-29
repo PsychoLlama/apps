@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Runtime configuration (feature flags) backed by async OPFS.",
+  "description": "Runtime configuration (feature flags).",
   "license": "MIT",
   "sideEffects": false,
   "exports": {
