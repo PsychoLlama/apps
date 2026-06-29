@@ -44,23 +44,20 @@ export const readEnvironment = async <Value extends JsonValue>(
 ): Promise<Value> => (await readAllEnvironments(option))[env];
 
 /**
- * Subscribe to an option's changes made in *other* browsing contexts,
- * resolving each to the full env map. Returns an unsubscribe.
+ * Subscribe to an option's changes, reporting its resolved value for the
+ * current {@link environment}. Returns an unsubscribe.
  *
- * It does not fire for changes made in this context: a `BroadcastChannel`
- * never delivers a tab its own posts, and we lean on that rather than an
- * in-memory fan-out. A caller mutating via {@link updateConfig} / {@link
- * reset} already has the new override, so it should patch its own state
- * there (resolve it against the option's defaults) instead of waiting on
- * this callback.
+ * Fires for changes from *any* context — sibling tabs and this one. A caller
+ * mutating via {@link updateConfig} / {@link reset} hears its own write back
+ * here too, so it can drive all of its state off this callback rather than
+ * also patching by hand at the mutation site.
  */
 export const subscribe = <Value extends JsonValue>(
   option: Option<Value>,
-  listener: (config: EnvironmentDefaults<Value>) => void,
+  listener: (value: Value) => void,
 ): (() => void) =>
-  onConfigMessage((message) => {
-    if (message.id !== option.id) return;
-    listener(resolve(option, message.override as Override<Value>));
+  onConfigMessage(option.id, (override) => {
+    listener(resolve(option, override as Override<Value>)[environment]);
   });
 
 /**
@@ -74,7 +71,7 @@ export const updateConfig = async <Value extends JsonValue>(
 ): Promise<void> => {
   const next = { ...(await readOverride<Value>(option.id)), ...patch };
   await writeOverride(option.id, next);
-  publish({ id: option.id, override: next });
+  publish(option.id, next);
 };
 
 /**
@@ -98,5 +95,5 @@ export const reset = async <Value extends JsonValue>(
     await writeOverride(option.id, next);
   }
 
-  publish({ id: option.id, override: next });
+  publish(option.id, next);
 };
