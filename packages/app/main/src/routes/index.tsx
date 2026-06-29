@@ -1,5 +1,7 @@
 import { For } from 'solid-js';
 import type { Component } from 'solid-js';
+import { experimentalApp } from '@app/experimental/config';
+import { environment } from '@lib/runtime-config';
 import { Card, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
@@ -24,11 +26,11 @@ interface AppEntry {
  * Hard-coded launcher inventory. Add an entry only when the target
  * is actually navigable — there is no "coming soon" tier.
  *
- * The experimental entry is gated on `INCLUDE_EXPERIMENTAL_APP` (baked
- * in by the host's vite config), so it appears only on the builds that
- * actually ship the `/experimental` route — preview and local, never
- * production. The constant folds to a literal at build time, so the
- * unused branch is dead-code-eliminated.
+ * The experimental entry follows the `experimental-app` flag's default
+ * for the build's environment — shown in development and staging, hidden
+ * in production. The route itself is gated at runtime by the service
+ * worker, which honors live overrides; this launcher link only reflects
+ * the environment's default posture.
  */
 const APPS: ReadonlyArray<AppEntry> = [
   {
@@ -62,7 +64,7 @@ const APPS: ReadonlyArray<AppEntry> = [
     description: 'Browse the component library and design system.',
     Icon: IconGallery,
   },
-  ...(import.meta.env.INCLUDE_EXPERIMENTAL_APP
+  ...(experimentalApp.defaults[environment].enabled
     ? [
         {
           id: 'experimental',
