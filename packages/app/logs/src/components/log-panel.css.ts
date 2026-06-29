@@ -1,4 +1,5 @@
 import { style } from '@vanilla-extract/css';
+import { text } from '@lib/design';
 
 /**
  * The meta fields (time, origin) read as a single token each — let them size to
@@ -18,4 +19,14 @@ export const metaCell = style({
 export const message = style({
   flexGrow: 1,
   minWidth: '32ch',
+});
+
+/**
+ * The chevron dividing origin segments — a quiet tick between names, matching
+ * the breadcrumb separator in the site header. Low-contrast so the names lead;
+ * never shrinks, so the glyph stays whole when the breadcrumb wraps.
+ */
+export const originSeparator = style({
+  color: text.lowContrast,
+  flexShrink: 0,
 });
