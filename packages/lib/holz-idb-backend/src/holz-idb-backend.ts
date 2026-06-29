@@ -63,6 +63,11 @@ export const createIdbBackend = (
   // closed, buffering until the first open; the valve only opens once `db` is
   // set, so the write path normally has a connection — the `?.` is
   // belt-and-suspenders, since logging must never throw.
+  //
+  // Streaming logs (while open) write one at a time; the buffered batch released
+  // on open drains through a single transaction so a flush — potentially
+  // thousands of logs held across a connect or upgrade — is one round trip to
+  // the store rather than one per log.
   const valve = createLogValve({
     capacity: bufferCapacity,
     open: false,
@@ -72,6 +77,21 @@ export const createIdbBackend = (
         // drops the log rather than surfacing — there's no safe way to report
         // it without recursing into the logger.
       });
+    },
+    drain: (logs) => {
+      // The valve only opens from within `connect`, which sets `db` first, and
+      // `open` is the sole caller of `drain` — so a live connection is
+      // guaranteed here. Assert it rather than silently dropping the batch.
+      if (db === null) {
+        throw new Error('Cannot drain logs: the database is not connected.');
+      }
+
+      // One transaction for the whole batch. `add` is fire-and-forget like the
+      // streaming path; awaiting `tx.done` only catches a failed flush so it
+      // drops rather than surfacing — reporting it would recurse into the logger.
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      for (const log of logs) void tx.store.add(log);
+      tx.done.catch(() => {});
     },
   });
 

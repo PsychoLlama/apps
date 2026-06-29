@@ -1,13 +1,22 @@
 import type { Log, LogProcessor } from '@holz/core';
 
 /**
+ * Releases a batch of buffered logs in one call when the gate opens. Distinct
+ * from the per-log {@link LogProcessor} so a downstream that benefits from
+ * batching — one IndexedDB transaction for the whole flush rather than a write
+ * per log — gets the entire buffer at once, in arrival order.
+ */
+export type LogDrain = (logs: Log[]) => void;
+
+/**
  * A gate over a log stream. Install {@link LogValve.processor} in a holz
  * pipeline and control the flow with {@link LogValve.open}/{@link
  * LogValve.close}.
  *
- * While open, logs stream straight through to the downstream processor. While
- * closed, logs are held in a ring buffer that grows to `capacity` (oldest
- * overwritten once full) and released in order the next time it opens.
+ * While open, logs stream straight through to the downstream processor one at a
+ * time. While closed, logs are held in a ring buffer that grows to `capacity`
+ * (oldest overwritten once full) and released as a single batch through the
+ * drain callback the next time it opens.
  */
 export interface LogValve {
   /**
@@ -16,7 +25,7 @@ export interface LogValve {
    */
   processor: LogProcessor;
 
-  /** Flush buffered logs through the processor and stream them going forward. */
+  /** Flush buffered logs through the drain callback and stream onward. */
   open(): void;
 
   /** Close the gate. Begin buffering logs. */
@@ -32,8 +41,15 @@ export interface CreateLogValveOptions {
    */
   capacity?: number;
 
-  /** Downstream processor logs flow into once the gate is open. */
+  /** Downstream processor each log streams into while the gate is open. */
   processor: LogProcessor;
+
+  /**
+   * Sink for the buffer accumulated while closed, released as one batch when
+   * the gate opens. Receives the held logs in arrival order so a downstream can
+   * persist them together — e.g. a single IndexedDB transaction per flush.
+   */
+  drain: LogDrain;
 
   /**
    * Whether the valve starts open. `true` streams logs straight through from
@@ -52,6 +68,7 @@ export interface CreateLogValveOptions {
 export const createLogValve = ({
   capacity = Infinity,
   processor: forward,
+  drain,
   open: startOpen,
 }: CreateLogValveOptions): LogValve => {
   // Ring buffer that grows lazily up to `capacity`, then overwrites in place.
@@ -81,18 +98,24 @@ export const createLogValve = ({
   };
 
   const open = () => {
-    // Open before draining so a processor that logs back through the now-open
-    // valve streams straight through instead of buffering behind the flush.
+    // Open before draining so a log emitted back through the now-open valve —
+    // including from within `drain` itself — streams straight through instead
+    // of buffering behind the flush.
     isOpen = true;
 
-    // Drain the buffer.
-    const count = buffer.length;
-    for (let offset = 0; offset < count; offset += 1) {
-      forward(buffer[(oldest + offset) % count]);
-    }
+    if (buffer.length === 0) return;
 
+    // Lift the ring into a flat, arrival-ordered batch and hand the whole thing
+    // to `drain` in one call. The buffer holds two contiguous runs — `oldest` to
+    // the end, then the start up to `oldest` — so joining those slices restores
+    // arrival order. Both slices are fresh, so resetting the buffer next can't
+    // disturb the batch, and a re-entrant log lands in the cleared buffer rather
+    // than one already released.
+    const batch = buffer.slice(oldest).concat(buffer.slice(0, oldest));
     buffer.length = 0;
     oldest = 0;
+
+    drain(batch);
   };
 
   const close = () => {
