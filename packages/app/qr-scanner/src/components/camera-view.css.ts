@@ -12,6 +12,12 @@ export const viewport = style({
   position: 'fixed',
   inset: 0,
   backgroundColor: black.step12,
+  // The stage is an opaque dark surface in *both* page themes (black
+  // backdrop + dimmed feed), so pin the color scheme to dark. Overlay
+  // controls resolve their `light-dark()` tokens to the dark-mode
+  // (light) values and stay legible against it — otherwise a
+  // light-theme `neutral` button paints dark-on-dark and vanishes.
+  colorScheme: 'dark',
 });
 
 /** The feed itself — fills the stage, cropping to cover rather than letterbox. */
