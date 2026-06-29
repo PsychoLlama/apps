@@ -1,23 +1,37 @@
 import { defineOption } from '../define-option';
-import { read } from '../config';
+import { readAllEnvironments, readEnvironment } from '../config';
 
-// jsdom has no OPFS, so `read` resolves to the bare defaults here. The
+// jsdom has no OPFS, so the reads resolve to the bare defaults here. The
 // persistence round-trip and cross-context `subscribe` behavior — both of
 // which need real browser APIs — live in `config.test.browser.ts`.
 
 const flag = (id: string) =>
   defineOption(id, {
-    dev: { enabled: true },
+    development: { enabled: true },
     staging: { enabled: true },
-    prod: { enabled: false },
+    production: { enabled: false },
   });
 
-describe('read', () => {
+describe('readAllEnvironments', () => {
   it('resolves to the full per-environment defaults when nothing is stored', async () => {
-    expect(await read(flag('read-defaults'))).toEqual({
-      dev: { enabled: true },
+    expect(await readAllEnvironments(flag('read-defaults'))).toEqual({
+      development: { enabled: true },
       staging: { enabled: true },
-      prod: { enabled: false },
+      production: { enabled: false },
+    });
+  });
+});
+
+describe('readEnvironment', () => {
+  it('defaults to the current environment (development under vitest)', async () => {
+    expect(await readEnvironment(flag('read-current'))).toEqual({
+      enabled: true,
+    });
+  });
+
+  it('reads the value for an explicit environment', async () => {
+    expect(await readEnvironment(flag('read-explicit'), 'production')).toEqual({
+      enabled: false,
     });
   });
 });

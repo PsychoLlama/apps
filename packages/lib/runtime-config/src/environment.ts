@@ -1,24 +1,20 @@
-import { type Environment } from './define-option';
+import { ENVIRONMENTS, type Environment } from './define-option';
+
+/** The environment non-deployed contexts (e.g. vitest's `test`) fall back to. */
+const DEFAULT_ENVIRONMENT: Environment = 'development';
 
 /**
- * Vite build modes mapped to their deploy environment. `development`
- * (the dev server) and `production` (`vite build`) are Vite's intrinsic
- * defaults; `staging` is passed explicitly (`--mode staging`) by the CI
- * preview build.
- */
-const ENVIRONMENT_BY_MODE: Record<string, Environment> = {
-  development: 'dev',
-  staging: 'staging',
-  production: 'prod',
-};
-
-/**
- * Resolve a deploy {@link Environment} from a Vite mode. Falls back to
- * `dev` for any unrecognized mode — notably vitest's `test` — so
- * non-deployed contexts behave like local development.
+ * Resolve a deploy {@link Environment} from a Vite mode. Our environments
+ * are named to match Vite's modes one-to-one (`vite build` → `production`,
+ * `--mode staging` → `staging`, the dev server → `development`), so this is
+ * an identity for deployed builds. Any unrecognized mode — notably vitest's
+ * `test` — falls back to `development`, so non-deployed contexts behave like
+ * local development.
  */
 export const resolveEnvironment = (mode: string): Environment =>
-  ENVIRONMENT_BY_MODE[mode] ?? 'dev';
+  (ENVIRONMENTS as readonly string[]).includes(mode)
+    ? (mode as Environment)
+    : DEFAULT_ENVIRONMENT;
 
 /**
  * The deploy environment this build targets. Derived from Vite's
@@ -28,7 +24,7 @@ export const resolveEnvironment = (mode: string): Environment =>
  * client alike.
  *
  * Use it to select the active value from an option's per-environment
- * map (e.g. the result of {@link read}).
+ * map (e.g. the result of {@link readEnvironment}).
  */
 export const environment: Environment = resolveEnvironment(
   import.meta.env.MODE,

@@ -1,5 +1,11 @@
 import { defineOption } from '../define-option';
-import { read, reset, subscribe, updateConfig } from '../config';
+import {
+  readAllEnvironments,
+  readEnvironment,
+  reset,
+  subscribe,
+  updateConfig,
+} from '../config';
 
 // Exercises the real OPFS-backed path in a browser. Each test wipes the
 // config directory so persisted overrides don't leak between cases.
@@ -10,34 +16,48 @@ afterEach(async () => {
 
 const flag = (id: string) =>
   defineOption(id, {
-    dev: { enabled: true },
+    development: { enabled: true },
     staging: { enabled: true },
-    prod: { enabled: false },
+    production: { enabled: false },
   });
 
 describe('updateConfig', () => {
   it('persists a per-environment patch that a later read reflects', async () => {
     const option = flag('persist');
 
-    await updateConfig(option, { prod: { enabled: true } });
+    await updateConfig(option, { production: { enabled: true } });
 
-    expect(await read(option)).toEqual({
-      dev: { enabled: true },
+    expect(await readAllEnvironments(option)).toEqual({
+      development: { enabled: true },
       staging: { enabled: true },
-      prod: { enabled: true },
+      production: { enabled: true },
+    });
+  });
+
+  it('reflects a persisted override through readEnvironment', async () => {
+    const option = flag('persist-single');
+
+    await updateConfig(option, { production: { enabled: true } });
+
+    expect(await readEnvironment(option, 'production')).toEqual({
+      enabled: true,
+    });
+    // An environment with no override still falls back to its default.
+    expect(await readEnvironment(option, 'development')).toEqual({
+      enabled: true,
     });
   });
 
   it('merges successive patches across environments', async () => {
     const option = flag('merge');
 
-    await updateConfig(option, { prod: { enabled: true } });
-    await updateConfig(option, { dev: { enabled: false } });
+    await updateConfig(option, { production: { enabled: true } });
+    await updateConfig(option, { development: { enabled: false } });
 
-    expect(await read(option)).toEqual({
-      dev: { enabled: false },
+    expect(await readAllEnvironments(option)).toEqual({
+      development: { enabled: false },
       staging: { enabled: true },
-      prod: { enabled: true },
+      production: { enabled: true },
     });
   });
 });
@@ -46,32 +66,32 @@ describe('reset', () => {
   it('reverts a single environment to its default, leaving others', async () => {
     const option = flag('reset-one');
     await updateConfig(option, {
-      dev: { enabled: false },
-      prod: { enabled: true },
+      development: { enabled: false },
+      production: { enabled: true },
     });
 
-    await reset(option, ['prod']);
+    await reset(option, ['production']);
 
-    expect(await read(option)).toEqual({
-      dev: { enabled: false },
+    expect(await readAllEnvironments(option)).toEqual({
+      development: { enabled: false },
       staging: { enabled: true },
-      prod: { enabled: false },
+      production: { enabled: false },
     });
   });
 
   it('clears every environment by default', async () => {
     const option = flag('reset-all');
     await updateConfig(option, {
-      dev: { enabled: false },
-      prod: { enabled: true },
+      development: { enabled: false },
+      production: { enabled: true },
     });
 
     await reset(option);
 
-    expect(await read(option)).toEqual({
-      dev: { enabled: true },
+    expect(await readAllEnvironments(option)).toEqual({
+      development: { enabled: true },
       staging: { enabled: true },
-      prod: { enabled: false },
+      production: { enabled: false },
     });
   });
 });
@@ -95,9 +115,9 @@ describe('subscribe', () => {
     });
 
     expect(config).toEqual({
-      dev: { enabled: true },
+      development: { enabled: true },
       staging: { enabled: false },
-      prod: { enabled: false },
+      production: { enabled: false },
     });
   });
 
@@ -106,7 +126,7 @@ describe('subscribe', () => {
     const calls: unknown[] = [];
     const unsubscribe = subscribe(option, (value) => calls.push(value));
 
-    fromSibling('some-other-option', { prod: { enabled: true } });
+    fromSibling('some-other-option', { production: { enabled: true } });
     await new Promise((resolve) => setTimeout(resolve));
     unsubscribe();
 

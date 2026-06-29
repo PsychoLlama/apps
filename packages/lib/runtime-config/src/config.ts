@@ -7,6 +7,7 @@ import {
   type Option,
   type Override,
 } from './define-option';
+import { environment } from './environment';
 import { deleteOverride, readOverride, writeOverride } from './storage';
 
 /** Layer an override onto an option's defaults — the resolved env map. */
@@ -16,17 +17,31 @@ const resolve = <Value extends JsonValue>(
 ): EnvironmentDefaults<Value> => ({ ...option.defaults, ...override });
 
 /**
- * Read an option's current configuration: its defaults with any persisted
- * override layered on top, as a full per-environment map. Resolves to the
- * bare defaults where nothing has been written or OPFS is unavailable.
+ * Read an option across *every* environment: its defaults with any
+ * persisted override layered on top, as a full per-environment map.
+ * Resolves to the bare defaults where nothing has been written or OPFS is
+ * unavailable.
  *
- * Returns every environment's value — selecting the active environment is
- * the caller's concern until environment detection lands.
+ * Reach for this when you need the whole map at once — e.g. a settings UI
+ * that edits each environment. To read the value for one environment, use
+ * {@link readEnvironment}.
  */
-export const read = async <Value extends JsonValue>(
+export const readAllEnvironments = async <Value extends JsonValue>(
   option: Option<Value>,
 ): Promise<EnvironmentDefaults<Value>> =>
   resolve(option, await readOverride<Value>(option.id));
+
+/**
+ * Read an option's resolved value for a single environment — the current
+ * {@link environment} by default. Layers any persisted override on top of
+ * the defaults, so this reflects runtime changes (it reads from OPFS).
+ *
+ * This is the everyday read: "what is this option set to here, now?".
+ */
+export const readEnvironment = async <Value extends JsonValue>(
+  option: Option<Value>,
+  env: Environment = environment,
+): Promise<Value> => (await readAllEnvironments(option))[env];
 
 /**
  * Subscribe to an option's changes made in *other* browsing contexts,
