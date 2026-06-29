@@ -10,34 +10,34 @@ afterEach(async () => {
 
 const flag = (id: string) =>
   defineOption(id, {
-    dev: { enabled: true },
+    development: { enabled: true },
     staging: { enabled: true },
-    prod: { enabled: false },
+    production: { enabled: false },
   });
 
 describe('updateConfig', () => {
   it('persists a per-environment patch that a later read reflects', async () => {
     const option = flag('persist');
 
-    await updateConfig(option, { prod: { enabled: true } });
+    await updateConfig(option, { production: { enabled: true } });
 
     expect(await read(option)).toEqual({
-      dev: { enabled: true },
+      development: { enabled: true },
       staging: { enabled: true },
-      prod: { enabled: true },
+      production: { enabled: true },
     });
   });
 
   it('merges successive patches across environments', async () => {
     const option = flag('merge');
 
-    await updateConfig(option, { prod: { enabled: true } });
-    await updateConfig(option, { dev: { enabled: false } });
+    await updateConfig(option, { production: { enabled: true } });
+    await updateConfig(option, { development: { enabled: false } });
 
     expect(await read(option)).toEqual({
-      dev: { enabled: false },
+      development: { enabled: false },
       staging: { enabled: true },
-      prod: { enabled: true },
+      production: { enabled: true },
     });
   });
 });
@@ -46,32 +46,32 @@ describe('reset', () => {
   it('reverts a single environment to its default, leaving others', async () => {
     const option = flag('reset-one');
     await updateConfig(option, {
-      dev: { enabled: false },
-      prod: { enabled: true },
+      development: { enabled: false },
+      production: { enabled: true },
     });
 
-    await reset(option, ['prod']);
+    await reset(option, ['production']);
 
     expect(await read(option)).toEqual({
-      dev: { enabled: false },
+      development: { enabled: false },
       staging: { enabled: true },
-      prod: { enabled: false },
+      production: { enabled: false },
     });
   });
 
   it('clears every environment by default', async () => {
     const option = flag('reset-all');
     await updateConfig(option, {
-      dev: { enabled: false },
-      prod: { enabled: true },
+      development: { enabled: false },
+      production: { enabled: true },
     });
 
     await reset(option);
 
     expect(await read(option)).toEqual({
-      dev: { enabled: true },
+      development: { enabled: true },
       staging: { enabled: true },
-      prod: { enabled: false },
+      production: { enabled: false },
     });
   });
 });
@@ -95,9 +95,9 @@ describe('subscribe', () => {
     });
 
     expect(config).toEqual({
-      dev: { enabled: true },
+      development: { enabled: true },
       staging: { enabled: false },
-      prod: { enabled: false },
+      production: { enabled: false },
     });
   });
 
@@ -106,7 +106,7 @@ describe('subscribe', () => {
     const calls: unknown[] = [];
     const unsubscribe = subscribe(option, (value) => calls.push(value));
 
-    fromSibling('some-other-option', { prod: { enabled: true } });
+    fromSibling('some-other-option', { production: { enabled: true } });
     await new Promise((resolve) => setTimeout(resolve));
     unsubscribe();
 

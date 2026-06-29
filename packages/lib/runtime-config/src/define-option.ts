@@ -1,5 +1,10 @@
-/** The deploy environments an option can carry distinct defaults for. */
-export const ENVIRONMENTS = ['dev', 'staging', 'prod'] as const;
+/**
+ * The deploy environments an option can carry distinct defaults for. Named
+ * to match Vite's build modes one-to-one (`development`, `staging`,
+ * `production`) so {@link resolveEnvironment} maps a mode to an environment
+ * without translation.
+ */
+export const ENVIRONMENTS = ['development', 'staging', 'production'] as const;
 
 /** One of the known deploy environments. */
 export type Environment = (typeof ENVIRONMENTS)[number];
@@ -45,9 +50,9 @@ export interface Option<Value extends JsonValue = { enabled: boolean }> {
  *
  * @example
  * const myFeature = defineOption('my-feature', {
- *   dev: { enabled: true },
+ *   development: { enabled: true },
  *   staging: { enabled: true },
- *   prod: { enabled: false },
+ *   production: { enabled: false },
  * });
  */
 export const defineOption = <Value extends JsonValue = { enabled: boolean }>(

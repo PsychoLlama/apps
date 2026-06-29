@@ -7,17 +7,17 @@ import { read } from '../config';
 
 const flag = (id: string) =>
   defineOption(id, {
-    dev: { enabled: true },
+    development: { enabled: true },
     staging: { enabled: true },
-    prod: { enabled: false },
+    production: { enabled: false },
   });
 
 describe('read', () => {
   it('resolves to the full per-environment defaults when nothing is stored', async () => {
     expect(await read(flag('read-defaults'))).toEqual({
-      dev: { enabled: true },
+      development: { enabled: true },
       staging: { enabled: true },
-      prod: { enabled: false },
+      production: { enabled: false },
     });
   });
 });
