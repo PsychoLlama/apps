@@ -62,16 +62,6 @@ export const createLogValve = ({
     }
   };
 
-  const drain = () => {
-    const count = buffer.length;
-    for (let offset = 0; offset < count; offset += 1) {
-      forward(buffer[(oldest + offset) % count]);
-    }
-
-    buffer.length = 0;
-    oldest = 0;
-  };
-
   const processor: LogProcessor = (log) => {
     if (isOpen) {
       forward(log);
@@ -84,7 +74,15 @@ export const createLogValve = ({
     // Open before draining so a processor that logs back through the now-open
     // valve streams straight through instead of buffering behind the flush.
     isOpen = true;
-    drain();
+
+    // Drain the buffer.
+    const count = buffer.length;
+    for (let offset = 0; offset < count; offset += 1) {
+      forward(buffer[(oldest + offset) % count]);
+    }
+
+    buffer.length = 0;
+    oldest = 0;
   };
 
   const close = () => {
