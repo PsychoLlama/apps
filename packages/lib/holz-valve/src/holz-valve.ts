@@ -42,7 +42,7 @@ export interface CreateLogValveOptions {
  */
 export const createLogValve = ({
   capacity = Infinity,
-  processor,
+  processor: forward,
 }: CreateLogValveOptions): LogValve => {
   // Ring buffer that grows lazily up to `capacity`, then overwrites in place.
   // Starting empty and pushing keeps the array packed — no holes for V8 to
@@ -65,33 +65,31 @@ export const createLogValve = ({
   const drain = () => {
     const count = buffer.length;
     for (let offset = 0; offset < count; offset += 1) {
-      processor(buffer[(oldest + offset) % count]);
+      forward(buffer[(oldest + offset) % count]);
     }
+
     buffer.length = 0;
     oldest = 0;
   };
 
-  const accept: LogProcessor = (log) => {
+  const processor: LogProcessor = (log) => {
     if (isOpen) {
-      return processor(log);
+      forward(log);
+    } else {
+      enqueue(log);
     }
-
-    enqueue(log);
-    return undefined;
   };
 
-  return {
-    processor: accept,
-
-    open() {
-      // Open before draining so a processor that logs back through the now-open
-      // valve streams straight through instead of buffering behind the flush.
-      isOpen = true;
-      drain();
-    },
-
-    close() {
-      isOpen = false;
-    },
+  const open = () => {
+    // Open before draining so a processor that logs back through the now-open
+    // valve streams straight through instead of buffering behind the flush.
+    isOpen = true;
+    drain();
   };
+
+  const close = () => {
+    isOpen = false;
+  };
+
+  return { processor, open, close };
 };

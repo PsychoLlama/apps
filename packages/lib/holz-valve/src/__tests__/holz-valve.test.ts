@@ -4,13 +4,7 @@
  * `logger.info(...)` → valve → downstream processor.
  */
 
-import {
-  createLogger,
-  level,
-  type Log,
-  type Logger,
-  type LogProcessor,
-} from '@holz/core';
+import { createLogger, type Logger, type LogProcessor } from '@holz/core';
 
 import { createLogValve, type LogValve } from '../holz-valve';
 
@@ -29,15 +23,6 @@ const setup = ({ capacity }: { capacity: number }): Harness => {
   const logger = createLogger(valve.processor);
   return { forwarded, valve, logger };
 };
-
-/** Minimal `Log` for exercising the valve as a processor directly. */
-const makeLog = (message: string): Log => ({
-  timestamp: 0,
-  message,
-  level: level.info,
-  origin: ['test'],
-  context: {},
-});
 
 describe('createLogValve', () => {
   it('streams logs straight through while open (the default)', () => {
@@ -152,16 +137,6 @@ describe('createLogValve', () => {
     // 'reentrant' is logged while flushing 'b'. Since the valve is already
     // open by then, it streams straight through rather than re-queuing.
     expect(forwarded).toEqual(['a', 'b', 'reentrant', 'c']);
-  });
-
-  it('returns the downstream result while open and nothing while closed', () => {
-    const processor: LogProcessor = () => 'handled';
-    const valve = createLogValve({ capacity: 10, processor });
-
-    expect(valve.processor(makeLog('a'))).toBe('handled');
-
-    valve.close();
-    expect(valve.processor(makeLog('b'))).toBeUndefined();
   });
 
   it('treats redundant open/close calls as no-ops', () => {
