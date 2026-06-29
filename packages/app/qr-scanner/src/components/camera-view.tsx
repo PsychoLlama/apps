@@ -51,27 +51,6 @@ export const CameraView: Component<CameraViewProps> = (props) => {
     onCleanup(
       startCaptureLoop(video, () => decoder.connection?.current, finishScan),
     );
-
-    // Kick off playback once the freshly attached stream is playable. A
-    // synchronous attempt right after assigning `srcObject` loses the race
-    // on iOS — the source isn't ready yet — so wait for `loadedmetadata`
-    // unless the element somehow already has it.
-    const play = () => {
-      void video.play().then(
-        () => logger.debug('Camera feed playing.'),
-        (error) =>
-          logger.warn('Camera feed failed to play.', {
-            error: toError(error),
-          }),
-      );
-    };
-
-    if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-      play();
-    } else {
-      video.addEventListener('loadedmetadata', play, { once: true });
-      onCleanup(() => video.removeEventListener('loadedmetadata', play));
-    }
   });
 
   return (
@@ -82,6 +61,19 @@ export const CameraView: Component<CameraViewProps> = (props) => {
         data-testid="camera-feed"
         aria-label="Live camera feed"
         class={css.video}
+        on:loadedmetadata={(event) => {
+          // Play once the freshly attached stream is playable. A
+          // synchronous attempt right after assigning `srcObject` loses
+          // the race on iOS — the source isn't ready yet — so wait for
+          // the metadata to land.
+          void event.currentTarget.play().then(
+            () => logger.debug('Camera feed playing.'),
+            (error) =>
+              logger.warn('Camera feed failed to play.', {
+                error: toError(error),
+              }),
+          );
+        }}
         ref={(video) => {
           videoEl = video;
           // Set as DOM properties, before insertion: the `muted` attribute
