@@ -1,6 +1,4 @@
 export {
-  LOG_DIRECTORY,
-  LOG_FILE_NAME,
   createLogger,
   type Log,
   type LogContext,
