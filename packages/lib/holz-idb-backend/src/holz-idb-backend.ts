@@ -125,11 +125,13 @@ export const createIdbBackend = (
   let connecting = false;
   let migrated = false;
 
-  // Logs flow downstream into whichever connection is currently live. The valve
-  // only opens once `db` is set, so the write path normally has a connection;
-  // the `?.` is belt-and-suspenders, since logging must never throw.
+  // Logs flow downstream into whichever connection is currently live. Start
+  // closed, buffering until the first open; the valve only opens once `db` is
+  // set, so the write path normally has a connection — the `?.` is
+  // belt-and-suspenders, since logging must never throw.
   const valve = createLogValve({
     capacity: bufferCapacity,
+    open: false,
     processor: (log) => {
       db?.add(STORE_NAME, log).catch(() => {
         // A failed write (quota exhausted, the connection closing mid-flush)
@@ -179,9 +181,8 @@ export const createIdbBackend = (
     }
   };
 
-  // Buffer from the first log, then open eagerly so the schema migrates up
-  // front rather than waiting on traffic.
-  valve.close();
+  // The valve buffers from the first log; open eagerly so the schema migrates
+  // up front rather than waiting on traffic.
   void connect();
 
   return (log) => {
