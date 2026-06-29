@@ -1,7 +1,6 @@
-import { For } from 'solid-js';
+import { For, Show, onCleanup, onMount } from 'solid-js';
 import type { Component } from 'solid-js';
-import { experimentalApp } from '@app/experimental/config';
-import { environment } from '@lib/runtime-config';
+import { useAction, useEffect } from '@lib/state';
 import { Card, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
@@ -12,6 +11,12 @@ import IconHammerWrench from 'virtual:icons/mdi/hammer-wrench';
 import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import IconGithub from 'virtual:icons/mdi/github';
+import {
+  experimentalFlag,
+  hydrateExperimentalFlagEffect,
+  setExperimentalEnabled,
+  watchExperimentalFlag,
+} from '../state/experimental-flag';
 import * as css from './index.css';
 
 interface AppEntry {
@@ -25,12 +30,6 @@ interface AppEntry {
 /**
  * Hard-coded launcher inventory. Add an entry only when the target
  * is actually navigable — there is no "coming soon" tier.
- *
- * The experimental entry follows the `experimental-app` flag's default
- * for the build's environment — shown in development and staging, hidden
- * in production. The route itself is gated at runtime by the service
- * worker, which honors live overrides; this launcher link only reflects
- * the environment's default posture.
  */
 const APPS: ReadonlyArray<AppEntry> = [
   {
@@ -64,18 +63,65 @@ const APPS: ReadonlyArray<AppEntry> = [
     description: 'Browse the component library and design system.',
     Icon: IconGallery,
   },
-  ...(experimentalApp.defaults[environment].enabled
-    ? [
-        {
-          id: 'experimental',
-          name: 'Experimental',
-          href: '/experimental',
-          description: 'A scratchpad for work-in-progress ideas.',
-          Icon: IconHammerWrench,
-        } satisfies AppEntry,
-      ]
-    : []),
 ];
+
+/**
+ * The experimental scratchpad. Kept out of {@link APPS} because it's
+ * gated on the `experimental-app` runtime flag rather than always shown:
+ * the launcher reveals it reactively (see {@link experimentalFlag}), in
+ * lockstep with the service worker's runtime route gate.
+ */
+const EXPERIMENTAL_APP: AppEntry = {
+  id: 'experimental',
+  name: 'Experimental',
+  href: '/experimental',
+  description: 'A scratchpad for work-in-progress ideas.',
+  Icon: IconHammerWrench,
+};
+
+/** A single launcher entry — a card linking to one app. */
+const AppCard: Component<{ app: AppEntry }> = (props) => (
+  <Flex as="li" class={css.item}>
+    <Card
+      as="a"
+      href={props.app.href}
+      size={3}
+      variant="surface"
+      class={css.card}
+    >
+      <Flex as="div" align="center" gap={4}>
+        <Flex as="div" direction="column" gap={2} grow>
+          <Flex as="div" align="center" gap={2}>
+            <props.app.Icon
+              width="20"
+              height="20"
+              class={css.icon}
+              aria-hidden="true"
+            />
+            <Heading as="h2" size={3} weight="medium" selectable={false}>
+              {props.app.name}
+            </Heading>
+          </Flex>
+          <Text
+            as="p"
+            size={2}
+            color="lowContrast"
+            trim="end"
+            selectable={false}
+          >
+            {props.app.description}
+          </Text>
+        </Flex>
+        <IconChevronRight
+          width="20"
+          height="20"
+          class={css.chevron}
+          aria-hidden="true"
+        />
+      </Flex>
+    </Card>
+  </Flex>
+);
 
 /**
  * The launcher is the suite's front door, so it carries the suite-level
@@ -83,115 +129,84 @@ const APPS: ReadonlyArray<AppEntry> = [
  * they'd read as app-specific anywhere else) and the source link lives
  * in the footer.
  */
-const Launcher = () => (
-  <Frame>
-    <SiteHeader
-      actions={
-        <LinkButton
-          testId="settings"
-          href="/settings"
-          aria-label="Settings"
-          variant="ghost"
-          color="neutral"
-        >
-          <IconCog width="24" height="24" />
-        </LinkButton>
-      }
-    />
+const Launcher = () => {
+  const reconcileFlag = useEffect(hydrateExperimentalFlagEffect);
+  const setEnabled = useAction(setExperimentalEnabled);
 
-    <FrameBody as="section">
-      <Flex as="div" direction="column" align="center" gap={6} grow>
-        <Flex as="hgroup" direction="column" align="center" gap={3}>
-          <Heading as="h1" size={8} trim="start" selectable={false}>
-            Apps
-          </Heading>
-          <Text
-            as="p"
-            size={3}
-            color="lowContrast"
-            trim="end"
-            selectable={false}
+  // The store is seeded with the build-environment default, so first
+  // paint (and prerender) match without a flash. Once mounted — OPFS is
+  // client-only, unavailable during SSG — reconcile with any persisted
+  // override and track changes made in other tabs.
+  onMount(() => {
+    void reconcileFlag();
+    onCleanup(watchExperimentalFlag(setEnabled));
+  });
+
+  return (
+    <Frame>
+      <SiteHeader
+        actions={
+          <LinkButton
+            testId="settings"
+            href="/settings"
+            aria-label="Settings"
+            variant="ghost"
+            color="neutral"
           >
-            A handful of small, single-purpose tools.
-          </Text>
+            <IconCog width="24" height="24" />
+          </LinkButton>
+        }
+      />
+
+      <FrameBody as="section">
+        <Flex as="div" direction="column" align="center" gap={6} grow>
+          <Flex as="hgroup" direction="column" align="center" gap={3}>
+            <Heading as="h1" size={8} trim="start" selectable={false}>
+              Apps
+            </Heading>
+            <Text
+              as="p"
+              size={3}
+              color="lowContrast"
+              trim="end"
+              selectable={false}
+            >
+              A handful of small, single-purpose tools.
+            </Text>
+          </Flex>
+
+          <Container as="div" size={2}>
+            <Flex
+              as="ul"
+              direction="column"
+              gap={3}
+              class={css.list}
+              aria-label="Apps"
+            >
+              <For each={APPS}>{(app) => <AppCard app={app} />}</For>
+              <Show when={experimentalFlag.enabled}>
+                <AppCard app={EXPERIMENTAL_APP} />
+              </Show>
+            </Flex>
+          </Container>
         </Flex>
 
-        <Container as="div" size={2}>
-          <Flex
-            as="ul"
-            direction="column"
-            gap={3}
-            class={css.list}
-            aria-label="Apps"
+        <Flex as="footer" justify="end">
+          <LinkButton
+            testId="github"
+            href="https://github.com/PsychoLlama/apps"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Source on GitHub"
+            variant="ghost"
+            color="neutral"
           >
-            <For each={APPS}>
-              {(app) => (
-                <Flex as="li" class={css.item}>
-                  <Card
-                    as="a"
-                    href={app.href}
-                    size={3}
-                    variant="surface"
-                    class={css.card}
-                  >
-                    <Flex as="div" align="center" gap={4}>
-                      <Flex as="div" direction="column" gap={2} grow>
-                        <Flex as="div" align="center" gap={2}>
-                          <app.Icon
-                            width="20"
-                            height="20"
-                            class={css.icon}
-                            aria-hidden="true"
-                          />
-                          <Heading
-                            as="h2"
-                            size={3}
-                            weight="medium"
-                            selectable={false}
-                          >
-                            {app.name}
-                          </Heading>
-                        </Flex>
-                        <Text
-                          as="p"
-                          size={2}
-                          color="lowContrast"
-                          trim="end"
-                          selectable={false}
-                        >
-                          {app.description}
-                        </Text>
-                      </Flex>
-                      <IconChevronRight
-                        width="20"
-                        height="20"
-                        class={css.chevron}
-                        aria-hidden="true"
-                      />
-                    </Flex>
-                  </Card>
-                </Flex>
-              )}
-            </For>
-          </Flex>
-        </Container>
-      </Flex>
-
-      <Flex as="footer" justify="end">
-        <LinkButton
-          testId="github"
-          href="https://github.com/PsychoLlama/apps"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Source on GitHub"
-          variant="ghost"
-          color="neutral"
-        >
-          <IconGithub width="20" height="20" />
-        </LinkButton>
-      </Flex>
-    </FrameBody>
-  </Frame>
-);
+            <IconGithub width="20" height="20" />
+          </LinkButton>
+        </Flex>
+      </FrameBody>
+    </Frame>
+  );
+};
 
 export default Launcher;
