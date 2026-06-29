@@ -1,28 +1,32 @@
-import { For, Show } from 'solid-js';
-import { Callout, Code, Flex, Text } from '@lib/ui';
+import { Callout, Code, Text } from '@lib/ui';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
-import { errorChain } from './error-chain';
+import { errorChain, type ErrorFrame } from './error-chain';
+import * as css from './log-panel.css';
 
 /**
  * An entry's third line, present only when the log carries a `context.error`.
- * A danger callout listing the error and its `cause` chain, outermost first,
- * with each deeper cause prefixed "caused by" so a hydrated chain reads
- * top-down. The error type comes through as monospace; the message trails it.
+ * A danger callout rendering the error and its `cause` chain as preformatted
+ * text, outermost first, with each deeper cause prefixed "caused by" so a
+ * hydrated chain reads top-down. The monospace face and danger tint come from
+ * the inner `Code`; the `pre` preserves the chain's line breaks.
  */
 export const ErrorDetails = (props: { error: Error }) => (
-  <Callout size={1} color="danger" icon={<IconAlert />}>
-    <Flex as="div" direction="column" gap={1}>
-      <For each={errorChain(props.error)}>
-        {(frame, index) => (
-          <Text as="p" size={1} selectable>
-            <Show when={index() > 0}>caused by </Show>
-            <Code size={1} variant="ghost" color="danger">
-              {frame.name}
-            </Code>
-            <Show when={frame.message}>{`: ${frame.message}`}</Show>
-          </Text>
-        )}
-      </For>
-    </Flex>
+  <Callout
+    size={1}
+    color="danger"
+    icon={<IconAlert />}
+    class={css.errorCallout}
+  >
+    <Text as="pre" size={1} selectable class={css.errorOutput}>
+      <Code size={1} variant="ghost" color="danger">
+        {errorChain(props.error).map(formatFrame).join('\n')}
+      </Code>
+    </Text>
   </Callout>
 );
+
+/** One chain frame as a line of text; deeper causes are flagged "caused by". */
+const formatFrame = (frame: ErrorFrame, index: number): string => {
+  const label = index > 0 ? `caused by ${frame.name}` : frame.name;
+  return frame.message ? `${label}: ${frame.message}` : label;
+};

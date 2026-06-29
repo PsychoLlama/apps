@@ -76,7 +76,7 @@ export const LogEntry = (props: { log: Log }) => {
           <For each={attributes()}>
             {([key, value]) => (
               <Badge size={1} variant="soft" color="neutral">
-                {key}: {formatValue(value)}
+                {key}={formatValue(value)}
               </Badge>
             )}
           </For>

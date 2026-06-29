@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutral } from '@lib/design';
+import { neutral, space } from '@lib/design';
 
 /**
  * The meta fields (time, origin) read as a single token each — let them size to
@@ -32,4 +32,23 @@ export const message = style({
 export const originSeparator = style({
   color: neutral.alpha[11],
   flexShrink: 0,
+});
+
+/**
+ * The error callout sits a step further from the entry than its other lines —
+ * the meta strip's badges crowd it otherwise. Adds to the entry's row gap so
+ * the callout reads as a distinct block rather than another inline detail.
+ */
+export const errorCallout = style({
+  marginTop: space[2],
+});
+
+/**
+ * The error chain, rendered as preformatted text: whitespace is preserved so a
+ * multi-line message keeps its shape, and long lines wrap rather than overflow
+ * the callout. The monospace face comes from the `Code` it wraps.
+ */
+export const errorOutput = style({
+  whiteSpace: 'pre-wrap',
+  overflowWrap: 'anywhere',
 });
