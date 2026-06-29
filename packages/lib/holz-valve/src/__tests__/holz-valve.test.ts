@@ -4,7 +4,12 @@
  * `logger.info(...)` → valve → downstream processor.
  */
 
-import { createLogger, type Logger, type LogProcessor } from '@holz/core';
+import {
+  createLogger,
+  type Log,
+  type Logger,
+  type LogProcessor,
+} from '@holz/core';
 
 import { createLogValve, type LogValve } from '../holz-valve';
 
@@ -25,7 +30,12 @@ const setup = ({
 }): Harness => {
   const forwarded: string[] = [];
   const processor: LogProcessor = (log) => void forwarded.push(log.message);
-  const valve = createLogValve({ capacity, open, processor });
+  // The drained batch records into the same sink, in order, so assertions read
+  // a single arrival-ordered stream regardless of which path delivered a log.
+  const drain = (logs: Log[]) => {
+    for (const log of logs) forwarded.push(log.message);
+  };
+  const valve = createLogValve({ capacity, open, processor, drain });
   const logger = createLogger(valve.processor);
   return { forwarded, valve, logger };
 };
@@ -130,19 +140,29 @@ describe('createLogValve', () => {
 
   it('streams a re-entrant log cleanly during a flush', () => {
     const forwarded: string[] = [];
-    let reentered = false;
 
-    // `processor` only reads `logger` when invoked (during the flush below),
-    // by which point the `const` is initialized.
-    const processor: LogProcessor = (log) => {
-      forwarded.push(log.message);
-      if (log.message === 'b' && !reentered) {
-        reentered = true;
-        logger.info('reentrant');
+    const processor: LogProcessor = (log) => void forwarded.push(log.message);
+
+    // `drain` re-enters mid-batch, logging back through the valve while
+    // releasing the held logs. It only reads `logger` when invoked (during the
+    // flush below), by which point the `const` is initialized.
+    let reentered = false;
+    const drain = (logs: Log[]) => {
+      for (const log of logs) {
+        forwarded.push(log.message);
+        if (log.message === 'b' && !reentered) {
+          reentered = true;
+          logger.info('reentrant');
+        }
       }
     };
 
-    const valve = createLogValve({ capacity: 10, open: true, processor });
+    const valve = createLogValve({
+      capacity: 10,
+      open: true,
+      processor,
+      drain,
+    });
     const logger = createLogger(valve.processor);
 
     valve.close();
@@ -151,8 +171,8 @@ describe('createLogValve', () => {
     logger.info('c');
     valve.open();
 
-    // 'reentrant' is logged while flushing 'b'. Since the valve is already
-    // open by then, it streams straight through rather than re-queuing.
+    // 'reentrant' is logged while draining 'b'. The valve is already open by
+    // then, so it streams straight through the processor rather than re-queuing.
     expect(forwarded).toEqual(['a', 'b', 'reentrant', 'c']);
   });
 
