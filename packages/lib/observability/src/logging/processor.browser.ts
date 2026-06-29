@@ -2,23 +2,21 @@ import { createConsoleBackend } from '@holz/console-backend';
 import { type LogProcessor, combine } from '@holz/core';
 import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
-import {
-  createOpfsWorkerBackend,
-  getWorkerLogBuffer,
-  inMainThread,
-  inObservabilityWorker,
-} from '@lib/holz-opfs-backend';
+import { createIdbBackend } from '@lib/holz-idb-backend';
 import { devPattern } from './dev-pattern';
-import { LOG_DIRECTORY, LOG_FILE_NAME } from './log-file';
+import { inMainThread } from './environment';
 
 const consoleBackend = createConsoleBackend();
 
 // The base log destination, chosen by the realm this module loads in. A global
-// collector (`setGlobalLogCollector`) still intercepts upstream of all three.
+// collector (`setGlobalLogCollector`) still intercepts upstream. Every browser
+// realm persists to the same origin-shared IndexedDB store — `createIdbBackend`
+// runs anywhere (main thread, dedicated workers, service workers), so there's
+// no observability worker to spawn and no env-specific persistence path.
 const selectFallback = (): LogProcessor => {
-  // Main thread: dev-filtered console plus off-main-thread persistence, which
-  // spawns the observability worker (worker-only `createOpfsWorkerBackend`
-  // would loop).
+  const persistence = createIdbBackend();
+
+  // Main thread: dev-filtered console plus persistence.
   if (inMainThread) {
     return combine([
       createEnvironmentFilter({
@@ -26,28 +24,16 @@ const selectFallback = (): LogProcessor => {
         pattern: devPattern,
         defaultPattern: '',
       }),
-      createOpfsWorkerBackend({
-        directory: LOG_DIRECTORY,
-        file: LOG_FILE_NAME,
-      }),
+      persistence,
     ]);
   }
 
-  // Inside the observability worker: persist our own logs to the same OPFS file
-  // as the main thread. `getWorkerLogBuffer().backend` buffers them; the
-  // `@lib/holz-opfs-backend` worker drains that buffer into the shared durable
-  // sink once `init` opens the file. Console output too — see the note below on
-  // why it skips the env filter.
-  if (inObservabilityWorker) {
-    return combine([consoleBackend, getWorkerLogBuffer().backend]);
-  }
-
-  // Any other worker (service, QR scanner, …): console only. They expose
-  // neither `localStorage` nor `process.env`, so `createEnvironmentFilter`
+  // Any worker (service, QR scanner, …): console plus persistence. Workers
+  // expose neither `localStorage` nor `process.env`, so `createEnvironmentFilter`
   // always lands on its empty default pattern and drops every log — there's no
   // knob to set. We skip the filter and write straight to the console; callers
   // running in a worker presumably want output.
-  return consoleBackend;
+  return combine([consoleBackend, persistence]);
 };
 
 export const processor: LogProcessor = createLogCollector({
