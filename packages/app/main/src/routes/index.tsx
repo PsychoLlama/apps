@@ -1,5 +1,10 @@
-import { For } from 'solid-js';
+import { For, onMount } from 'solid-js';
 import type { Component } from 'solid-js';
+import {
+  experimentalFlag,
+  loadExperimentalFlagEffect,
+} from '@app/experimental';
+import { useEffect } from '@lib/state';
 import { Card, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
@@ -23,12 +28,6 @@ interface AppEntry {
 /**
  * Hard-coded launcher inventory. Add an entry only when the target
  * is actually navigable — there is no "coming soon" tier.
- *
- * The experimental entry is gated on `INCLUDE_EXPERIMENTAL_APP` (baked
- * in by the host's vite config), so it appears only on the builds that
- * actually ship the `/experimental` route — preview and local, never
- * production. The constant folds to a literal at build time, so the
- * unused branch is dead-code-eliminated.
  */
 const APPS: ReadonlyArray<AppEntry> = [
   {
@@ -62,18 +61,21 @@ const APPS: ReadonlyArray<AppEntry> = [
     description: 'Browse the component library and design system.',
     Icon: IconGallery,
   },
-  ...(import.meta.env.INCLUDE_EXPERIMENTAL_APP
-    ? [
-        {
-          id: 'experimental',
-          name: 'Experimental',
-          href: '/experimental',
-          description: 'A scratchpad for work-in-progress ideas.',
-          Icon: IconHammerWrench,
-        } satisfies AppEntry,
-      ]
-    : []),
 ];
+
+/**
+ * Listed only where the `/experimental` route resolves to the scratchpad
+ * rather than a 404 — gated at runtime on the same flag the route reads, so
+ * the launcher never advertises a link that 404s. Enabled in dev and
+ * staging, hidden in production.
+ */
+const EXPERIMENTAL_APP: AppEntry = {
+  id: 'experimental',
+  name: 'Experimental',
+  href: '/experimental',
+  description: 'A scratchpad for work-in-progress ideas.',
+  Icon: IconHammerWrench,
+};
 
 /**
  * The launcher is the suite's front door, so it carries the suite-level
@@ -81,115 +83,126 @@ const APPS: ReadonlyArray<AppEntry> = [
  * they'd read as app-specific anywhere else) and the source link lives
  * in the footer.
  */
-const Launcher = () => (
-  <Frame>
-    <SiteHeader
-      actions={
-        <LinkButton
-          testId="settings"
-          href="/settings"
-          aria-label="Settings"
-          variant="ghost"
-          color="neutral"
-        >
-          <IconCog width="24" height="24" />
-        </LinkButton>
-      }
-    />
+const Launcher = () => {
+  // Refine the experimental flag with any persisted override on mount; the
+  // store already holds its default, so the listing is correct before this
+  // resolves (client-only — OPFS is unavailable during SSG).
+  const loadExperimentalFlag = useEffect(loadExperimentalFlagEffect);
+  onMount(() => void loadExperimentalFlag());
 
-    <FrameBody as="section">
-      <Flex as="div" direction="column" align="center" gap={6} grow>
-        <Flex as="hgroup" direction="column" align="center" gap={3}>
-          <Heading as="h1" size={8} trim="start" selectable={false}>
-            Apps
-          </Heading>
-          <Text
-            as="p"
-            size={3}
-            color="lowContrast"
-            trim="end"
-            selectable={false}
-          >
-            A handful of small, single-purpose tools.
-          </Text>
-        </Flex>
+  const apps = () =>
+    experimentalFlag.enabled ? [...APPS, EXPERIMENTAL_APP] : APPS;
 
-        <Container as="div" size={2}>
-          <Flex
-            as="ul"
-            direction="column"
-            gap={3}
-            class={css.list}
-            aria-label="Apps"
+  return (
+    <Frame>
+      <SiteHeader
+        actions={
+          <LinkButton
+            testId="settings"
+            href="/settings"
+            aria-label="Settings"
+            variant="ghost"
+            color="neutral"
           >
-            <For each={APPS}>
-              {(app) => (
-                <Flex as="li" class={css.item}>
-                  <Card
-                    as="a"
-                    href={app.href}
-                    size={3}
-                    variant="surface"
-                    class={css.card}
-                  >
-                    <Flex as="div" align="center" gap={4}>
-                      <Flex as="div" direction="column" gap={2} grow>
-                        <Flex as="div" align="center" gap={2}>
-                          <app.Icon
-                            width="20"
-                            height="20"
-                            class={css.icon}
-                            aria-hidden="true"
-                          />
-                          <Heading
-                            as="h2"
-                            size={3}
-                            weight="medium"
+            <IconCog width="24" height="24" />
+          </LinkButton>
+        }
+      />
+
+      <FrameBody as="section">
+        <Flex as="div" direction="column" align="center" gap={6} grow>
+          <Flex as="hgroup" direction="column" align="center" gap={3}>
+            <Heading as="h1" size={8} trim="start" selectable={false}>
+              Apps
+            </Heading>
+            <Text
+              as="p"
+              size={3}
+              color="lowContrast"
+              trim="end"
+              selectable={false}
+            >
+              A handful of small, single-purpose tools.
+            </Text>
+          </Flex>
+
+          <Container as="div" size={2}>
+            <Flex
+              as="ul"
+              direction="column"
+              gap={3}
+              class={css.list}
+              aria-label="Apps"
+            >
+              <For each={apps()}>
+                {(app) => (
+                  <Flex as="li" class={css.item}>
+                    <Card
+                      as="a"
+                      href={app.href}
+                      size={3}
+                      variant="surface"
+                      class={css.card}
+                    >
+                      <Flex as="div" align="center" gap={4}>
+                        <Flex as="div" direction="column" gap={2} grow>
+                          <Flex as="div" align="center" gap={2}>
+                            <app.Icon
+                              width="20"
+                              height="20"
+                              class={css.icon}
+                              aria-hidden="true"
+                            />
+                            <Heading
+                              as="h2"
+                              size={3}
+                              weight="medium"
+                              selectable={false}
+                            >
+                              {app.name}
+                            </Heading>
+                          </Flex>
+                          <Text
+                            as="p"
+                            size={2}
+                            color="lowContrast"
+                            trim="end"
                             selectable={false}
                           >
-                            {app.name}
-                          </Heading>
+                            {app.description}
+                          </Text>
                         </Flex>
-                        <Text
-                          as="p"
-                          size={2}
-                          color="lowContrast"
-                          trim="end"
-                          selectable={false}
-                        >
-                          {app.description}
-                        </Text>
+                        <IconChevronRight
+                          width="20"
+                          height="20"
+                          class={css.chevron}
+                          aria-hidden="true"
+                        />
                       </Flex>
-                      <IconChevronRight
-                        width="20"
-                        height="20"
-                        class={css.chevron}
-                        aria-hidden="true"
-                      />
-                    </Flex>
-                  </Card>
-                </Flex>
-              )}
-            </For>
-          </Flex>
-        </Container>
-      </Flex>
+                    </Card>
+                  </Flex>
+                )}
+              </For>
+            </Flex>
+          </Container>
+        </Flex>
 
-      <Flex as="footer" justify="end">
-        <LinkButton
-          testId="github"
-          href="https://github.com/PsychoLlama/apps"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Source on GitHub"
-          variant="ghost"
-          color="neutral"
-        >
-          <IconGithub width="20" height="20" />
-        </LinkButton>
-      </Flex>
-    </FrameBody>
-  </Frame>
-);
+        <Flex as="footer" justify="end">
+          <LinkButton
+            testId="github"
+            href="https://github.com/PsychoLlama/apps"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Source on GitHub"
+            variant="ghost"
+            color="neutral"
+          >
+            <IconGithub width="20" height="20" />
+          </LinkButton>
+        </Flex>
+      </FrameBody>
+    </Frame>
+  );
+};
 
 export default Launcher;

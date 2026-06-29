@@ -1,10 +1,7 @@
-import { Frame, FrameBody, SiteHeader } from '@lib/shell';
-
-export const Experimental = () => {
-  return (
-    <Frame>
-      <SiteHeader title="Experimental" />
-      <FrameBody />
-    </Frame>
-  );
-};
+/**
+ * `@app/experimental` — the scratchpad app. `Experimental` is the gated
+ * `/experimental` entry; the flag surface lets the launcher list it only
+ * where the route resolves.
+ */
+export { Experimental } from './experimental';
+export { experimentalFlag, loadExperimentalFlagEffect } from './state';

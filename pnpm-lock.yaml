@@ -163,9 +163,18 @@ importers:
 
   packages/app/experimental:
     dependencies:
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../../lib/runtime-config
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/state':
+        specifier: workspace:*
+        version: link:../../lib/state
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
@@ -269,6 +278,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/state':
+        specifier: workspace:*
+        version: link:../../lib/state
       '@lib/theme':
         specifier: workspace:*
         version: link:../../lib/theme
