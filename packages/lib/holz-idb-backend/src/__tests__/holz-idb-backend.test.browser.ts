@@ -49,11 +49,18 @@ const makeLog = (overrides: Partial<Log>): Log => ({
 let logger: Logger;
 
 beforeEach(async () => {
-  // Build the backend first so the database and its store exist, then wipe the
-  // store so each test starts empty. Clearing is a plain transaction — unlike
+  // The backend opens IndexedDB eagerly but asynchronously and returns its
+  // processor synchronously. Drive one log through and wait for it to land —
+  // proving the store exists and the connection is live — then wipe the store
+  // so each test starts empty. Clearing is a plain transaction: unlike
   // `deleteDB`, it raises no `versionchange`, so it neither disturbs nor waits
   // on any other open connection.
-  logger = createLogger(await createIdbBackend());
+  logger = createLogger(createIdbBackend());
+
+  logger.info('warm-up');
+  await vi.waitFor(async () => {
+    expect(await readPersistedLogs()).not.toHaveLength(0);
+  });
 
   const db = await openDB<LogDatabase>(DATABASE_NAME);
   try {
@@ -61,6 +68,53 @@ beforeEach(async () => {
   } finally {
     db.close();
   }
+});
+
+it('buffers logs emitted before the database finishes opening', async () => {
+  // A fresh backend opens IndexedDB asynchronously. Logs emitted in the same
+  // tick — before the connection is live — must buffer and flush once it opens
+  // rather than drop on the floor.
+  const eager = createLogger(createIdbBackend());
+  eager.info('emitted before open');
+
+  const logs = await vi.waitFor(async () => {
+    const persisted = await readPersistedLogs();
+    expect(persisted).toHaveLength(1);
+    return persisted;
+  });
+
+  expect(logs[0].message).toBe('emitted before open');
+});
+
+it('keeps writing across a schema upgrade triggered elsewhere', async () => {
+  // The backend from `beforeEach` holds an open connection. Persist a log
+  // through it, then force a version bump from a separate connection. That
+  // fires `versionchange` on the backend's connection, which must close to let
+  // the upgrade through and reconnect at the new version — not go dark.
+  logger.info('before upgrade');
+  await vi.waitFor(async () => {
+    expect(await readPersistedLogs()).toContainEqual(
+      expect.objectContaining({ message: 'before upgrade' }),
+    );
+  });
+
+  // Open at a higher version, adding a throwaway index. This blocks until the
+  // backend (and any other open connection) steps aside, then runs its upgrade.
+  const upgraded = await openDB(DATABASE_NAME, 2, {
+    upgrade(_db, _oldVersion, _newVersion, transaction) {
+      transaction.objectStore(STORE_NAME).createIndex('by-level', 'level');
+    },
+  });
+  upgraded.close();
+
+  // The backend is now disconnected. The next log must lazily reconnect at
+  // version 2 and persist, proving logging survived the upgrade.
+  logger.info('after upgrade');
+  await vi.waitFor(async () => {
+    expect(await readPersistedLogs()).toContainEqual(
+      expect.objectContaining({ message: 'after upgrade' }),
+    );
+  });
 });
 
 it('persists a log with its level, origin, and context', async () => {
@@ -105,7 +159,7 @@ it('orders logs by event time through the timestamp index', async () => {
   // Stand in for interleaved contexts: a buffered producer flushes an older
   // log *after* a newer one has already been written. Insertion order and
   // event-time order diverge — the index is what recovers chronology.
-  const db = await openDB(DATABASE_NAME);
+  const db = await openDB<LogDatabase>(DATABASE_NAME);
   try {
     await db.add(STORE_NAME, makeLog({ message: 'newer', timestamp: 2000 }));
     await db.add(STORE_NAME, makeLog({ message: 'older', timestamp: 1000 }));

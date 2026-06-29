@@ -472,6 +472,9 @@ importers:
       '@holz/core':
         specifier: 'catalog:'
         version: 0.8.3-rc.162
+      '@lib/holz-valve':
+        specifier: workspace:*
+        version: link:../holz-valve
       idb:
         specifier: 'catalog:'
         version: 8.0.3
