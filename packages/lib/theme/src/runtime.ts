@@ -5,6 +5,7 @@
  * `@lib/observability` into Vanilla Extract's child compiler.
  */
 export { colorScheme, theme } from './store';
+export { readActiveColorScheme } from './capabilities';
 export {
   clearTheme,
   hydrateColorSchemeEffect,
