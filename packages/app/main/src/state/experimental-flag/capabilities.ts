@@ -1,4 +1,4 @@
-import { environment, readEnvironment, subscribe } from '@lib/runtime-config';
+import { readEnvironment, subscribe } from '@lib/runtime-config';
 import { experimentalApp } from '@app/experimental/config';
 
 /**
@@ -18,6 +18,6 @@ export const readExperimentalFlag = async (): Promise<boolean> =>
 export const watchExperimentalFlag = (
   onChange: (enabled: boolean) => void,
 ): (() => void) =>
-  subscribe(experimentalApp, (defaults) => {
-    onChange(defaults[environment].enabled);
+  subscribe(experimentalApp, (value) => {
+    onChange(value.enabled);
   });
