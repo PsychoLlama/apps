@@ -17,3 +17,4 @@ export {
   type Override,
 } from './define-option';
 export { read, reset, subscribe, updateConfig } from './config';
+export { environment } from './environment';

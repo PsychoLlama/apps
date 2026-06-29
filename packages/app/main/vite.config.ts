@@ -32,15 +32,6 @@ const includeExperimental = includesExperimentalApp(process.env.GITHUB_REF);
 // notice.
 const manifestThemeColor = THEME_COLORS[DEFAULT_THEME_ID].dark;
 
-// The bundled service worker lives under `/_build/`, so its default
-// scope would be limited to that prefix. The dev server needs this
-// header to honor the `scope: '/'` registration; production (and the
-// wrangler-based `preview` script) set the same header via
-// `public/_headers`.
-const widenServiceWorkerScope = {
-  'Service-Worker-Allowed': '/',
-};
-
 export default defineConfig({
   define: {
     'import.meta.env.INCLUDE_EXPERIMENTAL_APP':
@@ -59,9 +50,18 @@ export default defineConfig({
       // Vite's chokidar watcher doesn't respect .gitignore.
       ignored: [...generatedArtifacts, scratchDir(workspaceRoot)],
     },
-    headers: widenServiceWorkerScope,
-    // Reached through a Cloudflare Tunnel for testing on mobile devices.
-    allowedHosts: ['apps.jessegibson.dev'],
+    headers: {
+      // The bundled service worker lives under `/_build/`, so its default
+      // scope would be limited to that prefix. The dev server needs this
+      // header to honor the `scope: '/'` registration; production (and the
+      // wrangler-based `preview` script) set the same header via
+      // `public/_headers`.
+      'Service-Worker-Allowed': '/',
+    },
+    allowedHosts: [
+      // Cloudflare Tunnel occasionally used for testing on mobile.
+      'apps.jessegibson.dev',
+    ],
   },
   worker: {
     // Vite runs `?worker` bundles through a separate plugin pipeline
