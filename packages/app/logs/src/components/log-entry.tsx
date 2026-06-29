@@ -3,20 +3,28 @@ import { Badge, Code, Flex, Text } from '@lib/ui';
 import type { Log } from '@lib/observability';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import { levelDisplay } from './level-display';
+import { ErrorDetails } from './error-details';
 import * as css from './log-panel.css';
 
 /**
- * One entry in the day's list, two lines tall. The lead line carries the
+ * One entry in the day's list, up to three lines. The lead line carries the
  * essentials — time of day, severity, message — with the message taking the
- * remaining width and wrapping. The origin trails on its own line as a
- * breadcrumb, present only when the log carries one, so a log's source reads as
- * a path without crowding the message it belongs to.
+ * remaining width and wrapping in place. The second line is a metadata strip:
+ * the origin breadcrumb followed by a neutral badge per context attribute
+ * (everything but `error`, which has its own treatment). The third line, shown
+ * only when the log carries an `error`, is a danger callout of its details.
  *
  * The time shows the clock only; the day lives in the group heading above.
  */
 export const LogEntry = (props: { log: Log }) => {
   const display = () => levelDisplay(props.log.level);
   const time = () => new Date(props.log.timestamp);
+
+  // The `error` attribute renders as the callout below, not as a badge.
+  const attributes = () =>
+    Object.entries(props.log.context).filter(([key]) => key !== 'error');
+
+  const hasMeta = () => props.log.origin.length > 0 || attributes().length > 0;
 
   return (
     <Flex as="li" direction="column" gap={1}>
@@ -41,27 +49,52 @@ export const LogEntry = (props: { log: Log }) => {
         </Text>
       </Flex>
 
-      <Show when={props.log.origin.length > 0}>
-        <Flex as="div" direction="row" align="center" gap={1} wrap="wrap">
-          <For each={props.log.origin}>
-            {(segment, index) => (
-              <>
-                <Show when={index() > 0}>
-                  <IconChevronRight
-                    width="14"
-                    height="14"
-                    aria-hidden="true"
-                    class={css.originSeparator}
-                  />
-                </Show>
-                <Code size={1} variant="ghost" color="neutral">
-                  {segment}
-                </Code>
-              </>
+      <Show when={hasMeta()}>
+        <Flex as="div" direction="row" align="center" gap={2} wrap="wrap">
+          <Show when={props.log.origin.length > 0}>
+            <Flex as="div" direction="row" align="center" gap={1} wrap="wrap">
+              <For each={props.log.origin}>
+                {(segment, index) => (
+                  <>
+                    <Show when={index() > 0}>
+                      <IconChevronRight
+                        width="14"
+                        height="14"
+                        aria-hidden="true"
+                        class={css.originSeparator}
+                      />
+                    </Show>
+                    <Code size={1} variant="ghost" color="neutral">
+                      {segment}
+                    </Code>
+                  </>
+                )}
+              </For>
+            </Flex>
+          </Show>
+
+          <For each={attributes()}>
+            {([key, value]) => (
+              <Badge size={1} variant="soft" color="neutral">
+                {key}: {formatValue(value)}
+              </Badge>
             )}
           </For>
         </Flex>
       </Show>
+
+      <Show when={props.log.context.error}>
+        {(error) => <ErrorDetails error={error()} />}
+      </Show>
     </Flex>
   );
+};
+
+/** Render a context attribute value — a JSON primitive or array of them — as a compact string. */
+const formatValue = (value: unknown): string => {
+  if (Array.isArray(value)) return `[${value.map(formatValue).join(', ')}]`;
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
+  if (typeof value === 'string') return value;
+  return JSON.stringify(value) ?? Object.prototype.toString.call(value);
 };
