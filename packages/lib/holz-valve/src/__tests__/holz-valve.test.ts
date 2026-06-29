@@ -22,11 +22,11 @@ interface Harness {
 }
 
 /** Wire a valve to a recording processor behind a real logger. */
-const setup = (capacity?: number): Harness => {
+const setup = (capacity = 10): Harness => {
   const forwarded: string[] = [];
   const processor: LogProcessor = (log) => void forwarded.push(log.message);
   const valve = createLogValve({ capacity, processor });
-  const logger = createLogger(valve);
+  const logger = createLogger(valve.processor);
   return { forwarded, valve, logger };
 };
 
@@ -100,34 +100,17 @@ describe('createLogValve', () => {
     expect(forwarded).toEqual(['c']);
   });
 
-  it('drops the oldest to fit when capacity shrinks below the backlog', () => {
-    const { forwarded, valve, logger } = setup();
+  it('wraps the ring buffer, keeping only the newest within capacity', () => {
+    const { forwarded, valve, logger } = setup(3);
 
     valve.close();
-    logger.info('a');
-    logger.info('b');
-    logger.info('c');
-    logger.info('d');
-
-    valve.setCapacity(2);
+    // Push past capacity so the write head wraps and overwrites the oldest.
+    for (const message of ['a', 'b', 'c', 'd', 'e']) {
+      logger.info(message);
+    }
     valve.open();
 
-    expect(forwarded).toEqual(['c', 'd']);
-  });
-
-  it('retains more once capacity grows', () => {
-    const { forwarded, valve, logger } = setup(1);
-
-    valve.close();
-    logger.info('a');
-    logger.info('b'); // evicts 'a' under capacity 1
-
-    valve.setCapacity(3);
-    logger.info('c');
-    logger.info('d');
-    valve.open();
-
-    expect(forwarded).toEqual(['b', 'c', 'd']);
+    expect(forwarded).toEqual(['c', 'd', 'e']);
   });
 
   it('streams a re-entrant log cleanly during a flush', () => {
@@ -144,8 +127,8 @@ describe('createLogValve', () => {
       }
     };
 
-    const valve = createLogValve({ processor });
-    const logger = createLogger(valve);
+    const valve = createLogValve({ capacity: 10, processor });
+    const logger = createLogger(valve.processor);
 
     valve.close();
     logger.info('a');
@@ -160,12 +143,12 @@ describe('createLogValve', () => {
 
   it('returns the downstream result while open and nothing while closed', () => {
     const processor: LogProcessor = () => 'handled';
-    const valve = createLogValve({ processor });
+    const valve = createLogValve({ capacity: 10, processor });
 
-    expect(valve(makeLog('a'))).toBe('handled');
+    expect(valve.processor(makeLog('a'))).toBe('handled');
 
     valve.close();
-    expect(valve(makeLog('b'))).toBeUndefined();
+    expect(valve.processor(makeLog('b'))).toBeUndefined();
   });
 
   it('treats redundant open/close calls as no-ops', () => {
