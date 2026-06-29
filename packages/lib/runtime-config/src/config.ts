@@ -44,21 +44,6 @@ export const readEnvironment = async <Value extends JsonValue>(
 ): Promise<Value> => (await readAllEnvironments(option))[env];
 
 /**
- * The option's *default* value for a single environment — the current
- * {@link environment} by default. Synchronous: it ignores OPFS overrides
- * and reads straight off the option declaration.
- *
- * Reach for this in contexts that can't await a disk read or that
- * deliberately want the shipped default rather than the live value (e.g.
- * SSR, or a synchronous module-init guard). Where overrides matter, use
- * {@link readEnvironment}.
- */
-export const readEnvironmentDefault = <Value extends JsonValue>(
-  option: Option<Value>,
-  env: Environment = environment,
-): Value => option.defaults[env];
-
-/**
  * Subscribe to an option's changes made in *other* browsing contexts,
  * resolving each to the full env map. Returns an unsubscribe.
  *

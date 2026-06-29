@@ -20,7 +20,6 @@ export {
 export {
   readAllEnvironments,
   readEnvironment,
-  readEnvironmentDefault,
   reset,
   subscribe,
   updateConfig,
