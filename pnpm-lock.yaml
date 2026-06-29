@@ -496,6 +496,8 @@ importers:
         specifier: workspace:*
         version: link:../holz-idb-backend
 
+  packages/lib/runtime-config: {}
+
   packages/lib/shell:
     dependencies:
       '@lib/design':
