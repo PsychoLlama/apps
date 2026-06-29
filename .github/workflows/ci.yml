@@ -74,7 +74,17 @@ jobs:
       # tests, knip, fmt, workspace validators, build) through turbo.
       # Cache hits skip work entirely. The build is part of `check`,
       # so `.output` is populated for the wrangler deploy step below.
+      #
+      # `BUILD_MODE` picks `@app/main`'s Vite build mode, which
+      # `@lib/runtime-config` reads as the deploy environment. Pull
+      # requests build `staging` (the preview upload below reuses this
+      # `.output`); main and local builds fall through to Vite's default
+      # `production`. Vite's mode is a CLI flag resolved before
+      # vite.config loads, so it can't be branched on `GITHUB_REF` in
+      # config — hence selecting it here, on the single shared build.
       - run: pnpm check
+        env:
+          BUILD_MODE: ${{ github.event_name == 'pull_request' && 'staging' || '' }}
 
       # Single-step `wrangler deploy` works but bypasses the version
       # model. Splitting into `wrangler versions upload` +
@@ -92,15 +102,7 @@ jobs:
       # Uploads a preview version on same-repo pull requests without
       # promoting to production. The `--preview-alias` pins the URL to
       # the PR number so reviewers get a stable link across pushes.
-      #
-      # Rebuilds in `staging` mode first. The `pnpm check` build above
-      # ran in Vite's default `production` mode (correct for the prod
-      # deploy on `main`); previews want `import.meta.env.MODE` to read
-      # `staging` so `@lib/runtime-config` resolves the staging
-      # environment. Vite's mode is a CLI flag fixed before config
-      # loads, so it can't be branched on `GITHUB_REF` from within
-      # vite.config — hence a second, mode-pinned build here on the
-      # preview path only.
+      # Reuses the `staging`-mode `.output` from `pnpm check` above.
       - name: Upload preview version
         id: preview
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
@@ -111,7 +113,6 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           SUBDOMAIN: ${{ vars.WORKERS_DEV_SUBDOMAIN }}
         run: |
-          pnpm exec vite build --mode staging
           pnpm exec wrangler versions upload --preview-alias "pr-$PR_NUMBER"
           echo "url=https://pr-$PR_NUMBER-apps.$SUBDOMAIN.workers.dev" >> "$GITHUB_OUTPUT"
 

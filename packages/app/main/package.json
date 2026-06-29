@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "vite build ${BUILD_MODE:+--mode $BUILD_MODE}",
     "start": "vite start",
     "preview": "wrangler dev",
     "typecheck": "tsc"
