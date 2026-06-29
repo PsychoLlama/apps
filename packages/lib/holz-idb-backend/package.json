@@ -6,7 +6,10 @@
   "description": "IndexedDB persistence backend for holz logs, usable from the main thread, workers, and service workers.",
   "license": "MIT",
   "sideEffects": false,
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./database": "./src/database.ts"
+  },
   "scripts": {
     "typecheck": "tsc"
   },

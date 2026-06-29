@@ -23,6 +23,14 @@ export const createLogger = (scope: readonly string[]): Logger =>
     baseLogger,
   );
 
+/**
+ * The severity scale, as a map of name to numeric level (`trace` lowest,
+ * `fatal` highest). Re-exported so consumers that interpret severities — a
+ * log viewer labelling or coloring by level — read the canonical values
+ * through this facade rather than reaching past it to `@holz/core`.
+ */
+export { level } from '@holz/core';
+
 export type {
   Log,
   LogContext,

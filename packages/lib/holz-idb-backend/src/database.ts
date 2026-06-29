@@ -87,3 +87,24 @@ export const openLogDatabase = (
     blocking: relinquish,
     terminated: relinquish,
   });
+
+/**
+ * Read every persisted log in event-time order. Goes through the
+ * {@link TIMESTAMP_INDEX} rather than the insertion key, so logs from
+ * interleaved producers — main thread, workers, a buffered flush landing an
+ * older log after a newer one — read back in true chronological order. Opens
+ * a short-lived connection (no `relinquish`) and closes it once the read
+ * resolves; the writing backend keeps its own long-lived connection.
+ *
+ * Reads the whole store in one shot — fine for a viewer over an on-device
+ * archive. Swap to a cursor or a bounded range over the index if the store
+ * grows past what's comfortable to hold in memory.
+ */
+export const readLogsByTimestamp = async (): Promise<Log[]> => {
+  const db = await openLogDatabase();
+  try {
+    return await db.getAllFromIndex(STORE_NAME, TIMESTAMP_INDEX);
+  } finally {
+    db.close();
+  }
+};
