@@ -18,7 +18,8 @@ export interface ConfigMessage {
 // lazy construction means a context that never publishes or subscribes
 // (e.g. SSG) never opens one. A `BroadcastChannel` never delivers a tab's
 // own posts back to it, so publisher and subscriber share this instance: we
-// hear sibling tabs but not our own writes (already applied locally).
+// hear sibling tabs but not our own writes — the writer patches its own
+// state directly instead of round-tripping through the channel.
 let transport: BroadcastChannelTransport<ConfigMessage, ConfigMessage> | null =
   null;
 

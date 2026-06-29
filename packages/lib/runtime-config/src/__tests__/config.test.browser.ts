@@ -77,20 +77,39 @@ describe('reset', () => {
 });
 
 describe('subscribe', () => {
-  it('fires with the resolved map when the option changes', async () => {
-    const option = flag('subscribe');
-    const calls: Array<Record<string, unknown>> = [];
-    const unsubscribe = subscribe(option, (config) => calls.push(config));
+  // A sibling browsing context, faked by posting on a second channel.
+  const fromSibling = (id: string, override: unknown) => {
+    const sibling = new BroadcastChannel('runtime-config');
+    sibling.postMessage({ id, override });
+    sibling.close();
+  };
 
-    await updateConfig(option, { staging: { enabled: false } });
+  it('fires with the resolved map on a change from another context', async () => {
+    const option = flag('subscribe');
+    const config = await new Promise((resolve) => {
+      const unsubscribe = subscribe(option, (value) => {
+        unsubscribe();
+        resolve(value);
+      });
+      fromSibling(option.id, { staging: { enabled: false } });
+    });
+
+    expect(config).toEqual({
+      dev: { enabled: true },
+      staging: { enabled: false },
+      prod: { enabled: false },
+    });
+  });
+
+  it('ignores changes to other options', async () => {
+    const option = flag('subscribe-filtered');
+    const calls: unknown[] = [];
+    const unsubscribe = subscribe(option, (value) => calls.push(value));
+
+    fromSibling('some-other-option', { prod: { enabled: true } });
+    await new Promise((resolve) => setTimeout(resolve));
     unsubscribe();
 
-    expect(calls).toEqual([
-      {
-        dev: { enabled: true },
-        staging: { enabled: false },
-        prod: { enabled: false },
-      },
-    ]);
+    expect(calls).toHaveLength(0);
   });
 });

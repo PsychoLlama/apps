@@ -15,31 +15,6 @@ const resolve = <Value extends JsonValue>(
   override: Override<Value>,
 ): EnvironmentDefaults<Value> => ({ ...option.defaults, ...override });
 
-// In-memory fan-out for *this* context — we can't lean on BroadcastChannel
-// alone. It never echoes to the tab that posted, so the caller of
-// `updateConfig` would miss its own change. And one channel multiplexes
-// every option, so inbound messages still need routing by ID and resolving
-// against each option's defaults. Keyed by option ID; `subscribe` wraps the
-// caller's listener so it receives the resolved map, not the raw override.
-type OverrideListener = (override: Override<JsonValue>) => void;
-const listeners = new Map<string, Set<OverrideListener>>();
-
-// One broadcast subscription backs every local listener. Attached when the
-// first listener registers, detached when the last leaves, so an app that
-// never subscribes never opens a channel.
-let detachChannel: (() => void) | null = null;
-
-const anyListeners = (): boolean => {
-  for (const set of listeners.values()) if (set.size > 0) return true;
-  return false;
-};
-
-const notify = (id: string, override: Override<JsonValue>): void => {
-  const set = listeners.get(id);
-  if (!set) return;
-  for (const listener of set) listener(override);
-};
-
 /**
  * Read an option's current configuration: its defaults with any persisted
  * override layered on top, as a full per-environment map. Resolves to the
@@ -54,38 +29,29 @@ export const read = async <Value extends JsonValue>(
   resolve(option, await readOverride<Value>(option.id));
 
 /**
- * Subscribe to an option's changes — from this context or a sibling tab.
- * The listener fires on each change (not immediately) with the resolved
- * env map; pair it with {@link read} for the initial value. Returns an
- * unsubscribe.
+ * Subscribe to an option's changes made in *other* browsing contexts,
+ * resolving each to the full env map. Returns an unsubscribe.
+ *
+ * It does not fire for changes made in this context: a `BroadcastChannel`
+ * never delivers a tab its own posts, and we lean on that rather than an
+ * in-memory fan-out. A caller mutating via {@link updateConfig} / {@link
+ * reset} already has the new override, so it should patch its own state
+ * there (resolve it against the option's defaults) instead of waiting on
+ * this callback.
  */
 export const subscribe = <Value extends JsonValue>(
   option: Option<Value>,
   listener: (config: EnvironmentDefaults<Value>) => void,
-): (() => void) => {
-  const wrapped: OverrideListener = (override) =>
-    listener(resolve(option, override as Override<Value>));
-
-  const set = listeners.get(option.id) ?? new Set();
-  set.add(wrapped);
-  listeners.set(option.id, set);
-
-  detachChannel ??= onConfigMessage(({ id, override }) => notify(id, override));
-
-  return () => {
-    set.delete(wrapped);
-    if (set.size === 0) listeners.delete(option.id);
-    if (!anyListeners()) {
-      detachChannel?.();
-      detachChannel = null;
-    }
-  };
-};
+): (() => void) =>
+  onConfigMessage((message) => {
+    if (message.id !== option.id) return;
+    listener(resolve(option, message.override as Override<Value>));
+  });
 
 /**
  * Merge a per-environment patch into an option's override, persist it to
- * OPFS, and announce it to other tabs and local subscribers. Environments
- * absent from the patch keep their existing value.
+ * OPFS, and announce it to other tabs. Environments absent from the patch
+ * keep their existing value.
  */
 export const updateConfig = async <Value extends JsonValue>(
   option: Option<Value>,
@@ -94,7 +60,6 @@ export const updateConfig = async <Value extends JsonValue>(
   const next = { ...(await readOverride<Value>(option.id)), ...patch };
   await writeOverride(option.id, next);
   publish({ id: option.id, override: next });
-  notify(option.id, next);
 };
 
 /**
@@ -119,5 +84,4 @@ export const reset = async <Value extends JsonValue>(
   }
 
   publish({ id: option.id, override: next });
-  notify(option.id, next);
 };
