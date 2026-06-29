@@ -48,18 +48,13 @@ const makeLog = (overrides: Partial<Log>): Log => ({
 let logger: Logger;
 
 beforeEach(async () => {
-  // The backend opens IndexedDB eagerly but asynchronously and returns its
-  // processor synchronously. Drive one log through and wait for it to land —
-  // proving the store exists and the connection is live — then wipe the store
+  // `createIdbBackend` synchronously registers its versioned open — which
+  // creates the store on a fresh origin — before this clear's no-version open
+  // runs, so the store is guaranteed to exist by the time we clear it. Wipe it
   // so each test starts empty. Clearing is a plain transaction: unlike
   // `deleteDB`, it raises no `versionchange`, so it neither disturbs nor waits
   // on any other open connection.
   logger = createLogger(createIdbBackend());
-
-  logger.info('warm-up');
-  await vi.waitFor(async () => {
-    expect(await readPersistedLogs()).not.toHaveLength(0);
-  });
 
   const db = await openLogDatabase();
   try {
