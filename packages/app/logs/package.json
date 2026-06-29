@@ -12,6 +12,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@vanilla-extract/css": "catalog:",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",

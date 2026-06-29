@@ -242,6 +242,9 @@ importers:
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
+      '@vanilla-extract/css':
+        specifier: 'catalog:'
+        version: 1.20.1
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
