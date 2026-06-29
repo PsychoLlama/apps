@@ -3,11 +3,8 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Log viewer — browse and export session logs persisted to OPFS.",
+  "description": "Log viewer for on-device session logs (work in progress).",
   "license": "MIT",
-  "sideEffects": [
-    "**/*.css.ts"
-  ],
   "exports": {
     ".": "./src/index.tsx"
   },
@@ -15,15 +12,10 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@lib/holz-opfs-backend": "workspace:*",
-    "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",
-    "@lib/state": "workspace:*",
-    "@lib/ui": "workspace:*",
-    "@vanilla-extract/css": "catalog:"
+    "@lib/ui": "workspace:*"
   },
   "peerDependencies": {
-    "@solidjs/router": "*",
     "solid-js": "*"
   }
 }
