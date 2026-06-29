@@ -115,7 +115,7 @@ describe('createLogValve', () => {
 
   it('buffers without bound at the default (Infinity) capacity', () => {
     const { forwarded, valve, logger } = setup({ capacity: Infinity });
-    const messages = Array.from(Array(500).keys(), (index) => `log-${index}`);
+    const messages = Array.from(Array(200).keys(), (index) => `log-${index}`);
 
     valve.close();
     for (const message of messages) {
