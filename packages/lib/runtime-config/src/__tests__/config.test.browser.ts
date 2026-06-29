@@ -1,5 +1,11 @@
 import { defineOption } from '../define-option';
-import { read, reset, subscribe, updateConfig } from '../config';
+import {
+  readAllEnvironments,
+  readEnvironment,
+  reset,
+  subscribe,
+  updateConfig,
+} from '../config';
 
 // Exercises the real OPFS-backed path in a browser. Each test wipes the
 // config directory so persisted overrides don't leak between cases.
@@ -21,10 +27,24 @@ describe('updateConfig', () => {
 
     await updateConfig(option, { production: { enabled: true } });
 
-    expect(await read(option)).toEqual({
+    expect(await readAllEnvironments(option)).toEqual({
       development: { enabled: true },
       staging: { enabled: true },
       production: { enabled: true },
+    });
+  });
+
+  it('reflects a persisted override through readEnvironment', async () => {
+    const option = flag('persist-single');
+
+    await updateConfig(option, { production: { enabled: true } });
+
+    expect(await readEnvironment(option, 'production')).toEqual({
+      enabled: true,
+    });
+    // An environment with no override still falls back to its default.
+    expect(await readEnvironment(option, 'development')).toEqual({
+      enabled: true,
     });
   });
 
@@ -34,7 +54,7 @@ describe('updateConfig', () => {
     await updateConfig(option, { production: { enabled: true } });
     await updateConfig(option, { development: { enabled: false } });
 
-    expect(await read(option)).toEqual({
+    expect(await readAllEnvironments(option)).toEqual({
       development: { enabled: false },
       staging: { enabled: true },
       production: { enabled: true },
@@ -52,7 +72,7 @@ describe('reset', () => {
 
     await reset(option, ['production']);
 
-    expect(await read(option)).toEqual({
+    expect(await readAllEnvironments(option)).toEqual({
       development: { enabled: false },
       staging: { enabled: true },
       production: { enabled: false },
@@ -68,7 +88,7 @@ describe('reset', () => {
 
     await reset(option);
 
-    expect(await read(option)).toEqual({
+    expect(await readAllEnvironments(option)).toEqual({
       development: { enabled: true },
       staging: { enabled: true },
       production: { enabled: false },
