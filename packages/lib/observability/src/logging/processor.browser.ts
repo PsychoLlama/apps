@@ -1,5 +1,5 @@
 import { createConsoleBackend } from '@holz/console-backend';
-import { type LogProcessor, combine } from '@holz/core';
+import { type LogProcessor, combine, filter } from '@holz/core';
 import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
 import { createIdbBackend } from '@lib/holz-idb-backend';
@@ -7,6 +7,13 @@ import { devPattern } from './dev-pattern';
 import { inMainThread } from './environment';
 
 const consoleBackend = createConsoleBackend();
+
+// Under Vitest `import.meta.env.DEV` is true, which flips `devPattern` to `'*'`
+// and forces every log to the console — and the worker branch below writes to
+// the console unconditionally. Mirror the server processor's `NODE_ENV` guard
+// and stay silent under test so suites don't spew log noise. `import.meta.env`
+// is statically replaced, so non-test bundles fold this to `true`.
+const notTest = import.meta.env.MODE !== 'test';
 
 // The base log destination, chosen by the realm this module loads in. A global
 // collector (`setGlobalLogCollector`) still intercepts upstream. Every browser
@@ -37,5 +44,5 @@ const selectFallback = (): LogProcessor => {
 };
 
 export const processor: LogProcessor = createLogCollector({
-  fallback: selectFallback(),
+  fallback: filter(() => notTest, selectFallback()),
 });
