@@ -7,4 +7,10 @@
  * this entry point exists to anchor the package.
  */
 
-export {};
+export {
+  defineOption,
+  type Environment,
+  type EnvironmentDefaults,
+  type JsonValue,
+  type Option,
+} from './define-option';
