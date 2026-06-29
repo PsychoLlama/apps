@@ -7,7 +7,6 @@
   "license": "MIT",
   "exports": {
     "./ignore": "./src/ignore.ts",
-    "./release": "./src/release.ts",
     "./vite-plugin/assert-hashed-assets": "./src/vite-plugin/assert-hashed-assets.ts",
     "./vite-plugin/icon-packs": "./src/vite-plugin/icon-packs/index.ts",
     "./vite-plugin/icon-packs-types": "./src/vite-plugin/icon-packs-types.d.ts",

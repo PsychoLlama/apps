@@ -18,7 +18,7 @@
       "dependsOn": ["^typecheck", "^build"],
       "outputs": [".output/**"],
       "outputLogs": "errors-only",
-      "env": ["GITHUB_REF", "BUILD_MODE"]
+      "env": ["BUILD_MODE"]
     },
     "dev": {
       "cache": false,

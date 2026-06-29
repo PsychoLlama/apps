@@ -281,9 +281,15 @@ importers:
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../../lib/runtime-config
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/state':
+        specifier: workspace:*
+        version: link:../../lib/state
       '@lib/theme':
         specifier: workspace:*
         version: link:../../lib/theme
@@ -366,9 +372,15 @@ importers:
 
   packages/app/service-worker:
     dependencies:
+      '@app/experimental':
+        specifier: workspace:*
+        version: link:../experimental
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../../lib/runtime-config
     devDependencies:
       '@dev/build':
         specifier: workspace:*
