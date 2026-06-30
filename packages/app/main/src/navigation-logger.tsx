@@ -23,15 +23,14 @@ const readPageContext = () => {
   const ua = (navigator as Navigator & { userAgentData?: UserAgentData })
     .userAgentData;
 
-  // TODO: Use real structures when Holz drops the nested object limitation.
   return {
     platform: ua?.platform,
     mobile: ua?.mobile,
-    brands: ua?.brands.map(({ brand, version }) => `${brand} ${version}`),
+    brands: ua?.brands,
     colorScheme: readActiveColorScheme(),
     reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
-    viewport: `${innerWidth}x${innerHeight}`,
-    screen: `${screen.width}x${screen.height}`,
+    viewport: { width: innerWidth, height: innerHeight },
+    screen: { width: screen.width, height: screen.height },
     devicePixelRatio: devicePixelRatio,
   };
 };

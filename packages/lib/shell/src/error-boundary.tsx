@@ -65,9 +65,7 @@ interface UserAgentData {
 
 /**
  * Best-effort UA client hints. Absent on Firefox/Safari (and any
- * non-secure context), so each field falls back to `undefined`. `brands`
- * collapses to `"<brand> <version>"` strings — log context only carries
- * primitives, not nested objects.
+ * non-secure context), so each field falls back to `undefined`.
  */
 const readClientHints = () => {
   const data = (navigator as Navigator & { userAgentData?: UserAgentData })
@@ -76,7 +74,7 @@ const readClientHints = () => {
   return {
     platform: data?.platform,
     mobile: data?.mobile,
-    brands: data?.brands.map(({ brand, version }) => `${brand} ${version}`),
+    brands: data?.brands,
   };
 };
 
