@@ -11,8 +11,11 @@ import { defineOption } from '@lib/runtime-config';
  * `@holz/pattern-filter` syntax (debug-style globs and negation, matched
  * against `log.origin`).
  */
-export const filter = defineOption<{ pattern: string }>('log-filter', {
-  development: { pattern: '*' },
-  staging: { pattern: '*' },
-  production: { pattern: '' },
-});
+export const filter = defineOption<{ pattern: string }>(
+  '@lib/observability:filter',
+  {
+    development: { pattern: '*' },
+    staging: { pattern: '*' },
+    production: { pattern: '' },
+  },
+);

@@ -38,7 +38,7 @@ export type Override<Value extends JsonValue> = Partial<
  * most commonly `{ enabled: boolean }` for a feature flag.
  */
 export interface Option<Value extends JsonValue = { enabled: boolean }> {
-  /** Stable identifier, e.g. `my-feature`. Used as the storage key. */
+  /** Stable identifier, e.g. `@app/beta`. Used as the storage key. */
   readonly id: string;
   /** Fallback values indexed by environment. */
   readonly defaults: EnvironmentDefaults<Value>;
@@ -49,7 +49,7 @@ export interface Option<Value extends JsonValue = { enabled: boolean }> {
  * use in each environment before any runtime override is loaded.
  *
  * @example
- * const myFeature = defineOption('my-feature', {
+ * const myFeature = defineOption('@app/beta', {
  *   development: { enabled: true },
  *   staging: { enabled: true },
  *   production: { enabled: false },
