@@ -9,8 +9,8 @@ import * as css from './log-panel.css';
 /**
  * One entry in the day's list, up to three lines. The lead line carries the
  * locating context — time of day, severity, and the origin breadcrumb. The
- * second line is the message itself, trailed by an outline badge per context
- * attribute (everything but `error`, which has its own treatment). The third
+ * second line is the message itself, trailed by an outline `Code` chip per
+ * context attribute (everything but `error`, which has its own treatment). The third
  * line, shown only when the log carries an `error`, is a danger callout of its
  * details.
  *
@@ -72,9 +72,9 @@ export const LogEntry = (props: { log: Log }) => {
 
         <For each={attributes()}>
           {([key, value]) => (
-            <Badge size={1} variant="outline" color="neutral">
+            <Code size={1} variant="outline" color="neutral">
               {key}={formatValue(value)}
-            </Badge>
+            </Code>
           )}
         </For>
       </Flex>
