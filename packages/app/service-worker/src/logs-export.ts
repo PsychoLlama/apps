@@ -9,7 +9,7 @@ import {
   TIMESTAMP_INDEX,
   openLogDatabase,
 } from '@lib/holz-idb-backend/database';
-import { createLogger } from '@lib/observability';
+import { createLogger, toError } from '@lib/observability';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -28,9 +28,7 @@ const DOWNLOAD_FILENAME = 'logs.ndjson';
  * file save.
  */
 export const streamLogArchive = (): Response => {
-  const stream = new ReadableStream<Uint8Array>({
-    start: (controller) => drainArchive(controller),
-  });
+  const stream = new ReadableStream<Uint8Array>({ start: drainArchive });
 
   return new Response(stream, {
     headers: {
@@ -70,7 +68,7 @@ const drainArchive = async (
     controller.close();
   } catch (error) {
     logger.error('Failed to stream the log archive.', {
-      reason: error instanceof Error ? error.message : String(error),
+      error: toError(error),
     });
     controller.error(error);
   } finally {
