@@ -12,16 +12,23 @@ import {
 } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import { ResetButton } from './reset-button';
-import { setExperimentalEnabled, setLogFilter } from './state/advanced/actions';
+import {
+  setExperimentalEnabled,
+  setLogExportEnabled,
+  setLogFilter,
+} from './state/advanced/actions';
 import {
   commitExperimentalEffect,
+  commitLogExportEffect,
   commitLogFilterEffect,
   hydrateAdvancedSettingsEffect,
   resetExperimentalEffect,
+  resetLogExportEffect,
   resetLogFilterEffect,
 } from './state/advanced/bindings';
 import {
   watchExperimentalEnabled,
+  watchLogExportEnabled,
   watchLogFilter,
 } from './state/advanced/capabilities';
 import { advancedDefaults, advancedSettings } from './state/advanced/store';
@@ -41,10 +48,13 @@ export const AdvancedSettings = () => {
   const advanced = advancedSettings;
   const reconcile = useEffect(hydrateAdvancedSettingsEffect);
   const commitFilter = useEffect(commitLogFilterEffect);
+  const commitLogExport = useEffect(commitLogExportEffect);
   const commitExperimental = useEffect(commitExperimentalEffect);
   const resetFilter = useEffect(resetLogFilterEffect);
+  const resetLogExport = useEffect(resetLogExportEffect);
   const resetExperimental = useEffect(resetExperimentalEffect);
   const mirrorFilter = useAction(setLogFilter);
+  const mirrorLogExport = useAction(setLogExportEnabled);
   const mirrorExperimental = useAction(setExperimentalEnabled);
 
   // The store is seeded with the build-environment default, so first
@@ -55,6 +65,7 @@ export const AdvancedSettings = () => {
   onMount(() => {
     void reconcile();
     onCleanup(watchLogFilter(mirrorFilter));
+    onCleanup(watchLogExportEnabled(mirrorLogExport));
     onCleanup(watchExperimentalEnabled(mirrorExperimental));
   });
 
@@ -137,6 +148,44 @@ export const AdvancedSettings = () => {
               if (next !== advanced.logFilter) void commitFilter(next);
             }}
           />
+        </Flex>
+
+        <Flex as="section" direction="column" gap={2}>
+          <Flex
+            as="header"
+            direction="row"
+            justify="between"
+            align="center"
+            gap={3}
+          >
+            <Heading as="h3" size={4} weight="medium" selectable={false}>
+              Logs export
+            </Heading>
+            <ResetButton
+              testId="advanced-log-export-reset"
+              label="Reset logs export"
+              disabled={
+                advanced.logExportEnabled === advancedDefaults.logExportEnabled
+              }
+              onReset={() => void resetLogExport()}
+            />
+          </Flex>
+          <Text as="label" size={2} color="lowContrast" selectable={false}>
+            <Flex
+              as="div"
+              direction="row"
+              justify="between"
+              align="center"
+              gap={3}
+            >
+              Show the export action in the logs header.
+              <Switch
+                testId="advanced-log-export-toggle"
+                checked={advanced.logExportEnabled}
+                onCheckedChange={(next) => void commitLogExport(next)}
+              />
+            </Flex>
+          </Text>
         </Flex>
 
         <Flex as="section" direction="column" gap={2}>

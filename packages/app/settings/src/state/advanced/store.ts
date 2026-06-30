@@ -1,6 +1,7 @@
 import { createStore, defineStore } from '@lib/state';
 import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
+import { logExport } from '@app/logs/config';
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
 
 /** Live values backing the settings page's Advanced section. */
@@ -13,6 +14,13 @@ export interface AdvancedSettingsState {
    * OPFS override.
    */
   logFilter: string;
+
+  /**
+   * Whether the logs export action is enabled for the active environment.
+   * Seeded from the option default, then reconciled on mount like
+   * `logFilter`.
+   */
+  logExportEnabled: boolean;
 
   /**
    * Whether the experimental app is enabled for the active environment.
@@ -30,6 +38,7 @@ export interface AdvancedSettingsState {
  */
 export const advancedDefaults: AdvancedSettingsState = {
   logFilter: filter.defaults[environment].pattern,
+  logExportEnabled: logExport.defaults[environment].enabled,
   experimentalEnabled: experimentalAppEnabled.defaults[environment].enabled,
 };
 

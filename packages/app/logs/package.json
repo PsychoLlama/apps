@@ -6,7 +6,8 @@
   "description": "Log viewer for on-device session logs (work in progress).",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.tsx"
+    ".": "./src/index.tsx",
+    "./config": "./src/config.ts"
   },
   "scripts": {
     "typecheck": "tsc"
@@ -16,6 +17,7 @@
     "@lib/design": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*",
+    "@lib/runtime-config": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*"
