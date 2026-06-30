@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js';
 import { Badge, Code, Flex, Text } from '@lib/ui';
-import type { Log } from '@lib/observability';
+import type { Log, LogContext } from '@lib/observability';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import { levelDisplay } from './level-display';
 import { ErrorDetails } from './error-details';
@@ -20,8 +20,10 @@ export const LogEntry = (props: { log: Log }) => {
   const display = () => levelDisplay(props.log.level);
   const time = () => new Date(props.log.timestamp);
 
-  // The `error` attribute renders as the callout below, not as a badge.
-  const attributes = () =>
+  // The `error` attribute renders as the callout below, not as a chip. Each
+  // remaining value is a `LogContext[string]` — the index-signature value type,
+  // a JSON primitive or array of them.
+  const attributes = (): Array<[string, LogContext[string]]> =>
     Object.entries(props.log.context).filter(([key]) => key !== 'error');
 
   return (
@@ -86,11 +88,14 @@ export const LogEntry = (props: { log: Log }) => {
   );
 };
 
-/** Render a context attribute value — a JSON primitive or array of them — as a compact string. */
-const formatValue = (value: unknown): string => {
+/**
+ * Render a context attribute value — a JSON primitive or array of them — as a
+ * compact string. Primitives go through `JSON.stringify`, so strings read as
+ * quoted literals (`"req_8f3a"`) and are unambiguous against bare numbers,
+ * booleans, and `null`.
+ */
+const formatValue = (value: LogContext[string]): string => {
   if (Array.isArray(value)) return `[${value.map(formatValue).join(', ')}]`;
-  if (value === null) return 'null';
   if (value === undefined) return 'undefined';
-  if (typeof value === 'string') return value;
-  return JSON.stringify(value) ?? Object.prototype.toString.call(value);
+  return JSON.stringify(value);
 };
