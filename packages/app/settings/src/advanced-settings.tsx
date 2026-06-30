@@ -25,8 +25,8 @@ import { advancedSettings } from './state/advanced/store';
 import * as css from './advanced-settings.css';
 
 const advancedHeadingId = 'settings-advanced-heading';
-const logFilterId = 'settings-log-filter';
-const experimentalLabelId = 'settings-experimental-label';
+const logFilterHeadingId = 'settings-log-filter-heading';
+const experimentalHeadingId = 'settings-experimental-heading';
 
 /**
  * Advanced settings — runtime-config controls for debugging and preview
@@ -80,67 +80,75 @@ export const AdvancedSettings = () => {
         />
       </Button>
 
-      <Flex as="div" direction="column" gap={3}>
-        <Flex as="div" direction="column" gap={2}>
-          <Text
-            as="label"
-            for={logFilterId}
-            size={2}
-            weight="medium"
-            selectable={false}
-          >
-            Log filter
-          </Text>
-          <Text as="p" size={2} color="lowContrast" selectable={false}>
-            Control what's logged to the console. Use <Code>*</Code> to show all
-            logs. See{' '}
-            <Link
-              testId="holz-readme"
-              href="https://github.com/PsychoLlama/holz/blob/main/packages/holz-pattern-filter/README.md"
-              target="_blank"
+      <Flex as="div" direction="column" gap={6}>
+        <Flex as="section" direction="column" gap={3}>
+          <Flex as="header" direction="column" gap={2}>
+            <Heading
+              as="h3"
+              id={logFilterHeadingId}
+              size={4}
+              weight="medium"
+              selectable={false}
             >
-              @holz/pattern-filter
-            </Link>{' '}
-            for the syntax guide.
-          </Text>
+              Log filter
+            </Heading>
+            <Text as="p" size={2} color="lowContrast" selectable={false}>
+              Control what's logged to the console. Use <Code>*</Code> to show
+              all logs. See{' '}
+              <Link
+                testId="holz-readme"
+                href="https://github.com/PsychoLlama/holz/blob/main/packages/holz-pattern-filter/README.md"
+                target="_blank"
+              >
+                @holz/pattern-filter
+              </Link>{' '}
+              for the syntax guide.
+            </Text>
+          </Flex>
+          <TextField
+            testId="advanced-log-filter"
+            aria-labelledby={logFilterHeadingId}
+            value={advanced.logFilter}
+            placeholder="*"
+            autocomplete="off"
+            autocapitalize="off"
+            enterkeyhint="done"
+            spellcheck={false}
+            onBlur={(event) => {
+              const next = event.currentTarget.value;
+              if (next !== advanced.logFilter) void commitFilter(next);
+            }}
+          />
         </Flex>
-        <TextField
-          testId="advanced-log-filter"
-          id={logFilterId}
-          value={advanced.logFilter}
-          placeholder="*"
-          autocomplete="off"
-          autocapitalize="off"
-          enterkeyhint="done"
-          spellcheck={false}
-          onBlur={(event) => {
-            const next = event.currentTarget.value;
-            if (next !== advanced.logFilter) void commitFilter(next);
-          }}
-        />
-      </Flex>
 
-      <Flex as="div" direction="row" justify="between" align="center" gap={3}>
-        <Flex as="div" direction="column" gap={2}>
-          <Text
-            as="span"
-            id={experimentalLabelId}
-            size={2}
-            weight="medium"
-            selectable={false}
+        <Flex as="section" direction="column" gap={2}>
+          <Flex
+            as="header"
+            direction="row"
+            justify="between"
+            align="center"
+            gap={3}
           >
-            Experimental app
-          </Text>
+            <Heading
+              as="h3"
+              id={experimentalHeadingId}
+              size={4}
+              weight="medium"
+              selectable={false}
+            >
+              Experimental app
+            </Heading>
+            <Switch
+              testId="advanced-experimental-toggle"
+              aria-labelledby={experimentalHeadingId}
+              checked={advanced.experimentalEnabled}
+              onCheckedChange={(next) => void commitExperimental(next)}
+            />
+          </Flex>
           <Text as="p" size={2} color="lowContrast" selectable={false}>
             Surfaces the experimental scratchpad in the launcher.
           </Text>
         </Flex>
-        <Switch
-          testId="advanced-experimental-toggle"
-          aria-labelledby={experimentalLabelId}
-          checked={advanced.experimentalEnabled}
-          onCheckedChange={(next) => void commitExperimental(next)}
-        />
       </Flex>
     </Flex>
   );
