@@ -16,20 +16,24 @@ import {
   setExperimentalEnabled,
   setLogExportEnabled,
   setLogFilter,
+  setShareEnabled,
 } from './state/advanced/actions';
 import {
   commitExperimentalEffect,
   commitLogExportEffect,
   commitLogFilterEffect,
+  commitShareEffect,
   hydrateAdvancedSettingsEffect,
   resetExperimentalEffect,
   resetLogExportEffect,
   resetLogFilterEffect,
+  resetShareEffect,
 } from './state/advanced/bindings';
 import {
   watchExperimentalEnabled,
   watchLogExportEnabled,
   watchLogFilter,
+  watchShareEnabled,
 } from './state/advanced/capabilities';
 import { advancedDefaults, advancedSettings } from './state/advanced/store';
 import * as css from './advanced-settings.css';
@@ -50,12 +54,15 @@ export const AdvancedSettings = () => {
   const commitFilter = useEffect(commitLogFilterEffect);
   const commitLogExport = useEffect(commitLogExportEffect);
   const commitExperimental = useEffect(commitExperimentalEffect);
+  const commitShare = useEffect(commitShareEffect);
   const resetFilter = useEffect(resetLogFilterEffect);
   const resetLogExport = useEffect(resetLogExportEffect);
   const resetExperimental = useEffect(resetExperimentalEffect);
+  const resetShare = useEffect(resetShareEffect);
   const mirrorFilter = useAction(setLogFilter);
   const mirrorLogExport = useAction(setLogExportEnabled);
   const mirrorExperimental = useAction(setExperimentalEnabled);
+  const mirrorShare = useAction(setShareEnabled);
 
   // The store is seeded with the build-environment default, so first
   // paint (and prerender) match without a flash. OPFS is client-only —
@@ -67,6 +74,7 @@ export const AdvancedSettings = () => {
     onCleanup(watchLogFilter(mirrorFilter));
     onCleanup(watchLogExportEnabled(mirrorLogExport));
     onCleanup(watchExperimentalEnabled(mirrorExperimental));
+    onCleanup(watchShareEnabled(mirrorShare));
   });
 
   return (
@@ -222,6 +230,42 @@ export const AdvancedSettings = () => {
                 testId="advanced-experimental-toggle"
                 checked={advanced.experimentalEnabled}
                 onCheckedChange={(next) => void commitExperimental(next)}
+              />
+            </Flex>
+          </Text>
+        </Flex>
+
+        <Flex as="section" direction="column" gap={2}>
+          <Flex
+            as="header"
+            direction="row"
+            justify="between"
+            align="center"
+            gap={3}
+          >
+            <Heading as="h3" size={4} weight="medium" selectable={false}>
+              Share app
+            </Heading>
+            <ResetButton
+              testId="advanced-share-reset"
+              label="Reset share app"
+              disabled={advanced.shareEnabled === advancedDefaults.shareEnabled}
+              onReset={() => void resetShare()}
+            />
+          </Flex>
+          <Text as="label" size={2} color="lowContrast" selectable={false}>
+            <Flex
+              as="div"
+              direction="row"
+              justify="between"
+              align="center"
+              gap={3}
+            >
+              Surface the peer-to-peer share app in the launcher.
+              <Switch
+                testId="advanced-share-toggle"
+                checked={advanced.shareEnabled}
+                onCheckedChange={(next) => void commitShare(next)}
               />
             </Flex>
           </Text>
