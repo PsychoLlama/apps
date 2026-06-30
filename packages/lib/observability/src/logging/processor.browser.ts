@@ -1,48 +1,34 @@
 import { createConsoleBackend } from '@holz/console-backend';
 import { type LogProcessor, combine, filter } from '@holz/core';
-import { createEnvironmentFilter } from '@holz/env-filter';
 import { createLogCollector } from '@holz/log-collector';
+import { createConfigFilter } from '@lib/holz-config-filter';
 import { createIdbBackend } from '@lib/holz-idb-backend';
-import { devPattern } from './dev-pattern';
-import { inMainThread } from './environment';
+// Aliased: `filter` (the log-pattern option) collides with `@holz/core`'s
+// `filter` operator imported above.
+import { filter as logFilter } from './config';
 
-const consoleBackend = createConsoleBackend();
-
-// Under Vitest `import.meta.env.DEV` is true, which flips `devPattern` to `'*'`
-// and forces every log to the console — and the worker branch below writes to
-// the console unconditionally. Mirror the server processor's `NODE_ENV` guard
-// and stay silent under test so suites don't spew log noise. `import.meta.env`
-// is statically replaced, so non-test bundles fold this to `true`.
+// Under Vitest `import.meta.env.MODE` is `'test'`. Mirror the server
+// processor's `NODE_ENV` guard and stay silent so suites don't spew log
+// noise. `import.meta.env` is statically replaced, so non-test bundles fold
+// this to `true` and drop the gate.
 const notTest = import.meta.env.MODE !== 'test';
 
-// The base log destination, chosen by the realm this module loads in. A global
-// collector (`setGlobalLogCollector`) still intercepts upstream. Every browser
-// realm persists to the same origin-shared IndexedDB store — `createIdbBackend`
-// runs anywhere (main thread, dedicated workers, service workers), so there's
-// no observability worker to spawn and no env-specific persistence path.
-const selectFallback = (): LogProcessor => {
-  const persistence = createIdbBackend();
-
-  // Main thread: dev-filtered console plus persistence.
-  if (inMainThread) {
-    return combine([
-      createEnvironmentFilter({
-        processor: consoleBackend,
-        pattern: devPattern,
-        defaultPattern: '',
-      }),
-      persistence,
-    ]);
-  }
-
-  // Any worker (service, QR scanner, …): console plus persistence. Workers
-  // expose neither `localStorage` nor `process.env`, so `createEnvironmentFilter`
-  // always lands on its empty default pattern and drops every log — there's no
-  // knob to set. We skip the filter and write straight to the console; callers
-  // running in a worker presumably want output.
-  return combine([consoleBackend, persistence]);
-};
-
+// The base destination for every browser realm: a config-filtered console
+// plus origin-shared IndexedDB persistence. A global collector
+// (`setGlobalLogCollector`) still intercepts upstream. Both halves run
+// anywhere — `createIdbBackend` and the OPFS-backed pattern read work on the
+// main thread and in workers (service, QR scanner, …) alike — so there's no
+// realm-specific branch and, unlike the `localStorage` env filter, workers
+// get the same filtering knob as the page.
 export const processor: LogProcessor = createLogCollector({
-  fallback: filter(() => notTest, selectFallback()),
+  fallback: filter(
+    () => notTest,
+    combine([
+      createConfigFilter({
+        option: logFilter,
+        processor: createConsoleBackend(),
+      }),
+      createIdbBackend(),
+    ]),
+  ),
 });

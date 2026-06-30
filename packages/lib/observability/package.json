@@ -6,7 +6,10 @@
   "description": "Structured logging built on @holz/core.",
   "license": "MIT",
   "sideEffects": false,
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/logging/config.ts"
+  },
   "imports": {
     "#processor": {
       "browser": "./src/logging/processor.browser.ts",
@@ -23,6 +26,8 @@
     "@holz/env-filter": "0.8.3-rc.162",
     "@holz/log-collector": "catalog:",
     "@holz/stream-backend": "0.8.3-rc.162",
-    "@lib/holz-idb-backend": "workspace:*"
+    "@lib/holz-config-filter": "workspace:*",
+    "@lib/holz-idb-backend": "workspace:*",
+    "@lib/runtime-config": "workspace:*"
   }
 }

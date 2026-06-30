@@ -1,0 +1,19 @@
+{
+  "name": "@lib/holz-config-filter",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Filter holz logs by a runtime-config pattern, live-updated and available wherever OPFS is.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@holz/core": "catalog:",
+    "@holz/pattern-filter": "catalog:",
+    "@lib/holz-valve": "workspace:*",
+    "@lib/runtime-config": "workspace:*"
+  }
+}
