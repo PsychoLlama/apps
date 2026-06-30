@@ -12,7 +12,9 @@
   "scripts": {
     "prepare": "workspace patch-workerd",
     "build": "turbo run build",
-    "check": "turbo run lint typecheck test test:browser knip:dev knip:production fmt-check workspace-check build",
+    "cargo:clippy": "cargo clippy --workspace --all-targets -- -D warnings",
+    "cargo:test": "cargo test --workspace",
+    "check": "turbo run lint cargo:clippy typecheck test cargo:test test:browser knip:dev knip:production fmt-check workspace-check build",
     "dev": "turbo run dev --filter=@app/main",
     "fmt": "treefmt",
     "fmt-check": "treefmt --ci",

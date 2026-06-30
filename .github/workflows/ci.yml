@@ -70,12 +70,13 @@ jobs:
           key: ${{ runner.os }}-turbo-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-turbo-
-      # The qr-scanner crate's `cargo test` runs inside `pnpm check`, but
-      # turbo's cache doesn't capture Rust artifacts (the test task emits
-      # no outputs). Cache the cargo registry/git checkouts and the build
-      # `target/` so compilation is incremental across runs. Keyed on
-      # `Cargo.lock`; restore-keys falls back to the latest prior entry so
-      # an unchanged dep graph still warms `target/` from source edits.
+      # `pnpm check` runs `cargo clippy` and `cargo test` over the Rust
+      # workspace, but turbo's cache doesn't capture Rust artifacts (those
+      # tasks emit no outputs). Cache the cargo registry/git checkouts and
+      # the build `target/` so compilation is incremental across runs.
+      # Keyed on `Cargo.lock`; restore-keys falls back to the latest prior
+      # entry so an unchanged dep graph still warms `target/` from source
+      # edits.
       - name: Restore Rust cache
         uses: actions/cache@v6
         with:

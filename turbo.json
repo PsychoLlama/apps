@@ -45,6 +45,16 @@
       "outputs": [],
       "outputLogs": "errors-only"
     },
+    "//#cargo:clippy": {
+      "inputs": ["crates/**", "Cargo.toml", "Cargo.lock"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
+    "//#cargo:test": {
+      "inputs": ["crates/**", "Cargo.toml", "Cargo.lock"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
     "//#lint": {
       "inputs": [
         "**/*.{ts,tsx,js,jsx,mjs,cjs}",
