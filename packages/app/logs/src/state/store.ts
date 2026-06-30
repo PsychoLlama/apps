@@ -1,5 +1,6 @@
-import { createStore, defineStore } from '@lib/state';
+import { createStore, defineStore, type Ref } from '@lib/state';
 import type { Log } from '@lib/observability';
+import type { LogConnection } from '@lib/holz-idb-backend/database';
 
 /**
  * Where the archive read sits.
@@ -16,13 +17,21 @@ export type LogsStatus = 'loading' | 'ready' | 'error';
 export interface LogsState {
   /** Where the archive read sits in its lifecycle. */
   status: LogsStatus;
-  /** Persisted logs in event-time order. Empty until a read resolves. */
+  /** Persisted logs, newest-first. Empty until a read resolves. */
   entries: Log[];
+  /**
+   * The viewer's own connection to the IndexedDB archive, held open for the
+   * lifetime of the view so reads walk the live store directly instead of
+   * reopening per read. `null` until the connection opens — which is also its
+   * state during SSG and first paint, since IndexedDB is client-only.
+   */
+  db: Ref<LogConnection> | null;
 }
 
 export const logsStore = defineStore<LogsState>(() => ({
   status: 'loading',
   entries: [],
+  db: null,
 }));
 
 /** Live, readonly view of the on-device log archive. */

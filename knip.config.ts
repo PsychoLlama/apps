@@ -79,6 +79,11 @@ const config: KnipConfig = {
       // the SW behavior tests live under `*.test.browser.ts`.
       entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
     },
+    'packages/app/logs': {
+      // The viewer's archive read drives real IndexedDB, so its behavior
+      // tests live under `*.test.browser.ts`.
+      entry: ['src/**/__tests__/*.test.browser.{ts,tsx}'],
+    },
     'packages/lib/holz-idb-backend': {
       // IndexedDB is only real in a browser, so the backend's behavior
       // tests live under `*.test.browser.ts`.
