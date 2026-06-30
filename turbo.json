@@ -7,6 +7,8 @@
     "tsconfig.node.json"
   ],
   "globalPassThroughEnv": [
+    "AR_wasm32_unknown_unknown",
+    "CC_wasm32_unknown_unknown",
     "CHROMIUM_PATH",
     "CLOUDFLARE_ACCOUNT_ID",
     "CLOUDFLARE_API_TOKEN",
