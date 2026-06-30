@@ -14,6 +14,7 @@
   "dependencies": {
     "@app/experimental": "workspace:*",
     "@app/share": "workspace:*",
+    "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/runtime-config": "workspace:*"
   },

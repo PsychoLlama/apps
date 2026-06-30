@@ -1,7 +1,7 @@
 import { Show, onCleanup, onMount, type JSX } from 'solid-js';
 import { useAction, useEffect } from '@lib/state';
 import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
-import { Button } from '@lib/ui';
+import { LinkButton } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import {
   exportFlag,
@@ -56,12 +56,21 @@ export const LogsView = (props: {
 };
 
 /**
- * Export action pinned to the logs header tray. Offers to pull the archive out
- * to a file. UI only for now — wiring the actual export comes later.
+ * Export action pinned to the logs header tray. Downloads the whole log archive
+ * as an `.ndjson` file from the service worker's `/api/local/logs` route, which
+ * streams every persisted log oldest-first. `native` keeps the router out of
+ * the way — the route is a service-worker resource, not an in-app page.
  */
 const ExportButton = () => (
-  <Button testId="export-logs" variant="ghost" color="neutral">
+  <LinkButton
+    testId="export-logs"
+    variant="ghost"
+    color="neutral"
+    native
+    href="/api/local/logs"
+    download="logs.ndjson"
+  >
     <IconDownload aria-hidden="true" />
     Export
-  </Button>
+  </LinkButton>
 );
