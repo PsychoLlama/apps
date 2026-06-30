@@ -14,11 +14,17 @@ describe('defineOption', () => {
   });
 
   it('carries arbitrary JSON-serializable payloads, not just flags', () => {
-    const option = defineOption('retry-policy', {
-      development: { attempts: 1, backoff: [100, 200] },
-      staging: { attempts: 3, backoff: [100, 200, 400] },
-      production: { attempts: 5, backoff: [100, 200, 400, 800, 1600] },
-    });
+    // Non-flag shapes opt in via an explicit generic; without it `Value`
+    // pins to the default `{ enabled: boolean }` so mismatches error at the
+    // definition rather than at the read site.
+    const option = defineOption<{ attempts: number; backoff: number[] }>(
+      'retry-policy',
+      {
+        development: { attempts: 1, backoff: [100, 200] },
+        staging: { attempts: 3, backoff: [100, 200, 400] },
+        production: { attempts: 5, backoff: [100, 200, 400, 800, 1600] },
+      },
+    );
 
     expect(option.defaults.production.attempts).toBe(5);
     expect(option.defaults.development.backoff).toEqual([100, 200]);

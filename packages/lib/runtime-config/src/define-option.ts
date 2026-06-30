@@ -57,5 +57,9 @@ export interface Option<Value extends JsonValue = { enabled: boolean }> {
  */
 export const defineOption = <Value extends JsonValue = { enabled: boolean }>(
   id: string,
-  defaults: EnvironmentDefaults<Value>,
+  // `NoInfer` keeps `defaults` from being an inference source: a mismatched
+  // environment would otherwise widen `Value` to a union, deferring the error
+  // to the read site. Blocking inference pins `Value` to the default (or an
+  // explicit generic) so each environment is checked here, at the definition.
+  defaults: EnvironmentDefaults<NoInfer<Value>>,
 ): Option<Value> => ({ id, defaults });

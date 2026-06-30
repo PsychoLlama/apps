@@ -3,8 +3,25 @@ import type { JsonValue, Override } from './define-option';
 /** The OPFS directory all option overrides are persisted under. */
 const DIRECTORY = 'config';
 
-/** One JSON file per option, keyed by the option's ID. */
-const fileName = (id: string): string => `${id}.json`;
+/**
+ * Percent-encode an option ID into a legal OPFS file name. The file system
+ * rejects names containing `/` and the reserved `.`/`..`, so a raw ID like
+ * `@app/experimental` is an illegal name. Every character outside the
+ * unreserved set is replaced with its `%XX` code unit; the common kebab-case
+ * ID passes through untouched, keeping stored files legible. Option IDs are
+ * never emoji, so one UTF-16 code unit per character suffices — no surrogate
+ * pairs to stitch back together. The mapping is injective, so distinct IDs
+ * never collide on the same file.
+ */
+const encodeId = (id: string): string =>
+  id.replace(
+    /[^a-zA-Z0-9_-]/g,
+    (char) =>
+      `%${char.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()}`,
+  );
+
+/** One JSON file per option, keyed by the option's encoded ID. */
+const fileName = (id: string): string => `${encodeId(id)}.json`;
 
 /**
  * The OPFS root, or `null` where OPFS is unavailable — server-side

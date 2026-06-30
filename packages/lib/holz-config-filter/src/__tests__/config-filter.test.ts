@@ -17,7 +17,7 @@ import { createConfigFilter } from '../config-filter';
 
 /** A pattern option whose `development` default is `pattern`. */
 const patternOption = (id: string, pattern: string) =>
-  defineOption(id, {
+  defineOption<{ pattern: string }>(id, {
     development: { pattern },
     staging: { pattern: '' },
     production: { pattern: '' },
