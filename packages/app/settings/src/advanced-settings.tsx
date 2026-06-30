@@ -11,22 +11,24 @@ import {
   TextField,
 } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
+import { ResetButton } from './reset-button';
 import { setExperimentalEnabled, setLogFilter } from './state/advanced/actions';
 import {
   commitExperimentalEffect,
   commitLogFilterEffect,
   hydrateAdvancedSettingsEffect,
+  resetExperimentalEffect,
+  resetLogFilterEffect,
 } from './state/advanced/bindings';
 import {
   watchExperimentalEnabled,
   watchLogFilter,
 } from './state/advanced/capabilities';
-import { advancedSettings } from './state/advanced/store';
+import { advancedDefaults, advancedSettings } from './state/advanced/store';
 import * as css from './advanced-settings.css';
 
 const advancedHeadingId = 'settings-advanced-heading';
 const logFilterHeadingId = 'settings-log-filter-heading';
-const experimentalHeadingId = 'settings-experimental-heading';
 
 /**
  * Advanced settings — runtime-config controls for debugging and preview
@@ -40,6 +42,8 @@ export const AdvancedSettings = () => {
   const reconcile = useEffect(hydrateAdvancedSettingsEffect);
   const commitFilter = useEffect(commitLogFilterEffect);
   const commitExperimental = useEffect(commitExperimentalEffect);
+  const resetFilter = useEffect(resetLogFilterEffect);
+  const resetExperimental = useEffect(resetExperimentalEffect);
   const mirrorFilter = useAction(setLogFilter);
   const mirrorExperimental = useAction(setExperimentalEnabled);
 
@@ -83,15 +87,29 @@ export const AdvancedSettings = () => {
       <Flex as="div" direction="column" gap={6}>
         <Flex as="section" direction="column" gap={3}>
           <Flex as="header" direction="column" gap={2}>
-            <Heading
-              as="h3"
-              id={logFilterHeadingId}
-              size={4}
-              weight="medium"
-              selectable={false}
+            <Flex
+              as="div"
+              direction="row"
+              justify="between"
+              align="center"
+              gap={3}
             >
-              Log filter
-            </Heading>
+              <Heading
+                as="h3"
+                id={logFilterHeadingId}
+                size={4}
+                weight="medium"
+                selectable={false}
+              >
+                Log filter
+              </Heading>
+              <ResetButton
+                testId="advanced-log-filter-reset"
+                label="Reset log filter"
+                disabled={advanced.logFilter === advancedDefaults.logFilter}
+                onReset={() => void resetFilter()}
+              />
+            </Flex>
             <Text as="p" size={2} color="lowContrast" selectable={false}>
               Control what's logged to the console. Use <Code>*</Code> to show
               all logs. See{' '}
@@ -129,24 +147,34 @@ export const AdvancedSettings = () => {
             align="center"
             gap={3}
           >
-            <Heading
-              as="h3"
-              id={experimentalHeadingId}
-              size={4}
-              weight="medium"
-              selectable={false}
-            >
+            <Heading as="h3" size={4} weight="medium" selectable={false}>
               Experimental app
             </Heading>
-            <Switch
-              testId="advanced-experimental-toggle"
-              aria-labelledby={experimentalHeadingId}
-              checked={advanced.experimentalEnabled}
-              onCheckedChange={(next) => void commitExperimental(next)}
+            <ResetButton
+              testId="advanced-experimental-reset"
+              label="Reset experimental app"
+              disabled={
+                advanced.experimentalEnabled ===
+                advancedDefaults.experimentalEnabled
+              }
+              onReset={() => void resetExperimental()}
             />
           </Flex>
-          <Text as="p" size={2} color="lowContrast" selectable={false}>
-            Surfaces the experimental scratchpad in the launcher.
+          <Text as="label" size={2} color="lowContrast" selectable={false}>
+            <Flex
+              as="div"
+              direction="row"
+              justify="between"
+              align="center"
+              gap={3}
+            >
+              Surface the experimental scratchpad in the launcher.
+              <Switch
+                testId="advanced-experimental-toggle"
+                checked={advanced.experimentalEnabled}
+                onCheckedChange={(next) => void commitExperimental(next)}
+              />
+            </Flex>
           </Text>
         </Flex>
       </Flex>

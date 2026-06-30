@@ -1,6 +1,6 @@
-import { For, Show, onMount } from 'solid-js';
+import { For, onMount } from 'solid-js';
 import { useEffect } from '@lib/state';
-import { Button, RadioCardsItem, RadioCardsRoot } from '@lib/ui';
+import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
 import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
 import {
   hydrateThemeEffect,
@@ -8,6 +8,7 @@ import {
   selectThemeEffect,
   theme,
 } from '@lib/theme/runtime';
+import { ResetButton } from './reset-button';
 import * as css from './theme-picker.css';
 
 /**
@@ -61,25 +62,19 @@ export const ThemePicker = () => {
 };
 
 /**
- * Inline action that snaps the theme back to `DEFAULT_THEME_ID`. Renders
- * only when the user has made a non-default selection — keeps the
- * settings page free of always-on disabled affordances and stays hidden
- * during the pre-hydration skeleton state.
+ * Inline action that snaps the theme back to `DEFAULT_THEME_ID`. Disabled
+ * while the theme is already default — or still unhydrated (`id: null`) —
+ * matching the reset affordances in the Advanced section.
  */
 export const ThemeResetButton = () => {
   const resetTheme = useEffect(resetThemeEffect);
 
   return (
-    <Show when={theme.id !== null && theme.id !== DEFAULT_THEME_ID}>
-      <Button
-        testId="theme-picker-reset"
-        variant="ghost"
-        color="neutral"
-        size={1}
-        onClick={() => resetTheme()}
-      >
-        Restore default
-      </Button>
-    </Show>
+    <ResetButton
+      testId="theme-picker-reset"
+      label="Reset theme"
+      disabled={theme.id === null || theme.id === DEFAULT_THEME_ID}
+      onReset={() => resetTheme()}
+    />
   );
 };

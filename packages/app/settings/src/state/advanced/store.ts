@@ -22,10 +22,20 @@ export interface AdvancedSettingsState {
   experimentalEnabled: boolean;
 }
 
-/** Source of truth for the Advanced settings controls. */
-export const advancedSettingsStore = defineStore<AdvancedSettingsState>(() => ({
+/**
+ * The active environment's built-in defaults — the values a reset reverts
+ * each control to. A control sits at its default exactly when its live
+ * value equals this, which is how the reset affordances decide whether to
+ * disable themselves.
+ */
+export const advancedDefaults: AdvancedSettingsState = {
   logFilter: filter.defaults[environment].pattern,
   experimentalEnabled: experimentalApp.defaults[environment].enabled,
+};
+
+/** Source of truth for the Advanced settings controls. */
+export const advancedSettingsStore = defineStore<AdvancedSettingsState>(() => ({
+  ...advancedDefaults,
 }));
 
 /** Live, readonly view of the Advanced settings. */
