@@ -1,0 +1,18 @@
+{
+  "name": "@crate/iroh",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Browser bindings for joining the iroh relay network, via wasm over the iroh crate.",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./dist/iroh_share.js"
+    }
+  },
+  "scripts": {
+    "build": "./bin/build",
+    "typecheck": "tsc"
+  }
+}

@@ -1,0 +1,41 @@
+[package]
+name = "iroh-share"
+version = "0.0.0"
+publish = false
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["console_error_panic_hook"]
+# Routes Rust panics to `console.error` with a readable message. Cheap
+# and worth keeping on — without it a panic is an opaque wasm trap.
+console_error_panic_hook = ["dep:console_error_panic_hook"]
+
+[dependencies]
+# Pinned to the `wasm-bindgen-cli` version the flake pulls from nixpkgs
+# (0.2.121). The CLI refuses to process a module built against a
+# different crate version, so bump both together.
+wasm-bindgen = "=0.2.121"
+console_error_panic_hook = { version = "0.1", optional = true }
+
+# Iroh only does anything in the browser, so it (and its wasm runtime
+# glue) is scoped to the wasm target. This keeps the native build — what
+# `cargo clippy`/`cargo test --workspace` compile — down to the panic
+# hook above, instead of dragging the whole iroh tree through every check.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# Browser builds need every default feature off; `tls-ring` is the one
+# TLS backend that compiles to wasm. In the browser iroh runs relay-only
+# (no hole-punching), tunnelling QUIC over WebSocket to the relay.
+iroh = { version = "1", default-features = false, features = ["tls-ring"] }
+# iroh needs randomness for key generation; on wasm that comes from the
+# JS crypto API. The feature exposes the backend; the matching
+# `getrandom_backend="wasm_js"` cfg in `.cargo/config.toml` selects it.
+getrandom = { version = "0.3", features = ["wasm_js"] }
+# An exported `async fn` lowers to a JS Promise via this crate, so
+# `#[wasm_bindgen]` over `connect` needs it in the graph directly.
+wasm-bindgen-futures = "0.4"
