@@ -4,6 +4,25 @@ import type { JsonValue, Override } from './define-config';
 const DIRECTORY = 'config';
 
 /**
+ * The on-disk format version. A constant we don't expect to ever bump —
+ * kept so a future format change has an explicit hook to branch on rather
+ * than having to sniff the shape of an untagged blob.
+ */
+const FORMAT_VERSION = 1;
+
+/**
+ * The on-disk envelope wrapping a persisted override: the override itself
+ * under `config`, tagged with the {@link FORMAT_VERSION} and the time it was
+ * last written. `updatedAt` is a hint for when the file was touched, not load-
+ * bearing for resolution.
+ */
+interface StoredOverride<Value extends JsonValue> {
+  readonly version: typeof FORMAT_VERSION;
+  readonly updatedAt: string;
+  readonly config: Override<Value>;
+}
+
+/**
  * Percent-encode an option ID into a legal OPFS file name. The file system
  * rejects names containing `/` and the reserved `.`/`..`, so a raw ID like
  * `@app/experimental` is an illegal name. Every character outside the
@@ -62,10 +81,10 @@ const isUnavailable = (error: unknown): boolean =>
     error.name === 'NotAllowedError');
 
 /**
- * Read the persisted override for an option. Returns an empty override
- * when nothing has been written yet, OPFS is unavailable, or the stored
- * file is unreadable (corrupt JSON), so the caller falls back to defaults
- * for every environment.
+ * Read the persisted override for an option, unwrapping it from its
+ * {@link StoredOverride} envelope. Returns an empty override when nothing has
+ * been written yet, OPFS is unavailable, or the stored file is unreadable
+ * (corrupt JSON), so the caller falls back to defaults for every environment.
  */
 export const readOverride = async <Value extends JsonValue>(
   id: string,
@@ -77,7 +96,8 @@ export const readOverride = async <Value extends JsonValue>(
     const dir = await root.getDirectoryHandle(DIRECTORY);
     const handle = await dir.getFileHandle(fileName(id));
     const text = await (await handle.getFile()).text();
-    return text ? (JSON.parse(text) as Override<Value>) : {};
+    if (!text) return {};
+    return (JSON.parse(text) as StoredOverride<Value>).config ?? {};
   } catch (error) {
     // A `SyntaxError` means the persisted file is corrupt — drop it on the
     // floor and revert to defaults rather than wedging every read of the
@@ -87,7 +107,10 @@ export const readOverride = async <Value extends JsonValue>(
   }
 };
 
-/** Persist an option's override, replacing whatever was there. */
+/**
+ * Persist an option's override, replacing whatever was there. Wraps it in a
+ * {@link StoredOverride} envelope, stamping the write time as it goes.
+ */
 export const writeOverride = async <Value extends JsonValue>(
   id: string,
   override: Override<Value>,
@@ -98,7 +121,12 @@ export const writeOverride = async <Value extends JsonValue>(
   const dir = await root.getDirectoryHandle(DIRECTORY, { create: true });
   const handle = await dir.getFileHandle(fileName(id), { create: true });
   const writable = await handle.createWritable();
-  await writable.write(JSON.stringify(override));
+  const stored: StoredOverride<Value> = {
+    version: FORMAT_VERSION,
+    updatedAt: new Date().toISOString(),
+    config: override,
+  };
+  await writable.write(JSON.stringify(stored));
   await writable.close();
 };
 

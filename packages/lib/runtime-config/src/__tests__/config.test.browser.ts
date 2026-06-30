@@ -68,6 +68,26 @@ describe('updateConfig', () => {
     });
   });
 
+  it('deletes the stored file when a patch returns every environment to its default', async () => {
+    const option = flag('update-to-default');
+
+    await updateConfig(option, { production: { enabled: true } });
+    // Patch production back to its default value — the override now remembers
+    // nothing, so the file should be removed rather than rewritten.
+    await updateConfig(option, { production: { enabled: false } });
+
+    expect(await readAllEnvironments(option)).toEqual({
+      development: { enabled: true },
+      staging: { enabled: true },
+      production: { enabled: false },
+    });
+
+    // Assert the file is gone, not merely emptied.
+    const root = await navigator.storage.getDirectory();
+    const dir = await root.getDirectoryHandle('config');
+    await expect(dir.getFileHandle('update-to-default.json')).rejects.toThrow();
+  });
+
   it('merges successive patches across environments', async () => {
     const option = flag('merge');
 

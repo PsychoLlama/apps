@@ -17,6 +17,61 @@ const resolve = <Value extends JsonValue>(
 ): EnvironmentDefaults<Value> => ({ ...option.defaults, ...override });
 
 /**
+ * Serialize a JSON value to a canonical string. The replacer rewrites every
+ * object with its keys sorted, so `JSON.stringify` — which otherwise emits
+ * keys in insertion order — produces identical text for structurally equal
+ * values. `JSON.stringify` still handles the recursion, arrays, and escaping;
+ * we only normalize key order. Its quoting and brackets keep types apart (a
+ * string can't collide with the array or object that spells it), so a plain
+ * `===` on the result is a sound deep equality.
+ */
+const canonical = (value: JsonValue): string =>
+  JSON.stringify(value, (_key, val: JsonValue) =>
+    val !== null && typeof val === 'object' && !Array.isArray(val)
+      ? Object.fromEntries(
+          Object.entries(val as { [key: string]: JsonValue }).sort(
+            ([keyA], [keyB]) => (keyA > keyB ? 1 : -1),
+          ),
+        )
+      : val,
+  );
+
+/** Deep equality for two JSON values, order-insensitive on object keys. */
+const jsonEqual = (left: JsonValue, right: JsonValue): boolean =>
+  canonical(left) === canonical(right);
+
+/**
+ * Whether an override is redundant: every environment it names already holds
+ * the option's default. Such an override remembers nothing, so it's deleted
+ * rather than persisted. An empty override is trivially redundant.
+ */
+const isRedundant = <Value extends JsonValue>(
+  option: Option<Value>,
+  override: Override<Value>,
+): boolean =>
+  ENVIRONMENTS.every((env) => {
+    const value = override[env];
+    return value === undefined || jsonEqual(value, option.defaults[env]);
+  });
+
+/**
+ * Persist an option's resolved override and announce it to every context.
+ * Deletes the file when the override is {@link isRedundant} — nothing worth
+ * remembering — otherwise writes it. Either way the change fans out.
+ */
+const commit = async <Value extends JsonValue>(
+  option: Option<Value>,
+  override: Override<Value>,
+): Promise<void> => {
+  if (isRedundant(option, override)) {
+    await deleteOverride(option.id);
+  } else {
+    await writeOverride(option.id, override);
+  }
+  publish(option.id, override);
+};
+
+/**
  * Read an option across *every* environment: its defaults with any
  * persisted override layered on top, as a full per-environment map.
  * Resolves to the bare defaults where nothing has been written or OPFS is
@@ -63,15 +118,16 @@ export const subscribe = <Value extends JsonValue>(
 /**
  * Merge a per-environment patch into an option's override, persist it to
  * OPFS, and announce it to other tabs. Environments absent from the patch
- * keep their existing value.
+ * keep their existing value. When the merge leaves every environment back at
+ * its default, the file is deleted rather than written — a no-op override
+ * isn't worth persisting.
  */
 export const updateConfig = async <Value extends JsonValue>(
   option: Option<Value>,
   patch: Override<Value>,
 ): Promise<void> => {
   const next = { ...(await readOverride<Value>(option.id)), ...patch };
-  await writeOverride(option.id, next);
-  publish(option.id, next);
+  await commit(option, next);
 };
 
 /**
@@ -89,11 +145,5 @@ export const reset = async <Value extends JsonValue>(
     if (!environments.includes(env) && env in current) next[env] = current[env];
   }
 
-  if (Object.keys(next).length === 0) {
-    await deleteOverride(option.id);
-  } else {
-    await writeOverride(option.id, next);
-  }
-
-  publish(option.id, next);
+  await commit(option, next);
 };
