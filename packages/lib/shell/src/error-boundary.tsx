@@ -56,30 +56,6 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE).namespace(
   'error-boundary',
 );
 
-/** Shape of `navigator.userAgentData` — not yet in the TS DOM lib. */
-interface UserAgentData {
-  platform: string;
-  mobile: boolean;
-  brands: ReadonlyArray<{ brand: string; version: string }>;
-}
-
-/**
- * Best-effort UA client hints. Absent on Firefox/Safari (and any
- * non-secure context), so each field falls back to `undefined`. `brands`
- * collapses to `"<brand> <version>"` strings — log context only carries
- * primitives, not nested objects.
- */
-const readClientHints = () => {
-  const data = (navigator as Navigator & { userAgentData?: UserAgentData })
-    .userAgentData;
-
-  return {
-    platform: data?.platform,
-    mobile: data?.mobile,
-    brands: data?.brands.map(({ brand, version }) => `${brand} ${version}`),
-  };
-};
-
 /** Fallback rendered when the global `<ErrorBoundary>` catches an uncaught error. */
 export default function ErrorBoundaryFallback(
   props: ErrorBoundaryFallbackProps,
@@ -87,14 +63,13 @@ export default function ErrorBoundaryFallback(
   const details = () => normalizeError(props.error);
   const location = useLocation();
 
-  // Report the failure once the fallback mounts (client-only, so
-  // `navigator` is safe). The route and client hints are what let us
-  // correlate a production occurrence back to a page and environment.
+  // Report the failure once the fallback mounts. The route is what lets
+  // us correlate a production occurrence back to a page; the browser
+  // environment is already captured by the page-load breadcrumb.
   onMount(() => {
     logger.error('Uncaught render error.', {
       error: toError(props.error),
       route: location.pathname,
-      ...readClientHints(),
     });
   });
 

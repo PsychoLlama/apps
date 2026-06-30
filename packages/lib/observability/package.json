@@ -20,12 +20,12 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@holz/ansi-terminal-backend": "0.8.3-rc.162",
-    "@holz/console-backend": "0.8.3-rc.162",
+    "@holz/ansi-terminal-backend": "0.8.3-rc.175",
+    "@holz/console-backend": "0.8.3-rc.175",
     "@holz/core": "catalog:",
-    "@holz/env-filter": "0.8.3-rc.162",
+    "@holz/env-filter": "0.8.3-rc.175",
     "@holz/log-collector": "catalog:",
-    "@holz/stream-backend": "0.8.3-rc.162",
+    "@holz/stream-backend": "0.8.3-rc.175",
     "@lib/holz-config-filter": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/runtime-config": "workspace:*"
