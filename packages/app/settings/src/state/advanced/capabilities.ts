@@ -7,7 +7,7 @@ import {
   type Override,
 } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
-import { experimentalApp } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/experimental/config';
 import { type AdvancedSettingsState } from './store';
 
 /**
@@ -19,7 +19,7 @@ export const readAdvancedSettings =
   async (): Promise<AdvancedSettingsState> => {
     const [logFilter, experimental] = await Promise.all([
       readEnvironment(filter),
-      readEnvironment(experimentalApp),
+      readEnvironment(experimentalAppEnabled),
     ]);
 
     return {
@@ -57,7 +57,7 @@ export const writeExperimentalEnabled = async (
   enabled: boolean,
 ): Promise<void> => {
   const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
-  await updateConfig(experimentalApp, patch);
+  await updateConfig(experimentalAppEnabled, patch);
 };
 
 /**
@@ -65,7 +65,7 @@ export const writeExperimentalEnabled = async (
  * reverting it to the built-in default. Other environments keep theirs.
  */
 export const resetExperimentalEnabled = (): Promise<void> =>
-  reset(experimentalApp, [environment]);
+  reset(experimentalAppEnabled, [environment]);
 
 /**
  * Watch for experimental flag changes from any browsing context. Returns
@@ -74,6 +74,6 @@ export const resetExperimentalEnabled = (): Promise<void> =>
 export const watchExperimentalEnabled = (
   onChange: (enabled: boolean) => void,
 ): (() => void) =>
-  subscribe(experimentalApp, (value) => {
+  subscribe(experimentalAppEnabled, (value) => {
     onChange(value.enabled);
   });

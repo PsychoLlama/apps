@@ -1,11 +1,11 @@
-import { defineOption } from '@lib/runtime-config';
+import { defineConfig } from '@lib/runtime-config';
 
 /**
  * Whether the experimental app is enabled. It's a branch-scoped
  * scratchpad, so it ships everywhere *except* production — available in
  * local dev and on preview deploys, hidden from the production build.
  */
-export const experimentalApp = defineOption('experimental-app', {
+export const enabled = defineConfig('@app/experimental', {
   development: { enabled: true },
   staging: { enabled: true },
   production: { enabled: false },

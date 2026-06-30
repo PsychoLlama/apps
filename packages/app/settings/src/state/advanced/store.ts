@@ -1,7 +1,7 @@
 import { createStore, defineStore } from '@lib/state';
 import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
-import { experimentalApp } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/experimental/config';
 
 /** Live values backing the settings page's Advanced section. */
 export interface AdvancedSettingsState {
@@ -30,7 +30,7 @@ export interface AdvancedSettingsState {
  */
 export const advancedDefaults: AdvancedSettingsState = {
   logFilter: filter.defaults[environment].pattern,
-  experimentalEnabled: experimentalApp.defaults[environment].enabled,
+  experimentalEnabled: experimentalAppEnabled.defaults[environment].enabled,
 };
 
 /** Source of truth for the Advanced settings controls. */

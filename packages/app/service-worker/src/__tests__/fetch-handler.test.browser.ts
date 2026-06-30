@@ -7,7 +7,7 @@
 
 import { type Mock } from 'vitest';
 
-import { experimentalApp } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/experimental/config';
 import { reset, updateConfig } from '@lib/runtime-config';
 
 import { CACHE_NAMES } from '../caches';
@@ -296,7 +296,7 @@ describe('handleFetch', () => {
     // target that. `reset` clears the persisted OPFS override between
     // cases so neither leaks the flag into the other.
     afterEach(async () => {
-      await reset(experimentalApp);
+      await reset(experimentalAppEnabled);
     });
 
     /** A navigation request to the scratchpad route. */
@@ -307,7 +307,9 @@ describe('handleFetch', () => {
     };
 
     it('serves the 404 page when the flag is disabled', async () => {
-      await updateConfig(experimentalApp, { development: { enabled: false } });
+      await updateConfig(experimentalAppEnabled, {
+        development: { enabled: false },
+      });
       // The shell is fetched at the clean `/404` path and re-served with
       // a 404 status.
       fetchSpy.mockResolvedValue(
@@ -326,7 +328,9 @@ describe('handleFetch', () => {
     });
 
     it('serves the navigation when the flag is enabled', async () => {
-      await updateConfig(experimentalApp, { development: { enabled: true } });
+      await updateConfig(experimentalAppEnabled, {
+        development: { enabled: true },
+      });
       fetchSpy.mockResolvedValue(
         new Response('<html>experimental</html>', { status: 200 }),
       );

@@ -11,13 +11,13 @@
  */
 
 import { createLogger, type LogProcessor } from '@holz/core';
-import { defineOption, updateConfig } from '@lib/runtime-config';
+import { defineConfig, updateConfig } from '@lib/runtime-config';
 
 import { createConfigFilter } from '../config-filter';
 
 /** A pattern option whose `development` default is `pattern`. */
 const patternOption = (id: string, pattern: string) =>
-  defineOption<{ pattern: string }>(id, {
+  defineConfig<{ pattern: string }>(id, {
     development: { pattern },
     staging: { pattern: '' },
     production: { pattern: '' },

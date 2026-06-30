@@ -1,5 +1,5 @@
 import { BroadcastChannelTransport } from '@lib/messaging/broadcast-channel';
-import type { JsonValue, Override } from './define-option';
+import type { JsonValue, Override } from './define-config';
 
 /**
  * The same-origin channel name an option's updates ride. One channel per

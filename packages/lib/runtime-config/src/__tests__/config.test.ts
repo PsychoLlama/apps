@@ -1,4 +1,4 @@
-import { defineOption } from '../define-option';
+import { defineConfig } from '../define-config';
 import { readAllEnvironments, readEnvironment } from '../config';
 
 // jsdom has no OPFS, so the reads resolve to the bare defaults here. The
@@ -6,7 +6,7 @@ import { readAllEnvironments, readEnvironment } from '../config';
 // which need real browser APIs — live in `config.test.browser.ts`.
 
 const flag = (id: string) =>
-  defineOption(id, {
+  defineConfig(id, {
     development: { enabled: true },
     staging: { enabled: true },
     production: { enabled: false },

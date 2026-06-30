@@ -1,4 +1,4 @@
-import { defineOption } from '@lib/runtime-config';
+import { defineConfig } from '@lib/runtime-config';
 
 /**
  * Runtime pattern gating which logs reach the browser console. Resolved per
@@ -11,8 +11,11 @@ import { defineOption } from '@lib/runtime-config';
  * `@holz/pattern-filter` syntax (debug-style globs and negation, matched
  * against `log.origin`).
  */
-export const filter = defineOption<{ pattern: string }>('log-filter', {
-  development: { pattern: '*' },
-  staging: { pattern: '*' },
-  production: { pattern: '' },
-});
+export const filter = defineConfig<{ pattern: string }>(
+  '@lib/observability:filter',
+  {
+    development: { pattern: '*' },
+    staging: { pattern: '*' },
+    production: { pattern: '' },
+  },
+);

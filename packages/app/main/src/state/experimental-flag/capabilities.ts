@@ -1,12 +1,12 @@
 import { readEnvironment, subscribe } from '@lib/runtime-config';
-import { experimentalApp } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/experimental/config';
 
 /**
  * Resolve whether the experimental app is enabled for the active
  * environment, layering any persisted OPFS override over the default.
  */
 export const readExperimentalFlag = async (): Promise<boolean> =>
-  (await readEnvironment(experimentalApp)).enabled;
+  (await readEnvironment(experimentalAppEnabled)).enabled;
 
 /**
  * Watch for changes to the experimental flag, reporting the resolved
@@ -18,6 +18,6 @@ export const readExperimentalFlag = async (): Promise<boolean> =>
 export const watchExperimentalFlag = (
   onChange: (enabled: boolean) => void,
 ): (() => void) =>
-  subscribe(experimentalApp, (value) => {
+  subscribe(experimentalAppEnabled, (value) => {
     onChange(value.enabled);
   });

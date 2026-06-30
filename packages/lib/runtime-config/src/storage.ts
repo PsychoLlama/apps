@@ -1,4 +1,4 @@
-import type { JsonValue, Override } from './define-option';
+import type { JsonValue, Override } from './define-config';
 
 /** The OPFS directory all option overrides are persisted under. */
 const DIRECTORY = 'config';

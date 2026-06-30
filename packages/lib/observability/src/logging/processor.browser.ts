@@ -5,7 +5,7 @@ import { createConfigFilter } from '@lib/holz-config-filter';
 import { createIdbBackend } from '@lib/holz-idb-backend';
 // Aliased: `filter` (the log-pattern option) collides with `@holz/core`'s
 // `filter` operator imported above.
-import { filter as logFilter } from './config';
+import { filter as logFilter } from '../config';
 
 // Under Vitest `import.meta.env.MODE` is `'test'`. Mirror the server
 // processor's `NODE_ENV` guard and stay silent so suites don't spew log

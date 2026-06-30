@@ -1,4 +1,4 @@
-import { defineOption } from '../define-option';
+import { defineConfig } from '../define-config';
 import { channelName } from '../channel';
 import {
   readAllEnvironments,
@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 const flag = (id: string) =>
-  defineOption(id, {
+  defineConfig(id, {
     development: { enabled: true },
     staging: { enabled: true },
     production: { enabled: false },

@@ -1,8 +1,8 @@
-import { defineOption } from '../define-option';
+import { defineConfig } from '../define-config';
 
-describe('defineOption', () => {
+describe('defineConfig', () => {
   it('returns the id and per-environment defaults verbatim', () => {
-    const option = defineOption('my-feature', {
+    const option = defineConfig('my-feature', {
       development: { enabled: true },
       staging: { enabled: true },
       production: { enabled: false },
@@ -17,7 +17,7 @@ describe('defineOption', () => {
     // Non-flag shapes opt in via an explicit generic; without it `Value`
     // pins to the default `{ enabled: boolean }` so mismatches error at the
     // definition rather than at the read site.
-    const option = defineOption<{ attempts: number; backoff: number[] }>(
+    const option = defineConfig<{ attempts: number; backoff: number[] }>(
       'retry-policy',
       {
         development: { attempts: 1, backoff: [100, 200] },
