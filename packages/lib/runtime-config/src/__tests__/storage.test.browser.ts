@@ -40,4 +40,24 @@ describe('storage with arbitrary option IDs', () => {
 
     expect(await readOverride('@app/experimental')).toEqual({});
   });
+
+  it('wraps the override in a versioned, timestamped envelope on disk', async () => {
+    await writeOverride('envelope', { production: { enabled: true } });
+
+    // Read the raw bytes to assert the on-disk shape, not the unwrapped view.
+    const root = await navigator.storage.getDirectory();
+    const dir = await root.getDirectoryHandle('config');
+    const handle = await dir.getFileHandle('envelope.json');
+    const stored = JSON.parse(await (await handle.getFile()).text()) as {
+      version: number;
+      updatedAt: string;
+      config: unknown;
+    };
+
+    expect(stored).toMatchObject({
+      version: 1,
+      config: { production: { enabled: true } },
+    });
+    expect(typeof stored.updatedAt).toBe('string');
+  });
 });
