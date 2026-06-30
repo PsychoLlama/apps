@@ -390,6 +390,9 @@ importers:
       '@app/share':
         specifier: workspace:*
         version: link:../share
+      '@lib/holz-idb-backend':
+        specifier: workspace:*
+        version: link:../../lib/holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
