@@ -32,7 +32,6 @@ export const ResetButton = (props: ResetButtonProps) => (
     aria-label={props.label}
     variant="ghost"
     color="neutral"
-    size={1}
     disabled={props.disabled}
     onClick={() => props.onReset()}
   >
