@@ -1,0 +1,26 @@
+{
+  "name": "@app/share",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Share resources — links and files — peer to peer.",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
+  "exports": {
+    ".": "./src/index.tsx",
+    "./config": "./src/config.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/runtime-config": "workspace:*",
+    "@lib/shell": "workspace:*",
+    "@lib/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "solid-js": "*"
+  }
+}

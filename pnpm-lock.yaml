@@ -284,6 +284,9 @@ importers:
       '@app/settings':
         specifier: workspace:*
         version: link:../settings
+      '@app/share':
+        specifier: workspace:*
+        version: link:../share
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -384,6 +387,9 @@ importers:
       '@app/experimental':
         specifier: workspace:*
         version: link:../experimental
+      '@app/share':
+        specifier: workspace:*
+        version: link:../share
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -406,6 +412,9 @@ importers:
       '@app/logs':
         specifier: workspace:*
         version: link:../logs
+      '@app/share':
+        specifier: workspace:*
+        version: link:../share
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -430,6 +439,21 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1
+      solid-js:
+        specifier: ^1.9.13
+        version: 1.9.13
+
+  packages/app/share:
+    dependencies:
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../../lib/runtime-config
+      '@lib/shell':
+        specifier: workspace:*
+        version: link:../../lib/shell
+      '@lib/ui':
+        specifier: workspace:*
+        version: link:../../lib/ui
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
