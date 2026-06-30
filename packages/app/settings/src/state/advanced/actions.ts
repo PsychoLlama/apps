@@ -11,6 +11,7 @@ export const setAdvancedSettings = defineAction(
     advanced.logFilter = values.logFilter;
     advanced.logExportEnabled = values.logExportEnabled;
     advanced.experimentalEnabled = values.experimentalEnabled;
+    advanced.shareEnabled = values.shareEnabled;
   },
 );
 
@@ -35,5 +36,13 @@ export const setExperimentalEnabled = defineAction(
   [advancedSettingsStore],
   (advanced, enabled: boolean) => {
     advanced.experimentalEnabled = enabled;
+  },
+);
+
+/** Mirror a resolved share flag into the store. */
+export const setShareEnabled = defineAction(
+  [advancedSettingsStore],
+  (advanced, enabled: boolean) => {
+    advanced.shareEnabled = enabled;
   },
 );

@@ -9,6 +9,7 @@ import {
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as shareAppEnabled } from '@app/share/config';
 import { type AdvancedSettingsState } from './store';
 
 /**
@@ -18,16 +19,18 @@ import { type AdvancedSettingsState } from './store';
  */
 export const readAdvancedSettings =
   async (): Promise<AdvancedSettingsState> => {
-    const [logFilter, logExportFlag, experimental] = await Promise.all([
+    const [logFilter, logExportFlag, experimental, share] = await Promise.all([
       readEnvironment(filter),
       readEnvironment(logExport),
       readEnvironment(experimentalAppEnabled),
+      readEnvironment(shareAppEnabled),
     ]);
 
     return {
       logFilter: logFilter.pattern,
       logExportEnabled: logExportFlag.enabled,
       experimentalEnabled: experimental.enabled,
+      shareEnabled: share.enabled,
     };
   };
 
@@ -104,5 +107,29 @@ export const watchExperimentalEnabled = (
   onChange: (enabled: boolean) => void,
 ): (() => void) =>
   subscribe(experimentalAppEnabled, (value) => {
+    onChange(value.enabled);
+  });
+
+/** Persist the share flag as the active environment's override. */
+export const writeShareEnabled = async (enabled: boolean): Promise<void> => {
+  const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
+  await updateConfig(shareAppEnabled, patch);
+};
+
+/**
+ * Clear the share flag override for the active environment only, reverting
+ * it to the built-in default. Other environments keep theirs.
+ */
+export const resetShareEnabled = (): Promise<void> =>
+  reset(shareAppEnabled, [environment]);
+
+/**
+ * Watch for share flag changes from any browsing context. Returns an
+ * unsubscribe.
+ */
+export const watchShareEnabled = (
+  onChange: (enabled: boolean) => void,
+): (() => void) =>
+  subscribe(shareAppEnabled, (value) => {
     onChange(value.enabled);
   });

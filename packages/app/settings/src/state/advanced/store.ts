@@ -3,6 +3,7 @@ import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as shareAppEnabled } from '@app/share/config';
 
 /** Live values backing the settings page's Advanced section. */
 export interface AdvancedSettingsState {
@@ -28,6 +29,12 @@ export interface AdvancedSettingsState {
    * `logFilter`.
    */
   experimentalEnabled: boolean;
+
+  /**
+   * Whether the share app is enabled for the active environment. Seeded
+   * from the option default, then reconciled on mount like `logFilter`.
+   */
+  shareEnabled: boolean;
 }
 
 /**
@@ -40,6 +47,7 @@ export const advancedDefaults: AdvancedSettingsState = {
   logFilter: filter.defaults[environment].pattern,
   logExportEnabled: logExport.defaults[environment].enabled,
   experimentalEnabled: experimentalAppEnabled.defaults[environment].enabled,
+  shareEnabled: shareAppEnabled.defaults[environment].enabled,
 };
 
 /** Source of truth for the Advanced settings controls. */

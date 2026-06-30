@@ -8,6 +8,7 @@
 import { type Mock } from 'vitest';
 
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as shareAppEnabled } from '@app/share/config';
 import { reset, updateConfig } from '@lib/runtime-config';
 
 import { CACHE_NAMES } from '../caches';
@@ -336,6 +337,59 @@ describe('handleFetch', () => {
       );
 
       const event = syntheticEvent(experimentalNavigation());
+      handleFetch(event as unknown as FetchEvent);
+
+      expect(event.respondWith).toHaveBeenCalledOnce();
+      const [response] = event.respondWith.mock.calls[0] as [Promise<Response>];
+      expect((await response).status).toBe(200);
+    });
+  });
+
+  describe('share route gating', () => {
+    // The runner resolves to the `development` environment, so overrides
+    // target that. `reset` clears the persisted OPFS override between
+    // cases so neither leaks the flag into the other.
+    afterEach(async () => {
+      await reset(shareAppEnabled);
+    });
+
+    /** A navigation request to the share route. */
+    const shareNavigation = (): Request => {
+      const request = new Request(sameOrigin('/share'));
+      Object.defineProperty(request, 'mode', { value: 'navigate' });
+      return request;
+    };
+
+    it('serves the 404 page when the flag is disabled', async () => {
+      await updateConfig(shareAppEnabled, {
+        development: { enabled: false },
+      });
+      // The shell is fetched at the clean `/404` path and re-served with
+      // a 404 status.
+      fetchSpy.mockResolvedValue(
+        new Response('<html>not found</html>', { status: 200 }),
+      );
+
+      const event = syntheticEvent(shareNavigation());
+      handleFetch(event as unknown as FetchEvent);
+
+      expect(event.respondWith).toHaveBeenCalledOnce();
+      const [response] = event.respondWith.mock.calls[0] as [Promise<Response>];
+      const resolved = await response;
+      expect(resolved.status).toBe(404);
+      expect(await resolved.text()).toBe('<html>not found</html>');
+      expect(fetchSpy).toHaveBeenCalledWith('/404');
+    });
+
+    it('serves the navigation when the flag is enabled', async () => {
+      await updateConfig(shareAppEnabled, {
+        development: { enabled: true },
+      });
+      fetchSpy.mockResolvedValue(
+        new Response('<html>share</html>', { status: 200 }),
+      );
+
+      const event = syntheticEvent(shareNavigation());
       handleFetch(event as unknown as FetchEvent);
 
       expect(event.respondWith).toHaveBeenCalledOnce();

@@ -81,12 +81,13 @@ export default defineConfig({
         // Manual entries for routes the crawler can't reach from `/`:
         //   - `/404`: rendered via Cloudflare's `not_found_handling`,
         //     not linked from any page.
-        //   - `/experimental`: scratchpad route, intentionally unlisted
-        //     from the launcher. Its shell ships in every build; the
-        //     service worker gates access at runtime via the
-        //     `experimental-app` flag (see `@lib/runtime-config`), so
-        //     there's nothing to decide at build time here.
-        routes: ['/404', '/experimental'],
+        //   - `/experimental` and `/share`: flag-gated app routes,
+        //     unlisted from the launcher whenever their flag is off.
+        //     Their shells ship in every build; the service worker gates
+        //     access at runtime via the per-app flag (see
+        //     `@lib/runtime-config`), so there's nothing to decide at
+        //     build time here.
+        routes: ['/404', '/experimental', '/share'],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file
