@@ -1,5 +1,7 @@
 import type { JSX } from 'solid-js';
 import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
+import { Button } from '@lib/ui';
+import IconDownload from 'virtual:icons/mdi/download-outline';
 
 /**
  * The logs layout: the `<main>` frame for every `/logs/*` route. Each route
@@ -20,7 +22,18 @@ export const LogsView = (props: {
   children?: JSX.Element;
 }) => (
   <>
-    <SiteHeader trail={props.trail} />
+    <SiteHeader trail={props.trail} actions={<ExportButton />} />
     <FrameBody>{props.children}</FrameBody>
   </>
+);
+
+/**
+ * Export action pinned to the logs header tray. Offers to pull the archive out
+ * to a file. UI only for now — wiring the actual export comes later.
+ */
+const ExportButton = () => (
+  <Button testId="export-logs" variant="ghost" color="neutral">
+    <IconDownload aria-hidden="true" />
+    Export
+  </Button>
 );
