@@ -7,6 +7,7 @@
  */
 
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as shareAppEnabled } from '@app/share/config';
 import { createLogger } from '@lib/observability';
 import { readEnvironment } from '@lib/runtime-config';
 
@@ -81,6 +82,13 @@ export const handleFetch = (event: FetchEvent): void => {
       return;
     }
 
+    // The share app ships in every build too, gated the same way: enabled
+    // in dev only, turned into a real 404 here wherever it's disabled.
+    if (isShareRoute(url)) {
+      event.respondWith(handleShareNavigation(event));
+      return;
+    }
+
     event.respondWith(handleNavigation(event));
   }
 };
@@ -88,6 +96,10 @@ export const handleFetch = (event: FetchEvent): void => {
 /** The scratchpad route, matched with or without a trailing slash. */
 const isExperimentalRoute = (url: URL): boolean =>
   url.pathname === '/experimental' || url.pathname === '/experimental/';
+
+/** The share route, matched with or without a trailing slash. */
+const isShareRoute = (url: URL): boolean =>
+  url.pathname === '/share' || url.pathname === '/share/';
 
 /**
  * Clean URL of the prerendered 404 shell. Cloudflare serves the
@@ -111,6 +123,21 @@ const handleExperimentalNavigation = async (
   if (enabled) return handleNavigation(event);
 
   logger.info('Experimental app disabled; serving the 404 page.', {
+    url: new URL(event.request.url).pathname,
+  });
+  return notFoundResponse();
+};
+
+/**
+ * Gates the share app behind its runtime flag, identically to {@link
+ * handleExperimentalNavigation}: a disabled flag yields the site's 404
+ * page, an enabled one flows through the normal offline-aware strategy.
+ */
+const handleShareNavigation = async (event: FetchEvent): Promise<Response> => {
+  const { enabled } = await readEnvironment(shareAppEnabled);
+  if (enabled) return handleNavigation(event);
+
+  logger.info('Share app disabled; serving the 404 page.', {
     url: new URL(event.request.url).pathname,
   });
   return notFoundResponse();
