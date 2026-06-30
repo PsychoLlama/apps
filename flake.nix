@@ -85,6 +85,22 @@
               # out of `default` so CI's closure doesn't pull it in.
               pkgs.fenix.stable.rust-analyzer
             ];
+
+            # Point Rust's build cache at the primary checkout's `target/`
+            # so every worktree shares one cache — a fresh worktree reuses
+            # already-compiled dependencies instead of paying a cold build.
+            # `--git-common-dir` resolves to the primary repo's `.git` from
+            # any linked worktree, so all worktrees (and the main checkout)
+            # agree on the same path without hard-coding it. Scoped to the
+            # `coding` shell so CI, which only enters `default`, keeps
+            # building into the workspace's own `target/`. Guarded so a
+            # git-less or non-repo environment falls back to cargo's default.
+            shellHook = ''
+              if _git_common="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
+                export CARGO_TARGET_DIR="$(dirname "$_git_common")/target"
+                unset _git_common
+              fi
+            '';
           };
 
           # NixOS-only deps and env that don't belong in CI's closure.
