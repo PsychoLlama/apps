@@ -5,14 +5,13 @@ import {
   Code,
   Flex,
   Heading,
-  IconButton,
   Link,
   Switch,
   Text,
   TextField,
 } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
-import IconReset from 'virtual:icons/mdi/backup-restore';
+import { ResetButton } from './reset-button';
 import { setExperimentalEnabled, setLogFilter } from './state/advanced/actions';
 import {
   commitExperimentalEffect,
@@ -104,17 +103,12 @@ export const AdvancedSettings = () => {
               >
                 Log filter
               </Heading>
-              <IconButton
+              <ResetButton
                 testId="advanced-log-filter-reset"
-                aria-label="Reset log filter"
-                size={1}
-                variant="ghost"
-                color="neutral"
+                label="Reset log filter"
                 disabled={advanced.logFilter === advancedDefaults.logFilter}
-                onClick={() => void resetFilter()}
-              >
-                <IconReset aria-hidden />
-              </IconButton>
+                onReset={() => void resetFilter()}
+              />
             </Flex>
             <Text as="p" size={2} color="lowContrast" selectable={false}>
               Control what's logged to the console. Use <Code>*</Code> to show
@@ -156,20 +150,15 @@ export const AdvancedSettings = () => {
             <Heading as="h3" size={4} weight="medium" selectable={false}>
               Experimental app
             </Heading>
-            <IconButton
+            <ResetButton
               testId="advanced-experimental-reset"
-              aria-label="Reset experimental app"
-              size={1}
-              variant="ghost"
-              color="neutral"
+              label="Reset experimental app"
               disabled={
                 advanced.experimentalEnabled ===
                 advancedDefaults.experimentalEnabled
               }
-              onClick={() => void resetExperimental()}
-            >
-              <IconReset aria-hidden />
-            </IconButton>
+              onReset={() => void resetExperimental()}
+            />
           </Flex>
           <Text as="label" size={2} color="lowContrast" selectable={false}>
             <Flex
