@@ -12,6 +12,9 @@ catalogs:
     '@holz/log-collector':
       specifier: 0.8.3-rc.162
       version: 0.8.3-rc.162
+    '@holz/pattern-filter':
+      specifier: 0.8.3-rc.162
+      version: 0.8.3-rc.162
     '@iconify/json':
       specifier: ^2.2.470
       version: 2.2.491
@@ -479,6 +482,21 @@ importers:
         specifier: ^1.9.13
         version: 1.9.13
 
+  packages/lib/holz-config-filter:
+    dependencies:
+      '@holz/core':
+        specifier: 'catalog:'
+        version: 0.8.3-rc.162
+      '@holz/pattern-filter':
+        specifier: 'catalog:'
+        version: 0.8.3-rc.162(@holz/core@0.8.3-rc.162)
+      '@lib/holz-valve':
+        specifier: workspace:*
+        version: link:../holz-valve
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../runtime-config
+
   packages/lib/holz-idb-backend:
     dependencies:
       '@holz/core':
@@ -519,9 +537,15 @@ importers:
       '@holz/stream-backend':
         specifier: 0.8.3-rc.162
         version: 0.8.3-rc.162(@holz/core@0.8.3-rc.162)
+      '@lib/holz-config-filter':
+        specifier: workspace:*
+        version: link:../holz-config-filter
       '@lib/holz-idb-backend':
         specifier: workspace:*
         version: link:../holz-idb-backend
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../runtime-config
 
   packages/lib/runtime-config:
     dependencies:
