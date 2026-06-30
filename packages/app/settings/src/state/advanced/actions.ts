@@ -9,6 +9,7 @@ export const setAdvancedSettings = defineAction(
   [advancedSettingsStore],
   (advanced, values: AdvancedSettingsState) => {
     advanced.logFilter = values.logFilter;
+    advanced.logExportEnabled = values.logExportEnabled;
     advanced.experimentalEnabled = values.experimentalEnabled;
   },
 );
@@ -18,6 +19,14 @@ export const setLogFilter = defineAction(
   [advancedSettingsStore],
   (advanced, pattern: string) => {
     advanced.logFilter = pattern;
+  },
+);
+
+/** Mirror a resolved logs export flag into the store. */
+export const setLogExportEnabled = defineAction(
+  [advancedSettingsStore],
+  (advanced, enabled: boolean) => {
+    advanced.logExportEnabled = enabled;
   },
 );
 

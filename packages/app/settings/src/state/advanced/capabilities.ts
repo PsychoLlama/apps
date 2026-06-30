@@ -7,6 +7,7 @@ import {
   type Override,
 } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
+import { logExport } from '@app/logs/config';
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
 import { type AdvancedSettingsState } from './store';
 
@@ -17,13 +18,15 @@ import { type AdvancedSettingsState } from './store';
  */
 export const readAdvancedSettings =
   async (): Promise<AdvancedSettingsState> => {
-    const [logFilter, experimental] = await Promise.all([
+    const [logFilter, logExportFlag, experimental] = await Promise.all([
       readEnvironment(filter),
+      readEnvironment(logExport),
       readEnvironment(experimentalAppEnabled),
     ]);
 
     return {
       logFilter: logFilter.pattern,
+      logExportEnabled: logExportFlag.enabled,
       experimentalEnabled: experimental.enabled,
     };
   };
@@ -50,6 +53,32 @@ export const watchLogFilter = (
 ): (() => void) =>
   subscribe(filter, (value) => {
     onChange(value.pattern);
+  });
+
+/** Persist the logs export flag as the active environment's override. */
+export const writeLogExportEnabled = async (
+  enabled: boolean,
+): Promise<void> => {
+  const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
+  await updateConfig(logExport, patch);
+};
+
+/**
+ * Clear the logs export override for the active environment only, reverting
+ * it to the built-in default. Other environments keep theirs.
+ */
+export const resetLogExportEnabled = (): Promise<void> =>
+  reset(logExport, [environment]);
+
+/**
+ * Watch for logs export flag changes from any browsing context. Returns an
+ * unsubscribe.
+ */
+export const watchLogExportEnabled = (
+  onChange: (enabled: boolean) => void,
+): (() => void) =>
+  subscribe(logExport, (value) => {
+    onChange(value.enabled);
   });
 
 /** Persist the experimental flag as the active environment's override. */

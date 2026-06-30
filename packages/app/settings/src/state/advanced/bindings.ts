@@ -3,8 +3,10 @@ import { setAdvancedSettings } from './actions';
 import {
   readAdvancedSettings,
   resetExperimentalEnabled,
+  resetLogExportEnabled,
   resetLogFilter,
   writeExperimentalEnabled,
+  writeLogExportEnabled,
   writeLogFilter,
 } from './capabilities';
 
@@ -26,6 +28,12 @@ export const hydrateAdvancedSettingsEffect = defineEffect(
 export const commitLogFilterEffect = defineEffect([], writeLogFilter);
 
 /**
+ * Persist the logs export flag. The write echoes back through the
+ * subscription, which is what actually updates the store.
+ */
+export const commitLogExportEffect = defineEffect([], writeLogExportEnabled);
+
+/**
  * Persist the experimental flag. The write echoes back through the
  * subscription, which is what actually updates the store.
  */
@@ -39,6 +47,12 @@ export const commitExperimentalEffect = defineEffect(
  * reset echoes back through the subscription, which updates the store.
  */
 export const resetLogFilterEffect = defineEffect([], resetLogFilter);
+
+/**
+ * Revert the logs export flag to its default for the active environment.
+ * The reset echoes back through the subscription, which updates the store.
+ */
+export const resetLogExportEffect = defineEffect([], resetLogExportEnabled);
 
 /**
  * Revert the experimental flag to its default for the active environment.

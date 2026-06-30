@@ -403,6 +403,9 @@ importers:
       '@app/experimental':
         specifier: workspace:*
         version: link:../experimental
+      '@app/logs':
+        specifier: workspace:*
+        version: link:../logs
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
