@@ -1,6 +1,6 @@
 import { onCleanup, onMount } from 'solid-js';
 import { useAction, useEffect } from '@lib/state';
-import { Code, Flex, Switch, Text, TextField } from '@lib/ui';
+import { Code, Flex, Link, Switch, Text, TextField } from '@lib/ui';
 import { setExperimentalEnabled, setLogFilter } from './state/advanced/actions';
 import {
   commitExperimentalEffect,
@@ -61,12 +61,19 @@ export const AdvancedSettings = () => {
           weight="medium"
           selectable={false}
         >
-          Debug log filter
+          Log filter
         </Text>
         <Text as="p" size={1} color="lowContrast" selectable={false}>
-          Controls which logs reach the browser console. Uses{' '}
-          <Code>@holz/pattern-filter</Code> syntax — <Code>*</Code> shows
-          everything, empty hides all. Applies live, workers included.
+          Control what's logged to the console. Use <Code>*</Code> to show all
+          logs. See{' '}
+          <Link
+            testId="holz-readme"
+            href="https://github.com/PsychoLlama/holz/blob/main/packages/holz-pattern-filter/README.md"
+            target="_blank"
+          >
+            @holz/pattern-filter
+          </Link>{' '}
+          for the syntax guide.
         </Text>
         <TextField
           testId="advanced-log-filter"
