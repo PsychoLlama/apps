@@ -11,8 +11,8 @@ import { createIdbBackend } from '../holz-idb-backend';
 import {
   DATABASE_NAME,
   STORE_NAME,
-  TIMESTAMP_INDEX,
   openLogDatabase,
+  readLogsByTimestamp,
 } from '../database';
 
 /** Reads every persisted log back in insertion (key) order. */
@@ -20,16 +20,6 @@ const readPersistedLogs = async (): Promise<Log[]> => {
   const db = await openLogDatabase();
   try {
     return await db.getAll(STORE_NAME);
-  } finally {
-    db.close();
-  }
-};
-
-/** Reads persisted logs back in event-time order via the timestamp index. */
-const readLogsByTimestamp = async (): Promise<Log[]> => {
-  const db = await openLogDatabase();
-  try {
-    return await db.getAllFromIndex(STORE_NAME, TIMESTAMP_INDEX);
   } finally {
     db.close();
   }

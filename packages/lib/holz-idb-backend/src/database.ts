@@ -43,6 +43,14 @@ export interface LogDatabase extends DBSchema {
 }
 
 /**
+ * A live connection to the holz log database. The type a holder keeps when it
+ * owns the connection's lifetime — opening it once and reading through it —
+ * rather than reaching for a self-connecting helper like
+ * {@link readLogsByTimestamp}.
+ */
+export type LogConnection = IDBPDatabase<LogDatabase>;
+
+/**
  * Step-aside hook wired to both `blocking` (a peer is upgrading and waiting on
  * this connection to close) and `terminated` (the browser killed the
  * connection), so a caller can relinquish and reconnect rather than go dark.
@@ -59,7 +67,7 @@ type Relinquish = () => void;
  */
 export const migrateLogDatabase = (
   relinquish?: Relinquish,
-): Promise<IDBPDatabase<LogDatabase>> =>
+): Promise<LogConnection> =>
   openDB<LogDatabase>(DATABASE_NAME, DATABASE_VERSION, {
     upgrade: (database) => {
       const store = database.createObjectStore(STORE_NAME, {
@@ -82,33 +90,29 @@ export const migrateLogDatabase = (
  */
 export const openLogDatabase = (
   relinquish?: Relinquish,
-): Promise<IDBPDatabase<LogDatabase>> =>
+): Promise<LogConnection> =>
   openDB<LogDatabase>(DATABASE_NAME, undefined, {
     blocking: relinquish,
     terminated: relinquish,
   });
 
 /**
- * Read every persisted log newest-first. Goes through the
+ * Read every persisted log in event-time order (oldest-first). Goes through the
  * {@link TIMESTAMP_INDEX} rather than the insertion key, so logs from
  * interleaved producers — main thread, workers, a buffered flush landing an
- * older log after a newer one — read back in true chronological order. The
- * index reads ascending (oldest-first); reverse it once so the viewer leads
- * with the most recent log. Opens a short-lived connection (no `relinquish`)
- * and closes it once the read resolves; the writing backend keeps its own
- * long-lived connection.
+ * older log after a newer one — read back in true chronological order. Opens a
+ * short-lived connection (no `relinquish`) and closes it once the read
+ * resolves; the writing backend keeps its own long-lived connection.
  *
- * Reads the whole store in one shot — fine for a viewer over an on-device
- * archive. Swap to a `'prev'`-direction cursor or a bounded range over the
- * index if the store grows past what's comfortable to hold in memory; a
- * `'prev'` cursor yields newest-first natively, no reverse needed.
+ * A self-contained reader for one-shot reads and tests: it owns the connection
+ * end to end. A consumer that holds a connection across many reads — like the
+ * log viewer, which keeps a {@link LogConnection} and walks it newest-first
+ * with a `'prev'` cursor — should read through that instead.
  */
 export const readLogsByTimestamp = async (): Promise<Log[]> => {
   const db = await openLogDatabase();
   try {
-    // `getAllFromIndex` hands back a fresh array, so reversing in place is safe.
-    const logs = await db.getAllFromIndex(STORE_NAME, TIMESTAMP_INDEX);
-    return logs.reverse();
+    return await db.getAllFromIndex(STORE_NAME, TIMESTAMP_INDEX);
   } finally {
     db.close();
   }
