@@ -33,6 +33,7 @@ fn start() {
 /// formats it with `Intl` in the viewer's locale and timezone rather than
 /// us baking a string here. `text` is the catch-all for opaque values.
 #[derive(Serialize)]
+#[cfg_attr(test, derive(Debug, PartialEq))]
 #[serde(tag = "type", rename_all = "camelCase")]
 enum Detail {
     /// A plain, unlinkable label/value row, e.g. a Wi-Fi password.
@@ -318,4 +319,128 @@ fn rgba_to_luma(rgba: &[u8]) -> Vec<u8> {
         });
     }
     luma
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rxing::{BarcodeFormat, RXingResult};
+
+    /// Run a raw payload through rxing's result parser and our flattening,
+    /// exactly as [`decode`] does — minus the image-decode step. Lets us
+    /// assert the `(kind, rows)` mapping against real parser output.
+    fn parse(text: &str) -> (&'static str, Vec<Detail>) {
+        let result = RXingResult::new(text, Vec::new(), Vec::new(), BarcodeFormat::QR_CODE);
+        parse_details(&parseRXingResult(&result))
+    }
+
+    #[test]
+    fn luma_treats_transparent_pixels_as_white() {
+        // Alpha 0 short-circuits to 0xFF regardless of the color channels.
+        assert_eq!(rgba_to_luma(&[10, 20, 30, 0]), vec![0xFF]);
+    }
+
+    #[test]
+    fn luma_maps_opaque_black_and_white_to_the_extremes() {
+        assert_eq!(rgba_to_luma(&[0, 0, 0, 255]), vec![0x00]);
+        assert_eq!(rgba_to_luma(&[255, 255, 255, 255]), vec![0xFF]);
+    }
+
+    #[test]
+    fn luma_weights_green_above_red_above_blue() {
+        // The channel weighting means equal-intensity primaries don't
+        // produce equal luma: green is brightest, blue darkest.
+        let red = rgba_to_luma(&[255, 0, 0, 255])[0];
+        let green = rgba_to_luma(&[0, 255, 0, 255])[0];
+        let blue = rgba_to_luma(&[0, 0, 255, 255])[0];
+        assert!(green > red && red > blue, "{green} > {red} > {blue}");
+    }
+
+    #[test]
+    fn luma_emits_one_byte_per_rgba_pixel() {
+        let two_pixels = [0, 0, 0, 255, 255, 255, 255, 255];
+        assert_eq!(rgba_to_luma(&two_pixels), vec![0x00, 0xFF]);
+    }
+
+    #[test]
+    fn parses_wifi_skipping_absent_fields() {
+        let (kind, rows) = parse("WIFI:T:WPA;S:mynet;P:secret;H:true;;");
+        assert_eq!(kind, "wifi");
+        // SSID/security/password/hidden are present; the EAP fields aren't,
+        // so they're dropped rather than rendered as empty rows.
+        assert_eq!(
+            rows,
+            vec![
+                Detail::text("Network", "mynet"),
+                Detail::text("Security", "WPA"),
+                Detail::text("Password", "secret"),
+                Detail::text("Hidden", "Yes"),
+            ]
+        );
+    }
+
+    #[test]
+    fn parses_url_as_a_typed_link() {
+        let (kind, rows) = parse("https://example.com");
+        assert_eq!(kind, "url");
+        assert_eq!(rows, vec![Detail::link("URL", "https://example.com")]);
+    }
+
+    #[test]
+    fn parses_mailto_as_a_typed_email() {
+        let (kind, rows) = parse("mailto:hi@example.com");
+        assert_eq!(kind, "email");
+        assert_eq!(rows[0], Detail::email("To", "hi@example.com"));
+    }
+
+    #[test]
+    fn parses_tel_as_a_typed_phone() {
+        let (kind, rows) = parse("tel:+15551234567");
+        assert_eq!(kind, "tel");
+        assert_eq!(rows[0], Detail::phone("Phone", "+15551234567"));
+    }
+
+    #[test]
+    fn parses_sms_as_a_typed_sms_row() {
+        let (kind, rows) = parse("smsto:+15551234567:");
+        assert_eq!(kind, "sms");
+        assert_eq!(rows[0], Detail::sms("Number", "+15551234567"));
+    }
+
+    #[test]
+    fn parses_geo_coordinates() {
+        let (kind, rows) = parse("geo:36.1,-115.2");
+        assert_eq!(kind, "geo");
+        assert_eq!(rows[0], Detail::geo("Latitude", "36.1"));
+        assert_eq!(rows[1], Detail::geo("Longitude", "-115.2"));
+    }
+
+    #[test]
+    fn opaque_text_carries_no_structured_rows() {
+        let (kind, rows) = parse("just some opaque text");
+        assert_eq!(kind, "text");
+        assert!(rows.is_empty());
+    }
+
+    #[test]
+    fn timestamp_rows_scale_seconds_to_millis() {
+        let mut rows = Vec::new();
+        push_timestamp(&mut rows, "Starts", 1_700_000_000, false);
+        assert_eq!(
+            rows,
+            vec![Detail::DateTime {
+                label: "Starts".to_owned(),
+                epoch_millis: 1_700_000_000_000,
+                all_day: false,
+            }]
+        );
+    }
+
+    #[test]
+    fn timestamp_rows_skip_unset_times() {
+        // rxing reports an absent calendar time as -1; it must not render.
+        let mut rows = Vec::new();
+        push_timestamp(&mut rows, "Ends", -1, false);
+        assert!(rows.is_empty());
+    }
 }
