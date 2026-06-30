@@ -44,11 +44,9 @@ const readArchiveNewestFirst = async (db: LogConnection): Promise<Log[]> => {
   const entries: Log[] = [];
   const index = db.transaction(STORE_NAME).store.index(TIMESTAMP_INDEX);
 
-  for (
-    let cursor = await index.openCursor(null, 'prev');
-    cursor;
-    cursor = await cursor.continue()
-  ) {
+  // `idb` makes a cursor async-iterable, advancing it each turn — so the
+  // `'prev'` direction is all that's needed to drain the index newest-first.
+  for await (const cursor of index.iterate(null, 'prev')) {
     entries.push(cursor.value);
   }
 
