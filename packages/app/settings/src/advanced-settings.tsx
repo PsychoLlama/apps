@@ -26,7 +26,6 @@ import * as css from './advanced-settings.css';
 
 const advancedHeadingId = 'settings-advanced-heading';
 const logFilterHeadingId = 'settings-log-filter-heading';
-const experimentalHeadingId = 'settings-experimental-heading';
 
 /**
  * Advanced settings — runtime-config controls for debugging and preview
@@ -122,31 +121,24 @@ export const AdvancedSettings = () => {
         </Flex>
 
         <Flex as="section" direction="column" gap={2}>
-          <Flex
-            as="header"
-            direction="row"
-            justify="between"
-            align="center"
-            gap={3}
-          >
-            <Heading
-              as="h3"
-              id={experimentalHeadingId}
-              size={4}
-              weight="medium"
-              selectable={false}
+          <Heading as="h3" size={4} weight="medium" selectable={false}>
+            Experimental app
+          </Heading>
+          <Text as="label" size={2} color="lowContrast" selectable={false}>
+            <Flex
+              as="div"
+              direction="row"
+              justify="between"
+              align="center"
+              gap={3}
             >
-              Experimental app
-            </Heading>
-            <Switch
-              testId="advanced-experimental-toggle"
-              aria-labelledby={experimentalHeadingId}
-              checked={advanced.experimentalEnabled}
-              onCheckedChange={(next) => void commitExperimental(next)}
-            />
-          </Flex>
-          <Text as="p" size={2} color="lowContrast" selectable={false}>
-            Surfaces the experimental scratchpad in the launcher.
+              Surface the experimental scratchpad in the launcher.
+              <Switch
+                testId="advanced-experimental-toggle"
+                checked={advanced.experimentalEnabled}
+                onCheckedChange={(next) => void commitExperimental(next)}
+              />
+            </Flex>
           </Text>
         </Flex>
       </Flex>
