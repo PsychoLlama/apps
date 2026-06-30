@@ -6,7 +6,7 @@ import {
   type JsonValue,
   type Option,
   type Override,
-} from './define-option';
+} from './define-config';
 import { environment } from './environment';
 import { deleteOverride, readOverride, writeOverride } from './storage';
 

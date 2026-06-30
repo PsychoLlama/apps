@@ -1,4 +1,4 @@
-import { ENVIRONMENTS, type Environment } from './define-option';
+import { ENVIRONMENTS, type Environment } from './define-config';
 
 /** The environment non-deployed contexts (e.g. vitest's `test`) fall back to. */
 const DEFAULT_ENVIRONMENT: Environment = 'development';

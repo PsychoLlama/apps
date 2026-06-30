@@ -49,13 +49,13 @@ export interface Option<Value extends JsonValue = { enabled: boolean }> {
  * use in each environment before any runtime override is loaded.
  *
  * @example
- * const myFeature = defineOption('@app/beta', {
+ * const myFeature = defineConfig('@app/beta', {
  *   development: { enabled: true },
  *   staging: { enabled: true },
  *   production: { enabled: false },
  * });
  */
-export const defineOption = <Value extends JsonValue = { enabled: boolean }>(
+export const defineConfig = <Value extends JsonValue = { enabled: boolean }>(
   id: string,
   // `NoInfer` keeps `defaults` from being an inference source: a mismatched
   // environment would otherwise widen `Value` to a union, deferring the error
