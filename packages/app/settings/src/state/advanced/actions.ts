@@ -1,7 +1,19 @@
 import { defineAction } from '@lib/state';
-import { advancedSettingsStore } from './store';
+import { advancedSettingsStore, type AdvancedSettingsState } from './store';
 
-/** Mirror the resolved log filter pattern into the store. */
+/**
+ * Mirror every resolved Advanced setting into the store in one flush.
+ * Used by the mount-time hydrate, which reads all options together.
+ */
+export const setAdvancedSettings = defineAction(
+  [advancedSettingsStore],
+  (advanced, values: AdvancedSettingsState) => {
+    advanced.logFilter = values.logFilter;
+    advanced.experimentalEnabled = values.experimentalEnabled;
+  },
+);
+
+/** Mirror a resolved log filter pattern into the store. */
 export const setLogFilter = defineAction(
   [advancedSettingsStore],
   (advanced, pattern: string) => {
@@ -9,7 +21,7 @@ export const setLogFilter = defineAction(
   },
 );
 
-/** Mirror the resolved experimental flag into the store. */
+/** Mirror a resolved experimental flag into the store. */
 export const setExperimentalEnabled = defineAction(
   [advancedSettingsStore],
   (advanced, enabled: boolean) => {

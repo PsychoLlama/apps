@@ -7,13 +7,25 @@ import {
 } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { experimentalApp } from '@app/experimental/config';
+import { type AdvancedSettingsState } from './store';
 
 /**
- * Resolve the log filter pattern for the active environment, layering any
- * persisted OPFS override over the default.
+ * Resolve every Advanced setting for the active environment in one pass,
+ * layering any persisted OPFS override over each option's default. Reads
+ * run concurrently so hydration is a single round-trip.
  */
-export const readLogFilter = async (): Promise<string> =>
-  (await readEnvironment(filter)).pattern;
+export const readAdvancedSettings =
+  async (): Promise<AdvancedSettingsState> => {
+    const [logFilter, experimental] = await Promise.all([
+      readEnvironment(filter),
+      readEnvironment(experimentalApp),
+    ]);
+
+    return {
+      logFilter: logFilter.pattern,
+      experimentalEnabled: experimental.enabled,
+    };
+  };
 
 /** Persist a new log filter pattern as the active environment's override. */
 export const writeLogFilter = async (pattern: string): Promise<void> => {
@@ -32,13 +44,6 @@ export const watchLogFilter = (
   subscribe(filter, (value) => {
     onChange(value.pattern);
   });
-
-/**
- * Resolve whether the experimental app is enabled for the active
- * environment, layering any persisted OPFS override over the default.
- */
-export const readExperimentalEnabled = async (): Promise<boolean> =>
-  (await readEnvironment(experimentalApp)).enabled;
 
 /** Persist the experimental flag as the active environment's override. */
 export const writeExperimentalEnabled = async (
