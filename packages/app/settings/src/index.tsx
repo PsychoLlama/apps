@@ -4,6 +4,7 @@ import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { AppearancePicker, appearanceHeadingId } from './appearance-picker';
 import { ThemePicker, ThemeResetButton, themeHeadingId } from './theme-picker';
+import { AdvancedSettings, advancedHeadingId } from './advanced-settings';
 
 export const Settings = () => (
   <Frame>
@@ -77,6 +78,25 @@ export const Settings = () => (
             </Flex>
 
             <ThemePicker />
+          </Flex>
+
+          <Flex as="section" direction="column" gap={3}>
+            <Flex as="header" direction="column" gap={2}>
+              <Heading
+                as="h2"
+                id={advancedHeadingId}
+                size={4}
+                weight="medium"
+                selectable={false}
+              >
+                Advanced
+              </Heading>
+              <Text as="p" size={2} color="lowContrast" selectable={false}>
+                Low-level controls for debugging and preview features.
+              </Text>
+            </Flex>
+
+            <AdvancedSettings />
           </Flex>
         </Flex>
       </Container>

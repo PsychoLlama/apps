@@ -397,9 +397,18 @@ importers:
 
   packages/app/settings:
     dependencies:
+      '@app/experimental':
+        specifier: workspace:*
+        version: link:../experimental
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../../lib/runtime-config
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
