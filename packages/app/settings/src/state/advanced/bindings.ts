@@ -2,6 +2,8 @@ import { defineEffect } from '@lib/state';
 import { setAdvancedSettings } from './actions';
 import {
   readAdvancedSettings,
+  resetExperimentalEnabled,
+  resetLogFilter,
   writeExperimentalEnabled,
   writeLogFilter,
 } from './capabilities';
@@ -30,4 +32,19 @@ export const commitLogFilterEffect = defineEffect([], writeLogFilter);
 export const commitExperimentalEffect = defineEffect(
   [],
   writeExperimentalEnabled,
+);
+
+/**
+ * Revert the log filter to its default for the active environment. The
+ * reset echoes back through the subscription, which updates the store.
+ */
+export const resetLogFilterEffect = defineEffect([], resetLogFilter);
+
+/**
+ * Revert the experimental flag to its default for the active environment.
+ * The reset echoes back through the subscription, which updates the store.
+ */
+export const resetExperimentalEffect = defineEffect(
+  [],
+  resetExperimentalEnabled,
 );

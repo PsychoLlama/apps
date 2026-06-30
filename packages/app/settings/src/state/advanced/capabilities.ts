@@ -1,6 +1,7 @@
 import {
   environment,
   readEnvironment,
+  reset,
   subscribe,
   updateConfig,
   type Override,
@@ -34,6 +35,12 @@ export const writeLogFilter = async (pattern: string): Promise<void> => {
 };
 
 /**
+ * Clear the log filter override for the active environment only, reverting
+ * it to the built-in default. Other environments keep their overrides.
+ */
+export const resetLogFilter = (): Promise<void> => reset(filter, [environment]);
+
+/**
  * Watch for log filter changes from any browsing context — including
  * same-tab writes — reporting the resolved pattern. Returns an
  * unsubscribe.
@@ -52,6 +59,13 @@ export const writeExperimentalEnabled = async (
   const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
   await updateConfig(experimentalApp, patch);
 };
+
+/**
+ * Clear the experimental flag override for the active environment only,
+ * reverting it to the built-in default. Other environments keep theirs.
+ */
+export const resetExperimentalEnabled = (): Promise<void> =>
+  reset(experimentalApp, [environment]);
 
 /**
  * Watch for experimental flag changes from any browsing context. Returns

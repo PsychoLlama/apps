@@ -5,23 +5,27 @@ import {
   Code,
   Flex,
   Heading,
+  IconButton,
   Link,
   Switch,
   Text,
   TextField,
 } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
+import IconReset from 'virtual:icons/mdi/backup-restore';
 import { setExperimentalEnabled, setLogFilter } from './state/advanced/actions';
 import {
   commitExperimentalEffect,
   commitLogFilterEffect,
   hydrateAdvancedSettingsEffect,
+  resetExperimentalEffect,
+  resetLogFilterEffect,
 } from './state/advanced/bindings';
 import {
   watchExperimentalEnabled,
   watchLogFilter,
 } from './state/advanced/capabilities';
-import { advancedSettings } from './state/advanced/store';
+import { advancedDefaults, advancedSettings } from './state/advanced/store';
 import * as css from './advanced-settings.css';
 
 const advancedHeadingId = 'settings-advanced-heading';
@@ -39,6 +43,8 @@ export const AdvancedSettings = () => {
   const reconcile = useEffect(hydrateAdvancedSettingsEffect);
   const commitFilter = useEffect(commitLogFilterEffect);
   const commitExperimental = useEffect(commitExperimentalEffect);
+  const resetFilter = useEffect(resetLogFilterEffect);
+  const resetExperimental = useEffect(resetExperimentalEffect);
   const mirrorFilter = useAction(setLogFilter);
   const mirrorExperimental = useAction(setExperimentalEnabled);
 
@@ -82,15 +88,34 @@ export const AdvancedSettings = () => {
       <Flex as="div" direction="column" gap={6}>
         <Flex as="section" direction="column" gap={3}>
           <Flex as="header" direction="column" gap={2}>
-            <Heading
-              as="h3"
-              id={logFilterHeadingId}
-              size={4}
-              weight="medium"
-              selectable={false}
+            <Flex
+              as="div"
+              direction="row"
+              justify="between"
+              align="center"
+              gap={3}
             >
-              Log filter
-            </Heading>
+              <Heading
+                as="h3"
+                id={logFilterHeadingId}
+                size={4}
+                weight="medium"
+                selectable={false}
+              >
+                Log filter
+              </Heading>
+              <IconButton
+                testId="advanced-log-filter-reset"
+                aria-label="Reset log filter"
+                size={1}
+                variant="ghost"
+                color="neutral"
+                disabled={advanced.logFilter === advancedDefaults.logFilter}
+                onClick={() => void resetFilter()}
+              >
+                <IconReset aria-hidden />
+              </IconButton>
+            </Flex>
             <Text as="p" size={2} color="lowContrast" selectable={false}>
               Control what's logged to the console. Use <Code>*</Code> to show
               all logs. See{' '}
@@ -121,9 +146,31 @@ export const AdvancedSettings = () => {
         </Flex>
 
         <Flex as="section" direction="column" gap={2}>
-          <Heading as="h3" size={4} weight="medium" selectable={false}>
-            Experimental app
-          </Heading>
+          <Flex
+            as="header"
+            direction="row"
+            justify="between"
+            align="center"
+            gap={3}
+          >
+            <Heading as="h3" size={4} weight="medium" selectable={false}>
+              Experimental app
+            </Heading>
+            <IconButton
+              testId="advanced-experimental-reset"
+              aria-label="Reset experimental app"
+              size={1}
+              variant="ghost"
+              color="neutral"
+              disabled={
+                advanced.experimentalEnabled ===
+                advancedDefaults.experimentalEnabled
+              }
+              onClick={() => void resetExperimental()}
+            >
+              <IconReset aria-hidden />
+            </IconButton>
+          </Flex>
           <Text as="label" size={2} color="lowContrast" selectable={false}>
             <Flex
               as="div"
