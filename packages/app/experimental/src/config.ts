@@ -5,7 +5,7 @@ import { defineOption } from '@lib/runtime-config';
  * scratchpad, so it ships everywhere *except* production — available in
  * local dev and on preview deploys, hidden from the production build.
  */
-export const experimentalApp = defineOption('@app/experimental', {
+export const enabled = defineOption('@app/experimental', {
   development: { enabled: true },
   staging: { enabled: true },
   production: { enabled: false },

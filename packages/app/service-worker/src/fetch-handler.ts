@@ -6,7 +6,7 @@
  * construct outside a real service worker.
  */
 
-import { experimentalApp } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/experimental/config';
 import { createLogger } from '@lib/observability';
 import { readEnvironment } from '@lib/runtime-config';
 
@@ -107,7 +107,7 @@ const NOT_FOUND_PATH = '/404';
 const handleExperimentalNavigation = async (
   event: FetchEvent,
 ): Promise<Response> => {
-  const { enabled } = await readEnvironment(experimentalApp);
+  const { enabled } = await readEnvironment(experimentalAppEnabled);
   if (enabled) return handleNavigation(event);
 
   logger.info('Experimental app disabled; serving the 404 page.', {

@@ -1,6 +1,6 @@
 import { createStore, defineStore } from '@lib/state';
 import { environment } from '@lib/runtime-config';
-import { experimentalApp } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/experimental/config';
 
 /** Whether the experimental scratchpad surfaces in the launcher. */
 export interface ExperimentalFlagState {
@@ -16,7 +16,7 @@ export interface ExperimentalFlagState {
 
 /** Source of truth for the launcher's experimental-app visibility. */
 export const experimentalFlagStore = defineStore<ExperimentalFlagState>(() => ({
-  enabled: experimentalApp.defaults[environment].enabled,
+  enabled: experimentalAppEnabled.defaults[environment].enabled,
 }));
 
 /** Live, readonly view of the experimental flag. */
