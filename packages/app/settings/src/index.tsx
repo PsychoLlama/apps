@@ -2,7 +2,11 @@ import { NoHydration } from 'solid-js/web';
 import { Callout, Container, Flex, Heading, Text } from '@lib/ui';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
-import { AppearancePicker, appearanceHeadingId } from './appearance-picker';
+import {
+  AppearancePicker,
+  AppearanceResetButton,
+  appearanceHeadingId,
+} from './appearance-picker';
 import { ThemePicker, ThemeResetButton, themeHeadingId } from './theme-picker';
 import { AdvancedSettings } from './advanced-settings';
 
@@ -35,15 +39,24 @@ export const Settings = () => (
 
           <Flex as="section" direction="column" gap={3}>
             <Flex as="header" direction="column" gap={2}>
-              <Heading
-                as="h2"
-                id={appearanceHeadingId}
-                size={4}
-                weight="medium"
-                selectable={false}
+              <Flex
+                as="div"
+                direction="row"
+                justify="between"
+                align="center"
+                gap={3}
               >
-                Appearance
-              </Heading>
+                <Heading
+                  as="h2"
+                  id={appearanceHeadingId}
+                  size={4}
+                  weight="medium"
+                  selectable={false}
+                >
+                  Appearance
+                </Heading>
+                <AppearanceResetButton />
+              </Flex>
               <Text as="p" size={2} color="lowContrast" selectable={false}>
                 Sets the app's color scheme.
               </Text>
