@@ -12,6 +12,7 @@ import { createLogger } from '@lib/observability';
 import { readEnvironment } from '@lib/runtime-config';
 
 import { CACHE_NAMES, openCache } from './caches';
+import { streamLogArchive } from './logs-export';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -51,6 +52,12 @@ export const handleFetch = (event: FetchEvent): void => {
   if (url.pathname === '/api/local/health') {
     logger.info('Responding to health check.', { url: url.pathname });
     event.respondWith(Response.json({ status: 'online' }));
+    return;
+  }
+
+  if (url.pathname === '/api/local/logs') {
+    logger.info('Streaming the log archive as ndjson.', { url: url.pathname });
+    event.respondWith(streamLogArchive());
     return;
   }
 

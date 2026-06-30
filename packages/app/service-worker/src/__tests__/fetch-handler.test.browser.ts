@@ -257,6 +257,15 @@ describe('handleFetch', () => {
     expect(await response.json()).toEqual({ status: 'online' });
   });
 
+  it('streams the local log archive as ndjson', () => {
+    const event = syntheticEvent(new Request(sameOrigin('/api/local/logs')));
+    handleFetch(event as unknown as FetchEvent);
+
+    expect(event.respondWith).toHaveBeenCalledOnce();
+    const [response] = event.respondWith.mock.calls[0] as [Response];
+    expect(response.headers.get('Content-Type')).toBe('application/x-ndjson');
+  });
+
   it('claims GET navigations so they flow through the offline strategy', () => {
     // `mode: 'navigate'` is reserved for the browser — the `Request`
     // constructor refuses it. Override the getter post-hoc so dispatch
