@@ -13,7 +13,6 @@
   },
   "scripts": {
     "build": "./bin/build",
-    "test": "cargo test",
     "typecheck": "tsc"
   }
 }
