@@ -10,6 +10,7 @@ import {
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
 import IconAuto from 'virtual:icons/mdi/auto-mode';
+import { ResetButton } from './reset-button';
 import * as css from './appearance-picker.css';
 
 /**
@@ -75,5 +76,25 @@ export const AppearancePicker = () => {
         )}
       </For>
     </RadioCardsRoot>
+  );
+};
+
+/**
+ * Inline action that hands the color scheme back to `'system'` — the
+ * no-override default that drops the persisted key and lets
+ * `@media (prefers-color-scheme)` take over. Disabled while already on
+ * `'system'` — or still unhydrated (`id: null`) — matching the reset
+ * affordances elsewhere on the settings page.
+ */
+export const AppearanceResetButton = () => {
+  const selectScheme = useEffect(selectColorSchemeEffect);
+
+  return (
+    <ResetButton
+      testId="appearance-picker-reset"
+      label="Reset appearance"
+      disabled={colorScheme.id === null || colorScheme.id === 'system'}
+      onReset={() => selectScheme('system')}
+    />
   );
 };
