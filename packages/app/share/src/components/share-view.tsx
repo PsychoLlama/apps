@@ -29,12 +29,6 @@ export const Share = () => (
             Sharing link
           </Heading>
 
-          <Callout color="neutral">
-            <Text as="span" size={2} selectable={false}>
-              Work in progress.
-            </Text>
-          </Callout>
-
           <Show when={connection.endpoint}>
             {(endpoint) => (
               <Code color="neutral" size={2} selectable class={css.shareLink}>
@@ -42,6 +36,12 @@ export const Share = () => (
               </Code>
             )}
           </Show>
+
+          <Callout color="neutral">
+            <Text as="span" size={2} selectable={false}>
+              Work in progress.
+            </Text>
+          </Callout>
         </Flex>
       </Container>
     </FrameBody>
