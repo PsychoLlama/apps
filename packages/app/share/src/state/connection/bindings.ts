@@ -1,7 +1,7 @@
 import { defineAction, defineEffect, ref } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
 import type { Connection } from '@crate/iroh';
-import { closeConnection, openConnection } from './capabilities';
+import { closeConnection, dialPeer, openConnection } from './capabilities';
 import { connectionStore } from './store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -75,3 +75,11 @@ export const releaseConnectionEffect = defineEffect(
   closeConnection,
   { onSuccess: resetConnection },
 );
+
+/**
+ * Dial the peer named in a share link once the relay connection is up. The
+ * receiving view performs this with the endpoint id from its URL. The dial's
+ * success and failure are logged by {@link dialPeer} itself, so there are no
+ * lifecycle actions here.
+ */
+export const dialPeerEffect = defineEffect([connectionStore], dialPeer);

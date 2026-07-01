@@ -1,27 +1,47 @@
+import { createEffect, on } from 'solid-js';
+import { useParams } from '@solidjs/router';
+import { useEffect } from '@lib/state';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import { Callout, Container, Text } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
+import { connection, dialPeerEffect } from '../state/connection';
 
 /**
  * The peer's view at `/share/with/:endpoint` — where a share link lands,
- * dialling the endpoint named in the URL. Currently a stub: the connection is
- * held open by the layout, but the receiving flow itself is still a work in
- * progress.
+ * dialling the endpoint named in the URL over the relay connection the layout
+ * holds open. The dial only wires the connection up (and logs the outcome);
+ * the receiving flow itself is still a work in progress.
  */
-export const ShareEndpoint = () => (
-  <>
-    <SiteHeader
-      trail={[{ label: 'Share', href: '/share' }, { label: 'Connection' }]}
-      actions={<ConnectionIndicator />}
-    />
-    <FrameBody>
-      <Container as="div" size={2}>
-        <Callout color="neutral">
-          <Text as="span" size={2} selectable={false}>
-            Work in progress.
-          </Text>
-        </Callout>
-      </Container>
-    </FrameBody>
-  </>
-);
+export const ShareEndpoint = () => {
+  const params = useParams<{ endpoint: string }>();
+  const dialPeer = useEffect(dialPeerEffect);
+
+  // The dial needs the live endpoint, so hold off until the relay connection
+  // lands. `on` re-runs if it cycles back to `connected` (e.g. a reconnect).
+  createEffect(
+    on(
+      () => connection.status,
+      (status) => {
+        if (status === 'connected') void dialPeer(params.endpoint);
+      },
+    ),
+  );
+
+  return (
+    <>
+      <SiteHeader
+        trail={[{ label: 'Share', href: '/share' }, { label: 'Connection' }]}
+        actions={<ConnectionIndicator />}
+      />
+      <FrameBody>
+        <Container as="div" size={2}>
+          <Callout color="neutral">
+            <Text as="span" size={2} selectable={false}>
+              Work in progress.
+            </Text>
+          </Callout>
+        </Container>
+      </FrameBody>
+    </>
+  );
+};

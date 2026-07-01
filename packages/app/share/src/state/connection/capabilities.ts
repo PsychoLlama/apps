@@ -80,7 +80,44 @@ export const openConnection = async (
     return null;
   }
 
+  // Start serving inbound dials so the peer being shared-with logs the other
+  // side of the connection. The loop is held by the endpoint and torn down
+  // when it's freed.
+  endpoint.acceptPeers((endpointId) => {
+    logger.debug('Peer connected.', { endpointId });
+  });
+
   return endpoint;
+};
+
+/**
+ * Dial the peer named in a share link over the live relay connection,
+ * resolving once the connection is established. Reads the endpoint off the
+ * connection store — the caller only dials once the relay connection is
+ * `connected`, so a missing endpoint is a caller bug and throws.
+ *
+ * Logs the outcome here (rather than via effect lifecycle actions) to sit
+ * alongside {@link openConnection}'s inbound `Peer connected.` log — both
+ * halves of a peer connection are observed from this layer.
+ */
+export const dialPeer = async (
+  state: DeepReadonly<ConnectionState>,
+  endpointId: string,
+): Promise<void> => {
+  const endpoint = state.endpoint?.current;
+  if (!endpoint) {
+    throw new Error('Cannot dial a peer before the relay connection is up.');
+  }
+
+  try {
+    const peer = await endpoint.dial(endpointId);
+    logger.debug('Dialed peer.', { endpointId: peer });
+  } catch (error) {
+    logger.error('Failed to dial peer.', {
+      endpointId,
+      error: toError(error),
+    });
+  }
 };
 
 /**
