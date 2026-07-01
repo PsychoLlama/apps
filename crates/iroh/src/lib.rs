@@ -23,7 +23,7 @@ fn start() {
 #[cfg(target_arch = "wasm32")]
 mod relay {
     use iroh::endpoint::presets;
-    use iroh::{Endpoint, Watcher};
+    use iroh::{Endpoint, SecretKey, Watcher};
     use wasm_bindgen::prelude::*;
 
     /// A live endpoint joined to the relay network. Holding it keeps the
@@ -56,11 +56,31 @@ mod relay {
         }
     }
 
-    /// Bind an endpoint to n0's public relays and wait until at least one
-    /// relay handshake completes. Rejects if binding fails.
-    #[wasm_bindgen]
-    pub async fn connect() -> Result<Connection, JsError> {
+    /// Mint a fresh endpoint identity, returning its secret key as the raw
+    /// 32 bytes. The host persists this and hands it to [`join_relay`] to
+    /// keep a stable identity (and share link) across reloads. Treat it as
+    /// a secret. Generating the key here — rather than deriving it inside
+    /// [`join_relay`] — lets the host persist and connect in parallel.
+    #[wasm_bindgen(js_name = generateSecretKey)]
+    pub fn generate_secret_key() -> Vec<u8> {
+        SecretKey::generate().to_bytes().to_vec()
+    }
+
+    /// Bind an endpoint under the given identity and join n0's public relay
+    /// network, resolving once at least one relay handshake completes. This
+    /// is a connection to the relay network, not to a peer.
+    ///
+    /// `secret_key` is the raw 32 bytes from [`generate_secret_key`] (or a
+    /// previously persisted one). Rejects if the key is malformed or
+    /// binding fails.
+    #[wasm_bindgen(js_name = joinRelay)]
+    pub async fn join_relay(secret_key: Vec<u8>) -> Result<Connection, JsError> {
+        let secret_key: [u8; 32] = secret_key
+            .try_into()
+            .map_err(|_| JsError::new("secret key must be exactly 32 bytes"))?;
+
         let endpoint = Endpoint::builder(presets::N0)
+            .secret_key(SecretKey::from_bytes(&secret_key))
             .bind()
             .await
             .map_err(|err| JsError::new(&err.to_string()))?;

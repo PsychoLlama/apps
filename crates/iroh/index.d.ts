@@ -22,11 +22,26 @@ export class Connection {
 }
 
 /**
- * Bind an endpoint to n0's public relays and resolve once at least one
- * relay handshake completes. Rejects if binding fails. {@link init} must
- * resolve before calling this.
+ * Mint a fresh endpoint identity, returning its secret key as the raw 32
+ * bytes. Persist it and hand it to {@link joinRelay} to keep a stable
+ * identity (and share link) across reloads. Treat it as a secret.
+ * Generating the key here — rather than deriving it inside
+ * {@link joinRelay} — lets the host persist and connect in parallel.
+ * {@link init} must resolve before calling this.
  */
-export function connect(): Promise<Connection>;
+export function generateSecretKey(): Uint8Array;
+
+/**
+ * Bind an endpoint under the given identity and join n0's public relay
+ * network, resolving once at least one relay handshake completes. This is
+ * a connection to the relay network, not to a peer. {@link init} must
+ * resolve before calling this.
+ *
+ * `secret_key` is the raw 32 bytes from {@link generateSecretKey} (or a
+ * previously persisted one). Rejects if the key is malformed or binding
+ * fails.
+ */
+export function joinRelay(secret_key: Uint8Array): Promise<Connection>;
 
 /** Bytes or a compiled module to instantiate the wasm from. */
 export type InitInput =
