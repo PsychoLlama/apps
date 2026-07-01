@@ -405,5 +405,25 @@ describe('handleFetch', () => {
       const [response] = event.respondWith.mock.calls[0] as [Promise<Response>];
       expect((await response).status).toBe(200);
     });
+
+    it('gates the /share/with/:endpoint peer route on the same flag', async () => {
+      await updateConfig(shareAppEnabled, {
+        development: { enabled: false },
+      });
+      fetchSpy.mockResolvedValue(
+        new Response('<html>not found</html>', { status: 200 }),
+      );
+
+      const request = new Request(sameOrigin('/share/with/abc123'));
+      Object.defineProperty(request, 'mode', { value: 'navigate' });
+      const event = syntheticEvent(request);
+      handleFetch(event as unknown as FetchEvent);
+
+      expect(event.respondWith).toHaveBeenCalledOnce();
+      const [response] = event.respondWith.mock.calls[0] as [Promise<Response>];
+      const resolved = await response;
+      expect(resolved.status).toBe(404);
+      expect(fetchSpy).toHaveBeenCalledWith('/404');
+    });
   });
 });

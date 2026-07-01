@@ -104,9 +104,13 @@ export const handleFetch = (event: FetchEvent): void => {
 const isExperimentalRoute = (url: URL): boolean =>
   url.pathname === '/experimental' || url.pathname === '/experimental/';
 
-/** The share route, matched with or without a trailing slash. */
+/**
+ * The share app's routes: the `/share` index (with or without a trailing
+ * slash) and every `/share/with/:endpoint` peer link beneath it. All are gated
+ * by the same runtime flag, so one prefix check covers the whole app.
+ */
 const isShareRoute = (url: URL): boolean =>
-  url.pathname === '/share' || url.pathname === '/share/';
+  url.pathname === '/share' || url.pathname.startsWith('/share/');
 
 /**
  * Clean URL of the prerendered 404 shell. Cloudflare serves the
