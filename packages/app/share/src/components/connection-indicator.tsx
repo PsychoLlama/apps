@@ -19,23 +19,13 @@ export const ConnectionIndicator = () => (
   <output class={css.root}>
     <Switch>
       <Match when={connection.status === 'connecting'}>
-        <IconConnecting
-          class={css.spinner}
-          width="20"
-          height="20"
-          aria-hidden="true"
-        />
+        <IconConnecting class={css.spinner} aria-hidden="true" />
         <Text as="span" size={1} selectable={false} class={css.visuallyHidden}>
           Connecting to the relay network…
         </Text>
       </Match>
       <Match when={connection.status === 'connected'}>
-        <IconConnected
-          class={css.connected}
-          width="20"
-          height="20"
-          aria-hidden="true"
-        />
+        <IconConnected class={css.connected} aria-hidden="true" />
         <Text as="span" size={1} selectable={false} class={css.visuallyHidden}>
           Connected to the relay network.
         </Text>
