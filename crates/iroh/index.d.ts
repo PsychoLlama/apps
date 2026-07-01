@@ -19,6 +19,23 @@ export class Connection {
    * `undefined` if none has finished its handshake yet.
    */
   readonly homeRelay: string | undefined;
+  /**
+   * Dial the peer named by `endpoint_id` over the relay on the
+   * test-connection ALPN. `endpoint_id` is a base32 identity string as
+   * produced by {@link Connection.endpointId} — the value carried in a
+   * share link.
+   * Resolves with the connected peer's identity once the connection is
+   * established; rejects if the id is malformed or the dial fails.
+   */
+  dial(endpoint_id: string): Promise<string>;
+  /**
+   * Start accepting inbound peer connections, invoking `on_peer` with each
+   * connecting peer's base32 identity. This is how a dialled endpoint
+   * observes the other side of a {@link Connection.dial}. Calling it again
+   * replaces the running loop. The loop stops when this `Connection` is
+   * freed.
+   */
+  acceptPeers(on_peer: (endpointId: string) => void): void;
 }
 
 /**
@@ -54,7 +71,7 @@ export type InitInput =
 /**
  * Instantiate the module. With no argument the glue fetches the sibling
  * `.wasm`; pass bytes/a module/URL to control loading yourself. Must
- * resolve before calling {@link connect}.
+ * resolve before calling {@link joinRelay}.
  */
 export default function init(
   module_or_path?:

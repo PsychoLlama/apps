@@ -36,6 +36,12 @@ iroh = { version = "1", default-features = false, features = ["tls-ring"] }
 # JS crypto API. The feature exposes the backend; the matching
 # `getrandom_backend="wasm_js"` cfg in `.cargo/config.toml` selects it.
 getrandom = { version = "0.3", features = ["wasm_js"] }
-# An exported `async fn` lowers to a JS Promise via this crate, so
-# `#[wasm_bindgen]` over `connect` needs it in the graph directly.
+# An exported `async fn` lowers to a JS Promise via this crate; `dial`
+# also uses its `future_to_promise` to hand back a promise from a sync fn.
 wasm-bindgen-futures = "0.4"
+# `dial` returns a `js_sys::Promise` and `accept_peers` takes a
+# `js_sys::Function` callback, so js-sys is in the graph directly.
+js-sys = "0.3"
+# The peer-accept loop runs on a background task whose handle aborts on
+# drop; `n0-future` (iroh's own task runtime) provides both on wasm.
+n0-future = "0.3"

@@ -1619,6 +1619,8 @@ dependencies = [
  "console_error_panic_hook",
  "getrandom 0.3.4",
  "iroh",
+ "js-sys",
+ "n0-future",
  "wasm-bindgen",
  "wasm-bindgen-futures",
 ]
