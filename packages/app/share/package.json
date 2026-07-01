@@ -27,6 +27,7 @@
     "idb": "catalog:"
   },
   "peerDependencies": {
+    "@solidjs/router": "*",
     "solid-js": "*"
   }
 }
