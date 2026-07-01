@@ -1,4 +1,8 @@
-import init, { connect, type Connection } from '@crate/iroh';
+import init, {
+  generateSecretKey,
+  joinRelay,
+  type Connection,
+} from '@crate/iroh';
 import { createLogger, toError } from '@lib/observability';
 import type { DeepReadonly } from '@lib/state';
 import { loadSecretKey, saveSecretKey } from './key-store';
@@ -44,12 +48,13 @@ const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
  * steps are async and client-only — the wasm fetches and the relay handshake
  * can't run during prerender — so this is driven from `onMount`.
  *
- * Restores a saved secret key (falling back to a fresh one) so the endpoint
- * keeps a stable identity across reloads, then persists whichever key the
- * endpoint ended up with.
+ * Reuses a saved identity, or mints a fresh one so the endpoint keeps a stable
+ * identity (and share link) across reloads. A fresh key is persisted in
+ * parallel with the relay connect rather than before it — the connect is the
+ * slow, networked step, and the write needn't gate it.
  *
  * `signal` lets the view cancel a connect it no longer needs. iroh's own
- * `connect()` isn't interruptible, so cancellation is cooperative: after each
+ * `joinRelay()` isn't interruptible, so cancellation is cooperative: after each
  * `await` we bail if the signal has fired, freeing a late-arriving endpoint so
  * its relay connection doesn't linger, and resolve to `null` rather than
  * handing back an endpoint nothing will hold.
@@ -61,18 +66,15 @@ export const openConnection = async (
   if (signal.aborted) return null;
   logger.debug('Iroh wasm initialized.');
 
-  const secretKey = await restoreSecretKey();
+  const restored = await restoreSecretKey();
   if (signal.aborted) return null;
 
-  const endpoint = await connect(secretKey);
-  if (signal.aborted) {
-    endpoint.free();
-    return null;
-  }
+  // Reuse the saved identity, or mint one and persist it alongside the connect.
+  const secretKey = restored ?? generateSecretKey();
+  const persisting = restored ? undefined : persistSecretKey(secretKey);
 
-  // Save the key the endpoint actually used — the restored one, or the fresh
-  // one the wasm minted when nothing was stored — before handing it back.
-  await persistSecretKey(endpoint.secretKey);
+  const endpoint = await joinRelay(secretKey);
+  await persisting;
   if (signal.aborted) {
     endpoint.free();
     return null;
