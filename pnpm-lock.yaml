@@ -453,6 +453,9 @@ importers:
       '@crate/iroh':
         specifier: workspace:*
         version: link:../../../crates/iroh
+      '@lib/design':
+        specifier: workspace:*
+        version: link:../../lib/design
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -468,6 +471,9 @@ importers:
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
+      '@vanilla-extract/css':
+        specifier: 'catalog:'
+        version: 1.20.1
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13

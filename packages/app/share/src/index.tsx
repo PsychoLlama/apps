@@ -1,9 +1,9 @@
-import { Match, Switch, onCleanup, onMount } from 'solid-js';
+import { onCleanup, onMount } from 'solid-js';
 import { useEffect } from '@lib/state';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import { Callout, Container, Text } from '@lib/ui';
+import { ConnectionIndicator } from './components/connection-indicator';
 import {
-  connection,
   openConnectionEffect,
   releaseConnectionEffect,
 } from './state/connection';
@@ -33,19 +33,12 @@ export const Share = () => {
 
   return (
     <Frame>
-      <SiteHeader title="Share" />
+      <SiteHeader title="Share" actions={<ConnectionIndicator />} />
       <FrameBody>
         <Container as="div" size={2}>
           <Callout color="neutral">
             <Text as="span" size={2} selectable={false}>
-              <Switch fallback="Work in progress.">
-                <Match when={connection.status === 'connecting'}>
-                  Connecting to the relay network…
-                </Match>
-                <Match when={connection.status === 'connected'}>
-                  Connected to the relay network.
-                </Match>
-              </Switch>
+              Work in progress.
             </Text>
           </Callout>
         </Container>
