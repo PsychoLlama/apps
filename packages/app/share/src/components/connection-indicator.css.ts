@@ -1,5 +1,5 @@
 import { keyframes, style } from '@vanilla-extract/css';
-import { slow, success, text } from '@lib/design';
+import { danger, slow, success, text } from '@lib/design';
 
 /** Inline-flex so the glyph centers in the header's actions tray. */
 export const root = style({
@@ -26,6 +26,11 @@ export const spinner = style({
 /** Connected glyph — a positive-tinted confirmation. */
 export const connected = style({
   color: success.solid[11],
+});
+
+/** Failed glyph — a danger-tinted alert. */
+export const failed = style({
+  color: danger.solid[11],
 });
 
 // Keeps the status copy out of view while leaving it in the accessibility

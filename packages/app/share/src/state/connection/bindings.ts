@@ -31,13 +31,14 @@ const setConnected = defineAction(
 );
 
 /**
- * Record a failed connect. There's no reconnect UI yet, so fall back to
- * `initial` and log it rather than stranding the view in `connecting`.
+ * Record a failed connect. Lands in `failed` — a terminal state the header
+ * flags — rather than stranding the view in `connecting`. There's no reconnect
+ * UI yet; teardown resets it back to `initial`.
  */
 const failConnection = defineAction(
   [connectionStore],
   (state, error: Error) => {
-    state.status = 'initial';
+    state.status = 'failed';
     state.endpoint = null;
     logger.error('Failed to join the iroh relay network.', {
       error: toError(error),

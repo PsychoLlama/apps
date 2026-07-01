@@ -11,8 +11,16 @@ import type { Connection } from '@crate/iroh';
  *   in flight.
  * - `connected` — the endpoint is live on the relay network; `endpoint`
  *   holds it open.
+ * - `failed` — the wasm load or handshake errored. Terminal for now; there's
+ *   no reconnect affordance, so the view stays here until it's torn down and
+ *   reset. Distinct from `initial` so the UI can flag the error rather than
+ *   look like nothing was attempted.
  */
-export type ConnectionStatus = 'initial' | 'connecting' | 'connected';
+export type ConnectionStatus =
+  | 'initial'
+  | 'connecting'
+  | 'connected'
+  | 'failed';
 
 /** The browser's live membership in the iroh relay network. */
 export interface ConnectionState {
