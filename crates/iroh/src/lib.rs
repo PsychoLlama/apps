@@ -23,7 +23,7 @@ fn start() {
 #[cfg(target_arch = "wasm32")]
 mod relay {
     use iroh::endpoint::presets;
-    use iroh::{Endpoint, Watcher};
+    use iroh::{Endpoint, SecretKey, Watcher};
     use wasm_bindgen::prelude::*;
 
     /// A live endpoint joined to the relay network. Holding it keeps the
@@ -43,6 +43,15 @@ mod relay {
             self.endpoint.id().to_string()
         }
 
+        /// The raw 32 bytes of this endpoint's secret key — the private
+        /// half of the identity behind [`endpoint_id`]. The host persists
+        /// it and hands it back to [`connect`] to restore the same
+        /// identity (and share link) across reloads. Treat it as a secret.
+        #[wasm_bindgen(getter, js_name = secretKey)]
+        pub fn secret_key(&self) -> Vec<u8> {
+            self.endpoint.secret_key().to_bytes().to_vec()
+        }
+
         /// The URL of the relay we're currently connected through, or
         /// `undefined` if none has finished its handshake yet.
         #[wasm_bindgen(getter, js_name = homeRelay)]
@@ -58,9 +67,23 @@ mod relay {
 
     /// Bind an endpoint to n0's public relays and wait until at least one
     /// relay handshake completes. Rejects if binding fails.
+    ///
+    /// Pass the 32 raw bytes from a prior [`Connection::secret_key`] to
+    /// restore a saved identity; omit them (`undefined`) to mint a fresh
+    /// one. Read the key back off the returned connection to persist
+    /// whichever was used.
     #[wasm_bindgen]
-    pub async fn connect() -> Result<Connection, JsError> {
-        let endpoint = Endpoint::builder(presets::N0)
+    pub async fn connect(secret_key: Option<Vec<u8>>) -> Result<Connection, JsError> {
+        let mut builder = Endpoint::builder(presets::N0);
+
+        if let Some(bytes) = secret_key {
+            let bytes: [u8; 32] = bytes
+                .try_into()
+                .map_err(|_| JsError::new("secret key must be exactly 32 bytes"))?;
+            builder = builder.secret_key(SecretKey::from_bytes(&bytes));
+        }
+
+        let endpoint = builder
             .bind()
             .await
             .map_err(|err| JsError::new(&err.to_string()))?;

@@ -19,14 +19,25 @@ export class Connection {
    * `undefined` if none has finished its handshake yet.
    */
   readonly homeRelay: string | undefined;
+  /**
+   * The raw 32 bytes of this endpoint's secret key — the private half of
+   * the identity behind {@link endpointId}. Persist it and hand it back
+   * to {@link connect} to restore the same identity (and share link)
+   * across reloads. Treat it as a secret.
+   */
+  readonly secretKey: Uint8Array;
 }
 
 /**
  * Bind an endpoint to n0's public relays and resolve once at least one
  * relay handshake completes. Rejects if binding fails. {@link init} must
  * resolve before calling this.
+ *
+ * Pass the 32 raw bytes from a prior {@link Connection.secretKey} to
+ * restore a saved identity; omit them to mint a fresh one. Read the key
+ * back off the returned connection to persist whichever was used.
  */
-export function connect(): Promise<Connection>;
+export function connect(secret_key?: Uint8Array | null): Promise<Connection>;
 
 /** Bytes or a compiled module to instantiate the wasm from. */
 export type InitInput =
