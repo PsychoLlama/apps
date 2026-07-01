@@ -38,6 +38,22 @@
       devShells = eachSystem (
         system: pkgs: rec {
           default = pkgs.mkShell {
+            # `ring` (pulled in by iroh's TLS backend in `@crate/iroh`)
+            # compiles crypto C to wasm, which needs a clang targeting
+            # wasm32. nix's *wrapped* clang injects host hardening flags
+            # (`-fzero-call-used-regs=…`) the wasm target rejects, so point
+            # ring's per-target `cc`/`ar` at the unwrapped LLVM tools.
+            # Scoped to the wasm32 target vars, so native C builds keep
+            # using gcc, and referenced by store path so the LLVM tools
+            # stay off `PATH` and don't shadow the gcc binutils native
+            # builds rely on. In the shellHook rather than as plain env
+            # attrs because only the hook (not arbitrary attrs) propagates
+            # to `coding`/`nixos` through `inputsFrom`.
+            shellHook = ''
+              export CC_wasm32_unknown_unknown="${pkgs.llvmPackages.clang-unwrapped}/bin/clang"
+              export AR_wasm32_unknown_unknown="${pkgs.llvmPackages.bintools-unwrapped}/bin/llvm-ar"
+            '';
+
             packages = [
               pkgs.nodejs
               # Source of truth for the pnpm version. Keep package.json's
