@@ -76,6 +76,15 @@
               # so the crate pins `wasm-bindgen = "=0.2.121"` to match
               # the version nixpkgs ships here.
               pkgs.wasm-bindgen-cli
+              # Provides `s6-setlock`, which the per-package `test:browser`
+              # scripts wrap around vitest to serialize Chromium machine-wide.
+              # turbo's `--concurrency` only bounds a single invocation, so it
+              # can't stop parallel browser runs from stampeding each other
+              # (across packages, or across worktrees). s6-setlock takes an
+              # exclusive lock on a fixed `/tmp` path — blocking, with a
+              # timeout — so only one browser suite drives Chromium at a time.
+              # Lives in `default` so CI (which only enters this shell) has it.
+              pkgs.s6
             ];
           };
 
