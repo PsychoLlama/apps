@@ -38,168 +38,176 @@ const makeLog = (overrides: Partial<Log>): Log => ({
 
 let logger: Logger;
 
-beforeEach(async () => {
-  // `createIdbBackend` synchronously registers its versioned open — which
-  // creates the store on a fresh origin — before this clear's no-version open
-  // runs, so the store is guaranteed to exist by the time we clear it. Wipe it
-  // so each test starts empty. Clearing is a plain transaction: unlike
-  // `deleteDB`, it raises no `versionchange`, so it neither disturbs nor waits
-  // on any other open connection.
-  logger = createLogger(createIdbBackend());
+describe('createIdbBackend', () => {
+  beforeEach(async () => {
+    // `createIdbBackend` synchronously registers its versioned open — which
+    // creates the store on a fresh origin — before this clear's no-version open
+    // runs, so the store is guaranteed to exist by the time we clear it. Wipe it
+    // so each test starts empty. Clearing is a plain transaction: unlike
+    // `deleteDB`, it raises no `versionchange`, so it neither disturbs nor waits
+    // on any other open connection.
+    logger = createLogger(createIdbBackend());
 
-  const db = await openLogDatabase();
-  try {
-    await db.clear(STORE_NAME);
-  } finally {
-    db.close();
-  }
-});
-
-it('buffers logs emitted before the database finishes opening', async () => {
-  // A fresh backend opens IndexedDB asynchronously. Logs emitted in the same
-  // tick — before the connection is live — must buffer and flush once it opens
-  // rather than drop on the floor.
-  const eager = createLogger(createIdbBackend());
-  eager.info('emitted before open');
-
-  const logs = await vi.waitFor(async () => {
-    const persisted = await readPersistedLogs();
-    expect(persisted).toHaveLength(1);
-    return persisted;
+    const db = await openLogDatabase();
+    try {
+      await db.clear(STORE_NAME);
+    } finally {
+      db.close();
+    }
   });
 
-  expect(logs[0].message).toBe('emitted before open');
-});
+  it('buffers logs emitted before the database finishes opening', async () => {
+    // A fresh backend opens IndexedDB asynchronously. Logs emitted in the same
+    // tick — before the connection is live — must buffer and flush once it opens
+    // rather than drop on the floor.
+    const eager = createLogger(createIdbBackend());
+    eager.info('emitted before open');
 
-it('keeps writing across a schema upgrade triggered elsewhere', async () => {
-  // The backend from `beforeEach` holds an open connection. Persist a log
-  // through it, then force a version bump from a separate connection. That
-  // fires `versionchange` on the backend's connection, which must close to let
-  // the upgrade through and reconnect at the new version — not go dark.
-  logger.info('before upgrade');
-  await vi.waitFor(async () => {
-    expect(await readPersistedLogs()).toContainEqual(
-      expect.objectContaining({ message: 'before upgrade' }),
-    );
+    const logs = await vi.waitFor(async () => {
+      const persisted = await readPersistedLogs();
+      expect(persisted).toHaveLength(1);
+      return persisted;
+    });
+
+    expect(logs[0].message).toBe('emitted before open');
   });
 
-  // Open at a higher version, adding a throwaway index. This blocks until the
-  // backend (and any other open connection) steps aside, then runs its upgrade.
-  const upgraded = await openDB(DATABASE_NAME, 2, {
-    upgrade(_db, _oldVersion, _newVersion, transaction) {
-      transaction.objectStore(STORE_NAME).createIndex('by-level', 'level');
-    },
-  });
-  upgraded.close();
+  it('keeps writing across a schema upgrade triggered elsewhere', async () => {
+    // The backend from `beforeEach` holds an open connection. Persist a log
+    // through it, then force a version bump from a separate connection. That
+    // fires `versionchange` on the backend's connection, which must close to let
+    // the upgrade through and reconnect at the new version — not go dark.
+    logger.info('before upgrade');
+    await vi.waitFor(async () => {
+      expect(await readPersistedLogs()).toContainEqual(
+        expect.objectContaining({ message: 'before upgrade' }),
+      );
+    });
 
-  // The backend is now disconnected. The next log must lazily reconnect at
-  // version 2 and persist, proving logging survived the upgrade.
-  logger.info('after upgrade');
-  await vi.waitFor(async () => {
-    expect(await readPersistedLogs()).toContainEqual(
-      expect.objectContaining({ message: 'after upgrade' }),
-    );
-  });
-});
+    // Open at a higher version, adding a throwaway index. This blocks until the
+    // backend (and any other open connection) steps aside, then runs its upgrade.
+    const upgraded = await openDB(DATABASE_NAME, 2, {
+      upgrade(_db, _oldVersion, _newVersion, transaction) {
+        transaction.objectStore(STORE_NAME).createIndex('by-level', 'level');
+      },
+    });
+    upgraded.close();
 
-it('persists a log with its level, origin, and context', async () => {
-  logger.namespace('worker').info('flushed batch', { count: 3 });
-
-  // The write is fire-and-forget, so poll the store until it lands.
-  const [log] = await vi.waitFor(async () => {
-    const logs = await readPersistedLogs();
-    expect(logs).toHaveLength(1);
-    return logs;
-  });
-
-  expect(log).toMatchObject({
-    message: 'flushed batch',
-    level: level.info,
-    origin: ['worker'],
-    context: { count: 3 },
-  });
-  expect(typeof log.timestamp).toBe('number');
-});
-
-it('announces over the broadcast channel when a log persists', async () => {
-  // A separate channel is a sibling instance of the backend's, so it hears the
-  // post the backend never delivers to itself.
-  const channel = createLogInsertedChannel();
-  const pinged = new Promise<void>((resolve) => {
-    channel.onMessage(() => resolve());
+    // The backend is now disconnected. The next log must lazily reconnect at
+    // version 2 and persist, proving logging survived the upgrade.
+    logger.info('after upgrade');
+    await vi.waitFor(async () => {
+      expect(await readPersistedLogs()).toContainEqual(
+        expect.objectContaining({ message: 'after upgrade' }),
+      );
+    });
   });
 
-  logger.info('ping me');
+  it('persists a log with its level, origin, and context', async () => {
+    logger.namespace('worker').info('flushed batch', { count: 3 });
 
-  await expect(pinged).resolves.toBeUndefined();
-  channel.close();
-});
+    // The write is fire-and-forget, so poll the store until it lands.
+    const [log] = await vi.waitFor(async () => {
+      const logs = await readPersistedLogs();
+      expect(logs).toHaveLength(1);
+      return logs;
+    });
 
-it('announces once per persisted log', async () => {
-  // Warm the connection first: a log emitted before the open buffers and drains
-  // as one batch, but once open, writes stream one at a time. Subscribe after
-  // it lands so the warm-up's own ping isn't counted.
-  logger.info('warm up');
-  await vi.waitFor(async () => {
-    expect(await readPersistedLogs()).toHaveLength(1);
+    expect(log).toMatchObject({
+      message: 'flushed batch',
+      level: level.info,
+      origin: ['worker'],
+      context: { count: 3 },
+    });
+    expect(typeof log.timestamp).toBe('number');
   });
 
-  let pings = 0;
-  const channel = createLogInsertedChannel();
-  channel.onMessage(() => {
-    pings++;
+  it('announces over the broadcast channel when a log persists', async () => {
+    // A separate channel is a sibling instance of the backend's, so it hears the
+    // post the backend never delivers to itself.
+    const channel = createLogInsertedChannel();
+    const pinged = new Promise<void>((resolve) => {
+      channel.onMessage(() => resolve());
+    });
+
+    logger.info('ping me');
+
+    await expect(pinged).resolves.toBeUndefined();
+    channel.close();
   });
 
-  // Three streamed writes in one tick — each publishes immediately, so the
-  // burst is three pings, not a coalesced one. Batching is future work at the
-  // IndexedDB layer.
-  logger.info('first');
-  logger.info('second');
-  logger.info('third');
+  it('announces once per persisted log', async () => {
+    let pings = 0;
+    const channel = createLogInsertedChannel();
+    channel.onMessage(() => {
+      pings++;
+    });
 
-  await vi.waitFor(async () => {
-    expect(await readPersistedLogs()).toHaveLength(4);
+    // Warm the connection: a log emitted before the open buffers and drains as
+    // one batch, but once open, writes stream one at a time. Wait for its ping,
+    // then reset — the count that matters is the burst that follows, and this
+    // sidesteps any race with the warm-up's own announce.
+    logger.info('warm up');
+    await vi.waitFor(() => {
+      expect(pings).toBeGreaterThanOrEqual(1);
+    });
+    pings = 0;
+
+    // Three streamed writes in one tick — each publishes on commit, so the burst
+    // is three pings, not a coalesced one. Batching is future work at the
+    // IndexedDB layer.
+    logger.info('first');
+    logger.info('second');
+    logger.info('third');
+
+    await vi.waitFor(async () => {
+      expect(await readPersistedLogs()).toHaveLength(4);
+    });
+    await vi.waitFor(() => {
+      expect(pings).toBe(3);
+    });
+    channel.close();
   });
-  await vi.waitFor(() => {
-    expect(pings).toBe(3);
+
+  it('appends logs in the order they were emitted', async () => {
+    logger.info('first');
+    logger.warn('second');
+    logger.error('third');
+
+    const logs = await vi.waitFor(async () => {
+      const persisted = await readPersistedLogs();
+      expect(persisted).toHaveLength(3);
+      return persisted;
+    });
+
+    expect(logs.map((log) => log.message)).toEqual([
+      'first',
+      'second',
+      'third',
+    ]);
+    expect(logs.map((log) => log.level)).toEqual([
+      level.info,
+      level.warn,
+      level.error,
+    ]);
   });
-  channel.close();
-});
 
-it('appends logs in the order they were emitted', async () => {
-  logger.info('first');
-  logger.warn('second');
-  logger.error('third');
+  it('orders logs by event time through the timestamp index', async () => {
+    // Stand in for interleaved contexts: a buffered producer flushes an older
+    // log *after* a newer one has already been written. Insertion order and
+    // event-time order diverge — the index is what recovers chronology.
+    const db = await openLogDatabase();
+    try {
+      await db.add(STORE_NAME, makeLog({ message: 'newer', timestamp: 2000 }));
+      await db.add(STORE_NAME, makeLog({ message: 'older', timestamp: 1000 }));
+    } finally {
+      db.close();
+    }
 
-  const logs = await vi.waitFor(async () => {
-    const persisted = await readPersistedLogs();
-    expect(persisted).toHaveLength(3);
-    return persisted;
+    const byInsertion = await readPersistedLogs();
+    const byTimestamp = await readLogsByTimestamp();
+
+    expect(byInsertion.map((log) => log.message)).toEqual(['newer', 'older']);
+    expect(byTimestamp.map((log) => log.message)).toEqual(['older', 'newer']);
   });
-
-  expect(logs.map((log) => log.message)).toEqual(['first', 'second', 'third']);
-  expect(logs.map((log) => log.level)).toEqual([
-    level.info,
-    level.warn,
-    level.error,
-  ]);
-});
-
-it('orders logs by event time through the timestamp index', async () => {
-  // Stand in for interleaved contexts: a buffered producer flushes an older
-  // log *after* a newer one has already been written. Insertion order and
-  // event-time order diverge — the index is what recovers chronology.
-  const db = await openLogDatabase();
-  try {
-    await db.add(STORE_NAME, makeLog({ message: 'newer', timestamp: 2000 }));
-    await db.add(STORE_NAME, makeLog({ message: 'older', timestamp: 1000 }));
-  } finally {
-    db.close();
-  }
-
-  const byInsertion = await readPersistedLogs();
-  const byTimestamp = await readLogsByTimestamp();
-
-  expect(byInsertion.map((log) => log.message)).toEqual(['newer', 'older']);
-  expect(byTimestamp.map((log) => log.message)).toEqual(['older', 'newer']);
 });
