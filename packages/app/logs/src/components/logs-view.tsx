@@ -55,7 +55,7 @@ export const LogsView = (props: {
       <SiteHeader
         trail={props.trail}
         actions={
-          <Flex as="div" align="center" gap={2}>
+          <Flex as="div" align="center" gap={4}>
             <RefreshButton />
             <Show when={exportFlag.enabled && workerControl.controlled}>
               <ExportButton />
