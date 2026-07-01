@@ -1,9 +1,8 @@
 import { Show } from 'solid-js';
 import { FrameBody, SiteHeader } from '@lib/shell';
-import { Callout, Code, Container, Flex, Heading, Text } from '@lib/ui';
+import { Callout, Container, Flex, Heading, Text, TextField } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
 import { connection } from '../state/connection';
-import * as css from './share-view.css';
 
 /**
  * A shareable link to this endpoint — the `/share/with/:endpoint` URL a peer
@@ -17,7 +16,7 @@ const shareLink = (endpointId: string): string =>
 /**
  * The sharer's view at `/share`. Still a stub — the sharing flow itself is a
  * work in progress — but once the relay connection is live it surfaces this
- * endpoint's share link as a selectable snippet, ready to hand to a peer.
+ * endpoint's share link in a read-only field, ready to copy and hand to a peer.
  */
 export const Share = () => (
   <>
@@ -31,9 +30,15 @@ export const Share = () => (
 
           <Show when={connection.endpoint}>
             {(endpoint) => (
-              <Code color="neutral" size={2} selectable class={css.shareLink}>
-                {shareLink(endpoint().current.endpointId)}
-              </Code>
+              <TextField
+                testId="share-link"
+                readOnly
+                aria-label="Sharing link"
+                value={shareLink(endpoint().current.endpointId)}
+                autocomplete={undefined}
+                autocapitalize={undefined}
+                enterkeyhint={undefined}
+              />
             )}
           </Show>
 
