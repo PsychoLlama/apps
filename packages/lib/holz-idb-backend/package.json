@@ -11,11 +11,15 @@
     "./database": "./src/database.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:browser": "s6-setlock -t 300000 /tmp/psychollama-apps.chromium.lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@holz/core": "catalog:",
     "@lib/holz-valve": "workspace:*",
     "idb": "catalog:"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

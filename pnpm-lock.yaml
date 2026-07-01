@@ -86,6 +86,9 @@ importers:
       '@dev/eslint-plugin':
         specifier: workspace:*
         version: link:packages/dev/eslint-plugin
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:packages/dev/vitest-config
       '@dev/workspace-cli':
         specifier: workspace:*
         version: link:packages/dev/workspace-cli
@@ -104,15 +107,6 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1
-      '@vanilla-extract/vite-plugin':
-        specifier: ^5.2.2
-        version: 5.2.2(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))(yaml@2.9.0)
-      '@vitest/browser':
-        specifier: 'catalog:'
-        version: 4.1.9(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))(vitest@4.1.9)
-      '@vitest/browser-playwright':
-        specifier: 'catalog:'
-        version: 4.1.9(playwright@1.61.0)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))(vitest@4.1.9)
       '@vitest/coverage-v8':
         specifier: ^4.1.5
         version: 4.1.9(@vitest/browser@4.1.9)(vitest@4.1.9)
@@ -155,9 +149,6 @@ importers:
       vite:
         specifier: ^7.3.2
         version: 7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)
-      vite-plugin-solid:
-        specifier: ^2.11.11
-        version: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@types/node@25.9.3)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
@@ -262,6 +253,10 @@ importers:
       solid-js:
         specifier: ^1.9.13
         version: 1.9.13
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
 
   packages/app/main:
     dependencies:
@@ -405,6 +400,9 @@ importers:
       '@dev/build':
         specifier: workspace:*
         version: link:../../dev/build
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
       vite:
         specifier: ^7.3.2
         version: 7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)
@@ -510,6 +508,40 @@ importers:
         specifier: ^8.59.0
         version: 8.62.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
 
+  packages/dev/vitest-config:
+    dependencies:
+      vite:
+        specifier: ^7.3.2
+        version: 7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)
+      vitest:
+        specifier: '*'
+        version: 4.1.9(@types/node@25.9.3)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
+    devDependencies:
+      '@dev/build':
+        specifier: workspace:*
+        version: link:../build
+      '@iconify/json':
+        specifier: 'catalog:'
+        version: 2.2.491
+      '@vanilla-extract/vite-plugin':
+        specifier: ^5.2.2
+        version: 5.2.2(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))(yaml@2.9.0)
+      '@vitest/browser':
+        specifier: 'catalog:'
+        version: 4.1.9(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))(vitest@4.1.9)
+      '@vitest/browser-playwright':
+        specifier: 'catalog:'
+        version: 4.1.9(playwright@1.61.0)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))(vitest@4.1.9)
+      playwright:
+        specifier: 'catalog:'
+        version: 1.61.0
+      unplugin-icons:
+        specifier: 'catalog:'
+        version: 23.0.1
+      vite-plugin-solid:
+        specifier: ^2.11.11
+        version: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
+
   packages/dev/workspace-cli:
     dependencies:
       '@pnpm/workspace.read-manifest':
@@ -570,6 +602,10 @@ importers:
       idb:
         specifier: 'catalog:'
         version: 8.0.3
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
 
   packages/lib/holz-valve:
     dependencies:
@@ -614,6 +650,10 @@ importers:
       '@lib/messaging':
         specifier: workspace:*
         version: link:../messaging
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
 
   packages/lib/shell:
     dependencies:
@@ -682,6 +722,9 @@ importers:
         specifier: 'catalog:'
         version: 2.1.5
     devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
       '@lib/gallery':
         specifier: workspace:*
         version: link:../gallery

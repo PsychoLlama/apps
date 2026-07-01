@@ -42,6 +42,12 @@
       "outputs": [],
       "outputLogs": "errors-only"
     },
+    "test:browser": {
+      "dependsOn": ["^typecheck"],
+      "inputs": ["src/**", "vitest.browser.config.ts"],
+      "outputs": [],
+      "outputLogs": "errors-only"
+    },
     "//#typecheck": {
       "inputs": ["*.ts", "tsconfig.json"],
       "outputs": [],
@@ -73,15 +79,6 @@
       "inputs": [
         "packages/**/src/**",
         "!packages/**/*.test.browser.{ts,tsx}",
-        "vitest.config.ts"
-      ],
-      "outputs": [],
-      "outputLogs": "errors-only"
-    },
-    "//#test:browser": {
-      "inputs": [
-        "packages/**/src/**/*.test.browser.{ts,tsx}",
-        "packages/**/src/**",
         "vitest.config.ts"
       ],
       "outputs": [],
