@@ -6,13 +6,13 @@ import { connection } from '../state/connection';
 import * as css from './share-view.css';
 
 /**
- * A shareable link to this endpoint — the `/share/:endpoint` URL a peer opens
- * to dial us, keyed by the endpoint's public identity. Only ever built
+ * A shareable link to this endpoint — the `/share/with/:endpoint` URL a peer
+ * opens to dial us, keyed by the endpoint's public identity. Only ever built
  * client-side (the endpoint is `null` until the client-only connect lands), so
  * `window.location.origin` is safe to read.
  */
 const shareLink = (endpointId: string): string =>
-  new URL(`/share/${endpointId}`, window.location.origin).href;
+  new URL(`/share/with/${endpointId}`, window.location.origin).href;
 
 /**
  * The sharer's view at `/share`. Still a stub — the sharing flow itself is a
