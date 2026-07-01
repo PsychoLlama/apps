@@ -1,3 +1,3 @@
-import { Share } from '@app/share';
+import { ShareLayout } from '@app/share';
 
-export default Share;
+export default ShareLayout;
