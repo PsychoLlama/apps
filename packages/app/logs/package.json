@@ -11,7 +11,7 @@
   },
   "scripts": {
     "typecheck": "tsc",
-    "test:browser": "s6-setlock -t 300000 /tmp/psychollama-apps.chromium.lock vitest run --config vitest.browser.config.ts"
+    "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@vanilla-extract/css": "catalog:",

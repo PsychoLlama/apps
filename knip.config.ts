@@ -2,9 +2,10 @@ import type { KnipConfig } from 'knip';
 
 const config: KnipConfig = {
   ignoreExportsUsedInFile: true,
-  // s6-setlock is provided by the nix devShell, not pnpm. The per-package
-  // `test:browser` scripts wrap vitest in it to serialize Chromium.
-  ignoreBinaries: ['s6-setlock'],
+  // chromium-lock is provided by the nix devShell (a flake wrapper around
+  // s6-setlock), not pnpm. The per-package `test:browser` scripts wrap vitest
+  // in it to serialize Chromium.
+  ignoreBinaries: ['chromium-lock'],
   workspaces: {
     '.': {
       entry: ['*.ts'],

@@ -34,7 +34,7 @@ export default defineConfig({
     },
     // Only the unit suite runs centrally. Browser tests are split per
     // package (each owns a `vitest.browser.config.ts` re-exporting the
-    // shared preset) so turbo reruns them per package and `s6-setlock`
+    // shared preset) so turbo reruns them per package and `chromium-lock`
     // serializes Chromium — rather than booting a browser for the whole
     // monorepo on every change.
     projects: [

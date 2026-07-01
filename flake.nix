@@ -36,7 +36,25 @@
 
     {
       devShells = eachSystem (
-        system: pkgs: rec {
+        system: pkgs:
+        let
+          # `chromium-lock <cmd…>` runs a command under an exclusive,
+          # machine-wide lock so only one browser suite drives Chromium at a
+          # time. The per-package `test:browser` scripts wrap `vitest` in it:
+          # turbo's `--concurrency` only bounds a single invocation, so it
+          # can't stop parallel browser runs from stampeding each other across
+          # packages or worktrees. Folding the lock policy (locker, path,
+          # timeout) into one wrapper keeps the package scripts down to
+          # `chromium-lock vitest …` and gives the policy a single home next to
+          # where its locker is provisioned. s6-setlock takes an exclusive lock
+          # (blocking by default); `-t` caps the wait in ms, and it releases
+          # the lock when the wrapped process exits. Referenced by store path
+          # so `chromium-lock` is the only thing that lands on `PATH`.
+          chromium-lock = pkgs.writers.writeDashBin "chromium-lock" ''
+            exec ${pkgs.s6}/bin/s6-setlock -t 300000 /tmp/psychollama-apps.chromium.lock "$@"
+          '';
+        in
+        rec {
           default = pkgs.mkShell {
             # `ring` (pulled in by iroh's TLS backend in `@crate/iroh`)
             # compiles crypto C to wasm, which needs a clang targeting
@@ -76,15 +94,10 @@
               # so the crate pins `wasm-bindgen = "=0.2.121"` to match
               # the version nixpkgs ships here.
               pkgs.wasm-bindgen-cli
-              # Provides `s6-setlock`, which the per-package `test:browser`
-              # scripts wrap around vitest to serialize Chromium machine-wide.
-              # turbo's `--concurrency` only bounds a single invocation, so it
-              # can't stop parallel browser runs from stampeding each other
-              # (across packages, or across worktrees). s6-setlock takes an
-              # exclusive lock on a fixed `/tmp` path — blocking, with a
-              # timeout — so only one browser suite drives Chromium at a time.
-              # Lives in `default` so CI (which only enters this shell) has it.
-              pkgs.s6
+              # Serializes Chromium across the per-package `test:browser`
+              # scripts (see the wrapper's definition above). Lives in
+              # `default` so CI (which only enters this shell) has it.
+              chromium-lock
             ];
           };
 
