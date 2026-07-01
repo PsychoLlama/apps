@@ -10,12 +10,17 @@ import { BroadcastChannelTransport } from '@lib/messaging/broadcast-channel';
  * re-reads on its own terms.
  *
  * The transport is symmetric, so both sides call the same opener: the backend
- * uses `send`, a viewer wires `onMessage`. A `BroadcastChannel` never echoes a
- * sender its own posts but does deliver to sibling instances, so a viewer
- * sharing the writer's context still hears the pings while the writer hears
- * nothing back. Each side owns its transport — `close` it to detach.
+ * uses `send`, a viewer wires `onMessage`. It's opened with `localEmit`, so one
+ * transport both pings and hears pings — a viewer that also writes, or a writer
+ * and viewer sharing a single instance, still sees its own inserts rather than
+ * relying on holding a separate sibling instance to catch them. Each side owns
+ * its transport — `close` it to detach.
  */
 export const createLogInsertedChannel = (): BroadcastChannelTransport<
   void,
   void
-> => new BroadcastChannelTransport('@lib/holz-idb-backend');
+> =>
+  new BroadcastChannelTransport({
+    channel: '@lib/holz-idb-backend',
+    localEmit: true,
+  });
