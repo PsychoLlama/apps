@@ -9,50 +9,44 @@ import type { JsonValue, Override } from './define-config';
 export const channelName = (id: string): string => `runtime-config:${id}`;
 
 /**
- * The subscribe side of one option's channel: a `BroadcastChannel` held open
- * only while something is listening, with sibling posts fanned out to every
- * local handler. Idle options cost nothing — no channel exists until the first
- * subscriber, and it's torn down again once the last one leaves.
+ * One option's channel: a single `BroadcastChannel` held open for the option's
+ * lifetime, carrying overrides between contexts and — via the transport's
+ * `selfDeliver` — back to this context's own subscribers. There's no idle
+ * teardown: a subscriber-less channel is never routed to (the browser only
+ * delivers to contexts with a live listener), so an open-but-quiet channel
+ * costs nothing beyond the tiny local clone of each post.
  */
 class OptionChannel {
-  readonly #name: string;
-
-  // Live only while `#subscribers > 0`. A counter, not a handler set: the
-  // transport already owns the listeners, so we track just enough to know when
-  // the channel has gone idle and can close.
-  #transport: BroadcastChannelTransport<
-    Override<JsonValue>,
-    Override<JsonValue>
-  > | null = null;
-  #subscribers = 0;
+  // `selfDeliver` folds publish and subscribe onto one instance: a write sent
+  // here reaches sibling contexts and echoes back to this context's handlers.
+  readonly #transport: BroadcastChannelTransport<Override<JsonValue>>;
 
   constructor(id: string) {
-    this.#name = channelName(id);
+    this.#transport = new BroadcastChannelTransport({
+      channel: channelName(id),
+      selfDeliver: true,
+    });
   }
 
-  /** Subscribe to overrides from any context. Returns an unsubscribe. */
+  /**
+   * Subscribe to overrides from any context, including writes {@link publish}ed
+   * here. Returns an unsubscribe.
+   */
   onMessage(handler: (override: Override<JsonValue>) => void): () => void {
-    const transport = (this.#transport ??= new BroadcastChannelTransport(
-      this.#name,
-    ));
-    const detach = transport.onMessage(handler);
-    this.#subscribers++;
+    return this.#transport.onMessage(handler);
+  }
 
-    let active = true;
-    return () => {
-      if (!active) return;
-      active = false;
-      detach();
-      if (--this.#subscribers === 0) {
-        transport.close();
-        this.#transport = null;
-      }
-    };
+  /**
+   * Announce an override to every context, including this one — the transport
+   * self-delivers, so a subscriber here hears its own write.
+   */
+  publish(override: Override<JsonValue>): void {
+    this.#transport.send(override);
   }
 }
 
-// One `OptionChannel` per option ID, built on first subscribe. A null-proto map
-// so option IDs can't collide with `Object.prototype` keys.
+// One `OptionChannel` per option ID. A null-proto map so option IDs can't
+// collide with `Object.prototype` keys.
 const channels = Object.create(null) as Record<string, OptionChannel>;
 
 const getChannel = (id: string): OptionChannel =>
@@ -60,20 +54,10 @@ const getChannel = (id: string): OptionChannel =>
 
 /**
  * Announce an option change to subscribers in every context, including this
- * one. Opens a throwaway channel for the single post and closes it right away,
- * so a writer that isn't also subscribed never holds IPC open for traffic it
- * doesn't watch. The throwaway is a *distinct* `BroadcastChannel` instance, so
- * a same-context subscriber hears the write back through the channel (a channel
- * only withholds a post from the exact instance that sent it).
+ * one.
  */
-export const publish = (id: string, override: Override<JsonValue>): void => {
-  const transport = new BroadcastChannelTransport<
-    Override<JsonValue>,
-    Override<JsonValue>
-  >(channelName(id));
-  transport.send(override);
-  transport.close();
-};
+export const publish = (id: string, override: Override<JsonValue>): void =>
+  getChannel(id).publish(override);
 
 /** Subscribe to one option's changes from any context. Returns an unsubscribe. */
 export const onConfigMessage = (
