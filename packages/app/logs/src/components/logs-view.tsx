@@ -5,16 +5,15 @@ import { LinkButton } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import {
   exportFlag,
-  hydrateExportFlagEffect,
   setExportEnabled,
   watchExportFlag,
 } from '../state/export-flag';
 import {
-  hydrateWorkerControlEffect,
   setWorkerControlled,
   watchWorkerControl,
   workerControl,
 } from '../state/worker-control';
+import { hydrateExportAvailabilityEffect } from '../state/export-availability';
 
 /**
  * The logs layout: the `<main>` frame for every `/logs/*` route. Each route
@@ -34,23 +33,18 @@ export const LogsView = (props: {
   trail: SiteHeaderCrumb[];
   children?: JSX.Element;
 }) => {
-  const reconcileFlag = useEffect(hydrateExportFlagEffect);
+  const reconcile = useEffect(hydrateExportAvailabilityEffect);
   const setEnabled = useAction(setExportEnabled);
-  const reconcileControl = useEffect(hydrateWorkerControlEffect);
   const setControlled = useAction(setWorkerControlled);
 
-  // The store is seeded with the build-environment default, so first
-  // paint (and prerender) match without a flash. Once mounted — OPFS is
-  // client-only, unavailable during SSG — reconcile with any persisted
-  // override and track changes made in other tabs.
-  //
-  // The export action also needs a service worker controlling the page to
-  // answer its `/api/local/logs` navigation; reconcile that on mount too
-  // (the worker is client-only) and track control handoffs.
+  // Both stores are seeded so first paint (and prerender) match without a
+  // flash. Once mounted — OPFS and the service worker are client-only,
+  // unavailable during SSG — a single reconcile lands both gating
+  // conditions in one flush; the watchers then track later changes: the
+  // flag from any tab, and service-worker control handoffs.
   onMount(() => {
-    void reconcileFlag();
+    void reconcile();
     onCleanup(watchExportFlag(setEnabled));
-    void reconcileControl();
     onCleanup(watchWorkerControl(setControlled));
   });
 
