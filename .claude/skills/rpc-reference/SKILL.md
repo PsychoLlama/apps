@@ -75,8 +75,9 @@ If you need a transport implementation and one does not yet exist, propose it to
 ### BroadcastChannelTransport - `@lib/messaging/broadcast-channel`
 
 - Wraps `BroadcastChannel`. Pure pub/sub: no per-send options, no responses. Use `send`/`onMessage` directly — RPC's request/response can't ride a broadcast.
-- Owns its channel: construct with a config object (`{ channel, localEmit? }`); `close()` closes the channel (which stops delivery) and drops self-emit handlers. A `BroadcastChannel` can't be reopened.
-- By default a channel withholds every post from the instance that sent it. Set `localEmit: true` and `send` also replays to this instance's own handlers, so one transport can both publish and observe its own writes.
+- One `Message` type rides both directions (`BroadcastChannelTransport<Message>`) — a broadcast is undirected, so inbound and outbound are the same feed.
+- Owns its channel: construct with a config object (`{ channel, selfDeliver }` — both required); `close()` closes the channel and drops self-emit handlers. Implements `Symbol.dispose`, so bind with `using` for automatic teardown.
+- A channel withholds every post from the instance that sent it. Set `selfDeliver: true` and `send` also replays to this instance's own handlers, so one transport can both publish and observe its own writes; `false` keeps the sibling-only default.
 
 ## Testing
 

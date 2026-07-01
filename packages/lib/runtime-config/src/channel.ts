@@ -9,26 +9,23 @@ import type { JsonValue, Override } from './define-config';
 export const channelName = (id: string): string => `runtime-config:${id}`;
 
 /**
- * One option's channel: a `BroadcastChannel` held open only while something is
- * listening, carrying overrides between contexts and — via the transport's
- * `localEmit` — back to this context's own subscribers. Idle options cost
- * nothing: no channel exists until the first subscriber, and it's torn down
- * again once the last one leaves.
+ * One option's channel: a single `BroadcastChannel` held open for the option's
+ * lifetime, carrying overrides between contexts and — via the transport's
+ * `selfDeliver` — back to this context's own subscribers. There's no idle
+ * teardown: a subscriber-less channel is never routed to (the browser only
+ * delivers to contexts with a live listener), so an open-but-quiet channel
+ * costs nothing beyond the tiny local clone of each post.
  */
 class OptionChannel {
-  readonly #name: string;
-
-  // Live only while `#subscribers > 0`. A counter, not a handler set: the
-  // transport already owns the listeners, so we track just enough to know when
-  // the channel has gone idle and can close.
-  #transport: BroadcastChannelTransport<
-    Override<JsonValue>,
-    Override<JsonValue>
-  > | null = null;
-  #subscribers = 0;
+  // `selfDeliver` folds publish and subscribe onto one instance: a write sent
+  // here reaches sibling contexts and echoes back to this context's handlers.
+  readonly #transport: BroadcastChannelTransport<Override<JsonValue>>;
 
   constructor(id: string) {
-    this.#name = channelName(id);
+    this.#transport = new BroadcastChannelTransport({
+      channel: channelName(id),
+      selfDeliver: true,
+    });
   }
 
   /**
@@ -36,46 +33,15 @@ class OptionChannel {
    * here. Returns an unsubscribe.
    */
   onMessage(handler: (override: Override<JsonValue>) => void): () => void {
-    const transport = (this.#transport ??= this.#open());
-    const detach = transport.onMessage(handler);
-    this.#subscribers++;
-
-    let active = true;
-    return () => {
-      if (!active) return;
-      active = false;
-      detach();
-      if (--this.#subscribers === 0) {
-        transport.close();
-        this.#transport = null;
-      }
-    };
+    return this.#transport.onMessage(handler);
   }
 
   /**
-   * Announce an override to every context, including this one. When something
-   * here is listening, the live transport self-emits so this context hears its
-   * own write; otherwise a throwaway carries the post to other contexts and
-   * closes right away, so a writer that isn't subscribed holds no IPC open.
+   * Announce an override to every context, including this one — the transport
+   * self-delivers, so a subscriber here hears its own write.
    */
   publish(override: Override<JsonValue>): void {
-    if (this.#transport) {
-      this.#transport.send(override);
-      return;
-    }
-
-    const transport = this.#open();
-    transport.send(override);
-    transport.close();
-  }
-
-  // `localEmit` folds publish and subscribe onto one instance: a write sent
-  // here reaches sibling contexts and echoes back to this context's handlers.
-  #open(): BroadcastChannelTransport<Override<JsonValue>, Override<JsonValue>> {
-    return new BroadcastChannelTransport({
-      channel: this.#name,
-      localEmit: true,
-    });
+    this.#transport.send(override);
   }
 }
 
