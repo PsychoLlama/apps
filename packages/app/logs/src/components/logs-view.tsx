@@ -1,7 +1,7 @@
 import { Show, onCleanup, onMount, type JSX } from 'solid-js';
 import { useAction, useEffect } from '@lib/state';
 import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
-import { Button, LinkButton } from '@lib/ui';
+import { Button, Flex, LinkButton } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import IconRefresh from 'virtual:icons/mdi/refresh';
 import {
@@ -55,12 +55,12 @@ export const LogsView = (props: {
       <SiteHeader
         trail={props.trail}
         actions={
-          <>
+          <Flex as="div" align="center" gap={2}>
             <RefreshButton />
             <Show when={exportFlag.enabled && workerControl.controlled}>
               <ExportButton />
             </Show>
-          </>
+          </Flex>
         }
       />
       <FrameBody>{props.children}</FrameBody>

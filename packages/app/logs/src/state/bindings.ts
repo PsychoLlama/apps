@@ -3,7 +3,7 @@ import { createLogger, toError, type Log } from '@lib/observability';
 import {
   closeArchive,
   loadArchive,
-  reloadArchive,
+  readNewLogs,
   type LoadedArchive,
 } from './capabilities';
 import { logsStore } from './store';
@@ -36,10 +36,16 @@ export const markLogsStale = defineAction([logsStore], (state) => {
   if (state.freshness === 'current') state.freshness = 'stale';
 });
 
-/** Land a re-read snapshot into the open connection and mark the archive current again. */
-const applyReload = defineAction([logsStore], (state, entries: Log[]) => {
+/**
+ * Land newly read logs and mark the archive current again. The refresh reads
+ * only what arrived since the last snapshot, so prepend it: both the new tail
+ * and the held entries are newest-first, and everything new outranks everything
+ * held, so concatenation preserves the global order. A press that turned up
+ * nothing still settles freshness back to `current`.
+ */
+export const applyReload = defineAction([logsStore], (state, added: Log[]) => {
   state.freshness = 'current';
-  state.entries = entries;
+  if (added.length > 0) state.entries = [...added, ...state.entries];
 });
 
 /**
@@ -87,11 +93,11 @@ export const releaseLogsEffect = defineEffect([logsStore], closeArchive, {
 });
 
 /**
- * Re-read the archive through the held connection and land the fresh snapshot.
+ * Read logs added since the snapshot through the held connection and land them.
  * Backs the refresh action, which only surfaces once {@link loadLogsEffect} has
  * opened a connection — so this reuses it rather than opening a second.
  */
-export const refreshLogsEffect = defineEffect([logsStore], reloadArchive, {
+export const refreshLogsEffect = defineEffect([logsStore], readNewLogs, {
   onSuccess: applyReload,
   onFailure: failRefresh,
 });

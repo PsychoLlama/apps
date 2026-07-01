@@ -1,6 +1,7 @@
 import { For, Match, Switch, onCleanup, onMount } from 'solid-js';
 import { useAction, useEffect } from '@lib/state';
 import { Badge, Callout, Flex, Text } from '@lib/ui';
+import { createLogInsertedChannel } from '@lib/holz-idb-backend/broadcast';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { LogsView } from './logs-view';
 import { LogPanel } from './log-panel';
@@ -8,7 +9,6 @@ import {
   logs,
   loadLogsEffect,
   releaseLogsEffect,
-  watchLogInserts,
   markLogsStale,
 } from '../state';
 
@@ -32,9 +32,13 @@ export const LogList = () => {
   onCleanup(() => void releaseLogs());
 
   // The backend pings from any context when it persists logs; flag the shown
-  // archive stale so the header offers a refresh. Client-only, so subscribe on
-  // mount and drop the channel on cleanup.
-  onMount(() => onCleanup(watchLogInserts(() => markStale())));
+  // archive stale so the header offers a refresh. Client-only (a BroadcastChannel
+  // isn't available during SSG), so open on mount and close on cleanup.
+  onMount(() => {
+    const channel = createLogInsertedChannel();
+    channel.onMessage(() => markStale());
+    onCleanup(() => channel.close());
+  });
 
   return (
     <LogsView trail={[{ label: 'Logs' }]}>
