@@ -8,7 +8,7 @@ import { openDB } from 'idb';
 import { createLogger, level, type Log, type Logger } from '@holz/core';
 
 import { createIdbBackend } from '../holz-idb-backend';
-import { onLogInserted } from '../broadcast';
+import { createLogInsertedChannel } from '../broadcast';
 import {
   DATABASE_NAME,
   STORE_NAME,
@@ -121,41 +121,49 @@ it('persists a log with its level, origin, and context', async () => {
   expect(typeof log.timestamp).toBe('number');
 });
 
-it('announces over the broadcast channel once a log persists', async () => {
-  // A separate `onLogInserted` transport is a sibling instance of the backend's
-  // publisher, so it hears the post the publisher never delivers to itself. The
-  // announce fires only after the write commits — assert it lands.
+it('announces over the broadcast channel when a log persists', async () => {
+  // A separate channel is a sibling instance of the backend's, so it hears the
+  // post the backend never delivers to itself.
+  const channel = createLogInsertedChannel();
   const pinged = new Promise<void>((resolve) => {
-    const stop = onLogInserted(() => {
-      stop();
-      resolve();
-    });
+    channel.onMessage(() => resolve());
   });
 
   logger.info('ping me');
 
   await expect(pinged).resolves.toBeUndefined();
+  channel.close();
 });
 
-it('coalesces a synchronous burst into a single announce', async () => {
+it('announces once per persisted log', async () => {
+  // Warm the connection first: a log emitted before the open buffers and drains
+  // as one batch, but once open, writes stream one at a time. Subscribe after
+  // it lands so the warm-up's own ping isn't counted.
+  logger.info('warm up');
+  await vi.waitFor(async () => {
+    expect(await readPersistedLogs()).toHaveLength(1);
+  });
+
   let pings = 0;
-  const stop = onLogInserted(() => {
+  const channel = createLogInsertedChannel();
+  channel.onMessage(() => {
     pings++;
   });
 
-  // Three logs in one tick land three writes; the announce is scheduled on the
-  // microtask that follows, so the burst collapses to one ping rather than one
-  // per log.
+  // Three streamed writes in one tick — each publishes immediately, so the
+  // burst is three pings, not a coalesced one. Batching is future work at the
+  // IndexedDB layer.
   logger.info('first');
   logger.info('second');
   logger.info('third');
 
   await vi.waitFor(async () => {
-    expect(await readPersistedLogs()).toHaveLength(3);
+    expect(await readPersistedLogs()).toHaveLength(4);
   });
-  stop();
-
-  expect(pings).toBe(1);
+  await vi.waitFor(() => {
+    expect(pings).toBe(3);
+  });
+  channel.close();
 });
 
 it('appends logs in the order they were emitted', async () => {
