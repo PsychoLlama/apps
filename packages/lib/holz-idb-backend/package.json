@@ -8,6 +8,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
+    "./broadcast": "./src/broadcast.ts",
     "./database": "./src/database.ts"
   },
   "scripts": {
@@ -16,6 +17,7 @@
   "dependencies": {
     "@holz/core": "catalog:",
     "@lib/holz-valve": "workspace:*",
+    "@lib/messaging": "workspace:*",
     "idb": "catalog:"
   }
 }

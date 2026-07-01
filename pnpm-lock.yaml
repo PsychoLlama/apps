@@ -561,6 +561,9 @@ importers:
       '@lib/holz-valve':
         specifier: workspace:*
         version: link:../holz-valve
+      '@lib/messaging':
+        specifier: workspace:*
+        version: link:../messaging
       idb:
         specifier: 'catalog:'
         version: 8.0.3

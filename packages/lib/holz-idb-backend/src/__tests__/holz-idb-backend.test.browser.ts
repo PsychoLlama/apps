@@ -8,6 +8,7 @@ import { openDB } from 'idb';
 import { createLogger, level, type Log, type Logger } from '@holz/core';
 
 import { createIdbBackend } from '../holz-idb-backend';
+import { onLogInserted } from '../broadcast';
 import {
   DATABASE_NAME,
   STORE_NAME,
@@ -118,6 +119,43 @@ it('persists a log with its level, origin, and context', async () => {
     context: { count: 3 },
   });
   expect(typeof log.timestamp).toBe('number');
+});
+
+it('announces over the broadcast channel once a log persists', async () => {
+  // A separate `onLogInserted` transport is a sibling instance of the backend's
+  // publisher, so it hears the post the publisher never delivers to itself. The
+  // announce fires only after the write commits — assert it lands.
+  const pinged = new Promise<void>((resolve) => {
+    const stop = onLogInserted(() => {
+      stop();
+      resolve();
+    });
+  });
+
+  logger.info('ping me');
+
+  await expect(pinged).resolves.toBeUndefined();
+});
+
+it('coalesces a synchronous burst into a single announce', async () => {
+  let pings = 0;
+  const stop = onLogInserted(() => {
+    pings++;
+  });
+
+  // Three logs in one tick land three writes; the announce is scheduled on the
+  // microtask that follows, so the burst collapses to one ping rather than one
+  // per log.
+  logger.info('first');
+  logger.info('second');
+  logger.info('third');
+
+  await vi.waitFor(async () => {
+    expect(await readPersistedLogs()).toHaveLength(3);
+  });
+  stop();
+
+  expect(pings).toBe(1);
 });
 
 it('appends logs in the order they were emitted', async () => {

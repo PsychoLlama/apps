@@ -2,6 +2,7 @@ import type { IDBPDatabase } from 'idb';
 import type { LogProcessor } from '@holz/core';
 import { createLogValve } from '@lib/holz-valve';
 
+import { createLogInsertedPublisher } from './broadcast';
 import {
   STORE_NAME,
   migrateLogDatabase,
@@ -59,6 +60,25 @@ export const createIdbBackend = (
   let connecting = false;
   let migrated = false;
 
+  // Pings viewers that the archive gained logs so they can offer a refresh.
+  // Coalesced: holz calls the processor synchronously, so a burst of logs is
+  // one turn of write attempts — schedule a single announce on the microtask
+  // that follows rather than one postMessage per log. Fired on the write
+  // attempt, not its commit: a viewer only re-reads on its own schedule (a
+  // user's refresh click), by which point the writes have long since landed.
+  // Optimistic, so a write that later fails leaves a spurious stale flag —
+  // harmless, since that refresh just finds nothing new and settles again.
+  const publisher = createLogInsertedPublisher();
+  let announceScheduled = false;
+  const scheduleAnnounce = () => {
+    if (announceScheduled) return;
+    announceScheduled = true;
+    queueMicrotask(() => {
+      announceScheduled = false;
+      publisher.announce();
+    });
+  };
+
   // Logs flow downstream into whichever connection is currently live. Start
   // closed, buffering until the first open; the valve only opens once `db` is
   // set, so the write path normally has a connection — the `?.` is
@@ -77,6 +97,7 @@ export const createIdbBackend = (
         // drops the log rather than surfacing — there's no safe way to report
         // it without recursing into the logger.
       });
+      scheduleAnnounce();
     },
     drain: (logs) => {
       // The valve only opens from within `connect`, which sets `db` first, and
@@ -92,6 +113,10 @@ export const createIdbBackend = (
       const tx = db.transaction(STORE_NAME, 'readwrite');
       for (const log of logs) void tx.store.add(log);
       tx.done.catch(() => {});
+
+      // An open with an empty buffer drains nothing — only ping when the batch
+      // actually carried logs.
+      if (logs.length > 0) scheduleAnnounce();
     },
   });
 
