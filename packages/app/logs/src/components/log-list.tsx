@@ -1,10 +1,16 @@
 import { For, Match, Switch, onCleanup, onMount } from 'solid-js';
-import { useEffect } from '@lib/state';
+import { useAction, useEffect } from '@lib/state';
 import { Badge, Callout, Flex, Text } from '@lib/ui';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { LogsView } from './logs-view';
 import { LogPanel } from './log-panel';
-import { logs, loadLogsEffect, releaseLogsEffect } from '../state';
+import {
+  logs,
+  loadLogsEffect,
+  releaseLogsEffect,
+  watchLogInserts,
+  markLogsStale,
+} from '../state';
 
 /** How many placeholder rows the loading skeleton stands up. */
 const SKELETON_ROWS = [0, 1, 2, 3, 4];
@@ -20,8 +26,15 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4];
 export const LogList = () => {
   const loadLogs = useEffect(loadLogsEffect);
   const releaseLogs = useEffect(releaseLogsEffect);
+  const markStale = useAction(markLogsStale);
+
   onMount(() => void loadLogs());
   onCleanup(() => void releaseLogs());
+
+  // The backend pings from any context when it persists logs; flag the shown
+  // archive stale so the header offers a refresh. Client-only, so subscribe on
+  // mount and drop the channel on cleanup.
+  onMount(() => onCleanup(watchLogInserts(() => markStale())));
 
   return (
     <LogsView trail={[{ label: 'Logs' }]}>

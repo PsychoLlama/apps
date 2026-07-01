@@ -1,8 +1,9 @@
 import { Show, onCleanup, onMount, type JSX } from 'solid-js';
 import { useAction, useEffect } from '@lib/state';
 import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
-import { LinkButton } from '@lib/ui';
+import { Button, LinkButton } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
+import IconRefresh from 'virtual:icons/mdi/refresh';
 import {
   exportFlag,
   setExportEnabled,
@@ -14,6 +15,7 @@ import {
   workerControl,
 } from '../state/worker-control';
 import { hydrateExportAvailabilityEffect } from '../state/export-availability';
+import { logs, refreshLogsEffect } from '../state';
 
 /**
  * The logs layout: the `<main>` frame for every `/logs/*` route. Each route
@@ -53,13 +55,42 @@ export const LogsView = (props: {
       <SiteHeader
         trail={props.trail}
         actions={
-          <Show when={exportFlag.enabled && workerControl.controlled}>
-            <ExportButton />
-          </Show>
+          <>
+            <RefreshButton />
+            <Show when={exportFlag.enabled && workerControl.controlled}>
+              <ExportButton />
+            </Show>
+          </>
         }
       />
       <FrameBody>{props.children}</FrameBody>
     </>
+  );
+};
+
+/**
+ * Refresh action pinned to the logs header tray. Surfaces once a read has
+ * landed (the archive left its `initial` state) and lights up only when the
+ * backend has reported new logs since — disabled while the view is current, so
+ * it doubles as an up-to-date indicator. A press re-reads the archive through
+ * the already-open connection.
+ */
+const RefreshButton = () => {
+  const refresh = useEffect(refreshLogsEffect);
+
+  return (
+    <Show when={logs.freshness !== 'initial'}>
+      <Button
+        testId="refresh-logs"
+        variant="ghost"
+        color="neutral"
+        disabled={logs.freshness !== 'stale'}
+        onClick={() => void refresh()}
+      >
+        <IconRefresh aria-hidden="true" />
+        Refresh
+      </Button>
+    </Show>
   );
 };
 

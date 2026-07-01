@@ -6,10 +6,16 @@
  */
 
 import { level, type Log } from '@lib/observability';
-import { STORE_NAME, openLogDatabase } from '@lib/holz-idb-backend/database';
+import {
+  STORE_NAME,
+  openLogDatabase,
+  type LogConnection,
+} from '@lib/holz-idb-backend/database';
 import { createIdbBackend } from '@lib/holz-idb-backend';
+import type { DeepReadonly } from '@lib/state';
 
-import { loadArchive } from '../capabilities';
+import { loadArchive, reloadArchive } from '../capabilities';
+import type { LogsState } from '../store';
 
 /** A complete `Log`, with only the fields a test cares about overridden. */
 const makeLog = (overrides: Partial<Log>): Log => ({
@@ -58,6 +64,37 @@ it('reads the archive newest-first by event time', async () => {
   } finally {
     archive.db.close();
   }
+});
+
+/** A minimal state view holding just the connection {@link reloadArchive} reads. */
+const heldState = (db: LogConnection): DeepReadonly<LogsState> =>
+  ({ db: { current: db } }) as DeepReadonly<LogsState>;
+
+it('re-reads new logs through the held connection', async () => {
+  const archive = await loadArchive();
+  try {
+    // A writer lands a log through a *separate* connection after the viewer's
+    // read resolved. The refresh re-reads through the connection already held —
+    // no reopen — and a fresh transaction sees the committed write.
+    const writer = await openLogDatabase();
+    try {
+      await writer.add(STORE_NAME, makeLog({ message: 'arrived later' }));
+    } finally {
+      writer.close();
+    }
+
+    const entries = await reloadArchive(heldState(archive.db));
+    expect(entries.map((log) => log.message)).toEqual(['arrived later']);
+  } finally {
+    archive.db.close();
+  }
+});
+
+it('rejects a refresh when no connection is held', async () => {
+  const disconnected = { db: null } as DeepReadonly<LogsState>;
+  await expect(reloadArchive(disconnected)).rejects.toThrow(
+    /no archive connection/i,
+  );
 });
 
 it('resolves empty over an empty archive', async () => {
