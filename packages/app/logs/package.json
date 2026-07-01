@@ -10,7 +10,8 @@
     "./config": "./src/config.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@vanilla-extract/css": "catalog:",
@@ -21,6 +22,9 @@
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": "*"

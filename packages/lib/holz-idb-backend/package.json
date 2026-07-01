@@ -12,12 +12,16 @@
     "./database": "./src/database.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@holz/core": "catalog:",
     "@lib/holz-valve": "workspace:*",
     "@lib/messaging": "workspace:*",
     "idb": "catalog:"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

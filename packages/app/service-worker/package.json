@@ -9,7 +9,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@app/experimental": "workspace:*",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@dev/build": "workspace:*",
+    "@dev/vitest-config": "workspace:*",
     "vite": "catalog:"
   }
 }

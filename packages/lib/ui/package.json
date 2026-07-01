@@ -19,7 +19,8 @@
     "#gallery/style": "./src/gallery/style.css.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@lib/design": "workspace:*",
@@ -27,6 +28,7 @@
     "@vanilla-extract/dynamic": "catalog:"
   },
   "devDependencies": {
+    "@dev/vitest-config": "workspace:*",
     "@lib/gallery": "workspace:*",
     "@solidjs/router": "catalog:",
     "@solidjs/testing-library": "catalog:",
