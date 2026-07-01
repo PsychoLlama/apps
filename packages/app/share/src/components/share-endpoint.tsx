@@ -10,7 +10,7 @@ import { ConnectionIndicator } from './connection-indicator';
 export const ShareEndpoint = () => (
   <>
     <SiteHeader
-      trail={[{ label: 'Share', href: '/share' }, { label: 'Endpoint' }]}
+      trail={[{ label: 'Share', href: '/share' }, { label: 'Connect' }]}
       actions={<ConnectionIndicator />}
     />
     <FrameBody>

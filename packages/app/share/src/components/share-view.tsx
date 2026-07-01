@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
 import { FrameBody, SiteHeader } from '@lib/shell';
-import { Callout, Code, Container, Flex, Text } from '@lib/ui';
+import { Callout, Code, Container, Flex, Heading, Text } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
 import { connection } from '../state/connection';
 import * as css from './share-view.css';
@@ -25,6 +25,10 @@ export const Share = () => (
     <FrameBody>
       <Container as="div" size={2}>
         <Flex as="div" direction="column" gap={4}>
+          <Heading as="h1" selectable={false}>
+            Sharing link
+          </Heading>
+
           <Callout color="neutral">
             <Text as="span" size={2} selectable={false}>
               Work in progress.
@@ -33,14 +37,9 @@ export const Share = () => (
 
           <Show when={connection.endpoint}>
             {(endpoint) => (
-              <Flex as="div" direction="column" gap={2}>
-                <Text as="span" size={1} color="lowContrast" selectable={false}>
-                  Your share link
-                </Text>
-                <Code color="neutral" size={2} selectable class={css.shareLink}>
-                  {shareLink(endpoint().current.endpointId)}
-                </Code>
-              </Flex>
+              <Code color="neutral" size={2} selectable class={css.shareLink}>
+                {shareLink(endpoint().current.endpointId)}
+              </Code>
             )}
           </Show>
         </Flex>
