@@ -6,7 +6,8 @@
   "description": "Shared Vitest building blocks: the common Vite plugin pipeline plus the per-package browser-test preset.",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts"
   },
   "scripts": {
     "typecheck": "tsc"

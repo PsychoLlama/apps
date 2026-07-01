@@ -48,10 +48,13 @@
           # `chromium-lock vitest …` and gives the policy a single home next to
           # where its locker is provisioned. s6-setlock takes an exclusive lock
           # (blocking by default); `-t` caps the wait in ms, and it releases
-          # the lock when the wrapped process exits. Referenced by store path
-          # so `chromium-lock` is the only thing that lands on `PATH`.
+          # the lock when the wrapped process exits. The wait cap defaults to
+          # 5min but honours `TEST_SUITE_TIMEOUT` (ms) so a slow machine or a
+          # deliberately-serialized batch can widen it without editing the
+          # flake. Referenced by store path so `chromium-lock` is the only
+          # thing that lands on `PATH`.
           chromium-lock = pkgs.writers.writeDashBin "chromium-lock" ''
-            exec ${pkgs.s6}/bin/s6-setlock -t 300000 /tmp/psychollama-apps.chromium.lock "$@"
+            exec ${pkgs.s6}/bin/s6-setlock -t "''${TEST_SUITE_TIMEOUT:-300000}" /tmp/psychollama-apps.chromium.lock "$@"
           '';
         in
         rec {
