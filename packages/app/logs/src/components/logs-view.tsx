@@ -5,10 +5,15 @@ import { LinkButton } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import {
   exportFlag,
-  hydrateExportFlagEffect,
   setExportEnabled,
   watchExportFlag,
 } from '../state/export-flag';
+import {
+  setWorkerControlled,
+  watchWorkerControl,
+  workerControl,
+} from '../state/worker-control';
+import { hydrateExportAvailabilityEffect } from '../state/export-availability';
 
 /**
  * The logs layout: the `<main>` frame for every `/logs/*` route. Each route
@@ -28,16 +33,19 @@ export const LogsView = (props: {
   trail: SiteHeaderCrumb[];
   children?: JSX.Element;
 }) => {
-  const reconcileFlag = useEffect(hydrateExportFlagEffect);
+  const reconcile = useEffect(hydrateExportAvailabilityEffect);
   const setEnabled = useAction(setExportEnabled);
+  const setControlled = useAction(setWorkerControlled);
 
-  // The store is seeded with the build-environment default, so first
-  // paint (and prerender) match without a flash. Once mounted — OPFS is
-  // client-only, unavailable during SSG — reconcile with any persisted
-  // override and track changes made in other tabs.
+  // Both stores are seeded so first paint (and prerender) match without a
+  // flash. Once mounted — OPFS and the service worker are client-only,
+  // unavailable during SSG — a single reconcile lands both gating
+  // conditions in one flush; the watchers then track later changes: the
+  // flag from any tab, and service-worker control handoffs.
   onMount(() => {
-    void reconcileFlag();
+    void reconcile();
     onCleanup(watchExportFlag(setEnabled));
+    onCleanup(watchWorkerControl(setControlled));
   });
 
   return (
@@ -45,7 +53,7 @@ export const LogsView = (props: {
       <SiteHeader
         trail={props.trail}
         actions={
-          <Show when={exportFlag.enabled}>
+          <Show when={exportFlag.enabled && workerControl.controlled}>
             <ExportButton />
           </Show>
         }
@@ -60,6 +68,11 @@ export const LogsView = (props: {
  * as an `.ndjson` file from the service worker's `/api/local/logs` route, which
  * streams every persisted log oldest-first. `native` keeps the router out of
  * the way — the route is a service-worker resource, not an in-app page.
+ *
+ * `target="_self"` (rather than `download`) is load-bearing: a `download`
+ * anchor bypasses the service worker with a native fetch, missing the stream
+ * and landing on the 404 page. Navigating instead lets the worker answer and
+ * its `Content-Disposition` header drive the download.
  */
 const ExportButton = () => (
   <LinkButton
@@ -68,7 +81,7 @@ const ExportButton = () => (
     color="neutral"
     native
     href="/api/local/logs"
-    download="logs.ndjson"
+    target="_self"
   >
     <IconDownload aria-hidden="true" />
     Export
