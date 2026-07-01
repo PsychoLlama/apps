@@ -9,10 +9,11 @@ import type { JsonValue, Override } from './define-config';
 export const channelName = (id: string): string => `runtime-config:${id}`;
 
 /**
- * The subscribe side of one option's channel: a `BroadcastChannel` held open
- * only while something is listening, with sibling posts fanned out to every
- * local handler. Idle options cost nothing — no channel exists until the first
- * subscriber, and it's torn down again once the last one leaves.
+ * One option's channel: a `BroadcastChannel` held open only while something is
+ * listening, carrying overrides between contexts and — via the transport's
+ * `localEmit` — back to this context's own subscribers. Idle options cost
+ * nothing: no channel exists until the first subscriber, and it's torn down
+ * again once the last one leaves.
  */
 class OptionChannel {
   readonly #name: string;
@@ -30,11 +31,12 @@ class OptionChannel {
     this.#name = channelName(id);
   }
 
-  /** Subscribe to overrides from any context. Returns an unsubscribe. */
+  /**
+   * Subscribe to overrides from any context, including writes {@link publish}ed
+   * here. Returns an unsubscribe.
+   */
   onMessage(handler: (override: Override<JsonValue>) => void): () => void {
-    const transport = (this.#transport ??= new BroadcastChannelTransport(
-      this.#name,
-    ));
+    const transport = (this.#transport ??= this.#open());
     const detach = transport.onMessage(handler);
     this.#subscribers++;
 
@@ -49,10 +51,36 @@ class OptionChannel {
       }
     };
   }
+
+  /**
+   * Announce an override to every context, including this one. When something
+   * here is listening, the live transport self-emits so this context hears its
+   * own write; otherwise a throwaway carries the post to other contexts and
+   * closes right away, so a writer that isn't subscribed holds no IPC open.
+   */
+  publish(override: Override<JsonValue>): void {
+    if (this.#transport) {
+      this.#transport.send(override);
+      return;
+    }
+
+    const transport = this.#open();
+    transport.send(override);
+    transport.close();
+  }
+
+  // `localEmit` folds publish and subscribe onto one instance: a write sent
+  // here reaches sibling contexts and echoes back to this context's handlers.
+  #open(): BroadcastChannelTransport<Override<JsonValue>, Override<JsonValue>> {
+    return new BroadcastChannelTransport({
+      channel: this.#name,
+      localEmit: true,
+    });
+  }
 }
 
-// One `OptionChannel` per option ID, built on first subscribe. A null-proto map
-// so option IDs can't collide with `Object.prototype` keys.
+// One `OptionChannel` per option ID. A null-proto map so option IDs can't
+// collide with `Object.prototype` keys.
 const channels = Object.create(null) as Record<string, OptionChannel>;
 
 const getChannel = (id: string): OptionChannel =>
@@ -60,20 +88,10 @@ const getChannel = (id: string): OptionChannel =>
 
 /**
  * Announce an option change to subscribers in every context, including this
- * one. Opens a throwaway channel for the single post and closes it right away,
- * so a writer that isn't also subscribed never holds IPC open for traffic it
- * doesn't watch. The throwaway is a *distinct* `BroadcastChannel` instance, so
- * a same-context subscriber hears the write back through the channel (a channel
- * only withholds a post from the exact instance that sent it).
+ * one.
  */
-export const publish = (id: string, override: Override<JsonValue>): void => {
-  const transport = new BroadcastChannelTransport<
-    Override<JsonValue>,
-    Override<JsonValue>
-  >(channelName(id));
-  transport.send(override);
-  transport.close();
-};
+export const publish = (id: string, override: Override<JsonValue>): void =>
+  getChannel(id).publish(override);
 
 /** Subscribe to one option's changes from any context. Returns an unsubscribe. */
 export const onConfigMessage = (
