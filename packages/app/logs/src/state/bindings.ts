@@ -1,19 +1,61 @@
 import { defineAction, defineEffect, ref } from '@lib/state';
-import { createLogger, toError } from '@lib/observability';
-import { closeArchive, loadArchive, type LoadedArchive } from './capabilities';
+import { createLogger, toError, type Log } from '@lib/observability';
+import {
+  closeArchive,
+  loadArchive,
+  readNewLogs,
+  type LoadedArchive,
+} from './capabilities';
 import { logsStore } from './store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
-/** Land a freshly read snapshot, plus the connection it came through, and mark the archive ready. */
+/**
+ * Land a freshly read snapshot, plus the connection it came through, and mark
+ * the archive ready. The snapshot is current as of this read, so freshness
+ * resets to `current` — any ping that arrived while the read was in flight is
+ * absorbed by it.
+ */
 export const setLogs = defineAction(
   [logsStore],
   (state, archive: LoadedArchive) => {
     state.status = 'ready';
+    state.freshness = 'current';
     state.entries = archive.entries;
     state.db = ref(archive.db);
   },
 );
+
+/**
+ * Mark the shown archive behind disk after the backend reports new logs. Only
+ * meaningful once a read has landed a `current` baseline — before that the
+ * in-flight read will show whatever's there, and after a ping is already
+ * pending nothing changes.
+ */
+export const markLogsStale = defineAction([logsStore], (state) => {
+  if (state.freshness === 'current') state.freshness = 'stale';
+});
+
+/**
+ * Land newly read logs and mark the archive current again. The refresh reads
+ * only what arrived since the last snapshot, so prepend it: both the new tail
+ * and the held entries are newest-first, and everything new outranks everything
+ * held, so concatenation preserves the global order. A press that turned up
+ * nothing still settles freshness back to `current`.
+ */
+export const applyReload = defineAction([logsStore], (state, added: Log[]) => {
+  state.freshness = 'current';
+  if (added.length > 0) state.entries = [...added, ...state.entries];
+});
+
+/**
+ * Record a failed refresh. Unlike the initial read, the viewer already has a
+ * snapshot on screen and a live connection — so leave both in place and stay
+ * `stale` (the action remains available to retry), just log the failure.
+ */
+const failRefresh = defineAction([logsStore], (_state, error: Error) => {
+  logger.error('Failed to refresh the log archive.', { error: toError(error) });
+});
 
 /**
  * Record a failed read. The viewer is read-only, so there's nothing to
@@ -48,4 +90,14 @@ export const loadLogsEffect = defineEffect([], loadArchive, {
  */
 export const releaseLogsEffect = defineEffect([logsStore], closeArchive, {
   onSuccess: clearDatabase,
+});
+
+/**
+ * Read logs added since the snapshot through the held connection and land them.
+ * Backs the refresh action, which only surfaces once {@link loadLogsEffect} has
+ * opened a connection — so this reuses it rather than opening a second.
+ */
+export const refreshLogsEffect = defineEffect([logsStore], readNewLogs, {
+  onSuccess: applyReload,
+  onFailure: failRefresh,
 });

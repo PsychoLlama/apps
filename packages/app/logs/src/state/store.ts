@@ -13,10 +13,24 @@ import type { LogConnection } from '@lib/holz-idb-backend/database';
  */
 export type LogsStatus = 'loading' | 'ready' | 'error';
 
+/**
+ * How the in-memory archive relates to what's persisted on disk.
+ *
+ * - `initial` — no read has resolved yet, so there's no baseline to compare
+ *   against. Also the SSG/first-paint state. The refresh action stays hidden.
+ * - `current` — `entries` matches the store as of the last read. The refresh
+ *   action shows but is disabled — there's nothing new to pull in.
+ * - `stale` — the backend pinged that new logs landed since the last read, so
+ *   `entries` is behind disk. The refresh action lights up.
+ */
+export type LogFreshness = 'initial' | 'current' | 'stale';
+
 /** The on-device log archive, as read back from IndexedDB. */
 export interface LogsState {
   /** Where the archive read sits in its lifecycle. */
   status: LogsStatus;
+  /** How `entries` relates to what's persisted — drives the refresh action. */
+  freshness: LogFreshness;
   /** Persisted logs, newest-first. Empty until a read resolves. */
   entries: Log[];
   /**
@@ -30,6 +44,7 @@ export interface LogsState {
 
 export const logsStore = defineStore<LogsState>(() => ({
   status: 'loading',
+  freshness: 'initial',
   entries: [],
   db: null,
 }));

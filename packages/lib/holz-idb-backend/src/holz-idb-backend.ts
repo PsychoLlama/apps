@@ -2,6 +2,7 @@ import type { IDBPDatabase } from 'idb';
 import type { LogProcessor } from '@holz/core';
 import { createLogValve } from '@lib/holz-valve';
 
+import { createLogInsertedChannel } from './broadcast';
 import {
   STORE_NAME,
   migrateLogDatabase,
@@ -59,6 +60,14 @@ export const createIdbBackend = (
   let connecting = false;
   let migrated = false;
 
+  // Pings viewers that the archive gained logs so they can offer a refresh.
+  // Fired once the write commits, not on the attempt — a write that later fails
+  // pings nothing, so no viewer is left with a spurious stale flag to shake off.
+  // One ping per committed write; coalescing a burst is future work at the
+  // IndexedDB layer, not this channel's job.
+  const channel = createLogInsertedChannel();
+  const announce = () => channel.send(undefined);
+
   // Logs flow downstream into whichever connection is currently live. Start
   // closed, buffering until the first open; the valve only opens once `db` is
   // set, so the write path normally has a connection — the `?.` is
@@ -72,11 +81,11 @@ export const createIdbBackend = (
     capacity: bufferCapacity,
     open: false,
     processor: (log) => {
-      db?.add(STORE_NAME, log).catch(() => {
-        // A failed write (quota exhausted, the connection closing mid-flush)
-        // drops the log rather than surfacing — there's no safe way to report
-        // it without recursing into the logger.
-      });
+      // Announce only once the write commits. A failed write (quota exhausted,
+      // the connection closing mid-flush) drops the log and pings nothing rather
+      // than surfacing — there's no safe way to report it without recursing into
+      // the logger.
+      db?.add(STORE_NAME, log).then(announce, () => {});
     },
     drain: (logs) => {
       // The valve only opens from within `connect`, which sets `db` first, and
@@ -87,11 +96,18 @@ export const createIdbBackend = (
       }
 
       // One transaction for the whole batch. `add` is fire-and-forget like the
-      // streaming path; awaiting `tx.done` only catches a failed flush so it
-      // drops rather than surfacing — reporting it would recurse into the logger.
+      // streaming path. Announce once the batch commits — a failed flush drops
+      // rather than surfacing (reporting it would recurse into the logger) and
+      // pings nothing. An open with an empty buffer drains nothing, so only ping
+      // when the batch actually carried logs.
       const tx = db.transaction(STORE_NAME, 'readwrite');
       for (const log of logs) void tx.store.add(log);
-      tx.done.catch(() => {});
+      tx.done.then(
+        () => {
+          if (logs.length > 0) announce();
+        },
+        () => {},
+      );
     },
   });
 
