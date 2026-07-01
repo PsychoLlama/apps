@@ -87,16 +87,17 @@ export default defineConfig({
         //     access at runtime via the per-app flag (see
         //     `@lib/runtime-config`), so there's nothing to decide at
         //     build time here.
-        //   - `/share/with/connect`: a representative shell for the dynamic
-        //     `/share/with/:endpoint` route. The endpoint id only exists
-        //     client-side (it's a live relay handle), so the route can't
-        //     be prerendered per-id — but its first paint is a fixed stub
-        //     independent of the id, so one shell serves every id. The
-        //     hook below flattens it to `/share-connect.html`, and
+        //   - `/share/with/__endpoint`: a representative shell for the
+        //     dynamic `/share/with/:endpoint` route. The endpoint id only
+        //     exists client-side (it's a live relay handle), so the route
+        //     can't be prerendered per-id — but its first paint is a fixed
+        //     stub independent of the id, so one shell serves every id. The
+        //     `__endpoint` sentinel stands in for the missing id; the hook
+        //     below flattens it to `/share/__endpoint.html`, and
         //     `public/_redirects` rewrites `/share/with/*` onto it so a cold
         //     load hydrates against a share-shaped shell instead of the
         //     404 page (which would mismatch and throw).
-        routes: ['/404', '/experimental', '/share', '/share/with/connect'],
+        routes: ['/404', '/experimental', '/share', '/share/with/__endpoint'],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file
@@ -108,15 +109,17 @@ export default defineConfig({
             route.fileName = '/404.html';
           }
 
-          // Flatten the `/share/with/:endpoint` shell to a root-level file,
-          // outside the `/share/with/` prefix. `public/_redirects` rewrites
-          // `/share/with/*` onto it, and Cloudflare normalizes rewrite targets
-          // by stripping `/index` and `.html` before its loop check — so a
-          // target left under `/share/with/` renormalizes into the
-          // `/share/with/*` source and the whole rule gets rejected as an
-          // infinite loop.
-          if (route.route === '/share/with/connect') {
-            route.fileName = '/share-connect.html';
+          // Flatten the `/share/with/:endpoint` shell up one level, to a
+          // sibling of `/share/with/` rather than a child of it.
+          // `public/_redirects` rewrites `/share/with/*` onto it, and
+          // Cloudflare normalizes rewrite targets by stripping `/index` and
+          // `.html` before its loop check — so a target left under
+          // `/share/with/` would renormalize into the `/share/with/*` source
+          // and the whole rule gets rejected as an infinite loop. Nesting at
+          // `/share/` (a shallower prefix the source can't match) keeps the
+          // shell tucked under the share app without tripping that check.
+          if (route.route === '/share/with/__endpoint') {
+            route.fileName = '/share/__endpoint.html';
           }
         },
       },

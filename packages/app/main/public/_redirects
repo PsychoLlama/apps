@@ -16,10 +16,10 @@
 # client hydrates a share route against 404 markup, throwing a hydration error.
 # A 200 rewrite (not a redirect) keeps the id in the URL for the client router.
 # `:endpoint` matches a single segment. The target is the extensionless
-# `/share-connect` (served from `/share-connect.html`): Cloudflare strips a
+# `/share/__endpoint` (served from `/share/__endpoint.html`): Cloudflare strips a
 # trailing `/index` or `.html` from the target and 307s to the stripped path, so
-# naming the `.html` here would bounce every id to a bare `/share-connect`,
-# dropping it from the URL. Living outside `/share/with/` also keeps the stripped
-# form from renormalizing into `/share/with/:endpoint` and tripping loop
-# detection.
-/share/with/:endpoint  /share-connect  200
+# naming the `.html` here would bounce every id to a bare `/share/__endpoint`,
+# dropping it from the URL. The target sits one level up from `/share/with/`, a
+# prefix the source can't match, so the stripped form never renormalizes into
+# `/share/with/:endpoint` and trips loop detection.
+/share/with/:endpoint  /share/__endpoint  200
