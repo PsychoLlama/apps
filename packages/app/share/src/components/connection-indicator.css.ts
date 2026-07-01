@@ -32,15 +32,3 @@ export const connected = style({
 export const failed = style({
   color: danger.solid[11],
 });
-
-// Keeps the status copy out of view while leaving it in the accessibility
-// tree for the `<output>` live region to announce. Mirrors the visually-
-// hidden input pattern in `@lib/ui`'s radio-cards.
-export const visuallyHidden = style({
-  position: 'absolute',
-  width: '1px',
-  height: '1px',
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  whiteSpace: 'nowrap',
-});
