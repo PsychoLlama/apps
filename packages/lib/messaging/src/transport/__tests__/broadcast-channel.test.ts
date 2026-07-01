@@ -10,8 +10,12 @@ type Wire = { type: 'created'; file: string };
 const setup = () => {
   // A unique name per call so concurrent tests don't cross-talk on one channel.
   const name = `broadcast-channel-test-${channels++}`;
-  const publisher = new BroadcastChannelTransport<never, Wire>(name);
-  const subscriber = new BroadcastChannelTransport<Wire, never>(name);
+  const publisher = new BroadcastChannelTransport<never, Wire>({
+    channel: name,
+  });
+  const subscriber = new BroadcastChannelTransport<Wire, never>({
+    channel: name,
+  });
   const close = () => {
     publisher.close();
     subscriber.close();
@@ -58,7 +62,9 @@ describe('BroadcastChannelTransport', () => {
     // A separate transport on the same name, opened before the post, is the
     // delivery barrier: once it hears the message the routing is done, so an
     // empty `seen` proves close() detached the subscriber's handler.
-    const barrier = new BroadcastChannelTransport<Wire, never>(name);
+    const barrier = new BroadcastChannelTransport<Wire, never>({
+      channel: name,
+    });
     const routed = new Promise<void>((resolve) =>
       barrier.onMessage(() => resolve()),
     );
@@ -90,5 +96,59 @@ describe('BroadcastChannelTransport', () => {
 
     expect(seen).toEqual([]);
     close();
+  });
+
+  it('withholds a send from its own handlers by default', async () => {
+    const name = `broadcast-channel-test-${channels++}`;
+    const solo = new BroadcastChannelTransport<Wire, Wire>({ channel: name });
+    const seen: Wire[] = [];
+    solo.onMessage((message) => seen.push(message));
+
+    // A sibling transport on the same name is the delivery barrier: once it
+    // hears solo's post the routing is done, so an empty `seen` proves solo
+    // never echoed the send to itself.
+    const barrier = new BroadcastChannelTransport<Wire, never>({
+      channel: name,
+    });
+    const routed = new Promise<void>((resolve) =>
+      barrier.onMessage(() => resolve()),
+    );
+
+    solo.send({ type: 'created', file: 'self.ndjson' });
+    await routed;
+
+    expect(seen).toEqual([]);
+    solo.close();
+    barrier.close();
+  });
+
+  it('echoes a send back to its own handlers when localEmit is set', () => {
+    const solo = new BroadcastChannelTransport<Wire, Wire>({
+      channel: `broadcast-channel-test-${channels++}`,
+      localEmit: true,
+    });
+    const seen: Wire[] = [];
+    solo.onMessage((message) => seen.push(message));
+
+    solo.send({ type: 'created', file: 'self.ndjson' });
+
+    // Self-emit fires synchronously — no need to await a round trip.
+    expect(seen).toEqual([{ type: 'created', file: 'self.ndjson' }]);
+    solo.close();
+  });
+
+  it('stops self-emitting to a handler after it unsubscribes', () => {
+    const solo = new BroadcastChannelTransport<Wire, Wire>({
+      channel: `broadcast-channel-test-${channels++}`,
+      localEmit: true,
+    });
+    const seen: Wire[] = [];
+    const unsubscribe = solo.onMessage((message) => seen.push(message));
+
+    unsubscribe();
+    solo.send({ type: 'created', file: 'self.ndjson' });
+
+    expect(seen).toEqual([]);
+    solo.close();
   });
 });
