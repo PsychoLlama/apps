@@ -9,16 +9,17 @@
 # the trailing literal keeps it scoped to the old manifest asset.
 /_build/assets/manifest-:hash.webmanifest  /manifest.webmanifest  301
 
-# Serve the flattened `/share/:endpoint` shell for every endpoint id. The id is
-# a live client-side relay handle, so no per-id page can be prerendered; without
-# this a cold load falls through to the 404 shell and the client hydrates a
-# share route against 404 markup, throwing a hydration error. A 200 rewrite (not
-# a redirect) keeps the id in the URL for the client router. `:id` matches a
-# single segment — unlike a `/share/*` splat it leaves `/share/` (the index's
-# own trailing-slash URL) alone. The target is the extensionless
+# Serve the flattened `/share/with/:endpoint` shell for every endpoint id. The
+# id is a live client-side relay handle, so no per-id page can be prerendered
+# (Cloudflare's static assets match literal paths only — no `[param]` filename
+# routing); without this a cold load falls through to the 404 shell and the
+# client hydrates a share route against 404 markup, throwing a hydration error.
+# A 200 rewrite (not a redirect) keeps the id in the URL for the client router.
+# `:endpoint` matches a single segment. The target is the extensionless
 # `/share-connect` (served from `/share-connect.html`): Cloudflare strips a
 # trailing `/index` or `.html` from the target and 307s to the stripped path, so
 # naming the `.html` here would bounce every id to a bare `/share-connect`,
-# dropping it from the URL. Living outside `/share/` also keeps the stripped
-# form from renormalizing into `/share/:id` and tripping loop detection.
-/share/:id  /share-connect  200
+# dropping it from the URL. Living outside `/share/with/` also keeps the stripped
+# form from renormalizing into `/share/with/:endpoint` and tripping loop
+# detection.
+/share/with/:endpoint  /share-connect  200

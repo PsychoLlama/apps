@@ -87,16 +87,16 @@ export default defineConfig({
         //     access at runtime via the per-app flag (see
         //     `@lib/runtime-config`), so there's nothing to decide at
         //     build time here.
-        //   - `/share/connect`: a representative shell for the dynamic
-        //     `/share/:endpoint` route. The endpoint id only exists
+        //   - `/share/with/connect`: a representative shell for the dynamic
+        //     `/share/with/:endpoint` route. The endpoint id only exists
         //     client-side (it's a live relay handle), so the route can't
         //     be prerendered per-id — but its first paint is a fixed stub
         //     independent of the id, so one shell serves every id. The
         //     hook below flattens it to `/share-connect.html`, and
-        //     `public/_redirects` rewrites `/share/*` onto it so a cold
+        //     `public/_redirects` rewrites `/share/with/*` onto it so a cold
         //     load hydrates against a share-shaped shell instead of the
         //     404 page (which would mismatch and throw).
-        routes: ['/404', '/experimental', '/share', '/share/connect'],
+        routes: ['/404', '/experimental', '/share', '/share/with/connect'],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file
@@ -108,13 +108,14 @@ export default defineConfig({
             route.fileName = '/404.html';
           }
 
-          // Flatten the `/share/:endpoint` shell to a root-level file,
-          // outside the `/share/` prefix. `public/_redirects` rewrites
-          // `/share/*` onto it, and Cloudflare normalizes rewrite targets
+          // Flatten the `/share/with/:endpoint` shell to a root-level file,
+          // outside the `/share/with/` prefix. `public/_redirects` rewrites
+          // `/share/with/*` onto it, and Cloudflare normalizes rewrite targets
           // by stripping `/index` and `.html` before its loop check — so a
-          // target left under `/share/` renormalizes into the `/share/*`
-          // source and the whole rule gets rejected as an infinite loop.
-          if (route.route === '/share/connect') {
+          // target left under `/share/with/` renormalizes into the
+          // `/share/with/*` source and the whole rule gets rejected as an
+          // infinite loop.
+          if (route.route === '/share/with/connect') {
             route.fileName = '/share-connect.html';
           }
         },
