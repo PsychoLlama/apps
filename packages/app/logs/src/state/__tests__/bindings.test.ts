@@ -29,73 +29,81 @@ const setup = () => {
   return { ...bindings, logs };
 };
 
-it('seeds freshness as initial before any read', () => {
-  const { logs } = setup();
-  expect(logs.freshness).toBe('initial');
+describe('logsStore', () => {
+  it('seeds freshness as initial before any read', () => {
+    const { logs } = setup();
+    expect(logs.freshness).toBe('initial');
+  });
 });
 
-it('marks the archive current when a read lands', () => {
-  const { logs, useAction } = setup();
+describe('setLogs', () => {
+  it('marks the archive current when a read lands', () => {
+    const { logs, useAction } = setup();
 
-  useAction(setLogs)({ db: fakeConnection, entries: [] });
+    useAction(setLogs)({ db: fakeConnection, entries: [] });
 
-  expect(logs.freshness).toBe('current');
+    expect(logs.freshness).toBe('current');
+  });
+
+  it('lands the archive back at current on a re-read', () => {
+    const { logs, useAction } = setup();
+    useAction(setLogs)({ db: fakeConnection, entries: [] });
+    useAction(markLogsStale)();
+
+    // A fresh read supersedes the stale flag.
+    useAction(setLogs)({ db: fakeConnection, entries: [] });
+
+    expect(logs.freshness).toBe('current');
+  });
 });
 
-it('flips a current archive to stale on a ping', () => {
-  const { logs, useAction } = setup();
-  useAction(setLogs)({ db: fakeConnection, entries: [] });
+describe('markLogsStale', () => {
+  it('flips a current archive to stale on a ping', () => {
+    const { logs, useAction } = setup();
+    useAction(setLogs)({ db: fakeConnection, entries: [] });
 
-  useAction(markLogsStale)();
+    useAction(markLogsStale)();
 
-  expect(logs.freshness).toBe('stale');
+    expect(logs.freshness).toBe('stale');
+  });
+
+  it('ignores pings before the first read lands', () => {
+    const { logs, useAction } = setup();
+
+    // No baseline yet — the in-flight read will show whatever's there, so a ping
+    // has nothing to invalidate.
+    useAction(markLogsStale)();
+
+    expect(logs.freshness).toBe('initial');
+  });
 });
 
-it('ignores pings before the first read lands', () => {
-  const { logs, useAction } = setup();
+describe('applyReload', () => {
+  it('prepends refreshed logs ahead of the held snapshot', () => {
+    const { logs, useAction } = setup();
+    const held = makeLog({ message: 'held', timestamp: 1000 });
+    useAction(setLogs)({ db: fakeConnection, entries: [held] });
+    useAction(markLogsStale)();
 
-  // No baseline yet — the in-flight read will show whatever's there, so a ping
-  // has nothing to invalidate.
-  useAction(markLogsStale)();
+    // The refresh reads only the newer tail; it lands ahead of the snapshot so
+    // the merged list stays newest-first.
+    const added = makeLog({ message: 'added', timestamp: 2000 });
+    useAction(applyReload)([added]);
 
-  expect(logs.freshness).toBe('initial');
-});
+    expect(logs.freshness).toBe('current');
+    expect(logs.entries.map((log) => log.message)).toEqual(['added', 'held']);
+  });
 
-it('re-reads land the archive back at current', () => {
-  const { logs, useAction } = setup();
-  useAction(setLogs)({ db: fakeConnection, entries: [] });
-  useAction(markLogsStale)();
+  it('settles freshness to current when a refresh adds nothing', () => {
+    const { logs, useAction } = setup();
+    const held = makeLog({ message: 'held', timestamp: 1000 });
+    useAction(setLogs)({ db: fakeConnection, entries: [held] });
+    useAction(markLogsStale)();
 
-  // A fresh read supersedes the stale flag.
-  useAction(setLogs)({ db: fakeConnection, entries: [] });
+    // An empty delta still confirms the view is current, and leaves entries be.
+    useAction(applyReload)([]);
 
-  expect(logs.freshness).toBe('current');
-});
-
-it('prepends refreshed logs ahead of the held snapshot', () => {
-  const { logs, useAction } = setup();
-  const held = makeLog({ message: 'held', timestamp: 1000 });
-  useAction(setLogs)({ db: fakeConnection, entries: [held] });
-  useAction(markLogsStale)();
-
-  // The refresh reads only the newer tail; it lands ahead of the snapshot so
-  // the merged list stays newest-first.
-  const added = makeLog({ message: 'added', timestamp: 2000 });
-  useAction(applyReload)([added]);
-
-  expect(logs.freshness).toBe('current');
-  expect(logs.entries.map((log) => log.message)).toEqual(['added', 'held']);
-});
-
-it('settles freshness to current when a refresh adds nothing', () => {
-  const { logs, useAction } = setup();
-  const held = makeLog({ message: 'held', timestamp: 1000 });
-  useAction(setLogs)({ db: fakeConnection, entries: [held] });
-  useAction(markLogsStale)();
-
-  // An empty delta still confirms the view is current, and leaves entries be.
-  useAction(applyReload)([]);
-
-  expect(logs.freshness).toBe('current');
-  expect(logs.entries.map((log) => log.message)).toEqual(['held']);
+    expect(logs.freshness).toBe('current');
+    expect(logs.entries.map((log) => log.message)).toEqual(['held']);
+  });
 });
