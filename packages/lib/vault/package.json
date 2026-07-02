@@ -10,6 +10,13 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
+  },
+  "dependencies": {
+    "idb": "catalog:"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

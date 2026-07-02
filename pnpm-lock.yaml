@@ -747,7 +747,15 @@ importers:
         specifier: ^1.9.13
         version: 1.9.13
 
-  packages/lib/vault: {}
+  packages/lib/vault:
+    dependencies:
+      idb:
+        specifier: 'catalog:'
+        version: 8.0.3
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
 
 packages:
 

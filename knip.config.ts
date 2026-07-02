@@ -109,6 +109,15 @@ const config: KnipConfig = {
         'src/**/__tests__/*.test.browser.{ts,tsx}',
       ],
     },
+    'packages/lib/vault': {
+      // Web Crypto and IndexedDB are only real in a browser, so the
+      // encryption round-trip tests live under `*.test.browser.ts`, run via
+      // the per-package browser config.
+      entry: [
+        'vitest.browser.config.ts',
+        'src/**/__tests__/*.test.browser.{ts,tsx}',
+      ],
+    },
     'packages/dev/vitest-config': {
       // Deps the shared preset pulls in by side effect rather than by a
       // named import, so knip can't see them: the browser-mode runtime and
