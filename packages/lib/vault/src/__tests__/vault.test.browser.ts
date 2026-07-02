@@ -146,6 +146,27 @@ describe('vault', () => {
     await expect(read('protected')).rejects.toThrow();
   });
 
+  it('rejects a read when a ciphertext is relocated to a different id', async () => {
+    await write('source', encode('bound to source'));
+
+    // Copy the raw ciphertext record onto a different id — exactly what an
+    // attacker with IndexedDB access but no key could do (an extension,
+    // devtools, disk access). The id is folded into the AES-GCM tag as
+    // additional authenticated data, so the record must fail to decrypt at the
+    // id it was moved to.
+    const db = await openVaultDatabase();
+    try {
+      const record = (await db.get(DATA_STORE, 'source'))!;
+      await db.put(DATA_STORE, record, 'destination');
+    } finally {
+      db.close();
+    }
+
+    await expect(read('destination')).rejects.toThrow();
+    // The value still decrypts at the id it was actually written under.
+    expect(decode((await read('source'))!)).toBe('bound to source');
+  });
+
   it('rejects a read when a value survives but its key is gone', async () => {
     await write('orphan', encode('unrecoverable'));
 
