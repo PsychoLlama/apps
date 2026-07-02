@@ -5,20 +5,30 @@ import init, {
 } from '@crate/iroh';
 import { createLogger, toError } from '@lib/observability';
 import type { DeepReadonly } from '@lib/state';
-import { loadSecretKey, saveSecretKey } from './key-store';
+import { read, write, type VaultId } from '@lib/vault';
 import type { ConnectionState } from './store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
+ * Vault id the endpoint's secret key is persisted under, namespaced per the
+ * vault's id convention. The key is the private half of the endpoint's
+ * identity — and thus its share link — so it goes through `@lib/vault`, which
+ * encrypts it at rest under a non-extractable AES-GCM key rather than leaving
+ * the raw bytes on disk in the clear.
+ */
+const SECRET_KEY_ID: VaultId = 'iroh/secret-key';
+
+/**
  * Restore the saved endpoint key, or `undefined` if none is stored. A failed
- * read (e.g. IndexedDB blocked in private mode) is logged and swallowed:
- * persistence is a convenience, so we fall back to minting a fresh identity
- * rather than failing the connect outright.
+ * read (e.g. IndexedDB blocked in private mode, or a cleared encryption key) is
+ * logged and swallowed: persistence is a convenience, so we fall back to
+ * minting a fresh identity rather than failing the connect outright.
  */
 const restoreSecretKey = async (): Promise<Uint8Array | undefined> => {
   try {
-    return await loadSecretKey();
+    const stored = await read(SECRET_KEY_ID);
+    return stored ? new Uint8Array(stored) : undefined;
   } catch (error) {
     logger.warn('Could not read the saved endpoint key; minting a fresh one.', {
       error: toError(error),
@@ -35,7 +45,7 @@ const restoreSecretKey = async (): Promise<Uint8Array | undefined> => {
  */
 const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
   try {
-    await saveSecretKey(secretKey);
+    await write(SECRET_KEY_ID, secretKey);
   } catch (error) {
     logger.warn('Could not persist the endpoint key; identity may change.', {
       error: toError(error),

@@ -23,8 +23,8 @@
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",
-    "@vanilla-extract/css": "catalog:",
-    "idb": "catalog:"
+    "@lib/vault": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {
     "@solidjs/router": "*",

@@ -94,6 +94,17 @@ describe('vault', () => {
     expect(new Uint8Array((await read('binary'))!)).toEqual(bytes);
   });
 
+  it('accepts a Uint8Array with the default buffer type, no copy required', async () => {
+    // The `: Uint8Array` annotation widens the buffer to `ArrayBufferLike` —
+    // the shape wasm bindings hand back. This guards `write`'s signature: were
+    // it the narrower `BufferSource`, this line would fail to type-check.
+    const bytes: Uint8Array = new Uint8Array([7, 8, 9]);
+
+    await write('wide-buffer', bytes);
+
+    expect(new Uint8Array((await read('wide-buffer'))!)).toEqual(bytes);
+  });
+
   it('persists a single non-extractable key and reuses it across writes', async () => {
     await write('one', encode('first'));
     await write('two', encode('second'));
