@@ -21,11 +21,7 @@ export type CardsVariant = 'surface' | 'classic';
 
 /** Semantic color palette for the card focus / indicator cue. */
 export type CardsColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
+  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 /** Fixed column count — overrides the auto-fit default. */
 export type CardsColumns = 1 | 2 | 3 | 4 | 5 | 6;

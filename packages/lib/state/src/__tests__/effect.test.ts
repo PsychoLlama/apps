@@ -141,9 +141,8 @@ describe('defineEffect / useEffect', () => {
   it('returns void for sync effects and Promise<void> for async effects', async () => {
     const { useEffect } = bootstrap();
     const syncEffect = defineEffect([], (value: number) => value);
-    const asyncEffect = defineEffect(
-      [],
-      (value: number): Promise<number> => Promise.resolve(value),
+    const asyncEffect = defineEffect([], (value: number): Promise<number> =>
+      Promise.resolve(value),
     );
 
     const syncResult: void = useEffect(syncEffect)(1);
@@ -156,9 +155,8 @@ describe('defineEffect / useEffect', () => {
 
   it('skips missing lifecycle handlers without error', async () => {
     const { useEffect, session } = bootstrap();
-    const effect = defineEffect(
-      [],
-      (value: number): Promise<number> => Promise.resolve(value),
+    const effect = defineEffect([], (value: number): Promise<number> =>
+      Promise.resolve(value),
     );
 
     await useEffect(effect)(7);

@@ -140,11 +140,7 @@ export function decode(
 
 /** Bytes or a compiled module to instantiate the wasm from. */
 export type InitInput =
-  | RequestInfo
-  | URL
-  | Response
-  | BufferSource
-  | WebAssembly.Module;
+  RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 /**
  * Instantiate the module. With no argument the glue fetches the sibling

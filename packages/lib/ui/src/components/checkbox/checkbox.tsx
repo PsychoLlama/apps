@@ -75,11 +75,7 @@ export type CheckboxSize = 1 | 2 | 3;
 export type CheckboxVariant = 'classic' | 'surface' | 'soft';
 /** Semantic color palette for the checked indicator. */
 export type CheckboxColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
+  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 /**
  * Tri-state value. `true` and `false` cover the binary cases;

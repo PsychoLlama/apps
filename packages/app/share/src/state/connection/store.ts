@@ -17,10 +17,7 @@ import type { Connection } from '@crate/iroh';
  *   look like nothing was attempted.
  */
 export type ConnectionStatus =
-  | 'initial'
-  | 'connecting'
-  | 'connected'
-  | 'failed';
+  'initial' | 'connecting' | 'connected' | 'failed';
 
 /** The browser's live membership in the iroh relay network. */
 export interface ConnectionState {

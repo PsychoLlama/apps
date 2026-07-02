@@ -46,11 +46,7 @@ export type ProgressVariant = 'classic' | 'surface' | 'soft';
 export type ProgressRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
 /** Semantic color palette for the indicator. */
 export type ProgressColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
+  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 /**
  * `Progress` props. Surfaces native `<div>` attributes apart from the

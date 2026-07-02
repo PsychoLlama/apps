@@ -55,11 +55,7 @@ export type SliderVariant = 'classic' | 'surface' | 'soft';
 export type SliderRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
 /** Semantic palette for the filled range. */
 export type SliderColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
+  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 /** Layout axis. */
 export type SliderOrientation = 'horizontal' | 'vertical';
 

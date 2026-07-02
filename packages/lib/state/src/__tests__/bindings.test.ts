@@ -44,9 +44,8 @@ describe('createTestBindings', () => {
   it('wraps perform for async effects', async () => {
     const { useEffect } = createTestBindings();
 
-    const effect = defineEffect(
-      [],
-      (value: number): Promise<number> => Promise.resolve(value * 2),
+    const effect = defineEffect([], (value: number): Promise<number> =>
+      Promise.resolve(value * 2),
     );
     await expect(useEffect(effect)(3)).resolves.toBeUndefined();
   });
@@ -67,9 +66,8 @@ describe('createTestBindings', () => {
     bound.invoke(increment);
     expect(counter.count).toBe(1);
 
-    const effect = defineEffect(
-      [],
-      (value: number): Promise<number> => Promise.resolve(value),
+    const effect = defineEffect([], (value: number): Promise<number> =>
+      Promise.resolve(value),
     );
     await expect(bound.perform(effect, 5)).resolves.toBeUndefined();
   });
@@ -97,9 +95,8 @@ describe('module-level bindings (global registry)', () => {
     const oneOff = defineStore<Counter>(() => ({ count: 0 }));
     createStore(oneOff);
     try {
-      const effect = defineEffect(
-        [],
-        (value: number): Promise<number> => Promise.resolve(value),
+      const effect = defineEffect([], (value: number): Promise<number> =>
+        Promise.resolve(value),
       );
       await expect(globalUseEffect(effect)(1)).resolves.toBeUndefined();
     } finally {
