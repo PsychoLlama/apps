@@ -747,6 +747,8 @@ importers:
         specifier: ^1.9.13
         version: 1.9.13
 
+  packages/lib/vault: {}
+
 packages:
 
   '@adobe/css-tools@4.5.0':
