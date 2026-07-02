@@ -51,17 +51,27 @@ const bindingFor = (id: VaultId): Uint8Array<ArrayBuffer> =>
  * the ciphertext for {@link read} to reuse. The id is also folded in as
  * {@link bindingFor additional authenticated data}, tying the ciphertext to its
  * id.
+ *
+ * `data` is taken as {@link AllowSharedBufferSource} — the widest byte-buffer
+ * type — so callers holding a `Uint8Array` with the default `ArrayBufferLike`
+ * backing (e.g. bytes from a wasm binding) can pass it straight through without
+ * first copying it into an `ArrayBuffer`-backed view.
  */
-export const write = async (id: VaultId, data: BufferSource): Promise<void> => {
+export const write = async (
+  id: VaultId,
+  data: AllowSharedBufferSource,
+): Promise<void> => {
   const db = await openVaultDatabase();
 
   try {
     const key = await getOrCreateKey(db);
     const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
     const ciphertext = await crypto.subtle.encrypt(
+      // `encrypt` accepts shared buffers at runtime, but its lib signature pins
+      // `data` to the narrower `BufferSource`; the cast bridges that gap.
       { name: 'AES-GCM', iv, additionalData: bindingFor(id) },
       key,
-      data,
+      data as BufferSource,
     );
 
     const record: EncryptedRecord = { iv, ciphertext };
