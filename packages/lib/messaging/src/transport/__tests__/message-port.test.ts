@@ -1,8 +1,7 @@
 import { MessagePortTransport } from '@lib/messaging/message-port';
 
 type Wire =
-  | { type: 'data'; buffer?: ArrayBuffer }
-  | { type: 'tick'; count: number };
+  { type: 'data'; buffer?: ArrayBuffer } | { type: 'tick'; count: number };
 
 /**
  * Wire a sender/receiver pair over a real `MessageChannel`. Ports are

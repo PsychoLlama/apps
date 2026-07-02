@@ -59,11 +59,7 @@ export type AvatarVariant = 'solid' | 'soft';
 export type AvatarRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
 /** Semantic color palette for the fallback surface. */
 export type AvatarColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
+  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 type Status = 'idle' | 'loading' | 'loaded' | 'error';
 

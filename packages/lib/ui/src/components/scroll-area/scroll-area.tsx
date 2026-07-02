@@ -104,11 +104,7 @@ const ZERO_SIZES: Sizes = {
 
 type ScrollState = 'hidden' | 'scrolling' | 'idle' | 'interacting';
 type ScrollEvent =
-  | 'SCROLL'
-  | 'SCROLL_END'
-  | 'POINTER_ENTER'
-  | 'POINTER_LEAVE'
-  | 'HIDE';
+  'SCROLL' | 'SCROLL_END' | 'POINTER_ENTER' | 'POINTER_LEAVE' | 'HIDE';
 
 const SCROLL_TRANSITIONS: Record<
   ScrollState,

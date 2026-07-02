@@ -49,11 +49,7 @@ import * as css from './data-list.css';
 
 /** Semantic color palette accepted by `DataListLabel`. */
 export type DataListColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
+  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 /** Visual size step. Controls the gap between items. */
 export type DataListSize = 1 | 2 | 3;

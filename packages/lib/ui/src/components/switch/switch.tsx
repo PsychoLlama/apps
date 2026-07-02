@@ -43,11 +43,7 @@ export type SwitchVariant = 'classic' | 'surface' | 'soft';
 export type SwitchRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
 /** Semantic color palette for the checked track. */
 export type SwitchColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
+  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 /**
  * `Switch` props. Surfaces native `<button>` attributes apart from

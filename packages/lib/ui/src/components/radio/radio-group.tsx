@@ -54,11 +54,7 @@ export type RadioSize = 1 | 2 | 3;
 export type RadioVariant = 'classic' | 'surface' | 'soft';
 /** Semantic color palette for the checked indicator. */
 export type RadioColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
+  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 
 const resolveRadioClasses = (
   size: RadioSize,

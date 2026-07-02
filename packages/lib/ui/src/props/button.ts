@@ -3,11 +3,7 @@ import * as css from './button.css';
 export type ButtonSize = 1 | 2 | 3 | 4;
 export type ButtonVariant = 'solid' | 'soft' | 'surface' | 'outline' | 'ghost';
 export type ButtonColor =
-  | 'accent'
-  | 'neutral'
-  | 'danger'
-  | 'warning'
-  | 'success';
+  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 export type ButtonRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
 
 export interface ButtonStyleProps {
