@@ -1,7 +1,7 @@
 import { defineAction, defineEffect, ref } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
-import type { Connection } from '@crate/iroh';
-import { closeConnection, dialPeer, openConnection } from './capabilities';
+import { openConnection, type Connection } from '@lib/iroh';
+import { dialPeer, releaseConnection } from './capabilities';
 import { connectionStore } from './store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -67,18 +67,21 @@ export const openConnectionEffect = defineEffect([], openConnection, {
 
 /**
  * Free the held endpoint and forget it. Pairs with the mount-time open so a
- * view that's navigated away from doesn't leak its relay connection. The free
- * is the side effect; the action only drops the reference.
+ * view that's navigated away from doesn't leak its relay connection. Reads the
+ * endpoint off the store and hands it to {@link closeConnection}; the action
+ * only drops the reference.
  */
 export const releaseConnectionEffect = defineEffect(
   [connectionStore],
-  closeConnection,
+  releaseConnection,
   { onSuccess: resetConnection },
 );
 
 /**
  * Dial the peer named in a share link once the relay connection is up. The
- * receiving view performs this with the endpoint id from its URL. The dial's
+ * receiving view performs this with the endpoint id from its URL. Reads the
+ * live endpoint off the store — the caller only dials once the connection is
+ * `connected`, so a missing endpoint is a caller bug and throws. The dial's
  * success and failure are logged by {@link dialPeer} itself, so there are no
  * lifecycle actions here.
  */
