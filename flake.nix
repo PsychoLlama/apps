@@ -91,6 +91,11 @@
                 pkgs.fenix.stable.defaultToolchain
                 pkgs.fenix.targets.wasm32-unknown-unknown.stable.rust-std
               ])
+              # Test runner for the native crate tests (`cargo:test` →
+              # `cargo nextest run`). Lives in `default` so CI, which only
+              # enters this shell, has it. nextest doesn't run doctests, but
+              # the crates are `cdylib`-only (no doctests), so nothing is lost.
+              pkgs.cargo-nextest
               # Generates the JS bindings for wasm crates that use
               # `wasm-bindgen` (e.g. `@crate/qr-scanner`). The CLI refuses
               # modules built against a mismatched `wasm-bindgen` crate,
