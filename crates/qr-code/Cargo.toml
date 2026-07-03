@@ -1,5 +1,5 @@
 [package]
-name = "qr-scanner"
+name = "qr-code"
 version = "0.0.0"
 publish = false
 edition.workspace = true
@@ -35,10 +35,12 @@ serde-wasm-bindgen = "0.6"
 # …) — pure-Rust deps (fancy-regex, uriparse, urlencoding, chrono-tz),
 # all wasm-friendly. `wasm_support` is just `chrono/wasmbind` — rxing
 # stamps every result with `Utc::now()`, which traps on wasm without a
-# JS-backed clock.
+# JS-backed clock. `encoders` powers `QRCodeWriter`, the QR generation
+# side (paired with `qrcode`).
 rxing = { version = "0.9", default-features = false, features = [
   "qrcode",
   "decoders",
+  "encoders",
   "client_support",
   "encoding_rs",
   "wasm_support",

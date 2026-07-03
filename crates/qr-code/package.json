@@ -1,14 +1,14 @@
 {
-  "name": "@crate/qr-scanner",
+  "name": "@crate/qr-code",
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "QR/barcode decoding for the browser, via wasm bindings over the rxing crate.",
+  "description": "QR code scanning and generation for the browser, via wasm bindings over the rxing crate.",
   "license": "MIT",
   "exports": {
     ".": {
       "types": "./index.d.ts",
-      "default": "./dist/qr_scanner.js"
+      "default": "./dist/qr_code.js"
     }
   },
   "scripts": {
