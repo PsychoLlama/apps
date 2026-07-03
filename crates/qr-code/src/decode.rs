@@ -1,5 +1,5 @@
-//! Wasm bindings over [`rxing`] (a pure-Rust ZXing port) for decoding
-//! QR codes from raw image data in the browser.
+//! The decode (scan) surface: read the first barcode out of a canvas
+//! `ImageData` RGBA buffer and hand the host structured, typed details.
 //!
 //! Typical flow from the host: take a canvas `ImageData` and hand its
 //! RGBA bytes straight to [`decode`] — the RGBA → luma conversion the
@@ -10,15 +10,6 @@ use rxing::client::result::{ParsedClientResult, parseRXingResult};
 use rxing::helpers;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
-
-/// Install the panic hook once at module load so a Rust panic surfaces
-/// as a readable `console.error` instead of an opaque `unreachable`
-/// trap. No-op unless the `console_error_panic_hook` feature is on.
-#[wasm_bindgen(start)]
-fn start() {
-    #[cfg(feature = "console_error_panic_hook")]
-    console_error_panic_hook::set_once();
-}
 
 /// One row of a decoded code's parsed details, serialized to a plain JS
 /// object so it crosses the wasm boundary as structured-clone-safe data.

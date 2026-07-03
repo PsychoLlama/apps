@@ -155,7 +155,7 @@ importers:
 
   crates/iroh: {}
 
-  crates/qr-scanner: {}
+  crates/qr-code: {}
 
   packages/app/experimental:
     dependencies:
@@ -348,9 +348,9 @@ importers:
 
   packages/app/qr-scanner:
     dependencies:
-      '@crate/qr-scanner':
+      '@crate/qr-code':
         specifier: workspace:*
-        version: link:../../../crates/qr-scanner
+        version: link:../../../crates/qr-code
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design

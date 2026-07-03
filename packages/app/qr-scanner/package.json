@@ -12,7 +12,7 @@
     "typecheck": "tsc && tsc -p src/worker/tsconfig.json"
   },
   "dependencies": {
-    "@crate/qr-scanner": "workspace:*",
+    "@crate/qr-code": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/messaging": "workspace:*",
     "@lib/observability": "workspace:*",

@@ -1,8 +1,9 @@
 /**
- * Public types for `@crate/qr-scanner`. Mirrors the `wasm-bindgen`
- * `--target web` output (`dist/qr_scanner.d.ts`), but is checked in so
+ * Public types for `@crate/qr-code`. Mirrors the `wasm-bindgen`
+ * `--target web` output (`dist/qr_code.d.ts`), but is checked in so
  * consumers type-check without first running the wasm build. Keep in
- * sync with the `#[wasm_bindgen]` surface in `src/lib.rs`.
+ * sync with the `#[wasm_bindgen]` surface in `src/decode.rs` and
+ * `src/encode.rs`.
  */
 
 /**
@@ -137,6 +138,25 @@ export function decode(
   width: number,
   height: number,
 ): Scan | undefined;
+
+/**
+ * A generated QR code as its raw module grid. Carries no pixels — just
+ * which cells are dark — so the host renders the SVG with its own tokens.
+ */
+export class QrCode {
+  private constructor();
+  free(): void;
+  /** Modules per side, quiet zone included. Grid is `size × size`. */
+  readonly size: number;
+  /** Row-major grid, one byte per module: 1 = dark, 0 = light. */
+  readonly modules: Uint8Array;
+}
+
+/**
+ * Encode `text` into a QR module grid. Throws on empty/too-long input —
+ * unlike a decode miss, a failed encode is a real error.
+ */
+export function encode(text: string): QrCode;
 
 /** Bytes or a compiled module to instantiate the wasm from. */
 export type InitInput =

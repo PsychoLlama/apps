@@ -1,11 +1,11 @@
-import { decode as decodeImage, type Scan } from '@crate/qr-scanner';
+import { decode as decodeImage, type Scan } from '@crate/qr-code';
 import { defineContract } from '@lib/messaging/rpc';
 import type { SendOptions } from '@lib/messaging/message-port';
 import { createLogger, toError } from '@lib/observability';
 
 /**
  * A decoded barcode — the worker's output, mirrored into host state on
- * recognition. Derived from `@crate/qr-scanner`'s {@link Scan} so the two
+ * recognition. Derived from `@crate/qr-code`'s {@link Scan} so the two
  * can't drift, but picked down to its plain data fields. `Scan` itself is a
  * wasm handle (it owns `free()` and can't cross a `postMessage` boundary),
  * so it never leaves the worker; what we surface is this

@@ -1,4 +1,4 @@
-import init from '@crate/qr-scanner';
+import init from '@crate/qr-code';
 import { RPC, type RpcMessage } from '@lib/messaging/rpc';
 import {
   MessagePortTransport,
