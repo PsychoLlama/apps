@@ -448,12 +448,12 @@ importers:
 
   packages/app/share:
     dependencies:
-      '@crate/iroh':
-        specifier: workspace:*
-        version: link:../../../crates/iroh
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/iroh':
+        specifier: workspace:*
+        version: link:../../lib/iroh
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
@@ -469,9 +469,6 @@ importers:
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
-      '@lib/vault':
-        specifier: workspace:*
-        version: link:../../lib/vault
       '@solidjs/router':
         specifier: ^0.16.1
         version: 0.16.1(solid-js@1.9.13)
@@ -621,6 +618,18 @@ importers:
       '@holz/core':
         specifier: 'catalog:'
         version: 0.8.3-rc.175
+
+  packages/lib/iroh:
+    dependencies:
+      '@crate/iroh':
+        specifier: workspace:*
+        version: link:../../../crates/iroh
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../observability
+      '@lib/vault':
+        specifier: workspace:*
+        version: link:../vault
 
   packages/lib/messaging: {}
 
