@@ -13,7 +13,7 @@
     "prepare": "workspace patch-workerd",
     "build": "turbo run build",
     "cargo:clippy": "cargo clippy --workspace --all-targets -- -D warnings",
-    "cargo:test": "cargo test --workspace",
+    "cargo:test": "cargo nextest run --workspace",
     "check": "turbo run lint cargo:clippy typecheck test cargo:test test:browser knip:dev knip:production fmt-check workspace-check build",
     "dev": "turbo run dev --filter=@app/main",
     "fmt": "treefmt",
