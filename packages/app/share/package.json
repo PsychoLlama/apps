@@ -16,6 +16,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@crate/qr-code": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/iroh": "workspace:*",
     "@lib/observability": "workspace:*",

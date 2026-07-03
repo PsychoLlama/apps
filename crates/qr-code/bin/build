@@ -13,7 +13,12 @@ set -euo pipefail
 # and the workspace root is two tiers up (crates/<name>).
 crate_dir="$(cd "$(dirname "$npm_package_json")" && pwd)"
 workspace_root="$(cd "$crate_dir/../.." && pwd)"
-wasm="$workspace_root/target/wasm32-unknown-unknown/release/qr_code.wasm"
+# `cargo` honors `CARGO_TARGET_DIR` (the `coding` shell points it at the
+# primary checkout's `target/` so worktrees share a build cache), so the
+# artifact path has to follow it too — falling back to the workspace's own
+# `target/` when it's unset (e.g. CI).
+target_dir="${CARGO_TARGET_DIR:-$workspace_root/target}"
+wasm="$target_dir/wasm32-unknown-unknown/release/qr_code.wasm"
 
 cargo build --release --target wasm32-unknown-unknown -p qr-code
 
