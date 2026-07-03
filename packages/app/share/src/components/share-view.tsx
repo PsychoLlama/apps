@@ -1,11 +1,12 @@
 import { Show, createEffect, on } from 'solid-js';
 import { useEffect } from '@lib/state';
 import { FrameBody, SiteHeader } from '@lib/shell';
-import { Callout, Container, Flex, Heading, Text, TextField } from '@lib/ui';
+import { Container, Flex, Heading, TextField } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
 import { QrCode } from './qr-code';
 import { connection } from '../state/connection';
 import { encodeQrCodeEffect, qrCode } from '../state/qr-code';
+import * as styles from './share-view.css';
 
 /**
  * A shareable link to this endpoint — the `/share/with/:endpoint` URL a peer
@@ -17,10 +18,9 @@ const shareLink = (endpointId: string): string =>
   new URL(`/share/with/${endpointId}`, window.location.origin).href;
 
 /**
- * The sharer's view at `/share`. Still a stub — the sharing flow itself is a
- * work in progress — but once the relay connection is live it surfaces this
- * endpoint's share link both as a read-only field to copy and as a QR code a
- * peer can scan to open it.
+ * The sharer's view at `/share`. Once the relay connection is live it surfaces
+ * this endpoint's share link two ways side by side: a read-only field on the
+ * left to copy and paste, and a QR code on the right for a peer to scan.
  */
 export const Share = () => {
   const encodeQrCode = useEffect(encodeQrCodeEffect);
@@ -49,32 +49,29 @@ export const Share = () => {
 
             <Show when={connection.endpoint}>
               {(endpoint) => (
-                <TextField
-                  testId="share-link"
-                  readOnly
-                  aria-label="Sharing link"
-                  value={shareLink(endpoint().current.endpointId)}
-                  autocomplete={undefined}
-                  autocapitalize={undefined}
-                  enterkeyhint={undefined}
-                />
+                <Flex as="div" direction="row" gap={4} align="stretch">
+                  <TextField
+                    class={styles.field}
+                    testId="share-link"
+                    readOnly
+                    aria-label="Sharing link"
+                    value={shareLink(endpoint().current.endpointId)}
+                    autocomplete={undefined}
+                    autocapitalize={undefined}
+                    enterkeyhint={undefined}
+                  />
+
+                  <Show when={qrCode.grid}>
+                    {(grid) => (
+                      <QrCode
+                        grid={grid().current}
+                        label="QR code for the sharing link"
+                      />
+                    )}
+                  </Show>
+                </Flex>
               )}
             </Show>
-
-            <Show when={connection.endpoint && qrCode.grid}>
-              {(grid) => (
-                <QrCode
-                  grid={grid().current}
-                  label="QR code for the sharing link"
-                />
-              )}
-            </Show>
-
-            <Callout color="neutral">
-              <Text as="span" size={2} selectable={false}>
-                Work in progress.
-              </Text>
-            </Callout>
           </Flex>
         </Container>
       </FrameBody>
