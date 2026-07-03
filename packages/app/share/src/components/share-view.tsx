@@ -49,18 +49,7 @@ export const Share = () => {
 
             <Show when={connection.endpoint}>
               {(endpoint) => (
-                <Flex as="div" direction="row" gap={4} align="stretch">
-                  <TextField
-                    class={styles.field}
-                    testId="share-link"
-                    readOnly
-                    aria-label="Sharing link"
-                    value={shareLink(endpoint().current.endpointId)}
-                    autocomplete={undefined}
-                    autocapitalize={undefined}
-                    enterkeyhint={undefined}
-                  />
-
+                <Flex as="div" direction="row" gap={4} align="start">
                   <Show when={qrCode.grid}>
                     {(grid) => (
                       <QrCode
@@ -69,6 +58,18 @@ export const Share = () => {
                       />
                     )}
                   </Show>
+
+                  <TextField
+                    testId="share-link"
+                    readOnly
+                    aria-label="Sharing link"
+                    value={shareLink(endpoint().current.endpointId)}
+                    class={styles.field}
+                    name="endpoint-id"
+                    autocomplete={undefined}
+                    autocapitalize={undefined}
+                    enterkeyhint={undefined}
+                  />
                 </Flex>
               )}
             </Show>
