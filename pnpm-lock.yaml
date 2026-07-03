@@ -448,6 +448,9 @@ importers:
 
   packages/app/share:
     dependencies:
+      '@crate/qr-code':
+        specifier: workspace:*
+        version: link:../../../crates/qr-code
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
