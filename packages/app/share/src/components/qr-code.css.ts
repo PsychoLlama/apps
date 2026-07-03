@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { black, radius, shadow, space, white } from '@lib/design';
+import { black, radius, shadow, white } from '@lib/design';
 
 /**
  * The QR plate: a fixed light backing that stays put across light and dark
@@ -11,7 +11,6 @@ import { black, radius, shadow, space, white } from '@lib/design';
 export const plate = style({
   display: 'block',
   width: 'fit-content',
-  padding: space[4],
   backgroundColor: white.step12,
   color: black.step12,
   borderRadius: radius[4],
@@ -24,7 +23,7 @@ export const plate = style({
  */
 export const canvas = style({
   display: 'block',
-  width: '12rem',
+  width: '10rem',
   maxWidth: '100%',
   height: 'auto',
   aspectRatio: '1 / 1',
