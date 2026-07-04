@@ -1,5 +1,6 @@
 import { defineAction, defineEffect, ref, type DeepReadonly } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
+import type { Navigator } from '@solidjs/router';
 import {
   CameraAborted,
   classifyCameraError,
@@ -14,7 +15,7 @@ import {
 } from './capabilities';
 import { createDecoder, type DecoderConnection } from './decoder';
 import { decoderStore } from './decoder-store';
-import { autoOpenHref } from './scan-link';
+import { resolveScanTarget } from './scan-link';
 import { scannerStore, type ScannerState } from './store';
 import type { ScanResult } from './worker/rpc';
 
@@ -141,6 +142,18 @@ export const recordScan = defineAction(
 );
 
 /**
+ * Input to {@link finishScan}: the recognized code plus the router
+ * navigator the caller pulled from `useNavigate`. Threading `navigate`
+ * through the effect keeps the launch decision — including the in-app
+ * route — inside the state handler, rather than reacting to the stored
+ * result from the view.
+ */
+interface FinishScanInput {
+  readonly result: ScanResult;
+  readonly navigate: Navigator;
+}
+
+/**
  * Side effects of a recognized hit, run before {@link recordScan} parks on
  * the result:
  *
@@ -148,34 +161,42 @@ export const recordScan = defineAction(
  *    indicator. Holding it open behind the result surface would leave the
  *    hardware running with no visible stop control, so the hit itself
  *    releases it; "Scan again" reopens the camera from scratch.
- * 2. Auto-open a safe web link, but only inside an installed PWA. A
- *    `url`-kind scan whose payload clears the {@link autoOpenHref} safety
- *    check launches in a new tab so the common case — point, scan, go —
- *    needs no extra tap; in standalone, `window.open` hands it to the real
- *    browser without replacing the app. In a plain browser tab we skip the
- *    auto-open (the user is already browsing) and leave the result
- *    surface's link for them to tap. Anything unsafe or non-link is never
- *    launched. Even in a PWA a popup blocker may swallow this (it fires
- *    outside a fresh user gesture); that's fine — the link is still there.
+ * 2. Auto-launch a recognized link, but only inside an installed PWA. A
+ *    `url`-kind scan whose payload clears the {@link resolveScanTarget}
+ *    safety check launches so the common case — point, scan, go — needs no
+ *    extra tap. A link back into our own origin routes in-app through the
+ *    router (no reload, no new tab, session intact); anything else opens a
+ *    new browser tab, handing off to the real browser without replacing
+ *    the app. In a plain browser tab we skip the auto-launch (the user is
+ *    already browsing) and leave the result surface's link for them to
+ *    tap. Anything unsafe or non-link is never launched. Even in a PWA a
+ *    popup blocker may swallow the new tab (it fires outside a fresh user
+ *    gesture); that's fine — the link is still there.
  *
  * The physical work lives here in the effect, mirroring
  * {@link stopCameraEffect}; the state transition is the action.
  */
 const finishScan = (
   state: DeepReadonly<ScannerState>,
-  result: ScanResult,
+  { result, navigate }: FinishScanInput,
 ): ScanResult => {
   stopStreamForResult(state, result);
-  const href = autoOpenHref(result);
-  if (href !== undefined && inStandalonePWA()) {
-    window.open(href, '_blank', 'noopener,noreferrer');
+
+  if (inStandalonePWA()) {
+    const target = resolveScanTarget(result);
+    if (target?.kind === 'internal') {
+      navigate(target.path);
+    } else if (target?.kind === 'external') {
+      window.open(target.href, '_blank', 'noopener,noreferrer');
+    }
   }
+
   return result;
 };
 
 /**
  * Finalize a scan on the first hit: run the {@link finishScan} side effects
- * (release the camera, auto-open a safe link), then hand off to
+ * (release the camera, auto-launch a safe link), then hand off to
  * {@link recordScan} to park on the result.
  */
 export const finishScanEffect = defineEffect([scannerStore], finishScan, {

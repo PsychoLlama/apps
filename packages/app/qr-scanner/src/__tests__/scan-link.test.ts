@@ -1,4 +1,9 @@
-import { autoOpenHref, linkFor } from '../scan-link';
+import {
+  autoOpenHref,
+  internalPath,
+  linkFor,
+  resolveScanTarget,
+} from '../scan-link';
 import type { ScanResult } from '../worker/rpc';
 
 describe('linkFor', () => {
@@ -193,5 +198,73 @@ describe('autoOpenHref', () => {
       details: [{ type: 'link', label: 'URL', value: 'https://example.com' }],
     };
     expect(autoOpenHref(contactScan)).toBeUndefined();
+  });
+});
+
+describe('internalPath', () => {
+  // The suite runs under jsdom, whose origin is our "own" origin here.
+  const origin = window.location.origin;
+
+  it('maps a same-origin link to its router path', () => {
+    expect(internalPath(`${origin}/share/with/abc123`)).toBe(
+      '/share/with/abc123',
+    );
+  });
+
+  it('carries the query and hash into the path', () => {
+    expect(internalPath(`${origin}/scanner?q=1#frag`)).toBe(
+      '/scanner?q=1#frag',
+    );
+  });
+
+  it('rejects a foreign origin — a lookalike stays external', () => {
+    // Same path, different host: the browser would navigate off-site, so it
+    // must never be handed to the in-app router.
+    expect(
+      internalPath('https://evil.example/share/with/abc123'),
+    ).toBeUndefined();
+  });
+
+  it('rejects a non-web scheme with no matching origin', () => {
+    expect(internalPath('mailto:user@example.com')).toBeUndefined();
+    expect(internalPath('tel:+15551234567')).toBeUndefined();
+  });
+});
+
+describe('resolveScanTarget', () => {
+  const origin = window.location.origin;
+  const urlScan = (value: string): ScanResult => ({
+    text: '',
+    format: 'QR_CODE',
+    kind: 'url',
+    details: [{ type: 'link', label: 'URL', value }],
+  });
+
+  it('routes a same-origin link in-app', () => {
+    expect(resolveScanTarget(urlScan(`${origin}/share/with/abc123`))).toEqual({
+      kind: 'internal',
+      path: '/share/with/abc123',
+    });
+  });
+
+  it('opens a foreign link in a new tab', () => {
+    expect(resolveScanTarget(urlScan('https://example.com/x'))).toEqual({
+      kind: 'external',
+      href: 'https://example.com/x',
+    });
+  });
+
+  it('is undefined when there is nothing safe to launch', () => {
+    // Non-`url` kinds and unsafe payloads both bottom out through
+    // `autoOpenHref`, so neither produces a target.
+    expect(resolveScanTarget(urlScan('javascript:alert(1)'))).toBeUndefined();
+    expect(
+      resolveScanTarget({
+        text: '',
+        format: 'QR_CODE',
+        kind: 'contact',
+        details: [{ type: 'link', label: 'URL', value: `${origin}/x` }],
+      }),
+    ).toBeUndefined();
   });
 });

@@ -8,6 +8,7 @@
  * sensitive, so a declared URL still has to clear {@link webLinkHref}.
  */
 
+import type { DeepReadonly } from '@lib/state';
 import type { ParsedDetail, ParsedLinkDetail } from '@crate/qr-code';
 import type { ScanResult } from './worker/rpc';
 
@@ -104,10 +105,61 @@ export const linkFor = (
  * clear the same {@link linkFor} `link` safety check used to render it —
  * so a `javascript:`/`data:`/deceptive-userinfo payload is never launched.
  */
-export const autoOpenHref = (result: ScanResult): string | undefined => {
+export const autoOpenHref = (
+  result: DeepReadonly<ScanResult>,
+): string | undefined => {
   if (result.kind !== 'url') return undefined;
   const link = result.details.find(
     (detail): detail is ParsedLinkDetail => detail.type === 'link',
   );
   return linkFor('link', link?.value ?? result.text)?.href;
+};
+
+/**
+ * A recognized web link resolved to how the app should open it. An
+ * `internal` link — one on our own origin — is handed to the router for a
+ * client-side navigation (no reload, no new tab); an `external` link goes
+ * to a fresh browser tab. The split lets a scanned link back into our own
+ * pages (a share invite, say) continue the session in place rather than
+ * bounce through the browser.
+ */
+export type ScanTarget =
+  | { readonly kind: 'internal'; readonly path: string }
+  | { readonly kind: 'external'; readonly href: string };
+
+/**
+ * The router path for a web link on our own origin, or `undefined` when it
+ * points elsewhere. Callers pass an href that's already cleared
+ * {@link linkFor}'s `link` safety check (http(s), a real host, no
+ * deceptive userinfo), so `new URL` can't throw and the origin comparison
+ * is the whole safety story: a lookalike like
+ * `https://evil.example/share/with/x` fails it and stays external, never
+ * routed into our app. Returns `pathname + search + hash` — everything
+ * past the origin — as the in-app path; a foreign-scheme href (`mailto:`,
+ * `tel:`) has no matching origin and falls through to `undefined`.
+ * Client-only: reads `window.location.origin`, so it's only ever reached
+ * with a live scan result in hand, never during SSG.
+ */
+export const internalPath = (href: string): string | undefined => {
+  const url = new URL(href);
+  if (url.origin !== window.location.origin) return undefined;
+  return `${url.pathname}${url.search}${url.hash}`;
+};
+
+/**
+ * Resolve a recognized code to its {@link ScanTarget}, or `undefined` when
+ * there's nothing safe to launch. Reuses {@link autoOpenHref} for the
+ * gate-and-validate — only `url`-kind scans, only payloads that clear the
+ * safety check — then routes the survivor: a same-origin link becomes an
+ * `internal` router navigation, anything else an `external` new tab.
+ */
+export const resolveScanTarget = (
+  result: DeepReadonly<ScanResult>,
+): ScanTarget | undefined => {
+  const href = autoOpenHref(result);
+  if (href === undefined) return undefined;
+  const path = internalPath(href);
+  return path === undefined
+    ? { kind: 'external', href }
+    : { kind: 'internal', path };
 };
