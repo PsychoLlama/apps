@@ -1,42 +1,19 @@
-import { Show, createEffect, on } from 'solid-js';
-import { useEffect } from '@lib/state';
+import { Show } from 'solid-js';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import { Container, Flex, Heading, TextField } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
 import { QrCode } from './qr-code';
-import { connection } from '../state/connection';
-import { encodeQrCodeEffect, qrCode } from '../state/qr-code';
+import { connection, qrCode, shareLink } from '../state/session';
 import * as styles from './share-view.css';
-
-/**
- * A shareable link to this endpoint — the `/share/with/:endpoint` URL a peer
- * opens to dial us, keyed by the endpoint's public identity. Only ever built
- * client-side (the endpoint is `null` until the client-only connect lands), so
- * `window.location.origin` is safe to read.
- */
-const shareLink = (endpointId: string): string =>
-  new URL(`/share/with/${endpointId}`, window.location.origin).href;
 
 /**
  * The sharer's view at `/share`. Once the relay connection is live it surfaces
  * this endpoint's share link two ways side by side: a read-only field on the
- * left to copy and paste, and a QR code on the right for a peer to scan.
+ * left to copy and paste, and a QR code on the right for a peer to scan. The
+ * connection lands the endpoint and its QR grid together, so both appear in the
+ * same paint.
  */
 export const Share = () => {
-  const encodeQrCode = useEffect(encodeQrCodeEffect);
-
-  // The share link only exists client-side once the endpoint lands, and the
-  // wasm encoder is client-only too — so encode reactively as the connection
-  // comes up (and again if it cycles back after a reconnect).
-  createEffect(
-    on(
-      () => connection.endpoint,
-      (endpoint) => {
-        if (endpoint) void encodeQrCode(shareLink(endpoint.current.endpointId));
-      },
-    ),
-  );
-
   return (
     <>
       <SiteHeader title="Share" actions={<ConnectionIndicator />} />
