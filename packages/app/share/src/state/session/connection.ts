@@ -1,5 +1,5 @@
 import { createStore, defineStore, type Ref } from '@lib/state';
-import type { Connection } from '@lib/iroh';
+import type { Connection } from '@crate/iroh';
 
 /**
  * Where the browser's relay connection sits in its lifecycle.

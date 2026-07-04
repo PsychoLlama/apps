@@ -1,10 +1,11 @@
 import { defineAction, defineEffect, ref } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
-import { openConnection, type Connection } from '@lib/iroh';
+import type { Connection } from '@crate/iroh';
 import {
+  closeConnection,
   dialPeer,
   encodeQrCode,
-  releaseConnection,
+  openConnection,
   shareLink,
 } from './capabilities';
 import { connectionStore } from './connection';
@@ -125,13 +126,12 @@ export const openConnectionEffect = defineEffect([], openShareSession, {
 
 /**
  * Free the held endpoint and forget it. Pairs with the mount-time open so a
- * view that's navigated away from doesn't leak its relay connection. Reads the
- * endpoint off the store and hands it to {@link closeConnection}; the action
- * only drops the reference.
+ * view that's navigated away from doesn't leak its relay connection. The free
+ * is the side effect; the action only drops the reference.
  */
 export const releaseConnectionEffect = defineEffect(
   [connectionStore],
-  releaseConnection,
+  closeConnection,
   { onSuccess: resetConnection },
 );
 
