@@ -14,9 +14,14 @@
       "enabled": false
     },
     {
-      "description": "@iconify/json releases far too often to bump every time. Batch its updates onto a monthly cadence.",
+      "description": "@iconify/json releases far too often to bump every time. Batch its updates onto a twice-monthly cadence.",
       "matchPackageNames": ["@iconify/json"],
-      "schedule": ["* * 1 * *"]
+      "schedule": ["* * 1,15 * *"]
+    },
+    {
+      "description": "turbo releases too often to bump every time. Batch its updates onto a twice-monthly cadence.",
+      "matchPackageNames": ["turbo"],
+      "schedule": ["* * 1,15 * *"]
     }
   ]
 }
