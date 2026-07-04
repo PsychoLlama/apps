@@ -4,19 +4,19 @@ import { Container, Flex, Heading, TextField } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
 import { QrCode } from './qr-code';
 import { connection, qrCode, shareLink } from '../state/session';
-import * as styles from './share-view.css';
+import * as styles from './beam-view.css';
 
 /**
- * The sharer's view at `/share`. Once the relay connection is live it surfaces
+ * The sharer's view at `/beam`. Once the relay connection is live it surfaces
  * this endpoint's share link two ways side by side: a read-only field on the
  * left to copy and paste, and a QR code on the right for a peer to scan. The
  * connection lands the endpoint and its QR grid together, so both appear in the
  * same paint.
  */
-export const Share = () => {
+export const Beam = () => {
   return (
     <>
-      <SiteHeader title="Share" actions={<ConnectionIndicator />} />
+      <SiteHeader title="Beam" actions={<ConnectionIndicator />} />
       <FrameBody>
         <Container as="div" size={2}>
           <Flex as="div" direction="column" gap={4}>

@@ -141,13 +141,13 @@ export const closeConnection = (state: DeepReadonly<ConnectionState>): void => {
 };
 
 /**
- * The shareable link to an endpoint — the `/share/with/:endpoint` URL a peer
+ * The shareable link to an endpoint — the `/beam/with/:endpoint` URL a peer
  * opens to dial us, keyed by the endpoint's public identity. Only ever built
  * client-side (the endpoint is `null` until the client-only connect lands), so
  * `window.location.origin` is safe to read.
  */
 export const shareLink = (endpointId: string): string =>
-  new URL(`/share/with/${endpointId}`, window.location.origin).href;
+  new URL(`/beam/with/${endpointId}`, window.location.origin).href;
 
 /**
  * The wasm init promise, memoized so the module instantiates once and every

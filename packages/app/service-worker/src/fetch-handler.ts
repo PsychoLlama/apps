@@ -7,7 +7,7 @@
  */
 
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
-import { enabled as shareAppEnabled } from '@app/beam/config';
+import { enabled as beamAppEnabled } from '@app/beam/config';
 import { createLogger } from '@lib/observability';
 import { readEnvironment } from '@lib/runtime-config';
 
@@ -89,10 +89,10 @@ export const handleFetch = (event: FetchEvent): void => {
       return;
     }
 
-    // The share app ships in every build too, gated the same way: enabled
+    // The beam app ships in every build too, gated the same way: enabled
     // in dev only, turned into a real 404 here wherever it's disabled.
-    if (isShareRoute(url)) {
-      event.respondWith(handleShareNavigation(event));
+    if (isBeamRoute(url)) {
+      event.respondWith(handleBeamNavigation(event));
       return;
     }
 
@@ -105,12 +105,12 @@ const isExperimentalRoute = (url: URL): boolean =>
   url.pathname === '/experimental' || url.pathname === '/experimental/';
 
 /**
- * The share app's routes: the `/share` index (with or without a trailing
- * slash) and every `/share/with/:endpoint` peer link beneath it. All are gated
+ * The beam app's routes: the `/beam` index (with or without a trailing
+ * slash) and every `/beam/with/:endpoint` peer link beneath it. All are gated
  * by the same runtime flag, so one prefix check covers the whole app.
  */
-const isShareRoute = (url: URL): boolean =>
-  url.pathname === '/share' || url.pathname.startsWith('/share/');
+const isBeamRoute = (url: URL): boolean =>
+  url.pathname === '/beam' || url.pathname.startsWith('/beam/');
 
 /**
  * Clean URL of the prerendered 404 shell. Cloudflare serves the
@@ -140,15 +140,15 @@ const handleExperimentalNavigation = async (
 };
 
 /**
- * Gates the share app behind its runtime flag, identically to {@link
+ * Gates the beam app behind its runtime flag, identically to {@link
  * handleExperimentalNavigation}: a disabled flag yields the site's 404
  * page, an enabled one flows through the normal offline-aware strategy.
  */
-const handleShareNavigation = async (event: FetchEvent): Promise<Response> => {
-  const { enabled } = await readEnvironment(shareAppEnabled);
+const handleBeamNavigation = async (event: FetchEvent): Promise<Response> => {
+  const { enabled } = await readEnvironment(beamAppEnabled);
   if (enabled) return handleNavigation(event);
 
-  logger.info('Share app disabled; serving the 404 page.', {
+  logger.info('Beam app disabled; serving the 404 page.', {
     url: new URL(event.request.url).pathname,
   });
   return notFoundResponse();

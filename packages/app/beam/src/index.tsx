@@ -1,9 +1,9 @@
 /**
  * `@app/beam` — peer-to-peer resource sharing over the iroh relay network.
- * `ShareLayout` is the `<main>` frame for every `/share/*` route and holds the
- * relay connection open; `Share` renders the sharer's view at `/share`, and
- * `ShareEndpoint` the (stubbed) peer view at `/share/:endpoint`.
+ * `BeamLayout` is the `<main>` frame for every `/beam/*` route and holds the
+ * relay connection open; `Beam` renders the sharer's view at `/beam`, and
+ * `BeamEndpoint` the (stubbed) peer view at `/beam/:endpoint`.
  */
-export { ShareLayout } from './components/share-layout';
-export { Share } from './components/share-view';
-export { ShareEndpoint } from './components/share-endpoint';
+export { BeamLayout } from './components/beam-layout';
+export { Beam } from './components/beam-view';
+export { BeamEndpoint } from './components/beam-endpoint';

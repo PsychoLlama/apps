@@ -11,7 +11,7 @@ export const setAdvancedSettings = defineAction(
     advanced.logFilter = values.logFilter;
     advanced.logExportEnabled = values.logExportEnabled;
     advanced.experimentalEnabled = values.experimentalEnabled;
-    advanced.shareEnabled = values.shareEnabled;
+    advanced.beamEnabled = values.beamEnabled;
   },
 );
 
@@ -39,10 +39,10 @@ export const setExperimentalEnabled = defineAction(
   },
 );
 
-/** Mirror a resolved share flag into the store. */
-export const setShareEnabled = defineAction(
+/** Mirror a resolved beam flag into the store. */
+export const setBeamEnabled = defineAction(
   [advancedSettingsStore],
   (advanced, enabled: boolean) => {
-    advanced.shareEnabled = enabled;
+    advanced.beamEnabled = enabled;
   },
 );

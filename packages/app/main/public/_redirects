@@ -9,17 +9,17 @@
 # the trailing literal keeps it scoped to the old manifest asset.
 /_build/assets/manifest-:hash.webmanifest  /manifest.webmanifest  301
 
-# Serve the flattened `/share/with/:endpoint` shell for every endpoint id. The
+# Serve the flattened `/beam/with/:endpoint` shell for every endpoint id. The
 # id is a live client-side relay handle, so no per-id page can be prerendered
 # (Cloudflare's static assets match literal paths only — no `[param]` filename
 # routing); without this a cold load falls through to the 404 shell and the
-# client hydrates a share route against 404 markup, throwing a hydration error.
+# client hydrates a beam route against 404 markup, throwing a hydration error.
 # A 200 rewrite (not a redirect) keeps the id in the URL for the client router.
 # `:endpoint` matches a single segment. The target is the extensionless
-# `/share/__endpoint` (served from `/share/__endpoint.html`): Cloudflare strips a
+# `/beam/__endpoint` (served from `/beam/__endpoint.html`): Cloudflare strips a
 # trailing `/index` or `.html` from the target and 307s to the stripped path, so
-# naming the `.html` here would bounce every id to a bare `/share/__endpoint`,
-# dropping it from the URL. The target sits one level up from `/share/with/`, a
+# naming the `.html` here would bounce every id to a bare `/beam/__endpoint`,
+# dropping it from the URL. The target sits one level up from `/beam/with/`, a
 # prefix the source can't match, so the stripped form never renormalizes into
-# `/share/with/:endpoint` and trips loop detection.
-/share/with/:endpoint  /share/__endpoint  200
+# `/beam/with/:endpoint` and trips loop detection.
+/beam/with/:endpoint  /beam/__endpoint  200

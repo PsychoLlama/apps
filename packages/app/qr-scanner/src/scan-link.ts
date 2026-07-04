@@ -133,7 +133,7 @@ export type ScanTarget =
  * {@link linkFor}'s `link` safety check (http(s), a real host, no
  * deceptive userinfo), so `new URL` can't throw and the origin comparison
  * is the whole safety story: a lookalike like
- * `https://evil.example/share/with/x` fails it and stays external, never
+ * `https://evil.example/beam/with/x` fails it and stays external, never
  * routed into our app. Returns `pathname + search + hash` — everything
  * past the origin — as the in-app path; a foreign-scheme href (`mailto:`,
  * `tel:`) has no matching origin and falls through to `undefined`.
