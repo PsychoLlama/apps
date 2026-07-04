@@ -7,7 +7,7 @@ import { ConnectionIndicator } from './connection-indicator';
 import { connection, dialPeerEffect } from '../state/session';
 
 /**
- * The peer's view at `/beam/with/:endpoint` — where a share link lands,
+ * The peer's view at `/beam/with/:endpoint` — where a beam link lands,
  * dialling the endpoint named in the URL over the relay connection the layout
  * holds open. The dial only wires the connection up (and logs the outcome);
  * the receiving flow itself is still a work in progress.

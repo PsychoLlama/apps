@@ -9,7 +9,7 @@ import {
 /**
  * The Beam layout: the `<main>` frame for every `/beam/*` route. It holds
  * the browser's iroh relay connection open for the whole surface, so the
- * endpoint survives navigation between the sharer's view and a peer's
+ * endpoint survives navigation between the sender's view and a peer's
  * `/beam/:endpoint` view without re-dialling. Each route renders its own
  * header and body inside.
  */
