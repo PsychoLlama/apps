@@ -57,7 +57,12 @@ catalog:
   idb: ^8.0.3
   knip: ^6.13.1
   playwright: ^1.59.1
-  'solid-js': ^1.9.13
+  # Pinned exact, not a caret range: the `overrides` above force every
+  # solid-js (runtime and transitive) to this catalog entry, but a caret
+  # still lets pnpm pick different patches per peer context — which lands
+  # two copies in one bundle and breaks reactivity (the router throws
+  # "<A> ... only used inside a Route"). An exact pin makes it resolve once.
+  'solid-js': 1.9.13
   turbo: ^2.5.8
   typescript: ^6.0.3
   'unplugin-icons': ^23.0.1
