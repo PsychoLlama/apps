@@ -4,7 +4,7 @@ import { useEffect } from '@lib/state';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import { Callout, Container, Text } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
-import { connection, dialPeerEffect } from '../state/connection';
+import { connection, dialPeerEffect } from '../state/session';
 
 /**
  * The peer's view at `/share/with/:endpoint` — where a share link lands,

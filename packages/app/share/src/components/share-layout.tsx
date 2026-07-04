@@ -4,7 +4,7 @@ import { Frame } from '@lib/shell';
 import {
   openConnectionEffect,
   releaseConnectionEffect,
-} from '../state/connection';
+} from '../state/session';
 
 /**
  * The share layout: the `<main>` frame for every `/share/*` route. It holds

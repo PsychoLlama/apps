@@ -2,7 +2,7 @@ import { Match, Switch } from 'solid-js';
 import IconConnecting from 'virtual:icons/mdi/loading';
 import IconConnected from 'virtual:icons/mdi/check-circle-outline';
 import IconFailed from 'virtual:icons/mdi/alert-circle-outline';
-import { connection } from '../state/connection';
+import { connection } from '../state/session';
 import * as css from './connection-indicator.css';
 
 /**
