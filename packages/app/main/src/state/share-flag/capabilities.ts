@@ -1,5 +1,5 @@
 import { readEnvironment, subscribe } from '@lib/runtime-config';
-import { enabled as shareAppEnabled } from '@app/share/config';
+import { enabled as shareAppEnabled } from '@app/beam/config';
 
 /**
  * Resolve whether the share app is enabled for the active environment,

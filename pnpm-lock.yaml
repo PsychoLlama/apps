@@ -57,6 +57,9 @@ catalogs:
     playwright:
       specifier: ^1.59.1
       version: 1.61.1
+    turbo:
+      specifier: ^2.5.8
+      version: 2.10.2
     typescript:
       specifier: ^6.0.3
       version: 6.0.3
@@ -153,6 +156,45 @@ importers:
   crates/iroh: {}
 
   crates/qr-code: {}
+
+  packages/app/beam:
+    dependencies:
+      '@crate/iroh':
+        specifier: workspace:*
+        version: link:../../../crates/iroh
+      '@crate/qr-code':
+        specifier: workspace:*
+        version: link:../../../crates/qr-code
+      '@lib/design':
+        specifier: workspace:*
+        version: link:../../lib/design
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../../lib/runtime-config
+      '@lib/shell':
+        specifier: workspace:*
+        version: link:../../lib/shell
+      '@lib/state':
+        specifier: workspace:*
+        version: link:../../lib/state
+      '@lib/ui':
+        specifier: workspace:*
+        version: link:../../lib/ui
+      '@lib/vault':
+        specifier: workspace:*
+        version: link:../../lib/vault
+      '@solidjs/router':
+        specifier: ^0.16.1
+        version: 0.16.1(solid-js@1.9.14)
+      '@vanilla-extract/css':
+        specifier: 'catalog:'
+        version: 1.20.1
+      solid-js:
+        specifier: ^1.9.13
+        version: 1.9.14
 
   packages/app/experimental:
     dependencies:
@@ -257,6 +299,9 @@ importers:
 
   packages/app/main:
     dependencies:
+      '@app/beam':
+        specifier: workspace:*
+        version: link:../beam
       '@app/experimental':
         specifier: workspace:*
         version: link:../experimental
@@ -278,9 +323,6 @@ importers:
       '@app/settings':
         specifier: workspace:*
         version: link:../settings
-      '@app/share':
-        specifier: workspace:*
-        version: link:../share
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -381,12 +423,12 @@ importers:
 
   packages/app/service-worker:
     dependencies:
+      '@app/beam':
+        specifier: workspace:*
+        version: link:../beam
       '@app/experimental':
         specifier: workspace:*
         version: link:../experimental
-      '@app/share':
-        specifier: workspace:*
-        version: link:../share
       '@lib/holz-idb-backend':
         specifier: workspace:*
         version: link:../../lib/holz-idb-backend
@@ -409,15 +451,15 @@ importers:
 
   packages/app/settings:
     dependencies:
+      '@app/beam':
+        specifier: workspace:*
+        version: link:../beam
       '@app/experimental':
         specifier: workspace:*
         version: link:../experimental
       '@app/logs':
         specifier: workspace:*
         version: link:../logs
-      '@app/share':
-        specifier: workspace:*
-        version: link:../share
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -439,45 +481,6 @@ importers:
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
-      '@vanilla-extract/css':
-        specifier: 'catalog:'
-        version: 1.20.1
-      solid-js:
-        specifier: ^1.9.13
-        version: 1.9.13
-
-  packages/app/share:
-    dependencies:
-      '@crate/iroh':
-        specifier: workspace:*
-        version: link:../../../crates/iroh
-      '@crate/qr-code':
-        specifier: workspace:*
-        version: link:../../../crates/qr-code
-      '@lib/design':
-        specifier: workspace:*
-        version: link:../../lib/design
-      '@lib/observability':
-        specifier: workspace:*
-        version: link:../../lib/observability
-      '@lib/runtime-config':
-        specifier: workspace:*
-        version: link:../../lib/runtime-config
-      '@lib/shell':
-        specifier: workspace:*
-        version: link:../../lib/shell
-      '@lib/state':
-        specifier: workspace:*
-        version: link:../../lib/state
-      '@lib/ui':
-        specifier: workspace:*
-        version: link:../../lib/ui
-      '@lib/vault':
-        specifier: workspace:*
-        version: link:../../lib/vault
-      '@solidjs/router':
-        specifier: ^0.16.1
-        version: 0.16.1(solid-js@1.9.13)
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.20.1
@@ -6306,16 +6309,24 @@ snapshots:
     dependencies:
       solid-js: 1.9.13
 
+  '@solidjs/meta@0.29.4(solid-js@1.9.14)':
+    dependencies:
+      solid-js: 1.9.14
+
   '@solidjs/router@0.16.1(solid-js@1.9.13)':
     dependencies:
       solid-js: 1.9.13
+
+  '@solidjs/router@0.16.1(solid-js@1.9.14)':
+    dependencies:
+      solid-js: 1.9.14
 
   '@solidjs/start@2.0.0-alpha.3(@testing-library/jest-dom@6.9.1)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/traverse': 7.29.7
       '@babel/types': 7.29.7
-      '@solidjs/meta': 0.29.4(solid-js@1.9.13)
+      '@solidjs/meta': 0.29.4(solid-js@1.9.14)
       '@types/babel__traverse': 7.28.0
       '@types/micromatch': 4.0.10
       cookie-es: 2.0.1
@@ -6333,12 +6344,12 @@ snapshots:
       seroval: 1.5.4
       seroval-plugins: 1.5.4(seroval@1.5.4)
       shiki: 1.29.2
-      solid-js: 1.9.13
+      solid-js: 1.9.14
       source-map-js: 1.2.1
       srvx: 0.11.16
-      terracotta: 1.1.0(solid-js@1.9.13)
+      terracotta: 1.1.0(solid-js@1.9.14)
       vite: 7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)
-      vite-plugin-solid: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
+      vite-plugin-solid: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.14)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
     transitivePeerDependencies:
       - '@testing-library/jest-dom'
       - crossws
@@ -7002,13 +7013,6 @@ snapshots:
       '@babel/types': 7.29.7
       html-entities: 2.3.3
       parse5: 7.3.0
-
-  babel-preset-solid@1.9.12(@babel/core@7.29.7)(solid-js@1.9.13):
-    dependencies:
-      '@babel/core': 7.29.7
-      babel-plugin-jsx-dom-expressions: 0.40.7(@babel/core@7.29.7)
-    optionalDependencies:
-      solid-js: 1.9.13
 
   babel-preset-solid@1.9.12(@babel/core@7.29.7)(solid-js@1.9.14):
     dependencies:
@@ -9145,15 +9149,6 @@ snapshots:
       seroval: 1.5.4
       seroval-plugins: 1.5.4(seroval@1.5.4)
 
-  solid-refresh@0.6.3(solid-js@1.9.13):
-    dependencies:
-      '@babel/generator': 7.29.7
-      '@babel/helper-module-imports': 7.29.7
-      '@babel/types': 7.29.7
-      solid-js: 1.9.13
-    transitivePeerDependencies:
-      - supports-color
-
   solid-refresh@0.6.3(solid-js@1.9.14):
     dependencies:
       '@babel/generator': 7.29.7
@@ -9163,9 +9158,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  solid-use@0.9.1(solid-js@1.9.13):
+  solid-use@0.9.1(solid-js@1.9.14):
     dependencies:
-      solid-js: 1.9.13
+      solid-js: 1.9.14
 
   source-map-js@1.2.1: {}
 
@@ -9325,10 +9320,10 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
-  terracotta@1.1.0(solid-js@1.9.13):
+  terracotta@1.1.0(solid-js@1.9.14):
     dependencies:
-      solid-js: 1.9.13
-      solid-use: 0.9.1(solid-js@1.9.13)
+      solid-js: 1.9.14
+      solid-use: 0.9.1(solid-js@1.9.14)
 
   terser@5.48.0:
     dependencies:
@@ -9641,21 +9636,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-
-  vite-plugin-solid@2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.13)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)):
-    dependencies:
-      '@babel/core': 7.29.7
-      '@types/babel__core': 7.20.5
-      babel-preset-solid: 1.9.12(@babel/core@7.29.7)(solid-js@1.9.13)
-      merge-anything: 5.1.7
-      solid-js: 1.9.13
-      solid-refresh: 0.6.3(solid-js@1.9.13)
-      vite: 7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)
-      vitefu: 1.1.3(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
-    optionalDependencies:
-      '@testing-library/jest-dom': 6.9.1
-    transitivePeerDependencies:
-      - supports-color
 
   vite-plugin-solid@2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.14)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)):
     dependencies:

@@ -26,7 +26,7 @@
     "@app/qr-scanner": "workspace:*",
     "@app/service-worker": "workspace:*",
     "@app/settings": "workspace:*",
-    "@app/share": "workspace:*",
+    "@app/beam": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/runtime-config": "workspace:*",

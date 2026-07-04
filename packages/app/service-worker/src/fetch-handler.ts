@@ -7,7 +7,7 @@
  */
 
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
-import { enabled as shareAppEnabled } from '@app/share/config';
+import { enabled as shareAppEnabled } from '@app/beam/config';
 import { createLogger } from '@lib/observability';
 import { readEnvironment } from '@lib/runtime-config';
 

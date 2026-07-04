@@ -1,6 +1,6 @@
 import { createStore, defineStore } from '@lib/state';
 import { environment } from '@lib/runtime-config';
-import { enabled as shareAppEnabled } from '@app/share/config';
+import { enabled as shareAppEnabled } from '@app/beam/config';
 
 /** Whether the share app surfaces in the launcher. */
 export interface ShareFlagState {

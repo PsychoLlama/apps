@@ -1,3 +1,3 @@
-import { ShareEndpoint } from '@app/share';
+import { ShareEndpoint } from '@app/beam';
 
 export default ShareEndpoint;

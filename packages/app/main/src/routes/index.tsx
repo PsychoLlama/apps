@@ -87,7 +87,7 @@ const EXPERIMENTAL_APP: AppEntry = {
 };
 
 /**
- * Peer-to-peer resource sharing. Gated on the `@app/share` runtime flag
+ * Peer-to-peer resource sharing. Gated on the `@app/beam` runtime flag
  * like {@link EXPERIMENTAL_APP} — it's still a work in progress, enabled
  * in local dev only — so the launcher reveals it reactively (see {@link
  * shareFlag}) in lockstep with the service worker's runtime route gate.

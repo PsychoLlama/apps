@@ -9,7 +9,7 @@ import {
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
-import { enabled as shareAppEnabled } from '@app/share/config';
+import { enabled as shareAppEnabled } from '@app/beam/config';
 import { type AdvancedSettingsState } from './store';
 
 /**

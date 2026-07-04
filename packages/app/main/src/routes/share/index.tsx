@@ -1,3 +1,3 @@
-import { Share } from '@app/share';
+import { Share } from '@app/beam';
 
 export default Share;

@@ -1,3 +1,3 @@
-import { ShareLayout } from '@app/share';
+import { ShareLayout } from '@app/beam';
 
 export default ShareLayout;

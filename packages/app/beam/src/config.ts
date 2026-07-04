@@ -5,7 +5,7 @@ import { defineConfig } from '@lib/runtime-config';
  * to local dev and preview (staging) for testing — hidden from production
  * builds until it's ready.
  */
-export const enabled = defineConfig('@app/share', {
+export const enabled = defineConfig('@app/beam', {
   development: { enabled: true },
   staging: { enabled: true },
   production: { enabled: false },

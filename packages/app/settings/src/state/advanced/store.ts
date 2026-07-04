@@ -3,7 +3,7 @@ import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
-import { enabled as shareAppEnabled } from '@app/share/config';
+import { enabled as shareAppEnabled } from '@app/beam/config';
 
 /** Live values backing the settings page's Advanced section. */
 export interface AdvancedSettingsState {

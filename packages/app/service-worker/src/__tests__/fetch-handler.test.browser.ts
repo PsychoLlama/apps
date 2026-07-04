@@ -8,7 +8,7 @@
 import { type Mock } from 'vitest';
 
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
-import { enabled as shareAppEnabled } from '@app/share/config';
+import { enabled as shareAppEnabled } from '@app/beam/config';
 import { reset, updateConfig } from '@lib/runtime-config';
 
 import { CACHE_NAMES } from '../caches';
