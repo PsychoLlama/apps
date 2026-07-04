@@ -1,4 +1,5 @@
 import { onCleanup, onMount, Show, type Component } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { useEffect } from '@lib/state';
 import { Flex, IconButton } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
@@ -34,6 +35,7 @@ interface CameraViewProps {
  */
 export const CameraView: Component<CameraViewProps> = (props) => {
   const finishScan = useEffect(finishScanEffect);
+  const navigate = useNavigate();
   let videoEl: HTMLVideoElement | undefined;
 
   onMount(() => {
@@ -49,7 +51,11 @@ export const CameraView: Component<CameraViewProps> = (props) => {
     // it tolerates the worker preload still being in flight and begins
     // decoding the moment it attaches.
     onCleanup(
-      startCaptureLoop(video, () => decoder.connection?.current, finishScan),
+      startCaptureLoop(
+        video,
+        () => decoder.connection?.current,
+        (result) => finishScan({ result, navigate }),
+      ),
     );
   });
 

@@ -15,7 +15,7 @@ import {
   Link,
 } from '@lib/ui';
 import IconRefresh from 'virtual:icons/mdi/refresh';
-import { linkFor } from '../scan-link';
+import { internalPath, linkFor } from '../scan-link';
 
 /** Friendly names for each recognized payload kind, used as the heading. */
 const KIND_LABELS: Record<ScanKind, string> = {
@@ -94,17 +94,34 @@ export const ScanResult: Component<ScanResultProps> = (props) => {
                         fallback={row().value}
                       >
                         {(link) => (
-                          <Link
-                            native
-                            href={link().href}
-                            target={link().newTab ? '_blank' : undefined}
-                            rel={
-                              link().newTab ? 'noopener noreferrer' : undefined
+                          <Show
+                            when={internalPath(link().href)}
+                            fallback={
+                              <Link
+                                native
+                                href={link().href}
+                                target={link().newTab ? '_blank' : undefined}
+                                rel={
+                                  link().newTab
+                                    ? 'noopener noreferrer'
+                                    : undefined
+                                }
+                                testId="scan-link"
+                              >
+                                {row().value}
+                              </Link>
                             }
-                            testId="scan-link"
                           >
-                            {row().value}
-                          </Link>
+                            {/* A link back into our own origin routes
+                                in-app: a router `<A>` (no `native`, no new
+                                tab) so the tap stays a client-side
+                                navigation instead of a full reload. */}
+                            {(path) => (
+                              <Link href={path()} testId="scan-link">
+                                {row().value}
+                              </Link>
+                            )}
+                          </Show>
                         )}
                       </Show>
                     )}

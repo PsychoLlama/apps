@@ -23,6 +23,7 @@
     "media-devices": "^0.5.0"
   },
   "peerDependencies": {
+    "@solidjs/router": "*",
     "solid-js": "*"
   }
 }
