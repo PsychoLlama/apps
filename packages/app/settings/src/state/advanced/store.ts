@@ -3,7 +3,7 @@ import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
-import { enabled as shareAppEnabled } from '@app/share/config';
+import { enabled as beamAppEnabled } from '@app/beam/config';
 
 /** Live values backing the settings page's Advanced section. */
 export interface AdvancedSettingsState {
@@ -31,10 +31,10 @@ export interface AdvancedSettingsState {
   experimentalEnabled: boolean;
 
   /**
-   * Whether the share app is enabled for the active environment. Seeded
+   * Whether the beam app is enabled for the active environment. Seeded
    * from the option default, then reconciled on mount like `logFilter`.
    */
-  shareEnabled: boolean;
+  beamEnabled: boolean;
 }
 
 /**
@@ -47,7 +47,7 @@ export const advancedDefaults: AdvancedSettingsState = {
   logFilter: filter.defaults[environment].pattern,
   logExportEnabled: logExport.defaults[environment].enabled,
   experimentalEnabled: experimentalAppEnabled.defaults[environment].enabled,
-  shareEnabled: shareAppEnabled.defaults[environment].enabled,
+  beamEnabled: beamAppEnabled.defaults[environment].enabled,
 };
 
 /** Source of truth for the Advanced settings controls. */

@@ -8,7 +8,7 @@
 import { type Mock } from 'vitest';
 
 import { enabled as experimentalAppEnabled } from '@app/experimental/config';
-import { enabled as shareAppEnabled } from '@app/share/config';
+import { enabled as beamAppEnabled } from '@app/beam/config';
 import { reset, updateConfig } from '@lib/runtime-config';
 
 import { CACHE_NAMES } from '../caches';
@@ -354,23 +354,23 @@ describe('handleFetch', () => {
     });
   });
 
-  describe('share route gating', () => {
+  describe('beam route gating', () => {
     // The runner resolves to the `development` environment, so overrides
     // target that. `reset` clears the persisted OPFS override between
     // cases so neither leaks the flag into the other.
     afterEach(async () => {
-      await reset(shareAppEnabled);
+      await reset(beamAppEnabled);
     });
 
-    /** A navigation request to the share route. */
-    const shareNavigation = (): Request => {
-      const request = new Request(sameOrigin('/share'));
+    /** A navigation request to the beam route. */
+    const beamNavigation = (): Request => {
+      const request = new Request(sameOrigin('/beam'));
       Object.defineProperty(request, 'mode', { value: 'navigate' });
       return request;
     };
 
     it('serves the 404 page when the flag is disabled', async () => {
-      await updateConfig(shareAppEnabled, {
+      await updateConfig(beamAppEnabled, {
         development: { enabled: false },
       });
       // The shell is fetched at the clean `/404` path and re-served with
@@ -379,7 +379,7 @@ describe('handleFetch', () => {
         new Response('<html>not found</html>', { status: 200 }),
       );
 
-      const event = syntheticEvent(shareNavigation());
+      const event = syntheticEvent(beamNavigation());
       handleFetch(event as unknown as FetchEvent);
 
       expect(event.respondWith).toHaveBeenCalledOnce();
@@ -391,14 +391,14 @@ describe('handleFetch', () => {
     });
 
     it('serves the navigation when the flag is enabled', async () => {
-      await updateConfig(shareAppEnabled, {
+      await updateConfig(beamAppEnabled, {
         development: { enabled: true },
       });
       fetchSpy.mockResolvedValue(
-        new Response('<html>share</html>', { status: 200 }),
+        new Response('<html>beam</html>', { status: 200 }),
       );
 
-      const event = syntheticEvent(shareNavigation());
+      const event = syntheticEvent(beamNavigation());
       handleFetch(event as unknown as FetchEvent);
 
       expect(event.respondWith).toHaveBeenCalledOnce();
@@ -406,15 +406,15 @@ describe('handleFetch', () => {
       expect((await response).status).toBe(200);
     });
 
-    it('gates the /share/with/:endpoint peer route on the same flag', async () => {
-      await updateConfig(shareAppEnabled, {
+    it('gates the /beam/with/:endpoint peer route on the same flag', async () => {
+      await updateConfig(beamAppEnabled, {
         development: { enabled: false },
       });
       fetchSpy.mockResolvedValue(
         new Response('<html>not found</html>', { status: 200 }),
       );
 
-      const request = new Request(sameOrigin('/share/with/abc123'));
+      const request = new Request(sameOrigin('/beam/with/abc123'));
       Object.defineProperty(request, 'mode', { value: 'navigate' });
       const event = syntheticEvent(request);
       handleFetch(event as unknown as FetchEvent);

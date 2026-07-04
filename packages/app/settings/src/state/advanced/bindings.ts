@@ -5,11 +5,11 @@ import {
   resetExperimentalEnabled,
   resetLogExportEnabled,
   resetLogFilter,
-  resetShareEnabled,
+  resetBeamEnabled,
   writeExperimentalEnabled,
   writeLogExportEnabled,
   writeLogFilter,
-  writeShareEnabled,
+  writeBeamEnabled,
 } from './capabilities';
 
 /**
@@ -66,13 +66,13 @@ export const resetExperimentalEffect = defineEffect(
 );
 
 /**
- * Persist the share flag. The write echoes back through the subscription,
+ * Persist the beam flag. The write echoes back through the subscription,
  * which is what actually updates the store.
  */
-export const commitShareEffect = defineEffect([], writeShareEnabled);
+export const commitBeamEffect = defineEffect([], writeBeamEnabled);
 
 /**
- * Revert the share flag to its default for the active environment. The
+ * Revert the beam flag to its default for the active environment. The
  * reset echoes back through the subscription, which updates the store.
  */
-export const resetShareEffect = defineEffect([], resetShareEnabled);
+export const resetBeamEffect = defineEffect([], resetBeamEnabled);

@@ -8,7 +8,7 @@ import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconTextBox from 'virtual:icons/mdi/text-box-outline';
 import IconGallery from 'virtual:icons/mdi/brush-variant';
 import IconHammerWrench from 'virtual:icons/mdi/hammer-wrench';
-import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
+import IconSend from 'virtual:icons/mdi/send';
 import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import IconGithub from 'virtual:icons/mdi/github';
@@ -19,11 +19,11 @@ import {
   watchExperimentalFlag,
 } from '../state/experimental-flag';
 import {
-  hydrateShareFlagEffect,
-  setShareEnabled,
-  shareFlag,
-  watchShareFlag,
-} from '../state/share-flag';
+  hydrateBeamFlagEffect,
+  setBeamEnabled,
+  beamFlag,
+  watchBeamFlag,
+} from '../state/beam-flag';
 import * as css from './index.css';
 
 interface AppEntry {
@@ -87,17 +87,17 @@ const EXPERIMENTAL_APP: AppEntry = {
 };
 
 /**
- * Peer-to-peer resource sharing. Gated on the `@app/share` runtime flag
+ * Peer-to-peer resource sharing. Gated on the `@app/beam` runtime flag
  * like {@link EXPERIMENTAL_APP} — it's still a work in progress, enabled
  * in local dev only — so the launcher reveals it reactively (see {@link
- * shareFlag}) in lockstep with the service worker's runtime route gate.
+ * beamFlag}) in lockstep with the service worker's runtime route gate.
  */
-const SHARE_APP: AppEntry = {
-  id: 'share',
-  name: 'Share',
-  href: '/share',
-  description: 'Share links and files peer to peer between your devices.',
-  Icon: IconShareVariant,
+const BEAM_APP: AppEntry = {
+  id: 'beam',
+  name: 'Beam',
+  href: '/beam',
+  description: 'Encrypted sharing between devices.',
+  Icon: IconSend,
 };
 
 /** A single launcher entry — a card linking to one app. */
@@ -153,8 +153,8 @@ const AppCard: Component<{ app: AppEntry }> = (props) => (
 const Launcher = () => {
   const reconcileFlag = useEffect(hydrateExperimentalFlagEffect);
   const setEnabled = useAction(setExperimentalEnabled);
-  const reconcileShare = useEffect(hydrateShareFlagEffect);
-  const setShareFlagEnabled = useAction(setShareEnabled);
+  const reconcileBeam = useEffect(hydrateBeamFlagEffect);
+  const setBeamFlagEnabled = useAction(setBeamEnabled);
 
   // The store is seeded with the build-environment default, so first
   // paint (and prerender) match without a flash. Once mounted — OPFS is
@@ -163,8 +163,8 @@ const Launcher = () => {
   onMount(() => {
     void reconcileFlag();
     onCleanup(watchExperimentalFlag(setEnabled));
-    void reconcileShare();
-    onCleanup(watchShareFlag(setShareFlagEnabled));
+    void reconcileBeam();
+    onCleanup(watchBeamFlag(setBeamFlagEnabled));
   });
 
   return (
@@ -209,8 +209,8 @@ const Launcher = () => {
               aria-label="Apps"
             >
               <For each={APPS}>{(app) => <AppCard app={app} />}</For>
-              <Show when={shareFlag.enabled}>
-                <AppCard app={SHARE_APP} />
+              <Show when={beamFlag.enabled}>
+                <AppCard app={BEAM_APP} />
               </Show>
               <Show when={experimentalFlag.enabled}>
                 <AppCard app={EXPERIMENTAL_APP} />

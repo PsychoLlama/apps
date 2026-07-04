@@ -16,24 +16,24 @@ import {
   setExperimentalEnabled,
   setLogExportEnabled,
   setLogFilter,
-  setShareEnabled,
+  setBeamEnabled,
 } from './state/advanced/actions';
 import {
   commitExperimentalEffect,
   commitLogExportEffect,
   commitLogFilterEffect,
-  commitShareEffect,
+  commitBeamEffect,
   hydrateAdvancedSettingsEffect,
   resetExperimentalEffect,
   resetLogExportEffect,
   resetLogFilterEffect,
-  resetShareEffect,
+  resetBeamEffect,
 } from './state/advanced/bindings';
 import {
   watchExperimentalEnabled,
   watchLogExportEnabled,
   watchLogFilter,
-  watchShareEnabled,
+  watchBeamEnabled,
 } from './state/advanced/capabilities';
 import { advancedDefaults, advancedSettings } from './state/advanced/store';
 import * as css from './advanced-settings.css';
@@ -54,15 +54,15 @@ export const AdvancedSettings = () => {
   const commitFilter = useEffect(commitLogFilterEffect);
   const commitLogExport = useEffect(commitLogExportEffect);
   const commitExperimental = useEffect(commitExperimentalEffect);
-  const commitShare = useEffect(commitShareEffect);
+  const commitBeam = useEffect(commitBeamEffect);
   const resetFilter = useEffect(resetLogFilterEffect);
   const resetLogExport = useEffect(resetLogExportEffect);
   const resetExperimental = useEffect(resetExperimentalEffect);
-  const resetShare = useEffect(resetShareEffect);
+  const resetBeam = useEffect(resetBeamEffect);
   const mirrorFilter = useAction(setLogFilter);
   const mirrorLogExport = useAction(setLogExportEnabled);
   const mirrorExperimental = useAction(setExperimentalEnabled);
-  const mirrorShare = useAction(setShareEnabled);
+  const mirrorBeam = useAction(setBeamEnabled);
 
   // The store is seeded with the build-environment default, so first
   // paint (and prerender) match without a flash. OPFS is client-only —
@@ -74,7 +74,7 @@ export const AdvancedSettings = () => {
     onCleanup(watchLogFilter(mirrorFilter));
     onCleanup(watchLogExportEnabled(mirrorLogExport));
     onCleanup(watchExperimentalEnabled(mirrorExperimental));
-    onCleanup(watchShareEnabled(mirrorShare));
+    onCleanup(watchBeamEnabled(mirrorBeam));
   });
 
   return (
@@ -244,13 +244,13 @@ export const AdvancedSettings = () => {
             gap={3}
           >
             <Heading as="h3" size={4} weight="medium" selectable={false}>
-              Share app
+              Beam app
             </Heading>
             <ResetButton
-              testId="advanced-share-reset"
-              label="Reset share app"
-              disabled={advanced.shareEnabled === advancedDefaults.shareEnabled}
-              onReset={() => void resetShare()}
+              testId="advanced-beam-reset"
+              label="Reset Beam app"
+              disabled={advanced.beamEnabled === advancedDefaults.beamEnabled}
+              onReset={() => void resetBeam()}
             />
           </Flex>
           <Text as="label" size={2} color="lowContrast" selectable={false}>
@@ -261,11 +261,11 @@ export const AdvancedSettings = () => {
               align="center"
               gap={3}
             >
-              Surface the peer-to-peer share app in the launcher.
+              Surface the peer-to-peer Beam app in the launcher.
               <Switch
-                testId="advanced-share-toggle"
-                checked={advanced.shareEnabled}
-                onCheckedChange={(next) => void commitShare(next)}
+                testId="advanced-beam-toggle"
+                checked={advanced.beamEnabled}
+                onCheckedChange={(next) => void commitBeam(next)}
               />
             </Flex>
           </Text>

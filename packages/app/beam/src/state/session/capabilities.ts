@@ -15,7 +15,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 /**
  * Vault id the endpoint's secret key is persisted under, namespaced per the
  * vault's id convention. The key is the private half of the endpoint's
- * identity — and thus its share link — so it goes through `@lib/vault`, which
+ * identity — and thus its beam link — so it goes through `@lib/vault`, which
  * encrypts it at rest under a non-extractable AES-GCM key rather than leaving
  * the raw bytes on disk in the clear.
  */
@@ -40,7 +40,7 @@ const restoreSecretKey = async (): Promise<Uint8Array | undefined> => {
 };
 
 /**
- * Persist the endpoint's key so its identity — and share link — survives a
+ * Persist the endpoint's key so its identity — and beam link — survives a
  * reload. Best-effort for the same reason as {@link restoreSecretKey}: a
  * failed write only means the identity may change next time, not that this
  * connection is unusable.
@@ -61,7 +61,7 @@ const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
  * can't run during prerender — so this is driven from `onMount`.
  *
  * Reuses a saved identity, or mints a fresh one so the endpoint keeps a stable
- * identity (and share link) across reloads. A fresh key is persisted in
+ * identity (and beam link) across reloads. A fresh key is persisted in
  * parallel with the relay connect rather than before it — the connect is the
  * slow, networked step, and the write needn't gate it.
  *
@@ -92,7 +92,7 @@ export const openConnection = async (
     return null;
   }
 
-  // Start serving inbound dials so the peer being shared-with logs the other
+  // Start serving inbound dials so the peer being dialed logs the other
   // side of the connection. The loop is held by the endpoint and torn down
   // when it's freed.
   endpoint.acceptPeers((endpointId) => {
@@ -103,7 +103,7 @@ export const openConnection = async (
 };
 
 /**
- * Dial the peer named in a share link over the live relay connection,
+ * Dial the peer named in a beam link over the live relay connection,
  * resolving once the connection is established. Reads the endpoint off the
  * connection store — the caller only dials once the relay connection is
  * `connected`, so a missing endpoint is a caller bug and throws.
@@ -141,13 +141,13 @@ export const closeConnection = (state: DeepReadonly<ConnectionState>): void => {
 };
 
 /**
- * The shareable link to an endpoint — the `/share/with/:endpoint` URL a peer
+ * The beam link to an endpoint — the `/beam/with/:endpoint` URL a peer
  * opens to dial us, keyed by the endpoint's public identity. Only ever built
  * client-side (the endpoint is `null` until the client-only connect lands), so
  * `window.location.origin` is safe to read.
  */
-export const shareLink = (endpointId: string): string =>
-  new URL(`/share/with/${endpointId}`, window.location.origin).href;
+export const beamLink = (endpointId: string): string =>
+  new URL(`/beam/with/${endpointId}`, window.location.origin).href;
 
 /**
  * The wasm init promise, memoized so the module instantiates once and every

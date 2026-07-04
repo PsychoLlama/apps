@@ -13,10 +13,10 @@ export interface QrGrid {
   modules: Uint8Array;
 }
 
-/** The QR rendering of the current share link. */
+/** The QR rendering of the current beam link. */
 export interface QrCodeState {
   /**
-   * The encoded grid for the live share link, held behind `Ref` so the
+   * The encoded grid for the live beam link, held behind `Ref` so the
    * reactive store doesn't proxy the byte buffer. `null` until the first
    * encode lands — the wasm encoder and the link are both client-only — and
    * again if an encode fails.
@@ -28,5 +28,5 @@ export const qrCodeStore = defineStore<QrCodeState>(() => ({
   grid: null,
 }));
 
-/** Live, readonly view of the share link's QR grid. */
+/** Live, readonly view of the beam link's QR grid. */
 export const qrCode = createStore(qrCodeStore);
