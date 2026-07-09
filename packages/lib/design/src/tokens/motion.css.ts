@@ -41,17 +41,45 @@ export const durationValues = {
   slow: { 1: '400ms', 2: '700ms' },
 } as const;
 
+/**
+ * Collapsed durations for reduced-motion. Every step snaps to `0ms` so
+ * transitions and animations resolve instantly. Applied both under
+ * `@media (prefers-reduced-motion: reduce)` and the forced-reduce
+ * override below.
+ */
+const reducedDurationValues = {
+  fast: { 1: '0ms', 2: '0ms' },
+  moderate: { 1: '0ms', 2: '0ms' },
+  slow: { 1: '0ms', 2: '0ms' },
+} as const;
+
+/**
+ * `data-` attribute on `:root` that forces a motion preference,
+ * overriding the system `prefers-reduced-motion` query. Absent means
+ * "system-managed." Kept in lockstep with `MOTION_ATTRIBUTE` in
+ * `@lib/theme` — the prelude and settings picker stamp this attribute,
+ * and the rules below key off it.
+ */
+const motionAttr = 'data-reduced-motion';
+
 globalStyle(':root', {
   vars: assignVars(durationTheme, durationValues),
   '@media': {
     '(prefers-reduced-motion: reduce)': {
-      vars: assignVars(durationTheme, {
-        fast: { 1: '0ms', 2: '0ms' },
-        moderate: { 1: '0ms', 2: '0ms' },
-        slow: { 1: '0ms', 2: '0ms' },
-      }),
+      vars: assignVars(durationTheme, reducedDurationValues),
     },
   },
+});
+
+// Forced overrides. The attribute selectors outrank the bare `:root`
+// rule above (and its media block) on specificity, so an explicit
+// choice wins regardless of the system preference.
+globalStyle(`:root[${motionAttr}="reduce"]`, {
+  vars: assignVars(durationTheme, reducedDurationValues),
+});
+
+globalStyle(`:root[${motionAttr}="no-preference"]`, {
+  vars: assignVars(durationTheme, durationValues),
 });
 
 /**
