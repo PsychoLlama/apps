@@ -1,32 +1,39 @@
 import { createTestBindings } from '@lib/state';
 import {
   hydrateColorSchemeEffect,
+  hydrateMotionEffect,
   hydrateThemeEffect,
   resetThemeEffect,
   selectColorSchemeEffect,
+  selectMotionEffect,
   selectThemeEffect,
   setColorScheme,
+  setMotion,
   setTheme,
 } from '../bindings';
 import * as capabilities from '../capabilities';
 import { DEFAULT_THEME_ID } from '../constants';
-import { colorSchemeStore, themeStore } from '../store';
+import { colorSchemeStore, motionStore, themeStore } from '../store';
 
 // Bindings tests assert on state transitions only. Capability behavior —
 // DOM writes, localStorage persistence, attribute validation — lives in
 // capabilities tests.
 vi.mock('../capabilities', () => ({
   applyColorScheme: vi.fn(),
+  applyMotion: vi.fn(),
   applyTheme: vi.fn(),
   readActiveColorScheme: vi.fn(),
+  readActiveMotion: vi.fn(),
   readActiveTheme: vi.fn(),
   resetTheme: vi.fn(),
 }));
 
 beforeEach(() => {
   vi.mocked(capabilities.applyColorScheme).mockReset();
+  vi.mocked(capabilities.applyMotion).mockReset();
   vi.mocked(capabilities.applyTheme).mockReset();
   vi.mocked(capabilities.readActiveColorScheme).mockReset();
+  vi.mocked(capabilities.readActiveMotion).mockReset();
   vi.mocked(capabilities.readActiveTheme).mockReset();
   vi.mocked(capabilities.resetTheme).mockReset();
 });
@@ -37,6 +44,7 @@ const setup = () => {
     ...bindings,
     theme: bindings.createStore(themeStore),
     colorScheme: bindings.createStore(colorSchemeStore),
+    motion: bindings.createStore(motionStore),
   };
 };
 
@@ -180,5 +188,69 @@ describe('hydrateColorSchemeEffect', () => {
     useEffect(hydrateColorSchemeEffect)();
 
     expect(colorScheme.id).toBe('dark');
+  });
+});
+
+describe('motionStore', () => {
+  it('starts unhydrated so SSG can render with no selection', () => {
+    const { motion } = setup();
+
+    expect(motion.id).toBeNull();
+  });
+});
+
+describe('setMotion', () => {
+  it('updates the active motion selection', () => {
+    const { motion, useAction } = setup();
+
+    useAction(setMotion)('reduce');
+
+    expect(motion.id).toBe('reduce');
+  });
+});
+
+describe('selectMotionEffect', () => {
+  it('updates state synchronously before the side effect runs', () => {
+    const { motion, useEffect } = setup();
+    let observed: string | null = null;
+    vi.mocked(capabilities.applyMotion).mockImplementation(() => {
+      observed = motion.id;
+    });
+
+    useEffect(selectMotionEffect)('reduce');
+
+    // `onStart` fires before the callback, so the capability sees the
+    // post-dispatch state — confirming UI gets the value before the
+    // DOM/localStorage write.
+    expect(observed).toBe('reduce');
+    expect(motion.id).toBe('reduce');
+  });
+
+  it('forwards the selection to the apply capability', () => {
+    const { useEffect } = setup();
+
+    useEffect(selectMotionEffect)('no-preference');
+
+    expect(capabilities.applyMotion).toHaveBeenCalledWith('no-preference');
+  });
+
+  it("propagates 'system' as a regular selection", () => {
+    const { motion, useEffect } = setup();
+
+    useEffect(selectMotionEffect)('system');
+
+    expect(motion.id).toBe('system');
+    expect(capabilities.applyMotion).toHaveBeenCalledWith('system');
+  });
+});
+
+describe('hydrateMotionEffect', () => {
+  it('seeds the store with the value read from the DOM', () => {
+    vi.mocked(capabilities.readActiveMotion).mockReturnValue('reduce');
+    const { motion, useEffect } = setup();
+
+    useEffect(hydrateMotionEffect)();
+
+    expect(motion.id).toBe('reduce');
   });
 });

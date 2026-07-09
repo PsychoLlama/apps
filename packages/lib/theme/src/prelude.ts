@@ -3,6 +3,9 @@ import {
   COLOR_SCHEME_IDS,
   COLOR_SCHEME_STORAGE_KEY,
   DEFAULT_THEME_ID,
+  MOTION_ATTRIBUTE,
+  MOTION_IDS,
+  MOTION_STORAGE_KEY,
   THEME_ATTRIBUTE,
   THEME_COLOR_META_ID,
   THEME_COLORS,
@@ -13,11 +16,12 @@ import {
 
 // Compiled to a minified IIFE by `@dev/build/vite-plugin/inline-script`
 // and inlined as a head script by `entry-server`. Runs before paint to
-// restamp `<html data-theme>` and `<html data-color-scheme>` with the
-// persisted selections — the SSG output already carries
-// `DEFAULT_THEME_ID` and no color-scheme override, so missing or
-// invalid stored values are no-ops and the defaults stay in place.
-// JS-disabled visitors fall through cleanly for the same reason.
+// restamp `<html data-theme>`, `<html data-color-scheme>`, and
+// `<html data-reduced-motion>` with the persisted selections — the SSG
+// output already carries `DEFAULT_THEME_ID` and no color-scheme or
+// motion override, so missing or invalid stored values are no-ops and
+// the defaults stay in place. JS-disabled visitors fall through cleanly
+// for the same reason.
 //
 // HARD CONSTRAINT: every import in this file must be CSS-free. Pulling
 // anything from a `.css.ts` module (directly or transitively) drags
@@ -40,6 +44,14 @@ try {
     (COLOR_SCHEME_IDS as readonly string[]).includes(storedScheme)
   ) {
     root.dataset[COLOR_SCHEME_ATTRIBUTE] = storedScheme;
+  }
+
+  const storedMotion = localStorage.getItem(MOTION_STORAGE_KEY);
+  if (
+    storedMotion &&
+    (MOTION_IDS as readonly string[]).includes(storedMotion)
+  ) {
+    root.dataset[MOTION_ATTRIBUTE] = storedMotion;
   }
 
   // Swap `<meta name="theme-color">` content to match the active theme's
