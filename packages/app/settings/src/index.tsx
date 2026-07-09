@@ -8,6 +8,11 @@ import {
   appearanceHeadingId,
 } from './appearance-picker';
 import { ThemePicker, ThemeResetButton, themeHeadingId } from './theme-picker';
+import {
+  MotionPicker,
+  MotionResetButton,
+  motionHeadingId,
+} from './motion-picker';
 import { AdvancedSettings } from './advanced-settings';
 
 export const Settings = () => (
@@ -91,6 +96,34 @@ export const Settings = () => (
             </Flex>
 
             <ThemePicker />
+          </Flex>
+
+          <Flex as="section" direction="column" gap={3}>
+            <Flex as="header" direction="column" gap={2}>
+              <Flex
+                as="div"
+                direction="row"
+                justify="between"
+                align="center"
+                gap={3}
+              >
+                <Heading
+                  as="h2"
+                  id={motionHeadingId}
+                  size={4}
+                  weight="medium"
+                  selectable={false}
+                >
+                  Motion
+                </Heading>
+                <MotionResetButton />
+              </Flex>
+              <Text as="p" size={2} color="lowContrast" selectable={false}>
+                Controls animations and transitions.
+              </Text>
+            </Flex>
+
+            <MotionPicker />
           </Flex>
 
           <Flex as="section" direction="column">
