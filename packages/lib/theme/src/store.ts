@@ -1,5 +1,5 @@
 import { createStore, defineStore } from '@lib/state';
-import type { ColorSchemeOption, ThemeId } from './constants';
+import type { ColorSchemeOption, MotionOption, ThemeId } from './constants';
 
 /** Active theme selection mirrored onto `<html data-theme>`. */
 export interface ThemeState {
@@ -47,3 +47,26 @@ export const colorSchemeStore = defineStore<ColorSchemeState>(() => ({
 
 /** Live readonly view of the active color-scheme override. */
 export const colorScheme = createStore(colorSchemeStore);
+
+/** Active motion override mirrored onto `<html data-reduced-motion>`. */
+export interface MotionState {
+  /**
+   * Selected motion option, or `null` until the client hydrates.
+   * `'system'` is a real selection (no override); `null` is the
+   * pre-hydration state and keeps the picker from flashing the wrong
+   * card before the prelude-stamped value is read.
+   */
+  id: MotionOption | null;
+}
+
+/**
+ * Source of truth for the runtime motion override.
+ * `hydrateMotionEffect` seeds it from the prelude-set
+ * `<html data-reduced-motion>` once the client mounts.
+ */
+export const motionStore = defineStore<MotionState>(() => ({
+  id: null,
+}));
+
+/** Live readonly view of the active motion override. */
+export const motion = createStore(motionStore);

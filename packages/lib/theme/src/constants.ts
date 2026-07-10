@@ -102,6 +102,43 @@ export type ColorSchemeOption = ColorSchemeId | 'system';
 export const COLOR_SCHEME_STORAGE_KEY = 'preferences.appearance.mode';
 
 /**
+ * `dataset` key on `<html>` that forces a motion preference. Mirrors
+ * the `data-reduced-motion` attribute `@lib/design`'s motion tokens key
+ * their forced-override rules off of — keep the two in lockstep so the
+ * prelude, runtime, and CSS all agree on where the override lives.
+ * Absent attribute means "system-managed," handing control back to
+ * `@media (prefers-reduced-motion)`.
+ */
+export const MOTION_ATTRIBUTE = 'reducedMotion';
+
+/**
+ * Canonical list of explicit motion overrides, matching the values of
+ * the `prefers-reduced-motion` media feature. `'system'` is not here —
+ * it's the absence of `<html data-reduced-motion>`, which lets the
+ * `@media (prefers-reduced-motion)` query take over.
+ */
+export const MOTION_IDS = ['no-preference', 'reduce'] as const;
+
+/** Identifier for an application-forced motion preference. */
+export type MotionId = (typeof MOTION_IDS)[number];
+
+/**
+ * Selectable value in the motion picker. `'no-preference'` forces full
+ * motion, `'reduce'` forces collapsed (instant) motion, and `'system'`
+ * is the no-override state — the store and picker share this shape so
+ * the radio group can bind directly without translation.
+ */
+export type MotionOption = MotionId | 'system';
+
+/**
+ * `localStorage` key holding the user's motion override. Stored value
+ * is a `MotionId`; `'system'` is represented by the key's absence,
+ * matching the DOM convention. The head prelude reads this before paint
+ * to restamp `<html data-reduced-motion>`.
+ */
+export const MOTION_STORAGE_KEY = 'preferences.appearance.motion';
+
+/**
  * `id` attribute on the per-scheme `theme-color` meta tags. The prelude
  * looks these up to swap `content` to the active theme's page background
  * before paint. Kept here so the server stamp and prelude can't drift.

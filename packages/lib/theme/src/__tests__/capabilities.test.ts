@@ -2,6 +2,8 @@ import {
   COLOR_SCHEME_ATTRIBUTE,
   COLOR_SCHEME_STORAGE_KEY,
   DEFAULT_THEME_ID,
+  MOTION_ATTRIBUTE,
+  MOTION_STORAGE_KEY,
   THEME_ATTRIBUTE,
   THEME_COLOR_META_ID,
   THEME_COLORS,
@@ -9,8 +11,10 @@ import {
 } from '../constants';
 import {
   applyColorScheme,
+  applyMotion,
   applyTheme,
   readActiveColorScheme,
+  readActiveMotion,
   readActiveTheme,
   resetTheme,
 } from '../capabilities';
@@ -25,6 +29,7 @@ const mountMetaTag = (id: string): HTMLMetaElement => {
 beforeEach(() => {
   delete document.documentElement.dataset[THEME_ATTRIBUTE];
   delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
+  delete document.documentElement.dataset[MOTION_ATTRIBUTE];
   document.getElementById(THEME_COLOR_META_ID.light)?.remove();
   document.getElementById(THEME_COLOR_META_ID.dark)?.remove();
   mountMetaTag(THEME_COLOR_META_ID.light);
@@ -289,6 +294,81 @@ describe('applyColorScheme', () => {
     expect(
       document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE],
     ).toBeUndefined();
+
+    removeItem.mockRestore();
+  });
+});
+
+describe('readActiveMotion', () => {
+  it('returns the validated value stamped on <html>', () => {
+    document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
+
+    expect(readActiveMotion()).toBe('reduce');
+  });
+
+  it("returns 'system' when the attribute is missing", () => {
+    expect(readActiveMotion()).toBe('system');
+  });
+
+  it("returns 'system' when the attribute is unrecognized", () => {
+    document.documentElement.dataset[MOTION_ATTRIBUTE] = 'jerky';
+
+    expect(readActiveMotion()).toBe('system');
+  });
+});
+
+describe('applyMotion', () => {
+  it('flips <html data-reduced-motion> to the requested override', () => {
+    applyMotion('reduce');
+
+    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
+  });
+
+  it('persists the override to localStorage', () => {
+    applyMotion('no-preference');
+
+    expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBe('no-preference');
+  });
+
+  it("drops the attribute when set to 'system'", () => {
+    document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
+
+    applyMotion('system');
+
+    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
+  });
+
+  it("clears the persisted preference when set to 'system'", () => {
+    localStorage.setItem(MOTION_STORAGE_KEY, 'reduce');
+
+    applyMotion('system');
+
+    expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBeNull();
+  });
+
+  it('still flips the DOM when localStorage rejects', () => {
+    const setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+
+    expect(() => applyMotion('reduce')).not.toThrow();
+    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
+
+    setItem.mockRestore();
+  });
+
+  it("still drops the attribute when localStorage rejects on 'system'", () => {
+    document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
+    const removeItem = vi
+      .spyOn(Storage.prototype, 'removeItem')
+      .mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+
+    expect(() => applyMotion('system')).not.toThrow();
+    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
 
     removeItem.mockRestore();
   });

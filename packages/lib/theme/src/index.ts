@@ -12,6 +12,9 @@ export {
   COLOR_SCHEME_IDS,
   COLOR_SCHEME_STORAGE_KEY,
   DEFAULT_THEME_ID,
+  MOTION_ATTRIBUTE,
+  MOTION_IDS,
+  MOTION_STORAGE_KEY,
   THEME_ATTRIBUTE,
   THEME_COLOR_META_ID,
   THEME_COLORS,
@@ -19,5 +22,7 @@ export {
   THEME_STORAGE_KEY,
   type ColorSchemeId,
   type ColorSchemeOption,
+  type MotionId,
+  type MotionOption,
   type ThemeId,
 } from './constants';

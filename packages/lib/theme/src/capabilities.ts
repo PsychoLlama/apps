@@ -4,6 +4,9 @@ import {
   COLOR_SCHEME_IDS,
   COLOR_SCHEME_STORAGE_KEY,
   DEFAULT_THEME_ID,
+  MOTION_ATTRIBUTE,
+  MOTION_IDS,
+  MOTION_STORAGE_KEY,
   THEME_ATTRIBUTE,
   THEME_COLOR_META_ID,
   THEME_COLORS,
@@ -11,6 +14,8 @@ import {
   THEME_STORAGE_KEY,
   type ColorSchemeId,
   type ColorSchemeOption,
+  type MotionId,
+  type MotionOption,
   type ThemeId,
 } from './constants';
 
@@ -22,6 +27,9 @@ const isThemeId = (value: string | undefined): value is ThemeId =>
 const isColorSchemeId = (value: string | undefined): value is ColorSchemeId =>
   value !== undefined &&
   (COLOR_SCHEME_IDS as readonly string[]).includes(value);
+
+const isMotionId = (value: string | undefined): value is MotionId =>
+  value !== undefined && (MOTION_IDS as readonly string[]).includes(value);
 
 /**
  * Read the active theme stamped onto `<html data-theme>`. The prelude
@@ -138,5 +146,38 @@ export const applyColorScheme = (option: ColorSchemeOption): void => {
   syncThemeColorMeta(readActiveTheme(), option);
   guardStorageWrite('persist', () => {
     localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, option);
+  });
+};
+
+/**
+ * Read the active motion override stamped onto
+ * `<html data-reduced-motion>`. Returns `'system'` when no override is
+ * present — the no-attribute state that hands control back to
+ * `@media (prefers-reduced-motion)`.
+ */
+export const readActiveMotion = (): MotionOption => {
+  const value = document.documentElement.dataset[MOTION_ATTRIBUTE];
+  return isMotionId(value) ? value : 'system';
+};
+
+/**
+ * Force a motion override or hand control back to the system
+ * preference. `'system'` clears both the DOM attribute and the
+ * persisted key — a missing attribute is the canonical no-override
+ * state, and a missing key means the prelude won't restamp on reload.
+ * DOM write happens first so the switch survives a localStorage failure.
+ */
+export const applyMotion = (option: MotionOption): void => {
+  if (option === 'system') {
+    delete document.documentElement.dataset[MOTION_ATTRIBUTE];
+    guardStorageWrite('clear', () => {
+      localStorage.removeItem(MOTION_STORAGE_KEY);
+    });
+    return;
+  }
+
+  document.documentElement.dataset[MOTION_ATTRIBUTE] = option;
+  guardStorageWrite('persist', () => {
+    localStorage.setItem(MOTION_STORAGE_KEY, option);
   });
 };
