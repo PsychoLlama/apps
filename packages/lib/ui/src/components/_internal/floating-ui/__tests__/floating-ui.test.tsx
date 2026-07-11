@@ -75,6 +75,36 @@ describe('FloatingContainer', () => {
     expect(shell?.firstElementChild?.tagName.toLowerCase()).toBe('svg');
   });
 
+  it('points the arrow toward the anchor per side', () => {
+    const cases = [
+      { side: 'bottom', width: '12', height: '6' },
+      { side: 'left', width: '6', height: '12' },
+    ] as const;
+
+    for (const { side, width, height } of cases) {
+      const { container } = render(() => (
+        <FloatingContainer side={side} arrow={{ visible: true }}>
+          content
+        </FloatingContainer>
+      ));
+      const svg = container.querySelector('svg');
+
+      // A horizontal side stands the arrow's box on its end.
+      expect(svg).toHaveAttribute('width', width);
+      expect(svg).toHaveAttribute('height', height);
+    }
+  });
+
+  it('passes the arrow alignment through to the arrow', () => {
+    const { container } = render(() => (
+      <FloatingContainer arrow={{ visible: true, align: 'end' }}>
+        content
+      </FloatingContainer>
+    ));
+
+    expect(container.querySelector('svg')).toHaveAttribute('data-align', 'end');
+  });
+
   it('reflects every side into the data attribute the CSS keys off', () => {
     // Layout (flex-direction) is driven from CSS by `data-side`, so the
     // contract this component owns is reflecting the side faithfully.

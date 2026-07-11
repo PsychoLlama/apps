@@ -3,7 +3,7 @@
  *
  * Covers what the arrow promises: it draws a correctly-sized triangle for
  * each direction — without a rotation transform, so the SVG box matches
- * the shape — and merges a consumer class.
+ * the shape — seats itself along the edge, and merges a consumer class.
  */
 
 import { render } from '@solidjs/testing-library';
@@ -11,7 +11,7 @@ import { Arrow } from '../arrow';
 
 describe('Arrow', () => {
   it('defaults to a 12×6 up-pointing triangle', () => {
-    const { container } = render(() => <Arrow />);
+    const { container } = render(() => <Arrow direction="up" />);
     const svg = container.querySelector('svg');
 
     expect(svg).toHaveAttribute('width', '12');
@@ -34,7 +34,7 @@ describe('Arrow', () => {
 
     for (const { direction, width, height, points } of cases) {
       const { container } = render(() => (
-        <Arrow width={12} height={6} direction={direction} />
+        <Arrow base={12} depth={6} direction={direction} />
       ));
       const svg = container.querySelector('svg');
 
@@ -45,8 +45,28 @@ describe('Arrow', () => {
     }
   });
 
+  it('reflects its alignment into the data attribute', () => {
+    const { container } = render(() => (
+      <Arrow direction="left" align="start" />
+    ));
+
+    expect(container.querySelector('svg')).toHaveAttribute(
+      'data-align',
+      'start',
+    );
+  });
+
+  it('defaults its alignment to center', () => {
+    const { container } = render(() => <Arrow direction="up" />);
+
+    expect(container.querySelector('svg')).toHaveAttribute(
+      'data-align',
+      'center',
+    );
+  });
+
   it('merges a consumer class', () => {
-    const { container } = render(() => <Arrow class="fill" />);
+    const { container } = render(() => <Arrow direction="up" class="fill" />);
 
     expect(container.querySelector('svg')).toHaveClass('fill');
   });

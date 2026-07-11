@@ -4,11 +4,12 @@ import { Flex, Heading, RadioGroupItem, RadioGroupRoot, Text } from '@lib/ui';
 import {
   FloatingContainer,
   anchor,
+  type ArrowAlign,
   type FloatingAlignment,
   type FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
 import { useAction } from '@lib/state';
-import { floatingControls, setAlign, setSide } from './store';
+import { floatingControls, setAlign, setArrowAlign, setSide } from './store';
 import * as css from './index.css';
 
 const SIDES = [
@@ -22,6 +23,11 @@ const ALIGNMENTS = [
   'center',
   'end',
 ] as const satisfies FloatingAlignment[];
+const ARROW_ALIGNMENTS = [
+  'start',
+  'center',
+  'end',
+] as const satisfies ArrowAlign[];
 
 /** A labeled radio group binding one placement axis to the controls store. */
 const PlacementControl = <Value extends string>(props: {
@@ -60,6 +66,7 @@ export const Experimental = () => {
   const controls = floatingControls;
   const chooseSide = useAction(setSide);
   const chooseAlign = useAction(setAlign);
+  const chooseArrowAlign = useAction(setArrowAlign);
 
   return (
     <Frame>
@@ -80,6 +87,13 @@ export const Experimental = () => {
             options={ALIGNMENTS}
             onValueChange={chooseAlign}
           />
+          <PlacementControl
+            label="Arrow align"
+            name="arrow-align"
+            value={controls.arrowAlign}
+            options={ARROW_ALIGNMENTS}
+            onValueChange={chooseArrowAlign}
+          />
         </Flex>
 
         <Flex as="div" grow align="center" justify="center">
@@ -87,7 +101,13 @@ export const Experimental = () => {
             <FloatingContainer
               side={controls.side}
               align={controls.align}
-              arrow={{ visible: true, width: 16, height: 8, class: css.arrow }}
+              arrow={{
+                visible: true,
+                base: 16,
+                depth: 8,
+                align: controls.arrowAlign,
+                class: css.arrow,
+              }}
             >
               <Flex as="div" direction="column" gap={1} class={css.surface}>
                 <Heading as="h2" size={3} selectable={false}>

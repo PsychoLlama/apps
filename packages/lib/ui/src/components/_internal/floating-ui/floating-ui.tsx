@@ -14,7 +14,12 @@ import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
 import * as css from './floating-ui.css';
 
 export { anchor } from './floating-ui.css';
-export { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
+export {
+  Arrow,
+  type ArrowAlign,
+  type ArrowDirection,
+  type ArrowProps,
+} from './arrow';
 
 /**
  * Internal primitive for positioned floating UI — tooltips, dropdowns,
@@ -82,8 +87,11 @@ export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
  */
 export type FloatingAlignment = 'start' | 'center' | 'end';
 
-/** Arrow configuration for a floating primitive. */
-export interface FloatingArrowProps extends ArrowProps {
+/**
+ * Arrow configuration for a floating primitive. `direction` is omitted —
+ * the container derives it from {@link FloatingContainerProps.side}.
+ */
+export interface FloatingArrowProps extends Omit<ArrowProps, 'direction'> {
   /** Whether to render the arrow. Defaults to `false`. */
   visible?: boolean;
 }
@@ -132,9 +140,10 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
     >
       <Show when={props.arrow?.visible}>
         <Arrow
-          width={props.arrow?.width}
-          height={props.arrow?.height}
+          base={props.arrow?.base}
+          depth={props.arrow?.depth}
           direction={ARROW_DIRECTION_BY_SIDE[side()]}
+          align={props.arrow?.align}
           class={props.arrow?.class}
         />
       </Show>

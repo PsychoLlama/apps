@@ -1,5 +1,6 @@
 import { createStore, defineAction, defineStore } from '@lib/state';
 import type {
+  ArrowAlign,
   FloatingAlignment,
   FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
@@ -10,11 +11,14 @@ export interface FloatingControlsState {
   side: FloatingSide;
   /** Placement along that edge. */
   align: FloatingAlignment;
+  /** Placement of the arrow along that edge. */
+  arrowAlign: ArrowAlign;
 }
 
 const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
   side: 'bottom',
   align: 'center',
+  arrowAlign: 'center',
 }));
 
 /** Live, readonly view of the floating-window placement controls. */
@@ -33,5 +37,13 @@ export const setAlign = defineAction(
   [floatingControlsStore],
   (controls, align: FloatingAlignment) => {
     controls.align = align;
+  },
+);
+
+/** Set the arrow's placement along the bound edge. */
+export const setArrowAlign = defineAction(
+  [floatingControlsStore],
+  (controls, arrowAlign: ArrowAlign) => {
+    controls.arrowAlign = arrowAlign;
   },
 );
