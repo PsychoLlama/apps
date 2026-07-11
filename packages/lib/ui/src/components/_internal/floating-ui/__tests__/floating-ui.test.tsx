@@ -74,4 +74,22 @@ describe('FloatingContainer', () => {
     // Arrow first so the body paints over its shadow seam.
     expect(shell?.firstElementChild?.tagName.toLowerCase()).toBe('svg');
   });
+
+  it('lays out the arrow toward the anchor per side', () => {
+    const cases = [
+      { side: 'bottom', direction: 'column' },
+      { side: 'top', direction: 'column-reverse' },
+      { side: 'right', direction: 'row' },
+      { side: 'left', direction: 'row-reverse' },
+    ] as const;
+
+    for (const { side, direction } of cases) {
+      const { container } = render(() => (
+        <FloatingContainer side={side}>content</FloatingContainer>
+      ));
+      const shell = container.querySelector<HTMLElement>('[data-side]');
+
+      expect(shell?.style.flexDirection).toBe(direction);
+    }
+  });
 });

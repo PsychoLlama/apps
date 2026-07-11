@@ -14,21 +14,20 @@ export const anchor = style({
  * fully outside the chosen edge of the anchor; `data-align` positions it
  * along that edge — `start` hugs the top/left, `end` the bottom/right.
  *
- * A flexbox lays out the arrow and body. The arrow comes first in the
- * DOM, so `flex-direction` (reversed for top/left) drops it onto the
- * edge facing the anchor.
+ * A flexbox lays out the arrow and body. The container renders the
+ * `flex-direction` from its per-side config (see `ARROW_BY_SIDE`), which
+ * seats the DOM-first arrow onto the edge facing the anchor.
  */
 export const container = style({
   position: 'absolute',
   display: 'flex',
   alignItems: 'center',
   selectors: {
-    // Push fully outside the chosen edge, and seat the arrow (first
-    // child) on the edge that faces the anchor.
-    '&[data-side="top"]': { bottom: '100%', flexDirection: 'column-reverse' },
-    '&[data-side="bottom"]': { top: '100%', flexDirection: 'column' },
-    '&[data-side="left"]': { right: '100%', flexDirection: 'row-reverse' },
-    '&[data-side="right"]': { left: '100%', flexDirection: 'row' },
+    // Push fully outside the chosen edge.
+    '&[data-side="top"]': { bottom: '100%' },
+    '&[data-side="bottom"]': { top: '100%' },
+    '&[data-side="left"]': { right: '100%' },
+    '&[data-side="right"]': { left: '100%' },
 
     // Align along a horizontal edge (top/bottom): start=left … end=right.
     '&[data-side="top"][data-align="start"], &[data-side="bottom"][data-align="start"]':
