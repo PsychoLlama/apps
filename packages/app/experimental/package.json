@@ -16,12 +16,8 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@lib/design": "workspace:*",
-    "@vanilla-extract/css": "catalog:",
     "@lib/runtime-config": "workspace:*",
-    "@lib/shell": "workspace:*",
-    "@lib/state": "workspace:*",
-    "@lib/ui": "workspace:*"
+    "@lib/shell": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": "*"

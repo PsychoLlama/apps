@@ -198,24 +198,12 @@ importers:
 
   packages/app/experimental:
     dependencies:
-      '@lib/design':
-        specifier: workspace:*
-        version: link:../../lib/design
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../../lib/runtime-config
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state':
-        specifier: workspace:*
-        version: link:../../lib/state
-      '@lib/ui':
-        specifier: workspace:*
-        version: link:../../lib/ui
-      '@vanilla-extract/css':
-        specifier: 'catalog:'
-        version: 1.20.1
       solid-js:
         specifier: 1.9.14
         version: 1.9.14

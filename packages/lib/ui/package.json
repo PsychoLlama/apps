@@ -11,7 +11,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./gallery": "./src/gallery/manifest.ts",
-    "./_internal/floating-ui": "./src/components/_internal/floating-ui/floating-ui.tsx",
     "./props/*": "./src/props/*.ts",
     "./package.json": "./package.json"
   },
