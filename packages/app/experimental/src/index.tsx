@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
-import { Flex, RadioGroupItem, RadioGroupRoot, Text } from '@lib/ui';
+import { Flex, Heading, RadioGroupItem, RadioGroupRoot, Text } from '@lib/ui';
 import {
   FloatingContainer,
   anchor,
@@ -87,11 +87,17 @@ export const Experimental = () => {
             <FloatingContainer
               side={controls.side}
               align={controls.align}
-              arrow={{ visible: true, width: 16, height: 8 }}
+              arrow={{ visible: true, width: 16, height: 8, class: css.arrow }}
             >
-              <Text as="p" selectable={false}>
-                Floating Window
-              </Text>
+              <Flex as="div" direction="column" gap={1} class={css.surface}>
+                <Heading as="h2" size={3} selectable={false}>
+                  Floating Window
+                </Heading>
+                <Text as="p" size={2} selectable={false}>
+                  A taller surface so the arrow has room to sit mid-height when
+                  the window binds to the left or right edge.
+                </Text>
+              </Flex>
             </FloatingContainer>
           </Flex>
         </Flex>
