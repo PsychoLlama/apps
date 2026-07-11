@@ -34,4 +34,62 @@ describe('FloatingContainer', () => {
 
     expect(container).toHaveTextContent('content');
   });
+
+  it('defaults to binding centered below the anchor', () => {
+    const { container } = render(() => (
+      <FloatingContainer>content</FloatingContainer>
+    ));
+    const shell = container.querySelector('[data-side]');
+
+    expect(shell).toHaveAttribute('data-side', 'bottom');
+    expect(shell).toHaveAttribute('data-align', 'center');
+  });
+
+  it('reflects side and align into data attributes', () => {
+    const { container } = render(() => (
+      <FloatingContainer side="right" align="end">
+        content
+      </FloatingContainer>
+    ));
+    const shell = container.querySelector('[data-side]');
+
+    expect(shell).toHaveAttribute('data-side', 'right');
+    expect(shell).toHaveAttribute('data-align', 'end');
+  });
+
+  it('omits the arrow by default', () => {
+    const { container } = render(() => (
+      <FloatingContainer>content</FloatingContainer>
+    ));
+
+    expect(container.querySelector('svg')).toBeNull();
+  });
+
+  it('renders the arrow before the body when visible', () => {
+    const { container } = render(() => (
+      <FloatingContainer arrow={{ visible: true }}>content</FloatingContainer>
+    ));
+    const shell = container.querySelector('[data-side]');
+
+    // Arrow first so the body paints over its shadow seam.
+    expect(shell?.firstElementChild?.tagName.toLowerCase()).toBe('svg');
+  });
+
+  it('lays out the arrow toward the anchor per side', () => {
+    const cases = [
+      { side: 'bottom', direction: 'column' },
+      { side: 'top', direction: 'column-reverse' },
+      { side: 'right', direction: 'row' },
+      { side: 'left', direction: 'row-reverse' },
+    ] as const;
+
+    for (const { side, direction } of cases) {
+      const { container } = render(() => (
+        <FloatingContainer side={side}>content</FloatingContainer>
+      ));
+      const shell = container.querySelector<HTMLElement>('[data-side]');
+
+      expect(shell?.style.flexDirection).toBe(direction);
+    }
+  });
 });

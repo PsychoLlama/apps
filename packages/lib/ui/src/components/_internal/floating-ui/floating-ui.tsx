@@ -1,4 +1,4 @@
-import { splitProps, type JSX } from 'solid-js';
+import { Show, splitProps, type JSX } from 'solid-js';
 import {
   flexPropKeys,
   resolveFlexClasses,
@@ -10,6 +10,9 @@ import {
   type PaddingProps,
 } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
+import * as css from './floating-ui.css';
+
+export { anchor } from './floating-ui.css';
 
 /**
  * Internal primitive for positioned floating UI — tooltips, dropdowns,
@@ -26,6 +29,12 @@ import { type TestIdProps } from '../../../props/test-id';
  * - `FloatingBody` — the visual surface. It lays out and pads its
  *   children and is the node consumers style and target in tests.
  */
+
+// Deliberately hand-rolled and short-lived. Most (likely all) of this
+// exists only because the CSS `anchor-positioning` primitives and the
+// `popover` attribute aren't baseline-available yet. Once they are, the
+// anchoring/layering plumbing collapses into a few CSS properties and
+// this module can be deleted rather than grown.
 
 /** Props for the floating content surface. */
 export interface FloatingBodyProps
@@ -46,6 +55,7 @@ export const FloatingBody = (props: FloatingBodyProps) => {
 
   const className = () =>
     [
+      css.body,
       ...resolveFlexClasses(flex),
       ...resolvePaddingClasses(padding),
       local.class,
@@ -60,16 +70,124 @@ export const FloatingBody = (props: FloatingBodyProps) => {
   );
 };
 
+/** Props for the floating primitive's pointer arrow. */
+export interface ArrowProps {
+  /** Triangle width, in px. Defaults to `12`. */
+  width?: number;
+  /** Triangle height, in px. Defaults to `6`. */
+  height?: number;
+  /**
+   * CSS rotation applied to the triangle so it points at the anchor —
+   * e.g. `'90deg'`. Defaults to `'0deg'` (points up).
+   */
+  rotate?: string;
+  /** Class merged onto the arrow — e.g. a fill or shadow. */
+  class?: string;
+}
+
+/**
+ * Decorative triangle that ties a floating surface back to its anchor.
+ * Sized by {@link ArrowProps.width} and {@link ArrowProps.height}, turned
+ * by {@link ArrowProps.rotate}; fills with `currentColor` unless a
+ * {@link ArrowProps.class} overrides it.
+ */
+export const Arrow = (props: ArrowProps) => {
+  const width = () => props.width ?? 12;
+  const height = () => props.height ?? 6;
+
+  return (
+    <svg
+      width={width()}
+      height={height()}
+      viewBox={`0 0 ${width()} ${height()}`}
+      class={props.class}
+      style={{ transform: `rotate(${props.rotate ?? '0deg'})` }}
+      aria-hidden="true"
+    >
+      <polygon
+        points={`0,${height()} ${width()},${height()} ${width() / 2},0`}
+        fill="currentColor"
+      />
+    </svg>
+  );
+};
+
+/** Which edge of the anchor a floating surface binds to. */
+export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
+
+/**
+ * Placement of the surface along the anchor edge it binds to. `start`
+ * hugs the top (left/right sides) or left (top/bottom sides); `end` the
+ * opposite; `center` splits the difference.
+ */
+export type FloatingAlignment = 'start' | 'center' | 'end';
+
+/** Arrow configuration for a floating primitive. */
+export interface FloatingArrowProps extends ArrowProps {
+  /** Whether to render the arrow. Defaults to `false`. */
+  visible?: boolean;
+}
+
+/** How the container lays out and orients the arrow for a given side. */
+interface SideArrowConfig {
+  /**
+   * Flex direction of the container. The arrow is first in the DOM, so
+   * reversing the axis for top/left seats it on the anchor-facing edge.
+   */
+  direction: 'row' | 'row-reverse' | 'column' | 'column-reverse';
+  /** Rotation that turns the (up-pointing) arrow to face the anchor. */
+  rotate: string;
+}
+
+/** Per-side arrow layout, keyed by {@link FloatingSide}. */
+const ARROW_BY_SIDE: Record<FloatingSide, SideArrowConfig> = {
+  top: { direction: 'column-reverse', rotate: '180deg' },
+  bottom: { direction: 'column', rotate: '0deg' },
+  left: { direction: 'row-reverse', rotate: '90deg' },
+  right: { direction: 'row', rotate: '-90deg' },
+};
+
 /** Props for the floating primitive entry point. */
 export interface FloatingContainerProps {
+  /** Edge of the anchor the surface binds to. Defaults to `'bottom'`. */
+  side?: FloatingSide;
+  /** Placement along that edge. Defaults to `'center'`. */
+  align?: FloatingAlignment;
+  /** Pointer arrow tying the surface to its anchor. Hidden by default. */
+  arrow?: FloatingArrowProps;
   /** Floating content to render. */
   children: JSX.Element;
 }
 
 /**
- * Entry point for a floating primitive. Wraps the {@link FloatingBody};
- * surface-wide plumbing will land here as the primitive grows.
+ * Entry point for a floating primitive. Owns the positioning shell —
+ * placing the surface outside a side of the anchor and aligning it along
+ * that edge — and wraps the {@link FloatingBody} surface. Further
+ * plumbing (layering) will land here as the primitive grows.
+ *
+ * The arrow renders before the body so, once both are stacked, the body
+ * paints over the arrow's shadow seam without needing a `z-index`.
  */
 export const FloatingContainer = (props: FloatingContainerProps) => {
-  return <FloatingBody>{props.children}</FloatingBody>;
+  const side = () => props.side ?? 'bottom';
+  const layout = () => ARROW_BY_SIDE[side()];
+
+  return (
+    <div
+      class={css.container}
+      style={{ 'flex-direction': layout().direction }}
+      data-side={side()}
+      data-align={props.align ?? 'center'}
+    >
+      <Show when={props.arrow?.visible}>
+        <Arrow
+          width={props.arrow?.width}
+          height={props.arrow?.height}
+          rotate={layout().rotate}
+          class={props.arrow?.class}
+        />
+      </Show>
+      <FloatingBody>{props.children}</FloatingBody>
+    </div>
+  );
 };

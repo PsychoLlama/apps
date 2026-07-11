@@ -67,6 +67,11 @@ const config: KnipConfig = {
       entry: [
         'vitest.browser.config.ts',
         'src/**/__tests__/*.test.browser.{ts,tsx}',
+        // `_internal/*` primitives (e.g. floating-ui) are a deliberate
+        // private API: fully built and tested, but not yet wired to a
+        // public consumer (Tooltip/Popover) or the `@lib/ui` barrel.
+        // Treat them as entries so their staged exports aren't flagged.
+        'src/components/_internal/**/*.tsx!',
       ],
       project: ['src/**/*.{ts,tsx}'],
       ignoreDependencies: [
