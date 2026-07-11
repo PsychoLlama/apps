@@ -83,12 +83,24 @@
               # in pnpm-workspace.yaml.
               pkgs.pnpm
               pkgs.treefmt
-              # Rust toolchain via fenix: the stable `default` profile plus
-              # the wasm32 target CI compiles crates against. Lives in
-              # `default` so CI builds and the higher shells (`coding`,
-              # `nixos`) all inherit it through `inputsFrom`.
+              # Rust toolchain via fenix, assembled with `withComponents` so
+              # every piece is cut from one stable channel snapshot — no
+              # version skew between rustc and rust-analyzer's proc-macro
+              # server. Mirrors the `dotfiles#rust` template; the wasm32
+              # target's `rust-std` (what CI compiles crates against) is
+              # folded in via `combine`, since a target's std isn't a host
+              # component `withComponents` can name. Lives in `default` so CI
+              # builds and the higher shells (`coding`, `nixos`) all inherit
+              # it — including rust-analyzer — through `inputsFrom`.
               (pkgs.fenix.combine [
-                pkgs.fenix.stable.defaultToolchain
+                (pkgs.fenix.stable.withComponents [
+                  "cargo"
+                  "clippy"
+                  "rust-analyzer"
+                  "rust-src"
+                  "rustc"
+                  "rustfmt"
+                ])
                 pkgs.fenix.targets.wasm32-unknown-unknown.stable.rust-std
               ])
               # Test runner for the native crate tests (`cargo:test` →
@@ -127,9 +139,6 @@
               # stdin and emits the structured `additionalContext`
               # response back out.
               pkgs.jq
-              # Rust language server, matched to the stable channel. Kept
-              # out of `default` so CI's closure doesn't pull it in.
-              pkgs.fenix.stable.rust-analyzer
             ];
 
             # Point Rust's build cache at the primary checkout's `target/`
