@@ -8,16 +8,13 @@ import type {
 export interface FloatingControlsState {
   /** Anchor edge the window binds to. */
   side: FloatingSide;
-  /** Horizontal placement relative to the pin. */
-  justify: FloatingAlignment;
-  /** Vertical placement relative to the pin. */
+  /** Placement along that edge. */
   align: FloatingAlignment;
 }
 
 const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
   side: 'bottom',
-  justify: 'center',
-  align: 'start',
+  align: 'center',
 }));
 
 /** Live, readonly view of the floating-window placement controls. */
@@ -31,15 +28,7 @@ export const setSide = defineAction(
   },
 );
 
-/** Set the window's horizontal placement. */
-export const setJustify = defineAction(
-  [floatingControlsStore],
-  (controls, justify: FloatingAlignment) => {
-    controls.justify = justify;
-  },
-);
-
-/** Set the window's vertical placement. */
+/** Set the window's placement along the bound edge. */
 export const setAlign = defineAction(
   [floatingControlsStore],
   (controls, align: FloatingAlignment) => {

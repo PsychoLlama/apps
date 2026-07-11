@@ -8,7 +8,7 @@ import {
   type FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
 import { useAction } from '@lib/state';
-import { floatingControls, setAlign, setJustify, setSide } from './store';
+import { floatingControls, setAlign, setSide } from './store';
 import * as css from './index.css';
 
 const SIDES = [
@@ -59,7 +59,6 @@ const PlacementControl = <Value extends string>(props: {
 export const Experimental = () => {
   const controls = floatingControls;
   const chooseSide = useAction(setSide);
-  const chooseJustify = useAction(setJustify);
   const chooseAlign = useAction(setAlign);
 
   return (
@@ -75,13 +74,6 @@ export const Experimental = () => {
             onValueChange={chooseSide}
           />
           <PlacementControl
-            label="Justify"
-            name="justify"
-            value={controls.justify}
-            options={ALIGNMENTS}
-            onValueChange={chooseJustify}
-          />
-          <PlacementControl
             label="Align"
             name="align"
             value={controls.align}
@@ -92,11 +84,7 @@ export const Experimental = () => {
 
         <Flex as="div" grow align="center" justify="center">
           <Flex as="section" class={`${css.anchorBox} ${anchor}`}>
-            <FloatingContainer
-              side={controls.side}
-              justify={controls.justify}
-              align={controls.align}
-            >
+            <FloatingContainer side={controls.side} align={controls.align}>
               <Text as="p" selectable={false}>
                 Floating Window
               </Text>
