@@ -1,4 +1,4 @@
-import { splitProps, type JSX } from 'solid-js';
+import { Show, splitProps, type JSX } from 'solid-js';
 import {
   flexPropKeys,
   resolveFlexClasses,
@@ -70,6 +70,41 @@ export const FloatingBody = (props: FloatingBodyProps) => {
   );
 };
 
+/** Props for the floating primitive's pointer arrow. */
+export interface ArrowProps {
+  /** Triangle width, in px. Defaults to `12`. */
+  width?: number;
+  /** Triangle height, in px. Defaults to `6`. */
+  height?: number;
+  /** Class merged onto the arrow — e.g. a fill or shadow. */
+  class?: string;
+}
+
+/**
+ * Decorative triangle that ties a floating surface back to its anchor.
+ * Sized by {@link ArrowProps.width} and {@link ArrowProps.height}; fills
+ * with `currentColor` unless a {@link ArrowProps.class} overrides it.
+ */
+export const Arrow = (props: ArrowProps) => {
+  const width = () => props.width ?? 12;
+  const height = () => props.height ?? 6;
+
+  return (
+    <svg
+      width={width()}
+      height={height()}
+      viewBox={`0 0 ${width()} ${height()}`}
+      class={props.class}
+      aria-hidden="true"
+    >
+      <polygon
+        points={`0,${height()} ${width()},${height()} ${width() / 2},0`}
+        fill="currentColor"
+      />
+    </svg>
+  );
+};
+
 /** Which edge of the anchor a floating surface binds to. */
 export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
 
@@ -80,12 +115,20 @@ export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
  */
 export type FloatingAlignment = 'start' | 'center' | 'end';
 
+/** Arrow configuration for a floating primitive. */
+export interface FloatingArrowProps extends ArrowProps {
+  /** Whether to render the arrow. Defaults to `false`. */
+  visible?: boolean;
+}
+
 /** Props for the floating primitive entry point. */
 export interface FloatingContainerProps {
   /** Edge of the anchor the surface binds to. Defaults to `'bottom'`. */
   side?: FloatingSide;
   /** Placement along that edge. Defaults to `'center'`. */
   align?: FloatingAlignment;
+  /** Pointer arrow tying the surface to its anchor. Hidden by default. */
+  arrow?: FloatingArrowProps;
   /** Floating content to render. */
   children: JSX.Element;
 }
@@ -95,6 +138,9 @@ export interface FloatingContainerProps {
  * placing the surface outside a side of the anchor and aligning it along
  * that edge — and wraps the {@link FloatingBody} surface. Further
  * plumbing (layering) will land here as the primitive grows.
+ *
+ * The arrow renders before the body so, once both are stacked, the body
+ * paints over the arrow's shadow seam without needing a `z-index`.
  */
 export const FloatingContainer = (props: FloatingContainerProps) => {
   return (
@@ -103,6 +149,13 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
       data-side={props.side ?? 'bottom'}
       data-align={props.align ?? 'center'}
     >
+      <Show when={props.arrow?.visible}>
+        <Arrow
+          width={props.arrow?.width}
+          height={props.arrow?.height}
+          class={props.arrow?.class}
+        />
+      </Show>
       <FloatingBody>{props.children}</FloatingBody>
     </div>
   );

@@ -56,4 +56,22 @@ describe('FloatingContainer', () => {
     expect(shell).toHaveAttribute('data-side', 'right');
     expect(shell).toHaveAttribute('data-align', 'end');
   });
+
+  it('omits the arrow by default', () => {
+    const { container } = render(() => (
+      <FloatingContainer>content</FloatingContainer>
+    ));
+
+    expect(container.querySelector('svg')).toBeNull();
+  });
+
+  it('renders the arrow before the body when visible', () => {
+    const { container } = render(() => (
+      <FloatingContainer arrow={{ visible: true }}>content</FloatingContainer>
+    ));
+    const shell = container.querySelector('[data-side]');
+
+    // Arrow first so the body paints over its shadow seam.
+    expect(shell?.firstElementChild?.tagName.toLowerCase()).toBe('svg');
+  });
 });
