@@ -10,9 +10,11 @@ import {
   type PaddingProps,
 } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
+import { Arrow, type ArrowProps } from './arrow';
 import * as css from './floating-ui.css';
 
 export { anchor } from './floating-ui.css';
+export { Arrow, type ArrowProps } from './arrow';
 
 /**
  * Internal primitive for positioned floating UI — tooltips, dropdowns,
@@ -67,48 +69,6 @@ export const FloatingBody = (props: FloatingBodyProps) => {
     <div class={className()} data-testid={local.testId}>
       {local.children}
     </div>
-  );
-};
-
-/** Props for the floating primitive's pointer arrow. */
-export interface ArrowProps {
-  /** Triangle width, in px. Defaults to `12`. */
-  width?: number;
-  /** Triangle height, in px. Defaults to `6`. */
-  height?: number;
-  /**
-   * CSS rotation applied to the triangle so it points at the anchor —
-   * e.g. `'90deg'`. Defaults to `'0deg'` (points up).
-   */
-  rotate?: string;
-  /** Class merged onto the arrow — e.g. a fill or shadow. */
-  class?: string;
-}
-
-/**
- * Decorative triangle that ties a floating surface back to its anchor.
- * Sized by {@link ArrowProps.width} and {@link ArrowProps.height}, turned
- * by {@link ArrowProps.rotate}; fills with `currentColor` unless a
- * {@link ArrowProps.class} overrides it.
- */
-export const Arrow = (props: ArrowProps) => {
-  const width = () => props.width ?? 12;
-  const height = () => props.height ?? 6;
-
-  return (
-    <svg
-      width={width()}
-      height={height()}
-      viewBox={`0 0 ${width()} ${height()}`}
-      class={props.class}
-      style={{ transform: `rotate(${props.rotate ?? '0deg'})` }}
-      aria-hidden="true"
-    >
-      <polygon
-        points={`0,${height()} ${width()},${height()} ${width() / 2},0`}
-        fill="currentColor"
-      />
-    </svg>
   );
 };
 
