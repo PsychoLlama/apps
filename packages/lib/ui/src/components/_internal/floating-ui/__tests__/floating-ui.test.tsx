@@ -34,4 +34,28 @@ describe('FloatingContainer', () => {
 
     expect(container).toHaveTextContent('content');
   });
+
+  it('defaults to binding centered below the anchor', () => {
+    const { container } = render(() => (
+      <FloatingContainer>content</FloatingContainer>
+    ));
+    const shell = container.querySelector('[data-side]');
+
+    expect(shell).toHaveAttribute('data-side', 'bottom');
+    expect(shell).toHaveAttribute('data-justify', 'center');
+    expect(shell).toHaveAttribute('data-align', 'start');
+  });
+
+  it('reflects side, justify, and align into data attributes', () => {
+    const { container } = render(() => (
+      <FloatingContainer side="right" justify="end" align="center">
+        content
+      </FloatingContainer>
+    ));
+    const shell = container.querySelector('[data-side]');
+
+    expect(shell).toHaveAttribute('data-side', 'right');
+    expect(shell).toHaveAttribute('data-justify', 'end');
+    expect(shell).toHaveAttribute('data-align', 'center');
+  });
 });

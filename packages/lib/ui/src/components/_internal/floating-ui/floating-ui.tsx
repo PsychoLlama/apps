@@ -30,6 +30,12 @@ export { anchor } from './floating-ui.css';
  *   children and is the node consumers style and target in tests.
  */
 
+// Deliberately hand-rolled and short-lived. Most (likely all) of this
+// exists only because the CSS `anchor-positioning` primitives and the
+// `popover` attribute aren't baseline-available yet. Once they are, the
+// anchoring/layering plumbing collapses into a few CSS properties and
+// this module can be deleted rather than grown.
+
 /** Props for the floating content surface. */
 export interface FloatingBodyProps
   extends FlexProps, PaddingProps, TestIdProps {
@@ -63,16 +69,43 @@ export const FloatingBody = (props: FloatingBodyProps) => {
   );
 };
 
+/** Which edge of the anchor a floating surface binds to. */
+export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
+
+/**
+ * Placement along an axis, relative to the pinned edge. Mirrors CSS
+ * grid: `justify` runs the inline (horizontal) axis, `align` the block
+ * (vertical) axis.
+ */
+export type FloatingAlignment = 'start' | 'center' | 'end';
+
 /** Props for the floating primitive entry point. */
 export interface FloatingContainerProps {
+  /** Edge of the anchor the surface binds to. Defaults to `'bottom'`. */
+  side?: FloatingSide;
+  /** Horizontal placement relative to the pin. Defaults to `'center'`. */
+  justify?: FloatingAlignment;
+  /** Vertical placement relative to the pin. Defaults to `'start'`. */
+  align?: FloatingAlignment;
   /** Floating content to render. */
   children: JSX.Element;
 }
 
 /**
- * Entry point for a floating primitive. Wraps the {@link FloatingBody};
- * surface-wide plumbing will land here as the primitive grows.
+ * Entry point for a floating primitive. Owns the positioning shell —
+ * pinning to a side of the anchor and sliding along both axes — and
+ * wraps the {@link FloatingBody} surface. Further plumbing (layering)
+ * will land here as the primitive grows.
  */
 export const FloatingContainer = (props: FloatingContainerProps) => {
-  return <FloatingBody class={css.container}>{props.children}</FloatingBody>;
+  return (
+    <div
+      class={css.container}
+      data-side={props.side ?? 'bottom'}
+      data-justify={props.justify ?? 'center'}
+      data-align={props.align ?? 'start'}
+    >
+      <FloatingBody>{props.children}</FloatingBody>
+    </div>
+  );
 };
