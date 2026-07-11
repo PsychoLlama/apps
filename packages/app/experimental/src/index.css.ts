@@ -16,18 +16,20 @@ export const target = style({
 });
 
 /**
- * The floating window's visual surface. A high-contrast inverted panel
- * (dark on light themes, light on dark) so it always reads as a distinct
- * window, with a heading/body pairing sized tall enough that arrows bound
- * to the left/right edges have room to sit mid-height. `color` cascades
- * into the `<Heading>`/`<Text>` (which inherit `currentColor`).
+ * The floating window's visual surface, applied straight onto the
+ * `FloatingBody` via the container's `class`. A high-contrast inverted
+ * panel (dark on light themes, light on dark) so it always reads as a
+ * distinct window, stacking a heading over body copy tall enough that
+ * arrows bound to the left/right edges have room to sit mid-height.
+ * `color` cascades into the `<Heading>`/`<Text>` (which inherit
+ * `currentColor`). Radius is left to the container's `radius` prop.
  */
 export const surface = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: space[1],
   maxWidth: '16rem',
   padding: `${space[3]} ${space[4]}`,
-  // Inherit the radius the FloatingBody sets, so the fill matches the
-  // corner the container rounds and offsets the arrow against.
-  borderRadius: 'inherit',
   backgroundColor: neutral.solid[12],
   color: neutral.solid[1],
   boxShadow: shadow[4],

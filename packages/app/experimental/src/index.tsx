@@ -120,6 +120,7 @@ export const Experimental = () => {
               side={controls.side}
               align={controls.align}
               radius={controls.radius}
+              class={css.surface}
               arrow={{
                 visible: true,
                 base: 16,
@@ -128,15 +129,13 @@ export const Experimental = () => {
                 class: css.arrow,
               }}
             >
-              <Flex as="div" direction="column" gap={1} class={css.surface}>
-                <Heading as="h2" size={3} selectable={false}>
-                  Floating Window
-                </Heading>
-                <Text as="p" size={2} selectable={false}>
-                  A taller surface so the arrow has room to sit mid-height when
-                  the window binds to the left or right edge.
-                </Text>
-              </Flex>
+              <Heading as="h2" size={3} selectable={false}>
+                Floating Window
+              </Heading>
+              <Text as="p" size={2} selectable={false}>
+                A taller surface so the arrow has room to sit mid-height when
+                the window binds to the left or right edge.
+              </Text>
             </FloatingContainer>
           </Flex>
         </Flex>

@@ -123,6 +123,12 @@ export interface FloatingContainerProps {
    * offsets a start/end-aligned arrow so it clears the rounded corner.
    */
   radius?: RadiusScale;
+  /**
+   * Class merged onto the {@link FloatingBody} surface — the node that
+   * carries the background, padding, and other chrome. Applies to the
+   * body, not the positioning shell.
+   */
+  class?: string;
   /** Pointer arrow tying the surface to its anchor. Hidden by default. */
   arrow?: FloatingArrowProps;
   /** Floating content to render. */
@@ -161,7 +167,9 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
           class={props.arrow?.class}
         />
       </Show>
-      <FloatingBody radius={props.radius}>{props.children}</FloatingBody>
+      <FloatingBody radius={props.radius} class={props.class}>
+        {props.children}
+      </FloatingBody>
     </div>
   );
 };

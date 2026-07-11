@@ -78,6 +78,17 @@ describe('FloatingContainer', () => {
     expect(body.split(' ').length).toBe(plainBody.split(' ').length + 1);
   });
 
+  it('forwards a consumer class onto the body surface', () => {
+    const { container } = render(() => (
+      <FloatingContainer class="surface">content</FloatingContainer>
+    ));
+    const body = container.querySelector('[data-side]')!.lastElementChild;
+
+    // The class lands on the body, not the positioning shell.
+    expect(container.querySelector('[data-side]')).not.toHaveClass('surface');
+    expect(body).toHaveClass('surface');
+  });
+
   it('reflects side and align into data attributes', () => {
     const { container } = render(() => (
       <FloatingContainer side="right" align="end">
