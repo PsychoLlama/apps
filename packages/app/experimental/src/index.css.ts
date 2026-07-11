@@ -2,13 +2,13 @@ import { style } from '@vanilla-extract/css';
 import { neutral, radius } from '@lib/design';
 
 /**
- * A visible placeholder surface for the floating primitive to anchor
- * against while we build it out. Diagonal hatching makes the box's
- * bounds obvious; it fills the frame body so there's room to position
- * within.
+ * The shrunk hatch box the floating window anchors against. Kept small
+ * and centered in its stage so the window stays visible whichever side
+ * it binds to. Diagonal hatching makes the box's bounds obvious.
  */
 export const anchorBox = style({
-  flex: 1,
+  width: '12rem',
+  height: '8rem',
   borderRadius: radius[4],
   border: `1px dashed ${neutral.solid[7]}`,
   backgroundColor: neutral.solid[2],
