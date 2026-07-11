@@ -1,4 +1,5 @@
 import { For } from 'solid-js';
+import type { RadiusScale } from '@lib/design';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import { Flex, Heading, RadioGroupItem, RadioGroupRoot, Text } from '@lib/ui';
 import {
@@ -9,7 +10,13 @@ import {
   type FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
 import { useAction } from '@lib/state';
-import { floatingControls, setAlign, setArrowAlign, setSide } from './store';
+import {
+  floatingControls,
+  setAlign,
+  setArrowAlign,
+  setRadius,
+  setSide,
+} from './store';
 import * as css from './index.css';
 
 const SIDES = [
@@ -28,6 +35,7 @@ const ARROW_ALIGNMENTS = [
   'center',
   'end',
 ] as const satisfies ArrowAlign[];
+const RADII = ['1', '2', '3', '4', '5', '6'] as const;
 
 /** A labeled radio group binding one placement axis to the controls store. */
 const PlacementControl = <Value extends string>(props: {
@@ -67,6 +75,7 @@ export const Experimental = () => {
   const chooseSide = useAction(setSide);
   const chooseAlign = useAction(setAlign);
   const chooseArrowAlign = useAction(setArrowAlign);
+  const chooseRadius = useAction(setRadius);
 
   return (
     <Frame>
@@ -94,6 +103,15 @@ export const Experimental = () => {
             options={ARROW_ALIGNMENTS}
             onValueChange={chooseArrowAlign}
           />
+          <PlacementControl
+            label="Radius"
+            name="radius"
+            value={String(controls.radius)}
+            options={RADII}
+            onValueChange={(value) =>
+              chooseRadius(Number(value) as RadiusScale)
+            }
+          />
         </Flex>
 
         <Flex as="div" grow align="center" justify="center">
@@ -101,6 +119,7 @@ export const Experimental = () => {
             <FloatingContainer
               side={controls.side}
               align={controls.align}
+              radius={controls.radius}
               arrow={{
                 visible: true,
                 base: 16,

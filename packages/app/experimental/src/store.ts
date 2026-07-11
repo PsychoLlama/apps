@@ -1,4 +1,5 @@
 import { createStore, defineAction, defineStore } from '@lib/state';
+import type { RadiusScale } from '@lib/design';
 import type {
   ArrowAlign,
   FloatingAlignment,
@@ -13,12 +14,15 @@ export interface FloatingControlsState {
   align: FloatingAlignment;
   /** Placement of the arrow along that edge. */
   arrowAlign: ArrowAlign;
+  /** Border radius of the surface. */
+  radius: RadiusScale;
 }
 
 const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
   side: 'bottom',
   align: 'center',
   arrowAlign: 'center',
+  radius: 4,
 }));
 
 /** Live, readonly view of the floating-window placement controls. */
@@ -45,5 +49,13 @@ export const setArrowAlign = defineAction(
   [floatingControlsStore],
   (controls, arrowAlign: ArrowAlign) => {
     controls.arrowAlign = arrowAlign;
+  },
+);
+
+/** Set the surface's border radius. */
+export const setRadius = defineAction(
+  [floatingControlsStore],
+  (controls, radius: RadiusScale) => {
+    controls.radius = radius;
   },
 );

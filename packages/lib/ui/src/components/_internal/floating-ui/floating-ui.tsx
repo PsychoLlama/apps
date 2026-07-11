@@ -1,4 +1,5 @@
 import { Show, splitProps, type JSX } from 'solid-js';
+import { type RadiusScale } from '@lib/design';
 import {
   flexPropKeys,
   resolveFlexClasses,
@@ -46,6 +47,8 @@ export {
 /** Props for the floating content surface. */
 export interface FloatingBodyProps
   extends FlexProps, PaddingProps, TestIdProps {
+  /** Border radius of the surface, from the design token scale. */
+  radius?: RadiusScale;
   /** Extra class names merged onto the surface element. */
   class?: string;
   /** Floating content to render. */
@@ -63,6 +66,7 @@ export const FloatingBody = (props: FloatingBodyProps) => {
   const className = () =>
     [
       css.body,
+      local.radius && css.bodyRadius[local.radius],
       ...resolveFlexClasses(flex),
       ...resolvePaddingClasses(padding),
       local.class,
@@ -114,6 +118,11 @@ export interface FloatingContainerProps {
   side?: FloatingSide;
   /** Placement along that edge. Defaults to `'center'`. */
   align?: FloatingAlignment;
+  /**
+   * Border radius of the surface, from the design token scale. Also
+   * offsets a start/end-aligned arrow so it clears the rounded corner.
+   */
+  radius?: RadiusScale;
   /** Pointer arrow tying the surface to its anchor. Hidden by default. */
   arrow?: FloatingArrowProps;
   /** Floating content to render. */
@@ -132,9 +141,14 @@ export interface FloatingContainerProps {
 export const FloatingContainer = (props: FloatingContainerProps) => {
   const side = () => props.side ?? 'bottom';
 
+  const className = () =>
+    [css.container, props.radius && css.arrowRadiusOffset[props.radius]]
+      .filter(Boolean)
+      .join(' ');
+
   return (
     <div
-      class={css.container}
+      class={className()}
       data-side={side()}
       data-align={props.align ?? 'center'}
     >
@@ -147,7 +161,7 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
           class={props.arrow?.class}
         />
       </Show>
-      <FloatingBody>{props.children}</FloatingBody>
+      <FloatingBody radius={props.radius}>{props.children}</FloatingBody>
     </div>
   );
 };

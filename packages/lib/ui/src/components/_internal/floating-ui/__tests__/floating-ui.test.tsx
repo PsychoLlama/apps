@@ -24,6 +24,24 @@ describe('FloatingBody', () => {
 
     expect(screen.getByTestId('body')).toHaveClass('custom');
   });
+
+  it('adds a radius class only when a radius is set', () => {
+    const { unmount } = render(() => (
+      <FloatingBody testId="plain">content</FloatingBody>
+    ));
+    const plain = screen.getByTestId('plain').className;
+    unmount();
+
+    render(() => (
+      <FloatingBody testId="rounded" radius={4}>
+        content
+      </FloatingBody>
+    ));
+    const rounded = screen.getByTestId('rounded').className;
+
+    // The radius step contributes exactly one extra class.
+    expect(rounded.split(' ').length).toBe(plain.split(' ').length + 1);
+  });
 });
 
 describe('FloatingContainer', () => {
@@ -43,6 +61,21 @@ describe('FloatingContainer', () => {
 
     expect(shell).toHaveAttribute('data-side', 'bottom');
     expect(shell).toHaveAttribute('data-align', 'center');
+  });
+
+  it('forwards its radius to the body surface', () => {
+    const plain = render(() => <FloatingContainer>content</FloatingContainer>);
+    const plainBody =
+      plain.container.querySelector('[data-side]')!.lastElementChild!.className;
+    plain.unmount();
+
+    const { container } = render(() => (
+      <FloatingContainer radius={4}>content</FloatingContainer>
+    ));
+    const body =
+      container.querySelector('[data-side]')!.lastElementChild!.className;
+
+    expect(body.split(' ').length).toBe(plainBody.split(' ').length + 1);
   });
 
   it('reflects side and align into data attributes', () => {

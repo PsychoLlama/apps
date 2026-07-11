@@ -65,6 +65,15 @@ describe('Arrow', () => {
     );
   });
 
+  it('reflects its direction into the data attribute the offset keys off', () => {
+    const { container } = render(() => <Arrow direction="right" />);
+
+    expect(container.querySelector('svg')).toHaveAttribute(
+      'data-direction',
+      'right',
+    );
+  });
+
   it('merges a consumer class', () => {
     const { container } = render(() => <Arrow direction="up" class="fill" />);
 

@@ -1,4 +1,6 @@
-import { style } from '@vanilla-extract/css';
+import { style, styleVariants } from '@vanilla-extract/css';
+import { radius } from '@lib/design';
+import { offset } from './arrow.css';
 
 /**
  * Anchor target — establishes the positioning context an absolutely
@@ -74,3 +76,18 @@ export const body = style({
   width: 'max-content',
   height: 'max-content',
 });
+
+/** Per-step border radius for the surface, keyed by the design scale. */
+export const bodyRadius = styleVariants(radius, (value) => ({
+  borderRadius: value,
+}));
+
+/**
+ * Maps the surface radius to the arrow's corner offset. The straight run
+ * of a rounded edge begins exactly one radius in from the corner, so a
+ * start/end-aligned arrow clears the curve when nudged by that same
+ * distance — the offset is the radius value verbatim.
+ */
+export const arrowRadiusOffset = styleVariants(radius, (value) => ({
+  vars: { [offset]: value },
+}));

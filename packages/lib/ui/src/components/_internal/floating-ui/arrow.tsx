@@ -81,6 +81,7 @@ export const Arrow = (props: ArrowProps) => {
       height={boxHeight()}
       viewBox={`0 0 ${boxWidth()} ${boxHeight()}`}
       class={className()}
+      data-direction={props.direction}
       data-align={props.align ?? 'center'}
       aria-hidden="true"
     >

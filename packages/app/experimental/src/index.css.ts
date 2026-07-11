@@ -25,7 +25,9 @@ export const target = style({
 export const surface = style({
   maxWidth: '16rem',
   padding: `${space[3]} ${space[4]}`,
-  borderRadius: radius[4],
+  // Inherit the radius the FloatingBody sets, so the fill matches the
+  // corner the container rounds and offsets the arrow against.
+  borderRadius: 'inherit',
   backgroundColor: neutral.solid[12],
   color: neutral.solid[1],
   boxShadow: shadow[4],
