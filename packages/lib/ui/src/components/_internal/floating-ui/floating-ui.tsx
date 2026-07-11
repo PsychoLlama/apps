@@ -10,11 +10,11 @@ import {
   type PaddingProps,
 } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
-import { Arrow, type ArrowProps } from './arrow';
+import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
 import * as css from './floating-ui.css';
 
 export { anchor } from './floating-ui.css';
-export { Arrow, type ArrowProps } from './arrow';
+export { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
 
 /**
  * Internal primitive for positioned floating UI — tooltips, dropdowns,
@@ -89,15 +89,15 @@ export interface FloatingArrowProps extends ArrowProps {
 }
 
 /**
- * Rotation that turns the (up-pointing) arrow to face the anchor, keyed
- * by {@link FloatingSide}. The container's `flex-direction` (driven from
- * CSS by `data-side`) seats the DOM-first arrow on the anchor-facing edge.
+ * Direction the arrow points so it faces the anchor, keyed by
+ * {@link FloatingSide}. The container's `flex-direction` (driven from CSS
+ * by `data-side`) seats the DOM-first arrow on the anchor-facing edge.
  */
-const ARROW_ROTATE_BY_SIDE: Record<FloatingSide, string> = {
-  top: '180deg',
-  bottom: '0deg',
-  left: '90deg',
-  right: '-90deg',
+const ARROW_DIRECTION_BY_SIDE: Record<FloatingSide, ArrowDirection> = {
+  top: 'down',
+  bottom: 'up',
+  left: 'right',
+  right: 'left',
 };
 
 /** Props for the floating primitive entry point. */
@@ -134,7 +134,7 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
         <Arrow
           width={props.arrow?.width}
           height={props.arrow?.height}
-          rotate={ARROW_ROTATE_BY_SIDE[side()]}
+          direction={ARROW_DIRECTION_BY_SIDE[side()]}
           class={props.arrow?.class}
         />
       </Show>

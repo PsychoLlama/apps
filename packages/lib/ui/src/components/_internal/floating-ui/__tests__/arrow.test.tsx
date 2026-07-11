@@ -1,8 +1,9 @@
 /**
  * Wiring tests for the floating-ui pointer arrow.
  *
- * Covers what the arrow promises: it sizes to its props, rotates to face
- * the anchor, and merges a consumer class.
+ * Covers what the arrow promises: it draws a correctly-sized triangle for
+ * each direction — without a rotation transform, so the SVG box matches
+ * the shape — and merges a consumer class.
  */
 
 import { render } from '@solidjs/testing-library';
@@ -15,18 +16,33 @@ describe('Arrow', () => {
 
     expect(svg).toHaveAttribute('width', '12');
     expect(svg).toHaveAttribute('height', '6');
-    expect(svg?.style.transform).toBe('rotate(0deg)');
+    expect(svg?.querySelector('polygon')).toHaveAttribute(
+      'points',
+      '0,6 12,6 6,0',
+    );
   });
 
-  it('sizes and rotates from its props', () => {
-    const { container } = render(() => (
-      <Arrow width={16} height={8} rotate="90deg" />
-    ));
-    const svg = container.querySelector('svg');
+  it('draws each direction and swaps its box when horizontal', () => {
+    // Base 12, depth 6. Vertical arrows measure 12×6; horizontal ones
+    // stand the base on its end and measure 6×12 — no transform.
+    const cases = [
+      { direction: 'up', width: 12, height: 6, points: '0,6 12,6 6,0' },
+      { direction: 'down', width: 12, height: 6, points: '0,0 12,0 6,6' },
+      { direction: 'left', width: 6, height: 12, points: '6,0 6,12 0,6' },
+      { direction: 'right', width: 6, height: 12, points: '0,0 0,12 6,6' },
+    ] as const;
 
-    expect(svg).toHaveAttribute('width', '16');
-    expect(svg).toHaveAttribute('height', '8');
-    expect(svg?.style.transform).toBe('rotate(90deg)');
+    for (const { direction, width, height, points } of cases) {
+      const { container } = render(() => (
+        <Arrow width={12} height={6} direction={direction} />
+      ));
+      const svg = container.querySelector('svg');
+
+      expect(svg).toHaveAttribute('width', String(width));
+      expect(svg).toHaveAttribute('height', String(height));
+      expect(svg?.querySelector('polygon')).toHaveAttribute('points', points);
+      expect(svg?.style.transform).toBe('');
+    }
   });
 
   it('merges a consumer class', () => {
