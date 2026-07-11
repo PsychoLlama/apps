@@ -128,23 +128,16 @@ export interface FloatingArrowProps extends ArrowProps {
   visible?: boolean;
 }
 
-/** How the container lays out and orients the arrow for a given side. */
-interface SideArrowConfig {
-  /**
-   * Flex direction of the container. The arrow is first in the DOM, so
-   * reversing the axis for top/left seats it on the anchor-facing edge.
-   */
-  direction: 'row' | 'row-reverse' | 'column' | 'column-reverse';
-  /** Rotation that turns the (up-pointing) arrow to face the anchor. */
-  rotate: string;
-}
-
-/** Per-side arrow layout, keyed by {@link FloatingSide}. */
-const ARROW_BY_SIDE: Record<FloatingSide, SideArrowConfig> = {
-  top: { direction: 'column-reverse', rotate: '180deg' },
-  bottom: { direction: 'column', rotate: '0deg' },
-  left: { direction: 'row-reverse', rotate: '90deg' },
-  right: { direction: 'row', rotate: '-90deg' },
+/**
+ * Rotation that turns the (up-pointing) arrow to face the anchor, keyed
+ * by {@link FloatingSide}. The container's `flex-direction` (driven from
+ * CSS by `data-side`) seats the DOM-first arrow on the anchor-facing edge.
+ */
+const ARROW_ROTATE_BY_SIDE: Record<FloatingSide, string> = {
+  top: '180deg',
+  bottom: '0deg',
+  left: '90deg',
+  right: '-90deg',
 };
 
 /** Props for the floating primitive entry point. */
@@ -170,12 +163,10 @@ export interface FloatingContainerProps {
  */
 export const FloatingContainer = (props: FloatingContainerProps) => {
   const side = () => props.side ?? 'bottom';
-  const layout = () => ARROW_BY_SIDE[side()];
 
   return (
     <div
       class={css.container}
-      style={{ 'flex-direction': layout().direction }}
       data-side={side()}
       data-align={props.align ?? 'center'}
     >
@@ -183,7 +174,7 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
         <Arrow
           width={props.arrow?.width}
           height={props.arrow?.height}
-          rotate={layout().rotate}
+          rotate={ARROW_ROTATE_BY_SIDE[side()]}
           class={props.arrow?.class}
         />
       </Show>

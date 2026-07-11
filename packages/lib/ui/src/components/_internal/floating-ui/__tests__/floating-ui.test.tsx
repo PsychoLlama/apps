@@ -75,21 +75,18 @@ describe('FloatingContainer', () => {
     expect(shell?.firstElementChild?.tagName.toLowerCase()).toBe('svg');
   });
 
-  it('lays out the arrow toward the anchor per side', () => {
-    const cases = [
-      { side: 'bottom', direction: 'column' },
-      { side: 'top', direction: 'column-reverse' },
-      { side: 'right', direction: 'row' },
-      { side: 'left', direction: 'row-reverse' },
-    ] as const;
+  it('reflects every side into the data attribute the CSS keys off', () => {
+    // Layout (flex-direction) is driven from CSS by `data-side`, so the
+    // contract this component owns is reflecting the side faithfully.
+    const sides = ['top', 'right', 'bottom', 'left'] as const;
 
-    for (const { side, direction } of cases) {
+    for (const side of sides) {
       const { container } = render(() => (
         <FloatingContainer side={side}>content</FloatingContainer>
       ));
-      const shell = container.querySelector<HTMLElement>('[data-side]');
+      const shell = container.querySelector('[data-side]');
 
-      expect(shell?.style.flexDirection).toBe(direction);
+      expect(shell).toHaveAttribute('data-side', side);
     }
   });
 });
