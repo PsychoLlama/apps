@@ -24,8 +24,8 @@ export const Beam = () => {
               Beam link
             </Heading>
 
-            <Show when={connection.endpoint}>
-              {(endpoint) => (
+            <Show when={connection.relay}>
+              {(relay) => (
                 <Flex as="div" direction="row" gap={4} align="start">
                   <Show when={qrCode.grid}>
                     {(grid) => (
@@ -40,7 +40,7 @@ export const Beam = () => {
                     testId="beam-link"
                     readOnly
                     aria-label="Beam link"
-                    value={beamLink(endpoint().current.endpointId)}
+                    value={beamLink(relay().current.endpointId)}
                     class={styles.field}
                     name="endpoint-id"
                     autocomplete={undefined}

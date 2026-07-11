@@ -1,6 +1,6 @@
 import { defineAction, defineEffect, ref } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
-import type { Connection } from '@crate/iroh';
+import type { Relay } from '@crate/iroh';
 import {
   closeConnection,
   dialPeer,
@@ -14,26 +14,26 @@ import { qrCodeStore, type QrGrid } from './qr-code';
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
- * A live endpoint paired with the QR encoding of its beam link — the two
+ * A live relay paired with the QR encoding of its beam link — the two
  * halves of a beam session, landed together so the view never shows a
  * connection without its code (nor a stale code without its connection). The
  * grid is `null` when the encode failed, which is non-fatal: the link is still
  * copyable from its text field.
  */
 interface BeamSession {
-  endpoint: Connection;
+  relay: Relay;
   qrCode: QrGrid | null;
 }
 
 /**
  * Enter the connecting state as the wasm load + handshake get under way,
- * dropping any QR grid from a prior session so it can't outlive its endpoint.
+ * dropping any QR grid from a prior session so it can't outlive its relay.
  */
 const beginConnecting = defineAction(
   [connectionStore, qrCodeStore],
   (connection, qr) => {
     connection.status = 'connecting';
-    connection.endpoint = null;
+    connection.relay = null;
     qr.grid = null;
   },
 );
@@ -49,11 +49,11 @@ const setConnected = defineAction(
   (connection, qr, session: BeamSession | null) => {
     if (!session) return;
     connection.status = 'connected';
-    connection.endpoint = ref(session.endpoint);
+    connection.relay = ref(session.relay);
     qr.grid = session.qrCode ? ref(session.qrCode) : null;
     logger.debug('Connected to iroh relay.', {
-      endpointId: session.endpoint.endpointId,
-      homeRelay: session.endpoint.homeRelay,
+      endpointId: session.relay.endpointId,
+      homeRelay: session.relay.homeRelay,
     });
   },
 );
@@ -67,7 +67,7 @@ const failConnection = defineAction(
   [connectionStore, qrCodeStore],
   (connection, qr, error: Error) => {
     connection.status = 'failed';
-    connection.endpoint = null;
+    connection.relay = null;
     qr.grid = null;
     logger.error('Failed to join the iroh relay network.', {
       error: toError(error),
@@ -75,20 +75,20 @@ const failConnection = defineAction(
   },
 );
 
-/** Forget the endpoint once it's been freed, returning to the initial state. */
+/** Forget the relay once it's been freed, returning to the initial state. */
 const resetConnection = defineAction(
   [connectionStore, qrCodeStore],
   (connection, qr) => {
     connection.status = 'initial';
-    connection.endpoint = null;
+    connection.relay = null;
     qr.grid = null;
   },
 );
 
 /**
  * Join the relay network and encode the endpoint's beam link into a QR grid
- * as one client-only flow, so the endpoint and its code land in a single
- * transactional update. A `null` endpoint means the connect was aborted, and
+ * as one client-only flow, so the relay and its code land in a single
+ * transactional update. A `null` relay means the connect was aborted, and
  * short-circuits before the encode. The encode is non-fatal — a failed code
  * still leaves a copyable link — so it's caught here rather than failing the
  * whole connect.
@@ -96,26 +96,26 @@ const resetConnection = defineAction(
 const openBeamSession = async (
   signal: AbortSignal,
 ): Promise<BeamSession | null> => {
-  const endpoint = await openConnection(signal);
-  if (!endpoint) return null;
+  const relay = await openConnection(signal);
+  if (!relay) return null;
 
   let qrCode: QrGrid | null = null;
   try {
-    qrCode = await encodeQrCode(beamLink(endpoint.endpointId));
+    qrCode = await encodeQrCode(beamLink(relay.endpointId));
   } catch (error) {
     logger.error('Failed to encode the beam link as a QR code.', {
       error: toError(error),
     });
   }
 
-  return { endpoint, qrCode };
+  return { relay, qrCode };
 };
 
 /**
  * Instantiate the wasm, join the relay network, and encode the beam link,
- * holding the resulting endpoint and QR grid in state. Client-only — none of
+ * holding the resulting relay and QR grid in state. Client-only — none of
  * it can run during SSG — so perform it from `onMount`, passing an
- * `AbortSignal` the cleanup aborts. The endpoint it opens is held in state, so
+ * `AbortSignal` the cleanup aborts. The relay it opens is held in state, so
  * {@link releaseConnectionEffect} must run on cleanup to free it.
  */
 export const openConnectionEffect = defineEffect([], openBeamSession, {
@@ -125,7 +125,7 @@ export const openConnectionEffect = defineEffect([], openBeamSession, {
 });
 
 /**
- * Free the held endpoint and forget it. Pairs with the mount-time open so a
+ * Free the held relay and forget it. Pairs with the mount-time open so a
  * view that's navigated away from doesn't leak its relay connection. The free
  * is the side effect; the action only drops the reference.
  */
@@ -138,8 +138,8 @@ export const releaseConnectionEffect = defineEffect(
 /**
  * Dial the peer named in a beam link once the relay connection is up. The
  * receiving view performs this with the endpoint id from its URL. Reads the
- * live endpoint off the store — the caller only dials once the connection is
- * `connected`, so a missing endpoint is a caller bug and throws. The dial's
+ * live relay off the store — the caller only dials once the connection is
+ * `connected`, so a missing relay is a caller bug and throws. The dial's
  * success and failure are logged by {@link dialPeer} itself, so there are no
  * lifecycle actions here.
  */

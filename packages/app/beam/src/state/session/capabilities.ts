@@ -1,8 +1,4 @@
-import init, {
-  generateSecretKey,
-  joinRelay,
-  type Connection,
-} from '@crate/iroh';
+import init, { generateSecretKey, joinRelay, type Relay } from '@crate/iroh';
 import initQrCode, { encode } from '@crate/qr-code';
 import { createLogger, toError } from '@lib/observability';
 import type { DeepReadonly } from '@lib/state';
@@ -67,13 +63,13 @@ const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
  *
  * `signal` lets the view cancel a connect it no longer needs. iroh's own
  * `joinRelay()` isn't interruptible, so cancellation is cooperative: after each
- * `await` we bail if the signal has fired, freeing a late-arriving endpoint so
+ * `await` we bail if the signal has fired, freeing a late-arriving relay so
  * its relay connection doesn't linger, and resolve to `null` rather than
- * handing back an endpoint nothing will hold.
+ * handing back a relay nothing will hold.
  */
 export const openConnection = async (
   signal: AbortSignal,
-): Promise<Connection | null> => {
+): Promise<Relay | null> => {
   await init();
   if (signal.aborted) return null;
   logger.debug('Iroh wasm initialized.');
@@ -85,28 +81,30 @@ export const openConnection = async (
   const secretKey = restored ?? generateSecretKey();
   const persisting = restored ? undefined : persistSecretKey(secretKey);
 
-  const endpoint = await joinRelay(secretKey);
+  const relay = await joinRelay(secretKey);
   await persisting;
   if (signal.aborted) {
-    endpoint.free();
+    relay.free();
     return null;
   }
 
   // Start serving inbound dials so the peer being dialed logs the other
-  // side of the connection. The loop is held by the endpoint and torn down
-  // when it's freed.
-  endpoint.acceptPeers((endpointId) => {
-    logger.debug('Peer connected.', { endpointId });
+  // side of the connection. The loop is held by the relay and torn down
+  // when it's freed. We only observe the peer's id, then free our handle —
+  // the accept loop keeps its own, so the connection stays open.
+  relay.acceptPeers((peer) => {
+    logger.debug('Peer connected.', { endpointId: peer.remoteId });
+    peer.free();
   });
 
-  return endpoint;
+  return relay;
 };
 
 /**
  * Dial the peer named in a beam link over the live relay connection,
- * resolving once the connection is established. Reads the endpoint off the
+ * resolving once the connection is established. Reads the relay off the
  * connection store — the caller only dials once the relay connection is
- * `connected`, so a missing endpoint is a caller bug and throws.
+ * `connected`, so a missing relay is a caller bug and throws.
  *
  * Logs the outcome here (rather than via effect lifecycle actions) to sit
  * alongside {@link openConnection}'s inbound `Peer connected.` log — both
@@ -116,14 +114,15 @@ export const dialPeer = async (
   state: DeepReadonly<ConnectionState>,
   endpointId: string,
 ): Promise<void> => {
-  const endpoint = state.endpoint?.current;
-  if (!endpoint) {
+  const relay = state.relay?.current;
+  if (!relay) {
     throw new Error('Cannot dial a peer before the relay connection is up.');
   }
 
   try {
-    const peer = await endpoint.dial(endpointId);
-    logger.debug('Dialed peer.', { endpointId: peer });
+    const peer = await relay.dial(endpointId);
+    logger.debug('Dialed peer.', { endpointId: peer.remoteId });
+    peer.free();
   } catch (error) {
     logger.error('Failed to dial peer.', {
       endpointId,
@@ -133,11 +132,11 @@ export const dialPeer = async (
 };
 
 /**
- * Free the held endpoint straight off the store view, tearing its relay
+ * Free the held relay straight off the store view, tearing its relay
  * connection down. A no-op before one's been opened.
  */
 export const closeConnection = (state: DeepReadonly<ConnectionState>): void => {
-  state.endpoint?.current.free();
+  state.relay?.current.free();
 };
 
 /**

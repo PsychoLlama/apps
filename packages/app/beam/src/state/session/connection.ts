@@ -1,5 +1,5 @@
 import { createStore, defineStore, type Ref } from '@lib/state';
-import type { Connection } from '@crate/iroh';
+import type { Relay } from '@crate/iroh';
 
 /**
  * Where the browser's relay connection sits in its lifecycle.
@@ -9,7 +9,7 @@ import type { Connection } from '@crate/iroh';
  *   first paint show, and where a torn-down connection returns to.
  * - `connecting` — the wasm is instantiating and/or the relay handshake is
  *   in flight.
- * - `connected` — the endpoint is live on the relay network; `endpoint`
+ * - `connected` — the endpoint is live on the relay network; `relay`
  *   holds it open.
  * - `failed` — the wasm load or handshake errored. Terminal for now; there's
  *   no reconnect affordance, so the view stays here until it's torn down and
@@ -30,12 +30,12 @@ export interface ConnectionState {
    * first paint, since the wasm is client-only. Held behind `Ref` so the
    * reactive store doesn't proxy the wasm handle.
    */
-  endpoint: Ref<Connection> | null;
+  relay: Ref<Relay> | null;
 }
 
 export const connectionStore = defineStore<ConnectionState>(() => ({
   status: 'initial',
-  endpoint: null,
+  relay: null,
 }));
 
 /** Live, readonly view of the relay connection. */
