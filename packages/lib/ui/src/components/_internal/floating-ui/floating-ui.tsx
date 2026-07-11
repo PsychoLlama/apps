@@ -10,6 +10,9 @@ import {
   type PaddingProps,
 } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
+import * as css from './floating-ui.css';
+
+export { anchor } from './floating-ui.css';
 
 /**
  * Internal primitive for positioned floating UI — tooltips, dropdowns,
@@ -71,5 +74,5 @@ export interface FloatingContainerProps {
  * surface-wide plumbing will land here as the primitive grows.
  */
 export const FloatingContainer = (props: FloatingContainerProps) => {
-  return <FloatingBody>{props.children}</FloatingBody>;
+  return <FloatingBody class={css.container}>{props.children}</FloatingBody>;
 };
