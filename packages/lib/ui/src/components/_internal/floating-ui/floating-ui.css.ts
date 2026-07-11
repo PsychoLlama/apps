@@ -1,4 +1,4 @@
-import { createVar, fallbackVar, style } from '@vanilla-extract/css';
+import { style } from '@vanilla-extract/css';
 
 /**
  * Anchor target — establishes the positioning context an absolutely
@@ -9,31 +9,43 @@ export const anchor = style({
   position: 'relative',
 });
 
-const translateX = createVar();
-const translateY = createVar();
-
 /**
- * Positioning shell for the floating surface. `data-side` pins it to an
- * edge of the anchor; `data-justify` (inline axis) and `data-align`
- * (block axis) slide it from there, composed into a single translate so
- * the two independent attributes don't clobber one `transform`.
+ * Positioning shell for the floating surface. `data-side` places it
+ * fully outside the chosen edge of the anchor; `data-align` positions it
+ * along that edge — `start` hugs the top/left, `end` the bottom/right.
  */
 export const container = style({
   position: 'absolute',
-  transform: `translate(${fallbackVar(translateX, '0')}, ${fallbackVar(translateY, '0')})`,
   selectors: {
-    // Which edge of the anchor the surface pins to.
-    '&[data-side="top"]': { top: 0, left: '50%' },
-    '&[data-side="bottom"]': { top: '100%', left: '50%' },
-    '&[data-side="left"]': { top: '50%', left: 0 },
-    '&[data-side="right"]': { top: '50%', left: '100%' },
-    // Horizontal slide relative to the pin.
-    '&[data-justify="start"]': { vars: { [translateX]: '0' } },
-    '&[data-justify="center"]': { vars: { [translateX]: '-50%' } },
-    '&[data-justify="end"]': { vars: { [translateX]: '-100%' } },
-    // Vertical slide relative to the pin.
-    '&[data-align="start"]': { vars: { [translateY]: '0' } },
-    '&[data-align="center"]': { vars: { [translateY]: '-50%' } },
-    '&[data-align="end"]': { vars: { [translateY]: '-100%' } },
+    // Push fully outside the chosen edge.
+    '&[data-side="top"]': { bottom: '100%' },
+    '&[data-side="bottom"]': { top: '100%' },
+    '&[data-side="left"]': { right: '100%' },
+    '&[data-side="right"]': { left: '100%' },
+
+    // Align along a horizontal edge (top/bottom): start=left … end=right.
+    '&[data-side="top"][data-align="start"], &[data-side="bottom"][data-align="start"]':
+      { left: 0 },
+    '&[data-side="top"][data-align="center"], &[data-side="bottom"][data-align="center"]':
+      { left: '50%', transform: 'translateX(-50%)' },
+    '&[data-side="top"][data-align="end"], &[data-side="bottom"][data-align="end"]':
+      { right: 0 },
+
+    // Align along a vertical edge (left/right): start=top … end=bottom.
+    '&[data-side="left"][data-align="start"], &[data-side="right"][data-align="start"]':
+      { top: 0 },
+    '&[data-side="left"][data-align="center"], &[data-side="right"][data-align="center"]':
+      { top: '50%', transform: 'translateY(-50%)' },
+    '&[data-side="left"][data-align="end"], &[data-side="right"][data-align="end"]':
+      { bottom: 0 },
   },
+});
+
+/**
+ * The visual surface. Caps how large floating content can grow so a
+ * window never overruns the viewport.
+ */
+export const body = style({
+  maxWidth: '20rem',
+  maxHeight: '20rem',
 });

@@ -42,20 +42,18 @@ describe('FloatingContainer', () => {
     const shell = container.querySelector('[data-side]');
 
     expect(shell).toHaveAttribute('data-side', 'bottom');
-    expect(shell).toHaveAttribute('data-justify', 'center');
-    expect(shell).toHaveAttribute('data-align', 'start');
+    expect(shell).toHaveAttribute('data-align', 'center');
   });
 
-  it('reflects side, justify, and align into data attributes', () => {
+  it('reflects side and align into data attributes', () => {
     const { container } = render(() => (
-      <FloatingContainer side="right" justify="end" align="center">
+      <FloatingContainer side="right" align="end">
         content
       </FloatingContainer>
     ));
     const shell = container.querySelector('[data-side]');
 
     expect(shell).toHaveAttribute('data-side', 'right');
-    expect(shell).toHaveAttribute('data-justify', 'end');
-    expect(shell).toHaveAttribute('data-align', 'center');
+    expect(shell).toHaveAttribute('data-align', 'end');
   });
 });

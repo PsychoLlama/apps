@@ -55,6 +55,7 @@ export const FloatingBody = (props: FloatingBodyProps) => {
 
   const className = () =>
     [
+      css.body,
       ...resolveFlexClasses(flex),
       ...resolvePaddingClasses(padding),
       local.class,
@@ -73,9 +74,9 @@ export const FloatingBody = (props: FloatingBodyProps) => {
 export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
 
 /**
- * Placement along an axis, relative to the pinned edge. Mirrors CSS
- * grid: `justify` runs the inline (horizontal) axis, `align` the block
- * (vertical) axis.
+ * Placement of the surface along the anchor edge it binds to. `start`
+ * hugs the top (left/right sides) or left (top/bottom sides); `end` the
+ * opposite; `center` splits the difference.
  */
 export type FloatingAlignment = 'start' | 'center' | 'end';
 
@@ -83,9 +84,7 @@ export type FloatingAlignment = 'start' | 'center' | 'end';
 export interface FloatingContainerProps {
   /** Edge of the anchor the surface binds to. Defaults to `'bottom'`. */
   side?: FloatingSide;
-  /** Horizontal placement relative to the pin. Defaults to `'center'`. */
-  justify?: FloatingAlignment;
-  /** Vertical placement relative to the pin. Defaults to `'start'`. */
+  /** Placement along that edge. Defaults to `'center'`. */
   align?: FloatingAlignment;
   /** Floating content to render. */
   children: JSX.Element;
@@ -93,17 +92,16 @@ export interface FloatingContainerProps {
 
 /**
  * Entry point for a floating primitive. Owns the positioning shell —
- * pinning to a side of the anchor and sliding along both axes — and
- * wraps the {@link FloatingBody} surface. Further plumbing (layering)
- * will land here as the primitive grows.
+ * placing the surface outside a side of the anchor and aligning it along
+ * that edge — and wraps the {@link FloatingBody} surface. Further
+ * plumbing (layering) will land here as the primitive grows.
  */
 export const FloatingContainer = (props: FloatingContainerProps) => {
   return (
     <div
       class={css.container}
       data-side={props.side ?? 'bottom'}
-      data-justify={props.justify ?? 'center'}
-      data-align={props.align ?? 'start'}
+      data-align={props.align ?? 'center'}
     >
       <FloatingBody>{props.children}</FloatingBody>
     </div>
