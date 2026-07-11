@@ -84,7 +84,11 @@ export const Experimental = () => {
 
         <Flex as="div" grow align="center" justify="center">
           <Flex as="section" class={`${css.anchorBox} ${anchor}`}>
-            <FloatingContainer side={controls.side} align={controls.align}>
+            <FloatingContainer
+              side={controls.side}
+              align={controls.align}
+              arrow={{ visible: true, width: 16, height: 8 }}
+            >
               <Text as="p" selectable={false}>
                 Floating Window
               </Text>
