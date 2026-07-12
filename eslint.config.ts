@@ -189,8 +189,12 @@ export default [
     },
   },
   {
-    // @lib/state internals may use solid-js/store directly.
-    files: ['packages/lib/state/src/**/*.ts'],
+    // @lib/state and @lib/state2 internals may use Solid's raw state
+    // primitives directly — they implement the sanctioned surface.
+    files: [
+      'packages/lib/state/src/**/*.ts',
+      'packages/lib/state2/src/**/*.ts',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
