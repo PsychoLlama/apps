@@ -16,6 +16,19 @@ export const target = style({
 });
 
 /**
+ * Signals that a click on the target will re-place the bound point.
+ * Applied alongside {@link target} while point mode is armed.
+ */
+export const pointArmed = style({
+  cursor: 'crosshair',
+});
+
+/** Fixed width so the offset sliders have a track to render. */
+export const offsetControl = style({
+  width: '12rem',
+});
+
+/**
  * The floating window's visual surface, applied straight onto the
  * `FloatingBody` via the container's `class`. A high-contrast inverted
  * panel (dark on light themes, light on dark) so it always reads as a
