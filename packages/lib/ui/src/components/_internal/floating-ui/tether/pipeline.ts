@@ -10,26 +10,31 @@ import type { TetherPlacement, TetherRect } from './geometry';
  * observation and DOM application live in `create-tether`.
  */
 
-/**
- * Everything a plugin may read. Rects are viewport-coordinate
- * measurements taken in the same frame; `placement` is the requested
- * (pre-decision) placement.
- */
-export interface TetherState {
-  /** Requested placement before any collision decisions. */
-  placement: TetherPlacement;
+/** The boxes a pipeline run measures, in viewport coordinates. */
+export interface TetherRects {
   /** The anchor element's box. */
   anchor: TetherRect;
   /** The floating container's box. Only its size is trustworthy — its
    * position reflects previously applied decisions. */
   popup: TetherRect;
-  /** The popup's positioning context (`offsetParent` of the anchor). */
-  parent: TetherRect;
   /** The visual viewport. */
   viewport: TetherRect;
   /** The arrow's box, or `null` when no arrow is rendered. Position
-   * reflects previously applied decisions; see {@link applied}. */
+   * reflects previously applied decisions; see
+   * {@link TetherState.applied}. */
   arrow: TetherRect | null;
+}
+
+/**
+ * Everything a plugin may read: the requested (pre-decision)
+ * placement, the boxes measured in the same frame, and the decisions
+ * that were painted while measuring.
+ */
+export interface TetherState {
+  /** Requested placement before any collision decisions. */
+  placement: TetherPlacement;
+  /** The measured boxes placement decisions run against. */
+  rects: TetherRects;
   /** Minimum clearance to keep between the surface and the viewport
    * edge when flipping, shifting, and sizing. */
   padding: number;

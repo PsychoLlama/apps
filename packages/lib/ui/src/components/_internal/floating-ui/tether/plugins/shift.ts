@@ -9,7 +9,8 @@ import type { TetherPlugin } from '../pipeline';
  * plugin's job; this only ever moves along the cross axis.
  */
 export const shift: TetherPlugin = (state, decisions) => {
-  const placed = place(state.anchor, state.popup, {
+  const { anchor, popup, viewport } = state.rects;
+  const placed = place(anchor, popup, {
     ...state.placement,
     side: decisions.side,
     align: decisions.align,
@@ -18,13 +19,11 @@ export const shift: TetherPlugin = (state, decisions) => {
   const vertical = isVerticalSide(decisions.side);
   const start = vertical ? placed.x : placed.y;
   const size = vertical ? placed.width : placed.height;
-  const viewportStart =
-    (vertical ? state.viewport.x : state.viewport.y) + state.padding;
+  const viewportStart = (vertical ? viewport.x : viewport.y) + state.padding;
   const viewportEnd =
-    (vertical ? rightOf(state.viewport) : bottomOf(state.viewport)) -
-    state.padding;
-  const anchorStart = vertical ? state.anchor.x : state.anchor.y;
-  const anchorSize = vertical ? state.anchor.width : state.anchor.height;
+    (vertical ? rightOf(viewport) : bottomOf(viewport)) - state.padding;
+  const anchorStart = vertical ? anchor.x : anchor.y;
+  const anchorSize = vertical ? anchor.width : anchor.height;
 
   // The raw correction that would pin the surface inside the viewport.
   // When it can't fit both edges, honoring the start edge wins.

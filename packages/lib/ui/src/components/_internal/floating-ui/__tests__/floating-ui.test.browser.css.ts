@@ -49,3 +49,17 @@ export const wideSurface = style({
   width: '300px',
   height: '40px',
 });
+
+/** Scrollable stage for exercising scroll-driven tether updates. */
+export const scrollStage = style({
+  position: 'fixed',
+  inset: 0,
+  overflow: 'auto',
+});
+
+/** Tall runway centering the anchor with generous room either side. */
+export const runway = style({
+  height: '300vh',
+  display: 'grid',
+  placeItems: 'center',
+});

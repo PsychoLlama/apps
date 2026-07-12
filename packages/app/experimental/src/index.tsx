@@ -13,6 +13,7 @@ import {
 import {
   FloatingContainer,
   anchor,
+  tetherPlugins,
   type ArrowAlign,
   type FloatingAlignment,
   type FloatingSide,
@@ -22,6 +23,7 @@ import {
   floatingControls,
   setAlign,
   setAlignOffset,
+  setAnchorElement,
   setArrowAlign,
   setPoint,
   setRadius,
@@ -30,6 +32,14 @@ import {
   setTether,
 } from './store';
 import * as css from './index.css';
+
+/** The flip fallback offered to the position-try plugin. */
+const OPPOSITE_SIDE: Record<FloatingSide, FloatingSide> = {
+  top: 'bottom',
+  bottom: 'top',
+  left: 'right',
+  right: 'left',
+};
 
 const SIDES = [
   'top',
@@ -92,6 +102,19 @@ export const Experimental = () => {
   const chooseAlignOffset = useAction(setAlignOffset);
   const choosePoint = useAction(setPoint);
   const chooseTether = useAction(setTether);
+  const captureAnchor = useAction(setAnchorElement);
+
+  /** The full pipeline, with a flip to the opposite edge on collision. */
+  const tetherOptions = () => ({
+    padding: 8,
+    plugins: [
+      tetherPlugins.positionTry([{ side: OPPOSITE_SIDE[controls.side] }]),
+      tetherPlugins.shift,
+      tetherPlugins.size,
+      tetherPlugins.arrow,
+      tetherPlugins.transformOrigin,
+    ],
+  });
 
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
@@ -205,19 +228,21 @@ export const Experimental = () => {
         <Flex as="div" grow align="center" justify="center">
           <Flex
             as="section"
+            ref={captureAnchor}
             class={[css.target, anchor, controls.point && css.pointArmed]
               .filter(Boolean)
               .join(' ')}
             onClick={placePoint}
           >
             <FloatingContainer
+              anchor={controls.anchorElement.current ?? undefined}
               side={controls.side}
               align={controls.align}
               radius={controls.radius}
               sideOffset={controls.sideOffset}
               alignOffset={controls.alignOffset}
               point={controls.point ?? undefined}
-              tether={controls.tether && { padding: 8 }}
+              tether={controls.tether ? tetherOptions() : undefined}
               direction="column"
               gap={1}
               py={3}

@@ -16,7 +16,8 @@ import type { TetherPlugin } from '../pipeline';
  * follow-up pass once the new placement paints.
  */
 export const arrow: TetherPlugin = (state, decisions) => {
-  if (!state.arrow) return decisions;
+  const { rects } = state;
+  if (!rects.arrow) return decisions;
 
   if (
     state.applied.side !== decisions.side ||
@@ -26,7 +27,7 @@ export const arrow: TetherPlugin = (state, decisions) => {
   }
 
   const vertical = isVerticalSide(decisions.side);
-  const placed = place(state.anchor, state.popup, {
+  const placed = place(rects.anchor, rects.popup, {
     ...state.placement,
     side: decisions.side,
     align: decisions.align,
@@ -35,14 +36,14 @@ export const arrow: TetherPlugin = (state, decisions) => {
   // Everything below runs on the cross axis — the edge the arrow
   // slides along. Positions are taken relative to the measured popup
   // so previously applied container shifts cancel out.
-  const anchorCenter = vertical ? centerX(state.anchor) : centerY(state.anchor);
+  const anchorCenter = vertical ? centerX(rects.anchor) : centerY(rects.anchor);
   const popupStart = vertical
     ? placed.x + decisions.shiftX
     : placed.y + decisions.shiftY;
   const popupSize = vertical ? placed.width : placed.height;
-  const measuredPopupStart = vertical ? state.popup.x : state.popup.y;
-  const arrowCenter = vertical ? centerX(state.arrow) : centerY(state.arrow);
-  const arrowSize = vertical ? state.arrow.width : state.arrow.height;
+  const measuredPopupStart = vertical ? rects.popup.x : rects.popup.y;
+  const arrowCenter = vertical ? centerX(rects.arrow) : centerY(rects.arrow);
+  const arrowSize = vertical ? rects.arrow.width : rects.arrow.height;
   const appliedShift = vertical
     ? state.applied.arrowShiftX
     : state.applied.arrowShiftY;

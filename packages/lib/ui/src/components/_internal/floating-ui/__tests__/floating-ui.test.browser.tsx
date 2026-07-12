@@ -7,12 +7,57 @@
  */
 
 import { render, waitFor } from '@solidjs/testing-library';
+import { createSignal } from 'solid-js';
 import {
   FloatingContainer,
   anchor,
+  tetherPlugins,
   type FloatingContainerProps,
+  type TetherOptions,
 } from '../floating-ui';
 import * as fixture from './floating-ui.test.browser.css';
+
+const { positionTry, shift, size, transformOrigin } = tetherPlugins;
+const arrowPlugin = tetherPlugins.arrow;
+
+/** The full pipeline, in fold order, with the opposite-side fallback. */
+const fullPipeline = (side: 'top' | 'bottom'): TetherOptions => ({
+  plugins: [
+    positionTry([{ side: side === 'bottom' ? 'top' : 'bottom' }]),
+    shift,
+    size,
+    arrowPlugin,
+    transformOrigin,
+  ],
+});
+
+/** A tethered surface bound to a fixed 100×100 anchor. */
+const Tethered = (
+  props: Omit<FloatingContainerProps, 'children' | 'class' | 'anchor'> & {
+    stage: string;
+    surface?: string;
+  },
+) => {
+  const [anchorElement, setAnchorElement] = createSignal<HTMLElement>();
+
+  return (
+    <div class={props.stage}>
+      <div
+        ref={setAnchorElement}
+        class={`${anchor} ${fixture.anchorBox}`}
+        data-testid="anchor"
+      >
+        <FloatingContainer
+          {...props}
+          anchor={anchorElement()}
+          class={props.surface ?? fixture.surface}
+        >
+          content
+        </FloatingContainer>
+      </div>
+    </div>
+  );
+};
 
 /** Render a surface bound to a fixed 100×100 anchor on a quiet stage. */
 const renderFloating = (
@@ -153,13 +198,11 @@ describe('FloatingContainer geometry', () => {
     // Anchor flush with the viewport's bottom edge: a below-surface
     // has no room, so the tether flips it above.
     const { container } = render(() => (
-      <div class={fixture.pinBottom}>
-        <div class={`${anchor} ${fixture.anchorBox}`} data-testid="anchor">
-          <FloatingContainer class={fixture.surface} side="bottom" tether>
-            content
-          </FloatingContainer>
-        </div>
-      </div>
+      <Tethered
+        stage={fixture.pinBottom}
+        side="bottom"
+        tether={fullPipeline('bottom')}
+      />
     ));
     const shell = container.querySelector('[data-side]')!;
 
@@ -175,13 +218,12 @@ describe('FloatingContainer geometry', () => {
     // Anchor flush with the left edge: a centered 300px surface starts
     // 100px offscreen, and the shift plugin walks it back in.
     const { container } = render(() => (
-      <div class={fixture.pinLeft}>
-        <div class={`${anchor} ${fixture.anchorBox}`} data-testid="anchor">
-          <FloatingContainer class={fixture.wideSurface} side="bottom" tether>
-            content
-          </FloatingContainer>
-        </div>
-      </div>
+      <Tethered
+        stage={fixture.pinLeft}
+        surface={fixture.wideSurface}
+        side="bottom"
+        tether={{ plugins: [shift] }}
+      />
     ));
     const shell = container.querySelector('[data-side]')!;
 
@@ -194,18 +236,13 @@ describe('FloatingContainer geometry', () => {
 
   it('centers the arrow over the anchor and aims the transform origin', async () => {
     const { container } = render(() => (
-      <div class={fixture.pinLeft}>
-        <div class={`${anchor} ${fixture.anchorBox}`} data-testid="anchor">
-          <FloatingContainer
-            class={fixture.wideSurface}
-            side="bottom"
-            tether
-            arrow={{ visible: true }}
-          >
-            content
-          </FloatingContainer>
-        </div>
-      </div>
+      <Tethered
+        stage={fixture.pinLeft}
+        surface={fixture.wideSurface}
+        side="bottom"
+        tether={fullPipeline('bottom')}
+        arrow={{ visible: true }}
+      />
     ));
     const shell = container.querySelector<HTMLElement>('[data-side]')!;
     const arrowElement = container.querySelector('svg')!;
@@ -236,19 +273,14 @@ describe('FloatingContainer geometry', () => {
     // surface above, invalidating the arrow's measured seat; the
     // second pass re-centers it over the anchor.
     const { container } = render(() => (
-      <div class={fixture.pinBottom}>
-        <div class={`${anchor} ${fixture.anchorBox}`} data-testid="anchor">
-          <FloatingContainer
-            class={fixture.wideSurface}
-            side="bottom"
-            align="start"
-            tether
-            arrow={{ visible: true }}
-          >
-            content
-          </FloatingContainer>
-        </div>
-      </div>
+      <Tethered
+        stage={fixture.pinBottom}
+        surface={fixture.wideSurface}
+        side="bottom"
+        align="start"
+        tether={fullPipeline('bottom')}
+        arrow={{ visible: true }}
+      />
     ));
     const shell = container.querySelector('[data-side]')!;
     const arrowElement = container.querySelector('svg')!;
@@ -266,13 +298,11 @@ describe('FloatingContainer geometry', () => {
 
   it('publishes available-space vars when tethered', async () => {
     const { container } = render(() => (
-      <div class={fixture.pinLeft}>
-        <div class={`${anchor} ${fixture.anchorBox}`} data-testid="anchor">
-          <FloatingContainer class={fixture.surface} side="bottom" tether>
-            content
-          </FloatingContainer>
-        </div>
-      </div>
+      <Tethered
+        stage={fixture.pinLeft}
+        side="bottom"
+        tether={{ plugins: [size] }}
+      />
     ));
     const shell = container.querySelector<HTMLElement>('[data-side]')!;
     const anchorRect = container
@@ -289,6 +319,48 @@ describe('FloatingContainer geometry', () => {
         `: ${document.documentElement.clientHeight - anchorRect.bottom}px`,
       );
     });
+  });
+
+  it('holds a fallback placement across a scroll round-trip', async () => {
+    // Scroll the anchor to the viewport's bottom edge (the surface
+    // flips above), then back to the middle where both sides fit: the
+    // position-try memory keeps it above instead of snapping home.
+    const { container } = render(() => (
+      <div class={fixture.scrollStage} data-testid="scroller">
+        <div class={fixture.runway}>
+          <Tethered stage="" side="bottom" tether={fullPipeline('bottom')} />
+        </div>
+      </div>
+    ));
+    const scroller = container.querySelector<HTMLElement>(
+      '[data-testid="scroller"]',
+    )!;
+    const anchorBox = container.querySelector('[data-testid="anchor"]')!;
+    const shell = container.querySelector('[data-side]')!;
+    const viewportHeight = document.documentElement.clientHeight;
+
+    // Center the anchor: both sides fit, the requested side stands.
+    const centerAnchor = () => {
+      const rect = anchorBox.getBoundingClientRect();
+      scroller.scrollTop += rect.top + rect.height / 2 - viewportHeight / 2;
+    };
+
+    centerAnchor();
+    await waitFor(() => expect(shell).toHaveAttribute('data-side', 'bottom'));
+
+    // Carry the anchor down to the bottom edge (scrolling up moves
+    // content down): 10px of room left below, the surface flips above.
+    scroller.scrollTop -=
+      viewportHeight - anchorBox.getBoundingClientRect().bottom - 10;
+    await waitFor(() => expect(shell).toHaveAttribute('data-side', 'top'));
+
+    // Back to the middle: the painted side still fits, so it holds.
+    centerAnchor();
+    await waitFor(() =>
+      expect(anchorBox.getBoundingClientRect().top).toBeGreaterThan(100),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(shell).toHaveAttribute('data-side', 'top');
   });
 
   it('applies offsets from the point in point mode', () => {

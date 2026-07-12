@@ -7,25 +7,21 @@ import {
   type TetherPlugin,
   type TetherState,
 } from './pipeline';
-import { arrow } from './plugins/arrow';
-import { flip } from './plugins/flip';
-import { shift } from './plugins/shift';
-import { size } from './plugins/size';
-import { transformOrigin } from './plugins/transform-origin';
 
 /**
  * The tether's reactive shell: watch the boxes that placement depends
  * on, run the decision pipeline when any of them move, and expose the
- * result as a signal. It never touches the DOM — the container merges
- * decisions over its own props, keeping a single writer.
+ * result as a signal. It never touches the DOM beyond measuring the
+ * elements it was handed — the container merges decisions over its own
+ * props, keeping a single writer.
  *
- * Observation is deliberately scroll-listener-free: `ResizeObserver`
- * catches the boxes changing size, and an `IntersectionObserver` with
- * fine-grained thresholds catches scroll carrying the surface or its
- * anchor toward a viewport edge — the only scroll positions collision
- * decisions care about. In environments without the observers (jsdom,
- * pre-hydration) the signal stays `null` and the pure-CSS placement
- * stands, which is the progressive-enhancement contract.
+ * Observation: `ResizeObserver` catches the boxes changing size, and a
+ * capture-phase passive scroll listener catches any scroll container
+ * in the ancestry carrying the anchor. Both funnel into one
+ * rAF-batched measure, so a per-pixel scroll stream costs at most one
+ * pipeline run per frame. In environments without `ResizeObserver`
+ * (jsdom, pre-hydration) the signal stays `null` and the pure-CSS
+ * placement stands, which is the progressive-enhancement contract.
  */
 
 /** Consumer-facing tuning knobs for a tethered container. */
@@ -36,39 +32,48 @@ export interface TetherOptions {
    */
   padding?: number;
   /**
-   * The decision pipeline, folded left. Defaults to
-   * {@link DEFAULT_PLUGINS}.
+   * The decision pipeline, folded left. There are no defaults — pass
+   * exactly the plugins the surface cares about.
    */
-  plugins?: readonly TetherPlugin[];
+  plugins: readonly TetherPlugin[];
 }
 
 /** Everything a tether run needs; `null` disables the tether. */
 export interface TetherConfig extends TetherOptions {
   /** The floating container element (the positioning shell). */
   popup: HTMLElement;
+  /** The anchor element the placement resolves against. */
+  anchor: HTMLElement;
+  /** The pointer arrow, when one is rendered. */
+  arrow?: SVGSVGElement | null;
   /** Requested placement before any collision decisions. */
   placement: TetherPlacement;
 }
 
 /**
- * The standard pipeline, mirroring Radix's middleware order: shift
- * and flip act on independent axes (cross and main respectively), and
- * everything downstream reads their resolved placement.
+ * The viewport in the coordinate space `getBoundingClientRect` reports
+ * (the layout viewport). `visualViewport` narrows it to what's really
+ * visible — pinch zoom and on-screen keyboards. Display cutouts need
+ * no handling here: the layout viewport only extends under them when a
+ * page opts into `viewport-fit=cover`, which this design never does.
  */
-export const DEFAULT_PLUGINS: readonly TetherPlugin[] = [
-  shift,
-  flip,
-  size,
-  arrow,
-  transformOrigin,
-];
+const measureViewport = (): TetherRect => {
+  const visual = window.visualViewport;
 
-/**
- * Intersection thresholds every 5%, so scroll near a viewport edge
- * produces a steady stream of recompute signals while scroll in the
- * middle of the viewport produces none at all.
- */
-const THRESHOLDS = Array.from({ length: 21 }, (_item, step) => step / 20);
+  return visual
+    ? {
+        x: visual.offsetLeft,
+        y: visual.offsetTop,
+        width: visual.width,
+        height: visual.height,
+      }
+    : {
+        x: 0,
+        y: 0,
+        width: document.documentElement.clientWidth,
+        height: document.documentElement.clientHeight,
+      };
+};
 
 const toRect = (rect: DOMRect): TetherRect => ({
   x: rect.x,
@@ -77,21 +82,26 @@ const toRect = (rect: DOMRect): TetherRect => ({
   height: rect.height,
 });
 
-const decisionsEqual = (
+/**
+ * Value equality for the decisions signal. Every pipeline run builds a
+ * fresh record from pure plugins, so subscriber stability comes from
+ * the signal comparing by value rather than reference.
+ */
+const sameDecisions = (
   before: TetherDecisions | null,
-  after: TetherDecisions,
+  after: TetherDecisions | null,
 ): boolean =>
-  before !== null &&
-  (Object.keys(after) as (keyof TetherDecisions)[]).every(
-    (key) => before[key] === after[key],
-  );
+  before === after ||
+  (before !== null &&
+    after !== null &&
+    (Object.keys(after) as (keyof TetherDecisions)[]).every(
+      (key) => before[key] === after[key],
+    ));
 
 /**
  * Watch a floating container and stream placement decisions for it.
- * The anchor is discovered structurally — it's the container's
- * `offsetParent`, the `position: relative` element the CSS placement
- * resolves against — and the arrow, when present, is the container's
- * first-child SVG.
+ * Every element involved rides in through the config — the tether
+ * never queries the DOM for structure.
  *
  * Returns `null` until a run completes (or forever, where observers
  * don't exist); `null` means "the pure-CSS placement stands".
@@ -99,7 +109,9 @@ const decisionsEqual = (
 export const createTether = (
   config: Accessor<TetherConfig | null>,
 ): Accessor<TetherDecisions | null> => {
-  const [decisions, setDecisions] = createSignal<TetherDecisions | null>(null);
+  const [decisions, setDecisions] = createSignal<TetherDecisions | null>(null, {
+    equals: sameDecisions,
+  });
 
   createEffect(() => {
     const current = config();
@@ -109,20 +121,9 @@ export const createTether = (
     }
 
     // No observers, no enhancement: the base CSS placement stands.
-    if (
-      typeof ResizeObserver === 'undefined' ||
-      typeof IntersectionObserver === 'undefined'
-    ) {
-      return;
-    }
+    if (typeof ResizeObserver === 'undefined') return;
 
-    const { popup } = current;
-    const anchor = popup.offsetParent;
-    if (!(anchor instanceof HTMLElement)) return;
-    const parent =
-      anchor.offsetParent instanceof HTMLElement
-        ? anchor.offsetParent
-        : document.documentElement;
+    const { popup, anchor, arrow } = current;
 
     // The decisions currently painted, so measurements contaminated by
     // them (the arrow's seat) can be normalized back to rest. Before
@@ -155,30 +156,21 @@ export const createTether = (
       // Runs inside rAF, outside any tracking scope — reading the
       // decisions signal here doesn't subscribe the effect to itself.
       const applied = toApplied(decisions(), current.placement);
-      const arrowElement = popup.querySelector(':scope > svg[data-direction]');
 
       const state: TetherState = {
         placement: current.placement,
-        anchor: toRect(anchor.getBoundingClientRect()),
-        popup: toRect(popup.getBoundingClientRect()),
-        parent: toRect(parent.getBoundingClientRect()),
-        viewport: {
-          x: 0,
-          y: 0,
-          width: document.documentElement.clientWidth,
-          height: document.documentElement.clientHeight,
+        rects: {
+          anchor: toRect(anchor.getBoundingClientRect()),
+          popup: toRect(popup.getBoundingClientRect()),
+          viewport: measureViewport(),
+          arrow: arrow ? toRect(arrow.getBoundingClientRect()) : null,
         },
-        arrow: arrowElement
-          ? toRect(arrowElement.getBoundingClientRect())
-          : null,
         padding: current.padding ?? 0,
         applied,
       };
 
-      const next = runTether(state, current.plugins ?? DEFAULT_PLUGINS);
-      setDecisions((previous) =>
-        decisionsEqual(previous, next) ? previous : next,
-      );
+      const next = runTether(state, current.plugins);
+      setDecisions(next);
 
       // A changed placement invalidates seat-dependent measurements
       // (see the arrow plugin), so run once more after it paints. The
@@ -192,25 +184,31 @@ export const createTether = (
     const resizes = new ResizeObserver(schedule);
     resizes.observe(popup);
     resizes.observe(anchor);
-    resizes.observe(parent);
 
-    const intersections = new IntersectionObserver(schedule, {
-      threshold: THRESHOLDS,
+    // Scroll anywhere in the ancestry moves the anchor relative to the
+    // viewport. Capture sees every scroll container without naming
+    // them; passive keeps the listener off the scroll critical path.
+    document.addEventListener('scroll', schedule, {
+      capture: true,
+      passive: true,
     });
-    intersections.observe(popup);
-    intersections.observe(anchor);
 
-    // Viewport growth can't create collisions, but it invalidates the
-    // available-space vars, and observers don't see it directly.
+    // Viewport changes invalidate the collision box and the
+    // available-space vars: the window itself, and the visual viewport
+    // moving independently (pinch zoom, on-screen keyboards).
     window.addEventListener('resize', schedule);
+    window.visualViewport?.addEventListener('resize', schedule);
+    window.visualViewport?.addEventListener('scroll', schedule);
 
     schedule();
 
     onCleanup(() => {
       cancelAnimationFrame(frame);
       resizes.disconnect();
-      intersections.disconnect();
+      document.removeEventListener('scroll', schedule, { capture: true });
       window.removeEventListener('resize', schedule);
+      window.visualViewport?.removeEventListener('resize', schedule);
+      window.visualViewport?.removeEventListener('scroll', schedule);
       setDecisions(null);
     });
   });

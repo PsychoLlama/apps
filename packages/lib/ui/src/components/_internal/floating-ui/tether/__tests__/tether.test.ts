@@ -6,9 +6,14 @@
  */
 
 import { availableOnSide, place, type TetherRect } from '../geometry';
-import { initialDecisions, runTether, type TetherState } from '../pipeline';
+import {
+  initialDecisions,
+  runTether,
+  type TetherRects,
+  type TetherState,
+} from '../pipeline';
 import { arrow } from '../plugins/arrow';
-import { flip } from '../plugins/flip';
+import { positionTry } from '../plugins/position-try';
 import { shift } from '../plugins/shift';
 import { size } from '../plugins/size';
 import { transformOrigin } from '../plugins/transform-origin';
@@ -21,16 +26,22 @@ const rect = (
 ): TetherRect => ({ x: left, y: top, width, height });
 
 /** A 100×100 anchor centered in a 1000×1000 viewport, 200×100 popup. */
-const state = (overrides: Partial<TetherState> = {}): TetherState => ({
+const state = (
+  overrides: Partial<Omit<TetherState, 'rects'>> & {
+    rects?: Partial<TetherRects>;
+  } = {},
+): TetherState => ({
   placement: { side: 'bottom', align: 'center', sideOffset: 0, alignOffset: 0 },
-  anchor: rect(450, 450, 100, 100),
-  popup: rect(400, 550, 200, 100),
-  parent: rect(0, 0, 1000, 1000),
-  viewport: rect(0, 0, 1000, 1000),
-  arrow: null,
   padding: 0,
   applied: { side: 'bottom', align: 'center', arrowShiftX: 0, arrowShiftY: 0 },
   ...overrides,
+  rects: {
+    anchor: rect(450, 450, 100, 100),
+    popup: rect(400, 550, 200, 100),
+    viewport: rect(0, 0, 1000, 1000),
+    arrow: null,
+    ...overrides.rects,
+  },
 });
 
 describe('place', () => {
@@ -88,39 +99,61 @@ describe('availableOnSide', () => {
   });
 });
 
-describe('flip', () => {
-  it('keeps the side when the surface fits', () => {
-    const decisions = flip(state(), initialDecisions(state().placement));
+describe('positionTry', () => {
+  const flipToTop = positionTry([{ side: 'top' }]);
+
+  it('keeps the requested placement when it fits', () => {
+    const decisions = flipToTop(state(), initialDecisions(state().placement));
     expect(decisions.side).toBe('bottom');
+    expect(decisions.align).toBe('center');
   });
 
-  it('flips to the opposite side when it overflows and has more room', () => {
+  it('falls to the first fitting fallback', () => {
     // Anchor near the bottom: a below-surface clips the viewport.
-    const near = state({ anchor: rect(450, 850, 100, 100) });
-    const decisions = flip(near, initialDecisions(near.placement));
+    const near = state({ rects: { anchor: rect(450, 850, 100, 100) } });
+    const decisions = flipToTop(near, initialDecisions(near.placement));
     expect(decisions.side).toBe('top');
   });
 
-  it('stays put when the opposite side is tighter', () => {
+  it('walks the preference list in order', () => {
+    // Too tall to fit above or below; the list carries it rightward.
+    const cascade = positionTry([{ side: 'top' }, { side: 'right' }]);
+    const cramped = state({
+      rects: { popup: rect(0, 0, 200, 600) },
+    });
+    const decisions = cascade(cramped, initialDecisions(cramped.placement));
+    expect(decisions.side).toBe('right');
+  });
+
+  it('shows the most surface when nothing fits', () => {
     // Overflows below, but above is even smaller.
     const cramped = state({
-      anchor: rect(450, 20, 100, 100),
-      popup: rect(0, 0, 200, 950),
+      rects: {
+        anchor: rect(450, 20, 100, 100),
+        popup: rect(0, 0, 200, 950),
+      },
     });
-    const decisions = flip(cramped, initialDecisions(cramped.placement));
+    const decisions = flipToTop(cramped, initialDecisions(cramped.placement));
     expect(decisions.side).toBe('bottom');
   });
 
-  it('respects edge padding when judging overflow', () => {
+  it('respects edge padding when judging fit', () => {
     // Fits exactly without padding; padding pushes it over the line.
-    const snug = state({ anchor: rect(450, 800, 100, 100) });
-    expect(flip(snug, initialDecisions(snug.placement)).side).toBe('bottom');
+    const snug = state({ rects: { anchor: rect(450, 800, 100, 100) } });
+    expect(flipToTop(snug, initialDecisions(snug.placement)).side).toBe(
+      'bottom',
+    );
 
-    const padded = state({ anchor: rect(450, 800, 100, 100), padding: 8 });
-    expect(flip(padded, initialDecisions(padded.placement)).side).toBe('top');
+    const padded = state({
+      rects: { anchor: rect(450, 800, 100, 100) },
+      padding: 8,
+    });
+    expect(flipToTop(padded, initialDecisions(padded.placement)).side).toBe(
+      'top',
+    );
   });
 
-  it('flips horizontal sides too', () => {
+  it('falls back across horizontal sides too', () => {
     const near = state({
       placement: {
         side: 'right',
@@ -128,10 +161,62 @@ describe('flip', () => {
         sideOffset: 0,
         alignOffset: 0,
       },
-      anchor: rect(850, 450, 100, 100),
+      applied: {
+        side: 'right',
+        align: 'center',
+        arrowShiftX: 0,
+        arrowShiftY: 0,
+      },
+      rects: { anchor: rect(850, 450, 100, 100) },
     });
-    const decisions = flip(near, initialDecisions(near.placement));
+    const decisions = positionTry([{ side: 'left' }])(
+      near,
+      initialDecisions(near.placement),
+    );
     expect(decisions.side).toBe('left');
+  });
+
+  it('supports alignment fallbacks along the same edge', () => {
+    // Anchor near the right edge: centered overflows, end-aligned fits.
+    const realign = positionTry([{ side: 'bottom', align: 'end' }]);
+    const near = state({ rects: { anchor: rect(880, 450, 100, 100) } });
+    const decisions = realign(near, initialDecisions(near.placement));
+    expect(decisions.side).toBe('bottom');
+    expect(decisions.align).toBe('end');
+  });
+
+  it('holds the painted placement while it still fits', () => {
+    // Plenty of room on both sides, but the surface already flipped:
+    // memory keeps it there instead of snapping home.
+    const settled = state({
+      applied: { side: 'top', align: 'center', arrowShiftX: 0, arrowShiftY: 0 },
+    });
+    const decisions = flipToTop(settled, initialDecisions(settled.placement));
+    expect(decisions.side).toBe('top');
+  });
+
+  it('releases the memory once the painted placement stops fitting', () => {
+    // Painted above, but the anchor reached the top edge.
+    const evicted = state({
+      applied: { side: 'top', align: 'center', arrowShiftX: 0, arrowShiftY: 0 },
+      rects: { anchor: rect(450, 20, 100, 100) },
+    });
+    const decisions = flipToTop(evicted, initialDecisions(evicted.placement));
+    expect(decisions.side).toBe('bottom');
+  });
+
+  it('ignores memory of a placement outside the preference list', () => {
+    // A stale paint (say, the fallback list changed) grants no priority.
+    const stale = state({
+      applied: {
+        side: 'left',
+        align: 'center',
+        arrowShiftX: 0,
+        arrowShiftY: 0,
+      },
+    });
+    const decisions = flipToTop(stale, initialDecisions(stale.placement));
+    expect(decisions.side).toBe('bottom');
   });
 });
 
@@ -144,14 +229,17 @@ describe('shift', () => {
 
   it('slides the surface back into the viewport', () => {
     // Anchor near the left edge: a centered surface starts at -65.
-    const near = state({ anchor: rect(10, 450, 50, 100) });
+    const near = state({ rects: { anchor: rect(10, 450, 50, 100) } });
     const decisions = shift(near, initialDecisions(near.placement));
     expect(decisions.shiftX).toBe(65);
     expect(decisions.shiftY).toBe(0);
   });
 
   it('honors edge padding', () => {
-    const near = state({ anchor: rect(10, 450, 50, 100), padding: 8 });
+    const near = state({
+      rects: { anchor: rect(10, 450, 50, 100) },
+      padding: 8,
+    });
     const decisions = shift(near, initialDecisions(near.placement));
     expect(decisions.shiftX).toBe(73);
   });
@@ -159,7 +247,7 @@ describe('shift', () => {
   it('stops shifting before the surface detaches from the anchor', () => {
     // The full correction (330) would push the surface's left edge past
     // the anchor's right edge; the limiter stops at their meeting point.
-    const far = state({ anchor: rect(-255, 450, 50, 100) });
+    const far = state({ rects: { anchor: rect(-255, 450, 50, 100) } });
     const decisions = shift(far, initialDecisions(far.placement));
     expect(decisions.shiftX).toBe(125);
   });
@@ -174,7 +262,7 @@ describe('shift', () => {
         sideOffset: 0,
         alignOffset: 0,
       },
-      anchor: rect(450, 10, 100, 50),
+      rects: { anchor: rect(450, 10, 100, 50) },
     });
     const decisions = shift(near, initialDecisions(near.placement));
     expect(decisions.shiftX).toBe(0);
@@ -212,7 +300,7 @@ describe('size', () => {
         sideOffset: 0,
         alignOffset: 0,
       },
-      anchor: rect(950, 450, 100, 100),
+      rects: { anchor: rect(950, 450, 100, 100) },
     });
     const decisions = size(cramped, initialDecisions(cramped.placement));
     expect(decisions.availableWidth).toBe(0);
@@ -231,8 +319,15 @@ describe('size', () => {
 describe('arrow', () => {
   // Arrow measured resting at the popup's center (rest center = 100
   // within the 200-wide surface at x=400).
-  const withArrow = (overrides: Partial<TetherState> = {}) =>
-    state({ arrow: rect(494, 550, 12, 6), ...overrides });
+  const withArrow = (
+    overrides: Partial<Omit<TetherState, 'rects'>> & {
+      rects?: Partial<TetherRects>;
+    } = {},
+  ) =>
+    state({
+      ...overrides,
+      rects: { arrow: rect(494, 550, 12, 6), ...overrides.rects },
+    });
 
   it('does nothing without an arrow', () => {
     const decisions = arrow(state(), initialDecisions(state().placement));
@@ -267,8 +362,10 @@ describe('arrow', () => {
         sideOffset: 0,
         alignOffset: 0,
       },
-      popup: rect(450, 550, 200, 100),
-      arrow: rect(544, 550, 12, 6),
+      rects: {
+        popup: rect(450, 550, 200, 100),
+        arrow: rect(544, 550, 12, 6),
+      },
       applied: {
         side: 'bottom',
         align: 'start',
@@ -290,8 +387,10 @@ describe('arrow', () => {
         sideOffset: 0,
         alignOffset: 0,
       },
-      popup: rect(450, 550, 200, 100),
-      arrow: rect(524, 550, 12, 6),
+      rects: {
+        popup: rect(450, 550, 200, 100),
+        arrow: rect(524, 550, 12, 6),
+      },
       applied: {
         side: 'bottom',
         align: 'start',
@@ -307,9 +406,11 @@ describe('arrow', () => {
     // Anchor far to the right of a detach-limited surface: its center
     // (900) lies beyond the surface's right edge (650).
     const detached = withArrow({
-      anchor: rect(850, 450, 100, 100),
-      popup: rect(450, 550, 200, 100),
-      arrow: rect(544, 550, 12, 6),
+      rects: {
+        anchor: rect(850, 450, 100, 100),
+        popup: rect(450, 550, 200, 100),
+        arrow: rect(544, 550, 12, 6),
+      },
       applied: {
         side: 'bottom',
         align: 'start',
@@ -340,8 +441,10 @@ describe('arrow', () => {
         sideOffset: 0,
         alignOffset: 0,
       },
-      popup: rect(550, 450, 200, 100),
-      arrow: rect(550, 494, 6, 12),
+      rects: {
+        popup: rect(550, 450, 200, 100),
+        arrow: rect(550, 494, 6, 12),
+      },
       applied: {
         side: 'right',
         align: 'start',
@@ -406,8 +509,8 @@ describe('runTether', () => {
   });
 
   it('folds left so later plugins see earlier decisions', () => {
-    const near = state({ anchor: rect(450, 850, 100, 100) });
-    const decisions = runTether(near, [flip, size]);
+    const near = state({ rects: { anchor: rect(450, 850, 100, 100) } });
+    const decisions = runTether(near, [positionTry([{ side: 'top' }]), size]);
 
     // size measured the flipped side's gap, not the requested one.
     expect(decisions.side).toBe('top');
@@ -416,10 +519,17 @@ describe('runTether', () => {
 
   it('holds the arrow while a flip invalidates its measurement', () => {
     const near = state({
-      anchor: rect(450, 850, 100, 100),
-      arrow: rect(494, 550, 12, 6),
+      rects: {
+        anchor: rect(450, 850, 100, 100),
+        arrow: rect(494, 550, 12, 6),
+      },
     });
-    const decisions = runTether(near, [flip, shift, size, arrow]);
+    const decisions = runTether(near, [
+      positionTry([{ side: 'top' }]),
+      shift,
+      size,
+      arrow,
+    ]);
 
     expect(decisions.side).toBe('top');
     expect(decisions.arrowShiftX).toBe(0);

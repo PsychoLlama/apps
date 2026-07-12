@@ -9,16 +9,17 @@ import type { TetherPlugin } from '../pipeline';
  * themselves and scroll instead of clipping.
  */
 export const size: TetherPlugin = (state, decisions) => {
+  const { anchor, viewport } = state.rects;
   const main = availableOnSide(
-    state.anchor,
-    state.viewport,
+    anchor,
+    viewport,
     decisions.side,
     state.placement.sideOffset,
     state.padding,
   );
   const cross = isVerticalSide(decisions.side)
-    ? state.viewport.width - state.padding * 2
-    : state.viewport.height - state.padding * 2;
+    ? viewport.width - state.padding * 2
+    : viewport.height - state.padding * 2;
 
   const [availableWidth, availableHeight] = isVerticalSide(decisions.side)
     ? [cross, main]
@@ -28,7 +29,7 @@ export const size: TetherPlugin = (state, decisions) => {
     ...decisions,
     availableWidth: Math.max(0, availableWidth),
     availableHeight: Math.max(0, availableHeight),
-    anchorWidth: state.anchor.width,
-    anchorHeight: state.anchor.height,
+    anchorWidth: anchor.width,
+    anchorHeight: anchor.height,
   };
 };

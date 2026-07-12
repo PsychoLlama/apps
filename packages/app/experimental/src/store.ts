@@ -1,4 +1,10 @@
-import { createStore, defineAction, defineStore } from '@lib/state';
+import {
+  createStore,
+  defineAction,
+  defineStore,
+  ref,
+  type Ref,
+} from '@lib/state';
 import type { RadiusScale } from '@lib/design';
 import type {
   ArrowAlign,
@@ -27,6 +33,8 @@ export interface FloatingControlsState {
   point: FloatingPoint | null;
   /** Whether the collision-avoidance tether is active. */
   tether: boolean;
+  /** The hatched target element the floating window anchors against. */
+  anchorElement: Ref<HTMLElement | null>;
 }
 
 const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
@@ -38,6 +46,7 @@ const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
   alignOffset: 0,
   point: null,
   tether: false,
+  anchorElement: ref(null),
 }));
 
 /** Live, readonly view of the floating-window placement controls. */
@@ -104,5 +113,13 @@ export const setTether = defineAction(
   [floatingControlsStore],
   (controls, tether: boolean) => {
     controls.tether = tether;
+  },
+);
+
+/** Remember the target element so the tether can measure against it. */
+export const setAnchorElement = defineAction(
+  [floatingControlsStore],
+  (controls, element: HTMLElement) => {
+    controls.anchorElement = ref(element);
   },
 );

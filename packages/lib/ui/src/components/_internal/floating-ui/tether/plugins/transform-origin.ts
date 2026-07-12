@@ -9,14 +9,15 @@ import type { TetherPlugin } from '../pipeline';
  * thing that spawned it.
  */
 export const transformOrigin: TetherPlugin = (state, decisions) => {
+  const { anchor, popup } = state.rects;
   const vertical = isVerticalSide(decisions.side);
-  const placed = place(state.anchor, state.popup, {
+  const placed = place(anchor, popup, {
     ...state.placement,
     side: decisions.side,
     align: decisions.align,
   });
 
-  const anchorCenter = vertical ? centerX(state.anchor) : centerY(state.anchor);
+  const anchorCenter = vertical ? centerX(anchor) : centerY(anchor);
   const start = vertical
     ? placed.x + decisions.shiftX
     : placed.y + decisions.shiftY;
