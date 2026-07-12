@@ -1,0 +1,176 @@
+/**
+ * Geometry tests for the floating-ui primitive.
+ *
+ * Placement is pure CSS keyed off `data-side`/`data-align` and inline
+ * offset vars, so the real browser is the only place the resulting
+ * pixel positions can be asserted — JSDOM doesn't run layout.
+ */
+
+import { render } from '@solidjs/testing-library';
+import {
+  FloatingContainer,
+  anchor,
+  type FloatingContainerProps,
+} from '../floating-ui';
+import * as fixture from './floating-ui.test.browser.css';
+
+/** Render a surface bound to a fixed 100×100 anchor on a quiet stage. */
+const renderFloating = (
+  props: Omit<FloatingContainerProps, 'children' | 'class'> = {},
+) => {
+  const { container } = render(() => (
+    <div class={fixture.stage}>
+      <div class={`${anchor} ${fixture.anchorBox}`} data-testid="anchor">
+        <FloatingContainer class={fixture.surface} {...props}>
+          content
+        </FloatingContainer>
+      </div>
+    </div>
+  ));
+
+  const anchorRect = container
+    .querySelector('[data-testid="anchor"]')!
+    .getBoundingClientRect();
+  const shellRect = container
+    .querySelector('[data-side]')!
+    .getBoundingClientRect();
+
+  return { anchorRect, shellRect };
+};
+
+describe('FloatingContainer geometry', () => {
+  it('rests fully outside the bound edge', () => {
+    const bottom = renderFloating({ side: 'bottom' });
+    expect(bottom.shellRect.top).toBeCloseTo(bottom.anchorRect.bottom);
+
+    const top = renderFloating({ side: 'top' });
+    expect(top.shellRect.bottom).toBeCloseTo(top.anchorRect.top);
+
+    const left = renderFloating({ side: 'left' });
+    expect(left.shellRect.right).toBeCloseTo(left.anchorRect.left);
+
+    const right = renderFloating({ side: 'right' });
+    expect(right.shellRect.left).toBeCloseTo(right.anchorRect.right);
+  });
+
+  it('aligns along the bound edge', () => {
+    const start = renderFloating({ side: 'bottom', align: 'start' });
+    expect(start.shellRect.left).toBeCloseTo(start.anchorRect.left);
+
+    const center = renderFloating({ side: 'bottom', align: 'center' });
+    expect(center.shellRect.left + center.shellRect.width / 2).toBeCloseTo(
+      center.anchorRect.left + center.anchorRect.width / 2,
+    );
+
+    const end = renderFloating({ side: 'bottom', align: 'end' });
+    expect(end.shellRect.right).toBeCloseTo(end.anchorRect.right);
+
+    const vertical = renderFloating({ side: 'right', align: 'end' });
+    expect(vertical.shellRect.bottom).toBeCloseTo(vertical.anchorRect.bottom);
+  });
+
+  it('opens a gap off the edge with sideOffset', () => {
+    const bottom = renderFloating({ side: 'bottom', sideOffset: 10 });
+    expect(bottom.shellRect.top).toBeCloseTo(bottom.anchorRect.bottom + 10);
+
+    const top = renderFloating({ side: 'top', sideOffset: 10 });
+    expect(top.shellRect.bottom).toBeCloseTo(top.anchorRect.top - 10);
+
+    const left = renderFloating({ side: 'left', sideOffset: 10 });
+    expect(left.shellRect.right).toBeCloseTo(left.anchorRect.left - 10);
+  });
+
+  it('nudges along the edge with alignOffset, inverting for end', () => {
+    const start = renderFloating({
+      side: 'bottom',
+      align: 'start',
+      alignOffset: 6,
+    });
+    expect(start.shellRect.left).toBeCloseTo(start.anchorRect.left + 6);
+
+    const center = renderFloating({
+      side: 'bottom',
+      align: 'center',
+      alignOffset: 6,
+    });
+    expect(center.shellRect.left + center.shellRect.width / 2).toBeCloseTo(
+      center.anchorRect.left + center.anchorRect.width / 2 + 6,
+    );
+
+    // Positive offsets push an end-aligned surface back toward start.
+    const end = renderFloating({
+      side: 'bottom',
+      align: 'end',
+      alignOffset: 6,
+    });
+    expect(end.shellRect.right).toBeCloseTo(end.anchorRect.right - 6);
+
+    const vertical = renderFloating({
+      side: 'right',
+      align: 'start',
+      alignOffset: 6,
+    });
+    expect(vertical.shellRect.top).toBeCloseTo(vertical.anchorRect.top + 6);
+  });
+
+  it('binds to an anchor-relative point instead of an edge', () => {
+    const point = { x: 30, y: 70 };
+
+    // Growing down-right: the surface's top-left corner sits on the point.
+    const downRight = renderFloating({
+      point,
+      side: 'bottom',
+      align: 'start',
+    });
+    expect(downRight.shellRect.left).toBeCloseTo(
+      downRight.anchorRect.left + 30,
+    );
+    expect(downRight.shellRect.top).toBeCloseTo(downRight.anchorRect.top + 70);
+
+    // Growing up: the surface's bottom edge sits on the point.
+    const up = renderFloating({ point, side: 'top', align: 'start' });
+    expect(up.shellRect.bottom).toBeCloseTo(up.anchorRect.top + 70);
+
+    // End alignment: the far edge sits on the point.
+    const end = renderFloating({ point, side: 'bottom', align: 'end' });
+    expect(end.shellRect.right).toBeCloseTo(end.anchorRect.left + 30);
+
+    // Centered growth splits the surface across the point.
+    const centered = renderFloating({ point, side: 'bottom', align: 'center' });
+    expect(centered.shellRect.left + centered.shellRect.width / 2).toBeCloseTo(
+      centered.anchorRect.left + 30,
+    );
+
+    // Sideways growth: the surface's left edge sits on the point.
+    const rightward = renderFloating({ point, side: 'right', align: 'start' });
+    expect(rightward.shellRect.left).toBeCloseTo(
+      rightward.anchorRect.left + 30,
+    );
+    expect(rightward.shellRect.top).toBeCloseTo(rightward.anchorRect.top + 70);
+  });
+
+  it('applies offsets from the point in point mode', () => {
+    const point = { x: 30, y: 70 };
+
+    const gapped = renderFloating({
+      point,
+      side: 'bottom',
+      align: 'start',
+      sideOffset: 10,
+      alignOffset: 6,
+    });
+    expect(gapped.shellRect.top).toBeCloseTo(gapped.anchorRect.top + 70 + 10);
+    expect(gapped.shellRect.left).toBeCloseTo(gapped.anchorRect.left + 30 + 6);
+
+    // Growing up, the gap opens above the point.
+    const upward = renderFloating({
+      point,
+      side: 'top',
+      align: 'start',
+      sideOffset: 10,
+    });
+    expect(upward.shellRect.bottom).toBeCloseTo(
+      upward.anchorRect.top + 70 - 10,
+    );
+  });
+});

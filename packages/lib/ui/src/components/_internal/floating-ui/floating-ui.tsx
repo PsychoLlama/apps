@@ -1,4 +1,5 @@
 import { Show, splitProps, type JSX } from 'solid-js';
+import { assignInlineVars } from '@vanilla-extract/dynamic';
 import { type RadiusScale } from '@lib/design';
 import {
   flexPropKeys,
@@ -85,6 +86,18 @@ export const FloatingBody = (props: FloatingBodyProps) => {
 export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
 
 /**
+ * A coordinate inside the anchor box, in px from its top-left corner.
+ * Binds the surface to a point instead of an edge — context menus
+ * anchor to the pointer, item-aligned selects to a measured item.
+ */
+export interface FloatingPoint {
+  /** Horizontal distance from the anchor's left edge, in px. */
+  x: number;
+  /** Vertical distance from the anchor's top edge, in px. */
+  y: number;
+}
+
+/**
  * Placement of the surface along the anchor edge it binds to. `start`
  * hugs the top (left/right sides) or left (top/bottom sides); `end` the
  * opposite; `center` splits the difference.
@@ -128,6 +141,25 @@ export interface FloatingContainerProps
   /** Placement along that edge. Defaults to `'center'`. */
   align?: FloatingAlignment;
   /**
+   * Gap between the anchor edge and the surface, in px. In point mode,
+   * the gap opens between the point and the surface instead. Defaults
+   * to `0`.
+   */
+  sideOffset?: number;
+  /**
+   * Nudge along the bound edge, in px. Positive values push a
+   * `start`-aligned surface toward `end`, an `end`-aligned surface
+   * toward `start`, and a centered surface toward `end` — flipping
+   * alignment never flips the sign. Defaults to `0`.
+   */
+  alignOffset?: number;
+  /**
+   * Bind the surface to a point inside the anchor box instead of an
+   * edge. {@link side} and {@link align} then describe which way the
+   * surface grows from that point.
+   */
+  point?: FloatingPoint;
+  /**
    * Border radius of the surface, from the design token scale. Also
    * offsets a start/end-aligned arrow so it clears the rounded corner.
    */
@@ -156,7 +188,14 @@ export interface FloatingContainerProps
 export const FloatingContainer = (props: FloatingContainerProps) => {
   // Keep the shell's positioning props; forward everything else (flex,
   // padding, test-id, radius, class, children) onto the body surface.
-  const [shell, body] = splitProps(props, ['side', 'align', 'arrow']);
+  const [shell, body] = splitProps(props, [
+    'side',
+    'align',
+    'arrow',
+    'sideOffset',
+    'alignOffset',
+    'point',
+  ]);
   const side = () => shell.side ?? 'bottom';
 
   const className = () =>
@@ -164,11 +203,29 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
       .filter(Boolean)
       .join(' ');
 
+  // Continuous pixel inputs ride in as inline vars; the static rules
+  // fold them into the placement math.
+  const inlineVars = () =>
+    assignInlineVars({
+      ...(shell.sideOffset !== undefined && {
+        [css.sideOffset]: `${shell.sideOffset}px`,
+      }),
+      ...(shell.alignOffset !== undefined && {
+        [css.alignOffset]: `${shell.alignOffset}px`,
+      }),
+      ...(shell.point && {
+        [css.pointX]: `${shell.point.x}px`,
+        [css.pointY]: `${shell.point.y}px`,
+      }),
+    });
+
   return (
     <div
       class={className()}
+      style={inlineVars()}
       data-side={side()}
       data-align={shell.align ?? 'center'}
+      data-point={shell.point ? '' : undefined}
     >
       <Show when={shell.arrow?.visible}>
         <Arrow
