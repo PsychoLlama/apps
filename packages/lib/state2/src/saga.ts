@@ -155,43 +155,80 @@ export interface DriveContext {
 
 /**
  * Internal: drive a saga to completion, interpreting each instruction.
- * Aborting the context's signal closes the generator at the next resume
- * point (running `finally` blocks and disposing `for await` iterators)
- * and rejects with the abort reason. Instruction failures are thrown
- * back into the saga so it can recover; unhandled ones reject.
+ * Aborting the context's signal cancels promptly even when the pending
+ * work ignores its signal: every await races against the abort. On
+ * abort at an instruction boundary the generator is closed (running
+ * `finally` blocks and disposing `for await` iterators); a saga hung on
+ * a bare `await` is abandoned instead — `call` is the cancellable path.
+ * Instruction failures are thrown back into the saga so it can recover;
+ * unhandled ones reject.
  */
 export const drive = async <Return>(
   gen: SagaGen<Return>,
   context: DriveContext,
 ): Promise<Return> => {
-  let step = await gen.next();
+  const { signal } = context;
+  if (signal.aborted) throw reasonOf(signal);
 
-  while (!step.done) {
-    if (context.signal.aborted) {
-      await gen.return(undefined as never);
-      throw reasonOf(context.signal);
+  // Assigned synchronously by the Promise executor below.
+  let onAbort!: () => void;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    onAbort = () => reject(reasonOf(signal));
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
+  // Pre-attach a handler so an abort firing after this saga completes
+  // doesn't surface as an unhandled rejection.
+  aborted.catch(() => undefined);
+
+  try {
+    let step = await race(gen.next(), aborted);
+
+    while (!step.done) {
+      if (signal.aborted) {
+        await gen.return(undefined as never);
+        throw reasonOf(signal);
+      }
+
+      let response: unknown;
+      let threw = false;
+      let failure: unknown;
+
+      try {
+        response = await race(execute(step.value, context), aborted);
+      } catch (error) {
+        threw = true;
+        failure = error;
+      }
+
+      if (signal.aborted) {
+        await gen.return(undefined as never);
+        throw reasonOf(signal);
+      }
+
+      step = await race(
+        threw ? gen.throw(failure) : gen.next(response),
+        aborted,
+      );
     }
 
-    let response: unknown;
-    let threw = false;
-    let failure: unknown;
-
-    try {
-      response = await execute(step.value, context);
-    } catch (error) {
-      threw = true;
-      failure = error;
-    }
-
-    if (context.signal.aborted) {
-      await gen.return(undefined as never);
-      throw reasonOf(context.signal);
-    }
-
-    step = threw ? await gen.throw(failure) : await gen.next(response);
+    return step.value;
+  } finally {
+    signal.removeEventListener('abort', onAbort);
   }
+};
 
-  return step.value;
+/**
+ * Race pending work against scope abort. The loser is detached: if abort
+ * wins, a later rejection from the abandoned promise must not surface as
+ * unhandled.
+ */
+const race = <T>(
+  work: T | Promise<T>,
+  aborted: Promise<never>,
+): T | Promise<T> => {
+  if (!(work instanceof Promise)) return work;
+  work.catch(() => undefined);
+  return Promise.race([work, aborted]);
 };
 
 const reasonOf = (signal: AbortSignal): Error =>
@@ -241,7 +278,9 @@ const runBlock = async (
         : abortError(),
     );
 
-  if (context.signal.aborted) propagate();
+  // The parent cannot be aborted here: `drive` re-checks its signal
+  // right before executing each instruction, and everything between that
+  // check and this listener registration is synchronous.
   context.signal.addEventListener('abort', propagate, { once: true });
 
   const held: AnyFact[] = [];

@@ -205,6 +205,16 @@ export default [
     },
   },
   {
+    // @lib/state2 sagas speak through `yield`ed instructions; their
+    // async-generator bodies often contain no literal `await` even though
+    // the driver awaits on their behalf. The rule misfires on the entire
+    // grammar.
+    files: ['packages/lib/state2/**/*.ts'],
+    rules: {
+      '@typescript-eslint/require-await': 'off',
+    },
+  },
+  {
     // @lib/ui primitives implement the components the rule redirects
     // everyone else toward — they have to use raw elements.
     files: ['packages/lib/ui/src/components/**/*.tsx'],
