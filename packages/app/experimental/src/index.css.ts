@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutral, radius, shadow, space } from '@lib/design';
+import { neutral, radius, shadow } from '@lib/design';
 
 /**
  * The shrunk box the floating window anchors against. Kept small and
@@ -19,17 +19,15 @@ export const target = style({
  * The floating window's visual surface, applied straight onto the
  * `FloatingBody` via the container's `class`. A high-contrast inverted
  * panel (dark on light themes, light on dark) so it always reads as a
- * distinct window, stacking a heading over body copy tall enough that
- * arrows bound to the left/right edges have room to sit mid-height.
- * `color` cascades into the `<Heading>`/`<Text>` (which inherit
- * `currentColor`). Radius is left to the container's `radius` prop.
+ * distinct window. `color` cascades into the `<Heading>`/`<Text>` (which
+ * inherit `currentColor`).
+ *
+ * Only holds what the container has no prop for: the fill, text color,
+ * elevation, and a width cap. Layout (column flow, gap) and padding ride
+ * in as the container's flex/padding props; radius as its `radius` prop.
  */
 export const surface = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: space[1],
   maxWidth: '16rem',
-  padding: `${space[3]} ${space[4]}`,
   backgroundColor: neutral.solid[12],
   color: neutral.solid[1],
   boxShadow: shadow[4],

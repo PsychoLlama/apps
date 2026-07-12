@@ -120,6 +120,10 @@ export const Experimental = () => {
               side={controls.side}
               align={controls.align}
               radius={controls.radius}
+              direction="column"
+              gap={1}
+              py={3}
+              px={4}
               class={css.surface}
               arrow={{
                 visible: true,
