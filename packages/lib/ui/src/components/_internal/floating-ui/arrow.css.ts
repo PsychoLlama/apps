@@ -30,6 +30,10 @@ export const shiftY = createVar();
 export const arrow = style({
   translate: `${fallbackVar(shiftX, '0px')} ${fallbackVar(shiftY, '0px')}`,
   selectors: {
+    // Hidden, not unmounted: the arrow keeps its box so the tether can
+    // keep measuring its seat while it waits offscreen of the anchor.
+    '&[data-hidden]': { visibility: 'hidden' },
+
     '&[data-align="start"]': { alignSelf: 'flex-start' },
     '&[data-align="center"]': { alignSelf: 'center' },
     '&[data-align="end"]': { alignSelf: 'flex-end' },

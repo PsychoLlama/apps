@@ -66,6 +66,10 @@ export interface TetherDecisions {
    * `null` leaves the var unset. */
   availableWidth: number | null;
   availableHeight: number | null;
+  /** The anchor's measured size, for surfaces that match it, in px.
+   * `null` leaves the var unset. */
+  anchorWidth: number | null;
+  anchorHeight: number | null;
   /** Nudge centering the arrow over the anchor, in px. */
   arrowShiftX: number;
   arrowShiftY: number;
@@ -91,6 +95,8 @@ export const initialDecisions = (
   shiftY: 0,
   availableWidth: null,
   availableHeight: null,
+  anchorWidth: null,
+  anchorHeight: null,
   arrowShiftX: 0,
   arrowShiftY: 0,
   arrowHidden: false,

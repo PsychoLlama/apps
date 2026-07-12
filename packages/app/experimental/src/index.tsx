@@ -27,6 +27,7 @@ import {
   setRadius,
   setSide,
   setSideOffset,
+  setTether,
 } from './store';
 import * as css from './index.css';
 
@@ -90,6 +91,7 @@ export const Experimental = () => {
   const chooseSideOffset = useAction(setSideOffset);
   const chooseAlignOffset = useAction(setAlignOffset);
   const choosePoint = useAction(setPoint);
+  const chooseTether = useAction(setTether);
 
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
@@ -183,6 +185,21 @@ export const Experimental = () => {
               Click the target to move the point.
             </Text>
           </Flex>
+
+          <Flex as="div" direction="column" gap={2}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Tether
+            </Text>
+            <Switch
+              testId="control-tether"
+              checked={controls.tether}
+              onCheckedChange={chooseTether}
+              aria-label="Tether"
+            />
+            <Text as="p" size={1} selectable={false}>
+              Dodges the viewport edges. Try shrinking the window.
+            </Text>
+          </Flex>
         </Flex>
 
         <Flex as="div" grow align="center" justify="center">
@@ -200,6 +217,7 @@ export const Experimental = () => {
               sideOffset={controls.sideOffset}
               alignOffset={controls.alignOffset}
               point={controls.point ?? undefined}
+              tether={controls.tether && { padding: 8 }}
               direction="column"
               gap={1}
               py={3}

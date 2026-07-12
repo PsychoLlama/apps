@@ -32,6 +32,12 @@ export interface ArrowProps {
    * container's arrow/body stack. Defaults to `'center'`.
    */
   align?: ArrowAlign;
+  /**
+   * Hide the arrow while keeping its box — set when the anchor has
+   * slid out from under the surface and there's nothing to point at.
+   * Defaults to `false`.
+   */
+  hidden?: boolean;
   /** Class merged onto the arrow — e.g. a fill or shadow. */
   class?: string;
 }
@@ -83,6 +89,7 @@ export const Arrow = (props: ArrowProps) => {
       class={className()}
       data-direction={props.direction}
       data-align={props.align ?? 'center'}
+      data-hidden={props.hidden ? '' : undefined}
       aria-hidden="true"
     >
       <polygon points={points()} fill="currentColor" />

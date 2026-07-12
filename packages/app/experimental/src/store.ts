@@ -25,6 +25,8 @@ export interface FloatingControlsState {
    * Anchor-relative point the window binds to. `null` keeps edge mode.
    */
   point: FloatingPoint | null;
+  /** Whether the collision-avoidance tether is active. */
+  tether: boolean;
 }
 
 const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
@@ -35,6 +37,7 @@ const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
   sideOffset: 0,
   alignOffset: 0,
   point: null,
+  tether: false,
 }));
 
 /** Live, readonly view of the floating-window placement controls. */
@@ -93,5 +96,13 @@ export const setPoint = defineAction(
   [floatingControlsStore],
   (controls, point: FloatingPoint | null) => {
     controls.point = point;
+  },
+);
+
+/** Toggle the collision-avoidance tether. */
+export const setTether = defineAction(
+  [floatingControlsStore],
+  (controls, tether: boolean) => {
+    controls.tether = tether;
   },
 );

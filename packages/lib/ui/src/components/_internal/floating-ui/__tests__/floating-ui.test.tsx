@@ -222,6 +222,20 @@ describe('FloatingContainer', () => {
     expect(shell).toHaveAttribute('data-align', 'start');
   });
 
+  it('degrades to the pure-CSS placement where observers are missing', () => {
+    // jsdom has no ResizeObserver/IntersectionObserver — exactly the
+    // environments the tether must silently sit out of.
+    const { container } = render(() => (
+      <FloatingContainer side="top" align="end" tether>
+        content
+      </FloatingContainer>
+    ));
+    const shell = container.querySelector('[data-side]');
+
+    expect(shell).toHaveAttribute('data-side', 'top');
+    expect(shell).toHaveAttribute('data-align', 'end');
+  });
+
   it('reflects every side into the data attribute the CSS keys off', () => {
     // Layout (flex-direction) is driven from CSS by `data-side`, so the
     // contract this component owns is reflecting the side faithfully.

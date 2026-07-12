@@ -28,5 +28,7 @@ export const size: TetherPlugin = (state, decisions) => {
     ...decisions,
     availableWidth: Math.max(0, availableWidth),
     availableHeight: Math.max(0, availableHeight),
+    anchorWidth: state.anchor.width,
+    anchorHeight: state.anchor.height,
   };
 };

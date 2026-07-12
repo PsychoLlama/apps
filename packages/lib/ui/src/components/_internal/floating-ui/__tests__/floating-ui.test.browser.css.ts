@@ -29,3 +29,23 @@ export const surface = style({
   width: '80px',
   height: '40px',
 });
+
+/** Pins an anchor flush against the viewport's bottom edge. */
+export const pinBottom = style({
+  position: 'fixed',
+  bottom: 0,
+  left: '200px',
+});
+
+/** Pins an anchor flush against the viewport's left edge. */
+export const pinLeft = style({
+  position: 'fixed',
+  left: 0,
+  top: '200px',
+});
+
+/** A surface wider than the 100px anchor, so centering overflows. */
+export const wideSurface = style({
+  width: '300px',
+  height: '40px',
+});
