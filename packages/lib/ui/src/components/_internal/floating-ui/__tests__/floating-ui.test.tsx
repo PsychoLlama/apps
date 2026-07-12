@@ -78,6 +78,29 @@ describe('FloatingContainer', () => {
     expect(body.split(' ').length).toBe(plainBody.split(' ').length + 1);
   });
 
+  it('forwards body props (test id, padding) onto the body surface', () => {
+    const plain = render(() => <FloatingContainer>content</FloatingContainer>);
+    const plainBody =
+      plain.container.querySelector('[data-side]')!.lastElementChild!.className;
+    plain.unmount();
+
+    const { container } = render(() => (
+      <FloatingContainer testId="surface" p={4}>
+        content
+      </FloatingContainer>
+    ));
+    const body = screen.getByTestId('surface');
+
+    // The test id lands on the body, and padding contributes its class.
+    expect(container.querySelector('[data-side]')).not.toHaveAttribute(
+      'data-testid',
+    );
+    expect(body).toBe(container.querySelector('[data-side]')!.lastElementChild);
+    expect(body.className.split(' ').length).toBe(
+      plainBody.split(' ').length + 1,
+    );
+  });
+
   it('forwards a consumer class onto the body surface', () => {
     const { container } = render(() => (
       <FloatingContainer class="surface">content</FloatingContainer>

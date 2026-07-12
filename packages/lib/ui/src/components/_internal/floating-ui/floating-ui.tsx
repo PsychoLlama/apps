@@ -112,8 +112,17 @@ const ARROW_DIRECTION_BY_SIDE: Record<FloatingSide, ArrowDirection> = {
   right: 'left',
 };
 
-/** Props for the floating primitive entry point. */
-export interface FloatingContainerProps {
+/**
+ * Props for the floating primitive entry point.
+ *
+ * The flex, padding, and test-id groups aren't the shell's own — they
+ * pass straight through to the {@link FloatingBody} surface, the node
+ * that lays out and pads the content. So does {@link class} and
+ * {@link radius}. The shell keeps only what positions the surface:
+ * {@link side}, {@link align}, and the {@link arrow}.
+ */
+export interface FloatingContainerProps
+  extends FlexProps, PaddingProps, TestIdProps {
   /** Edge of the anchor the surface binds to. Defaults to `'bottom'`. */
   side?: FloatingSide;
   /** Placement along that edge. Defaults to `'center'`. */
@@ -145,10 +154,13 @@ export interface FloatingContainerProps {
  * paints over the arrow's shadow seam without needing a `z-index`.
  */
 export const FloatingContainer = (props: FloatingContainerProps) => {
-  const side = () => props.side ?? 'bottom';
+  // Keep the shell's positioning props; forward everything else (flex,
+  // padding, test-id, radius, class, children) onto the body surface.
+  const [shell, body] = splitProps(props, ['side', 'align', 'arrow']);
+  const side = () => shell.side ?? 'bottom';
 
   const className = () =>
-    [css.container, props.radius && css.arrowRadiusOffset[props.radius]]
+    [css.container, body.radius && css.arrowRadiusOffset[body.radius]]
       .filter(Boolean)
       .join(' ');
 
@@ -156,20 +168,18 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
     <div
       class={className()}
       data-side={side()}
-      data-align={props.align ?? 'center'}
+      data-align={shell.align ?? 'center'}
     >
-      <Show when={props.arrow?.visible}>
+      <Show when={shell.arrow?.visible}>
         <Arrow
-          base={props.arrow?.base}
-          depth={props.arrow?.depth}
+          base={shell.arrow?.base}
+          depth={shell.arrow?.depth}
           direction={ARROW_DIRECTION_BY_SIDE[side()]}
-          align={props.arrow?.align}
-          class={props.arrow?.class}
+          align={shell.arrow?.align}
+          class={shell.arrow?.class}
         />
       </Show>
-      <FloatingBody radius={props.radius} class={props.class}>
-        {props.children}
-      </FloatingBody>
+      <FloatingBody {...body} />
     </div>
   );
 };
