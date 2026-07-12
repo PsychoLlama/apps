@@ -13,14 +13,24 @@ import type {
   FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
 
+/** One toggleable stage of the tether's decision pipeline. */
+export type TetherPluginName =
+  'positionTry' | 'shift' | 'size' | 'arrow' | 'transformOrigin';
+
 /** Placement inputs driving the floating window in the scratchpad. */
 export interface FloatingControlsState {
   /** Anchor edge the window binds to. */
   side: FloatingSide;
   /** Placement along that edge. */
   align: FloatingAlignment;
+  /** Whether the pointer arrow renders at all. */
+  arrowVisible: boolean;
   /** Placement of the arrow along that edge. */
   arrowAlign: ArrowAlign;
+  /** Length of the arrow's base edge, in px. */
+  arrowBase: number;
+  /** Depth the arrow protrudes toward the anchor, in px. */
+  arrowDepth: number;
   /** Border radius of the surface. */
   radius: RadiusScale;
   /** Gap between the anchor edge (or point) and the window, in px. */
@@ -33,6 +43,10 @@ export interface FloatingControlsState {
   point: FloatingPoint | null;
   /** Whether the collision-avoidance tether is active. */
   tether: boolean;
+  /** Viewport clearance the tether maintains, in px. */
+  tetherPadding: number;
+  /** Which pipeline stages the tether runs. */
+  plugins: Record<TetherPluginName, boolean>;
   /** The hatched target element the floating window anchors against. */
   anchorElement: Ref<HTMLElement | null>;
 }
@@ -40,12 +54,23 @@ export interface FloatingControlsState {
 const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
   side: 'bottom',
   align: 'center',
+  arrowVisible: true,
   arrowAlign: 'center',
+  arrowBase: 16,
+  arrowDepth: 8,
   radius: 4,
   sideOffset: 0,
   alignOffset: 0,
   point: null,
   tether: false,
+  tetherPadding: 8,
+  plugins: {
+    positionTry: true,
+    shift: true,
+    size: true,
+    arrow: true,
+    transformOrigin: true,
+  },
   anchorElement: ref(null),
 }));
 
@@ -68,11 +93,35 @@ export const setAlign = defineAction(
   },
 );
 
+/** Show or hide the pointer arrow. */
+export const setArrowVisible = defineAction(
+  [floatingControlsStore],
+  (controls, arrowVisible: boolean) => {
+    controls.arrowVisible = arrowVisible;
+  },
+);
+
 /** Set the arrow's placement along the bound edge. */
 export const setArrowAlign = defineAction(
   [floatingControlsStore],
   (controls, arrowAlign: ArrowAlign) => {
     controls.arrowAlign = arrowAlign;
+  },
+);
+
+/** Set the length of the arrow's base edge. */
+export const setArrowBase = defineAction(
+  [floatingControlsStore],
+  (controls, arrowBase: number) => {
+    controls.arrowBase = arrowBase;
+  },
+);
+
+/** Set how far the arrow protrudes toward the anchor. */
+export const setArrowDepth = defineAction(
+  [floatingControlsStore],
+  (controls, arrowDepth: number) => {
+    controls.arrowDepth = arrowDepth;
   },
 );
 
@@ -113,6 +162,22 @@ export const setTether = defineAction(
   [floatingControlsStore],
   (controls, tether: boolean) => {
     controls.tether = tether;
+  },
+);
+
+/** Set the viewport clearance the tether maintains. */
+export const setTetherPadding = defineAction(
+  [floatingControlsStore],
+  (controls, tetherPadding: number) => {
+    controls.tetherPadding = tetherPadding;
+  },
+);
+
+/** Enable or disable one stage of the tether's pipeline. */
+export const setPluginEnabled = defineAction(
+  [floatingControlsStore],
+  (controls, toggle: { plugin: TetherPluginName; enabled: boolean }) => {
+    controls.plugins[toggle.plugin] = toggle.enabled;
   },
 );
 
