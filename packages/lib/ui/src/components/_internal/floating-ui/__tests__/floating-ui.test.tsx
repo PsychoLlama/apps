@@ -7,6 +7,10 @@
 
 import { render, screen } from '@solidjs/testing-library';
 import { FloatingBody, FloatingContainer } from '../floating-ui';
+import * as css from '../floating-ui.css';
+
+/** Unwrap a `createVar()` reference (`var(--x)`) to its property name. */
+const varName = (reference: string) => reference.slice(4, -1);
 
 describe('FloatingBody', () => {
   it('renders its children', () => {
@@ -170,6 +174,66 @@ describe('FloatingContainer', () => {
     ));
 
     expect(container.querySelector('svg')).toHaveAttribute('data-align', 'end');
+  });
+
+  it('assigns offsets as inline vars only when provided', () => {
+    const plain = render(() => <FloatingContainer>content</FloatingContainer>);
+    const plainShell =
+      plain.container.querySelector<HTMLElement>('[data-side]')!;
+
+    // Unset props leave the vars unset so the CSS fallbacks apply.
+    expect(plainShell.style.getPropertyValue(varName(css.sideOffset))).toBe('');
+    expect(plainShell.style.getPropertyValue(varName(css.alignOffset))).toBe(
+      '',
+    );
+    plain.unmount();
+
+    const { container } = render(() => (
+      <FloatingContainer sideOffset={8} alignOffset={-4}>
+        content
+      </FloatingContainer>
+    ));
+    const shell = container.querySelector<HTMLElement>('[data-side]')!;
+
+    expect(shell.style.getPropertyValue(varName(css.sideOffset))).toBe('8px');
+    expect(shell.style.getPropertyValue(varName(css.alignOffset))).toBe('-4px');
+  });
+
+  it('enters point mode only when a point is provided', () => {
+    const plain = render(() => <FloatingContainer>content</FloatingContainer>);
+    expect(plain.container.querySelector('[data-side]')).not.toHaveAttribute(
+      'data-point',
+    );
+    plain.unmount();
+
+    const { container } = render(() => (
+      <FloatingContainer point={{ x: 12, y: 34 }} side="right" align="start">
+        content
+      </FloatingContainer>
+    ));
+    const shell = container.querySelector<HTMLElement>('[data-side]')!;
+
+    // The mode flag and coordinates land on the shell; side/align still
+    // reflect so the CSS can pick the growth direction.
+    expect(shell).toHaveAttribute('data-point');
+    expect(shell.style.getPropertyValue(varName(css.pointX))).toBe('12px');
+    expect(shell.style.getPropertyValue(varName(css.pointY))).toBe('34px');
+    expect(shell).toHaveAttribute('data-side', 'right');
+    expect(shell).toHaveAttribute('data-align', 'start');
+  });
+
+  it('degrades to the pure-CSS placement where observers are missing', () => {
+    // jsdom has no ResizeObserver/IntersectionObserver — exactly the
+    // environments the tether must silently sit out of.
+    const { container } = render(() => (
+      <FloatingContainer side="top" align="end" tether>
+        content
+      </FloatingContainer>
+    ));
+    const shell = container.querySelector('[data-side]');
+
+    expect(shell).toHaveAttribute('data-side', 'top');
+    expect(shell).toHaveAttribute('data-align', 'end');
   });
 
   it('reflects every side into the data attribute the CSS keys off', () => {

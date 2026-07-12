@@ -1,7 +1,15 @@
 import { For } from 'solid-js';
 import type { RadiusScale } from '@lib/design';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
-import { Flex, Heading, RadioGroupItem, RadioGroupRoot, Text } from '@lib/ui';
+import {
+  Flex,
+  Heading,
+  RadioGroupItem,
+  RadioGroupRoot,
+  Slider,
+  Switch,
+  Text,
+} from '@lib/ui';
 import {
   FloatingContainer,
   anchor,
@@ -13,9 +21,13 @@ import { useAction } from '@lib/state';
 import {
   floatingControls,
   setAlign,
+  setAlignOffset,
   setArrowAlign,
+  setPoint,
   setRadius,
   setSide,
+  setSideOffset,
+  setTether,
 } from './store';
 import * as css from './index.css';
 
@@ -76,6 +88,22 @@ export const Experimental = () => {
   const chooseAlign = useAction(setAlign);
   const chooseArrowAlign = useAction(setArrowAlign);
   const chooseRadius = useAction(setRadius);
+  const chooseSideOffset = useAction(setSideOffset);
+  const chooseAlignOffset = useAction(setAlignOffset);
+  const choosePoint = useAction(setPoint);
+  const chooseTether = useAction(setTether);
+
+  /** Re-place the bound point wherever the target box is clicked. */
+  const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
+    // Ignore clicks that bubble out of the floating window itself.
+    if (!controls.point || event.target !== event.currentTarget) return;
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    choosePoint({
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top,
+    });
+  };
 
   return (
     <Frame>
@@ -112,14 +140,84 @@ export const Experimental = () => {
               chooseRadius(Number(value) as RadiusScale)
             }
           />
+
+          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Side offset ({controls.sideOffset}px)
+            </Text>
+            <Slider
+              testId="control-side-offset"
+              value={[controls.sideOffset]}
+              onValueChange={([value = 0]) => chooseSideOffset(value)}
+              min={0}
+              max={32}
+              aria-label="Side offset"
+            />
+          </Flex>
+
+          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Align offset ({controls.alignOffset}px)
+            </Text>
+            <Slider
+              testId="control-align-offset"
+              value={[controls.alignOffset]}
+              onValueChange={([value = 0]) => chooseAlignOffset(value)}
+              min={-32}
+              max={32}
+              aria-label="Align offset"
+            />
+          </Flex>
+
+          <Flex as="div" direction="column" gap={2}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Point mode
+            </Text>
+            <Switch
+              testId="control-point"
+              checked={controls.point !== null}
+              onCheckedChange={(checked) =>
+                choosePoint(checked ? { x: 96, y: 64 } : null)
+              }
+              aria-label="Point mode"
+            />
+            <Text as="p" size={1} selectable={false}>
+              Click the target to move the point.
+            </Text>
+          </Flex>
+
+          <Flex as="div" direction="column" gap={2}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Tether
+            </Text>
+            <Switch
+              testId="control-tether"
+              checked={controls.tether}
+              onCheckedChange={chooseTether}
+              aria-label="Tether"
+            />
+            <Text as="p" size={1} selectable={false}>
+              Dodges the viewport edges. Try shrinking the window.
+            </Text>
+          </Flex>
         </Flex>
 
         <Flex as="div" grow align="center" justify="center">
-          <Flex as="section" class={`${css.target} ${anchor}`}>
+          <Flex
+            as="section"
+            class={[css.target, anchor, controls.point && css.pointArmed]
+              .filter(Boolean)
+              .join(' ')}
+            onClick={placePoint}
+          >
             <FloatingContainer
               side={controls.side}
               align={controls.align}
               radius={controls.radius}
+              sideOffset={controls.sideOffset}
+              alignOffset={controls.alignOffset}
+              point={controls.point ?? undefined}
+              tether={controls.tether && { padding: 8 }}
               direction="column"
               gap={1}
               py={3}

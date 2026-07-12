@@ -3,6 +3,7 @@ import type { RadiusScale } from '@lib/design';
 import type {
   ArrowAlign,
   FloatingAlignment,
+  FloatingPoint,
   FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
 
@@ -16,6 +17,16 @@ export interface FloatingControlsState {
   arrowAlign: ArrowAlign;
   /** Border radius of the surface. */
   radius: RadiusScale;
+  /** Gap between the anchor edge (or point) and the window, in px. */
+  sideOffset: number;
+  /** Nudge along the bound edge, in px. */
+  alignOffset: number;
+  /**
+   * Anchor-relative point the window binds to. `null` keeps edge mode.
+   */
+  point: FloatingPoint | null;
+  /** Whether the collision-avoidance tether is active. */
+  tether: boolean;
 }
 
 const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
@@ -23,6 +34,10 @@ const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
   align: 'center',
   arrowAlign: 'center',
   radius: 4,
+  sideOffset: 0,
+  alignOffset: 0,
+  point: null,
+  tether: false,
 }));
 
 /** Live, readonly view of the floating-window placement controls. */
@@ -57,5 +72,37 @@ export const setRadius = defineAction(
   [floatingControlsStore],
   (controls, radius: RadiusScale) => {
     controls.radius = radius;
+  },
+);
+
+/** Set the gap between the anchor edge (or point) and the window. */
+export const setSideOffset = defineAction(
+  [floatingControlsStore],
+  (controls, sideOffset: number) => {
+    controls.sideOffset = sideOffset;
+  },
+);
+
+/** Set the nudge along the bound edge. */
+export const setAlignOffset = defineAction(
+  [floatingControlsStore],
+  (controls, alignOffset: number) => {
+    controls.alignOffset = alignOffset;
+  },
+);
+
+/** Bind the window to a point inside the anchor, or `null` for edges. */
+export const setPoint = defineAction(
+  [floatingControlsStore],
+  (controls, point: FloatingPoint | null) => {
+    controls.point = point;
+  },
+);
+
+/** Toggle the collision-avoidance tether. */
+export const setTether = defineAction(
+  [floatingControlsStore],
+  (controls, tether: boolean) => {
+    controls.tether = tether;
   },
 );
