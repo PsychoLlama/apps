@@ -1,10 +1,10 @@
 ---
-description: Reference docs for `@lib/state2` — the experimental transactional state runtime (topics, folds, scopes, sagas). Load when authoring or reviewing code built on `@lib/state2`, picking an API, or wiring its tests. For the current production library, load `state-reference` instead.
+description: Reference docs for `@lib/state-next` — the experimental transactional state runtime (topics, folds, scopes, sagas). Load when authoring or reviewing code built on `@lib/state-next`, picking an API, or wiring its tests. For the current production library, load `state-reference` instead.
 ---
 
-# State Management (state2)
+# State Management (state-next)
 
-- Single entry point: `@lib/state2`.
+- Single entry point: `@lib/state-next`.
 - The model is space/time/life. Space: stores, cells, formulas. Time: topics (facts) and folds (transitions). Life: scopes (ownership) and sagas (processes).
 - The one law: sagas publish facts, folds fold facts into state, readers derive. Sagas never touch stores directly.
 

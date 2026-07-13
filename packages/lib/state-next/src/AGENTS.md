@@ -1,12 +1,12 @@
 ## Guidance
 
-- `index.ts` is the only public API. All exports go through it. Imported as `@lib/state2`.
+- `index.ts` is the only public API. All exports go through it. Imported as `@lib/state-next`.
 - The model is space/time/life: stores, cells, and formulas hold values (space); topics and folds turn facts into state transitions (time); scopes and sagas own processes and lifetimes (life).
 - The one law: life produces time, time mutates space, space never reaches back. Sagas cannot touch stores — they publish facts and read snapshots through instructions.
 - Facts and saga invocations are inert values interpreted by the driver. That's what keeps everything observable, simulable, and lintable — preserve it when extending the instruction set.
 - Reads are readonly everywhere; writable drafts exist only as fold handler arguments.
 - Co-locate tests. Example: `foo.ts` and `__tests__/foo.test.ts`.
-- Reference docs live in the `state2-reference` skill at `.claude/skills/state2-reference/SKILL.md`. Keep the skill updated when the API changes.
+- Reference docs live in the `state-next-reference` skill at `.claude/skills/state-next-reference/SKILL.md`. Keep the skill updated when the API changes.
   - Audience: expert frontend devs unfamiliar with this library.
   - Happy path only. No edge cases, error behavior, or implementation details.
   - Raw facts under markdown headers, 1-2 sentences max, few-to-no examples.

@@ -26,7 +26,7 @@ export default defineConfig({
     coverage: {
       include: [
         'packages/lib/state/src/**/*.ts',
-        'packages/lib/state2/src/**/*.ts',
+        'packages/lib/state-next/src/**/*.ts',
       ],
       thresholds: {
         lines: 100,

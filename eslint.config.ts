@@ -189,11 +189,11 @@ export default [
     },
   },
   {
-    // @lib/state and @lib/state2 internals may use Solid's raw state
+    // @lib/state and @lib/state-next internals may use Solid's raw state
     // primitives directly — they implement the sanctioned surface.
     files: [
       'packages/lib/state/src/**/*.ts',
-      'packages/lib/state2/src/**/*.ts',
+      'packages/lib/state-next/src/**/*.ts',
     ],
     rules: {
       'no-restricted-imports': [
@@ -205,11 +205,11 @@ export default [
     },
   },
   {
-    // @lib/state2 sagas speak through `yield`ed instructions; their
+    // @lib/state-next sagas speak through `yield`ed instructions; their
     // async-generator bodies often contain no literal `await` even though
     // the driver awaits on their behalf. The rule misfires on the entire
     // grammar.
-    files: ['packages/lib/state2/**/*.ts'],
+    files: ['packages/lib/state-next/**/*.ts'],
     rules: {
       '@typescript-eslint/require-await': 'off',
     },
