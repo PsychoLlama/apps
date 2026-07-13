@@ -87,38 +87,4 @@ describe('positionTry', () => {
     expect(decisions.side).toBe('bottom');
     expect(decisions.align).toBe('end');
   });
-
-  it('holds the painted placement while it still fits', () => {
-    // Plenty of room on both sides, but the surface already flipped:
-    // memory keeps it there instead of snapping home.
-    const settled = state({
-      applied: { side: 'top', align: 'center', arrowShiftX: 0, arrowShiftY: 0 },
-    });
-    const decisions = flipToTop(settled, initialDecisions(settled.placement));
-    expect(decisions.side).toBe('top');
-  });
-
-  it('releases the memory once the painted placement stops fitting', () => {
-    // Painted above, but the anchor reached the top edge.
-    const evicted = state({
-      applied: { side: 'top', align: 'center', arrowShiftX: 0, arrowShiftY: 0 },
-      rects: { anchor: rect(450, 20, 100, 100) },
-    });
-    const decisions = flipToTop(evicted, initialDecisions(evicted.placement));
-    expect(decisions.side).toBe('bottom');
-  });
-
-  it('ignores memory of a placement outside the preference list', () => {
-    // A stale paint (say, the fallback list changed) grants no priority.
-    const stale = state({
-      applied: {
-        side: 'left',
-        align: 'center',
-        arrowShiftX: 0,
-        arrowShiftY: 0,
-      },
-    });
-    const decisions = flipToTop(stale, initialDecisions(stale.placement));
-    expect(decisions.side).toBe('bottom');
-  });
 });

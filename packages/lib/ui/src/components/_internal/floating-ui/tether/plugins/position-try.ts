@@ -8,14 +8,9 @@ import type { TetherPlugin } from '../pipeline';
  * then each fallback in order, and the first candidate that fits the
  * padded viewport wins.
  *
- * Deviations from the CSS behavior, both for stability:
- * - Memory. The placement currently painted keeps priority while it
- *   still fits, so a surface that fell back doesn't snap home the
- *   instant the preferred spot reopens — scroll can't make it
- *   flip-flop across a boundary.
- * - When nothing fits, the candidate showing the largest visible area
- *   wins (CSS reverts to the requested placement even when a fallback
- *   would show more).
+ * Deviation from the CSS behavior: when nothing fits, the candidate
+ * showing the largest visible area wins (CSS reverts to the requested
+ * placement even when a fallback would show more).
  */
 
 /** One fallback placement in the preference order. */
@@ -33,7 +28,7 @@ export interface PositionTryFallback {
 export const positionTry =
   (fallbacks: readonly PositionTryFallback[]): TetherPlugin =>
   (state, decisions) => {
-    const { rects, placement, applied } = state;
+    const { rects, placement } = state;
     const bounds = inset(rects.viewport, state.padding);
 
     const candidates = [
@@ -43,14 +38,6 @@ export const positionTry =
         align: fallback.align ?? decisions.align,
       })),
     ];
-
-    // Memory: the placement already on screen jumps the queue, so it
-    // holds as long as it fits.
-    const painted = candidates.findIndex(
-      (candidate) =>
-        candidate.side === applied.side && candidate.align === applied.align,
-    );
-    if (painted > 0) candidates.unshift(...candidates.splice(painted, 1));
 
     const placedAt = (candidate: (typeof candidates)[number]) =>
       place(rects.anchor, rects.popup, { ...placement, ...candidate });

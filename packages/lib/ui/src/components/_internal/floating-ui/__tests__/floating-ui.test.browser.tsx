@@ -321,10 +321,10 @@ describe('FloatingContainer geometry', () => {
     });
   });
 
-  it('holds a fallback placement across a scroll round-trip', async () => {
+  it('re-resolves placement across a scroll round-trip', async () => {
     // Scroll the anchor to the viewport's bottom edge (the surface
-    // flips above), then back to the middle where both sides fit: the
-    // position-try memory keeps it above instead of snapping home.
+    // flips above), then back to the middle where both sides fit: with
+    // no memory, the surface snaps home to the requested side.
     const { container } = render(() => (
       <div class={fixture.scrollStage} data-testid="scroller">
         <div class={fixture.runway}>
@@ -354,13 +354,9 @@ describe('FloatingContainer geometry', () => {
       viewportHeight - anchorBox.getBoundingClientRect().bottom - 10;
     await waitFor(() => expect(shell).toHaveAttribute('data-side', 'top'));
 
-    // Back to the middle: the painted side still fits, so it holds.
+    // Back to the middle: both sides fit again, so it snaps home.
     centerAnchor();
-    await waitFor(() =>
-      expect(anchorBox.getBoundingClientRect().top).toBeGreaterThan(100),
-    );
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    expect(shell).toHaveAttribute('data-side', 'top');
+    await waitFor(() => expect(shell).toHaveAttribute('data-side', 'bottom'));
   });
 
   it('applies offsets from the point in point mode', () => {
