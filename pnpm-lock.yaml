@@ -719,6 +719,12 @@ importers:
         specifier: 1.9.14
         version: 1.9.14
 
+  packages/lib/state-next:
+    dependencies:
+      solid-js:
+        specifier: 1.9.14
+        version: 1.9.14
+
   packages/lib/theme:
     dependencies:
       '@lib/design':

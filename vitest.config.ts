@@ -24,7 +24,10 @@ export default defineConfig({
     // under 1s; 5s leaves an order of magnitude of headroom.
     testTimeout: 5_000,
     coverage: {
-      include: ['packages/lib/state/src/**/*.ts'],
+      include: [
+        'packages/lib/state/src/**/*.ts',
+        'packages/lib/state-next/src/**/*.ts',
+      ],
       thresholds: {
         lines: 100,
         functions: 100,

@@ -189,8 +189,12 @@ export default [
     },
   },
   {
-    // @lib/state internals may use solid-js/store directly.
-    files: ['packages/lib/state/src/**/*.ts'],
+    // @lib/state and @lib/state-next internals may use Solid's raw state
+    // primitives directly — they implement the sanctioned surface.
+    files: [
+      'packages/lib/state/src/**/*.ts',
+      'packages/lib/state-next/src/**/*.ts',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -198,6 +202,16 @@ export default [
           patterns: restrictedImportPatterns,
         },
       ],
+    },
+  },
+  {
+    // @lib/state-next sagas speak through `yield`ed instructions; their
+    // async-generator bodies often contain no literal `await` even though
+    // the driver awaits on their behalf. The rule misfires on the entire
+    // grammar.
+    files: ['packages/lib/state-next/**/*.ts'],
+    rules: {
+      '@typescript-eslint/require-await': 'off',
     },
   },
   {
