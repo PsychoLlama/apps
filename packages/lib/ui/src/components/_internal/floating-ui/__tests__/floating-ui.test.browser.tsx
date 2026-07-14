@@ -17,25 +17,17 @@ import {
 } from '../floating-ui';
 import * as fixture from './floating-ui.test.browser.css';
 
-const { positionTry, shift, size, transformOrigin } = tetherPlugins;
-const arrowPlugin = tetherPlugins.arrow;
+const { positionTry } = tetherPlugins;
 
-/** The full pipeline, in fold order, with the opposite-side fallback. */
-const fullPipeline = (side: 'top' | 'bottom'): TetherOptions => ({
-  plugins: [
-    positionTry([{ side: side === 'bottom' ? 'top' : 'bottom' }]),
-    shift,
-    size,
-    arrowPlugin,
-    transformOrigin,
-  ],
+/** A flip-only tether with the opposite-side fallback. */
+const flipTether = (side: 'top' | 'bottom'): TetherOptions => ({
+  plugins: [positionTry([{ side: side === 'bottom' ? 'top' : 'bottom' }])],
 });
 
 /** A tethered surface bound to a fixed 100×100 anchor. */
 const Tethered = (
   props: Omit<FloatingContainerProps, 'children' | 'class' | 'anchor'> & {
     stage: string;
-    surface?: string;
   },
 ) => {
   const [anchorElement, setAnchorElement] = createSignal<HTMLElement>();
@@ -50,7 +42,7 @@ const Tethered = (
         <FloatingContainer
           {...props}
           anchor={anchorElement()}
-          class={props.surface ?? fixture.surface}
+          class={fixture.surface}
         >
           content
         </FloatingContainer>
@@ -201,7 +193,7 @@ describe('FloatingContainer geometry', () => {
       <Tethered
         stage={fixture.pinBottom}
         side="bottom"
-        tether={fullPipeline('bottom')}
+        tether={flipTether('bottom')}
       />
     ));
     const shell = container.querySelector('[data-side]')!;
@@ -214,113 +206,6 @@ describe('FloatingContainer geometry', () => {
     expect(shell.getBoundingClientRect().bottom).toBeCloseTo(anchorRect.top);
   });
 
-  it('slides a tethered surface back into the viewport', async () => {
-    // Anchor flush with the left edge: a centered 300px surface starts
-    // 100px offscreen, and the shift plugin walks it back in.
-    const { container } = render(() => (
-      <Tethered
-        stage={fixture.pinLeft}
-        surface={fixture.wideSurface}
-        side="bottom"
-        tether={{ plugins: [shift] }}
-      />
-    ));
-    const shell = container.querySelector('[data-side]')!;
-
-    await waitFor(() =>
-      expect(shell.getBoundingClientRect().left).toBeCloseTo(0),
-    );
-    // The side never needed to change.
-    expect(shell).toHaveAttribute('data-side', 'bottom');
-  });
-
-  it('centers the arrow over the anchor and aims the transform origin', async () => {
-    const { container } = render(() => (
-      <Tethered
-        stage={fixture.pinLeft}
-        surface={fixture.wideSurface}
-        side="bottom"
-        tether={fullPipeline('bottom')}
-        arrow={{ visible: true }}
-      />
-    ));
-    const shell = container.querySelector<HTMLElement>('[data-side]')!;
-    const arrowElement = container.querySelector('svg')!;
-    const anchorRect = container
-      .querySelector('[data-testid="anchor"]')!
-      .getBoundingClientRect();
-    const anchorCenter = anchorRect.left + anchorRect.width / 2;
-
-    // The shifted surface leaves the resting arrow off-center; the
-    // arrow plugin walks it back over the anchor.
-    await waitFor(() => {
-      const arrowRect = arrowElement.getBoundingClientRect();
-      expect(arrowRect.left + arrowRect.width / 2).toBeCloseTo(anchorCenter);
-    });
-
-    // Scale animations grow out of the point facing the anchor.
-    const [originX, originY] = getComputedStyle(shell)
-      .transformOrigin.split(' ')
-      .map(parseFloat);
-    expect(originX + shell.getBoundingClientRect().left).toBeCloseTo(
-      anchorCenter,
-    );
-    expect(originY).toBeCloseTo(0);
-  });
-
-  it('re-centers the arrow after a flip through the follow-up pass', async () => {
-    // Start-aligned against the bottom edge: the tether flips the
-    // surface above, invalidating the arrow's measured seat; the
-    // second pass re-centers it over the anchor.
-    const { container } = render(() => (
-      <Tethered
-        stage={fixture.pinBottom}
-        surface={fixture.wideSurface}
-        side="bottom"
-        align="start"
-        tether={fullPipeline('bottom')}
-        arrow={{ visible: true }}
-      />
-    ));
-    const shell = container.querySelector('[data-side]')!;
-    const arrowElement = container.querySelector('svg')!;
-    const anchorRect = container
-      .querySelector('[data-testid="anchor"]')!
-      .getBoundingClientRect();
-    const anchorCenter = anchorRect.left + anchorRect.width / 2;
-
-    await waitFor(() => {
-      expect(shell).toHaveAttribute('data-side', 'top');
-      const arrowRect = arrowElement.getBoundingClientRect();
-      expect(arrowRect.left + arrowRect.width / 2).toBeCloseTo(anchorCenter);
-    });
-  });
-
-  it('publishes available-space vars when tethered', async () => {
-    const { container } = render(() => (
-      <Tethered
-        stage={fixture.pinLeft}
-        side="bottom"
-        tether={{ plugins: [size] }}
-      />
-    ));
-    const shell = container.querySelector<HTMLElement>('[data-side]')!;
-    const anchorRect = container
-      .querySelector('[data-testid="anchor"]')!
-      .getBoundingClientRect();
-
-    await waitFor(() => {
-      // Inline vars are hashed names; match by known values instead:
-      // the anchor is 100px wide, and the space below it runs to the
-      // viewport's bottom edge.
-      const style = shell.getAttribute('style')!;
-      expect(style).toContain(': 100px');
-      expect(style).toContain(
-        `: ${document.documentElement.clientHeight - anchorRect.bottom}px`,
-      );
-    });
-  });
-
   it('re-resolves placement across a scroll round-trip', async () => {
     // Scroll the anchor to the viewport's bottom edge (the surface
     // flips above), then back to the middle where both sides fit: with
@@ -328,7 +213,7 @@ describe('FloatingContainer geometry', () => {
     const { container } = render(() => (
       <div class={fixture.scrollStage} data-testid="scroller">
         <div class={fixture.runway}>
-          <Tethered stage="" side="bottom" tether={fullPipeline('bottom')} />
+          <Tethered stage="" side="bottom" tether={flipTether('bottom')} />
         </div>
       </div>
     ));

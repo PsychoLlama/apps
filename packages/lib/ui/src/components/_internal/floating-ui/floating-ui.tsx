@@ -1,7 +1,6 @@
 import { Show, createSignal, splitProps, type JSX } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import { type RadiusScale } from '@lib/design';
-import { shiftX as arrowShiftX, shiftY as arrowShiftY } from './arrow.css';
 import { createTether, type TetherOptions } from './tether/create-tether';
 import {
   flexPropKeys,
@@ -242,7 +241,6 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
   ]);
 
   const [shellElement, setShellElement] = createSignal<HTMLDivElement>();
-  const [arrowElement, setArrowElement] = createSignal<SVGSVGElement>();
   const decisions = createTether(() => {
     const popup = shellElement();
     const anchorElement = shell.anchor;
@@ -251,7 +249,6 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
     return {
       popup,
       anchor: anchorElement,
-      arrow: shell.arrow?.visible ? (arrowElement() ?? null) : null,
       placement: {
         side: shell.side ?? 'bottom',
         align: shell.align ?? 'center',
@@ -271,12 +268,10 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
       .join(' ');
 
   // Continuous pixel inputs ride in as inline vars; the static rules
-  // fold them into the placement math. Tether decisions fill the
-  // override slots the same way.
-  const inlineVars = () => {
-    const decided = decisions();
-
-    return assignInlineVars({
+  // fold them into the placement math. The tether's own decisions ride
+  // in through the `data-side`/`data-align` attributes instead.
+  const inlineVars = () =>
+    assignInlineVars({
       ...(shell.sideOffset !== undefined && {
         [css.sideOffset]: `${shell.sideOffset}px`,
       }),
@@ -287,33 +282,7 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
         [css.pointX]: `${shell.point.x}px`,
         [css.pointY]: `${shell.point.y}px`,
       }),
-      ...(decided && {
-        [css.shiftX]: `${decided.shiftX}px`,
-        [css.shiftY]: `${decided.shiftY}px`,
-        [arrowShiftX]: `${decided.arrowShiftX}px`,
-        [arrowShiftY]: `${decided.arrowShiftY}px`,
-      }),
-      ...(decided?.transformOrigin && {
-        [css.transformOrigin]: decided.transformOrigin,
-      }),
-      ...(decided?.availableWidth !== null &&
-        decided?.availableWidth !== undefined && {
-          [css.availableWidth]: `${decided.availableWidth}px`,
-        }),
-      ...(decided?.availableHeight !== null &&
-        decided?.availableHeight !== undefined && {
-          [css.availableHeight]: `${decided.availableHeight}px`,
-        }),
-      ...(decided?.anchorWidth !== null &&
-        decided?.anchorWidth !== undefined && {
-          [css.anchorWidth]: `${decided.anchorWidth}px`,
-        }),
-      ...(decided?.anchorHeight !== null &&
-        decided?.anchorHeight !== undefined && {
-          [css.anchorHeight]: `${decided.anchorHeight}px`,
-        }),
     });
-  };
 
   return (
     <div
@@ -326,12 +295,10 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
     >
       <Show when={shell.arrow?.visible}>
         <Arrow
-          ref={setArrowElement}
           base={shell.arrow?.base}
           depth={shell.arrow?.depth}
           direction={ARROW_DIRECTION_BY_SIDE[side()]}
           align={shell.arrow?.align}
-          hidden={decisions()?.arrowHidden}
           class={shell.arrow?.class}
         />
       </Show>

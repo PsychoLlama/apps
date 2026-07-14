@@ -5,7 +5,7 @@
  */
 
 import { initialDecisions, runTether } from '../pipeline';
-import { arrow, positionTry, shift, size } from '../plugins';
+import { positionTry } from '../plugins';
 import { rect, state } from './fixtures';
 
 describe('runTether', () => {
@@ -15,29 +15,15 @@ describe('runTether', () => {
   });
 
   it('folds left so later plugins see earlier decisions', () => {
+    // Anchor near the bottom: the first stage flips the surface above.
+    // The second stage pins to whatever's decided (empty fallback), so
+    // it can only report 'top' if it saw the first stage's choice.
     const near = state({ rects: { anchor: rect(450, 850, 100, 100) } });
-    const decisions = runTether(near, [positionTry([{ side: 'top' }]), size]);
-
-    // size measured the flipped side's gap, not the requested one.
-    expect(decisions.side).toBe('top');
-    expect(decisions.availableHeight).toBe(850);
-  });
-
-  it('holds the arrow while a flip invalidates its measurement', () => {
-    const near = state({
-      rects: {
-        anchor: rect(450, 850, 100, 100),
-        arrow: rect(494, 550, 12, 6),
-      },
-    });
     const decisions = runTether(near, [
       positionTry([{ side: 'top' }]),
-      shift,
-      size,
-      arrow,
+      positionTry([]),
     ]);
 
     expect(decisions.side).toBe('top');
-    expect(decisions.arrowShiftX).toBe(0);
   });
 });

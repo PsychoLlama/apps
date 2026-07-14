@@ -2,7 +2,6 @@ import { createEffect, createSignal, onCleanup, type Accessor } from 'solid-js';
 import type { TetherPlacement, TetherRect } from './geometry';
 import {
   runTether,
-  type AppliedDecisions,
   type TetherDecisions,
   type TetherPlugin,
   type TetherState,
@@ -28,7 +27,7 @@ import {
 export interface TetherOptions {
   /**
    * Clearance to keep between the surface and the viewport edge when
-   * flipping, shifting, and sizing, in px. Defaults to `0`.
+   * resolving placement, in px. Defaults to `0`.
    */
   padding?: number;
   /**
@@ -44,8 +43,6 @@ export interface TetherConfig extends TetherOptions {
   popup: HTMLElement;
   /** The anchor element the placement resolves against. */
   anchor: HTMLElement;
-  /** The pointer arrow, when one is rendered. */
-  arrow?: SVGSVGElement | null;
   /** Requested placement before any collision decisions. */
   placement: TetherPlacement;
 }
@@ -123,28 +120,7 @@ export const createTether = (
     // No observers, no enhancement: the base CSS placement stands.
     if (typeof ResizeObserver === 'undefined') return;
 
-    const { popup, anchor, arrow } = current;
-
-    // The decisions currently painted, so measurements contaminated by
-    // them (the arrow's seat) can be normalized back to rest. Before
-    // the first run, the painted placement is the raw request.
-    const toApplied = (
-      painted: TetherDecisions | null,
-      placement: TetherPlacement,
-    ): AppliedDecisions =>
-      painted
-        ? {
-            side: painted.side,
-            align: painted.align,
-            arrowShiftX: painted.arrowShiftX,
-            arrowShiftY: painted.arrowShiftY,
-          }
-        : {
-            side: placement.side,
-            align: placement.align,
-            arrowShiftX: 0,
-            arrowShiftY: 0,
-          };
+    const { popup, anchor } = current;
 
     let frame = 0;
     const schedule = () => {
@@ -153,32 +129,17 @@ export const createTether = (
     };
 
     const measure = () => {
-      // Runs inside rAF, outside any tracking scope — reading the
-      // decisions signal here doesn't subscribe the effect to itself.
-      const applied = toApplied(decisions(), current.placement);
-
       const state: TetherState = {
         placement: current.placement,
         rects: {
           anchor: toRect(anchor.getBoundingClientRect()),
           popup: toRect(popup.getBoundingClientRect()),
           viewport: measureViewport(),
-          arrow: arrow ? toRect(arrow.getBoundingClientRect()) : null,
         },
         padding: current.padding ?? 0,
-        applied,
       };
 
-      const next = runTether(state, current.plugins);
-      setDecisions(next);
-
-      // A changed placement invalidates seat-dependent measurements
-      // (see the arrow plugin), so run once more after it paints. The
-      // follow-up resolves the same placement and schedules nothing —
-      // a bounded two-pass, not a loop.
-      if (next.side !== applied.side || next.align !== applied.align) {
-        schedule();
-      }
+      setDecisions(runTether(state, current.plugins));
     };
 
     const resizes = new ResizeObserver(schedule);
@@ -193,9 +154,9 @@ export const createTether = (
       passive: true,
     });
 
-    // Viewport changes invalidate the collision box and the
-    // available-space vars: the window itself, and the visual viewport
-    // moving independently (pinch zoom, on-screen keyboards).
+    // Viewport changes invalidate the collision box: the window
+    // itself, and the visual viewport moving independently (pinch
+    // zoom, on-screen keyboards).
     window.addEventListener('resize', schedule);
     window.visualViewport?.addEventListener('resize', schedule);
     window.visualViewport?.addEventListener('scroll', schedule);

@@ -64,12 +64,6 @@ describe('positionTry', () => {
         sideOffset: 0,
         alignOffset: 0,
       },
-      applied: {
-        side: 'right',
-        align: 'center',
-        arrowShiftX: 0,
-        arrowShiftY: 0,
-      },
       rects: { anchor: rect(850, 450, 100, 100) },
     });
     const decisions = positionTry([{ side: 'left' }])(

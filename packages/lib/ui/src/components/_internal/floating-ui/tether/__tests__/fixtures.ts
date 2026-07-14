@@ -26,13 +26,11 @@ export const state = (
 ): TetherState => ({
   placement: { side: 'bottom', align: 'center', sideOffset: 0, alignOffset: 0 },
   padding: 0,
-  applied: { side: 'bottom', align: 'center', arrowShiftX: 0, arrowShiftY: 0 },
   ...overrides,
   rects: {
     anchor: rect(450, 450, 100, 100),
     popup: rect(400, 550, 200, 100),
     viewport: rect(0, 0, 1000, 1000),
-    arrow: null,
     ...overrides.rects,
   },
 });

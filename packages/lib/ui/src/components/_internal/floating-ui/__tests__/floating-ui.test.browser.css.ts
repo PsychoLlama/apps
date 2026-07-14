@@ -37,19 +37,6 @@ export const pinBottom = style({
   left: '200px',
 });
 
-/** Pins an anchor flush against the viewport's left edge. */
-export const pinLeft = style({
-  position: 'fixed',
-  left: 0,
-  top: '200px',
-});
-
-/** A surface wider than the 100px anchor, so centering overflows. */
-export const wideSurface = style({
-  width: '300px',
-  height: '40px',
-});
-
 /** Scrollable stage for exercising scroll-driven tether updates. */
 export const scrollStage = style({
   position: 'fixed',
