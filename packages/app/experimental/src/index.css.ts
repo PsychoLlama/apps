@@ -2,27 +2,14 @@ import { style } from '@vanilla-extract/css';
 import { neutral, radius, shadow } from '@lib/design';
 
 /**
- * Nested scroll container framing the stage. Bounded well under the
- * viewport so scrolling it drives the anchor toward (and past) the
- * viewport edges — the situation the tether exists for. The border
- * makes the clip boundary visible: an in-flow floating window is
- * clipped by scrolling ancestors by design, and this shows exactly
- * where.
+ * The play area the target sits in, centered in the space the controls
+ * leave. Framed with a dashed border and given generous height so the
+ * floating window has room to float off any side.
  */
 export const stage = style({
-  height: '65dvh',
-  overflow: 'auto',
+  minHeight: '65dvh',
   border: `1px dashed ${neutral.alpha[6]}`,
   borderRadius: radius[3],
-});
-
-/**
- * Tall runway inside the stage: generous scroll room above and below
- * the centered target so the floating window can run out of space in
- * either direction.
- */
-export const runway = style({
-  minHeight: '220dvh',
 });
 
 /**

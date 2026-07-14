@@ -65,13 +65,7 @@ const ARROW_ALIGNMENTS = [
   'end',
 ] as const satisfies ArrowAlign[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
-const PLUGIN_NAMES = [
-  'positionTry',
-  'shift',
-  'size',
-  'arrow',
-  'transformOrigin',
-] as const satisfies TetherPluginName[];
+const PLUGIN_NAMES = ['positionTry'] as const satisfies TetherPluginName[];
 
 /** A labeled radio group binding one placement axis to the controls store. */
 const PlacementControl = <Value extends string>(props: {
@@ -137,19 +131,8 @@ export const Experimental = () => {
               ]),
             ]
           : []),
-        ...(active.shift ? [tetherPlugins.shift] : []),
-        ...(active.size ? [tetherPlugins.size] : []),
-        ...(active.arrow ? [tetherPlugins.arrow] : []),
-        ...(active.transformOrigin ? [tetherPlugins.transformOrigin] : []),
       ],
     };
-  };
-
-  /** Start the stage scrolled to its middle, where the target waits. */
-  const centerStage = (element: HTMLElement) => {
-    requestAnimationFrame(() => {
-      element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
-    });
   };
 
   /** Re-place the bound point wherever the target box is clicked. */
@@ -296,7 +279,7 @@ export const Experimental = () => {
               aria-label="Tether"
             />
             <Text as="p" size={1} selectable={false}>
-              Dodges the viewport edges. Try scrolling the stage.
+              Dodges the viewport edges. Resize the window to see it flip.
             </Text>
           </Flex>
 
@@ -334,53 +317,45 @@ export const Experimental = () => {
           </Flex>
         </Flex>
 
-        <Flex as="div" ref={centerStage} class={css.stage}>
+        <Flex as="div" grow align="center" justify="center" class={css.stage}>
           <Flex
-            as="div"
-            grow
-            align="center"
-            justify="center"
-            class={css.runway}
+            as="section"
+            ref={captureAnchor}
+            class={[css.target, anchor, controls.point && css.pointArmed]
+              .filter(Boolean)
+              .join(' ')}
+            onClick={placePoint}
           >
-            <Flex
-              as="section"
-              ref={captureAnchor}
-              class={[css.target, anchor, controls.point && css.pointArmed]
-                .filter(Boolean)
-                .join(' ')}
-              onClick={placePoint}
+            <FloatingContainer
+              anchor={controls.anchorElement.current ?? undefined}
+              side={controls.side}
+              align={controls.align}
+              radius={controls.radius}
+              sideOffset={controls.sideOffset}
+              alignOffset={controls.alignOffset}
+              point={controls.point ?? undefined}
+              tether={controls.tether ? tetherOptions() : undefined}
+              direction="column"
+              gap={1}
+              py={3}
+              px={4}
+              class={css.surface}
+              arrow={{
+                visible: controls.arrowVisible,
+                base: controls.arrowBase,
+                depth: controls.arrowDepth,
+                align: controls.arrowAlign,
+                class: css.arrow,
+              }}
             >
-              <FloatingContainer
-                anchor={controls.anchorElement.current ?? undefined}
-                side={controls.side}
-                align={controls.align}
-                radius={controls.radius}
-                sideOffset={controls.sideOffset}
-                alignOffset={controls.alignOffset}
-                point={controls.point ?? undefined}
-                tether={controls.tether ? tetherOptions() : undefined}
-                direction="column"
-                gap={1}
-                py={3}
-                px={4}
-                class={css.surface}
-                arrow={{
-                  visible: controls.arrowVisible,
-                  base: controls.arrowBase,
-                  depth: controls.arrowDepth,
-                  align: controls.arrowAlign,
-                  class: css.arrow,
-                }}
-              >
-                <Heading as="h2" size={3} selectable={false}>
-                  Floating Window
-                </Heading>
-                <Text as="p" size={2} selectable={false}>
-                  A taller surface so the arrow has room to sit mid-height when
-                  the window binds to the left or right edge.
-                </Text>
-              </FloatingContainer>
-            </Flex>
+              <Heading as="h2" size={3} selectable={false}>
+                Floating Window
+              </Heading>
+              <Text as="p" size={2} selectable={false}>
+                A taller surface so the arrow has room to sit mid-height when
+                the window binds to the left or right edge.
+              </Text>
+            </FloatingContainer>
           </Flex>
         </Flex>
       </FrameBody>

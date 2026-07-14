@@ -14,8 +14,7 @@ import type {
 } from '@lib/ui/_internal/floating-ui';
 
 /** One toggleable stage of the tether's decision pipeline. */
-export type TetherPluginName =
-  'positionTry' | 'shift' | 'size' | 'arrow' | 'transformOrigin';
+export type TetherPluginName = 'positionTry';
 
 /** Placement inputs driving the floating window in the scratchpad. */
 export interface FloatingControlsState {
@@ -66,10 +65,6 @@ const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
   tetherPadding: 8,
   plugins: {
     positionTry: true,
-    shift: true,
-    size: true,
-    arrow: true,
-    transformOrigin: true,
   },
   anchorElement: ref(null),
 }));
