@@ -1,7 +1,7 @@
 /**
- * Animated-path tests for presence. Only a real browser computes
- * `animation-name` and fires `animationend`, so the exit-hold behavior
- * lives here; the immediate paths are covered in the jsdom suite.
+ * Animated-path tests for presence. Only a real browser runs motion
+ * and resolves `Animation.finished`, so the exit-hold behavior lives
+ * here; the immediate paths are covered in the jsdom suite.
  */
 
 import { render, waitFor } from '@solidjs/testing-library';
@@ -12,18 +12,18 @@ import * as fixture from './presence.test.browser.css';
 /** A presence-managed surface whose open state the test drives. */
 const Harness = (props: { surfaceClass: string; open: () => boolean }) => {
   const [element, setElement] = createSignal<HTMLElement | null>(null);
-  const mounted = createPresence({
+  const presence = createPresence({
     open: () => props.open(),
     element,
   });
 
   return (
-    <Show when={mounted()}>
+    <Show when={presence.mounted()}>
       <div
         ref={setElement}
         class={props.surfaceClass}
-        data-state={props.open() ? 'open' : 'closed'}
         data-testid="surface"
+        {...presence.props}
       >
         surface
       </div>
@@ -48,11 +48,22 @@ describe('createPresence (animated)', () => {
     setOpen(false);
     // Still mounted: the 100ms exit animation is running.
     expect(query()).not.toBeNull();
+    expect(query()).toHaveAttribute('data-state', 'closed');
 
     await waitFor(() => expect(query()).toBeNull());
   });
 
-  it('unmounts immediately when closing applies no animation', async () => {
+  it('holds the mount until an exit transition finishes', async () => {
+    const { setOpen, query } = renderHarness(fixture.transitioned);
+
+    setOpen(false);
+    // Still mounted: the 100ms opacity transition is running.
+    expect(query()).not.toBeNull();
+
+    await waitFor(() => expect(query()).toBeNull());
+  });
+
+  it('unmounts immediately when closing applies no motion', async () => {
     const { setOpen, query } = renderHarness(fixture.entranceOnly);
     // Let the entrance animation finish so it can't be mistaken for
     // exit motion.
@@ -78,6 +89,7 @@ describe('createPresence (animated)', () => {
     setOpen(true);
     // Reopening mid-exit keeps (or restores) the mount.
     expect(query()).not.toBeNull();
+    expect(query()).toHaveAttribute('data-state', 'open');
 
     // And it doesn't fall over afterwards: a later close still exits.
     setOpen(false);

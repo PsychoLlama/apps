@@ -54,24 +54,6 @@ export const transformOrigin = createVar();
 export const shiftX = createVar();
 export const shiftY = createVar();
 
-/**
- * Consumer contract: how much room the surface has before hitting the
- * viewport, assigned by the tether when active. Surfaces that scroll
- * instead of clipping cap themselves with these (e.g.
- * `max-height: var(--available-height)`); unset means unknown, so pair
- * every read with a fallback.
- */
-export const availableWidth = createVar();
-export const availableHeight = createVar();
-
-/**
- * Consumer contract: the anchor's measured size, assigned by the
- * tether when active. For surfaces that match their anchor's width
- * (e.g. a select menu spanning its trigger). Unset means unknown.
- */
-export const anchorWidth = createVar();
-export const anchorHeight = createVar();
-
 // Composition channels for the side/align-derived transform origin.
 // Side rules assign the axis facing the anchor; align rules assign the
 // axis running along the edge; unset halves resolve to center.

@@ -15,6 +15,8 @@ export type ArrowAlign = 'start' | 'center' | 'end';
 
 /** Props for the floating primitive's pointer arrow. */
 export interface ArrowProps {
+  /** Ref to the underlying SVG element. */
+  ref?: (element: SVGSVGElement) => void;
   /** Direction the point faces. */
   direction: ArrowDirection;
   /**
@@ -83,6 +85,7 @@ export const Arrow = (props: ArrowProps) => {
 
   return (
     <svg
+      ref={props.ref}
       width={boxWidth()}
       height={boxHeight()}
       viewBox={`0 0 ${boxWidth()} ${boxHeight()}`}

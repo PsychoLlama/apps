@@ -22,6 +22,15 @@ import {
  *   on unmount: whether focus returns to the trigger depends on *how*
  *   the surface closed (Escape restores; clicking elsewhere doesn't),
  *   and only the consumer knows.
+ *
+ * Why not `<dialog>.showModal()`, which ships a trap, Esc handling,
+ * and outside-inerting for free: modal dialogs promote into the top
+ * layer, where the browser renders them as viewport-positioned boxes
+ * detached from the flow. Until CSS anchor positioning is baseline, a
+ * top-layer surface can't anchor to an in-flow element — the same
+ * reason the `popover` attribute is off the table. Revisit when the
+ * tether migrates to native anchor positioning; the whole trap should
+ * collapse into `showModal()` then.
  */
 
 /** Focusables per WHATWG, minus the disabled/hidden ones we can query. */

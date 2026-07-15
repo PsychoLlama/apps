@@ -2,6 +2,17 @@ import { style } from '@vanilla-extract/css';
 import { neutral, radius, shadow } from '@lib/design';
 
 /**
+ * The play area the target sits in, centered in the space the controls
+ * leave. Framed with a dashed border and given generous height so the
+ * floating window has room to float off any side.
+ */
+export const stage = style({
+  minHeight: '65dvh',
+  border: `1px dashed ${neutral.alpha[6]}`,
+  borderRadius: radius[3],
+});
+
+/**
  * The shrunk box the floating window anchors against. Kept small and
  * centered in its stage so the window stays visible whichever side it
  * binds to. Diagonal hatching makes the box's bounds obvious.

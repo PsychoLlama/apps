@@ -2,6 +2,7 @@ import { For } from 'solid-js';
 import type { RadiusScale } from '@lib/design';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import {
+  Checkbox,
   Flex,
   Heading,
   RadioGroupItem,
@@ -13,6 +14,7 @@ import {
 import {
   FloatingContainer,
   anchor,
+  tetherPlugins,
   type ArrowAlign,
   type FloatingAlignment,
   type FloatingSide,
@@ -22,14 +24,29 @@ import {
   floatingControls,
   setAlign,
   setAlignOffset,
+  setAnchorElement,
   setArrowAlign,
+  setArrowBase,
+  setArrowDepth,
+  setArrowVisible,
+  setPluginEnabled,
   setPoint,
   setRadius,
   setSide,
   setSideOffset,
   setTether,
+  setTetherPadding,
+  type TetherPluginName,
 } from './store';
 import * as css from './index.css';
+
+/** The flip fallback offered to the position-try plugin. */
+const OPPOSITE_SIDE: Record<FloatingSide, FloatingSide> = {
+  top: 'bottom',
+  bottom: 'top',
+  left: 'right',
+  right: 'left',
+};
 
 const SIDES = [
   'top',
@@ -48,6 +65,7 @@ const ARROW_ALIGNMENTS = [
   'end',
 ] as const satisfies ArrowAlign[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
+const PLUGIN_NAMES = ['positionTry'] as const satisfies TetherPluginName[];
 
 /** A labeled radio group binding one placement axis to the controls store. */
 const PlacementControl = <Value extends string>(props: {
@@ -92,6 +110,30 @@ export const Experimental = () => {
   const chooseAlignOffset = useAction(setAlignOffset);
   const choosePoint = useAction(setPoint);
   const chooseTether = useAction(setTether);
+  const chooseTetherPadding = useAction(setTetherPadding);
+  const togglePlugin = useAction(setPluginEnabled);
+  const chooseArrowVisible = useAction(setArrowVisible);
+  const chooseArrowBase = useAction(setArrowBase);
+  const chooseArrowDepth = useAction(setArrowDepth);
+  const captureAnchor = useAction(setAnchorElement);
+
+  /** The enabled pipeline stages, in fold order. */
+  const tetherOptions = () => {
+    const active = controls.plugins;
+
+    return {
+      padding: controls.tetherPadding,
+      plugins: [
+        ...(active.positionTry
+          ? [
+              tetherPlugins.positionTry([
+                { side: OPPOSITE_SIDE[controls.side] },
+              ]),
+            ]
+          : []),
+      ],
+    };
+  };
 
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
@@ -140,6 +182,46 @@ export const Experimental = () => {
               chooseRadius(Number(value) as RadiusScale)
             }
           />
+
+          <Flex as="div" direction="column" gap={2}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Arrow
+            </Text>
+            <Switch
+              testId="control-arrow"
+              checked={controls.arrowVisible}
+              onCheckedChange={chooseArrowVisible}
+              aria-label="Arrow"
+            />
+          </Flex>
+
+          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Arrow base ({controls.arrowBase}px)
+            </Text>
+            <Slider
+              testId="control-arrow-base"
+              value={[controls.arrowBase]}
+              onValueChange={([value = 16]) => chooseArrowBase(value)}
+              min={8}
+              max={32}
+              aria-label="Arrow base"
+            />
+          </Flex>
+
+          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Arrow depth ({controls.arrowDepth}px)
+            </Text>
+            <Slider
+              testId="control-arrow-depth"
+              value={[controls.arrowDepth]}
+              onValueChange={([value = 8]) => chooseArrowDepth(value)}
+              min={4}
+              max={24}
+              aria-label="Arrow depth"
+            />
+          </Flex>
 
           <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
             <Text as="p" size={2} weight="medium" selectable={false}>
@@ -197,36 +279,71 @@ export const Experimental = () => {
               aria-label="Tether"
             />
             <Text as="p" size={1} selectable={false}>
-              Dodges the viewport edges. Try shrinking the window.
+              Dodges the viewport edges. Resize the window to see it flip.
             </Text>
+          </Flex>
+
+          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Tether padding ({controls.tetherPadding}px)
+            </Text>
+            <Slider
+              testId="control-tether-padding"
+              value={[controls.tetherPadding]}
+              onValueChange={([value = 8]) => chooseTetherPadding(value)}
+              min={0}
+              max={48}
+              aria-label="Tether padding"
+            />
+          </Flex>
+
+          <Flex as="div" direction="column" gap={2}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Tether plugins
+            </Text>
+            <For each={PLUGIN_NAMES}>
+              {(plugin) => (
+                <Checkbox
+                  testId={`control-plugin-${plugin}`}
+                  checked={controls.plugins[plugin]}
+                  onCheckedChange={(enabled) =>
+                    togglePlugin({ plugin, enabled })
+                  }
+                >
+                  {plugin}
+                </Checkbox>
+              )}
+            </For>
           </Flex>
         </Flex>
 
-        <Flex as="div" grow align="center" justify="center">
+        <Flex as="div" grow align="center" justify="center" class={css.stage}>
           <Flex
             as="section"
+            ref={captureAnchor}
             class={[css.target, anchor, controls.point && css.pointArmed]
               .filter(Boolean)
               .join(' ')}
             onClick={placePoint}
           >
             <FloatingContainer
+              anchor={controls.anchorElement.current ?? undefined}
               side={controls.side}
               align={controls.align}
               radius={controls.radius}
               sideOffset={controls.sideOffset}
               alignOffset={controls.alignOffset}
               point={controls.point ?? undefined}
-              tether={controls.tether && { padding: 8 }}
+              tether={controls.tether ? tetherOptions() : undefined}
               direction="column"
               gap={1}
               py={3}
               px={4}
               class={css.surface}
               arrow={{
-                visible: true,
-                base: 16,
-                depth: 8,
+                visible: controls.arrowVisible,
+                base: controls.arrowBase,
+                depth: controls.arrowDepth,
                 align: controls.arrowAlign,
                 class: css.arrow,
               }}

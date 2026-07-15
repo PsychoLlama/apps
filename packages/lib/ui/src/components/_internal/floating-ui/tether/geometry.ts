@@ -35,12 +35,36 @@ export const clamp = (value: number, min: number, max: number): number =>
 export const isVerticalSide = (side: FloatingSide): boolean =>
   side === 'top' || side === 'bottom';
 
-/** The opposite edge, used as the flip fallback. */
+/** The opposite edge, the usual position-try fallback. */
 export const OPPOSITE_SIDE: Record<FloatingSide, FloatingSide> = {
   top: 'bottom',
   bottom: 'top',
   left: 'right',
   right: 'left',
+};
+
+/** Shrink a rect inward by the same amount on every edge. */
+export const inset = (rect: TetherRect, amount: number): TetherRect => ({
+  x: rect.x + amount,
+  y: rect.y + amount,
+  width: Math.max(0, rect.width - amount * 2),
+  height: Math.max(0, rect.height - amount * 2),
+});
+
+/** Whether `rect` lies fully inside `bounds`. */
+export const contains = (bounds: TetherRect, rect: TetherRect): boolean =>
+  rect.x >= bounds.x &&
+  rect.y >= bounds.y &&
+  rightOf(rect) <= rightOf(bounds) &&
+  bottomOf(rect) <= bottomOf(bounds);
+
+/** Area of the overlap between two rects, in px². */
+export const overlapArea = (first: TetherRect, second: TetherRect): number => {
+  const width =
+    Math.min(rightOf(first), rightOf(second)) - Math.max(first.x, second.x);
+  const height =
+    Math.min(bottomOf(first), bottomOf(second)) - Math.max(first.y, second.y);
+  return Math.max(0, width) * Math.max(0, height);
 };
 
 /** Placement inputs the CSS rules resolve — mirrored for prediction. */
