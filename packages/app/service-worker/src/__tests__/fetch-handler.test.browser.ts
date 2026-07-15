@@ -301,7 +301,7 @@ describe('handleFetch', () => {
     expect(event.respondWith).not.toHaveBeenCalled();
   });
 
-  describe('experimental route gating', () => {
+  describe('scratchpad route gating', () => {
     // The runner resolves to the `development` environment, so overrides
     // target that. `reset` clears the persisted OPFS override between
     // cases so neither leaks the flag into the other.
@@ -310,8 +310,8 @@ describe('handleFetch', () => {
     });
 
     /** A navigation request to the scratchpad route. */
-    const experimentalNavigation = (): Request => {
-      const request = new Request(sameOrigin('/experimental'));
+    const scratchpadNavigation = (): Request => {
+      const request = new Request(sameOrigin('/scratchpad'));
       Object.defineProperty(request, 'mode', { value: 'navigate' });
       return request;
     };
@@ -326,7 +326,7 @@ describe('handleFetch', () => {
         new Response('<html>not found</html>', { status: 200 }),
       );
 
-      const event = syntheticEvent(experimentalNavigation());
+      const event = syntheticEvent(scratchpadNavigation());
       handleFetch(event as unknown as FetchEvent);
 
       expect(event.respondWith).toHaveBeenCalledOnce();
@@ -345,7 +345,7 @@ describe('handleFetch', () => {
         new Response('<html>experimental</html>', { status: 200 }),
       );
 
-      const event = syntheticEvent(experimentalNavigation());
+      const event = syntheticEvent(scratchpadNavigation());
       handleFetch(event as unknown as FetchEvent);
 
       expect(event.respondWith).toHaveBeenCalledOnce();

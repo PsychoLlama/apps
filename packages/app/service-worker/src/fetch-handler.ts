@@ -80,12 +80,12 @@ export const handleFetch = (event: FetchEvent): void => {
     // at build time, so this branch is dead-code-eliminated in prod.
     if (import.meta.env.DEV) return;
 
-    // The experimental scratchpad ships in every build now that its
-    // gate is a runtime flag rather than a build-time constant. The SW
-    // is where that flag turns into a real 404, hiding the route in
-    // environments where it's disabled.
-    if (isExperimentalRoute(url)) {
-      event.respondWith(handleExperimentalNavigation(event));
+    // The scratchpad app ships in every build now that its gate is a
+    // runtime flag rather than a build-time constant. The SW is where
+    // that flag turns into a real 404, hiding the route in environments
+    // where it's disabled.
+    if (isScratchpadRoute(url)) {
+      event.respondWith(handleScratchpadNavigation(event));
       return;
     }
 
@@ -101,8 +101,8 @@ export const handleFetch = (event: FetchEvent): void => {
 };
 
 /** The scratchpad route, matched with or without a trailing slash. */
-const isExperimentalRoute = (url: URL): boolean =>
-  url.pathname === '/experimental' || url.pathname === '/experimental/';
+const isScratchpadRoute = (url: URL): boolean =>
+  url.pathname === '/scratchpad' || url.pathname === '/scratchpad/';
 
 /**
  * The beam app's routes: the `/beam` index (with or without a trailing
@@ -120,20 +120,20 @@ const isBeamRoute = (url: URL): boolean =>
 const NOT_FOUND_PATH = '/404';
 
 /**
- * Gates the experimental scratchpad behind its runtime flag. When the
- * flag is off for the active environment the navigation gets the site's
- * 404 page; when on it flows through the normal offline-aware strategy.
- * The flag resolves from OPFS — shared with the page, so an in-app toggle
- * takes effect on the next navigation — falling back to the option's
+ * Gates the scratchpad app behind its runtime flag. When the flag is off
+ * for the active environment the navigation gets the site's 404 page;
+ * when on it flows through the normal offline-aware strategy. The flag
+ * resolves from OPFS — shared with the page, so an in-app toggle takes
+ * effect on the next navigation — falling back to the option's
  * per-environment default.
  */
-const handleExperimentalNavigation = async (
+const handleScratchpadNavigation = async (
   event: FetchEvent,
 ): Promise<Response> => {
   const { enabled } = await readEnvironment(experimentalAppEnabled);
   if (enabled) return handleNavigation(event);
 
-  logger.info('Experimental app disabled; serving the 404 page.', {
+  logger.info('Scratchpad app disabled; serving the 404 page.', {
     url: new URL(event.request.url).pathname,
   });
   return notFoundResponse();
@@ -141,7 +141,7 @@ const handleExperimentalNavigation = async (
 
 /**
  * Gates the beam app behind its runtime flag, identically to {@link
- * handleExperimentalNavigation}: a disabled flag yields the site's 404
+ * handleScratchpadNavigation}: a disabled flag yields the site's 404
  * page, an enabled one flows through the normal offline-aware strategy.
  */
 const handleBeamNavigation = async (event: FetchEvent): Promise<Response> => {

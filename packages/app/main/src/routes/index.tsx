@@ -81,7 +81,7 @@ const APPS: ReadonlyArray<AppEntry> = [
 const EXPERIMENTAL_APP: AppEntry = {
   id: 'experimental',
   name: 'Experimental',
-  href: '/experimental',
+  href: '/scratchpad',
   description: 'A scratchpad for work-in-progress ideas.',
   Icon: IconHammerWrench,
 };
