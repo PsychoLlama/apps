@@ -2,7 +2,7 @@ import { createStore, defineStore } from '@lib/state';
 import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
-import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import { enabled as beamAppEnabled } from '@app/beam/config';
 
 /** Live values backing the settings page's Advanced section. */
@@ -24,11 +24,11 @@ export interface AdvancedSettingsState {
   logExportEnabled: boolean;
 
   /**
-   * Whether the experimental app is enabled for the active environment.
+   * Whether the scratchpad app is enabled for the active environment.
    * Seeded from the option default, then reconciled on mount like
    * `logFilter`.
    */
-  experimentalEnabled: boolean;
+  scratchpadEnabled: boolean;
 
   /**
    * Whether the beam app is enabled for the active environment. Seeded
@@ -46,7 +46,7 @@ export interface AdvancedSettingsState {
 export const advancedDefaults: AdvancedSettingsState = {
   logFilter: filter.defaults[environment].pattern,
   logExportEnabled: logExport.defaults[environment].enabled,
-  experimentalEnabled: experimentalAppEnabled.defaults[environment].enabled,
+  scratchpadEnabled: scratchpadAppEnabled.defaults[environment].enabled,
   beamEnabled: beamAppEnabled.defaults[environment].enabled,
 };
 

@@ -10,7 +10,7 @@ export const setAdvancedSettings = defineAction(
   (advanced, values: AdvancedSettingsState) => {
     advanced.logFilter = values.logFilter;
     advanced.logExportEnabled = values.logExportEnabled;
-    advanced.experimentalEnabled = values.experimentalEnabled;
+    advanced.scratchpadEnabled = values.scratchpadEnabled;
     advanced.beamEnabled = values.beamEnabled;
   },
 );
@@ -31,11 +31,11 @@ export const setLogExportEnabled = defineAction(
   },
 );
 
-/** Mirror a resolved experimental flag into the store. */
-export const setExperimentalEnabled = defineAction(
+/** Mirror a resolved scratchpad flag into the store. */
+export const setScratchpadEnabled = defineAction(
   [advancedSettingsStore],
   (advanced, enabled: boolean) => {
-    advanced.experimentalEnabled = enabled;
+    advanced.scratchpadEnabled = enabled;
   },
 );
 

@@ -2,11 +2,11 @@ import { defineEffect } from '@lib/state';
 import { setAdvancedSettings } from './actions';
 import {
   readAdvancedSettings,
-  resetExperimentalEnabled,
+  resetScratchpadEnabled,
   resetLogExportEnabled,
   resetLogFilter,
   resetBeamEnabled,
-  writeExperimentalEnabled,
+  writeScratchpadEnabled,
   writeLogExportEnabled,
   writeLogFilter,
   writeBeamEnabled,
@@ -36,13 +36,10 @@ export const commitLogFilterEffect = defineEffect([], writeLogFilter);
 export const commitLogExportEffect = defineEffect([], writeLogExportEnabled);
 
 /**
- * Persist the experimental flag. The write echoes back through the
+ * Persist the scratchpad flag. The write echoes back through the
  * subscription, which is what actually updates the store.
  */
-export const commitExperimentalEffect = defineEffect(
-  [],
-  writeExperimentalEnabled,
-);
+export const commitScratchpadEffect = defineEffect([], writeScratchpadEnabled);
 
 /**
  * Revert the log filter to its default for the active environment. The
@@ -57,13 +54,10 @@ export const resetLogFilterEffect = defineEffect([], resetLogFilter);
 export const resetLogExportEffect = defineEffect([], resetLogExportEnabled);
 
 /**
- * Revert the experimental flag to its default for the active environment.
+ * Revert the scratchpad flag to its default for the active environment.
  * The reset echoes back through the subscription, which updates the store.
  */
-export const resetExperimentalEffect = defineEffect(
-  [],
-  resetExperimentalEnabled,
-);
+export const resetScratchpadEffect = defineEffect([], resetScratchpadEnabled);
 
 /**
  * Persist the beam flag. The write echoes back through the subscription,

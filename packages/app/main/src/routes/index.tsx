@@ -13,11 +13,11 @@ import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import IconGithub from 'virtual:icons/mdi/github';
 import {
-  experimentalFlag,
-  hydrateExperimentalFlagEffect,
-  setExperimentalEnabled,
-  watchExperimentalFlag,
-} from '../state/experimental-flag';
+  scratchpadFlag,
+  hydrateScratchpadFlagEffect,
+  setScratchpadEnabled,
+  watchScratchpadFlag,
+} from '../state/scratchpad-flag';
 import {
   hydrateBeamFlagEffect,
   setBeamEnabled,
@@ -73,22 +73,22 @@ const APPS: ReadonlyArray<AppEntry> = [
 ];
 
 /**
- * The experimental scratchpad. Kept out of {@link APPS} because it's
- * gated on the `experimental-app` runtime flag rather than always shown:
- * the launcher reveals it reactively (see {@link experimentalFlag}), in
- * lockstep with the service worker's runtime route gate.
+ * The scratchpad app. Kept out of {@link APPS} because it's gated on the
+ * `scratchpad` runtime flag rather than always shown: the launcher
+ * reveals it reactively (see {@link scratchpadFlag}), in lockstep with
+ * the service worker's runtime route gate.
  */
-const EXPERIMENTAL_APP: AppEntry = {
-  id: 'experimental',
-  name: 'Experimental',
-  href: '/experimental',
-  description: 'A scratchpad for work-in-progress ideas.',
+const SCRATCHPAD_APP: AppEntry = {
+  id: 'scratchpad',
+  name: 'Scratchpad',
+  href: '/scratchpad',
+  description: 'Experiments and work-in-progress ideas.',
   Icon: IconHammerWrench,
 };
 
 /**
  * Peer-to-peer resource sharing. Gated on the `@app/beam` runtime flag
- * like {@link EXPERIMENTAL_APP} — it's still a work in progress, enabled
+ * like {@link SCRATCHPAD_APP} — it's still a work in progress, enabled
  * in local dev only — so the launcher reveals it reactively (see {@link
  * beamFlag}) in lockstep with the service worker's runtime route gate.
  */
@@ -151,8 +151,8 @@ const AppCard: Component<{ app: AppEntry }> = (props) => (
  * in the footer.
  */
 const Launcher = () => {
-  const reconcileFlag = useEffect(hydrateExperimentalFlagEffect);
-  const setEnabled = useAction(setExperimentalEnabled);
+  const reconcileFlag = useEffect(hydrateScratchpadFlagEffect);
+  const setEnabled = useAction(setScratchpadEnabled);
   const reconcileBeam = useEffect(hydrateBeamFlagEffect);
   const setBeamFlagEnabled = useAction(setBeamEnabled);
 
@@ -162,7 +162,7 @@ const Launcher = () => {
   // override and track changes made in other tabs.
   onMount(() => {
     void reconcileFlag();
-    onCleanup(watchExperimentalFlag(setEnabled));
+    onCleanup(watchScratchpadFlag(setEnabled));
     void reconcileBeam();
     onCleanup(watchBeamFlag(setBeamFlagEnabled));
   });
@@ -212,8 +212,8 @@ const Launcher = () => {
               <Show when={beamFlag.enabled}>
                 <AppCard app={BEAM_APP} />
               </Show>
-              <Show when={experimentalFlag.enabled}>
-                <AppCard app={EXPERIMENTAL_APP} />
+              <Show when={scratchpadFlag.enabled}>
+                <AppCard app={SCRATCHPAD_APP} />
               </Show>
             </Flex>
           </Container>

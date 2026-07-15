@@ -10,7 +10,7 @@ describe('storage with arbitrary option IDs', () => {
   // OPFS rejects these as file names verbatim, so each only round-trips
   // because the ID is encoded before it reaches the file system.
   it.each([
-    ['@app/experimental'],
+    ['@app/scratchpad'],
     ['nested/path/like/id'],
     ['..'],
     ['.'],
@@ -35,10 +35,10 @@ describe('storage with arbitrary option IDs', () => {
   });
 
   it('deletes the override for an encoded ID', async () => {
-    await writeOverride('@app/experimental', { production: { enabled: true } });
-    await deleteOverride('@app/experimental');
+    await writeOverride('@app/scratchpad', { production: { enabled: true } });
+    await deleteOverride('@app/scratchpad');
 
-    expect(await readOverride('@app/experimental')).toEqual({});
+    expect(await readOverride('@app/scratchpad')).toEqual({});
   });
 
   it('wraps the override in a versioned, timestamped envelope on disk', async () => {

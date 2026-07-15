@@ -13,24 +13,24 @@ import {
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import { ResetButton } from './reset-button';
 import {
-  setExperimentalEnabled,
+  setScratchpadEnabled,
   setLogExportEnabled,
   setLogFilter,
   setBeamEnabled,
 } from './state/advanced/actions';
 import {
-  commitExperimentalEffect,
+  commitScratchpadEffect,
   commitLogExportEffect,
   commitLogFilterEffect,
   commitBeamEffect,
   hydrateAdvancedSettingsEffect,
-  resetExperimentalEffect,
+  resetScratchpadEffect,
   resetLogExportEffect,
   resetLogFilterEffect,
   resetBeamEffect,
 } from './state/advanced/bindings';
 import {
-  watchExperimentalEnabled,
+  watchScratchpadEnabled,
   watchLogExportEnabled,
   watchLogFilter,
   watchBeamEnabled,
@@ -53,15 +53,15 @@ export const AdvancedSettings = () => {
   const reconcile = useEffect(hydrateAdvancedSettingsEffect);
   const commitFilter = useEffect(commitLogFilterEffect);
   const commitLogExport = useEffect(commitLogExportEffect);
-  const commitExperimental = useEffect(commitExperimentalEffect);
+  const commitScratchpad = useEffect(commitScratchpadEffect);
   const commitBeam = useEffect(commitBeamEffect);
   const resetFilter = useEffect(resetLogFilterEffect);
   const resetLogExport = useEffect(resetLogExportEffect);
-  const resetExperimental = useEffect(resetExperimentalEffect);
+  const resetScratchpad = useEffect(resetScratchpadEffect);
   const resetBeam = useEffect(resetBeamEffect);
   const mirrorFilter = useAction(setLogFilter);
   const mirrorLogExport = useAction(setLogExportEnabled);
-  const mirrorExperimental = useAction(setExperimentalEnabled);
+  const mirrorScratchpad = useAction(setScratchpadEnabled);
   const mirrorBeam = useAction(setBeamEnabled);
 
   // The store is seeded with the build-environment default, so first
@@ -73,7 +73,7 @@ export const AdvancedSettings = () => {
     void reconcile();
     onCleanup(watchLogFilter(mirrorFilter));
     onCleanup(watchLogExportEnabled(mirrorLogExport));
-    onCleanup(watchExperimentalEnabled(mirrorExperimental));
+    onCleanup(watchScratchpadEnabled(mirrorScratchpad));
     onCleanup(watchBeamEnabled(mirrorBeam));
   });
 
@@ -205,16 +205,16 @@ export const AdvancedSettings = () => {
             gap={3}
           >
             <Heading as="h3" size={4} weight="medium" selectable={false}>
-              Experimental app
+              Scratchpad app
             </Heading>
             <ResetButton
-              testId="advanced-experimental-reset"
-              label="Reset experimental app"
+              testId="advanced-scratchpad-reset"
+              label="Reset scratchpad app"
               disabled={
-                advanced.experimentalEnabled ===
-                advancedDefaults.experimentalEnabled
+                advanced.scratchpadEnabled ===
+                advancedDefaults.scratchpadEnabled
               }
-              onReset={() => void resetExperimental()}
+              onReset={() => void resetScratchpad()}
             />
           </Flex>
           <Text as="label" size={2} color="lowContrast" selectable={false}>
@@ -225,11 +225,11 @@ export const AdvancedSettings = () => {
               align="center"
               gap={3}
             >
-              Surface the experimental scratchpad in the launcher.
+              Surface the scratchpad in the launcher.
               <Switch
-                testId="advanced-experimental-toggle"
-                checked={advanced.experimentalEnabled}
-                onCheckedChange={(next) => void commitExperimental(next)}
+                testId="advanced-scratchpad-toggle"
+                checked={advanced.scratchpadEnabled}
+                onCheckedChange={(next) => void commitScratchpad(next)}
               />
             </Flex>
           </Text>

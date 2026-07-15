@@ -8,7 +8,7 @@ import {
 } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
-import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import { enabled as beamAppEnabled } from '@app/beam/config';
 import { type AdvancedSettingsState } from './store';
 
@@ -19,17 +19,17 @@ import { type AdvancedSettingsState } from './store';
  */
 export const readAdvancedSettings =
   async (): Promise<AdvancedSettingsState> => {
-    const [logFilter, logExportFlag, experimental, beam] = await Promise.all([
+    const [logFilter, logExportFlag, scratchpad, beam] = await Promise.all([
       readEnvironment(filter),
       readEnvironment(logExport),
-      readEnvironment(experimentalAppEnabled),
+      readEnvironment(scratchpadAppEnabled),
       readEnvironment(beamAppEnabled),
     ]);
 
     return {
       logFilter: logFilter.pattern,
       logExportEnabled: logExportFlag.enabled,
-      experimentalEnabled: experimental.enabled,
+      scratchpadEnabled: scratchpad.enabled,
       beamEnabled: beam.enabled,
     };
   };
@@ -84,29 +84,29 @@ export const watchLogExportEnabled = (
     onChange(value.enabled);
   });
 
-/** Persist the experimental flag as the active environment's override. */
-export const writeExperimentalEnabled = async (
+/** Persist the scratchpad flag as the active environment's override. */
+export const writeScratchpadEnabled = async (
   enabled: boolean,
 ): Promise<void> => {
   const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
-  await updateConfig(experimentalAppEnabled, patch);
+  await updateConfig(scratchpadAppEnabled, patch);
 };
 
 /**
- * Clear the experimental flag override for the active environment only,
+ * Clear the scratchpad flag override for the active environment only,
  * reverting it to the built-in default. Other environments keep theirs.
  */
-export const resetExperimentalEnabled = (): Promise<void> =>
-  reset(experimentalAppEnabled, [environment]);
+export const resetScratchpadEnabled = (): Promise<void> =>
+  reset(scratchpadAppEnabled, [environment]);
 
 /**
- * Watch for experimental flag changes from any browsing context. Returns
+ * Watch for scratchpad flag changes from any browsing context. Returns
  * an unsubscribe.
  */
-export const watchExperimentalEnabled = (
+export const watchScratchpadEnabled = (
   onChange: (enabled: boolean) => void,
 ): (() => void) =>
-  subscribe(experimentalAppEnabled, (value) => {
+  subscribe(scratchpadAppEnabled, (value) => {
     onChange(value.enabled);
   });
 

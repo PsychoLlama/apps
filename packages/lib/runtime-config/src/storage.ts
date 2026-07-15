@@ -25,7 +25,7 @@ interface StoredOverride<Value extends JsonValue> {
 /**
  * Percent-encode an option ID into a legal OPFS file name. The file system
  * rejects names containing `/` and the reserved `.`/`..`, so a raw ID like
- * `@app/experimental` is an illegal name. Every character outside the
+ * `@app/scratchpad` is an illegal name. Every character outside the
  * unreserved set is replaced with its `%XX` code unit; the common kebab-case
  * ID passes through untouched, keeping stored files legible. Option IDs are
  * never emoji, so one UTF-16 code unit per character suffices — no surrogate

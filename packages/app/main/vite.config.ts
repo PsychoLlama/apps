@@ -81,7 +81,7 @@ export default defineConfig({
         // Manual entries for routes the crawler can't reach from `/`:
         //   - `/404`: rendered via Cloudflare's `not_found_handling`,
         //     not linked from any page.
-        //   - `/experimental` and `/beam`: flag-gated app routes,
+        //   - `/scratchpad` and `/beam`: flag-gated app routes,
         //     unlisted from the launcher whenever their flag is off.
         //     Their shells ship in every build; the service worker gates
         //     access at runtime via the per-app flag (see
@@ -97,7 +97,7 @@ export default defineConfig({
         //     `public/_redirects` rewrites `/beam/with/*` onto it so a cold
         //     load hydrates against a beam-shaped shell instead of the
         //     404 page (which would mismatch and throw).
-        routes: ['/404', '/experimental', '/beam', '/beam/with/__endpoint'],
+        routes: ['/404', '/scratchpad', '/beam', '/beam/with/__endpoint'],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file

@@ -196,30 +196,6 @@ importers:
         specifier: 1.9.14
         version: 1.9.14
 
-  packages/app/experimental:
-    dependencies:
-      '@lib/design':
-        specifier: workspace:*
-        version: link:../../lib/design
-      '@lib/runtime-config':
-        specifier: workspace:*
-        version: link:../../lib/runtime-config
-      '@lib/shell':
-        specifier: workspace:*
-        version: link:../../lib/shell
-      '@lib/state':
-        specifier: workspace:*
-        version: link:../../lib/state
-      '@lib/ui':
-        specifier: workspace:*
-        version: link:../../lib/ui
-      '@vanilla-extract/css':
-        specifier: 'catalog:'
-        version: 1.20.1
-      solid-js:
-        specifier: 1.9.14
-        version: 1.9.14
-
   packages/app/gallery:
     dependencies:
       '@lib/design':
@@ -314,9 +290,6 @@ importers:
       '@app/beam':
         specifier: workspace:*
         version: link:../beam
-      '@app/experimental':
-        specifier: workspace:*
-        version: link:../experimental
       '@app/gallery':
         specifier: workspace:*
         version: link:../gallery
@@ -329,6 +302,9 @@ importers:
       '@app/qr-scanner':
         specifier: workspace:*
         version: link:../qr-scanner
+      '@app/scratchpad':
+        specifier: workspace:*
+        version: link:../scratchpad
       '@app/service-worker':
         specifier: workspace:*
         version: link:../service-worker
@@ -433,14 +409,38 @@ importers:
         specifier: 1.9.14
         version: 1.9.14
 
+  packages/app/scratchpad:
+    dependencies:
+      '@lib/design':
+        specifier: workspace:*
+        version: link:../../lib/design
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../../lib/runtime-config
+      '@lib/shell':
+        specifier: workspace:*
+        version: link:../../lib/shell
+      '@lib/state':
+        specifier: workspace:*
+        version: link:../../lib/state
+      '@lib/ui':
+        specifier: workspace:*
+        version: link:../../lib/ui
+      '@vanilla-extract/css':
+        specifier: 'catalog:'
+        version: 1.20.1
+      solid-js:
+        specifier: 1.9.14
+        version: 1.9.14
+
   packages/app/service-worker:
     dependencies:
       '@app/beam':
         specifier: workspace:*
         version: link:../beam
-      '@app/experimental':
+      '@app/scratchpad':
         specifier: workspace:*
-        version: link:../experimental
+        version: link:../scratchpad
       '@lib/holz-idb-backend':
         specifier: workspace:*
         version: link:../../lib/holz-idb-backend
@@ -466,12 +466,12 @@ importers:
       '@app/beam':
         specifier: workspace:*
         version: link:../beam
-      '@app/experimental':
-        specifier: workspace:*
-        version: link:../experimental
       '@app/logs':
         specifier: workspace:*
         version: link:../logs
+      '@app/scratchpad':
+        specifier: workspace:*
+        version: link:../scratchpad
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design

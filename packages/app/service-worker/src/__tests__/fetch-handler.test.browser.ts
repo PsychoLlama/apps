@@ -7,7 +7,7 @@
 
 import { type Mock } from 'vitest';
 
-import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import { enabled as beamAppEnabled } from '@app/beam/config';
 import { reset, updateConfig } from '@lib/runtime-config';
 
@@ -301,23 +301,23 @@ describe('handleFetch', () => {
     expect(event.respondWith).not.toHaveBeenCalled();
   });
 
-  describe('experimental route gating', () => {
+  describe('scratchpad route gating', () => {
     // The runner resolves to the `development` environment, so overrides
     // target that. `reset` clears the persisted OPFS override between
     // cases so neither leaks the flag into the other.
     afterEach(async () => {
-      await reset(experimentalAppEnabled);
+      await reset(scratchpadAppEnabled);
     });
 
     /** A navigation request to the scratchpad route. */
-    const experimentalNavigation = (): Request => {
-      const request = new Request(sameOrigin('/experimental'));
+    const scratchpadNavigation = (): Request => {
+      const request = new Request(sameOrigin('/scratchpad'));
       Object.defineProperty(request, 'mode', { value: 'navigate' });
       return request;
     };
 
     it('serves the 404 page when the flag is disabled', async () => {
-      await updateConfig(experimentalAppEnabled, {
+      await updateConfig(scratchpadAppEnabled, {
         development: { enabled: false },
       });
       // The shell is fetched at the clean `/404` path and re-served with
@@ -326,7 +326,7 @@ describe('handleFetch', () => {
         new Response('<html>not found</html>', { status: 200 }),
       );
 
-      const event = syntheticEvent(experimentalNavigation());
+      const event = syntheticEvent(scratchpadNavigation());
       handleFetch(event as unknown as FetchEvent);
 
       expect(event.respondWith).toHaveBeenCalledOnce();
@@ -338,14 +338,14 @@ describe('handleFetch', () => {
     });
 
     it('serves the navigation when the flag is enabled', async () => {
-      await updateConfig(experimentalAppEnabled, {
+      await updateConfig(scratchpadAppEnabled, {
         development: { enabled: true },
       });
       fetchSpy.mockResolvedValue(
-        new Response('<html>experimental</html>', { status: 200 }),
+        new Response('<html>scratchpad</html>', { status: 200 }),
       );
 
-      const event = syntheticEvent(experimentalNavigation());
+      const event = syntheticEvent(scratchpadNavigation());
       handleFetch(event as unknown as FetchEvent);
 
       expect(event.respondWith).toHaveBeenCalledOnce();

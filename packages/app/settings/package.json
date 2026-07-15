@@ -15,7 +15,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@app/experimental": "workspace:*",
+    "@app/scratchpad": "workspace:*",
     "@app/logs": "workspace:*",
     "@app/beam": "workspace:*",
     "@lib/design": "workspace:*",
