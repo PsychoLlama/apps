@@ -8,7 +8,7 @@ import {
 } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
-import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/scratchpad/config';
 import { enabled as beamAppEnabled } from '@app/beam/config';
 import { type AdvancedSettingsState } from './store';
 

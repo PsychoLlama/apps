@@ -1,5 +1,5 @@
 import { readEnvironment, subscribe } from '@lib/runtime-config';
-import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/scratchpad/config';
 
 /**
  * Resolve whether the experimental app is enabled for the active

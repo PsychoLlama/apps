@@ -1,6 +1,6 @@
 import { createStore, defineStore } from '@lib/state';
 import { environment } from '@lib/runtime-config';
-import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/scratchpad/config';
 
 /** Whether the experimental scratchpad surfaces in the launcher. */
 export interface ExperimentalFlagState {

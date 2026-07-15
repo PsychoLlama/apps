@@ -7,7 +7,7 @@
 
 import { type Mock } from 'vitest';
 
-import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/scratchpad/config';
 import { enabled as beamAppEnabled } from '@app/beam/config';
 import { reset, updateConfig } from '@lib/runtime-config';
 

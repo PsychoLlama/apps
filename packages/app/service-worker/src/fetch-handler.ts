@@ -6,7 +6,7 @@
  * construct outside a real service worker.
  */
 
-import { enabled as experimentalAppEnabled } from '@app/experimental/config';
+import { enabled as experimentalAppEnabled } from '@app/scratchpad/config';
 import { enabled as beamAppEnabled } from '@app/beam/config';
 import { createLogger } from '@lib/observability';
 import { readEnvironment } from '@lib/runtime-config';
