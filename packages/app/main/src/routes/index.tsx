@@ -73,14 +73,14 @@ const APPS: ReadonlyArray<AppEntry> = [
 ];
 
 /**
- * The experimental scratchpad. Kept out of {@link APPS} because it's
- * gated on the `experimental-app` runtime flag rather than always shown:
- * the launcher reveals it reactively (see {@link experimentalFlag}), in
- * lockstep with the service worker's runtime route gate.
+ * The scratchpad app. Kept out of {@link APPS} because it's gated on the
+ * `experimental-app` runtime flag rather than always shown: the launcher
+ * reveals it reactively (see {@link experimentalFlag}), in lockstep with
+ * the service worker's runtime route gate.
  */
-const EXPERIMENTAL_APP: AppEntry = {
-  id: 'experimental',
-  name: 'Experimental',
+const SCRATCHPAD_APP: AppEntry = {
+  id: 'scratchpad',
+  name: 'Scratchpad',
   href: '/scratchpad',
   description: 'A scratchpad for work-in-progress ideas.',
   Icon: IconHammerWrench,
@@ -88,7 +88,7 @@ const EXPERIMENTAL_APP: AppEntry = {
 
 /**
  * Peer-to-peer resource sharing. Gated on the `@app/beam` runtime flag
- * like {@link EXPERIMENTAL_APP} — it's still a work in progress, enabled
+ * like {@link SCRATCHPAD_APP} — it's still a work in progress, enabled
  * in local dev only — so the launcher reveals it reactively (see {@link
  * beamFlag}) in lockstep with the service worker's runtime route gate.
  */
@@ -213,7 +213,7 @@ const Launcher = () => {
                 <AppCard app={BEAM_APP} />
               </Show>
               <Show when={experimentalFlag.enabled}>
-                <AppCard app={EXPERIMENTAL_APP} />
+                <AppCard app={SCRATCHPAD_APP} />
               </Show>
             </Flex>
           </Container>
