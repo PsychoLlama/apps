@@ -1,10 +1,10 @@
 import {
-  createStore,
-  defineAction,
+  defineCell,
+  defineFold,
+  defineScope,
   defineStore,
-  ref,
-  type Ref,
-} from '@lib/state';
+  defineTopic,
+} from '@lib/state-next';
 import type { RadiusScale } from '@lib/design';
 import type {
   ArrowAlign,
@@ -46,140 +46,133 @@ export interface FloatingControlsState {
   tetherPadding: number;
   /** Which pipeline stages the tether runs. */
   plugins: Record<TetherPluginName, boolean>;
-  /** The hatched target element the floating window anchors against. */
-  anchorElement: Ref<HTMLElement | null>;
 }
 
-const floatingControlsStore = defineStore<FloatingControlsState>(() => ({
-  side: 'bottom',
-  align: 'center',
-  arrowVisible: true,
-  arrowAlign: 'center',
-  arrowBase: 16,
-  arrowDepth: 8,
-  radius: 4,
-  sideOffset: 0,
-  alignOffset: 0,
-  point: null,
-  tether: false,
-  tetherPadding: 8,
-  plugins: {
-    positionTry: true,
-  },
-  anchorElement: ref(null),
-}));
+/** Owns the scratchpad's floating-window controls and anchor handle. */
+export const scratchpadScope = defineScope();
 
 /** Live, readonly view of the floating-window placement controls. */
-export const floatingControls = createStore(floatingControlsStore);
-
-/** Bind the window to a different edge of the anchor. */
-export const setSide = defineAction(
-  [floatingControlsStore],
-  (controls, side: FloatingSide) => {
-    controls.side = side;
-  },
+export const floatingControls = defineStore<FloatingControlsState>(
+  scratchpadScope,
+  () => ({
+    side: 'bottom',
+    align: 'center',
+    arrowVisible: true,
+    arrowAlign: 'center',
+    arrowBase: 16,
+    arrowDepth: 8,
+    radius: 4,
+    sideOffset: 0,
+    alignOffset: 0,
+    point: null,
+    tether: false,
+    tetherPadding: 8,
+    plugins: {
+      positionTry: true,
+    },
+  }),
 );
 
-/** Set the window's placement along the bound edge. */
-export const setAlign = defineAction(
-  [floatingControlsStore],
-  (controls, align: FloatingAlignment) => {
-    controls.align = align;
-  },
+/**
+ * The hatched target element the floating window anchors against. A cell,
+ * not store state — it holds a live DOM node that must never be proxied.
+ */
+export const anchorElement = defineCell<HTMLElement | null>(
+  scratchpadScope,
+  () => null,
 );
 
-/** Show or hide the pointer arrow. */
-export const setArrowVisible = defineAction(
-  [floatingControlsStore],
-  (controls, arrowVisible: boolean) => {
+/** The window bound to a different edge of the anchor. */
+export const sideChanged = defineTopic<FloatingSide>();
+defineFold(sideChanged, [floatingControls], (controls, side) => {
+  controls.side = side;
+});
+
+/** Placement along the bound edge changed. */
+export const alignChanged = defineTopic<FloatingAlignment>();
+defineFold(alignChanged, [floatingControls], (controls, align) => {
+  controls.align = align;
+});
+
+/** The pointer arrow was shown or hidden. */
+export const arrowVisibilityChanged = defineTopic<boolean>();
+defineFold(
+  arrowVisibilityChanged,
+  [floatingControls],
+  (controls, arrowVisible) => {
     controls.arrowVisible = arrowVisible;
   },
 );
 
-/** Set the arrow's placement along the bound edge. */
-export const setArrowAlign = defineAction(
-  [floatingControlsStore],
-  (controls, arrowAlign: ArrowAlign) => {
-    controls.arrowAlign = arrowAlign;
-  },
-);
+/** The arrow's placement along the bound edge changed. */
+export const arrowAlignChanged = defineTopic<ArrowAlign>();
+defineFold(arrowAlignChanged, [floatingControls], (controls, arrowAlign) => {
+  controls.arrowAlign = arrowAlign;
+});
 
-/** Set the length of the arrow's base edge. */
-export const setArrowBase = defineAction(
-  [floatingControlsStore],
-  (controls, arrowBase: number) => {
-    controls.arrowBase = arrowBase;
-  },
-);
+/** The length of the arrow's base edge changed. */
+export const arrowBaseChanged = defineTopic<number>();
+defineFold(arrowBaseChanged, [floatingControls], (controls, arrowBase) => {
+  controls.arrowBase = arrowBase;
+});
 
-/** Set how far the arrow protrudes toward the anchor. */
-export const setArrowDepth = defineAction(
-  [floatingControlsStore],
-  (controls, arrowDepth: number) => {
-    controls.arrowDepth = arrowDepth;
-  },
-);
+/** How far the arrow protrudes toward the anchor changed. */
+export const arrowDepthChanged = defineTopic<number>();
+defineFold(arrowDepthChanged, [floatingControls], (controls, arrowDepth) => {
+  controls.arrowDepth = arrowDepth;
+});
 
-/** Set the surface's border radius. */
-export const setRadius = defineAction(
-  [floatingControlsStore],
-  (controls, radius: RadiusScale) => {
-    controls.radius = radius;
-  },
-);
+/** The surface's border radius changed. */
+export const radiusChanged = defineTopic<RadiusScale>();
+defineFold(radiusChanged, [floatingControls], (controls, radius) => {
+  controls.radius = radius;
+});
 
-/** Set the gap between the anchor edge (or point) and the window. */
-export const setSideOffset = defineAction(
-  [floatingControlsStore],
-  (controls, sideOffset: number) => {
-    controls.sideOffset = sideOffset;
-  },
-);
+/** The gap between the anchor edge (or point) and the window changed. */
+export const sideOffsetChanged = defineTopic<number>();
+defineFold(sideOffsetChanged, [floatingControls], (controls, sideOffset) => {
+  controls.sideOffset = sideOffset;
+});
 
-/** Set the nudge along the bound edge. */
-export const setAlignOffset = defineAction(
-  [floatingControlsStore],
-  (controls, alignOffset: number) => {
-    controls.alignOffset = alignOffset;
-  },
-);
+/** The nudge along the bound edge changed. */
+export const alignOffsetChanged = defineTopic<number>();
+defineFold(alignOffsetChanged, [floatingControls], (controls, alignOffset) => {
+  controls.alignOffset = alignOffset;
+});
 
-/** Bind the window to a point inside the anchor, or `null` for edges. */
-export const setPoint = defineAction(
-  [floatingControlsStore],
-  (controls, point: FloatingPoint | null) => {
-    controls.point = point;
-  },
-);
+/** The window bound to a point inside the anchor, or `null` for edges. */
+export const pointChanged = defineTopic<FloatingPoint | null>();
+defineFold(pointChanged, [floatingControls], (controls, point) => {
+  controls.point = point;
+});
 
-/** Toggle the collision-avoidance tether. */
-export const setTether = defineAction(
-  [floatingControlsStore],
-  (controls, tether: boolean) => {
-    controls.tether = tether;
-  },
-);
+/** The collision-avoidance tether was toggled. */
+export const tetherToggled = defineTopic<boolean>();
+defineFold(tetherToggled, [floatingControls], (controls, tether) => {
+  controls.tether = tether;
+});
 
-/** Set the viewport clearance the tether maintains. */
-export const setTetherPadding = defineAction(
-  [floatingControlsStore],
-  (controls, tetherPadding: number) => {
+/** The viewport clearance the tether maintains changed. */
+export const tetherPaddingChanged = defineTopic<number>();
+defineFold(
+  tetherPaddingChanged,
+  [floatingControls],
+  (controls, tetherPadding) => {
     controls.tetherPadding = tetherPadding;
   },
 );
 
-/** Enable or disable one stage of the tether's pipeline. */
-export const setPluginEnabled = defineAction(
-  [floatingControlsStore],
-  (controls, toggle: { plugin: TetherPluginName; enabled: boolean }) => {
-    controls.plugins[toggle.plugin] = toggle.enabled;
-  },
-);
+/** One stage of the tether's pipeline was enabled or disabled. */
+export const pluginToggled = defineTopic<{
+  plugin: TetherPluginName;
+  enabled: boolean;
+}>();
+defineFold(pluginToggled, [floatingControls], (controls, toggle) => {
+  controls.plugins[toggle.plugin] = toggle.enabled;
+});
 
-/** Remember the target element so the tether can measure against it. */
-export const setAnchorElement = defineAction(
-  [floatingControlsStore],
-  (controls, element: HTMLElement) => {
-    controls.anchorElement = ref(element);
-  },
-);
+/** The target element was captured so the tether can measure against it. */
+export const anchorCaptured = defineTopic<HTMLElement>();
+defineFold(anchorCaptured, [anchorElement], (anchor, element) => {
+  anchor.current = element;
+});

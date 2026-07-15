@@ -19,7 +19,7 @@
     "@lib/design": "workspace:*",
     "@lib/runtime-config": "workspace:*",
     "@lib/shell": "workspace:*",
-    "@lib/state": "workspace:*",
+    "@lib/state-next": "workspace:*",
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:"
   },
