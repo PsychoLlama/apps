@@ -100,7 +100,7 @@ const PlacementControl = <Value extends string>(props: {
   );
 };
 
-export const Experimental = () => {
+export const Scratchpad = () => {
   const controls = floatingControls;
   const chooseSide = useAction(setSide);
   const chooseAlign = useAction(setAlign);
@@ -149,7 +149,7 @@ export const Experimental = () => {
 
   return (
     <Frame>
-      <SiteHeader title="Experimental" />
+      <SiteHeader title="Scratchpad" />
       <FrameBody>
         <Flex as="section" direction="row" wrap="wrap" gap={6}>
           <PlacementControl

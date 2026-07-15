@@ -13,11 +13,11 @@ import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import IconGithub from 'virtual:icons/mdi/github';
 import {
-  experimentalFlag,
-  hydrateExperimentalFlagEffect,
-  setExperimentalEnabled,
-  watchExperimentalFlag,
-} from '../state/experimental-flag';
+  scratchpadFlag,
+  hydrateScratchpadFlagEffect,
+  setScratchpadEnabled,
+  watchScratchpadFlag,
+} from '../state/scratchpad-flag';
 import {
   hydrateBeamFlagEffect,
   setBeamEnabled,
@@ -74,8 +74,8 @@ const APPS: ReadonlyArray<AppEntry> = [
 
 /**
  * The scratchpad app. Kept out of {@link APPS} because it's gated on the
- * `experimental-app` runtime flag rather than always shown: the launcher
- * reveals it reactively (see {@link experimentalFlag}), in lockstep with
+ * `scratchpad` runtime flag rather than always shown: the launcher
+ * reveals it reactively (see {@link scratchpadFlag}), in lockstep with
  * the service worker's runtime route gate.
  */
 const SCRATCHPAD_APP: AppEntry = {
@@ -151,8 +151,8 @@ const AppCard: Component<{ app: AppEntry }> = (props) => (
  * in the footer.
  */
 const Launcher = () => {
-  const reconcileFlag = useEffect(hydrateExperimentalFlagEffect);
-  const setEnabled = useAction(setExperimentalEnabled);
+  const reconcileFlag = useEffect(hydrateScratchpadFlagEffect);
+  const setEnabled = useAction(setScratchpadEnabled);
   const reconcileBeam = useEffect(hydrateBeamFlagEffect);
   const setBeamFlagEnabled = useAction(setBeamEnabled);
 
@@ -162,7 +162,7 @@ const Launcher = () => {
   // override and track changes made in other tabs.
   onMount(() => {
     void reconcileFlag();
-    onCleanup(watchExperimentalFlag(setEnabled));
+    onCleanup(watchScratchpadFlag(setEnabled));
     void reconcileBeam();
     onCleanup(watchBeamFlag(setBeamFlagEnabled));
   });
@@ -212,7 +212,7 @@ const Launcher = () => {
               <Show when={beamFlag.enabled}>
                 <AppCard app={BEAM_APP} />
               </Show>
-              <Show when={experimentalFlag.enabled}>
+              <Show when={scratchpadFlag.enabled}>
                 <AppCard app={SCRATCHPAD_APP} />
               </Show>
             </Flex>

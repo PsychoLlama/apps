@@ -1,3 +1,3 @@
-import { Experimental } from '@app/scratchpad';
+import { Scratchpad } from '@app/scratchpad';
 
-export default Experimental;
+export default Scratchpad;

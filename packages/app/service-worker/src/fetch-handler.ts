@@ -6,7 +6,7 @@
  * construct outside a real service worker.
  */
 
-import { enabled as experimentalAppEnabled } from '@app/scratchpad/config';
+import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import { enabled as beamAppEnabled } from '@app/beam/config';
 import { createLogger } from '@lib/observability';
 import { readEnvironment } from '@lib/runtime-config';
@@ -130,7 +130,7 @@ const NOT_FOUND_PATH = '/404';
 const handleScratchpadNavigation = async (
   event: FetchEvent,
 ): Promise<Response> => {
-  const { enabled } = await readEnvironment(experimentalAppEnabled);
+  const { enabled } = await readEnvironment(scratchpadAppEnabled);
   if (enabled) return handleNavigation(event);
 
   logger.info('Scratchpad app disabled; serving the 404 page.', {

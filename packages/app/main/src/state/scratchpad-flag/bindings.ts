@@ -1,10 +1,10 @@
 import { defineAction, defineEffect } from '@lib/state';
-import { readExperimentalFlag } from './capabilities';
-import { experimentalFlagStore } from './store';
+import { readScratchpadFlag } from './capabilities';
+import { scratchpadFlagStore } from './store';
 
 /** Mirror the resolved flag value into the store. */
-export const setExperimentalEnabled = defineAction(
-  [experimentalFlagStore],
+export const setScratchpadEnabled = defineAction(
+  [scratchpadFlagStore],
   (flag, enabled: boolean) => {
     flag.enabled = enabled;
   },
@@ -14,8 +14,8 @@ export const setExperimentalEnabled = defineAction(
  * Reconcile the seeded default with any persisted OPFS override. Run on
  * mount — OPFS is client-only, unavailable during SSG.
  */
-export const hydrateExperimentalFlagEffect = defineEffect(
+export const hydrateScratchpadFlagEffect = defineEffect(
   [],
-  readExperimentalFlag,
-  { onSuccess: setExperimentalEnabled },
+  readScratchpadFlag,
+  { onSuccess: setScratchpadEnabled },
 );
