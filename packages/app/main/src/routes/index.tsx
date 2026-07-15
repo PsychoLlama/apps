@@ -82,7 +82,7 @@ const SCRATCHPAD_APP: AppEntry = {
   id: 'scratchpad',
   name: 'Scratchpad',
   href: '/scratchpad',
-  description: 'A scratchpad for work-in-progress ideas.',
+  description: 'Experiments and work-in-progress ideas.',
   Icon: IconHammerWrench,
 };
 
