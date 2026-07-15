@@ -17,25 +17,28 @@ import {
   tetherPlugins,
   type ArrowAlign,
   type FloatingAlignment,
+  type FloatingPoint,
   type FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
-import { useAction } from '@lib/state';
+import { useAnchor, useCommit, useValue } from '@lib/state-next';
 import {
+  alignChanged,
+  alignOffsetChanged,
+  anchorCaptured,
+  anchorElement,
+  arrowAlignChanged,
+  arrowBaseChanged,
+  arrowDepthChanged,
+  arrowVisibilityChanged,
   floatingControls,
-  setAlign,
-  setAlignOffset,
-  setAnchorElement,
-  setArrowAlign,
-  setArrowBase,
-  setArrowDepth,
-  setArrowVisible,
-  setPluginEnabled,
-  setPoint,
-  setRadius,
-  setSide,
-  setSideOffset,
-  setTether,
-  setTetherPadding,
+  pluginToggled,
+  pointChanged,
+  radiusChanged,
+  scratchpadScope,
+  sideChanged,
+  sideOffsetChanged,
+  tetherPaddingChanged,
+  tetherToggled,
   type TetherPluginName,
 } from './store';
 import * as css from './index.css';
@@ -101,33 +104,47 @@ const PlacementControl = <Value extends string>(props: {
 };
 
 export const Scratchpad = () => {
-  const controls = floatingControls;
-  const chooseSide = useAction(setSide);
-  const chooseAlign = useAction(setAlign);
-  const chooseArrowAlign = useAction(setArrowAlign);
-  const chooseRadius = useAction(setRadius);
-  const chooseSideOffset = useAction(setSideOffset);
-  const chooseAlignOffset = useAction(setAlignOffset);
-  const choosePoint = useAction(setPoint);
-  const chooseTether = useAction(setTether);
-  const chooseTetherPadding = useAction(setTetherPadding);
-  const togglePlugin = useAction(setPluginEnabled);
-  const chooseArrowVisible = useAction(setArrowVisible);
-  const chooseArrowBase = useAction(setArrowBase);
-  const chooseArrowDepth = useAction(setArrowDepth);
-  const captureAnchor = useAction(setAnchorElement);
+  useAnchor(scratchpadScope);
+  const controls = useValue(floatingControls);
+  const anchorEl = useValue(anchorElement);
+  const commit = useCommit();
+
+  const chooseSide = (side: FloatingSide) => commit(sideChanged(side));
+  const chooseAlign = (align: FloatingAlignment) => commit(alignChanged(align));
+  const chooseArrowAlign = (align: ArrowAlign) =>
+    commit(arrowAlignChanged(align));
+  const chooseRadius = (radius: RadiusScale) => commit(radiusChanged(radius));
+  const chooseSideOffset = (offset: number) =>
+    commit(sideOffsetChanged(offset));
+  const chooseAlignOffset = (offset: number) =>
+    commit(alignOffsetChanged(offset));
+  const choosePoint = (point: FloatingPoint | null) =>
+    commit(pointChanged(point));
+  const chooseTether = (tether: boolean) => commit(tetherToggled(tether));
+  const chooseTetherPadding = (padding: number) =>
+    commit(tetherPaddingChanged(padding));
+  const togglePlugin = (toggle: {
+    plugin: TetherPluginName;
+    enabled: boolean;
+  }) => commit(pluginToggled(toggle));
+  const chooseArrowVisible = (visible: boolean) =>
+    commit(arrowVisibilityChanged(visible));
+  const chooseArrowBase = (base: number) => commit(arrowBaseChanged(base));
+  const chooseArrowDepth = (depth: number) => commit(arrowDepthChanged(depth));
+  const captureAnchor = (element: HTMLElement) =>
+    commit(anchorCaptured(element));
 
   /** The enabled pipeline stages, in fold order. */
   const tetherOptions = () => {
-    const active = controls.plugins;
+    const active = controls().plugins;
 
     return {
-      padding: controls.tetherPadding,
+      padding: controls().tetherPadding,
       plugins: [
         ...(active.positionTry
           ? [
               tetherPlugins.positionTry([
-                { side: OPPOSITE_SIDE[controls.side] },
+                { side: OPPOSITE_SIDE[controls().side] },
               ]),
             ]
           : []),
@@ -138,7 +155,7 @@ export const Scratchpad = () => {
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
     // Ignore clicks that bubble out of the floating window itself.
-    if (!controls.point || event.target !== event.currentTarget) return;
+    if (!controls().point || event.target !== event.currentTarget) return;
 
     const bounds = event.currentTarget.getBoundingClientRect();
     choosePoint({
@@ -155,28 +172,28 @@ export const Scratchpad = () => {
           <PlacementControl
             label="Side"
             name="side"
-            value={controls.side}
+            value={controls().side}
             options={SIDES}
             onValueChange={chooseSide}
           />
           <PlacementControl
             label="Align"
             name="align"
-            value={controls.align}
+            value={controls().align}
             options={ALIGNMENTS}
             onValueChange={chooseAlign}
           />
           <PlacementControl
             label="Arrow align"
             name="arrow-align"
-            value={controls.arrowAlign}
+            value={controls().arrowAlign}
             options={ARROW_ALIGNMENTS}
             onValueChange={chooseArrowAlign}
           />
           <PlacementControl
             label="Radius"
             name="radius"
-            value={String(controls.radius)}
+            value={String(controls().radius)}
             options={RADII}
             onValueChange={(value) =>
               chooseRadius(Number(value) as RadiusScale)
@@ -189,7 +206,7 @@ export const Scratchpad = () => {
             </Text>
             <Switch
               testId="control-arrow"
-              checked={controls.arrowVisible}
+              checked={controls().arrowVisible}
               onCheckedChange={chooseArrowVisible}
               aria-label="Arrow"
             />
@@ -197,11 +214,11 @@ export const Scratchpad = () => {
 
           <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
             <Text as="p" size={2} weight="medium" selectable={false}>
-              Arrow base ({controls.arrowBase}px)
+              Arrow base ({controls().arrowBase}px)
             </Text>
             <Slider
               testId="control-arrow-base"
-              value={[controls.arrowBase]}
+              value={[controls().arrowBase]}
               onValueChange={([value = 16]) => chooseArrowBase(value)}
               min={8}
               max={32}
@@ -211,11 +228,11 @@ export const Scratchpad = () => {
 
           <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
             <Text as="p" size={2} weight="medium" selectable={false}>
-              Arrow depth ({controls.arrowDepth}px)
+              Arrow depth ({controls().arrowDepth}px)
             </Text>
             <Slider
               testId="control-arrow-depth"
-              value={[controls.arrowDepth]}
+              value={[controls().arrowDepth]}
               onValueChange={([value = 8]) => chooseArrowDepth(value)}
               min={4}
               max={24}
@@ -225,11 +242,11 @@ export const Scratchpad = () => {
 
           <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
             <Text as="p" size={2} weight="medium" selectable={false}>
-              Side offset ({controls.sideOffset}px)
+              Side offset ({controls().sideOffset}px)
             </Text>
             <Slider
               testId="control-side-offset"
-              value={[controls.sideOffset]}
+              value={[controls().sideOffset]}
               onValueChange={([value = 0]) => chooseSideOffset(value)}
               min={0}
               max={32}
@@ -239,11 +256,11 @@ export const Scratchpad = () => {
 
           <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
             <Text as="p" size={2} weight="medium" selectable={false}>
-              Align offset ({controls.alignOffset}px)
+              Align offset ({controls().alignOffset}px)
             </Text>
             <Slider
               testId="control-align-offset"
-              value={[controls.alignOffset]}
+              value={[controls().alignOffset]}
               onValueChange={([value = 0]) => chooseAlignOffset(value)}
               min={-32}
               max={32}
@@ -257,7 +274,7 @@ export const Scratchpad = () => {
             </Text>
             <Switch
               testId="control-point"
-              checked={controls.point !== null}
+              checked={controls().point !== null}
               onCheckedChange={(checked) =>
                 choosePoint(checked ? { x: 96, y: 64 } : null)
               }
@@ -274,7 +291,7 @@ export const Scratchpad = () => {
             </Text>
             <Switch
               testId="control-tether"
-              checked={controls.tether}
+              checked={controls().tether}
               onCheckedChange={chooseTether}
               aria-label="Tether"
             />
@@ -285,11 +302,11 @@ export const Scratchpad = () => {
 
           <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
             <Text as="p" size={2} weight="medium" selectable={false}>
-              Tether padding ({controls.tetherPadding}px)
+              Tether padding ({controls().tetherPadding}px)
             </Text>
             <Slider
               testId="control-tether-padding"
-              value={[controls.tetherPadding]}
+              value={[controls().tetherPadding]}
               onValueChange={([value = 8]) => chooseTetherPadding(value)}
               min={0}
               max={48}
@@ -305,7 +322,7 @@ export const Scratchpad = () => {
               {(plugin) => (
                 <Checkbox
                   testId={`control-plugin-${plugin}`}
-                  checked={controls.plugins[plugin]}
+                  checked={controls().plugins[plugin]}
                   onCheckedChange={(enabled) =>
                     togglePlugin({ plugin, enabled })
                   }
@@ -321,30 +338,30 @@ export const Scratchpad = () => {
           <Flex
             as="section"
             ref={captureAnchor}
-            class={[css.target, anchor, controls.point && css.pointArmed]
+            class={[css.target, anchor, controls().point && css.pointArmed]
               .filter(Boolean)
               .join(' ')}
             onClick={placePoint}
           >
             <FloatingContainer
-              anchor={controls.anchorElement.current ?? undefined}
-              side={controls.side}
-              align={controls.align}
-              radius={controls.radius}
-              sideOffset={controls.sideOffset}
-              alignOffset={controls.alignOffset}
-              point={controls.point ?? undefined}
-              tether={controls.tether ? tetherOptions() : undefined}
+              anchor={anchorEl() ?? undefined}
+              side={controls().side}
+              align={controls().align}
+              radius={controls().radius}
+              sideOffset={controls().sideOffset}
+              alignOffset={controls().alignOffset}
+              point={controls().point ?? undefined}
+              tether={controls().tether ? tetherOptions() : undefined}
               direction="column"
               gap={1}
               py={3}
               px={4}
               class={css.surface}
               arrow={{
-                visible: controls.arrowVisible,
-                base: controls.arrowBase,
-                depth: controls.arrowDepth,
-                align: controls.arrowAlign,
+                visible: controls().arrowVisible,
+                base: controls().arrowBase,
+                depth: controls().arrowDepth,
+                align: controls().arrowAlign,
                 class: css.arrow,
               }}
             >

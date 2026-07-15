@@ -417,9 +417,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state':
+      '@lib/state-next':
         specifier: workspace:*
-        version: link:../../lib/state
+        version: link:../../lib/state-next
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
