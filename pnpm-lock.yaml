@@ -358,8 +358,8 @@ importers:
         specifier: workspace:*
         version: link:../../dev/build
       '@solidjs/vite-plugin-nitro-2':
-        specifier: 0.3.1
-        version: 0.3.1(oxc-parser@0.137.0)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
+        specifier: 0.3.2
+        version: 0.3.2(oxc-parser@0.137.0)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
       '@vanilla-extract/vite-plugin':
         specifier: ^5.2.2
         version: 5.2.2(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))(yaml@2.9.0)
@@ -2279,8 +2279,8 @@ packages:
       '@solidjs/router':
         optional: true
 
-  '@solidjs/vite-plugin-nitro-2@0.3.1':
-    resolution: {integrity: sha512-jdzR3rCV0fguxIbX98D3BvFvv+9UNF0CKq2j9KUxZ+8DZe35jOrkoVPNdwv6qU1kf94hA+1P1b1r2PS+MkzuOQ==}
+  '@solidjs/vite-plugin-nitro-2@0.3.2':
+    resolution: {integrity: sha512-tzNwIyzF6b/D1TsUsA1CVLVL83KqUST48kc0oYRxA5AQdc+3QjKh8cKSXK6lFcv3BTH/zG/towD+ErKpwu4IKg==}
     peerDependencies:
       vite: ^7.3.2
 
@@ -6375,7 +6375,7 @@ snapshots:
     optionalDependencies:
       '@solidjs/router': 0.16.1(solid-js@1.9.14)
 
-  '@solidjs/vite-plugin-nitro-2@0.3.1(oxc-parser@0.137.0)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
+  '@solidjs/vite-plugin-nitro-2@0.3.2(oxc-parser@0.137.0)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
     dependencies:
       nitropack: 2.13.4(oxc-parser@0.137.0)
       vite: 7.3.5(@types/node@25.9.3)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)
