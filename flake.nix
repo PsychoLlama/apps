@@ -111,9 +111,12 @@
               # Generates the JS bindings for wasm crates that use
               # `wasm-bindgen` (e.g. `@crate/qr-scanner`). The CLI refuses
               # modules built against a mismatched `wasm-bindgen` crate,
-              # so the crate pins `wasm-bindgen = "=0.2.121"` to match
-              # the version nixpkgs ships here.
-              pkgs.wasm-bindgen-cli
+              # so the crates pin `wasm-bindgen = "=0.2.126"` to match.
+              # Pinned to the versioned attribute rather than the
+              # unversioned `wasm-bindgen-cli` (which nixpkgs holds back
+              # at 0.2.121) so renovate's crate bumps can be matched here
+              # without waiting on the nixpkgs default to move.
+              pkgs.wasm-bindgen-cli_0_2_126
               # Serializes Chromium across the per-package `test:browser`
               # scripts (see the wrapper's definition above). Lives in
               # `default` so CI (which only enters this shell) has it.
