@@ -64,7 +64,7 @@ catalog:
   # "<A> ... only used inside a Route"). An exact pin makes it resolve once.
   'solid-js': 1.9.14
   turbo: ^2.5.8
-  typescript: ^6.0.3
+  typescript: ^7.0.0
   'unplugin-icons': ^23.0.1
   vite: ^7.3.2
   vitest: ^4.1.5
