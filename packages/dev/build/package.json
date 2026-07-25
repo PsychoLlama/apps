@@ -6,6 +6,7 @@
   "description": "Shared build-time tooling for the workspace.",
   "license": "MIT",
   "exports": {
+    "./babel-plugin/erase-overload-signatures": "./src/babel-plugin/erase-overload-signatures.ts",
     "./ignore": "./src/ignore.ts",
     "./vite-plugin/assert-hashed-assets": "./src/vite-plugin/assert-hashed-assets.ts",
     "./vite-plugin/icon-packs": "./src/vite-plugin/icon-packs/index.ts",
