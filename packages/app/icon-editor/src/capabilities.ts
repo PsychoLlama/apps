@@ -1,70 +1,64 @@
-import type { DeepReadonly } from '@lib/state';
+/**
+ * Every side effect the editor's sagas reach for, as plain functions
+ * that take the governing `AbortSignal` first and know nothing about
+ * state. The underlying fetchers in `icons.ts` cache their promises at
+ * module level and are shared between callers, so cancellation checks
+ * the signal *after* the await rather than tearing down a request other
+ * callers are still waiting on.
+ */
+
 import {
   loadIconPackIndex,
   loadIconPackManifest,
   loadIconPage,
+  loadIconPageEntries,
+  releaseInactivePackCaches,
   resolveIconRef,
   toIconRef,
+  type IconPackManifest,
+  type IconPackSummary,
+  type IconPageRequest,
+  type IconPageResult,
   type IconRef,
 } from './icons';
-import { PALETTES, type PaletteName } from './palette';
-import {
-  DEFAULT_ICON_EDITOR_STATE,
-  type IconEditorShape,
-  type IconEditorState,
-  type LoadingState,
-} from './store';
 
-/** Subset of {@link IconEditorState} style fields recognized by `hydrateStyle`. */
-export interface IconEditorStyleHydration {
-  /** Palette name from the curated set. */
-  palette?: string;
-  /** Shape mask. */
-  shape?: string;
-  /** Padding percent (`0`–`40`). */
-  padding?: number;
-}
+/** Load the pack catalog. */
+export const fetchPackIndex = async (
+  signal: AbortSignal,
+): Promise<IconPackSummary[]> => {
+  const packs = await loadIconPackIndex();
+  signal.throwIfAborted();
+  return packs;
+};
 
-const SHAPES: ReadonlyArray<IconEditorShape> = [
-  'square',
-  'rounded',
-  'squircle',
-  'circle',
-];
+/** Load one pack's manifest — names plus the URLs of its body chunks. */
+export const fetchPackManifest = async (
+  signal: AbortSignal,
+  pack: IconPackSummary,
+): Promise<IconPackManifest> => {
+  const manifest = await loadIconPackManifest(pack);
+  signal.throwIfAborted();
+  return manifest;
+};
 
-const PALETTE_NAMES = new Set<string>(PALETTES.map((entry) => entry.name));
+/** Load a single body chunk, preserving the request that asked for it. */
+export const fetchPageEntries = async (
+  signal: AbortSignal,
+  request: IconPageRequest,
+): Promise<IconPageResult> => {
+  const result = await loadIconPageEntries(request);
+  signal.throwIfAborted();
+  return result;
+};
 
-const isPaletteName = (value: string): value is PaletteName =>
-  PALETTE_NAMES.has(value);
-
-const isShape = (value: string): value is IconEditorShape =>
-  (SHAPES as ReadonlyArray<string>).includes(value);
-
-const clampPadding = (value: number): number =>
-  Math.max(0, Math.min(40, Math.floor(value)));
-
-/**
- * Resolve a hydrate input into a complete style snapshot. Missing or
- * unparseable fields fall back to {@link DEFAULT_ICON_EDITOR_STATE} —
- * the URL is the source of truth, so a clean `/icon-editor` link must
- * render the canonical defaults regardless of what the singleton store
- * was holding from a prior session.
- */
-export const resolveStyleHydration = (
-  input: IconEditorStyleHydration,
-): Pick<IconEditorState, 'palette' | 'shape' | 'padding'> => {
-  const palette =
-    input.palette && isPaletteName(input.palette) ? input.palette : undefined;
-  const shape = input.shape && isShape(input.shape) ? input.shape : undefined;
-  const padding =
-    input.padding !== undefined && Number.isFinite(input.padding)
-      ? clampPadding(input.padding)
-      : undefined;
-  return {
-    palette: palette ?? DEFAULT_ICON_EDITOR_STATE.palette,
-    shape: shape ?? DEFAULT_ICON_EDITOR_STATE.shape,
-    padding: padding ?? DEFAULT_ICON_EDITOR_STATE.padding,
-  };
+/** Resolve a fully-qualified `pack:name` reference. */
+export const fetchIconRef = async (
+  signal: AbortSignal,
+  ref: { pack: string; name: string },
+): Promise<IconRef | undefined> => {
+  const icon = await resolveIconRef(ref.pack, ref.name);
+  signal.throwIfAborted();
+  return icon;
 };
 
 /**
@@ -74,16 +68,24 @@ export const resolveStyleHydration = (
  * full pack in memory.
  */
 export const pickRandomIcon = async (
+  signal: AbortSignal,
   packId: string,
 ): Promise<IconRef | undefined> => {
   const packs = await loadIconPackIndex();
+  signal.throwIfAborted();
+
   const pack = packs.find((entry) => entry.id === packId);
   if (!pack) return undefined;
+
   const manifest = await loadIconPackManifest(pack);
+  signal.throwIfAborted();
   if (manifest.pages.length === 0) return undefined;
+
   const pageIndex = Math.floor(Math.random() * manifest.pages.length);
   const page = await loadIconPage(pack.id, manifest.pages[pageIndex]);
+  signal.throwIfAborted();
   if (page.length === 0) return undefined;
+
   const entry = page[Math.floor(Math.random() * page.length)];
   return toIconRef(
     {
@@ -97,43 +99,14 @@ export const pickRandomIcon = async (
   );
 };
 
-/** Payload returned by every async icon resolution. */
-export interface ResolvedIcon {
-  /** The resolved icon, or `undefined` when the pack/name didn't match. */
-  icon: IconRef | undefined;
-  /** Request id captured at start. Discarded when the live id has moved on. */
-  requestId: number;
-}
-
-/** Input for the `resolveIconEffect` — a parsed `pack:name` reference. */
-export interface ResolveIconInput {
-  pack: string;
-  name: string;
-}
-
 /**
- * Effect callback for `randomizeIconEffect`. Snapshots `requestId` so
- * the eventual `applyResolvedIcon` can detect supersession, then
- * delegates to {@link pickRandomIcon} scoped to the active pack.
+ * Drop the fetcher's manifest and page caches for every pack other than
+ * the one now active. The picker releases its own copy through a fold;
+ * this is the module-level half.
  */
-export const randomIconCapability = async (
-  load: DeepReadonly<LoadingState>,
-  packId: string,
-): Promise<ResolvedIcon> => {
-  const requestId = load.requestId;
-  const icon = await pickRandomIcon(packId);
-  return { icon, requestId };
-};
-
-/**
- * Effect callback for `resolveIconEffect`. Snapshots `requestId` then
- * resolves a fully-qualified icon ref through the pack fetcher.
- */
-export const resolveIconCapability = async (
-  load: DeepReadonly<LoadingState>,
-  input: ResolveIconInput,
-): Promise<ResolvedIcon> => {
-  const requestId = load.requestId;
-  const icon = await resolveIconRef(input.pack, input.name);
-  return { icon, requestId };
+export const releasePackCaches = (
+  _signal: AbortSignal,
+  activePackId: string,
+): void => {
+  releaseInactivePackCaches(activePackId);
 };

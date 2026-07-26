@@ -1,6 +1,12 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { createStore, defineAction, defineStore, useAction } from '@lib/state';
+import {
+  defineFold,
+  defineStore,
+  defineTopic,
+  useCommit,
+  useValue,
+} from '@lib/state-next';
 import { createLogger, toError } from '@lib/observability';
 import {
   Button,
@@ -12,7 +18,7 @@ import {
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { downloadPng, downloadSvg } from '../download';
 import { renderIconSvg } from '../svg';
-import type { IconEditorState } from '../store';
+import { iconEditorScope, type IconEditorState } from '../store';
 import { Field } from './field';
 
 interface ExportActionsProps {
@@ -44,21 +50,24 @@ const DEFAULT_PX = 512;
 /** Canonical size for the SVG export — vector, so any value is fine. */
 const SVG_EXPORT_SIZE = 512;
 
-const exportStore = defineStore<ExportPanelState>(() => ({
+// Owned by the editor's scope, not the panel's own — the rail swaps this
+// component out whenever the picker opens, and the chosen format and
+// size should survive that round trip.
+const exportPanel = defineStore<ExportPanelState>(iconEditorScope, () => ({
   format: 'svg',
   size: DEFAULT_PX,
 }));
-const exportState = createStore(exportStore);
 
-const setFormatAction = defineAction(
-  [exportStore],
-  (state, value: ExportFormat) => {
-    state.format = value;
-  },
-);
+/** The output format toggled between vector and raster. */
+const formatChanged = defineTopic<ExportFormat>();
+defineFold(formatChanged, [exportPanel], (state, format) => {
+  state.format = format;
+});
 
-const setSizeAction = defineAction([exportStore], (state, value: number) => {
-  if (Number.isFinite(value)) state.size = value;
+/** The target pixel size changed — from the input or a preset chip. */
+const sizeChanged = defineTopic<number>();
+defineFold(sizeChanged, [exportPanel], (state, size) => {
+  if (Number.isFinite(size)) state.size = size;
 });
 
 const clampSize = (value: number): number =>
@@ -75,10 +84,10 @@ const filenameStem = (icon: NonNullable<IconEditorState['icon']>) =>
  * square.
  */
 export const ExportActions: Component<ExportActionsProps> = (props) => {
-  const setFormat = useAction(setFormatAction);
-  const setSize = useAction(setSizeAction);
+  const panel = useValue(exportPanel);
+  const commit = useCommit();
 
-  const effectiveSize = () => clampSize(exportState.size);
+  const effectiveSize = () => clampSize(panel().size);
   // Filename / aria-label are only meaningful when an icon is chosen.
   // The Export button is disabled in the empty state, so the empty
   // string never reaches the user — we still need *something* to plug
@@ -86,7 +95,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   const filename = () => {
     const icon = props.state.icon;
     if (!icon) return '';
-    return exportState.format === 'svg'
+    return panel().format === 'svg'
       ? `${filenameStem(icon)}.svg`
       : `${filenameStem(icon)}-${effectiveSize()}.png`;
   };
@@ -94,7 +103,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
   const handleExport = () => {
     const icon = props.state.icon;
     if (!icon) return;
-    if (exportState.format === 'svg') {
+    if (panel().format === 'svg') {
       downloadSvg(
         renderIconSvg(props.state, { size: SVG_EXPORT_SIZE, metadata: true }),
         filename(),
@@ -144,8 +153,10 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
           name="export-format"
           size={1}
           columns={2}
-          value={exportState.format}
-          onValueChange={(value) => setFormat(value as ExportFormat)}
+          value={panel().format}
+          onValueChange={(value) =>
+            commit(formatChanged(value as ExportFormat))
+          }
           aria-label="Format"
         >
           <For each={FORMATS}>
@@ -161,7 +172,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
         </RadioCardsRoot>
       </Field>
 
-      <Show when={exportState.format === 'png'}>
+      <Show when={panel().format === 'png'}>
         <Field label="Size (px)" for="export-size">
           <Flex as="div" direction="column" gap={2}>
             <TextField
@@ -174,10 +185,10 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
               autocomplete="off"
               autocapitalize="off"
               enterkeyhint="done"
-              value={String(exportState.size)}
+              value={String(panel().size)}
               onInput={(event) => {
                 const next = Number(event.currentTarget.value);
-                if (Number.isFinite(next)) setSize(next);
+                if (Number.isFinite(next)) commit(sizeChanged(next));
               }}
             />
             <Flex as="div" gap={1} wrap="wrap">
@@ -188,7 +199,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
                     size={1}
                     variant="soft"
                     color={effectiveSize() === preset ? 'accent' : 'neutral'}
-                    onClick={() => setSize(preset)}
+                    onClick={() => commit(sizeChanged(preset))}
                   >
                     {preset}
                   </Button>
