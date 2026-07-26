@@ -1,8 +1,9 @@
 import { Match, Switch } from 'solid-js';
+import { useValue } from '@lib/state-next';
 import IconConnecting from 'virtual:icons/mdi/loading';
 import IconConnected from 'virtual:icons/mdi/check-circle-outline';
 import IconFailed from 'virtual:icons/mdi/alert-circle-outline';
-import { connection } from '../state/session';
+import { connectionStore } from '../state/session';
 import * as css from './connection-indicator.css';
 
 /**
@@ -16,36 +17,40 @@ import * as css from './connection-indicator.css';
  * its own `aria-label`, so swapping one in announces the new state to
  * assistive tech.
  */
-export const ConnectionIndicator = () => (
-  <output class={css.root}>
-    <Switch>
-      <Match when={connection.status === 'connecting'}>
-        <IconConnecting
-          class={css.spinner}
-          width="20"
-          height="20"
-          role="img"
-          aria-label="Connecting to the relay network…"
-        />
-      </Match>
-      <Match when={connection.status === 'connected'}>
-        <IconConnected
-          class={css.connected}
-          width="20"
-          height="20"
-          role="img"
-          aria-label="Connected to the relay network."
-        />
-      </Match>
-      <Match when={connection.status === 'failed'}>
-        <IconFailed
-          class={css.failed}
-          width="20"
-          height="20"
-          role="img"
-          aria-label="Failed to join the relay network."
-        />
-      </Match>
-    </Switch>
-  </output>
-);
+export const ConnectionIndicator = () => {
+  const connection = useValue(connectionStore);
+
+  return (
+    <output class={css.root}>
+      <Switch>
+        <Match when={connection().status === 'connecting'}>
+          <IconConnecting
+            class={css.spinner}
+            width="20"
+            height="20"
+            role="img"
+            aria-label="Connecting to the relay network…"
+          />
+        </Match>
+        <Match when={connection().status === 'connected'}>
+          <IconConnected
+            class={css.connected}
+            width="20"
+            height="20"
+            role="img"
+            aria-label="Connected to the relay network."
+          />
+        </Match>
+        <Match when={connection().status === 'failed'}>
+          <IconFailed
+            class={css.failed}
+            width="20"
+            height="20"
+            role="img"
+            aria-label="Failed to join the relay network."
+          />
+        </Match>
+      </Switch>
+    </output>
+  );
+};

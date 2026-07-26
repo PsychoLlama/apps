@@ -1,10 +1,10 @@
 import { createEffect, on } from 'solid-js';
 import { useParams } from '@solidjs/router';
-import { useEffect } from '@lib/state';
+import { useRun, useValue } from '@lib/state-next';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import { Callout, Container, Text } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
-import { connection, dialPeerEffect } from '../state/session';
+import { connectionStore, dialPeer, reportSagaFailure } from '../state/session';
 
 /**
  * The share view at `/beam/share/:id` — where a beam link lands, dialling the
@@ -14,15 +14,19 @@ import { connection, dialPeerEffect } from '../state/session';
  */
 export const BeamShare = () => {
   const params = useParams<{ id: string }>();
-  const dialPeer = useEffect(dialPeerEffect);
+  const connection = useValue(connectionStore);
+  const dial = useRun(dialPeer);
 
   // The dial needs the live endpoint, so hold off until the relay connection
   // lands. `on` re-runs if it cycles back to `connected` (e.g. a reconnect).
   createEffect(
     on(
-      () => connection.status,
+      () => connection().status,
       (status) => {
-        if (status === 'connected') void dialPeer(params.id);
+        if (status !== 'connected') return;
+        void dial(params.id).catch(
+          reportSagaFailure('The beam dial saga failed.'),
+        );
       },
     ),
   );

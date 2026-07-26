@@ -1,33 +1,25 @@
-import { onCleanup, onMount, type JSX } from 'solid-js';
-import { useEffect } from '@lib/state';
+import { onMount, type JSX } from 'solid-js';
+import { useAnchor, useRun } from '@lib/state-next';
 import { Frame } from '@lib/shell';
-import {
-  openConnectionEffect,
-  releaseConnectionEffect,
-} from '../state/session';
+import { beamScope, connectRelay, reportSagaFailure } from '../state/session';
 
 /**
- * The Beam layout: the `<main>` frame for every `/beam/*` route. It holds
- * the browser's iroh relay connection open for the whole surface, so the
- * endpoint survives navigation between the sender's view and a peer's
- * `/beam/:endpoint` view without re-dialling. Each route renders its own
- * header and body inside.
+ * The Beam layout: the `<main>` frame for every `/beam/*` route. It anchors
+ * the session scope for the whole surface, so the relay connection survives
+ * navigation between the invite view and a peer's share view without
+ * re-dialling. Each route renders its own header and body inside.
+ *
+ * The anchor is the only lifecycle wiring here: releasing it on cleanup
+ * aborts the connect and frees the relay.
  */
 export const BeamLayout = (props: { children?: JSX.Element }) => {
-  const openConnection = useEffect(openConnectionEffect);
-  const releaseConnection = useEffect(releaseConnectionEffect);
+  useAnchor(beamScope);
+  const connect = useRun(connectRelay);
 
   onMount(() => {
-    // The wasm can't be instantiated nor the relay dialled during SSG, so
-    // join the network once the client mounts. The controller lets the
-    // cleanup cancel a connect that's still in flight.
-    const controller = new AbortController();
-    void openConnection(controller.signal);
-
-    onCleanup(() => {
-      controller.abort();
-      void releaseConnection();
-    });
+    // Neither the wasm nor the handshake can run during SSG, so join the
+    // network once the client mounts.
+    void connect().catch(reportSagaFailure('The beam connect saga failed.'));
   });
 
   return <Frame>{props.children}</Frame>;

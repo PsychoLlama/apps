@@ -1,9 +1,7 @@
 import init, { generateSecretKey, joinRelay, type Relay } from '@crate/iroh';
 import initQrCode, { encode } from '@crate/qr-code';
 import { createLogger, toError } from '@lib/observability';
-import type { DeepReadonly } from '@lib/state';
 import { read, write, type VaultId } from '@lib/vault';
-import type { ConnectionState } from './connection';
 import type { QrGrid } from './qr-code';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -54,71 +52,85 @@ const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
 /**
  * Instantiate the iroh wasm module and join the public relay network. Both
  * steps are async and client-only — the wasm fetches and the relay handshake
- * can't run during prerender — so this is driven from `onMount`.
+ * can't run during prerender.
  *
  * Reuses a saved identity, or mints a fresh one so the endpoint keeps a stable
  * identity (and beam link) across reloads. A fresh key is persisted in
  * parallel with the relay connect rather than before it — the connect is the
  * slow, networked step, and the write needn't gate it.
  *
- * `signal` lets the view cancel a connect it no longer needs. iroh's own
- * `joinRelay()` isn't interruptible, so cancellation is cooperative: after each
- * `await` we bail if the signal has fired, freeing a late-arriving relay so
- * its relay connection doesn't linger, and resolve to `null` rather than
- * handing back a relay nothing will hold.
+ * Cancellation is cooperative: iroh's own `joinRelay()` isn't interruptible,
+ * so after each `await` we bail on the signal, freeing a late-arriving relay
+ * so its connection doesn't linger.
  */
-export const openConnection = async (
-  signal: AbortSignal,
-): Promise<Relay | null> => {
-  await init();
-  if (signal.aborted) return null;
-  logger.debug('Iroh wasm initialized.');
+export const openConnection = async (signal: AbortSignal): Promise<Relay> => {
+  try {
+    await init();
+    signal.throwIfAborted();
+    logger.debug('Iroh wasm initialized.');
 
-  const restored = await restoreSecretKey();
-  if (signal.aborted) return null;
+    const restored = await restoreSecretKey();
+    signal.throwIfAborted();
 
-  // Reuse the saved identity, or mint one and persist it alongside the connect.
-  const secretKey = restored ?? generateSecretKey();
-  const persisting = restored ? undefined : persistSecretKey(secretKey);
+    // Reuse the saved identity, or mint one and persist it alongside the
+    // connect.
+    const secretKey = restored ?? generateSecretKey();
+    const persisting = restored ? undefined : persistSecretKey(secretKey);
 
-  const relay = await joinRelay(secretKey);
-  await persisting;
-  if (signal.aborted) {
-    relay.free();
-    return null;
+    const relay = await joinRelay(secretKey);
+    await persisting;
+
+    // The handshake can't be interrupted, so a relay that lands after the
+    // abort has to be freed here or its relay connection lingers.
+    if (signal.aborted) relay.free();
+    signal.throwIfAborted();
+
+    // Start serving inbound dials so the peer being dialed logs the other
+    // side of the connection. The loop is held by the relay and torn down
+    // when it's freed. We only observe the peer's id, then free our handle —
+    // the accept loop keeps its own, so the connection stays open.
+    relay.acceptPeers((peer) => {
+      logger.debug('Peer connected.', { endpointId: peer.remoteId });
+      peer.free();
+    });
+
+    logger.debug('Connected to iroh relay.', {
+      endpointId: relay.endpointId,
+      homeRelay: relay.homeRelay,
+    });
+
+    return relay;
+  } catch (error) {
+    // An abort is ordinary teardown — the scope was released mid-connect —
+    // so it isn't worth reporting as a failure.
+    if (!signal.aborted) {
+      logger.error('Failed to join the iroh relay network.', {
+        error: toError(error),
+      });
+    }
+
+    throw error;
   }
-
-  // Start serving inbound dials so the peer being dialed logs the other
-  // side of the connection. The loop is held by the relay and torn down
-  // when it's freed. We only observe the peer's id, then free our handle —
-  // the accept loop keeps its own, so the connection stays open.
-  relay.acceptPeers((peer) => {
-    logger.debug('Peer connected.', { endpointId: peer.remoteId });
-    peer.free();
-  });
-
-  return relay;
 };
 
 /**
  * Dial the peer named in a beam link over the live relay connection,
- * resolving once the connection is established. Reads the relay off the
- * connection store — the caller only dials once the relay connection is
- * `connected`, so a missing relay is a caller bug and throws.
+ * resolving once the connection is established.
  *
- * Logs the outcome here (rather than via effect lifecycle actions) to sit
- * alongside {@link openConnection}'s inbound `Peer connected.` log — both
- * halves of a peer connection are observed from this layer.
+ * Logs the outcome here rather than from the saga, so it sits alongside
+ * {@link openConnection}'s inbound `Peer connected.` log — both halves of a
+ * peer connection are observed from this layer. A failed dial is reported and
+ * swallowed; there's no retry affordance yet.
+ *
+ * The signal goes unused: iroh's `dial()` isn't interruptible, and the peer
+ * handle is released before this resolves, so there's nothing an abort could
+ * unwind.
  */
-export const dialPeer = async (
-  state: DeepReadonly<ConnectionState>,
+export const dialEndpoint = async (
+  _signal: AbortSignal,
+  relay: Relay,
   endpointId: string,
 ): Promise<void> => {
-  const relay = state.relay?.current;
-  if (!relay) {
-    throw new Error('Cannot dial a peer before the relay connection is up.');
-  }
-
   try {
     const peer = await relay.dial(endpointId);
     logger.debug('Dialed peer.', { endpointId: peer.remoteId });
@@ -129,14 +141,6 @@ export const dialPeer = async (
       error: toError(error),
     });
   }
-};
-
-/**
- * Free the held relay straight off the store view, tearing its relay
- * connection down. A no-op before one's been opened.
- */
-export const closeConnection = (state: DeepReadonly<ConnectionState>): void => {
-  state.relay?.current.free();
 };
 
 /**
@@ -156,17 +160,36 @@ export const beamLink = (endpointId: string): string =>
 let wasmReady: Promise<unknown> | undefined;
 
 /**
- * Encode `text` into a QR module grid, instantiating the wasm on first use.
- * Copies `size`/`modules` out of the wasm handle into a plain {@link QrGrid}
- * and frees the handle, so the result owns its bytes and the reactive store
- * never touches wasm memory. Client-only — the wasm can't run during SSG.
+ * Encode this endpoint's beam link into a QR module grid, instantiating the
+ * encoder wasm on first use. Copies `size`/`modules` out of the wasm handle
+ * into a plain {@link QrGrid} and frees the handle, so the result owns its
+ * bytes and nothing downstream touches wasm memory. Client-only — neither the
+ * wasm nor `window.location` is available during SSG.
+ *
+ * Never rejects. A failed encode is non-fatal — the link is still copyable
+ * from its text field — so it resolves to `null` rather than sinking the
+ * connection landing alongside it.
  */
-export const encodeQrCode = async (text: string): Promise<QrGrid> => {
-  wasmReady ??= initQrCode();
-  await wasmReady;
+export const encodeBeamCode = async (
+  signal: AbortSignal,
+  endpointId: string,
+): Promise<QrGrid | null> => {
+  try {
+    wasmReady ??= initQrCode();
+    await wasmReady;
+    signal.throwIfAborted();
 
-  const code = encode(text);
-  const grid: QrGrid = { size: code.size, modules: code.modules };
-  code.free();
-  return grid;
+    const code = encode(beamLink(endpointId));
+    const grid: QrGrid = { size: code.size, modules: code.modules };
+    code.free();
+    return grid;
+  } catch (error) {
+    if (!signal.aborted) {
+      logger.error('Failed to encode the beam link as a QR code.', {
+        error: toError(error),
+      });
+    }
+
+    return null;
+  }
 };

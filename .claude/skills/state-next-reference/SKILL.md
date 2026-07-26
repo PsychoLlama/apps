@@ -54,6 +54,7 @@ description: Reference docs for `@lib/state-next` — the experimental transacti
 - `peek(ref)`: Untracked read.
 - `useCommit()`: Returns `(...facts) => void` — commit straight from UI for simple synchronous interactions. One call, N facts, one transition.
 - `run(saga(input))` / `useRun(saga)`: Drive a saga; resolves with its return value.
+- `isAbortError(error)`: Whether a rejection came from cancellation. `run(...)` rejects this way when the scope's last anchor is released mid-flight — ordinary teardown, not a failure.
 - `createRuntime()` / `bindRuntime(runtime)`: Isolated runtimes; app code uses the implicit global bindings.
 
 ## Testing

@@ -208,8 +208,9 @@ export default [
     // @lib/state-next sagas speak through `yield`ed instructions; their
     // async-generator bodies often contain no literal `await` even though
     // the driver awaits on their behalf. The rule misfires on the entire
-    // grammar.
-    files: ['packages/lib/state-next/**/*.ts'],
+    // grammar, so it's off wherever sagas are authored — the library and
+    // each package that defines them.
+    files: ['packages/lib/state-next/**/*.ts', 'packages/app/beam/**/*.ts'],
     rules: {
       '@typescript-eslint/require-await': 'off',
     },

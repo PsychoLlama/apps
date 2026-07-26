@@ -1,10 +1,11 @@
-import { createStore, defineStore, type Ref } from '@lib/state';
+import { defineCell, defineFold, defineTopic } from '@lib/state-next';
+import { beamScope } from './scope';
 
 /**
  * A generated QR code as its raw module grid — no pixels, just which cells
  * are dark — so the view paints it with its own tokens. A plain copy of the
- * shape `@crate/qr-code` returns, lifted out of wasm memory so it outlives the
- * handle and the reactive store never proxies wasm-owned bytes.
+ * shape `@crate/qr-code` returns, lifted out of wasm memory so it outlives
+ * the handle.
  */
 export interface QrGrid {
   /** Modules per side, quiet zone included. The grid is `size × size`. */
@@ -13,20 +14,21 @@ export interface QrGrid {
   modules: Uint8Array;
 }
 
-/** The QR rendering of the current beam link. */
-export interface QrCodeState {
-  /**
-   * The encoded grid for the live beam link, held behind `Ref` so the
-   * reactive store doesn't proxy the byte buffer. `null` until the first
-   * encode lands — the wasm encoder and the link are both client-only — and
-   * again if an encode fails.
-   */
-  grid: Ref<QrGrid> | null;
-}
+/**
+ * The QR rendering of this session's beam link. A cell, not store state —
+ * the grid is a byte buffer a reactive store must never proxy. `null` until
+ * the encode lands (both the encoder and the link are client-only), and if
+ * the encode failed.
+ */
+export const qrCode = defineCell<QrGrid | null>(beamScope, () => null);
 
-export const qrCodeStore = defineStore<QrCodeState>(() => ({
-  grid: null,
-}));
-
-/** Live, readonly view of the beam link's QR grid. */
-export const qrCode = createStore(qrCodeStore);
+/**
+ * The beam link was encoded into a scannable grid, or `null` if the encode
+ * failed. Failure is non-fatal — the link is still copyable from its text
+ * field — so this rides the same transition as the connection coming up
+ * rather than a separate one.
+ */
+export const codeEncoded = defineTopic<QrGrid | null>();
+defineFold(codeEncoded, [qrCode], (code, grid) => {
+  code.current = grid;
+});
