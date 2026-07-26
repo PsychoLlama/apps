@@ -84,23 +84,38 @@ export default defineConfig({
         // Manual entries for routes the crawler can't reach from `/`:
         //   - `/404`: rendered via Cloudflare's `not_found_handling`,
         //     not linked from any page.
-        //   - `/scratchpad` and `/beam`: flag-gated app routes,
+        //   - `/scratchpad` and the `/beam/*` routes: flag-gated apps,
         //     unlisted from the launcher whenever their flag is off.
         //     Their shells ship in every build; the service worker gates
         //     access at runtime via the per-app flag (see
         //     `@lib/runtime-config`), so there's nothing to decide at
-        //     build time here.
-        //   - `/beam/with/__endpoint`: a representative shell for the
-        //     dynamic `/beam/with/:endpoint` route. The endpoint id only
-        //     exists client-side (it's a live relay handle), so the route
-        //     can't be prerendered per-id — but its first paint is a fixed
-        //     stub independent of the id, so one shell serves every id. The
-        //     `__endpoint` sentinel stands in for the missing id; the hook
-        //     below flattens it to `/beam/__endpoint.html`, and
-        //     `public/_redirects` rewrites `/beam/with/*` onto it so a cold
-        //     load hydrates against a beam-shaped shell instead of the
-        //     404 page (which would mismatch and throw).
-        routes: ['/404', '/scratchpad', '/beam', '/beam/with/__endpoint'],
+        //     build time here. Beam's inner pages are listed rather than
+        //     left to the crawler so the set doesn't hinge on which links
+        //     the beam home happens to render.
+        //   - `/beam/share/__id` and `/beam/contacts/__id`: representative
+        //     shells for the dynamic `/beam/share/:id` and
+        //     `/beam/contacts/:id` routes. The id names a peer endpoint,
+        //     which only exists client-side (it's a live relay handle), so
+        //     neither route can be prerendered per-id — but each one's first
+        //     paint is a fixed stub independent of the id, so one shell
+        //     serves every id. That independence is load-bearing, not
+        //     incidental: Solid hydrates by adopting the server's DOM without
+        //     rewriting attributes, so any markup derived from the id would
+        //     render with the sentinel below and stay stuck on it. The
+        //     `__id` sentinel stands in for the missing
+        //     value; the hook below flattens them to `/beam/__share.html` and
+        //     `/beam/__contact.html`, and `public/_redirects` rewrites each
+        //     dynamic path onto its shell so a cold load hydrates against a
+        //     beam-shaped shell instead of the 404 page (which would mismatch
+        //     and throw).
+        routes: [
+          '/404',
+          '/scratchpad',
+          '/beam',
+          '/beam/invite',
+          '/beam/share/__id',
+          '/beam/contacts/__id',
+        ],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file
@@ -112,17 +127,21 @@ export default defineConfig({
             route.fileName = '/404.html';
           }
 
-          // Flatten the `/beam/with/:endpoint` shell up one level, to a
-          // sibling of `/beam/with/` rather than a child of it.
-          // `public/_redirects` rewrites `/beam/with/*` onto it, and
-          // Cloudflare normalizes rewrite targets by stripping `/index` and
-          // `.html` before its loop check — so a target left under
-          // `/beam/with/` would renormalize into the `/beam/with/*` source
-          // and the whole rule gets rejected as an infinite loop. Nesting at
-          // `/beam/` (a shallower prefix the source can't match) keeps the
-          // shell tucked under the beam app without tripping that check.
-          if (route.route === '/beam/with/__endpoint') {
-            route.fileName = '/beam/__endpoint.html';
+          // Flatten each dynamic beam shell up one level, to a sibling of
+          // its own directory rather than a child of it. `public/_redirects`
+          // rewrites the dynamic paths onto these, and Cloudflare normalizes
+          // rewrite targets by stripping `/index` and `.html` before its loop
+          // check — so a target left under `/beam/share/` would renormalize
+          // into the `/beam/share/:id` source and the whole rule gets
+          // rejected as an infinite loop. Nesting at `/beam/` (a shallower
+          // prefix neither source can match) keeps the shells tucked under
+          // the beam app without tripping that check.
+          if (route.route === '/beam/share/__id') {
+            route.fileName = '/beam/__share.html';
+          }
+
+          if (route.route === '/beam/contacts/__id') {
+            route.fileName = '/beam/__contact.html';
           }
         },
       },

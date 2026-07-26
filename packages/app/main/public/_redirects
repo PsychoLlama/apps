@@ -9,17 +9,18 @@
 # the trailing literal keeps it scoped to the old manifest asset.
 /_build/assets/manifest-:hash.webmanifest  /manifest.webmanifest  301
 
-# Serve the flattened `/beam/with/:endpoint` shell for every endpoint id. The
-# id is a live client-side relay handle, so no per-id page can be prerendered
-# (Cloudflare's static assets match literal paths only — no `[param]` filename
-# routing); without this a cold load falls through to the 404 shell and the
-# client hydrates a beam route against 404 markup, throwing a hydration error.
-# A 200 rewrite (not a redirect) keeps the id in the URL for the client router.
-# `:endpoint` matches a single segment. The target is the extensionless
-# `/beam/__endpoint` (served from `/beam/__endpoint.html`): Cloudflare strips a
-# trailing `/index` or `.html` from the target and 307s to the stripped path, so
-# naming the `.html` here would bounce every id to a bare `/beam/__endpoint`,
-# dropping it from the URL. The target sits one level up from `/beam/with/`, a
-# prefix the source can't match, so the stripped form never renormalizes into
-# `/beam/with/:endpoint` and trips loop detection.
-/beam/with/:endpoint  /beam/__endpoint  200
+# Serve the flattened beam shells for every endpoint id. The id is a live
+# client-side relay handle, so no per-id page can be prerendered (Cloudflare's
+# static assets match literal paths only — no `[param]` filename routing);
+# without these a cold load falls through to the 404 shell and the client
+# hydrates a beam route against 404 markup, throwing a hydration error. A 200
+# rewrite (not a redirect) keeps the id in the URL for the client router. `:id`
+# matches a single segment. Each target is extensionless (`/beam/__share` is
+# served from `/beam/__share.html`): Cloudflare strips a trailing `/index` or
+# `.html` from the target and 307s to the stripped path, so naming the `.html`
+# here would bounce every id to a bare `/beam/__share`, dropping it from the
+# URL. Both targets sit one level up from their source directory, at a prefix
+# neither source can match, so the stripped form never renormalizes into its
+# own source and trips loop detection.
+/beam/share/:id     /beam/__share    200
+/beam/contacts/:id  /beam/__contact  200
