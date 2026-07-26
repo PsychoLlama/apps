@@ -4,19 +4,22 @@ import { Container, Flex, Heading, TextField } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
 import { QrCode } from './qr-code';
 import { connection, qrCode, beamLink } from '../state/session';
-import * as styles from './beam-view.css';
+import * as styles from './beam-invite.css';
 
 /**
- * The sender's view at `/beam`. Once the relay connection is live it surfaces
- * this endpoint's beam link two ways side by side: a read-only field on the
- * left to copy and paste, and a QR code on the right for a peer to scan. The
- * connection lands the endpoint and its QR grid together, so both appear in the
- * same paint.
+ * The invite view at `/beam/invite`. Once the relay connection is live it
+ * surfaces this endpoint's beam link two ways side by side: a read-only field
+ * on the left to copy and paste, and a QR code on the right for a peer to scan.
+ * The connection lands the endpoint and its QR grid together, so both appear in
+ * the same paint.
  */
-export const Beam = () => {
+export const BeamInvite = () => {
   return (
     <>
-      <SiteHeader title="Beam" actions={<ConnectionIndicator />} />
+      <SiteHeader
+        trail={[{ label: 'Beam', href: '/beam' }, { label: 'Invite' }]}
+        actions={<ConnectionIndicator />}
+      />
       <FrameBody>
         <Container as="div" size={2}>
           <Flex as="div" direction="column" gap={4}>

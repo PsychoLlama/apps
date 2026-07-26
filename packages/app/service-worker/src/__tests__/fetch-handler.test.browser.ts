@@ -406,7 +406,14 @@ describe('handleFetch', () => {
       expect((await response).status).toBe(200);
     });
 
-    it('gates the /beam/with/:endpoint peer route on the same flag', async () => {
+    // Every route under `/beam/` rides the same prefix check, so the gate
+    // is asserted per-route: a new page added without a matching rewrite
+    // rule would otherwise ship ungated.
+    it.each([
+      ['/beam/invite'],
+      ['/beam/share/abc123'],
+      ['/beam/contacts/abc123'],
+    ])('gates %s on the same flag', async (pathname) => {
       await updateConfig(beamAppEnabled, {
         development: { enabled: false },
       });
@@ -414,7 +421,7 @@ describe('handleFetch', () => {
         new Response('<html>not found</html>', { status: 200 }),
       );
 
-      const request = new Request(sameOrigin('/beam/with/abc123'));
+      const request = new Request(sameOrigin(pathname));
       Object.defineProperty(request, 'mode', { value: 'navigate' });
       const event = syntheticEvent(request);
       handleFetch(event as unknown as FetchEvent);

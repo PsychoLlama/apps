@@ -1,3 +1,3 @@
-import { Beam } from '@app/beam';
+import { BeamHome } from '@app/beam';
 
-export default Beam;
+export default BeamHome;
