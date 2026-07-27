@@ -1,4 +1,4 @@
-import { call, commit, defineSaga, isAbortError, read } from '@lib/state-next';
+import { AbortError, call, commit, defineSaga, read } from '@lib/state-next';
 import { createLogger, toError } from '@lib/observability';
 import {
   connectFailed,
@@ -22,7 +22,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 export const reportSagaFailure =
   (message: string) =>
   (error: unknown): void => {
-    if (isAbortError(error)) return;
+    if (error instanceof AbortError) return;
     logger.error(message, { error: toError(error) });
   };
 

@@ -1,4 +1,4 @@
-export { isAbortError } from './abort';
+export { AbortError } from './abort';
 export {
   anchor,
   bindRuntime,

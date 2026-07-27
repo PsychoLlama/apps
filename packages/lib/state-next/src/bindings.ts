@@ -1,5 +1,5 @@
 import { onCleanup } from 'solid-js';
-import { isAbortError } from './abort';
+import { AbortError } from './abort';
 import { commitFacts } from './fold';
 import {
   FAILURES,
@@ -49,7 +49,7 @@ const runSaga = <Return>(
       // Detached but owned: same scope signal, direct commits. Failures
       // escape loudly instead of vanishing into a dropped promise.
       drive(child, context).catch((error: unknown) => {
-        if (isAbortError(error)) return;
+        if (error instanceof AbortError) return;
         reportFailure(runtime, error);
       });
     },
