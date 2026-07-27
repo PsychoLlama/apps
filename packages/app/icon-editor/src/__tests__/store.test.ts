@@ -2,29 +2,29 @@ import { createTestRuntime } from '@lib/state-next';
 import {
   DEFAULT_PACK_ID,
   entryKey,
-  iconEntries,
-  picker,
+  iconEntriesCell,
   pickerScope,
+  pickerStore,
 } from '../components/icon-grid/store';
 import {
   DEFAULT_ICON_EDITOR_STATE,
-  editorReset,
-  iconEditor,
+  editorResetTopic,
   iconEditorScope,
-  iconPicked,
-  iconResolveFailed,
-  iconResolveStarted,
-  iconResolveSuperseded,
-  iconResolved,
-  loading,
-  paddingChanged,
-  paletteChanged,
-  pickerClosed,
-  pickerOpened,
-  rail,
-  shapeChanged,
-  shareParams,
-  styleHydrated,
+  iconEditorStore,
+  iconPickedTopic,
+  iconResolveFailedTopic,
+  iconResolveStartedTopic,
+  iconResolveSupersededTopic,
+  iconResolvedTopic,
+  loadingStore,
+  paddingChangedTopic,
+  paletteChangedTopic,
+  pickerClosedTopic,
+  pickerOpenedTopic,
+  railStore,
+  shapeChangedTopic,
+  shareParamsFormula,
+  styleHydratedTopic,
 } from '../store';
 import type { IconRef } from '../icons';
 
@@ -51,152 +51,154 @@ const setup = () => {
   return runtime;
 };
 
-describe('iconPicked', () => {
+describe('iconPickedTopic', () => {
   it('writes the icon and bumps the request id so any in-flight resolve is superseded', () => {
     const { commit, peek } = setup();
 
-    commit(iconPicked(sampleIcon));
+    commit(iconPickedTopic(sampleIcon));
 
-    expect(peek(iconEditor).icon).toEqual(sampleIcon);
-    expect(peek(loading).requestId).toBe(1);
+    expect(peek(iconEditorStore).icon).toEqual(sampleIcon);
+    expect(peek(loadingStore).requestId).toBe(1);
   });
 
   it('zeroes pending so the URL mirror sees a settled icon without waiting for stale fetches to land', () => {
     const { commit, peek } = setup();
-    commit(iconResolveStarted());
-    commit(iconResolveStarted());
-    expect(peek(loading).pending).toBe(2);
+    commit(iconResolveStartedTopic());
+    commit(iconResolveStartedTopic());
+    expect(peek(loadingStore).pending).toBe(2);
 
-    commit(iconPicked(sampleIcon));
+    commit(iconPickedTopic(sampleIcon));
 
-    expect(peek(loading).pending).toBe(0);
+    expect(peek(loadingStore).pending).toBe(0);
   });
 
   it('pulls the picker to the icon’s pack and seeds its body in the same transition', () => {
     const { commit, peek } = setup();
 
-    commit(iconPicked(otherIcon));
+    commit(iconPickedTopic(otherIcon));
 
-    expect(peek(picker).activePackId).toBe('tabler');
-    expect(peek(iconEntries).get(entryKey('tabler', 'rocket'))?.body).toBe(
+    expect(peek(pickerStore).activePackId).toBe('tabler');
+    expect(peek(iconEntriesCell).get(entryKey('tabler', 'rocket'))?.body).toBe(
       otherIcon.body,
     );
   });
 });
 
-describe('editorReset', () => {
+describe('editorResetTopic', () => {
   it('restores the canonical defaults', () => {
     const { commit, peek } = setup();
-    commit(iconPicked(sampleIcon));
-    commit(paletteChanged('mint'));
-    commit(shapeChanged('circle'));
-    commit(paddingChanged(30));
+    commit(iconPickedTopic(sampleIcon));
+    commit(paletteChangedTopic('mint'));
+    commit(shapeChangedTopic('circle'));
+    commit(paddingChangedTopic(30));
 
-    commit(editorReset());
+    commit(editorResetTopic());
 
-    expect(peek(iconEditor)).toEqual(DEFAULT_ICON_EDITOR_STATE);
+    expect(peek(iconEditorStore)).toEqual(DEFAULT_ICON_EDITOR_STATE);
   });
 
   it('supersedes any pending resolve — zeroes pending, bumps requestId', () => {
     const { commit, peek } = setup();
-    commit(iconResolveStarted());
+    commit(iconResolveStartedTopic());
 
-    commit(editorReset());
+    commit(editorResetTopic());
 
-    expect(peek(loading).pending).toBe(0);
-    expect(peek(loading).requestId).toBe(2);
+    expect(peek(loadingStore).pending).toBe(0);
+    expect(peek(loadingStore).requestId).toBe(2);
   });
 
   it('returns the picker to the default pack so the panel’s pack card matches the blank slate', () => {
     const { commit, peek } = setup();
-    commit(iconPicked(otherIcon));
+    commit(iconPickedTopic(otherIcon));
 
-    commit(editorReset());
+    commit(editorResetTopic());
 
-    expect(peek(picker).activePackId).toBe(DEFAULT_PACK_ID);
+    expect(peek(pickerStore).activePackId).toBe(DEFAULT_PACK_ID);
   });
 });
 
-describe('styleHydrated', () => {
+describe('styleHydratedTopic', () => {
   it('applies style fields without touching the icon', () => {
     const { commit, peek } = setup();
-    commit(iconPicked(sampleIcon));
+    commit(iconPickedTopic(sampleIcon));
 
-    commit(styleHydrated({ palette: 'mint', shape: 'circle', padding: 8 }));
+    commit(
+      styleHydratedTopic({ palette: 'mint', shape: 'circle', padding: 8 }),
+    );
 
-    expect(peek(iconEditor).palette).toBe('mint');
-    expect(peek(iconEditor).shape).toBe('circle');
-    expect(peek(iconEditor).padding).toBe(8);
-    expect(peek(iconEditor).icon).toEqual(sampleIcon);
+    expect(peek(iconEditorStore).palette).toBe('mint');
+    expect(peek(iconEditorStore).shape).toBe('circle');
+    expect(peek(iconEditorStore).padding).toBe(8);
+    expect(peek(iconEditorStore).icon).toEqual(sampleIcon);
   });
 });
 
-describe('iconResolveStarted', () => {
+describe('iconResolveStartedTopic', () => {
   it('increments pending and bumps the request id atomically', () => {
     const { commit, peek } = setup();
 
-    commit(iconResolveStarted());
-    commit(iconResolveStarted());
+    commit(iconResolveStartedTopic());
+    commit(iconResolveStartedTopic());
 
-    expect(peek(loading).pending).toBe(2);
-    expect(peek(loading).requestId).toBe(2);
+    expect(peek(loadingStore).pending).toBe(2);
+    expect(peek(loadingStore).requestId).toBe(2);
   });
 });
 
-describe('iconResolved', () => {
+describe('iconResolvedTopic', () => {
   it('commits the icon and decrements pending', () => {
     const { commit, peek } = setup();
-    commit(iconResolveStarted());
+    commit(iconResolveStartedTopic());
 
-    commit(iconResolved(sampleIcon));
+    commit(iconResolvedTopic(sampleIcon));
 
-    expect(peek(iconEditor).icon).toEqual(sampleIcon);
-    expect(peek(loading).pending).toBe(0);
+    expect(peek(iconEditorStore).icon).toEqual(sampleIcon);
+    expect(peek(loadingStore).pending).toBe(0);
   });
 
   it('treats a missing icon as a no-op write but still decrements pending', () => {
     const { commit, peek } = setup();
-    commit(iconPicked(sampleIcon));
-    commit(iconResolveStarted());
+    commit(iconPickedTopic(sampleIcon));
+    commit(iconResolveStartedTopic());
 
-    commit(iconResolved(undefined));
+    commit(iconResolvedTopic(undefined));
 
-    expect(peek(iconEditor).icon).toEqual(sampleIcon);
-    expect(peek(loading).pending).toBe(0);
+    expect(peek(iconEditorStore).icon).toEqual(sampleIcon);
+    expect(peek(loadingStore).pending).toBe(0);
   });
 });
 
-describe('iconResolveSuperseded / iconResolveFailed', () => {
+describe('iconResolveSupersededTopic / iconResolveFailedTopic', () => {
   it('unwind the loading counter without going negative or touching the icon', () => {
     const { commit, peek } = setup();
-    commit(iconPicked(sampleIcon));
-    commit(iconResolveStarted());
+    commit(iconPickedTopic(sampleIcon));
+    commit(iconResolveStartedTopic());
 
-    commit(iconResolveSuperseded());
-    commit(iconResolveFailed());
+    commit(iconResolveSupersededTopic());
+    commit(iconResolveFailedTopic());
 
-    expect(peek(loading).pending).toBe(0);
-    expect(peek(iconEditor).icon).toEqual(sampleIcon);
+    expect(peek(loadingStore).pending).toBe(0);
+    expect(peek(iconEditorStore).icon).toEqual(sampleIcon);
   });
 });
 
-describe('pickerOpened / pickerClosed', () => {
+describe('pickerOpenedTopic / pickerClosedTopic', () => {
   it('swaps the rail to the icon browser and back to the properties inspector', () => {
     const { commit, peek } = setup();
 
-    commit(pickerOpened());
-    expect(peek(rail).view).toBe('picker');
+    commit(pickerOpenedTopic());
+    expect(peek(railStore).view).toBe('picker');
 
-    commit(pickerClosed());
-    expect(peek(rail).view).toBe('properties');
+    commit(pickerClosedTopic());
+    expect(peek(railStore).view).toBe('properties');
   });
 });
 
-describe('shareParams', () => {
+describe('shareParamsFormula', () => {
   it('drops every key sitting at its default so a resting link stays clean', () => {
     const { peek } = setup();
 
-    expect(peek(shareParams)).toEqual({
+    expect(peek(shareParamsFormula)).toEqual({
       icon: null,
       palette: null,
       shape: null,
@@ -206,9 +208,13 @@ describe('shareParams', () => {
 
   it('encodes the icon and the non-default style fields', () => {
     const { commit, peek } = setup();
-    commit(iconPicked(sampleIcon), paletteChanged('mint'), paddingChanged(25));
+    commit(
+      iconPickedTopic(sampleIcon),
+      paletteChangedTopic('mint'),
+      paddingChangedTopic(25),
+    );
 
-    expect(peek(shareParams)).toEqual({
+    expect(peek(shareParamsFormula)).toEqual({
       icon: 'mdi:home',
       palette: 'mint',
       shape: null,
@@ -218,8 +224,8 @@ describe('shareParams', () => {
 
   it('omits the icon key entirely while a resolve is pending, so the URL keeps the param it already had', () => {
     const { commit, peek } = setup();
-    commit(iconResolveStarted());
+    commit(iconResolveStartedTopic());
 
-    expect(peek(shareParams)).not.toHaveProperty('icon');
+    expect(peek(shareParamsFormula)).not.toHaveProperty('icon');
   });
 });

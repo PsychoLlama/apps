@@ -40,18 +40,18 @@ import {
   type IconPackSummary,
   type IconRef,
 } from '../../icons';
-import { loadMissingPackData } from './sagas';
+import { loadMissingPackDataSaga } from './sagas';
 import {
-  activePack,
+  activePackFormula,
   entryKey,
-  iconEntryCache,
-  missingPackData,
-  pageChanged,
-  pageView,
-  packSearchChanged,
-  picker,
-  pickerViewChanged,
-  searchChanged,
+  iconEntryCacheFormula,
+  missingPackDataFormula,
+  pageChangedTopic,
+  pageViewFormula,
+  packSearchChangedTopic,
+  pickerStore,
+  pickerViewChangedTopic,
+  searchChangedTopic,
 } from './store';
 import { PackCard } from '../pack-card';
 import * as css from './icon-grid.css';
@@ -85,11 +85,11 @@ interface IconGridProps {
  * matching the search.
  */
 export const IconGrid: Component<IconGridProps> = (props) => {
-  const state = useValue(picker);
-  const pack = useValue(activePack);
-  const missing = useValue(missingPackData);
+  const picker = useValue(pickerStore);
+  const pack = useValue(activePackFormula);
+  const missing = useValue(missingPackDataFormula);
   const commit = useCommit();
-  const loadMissing = useRun(loadMissingPackData);
+  const loadMissing = useRun(loadMissingPackDataSaga);
 
   // The editor fetches the pack catalog and folds every icon write into
   // the active pack, so both are already arranged by the time the grid
@@ -101,7 +101,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
    * keystroke walks the (proxied) name array once, not once per field
    * the render reads.
    */
-  const view = createMemo(useValue(pageView));
+  const view = createMemo(useValue(pageViewFormula));
 
   /**
    * The entry cache. `equals: false` because the `Map` reference is
@@ -109,7 +109,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
    * formula is what actually changed. Tiles walk the `Map` directly,
    * with no tracking node per `pack:name` key.
    */
-  const entries = createMemo(useValue(iconEntryCache), undefined, {
+  const entries = createMemo(useValue(iconEntryCacheFormula), undefined, {
     equals: false,
   });
 
@@ -143,39 +143,39 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   return (
     <Flex as="div" direction="column" gap={3} class={css.root}>
       <Switch>
-        <Match when={state().view === 'packs'}>
+        <Match when={picker().view === 'packs'}>
           <PackListView
-            packs={state().packs}
-            activePackId={state().activePackId}
-            search={state().packSearch}
-            onSearch={(query) => commit(packSearchChanged(query))}
+            packs={picker().packs}
+            activePackId={picker().activePackId}
+            search={picker().packSearch}
+            onSearch={(query) => commit(packSearchChangedTopic(query))}
             onPick={props.onSelectPack}
             onClose={props.onClose}
           />
         </Match>
-        <Match when={state().view === 'pack-detail'}>
+        <Match when={picker().view === 'pack-detail'}>
           <PackDetailView
             pack={pack()}
             manifest={view().manifest}
             getEntry={getEntry}
-            search={state().search}
-            onSearch={(query) => commit(searchChanged(query))}
+            search={picker().search}
+            onSearch={(query) => commit(searchChangedTopic(query))}
             visible={view().names}
             pageStart={view().start}
             total={view().total}
             currentPage={view().page}
             pageCount={view().pageCount}
-            onPageChange={(page) => commit(pageChanged(page))}
+            onPageChange={(page) => commit(pageChangedTopic(page))}
             selected={props.selected}
             onPickIcon={handlePickIcon}
             onClose={props.onClose}
-            onShowInfo={() => commit(pickerViewChanged('pack-info'))}
+            onShowInfo={() => commit(pickerViewChangedTopic('pack-info'))}
           />
         </Match>
-        <Match when={state().view === 'pack-info'}>
+        <Match when={picker().view === 'pack-info'}>
           <PackInfoView
             pack={pack()}
-            onShowIcons={() => commit(pickerViewChanged('pack-detail'))}
+            onShowIcons={() => commit(pickerViewChangedTopic('pack-detail'))}
           />
         </Match>
       </Switch>

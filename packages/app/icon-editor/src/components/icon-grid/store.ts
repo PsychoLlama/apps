@@ -14,7 +14,11 @@ import type {
   IconPageResult,
   IconRef,
 } from '../../icons';
-import { editorReset, iconPicked, iconResolved } from '../../store';
+import {
+  editorResetTopic,
+  iconPickedTopic,
+  iconResolvedTopic,
+} from '../../store';
 
 /** Which surface the picker is showing. */
 export type PickerView = 'packs' | 'pack-detail' | 'pack-info';
@@ -40,7 +44,7 @@ export interface PickerState {
    */
   manifests: { [packId: string]: IconPackManifest | undefined };
   /**
-   * Bumped on every write to {@link iconEntries}. Formulas read this to
+   * Bumped on every write to {@link iconEntriesCell}. Formulas read this to
    * pick up new resolutions; the `Map` itself stays non-reactive.
    */
   entriesVersion: number;
@@ -64,7 +68,7 @@ export const DEFAULT_PACK_ID = 'mdi';
 export const pickerScope = defineScope();
 
 /** Live, readonly view of the picker state. */
-export const picker = defineStore<PickerState>(pickerScope, () => ({
+export const pickerStore = defineStore<PickerState>(pickerScope, () => ({
   // Land on the chooser. The pack-detail view is reached only after the
   // user picks a pack, or after a deep link resolves an icon and pulls
   // the active pack along with it.
@@ -85,12 +89,12 @@ export const picker = defineStore<PickerState>(pickerScope, () => ({
  * cost when a 500-tile page re-binds. Reactivity flows through
  * `entriesVersion` instead.
  */
-export const iconEntries = defineCell<Map<string, IconEntry>>(
+export const iconEntriesCell = defineCell<Map<string, IconEntry>>(
   pickerScope,
   () => new Map(),
 );
 
-/** The writable shape a fold sees for {@link iconEntries}. */
+/** The writable shape a fold sees for {@link iconEntriesCell}. */
 type EntriesDraft = { current: Map<string, IconEntry> };
 
 /**
@@ -153,47 +157,51 @@ const openPack = (
 // --- Browsing ---
 
 /** The user picked a pack from the list. */
-export const packSelected = defineTopic<string>();
-defineFold(packSelected, [picker, iconEntries], (state, entries, packId) => {
-  openPack(state, entries, packId);
-});
+export const packSelectedTopic = defineTopic<string>();
+defineFold(
+  packSelectedTopic,
+  [pickerStore, iconEntriesCell],
+  (state, entries, packId) => {
+    openPack(state, entries, packId);
+  },
+);
 
 /** The picker swapped surfaces — pack list, icon grid, or pack info. */
-export const pickerViewChanged = defineTopic<PickerView>();
-defineFold(pickerViewChanged, [picker], (state, view) => {
+export const pickerViewChangedTopic = defineTopic<PickerView>();
+defineFold(pickerViewChangedTopic, [pickerStore], (state, view) => {
   state.view = view;
 });
 
 /** The in-pack search filter changed. Snaps the page index back so results aren't hidden behind a stale page. */
-export const searchChanged = defineTopic<string>();
-defineFold(searchChanged, [picker], (state, query) => {
+export const searchChangedTopic = defineTopic<string>();
+defineFold(searchChangedTopic, [pickerStore], (state, query) => {
   state.search = query;
   state.currentPage = 0;
 });
 
 /** The pack-list search filter changed. */
-export const packSearchChanged = defineTopic<string>();
-defineFold(packSearchChanged, [picker], (state, query) => {
+export const packSearchChangedTopic = defineTopic<string>();
+defineFold(packSearchChangedTopic, [pickerStore], (state, query) => {
   state.packSearch = query;
 });
 
 /** The user paged through the active pack's grid. */
-export const pageChanged = defineTopic<number>();
-defineFold(pageChanged, [picker], (state, page) => {
+export const pageChangedTopic = defineTopic<number>();
+defineFold(pageChangedTopic, [pickerStore], (state, page) => {
   state.currentPage = page;
 });
 
 // --- Fetched data ---
 
 /** The pack catalog landed. */
-export const packsLoaded = defineTopic<ReadonlyArray<IconPackSummary>>();
-defineFold(packsLoaded, [picker], (state, packs) => {
+export const packsLoadedTopic = defineTopic<ReadonlyArray<IconPackSummary>>();
+defineFold(packsLoadedTopic, [pickerStore], (state, packs) => {
   state.packs = packs;
 });
 
 /** A pack's manifest landed. */
-export const manifestLoaded = defineTopic<IconPackManifest>();
-defineFold(manifestLoaded, [picker], (state, manifest) => {
+export const manifestLoadedTopic = defineTopic<IconPackManifest>();
+defineFold(manifestLoadedTopic, [pickerStore], (state, manifest) => {
   state.manifests[manifest.id] = manifest;
 });
 
@@ -202,14 +210,18 @@ defineFold(manifestLoaded, [picker], (state, manifest) => {
  * that read through the entry cache re-evaluates once per arrival
  * rather than once per icon.
  */
-export const pageIngested = defineTopic<IconPageResult>();
-defineFold(pageIngested, [picker, iconEntries], (state, entries, ingest) => {
-  let added = false;
-  for (const entry of ingest.entries) {
-    added = insertEntry(entries, ingest.packId, entry) || added;
-  }
-  if (added) state.entriesVersion += 1;
-});
+export const pageIngestedTopic = defineTopic<IconPageResult>();
+defineFold(
+  pageIngestedTopic,
+  [pickerStore, iconEntriesCell],
+  (state, entries, ingest) => {
+    let added = false;
+    for (const entry of ingest.entries) {
+      added = insertEntry(entries, ingest.packId, entry) || added;
+    }
+    if (added) state.entriesVersion += 1;
+  },
+);
 
 // --- Reactions to the editor ---
 
@@ -239,17 +251,21 @@ const adoptIcon = (
   if (added) state.entriesVersion += 1;
 };
 
-defineFold(iconPicked, [picker, iconEntries], adoptIcon);
-defineFold(iconResolved, [picker, iconEntries], adoptIcon);
+defineFold(iconPickedTopic, [pickerStore, iconEntriesCell], adoptIcon);
+defineFold(iconResolvedTopic, [pickerStore, iconEntriesCell], adoptIcon);
 
-defineFold(editorReset, [picker, iconEntries], (state, entries) => {
-  openPack(state, entries, DEFAULT_PACK_ID);
-});
+defineFold(
+  editorResetTopic,
+  [pickerStore, iconEntriesCell],
+  (state, entries) => {
+    openPack(state, entries, DEFAULT_PACK_ID);
+  },
+);
 
 // --- Derived ---
 
 /** The active pack's catalog entry, `undefined` until the index lands. */
-export const activePack = defineFormula([picker], (state) =>
+export const activePackFormula = defineFormula([pickerStore], (state) =>
   state.packs?.find((entry) => entry.id === state.activePackId),
 );
 
@@ -257,8 +273,8 @@ export const activePack = defineFormula([picker], (state) =>
  * The entry cache, gated on `entriesVersion` so readers re-run when a
  * chunk lands. The `Map` reference itself never changes.
  */
-export const iconEntryCache = defineFormula(
-  [iconEntries, picker],
+export const iconEntryCacheFormula = defineFormula(
+  [iconEntriesCell, pickerStore],
   (entries, state) => {
     void state.entriesVersion;
     return entries;
@@ -304,59 +320,62 @@ const EMPTY_PAGE_VIEW: PageView = {
  *   along from the filter walk — probing `names.indexOf` per visible
  *   tile would re-walk the proxied name array hundreds of times a page.
  */
-export const pageView = defineFormula([picker], (state): PageView => {
-  const manifest = state.manifests[state.activePackId];
-  if (!manifest) return EMPTY_PAGE_VIEW;
+export const pageViewFormula = defineFormula(
+  [pickerStore],
+  (state): PageView => {
+    const manifest = state.manifests[state.activePackId];
+    if (!manifest) return EMPTY_PAGE_VIEW;
 
-  const term = state.search.trim().toLowerCase();
+    const term = state.search.trim().toLowerCase();
 
-  if (term.length === 0) {
-    const pageCount = Math.max(1, manifest.pages.length);
+    if (term.length === 0) {
+      const pageCount = Math.max(1, manifest.pages.length);
+      const page = Math.min(state.currentPage, pageCount - 1);
+      const start = manifest.pageStart[page] ?? 0;
+      const end = manifest.pageStart[page + 1] ?? manifest.total;
+      return {
+        manifest,
+        names: manifest.names.slice(start, end),
+        chunks: [page],
+        start,
+        total: manifest.names.length,
+        page,
+        pageCount,
+      };
+    }
+
+    const matches: string[] = [];
+    const owners: number[] = [];
+    let chunk = 0;
+    for (let idx = 0; idx < manifest.names.length; idx += 1) {
+      // Advance the cursor as the position crosses a chunk boundary, so
+      // the whole walk stays linear instead of paying a lookup per match.
+      while (
+        chunk + 1 < manifest.pageStart.length &&
+        idx >= manifest.pageStart[chunk + 1]
+      ) {
+        chunk += 1;
+      }
+      const name = manifest.names[idx];
+      if (!name.toLowerCase().includes(term)) continue;
+      matches.push(name);
+      owners.push(chunk);
+    }
+
+    const pageCount = Math.max(1, Math.ceil(matches.length / PAGE_SIZE));
     const page = Math.min(state.currentPage, pageCount - 1);
-    const start = manifest.pageStart[page] ?? 0;
-    const end = manifest.pageStart[page + 1] ?? manifest.total;
+    const start = page * PAGE_SIZE;
     return {
       manifest,
-      names: manifest.names.slice(start, end),
-      chunks: [page],
+      names: matches.slice(start, start + PAGE_SIZE),
+      chunks: [...new Set(owners.slice(start, start + PAGE_SIZE))],
       start,
-      total: manifest.names.length,
+      total: matches.length,
       page,
       pageCount,
     };
-  }
-
-  const matches: string[] = [];
-  const owners: number[] = [];
-  let chunk = 0;
-  for (let idx = 0; idx < manifest.names.length; idx += 1) {
-    // Advance the cursor as the position crosses a chunk boundary, so
-    // the whole walk stays linear instead of paying a lookup per match.
-    while (
-      chunk + 1 < manifest.pageStart.length &&
-      idx >= manifest.pageStart[chunk + 1]
-    ) {
-      chunk += 1;
-    }
-    const name = manifest.names[idx];
-    if (!name.toLowerCase().includes(term)) continue;
-    matches.push(name);
-    owners.push(chunk);
-  }
-
-  const pageCount = Math.max(1, Math.ceil(matches.length / PAGE_SIZE));
-  const page = Math.min(state.currentPage, pageCount - 1);
-  const start = page * PAGE_SIZE;
-  return {
-    manifest,
-    names: matches.slice(start, start + PAGE_SIZE),
-    chunks: [...new Set(owners.slice(start, start + PAGE_SIZE))],
-    start,
-    total: matches.length,
-    page,
-    pageCount,
-  };
-});
+  },
+);
 
 /** Fetches the current view needs but state doesn't hold yet. */
 export interface MissingPackData {
@@ -374,8 +393,8 @@ const NOTHING_MISSING: MissingPackData = { manifest: undefined, pages: [] };
  * click, deep link, reset — converges on the same answer without each
  * one remembering to kick off its own request.
  */
-export const missingPackData = defineFormula(
-  [picker, pageView],
+export const missingPackDataFormula = defineFormula(
+  [pickerStore, pageViewFormula],
   (state, view): MissingPackData => {
     const pack = state.packs?.find((entry) => entry.id === state.activePackId);
     if (!pack) return NOTHING_MISSING;

@@ -53,20 +53,20 @@ const SVG_EXPORT_SIZE = 512;
 // Owned by the editor's scope, not the panel's own — the rail swaps this
 // component out whenever the picker opens, and the chosen format and
 // size should survive that round trip.
-const exportPanel = defineStore<ExportPanelState>(iconEditorScope, () => ({
+const exportPanelStore = defineStore<ExportPanelState>(iconEditorScope, () => ({
   format: 'svg',
   size: DEFAULT_PX,
 }));
 
 /** The output format toggled between vector and raster. */
-const formatChanged = defineTopic<ExportFormat>();
-defineFold(formatChanged, [exportPanel], (state, format) => {
+const formatChangedTopic = defineTopic<ExportFormat>();
+defineFold(formatChangedTopic, [exportPanelStore], (state, format) => {
   state.format = format;
 });
 
 /** The target pixel size changed — from the input or a preset chip. */
-const sizeChanged = defineTopic<number>();
-defineFold(sizeChanged, [exportPanel], (state, size) => {
+const sizeChangedTopic = defineTopic<number>();
+defineFold(sizeChangedTopic, [exportPanelStore], (state, size) => {
   if (Number.isFinite(size)) state.size = size;
 });
 
@@ -84,7 +84,7 @@ const filenameStem = (icon: NonNullable<IconEditorState['icon']>) =>
  * square.
  */
 export const ExportActions: Component<ExportActionsProps> = (props) => {
-  const panel = useValue(exportPanel);
+  const panel = useValue(exportPanelStore);
   const commit = useCommit();
 
   const effectiveSize = () => clampSize(panel().size);
@@ -155,7 +155,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
           columns={2}
           value={panel().format}
           onValueChange={(value) =>
-            commit(formatChanged(value as ExportFormat))
+            commit(formatChangedTopic(value as ExportFormat))
           }
           aria-label="Format"
         >
@@ -188,7 +188,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
               value={String(panel().size)}
               onInput={(event) => {
                 const next = Number(event.currentTarget.value);
-                if (Number.isFinite(next)) commit(sizeChanged(next));
+                if (Number.isFinite(next)) commit(sizeChangedTopic(next));
               }}
             />
             <Flex as="div" gap={1} wrap="wrap">
@@ -199,7 +199,7 @@ export const ExportActions: Component<ExportActionsProps> = (props) => {
                     size={1}
                     variant="soft"
                     color={effectiveSize() === preset ? 'accent' : 'neutral'}
-                    onClick={() => commit(sizeChanged(preset))}
+                    onClick={() => commit(sizeChangedTopic(preset))}
                   >
                     {preset}
                   </Button>

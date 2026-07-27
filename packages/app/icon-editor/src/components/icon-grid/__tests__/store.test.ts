@@ -1,19 +1,19 @@
 import { createTestRuntime } from '@lib/state-next';
 import {
   entryKey,
-  iconEntries,
-  manifestLoaded,
-  missingPackData,
-  packSearchChanged,
-  packSelected,
-  packsLoaded,
-  pageChanged,
-  pageIngested,
-  pageView,
-  picker,
+  iconEntriesCell,
+  manifestLoadedTopic,
+  missingPackDataFormula,
+  packSearchChangedTopic,
+  packSelectedTopic,
+  packsLoadedTopic,
+  pageChangedTopic,
+  pageIngestedTopic,
+  pageViewFormula,
   pickerScope,
-  pickerViewChanged,
-  searchChanged,
+  pickerStore,
+  pickerViewChangedTopic,
+  searchChangedTopic,
 } from '../store';
 import { iconEditorScope } from '../../../store';
 import type {
@@ -64,91 +64,91 @@ const setup = () => {
   return runtime;
 };
 
-describe('packSelected', () => {
+describe('packSelectedTopic', () => {
   it('switches the active pack and resets filter/page state, landing on the detail view', () => {
     const { commit, peek } = setup();
-    commit(searchChanged('foo'));
-    commit(pageChanged(5));
+    commit(searchChangedTopic('foo'));
+    commit(pageChangedTopic(5));
 
-    commit(packSelected('tabler'));
+    commit(packSelectedTopic('tabler'));
 
-    expect(peek(picker).activePackId).toBe('tabler');
-    expect(peek(picker).search).toBe('');
-    expect(peek(picker).currentPage).toBe(0);
-    expect(peek(picker).view).toBe('pack-detail');
+    expect(peek(pickerStore).activePackId).toBe('tabler');
+    expect(peek(pickerStore).search).toBe('');
+    expect(peek(pickerStore).currentPage).toBe(0);
+    expect(peek(pickerStore).view).toBe('pack-detail');
   });
 
   it('drops manifests and bodies that no longer belong to the active pack', () => {
     const { commit, peek } = setup();
-    commit(manifestLoaded(manifest('mdi', ['home'])));
-    commit(manifestLoaded(manifest('tabler', ['rocket'])));
-    commit(pageIngested(pageResult('mdi', [entry('home')])));
-    commit(pageIngested(pageResult('tabler', [entry('rocket')])));
+    commit(manifestLoadedTopic(manifest('mdi', ['home'])));
+    commit(manifestLoadedTopic(manifest('tabler', ['rocket'])));
+    commit(pageIngestedTopic(pageResult('mdi', [entry('home')])));
+    commit(pageIngestedTopic(pageResult('tabler', [entry('rocket')])));
 
-    commit(packSelected('mdi'));
+    commit(packSelectedTopic('mdi'));
 
-    expect(Object.keys(peek(picker).manifests)).toEqual(['mdi']);
-    expect(peek(iconEntries).has(entryKey('mdi', 'home'))).toBe(true);
-    expect(peek(iconEntries).has(entryKey('tabler', 'rocket'))).toBe(false);
+    expect(Object.keys(peek(pickerStore).manifests)).toEqual(['mdi']);
+    expect(peek(iconEntriesCell).has(entryKey('mdi', 'home'))).toBe(true);
+    expect(peek(iconEntriesCell).has(entryKey('tabler', 'rocket'))).toBe(false);
   });
 });
 
-describe('searchChanged', () => {
+describe('searchChangedTopic', () => {
   it('snaps the page index back to 0 so results aren’t hidden behind a stale page', () => {
     const { commit, peek } = setup();
-    commit(pageChanged(7));
+    commit(pageChangedTopic(7));
 
-    commit(searchChanged('home'));
+    commit(searchChangedTopic('home'));
 
-    expect(peek(picker).search).toBe('home');
-    expect(peek(picker).currentPage).toBe(0);
+    expect(peek(pickerStore).search).toBe('home');
+    expect(peek(pickerStore).currentPage).toBe(0);
   });
 });
 
-describe('pickerViewChanged / packSearchChanged / pageChanged / packsLoaded', () => {
+describe('pickerViewChangedTopic / packSearchChangedTopic / pageChangedTopic / packsLoadedTopic', () => {
   it('write the corresponding fields', () => {
     const { commit, peek } = setup();
 
-    commit(pickerViewChanged('pack-info'));
-    commit(packSearchChanged('mat'));
-    commit(pageChanged(3));
-    commit(packsLoaded([pack('mdi'), pack('tabler')]));
+    commit(pickerViewChangedTopic('pack-info'));
+    commit(packSearchChangedTopic('mat'));
+    commit(pageChangedTopic(3));
+    commit(packsLoadedTopic([pack('mdi'), pack('tabler')]));
 
-    expect(peek(picker).view).toBe('pack-info');
-    expect(peek(picker).packSearch).toBe('mat');
-    expect(peek(picker).currentPage).toBe(3);
-    expect(peek(picker).packs).toHaveLength(2);
+    expect(peek(pickerStore).view).toBe('pack-info');
+    expect(peek(pickerStore).packSearch).toBe('mat');
+    expect(peek(pickerStore).currentPage).toBe(3);
+    expect(peek(pickerStore).packs).toHaveLength(2);
   });
 });
 
-describe('pageIngested', () => {
+describe('pageIngestedTopic', () => {
   it('bulk-inserts a chunk and bumps the version exactly once', () => {
     const { commit, peek } = setup();
 
     commit(
-      pageIngested(
+      pageIngestedTopic(
         pageResult('mdi', [entry('home'), entry('plus'), entry('minus')]),
       ),
     );
 
-    expect(peek(iconEntries).size).toBe(3);
-    expect(peek(picker).entriesVersion).toBe(1);
+    expect(peek(iconEntriesCell).size).toBe(3);
+    expect(peek(pickerStore).entriesVersion).toBe(1);
   });
 
   it('preserves reference identity for entries already cached — a fresh object would re-bind the tile’s innerHTML and restart its CSS animations', () => {
     const { commit, peek } = setup();
     const original = entry('home');
-    commit(pageIngested(pageResult('mdi', [original])));
-    const versionBefore = peek(picker).entriesVersion;
+    commit(pageIngestedTopic(pageResult('mdi', [original])));
+    const versionBefore = peek(pickerStore).entriesVersion;
 
-    commit(pageIngested(pageResult('mdi', [entry('home')])));
+    commit(pageIngestedTopic(pageResult('mdi', [entry('home')])));
 
-    expect(peek(iconEntries).get(entryKey('mdi', 'home'))).toBe(original);
-    expect(peek(picker).entriesVersion).toBe(versionBefore);
+    expect(peek(iconEntriesCell).get(entryKey('mdi', 'home'))).toBe(original);
+    expect(peek(pickerStore).entriesVersion).toBe(versionBefore);
   });
 });
 
-describe('pageView', () => {
+describe('pageViewFormula', () => {
   const names = ['alpha', 'beta', 'gamma', 'delta'];
   const paged = manifest('mdi', names, {
     pages: ['/mdi/page-0.json', '/mdi/page-1.json'],
@@ -158,69 +158,77 @@ describe('pageView', () => {
   it('is empty until the manifest lands', () => {
     const { peek } = setup();
 
-    expect(peek(pageView).manifest).toBeUndefined();
-    expect(peek(pageView).names).toEqual([]);
+    expect(peek(pageViewFormula).manifest).toBeUndefined();
+    expect(peek(pageViewFormula).names).toEqual([]);
   });
 
   it('maps each unfiltered page 1:1 onto an asset chunk, so paging costs exactly one fetch', () => {
     const { commit, peek } = setup();
-    commit(manifestLoaded(paged));
+    commit(manifestLoadedTopic(paged));
 
-    expect(peek(pageView).names).toEqual(['alpha', 'beta']);
-    expect(peek(pageView).chunks).toEqual([0]);
-    expect(peek(pageView).pageCount).toBe(2);
+    expect(peek(pageViewFormula).names).toEqual(['alpha', 'beta']);
+    expect(peek(pageViewFormula).chunks).toEqual([0]);
+    expect(peek(pageViewFormula).pageCount).toBe(2);
 
-    commit(pageChanged(1));
+    commit(pageChangedTopic(1));
 
-    expect(peek(pageView).names).toEqual(['gamma', 'delta']);
-    expect(peek(pageView).chunks).toEqual([1]);
-    expect(peek(pageView).start).toBe(2);
+    expect(peek(pageViewFormula).names).toEqual(['gamma', 'delta']);
+    expect(peek(pageViewFormula).chunks).toEqual([1]);
+    expect(peek(pageViewFormula).start).toBe(2);
   });
 
   it('slices a fixed page over the matches when filtered, carrying each match’s owning chunk', () => {
     const { commit, peek } = setup();
-    commit(manifestLoaded(paged));
+    commit(manifestLoadedTopic(paged));
 
-    commit(searchChanged('a'));
+    commit(searchChangedTopic('a'));
 
-    expect(peek(pageView).names).toEqual(['alpha', 'beta', 'gamma', 'delta']);
-    expect(peek(pageView).chunks).toEqual([0, 1]);
-    expect(peek(pageView).total).toBe(4);
+    expect(peek(pageViewFormula).names).toEqual([
+      'alpha',
+      'beta',
+      'gamma',
+      'delta',
+    ]);
+    expect(peek(pageViewFormula).chunks).toEqual([0, 1]);
+    expect(peek(pageViewFormula).total).toBe(4);
   });
 
   it('clamps a stale page index when a search shrinks the result set past it', () => {
     const { commit, peek } = setup();
-    commit(manifestLoaded(paged));
-    commit(pageChanged(1));
+    commit(manifestLoadedTopic(paged));
+    commit(pageChangedTopic(1));
 
-    commit(searchChanged('alpha'));
+    commit(searchChangedTopic('alpha'));
 
-    expect(peek(pageView).page).toBe(0);
-    expect(peek(pageView).names).toEqual(['alpha']);
+    expect(peek(pageViewFormula).page).toBe(0);
+    expect(peek(pageViewFormula).names).toEqual(['alpha']);
   });
 });
 
-describe('missingPackData', () => {
+describe('missingPackDataFormula', () => {
   it('reports nothing until the pack catalog lands', () => {
     const { peek } = setup();
 
-    expect(peek(missingPackData)).toEqual({ manifest: undefined, pages: [] });
+    expect(peek(missingPackDataFormula)).toEqual({
+      manifest: undefined,
+      pages: [],
+    });
   });
 
   it('asks for the active pack’s manifest first — everything else waits on it', () => {
     const { commit, peek } = setup();
-    commit(packsLoaded([pack('mdi')]));
+    commit(packsLoadedTopic([pack('mdi')]));
 
-    expect(peek(missingPackData).manifest?.id).toBe('mdi');
-    expect(peek(missingPackData).pages).toEqual([]);
+    expect(peek(missingPackDataFormula).manifest?.id).toBe('mdi');
+    expect(peek(missingPackDataFormula).pages).toEqual([]);
   });
 
   it('asks for the chunks backing the visible tiles once the manifest is in', () => {
     const { commit, peek } = setup();
-    commit(packsLoaded([pack('mdi')]));
-    commit(manifestLoaded(manifest('mdi', ['home'])));
+    commit(packsLoadedTopic([pack('mdi')]));
+    commit(manifestLoadedTopic(manifest('mdi', ['home'])));
 
-    expect(peek(missingPackData)).toEqual({
+    expect(peek(missingPackDataFormula)).toEqual({
       manifest: undefined,
       pages: [{ packId: 'mdi', pageUrl: '/mdi/page-0.json' }],
     });

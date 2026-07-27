@@ -6,9 +6,9 @@ import {
 } from '../../capabilities';
 import type { IconPageRequest } from '../../icons';
 import {
-  manifestLoaded,
-  packsLoaded,
-  pageIngested,
+  manifestLoadedTopic,
+  packsLoadedTopic,
+  pageIngestedTopic,
   pickerScope,
   type MissingPackData,
 } from './store';
@@ -17,17 +17,17 @@ import {
  * Fetch the pack catalog. Cheap to re-run — the fetcher holds the
  * resolved promise, so a second caller pays nothing.
  */
-export const loadPackIndex = defineSaga(pickerScope, async function* () {
+export const loadPackIndexSaga = defineSaga(pickerScope, async function* () {
   const packs = yield* call(fetchPackIndex);
-  yield commit(packsLoaded(packs));
+  yield commit(packsLoadedTopic(packs));
 });
 
-const loadPageBodies = defineSaga(
+const loadPageBodiesSaga = defineSaga(
   pickerScope,
   async function* (request: IconPageRequest) {
     try {
       const result = yield* call(fetchPageEntries, request);
-      yield commit(pageIngested(result));
+      yield commit(pageIngestedTopic(result));
     } catch {
       // The fetcher already logged. Tiles keep their skeletons and the
       // next page or search change retries.
@@ -41,13 +41,13 @@ const loadPageBodies = defineSaga(
  * are spawned so a slow page doesn't hold up its siblings — each lands
  * its own transition as it arrives.
  */
-export const loadMissingPackData = defineSaga(
+export const loadMissingPackDataSaga = defineSaga(
   pickerScope,
   async function* (missing: MissingPackData) {
     if (missing.manifest) {
       try {
         const manifest = yield* call(fetchPackManifest, missing.manifest);
-        yield commit(manifestLoaded(manifest));
+        yield commit(manifestLoadedTopic(manifest));
       } catch {
         // Already logged by the fetcher; the grid keeps its loading copy.
       }
@@ -55,7 +55,7 @@ export const loadMissingPackData = defineSaga(
     }
 
     for (const request of missing.pages) {
-      yield* spawn(loadPageBodies(request));
+      yield* spawn(loadPageBodiesSaga(request));
     }
   },
 );

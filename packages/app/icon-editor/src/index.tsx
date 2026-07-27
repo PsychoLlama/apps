@@ -4,33 +4,33 @@ import { useAnchor, useCommit, useRun, useValue } from '@lib/state-next';
 import { Frame, SiteHeader } from '@lib/shell';
 import { Flex } from '@lib/ui';
 import { IconGrid } from './components/icon-grid';
-import { loadPackIndex } from './components/icon-grid/sagas';
+import { loadPackIndexSaga } from './components/icon-grid/sagas';
 import {
-  activePack,
+  activePackFormula,
   pickerScope,
-  pickerViewChanged,
+  pickerViewChangedTopic,
 } from './components/icon-grid/store';
 import { Preview } from './components/preview';
 import { PropertiesPanel } from './components/properties-panel';
 import {
-  hydrateFromUrl,
-  randomizeIcon,
-  selectPack,
+  hydrateFromUrlSaga,
+  randomizeIconSaga,
+  selectPackSaga,
   type IconEditorUrlParams,
 } from './sagas';
 import {
-  editorReset,
-  iconEditor,
+  editorResetTopic,
   iconEditorScope,
-  iconPicked,
-  loading,
-  paddingChanged,
-  paletteChanged,
-  pickerClosed,
-  pickerOpened,
-  rail,
-  shapeChanged,
-  shareParams,
+  iconEditorStore,
+  iconPickedTopic,
+  loadingStore,
+  paddingChangedTopic,
+  paletteChangedTopic,
+  pickerClosedTopic,
+  pickerOpenedTopic,
+  railStore,
+  shapeChangedTopic,
+  shareParamsFormula,
 } from './store';
 import type { IconRef } from './icons';
 import * as css from './index.css';
@@ -49,17 +49,17 @@ export const IconEditor = () => {
   useAnchor(iconEditorScope);
   useAnchor(pickerScope);
 
-  const editor = useValue(iconEditor);
-  const load = useValue(loading);
-  const railState = useValue(rail);
-  const pack = useValue(activePack);
-  const params = useValue(shareParams);
+  const editor = useValue(iconEditorStore);
+  const load = useValue(loadingStore);
+  const rail = useValue(railStore);
+  const pack = useValue(activePackFormula);
+  const params = useValue(shareParamsFormula);
 
   const commit = useCommit();
-  const hydrate = useRun(hydrateFromUrl);
-  const randomize = useRun(randomizeIcon);
-  const choosePack = useRun(selectPack);
-  const loadPacks = useRun(loadPackIndex);
+  const hydrate = useRun(hydrateFromUrlSaga);
+  const randomize = useRun(randomizeIconSaga);
+  const choosePack = useRun(selectPackSaga);
+  const loadPacks = useRun(loadPackIndexSaga);
 
   const [searchParams, setSearchParams] = useSearchParams<IconSearchParams>();
 
@@ -117,15 +117,15 @@ export const IconEditor = () => {
   // the active pack's grid. Each lands as one transition across both
   // the rail and the picker.
   const handleChoosePack = () =>
-    commit(pickerViewChanged('packs'), pickerOpened());
+    commit(pickerViewChangedTopic('packs'), pickerOpenedTopic());
 
   const handleChooseIcon = () =>
-    commit(pickerViewChanged('pack-detail'), pickerOpened());
+    commit(pickerViewChangedTopic('pack-detail'), pickerOpenedTopic());
 
   // Committing a pick returns the rail to the properties inspector so
   // the chosen icon, its style, and export land back in one view.
   const handlePick = (icon: IconRef) =>
-    commit(iconPicked(icon), pickerClosed());
+    commit(iconPickedTopic(icon), pickerClosedTopic());
 
   return (
     <Frame>
@@ -150,25 +150,25 @@ export const IconEditor = () => {
             aria-label="Editor panel"
           >
             <Switch>
-              <Match when={railState().view === 'properties'}>
+              <Match when={rail().view === 'properties'}>
                 <PropertiesPanel
                   state={editor()}
                   activePack={pack()}
-                  onPalette={(name) => commit(paletteChanged(name))}
-                  onShape={(shape) => commit(shapeChanged(shape))}
-                  onPadding={(value) => commit(paddingChanged(value))}
+                  onPalette={(name) => commit(paletteChangedTopic(name))}
+                  onShape={(shape) => commit(shapeChangedTopic(shape))}
+                  onPadding={(value) => commit(paddingChangedTopic(value))}
                   onChoosePack={handleChoosePack}
                   onChooseIcon={handleChooseIcon}
                   onRandomize={() => void randomize()}
-                  onReset={() => commit(editorReset())}
+                  onReset={() => commit(editorResetTopic())}
                 />
               </Match>
-              <Match when={railState().view === 'picker'}>
+              <Match when={rail().view === 'picker'}>
                 <IconGrid
                   selected={editor().icon}
                   onSelect={handlePick}
                   onSelectPack={(packId) => void choosePack(packId)}
-                  onClose={() => commit(pickerClosed())}
+                  onClose={() => commit(pickerClosedTopic())}
                 />
               </Match>
             </Switch>

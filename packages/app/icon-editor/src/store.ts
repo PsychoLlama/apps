@@ -50,9 +50,12 @@ export const DEFAULT_ICON_EDITOR_STATE: IconEditorState = {
 export const iconEditorScope = defineScope();
 
 /** Live, readonly view of the icon under construction. */
-export const iconEditor = defineStore<IconEditorState>(iconEditorScope, () => ({
-  ...DEFAULT_ICON_EDITOR_STATE,
-}));
+export const iconEditorStore = defineStore<IconEditorState>(
+  iconEditorScope,
+  () => ({
+    ...DEFAULT_ICON_EDITOR_STATE,
+  }),
+);
 
 /**
  * Which surface the editing rail is showing. `properties` is the
@@ -69,7 +72,7 @@ export interface RailState {
 }
 
 /** Live, readonly view of the editing-rail surface. */
-export const rail = defineStore<RailState>(iconEditorScope, () => ({
+export const railStore = defineStore<RailState>(iconEditorScope, () => ({
   view: 'properties',
 }));
 
@@ -86,7 +89,7 @@ export interface LoadingState {
 }
 
 /** Live, readonly view of in-flight icon resolution lifecycle. */
-export const loading = defineStore<LoadingState>(iconEditorScope, () => ({
+export const loadingStore = defineStore<LoadingState>(iconEditorScope, () => ({
   pending: 0,
   requestId: 0,
 }));
@@ -102,28 +105,32 @@ export const loading = defineStore<LoadingState>(iconEditorScope, () => ({
  * Exported: the icon picker folds it to keep the active pack and its
  * body cache in step with the selection.
  */
-export const iconPicked = defineTopic<IconRef | undefined>();
-defineFold(iconPicked, [iconEditor, loading], (editor, load, icon) => {
-  editor.icon = icon;
-  load.pending = 0;
-  load.requestId += 1;
-});
+export const iconPickedTopic = defineTopic<IconRef | undefined>();
+defineFold(
+  iconPickedTopic,
+  [iconEditorStore, loadingStore],
+  (editor, load, icon) => {
+    editor.icon = icon;
+    load.pending = 0;
+    load.requestId += 1;
+  },
+);
 
 /** A palette was picked from the curated set. */
-export const paletteChanged = defineTopic<PaletteName>();
-defineFold(paletteChanged, [iconEditor], (editor, palette) => {
+export const paletteChangedTopic = defineTopic<PaletteName>();
+defineFold(paletteChangedTopic, [iconEditorStore], (editor, palette) => {
   editor.palette = palette;
 });
 
 /** A different canvas mask was selected. */
-export const shapeChanged = defineTopic<IconEditorShape>();
-defineFold(shapeChanged, [iconEditor], (editor, shape) => {
+export const shapeChangedTopic = defineTopic<IconEditorShape>();
+defineFold(shapeChangedTopic, [iconEditorStore], (editor, shape) => {
   editor.shape = shape;
 });
 
 /** The padding slider moved. */
-export const paddingChanged = defineTopic<number>();
-defineFold(paddingChanged, [iconEditor], (editor, padding) => {
+export const paddingChangedTopic = defineTopic<number>();
+defineFold(paddingChangedTopic, [iconEditorStore], (editor, padding) => {
   editor.padding = padding;
 });
 
@@ -132,42 +139,46 @@ defineFold(paddingChanged, [iconEditor], (editor, padding) => {
  * resolution. Exported: the picker folds it back to the default pack so
  * the panel's pack card matches the blank slate.
  */
-export const editorReset = defineTopic();
-defineFold(editorReset, [iconEditor, loading], (editor, load) => {
-  Object.assign(editor, DEFAULT_ICON_EDITOR_STATE);
-  load.pending = 0;
-  load.requestId += 1;
-});
+export const editorResetTopic = defineTopic();
+defineFold(
+  editorResetTopic,
+  [iconEditorStore, loadingStore],
+  (editor, load) => {
+    Object.assign(editor, DEFAULT_ICON_EDITOR_STATE);
+    load.pending = 0;
+    load.requestId += 1;
+  },
+);
 
 /**
  * Validated style fields arrived from the URL. The icon travels
  * separately — it needs an async pack fetch, so it lands through the
  * resolution lifecycle below.
  */
-export const styleHydrated = defineTopic<IconEditorStyle>();
-defineFold(styleHydrated, [iconEditor], (editor, style) => {
+export const styleHydratedTopic = defineTopic<IconEditorStyle>();
+defineFold(styleHydratedTopic, [iconEditorStore], (editor, style) => {
   editor.palette = style.palette;
   editor.shape = style.shape;
   editor.padding = style.padding;
 });
 
 /** The rail swapped to the full-rail icon browser. */
-export const pickerOpened = defineTopic();
-defineFold(pickerOpened, [rail], (state) => {
+export const pickerOpenedTopic = defineTopic();
+defineFold(pickerOpenedTopic, [railStore], (state) => {
   state.view = 'picker';
 });
 
 /** The rail returned to the always-on properties inspector. */
-export const pickerClosed = defineTopic();
-defineFold(pickerClosed, [rail], (state) => {
+export const pickerClosedTopic = defineTopic();
+defineFold(pickerClosedTopic, [railStore], (state) => {
   state.view = 'properties';
 });
 
 // --- Async icon resolution lifecycle ---
 
 /** An icon resolution began. Supersedes whatever was already in flight. */
-export const iconResolveStarted = defineTopic();
-defineFold(iconResolveStarted, [loading], (load) => {
+export const iconResolveStartedTopic = defineTopic();
+defineFold(iconResolveStartedTopic, [loadingStore], (load) => {
   load.pending += 1;
   load.requestId += 1;
 });
@@ -180,25 +191,29 @@ defineFold(iconResolveStarted, [loading], (load) => {
  * Exported: the picker folds it so a deep link or a shuffle pulls the
  * active pack along with the icon it resolved.
  */
-export const iconResolved = defineTopic<IconRef | undefined>();
-defineFold(iconResolved, [iconEditor, loading], (editor, load, icon) => {
-  load.pending = Math.max(0, load.pending - 1);
-  if (icon) editor.icon = icon;
-});
+export const iconResolvedTopic = defineTopic<IconRef | undefined>();
+defineFold(
+  iconResolvedTopic,
+  [iconEditorStore, loadingStore],
+  (editor, load, icon) => {
+    load.pending = Math.max(0, load.pending - 1);
+    if (icon) editor.icon = icon;
+  },
+);
 
 /**
  * A resolution came back after something newer took its place. The
  * loading counter still unwinds; the icon write is dropped so a user
  * pick (or newer URL navigation) survives an in-flight fetch.
  */
-export const iconResolveSuperseded = defineTopic();
-defineFold(iconResolveSuperseded, [loading], (load) => {
+export const iconResolveSupersededTopic = defineTopic();
+defineFold(iconResolveSupersededTopic, [loadingStore], (load) => {
   load.pending = Math.max(0, load.pending - 1);
 });
 
 /** A resolution threw. */
-export const iconResolveFailed = defineTopic();
-defineFold(iconResolveFailed, [loading], (load) => {
+export const iconResolveFailedTopic = defineTopic();
+defineFold(iconResolveFailedTopic, [loadingStore], (load) => {
   load.pending = Math.max(0, load.pending - 1);
 });
 
@@ -224,8 +239,8 @@ export type ShareParams = {
 const orNull = (value: string): string | null => (value === '' ? null : value);
 
 /** Search params mirroring the current editor state. */
-export const shareParams = defineFormula(
-  [iconEditor, loading],
+export const shareParamsFormula = defineFormula(
+  [iconEditorStore, loadingStore],
   (editor, load): ShareParams => {
     const params: ShareParams = {
       palette:

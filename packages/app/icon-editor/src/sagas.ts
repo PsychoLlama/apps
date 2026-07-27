@@ -5,23 +5,23 @@ import {
   pickRandomIcon,
   releasePackCaches,
 } from './capabilities';
-import { packSelected, picker } from './components/icon-grid/store';
+import { packSelectedTopic, pickerStore } from './components/icon-grid/store';
 import {
   resolveStyleHydration,
   type IconEditorStyleHydration,
 } from './hydration';
 import { parseIconRef, type IconRef } from './icons';
 import {
-  iconEditor,
+  iconEditorStore,
   iconEditorScope,
-  iconPicked,
-  iconResolveFailed,
-  iconResolveStarted,
-  iconResolveSuperseded,
-  iconResolved,
-  loading,
-  pickerClosed,
-  styleHydrated,
+  iconPickedTopic,
+  iconResolveFailedTopic,
+  iconResolveStartedTopic,
+  iconResolveSupersededTopic,
+  iconResolvedTopic,
+  loadingStore,
+  pickerClosedTopic,
+  styleHydratedTopic,
 } from './store';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -32,11 +32,11 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  * a user pick, a reset, a newer resolve — bumps the live value, and the
  * stale result is discarded rather than clobbering the newer icon.
  */
-const settleResolve = defineSaga(
+const settleResolveSaga = defineSaga(
   iconEditorScope,
   async function* (requestId: number, icon: IconRef | undefined) {
-    if ((yield* read(loading)).requestId !== requestId) {
-      yield commit(iconResolveSuperseded());
+    if ((yield* read(loadingStore)).requestId !== requestId) {
+      yield commit(iconResolveSupersededTopic());
       return;
     }
 
@@ -45,22 +45,22 @@ const settleResolve = defineSaga(
       logger.debug('Resolved an icon reference that no longer exists.');
     }
 
-    yield commit(iconResolved(icon));
+    yield commit(iconResolvedTopic(icon));
   },
 );
 
 /** Resolve a fully-qualified `pack:name` reference and commit when it lands. */
-export const resolveIcon = defineSaga(
+export const resolveIconSaga = defineSaga(
   iconEditorScope,
   async function* (ref: { pack: string; name: string }) {
-    yield commit(iconResolveStarted());
-    const requestId = (yield* read(loading)).requestId;
+    yield commit(iconResolveStartedTopic());
+    const requestId = (yield* read(loadingStore)).requestId;
 
     try {
       const icon = yield* call(fetchIconRef, ref);
-      yield* settleResolve(requestId, icon);
+      yield* settleResolveSaga(requestId, icon);
     } catch {
-      yield commit(iconResolveFailed());
+      yield commit(iconResolveFailedTopic());
     }
   },
 );
@@ -69,18 +69,21 @@ export const resolveIcon = defineSaga(
  * Roll a fresh icon without leaving the active pack — style fields stay
  * put so the user keeps refining one look.
  */
-export const randomizeIcon = defineSaga(iconEditorScope, async function* () {
-  const packId = (yield* read(picker)).activePackId;
-  yield commit(iconResolveStarted());
-  const requestId = (yield* read(loading)).requestId;
+export const randomizeIconSaga = defineSaga(
+  iconEditorScope,
+  async function* () {
+    const packId = (yield* read(pickerStore)).activePackId;
+    yield commit(iconResolveStartedTopic());
+    const requestId = (yield* read(loadingStore)).requestId;
 
-  try {
-    const icon = yield* call(pickRandomIcon, packId);
-    yield* settleResolve(requestId, icon);
-  } catch {
-    yield commit(iconResolveFailed());
-  }
-});
+    try {
+      const icon = yield* call(pickRandomIcon, packId);
+      yield* settleResolveSaga(requestId, icon);
+    } catch {
+      yield commit(iconResolveFailedTopic());
+    }
+  },
+);
 
 /** Search params the editor hydrates from. */
 export interface IconEditorUrlParams extends IconEditorStyleHydration {
@@ -92,15 +95,15 @@ export interface IconEditorUrlParams extends IconEditorStyleHydration {
  * Apply a URL to the editor. Style fields land synchronously; the icon
  * needs a pack fetch, so it goes through the resolution lifecycle.
  */
-export const hydrateFromUrl = defineSaga(
+export const hydrateFromUrlSaga = defineSaga(
   iconEditorScope,
   async function* (params: IconEditorUrlParams) {
-    const style = styleHydrated(resolveStyleHydration(params));
+    const style = styleHydratedTopic(resolveStyleHydration(params));
     const target = params.icon ? parseIconRef(params.icon) : undefined;
 
     if (!target) {
-      const editor = yield* read(iconEditor);
-      const load = yield* read(loading);
+      const editor = yield* read(iconEditorStore);
+      const load = yield* read(loadingStore);
       // An absent `icon` param is ambiguous: the mirror omits the key
       // while a resolve is in flight, so a Randomize round-trip arrives
       // back here looking exactly like a deliberate clear. Only treat it
@@ -111,7 +114,7 @@ export const hydrateFromUrl = defineSaga(
         load.pending === 0;
 
       if (clearing) {
-        yield commit(style, iconPicked(undefined));
+        yield commit(style, iconPickedTopic(undefined));
       } else {
         yield commit(style);
       }
@@ -123,10 +126,10 @@ export const hydrateFromUrl = defineSaga(
     // The mirror echoes every icon write back as a navigation. Without
     // this the round-trip would spend a fetch — and a loading pulse — on
     // re-resolving the icon we already hold.
-    const current = (yield* read(iconEditor)).icon;
+    const current = (yield* read(iconEditorStore)).icon;
     if (current?.pack === target.pack && current.name === target.name) return;
 
-    yield* resolveIcon(target);
+    yield* resolveIconSaga(target);
   },
 );
 
@@ -139,15 +142,19 @@ export const hydrateFromUrl = defineSaga(
  * bodies, in the picker's state (through the fold) and in the fetcher's
  * module-level caches (here).
  */
-export const selectPack = defineSaga(
+export const selectPackSaga = defineSaga(
   iconEditorScope,
   async function* (packId: string) {
-    const current = (yield* read(iconEditor)).icon;
+    const current = (yield* read(iconEditorStore)).icon;
 
     if (current && current.pack !== packId) {
-      yield commit(packSelected(packId), pickerClosed(), iconPicked(undefined));
+      yield commit(
+        packSelectedTopic(packId),
+        pickerClosedTopic(),
+        iconPickedTopic(undefined),
+      );
     } else {
-      yield commit(packSelected(packId), pickerClosed());
+      yield commit(packSelectedTopic(packId), pickerClosedTopic());
     }
 
     yield* call(releasePackCaches, packId);
