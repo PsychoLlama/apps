@@ -43,6 +43,7 @@ description: Reference docs for `@lib/ui` components — props, descriptions, an
 - [RadioCards](./reference/radio-cards.md): Group of radio options rendered as selectable cards.
 - [RadioGroup](./reference/radio-group.md): Group of radios sharing a single value.
 - [ScrollArea](./reference/scroll-area.md): Styled overflow container with custom scrollbars.
+- [SegmentedControl](./reference/segmented-control.md): Row of exclusive options sharing one track, with a sliding indicator.
 - [Separator](./reference/separator.md): Visual divider between sibling content.
 - [Slider](./reference/slider.md): Range input with one or more thumbs.
 - [Switch](./reference/switch.md): Two-state toggle button.

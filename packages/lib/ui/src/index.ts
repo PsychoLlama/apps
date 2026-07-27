@@ -214,3 +214,12 @@ export {
   type TableRowAlign,
   type TableCellJustify,
 } from './components/table/table';
+export {
+  SegmentedControlRoot,
+  SegmentedControlItem,
+  type SegmentedControlRootProps,
+  type SegmentedControlItemProps,
+  type SegmentedControlSize,
+  type SegmentedControlVariant,
+  type SegmentedControlRadius,
+} from './components/segmented-control/segmented-control';
