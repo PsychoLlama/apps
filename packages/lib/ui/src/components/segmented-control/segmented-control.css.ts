@@ -37,6 +37,10 @@
  *   disabled segment doesn't wash out the whole control.
  * - Drops upstream's `--tab-active-word-spacing` / `--tab-inactive-word-spacing`
  *   pair. Both resolve to `0em`, so they never moved anything.
+ * - The size's icon gap lands on each label copy rather than on their
+ *   wrapper. Upstream puts it on the wrapper, whose only in-flow child
+ *   is the checked copy (the unchecked one is absolutely positioned), so
+ *   the gap never reaches an item's icon and text.
  * - Drops upstream's `svg { flex-shrink: 0 }` guard. It would need a
  *   `globalStyle`, which is reserved for `@lib/design`, and the root's
  *   `min-width: max-content` already keeps columns from compressing
@@ -201,7 +205,6 @@ export const content = style({
   boxSizing: 'border-box',
   borderRadius: 'inherit',
   paddingInline: contentPaddingX,
-  gap: contentGap,
 
   selectors: {
     [`${item}:where(:has(input:disabled)) &`]: {
@@ -236,6 +239,13 @@ export const content = style({
  * keeps the track from reflowing on selection.
  */
 const crossFade = (visibleWhenChecked: boolean): StyleRule => ({
+  // Each copy is its own flex row, so an item rendered as icon + text
+  // gets the size's gap between them. Upstream hangs the gap on the
+  // wrapper instead, where the only in-flow child is the checked copy —
+  // leaving icons flush against their labels.
+  display: 'flex',
+  alignItems: 'center',
+  gap: contentGap,
   transitionProperty: 'opacity',
   transitionDuration: fast[1],
   opacity: visibleWhenChecked ? 0 : 1,

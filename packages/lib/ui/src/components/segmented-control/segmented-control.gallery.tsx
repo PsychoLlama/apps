@@ -56,6 +56,7 @@ const Demo = (props: { name: string } & DemoProps) => {
       variant={props.variant}
       radius={props.radius}
       disabled={props.disabled}
+      skeleton={props.skeleton}
       testId={props.name}
     >
       <For each={options()}>
