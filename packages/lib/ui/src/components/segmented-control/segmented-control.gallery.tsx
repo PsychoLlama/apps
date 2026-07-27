@@ -87,6 +87,7 @@ export default {
   sections: [
     {
       title: 'Size',
+      align: { rows: 'center' },
       columns: [
         {
           title: 'Surface',
@@ -105,6 +106,7 @@ export default {
     },
     {
       title: 'Radius',
+      align: { rows: 'center' },
       rows: [
         { title: 'None', props: { radius: 'none', name: 'radius-none' } },
         { title: 'Small', props: { radius: 'small', name: 'radius-small' } },
@@ -115,6 +117,7 @@ export default {
     },
     {
       title: 'States',
+      align: { rows: 'center' },
       rows: [
         { title: 'Default', props: { name: 'state-default' } },
         {
