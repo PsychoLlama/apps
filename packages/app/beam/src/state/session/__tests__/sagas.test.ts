@@ -9,23 +9,23 @@ import { simulate } from '@lib/state-next';
 import type { Relay } from '@crate/iroh';
 import { dialEndpoint, encodeBeamCode, openConnection } from '../capabilities';
 import {
-  connectFailed,
-  connected,
-  connecting,
+  connectFailedTopic,
+  connectedTopic,
+  connectingTopic,
   connectionStore,
-  relay,
+  relayCell,
 } from '../connection';
-import { codeEncoded, type QrGrid } from '../qr-code';
-import { connectRelay, dialPeer } from '../sagas';
+import { codeEncodedTopic, type QrGrid } from '../qr-code';
+import { connectRelaySaga, dialPeerSaga } from '../sagas';
 
 /** A stand-in endpoint. The sagas only read its id and hand it onward. */
 const fakeRelay = { endpointId: 'ep-1' } as Relay;
 
 const fakeGrid: QrGrid = { size: 1, modules: new Uint8Array([1]) };
 
-describe('connectRelay', () => {
+describe('connectRelaySaga', () => {
   it('lands the relay and its code in one transition', async () => {
-    const trace = await simulate(connectRelay(), {
+    const trace = await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'initial' }]],
       calls: [
         [openConnection, () => fakeRelay],
@@ -34,15 +34,15 @@ describe('connectRelay', () => {
     });
 
     expect(trace.commits).toEqual([
-      [connecting()],
-      [connected(fakeRelay), codeEncoded(fakeGrid)],
+      [connectingTopic()],
+      [connectedTopic(fakeRelay), codeEncodedTopic(fakeGrid)],
     ]);
   });
 
   it('encodes the link for the endpoint it just opened', async () => {
     const encode = vi.fn(() => fakeGrid);
 
-    await simulate(connectRelay(), {
+    await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'initial' }]],
       calls: [
         [openConnection, () => fakeRelay],
@@ -54,7 +54,7 @@ describe('connectRelay', () => {
   });
 
   it('still lands the connection when the encode found no code', async () => {
-    const trace = await simulate(connectRelay(), {
+    const trace = await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'initial' }]],
       calls: [
         [openConnection, () => fakeRelay],
@@ -64,13 +64,13 @@ describe('connectRelay', () => {
 
     // A missing code is non-fatal: the link is still copyable.
     expect(trace.commits).toEqual([
-      [connecting()],
-      [connected(fakeRelay), codeEncoded(null)],
+      [connectingTopic()],
+      [connectedTopic(fakeRelay), codeEncodedTopic(null)],
     ]);
   });
 
   it('records a failed handshake without stranding the view', async () => {
-    const trace = await simulate(connectRelay(), {
+    const trace = await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'initial' }]],
       calls: [
         [
@@ -82,13 +82,16 @@ describe('connectRelay', () => {
       ],
     });
 
-    expect(trace.commits).toEqual([[connecting()], [connectFailed()]]);
+    expect(trace.commits).toEqual([
+      [connectingTopic()],
+      [connectFailedTopic()],
+    ]);
   });
 
   it('refuses to open a second relay over a live one', async () => {
     const open = vi.fn(() => fakeRelay);
 
-    const trace = await simulate(connectRelay(), {
+    const trace = await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'connected' }]],
       calls: [[openConnection, open]],
     });
@@ -100,12 +103,12 @@ describe('connectRelay', () => {
   });
 });
 
-describe('dialPeer', () => {
+describe('dialPeerSaga', () => {
   it('dials over the relay the layout holds open', async () => {
     const dial = vi.fn();
 
-    const trace = await simulate(dialPeer('ep-2'), {
-      reads: [[relay, fakeRelay]],
+    const trace = await simulate(dialPeerSaga('ep-2'), {
+      reads: [[relayCell, fakeRelay]],
       calls: [[dialEndpoint, dial]],
     });
 
@@ -120,8 +123,8 @@ describe('dialPeer', () => {
 
   it('rejects a dial attempted before the connection is up', async () => {
     await expect(
-      simulate(dialPeer('ep-2'), {
-        reads: [[relay, null]],
+      simulate(dialPeerSaga('ep-2'), {
+        reads: [[relayCell, null]],
         calls: [[dialEndpoint, vi.fn()]],
       }),
     ).rejects.toThrow('Cannot dial a peer before the relay connection is up.');

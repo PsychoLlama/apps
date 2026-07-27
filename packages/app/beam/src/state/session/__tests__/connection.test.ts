@@ -8,13 +8,13 @@
 import { createTestRuntime } from '@lib/state-next';
 import type { Relay } from '@crate/iroh';
 import {
-  connectFailed,
-  connected,
-  connecting,
+  connectFailedTopic,
+  connectedTopic,
+  connectingTopic,
   connectionStore,
-  relay,
+  relayCell,
 } from '../connection';
-import { codeEncoded, qrCode, type QrGrid } from '../qr-code';
+import { codeEncodedTopic, qrCodeCell, type QrGrid } from '../qr-code';
 import { beamScope } from '../scope';
 
 /** A stand-in endpoint. Only `free` is ever called, and only on teardown. */
@@ -34,73 +34,75 @@ describe('connectionStore', () => {
     const { peek } = setup();
 
     expect(peek(connectionStore).status).toBe('initial');
-    expect(peek(relay)).toBeNull();
+    expect(peek(relayCell)).toBeNull();
   });
 });
 
-describe('connecting', () => {
+describe('connectingTopic', () => {
   it('marks the handshake under way', () => {
     const { commit, peek } = setup();
 
-    commit(connecting());
+    commit(connectingTopic());
 
     expect(peek(connectionStore).status).toBe('connecting');
   });
 });
 
-describe('connected', () => {
+describe('connectedTopic', () => {
   it('lands the live endpoint alongside the status', () => {
     const { commit, peek } = setup();
     const endpoint = fakeRelay();
 
-    commit(connected(endpoint));
+    commit(connectedTopic(endpoint));
 
     expect(peek(connectionStore).status).toBe('connected');
     // Identity, not deep equality: a store would hand back a proxy, and a
     // proxied wasm handle traps on every method call.
-    expect(peek(relay)).toBe(endpoint);
+    expect(peek(relayCell)).toBe(endpoint);
   });
 });
 
-describe('connectFailed', () => {
+describe('connectFailedTopic', () => {
   it('lands in a terminal failed state', () => {
     const { commit, peek } = setup();
-    commit(connecting());
+    commit(connectingTopic());
 
-    commit(connectFailed());
+    commit(connectFailedTopic());
 
     expect(peek(connectionStore).status).toBe('failed');
   });
 });
 
-describe('codeEncoded', () => {
+describe('codeEncodedTopic', () => {
   it('holds the encoded grid', () => {
     const { commit, peek } = setup();
 
-    commit(codeEncoded(fakeGrid));
+    commit(codeEncodedTopic(fakeGrid));
 
-    expect(peek(qrCode)).toBe(fakeGrid);
+    expect(peek(qrCodeCell)).toBe(fakeGrid);
   });
 
   it('leaves the code empty when the encode failed', () => {
     const { commit, peek } = setup();
 
-    commit(codeEncoded(null));
+    commit(codeEncodedTopic(null));
 
-    expect(peek(qrCode)).toBeNull();
+    expect(peek(qrCodeCell)).toBeNull();
   });
 
   it('lands in the same transition as the connection', () => {
     const { commit, ledger, peek } = setup();
     const endpoint = fakeRelay();
 
-    commit(connected(endpoint), codeEncoded(fakeGrid));
+    commit(connectedTopic(endpoint), codeEncodedTopic(fakeGrid));
 
     // One transition, so the view can never paint a connection without its
     // code (nor a code without its connection).
-    expect(ledger()).toEqual([[connected(endpoint), codeEncoded(fakeGrid)]]);
+    expect(ledger()).toEqual([
+      [connectedTopic(endpoint), codeEncodedTopic(fakeGrid)],
+    ]);
     expect(peek(connectionStore).status).toBe('connected');
-    expect(peek(qrCode)).toBe(fakeGrid);
+    expect(peek(qrCodeCell)).toBe(fakeGrid);
   });
 });
 
@@ -108,7 +110,7 @@ describe('beamScope', () => {
   it('frees the relay when the last anchor is released', () => {
     const free = vi.fn();
     const { commit, release } = setup();
-    commit(connected(fakeRelay(free)));
+    commit(connectedTopic(fakeRelay(free)));
 
     release();
 
@@ -119,7 +121,7 @@ describe('beamScope', () => {
     const free = vi.fn();
     const { anchor, commit, release } = setup();
     const second = anchor(beamScope);
-    commit(connected(fakeRelay(free)));
+    commit(connectedTopic(fakeRelay(free)));
 
     release();
 
@@ -133,7 +135,7 @@ describe('beamScope', () => {
   it('has nothing to free when no connect landed', () => {
     const { peek, release } = setup();
     // Touch the cell so it materializes and its drop hook actually runs.
-    expect(peek(relay)).toBeNull();
+    expect(peek(relayCell)).toBeNull();
 
     expect(release).not.toThrow();
   });

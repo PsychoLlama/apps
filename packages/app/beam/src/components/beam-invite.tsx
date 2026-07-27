@@ -4,7 +4,7 @@ import { FrameBody, SiteHeader } from '@lib/shell';
 import { Container, Flex, Heading, TextField } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';
 import { QrCode } from './qr-code';
-import { beamLink, qrCode, relay } from '../state/session';
+import { beamLink, qrCodeCell, relayCell } from '../state/session';
 import * as styles from './beam-invite.css';
 
 /**
@@ -15,8 +15,8 @@ import * as styles from './beam-invite.css';
  * appear in the same paint.
  */
 export const BeamInvite = () => {
-  const endpoint = useValue(relay);
-  const grid = useValue(qrCode);
+  const endpoint = useValue(relayCell);
+  const grid = useValue(qrCodeCell);
 
   return (
     <>

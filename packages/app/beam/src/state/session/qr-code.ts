@@ -20,7 +20,7 @@ export interface QrGrid {
  * the encode lands (both the encoder and the link are client-only), and if
  * the encode failed.
  */
-export const qrCode = defineCell<QrGrid | null>(beamScope, () => null);
+export const qrCodeCell = defineCell<QrGrid | null>(beamScope, () => null);
 
 /**
  * The beam link was encoded into a scannable grid, or `null` if the encode
@@ -28,7 +28,7 @@ export const qrCode = defineCell<QrGrid | null>(beamScope, () => null);
  * field — so this rides the same transition as the connection coming up
  * rather than a separate one.
  */
-export const codeEncoded = defineTopic<QrGrid | null>();
-defineFold(codeEncoded, [qrCode], (code, grid) => {
+export const codeEncodedTopic = defineTopic<QrGrid | null>();
+defineFold(codeEncodedTopic, [qrCodeCell], (code, grid) => {
   code.current = grid;
 });

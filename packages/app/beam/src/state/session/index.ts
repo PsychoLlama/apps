@@ -5,8 +5,8 @@
  * session alive; releasing the last anchor frees the relay.
  */
 export { beamScope } from './scope';
-export { connectionStore, relay } from './connection';
-export { qrCode } from './qr-code';
+export { connectionStore, relayCell } from './connection';
+export { qrCodeCell } from './qr-code';
 export type { QrGrid } from './qr-code';
 export { beamLink } from './capabilities';
-export { connectRelay, dialPeer, reportSagaFailure } from './sagas';
+export { connectRelaySaga, dialPeerSaga, reportSagaFailure } from './sagas';

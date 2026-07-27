@@ -1,7 +1,11 @@
 import { onMount, type JSX } from 'solid-js';
 import { useAnchor, useRun } from '@lib/state-next';
 import { Frame } from '@lib/shell';
-import { beamScope, connectRelay, reportSagaFailure } from '../state/session';
+import {
+  beamScope,
+  connectRelaySaga,
+  reportSagaFailure,
+} from '../state/session';
 
 /**
  * The Beam layout: the `<main>` frame for every `/beam/*` route. It anchors
@@ -14,7 +18,7 @@ import { beamScope, connectRelay, reportSagaFailure } from '../state/session';
  */
 export const BeamLayout = (props: { children?: JSX.Element }) => {
   useAnchor(beamScope);
-  const connect = useRun(connectRelay);
+  const connect = useRun(connectRelaySaga);
 
   onMount(() => {
     // Neither the wasm nor the handshake can run during SSG, so join the

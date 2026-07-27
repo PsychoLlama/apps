@@ -1,13 +1,13 @@
 import { AbortError, call, commit, defineSaga, read } from '@lib/state-next';
 import { createLogger, toError } from '@lib/observability';
 import {
-  connectFailed,
-  connected,
-  connecting,
+  connectFailedTopic,
+  connectedTopic,
+  connectingTopic,
   connectionStore,
-  relay,
+  relayCell,
 } from './connection';
-import { codeEncoded } from './qr-code';
+import { codeEncodedTopic } from './qr-code';
 import { dialEndpoint, encodeBeamCode, openConnection } from './capabilities';
 import { beamScope } from './scope';
 
@@ -39,19 +39,19 @@ export const reportSagaFailure =
  * Guarded on `initial` so a second anchor can't open a second relay, which
  * the cell would silently drop unfreed.
  */
-export const connectRelay = defineSaga(beamScope, async function* () {
+export const connectRelaySaga = defineSaga(beamScope, async function* () {
   const { status } = yield* read(connectionStore);
   if (status !== 'initial') return;
 
-  yield commit(connecting());
+  yield commit(connectingTopic());
 
   try {
     const endpoint = yield* call(openConnection);
     const grid = yield* call(encodeBeamCode, endpoint.endpointId);
-    yield commit(connected(endpoint), codeEncoded(grid));
+    yield commit(connectedTopic(endpoint), codeEncodedTopic(grid));
   } catch {
     // Reported by the capability, which has the context to describe it.
-    yield commit(connectFailed());
+    yield commit(connectFailedTopic());
   }
 });
 
@@ -60,10 +60,10 @@ export const connectRelay = defineSaga(beamScope, async function* () {
  * holds open. The caller only dials once the connection is `connected`, so a
  * missing relay is a caller bug and throws.
  */
-export const dialPeer = defineSaga(
+export const dialPeerSaga = defineSaga(
   beamScope,
   async function* (endpointId: string) {
-    const endpoint = yield* read(relay);
+    const endpoint = yield* read(relayCell);
     if (!endpoint) {
       throw new Error('Cannot dial a peer before the relay connection is up.');
     }

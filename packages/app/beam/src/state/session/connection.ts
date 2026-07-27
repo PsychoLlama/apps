@@ -15,7 +15,7 @@ import { beamScope } from './scope';
  *   first paint show.
  * - `connecting` — the wasm is instantiating and/or the relay handshake is
  *   in flight.
- * - `connected` — the endpoint is live on the relay network; {@link relay}
+ * - `connected` — the endpoint is live on the relay network; {@link relayCell}
  *   holds it open.
  * - `failed` — the wasm load or handshake errored. Terminal: there's no
  *   reconnect affordance, so the scope stays here until it's released.
@@ -45,21 +45,21 @@ export const connectionStore = defineStore<ConnectionState>(beamScope, () => ({
  * Freeing it tears the relay connection down, which is what `drop` does
  * once the last anchor is released.
  */
-export const relay = defineCell<Relay | null>(beamScope, () => null, {
+export const relayCell = defineCell<Relay | null>(beamScope, () => null, {
   drop: (held) => held?.free(),
 });
 
 /** The wasm load and relay handshake got under way. */
-export const connecting = defineTopic();
-defineFold(connecting, [connectionStore], (connection) => {
+export const connectingTopic = defineTopic();
+defineFold(connectingTopic, [connectionStore], (connection) => {
   connection.status = 'connecting';
 });
 
 /** The endpoint joined the relay network and is reachable. */
-export const connected = defineTopic<Relay>();
+export const connectedTopic = defineTopic<Relay>();
 defineFold(
-  connected,
-  [connectionStore, relay],
+  connectedTopic,
+  [connectionStore, relayCell],
   (connection, held, endpoint) => {
     connection.status = 'connected';
     held.current = endpoint;
@@ -70,7 +70,7 @@ defineFold(
  * The wasm load or the relay handshake errored. Payload-less: the failure
  * is logged where it happens and nothing renders it.
  */
-export const connectFailed = defineTopic();
-defineFold(connectFailed, [connectionStore], (connection) => {
+export const connectFailedTopic = defineTopic();
+defineFold(connectFailedTopic, [connectionStore], (connection) => {
   connection.status = 'failed';
 });
