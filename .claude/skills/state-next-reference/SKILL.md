@@ -7,6 +7,7 @@ description: Reference docs for `@lib/state-next` — the experimental transacti
 - Single entry point: `@lib/state-next`.
 - The model is space/time/life. Space: stores, cells, formulas. Time: topics (facts) and folds (transitions). Life: scopes (ownership) and sagas (processes).
 - The one law: sagas publish facts, folds fold facts into state, readers derive. Sagas never touch stores directly.
+- Handles are named by kind: `…Store`, `…Cell`, `…Formula`, `…Topic`, `…Scope`, `…Saga`. Assignments holding resolved values drop the suffix: `const foo = useValue(fooStore)`.
 
 ## Topics & Facts
 
@@ -54,6 +55,7 @@ description: Reference docs for `@lib/state-next` — the experimental transacti
 - `peek(ref)`: Untracked read.
 - `useCommit()`: Returns `(...facts) => void` — commit straight from UI for simple synchronous interactions. One call, N facts, one transition.
 - `run(saga(input))` / `useRun(saga)`: Drive a saga; resolves with its return value.
+- `AbortError`: Rejection class for cancelled work. Match with `instanceof`.
 - `createRuntime()` / `bindRuntime(runtime)`: Isolated runtimes; app code uses the implicit global bindings.
 
 ## Testing
@@ -65,20 +67,20 @@ description: Reference docs for `@lib/state-next` — the experimental transacti
 
 ```ts
 const setup = () => {
-  const scope = defineScope();
-  const counter = defineStore<Counter>(scope, () => ({ count: 0 }));
-  const added = defineTopic<number>();
-  defineFold(added, [counter], (draft, amount) => {
+  const testScope = defineScope();
+  const counterStore = defineStore<Counter>(testScope, () => ({ count: 0 }));
+  const addedTopic = defineTopic<number>();
+  defineFold(addedTopic, [counterStore], (draft, amount) => {
     draft.count += amount;
   });
   const bound = createTestRuntime();
-  bound.anchor(scope);
-  return { ...bound, counter, added };
+  bound.anchor(testScope);
+  return { ...bound, counterStore, addedTopic };
 };
 
 it('adds', () => {
-  const { commit, peek, counter, added } = setup();
-  commit(added(2), added(3));
-  expect(peek(counter).count).toBe(5);
+  const { commit, peek, counterStore, addedTopic } = setup();
+  commit(addedTopic(2), addedTopic(3));
+  expect(peek(counterStore).count).toBe(5);
 });
 ```

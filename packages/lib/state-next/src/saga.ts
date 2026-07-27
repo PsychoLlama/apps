@@ -1,4 +1,4 @@
-import { abortError, isAbortError } from './abort';
+import { AbortError } from './abort';
 import {
   SCOPE,
   type AnyCapability,
@@ -232,7 +232,7 @@ const race = <T>(
 };
 
 const reasonOf = (signal: AbortSignal): Error =>
-  signal.reason instanceof Error ? signal.reason : abortError();
+  signal.reason instanceof Error ? signal.reason : new AbortError();
 
 const execute = (instruction: Instruction, context: DriveContext): unknown => {
   switch (instruction[0]) {
@@ -275,7 +275,7 @@ const runBlock = async (
     controller.abort(
       context.signal.reason instanceof Error
         ? context.signal.reason
-        : abortError(),
+        : new AbortError(),
     );
 
   // The parent cannot be aborted here: `drive` re-checks its signal
@@ -295,7 +295,9 @@ const runBlock = async (
       children.map((child) =>
         drive(child, scoped).catch((error: unknown) => {
           // First failure cancels the remaining siblings.
-          controller.abort(abortError());
+          controller.abort(
+            new AbortError('Sibling failed; remaining work cancelled'),
+          );
           throw error;
         }),
       ),
@@ -307,7 +309,7 @@ const runBlock = async (
       // Prefer the original failure over the AbortErrors it caused in
       // siblings. Held facts are discarded: all or nothing.
       const failure =
-        rejections.find((entry) => !isAbortError(entry.reason)) ??
+        rejections.find((entry) => !(entry.reason instanceof AbortError)) ??
         rejections[0];
       throw failure.reason;
     }

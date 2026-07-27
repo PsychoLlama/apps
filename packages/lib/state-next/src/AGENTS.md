@@ -5,6 +5,7 @@
 - The one law: life produces time, time mutates space, space never reaches back. Sagas cannot touch stores — they publish facts and read snapshots through instructions.
 - Facts and saga invocations are inert values interpreted by the driver. That's what keeps everything observable, simulable, and lintable — preserve it when extending the instruction set.
 - Reads are readonly everywhere; writable drafts exist only as fold handler arguments.
+- Name handles by kind: `…Store`, `…Cell`, `…Formula`, `…Topic`, `…Scope`, `…Saga`.
 - Co-locate tests. Example: `foo.ts` and `__tests__/foo.test.ts`.
 - Reference docs live in the `state-next-reference` skill at `.claude/skills/state-next-reference/SKILL.md`. Keep the skill updated when the API changes.
   - Audience: expert frontend devs unfamiliar with this library.

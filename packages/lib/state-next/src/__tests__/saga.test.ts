@@ -1,3 +1,4 @@
+import { AbortError } from '../abort';
 import { bindRuntime, createTestRuntime } from '../bindings';
 import { defineFold } from '../fold';
 import { createRuntime } from '../runtime';
@@ -459,7 +460,7 @@ describe('drive internals', () => {
     })();
 
     await expect(drive(gen, noopContext(controller.signal))).rejects.toThrow(
-      /aborted/i,
+      AbortError,
     );
   });
 
@@ -478,7 +479,7 @@ describe('drive internals', () => {
     await settle();
     controller.abort('raw reason');
 
-    await expect(pending).rejects.toThrow(/aborted/i);
+    await expect(pending).rejects.toThrow(AbortError);
   });
 });
 
@@ -506,7 +507,7 @@ describe('scope release', () => {
     await settle();
     release();
 
-    await expect(pending).rejects.toThrow(/aborted/i);
+    await expect(pending).rejects.toThrow(AbortError);
     expect(ledger()).toEqual([]);
   });
 
@@ -557,7 +558,7 @@ describe('scope release', () => {
 
     release();
 
-    await expect(pending).rejects.toThrow(/aborted/i);
+    await expect(pending).rejects.toThrow(AbortError);
     expect(cleaned).toBe(true);
     expect(ledger()).toEqual([[added(1)]]);
   });
@@ -594,7 +595,7 @@ describe('scope release', () => {
 
     release();
 
-    await expect(pending).rejects.toThrow(/aborted/i);
+    await expect(pending).rejects.toThrow(AbortError);
     expect(disposed).toBe(true);
   });
 });

@@ -1,3 +1,4 @@
+export { AbortError } from './abort';
 export {
   anchor,
   bindRuntime,

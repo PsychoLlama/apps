@@ -75,6 +75,11 @@ export default [
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-deprecated': 'error',
       '@typescript-eslint/no-namespace': 'off',
+      // `async` is a signature decision as much as an implementation one.
+      // Generators that yield instructions, stubs that satisfy a promise-
+      // returning interface, and capabilities kept uniform across a module
+      // all trip this without being wrong.
+      '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/no-unused-vars': 'error',
       'custom/no-derived-token-types': 'error',
       'custom/no-log-interpolation': 'error',
@@ -202,16 +207,6 @@ export default [
           patterns: restrictedImportPatterns,
         },
       ],
-    },
-  },
-  {
-    // @lib/state-next sagas speak through `yield`ed instructions; their
-    // async-generator bodies often contain no literal `await` even though
-    // the driver awaits on their behalf. The rule misfires on the entire
-    // grammar.
-    files: ['packages/lib/state-next/**/*.ts'],
-    rules: {
-      '@typescript-eslint/require-await': 'off',
     },
   },
   {

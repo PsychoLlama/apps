@@ -1,5 +1,5 @@
 import { untrack } from 'solid-js';
-import { abortError } from './abort';
+import { AbortError } from './abort';
 import {
   DROP,
   KIND,
@@ -72,7 +72,9 @@ const killScope = (
   // Delete first so reads and commits observe the death immediately, then
   // abort producers, then release owned resources.
   runtime[SCOPES].delete(scope);
-  instance.controller.abort(abortError());
+  instance.controller.abort(
+    new AbortError('Scope released; in-flight work aborted'),
+  );
 
   for (const [ref, space] of instance.spaces) {
     if (ref[KIND] === 'cell' && space.kind === 'cell') {
