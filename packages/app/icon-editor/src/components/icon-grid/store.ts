@@ -44,6 +44,14 @@ export interface PickerState {
    */
   manifests: { [packId: string]: IconPackManifest | undefined };
   /**
+   * Asset URLs already handed to the fetcher, per pack — the manifest
+   * and any body chunks. The fetch trigger is derived, so it re-fires
+   * whenever the view moves; this is what stops it asking twice for the
+   * same asset. Failures stay recorded rather than clearing, so a broken
+   * asset can't spin in a retry loop.
+   */
+  requested: { [packId: string]: ReadonlyArray<string> | undefined };
+  /**
    * Bumped on every write to {@link iconEntriesCell}. Formulas read this to
    * pick up new resolutions; the `Map` itself stays non-reactive.
    */
@@ -79,6 +87,7 @@ export const pickerStore = defineStore<PickerState>(pickerScope, () => ({
   currentPage: 0,
   packs: undefined,
   manifests: {},
+  requested: {},
   entriesVersion: 0,
 }));
 
@@ -129,6 +138,13 @@ const dropInactivePacks = (
 ): void => {
   for (const key of Object.keys(state.manifests)) {
     if (key !== activePackId) delete state.manifests[key];
+  }
+
+  // The request ledger has to go with the data it describes. Leave it
+  // behind and the dropped pack looks permanently fetched: every asset
+  // marked requested, none of it in state, nothing left to re-ask.
+  for (const key of Object.keys(state.requested)) {
+    if (key !== activePackId) delete state.requested[key];
   }
 
   const prefix = `${activePackId}:`;
@@ -193,6 +209,33 @@ defineFold(pageChangedTopic, [pickerStore], (state, page) => {
 
 // --- Fetched data ---
 
+/** Record asset URLs against a pack, skipping any already there. */
+const markRequested = (
+  state: PickerState,
+  packId: string,
+  urls: ReadonlyArray<string>,
+): void => {
+  const seen = state.requested[packId] ?? [];
+  const fresh = urls.filter((url) => !seen.includes(url));
+  if (fresh.length > 0) state.requested[packId] = [...seen, ...fresh];
+};
+
+/**
+ * Assets were handed to the fetcher. Committed *before* the request so
+ * the derived trigger sees them as spoken for while they're in flight —
+ * this is what the module-level promise cache used to do, minus the
+ * lifetime nobody could prove.
+ */
+export const packAssetsRequestedTopic = defineTopic<{
+  /** Pack the assets belong to — the unit eviction works in. */
+  packId: string;
+  /** Manifest or body-chunk URLs now spoken for. */
+  urls: ReadonlyArray<string>;
+}>();
+defineFold(packAssetsRequestedTopic, [pickerStore], (state, request) => {
+  markRequested(state, request.packId, request.urls);
+});
+
 /** The pack catalog landed. */
 export const packsLoadedTopic = defineTopic<ReadonlyArray<IconPackSummary>>();
 defineFold(packsLoadedTopic, [pickerStore], (state, packs) => {
@@ -215,6 +258,10 @@ defineFold(
   pageIngestedTopic,
   [pickerStore, iconEntriesCell],
   (state, entries, ingest) => {
+    // A chunk pulled in by a resolve never went through the derived
+    // trigger, so record it here too — otherwise the grid would fetch
+    // the same chunk again the first time it displays it.
+    markRequested(state, ingest.packId, [ingest.pageUrl]);
     let added = false;
     for (const entry of ingest.entries) {
       added = insertEntry(entries, ingest.packId, entry) || added;
@@ -388,23 +435,33 @@ export interface MissingPackData {
 const NOTHING_MISSING: MissingPackData = { manifest: undefined, pages: [] };
 
 /**
- * What the picker still has to fetch. Derived rather than tracked, so
- * every path that moves the active pack, the filter, or the page — user
- * click, deep link, reset — converges on the same answer without each
- * one remembering to kick off its own request.
+ * What the picker still has to fetch: what the view needs, minus what
+ * state already holds, minus what's already been asked for. Derived
+ * rather than tracked, so every path that moves the active pack, the
+ * filter, or the page — user click, deep link, reset — converges on the
+ * same answer without each one remembering to kick off its own request.
  */
 export const missingPackDataFormula = defineFormula(
   [pickerStore, pageViewFormula],
   (state, view): MissingPackData => {
     const pack = state.packs?.find((entry) => entry.id === state.activePackId);
     if (!pack) return NOTHING_MISSING;
-    if (!view.manifest) return { manifest: pack, pages: [] };
+
+    const requested = state.requested[pack.id] ?? [];
+
+    if (!view.manifest) {
+      return requested.includes(pack.manifestUrl)
+        ? NOTHING_MISSING
+        : { manifest: pack, pages: [] };
+    }
 
     const manifest = view.manifest;
     const pages: IconPageRequest[] = [];
     for (const idx of view.chunks) {
       const pageUrl = manifest.pages[idx];
-      if (pageUrl) pages.push({ packId: manifest.id, pageUrl });
+      if (pageUrl && !requested.includes(pageUrl)) {
+        pages.push({ packId: manifest.id, pageUrl });
+      }
     }
     return { manifest: undefined, pages };
   },

@@ -1,10 +1,9 @@
-import { Match, Switch, createEffect, on, onCleanup, onMount } from 'solid-js';
+import { Match, Switch, createEffect, on, onCleanup } from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
 import { useAnchor, useCommit, useRun, useValue } from '@lib/state-next';
 import { Frame, SiteHeader } from '@lib/shell';
 import { Flex } from '@lib/ui';
 import { IconGrid } from './components/icon-grid';
-import { loadPackIndexSaga } from './components/icon-grid/sagas';
 import {
   activePackFormula,
   pickerScope,
@@ -59,14 +58,8 @@ export const IconEditor = () => {
   const hydrate = useRun(hydrateFromUrlSaga);
   const randomize = useRun(randomizeIconSaga);
   const choosePack = useRun(selectPackSaga);
-  const loadPacks = useRun(loadPackIndexSaga);
 
   const [searchParams, setSearchParams] = useSearchParams<IconSearchParams>();
-
-  // Fetch the pack catalog with the editor rather than with the grid —
-  // the properties panel's pack card needs it before the picker is ever
-  // opened.
-  onMount(() => void loadPacks());
 
   // --- Router bridges ---
   //

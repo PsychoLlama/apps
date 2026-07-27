@@ -4,6 +4,7 @@ import {
   iconEntriesCell,
   manifestLoadedTopic,
   missingPackDataFormula,
+  packAssetsRequestedTopic,
   packSearchChangedTopic,
   packSelectedTopic,
   packsLoadedTopic,
@@ -90,6 +91,30 @@ describe('packSelectedTopic', () => {
     expect(Object.keys(peek(pickerStore).manifests)).toEqual(['mdi']);
     expect(peek(iconEntriesCell).has(entryKey('mdi', 'home'))).toBe(true);
     expect(peek(iconEntriesCell).has(entryKey('tabler', 'rocket'))).toBe(false);
+  });
+
+  it('drops the request ledger alongside the data, so a revisited pack refetches instead of looking permanently fulfilled', () => {
+    const { commit, peek } = setup();
+    commit(
+      packAssetsRequestedTopic({ packId: 'tabler', urls: ['/tabler/a.json'] }),
+    );
+
+    commit(packSelectedTopic('mdi'));
+
+    expect(peek(pickerStore).requested.tabler).toBeUndefined();
+  });
+});
+
+describe('packAssetsRequestedTopic', () => {
+  it('accumulates URLs per pack without recording a duplicate', () => {
+    const { commit, peek } = setup();
+
+    commit(packAssetsRequestedTopic({ packId: 'mdi', urls: ['/a.json'] }));
+    commit(
+      packAssetsRequestedTopic({ packId: 'mdi', urls: ['/a.json', '/b.json'] }),
+    );
+
+    expect(peek(pickerStore).requested.mdi).toEqual(['/a.json', '/b.json']);
   });
 });
 
@@ -232,5 +257,44 @@ describe('missingPackDataFormula', () => {
       manifest: undefined,
       pages: [{ packId: 'mdi', pageUrl: '/mdi/page-0.json' }],
     });
+  });
+
+  it('stops asking for a manifest already in flight', () => {
+    const { commit, peek } = setup();
+    commit(packsLoadedTopic([pack('mdi')]));
+
+    commit(
+      packAssetsRequestedTopic({
+        packId: 'mdi',
+        urls: ['/mdi/manifest.json'],
+      }),
+    );
+
+    expect(peek(missingPackDataFormula).manifest).toBeUndefined();
+  });
+
+  it('stops asking for a chunk already in flight', () => {
+    const { commit, peek } = setup();
+    commit(packsLoadedTopic([pack('mdi')]));
+    commit(manifestLoadedTopic(manifest('mdi', ['home'])));
+
+    commit(
+      packAssetsRequestedTopic({
+        packId: 'mdi',
+        urls: ['/mdi/page-0.json'],
+      }),
+    );
+
+    expect(peek(missingPackDataFormula).pages).toEqual([]);
+  });
+
+  it('stops asking for a chunk that already landed, even one a resolve dragged in', () => {
+    const { commit, peek } = setup();
+    commit(packsLoadedTopic([pack('mdi')]));
+    commit(manifestLoadedTopic(manifest('mdi', ['home'])));
+
+    commit(pageIngestedTopic(pageResult('mdi', [entry('home')])));
+
+    expect(peek(missingPackDataFormula).pages).toEqual([]);
   });
 });
