@@ -1,30 +1,10 @@
 /**
- * Runtime fetcher for the iconify pack catalog. The build emits the
- * full `@iconify/json` corpus as paginated JSON assets behind a
- * `virtual:icon-packs` URL — this module is the only consumer that
- * knows the on-the-wire shape, and exposes typed lookups + an
- * in-memory cache so repeat browses through the same pack are free.
+ * The on-the-wire shape of the iconify pack catalog, plus the pure
+ * lookups that read it. The build emits the full `@iconify/json` corpus
+ * as paginated JSON assets; this module knows what those assets contain
+ * and nothing about how they arrive — fetching lives in
+ * `capabilities.ts`, and the results live in state.
  */
-
-/// <reference types="@dev/build/vite-plugin/icon-packs-types" />
-
-import { createLogger, toError } from '@lib/observability';
-import indexUrl from 'virtual:icon-packs';
-
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
-
-/** A non-OK response from an icon-asset fetch, carrying the URL and status. */
-class IconAssetError extends Error {
-  readonly url: string;
-  readonly status: number;
-
-  constructor(url: string, status: number) {
-    super(`Failed to fetch ${url}: ${status}`);
-    this.name = 'IconAssetError';
-    this.url = url;
-    this.status = status;
-  }
-}
 
 /**
  * A single icon entry. Most iconify packs share one viewBox across
@@ -132,93 +112,10 @@ export interface IconPackManifest {
   pageStart: ReadonlyArray<number>;
 }
 
-interface IndexPayload {
+/** The index asset's payload — a bare envelope around the pack list. */
+export interface IconIndexPayload {
   packs: IconPackSummary[];
 }
-
-const fetchJson = async <T>(url: string): Promise<T> => {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new IconAssetError(url, response.status);
-    }
-    return (await response.json()) as T;
-  } catch (error) {
-    // The choke point for every asset fetch — otherwise these fail
-    // silently and the picker just spins on "Loading…".
-    logger.warn('Icon asset request failed.', { url, error: toError(error) });
-    throw error;
-  }
-};
-
-let indexPromise: Promise<IconPackSummary[]> | undefined;
-const manifestCache = new Map<string, Promise<IconPackManifest>>();
-// Per-pack page cache so eviction is precise. Outer key is pack id;
-// inner key is page URL. A flat URL→entries map saved one indirection
-// but conflated packs — switching away from a heavy pack couldn't
-// reclaim its pages without scanning every URL.
-const pageCache = new Map<string, Map<string, Promise<IconEntry[]>>>();
-
-const pageCacheFor = (packId: string): Map<string, Promise<IconEntry[]>> => {
-  let inner = pageCache.get(packId);
-  if (!inner) {
-    inner = new Map();
-    pageCache.set(packId, inner);
-  }
-  return inner;
-};
-
-/** Load the pack catalog. Cached after the first call. */
-export const loadIconPackIndex = (): Promise<IconPackSummary[]> => {
-  indexPromise ??= fetchJson<IndexPayload>(indexUrl).then(
-    (payload) => payload.packs,
-  );
-  return indexPromise;
-};
-
-/** Load a pack's manifest (names + page URLs). Cached per pack id. */
-export const loadIconPackManifest = (
-  pack: IconPackSummary,
-): Promise<IconPackManifest> => {
-  const cached = manifestCache.get(pack.id);
-  if (cached) return cached;
-  const promise = fetchJson<IconPackManifest>(pack.manifestUrl);
-  manifestCache.set(pack.id, promise);
-  return promise;
-};
-
-/**
- * Load a single page chunk — array of `{ name, body }`. Cached per
- * `(packId, pageUrl)` so {@link releaseInactivePackCaches} can drop
- * a whole pack's worth of pages in one shot.
- */
-export const loadIconPage = (
-  packId: string,
-  pageUrl: string,
-): Promise<IconEntry[]> => {
-  const inner = pageCacheFor(packId);
-  const cached = inner.get(pageUrl);
-  if (cached) return cached;
-  const promise = fetchJson<IconEntry[]>(pageUrl);
-  inner.set(pageUrl, promise);
-  return promise;
-};
-
-/**
- * Drop manifests + pages for any pack other than `activePackId`.
- * The browser's HTTP cache covers the case where the user comes
- * back — re-fetching is cheap, while keeping every visited pack's
- * names array (one string per icon, ~7000 for MDI) and bodies in
- * memory adds up fast across the catalog.
- */
-export const releaseInactivePackCaches = (activePackId: string): void => {
-  for (const key of [...manifestCache.keys()]) {
-    if (key !== activePackId) manifestCache.delete(key);
-  }
-  for (const key of [...pageCache.keys()]) {
-    if (key !== activePackId) pageCache.delete(key);
-  }
-};
 
 /**
  * Encode a `pack:name` reference for URL params. Returns the empty
@@ -272,30 +169,27 @@ export const pageIndexFor = (
   return 0;
 };
 
-/** Coords for fetching a single page's entries, threaded through {@link loadIconPageEntries}. */
+/** Coords identifying one body chunk: which pack, and which asset. */
 export interface IconPageRequest {
   packId: string;
   pageUrl: string;
 }
 
-/** Result of {@link loadIconPageEntries} — the original request plus its entries. */
+/** A landed body chunk — the originating request plus its entries. */
 export interface IconPageResult {
   packId: string;
   pageUrl: string;
   entries: ReadonlyArray<IconEntry>;
 }
 
-/**
- * Fetch a single page's entries while preserving the originating
- * request — pure capability that side-effecting plumbing
- * (`defineEffect`) can wrap.
- */
-export const loadIconPageEntries = async (
-  request: IconPageRequest,
-): Promise<IconPageResult> => {
-  const entries = await loadIconPage(request.packId, request.pageUrl);
-  return { packId: request.packId, pageUrl: request.pageUrl, entries };
-};
+/** The name range one chunk covers, as `[start, end)` into `names`. */
+export const pageNameRange = (
+  manifest: IconPackManifest,
+  pageIndex: number,
+): readonly [start: number, end: number] => [
+  manifest.pageStart[pageIndex] ?? 0,
+  manifest.pageStart[pageIndex + 1] ?? manifest.total,
+];
 
 /**
  * Materialize an {@link IconRef} from an icon entry plus its host
@@ -322,34 +216,3 @@ export const toIconRef = (
   license: source.license,
   author: source.author,
 });
-
-/**
- * Resolve a fully-qualified `pack:name` reference, fetching whatever
- * pages and manifest are needed. Returns `undefined` when the pack
- * or icon doesn't exist.
- */
-export const resolveIconRef = async (
-  pack: string,
-  name: string,
-): Promise<IconRef | undefined> => {
-  const packs = await loadIconPackIndex();
-  const summary = packs.find((entry) => entry.id === pack);
-  if (!summary) return undefined;
-  const manifest = await loadIconPackManifest(summary);
-  const position = findIconIndex(manifest, name);
-  if (position < 0) return undefined;
-  const pageUrl = manifest.pages[pageIndexFor(manifest, position)];
-  const page = await loadIconPage(summary.id, pageUrl);
-  const entry = page.find((icon) => icon.name === name);
-  if (!entry) return undefined;
-  return toIconRef(
-    {
-      id: manifest.id,
-      width: manifest.width,
-      height: manifest.height,
-      license: summary.license,
-      author: summary.author,
-    },
-    entry,
-  );
-};
