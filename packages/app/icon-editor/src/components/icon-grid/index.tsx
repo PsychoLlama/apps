@@ -9,11 +9,10 @@ import {
   Switch,
   createEffect,
   createMemo,
-  on,
   onMount,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useAction, useEffect } from '@lib/state';
+import { useCommit, useRun, useValue } from '@lib/state-next';
 import {
   Badge,
   Code,
@@ -35,34 +34,27 @@ import IconNext from 'virtual:icons/mdi/chevron-right';
 import IconPrev from 'virtual:icons/mdi/chevron-left';
 import IconSearch from 'virtual:icons/mdi/magnify';
 import {
-  releaseInactivePackCaches,
   toIconRef,
   type IconEntry,
   type IconPackManifest,
   type IconPackSummary,
   type IconRef,
 } from '../../icons';
+import { loadMissingPackDataSaga } from './sagas';
 import {
-  loadManifestEffect,
-  loadPageEffect,
-  releaseInactivePacks as releaseInactivePacksAction,
-  seedEntry as seedEntryAction,
-  setCurrentPage as setCurrentPageAction,
-  setPackSearch as setPackSearchAction,
-  setSearch as setSearchAction,
-  setView as setViewAction,
-} from './bindings';
-import { entryKey, picker } from './store';
+  activePackFormula,
+  entryKey,
+  iconEntryCacheFormula,
+  missingPackDataFormula,
+  pageChangedTopic,
+  pageViewFormula,
+  packSearchChangedTopic,
+  pickerStore,
+  pickerViewChangedTopic,
+  searchChangedTopic,
+} from './store';
 import { PackCard } from '../pack-card';
 import * as css from './icon-grid.css';
-
-/**
- * Icons per visible page in the pack-detail grid. Sized so a typical
- * inspector rail (~7-10 columns) shows ~6-9 rows before paging — wide
- * enough to scan, short enough that scroll-then-page beats endless
- * scrolling.
- */
-const PAGE_SIZE = 60;
 
 const numberFormat = new Intl.NumberFormat();
 
@@ -93,207 +85,47 @@ interface IconGridProps {
  * matching the search.
  */
 export const IconGrid: Component<IconGridProps> = (props) => {
-  const setView = useAction(setViewAction);
-  const setSearch = useAction(setSearchAction);
-  const setPackSearch = useAction(setPackSearchAction);
-  const setCurrentPage = useAction(setCurrentPageAction);
-  const seedEntry = useAction(seedEntryAction);
-  const releaseInactivePacks = useAction(releaseInactivePacksAction);
-  const loadManifest = useEffect(loadManifestEffect);
-  const loadPage = useEffect(loadPageEffect);
+  const picker = useValue(pickerStore);
+  const pack = useValue(activePackFormula);
+  const missing = useValue(missingPackDataFormula);
+  const commit = useCommit();
+  const loadMissing = useRun(loadMissingPackDataSaga);
 
-  // The pack catalog is fetched eagerly by the editor (it backs the
-  // properties panel's pack card before the picker ever opens), and the
-  // editor also keeps `activePackId` in lockstep with the selected
-  // icon's pack, so the picker can assume both are already arranged on
-  // mount.
-
-  // Keep the entries map seeded with the currently selected icon —
-  // even before the manifest loads, the picker knows it can render
-  // the selected tile. URL hydration sometimes resolves an icon
-  // outside the active pack's loaded pages.
-  createEffect(() => {
-    const selected = props.selected;
-    if (!selected) return;
-    seedEntry({
-      pack: selected.pack,
-      entry: {
-        name: selected.name,
-        body: selected.body,
-        width: selected.width,
-        height: selected.height,
-      },
-    });
-  });
-
-  // `loadIconPage` caches at the module level, so this Set's only job
-  // is to keep `loadPage` from re-dispatching the success action with
-  // bodies already ingested. Recreated on every pack switch so the
-  // freshly-cleared module cache and this guard stay in sync.
-  let requestedUrls = new Set<string>();
-
-  // Memory release when switching packs — drop fetcher caches plus
-  // the picker's manifests/entries for inactive packs. The active
-  // pack's data stays put. `defer: true` skips the initial run since
-  // there's nothing to release on first mount.
-  createEffect(
-    on(
-      () => picker.activePackId,
-      (activePackId) => {
-        releaseInactivePackCaches(activePackId);
-        releaseInactivePacks(activePackId);
-        requestedUrls = new Set();
-      },
-      { defer: true },
-    ),
-  );
-
-  const activePack = createMemo<IconPackSummary | undefined>(() => {
-    const list = picker.packs;
-    if (!list) return undefined;
-    return list.find((entry) => entry.id === picker.activePackId);
-  });
-
-  // Trigger manifest fetches as the active pack changes.
-  createEffect(() => {
-    const pack = activePack();
-    if (!pack) return;
-    if (picker.manifests[pack.id]) return;
-    void loadManifest(pack);
-  });
-
-  const activeManifest = createMemo<IconPackManifest | undefined>(
-    () => picker.manifests[picker.activePackId],
-  );
+  // The editor fetches the pack catalog and folds every icon write into
+  // the active pack, so both are already arranged by the time the grid
+  // mounts. Pagination, the filter, and the entry cache are derived in
+  // `store.ts` — this component only memoizes them for render.
 
   /**
-   * Filtered name list — pure function of the active manifest + the
-   * trimmed search term. Pagination slices on top of this so the
-   * filter recomputes only when the manifest or search changes.
+   * The current slice. One memo over the whole derivation so a search
+   * keystroke walks the (proxied) name array once, not once per field
+   * the render reads.
    */
-  const matches = createMemo<ReadonlyArray<string>>(() => {
-    const manifest = activeManifest();
-    if (!manifest) return [];
-    const term = picker.search.trim().toLowerCase();
-    if (!term) return manifest.names;
-    return manifest.names.filter((name) => name.toLowerCase().includes(term));
-  });
-
-  const isFiltered = createMemo(() => picker.search.trim().length > 0);
+  const view = createMemo(useValue(pageViewFormula));
 
   /**
-   * Page count + per-page slice. Two regimes:
-   *
-   * - **Unfiltered**: each UI page maps 1:1 to one asset chunk
-   *   (`manifest.pages[i]`). Clicking next loads exactly one new
-   *   chunk — predictable network cost, no over-fetch, no chunk
-   *   straddling. Page sizes vary because chunks are byte-budgeted.
-   * - **Filtered**: search hits don't honour chunk boundaries, so
-   *   fall back to a fixed `PAGE_SIZE`-tile slice over the matches.
+   * The entry cache. `equals: false` because the `Map` reference is
+   * stable across chunk arrivals — the version counter inside the
+   * formula is what actually changed. Tiles walk the `Map` directly,
+   * with no tracking node per `pack:name` key.
    */
-  const pageCount = createMemo(() => {
-    const manifest = activeManifest();
-    if (!manifest) return 1;
-    if (isFiltered())
-      return Math.max(1, Math.ceil(matches().length / PAGE_SIZE));
-    return Math.max(1, manifest.pages.length);
-  });
-  /** Clamp the requested page index against the current filter — a search shrink may strand us past the last page. */
-  const safePage = createMemo(() =>
-    Math.min(picker.currentPage, pageCount() - 1),
-  );
-
-  /** First-icon index (0-based) for the active page within `matches`. */
-  const pageStart = createMemo(() => {
-    const manifest = activeManifest();
-    if (!manifest) return 0;
-    if (isFiltered()) return safePage() * PAGE_SIZE;
-    return manifest.pageStart[safePage()] ?? 0;
+  const entries = createMemo(useValue(iconEntryCacheFormula), undefined, {
+    equals: false,
   });
 
-  const visible = createMemo<ReadonlyArray<string>>(() => {
-    const manifest = activeManifest();
-    if (!manifest) return [];
-    if (isFiltered()) {
-      const list = matches();
-      const start = pageStart();
-      return list.slice(start, start + PAGE_SIZE);
-    }
-    const start = pageStart();
-    const next = manifest.pageStart[safePage() + 1] ?? manifest.total;
-    return manifest.names.slice(start, next);
-  });
+  // The picker's only fetch trigger: whatever the current view needs
+  // and state doesn't hold. Every path that moves the pack, the filter,
+  // or the page converges here, so none of them has to remember to
+  // start its own request.
+  createEffect(() => void loadMissing(missing()));
 
-  // Name → chunk-index lookup, built once per manifest. The naive
-  // alternative — `manifest.names.indexOf(name)` per visible name —
-  // walks the proxy-wrapped names array for every probe; with a
-  // 500-tile page over a 7k-icon pack that's millions of proxy
-  // accesses per click. The map collapses it to O(1) per lookup.
-  const nameToChunkIndex = createMemo<ReadonlyMap<string, number>>(() => {
-    const manifest = activeManifest();
-    if (!manifest) return new Map();
-    const map = new Map<string, number>();
-    let chunk = 0;
-    for (let idx = 0; idx < manifest.names.length; idx += 1) {
-      // Advance the cursor when the position crosses a chunk
-      // boundary, so the whole map builds in one linear walk
-      // instead of an O(log p) `pageIndexFor` per name.
-      while (
-        chunk + 1 < manifest.pageStart.length &&
-        idx >= manifest.pageStart[chunk + 1]
-      ) {
-        chunk += 1;
-      }
-      map.set(manifest.names[idx], chunk);
-    }
-    return map;
-  });
-
-  // Whenever the visible set changes, request the page chunks needed
-  // to render their bodies.
-  createEffect(() => {
-    const manifest = activeManifest();
-    if (!manifest) return;
-    const names = visible();
-    if (names.length === 0) return;
-    const lookup = nameToChunkIndex();
-    const needed = new Set<number>();
-    for (const name of names) {
-      const idx = lookup.get(name);
-      if (idx === undefined) continue;
-      needed.add(idx);
-    }
-    for (const idx of needed) {
-      const pageUrl = manifest.pages[idx];
-      if (!pageUrl || requestedUrls.has(pageUrl)) continue;
-      requestedUrls.add(pageUrl);
-      void loadPage({ packId: manifest.id, pageUrl });
-    }
-  });
-
-  // Memoize the entries snapshot so the proxy hops for `entries` and
-  // `entriesVersion` happen once per chunk arrival, not once per tile
-  // per binding. `equals: false` so downstream re-runs even though the
-  // `Map` reference doesn't change between bumps. Tiles read the memo
-  // (a plain signal accessor) and walk the `Map` directly — no proxy
-  // tracking nodes per `(pack:name)` key, the dominant cost when a
-  // 500-tile page re-binds.
-  const entriesSnapshot = createMemo(
-    () => {
-      void picker.entriesVersion;
-      return picker.entries.current;
-    },
-    picker.entries.current,
-    { equals: false },
-  );
-
-  const getEntry = (pack: string, name: string): IconEntry | undefined =>
-    entriesSnapshot().get(entryKey(pack, name));
+  const getEntry = (packId: string, name: string): IconEntry | undefined =>
+    entries().get(entryKey(packId, name));
 
   const handlePickIcon = (manifest: IconPackManifest, name: string) => {
     const entry = getEntry(manifest.id, name);
     if (!entry) return;
-    const summary = activePack();
+    const summary = pack();
     props.onSelect(
       toIconRef(
         {
@@ -311,39 +143,39 @@ export const IconGrid: Component<IconGridProps> = (props) => {
   return (
     <Flex as="div" direction="column" gap={3} class={css.root}>
       <Switch>
-        <Match when={picker.view === 'packs'}>
+        <Match when={picker().view === 'packs'}>
           <PackListView
-            packs={picker.packs}
-            activePackId={picker.activePackId}
-            search={picker.packSearch}
-            onSearch={setPackSearch}
+            packs={picker().packs}
+            activePackId={picker().activePackId}
+            search={picker().packSearch}
+            onSearch={(query) => commit(packSearchChangedTopic(query))}
             onPick={props.onSelectPack}
             onClose={props.onClose}
           />
         </Match>
-        <Match when={picker.view === 'pack-detail'}>
+        <Match when={picker().view === 'pack-detail'}>
           <PackDetailView
-            pack={activePack()}
-            manifest={activeManifest()}
+            pack={pack()}
+            manifest={view().manifest}
             getEntry={getEntry}
-            search={picker.search}
-            onSearch={setSearch}
-            visible={visible()}
-            pageStart={pageStart()}
-            total={matches().length}
-            currentPage={safePage()}
-            pageCount={pageCount()}
-            onPageChange={setCurrentPage}
+            search={picker().search}
+            onSearch={(query) => commit(searchChangedTopic(query))}
+            visible={view().names}
+            pageStart={view().start}
+            total={view().total}
+            currentPage={view().page}
+            pageCount={view().pageCount}
+            onPageChange={(page) => commit(pageChangedTopic(page))}
             selected={props.selected}
             onPickIcon={handlePickIcon}
             onClose={props.onClose}
-            onShowInfo={() => setView('pack-info')}
+            onShowInfo={() => commit(pickerViewChangedTopic('pack-info'))}
           />
         </Match>
-        <Match when={picker.view === 'pack-info'}>
+        <Match when={picker().view === 'pack-info'}>
           <PackInfoView
-            pack={activePack()}
-            onShowIcons={() => setView('pack-detail')}
+            pack={pack()}
+            onShowIcons={() => commit(pickerViewChangedTopic('pack-detail'))}
           />
         </Match>
       </Switch>

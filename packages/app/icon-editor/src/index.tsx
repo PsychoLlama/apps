@@ -1,39 +1,37 @@
-import {
-  Match,
-  Switch,
-  createEffect,
-  createMemo,
-  on,
-  onCleanup,
-  untrack,
-} from 'solid-js';
+import { Match, Switch, createEffect, on, onCleanup, onMount } from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
-import { useAction, useEffect } from '@lib/state';
+import { useAnchor, useCommit, useRun, useValue } from '@lib/state-next';
 import { Frame, SiteHeader } from '@lib/shell';
 import { Flex } from '@lib/ui';
 import { IconGrid } from './components/icon-grid';
+import { loadPackIndexSaga } from './components/icon-grid/sagas';
 import {
-  loadPacksEffect,
-  openPack as openPackAction,
-  setView as setPickerViewAction,
-} from './components/icon-grid/bindings';
-import { DEFAULT_PACK_ID, picker } from './components/icon-grid/store';
+  activePackFormula,
+  pickerScope,
+  pickerViewChangedTopic,
+} from './components/icon-grid/store';
 import { Preview } from './components/preview';
 import { PropertiesPanel } from './components/properties-panel';
-import { encodeIconRef, parseIconRef } from './icons';
 import {
-  closePicker as closePickerAction,
-  hydrateStyle as hydrateStyleAction,
-  openPicker as openPickerAction,
-  randomizeIconEffect,
-  reset as resetAction,
-  resolveIconEffect,
-  setIcon as setIconAction,
-  setPadding as setPaddingAction,
-  setPalette as setPaletteAction,
-  setShape as setShapeAction,
-} from './bindings';
-import { DEFAULT_ICON_EDITOR_STATE, iconEditor, loading, rail } from './store';
+  hydrateFromUrlSaga,
+  randomizeIconSaga,
+  selectPackSaga,
+  type IconEditorUrlParams,
+} from './sagas';
+import {
+  editorResetTopic,
+  iconEditorScope,
+  iconEditorStore,
+  iconPickedTopic,
+  loadingStore,
+  paddingChangedTopic,
+  paletteChangedTopic,
+  pickerClosedTopic,
+  pickerOpenedTopic,
+  railStore,
+  shapeChangedTopic,
+  shareParamsFormula,
+} from './store';
 import type { IconRef } from './icons';
 import * as css from './index.css';
 
@@ -44,173 +42,68 @@ type IconSearchParamKey = 'icon' | 'palette' | 'shape' | 'pad';
 type IconSearchParams = Partial<Record<IconSearchParamKey, string>> &
   Record<string, string | string[] | undefined>;
 
-/**
- * Mirror payload for `setSearchParams`. `null` is router idiom for
- * "delete this key"; an omitted key means "preserve whatever's
- * already in the URL." The extra `null` slot is what the runtime
- * accepts but the public `SearchParams` type doesn't model.
- */
-type IconMirrorParams = Partial<Record<IconSearchParamKey, string | null>>;
-
 /** Pause before flushing state changes to the URL. */
 const URL_DEBOUNCE_MS = 200;
 
-/**
- * Param-or-null tuple for `setSearchParams`. Returns `null` when the
- * value matches the canonical default so the URL stays clean at rest.
- */
-const paramOrNull = <T,>(
-  value: T,
-  fallback: T,
-  encode: (value: T) => string,
-) => (value === fallback ? null : encode(value));
-
-const identity = <T,>(value: T) => value;
-
 export const IconEditor = () => {
-  const setIcon = useAction(setIconAction);
-  const setPalette = useAction(setPaletteAction);
-  const setShape = useAction(setShapeAction);
-  const setPadding = useAction(setPaddingAction);
-  const reset = useAction(resetAction);
-  const hydrateStyle = useAction(hydrateStyleAction);
-  const openPicker = useAction(openPickerAction);
-  const closePicker = useAction(closePickerAction);
-  const setPickerView = useAction(setPickerViewAction);
-  const openPack = useAction(openPackAction);
-  const randomizeIcon = useEffect(randomizeIconEffect);
-  const resolveIcon = useEffect(resolveIconEffect);
-  const loadPacks = useEffect(loadPacksEffect);
+  useAnchor(iconEditorScope);
+  useAnchor(pickerScope);
+
+  const editor = useValue(iconEditorStore);
+  const load = useValue(loadingStore);
+  const rail = useValue(railStore);
+  const pack = useValue(activePackFormula);
+  const params = useValue(shareParamsFormula);
+
+  const commit = useCommit();
+  const hydrate = useRun(hydrateFromUrlSaga);
+  const randomize = useRun(randomizeIconSaga);
+  const choosePack = useRun(selectPackSaga);
+  const loadPacks = useRun(loadPackIndexSaga);
+
   const [searchParams, setSearchParams] = useSearchParams<IconSearchParams>();
 
-  // Fetch the pack catalog eagerly — the properties panel's pack card
-  // needs it before the picker is ever opened. The store caches the
-  // resolved list, so the picker reuses it on mount.
-  createEffect(() => {
-    if (!picker.packs) void loadPacks();
-  });
+  // Fetch the pack catalog with the editor rather than with the grid —
+  // the properties panel's pack card needs it before the picker is ever
+  // opened.
+  onMount(() => void loadPacks());
 
-  /** The selected pack's summary, surfaced as the panel's pack card. */
-  const activePack = createMemo(() =>
-    picker.packs?.find((pack) => pack.id === picker.activePackId),
-  );
-
-  // Keep the active pack in lockstep with the selected icon. A deep
-  // link or shuffle can resolve an icon from a pack other than the
-  // current one, and the panel's pack card must reflect that even while
-  // the picker is closed (so this lives here, not in the picker).
-  createEffect(
-    on(
-      () => iconEditor.icon?.pack,
-      (pack) => {
-        if (pack && pack !== picker.activePackId) openPack(pack);
-      },
-    ),
-  );
+  // --- Router bridges ---
+  //
+  // The router is the one thing outside the state system that both
+  // produces events and consumes state, so it gets two adapters. Every
+  // decision in between — validating params, superseding stale fetches,
+  // choosing which keys the URL should carry — lives in `sagas.ts` and
+  // `store.ts`; these two effects only move values across the boundary.
 
   const readParam = (key: IconSearchParamKey): string | undefined => {
     const value = searchParams[key];
     return typeof value === 'string' ? value : undefined;
   };
 
-  // Hydrate from the URL on mount and on every navigation. Style
-  // fields apply synchronously; the icon param requires a pack fetch,
-  // dispatched through `resolveIconEffect` so loading + supersession
-  // bookkeeping land in the store.
-  //
-  // `lastIconParam` records the `icon` value seen on the previous
-  // run so the "no icon" branch can distinguish a deliberate URL
-  // clear from a URL-mirror echo of an unchanged absent param. The
-  // latter happens every Randomize: style fields update first, the
-  // mirror omits `icon` while the random fetch is pending, and the
-  // resulting navigation arrives back here with no icon param. If we
-  // unconditionally called `setIcon(undefined)` then, the pending
-  // resolve would be superseded and the user would land with new
-  // styles but no icon.
-  let lastIconParam: string | undefined;
+  // URL → facts, on mount and on every navigation.
   createEffect(() => {
     const padParam = readParam('pad');
-    const iconParam = readParam('icon');
-    hydrateStyle({
+    const next: IconEditorUrlParams = {
+      icon: readParam('icon'),
       palette: readParam('palette'),
       shape: readParam('shape'),
       padding: padParam !== undefined ? Number(padParam) : undefined,
-    });
-    if (iconParam) {
-      lastIconParam = iconParam;
-      const parsed = parseIconRef(iconParam);
-      if (!parsed) return;
-      // Skip when the param already matches what we hold — the
-      // URL-mirror effect echoes every icon write back into the
-      // search params and retriggers this effect; without the
-      // short-circuit every pick spends a fetch round-trip (and a
-      // loading pulse) on a no-op refresh. `untrack` keeps that
-      // comparison from making `iconEditor.icon` a dependency.
-      const current = untrack(() => iconEditor.icon);
-      if (current?.pack === parsed.pack && current.name === parsed.name) {
-        return;
-      }
-      void resolveIcon({ pack: parsed.pack, name: parsed.name });
-      return;
-    }
-    const previouslyHadIcon = lastIconParam !== undefined;
-    lastIconParam = undefined;
-    if (previouslyHadIcon) {
-      setIcon(DEFAULT_ICON_EDITOR_STATE.icon);
-    }
+    };
+    void hydrate(next);
   });
 
-  // Mirror state → URL with a small debounce so each keystroke in the
-  // padding slider doesn't generate its own history entry. `defer: true`
-  // skips the immediate post-hydrate flush (URL would already match).
-  // Reading `loading.pending` lets the effect re-fire when a resolve
-  // settles, flushing the freshly-applied icon to the URL.
+  // State → URL, debounced so a padding drag doesn't write a history
+  // entry per frame. `defer: true` skips the post-hydrate flush, where
+  // the URL already matches what we just read from it.
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   createEffect(
     on(
-      () => ({
-        icon: encodeIconRef(iconEditor.icon),
-        palette: iconEditor.palette,
-        shape: iconEditor.shape,
-        pad: iconEditor.padding,
-        pending: loading.pending,
-      }),
+      params,
       (next) => {
         if (timeoutId !== undefined) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
-          // While an icon resolution is pending we omit the `icon`
-          // key — `setSearchParams` preserves omitted keys, so the
-          // URL's existing icon param survives until the resolve
-          // settles. A user pick zeroes `pending` immediately, so
-          // their choice mirrors right away even if a stale fetch
-          // is still in flight.
-          const params: IconMirrorParams = {
-            palette: paramOrNull(
-              next.palette,
-              DEFAULT_ICON_EDITOR_STATE.palette,
-              identity,
-            ),
-            shape: paramOrNull(
-              next.shape,
-              DEFAULT_ICON_EDITOR_STATE.shape,
-              identity,
-            ),
-            pad: paramOrNull(
-              next.pad,
-              DEFAULT_ICON_EDITOR_STATE.padding,
-              String,
-            ),
-          };
-          if (next.pending === 0) {
-            params.icon = paramOrNull(
-              next.icon,
-              encodeIconRef(DEFAULT_ICON_EDITOR_STATE.icon),
-              identity,
-            );
-          }
-          // `null` is the router's runtime sentinel for "delete this
-          // key"; the param type lets it through.
-          setSearchParams(params, { replace: true });
+          setSearchParams(next, { replace: true });
         }, URL_DEBOUNCE_MS);
       },
       { defer: true },
@@ -220,48 +113,19 @@ export const IconEditor = () => {
     if (timeoutId !== undefined) clearTimeout(timeoutId);
   });
 
-  // Roll a fresh icon without leaving the active pack — style fields
-  // stay put so the user keeps refining one look.
-  const handleRandomize = () => {
-    void randomizeIcon(picker.activePackId);
-  };
-
-  // Reset clears the icon + style and returns the active pack to the
-  // default, so the panel's pack card matches the blank-slate state.
-  const handleReset = () => {
-    reset();
-    openPack(DEFAULT_PACK_ID);
-  };
-
   // "Choose pack" opens the pack list; "Choose icon" jumps straight to
-  // the active pack's grid. Two entry points instead of the old
-  // packs→detail drill-down.
-  const handleChoosePack = () => {
-    setPickerView('packs');
-    openPicker();
-  };
+  // the active pack's grid. Each lands as one transition across both
+  // the rail and the picker.
+  const handleChoosePack = () =>
+    commit(pickerViewChangedTopic('packs'), pickerOpenedTopic());
 
-  const handleChooseIcon = () => {
-    setPickerView('pack-detail');
-    openPicker();
-  };
-
-  // Picking a pack swaps the active pack and returns to the inspector.
-  // A pack change strands the current icon (it belonged to the old
-  // pack), so clear it — the user is starting over within a new pack.
-  const handleSelectPack = (packId: string) => {
-    const current = iconEditor.icon;
-    openPack(packId);
-    if (current && current.pack !== packId) setIcon(undefined);
-    closePicker();
-  };
+  const handleChooseIcon = () =>
+    commit(pickerViewChangedTopic('pack-detail'), pickerOpenedTopic());
 
   // Committing a pick returns the rail to the properties inspector so
   // the chosen icon, its style, and export land back in one view.
-  const handlePick = (icon: IconRef) => {
-    setIcon(icon);
-    closePicker();
-  };
+  const handlePick = (icon: IconRef) =>
+    commit(iconPickedTopic(icon), pickerClosedTopic());
 
   return (
     <Frame>
@@ -272,9 +136,9 @@ export const IconEditor = () => {
           <Flex as="section" class={css.canvas} aria-label="Icon preview">
             <Flex as="div" class={css.canvasStage}>
               <Preview
-                state={iconEditor}
+                state={editor()}
                 size={296}
-                loading={loading.pending > 0}
+                loading={load().pending > 0}
               />
             </Flex>
           </Flex>
@@ -286,25 +150,25 @@ export const IconEditor = () => {
             aria-label="Editor panel"
           >
             <Switch>
-              <Match when={rail.view === 'properties'}>
+              <Match when={rail().view === 'properties'}>
                 <PropertiesPanel
-                  state={iconEditor}
-                  activePack={activePack()}
-                  onPalette={setPalette}
-                  onShape={setShape}
-                  onPadding={setPadding}
+                  state={editor()}
+                  activePack={pack()}
+                  onPalette={(name) => commit(paletteChangedTopic(name))}
+                  onShape={(shape) => commit(shapeChangedTopic(shape))}
+                  onPadding={(value) => commit(paddingChangedTopic(value))}
                   onChoosePack={handleChoosePack}
                   onChooseIcon={handleChooseIcon}
-                  onRandomize={handleRandomize}
-                  onReset={handleReset}
+                  onRandomize={() => void randomize()}
+                  onReset={() => commit(editorResetTopic())}
                 />
               </Match>
-              <Match when={rail.view === 'picker'}>
+              <Match when={rail().view === 'picker'}>
                 <IconGrid
-                  selected={iconEditor.icon}
+                  selected={editor().icon}
                   onSelect={handlePick}
-                  onSelectPack={handleSelectPack}
-                  onClose={closePicker}
+                  onSelectPack={(packId) => void choosePack(packId)}
+                  onClose={() => commit(pickerClosedTopic())}
                 />
               </Match>
             </Switch>

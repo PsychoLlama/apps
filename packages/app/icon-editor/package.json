@@ -18,7 +18,7 @@
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",
-    "@lib/state": "workspace:*",
+    "@lib/state-next": "workspace:*",
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:"
   },

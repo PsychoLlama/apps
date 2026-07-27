@@ -1,4 +1,4 @@
-import { resolveStyleHydration } from '../capabilities';
+import { resolveStyleHydration } from '../hydration';
 import { DEFAULT_ICON_EDITOR_STATE } from '../store';
 
 const DEFAULT_STYLE = {
