@@ -34,6 +34,12 @@ import { reportSagaFailure } from '../state/session';
 import { ConnectionIndicator } from './connection-indicator';
 import * as styles from './beam-contact.css';
 
+/**
+ * Ties the rename field to its label. A fixed id rather than a generated one:
+ * only ever one contact renders at a time, so there's nothing to collide with.
+ */
+const NAME_FIELD_ID = 'beam-contact-name';
+
 /** Dates read as dates, not timestamps. Follows the reader's locale. */
 const formatMoment = (epochMilliseconds: number): string =>
   new Intl.DateTimeFormat(undefined, {
@@ -174,18 +180,34 @@ export const BeamContact = () => {
                   </Text>
                 </Flex>
 
-                <TextField
-                  testId="beam-contact-name"
-                  aria-label="Name"
-                  placeholder={view().name}
-                  value={label()}
-                  maxLength={MAX_LABEL_LENGTH}
-                  onBlur={handleRename}
-                  name="contact-name"
-                  autocomplete="off"
-                  autocapitalize="words"
-                  enterkeyhint="done"
-                />
+                {/* Renaming saves on blur — there's one field and no other
+                    way out of it, so a Save button would only be a second
+                    thing to forget to press. An emptied field clears the
+                    local name, which the placeholder then answers with
+                    whatever the contact falls back to. */}
+                <Flex as="div" direction="column" gap={2}>
+                  <Text
+                    as="label"
+                    for={NAME_FIELD_ID}
+                    size={2}
+                    weight="medium"
+                    selectable={false}
+                  >
+                    Name
+                  </Text>
+                  <TextField
+                    testId="beam-contact-name"
+                    id={NAME_FIELD_ID}
+                    placeholder={view().name}
+                    value={label()}
+                    maxLength={MAX_LABEL_LENGTH}
+                    onBlur={handleRename}
+                    name="contact-name"
+                    autocomplete="off"
+                    autocapitalize="words"
+                    enterkeyhint="done"
+                  />
+                </Flex>
 
                 <DataListRoot orientation="vertical" size={2}>
                   <DataListItem>
@@ -203,7 +225,7 @@ export const BeamContact = () => {
                     </DataListValue>
                   </DataListItem>
                   <DataListItem>
-                    <DataListLabel>Paired</DataListLabel>
+                    <DataListLabel>How you paired</DataListLabel>
                     <DataListValue>
                       {view().direction === 'outbound'
                         ? 'You opened their link'

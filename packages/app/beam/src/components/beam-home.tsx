@@ -74,10 +74,12 @@ export const BeamHome = () => {
               </Callout>
             </Show>
 
-            {/* Only claim the book is empty once it has actually been read.
-                Between mount and the IndexedDB read landing there's no answer
-                yet, and "no devices yet" is the wrong one. */}
-            <Show when={book().status === 'ready' && contacts().length === 0}>
+            {/* Only claim there's nothing paired once the book has actually
+                been read. Between mount and the IndexedDB read landing there's
+                no answer yet, and "no devices yet" is the wrong one. Blocked
+                contacts don't count — they have their own section, and a book
+                holding only refusals still has nothing to share with. */}
+            <Show when={book().status === 'ready' && paired().length === 0}>
               <Text as="p" size={2} color="lowContrast" selectable={false}>
                 No devices yet. Share an invite, or scan one to pair.
               </Text>
