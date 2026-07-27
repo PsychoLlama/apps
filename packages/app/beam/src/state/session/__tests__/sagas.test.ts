@@ -17,6 +17,8 @@ import {
 } from '../connection';
 import { codeEncodedTopic, type QrGrid } from '../qr-code';
 import { connectRelaySaga, dialPeerSaga } from '../sagas';
+import { now, saveContact } from '../../contacts/capabilities';
+import { contactSeenTopic, contactsStore } from '../../contacts/contacts';
 
 /** A stand-in endpoint. The sagas only read its id and hand it onward. */
 const fakeRelay = { endpointId: 'ep-1' } as Relay;
@@ -104,12 +106,22 @@ describe('connectRelaySaga', () => {
 });
 
 describe('dialPeerSaga', () => {
+  /** Stubs for the address-book write the dial records on its way out. */
+  const bookkeeping = () =>
+    [
+      [now, () => 1234],
+      [saveContact, vi.fn()],
+    ] as const;
+
   it('dials over the relay the layout holds open', async () => {
     const dial = vi.fn();
 
-    const trace = await simulate(dialPeerSaga('ep-2'), {
-      reads: [[relayCell, fakeRelay]],
-      calls: [[dialEndpoint, dial]],
+    await simulate(dialPeerSaga('ep-2'), {
+      reads: [
+        [relayCell, fakeRelay],
+        [contactsStore, { status: 'ready', entries: {} }],
+      ],
+      calls: [...bookkeeping(), [dialEndpoint, dial]],
     });
 
     expect(dial).toHaveBeenCalledWith(
@@ -117,7 +129,41 @@ describe('dialPeerSaga', () => {
       fakeRelay,
       'ep-2',
     );
-    // The dial is pure side effect for now; nothing lands in state.
+  });
+
+  it('records the peer before dialling it', async () => {
+    const trace = await simulate(dialPeerSaga('ep-2'), {
+      reads: [
+        [relayCell, fakeRelay],
+        [contactsStore, { status: 'ready', entries: {} }],
+      ],
+      calls: [...bookkeeping(), [dialEndpoint, vi.fn()]],
+    });
+
+    // The pairing outlives the dial, so it lands in the book whether or not
+    // the connection ever comes up.
+    expect(trace.commits).toEqual([
+      [
+        contactSeenTopic({
+          endpointId: 'ep-2',
+          direction: 'outbound',
+          seenAt: 1234,
+        }),
+      ],
+    ]);
+  });
+
+  it('does nothing when handed this device’s own beam link', async () => {
+    const dial = vi.fn();
+
+    const trace = await simulate(dialPeerSaga('ep-1'), {
+      reads: [[relayCell, fakeRelay]],
+      calls: [...bookkeeping(), [dialEndpoint, dial]],
+    });
+
+    // Scanning your own code shouldn't dial yourself or leave a contact for
+    // this very device in the book.
+    expect(dial).not.toHaveBeenCalled();
     expect(trace.commits).toEqual([]);
   });
 

@@ -1,5 +1,5 @@
 import { defineCell, defineFold, defineTopic } from '@lib/state-next';
-import { beamScope } from './scope';
+import { beamScope } from '../scope';
 
 /**
  * A generated QR code as its raw module grid — no pixels, just which cells

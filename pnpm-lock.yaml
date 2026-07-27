@@ -192,9 +192,16 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.1
+      idb:
+        specifier: 'catalog:'
+        version: 8.0.3
       solid-js:
         specifier: 1.9.14
         version: 1.9.14
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
 
   packages/app/gallery:
     dependencies:

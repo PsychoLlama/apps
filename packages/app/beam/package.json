@@ -13,7 +13,8 @@
     "./config": "./src/config.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@crate/iroh": "workspace:*",
@@ -25,7 +26,11 @@
     "@lib/state-next": "workspace:*",
     "@lib/ui": "workspace:*",
     "@lib/vault": "workspace:*",
-    "@vanilla-extract/css": "catalog:"
+    "@vanilla-extract/css": "catalog:",
+    "idb": "catalog:"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   },
   "peerDependencies": {
     "@solidjs/router": "*",
