@@ -196,4 +196,39 @@ describe('Dialog', () => {
 
     expect(onOpenChange).not.toHaveBeenCalled();
   });
+
+  // --- Native closes ---
+  //
+  // A `<form method="dialog">` submit closes the element before any
+  // handler runs, so the DOM briefly disagrees with `open`.
+
+  it('reports a native close as a close request', async () => {
+    const { overlay, onOpenChange } = setup();
+
+    // The `close` event lands in a later task than `close()` itself.
+    overlay.close();
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it('reopens after a native close the call site declined', async () => {
+    // `onOpenChange` never syncs back, so `open` stays true — the DOM
+    // has to follow the prop, not the submit.
+    const { overlay } = setup();
+
+    overlay.close();
+
+    await waitFor(() => expect(overlay.open).toBe(true));
+    expect(overlay.matches(':modal')).toBe(true);
+  });
+
+  it('stays closed after a native close the call site accepted', async () => {
+    const { setOpen, overlay, panel } = setup();
+
+    overlay.close();
+    setOpen(false);
+
+    await waitFor(() => expect(panel()).toBeNull());
+    expect(overlay.open).toBe(false);
+  });
 });

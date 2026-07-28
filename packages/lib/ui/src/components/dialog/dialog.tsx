@@ -34,6 +34,10 @@
  *   else the first focusable one, else the dialog itself. Upstream
  *   always focuses its content wrapper, which reliably announces the
  *   dialog but costs consumers the ability to focus a field.
+ * - A `<form method="dialog">` submit still reports through
+ *   `onOpenChange`, and the DOM is put back if the call site declines —
+ *   but the UA has already left the top layer by then, so that one path
+ *   skips the exit animation.
  * - Body content mounts with the dialog and unmounts after it closes,
  *   matching upstream. A `<dialog>` would otherwise keep its subtree
  *   (and any form state in it) alive across opens.
@@ -44,6 +48,7 @@
 import {
   Show,
   createEffect,
+  createSignal,
   createUniqueId,
   mergeProps,
   splitProps,
@@ -135,7 +140,13 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
     element: () => overlayRef,
   });
 
+  // Bumped whenever the UA closes the element without going through the
+  // effect below, so the effect gets a chance to reconcile even though
+  // neither `open` nor `mounted` moved.
+  const [resyncTick, setResyncTick] = createSignal(0);
+
   createEffect(() => {
+    resyncTick();
     const overlay = overlayRef;
     if (!overlay) return;
 
@@ -162,9 +173,14 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
 
   // Nothing above calls `close()` while `open` is still true, so this
   // only fires for closes we didn't initiate — a `<form method="dialog">`
-  // submit inside the body, most likely.
+  // submit inside the body, most likely. The element is already gone by
+  // the time this runs, so the exit animation is forfeit either way;
+  // what's left is making sure the DOM ends up agreeing with `open`,
+  // including when the call site declines to close.
   const onClose = () => {
-    if (local.open) local.onOpenChange(false);
+    if (!local.open) return;
+    local.onOpenChange(false);
+    setResyncTick((tick) => tick + 1);
   };
 
   // The overlay covers the viewport, so "outside" means outside the
