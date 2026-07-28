@@ -110,8 +110,13 @@ export type AdvancedSettingChange =
  * workers, and this tab's own writes alike, which is what makes the
  * subscription the single source of truth rather than one of two.
  *
- * The stream runs until `signal` aborts, then unsubscribes. Callers must
- * drain it: an abandoned generator never reaches its cleanup.
+ * Subscribing happens here, before the stream is drained, and buffers
+ * from that moment. A caller can open the stream, do slower work, and
+ * drain afterwards without losing anything that landed in between — which
+ * is how hydration avoids overwriting a change that beat it.
+ *
+ * Unsubscribes when `signal` aborts or when draining ends, whichever
+ * comes first. An abandoned stream is safe: the abort alone cleans up.
  */
 export const watchAdvancedSettings = (
   signal: AbortSignal,
@@ -141,7 +146,21 @@ export const watchAdvancedSettings = (
     ),
   ];
 
-  signal.addEventListener('abort', () => wake?.(), { once: true });
+  let stopped = false;
+  const stop = (): void => {
+    if (stopped) return;
+    stopped = true;
+    for (const unsubscribe of unsubscribes) unsubscribe();
+  };
+
+  signal.addEventListener(
+    'abort',
+    () => {
+      stop();
+      wake?.();
+    },
+    { once: true },
+  );
 
   const drain = async function* (): AsyncGenerator<AdvancedSettingChange> {
     try {
@@ -159,7 +178,7 @@ export const watchAdvancedSettings = (
         wake = null;
       }
     } finally {
-      for (const unsubscribe of unsubscribes) unsubscribe();
+      stop();
     }
   };
 

@@ -1,4 +1,4 @@
-import { call, commit, defineSaga, spawn } from '@lib/state-next';
+import { call, commit, defineSaga } from '@lib/state-next';
 import {
   readAdvancedSettings,
   resetBeamEnabled,
@@ -21,17 +21,30 @@ import {
 } from './settings';
 
 /**
- * Publish every Advanced option change for as long as the scope lives.
- * This is the only writer the store has: the commit and reset sagas below
- * persist through `@lib/runtime-config`, and the change comes back here.
+ * Bring the Advanced section to life and keep it there. Opens the change
+ * subscription, reconciles the seeded defaults with whatever OPFS has
+ * persisted, then publishes every later change for as long as the scope
+ * lives. This is the store's only writer: the commit and reset sagas
+ * below persist through `@lib/runtime-config`, and the change comes back
+ * around here.
+ *
+ * `AdvancedSettings` runs it once as the section mounts — OPFS is
+ * client-only, so it can't run during SSG.
+ *
+ * Order matters. Subscribing before the read means a change landing
+ * mid-read is buffered rather than lost; draining after the restore means
+ * it's replayed on top of the snapshot instead of being clobbered by it.
  *
  * It never ends on its own. Releasing the last anchor aborts it, which
- * drops the underlying subscriptions.
+ * drops the subscriptions.
  */
-const watchAdvancedSettingsSaga = defineSaga(
+export const trackAdvancedSettingsSaga = defineSaga(
   advancedSettingsScope,
   async function* () {
     const changes = yield* call(watchAdvancedSettings);
+
+    const values = yield* call(readAdvancedSettings);
+    yield commit(advancedSettingsRestoredTopic(values));
 
     for await (const change of changes) {
       switch (change.option) {
@@ -49,25 +62,6 @@ const watchAdvancedSettingsSaga = defineSaga(
           break;
       }
     }
-  },
-);
-
-/**
- * Bring the Advanced section to life: start watching for changes, then
- * reconcile the seeded defaults with whatever OPFS has persisted.
- *
- * `AdvancedSettings` runs it once as the section mounts — OPFS is
- * client-only, so it can't run during SSG. The watcher is spawned before
- * the read so a change landing mid-read isn't missed, and detached so a
- * failed read doesn't take the subscription down with it.
- */
-export const trackAdvancedSettingsSaga = defineSaga(
-  advancedSettingsScope,
-  async function* () {
-    yield* spawn(watchAdvancedSettingsSaga());
-
-    const values = yield* call(readAdvancedSettings);
-    yield commit(advancedSettingsRestoredTopic(values));
   },
 );
 

@@ -1,5 +1,5 @@
 import { onMount } from 'solid-js';
-import { useAnchor, useRun, useValue } from '@lib/state-next';
+import { AbortError, useAnchor, useRun, useValue } from '@lib/state-next';
 import { createLogger, toError } from '@lib/observability';
 import {
   Button,
@@ -56,13 +56,17 @@ export const AdvancedSettings = () => {
 
   // The store is seeded with the build-environment default, so first
   // paint (and prerender) match without a flash. OPFS is client-only —
-  // unavailable during SSG — so the tracking saga starts on mount:
-  // it subscribes, then reconciles with any persisted override. Writes
-  // echo back through the subscription, making it the single source of
-  // truth. Releasing the anchor on cleanup tears it down.
+  // unavailable during SSG — so the tracking saga starts on mount: it
+  // subscribes, reconciles with any persisted override, then runs for as
+  // long as the section is mounted. Writes echo back through the
+  // subscription, making it the single source of truth.
   onMount(() => {
     void track().catch((error: unknown) => {
-      logger.error('Could not read the Advanced settings.', {
+      // Releasing the anchor on cleanup aborts the saga. That's ordinary
+      // teardown, and nothing to report.
+      if (error instanceof AbortError) return;
+
+      logger.error('The Advanced settings tracker failed.', {
         error: toError(error),
       });
     });
