@@ -1,3 +1,4 @@
+import { useNavigate } from '@solidjs/router';
 import { useCommit, useRun } from '@lib/state';
 import { Button, Callout, Flex, Text } from '@lib/ui';
 import IconAccountQuestion from 'virtual:icons/mdi/account-question-outline';
@@ -14,6 +15,8 @@ import {
  * contact's own page — so the question reads the same in both, and there's
  * one place to change what it costs to say yes.
  *
+ * Accepting navigates to the peer's share view, from wherever it was asked.
+ *
  * The name is the peer's own suggestion until the reader renames it, so it's
  * treated as untrusted text: rendered as a string, never as markup, and
  * capped in length before it ever reaches the address book. The endpoint key
@@ -29,11 +32,18 @@ export const PairingRequest = (props: {
 }) => {
   const accept = useRun(acceptPairingSaga);
   const commit = useCommit();
+  const navigate = useNavigate();
 
+  // Saying yes is agreeing to share with someone, so it lands where sharing
+  // happens rather than back on whatever page the question interrupted. It
+  // also answers the thing the reader is about to wonder — whether the peer
+  // heard the acceptance — which is the one page that says so.
   const handleAccept = () => {
-    void accept(props.contact.endpointId).catch(
-      reportSagaFailure('The pairing accept saga failed.'),
-    );
+    const { endpointId } = props.contact;
+
+    void accept(endpointId)
+      .then(() => navigate(`/beam/share/${endpointId}`))
+      .catch(reportSagaFailure('The pairing accept saga failed.'));
   };
 
   return (
