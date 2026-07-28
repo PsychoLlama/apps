@@ -1,84 +1,86 @@
 ---
-description: Reference docs for `@lib/state` — the codebase's sanctioned state management. Built-in Solid primitives (`createSignal`, `createStore`, `createMemo`) are banned outside `@lib/ui` and gallery listings. Load when authoring or reviewing any stateful code, picking an API, or wiring stateful tests.
+description: Reference docs for `@lib/state` — the codebase's sanctioned state management, a transactional runtime of topics, folds, scopes, and sagas. Built-in Solid primitives (`createSignal`, `createStore`, `createResource`) are banned outside `@lib/ui` and `@lib/design`. Load when authoring or reviewing any stateful code, picking an API, or wiring stateful tests.
 ---
 
 # State Management
 
 - Single entry point: `@lib/state`.
-- State updates are transactional: one action mutates all relevant stores in a single reactive flush. Don't fan out to multiple actions when one will do.
-- Side effects belong in effects, never in actions or stores.
+- The model is space/time/life. Space: stores, cells, formulas. Time: topics (facts) and folds (transitions). Life: scopes (ownership) and sagas (processes).
+- The one law: sagas publish facts, folds fold facts into state, readers derive. Sagas never touch stores directly.
+- Handles are named by kind: `…Store`, `…Cell`, `…Formula`, `…Topic`, `…Scope`, `…Saga`. Assignments holding resolved values drop the suffix: `const foo = useValue(fooStore)`.
 
-## Guidelines
+## Topics & Facts
 
-- App is SSG'd. Stores are ready on first paint; reserve loading states for effect-driven async work.
-- Naming: `timerStore` → `timer` inside handlers.
-- JSDoc every store interface, field, and referenced type (status unions, entity shapes). Describe the role, not the type.
+- `defineTopic<Payload>()`: Returns a callable topic. Calling it wraps a payload into an inert fact — `[topic, payload]` — that does nothing until committed. Module-level constant.
+- Omit the type parameter for payload-less topics; the fact constructor becomes zero-arg.
+- Topics are module-private by default. Export one when other features should fold it — it's the feature's outbound contract.
 
-## Structure
+## Space
 
-- **Stores** initialize state and own its types. Nothing else.
-- **Capabilities** are low-level side-effect functions (start recording, fetch, etc.). They may take store views as arguments but otherwise don't depend on `@lib/state`.
-- **Actions** describe state changes — synchronous handlers over store drafts.
-- **Bindings** wire capabilities to lifecycle actions via `defineEffect`. The integration point.
+- `defineStore<T>(scope, init)`: A deeply-reactive record owned by a scope. Readers get `DeepReadonly<T>` views.
+- `defineCell<T>(scope, init, { drop? })`: A single swappable value, never proxied — the home for host objects (media tracks, sockets, wasm handles). `drop` runs once with the held value when the scope dies.
+- `defineFormula([deps], compute)`: Derived state over stores, cells, and other formulas. Computed with tracked reads; consumers re-run when dependencies change.
+- Space materializes lazily on first touch and only while its scope is anchored.
 
-## Stores
+## Folds
 
-- `defineStore<T>(init)`: Returns a `StoreRef<T>` — opaque handle, no state yet. Module-level constant.
-- `createStore(storeRef)`: Materializes the store in the global registry. Returns a `DeepReadonly<T>` view for reads.
-- `destroyStore(storeRef)`: Tears down a store. Throws if not created.
-- Bootstrap a feature at module load: `export const timer = createStore(timerStore)`.
-- `DeepReadonly<T>`: Recursive readonly view. Short-circuits on `Ref<T>` so `.current` types as the held value.
+- `defineFold(topic, [refs], handler)`: Subscribes stores/cells to a topic. The handler is a pure synchronous fold: writable drafts in ref order, then the payload (omitted for payload-less topics).
+- Cell drafts are `{ current }` boxes; store drafts are mutable records.
+- A commit carries one or more facts; every subscribed fold runs in causal order within a single reactive flush. Multiple features folding the same fact commit atomically.
+- Folds are the only writers. Keep them in the owning module — write access stays private, reads stay public.
 
-## Actions
+## Scopes
 
-- `defineAction([storeRefs], handler)`: Binds a tuple of stores to a synchronous handler. Drafts are writable; writes batch into one reactive flush.
-- Handler: `(...drafts, input?) => void`. Omit the trailing `input` parameter when not needed — call site becomes zero-arg.
-- Typed-input actions require the input at the call site: `useAction(addN)(5)`.
-- `Action<Stores, Input>`: returned tuple. `AnyAction<Input>`: type-erased variant for effect lifecycle slots.
+- `defineScope()`: The unit of ownership and lifetime. Owns stores, cells, and running sagas. Module-level constant.
+- `anchor(scope)`: Pins the scope alive; returns an idempotent release. Anchors are refcounted — the last release aborts sagas, runs cell drops, and deallocates space.
+- `useAnchor(scope)`: Pins the scope to the current reactive owner (released on cleanup).
 
-## Effects
+## Sagas
 
-- `defineEffect([storeRefs], fn, { onStart?, onSuccess?, onFailure? })`: Wraps a side-effecting callback with lifecycle actions.
-- Callback receives a readonly view per declared store followed by the input. Pass `[]` when no state is read.
-- When the capability's signature matches, use it as the callback directly — no wrapper.
-- `onStart` fires with the input before the callback. `onSuccess` fires with the resolved value. `onFailure` fires with the caught `Error` — without it, errors re-throw.
-- Lifecycle slots accept named actions or inline `defineAction(...)` calls.
-- Sync callbacks return `void`; `Promise`-returning callbacks make the dispatch return `Promise<void>` via `PerformReturn<Output>`.
+- `defineSaga(scope, async function* (input) { ... })`: A process owned by a scope. Calling the result produces an inert invocation.
+- Saga vocabulary (everything is an instruction value):
+  - `yield commit(...facts)` — publish one transition: N facts, one flush.
+  - `yield* call(capability, ...args)` — run a side-effect function; the scope's `AbortSignal` is injected as its first argument.
+  - `yield* read(ref)` — untracked snapshot of a store, cell, or formula.
+  - `yield* otherSaga(input)` — sequential child.
+  - `yield* all(a(), b())` — concurrent children; commits pass through as they happen.
+  - `yield* atomic(a(), b())` — concurrent children; commits are held and fused into one transition when all settle. All-or-nothing on failure.
+  - `yield* spawn(child())` — detached child owned by the same scope; never fused, dies with the scope.
+- Capabilities are plain functions `(signal, ...args) => result` with no knowledge of this library.
+- Instruction failures throw back into the saga (`try/catch`, then commit a recovery fact). Unhandled failures reject the `run(...)` promise; failures escaping spawned sagas escalate loudly.
 
-## Hooks
+## Runtime & Hooks
 
-- `useStore(storeRef)`: Returns the readonly state from the global registry.
-- `useAction(action)`: Returns a callable that dispatches the action.
-- `useEffect(effect)`: Returns a callable that performs the effect.
-- Call-site arity: zero-arg for no-input, one-arg for typed input.
-
-## Refs
-
-- `ref(value)`: Wraps a value in an opaque `Ref<T>` with a `.current` property.
-- For host objects (media streams, recorders, class instances) that must live in reactive state without being proxied.
-- Refs are immutable. Swap by reassigning: `state.handle = ref(next)`.
-
-## Registry
-
-- `createRegistry()`: Builds an isolated registry. App code uses the implicit global registry; tests build their own.
-- `bindRegistry(registry)`: Returns the full `RegistryBindings` API (`createStore`, `destroyStore`, `useStore`, `useAction`, `useEffect`, `invoke`, `perform`) scoped to that registry.
+- `useValue(ref)`: Reactive accessor for a store view, cell value, or formula result.
+- `peek(ref)`: Untracked read.
+- `useCommit()`: Returns `(...facts) => void` — commit straight from UI for simple synchronous interactions. One call, N facts, one transition.
+- `run(saga(input))` / `useRun(saga)`: Drive a saga; resolves with its return value.
+- `AbortError`: Rejection class for cancelled work. Match with `instanceof`.
+- `createRuntime()` / `bindRuntime(runtime)`: Isolated runtimes; app code uses the implicit global bindings.
 
 ## Testing
 
-- Test actions and capabilities in isolation. Bindings are rarely worth testing directly — UI tests cover the integration.
-- `createTestBindings()`: Returns `RegistryBindings` backed by a fresh registry. One call per test keeps state isolated.
-- Co-locate tests under `__tests__/`. Example: `foo.ts` and `__tests__/foo.test.ts`.
+- `createTestRuntime({ calls? })`: Fresh isolated runtime per test. `calls` is `[real, stub]` capability pairs resolved by identity. Extra surface: `ledger()` (every commit, in order) and `failures()` (errors from spawned sagas).
+- Test folds by committing facts and asserting state — no sagas involved.
+- Test sagas with `simulate(saga(input), { calls?, reads? })` — no runtime, no state. The trace records `commits` (one entry per transition, `atomic` fusion included), `spawns`, and `result`.
+- Define fixture topics/stores/scopes inside a per-test setup function so fold subscriptions don't accumulate across tests.
 
 ```ts
 const setup = () => {
-  const bindings = createTestBindings();
-  const counter = bindings.createStore(counterStore);
-  return { ...bindings, counter };
+  const testScope = defineScope();
+  const counterStore = defineStore<Counter>(testScope, () => ({ count: 0 }));
+  const addedTopic = defineTopic<number>();
+  defineFold(addedTopic, [counterStore], (draft, amount) => {
+    draft.count += amount;
+  });
+  const bound = createTestRuntime();
+  bound.anchor(testScope);
+  return { ...bound, counterStore, addedTopic };
 };
 
-it('increments', () => {
-  const { counter, useAction } = setup();
-  useAction(increment)();
-  expect(counter.count).toBe(1);
+it('adds', () => {
+  const { commit, peek, counterStore, addedTopic } = setup();
+  commit(addedTopic(2), addedTopic(3));
+  expect(peek(counterStore).count).toBe(5);
 });
 ```

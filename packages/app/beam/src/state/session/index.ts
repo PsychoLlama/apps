@@ -1,5 +1,5 @@
 /**
- * The `@lib/state-next` surface backing a beam session: the browser's relay
+ * The `@lib/state` surface backing a beam session: the browser's relay
  * connection, the QR encoding of its beam link — which land together as the
  * connection comes up — and the name this device goes by. All of it sits in
  * the beam scope; anchoring that scope is what keeps the session alive, and

@@ -1,4 +1,4 @@
-import { defineFold, defineStore, defineTopic } from '@lib/state-next';
+import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { beamScope } from '../scope';
 import type { Contact, ContactDirection } from './database';
 

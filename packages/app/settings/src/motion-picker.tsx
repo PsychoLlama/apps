@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { useRun, useValue } from '@lib/state-next';
+import { useRun, useValue } from '@lib/state';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { MotionOption } from '@lib/theme';
 import { appearanceStore, selectMotionSaga } from '@lib/theme/runtime';

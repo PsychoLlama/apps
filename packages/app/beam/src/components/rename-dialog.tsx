@@ -1,4 +1,4 @@
-import { useCommit, useRun, useValue } from '@lib/state-next';
+import { useCommit, useRun, useValue } from '@lib/state';
 import { Button, Dialog, Flex, Text, TextField } from '@lib/ui';
 import {
   contactsStore,

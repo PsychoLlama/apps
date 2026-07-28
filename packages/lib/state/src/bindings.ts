@@ -1,94 +1,175 @@
-import { invoke, type Action } from './action';
-import { perform, type Effect, type PerformReturn } from './effect';
-import { createRegistry, GLOBAL_REGISTRY, type Registry } from './registry';
+import { onCleanup } from 'solid-js';
+import { AbortError } from './abort';
+import { commitFacts } from './fold';
 import {
-  createStore as createStoreInternal,
-  destroyStore as destroyStoreInternal,
-  getMutable,
-  type DeepReadonly,
-  type StoreRef,
-} from './store';
+  FAILURES,
+  OBSERVERS,
+  SCOPE,
+  STUBS,
+  type AnyCapability,
+  type AnyFact,
+  type AnySpaceRef,
+  type Runtime,
+  type ScopeRef,
+} from './internal';
+import { createRuntime, GLOBAL_RUNTIME } from './runtime';
+import {
+  drive,
+  type DriveContext,
+  type Saga,
+  type SagaInvocation,
+} from './saga';
+import { anchorScope, getAliveScope } from './scope';
+import { peekValue, resolveValue, type Snapshot } from './space';
 
-/**
- * Empty when `I` is `unknown` (the default for no-input actions), otherwise
- * `[input: I]`. Lets `useAction(foo)()` work for no-input actions while
- * forcing `useAction(foo)(value)` for typed input.
- */
-type CallArgs<I> = unknown extends I ? [] : [input: I];
+/** Run a saga invocation against a runtime. Its scope must be anchored. */
+const runSaga = <Return>(
+  runtime: Runtime,
+  invocation: SagaInvocation<Return>,
+): Promise<Return> => {
+  const scopeRef = invocation[SCOPE] as ScopeRef | undefined;
+  if (!scopeRef) {
+    throw new Error(
+      'Not a saga invocation: create one by calling a defined saga',
+    );
+  }
 
-/** Registry-scoped API returned by {@link bindRegistry}. */
-export interface RegistryBindings {
-  readonly createStore: <T extends object>(ref: StoreRef<T>) => DeepReadonly<T>;
-  readonly destroyStore: <T extends object>(ref: StoreRef<T>) => void;
-  readonly useStore: <T extends object>(ref: StoreRef<T>) => DeepReadonly<T>;
-  readonly useAction: <S extends readonly StoreRef<object>[], I>(
-    action: Action<S, I>,
-  ) => (...args: CallArgs<I>) => void;
-  readonly useEffect: <S extends readonly StoreRef<object>[], I, O>(
-    effect: Effect<S, I, O>,
-  ) => (...args: CallArgs<I>) => PerformReturn<O>;
-  readonly invoke: <S extends readonly StoreRef<object>[], I>(
-    action: Action<S, I>,
-    ...args: CallArgs<I>
-  ) => void;
-  readonly perform: <S extends readonly StoreRef<object>[], I, O>(
-    effect: Effect<S, I, O>,
-    ...args: CallArgs<I>
-  ) => PerformReturn<O>;
+  const scope = getAliveScope(runtime, scopeRef);
+
+  const context: DriveContext = {
+    signal: scope.controller.signal,
+    sink: (facts) => commitFacts(runtime, facts),
+    call: (signal, fn, args) =>
+      ((runtime[STUBS].get(fn) ?? fn) as (...rest: unknown[]) => unknown)(
+        signal,
+        ...args,
+      ),
+    read: (ref) => peekValue(runtime, ref),
+    spawn: (child) => {
+      // Detached but owned: same scope signal, direct commits. Failures
+      // escape loudly instead of vanishing into a dropped promise.
+      drive(child, context).catch((error: unknown) => {
+        if (error instanceof AbortError) return;
+        reportFailure(runtime, error);
+      });
+    },
+  };
+
+  return drive(invocation, context);
+};
+
+const reportFailure = (runtime: Runtime, error: unknown): void => {
+  const failure = error instanceof Error ? error : new Error(String(error));
+  const listeners = runtime[FAILURES];
+
+  if (listeners.length === 0) {
+    // No observer registered: escalate to the host's uncaught-error
+    // channel so the failure is loud, never swallowed.
+    queueMicrotask(() => {
+      throw failure;
+    });
+    return;
+  }
+
+  for (const listener of listeners) listener(failure);
+};
+
+/** Runtime-scoped API returned by {@link bindRuntime}. */
+export interface RuntimeBindings {
+  /** Pin a scope alive. Returns an idempotent release function. */
+  readonly anchor: (scope: ScopeRef) => () => void;
+  /** Pin a scope for the lifetime of the current reactive owner. */
+  readonly useAnchor: (scope: ScopeRef) => void;
+  /** Reactive accessor for a store view, cell value, or formula result. */
+  readonly useValue: <Ref extends AnySpaceRef>(ref: Ref) => () => Snapshot<Ref>;
+  /** Untracked read of a ref's current value. */
+  readonly peek: <Ref extends AnySpaceRef>(ref: Ref) => Snapshot<Ref>;
+  /** Commit facts directly: one call, N facts, one transition. */
+  readonly commit: (...facts: [AnyFact, ...AnyFact[]]) => void;
+  /** Commit callable for components. Same grammar as `commit`. */
+  readonly useCommit: () => (...facts: [AnyFact, ...AnyFact[]]) => void;
+  /** Run a saga invocation. Rejects on unhandled failure or scope release. */
+  readonly run: <Return>(invocation: SagaInvocation<Return>) => Promise<Return>;
+  /** Saga runner callable for components. */
+  readonly useRun: <Args extends unknown[], Return>(
+    saga: Saga<Args, Return>,
+  ) => (...args: Args) => Promise<Return>;
 }
 
 /**
- * Bind a registry and return the full registry-scoped API. Tests build one
- * per case via {@link createTestBindings}; app code uses the module-level
- * exports bound to the global registry.
+ * Bind a runtime and return the full runtime-scoped API. Tests build one
+ * per case via {@link createTestRuntime}; app code uses the module-level
+ * exports bound to the global runtime.
  */
-export const bindRegistry = (registry: Registry): RegistryBindings => {
+export const bindRuntime = (runtime: Runtime): RuntimeBindings => ({
+  anchor: (scope) => anchorScope(runtime, scope),
+
+  useAnchor(scope) {
+    onCleanup(anchorScope(runtime, scope));
+  },
+
+  useValue<Ref extends AnySpaceRef>(ref: Ref) {
+    return () => resolveValue(runtime, ref) as Snapshot<Ref>;
+  },
+
+  peek<Ref extends AnySpaceRef>(ref: Ref) {
+    return peekValue(runtime, ref) as Snapshot<Ref>;
+  },
+
+  commit: (...facts) => commitFacts(runtime, facts),
+
+  useCommit:
+    () =>
+    (...facts) =>
+      commitFacts(runtime, facts),
+
+  run: (invocation) => runSaga(runtime, invocation),
+
+  useRun<Args extends unknown[], Return>(saga: Saga<Args, Return>) {
+    return (...args: Args) => runSaga(runtime, saga(...args));
+  },
+});
+
+/** Extra observability surface for tests. */
+export interface TestRuntime extends RuntimeBindings {
+  /** Every commit in order: one entry per transition. */
+  readonly ledger: () => ReadonlyArray<readonly AnyFact[]>;
+  /** Failures that escaped detached (spawned) sagas. */
+  readonly failures: () => readonly Error[];
+}
+
+/** Options for {@link createTestRuntime}. */
+export interface TestRuntimeOptions {
+  /** Capability stubs: `[real, stub]` pairs resolved by identity at call time. */
+  readonly calls?: ReadonlyArray<readonly [AnyCapability, AnyCapability]>;
+}
+
+/**
+ * Build bindings against a fresh isolated runtime with a recording
+ * ledger. One call per test keeps state from leaking across cases.
+ */
+export const createTestRuntime = (
+  options: TestRuntimeOptions = {},
+): TestRuntime => {
+  const runtime = createRuntime();
+
+  for (const [fn, stub] of options.calls ?? []) {
+    runtime[STUBS].set(fn, stub);
+  }
+
+  const entries: Array<readonly AnyFact[]> = [];
+  runtime[OBSERVERS].push((facts) => entries.push(facts));
+
+  const failures: Error[] = [];
+  runtime[FAILURES].push((error) => failures.push(error));
+
   return {
-    createStore<T extends object>(ref: StoreRef<T>): DeepReadonly<T> {
-      return createStoreInternal(registry, ref);
-    },
-    destroyStore<T extends object>(ref: StoreRef<T>): void {
-      destroyStoreInternal(registry, ref);
-    },
-    useStore<T extends object>(ref: StoreRef<T>): DeepReadonly<T> {
-      return getMutable(registry, ref) as DeepReadonly<T>;
-    },
-    useAction<S extends readonly StoreRef<object>[], I>(action: Action<S, I>) {
-      return ((input?: I) => {
-        invoke(registry, action, input as I);
-      }) as (...args: CallArgs<I>) => void;
-    },
-    useEffect<S extends readonly StoreRef<object>[], I, O>(
-      effect: Effect<S, I, O>,
-    ) {
-      return ((input?: I) => perform(registry, effect, input as I)) as (
-        ...args: CallArgs<I>
-      ) => PerformReturn<O>;
-    },
-    invoke<S extends readonly StoreRef<object>[], I>(
-      action: Action<S, I>,
-      ...args: CallArgs<I>
-    ): void {
-      invoke(registry, action, args[0] as I);
-    },
-    perform<S extends readonly StoreRef<object>[], I, O>(
-      effect: Effect<S, I, O>,
-      ...args: CallArgs<I>
-    ): PerformReturn<O> {
-      return perform(registry, effect, args[0] as I);
-    },
+    ...bindRuntime(runtime),
+    ledger: () => entries,
+    failures: () => failures,
   };
 };
 
-/**
- * Build bindings against a fresh isolated registry. One call per test
- * keeps state from leaking across cases and removes the
- * `bindRegistry(createRegistry())` boilerplate.
- */
-export const createTestBindings = (): RegistryBindings => {
-  return bindRegistry(createRegistry());
-};
-
-/** Helpers bound to the global registry. */
-export const { createStore, destroyStore, useStore, useAction, useEffect } =
-  bindRegistry(GLOBAL_REGISTRY);
+/** Helpers bound to the global runtime. */
+export const { anchor, useAnchor, useValue, useCommit, peek, run, useRun } =
+  bindRuntime(GLOBAL_RUNTIME);

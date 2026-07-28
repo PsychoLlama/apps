@@ -6,7 +6,7 @@ import {
   defineTopic,
   useCommit,
   useValue,
-} from '@lib/state-next';
+} from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
 import {
   Button,

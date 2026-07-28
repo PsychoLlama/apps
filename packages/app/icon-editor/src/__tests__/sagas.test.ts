@@ -1,4 +1,4 @@
-import { simulate } from '@lib/state-next';
+import { simulate } from '@lib/state';
 import {
   fetchPackIndex,
   fetchPackManifest,

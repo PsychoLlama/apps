@@ -1,5 +1,5 @@
 import { For, Match, Switch, onMount } from 'solid-js';
-import { useAnchor, useRun, useValue } from '@lib/state-next';
+import { useAnchor, useRun, useValue } from '@lib/state';
 import { Badge, Callout, Flex, Text } from '@lib/ui';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { LogsView } from './logs-view';

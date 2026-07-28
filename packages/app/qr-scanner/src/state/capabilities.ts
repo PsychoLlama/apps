@@ -1,6 +1,6 @@
 import MediaDevices, { supportsMediaDevices } from 'media-devices';
 import { createLogger, toError } from '@lib/observability';
-import type { DeepReadonly } from '@lib/state-next';
+import type { DeepReadonly } from '@lib/state';
 import type { Navigator } from '@solidjs/router';
 import { resolveScanTarget } from '../scan-link';
 import type { ScanResult } from '../worker/rpc';

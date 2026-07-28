@@ -177,9 +177,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state-next':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../../lib/state-next
+        version: link:../../lib/state
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -214,9 +214,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state-next':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../../lib/state-next
+        version: link:../../lib/state
       '@lib/theme':
         specifier: workspace:*
         version: link:../../lib/theme
@@ -241,9 +241,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state-next':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../../lib/state-next
+        version: link:../../lib/state
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -278,9 +278,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state-next':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../../lib/state-next
+        version: link:../../lib/state
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -333,9 +333,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state-next':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../../lib/state-next
+        version: link:../../lib/state
       '@lib/theme':
         specifier: workspace:*
         version: link:../../lib/theme
@@ -400,9 +400,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state-next':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../../lib/state-next
+        version: link:../../lib/state
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -430,9 +430,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state-next':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../../lib/state-next
+        version: link:../../lib/state
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -494,9 +494,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
-      '@lib/state-next':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../../lib/state-next
+        version: link:../../lib/state
       '@lib/theme':
         specifier: workspace:*
         version: link:../../lib/theme
@@ -729,12 +729,6 @@ importers:
         specifier: 1.9.14
         version: 1.9.14
 
-  packages/lib/state-next:
-    dependencies:
-      solid-js:
-        specifier: 1.9.14
-        version: 1.9.14
-
   packages/lib/theme:
     dependencies:
       '@lib/design':
@@ -743,9 +737,9 @@ importers:
       '@lib/observability':
         specifier: workspace:*
         version: link:../observability
-      '@lib/state-next':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../state-next
+        version: link:../state
       '@lib/ui':
         specifier: workspace:*
         version: link:../ui

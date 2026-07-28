@@ -1,4 +1,4 @@
-import { defineScope } from '@lib/state-next';
+import { defineScope } from '@lib/state';
 
 /**
  * Owns the live view of the Advanced section's runtime-config options and

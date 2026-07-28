@@ -4,7 +4,7 @@ import {
   defineScope,
   defineStore,
   defineTopic,
-} from '@lib/state-next';
+} from '@lib/state';
 import { encodeIconRef, type IconRef } from './icons';
 import type { PaletteName } from './palette';
 

@@ -5,7 +5,7 @@
  * spies.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import { decoderCell, decoderReadyTopic } from '../decoder';
 import { scannerScope } from '../scope';
 import type { DecoderConnection } from '../../decoder';

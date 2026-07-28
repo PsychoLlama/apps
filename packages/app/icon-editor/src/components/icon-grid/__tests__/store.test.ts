@@ -1,4 +1,4 @@
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import {
   entryKey,
   iconEntriesCell,

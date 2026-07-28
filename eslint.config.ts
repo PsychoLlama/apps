@@ -85,7 +85,6 @@ export default [
       'custom/no-log-interpolation': 'error',
       'custom/no-static-style-prop': 'error',
       'custom/prefer-icon-button': 'error',
-      'custom/require-externalized-effects': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
         'error',
@@ -194,12 +193,9 @@ export default [
     },
   },
   {
-    // @lib/state and @lib/state-next internals may use Solid's raw state
-    // primitives directly — they implement the sanctioned surface.
-    files: [
-      'packages/lib/state/src/**/*.ts',
-      'packages/lib/state-next/src/**/*.ts',
-    ],
+    // @lib/state internals may use Solid's raw state primitives
+    // directly — they implement the sanctioned surface.
+    files: ['packages/lib/state/src/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -224,14 +220,6 @@ export default [
     files: ['packages/lib/design/**/*.tsx'],
     rules: {
       'custom/require-ui-primitives': 'off',
-    },
-  },
-  {
-    // @lib/state tests exercise defineEffect itself, so inline callbacks
-    // are expected. The separation rule applies to consumers.
-    files: ['packages/lib/state/src/__tests__/**/*.ts'],
-    rules: {
-      'custom/require-externalized-effects': 'off',
     },
   },
   {

@@ -1,4 +1,4 @@
-import { defineFormula } from '@lib/state-next';
+import { defineFormula } from '@lib/state';
 import { generateLabel } from '../labels';
 import { contactsStore } from './contacts';
 import type { Contact, ContactDirection, ContactTrust } from './database';

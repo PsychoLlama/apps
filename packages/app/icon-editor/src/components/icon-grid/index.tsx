@@ -12,7 +12,7 @@ import {
   onMount,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useCommit, useRun, useValue } from '@lib/state-next';
+import { useCommit, useRun, useValue } from '@lib/state';
 import {
   Badge,
   Code,

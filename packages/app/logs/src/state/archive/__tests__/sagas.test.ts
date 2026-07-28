@@ -5,7 +5,7 @@
  * what lets the saga return; the real one only ends when the scope dies.
  */
 
-import { AbortError, createTestRuntime, simulate } from '@lib/state-next';
+import { AbortError, createTestRuntime, simulate } from '@lib/state';
 import { level, type Log } from '@lib/observability';
 import type { LogConnection } from '@lib/holz-idb-backend/database';
 import {

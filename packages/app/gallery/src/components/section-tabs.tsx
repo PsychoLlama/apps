@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { useAnchor, useCommit, useValue } from '@lib/state-next';
+import { useAnchor, useCommit, useValue } from '@lib/state';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@lib/ui';
 import type { GalleryListing, GallerySection } from '@lib/gallery';
 import {

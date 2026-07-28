@@ -4,7 +4,7 @@
  * that a dismissal actually lands rather than being swallowed.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import { inviteClosedTopic, inviteOpenedTopic, inviteStore } from '../invite';
 import { beamScope } from '../../scope';
 

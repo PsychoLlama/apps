@@ -4,7 +4,7 @@
  * are about what the saga published and which side effects it reached for.
  */
 
-import { simulate } from '@lib/state-next';
+import { simulate } from '@lib/state';
 import type { Navigator } from '@solidjs/router';
 import {
   cameraFailedTopic,

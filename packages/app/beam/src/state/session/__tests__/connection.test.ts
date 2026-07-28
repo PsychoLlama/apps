@@ -5,7 +5,7 @@
  * so the tests stand in a fake one.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import type { Relay } from '@crate/iroh';
 import {
   connectFailedTopic,

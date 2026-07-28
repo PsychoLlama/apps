@@ -1,4 +1,4 @@
-import { call, commit, defineSaga, read } from '@lib/state-next';
+import { call, commit, defineSaga, read } from '@lib/state';
 import { beamScope } from '../scope';
 import {
   contactForgottenTopic,

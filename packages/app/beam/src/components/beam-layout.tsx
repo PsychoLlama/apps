@@ -1,5 +1,5 @@
 import { onMount, type JSX } from 'solid-js';
-import { useAnchor, useRun } from '@lib/state-next';
+import { useAnchor, useRun } from '@lib/state';
 import { Frame } from '@lib/shell';
 import { connectRelaySaga, reportSagaFailure } from '../state/session';
 import { restoreContactsSaga } from '../state/contacts';

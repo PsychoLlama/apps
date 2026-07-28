@@ -1,4 +1,4 @@
-import { AbortError, call, commit, defineSaga, read } from '@lib/state-next';
+import { AbortError, call, commit, defineSaga, read } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
 import {
   connectFailedTopic,

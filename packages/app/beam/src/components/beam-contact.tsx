@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { useCommit, useRun, useValue } from '@lib/state-next';
+import { useCommit, useRun, useValue } from '@lib/state';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import {
   AlertDialog,

@@ -1,5 +1,5 @@
 /**
- * The `@lib/state-next` surface backing the scanner: one camera session and
+ * The `@lib/state` surface backing the scanner: one camera session and
  * the decoder worker that serves it, both owned by {@link scannerScope}.
  * Anchoring that scope is what keeps the page alive; releasing the last
  * anchor stops the stream, terminates the worker, and aborts whatever was

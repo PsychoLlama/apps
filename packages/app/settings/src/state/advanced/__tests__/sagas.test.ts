@@ -8,7 +8,7 @@
  * saga return; the real one only ends when the scope dies.
  */
 
-import { createTestRuntime, simulate } from '@lib/state-next';
+import { createTestRuntime, simulate } from '@lib/state';
 import {
   readAdvancedSettings,
   resetBeamEnabled,

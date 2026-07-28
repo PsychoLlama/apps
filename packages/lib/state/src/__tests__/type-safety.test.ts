@@ -1,104 +1,104 @@
-import { defineAction } from '../action';
-import { createTestBindings } from '../bindings';
-import { defineEffect } from '../effect';
-import { defineStore } from '../store';
-
-// Compile-time assertions. The `@ts-expect-error` directives below fail
-// the build if a previously rejected expression starts type-checking.
-// The runtime `it` is a placeholder; the assertions live in the types.
+import { createTestRuntime } from '../bindings';
+import { defineFold } from '../fold';
+import { call, commit, defineSaga, read } from '../saga';
+import { defineScope } from '../scope';
+import {
+  defineCell,
+  defineFormula,
+  defineStore,
+  type DeepReadonly,
+} from '../space';
+import { defineTopic } from '../topic';
 
 interface Counter {
   count: number;
 }
 
-const counterStore = defineStore<Counter>(() => ({ count: 0 }));
-
-const noInput = defineAction([counterStore], (counter) => {
-  counter.count += 1;
-});
-
-const withNumber = defineAction([counterStore], (counter, amount: number) => {
-  counter.count += amount;
-});
-
-const withError = defineAction([counterStore], (counter, error: Error) => {
-  counter.count += error.message.length;
-});
-
-const numberEffect = defineEffect([], (value: number) => value);
-
-// Expressions below are type-checked but never executed.
-const check = (): void => {
-  const { useAction, useEffect } = createTestBindings();
-
-  // Call-site: no-input action accepts zero args, rejects extras.
-  useAction(noInput)();
-  // @ts-expect-error — no-input action rejects an argument.
-  useAction(noInput)(42);
-
-  // Call-site: typed-input action requires exactly that type.
-  useAction(withNumber)(5);
-  // @ts-expect-error — string is not assignable to number.
-  useAction(withNumber)('nope');
-  // @ts-expect-error — missing required input.
-  useAction(withNumber)();
-
-  // Effects behave the same at the call site.
-  useEffect(numberEffect)(1);
-  // @ts-expect-error — effect requires its input.
-  useEffect(numberEffect)();
-
-  // Lifecycle slots: an action with Input = unknown reuses across any
-  // effect (intended pattern, via contravariance on the phantom brand).
-  defineEffect([], (value: number) => value, { onStart: noInput });
-  defineEffect([], (value: string) => value, { onStart: noInput });
-
-  // Lifecycle slots: a narrower Input can't accept a wider slot's input.
-  // @ts-expect-error — onStart expects number; action accepts Error.
-  defineEffect([], (value: number) => value, { onStart: withError });
-  // @ts-expect-error — onSuccess expects number; action accepts Error.
-  defineEffect([], (value: number) => value, { onSuccess: withError });
-  // @ts-expect-error — onFailure expects Error; action accepts number.
-  defineEffect([], (value: number) => value, { onFailure: withNumber });
-
-  // Inline defineAction: Stores and draft types still flow through.
-  defineEffect([], (value: number) => value, {
-    onStart: defineAction([counterStore], (counter) => {
-      // @ts-expect-error — `missing` is not on Counter.
-      counter.missing = true;
-      counter.count += 1;
-    }),
-  });
-
-  // Read deps: the callback receives readonly views per store.
-  defineEffect([counterStore], (counter) => {
-    // @ts-expect-error — readonly views reject mutation.
-    counter.count = 1;
-    return counter.count;
-  });
-
-  // No-input overload: a callback whose arity matches the store count
-  // stays zero-arg at the call site.
-  const zeroArgEffect = defineEffect(
-    [counterStore],
-    (counter) => counter.count,
-  );
-  useEffect(zeroArgEffect)();
-  // @ts-expect-error — no-input effect rejects an argument.
-  useEffect(zeroArgEffect)(42);
-
-  // With-input overload: the trailing parameter pins Input.
-  const typedInputEffect = defineEffect(
-    [counterStore],
-    (_counter, amount: number) => amount + 1,
-  );
-  useEffect(typedInputEffect)(3);
-  // @ts-expect-error — typed-input effect rejects the wrong type.
-  useEffect(typedInputEffect)('nope');
-};
+const scope = defineScope();
+const counter = defineStore<Counter>(scope, () => ({ count: 0 }));
+const label = defineCell(scope, () => 'name');
 
 describe('type safety', () => {
-  it('compile-time assertions hold', () => {
-    expect(typeof check).toBe('function');
+  it('types topic payloads at the fact constructor', () => {
+    const added = defineTopic<number>();
+    expectTypeOf(added).parameter(0).toEqualTypeOf<number>();
+
+    const fired = defineTopic();
+    expectTypeOf(fired).parameters.toEqualTypeOf<[]>();
+
+    const illegal = () => {
+      // @ts-expect-error — the payload is required
+      added();
+      // @ts-expect-error — payload type must match
+      added('nope');
+    };
+    void illegal;
+  });
+
+  it('types fold drafts and payloads', () => {
+    const added = defineTopic<number>();
+
+    defineFold(added, [counter, label], (draft, name, amount) => {
+      expectTypeOf(draft).toEqualTypeOf<Counter>();
+      expectTypeOf(name).toEqualTypeOf<{ current: string }>();
+      expectTypeOf(amount).toEqualTypeOf<number>();
+    });
+  });
+
+  it('drops the payload parameter for payload-less topics', () => {
+    const fired = defineTopic();
+
+    defineFold(fired, [counter], (draft) => {
+      expectTypeOf(draft).toEqualTypeOf<Counter>();
+    });
+  });
+
+  it('returns readonly snapshots from reads', () => {
+    const { peek, anchor } = createTestRuntime();
+    anchor(scope);
+
+    const view = peek(counter);
+    expectTypeOf(view).toEqualTypeOf<DeepReadonly<Counter>>();
+    expectTypeOf(peek(label)).toEqualTypeOf<string>();
+
+    const illegal = () => {
+      // @ts-expect-error — views are readonly; writes live in folds
+      view.count = 5;
+    };
+    void illegal;
+  });
+
+  it('types saga inputs, reads, calls, and results', () => {
+    const added = defineTopic<number>();
+
+    const double = defineSaga(scope, async function* (amount: number) {
+      const snapshot = yield* read(counter);
+      expectTypeOf(snapshot).toEqualTypeOf<DeepReadonly<Counter>>();
+
+      const handle = yield* read(label);
+      expectTypeOf(handle).toEqualTypeOf<string>();
+
+      const length = yield* call(
+        async (_signal: AbortSignal, id: string) => id.length,
+        'abc',
+      );
+      expectTypeOf(length).toEqualTypeOf<number>();
+
+      yield commit(added(amount));
+      return amount * 2;
+    });
+
+    const { useRun } = createTestRuntime();
+    const runDouble = useRun(double);
+    expectTypeOf(runDouble).parameters.toEqualTypeOf<[number]>();
+    expectTypeOf(runDouble).returns.toEqualTypeOf<Promise<number>>();
+  });
+
+  it('types formula dependencies as snapshots', () => {
+    defineFormula([counter, label], (count, name) => {
+      expectTypeOf(count).toEqualTypeOf<DeepReadonly<Counter>>();
+      expectTypeOf(name).toEqualTypeOf<string>();
+      return `${name}:${count.count}`;
+    });
   });
 });

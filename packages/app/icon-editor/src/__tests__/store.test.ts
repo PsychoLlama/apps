@@ -1,4 +1,4 @@
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import {
   DEFAULT_PACK_ID,
   entryKey,

@@ -4,7 +4,7 @@
  * over one contact from being answered against another.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import {
   removalClosedTopic,
   removalOpenedTopic,

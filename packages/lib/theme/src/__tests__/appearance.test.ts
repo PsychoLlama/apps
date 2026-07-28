@@ -5,7 +5,7 @@
  * localStorage writes by the capability tests.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import {
   appearanceRestoredTopic,
   appearanceStore,

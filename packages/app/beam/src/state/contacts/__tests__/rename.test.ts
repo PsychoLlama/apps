@@ -5,7 +5,7 @@
  * the wrong contact would rename the wrong contact.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import { contactRenamedTopic } from '../contacts';
 import { renameClosedTopic, renameOpenedTopic, renameStore } from '../rename';
 import { beamScope } from '../../scope';

@@ -1,9 +1,4 @@
-import {
-  defineCell,
-  defineFold,
-  defineStore,
-  defineTopic,
-} from '@lib/state-next';
+import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
 import { stopStream } from './capabilities';
 import { scannerScope } from './scope';
 import type { ScanResult } from '../worker/rpc';

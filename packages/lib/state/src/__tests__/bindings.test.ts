@@ -1,106 +1,99 @@
-import { defineAction } from '../action';
+import { createRoot } from 'solid-js';
 import {
-  createStore,
-  createTestBindings,
-  destroyStore,
-  useAction as globalUseAction,
-  useEffect as globalUseEffect,
-  useStore as globalUseStore,
+  anchor as globalAnchor,
+  createTestRuntime,
+  peek as globalPeek,
+  useCommit as globalUseCommit,
 } from '../bindings';
-import { defineEffect } from '../effect';
-import { defineStore } from '../store';
+import { defineFold } from '../fold';
+import { commit, defineSaga } from '../saga';
+import { defineScope } from '../scope';
+import { defineCell, defineFormula, defineStore } from '../space';
+import { defineTopic } from '../topic';
 
 interface Counter {
   count: number;
 }
 
-const counterStore = defineStore<Counter>(() => ({ count: 0 }));
+const setup = () => {
+  const scope = defineScope();
+  const counter = defineStore<Counter>(scope, () => ({ count: 0 }));
+  const label = defineCell(scope, () => 'initial');
+  const added = defineTopic<number>();
 
-const increment = defineAction([counterStore], (counter) => {
-  counter.count += 1;
-});
-
-describe('createTestBindings', () => {
-  it('returns helpers bound to a fresh registry', () => {
-    const bound = createTestBindings();
-    const counter = bound.createStore(counterStore);
-    expect(counter.count).toBe(0);
-
-    bound.useAction(increment)();
-    expect(counter.count).toBe(1);
+  defineFold(added, [counter], (draft, amount) => {
+    draft.count += amount;
   });
 
-  it('isolates state across calls', () => {
-    const first = createTestBindings();
-    const second = createTestBindings();
-    const counterA = first.createStore(counterStore);
-    const counterB = second.createStore(counterStore);
+  return { scope, counter, label, added, ...createTestRuntime() };
+};
 
-    first.useAction(increment)();
-    expect(counterA.count).toBe(1);
-    expect(counterB.count).toBe(0);
-  });
+describe('bindRuntime', () => {
+  it('useAnchor pins the scope to the reactive owner', () => {
+    const { scope, counter, useAnchor, peek } = setup();
 
-  it('wraps perform for async effects', async () => {
-    const { useEffect } = createTestBindings();
-
-    const effect = defineEffect([], (value: number): Promise<number> =>
-      Promise.resolve(value * 2),
-    );
-    await expect(useEffect(effect)(3)).resolves.toBeUndefined();
-  });
-
-  it('wraps perform for sync effects', () => {
-    const { useEffect } = createTestBindings();
-
-    const fn = (value: number): number => value + 1;
-    const effect = defineEffect([], fn);
-    const result: void = useEffect(effect)(1);
-    expect(result).toBeUndefined();
-  });
-
-  it('exposes raw invoke and perform', async () => {
-    const bound = createTestBindings();
-    const counter = bound.createStore(counterStore);
-
-    bound.invoke(increment);
-    expect(counter.count).toBe(1);
-
-    const effect = defineEffect([], (value: number): Promise<number> =>
-      Promise.resolve(value),
-    );
-    await expect(bound.perform(effect, 5)).resolves.toBeUndefined();
-  });
-});
-
-describe('module-level bindings (global registry)', () => {
-  it('read and mutate the global registry', () => {
-    const oneOff = defineStore<Counter>(() => ({ count: 0 }));
-    const bumpOneOff = defineAction([oneOff], (counter) => {
-      counter.count += 2;
+    createRoot((dispose) => {
+      useAnchor(scope);
+      expect(peek(counter).count).toBe(0);
+      dispose();
     });
 
-    createStore(oneOff);
-    try {
-      const counter = globalUseStore(oneOff);
-      expect(counter.count).toBe(0);
-      globalUseAction(bumpOneOff)();
-      expect(counter.count).toBe(2);
-    } finally {
-      destroyStore(oneOff);
-    }
+    expect(() => peek(counter)).toThrow(/dead scope/i);
   });
 
-  it('exposes useEffect bound to the global registry', async () => {
-    const oneOff = defineStore<Counter>(() => ({ count: 0 }));
-    createStore(oneOff);
-    try {
-      const effect = defineEffect([], (value: number): Promise<number> =>
-        Promise.resolve(value),
-      );
-      await expect(globalUseEffect(effect)(1)).resolves.toBeUndefined();
-    } finally {
-      destroyStore(oneOff);
-    }
+  it('useValue returns accessors for stores, cells, and formulas', () => {
+    const { scope, counter, label, anchor, useValue } = setup();
+    anchor(scope);
+    const summary = defineFormula(
+      [counter, label],
+      (count, name) => `${name}:${count.count}`,
+    );
+
+    expect(useValue(counter)().count).toBe(0);
+    expect(useValue(label)()).toBe('initial');
+    expect(useValue(summary)()).toBe('initial:0');
+  });
+
+  it('useCommit publishes facts as one transition', () => {
+    const { scope, counter, added, anchor, useCommit, peek, ledger } = setup();
+    anchor(scope);
+
+    const send = useCommit();
+    send(added(2), added(3));
+
+    expect(peek(counter).count).toBe(5);
+    expect(ledger()).toEqual([[added(2), added(3)]]);
+  });
+
+  it('useRun forwards args and resolves with the return value', async () => {
+    const { scope, counter, added, anchor, useRun, peek } = setup();
+    anchor(scope);
+
+    const bump = defineSaga(scope, async function* (amount: number) {
+      yield commit(added(amount));
+      return amount + 1;
+    });
+
+    await expect(useRun(bump)(4)).resolves.toBe(5);
+    expect(peek(counter).count).toBe(4);
+  });
+});
+
+describe('module-level bindings (global runtime)', () => {
+  it('operate on the shared runtime', () => {
+    const scope = defineScope();
+    const counter = defineStore<Counter>(scope, () => ({ count: 0 }));
+    const added = defineTopic<number>();
+    defineFold(added, [counter], (draft, amount) => {
+      draft.count += amount;
+    });
+
+    const release = globalAnchor(scope);
+    globalUseCommit()(added(2));
+
+    expect(globalPeek(counter).count).toBe(2);
+
+    release();
+    expect(() => globalPeek(counter)).toThrow(/dead scope/i);
   });
 });

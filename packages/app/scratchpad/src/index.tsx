@@ -20,7 +20,7 @@ import {
   type FloatingPoint,
   type FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
-import { useAnchor, useCommit, useValue } from '@lib/state-next';
+import { useAnchor, useCommit, useValue } from '@lib/state';
 import {
   alignChanged,
   alignOffsetChanged,
