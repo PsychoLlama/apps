@@ -1,6 +1,7 @@
-import { For, Show, onCleanup, onMount } from 'solid-js';
+import { For, Show, onMount } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useAction, useEffect } from '@lib/state';
+import { AbortError, useAnchor, useRun, useValue } from '@lib/state-next';
+import { createLogger, toError } from '@lib/observability';
 import { Card, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
@@ -13,18 +14,13 @@ import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import IconGithub from 'virtual:icons/mdi/github';
 import {
-  scratchpadFlag,
-  hydrateScratchpadFlagEffect,
-  setScratchpadEnabled,
-  watchScratchpadFlag,
-} from '../state/scratchpad-flag';
-import {
-  hydrateBeamFlagEffect,
-  setBeamEnabled,
-  beamFlag,
-  watchBeamFlag,
-} from '../state/beam-flag';
+  launcherFlagsStore,
+  launcherScope,
+  trackLauncherFlagsSaga,
+} from '../state';
 import * as css from './index.css';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 interface AppEntry {
   id: string;
@@ -151,20 +147,25 @@ const AppCard: Component<{ app: AppEntry }> = (props) => (
  * in the footer.
  */
 const Launcher = () => {
-  const reconcileFlag = useEffect(hydrateScratchpadFlagEffect);
-  const setEnabled = useAction(setScratchpadEnabled);
-  const reconcileBeam = useEffect(hydrateBeamFlagEffect);
-  const setBeamFlagEnabled = useAction(setBeamEnabled);
+  useAnchor(launcherScope);
+  const flags = useValue(launcherFlagsStore);
+  const track = useRun(trackLauncherFlagsSaga);
 
   // The store is seeded with the build-environment default, so first
-  // paint (and prerender) match without a flash. Once mounted — OPFS is
-  // client-only, unavailable during SSG — reconcile with any persisted
-  // override and track changes made in other tabs.
+  // paint (and prerender) match without a flash. OPFS is client-only —
+  // unavailable during SSG — so the tracking saga starts on mount: it
+  // subscribes, reconciles with any persisted override, then runs for as
+  // long as the launcher is mounted.
   onMount(() => {
-    void reconcileFlag();
-    onCleanup(watchScratchpadFlag(setEnabled));
-    void reconcileBeam();
-    onCleanup(watchBeamFlag(setBeamFlagEnabled));
+    void track().catch((error: unknown) => {
+      // Releasing the anchor on cleanup aborts the saga. That's ordinary
+      // teardown, and nothing to report.
+      if (error instanceof AbortError) return;
+
+      logger.error('The launcher flag tracker failed.', {
+        error: toError(error),
+      });
+    });
   });
 
   return (
@@ -209,10 +210,10 @@ const Launcher = () => {
               aria-label="Apps"
             >
               <For each={APPS}>{(app) => <AppCard app={app} />}</For>
-              <Show when={beamFlag.enabled}>
+              <Show when={flags().beamEnabled}>
                 <AppCard app={BEAM_APP} />
               </Show>
-              <Show when={scratchpadFlag.enabled}>
+              <Show when={flags().scratchpadEnabled}>
                 <AppCard app={SCRATCHPAD_APP} />
               </Show>
             </Flex>
