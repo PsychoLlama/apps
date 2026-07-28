@@ -1,5 +1,6 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { beamScope } from '../scope';
+import { normalizeLabel } from '../labels';
 import type { Contact, ContactDirection } from './database';
 
 /**
@@ -99,8 +100,10 @@ defineFold(
 );
 
 /**
- * A contact was renamed. A `null` label clears the local name, dropping the
- * contact back to whatever it advertised or to its generated name.
+ * A contact was renamed. A `null` label clears the local name outright;
+ * anything else is normalized, so a blank field clears it too. Either way
+ * the contact drops back to whatever it advertised, or to its generated
+ * name.
  */
 export const contactRenamedTopic = defineTopic<{
   endpointId: string;
@@ -112,7 +115,7 @@ defineFold(
   [contactsStore],
   (book, { endpointId, label }) => {
     const contact = book.entries[endpointId];
-    if (contact) contact.label = label;
+    if (contact) contact.label = label === null ? null : normalizeLabel(label);
   },
 );
 

@@ -15,6 +15,7 @@ import {
   contactsStore,
 } from '../contacts';
 import type { Contact } from '../database';
+import { LABEL_MAX_LENGTH } from '../../labels';
 import { beamScope } from '../../scope';
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
@@ -174,6 +175,33 @@ describe('contactRenamedTopic', () => {
     commit(contactRenamedTopic({ endpointId: 'ep-9', label: 'Ghost' }));
 
     expect(peek(contactsStore).entries).toEqual({});
+  });
+
+  it('reads an emptied field as clearing the name', () => {
+    const { commit, peek } = setup();
+    commit(contactsRestoredTopic([fakeContact({ label: 'Work phone' })]));
+
+    commit(contactRenamedTopic({ endpointId: 'ep-1', label: '   ' }));
+
+    expect(peek(contactsStore).entries['ep-1'].label).toBeNull();
+  });
+
+  it('holds a typed name to the shared limit', () => {
+    const { commit, peek } = setup();
+    commit(contactsRestoredTopic([fakeContact()]));
+
+    commit(
+      contactRenamedTopic({
+        endpointId: 'ep-1',
+        label: 'x'.repeat(LABEL_MAX_LENGTH + 20),
+      }),
+    );
+
+    // The field's `maxlength` is a courtesy to whoever is typing; this is
+    // the rule, and it's the same one an advertised name is held to.
+    expect(peek(contactsStore).entries['ep-1'].label).toHaveLength(
+      LABEL_MAX_LENGTH,
+    );
   });
 });
 
