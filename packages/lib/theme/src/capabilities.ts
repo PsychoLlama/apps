@@ -90,7 +90,7 @@ const syncThemeColorMeta = (id: ThemeId, scheme: ColorSchemeOption): void => {
  * DOM write happens first so the visual switch survives a localStorage
  * failure.
  */
-export const applyTheme = (id: ThemeId): void => {
+export const applyTheme = (_signal: AbortSignal, id: ThemeId): void => {
   document.documentElement.dataset[THEME_ATTRIBUTE] = id;
   syncThemeColorMeta(id, readActiveColorScheme());
   guardStorageWrite('persist', () => {
@@ -132,7 +132,10 @@ export const readActiveColorScheme = (): ColorSchemeOption => {
  * DOM write happens first so the visual switch survives a localStorage
  * failure.
  */
-export const applyColorScheme = (option: ColorSchemeOption): void => {
+export const applyColorScheme = (
+  _signal: AbortSignal,
+  option: ColorSchemeOption,
+): void => {
   if (option === 'system') {
     delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
     syncThemeColorMeta(readActiveTheme(), 'system');
@@ -167,7 +170,10 @@ export const readActiveMotion = (): MotionOption => {
  * state, and a missing key means the prelude won't restamp on reload.
  * DOM write happens first so the switch survives a localStorage failure.
  */
-export const applyMotion = (option: MotionOption): void => {
+export const applyMotion = (
+  _signal: AbortSignal,
+  option: MotionOption,
+): void => {
   if (option === 'system') {
     delete document.documentElement.dataset[MOTION_ATTRIBUTE];
     guardStorageWrite('clear', () => {
