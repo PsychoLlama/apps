@@ -11,8 +11,9 @@
  * the sagas, which commit first and write through to disk after.
  */
 export { contactsStore } from './contacts';
-export { addressBookFormula } from './address-book';
+export { addressBookFormula, fallbackName } from './address-book';
 export type { ContactView } from './address-book';
+export { renameStore, renameOpenedTopic, renameClosedTopic } from './rename';
 export {
   forgetContactSaga,
   recordPeerSaga,

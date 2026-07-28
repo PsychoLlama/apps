@@ -1,12 +1,11 @@
 import { Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { useRun, useValue } from '@lib/state-next';
+import { useCommit, useRun, useValue } from '@lib/state-next';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import {
   Badge,
   Button,
   Callout,
-  Code,
   Container,
   DataListItem,
   DataListLabel,
@@ -14,25 +13,21 @@ import {
   DataListValue,
   Flex,
   Heading,
+  IconButton,
   Text,
-  TextField,
 } from '@lib/ui';
+import IconPencil from 'virtual:icons/mdi/pencil-outline';
 import {
   addressBookFormula,
   contactsStore,
   forgetContactSaga,
-  renameContactSaga,
+  renameOpenedTopic,
   type ContactView,
 } from '../state/contacts';
 import { reportSagaFailure } from '../state/session';
 import { ConnectionIndicator } from './connection-indicator';
+import { RenameDialog } from './rename-dialog';
 import * as styles from './beam-contact.css';
-
-/**
- * Ties the rename field to its label. A fixed id rather than a generated one:
- * only ever one contact renders at a time, so there's nothing to collide with.
- */
-const NAME_FIELD_ID = 'beam-contact-name';
 
 /** Dates read as dates, not timestamps. Follows the reader's locale. */
 const formatMoment = (epochMilliseconds: number): string =>
@@ -52,8 +47,7 @@ const describeTrust = (contact: ContactView): string => {
 
 /**
  * The contact detail view at `/beam/contacts/:id` — one peer's record: what
- * it's called, how the pairing began, and the controls to rename, block, or
- * forget it.
+ * it's called, how the pairing began, and the controls to rename or forget it.
  *
  * Everything below the header renders from the address book, which is read
  * from IndexedDB on the client. That's what keeps this page's prerendered
@@ -65,35 +59,16 @@ export const BeamContact = () => {
 
   const book = useValue(contactsStore);
   const contacts = useValue(addressBookFormula);
+  const commit = useCommit();
 
-  const rename = useRun(renameContactSaga);
   const forget = useRun(forgetContactSaga);
 
   /** The resolved view — the name and dates the page renders. */
   const contact = () =>
     contacts().find((view) => view.endpointId === params.id);
 
-  /** The raw local name, the one field the rename input edits directly. */
-  const label = () => book().entries[params.id]?.label ?? '';
-
   /** Whether the read has landed, either way. Until then the page waits. */
   const settled = () => book().status === 'ready' || book().status === 'failed';
-
-  const handleRename = (
-    event: FocusEvent & { currentTarget: HTMLInputElement },
-  ) => {
-    const typed = event.currentTarget.value.trim();
-    const next = typed.length > 0 ? typed : null;
-
-    // Normalize what's on screen to what's being stored, so trailing spaces
-    // (or a name emptied down to nothing) don't linger in the field.
-    event.currentTarget.value = next ?? '';
-    if (next === (book().entries[params.id]?.label ?? null)) return;
-
-    void rename({ endpointId: params.id, label: next }).catch(
-      reportSagaFailure('The contact rename saga failed.'),
-    );
-  };
 
   const handleForget = () => {
     void forget(params.id)
@@ -133,63 +108,70 @@ export const BeamContact = () => {
           >
             {(view) => (
               <Flex as="div" direction="column" gap={5}>
-                <Flex as="hgroup" direction="column" gap={2} align="start">
-                  <Heading as="h1" class={styles.name} selectable={false}>
-                    {view().name}
-                  </Heading>
+                {/* The rename control sits with the name it edits rather than
+                    in the record below, which is a list of things you read.
+                    An icon keeps it a fixed width, so a long name shortens
+                    the heading instead of squeezing the button. */}
+                <Flex
+                  as="div"
+                  direction="row"
+                  align="start"
+                  justify="between"
+                  gap={3}
+                >
+                  <Flex as="hgroup" direction="column" gap={2}>
+                    <Heading as="h1" class={styles.name} selectable={false}>
+                      {view().name}
+                    </Heading>
 
-                  <Show when={view().trust !== 'trusted'}>
-                    <Badge color="warning" variant="soft">
-                      Pending
-                    </Badge>
-                  </Show>
+                    <Text
+                      as="p"
+                      size={2}
+                      color="lowContrast"
+                      selectable={false}
+                    >
+                      {describeTrust(view())}
+                    </Text>
+                  </Flex>
 
-                  <Text as="p" size={2} color="lowContrast" selectable={false}>
-                    {describeTrust(view())}
-                  </Text>
-                </Flex>
-
-                {/* Renaming saves on blur — there's one field and no other
-                    way out of it, so a Save button would only be a second
-                    thing to forget to press. An emptied field clears the
-                    local name, which the placeholder then answers with
-                    whatever the contact falls back to. */}
-                <Flex as="div" direction="column" gap={2}>
-                  <Text
-                    as="label"
-                    for={NAME_FIELD_ID}
-                    size={2}
-                    weight="medium"
-                    selectable={false}
+                  <IconButton
+                    testId="beam-contact-rename"
+                    aria-label="Rename this contact"
+                    title="Rename this contact"
+                    variant="soft"
+                    color="neutral"
+                    onClick={() => commit(renameOpenedTopic(params.id))}
                   >
-                    Name
-                  </Text>
-                  <TextField
-                    testId="beam-contact-name"
-                    id={NAME_FIELD_ID}
-                    placeholder={view().name}
-                    value={label()}
-                    onBlur={handleRename}
-                    name="contact-name"
-                    autocomplete="off"
-                    autocapitalize="words"
-                    enterkeyhint="done"
-                  />
+                    <IconPencil width="18" height="18" aria-hidden="true" />
+                  </IconButton>
                 </Flex>
 
                 <DataListRoot orientation="vertical" size={2}>
+                  {/* Status leads the record. It's the one field that says
+                      whether anything can happen with this contact yet. */}
+                  <DataListItem>
+                    <DataListLabel>Status</DataListLabel>
+                    <DataListValue>
+                      <Badge
+                        color={
+                          view().trust === 'trusted' ? 'success' : 'warning'
+                        }
+                        variant="soft"
+                      >
+                        {view().trust === 'trusted' ? 'Paired' : 'Pending'}
+                      </Badge>
+                    </DataListValue>
+                  </DataListItem>
                   <DataListItem>
                     <DataListLabel>Endpoint key</DataListLabel>
                     <DataListValue>
-                      <Code
-                        size={1}
+                      <Badge
                         color="neutral"
-                        variant="ghost"
+                        variant="soft"
                         class={styles.endpointId}
-                        selectable
                       >
                         {view().endpointId}
-                      </Code>
+                      </Badge>
                     </DataListValue>
                   </DataListItem>
                   <DataListItem>
@@ -221,6 +203,8 @@ export const BeamContact = () => {
                     Remove
                   </Button>
                 </Flex>
+
+                <RenameDialog endpointId={view().endpointId} />
               </Flex>
             )}
           </Show>

@@ -26,12 +26,17 @@ export interface ContactView {
 }
 
 /**
- * Resolve what to call a contact. A local name wins; failing that the peer's
- * own suggestion; failing that the key prefix, which every endpoint has
- * whether or not it ever said anything.
+ * What a contact is called when it has no local name: the name the peer
+ * advertised, else the key prefix, which every endpoint has whether or not it
+ * ever said anything. This is what clearing a name falls back to, so the
+ * rename form shows it as the field's placeholder.
  */
+export const fallbackName = (contact: Contact): string =>
+  contact.suggestedLabel ?? generateLabel(contact.endpointId);
+
+/** Resolve what to call a contact. A local name wins over everything else. */
 const resolveName = (contact: Contact): string =>
-  contact.label ?? contact.suggestedLabel ?? generateLabel(contact.endpointId);
+  contact.label ?? fallbackName(contact);
 
 /**
  * The address book as the UI reads it: every contact resolved to a display
