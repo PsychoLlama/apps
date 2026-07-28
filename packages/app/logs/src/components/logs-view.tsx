@@ -1,21 +1,17 @@
-import { Show, onCleanup, onMount, type JSX } from 'solid-js';
-import { useAction, useEffect } from '@lib/state';
+import { Show, onMount, type JSX } from 'solid-js';
+import { useAnchor, useRun, useValue } from '@lib/state-next';
 import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 import { Button, Flex, LinkButton } from '@lib/ui';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import IconRefresh from 'virtual:icons/mdi/refresh';
 import {
-  exportFlag,
-  setExportEnabled,
-  watchExportFlag,
-} from '../state/export-flag';
-import {
-  setWorkerControlled,
-  watchWorkerControl,
-  workerControl,
-} from '../state/worker-control';
-import { hydrateExportAvailabilityEffect } from '../state/export-availability';
-import { logs, refreshLogsEffect } from '../state';
+  archiveStore,
+  exportAvailableFormula,
+  logsScope,
+  refreshArchiveSaga,
+  reportSagaFailure,
+  trackExportGateSaga,
+} from '../state';
 
 /**
  * The logs layout: the `<main>` frame for every `/logs/*` route. Each route
@@ -35,19 +31,19 @@ export const LogsView = (props: {
   trail: SiteHeaderCrumb[];
   children?: JSX.Element;
 }) => {
-  const reconcile = useEffect(hydrateExportAvailabilityEffect);
-  const setEnabled = useAction(setExportEnabled);
-  const setControlled = useAction(setWorkerControlled);
+  useAnchor(logsScope);
+  const exportAvailable = useValue(exportAvailableFormula);
+  const track = useRun(trackExportGateSaga);
 
-  // Both stores are seeded so first paint (and prerender) match without a
-  // flash. Once mounted — OPFS and the service worker are client-only,
-  // unavailable during SSG — a single reconcile lands both gating
-  // conditions in one flush; the watchers then track later changes: the
-  // flag from any tab, and service-worker control handoffs.
+  // Both gating conditions are seeded, so first paint (and prerender) match
+  // without a flash. OPFS and the service worker are client-only —
+  // unavailable during SSG — so the tracker starts on mount: it subscribes,
+  // reconciles the seeds against what's actually persisted and controlling,
+  // then follows every later change for as long as the view is on screen.
   onMount(() => {
-    void reconcile();
-    onCleanup(watchExportFlag(setEnabled));
-    onCleanup(watchWorkerControl(setControlled));
+    void track().catch(
+      reportSagaFailure('The logs export gate tracker failed.'),
+    );
   });
 
   return (
@@ -57,7 +53,7 @@ export const LogsView = (props: {
         actions={
           <Flex as="div" align="center" gap={4}>
             <RefreshButton />
-            <Show when={exportFlag.enabled && workerControl.controlled}>
+            <Show when={exportAvailable()}>
               <ExportButton />
             </Show>
           </Flex>
@@ -76,16 +72,19 @@ export const LogsView = (props: {
  * the already-open connection.
  */
 const RefreshButton = () => {
-  const refresh = useEffect(refreshLogsEffect);
+  const archive = useValue(archiveStore);
+  const refresh = useRun(refreshArchiveSaga);
 
   return (
-    <Show when={logs.freshness !== 'initial'}>
+    <Show when={archive().freshness !== 'initial'}>
       <Button
         testId="refresh-logs"
         variant="ghost"
         color="neutral"
-        disabled={logs.freshness !== 'stale'}
-        onClick={() => void refresh()}
+        disabled={archive().freshness !== 'stale'}
+        onClick={() => {
+          void refresh().catch(reportSagaFailure('The logs refresh failed.'));
+        }}
       >
         <IconRefresh aria-hidden="true" />
         Refresh

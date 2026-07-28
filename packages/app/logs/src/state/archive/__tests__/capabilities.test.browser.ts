@@ -7,16 +7,10 @@
  */
 
 import { level, type Log } from '@lib/observability';
-import {
-  STORE_NAME,
-  openLogDatabase,
-  type LogConnection,
-} from '@lib/holz-idb-backend/database';
+import { STORE_NAME, openLogDatabase } from '@lib/holz-idb-backend/database';
 import { createIdbBackend } from '@lib/holz-idb-backend';
-import type { DeepReadonly } from '@lib/state';
 
 import { loadArchive, readNewLogs } from '../capabilities';
-import type { LogsState } from '../store';
 
 /** A complete `Log`, with only the fields a test cares about overridden. */
 const makeLog = (overrides: Partial<Log>): Log => ({
@@ -28,17 +22,8 @@ const makeLog = (overrides: Partial<Log>): Log => ({
   ...overrides,
 });
 
-/**
- * A minimal state view holding just what {@link readNewLogs} reads: the live
- * connection and the snapshot it reads forward from.
- */
-const heldState = (
-  db: LogConnection,
-  entries: Log[] = [],
-): DeepReadonly<LogsState> =>
-  // `db` stands in for the held `Ref` — a branded type a plain object can't be
-  // asserted to directly, so route the stub through `unknown`.
-  ({ db: { current: db }, entries }) as unknown as DeepReadonly<LogsState>;
+/** The signal a live read runs under: never aborted. */
+const live = (): AbortSignal => new AbortController().signal;
 
 beforeEach(async () => {
   // Instantiating the backend synchronously registers its versioned open —
@@ -69,7 +54,7 @@ describe('loadArchive', () => {
       db.close();
     }
 
-    const archive = await loadArchive();
+    const archive = await loadArchive(live());
     try {
       expect(archive.entries.map((log) => log.message)).toEqual([
         'newer',
@@ -81,7 +66,7 @@ describe('loadArchive', () => {
   });
 
   it('resolves empty over an empty archive', async () => {
-    const archive = await loadArchive();
+    const archive = await loadArchive(live());
     try {
       expect(archive.entries).toEqual([]);
     } finally {
@@ -90,7 +75,7 @@ describe('loadArchive', () => {
   });
 
   it('hands back an open connection for the holder to keep', async () => {
-    const archive = await loadArchive();
+    const archive = await loadArchive(live());
     try {
       // The returned connection is live, not closed once the read resolved: a
       // follow-up read goes straight through it without reopening.
@@ -99,11 +84,20 @@ describe('loadArchive', () => {
       archive.db.close();
     }
   });
+
+  it('refuses to hand back a connection the view can no longer hold', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    // Neither the open nor the read is interruptible, so the connection is
+    // closed here rather than handed to a cell that will never take it.
+    await expect(loadArchive(controller.signal)).rejects.toThrow();
+  });
 });
 
 describe('readNewLogs', () => {
   it('reads the whole archive when the snapshot holds nothing', async () => {
-    const archive = await loadArchive();
+    const archive = await loadArchive(live());
     try {
       const writer = await openLogDatabase();
       try {
@@ -121,7 +115,7 @@ describe('readNewLogs', () => {
 
       // An empty snapshot has no floor to read forward from, so it falls back to
       // the full read — newest-first, like the initial load.
-      const added = await readNewLogs(heldState(archive.db, archive.entries));
+      const added = await readNewLogs(live(), archive.db, undefined);
       expect(added.map((log) => log.message)).toEqual(['newer', 'older']);
     } finally {
       archive.db.close();
@@ -129,13 +123,11 @@ describe('readNewLogs', () => {
   });
 
   it('reads only logs newer than the held snapshot', async () => {
-    const archive = await loadArchive();
+    const archive = await loadArchive(live());
     try {
       // The snapshot already holds an entry at t=2000. Two more land through a
       // separate connection: one newer, one back-dated below the floor. Only the
       // newer crosses the exclusive lower bound.
-      const snapshot = [makeLog({ message: 'seen', timestamp: 2000 })];
-
       const writer = await openLogDatabase();
       try {
         await writer.add(
@@ -150,7 +142,7 @@ describe('readNewLogs', () => {
         writer.close();
       }
 
-      const added = await readNewLogs(heldState(archive.db, snapshot));
+      const added = await readNewLogs(live(), archive.db, 2000);
       expect(added.map((log) => log.message)).toEqual(['newer']);
     } finally {
       archive.db.close();
@@ -158,8 +150,7 @@ describe('readNewLogs', () => {
   });
 
   it('rejects a refresh when no connection is held', async () => {
-    const disconnected = { db: null } as DeepReadonly<LogsState>;
-    await expect(readNewLogs(disconnected)).rejects.toThrow(
+    await expect(readNewLogs(live(), null, undefined)).rejects.toThrow(
       /no archive connection/i,
     );
   });

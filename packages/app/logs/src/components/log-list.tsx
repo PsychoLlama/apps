@@ -1,15 +1,14 @@
-import { For, Match, Switch, onCleanup, onMount } from 'solid-js';
-import { useAction, useEffect } from '@lib/state';
+import { For, Match, Switch, onMount } from 'solid-js';
+import { useAnchor, useRun, useValue } from '@lib/state-next';
 import { Badge, Callout, Flex, Text } from '@lib/ui';
-import { createLogInsertedChannel } from '@lib/holz-idb-backend/broadcast';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { LogsView } from './logs-view';
 import { LogPanel } from './log-panel';
 import {
-  logs,
-  loadLogsEffect,
-  releaseLogsEffect,
-  markLogsStale,
+  archiveStore,
+  logsScope,
+  reportSagaFailure,
+  trackArchiveSaga,
 } from '../state';
 
 /** How many placeholder rows the loading skeleton stands up. */
@@ -20,40 +19,38 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4];
  * IndexedDB on mount (client-only — the store is empty at SSG prerender) and
  * renders the matching state: a skeleton while the read is in flight, an
  * empty-state callout when the archive is genuinely empty, an error callout if
- * the read fails, otherwise the {@link LogPanel}. The read holds its connection
- * open, so closing it falls to `onCleanup`.
+ * the read fails, otherwise the {@link LogPanel}.
  */
 export const LogList = () => {
-  const loadLogs = useEffect(loadLogsEffect);
-  const releaseLogs = useEffect(releaseLogsEffect);
-  const markStale = useAction(markLogsStale);
+  useAnchor(logsScope);
+  const archive = useValue(archiveStore);
+  const track = useRun(trackArchiveSaga);
 
-  onMount(() => void loadLogs());
-  onCleanup(() => void releaseLogs());
-
-  // The backend pings from any context when it persists logs; flag the shown
-  // archive stale so the header offers a refresh. Client-only (a BroadcastChannel
-  // isn't available during SSG), so open on mount and close on cleanup.
+  // IndexedDB and `BroadcastChannel` are client-only — neither exists during
+  // SSG — so the tracker starts on mount. It listens for the backend's insert
+  // pings, reads the archive through its own connection, then flags the view
+  // stale whenever more logs land. The connection is closed by the scope, so
+  // there's nothing to release here.
   onMount(() => {
-    const channel = createLogInsertedChannel();
-    channel.onMessage(() => markStale());
-    onCleanup(() => channel.close());
+    void track().catch(reportSagaFailure('The log archive tracker failed.'));
   });
 
   return (
     <LogsView trail={[{ label: 'Logs' }]}>
       <Switch>
-        <Match when={logs.status === 'loading'}>
+        <Match when={archive().status === 'loading'}>
           <LoadingState />
         </Match>
-        <Match when={logs.status === 'error'}>
+        <Match when={archive().status === 'error'}>
           <ErrorState />
         </Match>
-        <Match when={logs.status === 'ready' && logs.entries.length === 0}>
+        <Match
+          when={archive().status === 'ready' && archive().entries.length === 0}
+        >
           <EmptyState />
         </Match>
-        <Match when={logs.status === 'ready'}>
-          <LogPanel logs={logs.entries} />
+        <Match when={archive().status === 'ready'}>
+          <LogPanel logs={archive().entries} />
         </Match>
       </Switch>
     </LogsView>
