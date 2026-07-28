@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { useCommit, useRun, useValue } from '@lib/state-next';
+import { useRun, useValue } from '@lib/state-next';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import {
   Badge,
@@ -21,9 +21,6 @@ import {
   addressBookFormula,
   contactsStore,
   forgetContactSaga,
-  removalArmedTopic,
-  removalDisarmedTopic,
-  removalStore,
   renameContactSaga,
   type ContactView,
 } from '../state/contacts';
@@ -68,13 +65,11 @@ export const BeamContact = () => {
 
   const book = useValue(contactsStore);
   const contacts = useValue(addressBookFormula);
-  const removal = useValue(removalStore);
-  const commit = useCommit();
 
   const rename = useRun(renameContactSaga);
   const forget = useRun(forgetContactSaga);
 
-  /** The resolved view — the name, fragment, and dates the page renders. */
+  /** The resolved view — the name and dates the page renders. */
   const contact = () =>
     contacts().find((view) => view.endpointId === params.id);
 
@@ -83,8 +78,6 @@ export const BeamContact = () => {
 
   /** Whether the read has landed, either way. Until then the page waits. */
   const settled = () => book().status === 'ready' || book().status === 'failed';
-
-  const armed = () => removal().endpointId === params.id;
 
   const handleRename = (
     event: FocusEvent & { currentTarget: HTMLInputElement },
@@ -215,41 +208,18 @@ export const BeamContact = () => {
                   </DataListItem>
                 </DataListRoot>
 
+                {/* Removing takes effect on the press. There's nothing here
+                    to lose: a contact is a name over a public key, and the
+                    peer can be paired with again from the same link. */}
                 <Flex as="div" direction="column" gap={3} align="start">
-                  {/* Forgetting is irreversible and there's no undo, so the
-                      button arms before it fires. Walking away from the page
-                      disarms it, which is the behaviour you'd want anyway. */}
-                  <Show
-                    when={armed()}
-                    fallback={
-                      <Button
-                        testId="beam-contact-remove"
-                        variant="soft"
-                        color="danger"
-                        onClick={() => commit(removalArmedTopic(params.id))}
-                      >
-                        Remove
-                      </Button>
-                    }
+                  <Button
+                    testId="beam-contact-remove"
+                    variant="soft"
+                    color="danger"
+                    onClick={handleForget}
                   >
-                    <Flex as="div" direction="row" gap={2} align="center">
-                      <Button
-                        testId="beam-contact-remove-confirm"
-                        color="danger"
-                        onClick={handleForget}
-                      >
-                        Remove for good
-                      </Button>
-                      <Button
-                        testId="beam-contact-remove-cancel"
-                        variant="ghost"
-                        color="neutral"
-                        onClick={() => commit(removalDisarmedTopic())}
-                      >
-                        Cancel
-                      </Button>
-                    </Flex>
-                  </Show>
+                    Remove
+                  </Button>
                 </Flex>
               </Flex>
             )}

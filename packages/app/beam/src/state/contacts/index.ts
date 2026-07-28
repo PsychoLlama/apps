@@ -14,11 +14,6 @@ export { contactsStore } from './contacts';
 export { addressBookFormula } from './address-book';
 export type { ContactView } from './address-book';
 export {
-  removalStore,
-  removalArmedTopic,
-  removalDisarmedTopic,
-} from './removal';
-export {
   forgetContactSaga,
   recordPeerSaga,
   renameContactSaga,

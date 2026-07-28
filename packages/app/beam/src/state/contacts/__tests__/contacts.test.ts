@@ -14,7 +14,6 @@ import {
   contactsRestoredTopic,
   contactsStore,
 } from '../contacts';
-import { removalArmedTopic, removalStore } from '../removal';
 import type { Contact } from '../database';
 import { beamScope } from '../../scope';
 
@@ -188,22 +187,12 @@ describe('contactForgottenTopic', () => {
     expect(peek(contactsStore).entries).toEqual({});
   });
 
-  it('disarms the confirmation it was armed by', () => {
+  it('ignores a contact that was already gone', () => {
     const { commit, peek } = setup();
     commit(contactsRestoredTopic([fakeContact()]));
-    commit(removalArmedTopic('ep-1'));
 
-    commit(contactForgottenTopic('ep-1'));
+    commit(contactForgottenTopic('ep-9'));
 
-    expect(peek(removalStore).endpointId).toBeNull();
-  });
-
-  it('leaves a confirmation armed for a different contact', () => {
-    const { commit, peek } = setup();
-    commit(removalArmedTopic('ep-2'));
-
-    commit(contactForgottenTopic('ep-1'));
-
-    expect(peek(removalStore).endpointId).toBe('ep-2');
+    expect(peek(contactsStore).entries).toEqual({ 'ep-1': fakeContact() });
   });
 });
