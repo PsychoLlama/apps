@@ -1,10 +1,10 @@
 import { style } from '@vanilla-extract/css';
 
 /**
- * Aligns card content to the leading edge so the icon hugs the left
- * margin. Mirrors the theme picker's swatch layout — keeps the two
- * sections visually consistent.
+ * Sizes the track to its segments instead of letting the column flex
+ * stretch it edge to edge. Mirrors the motion picker — keeps the two
+ * settings sections visually consistent.
  */
-export const card = style({
-  justifyContent: 'flex-start',
+export const control = style({
+  alignSelf: 'flex-start',
 });

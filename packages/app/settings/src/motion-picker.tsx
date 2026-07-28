@@ -1,15 +1,12 @@
-import { For, onMount, type Component, type JSX } from 'solid-js';
+import { For, onMount } from 'solid-js';
 import { useEffect } from '@lib/state';
-import { Flex, RadioCardsItem, RadioCardsRoot, Text } from '@lib/ui';
+import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { MotionOption } from '@lib/theme';
 import {
   hydrateMotionEffect,
   motion,
   selectMotionEffect,
 } from '@lib/theme/runtime';
-import IconMotionPlay from 'virtual:icons/mdi/motion-play-outline';
-import IconMotionPause from 'virtual:icons/mdi/motion-pause-outline';
-import IconAuto from 'virtual:icons/mdi/auto-mode';
 import { ResetButton } from './reset-button';
 import * as css from './motion-picker.css';
 
@@ -23,20 +20,21 @@ export const motionHeadingId = 'settings-motion-heading';
 interface MotionPickerOption {
   id: MotionOption;
   label: string;
-  icon: Component<JSX.SvgSVGAttributes<SVGSVGElement>>;
 }
 
+// No icons. A three-segment track carrying icon + label overflows a
+// 320px viewport, and the control can't shrink below `max-content`.
 const OPTIONS: ReadonlyArray<MotionPickerOption> = [
-  { id: 'system', label: 'System', icon: IconAuto },
-  { id: 'no-preference', label: 'Full', icon: IconMotionPlay },
-  { id: 'reduce', label: 'Reduced', icon: IconMotionPause },
+  { id: 'system', label: 'System' },
+  { id: 'no-preference', label: 'Full' },
+  { id: 'reduce', label: 'Reduced' },
 ];
 
 /**
  * Full/reduced/system picker for the `prefers-reduced-motion` overrides
- * in `@lib/design`. Reads/writes through `@lib/theme` — selecting a card
- * flips `<html data-reduced-motion>` (or drops it, for "System") and
- * persists the choice to localStorage.
+ * in `@lib/design`. Reads/writes through `@lib/theme` — selecting a
+ * segment flips `<html data-reduced-motion>` (or drops it, for "System")
+ * and persists the choice to localStorage.
  */
 export const MotionPicker = () => {
   const selectMotion = useEffect(selectMotionEffect);
@@ -44,39 +42,32 @@ export const MotionPicker = () => {
 
   // Mirrors the AppearancePicker hydration pattern — the prelude is the
   // canonical pre-paint setter and the store learns what's already on
-  // screen once the client mounts. The radio group renders disabled with
-  // no card selected until then, which beats flashing the wrong
+  // screen once the client mounts. The control renders disabled with no
+  // segment selected until then, which beats flashing the wrong
   // selection.
   onMount(hydrateMotion);
 
   return (
-    <RadioCardsRoot
+    <SegmentedControlRoot
       testId="motion-picker"
       name="motion"
       value={motion.id}
       skeleton={motion.id === null}
       onValueChange={(next) => selectMotion(next as MotionOption)}
-      gap={3}
-      columns={3}
+      class={css.control}
       aria-labelledby={motionHeadingId}
     >
       <For each={OPTIONS}>
         {(entry) => (
-          <RadioCardsItem
+          <SegmentedControlItem
             testId={`motion-picker-${entry.id}`}
             value={entry.id}
-            class={css.card}
           >
-            <Flex as="div" direction="row" align="center" gap={2}>
-              <entry.icon aria-hidden="true" />
-              <Text as="span" size={2} selectable={false}>
-                {entry.label}
-              </Text>
-            </Flex>
-          </RadioCardsItem>
+            {entry.label}
+          </SegmentedControlItem>
         )}
       </For>
-    </RadioCardsRoot>
+    </SegmentedControlRoot>
   );
 };
 
