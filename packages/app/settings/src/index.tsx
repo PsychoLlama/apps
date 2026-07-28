@@ -1,7 +1,8 @@
+import { onMount } from 'solid-js';
 import { NoHydration } from 'solid-js/web';
-import { useAnchor } from '@lib/state-next';
+import { useAnchor, useRun } from '@lib/state-next';
 import { Callout, Container, Flex, Heading, Text } from '@lib/ui';
-import { themeScope } from '@lib/theme/runtime';
+import { appearanceScope, hydrateAppearanceSaga } from '@lib/theme/runtime';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { ThemePicker, ThemeResetButton, themeHeadingId } from './theme-picker';
@@ -18,16 +19,24 @@ import {
 import { AdvancedSettings } from './advanced-settings';
 
 /**
- * The settings page. Anchors the theme scope for the whole surface: the
- * theme, appearance, and motion sections each read and write it, and one
- * anchor at the root keeps every picker and its reset button looking at
- * the same live state.
+ * The settings page. Anchors the appearance scope for the whole surface:
+ * the theme, appearance, and motion sections each read and write it, and
+ * one anchor at the root keeps every picker and its reset button looking
+ * at the same live state.
  *
  * The Advanced section owns its own scope — it holds a subscription with a
  * lifetime of its own.
  */
 export const Settings = () => {
-  useAnchor(themeScope);
+  useAnchor(appearanceScope);
+  const hydrateAppearance = useRun(hydrateAppearanceSaga);
+
+  // The site is SSG'd, so the server can't know the persisted
+  // preferences. The store starts unhydrated and every picker renders as
+  // a skeleton — which beats flashing the wrong selection. Hydrating once
+  // here, rather than per-picker, means all three sections come alive in
+  // the same transition.
+  onMount(() => void hydrateAppearance());
 
   return (
     <Frame>

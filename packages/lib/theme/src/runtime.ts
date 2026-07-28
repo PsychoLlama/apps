@@ -4,18 +4,16 @@
  * need the bundle + constants) don't transitively pull `@lib/state-next`
  * and `@lib/observability` into Vanilla Extract's child compiler.
  *
- * Reads go through the stores; changes go through the sagas. Anchor
- * {@link themeScope} for as long as a surface shows any of it — the DOM
- * attributes stay the canonical record, so a released scope loses nothing
- * a mount-time hydrate can't recover.
+ * Reads go through {@link appearanceStore}; changes go through the sagas.
+ * Anchor {@link appearanceScope} for as long as a surface shows any of it —
+ * the DOM attributes stay the canonical record, so a released scope loses
+ * nothing a mount-time hydrate can't recover.
  */
-export { themeScope } from './scope';
-export { colorSchemeStore, motionStore, themeStore } from './store';
+export { appearanceScope } from './scope';
+export { appearanceStore, type AppearanceState } from './appearance';
 export { readActiveColorScheme, readActiveMotion } from './capabilities';
 export {
-  hydrateColorSchemeSaga,
-  hydrateMotionSaga,
-  hydrateThemeSaga,
+  hydrateAppearanceSaga,
   resetThemeSaga,
   selectColorSchemeSaga,
   selectMotionSaga,

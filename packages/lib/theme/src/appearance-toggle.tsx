@@ -4,10 +4,10 @@ import { useAnchor, useRun, useValue } from '@lib/state-next';
 import { Button } from '@lib/ui';
 import type { ColorSchemeOption } from './constants';
 import {
-  colorSchemeStore,
-  hydrateColorSchemeSaga,
+  appearanceScope,
+  appearanceStore,
+  hydrateAppearanceSaga,
   selectColorSchemeSaga,
-  themeScope,
 } from './runtime';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
@@ -39,18 +39,19 @@ const CYCLE: ReadonlyArray<SchemeStep> = [
  * it anywhere a header or toolbar wants quick appearance control.
  */
 export const AppearanceToggle = () => {
-  useAnchor(themeScope);
-  const colorScheme = useValue(colorSchemeStore);
+  useAnchor(appearanceScope);
+  const appearance = useValue(appearanceStore);
   const selectScheme = useRun(selectColorSchemeSaga);
-  const hydrateScheme = useRun(hydrateColorSchemeSaga);
+  const hydrateAppearance = useRun(hydrateAppearanceSaga);
 
   // The prelude is the canonical pre-paint setter; the store learns the
-  // on-screen value once the client mounts. Until then `colorScheme().id`
-  // is null — the button renders as an inert skeleton rather than guess.
-  onMount(() => void hydrateScheme());
+  // on-screen values once the client mounts. Until then
+  // `appearance().colorScheme` is null — the button renders as an inert
+  // skeleton rather than guess.
+  onMount(() => void hydrateAppearance());
 
   const index = (): number =>
-    CYCLE.findIndex((step) => step.id === colorScheme().id);
+    CYCLE.findIndex((step) => step.id === appearance().colorScheme);
   const active = (): SchemeStep => CYCLE[index()] ?? CYCLE[0];
   const next = (): SchemeStep => CYCLE[(index() + 1) % CYCLE.length];
 
@@ -59,7 +60,7 @@ export const AppearanceToggle = () => {
       testId="appearance-toggle"
       variant="ghost"
       color="neutral"
-      skeleton={colorScheme().id === null}
+      skeleton={appearance().colorScheme === null}
       onClick={() => void selectScheme(next().id)}
     >
       <Dynamic component={active().icon} aria-hidden="true" />

@@ -1,12 +1,8 @@
-import { For, onMount } from 'solid-js';
+import { For } from 'solid-js';
 import { useRun, useValue } from '@lib/state-next';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { ColorSchemeOption } from '@lib/theme';
-import {
-  colorSchemeStore,
-  hydrateColorSchemeSaga,
-  selectColorSchemeSaga,
-} from '@lib/theme/runtime';
+import { appearanceStore, selectColorSchemeSaga } from '@lib/theme/runtime';
 import { ResetButton } from './reset-button';
 import * as css from './appearance-picker.css';
 
@@ -36,23 +32,15 @@ const OPTIONS: ReadonlyArray<AppearanceOption> = [
  * and persists the choice to localStorage.
  */
 export const AppearancePicker = () => {
-  const colorScheme = useValue(colorSchemeStore);
+  const appearance = useValue(appearanceStore);
   const selectScheme = useRun(selectColorSchemeSaga);
-  const hydrateScheme = useRun(hydrateColorSchemeSaga);
-
-  // Mirrors the ThemePicker hydration pattern — the prelude is the
-  // canonical pre-paint setter and the store learns what's already on
-  // screen once the client mounts. The control renders disabled with no
-  // segment selected until then, which beats flashing the wrong
-  // selection.
-  onMount(() => void hydrateScheme());
 
   return (
     <SegmentedControlRoot
       testId="appearance-picker"
       name="appearance"
-      value={colorScheme().id}
-      skeleton={colorScheme().id === null}
+      value={appearance().colorScheme}
+      skeleton={appearance().colorScheme === null}
       onValueChange={(next) => void selectScheme(next as ColorSchemeOption)}
       class={css.control}
       aria-labelledby={appearanceHeadingId}
@@ -75,18 +63,21 @@ export const AppearancePicker = () => {
  * Inline action that hands the color scheme back to `'system'` — the
  * no-override default that drops the persisted key and lets
  * `@media (prefers-color-scheme)` take over. Disabled while already on
- * `'system'` — or still unhydrated (`id: null`) — matching the reset
+ * `'system'` — or still unhydrated (`null`) — matching the reset
  * affordances elsewhere on the settings page.
  */
 export const AppearanceResetButton = () => {
-  const colorScheme = useValue(colorSchemeStore);
+  const appearance = useValue(appearanceStore);
   const selectScheme = useRun(selectColorSchemeSaga);
 
   return (
     <ResetButton
       testId="appearance-picker-reset"
       label="Reset appearance"
-      disabled={colorScheme().id === null || colorScheme().id === 'system'}
+      disabled={
+        appearance().colorScheme === null ||
+        appearance().colorScheme === 'system'
+      }
       onReset={() => void selectScheme('system')}
     />
   );

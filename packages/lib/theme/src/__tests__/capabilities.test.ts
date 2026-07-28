@@ -13,6 +13,7 @@ import {
   applyColorScheme,
   applyMotion,
   applyTheme,
+  readActiveAppearance,
   readActiveColorScheme,
   readActiveMotion,
   readActiveTheme,
@@ -376,5 +377,27 @@ describe('applyMotion', () => {
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
 
     removeItem.mockRestore();
+  });
+});
+
+describe('readActiveAppearance', () => {
+  it('gathers all three preferences off <html>', () => {
+    document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
+    document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
+    document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
+
+    expect(readActiveAppearance()).toEqual({
+      theme: 'jade',
+      colorScheme: 'dark',
+      motion: 'reduce',
+    });
+  });
+
+  it('falls back per field when the attributes are missing', () => {
+    expect(readActiveAppearance()).toEqual({
+      theme: DEFAULT_THEME_ID,
+      colorScheme: 'system',
+      motion: 'system',
+    });
   });
 });

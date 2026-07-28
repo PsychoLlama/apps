@@ -1,12 +1,8 @@
-import { For, onMount } from 'solid-js';
+import { For } from 'solid-js';
 import { useRun, useValue } from '@lib/state-next';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { MotionOption } from '@lib/theme';
-import {
-  hydrateMotionSaga,
-  motionStore,
-  selectMotionSaga,
-} from '@lib/theme/runtime';
+import { appearanceStore, selectMotionSaga } from '@lib/theme/runtime';
 import { ResetButton } from './reset-button';
 import * as css from './motion-picker.css';
 
@@ -37,23 +33,15 @@ const OPTIONS: ReadonlyArray<MotionPickerOption> = [
  * and persists the choice to localStorage.
  */
 export const MotionPicker = () => {
-  const motion = useValue(motionStore);
+  const appearance = useValue(appearanceStore);
   const selectMotion = useRun(selectMotionSaga);
-  const hydrateMotion = useRun(hydrateMotionSaga);
-
-  // Mirrors the AppearancePicker hydration pattern — the prelude is the
-  // canonical pre-paint setter and the store learns what's already on
-  // screen once the client mounts. The control renders disabled with no
-  // segment selected until then, which beats flashing the wrong
-  // selection.
-  onMount(() => void hydrateMotion());
 
   return (
     <SegmentedControlRoot
       testId="motion-picker"
       name="motion"
-      value={motion().id}
-      skeleton={motion().id === null}
+      value={appearance().motion}
+      skeleton={appearance().motion === null}
       onValueChange={(next) => void selectMotion(next as MotionOption)}
       class={css.control}
       aria-labelledby={motionHeadingId}
@@ -76,18 +64,20 @@ export const MotionPicker = () => {
  * Inline action that hands motion back to `'system'` — the no-override
  * default that drops the persisted key and lets
  * `@media (prefers-reduced-motion)` take over. Disabled while already on
- * `'system'` — or still unhydrated (`id: null`) — matching the reset
+ * `'system'` — or still unhydrated (`null`) — matching the reset
  * affordances elsewhere on the settings page.
  */
 export const MotionResetButton = () => {
-  const motion = useValue(motionStore);
+  const appearance = useValue(appearanceStore);
   const selectMotion = useRun(selectMotionSaga);
 
   return (
     <ResetButton
       testId="motion-picker-reset"
       label="Reset motion"
-      disabled={motion().id === null || motion().id === 'system'}
+      disabled={
+        appearance().motion === null || appearance().motion === 'system'
+      }
       onReset={() => void selectMotion('system')}
     />
   );

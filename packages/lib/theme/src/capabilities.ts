@@ -12,6 +12,7 @@ import {
   THEME_COLORS,
   THEME_IDS,
   THEME_STORAGE_KEY,
+  type AppearanceSelection,
   type ColorSchemeId,
   type ColorSchemeOption,
   type MotionId,
@@ -187,3 +188,15 @@ export const applyMotion = (
     localStorage.setItem(MOTION_STORAGE_KEY, option);
   });
 };
+
+/**
+ * Read all three appearance preferences off `<html>` in one pass. The
+ * prelude stamps them before paint, so this is the canonical
+ * post-prelude snapshot — and reading them together is what lets
+ * hydration land as a single transition.
+ */
+export const readActiveAppearance = (): AppearanceSelection => ({
+  theme: readActiveTheme(),
+  colorScheme: readActiveColorScheme(),
+  motion: readActiveMotion(),
+});
