@@ -126,6 +126,15 @@ export const overlay = style({
         to: { opacity: 0 },
       })} ${fast[2]} ${exit.productive}`,
     },
+    // Reopening after a close the UA forced is a fresh mount, which
+    // would replay the entrance. The dialog never went anywhere as far
+    // as the user is concerned, so it shouldn't animate in again. Same
+    // specificity as the rule above, so source order settles it — and
+    // the closed state stays animated, since a later real close still
+    // deserves its exit.
+    '&:where([data-state="open"][data-restored])': {
+      animation: 'none',
+    },
   },
 });
 
@@ -204,6 +213,11 @@ export const panel = style({
         from: { transform: 'none' },
         to: { transform: `translateY(${LIFT}) scale(0.99)` },
       })} ${fast[2]} ${exit.productive}`,
+    },
+    // See the matching rule on the overlay: a restore is a fresh mount,
+    // but not a fresh entrance.
+    [`${overlay}:where([data-state="open"][data-restored]) &`]: {
+      animation: 'none',
     },
   },
 });

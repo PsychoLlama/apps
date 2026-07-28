@@ -42,10 +42,9 @@
  *   so repeated presses spend the document's history-action activation
  *   and the UA starts closing the element regardless — its guard against
  *   pages that trap you in a dialog. Upstream, running on a `<div>`,
- *   never meets it. Here the dialog is put straight back up (visibly, on
- *   that press: the top layer is already gone), so `dismissible: false`
- *   still holds and a dismissible dialog still closes only when the call
- *   site agrees.
+ *   never meets it. Here the dialog is put straight back up without
+ *   replaying its entrance, so `dismissible: false` still holds and a
+ *   dismissible dialog still closes only when the call site agrees.
  * - Body content mounts with the dialog and unmounts after it closes,
  *   matching upstream. A `<dialog>` would otherwise keep its subtree
  *   (and any form state in it) alive across opens.
@@ -153,6 +152,13 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
   // neither `open` nor `mounted` moved.
   const [resyncTick, setResyncTick] = createSignal(0);
 
+  // Set while the dialog is back up after a close it didn't ask for.
+  // Reopening is a fresh mount, so the entrance would otherwise replay
+  // on every press; the stylesheet reads this to sit that one out. It
+  // rides on the element rather than in a variable because the attribute
+  // has to be in the DOM before `showModal()` makes the element render.
+  const [restored, setRestored] = createSignal(false);
+
   createEffect(() => {
     resyncTick();
     const overlay = overlayRef;
@@ -163,8 +169,10 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
       // what a reopen mid-exit looks like: presence cancels the unmount
       // and re-runs this while `[open]` still stands.
       if (!overlay.open) overlay.showModal();
-    } else if (overlay.open) {
-      overlay.close();
+    } else {
+      // Fully unmounted, so the next open is a real one and animates.
+      setRestored(false);
+      if (overlay.open) overlay.close();
     }
   });
 
@@ -205,6 +213,7 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
     // way `open` is still true, so the dialog goes back up. Anything
     // else is a fresh request the call site hasn't seen yet.
     if (!forced) local.onOpenChange(false);
+    setRestored(true);
     setResyncTick((tick) => tick + 1);
   };
 
@@ -244,6 +253,7 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
       onPointerDown={onPointerDown}
       onClick={onClick}
       {...presence.props}
+      data-restored={restored() ? '' : undefined}
     >
       <Show when={presence.mounted()}>
         <div class={css.scroll}>

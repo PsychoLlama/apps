@@ -241,6 +241,31 @@ describe('Dialog', () => {
     expect(overlay.matches(':modal')).toBe(true);
   });
 
+  // Reopening is a fresh mount, so the entrance keyframes would replay
+  // on every press. The stylesheet keys off `data-restored` to sit that
+  // one out.
+  it('does not replay the entrance when it puts itself back', async () => {
+    const { overlay } = setup();
+
+    forceDismiss(overlay);
+
+    await waitFor(() => expect(overlay.open).toBe(true));
+    expect(overlay).toHaveAttribute('data-restored');
+  });
+
+  it('animates in again on the next real open', async () => {
+    const { setOpen, overlay } = setup();
+
+    forceDismiss(overlay);
+    await waitFor(() => expect(overlay).toHaveAttribute('data-restored'));
+
+    setOpen(false);
+    await waitFor(() => expect(overlay.open).toBe(false));
+    setOpen(true);
+
+    expect(overlay).not.toHaveAttribute('data-restored');
+  });
+
   it('holds a forced dismissal off a dialog that is not dismissible', async () => {
     const { overlay, onOpenChange } = setup({ dismissible: false });
 
