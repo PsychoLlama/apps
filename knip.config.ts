@@ -98,6 +98,14 @@ const config: KnipConfig = {
         'src/**/__tests__/*.test.browser.{ts,tsx}',
       ],
     },
+    'packages/app/beam': {
+      // The address book persists to real IndexedDB, so its behavior tests
+      // live under `*.test.browser.ts`.
+      entry: [
+        'vitest.browser.config.ts',
+        'src/**/__tests__/*.test.browser.{ts,tsx}',
+      ],
+    },
     'packages/app/logs': {
       // The viewer's archive read drives real IndexedDB, so its behavior
       // tests live under `*.test.browser.ts`.

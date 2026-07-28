@@ -9,7 +9,8 @@ import {
 } from './connection';
 import { codeEncodedTopic } from './qr-code';
 import { dialEndpoint, encodeBeamCode, openConnection } from './capabilities';
-import { beamScope } from './scope';
+import { recordPeerSaga } from '../contacts';
+import { beamScope } from '../scope';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -57,8 +58,13 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
 
 /**
  * Dial the peer named in a beam link over the relay connection the layout
- * holds open. The caller only dials once the connection is `connected`, so a
- * missing relay is a caller bug and throws.
+ * holds open, recording it in the address book first so the pairing survives
+ * the reload the dial might not. The caller only dials once the connection is
+ * `connected`, so a missing relay is a caller bug and throws.
+ *
+ * Opening your own beam link is a no-op rather than an error — it's what
+ * happens when you scan the code off your own screen, and dialling yourself
+ * would both fail and leave a contact for this very device in the book.
  */
 export const dialPeerSaga = defineSaga(
   beamScope,
@@ -68,6 +74,9 @@ export const dialPeerSaga = defineSaga(
       throw new Error('Cannot dial a peer before the relay connection is up.');
     }
 
+    if (endpointId === endpoint.endpointId) return;
+
+    yield* recordPeerSaga({ endpointId, direction: 'outbound' });
     yield* call(dialEndpoint, endpoint, endpointId);
   },
 );

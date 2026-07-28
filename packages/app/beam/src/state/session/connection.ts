@@ -5,7 +5,7 @@ import {
   defineTopic,
 } from '@lib/state-next';
 import type { Relay } from '@crate/iroh';
-import { beamScope } from './scope';
+import { beamScope } from '../scope';
 
 /**
  * Where the browser's relay connection sits in its lifecycle.

@@ -15,7 +15,7 @@ import {
   relayCell,
 } from '../connection';
 import { codeEncodedTopic, qrCodeCell, type QrGrid } from '../qr-code';
-import { beamScope } from '../scope';
+import { beamScope } from '../../scope';
 
 /** A stand-in endpoint. Only `free` is ever called, and only on teardown. */
 const fakeRelay = (free: () => void = () => undefined): Relay =>
