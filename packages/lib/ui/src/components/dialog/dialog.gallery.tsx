@@ -13,8 +13,10 @@ const PARAGRAPHS = [
 ];
 
 type DemoProps = Partial<DialogProps> & {
-  /** Label on the opener, and the seed for the demo's test ids. */
+  /** Seeds the demo's test ids. Each cell needs its own. */
   name: string;
+  /** Label on the opener. */
+  label?: string;
   /** Render a form body instead of the default confirmation buttons. */
   form?: boolean;
   /** Pad the body until it outgrows the viewport, to show scrolling. */
@@ -36,7 +38,7 @@ const Demo = (props: DemoProps) => {
         testId={`${props.name}-trigger`}
         onClick={() => setOpen(true)}
       >
-        {props.name}
+        {props.label ?? 'Manage access'}
       </Button>
 
       <Dialog
@@ -171,6 +173,7 @@ export default {
             title: 'Invite a teammate',
             description: 'They will get an email with a join link.',
             form: true,
+            label: 'Invite',
             name: 'content-form',
           },
         },
@@ -190,10 +193,11 @@ export default {
         {
           title: 'Locked',
           props: {
-            title: 'Delete this project?',
+            title: 'Unsaved changes',
             description:
-              'This removes every deployment and cannot be undone. Choose an option to continue.',
+              'Escape and outside clicks are off, so this has to end in a choice.',
             dismissible: false,
+            label: 'Leave page',
             name: 'behavior-locked',
           },
         },
