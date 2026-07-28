@@ -3,32 +3,35 @@ import {
   applyColorScheme,
   applyMotion,
   applyTheme,
-  readActiveColorScheme,
-  readActiveMotion,
-  readActiveTheme,
+  readActiveAppearance,
   resetTheme,
 } from './capabilities';
 import type { ColorSchemeOption, MotionOption, ThemeId } from './constants';
-import { themeScope } from './scope';
+import { appearanceScope } from './scope';
 import {
-  colorSchemeRestoredTopic,
+  appearanceRestoredTopic,
   colorSchemeSelectedTopic,
-  motionRestoredTopic,
   motionSelectedTopic,
   themeResetTopic,
-  themeRestoredTopic,
   themeSelectedTopic,
-} from './store';
+} from './appearance';
 
 /**
- * Mirror the prelude-stamped `<html data-theme>` value into the store.
- * Run once on mount — the prelude is the canonical pre-paint setter, so
+ * Mirror the prelude-stamped `<html>` attributes into the store. Run once
+ * per surface on mount — the prelude is the canonical pre-paint setter, so
  * the store just learns what's already on screen.
+ *
+ * All three preferences hydrate together in a single transition. Reading
+ * them is three dataset lookups, and one commit means a picker set can't
+ * render with some controls live and others still skeletons.
  */
-export const hydrateThemeSaga = defineSaga(themeScope, async function* () {
-  const id = yield* call(readActiveTheme);
-  yield commit(themeRestoredTopic(id));
-});
+export const hydrateAppearanceSaga = defineSaga(
+  appearanceScope,
+  async function* () {
+    const selection = yield* call(readActiveAppearance);
+    yield commit(appearanceRestoredTopic(selection));
+  },
+);
 
 /**
  * Switch the active theme. Commits first so the UI reacts synchronously,
@@ -36,7 +39,7 @@ export const hydrateThemeSaga = defineSaga(themeScope, async function* () {
  * so it survives reload.
  */
 export const selectThemeSaga = defineSaga(
-  themeScope,
+  appearanceScope,
   async function* (id: ThemeId) {
     yield commit(themeSelectedTopic(id));
     yield* call(applyTheme, id);
@@ -49,23 +52,10 @@ export const selectThemeSaga = defineSaga(
  * so the next load picks up whatever default ships, rather than the value
  * the user happened to land on.
  */
-export const resetThemeSaga = defineSaga(themeScope, async function* () {
+export const resetThemeSaga = defineSaga(appearanceScope, async function* () {
   yield commit(themeResetTopic());
   yield* call(resetTheme);
 });
-
-/**
- * Mirror the prelude-stamped `<html data-color-scheme>` value into the
- * store. Run once on mount, for the same reason as
- * {@link hydrateThemeSaga}.
- */
-export const hydrateColorSchemeSaga = defineSaga(
-  themeScope,
-  async function* () {
-    const id = yield* call(readActiveColorScheme);
-    yield commit(colorSchemeRestoredTopic(id));
-  },
-);
 
 /**
  * Switch the active color-scheme override. Commits first so the UI reacts
@@ -74,22 +64,12 @@ export const hydrateColorSchemeSaga = defineSaga(
  * choice before paint on the next load.
  */
 export const selectColorSchemeSaga = defineSaga(
-  themeScope,
+  appearanceScope,
   async function* (option: ColorSchemeOption) {
     yield commit(colorSchemeSelectedTopic(option));
     yield* call(applyColorScheme, option);
   },
 );
-
-/**
- * Mirror the prelude-stamped `<html data-reduced-motion>` value into the
- * store. Run once on mount, for the same reason as
- * {@link hydrateThemeSaga}.
- */
-export const hydrateMotionSaga = defineSaga(themeScope, async function* () {
-  const id = yield* call(readActiveMotion);
-  yield commit(motionRestoredTopic(id));
-});
 
 /**
  * Switch the active motion override. Commits first so the UI reacts
@@ -98,7 +78,7 @@ export const hydrateMotionSaga = defineSaga(themeScope, async function* () {
  * choice before paint on the next load.
  */
 export const selectMotionSaga = defineSaga(
-  themeScope,
+  appearanceScope,
   async function* (option: MotionOption) {
     yield commit(motionSelectedTopic(option));
     yield* call(applyMotion, option);

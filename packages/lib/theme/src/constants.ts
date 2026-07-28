@@ -139,6 +139,23 @@ export type MotionOption = MotionId | 'system';
 export const MOTION_STORAGE_KEY = 'preferences.appearance.motion';
 
 /**
+ * The three appearance preferences as one resolved selection: every
+ * field a concrete choice, with `'system'` meaning "no override" rather
+ * than "not yet known". This is what `<html>` yields once the prelude
+ * has run — the shape hydration carries into the store.
+ */
+export interface AppearanceSelection {
+  /** Active theme variant. */
+  theme: ThemeId;
+
+  /** Active color-scheme override, or `'system'` to defer to the OS. */
+  colorScheme: ColorSchemeOption;
+
+  /** Active motion override, or `'system'` to defer to the OS. */
+  motion: MotionOption;
+}
+
+/**
  * `id` attribute on the per-scheme `theme-color` meta tags. The prelude
  * looks these up to swap `content` to the active theme's page background
  * before paint. Kept here so the server stamp and prelude can't drift.

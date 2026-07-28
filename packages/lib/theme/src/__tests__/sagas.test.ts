@@ -5,50 +5,48 @@
  *
  * The exceptions are the ordering cases, which need real folds to prove
  * the store is already updated by the time the capability runs. Those use
- * a test runtime with `themeScope` anchored.
+ * a test runtime with `appearanceScope` anchored.
  */
 
 import { createTestRuntime, simulate } from '@lib/state-next';
 import {
+  appearanceRestoredTopic,
+  appearanceStore,
+  colorSchemeSelectedTopic,
+  motionSelectedTopic,
+  themeResetTopic,
+  themeSelectedTopic,
+} from '../appearance';
+import {
   applyColorScheme,
   applyMotion,
   applyTheme,
-  readActiveColorScheme,
-  readActiveMotion,
-  readActiveTheme,
+  readActiveAppearance,
   resetTheme,
 } from '../capabilities';
 import { DEFAULT_THEME_ID } from '../constants';
 import {
-  hydrateColorSchemeSaga,
-  hydrateMotionSaga,
-  hydrateThemeSaga,
+  hydrateAppearanceSaga,
   resetThemeSaga,
   selectColorSchemeSaga,
   selectMotionSaga,
   selectThemeSaga,
 } from '../sagas';
-import { themeScope } from '../scope';
-import {
-  colorSchemeRestoredTopic,
-  colorSchemeSelectedTopic,
-  colorSchemeStore,
-  motionRestoredTopic,
-  motionSelectedTopic,
-  motionStore,
-  themeResetTopic,
-  themeRestoredTopic,
-  themeSelectedTopic,
-  themeStore,
-} from '../store';
+import { appearanceScope } from '../scope';
 
-describe('hydrateThemeSaga', () => {
-  it('publishes the theme it read off the DOM', async () => {
-    const trace = await simulate(hydrateThemeSaga(), {
-      calls: [[readActiveTheme, () => 'pink']],
+describe('hydrateAppearanceSaga', () => {
+  it('publishes every preference it read off the DOM in one commit', async () => {
+    const selection = {
+      theme: 'pink',
+      colorScheme: 'dark',
+      motion: 'reduce',
+    } as const;
+
+    const trace = await simulate(hydrateAppearanceSaga(), {
+      calls: [[readActiveAppearance, () => selection]],
     });
 
-    expect(trace.commits).toEqual([[themeRestoredTopic('pink')]]);
+    expect(trace.commits).toEqual([[appearanceRestoredTopic(selection)]]);
   });
 });
 
@@ -67,9 +65,11 @@ describe('selectThemeSaga', () => {
   it('updates state before the side effect runs', async () => {
     const observed: Array<string | null> = [];
     const runtime = createTestRuntime({
-      calls: [[applyTheme, () => observed.push(runtime.peek(themeStore).id)]],
+      calls: [
+        [applyTheme, () => observed.push(runtime.peek(appearanceStore).theme)],
+      ],
     });
-    runtime.anchor(themeScope);
+    runtime.anchor(appearanceScope);
 
     await runtime.run(selectThemeSaga('purple'));
 
@@ -77,7 +77,7 @@ describe('selectThemeSaga', () => {
     // state — confirming the UI gets the value before the DOM and
     // localStorage writes.
     expect(observed).toEqual(['purple']);
-    expect(runtime.peek(themeStore).id).toBe('purple');
+    expect(runtime.peek(appearanceStore).theme).toBe('purple');
   });
 });
 
@@ -96,25 +96,17 @@ describe('resetThemeSaga', () => {
   it('rewinds state to the default before the side effect runs', async () => {
     const observed: Array<string | null> = [];
     const runtime = createTestRuntime({
-      calls: [[resetTheme, () => observed.push(runtime.peek(themeStore).id)]],
+      calls: [
+        [resetTheme, () => observed.push(runtime.peek(appearanceStore).theme)],
+      ],
     });
-    runtime.anchor(themeScope);
+    runtime.anchor(appearanceScope);
     runtime.commit(themeSelectedTopic('jade'));
 
     await runtime.run(resetThemeSaga());
 
     expect(observed).toEqual([DEFAULT_THEME_ID]);
-    expect(runtime.peek(themeStore).id).toBe(DEFAULT_THEME_ID);
-  });
-});
-
-describe('hydrateColorSchemeSaga', () => {
-  it('publishes the override it read off the DOM', async () => {
-    const trace = await simulate(hydrateColorSchemeSaga(), {
-      calls: [[readActiveColorScheme, () => 'dark']],
-    });
-
-    expect(trace.commits).toEqual([[colorSchemeRestoredTopic('dark')]]);
+    expect(runtime.peek(appearanceStore).theme).toBe(DEFAULT_THEME_ID);
   });
 });
 
@@ -147,26 +139,16 @@ describe('selectColorSchemeSaga', () => {
       calls: [
         [
           applyColorScheme,
-          () => observed.push(runtime.peek(colorSchemeStore).id),
+          () => observed.push(runtime.peek(appearanceStore).colorScheme),
         ],
       ],
     });
-    runtime.anchor(themeScope);
+    runtime.anchor(appearanceScope);
 
     await runtime.run(selectColorSchemeSaga('dark'));
 
     expect(observed).toEqual(['dark']);
-    expect(runtime.peek(colorSchemeStore).id).toBe('dark');
-  });
-});
-
-describe('hydrateMotionSaga', () => {
-  it('publishes the override it read off the DOM', async () => {
-    const trace = await simulate(hydrateMotionSaga(), {
-      calls: [[readActiveMotion, () => 'reduce']],
-    });
-
-    expect(trace.commits).toEqual([[motionRestoredTopic('reduce')]]);
+    expect(runtime.peek(appearanceStore).colorScheme).toBe('dark');
   });
 });
 
@@ -196,13 +178,18 @@ describe('selectMotionSaga', () => {
   it('updates state before the side effect runs', async () => {
     const observed: Array<string | null> = [];
     const runtime = createTestRuntime({
-      calls: [[applyMotion, () => observed.push(runtime.peek(motionStore).id)]],
+      calls: [
+        [
+          applyMotion,
+          () => observed.push(runtime.peek(appearanceStore).motion),
+        ],
+      ],
     });
-    runtime.anchor(themeScope);
+    runtime.anchor(appearanceScope);
 
     await runtime.run(selectMotionSaga('reduce'));
 
     expect(observed).toEqual(['reduce']);
-    expect(runtime.peek(motionStore).id).toBe('reduce');
+    expect(runtime.peek(appearanceStore).motion).toBe('reduce');
   });
 });

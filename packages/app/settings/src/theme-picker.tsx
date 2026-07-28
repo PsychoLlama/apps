@@ -1,12 +1,11 @@
-import { For, onMount } from 'solid-js';
+import { For } from 'solid-js';
 import { useRun, useValue } from '@lib/state-next';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
 import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
 import {
-  hydrateThemeSaga,
+  appearanceStore,
   resetThemeSaga,
   selectThemeSaga,
-  themeStore,
 } from '@lib/theme/runtime';
 import { ResetButton } from './reset-button';
 import * as css from './theme-picker.css';
@@ -25,23 +24,15 @@ export const themeHeadingId = 'settings-theme-heading';
  * localStorage.
  */
 export const ThemePicker = () => {
-  const theme = useValue(themeStore);
+  const appearance = useValue(appearanceStore);
   const selectTheme = useRun(selectThemeSaga);
-  const hydrateTheme = useRun(hydrateThemeSaga);
-
-  // The site is SSG'd, so the server can't know the persisted theme.
-  // The store starts unhydrated (`id: null`); `onMount` reads the
-  // prelude-stamped attribute and publishes it once the client takes
-  // over. The radio group renders disabled with no card selected
-  // until then, which beats flashing the wrong selection.
-  onMount(() => void hydrateTheme());
 
   return (
     <RadioCardsRoot
       testId="theme-picker"
       name="theme"
-      value={theme().id}
-      skeleton={theme().id === null}
+      value={appearance().theme}
+      skeleton={appearance().theme === null}
       onValueChange={(next) => void selectTheme(next as ThemeId)}
       gap={3}
       class={css.root}
@@ -64,18 +55,20 @@ export const ThemePicker = () => {
 
 /**
  * Inline action that snaps the theme back to `DEFAULT_THEME_ID`. Disabled
- * while the theme is already default — or still unhydrated (`id: null`) —
+ * while the theme is already default — or still unhydrated (`null`) —
  * matching the reset affordances in the Advanced section.
  */
 export const ThemeResetButton = () => {
-  const theme = useValue(themeStore);
+  const appearance = useValue(appearanceStore);
   const resetTheme = useRun(resetThemeSaga);
 
   return (
     <ResetButton
       testId="theme-picker-reset"
       label="Reset theme"
-      disabled={theme().id === null || theme().id === DEFAULT_THEME_ID}
+      disabled={
+        appearance().theme === null || appearance().theme === DEFAULT_THEME_ID
+      }
       onReset={() => void resetTheme()}
     />
   );

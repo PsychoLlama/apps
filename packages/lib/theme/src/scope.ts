@@ -10,4 +10,4 @@ import { defineScope } from '@lib/state-next';
  * prelude stamps onto `<html>` are the canonical record; this scope holds
  * a mirror of them, and every consumer re-hydrates from the DOM on mount.
  */
-export const themeScope = defineScope();
+export const appearanceScope = defineScope();

@@ -7,6 +7,10 @@
  * watched with {@link subscribe}, and changed with {@link updateConfig} /
  * {@link reset}. Overrides persist to OPFS and fan out across tabs over a
  * broadcast channel.
+ *
+ * {@link watchAll} is the streaming counterpart to {@link subscribe}:
+ * several options merged into one buffered async stream, for consumers
+ * that would rather drain changes than register callbacks.
  */
 
 export {
@@ -25,3 +29,4 @@ export {
   updateConfig,
 } from './config';
 export { environment } from './environment';
+export { watchAll } from './watch';

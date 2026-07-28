@@ -4,6 +4,7 @@ import {
   reset,
   subscribe,
   updateConfig,
+  watchAll,
   type Override,
 } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
@@ -110,30 +111,13 @@ export type AdvancedSettingChange =
  * workers, and this tab's own writes alike, which is what makes the
  * subscription the single source of truth rather than one of two.
  *
- * Subscribing happens here, before the stream is drained, and buffers
- * from that moment. A caller can open the stream, do slower work, and
- * drain afterwards without losing anything that landed in between — which
- * is how hydration avoids overwriting a change that beat it.
- *
- * Unsubscribes when `signal` aborts or when draining ends, whichever
- * comes first. An abandoned stream is safe: the abort alone cleans up.
+ * See {@link watchAll} for the buffering and teardown guarantees the
+ * stream carries.
  */
 export const watchAdvancedSettings = (
   signal: AbortSignal,
-): AsyncGenerator<AdvancedSettingChange> => {
-  const pending: AdvancedSettingChange[] = [];
-
-  // Resolved when a change lands or the signal aborts. Buffering rather
-  // than dropping keeps a burst of writes — a reset touching several
-  // options, say — from collapsing into whichever one the consumer
-  // happened to be awake for.
-  let wake: (() => void) | null = null;
-  const push = (change: AdvancedSettingChange): void => {
-    pending.push(change);
-    wake?.();
-  };
-
-  const unsubscribes = [
+): AsyncGenerator<AdvancedSettingChange> =>
+  watchAll(signal, (push) => [
     subscribe(filter, ({ pattern }) => push({ option: 'logFilter', pattern })),
     subscribe(logExport, ({ enabled }) =>
       push({ option: 'logExport', enabled }),
@@ -144,43 +128,4 @@ export const watchAdvancedSettings = (
     subscribe(beamAppEnabled, ({ enabled }) =>
       push({ option: 'beam', enabled }),
     ),
-  ];
-
-  let stopped = false;
-  const stop = (): void => {
-    if (stopped) return;
-    stopped = true;
-    for (const unsubscribe of unsubscribes) unsubscribe();
-  };
-
-  signal.addEventListener(
-    'abort',
-    () => {
-      stop();
-      wake?.();
-    },
-    { once: true },
-  );
-
-  const drain = async function* (): AsyncGenerator<AdvancedSettingChange> {
-    try {
-      while (!signal.aborted) {
-        const next = pending.shift();
-
-        if (next) {
-          yield next;
-          continue;
-        }
-
-        await new Promise<void>((resolve) => {
-          wake = resolve;
-        });
-        wake = null;
-      }
-    } finally {
-      stop();
-    }
-  };
-
-  return drain();
-};
+  ]);
