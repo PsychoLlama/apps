@@ -2,7 +2,16 @@ import { createEffect, on, Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { useRun, useValue } from '@lib/state';
 import { FrameBody, SiteHeader } from '@lib/shell';
-import { Button, Callout, Container, Flex, Heading, Link, Text } from '@lib/ui';
+import {
+  Button,
+  Callout,
+  Container,
+  Flex,
+  Heading,
+  LinkButton,
+  Text,
+} from '@lib/ui';
+import IconContactCard from 'virtual:icons/mdi/card-account-details-outline';
 import { ConnectionIndicator } from './connection-indicator';
 import { addressBookFormula } from '../state/contacts';
 import { generateLabel } from '../state/labels';
@@ -116,37 +125,52 @@ export const BeamShare = () => {
             }
           >
             <Flex as="div" direction="column" gap={5}>
-              <Flex as="hgroup" direction="column" gap={2}>
-                {/* The name is the way to the peer's record — a title that
-                    happens to be a link, rather than a second line of copy
-                    pointing at one.
+              {/* The record sits behind a labelled link rather than the
+                  title itself: a heading that quietly navigates gives no
+                  hint of where, and "somewhere about this device" is the
+                  part a reader can't guess. Ghost keeps it quiet beside the
+                  name without pretending not to be a control.
 
-                    Only once the contact exists, which is also what keeps
-                    the `href` honest: this route is served from one
-                    prerendered shell for every id, so an anchor in that
-                    markup would ship the `__id` build sentinel and hand it
-                    to anyone who tapped before hydration caught up. The
-                    address book is empty during prerender, so this element
-                    is only ever built on the client, from the record rather
-                    than the route. */}
-                <Heading as="h1" selectable={false}>
-                  <Show when={contact()} fallback={name()}>
-                    {(view) => (
-                      <Link
-                        testId="beam-share-contact"
-                        href={`/beam/contacts/${view().endpointId}`}
-                        color="neutral"
-                        underline="hover"
-                      >
-                        {view().name}
-                      </Link>
-                    )}
-                  </Show>
-                </Heading>
+                  Only rendered once the contact exists. That's what keeps
+                  the `href` honest: this route is served from one
+                  prerendered shell for every id, so an anchor built from
+                  the route param at build time carries the `__id` sentinel.
+                  The address book is empty during prerender, so this is
+                  only ever built on the client, from the record. */}
+              <Flex
+                as="div"
+                direction="row"
+                align="start"
+                justify="between"
+                gap={3}
+              >
+                <Flex as="hgroup" direction="column" gap={2}>
+                  <Heading as="h1" selectable={false}>
+                    {name()}
+                  </Heading>
 
-                <Text as="p" size={2} color="lowContrast" selectable={false}>
-                  {describeState(state())}
-                </Text>
+                  <Text as="p" size={2} color="lowContrast" selectable={false}>
+                    {describeState(state())}
+                  </Text>
+                </Flex>
+
+                <Show when={contact()}>
+                  {(view) => (
+                    <LinkButton
+                      testId="beam-share-contact"
+                      href={`/beam/contacts/${view().endpointId}`}
+                      variant="ghost"
+                      color="neutral"
+                    >
+                      <IconContactCard
+                        width="18"
+                        height="18"
+                        aria-hidden="true"
+                      />
+                      Details
+                    </LinkButton>
+                  )}
+                </Show>
               </Flex>
 
               <Callout color="neutral">
