@@ -19,6 +19,11 @@ import {
   resetTheme,
 } from '../capabilities';
 
+// The apply capabilities take the scope's abort signal as their first
+// argument and ignore it — the DOM and localStorage writes are synchronous
+// and have nothing to unwind. One inert signal serves the whole suite.
+const signal = new AbortController().signal;
+
 const mountMetaTag = (id: string): HTMLMetaElement => {
   const meta = document.createElement('meta');
   meta.id = id;
@@ -57,19 +62,19 @@ describe('readActiveTheme', () => {
 
 describe('applyTheme', () => {
   it('flips <html data-theme> to the requested variant', () => {
-    applyTheme('purple');
+    applyTheme(signal, 'purple');
 
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('purple');
   });
 
   it('persists the choice to localStorage', () => {
-    applyTheme('teal');
+    applyTheme(signal, 'teal');
 
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('teal');
   });
 
   it("syncs the paired theme-color meta tags to the variant's colors", () => {
-    applyTheme('jade');
+    applyTheme(signal, 'jade');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -80,7 +85,7 @@ describe('applyTheme', () => {
   it('collapses both theme-color meta tags onto the dark variant when forced dark', () => {
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
 
-    applyTheme('jade');
+    applyTheme(signal, 'jade');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -91,7 +96,7 @@ describe('applyTheme', () => {
   it('collapses both theme-color meta tags onto the light variant when forced light', () => {
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'light';
 
-    applyTheme('jade');
+    applyTheme(signal, 'jade');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -106,7 +111,7 @@ describe('applyTheme', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyTheme('pink')).not.toThrow();
+    expect(() => applyTheme(signal, 'pink')).not.toThrow();
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('pink');
 
     setItem.mockRestore();
@@ -119,7 +124,7 @@ describe('applyTheme', () => {
         throw new Error('quota');
       });
 
-    expect(() => applyTheme('orange')).not.toThrow();
+    expect(() => applyTheme(signal, 'orange')).not.toThrow();
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('orange');
 
     setItem.mockRestore();
@@ -196,7 +201,7 @@ describe('readActiveColorScheme', () => {
 
 describe('applyColorScheme', () => {
   it('flips <html data-color-scheme> to the requested override', () => {
-    applyColorScheme('dark');
+    applyColorScheme(signal, 'dark');
 
     expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
       'dark',
@@ -204,7 +209,7 @@ describe('applyColorScheme', () => {
   });
 
   it('persists the override to localStorage', () => {
-    applyColorScheme('light');
+    applyColorScheme(signal, 'light');
 
     expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBe('light');
   });
@@ -212,7 +217,7 @@ describe('applyColorScheme', () => {
   it("drops the attribute when set to 'system'", () => {
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
 
-    applyColorScheme('system');
+    applyColorScheme(signal, 'system');
 
     expect(
       document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE],
@@ -222,7 +227,7 @@ describe('applyColorScheme', () => {
   it("clears the persisted preference when set to 'system'", () => {
     localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, 'dark');
 
-    applyColorScheme('system');
+    applyColorScheme(signal, 'system');
 
     expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBeNull();
   });
@@ -234,7 +239,7 @@ describe('applyColorScheme', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyColorScheme('dark')).not.toThrow();
+    expect(() => applyColorScheme(signal, 'dark')).not.toThrow();
     expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
       'dark',
     );
@@ -245,7 +250,7 @@ describe('applyColorScheme', () => {
   it("collapses both theme-color meta tags onto the active theme's dark variant when forced dark", () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
 
-    applyColorScheme('dark');
+    applyColorScheme(signal, 'dark');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -256,7 +261,7 @@ describe('applyColorScheme', () => {
   it("collapses both theme-color meta tags onto the active theme's light variant when forced light", () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
 
-    applyColorScheme('light');
+    applyColorScheme(signal, 'light');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -274,7 +279,7 @@ describe('applyColorScheme', () => {
       .getElementById(THEME_COLOR_META_ID.dark)
       ?.setAttribute('content', THEME_COLORS.jade.dark);
 
-    applyColorScheme('system');
+    applyColorScheme(signal, 'system');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -290,7 +295,7 @@ describe('applyColorScheme', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyColorScheme('system')).not.toThrow();
+    expect(() => applyColorScheme(signal, 'system')).not.toThrow();
     expect(
       document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE],
     ).toBeUndefined();
@@ -319,13 +324,13 @@ describe('readActiveMotion', () => {
 
 describe('applyMotion', () => {
   it('flips <html data-reduced-motion> to the requested override', () => {
-    applyMotion('reduce');
+    applyMotion(signal, 'reduce');
 
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
   });
 
   it('persists the override to localStorage', () => {
-    applyMotion('no-preference');
+    applyMotion(signal, 'no-preference');
 
     expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBe('no-preference');
   });
@@ -333,7 +338,7 @@ describe('applyMotion', () => {
   it("drops the attribute when set to 'system'", () => {
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
 
-    applyMotion('system');
+    applyMotion(signal, 'system');
 
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
   });
@@ -341,7 +346,7 @@ describe('applyMotion', () => {
   it("clears the persisted preference when set to 'system'", () => {
     localStorage.setItem(MOTION_STORAGE_KEY, 'reduce');
 
-    applyMotion('system');
+    applyMotion(signal, 'system');
 
     expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBeNull();
   });
@@ -353,7 +358,7 @@ describe('applyMotion', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyMotion('reduce')).not.toThrow();
+    expect(() => applyMotion(signal, 'reduce')).not.toThrow();
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
 
     setItem.mockRestore();
@@ -367,7 +372,7 @@ describe('applyMotion', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyMotion('system')).not.toThrow();
+    expect(() => applyMotion(signal, 'system')).not.toThrow();
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
 
     removeItem.mockRestore();

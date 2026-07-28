@@ -1,11 +1,11 @@
 import { For, onMount } from 'solid-js';
-import { useEffect } from '@lib/state';
+import { useRun, useValue } from '@lib/state-next';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { ColorSchemeOption } from '@lib/theme';
 import {
-  colorScheme,
-  hydrateColorSchemeEffect,
-  selectColorSchemeEffect,
+  colorSchemeStore,
+  hydrateColorSchemeSaga,
+  selectColorSchemeSaga,
 } from '@lib/theme/runtime';
 import { ResetButton } from './reset-button';
 import * as css from './appearance-picker.css';
@@ -36,23 +36,24 @@ const OPTIONS: ReadonlyArray<AppearanceOption> = [
  * and persists the choice to localStorage.
  */
 export const AppearancePicker = () => {
-  const selectScheme = useEffect(selectColorSchemeEffect);
-  const hydrateScheme = useEffect(hydrateColorSchemeEffect);
+  const colorScheme = useValue(colorSchemeStore);
+  const selectScheme = useRun(selectColorSchemeSaga);
+  const hydrateScheme = useRun(hydrateColorSchemeSaga);
 
   // Mirrors the ThemePicker hydration pattern — the prelude is the
   // canonical pre-paint setter and the store learns what's already on
   // screen once the client mounts. The control renders disabled with no
   // segment selected until then, which beats flashing the wrong
   // selection.
-  onMount(hydrateScheme);
+  onMount(() => void hydrateScheme());
 
   return (
     <SegmentedControlRoot
       testId="appearance-picker"
       name="appearance"
-      value={colorScheme.id}
-      skeleton={colorScheme.id === null}
-      onValueChange={(next) => selectScheme(next as ColorSchemeOption)}
+      value={colorScheme().id}
+      skeleton={colorScheme().id === null}
+      onValueChange={(next) => void selectScheme(next as ColorSchemeOption)}
       class={css.control}
       aria-labelledby={appearanceHeadingId}
     >
@@ -78,14 +79,15 @@ export const AppearancePicker = () => {
  * affordances elsewhere on the settings page.
  */
 export const AppearanceResetButton = () => {
-  const selectScheme = useEffect(selectColorSchemeEffect);
+  const colorScheme = useValue(colorSchemeStore);
+  const selectScheme = useRun(selectColorSchemeSaga);
 
   return (
     <ResetButton
       testId="appearance-picker-reset"
       label="Reset appearance"
-      disabled={colorScheme.id === null || colorScheme.id === 'system'}
-      onReset={() => selectScheme('system')}
+      disabled={colorScheme().id === null || colorScheme().id === 'system'}
+      onReset={() => void selectScheme('system')}
     />
   );
 };

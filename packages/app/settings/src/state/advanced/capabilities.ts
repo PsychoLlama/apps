@@ -10,7 +10,7 @@ import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import { enabled as beamAppEnabled } from '@app/beam/config';
-import { type AdvancedSettingsState } from './store';
+import { type AdvancedSettingsState } from './settings';
 
 /**
  * Resolve every Advanced setting for the active environment in one pass,
@@ -35,7 +35,10 @@ export const readAdvancedSettings =
   };
 
 /** Persist a new log filter pattern as the active environment's override. */
-export const writeLogFilter = async (pattern: string): Promise<void> => {
+export const writeLogFilter = async (
+  _signal: AbortSignal,
+  pattern: string,
+): Promise<void> => {
   const patch: Override<{ pattern: string }> = { [environment]: { pattern } };
   await updateConfig(filter, patch);
 };
@@ -46,20 +49,9 @@ export const writeLogFilter = async (pattern: string): Promise<void> => {
  */
 export const resetLogFilter = (): Promise<void> => reset(filter, [environment]);
 
-/**
- * Watch for log filter changes from any browsing context — including
- * same-tab writes — reporting the resolved pattern. Returns an
- * unsubscribe.
- */
-export const watchLogFilter = (
-  onChange: (pattern: string) => void,
-): (() => void) =>
-  subscribe(filter, (value) => {
-    onChange(value.pattern);
-  });
-
 /** Persist the logs export flag as the active environment's override. */
 export const writeLogExportEnabled = async (
+  _signal: AbortSignal,
   enabled: boolean,
 ): Promise<void> => {
   const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
@@ -73,19 +65,9 @@ export const writeLogExportEnabled = async (
 export const resetLogExportEnabled = (): Promise<void> =>
   reset(logExport, [environment]);
 
-/**
- * Watch for logs export flag changes from any browsing context. Returns an
- * unsubscribe.
- */
-export const watchLogExportEnabled = (
-  onChange: (enabled: boolean) => void,
-): (() => void) =>
-  subscribe(logExport, (value) => {
-    onChange(value.enabled);
-  });
-
 /** Persist the scratchpad flag as the active environment's override. */
 export const writeScratchpadEnabled = async (
+  _signal: AbortSignal,
   enabled: boolean,
 ): Promise<void> => {
   const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
@@ -99,19 +81,11 @@ export const writeScratchpadEnabled = async (
 export const resetScratchpadEnabled = (): Promise<void> =>
   reset(scratchpadAppEnabled, [environment]);
 
-/**
- * Watch for scratchpad flag changes from any browsing context. Returns
- * an unsubscribe.
- */
-export const watchScratchpadEnabled = (
-  onChange: (enabled: boolean) => void,
-): (() => void) =>
-  subscribe(scratchpadAppEnabled, (value) => {
-    onChange(value.enabled);
-  });
-
 /** Persist the beam flag as the active environment's override. */
-export const writeBeamEnabled = async (enabled: boolean): Promise<void> => {
+export const writeBeamEnabled = async (
+  _signal: AbortSignal,
+  enabled: boolean,
+): Promise<void> => {
   const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
   await updateConfig(beamAppEnabled, patch);
 };
@@ -123,13 +97,90 @@ export const writeBeamEnabled = async (enabled: boolean): Promise<void> => {
 export const resetBeamEnabled = (): Promise<void> =>
   reset(beamAppEnabled, [environment]);
 
+/** One Advanced option settling on a new resolved value. */
+export type AdvancedSettingChange =
+  | { option: 'logFilter'; pattern: string }
+  | { option: 'logExport'; enabled: boolean }
+  | { option: 'scratchpad'; enabled: boolean }
+  | { option: 'beam'; enabled: boolean };
+
 /**
- * Watch for beam flag changes from any browsing context. Returns an
- * unsubscribe.
+ * Watch every Advanced option at once, reporting each resolved value as it
+ * lands. Changes from any browsing context arrive here — sibling tabs,
+ * workers, and this tab's own writes alike, which is what makes the
+ * subscription the single source of truth rather than one of two.
+ *
+ * Subscribing happens here, before the stream is drained, and buffers
+ * from that moment. A caller can open the stream, do slower work, and
+ * drain afterwards without losing anything that landed in between — which
+ * is how hydration avoids overwriting a change that beat it.
+ *
+ * Unsubscribes when `signal` aborts or when draining ends, whichever
+ * comes first. An abandoned stream is safe: the abort alone cleans up.
  */
-export const watchBeamEnabled = (
-  onChange: (enabled: boolean) => void,
-): (() => void) =>
-  subscribe(beamAppEnabled, (value) => {
-    onChange(value.enabled);
-  });
+export const watchAdvancedSettings = (
+  signal: AbortSignal,
+): AsyncGenerator<AdvancedSettingChange> => {
+  const pending: AdvancedSettingChange[] = [];
+
+  // Resolved when a change lands or the signal aborts. Buffering rather
+  // than dropping keeps a burst of writes — a reset touching several
+  // options, say — from collapsing into whichever one the consumer
+  // happened to be awake for.
+  let wake: (() => void) | null = null;
+  const push = (change: AdvancedSettingChange): void => {
+    pending.push(change);
+    wake?.();
+  };
+
+  const unsubscribes = [
+    subscribe(filter, ({ pattern }) => push({ option: 'logFilter', pattern })),
+    subscribe(logExport, ({ enabled }) =>
+      push({ option: 'logExport', enabled }),
+    ),
+    subscribe(scratchpadAppEnabled, ({ enabled }) =>
+      push({ option: 'scratchpad', enabled }),
+    ),
+    subscribe(beamAppEnabled, ({ enabled }) =>
+      push({ option: 'beam', enabled }),
+    ),
+  ];
+
+  let stopped = false;
+  const stop = (): void => {
+    if (stopped) return;
+    stopped = true;
+    for (const unsubscribe of unsubscribes) unsubscribe();
+  };
+
+  signal.addEventListener(
+    'abort',
+    () => {
+      stop();
+      wake?.();
+    },
+    { once: true },
+  );
+
+  const drain = async function* (): AsyncGenerator<AdvancedSettingChange> {
+    try {
+      while (!signal.aborted) {
+        const next = pending.shift();
+
+        if (next) {
+          yield next;
+          continue;
+        }
+
+        await new Promise<void>((resolve) => {
+          wake = resolve;
+        });
+        wake = null;
+      }
+    } finally {
+      stop();
+    }
+  };
+
+  return drain();
+};

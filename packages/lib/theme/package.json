@@ -23,7 +23,7 @@
   "dependencies": {
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",
-    "@lib/state": "workspace:*",
+    "@lib/state-next": "workspace:*",
     "@lib/ui": "workspace:*"
   },
   "peerDependencies": {
