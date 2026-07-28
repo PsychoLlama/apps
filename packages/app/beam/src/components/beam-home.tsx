@@ -1,13 +1,22 @@
 import { Show } from 'solid-js';
-import { useValue } from '@lib/state-next';
+import { useCommit, useValue } from '@lib/state-next';
 import { FrameBody, SiteHeader } from '@lib/shell';
-import { Callout, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
+import {
+  Button,
+  Callout,
+  Container,
+  Flex,
+  Heading,
+  LinkButton,
+  Text,
+} from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
 import { ConnectionIndicator } from './connection-indicator';
 import { ContactList } from './contact-list';
+import { InviteDialog } from './invite-dialog';
 import { addressBookFormula, contactsStore } from '../state/contacts';
-import { selfLabelFormula } from '../state/session';
+import { inviteOpenedTopic, selfLabelFormula } from '../state/session';
 
 /**
  * The Beam home at `/beam` — the address book, and the app's entry point. It
@@ -22,6 +31,7 @@ export const BeamHome = () => {
   const book = useValue(contactsStore);
   const contacts = useValue(addressBookFormula);
   const selfLabel = useValue(selfLabelFormula);
+  const commit = useCommit();
 
   return (
     <>
@@ -87,10 +97,14 @@ export const BeamHome = () => {
             <ContactList testId="beam-contacts" contacts={contacts()} />
 
             <Flex as="div" direction="column" gap={3}>
-              <LinkButton testId="beam-invite" href="/beam/invite" size={3}>
+              <Button
+                testId="beam-invite"
+                size={3}
+                onClick={() => commit(inviteOpenedTopic())}
+              >
                 <IconShareVariant width="20" height="20" aria-hidden="true" />
                 Share an invite
-              </LinkButton>
+              </Button>
               <LinkButton
                 testId="beam-scan"
                 href="/scanner"
@@ -104,6 +118,8 @@ export const BeamHome = () => {
           </Flex>
         </Container>
       </FrameBody>
+
+      <InviteDialog />
     </>
   );
 };

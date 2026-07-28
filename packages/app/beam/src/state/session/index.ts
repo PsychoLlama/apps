@@ -9,5 +9,6 @@ export { connectionStore, relayCell } from './connection';
 export { qrCodeCell } from './qr-code';
 export type { QrGrid } from './qr-code';
 export { selfLabelFormula } from './identity';
+export { inviteStore, inviteOpenedTopic, inviteClosedTopic } from './invite';
 export { beamLink } from './capabilities';
 export { connectRelaySaga, dialPeerSaga, reportSagaFailure } from './sagas';

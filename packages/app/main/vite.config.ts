@@ -112,7 +112,6 @@ export default defineConfig({
           '/404',
           '/scratchpad',
           '/beam',
-          '/beam/invite',
           '/beam/share/__id',
           '/beam/contacts/__id',
         ],
