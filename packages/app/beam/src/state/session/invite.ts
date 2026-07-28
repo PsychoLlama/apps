@@ -1,4 +1,5 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
+import { contactSeenTopic } from '../contacts';
 import { beamScope } from '../scope';
 
 /**
@@ -27,4 +28,15 @@ defineFold(inviteOpenedTopic, [inviteStore], (invite) => {
 export const inviteClosedTopic = defineTopic();
 defineFold(inviteClosedTopic, [inviteStore], (invite) => {
   invite.open = false;
+});
+
+// A peer dialling in is the errand finishing: the link was handed over and
+// somebody used it. Getting the dialog out of the way is what lets the
+// request behind it be seen — it's a modal, so a pairing request that
+// arrives while it's up would otherwise sit under the overlay unnoticed.
+//
+// Only an inbound sighting. Our own dial, from a share view, is us going
+// somewhere rather than someone arriving.
+defineFold(contactSeenTopic, [inviteStore], (invite, { direction }) => {
+  if (direction === 'inbound') invite.open = false;
 });
