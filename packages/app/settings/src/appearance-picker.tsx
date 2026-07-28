@@ -1,15 +1,12 @@
-import { For, onMount, type Component, type JSX } from 'solid-js';
+import { For, onMount } from 'solid-js';
 import { useEffect } from '@lib/state';
-import { Flex, RadioCardsItem, RadioCardsRoot, Text } from '@lib/ui';
+import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { ColorSchemeOption } from '@lib/theme';
 import {
   colorScheme,
   hydrateColorSchemeEffect,
   selectColorSchemeEffect,
 } from '@lib/theme/runtime';
-import IconSun from 'virtual:icons/mdi/weather-sunny';
-import IconMoon from 'virtual:icons/mdi/weather-night';
-import IconAuto from 'virtual:icons/mdi/auto-mode';
 import { ResetButton } from './reset-button';
 import * as css from './appearance-picker.css';
 
@@ -23,18 +20,19 @@ export const appearanceHeadingId = 'settings-appearance-heading';
 interface AppearanceOption {
   id: ColorSchemeOption;
   label: string;
-  icon: Component<JSX.SvgSVGAttributes<SVGSVGElement>>;
 }
 
+// No icons. A three-segment track carrying icon + label overflows a
+// 320px viewport, and the control can't shrink below `max-content`.
 const OPTIONS: ReadonlyArray<AppearanceOption> = [
-  { id: 'system', label: 'System', icon: IconAuto },
-  { id: 'light', label: 'Light', icon: IconSun },
-  { id: 'dark', label: 'Dark', icon: IconMoon },
+  { id: 'system', label: 'System' },
+  { id: 'light', label: 'Light' },
+  { id: 'dark', label: 'Dark' },
 ];
 
 /**
  * Light/dark/system picker. Reads/writes through `@lib/theme` — selecting
- * a card flips `<html data-color-scheme>` (or drops it, for "System")
+ * a segment flips `<html data-color-scheme>` (or drops it, for "System")
  * and persists the choice to localStorage.
  */
 export const AppearancePicker = () => {
@@ -43,39 +41,32 @@ export const AppearancePicker = () => {
 
   // Mirrors the ThemePicker hydration pattern — the prelude is the
   // canonical pre-paint setter and the store learns what's already on
-  // screen once the client mounts. The radio group renders disabled
-  // with no card selected until then, which beats flashing the wrong
+  // screen once the client mounts. The control renders disabled with no
+  // segment selected until then, which beats flashing the wrong
   // selection.
   onMount(hydrateScheme);
 
   return (
-    <RadioCardsRoot
+    <SegmentedControlRoot
       testId="appearance-picker"
       name="appearance"
       value={colorScheme.id}
       skeleton={colorScheme.id === null}
       onValueChange={(next) => selectScheme(next as ColorSchemeOption)}
-      gap={3}
-      columns={3}
+      class={css.control}
       aria-labelledby={appearanceHeadingId}
     >
       <For each={OPTIONS}>
         {(entry) => (
-          <RadioCardsItem
+          <SegmentedControlItem
             testId={`appearance-picker-${entry.id}`}
             value={entry.id}
-            class={css.card}
           >
-            <Flex as="div" direction="row" align="center" gap={2}>
-              <entry.icon aria-hidden="true" />
-              <Text as="span" size={2} selectable={false}>
-                {entry.label}
-              </Text>
-            </Flex>
-          </RadioCardsItem>
+            {entry.label}
+          </SegmentedControlItem>
         )}
       </For>
-    </RadioCardsRoot>
+    </SegmentedControlRoot>
   );
 };
 
