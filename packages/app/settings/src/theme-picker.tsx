@@ -1,12 +1,12 @@
 import { For, onMount } from 'solid-js';
-import { useEffect } from '@lib/state';
+import { useRun, useValue } from '@lib/state-next';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
 import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
 import {
-  hydrateThemeEffect,
-  resetThemeEffect,
-  selectThemeEffect,
-  theme,
+  hydrateThemeSaga,
+  resetThemeSaga,
+  selectThemeSaga,
+  themeStore,
 } from '@lib/theme/runtime';
 import { ResetButton } from './reset-button';
 import * as css from './theme-picker.css';
@@ -25,23 +25,24 @@ export const themeHeadingId = 'settings-theme-heading';
  * localStorage.
  */
 export const ThemePicker = () => {
-  const selectTheme = useEffect(selectThemeEffect);
-  const hydrateTheme = useEffect(hydrateThemeEffect);
+  const theme = useValue(themeStore);
+  const selectTheme = useRun(selectThemeSaga);
+  const hydrateTheme = useRun(hydrateThemeSaga);
 
   // The site is SSG'd, so the server can't know the persisted theme.
   // The store starts unhydrated (`id: null`); `onMount` reads the
-  // prelude-stamped attribute and dispatches once the client takes
+  // prelude-stamped attribute and publishes it once the client takes
   // over. The radio group renders disabled with no card selected
   // until then, which beats flashing the wrong selection.
-  onMount(hydrateTheme);
+  onMount(() => void hydrateTheme());
 
   return (
     <RadioCardsRoot
       testId="theme-picker"
       name="theme"
-      value={theme.id}
-      skeleton={theme.id === null}
-      onValueChange={(next) => selectTheme(next as ThemeId)}
+      value={theme().id}
+      skeleton={theme().id === null}
+      onValueChange={(next) => void selectTheme(next as ThemeId)}
       gap={3}
       class={css.root}
       aria-labelledby={themeHeadingId}
@@ -67,14 +68,15 @@ export const ThemePicker = () => {
  * matching the reset affordances in the Advanced section.
  */
 export const ThemeResetButton = () => {
-  const resetTheme = useEffect(resetThemeEffect);
+  const theme = useValue(themeStore);
+  const resetTheme = useRun(resetThemeSaga);
 
   return (
     <ResetButton
       testId="theme-picker-reset"
       label="Reset theme"
-      disabled={theme.id === null || theme.id === DEFAULT_THEME_ID}
-      onReset={() => resetTheme()}
+      disabled={theme().id === null || theme().id === DEFAULT_THEME_ID}
+      onReset={() => void resetTheme()}
     />
   );
 };

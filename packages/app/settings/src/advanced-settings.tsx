@@ -1,5 +1,6 @@
-import { onCleanup, onMount } from 'solid-js';
-import { useAction, useEffect } from '@lib/state';
+import { onMount } from 'solid-js';
+import { useAnchor, useRun, useValue } from '@lib/state-next';
+import { createLogger, toError } from '@lib/observability';
 import {
   Button,
   Code,
@@ -13,30 +14,22 @@ import {
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import { ResetButton } from './reset-button';
 import {
-  setScratchpadEnabled,
-  setLogExportEnabled,
-  setLogFilter,
-  setBeamEnabled,
-} from './state/advanced/actions';
-import {
-  commitScratchpadEffect,
-  commitLogExportEffect,
-  commitLogFilterEffect,
-  commitBeamEffect,
-  hydrateAdvancedSettingsEffect,
-  resetScratchpadEffect,
-  resetLogExportEffect,
-  resetLogFilterEffect,
-  resetBeamEffect,
-} from './state/advanced/bindings';
-import {
-  watchScratchpadEnabled,
-  watchLogExportEnabled,
-  watchLogFilter,
-  watchBeamEnabled,
-} from './state/advanced/capabilities';
-import { advancedDefaults, advancedSettings } from './state/advanced/store';
+  advancedDefaults,
+  advancedSettingsScope,
+  advancedSettingsStore,
+  commitBeamSaga,
+  commitLogExportSaga,
+  commitLogFilterSaga,
+  commitScratchpadSaga,
+  resetBeamSaga,
+  resetLogExportSaga,
+  resetLogFilterSaga,
+  resetScratchpadSaga,
+  trackAdvancedSettingsSaga,
+} from './state/advanced';
 import * as css from './advanced-settings.css';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 const advancedHeadingId = 'settings-advanced-heading';
 const logFilterHeadingId = 'settings-log-filter-heading';
@@ -49,32 +42,30 @@ const logFilterHeadingId = 'settings-log-filter-heading';
  * out to every browsing context (sibling tabs and workers included).
  */
 export const AdvancedSettings = () => {
-  const advanced = advancedSettings;
-  const reconcile = useEffect(hydrateAdvancedSettingsEffect);
-  const commitFilter = useEffect(commitLogFilterEffect);
-  const commitLogExport = useEffect(commitLogExportEffect);
-  const commitScratchpad = useEffect(commitScratchpadEffect);
-  const commitBeam = useEffect(commitBeamEffect);
-  const resetFilter = useEffect(resetLogFilterEffect);
-  const resetLogExport = useEffect(resetLogExportEffect);
-  const resetScratchpad = useEffect(resetScratchpadEffect);
-  const resetBeam = useEffect(resetBeamEffect);
-  const mirrorFilter = useAction(setLogFilter);
-  const mirrorLogExport = useAction(setLogExportEnabled);
-  const mirrorScratchpad = useAction(setScratchpadEnabled);
-  const mirrorBeam = useAction(setBeamEnabled);
+  useAnchor(advancedSettingsScope);
+  const advanced = useValue(advancedSettingsStore);
+  const track = useRun(trackAdvancedSettingsSaga);
+  const commitFilter = useRun(commitLogFilterSaga);
+  const commitLogExport = useRun(commitLogExportSaga);
+  const commitScratchpad = useRun(commitScratchpadSaga);
+  const commitBeam = useRun(commitBeamSaga);
+  const resetFilter = useRun(resetLogFilterSaga);
+  const resetLogExport = useRun(resetLogExportSaga);
+  const resetScratchpad = useRun(resetScratchpadSaga);
+  const resetBeam = useRun(resetBeamSaga);
 
   // The store is seeded with the build-environment default, so first
   // paint (and prerender) match without a flash. OPFS is client-only —
-  // unavailable during SSG — so reconcile with any persisted override
-  // after mount, then subscribe. Writes echo back through the
-  // subscription, making it the single source of truth.
+  // unavailable during SSG — so the tracking saga starts on mount:
+  // it subscribes, then reconciles with any persisted override. Writes
+  // echo back through the subscription, making it the single source of
+  // truth. Releasing the anchor on cleanup tears it down.
   onMount(() => {
-    void reconcile();
-    onCleanup(watchLogFilter(mirrorFilter));
-    onCleanup(watchLogExportEnabled(mirrorLogExport));
-    onCleanup(watchScratchpadEnabled(mirrorScratchpad));
-    onCleanup(watchBeamEnabled(mirrorBeam));
+    void track().catch((error: unknown) => {
+      logger.error('Could not read the Advanced settings.', {
+        error: toError(error),
+      });
+    });
   });
 
   return (
@@ -125,7 +116,7 @@ export const AdvancedSettings = () => {
               <ResetButton
                 testId="advanced-log-filter-reset"
                 label="Reset log filter"
-                disabled={advanced.logFilter === advancedDefaults.logFilter}
+                disabled={advanced().logFilter === advancedDefaults.logFilter}
                 onReset={() => void resetFilter()}
               />
             </Flex>
@@ -145,7 +136,7 @@ export const AdvancedSettings = () => {
           <TextField
             testId="advanced-log-filter"
             aria-labelledby={logFilterHeadingId}
-            value={advanced.logFilter}
+            value={advanced().logFilter}
             placeholder="*"
             autocomplete="off"
             autocapitalize="off"
@@ -153,7 +144,7 @@ export const AdvancedSettings = () => {
             spellcheck={false}
             onBlur={(event) => {
               const next = event.currentTarget.value;
-              if (next !== advanced.logFilter) void commitFilter(next);
+              if (next !== advanced().logFilter) void commitFilter(next);
             }}
           />
         </Flex>
@@ -173,7 +164,8 @@ export const AdvancedSettings = () => {
               testId="advanced-log-export-reset"
               label="Reset logs export"
               disabled={
-                advanced.logExportEnabled === advancedDefaults.logExportEnabled
+                advanced().logExportEnabled ===
+                advancedDefaults.logExportEnabled
               }
               onReset={() => void resetLogExport()}
             />
@@ -189,7 +181,7 @@ export const AdvancedSettings = () => {
               Show the export action in the logs header.
               <Switch
                 testId="advanced-log-export-toggle"
-                checked={advanced.logExportEnabled}
+                checked={advanced().logExportEnabled}
                 onCheckedChange={(next) => void commitLogExport(next)}
               />
             </Flex>
@@ -211,7 +203,7 @@ export const AdvancedSettings = () => {
               testId="advanced-scratchpad-reset"
               label="Reset scratchpad app"
               disabled={
-                advanced.scratchpadEnabled ===
+                advanced().scratchpadEnabled ===
                 advancedDefaults.scratchpadEnabled
               }
               onReset={() => void resetScratchpad()}
@@ -228,7 +220,7 @@ export const AdvancedSettings = () => {
               Surface the scratchpad in the launcher.
               <Switch
                 testId="advanced-scratchpad-toggle"
-                checked={advanced.scratchpadEnabled}
+                checked={advanced().scratchpadEnabled}
                 onCheckedChange={(next) => void commitScratchpad(next)}
               />
             </Flex>
@@ -249,7 +241,7 @@ export const AdvancedSettings = () => {
             <ResetButton
               testId="advanced-beam-reset"
               label="Reset Beam app"
-              disabled={advanced.beamEnabled === advancedDefaults.beamEnabled}
+              disabled={advanced().beamEnabled === advancedDefaults.beamEnabled}
               onReset={() => void resetBeam()}
             />
           </Flex>
@@ -264,7 +256,7 @@ export const AdvancedSettings = () => {
               Surface the peer-to-peer Beam app in the launcher.
               <Switch
                 testId="advanced-beam-toggle"
-                checked={advanced.beamEnabled}
+                checked={advanced().beamEnabled}
                 onCheckedChange={(next) => void commitBeam(next)}
               />
             </Flex>
