@@ -214,6 +214,9 @@ importers:
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
+      '@lib/state-next':
+        specifier: workspace:*
+        version: link:../../lib/state-next
       '@lib/theme':
         specifier: workspace:*
         version: link:../../lib/theme
