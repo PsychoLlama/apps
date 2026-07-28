@@ -1,13 +1,12 @@
 import { onCleanup, onMount, Show, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { useEffect } from '@lib/state';
+import { useRun, useValue } from '@lib/state-next';
 import { Flex, IconButton } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
 import IconFlashlight from 'virtual:icons/mdi/flashlight';
 import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
-import { finishScanEffect } from '../bindings';
 import { startCaptureLoop } from '../capture-loop';
-import { decoder } from '../decoder-store';
+import { decoderCell, finishScanSaga, reportSagaFailure } from '../state';
 import * as css from './camera-view.css';
 import { createLogger, toError } from '@lib/observability';
 
@@ -34,7 +33,8 @@ interface CameraViewProps {
  * which swaps the result surface in for the feed.
  */
 export const CameraView: Component<CameraViewProps> = (props) => {
-  const finishScan = useEffect(finishScanEffect);
+  const finishScan = useRun(finishScanSaga);
+  const decoder = useValue(decoderCell);
   const navigate = useNavigate();
   let videoEl: HTMLVideoElement | undefined;
 
@@ -51,11 +51,11 @@ export const CameraView: Component<CameraViewProps> = (props) => {
     // it tolerates the worker preload still being in flight and begins
     // decoding the moment it attaches.
     onCleanup(
-      startCaptureLoop(
-        video,
-        () => decoder.connection?.current,
-        (result) => finishScan({ result, navigate }),
-      ),
+      startCaptureLoop(video, decoder, (result) => {
+        void finishScan({ result, navigate }).catch(
+          reportSagaFailure('The scan finalize saga failed.'),
+        );
+      }),
     );
   });
 

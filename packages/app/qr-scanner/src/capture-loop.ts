@@ -21,7 +21,7 @@ import { onVideoFrame } from './video-frames';
  */
 export const createFrameSampler = (
   video: HTMLVideoElement,
-  getDecoder: () => DecoderConnection | undefined,
+  getDecoder: () => DecoderConnection | null,
   onResult: (result: ScanResult) => void,
   onHit: () => void,
   signal: AbortSignal,
@@ -77,7 +77,7 @@ export const createFrameSampler = (
  */
 export const startCaptureLoop = (
   video: HTMLVideoElement,
-  getDecoder: () => DecoderConnection | undefined,
+  getDecoder: () => DecoderConnection | null,
   onResult: (result: ScanResult) => void,
 ): (() => void) => {
   const controller = new AbortController();

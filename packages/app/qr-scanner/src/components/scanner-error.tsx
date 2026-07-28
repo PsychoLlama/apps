@@ -1,7 +1,7 @@
 import { Show, type Component } from 'solid-js';
 import { Button, Flex, Heading, Text } from '@lib/ui';
 import IconRefresh from 'virtual:icons/mdi/refresh';
-import { type CameraErrorKind } from '../store';
+import { type CameraErrorKind } from '../state';
 
 /** User-facing copy for each failure mode. */
 const ERROR_MESSAGES: Record<CameraErrorKind, string> = {

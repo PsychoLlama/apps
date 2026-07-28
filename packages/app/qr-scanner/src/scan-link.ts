@@ -8,7 +8,7 @@
  * sensitive, so a declared URL still has to clear {@link webLinkHref}.
  */
 
-import type { DeepReadonly } from '@lib/state';
+import type { DeepReadonly } from '@lib/state-next';
 import type { ParsedDetail, ParsedLinkDetail } from '@crate/qr-code';
 import type { ScanResult } from './worker/rpc';
 

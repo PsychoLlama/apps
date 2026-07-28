@@ -92,9 +92,7 @@ describe('createFrameSampler', () => {
   });
 
   it('skips sampling until a decoder is available', async () => {
-    const slot: { decoder: DecoderConnection | undefined } = {
-      decoder: undefined,
-    };
+    const slot: { decoder: DecoderConnection | null } = { decoder: null };
     const sample = createFrameSampler(
       fakeVideo,
       () => slot.decoder,
