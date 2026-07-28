@@ -73,7 +73,7 @@ export const RenameDialog = (props: {
       open={rename().endpointId === props.endpointId}
       onOpenChange={() => commit(renameClosedTopic())}
       title="Rename contact"
-      description="Only this device sees the name you pick."
+      description="Choose a nickname for this contact."
       maxWidth="24rem"
     >
       <Flex as="form" direction="column" gap={4} onSubmit={handleSubmit}>
@@ -98,9 +98,6 @@ export const RenameDialog = (props: {
             autocapitalize="words"
             enterkeyhint="done"
           />
-          <Text as="p" size={1} color="lowContrast" selectable={false}>
-            Leave it empty to go back to the key.
-          </Text>
         </Flex>
 
         <Flex as="div" direction="row" gap={2} justify="end">
