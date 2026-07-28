@@ -1,5 +1,4 @@
 import { style } from '@vanilla-extract/css';
-import { neutral } from '@lib/design';
 
 /**
  * A contact row. Positioned so the name's link can stretch its hit area over
@@ -23,13 +22,4 @@ export const stretchedLink = style({
       inset: 0,
     },
   },
-});
-
-/**
- * Blocked rows read as set aside rather than merely listed: a flatter fill
- * and no elevation, so the eye passes over them on the way down the page.
- */
-export const blockedRow = style({
-  background: neutral.alpha[2],
-  boxShadow: 'none',
 });

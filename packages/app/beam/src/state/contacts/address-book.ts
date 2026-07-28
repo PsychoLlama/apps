@@ -50,16 +50,10 @@ export interface ContactView {
  * Resolve what to call a contact. A local name wins; failing that the peer's
  * own suggestion; failing that a name generated from the key, which every
  * endpoint has whether or not it ever said anything.
- *
- * A blocked contact never wears its suggested name — the block is a judgement
- * about the peer, and letting a blocked stranger keep choosing the words next
- * to it hands them a message board. A local name still stands: that one was
- * typed here.
  */
 const resolveName = (contact: Contact): string => {
   if (contact.label) return contact.label.slice(0, MAX_LABEL_LENGTH);
-
-  if (contact.suggestedLabel && contact.trust !== 'blocked') {
+  if (contact.suggestedLabel) {
     return contact.suggestedLabel.slice(0, MAX_LABEL_LENGTH);
   }
 

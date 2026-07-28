@@ -20,14 +20,12 @@ import {
 import {
   MAX_LABEL_LENGTH,
   addressBookFormula,
-  blockContactSaga,
   contactsStore,
   forgetContactSaga,
   removalArmedTopic,
   removalDisarmedTopic,
   removalStore,
   renameContactSaga,
-  unblockContactSaga,
   type ContactView,
 } from '../state/contacts';
 import { reportSagaFailure } from '../state/session';
@@ -49,15 +47,11 @@ const formatMoment = (epochMilliseconds: number): string =>
 
 /** How this contact's pairing stands, phrased from this device's side. */
 const describeTrust = (contact: ContactView): string => {
-  if (contact.trust === 'blocked') return 'Blocked. Nothing can be shared.';
+  if (contact.trust === 'trusted') return 'Paired. Ready to share.';
 
-  if (contact.trust === 'invited') {
-    return contact.direction === 'outbound'
-      ? 'Waiting for them to accept the invite.'
-      : 'They asked to pair. Waiting on you.';
-  }
-
-  return 'Paired. Ready to share.';
+  return contact.direction === 'outbound'
+    ? 'Waiting for them to accept the invite.'
+    : 'They asked to pair. Waiting on you.';
 };
 
 /**
@@ -79,8 +73,6 @@ export const BeamContact = () => {
   const commit = useCommit();
 
   const rename = useRun(renameContactSaga);
-  const block = useRun(blockContactSaga);
-  const unblock = useRun(unblockContactSaga);
   const forget = useRun(forgetContactSaga);
 
   /** The resolved view — the name, fragment, and dates the page renders. */
@@ -115,18 +107,6 @@ export const BeamContact = () => {
     void forget(params.id)
       .then(() => navigate('/beam'))
       .catch(reportSagaFailure('The contact forget saga failed.'));
-  };
-
-  const handleBlock = () => {
-    void block(params.id).catch(
-      reportSagaFailure('The contact block saga failed.'),
-    );
-  };
-
-  const handleUnblock = () => {
-    void unblock(params.id).catch(
-      reportSagaFailure('The contact unblock saga failed.'),
-    );
   };
 
   return (
@@ -167,11 +147,8 @@ export const BeamContact = () => {
                   </Heading>
 
                   <Show when={view().trust !== 'trusted'}>
-                    <Badge
-                      color={view().trust === 'blocked' ? 'danger' : 'warning'}
-                      variant="soft"
-                    >
-                      {view().trust === 'blocked' ? 'Blocked' : 'Pending'}
+                    <Badge color="warning" variant="soft">
+                      Pending
                     </Badge>
                   </Show>
 
@@ -247,29 +224,6 @@ export const BeamContact = () => {
                 </DataListRoot>
 
                 <Flex as="div" direction="column" gap={3} align="start">
-                  <Show
-                    when={view().trust === 'blocked'}
-                    fallback={
-                      <Button
-                        testId="beam-contact-block"
-                        variant="soft"
-                        color="neutral"
-                        onClick={handleBlock}
-                      >
-                        Block
-                      </Button>
-                    }
-                  >
-                    <Button
-                      testId="beam-contact-unblock"
-                      variant="soft"
-                      color="neutral"
-                      onClick={handleUnblock}
-                    >
-                      Unblock
-                    </Button>
-                  </Show>
-
                   {/* Forgetting is irreversible and there's no undo, so the
                       button arms before it fires. Walking away from the page
                       disarms it, which is the behaviour you'd want anyway. */}

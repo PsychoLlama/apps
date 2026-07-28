@@ -31,9 +31,6 @@ export const BeamHome = () => {
   const contacts = useValue(addressBookFormula);
   const selfLabel = useValue(selfLabelFormula);
 
-  const paired = () => contacts().filter((view) => view.trust !== 'blocked');
-  const blocked = () => contacts().filter((view) => view.trust === 'blocked');
-
   return (
     <>
       <SiteHeader title="Beam" actions={<ConnectionIndicator />} />
@@ -76,16 +73,14 @@ export const BeamHome = () => {
 
             {/* Only claim there's nothing paired once the book has actually
                 been read. Between mount and the IndexedDB read landing there's
-                no answer yet, and "no devices yet" is the wrong one. Blocked
-                contacts don't count — they have their own section, and a book
-                holding only refusals still has nothing to share with. */}
-            <Show when={book().status === 'ready' && paired().length === 0}>
+                no answer yet, and "no devices yet" is the wrong one. */}
+            <Show when={book().status === 'ready' && contacts().length === 0}>
               <Text as="p" size={2} color="lowContrast" selectable={false}>
                 No devices yet. Share an invite, or scan one to pair.
               </Text>
             </Show>
 
-            <ContactList testId="beam-contacts" contacts={paired()} />
+            <ContactList testId="beam-contacts" contacts={contacts()} />
 
             <Flex as="div" direction="column" gap={3}>
               <LinkButton testId="beam-invite" href="/beam/invite" size={3}>
@@ -102,12 +97,6 @@ export const BeamHome = () => {
                 Scan a code
               </LinkButton>
             </Flex>
-
-            <ContactList
-              testId="beam-blocked"
-              heading="Blocked"
-              contacts={blocked()}
-            />
           </Flex>
         </Container>
       </FrameBody>

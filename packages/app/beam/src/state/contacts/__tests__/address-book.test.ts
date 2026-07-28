@@ -58,26 +58,6 @@ describe('addressBookFormula', () => {
     );
   });
 
-  it('refuses to let a blocked peer keep naming itself', () => {
-    const { peek } = setup([
-      fakeContact({ suggestedLabel: 'Please unblock me', trust: 'blocked' }),
-    ]);
-
-    expect(peek(addressBookFormula)[0].name).toBe(generateLabel('ep-1'));
-  });
-
-  it('still honours a local name on a blocked peer', () => {
-    const { peek } = setup([
-      fakeContact({
-        label: 'Spam',
-        suggestedLabel: 'Please unblock me',
-        trust: 'blocked',
-      }),
-    ]);
-
-    expect(peek(addressBookFormula)[0].name).toBe('Spam');
-  });
-
   it('caps a name a peer could otherwise run off the screen', () => {
     const { peek } = setup([fakeContact({ suggestedLabel: 'x'.repeat(500) })]);
 
@@ -107,19 +87,6 @@ describe('addressBookFormula', () => {
       { name: 'Laptop', ambiguous: true, fragment: 'aaaaaa' },
       { name: 'Laptop', ambiguous: true, fragment: 'bbbbbb' },
       { name: 'Phone', ambiguous: false, fragment: 'cccccc' },
-    ]);
-  });
-
-  it('spots a collision across the block boundary', () => {
-    const { peek } = setup([
-      fakeContact({ endpointId: 'ep-1', label: 'Laptop' }),
-      fakeContact({ endpointId: 'ep-2', label: 'Laptop', trust: 'blocked' }),
-    ]);
-
-    // The sections render apart, but the names still clash on screen.
-    expect(peek(addressBookFormula).map((view) => view.ambiguous)).toEqual([
-      true,
-      true,
     ]);
   });
 

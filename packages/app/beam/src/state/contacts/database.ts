@@ -26,12 +26,11 @@ export const CONTACT_STORE = 'contacts';
  *   nobody has answered it yet. Persisted rather than held in memory so an
  *   invite survives a reload.
  * - `trusted` — both sides accepted. The only state that permits sharing.
- * - `blocked` — the peer is refused. A sink: nothing promotes out of it
- *   except an explicit unblock, which drops back to `invited` rather than
- *   restoring trust, so a mistaken block can be undone without silently
- *   handing back access.
+ *
+ * There is no blocked state. Refusing a peer is the same thing as never
+ * answering its invite, and a peer you want gone can be forgotten outright.
  */
-export type ContactTrust = 'invited' | 'trusted' | 'blocked';
+export type ContactTrust = 'invited' | 'trusted';
 
 /**
  * Which side opened the pairing. `outbound` means this device dialled the
@@ -56,7 +55,8 @@ export interface Contact {
   /**
    * The name the peer advertised for itself, or `null` if it never sent one.
    * Attacker-controlled: it arrives from an unauthenticated stranger, so it's
-   * only ever rendered as text and never used to title a blocked entry.
+   * only ever rendered as text, and any length of it has to survive the
+   * layout it lands in.
    */
   suggestedLabel: string | null;
 

@@ -1,5 +1,5 @@
 import { For, Show } from 'solid-js';
-import { Badge, Card, Code, Flex, Heading, Link } from '@lib/ui';
+import { Badge, Card, Code, Flex, Link } from '@lib/ui';
 import type { ContactView } from '../state/contacts';
 import * as styles from './contact-list.css';
 
@@ -12,14 +12,7 @@ import * as styles from './contact-list.css';
  * every row would bury the names it exists to disambiguate.
  */
 const ContactRow = (props: { contact: ContactView }) => (
-  <Card
-    as="li"
-    size={2}
-    classList={{
-      [styles.row]: true,
-      [styles.blockedRow]: props.contact.trust === 'blocked',
-    }}
-  >
+  <Card as="li" size={2} class={styles.row}>
     <Flex as="div" direction="row" align="center" justify="between" gap={3}>
       <Flex as="div" direction="column" gap={1}>
         <Link
@@ -50,36 +43,25 @@ const ContactRow = (props: { contact: ContactView }) => (
 );
 
 /**
- * A list of contacts under an optional heading. Renders nothing at all when
- * the list is empty, so a caller can hand it a section that may or may not
- * have anything in it without guarding first.
+ * The address book as a list. Renders nothing at all when it's empty, so the
+ * caller can hand it a book that may or may not have anything in it without
+ * guarding first.
  */
 export const ContactList = (props: {
   contacts: ContactView[];
-  heading?: string;
   testId: string;
 }) => (
   <Show when={props.contacts.length > 0}>
-    <Flex as="div" direction="column" gap={3}>
-      <Show when={props.heading}>
-        {(heading) => (
-          <Heading as="h2" size={2} color="lowContrast" selectable={false}>
-            {heading()}
-          </Heading>
-        )}
-      </Show>
-
-      <Flex
-        as="ul"
-        direction="column"
-        gap={2}
-        data-testid={props.testId}
-        aria-label={props.heading}
-      >
-        <For each={props.contacts}>
-          {(contact) => <ContactRow contact={contact} />}
-        </For>
-      </Flex>
+    <Flex
+      as="ul"
+      direction="column"
+      gap={2}
+      data-testid={props.testId}
+      aria-label="Contacts"
+    >
+      <For each={props.contacts}>
+        {(contact) => <ContactRow contact={contact} />}
+      </For>
     </Flex>
   </Show>
 );

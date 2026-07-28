@@ -6,11 +6,9 @@
 
 import { createTestRuntime } from '@lib/state-next';
 import {
-  contactBlockedTopic,
   contactForgottenTopic,
   contactRenamedTopic,
   contactSeenTopic,
-  contactUnblockedTopic,
   contactsLoadFailedTopic,
   contactsLoadingTopic,
   contactsRestoredTopic,
@@ -136,9 +134,9 @@ describe('contactSeenTopic', () => {
     });
   });
 
-  it('never promotes a blocked peer back out of the block', () => {
+  it('never talks its way up the trust ladder', () => {
     const { commit, peek } = setup();
-    commit(contactsRestoredTopic([fakeContact({ trust: 'blocked' })]));
+    commit(contactsRestoredTopic([fakeContact({ trust: 'invited' })]));
 
     commit(
       contactSeenTopic({
@@ -148,7 +146,7 @@ describe('contactSeenTopic', () => {
       }),
     );
 
-    expect(peek(contactsStore).entries['ep-1'].trust).toBe('blocked');
+    expect(peek(contactsStore).entries['ep-1'].trust).toBe('invited');
   });
 });
 
@@ -177,38 +175,6 @@ describe('contactRenamedTopic', () => {
     commit(contactRenamedTopic({ endpointId: 'ep-9', label: 'Ghost' }));
 
     expect(peek(contactsStore).entries).toEqual({});
-  });
-});
-
-describe('contactBlockedTopic', () => {
-  it('refuses a trusted contact', () => {
-    const { commit, peek } = setup();
-    commit(contactsRestoredTopic([fakeContact({ trust: 'trusted' })]));
-
-    commit(contactBlockedTopic('ep-1'));
-
-    expect(peek(contactsStore).entries['ep-1'].trust).toBe('blocked');
-  });
-});
-
-describe('contactUnblockedTopic', () => {
-  it('drops a lifted block back to an unanswered invite', () => {
-    const { commit, peek } = setup();
-    commit(contactsRestoredTopic([fakeContact({ trust: 'blocked' })]));
-
-    commit(contactUnblockedTopic('ep-1'));
-
-    // Not `trusted`: lifting a refusal isn't the same as granting access.
-    expect(peek(contactsStore).entries['ep-1'].trust).toBe('invited');
-  });
-
-  it('leaves a contact that was never blocked alone', () => {
-    const { commit, peek } = setup();
-    commit(contactsRestoredTopic([fakeContact({ trust: 'trusted' })]));
-
-    commit(contactUnblockedTopic('ep-1'));
-
-    expect(peek(contactsStore).entries['ep-1'].trust).toBe('trusted');
   });
 });
 

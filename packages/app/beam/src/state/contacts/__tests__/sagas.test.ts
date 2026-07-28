@@ -7,23 +7,19 @@
 import { simulate } from '@lib/state-next';
 import { now, readContacts, removeContact, saveContact } from '../capabilities';
 import {
-  contactBlockedTopic,
   contactForgottenTopic,
   contactRenamedTopic,
   contactSeenTopic,
-  contactUnblockedTopic,
   contactsLoadFailedTopic,
   contactsLoadingTopic,
   contactsRestoredTopic,
   contactsStore,
 } from '../contacts';
 import {
-  blockContactSaga,
   forgetContactSaga,
   recordPeerSaga,
   renameContactSaga,
   restoreContactsSaga,
-  unblockContactSaga,
 } from '../sagas';
 import type { Contact } from '../database';
 
@@ -166,36 +162,6 @@ describe('renameContactSaga', () => {
     });
 
     expect(save).not.toHaveBeenCalled();
-  });
-});
-
-describe('blockContactSaga', () => {
-  it('refuses the contact and writes it through', async () => {
-    const contact = fakeContact({ trust: 'blocked' });
-    const save = vi.fn();
-
-    const trace = await simulate(blockContactSaga('ep-1'), {
-      reads: [[contactsStore, bookHolding(contact)]],
-      calls: [[saveContact, save]],
-    });
-
-    expect(trace.commits).toEqual([[contactBlockedTopic('ep-1')]]);
-    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), contact);
-  });
-});
-
-describe('unblockContactSaga', () => {
-  it('lifts the block and writes it through', async () => {
-    const contact = fakeContact({ trust: 'invited' });
-    const save = vi.fn();
-
-    const trace = await simulate(unblockContactSaga('ep-1'), {
-      reads: [[contactsStore, bookHolding(contact)]],
-      calls: [[saveContact, save]],
-    });
-
-    expect(trace.commits).toEqual([[contactUnblockedTopic('ep-1')]]);
-    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), contact);
   });
 });
 

@@ -1,11 +1,9 @@
 import { call, commit, defineSaga, read } from '@lib/state-next';
 import { beamScope } from '../scope';
 import {
-  contactBlockedTopic,
   contactForgottenTopic,
   contactRenamedTopic,
   contactSeenTopic,
-  contactUnblockedTopic,
   contactsLoadFailedTopic,
   contactsLoadingTopic,
   contactsRestoredTopic,
@@ -87,27 +85,10 @@ export const renameContactSaga = defineSaga(
   },
 );
 
-/** Refuse a contact. */
-export const blockContactSaga = defineSaga(
-  beamScope,
-  async function* (endpointId: string) {
-    yield commit(contactBlockedTopic(endpointId));
-    yield* persistContactSaga(endpointId);
-  },
-);
-
-/** Lift a block, dropping the contact back to an unanswered invite. */
-export const unblockContactSaga = defineSaga(
-  beamScope,
-  async function* (endpointId: string) {
-    yield commit(contactUnblockedTopic(endpointId));
-    yield* persistContactSaga(endpointId);
-  },
-);
-
 /**
- * Forget a contact outright. Unlike a block this leaves nothing behind, so
- * the peer is a stranger again the next time it turns up.
+ * Forget a contact outright. This leaves nothing behind, so the peer is a
+ * stranger again the next time it turns up — which is also how you refuse
+ * one, since an unanswered invite grants nothing in the first place.
  */
 export const forgetContactSaga = defineSaga(
   beamScope,

@@ -2,7 +2,9 @@
  * The address book: every endpoint this device has paired with, persisted to
  * IndexedDB and loaded into the beam scope once per session. Contacts come
  * into existence by being seen — there's no "add" form — and move along a
- * trust ladder from `invited` to `trusted`, or sideways into `blocked`.
+ * trust ladder from `invited` to `trusted`. Refusing one is the same as
+ * leaving its invite unanswered, so the only way out of the book is to
+ * forget it.
  *
  * Reads go through {@link addressBookFormula}, which resolves each contact to
  * a display name and flags the ones whose names collide. Writes go through
@@ -17,10 +19,8 @@ export {
   removalDisarmedTopic,
 } from './removal';
 export {
-  blockContactSaga,
   forgetContactSaga,
   recordPeerSaga,
   renameContactSaga,
   restoreContactsSaga,
-  unblockContactSaga,
 } from './sagas';

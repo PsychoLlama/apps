@@ -80,8 +80,7 @@ defineFold(
 
     // A known peer only gets its clock bumped. Trust and direction record how
     // the pairing began, and seeing someone again is not a reason to revisit
-    // either — least of all for a blocked peer, whom a re-dial must never
-    // quietly promote back to `invited`.
+    // either — a re-dial must never talk its way up the trust ladder.
     if (existing) {
       existing.lastSeenAt = seenAt;
       return;
@@ -117,30 +116,7 @@ defineFold(
   },
 );
 
-/** A contact was blocked. */
-export const contactBlockedTopic = defineTopic<string>();
-defineFold(contactBlockedTopic, [contactsStore], (book, endpointId) => {
-  const contact = book.entries[endpointId];
-  if (contact) contact.trust = 'blocked';
-});
-
-/**
- * A blocked contact was unblocked, dropping back to `invited` rather than to
- * whatever it held before. Unblocking undoes a refusal; it doesn't grant
- * trust. A previously trusted peer has to be accepted again, which costs one
- * tap and closes the hole where an accidental block-then-unblock silently
- * restores sharing.
- */
-export const contactUnblockedTopic = defineTopic<string>();
-defineFold(contactUnblockedTopic, [contactsStore], (book, endpointId) => {
-  const contact = book.entries[endpointId];
-  if (contact?.trust === 'blocked') contact.trust = 'invited';
-});
-
-/**
- * A contact was removed from the address book. Exported so other features can
- * fold it — the removal confirmation clears itself off the back of it.
- */
+/** A contact was removed from the address book. */
 export const contactForgottenTopic = defineTopic<string>();
 defineFold(contactForgottenTopic, [contactsStore], (book, endpointId) => {
   delete book.entries[endpointId];
