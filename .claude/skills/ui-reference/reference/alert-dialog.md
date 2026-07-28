@@ -19,4 +19,4 @@ Base: `<div>` attributes on the panel (except `title`, `style`, `role`).
 - `align` (=`'center'`): Where the panel sits when shorter than the viewport. `'start' | 'center'`.
 - `maxWidth` (=`'450px'`): Any CSS width for the panel.
 - `class`: Class applied to the panel (the visible surface), not the overlay.
-- `children`: Extra content between the description and the buttons. Does not take opening focus.
+- `children`: Extra content between the description and the buttons. Opening focus stays on the cancelling button unless a descendant carries `autofocus`, which wins on tree order.

@@ -75,10 +75,13 @@ const Demo = (props: DemoProps) => {
             </Flex>
           </Match>
 
-          {/* The body is focusable, but `autofocus` on Cancel still
-              wins — a stray Enter can't confirm. */}
+          {/* Cancel carries `autofocus` too, but this field is earlier
+              in tree order, so the platform's focus delegate reaches it
+              first — a body that asks for focus gets it, without the
+              component arbitrating. */}
           <Match when={props.body === 'confirm'}>
             <TextField
+              autofocus
               placeholder="NORTHWIND"
               autocomplete="off"
               autocapitalize="characters"
@@ -187,7 +190,6 @@ export default {
       title: 'Panel',
       align: { rows: 'center' },
       rows: [
-        { title: 'Compact', props: { size: 1, name: 'panel-compact' } },
         { title: 'Roomy', props: { size: 4, name: 'panel-roomy' } },
         { title: 'Wide', props: { maxWidth: '640px', name: 'panel-wide' } },
         {

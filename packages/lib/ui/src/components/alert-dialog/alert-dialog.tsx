@@ -21,8 +21,13 @@
  *   the call site can decline the same way it declines Escape — that's
  *   how a confirm that has to await a request keeps the dialog up.
  * - Initial focus is `autofocus` on Cancel instead of upstream's
- *   `onOpenAutoFocus` + a ref. Same destination, and it survives body
- *   content that would otherwise win the platform's focus delegate.
+ *   `onOpenAutoFocus` + a ref. Same destination by default, and it
+ *   survives body content that would otherwise win the platform's focus
+ *   delegate on sheer position. It also leaves the door open the way
+ *   the platform does: `autofocus` in `children` sits earlier in tree
+ *   order, so the delegate reaches it first and a "type the name to
+ *   confirm" field can take focus. Upstream's imperative version
+ *   overrides unconditionally.
  * - `description` is required. Upstream only enforces it with a
  *   dev-time console warning, but `alertdialog` is the one role where a
  *   missing description leaves screen reader users with a question and
@@ -93,7 +98,12 @@ export interface AlertDialogProps
   maxWidth?: string;
   /** `class` lands on the panel — the visible surface, not the overlay. */
   class?: string;
-  /** Extra content between the description and the buttons. */
+  /**
+   * Extra content between the description and the buttons. Opening
+   * focus goes to the cancelling button, unless something in here
+   * carries `autofocus` — it comes first in tree order, so the platform
+   * hands it focus instead.
+   */
   children?: JSX.Element;
 }
 
@@ -153,7 +163,9 @@ const AlertDialog: Component<AlertDialogProps> = (rawProps) => {
 
       <Flex as="div" justify="end" gap={3}>
         {/* `autofocus` is what puts the platform's opening focus on the
-            safe choice, ahead of anything focusable in the body. */}
+            safe choice, ahead of anything merely focusable in the body.
+            A body control that asks for focus by name still wins on
+            tree order, which is the escape hatch. */}
         <Button
           as="button"
           variant="soft"

@@ -99,6 +99,20 @@ describe('AlertDialog', () => {
     await waitFor(() => expect(document.activeElement).toBe(cancel()));
   });
 
+  // Cancel carries `autofocus` too, but the body is earlier in tree
+  // order, so the platform's focus delegate reaches it first. That's
+  // the documented escape hatch for "type the name to confirm".
+  it('yields opening focus to a body control that asks for it', async () => {
+    setup({ children: <input autofocus data-testid="confirm-name" /> });
+
+    await waitFor(() =>
+      expect(document.activeElement).toHaveAttribute(
+        'data-testid',
+        'confirm-name',
+      ),
+    );
+  });
+
   // --- Choices ---
 
   it('asks to close when the user cancels', () => {
