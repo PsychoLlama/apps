@@ -1,16 +1,7 @@
 import { defineFormula } from '@lib/state-next';
-import { generateLabel, keyFragment } from '../labels';
+import { generateLabel } from '../labels';
 import { contactsStore } from './contacts';
 import type { Contact, ContactDirection, ContactTrust } from './database';
-
-/**
- * How long a name may be before the address book truncates it. The peer's
- * suggestion arrives from an unauthenticated stranger, so it's capped on the
- * way to the screen: a name is a name, not a paragraph, and an unbounded one
- * would let a peer push the rest of a row off-screen. The rename field caps
- * itself to the same length so a local name is never silently trimmed.
- */
-export const MAX_LABEL_LENGTH = 32;
 
 /** One contact as the address book renders it. */
 export interface ContactView {
@@ -19,19 +10,10 @@ export interface ContactView {
 
   /**
    * What to call this contact: its local name, else the name it advertised,
-   * else the name generated from its key. Already capped in length.
+   * else the leading characters of its key. Any length — a local name is
+   * typed here and stored here, so the layout gives way rather than the name.
    */
   name: string;
-
-  /** Leading characters of the key, shown when {@link ambiguous}. */
-  fragment: string;
-
-  /**
-   * Whether another contact renders under the same name. Generated names
-   * collide and a peer can advertise any name it likes — including one
-   * already in the book — so a colliding row shows its key fragment.
-   */
-  ambiguous: boolean;
 
   /** How far the peer has got along the trust ladder. */
   trust: ContactTrust;
@@ -41,61 +23,39 @@ export interface ContactView {
 
   /** When the contact first entered the address book. */
   createdAt: number;
-
-  /** When the peer was last seen. */
-  lastSeenAt: number;
 }
 
 /**
  * Resolve what to call a contact. A local name wins; failing that the peer's
- * own suggestion; failing that a name generated from the key, which every
- * endpoint has whether or not it ever said anything.
+ * own suggestion; failing that the key prefix, which every endpoint has
+ * whether or not it ever said anything.
  */
-const resolveName = (contact: Contact): string => {
-  if (contact.label) return contact.label.slice(0, MAX_LABEL_LENGTH);
-  if (contact.suggestedLabel) {
-    return contact.suggestedLabel.slice(0, MAX_LABEL_LENGTH);
-  }
-
-  return generateLabel(contact.endpointId);
-};
+const resolveName = (contact: Contact): string =>
+  contact.label ?? contact.suggestedLabel ?? generateLabel(contact.endpointId);
 
 /**
  * The address book as the UI reads it: every contact resolved to a display
- * name, flagged if that name collides with another's, and sorted by name so
- * the list holds still as peers come and go. Ties break on endpoint id, which
- * is stable and unique, so two same-named contacts keep a fixed order.
+ * name and sorted by it, so the list holds still as peers come and go. Ties
+ * break on endpoint id, which is stable and unique, so two contacts sharing a
+ * name keep a fixed order.
  *
- * One list rather than one per section — callers partition it by `trust`,
- * which keeps name collisions visible across the whole book instead of only
- * within a section.
+ * Names are not deduplicated. Two devices can wear the same one — a peer
+ * picks the name it advertises, and nothing stops it picking one already in
+ * the book — but accepting a second of the same name is a choice the reader
+ * made, and renaming either is one tap away.
  */
-export const addressBookFormula = defineFormula([contactsStore], (book) => {
-  const contacts = Object.values(book.entries).map(
-    (contact): Omit<ContactView, 'ambiguous'> => ({
+export const addressBookFormula = defineFormula([contactsStore], (book) =>
+  Object.values(book.entries)
+    .map((contact): ContactView => ({
       endpointId: contact.endpointId,
       name: resolveName(contact),
-      fragment: keyFragment(contact.endpointId),
       trust: contact.trust,
       direction: contact.direction,
       createdAt: contact.createdAt,
-      lastSeenAt: contact.lastSeenAt,
-    }),
-  );
-
-  const occurrences = new Map<string, number>();
-  for (const contact of contacts) {
-    occurrences.set(contact.name, (occurrences.get(contact.name) ?? 0) + 1);
-  }
-
-  return contacts
-    .map((contact): ContactView => ({
-      ...contact,
-      ambiguous: (occurrences.get(contact.name) ?? 0) > 1,
     }))
     .sort(
       (left, right) =>
         left.name.localeCompare(right.name) ||
         left.endpointId.localeCompare(right.endpointId),
-    );
-});
+    ),
+);

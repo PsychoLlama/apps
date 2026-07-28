@@ -13,8 +13,18 @@ export const row = style({
  * so a press anywhere on the row navigates, while the accessible name stays
  * the text itself rather than a card's worth of markup. It's invisible, so it
  * carries no radius of its own; the focus ring belongs to the anchor.
+ *
+ * Truncation needs the block display — an inline box has no width to overflow
+ * — and `minWidth: 0` to opt out of the flex item's automatic minimum, which
+ * would otherwise floor the link at the width of its own text and push the
+ * badge off the row instead.
  */
 export const stretchedLink = style({
+  display: 'block',
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
   selectors: {
     '&::after': {
       content: '""',

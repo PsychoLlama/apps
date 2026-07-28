@@ -1,7 +1,6 @@
 /**
  * Unit tests for the address book's derived view: which name a contact ends
- * up wearing, when a name is ambiguous enough to need its key fragment, and
- * the order the list comes back in.
+ * up wearing, and the order the list comes back in.
  */
 
 import { createTestRuntime } from '@lib/state-next';
@@ -58,35 +57,24 @@ describe('addressBookFormula', () => {
     );
   });
 
-  it('caps a name a peer could otherwise run off the screen', () => {
-    const { peek } = setup([fakeContact({ suggestedLabel: 'x'.repeat(500) })]);
+  it('passes a name of any length through untouched', () => {
+    const name = 'x'.repeat(500);
+    const { peek } = setup([fakeContact({ label: name })]);
 
-    expect(peek(addressBookFormula)[0].name).toHaveLength(32);
+    // Length is the layout's problem, not the book's — the name is stored
+    // locally and truncating it here would lie about what was typed.
+    expect(peek(addressBookFormula)[0].name).toBe(name);
   });
 
-  it('leaves a name that stands on its own unambiguous', () => {
+  it('lets two contacts wear the same name', () => {
     const { peek } = setup([
       fakeContact({ endpointId: 'ep-1', label: 'Laptop' }),
-      fakeContact({ endpointId: 'ep-2', label: 'Phone' }),
+      fakeContact({ endpointId: 'ep-2', label: 'Laptop' }),
     ]);
 
-    expect(peek(addressBookFormula).map((view) => view.ambiguous)).toEqual([
-      false,
-      false,
-    ]);
-  });
-
-  it('flags every row sharing a name, so the fragment tells them apart', () => {
-    const { peek } = setup([
-      fakeContact({ endpointId: 'aaaaaaaa11', label: 'Laptop' }),
-      fakeContact({ endpointId: 'bbbbbbbb22', label: 'Laptop' }),
-      fakeContact({ endpointId: 'cccccccc33', label: 'Phone' }),
-    ]);
-
-    expect(peek(addressBookFormula)).toMatchObject([
-      { name: 'Laptop', ambiguous: true, fragment: 'aaaaaa' },
-      { name: 'Laptop', ambiguous: true, fragment: 'bbbbbb' },
-      { name: 'Phone', ambiguous: false, fragment: 'cccccc' },
+    expect(peek(addressBookFormula).map((view) => view.name)).toEqual([
+      'Laptop',
+      'Laptop',
     ]);
   });
 
@@ -118,12 +106,7 @@ describe('addressBookFormula', () => {
 
   it('carries the fields a row renders from', () => {
     const { peek } = setup([
-      fakeContact({
-        trust: 'invited',
-        direction: 'inbound',
-        createdAt: 10,
-        lastSeenAt: 20,
-      }),
+      fakeContact({ trust: 'invited', direction: 'inbound', createdAt: 10 }),
     ]);
 
     expect(peek(addressBookFormula)[0]).toMatchObject({
@@ -131,7 +114,6 @@ describe('addressBookFormula', () => {
       trust: 'invited',
       direction: 'inbound',
       createdAt: 10,
-      lastSeenAt: 20,
     });
   });
 });

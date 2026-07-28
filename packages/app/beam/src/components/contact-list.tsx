@@ -1,5 +1,5 @@
 import { For, Show } from 'solid-js';
-import { Badge, Card, Code, Flex, Link } from '@lib/ui';
+import { Badge, Card, Flex, Link } from '@lib/ui';
 import type { ContactView } from '../state/contacts';
 import * as styles from './contact-list.css';
 
@@ -7,33 +7,25 @@ import * as styles from './contact-list.css';
  * One contact, as a row in the address book. The name is the row's link and
  * stretches its hit area over the whole card.
  *
- * The key fragment only appears when the name is {@link ContactView.ambiguous
- * ambiguous} — the key is what actually identifies a peer, but showing it on
- * every row would bury the names it exists to disambiguate.
+ * A name has no length limit, so the row holds the line by truncating: the
+ * badge keeps its width and the name gives way, rather than a long name
+ * pushing the row's own status off the edge of the screen.
  */
 const ContactRow = (props: { contact: ContactView }) => (
   <Card as="li" size={2} class={styles.row}>
     <Flex as="div" direction="row" align="center" justify="between" gap={3}>
-      <Flex as="div" direction="column" gap={1}>
-        <Link
-          testId="beam-contact-link"
-          href={`/beam/contacts/${props.contact.endpointId}`}
-          class={styles.stretchedLink}
-          color="neutral"
-          weight="medium"
-          underline="none"
-        >
-          {props.contact.name}
-        </Link>
+      <Link
+        testId="beam-contact-link"
+        href={`/beam/contacts/${props.contact.endpointId}`}
+        class={styles.stretchedLink}
+        color="neutral"
+        weight="medium"
+        underline="none"
+      >
+        {props.contact.name}
+      </Link>
 
-        <Show when={props.contact.ambiguous}>
-          <Code size={1} color="neutral" variant="ghost" selectable>
-            {props.contact.fragment}
-          </Code>
-        </Show>
-      </Flex>
-
-      <Show when={props.contact.trust === 'invited'}>
+      <Show when={props.contact.trust !== 'trusted'}>
         <Badge color="warning" variant="soft">
           {props.contact.direction === 'outbound' ? 'Invited' : 'Requested'}
         </Badge>

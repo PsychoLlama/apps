@@ -18,7 +18,6 @@ import {
   TextField,
 } from '@lib/ui';
 import {
-  MAX_LABEL_LENGTH,
   addressBookFormula,
   contactsStore,
   forgetContactSaga,
@@ -142,7 +141,7 @@ export const BeamContact = () => {
             {(view) => (
               <Flex as="div" direction="column" gap={5}>
                 <Flex as="hgroup" direction="column" gap={2} align="start">
-                  <Heading as="h1" selectable={false}>
+                  <Heading as="h1" class={styles.name} selectable={false}>
                     {view().name}
                   </Heading>
 
@@ -177,7 +176,6 @@ export const BeamContact = () => {
                     id={NAME_FIELD_ID}
                     placeholder={view().name}
                     value={label()}
-                    maxLength={MAX_LABEL_LENGTH}
                     onBlur={handleRename}
                     name="contact-name"
                     autocomplete="off"
@@ -213,12 +211,6 @@ export const BeamContact = () => {
                     <DataListLabel>Added</DataListLabel>
                     <DataListValue>
                       {formatMoment(view().createdAt)}
-                    </DataListValue>
-                  </DataListItem>
-                  <DataListItem>
-                    <DataListLabel>Last seen</DataListLabel>
-                    <DataListValue>
-                      {formatMoment(view().lastSeenAt)}
                     </DataListValue>
                   </DataListItem>
                 </DataListRoot>
