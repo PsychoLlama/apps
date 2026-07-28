@@ -1,4 +1,4 @@
-import { defineScope } from '@lib/state-next';
+import { defineScope } from '@lib/state';
 
 /**
  * Owns the runtime view of the three appearance preferences: theme,

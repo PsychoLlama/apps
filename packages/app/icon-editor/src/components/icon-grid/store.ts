@@ -5,7 +5,7 @@ import {
   defineScope,
   defineStore,
   defineTopic,
-} from '@lib/state-next';
+} from '@lib/state';
 import type {
   IconEntry,
   IconPackManifest,

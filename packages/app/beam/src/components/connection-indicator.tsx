@@ -1,5 +1,5 @@
 import { Match, Switch } from 'solid-js';
-import { useValue } from '@lib/state-next';
+import { useValue } from '@lib/state';
 import IconConnecting from 'virtual:icons/mdi/loading';
 import IconConnected from 'virtual:icons/mdi/check-circle-outline';
 import IconFailed from 'virtual:icons/mdi/alert-circle-outline';

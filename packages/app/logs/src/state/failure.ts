@@ -1,4 +1,4 @@
-import { AbortError } from '@lib/state-next';
+import { AbortError } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);

@@ -1,4 +1,4 @@
-import { defineFold, defineStore, defineTopic } from '@lib/state-next';
+import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';

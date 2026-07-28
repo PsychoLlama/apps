@@ -1,4 +1,4 @@
-import { defineScope } from '@lib/state-next';
+import { defineScope } from '@lib/state';
 
 /**
  * Owns everything a scanner session holds: the live camera stream, the

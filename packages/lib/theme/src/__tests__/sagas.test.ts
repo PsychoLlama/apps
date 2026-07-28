@@ -8,7 +8,7 @@
  * a test runtime with `appearanceScope` anchored.
  */
 
-import { createTestRuntime, simulate } from '@lib/state-next';
+import { createTestRuntime, simulate } from '@lib/state';
 import {
   appearanceRestoredTopic,
   appearanceStore,

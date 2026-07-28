@@ -5,7 +5,7 @@
  * these stand in a fake one.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import { level, type Log } from '@lib/observability';
 import type { LogConnection } from '@lib/holz-idb-backend/database';
 import {

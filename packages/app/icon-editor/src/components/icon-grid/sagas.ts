@@ -1,4 +1,4 @@
-import { call, commit, defineSaga, read, spawn } from '@lib/state-next';
+import { call, commit, defineSaga, read, spawn } from '@lib/state';
 import {
   fetchPackIndex,
   fetchPackManifest,

@@ -1,6 +1,6 @@
 import { createEffect, on } from 'solid-js';
 import { useParams } from '@solidjs/router';
-import { useRun, useValue } from '@lib/state-next';
+import { useRun, useValue } from '@lib/state';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import { Callout, Container, Text } from '@lib/ui';
 import { ConnectionIndicator } from './connection-indicator';

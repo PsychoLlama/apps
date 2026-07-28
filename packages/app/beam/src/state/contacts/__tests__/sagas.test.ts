@@ -4,7 +4,7 @@
  * the assertions are about what each saga published and wrote through.
  */
 
-import { simulate } from '@lib/state-next';
+import { simulate } from '@lib/state';
 import { now, readContacts, removeContact, saveContact } from '../capabilities';
 import {
   contactForgottenTopic,

@@ -4,7 +4,7 @@
  * and asserts state; nothing touches IndexedDB or a saga.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import {
   contactForgottenTopic,
   contactRenamedTopic,

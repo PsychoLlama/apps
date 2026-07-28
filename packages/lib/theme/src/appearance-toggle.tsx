@@ -1,6 +1,6 @@
 import { onMount, type Component, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { useAnchor, useRun, useValue } from '@lib/state-next';
+import { useAnchor, useRun, useValue } from '@lib/state';
 import { Button } from '@lib/ui';
 import type { ColorSchemeOption } from './constants';
 import {

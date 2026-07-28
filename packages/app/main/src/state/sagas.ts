@@ -1,4 +1,4 @@
-import { call, commit, defineSaga } from '@lib/state-next';
+import { call, commit, defineSaga } from '@lib/state';
 import { readLauncherFlags, watchLauncherFlags } from './capabilities';
 import {
   beamChangedTopic,

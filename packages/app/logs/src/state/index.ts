@@ -1,5 +1,5 @@
 /**
- * The `@lib/state-next` surface backing the log viewer: the on-device archive
+ * The `@lib/state` surface backing the log viewer: the on-device archive
  * and the conditions gating its export action, both owned by
  * {@link logsScope}. The views anchor that scope and run the tracking sagas;
  * releasing the last anchor is the whole teardown story.

@@ -1,4 +1,4 @@
-import { defineFold, defineStore, defineTopic } from '@lib/state-next';
+import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { DEFAULT_THEME_ID } from './constants';
 import type {
   AppearanceSelection,

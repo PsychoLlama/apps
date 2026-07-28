@@ -4,7 +4,7 @@
  * fact is covered by the saga tests.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import { environment } from '@lib/runtime-config';
 import { enabled as beamAppEnabled } from '@app/beam/config';
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';

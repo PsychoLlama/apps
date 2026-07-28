@@ -3,7 +3,7 @@
  * up wearing, and the order the list comes back in.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import { addressBookFormula } from '../address-book';
 import { contactsRestoredTopic } from '../contacts';
 import type { Contact } from '../database';

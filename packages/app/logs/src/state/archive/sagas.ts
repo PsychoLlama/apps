@@ -1,4 +1,4 @@
-import { AbortError, call, commit, defineSaga, read } from '@lib/state-next';
+import { AbortError, call, commit, defineSaga, read } from '@lib/state';
 import {
   archiveLoadFailedTopic,
   archiveLoadedTopic,

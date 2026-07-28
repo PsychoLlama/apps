@@ -193,12 +193,9 @@ export default [
     },
   },
   {
-    // @lib/state and @lib/state-next internals may use Solid's raw state
-    // primitives directly — they implement the sanctioned surface.
-    files: [
-      'packages/lib/state/src/**/*.ts',
-      'packages/lib/state-next/src/**/*.ts',
-    ],
+    // @lib/state internals may use Solid's raw state primitives
+    // directly — they implement the sanctioned surface.
+    files: ['packages/lib/state/src/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

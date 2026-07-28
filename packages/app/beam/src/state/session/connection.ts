@@ -1,9 +1,4 @@
-import {
-  defineCell,
-  defineFold,
-  defineStore,
-  defineTopic,
-} from '@lib/state-next';
+import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
 import type { Relay } from '@crate/iroh';
 import { beamScope } from '../scope';
 

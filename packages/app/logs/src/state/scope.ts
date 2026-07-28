@@ -1,4 +1,4 @@
-import { defineScope } from '@lib/state-next';
+import { defineScope } from '@lib/state';
 
 /**
  * Owns everything the log viewer holds: the archive snapshot, the IndexedDB

@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { useCommit, useValue } from '@lib/state-next';
+import { useCommit, useValue } from '@lib/state';
 import { Dialog, Flex, Text, TextField } from '@lib/ui';
 import { QrCode } from './qr-code';
 import {

@@ -5,7 +5,7 @@
  * one-transition guarantee lives.
  */
 
-import { simulate } from '@lib/state-next';
+import { simulate } from '@lib/state';
 import type { Relay } from '@crate/iroh';
 import { dialEndpoint, encodeBeamCode, openConnection } from '../capabilities';
 import {

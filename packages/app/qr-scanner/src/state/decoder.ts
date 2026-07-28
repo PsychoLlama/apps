@@ -1,4 +1,4 @@
-import { defineCell, defineFold, defineTopic } from '@lib/state-next';
+import { defineCell, defineFold, defineTopic } from '@lib/state';
 import { terminateDecoder, type DecoderConnection } from '../decoder';
 import { scannerScope } from './scope';
 

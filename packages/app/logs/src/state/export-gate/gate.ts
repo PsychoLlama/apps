@@ -3,7 +3,7 @@ import {
   defineFormula,
   defineStore,
   defineTopic,
-} from '@lib/state-next';
+} from '@lib/state';
 import { environment } from '@lib/runtime-config';
 import { logExport } from '../../config';
 import { logsScope } from '../scope';

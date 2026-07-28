@@ -1,10 +1,10 @@
 ---
-description: Reference docs for `@lib/state-next` — the experimental transactional state runtime (topics, folds, scopes, sagas). Load when authoring or reviewing code built on `@lib/state-next`, picking an API, or wiring its tests. For the current production library, load `state-reference` instead.
+description: Reference docs for `@lib/state` — the codebase's sanctioned state management, a transactional runtime of topics, folds, scopes, and sagas. Built-in Solid primitives (`createSignal`, `createStore`, `createResource`) are banned outside `@lib/ui` and `@lib/design`. Load when authoring or reviewing any stateful code, picking an API, or wiring stateful tests.
 ---
 
-# State Management (state-next)
+# State Management
 
-- Single entry point: `@lib/state-next`.
+- Single entry point: `@lib/state`.
 - The model is space/time/life. Space: stores, cells, formulas. Time: topics (facts) and folds (transitions). Life: scopes (ownership) and sagas (processes).
 - The one law: sagas publish facts, folds fold facts into state, readers derive. Sagas never touch stores directly.
 - Handles are named by kind: `…Store`, `…Cell`, `…Formula`, `…Topic`, `…Scope`, `…Saga`. Assignments holding resolved values drop the suffix: `const foo = useValue(fooStore)`.

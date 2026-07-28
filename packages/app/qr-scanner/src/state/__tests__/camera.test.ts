@@ -5,7 +5,7 @@
  * stream, so the tests stand in fakes.
  */
 
-import { createTestRuntime } from '@lib/state-next';
+import { createTestRuntime } from '@lib/state';
 import {
   cameraFailedTopic,
   cameraOpenedTopic,

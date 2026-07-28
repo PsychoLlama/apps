@@ -1,9 +1,4 @@
-import {
-  defineCell,
-  defineFold,
-  defineStore,
-  defineTopic,
-} from '@lib/state-next';
+import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
 import type { Log } from '@lib/observability';
 import type { LogConnection } from '@lib/holz-idb-backend/database';
 import { logsScope } from '../scope';

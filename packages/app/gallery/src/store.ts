@@ -1,9 +1,4 @@
-import {
-  defineFold,
-  defineScope,
-  defineStore,
-  defineTopic,
-} from '@lib/state-next';
+import { defineFold, defineScope, defineStore, defineTopic } from '@lib/state';
 
 /**
  * Owns the gallery's view state: which permutation tab each listing is
