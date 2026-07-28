@@ -85,7 +85,6 @@ export default [
       'custom/no-log-interpolation': 'error',
       'custom/no-static-style-prop': 'error',
       'custom/prefer-icon-button': 'error',
-      'custom/require-externalized-effects': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
         'error',
@@ -224,14 +223,6 @@ export default [
     files: ['packages/lib/design/**/*.tsx'],
     rules: {
       'custom/require-ui-primitives': 'off',
-    },
-  },
-  {
-    // @lib/state tests exercise defineEffect itself, so inline callbacks
-    // are expected. The separation rule applies to consumers.
-    files: ['packages/lib/state/src/__tests__/**/*.ts'],
-    rules: {
-      'custom/require-externalized-effects': 'off',
     },
   },
   {

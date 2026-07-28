@@ -7,7 +7,6 @@ import noZIndex from './rules/no-z-index';
 import preferIconButton from './rules/prefer-icon-button';
 import requireDesignTokens from './rules/require-design-tokens';
 import requireExplicitRouteExport from './rules/require-explicit-route-export';
-import requireExternalizedEffects from './rules/require-externalized-effects';
 import requireUiPrimitives from './rules/require-ui-primitives';
 
 // `ESLint.Plugin` requires every rule to match the core `RuleDefinition`
@@ -26,7 +25,6 @@ const plugin = {
     'prefer-icon-button': preferIconButton,
     'require-design-tokens': requireDesignTokens,
     'require-explicit-route-export': requireExplicitRouteExport,
-    'require-externalized-effects': requireExternalizedEffects,
     'require-ui-primitives': requireUiPrimitives,
   },
 };
