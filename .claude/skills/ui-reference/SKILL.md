@@ -36,6 +36,7 @@ description: Reference docs for `@lib/ui` components — props, descriptions, an
 - [Checkbox](./reference/checkbox.md): Tri-state checkbox with optional inline label.
 - [CheckboxCards](./reference/checkbox-cards.md): Group of checkbox options rendered as selectable cards.
 - [DataList](./reference/data-list.md): Description list for label–value pairs.
+- [Dialog](./reference/dialog.md): Modal `<dialog>` with a title, description, and body.
 - [IconButton](./reference/icon-button.md): Square button for a single icon.
 - [Kbd](./reference/kbd.md): Inline keyboard input.
 - [LinkButton](./reference/link-button.md): Anchor styled as a button for navigation actions.

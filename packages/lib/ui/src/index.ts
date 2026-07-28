@@ -223,3 +223,9 @@ export {
   type SegmentedControlVariant,
   type SegmentedControlRadius,
 } from './components/segmented-control/segmented-control';
+export {
+  default as Dialog,
+  type DialogProps,
+  type DialogSize,
+  type DialogAlign,
+} from './components/dialog/dialog';
