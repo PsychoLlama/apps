@@ -15,6 +15,11 @@ export { addressBookFormula, fallbackName } from './address-book';
 export type { ContactView } from './address-book';
 export { renameStore, renameOpenedTopic, renameClosedTopic } from './rename';
 export {
+  removalStore,
+  removalOpenedTopic,
+  removalClosedTopic,
+} from './removal';
+export {
   forgetContactSaga,
   recordPeerSaga,
   renameContactSaga,

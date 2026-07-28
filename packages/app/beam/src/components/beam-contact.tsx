@@ -3,6 +3,7 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { useCommit, useRun, useValue } from '@lib/state-next';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import {
+  AlertDialog,
   Badge,
   Button,
   Callout,
@@ -21,6 +22,9 @@ import {
   addressBookFormula,
   contactsStore,
   forgetContactSaga,
+  removalClosedTopic,
+  removalOpenedTopic,
+  removalStore,
   renameOpenedTopic,
   type ContactView,
 } from '../state/contacts';
@@ -59,6 +63,7 @@ export const BeamContact = () => {
 
   const book = useValue(contactsStore);
   const contacts = useValue(addressBookFormula);
+  const removal = useValue(removalStore);
   const commit = useCommit();
 
   const forget = useRun(forgetContactSaga);
@@ -190,21 +195,32 @@ export const BeamContact = () => {
                   </DataListItem>
                 </DataListRoot>
 
-                {/* Removing takes effect on the press. There's nothing here
-                    to lose: a contact is a name over a public key, and the
-                    peer can be paired with again from the same link. */}
                 <Flex as="div" direction="column" gap={3} align="start">
                   <Button
                     testId="beam-contact-remove"
                     variant="soft"
                     color="danger"
-                    onClick={handleForget}
+                    onClick={() => commit(removalOpenedTopic(params.id))}
                   >
                     Remove
                   </Button>
                 </Flex>
 
                 <RenameDialog endpointId={view().endpointId} />
+
+                {/* The name is in the question because the page it was asked
+                    from is about to be left behind — the confirmation is the
+                    last thing on screen that still says who this was. */}
+                <AlertDialog
+                  testId="beam-contact-remove-dialog"
+                  open={removal().endpointId === view().endpointId}
+                  onOpenChange={() => commit(removalClosedTopic())}
+                  title="Remove this contact?"
+                  description={`${view().name} drops out of your address book. Pairing again means trading links again.`}
+                  actionText="Remove"
+                  color="danger"
+                  onAction={handleForget}
+                />
               </Flex>
             )}
           </Show>
