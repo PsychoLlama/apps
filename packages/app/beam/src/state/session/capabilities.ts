@@ -1,7 +1,14 @@
-import init, { generateSecretKey, joinRelay, type Relay } from '@crate/iroh';
+import init, {
+  generateSecretKey,
+  joinRelay,
+  type PeerConnection,
+  type Relay,
+} from '@crate/iroh';
 import initQrCode, { encode } from '@crate/qr-code';
 import { createLogger, toError } from '@lib/observability';
 import { read, write, type VaultId } from '@lib/vault';
+import { createInbox, type Inbox } from './inbox';
+import { decodeMessage, encodeMessage, type BeamMessage } from './protocol';
 import type { QrGrid } from './qr-code';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -85,15 +92,6 @@ export const openConnection = async (signal: AbortSignal): Promise<Relay> => {
     if (signal.aborted) relay.free();
     signal.throwIfAborted();
 
-    // Start serving inbound dials so the peer being dialed logs the other
-    // side of the connection. The loop is held by the relay and torn down
-    // when it's freed. We only observe the peer's id, then free our handle —
-    // the accept loop keeps its own, so the connection stays open.
-    relay.acceptPeers((peer) => {
-      logger.debug('Peer connected.', { endpointId: peer.remoteId });
-      peer.free();
-    });
-
     logger.debug('Connected to iroh relay.', {
       endpointId: relay.endpointId,
       homeRelay: relay.homeRelay,
@@ -114,33 +112,147 @@ export const openConnection = async (signal: AbortSignal): Promise<Relay> => {
 };
 
 /**
+ * A peer that dialled us, paired with the identity it dialled from. The id
+ * is read here rather than in a saga because reading it crosses into wasm,
+ * and everything that touches a host object belongs in this layer.
+ */
+export interface InboundPeer {
+  /** The peer's endpoint public key. */
+  endpointId: string;
+  /** The live connection. The caller owns it and must free it. */
+  link: PeerConnection;
+}
+
+/**
+ * Start serving inbound dials, returning a queue of the peers that arrive.
+ * The relay owns the accept loop, so freeing it stops the queue filling.
+ *
+ * A queue rather than a callback because the consumer is a saga, which pulls
+ * one arrival at a time. Handles come out live and unfreed — the caller
+ * talks back over them, and is responsible for closing them.
+ */
+export const acceptInboundPeers = (
+  _signal: AbortSignal,
+  relay: Relay,
+): Inbox<InboundPeer> => {
+  const inbox = createInbox<InboundPeer>();
+
+  relay.acceptPeers((link) => {
+    const endpointId = link.remoteId;
+    logger.debug('Peer connected.', { endpointId });
+    inbox.push({ endpointId, link });
+  });
+
+  return inbox;
+};
+
+/**
+ * Wait for the next arrival in a queue. Rejects when the scope is released,
+ * which is what unwinds the saga loops parked on one.
+ */
+export const receiveNext = <T>(
+  signal: AbortSignal,
+  inbox: Inbox<T>,
+): Promise<T> => inbox.next(signal);
+
+/**
  * Dial the peer named in a beam link over the live relay connection,
- * resolving once the connection is established.
+ * resolving with the link once it's established.
  *
  * Logs the outcome here rather than from the saga, so it sits alongside
- * {@link openConnection}'s inbound `Peer connected.` log — both halves of a
- * peer connection are observed from this layer. A failed dial is reported and
- * swallowed; there's no retry affordance yet.
+ * {@link acceptInboundPeers}'s `Peer connected.` log — both halves of a peer
+ * connection are observed from this layer. A failed dial is reported and
+ * rethrown: the caller renders the peer as unreachable, which it can only do
+ * if it hears about it.
  *
- * The signal goes unused: iroh's `dial()` isn't interruptible, and the peer
- * handle is released before this resolves, so there's nothing an abort could
- * unwind.
+ * The signal goes unused: iroh's `dial()` isn't interruptible. A link that
+ * lands after the scope died is freed by the cell holding it, or never
+ * reaches one — an abandoned handle closes with the endpoint it rode in on.
  */
 export const dialEndpoint = async (
   _signal: AbortSignal,
   relay: Relay,
   endpointId: string,
-): Promise<void> => {
+): Promise<PeerConnection> => {
   try {
-    const peer = await relay.dial(endpointId);
-    logger.debug('Dialed peer.', { endpointId: peer.remoteId });
-    peer.free();
+    const link = await relay.dial(endpointId);
+    logger.debug('Dialed peer.', { endpointId: link.remoteId });
+    return link;
   } catch (error) {
     logger.error('Failed to dial peer.', {
       endpointId,
       error: toError(error),
     });
+
+    throw error;
   }
+};
+
+/**
+ * Start reading messages off a peer link, returning a queue of the ones that
+ * decode. Anything that doesn't is dropped here: the bytes came from a
+ * stranger, and a frame we can't read is not an event worth waking a saga
+ * for.
+ */
+export const listenToPeer = (
+  _signal: AbortSignal,
+  link: PeerConnection,
+): Inbox<BeamMessage> => {
+  const inbox = createInbox<BeamMessage>();
+  const endpointId = link.remoteId;
+
+  link.onMessage((bytes) => {
+    const message = decodeMessage(bytes);
+
+    if (!message) {
+      logger.warn('Discarded an unreadable message from a peer.', {
+        endpointId,
+      });
+      return;
+    }
+
+    logger.debug('Received a peer message.', {
+      endpointId,
+      type: message.type,
+    });
+    inbox.push(message);
+  });
+
+  return inbox;
+};
+
+/**
+ * Send one message over a peer link.
+ *
+ * Reports and swallows a failed send. Every message here is an announcement
+ * — a name, an acceptance — whose local half has already been committed, so
+ * a failure costs the peer its notification rather than the pairing. The
+ * acceptance is re-sent on the next link, which is what closes the gap.
+ */
+export const sendMessage = async (
+  _signal: AbortSignal,
+  link: PeerConnection,
+  message: BeamMessage,
+): Promise<void> => {
+  try {
+    await link.send(encodeMessage(message));
+  } catch (error) {
+    logger.warn('Could not send a message to a peer.', {
+      type: message.type,
+      error: toError(error),
+    });
+  }
+};
+
+/**
+ * Close a peer link. Freeing the handle is what closes the connection and
+ * stops its receive loop, so this is how a link ends before the scope does.
+ */
+export const releasePeer = (
+  _signal: AbortSignal,
+  link: PeerConnection,
+): void => {
+  link.free();
 };
 
 /**

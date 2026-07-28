@@ -1,6 +1,7 @@
 import { onMount, type JSX } from 'solid-js';
 import { useAnchor, useRun } from '@lib/state';
 import { Frame } from '@lib/shell';
+import { PairingBanner } from './pairing-banner';
 import { connectRelaySaga, reportSagaFailure } from '../state/session';
 import { restoreContactsSaga } from '../state/contacts';
 import { beamScope } from '../state/scope';
@@ -11,6 +12,10 @@ import { beamScope } from '../state/scope';
  * loaded address book survive navigation between the invite view and a peer's
  * share view without re-dialling or re-reading. Each route renders its own
  * header and body inside.
+ *
+ * Pairing requests hang off the frame rather than any one route: a peer can
+ * ask at any moment, and the reader shouldn't have to be on a particular
+ * page to hear it.
  *
  * The anchor is the only lifecycle wiring here: releasing it on cleanup
  * aborts the connect and frees the relay.
@@ -30,5 +35,10 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
     );
   });
 
-  return <Frame>{props.children}</Frame>;
+  return (
+    <Frame>
+      {props.children}
+      <PairingBanner />
+    </Frame>
+  );
 };

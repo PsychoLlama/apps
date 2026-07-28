@@ -6,6 +6,7 @@
 
 import { createTestRuntime } from '@lib/state';
 import {
+  contactAdvertisedTopic,
   contactForgottenTopic,
   contactRenamedTopic,
   contactSeenTopic,
@@ -13,6 +14,8 @@ import {
   contactsLoadingTopic,
   contactsRestoredTopic,
   contactsStore,
+  pairingAcceptedTopic,
+  pairingConfirmedTopic,
 } from '../contacts';
 import type { Contact } from '../database';
 import { LABEL_MAX_LENGTH } from '../../labels';
@@ -202,6 +205,118 @@ describe('contactRenamedTopic', () => {
     expect(peek(contactsStore).entries['ep-1'].label).toHaveLength(
       LABEL_MAX_LENGTH,
     );
+  });
+});
+
+describe('contactAdvertisedTopic', () => {
+  it('records the name a peer suggested for itself', () => {
+    const { commit, peek } = setup();
+    commit(contactsRestoredTopic([fakeContact()]));
+
+    commit(contactAdvertisedTopic({ endpointId: 'ep-1', label: 'Studio Mac' }));
+
+    expect(peek(contactsStore).entries['ep-1'].suggestedLabel).toBe(
+      'Studio Mac',
+    );
+  });
+
+  it('never overwrites the name the reader typed', () => {
+    const { commit, peek } = setup();
+    commit(contactsRestoredTopic([fakeContact({ label: 'Work phone' })]));
+
+    commit(contactAdvertisedTopic({ endpointId: 'ep-1', label: 'Studio Mac' }));
+
+    expect(peek(contactsStore).entries['ep-1']).toMatchObject({
+      label: 'Work phone',
+      suggestedLabel: 'Studio Mac',
+    });
+  });
+
+  it('caps a name that arrived from a stranger', () => {
+    const { commit, peek } = setup();
+    commit(contactsRestoredTopic([fakeContact()]));
+
+    commit(
+      contactAdvertisedTopic({
+        endpointId: 'ep-1',
+        label: 'z'.repeat(LABEL_MAX_LENGTH * 10),
+      }),
+    );
+
+    expect(peek(contactsStore).entries['ep-1'].suggestedLabel).toHaveLength(
+      LABEL_MAX_LENGTH,
+    );
+  });
+
+  it('ignores a name for a contact that isn’t there', () => {
+    const { commit, peek } = setup();
+
+    commit(contactAdvertisedTopic({ endpointId: 'ep-9', label: 'Ghost' }));
+
+    expect(peek(contactsStore).entries).toEqual({});
+  });
+});
+
+describe('pairingAcceptedTopic', () => {
+  it('promotes a peer the reader answered', () => {
+    const { commit, peek } = setup();
+    commit(
+      contactsRestoredTopic([
+        fakeContact({ trust: 'invited', direction: 'inbound' }),
+      ]),
+    );
+
+    commit(pairingAcceptedTopic('ep-1'));
+
+    expect(peek(contactsStore).entries['ep-1'].trust).toBe('trusted');
+  });
+
+  it('ignores a peer that was already forgotten', () => {
+    const { commit, peek } = setup();
+
+    commit(pairingAcceptedTopic('ep-1'));
+
+    expect(peek(contactsStore).entries).toEqual({});
+  });
+});
+
+describe('pairingConfirmedTopic', () => {
+  it('promotes a peer we were waiting on', () => {
+    const { commit, peek } = setup();
+    commit(
+      contactsRestoredTopic([
+        fakeContact({ trust: 'invited', direction: 'outbound' }),
+      ]),
+    );
+
+    commit(pairingConfirmedTopic('ep-1'));
+
+    expect(peek(contactsStore).entries['ep-1'].trust).toBe('trusted');
+  });
+
+  it('refuses to let a peer accept itself', () => {
+    const { commit, peek } = setup();
+    commit(
+      contactsRestoredTopic([
+        fakeContact({ trust: 'invited', direction: 'inbound' }),
+      ]),
+    );
+
+    commit(pairingConfirmedTopic('ep-1'));
+
+    // The sharp edge of the handshake. A stranger dialling in is filed as
+    // `invited` inbound; if its own claim of acceptance counted, it could
+    // promote itself to `trusted` with nobody ever asked. Trust in this
+    // direction is the reader's alone to grant.
+    expect(peek(contactsStore).entries['ep-1'].trust).toBe('invited');
+  });
+
+  it('ignores a peer that was already forgotten', () => {
+    const { commit, peek } = setup();
+
+    commit(pairingConfirmedTopic('ep-1'));
+
+    expect(peek(contactsStore).entries).toEqual({});
   });
 });
 

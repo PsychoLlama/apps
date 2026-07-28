@@ -30,6 +30,7 @@ import {
 } from '../state/contacts';
 import { reportSagaFailure } from '../state/session';
 import { ConnectionIndicator } from './connection-indicator';
+import { PairingRequest } from './pairing-request';
 import { RenameDialog } from './rename-dialog';
 import * as styles from './beam-contact.css';
 
@@ -150,6 +151,21 @@ export const BeamContact = () => {
                     <IconPencil width="18" height="18" aria-hidden="true" />
                   </IconButton>
                 </Flex>
+
+                {/* The same question the banner asks, in the one place that
+                    also shows the endpoint key. A request waved off from the
+                    banner still stands, so this is where it can be answered
+                    against something that can't be spoofed. */}
+                <Show
+                  when={
+                    view().trust === 'invited' && view().direction === 'inbound'
+                  }
+                >
+                  <PairingRequest
+                    testId="beam-contact-request"
+                    contact={view()}
+                  />
+                </Show>
 
                 <DataListRoot orientation="vertical" size={2}>
                   {/* Status leads the record. It's the one field that says

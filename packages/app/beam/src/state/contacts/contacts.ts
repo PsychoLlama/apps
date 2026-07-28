@@ -119,6 +119,58 @@ defineFold(
   },
 );
 
+/**
+ * A peer said what it calls itself. Kept apart from {@link Contact.label} so
+ * a local name always wins, and normalized on the way in like every other
+ * name — this one arrives from an unauthenticated stranger, so the cap is
+ * doing real work rather than tidying.
+ */
+export const contactAdvertisedTopic = defineTopic<{
+  endpointId: string;
+  label: string;
+}>();
+
+defineFold(
+  contactAdvertisedTopic,
+  [contactsStore],
+  (book, { endpointId, label }) => {
+    const contact = book.entries[endpointId];
+    if (contact) contact.suggestedLabel = normalizeLabel(label);
+  },
+);
+
+/**
+ * The reader accepted a peer's request to pair. Only moves a contact that
+ * was actually waiting on an answer: a peer already forgotten has nothing to
+ * promote, and re-accepting a trusted one is a no-op.
+ */
+export const pairingAcceptedTopic = defineTopic<string>();
+defineFold(pairingAcceptedTopic, [contactsStore], (book, endpointId) => {
+  const contact = book.entries[endpointId];
+  if (contact?.trust === 'invited') contact.trust = 'trusted';
+});
+
+/**
+ * A peer said it accepted us. This is the one transition driven by a
+ * message from the network rather than by the reader, so it carries the
+ * tighter guard: it only counts when *we* are the ones waiting, which means
+ * a contact we hold as `invited` **outbound**.
+ *
+ * Without the direction check, any stranger could dial in — which files them
+ * as `invited` inbound — and immediately claim acceptance, promoting itself
+ * to `trusted` with nobody ever asked. Trust in that direction is the
+ * reader's to grant, and it's granted through
+ * {@link pairingAcceptedTopic} alone.
+ */
+export const pairingConfirmedTopic = defineTopic<string>();
+defineFold(pairingConfirmedTopic, [contactsStore], (book, endpointId) => {
+  const contact = book.entries[endpointId];
+  if (contact?.trust !== 'invited') return;
+  if (contact.direction !== 'outbound') return;
+
+  contact.trust = 'trusted';
+});
+
 /** A contact was removed from the address book. */
 export const contactForgottenTopic = defineTopic<string>();
 defineFold(contactForgottenTopic, [contactsStore], (book, endpointId) => {
