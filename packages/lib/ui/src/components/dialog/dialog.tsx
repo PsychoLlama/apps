@@ -38,6 +38,14 @@
  *   `onOpenChange`, and the DOM is put back if the call site declines —
  *   but the UA has already left the top layer by then, so that one path
  *   skips the exit animation.
+ * - Escape is not always refusable. It doesn't count as user activation,
+ *   so repeated presses spend the document's history-action activation
+ *   and the UA starts closing the element regardless — its guard against
+ *   pages that trap you in a dialog. Upstream, running on a `<div>`,
+ *   never meets it. Here the dialog is put straight back up (visibly, on
+ *   that press: the top layer is already gone), so `dismissible: false`
+ *   still holds and a dismissible dialog still closes only when the call
+ *   site agrees.
  * - Body content mounts with the dialog and unmounts after it closes,
  *   matching upstream. A `<dialog>` would otherwise keep its subtree
  *   (and any form state in it) alive across opens.
@@ -163,23 +171,40 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
   const isInsidePanel = (target: EventTarget | null) =>
     target instanceof Node && panelRef?.contains(target) === true;
 
+  // A close request whose `cancel` came through non-cancelable — the UA
+  // is closing the element no matter what we do here. Read and reset by
+  // the `close` handler, which runs in a later task.
+  let forcedDismissal = false;
+
   // Escape (and any other UA close request) is intercepted rather than
   // obeyed: the DOM's open state is ours to set, so the dialog only ever
-  // closes by way of `onOpenChange`.
+  // closes by way of `onOpenChange`. Escape doesn't count as user
+  // activation, though, so a run of them with nothing in between spends
+  // the document's history-action activation and the UA starts sending
+  // `cancel` non-cancelable — a deliberate guard against pages that trap
+  // you in a dialog. `close` picks the aftermath up.
   const onCancel: JSX.EventHandler<HTMLDialogElement, Event> = (event) => {
+    forcedDismissal = !event.cancelable;
     event.preventDefault();
     if (local.dismissible) local.onOpenChange(false);
   };
 
-  // Nothing above calls `close()` while `open` is still true, so this
-  // only fires for closes we didn't initiate — a `<form method="dialog">`
-  // submit inside the body, most likely. The element is already gone by
-  // the time this runs, so the exit animation is forfeit either way;
-  // what's left is making sure the DOM ends up agreeing with `open`,
-  // including when the call site declines to close.
+  // Fires for closes the component didn't initiate: the forced dismissal
+  // above, or a `<form method="dialog">` submit inside the body. The
+  // element has already left the top layer by now, so the exit animation
+  // is forfeit either way; what's left is making the DOM agree with
+  // `open` again.
   const onClose = () => {
+    const forced = forcedDismissal;
+    forcedDismissal = false;
+
     if (!local.open) return;
-    local.onOpenChange(false);
+
+    // A forced dismissal was already offered to the call site by
+    // `onCancel` — or withheld, if the dialog isn't dismissible. Either
+    // way `open` is still true, so the dialog goes back up. Anything
+    // else is a fresh request the call site hasn't seen yet.
+    if (!forced) local.onOpenChange(false);
     setResyncTick((tick) => tick + 1);
   };
 

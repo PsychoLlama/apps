@@ -8,6 +8,8 @@ The panel fills its own scroll surface, so content taller than the viewport scro
 
 Initial focus is the platform's: the first `autofocus` descendant, else the first focusable one, else the dialog itself.
 
+Escape is not always refusable. It does not count as user activation, so a run of presses with nothing in between spends the document's history-action activation and the browser closes the element regardless — its guard against pages that trap you. The dialog goes straight back up, so `dismissible: false` holds, but that one press is visible.
+
 ## Props
 
 Base: `<div>` attributes on the panel (except `title`, `style`).

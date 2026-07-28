@@ -222,6 +222,35 @@ describe('Dialog', () => {
     expect(overlay.matches(':modal')).toBe(true);
   });
 
+  // Escape isn't user activation, so a run of presses spends the
+  // document's history-action activation and the UA starts sending
+  // `cancel` non-cancelable, then closes regardless.
+  const forceDismiss = (overlay: HTMLDialogElement) => {
+    overlay.dispatchEvent(new Event('cancel', { cancelable: false }));
+    overlay.close();
+  };
+
+  it('puts a forced dismissal back when the call site declines', async () => {
+    const { overlay, onOpenChange } = setup();
+
+    forceDismiss(overlay);
+
+    // Offered once, by `cancel` — not a second time by `close`.
+    expect(onOpenChange).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(overlay.open).toBe(true));
+    expect(overlay.matches(':modal')).toBe(true);
+  });
+
+  it('holds a forced dismissal off a dialog that is not dismissible', async () => {
+    const { overlay, onOpenChange } = setup({ dismissible: false });
+
+    forceDismiss(overlay);
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await waitFor(() => expect(overlay.open).toBe(true));
+    expect(overlay.matches(':modal')).toBe(true);
+  });
+
   it('stays closed after a native close the call site accepted', async () => {
     const { setOpen, overlay, panel } = setup();
 
