@@ -57,6 +57,25 @@ export const reportSagaFailure =
   };
 
 /**
+ * How a peer reads in a log line: where the pairing stands, not what the
+ * transport did. A connection is only interesting for what it means for the
+ * pairing, so every event here carries the trust and direction that make it
+ * legible — an inbound dial from a stranger and one from a device you paired
+ * with last week are the same packet and completely different news.
+ *
+ * These are the sagas' logs rather than the capabilities' because trust
+ * lives in state, and the capability layer can't see it.
+ */
+const pairing = (
+  endpointId: string,
+  contact?: { trust: string; direction: string },
+) => ({
+  endpointId,
+  trust: contact?.trust ?? 'unknown',
+  direction: contact?.direction ?? 'unknown',
+});
+
+/**
  * Act on one message from a peer. This is the whole of what a peer is able
  * to say to us, and both branches land in the address book through a saga
  * that decides whether to believe it — an advertised name can never
@@ -74,9 +93,32 @@ export const applyPeerMessageSaga = defineSaga(
         });
         break;
 
-      case 'accept':
+      case 'accept': {
+        // Read either side of the fold rather than restating its rule here.
+        // The fold decides whether a claimed acceptance counts; what's worth
+        // logging is whether it did, and a check that duplicated the guard
+        // would be free to drift away from it.
+        const before = (yield* read(contactsStore)).entries[input.endpointId];
         yield* confirmContactSaga(input.endpointId);
+        const after = (yield* read(contactsStore)).entries[input.endpointId];
+
+        if (before?.trust !== after?.trust) {
+          logger.info(
+            'A peer accepted our invite.',
+            pairing(input.endpointId, after),
+          );
+        } else if (after?.trust !== 'trusted') {
+          // Either a stranger promoting itself or a peer answering an invite
+          // we've since withdrawn. Worth seeing: the first is the attack the
+          // direction check exists to stop.
+          logger.warn(
+            'Ignored an acceptance from a peer we aren’t waiting on.',
+            pairing(input.endpointId, after),
+          );
+        }
+
         break;
+      }
     }
   },
 );
@@ -147,6 +189,16 @@ export const greetPeerSaga = defineSaga(
       endpointId: peer.endpointId,
       direction: 'inbound',
     });
+
+    // Logged after the sighting, so a first-time dial reads as the request
+    // it just became rather than as an unknown peer.
+    const contact = (yield* read(contactsStore)).entries[peer.endpointId];
+    logger.info(
+      contact?.trust === 'trusted'
+        ? 'A paired device connected.'
+        : 'A peer asked to pair.',
+      pairing(peer.endpointId, contact),
+    );
 
     yield* linkPeerSaga(peer);
   },
@@ -230,6 +282,15 @@ export const dialPeerSaga = defineSaga(
     if (statuses[endpointId] === 'linked') return;
 
     yield* recordPeerSaga({ endpointId, direction: 'outbound' });
+
+    const contact = (yield* read(contactsStore)).entries[endpointId];
+    logger.info(
+      contact?.trust === 'trusted'
+        ? 'Reconnecting to a paired device.'
+        : 'Inviting a peer to pair.',
+      pairing(endpointId, contact),
+    );
+
     yield commit(peerDialingTopic(endpointId));
 
     try {
@@ -256,6 +317,15 @@ export const acceptPairingSaga = defineSaga(
     const handles = yield* read(peerHandlesCell);
     const link = handles.get(endpointId);
     if (link) yield* call(sendMessage, link, acceptMessage());
+
+    const contact = (yield* read(contactsStore)).entries[endpointId];
+    logger.info('Accepted a peer’s request to pair.', {
+      ...pairing(endpointId, contact),
+      // Whether the peer heard it now or hears it on the next link. The
+      // difference is invisible from here and matters when someone asks why
+      // the other device still says it's waiting.
+      delivered: Boolean(link),
+    });
   },
 );
 
@@ -275,6 +345,9 @@ export const cancelPairingSaga = defineSaga(
       yield* call(releasePeer, link);
       yield commit(peerReleasedTopic(endpointId));
     }
+
+    const contact = (yield* read(contactsStore)).entries[endpointId];
+    logger.info('Withdrew an invite.', pairing(endpointId, contact));
 
     yield* forgetContactSaga(endpointId);
   },

@@ -603,7 +603,10 @@ describe('cancelPairingSaga', () => {
     const link = fakeLink();
 
     const trace = await simulate(cancelPairingSaga('ep-2'), {
-      reads: [[peerHandlesCell, new Map([['ep-2', link]])]],
+      reads: [
+        [peerHandlesCell, new Map([['ep-2', link]])],
+        [contactsStore, bookHolding(fakeContact())],
+      ],
       calls: [
         [releasePeer, release],
         [removeContact, vi.fn()],
@@ -619,7 +622,10 @@ describe('cancelPairingSaga', () => {
 
   it('forgets a contact that was never linked', async () => {
     const trace = await simulate(cancelPairingSaga('ep-2'), {
-      reads: [[peerHandlesCell, new Map()]],
+      reads: [
+        [peerHandlesCell, new Map()],
+        [contactsStore, bookHolding(fakeContact())],
+      ],
       calls: [
         [releasePeer, vi.fn()],
         [removeContact, vi.fn()],
