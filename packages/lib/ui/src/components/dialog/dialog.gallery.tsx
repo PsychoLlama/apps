@@ -163,7 +163,7 @@ const Demo = (props: DemoProps) => {
         }
         size={props.size}
         align={props.align}
-        dismissible={props.dismissible}
+        dismissal={props.dismissal}
         maxWidth={props.maxWidth}
         testId={props.name}
       >
@@ -299,7 +299,17 @@ export default {
       rows: [
         {
           title: 'Dismissible',
-          props: { dismissible: true, name: 'behavior-dismissible' },
+          props: { dismissal: 'any', name: 'behavior-dismissible' },
+        },
+        {
+          title: 'Escape only',
+          props: {
+            title: 'Invite teammates',
+            description:
+              'An outside click is inert, so a stray one cannot lose the form.',
+            dismissal: 'escape',
+            name: 'behavior-escape',
+          },
         },
         {
           title: 'Locked',
@@ -307,7 +317,7 @@ export default {
             title: 'Unsaved changes',
             description:
               'Escape and outside clicks are off, so this has to end in a choice.',
-            dismissible: false,
+            dismissal: 'none',
             name: 'behavior-locked',
           },
         },

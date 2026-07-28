@@ -150,8 +150,8 @@ describe('Dialog', () => {
     expect(overlay.open).toBe(true);
   });
 
-  it('ignores Escape when not dismissible', async () => {
-    const { overlay, onOpenChange } = setup({ dismissible: false });
+  it('ignores Escape when nothing dismisses', async () => {
+    const { overlay, onOpenChange } = setup({ dismissal: 'none' });
 
     await userEvent.keyboard('{Escape}');
 
@@ -189,12 +189,22 @@ describe('Dialog', () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it('ignores an outside click when not dismissible', () => {
-    const { onOpenChange, outside } = setup({ dismissible: false });
+  it('ignores an outside click when nothing dismisses', () => {
+    const { onOpenChange, outside } = setup({ dismissal: 'none' });
 
     pressAndRelease(outside(), outside());
 
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('ignores an outside click but not Escape when escape-only', async () => {
+    const { onOpenChange, outside } = setup({ dismissal: 'escape' });
+
+    pressAndRelease(outside(), outside());
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    await userEvent.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   // --- Native closes ---
@@ -266,8 +276,8 @@ describe('Dialog', () => {
     expect(overlay).not.toHaveAttribute('data-restored');
   });
 
-  it('holds a forced dismissal off a dialog that is not dismissible', async () => {
-    const { overlay, onOpenChange } = setup({ dismissible: false });
+  it('holds a forced dismissal off a dialog nothing dismisses', async () => {
+    const { overlay, onOpenChange } = setup({ dismissal: 'none' });
 
     forceDismiss(overlay);
 

@@ -228,4 +228,9 @@ export {
   type DialogProps,
   type DialogSize,
   type DialogAlign,
+  type DialogDismissal,
 } from './components/dialog/dialog';
+export {
+  default as AlertDialog,
+  type AlertDialogProps,
+} from './components/alert-dialog/alert-dialog';

@@ -23,9 +23,10 @@
  *   counterpart (`show()` doesn't reach the top layer), and a
  *   non-modal overlay is a popover, not a dialog.
  * - `onEscapeKeyDown` / `onPointerDownOutside` / `onInteractOutside`
- *   collapse into one `dismissible` flag. The events existed so callers
- *   could `preventDefault()` their way to a locked dialog; the flag says
- *   that directly.
+ *   collapse into one `dismissal` prop. The events existed so callers
+ *   could `preventDefault()` their way to a locked dialog; naming the
+ *   states says that directly, and the middle one covers the case that
+ *   needed two of them — keyboard dismissal without click-outside.
  * - No `container` prop. Portal targets are moot in the top layer.
  * - No scroll lock. The UA blocks interaction with the document behind
  *   a modal dialog, which is what upstream's `react-remove-scroll`
@@ -43,7 +44,7 @@
  *   and the UA starts closing the element regardless — its guard against
  *   pages that trap you in a dialog. Upstream, running on a `<div>`,
  *   never meets it. Here the dialog is put straight back up without
- *   replaying its entrance, so `dismissible: false` still holds and a
+ *   replaying its entrance, so `dismissal: 'none'` still holds and a
  *   dismissible dialog still closes only when the call site agrees.
  * - Body content mounts with the dialog and unmounts after it closes,
  *   matching upstream. A `<dialog>` would otherwise keep its subtree
@@ -74,13 +75,19 @@ export type DialogSize = 1 | 2 | 3 | 4;
 export type DialogAlign = 'start' | 'center';
 
 /**
+ * Which gestures ask the dialog to close: `'any'` of them, `'escape'`
+ * alone, or `'none'`.
+ */
+export type DialogDismissal = 'any' | 'escape' | 'none';
+
+/**
  * `Dialog` props. Renders a modal `<dialog>` filling the viewport, with
  * the panel centered inside its own scroll surface.
  */
 export interface DialogProps
   extends
     RequiredTestIdProps,
-    Omit<JSX.HTMLAttributes<HTMLDivElement>, 'title' | 'style'> {
+    Omit<JSX.HTMLAttributes<HTMLDivElement>, 'title' | 'style' | 'role'> {
   /** Whether the dialog is showing. */
   open: boolean;
   /**
@@ -97,10 +104,20 @@ export interface DialogProps
   /** Where the panel sits when it's shorter than the viewport. @default 'center' */
   align?: DialogAlign;
   /**
-   * Let Escape and outside clicks close the dialog. Turn off for flows
-   * that must end in an explicit choice. @default true
+   * Which gestures ask the dialog to close. `'any'` is Escape and a
+   * click outside the panel, `'escape'` leaves an outside click inert,
+   * and `'none'` is neither — for flows that must end in an explicit
+   * choice. @default 'any'
    */
-  dismissible?: boolean;
+  dismissal?: DialogDismissal;
+  /**
+   * ARIA role. `'alertdialog'` marks the dialog an interruption
+   * awaiting a decision, which assistive tech announces more
+   * insistently. Reach for `AlertDialog` rather than setting this by
+   * hand — the role is a promise about the whole pattern, not just the
+   * announcement. @default the element's implicit `dialog`
+   */
+  role?: 'alertdialog';
   /** Any CSS width for the panel. @default '600px' */
   maxWidth?: string;
   /** `class` lands on the panel — the visible surface, not the overlay. */
@@ -116,7 +133,7 @@ export interface DialogProps
  */
 const Dialog: ParentComponent<DialogProps> = (rawProps) => {
   const props = mergeProps(
-    { size: 3 as const, align: 'center' as const, dismissible: true },
+    { size: 3 as const, align: 'center' as const, dismissal: 'any' as const },
     rawProps,
   );
   const [tid, withoutTid] = splitProps(props, [...testIdPropKeys]);
@@ -127,11 +144,18 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
     'description',
     'size',
     'align',
-    'dismissible',
+    'dismissal',
+    'role',
     'maxWidth',
     'class',
     'children',
   ]);
+
+  // Two routes, one prop: the keyboard route without the pointer one is
+  // the only combination worth naming, so the states are ordered rather
+  // than crossed.
+  const escapeDismisses = () => local.dismissal !== 'none';
+  const outsideDismisses = () => local.dismissal === 'any';
 
   const titleId = createUniqueId();
   const descriptionId = createUniqueId();
@@ -194,7 +218,7 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
   const onCancel: JSX.EventHandler<HTMLDialogElement, Event> = (event) => {
     forcedDismissal = !event.cancelable;
     event.preventDefault();
-    if (local.dismissible) local.onOpenChange(false);
+    if (escapeDismisses()) local.onOpenChange(false);
   };
 
   // Fires for closes the component didn't initiate: the forced dismissal
@@ -209,7 +233,7 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
     if (!local.open) return;
 
     // A forced dismissal was already offered to the call site by
-    // `onCancel` — or withheld, if the dialog isn't dismissible. Either
+    // `onCancel` — or withheld, if the dialog refuses dismissal. Either
     // way `open` is still true, so the dialog goes back up. Anything
     // else is a fresh request the call site hasn't seen yet.
     if (!forced) local.onOpenChange(false);
@@ -230,7 +254,7 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
   };
 
   const onClick: JSX.EventHandler<HTMLDialogElement, MouseEvent> = (event) => {
-    if (!local.dismissible) return;
+    if (!outsideDismisses()) return;
     if (pressedInsidePanel || isInsidePanel(event.target)) return;
     local.onOpenChange(false);
   };
@@ -244,6 +268,7 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
         overlayRef = el;
       }}
       class={css.overlay}
+      role={local.role}
       aria-labelledby={titleId}
       aria-describedby={
         local.description === undefined ? undefined : descriptionId
