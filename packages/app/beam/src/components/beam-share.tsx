@@ -57,14 +57,16 @@ export const BeamShare = () => {
   /** Whether this link points back at the device reading it. */
   const isSelf = () => endpoint()?.endpointId === params.id;
 
+  /** This peer's record, once the address book has one for it. */
+  const contact = () =>
+    contacts().find((view) => view.endpointId === params.id);
+
   /**
    * What to call the peer. The address book has a name for it the moment the
    * dial records it; before that — and for the first paint of a cold load —
    * its key prefix is the same name both devices would land on anyway.
    */
-  const name = () =>
-    contacts().find((view) => view.endpointId === params.id)?.name ??
-    generateLabel(params.id);
+  const name = () => contact()?.name ?? generateLabel(params.id);
 
   /** Where the pairing stands. Nothing attempted yet reads as `preparing`. */
   const state = (): ShareState => states()[params.id] ?? 'preparing';
@@ -93,9 +95,9 @@ export const BeamShare = () => {
   return (
     <>
       {/* No `:id` in the trail. This route is served from one prerendered
-          shell for every id, and hydration adopts the server's DOM without
-          rewriting attributes — so a param-derived `href` would freeze at
-          the build sentinel. Same rule as the contact page. */}
+          shell for every id, so a param-derived `href` ships the `__id`
+          build sentinel in the markup — live to any tap that lands before
+          hydration replaces it. Same rule as the contact page. */}
       <SiteHeader
         trail={[{ label: 'Beam', href: '/beam' }, { label: 'Share' }]}
         actions={<ConnectionIndicator />}
@@ -115,8 +117,31 @@ export const BeamShare = () => {
           >
             <Flex as="div" direction="column" gap={5}>
               <Flex as="hgroup" direction="column" gap={2}>
+                {/* The name is the way to the peer's record — a title that
+                    happens to be a link, rather than a second line of copy
+                    pointing at one.
+
+                    Only once the contact exists, which is also what keeps
+                    the `href` honest: this route is served from one
+                    prerendered shell for every id, so an anchor in that
+                    markup would ship the `__id` build sentinel and hand it
+                    to anyone who tapped before hydration caught up. The
+                    address book is empty during prerender, so this element
+                    is only ever built on the client, from the record rather
+                    than the route. */}
                 <Heading as="h1" selectable={false}>
-                  {name()}
+                  <Show when={contact()} fallback={name()}>
+                    {(view) => (
+                      <Link
+                        testId="beam-share-contact"
+                        href={`/beam/contacts/${view().endpointId}`}
+                        color="neutral"
+                        underline="hover"
+                      >
+                        {view().name}
+                      </Link>
+                    )}
+                  </Show>
                 </Heading>
 
                 <Text as="p" size={2} color="lowContrast" selectable={false}>
@@ -134,8 +159,8 @@ export const BeamShare = () => {
                   Once paired, the way out is Remove on the contact's page —
                   the same door for a pairing that was never accepted and one
                   that's simply no longer wanted. */}
-              <Flex as="div" direction="row" gap={3} align="center" wrap="wrap">
-                <Show when={state() === 'awaiting' || state() === 'connecting'}>
+              <Show when={state() === 'awaiting' || state() === 'connecting'}>
+                <Flex as="div" direction="row" gap={3} align="center">
                   <Button
                     testId="beam-share-cancel"
                     variant="soft"
@@ -144,16 +169,8 @@ export const BeamShare = () => {
                   >
                     Cancel invite
                   </Button>
-                </Show>
-
-                <Link
-                  testId="beam-share-contact"
-                  href={`/beam/contacts/${params.id}`}
-                  size={2}
-                >
-                  See this device’s details
-                </Link>
-              </Flex>
+                </Flex>
+              </Show>
             </Flex>
           </Show>
         </Container>
