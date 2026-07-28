@@ -1,5 +1,5 @@
-import { Match, onCleanup, onMount, Show, Switch } from 'solid-js';
-import { useEffect } from '@lib/state';
+import { Match, onMount, Show, Switch } from 'solid-js';
+import { useAnchor, useRun, useValue } from '@lib/state-next';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import { Container } from '@lib/ui';
 import { CameraView } from './components/camera-view';
@@ -7,14 +7,16 @@ import { Landing } from './components/landing';
 import { ScannerError } from './components/scanner-error';
 import { ScanResult } from './components/scan-result';
 import {
-  shutdownScannerEffect,
-  startCameraEffect,
-  startDecoderEffect,
-  stopCameraEffect,
-  toggleTorchEffect,
-} from './bindings';
-import { cameraPermissionGranted } from './capabilities';
-import { scanner } from './store';
+  autoStartScanSaga,
+  cameraStore,
+  preloadDecoderSaga,
+  reportSagaFailure,
+  scannerScope,
+  startScanSaga,
+  stopScanSaga,
+  streamCell,
+  toggleTorchSaga,
+} from './state';
 
 /**
  * Scanner app. Drives a camera session: the landing page opens the feed,
@@ -22,52 +24,43 @@ import { scanner } from './store';
  * Errors swap the landing copy for a recovery message. On a recognized
  * code the result surface replaces the feed, showing the raw payload with
  * a control to scan again.
+ *
+ * The anchor is the only lifecycle wiring here: releasing it on cleanup
+ * stops the stream, terminates the decoder worker, and supersedes a request
+ * still waiting on its permission prompt.
  */
 export const QrScanner = () => {
-  const startCamera = useEffect(startCameraEffect);
-  const stopCamera = useEffect(stopCameraEffect);
-  const toggleTorch = useEffect(toggleTorchEffect);
-  const createDecoder = useEffect(startDecoderEffect);
-  const shutdown = useEffect(shutdownScannerEffect);
+  useAnchor(scannerScope);
+  const camera = useValue(cameraStore);
+  const stream = useValue(streamCell);
+  const startScan = useRun(startScanSaga);
+  const autoStart = useRun(autoStartScanSaga);
+  const stopScan = useRun(stopScanSaga);
+  const toggleTorch = useRun(toggleTorchSaga);
+  const preloadDecoder = useRun(preloadDecoderSaga);
 
-  // Latched on unmount so the async permission probe below can tell the
-  // page is gone and skip auto-starting the camera under a torn-down view.
-  let cancelled = false;
+  const start = () =>
+    void startScan().catch(reportSagaFailure('The camera start saga failed.'));
 
-  // Preload the decoder worker + wasm across the whole scanner page so
-  // the module is warm by the time the camera goes live; it outlives
-  // individual camera sessions and is torn down only on unmount.
   onMount(() => {
-    void createDecoder();
-
-    // On a return visit where camera permission already stands, skip the
-    // landing pitch and open the feed straight away. The probe resolves
-    // async, so latch onto this mount and the session's current generation
-    // and bail if either moved: a late resolve must not reopen the camera
-    // under an unmounted page, nor start a request over a session the user
-    // has since driven. Every request start bumps the generation (and a
-    // scan, cancel, or error is always downstream of one), so a still-
-    // matching generation means an untouched fresh mount.
-    const generation = scanner.generation;
-    void cameraPermissionGranted().then((granted) => {
-      if (granted && !cancelled && scanner.generation === generation) {
-        void startCamera();
-      }
-    });
-  });
-
-  // Tear the whole page down in one dispatch on unmount: stop a live
-  // stream, supersede a still-pending request, and terminate the decoder
-  // worker. Safe in any state — each step no-ops when its resource is
-  // absent.
-  onCleanup(() => {
-    cancelled = true;
-    void shutdown();
+    // Neither the worker nor the Permissions API can run during SSG, so both
+    // start once the client mounts. They're independent: the feed is usable
+    // whether or not the decoder has landed, and vice versa.
+    //
+    // The worker is preloaded across the whole scanner page so its wasm is
+    // warm by the time the camera goes live; it outlives individual camera
+    // sessions and is torn down only with the scope.
+    void preloadDecoder().catch(
+      reportSagaFailure('The decoder preload saga failed.'),
+    );
+    void autoStart().catch(
+      reportSagaFailure('The camera auto-start saga failed.'),
+    );
   });
 
   return (
     <Show
-      when={scanner.status === 'streaming' && scanner.stream}
+      when={camera().status === 'streaming' && stream()}
       fallback={
         <Frame>
           <SiteHeader title="Scanner" />
@@ -75,28 +68,23 @@ export const QrScanner = () => {
           <FrameBody>
             <Container as="div" size={1}>
               <Switch>
-                <Match when={scanner.result}>
+                <Match when={camera().result}>
                   {(result) => (
                     <ScanResult
                       text={result().text}
                       kind={result().kind}
                       details={result().details}
-                      onRetry={() => void startCamera()}
+                      onRetry={start}
                     />
                   )}
                 </Match>
-                <Match when={scanner.status === 'error' && scanner.error}>
-                  {(kind) => (
-                    <ScannerError
-                      kind={kind()}
-                      onRetry={() => void startCamera()}
-                    />
-                  )}
+                <Match when={camera().status === 'error' && camera().error}>
+                  {(kind) => <ScannerError kind={kind()} onRetry={start} />}
                 </Match>
                 <Match when={true}>
                   <Landing
-                    requesting={scanner.status === 'requesting'}
-                    onStart={() => void startCamera()}
+                    requesting={camera().status === 'requesting'}
+                    onStart={start}
                   />
                 </Match>
               </Switch>
@@ -105,13 +93,21 @@ export const QrScanner = () => {
         </Frame>
       }
     >
-      {(stream) => (
+      {(live) => (
         <CameraView
-          stream={stream().current}
-          onCancel={() => stopCamera()}
-          torchSupported={scanner.torch.supported}
-          torchOn={scanner.torch.on}
-          onToggleTorch={() => void toggleTorch(!scanner.torch.on)}
+          stream={live()}
+          onCancel={() =>
+            void stopScan().catch(
+              reportSagaFailure('The camera stop saga failed.'),
+            )
+          }
+          torchSupported={camera().torch.supported}
+          torchOn={camera().torch.on}
+          onToggleTorch={() =>
+            void toggleTorch(!camera().torch.on).catch(
+              reportSagaFailure('The torch toggle saga failed.'),
+            )
+          }
         />
       )}
     </Show>

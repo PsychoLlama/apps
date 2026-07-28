@@ -1,18 +1,14 @@
-import { ref } from '@lib/state';
 import MediaDevices from 'media-devices';
 import {
-  CameraAborted,
   CameraError,
   cameraPermissionGranted,
   classifyCameraError,
-  openCameraSession,
+  openCamera,
+  releaseCamera,
   setTorch,
   stopStream,
-  stopStreamForResult,
   supportsTorch,
 } from '../capabilities';
-import type { ScannerState } from '../store';
-import type { ScanResult } from '../worker/rpc';
 
 vi.mock('media-devices', () => ({
   default: { getUserMedia: vi.fn() },
@@ -20,7 +16,17 @@ vi.mock('media-devices', () => ({
 }));
 
 const fakeStream = (tracks: Array<{ stop: ReturnType<typeof vi.fn> }>) =>
-  ({ getTracks: () => tracks }) as unknown as MediaStream;
+  ({
+    getTracks: () => tracks,
+    getVideoTracks: () => [],
+  }) as unknown as MediaStream;
+
+/** A stream whose sole video track reports the given capabilities. */
+const streamWithVideoTrack = (track: object): MediaStream =>
+  ({
+    getTracks: () => [],
+    getVideoTracks: () => [track],
+  }) as unknown as MediaStream;
 
 /** Build an Error carrying a specific `name`, the signal we classify on. */
 const namedError = (name: string): Error => {
@@ -28,6 +34,9 @@ const namedError = (name: string): Error => {
   error.name = name;
   return error;
 };
+
+/** A signal that is never aborted — the ordinary path. */
+const live = (): AbortSignal => new AbortController().signal;
 
 describe('classifyCameraError', () => {
   it('maps permission rejections to permission-denied', () => {
@@ -100,96 +109,60 @@ describe('cameraPermissionGranted', () => {
 });
 
 describe('stopStream', () => {
-  it('stops every track on the active stream', () => {
+  it('stops every track on the stream', () => {
     const tracks = [{ stop: vi.fn() }, { stop: vi.fn() }];
-    const state: ScannerState = {
-      status: 'streaming',
-      stream: ref(fakeStream(tracks)),
-      error: null,
-      torch: { supported: false, on: false },
-      result: null,
-      generation: 1,
-    };
 
-    stopStream(state);
+    stopStream(fakeStream(tracks));
 
     expect(tracks[0].stop).toHaveBeenCalledOnce();
     expect(tracks[1].stop).toHaveBeenCalledOnce();
   });
 
   it('is a no-op when no stream is open', () => {
-    const state: ScannerState = {
-      status: 'idle',
-      stream: null,
-      error: null,
-      torch: { supported: false, on: false },
-      result: null,
-      generation: 0,
-    };
-    expect(() => stopStream(state)).not.toThrow();
+    // The cell's drop hook hands it whatever the cell held, `null` included.
+    expect(() => stopStream(null)).not.toThrow();
   });
 });
 
-describe('stopStreamForResult', () => {
-  it('releases the camera and forwards the result for recording', () => {
+describe('releaseCamera', () => {
+  it('stops the stream it is handed', () => {
     const tracks = [{ stop: vi.fn() }];
-    const state: ScannerState = {
-      status: 'streaming',
-      stream: ref(fakeStream(tracks)),
-      error: null,
-      torch: { supported: false, on: false },
-      result: null,
-      generation: 1,
-    };
-    const result: ScanResult = {
-      text: 'https://example.com',
-      format: 'QR_CODE',
-      kind: 'url',
-      details: [],
-    };
 
-    expect(stopStreamForResult(state, result)).toEqual(result);
+    releaseCamera(live(), fakeStream(tracks));
+
     expect(tracks[0].stop).toHaveBeenCalledOnce();
   });
+
+  it('is a no-op when nothing is streaming', () => {
+    expect(() => releaseCamera(live(), null)).not.toThrow();
+  });
 });
 
-describe('openCameraSession', () => {
-  const requestingState = (generation: number): ScannerState => ({
-    status: 'requesting',
-    stream: null,
-    error: null,
-    torch: { supported: false, on: false },
-    result: null,
-    generation,
-  });
-
-  it('returns the stream when the request is not superseded', async () => {
-    const stream = fakeStream([{ stop: vi.fn() }]);
+describe('openCamera', () => {
+  it('resolves with the live stream and its torch support', async () => {
+    const stream = streamWithVideoTrack({
+      getCapabilities: () => ({ torch: true }),
+    });
     vi.mocked(MediaDevices.getUserMedia).mockResolvedValueOnce(stream);
 
-    await expect(openCameraSession(requestingState(1))).resolves.toBe(stream);
+    await expect(openCamera(live())).resolves.toEqual({ stream, torch: true });
   });
 
-  it('stops the stream and aborts when superseded mid-prompt', async () => {
+  it('stops the stream and throws when superseded mid-prompt', async () => {
     const tracks = [{ stop: vi.fn() }];
-    vi.mocked(MediaDevices.getUserMedia).mockResolvedValueOnce(
-      fakeStream(tracks),
-    );
+    const controller = new AbortController();
+    vi.mocked(MediaDevices.getUserMedia).mockImplementationOnce(async () => {
+      // The page went away while the permission prompt was still open.
+      controller.abort();
+      return fakeStream(tracks);
+    });
 
-    // A live view whose generation is bumped while getUserMedia is pending,
-    // mimicking the user navigating away before the prompt resolves.
-    const state = requestingState(1);
-    const pending = openCameraSession(state);
-    state.generation = 2;
-
-    await expect(pending).rejects.toBeInstanceOf(CameraAborted);
+    await expect(openCamera(controller.signal)).rejects.toThrow();
+    // `getUserMedia` can't be cancelled, so the orphan is stopped here or
+    // the camera stays live with nothing holding it.
     expect(tracks[0].stop).toHaveBeenCalledOnce();
   });
 });
-
-/** A stream whose sole video track reports the given capabilities. */
-const streamWithVideoTrack = (track: object): MediaStream =>
-  ({ getVideoTracks: () => [track] }) as unknown as MediaStream;
 
 describe('supportsTorch', () => {
   it('is true when the video track reports a torch capability', () => {
@@ -216,35 +189,25 @@ describe('supportsTorch', () => {
 });
 
 describe('setTorch', () => {
-  const streamingState = (track: object): ScannerState => ({
-    status: 'streaming',
-    stream: ref(streamWithVideoTrack(track)),
-    error: null,
-    torch: { supported: true, on: false },
-    result: null,
-    generation: 1,
-  });
-
   it('applies the torch constraint and resolves with the requested state', async () => {
     const applyConstraints = vi.fn().mockResolvedValue(undefined);
-    const state = streamingState({ applyConstraints });
+    const stream = streamWithVideoTrack({ applyConstraints });
 
-    await expect(setTorch(state, true)).resolves.toBe(true);
+    await expect(setTorch(live(), stream, true)).resolves.toBe(true);
     expect(applyConstraints).toHaveBeenCalledWith({
       advanced: [{ torch: true }],
     });
   });
 
   it('is a no-op resolving with the request when no stream is open', async () => {
-    const state: ScannerState = {
-      status: 'idle',
-      stream: null,
-      error: null,
-      torch: { supported: false, on: false },
-      result: null,
-      generation: 0,
-    };
+    await expect(setTorch(live(), null, true)).resolves.toBe(true);
+  });
 
-    await expect(setTorch(state, true)).resolves.toBe(true);
+  it('rejects when the hardware refuses the constraint', async () => {
+    const stream = streamWithVideoTrack({
+      applyConstraints: vi.fn().mockRejectedValue(new Error('nope')),
+    });
+
+    await expect(setTorch(live(), stream, true)).rejects.toThrow('nope');
   });
 });
