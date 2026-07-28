@@ -1,15 +1,7 @@
 import { Show } from 'solid-js';
 import { useValue } from '@lib/state-next';
 import { FrameBody, SiteHeader } from '@lib/shell';
-import {
-  Callout,
-  Container,
-  Flex,
-  Heading,
-  LinkButton,
-  Strong,
-  Text,
-} from '@lib/ui';
+import { Callout, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
 import { ConnectionIndicator } from './connection-indicator';
@@ -33,7 +25,34 @@ export const BeamHome = () => {
 
   return (
     <>
-      <SiteHeader title="Beam" actions={<ConnectionIndicator />} />
+      {/* The name sits in the header rather than in the copy below it. It's
+          this device's identity, which is chrome — the same class of thing as
+          the connection status it sits beside — and putting it here leaves the
+          headline free to say what the page is for. It only exists once the
+          relay connection lands, so the tray simply holds the status alone
+          until then; a placeholder name is a lie someone might read out to the
+          person beside them. */}
+      <SiteHeader
+        title="Beam"
+        actions={
+          <>
+            <Show when={selfLabel()}>
+              {(label) => (
+                <Text
+                  as="span"
+                  size={2}
+                  color="lowContrast"
+                  title="The name other devices see you by"
+                  selectable
+                >
+                  {label()}
+                </Text>
+              )}
+            </Show>
+            <ConnectionIndicator />
+          </>
+        }
+      />
       <FrameBody>
         <Container as="div" size={2}>
           <Flex as="div" direction="column" gap={5}>
@@ -42,24 +61,9 @@ export const BeamHome = () => {
                 Beam
               </Heading>
 
-              {/* The name is generated from this device's endpoint key, so it
-                  only exists once the relay connection lands. Until then the
-                  line says what the page is for instead — a placeholder name
-                  is a lie someone might read out to the person beside them. */}
-              <Show
-                when={selfLabel()}
-                fallback={
-                  <Text as="p" size={2} color="lowContrast" selectable={false}>
-                    Share links and files with your other devices.
-                  </Text>
-                }
-              >
-                {(label) => (
-                  <Text as="p" size={2} color="lowContrast" selectable={false}>
-                    Other devices see you as <Strong>{label()}</Strong>.
-                  </Text>
-                )}
-              </Show>
+              <Text as="p" size={2} color="lowContrast" selectable={false}>
+                Share links and files with your other devices.
+              </Text>
             </Flex>
 
             <Show when={book().status === 'failed'}>
