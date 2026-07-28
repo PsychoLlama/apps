@@ -62,16 +62,26 @@ defineFold(contactForgottenTopic, [requestsStore], (requests, endpointId) => {
  * device happens to be awake is one you'd miss. Accepting an absent peer
  * still promotes the pairing here; the peer learns of it the next time the
  * two connect.
+ *
+ * Ordered oldest first, unlike the address book's alphabetical sort. These
+ * are a queue of unanswered questions, and the one that has been waiting
+ * longest is the one to answer first.
  */
 export const pairingRequestsFormula = defineFormula(
   [addressBookFormula, requestsStore],
   (contacts, requests): ContactView[] =>
-    contacts.filter(
-      (contact) =>
-        contact.trust === 'invited' &&
-        contact.direction === 'inbound' &&
-        !requests.dismissed[contact.endpointId],
-    ),
+    contacts
+      .filter(
+        (contact) =>
+          contact.trust === 'invited' &&
+          contact.direction === 'inbound' &&
+          !requests.dismissed[contact.endpointId],
+      )
+      .sort(
+        (left, right) =>
+          left.createdAt - right.createdAt ||
+          left.endpointId.localeCompare(right.endpointId),
+      ),
 );
 
 /**

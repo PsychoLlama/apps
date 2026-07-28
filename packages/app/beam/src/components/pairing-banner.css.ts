@@ -11,9 +11,16 @@ import { background, neutral, space } from '@lib/design';
  * Bottom rather than top: it's the only chrome here that wants a tap, and
  * the bottom of a phone is where a thumb already is. The top border and
  * opaque surface separate it from the content scrolling past behind it.
+ *
+ * Requests stack, so the tray is capped and scrolls. Half the viewport
+ * leaves the page underneath legible no matter how many peers are asking —
+ * without a ceiling a pile of requests would push the content off the top
+ * of the screen.
  */
 export const tray = style({
   padding: space[5],
   borderTop: `1px solid ${neutral.alpha[6]}`,
   backgroundColor: background.page,
+  maxHeight: '50dvh',
+  overflowY: 'auto',
 });

@@ -106,6 +106,20 @@ describe('pairingRequestsFormula', () => {
     expect(peek(requestsStore).dismissed).toEqual({});
   });
 
+  it('queues several peers oldest first', () => {
+    const { peek } = setup([
+      fakeContact({ endpointId: 'ep-2', label: 'Aardvark', createdAt: 20 }),
+      fakeContact({ endpointId: 'ep-1', label: 'Zebra', createdAt: 10 }),
+    ]);
+
+    // Arrival order, not the address book's alphabetical sort: these are
+    // unanswered questions, and the one waiting longest comes first.
+    expect(peek(pairingRequestsFormula)).toMatchObject([
+      { endpointId: 'ep-1' },
+      { endpointId: 'ep-2' },
+    ]);
+  });
+
   it('surfaces a request that outlived the session it arrived in', () => {
     // An invite is persisted precisely so it survives a reload; a request
     // answerable only while the other device is awake is one you'd miss.
