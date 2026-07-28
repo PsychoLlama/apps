@@ -4,7 +4,7 @@ Modal dialog built on a native `<dialog>` promoted to the top layer by `showModa
 
 A single flat export, not a compound: the title and description are props, openers are ordinary buttons the call site already owns, and closing is `onOpenChange(false)`. Fully controlled — there is no `defaultOpen`. Modal only.
 
-The panel fills its own scroll surface, so content taller than the viewport scrolls with the panel rather than being clipped. Body content mounts when the dialog opens and unmounts after the exit animation settles, so form state does not survive a close.
+The panel fills its own scroll surface, so content taller than the viewport scrolls with the panel rather than being clipped. `align="center"` centers within the layout viewport, so the host page needs `interactive-widget=resizes-content` in its viewport meta for an on-screen keyboard to count against that space (`@app/main` declares it; iOS Safari ignores it). Body content mounts when the dialog opens and unmounts after the exit animation settles, so form state does not survive a close.
 
 Initial focus is the platform's: the first `autofocus` descendant, else the first focusable one, else the dialog itself.
 

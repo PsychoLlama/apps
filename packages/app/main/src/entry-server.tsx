@@ -18,9 +18,16 @@ export default createHandler(() => (
       <html lang="en" data-theme={DEFAULT_THEME_ID}>
         <head>
           <meta charset="utf-8" />
+          {/* `interactive-widget=resizes-content` shrinks the layout
+              viewport when the on-screen keyboard opens, not just the
+              visual one. Without it a `position: fixed` surface still
+              spans the full screen and centers itself against space the
+              keyboard is covering — a centered `<Dialog>` can land
+              behind it. Chromium honors this; iOS Safari still behaves
+              as `resizes-visual`. */}
           <meta
             name="viewport"
-            content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+            content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"
           />
           {/* Paired `theme-color` meta tags drive the browser-chrome
               color per OS scheme. SSG-seeded with the `DEFAULT_THEME_ID`

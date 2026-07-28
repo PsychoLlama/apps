@@ -38,6 +38,9 @@
  *   responsive object form would defeat that and bloat the bundle).
  * - Drops the `width` / `minWidth` / `height` escape hatches. `maxWidth`
  *   is the one that earns its keep; the rest are a `class` away.
+ * - Adds the safe-area insets to the panel's gutters. Upstream measures
+ *   them from the screen edge, which on a `viewport-fit=cover` page puts
+ *   the panel under the notch and the home indicator.
  * - Skips `highContrast` (deferred deviation).
  *
  * @see https://www.radix-ui.com/themes/docs/components/dialog
@@ -146,15 +149,26 @@ export const scroll = style({
  * `margin: auto` centers the panel in whatever space is left over —
  * which, unlike `justify-content`, still lets an overflowing panel
  * scroll to its own top edge instead of being clipped.
+ *
+ * The space it centers within is the layout viewport, so the host page
+ * has to declare `interactive-widget=resizes-content` for an on-screen
+ * keyboard to count against it. Otherwise the keyboard shrinks only the
+ * visual viewport and a centered panel can sit behind it.
  */
 export const scrollPadding = style({
   flexGrow: 1,
   margin: 'auto',
-  paddingBlockStart: space[6],
+  // The page is `viewport-fit=cover` and the dialog is `inset: 0`, so
+  // these gutters start at the screen edge — under the notch and the
+  // home indicator. Adding the safe-area insets measures the panel's
+  // breathing room from the safe area inward instead, matching how
+  // `@lib/shell` pads its header. Upstream doesn't handle this at all.
+  paddingBlockStart: `calc(${space[6]} + env(safe-area-inset-top))`,
   // Leaves the panel visibly off the bottom edge on tall viewports
   // without eating the screen on short ones.
-  paddingBlockEnd: `max(${space[6]}, 6vh)`,
-  paddingInline: space[4],
+  paddingBlockEnd: `calc(max(${space[6]}, 6vh) + env(safe-area-inset-bottom))`,
+  paddingInlineStart: `calc(${space[4]} + env(safe-area-inset-left))`,
+  paddingInlineEnd: `calc(${space[4]} + env(safe-area-inset-right))`,
 });
 
 export const align = styleVariants({
