@@ -12,8 +12,8 @@
  * - The buttons are the API, not children. Upstream's `Action` /
  *   `Cancel` are `Dialog.Close` in a trench coat, and every one of its
  *   examples lays them out the same way; the pair is what makes this an
- *   alert dialog rather than a dialog, so it's `action` / `cancel`
- *   props and a layout the component owns. What's left for `children`
+ *   alert dialog rather than a dialog, so it's `actionText` /
+ *   `cancelText` and a layout the component owns. What's left for `children`
  *   is the occasional extra — a confirmation field, a list of what's
  *   about to be lost.
  * - `onAction` reports the choice; it doesn't perform the close.
@@ -77,14 +77,14 @@ export interface AlertDialogProps
    */
   description: JSX.Element;
   /** Label for the confirming button. */
-  action: JSX.Element;
+  actionText: JSX.Element;
   /**
    * Fires when the user confirms, just before the close request. Do the
    * work here; leave the closing to `onOpenChange`.
    */
   onAction: () => void;
   /** Label for the button that backs out. @default 'Cancel' */
-  cancel?: JSX.Element;
+  cancelText?: JSX.Element;
   /**
    * Semantic color for the confirming button. Reach for `'danger'` when
    * the action destroys something. @default 'accent'
@@ -115,7 +115,7 @@ export interface AlertDialogProps
  */
 const AlertDialog: Component<AlertDialogProps> = (rawProps) => {
   const props = mergeProps(
-    { cancel: 'Cancel', color: 'accent' as const, maxWidth: '450px' },
+    { cancelText: 'Cancel', color: 'accent' as const, maxWidth: '450px' },
     rawProps,
   );
   const [tid, withoutTid] = splitProps(props, [...testIdPropKeys]);
@@ -124,9 +124,9 @@ const AlertDialog: Component<AlertDialogProps> = (rawProps) => {
     'onOpenChange',
     'title',
     'description',
-    'action',
+    'actionText',
     'onAction',
-    'cancel',
+    'cancelText',
     'color',
     'size',
     'align',
@@ -146,7 +146,7 @@ const AlertDialog: Component<AlertDialogProps> = (rawProps) => {
     <Dialog
       {...rest}
       role="alertdialog"
-      dismissible="escape"
+      dismissal="escape"
       open={local.open}
       onOpenChange={local.onOpenChange}
       title={local.title}
@@ -174,7 +174,7 @@ const AlertDialog: Component<AlertDialogProps> = (rawProps) => {
           testId={`${tid.testId}-cancel`}
           onClick={() => local.onOpenChange(false)}
         >
-          {local.cancel}
+          {local.cancelText}
         </Button>
         <Button
           as="button"
@@ -182,7 +182,7 @@ const AlertDialog: Component<AlertDialogProps> = (rawProps) => {
           testId={`${tid.testId}-action`}
           onClick={onConfirm}
         >
-          {local.action}
+          {local.actionText}
         </Button>
       </Flex>
     </Dialog>

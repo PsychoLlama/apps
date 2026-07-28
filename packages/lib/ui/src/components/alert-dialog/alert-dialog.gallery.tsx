@@ -52,8 +52,8 @@ const Demo = (props: DemoProps) => {
           props.description ??
           'Northwind and everything in it is removed for good. This cannot be undone.'
         }
-        action={props.action ?? 'Delete project'}
-        cancel={props.cancel}
+        actionText={props.actionText ?? 'Delete project'}
+        cancelText={props.cancelText}
         color={props.color ?? 'danger'}
         size={props.size}
         align={props.align}
@@ -115,7 +115,7 @@ export default {
             title: 'Publish changes',
             description:
               'Northwind goes live for everyone in the workspace right away.',
-            action: 'Publish',
+            actionText: 'Publish',
             name: 'tone-accent',
           },
         },
@@ -126,7 +126,7 @@ export default {
             title: 'Sign out everywhere',
             description:
               'Every session on every device ends. You will have to sign in again.',
-            action: 'Sign out',
+            actionText: 'Sign out',
             name: 'tone-neutral',
           },
         },
@@ -141,7 +141,7 @@ export default {
             title: 'Overwrite the saved draft',
             description:
               'The draft from Tuesday is replaced by what is on screen now.',
-            action: 'Overwrite',
+            actionText: 'Overwrite',
             name: 'tone-warning',
           },
         },
@@ -152,7 +152,7 @@ export default {
             title: 'Approve access request',
             description:
               'Ada gets editor access to Northwind and an email saying so.',
-            action: 'Approve',
+            actionText: 'Approve',
             name: 'tone-success',
           },
         },
@@ -182,7 +182,7 @@ export default {
         },
         {
           title: 'Custom cancel',
-          props: { cancel: 'Keep the project', name: 'content-cancel' },
+          props: { cancelText: 'Keep the project', name: 'content-cancel' },
         },
       ],
     },

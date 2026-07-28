@@ -11,9 +11,9 @@ Base: `<div>` attributes on the panel (except `title`, `style`, `role`).
 - `onOpenChange` (required): Fires when the user asks to close — Escape, Cancel, or right after a confirm. Only ever called with `false`; declining it keeps the dialog up (e.g. while a confirm is in flight).
 - `title` (required): Heading at the top of the panel. Also the accessible name.
 - `description` (required): What the choice costs. Wired to `aria-describedby`.
-- `action` (required): Label for the confirming button.
+- `actionText` (required): Label for the confirming button.
 - `onAction` (required): Fires when the user confirms, just before the close request. Do the work here; leave closing to `onOpenChange`.
-- `cancel` (=`'Cancel'`): Label for the button that backs out.
+- `cancelText` (=`'Cancel'`): Label for the button that backs out.
 - `color` (=`'accent'`): Semantic color for the confirming button. `'accent' | 'neutral' | 'danger' | 'warning' | 'success'`.
 - `size` (=`3`): Panel padding and rounding. `1 | 2 | 3 | 4`.
 - `align` (=`'center'`): Where the panel sits when shorter than the viewport. `'start' | 'center'`.

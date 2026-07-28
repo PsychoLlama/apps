@@ -28,7 +28,7 @@ const setup = (overrides: Overrides = {}) => {
     <AlertDialog
       title="Delete project"
       description="Northwind is removed for good."
-      action="Delete"
+      actionText="Delete"
       testId="alert"
       {...overrides}
       open={open()}
@@ -150,8 +150,8 @@ describe('AlertDialog', () => {
 
   it('labels the buttons from props', () => {
     const { cancel, action } = setup({
-      cancel: 'Keep it',
-      action: 'Delete forever',
+      cancelText: 'Keep it',
+      actionText: 'Delete forever',
     });
 
     expect(cancel()).toHaveTextContent('Keep it');
