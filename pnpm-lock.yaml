@@ -349,8 +349,8 @@ importers:
         specifier: ^0.16.1
         version: 0.16.1(solid-js@1.9.14)
       '@solidjs/start':
-        specifier: 2.0.0-rc.2
-        version: 2.0.0-rc.2(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
+        specifier: 2.0.0-rc.3
+        version: 2.0.0-rc.3(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.1
@@ -2354,8 +2354,8 @@ packages:
     peerDependencies:
       solid-js: 1.9.14
 
-  '@solidjs/start@2.0.0-rc.2':
-    resolution: {integrity: sha512-LqLJr7FOjcN64U7fzpIYpJaQ16qJYKV74yKpStDybgmvpKle5Dt8H2vr80PYoWKFCzTCDCAxh2HX3+VZNGd3Xg==}
+  '@solidjs/start@2.0.0-rc.3':
+    resolution: {integrity: sha512-kNOtSe0Q8Zj2zNoJ76UTqXN8zdBZ3d46spyh3wP0eehg5O98TZGbcek2UbD2KX4CBysthT06l4bmcxq1fpknqg==}
     engines: {node: '>=24'}
     peerDependencies:
       vite: ^8.0.0
@@ -3580,8 +3580,8 @@ packages:
   h3@1.15.11:
     resolution: {integrity: sha512-L3THSe2MPeBwgIZVSH5zLdBBU90TOxarvhK9d04IDY2AmVS8j2Jz2LIWtwsGOU3lu2I5jCN7FNvVfY2+XyF+mg==}
 
-  h3@2.0.1-rc.25:
-    resolution: {integrity: sha512-uIK++Up28xDt4n0+bSWfVssRivNXpUmMmA6CCiK6j9+utLcBMcFK97Gn9PlSZwAPW9oLy3CjGJ4ag40CY9YYtQ==}
+  h3@2.0.1-rc.26:
+    resolution: {integrity: sha512-GDxlvDsKxgjRvG5UBRJYyGJTMWLV30CJ4cV+e7QCTgftDHihrvio1fVPbNembhEr6J4WNm8IWy3fookgyTweLw==}
     engines: {node: '>=20.11.1'}
     hasBin: true
     peerDependencies:
@@ -4738,11 +4738,6 @@ packages:
 
   space-separated-tokens@2.0.2:
     resolution: {integrity: sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q==}
-
-  srvx@0.11.22:
-    resolution: {integrity: sha512-LqZxxBDMKuMAZzFzJnDCkFOrs9MZQZr0LvHiO/SuSZVdQaXD7xQ5UWTUxheJrQPve1qk9MG2B/yttUvJxw8egQ==}
-    engines: {node: '>=20.16.0'}
-    hasBin: true
 
   srvx@0.12.4:
     resolution: {integrity: sha512-RixzFlMn3dvzDTpKIAXhXrqL4cy6vScNCP0VVwgVbUBU94o+DiXLsFnAZetbyKAEnK6Ox3hzHXWGsyv/Iibv7g==}
@@ -6571,7 +6566,7 @@ snapshots:
     dependencies:
       solid-js: 1.9.14
 
-  '@solidjs/start@2.0.0-rc.2(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
+  '@solidjs/start@2.0.0-rc.3(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/traverse': 7.29.7
@@ -6583,7 +6578,7 @@ snapshots:
       defu: 6.1.7
       error-stack-parser: 2.1.4
       fast-glob: 3.3.3
-      h3: 2.0.1-rc.25
+      h3: 2.0.1-rc.26
       html-to-image: 1.11.13
       micromatch: 4.0.8
       oxc-parser: 0.139.0
@@ -8090,10 +8085,10 @@ snapshots:
       ufo: 1.6.4
       uncrypto: 0.1.3
 
-  h3@2.0.1-rc.25:
+  h3@2.0.1-rc.26:
     dependencies:
       rou3: 0.9.1
-      srvx: 0.11.22
+      srvx: 0.12.4
 
   has-bigints@1.1.0: {}
 
@@ -9492,8 +9487,6 @@ snapshots:
   source-map@0.7.6: {}
 
   space-separated-tokens@2.0.2: {}
-
-  srvx@0.11.22: {}
 
   srvx@0.12.4: {}
 
