@@ -6,6 +6,7 @@
 import { createTestRuntime } from '@lib/state';
 import type { PeerConnection } from '@crate/iroh';
 import {
+  activeContactsFormula,
   pairingRequestsFormula,
   requestDismissedTopic,
   requestsStore,
@@ -126,6 +127,42 @@ describe('pairingRequestsFormula', () => {
     const { peek } = setup([fakeContact()]);
 
     expect(peek(pairingRequestsFormula)).toHaveLength(1);
+  });
+});
+
+describe('activeContactsFormula', () => {
+  it('surfaces a paired device with a live link', () => {
+    const { commit, peek } = setup([
+      fakeContact({ trust: 'trusted', label: 'Studio Mac' }),
+    ]);
+
+    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
+
+    expect(peek(activeContactsFormula)).toMatchObject([{ name: 'Studio Mac' }]);
+  });
+
+  it('ignores a paired device nothing has reached', () => {
+    const { peek } = setup([fakeContact({ trust: 'trusted' })]);
+
+    // Empty at every first paint: nothing is linked until something dials.
+    expect(peek(activeContactsFormula)).toEqual([]);
+  });
+
+  it('ignores a linked peer that hasn’t accepted', () => {
+    const { commit, peek } = setup([fakeContact({ trust: 'invited' })]);
+
+    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
+
+    // A link isn't permission. Nothing can be shared with this one yet.
+    expect(peek(activeContactsFormula)).toEqual([]);
+  });
+
+  it('ignores a peer whose dial never landed', () => {
+    const { commit, peek } = setup([fakeContact({ trust: 'trusted' })]);
+
+    commit(peerUnreachableTopic('ep-1'));
+
+    expect(peek(activeContactsFormula)).toEqual([]);
   });
 });
 

@@ -19,6 +19,7 @@ export type { QrGrid } from './qr-code';
 export { selfLabelFormula } from './identity';
 export { inviteStore, inviteOpenedTopic, inviteClosedTopic } from './invite';
 export {
+  activeContactsFormula,
   pairingRequestsFormula,
   requestDismissedTopic,
   shareStatesFormula,
@@ -28,6 +29,7 @@ export {
   copyNoticeStore,
   draftChangedTopic,
   draftsStore,
+  queuedSharesFormula,
   SHARE_MAX_LENGTH,
   shareLink,
   sharesByPeerFormula,
