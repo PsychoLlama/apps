@@ -1,21 +1,28 @@
 /**
- * Unit tests for the beam session's sagas. These run under `simulate`, so
+ * Unit tests for the beam session's sagas. Most run under `simulate`, so
  * there's no runtime and no state — every capability is stubbed and the
  * assertions are about what the saga published, which is exactly where the
  * one-transition guarantee lives.
+ *
+ * The exception is at the bottom: a saga whose behaviour turns on state
+ * changing *underneath it* can't be simulated, because a stubbed read hands
+ * back the same value every time. Those run against a real runtime.
  */
 
-import { simulate } from '@lib/state';
+import { createTestRuntime, simulate } from '@lib/state';
 import type { PeerConnection, Relay } from '@crate/iroh';
 import {
   acceptInboundPeers,
+  copyText,
   dialEndpoint,
   encodeBeamCode,
   listenToPeer,
+  newShareId,
   openConnection,
   receiveNext,
   releasePeer,
   sendMessage,
+  wait,
 } from '../capabilities';
 import {
   connectFailedTopic,
@@ -34,28 +41,45 @@ import {
   peerReleasedTopic,
   peerUnreachableTopic,
 } from '../peers';
-import { acceptMessage, helloMessage } from '../protocol';
+import { acceptMessage, helloMessage, shareMessage } from '../protocol';
 import { codeEncodedTopic, type QrGrid } from '../qr-code';
+import {
+  COPY_NOTICE_DURATION,
+  copyNoticeExpiredTopic,
+  draftClearedTopic,
+  shareCopiedTopic,
+  shareLogStore,
+  shareQueuedTopic,
+  shareReceivedTopic,
+  shareSentTopic,
+  type Share,
+} from '../shares';
 import {
   acceptPairingSaga,
   applyPeerMessageSaga,
   cancelPairingSaga,
   connectRelaySaga,
+  copyShareSaga,
   dialPeerSaga,
+  flushSharesSaga,
   greetPeerSaga,
   linkPeerSaga,
+  receiveShareSaga,
   serveInboundSaga,
+  shareTextSaga,
 } from '../sagas';
 import { now, saveContact, removeContact } from '../../contacts/capabilities';
 import {
   contactAdvertisedTopic,
   contactForgottenTopic,
   contactSeenTopic,
+  contactsRestoredTopic,
   contactsStore,
   pairingAcceptedTopic,
   pairingConfirmedTopic,
 } from '../../contacts/contacts';
 import type { Contact } from '../../contacts/database';
+import { beamScope } from '../../scope';
 
 /** A stand-in endpoint. The sagas only read its id and hand it onward. */
 const fakeRelay = { endpointId: 'ep-1' } as Relay;
@@ -82,6 +106,15 @@ const bookHolding = (...contacts: Contact[]) => ({
   entries: Object.fromEntries(
     contacts.map((contact) => [contact.endpointId, contact]),
   ),
+});
+
+const fakeShare = (overrides: Partial<Share> = {}): Share => ({
+  id: 'share-1',
+  endpointId: 'ep-2',
+  body: 'hello',
+  status: 'queued',
+  at: 1,
+  ...overrides,
 });
 
 describe('connectRelaySaga', () => {
@@ -283,6 +316,7 @@ describe('linkPeerSaga', () => {
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
         [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+        [shareLogStore, { items: [] }],
       ],
       calls: [...wiring(), [sendMessage, send]],
     });
@@ -314,6 +348,30 @@ describe('linkPeerSaga', () => {
       expect.anything(),
       acceptMessage(),
     );
+  });
+
+  it('sends what was queued while the peer was away', async () => {
+    const send = vi.fn(() => true);
+    const link = fakeLink();
+
+    const trace = await simulate(linkPeerSaga({ endpointId: 'ep-2', link }), {
+      reads: [
+        [peerHandlesCell, new Map()],
+        [selfLabelFormula, 'abcd1234'],
+        [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+        [shareLogStore, { items: [fakeShare({ body: 'kettle is on' })] }],
+      ],
+      calls: [...wiring(), [sendMessage, send]],
+    });
+
+    // The other half of queueing: a share written to a sleeping device is
+    // held until the device turns up, and turning up is this.
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      link,
+      shareMessage('kettle is on'),
+    );
+    expect(trace.commits.at(-1)).toEqual([shareSentTopic('share-1')]);
   });
 
   it('closes the link it replaces', async () => {
@@ -397,6 +455,35 @@ describe('applyPeerMessageSaga', () => {
     );
 
     expect(trace.commits).toEqual([[pairingConfirmedTopic('ep-2')]]);
+  });
+
+  it('takes a share through the saga that judges the sender', async () => {
+    const trace = await simulate(
+      applyPeerMessageSaga({
+        endpointId: 'ep-2',
+        message: shareMessage('kettle is on'),
+      }),
+      {
+        reads: [
+          [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+        ],
+        calls: [
+          [now, () => 1234],
+          [newShareId, () => 'share-1'],
+        ],
+      },
+    );
+
+    expect(trace.commits).toEqual([
+      [
+        shareReceivedTopic({
+          id: 'share-1',
+          endpointId: 'ep-2',
+          body: 'kettle is on',
+          at: 1234,
+        }),
+      ],
+    ]);
   });
 });
 
@@ -560,6 +647,7 @@ describe('acceptPairingSaga', () => {
       reads: [
         [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
         [peerHandlesCell, new Map([['ep-2', link]])],
+        [shareLogStore, { items: [] }],
       ],
       calls: [
         [saveContact, vi.fn()],
@@ -633,5 +721,379 @@ describe('cancelPairingSaga', () => {
     });
 
     expect(trace.commits).toEqual([[contactForgottenTopic('ep-2')]]);
+  });
+});
+
+describe('shareTextSaga', () => {
+  /** Reads a share makes on its way out to a peer that can't take it yet. */
+  const unreachable = () =>
+    [
+      [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+      [peerHandlesCell, new Map()],
+      [shareLogStore, { items: [] }],
+    ] as const;
+
+  it('queues the share and clears the draft together', async () => {
+    const trace = await simulate(
+      shareTextSaga({ endpointId: 'ep-2', body: 'kettle is on' }),
+      {
+        reads: [...unreachable()],
+        calls: [
+          [now, () => 1234],
+          [newShareId, () => 'share-1'],
+        ],
+      },
+    );
+
+    // One transition: a paint between the two would show an empty field
+    // above a log that hasn't gained the row yet.
+    expect(trace.commits).toEqual([
+      [
+        shareQueuedTopic({
+          id: 'share-1',
+          endpointId: 'ep-2',
+          body: 'kettle is on',
+          at: 1234,
+        }),
+        draftClearedTopic('ep-2'),
+      ],
+    ]);
+  });
+
+  it('says nothing about a body of whitespace', async () => {
+    const trace = await simulate(
+      shareTextSaga({ endpointId: 'ep-2', body: '   \n  ' }),
+      {
+        reads: [...unreachable()],
+        calls: [
+          [now, () => 1234],
+          [newShareId, () => 'share-1'],
+        ],
+      },
+    );
+
+    expect(trace.commits).toEqual([]);
+  });
+
+  it('sends what it queued when the peer is there', async () => {
+    const send = vi.fn(() => true);
+    const link = fakeLink();
+
+    const trace = await simulate(
+      shareTextSaga({ endpointId: 'ep-2', body: 'kettle is on' }),
+      {
+        reads: [
+          [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+          [peerHandlesCell, new Map([['ep-2', link]])],
+          [shareLogStore, { items: [fakeShare({ body: 'kettle is on' })] }],
+        ],
+        calls: [
+          [now, () => 1234],
+          [newShareId, () => 'share-1'],
+          [sendMessage, send],
+        ],
+      },
+    );
+
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      link,
+      shareMessage('kettle is on'),
+    );
+    expect(trace.commits.at(-1)).toEqual([shareSentTopic('share-1')]);
+  });
+});
+
+describe('flushSharesSaga', () => {
+  /** A flush aimed at the peer every fixture here is about. */
+  const flush = () => flushSharesSaga({ endpointId: 'ep-2', link: fakeLink() });
+
+  it('holds everything back from a peer that hasn’t accepted', async () => {
+    const send = vi.fn(() => true);
+
+    const trace = await simulate(flush(), {
+      reads: [
+        [contactsStore, bookHolding(fakeContact({ trust: 'invited' }))],
+        [shareLogStore, { items: [fakeShare()] }],
+      ],
+      calls: [[sendMessage, send]],
+    });
+
+    // The queue fills from the moment the composer does, which is before the
+    // peer has answered. Sending anyway would hand text to a stranger.
+    expect(send).not.toHaveBeenCalled();
+    expect(trace.commits).toEqual([]);
+  });
+
+  it('sends the queue in the order it was written', async () => {
+    const sent: string[] = [];
+
+    const trace = await simulate(flush(), {
+      reads: [
+        [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+        [
+          shareLogStore,
+          {
+            items: [
+              fakeShare({ id: 'share-1', body: 'first' }),
+              fakeShare({ id: 'share-2', body: 'second' }),
+            ],
+          },
+        ],
+      ],
+      calls: [
+        [
+          sendMessage,
+          (_signal: AbortSignal, _link: unknown, message: { body: string }) => {
+            sent.push(message.body);
+            return true;
+          },
+        ],
+      ],
+    });
+
+    expect(sent).toEqual(['first', 'second']);
+    expect(trace.commits).toEqual([
+      [shareSentTopic('share-1')],
+      [shareSentTopic('share-2')],
+    ]);
+  });
+
+  it('leaves what it has already sent alone', async () => {
+    const send = vi.fn(() => true);
+
+    const trace = await simulate(flush(), {
+      reads: [
+        [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+        [
+          shareLogStore,
+          {
+            items: [
+              fakeShare({ id: 'share-1', status: 'sent' }),
+              fakeShare({ id: 'share-2', status: 'received' }),
+              fakeShare({ id: 'share-3', endpointId: 'ep-3' }),
+            ],
+          },
+        ],
+      ],
+      calls: [[sendMessage, send]],
+    });
+
+    // Only this peer's, and only the ones still waiting. A flush runs on
+    // every link, so a re-send would double up the whole session.
+    expect(send).not.toHaveBeenCalled();
+    expect(trace.commits).toEqual([]);
+  });
+
+  it('stops at the first send that doesn’t land', async () => {
+    const send = vi.fn(() => false);
+
+    const trace = await simulate(flush(), {
+      reads: [
+        [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+        [
+          shareLogStore,
+          {
+            items: [fakeShare({ id: 'share-1' }), fakeShare({ id: 'share-2' })],
+          },
+        ],
+      ],
+      calls: [[sendMessage, send]],
+    });
+
+    // The link is gone. Marching on would report a pile of shares as sent
+    // that nobody received.
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(trace.commits).toEqual([]);
+  });
+});
+
+describe('receiveShareSaga', () => {
+  it('takes a share from a paired device', async () => {
+    const trace = await simulate(
+      receiveShareSaga({ endpointId: 'ep-2', body: 'kettle is on' }),
+      {
+        reads: [
+          [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+        ],
+        calls: [
+          [now, () => 1234],
+          [newShareId, () => 'share-1'],
+        ],
+      },
+    );
+
+    expect(trace.commits).toEqual([
+      [
+        shareReceivedTopic({
+          id: 'share-1',
+          endpointId: 'ep-2',
+          body: 'kettle is on',
+          at: 1234,
+        }),
+      ],
+    ]);
+  });
+
+  it('drops a share from a peer nobody accepted', async () => {
+    const trace = await simulate(
+      receiveShareSaga({ endpointId: 'ep-2', body: 'buy something' }),
+      {
+        reads: [
+          [contactsStore, bookHolding(fakeContact({ trust: 'invited' }))],
+        ],
+        calls: [
+          [now, () => 1234],
+          [newShareId, () => 'share-1'],
+        ],
+      },
+    );
+
+    // A stranger can dial in and start talking before anyone has agreed to
+    // anything. This is the guard that keeps it off the screen.
+    expect(trace.commits).toEqual([]);
+  });
+
+  it('drops a share from a peer that isn’t in the book at all', async () => {
+    const trace = await simulate(
+      receiveShareSaga({ endpointId: 'ep-9', body: 'buy something' }),
+      {
+        reads: [[contactsStore, bookHolding()]],
+        calls: [
+          [now, () => 1234],
+          [newShareId, () => 'share-1'],
+        ],
+      },
+    );
+
+    expect(trace.commits).toEqual([]);
+  });
+});
+
+describe('copyShareSaga', () => {
+  it('copies the body and says so for a moment', async () => {
+    const copy = vi.fn(() => true);
+    const sleep = vi.fn();
+
+    const trace = await simulate(
+      copyShareSaga({ id: 'share-1', body: 'kettle is on' }),
+      {
+        calls: [
+          [copyText, copy],
+          [wait, sleep],
+        ],
+      },
+    );
+
+    expect(copy).toHaveBeenCalledWith(expect.any(AbortSignal), 'kettle is on');
+    expect(sleep).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      COPY_NOTICE_DURATION,
+    );
+    expect(trace.commits).toEqual([
+      [shareCopiedTopic('share-1')],
+      [copyNoticeExpiredTopic('share-1')],
+    ]);
+  });
+
+  it('claims nothing when the clipboard refuses', async () => {
+    const trace = await simulate(
+      copyShareSaga({ id: 'share-1', body: 'kettle is on' }),
+      {
+        calls: [
+          [copyText, () => false],
+          [wait, vi.fn()],
+        ],
+      },
+    );
+
+    // A confirmation for a copy that didn't happen is worse than none.
+    expect(trace.commits).toEqual([]);
+  });
+});
+
+describe('a pairing landing mid-saga', () => {
+  /** A runtime holding a peer we invited, linked, with a share waiting. */
+  const setup = (send: () => boolean) => {
+    const link = fakeLink();
+
+    const runtime = createTestRuntime({
+      calls: [
+        [saveContact, vi.fn()],
+        [sendMessage, vi.fn(send)],
+      ],
+    });
+
+    runtime.anchor(beamScope);
+    runtime.commit(
+      contactsRestoredTopic([
+        fakeContact({ trust: 'invited', direction: 'outbound' }),
+      ]),
+      peerLinkedTopic({ endpointId: 'ep-2', link }),
+      shareQueuedTopic({
+        id: 'share-1',
+        endpointId: 'ep-2',
+        body: 'kettle is on',
+        at: 1,
+      }),
+    );
+
+    return { ...runtime, link };
+  };
+
+  it('sends the queue the moment the peer accepts', async () => {
+    const send = vi.fn(() => true);
+    const { run, peek, link } = setup(send);
+
+    await run(
+      applyPeerMessageSaga({ endpointId: 'ep-2', message: acceptMessage() }),
+    );
+
+    // The whole point of a queue: it fills before the peer has answered, so
+    // the answer is what lets it out. A read hands back a live view of the
+    // store, so noticing the trust moved means comparing the value across
+    // the commit rather than the record holding it — get that wrong and the
+    // share sits queued forever against a peer that already said yes.
+    expect(peek(contactsStore).entries['ep-2']?.trust).toBe('trusted');
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      link,
+      shareMessage('kettle is on'),
+    );
+    expect(peek(shareLogStore).items[0]?.status).toBe('sent');
+  });
+
+  it('leaves the queue alone when a stranger claims acceptance', async () => {
+    const send = vi.fn(() => true);
+    const runtime = createTestRuntime({
+      calls: [
+        [saveContact, vi.fn()],
+        [sendMessage, send],
+      ],
+    });
+
+    runtime.anchor(beamScope);
+    runtime.commit(
+      // Filed as `invited` inbound — a peer that dialled us. Its own claim
+      // of acceptance grants it nothing.
+      contactsRestoredTopic([
+        fakeContact({ trust: 'invited', direction: 'inbound' }),
+      ]),
+      peerLinkedTopic({ endpointId: 'ep-2', link: fakeLink() }),
+      shareQueuedTopic({
+        id: 'share-1',
+        endpointId: 'ep-2',
+        body: 'kettle is on',
+        at: 1,
+      }),
+    );
+
+    await runtime.run(
+      applyPeerMessageSaga({ endpointId: 'ep-2', message: acceptMessage() }),
+    );
+
+    expect(runtime.peek(contactsStore).entries['ep-2']?.trust).toBe('invited');
+    expect(send).not.toHaveBeenCalled();
+    expect(runtime.peek(shareLogStore).items[0]?.status).toBe('queued');
   });
 });

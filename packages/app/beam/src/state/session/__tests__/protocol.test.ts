@@ -9,8 +9,10 @@ import {
   decodeMessage,
   encodeMessage,
   helloMessage,
+  shareMessage,
 } from '../protocol';
 import { LABEL_MAX_LENGTH } from '../../labels';
+import { SHARE_MAX_LENGTH } from '../shares';
 
 /** Bytes as a peer would put them on the wire, without going through us. */
 const wire = (raw: string): Uint8Array => new TextEncoder().encode(raw);
@@ -26,6 +28,12 @@ describe('encodeMessage / decodeMessage', () => {
     expect(decodeMessage(encodeMessage(acceptMessage()))).toEqual(
       acceptMessage(),
     );
+  });
+
+  it('round-trips a share, newlines and all', () => {
+    const message = shareMessage('line one\nline two');
+
+    expect(decodeMessage(encodeMessage(message))).toEqual(message);
   });
 });
 
@@ -65,6 +73,25 @@ describe('decodeMessage', () => {
     const message = JSON.stringify({ type: 'hello', label });
 
     expect(decodeMessage(wire(message))).toEqual(helloMessage(label));
+  });
+
+  it('refuses a share whose body is not a string', () => {
+    expect(decodeMessage(wire('{"type":"share","body":42}'))).toBeNull();
+    expect(decodeMessage(wire('{"type":"share"}'))).toBeNull();
+  });
+
+  it('refuses a share the transport could not have carried', () => {
+    const overlong = 'a'.repeat(SHARE_MAX_LENGTH + 1);
+    const message = JSON.stringify({ type: 'share', body: overlong });
+
+    expect(decodeMessage(wire(message))).toBeNull();
+  });
+
+  it('takes a share right at the limit', () => {
+    const body = 'a'.repeat(SHARE_MAX_LENGTH);
+    const message = JSON.stringify({ type: 'share', body });
+
+    expect(decodeMessage(wire(message))).toEqual(shareMessage(body));
   });
 
   it('drops fields it did not ask for', () => {

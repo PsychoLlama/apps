@@ -8,7 +8,10 @@
  *
  * The handshake lives here rather than in the address book because it's
  * about the network: the book records what a pairing *is*, and this decides
- * what a peer on the wire is allowed to change about it.
+ * what a peer on the wire is allowed to change about it. What the two
+ * devices then say to each other — text, and the links that are a special
+ * case of it — is logged here too, and only here: a share is a hand-off
+ * between devices, so it lives and dies with the session.
  */
 export { connectionStore, relayCell } from './connection';
 export { qrCodeCell } from './qr-code';
@@ -16,16 +19,29 @@ export type { QrGrid } from './qr-code';
 export { selfLabelFormula } from './identity';
 export { inviteStore, inviteOpenedTopic, inviteClosedTopic } from './invite';
 export {
+  activeContactsFormula,
   pairingRequestsFormula,
   requestDismissedTopic,
   shareStatesFormula,
 } from './pairing';
 export type { ShareState } from './pairing';
+export {
+  copyNoticeStore,
+  draftChangedTopic,
+  draftsStore,
+  queuedSharesFormula,
+  SHARE_MAX_LENGTH,
+  shareLink,
+  sharesByPeerFormula,
+} from './shares';
+export type { Share } from './shares';
 export { beamLink } from './capabilities';
 export {
   acceptPairingSaga,
   cancelPairingSaga,
   connectRelaySaga,
+  copyShareSaga,
   dialPeerSaga,
   reportSagaFailure,
+  shareTextSaga,
 } from './sagas';

@@ -222,27 +222,89 @@ export const listenToPeer = (
 };
 
 /**
- * Send one message over a peer link.
+ * Send one message over a peer link, resolving with whether it landed.
  *
- * Reports and swallows a failed send. Every message here is an announcement
- * — a name, an acceptance — whose local half has already been committed, so
- * a failure costs the peer its notification rather than the pairing. The
- * acceptance is re-sent on the next link, which is what closes the gap.
+ * Never rejects. The announcements — a name, an acceptance — have already
+ * committed their local half by the time this runs, so a failure costs the
+ * peer its notification rather than the pairing, and the acceptance is
+ * re-sent on the next link anyway. Those callers ignore the answer.
+ *
+ * A share does not: it stays queued until it's actually on the wire, so it
+ * needs to hear that this didn't work. Reporting rather than throwing keeps
+ * one send path for both, since a dead link is an ordinary outcome here and
+ * not an exceptional one.
  */
 export const sendMessage = async (
   _signal: AbortSignal,
   link: PeerConnection,
   message: BeamMessage,
-): Promise<void> => {
+): Promise<boolean> => {
   try {
     await link.send(encodeMessage(message));
+    return true;
   } catch (error) {
     logger.warn('Could not send a message to a peer.', {
       type: message.type,
       error: toError(error),
     });
+
+    return false;
   }
 };
+
+/**
+ * Put text on the clipboard, resolving with whether it worked. The API is
+ * permissioned and unavailable outside a secure context, and a refusal is a
+ * perfectly ordinary answer — so it's reported rather than thrown, and the
+ * caller simply doesn't claim to have copied anything.
+ */
+export const copyText = async (
+  _signal: AbortSignal,
+  text: string,
+): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    logger.warn('Could not copy to the clipboard.', { error: toError(error) });
+    return false;
+  }
+};
+
+/**
+ * Wait, then carry on — the timer behind a confirmation that takes itself
+ * away. Rejects if the scope is released first, so the saga unwinds with
+ * everything else rather than committing into a torn-down runtime.
+ */
+export const wait = (
+  signal: AbortSignal,
+  milliseconds: number,
+): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(signal.reason as Error);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', abandon);
+      resolve();
+    }, milliseconds);
+
+    const abandon = () => {
+      clearTimeout(timer);
+      reject(signal.reason as Error);
+    };
+
+    signal.addEventListener('abort', abandon, { once: true });
+  });
+
+/**
+ * Mint an id for a share. Only ever compared and used as a list key, so
+ * anything unique does — a capability rather than a bare `randomUUID()` for
+ * the same reason as the clock: it keeps the sagas deterministic under test.
+ */
+export const newShareId = (): string => crypto.randomUUID();
 
 /**
  * Close a peer link. Freeing the handle is what closes the connection and
