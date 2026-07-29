@@ -76,6 +76,12 @@ export default defineConfig({
     }),
     solidStart({
       solid: { babel: { plugins: [eraseOverloadSignatures()] } },
+      // Suppresses the dev toolbar added in 2.0.0-rc.2, which otherwise
+      // pins a persistent overlay to every dev page. Turning it off swaps
+      // `<DevToolbar>` back out for the plain error boundary, so uncaught
+      // errors still surface — just as the 500 fallback plus a console
+      // trace instead of the toolbar's error viewer.
+      devOverlay: false,
     }),
     nitro({
       preset: 'static',
