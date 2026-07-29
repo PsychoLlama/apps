@@ -202,16 +202,23 @@ export const applyPeerMessageSaga = defineSaga(
       case 'accept': {
         // Read either side of the fold rather than restating its rule here.
         // The fold decides whether a claimed acceptance counts; what's worth
-        // logging is whether it did, and a check that duplicated the guard
+        // knowing is whether it did, and a check that duplicated the guard
         // would be free to drift away from it.
-        const before = (yield* read(contactsStore)).entries[input.endpointId];
-        yield* confirmContactSaga(input.endpointId);
-        const after = (yield* read(contactsStore)).entries[input.endpointId];
+        //
+        // The trust itself, not the record holding it. A read hands back a
+        // live view of the store, so a record kept across the commit reports
+        // the value it has *now* — which would make this comparison one
+        // between the new trust and itself, always equal, always false.
+        const before = (yield* read(contactsStore)).entries[input.endpointId]
+          ?.trust;
 
-        if (before?.trust !== after?.trust) {
+        yield* confirmContactSaga(input.endpointId);
+        const contact = (yield* read(contactsStore)).entries[input.endpointId];
+
+        if (before !== contact?.trust) {
           logger.info(
             'A peer accepted our invite.',
-            pairing(input.endpointId, after),
+            pairing(input.endpointId, contact),
           );
 
           // They've said yes, so whatever was written while they were
@@ -222,13 +229,13 @@ export const applyPeerMessageSaga = defineSaga(
           if (link) {
             yield* flushSharesSaga({ endpointId: input.endpointId, link });
           }
-        } else if (after?.trust !== 'trusted') {
+        } else if (contact?.trust !== 'trusted') {
           // Either a stranger promoting itself or a peer answering an invite
           // we've since withdrawn. Worth seeing: the first is the attack the
           // direction check exists to stop.
           logger.warn(
             'Ignored an acceptance from a peer we aren’t waiting on.',
-            pairing(input.endpointId, after),
+            pairing(input.endpointId, contact),
           );
         }
 

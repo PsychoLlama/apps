@@ -1,11 +1,15 @@
 /**
- * Unit tests for the beam session's sagas. These run under `simulate`, so
+ * Unit tests for the beam session's sagas. Most run under `simulate`, so
  * there's no runtime and no state — every capability is stubbed and the
  * assertions are about what the saga published, which is exactly where the
  * one-transition guarantee lives.
+ *
+ * The exception is at the bottom: a saga whose behaviour turns on state
+ * changing *underneath it* can't be simulated, because a stubbed read hands
+ * back the same value every time. Those run against a real runtime.
  */
 
-import { simulate } from '@lib/state';
+import { createTestRuntime, simulate } from '@lib/state';
 import type { PeerConnection, Relay } from '@crate/iroh';
 import {
   acceptInboundPeers,
@@ -69,11 +73,13 @@ import {
   contactAdvertisedTopic,
   contactForgottenTopic,
   contactSeenTopic,
+  contactsRestoredTopic,
   contactsStore,
   pairingAcceptedTopic,
   pairingConfirmedTopic,
 } from '../../contacts/contacts';
 import type { Contact } from '../../contacts/database';
+import { beamScope } from '../../scope';
 
 /** A stand-in endpoint. The sagas only read its id and hand it onward. */
 const fakeRelay = { endpointId: 'ep-1' } as Relay;
@@ -1003,5 +1009,91 @@ describe('copyShareSaga', () => {
 
     // A confirmation for a copy that didn't happen is worse than none.
     expect(trace.commits).toEqual([]);
+  });
+});
+
+describe('a pairing landing mid-saga', () => {
+  /** A runtime holding a peer we invited, linked, with a share waiting. */
+  const setup = (send: () => boolean) => {
+    const link = fakeLink();
+
+    const runtime = createTestRuntime({
+      calls: [
+        [saveContact, vi.fn()],
+        [sendMessage, vi.fn(send)],
+      ],
+    });
+
+    runtime.anchor(beamScope);
+    runtime.commit(
+      contactsRestoredTopic([
+        fakeContact({ trust: 'invited', direction: 'outbound' }),
+      ]),
+      peerLinkedTopic({ endpointId: 'ep-2', link }),
+      shareQueuedTopic({
+        id: 'share-1',
+        endpointId: 'ep-2',
+        body: 'kettle is on',
+        at: 1,
+      }),
+    );
+
+    return { ...runtime, link };
+  };
+
+  it('sends the queue the moment the peer accepts', async () => {
+    const send = vi.fn(() => true);
+    const { run, peek, link } = setup(send);
+
+    await run(
+      applyPeerMessageSaga({ endpointId: 'ep-2', message: acceptMessage() }),
+    );
+
+    // The whole point of a queue: it fills before the peer has answered, so
+    // the answer is what lets it out. A read hands back a live view of the
+    // store, so noticing the trust moved means comparing the value across
+    // the commit rather than the record holding it — get that wrong and the
+    // share sits queued forever against a peer that already said yes.
+    expect(peek(contactsStore).entries['ep-2']?.trust).toBe('trusted');
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      link,
+      shareMessage('kettle is on'),
+    );
+    expect(peek(shareLogStore).items[0]?.status).toBe('sent');
+  });
+
+  it('leaves the queue alone when a stranger claims acceptance', async () => {
+    const send = vi.fn(() => true);
+    const runtime = createTestRuntime({
+      calls: [
+        [saveContact, vi.fn()],
+        [sendMessage, send],
+      ],
+    });
+
+    runtime.anchor(beamScope);
+    runtime.commit(
+      // Filed as `invited` inbound — a peer that dialled us. Its own claim
+      // of acceptance grants it nothing.
+      contactsRestoredTopic([
+        fakeContact({ trust: 'invited', direction: 'inbound' }),
+      ]),
+      peerLinkedTopic({ endpointId: 'ep-2', link: fakeLink() }),
+      shareQueuedTopic({
+        id: 'share-1',
+        endpointId: 'ep-2',
+        body: 'kettle is on',
+        at: 1,
+      }),
+    );
+
+    await runtime.run(
+      applyPeerMessageSaga({ endpointId: 'ep-2', message: acceptMessage() }),
+    );
+
+    expect(runtime.peek(contactsStore).entries['ep-2']?.trust).toBe('invited');
+    expect(send).not.toHaveBeenCalled();
+    expect(runtime.peek(shareLogStore).items[0]?.status).toBe('queued');
   });
 });
