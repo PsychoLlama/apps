@@ -35,9 +35,9 @@ export class Relay {
   dial(endpoint_id: string): Promise<PeerConnection>;
   /**
    * Start accepting inbound peer connections, invoking `on_peer` with a
-   * {@link PeerConnection} for each connecting peer. This is how a dialled
-   * endpoint observes the other side of a {@link Relay.dial}. Calling it
-   * again replaces the running loop. The loop stops when this `Relay` is
+   * {@link PeerConnection} for each connecting peer. This is the other side
+   * of a {@link Relay.dial}: retain the handle to talk back over it. Calling
+   * it again replaces the running loop. The loop stops when this `Relay` is
    * freed. The loop holds each connection open itself, so the callback may
    * free its handle without closing the connection.
    */
@@ -49,6 +49,11 @@ export class Relay {
  * opened through. Produced by {@link Relay.dial} and handed to the
  * {@link Relay.acceptPeers} callback. Holding it keeps the peer connection
  * open; freeing it closes it.
+ *
+ * Carries the peer's identity plus a message channel: {@link
+ * PeerConnection.send} pushes a byte string to the other side and
+ * {@link PeerConnection.onMessage} surfaces the ones arriving back. Framing
+ * is the host's business — a message is whatever bytes were sent.
  */
 export class PeerConnection {
   private constructor();
@@ -58,6 +63,20 @@ export class PeerConnection {
    * value it advertises as its {@link Relay.endpointId}.
    */
   readonly remoteId: string;
+  /**
+   * Send one message to the peer, resolving once it has been written and
+   * rejecting if the connection is gone. Each message rides its own stream,
+   * so messages are ordered only within themselves — two sends can land out
+   * of order.
+   */
+  send(message: Uint8Array): Promise<void>;
+  /**
+   * Start reading inbound messages, invoking `on_message` with each one.
+   * Calling it again replaces the running loop, which ends when the
+   * connection closes or this handle is freed. Oversized or failed streams
+   * are dropped individually rather than ending the loop.
+   */
+  onMessage(on_message: (message: Uint8Array) => void): void;
 }
 
 /**

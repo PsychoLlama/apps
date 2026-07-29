@@ -6,6 +6,7 @@
 
 import { createTestRuntime } from '@lib/state';
 import { inviteClosedTopic, inviteOpenedTopic, inviteStore } from '../invite';
+import { contactSeenTopic } from '../../contacts/contacts';
 import { beamScope } from '../../scope';
 
 const setup = () => {
@@ -36,5 +37,38 @@ describe('inviteStore', () => {
     commit(inviteClosedTopic());
 
     expect(peek(inviteStore).open).toBe(false);
+  });
+
+  it('steps aside when a peer dials in', () => {
+    const { commit, peek } = setup();
+    commit(inviteOpenedTopic());
+
+    commit(
+      contactSeenTopic({
+        endpointId: 'ep-1',
+        direction: 'inbound',
+        seenAt: 1,
+      }),
+    );
+
+    // The dialog is modal, so a request arriving behind it would sit under
+    // the overlay unseen.
+    expect(peek(inviteStore).open).toBe(false);
+  });
+
+  it('stays put when this device dials out', () => {
+    const { commit, peek } = setup();
+    commit(inviteOpenedTopic());
+
+    commit(
+      contactSeenTopic({
+        endpointId: 'ep-1',
+        direction: 'outbound',
+        seenAt: 1,
+      }),
+    );
+
+    // Our own dial is us going somewhere, not someone arriving.
+    expect(peek(inviteStore).open).toBe(true);
   });
 });

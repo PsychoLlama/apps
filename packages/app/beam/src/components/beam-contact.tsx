@@ -15,6 +15,7 @@ import {
   Flex,
   Heading,
   IconButton,
+  LinkButton,
   Text,
 } from '@lib/ui';
 import IconPencil from 'virtual:icons/mdi/pencil-outline';
@@ -30,6 +31,7 @@ import {
 } from '../state/contacts';
 import { reportSagaFailure } from '../state/session';
 import { ConnectionIndicator } from './connection-indicator';
+import { PairingRequest } from './pairing-request';
 import { RenameDialog } from './rename-dialog';
 import * as styles from './beam-contact.css';
 
@@ -84,13 +86,13 @@ export const BeamContact = () => {
   return (
     <>
       {/* The trail is deliberately free of `:id`. This route is served from
-          one prerendered shell (`/beam/__contact.html`) for every id, and
-          Solid's hydration adopts the server's DOM without rewriting
-          attributes — so a param-derived `href` would render once with the
-          `__id` build sentinel and stay frozen there until some unrelated
-          update re-ran the effect. `useParams()` itself is correct on the
-          client; it's only the prerendered markup that can't depend on it.
-          The same rule binds anything this page renders from the id. */}
+          one prerendered shell (`/beam/__contact.html`) for every id, so a
+          param-derived `href` ships the `__id` build sentinel in the markup
+          — a live wrong link to anything that follows it before hydration
+          replaces it. `useParams()` itself is correct on the client; it's
+          only the prerendered markup that can't depend on it. The same rule
+          binds anything this page renders from the id, which is why the
+          rest of the page waits on the address book. */}
       <SiteHeader
         trail={[{ label: 'Beam', href: '/beam' }, { label: 'Contact' }]}
         actions={<ConnectionIndicator />}
@@ -151,6 +153,21 @@ export const BeamContact = () => {
                   </IconButton>
                 </Flex>
 
+                {/* The same question the banner asks, in the one place that
+                    also shows the endpoint key. A request waved off from the
+                    banner still stands, so this is where it can be answered
+                    against something that can't be spoofed. */}
+                <Show
+                  when={
+                    view().trust === 'invited' && view().direction === 'inbound'
+                  }
+                >
+                  <PairingRequest
+                    testId="beam-contact-request"
+                    contact={view()}
+                  />
+                </Show>
+
                 <DataListRoot orientation="vertical" size={2}>
                   {/* Status leads the record. It's the one field that says
                       whether anything can happen with this contact yet. */}
@@ -195,7 +212,24 @@ export const BeamContact = () => {
                   </DataListItem>
                 </DataListRoot>
 
-                <Flex as="div" direction="column" gap={3} align="start">
+                {/* The way back to the peer itself. Everything above is a
+                    record of a device; this is the door to it, and without
+                    one the only route to a contact you've already met is to
+                    open its beam link again.
+
+                    Built from the record rather than the route param, so the
+                    `href` is never the `__id` build sentinel this page's
+                    prerendered shell carries — the contact only exists on
+                    the client. */}
+                <Flex as="div" direction="row" gap={3} align="center">
+                  <LinkButton
+                    testId="beam-contact-connect"
+                    href={`/beam/share/${view().endpointId}`}
+                    variant="soft"
+                  >
+                    Connect
+                  </LinkButton>
+
                   <Button
                     testId="beam-contact-remove"
                     variant="soft"

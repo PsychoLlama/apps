@@ -7,6 +7,7 @@
 import { simulate } from '@lib/state';
 import { now, readContacts, removeContact, saveContact } from '../capabilities';
 import {
+  contactAdvertisedTopic,
   contactForgottenTopic,
   contactRenamedTopic,
   contactSeenTopic,
@@ -14,9 +15,14 @@ import {
   contactsLoadingTopic,
   contactsRestoredTopic,
   contactsStore,
+  pairingAcceptedTopic,
+  pairingConfirmedTopic,
 } from '../contacts';
 import {
+  acceptContactSaga,
+  confirmContactSaga,
   forgetContactSaga,
+  noteAdvertisedNameSaga,
   recordPeerSaga,
   renameContactSaga,
   restoreContactsSaga,
@@ -162,6 +168,60 @@ describe('renameContactSaga', () => {
     });
 
     expect(save).not.toHaveBeenCalled();
+  });
+});
+
+describe('noteAdvertisedNameSaga', () => {
+  it('commits the advertised name before writing it through', async () => {
+    const contact = fakeContact({ suggestedLabel: 'Studio Mac' });
+    const save = vi.fn();
+
+    const trace = await simulate(
+      noteAdvertisedNameSaga({ endpointId: 'ep-1', label: 'Studio Mac' }),
+      {
+        reads: [[contactsStore, bookHolding(contact)]],
+        calls: [[saveContact, save]],
+      },
+    );
+
+    expect(trace.commits).toEqual([
+      [contactAdvertisedTopic({ endpointId: 'ep-1', label: 'Studio Mac' })],
+    ]);
+    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), contact);
+  });
+});
+
+describe('acceptContactSaga', () => {
+  it('promotes the pairing and writes it through', async () => {
+    const contact = fakeContact({ trust: 'trusted', direction: 'inbound' });
+    const save = vi.fn();
+
+    const trace = await simulate(acceptContactSaga('ep-1'), {
+      reads: [[contactsStore, bookHolding(contact)]],
+      calls: [[saveContact, save]],
+    });
+
+    // Accepting has to survive a reload — it's the half of the handshake
+    // that doesn't depend on the peer still being there.
+    expect(trace.commits).toEqual([[pairingAcceptedTopic('ep-1')]]);
+    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), contact);
+  });
+});
+
+describe('confirmContactSaga', () => {
+  it('records the peer\u2019s claim and writes the result through', async () => {
+    const contact = fakeContact({ trust: 'trusted' });
+    const save = vi.fn();
+
+    const trace = await simulate(confirmContactSaga('ep-1'), {
+      reads: [[contactsStore, bookHolding(contact)]],
+      calls: [[saveContact, save]],
+    });
+
+    // The saga passes the claim on; whether to believe it is the fold's
+    // call, and the write only copies out whatever the fold decided.
+    expect(trace.commits).toEqual([[pairingConfirmedTopic('ep-1')]]);
+    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), contact);
   });
 });
 

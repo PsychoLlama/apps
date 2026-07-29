@@ -38,6 +38,13 @@ mod relay {
     /// ALPNs rather than piggy-back on this one.
     const ALPN: &[u8] = b"test-connection";
 
+    /// Largest inbound message [`PeerConnection::on_message`] will read off a
+    /// stream. Everything spoken over this ALPN today is a short control
+    /// frame, so this is a ceiling on what an unauthenticated peer can make
+    /// us buffer rather than a budget anything real is expected to approach.
+    /// A stream that overruns it is dropped; the connection carries on.
+    const MAX_MESSAGE_BYTES: usize = 64 * 1024;
+
     /// A live endpoint joined to the relay network. Holding it keeps the
     /// relay connection open; dropping it (the host releasing the JS
     /// handle) tears the endpoint down.
@@ -61,12 +68,29 @@ mod relay {
     /// [`Relay::accept_peers`] callback. Holding it keeps the peer connection
     /// open; dropping it (the host releasing the JS handle) closes it.
     ///
-    /// Deliberately thin: today it only surfaces the peer's identity, enough
-    /// for the bring-up handshake. Real features (streams, datagrams) will
-    /// grow methods here as they need them.
+    /// Carries the peer's identity plus a message channel: [`Self::send`]
+    /// pushes a byte string to the other side and [`Self::on_message`]
+    /// surfaces the ones arriving back. Framing is left to the host — a
+    /// message is whatever bytes were handed to `send`.
     #[wasm_bindgen]
     pub struct PeerConnection {
         connection: Connection,
+        // Background loop reading inbound messages, if [`Self::on_message`]
+        // has started it. An `AbortOnDropHandle`, so freeing this handle
+        // stops the loop — which makes holding the handle the thing that
+        // keeps messages flowing, and dropping it the way to stop listening.
+        receive_task: Option<AbortOnDropHandle<()>>,
+    }
+
+    impl PeerConnection {
+        /// Wrap a live connection with no receive loop running. Private: a
+        /// `PeerConnection` is only ever minted by a dial or an accept.
+        fn new(connection: Connection) -> Self {
+            Self {
+                connection,
+                receive_task: None,
+            }
+        }
     }
 
     #[wasm_bindgen]
@@ -76,6 +100,67 @@ mod relay {
         #[wasm_bindgen(getter, js_name = remoteId)]
         pub fn remote_id(&self) -> String {
             self.connection.remote_id().to_string()
+        }
+
+        /// Send one message to the peer, resolving once it has been written.
+        /// Rejects if the connection is gone.
+        ///
+        /// Each message rides its own unidirectional stream, opened and
+        /// finished here, so the stream boundary *is* the message boundary
+        /// and the host needs no length prefix of its own. The cost is that
+        /// messages are ordered only within a stream — two `send`s can land
+        /// out of order — which is fine for the independent control frames
+        /// spoken over this ALPN.
+        ///
+        /// A sync fn returning a promise, for the same reason as
+        /// [`Relay::dial`]: the future owns a cloned [`Connection`] rather
+        /// than borrowing `self`, so the host freeing this handle mid-send
+        /// can't panic.
+        #[wasm_bindgen]
+        pub fn send(&self, message: Vec<u8>) -> js_sys::Promise {
+            let connection = self.connection.clone();
+            wasm_bindgen_futures::future_to_promise(async move {
+                let mut stream = connection
+                    .open_uni()
+                    .await
+                    .map_err(|err| JsError::new(&err.to_string()))?;
+
+                stream
+                    .write_all(&message)
+                    .await
+                    .map_err(|err| JsError::new(&err.to_string()))?;
+
+                // `finish` marks the end of the message and returns
+                // immediately; the transport keeps flushing after the stream
+                // is dropped, so there's nothing to await here.
+                stream
+                    .finish()
+                    .map_err(|err| JsError::new(&err.to_string()))?;
+
+                Ok(JsValue::UNDEFINED)
+            })
+        }
+
+        /// Start reading inbound messages, invoking `on_message` with each
+        /// one as a `Uint8Array`. Calling it again replaces the running loop.
+        ///
+        /// The loop ends when the connection closes or this handle is freed.
+        /// A stream that fails or overruns [`MAX_MESSAGE_BYTES`] is dropped
+        /// on its own — one peer sending garbage shouldn't cost us the rest
+        /// of the conversation.
+        #[wasm_bindgen(js_name = onMessage)]
+        pub fn on_message(&mut self, on_message: js_sys::Function) {
+            let connection = self.connection.clone();
+            self.receive_task = Some(AbortOnDropHandle::new(spawn(async move {
+                while let Ok(mut stream) = connection.accept_uni().await {
+                    let Ok(message) = stream.read_to_end(MAX_MESSAGE_BYTES).await else {
+                        continue;
+                    };
+
+                    let bytes = js_sys::Uint8Array::from(message.as_slice());
+                    let _ = on_message.call1(&JsValue::NULL, &bytes);
+                }
+            })));
         }
     }
 
@@ -124,14 +209,14 @@ mod relay {
                     .await
                     .map_err(|err| JsError::new(&err.to_string()))?;
 
-                Ok(PeerConnection { connection }.into())
+                Ok(PeerConnection::new(connection).into())
             })
         }
 
         /// Start accepting inbound peer connections, invoking `on_peer` with
-        /// a [`PeerConnection`] for each connecting peer. This is how a
-        /// dialled endpoint observes — and the host logs — the other side of
-        /// a [`Relay::dial`]. Calling it again replaces the running loop.
+        /// a [`PeerConnection`] for each connecting peer. This is the other
+        /// side of a [`Relay::dial`]: the host retains the handle to talk
+        /// back over it. Calling it again replaces the running loop.
         ///
         /// The loop runs on a background task holding a cloned [`Endpoint`];
         /// its handle lives on this `Relay`, so freeing the relay aborts the
@@ -149,9 +234,7 @@ mod relay {
                 while let Some(incoming) = endpoint.accept().await {
                     match incoming.await {
                         Ok(connection) => {
-                            let peer = PeerConnection {
-                                connection: connection.clone(),
-                            };
+                            let peer = PeerConnection::new(connection.clone());
                             let _ = on_peer.call1(&JsValue::NULL, &JsValue::from(peer));
                             connections.push(connection);
                         }

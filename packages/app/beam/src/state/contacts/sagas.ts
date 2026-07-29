@@ -1,6 +1,7 @@
 import { call, commit, defineSaga, read } from '@lib/state';
 import { beamScope } from '../scope';
 import {
+  contactAdvertisedTopic,
   contactForgottenTopic,
   contactRenamedTopic,
   contactSeenTopic,
@@ -8,6 +9,8 @@ import {
   contactsLoadingTopic,
   contactsRestoredTopic,
   contactsStore,
+  pairingAcceptedTopic,
+  pairingConfirmedTopic,
 } from './contacts';
 import { now, readContacts, removeContact, saveContact } from './capabilities';
 import type { ContactDirection } from './database';
@@ -82,6 +85,44 @@ export const renameContactSaga = defineSaga(
   async function* (input: { endpointId: string; label: string | null }) {
     yield commit(contactRenamedTopic(input));
     yield* persistContactSaga(input.endpointId);
+  },
+);
+
+/**
+ * Record the name a peer advertised for itself. Kept apart from the local
+ * name, so this can never overwrite one the reader typed.
+ */
+export const noteAdvertisedNameSaga = defineSaga(
+  beamScope,
+  async function* (input: { endpointId: string; label: string }) {
+    yield commit(contactAdvertisedTopic(input));
+    yield* persistContactSaga(input.endpointId);
+  },
+);
+
+/**
+ * Accept a peer's request to pair, promoting it to `trusted` here. Telling
+ * the peer is the session layer's job — this is only the half that has to
+ * survive a reload.
+ */
+export const acceptContactSaga = defineSaga(
+  beamScope,
+  async function* (endpointId: string) {
+    yield commit(pairingAcceptedTopic(endpointId));
+    yield* persistContactSaga(endpointId);
+  },
+);
+
+/**
+ * Record that a peer accepted an invite we sent it. The fold decides whether
+ * to believe it — see {@link pairingConfirmedTopic}, which ignores the claim
+ * unless we're the side that was waiting.
+ */
+export const confirmContactSaga = defineSaga(
+  beamScope,
+  async function* (endpointId: string) {
+    yield commit(pairingConfirmedTopic(endpointId));
+    yield* persistContactSaga(endpointId);
   },
 );
 
