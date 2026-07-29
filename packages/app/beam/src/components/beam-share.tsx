@@ -13,6 +13,8 @@ import {
 } from '@lib/ui';
 import IconContactCard from 'virtual:icons/mdi/card-account-details-outline';
 import { ConnectionIndicator } from './connection-indicator';
+import { ShareComposer } from './share-composer';
+import { ShareLog } from './share-log';
 import { addressBookFormula } from '../state/contacts';
 import { generateLabel } from '../state/labels';
 import {
@@ -22,6 +24,7 @@ import {
   relayCell,
   reportSagaFailure,
   shareStatesFormula,
+  sharesByPeerFormula,
   type ShareState,
 } from '../state/session';
 
@@ -42,10 +45,11 @@ const describeState = (state: ShareState): string => {
 };
 
 /**
- * The share view at `/beam/share/:id` — where a beam link lands. It dials the
- * endpoint named in the URL over the relay connection the layout holds open,
- * introduces this device, and reports how the pairing stands until the peer
- * answers. Sharing itself is still a work in progress.
+ * The share view at `/beam/share/:id` — where a beam link lands, and where
+ * sharing happens. It dials the endpoint named in the URL over the relay
+ * connection the layout holds open, introduces this device, reports how the
+ * pairing stands until the peer answers, and carries the composer and the
+ * session's log of what has passed between the two. Files are Phase 5.
  *
  * Opening your own link is its own case, not an error: it's what happens
  * when you scan the code off your own screen, and the page says so rather
@@ -59,6 +63,7 @@ export const BeamShare = () => {
   const endpoint = useValue(relayCell);
   const contacts = useValue(addressBookFormula);
   const states = useValue(shareStatesFormula);
+  const shares = useValue(sharesByPeerFormula);
 
   const dial = useRun(dialPeerSaga);
   const cancel = useRun(cancelPairingSaga);
@@ -173,12 +178,6 @@ export const BeamShare = () => {
                 </Show>
               </Flex>
 
-              <Callout color="neutral">
-                <Text as="span" size={2} selectable={false}>
-                  Sharing is a work in progress.
-                </Text>
-              </Callout>
-
               {/* Withdrawing only makes sense while they haven't answered.
                   Once paired, the way out is Remove on the contact's page —
                   the same door for a pairing that was never accepted and one
@@ -194,6 +193,27 @@ export const BeamShare = () => {
                     Cancel invite
                   </Button>
                 </Flex>
+              </Show>
+
+              {/* Both hang off the record rather than the route param. The
+                  address book is empty during prerender, so this is the same
+                  rule that keeps the details link honest — and it's also the
+                  right gate on its own terms: there's nobody to write to
+                  until the peer is a contact. */}
+              <Show when={contact()}>
+                {(view) => (
+                  <>
+                    <ShareLog
+                      shares={shares()[view().endpointId] ?? []}
+                      peerName={view().name}
+                    />
+
+                    <ShareComposer
+                      endpointId={view().endpointId}
+                      connected={state() === 'connected'}
+                    />
+                  </>
+                )}
               </Show>
             </Flex>
           </Show>

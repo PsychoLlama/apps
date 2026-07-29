@@ -1,4 +1,5 @@
 import { LABEL_MAX_LENGTH } from '../labels';
+import { SHARE_MAX_LENGTH } from './shares';
 
 /**
  * What two beam endpoints say to each other over a peer link. Everything
@@ -9,8 +10,8 @@ import { LABEL_MAX_LENGTH } from '../labels';
  *
  * The wire format is JSON in UTF-8, one message per iroh stream — the
  * stream boundary is the message boundary, so nothing here has to frame
- * itself. Cheap to read in a log, and the handshake is a handful of messages
- * per pairing rather than anything that would notice the encoding.
+ * itself. Cheap to read in a log, and what rides it — a handshake and short
+ * pieces of text — is nowhere near the size where the encoding would show.
  */
 
 /** A message one endpoint sends another. */
@@ -32,7 +33,17 @@ export type BeamMessage =
    * it only means anything when we're the ones waiting. See
    * `pairingConfirmedTopic`, which is where that rule is enforced.
    */
-  | { readonly type: 'accept' };
+  | { readonly type: 'accept' }
+  /**
+   * "Here's something." The point of the whole app: a note or a link, sent
+   * from one paired device to another.
+   *
+   * Only believed from a peer the reader accepted — see `receiveShareSaga`,
+   * which drops one from anybody else. A stranger can put this on the wire
+   * the moment it dials, and a device that shows unsolicited text from
+   * whoever asks is a device that can be shouted at.
+   */
+  | { readonly type: 'share'; readonly body: string };
 
 /** "Here's what I call myself." */
 export const helloMessage = (label: string): BeamMessage => ({
@@ -42,6 +53,12 @@ export const helloMessage = (label: string): BeamMessage => ({
 
 /** "I've accepted you." */
 export const acceptMessage = (): BeamMessage => ({ type: 'accept' });
+
+/** "Here's something." */
+export const shareMessage = (body: string): BeamMessage => ({
+  type: 'share',
+  body,
+});
 
 /** Render a message as the bytes that go on the wire. */
 export const encodeMessage = (message: BeamMessage): Uint8Array =>
@@ -78,6 +95,15 @@ export const decodeMessage = (bytes: Uint8Array): BeamMessage | null => {
 
     case 'accept':
       return acceptMessage();
+
+    case 'share':
+      // Bounded here as well as normalized downstream, for the same reason
+      // as a name: this is the edge, and a body the transport couldn't have
+      // carried is a frame worth disbelieving whole.
+      return typeof message.body === 'string' &&
+        message.body.length <= SHARE_MAX_LENGTH
+        ? shareMessage(message.body)
+        : null;
 
     default:
       return null;

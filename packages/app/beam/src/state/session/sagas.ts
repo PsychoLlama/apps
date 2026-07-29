@@ -11,13 +11,16 @@ import {
 import { codeEncodedTopic } from './qr-code';
 import {
   acceptInboundPeers,
+  copyText,
   dialEndpoint,
   encodeBeamCode,
   listenToPeer,
+  newShareId,
   openConnection,
   receiveNext,
   releasePeer,
   sendMessage,
+  wait,
   type InboundPeer,
 } from './capabilities';
 import { selfLabelFormula } from './identity';
@@ -29,8 +32,24 @@ import {
   peerReleasedTopic,
   peerUnreachableTopic,
 } from './peers';
-import { acceptMessage, helloMessage, type BeamMessage } from './protocol';
+import {
+  acceptMessage,
+  helloMessage,
+  shareMessage,
+  type BeamMessage,
+} from './protocol';
 import type { Inbox } from './inbox';
+import {
+  COPY_NOTICE_DURATION,
+  copyNoticeExpiredTopic,
+  draftClearedTopic,
+  normalizeShare,
+  shareCopiedTopic,
+  shareLogStore,
+  shareQueuedTopic,
+  shareReceivedTopic,
+  shareSentTopic,
+} from './shares';
 import {
   acceptContactSaga,
   confirmContactSaga,
@@ -39,6 +58,7 @@ import {
   noteAdvertisedNameSaga,
   recordPeerSaga,
 } from '../contacts';
+import { now } from '../contacts/capabilities';
 import { beamScope } from '../scope';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -76,11 +96,90 @@ const pairing = (
 });
 
 /**
+ * Hand everything queued for a peer to the transport, in the order it was
+ * written. Called wherever a queue might have become sendable: a link coming
+ * up, and either side of the pairing being accepted.
+ *
+ * Takes the link rather than looking one up, so the caller that just
+ * established it isn't reading its own commit back out of a cell. Callers
+ * that don't hold one look first and skip the flush — an absent peer's queue
+ * simply waits for the next link.
+ *
+ * The trust guard is the point rather than defensive noise, and it lives
+ * here so there's one of it: the queue fills from the moment the composer
+ * does, which is before the peer has answered, so a share only leaves once
+ * the reader has accepted them.
+ *
+ * Stops at the first send that doesn't land. The link is gone, and marching
+ * through the rest of the queue against a dead connection would report a
+ * pile of shares as sent that nobody received.
+ */
+export const flushSharesSaga = defineSaga(
+  beamScope,
+  async function* (input: { endpointId: string; link: PeerConnection }) {
+    const { entries } = yield* read(contactsStore);
+    if (entries[input.endpointId]?.trust !== 'trusted') return;
+
+    const { items } = yield* read(shareLogStore);
+    const queued = items.filter(
+      (share) =>
+        share.endpointId === input.endpointId && share.status === 'queued',
+    );
+
+    for (const share of queued) {
+      const delivered = yield* call(
+        sendMessage,
+        input.link,
+        shareMessage(share.body),
+      );
+
+      if (!delivered) break;
+      yield commit(shareSentTopic(share.id));
+    }
+  },
+);
+
+/**
+ * Take something a peer shared. Only from a device the reader accepted:
+ * a stranger can dial in and start talking before anyone has agreed to
+ * anything, and a screen that fills with text from whoever asks is a screen
+ * that can be shouted at. Refused shares are logged rather than silently
+ * dropped — it's the one message that means somebody tried.
+ */
+export const receiveShareSaga = defineSaga(
+  beamScope,
+  async function* (input: { endpointId: string; body: string }) {
+    const contact = (yield* read(contactsStore)).entries[input.endpointId];
+
+    if (contact?.trust !== 'trusted') {
+      logger.warn(
+        'Dropped a share from a peer we haven’t paired with.',
+        pairing(input.endpointId, contact),
+      );
+
+      return;
+    }
+
+    const at = yield* call(now);
+    const id = yield* call(newShareId);
+
+    yield commit(
+      shareReceivedTopic({
+        id,
+        endpointId: input.endpointId,
+        body: input.body,
+        at,
+      }),
+    );
+  },
+);
+
+/**
  * Act on one message from a peer. This is the whole of what a peer is able
- * to say to us, and both branches land in the address book through a saga
- * that decides whether to believe it — an advertised name can never
- * overwrite a local one, and a claimed acceptance only counts when we're the
- * side that was waiting.
+ * to say to us, and each branch lands through a saga that decides whether to
+ * believe it — an advertised name can never overwrite a local one, a claimed
+ * acceptance only counts when we're the side that was waiting, and a share
+ * only counts from a peer that was accepted.
  */
 export const applyPeerMessageSaga = defineSaga(
   beamScope,
@@ -90,6 +189,13 @@ export const applyPeerMessageSaga = defineSaga(
         yield* noteAdvertisedNameSaga({
           endpointId: input.endpointId,
           label: input.message.label,
+        });
+        break;
+
+      case 'share':
+        yield* receiveShareSaga({
+          endpointId: input.endpointId,
+          body: input.message.body,
         });
         break;
 
@@ -107,6 +213,15 @@ export const applyPeerMessageSaga = defineSaga(
             'A peer accepted our invite.',
             pairing(input.endpointId, after),
           );
+
+          // They've said yes, so whatever was written while they were
+          // deciding goes out — over the link their acceptance arrived on.
+          const handles = yield* read(peerHandlesCell);
+          const link = handles.get(input.endpointId);
+
+          if (link) {
+            yield* flushSharesSaga({ endpointId: input.endpointId, link });
+          }
         } else if (after?.trust !== 'trusted') {
           // Either a stranger promoting itself or a peer answering an invite
           // we've since withdrawn. Worth seeing: the first is the attack the
@@ -178,6 +293,11 @@ export const linkPeerSaga = defineSaga(
     if (entries[input.endpointId]?.trust === 'trusted') {
       yield* call(sendMessage, input.link, acceptMessage());
     }
+
+    // Anything written while this peer was away goes out now. This is the
+    // other half of queueing: a share composed against a sleeping device is
+    // held until the device turns up, and turning up is this.
+    yield* flushSharesSaga(input);
   },
 );
 
@@ -326,6 +446,10 @@ export const acceptPairingSaga = defineSaga(
       // the other device still says it's waiting.
       delivered: Boolean(link),
     });
+
+    // Accepting is the moment sharing becomes allowed, so anything written
+    // to this peer beforehand goes out with the acceptance.
+    if (link) yield* flushSharesSaga({ endpointId, link });
   },
 );
 
@@ -350,5 +474,64 @@ export const cancelPairingSaga = defineSaga(
     logger.info('Withdrew an invite.', pairing(endpointId, contact));
 
     yield* forgetContactSaga(endpointId);
+  },
+);
+
+/**
+ * Share what the composer holds. The share lands in the log queued and the
+ * draft goes in the same transition — one is the other having happened, and
+ * splitting them would let a paint fall between a cleared field and the row
+ * that replaced it.
+ *
+ * A body with nothing in it is dropped rather than reported. The composer's
+ * own button is disabled for one, so getting here with one means whitespace,
+ * and refusing to send whitespace needs no explanation.
+ */
+export const shareTextSaga = defineSaga(
+  beamScope,
+  async function* (input: { endpointId: string; body: string }) {
+    if (!normalizeShare(input.body)) return;
+
+    const at = yield* call(now);
+    const id = yield* call(newShareId);
+
+    yield commit(
+      shareQueuedTopic({
+        id,
+        endpointId: input.endpointId,
+        body: input.body,
+        at,
+      }),
+      draftClearedTopic(input.endpointId),
+    );
+
+    // Straight out if the peer is here to take it. If it isn't, the share
+    // stays queued and the next link carries it.
+    const handles = yield* read(peerHandlesCell);
+    const link = handles.get(input.endpointId);
+
+    if (link) yield* flushSharesSaga({ endpointId: input.endpointId, link });
+  },
+);
+
+/**
+ * Copy a share's text, and say so for a moment. The confirmation is the
+ * whole point of routing this through a saga: the clipboard gives no visible
+ * sign it worked, and a button that answers nothing reads as a button that
+ * did nothing.
+ *
+ * Nothing is claimed if the copy was refused — the clipboard is
+ * permissioned, and a confirmation for a copy that didn't happen is worse
+ * than no confirmation at all.
+ */
+export const copyShareSaga = defineSaga(
+  beamScope,
+  async function* (input: { id: string; body: string }) {
+    const copied = yield* call(copyText, input.body);
+    if (!copied) return;
+
+    yield commit(shareCopiedTopic(input.id));
+    yield* call(wait, COPY_NOTICE_DURATION);
+    yield commit(copyNoticeExpiredTopic(input.id));
   },
 );
