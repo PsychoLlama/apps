@@ -58,12 +58,11 @@ const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
 };
 
 /**
- * A live relay membership and everything registered against it.
+ * A live relay membership and the queue its inbound handler fills.
  *
- * The relay handle alone isn't enough to hold onto: the listener wired to it
- * is a wasm handle of its own, and one that nothing references is
- * unsubscribed whenever the engine gets around to collecting it. So the two
- * travel together, and {@link RelaySession.release} ends both.
+ * Bundled because the queue is only reachable through the handler the relay
+ * was defined with — there's no way to ask a relay for it after the fact,
+ * which is the point: the handler can't be missing when a peer arrives.
  */
 export interface RelaySession {
   /** The live relay. Dialling goes through it. */
@@ -145,39 +144,35 @@ const linkPeer = (connection: PeerConnection): PeerLink => {
 };
 
 /**
- * Define the relay and its inbound listener, without connecting.
+ * Define the relay, queue and all, without connecting.
+ *
+ * The inbound handler is part of the definition rather than something
+ * registered afterwards, so the queue is filling from the moment the relay
+ * exists — there is no window in which a peer could dial in and find nobody
+ * home.
  *
  * Frees the identity on the way out: the relay copies the key it binds
  * under, and the endpoint id stays readable from the relay itself, so
  * holding both would only be a second handle to keep track of.
  */
 const defineSession = (identity: Identity): RelaySession => {
+  const peers = createInbox<PeerLink>();
   let relay: Relay;
 
   try {
-    relay = new Relay(identity, {
+    relay = Relay.new(identity, {
       protocols: { [BEAM_PROTOCOL]: { maxMessageSize: MAX_MESSAGE_BYTES } },
+      onPeerConnection: (_protocol, connection) => {
+        const peer = linkPeer(connection);
+        logger.debug('Peer connected.', { endpointId: peer.endpointId });
+        peers.push(peer);
+      },
     });
   } finally {
     identity.free();
   }
 
-  const peers = createInbox<PeerLink>();
-
-  const accepting = relay.onPeerConnection((_protocol, connection) => {
-    const peer = linkPeer(connection);
-    logger.debug('Peer connected.', { endpointId: peer.endpointId });
-    peers.push(peer);
-  });
-
-  return {
-    relay,
-    peers,
-    release: () => {
-      accepting.free();
-      relay.free();
-    },
-  };
+  return { relay, peers, release: () => relay.free() };
 };
 
 /**
@@ -191,9 +186,9 @@ const defineSession = (identity: Identity): RelaySession => {
  * parallel with the relay connect rather than before it — the connect is the
  * slow, networked step, and the write needn't gate it.
  *
- * The inbound listener goes on before the connect, not after. A peer that
- * dials while nothing is listening is declined outright, and the handshake is
- * a wide enough window for that to happen.
+ * Inbound peers are queued from the moment the relay is defined — the handler
+ * is part of its definition — so nothing arriving during the handshake is
+ * missed.
  *
  * Cancellation is cooperative: iroh's own `connect()` isn't interruptible, so
  * after each `await` we bail on the signal, releasing a late-arriving session

@@ -25,9 +25,10 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern "C" {
-    /// Everything about a relay other than its identity. An options bag
-    /// rather than positional arguments because it's the part expected to
-    /// grow — relay server selection is the obvious next entry.
+    /// Everything about a relay other than its identity: the protocols it
+    /// speaks and the handler for peers that dial in. An options bag rather
+    /// than positional arguments because it's the part expected to grow —
+    /// relay server selection is the obvious next entry.
     ///
     /// The identity stays positional because wasm-bindgen can only unwrap
     /// an exported class at an argument position; one nested in a plain
@@ -55,7 +56,7 @@ struct RelayState {
     protocols: ProtocolTable,
     phase: Cell<Phase>,
     endpoint: RefCell<Option<Endpoint>>,
-    peers: Registry<js_sys::Function>,
+    on_peer_connection: js_sys::Function,
     connection_changes: Registry<js_sys::Function>,
     // The accept loop and the home-relay watcher. `AbortOnDropHandle`s, so
     // freeing the relay stops both.
@@ -67,8 +68,8 @@ struct RelayState {
 /// handle.
 ///
 /// This is the network handle; a [`PeerConnection`] is a single peer on it.
-/// [`Relay::dial`] opens one, and [`Relay::on_peer_connection`] surfaces
-/// the inbound ones.
+/// [`Relay::dial`] opens one, and the `onPeerConnection` handler given at
+/// construction surfaces the inbound ones.
 #[wasm_bindgen]
 pub struct Relay {
     state: Rc<RelayState>,
@@ -79,13 +80,20 @@ impl Relay {
     /// Define a relay without connecting it. Validates the options and
     /// throws on anything the host got wrong — an empty protocol table, a
     /// name too long for an ALPN, a message ceiling that isn't a sane byte
-    /// count.
+    /// count, a missing peer handler.
     ///
-    /// Nothing here touches the network. Register listeners, then call
-    /// [`Self::connect`].
-    #[wasm_bindgen(constructor)]
-    pub fn new(identity: &Identity, options: &RelayOptions) -> Result<Relay, JsError> {
+    /// `onPeerConnection` is required, and required *here* rather than as a
+    /// method, so there is no moment when a relay is reachable and nothing
+    /// is listening. A peer arriving in that window would have to be turned
+    /// away, and turning one away is invisible to the host and nearly
+    /// invisible to the dialer; making the handler part of the definition
+    /// means the window cannot exist.
+    ///
+    /// Nothing here touches the network — call [`Self::connect`] next.
+    #[wasm_bindgen(js_name = new)]
+    pub fn create(identity: &Identity, options: &RelayOptions) -> Result<Relay, JsError> {
         let protocols = read_protocols(options)?;
+        let on_peer_connection = read_peer_handler(options)?;
 
         Ok(Relay {
             state: Rc::new(RelayState {
@@ -93,7 +101,7 @@ impl Relay {
                 protocols,
                 phase: Cell::new(Phase::Defined),
                 endpoint: RefCell::new(None),
-                peers: Registry::new(),
+                on_peer_connection,
                 connection_changes: Registry::new(),
                 tasks: RefCell::new(Vec::new()),
             }),
@@ -126,23 +134,6 @@ impl Relay {
     #[wasm_bindgen(js_name = onConnectionChange)]
     pub fn on_connection_change(&self, on_change: js_sys::Function) -> Subscription {
         self.state.connection_changes.subscribe(on_change)
-    }
-
-    /// Handle inbound peer connections, invoking `on_peer` with the
-    /// protocol that was negotiated and a live [`PeerConnection`]. Returns
-    /// the handle that stops delivery.
-    ///
-    /// This is the other side of a [`Self::dial`]: the host retains the
-    /// connection to talk back over it, and closing it is the host's
-    /// business. Every listener gets its own handle to the same underlying
-    /// connection, so one freeing its handle doesn't cut the others off.
-    ///
-    /// A peer that dials in while nothing is listening is declined rather
-    /// than parked — holding a connection open that nobody asked for is
-    /// how an endpoint accumulates connections it will never read.
-    #[wasm_bindgen(js_name = onPeerConnection)]
-    pub fn on_peer_connection(&self, on_peer: js_sys::Function) -> Subscription {
-        self.state.peers.subscribe(on_peer)
     }
 
     /// Bind the endpoint and join the relay network, resolving once at
@@ -311,6 +302,14 @@ fn read_protocols(options: &RelayOptions) -> Result<ProtocolTable, JsError> {
     ProtocolTable::new(entries).map_err(|err| JsError::new(&err.to_string()))
 }
 
+/// Read the required peer handler out of the options bag.
+fn read_peer_handler(options: &RelayOptions) -> Result<js_sys::Function, JsError> {
+    js_sys::Reflect::get(options, &JsValue::from_str("onPeerConnection"))
+        .ok()
+        .and_then(|handler| handler.dyn_into::<js_sys::Function>().ok())
+        .ok_or_else(|| JsError::new("`onPeerConnection` must be a function"))
+}
+
 /// The URL of whichever relay server is currently connected. An endpoint
 /// can be mid-handshake with several; only a connected one is an address
 /// peers can actually reach us at.
@@ -326,9 +325,12 @@ fn connected_url(statuses: &[iroh::endpoint::RelayStatus]) -> Option<String> {
 /// A failed handshake is that peer's problem, and an ALPN we never
 /// advertised shouldn't be reachable at all — both skip to the next
 /// arrival rather than taking the loop down.
+///
+/// There is no "nobody is listening" case: the handler is settled when the
+/// relay is defined, so by the time this loop can run there is always one.
 fn serve_inbound(state: &Rc<RelayState>, endpoint: Endpoint) -> AbortOnDropHandle<()> {
     let protocols = state.protocols.clone();
-    let peers = state.peers.clone();
+    let on_peer = state.on_peer_connection.clone();
 
     AbortOnDropHandle::new(spawn(async move {
         while let Some(incoming) = endpoint.accept().await {
@@ -340,18 +342,10 @@ fn serve_inbound(state: &Rc<RelayState>, endpoint: Endpoint) -> AbortOnDropHandl
                 continue;
             };
 
-            // Nobody is listening, so the connection is declined: dropping
-            // it here is what closes it.
-            if peers.is_empty() {
-                continue;
-            }
-
-            let peer = PeerConnection::new(connection, protocol.clone());
             let name = JsValue::from_str(protocol.name());
+            let peer = PeerConnection::new(connection, protocol.clone());
 
-            for listener in peers.listeners() {
-                let _ = listener.call2(&JsValue::NULL, &name, &JsValue::from(peer.clone()));
-            }
+            let _ = on_peer.call2(&JsValue::NULL, &name, &JsValue::from(peer));
         }
     }))
 }

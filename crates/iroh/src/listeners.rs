@@ -1,11 +1,15 @@
-//! Fan-out for the callback-shaped surfaces: relay status, inbound peers,
-//! inbound messages.
+//! Fan-out for the optional callback surfaces: relay status and inbound
+//! messages.
 //!
-//! Every `on*` method hands back a [`Subscription`] rather than replacing
+//! Those `on*` methods hand back a [`Subscription`] rather than replacing
 //! whatever was registered before, so two parts of a host can watch the
 //! same thing without knowing about each other. Dropping the handle is
 //! what stops delivery — which makes it work under `using` the same way
 //! every other handle in this crate does.
+//!
+//! Inbound peers deliberately don't come through here. That handler is
+//! required when a [`Relay`](crate::Relay) is defined, so it can neither be
+//! missing when a peer arrives nor be dropped by losing a handle.
 //!
 //! Generic over the listener so the bookkeeping is exercised by the native
 //! tests; on wasm the listener is always a `js_sys::Function`.
@@ -130,13 +134,6 @@ impl<T: Clone + 'static> Registry<T> {
             .map(|(_, listener)| listener.clone())
             .collect()
     }
-
-    /// Whether anything is listening. Lets a caller skip work nobody would
-    /// see — and, for inbound peers, decline a connection outright rather
-    /// than hold one open that no one asked for.
-    pub fn is_empty(&self) -> bool {
-        self.slots.borrow().entries.is_empty()
-    }
 }
 
 #[cfg(test)]
@@ -147,7 +144,6 @@ mod tests {
     fn starts_out_empty() {
         let registry = Registry::<u32>::new();
 
-        assert!(registry.is_empty());
         assert_eq!(registry.listeners(), Vec::<u32>::new());
     }
 
@@ -169,16 +165,6 @@ mod tests {
         drop(first);
 
         assert_eq!(registry.listeners(), vec![2]);
-    }
-
-    #[test]
-    fn is_empty_again_once_every_listener_is_gone() {
-        let registry = Registry::new();
-        let subscription = registry.subscribe(1u32);
-
-        assert!(!registry.is_empty());
-        drop(subscription);
-        assert!(registry.is_empty());
     }
 
     /// `unsubscribe()` is the explicit spelling of the drop, so it has to
@@ -254,6 +240,5 @@ mod tests {
         let _subscription = registry.subscribe(1u32);
 
         assert_eq!(elsewhere.listeners(), vec![1]);
-        assert!(!elsewhere.is_empty());
     }
 }

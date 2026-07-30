@@ -5,54 +5,44 @@
 //! onward they *are* the same thing — who started it stops mattering once
 //! it's up.
 //!
-//! Handles share the connection underneath. Handing the same connection to
-//! several listeners means several JS objects over one transport, and only
-//! one of them may be reading streams — otherwise inbound messages would be
-//! split between readers at random. So the read loop, the listeners, and
-//! the connection live behind a shared state that the last handle takes
-//! down with it.
+//! Exactly one handle exists per connection — a dial returns one, and the
+//! relay's peer handler is given one — so freeing it closes the connection
+//! and stops the loop reading from it. Message listeners fan out from that
+//! single handle rather than from competing handles, which is what keeps
+//! inbound streams from being split between readers at random.
 
 use crate::listeners::{Registry, Subscription};
 use crate::protocol::Protocol;
 use iroh::endpoint::{Connection, VarInt};
 use n0_future::task::{AbortOnDropHandle, spawn};
 use std::cell::RefCell;
-use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 
 /// Close code sent when a host closes a connection itself. Nothing reads
 /// it — a deliberate close is not an error — but QUIC requires one.
 const CLOSE_CODE: u32 = 0;
 
-/// What every handle to one peer shares: the connection, the protocol it
-/// was opened on, and the single loop reading messages off it.
+/// The connection, the protocol it was opened on, and the single loop
+/// reading messages off it.
 struct PeerState {
     connection: Connection,
     protocol: Protocol,
     messages: Registry<js_sys::Function>,
     // The read loop, started by the first `onMessage` and kept for the
-    // life of the connection. An `AbortOnDropHandle`, so the last handle
-    // going away stops it — the same drop that closes the connection.
+    // life of the connection. An `AbortOnDropHandle`, so freeing this
+    // handle stops it — the same drop that closes the connection.
     reader: RefCell<Option<AbortOnDropHandle<()>>>,
 }
 
 /// A live connection to a single peer.
 ///
-/// Holding it keeps the connection open; freeing every handle to it closes
-/// it. [`Self::send`] pushes a byte string to the other side and
+/// Holding it keeps the connection open; freeing it closes it.
+/// [`Self::send`] pushes a byte string to the other side and
 /// [`Self::on_message`] surfaces the ones arriving back. Framing is left to
 /// the host — a message is whatever bytes were handed to `send`.
 #[wasm_bindgen]
 pub struct PeerConnection {
-    state: Rc<PeerState>,
-}
-
-impl Clone for PeerConnection {
-    fn clone(&self) -> Self {
-        Self {
-            state: Rc::clone(&self.state),
-        }
-    }
+    state: PeerState,
 }
 
 impl PeerConnection {
@@ -60,12 +50,12 @@ impl PeerConnection {
     /// connection is only ever minted by a dial or an accept.
     pub(crate) fn new(connection: Connection, protocol: Protocol) -> Self {
         Self {
-            state: Rc::new(PeerState {
+            state: PeerState {
                 connection,
                 protocol,
                 messages: Registry::new(),
                 reader: RefCell::new(None),
-            }),
+            },
         }
     }
 }
@@ -185,7 +175,7 @@ impl PeerConnection {
 
 impl PeerConnection {
     /// Start the read loop if it isn't already running. One loop per
-    /// connection, shared by every handle and every listener.
+    /// connection, feeding every listener registered against it.
     fn start_reading(&self) {
         let mut reader = self.state.reader.borrow_mut();
         if reader.is_some() {

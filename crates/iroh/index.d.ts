@@ -87,11 +87,11 @@ export interface ProtocolOptions {
 }
 
 /**
- * Everything about a relay other than its identity. An options bag because
- * it's the part expected to grow — relay server selection being the
- * obvious next entry. The identity stays positional: `wasm-bindgen` can
- * only unwrap an exported class at an argument position, not one nested in
- * a plain object.
+ * Everything about a relay other than its identity: the protocols it speaks
+ * and the handler for peers that dial in. An options bag because it's the
+ * part expected to grow — relay server selection being the obvious next
+ * entry. The identity stays positional: `wasm-bindgen` can only unwrap an
+ * exported class at an argument position, not one nested in a plain object.
  */
 export interface RelayOptions {
   /**
@@ -103,10 +103,28 @@ export interface RelayOptions {
    * at bind time.
    */
   protocols: Record<string, ProtocolOptions>;
+
+  /**
+   * Handle inbound peer connections, called with the protocol that was
+   * negotiated and a live {@link PeerConnection}. This is the other side of
+   * a {@link Relay.dial}: retain the connection to talk back over it, and
+   * close it when done.
+   *
+   * Required, and required *here* rather than as a method, so there is no
+   * moment when a relay is reachable and nothing is listening. A peer
+   * arriving in that window would have to be turned away, which is
+   * invisible to this side and nearly invisible to the dialer — it sees a
+   * connection come up and then close for no stated reason. Settling the
+   * handler when the relay is defined means the window cannot exist.
+   *
+   * One handler, and no unsubscribing: it lives exactly as long as the
+   * relay does.
+   */
+  onPeerConnection: (protocol: string, peer: PeerConnection) => void;
 }
 
 /**
- * A relay membership: defined by the constructor, live after
+ * A relay membership: defined by {@link Relay.new}, live after
  * {@link Relay.connect}, and torn down by {@link Relay.close} or by
  * releasing the handle.
  *
@@ -115,17 +133,23 @@ export interface RelayOptions {
  * network handle; a `PeerConnection` is a single peer on it.
  */
 export class Relay {
+  private constructor();
+  free(): void;
+  [Symbol.dispose](): void;
   /**
    * Define a relay without connecting it. Validates the options and throws
    * on anything malformed — an empty protocol table, a name too long for
-   * an ALPN, a message ceiling that isn't a sane byte count.
+   * an ALPN, a message ceiling that isn't a sane byte count, a missing
+   * `onPeerConnection`.
    *
-   * Nothing here touches the network. Register listeners, then
-   * {@link Relay.connect}. {@link init} must resolve before calling this.
+   * Nothing here touches the network — call {@link Relay.connect} next.
+   * {@link init} must resolve before calling this.
    */
-  constructor(identity: Identity, options: RelayOptions);
-  free(): void;
-  [Symbol.dispose](): void;
+  // A static factory named `new`, not a construct signature. The rule
+  // guards against `new(): T` written where a constructor was meant; this
+  // mirrors the `Relay::new` the crate exports.
+  // eslint-disable-next-line @typescript-eslint/no-misused-new
+  static new(identity: Identity, options: RelayOptions): Relay;
   /**
    * The address peers dial to reach this relay, as a base32 string. The
    * same value as the identity's, repeated so a holder of a relay needn't
@@ -159,21 +183,6 @@ export class Relay {
     onChange: (homeRelay: string | undefined) => void,
   ): Subscription;
   /**
-   * Handle inbound peer connections, invoking `onPeer` with the protocol
-   * that was negotiated and a live {@link PeerConnection}.
-   *
-   * This is the other side of a {@link Relay.dial}: retain the connection
-   * to talk back over it, and close it when done. Every listener gets its
-   * own handle to the same underlying connection, so one releasing its
-   * handle doesn't cut the others off.
-   *
-   * A peer that dials in while nothing is listening is declined rather
-   * than parked.
-   */
-  onPeerConnection(
-    onPeer: (protocol: string, peer: PeerConnection) => void,
-  ): Subscription;
-  /**
    * Dial the peer named by `endpointId` on `protocol`, resolving with a
    * live {@link PeerConnection} once established.
    *
@@ -197,14 +206,13 @@ export class Relay {
 
 /**
  * A live connection to a single peer, riding over the {@link Relay} it was
- * opened through. Produced by {@link Relay.dial} and handed to the
- * {@link Relay.onPeerConnection} listener — the same object either
- * direction, because who started a connection stops mattering once it's
- * up.
+ * opened through. Produced by {@link Relay.dial} and handed to the relay's
+ * `onPeerConnection` handler — the same object either direction, because
+ * who started a connection stops mattering once it's up.
  *
- * Handles share the connection underneath: releasing one closes it only if
- * it was the last. Framing is the host's business — a message is whatever
- * bytes were sent.
+ * Exactly one handle exists per connection, so releasing it closes the
+ * connection. Framing is the host's business — a message is whatever bytes
+ * were sent.
  */
 export class PeerConnection {
   private constructor();
