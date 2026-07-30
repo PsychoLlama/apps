@@ -263,7 +263,9 @@ export class PeerConnection {
    * so, or the transport failing.
    *
    * Each read starts its own wait, so hold onto the promise rather than
-   * re-reading the property.
+   * re-reading the property. A pending wait doesn't keep the connection
+   * alive: releasing the handle closes it, and closing it is what settles
+   * every outstanding wait.
    */
   readonly closed: Promise<string>;
 }
