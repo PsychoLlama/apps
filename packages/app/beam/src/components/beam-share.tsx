@@ -21,7 +21,7 @@ import {
   cancelPairingSaga,
   connectionStore,
   dialPeerSaga,
-  relayCell,
+  endpointCell,
   reportSagaFailure,
   shareStatesFormula,
   sharesByPeerFormula,
@@ -46,7 +46,7 @@ const describeState = (state: ShareState): string => {
 
 /**
  * The share view at `/beam/share/:id` — where a beam link lands, and where
- * sharing happens. It dials the endpoint named in the URL over the relay
+ * sharing happens. It dials the endpoint named in the URL over the endpoint
  * connection the layout holds open, introduces this device, reports how the
  * pairing stands until the peer answers, and carries the composer and the
  * session's log of what has passed between the two. Files are Phase 5.
@@ -60,7 +60,7 @@ export const BeamShare = () => {
   const navigate = useNavigate();
 
   const connection = useValue(connectionStore);
-  const endpoint = useValue(relayCell);
+  const session = useValue(endpointCell);
   const contacts = useValue(addressBookFormula);
   const states = useValue(shareStatesFormula);
   const shares = useValue(sharesByPeerFormula);
@@ -69,7 +69,7 @@ export const BeamShare = () => {
   const cancel = useRun(cancelPairingSaga);
 
   /** Whether this link points back at the device reading it. */
-  const isSelf = () => endpoint()?.relay.endpointId === params.id;
+  const isSelf = () => session()?.endpoint.id === params.id;
 
   /** This peer's record, once the address book has one for it. */
   const contact = () =>

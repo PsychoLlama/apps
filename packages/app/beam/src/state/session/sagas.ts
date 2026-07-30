@@ -5,7 +5,7 @@ import {
   connectedTopic,
   connectingTopic,
   connectionStore,
-  relayCell,
+  endpointCell,
 } from './connection';
 import { codeEncodedTopic } from './qr-code';
 import {
@@ -19,7 +19,7 @@ import {
   sendMessage,
   wait,
   type PeerLink,
-  type RelaySession,
+  type EndpointSession,
 } from './capabilities';
 import { selfLabelFormula } from './identity';
 import {
@@ -323,14 +323,14 @@ export const greetPeerSaga = defineSaga(
 );
 
 /**
- * Serve inbound dials for as long as the relay is up, handling each peer on
+ * Serve inbound dials for as long as the endpoint is up, handling each peer on
  * its own. Spawned per peer rather than handled in line: a slow greeting to
  * one peer must not hold up the next arrival, and a peer that fails
  * mid-handshake shouldn't take the accept loop down with it.
  */
 export const serveInboundSaga = defineSaga(
   beamScope,
-  async function* (session: RelaySession) {
+  async function* (session: EndpointSession) {
     while (true) {
       const peer = yield* call(receiveNext, session.peers);
       yield* spawn(greetPeerSaga(peer));
@@ -340,16 +340,16 @@ export const serveInboundSaga = defineSaga(
 
 /**
  * Join the relay network and encode this endpoint's beam link, landing the
- * live relay and its QR grid in a single transition so the view never shows a
+ * live endpoint and its QR grid in a single transition so the view never shows a
  * connection without its code (nor a stale code without its connection).
  * Inbound dials are served from the moment it lands.
  *
  * Client-only — neither the wasm fetch nor the handshake can run during SSG —
  * so `BeamLayout` starts it from `onMount`. Cancellation rides the scope's
  * signal: releasing the last anchor aborts the connect and frees whatever
- * relay it landed.
+ * endpoint it landed.
  *
- * Guarded on `initial` so a second anchor can't open a second relay, which
+ * Guarded on `initial` so a second anchor can't open a second endpoint, which
  * the cell would silently drop unfreed.
  */
 export const connectRelaySaga = defineSaga(beamScope, async function* () {
@@ -360,7 +360,7 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
 
   try {
     const session = yield* call(openConnection);
-    const grid = yield* call(encodeBeamCode, session.relay.endpointId);
+    const grid = yield* call(encodeBeamCode, session.endpoint.id);
     yield commit(connectedTopic(session), codeEncodedTopic(grid));
     yield* spawn(serveInboundSaga(session));
   } catch {
@@ -373,7 +373,7 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
  * Dial the peer named in a beam link over the relay connection the layout
  * holds open, recording it in the address book first so the pairing survives
  * the reload the dial might not. The caller only dials once the connection is
- * `connected`, so a missing relay is a caller bug and throws.
+ * `connected`, so a missing endpoint is a caller bug and throws.
  *
  * Opening your own beam link is a no-op rather than an error — it's what
  * happens when you scan the code off your own screen, and dialling yourself
@@ -386,12 +386,12 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
 export const dialPeerSaga = defineSaga(
   beamScope,
   async function* (endpointId: string) {
-    const session = yield* read(relayCell);
+    const session = yield* read(endpointCell);
     if (!session) {
       throw new Error('Cannot dial a peer before the relay connection is up.');
     }
 
-    if (endpointId === session.relay.endpointId) return;
+    if (endpointId === session.endpoint.id) return;
 
     const { statuses } = yield* read(peerLinksStore);
     if (statuses[endpointId] === 'dialing') return;
@@ -410,7 +410,7 @@ export const dialPeerSaga = defineSaga(
     yield commit(peerDialingTopic(endpointId));
 
     try {
-      const link = yield* call(dialEndpoint, session.relay, endpointId);
+      const link = yield* call(dialEndpoint, session.endpoint, endpointId);
       yield* linkPeerSaga(link);
     } catch {
       // Reported by the capability, which has the context to describe it.

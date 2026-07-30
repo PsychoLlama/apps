@@ -1,10 +1,10 @@
-//! The endpoint identity a relay connects under.
+//! The identity an endpoint runs under.
 //!
 //! An identity is just a validated secret key: no network, no lifecycle,
-//! nothing to tear down. It exists separately from [`Relay`](crate::Relay)
-//! so a host can mint or restore one, read the address it implies, and
-//! persist it — all before deciding to connect, and without the module
-//! holding a secret key of its own.
+//! nothing to tear down. It exists separately from
+//! [`Endpoint`](crate::Endpoint) so a host can mint or restore one, read
+//! the address it implies, and persist it — all before deciding to join,
+//! and without the module holding a secret key of its own.
 
 use crate::secret_key::parse_secret_key;
 use iroh::SecretKey;
@@ -13,16 +13,16 @@ use wasm_bindgen::prelude::*;
 /// An endpoint's identity: its secret key, and the public address that key
 /// implies.
 ///
-/// Hand it to [`Relay.new`](crate::Relay) to connect under it. Nothing here
-/// touches the network — two relays can run under two identities at once,
-/// and an identity outlives every relay opened with it.
+/// Hand it to [`Endpoint.new`](crate::Endpoint) to run under it. Nothing
+/// here touches the network — two endpoints can run under two identities at
+/// once, and an identity outlives every endpoint opened with it.
 #[wasm_bindgen]
 pub struct Identity {
     secret: SecretKey,
 }
 
 impl Identity {
-    /// The key itself, for the relay that binds under it. Private: the
+    /// The key itself, for the endpoint that binds under it. Private: the
     /// public half is the only part a host has business reading, apart
     /// from the raw bytes it persists.
     pub(crate) fn secret(&self) -> SecretKey {
@@ -52,10 +52,10 @@ impl Identity {
         })
     }
 
-    /// The public address peers dial to reach a relay running under this
-    /// identity, as a base32 string. Derived from the key, so it's readable
-    /// straight away — a host can render its share link before, or without,
-    /// ever connecting.
+    /// The public address peers dial to reach an endpoint running under
+    /// this identity, as a base32 string. Derived from the key, so it's
+    /// readable straight away — a host can render its share link before, or
+    /// without, ever joining.
     #[wasm_bindgen(getter, js_name = endpointId)]
     pub fn endpoint_id(&self) -> String {
         self.secret.public().to_string()

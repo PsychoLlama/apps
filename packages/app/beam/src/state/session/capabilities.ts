@@ -1,4 +1,4 @@
-import init, { Identity, Relay, type PeerConnection } from '@crate/iroh';
+import init, { Endpoint, Identity, type PeerConnection } from '@crate/iroh';
 import initQrCode, { encode } from '@crate/qr-code';
 import { createLogger, toError } from '@lib/observability';
 import { read, write, type VaultId } from '@lib/vault';
@@ -58,19 +58,20 @@ const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
 };
 
 /**
- * A live relay membership and the queue its inbound handler fills.
+ * A live endpoint and the queue its inbound handler fills.
  *
- * Bundled because the queue is only reachable through the handler the relay
- * was defined with — there's no way to ask a relay for it after the fact,
- * which is the point: the handler can't be missing when a peer arrives.
+ * Bundled because the queue is only reachable through the handler the
+ * endpoint was defined with — there's no way to ask an endpoint for it after
+ * the fact, which is the point: the handler can't be missing when a peer
+ * arrives.
  */
-export interface RelaySession {
-  /** The live relay. Dialling goes through it. */
-  readonly relay: Relay;
+export interface EndpointSession {
+  /** The live endpoint. Dialling goes through it. */
+  readonly endpoint: Endpoint;
 
   /**
    * Peers that dialled us, queued as they arrive. Filled from the moment the
-   * relay is defined — before it connects — so an inbound dial landing
+   * endpoint is defined — before it joins — so an inbound dial landing
    * during the handshake isn't turned away.
    */
   readonly peers: Inbox<PeerLink>;
@@ -81,7 +82,7 @@ export interface RelaySession {
 
 /**
  * A live link to one peer and everything registered against it. Bundled for
- * the same reason as {@link RelaySession}: the message listener is a handle
+ * the same reason as {@link EndpointSession}: the message listener is a handle
  * that has to outlive the callback it wraps.
  *
  * The same shape in both directions — a dial and an inbound connection
@@ -144,23 +145,23 @@ const linkPeer = (connection: PeerConnection): PeerLink => {
 };
 
 /**
- * Define the relay, queue and all, without connecting.
+ * Define the endpoint, queue and all, without joining.
  *
  * The inbound handler is part of the definition rather than something
- * registered afterwards, so the queue is filling from the moment the relay
- * exists — there is no window in which a peer could dial in and find nobody
- * home.
+ * registered afterwards, so the queue is filling from the moment the
+ * endpoint exists — there is no window in which a peer could dial in and
+ * find nobody home.
  *
- * Frees the identity on the way out: the relay copies the key it binds
- * under, and the endpoint id stays readable from the relay itself, so
+ * Frees the identity on the way out: the endpoint copies the key it binds
+ * under, and the endpoint id stays readable from the endpoint itself, so
  * holding both would only be a second handle to keep track of.
  */
-const defineSession = (identity: Identity): RelaySession => {
+const defineSession = (identity: Identity): EndpointSession => {
   const peers = createInbox<PeerLink>();
-  let relay: Relay;
+  let endpoint: Endpoint;
 
   try {
-    relay = Relay.new(identity, {
+    endpoint = Endpoint.new(identity, {
       protocols: { [BEAM_PROTOCOL]: { maxMessageSize: MAX_MESSAGE_BYTES } },
       onPeerConnection: (_protocol, connection) => {
         const peer = linkPeer(connection);
@@ -172,31 +173,31 @@ const defineSession = (identity: Identity): RelaySession => {
     identity.free();
   }
 
-  return { relay, peers, release: () => relay.free() };
+  return { endpoint, peers, release: () => endpoint.free() };
 };
 
 /**
- * Instantiate the iroh wasm module, define a relay under this device's
+ * Instantiate the iroh wasm module, define an endpoint under this device's
  * identity, and join the public relay network. Both steps are async and
  * client-only — the wasm fetches and the relay handshake can't run during
  * prerender.
  *
  * Reuses a saved identity, or mints a fresh one so the endpoint keeps a stable
  * identity (and beam link) across reloads. A fresh key is persisted in
- * parallel with the relay connect rather than before it — the connect is the
- * slow, networked step, and the write needn't gate it.
+ * parallel with the join rather than before it — the join is the slow,
+ * networked step, and the write needn't gate it.
  *
- * Inbound peers are queued from the moment the relay is defined — the handler
- * is part of its definition — so nothing arriving during the handshake is
- * missed.
+ * Inbound peers are queued from the moment the endpoint is defined — the
+ * handler is part of its definition — so nothing arriving during the handshake
+ * is missed.
  *
- * Cancellation is cooperative: iroh's own `connect()` isn't interruptible, so
+ * Cancellation is cooperative: iroh's own `join()` isn't interruptible, so
  * after each `await` we bail on the signal, releasing a late-arriving session
  * so its connection doesn't linger.
  */
 export const openConnection = async (
   signal: AbortSignal,
-): Promise<RelaySession> => {
+): Promise<EndpointSession> => {
   try {
     await init();
     signal.throwIfAborted();
@@ -215,11 +216,11 @@ export const openConnection = async (
     const session = defineSession(identity);
 
     try {
-      await session.relay.connect();
+      await session.endpoint.join();
       await persisting;
     } catch (error) {
       // Nothing else holds the session yet, so a failed connect has to
-      // release it here or the relay and its listener are stranded.
+      // release it here or the endpoint and its listener are stranded.
       session.release();
       throw error;
     }
@@ -230,8 +231,8 @@ export const openConnection = async (
     signal.throwIfAborted();
 
     logger.debug('Connected to iroh relay.', {
-      endpointId: session.relay.endpointId,
-      homeRelay: session.relay.homeRelay,
+      endpointId: session.endpoint.id,
+      homeRelay: session.endpoint.homeRelay,
     });
 
     return session;
@@ -258,8 +259,8 @@ export const receiveNext = <T>(
 ): Promise<T> => inbox.next(signal);
 
 /**
- * Dial the peer named in a beam link over the live relay connection,
- * resolving with the link once it's established.
+ * Dial the peer named in a beam link over the live endpoint, resolving with
+ * the link once it's established.
  *
  * Logs the outcome here rather than from the saga, so it sits alongside the
  * `Peer connected.` log the inbound listener writes — both halves of a peer
@@ -269,15 +270,15 @@ export const receiveNext = <T>(
  *
  * The signal goes unused: iroh's `dial()` isn't interruptible. A link that
  * lands after the scope died is released by the cell holding it, or never
- * reaches one — an abandoned handle closes with the relay it rode in on.
+ * reaches one — an abandoned handle closes with the endpoint it rode in on.
  */
 export const dialEndpoint = async (
   _signal: AbortSignal,
-  relay: Relay,
+  endpoint: Endpoint,
   endpointId: string,
 ): Promise<PeerLink> => {
   try {
-    const peer = linkPeer(await relay.dial(endpointId, BEAM_PROTOCOL));
+    const peer = linkPeer(await endpoint.dial(endpointId, BEAM_PROTOCOL));
     logger.debug('Dialed peer.', { endpointId: peer.endpointId });
     return peer;
   } catch (error) {

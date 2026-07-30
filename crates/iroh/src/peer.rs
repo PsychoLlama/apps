@@ -1,12 +1,12 @@
 //! A live conversation with one peer.
 //!
-//! Both directions land here: a [`Relay::dial`](crate::Relay::dial) and an
-//! inbound connection produce the same thing, because from the connection
-//! onward they *are* the same thing — who started it stops mattering once
-//! it's up.
+//! Both directions land here: an [`Endpoint::dial`](crate::Endpoint::dial)
+//! and an inbound connection produce the same thing, because from the
+//! connection onward they *are* the same thing — who started it stops
+//! mattering once it's up.
 //!
 //! Exactly one handle exists per connection — a dial returns one, and the
-//! relay's peer handler is given one — so freeing it closes the connection
+//! endpoint's peer handler is given one — so freeing it closes the connection
 //! and stops the loop reading from it. Message listeners fan out from that
 //! single handle rather than from competing handles, which is what keeps
 //! inbound streams from being split between readers at random.
@@ -71,7 +71,7 @@ impl PeerConnection {
     }
 
     /// The protocol this connection was opened on — one of the ALPNs the
-    /// relay declared.
+    /// endpoint declared.
     #[wasm_bindgen(getter)]
     pub fn protocol(&self) -> String {
         self.state.protocol.name().to_owned()
@@ -90,7 +90,7 @@ impl PeerConnection {
     /// of order.
     ///
     /// A sync fn returning a promise, for the same reason as
-    /// [`Relay::dial`](crate::Relay::dial): the future owns a cloned
+    /// [`Endpoint::dial`](crate::Endpoint::dial): the future owns a cloned
     /// connection rather than borrowing this handle, so the host freeing it
     /// mid-send can't panic.
     #[wasm_bindgen]

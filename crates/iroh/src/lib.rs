@@ -9,14 +9,14 @@
 //! - [`Identity`] is a validated secret key and the address it implies.
 //!   No network, no lifecycle — mint or restore one, read its address,
 //!   persist it.
-//! - [`Relay`] is a membership in the relay network. It's defined under an
-//!   identity and a set of protocols first, connected second, so listeners
-//!   can be in place before anything arrives.
+//! - [`Endpoint`] is this device on the network. It's defined under an
+//!   identity, a set of protocols, and its handlers first, joined second,
+//!   so nothing can arrive before there's somewhere to put it.
 //! - [`PeerConnection`] is one conversation with one peer, the same object
 //!   whether it was dialled or accepted.
 //!
-//! None of it is a singleton: two identities can hold two relays at once,
-//! and nothing is stored at module scope.
+//! None of it is a singleton: two identities can hold two endpoints at
+//! once, and nothing is stored at module scope.
 //!
 //! Every handle here frees deterministically. wasm-bindgen aliases
 //! `Symbol.dispose` to `free`, so a host can reach for `using` instead of
@@ -37,20 +37,20 @@ mod secret_key;
 // Everything below talks to iroh, which only builds (and only means
 // anything) on wasm — see the target-gated dependency in Cargo.toml.
 #[cfg(target_arch = "wasm32")]
+mod endpoint;
+#[cfg(target_arch = "wasm32")]
 mod identity;
 #[cfg(target_arch = "wasm32")]
 mod peer;
-#[cfg(target_arch = "wasm32")]
-mod relay;
 
 pub use listeners::Subscription;
 
 #[cfg(target_arch = "wasm32")]
+pub use endpoint::{Endpoint, EndpointOptions};
+#[cfg(target_arch = "wasm32")]
 pub use identity::Identity;
 #[cfg(target_arch = "wasm32")]
 pub use peer::PeerConnection;
-#[cfg(target_arch = "wasm32")]
-pub use relay::{Relay, RelayOptions};
 
 /// Install the panic hook once at module load so a Rust panic surfaces as
 /// a readable `console.error` instead of an opaque `unreachable` trap.

@@ -18,7 +18,7 @@ import { beamScope } from '../state/scope';
  * page to hear it.
  *
  * The anchor is the only lifecycle wiring here: releasing it on cleanup
- * aborts the connect and frees the relay.
+ * aborts the connect and frees the endpoint.
  */
 export const BeamLayout = (props: { children?: JSX.Element }) => {
   useAnchor(beamScope);
@@ -28,7 +28,7 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
   onMount(() => {
     // Neither the wasm, the handshake, nor IndexedDB can run during SSG, so
     // both start once the client mounts. They're independent: the address
-    // book is readable whether or not the relay ever comes up.
+    // book is readable whether or not the endpoint ever comes up.
     void connect().catch(reportSagaFailure('The beam connect saga failed.'));
     void restore().catch(
       reportSagaFailure('The address book restore saga failed.'),

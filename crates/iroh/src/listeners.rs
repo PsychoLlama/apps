@@ -7,8 +7,8 @@
 //! which makes it work under `using` the same way every other handle in
 //! this crate does.
 //!
-//! A relay's own handlers deliberately don't come through here. They're
-//! settled when the [`Relay`](crate::Relay) is defined, so they can be
+//! An endpoint's own handlers deliberately don't come through here. They're
+//! settled when the [`Endpoint`](crate::Endpoint) is defined, so they can be
 //! neither missing when something arrives nor dropped by losing a handle;
 //! the cost is one handler each, which is all either has ever wanted.
 //!

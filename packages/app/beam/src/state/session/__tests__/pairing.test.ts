@@ -178,7 +178,7 @@ describe('shareStatesFormula', () => {
     const { peek } = setup([fakeContact()]);
 
     // The view reads an absent entry as `preparing`, which is right for a
-    // cold load and for the paint before the relay is up.
+    // cold load and for the paint before the endpoint is up.
     expect(peek(shareStatesFormula)['ep-1']).toBeUndefined();
   });
 

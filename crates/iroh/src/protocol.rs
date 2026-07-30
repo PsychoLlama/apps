@@ -1,10 +1,10 @@
-//! What a relay speaks on the wire.
+//! What an endpoint speaks on the wire.
 //!
 //! iroh multiplexes by ALPN: an endpoint advertises the protocols it
 //! accepts when it binds, a dialer names the one it wants, and inbound
 //! connections are dispatched on the one that was negotiated. So the set
 //! has to be known before connecting, which is why the host declares it
-//! when it builds a [`Relay`](crate::Relay) rather than when it dials.
+//! when it builds an [`Endpoint`](crate::Endpoint) rather than when it dials.
 //!
 //! Each protocol also carries the ceiling on an inbound message. That's
 //! ours, not iroh's — it's the bound handed to the stream reader, and thus
@@ -56,7 +56,7 @@ impl core::fmt::Display for ProtocolError {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::NoProtocols => {
-                write!(formatter, "a relay must declare at least one protocol")
+                write!(formatter, "an endpoint must declare at least one protocol")
             }
 
             Self::BadName { name } => write!(
@@ -73,7 +73,7 @@ impl core::fmt::Display for ProtocolError {
     }
 }
 
-/// One protocol a relay speaks, and the terms it speaks it on.
+/// One protocol an endpoint speaks, and the terms it speaks it on.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Protocol {
     name: String,
@@ -125,10 +125,10 @@ impl Protocol {
     }
 }
 
-/// Every protocol a relay speaks. Built once when the relay is defined and
-/// read from both directions after: the ALPNs go out at bind time, and an
-/// inbound connection is matched back to its entry to find the message
-/// ceiling to read it under.
+/// Every protocol an endpoint speaks. Built once when the endpoint is
+/// defined and read from both directions after: the ALPNs go out at bind
+/// time, and an inbound connection is matched back to its entry to find
+/// the message ceiling to read it under.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProtocolTable {
     entries: Vec<Protocol>,

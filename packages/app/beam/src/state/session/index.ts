@@ -1,9 +1,9 @@
 /**
- * The `@lib/state` surface backing a beam session: the browser's relay
+ * The `@lib/state` surface backing a beam session: the browser's endpoint
  * connection, the QR encoding of its beam link — which land together as the
  * connection comes up — the name this device goes by, and the links it holds
  * to peers. All of it sits in the beam scope; anchoring that scope is what
- * keeps the session alive, and releasing the last anchor frees the relay and
+ * keeps the session alive, and releasing the last anchor frees the endpoint and
  * every peer link with it.
  *
  * The handshake lives here rather than in the address book because it's
@@ -13,7 +13,7 @@
  * case of it — is logged here too, and only here: a share is a hand-off
  * between devices, so it lives and dies with the session.
  */
-export { connectionStore, relayCell } from './connection';
+export { connectionStore, endpointCell } from './connection';
 export { qrCodeCell } from './qr-code';
 export type { QrGrid } from './qr-code';
 export { selfLabelFormula } from './identity';
