@@ -88,10 +88,10 @@ export interface ProtocolOptions {
 
 /**
  * Everything about a relay other than its identity: the protocols it speaks
- * and the handler for peers that dial in. An options bag because it's the
- * part expected to grow — relay server selection being the obvious next
- * entry. The identity stays positional: `wasm-bindgen` can only unwrap an
- * exported class at an argument position, not one nested in a plain object.
+ * and the handlers it runs. An options bag because it's the part expected to
+ * grow — relay server selection being the obvious next entry. The identity
+ * stays positional: `wasm-bindgen` can only unwrap an exported class at an
+ * argument position, not one nested in a plain object.
  */
 export interface RelayOptions {
   /**
@@ -121,6 +121,21 @@ export interface RelayOptions {
    * relay does.
    */
   onPeerConnection: (protocol: string, peer: PeerConnection) => void;
+
+  /**
+   * Watch the relay connection come and go, called with the home relay's
+   * URL — or `undefined` when there isn't one. Fires for the first
+   * connection too, since it's in place before {@link Relay.connect} binds
+   * anything.
+   *
+   * Optional, unlike {@link RelayOptions.onPeerConnection}: a missed status
+   * change costs nothing, because {@link Relay.homeRelay} reports the
+   * current state on demand. Omitting it means no watcher runs at all.
+   *
+   * One handler, and no unsubscribing: it lives exactly as long as the
+   * relay does.
+   */
+  onConnectionChange?: (homeRelay: string | undefined) => void;
 }
 
 /**
@@ -140,7 +155,7 @@ export class Relay {
    * Define a relay without connecting it. Validates the options and throws
    * on anything malformed — an empty protocol table, a name too long for
    * an ALPN, a message ceiling that isn't a sane byte count, a missing
-   * `onPeerConnection`.
+   * `onPeerConnection`, an `onConnectionChange` that isn't a function.
    *
    * Nothing here touches the network — call {@link Relay.connect} next.
    * {@link init} must resolve before calling this.
@@ -171,17 +186,6 @@ export class Relay {
    * means a second `Relay`.
    */
   connect(): Promise<void>;
-  /**
-   * Watch the relay connection come and go, invoking `onChange` with the
-   * home relay's URL, or `undefined` when there isn't one.
-   *
-   * Register it before {@link Relay.connect} to see the first connection
-   * land; a listener added later hears about the next change, not the
-   * state it walked in on.
-   */
-  onConnectionChange(
-    onChange: (homeRelay: string | undefined) => void,
-  ): Subscription;
   /**
    * Dial the peer named by `endpointId` on `protocol`, resolving with a
    * live {@link PeerConnection} once established.

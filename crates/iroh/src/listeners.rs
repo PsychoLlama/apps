@@ -1,15 +1,16 @@
-//! Fan-out for the optional callback surfaces: relay status and inbound
-//! messages.
+//! Fan-out for inbound peer messages.
 //!
-//! Those `on*` methods hand back a [`Subscription`] rather than replacing
-//! whatever was registered before, so two parts of a host can watch the
-//! same thing without knowing about each other. Dropping the handle is
-//! what stops delivery — which makes it work under `using` the same way
-//! every other handle in this crate does.
+//! [`PeerConnection::on_message`](crate::PeerConnection::on_message) hands
+//! back a [`Subscription`] rather than replacing whatever was registered
+//! before, so two parts of a host can read the same conversation without
+//! knowing about each other. Dropping the handle is what stops delivery —
+//! which makes it work under `using` the same way every other handle in
+//! this crate does.
 //!
-//! Inbound peers deliberately don't come through here. That handler is
-//! required when a [`Relay`](crate::Relay) is defined, so it can neither be
-//! missing when a peer arrives nor be dropped by losing a handle.
+//! A relay's own handlers deliberately don't come through here. They're
+//! settled when the [`Relay`](crate::Relay) is defined, so they can be
+//! neither missing when something arrives nor dropped by losing a handle;
+//! the cost is one handler each, which is all either has ever wanted.
 //!
 //! Generic over the listener so the bookkeeping is exercised by the native
 //! tests; on wasm the listener is always a `js_sys::Function`.

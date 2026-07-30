@@ -1,18 +1,16 @@
 //! Membership in the relay network.
 //!
-//! A relay is defined before it connects: the identity it runs under and
-//! the protocols it speaks are settled up front, because iroh needs the
-//! ALPNs at bind time and a host wants its address before the handshake.
-//! Listeners can be registered against it in the same breath, so an
-//! inbound peer arriving the instant the connection lands has somewhere to
-//! go.
+//! A relay is defined before it connects: the identity it runs under, the
+//! protocols it speaks, and its handlers are all settled up front, because
+//! iroh needs the ALPNs at bind time, a host wants its address before the
+//! handshake, and anything arriving the instant the connection lands needs
+//! somewhere to go.
 //!
 //! In the browser iroh is relay-only — no hole-punching — so QUIC is
 //! tunnelled over a WebSocket to a relay server, end-to-end encrypted, and
 //! every peer connection rides over this one membership.
 
 use crate::identity::Identity;
-use crate::listeners::{Registry, Subscription};
 use crate::peer::PeerConnection;
 use crate::protocol::{Protocol, ProtocolTable};
 use iroh::endpoint::presets;
@@ -26,9 +24,9 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 extern "C" {
     /// Everything about a relay other than its identity: the protocols it
-    /// speaks and the handler for peers that dial in. An options bag rather
-    /// than positional arguments because it's the part expected to grow —
-    /// relay server selection is the obvious next entry.
+    /// speaks and the handlers it runs. An options bag rather than
+    /// positional arguments because it's the part expected to grow — relay
+    /// server selection is the obvious next entry.
     ///
     /// The identity stays positional because wasm-bindgen can only unwrap
     /// an exported class at an argument position; one nested in a plain
@@ -57,9 +55,9 @@ struct RelayState {
     phase: Cell<Phase>,
     endpoint: RefCell<Option<Endpoint>>,
     on_peer_connection: js_sys::Function,
-    connection_changes: Registry<js_sys::Function>,
-    // The accept loop and the home-relay watcher. `AbortOnDropHandle`s, so
-    // freeing the relay stops both.
+    on_connection_change: Option<js_sys::Function>,
+    // The accept loop and, if anything is watching, the home-relay watcher.
+    // `AbortOnDropHandle`s, so freeing the relay stops both.
     tasks: RefCell<Vec<AbortOnDropHandle<()>>>,
 }
 
@@ -82,18 +80,20 @@ impl Relay {
     /// name too long for an ALPN, a message ceiling that isn't a sane byte
     /// count, a missing peer handler.
     ///
-    /// `onPeerConnection` is required, and required *here* rather than as a
-    /// method, so there is no moment when a relay is reachable and nothing
-    /// is listening. A peer arriving in that window would have to be turned
-    /// away, and turning one away is invisible to the host and nearly
-    /// invisible to the dialer; making the handler part of the definition
-    /// means the window cannot exist.
+    /// Handlers are given here rather than registered afterwards, so there
+    /// is no moment when a relay is running and nothing is listening.
+    /// `onPeerConnection` is required — a peer arriving in that window would
+    /// have to be turned away, which is invisible to the host and nearly
+    /// invisible to the dialer. `onConnectionChange` is optional, because
+    /// missing a status change costs nothing: [`Self::home_relay`] reports
+    /// the current state on demand.
     ///
     /// Nothing here touches the network — call [`Self::connect`] next.
     #[wasm_bindgen(js_name = new)]
     pub fn create(identity: &Identity, options: &RelayOptions) -> Result<Relay, JsError> {
         let protocols = read_protocols(options)?;
         let on_peer_connection = read_peer_handler(options)?;
+        let on_connection_change = read_connection_handler(options)?;
 
         Ok(Relay {
             state: Rc::new(RelayState {
@@ -102,7 +102,7 @@ impl Relay {
                 phase: Cell::new(Phase::Defined),
                 endpoint: RefCell::new(None),
                 on_peer_connection,
-                connection_changes: Registry::new(),
+                on_connection_change,
                 tasks: RefCell::new(Vec::new()),
             }),
         })
@@ -122,18 +122,6 @@ impl Relay {
     pub fn home_relay(&self) -> Option<String> {
         let endpoint = self.state.endpoint.borrow();
         connected_url(&endpoint.as_ref()?.home_relay_status().get())
-    }
-
-    /// Watch the relay connection come and go, invoking `on_change` with
-    /// the home relay's URL — or `undefined` when there isn't one.
-    /// Returns the handle that stops delivery.
-    ///
-    /// Register it before [`Self::connect`] to see the first connection
-    /// land; a listener added later hears about the next change, not the
-    /// state it walked in on.
-    #[wasm_bindgen(js_name = onConnectionChange)]
-    pub fn on_connection_change(&self, on_change: js_sys::Function) -> Subscription {
-        self.state.connection_changes.subscribe(on_change)
     }
 
     /// Bind the endpoint and join the relay network, resolving once at
@@ -179,11 +167,18 @@ impl Relay {
 
             // Started before the handshake is awaited so a peer that dials
             // the instant we're reachable is served, and so the first
-            // connection change is one the host's listeners see.
-            state.tasks.borrow_mut().extend([
-                serve_inbound(&state, endpoint.clone()),
-                watch_home_relay(&state, endpoint.clone()),
-            ]);
+            // connection change is one the host hears about. Scoped so the
+            // borrow ends before the await below.
+            {
+                let mut tasks = state.tasks.borrow_mut();
+                tasks.push(serve_inbound(&state, endpoint.clone()));
+
+                // No watcher at all unless the host asked for one — the
+                // `homeRelay` getter reads the endpoint directly.
+                if let Some(on_change) = state.on_connection_change.clone() {
+                    tasks.push(watch_home_relay(on_change, endpoint.clone()));
+                }
+            }
 
             *state.endpoint.borrow_mut() = Some(endpoint.clone());
 
@@ -310,6 +305,24 @@ fn read_peer_handler(options: &RelayOptions) -> Result<js_sys::Function, JsError
         .ok_or_else(|| JsError::new("`onPeerConnection` must be a function"))
 }
 
+/// Read the optional connection watcher out of the options bag.
+///
+/// Absent is fine; present-but-not-a-function is not. Silently ignoring the
+/// latter would leave a host waiting on a watcher that never fires.
+fn read_connection_handler(options: &RelayOptions) -> Result<Option<js_sys::Function>, JsError> {
+    let handler = js_sys::Reflect::get(options, &JsValue::from_str("onConnectionChange"))
+        .map_err(|_| JsError::new("relay options must be an object"))?;
+
+    if handler.is_undefined() || handler.is_null() {
+        return Ok(None);
+    }
+
+    handler
+        .dyn_into::<js_sys::Function>()
+        .map(Some)
+        .map_err(|_| JsError::new("`onConnectionChange` must be a function"))
+}
+
 /// The URL of whichever relay server is currently connected. An endpoint
 /// can be mid-handshake with several; only a connected one is an address
 /// peers can actually reach us at.
@@ -353,9 +366,10 @@ fn serve_inbound(state: &Rc<RelayState>, endpoint: Endpoint) -> AbortOnDropHandl
 /// Report relay connection changes to the host for as long as the relay is
 /// up. iroh publishes home relay status as a watcher, so this is a genuine
 /// stream of changes rather than a poll.
-fn watch_home_relay(state: &Rc<RelayState>, endpoint: Endpoint) -> AbortOnDropHandle<()> {
-    let changes = state.connection_changes.clone();
-
+///
+/// Only spawned when the host gave a handler, so an unwatched relay doesn't
+/// pay for a stream nobody reads.
+fn watch_home_relay(on_change: js_sys::Function, endpoint: Endpoint) -> AbortOnDropHandle<()> {
     AbortOnDropHandle::new(spawn(async move {
         let mut statuses = endpoint.home_relay_status().stream();
 
@@ -365,9 +379,7 @@ fn watch_home_relay(state: &Rc<RelayState>, endpoint: Endpoint) -> AbortOnDropHa
                 None => JsValue::UNDEFINED,
             };
 
-            for listener in changes.listeners() {
-                let _ = listener.call1(&JsValue::NULL, &url);
-            }
+            let _ = on_change.call1(&JsValue::NULL, &url);
         }
     }))
 }
