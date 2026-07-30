@@ -55,7 +55,7 @@ export const InviteDialog = () => {
               testId="beam-link"
               readOnly
               aria-label="Beam link"
-              value={beamLink(live().endpointId)}
+              value={beamLink(live().relay.endpointId)}
               onFocus={(event) => {
                 event.currentTarget.select();
                 event.currentTarget.scrollLeft = 0;

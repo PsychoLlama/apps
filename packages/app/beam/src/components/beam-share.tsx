@@ -69,7 +69,7 @@ export const BeamShare = () => {
   const cancel = useRun(cancelPairingSaga);
 
   /** Whether this link points back at the device reading it. */
-  const isSelf = () => endpoint()?.endpointId === params.id;
+  const isSelf = () => endpoint()?.relay.endpointId === params.id;
 
   /** This peer's record, once the address book has one for it. */
   const contact = () =>

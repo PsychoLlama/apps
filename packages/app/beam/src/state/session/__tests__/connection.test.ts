@@ -7,6 +7,8 @@
 
 import { createTestRuntime } from '@lib/state';
 import type { Relay } from '@crate/iroh';
+import type { PeerLink, RelaySession } from '../capabilities';
+import { createInbox } from '../inbox';
 import {
   connectFailedTopic,
   connectedTopic,
@@ -17,9 +19,15 @@ import {
 import { codeEncodedTopic, qrCodeCell, type QrGrid } from '../qr-code';
 import { beamScope } from '../../scope';
 
-/** A stand-in endpoint. Only `free` is ever called, and only on teardown. */
-const fakeRelay = (free: () => void = () => undefined): Relay =>
-  ({ free }) as Relay;
+/**
+ * A stand-in relay session. Only `release` is ever called, and only on
+ * teardown — nothing here dereferences the relay itself.
+ */
+const fakeSession = (release: () => void = () => undefined): RelaySession => ({
+  relay: { endpointId: 'ep-1' } as Relay,
+  peers: createInbox<PeerLink>(),
+  release,
+});
 
 const fakeGrid: QrGrid = { size: 1, modules: new Uint8Array([1]) };
 
@@ -51,7 +59,7 @@ describe('connectingTopic', () => {
 describe('connectedTopic', () => {
   it('lands the live endpoint alongside the status', () => {
     const { commit, peek } = setup();
-    const endpoint = fakeRelay();
+    const endpoint = fakeSession();
 
     commit(connectedTopic(endpoint));
 
@@ -92,7 +100,7 @@ describe('codeEncodedTopic', () => {
 
   it('lands in the same transition as the connection', () => {
     const { commit, ledger, peek } = setup();
-    const endpoint = fakeRelay();
+    const endpoint = fakeSession();
 
     commit(connectedTopic(endpoint), codeEncodedTopic(fakeGrid));
 
@@ -107,32 +115,32 @@ describe('codeEncodedTopic', () => {
 });
 
 describe('beamScope', () => {
-  it('frees the relay when the last anchor is released', () => {
-    const free = vi.fn();
+  it('releases the relay when the last anchor is released', () => {
+    const dispose = vi.fn();
     const { commit, release } = setup();
-    commit(connectedTopic(fakeRelay(free)));
+    commit(connectedTopic(fakeSession(dispose)));
 
     release();
 
-    expect(free).toHaveBeenCalledOnce();
+    expect(dispose).toHaveBeenCalledOnce();
   });
 
   it('keeps the relay alive while another anchor holds the scope', () => {
-    const free = vi.fn();
+    const dispose = vi.fn();
     const { anchor, commit, release } = setup();
     const second = anchor(beamScope);
-    commit(connectedTopic(fakeRelay(free)));
+    commit(connectedTopic(fakeSession(dispose)));
 
     release();
 
     // Navigating between `/beam/*` routes must not tear the relay down.
-    expect(free).not.toHaveBeenCalled();
+    expect(dispose).not.toHaveBeenCalled();
 
     second();
-    expect(free).toHaveBeenCalledOnce();
+    expect(dispose).toHaveBeenCalledOnce();
   });
 
-  it('has nothing to free when no connect landed', () => {
+  it('has nothing to release when no connect landed', () => {
     const { peek, release } = setup();
     // Touch the cell so it materializes and its drop hook actually runs.
     expect(peek(relayCell)).toBeNull();

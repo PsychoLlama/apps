@@ -11,6 +11,6 @@ import { relayCell } from './connection';
  * `null` until the relay connection lands, since there's no endpoint to
  * derive it from before that — including during SSG and first paint.
  */
-export const selfLabelFormula = defineFormula([relayCell], (endpoint) =>
-  endpoint ? generateLabel(endpoint.endpointId) : null,
+export const selfLabelFormula = defineFormula([relayCell], (session) =>
+  session ? generateLabel(session.relay.endpointId) : null,
 );

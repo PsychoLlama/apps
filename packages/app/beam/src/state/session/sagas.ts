@@ -1,6 +1,5 @@
 import { AbortError, call, commit, defineSaga, read, spawn } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
-import type { PeerConnection, Relay } from '@crate/iroh';
 import {
   connectFailedTopic,
   connectedTopic,
@@ -10,18 +9,17 @@ import {
 } from './connection';
 import { codeEncodedTopic } from './qr-code';
 import {
-  acceptInboundPeers,
   copyText,
   dialEndpoint,
   encodeBeamCode,
-  listenToPeer,
   newShareId,
   openConnection,
   receiveNext,
   releasePeer,
   sendMessage,
   wait,
-  type InboundPeer,
+  type PeerLink,
+  type RelaySession,
 } from './capabilities';
 import { selfLabelFormula } from './identity';
 import {
@@ -38,7 +36,6 @@ import {
   shareMessage,
   type BeamMessage,
 } from './protocol';
-import type { Inbox } from './inbox';
 import {
   COPY_NOTICE_DURATION,
   copyNoticeExpiredTopic,
@@ -116,20 +113,20 @@ const pairing = (
  */
 export const flushSharesSaga = defineSaga(
   beamScope,
-  async function* (input: { endpointId: string; link: PeerConnection }) {
+  async function* (peer: PeerLink) {
     const { entries } = yield* read(contactsStore);
-    if (entries[input.endpointId]?.trust !== 'trusted') return;
+    if (entries[peer.endpointId]?.trust !== 'trusted') return;
 
     const { items } = yield* read(shareLogStore);
     const queued = items.filter(
       (share) =>
-        share.endpointId === input.endpointId && share.status === 'queued',
+        share.endpointId === peer.endpointId && share.status === 'queued',
     );
 
     for (const share of queued) {
       const delivered = yield* call(
         sendMessage,
-        input.link,
+        peer,
         shareMessage(share.body),
       );
 
@@ -226,9 +223,7 @@ export const applyPeerMessageSaga = defineSaga(
           const handles = yield* read(peerHandlesCell);
           const link = handles.get(input.endpointId);
 
-          if (link) {
-            yield* flushSharesSaga({ endpointId: input.endpointId, link });
-          }
+          if (link) yield* flushSharesSaga(link);
         } else if (contact?.trust !== 'trusted') {
           // Either a stranger promoting itself or a peer answering an invite
           // we've since withdrawn. Worth seeing: the first is the attack the
@@ -254,15 +249,12 @@ export const applyPeerMessageSaga = defineSaga(
  * signal isn't surfaced yet, and a parked saga costs nothing until the scope
  * releases it.
  */
-const pumpPeerSaga = defineSaga(
-  beamScope,
-  async function* (input: { endpointId: string; inbox: Inbox<BeamMessage> }) {
-    while (true) {
-      const message = yield* call(receiveNext, input.inbox);
-      yield* applyPeerMessageSaga({ endpointId: input.endpointId, message });
-    }
-  },
-);
+const pumpPeerSaga = defineSaga(beamScope, async function* (peer: PeerLink) {
+  while (true) {
+    const message = yield* call(receiveNext, peer.messages);
+    yield* applyPeerMessageSaga({ endpointId: peer.endpointId, message });
+  }
+});
 
 /**
  * Take a freshly established link into the session: hold the handle, start
@@ -270,7 +262,8 @@ const pumpPeerSaga = defineSaga(
  * an accept differ only in who started it, and from the link onward they're
  * the same conversation.
  *
- * The listener starts before the greeting goes out, so a peer that answers
+ * The link arrives already listening — the capability wires its message
+ * queue as it wraps the connection — so a peer that answers the greeting
  * immediately isn't answering into a void.
  *
  * The acceptance re-sent here is what makes pairing eventually consistent:
@@ -280,38 +273,36 @@ const pumpPeerSaga = defineSaga(
  */
 export const linkPeerSaga = defineSaga(
   beamScope,
-  async function* (input: { endpointId: string; link: PeerConnection }) {
-    // A second link to the same peer replaces the first. Freeing the old
+  async function* (peer: PeerLink) {
+    // A second link to the same peer replaces the first. Releasing the old
     // handle closes a connection nothing is reading any more; leaving it
     // would strand it open for the life of the scope.
     const handles = yield* read(peerHandlesCell);
-    const previous = handles.get(input.endpointId);
+    const previous = handles.get(peer.endpointId);
     if (previous) yield* call(releasePeer, previous);
 
-    yield commit(peerLinkedTopic(input));
-
-    const inbox = yield* call(listenToPeer, input.link);
-    yield* spawn(pumpPeerSaga({ endpointId: input.endpointId, inbox }));
+    yield commit(peerLinkedTopic(peer));
+    yield* spawn(pumpPeerSaga(peer));
 
     const label = yield* read(selfLabelFormula);
-    if (label) yield* call(sendMessage, input.link, helloMessage(label));
+    if (label) yield* call(sendMessage, peer, helloMessage(label));
 
     const { entries } = yield* read(contactsStore);
-    if (entries[input.endpointId]?.trust === 'trusted') {
-      yield* call(sendMessage, input.link, acceptMessage());
+    if (entries[peer.endpointId]?.trust === 'trusted') {
+      yield* call(sendMessage, peer, acceptMessage());
     }
 
     // Anything written while this peer was away goes out now. This is the
     // other half of queueing: a share composed against a sleeping device is
     // held until the device turns up, and turning up is this.
-    yield* flushSharesSaga(input);
+    yield* flushSharesSaga(peer);
   },
 );
 
 /** Take an inbound dial: file the peer as having asked, then link it. */
 export const greetPeerSaga = defineSaga(
   beamScope,
-  async function* (peer: InboundPeer) {
+  async function* (peer: PeerLink) {
     yield* recordPeerSaga({
       endpointId: peer.endpointId,
       direction: 'inbound',
@@ -339,11 +330,9 @@ export const greetPeerSaga = defineSaga(
  */
 export const serveInboundSaga = defineSaga(
   beamScope,
-  async function* (relay: Relay) {
-    const inbox = yield* call(acceptInboundPeers, relay);
-
+  async function* (session: RelaySession) {
     while (true) {
-      const peer = yield* call(receiveNext, inbox);
+      const peer = yield* call(receiveNext, session.peers);
       yield* spawn(greetPeerSaga(peer));
     }
   },
@@ -370,10 +359,10 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
   yield commit(connectingTopic());
 
   try {
-    const endpoint = yield* call(openConnection);
-    const grid = yield* call(encodeBeamCode, endpoint.endpointId);
-    yield commit(connectedTopic(endpoint), codeEncodedTopic(grid));
-    yield* spawn(serveInboundSaga(endpoint));
+    const session = yield* call(openConnection);
+    const grid = yield* call(encodeBeamCode, session.relay.endpointId);
+    yield commit(connectedTopic(session), codeEncodedTopic(grid));
+    yield* spawn(serveInboundSaga(session));
   } catch {
     // Reported by the capability, which has the context to describe it.
     yield commit(connectFailedTopic());
@@ -397,12 +386,12 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
 export const dialPeerSaga = defineSaga(
   beamScope,
   async function* (endpointId: string) {
-    const endpoint = yield* read(relayCell);
-    if (!endpoint) {
+    const session = yield* read(relayCell);
+    if (!session) {
       throw new Error('Cannot dial a peer before the relay connection is up.');
     }
 
-    if (endpointId === endpoint.endpointId) return;
+    if (endpointId === session.relay.endpointId) return;
 
     const { statuses } = yield* read(peerLinksStore);
     if (statuses[endpointId] === 'dialing') return;
@@ -421,8 +410,8 @@ export const dialPeerSaga = defineSaga(
     yield commit(peerDialingTopic(endpointId));
 
     try {
-      const link = yield* call(dialEndpoint, endpoint, endpointId);
-      yield* linkPeerSaga({ endpointId, link });
+      const link = yield* call(dialEndpoint, session.relay, endpointId);
+      yield* linkPeerSaga(link);
     } catch {
       // Reported by the capability, which has the context to describe it.
       yield commit(peerUnreachableTopic(endpointId));
@@ -456,7 +445,7 @@ export const acceptPairingSaga = defineSaga(
 
     // Accepting is the moment sharing becomes allowed, so anything written
     // to this peer beforehand goes out with the acceptance.
-    if (link) yield* flushSharesSaga({ endpointId, link });
+    if (link) yield* flushSharesSaga(link);
   },
 );
 
@@ -517,7 +506,7 @@ export const shareTextSaga = defineSaga(
     const handles = yield* read(peerHandlesCell);
     const link = handles.get(input.endpointId);
 
-    if (link) yield* flushSharesSaga({ endpointId: input.endpointId, link });
+    if (link) yield* flushSharesSaga(link);
   },
 );
 

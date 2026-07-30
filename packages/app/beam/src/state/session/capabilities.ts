@@ -1,14 +1,15 @@
-import init, {
-  generateSecretKey,
-  joinRelay,
-  type PeerConnection,
-  type Relay,
-} from '@crate/iroh';
+import init, { Identity, Relay, type PeerConnection } from '@crate/iroh';
 import initQrCode, { encode } from '@crate/qr-code';
 import { createLogger, toError } from '@lib/observability';
 import { read, write, type VaultId } from '@lib/vault';
 import { createInbox, type Inbox } from './inbox';
-import { decodeMessage, encodeMessage, type BeamMessage } from './protocol';
+import {
+  BEAM_PROTOCOL,
+  MAX_MESSAGE_BYTES,
+  decodeMessage,
+  encodeMessage,
+  type BeamMessage,
+} from './protocol';
 import type { QrGrid } from './qr-code';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -57,20 +58,150 @@ const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
 };
 
 /**
- * Instantiate the iroh wasm module and join the public relay network. Both
- * steps are async and client-only — the wasm fetches and the relay handshake
- * can't run during prerender.
+ * A live relay membership and everything registered against it.
+ *
+ * The relay handle alone isn't enough to hold onto: the listener wired to it
+ * is a wasm handle of its own, and one that nothing references is
+ * unsubscribed whenever the engine gets around to collecting it. So the two
+ * travel together, and {@link RelaySession.release} ends both.
+ */
+export interface RelaySession {
+  /** The live relay. Dialling goes through it. */
+  readonly relay: Relay;
+
+  /**
+   * Peers that dialled us, queued as they arrive. Filled from the moment the
+   * relay is defined — before it connects — so an inbound dial landing
+   * during the handshake isn't turned away.
+   */
+  readonly peers: Inbox<PeerLink>;
+
+  /** Leave the relay network and stop listening. */
+  release(): void;
+}
+
+/**
+ * A live link to one peer and everything registered against it. Bundled for
+ * the same reason as {@link RelaySession}: the message listener is a handle
+ * that has to outlive the callback it wraps.
+ *
+ * The same shape in both directions — a dial and an inbound connection
+ * differ only in who started them.
+ */
+export interface PeerLink {
+  /** The peer's endpoint public key. */
+  readonly endpointId: string;
+
+  /** The transport underneath, for sending. */
+  readonly connection: PeerConnection;
+
+  /** Messages from this peer, queued as they decode. */
+  readonly messages: Inbox<BeamMessage>;
+
+  /** Close the connection and stop listening. */
+  release(): void;
+}
+
+/**
+ * Wire a live connection into a {@link PeerLink}, decoding inbound messages
+ * into its queue. Anything that doesn't decode is dropped here: the bytes
+ * came from a stranger, and a frame we can't read is not an event worth
+ * waking a saga for.
+ *
+ * A queue rather than a callback because the consumer is a saga, which pulls
+ * one arrival at a time.
+ */
+const linkPeer = (connection: PeerConnection): PeerLink => {
+  const endpointId = connection.endpointId;
+  const messages = createInbox<BeamMessage>();
+
+  const listening = connection.onMessage((bytes) => {
+    const message = decodeMessage(bytes);
+
+    if (!message) {
+      logger.warn('Discarded an unreadable message from a peer.', {
+        endpointId,
+      });
+      return;
+    }
+
+    logger.debug('Received a peer message.', {
+      endpointId,
+      type: message.type,
+    });
+
+    messages.push(message);
+  });
+
+  return {
+    endpointId,
+    connection,
+    messages,
+    release: () => {
+      listening.free();
+      connection.free();
+    },
+  };
+};
+
+/**
+ * Define the relay and its inbound listener, without connecting.
+ *
+ * Frees the identity on the way out: the relay copies the key it binds
+ * under, and the endpoint id stays readable from the relay itself, so
+ * holding both would only be a second handle to keep track of.
+ */
+const defineSession = (identity: Identity): RelaySession => {
+  let relay: Relay;
+
+  try {
+    relay = new Relay(identity, {
+      protocols: { [BEAM_PROTOCOL]: { maxMessageSize: MAX_MESSAGE_BYTES } },
+    });
+  } finally {
+    identity.free();
+  }
+
+  const peers = createInbox<PeerLink>();
+
+  const accepting = relay.onPeerConnection((_protocol, connection) => {
+    const peer = linkPeer(connection);
+    logger.debug('Peer connected.', { endpointId: peer.endpointId });
+    peers.push(peer);
+  });
+
+  return {
+    relay,
+    peers,
+    release: () => {
+      accepting.free();
+      relay.free();
+    },
+  };
+};
+
+/**
+ * Instantiate the iroh wasm module, define a relay under this device's
+ * identity, and join the public relay network. Both steps are async and
+ * client-only — the wasm fetches and the relay handshake can't run during
+ * prerender.
  *
  * Reuses a saved identity, or mints a fresh one so the endpoint keeps a stable
  * identity (and beam link) across reloads. A fresh key is persisted in
  * parallel with the relay connect rather than before it — the connect is the
  * slow, networked step, and the write needn't gate it.
  *
- * Cancellation is cooperative: iroh's own `joinRelay()` isn't interruptible,
- * so after each `await` we bail on the signal, freeing a late-arriving relay
+ * The inbound listener goes on before the connect, not after. A peer that
+ * dials while nothing is listening is declined outright, and the handshake is
+ * a wide enough window for that to happen.
+ *
+ * Cancellation is cooperative: iroh's own `connect()` isn't interruptible, so
+ * after each `await` we bail on the signal, releasing a late-arriving session
  * so its connection doesn't linger.
  */
-export const openConnection = async (signal: AbortSignal): Promise<Relay> => {
+export const openConnection = async (
+  signal: AbortSignal,
+): Promise<RelaySession> => {
   try {
     await init();
     signal.throwIfAborted();
@@ -81,23 +212,34 @@ export const openConnection = async (signal: AbortSignal): Promise<Relay> => {
 
     // Reuse the saved identity, or mint one and persist it alongside the
     // connect.
-    const secretKey = restored ?? generateSecretKey();
-    const persisting = restored ? undefined : persistSecretKey(secretKey);
+    const identity = restored ? Identity.from(restored) : Identity.create();
+    const persisting = restored
+      ? undefined
+      : persistSecretKey(identity.secretKey);
 
-    const relay = await joinRelay(secretKey);
-    await persisting;
+    const session = defineSession(identity);
 
-    // The handshake can't be interrupted, so a relay that lands after the
-    // abort has to be freed here or its relay connection lingers.
-    if (signal.aborted) relay.free();
+    try {
+      await session.relay.connect();
+      await persisting;
+    } catch (error) {
+      // Nothing else holds the session yet, so a failed connect has to
+      // release it here or the relay and its listener are stranded.
+      session.release();
+      throw error;
+    }
+
+    // The handshake can't be interrupted, so a session that lands after the
+    // abort has to be released here or its relay connection lingers.
+    if (signal.aborted) session.release();
     signal.throwIfAborted();
 
     logger.debug('Connected to iroh relay.', {
-      endpointId: relay.endpointId,
-      homeRelay: relay.homeRelay,
+      endpointId: session.relay.endpointId,
+      homeRelay: session.relay.homeRelay,
     });
 
-    return relay;
+    return session;
   } catch (error) {
     // An abort is ordinary teardown — the scope was released mid-connect —
     // so it isn't worth reporting as a failure.
@@ -109,41 +251,6 @@ export const openConnection = async (signal: AbortSignal): Promise<Relay> => {
 
     throw error;
   }
-};
-
-/**
- * A peer that dialled us, paired with the identity it dialled from. The id
- * is read here rather than in a saga because reading it crosses into wasm,
- * and everything that touches a host object belongs in this layer.
- */
-export interface InboundPeer {
-  /** The peer's endpoint public key. */
-  endpointId: string;
-  /** The live connection. The caller owns it and must free it. */
-  link: PeerConnection;
-}
-
-/**
- * Start serving inbound dials, returning a queue of the peers that arrive.
- * The relay owns the accept loop, so freeing it stops the queue filling.
- *
- * A queue rather than a callback because the consumer is a saga, which pulls
- * one arrival at a time. Handles come out live and unfreed — the caller
- * talks back over them, and is responsible for closing them.
- */
-export const acceptInboundPeers = (
-  _signal: AbortSignal,
-  relay: Relay,
-): Inbox<InboundPeer> => {
-  const inbox = createInbox<InboundPeer>();
-
-  relay.acceptPeers((link) => {
-    const endpointId = link.remoteId;
-    logger.debug('Peer connected.', { endpointId });
-    inbox.push({ endpointId, link });
-  });
-
-  return inbox;
 };
 
 /**
@@ -159,25 +266,25 @@ export const receiveNext = <T>(
  * Dial the peer named in a beam link over the live relay connection,
  * resolving with the link once it's established.
  *
- * Logs the outcome here rather than from the saga, so it sits alongside
- * {@link acceptInboundPeers}'s `Peer connected.` log — both halves of a peer
+ * Logs the outcome here rather than from the saga, so it sits alongside the
+ * `Peer connected.` log the inbound listener writes — both halves of a peer
  * connection are observed from this layer. A failed dial is reported and
  * rethrown: the caller renders the peer as unreachable, which it can only do
  * if it hears about it.
  *
  * The signal goes unused: iroh's `dial()` isn't interruptible. A link that
- * lands after the scope died is freed by the cell holding it, or never
- * reaches one — an abandoned handle closes with the endpoint it rode in on.
+ * lands after the scope died is released by the cell holding it, or never
+ * reaches one — an abandoned handle closes with the relay it rode in on.
  */
 export const dialEndpoint = async (
   _signal: AbortSignal,
   relay: Relay,
   endpointId: string,
-): Promise<PeerConnection> => {
+): Promise<PeerLink> => {
   try {
-    const link = await relay.dial(endpointId);
-    logger.debug('Dialed peer.', { endpointId: link.remoteId });
-    return link;
+    const peer = linkPeer(await relay.dial(endpointId, BEAM_PROTOCOL));
+    logger.debug('Dialed peer.', { endpointId: peer.endpointId });
+    return peer;
   } catch (error) {
     logger.error('Failed to dial peer.', {
       endpointId,
@@ -186,39 +293,6 @@ export const dialEndpoint = async (
 
     throw error;
   }
-};
-
-/**
- * Start reading messages off a peer link, returning a queue of the ones that
- * decode. Anything that doesn't is dropped here: the bytes came from a
- * stranger, and a frame we can't read is not an event worth waking a saga
- * for.
- */
-export const listenToPeer = (
-  _signal: AbortSignal,
-  link: PeerConnection,
-): Inbox<BeamMessage> => {
-  const inbox = createInbox<BeamMessage>();
-  const endpointId = link.remoteId;
-
-  link.onMessage((bytes) => {
-    const message = decodeMessage(bytes);
-
-    if (!message) {
-      logger.warn('Discarded an unreadable message from a peer.', {
-        endpointId,
-      });
-      return;
-    }
-
-    logger.debug('Received a peer message.', {
-      endpointId,
-      type: message.type,
-    });
-    inbox.push(message);
-  });
-
-  return inbox;
 };
 
 /**
@@ -236,11 +310,11 @@ export const listenToPeer = (
  */
 export const sendMessage = async (
   _signal: AbortSignal,
-  link: PeerConnection,
+  peer: PeerLink,
   message: BeamMessage,
 ): Promise<boolean> => {
   try {
-    await link.send(encodeMessage(message));
+    await peer.connection.send(encodeMessage(message));
     return true;
   } catch (error) {
     logger.warn('Could not send a message to a peer.', {
@@ -307,14 +381,11 @@ export const wait = (
 export const newShareId = (): string => crypto.randomUUID();
 
 /**
- * Close a peer link. Freeing the handle is what closes the connection and
+ * Close a peer link. Releasing the handle is what closes the connection and
  * stops its receive loop, so this is how a link ends before the scope does.
  */
-export const releasePeer = (
-  _signal: AbortSignal,
-  link: PeerConnection,
-): void => {
-  link.free();
+export const releasePeer = (_signal: AbortSignal, peer: PeerLink): void => {
+  peer.release();
 };
 
 /**

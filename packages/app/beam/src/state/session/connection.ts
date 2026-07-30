@@ -1,5 +1,5 @@
 import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
-import type { Relay } from '@crate/iroh';
+import type { RelaySession } from './capabilities';
 import { beamScope } from '../scope';
 
 /**
@@ -32,17 +32,21 @@ export const connectionStore = defineStore<ConnectionState>(beamScope, () => ({
 }));
 
 /**
- * The live endpoint joined to the relay network, held for the lifetime of
- * the scope so it stays reachable. A cell, not store state — it holds a
- * wasm handle that must never be proxied. `null` outside the `connected`
- * state, including during SSG and first paint.
+ * The live relay membership, held for the lifetime of the scope so it stays
+ * reachable. A cell, not store state — it holds wasm handles that must never
+ * be proxied. `null` outside the `connected` state, including during SSG and
+ * first paint.
  *
- * Freeing it tears the relay connection down, which is what `drop` does
- * once the last anchor is released.
+ * The session rather than the bare relay: the inbound listener wired to it
+ * is a handle of its own, and one nothing references is unsubscribed
+ * whenever the engine collects it. Releasing the session ends both, which is
+ * what `drop` does once the last anchor goes.
  */
-export const relayCell = defineCell<Relay | null>(beamScope, () => null, {
-  drop: (held) => held?.free(),
-});
+export const relayCell = defineCell<RelaySession | null>(
+  beamScope,
+  () => null,
+  { drop: (held) => held?.release() },
+);
 
 /** The wasm load and relay handshake got under way. */
 export const connectingTopic = defineTopic();
@@ -51,13 +55,13 @@ defineFold(connectingTopic, [connectionStore], (connection) => {
 });
 
 /** The endpoint joined the relay network and is reachable. */
-export const connectedTopic = defineTopic<Relay>();
+export const connectedTopic = defineTopic<RelaySession>();
 defineFold(
   connectedTopic,
   [connectionStore, relayCell],
-  (connection, held, endpoint) => {
+  (connection, held, session) => {
     connection.status = 'connected';
-    held.current = endpoint;
+    held.current = session;
   },
 );
 
