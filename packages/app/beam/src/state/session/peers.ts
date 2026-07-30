@@ -1,5 +1,5 @@
 import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
-import type { PeerConnection } from '@crate/iroh';
+import type { PeerLink } from './capabilities';
 import { beamScope } from '../scope';
 
 /**
@@ -39,10 +39,10 @@ export const peerLinksStore = defineStore<PeerLinks>(beamScope, () => ({
  * the scope closes every link, which is what ends the receive loop each
  * handle owns on the Rust side.
  */
-export const peerHandlesCell = defineCell<ReadonlyMap<string, PeerConnection>>(
+export const peerHandlesCell = defineCell<ReadonlyMap<string, PeerLink>>(
   beamScope,
   () => new Map(),
-  { drop: (handles) => handles.forEach((handle) => handle.free()) },
+  { drop: (handles) => handles.forEach((handle) => handle.release()) },
 );
 
 /** A dial went out to a peer. */
@@ -53,21 +53,18 @@ defineFold(peerDialingTopic, [peerLinksStore], (links, endpointId) => {
 
 /**
  * A link to a peer came up, in either direction. Carries the handle so the
- * cell can hold it — the same shape as the relay connection landing.
+ * cell can hold it — the same shape as the relay connection landing. The
+ * link knows which peer it belongs to, so nothing else has to be paired
+ * with it here.
  */
-export const peerLinkedTopic = defineTopic<{
-  /** The peer on the other end. */
-  endpointId: string;
-  /** The live connection. Freed when the scope drops, or on release. */
-  link: PeerConnection;
-}>();
+export const peerLinkedTopic = defineTopic<PeerLink>();
 
 defineFold(
   peerLinkedTopic,
   [peerLinksStore, peerHandlesCell],
-  (links, handles, { endpointId, link }) => {
-    links.statuses[endpointId] = 'linked';
-    handles.current = new Map(handles.current).set(endpointId, link);
+  (links, handles, peer) => {
+    links.statuses[peer.endpointId] = 'linked';
+    handles.current = new Map(handles.current).set(peer.endpointId, peer);
   },
 );
 

@@ -7,7 +7,7 @@ import {
   inviteClosedTopic,
   inviteStore,
   qrCodeCell,
-  relayCell,
+  endpointCell,
 } from '../state/session';
 
 /**
@@ -22,7 +22,7 @@ import {
  */
 export const InviteDialog = () => {
   const invite = useValue(inviteStore);
-  const endpoint = useValue(relayCell);
+  const session = useValue(endpointCell);
   const grid = useValue(qrCodeCell);
   const commit = useCommit();
 
@@ -36,7 +36,7 @@ export const InviteDialog = () => {
       maxWidth="24rem"
     >
       <Show
-        when={endpoint()}
+        when={session()}
         fallback={
           <Text as="p" size={2} color="lowContrast" selectable={false}>
             Waiting for the relay connection…
@@ -55,7 +55,7 @@ export const InviteDialog = () => {
               testId="beam-link"
               readOnly
               aria-label="Beam link"
-              value={beamLink(live().endpointId)}
+              value={beamLink(live().endpoint.id)}
               onFocus={(event) => {
                 event.currentTarget.select();
                 event.currentTarget.scrollLeft = 0;

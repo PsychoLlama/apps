@@ -2,6 +2,22 @@ import { LABEL_MAX_LENGTH } from '../labels';
 import { SHARE_MAX_LENGTH } from './shares';
 
 /**
+ * The ALPN two beam endpoints negotiate on. iroh dispatches inbound
+ * connections by it, so both halves of a link must agree — and versioning
+ * it here is what lets a future format land without a peer on the old one
+ * mistaking it for something it can read.
+ */
+export const BEAM_PROTOCOL = 'beam/0';
+
+/**
+ * Largest inbound message the transport will read off a stream. Everything
+ * spoken here is a short control frame — the longest is a share, capped far
+ * below this — so it's a ceiling on what an unauthenticated peer can make
+ * the browser buffer rather than a budget anything real approaches.
+ */
+export const MAX_MESSAGE_BYTES = 64 * 1024;
+
+/**
  * What two beam endpoints say to each other over a peer link. Everything
  * here is spoken before either side has agreed to anything, so every field
  * arrives from an unauthenticated stranger and is treated as such: the

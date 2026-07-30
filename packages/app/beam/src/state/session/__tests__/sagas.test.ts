@@ -10,26 +10,26 @@
  */
 
 import { createTestRuntime, simulate } from '@lib/state';
-import type { PeerConnection, Relay } from '@crate/iroh';
+import type { Endpoint, PeerConnection } from '@crate/iroh';
 import {
-  acceptInboundPeers,
   copyText,
   dialEndpoint,
   encodeBeamCode,
-  listenToPeer,
   newShareId,
   openConnection,
   receiveNext,
   releasePeer,
   sendMessage,
   wait,
+  type PeerLink,
+  type EndpointSession,
 } from '../capabilities';
 import {
   connectFailedTopic,
   connectedTopic,
   connectingTopic,
   connectionStore,
-  relayCell,
+  endpointCell,
 } from '../connection';
 import { selfLabelFormula } from '../identity';
 import { createInbox } from '../inbox';
@@ -81,13 +81,28 @@ import {
 import type { Contact } from '../../contacts/database';
 import { beamScope } from '../../scope';
 
-/** A stand-in endpoint. The sagas only read its id and hand it onward. */
-const fakeRelay = { endpointId: 'ep-1' } as Relay;
+/**
+ * A stand-in endpoint session. The sagas only read the endpoint's id and drain the
+ * peer queue; everything else about one goes through a capability.
+ */
+const fakeSession: EndpointSession = {
+  endpoint: { id: 'ep-1' } as Endpoint,
+  peers: createInbox<PeerLink>(),
+  release: () => undefined,
+};
 
 const fakeGrid: QrGrid = { size: 1, modules: new Uint8Array([1]) };
 
-/** A stand-in peer link. Everything done to one goes through a capability. */
-const fakeLink = (): PeerConnection => ({}) as PeerConnection;
+/**
+ * A stand-in peer link, already listening — which is what a real one is by
+ * the time a saga sees it. Everything done to one goes through a capability.
+ */
+const fakeLink = (endpointId = 'ep-2'): PeerLink => ({
+  endpointId,
+  connection: {} as PeerConnection,
+  messages: createInbox(),
+  release: () => undefined,
+});
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
   endpointId: 'ep-2',
@@ -118,31 +133,31 @@ const fakeShare = (overrides: Partial<Share> = {}): Share => ({
 });
 
 describe('connectRelaySaga', () => {
-  it('lands the relay and its code in one transition', async () => {
+  it('lands the endpoint and its code in one transition', async () => {
     const trace = await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'initial' }]],
       calls: [
-        [openConnection, () => fakeRelay],
+        [openConnection, () => fakeSession],
         [encodeBeamCode, () => fakeGrid],
       ],
     });
 
     expect(trace.commits).toEqual([
       [connectingTopic()],
-      [connectedTopic(fakeRelay), codeEncodedTopic(fakeGrid)],
+      [connectedTopic(fakeSession), codeEncodedTopic(fakeGrid)],
     ]);
   });
 
-  it('starts serving inbound dials once the relay is up', async () => {
+  it('starts serving inbound dials once the endpoint is up', async () => {
     const trace = await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'initial' }]],
       calls: [
-        [openConnection, () => fakeRelay],
+        [openConnection, () => fakeSession],
         [encodeBeamCode, () => fakeGrid],
       ],
     });
 
-    // Nobody can pair with a device that isn't listening, and the relay is
+    // Nobody can pair with a device that isn't listening, and the endpoint is
     // the earliest moment it can.
     expect(trace.spawns).toHaveLength(1);
   });
@@ -153,7 +168,7 @@ describe('connectRelaySaga', () => {
     await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'initial' }]],
       calls: [
-        [openConnection, () => fakeRelay],
+        [openConnection, () => fakeSession],
         [encodeBeamCode, encode],
       ],
     });
@@ -165,7 +180,7 @@ describe('connectRelaySaga', () => {
     const trace = await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'initial' }]],
       calls: [
-        [openConnection, () => fakeRelay],
+        [openConnection, () => fakeSession],
         [encodeBeamCode, () => null],
       ],
     });
@@ -173,7 +188,7 @@ describe('connectRelaySaga', () => {
     // A missing code is non-fatal: the link is still copyable.
     expect(trace.commits).toEqual([
       [connectingTopic()],
-      [connectedTopic(fakeRelay), codeEncodedTopic(null)],
+      [connectedTopic(fakeSession), codeEncodedTopic(null)],
     ]);
   });
 
@@ -196,15 +211,15 @@ describe('connectRelaySaga', () => {
     ]);
   });
 
-  it('refuses to open a second relay over a live one', async () => {
-    const open = vi.fn(() => fakeRelay);
+  it('refuses to open a second endpoint over a live one', async () => {
+    const open = vi.fn(() => fakeSession);
 
     const trace = await simulate(connectRelaySaga(), {
       reads: [[connectionStore, { status: 'connected' }]],
       calls: [[openConnection, open]],
     });
 
-    // The cell holds one relay; a second connect would drop the first
+    // The cell holds one endpoint; a second connect would drop the first
     // unfreed.
     expect(open).not.toHaveBeenCalled();
     expect(trace.commits).toEqual([]);
@@ -212,24 +227,23 @@ describe('connectRelaySaga', () => {
 });
 
 describe('serveInboundSaga', () => {
-  it('accepts over the relay it was handed', async () => {
-    const accept = vi.fn(() => createInbox<never>());
+  it('drains the queue the session was handed', async () => {
+    const receive = vi.fn(() => {
+      throw new Error('scope released');
+    });
 
     await expect(
-      simulate(serveInboundSaga(fakeRelay), {
-        calls: [
-          [acceptInboundPeers, accept],
-          [
-            receiveNext,
-            () => {
-              throw new Error('scope released');
-            },
-          ],
-        ],
+      simulate(serveInboundSaga(fakeSession), {
+        calls: [[receiveNext, receive]],
       }),
     ).rejects.toThrow('scope released');
 
-    expect(accept).toHaveBeenCalledWith(expect.any(AbortSignal), fakeRelay);
+    // The queue is filled by the endpoint's own listener, wired before the
+    // connect — so the saga has only to pull from it.
+    expect(receive).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      fakeSession.peers,
+    );
   });
 });
 
@@ -237,7 +251,6 @@ describe('linkPeerSaga', () => {
   /** Stubs for the plumbing every link runs through. */
   const wiring = () =>
     [
-      [listenToPeer, () => createInbox()],
       [sendMessage, vi.fn()],
       [releasePeer, vi.fn()],
     ] as const;
@@ -246,7 +259,7 @@ describe('linkPeerSaga', () => {
     const send = vi.fn();
     const link = fakeLink();
 
-    const trace = await simulate(linkPeerSaga({ endpointId: 'ep-2', link }), {
+    const trace = await simulate(linkPeerSaga(link), {
       reads: [
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
@@ -255,9 +268,7 @@ describe('linkPeerSaga', () => {
       calls: [...wiring(), [sendMessage, send]],
     });
 
-    expect(trace.commits).toEqual([
-      [peerLinkedTopic({ endpointId: 'ep-2', link })],
-    ]);
+    expect(trace.commits).toEqual([[peerLinkedTopic(link)]]);
     expect(send).toHaveBeenCalledWith(
       expect.any(AbortSignal),
       link,
@@ -265,37 +276,26 @@ describe('linkPeerSaga', () => {
     );
   });
 
-  it('starts listening before it says anything', async () => {
-    const order: string[] = [];
-
-    await simulate(linkPeerSaga({ endpointId: 'ep-2', link: fakeLink() }), {
+  it('starts draining the peer\u2019s messages', async () => {
+    const trace = await simulate(linkPeerSaga(fakeLink()), {
       reads: [
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
         [contactsStore, bookHolding(fakeContact())],
       ],
-      calls: [
-        ...wiring(),
-        [
-          listenToPeer,
-          () => {
-            order.push('listen');
-            return createInbox();
-          },
-        ],
-        [sendMessage, () => void order.push('send')],
-      ],
+      calls: [...wiring()],
     });
 
-    // A peer that answers immediately would otherwise be answering into a
-    // void.
-    expect(order).toEqual(['listen', 'send']);
+    // The link arrives already listening \u2014 the capability wires its queue
+    // as it wraps the connection \u2014 so what's left to check here is that
+    // something is pulling from that queue.
+    expect(trace.spawns).toHaveLength(1);
   });
 
-  it('says nothing about itself before the relay names it', async () => {
+  it('says nothing about itself before the endpoint names it', async () => {
     const send = vi.fn();
 
-    await simulate(linkPeerSaga({ endpointId: 'ep-2', link: fakeLink() }), {
+    await simulate(linkPeerSaga(fakeLink()), {
       reads: [
         [peerHandlesCell, new Map()],
         [selfLabelFormula, null],
@@ -311,7 +311,7 @@ describe('linkPeerSaga', () => {
     const send = vi.fn();
     const link = fakeLink();
 
-    await simulate(linkPeerSaga({ endpointId: 'ep-2', link }), {
+    await simulate(linkPeerSaga(link), {
       reads: [
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
@@ -333,7 +333,7 @@ describe('linkPeerSaga', () => {
   it('claims nothing to a peer that hasn’t been accepted', async () => {
     const send = vi.fn();
 
-    await simulate(linkPeerSaga({ endpointId: 'ep-2', link: fakeLink() }), {
+    await simulate(linkPeerSaga(fakeLink()), {
       reads: [
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
@@ -354,7 +354,7 @@ describe('linkPeerSaga', () => {
     const send = vi.fn(() => true);
     const link = fakeLink();
 
-    const trace = await simulate(linkPeerSaga({ endpointId: 'ep-2', link }), {
+    const trace = await simulate(linkPeerSaga(link), {
       reads: [
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
@@ -378,7 +378,7 @@ describe('linkPeerSaga', () => {
     const release = vi.fn();
     const stale = fakeLink();
 
-    await simulate(linkPeerSaga({ endpointId: 'ep-2', link: fakeLink() }), {
+    await simulate(linkPeerSaga(fakeLink()), {
       reads: [
         [peerHandlesCell, new Map([['ep-2', stale]])],
         [selfLabelFormula, 'abcd1234'],
@@ -397,7 +397,7 @@ describe('greetPeerSaga', () => {
   it('files an inbound dial as a request before linking it', async () => {
     const link = fakeLink();
 
-    const trace = await simulate(greetPeerSaga({ endpointId: 'ep-2', link }), {
+    const trace = await simulate(greetPeerSaga(link), {
       reads: [
         [contactsStore, bookHolding(fakeContact({ direction: 'inbound' }))],
         [peerHandlesCell, new Map()],
@@ -406,7 +406,6 @@ describe('greetPeerSaga', () => {
       calls: [
         [now, () => 1234],
         [saveContact, vi.fn()],
-        [listenToPeer, () => createInbox()],
         [sendMessage, vi.fn()],
         [releasePeer, vi.fn()],
       ],
@@ -422,7 +421,7 @@ describe('greetPeerSaga', () => {
           seenAt: 1234,
         }),
       ],
-      [peerLinkedTopic({ endpointId: 'ep-2', link })],
+      [peerLinkedTopic(link)],
     ]);
   });
 });
@@ -493,7 +492,6 @@ describe('dialPeerSaga', () => {
     [
       [now, () => 1234],
       [saveContact, vi.fn()],
-      [listenToPeer, () => createInbox()],
       [sendMessage, vi.fn()],
       [releasePeer, vi.fn()],
     ] as const;
@@ -501,14 +499,14 @@ describe('dialPeerSaga', () => {
   /** Reads a dial makes on its way through to a link. */
   const surroundings = () =>
     [
-      [relayCell, fakeRelay],
+      [endpointCell, fakeSession],
       [peerLinksStore, { statuses: {} }],
       [peerHandlesCell, new Map()],
       [selfLabelFormula, 'abcd1234'],
       [contactsStore, bookHolding(fakeContact())],
     ] as const;
 
-  it('dials over the relay the layout holds open', async () => {
+  it('dials over the endpoint the layout holds open', async () => {
     const dial = vi.fn(() => fakeLink());
 
     await simulate(dialPeerSaga('ep-2'), {
@@ -518,7 +516,7 @@ describe('dialPeerSaga', () => {
 
     expect(dial).toHaveBeenCalledWith(
       expect.any(AbortSignal),
-      fakeRelay,
+      fakeSession.endpoint,
       'ep-2',
     );
   });
@@ -542,7 +540,7 @@ describe('dialPeerSaga', () => {
         }),
       ],
       [peerDialingTopic('ep-2')],
-      [peerLinkedTopic({ endpointId: 'ep-2', link })],
+      [peerLinkedTopic(link)],
     ]);
   });
 
@@ -569,7 +567,7 @@ describe('dialPeerSaga', () => {
     const dial = vi.fn();
 
     const trace = await simulate(dialPeerSaga('ep-1'), {
-      reads: [[relayCell, fakeRelay]],
+      reads: [[endpointCell, fakeSession]],
       calls: [...wiring(), [dialEndpoint, dial]],
     });
 
@@ -584,7 +582,7 @@ describe('dialPeerSaga', () => {
 
     const trace = await simulate(dialPeerSaga('ep-2'), {
       reads: [
-        [relayCell, fakeRelay],
+        [endpointCell, fakeSession],
         [peerLinksStore, { statuses: { 'ep-2': 'linked' } }],
       ],
       calls: [...wiring(), [dialEndpoint, dial]],
@@ -601,7 +599,7 @@ describe('dialPeerSaga', () => {
 
     await simulate(dialPeerSaga('ep-2'), {
       reads: [
-        [relayCell, fakeRelay],
+        [endpointCell, fakeSession],
         [peerLinksStore, { statuses: { 'ep-2': 'dialing' } }],
       ],
       calls: [...wiring(), [dialEndpoint, dial]],
@@ -615,7 +613,7 @@ describe('dialPeerSaga', () => {
 
     await simulate(dialPeerSaga('ep-2'), {
       reads: [
-        [relayCell, fakeRelay],
+        [endpointCell, fakeSession],
         [peerLinksStore, { statuses: { 'ep-2': 'unreachable' } }],
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
@@ -631,7 +629,7 @@ describe('dialPeerSaga', () => {
   it('rejects a dial attempted before the connection is up', async () => {
     await expect(
       simulate(dialPeerSaga('ep-2'), {
-        reads: [[relayCell, null]],
+        reads: [[endpointCell, null]],
         calls: [[dialEndpoint, vi.fn()]],
       }),
     ).rejects.toThrow('Cannot dial a peer before the relay connection is up.');
@@ -806,7 +804,7 @@ describe('shareTextSaga', () => {
 
 describe('flushSharesSaga', () => {
   /** A flush aimed at the peer every fixture here is about. */
-  const flush = () => flushSharesSaga({ endpointId: 'ep-2', link: fakeLink() });
+  const flush = () => flushSharesSaga(fakeLink());
 
   it('holds everything back from a peer that hasn’t accepted', async () => {
     const send = vi.fn(() => true);
@@ -1029,7 +1027,7 @@ describe('a pairing landing mid-saga', () => {
       contactsRestoredTopic([
         fakeContact({ trust: 'invited', direction: 'outbound' }),
       ]),
-      peerLinkedTopic({ endpointId: 'ep-2', link }),
+      peerLinkedTopic(link),
       shareQueuedTopic({
         id: 'share-1',
         endpointId: 'ep-2',
@@ -1079,7 +1077,7 @@ describe('a pairing landing mid-saga', () => {
       contactsRestoredTopic([
         fakeContact({ trust: 'invited', direction: 'inbound' }),
       ]),
-      peerLinkedTopic({ endpointId: 'ep-2', link: fakeLink() }),
+      peerLinkedTopic(fakeLink()),
       shareQueuedTopic({
         id: 'share-1',
         endpointId: 'ep-2',

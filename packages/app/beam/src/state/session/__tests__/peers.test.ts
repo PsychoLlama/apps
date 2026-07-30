@@ -7,6 +7,8 @@
 
 import { createTestRuntime } from '@lib/state';
 import type { PeerConnection } from '@crate/iroh';
+import type { PeerLink } from '../capabilities';
+import { createInbox } from '../inbox';
 import {
   peerDialingTopic,
   peerHandlesCell,
@@ -18,7 +20,12 @@ import {
 import { beamScope } from '../../scope';
 
 /** A stand-in link. The folds only hold it; nothing calls into it. */
-const fakeLink = (): PeerConnection => ({}) as PeerConnection;
+const fakeLink = (endpointId = 'ep-1'): PeerLink => ({
+  endpointId,
+  connection: {} as PeerConnection,
+  messages: createInbox(),
+  release: () => undefined,
+});
 
 const setup = () => {
   const runtime = createTestRuntime();
@@ -49,7 +56,7 @@ describe('peerLinkedTopic', () => {
     const { commit, peek } = setup();
     const link = fakeLink();
 
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link }));
+    commit(peerLinkedTopic(link));
 
     expect(peek(peerLinksStore).statuses['ep-1']).toBe('linked');
     expect(peek(peerHandlesCell).get('ep-1')).toBe(link);
@@ -59,8 +66,8 @@ describe('peerLinkedTopic', () => {
     const { commit, peek } = setup();
     const second = fakeLink();
 
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: second }));
+    commit(peerLinkedTopic(fakeLink('ep-1')));
+    commit(peerLinkedTopic(second));
 
     expect(peek(peerHandlesCell).get('ep-1')).toBe(second);
   });
@@ -69,8 +76,8 @@ describe('peerLinkedTopic', () => {
     const { commit, peek } = setup();
     const first = fakeLink();
 
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: first }));
-    commit(peerLinkedTopic({ endpointId: 'ep-2', link: fakeLink() }));
+    commit(peerLinkedTopic(first));
+    commit(peerLinkedTopic(fakeLink('ep-2')));
 
     expect(peek(peerHandlesCell).get('ep-1')).toBe(first);
   });
@@ -91,7 +98,7 @@ describe('peerReleasedTopic', () => {
   it('drops the link and its handle', () => {
     const { commit, peek } = setup();
 
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
+    commit(peerLinkedTopic(fakeLink('ep-1')));
     commit(peerReleasedTopic('ep-1'));
 
     expect(peek(peerLinksStore).statuses).toEqual({});

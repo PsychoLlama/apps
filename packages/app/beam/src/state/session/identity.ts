@@ -1,6 +1,6 @@
 import { defineFormula } from '@lib/state';
 import { generateLabel } from '../labels';
-import { relayCell } from './connection';
+import { endpointCell } from './connection';
 
 /**
  * What this device calls itself: the name generated from its own endpoint
@@ -11,6 +11,6 @@ import { relayCell } from './connection';
  * `null` until the relay connection lands, since there's no endpoint to
  * derive it from before that — including during SSG and first paint.
  */
-export const selfLabelFormula = defineFormula([relayCell], (endpoint) =>
-  endpoint ? generateLabel(endpoint.endpointId) : null,
+export const selfLabelFormula = defineFormula([endpointCell], (session) =>
+  session ? generateLabel(session.endpoint.id) : null,
 );

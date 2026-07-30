@@ -5,6 +5,8 @@
 
 import { createTestRuntime } from '@lib/state';
 import type { PeerConnection } from '@crate/iroh';
+import type { PeerLink } from '../capabilities';
+import { createInbox } from '../inbox';
 import {
   activeContactsFormula,
   pairingRequestsFormula,
@@ -36,7 +38,12 @@ const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
 });
 
 /** A stand-in link. Nothing here calls into one. */
-const fakeLink = (): PeerConnection => ({}) as PeerConnection;
+const fakeLink = (endpointId = 'ep-1'): PeerLink => ({
+  endpointId,
+  connection: {} as PeerConnection,
+  messages: createInbox(),
+  release: () => undefined,
+});
 
 const setup = (contacts: Contact[] = []) => {
   const runtime = createTestRuntime();
@@ -89,7 +96,7 @@ describe('pairingRequestsFormula', () => {
     const { commit, peek } = setup([fakeContact()]);
     commit(requestDismissedTopic('ep-1'));
 
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
+    commit(peerLinkedTopic(fakeLink('ep-1')));
 
     // A fresh ask, not a bypass: the contact is still `invited`, and the
     // prompt is the same prompt.
@@ -136,7 +143,7 @@ describe('activeContactsFormula', () => {
       fakeContact({ trust: 'trusted', label: 'Studio Mac' }),
     ]);
 
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
+    commit(peerLinkedTopic(fakeLink('ep-1')));
 
     expect(peek(activeContactsFormula)).toMatchObject([{ name: 'Studio Mac' }]);
   });
@@ -151,7 +158,7 @@ describe('activeContactsFormula', () => {
   it('ignores a linked peer that hasn’t accepted', () => {
     const { commit, peek } = setup([fakeContact({ trust: 'invited' })]);
 
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
+    commit(peerLinkedTopic(fakeLink('ep-1')));
 
     // A link isn't permission. Nothing can be shared with this one yet.
     expect(peek(activeContactsFormula)).toEqual([]);
@@ -171,7 +178,7 @@ describe('shareStatesFormula', () => {
     const { peek } = setup([fakeContact()]);
 
     // The view reads an absent entry as `preparing`, which is right for a
-    // cold load and for the paint before the relay is up.
+    // cold load and for the paint before the endpoint is up.
     expect(peek(shareStatesFormula)['ep-1']).toBeUndefined();
   });
 
@@ -188,7 +195,7 @@ describe('shareStatesFormula', () => {
       fakeContact({ trust: 'invited', direction: 'outbound' }),
     ]);
 
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
+    commit(peerLinkedTopic(fakeLink('ep-1')));
 
     expect(peek(shareStatesFormula)['ep-1']).toBe('awaiting');
   });
@@ -196,7 +203,7 @@ describe('shareStatesFormula', () => {
   it('reads a link to a paired peer as connected', () => {
     const { commit, peek } = setup([fakeContact({ trust: 'trusted' })]);
 
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
+    commit(peerLinkedTopic(fakeLink('ep-1')));
 
     expect(peek(shareStatesFormula)['ep-1']).toBe('connected');
   });
@@ -213,7 +220,7 @@ describe('shareStatesFormula', () => {
     const { commit, peek } = setup([
       fakeContact({ trust: 'invited', direction: 'outbound' }),
     ]);
-    commit(peerLinkedTopic({ endpointId: 'ep-1', link: fakeLink() }));
+    commit(peerLinkedTopic(fakeLink('ep-1')));
 
     commit(contactsRestoredTopic([fakeContact({ trust: 'trusted' })]));
 

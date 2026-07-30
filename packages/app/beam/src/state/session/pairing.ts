@@ -106,7 +106,7 @@ export const activeContactsFormula = defineFormula(
  * How the share view stands with one peer — the transport and the pairing
  * read as one thing, because that's how the reader experiences it.
  *
- * - `preparing` — nothing attempted. The relay isn't up, or the dial hasn't
+ * - `preparing` — nothing attempted. The endpoint isn't up, or the dial hasn't
  *   started. This is what prerender and first paint show.
  * - `connecting` — the dial is in flight.
  * - `awaiting` — the link is up and we've asked; they haven't answered.
