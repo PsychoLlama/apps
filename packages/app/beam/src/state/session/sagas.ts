@@ -6,12 +6,15 @@ import {
   connectingTopic,
   connectionStore,
   endpointCell,
+  relayChangedTopic,
 } from './connection';
 import { codeEncodedTopic } from './qr-code';
 import {
+  awaitPeerClose,
   copyText,
   dialEndpoint,
   encodeBeamCode,
+  loadIdentity,
   newShareId,
   openConnection,
   receiveNext,
@@ -21,8 +24,9 @@ import {
   type PeerLink,
   type EndpointSession,
 } from './capabilities';
-import { selfLabelFormula } from './identity';
+import { identityResolvedTopic, selfLabelFormula } from './identity';
 import {
+  peerClosedTopic,
   peerDialingTopic,
   peerHandlesCell,
   peerLinkedTopic,
@@ -245,15 +249,33 @@ export const applyPeerMessageSaga = defineSaga(
  *
  * Loops forever by design: it's spawned, so the abort that ends it is
  * swallowed as ordinary teardown rather than reported. A link that closes
- * early leaves this parked rather than exiting — the connection-closed
- * signal isn't surfaced yet, and a parked saga costs nothing until the scope
- * releases it.
+ * early leaves this parked rather than exiting — {@link watchPeerSaga} is
+ * what notices that, and a parked saga costs nothing until the scope releases
+ * it.
  */
 const pumpPeerSaga = defineSaga(beamScope, async function* (peer: PeerLink) {
   while (true) {
     const message = yield* call(receiveNext, peer.messages);
     yield* applyPeerMessageSaga({ endpointId: peer.endpointId, message });
   }
+});
+
+/**
+ * Wait for one peer link to end, and say so.
+ *
+ * Every link gets one, in either direction, because either end can hang up:
+ * walking away from a share view closes the connection from that side, and
+ * this is how the device left holding it finds out rather than going on
+ * showing a peer that isn't there.
+ *
+ * Deliberate teardown here settles the same promise, so this fires for links
+ * this device released too. Sorting that out is the fold's job — it holds the
+ * handle, so it can see whether the link that ended is still the current one.
+ */
+const watchPeerSaga = defineSaga(beamScope, async function* (peer: PeerLink) {
+  yield* call(awaitPeerClose, peer);
+  logger.debug('A peer link closed.', { endpointId: peer.endpointId });
+  yield commit(peerClosedTopic(peer));
 });
 
 /**
@@ -283,6 +305,7 @@ export const linkPeerSaga = defineSaga(
 
     yield commit(peerLinkedTopic(peer));
     yield* spawn(pumpPeerSaga(peer));
+    yield* spawn(watchPeerSaga(peer));
 
     const label = yield* read(selfLabelFormula);
     if (label) yield* call(sendMessage, peer, helloMessage(label));
@@ -339,30 +362,75 @@ export const serveInboundSaga = defineSaga(
 );
 
 /**
- * Join the relay network and encode this endpoint's beam link, landing the
- * live endpoint and its QR grid in a single transition so the view never shows a
- * connection without its code (nor a stale code without its connection).
- * Inbound dials are served from the moment it lands.
+ * Report relay changes for as long as the endpoint is up. Losing a relay
+ * isn't a failure — iroh goes and finds another — so this is a status feed
+ * rather than an error path, and the header's indicator is its only reader.
  *
- * Client-only — neither the wasm fetch nor the handshake can run during SSG —
- * so `BeamLayout` starts it from `onMount`. Cancellation rides the scope's
- * signal: releasing the last anchor aborts the connect and frees whatever
- * endpoint it landed.
+ * Loops forever, like the accept loop, and ends the same way: the scope dies
+ * and the abort is swallowed as teardown.
+ */
+export const watchRelaySaga = defineSaga(
+  beamScope,
+  async function* (session: EndpointSession) {
+    while (true) {
+      const homeRelay = yield* call(receiveNext, session.relay);
+      yield commit(relayChangedTopic(homeRelay));
+    }
+  },
+);
+
+/**
+ * Encode this device's beam link into a scannable grid.
  *
- * Guarded on `initial` so a second anchor can't open a second endpoint, which
- * the cell would silently drop unfreed.
+ * Spawned rather than awaited so it runs alongside the relay handshake: both
+ * need the wasm, neither needs the other, and the invite is readable from the
+ * link alone while the code is still being drawn.
+ */
+export const encodeInviteSaga = defineSaga(
+  beamScope,
+  async function* (endpointId: string) {
+    const grid = yield* call(encodeBeamCode, endpointId);
+    yield commit(codeEncodedTopic(grid));
+  },
+);
+
+/**
+ * Settle this device's identity, then join the relay network under it.
+ *
+ * Two steps, published separately, because they finish at very different
+ * times. The identity is a key derivation — the address is readable the
+ * moment the wasm is up and the vault has answered — so the header can name
+ * this device and the invite can show its link while the handshake is still
+ * a round trip away. Waiting for the relay to say either would leave the page
+ * blank for the slowest part of coming up.
+ *
+ * Once the endpoint lands, three things run against it for the life of the
+ * scope: inbound dials are served, relay changes are reported, and the QR
+ * encode — started earlier, off the identity — finishes whenever it finishes.
+ *
+ * Client-only, so `BeamLayout` starts it from `onMount`. Cancellation rides
+ * the scope's signal: releasing the last anchor aborts the connect and frees
+ * whatever endpoint it landed.
+ *
+ * Guarded on `started` rather than on the status, which begins at
+ * `connecting` for first paint's sake: without it a second anchor could open
+ * a second endpoint, which the cell would silently drop unfreed.
  */
 export const connectRelaySaga = defineSaga(beamScope, async function* () {
-  const { status } = yield* read(connectionStore);
-  if (status !== 'initial') return;
+  const { started } = yield* read(connectionStore);
+  if (started) return;
 
   yield commit(connectingTopic());
 
   try {
-    const session = yield* call(openConnection);
-    const grid = yield* call(encodeBeamCode, session.endpoint.id);
-    yield commit(connectedTopic(session), codeEncodedTopic(grid));
+    const self = yield* call(loadIdentity);
+    yield commit(identityResolvedTopic(self.endpointId));
+    yield* spawn(encodeInviteSaga(self.endpointId));
+
+    const session = yield* call(openConnection, self);
+    yield commit(connectedTopic(session));
     yield* spawn(serveInboundSaga(session));
+    yield* spawn(watchRelaySaga(session));
   } catch {
     // Reported by the capability, which has the context to describe it.
     yield commit(connectFailedTopic());
@@ -450,6 +518,35 @@ export const acceptPairingSaga = defineSaga(
 );
 
 /**
+ * Hang up on a peer, leaving the pairing alone.
+ *
+ * This is what leaving a share view does. A connection is the expensive,
+ * device-visible half of a pairing — it holds a relay stream open on both
+ * ends and keeps the other device listed as reachable — and the share view is
+ * the only place either matters, so it ends with the view rather than with
+ * the scope. Closing it tells the peer plainly, which is the whole reason the
+ * far side can show `disconnected` instead of a link that quietly stops
+ * answering.
+ *
+ * Nothing is lost by it: the contact stays, anything unsent stays queued, and
+ * coming back re-dials and flushes.
+ *
+ * A no-op for a peer with no live link — an inbound one may never have been
+ * dialled from here at all.
+ */
+export const disconnectPeerSaga = defineSaga(
+  beamScope,
+  async function* (endpointId: string) {
+    const handles = yield* read(peerHandlesCell);
+    const link = handles.get(endpointId);
+    if (!link) return;
+
+    yield* call(releasePeer, link);
+    yield commit(peerReleasedTopic(endpointId));
+  },
+);
+
+/**
  * Take back an invite we sent: drop the link and forget the contact. The
  * peer is told nothing — there's no message for withdrawing, and one would
  * only matter to a device that has already been asked to decide. What it
@@ -458,13 +555,7 @@ export const acceptPairingSaga = defineSaga(
 export const cancelPairingSaga = defineSaga(
   beamScope,
   async function* (endpointId: string) {
-    const handles = yield* read(peerHandlesCell);
-    const link = handles.get(endpointId);
-
-    if (link) {
-      yield* call(releasePeer, link);
-      yield commit(peerReleasedTopic(endpointId));
-    }
+    yield* disconnectPeerSaga(endpointId);
 
     const contact = (yield* read(contactsStore)).entries[endpointId];
     logger.info('Withdrew an invite.', pairing(endpointId, contact));

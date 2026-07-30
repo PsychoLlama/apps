@@ -15,7 +15,9 @@ import {
   connectingTopic,
   connectionStore,
   endpointCell,
+  relayChangedTopic,
 } from '../connection';
+import { identityResolvedTopic, identityStore } from '../identity';
 import { codeEncodedTopic, qrCodeCell, type QrGrid } from '../qr-code';
 import { beamScope } from '../../scope';
 
@@ -28,6 +30,7 @@ const fakeSession = (
 ): EndpointSession => ({
   endpoint: { id: 'ep-1' } as Endpoint,
   peers: createInbox<PeerLink>(),
+  relay: createInbox<string | null>(),
   release,
 });
 
@@ -40,21 +43,27 @@ const setup = () => {
 };
 
 describe('connectionStore', () => {
-  it('seeds an idle status and no endpoint before a connect', () => {
+  it('seeds a connecting status and no endpoint before a connect', () => {
     const { peek } = setup();
 
-    expect(peek(connectionStore).status).toBe('initial');
+    // The spinner is the prerendered state: connecting starts on mount and
+    // nothing cancels it, so an idle status would only ever be a lie the
+    // markup told for a frame.
+    expect(peek(connectionStore).status).toBe('connecting');
+    expect(peek(connectionStore).homeRelay).toBeNull();
     expect(peek(endpointCell)).toBeNull();
   });
-});
 
-describe('connectingTopic', () => {
-  it('marks the handshake under way', () => {
+  it('has not started a connect until something says so', () => {
     const { commit, peek } = setup();
+
+    expect(peek(connectionStore).started).toBe(false);
 
     commit(connectingTopic());
 
-    expect(peek(connectionStore).status).toBe('connecting');
+    // The guard the status can no longer serve, now that it starts already
+    // showing a connect under way.
+    expect(peek(connectionStore).started).toBe(true);
   });
 });
 
@@ -69,6 +78,55 @@ describe('connectedTopic', () => {
     // Identity, not deep equality: a store would hand back a proxy, and a
     // proxied wasm handle traps on every method call.
     expect(peek(endpointCell)).toBe(endpoint);
+  });
+});
+
+describe('relayChangedTopic', () => {
+  it('names the relay carrying the endpoint', () => {
+    const { commit, peek } = setup();
+
+    commit(relayChangedTopic('https://relay.example'));
+
+    expect(peek(connectionStore).status).toBe('connected');
+    expect(peek(connectionStore).homeRelay).toBe('https://relay.example');
+  });
+
+  it('falls back to connecting when the relay goes away', () => {
+    const { commit, peek } = setup();
+    commit(relayChangedTopic('https://relay.example'));
+
+    commit(relayChangedTopic(null));
+
+    // Not a failure: iroh goes and finds another relay on its own, so this
+    // is the same news the first handshake was.
+    expect(peek(connectionStore).status).toBe('connecting');
+    expect(peek(connectionStore).homeRelay).toBeNull();
+  });
+
+  it('leaves a failed connect alone', () => {
+    const { commit, peek } = setup();
+    commit(connectFailedTopic());
+
+    commit(relayChangedTopic('https://relay.example'));
+
+    // The endpoint behind a failure is gone. A late change from a watcher
+    // still unwinding would have the header claim a connection nothing holds.
+    expect(peek(connectionStore).status).toBe('failed');
+    expect(peek(connectionStore).homeRelay).toBeNull();
+  });
+});
+
+describe('identityResolvedTopic', () => {
+  it('names this device before any connection lands', () => {
+    const { commit, peek } = setup();
+
+    commit(identityResolvedTopic('ep-1'));
+
+    expect(peek(identityStore).endpointId).toBe('ep-1');
+    // The whole point of splitting it out: the address is readable from the
+    // key alone, with no relay involved.
+    expect(peek(connectionStore).status).toBe('connecting');
+    expect(peek(endpointCell)).toBeNull();
   });
 });
 
@@ -100,19 +158,16 @@ describe('codeEncodedTopic', () => {
     expect(peek(qrCodeCell)).toBeNull();
   });
 
-  it('lands in the same transition as the connection', () => {
-    const { commit, ledger, peek } = setup();
-    const endpoint = fakeSession();
+  it('lands without waiting for the relay connection', () => {
+    const { commit, peek } = setup();
 
-    commit(connectedTopic(endpoint), codeEncodedTopic(fakeGrid));
+    commit(identityResolvedTopic('ep-1'));
+    commit(codeEncodedTopic(fakeGrid));
 
-    // One transition, so the view can never paint a connection without its
-    // code (nor a code without its connection).
-    expect(ledger()).toEqual([
-      [connectedTopic(endpoint), codeEncodedTopic(fakeGrid)],
-    ]);
-    expect(peek(connectionStore).status).toBe('connected');
+    // The code encodes the link, and the link is the address the key
+    // implies — so the invite is complete before the handshake is.
     expect(peek(qrCodeCell)).toBe(fakeGrid);
+    expect(peek(endpointCell)).toBeNull();
   });
 });
 

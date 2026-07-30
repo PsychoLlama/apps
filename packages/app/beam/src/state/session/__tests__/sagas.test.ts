@@ -12,9 +12,11 @@
 import { createTestRuntime, simulate } from '@lib/state';
 import type { Endpoint, PeerConnection } from '@crate/iroh';
 import {
+  awaitPeerClose,
   copyText,
   dialEndpoint,
   encodeBeamCode,
+  loadIdentity,
   newShareId,
   openConnection,
   receiveNext,
@@ -23,6 +25,7 @@ import {
   wait,
   type PeerLink,
   type EndpointSession,
+  type SelfKey,
 } from '../capabilities';
 import {
   connectFailedTopic,
@@ -31,7 +34,7 @@ import {
   connectionStore,
   endpointCell,
 } from '../connection';
-import { selfLabelFormula } from '../identity';
+import { identityResolvedTopic, selfLabelFormula } from '../identity';
 import { createInbox } from '../inbox';
 import {
   peerDialingTopic,
@@ -61,12 +64,15 @@ import {
   connectRelaySaga,
   copyShareSaga,
   dialPeerSaga,
+  disconnectPeerSaga,
+  encodeInviteSaga,
   flushSharesSaga,
   greetPeerSaga,
   linkPeerSaga,
   receiveShareSaga,
   serveInboundSaga,
   shareTextSaga,
+  watchRelaySaga,
 } from '../sagas';
 import { now, saveContact, removeContact } from '../../contacts/capabilities';
 import {
@@ -88,7 +94,14 @@ import { beamScope } from '../../scope';
 const fakeSession: EndpointSession = {
   endpoint: { id: 'ep-1' } as Endpoint,
   peers: createInbox<PeerLink>(),
+  relay: createInbox<string | null>(),
   release: () => undefined,
+};
+
+/** A stand-in identity. Only the address is ever looked at. */
+const fakeSelf: SelfKey = {
+  endpointId: 'ep-1',
+  secretKey: new Uint8Array(32),
 };
 
 const fakeGrid: QrGrid = { size: 1, modules: new Uint8Array([1]) };
@@ -101,6 +114,7 @@ const fakeLink = (endpointId = 'ep-2'): PeerLink => ({
   endpointId,
   connection: {} as PeerConnection,
   messages: createInbox(),
+  closed: new Promise(() => undefined),
   release: () => undefined,
 });
 
@@ -133,75 +147,96 @@ const fakeShare = (overrides: Partial<Share> = {}): Share => ({
 });
 
 describe('connectRelaySaga', () => {
-  it('lands the endpoint and its code in one transition', async () => {
+  /** A connect nothing has started yet. */
+  const idle = () =>
+    [
+      [
+        connectionStore,
+        { status: 'connecting', homeRelay: null, started: false },
+      ],
+    ] as const;
+
+  it('names this device before it joins anything', async () => {
     const trace = await simulate(connectRelaySaga(), {
-      reads: [[connectionStore, { status: 'initial' }]],
+      reads: [...idle()],
       calls: [
+        [loadIdentity, () => fakeSelf],
         [openConnection, () => fakeSession],
-        [encodeBeamCode, () => fakeGrid],
       ],
     });
 
+    // Two transitions, and the order is the point: the address is derived
+    // from the key, so the header can name this device while the handshake
+    // is still a round trip away.
     expect(trace.commits).toEqual([
       [connectingTopic()],
-      [connectedTopic(fakeSession), codeEncodedTopic(fakeGrid)],
+      [identityResolvedTopic('ep-1')],
+      [connectedTopic(fakeSession)],
     ]);
   });
 
-  it('starts serving inbound dials once the endpoint is up', async () => {
-    const trace = await simulate(connectRelaySaga(), {
-      reads: [[connectionStore, { status: 'initial' }]],
-      calls: [
-        [openConnection, () => fakeSession],
-        [encodeBeamCode, () => fakeGrid],
-      ],
-    });
-
-    // Nobody can pair with a device that isn't listening, and the endpoint is
-    // the earliest moment it can.
-    expect(trace.spawns).toHaveLength(1);
-  });
-
-  it('encodes the link for the endpoint it just opened', async () => {
-    const encode = vi.fn(() => fakeGrid);
+  it('joins the network under the identity it just settled', async () => {
+    const open = vi.fn(() => fakeSession);
 
     await simulate(connectRelaySaga(), {
-      reads: [[connectionStore, { status: 'initial' }]],
+      reads: [...idle()],
       calls: [
-        [openConnection, () => fakeSession],
-        [encodeBeamCode, encode],
+        [loadIdentity, () => fakeSelf],
+        [openConnection, open],
       ],
     });
 
-    expect(encode).toHaveBeenCalledWith(expect.any(AbortSignal), 'ep-1');
+    expect(open).toHaveBeenCalledWith(expect.any(AbortSignal), fakeSelf);
   });
 
-  it('still lands the connection when the encode found no code', async () => {
+  it('serves dials, watches the relay, and draws the code', async () => {
     const trace = await simulate(connectRelaySaga(), {
-      reads: [[connectionStore, { status: 'initial' }]],
+      reads: [...idle()],
       calls: [
+        [loadIdentity, () => fakeSelf],
         [openConnection, () => fakeSession],
-        [encodeBeamCode, () => null],
       ],
     });
 
-    // A missing code is non-fatal: the link is still copyable.
-    expect(trace.commits).toEqual([
-      [connectingTopic()],
-      [connectedTopic(fakeSession), codeEncodedTopic(null)],
-    ]);
+    // Nobody can pair with a device that isn't listening, nothing would
+    // notice a relay coming and going, and the invite would have no code.
+    expect(trace.spawns).toHaveLength(3);
   });
 
   it('records a failed handshake without stranding the view', async () => {
     const trace = await simulate(connectRelaySaga(), {
-      reads: [[connectionStore, { status: 'initial' }]],
+      reads: [...idle()],
       calls: [
+        [loadIdentity, () => fakeSelf],
         [
           openConnection,
           () => {
             throw new Error('relay unreachable');
           },
         ],
+      ],
+    });
+
+    // The identity still landed: a device that can't reach a relay still
+    // knows what it's called and what its link is.
+    expect(trace.commits).toEqual([
+      [connectingTopic()],
+      [identityResolvedTopic('ep-1')],
+      [connectFailedTopic()],
+    ]);
+  });
+
+  it('records a failure that beat the identity', async () => {
+    const trace = await simulate(connectRelaySaga(), {
+      reads: [...idle()],
+      calls: [
+        [
+          loadIdentity,
+          () => {
+            throw new Error('wasm blocked');
+          },
+        ],
+        [openConnection, vi.fn()],
       ],
     });
 
@@ -215,14 +250,94 @@ describe('connectRelaySaga', () => {
     const open = vi.fn(() => fakeSession);
 
     const trace = await simulate(connectRelaySaga(), {
-      reads: [[connectionStore, { status: 'connected' }]],
-      calls: [[openConnection, open]],
+      reads: [
+        [
+          connectionStore,
+          {
+            status: 'connected',
+            homeRelay: 'https://relay.example',
+            started: true,
+          },
+        ],
+      ],
+      calls: [
+        [loadIdentity, vi.fn()],
+        [openConnection, open],
+      ],
     });
 
-    // The cell holds one endpoint; a second connect would drop the first
-    // unfreed.
+    // Guarded on `started` rather than the status, which begins already
+    // showing a connect under way. The cell holds one endpoint; a second
+    // connect would drop the first unfreed.
     expect(open).not.toHaveBeenCalled();
     expect(trace.commits).toEqual([]);
+  });
+});
+
+describe('encodeInviteSaga', () => {
+  it('encodes the link for this device’s address', async () => {
+    const encode = vi.fn(() => fakeGrid);
+
+    const trace = await simulate(encodeInviteSaga('ep-1'), {
+      calls: [[encodeBeamCode, encode]],
+    });
+
+    expect(encode).toHaveBeenCalledWith(expect.any(AbortSignal), 'ep-1');
+    expect(trace.commits).toEqual([[codeEncodedTopic(fakeGrid)]]);
+  });
+
+  it('says so when the encode found no code', async () => {
+    const trace = await simulate(encodeInviteSaga('ep-1'), {
+      calls: [[encodeBeamCode, () => null]],
+    });
+
+    // A missing code is non-fatal: the link is still copyable.
+    expect(trace.commits).toEqual([[codeEncodedTopic(null)]]);
+  });
+});
+
+describe('watchRelaySaga', () => {
+  /**
+   * A runtime whose relay queue hands back `changes` in order and then dies,
+   * the way a released scope ends the loop. Real rather than simulated: the
+   * point is what the header ends up showing, which is state.
+   */
+  const watching = async (changes: ReadonlyArray<string | null>) => {
+    const queued = [...changes];
+
+    const runtime = createTestRuntime({
+      calls: [
+        [
+          receiveNext,
+          () => {
+            if (queued.length === 0) throw new Error('scope released');
+            return queued.shift();
+          },
+        ],
+      ],
+    });
+
+    runtime.anchor(beamScope);
+    await expect(runtime.run(watchRelaySaga(fakeSession))).rejects.toThrow(
+      'scope released',
+    );
+
+    return runtime;
+  };
+
+  it('mirrors a relay coming up', async () => {
+    const { peek } = await watching(['https://relay.example']);
+
+    expect(peek(connectionStore).status).toBe('connected');
+    expect(peek(connectionStore).homeRelay).toBe('https://relay.example');
+  });
+
+  it('mirrors a relay going away', async () => {
+    const { peek } = await watching(['https://relay.example', null]);
+
+    // Back to the spinner, not an error: iroh finds another on its own.
+    expect(peek(connectionStore).status).toBe('connecting');
+    expect(peek(connectionStore).homeRelay).toBeNull();
   });
 });
 
@@ -276,7 +391,7 @@ describe('linkPeerSaga', () => {
     );
   });
 
-  it('starts draining the peer\u2019s messages', async () => {
+  it('starts draining the peer\u2019s messages and watching for its exit', async () => {
     const trace = await simulate(linkPeerSaga(fakeLink()), {
       reads: [
         [peerHandlesCell, new Map()],
@@ -288,8 +403,9 @@ describe('linkPeerSaga', () => {
 
     // The link arrives already listening \u2014 the capability wires its queue
     // as it wraps the connection \u2014 so what's left to check here is that
-    // something is pulling from that queue.
-    expect(trace.spawns).toHaveLength(1);
+    // something is pulling from that queue, and that something notices when
+    // the far side hangs up.
+    expect(trace.spawns).toHaveLength(2);
   });
 
   it('says nothing about itself before the endpoint names it', async () => {
@@ -680,6 +796,70 @@ describe('acceptPairingSaga', () => {
     // the news.
     expect(trace.commits).toEqual([[pairingAcceptedTopic('ep-2')]]);
     expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe('disconnectPeerSaga', () => {
+  it('hangs up without touching the pairing', async () => {
+    const release = vi.fn();
+    const link = fakeLink();
+
+    const trace = await simulate(disconnectPeerSaga('ep-2'), {
+      reads: [[peerHandlesCell, new Map([['ep-2', link]])]],
+      calls: [[releasePeer, release]],
+    });
+
+    // Leaving a share view ends the connection, not the relationship: the
+    // contact stays, anything queued stays queued, and coming back re-dials.
+    expect(release).toHaveBeenCalledWith(expect.any(AbortSignal), link);
+    expect(trace.commits).toEqual([[peerReleasedTopic('ep-2')]]);
+  });
+
+  it('says nothing about a peer with no live link', async () => {
+    const release = vi.fn();
+
+    const trace = await simulate(disconnectPeerSaga('ep-2'), {
+      reads: [[peerHandlesCell, new Map()]],
+      calls: [[releasePeer, release]],
+    });
+
+    expect(release).not.toHaveBeenCalled();
+    expect(trace.commits).toEqual([]);
+  });
+});
+
+describe('a peer hanging up', () => {
+  it('marks the link closed once the connection ends', async () => {
+    const link = fakeLink();
+    let hangUp = () => undefined as void;
+    const ended = new Promise<void>((resolve) => {
+      hangUp = resolve;
+    });
+
+    const runtime = createTestRuntime({
+      calls: [
+        [saveContact, vi.fn()],
+        [sendMessage, vi.fn()],
+        [releasePeer, vi.fn()],
+        [awaitPeerClose, () => ended],
+      ],
+    });
+
+    runtime.anchor(beamScope);
+    runtime.commit(contactsRestoredTopic([fakeContact({ trust: 'trusted' })]));
+
+    await runtime.run(linkPeerSaga(link));
+    expect(runtime.peek(peerLinksStore).statuses['ep-2']).toBe('linked');
+
+    hangUp();
+
+    // The other half of leaving a share view: the device left holding the
+    // link finds out, rather than going on showing a peer that isn't there.
+    await vi.waitFor(() => {
+      expect(runtime.peek(peerLinksStore).statuses['ep-2']).toBe('closed');
+    });
+
+    expect(runtime.peek(peerHandlesCell).has('ep-2')).toBe(false);
   });
 });
 

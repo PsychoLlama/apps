@@ -4,17 +4,21 @@ import { Dialog, Flex, Text, TextField } from '@lib/ui';
 import { QrCode } from './qr-code';
 import {
   beamLink,
+  identityStore,
   inviteClosedTopic,
   inviteStore,
   qrCodeCell,
-  endpointCell,
 } from '../state/session';
 
 /**
  * This device's beam link, as a modal. Two ways to hand the same URL over: a
- * read-only field to copy, and a QR code beneath it for a peer to scan. The
- * connection lands the endpoint and its QR grid in one transition, so both
- * appear in the same paint.
+ * read-only field to copy, and a QR code beneath it for a peer to scan.
+ *
+ * Both hang off this device's identity rather than its relay connection. The
+ * link is the address the key implies, so it's true the moment the key is
+ * loaded and stays true whether or not the handshake ever lands — and a peer
+ * who scans early simply dials a device that's still coming up. The code
+ * follows a beat later, since it has an encoder of its own to instantiate.
  *
  * A dialog rather than a page. An invite is a thirty-second errand that ends
  * on someone else's screen — routing to it cost a navigation each way and put
@@ -22,7 +26,7 @@ import {
  */
 export const InviteDialog = () => {
   const invite = useValue(inviteStore);
-  const session = useValue(endpointCell);
+  const self = useValue(identityStore);
   const grid = useValue(qrCodeCell);
   const commit = useCommit();
 
@@ -36,14 +40,14 @@ export const InviteDialog = () => {
       maxWidth="24rem"
     >
       <Show
-        when={session()}
+        when={self().endpointId}
         fallback={
           <Text as="p" size={2} color="lowContrast" selectable={false}>
-            Waiting for the relay connection…
+            Preparing this device’s link…
           </Text>
         }
       >
-        {(live) => (
+        {(endpointId) => (
           <Flex as="div" direction="column" gap={4}>
             {/* The platform focuses the first focusable child on open, which
                 for a read-only field means a caret parked past the end of a
@@ -55,7 +59,7 @@ export const InviteDialog = () => {
               testId="beam-link"
               readOnly
               aria-label="Beam link"
-              value={beamLink(live().endpoint.id)}
+              value={beamLink(endpointId())}
               onFocus={(event) => {
                 event.currentTarget.select();
                 event.currentTarget.scrollLeft = 0;
