@@ -55,7 +55,6 @@ import {
   acceptContactSaga,
   confirmContactSaga,
   contactsStore,
-  forgetContactSaga,
   noteAdvertisedNameSaga,
   recordPeerSaga,
 } from '../contacts';
@@ -552,24 +551,6 @@ export const disconnectPeerSaga = defineSaga(
 
     yield* call(releasePeer, link);
     yield commit(peerReleasedTopic(endpointId));
-  },
-);
-
-/**
- * Take back an invite we sent: drop the link and forget the contact. The
- * peer is told nothing — there's no message for withdrawing, and one would
- * only matter to a device that has already been asked to decide. What it
- * sees is a stranger the next time either side dials.
- */
-export const cancelPairingSaga = defineSaga(
-  beamScope,
-  async function* (endpointId: string) {
-    yield* disconnectPeerSaga(endpointId);
-
-    const contact = (yield* read(contactsStore)).entries[endpointId];
-    logger.info('Withdrew an invite.', pairing(endpointId, contact));
-
-    yield* forgetContactSaga(endpointId);
   },
 );
 

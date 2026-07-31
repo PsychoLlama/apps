@@ -60,7 +60,6 @@ import {
 import {
   acceptPairingSaga,
   applyPeerMessageSaga,
-  cancelPairingSaga,
   connectRelaySaga,
   copyShareSaga,
   dialPeerSaga,
@@ -74,10 +73,9 @@ import {
   shareTextSaga,
   watchRelaySaga,
 } from '../sagas';
-import { now, saveContact, removeContact } from '../../contacts/capabilities';
+import { now, saveContact } from '../../contacts/capabilities';
 import {
   contactAdvertisedTopic,
-  contactForgottenTopic,
   contactSeenTopic,
   contactsRestoredTopic,
   contactsStore,
@@ -911,45 +909,6 @@ describe('a peer hanging up', () => {
     });
 
     expect(runtime.peek(peerHandlesCell).has(PEER_ID)).toBe(false);
-  });
-});
-
-describe('cancelPairingSaga', () => {
-  it('drops the link and forgets the contact', async () => {
-    const release = vi.fn();
-    const link = fakeLink();
-
-    const trace = await simulate(cancelPairingSaga(PEER_ID), {
-      reads: [
-        [peerHandlesCell, new Map([[PEER_ID, link]])],
-        [contactsStore, bookHolding(fakeContact())],
-      ],
-      calls: [
-        [releasePeer, release],
-        [removeContact, vi.fn()],
-      ],
-    });
-
-    expect(release).toHaveBeenCalledWith(expect.any(AbortSignal), link);
-    expect(trace.commits).toEqual([
-      [peerReleasedTopic(PEER_ID)],
-      [contactForgottenTopic(PEER_ID)],
-    ]);
-  });
-
-  it('forgets a contact that was never linked', async () => {
-    const trace = await simulate(cancelPairingSaga(PEER_ID), {
-      reads: [
-        [peerHandlesCell, new Map()],
-        [contactsStore, bookHolding(fakeContact())],
-      ],
-      calls: [
-        [releasePeer, vi.fn()],
-        [removeContact, vi.fn()],
-      ],
-    });
-
-    expect(trace.commits).toEqual([[contactForgottenTopic(PEER_ID)]]);
   });
 });
 
