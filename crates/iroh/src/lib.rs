@@ -28,8 +28,6 @@ use wasm_bindgen::prelude::*;
 // tests. Off the wasm target nothing but those tests uses it, which is
 // what the `dead_code` allowance is for.
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
-mod listeners;
-#[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 mod protocol;
 #[cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
 mod secret_key;
@@ -42,8 +40,6 @@ mod endpoint;
 mod identity;
 #[cfg(target_arch = "wasm32")]
 mod peer;
-
-pub use listeners::Subscription;
 
 #[cfg(target_arch = "wasm32")]
 pub use endpoint::{Endpoint, EndpointOptions};

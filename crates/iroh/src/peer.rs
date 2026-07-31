@@ -7,15 +7,15 @@
 //!
 //! Exactly one handle exists per connection — a dial returns one, and the
 //! endpoint's peer handler is given one — so freeing it closes the connection
-//! and stops the loop reading from it. Message listeners fan out from that
-//! single handle rather than from competing handles, which is what keeps
-//! inbound streams from being split between readers at random.
+//! and stops the loop reading from it. Inbound messages go to the one
+//! `onmessage` that handle carries, rather than to a set of competing
+//! readers, which is what keeps a conversation from being split at random.
 
-use crate::listeners::{Registry, Subscription};
 use crate::protocol::Protocol;
 use iroh::endpoint::{Connection, VarInt};
 use n0_future::task::{AbortOnDropHandle, spawn};
 use std::cell::RefCell;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 
 /// Close code sent when a host closes a connection itself. Nothing reads
@@ -27,8 +27,12 @@ const CLOSE_CODE: u32 = 0;
 struct PeerState {
     connection: Connection,
     protocol: Protocol,
-    messages: Registry<js_sys::Function>,
-    // The read loop, started by the first `onMessage` and kept for the
+    /// Where inbound messages go, or `None` while nothing is listening.
+    /// Behind an [`Rc`] so the read loop can hold it without borrowing the
+    /// handle across an await, and read afresh on each delivery so
+    /// reassigning `onmessage` takes effect from the next message.
+    on_message: Rc<RefCell<Option<js_sys::Function>>>,
+    // The read loop, started by the first `onmessage` and kept for the
     // life of the connection. An `AbortOnDropHandle`, so freeing this
     // handle stops it — the same drop that closes the connection.
     reader: RefCell<Option<AbortOnDropHandle<()>>>,
@@ -53,8 +57,8 @@ impl Drop for PeerState {
 /// A live connection to a single peer.
 ///
 /// Holding it keeps the connection open; freeing it closes it.
-/// [`Self::send`] pushes a byte string to the other side and
-/// [`Self::on_message`] surfaces the ones arriving back. Framing is left to
+/// [`Self::send`] pushes a byte string to the other side and the
+/// `onmessage` handler surfaces the ones arriving back. Framing is left to
 /// the host — a message is whatever bytes were handed to `send`.
 #[wasm_bindgen]
 pub struct PeerConnection {
@@ -69,7 +73,7 @@ impl PeerConnection {
             state: PeerState {
                 connection,
                 protocol,
-                messages: Registry::new(),
+                on_message: Rc::new(RefCell::new(None)),
                 reader: RefCell::new(None),
             },
         }
@@ -145,19 +149,46 @@ impl PeerConnection {
         })
     }
 
-    /// Start reading inbound messages, invoking `on_message` with each one
-    /// as a `Uint8Array`. Returns the handle that stops delivery.
+    /// The handler inbound messages go to, or `undefined` while nothing is
+    /// listening.
+    #[wasm_bindgen(getter, js_name = onmessage)]
+    pub fn on_message(&self) -> Option<js_sys::Function> {
+        self.state.on_message.borrow().clone()
+    }
+
+    /// Deliver inbound messages to `handler`, called with each one as a
+    /// `Uint8Array`. Assigning `null` or `undefined` stops delivery.
     ///
-    /// The read loop starts with the first listener and stays up for the
+    /// One handler, assigned rather than subscribed: there is exactly one
+    /// handle per connection, so there was never a second reader for a
+    /// subscription to keep clear of — and an assignment doesn't hand the
+    /// host a wasm handle to release, which a subscription did.
+    ///
+    /// The read loop starts with the first handler and stays up for the
     /// life of the connection, so messages arriving while nothing is
-    /// subscribed are read and discarded rather than queued. A stream that
+    /// listening are read and discarded rather than queued. A stream that
     /// fails or overruns the protocol's `maxMessageSize` is dropped on its
     /// own — one peer sending garbage shouldn't cost us the rest of the
     /// conversation.
-    #[wasm_bindgen(js_name = onMessage)]
-    pub fn on_message(&self, on_message: js_sys::Function) -> Subscription {
+    ///
+    /// Throws on anything that isn't a function or nullish. Coercing it to
+    /// "nothing is listening" the way the DOM does would leave a host
+    /// waiting on a handler that can never fire.
+    #[wasm_bindgen(setter, js_name = onmessage)]
+    pub fn set_on_message(&self, handler: JsValue) -> Result<(), JsError> {
+        if handler.is_undefined() || handler.is_null() {
+            *self.state.on_message.borrow_mut() = None;
+            return Ok(());
+        }
+
+        let handler: js_sys::Function = handler
+            .dyn_into()
+            .map_err(|_| JsError::new("`onmessage` must be a function, `null`, or `undefined`"))?;
+
+        *self.state.on_message.borrow_mut() = Some(handler);
         self.start_reading();
-        self.state.messages.subscribe(on_message)
+
+        Ok(())
     }
 
     /// Close the connection, telling the peer it was deliberate.
@@ -193,7 +224,8 @@ impl PeerConnection {
 
 impl PeerConnection {
     /// Start the read loop if it isn't already running. One loop per
-    /// connection, feeding every listener registered against it.
+    /// connection, feeding whichever handler is assigned when a message
+    /// lands.
     fn start_reading(&self) {
         let mut reader = self.state.reader.borrow_mut();
         if reader.is_some() {
@@ -201,7 +233,7 @@ impl PeerConnection {
         }
 
         let connection = self.state.connection.clone();
-        let messages = self.state.messages.clone();
+        let on_message = Rc::clone(&self.state.on_message);
         let limit = self.state.protocol.max_message_size();
 
         *reader = Some(AbortOnDropHandle::new(spawn(async move {
@@ -210,10 +242,18 @@ impl PeerConnection {
                     continue;
                 };
 
+                // Cloned out before the call, not held across it: delivery
+                // runs host code, and host code is free to reassign
+                // `onmessage` while it runs. An outstanding borrow would
+                // panic on the assignment.
+                let handler = on_message.borrow().clone();
+
+                let Some(handler) = handler else {
+                    continue;
+                };
+
                 let bytes = js_sys::Uint8Array::from(message.as_slice());
-                for listener in messages.listeners() {
-                    let _ = listener.call1(&JsValue::NULL, &bytes);
-                }
+                let _ = handler.call1(&JsValue::NULL, &bytes);
             }
         })));
     }

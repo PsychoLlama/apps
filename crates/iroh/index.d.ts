@@ -16,25 +16,6 @@
  */
 
 /**
- * A registered listener, live until this handle is released.
- *
- * Releasing it — `unsubscribe()`, `free()`, or leaving a `using` scope —
- * stops delivery. Letting it go out of scope unreferenced does too, but
- * only whenever the engine gets around to collecting it, so say so
- * explicitly if it matters when delivery stops.
- */
-export class Subscription {
-  private constructor();
-  free(): void;
-  [Symbol.dispose](): void;
-  /**
-   * Stop delivering to this listener. Consumes the handle, which is the
-   * same thing releasing it does.
-   */
-  unsubscribe(): void;
-}
-
-/**
  * An endpoint's identity: its secret key, and the public address that key
  * implies.
  *
@@ -242,14 +223,18 @@ export class PeerConnection {
    */
   send(message: Uint8Array): Promise<void>;
   /**
-   * Start reading inbound messages, invoking `onMessage` with each one.
+   * Where inbound messages go, assigned rather than subscribed — there is
+   * one handle per connection, so there is one reader. Assign `null` or
+   * `undefined` to stop delivery; anything else that isn't a function
+   * throws rather than silently listening to nothing.
    *
-   * The read loop starts with the first listener and stays up for the life
-   * of the connection, so messages arriving while nothing is subscribed
-   * are read and discarded rather than queued. Oversized or failed streams
-   * are dropped individually rather than ending the loop.
+   * The read loop starts with the first handler and stays up for the life
+   * of the connection, so messages arriving while nothing is listening are
+   * read and discarded rather than queued. Oversized or failed streams are
+   * dropped individually rather than ending the loop.
    */
-  onMessage(onMessage: (message: Uint8Array) => void): Subscription;
+  get onmessage(): ((message: Uint8Array) => void) | undefined;
+  set onmessage(handler: ((message: Uint8Array) => void) | null | undefined);
   /**
    * Close the connection, telling the peer it was deliberate. Returns
    * immediately — QUIC sends the close frame best-effort and there is
