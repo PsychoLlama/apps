@@ -8,12 +8,11 @@ import { background, neutral, space } from '@lib/design';
  * page. The top border and opaque surface separate it from the content
  * scrolling past behind it, the same way the pairing tray above it does.
  *
- * Tighter vertical padding than the tray — nothing here is a tap target, so
- * the bar costs the page as little height as a line of text allows.
+ * Padded evenly, and tightly — nothing here is a tap target, so the bar costs
+ * the page as little as a line of text allows on every side.
  */
 export const bar = style({
-  paddingBlock: space[2],
-  paddingInline: space[5],
+  padding: space[2],
   borderTop: `1px solid ${neutral.alpha[6]}`,
   backgroundColor: background.page,
 });
