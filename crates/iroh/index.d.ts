@@ -19,7 +19,7 @@
  * An endpoint's identity: its secret key, and the public address that key
  * implies.
  *
- * Hand it to {@link Endpoint.new} to run under it. Nothing here touches the
+ * Hand it to {@link Endpoint.from} to run under it. Nothing here touches the
  * network — two endpoints can run under two identities at once, and an
  * identity outlives every endpoint opened with it.
  */
@@ -119,7 +119,7 @@ export interface EndpointOptions {
 }
 
 /**
- * This device on the network: defined by {@link Endpoint.new}, live after
+ * This device on the network: defined by {@link Endpoint.from}, live after
  * {@link Endpoint.join}, and torn down by {@link Endpoint.leave} or by
  * releasing the handle.
  *
@@ -143,11 +143,7 @@ export class Endpoint {
    * Nothing here touches the network — call {@link Endpoint.join} next.
    * {@link init} must resolve before calling this.
    */
-  // A static factory named `new`, not a construct signature. The rule
-  // guards against `new(): T` written where a constructor was meant; this
-  // mirrors the `Endpoint::new` the crate exports.
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
-  static new(identity: Identity, options: EndpointOptions): Endpoint;
+  static from(identity: Identity, options: EndpointOptions): Endpoint;
   /**
    * The address peers dial to reach this endpoint, as a base32 string —
    * what {@link Identity.endpointId} names. The same value as the

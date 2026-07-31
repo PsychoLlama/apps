@@ -203,7 +203,7 @@ const defineSession = (identity: Identity): EndpointSession => {
   let endpoint: Endpoint;
 
   try {
-    endpoint = Endpoint.new(identity, {
+    endpoint = Endpoint.from(identity, {
       protocols: { [BEAM_PROTOCOL]: { maxMessageSize: MAX_MESSAGE_BYTES } },
       onPeerConnection: (_protocol, connection) => {
         const peer = linkPeer(connection);

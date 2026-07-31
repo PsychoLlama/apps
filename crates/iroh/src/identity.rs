@@ -13,7 +13,7 @@ use wasm_bindgen::prelude::*;
 /// An endpoint's identity: its secret key, and the public address that key
 /// implies.
 ///
-/// Hand it to [`Endpoint.new`](crate::Endpoint) to run under it. Nothing
+/// Hand it to [`Endpoint.from`](crate::Endpoint) to run under it. Nothing
 /// here touches the network — two endpoints can run under two identities at
 /// once, and an identity outlives every endpoint opened with it.
 #[wasm_bindgen]
