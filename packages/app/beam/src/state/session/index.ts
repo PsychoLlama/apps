@@ -44,7 +44,6 @@ export type { Share } from './shares';
 export { beamLink } from './capabilities';
 export {
   acceptPairingSaga,
-  cancelPairingSaga,
   connectRelaySaga,
   copyShareSaga,
   dialPeerSaga,

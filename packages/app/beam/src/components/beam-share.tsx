@@ -1,16 +1,8 @@
 import { createEffect, on, onCleanup, Show } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useParams } from '@solidjs/router';
 import { useCommit, useRun, useValue } from '@lib/state';
 import { FrameBody } from '@lib/shell';
-import {
-  Button,
-  Callout,
-  Container,
-  Flex,
-  Heading,
-  LinkButton,
-  Text,
-} from '@lib/ui';
+import { Callout, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import IconContactCard from 'virtual:icons/mdi/card-account-details-outline';
 import { ShareComposer } from './share-composer';
 import { ShareLog } from './share-log';
@@ -18,7 +10,6 @@ import { addressBookFormula } from '../state/contacts';
 import { isEndpointId } from '../state/endpoint-id';
 import { generateLabel } from '../state/labels';
 import {
-  cancelPairingSaga,
   connectionStore,
   dialPeerSaga,
   disconnectPeerSaga,
@@ -45,7 +36,6 @@ import {
  */
 export const BeamShare = () => {
   const params = useParams<{ id: string }>();
-  const navigate = useNavigate();
 
   const connection = useValue(connectionStore);
   const self = useValue(identityStore);
@@ -54,7 +44,6 @@ export const BeamShare = () => {
   const shares = useValue(sharesByPeerFormula);
 
   const dial = useRun(dialPeerSaga);
-  const cancel = useRun(cancelPairingSaga);
   const disconnect = useRun(disconnectPeerSaga);
   const commit = useCommit();
 
@@ -166,12 +155,6 @@ export const BeamShare = () => {
     ),
   );
 
-  const handleCancel = () => {
-    void cancel(params.id)
-      .then(() => navigate('/beam'))
-      .catch(reportSagaFailure('The pairing cancel saga failed.'));
-  };
-
   return (
     <>
       {/* The frame is prerendered; nothing inside it is. This route is served
@@ -252,25 +235,6 @@ export const BeamShare = () => {
                       )}
                     </Show>
                   </Flex>
-
-                  {/* Withdrawing only makes sense while they haven't answered.
-                  Once paired, the way out is Remove on the contact's page —
-                  the same door for a pairing that was never accepted and one
-                  that's simply no longer wanted. */}
-                  <Show
-                    when={state() === 'awaiting' || state() === 'connecting'}
-                  >
-                    <Flex as="div" direction="row" gap={3} align="center">
-                      <Button
-                        testId="beam-share-cancel"
-                        variant="soft"
-                        color="neutral"
-                        onClick={handleCancel}
-                      >
-                        Cancel invite
-                      </Button>
-                    </Flex>
-                  </Show>
 
                   {/* Both hang off the record rather than the route param:
                   there's nobody to write to until the peer is a contact. */}
