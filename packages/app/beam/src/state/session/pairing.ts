@@ -85,20 +85,26 @@ export const pairingRequestsFormula = defineFormula(
 );
 
 /**
- * Contacts that can be shared with right now: paired, and with a live link
- * this session. Both halves are required — a peer that hasn't accepted us
- * isn't allowed to receive anything, and a peer that's asleep can't.
+ * Which peers can be shared with right now: paired, and with a live link this
+ * session. Both halves are required — a peer that hasn't accepted us isn't
+ * allowed to receive anything, and a peer that's asleep can't.
  *
- * Sorted like the address book, since it's a subset of it wearing the same
- * names. Empty until something dials, which includes every first paint.
+ * A lookup rather than a list, because it's read one row at a time: the
+ * address book marks its own entries instead of repeating the reachable ones
+ * in a second list above itself. Empty until something dials, which includes
+ * every first paint.
  */
-export const activeContactsFormula = defineFormula(
-  [addressBookFormula, peerLinksStore],
-  (contacts, links): ContactView[] =>
-    contacts.filter(
-      (contact) =>
-        contact.trust === 'trusted' &&
-        links.statuses[contact.endpointId] === 'linked',
+export const activePeersFormula = defineFormula(
+  [contactsStore, peerLinksStore],
+  (book, links): Record<string, true> =>
+    Object.fromEntries(
+      Object.keys(links.statuses)
+        .filter(
+          (endpointId) =>
+            links.statuses[endpointId] === 'linked' &&
+            book.entries[endpointId]?.trust === 'trusted',
+        )
+        .map((endpointId) => [endpointId, true]),
     ),
 );
 

@@ -17,7 +17,11 @@ import * as styles from './contact-list.css';
  * the sidebar — but it's the row that knows its own `href`, so the test lives
  * here rather than being threaded down from whichever list is hosting it.
  */
-const ContactRow = (props: { contact: ContactView; queued: number }) => {
+const ContactRow = (props: {
+  contact: ContactView;
+  queued: number;
+  active: boolean;
+}) => {
   const location = useLocation();
 
   const href = () => `/beam/share/${props.contact.endpointId}`;
@@ -53,6 +57,18 @@ const ContactRow = (props: { contact: ContactView; queued: number }) => {
           </Badge>
         </Show>
 
+        {/* Reachable right now — the one thing about a row that changes on
+          its own while you're looking at it. It marks the row in place
+          rather than lifting it into a list of its own, so the book stays a
+          book: the same devices in the same order, whoever happens to be
+          awake. Only one of these two can ever show, since reachable means
+          paired. */}
+        <Show when={props.active}>
+          <Badge color="success" variant="soft">
+            Active
+          </Badge>
+        </Show>
+
         <Show when={props.contact.trust !== 'trusted'}>
           <Badge color="warning" variant="soft">
             {props.contact.direction === 'outbound' ? 'Invited' : 'Requested'}
@@ -68,12 +84,10 @@ const ContactRow = (props: { contact: ContactView; queued: number }) => {
  * can hand it a book that may or may not have anything in it without
  * guarding first.
  *
- * Used for both the address book and the shorter list of devices that are
- * reachable right now. Every row leads to the same place: tapping a contact
- * is going to share with it, whichever list it was tapped in. The record
- * behind it is one hop further on, from the share view's own Details link —
- * renaming and forgetting are errands you go looking for, not the reason
- * anyone opens the address book.
+ * Every row leads to the same place: tapping a contact is going to share with
+ * it. The record behind it is one hop further on, from the share view's own
+ * Details link — renaming and forgetting are errands you go looking for, not
+ * the reason anyone opens the address book.
  */
 export const ContactList = (props: {
   contacts: ContactView[];
@@ -82,6 +96,8 @@ export const ContactList = (props: {
   label: string;
   /** Shares still waiting to go out, by endpoint id. */
   queued?: Record<string, number>;
+  /** Peers reachable right now, by endpoint id. */
+  active?: Record<string, true>;
 }) => (
   <Show when={props.contacts.length > 0}>
     <Flex
@@ -96,6 +112,7 @@ export const ContactList = (props: {
           <ContactRow
             contact={contact}
             queued={props.queued?.[contact.endpointId] ?? 0}
+            active={props.active?.[contact.endpointId] ?? false}
           />
         )}
       </For>

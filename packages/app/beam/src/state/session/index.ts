@@ -25,7 +25,7 @@ export {
 } from './focus';
 export { inviteStore, inviteOpenedTopic, inviteClosedTopic } from './invite';
 export {
-  activeContactsFormula,
+  activePeersFormula,
   pairingRequestsFormula,
   requestDismissedTopic,
   shareStatesFormula,

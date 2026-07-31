@@ -1,27 +1,33 @@
 import { Show } from 'solid-js';
 import { useValue } from '@lib/state';
-import { Flex, Heading, Text } from '@lib/ui';
+import { Flex, Text } from '@lib/ui';
 import { ContactList } from './contact-list';
 import { addressBookFormula, contactsStore } from '../state/contacts';
-import { activeContactsFormula, queuedSharesFormula } from '../state/session';
+import { activePeersFormula, queuedSharesFormula } from '../state/session';
 
 /**
- * The address book, as the two lists it reads as. Rendered twice at different
- * sizes — inline on the home page for a phone, and in the frame's sidebar on
- * a wide screen — so the two can't drift into two different address books.
+ * The address book. Rendered twice at different sizes — inline on the home
+ * page for a phone, and in the frame's sidebar on a wide screen — so the two
+ * can't drift into two different address books.
  *
  * Only one is ever visible; the media query in each host decides which. Both
  * stay in the markup, which is what keeps this working under SSG: the choice
  * is CSS, so a prerendered page is correct at every width before any script
  * runs.
  *
- * `testId` prefixes the lists rather than naming one, since both copies are in
+ * One list, in one order. Which devices are awake is a property of a row,
+ * carried by a badge on it, rather than a second list above the first — a
+ * shortlist that repeats rows says the same names twice, and one that moved
+ * them would reshuffle itself as peers came and went, under the pointer of
+ * someone trying to find a device by where it was last time.
+ *
+ * `testId` prefixes the list rather than naming it, since both copies are in
  * the DOM at once and a test reaching for a row needs to say which it meant.
  */
 export const ContactDirectory = (props: { testId: string }) => {
   const book = useValue(contactsStore);
   const contacts = useValue(addressBookFormula);
-  const active = useValue(activeContactsFormula);
+  const active = useValue(activePeersFormula);
   const queued = useValue(queuedSharesFormula);
 
   return (
@@ -35,48 +41,13 @@ export const ContactDirectory = (props: { testId: string }) => {
         </Text>
       </Show>
 
-      {/* Devices that are awake and paired, lifted out of the book below. It
-          repeats rows rather than moving them: the book is where a device
-          lives, and a list that reshuffled itself as peers came and went would
-          be a worse place to look one up. What this list adds is the shortlist
-          — the devices a tap actually reaches right now — not a different
-          destination.
-
-          Only rendered when there's something in it, which is every first
-          paint — nothing is linked until something dials. */}
-      <Show when={active().length > 0}>
-        <Flex as="section" direction="column" gap={3}>
-          <Heading as="h2" size={3} selectable={false}>
-            Active
-          </Heading>
-
-          <ContactList
-            testId={`${props.testId}-active`}
-            label="Devices you can share with now"
-            contacts={active()}
-            queued={queued()}
-          />
-        </Flex>
-      </Show>
-
-      <Show when={contacts().length > 0}>
-        <Flex as="section" direction="column" gap={3}>
-          {/* The book only needs naming once something sits above it. On its
-              own it's the whole list. */}
-          <Show when={active().length > 0}>
-            <Heading as="h2" size={3} selectable={false}>
-              All devices
-            </Heading>
-          </Show>
-
-          <ContactList
-            testId={`${props.testId}-contacts`}
-            label="Contacts"
-            contacts={contacts()}
-            queued={queued()}
-          />
-        </Flex>
-      </Show>
+      <ContactList
+        testId={`${props.testId}-contacts`}
+        label="Contacts"
+        contacts={contacts()}
+        queued={queued()}
+        active={active()}
+      />
     </Flex>
   );
 };
