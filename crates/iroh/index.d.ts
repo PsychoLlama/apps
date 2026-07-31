@@ -6,9 +6,9 @@
  * `Promise<any>`) can be narrowed. Keep in sync with the
  * `#[wasm_bindgen]` surface in `src/lib.rs`.
  *
- * Every handle here is a wasm object that must be released.
- * `wasm-bindgen` aliases `Symbol.dispose` to `free`, so `using` works
- * throughout and is the recommended way to hold one:
+ * Every handle here is a wasm object that must be released — see
+ * {@link Handle}. `wasm-bindgen` aliases `Symbol.dispose` to `free`, so
+ * `using` works throughout and is the recommended way to hold one:
  *
  * ```ts
  * using identity = Identity.create();
@@ -16,48 +16,31 @@
  */
 
 /**
- * A registered listener, live until this handle is released.
+ * What every handle here has in common: it owns memory on the wasm side that
+ * the garbage collector can't see, so it has to be handed back.
  *
- * Releasing it — `unsubscribe()`, `free()`, or leaving a `using` scope —
- * stops delivery. Letting it go out of scope unreferenced does too, but
- * only whenever the engine gets around to collecting it, so say so
- * explicitly if it matters when delivery stops.
+ * There is no shared base at runtime — `wasm-bindgen` gives each class its
+ * own `free` and its own `Symbol.dispose` alias. This says the release
+ * contract once instead of repeating it on each of them.
  */
-export class Subscription {
-  private constructor();
-  free(): void;
-  [Symbol.dispose](): void;
+export interface Handle extends Disposable {
   /**
-   * Stop delivering to this listener. Consumes the handle, which is the
-   * same thing releasing it does.
+   * Release the wasm object. Reaching for the handle afterwards throws, and
+   * dropping the last reference without calling this leaks. Prefer `using`,
+   * which calls it at the end of the scope.
    */
-  unsubscribe(): void;
+  free(): void;
 }
 
 /**
  * An endpoint's identity: its secret key, and the public address that key
  * implies.
  *
- * Hand it to {@link Endpoint.new} to run under it. Nothing here touches the
+ * Hand it to {@link Endpoint.from} to run under it. Nothing here touches the
  * network — two endpoints can run under two identities at once, and an
  * identity outlives every endpoint opened with it.
  */
-export class Identity {
-  private constructor();
-  free(): void;
-  [Symbol.dispose](): void;
-  /**
-   * Mint a fresh identity. Persist {@link Identity.secretKey} to keep the
-   * same address across reloads; an identity that isn't saved is gone when
-   * the page is. {@link init} must resolve before calling this.
-   */
-  static create(): Identity;
-  /**
-   * Restore a previously persisted identity from the raw 32 bytes of
-   * {@link Identity.secretKey}. Throws if that isn't what it got.
-   * {@link init} must resolve before calling this.
-   */
-  static from(bytes: Uint8Array): Identity;
+export interface Identity extends Handle {
   /**
    * The public address peers dial to reach an endpoint running under this
    * identity, as a base32 string. Derived from the key, so it's readable
@@ -70,6 +53,26 @@ export class Identity {
    */
   readonly secretKey: Uint8Array;
 }
+
+/**
+ * Where an {@link Identity} comes from. Described as its static side rather
+ * than as a class because there is nothing to construct: the wasm module
+ * hands these out, and `new` was never part of the surface.
+ */
+export const Identity: {
+  /**
+   * Mint a fresh identity. Persist {@link Identity.secretKey} to keep the
+   * same address across reloads; an identity that isn't saved is gone when
+   * the page is. {@link init} must resolve before calling this.
+   */
+  create(): Identity;
+  /**
+   * Restore a previously persisted identity from the raw 32 bytes of
+   * {@link Identity.secretKey}. Throws if that isn't what it got.
+   * {@link init} must resolve before calling this.
+   */
+  from(bytes: Uint8Array): Identity;
+};
 
 /** Terms one protocol is spoken on. */
 export interface ProtocolOptions {
@@ -138,7 +141,7 @@ export interface EndpointOptions {
 }
 
 /**
- * This device on the network: defined by {@link Endpoint.new}, live after
+ * This device on the network: defined by {@link Endpoint.from}, live after
  * {@link Endpoint.join}, and torn down by {@link Endpoint.leave} or by
  * releasing the handle.
  *
@@ -148,25 +151,7 @@ export interface EndpointOptions {
  * The relay server carrying the traffic is {@link Endpoint.homeRelay}, and
  * is not this.
  */
-export class Endpoint {
-  private constructor();
-  free(): void;
-  [Symbol.dispose](): void;
-  /**
-   * Define an endpoint without joining the network. Validates the options
-   * and throws on anything malformed — an empty protocol table, a name too
-   * long for an ALPN, a message ceiling that isn't a sane byte count, a
-   * missing `onPeerConnection`, an `onConnectionChange` that isn't a
-   * function.
-   *
-   * Nothing here touches the network — call {@link Endpoint.join} next.
-   * {@link init} must resolve before calling this.
-   */
-  // A static factory named `new`, not a construct signature. The rule
-  // guards against `new(): T` written where a constructor was meant; this
-  // mirrors the `Endpoint::new` the crate exports.
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
-  static new(identity: Identity, options: EndpointOptions): Endpoint;
+export interface Endpoint extends Handle {
   /**
    * The address peers dial to reach this endpoint, as a base32 string —
    * what {@link Identity.endpointId} names. The same value as the
@@ -211,6 +196,21 @@ export class Endpoint {
   leave(): Promise<void>;
 }
 
+/** Where an {@link Endpoint} comes from, as with {@link Identity}. */
+export const Endpoint: {
+  /**
+   * Define an endpoint without joining the network. Validates the options
+   * and throws on anything malformed — an empty protocol table, a name too
+   * long for an ALPN, a message ceiling that isn't a sane byte count, a
+   * missing `onPeerConnection`, an `onConnectionChange` that isn't a
+   * function.
+   *
+   * Nothing here touches the network — call {@link Endpoint.join} next.
+   * {@link init} must resolve before calling this.
+   */
+  from(identity: Identity, options: EndpointOptions): Endpoint;
+};
+
 /**
  * A live connection to a single peer, riding over the {@link Endpoint} it
  * was opened through. Produced by {@link Endpoint.dial} and handed to the
@@ -221,10 +221,7 @@ export class Endpoint {
  * connection. Framing is the host's business — a message is whatever bytes
  * were sent.
  */
-export class PeerConnection {
-  private constructor();
-  free(): void;
-  [Symbol.dispose](): void;
+export interface PeerConnection extends Handle {
   /**
    * The connected peer's public identity, as a base32 string — the same
    * value it advertises as its {@link Identity.endpointId}.
@@ -242,14 +239,18 @@ export class PeerConnection {
    */
   send(message: Uint8Array): Promise<void>;
   /**
-   * Start reading inbound messages, invoking `onMessage` with each one.
+   * Where inbound messages go, assigned rather than subscribed — there is
+   * one handle per connection, so there is one reader. Assign `null` or
+   * `undefined` to stop delivery; anything else that isn't a function
+   * throws rather than silently listening to nothing.
    *
-   * The read loop starts with the first listener and stays up for the life
-   * of the connection, so messages arriving while nothing is subscribed
-   * are read and discarded rather than queued. Oversized or failed streams
-   * are dropped individually rather than ending the loop.
+   * The read loop starts with the first handler and stays up for the life
+   * of the connection, so messages arriving while nothing is listening are
+   * read and discarded rather than queued. Oversized or failed streams are
+   * dropped individually rather than ending the loop.
    */
-  onMessage(onMessage: (message: Uint8Array) => void): Subscription;
+  get onmessage(): ((message: Uint8Array) => void) | undefined;
+  set onmessage(handler: ((message: Uint8Array) => void) | null | undefined);
   /**
    * Close the connection, telling the peer it was deliberate. Returns
    * immediately — QUIC sends the close frame best-effort and there is

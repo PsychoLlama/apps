@@ -65,7 +65,7 @@ struct EndpointState {
     tasks: RefCell<Vec<AbortOnDropHandle<()>>>,
 }
 
-/// This device on the network: defined by [`Endpoint::new`], live after
+/// This device on the network: defined by [`Endpoint::create`], live after
 /// [`Endpoint::join`], and torn down by [`Endpoint::leave`] or by freeing
 /// the handle.
 ///
@@ -94,7 +94,7 @@ impl Endpoint {
     /// the current state on demand.
     ///
     /// Nothing here touches the network — call [`Self::join`] next.
-    #[wasm_bindgen(js_name = new)]
+    #[wasm_bindgen(js_name = from)]
     pub fn create(identity: &Identity, options: &EndpointOptions) -> Result<Endpoint, JsError> {
         let protocols = read_protocols(options)?;
         let on_peer_connection = read_peer_handler(options)?;

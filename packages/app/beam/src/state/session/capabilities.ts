@@ -109,9 +109,9 @@ export interface EndpointSession {
 }
 
 /**
- * A live link to one peer and everything registered against it. Bundled for
- * the same reason as {@link EndpointSession}: the message listener is a handle
- * that has to outlive the callback it wraps.
+ * A live link to one peer and the queue its message handler fills. Bundled
+ * for the same reason as {@link EndpointSession}: the queue is only reachable
+ * through the handler wired onto the connection.
  *
  * The same shape in both directions — a dial and an inbound connection
  * differ only in who started them.
@@ -155,7 +155,7 @@ const linkPeer = (connection: PeerConnection): PeerLink => {
   // up is observed even if nothing gets around to awaiting it until later.
   const closed = connection.closed;
 
-  const listening = connection.onMessage((bytes) => {
+  connection.onmessage = (bytes) => {
     const message = decodeMessage(bytes);
 
     if (!message) {
@@ -171,21 +171,17 @@ const linkPeer = (connection: PeerConnection): PeerLink => {
     });
 
     messages.push(message);
-  });
+  };
 
   return {
     endpointId,
     connection,
     messages,
     closed,
-    release: () => {
-      listening.free();
-
-      // Freeing the handle is what closes the connection, which is also what
-      // settles `closed` — so hanging up here is heard by the peer, and by
-      // whatever is parked on the far end of that promise.
-      connection.free();
-    },
+    // Freeing the handle takes the message handler with it and closes the
+    // connection, which is also what settles `closed` — so hanging up here
+    // is heard by the peer, and by whatever is parked on that promise.
+    release: () => connection.free(),
   };
 };
 
@@ -207,7 +203,7 @@ const defineSession = (identity: Identity): EndpointSession => {
   let endpoint: Endpoint;
 
   try {
-    endpoint = Endpoint.new(identity, {
+    endpoint = Endpoint.from(identity, {
       protocols: { [BEAM_PROTOCOL]: { maxMessageSize: MAX_MESSAGE_BYTES } },
       onPeerConnection: (_protocol, connection) => {
         const peer = linkPeer(connection);
