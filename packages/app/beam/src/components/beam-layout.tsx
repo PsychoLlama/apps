@@ -2,6 +2,7 @@ import { onMount, type JSX } from 'solid-js';
 import { useAnchor, useRun } from '@lib/state';
 import { Frame } from '@lib/shell';
 import { PairingBanner } from './pairing-banner';
+import { StatusBar } from './status-bar';
 import { connectRelaySaga, reportSagaFailure } from '../state/session';
 import { restoreContactsSaga } from '../state/contacts';
 import { beamScope } from '../state/scope';
@@ -15,7 +16,8 @@ import { beamScope } from '../state/scope';
  *
  * Pairing requests hang off the frame rather than any one route: a peer can
  * ask at any moment, and the reader shouldn't have to be on a particular
- * page to hear it.
+ * page to hear it. The status bar below them is here for the same reason in
+ * reverse — it reports on the session, which no single route owns.
  *
  * The anchor is the only lifecycle wiring here: releasing it on cleanup
  * aborts the connect and frees the endpoint.
@@ -39,6 +41,7 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
     <Frame>
       {props.children}
       <PairingBanner />
+      <StatusBar />
     </Frame>
   );
 };

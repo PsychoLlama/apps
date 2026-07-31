@@ -12,7 +12,6 @@ import {
 } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
-import { ConnectionIndicator } from './connection-indicator';
 import { ContactList } from './contact-list';
 import { InviteDialog } from './invite-dialog';
 import { addressBookFormula, contactsStore } from '../state/contacts';
@@ -47,32 +46,28 @@ export const BeamHome = () => {
   return (
     <>
       {/* The name sits in the header rather than in the copy below it. It's
-          this device's identity, which is chrome — the same class of thing as
-          the connection status it sits beside — and putting it here leaves the
-          headline free to say what the page is for. It's derived from the
+          this device's identity, which is chrome, and putting it here leaves
+          the headline free to say what the page is for. It's derived from the
           endpoint key, so it turns up as soon as the key is loaded rather than
-          waiting on the relay; until then the tray holds the status alone,
-          since a placeholder name is a lie someone might read out to the
-          person beside them. */}
+          waiting on the relay; until then the tray is empty, since a
+          placeholder name is a lie someone might read out to the person beside
+          them. */}
       <SiteHeader
         title="Beam"
         actions={
-          <>
-            <Show when={selfLabel()}>
-              {(label) => (
-                <Text
-                  as="span"
-                  size={2}
-                  color="lowContrast"
-                  title="The name other devices see you by"
-                  selectable
-                >
-                  {label()}
-                </Text>
-              )}
-            </Show>
-            <ConnectionIndicator />
-          </>
+          <Show when={selfLabel()}>
+            {(label) => (
+              <Text
+                as="span"
+                size={2}
+                color="lowContrast"
+                title="The name other devices see you by"
+                selectable
+              >
+                {label()}
+              </Text>
+            )}
+          </Show>
         }
       />
       <FrameBody>

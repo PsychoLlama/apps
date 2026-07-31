@@ -30,7 +30,6 @@ import {
   type ContactView,
 } from '../state/contacts';
 import { reportSagaFailure } from '../state/session';
-import { ConnectionIndicator } from './connection-indicator';
 import { PairingRequest } from './pairing-request';
 import { RenameDialog } from './rename-dialog';
 import * as styles from './beam-contact.css';
@@ -95,7 +94,6 @@ export const BeamContact = () => {
           rest of the page waits on the address book. */}
       <SiteHeader
         trail={[{ label: 'Beam', href: '/beam' }, { label: 'Contact' }]}
-        actions={<ConnectionIndicator />}
       />
       <FrameBody>
         <Container as="div" size={2}>
