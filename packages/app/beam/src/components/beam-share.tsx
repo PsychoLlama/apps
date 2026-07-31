@@ -1,4 +1,4 @@
-import { createEffect, on, Show } from 'solid-js';
+import { createEffect, on, onCleanup, Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { useRun, useValue } from '@lib/state';
 import { FrameBody, SiteHeader } from '@lib/shell';
@@ -21,7 +21,8 @@ import {
   cancelPairingSaga,
   connectionStore,
   dialPeerSaga,
-  endpointCell,
+  disconnectPeerSaga,
+  identityStore,
   reportSagaFailure,
   shareStatesFormula,
   sharesByPeerFormula,
@@ -41,6 +42,8 @@ const describeState = (state: ShareState): string => {
       return 'Paired. Ready to share.';
     case 'unreachable':
       return 'Couldn’t reach this device. It may be offline.';
+    case 'disconnected':
+      return 'Disconnected. Anything you write will reach them when they’re back.';
   }
 };
 
@@ -60,16 +63,21 @@ export const BeamShare = () => {
   const navigate = useNavigate();
 
   const connection = useValue(connectionStore);
-  const session = useValue(endpointCell);
+  const self = useValue(identityStore);
   const contacts = useValue(addressBookFormula);
   const states = useValue(shareStatesFormula);
   const shares = useValue(sharesByPeerFormula);
 
   const dial = useRun(dialPeerSaga);
   const cancel = useRun(cancelPairingSaga);
+  const disconnect = useRun(disconnectPeerSaga);
 
-  /** Whether this link points back at the device reading it. */
-  const isSelf = () => session()?.endpoint.id === params.id;
+  /**
+   * Whether this link points back at the device reading it. Answered off the
+   * identity rather than the endpoint, so scanning your own code says so
+   * straight away instead of after the handshake.
+   */
+  const isSelf = () => self().endpointId === params.id;
 
   /** This peer's record, once the address book has one for it. */
   const contact = () =>
@@ -86,16 +94,39 @@ export const BeamShare = () => {
   const state = (): ShareState => states()[params.id] ?? 'preparing';
 
   // The dial needs the live endpoint, so hold off until the relay connection
-  // lands. `on` re-runs if it cycles back to `connected` (e.g. a reconnect);
-  // the saga itself ignores a peer already dialled.
+  // lands. Keyed on the peer too, since one share view serves every id: a
+  // relay that cycles back to `connected`, or a different peer, both mean
+  // dial. The saga itself ignores a peer already dialled or in flight.
   createEffect(
     on(
-      () => connection().status,
-      (status) => {
+      () => [params.id, connection().status] as const,
+      ([endpointId, status]) => {
         if (status !== 'connected') return;
-        void dial(params.id).catch(
+        void dial(endpointId).catch(
           reportSagaFailure('The beam dial saga failed.'),
         );
+      },
+    ),
+  );
+
+  // Leaving takes the connection with it. This view is the only place a live
+  // link means anything, and holding one open past it keeps a relay stream
+  // busy on both devices and leaves this one listed as reachable on a screen
+  // nobody is looking at. The pairing and anything queued survive; coming
+  // back dials again and sends what's waiting.
+  //
+  // Keyed on the id rather than hung off the component, so moving between two
+  // peers' views hangs up on the one being left rather than on whichever id
+  // the route params happen to hold by the time cleanup runs.
+  createEffect(
+    on(
+      () => params.id,
+      (endpointId) => {
+        onCleanup(() => {
+          void disconnect(endpointId).catch(
+            reportSagaFailure('The peer disconnect saga failed.'),
+          );
+        });
       },
     ),
   );

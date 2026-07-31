@@ -113,13 +113,21 @@ export const activeContactsFormula = defineFormula(
  * - `connected` — linked and paired. The only state where sharing happens.
  * - `unreachable` — the dial didn't land. Nothing more happens without
  *   another attempt.
+ * - `disconnected` — the link was up and ended, usually because the peer
+ *   walked away from its own share view. The pairing is untouched: shares go
+ *   on queueing, and the next link carries them.
  *
  * There is no `declined`. Refusing a request sends nothing — it's inaction,
  * and inaction has no message — so a caller can't be told no. What it sees
  * instead is `awaiting`, indefinitely, which is the truth of it.
  */
 export type ShareState =
-  'preparing' | 'connecting' | 'awaiting' | 'connected' | 'unreachable';
+  | 'preparing'
+  | 'connecting'
+  | 'awaiting'
+  | 'connected'
+  | 'unreachable'
+  | 'disconnected';
 
 /**
  * Where the share view stands with each peer it knows about. A map rather
@@ -134,6 +142,7 @@ export const shareStatesFormula = defineFormula(
       Object.entries(links.statuses).map(([endpointId, status]) => {
         if (status === 'dialing') return [endpointId, 'connecting'];
         if (status === 'unreachable') return [endpointId, 'unreachable'];
+        if (status === 'closed') return [endpointId, 'disconnected'];
 
         return [
           endpointId,

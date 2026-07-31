@@ -34,6 +34,22 @@ struct PeerState {
     reader: RefCell<Option<AbortOnDropHandle<()>>>,
 }
 
+impl Drop for PeerState {
+    /// Close the connection as the handle goes, which is what makes "freeing
+    /// it closes it" true rather than nearly true.
+    ///
+    /// A [`Connection`] is a cheap clone over shared state and only closes
+    /// when the *last* clone drops — and [`PeerConnection::closed`] hands one
+    /// to a future that waits for exactly that. So a host that has read
+    /// `closed` and then frees the handle would otherwise leave the
+    /// connection open, waited on by a promise that can never resolve because
+    /// nothing is left to close it. Saying so explicitly costs nothing on a
+    /// connection that is already closing.
+    fn drop(&mut self) {
+        self.connection.close(VarInt::from_u32(CLOSE_CODE), b"");
+    }
+}
+
 /// A live connection to a single peer.
 ///
 /// Holding it keeps the connection open; freeing it closes it.
@@ -161,7 +177,9 @@ impl PeerConnection {
     /// or the transport failing.
     ///
     /// Each read starts its own wait, so a host that wants one promise
-    /// should hold onto it rather than re-reading the property.
+    /// should hold onto it rather than re-reading the property. A pending
+    /// wait doesn't keep the connection alive: dropping this handle closes
+    /// it, and closing it is what settles every outstanding wait.
     #[wasm_bindgen(getter)]
     pub fn closed(&self) -> js_sys::Promise {
         let connection = self.state.connection.clone();

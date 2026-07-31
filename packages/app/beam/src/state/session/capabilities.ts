@@ -58,10 +58,30 @@ const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
 };
 
 /**
- * A live endpoint and the queue its inbound handler fills.
+ * This device's identity as plain data: the address it advertises, and the
+ * key that address is derived from.
  *
- * Bundled because the queue is only reachable through the handler the
- * endpoint was defined with — there's no way to ask an endpoint for it after
+ * Plain data rather than the wasm {@link Identity} on purpose. The address is
+ * readable the moment the key is — no network involved — so the view can name
+ * this device and render its beam link long before the relay handshake lands.
+ * Getting there means the identity has to cross from one capability call to
+ * the next, and a wasm handle held across a saga step is a handle that leaks
+ * if the scope dies between them. Bytes don't leak, and minting the handle
+ * again from them is a key derivation, not a round trip.
+ */
+export interface SelfKey {
+  /** The address peers dial to reach this device, as a base32 string. */
+  readonly endpointId: string;
+
+  /** The raw secret key. Never commit this to a store — it *is* the device. */
+  readonly secretKey: Uint8Array;
+}
+
+/**
+ * A live endpoint and the queues its handlers fill.
+ *
+ * Bundled because the queues are only reachable through the handlers the
+ * endpoint was defined with — there's no way to ask an endpoint for them after
  * the fact, which is the point: the handler can't be missing when a peer
  * arrives.
  */
@@ -75,6 +95,14 @@ export interface EndpointSession {
    * during the handshake isn't turned away.
    */
   readonly peers: Inbox<PeerLink>;
+
+  /**
+   * Every change to the relay carrying this endpoint: the server's URL, or
+   * `null` when there isn't one. Filled from the same moment as
+   * {@link EndpointSession.peers}, so the first connection is an arrival like
+   * any other rather than something the reader has to infer from the join.
+   */
+  readonly relay: Inbox<string | null>;
 
   /** Leave the relay network and stop listening. */
   release(): void;
@@ -98,6 +126,13 @@ export interface PeerLink {
   /** Messages from this peer, queued as they decode. */
   readonly messages: Inbox<BeamMessage>;
 
+  /**
+   * Settles when the connection ends, whichever side ended it and whether it
+   * was deliberate or the transport giving out. Read once and held, because
+   * the wasm getter starts a fresh wait on every read.
+   */
+  readonly closed: Promise<unknown>;
+
   /** Close the connection and stop listening. */
   release(): void;
 }
@@ -114,6 +149,11 @@ export interface PeerLink {
 const linkPeer = (connection: PeerConnection): PeerLink => {
   const endpointId = connection.endpointId;
   const messages = createInbox<BeamMessage>();
+
+  // Read once, here. The getter mints a fresh wait per read, and this one is
+  // taken before anything can close the connection — so the far side hanging
+  // up is observed even if nothing gets around to awaiting it until later.
+  const closed = connection.closed;
 
   const listening = connection.onMessage((bytes) => {
     const message = decodeMessage(bytes);
@@ -137,20 +177,25 @@ const linkPeer = (connection: PeerConnection): PeerLink => {
     endpointId,
     connection,
     messages,
+    closed,
     release: () => {
       listening.free();
+
+      // Freeing the handle is what closes the connection, which is also what
+      // settles `closed` — so hanging up here is heard by the peer, and by
+      // whatever is parked on the far end of that promise.
       connection.free();
     },
   };
 };
 
 /**
- * Define the endpoint, queue and all, without joining.
+ * Define the endpoint, queues and all, without joining.
  *
- * The inbound handler is part of the definition rather than something
- * registered afterwards, so the queue is filling from the moment the
- * endpoint exists — there is no window in which a peer could dial in and
- * find nobody home.
+ * Both handlers are part of the definition rather than something registered
+ * afterwards, so the queues are filling from the moment the endpoint exists —
+ * there is no window in which a peer could dial in and find nobody home, nor
+ * one in which the relay could come up unobserved.
  *
  * Frees the identity on the way out: the endpoint copies the key it binds
  * under, and the endpoint id stays readable from the endpoint itself, so
@@ -158,6 +203,7 @@ const linkPeer = (connection: PeerConnection): PeerLink => {
  */
 const defineSession = (identity: Identity): EndpointSession => {
   const peers = createInbox<PeerLink>();
+  const relay = createInbox<string | null>();
   let endpoint: Endpoint;
 
   try {
@@ -168,36 +214,41 @@ const defineSession = (identity: Identity): EndpointSession => {
         logger.debug('Peer connected.', { endpointId: peer.endpointId });
         peers.push(peer);
       },
+      // `undefined` and `null` mean the same thing here — nothing is carrying
+      // us — and a queue of one shape is easier to fold than a queue of two.
+      onConnectionChange: (homeRelay) => {
+        logger.debug('Relay connection changed.', {
+          homeRelay: homeRelay ?? null,
+        });
+
+        relay.push(homeRelay ?? null);
+      },
     });
   } finally {
     identity.free();
   }
 
-  return { endpoint, peers, release: () => endpoint.free() };
+  return { endpoint, peers, relay, release: () => endpoint.free() };
 };
 
 /**
- * Instantiate the iroh wasm module, define an endpoint under this device's
- * identity, and join the public relay network. Both steps are async and
- * client-only — the wasm fetches and the relay handshake can't run during
- * prerender.
+ * Instantiate the iroh wasm module and settle this device's identity, without
+ * touching the network. Client-only — the wasm fetch can't run during
+ * prerender — but far quicker than the handshake that follows, which is the
+ * point of it being its own step: the address is derived from the key, so the
+ * view can name this device and render its beam link while the relay is still
+ * being dialled.
  *
- * Reuses a saved identity, or mints a fresh one so the endpoint keeps a stable
- * identity (and beam link) across reloads. A fresh key is persisted in
- * parallel with the join rather than before it — the join is the slow,
- * networked step, and the write needn't gate it.
+ * Reuses a saved identity, or mints a fresh one, so the address (and thus the
+ * beam link) survives a reload. A fresh key is persisted in the background: it
+ * only decides whether *next* time reuses this identity, so nothing here has
+ * to wait for the write.
  *
- * Inbound peers are queued from the moment the endpoint is defined — the
- * handler is part of its definition — so nothing arriving during the handshake
- * is missed.
- *
- * Cancellation is cooperative: iroh's own `join()` isn't interruptible, so
- * after each `await` we bail on the signal, releasing a late-arriving session
- * so its connection doesn't linger.
+ * Hands back plain bytes rather than the wasm handle. The handle would have to
+ * survive until {@link openConnection} takes it, and one held across a saga
+ * step leaks if the scope dies in between.
  */
-export const openConnection = async (
-  signal: AbortSignal,
-): Promise<EndpointSession> => {
+export const loadIdentity = async (signal: AbortSignal): Promise<SelfKey> => {
   try {
     await init();
     signal.throwIfAborted();
@@ -206,21 +257,61 @@ export const openConnection = async (
     const restored = await restoreSecretKey();
     signal.throwIfAborted();
 
-    // Reuse the saved identity, or mint one and persist it alongside the
-    // connect.
     const identity = restored ? Identity.from(restored) : Identity.create();
-    const persisting = restored
-      ? undefined
-      : persistSecretKey(identity.secretKey);
 
-    const session = defineSession(identity);
+    let self: SelfKey;
+    try {
+      self = {
+        endpointId: identity.endpointId,
+        secretKey: identity.secretKey,
+      };
+    } finally {
+      identity.free();
+    }
+
+    if (!restored) void persistSecretKey(self.secretKey);
+
+    logger.debug('Endpoint identity ready.', { endpointId: self.endpointId });
+    return self;
+  } catch (error) {
+    // An abort is ordinary teardown — the scope was released mid-load — so it
+    // isn't worth reporting as a failure.
+    if (!signal.aborted) {
+      logger.error('Failed to settle this device’s identity.', {
+        error: toError(error),
+      });
+    }
+
+    throw error;
+  }
+};
+
+/**
+ * Define an endpoint under this device's identity and join the public relay
+ * network. Client-only, and the slow half of coming up: the handshake is a
+ * round trip to a relay server.
+ *
+ * Inbound peers and relay changes are queued from the moment the endpoint is
+ * defined — the handlers are part of its definition — so nothing arriving
+ * during the handshake is missed.
+ *
+ * Cancellation is cooperative: iroh's own `join()` isn't interruptible, so
+ * after each `await` we bail on the signal, releasing a late-arriving session
+ * so its connection doesn't linger.
+ */
+export const openConnection = async (
+  signal: AbortSignal,
+  self: SelfKey,
+): Promise<EndpointSession> => {
+  try {
+    signal.throwIfAborted();
+    const session = defineSession(Identity.from(self.secretKey));
 
     try {
       await session.endpoint.join();
-      await persisting;
     } catch (error) {
       // Nothing else holds the session yet, so a failed connect has to
-      // release it here or the endpoint and its listener are stranded.
+      // release it here or the endpoint and its listeners are stranded.
       session.release();
       throw error;
     }
@@ -237,8 +328,6 @@ export const openConnection = async (
 
     return session;
   } catch (error) {
-    // An abort is ordinary teardown — the scope was released mid-connect —
-    // so it isn't worth reporting as a failure.
     if (!signal.aborted) {
       logger.error('Failed to join the iroh relay network.', {
         error: toError(error),
@@ -383,6 +472,38 @@ export const newShareId = (): string => crypto.randomUUID();
 export const releasePeer = (_signal: AbortSignal, peer: PeerLink): void => {
   peer.release();
 };
+
+/**
+ * Wait for a peer link to end — the far side closing it, this side releasing
+ * it, or the transport giving out. Resolves rather than reports which: from
+ * the reader's side there is no difference between a device that walked away
+ * and one whose connection dropped, and claiming to know would be a guess.
+ *
+ * Rejects if the scope is released first, so the saga parked on this unwinds
+ * with everything else instead of committing into a torn-down runtime — which
+ * is the ordinary case, since releasing the scope is itself what closes the
+ * connection.
+ */
+export const awaitPeerClose = (
+  signal: AbortSignal,
+  peer: PeerLink,
+): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(signal.reason as Error);
+      return;
+    }
+
+    const abandon = () => reject(signal.reason as Error);
+    signal.addEventListener('abort', abandon, { once: true });
+
+    // `finally`, not `then`: the promise settles either way when the
+    // connection ends, and the reason it carries is the transport's business.
+    void peer.closed.finally(() => {
+      signal.removeEventListener('abort', abandon);
+      resolve();
+    });
+  });
 
 /**
  * The beam link to an endpoint — the `/beam/share/:id` URL a peer opens to

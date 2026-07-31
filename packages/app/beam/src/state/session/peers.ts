@@ -12,8 +12,11 @@ import { beamScope } from '../scope';
  * - `linked` — the connection is up and messages flow.
  * - `unreachable` — the dial failed. Terminal until something dials again;
  *   there's no retry affordance yet.
+ * - `closed` — the link was up and ended. Distinct from `unreachable`, which
+ *   is a device that was never reached, and from absent, which is a device
+ *   nothing has been tried with: this one answered and then went.
  */
-export type PeerLinkStatus = 'dialing' | 'linked' | 'unreachable';
+export type PeerLinkStatus = 'dialing' | 'linked' | 'unreachable' | 'closed';
 
 /** Which peers this session can currently talk to. */
 export interface PeerLinks {
@@ -73,6 +76,30 @@ export const peerUnreachableTopic = defineTopic<string>();
 defineFold(peerUnreachableTopic, [peerLinksStore], (links, endpointId) => {
   links.statuses[endpointId] = 'unreachable';
 });
+
+/**
+ * A link ended on its own: the peer hung up, or the transport gave out.
+ *
+ * Carries the handle rather than the id so the fold can tell whether the link
+ * that ended is still the one being held. It often isn't — a link this device
+ * released deliberately closes too, and a replaced link closes as it's swapped
+ * out — and marking a peer `closed` on the strength of a connection nothing
+ * points at any more would undo the state that replaced it.
+ */
+export const peerClosedTopic = defineTopic<PeerLink>();
+defineFold(
+  peerClosedTopic,
+  [peerLinksStore, peerHandlesCell],
+  (links, handles, peer) => {
+    if (handles.current.get(peer.endpointId) !== peer) return;
+
+    links.statuses[peer.endpointId] = 'closed';
+
+    const remaining = new Map(handles.current);
+    remaining.delete(peer.endpointId);
+    handles.current = remaining;
+  },
+);
 
 /**
  * A link was let go. The handle is freed by the saga before this lands —

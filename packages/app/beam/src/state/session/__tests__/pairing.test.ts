@@ -42,6 +42,7 @@ const fakeLink = (endpointId = 'ep-1'): PeerLink => ({
   endpointId,
   connection: {} as PeerConnection,
   messages: createInbox(),
+  closed: new Promise(() => undefined),
   release: () => undefined,
 });
 

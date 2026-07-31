@@ -13,10 +13,10 @@
  * case of it — is logged here too, and only here: a share is a hand-off
  * between devices, so it lives and dies with the session.
  */
-export { connectionStore, endpointCell } from './connection';
+export { connectionStore } from './connection';
 export { qrCodeCell } from './qr-code';
 export type { QrGrid } from './qr-code';
-export { selfLabelFormula } from './identity';
+export { identityStore, selfLabelFormula } from './identity';
 export { inviteStore, inviteOpenedTopic, inviteClosedTopic } from './invite';
 export {
   activeContactsFormula,
@@ -42,6 +42,7 @@ export {
   connectRelaySaga,
   copyShareSaga,
   dialPeerSaga,
+  disconnectPeerSaga,
   reportSagaFailure,
   shareTextSaga,
 } from './sagas';

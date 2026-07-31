@@ -49,9 +49,10 @@ export const BeamHome = () => {
       {/* The name sits in the header rather than in the copy below it. It's
           this device's identity, which is chrome — the same class of thing as
           the connection status it sits beside — and putting it here leaves the
-          headline free to say what the page is for. It only exists once the
-          relay connection lands, so the tray simply holds the status alone
-          until then; a placeholder name is a lie someone might read out to the
+          headline free to say what the page is for. It's derived from the
+          endpoint key, so it turns up as soon as the key is loaded rather than
+          waiting on the relay; until then the tray holds the status alone,
+          since a placeholder name is a lie someone might read out to the
           person beside them. */}
       <SiteHeader
         title="Beam"
