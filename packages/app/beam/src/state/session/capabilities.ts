@@ -70,7 +70,7 @@ const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
  * again from them is a key derivation, not a round trip.
  */
 export interface SelfKey {
-  /** The address peers dial to reach this device, as a base32 string. */
+  /** The address peers dial to reach this device, as a hex string. */
   readonly endpointId: string;
 
   /** The raw secret key. Never commit this to a store — it *is* the device. */

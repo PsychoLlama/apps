@@ -15,6 +15,7 @@ import IconContactCard from 'virtual:icons/mdi/card-account-details-outline';
 import { ShareComposer } from './share-composer';
 import { ShareLog } from './share-log';
 import { addressBookFormula } from '../state/contacts';
+import { isEndpointId } from '../state/endpoint-id';
 import { generateLabel } from '../state/labels';
 import {
   cancelPairingSaga,
@@ -58,6 +59,14 @@ export const BeamShare = () => {
   const commit = useCommit();
 
   /**
+   * Whether the route names an address at all. Format only — it says the id
+   * could be dialled, never that anything is listening — and it's synchronous,
+   * so a link that was never one is answered on the first paint rather than
+   * after a handshake it can't survive.
+   */
+  const dialable = () => isEndpointId(params.id);
+
+  /**
    * Whether this link points back at the device reading it. Answered off the
    * identity rather than the endpoint, so scanning your own code says so
    * straight away instead of after the handshake.
@@ -87,6 +96,7 @@ export const BeamShare = () => {
       () => [params.id, connection().status] as const,
       ([endpointId, status]) => {
         if (status !== 'connected') return;
+        if (!dialable()) return;
         void dial(endpointId).catch(
           reportSagaFailure('The beam dial saga failed.'),
         );
@@ -123,10 +133,11 @@ export const BeamShare = () => {
   // Keyed so that opening your own link focuses nothing: nothing is dialled
   // there, and a reading stuck on "Connecting" for a connection that was
   // never attempted is worse than an empty corner. Identity settles after
-  // first paint, so this re-runs and clears itself once it does.
+  // first paint, so this re-runs and clears itself once it does. A link that
+  // was never an address is the same case for the same reason.
   createEffect(
     on(
-      () => (isSelf() ? null : params.id),
+      () => (isSelf() || !dialable() ? null : params.id),
       (endpointId) => {
         if (!endpointId) return;
 
@@ -150,19 +161,35 @@ export const BeamShare = () => {
           before hydration replaces it. Same rule as the contact page. */}
       <FrameBody>
         <Container as="div" size={2}>
+          {/* Nothing was dialled and nothing was written to the address book,
+              which is the point of answering this here: the book is written
+              before the dial, so an id that could never be one has to be
+              turned away before it becomes a contact nobody can remove
+              without going looking for it. */}
           <Show
-            when={!isSelf()}
+            when={dialable()}
             fallback={
-              <Callout color="neutral">
+              <Callout color="warning">
                 <Text as="span" size={2} selectable={false}>
-                  This is this device’s own beam link. Open it somewhere else to
-                  pair.
+                  That isn’t a beam link. Check the address, or scan the code
+                  from the other device.
                 </Text>
               </Callout>
             }
           >
-            <Flex as="div" direction="column" gap={5}>
-              {/* The record sits behind a labelled link rather than the
+            <Show
+              when={!isSelf()}
+              fallback={
+                <Callout color="neutral">
+                  <Text as="span" size={2} selectable={false}>
+                    This is this device’s own beam link. Open it somewhere else
+                    to pair.
+                  </Text>
+                </Callout>
+              }
+            >
+              <Flex as="div" direction="column" gap={5}>
+                {/* The record sits behind a labelled link rather than the
                   title itself: a heading that quietly navigates gives no
                   hint of where, and "somewhere about this device" is the
                   part a reader can't guess. Ghost keeps it quiet beside the
@@ -174,74 +201,75 @@ export const BeamShare = () => {
                   the route param at build time carries the `__id` sentinel.
                   The address book is empty during prerender, so this is
                   only ever built on the client, from the record. */}
-              <Flex
-                as="div"
-                direction="row"
-                align="center"
-                justify="between"
-                gap={3}
-              >
-                <Heading as="h1" selectable={false}>
-                  {name()}
-                </Heading>
+                <Flex
+                  as="div"
+                  direction="row"
+                  align="center"
+                  justify="between"
+                  gap={3}
+                >
+                  <Heading as="h1" selectable={false}>
+                    {name()}
+                  </Heading>
 
-                <Show when={contact()}>
-                  {(view) => (
-                    <LinkButton
-                      testId="beam-share-contact"
-                      href={`/beam/contacts/${view().endpointId}`}
-                      variant="ghost"
-                      color="neutral"
-                    >
-                      <IconContactCard
-                        width="18"
-                        height="18"
-                        aria-hidden="true"
-                      />
-                      Details
-                    </LinkButton>
-                  )}
-                </Show>
-              </Flex>
+                  <Show when={contact()}>
+                    {(view) => (
+                      <LinkButton
+                        testId="beam-share-contact"
+                        href={`/beam/contacts/${view().endpointId}`}
+                        variant="ghost"
+                        color="neutral"
+                      >
+                        <IconContactCard
+                          width="18"
+                          height="18"
+                          aria-hidden="true"
+                        />
+                        Details
+                      </LinkButton>
+                    )}
+                  </Show>
+                </Flex>
 
-              {/* Withdrawing only makes sense while they haven't answered.
+                {/* Withdrawing only makes sense while they haven't answered.
                   Once paired, the way out is Remove on the contact's page —
                   the same door for a pairing that was never accepted and one
                   that's simply no longer wanted. */}
-              <Show when={state() === 'awaiting' || state() === 'connecting'}>
-                <Flex as="div" direction="row" gap={3} align="center">
-                  <Button
-                    testId="beam-share-cancel"
-                    variant="soft"
-                    color="neutral"
-                    onClick={handleCancel}
-                  >
-                    Cancel invite
-                  </Button>
-                </Flex>
-              </Show>
+                <Show when={state() === 'awaiting' || state() === 'connecting'}>
+                  <Flex as="div" direction="row" gap={3} align="center">
+                    <Button
+                      testId="beam-share-cancel"
+                      variant="soft"
+                      color="neutral"
+                      onClick={handleCancel}
+                    >
+                      Cancel invite
+                    </Button>
+                  </Flex>
+                </Show>
 
-              {/* Both hang off the record rather than the route param. The
+                {/* Both hang off the record rather than the route param. The
                   address book is empty during prerender, so this is the same
                   rule that keeps the details link honest — and it's also the
                   right gate on its own terms: there's nobody to write to
                   until the peer is a contact. */}
-              <Show when={contact()}>
-                {(view) => (
-                  <>
-                    <ShareLog
-                      shares={shares()[view().endpointId] ?? []}
-                      peerName={view().name}
-                    />
+                <Show when={contact()}>
+                  {(view) => (
+                    <>
+                      <ShareLog
+                        shares={shares()[view().endpointId] ?? []}
+                        peerName={view().name}
+                      />
 
-                    <ShareComposer
-                      endpointId={view().endpointId}
-                      connected={state() === 'connected'}
-                    />
-                  </>
-                )}
-              </Show>
-            </Flex>
+                      <ShareComposer
+                        endpointId={view().endpointId}
+                        connected={state() === 'connected'}
+                      />
+                    </>
+                  )}
+                </Show>
+              </Flex>
+            </Show>
           </Show>
         </Container>
       </FrameBody>

@@ -53,7 +53,7 @@ impl Identity {
     }
 
     /// The public address peers dial to reach an endpoint running under
-    /// this identity, as a base32 string. Derived from the key, so it's
+    /// this identity, as a hex string. Derived from the key, so it's
     /// readable straight away — a host can render its share link before, or
     /// without, ever joining.
     #[wasm_bindgen(getter, js_name = endpointId)]
