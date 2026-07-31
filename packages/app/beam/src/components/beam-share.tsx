@@ -1,7 +1,7 @@
 import { createEffect, on, onCleanup, Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { useRun, useValue } from '@lib/state';
-import { FrameBody, SiteHeader } from '@lib/shell';
+import { useCommit, useRun, useValue } from '@lib/state';
+import { FrameBody } from '@lib/shell';
 import {
   Button,
   Callout,
@@ -12,7 +12,6 @@ import {
   Text,
 } from '@lib/ui';
 import IconContactCard from 'virtual:icons/mdi/card-account-details-outline';
-import { ConnectionIndicator } from './connection-indicator';
 import { ShareComposer } from './share-composer';
 import { ShareLog } from './share-log';
 import { addressBookFormula } from '../state/contacts';
@@ -23,36 +22,21 @@ import {
   dialPeerSaga,
   disconnectPeerSaga,
   identityStore,
+  peerBlurredTopic,
+  peerFocusedTopic,
   reportSagaFailure,
   shareStatesFormula,
   sharesByPeerFormula,
   type ShareState,
 } from '../state/session';
 
-/** What each state of the pairing says, phrased from this device's side. */
-const describeState = (state: ShareState): string => {
-  switch (state) {
-    case 'preparing':
-      return 'Getting ready to connect…';
-    case 'connecting':
-      return 'Connecting…';
-    case 'awaiting':
-      return 'Waiting for them to accept. Keep this device awake.';
-    case 'connected':
-      return 'Paired. Ready to share.';
-    case 'unreachable':
-      return 'Couldn’t reach this device. It may be offline.';
-    case 'disconnected':
-      return 'Disconnected. Anything you write will reach them when they’re back.';
-  }
-};
-
 /**
  * The share view at `/beam/share/:id` — where a beam link lands, and where
  * sharing happens. It dials the endpoint named in the URL over the endpoint
- * connection the layout holds open, introduces this device, reports how the
- * pairing stands until the peer answers, and carries the composer and the
- * session's log of what has passed between the two. Files are Phase 5.
+ * connection the layout holds open, introduces this device, and carries the
+ * composer and the session's log of what has passed between the two. How the
+ * pairing stands is reported by the frame's status bar, which this view
+ * points at the peer for as long as it's open. Files are Phase 5.
  *
  * Opening your own link is its own case, not an error: it's what happens
  * when you scan the code off your own screen, and the page says so rather
@@ -71,6 +55,7 @@ export const BeamShare = () => {
   const dial = useRun(dialPeerSaga);
   const cancel = useRun(cancelPairingSaga);
   const disconnect = useRun(disconnectPeerSaga);
+  const commit = useCommit();
 
   /**
    * Whether this link points back at the device reading it. Answered off the
@@ -131,6 +116,26 @@ export const BeamShare = () => {
     ),
   );
 
+  // Point the frame's status bar at this peer for as long as the view is
+  // open. The bar is mounted by the layout, which can't tell a share route
+  // from a contact route by its params, so the view that knows says so.
+  //
+  // Keyed so that opening your own link focuses nothing: nothing is dialled
+  // there, and a reading stuck on "Connecting" for a connection that was
+  // never attempted is worse than an empty corner. Identity settles after
+  // first paint, so this re-runs and clears itself once it does.
+  createEffect(
+    on(
+      () => (isSelf() ? null : params.id),
+      (endpointId) => {
+        if (!endpointId) return;
+
+        commit(peerFocusedTopic(endpointId));
+        onCleanup(() => commit(peerBlurredTopic(endpointId)));
+      },
+    ),
+  );
+
   const handleCancel = () => {
     void cancel(params.id)
       .then(() => navigate('/beam'))
@@ -139,14 +144,10 @@ export const BeamShare = () => {
 
   return (
     <>
-      {/* No `:id` in the trail. This route is served from one prerendered
-          shell for every id, so a param-derived `href` ships the `__id`
-          build sentinel in the markup — live to any tap that lands before
-          hydration replaces it. Same rule as the contact page. */}
-      <SiteHeader
-        trail={[{ label: 'Beam', href: '/beam' }, { label: 'Share' }]}
-        actions={<ConnectionIndicator />}
-      />
+      {/* Nothing here is built from `:id`. This route is served from one
+          prerendered shell for every id, so a param-derived `href` ships the
+          `__id` build sentinel in the markup — live to any tap that lands
+          before hydration replaces it. Same rule as the contact page. */}
       <FrameBody>
         <Container as="div" size={2}>
           <Show
@@ -176,19 +177,13 @@ export const BeamShare = () => {
               <Flex
                 as="div"
                 direction="row"
-                align="start"
+                align="center"
                 justify="between"
                 gap={3}
               >
-                <Flex as="hgroup" direction="column" gap={2}>
-                  <Heading as="h1" selectable={false}>
-                    {name()}
-                  </Heading>
-
-                  <Text as="p" size={2} color="lowContrast" selectable={false}>
-                    {describeState(state())}
-                  </Text>
-                </Flex>
+                <Heading as="h1" selectable={false}>
+                  {name()}
+                </Heading>
 
                 <Show when={contact()}>
                   {(view) => (

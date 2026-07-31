@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
 import { useCommit, useValue } from '@lib/state';
-import { FrameBody, SiteHeader } from '@lib/shell';
+import { FrameBody } from '@lib/shell';
 import {
   Button,
   Callout,
@@ -12,16 +12,11 @@ import {
 } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
-import { ConnectionIndicator } from './connection-indicator';
-import { ContactList } from './contact-list';
+import { ContactDirectory } from './contact-directory';
 import { InviteDialog } from './invite-dialog';
-import { addressBookFormula, contactsStore } from '../state/contacts';
-import {
-  activeContactsFormula,
-  inviteOpenedTopic,
-  queuedSharesFormula,
-  selfLabelFormula,
-} from '../state/session';
+import { contactsStore } from '../state/contacts';
+import { inviteOpenedTopic } from '../state/session';
+import * as styles from './beam-home.css';
 
 /**
  * The Beam home at `/beam` — the address book, and the app's entry point. It
@@ -38,43 +33,10 @@ import {
  */
 export const BeamHome = () => {
   const book = useValue(contactsStore);
-  const contacts = useValue(addressBookFormula);
-  const active = useValue(activeContactsFormula);
-  const queued = useValue(queuedSharesFormula);
-  const selfLabel = useValue(selfLabelFormula);
   const commit = useCommit();
 
   return (
     <>
-      {/* The name sits in the header rather than in the copy below it. It's
-          this device's identity, which is chrome — the same class of thing as
-          the connection status it sits beside — and putting it here leaves the
-          headline free to say what the page is for. It's derived from the
-          endpoint key, so it turns up as soon as the key is loaded rather than
-          waiting on the relay; until then the tray holds the status alone,
-          since a placeholder name is a lie someone might read out to the
-          person beside them. */}
-      <SiteHeader
-        title="Beam"
-        actions={
-          <>
-            <Show when={selfLabel()}>
-              {(label) => (
-                <Text
-                  as="span"
-                  size={2}
-                  color="lowContrast"
-                  title="The name other devices see you by"
-                  selectable
-                >
-                  {label()}
-                </Text>
-              )}
-            </Show>
-            <ConnectionIndicator />
-          </>
-        }
-      />
       <FrameBody>
         <Container as="div" size={2}>
           <Flex as="div" direction="column" gap={5}>
@@ -97,58 +59,13 @@ export const BeamHome = () => {
               </Callout>
             </Show>
 
-            {/* Only claim there's nothing paired once the book has actually
-                been read. Between mount and the IndexedDB read landing there's
-                no answer yet, and "no devices yet" is the wrong one. */}
-            <Show when={book().status === 'ready' && contacts().length === 0}>
-              <Text as="p" size={2} color="lowContrast" selectable={false}>
-                No devices yet. Share an invite, or scan one to pair.
-              </Text>
-            </Show>
-
-            {/* Devices that are awake and paired, lifted out of the book
-                below. It repeats rows rather than moving them: the book is
-                where a device lives, and a list that reshuffled itself as
-                peers came and went would be a worse place to look one up.
-                Rows here lead to sharing rather than to the record, because
-                that's the only reason to care that a device is reachable.
-
-                Only rendered when there's something in it, which is every
-                first paint — nothing is linked until something dials. */}
-            <Show when={active().length > 0}>
-              <Flex as="section" direction="column" gap={3}>
-                <Heading as="h2" size={3} selectable={false}>
-                  Active
-                </Heading>
-
-                <ContactList
-                  testId="beam-active"
-                  label="Devices you can share with now"
-                  contacts={active()}
-                  destination="share"
-                  queued={queued()}
-                />
-              </Flex>
-            </Show>
-
-            <Show when={contacts().length > 0}>
-              <Flex as="section" direction="column" gap={3}>
-                {/* The book only needs naming once something sits above it.
-                    On its own it's the page. */}
-                <Show when={active().length > 0}>
-                  <Heading as="h2" size={3} selectable={false}>
-                    All devices
-                  </Heading>
-                </Show>
-
-                <ContactList
-                  testId="beam-contacts"
-                  label="Contacts"
-                  contacts={contacts()}
-                  queued={queued()}
-                />
-              </Flex>
-            </Show>
+            {/* The book, inline — but only while there's no rail to hold it.
+                Above `md` the frame's sidebar carries the same directory
+                beside this page, and repeating it here would be the same
+                list twice on one screen. */}
+            <Flex as="div" direction="column" class={styles.directory}>
+              <ContactDirectory testId="beam" />
+            </Flex>
 
             <Flex as="div" direction="column" gap={3}>
               <Button

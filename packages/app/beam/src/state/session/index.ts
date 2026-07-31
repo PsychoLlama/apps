@@ -14,12 +14,18 @@
  * between devices, so it lives and dies with the session.
  */
 export { connectionStore } from './connection';
+export type { ConnectionStatus } from './connection';
 export { qrCodeCell } from './qr-code';
 export type { QrGrid } from './qr-code';
 export { identityStore, selfLabelFormula } from './identity';
+export {
+  focusedPeerFormula,
+  peerBlurredTopic,
+  peerFocusedTopic,
+} from './focus';
 export { inviteStore, inviteOpenedTopic, inviteClosedTopic } from './invite';
 export {
-  activeContactsFormula,
+  activePeersFormula,
   pairingRequestsFormula,
   requestDismissedTopic,
   shareStatesFormula,
