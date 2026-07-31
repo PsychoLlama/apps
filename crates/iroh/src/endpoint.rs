@@ -94,11 +94,6 @@ impl Endpoint {
     /// the current state on demand.
     ///
     /// Nothing here touches the network — call [`Self::join`] next.
-    ///
-    /// Exported as `Endpoint.from`, not `Endpoint.new`: it's a factory
-    /// reading an identity, and `new` on the JS side reads as a
-    /// constructor this isn't. It also matches
-    /// [`Identity.from`](crate::Identity::from_secret_key).
     #[wasm_bindgen(js_name = from)]
     pub fn create(identity: &Identity, options: &EndpointOptions) -> Result<Endpoint, JsError> {
         let protocols = read_protocols(options)?;
