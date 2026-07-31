@@ -81,7 +81,7 @@
       // Without this the suite passes on a machine that happens to have built
       // the crates and fails on a clean checkout. Every crate carrying a JS
       // bridge belongs here.
-      "dependsOn": ["@crate/iroh#build", "@crate/qr-code#build"],
+      "dependsOn": ["@crate/p2p#build", "@crate/qr-code#build"],
       "inputs": [
         "packages/**/src/**",
         "!packages/**/*.test.browser.{ts,tsx}",

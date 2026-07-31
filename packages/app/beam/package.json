@@ -17,7 +17,7 @@
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
-    "@crate/iroh": "workspace:*",
+    "@crate/p2p": "workspace:*",
     "@crate/qr-code": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",

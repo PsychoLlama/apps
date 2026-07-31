@@ -1,5 +1,5 @@
 [package]
-name = "iroh-share"
+name = "p2p"
 version = "0.0.0"
 publish = false
 edition.workspace = true

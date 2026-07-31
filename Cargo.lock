@@ -1520,19 +1520,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "iroh-share"
-version = "0.0.0"
-dependencies = [
- "console_error_panic_hook",
- "getrandom 0.4.3",
- "iroh",
- "js-sys",
- "n0-future",
- "wasm-bindgen",
- "wasm-bindgen-futures",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2187,6 +2174,19 @@ name = "openssl-probe"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
+
+[[package]]
+name = "p2p"
+version = "0.0.0"
+dependencies = [
+ "console_error_panic_hook",
+ "getrandom 0.4.3",
+ "iroh",
+ "js-sys",
+ "n0-future",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+]
 
 [[package]]
 name = "papaya"

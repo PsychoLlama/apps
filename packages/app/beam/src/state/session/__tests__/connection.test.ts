@@ -6,7 +6,7 @@
  */
 
 import { createTestRuntime } from '@lib/state';
-import type { Endpoint } from '@crate/iroh';
+import type { Endpoint } from '@crate/p2p';
 import type { PeerLink, EndpointSession } from '../capabilities';
 import { createInbox } from '../inbox';
 import {

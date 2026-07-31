@@ -10,7 +10,7 @@
  */
 
 import { createTestRuntime, simulate } from '@lib/state';
-import type { Endpoint, PeerConnection } from '@crate/iroh';
+import type { Endpoint, PeerConnection } from '@crate/p2p';
 import {
   awaitPeerClose,
   copyText,
