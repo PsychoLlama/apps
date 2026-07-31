@@ -6,7 +6,7 @@
  */
 
 import { createTestRuntime } from '@lib/state';
-import type { PeerConnection } from '@crate/iroh';
+import type { PeerConnection } from '@crate/p2p';
 import type { PeerLink } from '../capabilities';
 import { createInbox } from '../inbox';
 import {

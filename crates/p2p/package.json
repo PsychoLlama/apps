@@ -1,5 +1,5 @@
 {
-  "name": "@crate/iroh",
+  "name": "@crate/p2p",
   "private": true,
   "type": "module",
   "version": "0.0.0",
@@ -8,7 +8,7 @@
   "exports": {
     ".": {
       "types": "./index.d.ts",
-      "default": "./dist/iroh_share.js"
+      "default": "./dist/p2p.js"
     }
   },
   "scripts": {

@@ -1,6 +1,6 @@
 /**
- * Public types for `@crate/iroh`. Mirrors the `wasm-bindgen`
- * `--target web` output (`dist/iroh_share.d.ts`), but is checked in so
+ * Public types for `@crate/p2p`. Mirrors the `wasm-bindgen`
+ * `--target web` output (`dist/p2p.d.ts`), but is checked in so
  * consumers type-check without first running the wasm build, and so the
  * loosely-typed corners of the generated output (`Function`,
  * `Promise<any>`) can be narrowed. Keep in sync with the

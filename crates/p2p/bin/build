@@ -2,7 +2,7 @@
 #
 # Compile the crate to wasm and generate its JS glue.
 #
-#   1. `cargo` builds `iroh-share` for the wasm32 target.
+#   1. `cargo` builds `p2p` for the wasm32 target.
 #   2. `wasm-bindgen` turns the raw `.wasm` into an ES module under `dist/`.
 #
 # `wasm-bindgen` (the CLI) comes from the nix devShell, not pnpm.
@@ -18,11 +18,11 @@ workspace_root="$(cd "$crate_dir/../.." && pwd)"
 # artifact path has to follow it too — falling back to the workspace's own
 # `target/` when it's unset (e.g. CI).
 target_dir="${CARGO_TARGET_DIR:-$workspace_root/target}"
-wasm="$target_dir/wasm32-unknown-unknown/release/iroh_share.wasm"
+wasm="$target_dir/wasm32-unknown-unknown/release/p2p.wasm"
 
-cargo build --release --target wasm32-unknown-unknown -p iroh-share
+cargo build --release --target wasm32-unknown-unknown -p p2p
 
 wasm-bindgen "$wasm" \
   --out-dir "$crate_dir/dist" \
-  --out-name iroh_share \
+  --out-name p2p \
   --target web

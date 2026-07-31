@@ -1,4 +1,4 @@
-import init, { Endpoint, Identity, type PeerConnection } from '@crate/iroh';
+import init, { Endpoint, Identity, type PeerConnection } from '@crate/p2p';
 import initQrCode, { encode } from '@crate/qr-code';
 import { createLogger, toError } from '@lib/observability';
 import { read, write, type VaultId } from '@lib/vault';
@@ -21,7 +21,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  * encrypts it at rest under a non-extractable AES-GCM key rather than leaving
  * the raw bytes on disk in the clear.
  */
-const SECRET_KEY_ID: VaultId = 'iroh/secret-key';
+const SECRET_KEY_ID: VaultId = 'p2p/secret-key';
 
 /**
  * Restore the saved endpoint key, or `undefined` if none is stored. A failed
