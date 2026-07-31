@@ -97,24 +97,27 @@ export const BeamContact = () => {
           <Show
             when={contact()}
             fallback={
-              // A malformed id is answered without waiting on anything: it
-              // could never have been written to the book, so "isn't in your
-              // contacts" would be true and beside the point.
-              <Show
-                when={isEndpointId(params.id)}
-                fallback={
-                  <Callout color="warning">
-                    <Text as="span" size={2} selectable={false}>
-                      That isn’t a beam link. Check the address, or scan the
-                      code from the other device.
-                    </Text>
-                  </Callout>
-                }
-              >
-                {/* Only once the read has landed: before that, an unfound
-                    contact means the book isn't loaded, not that it's
-                    missing. */}
-                <Show when={settled()}>
+              // Both answers wait on the read. For the missing contact that's
+              // because an unfound one means the book isn't loaded yet, not
+              // that it's absent — and the malformed id has to wait too, for a
+              // different reason: this route is served from one prerendered
+              // shell for every id, so the shell would answer the question
+              // against the `__id` sentinel and turn away every link there is.
+              // `settled()` is `false` through prerender and first paint alike
+              // (IndexedDB is client-only), which is what keeps the two sides
+              // rendering the same tree for hydration to adopt.
+              <Show when={settled()}>
+                <Show
+                  when={isEndpointId(params.id)}
+                  fallback={
+                    <Callout color="warning">
+                      <Text as="span" size={2} selectable={false}>
+                        That isn’t a beam link. Check the address, or scan the
+                        code from the other device.
+                      </Text>
+                    </Callout>
+                  }
+                >
                   <Callout color="neutral">
                     <Text as="span" size={2} selectable={false}>
                       This device isn’t in your contacts.
