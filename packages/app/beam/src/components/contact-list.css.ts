@@ -1,12 +1,27 @@
 import { style } from '@vanilla-extract/css';
-import { accent } from '@lib/design';
+import { accent, space } from '@lib/design';
 
 /**
- * A contact row. Positioned so the name's link can stretch its hit area over
- * the whole card — a row on a phone is a thumb target, not a word.
+ * A contact row — the anchor itself, filled out to the width of the list.
+ *
+ * Both overrides are against the ghost variant's inline-button defaults, and
+ * `&&` doubles the class specificity so they land regardless of stylesheet
+ * order. The margin is the notable one: ghost retracts its own padding back
+ * out of the layout box so a button sits flush with the text beside it, which
+ * for a stack of rows would lap each one over its neighbour.
+ *
+ * The height is the other. Ghost sizes to its text, and a row in an address
+ * book is a thumb target rather than a word in a sentence.
  */
 export const row = style({
-  position: 'relative',
+  selectors: {
+    '&&': {
+      width: '100%',
+      minHeight: space[7],
+      justifyContent: 'space-between',
+      margin: 0,
+    },
+  },
 });
 
 /**
@@ -14,46 +29,27 @@ export const row = style({
  * where the list survives the navigation it caused — a page that replaces the
  * list it was tapped in has nothing left to mark.
  *
- * A tinted fill plus an accent border, rather than one or the other: the fill
- * alone is a weak signal against a card that already has a surface, and the
- * border alone reads as hover. `&&` doubles the class specificity so this
- * wins against `Card`'s own rules regardless of stylesheet order, and the
- * border rides `Card`'s `::after` — the pseudo-element it draws its own
- * outline on — so the two can't both paint.
+ * Only the fill is set here; the row itself switches to the accent color when
+ * it's current, so the text and the hover and active fills come along with it.
+ * That's what keeps this to one declaration: the tint below matches the fill
+ * ghost would paint on hover anyway, so the current row simply looks hovered
+ * already, which is the truth of it.
  */
 export const currentRow = style({
   selectors: {
     '&&': {
       backgroundColor: accent.alpha[3],
     },
-    '&&::after': {
-      boxShadow: `inset 0 0 0 1px ${accent.alpha[8]}`,
-    },
   },
 });
 
 /**
- * The contact's name, and the row's link. The pseudo-element covers the card
- * so a press anywhere on the row navigates, while the accessible name stays
- * the text itself rather than a card's worth of markup. It's invisible, so it
- * carries no radius of its own; the focus ring belongs to the anchor.
- *
- * Truncation needs the block display — an inline box has no width to overflow
- * — and `minWidth: 0` to opt out of the flex item's automatic minimum, which
- * would otherwise floor the link at the width of its own text and push the
- * badge off the row instead.
+ * The contact's name. Truncation needs the block display — an inline box has
+ * no width to overflow — and `minWidth: 0` to opt out of the flex item's
+ * automatic minimum, which would otherwise floor the name at the width of its
+ * own text and push the badges off the row instead.
  */
-export const stretchedLink = style({
+export const name = style({
   display: 'block',
   minWidth: 0,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  selectors: {
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      inset: 0,
-    },
-  },
 });

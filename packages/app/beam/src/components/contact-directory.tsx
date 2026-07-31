@@ -1,6 +1,6 @@
 import { Show } from 'solid-js';
 import { useValue } from '@lib/state';
-import { Flex, Text } from '@lib/ui';
+import { Em, Flex, Heading, Text } from '@lib/ui';
 import { ContactList } from './contact-list';
 import { addressBookFormula, contactsStore } from '../state/contacts';
 import { activePeersFormula, queuedSharesFormula } from '../state/session';
@@ -31,19 +31,41 @@ export const ContactDirectory = (props: { testId: string }) => {
   const queued = useValue(queuedSharesFormula);
 
   return (
-    <Flex as="div" direction="column" gap={5}>
+    <Flex as="div" direction="column" gap={3}>
+      {/* The list names itself rather than leaning on the page around it.
+          Only one of the two copies is ever visible, and the sidebar's has no
+          page of its own to be titled by.
+
+          Indented by a row's own inline padding so the title sits over the
+          names rather than a few pixels to their left — the rows are buttons,
+          and a button's padding is inside its hit area rather than around
+          it. */}
+      <Heading as="h2" size={3} mx={3} selectable={false}>
+        Contacts
+      </Heading>
+
       {/* Only claim there's nothing paired once the book has actually been
           read. Between mount and the IndexedDB read landing there's no answer
-          yet, and "no devices yet" is the wrong one. */}
+          yet, and "no contacts" is the wrong one.
+
+          Centered, so it reads as the list's own empty middle rather than as
+          a line of prose the heading introduces. It says only what's true and
+          nothing about what to do — the invite and scan buttons are already
+          on the page saying that. */}
       <Show when={book().status === 'ready' && contacts().length === 0}>
-        <Text as="p" size={2} color="lowContrast" selectable={false}>
-          No devices yet. Share an invite, or scan one to pair.
+        <Text
+          as="p"
+          size={2}
+          align="center"
+          color="lowContrast"
+          selectable={false}
+        >
+          <Em>No contacts</Em>
         </Text>
       </Show>
 
       <ContactList
         testId={`${props.testId}-contacts`}
-        label="Contacts"
         contacts={contacts()}
         queued={queued()}
         active={active()}
