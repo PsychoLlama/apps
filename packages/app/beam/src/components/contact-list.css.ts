@@ -1,44 +1,43 @@
 import { style } from '@vanilla-extract/css';
-import { accent, space } from '@lib/design';
+import { breakpoint, space } from '@lib/design';
 
 /**
  * A contact row — the anchor itself, filled out to the width of the list.
  *
- * Both overrides are against the ghost variant's inline-button defaults, and
+ * Every override is against the ghost variant's inline-button defaults, and
  * `&&` doubles the class specificity so they land regardless of stylesheet
- * order. The margin is the notable one: ghost retracts its own padding back
- * out of the layout box so a button sits flush with the text beside it, which
- * for a stack of rows would lap each one over its neighbour.
+ * order. Ghost retracts its own padding back out of the layout box so a button
+ * sits flush with the text beside it; a stack of rows needs that undone
+ * vertically, where it would lap each row over its neighbour, and kept
+ * horizontally, where it's exactly right.
  *
- * The height is the other. Ghost sizes to its text, and a row in an address
- * book is a thumb target rather than a word in a sentence.
+ * So the rows hang out of their column by their own inline padding. Inline on
+ * the home page that lands the names on the page's gutter, in the same column
+ * as the heading above them and the buttons below — the padding stays, as the
+ * slack around a tap, but stops pushing the text out of line with everything
+ * else on the page.
+ *
+ * The rail has no gutter to line up with, and a row already reaches both its
+ * edges, so there the retraction goes away and the padding is just padding.
+ *
+ * The height is the last of it. Ghost sizes to its text, and a row in an
+ * address book is a thumb target rather than a word in a sentence.
  */
 export const row = style({
   selectors: {
     '&&': {
-      width: '100%',
+      alignSelf: 'stretch',
       minHeight: space[7],
       justifyContent: 'space-between',
-      margin: 0,
+      marginBlock: 0,
+      marginInline: `calc(-1 * ${space[3]})`,
     },
   },
-});
-
-/**
- * The row whose peer is the one on screen. Only ever visible in the sidebar,
- * where the list survives the navigation it caused — a page that replaces the
- * list it was tapped in has nothing left to mark.
- *
- * Only the fill is set here; the row itself switches to the accent color when
- * it's current, so the text and the hover and active fills come along with it.
- * That's what keeps this to one declaration: the tint below matches the fill
- * ghost would paint on hover anyway, so the current row simply looks hovered
- * already, which is the truth of it.
- */
-export const currentRow = style({
-  selectors: {
-    '&&': {
-      backgroundColor: accent.alpha[3],
+  '@media': {
+    [breakpoint.md]: {
+      selectors: {
+        '&&': { marginInline: 0 },
+      },
     },
   },
 });

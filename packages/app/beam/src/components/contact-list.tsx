@@ -38,15 +38,18 @@ const ContactRow = (props: {
 
   return (
     <Flex as="li" direction="column">
-      {/* The current row switches color rather than being tinted on top of
-          the neutral one, so its text and its pressed state come along with
-          the fill instead of each needing a rule of its own. */}
+      {/* Being current is a change of color, not a fill behind the text. A
+          tinted row would read as a surface again — the thing these stopped
+          being — and it would be competing with the hover fill for the same
+          background. Recoloring leaves hover free to mean "under the
+          pointer" and current to mean "already open". */}
       <LinkButton
         testId="beam-contact-link"
         href={href()}
-        class={current() ? `${styles.row} ${styles.currentRow}` : styles.row}
+        class={styles.row}
         size={3}
         variant="ghost"
+        radius="none"
         color={current() ? 'accent' : 'neutral'}
         aria-current={current() ? 'page' : undefined}
       >
