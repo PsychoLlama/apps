@@ -29,6 +29,7 @@ import {
   renameOpenedTopic,
   type ContactView,
 } from '../state/contacts';
+import { isEndpointId } from '../state/endpoint-id';
 import { reportSagaFailure } from '../state/session';
 import { PairingRequest } from './pairing-request';
 import { RenameDialog } from './rename-dialog';
@@ -96,14 +97,30 @@ export const BeamContact = () => {
           <Show
             when={contact()}
             fallback={
-              // Only once the read has landed: before that, an unfound
-              // contact means the book isn't loaded, not that it's missing.
-              <Show when={settled()}>
-                <Callout color="neutral">
-                  <Text as="span" size={2} selectable={false}>
-                    This device isn’t in your contacts.
-                  </Text>
-                </Callout>
+              // A malformed id is answered without waiting on anything: it
+              // could never have been written to the book, so "isn't in your
+              // contacts" would be true and beside the point.
+              <Show
+                when={isEndpointId(params.id)}
+                fallback={
+                  <Callout color="warning">
+                    <Text as="span" size={2} selectable={false}>
+                      That isn’t a beam link. Check the address, or scan the
+                      code from the other device.
+                    </Text>
+                  </Callout>
+                }
+              >
+                {/* Only once the read has landed: before that, an unfound
+                    contact means the book isn't loaded, not that it's
+                    missing. */}
+                <Show when={settled()}>
+                  <Callout color="neutral">
+                    <Text as="span" size={2} selectable={false}>
+                      This device isn’t in your contacts.
+                    </Text>
+                  </Callout>
+                </Show>
               </Show>
             }
           >

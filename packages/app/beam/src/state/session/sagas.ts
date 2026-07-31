@@ -60,6 +60,7 @@ import {
   recordPeerSaga,
 } from '../contacts';
 import { now } from '../contacts/capabilities';
+import { isEndpointId } from '../endpoint-id';
 import { beamScope } from '../scope';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -443,6 +444,12 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
  * the reload the dial might not. The caller only dials once the connection is
  * `connected`, so a missing endpoint is a caller bug and throws.
  *
+ * An id that isn't an address is dropped before any of that. The book is
+ * written before the dial — deliberately, so a pairing survives the reload
+ * the dial might not — which means a peer that's merely asleep is worth
+ * recording, and one that could never exist is not. `/beam/share/bacon` is a
+ * URL anybody can type, and without this it leaves a contact behind forever.
+ *
  * Opening your own beam link is a no-op rather than an error — it's what
  * happens when you scan the code off your own screen, and dialling yourself
  * would both fail and leave a contact for this very device in the book.
@@ -454,6 +461,8 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
 export const dialPeerSaga = defineSaga(
   beamScope,
   async function* (endpointId: string) {
+    if (!isEndpointId(endpointId)) return;
+
     const session = yield* read(endpointCell);
     if (!session) {
       throw new Error('Cannot dial a peer before the relay connection is up.');
