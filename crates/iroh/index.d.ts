@@ -43,7 +43,7 @@ export interface Handle extends Disposable {
 export interface Identity extends Handle {
   /**
    * The public address peers dial to reach an endpoint running under this
-   * identity, as a base32 string. Derived from the key, so it's readable
+   * identity, as a hex string. Derived from the key, so it's readable
    * straight away — render a share link before, or without, ever joining.
    */
   readonly endpointId: string;
@@ -153,7 +153,7 @@ export interface EndpointOptions {
  */
 export interface Endpoint extends Handle {
   /**
-   * The address peers dial to reach this endpoint, as a base32 string —
+   * The address peers dial to reach this endpoint, as a hex string —
    * what {@link Identity.endpointId} names. The same value as the
    * identity's, repeated so a holder of an endpoint needn't carry the
    * identity alongside it.
@@ -178,7 +178,7 @@ export interface Endpoint extends Handle {
    * Dial the peer named by `endpointId` on `protocol`, resolving with a
    * live {@link PeerConnection} once established.
    *
-   * `endpointId` is a base32 identity string as produced by
+   * `endpointId` is a hex identity string as produced by
    * {@link Identity.endpointId} — the value carried in a share link.
    * `protocol` must be one this endpoint declared. Rejects if the id is
    * malformed, the protocol wasn't declared, the endpoint hasn't joined, or
@@ -223,7 +223,7 @@ export const Endpoint: {
  */
 export interface PeerConnection extends Handle {
   /**
-   * The connected peer's public identity, as a base32 string — the same
+   * The connected peer's public identity, as a hex string — the same
    * value it advertises as its {@link Identity.endpointId}.
    */
   readonly endpointId: string;

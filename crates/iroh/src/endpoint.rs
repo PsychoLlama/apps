@@ -113,7 +113,7 @@ impl Endpoint {
         })
     }
 
-    /// The address peers dial to reach this endpoint, as a base32 string.
+    /// The address peers dial to reach this endpoint, as a hex string.
     /// The same value as the identity's, repeated here so a host holding an
     /// endpoint doesn't have to carry the identity alongside it.
     #[wasm_bindgen(getter)]
@@ -199,7 +199,7 @@ impl Endpoint {
     /// Dial the peer named by `endpoint_id` on `protocol`, resolving with a
     /// live [`PeerConnection`] once it's established.
     ///
-    /// `endpoint_id` is a base32 identity string as produced by
+    /// `endpoint_id` is a hex identity string as produced by
     /// [`Identity.endpointId`](crate::Identity::endpoint_id) — the value
     /// carried in a share link. `protocol` must be one this endpoint
     /// declared; dialling an undeclared one throws, since there'd be no

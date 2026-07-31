@@ -82,7 +82,7 @@ impl PeerConnection {
 
 #[wasm_bindgen]
 impl PeerConnection {
-    /// The connected peer's public identity, as a base32 string — the same
+    /// The connected peer's public identity, as a hex string — the same
     /// value it advertises as its
     /// [`Identity.endpointId`](crate::Identity::endpoint_id).
     #[wasm_bindgen(getter, js_name = endpointId)]
