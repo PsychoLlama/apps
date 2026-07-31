@@ -1,7 +1,7 @@
 import { createEffect, on, onCleanup, Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { useCommit, useRun, useValue } from '@lib/state';
-import { FrameBody, SiteHeader } from '@lib/shell';
+import { FrameBody } from '@lib/shell';
 import {
   Button,
   Callout,
@@ -144,13 +144,10 @@ export const BeamShare = () => {
 
   return (
     <>
-      {/* No `:id` in the trail. This route is served from one prerendered
-          shell for every id, so a param-derived `href` ships the `__id`
-          build sentinel in the markup — live to any tap that lands before
-          hydration replaces it. Same rule as the contact page. */}
-      <SiteHeader
-        trail={[{ label: 'Beam', href: '/beam' }, { label: 'Share' }]}
-      />
+      {/* Nothing here is built from `:id`. This route is served from one
+          prerendered shell for every id, so a param-derived `href` ships the
+          `__id` build sentinel in the markup — live to any tap that lands
+          before hydration replaces it. Same rule as the contact page. */}
       <FrameBody>
         <Container as="div" size={2}>
           <Show

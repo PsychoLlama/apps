@@ -1,7 +1,7 @@
 import { Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { useCommit, useRun, useValue } from '@lib/state';
-import { FrameBody, SiteHeader } from '@lib/shell';
+import { FrameBody } from '@lib/shell';
 import {
   AlertDialog,
   Badge,
@@ -84,17 +84,13 @@ export const BeamContact = () => {
 
   return (
     <>
-      {/* The trail is deliberately free of `:id`. This route is served from
-          one prerendered shell (`/beam/__contact.html`) for every id, so a
-          param-derived `href` ships the `__id` build sentinel in the markup
-          — a live wrong link to anything that follows it before hydration
-          replaces it. `useParams()` itself is correct on the client; it's
-          only the prerendered markup that can't depend on it. The same rule
-          binds anything this page renders from the id, which is why the
-          rest of the page waits on the address book. */}
-      <SiteHeader
-        trail={[{ label: 'Beam', href: '/beam' }, { label: 'Contact' }]}
-      />
+      {/* Nothing here is built from `:id`. This route is served from one
+          prerendered shell (`/beam/__contact.html`) for every id, so an
+          `href` derived from the param ships the `__id` build sentinel in
+          the markup — a live wrong link to anything that follows it before
+          hydration replaces it. `useParams()` itself is correct on the
+          client; it's only the prerendered markup that can't depend on it,
+          which is why the page waits on the address book. */}
       <FrameBody>
         <Container as="div" size={2}>
           <Show

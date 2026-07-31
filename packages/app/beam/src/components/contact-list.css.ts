@@ -1,4 +1,5 @@
 import { style } from '@vanilla-extract/css';
+import { accent } from '@lib/design';
 
 /**
  * A contact row. Positioned so the name's link can stretch its hit area over
@@ -6,6 +7,29 @@ import { style } from '@vanilla-extract/css';
  */
 export const row = style({
   position: 'relative',
+});
+
+/**
+ * The row whose peer is the one on screen. Only ever visible in the sidebar,
+ * where the list survives the navigation it caused — a page that replaces the
+ * list it was tapped in has nothing left to mark.
+ *
+ * A tinted fill plus an accent border, rather than one or the other: the fill
+ * alone is a weak signal against a card that already has a surface, and the
+ * border alone reads as hover. `&&` doubles the class specificity so this
+ * wins against `Card`'s own rules regardless of stylesheet order, and the
+ * border rides `Card`'s `::after` — the pseudo-element it draws its own
+ * outline on — so the two can't both paint.
+ */
+export const currentRow = style({
+  selectors: {
+    '&&': {
+      backgroundColor: accent.alpha[3],
+    },
+    '&&::after': {
+      boxShadow: `inset 0 0 0 1px ${accent.alpha[8]}`,
+    },
+  },
 });
 
 /**

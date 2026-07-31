@@ -1,4 +1,5 @@
 import { For, Show } from 'solid-js';
+import { useLocation } from '@solidjs/router';
 import { Badge, Card, Flex, Link } from '@lib/ui';
 import type { ContactView } from '../state/contacts';
 import * as styles from './contact-list.css';
@@ -10,38 +11,57 @@ import * as styles from './contact-list.css';
  * A name has no length limit, so the row holds the line by truncating: the
  * badges keep their width and the name gives way, rather than a long name
  * pushing the row's own status off the edge of the screen.
+ *
+ * The row marks itself when its peer is the one on screen. That only shows
+ * anywhere the list is still visible while its destination is open, which is
+ * the sidebar — but it's the row that knows its own `href`, so the test lives
+ * here rather than being threaded down from whichever list is hosting it.
  */
-const ContactRow = (props: { contact: ContactView; queued: number }) => (
-  <Card as="li" size={2} class={styles.row}>
-    <Flex as="div" direction="row" align="center" justify="between" gap={3}>
-      <Link
-        testId="beam-contact-link"
-        href={`/beam/share/${props.contact.endpointId}`}
-        class={styles.stretchedLink}
-        color="neutral"
-        weight="medium"
-        underline="none"
-      >
-        {props.contact.name}
-      </Link>
+const ContactRow = (props: { contact: ContactView; queued: number }) => {
+  const location = useLocation();
 
-      {/* Something written to this device that hasn't reached it. Worth
+  const href = () => `/beam/share/${props.contact.endpointId}`;
+
+  /** Whether this row's peer is the one the pane is showing. */
+  const current = () => location.pathname === href();
+
+  return (
+    <Card
+      as="li"
+      size={2}
+      class={current() ? `${styles.row} ${styles.currentRow}` : styles.row}
+    >
+      <Flex as="div" direction="row" align="center" justify="between" gap={3}>
+        <Link
+          testId="beam-contact-link"
+          href={href()}
+          class={styles.stretchedLink}
+          color="neutral"
+          weight="medium"
+          underline="none"
+          aria-current={current() ? 'page' : undefined}
+        >
+          {props.contact.name}
+        </Link>
+
+        {/* Something written to this device that hasn't reached it. Worth
           seeing from the list: the alternative is finding out by opening the
           page you'd only open if you already suspected. */}
-      <Show when={props.queued > 0}>
-        <Badge color="accent" variant="soft">
-          {props.queued} queued
-        </Badge>
-      </Show>
+        <Show when={props.queued > 0}>
+          <Badge color="accent" variant="soft">
+            {props.queued} queued
+          </Badge>
+        </Show>
 
-      <Show when={props.contact.trust !== 'trusted'}>
-        <Badge color="warning" variant="soft">
-          {props.contact.direction === 'outbound' ? 'Invited' : 'Requested'}
-        </Badge>
-      </Show>
-    </Flex>
-  </Card>
-);
+        <Show when={props.contact.trust !== 'trusted'}>
+          <Badge color="warning" variant="soft">
+            {props.contact.direction === 'outbound' ? 'Invited' : 'Requested'}
+          </Badge>
+        </Show>
+      </Flex>
+    </Card>
+  );
+};
 
 /**
  * A list of contacts. Renders nothing at all when it's empty, so the caller
