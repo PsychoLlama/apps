@@ -1,9 +1,10 @@
 import { Show } from 'solid-js';
 import { useValue } from '@lib/state';
-import { Flex, Text } from '@lib/ui';
+import { Flex, Heading, Text } from '@lib/ui';
 import { ContactList } from './contact-list';
 import { addressBookFormula, contactsStore } from '../state/contacts';
 import { activePeersFormula, queuedSharesFormula } from '../state/session';
+import * as styles from './contact-directory.css';
 
 /**
  * The address book. Rendered twice at different sizes — inline on the home
@@ -31,19 +32,36 @@ export const ContactDirectory = (props: { testId: string }) => {
   const queued = useValue(queuedSharesFormula);
 
   return (
-    <Flex as="div" direction="column" gap={5}>
+    <Flex as="div" direction="column" gap={3} grow>
+      {/* The list names itself rather than leaning on the page around it.
+          Only one of the two copies is ever visible, and the sidebar's has no
+          page of its own to be titled by.
+
+          Where it sits inline depends on what's holding it — see the
+          stylesheet. */}
+      <Heading as="h2" size={5} class={styles.heading} selectable={false}>
+        Contacts
+      </Heading>
+
       {/* Only claim there's nothing paired once the book has actually been
           read. Between mount and the IndexedDB read landing there's no answer
-          yet, and "no devices yet" is the wrong one. */}
+          yet, and "no contacts" is the wrong one.
+
+          It fills whatever room the list would have had and centers in it, so
+          in the rail it sits in the empty middle rather than hanging under
+          the heading. Plain, and quietly — it's a statement of fact, not a
+          line worth stressing, and it says nothing about what to do because
+          the invite and scan buttons are already on the page saying that. */}
       <Show when={book().status === 'ready' && contacts().length === 0}>
-        <Text as="p" size={2} color="lowContrast" selectable={false}>
-          No devices yet. Share an invite, or scan one to pair.
-        </Text>
+        <Flex as="div" direction="column" justify="center" align="center" grow>
+          <Text as="p" size={2} color="lowContrast" selectable={false}>
+            No contacts
+          </Text>
+        </Flex>
       </Show>
 
       <ContactList
         testId={`${props.testId}-contacts`}
-        label="Contacts"
         contacts={contacts()}
         queued={queued()}
         active={active()}

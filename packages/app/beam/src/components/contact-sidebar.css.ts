@@ -19,6 +19,11 @@ import { background, breakpoint, neutral, space } from '@lib/design';
  * Scrolls on its own, like the body it sits beside: an address book is
  * unbounded, and a rail that grew with it would take the frame's height with
  * it.
+ *
+ * Padded top and bottom only. The rows are full-width buttons that carry
+ * their own padding inside the hit area, so inline padding here would inset
+ * the whole list and leave a dead strip either side of it — a tap that lands
+ * next to a name would miss.
  */
 export const sidebar = style({
   display: 'none',
@@ -29,7 +34,7 @@ export const sidebar = style({
       width: '17rem',
       minHeight: 0,
       overflowY: 'auto',
-      padding: space[5],
+      padding: `${space[4]} 0`,
       borderRight: `1px solid ${neutral.alpha[6]}`,
       backgroundColor: background.page,
     },

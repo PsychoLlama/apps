@@ -1,12 +1,19 @@
 import { For, Show } from 'solid-js';
 import { useLocation } from '@solidjs/router';
-import { Badge, Card, Flex, Link } from '@lib/ui';
+import { Badge, Flex, LinkButton, Text } from '@lib/ui';
 import type { ContactView } from '../state/contacts';
 import * as styles from './contact-list.css';
 
 /**
- * One contact, as a row in the address book. The name is the row's link and
- * stretches its hit area over the whole card.
+ * One contact, as a row in the address book. The row *is* the link: a
+ * full-width button rather than a card with an anchor inside it. A card draws
+ * a surface around each contact as though the row were a thing to read, and
+ * the surfaces stack up into a page of boxes; an address book is a list of
+ * places to go, so the rows are the plainest thing that can be tapped and sit
+ * flush against each other.
+ *
+ * Ghost for the same reason — a row is only ever an invitation to go
+ * somewhere, so it stays out of the way until it's pointed at.
  *
  * A name has no length limit, so the row holds the line by truncating: the
  * badges keep their width and the name gives way, rather than a long name
@@ -30,52 +37,62 @@ const ContactRow = (props: {
   const current = () => location.pathname === href();
 
   return (
-    <Card
-      as="li"
-      size={2}
-      class={current() ? `${styles.row} ${styles.currentRow}` : styles.row}
-    >
-      <Flex as="div" direction="row" align="center" justify="between" gap={3}>
-        <Link
-          testId="beam-contact-link"
-          href={href()}
-          class={styles.stretchedLink}
-          color="neutral"
+    <Flex as="li" direction="column">
+      {/* Being current is a change of color, not a fill behind the text. A
+          tinted row would read as a surface again — the thing these stopped
+          being — and it would be competing with the hover fill for the same
+          background. Recoloring leaves hover free to mean "under the
+          pointer" and current to mean "already open". */}
+      <LinkButton
+        testId="beam-contact-link"
+        href={href()}
+        class={styles.row}
+        size={3}
+        variant="ghost"
+        radius="none"
+        color={current() ? 'accent' : 'neutral'}
+        aria-current={current() ? 'page' : undefined}
+      >
+        <Text
+          as="span"
           weight="medium"
-          underline="none"
-          aria-current={current() ? 'page' : undefined}
+          class={styles.name}
+          truncate
+          selectable={false}
         >
           {props.contact.name}
-        </Link>
+        </Text>
 
-        {/* Something written to this device that hasn't reached it. Worth
-          seeing from the list: the alternative is finding out by opening the
-          page you'd only open if you already suspected. */}
-        <Show when={props.queued > 0}>
-          <Badge color="accent" variant="soft">
-            {props.queued} queued
-          </Badge>
-        </Show>
+        <Flex as="div" direction="row" align="center" gap={2}>
+          {/* Something written to this device that hasn't reached it. Worth
+              seeing from the list: the alternative is finding out by opening
+              the page you'd only open if you already suspected. */}
+          <Show when={props.queued > 0}>
+            <Badge color="accent" variant="soft">
+              {props.queued} queued
+            </Badge>
+          </Show>
 
-        {/* Reachable right now — the one thing about a row that changes on
-          its own while you're looking at it. It marks the row in place
-          rather than lifting it into a list of its own, so the book stays a
-          book: the same devices in the same order, whoever happens to be
-          awake. Only one of these two can ever show, since reachable means
-          paired. */}
-        <Show when={props.active}>
-          <Badge color="success" variant="soft">
-            Active
-          </Badge>
-        </Show>
+          {/* Reachable right now — the one thing about a row that changes on
+              its own while you're looking at it. It marks the row in place
+              rather than lifting it into a list of its own, so the book stays
+              a book: the same devices in the same order, whoever happens to
+              be awake. Only one of these two can ever show, since reachable
+              means paired. */}
+          <Show when={props.active}>
+            <Badge color="success" variant="soft">
+              Active
+            </Badge>
+          </Show>
 
-        <Show when={props.contact.trust !== 'trusted'}>
-          <Badge color="warning" variant="soft">
-            {props.contact.direction === 'outbound' ? 'Invited' : 'Requested'}
-          </Badge>
-        </Show>
-      </Flex>
-    </Card>
+          <Show when={props.contact.trust !== 'trusted'}>
+            <Badge color="warning" variant="soft">
+              {props.contact.direction === 'outbound' ? 'Invited' : 'Requested'}
+            </Badge>
+          </Show>
+        </Flex>
+      </LinkButton>
+    </Flex>
   );
 };
 
@@ -83,6 +100,11 @@ const ContactRow = (props: {
  * A list of contacts. Renders nothing at all when it's empty, so the caller
  * can hand it a book that may or may not have anything in it without
  * guarding first.
+ *
+ * The rows butt up against each other with no gap between them. They carry no
+ * surface of their own, so a gap would only be space between two pieces of
+ * nothing — where flush rows read as one list and give each hover fill an
+ * edge to meet.
  *
  * Every row leads to the same place: tapping a contact is going to share with
  * it. The record behind it is one hop further on, from the share view's own
@@ -92,21 +114,13 @@ const ContactRow = (props: {
 export const ContactList = (props: {
   contacts: ContactView[];
   testId: string;
-  /** What the list is, for anyone not reading it visually. */
-  label: string;
   /** Shares still waiting to go out, by endpoint id. */
   queued?: Record<string, number>;
   /** Peers reachable right now, by endpoint id. */
   active?: Record<string, true>;
 }) => (
   <Show when={props.contacts.length > 0}>
-    <Flex
-      as="ul"
-      direction="column"
-      gap={2}
-      data-testid={props.testId}
-      aria-label={props.label}
-    >
+    <Flex as="ul" direction="column" testId={props.testId}>
       <For each={props.contacts}>
         {(contact) => (
           <ContactRow
