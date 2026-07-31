@@ -22,6 +22,12 @@ import {
  *
  * The draft lives in the scope rather than the field, so wandering off to
  * the contact's record and back doesn't quietly discard a half-written note.
+ *
+ * A real `<form>`, so sending goes through the one path the browser already
+ * understands: a submit button submits it, ⌘/Ctrl+Enter from the field does
+ * too, and both arrive at the same handler. A `<div>` with a click handler
+ * would have to reimplement each of those, and would get the keyboard one
+ * wrong by omission.
  */
 export const ShareComposer = (props: {
   /** The peer this is addressed to. */
@@ -38,14 +44,38 @@ export const ShareComposer = (props: {
   /** Whitespace is nothing to share, so the button won't offer to. */
   const empty = () => body().trim().length === 0;
 
-  const handleShare = () => {
+  /**
+   * Sent from the draft rather than from `FormData`. The scope already holds
+   * what was typed — it has to, so the note survives navigating away — and
+   * reading the field back would make a second source of truth out of the
+   * one the saga is about to clear.
+   */
+  const handleSubmit = (event: SubmitEvent) => {
+    event.preventDefault();
+
     void share({ endpointId: props.endpointId, body: body() }).catch(
       reportSagaFailure('The share saga failed.'),
     );
   };
 
+  /**
+   * Submit from the keyboard. Enter belongs to the field — a share may be
+   * several lines — so the gesture is the usual ⌘/Ctrl+Enter, routed through
+   * `requestSubmit` so it takes the same path as the button rather than a
+   * parallel one that could drift from it.
+   */
+  const handleKeyDown = (
+    event: KeyboardEvent & { currentTarget: HTMLTextAreaElement },
+  ) => {
+    if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return;
+    if (empty()) return;
+
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  };
+
   return (
-    <Flex as="div" direction="column" gap={3}>
+    <Flex as="form" direction="column" gap={3} onSubmit={handleSubmit}>
       {/* `maxlength` is a courtesy to whoever is typing; the cap that
           matters is enforced where the share is stored, and again at the
           decoder for anything arriving the other way. */}
@@ -62,6 +92,7 @@ export const ShareComposer = (props: {
             }),
           )
         }
+        onKeyDown={handleKeyDown}
         rows={3}
         resize="vertical"
         maxlength={SHARE_MAX_LENGTH}
@@ -86,11 +117,7 @@ export const ShareComposer = (props: {
           </Text>
         </Show>
 
-        <Button
-          testId="beam-share-send"
-          onClick={handleShare}
-          disabled={empty()}
-        >
+        <Button testId="beam-share-send" type="submit" disabled={empty()}>
           <IconSend width="18" height="18" aria-hidden="true" />
           {props.connected ? 'Send' : 'Queue'}
         </Button>
