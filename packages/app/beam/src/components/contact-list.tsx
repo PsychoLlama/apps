@@ -3,9 +3,6 @@ import { Badge, Card, Flex, Link } from '@lib/ui';
 import type { ContactView } from '../state/contacts';
 import * as styles from './contact-list.css';
 
-/** Where a row leads. */
-type Destination = 'contact' | 'share';
-
 /**
  * One contact, as a row in the address book. The name is the row's link and
  * stretches its hit area over the whole card.
@@ -14,20 +11,12 @@ type Destination = 'contact' | 'share';
  * badges keep their width and the name gives way, rather than a long name
  * pushing the row's own status off the edge of the screen.
  */
-const ContactRow = (props: {
-  contact: ContactView;
-  destination: Destination;
-  queued: number;
-}) => (
+const ContactRow = (props: { contact: ContactView; queued: number }) => (
   <Card as="li" size={2} class={styles.row}>
     <Flex as="div" direction="row" align="center" justify="between" gap={3}>
       <Link
         testId="beam-contact-link"
-        href={
-          props.destination === 'share'
-            ? `/beam/share/${props.contact.endpointId}`
-            : `/beam/contacts/${props.contact.endpointId}`
-        }
+        href={`/beam/share/${props.contact.endpointId}`}
         class={styles.stretchedLink}
         color="neutral"
         weight="medium"
@@ -60,17 +49,17 @@ const ContactRow = (props: {
  * guarding first.
  *
  * Used for both the address book and the shorter list of devices that are
- * reachable right now, which differ in where a row leads: browsing the book
- * is looking someone up, and tapping a device that's awake is going to share
- * with it.
+ * reachable right now. Every row leads to the same place: tapping a contact
+ * is going to share with it, whichever list it was tapped in. The record
+ * behind it is one hop further on, from the share view's own Details link —
+ * renaming and forgetting are errands you go looking for, not the reason
+ * anyone opens the address book.
  */
 export const ContactList = (props: {
   contacts: ContactView[];
   testId: string;
   /** What the list is, for anyone not reading it visually. */
   label: string;
-  /** Where a row leads. Defaults to the contact's record. */
-  destination?: Destination;
   /** Shares still waiting to go out, by endpoint id. */
   queued?: Record<string, number>;
 }) => (
@@ -86,7 +75,6 @@ export const ContactList = (props: {
         {(contact) => (
           <ContactRow
             contact={contact}
-            destination={props.destination ?? 'contact'}
             queued={props.queued?.[contact.endpointId] ?? 0}
           />
         )}

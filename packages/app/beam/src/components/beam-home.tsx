@@ -105,8 +105,8 @@ export const BeamHome = () => {
                 below. It repeats rows rather than moving them: the book is
                 where a device lives, and a list that reshuffled itself as
                 peers came and went would be a worse place to look one up.
-                Rows here lead to sharing rather than to the record, because
-                that's the only reason to care that a device is reachable.
+                What this list adds is the shortlist — the devices a tap
+                actually reaches right now — not a different destination.
 
                 Only rendered when there's something in it, which is every
                 first paint — nothing is linked until something dials. */}
@@ -120,7 +120,6 @@ export const BeamHome = () => {
                   testId="beam-active"
                   label="Devices you can share with now"
                   contacts={active()}
-                  destination="share"
                   queued={queued()}
                 />
               </Flex>
