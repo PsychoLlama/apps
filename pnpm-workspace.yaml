@@ -43,7 +43,7 @@ catalog:
   '@holz/pattern-filter': 0.9.0
   '@iconify/json': ^2.2.470
   '@solidjs/meta': ^0.29.4
-  '@solidjs/router': ^0.16.1
+  '@solidjs/router': ^1.0.0
   '@solidjs/testing-library': ^0.8.10
   '@testing-library/jest-dom': ^7.0.0
   '@testing-library/user-event': ^14.6.1
