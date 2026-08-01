@@ -43,24 +43,22 @@ export const BeamHome = () => {
             would read as a second, unrelated surface. */}
         <Container as="div" size={3} align="start">
           <Flex as="div" direction="column" gap={6}>
-            <Flex as="hgroup" direction="column" gap={3}>
+            <Flex as="hgroup" direction="column" gap={2}>
               <Heading as="h1" size={8} selectable={false}>
                 Beam
               </Heading>
 
-              {/* Two lines rather than one: the first says what you'd use it
-                  for, the second why you'd use this one. A reader who stops
-                  after the first still knows what the page is.
+              {/* Plain body text, not a second heading. The title above is
+                  the only thing on the page with any typographic weight to
+                  it; a subtitle competing at its own size would give the
+                  reader two things to look at first.
 
-                  Neither claims the traffic avoids a server — it doesn't. A
-                  browser can't hole-punch, so every share goes through an
-                  iroh relay; what the relay can't do is read it. */}
-              <Text as="p" size={5} selectable={false}>
-                Send links and files between your devices.
-              </Text>
-
-              <Text as="p" size={3} color="lowContrast" selectable={false}>
-                Fast, encrypted, and no account to sign into.
+                  It doesn't claim the traffic avoids a server — it doesn't.
+                  A browser can't hole-punch, so every share goes through an
+                  iroh relay; what the relay can't do is read it, which is
+                  what "fully encrypted" is saying. */}
+              <Text as="p" size={3} selectable={false}>
+                Share text, links, and files between devices. Fully encrypted.
               </Text>
             </Flex>
 
