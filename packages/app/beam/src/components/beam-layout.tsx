@@ -1,12 +1,17 @@
-import { onMount, type JSX } from 'solid-js';
-import { useAnchor, useRun } from '@lib/state';
+import { Match, Switch, onMount, type JSX } from 'solid-js';
+import { useAnchor, useRun, useValue } from '@lib/state';
 import { Frame } from '@lib/shell';
 import { Flex } from '@lib/ui';
 import { BeamHeader } from './beam-header';
+import { BeamOnboarding } from './beam-onboarding';
 import { ContactSidebar } from './contact-sidebar';
 import { PairingBanner } from './pairing-banner';
 import { StatusBar } from './status-bar';
-import { connectRelaySaga, reportSagaFailure } from '../state/session';
+import {
+  connectRelaySaga,
+  identityStore,
+  reportSagaFailure,
+} from '../state/session';
 import { restoreContactsSaga } from '../state/contacts';
 import { beamScope } from '../state/scope';
 import * as styles from './beam-layout.css';
@@ -27,11 +32,18 @@ import * as styles from './beam-layout.css';
  * book stays open beside whatever route is in the pane. It's absent below
  * `md`, where the home page carries the same directory inline.
  *
+ * All three of them, and the route itself, wait on this device's key. A
+ * device with no key has no session to report on and no onward route worth
+ * showing, so the frame holds an onboarding surface instead — and until the
+ * vault answers it holds neither, because picking one and swapping it a
+ * moment later is a flash of the wrong app.
+ *
  * The anchor is the only lifecycle wiring here: releasing it on cleanup
  * aborts the connect and frees the endpoint.
  */
 export const BeamLayout = (props: { children?: JSX.Element }) => {
   useAnchor(beamScope);
+  const self = useValue(identityStore);
   const connect = useRun(connectRelaySaga);
   const restore = useRun(restoreContactsSaga);
 
@@ -49,18 +61,31 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
     <Frame>
       <BeamHeader />
 
-      <Flex as="div" direction="row" class={styles.split}>
-        <ContactSidebar />
+      <Switch>
+        <Match when={self().status === 'absent'}>
+          <BeamOnboarding />
+        </Match>
 
-        {/* The route's own column, filling what the rail leaves. Each route
-            renders its body into it. */}
-        <Flex as="div" direction="column" class={styles.pane}>
-          {props.children}
-        </Flex>
-      </Flex>
+        {/* A failed load renders the session too, rather than nothing. We
+            don't know whether there's a key, so the choice is between showing
+            a surface that reports the failure and showing a first-run screen
+            to somebody who may already be set up — and the second would offer
+            to mint a second identity over the top of a working one. */}
+        <Match when={self().status === 'ready' || self().status === 'failed'}>
+          <Flex as="div" direction="row" class={styles.split}>
+            <ContactSidebar />
 
-      <PairingBanner />
-      <StatusBar />
+            {/* The route's own column, filling what the rail leaves. Each
+                route renders its body into it. */}
+            <Flex as="div" direction="column" class={styles.pane}>
+              {props.children}
+            </Flex>
+          </Flex>
+
+          <PairingBanner />
+          <StatusBar />
+        </Match>
+      </Switch>
     </Frame>
   );
 };
