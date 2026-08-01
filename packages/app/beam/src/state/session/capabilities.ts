@@ -1,7 +1,7 @@
 import init, { Endpoint, Identity, type PeerConnection } from '@crate/p2p';
 import initQrCode, { encode } from '@crate/qr-code';
 import { createLogger, toError } from '@lib/observability';
-import { read, type VaultId } from '@lib/vault';
+import { read, write, type VaultId } from '@lib/vault';
 import { createInbox, type Inbox } from './inbox';
 import {
   BEAM_PROTOCOL,
@@ -24,6 +24,31 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 const SECRET_KEY_ID: VaultId = 'iroh/secret-key';
 
 /**
+ * Vault id the device's chosen name is persisted under. Alongside the key
+ * rather than in the address book because it's part of this device's identity
+ * rather than a record about someone else — and because the two are written
+ * together when a device is set up, and read back together on every load.
+ *
+ * Not a secret, and stored encrypted anyway. The vault is where identity
+ * lives, and a second storage mechanism for one string would only be a second
+ * thing to keep in step with the key it names.
+ */
+const DEVICE_NAME_ID: VaultId = 'p2p/device-name';
+
+/**
+ * The iroh wasm init promise, memoized so the module instantiates once. Both
+ * ways in — restoring an identity and minting one — start with it, and a
+ * device that mints on its first visit would otherwise instantiate twice.
+ */
+let p2pReady: Promise<unknown> | undefined;
+
+/** Instantiate the iroh wasm module, at most once per page. */
+const initP2p = async (): Promise<void> => {
+  p2pReady ??= init();
+  await p2pReady;
+};
+
+/**
  * Restore the saved endpoint key, or `undefined` if none is stored. A failed
  * read (e.g. IndexedDB blocked in private mode, or a cleared encryption key) is
  * logged and swallowed, and answers `undefined` like an empty vault does: a key
@@ -39,6 +64,60 @@ const restoreSecretKey = async (): Promise<Uint8Array | undefined> => {
       error: toError(error),
     });
     return undefined;
+  }
+};
+
+/**
+ * Restore the name this device was given when it was set up, or `null` if it
+ * was never named. Swallows a failed read like {@link restoreSecretKey} does,
+ * and for a lighter reason: an unreadable name costs the device its label, and
+ * the key prefix stands in — worth far less than turning away a key that read
+ * back perfectly well.
+ */
+const restoreDeviceName = async (): Promise<string | null> => {
+  try {
+    const stored = await read(DEVICE_NAME_ID);
+    return stored ? new TextDecoder().decode(stored) : null;
+  } catch (error) {
+    logger.warn('Could not read this device’s saved name.', {
+      error: toError(error),
+    });
+    return null;
+  }
+};
+
+/**
+ * Persist a freshly minted identity — the key, and the name chosen with it.
+ *
+ * Best-effort, and awaited rather than left in the background: this is the
+ * whole of what setting up a device does, so its failure is worth knowing
+ * before the flow moves on. A failed write still leaves a usable identity in
+ * memory, so it's reported rather than thrown — the session works, and the
+ * next reload asks to set the device up again.
+ *
+ * The name goes second and on its own: a device with a key and no name falls
+ * back to its key prefix, which is what every device did before names existed.
+ * A name with no key would be a label for nobody.
+ */
+const persistIdentity = async (self: SelfKey): Promise<void> => {
+  try {
+    await write(SECRET_KEY_ID, self.secretKey);
+  } catch (error) {
+    logger.warn('Could not persist the endpoint key; identity will not last.', {
+      error: toError(error),
+    });
+
+    return;
+  }
+
+  if (!self.label) return;
+
+  try {
+    await write(DEVICE_NAME_ID, new TextEncoder().encode(self.label));
+  } catch (error) {
+    logger.warn('Could not persist this device’s name.', {
+      error: toError(error),
+    });
   }
 };
 
@@ -60,6 +139,14 @@ export interface SelfKey {
 
   /** The raw secret key. Never commit this to a store — it *is* the device. */
   readonly secretKey: Uint8Array;
+
+  /**
+   * What this device is called, as the reader named it when they set it up,
+   * or `null` if they left it blank — in which case the key prefix stands in,
+   * the same fallback an unnamed contact gets. Unlike the key, this is
+   * ordinary data and belongs in a store.
+   */
+  readonly label: string | null;
 }
 
 /**
@@ -234,7 +321,7 @@ export const loadIdentity = async (
   signal: AbortSignal,
 ): Promise<SelfKey | null> => {
   try {
-    await init();
+    await initP2p();
     signal.throwIfAborted();
     logger.debug('Iroh wasm initialized.');
 
@@ -246,6 +333,9 @@ export const loadIdentity = async (
       return null;
     }
 
+    const label = await restoreDeviceName();
+    signal.throwIfAborted();
+
     const identity = Identity.from(restored);
 
     let self: SelfKey;
@@ -253,6 +343,7 @@ export const loadIdentity = async (
       self = {
         endpointId: identity.endpointId,
         secretKey: identity.secretKey,
+        label,
       };
     } finally {
       identity.free();
@@ -265,6 +356,60 @@ export const loadIdentity = async (
     // isn't worth reporting as a failure.
     if (!signal.aborted) {
       logger.error('Failed to settle this device’s identity.', {
+        error: toError(error),
+      });
+    }
+
+    throw error;
+  }
+};
+
+/**
+ * Mint an identity for this device and save it: a fresh endpoint key, and the
+ * name the reader chose to go with it. What setting up a device actually
+ * does, and the only thing in the app that creates a key.
+ *
+ * The name arrives already normalized — the caller runs it through the same
+ * authority every other name in the app goes through — because this one is
+ * written to disk, and what's stored has to match what the store settles on.
+ * `null` for a field left blank.
+ *
+ * Rejects if the mint or the wasm fails; a failed *save* does not, since the
+ * identity in hand is perfectly usable and only its durability was lost.
+ */
+export const createIdentity = async (
+  signal: AbortSignal,
+  label: string | null,
+): Promise<SelfKey> => {
+  try {
+    await initP2p();
+    signal.throwIfAborted();
+
+    const identity = Identity.create();
+
+    let self: SelfKey;
+    try {
+      self = {
+        endpointId: identity.endpointId,
+        secretKey: identity.secretKey,
+        label,
+      };
+    } finally {
+      identity.free();
+    }
+
+    await persistIdentity(self);
+    signal.throwIfAborted();
+
+    logger.info('Minted an endpoint identity for this device.', {
+      endpointId: self.endpointId,
+      named: Boolean(self.label),
+    });
+
+    return self;
+  } catch (error) {
+    if (!signal.aborted) {
+      logger.error('Failed to mint an identity for this device.', {
         error: toError(error),
       });
     }

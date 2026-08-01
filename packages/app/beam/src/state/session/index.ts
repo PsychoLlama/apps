@@ -46,6 +46,7 @@ export {
   acceptPairingSaga,
   connectRelaySaga,
   copyShareSaga,
+  createIdentitySaga,
   dialPeerSaga,
   disconnectPeerSaga,
   reportSagaFailure,

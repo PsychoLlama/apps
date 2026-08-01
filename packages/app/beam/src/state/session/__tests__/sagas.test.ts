@@ -14,6 +14,7 @@ import type { Endpoint, PeerConnection } from '@crate/p2p';
 import {
   awaitPeerClose,
   copyText,
+  createIdentity,
   dialEndpoint,
   encodeBeamCode,
   loadIdentity,
@@ -67,6 +68,7 @@ import {
   applyPeerMessageSaga,
   connectRelaySaga,
   copyShareSaga,
+  createIdentitySaga,
   dialPeerSaga,
   disconnectPeerSaga,
   encodeInviteSaga,
@@ -115,6 +117,7 @@ const fakeSession: EndpointSession = {
 const fakeSelf: SelfKey = {
   endpointId: SELF_ID,
   secretKey: new Uint8Array(32),
+  label: null,
 };
 
 const fakeGrid: QrGrid = { size: 1, modules: new Uint8Array([1]) };
@@ -183,7 +186,7 @@ describe('connectRelaySaga', () => {
     // is still a round trip away.
     expect(trace.commits).toEqual([
       [connectingTopic()],
-      [identityResolvedTopic(SELF_ID)],
+      [identityResolvedTopic({ endpointId: SELF_ID, label: null })],
       [connectedTopic(fakeSession)],
     ]);
   });
@@ -234,7 +237,7 @@ describe('connectRelaySaga', () => {
     // knows what it's called and what its link is.
     expect(trace.commits).toEqual([
       [connectingTopic()],
-      [identityResolvedTopic(SELF_ID)],
+      [identityResolvedTopic({ endpointId: SELF_ID, label: null })],
       [connectFailedTopic()],
     ]);
   });
@@ -308,6 +311,124 @@ describe('connectRelaySaga', () => {
     // showing a connect under way. The cell holds one endpoint; a second
     // connect would drop the first unfreed.
     expect(open).not.toHaveBeenCalled();
+    expect(trace.commits).toEqual([]);
+  });
+});
+
+describe('createIdentitySaga', () => {
+  /** A device nothing has set up yet. */
+  const unset = () =>
+    [
+      [
+        connectionStore,
+        { status: 'connecting', homeRelay: null, started: false },
+      ],
+    ] as const;
+
+  it('mints a key under the chosen name and comes up under it', async () => {
+    const mint = vi.fn(() => ({ ...fakeSelf, label: 'This laptop' }));
+
+    const trace = await simulate(createIdentitySaga('This laptop'), {
+      reads: [...unset()],
+      calls: [
+        [createIdentity, mint],
+        [openConnection, () => fakeSession],
+      ],
+    });
+
+    expect(mint).toHaveBeenCalledWith(expect.any(AbortSignal), 'This laptop');
+
+    // The same three transitions a restored identity publishes: from here on
+    // there is no difference between a key that was minted and one that was
+    // read back.
+    expect(trace.commits).toEqual([
+      [connectingTopic()],
+      [identityResolvedTopic({ endpointId: SELF_ID, label: 'This laptop' })],
+      [connectedTopic(fakeSession)],
+    ]);
+  });
+
+  it('normalizes the name before it is written anywhere', async () => {
+    const mint = vi.fn(() => fakeSelf);
+
+    await simulate(createIdentitySaga('  Kitchen iPad \n'), {
+      reads: [...unset()],
+      calls: [
+        [createIdentity, mint],
+        [openConnection, () => fakeSession],
+      ],
+    });
+
+    // Unlike every other name in the app, this one is persisted — so what
+    // reaches the vault has to be what the store would settle on rather than
+    // whatever the field held.
+    expect(mint).toHaveBeenCalledWith(expect.any(AbortSignal), 'Kitchen iPad');
+  });
+
+  it('reads a blank field as no name at all', async () => {
+    const mint = vi.fn(() => fakeSelf);
+
+    await simulate(createIdentitySaga('   '), {
+      reads: [...unset()],
+      calls: [
+        [createIdentity, mint],
+        [openConnection, () => fakeSession],
+      ],
+    });
+
+    // Not a name made of spaces. A device with no name falls back to its own
+    // key prefix, which is what an unnamed contact wears.
+    expect(mint).toHaveBeenCalledWith(expect.any(AbortSignal), null);
+  });
+
+  it('leaves a device that failed to mint able to try again', async () => {
+    const trace = await simulate(createIdentitySaga('This laptop'), {
+      reads: [...unset()],
+      calls: [
+        [
+          createIdentity,
+          () => {
+            throw new Error('wasm blocked');
+          },
+        ],
+        [openConnection, vi.fn()],
+      ],
+    });
+
+    // `absent`, not `failed`: we know exactly what's true of this device —
+    // it has no key — so the flow can put the form back rather than stranding
+    // the reader on a surface with nothing to do. The absence undoes the
+    // `connecting` in front of it, which is what lets them try again.
+    expect(trace.commits).toEqual([
+      [connectingTopic()],
+      [identityAbsentTopic()],
+    ]);
+  });
+
+  it('refuses to mint a second key over the first', async () => {
+    const mint = vi.fn(() => fakeSelf);
+
+    const trace = await simulate(createIdentitySaga('Second try'), {
+      reads: [
+        [
+          connectionStore,
+          {
+            status: 'connected',
+            homeRelay: 'https://relay.example',
+            started: true,
+          },
+        ],
+      ],
+      calls: [
+        [createIdentity, mint],
+        [openConnection, vi.fn()],
+      ],
+    });
+
+    // The sharper half of the same guard the load carries: a double-submit
+    // would replace a key that may already have been handed to someone as a
+    // beam link, and everyone holding it would be looking at a stranger.
+    expect(mint).not.toHaveBeenCalled();
     expect(trace.commits).toEqual([]);
   });
 });

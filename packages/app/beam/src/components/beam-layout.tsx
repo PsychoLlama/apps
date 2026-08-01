@@ -1,4 +1,5 @@
 import { Match, Switch, onMount, type JSX } from 'solid-js';
+import { useLocation } from '@solidjs/router';
 import { useAnchor, useRun, useValue } from '@lib/state';
 import { Frame } from '@lib/shell';
 import { Flex } from '@lib/ui';
@@ -7,13 +8,10 @@ import { BeamOnboarding } from './beam-onboarding';
 import { ContactSidebar } from './contact-sidebar';
 import { PairingBanner } from './pairing-banner';
 import { StatusBar } from './status-bar';
-import {
-  connectRelaySaga,
-  identityStore,
-  reportSagaFailure,
-} from '../state/session';
+import { connectRelaySaga, reportSagaFailure } from '../state/session';
 import { restoreContactsSaga } from '../state/contacts';
 import { beamScope } from '../state/scope';
+import { beamSurfaceFormula, surfaceForRoute } from '../state/surface';
 import * as styles from './beam-layout.css';
 
 /**
@@ -32,20 +30,25 @@ import * as styles from './beam-layout.css';
  * book stays open beside whatever route is in the pane. It's absent below
  * `md`, where the home page carries the same directory inline.
  *
- * All three of them, and the route itself, wait on this device's key. A
- * device with no key has no session to report on and no onward route worth
- * showing, so the frame holds an onboarding surface instead — and until the
- * vault answers it holds neither, because picking one and swapping it a
- * moment later is a flash of the wrong app.
+ * All three of them, and the route itself, wait on what this device has: a
+ * key, and someone to use it with. Without either there's no session to
+ * report on and no onward route worth showing, so the frame holds the
+ * onboarding flow instead — and while the answer is still coming back it
+ * holds neither, because picking a surface and swapping it a moment later is
+ * a flash of the wrong app.
  *
  * The anchor is the only lifecycle wiring here: releasing it on cleanup
  * aborts the connect and frees the endpoint.
  */
 export const BeamLayout = (props: { children?: JSX.Element }) => {
   useAnchor(beamScope);
-  const self = useValue(identityStore);
+  const location = useLocation();
+  const derived = useValue(beamSurfaceFormula);
   const connect = useRun(connectRelaySaga);
   const restore = useRun(restoreContactsSaga);
+
+  /** Which screen to show — the derived one, unless the route outranks it. */
+  const surface = () => surfaceForRoute(derived(), location.pathname);
 
   onMount(() => {
     // Neither the wasm, the handshake, nor IndexedDB can run during SSG, so
@@ -61,17 +64,18 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
     <Frame>
       <BeamHeader />
 
+      {/* `unknown` matches nothing on purpose: it's the state where no screen
+          is the right one, and the frame's header is all there is to show. */}
       <Switch>
-        <Match when={self().status === 'absent'}>
-          <BeamOnboarding />
+        <Match when={surface() === 'identity'}>
+          <BeamOnboarding step="identity" />
         </Match>
 
-        {/* A failed load renders the session too, rather than nothing. We
-            don't know whether there's a key, so the choice is between showing
-            a surface that reports the failure and showing a first-run screen
-            to somebody who may already be set up — and the second would offer
-            to mint a second identity over the top of a working one. */}
-        <Match when={self().status === 'ready' || self().status === 'failed'}>
+        <Match when={surface() === 'pairing'}>
+          <BeamOnboarding step="pairing" />
+        </Match>
+
+        <Match when={surface() === 'session'}>
           <Flex as="div" direction="row" class={styles.split}>
             <ContactSidebar />
 

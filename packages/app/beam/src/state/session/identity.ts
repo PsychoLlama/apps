@@ -4,7 +4,7 @@ import {
   defineStore,
   defineTopic,
 } from '@lib/state';
-import { generateLabel } from '../labels';
+import { generateLabel, normalizeLabel } from '../labels';
 import { beamScope } from '../scope';
 
 /**
@@ -37,16 +37,28 @@ export interface SelfIdentity {
    * state here is read by anything that asks.
    */
   endpointId: string | null;
+
+  /**
+   * The name the reader gave this device when they set it up, or `null` if
+   * they left it blank. `null` is not "unnamed" as far as anyone else is
+   * concerned — {@link selfLabelFormula} falls back to the key prefix, which
+   * is the same name an unnamed contact wears.
+   */
+  label: string | null;
 }
 
 /** Who this device is on the network. */
 export const identityStore = defineStore<SelfIdentity>(beamScope, () => ({
   status: 'pending',
   endpointId: null,
+  label: null,
 }));
 
 /**
- * The endpoint key was restored, settling this device's address.
+ * The endpoint key settled this device's address — restored from the vault, or
+ * minted just now by setting the device up. One fact for both, because from
+ * here on there is no difference: a key is a key, and everything downstream
+ * wants the address rather than its provenance.
  *
  * Its own fact rather than part of the connection landing, because it happens
  * far earlier: the address is derived from the key, so it's readable as soon
@@ -54,10 +66,18 @@ export const identityStore = defineStore<SelfIdentity>(beamScope, () => ({
  * what lets the header name this device, and the invite show its link, while
  * the handshake is still in flight.
  */
-export const identityResolvedTopic = defineTopic<string>();
-defineFold(identityResolvedTopic, [identityStore], (self, endpointId) => {
+export const identityResolvedTopic = defineTopic<{
+  /** This device's endpoint address, as hex. */
+  endpointId: string;
+
+  /** The name chosen for this device, as typed, or `null` for none. */
+  label: string | null;
+}>();
+
+defineFold(identityResolvedTopic, [identityStore], (self, resolved) => {
   self.status = 'ready';
-  self.endpointId = endpointId;
+  self.endpointId = resolved.endpointId;
+  self.label = normalizeLabel(resolved.label ?? '');
 });
 
 /**
@@ -84,14 +104,19 @@ defineFold(identityFailedTopic, [identityStore], (self) => {
 });
 
 /**
- * What this device calls itself: the name generated from its own endpoint
- * key. Read-only and unconfigurable for now — the point is that both sides of
- * a pairing can name each other before either has typed anything, and a name
- * derived from the key needs no exchange to agree on.
+ * What this device calls itself, and what it advertises to every peer it
+ * links with: the name chosen when the device was set up, or the prefix of
+ * its own endpoint key if that was left blank.
+ *
+ * The fallback is the same one an unnamed contact wears, and it needs no
+ * exchange to agree on — both sides of a pairing derive it from the key. A
+ * chosen name is the improvement on that, not a replacement for it: skipping
+ * the field costs you a friendly name, never a name.
  *
  * `null` until the key lands, which is a moment or two after mount rather
  * than a relay round trip away.
  */
-export const selfLabelFormula = defineFormula([identityStore], (self) =>
-  self.endpointId ? generateLabel(self.endpointId) : null,
-);
+export const selfLabelFormula = defineFormula([identityStore], (self) => {
+  if (!self.endpointId) return null;
+  return self.label ?? generateLabel(self.endpointId);
+});

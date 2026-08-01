@@ -12,6 +12,7 @@ import { codeEncodedTopic } from './qr-code';
 import {
   awaitPeerClose,
   copyText,
+  createIdentity,
   dialEndpoint,
   encodeBeamCode,
   loadIdentity,
@@ -66,6 +67,7 @@ import {
 } from '../contacts';
 import { now } from '../contacts/capabilities';
 import { isEndpointId } from '../endpoint-id';
+import { normalizeLabel } from '../labels';
 import { beamScope } from '../scope';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -401,23 +403,52 @@ export const encodeInviteSaga = defineSaga(
 );
 
 /**
- * Settle this device's identity, then join the relay network under it.
+ * Publish a settled identity and join the relay network under it. The half of
+ * coming up that doesn't care where the key came from — restored from the
+ * vault on load, or minted a second ago by setting the device up.
  *
  * Two steps, published separately, because they finish at very different
  * times. The identity is a key derivation — the address is readable the
- * moment the wasm is up and the vault has answered — so the header can name
- * this device and the invite can show its link while the handshake is still
- * a round trip away. Waiting for the relay to say either would leave the page
- * blank for the slowest part of coming up.
+ * moment the key is — so the header can name this device and the invite can
+ * show its link while the handshake is still a round trip away. Waiting for
+ * the relay to say either would leave the page blank for the slowest part of
+ * coming up.
+ *
+ * Once the endpoint lands, three things run against it for the life of the
+ * scope: inbound dials are served, relay changes are reported, and the QR
+ * encode — started earlier, off the identity — finishes whenever it finishes.
+ */
+export const joinRelaySaga = defineSaga(
+  beamScope,
+  async function* (self: SelfKey) {
+    yield commit(
+      identityResolvedTopic({
+        endpointId: self.endpointId,
+        label: self.label,
+      }),
+    );
+
+    yield* spawn(encodeInviteSaga(self.endpointId));
+
+    try {
+      const session = yield* call(openConnection, self);
+      yield commit(connectedTopic(session));
+      yield* spawn(serveInboundSaga(session));
+      yield* spawn(watchRelaySaga(session));
+    } catch {
+      // Reported by the capability, which has the context to describe it.
+      yield commit(connectFailedTopic());
+    }
+  },
+);
+
+/**
+ * Load this device's saved identity, then join the relay network under it.
  *
  * A device with no saved key stops here. There is nothing to join the network
  * as, and minting one unasked would give the visitor an identity — and a beam
  * link others could save — before they had said they wanted one. The absence
  * is published as its own fact, and onboarding is what acts on it.
- *
- * Once the endpoint lands, three things run against it for the life of the
- * scope: inbound dials are served, relay changes are reported, and the QR
- * encode — started earlier, off the identity — finishes whenever it finishes.
  *
  * Client-only, so `BeamLayout` starts it from `onMount`. Cancellation rides
  * the scope's signal: releasing the last anchor aborts the connect and frees
@@ -449,19 +480,51 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
     return;
   }
 
-  yield commit(identityResolvedTopic(self.endpointId));
-  yield* spawn(encodeInviteSaga(self.endpointId));
-
-  try {
-    const session = yield* call(openConnection, self);
-    yield commit(connectedTopic(session));
-    yield* spawn(serveInboundSaga(session));
-    yield* spawn(watchRelaySaga(session));
-  } catch {
-    // Reported by the capability, which has the context to describe it.
-    yield commit(connectFailedTopic());
-  }
+  yield* joinRelaySaga(self);
 });
+
+/**
+ * Set this device up: mint an identity under the name the reader chose, then
+ * come up under it. The first step of onboarding, and the only thing in the
+ * app that creates a key.
+ *
+ * Guarded on the same flag the load is, and for a sharper reason: without it,
+ * a double-submit mints a second key over the first — and the first may
+ * already have been handed to someone as a beam link.
+ *
+ * The name is normalized before it goes anywhere, unlike the other names in
+ * the app: this one is *written to disk*, so it has to be the same string the
+ * fold would settle on rather than whatever the field held. An emptied field
+ * normalizes to `null`, and a device with no name falls back to its key
+ * prefix.
+ *
+ * A failed mint puts the device back exactly where it started — `absent`, and
+ * with nothing connecting — so the form comes back and the reader can try
+ * again. `absent` rather than `failed` because we know precisely what's true
+ * of this device: it has no key. The failure itself is only in the log, which
+ * is a gap worth closing when this flow stops being a scaffold.
+ */
+export const createIdentitySaga = defineSaga(
+  beamScope,
+  async function* (label: string) {
+    const { started } = yield* read(connectionStore);
+    if (started) return;
+
+    yield commit(connectingTopic());
+
+    let self: SelfKey;
+    try {
+      self = yield* call(createIdentity, normalizeLabel(label));
+    } catch {
+      // Reported by the capability, which has the context to describe it.
+      // The absence undoes the `connecting` above along with it.
+      yield commit(identityAbsentTopic());
+      return;
+    }
+
+    yield* joinRelaySaga(self);
+  },
+);
 
 /**
  * Dial the peer named in a beam link over the relay connection the layout

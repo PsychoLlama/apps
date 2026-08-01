@@ -22,9 +22,14 @@ import {
   identityFailedTopic,
   identityResolvedTopic,
   identityStore,
+  selfLabelFormula,
 } from '../identity';
 import { codeEncodedTopic, qrCodeCell, type QrGrid } from '../qr-code';
+import { generateLabel } from '../../labels';
 import { beamScope } from '../../scope';
+
+/** A well-formed endpoint id, for the tests that read a name out of one. */
+const SELF_ID = `e1${'0'.repeat(62)}`;
 
 /**
  * A stand-in endpoint session. Only `release` is ever called, and only on
@@ -137,7 +142,7 @@ describe('identityResolvedTopic', () => {
   it('names this device before any connection lands', () => {
     const { commit, peek } = setup();
 
-    commit(identityResolvedTopic('ep-1'));
+    commit(identityResolvedTopic({ endpointId: 'ep-1', label: null }));
 
     expect(peek(identityStore).status).toBe('ready');
     expect(peek(identityStore).endpointId).toBe('ep-1');
@@ -145,6 +150,26 @@ describe('identityResolvedTopic', () => {
     // key alone, with no relay involved.
     expect(peek(connectionStore).status).toBe('connecting');
     expect(peek(endpointCell)).toBeNull();
+  });
+
+  it('holds the chosen name against the same rule every name obeys', () => {
+    const { commit, peek } = setup();
+
+    commit(identityResolvedTopic({ endpointId: 'ep-1', label: '  Studio  ' }));
+
+    expect(peek(identityStore).label).toBe('Studio');
+    expect(peek(selfLabelFormula)).toBe('Studio');
+  });
+
+  it('falls back to the key prefix when the name was left blank', () => {
+    const { commit, peek } = setup();
+
+    commit(identityResolvedTopic({ endpointId: SELF_ID, label: '   ' }));
+
+    // Not a name made of spaces, and not no name at all: an unnamed device
+    // wears the start of its own key, the same as an unnamed contact.
+    expect(peek(identityStore).label).toBeNull();
+    expect(peek(selfLabelFormula)).toBe(generateLabel(SELF_ID));
   });
 });
 
@@ -156,6 +181,20 @@ describe('identityAbsentTopic', () => {
 
     expect(peek(identityStore).status).toBe('absent');
     expect(peek(identityStore).endpointId).toBeNull();
+  });
+
+  it('puts the connection back where it started', () => {
+    const { commit, peek } = setup();
+    commit(connectingTopic());
+
+    commit(identityAbsentTopic());
+
+    // Setting the device up is itself a connect, and it's guarded on this
+    // flag. Left set, the first attempt would be turned away as a duplicate
+    // of the attempt that discovered there was nothing to attempt.
+    expect(peek(connectionStore).started).toBe(false);
+    expect(peek(connectionStore).status).toBe('connecting');
+    expect(peek(connectionStore).homeRelay).toBeNull();
   });
 });
 
@@ -203,7 +242,7 @@ describe('codeEncodedTopic', () => {
   it('lands without waiting for the relay connection', () => {
     const { commit, peek } = setup();
 
-    commit(identityResolvedTopic('ep-1'));
+    commit(identityResolvedTopic({ endpointId: 'ep-1', label: null }));
     commit(codeEncodedTopic(fakeGrid));
 
     // The code encodes the link, and the link is the address the key
