@@ -1,17 +1,10 @@
 import { Show } from 'solid-js';
 import { useCommit, useValue } from '@lib/state';
 import { FrameBody } from '@lib/shell';
-import {
-  Button,
-  Callout,
-  Container,
-  Flex,
-  Heading,
-  LinkButton,
-  Text,
-} from '@lib/ui';
+import { Button, Callout, Container, Flex, LinkButton, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
+import { BeamIntro } from './beam-intro';
 import { ContactDirectory } from './contact-directory';
 import { InviteDialog } from './invite-dialog';
 import { contactsStore } from '../state/contacts';
@@ -43,24 +36,7 @@ export const BeamHome = () => {
             would read as a second, unrelated surface. */}
         <Container as="div" size={3} align="start">
           <Flex as="div" direction="column" gap={6}>
-            <Flex as="hgroup" direction="column" gap={2}>
-              <Heading as="h1" size={8} selectable={false}>
-                Beam
-              </Heading>
-
-              {/* Plain body text, not a second heading. The title above is
-                  the only thing on the page with any typographic weight to
-                  it; a subtitle competing at its own size would give the
-                  reader two things to look at first.
-
-                  It doesn't claim the traffic avoids a server — it doesn't.
-                  A browser can't hole-punch, so every share goes through an
-                  iroh relay; what the relay can't do is read it, which is
-                  what "fully encrypted" is saying. */}
-              <Text as="p" size={3} selectable={false}>
-                Share text, links, and files between devices. Fully encrypted.
-              </Text>
-            </Flex>
+            <BeamIntro />
 
             <Show when={book().status === 'failed'}>
               <Callout color="warning">
