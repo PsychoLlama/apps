@@ -1,7 +1,7 @@
 import init, { Endpoint, Identity, type PeerConnection } from '@crate/p2p';
 import initQrCode, { encode } from '@crate/qr-code';
 import { createLogger, toError } from '@lib/observability';
-import { read, write, type VaultId } from '@lib/vault';
+import { read, type VaultId } from '@lib/vault';
 import { createInbox, type Inbox } from './inbox';
 import {
   BEAM_PROTOCOL,
@@ -26,34 +26,19 @@ const SECRET_KEY_ID: VaultId = 'iroh/secret-key';
 /**
  * Restore the saved endpoint key, or `undefined` if none is stored. A failed
  * read (e.g. IndexedDB blocked in private mode, or a cleared encryption key) is
- * logged and swallowed: persistence is a convenience, so we fall back to
- * minting a fresh identity rather than failing the connect outright.
+ * logged and swallowed, and answers `undefined` like an empty vault does: a key
+ * we can't read is a key we can't be, and the caller treats both as a device
+ * that hasn't been set up rather than failing the load outright.
  */
 const restoreSecretKey = async (): Promise<Uint8Array | undefined> => {
   try {
     const stored = await read(SECRET_KEY_ID);
     return stored ? new Uint8Array(stored) : undefined;
   } catch (error) {
-    logger.warn('Could not read the saved endpoint key; minting a fresh one.', {
+    logger.warn('Could not read the saved endpoint key.', {
       error: toError(error),
     });
     return undefined;
-  }
-};
-
-/**
- * Persist the endpoint's key so its identity — and beam link — survives a
- * reload. Best-effort for the same reason as {@link restoreSecretKey}: a
- * failed write only means the identity may change next time, not that this
- * connection is unusable.
- */
-const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
-  try {
-    await write(SECRET_KEY_ID, secretKey);
-  } catch (error) {
-    logger.warn('Could not persist the endpoint key; identity may change.', {
-      error: toError(error),
-    });
   }
 };
 
@@ -228,23 +213,26 @@ const defineSession = (identity: Identity): EndpointSession => {
 };
 
 /**
- * Instantiate the iroh wasm module and settle this device's identity, without
- * touching the network. Client-only — the wasm fetch can't run during
+ * Instantiate the iroh wasm module and load this device's saved identity,
+ * without touching the network. Client-only — the wasm fetch can't run during
  * prerender — but far quicker than the handshake that follows, which is the
  * point of it being its own step: the address is derived from the key, so the
  * view can name this device and render its beam link while the relay is still
  * being dialled.
  *
- * Reuses a saved identity, or mints a fresh one, so the address (and thus the
- * beam link) survives a reload. A fresh key is persisted in the background: it
- * only decides whether *next* time reuses this identity, so nothing here has
- * to wait for the write.
+ * Restores only. `null` means there is no key on this device, which is how a
+ * device that hasn't been set up is told apart from one that has — nothing is
+ * minted behind the reader's back, because a key is an identity other people
+ * will come to know this device by, and handing one out to a passing visitor
+ * makes every such device a stranger's device by default.
  *
  * Hands back plain bytes rather than the wasm handle. The handle would have to
  * survive until {@link openConnection} takes it, and one held across a saga
  * step leaks if the scope dies in between.
  */
-export const loadIdentity = async (signal: AbortSignal): Promise<SelfKey> => {
+export const loadIdentity = async (
+  signal: AbortSignal,
+): Promise<SelfKey | null> => {
   try {
     await init();
     signal.throwIfAborted();
@@ -253,7 +241,12 @@ export const loadIdentity = async (signal: AbortSignal): Promise<SelfKey> => {
     const restored = await restoreSecretKey();
     signal.throwIfAborted();
 
-    const identity = restored ? Identity.from(restored) : Identity.create();
+    if (!restored) {
+      logger.debug('No endpoint identity is stored on this device.');
+      return null;
+    }
+
+    const identity = Identity.from(restored);
 
     let self: SelfKey;
     try {
@@ -264,8 +257,6 @@ export const loadIdentity = async (signal: AbortSignal): Promise<SelfKey> => {
     } finally {
       identity.free();
     }
-
-    if (!restored) void persistSecretKey(self.secretKey);
 
     logger.debug('Endpoint identity ready.', { endpointId: self.endpointId });
     return self;

@@ -23,8 +23,14 @@ import {
   wait,
   type PeerLink,
   type EndpointSession,
+  type SelfKey,
 } from './capabilities';
-import { identityResolvedTopic, selfLabelFormula } from './identity';
+import {
+  identityAbsentTopic,
+  identityFailedTopic,
+  identityResolvedTopic,
+  selfLabelFormula,
+} from './identity';
 import {
   peerClosedTopic,
   peerDialingTopic,
@@ -404,6 +410,11 @@ export const encodeInviteSaga = defineSaga(
  * a round trip away. Waiting for the relay to say either would leave the page
  * blank for the slowest part of coming up.
  *
+ * A device with no saved key stops here. There is nothing to join the network
+ * as, and minting one unasked would give the visitor an identity — and a beam
+ * link others could save — before they had said they wanted one. The absence
+ * is published as its own fact, and onboarding is what acts on it.
+ *
  * Once the endpoint lands, three things run against it for the life of the
  * scope: inbound dials are served, relay changes are reported, and the QR
  * encode — started earlier, off the identity — finishes whenever it finishes.
@@ -422,11 +433,26 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
 
   yield commit(connectingTopic());
 
+  let self: SelfKey | null;
   try {
-    const self = yield* call(loadIdentity);
-    yield commit(identityResolvedTopic(self.endpointId));
-    yield* spawn(encodeInviteSaga(self.endpointId));
+    self = yield* call(loadIdentity);
+  } catch {
+    // Reported by the capability, which has the context to describe it. The
+    // connection fails with it: there is no address to dial anyone from, and
+    // an unresolved identity is not the same news as an unreachable relay.
+    yield commit(identityFailedTopic(), connectFailedTopic());
+    return;
+  }
 
+  if (!self) {
+    yield commit(identityAbsentTopic());
+    return;
+  }
+
+  yield commit(identityResolvedTopic(self.endpointId));
+  yield* spawn(encodeInviteSaga(self.endpointId));
+
+  try {
     const session = yield* call(openConnection, self);
     yield commit(connectedTopic(session));
     yield* spawn(serveInboundSaga(session));

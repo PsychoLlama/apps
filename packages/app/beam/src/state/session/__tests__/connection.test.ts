@@ -17,7 +17,12 @@ import {
   endpointCell,
   relayChangedTopic,
 } from '../connection';
-import { identityResolvedTopic, identityStore } from '../identity';
+import {
+  identityAbsentTopic,
+  identityFailedTopic,
+  identityResolvedTopic,
+  identityStore,
+} from '../identity';
 import { codeEncodedTopic, qrCodeCell, type QrGrid } from '../qr-code';
 import { beamScope } from '../../scope';
 
@@ -116,17 +121,54 @@ describe('relayChangedTopic', () => {
   });
 });
 
+describe('identityStore', () => {
+  it('knows nothing about this device before the vault answers', () => {
+    const { peek } = setup();
+
+    // Not `absent`: that's a claim about the device, and prerender is in no
+    // position to make one. Onboarding hangs off `absent`, so seeding it
+    // would offer a fresh key to every device on first paint.
+    expect(peek(identityStore).status).toBe('pending');
+    expect(peek(identityStore).endpointId).toBeNull();
+  });
+});
+
 describe('identityResolvedTopic', () => {
   it('names this device before any connection lands', () => {
     const { commit, peek } = setup();
 
     commit(identityResolvedTopic('ep-1'));
 
+    expect(peek(identityStore).status).toBe('ready');
     expect(peek(identityStore).endpointId).toBe('ep-1');
     // The whole point of splitting it out: the address is readable from the
     // key alone, with no relay involved.
     expect(peek(connectionStore).status).toBe('connecting');
     expect(peek(endpointCell)).toBeNull();
+  });
+});
+
+describe('identityAbsentTopic', () => {
+  it('marks a device that has never been set up', () => {
+    const { commit, peek } = setup();
+
+    commit(identityAbsentTopic());
+
+    expect(peek(identityStore).status).toBe('absent');
+    expect(peek(identityStore).endpointId).toBeNull();
+  });
+});
+
+describe('identityFailedTopic', () => {
+  it('keeps an unreadable key apart from a missing one', () => {
+    const { commit, peek } = setup();
+
+    commit(identityFailedTopic());
+
+    // `failed`, not `absent`. We don't know whether there's a key, and
+    // rendering onboarding here would offer to mint a second identity over
+    // the top of a working one.
+    expect(peek(identityStore).status).toBe('failed');
   });
 });
 

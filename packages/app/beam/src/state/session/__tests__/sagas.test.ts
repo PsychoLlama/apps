@@ -34,7 +34,12 @@ import {
   connectionStore,
   endpointCell,
 } from '../connection';
-import { identityResolvedTopic, selfLabelFormula } from '../identity';
+import {
+  identityAbsentTopic,
+  identityFailedTopic,
+  identityResolvedTopic,
+  selfLabelFormula,
+} from '../identity';
 import { createInbox } from '../inbox';
 import {
   peerDialingTopic,
@@ -248,10 +253,35 @@ describe('connectRelaySaga', () => {
       ],
     });
 
+    // Both, in one transition: with no address there's nothing to dial from,
+    // and an identity nobody could read is not the same news as a relay that
+    // wouldn't answer.
     expect(trace.commits).toEqual([
       [connectingTopic()],
-      [connectFailedTopic()],
+      [identityFailedTopic(), connectFailedTopic()],
     ]);
+  });
+
+  it('stops at an unset device rather than minting it a key', async () => {
+    const open = vi.fn(() => fakeSession);
+
+    const trace = await simulate(connectRelaySaga(), {
+      reads: [...idle()],
+      calls: [
+        [loadIdentity, () => null],
+        [openConnection, open],
+      ],
+    });
+
+    // The absence is the fact, and it's the last one: there's nothing to
+    // join the relay network as, and nothing to draw a beam link from.
+    expect(trace.commits).toEqual([
+      [connectingTopic()],
+      [identityAbsentTopic()],
+    ]);
+
+    expect(open).not.toHaveBeenCalled();
+    expect(trace.spawns).toHaveLength(0);
   });
 
   it('refuses to open a second endpoint over a live one', async () => {
