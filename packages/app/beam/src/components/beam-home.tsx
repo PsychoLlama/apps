@@ -38,15 +38,27 @@ export const BeamHome = () => {
   return (
     <>
       <FrameBody>
-        <Container as="div" size={2}>
-          <Flex as="div" direction="column" gap={5}>
+        {/* Left-aligned rather than centered in the pane: the rail beside it
+            starts at the top-left, and a column that floated to the middle
+            would read as a second, unrelated surface. */}
+        <Container as="div" size={3} align="start">
+          <Flex as="div" direction="column" gap={6}>
             <Flex as="hgroup" direction="column" gap={2}>
-              <Heading as="h1" selectable={false}>
+              <Heading as="h1" size={8} selectable={false}>
                 Beam
               </Heading>
 
-              <Text as="p" size={2} color="lowContrast" selectable={false}>
-                Share links and files with your other devices.
+              {/* Plain body text, not a second heading. The title above is
+                  the only thing on the page with any typographic weight to
+                  it; a subtitle competing at its own size would give the
+                  reader two things to look at first.
+
+                  It doesn't claim the traffic avoids a server — it doesn't.
+                  A browser can't hole-punch, so every share goes through an
+                  iroh relay; what the relay can't do is read it, which is
+                  what "fully encrypted" is saying. */}
+              <Text as="p" size={3} selectable={false}>
+                Share text, links, and files between devices. Fully encrypted.
               </Text>
             </Flex>
 
@@ -67,7 +79,7 @@ export const BeamHome = () => {
               <ContactDirectory testId="beam" />
             </Flex>
 
-            <Flex as="div" direction="column" gap={3}>
+            <Flex as="div" gap={3} class={styles.actions}>
               <Button
                 testId="beam-invite"
                 size={3}
