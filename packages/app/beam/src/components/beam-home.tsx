@@ -38,15 +38,29 @@ export const BeamHome = () => {
   return (
     <>
       <FrameBody>
-        <Container as="div" size={2}>
-          <Flex as="div" direction="column" gap={5}>
-            <Flex as="hgroup" direction="column" gap={2}>
-              <Heading as="h1" selectable={false}>
+        {/* Left-aligned rather than centered in the pane: the rail beside it
+            starts at the top-left, and a column that floated to the middle
+            would read as a second, unrelated surface. */}
+        <Container as="div" size={3} align="start">
+          <Flex as="div" direction="column" gap={6}>
+            <Flex as="hgroup" direction="column" gap={3}>
+              <Heading as="h1" size={8} selectable={false}>
                 Beam
               </Heading>
 
-              <Text as="p" size={2} color="lowContrast" selectable={false}>
-                Share links and files with your other devices.
+              {/* Two lines rather than one: the first says what you'd use it
+                  for, the second why you'd use this one. A reader who stops
+                  after the first still knows what the page is.
+
+                  Neither claims the traffic avoids a server — it doesn't. A
+                  browser can't hole-punch, so every share goes through an
+                  iroh relay; what the relay can't do is read it. */}
+              <Text as="p" size={5} selectable={false}>
+                Send links and files between your devices.
+              </Text>
+
+              <Text as="p" size={3} color="lowContrast" selectable={false}>
+                Fast, encrypted, and no account to sign into.
               </Text>
             </Flex>
 
@@ -67,7 +81,7 @@ export const BeamHome = () => {
               <ContactDirectory testId="beam" />
             </Flex>
 
-            <Flex as="div" direction="column" gap={3}>
+            <Flex as="div" gap={3} class={styles.actions}>
               <Button
                 testId="beam-invite"
                 size={3}
