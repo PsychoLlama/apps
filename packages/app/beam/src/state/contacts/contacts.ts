@@ -1,7 +1,7 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { beamScope } from '../scope';
 import { normalizeLabel } from '../labels';
-import type { Contact, ContactDirection } from './database';
+import type { Contact, ContactDirection } from '../database';
 
 /**
  * Where the persisted address book sits in its lifecycle.

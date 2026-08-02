@@ -1,5 +1,5 @@
 import { createLogger, toError } from '@lib/observability';
-import { CONTACT_STORE, openBeamDatabase, type Contact } from './database';
+import { CONTACT_STORE, openBeamDatabase, type Contact } from '../database';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 

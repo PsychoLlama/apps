@@ -13,7 +13,7 @@ import {
   pairingConfirmedTopic,
 } from './contacts';
 import { now, readContacts, removeContact, saveContact } from './capabilities';
-import type { ContactDirection } from './database';
+import type { ContactDirection } from '../database';
 
 /**
  * Write a contact's current in-memory state through to IndexedDB. Every

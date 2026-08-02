@@ -1,8 +1,8 @@
 /**
  * Behavioral tests for the address book's persistence. IndexedDB is real
  * (provided by Chromium), so these exercise the same path production takes:
- * the capabilities open the database, write through the contact store, and
- * read it back across connections.
+ * the capabilities open the beam database, write through the contact store,
+ * and read it back across connections.
  */
 
 import { deleteDB } from 'idb';
@@ -12,7 +12,7 @@ import {
   DATABASE_NAME,
   openBeamDatabase,
   type Contact,
-} from '../database';
+} from '../../database';
 
 /** Capabilities take a signal; nothing here cancels, so one never-aborted. */
 const signal = (): AbortSignal => new AbortController().signal;

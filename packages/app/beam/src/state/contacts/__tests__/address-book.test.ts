@@ -6,7 +6,7 @@
 import { createTestRuntime } from '@lib/state';
 import { addressBookFormula } from '../address-book';
 import { contactsRestoredTopic } from '../contacts';
-import type { Contact } from '../database';
+import type { Contact } from '../../database';
 import { generateLabel } from '../../labels';
 import { beamScope } from '../../scope';
 

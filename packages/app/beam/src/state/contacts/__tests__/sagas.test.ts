@@ -27,7 +27,7 @@ import {
   renameContactSaga,
   restoreContactsSaga,
 } from '../sagas';
-import type { Contact } from '../database';
+import type { Contact } from '../../database';
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
   endpointId: 'ep-1',

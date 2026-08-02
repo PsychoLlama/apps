@@ -23,7 +23,7 @@ import {
   contactForgottenTopic,
   contactsRestoredTopic,
 } from '../../contacts/contacts';
-import type { Contact } from '../../contacts/database';
+import type { Contact } from '../../database';
 import { beamScope } from '../../scope';
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({

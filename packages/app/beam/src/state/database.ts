@@ -1,13 +1,17 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 /**
- * The on-disk contract for the beam address book — database and store names,
- * schema version, and the persisted contact shape — plus the opener that
- * applies it. The single source of truth shared by the contact capabilities
- * and their tests, so both speak the same store names and value types.
+ * The on-disk contract for everything beam keeps — database and store names,
+ * schema version, the persisted record shapes, and the opener that applies
+ * them. Above the features rather than inside any one of them, because there
+ * is a single database and a single version number: a store added for one
+ * feature is a migration every other feature's records live through.
+ *
+ * The single source of truth shared by the capabilities and their tests, so
+ * both speak the same store names and value types.
  */
 
-/** Database the address book persists to. One per origin. */
+/** Database beam persists to. One per origin. */
 export const DATABASE_NAME = 'beam';
 
 /**

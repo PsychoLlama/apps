@@ -89,7 +89,7 @@ import {
   pairingAcceptedTopic,
   pairingConfirmedTopic,
 } from '../../contacts/contacts';
-import type { Contact } from '../../contacts/database';
+import type { Contact } from '../../database';
 import { beamScope } from '../../scope';
 
 /**
