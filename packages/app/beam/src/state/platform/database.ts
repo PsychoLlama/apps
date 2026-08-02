@@ -21,7 +21,7 @@ export const DATABASE_NAME = 'beam';
  * Schema version this code knows how to create. Bump it alongside a migration
  * in {@link openBeamDatabase} whenever the stores change.
  */
-export const DATABASE_VERSION = 3;
+export const DATABASE_VERSION = 4;
 
 /**
  * Object store holding one record per endpoint this device knows about,
@@ -59,27 +59,6 @@ export const SELF_KEY = 'self';
  */
 export type LoadStatus = 'initial' | 'loading' | 'ready' | 'failed';
 
-/**
- * How far a peer has got along the trust ladder.
- *
- * - `invited` — a pairing is outstanding in one direction or the other, and
- *   nobody has answered it yet. Persisted rather than held in memory so an
- *   invite survives a reload.
- * - `trusted` — both sides accepted. The only state that permits sharing.
- *
- * There is no blocked state. Refusing a peer is the same thing as never
- * answering its invite, and a peer you want gone can be forgotten outright.
- */
-export type ContactTrust = 'invited' | 'trusted';
-
-/**
- * Which side opened the pairing. `outbound` means this device dialled the
- * peer (it opened their beam link); `inbound` means the peer dialled us. It's
- * what lets an outstanding invite be phrased from the right side — "waiting
- * on them" versus "waiting on you".
- */
-export type ContactDirection = 'outbound' | 'inbound';
-
 /** What every row in the contact store carries, whoever it's about. */
 interface EndpointRecord {
   /** The endpoint's public key, hex-encoded. The store's key path. */
@@ -111,12 +90,6 @@ export interface Contact extends EndpointRecord {
    * layout it lands in.
    */
   suggestedLabel: string | null;
-
-  /** How far the peer has got along the trust ladder. */
-  trust: ContactTrust;
-
-  /** Which side opened the pairing. */
-  direction: ContactDirection;
 
   /** When the peer was last seen, in epoch milliseconds. */
   lastSeenAt: number;
@@ -182,6 +155,23 @@ export interface OnboardingRecord {
   updatedAt: number;
 }
 
+/**
+ * A v3 contact record with the two pairing fields taken off it.
+ *
+ * Laundered through `unknown` in both directions on purpose: the fields being
+ * removed are ones the current {@link Contact} has no knowledge of, so there
+ * is no type here that describes the value on the way in. Confined to the
+ * migration, which is the only code that ever sees the old shape.
+ */
+const dropPairingFields = (record: ContactRecord): ContactRecord => {
+  const fields = { ...record } as unknown as Record<string, unknown>;
+
+  delete fields.trust;
+  delete fields.direction;
+
+  return fields as unknown as ContactRecord;
+};
+
 /** Typed schema for the beam database, applied to every {@link openDB}. */
 export interface BeamSchema extends DBSchema {
   [CONTACT_STORE]: {
@@ -211,13 +201,18 @@ export type BeamConnection = IDBPDatabase<BeamSchema>;
  * flag with no users to strand, so the honest move is to start the store over
  * and let the pairings be made again.
  *
+ * v4 keeps its rows and edits them. Unlike v3 there's nothing uninterpretable
+ * about a v3 record — it carries two fields that no longer mean anything —
+ * and a contact is worth more than the trust that used to hang off it, so
+ * dropping the fields beats dropping the peers.
+ *
  * Each version's changes are guarded on `oldVersion` rather than run as a
  * block, because a database can arrive at any version behind: one opened
  * fresh runs all of it, and one left at v1 runs only what it missed.
  */
 export const openBeamDatabase = (): Promise<BeamConnection> =>
   openDB<BeamSchema>(DATABASE_NAME, DATABASE_VERSION, {
-    upgrade: (database, oldVersion) => {
+    upgrade: (database, oldVersion, _newVersion, transaction) => {
       if (oldVersion < 2) {
         database.createObjectStore(ONBOARDING_STORE);
       }
@@ -238,6 +233,23 @@ export const openBeamDatabase = (): Promise<BeamConnection> =>
         }
 
         database.createObjectStore(CONTACT_STORE, { keyPath: 'endpointId' });
+      }
+
+      if (oldVersion >= 3 && oldVersion < 4) {
+        // `trust` and `direction` went with the pairing handshake. Knowing an
+        // endpoint id is what grants access now, so a peer in the book is a
+        // peer you can talk to, and the fields it used to be gated on are two
+        // stale values a future reader would have to wonder about.
+        //
+        // Only from v3: a store this migration created a moment ago is empty,
+        // and one rebuilt above never held them.
+        const contacts = transaction.objectStore(CONTACT_STORE);
+
+        void contacts.getAll().then((records) => {
+          for (const record of records) {
+            void contacts.put(dropPairingFields(record));
+          }
+        });
       }
     },
   });

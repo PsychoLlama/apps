@@ -51,37 +51,14 @@ describe('inviteStore', () => {
     expect(peek(inviteStore).open).toBe(false);
   });
 
-  it('steps aside when a peer dials in', () => {
+  it('steps aside once a peer turns up', () => {
     const { commit, peek } = setup();
     commit(inviteOpenedTopic());
 
-    commit(
-      contactSeenTopic({
-        endpointId: 'ep-1',
-        direction: 'inbound',
-        seenAt: 1,
-      }),
-    );
+    commit(contactSeenTopic({ endpointId: 'ep-1', seenAt: 1 }));
 
-    // The dialog is modal, so a request arriving behind it would sit under
-    // the overlay unseen.
+    // Meeting somebody is the errand the dialog was open for finishing.
     expect(peek(inviteStore).open).toBe(false);
-  });
-
-  it('stays put when this device dials out', () => {
-    const { commit, peek } = setup();
-    commit(inviteOpenedTopic());
-
-    commit(
-      contactSeenTopic({
-        endpointId: 'ep-1',
-        direction: 'outbound',
-        seenAt: 1,
-      }),
-    );
-
-    // Our own dial is us going somewhere, not someone arriving.
-    expect(peek(inviteStore).open).toBe(true);
   });
 });
 

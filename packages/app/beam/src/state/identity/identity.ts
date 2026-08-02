@@ -15,7 +15,7 @@ import type { SelfContact } from '../platform/database';
  *
  * Its own store rather than a corner of the address book. Everything that
  * reaches into the book is asking about somebody else — what they're called,
- * whether they're trusted, whether to send them a share — and a row about
+ * when they last turned up, whether to send them a share — and a row about
  * yourself sitting in there would have to be excluded by every one of those
  * readers, forever, correctly. Here it simply isn't reachable by the
  * question, and the two halves of "who am I" sit together instead of a key in

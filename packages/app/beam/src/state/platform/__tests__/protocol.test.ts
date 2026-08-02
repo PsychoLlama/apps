@@ -5,7 +5,6 @@
  */
 
 import {
-  acceptMessage,
   decodeMessage,
   encodeMessage,
   helloMessage,
@@ -21,12 +20,6 @@ describe('encodeMessage / decodeMessage', () => {
   it('round-trips a greeting', () => {
     expect(decodeMessage(encodeMessage(helloMessage('Work phone')))).toEqual(
       helloMessage('Work phone'),
-    );
-  });
-
-  it('round-trips an acceptance', () => {
-    expect(decodeMessage(encodeMessage(acceptMessage()))).toEqual(
-      acceptMessage(),
     );
   });
 
@@ -96,12 +89,12 @@ describe('decodeMessage', () => {
 
   it('drops fields it did not ask for', () => {
     const message = JSON.stringify({
-      type: 'accept',
-      trust: 'trusted',
+      type: 'hello',
+      label: 'Laptop',
       endpointId: 'ep-someone-else',
     });
 
     // A peer doesn't get to smuggle state in beside the message it sent.
-    expect(decodeMessage(wire(message))).toEqual({ type: 'accept' });
+    expect(decodeMessage(wire(message))).toEqual(helloMessage('Laptop'));
   });
 });

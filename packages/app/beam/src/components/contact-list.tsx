@@ -77,17 +77,10 @@ const ContactRow = (props: {
               its own while you're looking at it. It marks the row in place
               rather than lifting it into a list of its own, so the book stays
               a book: the same devices in the same order, whoever happens to
-              be awake. Only one of these two can ever show, since reachable
-              means paired. */}
+              be awake. */}
           <Show when={props.active}>
             <Badge color="success" variant="soft">
               Active
-            </Badge>
-          </Show>
-
-          <Show when={props.contact.trust !== 'trusted'}>
-            <Badge color="warning" variant="soft">
-              {props.contact.direction === 'outbound' ? 'Invited' : 'Requested'}
             </Badge>
           </Show>
         </Flex>

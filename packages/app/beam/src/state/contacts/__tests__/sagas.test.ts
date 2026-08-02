@@ -20,12 +20,8 @@ import {
   contactsLoadingTopic,
   contactsRestoredTopic,
   contactsStore,
-  pairingAcceptedTopic,
-  pairingConfirmedTopic,
 } from '../contacts';
 import {
-  acceptContactSaga,
-  confirmContactSaga,
   forgetContactSaga,
   noteAdvertisedNameSaga,
   recordPeerSaga,
@@ -39,8 +35,6 @@ const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
   endpointId: 'ep-1',
   label: null,
   suggestedLabel: null,
-  trust: 'trusted',
-  direction: 'outbound',
   createdAt: 1,
   lastSeenAt: 1,
   ...overrides,
@@ -104,25 +98,16 @@ describe('recordPeerSaga', () => {
   it('stamps the sighting with the clock it was told', async () => {
     const contact = fakeContact({ endpointId: 'ep-2' });
 
-    const trace = await simulate(
-      recordPeerSaga({ endpointId: 'ep-2', direction: 'outbound' }),
-      {
-        reads: [[contactsStore, bookHolding(contact)]],
-        calls: [
-          [now, () => 1234],
-          [saveContact, vi.fn()],
-        ],
-      },
-    );
+    const trace = await simulate(recordPeerSaga('ep-2'), {
+      reads: [[contactsStore, bookHolding(contact)]],
+      calls: [
+        [now, () => 1234],
+        [saveContact, vi.fn()],
+      ],
+    });
 
     expect(trace.commits).toEqual([
-      [
-        contactSeenTopic({
-          endpointId: 'ep-2',
-          direction: 'outbound',
-          seenAt: 1234,
-        }),
-      ],
+      [contactSeenTopic({ endpointId: 'ep-2', seenAt: 1234 })],
     ]);
   });
 
@@ -130,16 +115,13 @@ describe('recordPeerSaga', () => {
     const save = vi.fn();
     const contact = fakeContact({ endpointId: 'ep-2' });
 
-    await simulate(
-      recordPeerSaga({ endpointId: 'ep-2', direction: 'inbound' }),
-      {
-        reads: [[contactsStore, bookHolding(contact)]],
-        calls: [
-          [now, () => 1234],
-          [saveContact, save],
-        ],
-      },
-    );
+    await simulate(recordPeerSaga('ep-2'), {
+      reads: [[contactsStore, bookHolding(contact)]],
+      calls: [
+        [now, () => 1234],
+        [saveContact, save],
+      ],
+    });
 
     expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), contact);
   });
@@ -193,40 +175,6 @@ describe('noteAdvertisedNameSaga', () => {
     expect(trace.commits).toEqual([
       [contactAdvertisedTopic({ endpointId: 'ep-1', label: 'Studio Mac' })],
     ]);
-    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), contact);
-  });
-});
-
-describe('acceptContactSaga', () => {
-  it('promotes the pairing and writes it through', async () => {
-    const contact = fakeContact({ trust: 'trusted', direction: 'inbound' });
-    const save = vi.fn();
-
-    const trace = await simulate(acceptContactSaga('ep-1'), {
-      reads: [[contactsStore, bookHolding(contact)]],
-      calls: [[saveContact, save]],
-    });
-
-    // Accepting has to survive a reload — it's the half of the handshake
-    // that doesn't depend on the peer still being there.
-    expect(trace.commits).toEqual([[pairingAcceptedTopic('ep-1')]]);
-    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), contact);
-  });
-});
-
-describe('confirmContactSaga', () => {
-  it('records the peer\u2019s claim and writes the result through', async () => {
-    const contact = fakeContact({ trust: 'trusted' });
-    const save = vi.fn();
-
-    const trace = await simulate(confirmContactSaga('ep-1'), {
-      reads: [[contactsStore, bookHolding(contact)]],
-      calls: [[saveContact, save]],
-    });
-
-    // The saga passes the claim on; whether to believe it is the fold's
-    // call, and the write only copies out whatever the fold decided.
-    expect(trace.commits).toEqual([[pairingConfirmedTopic('ep-1')]]);
     expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), contact);
   });
 });

@@ -12,11 +12,7 @@ import {
   releasePeer,
   sendMessage,
 } from '../../platform/iroh';
-import {
-  acceptMessage,
-  helloMessage,
-  shareMessage,
-} from '../../platform/protocol';
+import { helloMessage, shareMessage } from '../../platform/protocol';
 import { now } from '../../platform/host';
 import { saveContact, saveOnboarding } from '../../platform/database';
 import { endpointCell } from '../connection';
@@ -102,8 +98,6 @@ const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
   endpointId: PEER_ID,
   label: null,
   suggestedLabel: null,
-  trust: 'invited',
-  direction: 'outbound',
   createdAt: 1,
   lastSeenAt: 1,
   ...overrides,
@@ -142,7 +136,7 @@ describe('linkPeerSaga', () => {
       reads: [
         [peerHandlesCell, new Map()],
         [deviceNameFormula, 'abcd1234'],
-        [contactsStore, bookHolding(fakeContact())],
+        [shareLogStore, { items: [] }],
       ],
       calls: [...wiring(), [sendMessage, send]],
     });
@@ -160,7 +154,7 @@ describe('linkPeerSaga', () => {
       reads: [
         [peerHandlesCell, new Map()],
         [deviceNameFormula, 'abcd1234'],
-        [contactsStore, bookHolding(fakeContact())],
+        [shareLogStore, { items: [] }],
       ],
       calls: [...wiring()],
     });
@@ -179,55 +173,12 @@ describe('linkPeerSaga', () => {
       reads: [
         [peerHandlesCell, new Map()],
         [deviceNameFormula, null],
-        [contactsStore, bookHolding(fakeContact())],
-      ],
-      calls: [...wiring(), [sendMessage, send]],
-    });
-
-    expect(send).not.toHaveBeenCalled();
-  });
-
-  it('re-sends the acceptance to a peer already trusted', async () => {
-    const send = vi.fn();
-    const link = fakeLink();
-
-    await simulate(linkPeerSaga(link), {
-      reads: [
-        [peerHandlesCell, new Map()],
-        [deviceNameFormula, 'abcd1234'],
-        [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
         [shareLogStore, { items: [] }],
       ],
       calls: [...wiring(), [sendMessage, send]],
     });
 
-    // This is what makes pairing eventually consistent: accepting a peer
-    // that was away sent nothing at the time, so the next link carries it.
-    expect(send).toHaveBeenCalledWith(
-      expect.any(AbortSignal),
-      link,
-      acceptMessage(),
-    );
-  });
-
-  it('claims nothing to a peer that hasn’t been accepted', async () => {
-    const send = vi.fn();
-
-    await simulate(linkPeerSaga(fakeLink()), {
-      reads: [
-        [peerHandlesCell, new Map()],
-        [deviceNameFormula, 'abcd1234'],
-        [contactsStore, bookHolding(fakeContact({ trust: 'invited' }))],
-      ],
-      calls: [...wiring(), [sendMessage, send]],
-    });
-
-    expect(send).toHaveBeenCalledTimes(1);
-    expect(send).not.toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      acceptMessage(),
-    );
+    expect(send).not.toHaveBeenCalled();
   });
 
   it('sends what was queued while the peer was away', async () => {
@@ -238,7 +189,7 @@ describe('linkPeerSaga', () => {
       reads: [
         [peerHandlesCell, new Map()],
         [deviceNameFormula, 'abcd1234'],
-        [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
+        [contactsStore, bookHolding(fakeContact())],
         [shareLogStore, { items: [fakeShare({ body: 'kettle is on' })] }],
       ],
       calls: [...wiring(), [sendMessage, send]],
@@ -262,7 +213,7 @@ describe('linkPeerSaga', () => {
       reads: [
         [peerHandlesCell, new Map([[PEER_ID, stale]])],
         [deviceNameFormula, 'abcd1234'],
-        [contactsStore, bookHolding(fakeContact())],
+        [shareLogStore, { items: [] }],
       ],
       calls: [...wiring(), [releasePeer, release]],
     });
@@ -274,15 +225,16 @@ describe('linkPeerSaga', () => {
 });
 
 describe('greetPeerSaga', () => {
-  it('files an inbound dial as a request before linking it', async () => {
+  it('files an inbound dial in the book before linking it', async () => {
     const link = fakeLink();
 
     const trace = await simulate(greetPeerSaga(link), {
       reads: [
-        [contactsStore, bookHolding(fakeContact({ direction: 'inbound' }))],
+        [contactsStore, bookHolding(fakeContact())],
         [peerHandlesCell, new Map()],
         [deviceNameFormula, 'abcd1234'],
         [onboardingStore, setUp()],
+        [shareLogStore, { items: [] }],
       ],
       calls: [
         [now, () => 1234],
@@ -293,16 +245,10 @@ describe('greetPeerSaga', () => {
       ],
     });
 
-    // The request has to exist before the reader can be asked about it, and
-    // it has to survive a reload the connection won't.
+    // The contact has to survive a reload the connection won't, so it lands
+    // before anything is done with the link.
     expect(trace.commits).toEqual([
-      [
-        contactSeenTopic({
-          endpointId: PEER_ID,
-          direction: 'inbound',
-          seenAt: 1234,
-        }),
-      ],
+      [contactSeenTopic({ endpointId: PEER_ID, seenAt: 1234 })],
       [peerLinkedTopic(link)],
     ]);
   });
@@ -310,10 +256,11 @@ describe('greetPeerSaga', () => {
   it('ends setup for a device that has just been found', async () => {
     const trace = await simulate(greetPeerSaga(fakeLink()), {
       reads: [
-        [contactsStore, bookHolding(fakeContact({ direction: 'inbound' }))],
+        [contactsStore, bookHolding(fakeContact())],
         [peerHandlesCell, new Map()],
         [deviceNameFormula, 'abcd1234'],
         [onboardingStore, midSetup()],
+        [shareLogStore, { items: [] }],
       ],
       calls: [
         [now, () => 1234],
@@ -352,6 +299,7 @@ describe('dialPeerSaga', () => {
       [deviceNameFormula, 'abcd1234'],
       [contactsStore, bookHolding(fakeContact())],
       [onboardingStore, setUp()],
+      [shareLogStore, { items: [] }],
     ] as const;
 
   it('dials over the endpoint the layout holds open', async () => {
@@ -377,16 +325,10 @@ describe('dialPeerSaga', () => {
       calls: [...wiring(), [dialEndpoint, () => link]],
     });
 
-    // The pairing outlives the dial, so it lands in the book whether or not
+    // The contact outlives the dial, so it lands in the book whether or not
     // the connection ever comes up.
     expect(trace.commits).toEqual([
-      [
-        contactSeenTopic({
-          endpointId: PEER_ID,
-          direction: 'outbound',
-          seenAt: 1234,
-        }),
-      ],
+      [contactSeenTopic({ endpointId: PEER_ID, seenAt: 1234 })],
       [peerDialingTopic(PEER_ID)],
       [peerLinkedTopic(link)],
     ]);
@@ -401,6 +343,7 @@ describe('dialPeerSaga', () => {
         [deviceNameFormula, 'abcd1234'],
         [contactsStore, bookHolding(fakeContact())],
         [onboardingStore, midSetup()],
+        [shareLogStore, { items: [] }],
       ],
       calls: [...wiring(), [dialEndpoint, () => fakeLink()]],
     });
@@ -427,8 +370,8 @@ describe('dialPeerSaga', () => {
       ],
     });
 
-    // The contact stays in the book — the invite is the durable half — but
-    // the view has to be able to say the device wasn't there.
+    // The contact stays in the book — it's the durable half — but the view
+    // has to be able to say the device wasn't there.
     expect(trace.commits.at(-1)).toEqual([peerUnreachableTopic(PEER_ID)]);
   });
 
@@ -465,11 +408,7 @@ describe('dialPeerSaga', () => {
     // exactly the one worth keeping, since the link that named it may not
     // come round again. Only the malformed id is turned away.
     expect(trace.commits[0]).toEqual([
-      contactSeenTopic({
-        endpointId: PEER_ID,
-        direction: 'outbound',
-        seenAt: 1234,
-      }),
+      contactSeenTopic({ endpointId: PEER_ID, seenAt: 1234 }),
     ]);
   });
 
@@ -529,6 +468,7 @@ describe('dialPeerSaga', () => {
         [deviceNameFormula, 'abcd1234'],
         [contactsStore, bookHolding(fakeContact())],
         [onboardingStore, setUp()],
+        [shareLogStore, { items: [] }],
       ],
       calls: [...wiring(), [dialEndpoint, dial]],
     });
@@ -548,7 +488,7 @@ describe('dialPeerSaga', () => {
 });
 
 describe('disconnectPeerSaga', () => {
-  it('hangs up without touching the pairing', async () => {
+  it('hangs up without touching the contact', async () => {
     const release = vi.fn();
     const link = fakeLink();
 
@@ -594,7 +534,7 @@ describe('a peer hanging up', () => {
     });
 
     runtime.anchor(beamScope);
-    runtime.commit(contactsRestoredTopic([fakeContact({ trust: 'trusted' })]));
+    runtime.commit(contactsRestoredTopic([fakeContact()]));
 
     await runtime.run(linkPeerSaga(link));
     expect(runtime.peek(peerLinksStore).statuses[PEER_ID]).toBe('linked');
