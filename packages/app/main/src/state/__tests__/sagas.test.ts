@@ -13,7 +13,6 @@ import {
   type LauncherFlagChange,
 } from '../capabilities';
 import {
-  beamChangedTopic,
   launcherFlagsRestoredTopic,
   launcherFlagsStore,
   scratchpadChangedTopic,
@@ -23,7 +22,6 @@ import { trackLauncherFlagsSaga } from '../sagas';
 import { launcherScope } from '../scope';
 
 const persisted: LauncherFlagsState = {
-  beamEnabled: true,
   scratchpadEnabled: true,
 };
 
@@ -65,14 +63,17 @@ describe('trackLauncherFlagsSaga', () => {
   it('publishes the persisted snapshot before any later change', async () => {
     const trace = await simulate(trackLauncherFlagsSaga(), {
       calls: [
-        [watchLauncherFlags, () => streamOf([{ app: 'beam', enabled: false }])],
+        [
+          watchLauncherFlags,
+          () => streamOf([{ app: 'scratchpad', enabled: false }]),
+        ],
         [readLauncherFlags, () => persisted],
       ],
     });
 
     expect(trace.commits).toEqual([
       [launcherFlagsRestoredTopic(persisted)],
-      [beamChangedTopic(false)],
+      [scratchpadChangedTopic(false)],
     ]);
   });
 
@@ -84,7 +85,7 @@ describe('trackLauncherFlagsSaga', () => {
           () =>
             streamOf([
               { app: 'scratchpad', enabled: false },
-              { app: 'beam', enabled: false },
+              { app: 'scratchpad', enabled: true },
             ]),
         ],
         [readLauncherFlags, () => persisted],
@@ -93,14 +94,17 @@ describe('trackLauncherFlagsSaga', () => {
 
     expect(trace.commits.slice(1)).toEqual([
       [scratchpadChangedTopic(false)],
-      [beamChangedTopic(false)],
+      [scratchpadChangedTopic(true)],
     ]);
   });
 
   it('replays a change that landed mid-read on top of the snapshot', async () => {
     const runtime = createTestRuntime({
       calls: [
-        [watchLauncherFlags, () => streamOf([{ app: 'beam', enabled: false }])],
+        [
+          watchLauncherFlags,
+          () => streamOf([{ app: 'scratchpad', enabled: false }]),
+        ],
         [readLauncherFlags, () => persisted],
       ],
     });
@@ -111,8 +115,7 @@ describe('trackLauncherFlagsSaga', () => {
     // The stream drains after the restore, so the later change wins
     // rather than being clobbered by the snapshot it raced.
     expect(runtime.peek(launcherFlagsStore)).toEqual({
-      beamEnabled: false,
-      scratchpadEnabled: true,
+      scratchpadEnabled: false,
     });
   });
 });

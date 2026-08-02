@@ -1,5 +1,5 @@
 /**
- * Tests for `watchAdvancedSettings` — the bridge from four
+ * Tests for `watchAdvancedSettings` — the bridge from three
  * `@lib/runtime-config` subscriptions to one async stream. The rest of the
  * capabilities are thin wrappers over `@lib/runtime-config` and are
  * covered there.
@@ -10,7 +10,6 @@ import type * as RuntimeConfig from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
-import { enabled as beamAppEnabled } from '@app/beam/config';
 import {
   watchAdvancedSettings,
   type AdvancedSettingChange,
@@ -26,11 +25,10 @@ type Listeners = {
   logFilter: (value: { pattern: string }) => void;
   logExport: (value: { enabled: boolean }) => void;
   scratchpad: (value: { enabled: boolean }) => void;
-  beam: (value: { enabled: boolean }) => void;
 };
 
 const setup = () => {
-  const unsubscribes = [vi.fn(), vi.fn(), vi.fn(), vi.fn()];
+  const unsubscribes = [vi.fn(), vi.fn(), vi.fn()];
   const listeners: Partial<Listeners> = {};
   let index = 0;
 
@@ -38,7 +36,6 @@ const setup = () => {
     if (option === filter) listeners.logFilter = listener;
     if (option === logExport) listeners.logExport = listener;
     if (option === scratchpadAppEnabled) listeners.scratchpad = listener;
-    if (option === beamAppEnabled) listeners.beam = listener;
     return unsubscribes[index++] ?? vi.fn();
   });
 
@@ -61,9 +58,8 @@ describe('watchAdvancedSettings', () => {
   it('subscribes to every option up front, before anything drains it', () => {
     const { listeners } = setup();
 
-    expect(subscribe).toHaveBeenCalledTimes(4);
+    expect(subscribe).toHaveBeenCalledTimes(3);
     expect(Object.keys(listeners).sort()).toEqual([
-      'beam',
       'logExport',
       'logFilter',
       'scratchpad',
@@ -76,19 +72,17 @@ describe('watchAdvancedSettings', () => {
     listeners.logFilter({ pattern: 'app:*' });
     listeners.logExport({ enabled: true });
     listeners.scratchpad({ enabled: false });
-    listeners.beam({ enabled: true });
 
     const seen: AdvancedSettingChange[] = [];
     for await (const change of changes) {
       seen.push(change);
-      if (seen.length === 4) break;
+      if (seen.length === 3) break;
     }
 
     expect(seen).toEqual([
       { option: 'logFilter', pattern: 'app:*' },
       { option: 'logExport', enabled: true },
       { option: 'scratchpad', enabled: false },
-      { option: 'beam', enabled: true },
     ]);
   });
 
@@ -137,10 +131,10 @@ describe('watchAdvancedSettings', () => {
 
   it('unsubscribes when the consumer stops draining early', async () => {
     const { changes, listeners, unsubscribes } = setup();
-    listeners.beam({ enabled: true });
+    listeners.scratchpad({ enabled: true });
 
     for await (const change of changes) {
-      expect(change).toEqual({ option: 'beam', enabled: true });
+      expect(change).toEqual({ option: 'scratchpad', enabled: true });
       break;
     }
 

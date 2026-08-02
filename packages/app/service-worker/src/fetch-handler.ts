@@ -7,7 +7,6 @@
  */
 
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
-import { enabled as beamAppEnabled } from '@app/beam/config';
 import { createLogger } from '@lib/observability';
 import { readEnvironment } from '@lib/runtime-config';
 
@@ -89,13 +88,6 @@ export const handleFetch = (event: FetchEvent): void => {
       return;
     }
 
-    // The beam app ships in every build too, gated the same way: enabled
-    // in dev only, turned into a real 404 here wherever it's disabled.
-    if (isBeamRoute(url)) {
-      event.respondWith(handleBeamNavigation(event));
-      return;
-    }
-
     event.respondWith(handleNavigation(event));
   }
 };
@@ -103,15 +95,6 @@ export const handleFetch = (event: FetchEvent): void => {
 /** The scratchpad route, matched with or without a trailing slash. */
 const isScratchpadRoute = (url: URL): boolean =>
   url.pathname === '/scratchpad' || url.pathname === '/scratchpad/';
-
-/**
- * The beam app's routes: the `/beam` index (with or without a trailing slash)
- * and everything beneath it — every `/beam/share/:id` peer link included. All
- * are gated by the same runtime flag, so one prefix check covers the whole
- * app.
- */
-const isBeamRoute = (url: URL): boolean =>
-  url.pathname === '/beam' || url.pathname.startsWith('/beam/');
 
 /**
  * Clean URL of the prerendered 404 shell. Cloudflare serves the
@@ -135,21 +118,6 @@ const handleScratchpadNavigation = async (
   if (enabled) return handleNavigation(event);
 
   logger.info('Scratchpad app disabled; serving the 404 page.', {
-    url: new URL(event.request.url).pathname,
-  });
-  return notFoundResponse();
-};
-
-/**
- * Gates the beam app behind its runtime flag, identically to {@link
- * handleScratchpadNavigation}: a disabled flag yields the site's 404
- * page, an enabled one flows through the normal offline-aware strategy.
- */
-const handleBeamNavigation = async (event: FetchEvent): Promise<Response> => {
-  const { enabled } = await readEnvironment(beamAppEnabled);
-  if (enabled) return handleNavigation(event);
-
-  logger.info('Beam app disabled; serving the 404 page.', {
     url: new URL(event.request.url).pathname,
   });
   return notFoundResponse();

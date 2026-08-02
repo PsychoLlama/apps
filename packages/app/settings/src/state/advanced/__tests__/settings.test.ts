@@ -10,7 +10,6 @@ import {
   advancedDefaults,
   advancedSettingsRestoredTopic,
   advancedSettingsStore,
-  beamChangedTopic,
   logExportChangedTopic,
   logFilterChangedTopic,
   scratchpadChangedTopic,
@@ -28,7 +27,6 @@ const inverted: AdvancedSettingsState = {
   logFilter: `${advancedDefaults.logFilter}:changed`,
   logExportEnabled: !advancedDefaults.logExportEnabled,
   scratchpadEnabled: !advancedDefaults.scratchpadEnabled,
-  beamEnabled: !advancedDefaults.beamEnabled,
 };
 
 describe('advancedSettingsStore', () => {
@@ -71,16 +69,6 @@ describe('advancedSettingsStore', () => {
 
     expect(peek(advancedSettingsStore).scratchpadEnabled).toBe(
       !advancedDefaults.scratchpadEnabled,
-    );
-  });
-
-  it('takes a resolved beam flag', () => {
-    const { commit, peek } = setup();
-
-    commit(beamChangedTopic(!advancedDefaults.beamEnabled));
-
-    expect(peek(advancedSettingsStore).beamEnabled).toBe(
-      !advancedDefaults.beamEnabled,
     );
   });
 

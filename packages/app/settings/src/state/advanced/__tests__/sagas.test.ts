@@ -11,23 +11,19 @@
 import { createTestRuntime, simulate } from '@lib/state';
 import {
   readAdvancedSettings,
-  resetBeamEnabled,
   resetLogExportEnabled,
   resetLogFilter,
   resetScratchpadEnabled,
   watchAdvancedSettings,
-  writeBeamEnabled,
   writeLogExportEnabled,
   writeLogFilter,
   writeScratchpadEnabled,
   type AdvancedSettingChange,
 } from '../capabilities';
 import {
-  commitBeamSaga,
   commitLogExportSaga,
   commitLogFilterSaga,
   commitScratchpadSaga,
-  resetBeamSaga,
   resetLogExportSaga,
   resetLogFilterSaga,
   resetScratchpadSaga,
@@ -38,7 +34,6 @@ import {
   advancedDefaults,
   advancedSettingsRestoredTopic,
   advancedSettingsStore,
-  beamChangedTopic,
   logExportChangedTopic,
   logFilterChangedTopic,
   scratchpadChangedTopic,
@@ -49,7 +44,6 @@ const persisted: AdvancedSettingsState = {
   logFilter: 'app:*',
   logExportEnabled: !advancedDefaults.logExportEnabled,
   scratchpadEnabled: !advancedDefaults.scratchpadEnabled,
-  beamEnabled: !advancedDefaults.beamEnabled,
 };
 
 /** A finite stand-in for the live subscription. */
@@ -117,7 +111,6 @@ describe('trackAdvancedSettingsSaga', () => {
               { option: 'logFilter', pattern: 'app:*' },
               { option: 'logExport', enabled: true },
               { option: 'scratchpad', enabled: false },
-              { option: 'beam', enabled: true },
             ]),
         ],
         [readAdvancedSettings, () => ({ ...advancedDefaults })],
@@ -128,7 +121,6 @@ describe('trackAdvancedSettingsSaga', () => {
       [logFilterChangedTopic('app:*')],
       [logExportChangedTopic(true)],
       [scratchpadChangedTopic(false)],
-      [beamChangedTopic(true)],
     ]);
   });
 
@@ -156,7 +148,6 @@ describe('trackAdvancedSettingsSaga', () => {
               { option: 'logFilter', pattern: 'app:*' },
               { option: 'logExport', enabled: true },
               { option: 'scratchpad', enabled: true },
-              { option: 'beam', enabled: true },
             ]),
         ],
         [readAdvancedSettings, () => ({ ...advancedDefaults })],
@@ -170,7 +161,6 @@ describe('trackAdvancedSettingsSaga', () => {
       logFilter: 'app:*',
       logExportEnabled: true,
       scratchpadEnabled: true,
-      beamEnabled: true,
     });
   });
 
@@ -217,7 +207,6 @@ describe('write sagas', () => {
       writeScratchpadEnabled,
       false,
     ],
-    ['commitBeamSaga', commitBeamSaga(true), writeBeamEnabled, true],
   ] as const)(
     '%s persists its value and commits nothing',
     async (_name, invocation, capability, value) => {
@@ -238,7 +227,6 @@ describe('write sagas', () => {
     ['resetLogFilterSaga', resetLogFilterSaga(), resetLogFilter],
     ['resetLogExportSaga', resetLogExportSaga(), resetLogExportEnabled],
     ['resetScratchpadSaga', resetScratchpadSaga(), resetScratchpadEnabled],
-    ['resetBeamSaga', resetBeamSaga(), resetBeamEnabled],
   ] as const)(
     '%s clears its override and commits nothing',
     async (_name, invocation, capability) => {

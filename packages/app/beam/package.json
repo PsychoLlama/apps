@@ -9,8 +9,7 @@
     "**/*.css.ts"
   ],
   "exports": {
-    ".": "./src/index.tsx",
-    "./config": "./src/config.ts"
+    ".": "./src/index.tsx"
   },
   "scripts": {
     "typecheck": "tsc",
@@ -21,7 +20,6 @@
     "@crate/qr-code": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",
-    "@lib/runtime-config": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",

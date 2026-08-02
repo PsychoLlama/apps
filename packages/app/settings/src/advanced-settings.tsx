@@ -17,11 +17,9 @@ import {
   advancedDefaults,
   advancedSettingsScope,
   advancedSettingsStore,
-  commitBeamSaga,
   commitLogExportSaga,
   commitLogFilterSaga,
   commitScratchpadSaga,
-  resetBeamSaga,
   resetLogExportSaga,
   resetLogFilterSaga,
   resetScratchpadSaga,
@@ -48,11 +46,9 @@ export const AdvancedSettings = () => {
   const commitFilter = useRun(commitLogFilterSaga);
   const commitLogExport = useRun(commitLogExportSaga);
   const commitScratchpad = useRun(commitScratchpadSaga);
-  const commitBeam = useRun(commitBeamSaga);
   const resetFilter = useRun(resetLogFilterSaga);
   const resetLogExport = useRun(resetLogExportSaga);
   const resetScratchpad = useRun(resetScratchpadSaga);
-  const resetBeam = useRun(resetBeamSaga);
 
   // The store is seeded with the build-environment default, so first
   // paint (and prerender) match without a flash. OPFS is client-only —
@@ -226,42 +222,6 @@ export const AdvancedSettings = () => {
                 testId="advanced-scratchpad-toggle"
                 checked={advanced().scratchpadEnabled}
                 onCheckedChange={(next) => void commitScratchpad(next)}
-              />
-            </Flex>
-          </Text>
-        </Flex>
-
-        <Flex as="section" direction="column" gap={2}>
-          <Flex
-            as="header"
-            direction="row"
-            justify="between"
-            align="center"
-            gap={3}
-          >
-            <Heading as="h3" size={4} weight="medium" selectable={false}>
-              Beam app
-            </Heading>
-            <ResetButton
-              testId="advanced-beam-reset"
-              label="Reset Beam app"
-              disabled={advanced().beamEnabled === advancedDefaults.beamEnabled}
-              onReset={() => void resetBeam()}
-            />
-          </Flex>
-          <Text as="label" size={2} color="lowContrast" selectable={false}>
-            <Flex
-              as="div"
-              direction="row"
-              justify="between"
-              align="center"
-              gap={3}
-            >
-              Surface the peer-to-peer Beam app in the launcher.
-              <Switch
-                testId="advanced-beam-toggle"
-                checked={advanced().beamEnabled}
-                onCheckedChange={(next) => void commitBeam(next)}
               />
             </Flex>
           </Text>
