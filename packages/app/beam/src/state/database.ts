@@ -18,21 +18,27 @@ export const DATABASE_NAME = 'beam';
  * Schema version this code knows how to create. Bump it alongside a migration
  * in {@link openBeamDatabase} whenever the stores change.
  */
-export const DATABASE_VERSION = 2;
+export const DATABASE_VERSION = 3;
 
-/** Object store holding one record per paired endpoint. */
+/**
+ * Object store holding one record per endpoint this device knows about,
+ * including itself. See {@link ContactRecord}.
+ */
 export const CONTACT_STORE = 'contacts';
-
-/** Object store holding what this device calls itself. One record. */
-export const DEVICE_STORE = 'device';
 
 /** Object store holding how far setting this device up has got. One record. */
 export const ONBOARDING_STORE = 'onboarding';
 
 /**
- * The key the single-record stores keep their one row under. Out-of-line and
- * constant: neither record has a natural id, and inventing one would only be
- * a second way to ask for a row there is only ever one of.
+ * The store v2 kept this device's name in, dropped in v3. Named here so the
+ * migration that removes it doesn't do so against a bare string.
+ */
+const LEGACY_DEVICE_STORE = 'device';
+
+/**
+ * The key the single-record store keeps its one row under. Out-of-line and
+ * constant: the record has no natural id, and inventing one would only be a
+ * second way to ask for a row there is only ever one of.
  */
 export const SELF_KEY = 'self';
 
@@ -57,15 +63,27 @@ export type ContactTrust = 'invited' | 'trusted';
  */
 export type ContactDirection = 'outbound' | 'inbound';
 
-/** One paired endpoint, as the address book stores it. */
-export interface Contact {
-  /** The peer's endpoint public key, hex-encoded. The store's key path. */
+/** What every row in the contact store carries, whoever it's about. */
+interface EndpointRecord {
+  /** The endpoint's public key, hex-encoded. The store's key path. */
   endpointId: string;
+
+  /** The name typed for this endpoint here, or `null` if nobody typed one. */
+  label: string | null;
+
+  /** When the row entered the store, in epoch milliseconds. */
+  createdAt: number;
+}
+
+/** One paired endpoint, as the address book stores it. */
+export interface Contact extends EndpointRecord {
+  /** Marks this row as being about somebody else. */
+  kind: 'peer';
 
   /**
    * The name this device gave the peer, or `null` if it was never renamed.
-   * Always wins over {@link suggestedLabel} — a local name shouldn't be
-   * overwritten by whatever the peer calls itself.
+   * Always wins over {@link Contact.suggestedLabel} — a local name shouldn't
+   * be overwritten by whatever the peer calls itself.
    */
   label: string | null;
 
@@ -83,27 +101,39 @@ export interface Contact {
   /** Which side opened the pairing. */
   direction: ContactDirection;
 
-  /** When the contact first entered the address book, in epoch milliseconds. */
-  createdAt: number;
-
   /** When the peer was last seen, in epoch milliseconds. */
   lastSeenAt: number;
 }
 
-/** What this device calls itself. One record, under {@link SELF_KEY}. */
-export interface DeviceRecord {
+/**
+ * This device's own row in the contact store.
+ *
+ * The same table as the peers because it's the same kind of thing: an
+ * endpoint with a name on it, addressed by its key. Its own *shape* because
+ * almost nothing else a contact carries means anything about yourself —
+ * there is no name you advertised to yourself, no trust to grant, and no
+ * side that opened the pairing.
+ *
+ * The `kind` tag is what keeps the two apart on the way back in. Every row
+ * arrives in one read, and the tag is on the record rather than inferred from
+ * matching the endpoint id against the live key — which would make the split
+ * depend on the wasm having loaded, and would quietly reclassify this device
+ * as a stranger if its key were ever rotated.
+ */
+export interface SelfContact extends EndpointRecord {
+  /** Marks this row as being about this device. */
+  kind: 'self';
+
   /**
    * The name the reader gave this device, or `null` if they never gave one.
    * It's what every peer sees, and what they save this device under, so it
    * outlives the connection it was first advertised over.
-   *
-   * Its own table rather than a field on the onboarding record, and not in
-   * the vault either: the name isn't a secret, and it isn't progress through
-   * a flow. It's a setting, which is a thing with a much longer life than the
-   * one screen that currently asks for it.
    */
   label: string | null;
 }
+
+/** Anything the contact store holds: a peer, or this device. */
+export type ContactRecord = Contact | SelfContact;
 
 /**
  * How far setting this device up has got.
@@ -139,11 +169,7 @@ export interface OnboardingRecord {
 export interface BeamSchema extends DBSchema {
   [CONTACT_STORE]: {
     key: string;
-    value: Contact;
-  };
-  [DEVICE_STORE]: {
-    key: string;
-    value: DeviceRecord;
+    value: ContactRecord;
   };
   [ONBOARDING_STORE]: {
     key: string;
@@ -159,9 +185,14 @@ export type BeamConnection = IDBPDatabase<BeamSchema>;
  * disk up to it.
  *
  * The contact store takes an in-line key: `endpointId` is already part of
- * every record and is the only thing a contact can be addressed by, so
+ * every record and is the only thing an endpoint can be addressed by, so
  * carrying it separately would just be a second copy to keep in sync. The
- * other two hold one row each and take {@link SELF_KEY} from the outside.
+ * onboarding store holds one row and takes {@link SELF_KEY} from the outside.
+ *
+ * v3 rebuilds the contacts rather than migrating them. Every row predating it
+ * is untagged, which the reader has no way to interpret — and beam is behind a
+ * flag with no users to strand, so the honest move is to start the store over
+ * and let the pairings be made again.
  *
  * Each version's changes are guarded on `oldVersion` rather than run as a
  * block, because a database can arrive at any version behind: one opened
@@ -170,13 +201,26 @@ export type BeamConnection = IDBPDatabase<BeamSchema>;
 export const openBeamDatabase = (): Promise<BeamConnection> =>
   openDB<BeamSchema>(DATABASE_NAME, DATABASE_VERSION, {
     upgrade: (database, oldVersion) => {
-      if (oldVersion < 1) {
-        database.createObjectStore(CONTACT_STORE, { keyPath: 'endpointId' });
+      if (oldVersion < 2) {
+        database.createObjectStore(ONBOARDING_STORE);
       }
 
-      if (oldVersion < 2) {
-        database.createObjectStore(DEVICE_STORE);
-        database.createObjectStore(ONBOARDING_STORE);
+      if (oldVersion < 3) {
+        // Both are gone in v3: the device's name moved into the contact store
+        // as a row of its own, and every contact written before that is a
+        // record with no `kind` on it.
+        //
+        // Untyped, because a store the current schema doesn't have is a store
+        // the typed handle can't name — which is the point of dropping it.
+        const legacy = database as unknown as IDBPDatabase;
+
+        for (const store of [LEGACY_DEVICE_STORE, CONTACT_STORE]) {
+          if (legacy.objectStoreNames.contains(store)) {
+            legacy.deleteObjectStore(store);
+          }
+        }
+
+        database.createObjectStore(CONTACT_STORE, { keyPath: 'endpointId' });
       }
     },
   });

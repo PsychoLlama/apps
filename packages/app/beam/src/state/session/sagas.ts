@@ -57,9 +57,9 @@ import {
   contactsStore,
   noteAdvertisedNameSaga,
   recordPeerSaga,
+  selfLabelFormula,
 } from '../contacts';
 import { now } from '../contacts/capabilities';
-import { selfLabelFormula } from '../device';
 import { finishPairingSaga } from '../onboarding';
 import { isEndpointId } from '../endpoint-id';
 import { beamScope } from '../scope';

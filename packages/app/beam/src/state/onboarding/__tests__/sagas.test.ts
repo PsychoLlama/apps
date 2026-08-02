@@ -18,9 +18,9 @@ import {
   finishPairingSaga,
   restoreOnboardingSaga,
 } from '../sagas';
-import { deviceNamedTopic } from '../../device/device';
-import { saveDeviceName } from '../../device/capabilities';
-import { now } from '../../contacts/capabilities';
+import { contactsStore, selfNamedTopic } from '../../contacts/contacts';
+import { now, saveContact } from '../../contacts/capabilities';
+import { identityStore } from '../../session/identity';
 
 /** Progress that hasn't been read back yet. */
 const unread = () =>
@@ -30,7 +30,11 @@ const unread = () =>
 
 /** A device sitting on a given step, with the read already landed. */
 const on = (step: string) =>
-  [[onboardingStore, { status: 'ready', step, updatedAt: 1 }]] as const;
+  [
+    [onboardingStore, { status: 'ready', step, updatedAt: 1 }],
+    [identityStore, { endpointId: 'ep-1' }],
+    [contactsStore, { status: 'ready', self: null, entries: {} }],
+  ] as const;
 
 describe('restoreOnboardingSaga', () => {
   it('reads the stored progress into the scope', async () => {
@@ -86,7 +90,7 @@ describe('finishNamingSaga', () => {
     const trace = await simulate(finishNamingSaga('Studio'), {
       reads: [...on('naming')],
       calls: [
-        [saveDeviceName, vi.fn()],
+        [saveContact, vi.fn()],
         [saveOnboarding, vi.fn()],
         [now, () => 1234],
       ],
@@ -95,7 +99,7 @@ describe('finishNamingSaga', () => {
     // Two transitions, in that order: the name belongs to the device before
     // the step it was asked for is over.
     expect(trace.commits).toEqual([
-      [deviceNamedTopic('Studio')],
+      [selfNamedTopic({ endpointId: 'ep-1', label: 'Studio', at: 1234 })],
       [onboardingAdvancedTopic({ step: 'pairing', updatedAt: 1234 })],
     ]);
   });
@@ -106,7 +110,7 @@ describe('finishNamingSaga', () => {
     await simulate(finishNamingSaga('Studio'), {
       reads: [...on('naming')],
       calls: [
-        [saveDeviceName, vi.fn()],
+        [saveContact, vi.fn()],
         [saveOnboarding, save],
         [now, () => 1234],
       ],
@@ -124,7 +128,7 @@ describe('finishNamingSaga', () => {
     const trace = await simulate(finishNamingSaga('   '), {
       reads: [...on('naming')],
       calls: [
-        [saveDeviceName, vi.fn()],
+        [saveContact, vi.fn()],
         [saveOnboarding, save],
         [now, () => 1234],
       ],
@@ -142,7 +146,7 @@ describe('finishNamingSaga', () => {
     const trace = await simulate(finishNamingSaga('Second try'), {
       reads: [...on('pairing')],
       calls: [
-        [saveDeviceName, save],
+        [saveContact, save],
         [saveOnboarding, vi.fn()],
         [now, () => 1234],
       ],

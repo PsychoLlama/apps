@@ -10,7 +10,6 @@ import { PairingBanner } from './pairing-banner';
 import { StatusBar } from './status-bar';
 import { connectRelaySaga, reportSagaFailure } from '../state/session';
 import { restoreContactsSaga } from '../state/contacts';
-import { restoreDeviceSaga } from '../state/device';
 import { restoreOnboardingSaga } from '../state/onboarding';
 import { beamScope } from '../state/scope';
 import { beamSurfaceFormula, surfaceForRoute } from '../state/surface';
@@ -48,7 +47,6 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
   const derived = useValue(beamSurfaceFormula);
   const connect = useRun(connectRelaySaga);
   const restoreContacts = useRun(restoreContactsSaga);
-  const restoreDevice = useRun(restoreDeviceSaga);
   const restoreOnboarding = useRun(restoreOnboardingSaga);
 
   /** Which screen to show — the derived one, unless the route outranks it. */
@@ -56,16 +54,13 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
 
   onMount(() => {
     // Neither the wasm, the handshake, nor IndexedDB can run during SSG, so
-    // all four start once the client mounts. They're independent, and the
-    // disk answers long before the relay does: the address book, this
-    // device's name, and how far its setup has got are all readable whether
-    // or not the endpoint ever comes up.
+    // all three start once the client mounts. They're independent, and the
+    // disk answers long before the relay does: the contact store — this
+    // device's own row included — and how far its setup has got are both
+    // readable whether or not the endpoint ever comes up.
     void connect().catch(reportSagaFailure('The beam connect saga failed.'));
     void restoreContacts().catch(
       reportSagaFailure('The address book restore saga failed.'),
-    );
-    void restoreDevice().catch(
-      reportSagaFailure('The device name restore saga failed.'),
     );
     void restoreOnboarding().catch(
       reportSagaFailure('The setup progress restore saga failed.'),

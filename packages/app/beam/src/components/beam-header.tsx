@@ -3,7 +3,7 @@ import { useLocation } from '@solidjs/router';
 import { useValue } from '@lib/state';
 import { SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 import { Text } from '@lib/ui';
-import { selfLabelFormula } from '../state/device';
+import { selfLabelFormula } from '../state/contacts';
 
 /**
  * The breadcrumb for a `/beam/*` path. Matched on the prefix, never on the

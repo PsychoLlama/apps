@@ -6,7 +6,10 @@
 
 import { createTestRuntime } from '@lib/state';
 import { setupDraftStore, setupNameChangedTopic } from '../draft';
-import { deviceLoadFailedTopic, deviceNamedTopic } from '../../device/device';
+import {
+  contactsLoadFailedTopic,
+  selfNamedTopic,
+} from '../../contacts/contacts';
 import { beamScope } from '../../scope';
 
 const setup = () => {
@@ -36,7 +39,7 @@ describe('setupDraftStore', () => {
     const { commit, peek } = setup();
     commit(setupNameChangedTopic('Carol’s Phone'));
 
-    commit(deviceLoadFailedTopic());
+    commit(contactsLoadFailedTopic());
 
     // The form is rebuilt around the draft on anything short of success.
     // Making them retype what they just typed would be the app's mistake,
@@ -48,7 +51,9 @@ describe('setupDraftStore', () => {
     const { commit, peek } = setup();
     commit(setupNameChangedTopic('Carol’s Phone'));
 
-    commit(deviceNamedTopic('Carol’s Phone'));
+    commit(
+      selfNamedTopic({ endpointId: 'ep-1', label: 'Carol’s Phone', at: 1 }),
+    );
 
     expect(peek(setupDraftStore).name).toBe('');
   });

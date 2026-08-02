@@ -6,14 +6,14 @@
  */
 
 import { deleteDB, openDB } from 'idb';
-import { readDeviceName, saveDeviceName } from '../device/capabilities';
+import { readContacts, saveContact } from '../contacts/capabilities';
 import { readOnboarding, saveOnboarding } from '../onboarding/capabilities';
 import {
   CONTACT_STORE,
   DATABASE_NAME,
-  DEVICE_STORE,
   ONBOARDING_STORE,
   openBeamDatabase,
+  type SelfContact,
 } from '../database';
 
 /** Capabilities take a signal; nothing here cancels, so one never-aborted. */
@@ -23,6 +23,13 @@ const signal = (): AbortSignal => new AbortController().signal;
 // only state that leaks between them.
 afterEach(() => deleteDB(DATABASE_NAME));
 
+const fakeSelf: SelfContact = {
+  kind: 'self',
+  endpointId: 'ep-self',
+  label: 'Studio',
+  createdAt: 1,
+};
+
 describe('openBeamDatabase', () => {
   it('creates every store on a database nobody has opened', async () => {
     const database = await openBeamDatabase();
@@ -30,7 +37,6 @@ describe('openBeamDatabase', () => {
     try {
       expect([...database.objectStoreNames].sort()).toEqual([
         CONTACT_STORE,
-        DEVICE_STORE,
         ONBOARDING_STORE,
       ]);
     } finally {
@@ -38,66 +44,53 @@ describe('openBeamDatabase', () => {
     }
   });
 
-  it('adds the new stores to a database left at v1', async () => {
-    // The shape v1 shipped, built by hand — the opener can only make the
+  it('starts the contacts over on a database left at v2', async () => {
+    // The shape v2 shipped, built by hand — the opener can only make the
     // current one, and the migration is only interesting against an old one.
-    const legacy = await openDB(DATABASE_NAME, 1, {
+    const legacy = await openDB(DATABASE_NAME, 2, {
       upgrade: (database) => {
         database.createObjectStore(CONTACT_STORE, { keyPath: 'endpointId' });
+        database.createObjectStore('device');
+        database.createObjectStore(ONBOARDING_STORE);
       },
     });
 
-    await legacy.put(CONTACT_STORE, {
-      endpointId: 'ep-1',
-      label: null,
-      suggestedLabel: null,
-      trust: 'trusted',
-      direction: 'outbound',
-      createdAt: 1,
-      lastSeenAt: 1,
-    });
-
+    await legacy.put(CONTACT_STORE, { endpointId: 'ep-1', label: 'Untagged' });
+    await legacy.put(ONBOARDING_STORE, { step: 'done', updatedAt: 1 }, 'self');
     legacy.close();
 
     const database = await openBeamDatabase();
 
     try {
+      // The device table is gone, and so are the rows that predate the tag —
+      // there is no reading one, so keeping it would be keeping a record
+      // nothing can interpret.
       expect([...database.objectStoreNames].sort()).toEqual([
         CONTACT_STORE,
-        DEVICE_STORE,
         ONBOARDING_STORE,
       ]);
 
-      // The contacts come through untouched. A migration that drops what was
-      // already there is the one failure nobody recovers from.
-      expect(await database.count(CONTACT_STORE)).toBe(1);
+      expect(await database.count(CONTACT_STORE)).toBe(0);
+
+      // Setup progress is untouched: its shape didn't change, so there is
+      // nothing to rebuild and no reason to ask again.
+      expect(await database.get(ONBOARDING_STORE, 'self')).toEqual({
+        step: 'done',
+        updatedAt: 1,
+      });
     } finally {
       database.close();
     }
   });
 });
 
-describe('saveDeviceName', () => {
-  it('round-trips the name through IndexedDB', async () => {
-    await saveDeviceName(signal(), 'Studio');
+describe('saveContact', () => {
+  it('round-trips this device’s own row through IndexedDB', async () => {
+    await saveContact(signal(), fakeSelf);
 
-    expect(await readDeviceName(signal())).toBe('Studio');
-  });
-
-  it('replaces the name already stored', async () => {
-    await saveDeviceName(signal(), 'Old name');
-
-    await saveDeviceName(signal(), 'New name');
-
-    // One row, under a constant key: a second name is a rename, never a
-    // second device.
-    expect(await readDeviceName(signal())).toBe('New name');
-  });
-});
-
-describe('readDeviceName', () => {
-  it('reads an untouched table as an unnamed device', async () => {
-    expect(await readDeviceName(signal())).toBeNull();
+    // Same table, same call, same key path as a peer — being about yourself
+    // is a property of the record rather than of how it's stored.
+    expect(await readContacts(signal())).toEqual([fakeSelf]);
   });
 });
 

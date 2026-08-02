@@ -1,18 +1,29 @@
 import { createLogger, toError } from '@lib/observability';
-import { CONTACT_STORE, openBeamDatabase, type Contact } from '../database';
+import {
+  CONTACT_STORE,
+  openBeamDatabase,
+  type ContactRecord,
+} from '../database';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
- * Read the whole address book back from IndexedDB. Small by nature — it holds
- * one record per device someone has paired with — so it loads in full rather
+ * Read the whole contact store back from IndexedDB — every peer, and this
+ * device's own row with them. Small by nature, so it loads in full rather
  * than paging.
+ *
+ * One read for both, and no filtering here: the rows are tagged, and sorting
+ * them out is a decision about state rather than about storage. It also means
+ * the device's name arrives without waiting on the wasm to say what this
+ * device's address is.
  *
  * Rethrows on failure: a book that couldn't be read is not an empty book, and
  * the caller needs to tell the difference to avoid claiming there are no
  * contacts when the truth is unknown.
  */
-export const readContacts = async (signal: AbortSignal): Promise<Contact[]> => {
+export const readContacts = async (
+  signal: AbortSignal,
+): Promise<ContactRecord[]> => {
   const database = await openBeamDatabase();
 
   try {
@@ -33,7 +44,9 @@ export const readContacts = async (signal: AbortSignal): Promise<Contact[]> => {
 };
 
 /**
- * Write a contact through to IndexedDB, replacing whatever was at its id.
+ * Write a record through to IndexedDB, replacing whatever was at its id.
+ * Takes either kind — this device's row is written the same way a peer's is,
+ * because on disk it is the same kind of thing.
  *
  * Reports and swallows a failed write. The change is already in memory by the
  * time this runs — folds commit first so the UI answers the tap immediately —
@@ -42,15 +55,16 @@ export const readContacts = async (signal: AbortSignal): Promise<Contact[]> => {
  */
 export const saveContact = async (
   _signal: AbortSignal,
-  contact: Contact,
+  record: ContactRecord,
 ): Promise<void> => {
   const database = await openBeamDatabase();
 
   try {
-    await database.put(CONTACT_STORE, contact);
+    await database.put(CONTACT_STORE, record);
   } catch (error) {
     logger.error('Could not persist a contact; the change may not survive.', {
-      endpointId: contact.endpointId,
+      kind: record.kind,
+      endpointId: record.endpointId,
       error: toError(error),
     });
   } finally {

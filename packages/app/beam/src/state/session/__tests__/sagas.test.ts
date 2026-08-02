@@ -74,7 +74,7 @@ import {
   watchRelaySaga,
 } from '../sagas';
 import { now, saveContact } from '../../contacts/capabilities';
-import { selfLabelFormula } from '../../device/device';
+import { selfLabelFormula } from '../../contacts/self';
 import {
   onboardingAdvancedTopic,
   onboardingStore,
@@ -144,6 +144,7 @@ const fakeLink = (endpointId = PEER_ID): PeerLink => ({
 });
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
+  kind: 'peer',
   endpointId: PEER_ID,
   label: null,
   suggestedLabel: null,

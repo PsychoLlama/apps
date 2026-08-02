@@ -18,6 +18,7 @@ import {
 const signal = (): AbortSignal => new AbortController().signal;
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
+  kind: 'peer',
   endpointId: 'ep-1',
   label: null,
   suggestedLabel: null,

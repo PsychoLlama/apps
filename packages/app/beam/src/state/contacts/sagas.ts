@@ -11,8 +11,11 @@ import {
   contactsStore,
   pairingAcceptedTopic,
   pairingConfirmedTopic,
+  selfNamedTopic,
 } from './contacts';
 import { now, readContacts, removeContact, saveContact } from './capabilities';
+import { identityStore } from '../session/identity';
+import { normalizeLabel } from '../labels';
 import type { ContactDirection } from '../database';
 
 /**
@@ -73,6 +76,52 @@ export const recordPeerSaga = defineSaga(
 
     yield commit(contactSeenTopic({ ...input, seenAt }));
     yield* persistContactSaga(input.endpointId);
+  },
+);
+
+/**
+ * Name this device, answering whether it took.
+ *
+ * The name is normalized here, before it goes anywhere, because it's *written
+ * to disk* — what's stored has to be the same string the fold settles on
+ * rather than whatever the field held. A blank name is refused rather than
+ * saved as one: a device carrying an empty string is worse off than one
+ * carrying `null`, since the fallback to its key prefix stops working and
+ * every peer is told it's called nothing at all.
+ *
+ * Needs the key, so it can't run before one lands. In practice one always
+ * has: the key is minted on load and this is driven by a button.
+ *
+ * A row left at an address this device no longer answers on is deleted rather
+ * than left behind. The name follows the device, so a rotated key would
+ * otherwise leave a second self row on disk — and the read that picks one of
+ * them up would be picking arbitrarily.
+ *
+ * The answer is for the caller's benefit — setting a device up moves on only
+ * once this lands, and a refused name shouldn't move anything.
+ */
+export const nameSelfSaga = defineSaga(
+  beamScope,
+  async function* (raw: string) {
+    const label = normalizeLabel(raw);
+    if (!label) return false;
+
+    const { endpointId } = yield* read(identityStore);
+    if (!endpointId) return false;
+
+    const previous = (yield* read(contactsStore)).self?.endpointId;
+    const at = yield* call(now);
+
+    yield commit(selfNamedTopic({ endpointId, label, at }));
+
+    if (previous && previous !== endpointId) {
+      yield* call(removeContact, previous);
+    }
+
+    const { self } = yield* read(contactsStore);
+    if (self) yield* call(saveContact, { ...self });
+
+    return true;
   },
 );
 

@@ -7,8 +7,8 @@ import {
   onboardingStore,
 } from './progress';
 import { readOnboarding, saveOnboarding } from './capabilities';
+import { nameSelfSaga } from '../contacts';
 import { now } from '../contacts/capabilities';
-import { nameDeviceSaga } from '../device';
 import type { OnboardingStep } from '../database';
 import { beamScope } from '../scope';
 
@@ -69,7 +69,7 @@ export const finishNamingSaga = defineSaga(
     const { step } = yield* read(onboardingStore);
     if (step !== 'naming') return;
 
-    const named = yield* nameDeviceSaga(name);
+    const named = yield* nameSelfSaga(name);
     if (!named) return;
 
     yield* advanceSaga('pairing');

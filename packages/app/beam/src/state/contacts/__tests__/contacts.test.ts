@@ -22,6 +22,7 @@ import { LABEL_MAX_LENGTH } from '../../labels';
 import { beamScope } from '../../scope';
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
+  kind: 'peer',
   endpointId: 'ep-1',
   label: null,
   suggestedLabel: null,
@@ -101,6 +102,7 @@ describe('contactSeenTopic', () => {
     );
 
     expect(peek(contactsStore).entries['ep-2']).toEqual({
+      kind: 'peer',
       endpointId: 'ep-2',
       label: null,
       suggestedLabel: null,

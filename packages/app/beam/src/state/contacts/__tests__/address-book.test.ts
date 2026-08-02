@@ -11,6 +11,7 @@ import { generateLabel } from '../../labels';
 import { beamScope } from '../../scope';
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
+  kind: 'peer',
   endpointId: 'ep-1',
   label: null,
   suggestedLabel: null,
