@@ -240,6 +240,13 @@ const defineSession = (identity: Identity): EndpointSession => {
  * only decides whether *next* time reuses this identity, so nothing here has
  * to wait for the write.
  *
+ * A key is not a commitment. It costs nothing to hold, means nothing until
+ * somebody dials it, and having one on hand is what lets a device that just
+ * scanned a link answer immediately — so it's minted on arrival rather than
+ * held back behind a screen the reader hasn't got to yet. What this device is
+ * *called*, and whether it has met anyone, are separate questions with
+ * separate answers on disk.
+ *
  * Hands back plain bytes rather than the wasm handle. The handle would have to
  * survive until {@link openConnection} takes it, and one held across a saga
  * step leaks if the scope dies in between.

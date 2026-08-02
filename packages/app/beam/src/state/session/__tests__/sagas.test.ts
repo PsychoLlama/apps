@@ -34,7 +34,7 @@ import {
   connectionStore,
   endpointCell,
 } from '../connection';
-import { identityResolvedTopic, selfLabelFormula } from '../identity';
+import { identityResolvedTopic, identityStore } from '../identity';
 import { createInbox } from '../inbox';
 import {
   peerDialingTopic,
@@ -69,11 +69,18 @@ import {
   greetPeerSaga,
   linkPeerSaga,
   receiveShareSaga,
+  renameThisDeviceSaga,
   serveInboundSaga,
   shareTextSaga,
   watchRelaySaga,
 } from '../sagas';
 import { now, saveContact } from '../../contacts/capabilities';
+import { selfLabelFormula } from '../../contacts/self';
+import {
+  onboardingAdvancedTopic,
+  onboardingStore,
+} from '../../onboarding/progress';
+import { saveOnboarding } from '../../onboarding/capabilities';
 import {
   contactAdvertisedTopic,
   contactSeenTopic,
@@ -82,7 +89,7 @@ import {
   pairingAcceptedTopic,
   pairingConfirmedTopic,
 } from '../../contacts/contacts';
-import type { Contact } from '../../contacts/database';
+import type { Contact } from '../../database';
 import { beamScope } from '../../scope';
 
 /**
@@ -115,6 +122,17 @@ const fakeSelf: SelfKey = {
 const fakeGrid: QrGrid = { size: 1, modules: new Uint8Array([1]) };
 
 /**
+ * A device that finished setting up. The default for the peer sagas, which
+ * all run through the last setup step and have nothing to say about it once
+ * it's answered — the two tests that *are* about it read `midSetup` instead.
+ */
+const setUp = () => ({ status: 'ready', step: 'done', updatedAt: 1 }) as const;
+
+/** A device on setup's last step, waiting to meet somebody. */
+const midSetup = () =>
+  ({ status: 'ready', step: 'pairing', updatedAt: 1 }) as const;
+
+/**
  * A stand-in peer link, already listening — which is what a real one is by
  * the time a saga sees it. Everything done to one goes through a capability.
  */
@@ -127,6 +145,7 @@ const fakeLink = (endpointId = PEER_ID): PeerLink => ({
 });
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
+  kind: 'peer',
   endpointId: PEER_ID,
   label: null,
   suggestedLabel: null,
@@ -248,10 +267,14 @@ describe('connectRelaySaga', () => {
       ],
     });
 
+    // Nothing landed but the failure. With no address there is nothing to
+    // dial from and nothing to draw a beam link out of.
     expect(trace.commits).toEqual([
       [connectingTopic()],
       [connectFailedTopic()],
     ]);
+
+    expect(trace.spawns).toHaveLength(0);
   });
 
   it('refuses to open a second endpoint over a live one', async () => {
@@ -526,12 +549,14 @@ describe('greetPeerSaga', () => {
         [contactsStore, bookHolding(fakeContact({ direction: 'inbound' }))],
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
+        [onboardingStore, setUp()],
       ],
       calls: [
         [now, () => 1234],
         [saveContact, vi.fn()],
         [sendMessage, vi.fn()],
         [releasePeer, vi.fn()],
+        [saveOnboarding, vi.fn()],
       ],
     });
 
@@ -546,6 +571,30 @@ describe('greetPeerSaga', () => {
         }),
       ],
       [peerLinkedTopic(link)],
+    ]);
+  });
+
+  it('ends setup for a device that has just been found', async () => {
+    const trace = await simulate(greetPeerSaga(fakeLink()), {
+      reads: [
+        [contactsStore, bookHolding(fakeContact({ direction: 'inbound' }))],
+        [peerHandlesCell, new Map()],
+        [selfLabelFormula, 'abcd1234'],
+        [onboardingStore, midSetup()],
+      ],
+      calls: [
+        [now, () => 1234],
+        [saveContact, vi.fn()],
+        [sendMessage, vi.fn()],
+        [releasePeer, vi.fn()],
+        [saveOnboarding, vi.fn()],
+      ],
+    });
+
+    // Being found answers the last step as well as finding somebody does.
+    // Whoever scanned the code is on the other end of this.
+    expect(trace.commits).toContainEqual([
+      onboardingAdvancedTopic({ step: 'done', updatedAt: 1234 }),
     ]);
   });
 });
@@ -618,6 +667,7 @@ describe('dialPeerSaga', () => {
       [saveContact, vi.fn()],
       [sendMessage, vi.fn()],
       [releasePeer, vi.fn()],
+      [saveOnboarding, vi.fn()],
     ] as const;
 
   /** Reads a dial makes on its way through to a link. */
@@ -628,6 +678,7 @@ describe('dialPeerSaga', () => {
       [peerHandlesCell, new Map()],
       [selfLabelFormula, 'abcd1234'],
       [contactsStore, bookHolding(fakeContact())],
+      [onboardingStore, setUp()],
     ] as const;
 
   it('dials over the endpoint the layout holds open', async () => {
@@ -665,6 +716,27 @@ describe('dialPeerSaga', () => {
       ],
       [peerDialingTopic(PEER_ID)],
       [peerLinkedTopic(link)],
+    ]);
+  });
+
+  it('ends setup for a device that has just found somebody', async () => {
+    const trace = await simulate(dialPeerSaga(PEER_ID), {
+      reads: [
+        [endpointCell, fakeSession],
+        [peerLinksStore, { statuses: {} }],
+        [peerHandlesCell, new Map()],
+        [selfLabelFormula, 'abcd1234'],
+        [contactsStore, bookHolding(fakeContact())],
+        [onboardingStore, midSetup()],
+      ],
+      calls: [...wiring(), [dialEndpoint, () => fakeLink()]],
+    });
+
+    // Scanning a beam link is the ordinary way out of setup's last step, and
+    // it lands with the contact rather than with the connection: a peer
+    // that's merely asleep has still been met.
+    expect(trace.commits).toContainEqual([
+      onboardingAdvancedTopic({ step: 'done', updatedAt: 1234 }),
     ]);
   });
 
@@ -783,6 +855,7 @@ describe('dialPeerSaga', () => {
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
         [contactsStore, bookHolding(fakeContact())],
+        [onboardingStore, setUp()],
       ],
       calls: [...wiring(), [dialEndpoint, dial]],
     });
@@ -844,6 +917,105 @@ describe('acceptPairingSaga', () => {
     // depend on the other device still being awake. The next link carries
     // the news.
     expect(trace.commits).toEqual([[pairingAcceptedTopic(PEER_ID)]]);
+    expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe('renameThisDeviceSaga', () => {
+  /** This device's row, as the rename reads it back to write it through. */
+  const named = (label: string | null) => ({
+    ...bookHolding(),
+    self: {
+      kind: 'self' as const,
+      endpointId: SELF_ID,
+      label,
+      createdAt: 1,
+    },
+  });
+
+  it('tells the devices already on the line', async () => {
+    const send = vi.fn();
+    const first = fakeLink();
+    const second = fakeLink(`e3${'0'.repeat(62)}`);
+
+    const trace = await simulate(renameThisDeviceSaga('Studio'), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, named('Studio')],
+        [selfLabelFormula, 'Studio'],
+        [
+          peerHandlesCell,
+          new Map([
+            [first.endpointId, first],
+            [second.endpointId, second],
+          ]),
+        ],
+      ],
+      calls: [
+        [now, () => 1],
+        [saveContact, vi.fn()],
+        [sendMessage, send],
+      ],
+    });
+
+    // The greeting is the only time a peer hears this name, so a rename that
+    // stopped at disk would leave every connected device calling this one by
+    // a name it stopped answering to.
+    expect(trace.result).toBe(true);
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      first,
+      helloMessage('Studio'),
+    );
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      second,
+      helloMessage('Studio'),
+    );
+  });
+
+  it('announces what a cleared name falls back to', async () => {
+    const send = vi.fn();
+    const link = fakeLink();
+
+    await simulate(renameThisDeviceSaga(null), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, named(null)],
+        // Read back rather than reused: clearing leaves the key prefix, and
+        // that's a name rather than an absence, so it's what goes out.
+        [selfLabelFormula, 'e1000000'],
+        [peerHandlesCell, new Map([[link.endpointId, link]])],
+      ],
+      calls: [
+        [now, () => 1],
+        [saveContact, vi.fn()],
+        [sendMessage, send],
+      ],
+    });
+
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      link,
+      helloMessage('e1000000'),
+    );
+  });
+
+  it('says nothing when the rename didn’t take', async () => {
+    const send = vi.fn();
+    const link = fakeLink();
+
+    const trace = await simulate(renameThisDeviceSaga('Studio'), {
+      reads: [
+        [identityStore, { endpointId: null }],
+        [peerHandlesCell, new Map([[link.endpointId, link]])],
+      ],
+      calls: [[sendMessage, send]],
+    });
+
+    // No key means no row was written, and announcing a name nothing on disk
+    // agrees with would leave the peers ahead of this device.
+    expect(trace.result).toBe(false);
     expect(send).not.toHaveBeenCalled();
   });
 });

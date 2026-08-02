@@ -1,7 +1,12 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { beamScope } from '../scope';
 import { normalizeLabel } from '../labels';
-import type { Contact, ContactDirection } from './database';
+import type {
+  Contact,
+  ContactDirection,
+  ContactRecord,
+  SelfContact,
+} from '../database';
 
 /**
  * Where the persisted address book sits in its lifecycle.
@@ -16,25 +21,39 @@ import type { Contact, ContactDirection } from './database';
  */
 export type ContactBookStatus = 'initial' | 'loading' | 'ready' | 'failed';
 
-/** Every peer this device has paired with, as held in memory. */
+/** Every endpoint this device knows about, as held in memory. */
 export interface ContactBook {
   /** Where the persisted book sits in its lifecycle. */
   status: ContactBookStatus;
 
   /**
-   * Contacts by endpoint id. A map rather than a list: every lookup in the
-   * app is by endpoint (a beam link, an inbound dial, a route param), and
+   * This device's own row, or `null` until somebody names it.
+   *
+   * Beside the peers rather than among them, though it comes off the same
+   * table in the same read. Everything that reaches into `entries` is asking
+   * about somebody else — what they're called, whether they're trusted,
+   * whether to send them a share — and a self row sitting in there would have
+   * to be excluded by every one of those readers, forever, correctly. Here it
+   * simply isn't reachable by the question.
+   */
+  self: SelfContact | null;
+
+  /**
+   * Peers by endpoint id. A map rather than a list: every lookup in the app
+   * is by endpoint (a beam link, an inbound dial, a route param), and
    * ordering is a rendering concern the address book derives.
    */
   entries: Record<string, Contact>;
 }
 
 /**
- * The address book. IndexedDB is the durable copy; this is the working one,
- * loaded once per session and written through on every change.
+ * The address book, and this device's own row alongside it. IndexedDB is the
+ * durable copy; this is the working one, loaded once per session and written
+ * through on every change.
  */
 export const contactsStore = defineStore<ContactBook>(beamScope, () => ({
   status: 'initial',
+  self: null,
   entries: {},
 }));
 
@@ -45,17 +64,61 @@ defineFold(contactsLoadingTopic, [contactsStore], (book) => {
 });
 
 /**
- * The persisted address book was read back. Replaces the working copy
- * outright rather than merging: the read runs once per session, before
- * anything can have changed it, and a merge would only obscure that.
+ * The persisted store was read back — every row of it, this device's
+ * included. Replaces the working copy outright rather than merging: the read
+ * runs once per session, before anything can have changed it, and a merge
+ * would only obscure that.
+ *
+ * The split happens here rather than in the capability, so the one rule that
+ * decides which rows are peers lives beside the state it fills. A second self
+ * row can't exist — one device, one key at a time — but if one somehow did,
+ * the last read wins and neither ends up in `entries`.
  */
-export const contactsRestoredTopic = defineTopic<Contact[]>();
-defineFold(contactsRestoredTopic, [contactsStore], (book, contacts) => {
+export const contactsRestoredTopic = defineTopic<ContactRecord[]>();
+defineFold(contactsRestoredTopic, [contactsStore], (book, records) => {
   book.status = 'ready';
+  book.self = records.find((record) => record.kind === 'self') ?? null;
   book.entries = Object.fromEntries(
-    contacts.map((contact) => [contact.endpointId, contact]),
+    records
+      .filter((record) => record.kind === 'peer')
+      .map((contact) => [contact.endpointId, contact]),
   );
 });
+
+/**
+ * The reader named this device. Normalized on the way in like every other
+ * name, so what the store settles on is what gets written to disk and what
+ * every peer is told. A `null` label clears the name outright, and a blank one
+ * clears it too — either way the device drops back to the prefix of its own
+ * key, which is a real name rather than an absence.
+ *
+ * Renaming keeps the row's original date: a device named twice is the same
+ * device, and `createdAt` is when it first became one. A key that changed
+ * underneath — the vault cleared, a fresh identity minted — moves the row to
+ * the new address, because the name belongs to the device rather than to the
+ * key it happens to hold.
+ */
+export const selfNamedTopic = defineTopic<{
+  /** This device's current endpoint address. */
+  endpointId: string;
+  /** The name typed for it, as typed, or `null` to clear it. */
+  label: string | null;
+  /** When it was named, in epoch milliseconds. */
+  at: number;
+}>();
+
+defineFold(
+  selfNamedTopic,
+  [contactsStore],
+  (book, { endpointId, label, at }) => {
+    book.self = {
+      kind: 'self',
+      endpointId,
+      label: label === null ? null : normalizeLabel(label),
+      createdAt: book.self?.createdAt ?? at,
+    };
+  },
+);
 
 /** The persisted address book couldn't be read. */
 export const contactsLoadFailedTopic = defineTopic();
@@ -88,6 +151,7 @@ defineFold(
     }
 
     book.entries[endpointId] = {
+      kind: 'peer',
       endpointId,
       label: null,
       suggestedLabel: null,

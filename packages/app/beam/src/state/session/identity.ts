@@ -1,10 +1,4 @@
-import {
-  defineFold,
-  defineFormula,
-  defineStore,
-  defineTopic,
-} from '@lib/state';
-import { generateLabel } from '../labels';
+import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { beamScope } from '../scope';
 
 /** Who this device is on the network, as far as anyone else is concerned. */
@@ -38,16 +32,3 @@ export const identityResolvedTopic = defineTopic<string>();
 defineFold(identityResolvedTopic, [identityStore], (self, endpointId) => {
   self.endpointId = endpointId;
 });
-
-/**
- * What this device calls itself: the name generated from its own endpoint
- * key. Read-only and unconfigurable for now — the point is that both sides of
- * a pairing can name each other before either has typed anything, and a name
- * derived from the key needs no exchange to agree on.
- *
- * `null` until the key lands, which is a moment or two after mount rather
- * than a relay round trip away.
- */
-export const selfLabelFormula = defineFormula([identityStore], (self) =>
-  self.endpointId ? generateLabel(self.endpointId) : null,
-);

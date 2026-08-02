@@ -116,6 +116,16 @@ describe('relayChangedTopic', () => {
   });
 });
 
+describe('identityStore', () => {
+  it('has no address before the key has loaded', () => {
+    const { peek } = setup();
+
+    // What prerender and first paint show. The wasm can't run during SSG, so
+    // there is nothing this device could claim to be yet.
+    expect(peek(identityStore).endpointId).toBeNull();
+  });
+});
+
 describe('identityResolvedTopic', () => {
   it('names this device before any connection lands', () => {
     const { commit, peek } = setup();

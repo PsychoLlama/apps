@@ -6,11 +6,12 @@
 import { createTestRuntime } from '@lib/state';
 import { addressBookFormula } from '../address-book';
 import { contactsRestoredTopic } from '../contacts';
-import type { Contact } from '../database';
+import type { Contact } from '../../database';
 import { generateLabel } from '../../labels';
 import { beamScope } from '../../scope';
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
+  kind: 'peer',
   endpointId: 'ep-1',
   label: null,
   suggestedLabel: null,

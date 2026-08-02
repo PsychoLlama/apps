@@ -17,19 +17,24 @@ import {
   contactsStore,
   pairingAcceptedTopic,
   pairingConfirmedTopic,
+  selfNamedTopic,
 } from '../contacts';
 import {
   acceptContactSaga,
   confirmContactSaga,
   forgetContactSaga,
+  nameSelfSaga,
   noteAdvertisedNameSaga,
   recordPeerSaga,
   renameContactSaga,
+  renameSelfSaga,
   restoreContactsSaga,
 } from '../sagas';
-import type { Contact } from '../database';
+import { identityStore } from '../../session/identity';
+import type { Contact, SelfContact } from '../../database';
 
 const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
+  kind: 'peer',
   endpointId: 'ep-1',
   label: null,
   suggestedLabel: null,
@@ -43,7 +48,15 @@ const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
 /** A book holding one contact, as the write-through path reads it back. */
 const bookHolding = (contact: Contact) => ({
   status: 'ready' as const,
+  self: null,
   entries: { [contact.endpointId]: contact },
+});
+
+/** A book whose only row is this device's, as the naming path reads it back. */
+const bookNaming = (self: SelfContact | null) => ({
+  status: 'ready' as const,
+  self,
+  entries: {},
 });
 
 describe('restoreContactsSaga', () => {
@@ -51,7 +64,7 @@ describe('restoreContactsSaga', () => {
     const contact = fakeContact();
 
     const trace = await simulate(restoreContactsSaga(), {
-      reads: [[contactsStore, { status: 'initial', entries: {} }]],
+      reads: [[contactsStore, { status: 'initial', self: null, entries: {} }]],
       calls: [[readContacts, () => [contact]]],
     });
 
@@ -63,7 +76,7 @@ describe('restoreContactsSaga', () => {
 
   it('records an unreadable book without claiming it is empty', async () => {
     const trace = await simulate(restoreContactsSaga(), {
-      reads: [[contactsStore, { status: 'initial', entries: {} }]],
+      reads: [[contactsStore, { status: 'initial', self: null, entries: {} }]],
       calls: [
         [
           readContacts,
@@ -235,5 +248,231 @@ describe('forgetContactSaga', () => {
 
     expect(trace.commits).toEqual([[contactForgottenTopic('ep-1')]]);
     expect(remove).toHaveBeenCalledWith(expect.any(AbortSignal), 'ep-1');
+  });
+});
+
+describe('nameSelfSaga', () => {
+  const SELF_ID = 'ep-self';
+
+  const fakeSelf = (overrides: Partial<SelfContact> = {}): SelfContact => ({
+    kind: 'self',
+    endpointId: SELF_ID,
+    label: 'Studio',
+    createdAt: 1234,
+    ...overrides,
+  });
+
+  it('names this device and writes the row through', async () => {
+    const save = vi.fn();
+
+    const trace = await simulate(nameSelfSaga('Studio'), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, bookNaming(fakeSelf())],
+      ],
+      calls: [
+        [now, () => 1234],
+        [saveContact, save],
+        [removeContact, vi.fn()],
+      ],
+    });
+
+    expect(trace.commits).toEqual([
+      [selfNamedTopic({ endpointId: SELF_ID, label: 'Studio', at: 1234 })],
+    ]);
+
+    // Read back out of the store rather than rebuilt here, so the fold stays
+    // the single place that decides what the row looks like.
+    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), fakeSelf());
+    expect(trace.result).toBe(true);
+  });
+
+  it('normalizes the name before it is written anywhere', async () => {
+    const trace = await simulate(nameSelfSaga('  Kitchen iPad \n'), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, bookNaming(null)],
+      ],
+      calls: [
+        [now, () => 1234],
+        [saveContact, vi.fn()],
+        [removeContact, vi.fn()],
+      ],
+    });
+
+    // This one is persisted, so what reaches the fact has to be what the
+    // store would settle on rather than whatever the field held.
+    expect(trace.commits).toEqual([
+      [
+        selfNamedTopic({
+          endpointId: SELF_ID,
+          label: 'Kitchen iPad',
+          at: 1234,
+        }),
+      ],
+    ]);
+  });
+
+  it('refuses a name that is only whitespace', async () => {
+    const save = vi.fn();
+
+    const trace = await simulate(nameSelfSaga('   '), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, bookNaming(null)],
+      ],
+      calls: [
+        [now, () => 1234],
+        [saveContact, save],
+        [removeContact, vi.fn()],
+      ],
+    });
+
+    // A field holding two spaces looks filled in and isn't. Saving it would
+    // leave the device worse off than unnamed: the fallback to its key prefix
+    // stops working, and every peer is told it's called nothing at all.
+    expect(save).not.toHaveBeenCalled();
+    expect(trace.commits).toEqual([]);
+    expect(trace.result).toBe(false);
+  });
+
+  it('waits for a key before writing a row keyed by one', async () => {
+    const save = vi.fn();
+
+    const trace = await simulate(nameSelfSaga('Studio'), {
+      reads: [
+        [identityStore, { endpointId: null }],
+        [contactsStore, bookNaming(null)],
+      ],
+      calls: [
+        [now, () => 1234],
+        [saveContact, save],
+        [removeContact, vi.fn()],
+      ],
+    });
+
+    expect(save).not.toHaveBeenCalled();
+    expect(trace.commits).toEqual([]);
+    expect(trace.result).toBe(false);
+  });
+
+  it('clears the row the key used to answer on', async () => {
+    const remove = vi.fn();
+
+    await simulate(nameSelfSaga('Studio'), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, bookNaming(fakeSelf({ endpointId: 'old-key' }))],
+      ],
+      calls: [
+        [now, () => 1234],
+        [saveContact, vi.fn()],
+        [removeContact, remove],
+      ],
+    });
+
+    // The name follows the device, and there is only ever one row for it —
+    // a rotated key would otherwise leave a second behind, and the read that
+    // picked one up would be picking arbitrarily.
+    expect(remove).toHaveBeenCalledWith(expect.any(AbortSignal), 'old-key');
+  });
+
+  it('leaves the row alone when the key never moved', async () => {
+    const remove = vi.fn();
+
+    await simulate(nameSelfSaga('Kitchen'), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, bookNaming(fakeSelf())],
+      ],
+      calls: [
+        [now, () => 1234],
+        [saveContact, vi.fn()],
+        [removeContact, remove],
+      ],
+    });
+
+    // A rename is a rename. Deleting the row it's replacing would be a
+    // window where this device has no name at all.
+    expect(remove).not.toHaveBeenCalled();
+  });
+});
+
+describe('renameSelfSaga', () => {
+  const SELF_ID = 'ep-self';
+
+  const fakeSelf = (overrides: Partial<SelfContact> = {}): SelfContact => ({
+    kind: 'self',
+    endpointId: SELF_ID,
+    label: 'Studio',
+    createdAt: 1234,
+    ...overrides,
+  });
+
+  it('commits the new name and writes the row through', async () => {
+    const save = vi.fn();
+    const self = fakeSelf({ label: 'Kitchen' });
+
+    const trace = await simulate(renameSelfSaga('Kitchen'), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, bookNaming(self)],
+      ],
+      calls: [
+        [now, () => 5678],
+        [saveContact, save],
+        [removeContact, vi.fn()],
+      ],
+    });
+
+    expect(trace.commits).toEqual([
+      [selfNamedTopic({ endpointId: SELF_ID, label: 'Kitchen', at: 5678 })],
+    ]);
+    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), self);
+  });
+
+  it('passes an emptied field through as a request to clear', async () => {
+    const save = vi.fn();
+    const self = fakeSelf({ label: null });
+
+    const trace = await simulate(renameSelfSaga(''), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, bookNaming(self)],
+      ],
+      calls: [
+        [now, () => 5678],
+        [saveContact, save],
+        [removeContact, vi.fn()],
+      ],
+    });
+
+    // Unlike naming a device during setup, clearing is a real answer: the
+    // device drops back to the prefix of its own key, which is a name. The
+    // fold decides that, so the field's contents go through untouched.
+    expect(trace.commits).toEqual([
+      [selfNamedTopic({ endpointId: SELF_ID, label: '', at: 5678 })],
+    ]);
+    expect(save).toHaveBeenCalledWith(expect.any(AbortSignal), self);
+  });
+
+  it('waits for a key before writing a row keyed by one', async () => {
+    const save = vi.fn();
+
+    const trace = await simulate(renameSelfSaga('Kitchen'), {
+      reads: [
+        [identityStore, { endpointId: null }],
+        [contactsStore, bookNaming(null)],
+      ],
+      calls: [
+        [now, () => 5678],
+        [saveContact, save],
+        [removeContact, vi.fn()],
+      ],
+    });
+
+    expect(save).not.toHaveBeenCalled();
+    expect(trace.commits).toEqual([]);
+    expect(trace.result).toBe(false);
   });
 });

@@ -1,10 +1,9 @@
 /**
  * The `@lib/state` surface backing a beam session: the browser's endpoint
  * connection, the QR encoding of its beam link — which land together as the
- * connection comes up — the name this device goes by, and the links it holds
- * to peers. All of it sits in the beam scope; anchoring that scope is what
- * keeps the session alive, and releasing the last anchor frees the endpoint and
- * every peer link with it.
+ * connection comes up — and the links it holds to peers. All of it sits in the
+ * beam scope; anchoring that scope is what keeps the session alive, and
+ * releasing the last anchor frees the endpoint and every peer link with it.
  *
  * The handshake lives here rather than in the address book because it's
  * about the network: the book records what a pairing *is*, and this decides
@@ -17,7 +16,7 @@ export { connectionStore } from './connection';
 export type { ConnectionStatus } from './connection';
 export { qrCodeCell } from './qr-code';
 export type { QrGrid } from './qr-code';
-export { identityStore, selfLabelFormula } from './identity';
+export { identityStore } from './identity';
 export {
   focusedPeerFormula,
   peerBlurredTopic,
@@ -48,6 +47,7 @@ export {
   copyShareSaga,
   dialPeerSaga,
   disconnectPeerSaga,
+  renameThisDeviceSaga,
   reportSagaFailure,
   shareTextSaga,
 } from './sagas';

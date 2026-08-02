@@ -24,7 +24,7 @@ import {
   type PeerLink,
   type EndpointSession,
 } from './capabilities';
-import { identityResolvedTopic, selfLabelFormula } from './identity';
+import { identityResolvedTopic } from './identity';
 import {
   peerClosedTopic,
   peerDialingTopic,
@@ -57,8 +57,11 @@ import {
   contactsStore,
   noteAdvertisedNameSaga,
   recordPeerSaga,
+  renameSelfSaga,
+  selfLabelFormula,
 } from '../contacts';
 import { now } from '../contacts/capabilities';
+import { finishPairingSaga } from '../onboarding';
 import { isEndpointId } from '../endpoint-id';
 import { beamScope } from '../scope';
 
@@ -322,6 +325,43 @@ export const linkPeerSaga = defineSaga(
   },
 );
 
+/**
+ * Rename this device and tell whoever is listening, answering whether the
+ * rename took.
+ *
+ * The greeting {@link linkPeerSaga} sends is the only time a peer hears what
+ * this device is called, so a rename that stopped at disk would leave every
+ * device already on the line calling this one by a name it no longer answers
+ * to — until it happened to reconnect, which may be days. Re-greeting is the
+ * cheapest fix: `hello` is idempotent on the far side, where it lands as the
+ * advertised name and never overwrites a nickname the reader chose.
+ *
+ * It's here rather than in the address book because the peers are here. The
+ * book owns what this device is called; the session owns who has been told.
+ *
+ * Absent peers are not chased. They hear it on the next link, which is the
+ * same bargain acceptance makes.
+ */
+export const renameThisDeviceSaga = defineSaga(
+  beamScope,
+  async function* (label: string | null) {
+    const renamed = yield* renameSelfSaga(label);
+    if (!renamed) return false;
+
+    // Read back rather than reused: a cleared name falls back to the key
+    // prefix, and that fallback is what peers should be told.
+    const announced = yield* read(selfLabelFormula);
+    if (!announced) return true;
+
+    const handles = yield* read(peerHandlesCell);
+    for (const link of handles.values()) {
+      yield* call(sendMessage, link, helloMessage(announced));
+    }
+
+    return true;
+  },
+);
+
 /** Take an inbound dial: file the peer as having asked, then link it. */
 export const greetPeerSaga = defineSaga(
   beamScope,
@@ -330,6 +370,10 @@ export const greetPeerSaga = defineSaga(
       endpointId: peer.endpointId,
       direction: 'inbound',
     });
+
+    // Somebody found us, which is the whole of what setup's last step asks
+    // for. A no-op once it's been answered.
+    yield* finishPairingSaga();
 
     // Logged after the sighting, so a first-time dial reads as the request
     // it just became rather than as an unknown peer.
@@ -474,6 +518,11 @@ export const dialPeerSaga = defineSaga(
     if (statuses[endpointId] === 'linked') return;
 
     yield* recordPeerSaga({ endpointId, direction: 'outbound' });
+
+    // We found somebody, which answers setup's last step just as well as
+    // being found does. Committed before the dial, like the contact is: a
+    // peer that turns out to be asleep is still a peer this device has met.
+    yield* finishPairingSaga();
 
     const contact = (yield* read(contactsStore)).entries[endpointId];
     logger.info(

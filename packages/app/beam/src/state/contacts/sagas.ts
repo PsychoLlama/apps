@@ -11,9 +11,12 @@ import {
   contactsStore,
   pairingAcceptedTopic,
   pairingConfirmedTopic,
+  selfNamedTopic,
 } from './contacts';
 import { now, readContacts, removeContact, saveContact } from './capabilities';
-import type { ContactDirection } from './database';
+import { identityStore } from '../session/identity';
+import { normalizeLabel } from '../labels';
+import type { ContactDirection } from '../database';
 
 /**
  * Write a contact's current in-memory state through to IndexedDB. Every
@@ -73,6 +76,60 @@ export const recordPeerSaga = defineSaga(
 
     yield commit(contactSeenTopic({ ...input, seenAt }));
     yield* persistContactSaga(input.endpointId);
+  },
+);
+
+/**
+ * Rename this device, answering whether it took. An emptied field clears the
+ * name, dropping the device back to the prefix of its own key — the same
+ * fallback an unnamed contact wears, so it's a name rather than a blank.
+ *
+ * Needs the key, so it can't run before one lands. In practice one always
+ * has: the key is minted on load and this is driven by a button.
+ *
+ * A row left at an address this device no longer answers on is deleted rather
+ * than left behind. The name follows the device, so a rotated key would
+ * otherwise leave a second self row on disk — and the read that picks one of
+ * them up would be picking arbitrarily.
+ */
+export const renameSelfSaga = defineSaga(
+  beamScope,
+  async function* (label: string | null) {
+    const { endpointId } = yield* read(identityStore);
+    if (!endpointId) return false;
+
+    const previous = (yield* read(contactsStore)).self?.endpointId;
+    const at = yield* call(now);
+
+    yield commit(selfNamedTopic({ endpointId, label, at }));
+
+    if (previous && previous !== endpointId) {
+      yield* call(removeContact, previous);
+    }
+
+    const { self } = yield* read(contactsStore);
+    if (self) yield* call(saveContact, { ...self });
+
+    return true;
+  },
+);
+
+/**
+ * Name this device for the first time, answering whether it took.
+ *
+ * The same write as a rename, with the one rule setup adds: a blank is
+ * refused rather than accepted as a name. Clearing a name later is a choice
+ * about what to fall back to; a blank field at the step whose whole purpose is
+ * to collect a name is an unanswered question, and the answer is what setup
+ * waits on before moving off it.
+ */
+export const nameSelfSaga = defineSaga(
+  beamScope,
+  async function* (raw: string) {
+    const label = normalizeLabel(raw);
+    if (!label) return false;
+
+    return yield* renameSelfSaga(label);
   },
 );
 

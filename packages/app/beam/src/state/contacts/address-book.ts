@@ -1,7 +1,7 @@
 import { defineFormula } from '@lib/state';
 import { generateLabel } from '../labels';
 import { contactsStore } from './contacts';
-import type { Contact, ContactDirection, ContactTrust } from './database';
+import type { Contact, ContactDirection, ContactTrust } from '../database';
 
 /** One contact as the address book renders it. */
 export interface ContactView {
