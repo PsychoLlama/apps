@@ -5,13 +5,12 @@ import {
   fallbackName,
   renameClosedTopic,
   renameContactSaga,
-  renameSelfSaga,
   renameStore,
   selfFallbackFormula,
   type RenameTarget,
 } from '../state/contacts';
 import { LABEL_MAX_LENGTH } from '../state/labels';
-import { reportSagaFailure } from '../state/session';
+import { renameThisDeviceSaga, reportSagaFailure } from '../state/session';
 
 /** Ties the field to its label. Only one rename form is ever mounted. */
 const NAME_FIELD_ID = 'beam-rename-name';
@@ -41,7 +40,7 @@ export const RenameDialog = (props: {
   const book = useValue(contactsStore);
   const selfFallback = useValue(selfFallbackFormula);
   const runContactRename = useRun(renameContactSaga);
-  const runSelfRename = useRun(renameSelfSaga);
+  const runSelfRename = useRun(renameThisDeviceSaga);
   const commit = useCommit();
 
   /** Whether the open form is this one's. */

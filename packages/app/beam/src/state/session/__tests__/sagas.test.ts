@@ -34,7 +34,7 @@ import {
   connectionStore,
   endpointCell,
 } from '../connection';
-import { identityResolvedTopic } from '../identity';
+import { identityResolvedTopic, identityStore } from '../identity';
 import { createInbox } from '../inbox';
 import {
   peerDialingTopic,
@@ -69,6 +69,7 @@ import {
   greetPeerSaga,
   linkPeerSaga,
   receiveShareSaga,
+  renameThisDeviceSaga,
   serveInboundSaga,
   shareTextSaga,
   watchRelaySaga,
@@ -916,6 +917,105 @@ describe('acceptPairingSaga', () => {
     // depend on the other device still being awake. The next link carries
     // the news.
     expect(trace.commits).toEqual([[pairingAcceptedTopic(PEER_ID)]]);
+    expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe('renameThisDeviceSaga', () => {
+  /** This device's row, as the rename reads it back to write it through. */
+  const named = (label: string | null) => ({
+    ...bookHolding(),
+    self: {
+      kind: 'self' as const,
+      endpointId: SELF_ID,
+      label,
+      createdAt: 1,
+    },
+  });
+
+  it('tells the devices already on the line', async () => {
+    const send = vi.fn();
+    const first = fakeLink();
+    const second = fakeLink(`e3${'0'.repeat(62)}`);
+
+    const trace = await simulate(renameThisDeviceSaga('Studio'), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, named('Studio')],
+        [selfLabelFormula, 'Studio'],
+        [
+          peerHandlesCell,
+          new Map([
+            [first.endpointId, first],
+            [second.endpointId, second],
+          ]),
+        ],
+      ],
+      calls: [
+        [now, () => 1],
+        [saveContact, vi.fn()],
+        [sendMessage, send],
+      ],
+    });
+
+    // The greeting is the only time a peer hears this name, so a rename that
+    // stopped at disk would leave every connected device calling this one by
+    // a name it stopped answering to.
+    expect(trace.result).toBe(true);
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      first,
+      helloMessage('Studio'),
+    );
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      second,
+      helloMessage('Studio'),
+    );
+  });
+
+  it('announces what a cleared name falls back to', async () => {
+    const send = vi.fn();
+    const link = fakeLink();
+
+    await simulate(renameThisDeviceSaga(null), {
+      reads: [
+        [identityStore, { endpointId: SELF_ID }],
+        [contactsStore, named(null)],
+        // Read back rather than reused: clearing leaves the key prefix, and
+        // that's a name rather than an absence, so it's what goes out.
+        [selfLabelFormula, 'e1000000'],
+        [peerHandlesCell, new Map([[link.endpointId, link]])],
+      ],
+      calls: [
+        [now, () => 1],
+        [saveContact, vi.fn()],
+        [sendMessage, send],
+      ],
+    });
+
+    expect(send).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+      link,
+      helloMessage('e1000000'),
+    );
+  });
+
+  it('says nothing when the rename didn’t take', async () => {
+    const send = vi.fn();
+    const link = fakeLink();
+
+    const trace = await simulate(renameThisDeviceSaga('Studio'), {
+      reads: [
+        [identityStore, { endpointId: null }],
+        [peerHandlesCell, new Map([[link.endpointId, link]])],
+      ],
+      calls: [[sendMessage, send]],
+    });
+
+    // No key means no row was written, and announcing a name nothing on disk
+    // agrees with would leave the peers ahead of this device.
+    expect(trace.result).toBe(false);
     expect(send).not.toHaveBeenCalled();
   });
 });

@@ -57,6 +57,7 @@ import {
   contactsStore,
   noteAdvertisedNameSaga,
   recordPeerSaga,
+  renameSelfSaga,
   selfLabelFormula,
 } from '../contacts';
 import { now } from '../contacts/capabilities';
@@ -321,6 +322,43 @@ export const linkPeerSaga = defineSaga(
     // other half of queueing: a share composed against a sleeping device is
     // held until the device turns up, and turning up is this.
     yield* flushSharesSaga(peer);
+  },
+);
+
+/**
+ * Rename this device and tell whoever is listening, answering whether the
+ * rename took.
+ *
+ * The greeting {@link linkPeerSaga} sends is the only time a peer hears what
+ * this device is called, so a rename that stopped at disk would leave every
+ * device already on the line calling this one by a name it no longer answers
+ * to — until it happened to reconnect, which may be days. Re-greeting is the
+ * cheapest fix: `hello` is idempotent on the far side, where it lands as the
+ * advertised name and never overwrites a nickname the reader chose.
+ *
+ * It's here rather than in the address book because the peers are here. The
+ * book owns what this device is called; the session owns who has been told.
+ *
+ * Absent peers are not chased. They hear it on the next link, which is the
+ * same bargain acceptance makes.
+ */
+export const renameThisDeviceSaga = defineSaga(
+  beamScope,
+  async function* (label: string | null) {
+    const renamed = yield* renameSelfSaga(label);
+    if (!renamed) return false;
+
+    // Read back rather than reused: a cleared name falls back to the key
+    // prefix, and that fallback is what peers should be told.
+    const announced = yield* read(selfLabelFormula);
+    if (!announced) return true;
+
+    const handles = yield* read(peerHandlesCell);
+    for (const link of handles.values()) {
+      yield* call(sendMessage, link, helloMessage(announced));
+    }
+
+    return true;
   },
 );
 

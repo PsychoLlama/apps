@@ -47,6 +47,7 @@ export {
   copyShareSaga,
   dialPeerSaga,
   disconnectPeerSaga,
+  renameThisDeviceSaga,
   reportSagaFailure,
   shareTextSaga,
 } from './sagas';
