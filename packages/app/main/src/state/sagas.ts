@@ -1,10 +1,6 @@
 import { call, commit, defineSaga } from '@lib/state';
 import { readLauncherFlags, watchLauncherFlags } from './capabilities';
-import {
-  beamChangedTopic,
-  launcherFlagsRestoredTopic,
-  scratchpadChangedTopic,
-} from './flags';
+import { launcherFlagsRestoredTopic, scratchpadChangedTopic } from './flags';
 import { launcherScope } from './scope';
 
 /**
@@ -33,9 +29,6 @@ export const trackLauncherFlagsSaga = defineSaga(
 
     for await (const change of changes) {
       switch (change.app) {
-        case 'beam':
-          yield commit(beamChangedTopic(change.enabled));
-          break;
         case 'scratchpad':
           yield commit(scratchpadChangedTopic(change.enabled));
           break;

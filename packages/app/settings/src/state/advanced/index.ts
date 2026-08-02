@@ -11,11 +11,9 @@
 export { advancedDefaults, advancedSettingsStore } from './settings';
 export { advancedSettingsScope } from './scope';
 export {
-  commitBeamSaga,
   commitLogExportSaga,
   commitLogFilterSaga,
   commitScratchpadSaga,
-  resetBeamSaga,
   resetLogExportSaga,
   resetLogFilterSaga,
   resetScratchpadSaga,

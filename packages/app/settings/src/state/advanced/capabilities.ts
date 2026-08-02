@@ -10,7 +10,6 @@ import {
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
-import { enabled as beamAppEnabled } from '@app/beam/config';
 import { type AdvancedSettingsState } from './settings';
 
 /**
@@ -20,18 +19,16 @@ import { type AdvancedSettingsState } from './settings';
  */
 export const readAdvancedSettings =
   async (): Promise<AdvancedSettingsState> => {
-    const [logFilter, logExportFlag, scratchpad, beam] = await Promise.all([
+    const [logFilter, logExportFlag, scratchpad] = await Promise.all([
       readEnvironment(filter),
       readEnvironment(logExport),
       readEnvironment(scratchpadAppEnabled),
-      readEnvironment(beamAppEnabled),
     ]);
 
     return {
       logFilter: logFilter.pattern,
       logExportEnabled: logExportFlag.enabled,
       scratchpadEnabled: scratchpad.enabled,
-      beamEnabled: beam.enabled,
     };
   };
 
@@ -82,28 +79,11 @@ export const writeScratchpadEnabled = async (
 export const resetScratchpadEnabled = (): Promise<void> =>
   reset(scratchpadAppEnabled, [environment]);
 
-/** Persist the beam flag as the active environment's override. */
-export const writeBeamEnabled = async (
-  _signal: AbortSignal,
-  enabled: boolean,
-): Promise<void> => {
-  const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
-  await updateConfig(beamAppEnabled, patch);
-};
-
-/**
- * Clear the beam flag override for the active environment only, reverting
- * it to the built-in default. Other environments keep theirs.
- */
-export const resetBeamEnabled = (): Promise<void> =>
-  reset(beamAppEnabled, [environment]);
-
 /** One Advanced option settling on a new resolved value. */
 export type AdvancedSettingChange =
   | { option: 'logFilter'; pattern: string }
   | { option: 'logExport'; enabled: boolean }
-  | { option: 'scratchpad'; enabled: boolean }
-  | { option: 'beam'; enabled: boolean };
+  | { option: 'scratchpad'; enabled: boolean };
 
 /**
  * Watch every Advanced option at once, reporting each resolved value as it
@@ -124,8 +104,5 @@ export const watchAdvancedSettings = (
     ),
     subscribe(scratchpadAppEnabled, ({ enabled }) =>
       push({ option: 'scratchpad', enabled }),
-    ),
-    subscribe(beamAppEnabled, ({ enabled }) =>
-      push({ option: 'beam', enabled }),
     ),
   ]);

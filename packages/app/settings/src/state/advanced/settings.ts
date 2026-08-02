@@ -3,7 +3,6 @@ import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 import { logExport } from '@app/logs/config';
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
-import { enabled as beamAppEnabled } from '@app/beam/config';
 import { advancedSettingsScope } from './scope';
 
 /** Live values backing the settings page's Advanced section. */
@@ -30,12 +29,6 @@ export interface AdvancedSettingsState {
    * `logFilter`.
    */
   scratchpadEnabled: boolean;
-
-  /**
-   * Whether the beam app is enabled for the active environment. Seeded
-   * from the option default, then reconciled on mount like `logFilter`.
-   */
-  beamEnabled: boolean;
 }
 
 /**
@@ -48,7 +41,6 @@ export const advancedDefaults: AdvancedSettingsState = {
   logFilter: filter.defaults[environment].pattern,
   logExportEnabled: logExport.defaults[environment].enabled,
   scratchpadEnabled: scratchpadAppEnabled.defaults[environment].enabled,
-  beamEnabled: beamAppEnabled.defaults[environment].enabled,
 };
 
 /**
@@ -77,7 +69,6 @@ defineFold(
     advanced.logFilter = values.logFilter;
     advanced.logExportEnabled = values.logExportEnabled;
     advanced.scratchpadEnabled = values.scratchpadEnabled;
-    advanced.beamEnabled = values.beamEnabled;
   },
 );
 
@@ -110,9 +101,3 @@ defineFold(
     advanced.scratchpadEnabled = enabled;
   },
 );
-
-/** The beam app flag resolved to a new value. */
-export const beamChangedTopic = defineTopic<boolean>();
-defineFold(beamChangedTopic, [advancedSettingsStore], (advanced, enabled) => {
-  advanced.beamEnabled = enabled;
-});

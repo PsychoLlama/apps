@@ -6,10 +6,8 @@
 
 import { createTestRuntime } from '@lib/state';
 import { environment } from '@lib/runtime-config';
-import { enabled as beamAppEnabled } from '@app/beam/config';
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import {
-  beamChangedTopic,
   launcherFlagsRestoredTopic,
   launcherFlagsStore,
   scratchpadChangedTopic,
@@ -29,7 +27,6 @@ describe('launcherFlagsStore', () => {
     // Seeding from the defaults is what keeps prerender and the client's
     // first paint in agreement — the OPFS override arrives later.
     expect(peek(launcherFlagsStore)).toEqual({
-      beamEnabled: beamAppEnabled.defaults[environment].enabled,
       scratchpadEnabled: scratchpadAppEnabled.defaults[environment].enabled,
     });
   });
@@ -37,50 +34,17 @@ describe('launcherFlagsStore', () => {
   it('takes every resolved flag at once', () => {
     const { commit, peek } = setup();
 
-    commit(
-      launcherFlagsRestoredTopic({
-        beamEnabled: true,
-        scratchpadEnabled: true,
-      }),
-    );
+    commit(launcherFlagsRestoredTopic({ scratchpadEnabled: true }));
 
-    expect(peek(launcherFlagsStore)).toEqual({
-      beamEnabled: true,
-      scratchpadEnabled: true,
-    });
-  });
-
-  it('takes a beam flag change on its own', () => {
-    const { commit, peek } = setup();
-    commit(
-      launcherFlagsRestoredTopic({
-        beamEnabled: false,
-        scratchpadEnabled: true,
-      }),
-    );
-
-    commit(beamChangedTopic(true));
-
-    expect(peek(launcherFlagsStore)).toEqual({
-      beamEnabled: true,
-      scratchpadEnabled: true,
-    });
+    expect(peek(launcherFlagsStore)).toEqual({ scratchpadEnabled: true });
   });
 
   it('takes a scratchpad flag change on its own', () => {
     const { commit, peek } = setup();
-    commit(
-      launcherFlagsRestoredTopic({
-        beamEnabled: true,
-        scratchpadEnabled: false,
-      }),
-    );
+    commit(launcherFlagsRestoredTopic({ scratchpadEnabled: false }));
 
     commit(scratchpadChangedTopic(true));
 
-    expect(peek(launcherFlagsStore)).toEqual({
-      beamEnabled: true,
-      scratchpadEnabled: true,
-    });
+    expect(peek(launcherFlagsStore)).toEqual({ scratchpadEnabled: true });
   });
 });

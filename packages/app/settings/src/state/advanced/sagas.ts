@@ -1,12 +1,10 @@
 import { call, commit, defineSaga } from '@lib/state';
 import {
   readAdvancedSettings,
-  resetBeamEnabled,
   resetLogExportEnabled,
   resetLogFilter,
   resetScratchpadEnabled,
   watchAdvancedSettings,
-  writeBeamEnabled,
   writeLogExportEnabled,
   writeLogFilter,
   writeScratchpadEnabled,
@@ -14,7 +12,6 @@ import {
 import { advancedSettingsScope } from './scope';
 import {
   advancedSettingsRestoredTopic,
-  beamChangedTopic,
   logExportChangedTopic,
   logFilterChangedTopic,
   scratchpadChangedTopic,
@@ -56,9 +53,6 @@ export const trackAdvancedSettingsSaga = defineSaga(
           break;
         case 'scratchpad':
           yield commit(scratchpadChangedTopic(change.enabled));
-          break;
-        case 'beam':
-          yield commit(beamChangedTopic(change.enabled));
           break;
       }
     }
@@ -116,21 +110,5 @@ export const resetScratchpadSaga = defineSaga(
   advancedSettingsScope,
   async function* () {
     yield* call(resetScratchpadEnabled);
-  },
-);
-
-/** Persist the beam flag. Echoes back like {@link commitLogFilterSaga}. */
-export const commitBeamSaga = defineSaga(
-  advancedSettingsScope,
-  async function* (enabled: boolean) {
-    yield* call(writeBeamEnabled, enabled);
-  },
-);
-
-/** Revert the beam flag to its default for the active environment. */
-export const resetBeamSaga = defineSaga(
-  advancedSettingsScope,
-  async function* () {
-    yield* call(resetBeamEnabled);
   },
 );

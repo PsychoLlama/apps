@@ -66,6 +66,13 @@ const APPS: ReadonlyArray<AppEntry> = [
     description: 'Browse the component library and design system.',
     Icon: IconGallery,
   },
+  {
+    id: 'beam',
+    name: 'Beam',
+    href: '/beam',
+    description: 'Encrypted sharing between devices.',
+    Icon: IconSend,
+  },
 ];
 
 /**
@@ -80,20 +87,6 @@ const SCRATCHPAD_APP: AppEntry = {
   href: '/scratchpad',
   description: 'Experiments and work-in-progress ideas.',
   Icon: IconHammerWrench,
-};
-
-/**
- * Peer-to-peer resource sharing. Gated on the `@app/beam` runtime flag
- * like {@link SCRATCHPAD_APP} — it's still a work in progress, enabled
- * in local dev only — so the launcher reveals it reactively (see {@link
- * beamFlag}) in lockstep with the service worker's runtime route gate.
- */
-const BEAM_APP: AppEntry = {
-  id: 'beam',
-  name: 'Beam',
-  href: '/beam',
-  description: 'Encrypted sharing between devices.',
-  Icon: IconSend,
 };
 
 /** A single launcher entry — a card linking to one app. */
@@ -210,9 +203,6 @@ const Launcher = () => {
               aria-label="Apps"
             >
               <For each={APPS}>{(app) => <AppCard app={app} />}</For>
-              <Show when={flags().beamEnabled}>
-                <AppCard app={BEAM_APP} />
-              </Show>
               <Show when={flags().scratchpadEnabled}>
                 <AppCard app={SCRATCHPAD_APP} />
               </Show>
