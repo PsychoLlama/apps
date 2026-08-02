@@ -3,13 +3,9 @@ import { useRun, useValue } from '@lib/state';
 import { Badge, Button, Card, Flex, LinkButton, Text } from '@lib/ui';
 import IconContentCopy from 'virtual:icons/mdi/content-copy';
 import IconOpenInNew from 'virtual:icons/mdi/open-in-new';
-import {
-  copyNoticeStore,
-  copyShareSaga,
-  reportSagaFailure,
-  shareLink,
-  type Share,
-} from '../state/session';
+import { reportSagaFailure } from '../state/failure';
+import { shareLink } from '../state/share-body';
+import { copyNoticeStore, copyShareSaga, type Share } from '../state/shares';
 import * as styles from './share-log.css';
 
 /** Times read as times. Follows the reader's locale. */

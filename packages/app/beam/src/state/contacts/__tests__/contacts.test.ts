@@ -17,7 +17,7 @@ import {
   pairingAcceptedTopic,
   pairingConfirmedTopic,
 } from '../contacts';
-import type { Contact } from '../../database';
+import type { Contact } from '../../platform/database';
 import { LABEL_MAX_LENGTH } from '../../labels';
 import { beamScope } from '../../scope';
 

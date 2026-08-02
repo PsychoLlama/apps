@@ -23,14 +23,16 @@ import {
   addressBookFormula,
   contactsStore,
   forgetContactSaga,
+  type ContactView,
+} from '../state/contacts';
+import { isEndpointId } from '../state/endpoint';
+import { reportSagaFailure } from '../state/failure';
+import {
   removalClosedTopic,
   removalOpenedTopic,
   removalStore,
   renameOpenedTopic,
-  type ContactView,
-} from '../state/contacts';
-import { isEndpointId } from '../state/endpoint-id';
-import { reportSagaFailure } from '../state/session';
+} from '../state/view';
 import { PairingRequest } from './pairing-request';
 import { RenameDialog } from './rename-dialog';
 import * as styles from './beam-contact.css';

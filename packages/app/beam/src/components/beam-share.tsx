@@ -7,20 +7,19 @@ import IconContactCard from 'virtual:icons/mdi/card-account-details-outline';
 import { ShareComposer } from './share-composer';
 import { ShareLog } from './share-log';
 import { addressBookFormula } from '../state/contacts';
-import { isEndpointId } from '../state/endpoint-id';
+import { isEndpointId } from '../state/endpoint';
+import { reportSagaFailure } from '../state/failure';
+import { identityStore } from '../state/identity';
 import { generateLabel } from '../state/labels';
 import {
   connectionStore,
   dialPeerSaga,
   disconnectPeerSaga,
-  identityStore,
-  peerBlurredTopic,
-  peerFocusedTopic,
-  reportSagaFailure,
-  shareStatesFormula,
-  sharesByPeerFormula,
-  type ShareState,
-} from '../state/session';
+  peerStatesFormula,
+  type PeerState,
+} from '../state/network';
+import { sharesByPeerFormula } from '../state/shares';
+import { peerBlurredTopic, peerFocusedTopic } from '../state/view';
 
 /**
  * The share view at `/beam/share/:id` — where a beam link lands, and where
@@ -40,7 +39,7 @@ export const BeamShare = () => {
   const connection = useValue(connectionStore);
   const self = useValue(identityStore);
   const contacts = useValue(addressBookFormula);
-  const states = useValue(shareStatesFormula);
+  const states = useValue(peerStatesFormula);
   const shares = useValue(sharesByPeerFormula);
 
   const dial = useRun(dialPeerSaga);
@@ -93,7 +92,7 @@ export const BeamShare = () => {
   const name = () => contact()?.name ?? generateLabel(params.id);
 
   /** Where the pairing stands. Nothing attempted yet reads as `preparing`. */
-  const state = (): ShareState => states()[params.id] ?? 'preparing';
+  const state = (): PeerState => states()[params.id] ?? 'preparing';
 
   // The dial needs the live endpoint, so hold off until the relay connection
   // lands. Keyed on the peer too, since one share view serves every id: a

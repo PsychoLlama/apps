@@ -3,11 +3,8 @@ import { useCommit, useRun } from '@lib/state';
 import { Button, Callout, Flex, Text } from '@lib/ui';
 import IconAccountQuestion from 'virtual:icons/mdi/account-question-outline';
 import type { ContactView } from '../state/contacts';
-import {
-  acceptPairingSaga,
-  requestDismissedTopic,
-  reportSagaFailure,
-} from '../state/session';
+import { reportSagaFailure } from '../state/failure';
+import { acceptPairingSaga, requestDismissedTopic } from '../state/network';
 
 /**
  * One peer asking to pair, with the two answers to it. Used wherever a

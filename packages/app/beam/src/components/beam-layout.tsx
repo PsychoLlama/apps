@@ -8,11 +8,12 @@ import { BeamOnboarding } from './beam-onboarding';
 import { ContactSidebar } from './contact-sidebar';
 import { PairingBanner } from './pairing-banner';
 import { StatusBar } from './status-bar';
-import { connectRelaySaga, reportSagaFailure } from '../state/session';
 import { restoreContactsSaga } from '../state/contacts';
+import { reportSagaFailure } from '../state/failure';
+import { connectRelaySaga } from '../state/network';
 import { restoreOnboardingSaga } from '../state/onboarding';
 import { beamScope } from '../state/scope';
-import { beamSurfaceFormula, surfaceForRoute } from '../state/surface';
+import { beamSurfaceFormula, surfaceForRoute } from '../state/view';
 import * as styles from './beam-layout.css';
 
 /**

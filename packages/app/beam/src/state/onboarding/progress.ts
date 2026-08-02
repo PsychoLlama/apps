@@ -1,25 +1,19 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
-import type { OnboardingRecord, OnboardingStep } from '../database';
+import type {
+  LoadStatus,
+  OnboardingRecord,
+  OnboardingStep,
+} from '../platform/database';
 import { beamScope } from '../scope';
-
-/**
- * Where the persisted progress sits in its lifecycle. The same four states
- * every other persisted thing in beam has.
- *
- * - `initial` — the read hasn't been attempted. What prerender and first
- *   paint show, and the reason the surface renders nothing at all until this
- *   moves: picking a screen here would be guessing.
- * - `loading` — the read is in flight.
- * - `ready` — the step is in memory and authoritative.
- * - `failed` — IndexedDB was unreadable. Distinct from a `ready` device on
- *   step one, which is a device nobody has set up.
- */
-export type OnboardingStatus = 'initial' | 'loading' | 'ready' | 'failed';
 
 /** How far setting this device up has got, as held in memory. */
 export interface OnboardingProgress {
-  /** Where the persisted progress sits in its lifecycle. */
-  status: OnboardingStatus;
+  /**
+   * Where the persisted progress sits in its lifecycle. `initial` is why the
+   * surface renders nothing at all until this moves: picking a screen before
+   * the disk has answered would be guessing.
+   */
+  status: LoadStatus;
 
   /**
    * Which step the device is on. Starts at `naming` because that's what a

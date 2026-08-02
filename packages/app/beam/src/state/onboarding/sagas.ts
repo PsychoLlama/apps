@@ -6,11 +6,12 @@ import {
   onboardingRestoredTopic,
   onboardingStore,
 } from './progress';
-import { readOnboarding, saveOnboarding } from './capabilities';
-import { nameSelfSaga } from '../contacts';
-import { now } from '../contacts/capabilities';
-import type { OnboardingStep } from '../database';
+import { readOnboarding, saveOnboarding } from '../platform/database';
+import { now } from '../platform/host';
+import { nameDeviceSaga } from '../identity';
+import { normalizeLabel } from '../labels';
 import { beamScope } from '../scope';
+import type { OnboardingStep } from '../platform/database';
 
 /**
  * Move to a step and write it through. Commits first and persists after, like
@@ -56,20 +57,26 @@ export const restoreOnboardingSaga = defineSaga(beamScope, async function* () {
 /**
  * Finish step one: name this device, then move on.
  *
- * The name is the device's to accept or refuse — a field holding two spaces
- * is not a name — and the step only moves if it took. Otherwise the form
- * comes back, still holding what was typed.
+ * A blank is refused here rather than passed on. Clearing a name later is a
+ * choice about what to fall back to; a blank field at the step whose whole
+ * purpose is to collect a name is an unanswered question, and the answer is
+ * what setup waits on before moving off it. Either way the form comes back
+ * still holding what was typed, because the draft only clears on a name that
+ * landed.
  *
  * Guarded on the step rather than on the form, so a stale submit from a
  * screen that has already moved on can't walk the device backwards.
  */
 export const finishNamingSaga = defineSaga(
   beamScope,
-  async function* (name: string) {
+  async function* (raw: string) {
     const { step } = yield* read(onboardingStore);
     if (step !== 'naming') return;
 
-    const named = yield* nameSelfSaga(name);
+    const label = normalizeLabel(raw);
+    if (!label) return;
+
+    const named = yield* nameDeviceSaga(label);
     if (!named) return;
 
     yield* advanceSaga('pairing');
