@@ -349,8 +349,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0(solid-js@1.9.14)
       '@solidjs/start':
-        specifier: 2.0.0-rc.8
-        version: 2.0.0-rc.8(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
+        specifier: 2.0.0-rc.9
+        version: 2.0.0-rc.9(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.2
@@ -2367,8 +2367,8 @@ packages:
     peerDependencies:
       solid-js: 1.9.14
 
-  '@solidjs/start@2.0.0-rc.8':
-    resolution: {integrity: sha512-ol04xsQIATkTKQGcXpGrDsJzi7bXzELi+HKl2no/P06gfXamTeemPgjgolV9NIbKJ0fII9GDGDLkJxkuHPbYrA==}
+  '@solidjs/start@2.0.0-rc.9':
+    resolution: {integrity: sha512-+F4rOthjjbv0ztA8X4r00ptTVzsC0Y7Cc9LL+vm0FiglBBxO0VnzHkEGuO22XD7kv2ONVGDDhQ///k7hhodf3w==}
     engines: {node: '>=24'}
     peerDependencies:
       '@solidjs/router': ^1.0.0
@@ -6608,7 +6608,7 @@ snapshots:
     dependencies:
       solid-js: 1.9.14
 
-  '@solidjs/start@2.0.0-rc.8(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
+  '@solidjs/start@2.0.0-rc.9(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/traverse': 7.29.7
