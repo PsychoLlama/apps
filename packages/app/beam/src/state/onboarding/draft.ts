@@ -8,7 +8,7 @@
  */
 
 import { defineFold, defineStore, defineTopic } from '@lib/state';
-import { selfNamedTopic } from '../contacts/contacts';
+import { deviceNamedTopic } from '../identity';
 import { beamScope } from '../scope';
 
 /** The half-filled setup form. */
@@ -37,6 +37,6 @@ defineFold(setupNameChangedTopic, [setupDraftStore], (draft, name) => {
 // the name belongs to the device now, so the form has nothing left to hold —
 // while a name the device *refused* never publishes this, and the draft
 // survives for the retry.
-defineFold(selfNamedTopic, [setupDraftStore], (draft) => {
+defineFold(deviceNamedTopic, [setupDraftStore], (draft) => {
   draft.name = '';
 });

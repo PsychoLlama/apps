@@ -6,10 +6,8 @@
 
 import { createTestRuntime } from '@lib/state';
 import { setupDraftStore, setupNameChangedTopic } from '../draft';
-import {
-  contactsLoadFailedTopic,
-  selfNamedTopic,
-} from '../../contacts/contacts';
+import { deviceNamedTopic } from '../../identity';
+import { contactsLoadFailedTopic } from '../../contacts/contacts';
 import { beamScope } from '../../scope';
 
 const setup = () => {
@@ -52,7 +50,7 @@ describe('setupDraftStore', () => {
     commit(setupNameChangedTopic('Carol’s Phone'));
 
     commit(
-      selfNamedTopic({ endpointId: 'ep-1', label: 'Carol’s Phone', at: 1 }),
+      deviceNamedTopic({ endpointId: 'ep-1', label: 'Carol’s Phone', at: 1 }),
     );
 
     expect(peek(setupDraftStore).name).toBe('');

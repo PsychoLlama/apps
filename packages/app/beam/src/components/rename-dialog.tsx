@@ -3,14 +3,17 @@ import { Button, Dialog, Flex, Text, TextField } from '@lib/ui';
 import {
   contactsStore,
   fallbackName,
-  renameClosedTopic,
   renameContactSaga,
-  renameStore,
-  selfFallbackFormula,
-  type RenameTarget,
 } from '../state/contacts';
+import { reportSagaFailure } from '../state/failure';
+import { deviceFallbackFormula, identityStore } from '../state/identity';
 import { LABEL_MAX_LENGTH } from '../state/labels';
-import { renameThisDeviceSaga, reportSagaFailure } from '../state/session';
+import { renameDeviceSaga } from '../state/network';
+import {
+  renameClosedTopic,
+  renameStore,
+  type RenameTarget,
+} from '../state/view';
 
 /** Ties the field to its label. Only one rename form is ever mounted. */
 const NAME_FIELD_ID = 'beam-rename-name';
@@ -38,9 +41,10 @@ export const RenameDialog = (props: {
 }) => {
   const rename = useValue(renameStore);
   const book = useValue(contactsStore);
-  const selfFallback = useValue(selfFallbackFormula);
+  const self = useValue(identityStore);
+  const deviceFallback = useValue(deviceFallbackFormula);
   const runContactRename = useRun(renameContactSaga);
-  const runSelfRename = useRun(renameThisDeviceSaga);
+  const runDeviceRename = useRun(renameDeviceSaga);
   const commit = useCommit();
 
   /** Whether the open form is this one's. */
@@ -55,7 +59,7 @@ export const RenameDialog = (props: {
   /** The local name as stored, which is where an unresolved one lives. */
   const label = () => {
     const mine = props.target;
-    if (mine.kind === 'self') return book().self?.label ?? '';
+    if (mine.kind === 'self') return self().record?.label ?? '';
     return book().entries[mine.endpointId]?.label ?? '';
   };
 
@@ -66,7 +70,7 @@ export const RenameDialog = (props: {
    */
   const placeholder = () => {
     const mine = props.target;
-    if (mine.kind === 'self') return selfFallback();
+    if (mine.kind === 'self') return deviceFallback();
 
     const stored = book().entries[mine.endpointId];
     return stored ? fallbackName(stored) : '';
@@ -88,7 +92,7 @@ export const RenameDialog = (props: {
     // there's one place that decides what a name may be, rather than one
     // rule here and another wherever the next name comes from.
     if (mine.kind === 'self') {
-      void runSelfRename(typed).catch(
+      void runDeviceRename(typed).catch(
         reportSagaFailure('The device rename saga failed.'),
       );
 

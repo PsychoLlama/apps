@@ -3,7 +3,8 @@ import { useValue } from '@lib/state';
 import { Flex, Heading, Text } from '@lib/ui';
 import { ContactList } from './contact-list';
 import { addressBookFormula, contactsStore } from '../state/contacts';
-import { activePeersFormula, queuedSharesFormula } from '../state/session';
+import { activePeersFormula } from '../state/network';
+import { queuedSharesFormula } from '../state/shares';
 import * as styles from './contact-directory.css';
 
 /**

@@ -8,7 +8,7 @@ import { BeamIntro } from './beam-intro';
 import { ContactDirectory } from './contact-directory';
 import { InviteDialog } from './invite-dialog';
 import { contactsStore } from '../state/contacts';
-import { inviteOpenedTopic } from '../state/session';
+import { inviteOpenedTopic } from '../state/view';
 import * as styles from './beam-home.css';
 
 /**

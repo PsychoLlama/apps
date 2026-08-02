@@ -1,5 +1,5 @@
 import { Flex } from '@lib/ui';
-import type { QrGrid } from '../state/session';
+import type { QrGrid } from '../state/platform/qr-code';
 import * as styles from './qr-code.css';
 
 /**

@@ -2,13 +2,10 @@ import { Show } from 'solid-js';
 import { useCommit, useRun, useValue } from '@lib/state';
 import { Button, Flex, Text, TextArea } from '@lib/ui';
 import IconSend from 'virtual:icons/mdi/send-outline';
-import {
-  draftChangedTopic,
-  draftsStore,
-  reportSagaFailure,
-  SHARE_MAX_LENGTH,
-  shareTextSaga,
-} from '../state/session';
+import { reportSagaFailure } from '../state/failure';
+import { shareTextSaga } from '../state/network';
+import { SHARE_MAX_LENGTH } from '../state/share-body';
+import { draftChangedTopic, draftsStore } from '../state/shares';
 
 /**
  * Where text and links are written, at the foot of a peer's share view.

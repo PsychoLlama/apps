@@ -2,7 +2,7 @@ import { For, Show } from 'solid-js';
 import { useValue } from '@lib/state';
 import { Flex } from '@lib/ui';
 import { PairingRequest } from './pairing-request';
-import { pairingRequestsFormula } from '../state/session';
+import { pairingRequestsFormula } from '../state/network';
 import * as styles from './pairing-banner.css';
 
 /**

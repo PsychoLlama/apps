@@ -3,10 +3,10 @@ import { useValue } from '@lib/state';
 import { Flex, Text } from '@lib/ui';
 import {
   connectionStore,
-  focusedPeerFormula,
   type ConnectionStatus,
-  type ShareState,
-} from '../state/session';
+  type PeerState,
+} from '../state/network';
+import { focusedPeerFormula } from '../state/view';
 import * as styles from './status-bar.css';
 
 /** Where the relay connection stands, in the word a reader would use. */
@@ -27,7 +27,7 @@ const describeRelay = (status: ConnectionStatus): string => {
  * flight to anyone watching, and a device that never answered and one that
  * hung up are both, from here, simply not there.
  */
-const describePeer = (state: ShareState): string => {
+const describePeer = (state: PeerState): string => {
   switch (state) {
     case 'preparing':
     case 'connecting':
@@ -47,7 +47,7 @@ const describePeer = (state: ShareState): string => {
  * form is what fits in a bar; this is the part that says what to do about it,
  * and which of the two ways a peer came to be offline this one was.
  */
-const explainPeer = (state: ShareState): string => {
+const explainPeer = (state: PeerState): string => {
   switch (state) {
     case 'preparing':
       return 'Getting ready to connect…';

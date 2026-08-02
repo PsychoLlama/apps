@@ -2,13 +2,9 @@ import { Show } from 'solid-js';
 import { useCommit, useValue } from '@lib/state';
 import { Dialog, Flex, Text, TextField } from '@lib/ui';
 import { QrCode } from './qr-code';
-import {
-  beamLink,
-  identityStore,
-  inviteClosedTopic,
-  inviteStore,
-  qrCodeCell,
-} from '../state/session';
+import { beamLink } from '../state/endpoint';
+import { identityStore, qrCodeCell } from '../state/identity';
+import { inviteClosedTopic, inviteStore } from '../state/view';
 
 /**
  * This device's beam link, as a modal. Two ways to hand the same URL over: a

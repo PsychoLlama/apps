@@ -12,15 +12,18 @@ import {
   onboardingRestoredTopic,
   onboardingStore,
 } from '../progress';
-import { readOnboarding, saveOnboarding } from '../capabilities';
+import {
+  readOnboarding,
+  saveOnboarding,
+  saveContact,
+} from '../../platform/database';
 import {
   finishNamingSaga,
   finishPairingSaga,
   restoreOnboardingSaga,
 } from '../sagas';
-import { contactsStore, selfNamedTopic } from '../../contacts/contacts';
-import { now, saveContact } from '../../contacts/capabilities';
-import { identityStore } from '../../session/identity';
+import { deviceNamedTopic, identityStore } from '../../identity';
+import { now } from '../../platform/host';
 
 /** Progress that hasn't been read back yet. */
 const unread = () =>
@@ -32,8 +35,7 @@ const unread = () =>
 const on = (step: string) =>
   [
     [onboardingStore, { status: 'ready', step, updatedAt: 1 }],
-    [identityStore, { endpointId: 'ep-1' }],
-    [contactsStore, { status: 'ready', self: null, entries: {} }],
+    [identityStore, { endpointId: 'ep-1', record: null }],
   ] as const;
 
 describe('restoreOnboardingSaga', () => {
@@ -99,7 +101,7 @@ describe('finishNamingSaga', () => {
     // Two transitions, in that order: the name belongs to the device before
     // the step it was asked for is over.
     expect(trace.commits).toEqual([
-      [selfNamedTopic({ endpointId: 'ep-1', label: 'Studio', at: 1234 })],
+      [deviceNamedTopic({ endpointId: 'ep-1', label: 'Studio', at: 1234 })],
       [onboardingAdvancedTopic({ step: 'pairing', updatedAt: 1234 })],
     ]);
   });

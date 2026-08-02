@@ -3,7 +3,8 @@ import { useLocation } from '@solidjs/router';
 import { useCommit, useValue } from '@lib/state';
 import { SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 import { Button, Text } from '@lib/ui';
-import { renameOpenedTopic, selfLabelFormula } from '../state/contacts';
+import { deviceNameFormula } from '../state/identity';
+import { renameOpenedTopic } from '../state/view';
 import { RenameDialog } from './rename-dialog';
 
 /**
@@ -73,7 +74,7 @@ export const BeamHeader = (props: {
   renameable: boolean;
 }) => {
   const location = useLocation();
-  const selfLabel = useValue(selfLabelFormula);
+  const deviceName = useValue(deviceNameFormula);
   const commit = useCommit();
 
   return (
@@ -81,7 +82,7 @@ export const BeamHeader = (props: {
       <SiteHeader
         trail={trailFor(location.pathname)}
         actions={
-          <Show when={selfLabel()}>
+          <Show when={deviceName()}>
             {(label) => (
               <Show
                 when={props.renameable}

@@ -13,14 +13,15 @@ import {
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
 import { BeamIntro } from './beam-intro';
 import { InviteDialog } from './invite-dialog';
-import { inviteOpenedTopic, reportSagaFailure } from '../state/session';
+import { reportSagaFailure } from '../state/failure';
 import { LABEL_MAX_LENGTH, normalizeLabel } from '../state/labels';
+import { inviteOpenedTopic } from '../state/view';
 import {
   finishNamingSaga,
   setupDraftStore,
   setupNameChangedTopic,
 } from '../state/onboarding';
-import type { OnboardingStep } from '../state/database';
+import type { OnboardingStep } from '../state/platform/database';
 import * as styles from './beam-onboarding.css';
 
 /**
