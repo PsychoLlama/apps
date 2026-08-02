@@ -18,15 +18,21 @@ export const BEAM_PROTOCOL = 'beam/0';
 export const MAX_MESSAGE_BYTES = 64 * 1024;
 
 /**
- * What two beam endpoints say to each other over a peer link. Everything
- * here is spoken before either side has agreed to anything, so every field
- * arrives from an unauthenticated stranger and is treated as such: the
- * decoder is the trust boundary, and what it lets through is text, never
- * markup and never a command.
+ * What two beam endpoints say to each other over a peer link.
+ *
+ * Reaching this device at all means holding its endpoint id, which is a
+ * 32-byte public key nobody guesses — so a peer on the wire is one that was
+ * given the address. That's what stands in for a handshake, and it's why
+ * there's no message here for agreeing to anything.
+ *
+ * It bounds who can speak, not what they can say. The fields still arrive
+ * from another device and are still treated as such: the decoder is the
+ * boundary, and what it lets through is text, never markup and never a
+ * command.
  *
  * The wire format is JSON in UTF-8, one message per iroh stream — the
  * stream boundary is the message boundary, so nothing here has to frame
- * itself. Cheap to read in a log, and what rides it — a handshake and short
+ * itself. Cheap to read in a log, and what rides it — a greeting and short
  * pieces of text — is nowhere near the size where the encoding would show.
  */
 
@@ -40,24 +46,8 @@ export type BeamMessage =
    */
   | { readonly type: 'hello'; readonly label: string }
   /**
-   * "I've accepted you." Sent when the reader accepts a request, and again
-   * on every later link to a peer already trusted — so an acceptance made
-   * while the other side was away still lands, without either device having
-   * to remember it was owed.
-   *
-   * Believing one is the sharp edge: a stranger can send this unprompted, so
-   * it only means anything when we're the ones waiting. See
-   * `pairingConfirmedTopic`, which is where that rule is enforced.
-   */
-  | { readonly type: 'accept' }
-  /**
    * "Here's something." The point of the whole app: a note or a link, sent
-   * from one paired device to another.
-   *
-   * Only believed from a peer the reader accepted — see `receiveShareSaga`,
-   * which drops one from anybody else. A stranger can put this on the wire
-   * the moment it dials, and a device that shows unsolicited text from
-   * whoever asks is a device that can be shouted at.
+   * from one device to another.
    */
   | { readonly type: 'share'; readonly body: string };
 
@@ -66,9 +56,6 @@ export const helloMessage = (label: string): BeamMessage => ({
   type: 'hello',
   label,
 });
-
-/** "I've accepted you." */
-export const acceptMessage = (): BeamMessage => ({ type: 'accept' });
 
 /** "Here's something." */
 export const shareMessage = (body: string): BeamMessage => ({
@@ -108,9 +95,6 @@ export const decodeMessage = (bytes: Uint8Array): BeamMessage | null => {
         message.label.length <= LABEL_MAX_LENGTH
         ? helloMessage(message.label)
         : null;
-
-    case 'accept':
-      return acceptMessage();
 
     case 'share':
       // Bounded here as well as normalized downstream, for the same reason

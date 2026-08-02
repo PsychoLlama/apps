@@ -15,8 +15,6 @@ const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
   endpointId: 'ep-1',
   label: null,
   suggestedLabel: null,
-  trust: 'trusted',
-  direction: 'outbound',
   createdAt: 1,
   lastSeenAt: 1,
   ...overrides,
@@ -106,14 +104,10 @@ describe('addressBookFormula', () => {
   });
 
   it('carries the fields a row renders from', () => {
-    const { peek } = setup([
-      fakeContact({ trust: 'invited', direction: 'inbound', createdAt: 10 }),
-    ]);
+    const { peek } = setup([fakeContact({ createdAt: 10 })]);
 
     expect(peek(addressBookFormula)[0]).toMatchObject({
       endpointId: 'ep-1',
-      trust: 'invited',
-      direction: 'inbound',
       createdAt: 10,
     });
   });

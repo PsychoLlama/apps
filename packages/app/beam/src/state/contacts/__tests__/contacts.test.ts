@@ -1,7 +1,7 @@
 /**
  * Unit tests for the address book's folds — how a contact enters the book,
- * moves along the trust ladder, and leaves it. Everything here commits facts
- * and asserts state; nothing touches IndexedDB or a saga.
+ * gets named, and leaves it. Everything here commits facts and asserts
+ * state; nothing touches IndexedDB or a saga.
  */
 
 import { createTestRuntime } from '@lib/state';
@@ -14,8 +14,6 @@ import {
   contactsLoadingTopic,
   contactsRestoredTopic,
   contactsStore,
-  pairingAcceptedTopic,
-  pairingConfirmedTopic,
 } from '../contacts';
 import type { Contact } from '../../platform/database';
 import { LABEL_MAX_LENGTH } from '../../labels';
@@ -26,8 +24,6 @@ const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
   endpointId: 'ep-1',
   label: null,
   suggestedLabel: null,
-  trust: 'trusted',
-  direction: 'outbound',
   createdAt: 1,
   lastSeenAt: 1,
   ...overrides,
@@ -90,24 +86,16 @@ describe('contactsLoadFailedTopic', () => {
 });
 
 describe('contactSeenTopic', () => {
-  it('adds an unknown peer as an unanswered invite', () => {
+  it('adds an unknown peer to the book', () => {
     const { commit, peek } = setup();
 
-    commit(
-      contactSeenTopic({
-        endpointId: 'ep-2',
-        direction: 'outbound',
-        seenAt: 500,
-      }),
-    );
+    commit(contactSeenTopic({ endpointId: 'ep-2', seenAt: 500 }));
 
     expect(peek(contactsStore).entries['ep-2']).toEqual({
       kind: 'peer',
       endpointId: 'ep-2',
       label: null,
       suggestedLabel: null,
-      trust: 'invited',
-      direction: 'outbound',
       createdAt: 500,
       lastSeenAt: 500,
     });
@@ -121,37 +109,15 @@ describe('contactSeenTopic', () => {
       ]),
     );
 
-    commit(
-      contactSeenTopic({
-        endpointId: 'ep-1',
-        direction: 'inbound',
-        seenAt: 900,
-      }),
-    );
+    commit(contactSeenTopic({ endpointId: 'ep-1', seenAt: 900 }));
 
     expect(peek(contactsStore).entries['ep-1']).toMatchObject({
       label: 'Laptop',
-      // The pairing was opened outbound; being dialled later doesn't rewrite
-      // how it began.
-      direction: 'outbound',
+      // When the contact entered the book is the one thing a later sighting
+      // can't restate, so meeting again must not overwrite it.
       createdAt: 1,
       lastSeenAt: 900,
     });
-  });
-
-  it('never talks its way up the trust ladder', () => {
-    const { commit, peek } = setup();
-    commit(contactsRestoredTopic([fakeContact({ trust: 'invited' })]));
-
-    commit(
-      contactSeenTopic({
-        endpointId: 'ep-1',
-        direction: 'inbound',
-        seenAt: 900,
-      }),
-    );
-
-    expect(peek(contactsStore).entries['ep-1'].trust).toBe('invited');
   });
 });
 
@@ -254,69 +220,6 @@ describe('contactAdvertisedTopic', () => {
     const { commit, peek } = setup();
 
     commit(contactAdvertisedTopic({ endpointId: 'ep-9', label: 'Ghost' }));
-
-    expect(peek(contactsStore).entries).toEqual({});
-  });
-});
-
-describe('pairingAcceptedTopic', () => {
-  it('promotes a peer the reader answered', () => {
-    const { commit, peek } = setup();
-    commit(
-      contactsRestoredTopic([
-        fakeContact({ trust: 'invited', direction: 'inbound' }),
-      ]),
-    );
-
-    commit(pairingAcceptedTopic('ep-1'));
-
-    expect(peek(contactsStore).entries['ep-1'].trust).toBe('trusted');
-  });
-
-  it('ignores a peer that was already forgotten', () => {
-    const { commit, peek } = setup();
-
-    commit(pairingAcceptedTopic('ep-1'));
-
-    expect(peek(contactsStore).entries).toEqual({});
-  });
-});
-
-describe('pairingConfirmedTopic', () => {
-  it('promotes a peer we were waiting on', () => {
-    const { commit, peek } = setup();
-    commit(
-      contactsRestoredTopic([
-        fakeContact({ trust: 'invited', direction: 'outbound' }),
-      ]),
-    );
-
-    commit(pairingConfirmedTopic('ep-1'));
-
-    expect(peek(contactsStore).entries['ep-1'].trust).toBe('trusted');
-  });
-
-  it('refuses to let a peer accept itself', () => {
-    const { commit, peek } = setup();
-    commit(
-      contactsRestoredTopic([
-        fakeContact({ trust: 'invited', direction: 'inbound' }),
-      ]),
-    );
-
-    commit(pairingConfirmedTopic('ep-1'));
-
-    // The sharp edge of the handshake. A stranger dialling in is filed as
-    // `invited` inbound; if its own claim of acceptance counted, it could
-    // promote itself to `trusted` with nobody ever asked. Trust in this
-    // direction is the reader's alone to grant.
-    expect(peek(contactsStore).entries['ep-1'].trust).toBe('invited');
-  });
-
-  it('ignores a peer that was already forgotten', () => {
-    const { commit, peek } = setup();
-
-    commit(pairingConfirmedTopic('ep-1'));
 
     expect(peek(contactsStore).entries).toEqual({});
   });

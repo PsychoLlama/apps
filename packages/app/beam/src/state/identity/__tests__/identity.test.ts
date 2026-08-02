@@ -36,8 +36,6 @@ const fakePeer = (overrides: Partial<Contact> = {}): Contact => ({
   endpointId: PEER_ID,
   label: null,
   suggestedLabel: null,
-  trust: 'invited',
-  direction: 'outbound',
   createdAt: 1,
   lastSeenAt: 1,
   ...overrides,

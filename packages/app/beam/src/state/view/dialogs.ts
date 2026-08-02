@@ -44,15 +44,14 @@ defineFold(inviteClosedTopic, [inviteStore], (invite) => {
   invite.open = false;
 });
 
-// A peer dialling in is the errand finishing: the link was handed over and
-// somebody used it. Getting the dialog out of the way is what lets the
-// request behind it be seen — it's a modal, so a pairing request that
-// arrives while it's up would otherwise sit under the overlay unnoticed.
+// Meeting a peer is the errand finishing: the link was handed over and
+// somebody used it, so the dialog holding it up has done its job.
 //
-// Only an inbound sighting. Our own dial, from a share view, is us going
-// somewhere rather than someone arriving.
-defineFold(contactSeenTopic, [inviteStore], (invite, { direction }) => {
-  if (direction === 'inbound') invite.open = false;
+// Any sighting, not just an inbound one. The other kind is this device
+// dialling out, which only happens from a share view — where the dialog isn't
+// open, making this a no-op rather than a case worth distinguishing.
+defineFold(contactSeenTopic, [inviteStore], (invite) => {
+  invite.open = false;
 });
 
 /**

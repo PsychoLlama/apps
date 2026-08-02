@@ -1,11 +1,7 @@
 import { defineFormula } from '@lib/state';
 import { generateLabel } from '../labels';
 import { contactsStore } from './contacts';
-import type {
-  Contact,
-  ContactDirection,
-  ContactTrust,
-} from '../platform/database';
+import type { Contact } from '../platform/database';
 
 /** One contact as the address book renders it. */
 export interface ContactView {
@@ -18,12 +14,6 @@ export interface ContactView {
    * typed here and stored here, so the layout gives way rather than the name.
    */
   name: string;
-
-  /** How far the peer has got along the trust ladder. */
-  trust: ContactTrust;
-
-  /** Which side opened the pairing. */
-  direction: ContactDirection;
 
   /** When the contact first entered the address book. */
   createdAt: number;
@@ -50,16 +40,14 @@ const resolveName = (contact: Contact): string =>
  *
  * Names are not deduplicated. Two devices can wear the same one — a peer
  * picks the name it advertises, and nothing stops it picking one already in
- * the book — but accepting a second of the same name is a choice the reader
- * made, and renaming either is one tap away.
+ * the book — but renaming either is one tap away, and the contact page shows
+ * the endpoint key, which is the part that can't collide.
  */
 export const addressBookFormula = defineFormula([contactsStore], (book) =>
   Object.values(book.entries)
     .map((contact): ContactView => ({
       endpointId: contact.endpointId,
       name: resolveName(contact),
-      trust: contact.trust,
-      direction: contact.direction,
       createdAt: contact.createdAt,
     }))
     .sort(

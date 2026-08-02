@@ -3,10 +3,10 @@ import type { PeerLink } from '../platform/iroh';
 import { beamScope } from '../scope';
 
 /**
- * Where a link to one peer sits. This is the transport, not the pairing:
- * a link can be up between two devices that have agreed to nothing, and a
- * trusted pair can have no link at all because one of them is asleep. The
- * address book holds the pairing; this holds whether we can talk right now.
+ * Where a link to one peer sits. This is the transport, not the relationship:
+ * a device in the address book can have no link at all because it's asleep,
+ * and a link can be up to one that isn't in the book yet. The address book
+ * holds who we know; this holds who we can talk to right now.
  *
  * - `dialing` — the dial is in flight.
  * - `linked` — the connection is up and messages flow.

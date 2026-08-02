@@ -22,8 +22,8 @@ const describeRelay = (status: ConnectionStatus): string => {
 };
 
 /**
- * Where the peer connection stands, in one word. The six states collapse to
- * four: a dial that hasn't started yet is indistinguishable from one in
+ * Where the peer connection stands, in one word. The five states collapse to
+ * three: a dial that hasn't started yet is indistinguishable from one in
  * flight to anyone watching, and a device that never answered and one that
  * hung up are both, from here, simply not there.
  */
@@ -32,8 +32,6 @@ const describePeer = (state: PeerState): string => {
     case 'preparing':
     case 'connecting':
       return 'Connecting';
-    case 'awaiting':
-      return 'Waiting';
     case 'connected':
       return 'Connected';
     case 'unreachable':
@@ -53,10 +51,8 @@ const explainPeer = (state: PeerState): string => {
       return 'Getting ready to connect…';
     case 'connecting':
       return 'Connecting…';
-    case 'awaiting':
-      return 'Waiting for them to accept. Keep this device awake.';
     case 'connected':
-      return 'Paired. Ready to share.';
+      return 'Connected. Ready to share.';
     case 'unreachable':
       return 'Couldn’t reach this device. It may be offline.';
     case 'disconnected':
@@ -115,8 +111,7 @@ export const StatusBar = () => {
             title={explainPeer(view().state)}
           >
             {/* The name is the peer's own suggestion until the reader renames
-                it, so it's rendered as a string and never as markup — the
-                same rule the pairing prompt is held to. */}
+                it, so it's rendered as a string and never as markup. */}
             <Text
               as="span"
               size={1}

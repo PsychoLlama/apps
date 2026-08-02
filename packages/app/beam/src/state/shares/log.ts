@@ -29,8 +29,8 @@ export const SHARE_LOG_LIMIT = 200;
  * alongside, because the combinations that would make don't exist: a share
  * we received was never queued, and one we queued was never received.
  *
- * - `queued` — ours, written but not yet on the wire. Either the peer hasn't
- *   accepted us or it isn't reachable right now.
+ * - `queued` — ours, written but not yet on the wire. The peer isn't
+ *   reachable right now.
  * - `sent` — ours, handed to the transport.
  * - `received` — theirs.
  */

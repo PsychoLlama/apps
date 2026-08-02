@@ -9,12 +9,9 @@ import {
   contactsLoadingTopic,
   contactsRestoredTopic,
   contactsStore,
-  pairingAcceptedTopic,
-  pairingConfirmedTopic,
 } from './contacts';
 import { readContacts, removeContact, saveContact } from '../platform/database';
 import { now } from '../platform/host';
-import type { ContactDirection } from '../platform/database';
 
 /**
  * Write a contact's current in-memory state through to IndexedDB. Every
@@ -69,11 +66,11 @@ export const restoreContactsSaga = defineSaga(beamScope, async function* () {
  */
 export const recordPeerSaga = defineSaga(
   beamScope,
-  async function* (input: { endpointId: string; direction: ContactDirection }) {
+  async function* (endpointId: string) {
     const seenAt = yield* call(now);
 
-    yield commit(contactSeenTopic({ ...input, seenAt }));
-    yield* persistContactSaga(input.endpointId);
+    yield commit(contactSeenTopic({ endpointId, seenAt }));
+    yield* persistContactSaga(endpointId);
   },
 );
 
@@ -102,35 +99,10 @@ export const noteAdvertisedNameSaga = defineSaga(
 );
 
 /**
- * Accept a peer's request to pair, promoting it to `trusted` here. Telling
- * the peer is the network's job — this is only the half that has to survive
- * a reload.
- */
-export const acceptContactSaga = defineSaga(
-  beamScope,
-  async function* (endpointId: string) {
-    yield commit(pairingAcceptedTopic(endpointId));
-    yield* persistContactSaga(endpointId);
-  },
-);
-
-/**
- * Record that a peer accepted an invite we sent it. The fold decides whether
- * to believe it — see {@link pairingConfirmedTopic}, which ignores the claim
- * unless we're the side that was waiting.
- */
-export const confirmContactSaga = defineSaga(
-  beamScope,
-  async function* (endpointId: string) {
-    yield commit(pairingConfirmedTopic(endpointId));
-    yield* persistContactSaga(endpointId);
-  },
-);
-
-/**
- * Forget a contact outright. This leaves nothing behind, so the peer is a
- * stranger again the next time it turns up — which is also how you refuse
- * one, since an unanswered invite grants nothing in the first place.
+ * Forget a contact outright. This leaves nothing behind, so the peer arrives
+ * unrecognized the next time it turns up. It doesn't lock anyone out: whoever
+ * holds this device's beam link can still reach it, and doing so files them
+ * afresh.
  */
 export const forgetContactSaga = defineSaga(
   beamScope,

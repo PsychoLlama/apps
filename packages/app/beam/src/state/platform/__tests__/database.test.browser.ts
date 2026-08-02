@@ -40,8 +40,6 @@ const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
   endpointId: 'ep-1',
   label: null,
   suggestedLabel: null,
-  trust: 'trusted',
-  direction: 'outbound',
   createdAt: 1,
   lastSeenAt: 1,
   ...overrides,
@@ -95,6 +93,51 @@ describe('openBeamDatabase', () => {
         step: 'done',
         updatedAt: 1,
       });
+    } finally {
+      database.close();
+    }
+  });
+
+  it('keeps the contacts on a database left at v3', async () => {
+    // The shape v3 shipped: tagged rows carrying the two pairing fields.
+    const legacy = await openDB(DATABASE_NAME, 3, {
+      upgrade: (database) => {
+        database.createObjectStore(CONTACT_STORE, { keyPath: 'endpointId' });
+        database.createObjectStore(ONBOARDING_STORE);
+      },
+    });
+
+    await legacy.put(CONTACT_STORE, {
+      kind: 'peer',
+      endpointId: 'ep-1',
+      label: 'Laptop',
+      suggestedLabel: null,
+      trust: 'trusted',
+      direction: 'outbound',
+      createdAt: 1,
+      lastSeenAt: 2,
+    });
+    await legacy.put(CONTACT_STORE, fakeSelf);
+    legacy.close();
+
+    const database = await openBeamDatabase();
+
+    try {
+      // Unlike v3, the rows survive. A v3 record is perfectly readable; it
+      // just carries two fields that stopped meaning anything, and a contact
+      // is worth more than the trust that used to hang off it.
+      expect(await database.get(CONTACT_STORE, 'ep-1')).toEqual({
+        kind: 'peer',
+        endpointId: 'ep-1',
+        label: 'Laptop',
+        suggestedLabel: null,
+        createdAt: 1,
+        lastSeenAt: 2,
+      });
+
+      // This device's row never carried either field, so it comes through
+      // exactly as it went in.
+      expect(await database.get(CONTACT_STORE, 'ep-self')).toEqual(fakeSelf);
     } finally {
       database.close();
     }

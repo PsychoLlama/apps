@@ -1,9 +1,7 @@
 import { call, commit, defineSaga, read } from '@lib/state';
-import { createLogger } from '@lib/observability';
 import { sendMessage, type PeerLink } from '../../platform/iroh';
 import { shareMessage } from '../../platform/protocol';
 import { newShareId, now } from '../../platform/host';
-import { contactsStore } from '../../contacts';
 import { normalizeShare } from '../../share-body';
 import {
   draftClearedTopic,
@@ -14,7 +12,6 @@ import {
 } from '../../shares';
 import { beamScope } from '../../scope';
 import { peerHandlesCell } from '../peers';
-import { pairingContext } from './pairing-log';
 
 /**
  * Moving shares across a link.
@@ -25,22 +22,15 @@ import { pairingContext } from './pairing-log';
  * whenever there's somebody there to take it.
  */
 
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
-
 /**
  * Hand everything queued for a peer to the transport, in the order it was
- * written. Called wherever a queue might have become sendable: a link coming
- * up, and either side of the pairing being accepted.
+ * written. Called wherever a queue might have become sendable, which is a
+ * link coming up.
  *
  * Takes the link rather than looking one up, so the caller that just
  * established it isn't reading its own commit back out of a cell. Callers
  * that don't hold one look first and skip the flush — an absent peer's queue
  * simply waits for the next link.
- *
- * The trust guard is the point rather than defensive noise, and it lives
- * here so there's one of it: the queue fills from the moment the composer
- * does, which is before the peer has answered, so a share only leaves once
- * the reader has accepted them.
  *
  * Stops at the first send that doesn't land. The link is gone, and marching
  * through the rest of the queue against a dead connection would report a
@@ -49,9 +39,6 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 export const flushSharesSaga = defineSaga(
   beamScope,
   async function* (peer: PeerLink) {
-    const { entries } = yield* read(contactsStore);
-    if (entries[peer.endpointId]?.trust !== 'trusted') return;
-
     const { items } = yield* read(shareLogStore);
     const queued = items.filter(
       (share) =>
@@ -72,26 +59,17 @@ export const flushSharesSaga = defineSaga(
 );
 
 /**
- * Take something a peer shared. Only from a device the reader accepted:
- * a stranger can dial in and start talking before anyone has agreed to
- * anything, and a screen that fills with text from whoever asks is a screen
- * that can be shouted at. Refused shares are logged rather than silently
- * dropped — it's the one message that means somebody tried.
+ * Take something a peer shared.
+ *
+ * Anyone who can put this on the wire already holds this device's endpoint
+ * id, which is the only thing that was ever being checked — so the share is
+ * taken and logged against whoever sent it. The sender is filed as a contact
+ * by the link that carried it, so a share always has a name to sit under,
+ * even if that name is a key prefix.
  */
 export const receiveShareSaga = defineSaga(
   beamScope,
   async function* (input: { endpointId: string; body: string }) {
-    const contact = (yield* read(contactsStore)).entries[input.endpointId];
-
-    if (contact?.trust !== 'trusted') {
-      logger.warn(
-        'Dropped a share from a peer we haven’t paired with.',
-        pairingContext(input.endpointId, contact),
-      );
-
-      return;
-    }
-
     const at = yield* call(now);
     const id = yield* call(newShareId);
 

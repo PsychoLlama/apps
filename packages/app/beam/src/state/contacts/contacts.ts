@@ -1,12 +1,7 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { beamScope } from '../scope';
 import { normalizeLabel } from '../labels';
-import type {
-  Contact,
-  ContactDirection,
-  ContactRecord,
-  LoadStatus,
-} from '../platform/database';
+import type { Contact, ContactRecord, LoadStatus } from '../platform/database';
 
 /** Every peer this device knows about, as held in memory. */
 export interface ContactBook {
@@ -72,8 +67,6 @@ defineFold(contactsLoadFailedTopic, [contactsStore], (book) => {
 export const contactSeenTopic = defineTopic<{
   /** The peer's endpoint public key. */
   endpointId: string;
-  /** Which side opened the pairing. Only used when the contact is new. */
-  direction: ContactDirection;
   /** When the sighting happened, in epoch milliseconds. */
   seenAt: number;
 }>();
@@ -81,12 +74,12 @@ export const contactSeenTopic = defineTopic<{
 defineFold(
   contactSeenTopic,
   [contactsStore],
-  (book, { endpointId, direction, seenAt }) => {
+  (book, { endpointId, seenAt }) => {
     const existing = book.entries[endpointId];
 
-    // A known peer only gets its clock bumped. Trust and direction record how
-    // the pairing began, and seeing someone again is not a reason to revisit
-    // either — a re-dial must never talk its way up the trust ladder.
+    // A known peer only gets its clock bumped. `createdAt` is the one field
+    // that records something a later sighting can't change, so meeting again
+    // must not overwrite it.
     if (existing) {
       existing.lastSeenAt = seenAt;
       return;
@@ -97,8 +90,6 @@ defineFold(
       endpointId,
       label: null,
       suggestedLabel: null,
-      trust: 'invited',
-      direction,
       createdAt: seenAt,
       lastSeenAt: seenAt,
     };
@@ -144,38 +135,6 @@ defineFold(
     if (contact) contact.suggestedLabel = normalizeLabel(label);
   },
 );
-
-/**
- * The reader accepted a peer's request to pair. Only moves a contact that
- * was actually waiting on an answer: a peer already forgotten has nothing to
- * promote, and re-accepting a trusted one is a no-op.
- */
-export const pairingAcceptedTopic = defineTopic<string>();
-defineFold(pairingAcceptedTopic, [contactsStore], (book, endpointId) => {
-  const contact = book.entries[endpointId];
-  if (contact?.trust === 'invited') contact.trust = 'trusted';
-});
-
-/**
- * A peer said it accepted us. This is the one transition driven by a
- * message from the network rather than by the reader, so it carries the
- * tighter guard: it only counts when *we* are the ones waiting, which means
- * a contact we hold as `invited` **outbound**.
- *
- * Without the direction check, any stranger could dial in — which files them
- * as `invited` inbound — and immediately claim acceptance, promoting itself
- * to `trusted` with nobody ever asked. Trust in that direction is the
- * reader's to grant, and it's granted through
- * {@link pairingAcceptedTopic} alone.
- */
-export const pairingConfirmedTopic = defineTopic<string>();
-defineFold(pairingConfirmedTopic, [contactsStore], (book, endpointId) => {
-  const contact = book.entries[endpointId];
-  if (contact?.trust !== 'invited') return;
-  if (contact.direction !== 'outbound') return;
-
-  contact.trust = 'trusted';
-});
 
 /** A contact was removed from the address book. */
 export const contactForgottenTopic = defineTopic<string>();

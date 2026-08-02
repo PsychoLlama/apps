@@ -23,7 +23,6 @@ import {
   addressBookFormula,
   contactsStore,
   forgetContactSaga,
-  type ContactView,
 } from '../state/contacts';
 import { isEndpointId } from '../state/endpoint';
 import { reportSagaFailure } from '../state/failure';
@@ -33,7 +32,6 @@ import {
   removalStore,
   renameOpenedTopic,
 } from '../state/view';
-import { PairingRequest } from './pairing-request';
 import { RenameDialog } from './rename-dialog';
 import * as styles from './beam-contact.css';
 
@@ -44,18 +42,9 @@ const formatMoment = (epochMilliseconds: number): string =>
     timeStyle: 'short',
   }).format(epochMilliseconds);
 
-/** How this contact's pairing stands, phrased from this device's side. */
-const describeTrust = (contact: ContactView): string => {
-  if (contact.trust === 'trusted') return 'Paired. Ready to share.';
-
-  return contact.direction === 'outbound'
-    ? 'Waiting for them to accept the invite.'
-    : 'They asked to pair. Waiting on you.';
-};
-
 /**
  * The contact detail view at `/beam/contacts/:id` — one peer's record: what
- * it's called, how the pairing began, and the controls to rename or forget it.
+ * it's called, when it turned up, and the controls to rename or forget it.
  *
  * Everything below the header renders from the address book, which is read
  * from IndexedDB on the client. That's what keeps this page's prerendered
@@ -142,20 +131,9 @@ export const BeamContact = () => {
                   justify="between"
                   gap={3}
                 >
-                  <Flex as="hgroup" direction="column" gap={2}>
-                    <Heading as="h1" class={styles.name} selectable={false}>
-                      {view().name}
-                    </Heading>
-
-                    <Text
-                      as="p"
-                      size={2}
-                      color="lowContrast"
-                      selectable={false}
-                    >
-                      {describeTrust(view())}
-                    </Text>
-                  </Flex>
+                  <Heading as="h1" class={styles.name} selectable={false}>
+                    {view().name}
+                  </Heading>
 
                   <IconButton
                     testId="beam-contact-rename"
@@ -176,37 +154,11 @@ export const BeamContact = () => {
                   </IconButton>
                 </Flex>
 
-                {/* The same question the banner asks, in the one place that
-                    also shows the endpoint key. A request waved off from the
-                    banner still stands, so this is where it can be answered
-                    against something that can't be spoofed. */}
-                <Show
-                  when={
-                    view().trust === 'invited' && view().direction === 'inbound'
-                  }
-                >
-                  <PairingRequest
-                    testId="beam-contact-request"
-                    contact={view()}
-                  />
-                </Show>
-
                 <DataListRoot orientation="vertical" size={2}>
-                  {/* Status leads the record. It's the one field that says
-                      whether anything can happen with this contact yet. */}
-                  <DataListItem>
-                    <DataListLabel>Status</DataListLabel>
-                    <DataListValue>
-                      <Badge
-                        color={
-                          view().trust === 'trusted' ? 'success' : 'warning'
-                        }
-                        variant="soft"
-                      >
-                        {view().trust === 'trusted' ? 'Paired' : 'Pending'}
-                      </Badge>
-                    </DataListValue>
-                  </DataListItem>
+                  {/* The key leads the record. It's the only field here that
+                      identifies the device rather than describing it — a name
+                      is whatever either side typed, and this is the address
+                      that made the connection happen. */}
                   <DataListItem>
                     <DataListLabel>Endpoint key</DataListLabel>
                     <DataListValue>
@@ -217,14 +169,6 @@ export const BeamContact = () => {
                       >
                         {view().endpointId}
                       </Badge>
-                    </DataListValue>
-                  </DataListItem>
-                  <DataListItem>
-                    <DataListLabel>How you paired</DataListLabel>
-                    <DataListValue>
-                      {view().direction === 'outbound'
-                        ? 'You opened their link'
-                        : 'They opened your link'}
                     </DataListValue>
                   </DataListItem>
                   <DataListItem>
@@ -275,7 +219,7 @@ export const BeamContact = () => {
                   open={removal().endpointId === view().endpointId}
                   onOpenChange={() => commit(removalClosedTopic())}
                   title="Remove this contact?"
-                  description={`${view().name} drops out of your address book. Pairing again means trading links again.`}
+                  description={`${view().name} drops out of your address book. They can still reach this device if they have its link.`}
                   actionText="Remove"
                   color="danger"
                   onAction={handleForget}

@@ -8,7 +8,7 @@ import {
   type PeerLink,
 } from '../../platform/iroh';
 import { receiveNext } from '../../platform/inbox';
-import { acceptMessage, helloMessage } from '../../platform/protocol';
+import { helloMessage } from '../../platform/protocol';
 import { contactsStore, recordPeerSaga } from '../../contacts';
 import { deviceNameFormula } from '../../identity';
 import { finishPairingSaga } from '../../onboarding';
@@ -24,8 +24,8 @@ import {
   peerReleasedTopic,
   peerUnreachableTopic,
 } from '../peers';
-import { pairingContext } from './pairing-log';
-import { applyPeerMessageSaga } from './pairing';
+import { peerContext } from './peer-log';
+import { applyPeerMessageSaga } from './messages';
 import { flushSharesSaga } from './shares';
 
 /**
@@ -80,11 +80,6 @@ const watchPeerSaga = defineSaga(beamScope, async function* (peer: PeerLink) {
  * The link arrives already listening — the capability wires its message
  * queue as it wraps the connection — so a peer that answers the greeting
  * immediately isn't answering into a void.
- *
- * The acceptance re-sent here is what makes pairing eventually consistent:
- * accepting a peer that's away sends nothing at the time, so the next link
- * to a contact we already trust carries the news. Cheap, idempotent, and it
- * spares both devices having to remember an unsent message.
  */
 export const linkPeerSaga = defineSaga(
   beamScope,
@@ -103,11 +98,6 @@ export const linkPeerSaga = defineSaga(
     const label = yield* read(deviceNameFormula);
     if (label) yield* call(sendMessage, peer, helloMessage(label));
 
-    const { entries } = yield* read(contactsStore);
-    if (entries[peer.endpointId]?.trust === 'trusted') {
-      yield* call(sendMessage, peer, acceptMessage());
-    }
-
     // Anything written while this peer was away goes out now. This is the
     // other half of queueing: a share composed against a sleeping device is
     // held until the device turns up, and turning up is this.
@@ -115,27 +105,24 @@ export const linkPeerSaga = defineSaga(
   },
 );
 
-/** Take an inbound dial: file the peer as having asked, then link it. */
+/** Take an inbound dial: file the peer in the address book, then link it. */
 export const greetPeerSaga = defineSaga(
   beamScope,
   async function* (peer: PeerLink) {
-    yield* recordPeerSaga({
-      endpointId: peer.endpointId,
-      direction: 'inbound',
-    });
+    // Logged before the sighting files it, so a device turning up for the
+    // first time reads as new rather than as one we already had.
+    const { entries } = yield* read(contactsStore);
+    const known = Boolean(entries[peer.endpointId]);
+
+    yield* recordPeerSaga(peer.endpointId);
 
     // Somebody found us, which is the whole of what setup's last step asks
     // for. A no-op once it's been answered.
     yield* finishPairingSaga();
 
-    // Logged after the sighting, so a first-time dial reads as the request
-    // it just became rather than as an unknown peer.
-    const contact = (yield* read(contactsStore)).entries[peer.endpointId];
     logger.info(
-      contact?.trust === 'trusted'
-        ? 'A paired device connected.'
-        : 'A peer asked to pair.',
-      pairingContext(peer.endpointId, contact),
+      known ? 'A known device connected.' : 'A new device connected.',
+      peerContext(peer.endpointId, known),
     );
 
     yield* linkPeerSaga(peer);
@@ -144,12 +131,12 @@ export const greetPeerSaga = defineSaga(
 
 /**
  * Dial the peer named in a beam link over the relay connection the layout
- * holds open, recording it in the address book first so the pairing survives
+ * holds open, recording it in the address book first so the contact survives
  * the reload the dial might not. The caller only dials once the connection is
  * `connected`, so a missing endpoint is a caller bug and throws.
  *
  * An id that isn't an address is dropped before any of that. The book is
- * written before the dial — deliberately, so a pairing survives the reload
+ * written before the dial — deliberately, so a contact survives the reload
  * the dial might not — which means a peer that's merely asleep is worth
  * recording, and one that could never exist is not. `/beam/share/bacon` is a
  * URL anybody can type, and without this it leaves a contact behind forever.
@@ -178,19 +165,19 @@ export const dialPeerSaga = defineSaga(
     if (statuses[endpointId] === 'dialing') return;
     if (statuses[endpointId] === 'linked') return;
 
-    yield* recordPeerSaga({ endpointId, direction: 'outbound' });
+    const { entries } = yield* read(contactsStore);
+    const known = Boolean(entries[endpointId]);
+
+    yield* recordPeerSaga(endpointId);
 
     // We found somebody, which answers setup's last step just as well as
     // being found does. Committed before the dial, like the contact is: a
     // peer that turns out to be asleep is still a peer this device has met.
     yield* finishPairingSaga();
 
-    const contact = (yield* read(contactsStore)).entries[endpointId];
     logger.info(
-      contact?.trust === 'trusted'
-        ? 'Reconnecting to a paired device.'
-        : 'Inviting a peer to pair.',
-      pairingContext(endpointId, contact),
+      known ? 'Reconnecting to a known device.' : 'Reaching a new device.',
+      peerContext(endpointId, known),
     );
 
     yield commit(peerDialingTopic(endpointId));
@@ -206,11 +193,12 @@ export const dialPeerSaga = defineSaga(
 );
 
 /**
- * Hang up on a peer, leaving the pairing alone.
+ * Hang up on a peer, leaving the contact alone.
  *
  * This is what leaving a share view does. A connection is the expensive,
- * device-visible half of a pairing — it holds a relay stream open on both
- * ends and keeps the other device listed as reachable — and the share view is
+ * device-visible half of knowing someone — it holds a relay stream open on
+ * both ends and keeps the other device listed as reachable — and the share
+ * view is
  * the only place either matters, so it ends with the view rather than with
  * the scope. Closing it tells the peer plainly, which is the whole reason the
  * far side can show `disconnected` instead of a link that quietly stops

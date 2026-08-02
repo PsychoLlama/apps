@@ -1,7 +1,7 @@
 /**
  * Unit tests for moving shares across a link: what gets queued, what actually
- * goes out, and what is refused on the way in. Simulated, so the assertions
- * are about what each saga published and handed to the transport.
+ * goes out, and what lands on the way in. Simulated, so the assertions are
+ * about what each saga published and handed to the transport.
  */
 
 import { simulate } from '@lib/state';
@@ -9,7 +9,6 @@ import { sendMessage } from '../../platform/iroh';
 import { shareMessage } from '../../platform/protocol';
 import { newShareId, now } from '../../platform/host';
 import { peerHandlesCell } from '../peers';
-import { contactsStore } from '../../contacts';
 import {
   draftClearedTopic,
   shareLogStore,
@@ -25,7 +24,6 @@ import {
 import type { PeerConnection } from '@crate/p2p';
 import type { PeerLink } from '../../platform/iroh';
 import { createInbox } from '../../platform/inbox';
-import type { Contact } from '../../platform/database';
 import type { Share } from '../../shares';
 
 const PEER_ID = `e2${'0'.repeat(62)}`;
@@ -42,26 +40,6 @@ const fakeLink = (endpointId = PEER_ID): PeerLink => ({
   release: () => undefined,
 });
 
-const fakeContact = (overrides: Partial<Contact> = {}): Contact => ({
-  kind: 'peer',
-  endpointId: PEER_ID,
-  label: null,
-  suggestedLabel: null,
-  trust: 'invited',
-  direction: 'outbound',
-  createdAt: 1,
-  lastSeenAt: 1,
-  ...overrides,
-});
-
-/** A book holding one contact, as the write-through path reads it back. */
-const bookHolding = (...contacts: Contact[]) => ({
-  status: 'ready' as const,
-  entries: Object.fromEntries(
-    contacts.map((contact) => [contact.endpointId, contact]),
-  ),
-});
-
 const fakeShare = (overrides: Partial<Share> = {}): Share => ({
   id: 'share-1',
   endpointId: PEER_ID,
@@ -75,7 +53,6 @@ describe('shareTextSaga', () => {
   /** Reads a share makes on its way out to a peer that can't take it yet. */
   const unreachable = () =>
     [
-      [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
       [peerHandlesCell, new Map()],
       [shareLogStore, { items: [] }],
     ] as const;
@@ -130,7 +107,6 @@ describe('shareTextSaga', () => {
       shareTextSaga({ endpointId: PEER_ID, body: 'kettle is on' }),
       {
         reads: [
-          [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
           [peerHandlesCell, new Map([[PEER_ID, link]])],
           [shareLogStore, { items: [fakeShare({ body: 'kettle is on' })] }],
         ],
@@ -155,29 +131,11 @@ describe('flushSharesSaga', () => {
   /** A flush aimed at the peer every fixture here is about. */
   const flush = () => flushSharesSaga(fakeLink());
 
-  it('holds everything back from a peer that hasn’t accepted', async () => {
-    const send = vi.fn(() => true);
-
-    const trace = await simulate(flush(), {
-      reads: [
-        [contactsStore, bookHolding(fakeContact({ trust: 'invited' }))],
-        [shareLogStore, { items: [fakeShare()] }],
-      ],
-      calls: [[sendMessage, send]],
-    });
-
-    // The queue fills from the moment the composer does, which is before the
-    // peer has answered. Sending anyway would hand text to a stranger.
-    expect(send).not.toHaveBeenCalled();
-    expect(trace.commits).toEqual([]);
-  });
-
   it('sends the queue in the order it was written', async () => {
     const sent: string[] = [];
 
     const trace = await simulate(flush(), {
       reads: [
-        [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
         [
           shareLogStore,
           {
@@ -211,7 +169,6 @@ describe('flushSharesSaga', () => {
 
     const trace = await simulate(flush(), {
       reads: [
-        [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
         [
           shareLogStore,
           {
@@ -237,7 +194,6 @@ describe('flushSharesSaga', () => {
 
     const trace = await simulate(flush(), {
       reads: [
-        [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
         [
           shareLogStore,
           {
@@ -260,9 +216,7 @@ describe('receiveShareSaga', () => {
     const trace = await simulate(
       receiveShareSaga({ endpointId: PEER_ID, body: 'kettle is on' }),
       {
-        reads: [
-          [contactsStore, bookHolding(fakeContact({ trust: 'trusted' }))],
-        ],
+        reads: [],
         calls: [
           [now, () => 1234],
           [newShareId, () => 'share-1'],
@@ -282,13 +236,10 @@ describe('receiveShareSaga', () => {
     ]);
   });
 
-  it('drops a share from a peer nobody accepted', async () => {
+  it('takes one from a peer that isn’t in the book yet', async () => {
     const trace = await simulate(
-      receiveShareSaga({ endpointId: PEER_ID, body: 'buy something' }),
+      receiveShareSaga({ endpointId: 'ep-9', body: 'kettle is on' }),
       {
-        reads: [
-          [contactsStore, bookHolding(fakeContact({ trust: 'invited' }))],
-        ],
         calls: [
           [now, () => 1234],
           [newShareId, () => 'share-1'],
@@ -296,23 +247,18 @@ describe('receiveShareSaga', () => {
       },
     );
 
-    // A stranger can dial in and start talking before anyone has agreed to
-    // anything. This is the guard that keeps it off the screen.
-    expect(trace.commits).toEqual([]);
-  });
-
-  it('drops a share from a peer that isn’t in the book at all', async () => {
-    const trace = await simulate(
-      receiveShareSaga({ endpointId: 'ep-9', body: 'buy something' }),
-      {
-        reads: [[contactsStore, bookHolding()]],
-        calls: [
-          [now, () => 1234],
-          [newShareId, () => 'share-1'],
-        ],
-      },
-    );
-
-    expect(trace.commits).toEqual([]);
+    // Holding this device's endpoint id is the whole of what it takes to
+    // reach it, so a share is taken on its own terms. The link that carried
+    // it files the sender, which is what gives the row a name to sit under.
+    expect(trace.commits).toEqual([
+      [
+        shareReceivedTopic({
+          id: 'share-1',
+          endpointId: 'ep-9',
+          body: 'kettle is on',
+          at: 1234,
+        }),
+      ],
+    ]);
   });
 });
