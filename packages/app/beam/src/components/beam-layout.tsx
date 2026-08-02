@@ -69,7 +69,12 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
 
   return (
     <Frame>
-      <BeamHeader />
+      {/* The rename control stands down for the step whose whole job is to
+          collect the name. Two ways to answer one question, one of them a
+          modal over the other, and only the form below advances setup. */}
+      <BeamHeader
+        renameable={surface() === 'pairing' || surface() === 'session'}
+      />
 
       {/* `unknown` matches nothing on purpose: it's the state where no screen
           is the right one, and the frame's header is all there is to show. */}

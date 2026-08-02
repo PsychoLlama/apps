@@ -161,7 +161,14 @@ export const BeamContact = () => {
                     title="Rename this contact"
                     variant="soft"
                     color="neutral"
-                    onClick={() => commit(renameOpenedTopic(params.id))}
+                    onClick={() =>
+                      commit(
+                        renameOpenedTopic({
+                          kind: 'peer',
+                          endpointId: params.id,
+                        }),
+                      )
+                    }
                   >
                     <IconPencil width="18" height="18" aria-hidden="true" />
                   </IconButton>
@@ -254,7 +261,9 @@ export const BeamContact = () => {
                   </Button>
                 </Flex>
 
-                <RenameDialog endpointId={view().endpointId} />
+                <RenameDialog
+                  target={{ kind: 'peer', endpointId: view().endpointId }}
+                />
 
                 {/* The name is in the question because the page it was asked
                     from is about to be left behind — the confirmation is the

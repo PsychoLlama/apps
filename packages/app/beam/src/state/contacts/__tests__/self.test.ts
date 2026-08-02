@@ -11,7 +11,7 @@ import {
   selfNamedTopic,
 } from '../contacts';
 import { addressBookFormula } from '../address-book';
-import { selfLabelFormula } from '../self';
+import { selfFallbackFormula, selfLabelFormula } from '../self';
 import { identityResolvedTopic } from '../../session/identity';
 import { generateLabel } from '../../labels';
 import { beamScope } from '../../scope';
@@ -101,6 +101,27 @@ describe('selfNamedTopic', () => {
     expect(peek(contactsStore).self?.label).toBe('Studio');
   });
 
+  it('clears the name when the field is emptied', () => {
+    const { commit, peek } = setup();
+    commit(selfNamedTopic({ endpointId: SELF_ID, label: 'Studio', at: 1 }));
+
+    commit(selfNamedTopic({ endpointId: SELF_ID, label: '  ', at: 2 }));
+
+    // Cleared rather than stored as a blank. A device carrying an empty
+    // string tells every peer it's called nothing at all; a device carrying
+    // `null` falls back to the prefix of its own key.
+    expect(peek(contactsStore).self?.label).toBeNull();
+  });
+
+  it('clears the name when it is dropped outright', () => {
+    const { commit, peek } = setup();
+    commit(selfNamedTopic({ endpointId: SELF_ID, label: 'Studio', at: 1 }));
+
+    commit(selfNamedTopic({ endpointId: SELF_ID, label: null, at: 2 }));
+
+    expect(peek(contactsStore).self?.label).toBeNull();
+  });
+
   it('keeps the date the device was first named', () => {
     const { commit, peek } = setup();
     commit(selfNamedTopic({ endpointId: SELF_ID, label: 'Studio', at: 1 }));
@@ -171,5 +192,34 @@ describe('selfLabelFormula', () => {
     // The row remembers where the key was when the name was typed; peers dial
     // the live one.
     expect(peek(selfLabelFormula)).toBe('Studio');
+  });
+
+  it('goes back to the key prefix once the name is cleared', () => {
+    const { commit, peek } = setup();
+    commit(identityResolvedTopic(SELF_ID));
+    commit(selfNamedTopic({ endpointId: SELF_ID, label: 'Studio', at: 1 }));
+
+    commit(selfNamedTopic({ endpointId: SELF_ID, label: null, at: 2 }));
+
+    expect(peek(selfLabelFormula)).toBe(generateLabel(SELF_ID));
+  });
+});
+
+describe('selfFallbackFormula', () => {
+  it('has nothing to fall back to before the key lands', () => {
+    const { peek } = setup();
+
+    expect(peek(selfFallbackFormula)).toBe('');
+  });
+
+  it('answers with the key prefix, named or not', () => {
+    const { commit, peek } = setup();
+    commit(identityResolvedTopic(SELF_ID));
+
+    commit(selfNamedTopic({ endpointId: SELF_ID, label: 'Studio', at: 1 }));
+
+    // What clearing the name would get you, which is what the rename form
+    // promises in its placeholder — so it can't be the name already typed.
+    expect(peek(selfFallbackFormula)).toBe(generateLabel(SELF_ID));
   });
 });

@@ -80,14 +80,9 @@ export const recordPeerSaga = defineSaga(
 );
 
 /**
- * Name this device, answering whether it took.
- *
- * The name is normalized here, before it goes anywhere, because it's *written
- * to disk* — what's stored has to be the same string the fold settles on
- * rather than whatever the field held. A blank name is refused rather than
- * saved as one: a device carrying an empty string is worse off than one
- * carrying `null`, since the fallback to its key prefix stops working and
- * every peer is told it's called nothing at all.
+ * Rename this device, answering whether it took. An emptied field clears the
+ * name, dropping the device back to the prefix of its own key — the same
+ * fallback an unnamed contact wears, so it's a name rather than a blank.
  *
  * Needs the key, so it can't run before one lands. In practice one always
  * has: the key is minted on load and this is driven by a button.
@@ -96,16 +91,10 @@ export const recordPeerSaga = defineSaga(
  * than left behind. The name follows the device, so a rotated key would
  * otherwise leave a second self row on disk — and the read that picks one of
  * them up would be picking arbitrarily.
- *
- * The answer is for the caller's benefit — setting a device up moves on only
- * once this lands, and a refused name shouldn't move anything.
  */
-export const nameSelfSaga = defineSaga(
+export const renameSelfSaga = defineSaga(
   beamScope,
-  async function* (raw: string) {
-    const label = normalizeLabel(raw);
-    if (!label) return false;
-
+  async function* (label: string | null) {
     const { endpointId } = yield* read(identityStore);
     if (!endpointId) return false;
 
@@ -122,6 +111,25 @@ export const nameSelfSaga = defineSaga(
     if (self) yield* call(saveContact, { ...self });
 
     return true;
+  },
+);
+
+/**
+ * Name this device for the first time, answering whether it took.
+ *
+ * The same write as a rename, with the one rule setup adds: a blank is
+ * refused rather than accepted as a name. Clearing a name later is a choice
+ * about what to fall back to; a blank field at the step whose whole purpose is
+ * to collect a name is an unanswered question, and the answer is what setup
+ * waits on before moving off it.
+ */
+export const nameSelfSaga = defineSaga(
+  beamScope,
+  async function* (raw: string) {
+    const label = normalizeLabel(raw);
+    if (!label) return false;
+
+    return yield* renameSelfSaga(label);
   },
 );
 

@@ -36,3 +36,16 @@ export const selfLabelFormula = defineFormula(
     return book.self?.label ?? generateLabel(self.endpointId);
   },
 );
+
+/**
+ * What this device would be called if nobody had named it — a contact's
+ * `fallbackName`, for the one row with no peer on the other end to have
+ * advertised anything. This is what clearing the name falls back to, so the
+ * rename form shows it as the field's placeholder.
+ *
+ * Empty until the key lands, which is the same moment the rename control
+ * appears at all.
+ */
+export const selfFallbackFormula = defineFormula([identityStore], (self) =>
+  self.endpointId ? generateLabel(self.endpointId) : '',
+);

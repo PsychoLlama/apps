@@ -5,7 +5,10 @@ import {
   fallbackName,
   renameClosedTopic,
   renameContactSaga,
+  renameSelfSaga,
   renameStore,
+  selfFallbackFormula,
+  type RenameTarget,
 } from '../state/contacts';
 import { LABEL_MAX_LENGTH } from '../state/labels';
 import { reportSagaFailure } from '../state/session';
@@ -17,28 +20,45 @@ const NAME_FIELD_ID = 'beam-rename-name';
 const NAME_FIELD = 'label';
 
 /**
- * The rename form for one contact, as a modal. Renaming is deliberate and
+ * The rename form for one record, as a modal. Renaming is deliberate and
  * occasional — it isn't part of reading the record — so it opens on request
  * instead of sitting on the page as a field to be edited by accident.
  *
- * Bound to an endpoint rather than to whatever is on screen: the store holds
- * the contact the form was opened over, so it can't end up aimed at a
- * different record.
+ * Bound to a target rather than to whatever is on screen: the store holds the
+ * record the form was opened over, so it can't end up aimed at a different
+ * one.
+ *
+ * It renames this device by the same route it renames a peer, because from the
+ * reader's side it is the same act — give this endpoint a name, or clear it and
+ * let it fall back. Only the wording and where the name is read from differ,
+ * which is what the target decides.
  */
 export const RenameDialog = (props: {
-  /** The contact this form renames. */
-  endpointId: string;
+  /** The record this form renames. */
+  target: RenameTarget;
 }) => {
   const rename = useValue(renameStore);
   const book = useValue(contactsStore);
-  const run = useRun(renameContactSaga);
+  const selfFallback = useValue(selfFallbackFormula);
+  const runContactRename = useRun(renameContactSaga);
+  const runSelfRename = useRun(renameSelfSaga);
   const commit = useCommit();
 
-  /** The contact as stored, which is where an unresolved local name lives. */
-  const contact = () => book().entries[props.endpointId];
+  /** Whether the open form is this one's. */
+  const open = () => {
+    const active = rename().target;
+    const mine = props.target;
+    if (!active) return false;
+    if (mine.kind === 'self') return active.kind === 'self';
+    return active.kind === 'peer' && active.endpointId === mine.endpointId;
+  };
 
-  /** The local name as stored — empty when the contact has never been named. */
-  const label = () => contact()?.label ?? '';
+  /** The local name as stored, which is where an unresolved one lives. */
+  const label = () => {
+    const mine = props.target;
+    if (mine.kind === 'self') return book().self?.label ?? '';
+    return book().entries[mine.endpointId]?.label ?? '';
+  };
 
   /**
    * What the name would revert to if cleared. The placeholder promises what
@@ -46,7 +66,10 @@ export const RenameDialog = (props: {
    * local name the field is already showing.
    */
   const placeholder = () => {
-    const stored = contact();
+    const mine = props.target;
+    if (mine.kind === 'self') return selfFallback();
+
+    const stored = book().entries[mine.endpointId];
     return stored ? fallbackName(stored) : '';
   };
 
@@ -58,24 +81,39 @@ export const RenameDialog = (props: {
     // `FormData` widens to `File` for the general case; a text input only ever
     // yields a string, so anything else is treated as an empty field.
     const entry = new FormData(event.currentTarget).get(NAME_FIELD);
+    const typed = typeof entry === 'string' ? entry : '';
+    const mine = props.target;
 
     // Handed over as typed. The fold normalizes it — trimming, capping, and
     // reading an emptied field as a request to clear the local name — so
     // there's one place that decides what a name may be, rather than one
     // rule here and another wherever the next name comes from.
-    void run({
-      endpointId: props.endpointId,
-      label: typeof entry === 'string' ? entry : '',
-    }).catch(reportSagaFailure('The contact rename saga failed.'));
+    if (mine.kind === 'self') {
+      void runSelfRename(typed).catch(
+        reportSagaFailure('The device rename saga failed.'),
+      );
+
+      return;
+    }
+
+    void runContactRename({ endpointId: mine.endpointId, label: typed }).catch(
+      reportSagaFailure('The contact rename saga failed.'),
+    );
   };
 
   return (
     <Dialog
       testId="beam-rename-dialog"
-      open={rename().endpointId === props.endpointId}
+      open={open()}
       onOpenChange={() => commit(renameClosedTopic())}
-      title="Rename contact"
-      description="Choose a nickname for this contact."
+      title={
+        props.target.kind === 'self' ? 'Rename this device' : 'Rename contact'
+      }
+      description={
+        props.target.kind === 'self'
+          ? 'Choose the name other devices see you by.'
+          : 'Choose a nickname for this contact.'
+      }
       maxWidth="24rem"
     >
       <Flex as="form" direction="column" gap={4} onSubmit={handleSubmit}>

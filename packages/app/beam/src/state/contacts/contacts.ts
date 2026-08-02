@@ -88,7 +88,9 @@ defineFold(contactsRestoredTopic, [contactsStore], (book, records) => {
 /**
  * The reader named this device. Normalized on the way in like every other
  * name, so what the store settles on is what gets written to disk and what
- * every peer is told.
+ * every peer is told. A `null` label clears the name outright, and a blank one
+ * clears it too — either way the device drops back to the prefix of its own
+ * key, which is a real name rather than an absence.
  *
  * Renaming keeps the row's original date: a device named twice is the same
  * device, and `createdAt` is when it first became one. A key that changed
@@ -99,8 +101,8 @@ defineFold(contactsRestoredTopic, [contactsStore], (book, records) => {
 export const selfNamedTopic = defineTopic<{
   /** This device's current endpoint address. */
   endpointId: string;
-  /** The name typed for it, as typed. */
-  label: string;
+  /** The name typed for it, as typed, or `null` to clear it. */
+  label: string | null;
   /** When it was named, in epoch milliseconds. */
   at: number;
 }>();
@@ -112,7 +114,7 @@ defineFold(
     book.self = {
       kind: 'self',
       endpointId,
-      label: normalizeLabel(label),
+      label: label === null ? null : normalizeLabel(label),
       createdAt: book.self?.createdAt ?? at,
     };
   },
