@@ -13,28 +13,29 @@ import {
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
 import { BeamIntro } from './beam-intro';
 import { InviteDialog } from './invite-dialog';
-import {
-  createIdentitySaga,
-  inviteOpenedTopic,
-  reportSagaFailure,
-} from '../state/session';
+import { inviteOpenedTopic, reportSagaFailure } from '../state/session';
 import { LABEL_MAX_LENGTH, normalizeLabel } from '../state/labels';
-import { setupDraftStore, setupNameChangedTopic } from '../state/onboarding';
+import {
+  finishNamingSaga,
+  setupDraftStore,
+  setupNameChangedTopic,
+} from '../state/onboarding';
+import type { OnboardingStep } from '../state/database';
 import * as styles from './beam-onboarding.css';
 
 /**
- * Which step of setting up a device the reader is on. Derived rather than
- * held — see `state/surface.ts` — so there is no way to be on a step the
- * device hasn't actually reached.
+ * Which step of setting up a device the reader is on. The two the flow
+ * actually renders — `done` is the third value the step can take, and it's
+ * the one where this component isn't on screen at all.
  */
-export type OnboardingStep = 'identity' | 'pairing';
+export type SetupStep = Exclude<OnboardingStep, 'done'>;
 
 /** How many steps there are, for the counter and the bar to agree on. */
 const STEP_COUNT = 2;
 
 /** Where each step sits in the sequence, for the reader's benefit. */
-const STEP_NUMBER: Record<OnboardingStep, number> = {
-  identity: 1,
+const STEP_NUMBER: Record<SetupStep, number> = {
+  naming: 1,
   pairing: 2,
 };
 
@@ -46,34 +47,35 @@ const NAME_FIELD_ID = 'beam-device-name';
 const NAME_FIELD = 'label';
 
 /**
- * Setting up a device, as two things done in order: mint an identity, then
- * meet another device with it.
+ * Setting up a device, as two things done in order: name it, then meet
+ * another device with it.
  *
- * Both are the reader's to start. The first is a key that other people will
- * come to know this device by, and the second ends up on someone else's
- * screen — neither is the kind of thing to do on a visitor's behalf while
- * they're still reading the page.
+ * Both are the reader's to start. The first is what everyone they pair with
+ * will know this device by, and the second ends up on someone else's screen —
+ * neither is the kind of thing to do on a visitor's behalf while they're
+ * still reading the page.
  *
- * The step is a prop rather than state of its own: what you've got decides
- * what you see, so there is no "next" to press and no way to be looking at
- * step two on a device that never finished step one.
+ * The step is a prop rather than state of its own. It's read from the scope
+ * one level up, where it's persisted, so a step finished here is a step
+ * finished for good and there's no way to be looking at step two on a device
+ * that never got through step one.
  *
  * Nothing here says how to leave. Step two ends when a device turns up, which
  * is the thing it's asking for — a flow with a way past it is a flow that
  * gets pressed past.
  */
-export const BeamOnboarding = (props: { step: OnboardingStep }) => {
+export const BeamOnboarding = (props: { step: SetupStep }) => {
   const draft = useValue(setupDraftStore);
-  const create = useRun(createIdentitySaga);
+  const finishNaming = useRun(finishNamingSaga);
   const commit = useCommit();
 
-  /** The name as typed, held in the scope so a failed mint doesn't lose it. */
+  /** The name as typed, held in the scope so a stumble doesn't lose it. */
   const name = () => draft().name;
 
   /**
-   * Whether there's a name to mint under. Measured with the rule that will
-   * actually decide, so the button can't offer to submit something the saga
-   * would turn away — a field holding two spaces looks filled in and isn't.
+   * Whether there's a name to save. Measured with the rule that will actually
+   * decide, so the button can't offer to submit something the saga would turn
+   * away — a field holding two spaces looks filled in and isn't.
    */
   const named = () => normalizeLabel(name()) !== null;
 
@@ -89,8 +91,8 @@ export const BeamOnboarding = (props: { step: OnboardingStep }) => {
     // so the requirement is enforced here too rather than only on the button.
     if (!named()) return;
 
-    void create(name()).catch(
-      reportSagaFailure('The identity creation saga failed.'),
+    void finishNaming(name()).catch(
+      reportSagaFailure('The device naming saga failed.'),
     );
   };
 
@@ -128,7 +130,7 @@ export const BeamOnboarding = (props: { step: OnboardingStep }) => {
               </Flex>
 
               <Switch>
-                <Match when={props.step === 'identity'}>
+                <Match when={props.step === 'naming'}>
                   <Flex as="div" direction="column" gap={2}>
                     <Heading as="h2" size={4} selectable={false}>
                       Name this device
@@ -201,7 +203,7 @@ export const BeamOnboarding = (props: { step: OnboardingStep }) => {
                         has to be visibly waiting on it. */}
                     <Flex as="div" direction="row">
                       <Button
-                        testId="beam-create-identity"
+                        testId="beam-name-device"
                         type="submit"
                         disabled={!named()}
                       >

@@ -2,14 +2,14 @@
  * What the setup form is holding while it's being filled in.
  *
  * In the scope rather than in the field because the form is torn down and
- * rebuilt around it: a mint that fails puts the device back on step one, and
- * the name typed a moment ago should still be there rather than having to be
- * typed again.
+ * rebuilt around it: leaving the step and coming back, or a save that didn't
+ * land, should still have the name typed a moment ago rather than asking for
+ * it again.
  */
 
 import { defineFold, defineStore, defineTopic } from '@lib/state';
-import { identityResolvedTopic } from './session';
-import { beamScope } from './scope';
+import { deviceNamedTopic } from '../device/device';
+import { beamScope } from '../scope';
 
 /** The half-filled setup form. */
 export interface SetupDraft {
@@ -32,11 +32,11 @@ defineFold(setupNameChangedTopic, [setupDraftStore], (draft, name) => {
   draft.name = name;
 });
 
-// A landed identity takes the draft with it. Folding the session's own topic
+// A name that landed takes the draft with it. Folding the device's own topic
 // keeps that automatic, and keeps it on exactly the right side of the line:
-// the name is now the device's, so the form has nothing left to hold — while
-// a mint that *failed* never publishes this, and the draft survives for the
-// retry.
-defineFold(identityResolvedTopic, [setupDraftStore], (draft) => {
+// the name belongs to the device now, so the form has nothing left to hold —
+// while a name the device *refused* never publishes this, and the draft
+// survives for the retry.
+defineFold(deviceNamedTopic, [setupDraftStore], (draft) => {
   draft.name = '';
 });

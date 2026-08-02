@@ -1,6 +1,5 @@
 import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
 import type { EndpointSession } from './capabilities';
-import { identityAbsentTopic } from './identity';
 import { beamScope } from '../scope';
 
 /**
@@ -101,21 +100,6 @@ defineFold(relayChangedTopic, [connectionStore], (connection, homeRelay) => {
 
   connection.homeRelay = homeRelay;
   connection.status = homeRelay ? 'connected' : 'connecting';
-});
-
-// Nothing is connecting on a device with no key, and nothing will until one
-// exists — so the connect that just ran is over, and this puts the store back
-// exactly where it started rather than leaving a handshake apparently in
-// flight forever.
-//
-// `started` is the point. Setting up a device is itself a connect, under a key
-// that didn't exist a moment ago, and it's guarded on this flag: left set, the
-// first attempt would be turned away as a duplicate of the attempt that
-// discovered there was nothing to attempt.
-defineFold(identityAbsentTopic, [connectionStore], (connection) => {
-  connection.status = 'connecting';
-  connection.homeRelay = null;
-  connection.started = false;
 });
 
 /**

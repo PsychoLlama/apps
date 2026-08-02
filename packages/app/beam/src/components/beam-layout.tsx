@@ -10,6 +10,8 @@ import { PairingBanner } from './pairing-banner';
 import { StatusBar } from './status-bar';
 import { connectRelaySaga, reportSagaFailure } from '../state/session';
 import { restoreContactsSaga } from '../state/contacts';
+import { restoreDeviceSaga } from '../state/device';
+import { restoreOnboardingSaga } from '../state/onboarding';
 import { beamScope } from '../state/scope';
 import { beamSurfaceFormula, surfaceForRoute } from '../state/surface';
 import * as styles from './beam-layout.css';
@@ -30,12 +32,12 @@ import * as styles from './beam-layout.css';
  * book stays open beside whatever route is in the pane. It's absent below
  * `md`, where the home page carries the same directory inline.
  *
- * All three of them, and the route itself, wait on what this device has: a
- * key, and someone to use it with. Without either there's no session to
- * report on and no onward route worth showing, so the frame holds the
- * onboarding flow instead — and while the answer is still coming back it
- * holds neither, because picking a surface and swapping it a moment later is
- * a flash of the wrong app.
+ * All three of them, and the route itself, wait on how far setting this
+ * device up has got. Until it's been set up there's no session worth
+ * reporting on and no onward route worth showing, so the frame holds the
+ * setup flow instead — and while the disk is still answering it holds
+ * neither, because picking a surface and swapping it a moment later is a
+ * flash of the wrong app.
  *
  * The anchor is the only lifecycle wiring here: releasing it on cleanup
  * aborts the connect and frees the endpoint.
@@ -45,18 +47,28 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
   const location = useLocation();
   const derived = useValue(beamSurfaceFormula);
   const connect = useRun(connectRelaySaga);
-  const restore = useRun(restoreContactsSaga);
+  const restoreContacts = useRun(restoreContactsSaga);
+  const restoreDevice = useRun(restoreDeviceSaga);
+  const restoreOnboarding = useRun(restoreOnboardingSaga);
 
   /** Which screen to show — the derived one, unless the route outranks it. */
   const surface = () => surfaceForRoute(derived(), location.pathname);
 
   onMount(() => {
     // Neither the wasm, the handshake, nor IndexedDB can run during SSG, so
-    // both start once the client mounts. They're independent: the address
-    // book is readable whether or not the endpoint ever comes up.
+    // all four start once the client mounts. They're independent, and the
+    // disk answers long before the relay does: the address book, this
+    // device's name, and how far its setup has got are all readable whether
+    // or not the endpoint ever comes up.
     void connect().catch(reportSagaFailure('The beam connect saga failed.'));
-    void restore().catch(
+    void restoreContacts().catch(
       reportSagaFailure('The address book restore saga failed.'),
+    );
+    void restoreDevice().catch(
+      reportSagaFailure('The device name restore saga failed.'),
+    );
+    void restoreOnboarding().catch(
+      reportSagaFailure('The setup progress restore saga failed.'),
     );
   });
 
@@ -67,8 +79,8 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
       {/* `unknown` matches nothing on purpose: it's the state where no screen
           is the right one, and the frame's header is all there is to show. */}
       <Switch>
-        <Match when={surface() === 'identity'}>
-          <BeamOnboarding step="identity" />
+        <Match when={surface() === 'naming'}>
+          <BeamOnboarding step="naming" />
         </Match>
 
         <Match when={surface() === 'pairing'}>

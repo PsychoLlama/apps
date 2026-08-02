@@ -17,19 +17,9 @@ import {
   endpointCell,
   relayChangedTopic,
 } from '../connection';
-import {
-  identityAbsentTopic,
-  identityFailedTopic,
-  identityResolvedTopic,
-  identityStore,
-  selfLabelFormula,
-} from '../identity';
+import { identityResolvedTopic, identityStore } from '../identity';
 import { codeEncodedTopic, qrCodeCell, type QrGrid } from '../qr-code';
-import { generateLabel } from '../../labels';
 import { beamScope } from '../../scope';
-
-/** A well-formed endpoint id, for the tests that read a name out of one. */
-const SELF_ID = `e1${'0'.repeat(62)}`;
 
 /**
  * A stand-in endpoint session. Only `release` is ever called, and only on
@@ -127,13 +117,11 @@ describe('relayChangedTopic', () => {
 });
 
 describe('identityStore', () => {
-  it('knows nothing about this device before the vault answers', () => {
+  it('has no address before the key has loaded', () => {
     const { peek } = setup();
 
-    // Not `absent`: that's a claim about the device, and prerender is in no
-    // position to make one. Onboarding hangs off `absent`, so seeding it
-    // would offer a fresh key to every device on first paint.
-    expect(peek(identityStore).status).toBe('pending');
+    // What prerender and first paint show. The wasm can't run during SSG, so
+    // there is nothing this device could claim to be yet.
     expect(peek(identityStore).endpointId).toBeNull();
   });
 });
@@ -142,73 +130,13 @@ describe('identityResolvedTopic', () => {
   it('names this device before any connection lands', () => {
     const { commit, peek } = setup();
 
-    commit(identityResolvedTopic({ endpointId: 'ep-1', label: null }));
+    commit(identityResolvedTopic('ep-1'));
 
-    expect(peek(identityStore).status).toBe('ready');
     expect(peek(identityStore).endpointId).toBe('ep-1');
     // The whole point of splitting it out: the address is readable from the
     // key alone, with no relay involved.
     expect(peek(connectionStore).status).toBe('connecting');
     expect(peek(endpointCell)).toBeNull();
-  });
-
-  it('holds the chosen name against the same rule every name obeys', () => {
-    const { commit, peek } = setup();
-
-    commit(identityResolvedTopic({ endpointId: 'ep-1', label: '  Studio  ' }));
-
-    expect(peek(identityStore).label).toBe('Studio');
-    expect(peek(selfLabelFormula)).toBe('Studio');
-  });
-
-  it('falls back to the key prefix when the name is unrecoverable', () => {
-    const { commit, peek } = setup();
-
-    commit(identityResolvedTopic({ endpointId: SELF_ID, label: null }));
-
-    // Setting a device up requires a name, so this is the vault having lost
-    // one and kept the key. The device still has a name — the start of its
-    // own key, the same as an unnamed contact.
-    expect(peek(identityStore).label).toBeNull();
-    expect(peek(selfLabelFormula)).toBe(generateLabel(SELF_ID));
-  });
-});
-
-describe('identityAbsentTopic', () => {
-  it('marks a device that has never been set up', () => {
-    const { commit, peek } = setup();
-
-    commit(identityAbsentTopic());
-
-    expect(peek(identityStore).status).toBe('absent');
-    expect(peek(identityStore).endpointId).toBeNull();
-  });
-
-  it('puts the connection back where it started', () => {
-    const { commit, peek } = setup();
-    commit(connectingTopic());
-
-    commit(identityAbsentTopic());
-
-    // Setting the device up is itself a connect, and it's guarded on this
-    // flag. Left set, the first attempt would be turned away as a duplicate
-    // of the attempt that discovered there was nothing to attempt.
-    expect(peek(connectionStore).started).toBe(false);
-    expect(peek(connectionStore).status).toBe('connecting');
-    expect(peek(connectionStore).homeRelay).toBeNull();
-  });
-});
-
-describe('identityFailedTopic', () => {
-  it('keeps an unreadable key apart from a missing one', () => {
-    const { commit, peek } = setup();
-
-    commit(identityFailedTopic());
-
-    // `failed`, not `absent`. We don't know whether there's a key, and
-    // rendering onboarding here would offer to mint a second identity over
-    // the top of a working one.
-    expect(peek(identityStore).status).toBe('failed');
   });
 });
 
@@ -243,7 +171,7 @@ describe('codeEncodedTopic', () => {
   it('lands without waiting for the relay connection', () => {
     const { commit, peek } = setup();
 
-    commit(identityResolvedTopic({ endpointId: 'ep-1', label: null }));
+    commit(identityResolvedTopic('ep-1'));
     commit(codeEncodedTopic(fakeGrid));
 
     // The code encodes the link, and the link is the address the key

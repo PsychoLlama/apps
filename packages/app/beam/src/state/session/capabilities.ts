@@ -24,43 +24,17 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 const SECRET_KEY_ID: VaultId = 'iroh/secret-key';
 
 /**
- * Vault id the device's chosen name is persisted under. Alongside the key
- * rather than in the address book because it's part of this device's identity
- * rather than a record about someone else — and because the two are written
- * together when a device is set up, and read back together on every load.
- *
- * Not a secret, and stored encrypted anyway. The vault is where identity
- * lives, and a second storage mechanism for one string would only be a second
- * thing to keep in step with the key it names.
- */
-const DEVICE_NAME_ID: VaultId = 'p2p/device-name';
-
-/**
- * The iroh wasm init promise, memoized so the module instantiates once. Both
- * ways in — restoring an identity and minting one — start with it, and a
- * device that mints on its first visit would otherwise instantiate twice.
- */
-let p2pReady: Promise<unknown> | undefined;
-
-/** Instantiate the iroh wasm module, at most once per page. */
-const initP2p = async (): Promise<void> => {
-  p2pReady ??= init();
-  await p2pReady;
-};
-
-/**
  * Restore the saved endpoint key, or `undefined` if none is stored. A failed
  * read (e.g. IndexedDB blocked in private mode, or a cleared encryption key) is
- * logged and swallowed, and answers `undefined` like an empty vault does: a key
- * we can't read is a key we can't be, and the caller treats both as a device
- * that hasn't been set up rather than failing the load outright.
+ * logged and swallowed: persistence is a convenience, so we fall back to
+ * minting a fresh identity rather than failing the connect outright.
  */
 const restoreSecretKey = async (): Promise<Uint8Array | undefined> => {
   try {
     const stored = await read(SECRET_KEY_ID);
     return stored ? new Uint8Array(stored) : undefined;
   } catch (error) {
-    logger.warn('Could not read the saved endpoint key.', {
+    logger.warn('Could not read the saved endpoint key; minting a fresh one.', {
       error: toError(error),
     });
     return undefined;
@@ -68,56 +42,16 @@ const restoreSecretKey = async (): Promise<Uint8Array | undefined> => {
 };
 
 /**
- * Restore the name this device was given when it was set up, or `null` if it
- * was never named. Swallows a failed read like {@link restoreSecretKey} does,
- * and for a lighter reason: an unreadable name costs the device its label, and
- * the key prefix stands in — worth far less than turning away a key that read
- * back perfectly well.
+ * Persist the endpoint's key so its identity — and beam link — survives a
+ * reload. Best-effort for the same reason as {@link restoreSecretKey}: a
+ * failed write only means the identity may change next time, not that this
+ * connection is unusable.
  */
-const restoreDeviceName = async (): Promise<string | null> => {
+const persistSecretKey = async (secretKey: Uint8Array): Promise<void> => {
   try {
-    const stored = await read(DEVICE_NAME_ID);
-    return stored ? new TextDecoder().decode(stored) : null;
+    await write(SECRET_KEY_ID, secretKey);
   } catch (error) {
-    logger.warn('Could not read this device’s saved name.', {
-      error: toError(error),
-    });
-    return null;
-  }
-};
-
-/**
- * Persist a freshly minted identity — the key, and the name chosen with it.
- *
- * Best-effort, and awaited rather than left in the background: this is the
- * whole of what setting up a device does, so its failure is worth knowing
- * before the flow moves on. A failed write still leaves a usable identity in
- * memory, so it's reported rather than thrown — the session works, and the
- * next reload asks to set the device up again.
- *
- * The name goes second and on its own, so the order of the two failures is
- * the survivable one: a key whose name didn't save falls back to its own key
- * prefix and works, where a name saved against a key that didn't would be a
- * label for nobody — and would be read back next load as the name of whatever
- * key got minted instead.
- */
-const persistIdentity = async (self: SelfKey): Promise<void> => {
-  try {
-    await write(SECRET_KEY_ID, self.secretKey);
-  } catch (error) {
-    logger.warn('Could not persist the endpoint key; identity will not last.', {
-      error: toError(error),
-    });
-
-    return;
-  }
-
-  if (!self.label) return;
-
-  try {
-    await write(DEVICE_NAME_ID, new TextEncoder().encode(self.label));
-  } catch (error) {
-    logger.warn('Could not persist this device’s name.', {
+    logger.warn('Could not persist the endpoint key; identity may change.', {
       error: toError(error),
     });
   }
@@ -141,17 +75,6 @@ export interface SelfKey {
 
   /** The raw secret key. Never commit this to a store — it *is* the device. */
   readonly secretKey: Uint8Array;
-
-  /**
-   * What this device is called, as the reader named it when they set it up.
-   *
-   * `null` only where the name couldn't be recovered — the write that saved
-   * it failed, or the read that should have brought it back did. Setting a
-   * device up requires a name, so this is a loss rather than a choice, and
-   * the key prefix stands in as it does for an unnamed contact. Unlike the
-   * key, this is ordinary data and belongs in a store.
-   */
-  readonly label: string | null;
 }
 
 /**
@@ -305,54 +228,51 @@ const defineSession = (identity: Identity): EndpointSession => {
 };
 
 /**
- * Instantiate the iroh wasm module and load this device's saved identity,
- * without touching the network. Client-only — the wasm fetch can't run during
+ * Instantiate the iroh wasm module and settle this device's identity, without
+ * touching the network. Client-only — the wasm fetch can't run during
  * prerender — but far quicker than the handshake that follows, which is the
  * point of it being its own step: the address is derived from the key, so the
  * view can name this device and render its beam link while the relay is still
  * being dialled.
  *
- * Restores only. `null` means there is no key on this device, which is how a
- * device that hasn't been set up is told apart from one that has — nothing is
- * minted behind the reader's back, because a key is an identity other people
- * will come to know this device by, and handing one out to a passing visitor
- * makes every such device a stranger's device by default.
+ * Reuses a saved identity, or mints a fresh one, so the address (and thus the
+ * beam link) survives a reload. A fresh key is persisted in the background: it
+ * only decides whether *next* time reuses this identity, so nothing here has
+ * to wait for the write.
+ *
+ * A key is not a commitment. It costs nothing to hold, means nothing until
+ * somebody dials it, and having one on hand is what lets a device that just
+ * scanned a link answer immediately — so it's minted on arrival rather than
+ * held back behind a screen the reader hasn't got to yet. What this device is
+ * *called*, and whether it has met anyone, are separate questions with
+ * separate answers on disk.
  *
  * Hands back plain bytes rather than the wasm handle. The handle would have to
  * survive until {@link openConnection} takes it, and one held across a saga
  * step leaks if the scope dies in between.
  */
-export const loadIdentity = async (
-  signal: AbortSignal,
-): Promise<SelfKey | null> => {
+export const loadIdentity = async (signal: AbortSignal): Promise<SelfKey> => {
   try {
-    await initP2p();
+    await init();
     signal.throwIfAborted();
     logger.debug('Iroh wasm initialized.');
 
     const restored = await restoreSecretKey();
     signal.throwIfAborted();
 
-    if (!restored) {
-      logger.debug('No endpoint identity is stored on this device.');
-      return null;
-    }
-
-    const label = await restoreDeviceName();
-    signal.throwIfAborted();
-
-    const identity = Identity.from(restored);
+    const identity = restored ? Identity.from(restored) : Identity.create();
 
     let self: SelfKey;
     try {
       self = {
         endpointId: identity.endpointId,
         secretKey: identity.secretKey,
-        label,
       };
     } finally {
       identity.free();
     }
+
+    if (!restored) void persistSecretKey(self.secretKey);
 
     logger.debug('Endpoint identity ready.', { endpointId: self.endpointId });
     return self;
@@ -361,60 +281,6 @@ export const loadIdentity = async (
     // isn't worth reporting as a failure.
     if (!signal.aborted) {
       logger.error('Failed to settle this device’s identity.', {
-        error: toError(error),
-      });
-    }
-
-    throw error;
-  }
-};
-
-/**
- * Mint an identity for this device and save it: a fresh endpoint key, and the
- * name the reader chose to go with it. What setting up a device actually
- * does, and the only thing in the app that creates a key.
- *
- * The name arrives already normalized, and non-empty — the caller runs it
- * through the same authority every other name in the app goes through, and
- * turns away what's left of a blank field. It's written to disk, so what's
- * stored has to match what the store settles on.
- *
- * Rejects if the mint or the wasm fails; a failed *save* does not, since the
- * identity in hand is perfectly usable and only its durability was lost.
- */
-export const createIdentity = async (
-  signal: AbortSignal,
-  label: string,
-): Promise<SelfKey> => {
-  try {
-    await initP2p();
-    signal.throwIfAborted();
-
-    const identity = Identity.create();
-
-    let self: SelfKey;
-    try {
-      self = {
-        endpointId: identity.endpointId,
-        secretKey: identity.secretKey,
-        label,
-      };
-    } finally {
-      identity.free();
-    }
-
-    await persistIdentity(self);
-    signal.throwIfAborted();
-
-    logger.info('Minted an endpoint identity for this device.', {
-      endpointId: self.endpointId,
-      named: Boolean(self.label),
-    });
-
-    return self;
-  } catch (error) {
-    if (!signal.aborted) {
-      logger.error('Failed to mint an identity for this device.', {
         error: toError(error),
       });
     }

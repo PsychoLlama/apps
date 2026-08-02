@@ -14,7 +14,6 @@ import type { Endpoint, PeerConnection } from '@crate/p2p';
 import {
   awaitPeerClose,
   copyText,
-  createIdentity,
   dialEndpoint,
   encodeBeamCode,
   loadIdentity,
@@ -35,12 +34,7 @@ import {
   connectionStore,
   endpointCell,
 } from '../connection';
-import {
-  identityAbsentTopic,
-  identityFailedTopic,
-  identityResolvedTopic,
-  selfLabelFormula,
-} from '../identity';
+import { identityResolvedTopic } from '../identity';
 import { createInbox } from '../inbox';
 import {
   peerDialingTopic,
@@ -68,7 +62,6 @@ import {
   applyPeerMessageSaga,
   connectRelaySaga,
   copyShareSaga,
-  createIdentitySaga,
   dialPeerSaga,
   disconnectPeerSaga,
   encodeInviteSaga,
@@ -81,6 +74,12 @@ import {
   watchRelaySaga,
 } from '../sagas';
 import { now, saveContact } from '../../contacts/capabilities';
+import { selfLabelFormula } from '../../device/device';
+import {
+  onboardingAdvancedTopic,
+  onboardingStore,
+} from '../../onboarding/progress';
+import { saveOnboarding } from '../../onboarding/capabilities';
 import {
   contactAdvertisedTopic,
   contactSeenTopic,
@@ -117,10 +116,20 @@ const fakeSession: EndpointSession = {
 const fakeSelf: SelfKey = {
   endpointId: SELF_ID,
   secretKey: new Uint8Array(32),
-  label: null,
 };
 
 const fakeGrid: QrGrid = { size: 1, modules: new Uint8Array([1]) };
+
+/**
+ * A device that finished setting up. The default for the peer sagas, which
+ * all run through the last setup step and have nothing to say about it once
+ * it's answered — the two tests that *are* about it read `midSetup` instead.
+ */
+const setUp = () => ({ status: 'ready', step: 'done', updatedAt: 1 }) as const;
+
+/** A device on setup's last step, waiting to meet somebody. */
+const midSetup = () =>
+  ({ status: 'ready', step: 'pairing', updatedAt: 1 }) as const;
 
 /**
  * A stand-in peer link, already listening — which is what a real one is by
@@ -186,7 +195,7 @@ describe('connectRelaySaga', () => {
     // is still a round trip away.
     expect(trace.commits).toEqual([
       [connectingTopic()],
-      [identityResolvedTopic({ endpointId: SELF_ID, label: null })],
+      [identityResolvedTopic(SELF_ID)],
       [connectedTopic(fakeSession)],
     ]);
   });
@@ -237,7 +246,7 @@ describe('connectRelaySaga', () => {
     // knows what it's called and what its link is.
     expect(trace.commits).toEqual([
       [connectingTopic()],
-      [identityResolvedTopic({ endpointId: SELF_ID, label: null })],
+      [identityResolvedTopic(SELF_ID)],
       [connectFailedTopic()],
     ]);
   });
@@ -256,34 +265,13 @@ describe('connectRelaySaga', () => {
       ],
     });
 
-    // Both, in one transition: with no address there's nothing to dial from,
-    // and an identity nobody could read is not the same news as a relay that
-    // wouldn't answer.
+    // Nothing landed but the failure. With no address there is nothing to
+    // dial from and nothing to draw a beam link out of.
     expect(trace.commits).toEqual([
       [connectingTopic()],
-      [identityFailedTopic(), connectFailedTopic()],
-    ]);
-  });
-
-  it('stops at an unset device rather than minting it a key', async () => {
-    const open = vi.fn(() => fakeSession);
-
-    const trace = await simulate(connectRelaySaga(), {
-      reads: [...idle()],
-      calls: [
-        [loadIdentity, () => null],
-        [openConnection, open],
-      ],
-    });
-
-    // The absence is the fact, and it's the last one: there's nothing to
-    // join the relay network as, and nothing to draw a beam link from.
-    expect(trace.commits).toEqual([
-      [connectingTopic()],
-      [identityAbsentTopic()],
+      [connectFailedTopic()],
     ]);
 
-    expect(open).not.toHaveBeenCalled();
     expect(trace.spawns).toHaveLength(0);
   });
 
@@ -311,126 +299,6 @@ describe('connectRelaySaga', () => {
     // showing a connect under way. The cell holds one endpoint; a second
     // connect would drop the first unfreed.
     expect(open).not.toHaveBeenCalled();
-    expect(trace.commits).toEqual([]);
-  });
-});
-
-describe('createIdentitySaga', () => {
-  /** A device nothing has set up yet. */
-  const unset = () =>
-    [
-      [
-        connectionStore,
-        { status: 'connecting', homeRelay: null, started: false },
-      ],
-    ] as const;
-
-  it('mints a key under the chosen name and comes up under it', async () => {
-    const mint = vi.fn(() => ({ ...fakeSelf, label: 'This laptop' }));
-
-    const trace = await simulate(createIdentitySaga('This laptop'), {
-      reads: [...unset()],
-      calls: [
-        [createIdentity, mint],
-        [openConnection, () => fakeSession],
-      ],
-    });
-
-    expect(mint).toHaveBeenCalledWith(expect.any(AbortSignal), 'This laptop');
-
-    // The same three transitions a restored identity publishes: from here on
-    // there is no difference between a key that was minted and one that was
-    // read back.
-    expect(trace.commits).toEqual([
-      [connectingTopic()],
-      [identityResolvedTopic({ endpointId: SELF_ID, label: 'This laptop' })],
-      [connectedTopic(fakeSession)],
-    ]);
-  });
-
-  it('normalizes the name before it is written anywhere', async () => {
-    const mint = vi.fn(() => fakeSelf);
-
-    await simulate(createIdentitySaga('  Kitchen iPad \n'), {
-      reads: [...unset()],
-      calls: [
-        [createIdentity, mint],
-        [openConnection, () => fakeSession],
-      ],
-    });
-
-    // Unlike every other name in the app, this one is persisted — so what
-    // reaches the vault has to be what the store would settle on rather than
-    // whatever the field held.
-    expect(mint).toHaveBeenCalledWith(expect.any(AbortSignal), 'Kitchen iPad');
-  });
-
-  it('refuses to mint a device nobody named', async () => {
-    const mint = vi.fn(() => fakeSelf);
-
-    const trace = await simulate(createIdentitySaga('   '), {
-      reads: [...unset()],
-      calls: [
-        [createIdentity, mint],
-        [openConnection, () => fakeSession],
-      ],
-    });
-
-    // A field holding two spaces looks filled in and isn't. The rule lives
-    // here rather than only on the button, because Enter submits a one-field
-    // form whatever the button is doing.
-    expect(mint).not.toHaveBeenCalled();
-    expect(trace.commits).toEqual([]);
-  });
-
-  it('leaves a device that failed to mint able to try again', async () => {
-    const trace = await simulate(createIdentitySaga('This laptop'), {
-      reads: [...unset()],
-      calls: [
-        [
-          createIdentity,
-          () => {
-            throw new Error('wasm blocked');
-          },
-        ],
-        [openConnection, vi.fn()],
-      ],
-    });
-
-    // `absent`, not `failed`: we know exactly what's true of this device —
-    // it has no key — so the flow can put the form back rather than stranding
-    // the reader on a surface with nothing to do. The absence undoes the
-    // `connecting` in front of it, which is what lets them try again.
-    expect(trace.commits).toEqual([
-      [connectingTopic()],
-      [identityAbsentTopic()],
-    ]);
-  });
-
-  it('refuses to mint a second key over the first', async () => {
-    const mint = vi.fn(() => fakeSelf);
-
-    const trace = await simulate(createIdentitySaga('Second try'), {
-      reads: [
-        [
-          connectionStore,
-          {
-            status: 'connected',
-            homeRelay: 'https://relay.example',
-            started: true,
-          },
-        ],
-      ],
-      calls: [
-        [createIdentity, mint],
-        [openConnection, vi.fn()],
-      ],
-    });
-
-    // The sharper half of the same guard the load carries: a double-submit
-    // would replace a key that may already have been handed to someone as a
-    // beam link, and everyone holding it would be looking at a stranger.
-    expect(mint).not.toHaveBeenCalled();
     expect(trace.commits).toEqual([]);
   });
 });
@@ -679,12 +547,14 @@ describe('greetPeerSaga', () => {
         [contactsStore, bookHolding(fakeContact({ direction: 'inbound' }))],
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
+        [onboardingStore, setUp()],
       ],
       calls: [
         [now, () => 1234],
         [saveContact, vi.fn()],
         [sendMessage, vi.fn()],
         [releasePeer, vi.fn()],
+        [saveOnboarding, vi.fn()],
       ],
     });
 
@@ -699,6 +569,30 @@ describe('greetPeerSaga', () => {
         }),
       ],
       [peerLinkedTopic(link)],
+    ]);
+  });
+
+  it('ends setup for a device that has just been found', async () => {
+    const trace = await simulate(greetPeerSaga(fakeLink()), {
+      reads: [
+        [contactsStore, bookHolding(fakeContact({ direction: 'inbound' }))],
+        [peerHandlesCell, new Map()],
+        [selfLabelFormula, 'abcd1234'],
+        [onboardingStore, midSetup()],
+      ],
+      calls: [
+        [now, () => 1234],
+        [saveContact, vi.fn()],
+        [sendMessage, vi.fn()],
+        [releasePeer, vi.fn()],
+        [saveOnboarding, vi.fn()],
+      ],
+    });
+
+    // Being found answers the last step as well as finding somebody does.
+    // Whoever scanned the code is on the other end of this.
+    expect(trace.commits).toContainEqual([
+      onboardingAdvancedTopic({ step: 'done', updatedAt: 1234 }),
     ]);
   });
 });
@@ -771,6 +665,7 @@ describe('dialPeerSaga', () => {
       [saveContact, vi.fn()],
       [sendMessage, vi.fn()],
       [releasePeer, vi.fn()],
+      [saveOnboarding, vi.fn()],
     ] as const;
 
   /** Reads a dial makes on its way through to a link. */
@@ -781,6 +676,7 @@ describe('dialPeerSaga', () => {
       [peerHandlesCell, new Map()],
       [selfLabelFormula, 'abcd1234'],
       [contactsStore, bookHolding(fakeContact())],
+      [onboardingStore, setUp()],
     ] as const;
 
   it('dials over the endpoint the layout holds open', async () => {
@@ -818,6 +714,27 @@ describe('dialPeerSaga', () => {
       ],
       [peerDialingTopic(PEER_ID)],
       [peerLinkedTopic(link)],
+    ]);
+  });
+
+  it('ends setup for a device that has just found somebody', async () => {
+    const trace = await simulate(dialPeerSaga(PEER_ID), {
+      reads: [
+        [endpointCell, fakeSession],
+        [peerLinksStore, { statuses: {} }],
+        [peerHandlesCell, new Map()],
+        [selfLabelFormula, 'abcd1234'],
+        [contactsStore, bookHolding(fakeContact())],
+        [onboardingStore, midSetup()],
+      ],
+      calls: [...wiring(), [dialEndpoint, () => fakeLink()]],
+    });
+
+    // Scanning a beam link is the ordinary way out of setup's last step, and
+    // it lands with the contact rather than with the connection: a peer
+    // that's merely asleep has still been met.
+    expect(trace.commits).toContainEqual([
+      onboardingAdvancedTopic({ step: 'done', updatedAt: 1234 }),
     ]);
   });
 
@@ -936,6 +853,7 @@ describe('dialPeerSaga', () => {
         [peerHandlesCell, new Map()],
         [selfLabelFormula, 'abcd1234'],
         [contactsStore, bookHolding(fakeContact())],
+        [onboardingStore, setUp()],
       ],
       calls: [...wiring(), [dialEndpoint, dial]],
     });

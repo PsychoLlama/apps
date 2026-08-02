@@ -12,7 +12,6 @@ import { codeEncodedTopic } from './qr-code';
 import {
   awaitPeerClose,
   copyText,
-  createIdentity,
   dialEndpoint,
   encodeBeamCode,
   loadIdentity,
@@ -24,14 +23,8 @@ import {
   wait,
   type PeerLink,
   type EndpointSession,
-  type SelfKey,
 } from './capabilities';
-import {
-  identityAbsentTopic,
-  identityFailedTopic,
-  identityResolvedTopic,
-  selfLabelFormula,
-} from './identity';
+import { identityResolvedTopic } from './identity';
 import {
   peerClosedTopic,
   peerDialingTopic,
@@ -66,8 +59,9 @@ import {
   recordPeerSaga,
 } from '../contacts';
 import { now } from '../contacts/capabilities';
+import { selfLabelFormula } from '../device';
+import { finishPairingSaga } from '../onboarding';
 import { isEndpointId } from '../endpoint-id';
-import { normalizeLabel } from '../labels';
 import { beamScope } from '../scope';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -339,6 +333,10 @@ export const greetPeerSaga = defineSaga(
       direction: 'inbound',
     });
 
+    // Somebody found us, which is the whole of what setup's last step asks
+    // for. A no-op once it's been answered.
+    yield* finishPairingSaga();
+
     // Logged after the sighting, so a first-time dial reads as the request
     // it just became rather than as an unknown peer.
     const contact = (yield* read(contactsStore)).entries[peer.endpointId];
@@ -403,52 +401,18 @@ export const encodeInviteSaga = defineSaga(
 );
 
 /**
- * Publish a settled identity and join the relay network under it. The half of
- * coming up that doesn't care where the key came from — restored from the
- * vault on load, or minted a second ago by setting the device up.
+ * Settle this device's identity, then join the relay network under it.
  *
  * Two steps, published separately, because they finish at very different
  * times. The identity is a key derivation — the address is readable the
- * moment the key is — so the header can name this device and the invite can
- * show its link while the handshake is still a round trip away. Waiting for
- * the relay to say either would leave the page blank for the slowest part of
- * coming up.
+ * moment the wasm is up and the vault has answered — so the header can name
+ * this device and the invite can show its link while the handshake is still
+ * a round trip away. Waiting for the relay to say either would leave the page
+ * blank for the slowest part of coming up.
  *
  * Once the endpoint lands, three things run against it for the life of the
  * scope: inbound dials are served, relay changes are reported, and the QR
  * encode — started earlier, off the identity — finishes whenever it finishes.
- */
-export const joinRelaySaga = defineSaga(
-  beamScope,
-  async function* (self: SelfKey) {
-    yield commit(
-      identityResolvedTopic({
-        endpointId: self.endpointId,
-        label: self.label,
-      }),
-    );
-
-    yield* spawn(encodeInviteSaga(self.endpointId));
-
-    try {
-      const session = yield* call(openConnection, self);
-      yield commit(connectedTopic(session));
-      yield* spawn(serveInboundSaga(session));
-      yield* spawn(watchRelaySaga(session));
-    } catch {
-      // Reported by the capability, which has the context to describe it.
-      yield commit(connectFailedTopic());
-    }
-  },
-);
-
-/**
- * Load this device's saved identity, then join the relay network under it.
- *
- * A device with no saved key stops here. There is nothing to join the network
- * as, and minting one unasked would give the visitor an identity — and a beam
- * link others could save — before they had said they wanted one. The absence
- * is published as its own fact, and onboarding is what acts on it.
  *
  * Client-only, so `BeamLayout` starts it from `onMount`. Cancellation rides
  * the scope's signal: releasing the last anchor aborts the connect and frees
@@ -464,73 +428,20 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
 
   yield commit(connectingTopic());
 
-  let self: SelfKey | null;
   try {
-    self = yield* call(loadIdentity);
+    const self = yield* call(loadIdentity);
+    yield commit(identityResolvedTopic(self.endpointId));
+    yield* spawn(encodeInviteSaga(self.endpointId));
+
+    const session = yield* call(openConnection, self);
+    yield commit(connectedTopic(session));
+    yield* spawn(serveInboundSaga(session));
+    yield* spawn(watchRelaySaga(session));
   } catch {
-    // Reported by the capability, which has the context to describe it. The
-    // connection fails with it: there is no address to dial anyone from, and
-    // an unresolved identity is not the same news as an unreachable relay.
-    yield commit(identityFailedTopic(), connectFailedTopic());
-    return;
+    // Reported by the capability, which has the context to describe it.
+    yield commit(connectFailedTopic());
   }
-
-  if (!self) {
-    yield commit(identityAbsentTopic());
-    return;
-  }
-
-  yield* joinRelaySaga(self);
 });
-
-/**
- * Set this device up: mint an identity under the name the reader chose, then
- * come up under it. The first step of onboarding, and the only thing in the
- * app that creates a key.
- *
- * Guarded on the same flag the load is, and for a sharper reason: without it,
- * a double-submit mints a second key over the first — and the first may
- * already have been handed to someone as a beam link.
- *
- * The name is normalized before it goes anywhere, unlike the other names in
- * the app: this one is *written to disk*, so it has to be the same string the
- * fold would settle on rather than whatever the field held.
- *
- * A name is required, and this is where that's true rather than only in the
- * form. Nothing normalizes to a name means nothing to mint: the key would
- * outlive the moment anyone could be asked again, and every device that saved
- * it would have a row with no name in it.
- *
- * A failed mint puts the device back exactly where it started — `absent`, and
- * with nothing connecting — so the form comes back and the reader can try
- * again. `absent` rather than `failed` because we know precisely what's true
- * of this device: it has no key. The failure itself is only in the log, which
- * is a gap worth closing when this flow stops being a scaffold.
- */
-export const createIdentitySaga = defineSaga(
-  beamScope,
-  async function* (label: string) {
-    const name = normalizeLabel(label);
-    if (!name) return;
-
-    const { started } = yield* read(connectionStore);
-    if (started) return;
-
-    yield commit(connectingTopic());
-
-    let self: SelfKey;
-    try {
-      self = yield* call(createIdentity, name);
-    } catch {
-      // Reported by the capability, which has the context to describe it.
-      // The absence undoes the `connecting` above along with it.
-      yield commit(identityAbsentTopic());
-      return;
-    }
-
-    yield* joinRelaySaga(self);
-  },
-);
 
 /**
  * Dial the peer named in a beam link over the relay connection the layout
@@ -569,6 +480,11 @@ export const dialPeerSaga = defineSaga(
     if (statuses[endpointId] === 'linked') return;
 
     yield* recordPeerSaga({ endpointId, direction: 'outbound' });
+
+    // We found somebody, which answers setup's last step just as well as
+    // being found does. Committed before the dial, like the contact is: a
+    // peer that turns out to be asleep is still a peer this device has met.
+    yield* finishPairingSaga();
 
     const contact = (yield* read(contactsStore)).entries[endpointId];
     logger.info(

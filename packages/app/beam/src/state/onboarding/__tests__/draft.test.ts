@@ -5,14 +5,9 @@
  */
 
 import { createTestRuntime } from '@lib/state';
-import { setupDraftStore, setupNameChangedTopic } from '../onboarding';
-import {
-  identityAbsentTopic,
-  identityResolvedTopic,
-} from '../session/identity';
-import { beamScope } from '../scope';
-
-const SELF_ID = `e1${'0'.repeat(62)}`;
+import { setupDraftStore, setupNameChangedTopic } from '../draft';
+import { deviceLoadFailedTopic, deviceNamedTopic } from '../../device/device';
+import { beamScope } from '../../scope';
 
 const setup = () => {
   const runtime = createTestRuntime();
@@ -37,14 +32,15 @@ describe('setupDraftStore', () => {
     expect(peek(setupDraftStore).name).toBe('  Carol’s Ph');
   });
 
-  it('keeps the name when the mint failed', () => {
+  it('keeps the name when nothing landed', () => {
     const { commit, peek } = setup();
     commit(setupNameChangedTopic('Carol’s Phone'));
 
-    commit(identityAbsentTopic());
+    commit(deviceLoadFailedTopic());
 
-    // The form is torn down and rebuilt around the draft on a failure. Making
-    // them retype what they just typed would be the app's mistake, twice.
+    // The form is rebuilt around the draft on anything short of success.
+    // Making them retype what they just typed would be the app's mistake,
+    // twice.
     expect(peek(setupDraftStore).name).toBe('Carol’s Phone');
   });
 
@@ -52,7 +48,7 @@ describe('setupDraftStore', () => {
     const { commit, peek } = setup();
     commit(setupNameChangedTopic('Carol’s Phone'));
 
-    commit(identityResolvedTopic({ endpointId: SELF_ID, label: 'Carol' }));
+    commit(deviceNamedTopic('Carol’s Phone'));
 
     expect(peek(setupDraftStore).name).toBe('');
   });
