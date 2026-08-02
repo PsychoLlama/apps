@@ -494,9 +494,12 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
  *
  * The name is normalized before it goes anywhere, unlike the other names in
  * the app: this one is *written to disk*, so it has to be the same string the
- * fold would settle on rather than whatever the field held. An emptied field
- * normalizes to `null`, and a device with no name falls back to its key
- * prefix.
+ * fold would settle on rather than whatever the field held.
+ *
+ * A name is required, and this is where that's true rather than only in the
+ * form. Nothing normalizes to a name means nothing to mint: the key would
+ * outlive the moment anyone could be asked again, and every device that saved
+ * it would have a row with no name in it.
  *
  * A failed mint puts the device back exactly where it started — `absent`, and
  * with nothing connecting — so the form comes back and the reader can try
@@ -507,6 +510,9 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
 export const createIdentitySaga = defineSaga(
   beamScope,
   async function* (label: string) {
+    const name = normalizeLabel(label);
+    if (!name) return;
+
     const { started } = yield* read(connectionStore);
     if (started) return;
 
@@ -514,7 +520,7 @@ export const createIdentitySaga = defineSaga(
 
     let self: SelfKey;
     try {
-      self = yield* call(createIdentity, normalizeLabel(label));
+      self = yield* call(createIdentity, name);
     } catch {
       // Reported by the capability, which has the context to describe it.
       // The absence undoes the `connecting` above along with it.

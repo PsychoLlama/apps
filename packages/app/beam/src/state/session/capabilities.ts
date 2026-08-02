@@ -95,9 +95,11 @@ const restoreDeviceName = async (): Promise<string | null> => {
  * memory, so it's reported rather than thrown — the session works, and the
  * next reload asks to set the device up again.
  *
- * The name goes second and on its own: a device with a key and no name falls
- * back to its key prefix, which is what every device did before names existed.
- * A name with no key would be a label for nobody.
+ * The name goes second and on its own, so the order of the two failures is
+ * the survivable one: a key whose name didn't save falls back to its own key
+ * prefix and works, where a name saved against a key that didn't would be a
+ * label for nobody — and would be read back next load as the name of whatever
+ * key got minted instead.
  */
 const persistIdentity = async (self: SelfKey): Promise<void> => {
   try {
@@ -141,10 +143,13 @@ export interface SelfKey {
   readonly secretKey: Uint8Array;
 
   /**
-   * What this device is called, as the reader named it when they set it up,
-   * or `null` if they left it blank — in which case the key prefix stands in,
-   * the same fallback an unnamed contact gets. Unlike the key, this is
-   * ordinary data and belongs in a store.
+   * What this device is called, as the reader named it when they set it up.
+   *
+   * `null` only where the name couldn't be recovered — the write that saved
+   * it failed, or the read that should have brought it back did. Setting a
+   * device up requires a name, so this is a loss rather than a choice, and
+   * the key prefix stands in as it does for an unnamed contact. Unlike the
+   * key, this is ordinary data and belongs in a store.
    */
   readonly label: string | null;
 }
@@ -369,17 +374,17 @@ export const loadIdentity = async (
  * name the reader chose to go with it. What setting up a device actually
  * does, and the only thing in the app that creates a key.
  *
- * The name arrives already normalized — the caller runs it through the same
- * authority every other name in the app goes through — because this one is
- * written to disk, and what's stored has to match what the store settles on.
- * `null` for a field left blank.
+ * The name arrives already normalized, and non-empty — the caller runs it
+ * through the same authority every other name in the app goes through, and
+ * turns away what's left of a blank field. It's written to disk, so what's
+ * stored has to match what the store settles on.
  *
  * Rejects if the mint or the wasm fails; a failed *save* does not, since the
  * identity in hand is perfectly usable and only its durability was lost.
  */
 export const createIdentity = async (
   signal: AbortSignal,
-  label: string | null,
+  label: string,
 ): Promise<SelfKey> => {
   try {
     await initP2p();

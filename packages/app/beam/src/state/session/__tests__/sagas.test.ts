@@ -365,10 +365,10 @@ describe('createIdentitySaga', () => {
     expect(mint).toHaveBeenCalledWith(expect.any(AbortSignal), 'Kitchen iPad');
   });
 
-  it('reads a blank field as no name at all', async () => {
+  it('refuses to mint a device nobody named', async () => {
     const mint = vi.fn(() => fakeSelf);
 
-    await simulate(createIdentitySaga('   '), {
+    const trace = await simulate(createIdentitySaga('   '), {
       reads: [...unset()],
       calls: [
         [createIdentity, mint],
@@ -376,9 +376,11 @@ describe('createIdentitySaga', () => {
       ],
     });
 
-    // Not a name made of spaces. A device with no name falls back to its own
-    // key prefix, which is what an unnamed contact wears.
-    expect(mint).toHaveBeenCalledWith(expect.any(AbortSignal), null);
+    // A field holding two spaces looks filled in and isn't. The rule lives
+    // here rather than only on the button, because Enter submits a one-field
+    // form whatever the button is doing.
+    expect(mint).not.toHaveBeenCalled();
+    expect(trace.commits).toEqual([]);
   });
 
   it('leaves a device that failed to mint able to try again', async () => {

@@ -17,7 +17,11 @@ export { connectionStore } from './connection';
 export type { ConnectionStatus } from './connection';
 export { qrCodeCell } from './qr-code';
 export type { QrGrid } from './qr-code';
-export { identityStore, selfLabelFormula } from './identity';
+export {
+  identityResolvedTopic,
+  identityStore,
+  selfLabelFormula,
+} from './identity';
 export {
   focusedPeerFormula,
   peerBlurredTopic,

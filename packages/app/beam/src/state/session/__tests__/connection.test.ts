@@ -161,13 +161,14 @@ describe('identityResolvedTopic', () => {
     expect(peek(selfLabelFormula)).toBe('Studio');
   });
 
-  it('falls back to the key prefix when the name was left blank', () => {
+  it('falls back to the key prefix when the name is unrecoverable', () => {
     const { commit, peek } = setup();
 
-    commit(identityResolvedTopic({ endpointId: SELF_ID, label: '   ' }));
+    commit(identityResolvedTopic({ endpointId: SELF_ID, label: null }));
 
-    // Not a name made of spaces, and not no name at all: an unnamed device
-    // wears the start of its own key, the same as an unnamed contact.
+    // Setting a device up requires a name, so this is the vault having lost
+    // one and kept the key. The device still has a name — the start of its
+    // own key, the same as an unnamed contact.
     expect(peek(identityStore).label).toBeNull();
     expect(peek(selfLabelFormula)).toBe(generateLabel(SELF_ID));
   });

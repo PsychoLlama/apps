@@ -106,12 +106,13 @@ defineFold(identityFailedTopic, [identityStore], (self) => {
 /**
  * What this device calls itself, and what it advertises to every peer it
  * links with: the name chosen when the device was set up, or the prefix of
- * its own endpoint key if that was left blank.
+ * its own endpoint key if that name can't be recovered.
  *
- * The fallback is the same one an unnamed contact wears, and it needs no
- * exchange to agree on — both sides of a pairing derive it from the key. A
- * chosen name is the improvement on that, not a replacement for it: skipping
- * the field costs you a friendly name, never a name.
+ * Setting a device up requires a name, so the fallback is a safety net rather
+ * than an option — it's what a device wears when the vault lost the name but
+ * kept the key. Being derived from the key, it needs no exchange to agree on,
+ * and it's the same name an unnamed contact goes by, so a device that fell
+ * back is still a device with a name.
  *
  * `null` until the key lands, which is a moment or two after mount rather
  * than a relay round trip away.

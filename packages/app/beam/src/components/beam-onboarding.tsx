@@ -1,5 +1,5 @@
 import { Match, Switch } from 'solid-js';
-import { useCommit, useRun } from '@lib/state';
+import { useCommit, useRun, useValue } from '@lib/state';
 import { FrameBody } from '@lib/shell';
 import {
   Button,
@@ -18,7 +18,8 @@ import {
   inviteOpenedTopic,
   reportSagaFailure,
 } from '../state/session';
-import { LABEL_MAX_LENGTH } from '../state/labels';
+import { LABEL_MAX_LENGTH, normalizeLabel } from '../state/labels';
+import { setupDraftStore, setupNameChangedTopic } from '../state/onboarding';
 import * as styles from './beam-onboarding.css';
 
 /**
@@ -40,7 +41,8 @@ const STEP_NUMBER: Record<OnboardingStep, number> = {
 /** Ties the field to its label. Only one setup form is ever mounted. */
 const NAME_FIELD_ID = 'beam-device-name';
 
-/** The form control's name, and the key the submit handler reads back. */
+/** The form control's name. Autofill and the platform read it; nothing here
+ * does — the submit takes what was typed from the scope. */
 const NAME_FIELD = 'label';
 
 /**
@@ -61,19 +63,33 @@ const NAME_FIELD = 'label';
  * gets pressed past.
  */
 export const BeamOnboarding = (props: { step: OnboardingStep }) => {
+  const draft = useValue(setupDraftStore);
   const create = useRun(createIdentitySaga);
   const commit = useCommit();
 
-  const handleSubmit = (
-    event: SubmitEvent & { currentTarget: HTMLFormElement },
-  ) => {
+  /** The name as typed, held in the scope so a failed mint doesn't lose it. */
+  const name = () => draft().name;
+
+  /**
+   * Whether there's a name to mint under. Measured with the rule that will
+   * actually decide, so the button can't offer to submit something the saga
+   * would turn away — a field holding two spaces looks filled in and isn't.
+   */
+  const named = () => normalizeLabel(name()) !== null;
+
+  /**
+   * Sent from the draft rather than from `FormData`. The scope already holds
+   * what was typed, and reading the field back would make a second source of
+   * truth out of the one the button is enabled from.
+   */
+  const handleSubmit = (event: SubmitEvent) => {
     event.preventDefault();
 
-    // `FormData` widens to `File` for the general case; a text input only ever
-    // yields a string, so anything else is treated as an empty field.
-    const entry = new FormData(event.currentTarget).get(NAME_FIELD);
+    // Enter in a single-field form submits it whatever the button is doing,
+    // so the requirement is enforced here too rather than only on the button.
+    if (!named()) return;
 
-    void create(typeof entry === 'string' ? entry : '').catch(
+    void create(name()).catch(
       reportSagaFailure('The identity creation saga failed.'),
     );
   };
@@ -115,22 +131,21 @@ export const BeamOnboarding = (props: { step: OnboardingStep }) => {
                 <Match when={props.step === 'identity'}>
                   <Flex as="div" direction="column" gap={2}>
                     <Heading as="h2" size={4} selectable={false}>
-                      Create an identity
+                      Name this device
                     </Heading>
 
-                    {/* Says what the key is for and what it costs, because
-                        this is the one irreversible thing in the flow: the
-                        address other devices save is derived from it, so a
-                        second one makes this device a stranger to everyone
-                        who kept the first. */}
+                    {/* Where the name ends up, rather than what the step does
+                        underneath. A key is minted here too, but the reader
+                        is being asked for one thing and the sentence answers
+                        the question they'd actually ask about it: who sees
+                        this? */}
                     <Text
                       as="p"
                       size={2}
                       color="lowContrast"
                       selectable={false}
                     >
-                      Beam gives this device a key of its own. Other devices
-                      will know it by the name you choose.
+                      This is what other devices see when you connect.
                     </Text>
                   </Flex>
 
@@ -151,16 +166,21 @@ export const BeamOnboarding = (props: { step: OnboardingStep }) => {
                         Device name
                       </Text>
 
-                      {/* Not required. A device with no name goes by the
-                          start of its own key, which is what an unnamed
-                          contact wears — so leaving this blank costs a
-                          friendly name and nothing else, and holding up the
-                          only step that matters over it would be a toll. */}
+                      {/* The placeholder names a person as well as a thing.
+                          The name is read by whoever is on the other end, and
+                          "Phone" tells them nothing once they know two
+                          people with one. */}
                       <TextField
                         testId="beam-device-name"
                         id={NAME_FIELD_ID}
                         name={NAME_FIELD}
-                        placeholder="This laptop"
+                        placeholder="Carol’s Phone"
+                        value={name()}
+                        onInput={(event) =>
+                          commit(
+                            setupNameChangedTopic(event.currentTarget.value),
+                          )
+                        }
                         maxlength={LABEL_MAX_LENGTH}
                         autofocus
                         autocomplete="off"
@@ -169,9 +189,17 @@ export const BeamOnboarding = (props: { step: OnboardingStep }) => {
                       />
                     </Flex>
 
+                    {/* Disabled rather than hidden, and rather than letting
+                        the submit fail: the button is the only thing on
+                        screen saying the field has to be filled in, so it
+                        has to be visibly waiting on it. */}
                     <Flex as="div" direction="row">
-                      <Button testId="beam-create-identity" type="submit">
-                        Create identity
+                      <Button
+                        testId="beam-create-identity"
+                        type="submit"
+                        disabled={!named()}
+                      >
+                        Next
                       </Button>
                     </Flex>
                   </Flex>
