@@ -18,7 +18,7 @@ import { draftChangedTopic, draftsStore } from '../state/shares';
  * "Queue" when it's going to wait.
  *
  * The draft lives in the scope rather than the field, so wandering off to
- * the contact's record and back doesn't quietly discard a half-written note.
+ * another peer and back doesn't quietly discard a half-written note.
  *
  * A real `<form>`, so sending goes through the one path the browser already
  * understands: a submit button submits it, ⌘/Ctrl+Enter from the field does

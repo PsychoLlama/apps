@@ -16,8 +16,8 @@ const TOOLTIP = 'The name other devices see you by';
 
 /**
  * The breadcrumb for a `/beam/*` path. Matched on the prefix, never on the
- * id: each dynamic route is served from one prerendered shell for every id,
- * so anything derived from the id would ship the `__id` build sentinel in the
+ * id: the dynamic route is served from one prerendered shell for every id, so
+ * anything derived from the id would ship the `__id` build sentinel in the
  * markup — and Solid hydrates by adopting the server's DOM rather than
  * rewriting it, which would leave it stuck there. The prefix is the same for
  * every id, so it survives that.
@@ -26,9 +26,6 @@ const trailFor = (pathname: string): SiteHeaderCrumb[] => {
   const beam = { label: 'Beam', href: '/beam' };
 
   if (pathname.startsWith('/beam/share/')) return [beam, { label: 'Share' }];
-  if (pathname.startsWith('/beam/contacts/')) {
-    return [beam, { label: 'Contact' }];
-  }
 
   // The root of the section links nowhere — never a link to the page you're
   // already on.

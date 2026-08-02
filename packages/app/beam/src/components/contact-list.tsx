@@ -100,9 +100,9 @@ const ContactRow = (props: {
  * edge to meet.
  *
  * Every row leads to the same place: tapping a contact is going to share with
- * it. The record behind it is one hop further on, from the share view's own
- * Details link — renaming and forgetting are errands you go looking for, not
- * the reason anyone opens the address book.
+ * it. That page carries the record too — the key, the date, and the controls
+ * to rename or forget — so the list has one destination rather than a
+ * destination and an errand hanging off it.
  */
 export const ContactList = (props: {
   contacts: ContactView[];

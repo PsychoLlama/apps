@@ -1,9 +1,10 @@
 import { style } from '@vanilla-extract/css';
 
 /**
- * The contact's name as the page's title. A local name has no length limit
- * and nothing obliges it to contain a space, so the heading breaks mid-word
- * rather than letting one long name widen the page.
+ * The peer's name as the page's title. A local name has no length limit and
+ * nothing obliges it to contain a space, so the heading breaks mid-word rather
+ * than letting one long name widen the page and squeeze the controls beside
+ * it.
  */
 export const name = style({
   overflowWrap: 'anywhere',
