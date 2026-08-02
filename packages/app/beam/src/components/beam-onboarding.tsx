@@ -138,14 +138,20 @@ export const BeamOnboarding = (props: { step: OnboardingStep }) => {
                         underneath. A key is minted here too, but the reader
                         is being asked for one thing and the sentence answers
                         the question they'd actually ask about it: who sees
-                        this? */}
+                        this?
+
+                        Both halves earn their place. The first is the moment
+                        of connecting, the second is that the name outlives
+                        it — and it's the second that gets people to type
+                        something they'd want a stranger to read back. */}
                     <Text
                       as="p"
                       size={2}
                       color="lowContrast"
                       selectable={false}
                     >
-                      This is what other devices see when you connect.
+                      This is how you appear to other devices and how they’ll
+                      save you in their contacts.
                     </Text>
                   </Flex>
 
