@@ -11,24 +11,11 @@ export const name = style({
 });
 
 /**
- * The endpoint key, worn as a badge. Badges are built for short status words,
- * so three of their defaults have to give: 64 hex characters with no spaces
- * need `anywhere` to break at all, `nowrap` would run them off the screen, and
- * the key is the one thing on this page worth copying, so the chrome's
- * `user-select: none` can't apply to it. `&&` doubles the class specificity to
- * win against `Badge`'s own rules regardless of stylesheet order.
+ * Rename and Forget, as a pair beside the name. They opt out of the flex
+ * default of shrinking to fit: their labels are the whole control, so a
+ * narrow screen has to wrap the heading — which it can, mid-word — rather
+ * than squeeze two words onto three lines each.
  */
-export const endpointId = style({
-  selectors: {
-    '&&': {
-      // `inline-flex` sizes the badge to its content, so the key sets the
-      // width and the pill grows past the column. A block box takes the
-      // column's width instead and lets the text wrap inside it.
-      display: 'block',
-      maxWidth: '100%',
-      whiteSpace: 'normal',
-      overflowWrap: 'anywhere',
-      userSelect: 'text',
-    },
-  },
+export const actions = style({
+  flexShrink: 0,
 });

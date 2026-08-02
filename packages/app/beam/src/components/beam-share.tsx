@@ -2,22 +2,7 @@ import { createEffect, on, onCleanup, Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { useCommit, useRun, useValue } from '@lib/state';
 import { FrameBody } from '@lib/shell';
-import {
-  AlertDialog,
-  Badge,
-  Callout,
-  DataListItem,
-  DataListLabel,
-  DataListRoot,
-  DataListValue,
-  Flex,
-  Heading,
-  IconButton,
-  Separator,
-  Text,
-} from '@lib/ui';
-import IconDelete from 'virtual:icons/mdi/delete-outline';
-import IconPencil from 'virtual:icons/mdi/pencil-outline';
+import { AlertDialog, Button, Callout, Flex, Heading, Text } from '@lib/ui';
 import { RenameDialog } from './rename-dialog';
 import { ShareComposer } from './share-composer';
 import { ShareLog } from './share-log';
@@ -55,17 +40,16 @@ const formatMoment = (epochMilliseconds: number): string =>
  * The peer view at `/beam/share/:id` — where a beam link lands, and the only
  * page there is about another device. It dials the endpoint named in the URL
  * over the endpoint connection the layout holds open, introduces this device,
- * and carries the composer, the session's log of what has passed between the
- * two, and the record itself. How the connection stands is reported by the
- * frame's status bar, which this view points at the peer for as long as it's
- * open. Files are Phase 5.
+ * and carries the composer and the session's log of what has passed between
+ * the two. How the connection stands is reported by the frame's status bar,
+ * which this view points at the peer for as long as it's open. Files are
+ * Phase 5.
  *
- * The record used to be a page of its own a hop further on. It was three
- * fields and two buttons about a device you were already looking at, and the
- * only route to it was from here — so it reads better as the foot of this
- * page than as a destination. Renaming and forgetting sit with the name they
- * act on, and everything you'd go looking for about a peer is now in one
- * place.
+ * The record used to be a page of its own a hop further on, and most of it
+ * turned out not to be worth keeping. The endpoint key is in the address bar
+ * already; what's left is when the peer was met, which reads as a caption on
+ * its name, and the two things you'd do to it, which sit with the name they
+ * act on.
  *
  * Opening your own link is its own case, not an error: it's what happens
  * when you scan the code off your own screen, and the page says so rather
@@ -216,8 +200,9 @@ export const BeamShare = () => {
     //
     // Nothing caps the column either. The pane is already as narrow as the
     // contacts rail leaves it, and a second cap inside that would float the
-    // page in its own frame — the log has bodies to fit and the key is 64
-    // characters, both of which would rather have the room.
+    // page in its own frame — where the log has bodies to fit and the
+    // composer is something to type into, both of which would rather have
+    // the room.
     <FrameBody>
       <Show when={identified()}>
         {/* Nothing was dialled and nothing was written to the address book,
@@ -249,10 +234,10 @@ export const BeamShare = () => {
           >
             <Flex as="div" direction="column" gap={5}>
               {/* Both controls act on the name beside them, which is why
-                  they sit with it rather than down in the record: one edits
-                  it, the other takes it away. Icons keep them a fixed width,
-                  so a long name shortens the heading instead of squeezing
-                  the pair.
+                  they sit with it: one edits it, the other takes it away.
+                  Labelled rather than iconic — "rename" and "forget" have no
+                  glyph a reader would land on without being told, and
+                  forgetting is the one thing here that can't be undone.
 
                   Only rendered once the contact exists — there's nothing to
                   rename or forget until the peer is one. */}
@@ -263,17 +248,42 @@ export const BeamShare = () => {
                 justify="between"
                 gap={3}
               >
-                <Heading as="h1" class={styles.name} selectable={false}>
-                  {name()}
-                </Heading>
+                {/* The date rides under the name as the heading's own
+                    subtitle. It's the one thing worth saying about a peer
+                    beyond what it's called — whether this is somebody you
+                    met months ago or the device in your hand right now —
+                    and it reads as a caption on the name rather than as a
+                    field to look up. */}
+                <Flex as="hgroup" direction="column" gap={1}>
+                  <Heading as="h1" class={styles.name} selectable={false}>
+                    {name()}
+                  </Heading>
+
+                  <Show when={contact()}>
+                    {(view) => (
+                      <Text
+                        as="p"
+                        size={1}
+                        color="lowContrast"
+                        selectable={false}
+                      >
+                        Added {formatMoment(view().createdAt)}
+                      </Text>
+                    )}
+                  </Show>
+                </Flex>
 
                 <Show when={contact()}>
                   {(view) => (
-                    <Flex as="div" direction="row" align="center" gap={2}>
-                      <IconButton
+                    <Flex
+                      as="div"
+                      direction="row"
+                      align="center"
+                      gap={2}
+                      class={styles.actions}
+                    >
+                      <Button
                         testId="beam-share-rename"
-                        aria-label="Rename this contact"
-                        title="Rename this contact"
                         variant="soft"
                         color="neutral"
                         onClick={() =>
@@ -285,29 +295,27 @@ export const BeamShare = () => {
                           )
                         }
                       >
-                        <IconPencil width="18" height="18" aria-hidden="true" />
-                      </IconButton>
+                        Rename
+                      </Button>
 
-                      <IconButton
-                        testId="beam-share-remove"
-                        aria-label="Remove this contact"
-                        title="Remove this contact"
+                      <Button
+                        testId="beam-share-forget"
                         variant="soft"
                         color="danger"
                         onClick={() =>
                           commit(removalOpenedTopic(view().endpointId))
                         }
                       >
-                        <IconDelete width="18" height="18" aria-hidden="true" />
-                      </IconButton>
+                        Forget
+                      </Button>
                     </Flex>
                   )}
                 </Show>
               </Flex>
 
               {/* Everything below hangs off the record rather than the route
-                  param: there's nobody to write to, and nothing to say about
-                  them, until the peer is a contact. */}
+                  param: there's nobody to write to until the peer is a
+                  contact. */}
               <Show when={contact()}>
                 {(view) => (
                   <>
@@ -321,37 +329,6 @@ export const BeamShare = () => {
                       connected={state() === 'connected'}
                     />
 
-                    {/* The record, at the foot and quiet. It's reference
-                        material — the address that made this work and when it
-                        first did — so it sits below the thing the page is
-                        for rather than between the reader and it. */}
-                    <Separator decorative size={4} />
-
-                    <DataListRoot orientation="vertical" size={1}>
-                      {/* The key leads the record. It's the only field here
-                          that identifies the device rather than describing
-                          it — a name is whatever either side typed, and this
-                          is the address that made the connection happen. */}
-                      <DataListItem>
-                        <DataListLabel>Endpoint key</DataListLabel>
-                        <DataListValue>
-                          <Badge
-                            color="neutral"
-                            variant="soft"
-                            class={styles.endpointId}
-                          >
-                            {view().endpointId}
-                          </Badge>
-                        </DataListValue>
-                      </DataListItem>
-                      <DataListItem>
-                        <DataListLabel>Added</DataListLabel>
-                        <DataListValue>
-                          {formatMoment(view().createdAt)}
-                        </DataListValue>
-                      </DataListItem>
-                    </DataListRoot>
-
                     <RenameDialog
                       target={{ kind: 'peer', endpointId: view().endpointId }}
                     />
@@ -361,12 +338,12 @@ export const BeamShare = () => {
                         confirmation is the last thing on screen that still
                         says who this was. */}
                     <AlertDialog
-                      testId="beam-share-remove-dialog"
+                      testId="beam-share-forget-dialog"
                       open={removal().endpointId === view().endpointId}
                       onOpenChange={() => commit(removalClosedTopic())}
-                      title="Remove this contact?"
+                      title="Forget this contact?"
                       description={`${view().name} drops out of your address book. They can still reach this device if they have its link.`}
-                      actionText="Remove"
+                      actionText="Forget"
                       color="danger"
                       onAction={handleForget}
                     />
