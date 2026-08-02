@@ -40,8 +40,8 @@ const resolveName = (contact: Contact): string =>
  *
  * Names are not deduplicated. Two devices can wear the same one — a peer
  * picks the name it advertises, and nothing stops it picking one already in
- * the book — but renaming either is one tap away, and the contact page shows
- * the endpoint key, which is the part that can't collide.
+ * the book — but renaming either is one tap away, and a peer's page shows the
+ * endpoint key, which is the part that can't collide.
  */
 export const addressBookFormula = defineFormula([contactsStore], (book) =>
   Object.values(book.entries)

@@ -98,29 +98,21 @@ export default defineConfig({
         //     build time here. Beam's inner pages are listed rather than
         //     left to the crawler so the set doesn't hinge on which links
         //     the beam home happens to render.
-        //   - `/beam/share/__id` and `/beam/contacts/__id`: representative
-        //     shells for the dynamic `/beam/share/:id` and
-        //     `/beam/contacts/:id` routes. The id names a peer endpoint,
-        //     which only exists client-side (it's a live relay handle), so
-        //     neither route can be prerendered per-id — but each one's first
-        //     paint is a fixed stub independent of the id, so one shell
-        //     serves every id. That independence is load-bearing, not
-        //     incidental: Solid hydrates by adopting the server's DOM without
-        //     rewriting attributes, so any markup derived from the id would
-        //     render with the sentinel below and stay stuck on it. The
-        //     `__id` sentinel stands in for the missing
-        //     value; the hook below flattens them to `/beam/__share.html` and
-        //     `/beam/__contact.html`, and `public/_redirects` rewrites each
-        //     dynamic path onto its shell so a cold load hydrates against a
+        //   - `/beam/share/__id`: a representative shell for the dynamic
+        //     `/beam/share/:id` route. The id names a peer endpoint, which
+        //     only exists client-side (it's a live relay handle), so the route
+        //     can't be prerendered per-id — but its first paint is a fixed
+        //     stub independent of the id, so one shell serves every id. That
+        //     independence is load-bearing, not incidental: Solid hydrates by
+        //     adopting the server's DOM without rewriting attributes, so any
+        //     markup derived from the id would render with the sentinel below
+        //     and stay stuck on it. The `__id` sentinel stands in for the
+        //     missing value; the hook below flattens it to
+        //     `/beam/__share.html`, and `public/_redirects` rewrites the
+        //     dynamic path onto that shell so a cold load hydrates against a
         //     beam-shaped shell instead of the 404 page (which would mismatch
         //     and throw).
-        routes: [
-          '/404',
-          '/scratchpad',
-          '/beam',
-          '/beam/share/__id',
-          '/beam/contacts/__id',
-        ],
+        routes: ['/404', '/scratchpad', '/beam', '/beam/share/__id'],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file
@@ -132,21 +124,17 @@ export default defineConfig({
             route.fileName = '/404.html';
           }
 
-          // Flatten each dynamic beam shell up one level, to a sibling of
-          // its own directory rather than a child of it. `public/_redirects`
-          // rewrites the dynamic paths onto these, and Cloudflare normalizes
+          // Flatten the dynamic beam shell up one level, to a sibling of its
+          // own directory rather than a child of it. `public/_redirects`
+          // rewrites the dynamic path onto it, and Cloudflare normalizes
           // rewrite targets by stripping `/index` and `.html` before its loop
           // check — so a target left under `/beam/share/` would renormalize
           // into the `/beam/share/:id` source and the whole rule gets
           // rejected as an infinite loop. Nesting at `/beam/` (a shallower
-          // prefix neither source can match) keeps the shells tucked under
-          // the beam app without tripping that check.
+          // prefix the source can't match) keeps the shell tucked under the
+          // beam app without tripping that check.
           if (route.route === '/beam/share/__id') {
             route.fileName = '/beam/__share.html';
-          }
-
-          if (route.route === '/beam/contacts/__id') {
-            route.fileName = '/beam/__contact.html';
           }
         },
       },

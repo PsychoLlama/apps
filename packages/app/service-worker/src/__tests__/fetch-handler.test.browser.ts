@@ -409,7 +409,7 @@ describe('handleFetch', () => {
     // Every route under `/beam/` rides the same prefix check, so the gate
     // is asserted per-route: a new page added without a matching rewrite
     // rule would otherwise ship ungated.
-    it.each([['/beam/share/abc123'], ['/beam/contacts/abc123']])(
+    it.each([['/beam/share/abc123']])(
       'gates %s on the same flag',
       async (pathname) => {
         await updateConfig(beamAppEnabled, {

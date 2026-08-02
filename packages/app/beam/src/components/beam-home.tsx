@@ -1,7 +1,7 @@
 import { Show } from 'solid-js';
 import { useCommit, useValue } from '@lib/state';
 import { FrameBody } from '@lib/shell';
-import { Button, Callout, Container, Flex, LinkButton, Text } from '@lib/ui';
+import { Button, Callout, Flex, LinkButton, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
 import { BeamIntro } from './beam-intro';
@@ -31,51 +31,50 @@ export const BeamHome = () => {
   return (
     <>
       <FrameBody>
-        {/* Left-aligned rather than centered in the pane: the rail beside it
-            starts at the top-left, and a column that floated to the middle
-            would read as a second, unrelated surface. */}
-        <Container as="div" size={3} align="start">
-          <Flex as="div" direction="column" gap={6}>
-            <BeamIntro />
+        {/* No column cap. The pane is already as narrow as the rail beside it
+            leaves it, and capping it again would float the page inside its
+            own frame — a second margin inside a margin, with the address book
+            butted up against the outer one. */}
+        <Flex as="div" direction="column" gap={6}>
+          <BeamIntro />
 
-            <Show when={book().status === 'failed'}>
-              <Callout color="warning">
-                <Text as="span" size={2} selectable={false}>
-                  Your contacts couldn’t be loaded. Pairing still works, but
-                  nothing will be remembered.
-                </Text>
-              </Callout>
-            </Show>
+          <Show when={book().status === 'failed'}>
+            <Callout color="warning">
+              <Text as="span" size={2} selectable={false}>
+                Your contacts couldn’t be loaded. Pairing still works, but
+                nothing will be remembered.
+              </Text>
+            </Callout>
+          </Show>
 
-            {/* The book, inline — but only while there's no rail to hold it.
-                Above `md` the frame's sidebar carries the same directory
-                beside this page, and repeating it here would be the same
-                list twice on one screen. */}
-            <Flex as="div" direction="column" class={styles.directory}>
-              <ContactDirectory testId="beam" />
-            </Flex>
-
-            <Flex as="div" gap={3} class={styles.actions}>
-              <Button
-                testId="beam-invite"
-                size={3}
-                onClick={() => commit(inviteOpenedTopic())}
-              >
-                <IconShareVariant width="20" height="20" aria-hidden="true" />
-                Share an invite
-              </Button>
-              <LinkButton
-                testId="beam-scan"
-                href="/scanner"
-                size={3}
-                variant="soft"
-              >
-                <IconQrcodeScan width="20" height="20" aria-hidden="true" />
-                Scan a code
-              </LinkButton>
-            </Flex>
+          {/* The book, inline — but only while there's no rail to hold it.
+              Above `md` the frame's sidebar carries the same directory
+              beside this page, and repeating it here would be the same
+              list twice on one screen. */}
+          <Flex as="div" direction="column" class={styles.directory}>
+            <ContactDirectory testId="beam" />
           </Flex>
-        </Container>
+
+          <Flex as="div" gap={3} class={styles.actions}>
+            <Button
+              testId="beam-invite"
+              size={3}
+              onClick={() => commit(inviteOpenedTopic())}
+            >
+              <IconShareVariant width="20" height="20" aria-hidden="true" />
+              Share an invite
+            </Button>
+            <LinkButton
+              testId="beam-scan"
+              href="/scanner"
+              size={3}
+              variant="soft"
+            >
+              <IconQrcodeScan width="20" height="20" aria-hidden="true" />
+              Scan a code
+            </LinkButton>
+          </Flex>
+        </Flex>
       </FrameBody>
 
       <InviteDialog />

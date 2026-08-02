@@ -106,9 +106,9 @@ const isScratchpadRoute = (url: URL): boolean =>
 
 /**
  * The beam app's routes: the `/beam` index (with or without a trailing slash)
- * and everything beneath it — every `/beam/share/:id` peer link and every
- * `/beam/contacts/:id` record. All are gated by the same runtime flag, so one
- * prefix check covers the whole app.
+ * and everything beneath it — every `/beam/share/:id` peer link included. All
+ * are gated by the same runtime flag, so one prefix check covers the whole
+ * app.
  */
 const isBeamRoute = (url: URL): boolean =>
   url.pathname === '/beam' || url.pathname.startsWith('/beam/');

@@ -96,9 +96,10 @@ describe('surfaceForRoute', () => {
 
   it('keeps step two everywhere else', () => {
     expect(surfaceForRoute('pairing', '/beam')).toBe('pairing');
-    expect(surfaceForRoute('pairing', `/beam/contacts/${PEER_ID}`)).toBe(
-      'pairing',
-    );
+
+    // The prefix includes its trailing slash, so a path that merely starts
+    // the same way isn't a link and doesn't get the exemption.
+    expect(surfaceForRoute('pairing', '/beam/shared')).toBe('pairing');
   });
 
   it('leaves every other surface alone on a beam link', () => {

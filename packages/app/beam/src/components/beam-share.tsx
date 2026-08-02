@@ -1,12 +1,12 @@
 import { createEffect, on, onCleanup, Show } from 'solid-js';
-import { useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import { useCommit, useRun, useValue } from '@lib/state';
 import { FrameBody } from '@lib/shell';
-import { Callout, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
-import IconContactCard from 'virtual:icons/mdi/card-account-details-outline';
+import { AlertDialog, Button, Callout, Flex, Heading, Text } from '@lib/ui';
+import { RenameDialog } from './rename-dialog';
 import { ShareComposer } from './share-composer';
 import { ShareLog } from './share-log';
-import { addressBookFormula } from '../state/contacts';
+import { addressBookFormula, forgetContactSaga } from '../state/contacts';
 import { isEndpointId } from '../state/endpoint';
 import { reportSagaFailure } from '../state/failure';
 import { identityStore } from '../state/identity';
@@ -19,15 +19,37 @@ import {
   type PeerState,
 } from '../state/network';
 import { sharesByPeerFormula } from '../state/shares';
-import { peerBlurredTopic, peerFocusedTopic } from '../state/view';
+import {
+  peerBlurredTopic,
+  peerFocusedTopic,
+  removalClosedTopic,
+  removalOpenedTopic,
+  removalStore,
+  renameOpenedTopic,
+} from '../state/view';
+import * as styles from './beam-share.css';
+
+/** Dates read as dates, not timestamps. Follows the reader's locale. */
+const formatMoment = (epochMilliseconds: number): string =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(epochMilliseconds);
 
 /**
- * The share view at `/beam/share/:id` — where a beam link lands, and where
- * sharing happens. It dials the endpoint named in the URL over the endpoint
- * connection the layout holds open, introduces this device, and carries the
- * composer and the session's log of what has passed between the two. How the
- * pairing stands is reported by the frame's status bar, which this view
- * points at the peer for as long as it's open. Files are Phase 5.
+ * The peer view at `/beam/share/:id` — where a beam link lands, and the only
+ * page there is about another device. It dials the endpoint named in the URL
+ * over the endpoint connection the layout holds open, introduces this device,
+ * and carries the composer and the session's log of what has passed between
+ * the two. How the connection stands is reported by the frame's status bar,
+ * which this view points at the peer for as long as it's open. Files are
+ * Phase 5.
+ *
+ * The record used to be a page of its own a hop further on, and most of it
+ * turned out not to be worth keeping. The endpoint key is in the address bar
+ * already; what's left is when the peer was met, which reads as a caption on
+ * its name, and the two things you'd do to it, which sit with the name they
+ * act on.
  *
  * Opening your own link is its own case, not an error: it's what happens
  * when you scan the code off your own screen, and the page says so rather
@@ -35,15 +57,18 @@ import { peerBlurredTopic, peerFocusedTopic } from '../state/view';
  */
 export const BeamShare = () => {
   const params = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const connection = useValue(connectionStore);
   const self = useValue(identityStore);
   const contacts = useValue(addressBookFormula);
   const states = useValue(peerStatesFormula);
   const shares = useValue(sharesByPeerFormula);
+  const removal = useValue(removalStore);
 
   const dial = useRun(dialPeerSaga);
   const disconnect = useRun(disconnectPeerSaga);
+  const forget = useRun(forgetContactSaga);
   const commit = useCommit();
 
   /**
@@ -94,6 +119,15 @@ export const BeamShare = () => {
   /** Where the pairing stands. Nothing attempted yet reads as `preparing`. */
   const state = (): PeerState => states()[params.id] ?? 'preparing';
 
+  // Forgetting a peer leaves this page behind: it's the record's page as much
+  // as the connection's, and staying on it would show a device that is no
+  // longer in the book, its name already reverted to a key prefix.
+  const handleForget = () => {
+    void forget(params.id)
+      .then(() => navigate('/beam'))
+      .catch(reportSagaFailure('The contact forget saga failed.'));
+  };
+
   // The dial needs the live endpoint, so hold off until the relay connection
   // lands. Keyed on the peer too, since one share view serves every id: a
   // relay that cycles back to `connected`, or a different peer, both mean
@@ -134,8 +168,8 @@ export const BeamShare = () => {
   );
 
   // Point the frame's status bar at this peer for as long as the view is
-  // open. The bar is mounted by the layout, which can't tell a share route
-  // from a contact route by its params, so the view that knows says so.
+  // open. The bar is mounted by the layout, which can't tell which route is
+  // showing from its own params, so the view that knows says so.
   //
   // Keyed so that opening your own link focuses nothing: nothing is dialled
   // there, and a reading stuck on "Connecting" for a connection that was
@@ -155,109 +189,171 @@ export const BeamShare = () => {
   );
 
   return (
-    <>
-      {/* The frame is prerendered; nothing inside it is. This route is served
-          from one shell for every id, built against the `__id` sentinel, so
-          anything derived from `:id` at build time is derived from a
-          placeholder — a param-built `href` ships live and wrong, and a
-          param-built branch renders a tree the client then disagrees with,
-          which is a hydration crash rather than a cosmetic slip. Holding the
-          body back until `identified()` retires the whole class of bug
-          instead of the instances of it. Same rule as the contact page, which
-          waits on its address book read for the same reason. */}
-      <FrameBody>
-        <Container as="div" size={2}>
-          <Show when={identified()}>
-            {/* Nothing was dialled and nothing was written to the address
-                book, which is the point of answering this here: the book is
-                written before the dial, so an id that could never be one has
-                to be turned away before it becomes a contact nobody can
-                remove without going looking for it. */}
-            <Show
-              when={dialable()}
-              fallback={
-                <Callout color="warning">
-                  <Text as="span" size={2} selectable={false}>
-                    That isn’t a beam link. Check the address, or scan the code
-                    from the other device.
-                  </Text>
-                </Callout>
-              }
-            >
-              <Show
-                when={!isSelf()}
-                fallback={
-                  <Callout color="neutral">
-                    <Text as="span" size={2} selectable={false}>
-                      This is this device’s own beam link. Open it somewhere
-                      else to pair.
-                    </Text>
-                  </Callout>
-                }
+    // The frame is prerendered; nothing inside it is. This route is served
+    // from one shell for every id, built against the `__id` sentinel, so
+    // anything derived from `:id` at build time is derived from a placeholder
+    // — a param-built `href` ships live and wrong, and a param-built branch
+    // renders a tree the client then disagrees with, which is a hydration
+    // crash rather than a cosmetic slip. Holding the body back until
+    // `identified()` retires the whole class of bug instead of the instances
+    // of it.
+    //
+    // Nothing caps the column either. The pane is already as narrow as the
+    // contacts rail leaves it, and a second cap inside that would float the
+    // page in its own frame — where the log has bodies to fit and the
+    // composer is something to type into, both of which would rather have
+    // the room.
+    <FrameBody>
+      <Show when={identified()}>
+        {/* Nothing was dialled and nothing was written to the address book,
+            which is the point of answering this here: the book is written
+            before the dial, so an id that could never be one has to be turned
+            away before it becomes a contact nobody can remove without going
+            looking for it. */}
+        <Show
+          when={dialable()}
+          fallback={
+            <Callout color="warning">
+              <Text as="span" size={2} selectable={false}>
+                That isn’t a beam link. Check the address, or scan the code from
+                the other device.
+              </Text>
+            </Callout>
+          }
+        >
+          <Show
+            when={!isSelf()}
+            fallback={
+              <Callout color="neutral">
+                <Text as="span" size={2} selectable={false}>
+                  This is this device’s own beam link. Open it somewhere else to
+                  pair.
+                </Text>
+              </Callout>
+            }
+          >
+            <Flex as="div" direction="column" gap={5}>
+              {/* Both controls act on the name beside them, which is why
+                  they sit with it: one edits it, the other takes it away.
+                  Labelled rather than iconic — "rename" and "forget" have no
+                  glyph a reader would land on without being told, and
+                  forgetting is the one thing here that can't be undone.
+
+                  Only rendered once the contact exists — there's nothing to
+                  rename or forget until the peer is one. */}
+              <Flex
+                as="div"
+                direction="row"
+                align="start"
+                justify="between"
+                gap={3}
               >
-                <Flex as="div" direction="column" gap={5}>
-                  {/* The record sits behind a labelled link rather than the
-                  title itself: a heading that quietly navigates gives no
-                  hint of where, and "somewhere about this device" is the
-                  part a reader can't guess. Ghost keeps it quiet beside the
-                  name without pretending not to be a control.
+                {/* The date rides under the name as the heading's own
+                    subtitle. It's the one thing worth saying about a peer
+                    beyond what it's called — whether this is somebody you
+                    met months ago or the device in your hand right now —
+                    and it reads as a caption on the name rather than as a
+                    field to look up. */}
+                <Flex as="hgroup" direction="column" gap={1}>
+                  <Heading as="h1" class={styles.name} selectable={false}>
+                    {name()}
+                  </Heading>
 
-                  Only rendered once the contact exists, which is the right
-                  gate on its own terms: there's no record to point at until
-                  the peer is one. */}
-                  <Flex
-                    as="div"
-                    direction="row"
-                    align="center"
-                    justify="between"
-                    gap={3}
-                  >
-                    <Heading as="h1" selectable={false}>
-                      {name()}
-                    </Heading>
-
-                    <Show when={contact()}>
-                      {(view) => (
-                        <LinkButton
-                          testId="beam-share-contact"
-                          href={`/beam/contacts/${view().endpointId}`}
-                          variant="ghost"
-                          color="neutral"
-                        >
-                          <IconContactCard
-                            width="18"
-                            height="18"
-                            aria-hidden="true"
-                          />
-                          Details
-                        </LinkButton>
-                      )}
-                    </Show>
-                  </Flex>
-
-                  {/* Both hang off the record rather than the route param:
-                  there's nobody to write to until the peer is a contact. */}
                   <Show when={contact()}>
                     {(view) => (
-                      <>
-                        <ShareLog
-                          shares={shares()[view().endpointId] ?? []}
-                          peerName={view().name}
-                        />
-
-                        <ShareComposer
-                          endpointId={view().endpointId}
-                          connected={state() === 'connected'}
-                        />
-                      </>
+                      <Text
+                        as="p"
+                        size={1}
+                        color="lowContrast"
+                        selectable={false}
+                      >
+                        Added {formatMoment(view().createdAt)}
+                      </Text>
                     )}
                   </Show>
                 </Flex>
+
+                <Show when={contact()}>
+                  {(view) => (
+                    <Flex
+                      as="div"
+                      direction="row"
+                      align="center"
+                      gap={2}
+                      class={styles.actions}
+                    >
+                      <Button
+                        testId="beam-share-rename"
+                        variant="soft"
+                        color="neutral"
+                        onClick={() =>
+                          commit(
+                            renameOpenedTopic({
+                              kind: 'peer',
+                              endpointId: view().endpointId,
+                            }),
+                          )
+                        }
+                      >
+                        Rename
+                      </Button>
+
+                      <Button
+                        testId="beam-share-forget"
+                        variant="soft"
+                        color="danger"
+                        onClick={() =>
+                          commit(removalOpenedTopic(view().endpointId))
+                        }
+                      >
+                        Forget
+                      </Button>
+                    </Flex>
+                  )}
+                </Show>
+              </Flex>
+
+              {/* Everything below hangs off the record rather than the route
+                  param: there's nobody to write to until the peer is a
+                  contact. */}
+              <Show when={contact()}>
+                {(view) => (
+                  <>
+                    <ShareLog
+                      shares={shares()[view().endpointId] ?? []}
+                      peerName={view().name}
+                    />
+
+                    <ShareComposer
+                      endpointId={view().endpointId}
+                      connected={state() === 'connected'}
+                    />
+
+                    <RenameDialog
+                      target={{ kind: 'peer', endpointId: view().endpointId }}
+                    />
+
+                    {/* The name is in the question because the page it was
+                        asked from is about to be left behind — the
+                        confirmation is the last thing on screen that still
+                        says who this was. */}
+                    <AlertDialog
+                      testId="beam-share-forget-dialog"
+                      open={removal().endpointId === view().endpointId}
+                      onOpenChange={() => commit(removalClosedTopic())}
+                      title="Forget this contact?"
+                      description={`${view().name} drops out of your address book. They can still reach this device if they have its link.`}
+                      actionText="Forget"
+                      color="danger"
+                      onAction={handleForget}
+                    />
+                  </>
+                )}
               </Show>
-            </Show>
+            </Flex>
           </Show>
-        </Container>
-      </FrameBody>
-    </>
+        </Show>
+      </Show>
+    </FrameBody>
   );
 };

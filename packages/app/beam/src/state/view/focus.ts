@@ -14,9 +14,9 @@ import { peerStatesFormula, type PeerState } from '../network';
  * open.
  *
  * Kept in state rather than read off the route because the chrome that reports
- * it outlives any one route: the status bar is mounted by the layout, and
- * `/beam/share/:id` and `/beam/contacts/:id` are indistinguishable from a
- * layout's params. The view that knows which it is says so.
+ * it outlives any one route: the status bar is mounted by the layout, and a
+ * layout's params can't tell `/beam/share/:id` from `/beam`. The view that
+ * knows which it is says so.
  *
  * The link statuses can't answer this on their own. They record every peer
  * something has been tried with and keep a failed dial's entry until something
