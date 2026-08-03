@@ -1,6 +1,5 @@
-import { Show } from 'solid-js';
 import { useCommit, useRun, useValue } from '@lib/state';
-import { Flex, IconButton, Text, TextField } from '@lib/ui';
+import { Flex, IconButton, TextField } from '@lib/ui';
 import IconSend from 'virtual:icons/mdi/send-outline';
 import { reportSagaFailure } from '../state/failure';
 import { shareTextSaga } from '../state/network';
@@ -105,23 +104,14 @@ export const ShareComposer = (props: {
             type="submit"
             aria-label={action()}
             title={action()}
-            variant="soft"
-            size={2}
+            variant="ghost"
+            color="neutral"
             disabled={empty()}
           >
             <IconSend aria-hidden="true" />
           </IconButton>
         }
       />
-
-      {/* Only said when it's true, and only about the thing the reader is
-          about to do. A permanent note about connection state belongs to
-          the status line at the top of the page. */}
-      <Show when={!props.connected}>
-        <Text as="span" size={1} color="lowContrast" selectable={false}>
-          They’ll get this when they’re back.
-        </Text>
-      </Show>
     </Flex>
   );
 };

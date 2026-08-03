@@ -66,11 +66,11 @@ const ContactRow = (props: { contact: ContactView; active: boolean }) => {
             a book: the same devices in the same order, whoever happens to be
             awake.
 
-            A pill rather than a rounded rectangle. The badge is a state
-            light, not a control, and at this size a full radius is what
-            keeps it from reading as something to press. */}
+            Surface rather than soft: the row it sits in is itself a button,
+            so the badge needs an edge of its own to read as a reading rather
+            than as a second control inside the first. */}
         <Show when={props.active}>
-          <Badge color="success" variant="soft" radius="full">
+          <Badge color="success" variant="surface">
             Active
           </Badge>
         </Show>
