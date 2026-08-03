@@ -139,23 +139,3 @@ export const sharesByPeerFormula = defineFormula(
     return grouped;
   },
 );
-
-/**
- * How many shares are still waiting to go out to each peer. What the address
- * book surfaces: a queue means something was written to a device that hasn't
- * heard it yet, which is worth seeing from the list rather than only from the
- * page you'd have to open to find out.
- */
-export const queuedSharesFormula = defineFormula(
-  [shareLogStore],
-  (log): Record<string, number> => {
-    const counts: Record<string, number> = {};
-
-    for (const share of log.items) {
-      if (share.status !== 'queued') continue;
-      counts[share.endpointId] = (counts[share.endpointId] ?? 0) + 1;
-    }
-
-    return counts;
-  },
-);

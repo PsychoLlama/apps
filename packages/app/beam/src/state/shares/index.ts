@@ -13,7 +13,6 @@
  * became of it, and what's half-written still.
  */
 export {
-  queuedSharesFormula,
   shareLogStore,
   shareQueuedTopic,
   shareReceivedTopic,

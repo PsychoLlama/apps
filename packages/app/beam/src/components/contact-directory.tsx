@@ -4,7 +4,6 @@ import { Flex, Heading, Text } from '@lib/ui';
 import { ContactList } from './contact-list';
 import { addressBookFormula, contactsStore } from '../state/contacts';
 import { activePeersFormula } from '../state/network';
-import { queuedSharesFormula } from '../state/shares';
 import * as styles from './contact-directory.css';
 
 /**
@@ -30,7 +29,6 @@ export const ContactDirectory = (props: { testId: string }) => {
   const book = useValue(contactsStore);
   const contacts = useValue(addressBookFormula);
   const active = useValue(activePeersFormula);
-  const queued = useValue(queuedSharesFormula);
 
   return (
     <Flex as="div" direction="column" gap={3} grow>
@@ -64,7 +62,6 @@ export const ContactDirectory = (props: { testId: string }) => {
       <ContactList
         testId={`${props.testId}-contacts`}
         contacts={contacts()}
-        queued={queued()}
         active={active()}
       />
     </Flex>
