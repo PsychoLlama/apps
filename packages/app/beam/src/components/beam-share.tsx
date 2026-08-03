@@ -238,6 +238,14 @@ export const BeamShare = () => {
             }
           >
             <Flex as="div" direction="column" gap={5}>
+              {/* Both controls act on the name beside them, which is why
+                  they sit with it: one edits it, the other takes it away.
+                  Labelled rather than iconic — "rename" and "forget" have no
+                  glyph a reader would land on without being told, and
+                  forgetting is the one thing here that can't be undone.
+
+                  Only rendered once the contact exists — there's nothing to
+                  rename or forget until the peer is one. */}
               <Flex
                 as="div"
                 direction="row"
@@ -252,41 +260,8 @@ export const BeamShare = () => {
                     and it reads as a caption on the name rather than as a
                     field to look up. */}
                 <Flex as="hgroup" direction="column" gap={1}>
-                  {/* Renaming is the name itself, the way it already is in
-                      the header for this device's own. A control parked
-                      beside a name is a second thing to aim at for an edit
-                      whose target is the first, and the page's title is the
-                      largest thing on it — nothing smaller has to appear to
-                      be reached for, which also settles the touchscreen,
-                      where there's no hover for a control to hide behind.
-
-                      Only clickable once the contact exists. Until the peer
-                      is one the name is a key prefix nothing is storing, so
-                      there is nothing a rename could be written to. */}
                   <Heading as="h1" class={styles.name} selectable={false}>
-                    <Show when={contact()} fallback={name()}>
-                      {(view) => (
-                        <Button
-                          testId="beam-share-rename"
-                          aria-label={`Rename this contact, currently ${view().name}`}
-                          title="The name you saved this device as"
-                          variant="ghost"
-                          color="neutral"
-                          size={4}
-                          class={styles.rename}
-                          onClick={() =>
-                            commit(
-                              renameOpenedTopic({
-                                kind: 'peer',
-                                endpointId: view().endpointId,
-                              }),
-                            )
-                          }
-                        >
-                          {name()}
-                        </Button>
-                      )}
-                    </Show>
+                    {name()}
                   </Heading>
 
                   <Show when={contact()}>
@@ -303,26 +278,42 @@ export const BeamShare = () => {
                   </Show>
                 </Flex>
 
-                {/* Forgetting stays a button of its own. It's the one thing
-                    on this page that can't be undone, so it is spelled out
-                    rather than folded into something you might be aiming at
-                    for another reason.
-
-                    Only rendered once the contact exists — there's nothing
-                    to forget until the peer is one. */}
                 <Show when={contact()}>
                   {(view) => (
-                    <Button
-                      testId="beam-share-forget"
-                      variant="soft"
-                      color="danger"
+                    <Flex
+                      as="div"
+                      direction="row"
+                      align="center"
+                      gap={2}
                       class={styles.actions}
-                      onClick={() =>
-                        commit(removalOpenedTopic(view().endpointId))
-                      }
                     >
-                      Forget
-                    </Button>
+                      <Button
+                        testId="beam-share-rename"
+                        variant="soft"
+                        color="neutral"
+                        onClick={() =>
+                          commit(
+                            renameOpenedTopic({
+                              kind: 'peer',
+                              endpointId: view().endpointId,
+                            }),
+                          )
+                        }
+                      >
+                        Rename
+                      </Button>
+
+                      <Button
+                        testId="beam-share-forget"
+                        variant="soft"
+                        color="danger"
+                        onClick={() =>
+                          commit(removalOpenedTopic(view().endpointId))
+                        }
+                      >
+                        Forget
+                      </Button>
+                    </Flex>
                   )}
                 </Show>
               </Flex>
