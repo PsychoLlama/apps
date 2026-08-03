@@ -29,12 +29,17 @@ import {
 } from '../state/view';
 import * as styles from './beam-share.css';
 
-/** Dates read as dates, not timestamps. Follows the reader's locale. */
-const formatMoment = (epochMilliseconds: number): string =>
-  new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(epochMilliseconds);
+/**
+ * Dates read as dates. Follows the reader's locale.
+ *
+ * The day only. When a pairing happened is a fact about how long you've known
+ * a device, and the minute it landed on says nothing about that — it's
+ * precision the reader has no use for, spent on the caption of a name.
+ */
+const formatDate = (epochMilliseconds: number): string =>
+  new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
+    epochMilliseconds,
+  );
 
 /**
  * The peer view at `/beam/share/:id` — where a beam link lands, and the only
@@ -267,7 +272,7 @@ export const BeamShare = () => {
                         color="lowContrast"
                         selectable={false}
                       >
-                        Added {formatMoment(view().createdAt)}
+                        Added {formatDate(view().createdAt)}
                       </Text>
                     )}
                   </Show>
@@ -319,14 +324,20 @@ export const BeamShare = () => {
               <Show when={contact()}>
                 {(view) => (
                   <>
-                    <ShareLog
-                      shares={shares()[view().endpointId] ?? []}
-                      peerName={view().name}
-                    />
-
+                    {/* The composer leads and what was shared follows it.
+                        Sharing is the reason the page was opened — the field
+                        is what you came to use, so it sits where the eye
+                        lands rather than under a log you have to scroll past
+                        to reach it. What's been shared reads as the result
+                        of it, newest first, directly beneath. */}
                     <ShareComposer
                       endpointId={view().endpointId}
                       connected={state() === 'connected'}
+                    />
+
+                    <ShareLog
+                      shares={shares()[view().endpointId] ?? []}
+                      peerName={view().name}
                     />
 
                     <RenameDialog

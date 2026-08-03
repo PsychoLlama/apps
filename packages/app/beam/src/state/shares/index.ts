@@ -22,4 +22,3 @@ export {
 } from './log';
 export type { Share } from './log';
 export { draftChangedTopic, draftClearedTopic, draftsStore } from './drafts';
-export { copyNoticeStore, copyShareSaga } from './notice';
