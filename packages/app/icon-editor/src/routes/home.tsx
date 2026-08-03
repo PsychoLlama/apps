@@ -3,20 +3,20 @@ import { useSearchParams } from '@solidjs/router';
 import { useAnchor, useCommit, useRun, useValue } from '@lib/state';
 import { Frame, SiteHeader } from '@lib/shell';
 import { Flex } from '@lib/ui';
-import { IconGrid } from './components/icon-grid';
+import { IconGrid } from '../components/icon-grid';
 import {
   activePackFormula,
   pickerScope,
   pickerViewChangedTopic,
-} from './components/icon-grid/store';
-import { Preview } from './components/preview';
-import { PropertiesPanel } from './components/properties-panel';
+} from '../components/icon-grid/store';
+import { Preview } from '../components/preview';
+import { PropertiesPanel } from '../components/properties-panel';
 import {
   hydrateFromUrlSaga,
   randomizeIconSaga,
   selectPackSaga,
   type IconEditorUrlParams,
-} from './sagas';
+} from '../sagas';
 import {
   editorResetTopic,
   iconEditorScope,
@@ -30,9 +30,9 @@ import {
   railStore,
   shapeChangedTopic,
   shareParamsFormula,
-} from './store';
-import type { IconRef } from './icons';
-import * as css from './index.css';
+} from '../store';
+import type { IconRef } from '../icons';
+import * as css from './home.css';
 
 /** Recognized search-param keys backing a shareable icon URL. */
 type IconSearchParamKey = 'icon' | 'palette' | 'shape' | 'pad';
@@ -44,7 +44,7 @@ type IconSearchParams = Partial<Record<IconSearchParamKey, string>> &
 /** Pause before flushing state changes to the URL. */
 const URL_DEBOUNCE_MS = 200;
 
-export const IconEditor = () => {
+const IconEditor = () => {
   useAnchor(iconEditorScope);
   useAnchor(pickerScope);
 
@@ -171,3 +171,5 @@ export const IconEditor = () => {
     </Frame>
   );
 };
+
+export default IconEditor;

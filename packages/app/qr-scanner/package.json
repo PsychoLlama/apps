@@ -6,7 +6,7 @@
   "description": "QR code scanner. Reads codes from the device camera.",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.tsx"
+    "./routes/*": "./src/routes/*.tsx"
   },
   "scripts": {
     "typecheck": "tsc && tsc -p src/worker/tsconfig.json"

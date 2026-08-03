@@ -3,13 +3,13 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Icon editor app — pick, restyle, and export icons from the iconify catalog.",
+  "description": "Icon editor app \u2014 pick, restyle, and export icons from the iconify catalog.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts"
   ],
   "exports": {
-    ".": "./src/index.tsx"
+    "./routes/*": "./src/routes/*.tsx"
   },
   "scripts": {
     "typecheck": "tsc"

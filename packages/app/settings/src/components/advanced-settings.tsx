@@ -24,7 +24,7 @@ import {
   resetLogFilterSaga,
   resetScratchpadSaga,
   trackAdvancedSettingsSaga,
-} from './state/advanced';
+} from '../state/advanced';
 import * as css from './advanced-settings.css';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);

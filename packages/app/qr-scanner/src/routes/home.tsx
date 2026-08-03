@@ -2,10 +2,10 @@ import { Match, onMount, Show, Switch } from 'solid-js';
 import { useAnchor, useRun, useValue } from '@lib/state';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import { Container } from '@lib/ui';
-import { CameraView } from './components/camera-view';
-import { Landing } from './components/landing';
-import { ScannerError } from './components/scanner-error';
-import { ScanResult } from './components/scan-result';
+import { CameraView } from '../components/camera-view';
+import { Landing } from '../components/landing';
+import { ScannerError } from '../components/scanner-error';
+import { ScanResult } from '../components/scan-result';
 import {
   autoStartScanSaga,
   cameraStore,
@@ -16,7 +16,7 @@ import {
   stopScanSaga,
   streamCell,
   toggleTorchSaga,
-} from './state';
+} from '../state';
 
 /**
  * Scanner app. Drives a camera session: the landing page opens the feed,
@@ -29,7 +29,7 @@ import {
  * stops the stream, terminates the decoder worker, and supersedes a request
  * still waiting on its permission prompt.
  */
-export const QrScanner = () => {
+const QrScanner = () => {
   useAnchor(scannerScope);
   const camera = useValue(cameraStore);
   const stream = useValue(streamCell);
@@ -113,3 +113,5 @@ export const QrScanner = () => {
     </Show>
   );
 };
+
+export default QrScanner;

@@ -40,8 +40,8 @@ import {
   tetherPaddingChanged,
   tetherToggled,
   type TetherPluginName,
-} from './store';
-import * as css from './index.css';
+} from '../store';
+import * as css from './home.css';
 
 /** The flip fallback offered to the position-try plugin. */
 const OPPOSITE_SIDE: Record<FloatingSide, FloatingSide> = {
@@ -103,7 +103,7 @@ const PlacementControl = <Value extends string>(props: {
   );
 };
 
-export const Scratchpad = () => {
+const Scratchpad = () => {
   useAnchor(scratchpadScope);
   const controls = useValue(floatingControls);
   const anchorEl = useValue(anchorElement);
@@ -379,3 +379,5 @@ export const Scratchpad = () => {
     </Frame>
   );
 };
+
+export default Scratchpad;

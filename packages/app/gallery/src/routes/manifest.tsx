@@ -1,7 +1,7 @@
 import { Flex, Heading, Text } from '@lib/ui';
 import type { GalleryGroup, GalleryListing } from '@lib/gallery';
-import { ManifestListings } from './manifest-listings';
-import { GalleryView } from './gallery-view';
+import { ManifestListings } from '../components/manifest-listings';
+import { GalleryView } from '../components/gallery-view';
 
 /**
  * Collect an eager `import.meta.glob` of a package's `*.gallery.tsx` modules
@@ -24,7 +24,7 @@ const collectListings = (
  * so SolidStart preloads them alongside the route and the page paints complete —
  * no flash while a deferred listings import streams in after navigation.
  */
-export const ManifestRoute = (props: {
+const ManifestRoute = (props: {
   /** Manifest title, conventionally the package name (`@lib/ui`). */
   title: string;
   /** One-line summary, conventionally the package's `description`. */
@@ -62,3 +62,5 @@ export const ManifestRoute = (props: {
     </GalleryView>
   );
 };
+
+export default ManifestRoute;

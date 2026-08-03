@@ -1,5 +1,5 @@
 import gallery, { listings } from '@lib/ui/gallery';
-import { ManifestRoute } from '@app/gallery';
+import ManifestRoute from '@app/gallery/routes/manifest';
 
 /** `@lib/ui`'s gallery page. Listings come pre-globbed from the manifest. */
 export default function LibUiGallery() {
