@@ -5,18 +5,22 @@ import { Callout, Container, Flex, Heading, Text } from '@lib/ui';
 import { appearanceScope, hydrateAppearanceSaga } from '@lib/theme/runtime';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
-import { ThemePicker, ThemeResetButton, themeHeadingId } from './theme-picker';
+import {
+  ThemePicker,
+  ThemeResetButton,
+  themeHeadingId,
+} from '../components/theme-picker';
 import {
   AppearancePicker,
   AppearanceResetButton,
   appearanceHeadingId,
-} from './appearance-picker';
+} from '../components/appearance-picker';
 import {
   MotionPicker,
   MotionResetButton,
   motionHeadingId,
-} from './motion-picker';
-import { AdvancedSettings } from './advanced-settings';
+} from '../components/motion-picker';
+import { AdvancedSettings } from '../components/advanced-settings';
 
 /**
  * The settings page. Anchors the appearance scope for the whole surface:
@@ -27,7 +31,7 @@ import { AdvancedSettings } from './advanced-settings';
  * The Advanced section owns its own scope — it holds a subscription with a
  * lifetime of its own.
  */
-export const Settings = () => {
+const Settings = () => {
   useAnchor(appearanceScope);
   const hydrateAppearance = useRun(hydrateAppearanceSaga);
 
@@ -158,3 +162,5 @@ export const Settings = () => {
     </Frame>
   );
 };
+
+export default Settings;

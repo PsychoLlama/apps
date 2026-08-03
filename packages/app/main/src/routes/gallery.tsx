@@ -1,3 +1,3 @@
-import { Gallery } from '@app/gallery';
+import Gallery from '@app/gallery/routes/layout';
 
 export default Gallery;

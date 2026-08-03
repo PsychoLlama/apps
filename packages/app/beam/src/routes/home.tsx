@@ -4,12 +4,12 @@ import { FrameBody } from '@lib/shell';
 import { Button, Callout, Flex, LinkButton, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
-import { BeamIntro } from './beam-intro';
-import { ContactDirectory } from './contact-directory';
-import { InviteDialog } from './invite-dialog';
+import { BeamIntro } from '../components/beam-intro';
+import { ContactDirectory } from '../components/contact-directory';
+import { InviteDialog } from '../components/invite-dialog';
 import { contactsStore } from '../state/contacts';
 import { inviteOpenedTopic } from '../state/view';
-import * as styles from './beam-home.css';
+import * as styles from './home.css';
 
 /**
  * The Beam home at `/beam` — the address book, and the app's entry point. It
@@ -24,7 +24,7 @@ import * as styles from './beam-home.css';
  * same-origin URL, which the scanner already resolves to an in-app route, so
  * the tap lands back here at `/beam/share/:id`.
  */
-export const BeamHome = () => {
+const BeamHome = () => {
   const book = useValue(contactsStore);
   const commit = useCommit();
 
@@ -81,3 +81,5 @@ export const BeamHome = () => {
     </>
   );
 };
+
+export default BeamHome;

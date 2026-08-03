@@ -1,3 +1,3 @@
-import { Settings } from '@app/settings';
+import Settings from '@app/settings/routes/home';
 
 export default Settings;

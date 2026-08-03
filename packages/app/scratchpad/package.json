@@ -3,13 +3,13 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Scratchpad app — a wired-up blank canvas for branch-scoped experiments.",
+  "description": "Scratchpad app \u2014 a wired-up blank canvas for branch-scoped experiments.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts"
   ],
   "exports": {
-    ".": "./src/index.tsx",
+    "./routes/*": "./src/routes/*.tsx",
     "./config": "./src/config.ts"
   },
   "scripts": {

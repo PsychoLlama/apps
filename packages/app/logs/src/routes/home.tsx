@@ -2,8 +2,8 @@ import { For, Match, Switch, onMount } from 'solid-js';
 import { useAnchor, useRun, useValue } from '@lib/state';
 import { Badge, Callout, Flex, Text } from '@lib/ui';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
-import { LogsView } from './logs-view';
-import { LogPanel } from './log-panel';
+import { LogsView } from '../components/logs-view';
+import { LogPanel } from '../components/log-panel';
 import {
   archiveStore,
   logsScope,
@@ -21,7 +21,7 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4];
  * empty-state callout when the archive is genuinely empty, an error callout if
  * the read fails, otherwise the {@link LogPanel}.
  */
-export const LogList = () => {
+const LogList = () => {
   useAnchor(logsScope);
   const archive = useValue(archiveStore);
   const track = useRun(trackArchiveSaga);
@@ -95,3 +95,5 @@ const ErrorState = () => (
     </Text>
   </Callout>
 );
+
+export default LogList;

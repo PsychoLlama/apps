@@ -1,11 +1,11 @@
 import { For } from 'solid-js';
 import { Card, Container, Flex, Grid, Heading, Link, Text } from '@lib/ui';
 import { manifestLinks } from '../manifests';
-import { GalleryView } from './gallery-view';
-import * as css from './gallery-home.css';
+import { GalleryView } from '../components/gallery-view';
+import * as css from './home.css';
 
 /** The gallery landing page: one card per manifest, linking to its own page. */
-export const GalleryHome = () => (
+const GalleryHome = () => (
   <GalleryView trail={[{ label: 'Gallery' }]}>
     <Container as="div" size={3}>
       <Flex as="header" direction="column" gap={2}>
@@ -73,3 +73,5 @@ export const GalleryHome = () => (
     </Container>
   </GalleryView>
 );
+
+export default GalleryHome;

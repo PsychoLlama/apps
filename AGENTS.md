@@ -14,7 +14,6 @@
   - `@lib/*` — shared libraries.
   - `@dev/*` — internal tooling.
 - To discover packages: `jq -r '[.name, .description] | @tsv' packages/*/*/package.json`
-- `@app/*` packages export top-level components. `@app/main` owns routing — its `src/routes/**/*.tsx` files import from `@app/*` packages and export the component as the route's default.
 - Rust crates live flat at `crates/<name>` (no tiers).
 - Crates with wasm/napi bridges carry a `package.json` following the name `@crate/<name>`, both as a Cargo member and pnpm workspace package.
 
