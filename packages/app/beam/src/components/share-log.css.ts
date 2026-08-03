@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { neutral, radius, space } from '@lib/design';
+import { neutral, radius, space, typeScale } from '@lib/design';
 
 /**
  * The zone itself — one surface holding everything that has passed between
@@ -43,12 +43,17 @@ export const row = style({
  * left is which way the thing moved, and an arrow says that in the width of
  * an icon rather than a column of repeated names.
  *
- * Nudged down to sit on the first line of the body beside it: the row aligns
- * to the top, and an icon box is shorter than a line of text, so without the
+ * Sized by the type rather than in pixels. The icon draws itself at `1em`, so
+ * setting the step the body beside it is set at leaves the arrow in scale with
+ * the text it labels — and it stays that way if the body's step ever moves.
+ *
+ * Nudged down to sit on the first line of that body: the row aligns to the
+ * top, and a square glyph box is shorter than a line of text, so without the
  * offset it rides high against the text's cap height.
  */
 export const direction = style({
   flexShrink: 0,
+  fontSize: typeScale[2].fontSize,
   marginBlockStart: space[1],
   color: neutral.alpha[11],
 });

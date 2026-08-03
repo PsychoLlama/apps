@@ -1,13 +1,9 @@
 import { For, Show } from 'solid-js';
-import { useRun, useValue } from '@lib/state';
-import { Badge, Button, Flex, Heading, LinkButton, Text } from '@lib/ui';
-import IconContentCopy from 'virtual:icons/mdi/content-copy';
-import IconOpenInNew from 'virtual:icons/mdi/open-in-new';
-import IconTrayArrowDown from 'virtual:icons/mdi/tray-arrow-down';
-import IconTrayArrowUp from 'virtual:icons/mdi/tray-arrow-up';
-import { reportSagaFailure } from '../state/failure';
+import { Badge, Flex, Heading, Link, Text } from '@lib/ui';
+import IconArrowDown from 'virtual:icons/mdi/arrow-down';
+import IconArrowUp from 'virtual:icons/mdi/arrow-up';
 import { shareLink } from '../state/share-body';
-import { copyNoticeStore, copyShareSaga, type Share } from '../state/shares';
+import { type Share } from '../state/shares';
 import * as styles from './share-log.css';
 
 /** Times read as times. Follows the reader's locale. */
@@ -21,30 +17,17 @@ const formatTime = (epochMilliseconds: number): string =>
  * everything else — which way it went, when, whether it's still waiting — is
  * a line of chrome under it.
  *
- * Copy and Open are offered on every item rather than only on the ones that
- * arrived. Re-copying something you sent from the device you sent it from is
- * exactly what someone reaching for this page is doing, and withholding the
- * button on the grounds that they typed it once already would be a rule with
- * nothing behind it.
+ * Nothing here is a button. The body is selectable text, and a URL is the
+ * link itself — which between them is every way there is to take one of
+ * these. A Copy control alongside that was a second path to what selecting
+ * already does, and it cost every item a filled rectangle to say so.
  */
 const ShareRow = (props: { share: Share; peerName: string }) => {
-  const notice = useValue(copyNoticeStore);
-  const copy = useRun(copyShareSaga);
-
   /** The URL this share is, if it's a URL at all. */
   const link = () => shareLink(props.share.body);
 
-  /** Whether this row is the one that was just copied. */
-  const copied = () => notice().shareId === props.share.id;
-
   /** Whether this one arrived rather than left. */
   const inbound = () => props.share.status === 'received';
-
-  const handleCopy = () => {
-    void copy({ id: props.share.id, body: props.share.body }).catch(
-      reportSagaFailure('The share copy saga failed.'),
-    );
-  };
 
   return (
     <Flex as="li" direction="row" align="start" gap={3} class={styles.row}>
@@ -54,18 +37,14 @@ const ShareRow = (props: { share: Share; peerName: string }) => {
       <Show
         when={inbound()}
         fallback={
-          <IconTrayArrowUp
-            width="18"
-            height="18"
+          <IconArrowUp
             role="img"
             aria-label="Shared by you"
             class={styles.direction}
           />
         }
       >
-        <IconTrayArrowDown
-          width="18"
-          height="18"
+        <IconArrowDown
           role="img"
           aria-label={`Shared by ${props.peerName}`}
           class={styles.direction}
@@ -82,68 +61,41 @@ const ShareRow = (props: { share: Share; peerName: string }) => {
       >
         {/* Selectable, and rendered as text. A received body came off the
             wire from another device — one the reader vouched for, which is
-            not the same as one they control — so it is never markup, and the
-            only thing offered to act on it is a link the scheme allowlist
-            has already vetted. */}
+            not the same as one they control — so it is never markup. A body
+            that is entirely a URL becomes the link itself rather than
+            growing an Open button beside it: the thing on screen is the
+            address, so the address is what you click. The `href` is the
+            allowlisted URL, not the raw body, so `javascript:` and `data:`
+            never reach an anchor. */}
         <Text as="p" size={2} class={styles.body} selectable>
-          {props.share.body}
+          <Show when={link()} fallback={props.share.body}>
+            {(href) => (
+              <Link
+                testId="beam-share-open"
+                href={href()}
+                native
+                target="_blank"
+                rel="noreferrer noopener"
+                selectable
+              >
+                {props.share.body}
+              </Link>
+            )}
+          </Show>
         </Text>
 
-        <Flex
-          as="div"
-          direction="row"
-          align="center"
-          justify="between"
-          gap={3}
-          wrap="wrap"
-        >
-          <Flex as="div" direction="row" align="center" gap={2}>
-            <Text as="span" size={1} color="lowContrast" selectable={false}>
-              {formatTime(props.share.at)}
-            </Text>
+        <Flex as="div" direction="row" align="center" gap={2}>
+          <Text as="span" size={1} color="lowContrast" selectable={false}>
+            {formatTime(props.share.at)}
+          </Text>
 
-            {/* Only ours can be waiting. A queued item is the one thing on
-                this surface that hasn't happened yet, so it says so. */}
-            <Show when={props.share.status === 'queued'}>
-              <Badge color="warning" variant="soft">
-                Queued
-              </Badge>
-            </Show>
-          </Flex>
-
-          {/* Ghost rather than soft. On a card the buttons had a filled
-              surface to sit against and needed one of their own; ruled off
-              inside a single region they'd be the heaviest thing in it,
-              repeated once per item down the page. */}
-          <Flex as="div" direction="row" align="center" gap={1}>
-            <Show when={link()}>
-              {(href) => (
-                <LinkButton
-                  testId="beam-share-open"
-                  href={href()}
-                  native
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  size={1}
-                  variant="ghost"
-                >
-                  <IconOpenInNew width="16" height="16" aria-hidden="true" />
-                  Open
-                </LinkButton>
-              )}
-            </Show>
-
-            <Button
-              testId="beam-share-copy"
-              size={1}
-              variant="ghost"
-              color="neutral"
-              onClick={handleCopy}
-            >
-              <IconContentCopy width="16" height="16" aria-hidden="true" />
-              {copied() ? 'Copied' : 'Copy'}
-            </Button>
-          </Flex>
+          {/* Only ours can be waiting. A queued item is the one thing on
+              this surface that hasn't happened yet, so it says so. */}
+          <Show when={props.share.status === 'queued'}>
+            <Badge color="warning" variant="soft">
+              Queued
+            </Badge>
+          </Show>
         </Flex>
       </Flex>
     </Flex>
