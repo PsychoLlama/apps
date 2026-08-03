@@ -11,12 +11,18 @@ import { neutral, radius, space, typeScale } from '@lib/design';
  * region with items ruled off inside it reads as what it is — a surface two
  * devices are putting things down on, ordered by when they landed.
  *
+ * Rounded a step under the container default, at the crossover step the
+ * field above it sits on. The zone is the widest surface on the page, and
+ * radius reads relative to the edge it's cutting: the same corner that looks
+ * gentle on a card looks inflated across a full-width region, and it pulled
+ * the eye to the corners rather than to the rows inside them.
+ *
  * `overflow: hidden` so the rules and any row's hover fill stop at the
  * rounded corners instead of squaring them off.
  */
 export const zone = style({
   border: `1px solid ${neutral.alpha[6]}`,
-  borderRadius: radius[4],
+  borderRadius: radius[3],
   overflow: 'hidden',
 });
 

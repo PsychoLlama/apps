@@ -27,27 +27,4 @@ export const status = style({
   display: 'inline-flex',
   alignItems: 'baseline',
   gap: space[1],
-  // The peer reading carries a name of unbounded length, so it's the side
-  // that gives way — first by capping itself, then by shrinking below that
-  // when the bar runs out of room. `min-width: 0` opts out of the flex item's
-  // automatic minimum, which would otherwise floor it at the width of the
-  // name and push the relay reading off the other edge.
-  minWidth: 0,
-});
-
-/**
- * The focused peer's name. Truncates rather than wrapping: the bar is one
- * line of chrome, and a name is the one thing in it with no length limit.
- *
- * The trailing colon goes with it — a name long enough to clip is one whose
- * punctuation the ellipsis stands in for anyway. Block display is what gives
- * the box a width to overflow in the first place; an inline one has none.
- */
-export const peerName = style({
-  display: 'block',
-  minWidth: 0,
-  maxWidth: '12rem',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
 });

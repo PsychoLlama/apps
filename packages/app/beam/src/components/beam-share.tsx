@@ -20,8 +20,6 @@ import {
 } from '../state/network';
 import { sharesByPeerFormula } from '../state/shares';
 import {
-  peerBlurredTopic,
-  peerFocusedTopic,
   removalClosedTopic,
   removalOpenedTopic,
   removalStore,
@@ -168,27 +166,6 @@ export const BeamShare = () => {
             reportSagaFailure('The peer disconnect saga failed.'),
           );
         });
-      },
-    ),
-  );
-
-  // Point the frame's status bar at this peer for as long as the view is
-  // open. The bar is mounted by the layout, which can't tell which route is
-  // showing from its own params, so the view that knows says so.
-  //
-  // Keyed so that opening your own link focuses nothing: nothing is dialled
-  // there, and a reading stuck on "Connecting" for a connection that was
-  // never attempted is worse than an empty corner. Identity settles after
-  // first paint, so this re-runs and clears itself once it does. A link that
-  // was never an address is the same case for the same reason.
-  createEffect(
-    on(
-      () => (isSelf() || !dialable() ? null : params.id),
-      (endpointId) => {
-        if (!endpointId) return;
-
-        commit(peerFocusedTopic(endpointId));
-        onCleanup(() => commit(peerBlurredTopic(endpointId)));
       },
     ),
   );

@@ -129,7 +129,7 @@ export const ShareLog = (props: { shares: Share[]; peerName: string }) => (
           saying: what's here goes away when the app is closed. */}
       <Heading
         as="h2"
-        size={1}
+        size={3}
         weight="medium"
         color="lowContrast"
         selectable={false}

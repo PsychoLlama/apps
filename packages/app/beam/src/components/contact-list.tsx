@@ -16,7 +16,7 @@ import * as styles from './contact-list.css';
  * somewhere, so it stays out of the way until it's pointed at.
  *
  * A name has no length limit, so the row holds the line by truncating: the
- * badges keep their width and the name gives way, rather than a long name
+ * badge keeps its width and the name gives way, rather than a long name
  * pushing the row's own status off the edge of the screen.
  *
  * The row marks itself when its peer is the one on screen. That only shows
@@ -24,11 +24,7 @@ import * as styles from './contact-list.css';
  * the sidebar — but it's the row that knows its own `href`, so the test lives
  * here rather than being threaded down from whichever list is hosting it.
  */
-const ContactRow = (props: {
-  contact: ContactView;
-  queued: number;
-  active: boolean;
-}) => {
+const ContactRow = (props: { contact: ContactView; active: boolean }) => {
   const location = useLocation();
 
   const href = () => `/beam/share/${props.contact.endpointId}`;
@@ -63,27 +59,21 @@ const ContactRow = (props: {
           {props.contact.name}
         </Text>
 
-        <Flex as="div" direction="row" align="center" gap={2}>
-          {/* Something written to this device that hasn't reached it. Worth
-              seeing from the list: the alternative is finding out by opening
-              the page you'd only open if you already suspected. */}
-          <Show when={props.queued > 0}>
-            <Badge color="accent" variant="soft">
-              {props.queued} queued
-            </Badge>
-          </Show>
+        {/* Reachable right now — the one thing about a row that changes on
+            its own while you're looking at it, and the only thing the list
+            says about a contact beyond its name. It marks the row in place
+            rather than lifting it into a list of its own, so the book stays
+            a book: the same devices in the same order, whoever happens to be
+            awake.
 
-          {/* Reachable right now — the one thing about a row that changes on
-              its own while you're looking at it. It marks the row in place
-              rather than lifting it into a list of its own, so the book stays
-              a book: the same devices in the same order, whoever happens to
-              be awake. */}
-          <Show when={props.active}>
-            <Badge color="success" variant="soft">
-              Active
-            </Badge>
-          </Show>
-        </Flex>
+            Surface rather than soft: the row it sits in is itself a button,
+            so the badge needs an edge of its own to read as a reading rather
+            than as a second control inside the first. */}
+        <Show when={props.active}>
+          <Badge color="success" variant="surface">
+            Active
+          </Badge>
+        </Show>
       </LinkButton>
     </Flex>
   );
@@ -107,8 +97,6 @@ const ContactRow = (props: {
 export const ContactList = (props: {
   contacts: ContactView[];
   testId: string;
-  /** Shares still waiting to go out, by endpoint id. */
-  queued?: Record<string, number>;
   /** Peers reachable right now, by endpoint id. */
   active?: Record<string, true>;
 }) => (
@@ -118,7 +106,6 @@ export const ContactList = (props: {
         {(contact) => (
           <ContactRow
             contact={contact}
-            queued={props.queued?.[contact.endpointId] ?? 0}
             active={props.active?.[contact.endpointId] ?? false}
           />
         )}
