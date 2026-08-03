@@ -3,9 +3,9 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { useCommit, useRun, useValue } from '@lib/state';
 import { FrameBody } from '@lib/shell';
 import { AlertDialog, Button, Callout, Flex, Heading, Text } from '@lib/ui';
-import { RenameDialog } from './rename-dialog';
-import { ShareComposer } from './share-composer';
-import { ShareLog } from './share-log';
+import { RenameDialog } from '../components/rename-dialog';
+import { ShareComposer } from '../components/share-composer';
+import { ShareLog } from '../components/share-log';
 import { addressBookFormula, forgetContactSaga } from '../state/contacts';
 import { isEndpointId } from '../state/endpoint';
 import { reportSagaFailure } from '../state/failure';
@@ -25,7 +25,7 @@ import {
   removalStore,
   renameOpenedTopic,
 } from '../state/view';
-import * as styles from './beam-share.css';
+import * as styles from './share.css';
 
 /**
  * Dates read as dates. Follows the reader's locale.
@@ -58,7 +58,7 @@ const formatDate = (epochMilliseconds: number): string =>
  * when you scan the code off your own screen, and the page says so rather
  * than sitting on a dial that will never land.
  */
-export const BeamShare = () => {
+const BeamShare = () => {
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -345,3 +345,5 @@ export const BeamShare = () => {
     </FrameBody>
   );
 };
+
+export default BeamShare;

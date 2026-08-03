@@ -1,3 +1,3 @@
-import { BeamHome } from '@app/beam';
+import BeamHome from '@app/beam/routes/home';
 
 export default BeamHome;

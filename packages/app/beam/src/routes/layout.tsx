@@ -3,24 +3,25 @@ import { useLocation } from '@solidjs/router';
 import { useAnchor, useRun, useValue } from '@lib/state';
 import { Frame } from '@lib/shell';
 import { Flex } from '@lib/ui';
-import { BeamHeader } from './beam-header';
-import { BeamOnboarding } from './beam-onboarding';
-import { ContactSidebar } from './contact-sidebar';
-import { StatusBar } from './status-bar';
+import { BeamHeader } from '../components/beam-header';
+import { BeamOnboarding } from '../components/beam-onboarding';
+import { ContactSidebar } from '../components/contact-sidebar';
+import { StatusBar } from '../components/status-bar';
 import { restoreContactsSaga } from '../state/contacts';
 import { reportSagaFailure } from '../state/failure';
 import { connectRelaySaga } from '../state/network';
 import { restoreOnboardingSaga } from '../state/onboarding';
 import { beamScope } from '../state/scope';
 import { beamSurfaceFormula, surfaceForRoute } from '../state/view';
-import * as styles from './beam-layout.css';
+import * as styles from './layout.css';
 
 /**
  * The Beam layout: the `<main>` frame for every `/beam/*` route. It anchors
  * the session scope for the whole surface, so the relay connection and the
  * loaded address book survive navigation between the invite view and a peer's
  * share view without re-dialling or re-reading. Each route renders its own
- * header and body inside.
+ * header and body inside: `./home` is the address book at `/beam`, `./share`
+ * is one peer at `/beam/share/:id`.
  *
  * The status bar hangs off the frame rather than any one route: it reports on
  * the session, which no single route owns.
@@ -39,7 +40,7 @@ import * as styles from './beam-layout.css';
  * The anchor is the only lifecycle wiring here: releasing it on cleanup
  * aborts the connect and frees the endpoint.
  */
-export const BeamLayout = (props: { children?: JSX.Element }) => {
+const BeamLayout = (props: { children?: JSX.Element }) => {
   useAnchor(beamScope);
   const location = useLocation();
   const derived = useValue(beamSurfaceFormula);
@@ -102,3 +103,5 @@ export const BeamLayout = (props: { children?: JSX.Element }) => {
     </Frame>
   );
 };
+
+export default BeamLayout;
