@@ -1,8 +1,10 @@
 import { For, Show } from 'solid-js';
 import { useRun, useValue } from '@lib/state';
-import { Badge, Button, Card, Flex, LinkButton, Text } from '@lib/ui';
+import { Badge, Button, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import IconContentCopy from 'virtual:icons/mdi/content-copy';
 import IconOpenInNew from 'virtual:icons/mdi/open-in-new';
+import IconTrayArrowDown from 'virtual:icons/mdi/tray-arrow-down';
+import IconTrayArrowUp from 'virtual:icons/mdi/tray-arrow-up';
 import { reportSagaFailure } from '../state/failure';
 import { shareLink } from '../state/share-body';
 import { copyNoticeStore, copyShareSaga, type Share } from '../state/shares';
@@ -15,11 +17,11 @@ const formatTime = (epochMilliseconds: number): string =>
   );
 
 /**
- * One thing shared, in either direction. The body is the row; everything
- * else — who, when, whether it's still waiting to go out — is chrome around
- * it.
+ * One thing on the surface, in either direction. The body is the item;
+ * everything else — which way it went, when, whether it's still waiting — is
+ * a line of chrome under it.
  *
- * Copy and Open are offered on every row rather than only on the ones that
+ * Copy and Open are offered on every item rather than only on the ones that
  * arrived. Re-copying something you sent from the device you sent it from is
  * exactly what someone reaching for this page is doing, and withholding the
  * button on the grounds that they typed it once already would be a rule with
@@ -35,6 +37,9 @@ const ShareRow = (props: { share: Share; peerName: string }) => {
   /** Whether this row is the one that was just copied. */
   const copied = () => notice().shareId === props.share.id;
 
+  /** Whether this one arrived rather than left. */
+  const inbound = () => props.share.status === 'received';
+
   const handleCopy = () => {
     void copy({ id: props.share.id, body: props.share.body }).catch(
       reportSagaFailure('The share copy saga failed.'),
@@ -42,35 +47,39 @@ const ShareRow = (props: { share: Share; peerName: string }) => {
   };
 
   return (
-    <Card as="li" size={2}>
-      <Flex as="div" direction="column" gap={2}>
-        <Flex as="div" direction="row" align="center" justify="between" gap={3}>
-          <Text
-            as="span"
-            size={1}
-            color="lowContrast"
-            class={styles.author}
-            truncate
-            selectable={false}
-          >
-            {props.share.status === 'received' ? props.peerName : 'You'}
-          </Text>
+    <Flex as="li" direction="row" align="start" gap={3} class={styles.row}>
+      {/* The arrow carries what a name used to, so it carries the name's
+          accessible text with it: an icon alone would leave a screen reader
+          with the body and no idea which device put it there. */}
+      <Show
+        when={inbound()}
+        fallback={
+          <IconTrayArrowUp
+            width="18"
+            height="18"
+            role="img"
+            aria-label="Shared by you"
+            class={styles.direction}
+          />
+        }
+      >
+        <IconTrayArrowDown
+          width="18"
+          height="18"
+          role="img"
+          aria-label={`Shared by ${props.peerName}`}
+          class={styles.direction}
+        />
+      </Show>
 
-          <Flex as="div" direction="row" align="center" gap={2}>
-            {/* Only ours can be waiting. A queued row is the one thing on
-                this page that hasn't happened yet, so it says so. */}
-            <Show when={props.share.status === 'queued'}>
-              <Badge color="warning" variant="soft">
-                Queued
-              </Badge>
-            </Show>
-
-            <Text as="span" size={1} color="lowContrast" selectable={false}>
-              {formatTime(props.share.at)}
-            </Text>
-          </Flex>
-        </Flex>
-
+      <Flex
+        as="div"
+        direction="column"
+        gap={1}
+        grow
+        class={styles.content}
+        data-testid="beam-share-item"
+      >
         {/* Selectable, and rendered as text. A received body came off the
             wire from another device — one the reader vouched for, which is
             not the same as one they control — so it is never markup, and the
@@ -80,61 +89,114 @@ const ShareRow = (props: { share: Share; peerName: string }) => {
           {props.share.body}
         </Text>
 
-        <Flex as="div" direction="row" gap={2} justify="end" wrap="wrap">
-          <Show when={link()}>
-            {(href) => (
-              <LinkButton
-                testId="beam-share-open"
-                href={href()}
-                native
-                target="_blank"
-                rel="noreferrer noopener"
-                size={1}
-                variant="soft"
-              >
-                <IconOpenInNew width="16" height="16" aria-hidden="true" />
-                Open
-              </LinkButton>
-            )}
-          </Show>
+        <Flex
+          as="div"
+          direction="row"
+          align="center"
+          justify="between"
+          gap={3}
+          wrap="wrap"
+        >
+          <Flex as="div" direction="row" align="center" gap={2}>
+            <Text as="span" size={1} color="lowContrast" selectable={false}>
+              {formatTime(props.share.at)}
+            </Text>
 
-          <Button
-            testId="beam-share-copy"
-            size={1}
-            variant="soft"
-            color="neutral"
-            onClick={handleCopy}
-          >
-            <IconContentCopy width="16" height="16" aria-hidden="true" />
-            {copied() ? 'Copied' : 'Copy'}
-          </Button>
+            {/* Only ours can be waiting. A queued item is the one thing on
+                this surface that hasn't happened yet, so it says so. */}
+            <Show when={props.share.status === 'queued'}>
+              <Badge color="warning" variant="soft">
+                Queued
+              </Badge>
+            </Show>
+          </Flex>
+
+          {/* Ghost rather than soft. On a card the buttons had a filled
+              surface to sit against and needed one of their own; ruled off
+              inside a single region they'd be the heaviest thing in it,
+              repeated once per item down the page. */}
+          <Flex as="div" direction="row" align="center" gap={1}>
+            <Show when={link()}>
+              {(href) => (
+                <LinkButton
+                  testId="beam-share-open"
+                  href={href()}
+                  native
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  size={1}
+                  variant="ghost"
+                >
+                  <IconOpenInNew width="16" height="16" aria-hidden="true" />
+                  Open
+                </LinkButton>
+              )}
+            </Show>
+
+            <Button
+              testId="beam-share-copy"
+              size={1}
+              variant="ghost"
+              color="neutral"
+              onClick={handleCopy}
+            >
+              <IconContentCopy width="16" height="16" aria-hidden="true" />
+              {copied() ? 'Copied' : 'Copy'}
+            </Button>
+          </Flex>
         </Flex>
       </Flex>
-    </Card>
+    </Flex>
   );
 };
 
 /**
- * Everything shared with one peer this session, oldest first so the newest
- * sits nearest the composer below it. Renders nothing when empty — the page
- * says what it's for elsewhere, and an empty log needs no frame around it.
+ * Everything shared with one peer this session — one surface the two devices
+ * put things down on, newest first so the last thing shared sits nearest the
+ * composer above it.
  *
- * The log is memory-only, and deliberately: a share is a hand-off between
- * two devices in the same room, not a conversation to come back to. Closing
- * the app is how you clear it.
+ * It reads as a region rather than a feed, which is the correction it exists
+ * to make. Framing each item in its own card made a page of things addressed
+ * to somebody, and nothing here is: a share is a hand-off between two devices
+ * in the same room, not a conversation. One bordered zone with the items ruled
+ * off inside it says what actually happened — these things were put here, in
+ * this order, and either of us can pick them up.
+ *
+ * Renders nothing when empty. The page says what it's for elsewhere, and an
+ * empty zone would be a box outlining the absence of anything to take from it.
+ *
+ * The log is memory-only, and deliberately: closing the app is how you clear
+ * the surface.
  */
 export const ShareLog = (props: { shares: Share[]; peerName: string }) => (
   <Show when={props.shares.length > 0}>
-    <Flex
-      as="ul"
-      direction="column"
-      gap={2}
-      data-testid="beam-share-log"
-      aria-label="Shared this session"
-    >
-      <For each={props.shares}>
-        {(share) => <ShareRow share={share} peerName={props.peerName} />}
-      </For>
+    <Flex as="section" direction="column" gap={2}>
+      {/* The zone is named out loud rather than left to be inferred. A
+          bordered region under a text field reads as another field until
+          something tells you otherwise, and "this session" is the part worth
+          saying: what's here goes away when the app is closed. */}
+      <Heading
+        as="h2"
+        size={1}
+        weight="medium"
+        color="lowContrast"
+        selectable={false}
+      >
+        Shared this session
+      </Heading>
+
+      <Flex
+        as="ul"
+        direction="column"
+        background="surface"
+        class={styles.zone}
+        data-testid="beam-share-log"
+        aria-label="Shared this session"
+      >
+        <For each={props.shares}>
+          {(share) => <ShareRow share={share} peerName={props.peerName} />}
+        </For>
+      </Flex>
     </Flex>
   </Show>
 );
