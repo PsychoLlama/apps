@@ -119,17 +119,20 @@ defineFold(contactForgottenTopic, [shareLogStore], (log, endpointId) => {
 });
 
 /**
- * Everything shared, grouped by peer and oldest first — the order the share
- * view reads them in, with the newest nearest the composer. A record rather
- * than one peer's shares, because a formula takes no argument: the view looks
- * up the id in its route and falls back to nothing.
+ * Everything shared, grouped by peer and newest first — the order the share
+ * view reads them in. The composer sits above what it produced, so the thing
+ * just shared belongs at the top, nearest the field that sent it; older ones
+ * fall away below. A record rather than one peer's shares, because a formula
+ * takes no argument: the view looks up the id in its route and falls back to
+ * nothing.
  */
 export const sharesByPeerFormula = defineFormula(
   [shareLogStore],
   (log): Record<string, Share[]> => {
     const grouped: Record<string, Share[]> = {};
 
-    for (const share of log.items) {
+    for (let index = log.items.length - 1; index >= 0; index -= 1) {
+      const share = log.items[index];
       (grouped[share.endpointId] ??= []).push(share);
     }
 

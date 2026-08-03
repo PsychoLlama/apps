@@ -319,14 +319,20 @@ export const BeamShare = () => {
               <Show when={contact()}>
                 {(view) => (
                   <>
-                    <ShareLog
-                      shares={shares()[view().endpointId] ?? []}
-                      peerName={view().name}
-                    />
-
+                    {/* The composer leads and what was shared follows it.
+                        Sharing is the reason the page was opened — the field
+                        is what you came to use, so it sits where the eye
+                        lands rather than under a log you have to scroll past
+                        to reach it. What's been shared reads as the result
+                        of it, newest first, directly beneath. */}
                     <ShareComposer
                       endpointId={view().endpointId}
                       connected={state() === 'connected'}
+                    />
+
+                    <ShareLog
+                      shares={shares()[view().endpointId] ?? []}
+                      peerName={view().name}
                     />
 
                     <RenameDialog
