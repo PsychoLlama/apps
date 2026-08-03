@@ -11,12 +11,17 @@ import { neutral, radius, space, typeScale } from '@lib/design';
  * region with items ruled off inside it reads as what it is — a surface two
  * devices are putting things down on, ordered by when they landed.
  *
+ * Rounded a step past the container default. The zone is the largest surface
+ * on the page and it sits directly under the composer, so at the standard
+ * step its corners read as sharp against the field above them — the softer
+ * one makes it a place things are set down rather than a panel.
+ *
  * `overflow: hidden` so the rules and any row's hover fill stop at the
  * rounded corners instead of squaring them off.
  */
 export const zone = style({
   border: `1px solid ${neutral.alpha[6]}`,
-  borderRadius: radius[4],
+  borderRadius: radius[5],
   overflow: 'hidden',
 });
 
