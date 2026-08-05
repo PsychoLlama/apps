@@ -346,8 +346,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0(solid-js@1.9.14)
       '@solidjs/start':
-        specifier: 2.0.0-rc.9
-        version: 2.0.0-rc.9(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
+        specifier: 2.0.0-rc.10
+        version: 2.0.0-rc.10(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.2
@@ -2365,8 +2365,8 @@ packages:
     peerDependencies:
       solid-js: 1.9.14
 
-  '@solidjs/start@2.0.0-rc.9':
-    resolution: {integrity: sha512-+F4rOthjjbv0ztA8X4r00ptTVzsC0Y7Cc9LL+vm0FiglBBxO0VnzHkEGuO22XD7kv2ONVGDDhQ///k7hhodf3w==}
+  '@solidjs/start@2.0.0-rc.10':
+    resolution: {integrity: sha512-UXOyBb17uhVpWESTz7gIMGm9FLvjwdiotO9WRs29jkYqezPgz5IltUtoxmPzUUB3/mszGWTGSM7mJZA3k06rOg==}
     engines: {node: '>=24'}
     peerDependencies:
       '@solidjs/router': ^1.0.0
@@ -6047,13 +6047,6 @@ snapshots:
       '@tybys/wasm-util': 0.10.3
     optional: true
 
-  '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)':
-    dependencies:
-      '@emnapi/core': 1.11.2
-      '@emnapi/runtime': 1.11.2
-      '@tybys/wasm-util': 0.10.3
-    optional: true
-
   '@napi-rs/wasm-runtime@1.2.2(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)':
     dependencies:
       '@emnapi/core': 1.11.2
@@ -6173,7 +6166,7 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.11.2
       '@emnapi/runtime': 1.11.2
-      '@napi-rs/wasm-runtime': 1.1.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)
+      '@napi-rs/wasm-runtime': 1.2.2(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)
     optional: true
 
   '@oxc-parser/binding-wasm32-wasi@0.142.0':
@@ -6616,7 +6609,7 @@ snapshots:
     dependencies:
       solid-js: 1.9.14
 
-  '@solidjs/start@2.0.0-rc.9(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
+  '@solidjs/start@2.0.0-rc.10(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/traverse': 7.29.7
