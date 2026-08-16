@@ -92,9 +92,14 @@ export const handleFetch = (event: FetchEvent): void => {
   }
 };
 
-/** The scratchpad route, matched with or without a trailing slash. */
+/**
+ * The scratchpad surface: its landing page and every experiment nested
+ * under it, matched with or without a trailing slash. The whole subtree
+ * rides on one flag, so a disabled scratchpad hides its experiments too
+ * — otherwise the gate would leak every route added beneath it.
+ */
 const isScratchpadRoute = (url: URL): boolean =>
-  url.pathname === '/scratchpad' || url.pathname === '/scratchpad/';
+  url.pathname === '/scratchpad' || url.pathname.startsWith('/scratchpad/');
 
 /**
  * Clean URL of the prerendered 404 shell. Cloudflare serves the

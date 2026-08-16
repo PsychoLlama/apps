@@ -1,3 +1,3 @@
-import Scratchpad from '@app/scratchpad/routes/home';
+import ScratchpadLayout from '@app/scratchpad/routes/layout';
 
-export default Scratchpad;
+export default ScratchpadLayout;

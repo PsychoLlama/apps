@@ -90,8 +90,11 @@ export default defineConfig({
         // Manual entries for routes the crawler can't reach from `/`:
         //   - `/404`: rendered via Cloudflare's `not_found_handling`,
         //     not linked from any page.
-        //   - `/scratchpad` and the `/beam/*` routes: flag-gated apps,
+        //   - the `/scratchpad/*` and `/beam/*` routes: flag-gated apps,
         //     unlisted from the launcher whenever their flag is off.
+        //     The scratchpad's experiments are listed one by one because
+        //     its landing page is a blank canvas that links to none of
+        //     them — nothing for the crawler to follow.
         //     Their shells ship in every build; the service worker gates
         //     access at runtime via the per-app flag (see
         //     `@lib/runtime-config`), so there's nothing to decide at
@@ -112,7 +115,13 @@ export default defineConfig({
         //     dynamic path onto that shell so a cold load hydrates against a
         //     beam-shaped shell instead of the 404 page (which would mismatch
         //     and throw).
-        routes: ['/404', '/scratchpad', '/beam', '/beam/share/__id'],
+        routes: [
+          '/404',
+          '/scratchpad',
+          '/scratchpad/floating-ui',
+          '/beam',
+          '/beam/share/__id',
+        ],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file
