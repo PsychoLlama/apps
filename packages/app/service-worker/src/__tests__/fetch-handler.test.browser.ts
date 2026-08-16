@@ -308,14 +308,20 @@ describe('handleFetch', () => {
       await reset(scratchpadAppEnabled);
     });
 
-    /** A navigation request to the scratchpad route. */
-    const scratchpadNavigation = (): Request => {
-      const request = new Request(sameOrigin('/scratchpad'));
+    /** A navigation request to a route on the scratchpad surface. */
+    const scratchpadNavigation = (path = '/scratchpad'): Request => {
+      const request = new Request(sameOrigin(path));
       Object.defineProperty(request, 'mode', { value: 'navigate' });
       return request;
     };
 
-    it('serves the 404 page when the flag is disabled', async () => {
+    // The landing page and every experiment nested beneath it ride on the
+    // same flag, so the whole subtree disappears together.
+    it.each([
+      ['the landing page', '/scratchpad'],
+      ['a trailing slash', '/scratchpad/'],
+      ['a nested experiment', '/scratchpad/floating-ui'],
+    ])('serves the 404 page for %s when disabled', async (_label, path) => {
       await updateConfig(scratchpadAppEnabled, {
         development: { enabled: false },
       });
@@ -325,7 +331,7 @@ describe('handleFetch', () => {
         new Response('<html>not found</html>', { status: 200 }),
       );
 
-      const event = syntheticEvent(scratchpadNavigation());
+      const event = syntheticEvent(scratchpadNavigation(path));
       handleFetch(event as unknown as FetchEvent);
 
       expect(event.respondWith).toHaveBeenCalledOnce();
@@ -334,6 +340,23 @@ describe('handleFetch', () => {
       expect(resolved.status).toBe(404);
       expect(await resolved.text()).toBe('<html>not found</html>');
       expect(fetchSpy).toHaveBeenCalledWith('/404');
+    });
+
+    // Only the surface itself is gated. A sibling route that merely shares
+    // the prefix is a different app and must not be caught by the gate.
+    it('ignores routes that only share the scratchpad prefix', async () => {
+      await updateConfig(scratchpadAppEnabled, {
+        development: { enabled: false },
+      });
+      fetchSpy.mockResolvedValue(new Response('<html>other</html>'));
+
+      const event = syntheticEvent(scratchpadNavigation('/scratchpad-notes'));
+      handleFetch(event as unknown as FetchEvent);
+
+      expect(event.respondWith).toHaveBeenCalledOnce();
+      const [response] = event.respondWith.mock.calls[0] as [Promise<Response>];
+      expect((await response).status).toBe(200);
+      expect(fetchSpy).not.toHaveBeenCalledWith('/404');
     });
 
     it('serves the navigation when the flag is enabled', async () => {
