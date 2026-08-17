@@ -11,6 +11,10 @@
  * {@link watchAll} is the streaming counterpart to {@link subscribe}:
  * several options merged into one buffered async stream, for consumers
  * that would rather drain changes than register callbacks.
+ *
+ * {@link pruneOverrides} is the housekeeping call: hand it every option the
+ * origin declares and it clears the persisted remains of options that no
+ * longer exist.
  */
 
 export {
@@ -29,4 +33,5 @@ export {
   updateConfig,
 } from './config';
 export { environment } from './environment';
+export { pruneOverrides } from './storage';
 export { watchAll } from './watch';

@@ -1,4 +1,4 @@
-import type { JsonValue, Override } from './define-config';
+import type { JsonValue, Option, Override } from './define-config';
 
 /** The OPFS directory all option overrides are persisted under. */
 const DIRECTORY = 'config';
@@ -141,5 +141,55 @@ export const deleteOverride = async (id: string): Promise<void> => {
   } catch (error) {
     if (isUnavailable(error)) return;
     throw error;
+  }
+};
+
+/**
+ * Delete every persisted override no application option claims — leftovers
+ * from options removed in an earlier release.
+ *
+ * `known` must be *every* option the origin declares, not one app's subset:
+ * all routes and workers share this directory, so a partial list deletes
+ * live overrides that merely happen to be defined elsewhere.
+ *
+ * Deletions run concurrently. An entry that vanished mid-sweep — a sibling
+ * context pruning the same directory — isn't a failure; anything else is
+ * gathered into an `AggregateError` so one unreadable file doesn't hide the
+ * rest of the sweep.
+ */
+export const pruneOverrides = async (
+  known: readonly Option<JsonValue>[],
+): Promise<void> => {
+  const root = await opfsRoot();
+  if (!root) return;
+
+  const claimed = new Set(known.map((option) => fileName(option.id)));
+
+  let dir: FileSystemDirectoryHandle;
+  try {
+    dir = await root.getDirectoryHandle(DIRECTORY);
+  } catch (error) {
+    if (isUnavailable(error)) return;
+    throw error;
+  }
+
+  const orphans: string[] = [];
+  for await (const name of dir.keys()) {
+    if (!claimed.has(name)) orphans.push(name);
+  }
+
+  const results = await Promise.allSettled(
+    // `recursive` covers a directory entry. Nothing we write is a directory,
+    // but the config dir is ours, so anything unclaimed in it goes.
+    orphans.map((name) => dir.removeEntry(name, { recursive: true })),
+  );
+
+  const failures = results
+    .filter((result) => result.status === 'rejected')
+    .map((result) => result.reason as unknown)
+    .filter((reason) => !isUnavailable(reason));
+
+  if (failures.length > 0) {
+    throw new AggregateError(failures, 'Failed to prune config overrides.');
   }
 };
