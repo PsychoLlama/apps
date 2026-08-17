@@ -124,16 +124,16 @@ export const PropertiesPanel: Component<PropertiesPanelProps> = (props) => {
           aria-label="Icon"
         >
           <IconChooser icon={props.state.icon} onClick={props.onChooseIcon} />
-          <Show when={props.activePack}>
-            {(pack) => (
-              <PackCard
-                pack={pack()}
-                testId="icon-editor-choose-pack"
-                aria-label={`Change pack: ${pack().name}`}
-                onClick={props.onChoosePack}
-              />
-            )}
-          </Show>
+          {/* Rendered unconditionally — the card skeletons itself until
+              the pack index lands, so the actions below it don't jump. */}
+          <PackCard
+            pack={props.activePack}
+            testId="icon-editor-choose-pack"
+            aria-label={
+              props.activePack && `Change pack: ${props.activePack.name}`
+            }
+            onClick={props.onChoosePack}
+          />
           <Flex as="div" gap={3}>
             <Button
               class={css.actionButton}
