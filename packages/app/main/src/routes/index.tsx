@@ -52,6 +52,13 @@ const APPS: ReadonlyArray<AppEntry> = [
     Icon: IconQrcodeScan,
   },
   {
+    id: 'beam',
+    name: 'Beam',
+    href: '/beam',
+    description: 'Encrypted sharing between devices.',
+    Icon: IconSend,
+  },
+  {
     id: 'logs',
     name: 'Logs',
     href: '/logs',
@@ -65,13 +72,6 @@ const APPS: ReadonlyArray<AppEntry> = [
     href: '/gallery',
     description: 'Browse the component library and design system.',
     Icon: IconGallery,
-  },
-  {
-    id: 'beam',
-    name: 'Beam',
-    href: '/beam',
-    description: 'Encrypted sharing between devices.',
-    Icon: IconSend,
   },
 ];
 
