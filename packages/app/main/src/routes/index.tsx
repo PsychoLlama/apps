@@ -40,7 +40,7 @@ const APPS: ReadonlyArray<AppEntry> = [
     name: 'Icon Editor',
     href: '/icon-editor',
     description:
-      'Restyle an icon from the Iconify catalog and export it as a brandmark.',
+      'Create app icons, favicons, and logos for non-commercial projects.',
     Icon: IconPalette,
   },
   {
