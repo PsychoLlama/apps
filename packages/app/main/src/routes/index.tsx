@@ -40,7 +40,7 @@ const APPS: ReadonlyArray<AppEntry> = [
     name: 'Icon Editor',
     href: '/icon-editor',
     description:
-      'Restyle an icon from the Iconify catalog and export it as a brandmark.',
+      'Create app icons, favicons, and logos for non-commercial projects.',
     Icon: IconPalette,
   },
   {
@@ -50,6 +50,13 @@ const APPS: ReadonlyArray<AppEntry> = [
     description:
       'Scan QR codes with your camera. Decoding runs entirely on your device.',
     Icon: IconQrcodeScan,
+  },
+  {
+    id: 'beam',
+    name: 'Beam',
+    href: '/beam',
+    description: 'Encrypted sharing between devices.',
+    Icon: IconSend,
   },
   {
     id: 'logs',
@@ -65,13 +72,6 @@ const APPS: ReadonlyArray<AppEntry> = [
     href: '/gallery',
     description: 'Browse the component library and design system.',
     Icon: IconGallery,
-  },
-  {
-    id: 'beam',
-    name: 'Beam',
-    href: '/beam',
-    description: 'Encrypted sharing between devices.',
-    Icon: IconSend,
   },
 ];
 
