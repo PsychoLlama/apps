@@ -6,27 +6,15 @@
  */
 
 import { createTestRuntime, simulate } from '@lib/state';
-import {
-  readExportGate,
-  watchExportGate,
-  type ExportGateChange,
-} from '../capabilities';
-import {
-  exportFlagChangedTopic,
-  exportGateRestoredTopic,
-  exportGateStore,
-  workerControlChangedTopic,
-  type ExportGateState,
-} from '../gate';
+import { isWorkerControlling, watchWorkerControl } from '../capabilities';
+import { exportGateStore, workerControlChangedTopic } from '../gate';
 import { trackExportGateSaga } from '../sagas';
 import { logsScope } from '../../scope';
 
-const persisted: ExportGateState = { enabled: true, controlled: true };
-
 /** A finite stand-in for the live subscription. */
 const streamOf = async function* (
-  changes: readonly ExportGateChange[],
-): AsyncGenerator<ExportGateChange> {
+  changes: readonly boolean[],
+): AsyncGenerator<boolean> {
   yield* changes;
 };
 
@@ -37,81 +25,54 @@ describe('trackExportGateSaga', () => {
     await simulate(trackExportGateSaga(), {
       calls: [
         [
-          watchExportGate,
+          watchWorkerControl,
           () => {
             order.push('watch');
             return streamOf([]);
           },
         ],
         [
-          readExportGate,
+          isWorkerControlling,
           () => {
             order.push('read');
-            return persisted;
+            return true;
           },
         ],
       ],
     });
 
-    // Subscribing first is what keeps a change landing mid-read from being
+    // Subscribing first is what keeps a handoff landing mid-read from being
     // lost rather than buffered.
     expect(order).toEqual(['watch', 'read']);
   });
 
-  it('publishes the resolved conditions before any later change', async () => {
+  it('publishes the page controller before any later handoff', async () => {
     const trace = await simulate(trackExportGateSaga(), {
       calls: [
-        [watchExportGate, () => streamOf([{ source: 'flag', enabled: false }])],
-        [readExportGate, () => persisted],
+        [watchWorkerControl, () => streamOf([false])],
+        [isWorkerControlling, () => true],
       ],
     });
 
     expect(trace.commits).toEqual([
-      [exportGateRestoredTopic(persisted)],
-      [exportFlagChangedTopic(false)],
-    ]);
-  });
-
-  it('translates each change into its own fact', async () => {
-    const trace = await simulate(trackExportGateSaga(), {
-      calls: [
-        [
-          watchExportGate,
-          () =>
-            streamOf([
-              { source: 'worker', controlled: false },
-              { source: 'flag', enabled: false },
-            ]),
-        ],
-        [readExportGate, () => persisted],
-      ],
-    });
-
-    expect(trace.commits.slice(1)).toEqual([
+      [workerControlChangedTopic(true)],
       [workerControlChangedTopic(false)],
-      [exportFlagChangedTopic(false)],
     ]);
   });
 
-  it('replays a change that landed mid-read on top of the snapshot', async () => {
+  it('replays a handoff that landed mid-read on top of the snapshot', async () => {
     const runtime = createTestRuntime({
       calls: [
-        [
-          watchExportGate,
-          () => streamOf([{ source: 'worker', controlled: false }]),
-        ],
-        [readExportGate, () => persisted],
+        [watchWorkerControl, () => streamOf([false])],
+        [isWorkerControlling, () => true],
       ],
     });
     runtime.anchor(logsScope);
 
     await runtime.run(trackExportGateSaga());
 
-    // The stream drains after the restore, so the later handoff wins rather
-    // than being clobbered by the snapshot it raced.
-    expect(runtime.peek(exportGateStore)).toEqual({
-      enabled: true,
-      controlled: false,
-    });
+    // The stream drains after the read, so the later handoff wins rather than
+    // being clobbered by the snapshot it raced.
+    expect(runtime.peek(exportGateStore)).toEqual({ controlled: false });
   });
 });

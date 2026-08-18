@@ -8,7 +8,6 @@ import {
   type Override,
 } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
-import { logExport } from '@app/logs/config';
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import { type AdvancedSettingsState } from './settings';
 
@@ -19,15 +18,13 @@ import { type AdvancedSettingsState } from './settings';
  */
 export const readAdvancedSettings =
   async (): Promise<AdvancedSettingsState> => {
-    const [logFilter, logExportFlag, scratchpad] = await Promise.all([
+    const [logFilter, scratchpad] = await Promise.all([
       readEnvironment(filter),
-      readEnvironment(logExport),
       readEnvironment(scratchpadAppEnabled),
     ]);
 
     return {
       logFilter: logFilter.pattern,
-      logExportEnabled: logExportFlag.enabled,
       scratchpadEnabled: scratchpad.enabled,
     };
   };
@@ -46,22 +43,6 @@ export const writeLogFilter = async (
  * it to the built-in default. Other environments keep their overrides.
  */
 export const resetLogFilter = (): Promise<void> => reset(filter, [environment]);
-
-/** Persist the logs export flag as the active environment's override. */
-export const writeLogExportEnabled = async (
-  _signal: AbortSignal,
-  enabled: boolean,
-): Promise<void> => {
-  const patch: Override<{ enabled: boolean }> = { [environment]: { enabled } };
-  await updateConfig(logExport, patch);
-};
-
-/**
- * Clear the logs export override for the active environment only, reverting
- * it to the built-in default. Other environments keep theirs.
- */
-export const resetLogExportEnabled = (): Promise<void> =>
-  reset(logExport, [environment]);
 
 /** Persist the scratchpad flag as the active environment's override. */
 export const writeScratchpadEnabled = async (
@@ -82,7 +63,6 @@ export const resetScratchpadEnabled = (): Promise<void> =>
 /** One Advanced option settling on a new resolved value. */
 export type AdvancedSettingChange =
   | { option: 'logFilter'; pattern: string }
-  | { option: 'logExport'; enabled: boolean }
   | { option: 'scratchpad'; enabled: boolean };
 
 /**
@@ -99,9 +79,6 @@ export const watchAdvancedSettings = (
 ): AsyncGenerator<AdvancedSettingChange> =>
   watchAll(signal, (push) => [
     subscribe(filter, ({ pattern }) => push({ option: 'logFilter', pattern })),
-    subscribe(logExport, ({ enabled }) =>
-      push({ option: 'logExport', enabled }),
-    ),
     subscribe(scratchpadAppEnabled, ({ enabled }) =>
       push({ option: 'scratchpad', enabled }),
     ),

@@ -1,18 +1,15 @@
 import { call, commit, defineSaga } from '@lib/state';
 import {
   readAdvancedSettings,
-  resetLogExportEnabled,
   resetLogFilter,
   resetScratchpadEnabled,
   watchAdvancedSettings,
-  writeLogExportEnabled,
   writeLogFilter,
   writeScratchpadEnabled,
 } from './capabilities';
 import { advancedSettingsScope } from './scope';
 import {
   advancedSettingsRestoredTopic,
-  logExportChangedTopic,
   logFilterChangedTopic,
   scratchpadChangedTopic,
 } from './settings';
@@ -48,9 +45,6 @@ export const trackAdvancedSettingsSaga = defineSaga(
         case 'logFilter':
           yield commit(logFilterChangedTopic(change.pattern));
           break;
-        case 'logExport':
-          yield commit(logExportChangedTopic(change.enabled));
-          break;
         case 'scratchpad':
           yield commit(scratchpadChangedTopic(change.enabled));
           break;
@@ -78,22 +72,6 @@ export const resetLogFilterSaga = defineSaga(
   advancedSettingsScope,
   async function* () {
     yield* call(resetLogFilter);
-  },
-);
-
-/** Persist the logs export flag. Echoes back like {@link commitLogFilterSaga}. */
-export const commitLogExportSaga = defineSaga(
-  advancedSettingsScope,
-  async function* (enabled: boolean) {
-    yield* call(writeLogExportEnabled, enabled);
-  },
-);
-
-/** Revert the logs export flag to its default for the active environment. */
-export const resetLogExportSaga = defineSaga(
-  advancedSettingsScope,
-  async function* () {
-    yield* call(resetLogExportEnabled);
   },
 );
 

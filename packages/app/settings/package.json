@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@app/scratchpad": "workspace:*",
-    "@app/logs": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/runtime-config": "workspace:*",

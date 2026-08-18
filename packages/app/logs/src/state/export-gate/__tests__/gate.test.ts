@@ -5,15 +5,11 @@
  */
 
 import { createTestRuntime } from '@lib/state';
-import { environment } from '@lib/runtime-config';
 import {
   exportAvailableFormula,
-  exportFlagChangedTopic,
-  exportGateRestoredTopic,
   exportGateStore,
   workerControlChangedTopic,
 } from '../gate';
-import { logExport } from '../../../config';
 import { logsScope } from '../../scope';
 
 const setup = () => {
@@ -23,64 +19,38 @@ const setup = () => {
 };
 
 describe('exportGateStore', () => {
-  it("starts on the active environment's built-in default, uncontrolled", () => {
+  it('starts uncontrolled', () => {
     const { peek } = setup();
 
-    // Seeding the flag from its default is what keeps prerender and the
-    // client's first paint in agreement; control can't be confirmed until the
-    // page is live, so it starts out denied.
-    expect(peek(exportGateStore)).toEqual({
-      enabled: logExport.defaults[environment].enabled,
-      controlled: false,
-    });
+    // Control can't be confirmed until the page is live, so it starts out
+    // denied — which is also what prerender renders.
+    expect(peek(exportGateStore)).toEqual({ controlled: false });
   });
 
-  it('takes both resolved conditions at once', () => {
+  it('takes a control handoff', () => {
     const { commit, peek } = setup();
-
-    commit(exportGateRestoredTopic({ enabled: true, controlled: true }));
-
-    expect(peek(exportGateStore)).toEqual({ enabled: true, controlled: true });
-  });
-
-  it('takes a flag change on its own', () => {
-    const { commit, peek } = setup();
-    commit(exportGateRestoredTopic({ enabled: false, controlled: true }));
-
-    commit(exportFlagChangedTopic(true));
-
-    expect(peek(exportGateStore)).toEqual({ enabled: true, controlled: true });
-  });
-
-  it('takes a control handoff on its own', () => {
-    const { commit, peek } = setup();
-    commit(exportGateRestoredTopic({ enabled: true, controlled: false }));
 
     commit(workerControlChangedTopic(true));
 
-    expect(peek(exportGateStore)).toEqual({ enabled: true, controlled: true });
+    expect(peek(exportGateStore)).toEqual({ controlled: true });
   });
 });
 
 describe('exportAvailableFormula', () => {
-  it('offers the action only when both conditions hold', () => {
+  it('offers the action once a worker controls the page', () => {
     const { commit, peek } = setup();
 
-    commit(exportGateRestoredTopic({ enabled: true, controlled: true }));
+    commit(workerControlChangedTopic(true));
 
     expect(peek(exportAvailableFormula)).toBe(true);
   });
 
-  it.each([
-    { enabled: true, controlled: false },
-    { enabled: false, controlled: true },
-    { enabled: false, controlled: false },
-  ])('withholds the action given %o', (values) => {
+  it('withholds the action while nothing controls the page', () => {
     const { commit, peek } = setup();
 
-    // Either condition alone is a dead button: an enabled feature with no
-    // worker 404s, and a worker with the feature off has nothing to offer.
-    commit(exportGateRestoredTopic(values));
+    // Without a worker the export navigation escapes to the network and
+    // 404s: a dead button.
+    commit(workerControlChangedTopic(false));
 
     expect(peek(exportAvailableFormula)).toBe(false);
   });
