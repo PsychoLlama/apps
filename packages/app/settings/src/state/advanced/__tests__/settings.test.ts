@@ -10,7 +10,6 @@ import {
   advancedDefaults,
   advancedSettingsRestoredTopic,
   advancedSettingsStore,
-  logExportChangedTopic,
   logFilterChangedTopic,
   scratchpadChangedTopic,
   type AdvancedSettingsState,
@@ -25,7 +24,6 @@ const setup = () => {
 /** Every option flipped away from whatever the environment defaults to. */
 const inverted: AdvancedSettingsState = {
   logFilter: `${advancedDefaults.logFilter}:changed`,
-  logExportEnabled: !advancedDefaults.logExportEnabled,
   scratchpadEnabled: !advancedDefaults.scratchpadEnabled,
 };
 
@@ -50,16 +48,6 @@ describe('advancedSettingsStore', () => {
     commit(logFilterChangedTopic('app:*'));
 
     expect(peek(advancedSettingsStore).logFilter).toBe('app:*');
-  });
-
-  it('takes a resolved logs export flag', () => {
-    const { commit, peek } = setup();
-
-    commit(logExportChangedTopic(!advancedDefaults.logExportEnabled));
-
-    expect(peek(advancedSettingsStore).logExportEnabled).toBe(
-      !advancedDefaults.logExportEnabled,
-    );
   });
 
   it('takes a resolved scratchpad flag', () => {

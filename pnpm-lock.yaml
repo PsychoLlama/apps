@@ -467,9 +467,6 @@ importers:
 
   packages/app/settings:
     dependencies:
-      '@app/logs':
-        specifier: workspace:*
-        version: link:../logs
       '@app/scratchpad':
         specifier: workspace:*
         version: link:../scratchpad

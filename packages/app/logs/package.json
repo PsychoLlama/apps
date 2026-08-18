@@ -6,8 +6,7 @@
   "description": "Log viewer for on-device session logs (work in progress).",
   "license": "MIT",
   "exports": {
-    "./routes/*": "./src/routes/*.tsx",
-    "./config": "./src/config.ts"
+    "./routes/*": "./src/routes/*.tsx"
   },
   "scripts": {
     "typecheck": "tsc",

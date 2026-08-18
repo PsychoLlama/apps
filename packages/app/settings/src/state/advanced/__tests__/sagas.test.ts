@@ -11,20 +11,16 @@
 import { createTestRuntime, simulate } from '@lib/state';
 import {
   readAdvancedSettings,
-  resetLogExportEnabled,
   resetLogFilter,
   resetScratchpadEnabled,
   watchAdvancedSettings,
-  writeLogExportEnabled,
   writeLogFilter,
   writeScratchpadEnabled,
   type AdvancedSettingChange,
 } from '../capabilities';
 import {
-  commitLogExportSaga,
   commitLogFilterSaga,
   commitScratchpadSaga,
-  resetLogExportSaga,
   resetLogFilterSaga,
   resetScratchpadSaga,
   trackAdvancedSettingsSaga,
@@ -34,7 +30,6 @@ import {
   advancedDefaults,
   advancedSettingsRestoredTopic,
   advancedSettingsStore,
-  logExportChangedTopic,
   logFilterChangedTopic,
   scratchpadChangedTopic,
   type AdvancedSettingsState,
@@ -42,7 +37,6 @@ import {
 
 const persisted: AdvancedSettingsState = {
   logFilter: 'app:*',
-  logExportEnabled: !advancedDefaults.logExportEnabled,
   scratchpadEnabled: !advancedDefaults.scratchpadEnabled,
 };
 
@@ -109,7 +103,6 @@ describe('trackAdvancedSettingsSaga', () => {
           () =>
             streamOf([
               { option: 'logFilter', pattern: 'app:*' },
-              { option: 'logExport', enabled: true },
               { option: 'scratchpad', enabled: false },
             ]),
         ],
@@ -119,7 +112,6 @@ describe('trackAdvancedSettingsSaga', () => {
 
     expect(trace.commits.slice(1)).toEqual([
       [logFilterChangedTopic('app:*')],
-      [logExportChangedTopic(true)],
       [scratchpadChangedTopic(false)],
     ]);
   });
@@ -146,7 +138,6 @@ describe('trackAdvancedSettingsSaga', () => {
           () =>
             streamOf([
               { option: 'logFilter', pattern: 'app:*' },
-              { option: 'logExport', enabled: true },
               { option: 'scratchpad', enabled: true },
             ]),
         ],
@@ -159,7 +150,6 @@ describe('trackAdvancedSettingsSaga', () => {
 
     expect(runtime.peek(advancedSettingsStore)).toEqual({
       logFilter: 'app:*',
-      logExportEnabled: true,
       scratchpadEnabled: true,
     });
   });
@@ -196,12 +186,6 @@ describe('write sagas', () => {
       'app:*',
     ],
     [
-      'commitLogExportSaga',
-      commitLogExportSaga(true),
-      writeLogExportEnabled,
-      true,
-    ],
-    [
       'commitScratchpadSaga',
       commitScratchpadSaga(false),
       writeScratchpadEnabled,
@@ -225,7 +209,6 @@ describe('write sagas', () => {
 
   it.each([
     ['resetLogFilterSaga', resetLogFilterSaga(), resetLogFilter],
-    ['resetLogExportSaga', resetLogExportSaga(), resetLogExportEnabled],
     ['resetScratchpadSaga', resetScratchpadSaga(), resetScratchpadEnabled],
   ] as const)(
     '%s clears its override and commits nothing',

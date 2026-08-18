@@ -5,7 +5,6 @@ import {
   type Option,
 } from '@lib/runtime-config';
 import { filter as consoleLogFilter } from '@lib/observability/config';
-import { logExport as logExportEnabled } from '@app/logs/config';
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -22,7 +21,6 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  */
 const KNOWN_OPTIONS: readonly Option<JsonValue>[] = [
   consoleLogFilter,
-  logExportEnabled,
   scratchpadAppEnabled,
 ];
 

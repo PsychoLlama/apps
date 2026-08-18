@@ -17,10 +17,8 @@ import {
   advancedDefaults,
   advancedSettingsScope,
   advancedSettingsStore,
-  commitLogExportSaga,
   commitLogFilterSaga,
   commitScratchpadSaga,
-  resetLogExportSaga,
   resetLogFilterSaga,
   resetScratchpadSaga,
   trackAdvancedSettingsSaga,
@@ -44,10 +42,8 @@ export const AdvancedSettings = () => {
   const advanced = useValue(advancedSettingsStore);
   const track = useRun(trackAdvancedSettingsSaga);
   const commitFilter = useRun(commitLogFilterSaga);
-  const commitLogExport = useRun(commitLogExportSaga);
   const commitScratchpad = useRun(commitScratchpadSaga);
   const resetFilter = useRun(resetLogFilterSaga);
-  const resetLogExport = useRun(resetLogExportSaga);
   const resetScratchpad = useRun(resetScratchpadSaga);
 
   // The store is seeded with the build-environment default, so first
@@ -147,45 +143,6 @@ export const AdvancedSettings = () => {
               if (next !== advanced().logFilter) void commitFilter(next);
             }}
           />
-        </Flex>
-
-        <Flex as="section" direction="column" gap={2}>
-          <Flex
-            as="header"
-            direction="row"
-            justify="between"
-            align="center"
-            gap={3}
-          >
-            <Heading as="h3" size={4} weight="medium" selectable={false}>
-              Logs export
-            </Heading>
-            <ResetButton
-              testId="advanced-log-export-reset"
-              label="Reset logs export"
-              disabled={
-                advanced().logExportEnabled ===
-                advancedDefaults.logExportEnabled
-              }
-              onReset={() => void resetLogExport()}
-            />
-          </Flex>
-          <Text as="label" size={2} color="lowContrast" selectable={false}>
-            <Flex
-              as="div"
-              direction="row"
-              justify="between"
-              align="center"
-              gap={3}
-            >
-              Show the export action in the logs header.
-              <Switch
-                testId="advanced-log-export-toggle"
-                checked={advanced().logExportEnabled}
-                onCheckedChange={(next) => void commitLogExport(next)}
-              />
-            </Flex>
-          </Text>
         </Flex>
 
         <Flex as="section" direction="column" gap={2}>

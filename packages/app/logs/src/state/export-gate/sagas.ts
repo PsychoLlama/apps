@@ -1,43 +1,31 @@
 import { call, commit, defineSaga } from '@lib/state';
-import { readExportGate, watchExportGate } from './capabilities';
-import {
-  exportFlagChangedTopic,
-  exportGateRestoredTopic,
-  workerControlChangedTopic,
-} from './gate';
+import { isWorkerControlling, watchWorkerControl } from './capabilities';
+import { workerControlChangedTopic } from './gate';
 import { logsScope } from '../scope';
 
 /**
- * Bring the export action's gating conditions to life and keep them there.
- * Opens the change subscription, reconciles the seeded defaults with the
- * persisted override and the page's actual controller, then publishes every
- * later change for as long as the scope lives. This is the store's only
+ * Bring the export action's gating condition to life and keep it there. Opens
+ * the change subscription, confirms who controls the page, then publishes
+ * every later handoff for as long as the scope lives. This is the store's only
  * writer.
  *
- * `LogsView` runs it once on mount — OPFS and the Service Worker API are both
- * client-only, so neither can run during SSG.
+ * `LogsView` runs it once on mount — the Service Worker API is client-only, so
+ * it can't run during SSG.
  *
- * Order matters. Subscribing before the read means a change landing mid-read
- * is buffered rather than lost; draining after the restore means it's replayed
- * on top of the snapshot instead of being clobbered by it.
+ * Order matters. Subscribing before the read means a handoff landing mid-read
+ * is buffered rather than lost; draining after the read means it's replayed on
+ * top of the snapshot instead of being clobbered by it.
  *
  * It never ends on its own. Releasing the last anchor aborts it, which drops
- * the subscriptions.
+ * the subscription.
  */
 export const trackExportGateSaga = defineSaga(logsScope, async function* () {
-  const changes = yield* call(watchExportGate);
+  const changes = yield* call(watchWorkerControl);
 
-  const values = yield* call(readExportGate);
-  yield commit(exportGateRestoredTopic(values));
+  const controlled = yield* call(isWorkerControlling);
+  yield commit(workerControlChangedTopic(controlled));
 
   for await (const change of changes) {
-    switch (change.source) {
-      case 'flag':
-        yield commit(exportFlagChangedTopic(change.enabled));
-        break;
-      case 'worker':
-        yield commit(workerControlChangedTopic(change.controlled));
-        break;
-    }
+    yield commit(workerControlChangedTopic(change));
   }
 });

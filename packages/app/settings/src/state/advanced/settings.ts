@@ -1,7 +1,6 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
-import { logExport } from '@app/logs/config';
 import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import { advancedSettingsScope } from './scope';
 
@@ -15,13 +14,6 @@ export interface AdvancedSettingsState {
    * OPFS override.
    */
   logFilter: string;
-
-  /**
-   * Whether the logs export action is enabled for the active environment.
-   * Seeded from the option default, then reconciled on mount like
-   * `logFilter`.
-   */
-  logExportEnabled: boolean;
 
   /**
    * Whether the scratchpad app is enabled for the active environment.
@@ -39,7 +31,6 @@ export interface AdvancedSettingsState {
  */
 export const advancedDefaults: AdvancedSettingsState = {
   logFilter: filter.defaults[environment].pattern,
-  logExportEnabled: logExport.defaults[environment].enabled,
   scratchpadEnabled: scratchpadAppEnabled.defaults[environment].enabled,
 };
 
@@ -67,7 +58,6 @@ defineFold(
   [advancedSettingsStore],
   (advanced, values) => {
     advanced.logFilter = values.logFilter;
-    advanced.logExportEnabled = values.logExportEnabled;
     advanced.scratchpadEnabled = values.scratchpadEnabled;
   },
 );
@@ -79,16 +69,6 @@ defineFold(
   [advancedSettingsStore],
   (advanced, pattern) => {
     advanced.logFilter = pattern;
-  },
-);
-
-/** The logs export flag resolved to a new value. */
-export const logExportChangedTopic = defineTopic<boolean>();
-defineFold(
-  logExportChangedTopic,
-  [advancedSettingsStore],
-  (advanced, enabled) => {
-    advanced.logExportEnabled = enabled;
   },
 );
 

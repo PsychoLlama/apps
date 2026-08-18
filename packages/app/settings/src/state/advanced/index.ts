@@ -11,10 +11,8 @@
 export { advancedDefaults, advancedSettingsStore } from './settings';
 export { advancedSettingsScope } from './scope';
 export {
-  commitLogExportSaga,
   commitLogFilterSaga,
   commitScratchpadSaga,
-  resetLogExportSaga,
   resetLogFilterSaga,
   resetScratchpadSaga,
   trackAdvancedSettingsSaga,
