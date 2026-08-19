@@ -5,6 +5,7 @@ import { createLogValve } from '@lib/holz-valve';
 import { createLogInsertedChannel } from './broadcast';
 import {
   STORE_NAME,
+  isVersionError,
   migrateLogDatabase,
   openLogDatabase,
   type LogDatabase,
@@ -17,15 +18,6 @@ import {
  * can't grow the buffer without limit.
  */
 const DEFAULT_BUFFER_CAPACITY = 10_000;
-
-/**
- * A versioned open rejects with a `VersionError` when the database already
- * exists at a higher version — a peer migrated past `DATABASE_VERSION` before
- * this context opened. The fix is to reconnect at the current version, not give
- * up.
- */
-const isVersionError = (error: unknown): boolean =>
-  error instanceof DOMException && error.name === 'VersionError';
 
 /** Options for {@link createIdbBackend}. */
 export interface CreateIdbBackendOptions {

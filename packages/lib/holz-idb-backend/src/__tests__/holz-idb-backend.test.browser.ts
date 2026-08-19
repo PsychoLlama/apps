@@ -11,6 +11,7 @@ import { createIdbBackend } from '../holz-idb-backend';
 import { createLogInsertedChannel } from '../broadcast';
 import {
   DATABASE_NAME,
+  DATABASE_VERSION,
   STORE_NAME,
   openLogDatabase,
   readLogsByTimestamp,
@@ -84,9 +85,10 @@ describe('createIdbBackend', () => {
       );
     });
 
-    // Open at a higher version, adding a throwaway index. This blocks until the
-    // backend (and any other open connection) steps aside, then runs its upgrade.
-    const upgraded = await openDB(DATABASE_NAME, 2, {
+    // Open one version past whatever this code knows, adding a throwaway index.
+    // This blocks until the backend (and any other open connection) steps
+    // aside, then runs its upgrade.
+    const upgraded = await openDB(DATABASE_NAME, DATABASE_VERSION + 1, {
       upgrade(_db, _oldVersion, _newVersion, transaction) {
         transaction.objectStore(STORE_NAME).createIndex('by-level', 'level');
       },
@@ -94,7 +96,7 @@ describe('createIdbBackend', () => {
     upgraded.close();
 
     // The backend is now disconnected. The next log must lazily reconnect at
-    // version 2 and persist, proving logging survived the upgrade.
+    // the new version and persist, proving logging survived the upgrade.
     logger.info('after upgrade');
     await vi.waitFor(async () => {
       expect(await readPersistedLogs()).toContainEqual(

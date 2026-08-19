@@ -16,10 +16,25 @@ export const DATABASE_NAME = '@holz';
  * Reconnecting tabs open at whatever version currently exists, so they ride
  * past this without needing to know it.
  */
-export const DATABASE_VERSION = 1;
+export const DATABASE_VERSION = 2;
 
 /** Object store every {@link Log} lands in. */
 export const STORE_NAME = 'logs';
+
+/**
+ * Object store holding the single {@link PruneRecord}. Without it a pruned
+ * archive is indistinguishable from one that never had those logs — the gap is
+ * invisible.
+ */
+export const PRUNE_STORE_NAME = 'pruning';
+
+/**
+ * The one key {@link PRUNE_STORE_NAME} ever holds. Pruning recurs for the life
+ * of the archive, so its bookkeeping is overwritten in place rather than
+ * appended — a history of prunes would be the same grow-only store pruning
+ * exists to bound.
+ */
+export const PRUNE_RECORD_KEY = 'latest';
 
 /**
  * Index over `Log.timestamp`. Insertion order (the auto-incremented key)
@@ -30,6 +45,19 @@ export const STORE_NAME = 'logs';
  */
 export const TIMESTAMP_INDEX = 'by-timestamp';
 
+/**
+ * The most recent pruning pass: when it ran and how many logs it dropped.
+ * Absent until the first pass that actually deletes something, and replaced by
+ * each pass after that — it dates the newest gap in the archive, not every gap.
+ */
+export interface PruneRecord {
+  /** Wall-clock time (`Date.now()`) the pass committed. */
+  timestamp: number;
+
+  /** How many logs the pass deleted. Always greater than zero. */
+  deleted: number;
+}
+
 /** Typed schema for the holz log database, applied to every {@link openDB}. */
 export interface LogDatabase extends DBSchema {
   [STORE_NAME]: {
@@ -39,6 +67,12 @@ export interface LogDatabase extends DBSchema {
     indexes: {
       [TIMESTAMP_INDEX]: number;
     };
+  };
+
+  [PRUNE_STORE_NAME]: {
+    /** Always {@link PRUNE_RECORD_KEY} — the store holds one record. */
+    key: typeof PRUNE_RECORD_KEY;
+    value: PruneRecord;
   };
 }
 
@@ -69,12 +103,22 @@ export const migrateLogDatabase = (
   relinquish?: Relinquish,
 ): Promise<LogConnection> =>
   openDB<LogDatabase>(DATABASE_NAME, DATABASE_VERSION, {
-    upgrade: (database) => {
-      const store = database.createObjectStore(STORE_NAME, {
-        autoIncrement: true,
-      });
+    upgrade: (database, oldVersion) => {
+      // Sequential, version-gated steps: a database at any older version
+      // catches up by running every step it missed.
+      if (oldVersion < 1) {
+        const store = database.createObjectStore(STORE_NAME, {
+          autoIncrement: true,
+        });
 
-      store.createIndex(TIMESTAMP_INDEX, 'timestamp');
+        store.createIndex(TIMESTAMP_INDEX, 'timestamp');
+      }
+
+      if (oldVersion < 2) {
+        // Out-of-line keys: the sole record is written at a fixed key rather
+        // than carrying one.
+        database.createObjectStore(PRUNE_STORE_NAME);
+      }
     },
 
     blocking: relinquish,
@@ -95,6 +139,33 @@ export const openLogDatabase = (
     blocking: relinquish,
     terminated: relinquish,
   });
+
+/**
+ * A versioned open rejects with a `VersionError` when the database already
+ * exists at a higher version — a peer migrated past {@link DATABASE_VERSION}
+ * before this context opened. The fix is to reconnect at the current version,
+ * not give up.
+ */
+export const isVersionError = (error: unknown): boolean =>
+  error instanceof DOMException && error.name === 'VersionError';
+
+/**
+ * Open the database, migrating it to {@link DATABASE_VERSION} unless a peer
+ * already moved it further along. The one-shot open for callers that just want
+ * a working connection and don't care which of the two paths produced it — the
+ * backend, which retries and reconnects on its own schedule, drives
+ * {@link migrateLogDatabase} and {@link openLogDatabase} directly instead.
+ */
+export const connectToLogDatabase = async (
+  relinquish?: Relinquish,
+): Promise<LogConnection> => {
+  try {
+    return await migrateLogDatabase(relinquish);
+  } catch (error) {
+    if (!isVersionError(error)) throw error;
+    return await openLogDatabase(relinquish);
+  }
+};
 
 /**
  * Read every persisted log in event-time order (oldest-first). Goes through the
