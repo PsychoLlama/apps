@@ -74,7 +74,12 @@ export const LogEntry = (props: { log: Log }) => {
 
         <For each={attributes()}>
           {([key, value]) => (
-            <Code size={1} variant="outline" color="neutral">
+            <Code
+              size={1}
+              variant="outline"
+              color="neutral"
+              class={css.attribute}
+            >
               {key}={formatValue(value)}
             </Code>
           )}
