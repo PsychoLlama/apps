@@ -1,10 +1,13 @@
 import { watchAll } from '@lib/runtime-config';
 import { createLogger, toError, type Log } from '@lib/observability';
 import {
+  PRUNE_RECORD_KEY,
+  PRUNE_STORE_NAME,
   STORE_NAME,
   TIMESTAMP_INDEX,
   openLogDatabase,
   type LogConnection,
+  type PruneRecord,
 } from '@lib/holz-idb-backend/database';
 import { createLogInsertedChannel } from '@lib/holz-idb-backend/broadcast';
 import type { LoadedArchive } from './archive';
@@ -12,9 +15,10 @@ import type { LoadedArchive } from './archive';
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
- * Open the viewer's own connection and read the whole archive newest-first.
- * The connection is returned alongside the snapshot so the archive cell can
- * hold it open for the lifetime of the view.
+ * Open the viewer's own connection and read the whole archive newest-first,
+ * along with the bookkeeping for the last pruning pass. The connection is
+ * returned alongside the snapshot so the archive cell can hold it open for the
+ * lifetime of the view.
  *
  * Nothing here is interruptible, so a connection that lands after the view
  * went away is closed on the spot — the commit that would have handed it to
@@ -28,9 +32,13 @@ export const loadArchive = async (
   const db = await openLogDatabase();
 
   try {
-    const entries = await readArchiveNewestFirst(db);
+    const [entries, pruned] = await Promise.all([
+      readArchiveNewestFirst(db),
+      readPruneRecord(db),
+    ]);
+
     signal.throwIfAborted();
-    return { db, entries };
+    return { db, entries, pruned };
   } catch (error) {
     db.close();
 
@@ -44,6 +52,25 @@ export const loadArchive = async (
 
     throw error;
   }
+};
+
+/**
+ * Read the archive's pruning bookkeeping — when the last pass dropped logs and
+ * how many — or `null` when nothing has ever been pruned. It dates the gap
+ * below the oldest entry on screen, which is otherwise indistinguishable from
+ * an archive that simply never held those logs.
+ *
+ * A viewer opens at whatever version currently exists, and that can predate the
+ * pruning store — an upgrade blocked by another tab leaves the schema behind
+ * until every peer steps aside. Naming a store that isn't there throws, which
+ * would take the archive read down with it, so a missing store reads as
+ * `null`: true of every database old enough to lack it.
+ */
+const readPruneRecord = async (
+  db: LogConnection,
+): Promise<PruneRecord | null> => {
+  if (!db.objectStoreNames.contains(PRUNE_STORE_NAME)) return null;
+  return (await db.get(PRUNE_STORE_NAME, PRUNE_RECORD_KEY)) ?? null;
 };
 
 /**

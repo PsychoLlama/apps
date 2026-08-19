@@ -45,6 +45,7 @@ const makeLog = (overrides: Partial<Log>): Log => ({
 const loaded: LoadedArchive = {
   db: fakeConnection,
   entries: [makeLog({ message: 'read', timestamp: 1000 })],
+  pruned: null,
 };
 
 /** A stubbed pull that reports `count` pings and then runs dry. */

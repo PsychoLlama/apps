@@ -1,6 +1,9 @@
 import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
 import type { Log } from '@lib/observability';
-import type { LogConnection } from '@lib/holz-idb-backend/database';
+import type {
+  LogConnection,
+  PruneRecord,
+} from '@lib/holz-idb-backend/database';
 import { logsScope } from '../scope';
 import { closeConnection } from './capabilities';
 
@@ -35,6 +38,11 @@ export interface ArchiveState {
   freshness: ArchiveFreshness;
   /** Persisted logs, newest-first. Empty until a read resolves. */
   entries: Log[];
+  /**
+   * The last pruning pass, or `null` when nothing has ever been pruned. Dates
+   * the gap below the oldest entry, which the entries alone can't show.
+   */
+  pruned: PruneRecord | null;
 }
 
 /** Source of truth for the archive the viewer renders. */
@@ -42,6 +50,7 @@ export const archiveStore = defineStore<ArchiveState>(logsScope, () => ({
   status: 'loading',
   freshness: 'initial',
   entries: [],
+  pruned: null,
 }));
 
 /**
@@ -66,6 +75,8 @@ export interface LoadedArchive {
   db: LogConnection;
   /** The archive contents, newest-first. */
   entries: Log[];
+  /** The last pruning pass, or `null` if the archive has never been pruned. */
+  pruned: PruneRecord | null;
 }
 
 /**
@@ -81,6 +92,7 @@ defineFold(
     archive.status = 'ready';
     archive.freshness = 'current';
     archive.entries = loaded.entries;
+    archive.pruned = loaded.pruned;
     held.current = loaded.db;
   },
 );
