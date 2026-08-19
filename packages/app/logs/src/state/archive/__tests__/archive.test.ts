@@ -47,6 +47,7 @@ describe('archiveStore', () => {
       status: 'loading',
       freshness: 'initial',
       entries: [],
+      pruned: null,
     });
     expect(peek(connectionCell)).toBeNull();
   });
@@ -57,23 +58,45 @@ describe('archiveLoadedTopic', () => {
     const { commit, peek } = setup();
     const entry = makeLog({ message: 'read', timestamp: 1000 });
 
-    commit(archiveLoadedTopic({ db: fakeConnection, entries: [entry] }));
+    commit(
+      archiveLoadedTopic({
+        db: fakeConnection,
+        entries: [entry],
+        pruned: null,
+      }),
+    );
 
     expect(peek(archiveStore)).toEqual({
       status: 'ready',
       freshness: 'current',
       entries: [entry],
+      pruned: null,
     });
     expect(peek(connectionCell)).toBe(fakeConnection);
   });
 
+  it('lands the pruning record the read came back with', () => {
+    const { commit, peek } = setup();
+    const pruned = { timestamp: 5000, deleted: 2000 };
+
+    commit(archiveLoadedTopic({ db: fakeConnection, entries: [], pruned }));
+
+    // Nothing else surfaces the gap below the oldest entry — without this the
+    // archive reads as if it had never held those logs.
+    expect(peek(archiveStore).pruned).toEqual(pruned);
+  });
+
   it('lands the archive back at current on a re-read', () => {
     const { commit, peek } = setup();
-    commit(archiveLoadedTopic({ db: fakeConnection, entries: [] }));
+    commit(
+      archiveLoadedTopic({ db: fakeConnection, entries: [], pruned: null }),
+    );
     commit(logsInsertedTopic());
 
     // A fresh read supersedes the stale flag.
-    commit(archiveLoadedTopic({ db: fakeConnection, entries: [] }));
+    commit(
+      archiveLoadedTopic({ db: fakeConnection, entries: [], pruned: null }),
+    );
 
     expect(peek(archiveStore).freshness).toBe('current');
   });
@@ -93,7 +116,9 @@ describe('archiveLoadFailedTopic', () => {
 describe('logsInsertedTopic', () => {
   it('flips a current archive to stale on a ping', () => {
     const { commit, peek } = setup();
-    commit(archiveLoadedTopic({ db: fakeConnection, entries: [] }));
+    commit(
+      archiveLoadedTopic({ db: fakeConnection, entries: [], pruned: null }),
+    );
 
     commit(logsInsertedTopic());
 
@@ -115,7 +140,9 @@ describe('archiveRefreshedTopic', () => {
   it('prepends refreshed logs ahead of the held snapshot', () => {
     const { commit, peek } = setup();
     const held = makeLog({ message: 'held', timestamp: 1000 });
-    commit(archiveLoadedTopic({ db: fakeConnection, entries: [held] }));
+    commit(
+      archiveLoadedTopic({ db: fakeConnection, entries: [held], pruned: null }),
+    );
     commit(logsInsertedTopic());
 
     // The refresh reads only the newer tail; it lands ahead of the snapshot so
@@ -133,7 +160,9 @@ describe('archiveRefreshedTopic', () => {
   it('settles freshness to current when a refresh adds nothing', () => {
     const { commit, peek } = setup();
     const held = makeLog({ message: 'held', timestamp: 1000 });
-    commit(archiveLoadedTopic({ db: fakeConnection, entries: [held] }));
+    commit(
+      archiveLoadedTopic({ db: fakeConnection, entries: [held], pruned: null }),
+    );
     commit(logsInsertedTopic());
 
     // An empty delta still confirms the view is current, and leaves entries be.

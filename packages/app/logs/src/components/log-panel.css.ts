@@ -22,6 +22,19 @@ export const message = style({
 });
 
 /**
+ * A context attribute chip. Values are arbitrary — a URL, a stack frame, an
+ * opaque id — so a chip can easily outrun the viewport on its own. `anywhere`
+ * (not `break-word`) is what lets it break: it feeds into the chip's min-content
+ * width, so the flex row can shrink it below its longest token instead of
+ * letting it overflow into the body's clipped x-axis, where the value is
+ * unreadable and unselectable.
+ */
+export const attribute = style({
+  minWidth: 0,
+  overflowWrap: 'anywhere',
+});
+
+/**
  * The chevron dividing origin segments — a quiet tick between names. Paints the
  * exact color the origin `Code` segments use (`neutral` ghost is `alpha[11]`),
  * so the glyph reads as part of the same breadcrumb rather than a hair off it.

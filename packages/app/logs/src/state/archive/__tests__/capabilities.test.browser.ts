@@ -7,7 +7,12 @@
  */
 
 import { level, type Log } from '@lib/observability';
-import { STORE_NAME, openLogDatabase } from '@lib/holz-idb-backend/database';
+import {
+  PRUNE_RECORD_KEY,
+  PRUNE_STORE_NAME,
+  STORE_NAME,
+  openLogDatabase,
+} from '@lib/holz-idb-backend/database';
 import { createIdbBackend } from '@lib/holz-idb-backend';
 
 import { loadArchive, readNewLogs } from '../capabilities';
@@ -29,13 +34,13 @@ beforeEach(async () => {
   // Instantiating the backend synchronously registers its versioned open —
   // which creates the store on a fresh origin — before this clear's no-version
   // open runs. It opens at the current version when a peer has migrated past
-  // ours, so it never fights another test file's schema. Wipe the store so each
-  // test starts empty.
+  // ours, so it never fights another test file's schema. Wipe both stores so
+  // each test starts empty.
   createIdbBackend();
 
   const db = await openLogDatabase();
   try {
-    await db.clear(STORE_NAME);
+    await Promise.all([db.clear(STORE_NAME), db.clear(PRUNE_STORE_NAME)]);
   } finally {
     db.close();
   }
@@ -69,6 +74,32 @@ describe('loadArchive', () => {
     const archive = await loadArchive(live());
     try {
       expect(archive.entries).toEqual([]);
+    } finally {
+      archive.db.close();
+    }
+  });
+
+  it('reads back the pruning record so the gap can be dated', async () => {
+    const pruned = { timestamp: 1_700_000_000_000, deleted: 2000 };
+    const writer = await openLogDatabase();
+    try {
+      await writer.put(PRUNE_STORE_NAME, pruned, PRUNE_RECORD_KEY);
+    } finally {
+      writer.close();
+    }
+
+    const archive = await loadArchive(live());
+    try {
+      expect(archive.pruned).toEqual(pruned);
+    } finally {
+      archive.db.close();
+    }
+  });
+
+  it('reports nothing pruned when no pass has ever run', async () => {
+    const archive = await loadArchive(live());
+    try {
+      expect(archive.pruned).toBeNull();
     } finally {
       archive.db.close();
     }
