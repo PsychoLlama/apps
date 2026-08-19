@@ -1,4 +1,5 @@
 import { createLogger, toError } from '@lib/observability';
+import { pruneLogs } from '@lib/holz-idb-backend';
 import {
   pruneOverrides,
   type JsonValue,
@@ -34,7 +35,8 @@ const KNOWN_OPTIONS: readonly Option<JsonValue>[] = [
  * the critical path.
  *
  * Today that's clearing the persisted remains of runtime options that no
- * longer exist. Later tasks of the same character belong here too.
+ * longer exist, and trimming the log archive back under its cap. Later tasks of
+ * the same character belong here too.
  */
 export const runStartupTasks = (): void => {
   pruneOverrides(KNOWN_OPTIONS).catch((error: unknown) => {
@@ -42,4 +44,18 @@ export const runStartupTasks = (): void => {
       error: toError(error),
     });
   });
+
+  // Cut back to half the ceiling so the archive coasts for another two
+  // thousand logs before the next pass — most page loads find nothing to do.
+  //
+  // A successful pass says nothing: it would log into the store it just
+  // trimmed, and the pass already leaves its own record behind for anyone
+  // reading the archive later.
+  pruneLogs({ maxRecords: 4_000, retainRecords: 2_000 }).catch(
+    (error: unknown) => {
+      logger.error('Failed to prune the log archive.', {
+        error: toError(error),
+      });
+    },
+  );
 };

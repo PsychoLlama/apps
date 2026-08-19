@@ -321,6 +321,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/holz-idb-backend':
+        specifier: workspace:*
+        version: link:../../lib/holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability
