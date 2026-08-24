@@ -68,7 +68,7 @@ const commit = async <Value extends JsonValue>(
   } else {
     await writeOverride(option.id, override);
   }
-  publish(option.id, override);
+  await publish(option.id, override);
 };
 
 /**

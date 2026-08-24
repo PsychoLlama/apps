@@ -26,7 +26,7 @@ describe('BroadcastChannelTransport', () => {
       subscriber.onMessage(resolve),
     );
 
-    publisher.send({ type: 'created', file: 'a.ndjson' });
+    await publisher.send({ type: 'created', file: 'a.ndjson' });
 
     expect(await received).toEqual({ type: 'created', file: 'a.ndjson' });
   });
@@ -46,7 +46,7 @@ describe('BroadcastChannelTransport', () => {
       subscriber.onMessage(resolve),
     );
 
-    publisher.send({ type: 'created', file: 'b.ndjson' });
+    await publisher.send({ type: 'created', file: 'b.ndjson' });
 
     expect(await Promise.all([first, second])).toEqual([
       { type: 'created', file: 'b.ndjson' },
@@ -79,7 +79,7 @@ describe('BroadcastChannelTransport', () => {
     );
 
     subscriber.close();
-    publisher.send({ type: 'created', file: 'd.ndjson' });
+    await publisher.send({ type: 'created', file: 'd.ndjson' });
     await routed;
 
     expect(seen).toEqual([]);
@@ -106,7 +106,7 @@ describe('BroadcastChannelTransport', () => {
       new Promise<void>((resolve) => subscriber.onMessage(() => resolve()));
 
     unsubscribe();
-    publisher.send({ type: 'created', file: 'c.ndjson' });
+    await publisher.send({ type: 'created', file: 'c.ndjson' });
     await settled();
 
     expect(seen).toEqual([]);
@@ -132,28 +132,29 @@ describe('BroadcastChannelTransport', () => {
       barrier.onMessage(() => resolve()),
     );
 
-    solo.send({ type: 'created', file: 'self.ndjson' });
+    await solo.send({ type: 'created', file: 'self.ndjson' });
     await routed;
 
     expect(seen).toEqual([]);
   });
 
-  it('echoes a send back to its own handlers when selfDeliver is set', () => {
-    using solo = new BroadcastChannelTransport<Wire>({
+  it('echoes a send back to its own handlers when selfDeliver is set', async () => {
+    await using solo = new BroadcastChannelTransport<Wire>({
       channel: uniqueChannel(),
       selfDeliver: true,
     });
     const seen: Wire[] = [];
     solo.onMessage((message) => seen.push(message));
 
-    solo.send({ type: 'created', file: 'self.ndjson' });
+    await solo.send({ type: 'created', file: 'self.ndjson' });
 
-    // Self-delivery fires synchronously — no need to await a round trip.
+    // Self-delivery runs inline, before the send settles — no round trip to
+    // wait on, unlike the sibling path.
     expect(seen).toEqual([{ type: 'created', file: 'self.ndjson' }]);
   });
 
-  it('stops self-delivering to a handler after it unsubscribes', () => {
-    using solo = new BroadcastChannelTransport<Wire>({
+  it('stops self-delivering to a handler after it unsubscribes', async () => {
+    await using solo = new BroadcastChannelTransport<Wire>({
       channel: uniqueChannel(),
       selfDeliver: true,
     });
@@ -161,7 +162,42 @@ describe('BroadcastChannelTransport', () => {
     const unsubscribe = solo.onMessage((message) => seen.push(message));
 
     unsubscribe();
-    solo.send({ type: 'created', file: 'self.ndjson' });
+    await solo.send({ type: 'created', file: 'self.ndjson' });
+
+    expect(seen).toEqual([]);
+  });
+
+  it('stops delivering to its handlers once disposed', async () => {
+    const channel = uniqueChannel();
+    await using publisher = new BroadcastChannelTransport<Wire>({
+      channel,
+      selfDeliver: false,
+    });
+    const seen: Wire[] = [];
+
+    // Disposal is scope-bound, so the subscriber gets its own block: leaving
+    // it is what tears the transport down, and the assertions below run
+    // against an already-disposed instance.
+    {
+      await using subscriber = new BroadcastChannelTransport<Wire>({
+        channel,
+        selfDeliver: false,
+      });
+      subscriber.onMessage((message) => seen.push(message));
+    }
+
+    // Same barrier trick as the `close()` case: a live sibling proves the post
+    // was routed, so an empty `seen` means disposal detached the subscriber.
+    await using barrier = new BroadcastChannelTransport<Wire>({
+      channel,
+      selfDeliver: false,
+    });
+    const routed = new Promise<void>((resolve) =>
+      barrier.onMessage(() => resolve()),
+    );
+
+    await publisher.send({ type: 'created', file: 'e.ndjson' });
+    await routed;
 
     expect(seen).toEqual([]);
   });

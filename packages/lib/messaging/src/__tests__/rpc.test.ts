@@ -87,9 +87,10 @@ const setup = () => {
   port1.start();
   port2.start();
 
-  // Events are fire-and-forget — nothing to await. A round-trip request is
-  // an ordered barrier: it can't resolve until every message queued before
-  // it on the same channel has been handled.
+  // Awaiting a `notify` only proves the transport accepted it, never that the
+  // peer ran its handler. A round-trip request is the barrier that proves
+  // that: it can't resolve until every message queued before it on the same
+  // channel has been handled.
   const flush = () => client.request('add', { left: 0, right: 0 });
 
   return { server, client, logged, sizes, flush };
@@ -176,12 +177,12 @@ describe('RPC', () => {
   it('drops events named after inherited members', async () => {
     const { client, logged, flush } = setup();
     const loose = client as unknown as {
-      notify(method: string, params?: unknown): void;
+      notify(method: string, params?: unknown): Promise<void>;
     };
 
-    loose.notify('constructor', {});
-    loose.notify('__proto__', {});
-    loose.notify('hasOwnProperty', {});
+    await loose.notify('constructor', {});
+    await loose.notify('__proto__', {});
+    await loose.notify('hasOwnProperty', {});
     await flush();
 
     expect(logged).toEqual([]);
@@ -190,7 +191,7 @@ describe('RPC', () => {
   it('delivers an event with a payload', async () => {
     const { client, logged, flush } = setup();
 
-    client.notify('log', { message: 'hello' });
+    await client.notify('log', { message: 'hello' });
     await flush();
 
     expect(logged).toEqual(['hello']);
@@ -199,7 +200,7 @@ describe('RPC', () => {
   it('delivers a zero-argument event', async () => {
     const { client, logged, flush } = setup();
 
-    client.notify('ping');
+    await client.notify('ping');
     await flush();
 
     expect(logged).toEqual(['pong']);
@@ -223,7 +224,7 @@ describe('RPC', () => {
     const { client, sizes, flush } = setup();
     const buffer = new ArrayBuffer(8);
 
-    client.notify('sink', { buffer }, { transfer: [buffer] });
+    await client.notify('sink', { buffer }, { transfer: [buffer] });
     await flush();
 
     expect(sizes).toEqual([8]);
@@ -252,13 +253,14 @@ describe('RPC', () => {
     const sent: Array<{ message: RpcMessage; options: SendOptions }> = [];
     let deliver!: (message: RpcMessage) => void;
     const transport: Transport<RpcMessage, RpcMessage, SendOptions> = {
-      send: (message, options) => {
+      send: async (message, options) => {
         sent.push({ message, options });
       },
       onMessage: (handler) => {
         deliver = handler;
         return () => undefined;
       },
+      [Symbol.asyncDispose]: async () => {},
     };
     RPC.from<ServerApi, ClientApi, SendOptions>(transport, {
       requests: {
@@ -293,6 +295,82 @@ describe('RPC', () => {
     expect(reply(1)?.options).toEqual({});
     // Populated reply: the handler's transfer list rides along.
     expect(reply(2)?.options).toEqual({ transfer: [expect.any(ArrayBuffer)] });
+  });
+
+  it('rejects a request whose send fails', async () => {
+    // A request that never reached the transport has no reply coming, so it
+    // must reject rather than hang forever waiting on one.
+    const { client } = setup();
+    const bad = { left: 1, right: () => {} } as unknown as {
+      left: number;
+      right: number;
+    };
+
+    await expect(client.request('add', bad)).rejects.toThrow();
+  });
+
+  it('rejects a notify whose send fails', async () => {
+    // Fire-and-forget still can't cross a link that refuses the message —
+    // the promise is the only place that failure can surface.
+    const { client } = setup();
+    const bad = { message: () => {} } as unknown as { message: string };
+
+    await expect(client.notify('log', bad)).rejects.toThrow();
+  });
+
+  it('frees a failed request id instead of leaking it', async () => {
+    // The pending entry is dropped on a failed send, so a stray response
+    // carrying that id later finds nothing to resolve — and, more importantly,
+    // the endpoint keeps working.
+    const { client } = setup();
+    const bad = { left: 1, right: () => {} } as unknown as {
+      left: number;
+      right: number;
+    };
+
+    await expect(client.request('add', bad)).rejects.toThrow();
+
+    await expect(client.request('add', { left: 2, right: 3 })).resolves.toBe(5);
+  });
+
+  it('survives a reply that cannot be sent', async () => {
+    // A handler returning an unserializable result fails on the reply send.
+    // There's no local caller to reject, so the failure is dropped — the
+    // endpoint must stay up rather than tear down over it.
+    const { port1, port2 } = new MessageChannel();
+    const serverApi = defineContract<SendOptions>()({
+      requests: {
+        unserializable: () => () => {},
+        fine: () => 'ok',
+      },
+    });
+    type ServerContract = typeof serverApi;
+    type Caller = {
+      requests: Record<string, never>;
+      events: Record<string, never>;
+    };
+
+    using server = RPC.from<ServerContract, Caller, SendOptions>(
+      new MessagePortTransport(port1),
+      serverApi,
+    );
+    using client = RPC.from<Caller, ServerContract, SendOptions>(
+      new MessagePortTransport(port2),
+      { requests: {}, events: {} },
+    );
+    port1.start();
+    port2.start();
+    expect(server).toBeDefined();
+
+    // Nothing ever comes back for this one — the reply couldn't be sent, and
+    // the peer has no way to say so. It stays pending until `client` is
+    // disposed at the end of scope, at which point it rejects as closed; the
+    // catch is only to keep that from surfacing as an unhandled rejection.
+    // Its staying pending in the first place is the documented gap the
+    // observability TODO covers.
+    void client.request('unserializable').catch(() => {});
+
+    await expect(client.request('fine')).resolves.toBe('ok');
   });
 
   it('rejects in-flight requests with an RpcClosedError on close', async () => {
@@ -331,10 +409,11 @@ describe('RPC', () => {
     // detaching actually halts delivery is covered in message-port.test.ts.
     let unsubscribed = false;
     const transport: Transport<RpcMessage, RpcMessage> = {
-      send: () => undefined,
+      send: async () => undefined,
       onMessage: () => () => {
         unsubscribed = true;
       },
+      [Symbol.asyncDispose]: async () => {},
     };
     const rpc = RPC.from<ClientApi, ServerApi>(transport, {
       requests: {},

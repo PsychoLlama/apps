@@ -39,9 +39,13 @@ class OptionChannel {
   /**
    * Announce an override to every context, including this one — the transport
    * self-delivers, so a subscriber here hears its own write.
+   *
+   * Resolves once the channel accepts the post, which is as far as a broadcast
+   * can report: no context acknowledges, so this never says whether anyone was
+   * listening.
    */
-  publish(override: Override<JsonValue>): void {
-    this.#transport.send(override);
+  publish(override: Override<JsonValue>): Promise<void> {
+    return this.#transport.send(override);
   }
 }
 
@@ -54,10 +58,13 @@ const getChannel = (id: string): OptionChannel =>
 
 /**
  * Announce an option change to subscribers in every context, including this
- * one.
+ * one. Resolves once the channel accepts the post — a broadcast has no
+ * acknowledgement, so that's the only delivery signal there is.
  */
-export const publish = (id: string, override: Override<JsonValue>): void =>
-  getChannel(id).publish(override);
+export const publish = (
+  id: string,
+  override: Override<JsonValue>,
+): Promise<void> => getChannel(id).publish(override);
 
 /** Subscribe to one option's changes from any context. Returns an unsubscribe. */
 export const onConfigMessage = (
