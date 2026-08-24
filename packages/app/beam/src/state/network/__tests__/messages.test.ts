@@ -15,7 +15,6 @@ import { contactsStore } from '../../contacts';
 import { contactAdvertisedTopic } from '../../contacts/contacts';
 import { shareReceivedTopic } from '../../shares';
 import { applyPeerMessageSaga, renameDeviceSaga } from '../sagas/messages';
-import type { PeerConnection } from '@crate/p2p';
 import type { PeerLink } from '../../platform/iroh';
 import { createInbox } from '../../platform/inbox';
 import type { Contact } from '../../platform/database';
@@ -36,7 +35,7 @@ const PEER_ID = `e2${'0'.repeat(62)}`;
  */
 const fakeLink = (endpointId = PEER_ID): PeerLink => ({
   endpointId,
-  connection: {} as PeerConnection,
+  send: () => Promise.resolve(),
   messages: createInbox(),
   closed: new Promise(() => undefined),
   release: () => undefined,

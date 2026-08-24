@@ -15,7 +15,7 @@ import {
 import { helloMessage, shareMessage } from '../../../protocol';
 import { now } from '../../platform/host';
 import { saveContact, saveOnboarding } from '../../platform/database';
-import { endpointCell } from '../connection';
+import { sessionCell } from '../connection';
 import {
   peerDialingTopic,
   peerHandlesCell,
@@ -24,7 +24,7 @@ import {
   peerReleasedTopic,
   peerUnreachableTopic,
 } from '../peers';
-import { deviceNameFormula } from '../../identity';
+import { deviceNameFormula, identityStore } from '../../identity';
 import {
   contactSeenTopic,
   contactsRestoredTopic,
@@ -42,8 +42,7 @@ import {
   linkPeerSaga,
 } from '../sagas/link';
 import { beamScope } from '../../scope';
-import type { Endpoint, PeerConnection } from '@crate/p2p';
-import type { EndpointSession, PeerLink } from '../../platform/iroh';
+import type { P2pSession, PeerLink } from '../../platform/iroh';
 import { createInbox } from '../../platform/inbox';
 import type { Contact } from '../../platform/database';
 import type { Share } from '../../shares';
@@ -60,13 +59,23 @@ const SELF_ID = `e1${'0'.repeat(62)}`;
 const PEER_ID = `e2${'0'.repeat(62)}`;
 
 /**
- * A stand-in endpoint session. The sagas only read the endpoint's id and drain the
- * peer queue; everything else about one goes through a capability.
+ * This device, as {@link dialPeerSaga} reads it for the self-check. The
+ * address is here rather than on the session because the session is open
+ * before the key is settled — `identityStore` is the canonical answer to who
+ * this device is, and it lands long before a dial is possible.
  */
-const fakeSession: EndpointSession = {
-  endpoint: { id: SELF_ID } as Endpoint,
+const fakeIdentity = { endpointId: SELF_ID, record: null };
+
+/**
+ * A stand-in session. The sagas only drain its queues; everything they ask the
+ * network to do goes through a capability, which the simulation stubs.
+ */
+const fakeSession: P2pSession = {
   peers: createInbox<PeerLink>(),
   relay: createInbox<string | null>(),
+  loadIdentity: () => Promise.reject(new Error('not used')),
+  join: () => Promise.reject(new Error('not used')),
+  dial: () => Promise.reject(new Error('not used')),
   release: () => undefined,
 };
 
@@ -87,7 +96,7 @@ const midSetup = () =>
  */
 const fakeLink = (endpointId = PEER_ID): PeerLink => ({
   endpointId,
-  connection: {} as PeerConnection,
+  send: () => Promise.resolve(),
   messages: createInbox(),
   closed: new Promise(() => undefined),
   release: () => undefined,
@@ -293,7 +302,8 @@ describe('dialPeerSaga', () => {
   /** Reads a dial makes on its way through to a link. */
   const surroundings = () =>
     [
-      [endpointCell, fakeSession],
+      [sessionCell, fakeSession],
+      [identityStore, fakeIdentity],
       [peerLinksStore, { statuses: {} }],
       [peerHandlesCell, new Map()],
       [deviceNameFormula, 'abcd1234'],
@@ -302,7 +312,7 @@ describe('dialPeerSaga', () => {
       [shareLogStore, { items: [] }],
     ] as const;
 
-  it('dials over the endpoint the layout holds open', async () => {
+  it('dials over the session the layout holds open', async () => {
     const dial = vi.fn(() => fakeLink());
 
     await simulate(dialPeerSaga(PEER_ID), {
@@ -312,7 +322,7 @@ describe('dialPeerSaga', () => {
 
     expect(dial).toHaveBeenCalledWith(
       expect.any(AbortSignal),
-      fakeSession.endpoint,
+      fakeSession,
       PEER_ID,
     );
   });
@@ -337,7 +347,8 @@ describe('dialPeerSaga', () => {
   it('ends setup for a device that has just found somebody', async () => {
     const trace = await simulate(dialPeerSaga(PEER_ID), {
       reads: [
-        [endpointCell, fakeSession],
+        [sessionCell, fakeSession],
+        [identityStore, fakeIdentity],
         [peerLinksStore, { statuses: {} }],
         [peerHandlesCell, new Map()],
         [deviceNameFormula, 'abcd1234'],
@@ -416,7 +427,10 @@ describe('dialPeerSaga', () => {
     const dial = vi.fn();
 
     const trace = await simulate(dialPeerSaga(SELF_ID), {
-      reads: [[endpointCell, fakeSession]],
+      reads: [
+        [sessionCell, fakeSession],
+        [identityStore, fakeIdentity],
+      ],
       calls: [...wiring(), [dialEndpoint, dial]],
     });
 
@@ -431,7 +445,8 @@ describe('dialPeerSaga', () => {
 
     const trace = await simulate(dialPeerSaga(PEER_ID), {
       reads: [
-        [endpointCell, fakeSession],
+        [sessionCell, fakeSession],
+        [identityStore, fakeIdentity],
         [peerLinksStore, { statuses: { [PEER_ID]: 'linked' } }],
       ],
       calls: [...wiring(), [dialEndpoint, dial]],
@@ -448,7 +463,8 @@ describe('dialPeerSaga', () => {
 
     await simulate(dialPeerSaga(PEER_ID), {
       reads: [
-        [endpointCell, fakeSession],
+        [sessionCell, fakeSession],
+        [identityStore, fakeIdentity],
         [peerLinksStore, { statuses: { [PEER_ID]: 'dialing' } }],
       ],
       calls: [...wiring(), [dialEndpoint, dial]],
@@ -462,7 +478,8 @@ describe('dialPeerSaga', () => {
 
     await simulate(dialPeerSaga(PEER_ID), {
       reads: [
-        [endpointCell, fakeSession],
+        [sessionCell, fakeSession],
+        [identityStore, fakeIdentity],
         [peerLinksStore, { statuses: { [PEER_ID]: 'unreachable' } }],
         [peerHandlesCell, new Map()],
         [deviceNameFormula, 'abcd1234'],
@@ -480,7 +497,7 @@ describe('dialPeerSaga', () => {
   it('rejects a dial attempted before the connection is up', async () => {
     await expect(
       simulate(dialPeerSaga(PEER_ID), {
-        reads: [[endpointCell, null]],
+        reads: [[sessionCell, null]],
         calls: [[dialEndpoint, vi.fn()]],
       }),
     ).rejects.toThrow('Cannot dial a peer before the relay connection is up.');

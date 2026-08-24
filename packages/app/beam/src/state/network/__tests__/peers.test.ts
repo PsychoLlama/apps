@@ -6,7 +6,6 @@
  */
 
 import { createTestRuntime } from '@lib/state';
-import type { PeerConnection } from '@crate/p2p';
 import type { PeerLink } from '../../platform/iroh';
 import { createInbox } from '../../platform/inbox';
 import {
@@ -26,7 +25,7 @@ import { beamScope } from '../../scope';
  */
 const fakeLink = (endpointId = 'ep-1'): PeerLink => ({
   endpointId,
-  connection: {} as PeerConnection,
+  send: () => Promise.resolve(),
   messages: createInbox(),
   closed: new Promise(() => undefined),
   release: () => undefined,

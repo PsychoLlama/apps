@@ -1,35 +1,35 @@
 /**
  * Unit tests for the relay connection's folds — the state transitions a
  * connect publishes, plus the lifetime guarantee the whole app hangs off: the
- * endpoint is freed when the last anchor is released. Nothing here
- * dereferences the endpoint, so the tests stand in a fake one.
+ * session is released when the last anchor is. Nothing here
+ * asks the worker for anything, so the tests stand in a fake session.
  */
 
 import { createTestRuntime } from '@lib/state';
-import type { Endpoint } from '@crate/p2p';
-import type { EndpointSession, PeerLink } from '../../platform/iroh';
+import type { P2pSession, PeerLink } from '../../platform/iroh';
 import { createInbox } from '../../platform/inbox';
 import {
   connectFailedTopic,
   connectedTopic,
   connectingTopic,
   connectionStore,
-  endpointCell,
+  p2pStartedTopic,
+  sessionCell,
   relayChangedTopic,
 } from '../connection';
 import { identityResolvedTopic, identityStore } from '../../identity';
 import { beamScope } from '../../scope';
 
 /**
- * A stand-in endpoint session. Only `release` is ever called, and only on
- * teardown — nothing here dereferences the endpoint itself.
+ * A stand-in session. Only `release` is ever called, and only on teardown —
+ * nothing here asks the worker to do anything.
  */
-const fakeSession = (
-  release: () => void = () => undefined,
-): EndpointSession => ({
-  endpoint: { id: 'ep-1' } as Endpoint,
+const fakeSession = (release: () => void = () => undefined): P2pSession => ({
   peers: createInbox<PeerLink>(),
   relay: createInbox<string | null>(),
+  loadIdentity: () => Promise.reject(new Error('not used')),
+  join: () => Promise.reject(new Error('not used')),
+  dial: () => Promise.reject(new Error('not used')),
   release,
 });
 
@@ -40,7 +40,7 @@ const setup = () => {
 };
 
 describe('connectionStore', () => {
-  it('seeds a connecting status and no endpoint before a connect', () => {
+  it('seeds a connecting status and no session before a connect', () => {
     const { peek } = setup();
 
     // The spinner is the prerendered state: connecting starts on mount and
@@ -48,7 +48,7 @@ describe('connectionStore', () => {
     // markup told for a frame.
     expect(peek(connectionStore).status).toBe('connecting');
     expect(peek(connectionStore).homeRelay).toBeNull();
-    expect(peek(endpointCell)).toBeNull();
+    expect(peek(sessionCell)).toBeNull();
   });
 
   it('has not started a connect until something says so', () => {
@@ -64,17 +64,30 @@ describe('connectionStore', () => {
   });
 });
 
-describe('connectedTopic', () => {
-  it('lands the live endpoint alongside the status', () => {
+describe('p2pStartedTopic', () => {
+  it('holds the session without claiming a connection', () => {
     const { commit, peek } = setup();
-    const endpoint = fakeSession();
+    const session = fakeSession();
 
-    commit(connectedTopic(endpoint));
+    commit(p2pStartedTopic(session));
+
+    // Identity, not deep equality: a store would hand back a proxy, and a
+    // proxied session's methods would be called on the wrong object.
+    expect(peek(sessionCell)).toBe(session);
+    // The worker being up says nothing about the relay. The handshake is
+    // still ahead, and the header must go on showing a connect under way.
+    expect(peek(connectionStore).status).toBe('connecting');
+  });
+});
+
+describe('connectedTopic', () => {
+  it('marks the connection live', () => {
+    const { commit, peek } = setup();
+    commit(p2pStartedTopic(fakeSession()));
+
+    commit(connectedTopic());
 
     expect(peek(connectionStore).status).toBe('connected');
-    // Identity, not deep equality: a store would hand back a proxy, and a
-    // proxied wasm handle traps on every method call.
-    expect(peek(endpointCell)).toBe(endpoint);
   });
 });
 
@@ -123,7 +136,7 @@ describe('identityResolvedTopic', () => {
     // The whole point of splitting it out: the address is readable from the
     // key alone, with no relay involved.
     expect(peek(connectionStore).status).toBe('connecting');
-    expect(peek(endpointCell)).toBeNull();
+    expect(peek(sessionCell)).toBeNull();
   });
 });
 
@@ -139,25 +152,25 @@ describe('connectFailedTopic', () => {
 });
 
 describe('beamScope', () => {
-  it('releases the endpoint when the last anchor is released', () => {
+  it('releases the session when the last anchor is released', () => {
     const dispose = vi.fn();
     const { commit, release } = setup();
-    commit(connectedTopic(fakeSession(dispose)));
+    commit(p2pStartedTopic(fakeSession(dispose)));
 
     release();
 
     expect(dispose).toHaveBeenCalledOnce();
   });
 
-  it('keeps the endpoint alive while another anchor holds the scope', () => {
+  it('keeps the session alive while another anchor holds the scope', () => {
     const dispose = vi.fn();
     const { anchor, commit, release } = setup();
     const second = anchor(beamScope);
-    commit(connectedTopic(fakeSession(dispose)));
+    commit(p2pStartedTopic(fakeSession(dispose)));
 
     release();
 
-    // Navigating between `/beam/*` routes must not tear the endpoint down.
+    // Navigating between `/beam/*` routes must not tear the session down.
     expect(dispose).not.toHaveBeenCalled();
 
     second();
@@ -167,7 +180,7 @@ describe('beamScope', () => {
   it('has nothing to release when no connect landed', () => {
     const { peek, release } = setup();
     // Touch the cell so it materializes and its drop hook actually runs.
-    expect(peek(endpointCell)).toBeNull();
+    expect(peek(sessionCell)).toBeNull();
 
     expect(release).not.toThrow();
   });

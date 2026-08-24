@@ -1,5 +1,5 @@
 import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
-import type { EndpointSession } from '../platform/iroh';
+import type { P2pSession } from '../platform/iroh';
 import { beamScope } from '../scope';
 
 /**
@@ -10,7 +10,7 @@ import { beamScope } from '../scope';
  *   finding another. Also what prerender and first paint show: connecting is
  *   automatic, so a freshly loaded page is always already on its way.
  * - `connected` — a relay server has finished its handshake and this device
- *   is reachable; {@link endpointCell} holds the endpoint open.
+ *   is reachable; {@link sessionCell} holds the session open.
  * - `failed` — the wasm load or the join errored. Terminal: there's no
  *   reconnect affordance, so the scope stays here until it's released.
  *
@@ -50,17 +50,20 @@ export const connectionStore = defineStore<ConnectionState>(beamScope, () => ({
 }));
 
 /**
- * The live endpoint, held for the lifetime of the scope so it stays
- * reachable. A cell, not store state — it holds wasm handles that must never
- * be proxied. `null` until the join lands, including during SSG and first
+ * This visit's session on the p2p worker, held for the lifetime of the scope.
+ * A cell, not store state — it holds queues and closures that must never be
+ * proxied. `null` until the worker is up, including during SSG and first
  * paint.
  *
- * The session rather than the bare endpoint: the queues it fills are only
- * reachable through the handlers the endpoint was defined with, so they
- * travel together. Releasing the session ends all of it, which is what `drop`
- * does once the last anchor goes.
+ * Held from the moment the worker answers rather than from the join, which is
+ * what makes releasing the scope sufficient at every point after that: a
+ * handshake still in flight, one that failed, one that landed — all of them
+ * end the same way, by the drop below telling the endpoint to leave.
+ *
+ * The worker itself is not in here. It belongs to the page and outlives every
+ * session; see `state/platform/iroh`.
  */
-export const endpointCell = defineCell<EndpointSession | null>(
+export const sessionCell = defineCell<P2pSession | null>(
   beamScope,
   () => null,
   { drop: (held) => held?.release() },
@@ -73,16 +76,24 @@ defineFold(connectingTopic, [connectionStore], (connection) => {
   connection.started = true;
 });
 
-/** The endpoint joined the relay network and is reachable. */
-export const connectedTopic = defineTopic<EndpointSession>();
-defineFold(
-  connectedTopic,
-  [connectionStore, endpointCell],
-  (connection, held, session) => {
-    connection.status = 'connected';
-    held.current = session;
-  },
-);
+/**
+ * The p2p worker is up and a session is open on it. Committed before the
+ * handshake starts, so the cell owns teardown for everything that follows.
+ */
+export const p2pStartedTopic = defineTopic<P2pSession>();
+defineFold(p2pStartedTopic, [sessionCell], (held, session) => {
+  held.current = session;
+});
+
+/**
+ * The endpoint joined the relay network and is reachable. Payload-less: the
+ * session landed earlier, with {@link p2pStartedTopic}, and this only says
+ * what became of it.
+ */
+export const connectedTopic = defineTopic();
+defineFold(connectedTopic, [connectionStore], (connection) => {
+  connection.status = 'connected';
+});
 
 /**
  * The relay carrying this endpoint changed: a server's URL, or `null` when

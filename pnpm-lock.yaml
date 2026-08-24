@@ -45,6 +45,9 @@ catalogs:
     esbuild:
       specifier: ^0.28.0
       version: 0.28.2
+    eslint:
+      specifier: ^10.0.0
+      version: 10.9.0
     idb:
       specifier: ^8.0.3
       version: 8.0.3
@@ -165,6 +168,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/messaging':
+        specifier: workspace:*
+        version: link:../../lib/messaging
       '@lib/observability':
         specifier: workspace:*
         version: link:../../lib/observability

@@ -1,18 +1,19 @@
 /**
  * Unit tests for coming up: settling this device's identity, joining the
- * relay, and the two loops that run against the endpoint afterwards.
+ * relay, and the two loops that run against the session afterwards.
  * Simulated, so every capability is stubbed and the assertions are about what
  * each saga published.
  */
 
 import { createTestRuntime, simulate } from '@lib/state';
-import { loadIdentity, openConnection } from '../../platform/iroh';
+import { loadIdentity, openConnection, startP2p } from '../../platform/iroh';
 import { receiveNext, createInbox } from '../../platform/inbox';
 import {
   connectFailedTopic,
   connectedTopic,
   connectingTopic,
   connectionStore,
+  p2pStartedTopic,
 } from '../connection';
 import { identityResolvedTopic } from '../../identity';
 import {
@@ -21,8 +22,7 @@ import {
   watchRelaySaga,
 } from '../sagas/relay';
 import { beamScope } from '../../scope';
-import type { Endpoint } from '@crate/p2p';
-import type { EndpointSession, PeerLink, SelfKey } from '../../platform/iroh';
+import type { P2pSession, PeerLink, SelfKey } from '../../platform/iroh';
 
 /**
  * Stand-in endpoint ids for this device and the peer it talks to. Well-formed
@@ -34,13 +34,15 @@ import type { EndpointSession, PeerLink, SelfKey } from '../../platform/iroh';
 const SELF_ID = `e1${'0'.repeat(62)}`;
 
 /**
- * A stand-in endpoint session. The sagas only read the endpoint's id and drain the
- * peer queue; everything else about one goes through a capability.
+ * A stand-in session. The sagas only drain its queues; everything they ask the
+ * network to do goes through a capability, which the simulation stubs.
  */
-const fakeSession: EndpointSession = {
-  endpoint: { id: SELF_ID } as Endpoint,
+const fakeSession: P2pSession = {
   peers: createInbox<PeerLink>(),
   relay: createInbox<string | null>(),
+  loadIdentity: () => Promise.reject(new Error('not used')),
+  join: () => Promise.reject(new Error('not used')),
+  dial: () => Promise.reject(new Error('not used')),
   release: () => undefined,
 };
 
@@ -64,41 +66,45 @@ describe('connectRelaySaga', () => {
     const trace = await simulate(connectRelaySaga(), {
       reads: [...idle()],
       calls: [
+        [startP2p, () => fakeSession],
         [loadIdentity, () => fakeSelf],
-        [openConnection, () => fakeSession],
+        [openConnection, vi.fn()],
       ],
     });
 
-    // Two transitions, and the order is the point: the address is derived
-    // from the key, so the header can name this device while the handshake
-    // is still a round trip away.
+    // The order is the point. The session is held before anything can fail
+    // under it, and the address is derived from the key — so the header can
+    // name this device while the handshake is still a round trip away.
     expect(trace.commits).toEqual([
       [connectingTopic()],
+      [p2pStartedTopic(fakeSession)],
       [identityResolvedTopic(SELF_ID)],
-      [connectedTopic(fakeSession)],
+      [connectedTopic()],
     ]);
   });
 
   it('joins the network under the identity it just settled', async () => {
-    const open = vi.fn(() => fakeSession);
+    const open = vi.fn();
 
     await simulate(connectRelaySaga(), {
       reads: [...idle()],
       calls: [
+        [startP2p, () => fakeSession],
         [loadIdentity, () => fakeSelf],
         [openConnection, open],
       ],
     });
 
-    expect(open).toHaveBeenCalledWith(expect.any(AbortSignal), fakeSelf);
+    expect(open).toHaveBeenCalledWith(expect.any(AbortSignal), fakeSession);
   });
 
   it('serves dials, watches the relay, and draws the code', async () => {
     const trace = await simulate(connectRelaySaga(), {
       reads: [...idle()],
       calls: [
+        [startP2p, () => fakeSession],
         [loadIdentity, () => fakeSelf],
-        [openConnection, () => fakeSession],
+        [openConnection, vi.fn()],
       ],
     });
 
@@ -111,6 +117,7 @@ describe('connectRelaySaga', () => {
     const trace = await simulate(connectRelaySaga(), {
       reads: [...idle()],
       calls: [
+        [startP2p, () => fakeSession],
         [loadIdentity, () => fakeSelf],
         [
           openConnection,
@@ -122,9 +129,11 @@ describe('connectRelaySaga', () => {
     });
 
     // The identity still landed: a device that can't reach a relay still
-    // knows what it's called and what its link is.
+    // knows what it's called and what its link is. And the session is still
+    // held, so releasing the scope is what tells the worker to leave.
     expect(trace.commits).toEqual([
       [connectingTopic()],
+      [p2pStartedTopic(fakeSession)],
       [identityResolvedTopic(SELF_ID)],
       [connectFailedTopic()],
     ]);
@@ -134,6 +143,7 @@ describe('connectRelaySaga', () => {
     const trace = await simulate(connectRelaySaga(), {
       reads: [...idle()],
       calls: [
+        [startP2p, () => fakeSession],
         [
           loadIdentity,
           () => {
@@ -144,18 +154,21 @@ describe('connectRelaySaga', () => {
       ],
     });
 
-    // Nothing landed but the failure. With no address there is nothing to
-    // dial from and nothing to draw a beam link out of.
+    // No address, so nothing to dial from and nothing to draw a beam link
+    // out of — but the session landed first and is still owned, which is what
+    // stops a worker being stranded by a failure this early.
     expect(trace.commits).toEqual([
       [connectingTopic()],
+      [p2pStartedTopic(fakeSession)],
       [connectFailedTopic()],
     ]);
 
     expect(trace.spawns).toHaveLength(0);
   });
 
-  it('refuses to open a second endpoint over a live one', async () => {
-    const open = vi.fn(() => fakeSession);
+  it('refuses to open a second session over a live one', async () => {
+    const start = vi.fn();
+    const open = vi.fn();
 
     const trace = await simulate(connectRelaySaga(), {
       reads: [
@@ -169,14 +182,16 @@ describe('connectRelaySaga', () => {
         ],
       ],
       calls: [
+        [startP2p, start],
         [loadIdentity, vi.fn()],
         [openConnection, open],
       ],
     });
 
     // Guarded on `started` rather than the status, which begins already
-    // showing a connect under way. The cell holds one endpoint; a second
-    // connect would drop the first unfreed.
+    // showing a connect under way. The cell holds one session; a second
+    // connect would drop the first without ever telling it to leave.
+    expect(start).not.toHaveBeenCalled();
     expect(open).not.toHaveBeenCalled();
     expect(trace.commits).toEqual([]);
   });

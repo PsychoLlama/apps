@@ -8,7 +8,7 @@ import { createTestRuntime } from '@lib/state';
 import type { QrGrid } from '../../platform/qr-code';
 import { codeEncodedTopic, qrCodeCell } from '../qr-code';
 import { identityResolvedTopic } from '../identity';
-import { endpointCell } from '../../network/connection';
+import { sessionCell } from '../../network/connection';
 import { beamScope } from '../../scope';
 
 const fakeGrid: QrGrid = { size: 1, modules: new Uint8Array([1]) };
@@ -45,6 +45,6 @@ describe('codeEncodedTopic', () => {
     // The code encodes the link, and the link is the address the key
     // implies — so the invite is complete before the handshake is.
     expect(peek(qrCodeCell)).toBe(fakeGrid);
-    expect(peek(endpointCell)).toBeNull();
+    expect(peek(sessionCell)).toBeNull();
   });
 });
