@@ -367,23 +367,29 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
   }
 
   /**
-   * Tear down on scope exit, so a `using` binding can't leave requests
-   * dangling. Synchronous, and deliberately narrower than the transport's
-   * `AsyncDisposable`: closing an endpoint only detaches and rejects locally.
-   * The transport is disposed by whoever owns it — often in the same scope,
-   * bound separately.
+   * Tear down on scope exit, so an `await using` binding can't leave requests
+   * dangling. Async to match every transport, even though {@link close} itself
+   * is synchronous — one disposal style everywhere beats making each call site
+   * remember which kind it's holding.
+   *
+   * The transport isn't touched: this endpoint doesn't own it. Bind it
+   * separately in the same scope.
    */
-  [Symbol.dispose](): void {
+  async [Symbol.asyncDispose](): Promise<void> {
     this.close();
   }
 
   /**
    * Call a remote request method and await its result. Rejects with an
    * {@link RpcError} if the remote handler throws (or the method is unknown
-   * to the remote). Throws an {@link RpcClosedError} if this endpoint has
-   * been closed.
+   * to the remote), with an {@link RpcClosedError} if this endpoint has been
+   * closed, and with whatever the transport reports if the send itself fails.
+   *
+   * Every failure arrives the same way — as a rejection. Nothing here throws
+   * synchronously, so a caller needs one `catch`, not a `try` around the call
+   * plus a `catch` on the promise.
    */
-  request<Method extends RequestMethod<Remote>>(
+  async request<Method extends RequestMethod<Remote>>(
     method: Method,
     ...args: CallArgs<Requests<Remote>[Method], Options>
   ): Promise<ResultOf<Requests<Remote>[Method]>> {
@@ -420,17 +426,18 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
    * await it. A caller that doesn't may discard the promise (`void
    * rpc.notify(…)`); nothing downstream depends on it.
    *
-   * Throws — synchronously, rather than rejecting — if this endpoint has been
-   * closed. Sending on a dead endpoint is a local bug, not a delivery failure,
-   * and throwing keeps it loud even where the promise is discarded.
+   * Rejects with an {@link RpcClosedError} on a closed endpoint, matching
+   * {@link request} — one failure channel, whatever went wrong. Discarding the
+   * promise therefore discards that error too, so discard it only where a lost
+   * event genuinely doesn't matter.
    */
-  notify<Method extends EventMethod<Remote>>(
+  async notify<Method extends EventMethod<Remote>>(
     method: Method,
     ...args: CallArgs<Events<Remote>[Method], Options>
   ): Promise<void> {
     if (this.#closed) throw new RpcClosedError();
     const [params, options] = args as [params?: unknown, options?: Options];
-    return this.#send({ type: 'event', method, params }, options);
+    await this.#send({ type: 'event', method, params }, options);
   }
 
   // Hand a message to the transport, materializing an empty options bag when

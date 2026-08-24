@@ -32,17 +32,17 @@ export interface BroadcastChannelConfig {
  * can't be made at all: an unserializable payload, or a channel already closed.
  *
  * Owns its channel: construct it with a {@link BroadcastChannelConfig} and
- * {@link close} when done (or bind it with `using` / `await using` for
- * automatic teardown). By default a `BroadcastChannel` never delivers a message
- * back to the instance that posted it, only to sibling instances — so a
- * publisher and a subscriber in one context each need their own transport to
- * hear each other. Set {@link BroadcastChannelConfig.selfDeliver} to fold both
- * roles into one instance: `send` then also replays to this transport's own
- * handlers.
+ * bind it with `await using` for automatic teardown, or {@link close} it by
+ * hand where a scope-bound lifetime doesn't fit. By default a
+ * `BroadcastChannel` never delivers a message back to the instance that posted
+ * it, only to sibling instances — so a publisher and a subscriber in one
+ * context each need their own transport to hear each other. Set
+ * {@link BroadcastChannelConfig.selfDeliver} to fold both roles into one
+ * instance: `send` then also replays to this transport's own handlers.
  *
  * @example
  * ```ts
- * using transport = new BroadcastChannelTransport<Message>({
+ * await using transport = new BroadcastChannelTransport<Message>({
  *   channel: 'log-files',
  *   selfDeliver: false,
  * });
@@ -50,9 +50,10 @@ export interface BroadcastChannelConfig {
  * await transport.send(payload);
  * ```
  */
-export class BroadcastChannelTransport<Message>
-  implements Transport<Message, Message>, Disposable
-{
+export class BroadcastChannelTransport<Message> implements Transport<
+  Message,
+  Message
+> {
   readonly #channel: BroadcastChannel;
   readonly #selfDeliver: boolean;
 
@@ -113,20 +114,11 @@ export class BroadcastChannelTransport<Message>
 
   /**
    * Tear down on scope exit, so an `await using` binding can't leak the
-   * channel. Teardown is synchronous underneath; the async signature is the
-   * {@link Transport} contract, which every transport meets so callers never
-   * have to remember which ones need awaiting.
+   * channel. Teardown is synchronous underneath, but the signature stays async
+   * to match every other transport — one disposal style across the package
+   * means no call site has to remember which kind a given transport takes.
    */
   async [Symbol.asyncDispose](): Promise<void> {
-    this.close();
-  }
-
-  /**
-   * The synchronous counterpart, for a plain `using` binding. Nothing here
-   * needs awaiting, so callers with no other reason to be async can bind the
-   * transport without one.
-   */
-  [Symbol.dispose](): void {
     this.close();
   }
 }

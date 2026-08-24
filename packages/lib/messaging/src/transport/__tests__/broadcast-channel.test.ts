@@ -3,7 +3,7 @@ import { BroadcastChannelTransport } from '@lib/messaging/broadcast-channel';
 type Wire = { type: 'created'; file: string };
 
 // A unique name per transport pair so concurrent tests don't cross-talk on one
-// channel. Transports bind with `using`, so each closes when its test's scope
+// channel. Transports bind with `await using`, so each closes when its test's scope
 // exits — no manual teardown to forget, even if an assertion throws first.
 let channels = 0;
 const uniqueChannel = () => `broadcast-channel-test-${channels++}`;
@@ -14,11 +14,11 @@ describe('BroadcastChannelTransport', () => {
     // A publisher and subscriber each hold their own transport, since a channel
     // never delivers to the instance that posted — one shared transport would
     // never hear itself.
-    using publisher = new BroadcastChannelTransport<Wire>({
+    await using publisher = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
-    using subscriber = new BroadcastChannelTransport<Wire>({
+    await using subscriber = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -33,11 +33,11 @@ describe('BroadcastChannelTransport', () => {
 
   it('delivers to every registered handler', async () => {
     const channel = uniqueChannel();
-    using publisher = new BroadcastChannelTransport<Wire>({
+    await using publisher = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
-    using subscriber = new BroadcastChannelTransport<Wire>({
+    await using subscriber = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -56,11 +56,11 @@ describe('BroadcastChannelTransport', () => {
 
   it('stops delivering to its handlers once closed', async () => {
     const channel = uniqueChannel();
-    using publisher = new BroadcastChannelTransport<Wire>({
+    await using publisher = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
-    using subscriber = new BroadcastChannelTransport<Wire>({
+    await using subscriber = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -70,7 +70,7 @@ describe('BroadcastChannelTransport', () => {
     // A separate transport on the same name, opened before the post, is the
     // delivery barrier: once it hears the message the routing is done, so an
     // empty `seen` proves close() detached the subscriber's handler.
-    using barrier = new BroadcastChannelTransport<Wire>({
+    await using barrier = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -87,11 +87,11 @@ describe('BroadcastChannelTransport', () => {
 
   it('stops delivering to a handler after it unsubscribes', async () => {
     const channel = uniqueChannel();
-    using publisher = new BroadcastChannelTransport<Wire>({
+    await using publisher = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
-    using subscriber = new BroadcastChannelTransport<Wire>({
+    await using subscriber = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -114,7 +114,7 @@ describe('BroadcastChannelTransport', () => {
 
   it('withholds a send from its own handlers by default', async () => {
     const channel = uniqueChannel();
-    using solo = new BroadcastChannelTransport<Wire>({
+    await using solo = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -124,7 +124,7 @@ describe('BroadcastChannelTransport', () => {
     // A sibling transport on the same name is the delivery barrier: once it
     // hears solo's post the routing is done, so an empty `seen` proves solo
     // never echoed the send to itself.
-    using barrier = new BroadcastChannelTransport<Wire>({
+    await using barrier = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });

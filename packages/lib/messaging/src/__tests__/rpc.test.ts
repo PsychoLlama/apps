@@ -350,11 +350,11 @@ describe('RPC', () => {
       events: Record<string, never>;
     };
 
-    using server = RPC.from<ServerContract, Caller, SendOptions>(
+    await using server = RPC.from<ServerContract, Caller, SendOptions>(
       new MessagePortTransport(port1),
       serverApi,
     );
-    using client = RPC.from<Caller, ServerContract, SendOptions>(
+    await using client = RPC.from<Caller, ServerContract, SendOptions>(
       new MessagePortTransport(port2),
       { requests: {}, events: {} },
     );
@@ -385,22 +385,25 @@ describe('RPC', () => {
     await expect(pending).rejects.toBeInstanceOf(RpcClosedError);
   });
 
-  it('throws on request after close', () => {
+  it('rejects a request issued after close', async () => {
     const { client } = setup();
     client.close();
 
-    expect(() => client.request('add', { left: 1, right: 1 })).toThrow(
-      RpcClosedError,
-    );
+    // Rejects rather than throwing synchronously: every failure on `request`
+    // arrives through the promise, so a caller needs one `catch` and not a
+    // `try` wrapped around the call as well.
+    await expect(
+      client.request('add', { left: 1, right: 1 }),
+    ).rejects.toBeInstanceOf(RpcClosedError);
   });
 
-  it('throws on notify after close', () => {
+  it('rejects a notify issued after close', async () => {
     const { client } = setup();
     client.close();
 
-    expect(() => client.notify('log', { message: 'hi' })).toThrow(
-      RpcClosedError,
-    );
+    await expect(
+      client.notify('log', { message: 'hi' }),
+    ).rejects.toBeInstanceOf(RpcClosedError);
   });
 
   it('discards the transport listener on close', () => {
