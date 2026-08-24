@@ -638,7 +638,11 @@ importers:
         specifier: 'catalog:'
         version: 0.9.0
 
-  packages/lib/messaging: {}
+  packages/lib/messaging:
+    dependencies:
+      '@lib/polyfill':
+        specifier: workspace:*
+        version: link:../polyfill
 
   packages/lib/observability:
     dependencies:
@@ -669,6 +673,8 @@ importers:
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../runtime-config
+
+  packages/lib/polyfill: {}
 
   packages/lib/runtime-config:
     dependencies:

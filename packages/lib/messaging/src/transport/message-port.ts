@@ -1,3 +1,4 @@
+import '@lib/polyfill/resource-management';
 import type { MessageHandler, Transport, Unsubscribe } from './interface.ts';
 
 /**
