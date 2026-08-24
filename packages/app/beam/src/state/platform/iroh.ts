@@ -276,7 +276,19 @@ export const attachSession = (
   const relay = createInbox<string | null>();
   const registry = new Map<string, PeerEntry>();
 
-  /** This peer's entry, creating it if news of it arrived first. */
+  /**
+   * This peer's entry, creating it if news of it arrived first.
+   *
+   * Entries are never removed. A peer id names one connection for the whole
+   * life of the session, so the entry under it is the single answer to "what
+   * happened to that connection" — and removing a settled one would only mean
+   * the next mention of that id quietly built a second, unsettled answer.
+   * Which is precisely the bug: a close that beats its own dial reply would
+   * leave the link's `closed` pending forever, and the saga watching it parked.
+   *
+   * Bounded by connections made this visit, which is the same order as the
+   * handle map the session already keeps.
+   */
   const entryFor = (peerId: string): PeerEntry => {
     const existing = registry.get(peerId);
     if (existing) return existing;
@@ -312,10 +324,6 @@ export const attachSession = (
         // device chose without a round trip first.
         entry.settle();
 
-        // Deliberately does *not* forget the entry. The worker will close the
-        // connection and announce it, and that announcement needs somewhere to
-        // land — dropping it here would either lose it or lazily rebuild an
-        // entry nothing is draining.
         void rpc
           .notify('release', { peerId: peer.peerId })
           .catch((error: unknown) => {
@@ -332,10 +340,7 @@ export const attachSession = (
     peerConnected: (peer) => peers.push(linkFor(peer)),
     peerMessage: ({ peerId, message }) =>
       entryFor(peerId).messages.push(message),
-    peerClosed: ({ peerId }) => {
-      entryFor(peerId).settle();
-      registry.delete(peerId);
-    },
+    peerClosed: ({ peerId }) => entryFor(peerId).settle(),
     relayChanged: ({ homeRelay }) => relay.push(homeRelay),
   });
 
