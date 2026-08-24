@@ -4,21 +4,11 @@ import { useAnchor, useCommit, useRun, useValue } from '@lib/state';
 import { Frame, SiteHeader } from '@lib/shell';
 import { Flex } from '@lib/ui';
 import { IconGrid } from '../components/icon-grid';
-import {
-  activePackFormula,
-  pickerScope,
-  pickerViewChangedTopic,
-} from '../components/icon-grid/store';
 import { Preview } from '../components/preview';
 import { PropertiesPanel } from '../components/properties-panel';
 import {
-  hydrateFromUrlSaga,
-  randomizeIconSaga,
-  selectPackSaga,
-  type IconEditorUrlParams,
-} from '../sagas';
-import {
   editorResetTopic,
+  hydrateFromUrlSaga,
   iconEditorScope,
   iconEditorStore,
   iconPickedTopic,
@@ -28,9 +18,17 @@ import {
   pickerClosedTopic,
   pickerOpenedTopic,
   railStore,
+  randomizeIconSaga,
+  selectPackSaga,
   shapeChangedTopic,
   shareParamsFormula,
-} from '../store';
+  type IconEditorUrlParams,
+} from '../state/editor';
+import {
+  activePackFormula,
+  pickerScope,
+  pickerViewChangedTopic,
+} from '../state/picker';
 import type { IconRef } from '../icons';
 import * as css from './home.css';
 

@@ -17,7 +17,7 @@ import type {
   IconPackSummary,
   IconPageRequest,
   IconPageResult,
-} from './icons';
+} from '../icons';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 

@@ -3,7 +3,7 @@
 
 import type { Component, JSX } from 'solid-js';
 import { renderIconSvg } from '../svg';
-import type { IconEditorShape, IconEditorState } from '../store';
+import type { IconEditorShape, IconEditorState } from '../state/editor';
 import * as css from './preview.css';
 
 /**

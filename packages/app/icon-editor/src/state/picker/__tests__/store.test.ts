@@ -16,7 +16,7 @@ import {
   pickerViewChangedTopic,
   searchChangedTopic,
 } from '../store';
-import { iconEditorScope } from '../../../store';
+import { iconEditorScope } from '../../editor/store';
 import type {
   IconEntry,
   IconPackManifest,

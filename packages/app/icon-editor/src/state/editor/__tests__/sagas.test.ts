@@ -4,7 +4,7 @@ import {
   fetchPackManifest,
   fetchPageEntries,
   rollIndex,
-} from '../capabilities';
+} from '../../capabilities';
 import {
   entryKey,
   iconEntriesCell,
@@ -14,7 +14,7 @@ import {
   packsLoadedTopic,
   pageIngestedTopic,
   pickerStore,
-} from '../components/icon-grid/store';
+} from '../../picker/store';
 import {
   hydrateFromUrlSaga,
   randomizeIconSaga,
@@ -38,7 +38,7 @@ import type {
   IconPackManifest,
   IconPackSummary,
   IconRef,
-} from '../icons';
+} from '../../../icons';
 
 const MANIFEST_URL = '/packs/mdi.json';
 const PAGE_URL = '/packs/mdi/0.json';

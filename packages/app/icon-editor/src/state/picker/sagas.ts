@@ -3,7 +3,7 @@ import {
   fetchPackIndex,
   fetchPackManifest,
   fetchPageEntries,
-} from '../../capabilities';
+} from '../capabilities';
 import type { IconPackSummary, IconPageRequest } from '../../icons';
 import {
   manifestLoadedTopic,

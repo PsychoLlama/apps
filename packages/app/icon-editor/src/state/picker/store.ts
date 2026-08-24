@@ -18,7 +18,7 @@ import {
   editorResetTopic,
   iconPickedTopic,
   iconResolvedTopic,
-} from '../../store';
+} from '../editor/store';
 
 /** Which surface the picker is showing. */
 export type PickerView = 'packs' | 'pack-detail' | 'pack-info';

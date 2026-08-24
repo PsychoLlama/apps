@@ -5,7 +5,7 @@ import {
   iconEntriesCell,
   pickerScope,
   pickerStore,
-} from '../components/icon-grid/store';
+} from '../../picker/store';
 import {
   DEFAULT_ICON_EDITOR_STATE,
   editorResetTopic,
@@ -26,7 +26,7 @@ import {
   shareParamsFormula,
   styleHydratedTopic,
 } from '../store';
-import type { IconRef } from '../icons';
+import type { IconRef } from '../../../icons';
 
 const sampleIcon: IconRef = {
   pack: 'mdi',

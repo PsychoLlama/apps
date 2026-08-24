@@ -1,5 +1,5 @@
 import { resolveStyleHydration } from '../hydration';
-import { DEFAULT_ICON_EDITOR_STATE } from '../store';
+import { DEFAULT_ICON_EDITOR_STATE } from '../state/editor/store';
 
 const DEFAULT_STYLE = {
   palette: DEFAULT_ICON_EDITOR_STATE.palette,
