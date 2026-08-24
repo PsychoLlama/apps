@@ -8,7 +8,7 @@ import {
   decodeMessage,
   encodeMessage,
   type BeamMessage,
-} from './protocol';
+} from '../../protocol';
 
 /**
  * Everything beam does with iroh: settling this device's key, joining the

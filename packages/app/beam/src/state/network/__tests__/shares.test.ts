@@ -6,7 +6,7 @@
 
 import { simulate } from '@lib/state';
 import { sendMessage } from '../../platform/iroh';
-import { shareMessage } from '../../platform/protocol';
+import { shareMessage } from '../../../protocol';
 import { newShareId, now } from '../../platform/host';
 import { peerHandlesCell } from '../peers';
 import {

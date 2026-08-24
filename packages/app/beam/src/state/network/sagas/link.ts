@@ -8,7 +8,7 @@ import {
   type PeerLink,
 } from '../../platform/iroh';
 import { receiveNext } from '../../platform/inbox';
-import { helloMessage } from '../../platform/protocol';
+import { helloMessage } from '../../../protocol';
 import { contactsStore, recordPeerSaga } from '../../contacts';
 import { deviceNameFormula } from '../../identity';
 import { finishPairingSaga } from '../../onboarding';

@@ -12,7 +12,7 @@ import {
   releasePeer,
   sendMessage,
 } from '../../platform/iroh';
-import { helloMessage, shareMessage } from '../../platform/protocol';
+import { helloMessage, shareMessage } from '../../../protocol';
 import { now } from '../../platform/host';
 import { saveContact, saveOnboarding } from '../../platform/database';
 import { endpointCell } from '../connection';

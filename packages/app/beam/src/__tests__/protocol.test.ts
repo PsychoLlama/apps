@@ -10,8 +10,8 @@ import {
   helloMessage,
   shareMessage,
 } from '../protocol';
-import { LABEL_MAX_LENGTH } from '../../labels';
-import { SHARE_MAX_LENGTH } from '../../share-body';
+import { LABEL_MAX_LENGTH } from '../state/labels';
+import { SHARE_MAX_LENGTH } from '../state/share-body';
 
 /** Bytes as a peer would put them on the wire, without going through us. */
 const wire = (raw: string): Uint8Array => new TextEncoder().encode(raw);
