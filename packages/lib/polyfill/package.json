@@ -1,0 +1,15 @@
+{
+  "name": "@lib/polyfill",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Side-effect imports that install missing runtime globals.",
+  "license": "MIT",
+  "sideEffects": true,
+  "exports": {
+    "./resource-management": "./src/resource-management.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}

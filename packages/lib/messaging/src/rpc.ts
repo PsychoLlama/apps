@@ -1,3 +1,4 @@
+import '@lib/polyfill/resource-management';
 import type { Transport, Unsubscribe } from './transport/interface.ts';
 
 /**
