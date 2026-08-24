@@ -117,8 +117,8 @@ importers:
         specifier: ^2.32.0
         version: 2.32.0(@typescript-eslint/parser@8.67.0(eslint@10.8.1(jiti@2.7.0))(typescript@6.0.3))(eslint@10.8.1(jiti@2.7.0))
       eslint-plugin-solid:
-        specifier: ^0.15.0
-        version: 0.15.0(eslint@10.8.1(jiti@2.7.0))(typescript@6.0.3)
+        specifier: ^0.16.0
+        version: 0.16.0(eslint@10.8.1(jiti@2.7.0))(typescript@6.0.3)
       jsdom:
         specifier: ^30.0.0
         version: 30.0.1
@@ -3471,8 +3471,8 @@ packages:
       '@typescript-eslint/parser':
         optional: true
 
-  eslint-plugin-solid@0.15.0:
-    resolution: {integrity: sha512-IMSj0HK8zu4WuHMAeH38izG8ZBgOkwUqu0W2LrTyW0m/QPuOmrq8P2Y36HDAETIgDg9j6G+TJBdfpILTVPJkFQ==}
+  eslint-plugin-solid@0.16.0:
+    resolution: {integrity: sha512-q45VUvh3kv9ZHoVWZrep/KJFA7qqBH0khHuEEp0sCzEDuM3FtHFqK6fLWFIIIDGVQ8aFouUHROaOXVi8GgzShA==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       eslint: ^9.0.0 || ^10.0.0
@@ -8022,7 +8022,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-solid@0.15.0(eslint@10.8.1(jiti@2.7.0))(typescript@6.0.3):
+  eslint-plugin-solid@0.16.0(eslint@10.8.1(jiti@2.7.0))(typescript@6.0.3):
     dependencies:
       '@typescript-eslint/utils': 8.67.0(eslint@10.8.1(jiti@2.7.0))(typescript@6.0.3)
       eslint: 10.8.1(jiti@2.7.0)
