@@ -10,7 +10,7 @@ import {
   galleryScope,
   galleryStore,
   sectionSelectedTopic,
-} from '../store';
+} from '../sections';
 
 const setup = () => {
   const runtime = createTestRuntime();

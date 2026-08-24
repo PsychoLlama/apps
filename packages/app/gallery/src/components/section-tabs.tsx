@@ -7,7 +7,7 @@ import {
   galleryScope,
   galleryStore,
   sectionSelectedTopic,
-} from '../store';
+} from '../state';
 import { SectionGrid } from './section-grid';
 import { slugify } from './slugify';
 
