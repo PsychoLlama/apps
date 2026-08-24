@@ -173,6 +173,28 @@ const createEntry = (): PeerEntry => {
 };
 
 /**
+ * Everything one visit's news can land on: the worker's own events, plus the
+ * one thing the worker is in no position to report.
+ *
+ * A thread that crashed can't announce that it crashed, so the host raises
+ * {@link SessionFeed.lost} on its behalf. It's on the feed rather than beside
+ * it because the session is the only thing holding the queues that have to be
+ * unblocked, and it goes out of reach the moment the visit ends.
+ */
+/** Whatever a give-up can say for itself, beyond naming what went wrong. */
+type FailureDetails = Partial<{
+  error: Error;
+  reason: string;
+  filename: string;
+  lineno: number;
+}>;
+
+export interface SessionFeed extends P2pEventSink {
+  /** The thread is gone. Nothing further is coming over it. */
+  lost(): void;
+}
+
+/**
  * The worker, and the page-long RPC bound to it.
  *
  * Held here rather than in a scope on purpose. The worker outlives any one
@@ -192,11 +214,20 @@ interface P2pWorkerHost {
   readonly rpc: RPC<HostApi, P2pApi, SendOptions>;
   readonly ready: Promise<void>;
 
-  /** Where the current visit's events go, or `undefined` between visits. */
-  sink: P2pEventSink | undefined;
+  /** Where the current visit's news goes, or `undefined` between visits. */
+  sink: SessionFeed | undefined;
 
   /** Set when the thread died under us; the next visit spawns a fresh one. */
   dead: boolean;
+
+  /**
+   * Give up on this thread: say why, unpark everything waiting on it, and
+   * mark it for replacement on the next visit.
+   *
+   * Idempotent, because the ways a worker can die aren't exclusive — a thread
+   * that throws on its way out may report the failure itself first.
+   */
+  fail(reason: string, details?: FailureDetails): void;
 }
 
 let host: P2pWorkerHost | undefined;
@@ -210,7 +241,7 @@ let host: P2pWorkerHost | undefined;
  * feed rather than stacking a second set of listeners.
  */
 const spawnWorker = (): P2pWorkerHost => {
-  const worker = new P2pWorker({ name: 'Beam P2P' });
+  const worker = new P2pWorker({ name: '@app/beam' });
 
   let markReady!: () => void;
   const ready = new Promise<void>((resolve) => {
@@ -224,25 +255,49 @@ const spawnWorker = (): P2pWorkerHost => {
     dead: false,
     rpc: RPC.from<HostApi, P2pApi, SendOptions>(
       new MessagePortTransport<RpcMessage, RpcMessage>(worker),
-      createHostHandlers(markReady, () => spawned.sink),
+      createHostHandlers({
+        onReady: markReady,
+        onFailed: ({ reason }) =>
+          spawned.fail('The p2p worker reported a fatal error.', { reason }),
+        sink: () => spawned.sink,
+      }),
     ),
+
+    // A thread that dies takes every connection with it, and nothing else
+    // would ever say so: no `peerClosed` arrives, so every link's `closed`
+    // stays pending, the saga parked on it never wakes, and the status bar
+    // goes on claiming a relay nothing is holding.
+    fail(reason, details) {
+      if (this.dead) return;
+      this.dead = true;
+
+      logger.error(reason, details);
+      this.sink?.lost();
+
+      // Whoever is waiting on the handshake is waiting on a thread that will
+      // never answer. Let them through to fail on their next request instead.
+      markReady();
+    },
   };
 
-  // A thread that dies takes every connection with it, and nothing else would
-  // ever say so: no `peerClosed` arrives, so every link's `closed` stays
-  // pending, the saga parked on it never wakes, and the status bar goes on
-  // claiming a relay nothing is holding. This is the only notice we get.
-  const bury = (error: unknown) => {
-    if (spawned.dead) return;
-    spawned.dead = true;
+  worker.addEventListener('error', (event) => {
+    // `error` is null whenever the browser withholds the detail, so the
+    // event's own fields are the whole account we get. They're logged beside
+    // the error rather than folded into it, since a `CoercedError: null`
+    // would name neither the file nor the line.
+    spawned.fail('The p2p worker threw and stopped.', {
+      error: toError(event.error ?? event.message),
+      filename: event.filename,
+      lineno: event.lineno,
+    });
+  });
 
-    logger.error('The p2p worker failed.', { error: toError(error) });
-    spawned.sink?.relayChanged({ homeRelay: null });
-    markReady();
-  };
-
-  worker.addEventListener('error', (event) => bury(event.error));
-  worker.addEventListener('messageerror', (event) => bury(event.data));
+  worker.addEventListener('messageerror', () => {
+    // Not a crash — the thread is alive, but a frame arrived that couldn't be
+    // deserialized. Fatal all the same: RPC has no timeout, so whichever
+    // caller that frame was answering would wait on it for good.
+    spawned.fail('The p2p worker sent a message the page could not read.');
+  });
 
   return spawned;
 };
@@ -270,7 +325,7 @@ const workerHost = (): P2pWorkerHost => {
  */
 export const attachSession = (
   rpc: RPC<HostApi, P2pApi, SendOptions>,
-  install: (sink: P2pEventSink | undefined) => void,
+  install: (feed: SessionFeed | undefined) => void,
 ): P2pSession => {
   const peers = createInbox<PeerLink>();
   const relay = createInbox<string | null>();
@@ -342,6 +397,15 @@ export const attachSession = (
       entryFor(peerId).messages.push(message),
     peerClosed: ({ peerId }) => entryFor(peerId).settle(),
     relayChanged: ({ homeRelay }) => relay.push(homeRelay),
+
+    lost: () => {
+      // Nothing is ever going to report these closed: the thread that held
+      // the connections is gone, so no `peerClosed` is coming for any of
+      // them. Settle them here and each `watchPeerSaga` wakes and commits
+      // the disconnect it would otherwise wait on for the life of the page.
+      for (const entry of registry.values()) entry.settle();
+      relay.push(null);
+    },
   });
 
   return {

@@ -50,6 +50,26 @@ const events: SessionEvents = {
   relayChanged: (change) => announce('relayChanged', change),
 };
 
+// Anything that escapes a task here would otherwise leave no trace on either
+// thread. The page's `error` listener sees uncaught throws only, and by the
+// time one crosses a thread boundary it has been flattened to a message with
+// no stack; an unhandled rejection doesn't cross at all. Since almost
+// everything this worker does is asynchronous — a QUIC read, a relay
+// handshake, a dial — the rejection case is the likelier of the two.
+self.addEventListener('error', (event) => {
+  logger.error('Uncaught error in the p2p worker.', {
+    error: toError(event.error ?? event.message),
+    filename: event.filename,
+    lineno: event.lineno,
+  });
+});
+
+self.addEventListener('unhandledrejection', (event) => {
+  logger.error('Unhandled rejection in the p2p worker.', {
+    error: toError(event.reason),
+  });
+});
+
 const session = new WorkerSession(events);
 
 // `session` and `rpc` reference each other: the session announces through the
@@ -65,10 +85,12 @@ const rpc = RPC.from<P2pApi, HostApi, SendOptions>(
 /**
  * Instantiate the wasm on load rather than on the first request, so it's warm
  * by the time the page asks for an identity. Once it's live, say so: the host
- * holds every request until `ready` lands.
+ * holds every request until `ready` or `failed` lands.
  *
- * A failed init is logged, not swallowed: the worker stays up but every call
- * would trap, so without this the breakage would be invisible.
+ * A failed init is reported both ways, not swallowed. The worker survives it,
+ * so nothing the page listens for on the `Worker` itself fires — it would sit
+ * on a handshake that has already lost, with the only account of why in a
+ * console it isn't watching.
  */
 void WorkerSession.init()
   .then(() => {
@@ -83,5 +105,11 @@ void WorkerSession.init()
     });
   })
   .catch((error: unknown) => {
-    logger.error('Iroh wasm failed to initialize.', { error: toError(error) });
+    const failure = toError(error);
+    logger.error('Iroh wasm failed to initialize.', { error: failure });
+
+    return rpc.notify('failed', { reason: failure.message }).catch(() => {
+      // Nothing left to try. Both ends of the report have now failed, and the
+      // one above already said so with the stack attached.
+    });
   });

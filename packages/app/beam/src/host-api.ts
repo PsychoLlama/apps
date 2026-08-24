@@ -43,20 +43,44 @@ export interface P2pEventSink {
   relayChanged(change: { homeRelay: string | null }): void;
 }
 
+/** What the page does with the worker's lifecycle news. */
+export interface HostLifecycle {
+  /** The wasm is live and the worker will answer requests. */
+  onReady: () => void;
+
+  /** The worker is up but unusable, and said so itself. */
+  onFailed: (failure: { reason: string }) => void;
+
+  /** The current visit's sink, or `undefined` between visits. */
+  sink: () => P2pEventSink | undefined;
+}
+
 /**
  * Build the page's handlers for one worker.
  *
- * `ready` is the worker's one-shot announcement that its wasm is live; the host
- * holds every request until it lands. The rest are forwarded to whichever sink
- * the current visit installed — `undefined` between visits, which is why each
- * one checks.
+ * `ready` and `failed` are the worker's one-shot verdicts on its own startup;
+ * the host holds every request until one of them lands. The rest are forwarded
+ * to whichever sink the current visit installed — `undefined` between visits,
+ * which is why each one checks.
  */
-export const createHostHandlers = (
-  onReady: () => void,
-  sink: () => P2pEventSink | undefined,
-) => ({
+export const createHostHandlers = ({
+  onReady,
+  onFailed,
+  sink,
+}: HostLifecycle) => ({
   events: {
     ready: onReady,
+
+    /**
+     * The worker came up but can't work — its wasm never initialized, so
+     * every request from here would trap.
+     *
+     * Worth a channel of its own: a worker that fails this way stays alive,
+     * so it fires neither `error` nor `messageerror`, and without this the
+     * page would sit on a handshake that has already lost.
+     */
+    failed: onFailed,
+
     peerConnected: (peer: { peerId: string; endpointId: string }) =>
       sink()?.peerConnected(peer),
     peerMessage: (arrival: { peerId: string; message: BeamMessage }) =>

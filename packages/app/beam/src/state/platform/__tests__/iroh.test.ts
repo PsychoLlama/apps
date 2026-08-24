@@ -18,7 +18,7 @@ import {
   MessagePortTransport,
   type SendOptions,
 } from '@lib/messaging/message-port';
-import { attachSession, sendMessage } from '../iroh';
+import { attachSession, sendMessage, type SessionFeed } from '../iroh';
 import { helloMessage } from '../../../protocol';
 import {
   createHostHandlers,
@@ -59,13 +59,14 @@ const setup = (handlers: WorkerHandlers = {}) => {
   // The page's end, wired exactly as `startP2p` wires it: the handlers are
   // installed once and read the sink slot on every event, so the session
   // attached below is what they route to.
-  let sink: P2pEventSink | undefined;
+  let sink: SessionFeed | undefined;
   const host = RPC.from<HostApi, P2pApi, SendOptions>(
     new MessagePortTransport<RpcMessage, RpcMessage>(channel.port1),
-    createHostHandlers(
-      () => undefined,
-      () => sink,
-    ),
+    createHostHandlers({
+      onReady: () => undefined,
+      onFailed: () => undefined,
+      sink: () => sink,
+    }),
   );
 
   // The stand-in worker. `notify`-only methods are recorded and ignored, which
@@ -99,11 +100,18 @@ const setup = (handlers: WorkerHandlers = {}) => {
   return {
     session,
     received,
+
     /** Announce something the way the worker would. */
     emit: <Method extends keyof P2pEventSink>(
       method: Method,
       ...params: Parameters<P2pEventSink[Method]>
     ) => void worker.notify(method, ...(params as [never])),
+
+    /**
+     * Report the thread gone, the way the host does when the `Worker` fires
+     * `error`. Not something the worker can send — it's dead.
+     */
+    lose: () => sink?.lost(),
   };
 };
 
@@ -201,6 +209,40 @@ describe('attachSession', () => {
 
     await tick();
     expect(received.map((call) => call.method)).toContain('release');
+  });
+
+  it('settles every open link when the worker dies', async () => {
+    const { session, emit, lose } = setup({
+      dial: () => ({ peerId: 'peer-1', endpointId: PEER_ID }),
+    });
+    const dialled = await session.dial(PEER_ID);
+
+    emit('peerConnected', { peerId: 'peer-2', endpointId: PEER_ID });
+    await tick();
+    const inbound = await session.peers.next(new AbortController().signal);
+
+    lose();
+
+    // A dead thread announces nothing, so no `peerClosed` is ever coming for
+    // these. Without settling them here every `watchPeerSaga` parks for the
+    // life of the page and the peer list never empties.
+    await expect(dialled.closed).resolves.toBeUndefined();
+    await expect(inbound.closed).resolves.toBeUndefined();
+  });
+
+  it('drops the relay when the worker dies', async () => {
+    const { session, emit, lose } = setup();
+    const signal = new AbortController().signal;
+
+    emit('relayChanged', { homeRelay: 'https://relay.example' });
+    await expect(session.relay.next(signal)).resolves.toBe(
+      'https://relay.example',
+    );
+
+    lose();
+
+    // Otherwise the status bar goes on claiming a relay nothing is holding.
+    await expect(session.relay.next(signal)).resolves.toBeNull();
   });
 
   it('reports the relay coming and going', async () => {
