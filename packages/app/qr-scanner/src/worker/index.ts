@@ -26,14 +26,20 @@ const rpc = RPC.from<DecoderApi, HostApi, SendOptions>(transport, api);
  * A failed init is logged, not swallowed: the worker stays up but every
  * `decode` would trap, so without this the breakage would be invisible.
  */
-void init().then(
-  () => {
+void init()
+  .then(() => {
     logger.debug('Decoder wasm initialized.');
-    rpc.notify('ready');
-  },
-  (error: unknown) => {
+    // `notify` is fallible now, so the announce gets its own catch rather than
+    // riding on init's. A lost `ready` leaves the host waiting forever with no
+    // frame ever sent, so it's worth a distinct log from an init failure.
+    return rpc.notify('ready').catch((error: unknown) => {
+      logger.error('Decoder failed to announce readiness.', {
+        error: toError(error),
+      });
+    });
+  })
+  .catch((error: unknown) => {
     logger.error('Decoder wasm failed to initialize.', {
       error: toError(error),
     });
-  },
-);
+  });

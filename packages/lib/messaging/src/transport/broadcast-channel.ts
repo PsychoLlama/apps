@@ -26,27 +26,34 @@ export interface BroadcastChannelConfig {
  * transport's `send`/`onMessage` directly rather than RPC, whose
  * request/response model a broadcast can't fulfill.
  *
+ * `send` resolves once the channel accepts the post — a broadcast is
+ * fire-and-forget by nature, so nothing here reports whether any context was
+ * listening, let alone whether one acted on it. It rejects only when the post
+ * can't be made at all: an unserializable payload, or a channel already closed.
+ *
  * Owns its channel: construct it with a {@link BroadcastChannelConfig} and
- * {@link close} when done (or bind it with `using` for automatic teardown). By
- * default a `BroadcastChannel` never delivers a message back to the instance
- * that posted it, only to sibling instances — so a publisher and a subscriber
- * in one context each need their own transport to hear each other. Set
+ * bind it with `await using` for automatic teardown, or {@link close} it by
+ * hand where a scope-bound lifetime doesn't fit. By default a
+ * `BroadcastChannel` never delivers a message back to the instance that posted
+ * it, only to sibling instances — so a publisher and a subscriber in one
+ * context each need their own transport to hear each other. Set
  * {@link BroadcastChannelConfig.selfDeliver} to fold both roles into one
  * instance: `send` then also replays to this transport's own handlers.
  *
  * @example
  * ```ts
- * using transport = new BroadcastChannelTransport<Message>({
+ * await using transport = new BroadcastChannelTransport<Message>({
  *   channel: 'log-files',
  *   selfDeliver: false,
  * });
  * transport.onMessage((message) => {});
- * transport.send(payload);
+ * await transport.send(payload);
  * ```
  */
-export class BroadcastChannelTransport<Message>
-  implements Transport<Message, Message>, Disposable
-{
+export class BroadcastChannelTransport<Message> implements Transport<
+  Message,
+  Message
+> {
   readonly #channel: BroadcastChannel;
   readonly #selfDeliver: boolean;
 
@@ -61,12 +68,15 @@ export class BroadcastChannelTransport<Message>
     this.#selfDeliver = config.selfDeliver;
   }
 
-  send(message: Message): void {
+  // `async` so a synchronous `postMessage` throw — an unserializable payload,
+  // a closed channel — reaches the caller as a rejection rather than as a
+  // second, separate error channel.
+  async send(message: Message): Promise<void> {
     this.#channel.postMessage(message);
 
     // A channel never echoes a sender its own post, so `selfDeliver` replays it
-    // to local handlers by hand. It fires synchronously here, ahead of the async
-    // sibling delivery.
+    // to local handlers by hand. It fires before this promise settles, ahead of
+    // the async sibling delivery.
     if (this.#selfDeliver) {
       for (const emit of this.#localHandlers) {
         emit(message);
@@ -102,8 +112,13 @@ export class BroadcastChannelTransport<Message>
     this.#localHandlers.clear();
   }
 
-  /** Tear down on scope exit, so a `using` binding can't leak the channel. */
-  [Symbol.dispose](): void {
+  /**
+   * Tear down on scope exit, so an `await using` binding can't leak the
+   * channel. Teardown is synchronous underneath, but the signature stays async
+   * to match every other transport — one disposal style across the package
+   * means no call site has to remember which kind a given transport takes.
+   */
+  async [Symbol.asyncDispose](): Promise<void> {
     this.close();
   }
 }

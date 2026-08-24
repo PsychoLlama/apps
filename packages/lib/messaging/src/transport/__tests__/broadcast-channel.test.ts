@@ -3,7 +3,7 @@ import { BroadcastChannelTransport } from '@lib/messaging/broadcast-channel';
 type Wire = { type: 'created'; file: string };
 
 // A unique name per transport pair so concurrent tests don't cross-talk on one
-// channel. Transports bind with `using`, so each closes when its test's scope
+// channel. Transports bind with `await using`, so each closes when its test's scope
 // exits — no manual teardown to forget, even if an assertion throws first.
 let channels = 0;
 const uniqueChannel = () => `broadcast-channel-test-${channels++}`;
@@ -14,11 +14,11 @@ describe('BroadcastChannelTransport', () => {
     // A publisher and subscriber each hold their own transport, since a channel
     // never delivers to the instance that posted — one shared transport would
     // never hear itself.
-    using publisher = new BroadcastChannelTransport<Wire>({
+    await using publisher = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
-    using subscriber = new BroadcastChannelTransport<Wire>({
+    await using subscriber = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -26,18 +26,18 @@ describe('BroadcastChannelTransport', () => {
       subscriber.onMessage(resolve),
     );
 
-    publisher.send({ type: 'created', file: 'a.ndjson' });
+    await publisher.send({ type: 'created', file: 'a.ndjson' });
 
     expect(await received).toEqual({ type: 'created', file: 'a.ndjson' });
   });
 
   it('delivers to every registered handler', async () => {
     const channel = uniqueChannel();
-    using publisher = new BroadcastChannelTransport<Wire>({
+    await using publisher = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
-    using subscriber = new BroadcastChannelTransport<Wire>({
+    await using subscriber = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -46,7 +46,7 @@ describe('BroadcastChannelTransport', () => {
       subscriber.onMessage(resolve),
     );
 
-    publisher.send({ type: 'created', file: 'b.ndjson' });
+    await publisher.send({ type: 'created', file: 'b.ndjson' });
 
     expect(await Promise.all([first, second])).toEqual([
       { type: 'created', file: 'b.ndjson' },
@@ -56,11 +56,11 @@ describe('BroadcastChannelTransport', () => {
 
   it('stops delivering to its handlers once closed', async () => {
     const channel = uniqueChannel();
-    using publisher = new BroadcastChannelTransport<Wire>({
+    await using publisher = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
-    using subscriber = new BroadcastChannelTransport<Wire>({
+    await using subscriber = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -70,7 +70,7 @@ describe('BroadcastChannelTransport', () => {
     // A separate transport on the same name, opened before the post, is the
     // delivery barrier: once it hears the message the routing is done, so an
     // empty `seen` proves close() detached the subscriber's handler.
-    using barrier = new BroadcastChannelTransport<Wire>({
+    await using barrier = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -79,7 +79,7 @@ describe('BroadcastChannelTransport', () => {
     );
 
     subscriber.close();
-    publisher.send({ type: 'created', file: 'd.ndjson' });
+    await publisher.send({ type: 'created', file: 'd.ndjson' });
     await routed;
 
     expect(seen).toEqual([]);
@@ -87,11 +87,11 @@ describe('BroadcastChannelTransport', () => {
 
   it('stops delivering to a handler after it unsubscribes', async () => {
     const channel = uniqueChannel();
-    using publisher = new BroadcastChannelTransport<Wire>({
+    await using publisher = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
-    using subscriber = new BroadcastChannelTransport<Wire>({
+    await using subscriber = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -106,7 +106,7 @@ describe('BroadcastChannelTransport', () => {
       new Promise<void>((resolve) => subscriber.onMessage(() => resolve()));
 
     unsubscribe();
-    publisher.send({ type: 'created', file: 'c.ndjson' });
+    await publisher.send({ type: 'created', file: 'c.ndjson' });
     await settled();
 
     expect(seen).toEqual([]);
@@ -114,7 +114,7 @@ describe('BroadcastChannelTransport', () => {
 
   it('withholds a send from its own handlers by default', async () => {
     const channel = uniqueChannel();
-    using solo = new BroadcastChannelTransport<Wire>({
+    await using solo = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -124,7 +124,7 @@ describe('BroadcastChannelTransport', () => {
     // A sibling transport on the same name is the delivery barrier: once it
     // hears solo's post the routing is done, so an empty `seen` proves solo
     // never echoed the send to itself.
-    using barrier = new BroadcastChannelTransport<Wire>({
+    await using barrier = new BroadcastChannelTransport<Wire>({
       channel,
       selfDeliver: false,
     });
@@ -132,28 +132,29 @@ describe('BroadcastChannelTransport', () => {
       barrier.onMessage(() => resolve()),
     );
 
-    solo.send({ type: 'created', file: 'self.ndjson' });
+    await solo.send({ type: 'created', file: 'self.ndjson' });
     await routed;
 
     expect(seen).toEqual([]);
   });
 
-  it('echoes a send back to its own handlers when selfDeliver is set', () => {
-    using solo = new BroadcastChannelTransport<Wire>({
+  it('echoes a send back to its own handlers when selfDeliver is set', async () => {
+    await using solo = new BroadcastChannelTransport<Wire>({
       channel: uniqueChannel(),
       selfDeliver: true,
     });
     const seen: Wire[] = [];
     solo.onMessage((message) => seen.push(message));
 
-    solo.send({ type: 'created', file: 'self.ndjson' });
+    await solo.send({ type: 'created', file: 'self.ndjson' });
 
-    // Self-delivery fires synchronously — no need to await a round trip.
+    // Self-delivery runs inline, before the send settles — no round trip to
+    // wait on, unlike the sibling path.
     expect(seen).toEqual([{ type: 'created', file: 'self.ndjson' }]);
   });
 
-  it('stops self-delivering to a handler after it unsubscribes', () => {
-    using solo = new BroadcastChannelTransport<Wire>({
+  it('stops self-delivering to a handler after it unsubscribes', async () => {
+    await using solo = new BroadcastChannelTransport<Wire>({
       channel: uniqueChannel(),
       selfDeliver: true,
     });
@@ -161,7 +162,42 @@ describe('BroadcastChannelTransport', () => {
     const unsubscribe = solo.onMessage((message) => seen.push(message));
 
     unsubscribe();
-    solo.send({ type: 'created', file: 'self.ndjson' });
+    await solo.send({ type: 'created', file: 'self.ndjson' });
+
+    expect(seen).toEqual([]);
+  });
+
+  it('stops delivering to its handlers once disposed', async () => {
+    const channel = uniqueChannel();
+    await using publisher = new BroadcastChannelTransport<Wire>({
+      channel,
+      selfDeliver: false,
+    });
+    const seen: Wire[] = [];
+
+    // Disposal is scope-bound, so the subscriber gets its own block: leaving
+    // it is what tears the transport down, and the assertions below run
+    // against an already-disposed instance.
+    {
+      await using subscriber = new BroadcastChannelTransport<Wire>({
+        channel,
+        selfDeliver: false,
+      });
+      subscriber.onMessage((message) => seen.push(message));
+    }
+
+    // Same barrier trick as the `close()` case: a live sibling proves the post
+    // was routed, so an empty `seen` means disposal detached the subscriber.
+    await using barrier = new BroadcastChannelTransport<Wire>({
+      channel,
+      selfDeliver: false,
+    });
+    const routed = new Promise<void>((resolve) =>
+      barrier.onMessage(() => resolve()),
+    );
+
+    await publisher.send({ type: 'created', file: 'e.ndjson' });
+    await routed;
 
     expect(seen).toEqual([]);
   });

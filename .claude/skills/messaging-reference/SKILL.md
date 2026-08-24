@@ -10,9 +10,14 @@ description: Reference docs for `@lib/messaging` — a typed, bidirectional RPC 
 - Each implementation has its own entrypoint from `@lib/messaging/*`.
 
 ```ts
-export interface Transport<Inbound, Outbound, Options = never> {
-  send: (message: Outbound, options: Options) => void;
+export interface Transport<
+  Inbound,
+  Outbound,
+  Options = never,
+> extends AsyncDisposable {
+  send: (message: Outbound, options: Options) => Promise<void>;
   onMessage: (handler: MessageHandler<Inbound>) => Unsubscribe;
+  [Symbol.asyncDispose]: () => Promise<void>;
 }
 ```
 
@@ -50,7 +55,7 @@ export type Local = typeof api; // params-only contract; the peer imports it as 
 ```ts
 const rpc = RPC.from<Local, Remote, SendOptions>(transport, api);
 
-rpc.notify('ready', payload); // void
+rpc.notify('ready', payload); // Promise<void>
 rpc.request('status', payload, options); // Promise<string>
 rpc.request('mint'); // Promise<ArrayBuffer> (no payload)
 rpc.close(); // Tear down listeners, block outbound. Transport must be closed separately.

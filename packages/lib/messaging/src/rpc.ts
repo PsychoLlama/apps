@@ -367,12 +367,29 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
   }
 
   /**
+   * Tear down on scope exit, so an `await using` binding can't leave requests
+   * dangling. Async to match every transport, even though {@link close} itself
+   * is synchronous — one disposal style everywhere beats making each call site
+   * remember which kind it's holding.
+   *
+   * The transport isn't touched: this endpoint doesn't own it. Bind it
+   * separately in the same scope.
+   */
+  async [Symbol.asyncDispose](): Promise<void> {
+    this.close();
+  }
+
+  /**
    * Call a remote request method and await its result. Rejects with an
    * {@link RpcError} if the remote handler throws (or the method is unknown
-   * to the remote). Throws an {@link RpcClosedError} if this endpoint has
-   * been closed.
+   * to the remote), with an {@link RpcClosedError} if this endpoint has been
+   * closed, and with whatever the transport reports if the send itself fails.
+   *
+   * Every failure arrives the same way — as a rejection. Nothing here throws
+   * synchronously, so a caller needs one `catch`, not a `try` around the call
+   * plus a `catch` on the promise.
    */
-  request<Method extends RequestMethod<Remote>>(
+  async request<Method extends RequestMethod<Remote>>(
     method: Method,
     ...args: CallArgs<Requests<Remote>[Method], Options>
   ): Promise<ResultOf<Requests<Remote>[Method]>> {
@@ -386,39 +403,67 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
             resolve(result as ResultOf<Requests<Remote>[Method]>),
           reject: (error) => reject(error),
         });
-        try {
-          this.#send({ type: 'request', id, method, params }, options);
-        } catch (thrown) {
-          // The request never left the building (e.g. transfer on a
-          // non-transferable transport, or a `DataCloneError`). Drop its
-          // pending entry so the id can't leak or later match a stray
-          // response.
-          this.#pending.delete(id);
-          reject(toError(thrown));
-        }
+        void this.#send({ type: 'request', id, method, params }, options).catch(
+          (thrown: unknown) => {
+            // The request never left the building (e.g. transfer on a
+            // non-transferable transport, a `DataCloneError`, a dead socket).
+            // Drop its pending entry so the id can't leak or later match a stray
+            // response, and surface the failure to the caller — a request that
+            // was never sent has no reply coming, so leaving it pending would
+            // hang forever.
+            this.#pending.delete(id);
+            reject(toError(thrown));
+          },
+        );
       },
     );
   }
 
   /**
-   * Fire a remote event. Returns once handed to the transport. Throws an
-   * {@link RpcClosedError} if this endpoint has been closed.
+   * Fire a remote event. Resolves once the transport has accepted it, and
+   * rejects if the send failed — fire-and-forget still can't reach a peer
+   * across a link that's closed or timing out, and a caller that cares can
+   * await it. A caller that doesn't may discard the promise (`void
+   * rpc.notify(…)`); nothing downstream depends on it.
+   *
+   * Rejects with an {@link RpcClosedError} on a closed endpoint, matching
+   * {@link request} — one failure channel, whatever went wrong. Discarding the
+   * promise therefore discards that error too, so discard it only where a lost
+   * event genuinely doesn't matter.
    */
-  notify<Method extends EventMethod<Remote>>(
+  async notify<Method extends EventMethod<Remote>>(
     method: Method,
     ...args: CallArgs<Events<Remote>[Method], Options>
-  ): void {
+  ): Promise<void> {
     if (this.#closed) throw new RpcClosedError();
     const [params, options] = args as [params?: unknown, options?: Options];
-    this.#send({ type: 'event', method, params }, options);
+    await this.#send({ type: 'event', method, params }, options);
   }
 
   // Hand a message to the transport, materializing an empty options bag when
   // the caller has none. The transport always receives a bag and decides what
   // to do with it — the type system already guarantees the caller can only
   // pass options this transport understands.
-  #send(message: RpcMessage, options?: Options): void {
-    this.#transport.send(message, options ?? ({} as Options));
+  //
+  // `async` so a transport that throws synchronously still surfaces as a
+  // rejection: every caller here handles one error channel, not two.
+  async #send(message: RpcMessage, options?: Options): Promise<void> {
+    await this.#transport.send(message, options ?? ({} as Options));
+  }
+
+  // Send a reply, discarding a failed send.
+  //
+  // A response has no local caller to reject: the requester sits on the far
+  // end of the link that just failed, so there's nothing to route the error to
+  // and nothing useful to do with it here. The peer's own request eventually
+  // settles on its terms — a timeout, or its endpoint closing.
+  //
+  // TODO: surface these through a per-transport observability hook. They
+  // deserve a log, but `@lib/messaging` can't own that: `@lib/observability`'s
+  // worker backend talks over this RPC, so depending on it here would close
+  // the cycle. The hook has to be something the caller supplies.
+  #reply(message: RpcMessage, options?: Options): void {
+    void this.#send(message, options).catch(() => {});
   }
 
   async #dispatch(message: RpcMessage): Promise<void> {
@@ -440,7 +485,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
   ): Promise<void> {
     const handler = findHandler(this.#requestHandlers, message.method);
     if (!handler) {
-      this.#send({
+      this.#reply({
         type: 'response',
         id: message.id,
         ok: false,
@@ -456,7 +501,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
       const options = {} as Options;
       const reply = handler as (params: never, options: Options) => unknown;
       const result = await reply(message.params as never, options);
-      this.#send(
+      this.#reply(
         {
           type: 'response',
           id: message.id,
@@ -470,7 +515,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
       // internal bug. Either way the caller's `request` promise rejects with
       // the message below, so the failure surfaces on their end.
       const error = toError(thrown);
-      this.#send({
+      this.#reply({
         type: 'response',
         id: message.id,
         ok: false,
