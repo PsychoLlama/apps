@@ -8,13 +8,13 @@ import {
   type PeerLink,
 } from '../../platform/iroh';
 import { receiveNext } from '../../platform/inbox';
-import { helloMessage } from '../../platform/protocol';
+import { helloMessage } from '../../../protocol';
 import { contactsStore, recordPeerSaga } from '../../contacts';
-import { deviceNameFormula } from '../../identity';
+import { deviceNameFormula, identityStore } from '../../identity';
 import { finishPairingSaga } from '../../onboarding';
 import { isEndpointId } from '../../endpoint';
 import { beamScope } from '../../scope';
-import { endpointCell } from '../connection';
+import { sessionCell } from '../connection';
 import {
   peerClosedTopic,
   peerDialingTopic,
@@ -154,12 +154,17 @@ export const dialPeerSaga = defineSaga(
   async function* (endpointId: string) {
     if (!isEndpointId(endpointId)) return;
 
-    const session = yield* read(endpointCell);
+    const session = yield* read(sessionCell);
     if (!session) {
       throw new Error('Cannot dial a peer before the relay connection is up.');
     }
 
-    if (endpointId === session.endpoint.id) return;
+    // Answered off the identity rather than the session. The session is open
+    // before the key is settled, so it has no address of its own to compare
+    // against — and `identityStore` is the canonical answer to who this device
+    // is, which the share view already reads the same way.
+    const { endpointId: self } = yield* read(identityStore);
+    if (endpointId === self) return;
 
     const { statuses } = yield* read(peerLinksStore);
     if (statuses[endpointId] === 'dialing') return;
@@ -183,7 +188,7 @@ export const dialPeerSaga = defineSaga(
     yield commit(peerDialingTopic(endpointId));
 
     try {
-      const link = yield* call(dialEndpoint, session.endpoint, endpointId);
+      const link = yield* call(dialEndpoint, session, endpointId);
       yield* linkPeerSaga(link);
     } catch {
       // Reported by the capability, which has the context to describe it.

@@ -1,6 +1,6 @@
 import { call, commit, defineSaga, read } from '@lib/state';
 import { sendMessage, type PeerLink } from '../../platform/iroh';
-import { shareMessage } from '../../platform/protocol';
+import { shareMessage } from '../../../protocol';
 import { newShareId, now } from '../../platform/host';
 import { normalizeShare } from '../../share-body';
 import {

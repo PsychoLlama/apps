@@ -12,13 +12,14 @@
     "./routes/*": "./src/routes/*.tsx"
   },
   "scripts": {
-    "typecheck": "tsc",
+    "typecheck": "tsc && tsc -p src/worker/tsconfig.json",
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@crate/p2p": "workspace:*",
     "@crate/qr-code": "workspace:*",
     "@lib/design": "workspace:*",
+    "@lib/messaging": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",

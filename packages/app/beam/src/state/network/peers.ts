@@ -33,19 +33,24 @@ export const peerLinksStore = defineStore<PeerLinks>(beamScope, () => ({
 }));
 
 /**
- * The live connection to each linked peer, held for as long as the session
- * needs to talk over it. A cell, not store state — these are wasm handles
- * and must never be proxied.
+ * The live link to each peer this session can talk to. A cell, not store
+ * state — still, but for a different reason than before. A {@link PeerLink} is
+ * no longer a wasm handle: it's a host-side record naming a connection the p2p
+ * worker holds. It stays out of the store because its closures must not be
+ * proxied.
  *
  * Replaced wholesale rather than mutated so a reader sees the change; the
- * map is small (one entry per peer met this session) and never hot. Dropping
- * the scope closes every link, which is what ends the receive loop each
- * handle owns on the Rust side.
+ * map is small (one entry per peer met this session) and never hot.
+ *
+ * No `drop`, deliberately. There is nothing here to release: the worker holds
+ * the connections, `sessionCell` owns the session, and releasing that asks the
+ * endpoint to leave — which closes every peer connection it was holding. A
+ * second, per-peer teardown racing that one would be redundant at best, and at
+ * worst it would run after the session had already gone.
  */
 export const peerHandlesCell = defineCell<ReadonlyMap<string, PeerLink>>(
   beamScope,
   () => new Map(),
-  { drop: (handles) => handles.forEach((handle) => handle.release()) },
 );
 
 /** A dial went out to a peer. */

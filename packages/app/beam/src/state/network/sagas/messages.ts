@@ -1,7 +1,7 @@
 import { call, defineSaga, read } from '@lib/state';
 import { sendMessage } from '../../platform/iroh';
-import { helloMessage } from '../../platform/protocol';
-import type { BeamMessage } from '../../platform/protocol';
+import { helloMessage } from '../../../protocol';
+import type { BeamMessage } from '../../../protocol';
 import { noteAdvertisedNameSaga } from '../../contacts';
 import { deviceNameFormula, nameDeviceSaga } from '../../identity';
 import { beamScope } from '../../scope';

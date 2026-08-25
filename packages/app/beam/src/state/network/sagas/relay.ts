@@ -4,14 +4,15 @@ import {
   connectedTopic,
   connectingTopic,
   connectionStore,
+  p2pStartedTopic,
   relayChangedTopic,
 } from '../connection';
-import { loadIdentity, openConnection } from '../../platform/iroh';
+import { loadIdentity, openConnection, startP2p } from '../../platform/iroh';
 import { receiveNext } from '../../platform/inbox';
 import { encodeInviteSaga, identityResolvedTopic } from '../../identity';
 import { beamScope } from '../../scope';
 import { greetPeerSaga } from './link';
-import type { EndpointSession } from '../../platform/iroh';
+import type { P2pSession } from '../../platform/iroh';
 
 /**
  * Coming up: settling this device's identity, joining the relay network under
@@ -27,7 +28,7 @@ import type { EndpointSession } from '../../platform/iroh';
  */
 export const serveInboundSaga = defineSaga(
   beamScope,
-  async function* (session: EndpointSession) {
+  async function* (session: P2pSession) {
     while (true) {
       const peer = yield* call(receiveNext, session.peers);
       yield* spawn(greetPeerSaga(peer));
@@ -45,7 +46,7 @@ export const serveInboundSaga = defineSaga(
  */
 export const watchRelaySaga = defineSaga(
   beamScope,
-  async function* (session: EndpointSession) {
+  async function* (session: P2pSession) {
     while (true) {
       const homeRelay = yield* call(receiveNext, session.relay);
       yield commit(relayChangedTopic(homeRelay));
@@ -82,12 +83,19 @@ export const connectRelaySaga = defineSaga(beamScope, async function* () {
   yield commit(connectingTopic());
 
   try {
-    const self = yield* call(loadIdentity);
+    // Committed the instant it exists, before anything else can fail
+    // underneath it. From here on the cell owns teardown, so nothing below
+    // needs to clean up after itself — including the handshake, which can't be
+    // interrupted and may well land after the reader has moved on.
+    const session = yield* call(startP2p);
+    yield commit(p2pStartedTopic(session));
+
+    const self = yield* call(loadIdentity, session);
     yield commit(identityResolvedTopic(self.endpointId));
     yield* spawn(encodeInviteSaga(self.endpointId));
 
-    const session = yield* call(openConnection, self);
-    yield commit(connectedTopic(session));
+    yield* call(openConnection, session);
+    yield commit(connectedTopic());
     yield* spawn(serveInboundSaga(session));
     yield* spawn(watchRelaySaga(session));
   } catch {

@@ -6,7 +6,7 @@
 
 import { simulate } from '@lib/state';
 import { sendMessage } from '../../platform/iroh';
-import { shareMessage } from '../../platform/protocol';
+import { shareMessage } from '../../../protocol';
 import { newShareId, now } from '../../platform/host';
 import { peerHandlesCell } from '../peers';
 import {
@@ -21,7 +21,6 @@ import {
   receiveShareSaga,
   shareTextSaga,
 } from '../sagas/shares';
-import type { PeerConnection } from '@crate/p2p';
 import type { PeerLink } from '../../platform/iroh';
 import { createInbox } from '../../platform/inbox';
 import type { Share } from '../../shares';
@@ -34,7 +33,7 @@ const PEER_ID = `e2${'0'.repeat(62)}`;
  */
 const fakeLink = (endpointId = PEER_ID): PeerLink => ({
   endpointId,
-  connection: {} as PeerConnection,
+  send: () => Promise.resolve(),
   messages: createInbox(),
   closed: new Promise(() => undefined),
   release: () => undefined,
