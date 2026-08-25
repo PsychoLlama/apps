@@ -40,19 +40,19 @@ import {
   type IconPackSummary,
   type IconRef,
 } from '../../icons';
-import { loadMissingPackDataSaga } from './sagas';
 import {
   activePackFormula,
   entryKey,
   iconEntryCacheFormula,
+  loadMissingPackDataSaga,
   missingPackDataFormula,
+  packSearchChangedTopic,
   pageChangedTopic,
   pageViewFormula,
-  packSearchChangedTopic,
   pickerStore,
   pickerViewChangedTopic,
   searchChangedTopic,
-} from './store';
+} from '../../state/picker';
 import { PackCard } from '../pack-card';
 import * as css from './icon-grid.css';
 

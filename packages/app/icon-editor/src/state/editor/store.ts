@@ -5,8 +5,8 @@ import {
   defineStore,
   defineTopic,
 } from '@lib/state';
-import { encodeIconRef, type IconRef } from './icons';
-import type { PaletteName } from './palette';
+import { encodeIconRef, type IconRef } from '../../icons';
+import type { PaletteName } from '../../palette';
 
 /** Available shape masks for the icon canvas. */
 export type IconEditorShape = 'square' | 'rounded' | 'squircle' | 'circle';

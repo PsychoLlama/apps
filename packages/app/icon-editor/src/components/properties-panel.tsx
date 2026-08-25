@@ -9,7 +9,7 @@ import IconPlaceholder from 'virtual:icons/mdi/image-outline';
 import IconReset from 'virtual:icons/mdi/restart';
 import IconShuffle from 'virtual:icons/mdi/shuffle-variant';
 import type { IconPackSummary } from '../icons';
-import type { IconEditorShape, IconEditorState } from '../store';
+import type { IconEditorShape, IconEditorState } from '../state/editor';
 import type { PaletteName } from '../palette';
 import { ExportActions } from './export-actions';
 import { Field } from './field';

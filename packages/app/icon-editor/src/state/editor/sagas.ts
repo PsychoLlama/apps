@@ -1,21 +1,21 @@
 import { call, commit, defineSaga, read } from '@lib/state';
 import { createLogger } from '@lib/observability';
-import { rollIndex } from './capabilities';
+import { rollIndex } from '../capabilities';
 import {
   ensureManifestSaga,
   ensurePacksSaga,
   ensurePageSaga,
-} from './components/icon-grid/sagas';
+} from '../picker/sagas';
 import {
   entryKey,
   iconEntriesCell,
   packSelectedTopic,
   pickerStore,
-} from './components/icon-grid/store';
+} from '../picker/store';
 import {
   resolveStyleHydration,
   type IconEditorStyleHydration,
-} from './hydration';
+} from '../../hydration';
 import {
   findIconIndex,
   pageIndexFor,
@@ -25,7 +25,7 @@ import {
   type IconPackManifest,
   type IconPackSummary,
   type IconRef,
-} from './icons';
+} from '../../icons';
 import {
   iconEditorStore,
   iconEditorScope,

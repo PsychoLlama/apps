@@ -9,7 +9,7 @@ import {
   DEFAULT_ICON_EDITOR_STATE,
   type IconEditorShape,
   type IconEditorStyle,
-} from './store';
+} from './state/editor/store';
 
 /** Raw, unvalidated style fields as they arrive from search params. */
 export interface IconEditorStyleHydration {

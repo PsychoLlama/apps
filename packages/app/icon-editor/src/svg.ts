@@ -1,5 +1,5 @@
 import { findPalette } from './palette';
-import type { IconEditorShape, IconEditorState } from './store';
+import type { IconEditorShape, IconEditorState } from './state/editor/store';
 
 /** Minimal XML-text escape — covers everything iconify metadata might carry. */
 const escapeXml = (value: string): string =>
