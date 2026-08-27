@@ -210,7 +210,7 @@ const Launcher = () => {
           </Container>
         </Flex>
 
-        <Flex as="footer" justify="end">
+        <Flex as="footer" justify="end" class={css.footer}>
           <LinkButton
             testId="github"
             href="https://github.com/PsychoLlama/apps"
