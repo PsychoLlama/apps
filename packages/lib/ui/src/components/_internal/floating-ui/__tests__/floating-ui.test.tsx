@@ -7,7 +7,7 @@
 
 import { render, screen } from '@solidjs/testing-library';
 import { createSignal } from 'solid-js';
-import { FloatingBody, FloatingContainer, tetherPlugins } from '../floating-ui';
+import { FloatingBody, FloatingContainer } from '../floating-ui';
 import * as css from '../floating-ui.css';
 
 /** Unwrap a `createVar()` reference (`var(--x)`) to its property name. */
@@ -224,8 +224,8 @@ describe('FloatingContainer', () => {
   });
 
   it('degrades to the pure-CSS placement where observers are missing', () => {
-    // jsdom has no ResizeObserver — exactly the environments the
-    // tether must silently sit out of.
+    // jsdom has no ResizeObserver/IntersectionObserver — exactly the
+    // environments the tether must silently sit out of.
     const [anchorElement, setAnchorElement] = createSignal<HTMLElement>();
     const { container } = render(() => (
       <div ref={setAnchorElement}>
@@ -233,9 +233,7 @@ describe('FloatingContainer', () => {
           anchor={anchorElement()}
           side="top"
           align="end"
-          tether={{
-            plugins: [tetherPlugins.positionTry([{ side: 'bottom' }])],
-          }}
+          tether={{ fallbacks: [{ side: 'bottom' }] }}
         >
           content
         </FloatingContainer>
@@ -245,6 +243,7 @@ describe('FloatingContainer', () => {
 
     expect(shell).toHaveAttribute('data-side', 'top');
     expect(shell).toHaveAttribute('data-align', 'end');
+    expect(shell).not.toHaveAttribute('data-tethered');
   });
 
   it('reflects every side into the data attribute the CSS keys off', () => {

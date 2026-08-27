@@ -13,8 +13,8 @@ import type {
   FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
 
-/** One toggleable stage of the tether's decision pipeline. */
-export type TetherPluginName = 'positionTry';
+/** One toggleable collision behavior the tether can run. */
+export type TetherFeature = 'flip' | 'shift' | 'size' | 'hideWhenDetached';
 
 /** Placement inputs driving the floating window in the scratchpad. */
 export interface FloatingControlsState {
@@ -42,10 +42,12 @@ export interface FloatingControlsState {
   point: FloatingPoint | null;
   /** Whether the collision-avoidance tether is active. */
   tether: boolean;
-  /** Viewport clearance the tether maintains, in px. */
+  /** Boundary clearance the tether maintains, in px. */
   tetherPadding: number;
-  /** Which pipeline stages the tether runs. */
-  plugins: Record<TetherPluginName, boolean>;
+  /** Which collision behaviors the tether runs. */
+  features: Record<TetherFeature, boolean>;
+  /** Whether the surface clamps itself to the room the tether reports. */
+  clampToAvailable: boolean;
 }
 
 /** Owns the scratchpad's floating-window controls and anchor handle. */
@@ -67,9 +69,13 @@ export const floatingControls = defineStore<FloatingControlsState>(
     point: null,
     tether: false,
     tetherPadding: 8,
-    plugins: {
-      positionTry: true,
+    features: {
+      flip: true,
+      shift: true,
+      size: true,
+      hideWhenDetached: false,
     },
+    clampToAvailable: false,
   }),
 );
 
@@ -162,13 +168,19 @@ defineFold(
   },
 );
 
-/** One stage of the tether's pipeline was enabled or disabled. */
-export const pluginToggled = defineTopic<{
-  plugin: TetherPluginName;
+/** One of the tether's collision behaviors was enabled or disabled. */
+export const featureToggled = defineTopic<{
+  feature: TetherFeature;
   enabled: boolean;
 }>();
-defineFold(pluginToggled, [floatingControls], (controls, toggle) => {
-  controls.plugins[toggle.plugin] = toggle.enabled;
+defineFold(featureToggled, [floatingControls], (controls, toggle) => {
+  controls.features[toggle.feature] = toggle.enabled;
+});
+
+/** Clamping the surface to the tether's reported room was toggled. */
+export const clampToggled = defineTopic<boolean>();
+defineFold(clampToggled, [floatingControls], (controls, clamp) => {
+  controls.clampToAvailable = clamp;
 });
 
 /** The target element was captured so the tether can measure against it. */

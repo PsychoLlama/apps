@@ -8,13 +8,12 @@ import { createVar, fallbackVar, style } from '@vanilla-extract/css';
 export const offset = createVar();
 
 /**
- * Override slots: a pixel nudge applied on top of the arrow's seated
- * position, one var per axis. The tether assigns these on the container
- * (they inherit down) to center the arrow over the anchor after
- * collision adjustments; unset they fall back to `0`.
+ * The tether's resolved arrow position, in px from the surface's
+ * leading edge along the edge the arrow sits on. Only meaningful while
+ * the container is tethered, where it replaces `align-self` seating
+ * outright rather than adjusting it.
  */
-export const shiftX = createVar();
-export const shiftY = createVar();
+export const tetherOffset = createVar();
 
 /**
  * Seats the arrow along the anchor edge via `align-self` — the cross axis
@@ -26,9 +25,13 @@ export const shiftY = createVar();
  * the surface's rounded corner instead of riding up onto the curve. The
  * nudge lands on whichever axis the arrow stacks against — inline for
  * up/down arrows (horizontal edge), block for left/right (vertical edge).
+ *
+ * Under a tethered container the arrow is measured against the anchor
+ * instead: it collapses to the start of the edge and rides out to the
+ * offset `@floating-ui/dom` centers it on, so it keeps pointing at the
+ * anchor after the surface has flipped or slid.
  */
 export const arrow = style({
-  translate: `${fallbackVar(shiftX, '0px')} ${fallbackVar(shiftY, '0px')}`,
   selectors: {
     // Hidden, not unmounted: the arrow keeps its box so the tether can
     // keep measuring its seat while it waits offscreen of the anchor.
@@ -46,5 +49,20 @@ export const arrow = style({
       { marginBlockStart: fallbackVar(offset, '0px') },
     '&[data-direction="left"][data-align="end"], &[data-direction="right"][data-align="end"]':
       { marginBlockEnd: fallbackVar(offset, '0px') },
+
+    // Tethered: `flex-start` puts the arrow's leading edge at the
+    // surface's, which is the origin the tether's offset is measured
+    // from, so a plain translation seats it.
+    '[data-tethered] &': {
+      alignSelf: 'flex-start',
+      margin: 0,
+    },
+    '[data-tethered] &:where([data-direction="up"], [data-direction="down"])': {
+      translate: `${fallbackVar(tetherOffset, '0px')} 0`,
+    },
+    '[data-tethered] &:where([data-direction="left"], [data-direction="right"])':
+      {
+        translate: `0 ${fallbackVar(tetherOffset, '0px')}`,
+      },
   },
 });

@@ -42,17 +42,34 @@ export const pointY = createVar();
  * Override slot for the container's `transform-origin`. Unset, the
  * origin derives from `data-side`/`data-align` so scale animations grow
  * out of the anchor-facing edge. The tether assigns this var to aim the
- * origin at the anchor's exact position after collision adjustments.
+ * origin at the anchor's exact position after collision handling.
  */
 export const transformOrigin = createVar();
 
 /**
- * Override slots: a pixel translation applied on top of the CSS
- * placement, one var per axis. The tether assigns these to slide the
- * surface back into the viewport; unset they fall back to `0`.
+ * The tether's resolved position, in px from the anchor's padding box.
+ * Only meaningful under {@link tethered}, where they replace the CSS
+ * placement outright rather than adjusting it.
  */
-export const shiftX = createVar();
-export const shiftY = createVar();
+export const tetherX = createVar();
+export const tetherY = createVar();
+
+/**
+ * Room the surface has inside its clipping boundary, published by the
+ * tether's size pass. Surfaces that should scroll rather than overflow
+ * read these — `max-height: var(--available-height)` on the body — and
+ * they're simply unset without JavaScript.
+ */
+export const availableWidth = createVar();
+export const availableHeight = createVar();
+
+/**
+ * The anchor's measured box, published by the tether. Size-matched
+ * surfaces (a select's listbox) read these to track the trigger's
+ * width.
+ */
+export const anchorWidth = createVar();
+export const anchorHeight = createVar();
 
 // Composition channels for the side/align-derived transform origin.
 // Side rules assign the axis facing the anchor; align rules assign the
@@ -82,19 +99,26 @@ const nudge = fallbackVar(alignOffset, '0px');
  * describe which way the surface grows from that point, and the offsets
  * displace it from the point the same way they displace it from an edge.
  *
+ * Tethered (`data-tethered`): once `@floating-ui/dom` has measured the
+ * page, its answer supersedes both — every inset, margin, and transform
+ * the placement rules set is cleared and the surface rides on a single
+ * translation. The rules above remain the pre-JS (and no-JS) placement,
+ * and `data-side`/`data-align` keep reflecting the resolved placement so
+ * everything keyed off them — the arrow's edge, the transform origin,
+ * consumer animations — still follows the surface.
+ *
  * A flexbox lays out the arrow and body. Each side sets its own
  * `flex-direction`, which seats the DOM-first arrow onto the edge facing
  * the anchor (reversed for top/left).
  *
  * Every selector is wrapped in `:where(...)` so all rules hold equal
  * specificity and the cascade resolves by source order — the point-mode
- * block sits last so it can override any edge-mode positioning.
+ * and tethered blocks sit last so they can override the edge-mode rules.
  */
 export const container = style({
   position: 'absolute',
   display: 'flex',
   alignItems: 'center',
-  translate: `${fallbackVar(shiftX, '0px')} ${fallbackVar(shiftY, '0px')}`,
   transformOrigin: fallbackVar(
     transformOrigin,
     `${fallbackVar(originX, '50%')} ${fallbackVar(originY, '50%')}`,
@@ -225,6 +249,29 @@ export const container = style({
       {
         vars: { [pointShiftY]: `calc(-100% - ${nudge})` },
       },
+
+    // --- Tethered ---
+    // The tether resolves position in the anchor's own coordinate
+    // space, so pinning the shell to the anchor's top-left corner and
+    // translating by its answer lands the surface exactly. Everything
+    // the placement rules above set has to be cleared first, or their
+    // insets and margins would compound with the translation.
+    '&:where([data-tethered])': {
+      inset: 'auto',
+      top: 0,
+      left: 0,
+      margin: 0,
+      transform: 'none',
+      translate: `${fallbackVar(tetherX, '0px')} ${fallbackVar(tetherY, '0px')}`,
+    },
+
+    // The anchor has scrolled out of its clipping ancestor. Hidden
+    // rather than unmounted: the tether keeps measuring so the surface
+    // can come back the moment the anchor does.
+    '&:where([data-anchor-hidden])': {
+      visibility: 'hidden',
+      pointerEvents: 'none',
+    },
   },
 });
 

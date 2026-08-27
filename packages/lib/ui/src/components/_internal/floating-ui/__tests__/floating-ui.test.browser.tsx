@@ -11,23 +11,31 @@ import { createSignal } from 'solid-js';
 import {
   FloatingContainer,
   anchor,
-  tetherPlugins,
   type FloatingContainerProps,
   type TetherOptions,
 } from '../floating-ui';
+import * as css from '../floating-ui.css';
 import * as fixture from './floating-ui.test.browser.css';
 
-const { positionTry } = tetherPlugins;
+/** Unwrap a `createVar()` reference (`var(--x)`) to its property name. */
+const varName = (reference: string) => reference.slice(4, -1);
 
-/** A flip-only tether with the opposite-side fallback. */
-const flipTether = (side: 'top' | 'bottom'): TetherOptions => ({
-  plugins: [positionTry([{ side: side === 'bottom' ? 'top' : 'bottom' }])],
-});
+/**
+ * Pixel-grid comparison. Tethered coordinates are snapped to whole
+ * device pixels, so exact equality with a fractional layout is wrong by
+ * up to half a pixel by design.
+ */
+const expectNear = (actual: number, expected: number) =>
+  expect(Math.abs(actual - expected)).toBeLessThanOrEqual(1);
+
+/** A flip-only tether: no sliding, no size measurement. */
+const flipTether: TetherOptions = { shift: false, size: false };
 
 /** A tethered surface bound to a fixed 100×100 anchor. */
 const Tethered = (
   props: Omit<FloatingContainerProps, 'children' | 'class' | 'anchor'> & {
     stage: string;
+    surface?: string;
   },
 ) => {
   const [anchorElement, setAnchorElement] = createSignal<HTMLElement>();
@@ -42,13 +50,32 @@ const Tethered = (
         <FloatingContainer
           {...props}
           anchor={anchorElement()}
-          class={fixture.surface}
+          class={props.surface ?? fixture.surface}
         >
           content
         </FloatingContainer>
       </div>
     </div>
   );
+};
+
+/** Render a tethered surface and wait for the first placement to land. */
+const renderTethered = async (
+  props: Omit<FloatingContainerProps, 'children' | 'class' | 'anchor'> & {
+    stage: string;
+    surface?: string;
+  },
+) => {
+  const { container } = render(() => <Tethered {...props} />);
+  const shell = container.querySelector<HTMLElement>('[data-side]')!;
+
+  await waitFor(() => expect(shell).toHaveAttribute('data-tethered'));
+
+  return {
+    shell,
+    anchorBox: container.querySelector('[data-testid="anchor"]')!,
+    arrow: container.querySelector('svg'),
+  };
 };
 
 /** Render a surface bound to a fixed 100×100 anchor on a quiet stage. */
@@ -190,11 +217,7 @@ describe('FloatingContainer geometry', () => {
     // Anchor flush with the viewport's bottom edge: a below-surface
     // has no room, so the tether flips it above.
     const { container } = render(() => (
-      <Tethered
-        stage={fixture.pinBottom}
-        side="bottom"
-        tether={flipTether('bottom')}
-      />
+      <Tethered stage={fixture.pinBottom} side="bottom" tether={flipTether} />
     ));
     const shell = container.querySelector('[data-side]')!;
 
@@ -213,7 +236,7 @@ describe('FloatingContainer geometry', () => {
     const { container } = render(() => (
       <div class={fixture.scrollStage} data-testid="scroller">
         <div class={fixture.runway}>
-          <Tethered stage="" side="bottom" tether={flipTether('bottom')} />
+          <Tethered stage="" side="bottom" tether={flipTether} />
         </div>
       </div>
     ));
@@ -267,5 +290,92 @@ describe('FloatingContainer geometry', () => {
     expect(upward.shellRect.bottom).toBeCloseTo(
       upward.anchorRect.top + 70 - 10,
     );
+  });
+
+  it('reproduces the CSS placement when nothing collides', async () => {
+    // The tether takes positioning over outright rather than nudging
+    // it, so an uncontested placement has to land in the same spot the
+    // pure-CSS rules would have put it.
+    const { shell, anchorBox } = await renderTethered({
+      stage: fixture.stage,
+      side: 'bottom',
+      sideOffset: 10,
+      tether: {},
+    });
+
+    const anchorRect = anchorBox.getBoundingClientRect();
+    const shellRect = shell.getBoundingClientRect();
+
+    expectNear(shellRect.top, anchorRect.bottom + 10);
+    expectNear(
+      shellRect.left + shellRect.width / 2,
+      anchorRect.left + anchorRect.width / 2,
+    );
+  });
+
+  it('slides the surface back inside the padded viewport', async () => {
+    // A 300px surface centered on a 100px anchor flush against the left
+    // edge would start at -100. Sliding along the edge is the only way
+    // to keep it visible — flipping sides wouldn't help.
+    const { shell, anchorBox } = await renderTethered({
+      stage: fixture.pinLeft,
+      surface: fixture.wideSurface,
+      side: 'bottom',
+      tether: { padding: 8 },
+    });
+
+    expect(anchorBox.getBoundingClientRect().left).toBeCloseTo(0);
+    expectNear(shell.getBoundingClientRect().left, 8);
+  });
+
+  it('keeps the arrow over the anchor after sliding', async () => {
+    const { anchorBox, arrow } = await renderTethered({
+      stage: fixture.pinLeft,
+      surface: fixture.wideSurface,
+      side: 'bottom',
+      arrow: { visible: true },
+      tether: { padding: 8 },
+    });
+
+    const anchorRect = anchorBox.getBoundingClientRect();
+    const arrowRect = arrow!.getBoundingClientRect();
+
+    expectNear(
+      arrowRect.left + arrowRect.width / 2,
+      anchorRect.left + anchorRect.width / 2,
+    );
+  });
+
+  it('publishes the anchor box and the room left for the surface', async () => {
+    const { shell } = await renderTethered({
+      stage: fixture.stage,
+      side: 'bottom',
+      tether: {},
+    });
+
+    // Size matching reads these; without JavaScript they stay unset and
+    // the surface falls back to hugging its content.
+    expect(shell.style.getPropertyValue(varName(css.anchorWidth))).toBe(
+      '100px',
+    );
+    expect(shell.style.getPropertyValue(varName(css.anchorHeight))).toBe(
+      '100px',
+    );
+    expect(shell.style.getPropertyValue(varName(css.availableHeight))).toMatch(
+      /^\d+(\.\d+)?px$/,
+    );
+  });
+
+  it('resolves collisions in point mode too', async () => {
+    // The point becomes a zero-size anchor, so every placement decision
+    // works exactly as it does off an edge.
+    const { shell } = await renderTethered({
+      stage: fixture.pinBottom,
+      point: { x: 50, y: 100 },
+      side: 'bottom',
+      tether: { size: false },
+    });
+
+    await waitFor(() => expect(shell).toHaveAttribute('data-side', 'top'));
   });
 });
