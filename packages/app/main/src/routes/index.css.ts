@@ -28,3 +28,13 @@ export const chevron = style({
     },
   },
 });
+
+/**
+ * The footer is pushed to the bottom of the frame by the growing content
+ * above it, but on a short viewport (or a long app list) there's nothing
+ * left to push with and the source link collides with the last card. The
+ * margin is the floor: a minimum gap the squeeze can never close.
+ */
+export const footer = style({
+  marginBlockStart: space[6],
+});
