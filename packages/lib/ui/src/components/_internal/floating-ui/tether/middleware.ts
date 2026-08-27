@@ -7,10 +7,13 @@ import {
   type Boundary,
   type DetectOverflowOptions,
   type Dimensions,
+  type FlipOptions,
   type Middleware,
   type MiddlewareData,
   type Padding,
   type Rect,
+  type ShiftOptions,
+  type SizeOptions,
 } from '@floating-ui/dom';
 import { clamp } from './pixels';
 import {
@@ -44,35 +47,57 @@ export interface TetherFallback {
   align?: FloatingAlignment;
 }
 
-/** Consumer-facing tuning knobs for a tethered floating element. */
-export interface TetherOptions {
+/**
+ * `flip`, with the fallback chain in the primitive's own vocabulary.
+ * Every other knob the middleware takes passes straight through.
+ */
+export interface TetherFlipOptions extends Omit<
+  FlipOptions,
+  'fallbackPlacements'
+> {
   /**
-   * Clearance to keep between the floating element and the clipping
-   * boundary, in px. Defaults to `0`.
-   */
-  padding?: Padding;
-  /**
-   * Placements to try, in order, when the requested one overflows —
-   * the same model as CSS `position-try-fallbacks`. An empty list pins
-   * the placement and disables flipping entirely. Defaults to the
+   * Placements to try, in order, when the requested one overflows — the
+   * same model as CSS `position-try-fallbacks`. Defaults to the
    * opposite side.
    */
   fallbacks?: readonly TetherFallback[];
+}
+
+/**
+ * One collision pass: its middleware's options, or a plain `true`/
+ * `false` to take the defaults or skip the pass entirely.
+ */
+export type TetherPass<Options> = Options | boolean;
+
+/**
+ * Consumer-facing tuning knobs, one entry per middleware the tether
+ * runs. Each pass is on by default and can be turned off with `false`
+ * or tuned by handing it the middleware's own options.
+ */
+export interface TetherOptions {
   /**
-   * Slide the floating element along the bound edge to keep it in view.
-   * Defaults to `true`.
+   * Clearance to keep between the floating element and the clipping
+   * boundary, in px. A default for every pass below. Defaults to `0`.
    */
-  shift?: boolean;
+  padding?: Padding;
   /**
-   * Measure the room left inside the boundary and publish it (see
-   * `TetherState.available`). Defaults to `true`.
-   */
-  size?: boolean;
-  /**
-   * The element(s) that clip the floating element. Defaults to the
-   * scroll ancestry, bounded by the viewport.
+   * The element(s) that clip the floating element. A default for every
+   * pass below. Defaults to the scroll ancestry, bounded by the
+   * viewport.
    */
   boundary?: Boundary;
+  /**
+   * Move to another placement when the requested one overflows.
+   * `false` pins the placement.
+   */
+  flip?: TetherPass<TetherFlipOptions>;
+  /** Slide along the bound edge to stay in view. */
+  shift?: TetherPass<ShiftOptions>;
+  /**
+   * Measure the room left inside the boundary and publish it (see
+   * `TetherState.available`).
+   */
+  size?: TetherPass<Omit<SizeOptions, 'apply'>>;
 }
 
 /** Everything one placement pass needs; `null` disables the tether. */
@@ -174,12 +199,16 @@ const transformOrigin = (): Middleware => ({
 });
 
 /**
- * `size`'s measurement, published as middleware data. The library
- * shapes it as a style mutation (`apply`) because that's what most
- * consumers want; we only ever hand the numbers to CSS vars and let the
- * consumer decide whether to clamp, so it's rewrapped as data.
+ * `size`'s measurement, published as middleware data.
+ *
+ * The library's only output channel for it is the `apply` callback,
+ * shaped for mutating the floating element's styles directly. The
+ * tether never writes to the DOM — it publishes `--available-width` and
+ * `--available-height` and lets the surface decide what to do with the
+ * room (cap its height and scroll, cap its width, ignore it entirely).
+ * So the callback is rewrapped as data, like every other middleware.
  */
-const availableSpace = (options: DetectOverflowOptions): Middleware => {
+const availableSpace = (options: Omit<SizeOptions, 'apply'>): Middleware => {
   const room: Dimensions = { width: 0, height: 0 };
   const measure = size({
     ...options,
@@ -198,8 +227,23 @@ const availableSpace = (options: DetectOverflowOptions): Middleware => {
 };
 
 /**
- * Translate the declarative options into a middleware list, in the
- * order `@floating-ui/dom` prescribes: displace, choose a side, slide,
+ * Resolve one pass's options: `false` skips it, `true` or an absent
+ * entry takes the shared overflow defaults, and an options object is
+ * layered over them.
+ */
+const pass = <Options extends DetectOverflowOptions>(
+  option: TetherPass<Options> | undefined,
+  defaults: DetectOverflowOptions,
+): Options | null => {
+  if (option === false) return null;
+  if (option === true || option === undefined) return defaults as Options;
+
+  return { ...defaults, ...option };
+};
+
+/**
+ * Translate the options map into a middleware list, in the order
+ * `@floating-ui/dom` prescribes: displace, choose a placement, slide,
  * measure the room, seat the arrow. Our own reporting middleware run
  * last, where the numbers are final.
  */
@@ -209,9 +253,14 @@ export const buildMiddleware = (config: TetherConfig): Middleware[] => {
     ...(config.boundary && { boundary: config.boundary }),
   };
 
-  // `position-try-fallbacks` semantics: an explicit chain replaces the
-  // library's computed default, and an empty one pins the placement.
-  const fallbackPlacements = config.fallbacks?.map(({ side, align }) =>
+  const flipPass = pass(config.flip, overflow);
+  const shiftPass = pass(config.shift, overflow);
+  const sizePass = pass(config.size, overflow);
+
+  // `position-try-fallbacks` in our own vocabulary: a side/align pair
+  // per entry, with the alignment inherited from the request.
+  const { fallbacks, ...flipOptions } = flipPass ?? {};
+  const fallbackPlacements = fallbacks?.map(({ side, align }) =>
     toPlacement({ side, align: align ?? config.placement.align }),
   );
 
@@ -224,16 +273,16 @@ export const buildMiddleware = (config: TetherConfig): Middleware[] => {
       crossAxis: config.alignOffset ?? 0,
       alignmentAxis: config.alignOffset ?? 0,
     }),
-    ...(fallbackPlacements?.length === 0
-      ? []
-      : [
+    ...(flipPass
+      ? [
           flip({
-            ...overflow,
+            ...flipOptions,
             ...(fallbackPlacements && { fallbackPlacements }),
           }),
-        ]),
-    ...(config.shift === false ? [] : [shift(overflow)]),
-    ...(config.size === false ? [] : [availableSpace(overflow)]),
+        ]
+      : []),
+    ...(shiftPass ? [shift(shiftPass)] : []),
+    ...(sizePass ? [availableSpace(sizePass)] : []),
     ...(config.arrow
       ? [arrow({ element: config.arrow, padding: config.arrowPadding ?? 0 })]
       : []),

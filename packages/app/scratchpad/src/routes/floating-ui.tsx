@@ -19,7 +19,9 @@ import {
   type FloatingPoint,
   type FloatingSide,
   type TetherFallback,
+  type TetherFlipOptions,
   type TetherOptions,
+  type TetherPass,
 } from '@lib/ui/_internal/floating-ui';
 import { useAnchor, useCommit, useValue } from '@lib/state';
 import {
@@ -32,7 +34,7 @@ import {
   arrowDepthChanged,
   arrowVisibilityChanged,
   clampToggled,
-  fallbackModeChanged,
+  flipModeChanged,
   featureToggled,
   floatingControls,
   pointChanged,
@@ -42,7 +44,7 @@ import {
   sideOffsetChanged,
   tetherPaddingChanged,
   tetherToggled,
-  type FallbackMode,
+  type FlipMode,
   type TetherFeature,
 } from '../state/floating-ui';
 import * as css from './floating-ui.css';
@@ -65,11 +67,7 @@ const ARROW_ALIGNMENTS = [
 ] as const satisfies ArrowAlign[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
 const TETHER_FEATURES = ['shift', 'size'] as const satisfies TetherFeature[];
-const FALLBACK_MODES = [
-  'auto',
-  'none',
-  'chain',
-] as const satisfies FallbackMode[];
+const FLIP_MODES = ['auto', 'off', 'chain'] as const satisfies FlipMode[];
 
 /**
  * The chain the `chain` mode walks — a deliberately odd order so it's
@@ -82,17 +80,15 @@ const FALLBACK_CHAIN = [
   { side: 'top' },
 ] as const satisfies TetherFallback[];
 
-/** The fallback chain a mode stands for; `undefined` keeps the default. */
-const fallbacksFor = (
-  mode: FallbackMode,
-): readonly TetherFallback[] | undefined => {
+/** The flip pass a mode stands for. */
+const flipFor = (mode: FlipMode): TetherPass<TetherFlipOptions> => {
   switch (mode) {
     case 'auto':
-      return undefined;
-    case 'none':
-      return [];
+      return true;
+    case 'off':
+      return false;
     case 'chain':
-      return FALLBACK_CHAIN;
+      return { fallbacks: FALLBACK_CHAIN };
   }
 };
 
@@ -159,8 +155,7 @@ const FloatingUiScratchpad = () => {
     feature: TetherFeature;
     enabled: boolean;
   }) => commit(featureToggled(toggle));
-  const chooseFallbackMode = (mode: FallbackMode) =>
-    commit(fallbackModeChanged(mode));
+  const chooseFlipMode = (mode: FlipMode) => commit(flipModeChanged(mode));
   const chooseClamp = (clamp: boolean) => commit(clampToggled(clamp));
   const chooseArrowVisible = (visible: boolean) =>
     commit(arrowVisibilityChanged(visible));
@@ -169,16 +164,12 @@ const FloatingUiScratchpad = () => {
   const captureAnchor = (element: HTMLElement) =>
     commit(anchorCaptured(element));
 
-  /** The collision behaviors the tether runs, as it takes them. */
-  const tetherOptions = (): TetherOptions => {
-    const fallbacks = fallbacksFor(controls().fallbackMode);
-
-    return {
-      padding: controls().tetherPadding,
-      ...(fallbacks && { fallbacks }),
-      ...controls().features,
-    };
-  };
+  /** The collision passes the tether runs, as it takes them. */
+  const tetherOptions = (): TetherOptions => ({
+    padding: controls().tetherPadding,
+    flip: flipFor(controls().flipMode),
+    ...controls().features,
+  });
 
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
@@ -224,11 +215,11 @@ const FloatingUiScratchpad = () => {
             onValueChange={chooseArrowAlign}
           />
           <PlacementControl
-            label="Fallbacks"
-            name="fallbacks"
-            value={controls().fallbackMode}
-            options={FALLBACK_MODES}
-            onValueChange={chooseFallbackMode}
+            label="Flip"
+            name="flip"
+            value={controls().flipMode}
+            options={FLIP_MODES}
+            onValueChange={chooseFlipMode}
           />
           <PlacementControl
             label="Radius"

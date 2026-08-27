@@ -37,7 +37,12 @@ export {
   type FloatingSide,
 } from './tether/placement';
 export { type TetherState } from './tether/create-tether';
-export { type TetherFallback, type TetherOptions } from './tether/middleware';
+export {
+  type TetherFallback,
+  type TetherFlipOptions,
+  type TetherOptions,
+  type TetherPass,
+} from './tether/middleware';
 
 /**
  * Internal primitive for positioned floating UI — tooltips, dropdowns,

@@ -229,7 +229,7 @@ describe('FloatingContainer', () => {
       <FloatingContainer
         side="top"
         align="end"
-        tether={{ fallbacks: [{ side: 'bottom' }] }}
+        tether={{ flip: { fallbacks: [{ side: 'bottom' }] } }}
       >
         content
       </FloatingContainer>

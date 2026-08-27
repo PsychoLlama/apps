@@ -244,20 +244,20 @@ describe('FloatingContainer geometry', () => {
       side: 'bottom',
       tether: {
         ...flipTether,
-        fallbacks: [{ side: 'right' }, { side: 'top' }],
+        flip: { fallbacks: [{ side: 'right' }, { side: 'top' }] },
       },
     });
 
     await waitFor(() => expect(floating).toHaveAttribute('data-side', 'right'));
   });
 
-  it('pins the placement when the fallback chain is empty', async () => {
-    // No fallbacks to try means nowhere to go: the surface overflows
-    // rather than moving, exactly as an empty `position-try` list would.
+  it('pins the placement when the flip pass is off', async () => {
+    // Nowhere to go: the surface overflows rather than moving, the way
+    // an element with no `position-try-fallbacks` would.
     const { floating } = await renderTethered({
       stage: fixture.pinBottom,
       side: 'bottom',
-      tether: { ...flipTether, fallbacks: [] },
+      tether: { ...flipTether, flip: false },
     });
 
     expect(floating).toHaveAttribute('data-side', 'bottom');

@@ -17,11 +17,11 @@ import type {
 export type TetherFeature = 'shift' | 'size';
 
 /**
- * Which fallback chain the tether tries when the requested placement
- * overflows: the library's computed default, nothing at all, or a
- * hand-written `position-try`-style chain.
+ * How the tether's flip pass is configured: the library's computed
+ * fallback, the pass turned off, or a hand-written `position-try`-style
+ * chain.
  */
-export type FallbackMode = 'auto' | 'none' | 'chain';
+export type FlipMode = 'auto' | 'off' | 'chain';
 
 /** Placement inputs driving the floating window in the scratchpad. */
 export interface FloatingControlsState {
@@ -53,8 +53,8 @@ export interface FloatingControlsState {
   tetherPadding: number;
   /** Which collision behaviors the tether runs. */
   features: Record<TetherFeature, boolean>;
-  /** Which fallback chain the tether walks when the placement overflows. */
-  fallbackMode: FallbackMode;
+  /** How the tether's flip pass is configured. */
+  flipMode: FlipMode;
   /** Whether the surface clamps itself to the room the tether reports. */
   clampToAvailable: boolean;
 }
@@ -82,7 +82,7 @@ export const floatingControls = defineStore<FloatingControlsState>(
       shift: true,
       size: true,
     },
-    fallbackMode: 'auto',
+    flipMode: 'auto',
     clampToAvailable: false,
   }),
 );
@@ -185,10 +185,10 @@ defineFold(featureToggled, [floatingControls], (controls, toggle) => {
   controls.features[toggle.feature] = toggle.enabled;
 });
 
-/** The fallback chain the tether walks changed. */
-export const fallbackModeChanged = defineTopic<FallbackMode>();
-defineFold(fallbackModeChanged, [floatingControls], (controls, mode) => {
-  controls.fallbackMode = mode;
+/** How the tether's flip pass is configured changed. */
+export const flipModeChanged = defineTopic<FlipMode>();
+defineFold(flipModeChanged, [floatingControls], (controls, mode) => {
+  controls.flipMode = mode;
 });
 
 /** Clamping the surface to the tether's reported room was toggled. */
