@@ -14,7 +14,14 @@ import type {
 } from '@lib/ui/_internal/floating-ui';
 
 /** One toggleable collision behavior the tether can run. */
-export type TetherFeature = 'flip' | 'shift' | 'size' | 'hideWhenDetached';
+export type TetherFeature = 'shift' | 'size' | 'hideWhenDetached';
+
+/**
+ * Which fallback chain the tether tries when the requested placement
+ * overflows: the library's computed default, nothing at all, or a
+ * hand-written `position-try`-style chain.
+ */
+export type FallbackMode = 'auto' | 'none' | 'chain';
 
 /** Placement inputs driving the floating window in the scratchpad. */
 export interface FloatingControlsState {
@@ -46,6 +53,8 @@ export interface FloatingControlsState {
   tetherPadding: number;
   /** Which collision behaviors the tether runs. */
   features: Record<TetherFeature, boolean>;
+  /** Which fallback chain the tether walks when the placement overflows. */
+  fallbackMode: FallbackMode;
   /** Whether the surface clamps itself to the room the tether reports. */
   clampToAvailable: boolean;
 }
@@ -70,11 +79,11 @@ export const floatingControls = defineStore<FloatingControlsState>(
     tether: false,
     tetherPadding: 8,
     features: {
-      flip: true,
       shift: true,
       size: true,
       hideWhenDetached: false,
     },
+    fallbackMode: 'auto',
     clampToAvailable: false,
   }),
 );
@@ -175,6 +184,12 @@ export const featureToggled = defineTopic<{
 }>();
 defineFold(featureToggled, [floatingControls], (controls, toggle) => {
   controls.features[toggle.feature] = toggle.enabled;
+});
+
+/** The fallback chain the tether walks changed. */
+export const fallbackModeChanged = defineTopic<FallbackMode>();
+defineFold(fallbackModeChanged, [floatingControls], (controls, mode) => {
+  controls.fallbackMode = mode;
 });
 
 /** Clamping the surface to the tether's reported room was toggled. */

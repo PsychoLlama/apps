@@ -18,6 +18,8 @@ import {
   type FloatingAlignment,
   type FloatingPoint,
   type FloatingSide,
+  type TetherFallback,
+  type TetherOptions,
 } from '@lib/ui/_internal/floating-ui';
 import { useAnchor, useCommit, useValue } from '@lib/state';
 import {
@@ -30,6 +32,7 @@ import {
   arrowDepthChanged,
   arrowVisibilityChanged,
   clampToggled,
+  fallbackModeChanged,
   featureToggled,
   floatingControls,
   pointChanged,
@@ -39,6 +42,7 @@ import {
   sideOffsetChanged,
   tetherPaddingChanged,
   tetherToggled,
+  type FallbackMode,
   type TetherFeature,
 } from '../state/floating-ui';
 import * as css from './floating-ui.css';
@@ -61,11 +65,40 @@ const ARROW_ALIGNMENTS = [
 ] as const satisfies ArrowAlign[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
 const TETHER_FEATURES = [
-  'flip',
   'shift',
   'size',
   'hideWhenDetached',
 ] as const satisfies TetherFeature[];
+const FALLBACK_MODES = [
+  'auto',
+  'none',
+  'chain',
+] as const satisfies FallbackMode[];
+
+/**
+ * The chain the `chain` mode walks — a deliberately odd order so it's
+ * obvious the tether follows the list rather than flipping to the
+ * opposite side on its own.
+ */
+const FALLBACK_CHAIN = [
+  { side: 'right' },
+  { side: 'left' },
+  { side: 'top' },
+] as const satisfies TetherFallback[];
+
+/** The fallback chain a mode stands for; `undefined` keeps the default. */
+const fallbacksFor = (
+  mode: FallbackMode,
+): readonly TetherFallback[] | undefined => {
+  switch (mode) {
+    case 'auto':
+      return undefined;
+    case 'none':
+      return [];
+    case 'chain':
+      return FALLBACK_CHAIN;
+  }
+};
 
 /** A labeled radio group binding one placement axis to the controls store. */
 const PlacementControl = <Value extends string>(props: {
@@ -130,6 +163,8 @@ const FloatingUiScratchpad = () => {
     feature: TetherFeature;
     enabled: boolean;
   }) => commit(featureToggled(toggle));
+  const chooseFallbackMode = (mode: FallbackMode) =>
+    commit(fallbackModeChanged(mode));
   const chooseClamp = (clamp: boolean) => commit(clampToggled(clamp));
   const chooseArrowVisible = (visible: boolean) =>
     commit(arrowVisibilityChanged(visible));
@@ -139,10 +174,15 @@ const FloatingUiScratchpad = () => {
     commit(anchorCaptured(element));
 
   /** The collision behaviors the tether runs, as it takes them. */
-  const tetherOptions = () => ({
-    padding: controls().tetherPadding,
-    ...controls().features,
-  });
+  const tetherOptions = (): TetherOptions => {
+    const fallbacks = fallbacksFor(controls().fallbackMode);
+
+    return {
+      padding: controls().tetherPadding,
+      ...(fallbacks && { fallbacks }),
+      ...controls().features,
+    };
+  };
 
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
@@ -186,6 +226,13 @@ const FloatingUiScratchpad = () => {
             value={controls().arrowAlign}
             options={ARROW_ALIGNMENTS}
             onValueChange={chooseArrowAlign}
+          />
+          <PlacementControl
+            label="Fallbacks"
+            name="fallbacks"
+            value={controls().fallbackMode}
+            options={FALLBACK_MODES}
+            onValueChange={chooseFallbackMode}
           />
           <PlacementControl
             label="Radius"
