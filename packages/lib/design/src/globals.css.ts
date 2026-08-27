@@ -54,6 +54,31 @@ globalStyle('body', {
   fontSize: typeScale[3].fontSize,
   lineHeight: typeScale[3].bodyLineHeight,
   letterSpacing: typeScale[3].letterSpacing,
+  '@media': {
+    // Installed, browsers may resolve viewport units against a chrome-inclusive
+    // viewport for the first frames of a load, before standalone display mode
+    // applies — `dvh` comes back one retractable URL bar too tall. The reset
+    // above resolves inside that window and is never invalidated, leaving the
+    // page permanently taller than the viewport.
+    //
+    // Percentages resolve against the initial containing block, which is right
+    // from the first frame. Tabs keep `dvh` for its retracting-chrome behavior.
+    '(display-mode: standalone)': {
+      minHeight: '100%',
+    },
+  },
+});
+
+/**
+ * Height basis for the standalone `min-height` above: a percentage needs a
+ * definite height to resolve against.
+ */
+globalStyle('html', {
+  '@media': {
+    '(display-mode: standalone)': {
+      height: '100%',
+    },
+  },
 });
 
 // --- Selection ---
