@@ -64,11 +64,7 @@ const ARROW_ALIGNMENTS = [
   'end',
 ] as const satisfies ArrowAlign[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
-const TETHER_FEATURES = [
-  'shift',
-  'size',
-  'hideWhenDetached',
-] as const satisfies TetherFeature[];
+const TETHER_FEATURES = ['shift', 'size'] as const satisfies TetherFeature[];
 const FALLBACK_MODES = [
   'auto',
   'none',

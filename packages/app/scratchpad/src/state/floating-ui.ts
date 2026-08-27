@@ -14,7 +14,7 @@ import type {
 } from '@lib/ui/_internal/floating-ui';
 
 /** One toggleable collision behavior the tether can run. */
-export type TetherFeature = 'shift' | 'size' | 'hideWhenDetached';
+export type TetherFeature = 'shift' | 'size';
 
 /**
  * Which fallback chain the tether tries when the requested placement
@@ -81,7 +81,6 @@ export const floatingControls = defineStore<FloatingControlsState>(
     features: {
       shift: true,
       size: true,
-      hideWhenDetached: false,
     },
     fallbackMode: 'auto',
     clampToAvailable: false,

@@ -408,36 +408,6 @@ describe('FloatingContainer geometry', () => {
     ).toMatch(/^\d+(\.\d+)?px$/);
   });
 
-  it('flags the surface once the anchor is clipped out of view', async () => {
-    const { container } = render(() => (
-      <div class={fixture.clipStage} data-testid="port">
-        <div class={fixture.clipRunway}>
-          <Tethered
-            stage=""
-            side="bottom"
-            tether={{ hideWhenDetached: true }}
-          />
-        </div>
-      </div>
-    ));
-    const port = container.querySelector<HTMLElement>('[data-testid="port"]')!;
-    const floating = container.querySelector<HTMLElement>('[data-side]')!;
-
-    await waitFor(() => expect(floating).toHaveAttribute('data-tethered'));
-    expect(floating).not.toHaveAttribute('data-anchor-hidden');
-
-    // Scroll the anchor clean past the top of its scroll port.
-    port.scrollTop = port.scrollHeight;
-    await waitFor(() => expect(floating).toHaveAttribute('data-anchor-hidden'));
-    expect(getComputedStyle(floating).visibility).toBe('hidden');
-
-    // And back: detachment is a state, not a teardown.
-    port.scrollTop = 0;
-    await waitFor(() =>
-      expect(floating).not.toHaveAttribute('data-anchor-hidden'),
-    );
-  });
-
   it('resolves collisions in point mode too', async () => {
     // The point becomes a zero-size anchor, so every placement decision
     // works exactly as it does off an edge.

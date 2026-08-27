@@ -50,13 +50,8 @@ export interface TetherState {
   translate: FloatingPoint | null;
   /** `transform-origin` aimed back at the anchor, for scale animations. */
   transformOrigin: string | null;
-  /** The anchor as measured, for size matching and detachment. */
-  anchor: {
-    width: number;
-    height: number;
-    /** Whether the anchor has been clipped out of view. */
-    hidden: boolean;
-  } | null;
+  /** The anchor's measured box, for size matching. */
+  anchor: { width: number; height: number } | null;
   /** Arrow seating. `null` when no arrow is being positioned. */
   arrow: {
     /**
@@ -133,9 +128,7 @@ const resolve = async (config: TetherConfig): Promise<TetherState> => {
     placement: fromPlacement(placement),
     translate: { x: snapToPixel(x), y: snapToPixel(y) },
     transformOrigin: data.transformOrigin?.origin ?? null,
-    anchor: data.anchorSize
-      ? { ...data.anchorSize, hidden: data.hide?.referenceHidden ?? false }
-      : null,
+    anchor: data.anchorSize ?? null,
     arrow: seat
       ? {
           offset: snapToPixel(seat.x ?? seat.y ?? 0),

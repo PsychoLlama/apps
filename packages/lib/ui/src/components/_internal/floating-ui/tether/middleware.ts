@@ -1,7 +1,6 @@
 import {
   arrow,
   flip,
-  hide,
   offset,
   shift,
   size,
@@ -69,12 +68,6 @@ export interface TetherOptions {
    * `TetherState.available`). Defaults to `true`.
    */
   size?: boolean;
-  /**
-   * Flag the floating element once the anchor has been scrolled out of
-   * its clipping ancestor, so it can hide instead of pointing at
-   * nothing. Costs an extra overflow pass. Defaults to `false`.
-   */
-  hideWhenDetached?: boolean;
   /**
    * The element(s) that clip the floating element. Defaults to the
    * scroll ancestry, bounded by the viewport.
@@ -207,8 +200,8 @@ const availableSpace = (options: DetectOverflowOptions): Middleware => {
 /**
  * Translate the declarative options into a middleware list, in the
  * order `@floating-ui/dom` prescribes: displace, choose a side, slide,
- * measure the room, seat the arrow, test visibility. Our own reporting
- * middleware run last, where the numbers are final.
+ * measure the room, seat the arrow. Our own reporting middleware run
+ * last, where the numbers are final.
  */
 export const buildMiddleware = (config: TetherConfig): Middleware[] => {
   const overflow: DetectOverflowOptions = {
@@ -244,7 +237,6 @@ export const buildMiddleware = (config: TetherConfig): Middleware[] => {
     ...(config.arrow
       ? [arrow({ element: config.arrow, padding: config.arrowPadding ?? 0 })]
       : []),
-    ...(config.hideWhenDetached ? [hide(overflow)] : []),
     anchorSize(),
     transformOrigin(),
   ];

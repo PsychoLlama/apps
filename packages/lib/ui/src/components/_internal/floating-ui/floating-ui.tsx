@@ -310,7 +310,6 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
       data-align={align()}
       data-point={container.point ? '' : undefined}
       data-tethered={tether.placement ? '' : undefined}
-      data-anchor-hidden={tether.anchor?.hidden ? '' : undefined}
     >
       <Show when={container.arrow?.visible}>
         <Arrow

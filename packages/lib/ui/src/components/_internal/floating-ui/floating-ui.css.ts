@@ -264,14 +264,6 @@ export const container = style({
       transform: 'none',
       translate: `${fallbackVar(tetherX, '0px')} ${fallbackVar(tetherY, '0px')}`,
     },
-
-    // The anchor has scrolled out of its clipping ancestor. Hidden
-    // rather than unmounted: the tether keeps measuring so the surface
-    // can come back the moment the anchor does.
-    '&:where([data-anchor-hidden])': {
-      visibility: 'hidden',
-      pointerEvents: 'none',
-    },
   },
 });
 
