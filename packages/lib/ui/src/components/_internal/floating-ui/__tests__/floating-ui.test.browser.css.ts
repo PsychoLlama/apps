@@ -67,3 +67,22 @@ export const wideSurface = style({
   width: '300px',
   height: '40px',
 });
+
+/**
+ * A small scroll port the anchor can be scrolled clean out of, for
+ * exercising detachment inside a clipping ancestor rather than at the
+ * viewport edge.
+ */
+export const clipStage = style({
+  position: 'fixed',
+  top: '100px',
+  left: '100px',
+  width: '220px',
+  height: '120px',
+  overflow: 'auto',
+});
+
+/** Tall content inside {@link clipStage} so there is somewhere to scroll. */
+export const clipRunway = style({
+  height: '600px',
+});
