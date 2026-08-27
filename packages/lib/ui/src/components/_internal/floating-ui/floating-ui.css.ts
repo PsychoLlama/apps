@@ -87,7 +87,7 @@ const gap = fallbackVar(sideOffset, '0px');
 const nudge = fallbackVar(alignOffset, '0px');
 
 /**
- * Positioning shell for the floating surface.
+ * Positioning container for the floating surface.
  *
  * Edge mode (default): `data-side` places it fully outside the chosen
  * edge of the anchor and `data-align` positions it along that edge —
@@ -252,7 +252,7 @@ export const container = style({
 
     // --- Tethered ---
     // The tether resolves position in the anchor's own coordinate
-    // space, so pinning the shell to the anchor's top-left corner and
+    // space, so pinning the container to the anchor's top-left corner and
     // translating by its answer lands the surface exactly. Everything
     // the placement rules above set has to be cleared first, or their
     // insets and margins would compound with the translation.
@@ -277,7 +277,7 @@ export const container = style({
 
 /**
  * The visual surface. Sizes to its content so a window hugs what it
- * holds instead of wrapping or stretching to fill the positioning shell.
+ * holds instead of wrapping or stretching to fill the positioning container.
  */
 export const body = style({
   width: 'max-content',

@@ -6,7 +6,6 @@
  */
 
 import { render, screen } from '@solidjs/testing-library';
-import { createSignal } from 'solid-js';
 import { FloatingBody, FloatingContainer } from '../floating-ui';
 import * as css from '../floating-ui.css';
 
@@ -223,27 +222,23 @@ describe('FloatingContainer', () => {
     expect(shell).toHaveAttribute('data-align', 'start');
   });
 
-  it('degrades to the pure-CSS placement where observers are missing', () => {
-    // jsdom has no ResizeObserver/IntersectionObserver — exactly the
-    // environments the tether must silently sit out of.
-    const [anchorElement, setAnchorElement] = createSignal<HTMLElement>();
+  it('leaves the CSS placement in charge until an anchor arrives', () => {
+    // Server-rendered and pre-hydration markup has nothing to measure
+    // against, so the tether sits out however it was configured.
     const { container } = render(() => (
-      <div ref={setAnchorElement}>
-        <FloatingContainer
-          anchor={anchorElement()}
-          side="top"
-          align="end"
-          tether={{ fallbacks: [{ side: 'bottom' }] }}
-        >
-          content
-        </FloatingContainer>
-      </div>
+      <FloatingContainer
+        side="top"
+        align="end"
+        tether={{ fallbacks: [{ side: 'bottom' }] }}
+      >
+        content
+      </FloatingContainer>
     ));
-    const shell = container.querySelector('[data-side]');
+    const floating = container.querySelector('[data-side]');
 
-    expect(shell).toHaveAttribute('data-side', 'top');
-    expect(shell).toHaveAttribute('data-align', 'end');
-    expect(shell).not.toHaveAttribute('data-tethered');
+    expect(floating).toHaveAttribute('data-side', 'top');
+    expect(floating).toHaveAttribute('data-align', 'end');
+    expect(floating).not.toHaveAttribute('data-tethered');
   });
 
   it('reflects every side into the data attribute the CSS keys off', () => {

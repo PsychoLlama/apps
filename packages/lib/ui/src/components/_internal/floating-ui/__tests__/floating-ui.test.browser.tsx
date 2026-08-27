@@ -67,12 +67,12 @@ const renderTethered = async (
   },
 ) => {
   const { container } = render(() => <Tethered {...props} />);
-  const shell = container.querySelector<HTMLElement>('[data-side]')!;
+  const floating = container.querySelector<HTMLElement>('[data-side]')!;
 
-  await waitFor(() => expect(shell).toHaveAttribute('data-tethered'));
+  await waitFor(() => expect(floating).toHaveAttribute('data-tethered'));
 
   return {
-    shell,
+    floating,
     anchorBox: container.querySelector('[data-testid="anchor"]')!,
     arrow: container.querySelector('svg'),
   };
@@ -95,53 +95,55 @@ const renderFloating = (
   const anchorRect = container
     .querySelector('[data-testid="anchor"]')!
     .getBoundingClientRect();
-  const shellRect = container
+  const floatingRect = container
     .querySelector('[data-side]')!
     .getBoundingClientRect();
 
-  return { anchorRect, shellRect };
+  return { anchorRect, floatingRect };
 };
 
 describe('FloatingContainer geometry', () => {
   it('rests fully outside the bound edge', () => {
     const bottom = renderFloating({ side: 'bottom' });
-    expect(bottom.shellRect.top).toBeCloseTo(bottom.anchorRect.bottom);
+    expect(bottom.floatingRect.top).toBeCloseTo(bottom.anchorRect.bottom);
 
     const top = renderFloating({ side: 'top' });
-    expect(top.shellRect.bottom).toBeCloseTo(top.anchorRect.top);
+    expect(top.floatingRect.bottom).toBeCloseTo(top.anchorRect.top);
 
     const left = renderFloating({ side: 'left' });
-    expect(left.shellRect.right).toBeCloseTo(left.anchorRect.left);
+    expect(left.floatingRect.right).toBeCloseTo(left.anchorRect.left);
 
     const right = renderFloating({ side: 'right' });
-    expect(right.shellRect.left).toBeCloseTo(right.anchorRect.right);
+    expect(right.floatingRect.left).toBeCloseTo(right.anchorRect.right);
   });
 
   it('aligns along the bound edge', () => {
     const start = renderFloating({ side: 'bottom', align: 'start' });
-    expect(start.shellRect.left).toBeCloseTo(start.anchorRect.left);
+    expect(start.floatingRect.left).toBeCloseTo(start.anchorRect.left);
 
     const center = renderFloating({ side: 'bottom', align: 'center' });
-    expect(center.shellRect.left + center.shellRect.width / 2).toBeCloseTo(
-      center.anchorRect.left + center.anchorRect.width / 2,
-    );
+    expect(
+      center.floatingRect.left + center.floatingRect.width / 2,
+    ).toBeCloseTo(center.anchorRect.left + center.anchorRect.width / 2);
 
     const end = renderFloating({ side: 'bottom', align: 'end' });
-    expect(end.shellRect.right).toBeCloseTo(end.anchorRect.right);
+    expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.right);
 
     const vertical = renderFloating({ side: 'right', align: 'end' });
-    expect(vertical.shellRect.bottom).toBeCloseTo(vertical.anchorRect.bottom);
+    expect(vertical.floatingRect.bottom).toBeCloseTo(
+      vertical.anchorRect.bottom,
+    );
   });
 
   it('opens a gap off the edge with sideOffset', () => {
     const bottom = renderFloating({ side: 'bottom', sideOffset: 10 });
-    expect(bottom.shellRect.top).toBeCloseTo(bottom.anchorRect.bottom + 10);
+    expect(bottom.floatingRect.top).toBeCloseTo(bottom.anchorRect.bottom + 10);
 
     const top = renderFloating({ side: 'top', sideOffset: 10 });
-    expect(top.shellRect.bottom).toBeCloseTo(top.anchorRect.top - 10);
+    expect(top.floatingRect.bottom).toBeCloseTo(top.anchorRect.top - 10);
 
     const left = renderFloating({ side: 'left', sideOffset: 10 });
-    expect(left.shellRect.right).toBeCloseTo(left.anchorRect.left - 10);
+    expect(left.floatingRect.right).toBeCloseTo(left.anchorRect.left - 10);
   });
 
   it('nudges along the edge with alignOffset, inverting for end', () => {
@@ -150,16 +152,16 @@ describe('FloatingContainer geometry', () => {
       align: 'start',
       alignOffset: 6,
     });
-    expect(start.shellRect.left).toBeCloseTo(start.anchorRect.left + 6);
+    expect(start.floatingRect.left).toBeCloseTo(start.anchorRect.left + 6);
 
     const center = renderFloating({
       side: 'bottom',
       align: 'center',
       alignOffset: 6,
     });
-    expect(center.shellRect.left + center.shellRect.width / 2).toBeCloseTo(
-      center.anchorRect.left + center.anchorRect.width / 2 + 6,
-    );
+    expect(
+      center.floatingRect.left + center.floatingRect.width / 2,
+    ).toBeCloseTo(center.anchorRect.left + center.anchorRect.width / 2 + 6);
 
     // Positive offsets push an end-aligned surface back toward start.
     const end = renderFloating({
@@ -167,14 +169,14 @@ describe('FloatingContainer geometry', () => {
       align: 'end',
       alignOffset: 6,
     });
-    expect(end.shellRect.right).toBeCloseTo(end.anchorRect.right - 6);
+    expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.right - 6);
 
     const vertical = renderFloating({
       side: 'right',
       align: 'start',
       alignOffset: 6,
     });
-    expect(vertical.shellRect.top).toBeCloseTo(vertical.anchorRect.top + 6);
+    expect(vertical.floatingRect.top).toBeCloseTo(vertical.anchorRect.top + 6);
   });
 
   it('binds to an anchor-relative point instead of an edge', () => {
@@ -186,31 +188,35 @@ describe('FloatingContainer geometry', () => {
       side: 'bottom',
       align: 'start',
     });
-    expect(downRight.shellRect.left).toBeCloseTo(
+    expect(downRight.floatingRect.left).toBeCloseTo(
       downRight.anchorRect.left + 30,
     );
-    expect(downRight.shellRect.top).toBeCloseTo(downRight.anchorRect.top + 70);
+    expect(downRight.floatingRect.top).toBeCloseTo(
+      downRight.anchorRect.top + 70,
+    );
 
     // Growing up: the surface's bottom edge sits on the point.
     const up = renderFloating({ point, side: 'top', align: 'start' });
-    expect(up.shellRect.bottom).toBeCloseTo(up.anchorRect.top + 70);
+    expect(up.floatingRect.bottom).toBeCloseTo(up.anchorRect.top + 70);
 
     // End alignment: the far edge sits on the point.
     const end = renderFloating({ point, side: 'bottom', align: 'end' });
-    expect(end.shellRect.right).toBeCloseTo(end.anchorRect.left + 30);
+    expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.left + 30);
 
     // Centered growth splits the surface across the point.
     const centered = renderFloating({ point, side: 'bottom', align: 'center' });
-    expect(centered.shellRect.left + centered.shellRect.width / 2).toBeCloseTo(
-      centered.anchorRect.left + 30,
-    );
+    expect(
+      centered.floatingRect.left + centered.floatingRect.width / 2,
+    ).toBeCloseTo(centered.anchorRect.left + 30);
 
     // Sideways growth: the surface's left edge sits on the point.
     const rightward = renderFloating({ point, side: 'right', align: 'start' });
-    expect(rightward.shellRect.left).toBeCloseTo(
+    expect(rightward.floatingRect.left).toBeCloseTo(
       rightward.anchorRect.left + 30,
     );
-    expect(rightward.shellRect.top).toBeCloseTo(rightward.anchorRect.top + 70);
+    expect(rightward.floatingRect.top).toBeCloseTo(
+      rightward.anchorRect.top + 70,
+    );
   });
 
   it('flips to the roomier side when tethered against a viewport edge', async () => {
@@ -219,14 +225,42 @@ describe('FloatingContainer geometry', () => {
     const { container } = render(() => (
       <Tethered stage={fixture.pinBottom} side="bottom" tether={flipTether} />
     ));
-    const shell = container.querySelector('[data-side]')!;
+    const floating = container.querySelector('[data-side]')!;
 
-    await waitFor(() => expect(shell).toHaveAttribute('data-side', 'top'));
+    await waitFor(() => expect(floating).toHaveAttribute('data-side', 'top'));
 
     const anchorRect = container
       .querySelector('[data-testid="anchor"]')!
       .getBoundingClientRect();
-    expect(shell.getBoundingClientRect().bottom).toBeCloseTo(anchorRect.top);
+    expect(floating.getBoundingClientRect().bottom).toBeCloseTo(anchorRect.top);
+  });
+
+  it('walks the fallback chain in order', async () => {
+    // `position-try-fallbacks` semantics: the chain replaces the
+    // opposite-side default, so an anchor with no room below lands on
+    // the first listed placement that fits rather than flipping up.
+    const { floating } = await renderTethered({
+      stage: fixture.pinBottom,
+      side: 'bottom',
+      tether: {
+        ...flipTether,
+        fallbacks: [{ side: 'right' }, { side: 'top' }],
+      },
+    });
+
+    await waitFor(() => expect(floating).toHaveAttribute('data-side', 'right'));
+  });
+
+  it('pins the placement when the fallback chain is empty', async () => {
+    // No fallbacks to try means nowhere to go: the surface overflows
+    // rather than moving, exactly as an empty `position-try` list would.
+    const { floating } = await renderTethered({
+      stage: fixture.pinBottom,
+      side: 'bottom',
+      tether: { ...flipTether, fallbacks: [] },
+    });
+
+    expect(floating).toHaveAttribute('data-side', 'bottom');
   });
 
   it('re-resolves placement across a scroll round-trip', async () => {
@@ -244,7 +278,7 @@ describe('FloatingContainer geometry', () => {
       '[data-testid="scroller"]',
     )!;
     const anchorBox = container.querySelector('[data-testid="anchor"]')!;
-    const shell = container.querySelector('[data-side]')!;
+    const floating = container.querySelector('[data-side]')!;
     const viewportHeight = document.documentElement.clientHeight;
 
     // Center the anchor: both sides fit, the requested side stands.
@@ -254,17 +288,21 @@ describe('FloatingContainer geometry', () => {
     };
 
     centerAnchor();
-    await waitFor(() => expect(shell).toHaveAttribute('data-side', 'bottom'));
+    await waitFor(() =>
+      expect(floating).toHaveAttribute('data-side', 'bottom'),
+    );
 
     // Carry the anchor down to the bottom edge (scrolling up moves
     // content down): 10px of room left below, the surface flips above.
     scroller.scrollTop -=
       viewportHeight - anchorBox.getBoundingClientRect().bottom - 10;
-    await waitFor(() => expect(shell).toHaveAttribute('data-side', 'top'));
+    await waitFor(() => expect(floating).toHaveAttribute('data-side', 'top'));
 
     // Back to the middle: both sides fit again, so it snaps home.
     centerAnchor();
-    await waitFor(() => expect(shell).toHaveAttribute('data-side', 'bottom'));
+    await waitFor(() =>
+      expect(floating).toHaveAttribute('data-side', 'bottom'),
+    );
   });
 
   it('applies offsets from the point in point mode', () => {
@@ -277,8 +315,12 @@ describe('FloatingContainer geometry', () => {
       sideOffset: 10,
       alignOffset: 6,
     });
-    expect(gapped.shellRect.top).toBeCloseTo(gapped.anchorRect.top + 70 + 10);
-    expect(gapped.shellRect.left).toBeCloseTo(gapped.anchorRect.left + 30 + 6);
+    expect(gapped.floatingRect.top).toBeCloseTo(
+      gapped.anchorRect.top + 70 + 10,
+    );
+    expect(gapped.floatingRect.left).toBeCloseTo(
+      gapped.anchorRect.left + 30 + 6,
+    );
 
     // Growing up, the gap opens above the point.
     const upward = renderFloating({
@@ -287,7 +329,7 @@ describe('FloatingContainer geometry', () => {
       align: 'start',
       sideOffset: 10,
     });
-    expect(upward.shellRect.bottom).toBeCloseTo(
+    expect(upward.floatingRect.bottom).toBeCloseTo(
       upward.anchorRect.top + 70 - 10,
     );
   });
@@ -296,7 +338,7 @@ describe('FloatingContainer geometry', () => {
     // The tether takes positioning over outright rather than nudging
     // it, so an uncontested placement has to land in the same spot the
     // pure-CSS rules would have put it.
-    const { shell, anchorBox } = await renderTethered({
+    const { floating, anchorBox } = await renderTethered({
       stage: fixture.stage,
       side: 'bottom',
       sideOffset: 10,
@@ -304,11 +346,11 @@ describe('FloatingContainer geometry', () => {
     });
 
     const anchorRect = anchorBox.getBoundingClientRect();
-    const shellRect = shell.getBoundingClientRect();
+    const floatingRect = floating.getBoundingClientRect();
 
-    expectNear(shellRect.top, anchorRect.bottom + 10);
+    expectNear(floatingRect.top, anchorRect.bottom + 10);
     expectNear(
-      shellRect.left + shellRect.width / 2,
+      floatingRect.left + floatingRect.width / 2,
       anchorRect.left + anchorRect.width / 2,
     );
   });
@@ -317,7 +359,7 @@ describe('FloatingContainer geometry', () => {
     // A 300px surface centered on a 100px anchor flush against the left
     // edge would start at -100. Sliding along the edge is the only way
     // to keep it visible — flipping sides wouldn't help.
-    const { shell, anchorBox } = await renderTethered({
+    const { floating, anchorBox } = await renderTethered({
       stage: fixture.pinLeft,
       surface: fixture.wideSurface,
       side: 'bottom',
@@ -325,7 +367,7 @@ describe('FloatingContainer geometry', () => {
     });
 
     expect(anchorBox.getBoundingClientRect().left).toBeCloseTo(0);
-    expectNear(shell.getBoundingClientRect().left, 8);
+    expectNear(floating.getBoundingClientRect().left, 8);
   });
 
   it('keeps the arrow over the anchor after sliding', async () => {
@@ -347,7 +389,7 @@ describe('FloatingContainer geometry', () => {
   });
 
   it('publishes the anchor box and the room left for the surface', async () => {
-    const { shell } = await renderTethered({
+    const { floating } = await renderTethered({
       stage: fixture.stage,
       side: 'bottom',
       tether: {},
@@ -355,15 +397,15 @@ describe('FloatingContainer geometry', () => {
 
     // Size matching reads these; without JavaScript they stay unset and
     // the surface falls back to hugging its content.
-    expect(shell.style.getPropertyValue(varName(css.anchorWidth))).toBe(
+    expect(floating.style.getPropertyValue(varName(css.anchorWidth))).toBe(
       '100px',
     );
-    expect(shell.style.getPropertyValue(varName(css.anchorHeight))).toBe(
+    expect(floating.style.getPropertyValue(varName(css.anchorHeight))).toBe(
       '100px',
     );
-    expect(shell.style.getPropertyValue(varName(css.availableHeight))).toMatch(
-      /^\d+(\.\d+)?px$/,
-    );
+    expect(
+      floating.style.getPropertyValue(varName(css.availableHeight)),
+    ).toMatch(/^\d+(\.\d+)?px$/);
   });
 
   it('flags the surface once the anchor is clipped out of view', async () => {
@@ -379,33 +421,33 @@ describe('FloatingContainer geometry', () => {
       </div>
     ));
     const port = container.querySelector<HTMLElement>('[data-testid="port"]')!;
-    const shell = container.querySelector<HTMLElement>('[data-side]')!;
+    const floating = container.querySelector<HTMLElement>('[data-side]')!;
 
-    await waitFor(() => expect(shell).toHaveAttribute('data-tethered'));
-    expect(shell).not.toHaveAttribute('data-anchor-hidden');
+    await waitFor(() => expect(floating).toHaveAttribute('data-tethered'));
+    expect(floating).not.toHaveAttribute('data-anchor-hidden');
 
     // Scroll the anchor clean past the top of its scroll port.
     port.scrollTop = port.scrollHeight;
-    await waitFor(() => expect(shell).toHaveAttribute('data-anchor-hidden'));
-    expect(getComputedStyle(shell).visibility).toBe('hidden');
+    await waitFor(() => expect(floating).toHaveAttribute('data-anchor-hidden'));
+    expect(getComputedStyle(floating).visibility).toBe('hidden');
 
     // And back: detachment is a state, not a teardown.
     port.scrollTop = 0;
     await waitFor(() =>
-      expect(shell).not.toHaveAttribute('data-anchor-hidden'),
+      expect(floating).not.toHaveAttribute('data-anchor-hidden'),
     );
   });
 
   it('resolves collisions in point mode too', async () => {
     // The point becomes a zero-size anchor, so every placement decision
     // works exactly as it does off an edge.
-    const { shell } = await renderTethered({
+    const { floating } = await renderTethered({
       stage: fixture.pinBottom,
       point: { x: 50, y: 100 },
       side: 'bottom',
       tether: { size: false },
     });
 
-    await waitFor(() => expect(shell).toHaveAttribute('data-side', 'top'));
+    await waitFor(() => expect(floating).toHaveAttribute('data-side', 'top'));
   });
 });
