@@ -45,6 +45,9 @@ catalogs:
     esbuild:
       specifier: ^0.28.0
       version: 0.28.2
+    eslint:
+      specifier: ^10.0.0
+      version: 10.9.1
     idb:
       specifier: ^8.0.3
       version: 8.0.3
@@ -349,8 +352,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0(solid-js@1.9.15)
       '@solidjs/start':
-        specifier: 2.0.3
-        version: 2.0.3(@solidjs/router@1.0.0(solid-js@1.9.15))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
+        specifier: 2.0.4
+        version: 2.0.4(@solidjs/router@1.0.0(solid-js@1.9.15))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.2
@@ -2521,8 +2524,8 @@ packages:
     peerDependencies:
       solid-js: 1.9.15
 
-  '@solidjs/start@2.0.3':
-    resolution: {integrity: sha512-WXHi+BXWaZLLSuBER/RCeldS2PNtZuLZEtMblszn/bhTCuxcGPq1Q6NFv6uNK9PZxd8evX3seEnCEFD0fpVhuA==}
+  '@solidjs/start@2.0.4':
+    resolution: {integrity: sha512-RKIWYgdW+3XoaNa37QqH/Z1RRVglEOWDoCCe1nV+hVzbXa0wtW9uWntKk3DtM3IJlryKNSA6G3yfAe5LAcsSHw==}
     engines: {node: '>=24'}
     peerDependencies:
       '@solidjs/router': ^1.0.0
@@ -3421,8 +3424,8 @@ packages:
   error-stack-parser-es@1.0.5:
     resolution: {integrity: sha512-5qucVt2XcuGMcEGgWI7i+yZpmpByQ8J1lHhcL7PwqCwu9FPP3VUXzT4ltHe5i2z9dePwEHcDVOAfSnHsOlCXRA==}
 
-  error-stack-parser@2.1.4:
-    resolution: {integrity: sha512-Sk5V6wVazPhq5MhpO+AUxJn5x7XSXGl1R93Vn7i+zS15KDVxQijejNCrz8340/2bgLBjR9GtEG8ZVKONDjcqGQ==}
+  error-stack-parser-es@2.0.1:
+    resolution: {integrity: sha512-J36ntO+rMQVRuR/umlmxmfLi4TpWwtmTnHoJoXTiC2xDNazs0VDPKcX6pbhZMDd2HFtH9isMBJXMdbki+A++Pg==}
 
   es-abstract@1.24.2:
     resolution: {integrity: sha512-2FpH9Q5i2RRwyEP1AylXe6nYLR5OhaJTZwmlcP0dL/+JCbgg7yyEo/sEK6HeGZRf3dFpWwThaRHVApXSkW3xeg==}
@@ -4938,9 +4941,6 @@ packages:
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
-  stackframe@1.3.4:
-    resolution: {integrity: sha512-oeVtt7eWQS+Na6F//S4kJ2K2VbRlS9D43mAlMyVpVWovy9o+jfgH8O9agzANzaiLjclA0oYzUXEM4PurhSUChw==}
-
   standard-as-callback@2.1.0:
     resolution: {integrity: sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A==}
 
@@ -5050,8 +5050,8 @@ packages:
   teex@1.0.1:
     resolution: {integrity: sha512-eYE6iEI62Ni1H8oIa7KlDU6uQBtqr4Eajni3wX7rpfXD8ysFx8z0+dri+KWEPWpBsxXfxu58x/0jvTVT1ekOSg==}
 
-  terracotta@1.1.1:
-    resolution: {integrity: sha512-Sa6wnvkGMFmPq8N/wQb2aKkIW2eXH0LJvUOEk6QZLBEjqy+LsbzAOpDuqEfOmfA/hexssE6eQve2i1IIOeOh4g==}
+  terracotta@1.2.4:
+    resolution: {integrity: sha512-lVBegOwHeQ4483/H0736+D6orU8YDgG5msLyEsoB/ZBess/RWe8NRBKh0lEfpZTIyKYiLm2VzzWd6axkkWt0kQ==}
     engines: {node: '>=10'}
     peerDependencies:
       solid-js: 1.9.15
@@ -6854,17 +6854,18 @@ snapshots:
     dependencies:
       solid-js: 1.9.15
 
-  '@solidjs/start@2.0.3(@solidjs/router@1.0.0(solid-js@1.9.15))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
+  '@solidjs/start@2.0.4(@solidjs/router@1.0.0(solid-js@1.9.15))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11))(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/traverse': 7.29.7
       '@babel/types': 7.29.8
+      '@jridgewell/trace-mapping': 0.3.31
       '@solidjs/meta': 0.29.4(solid-js@1.9.15)
       '@types/babel__traverse': 7.28.0
       '@types/micromatch': 4.0.10
       cookie-es: 3.1.1
       defu: 6.1.7
-      error-stack-parser: 2.1.4
+      error-stack-parser-es: 2.0.1
       fast-glob: 3.3.3
       h3: 2.0.1-rc.26
       html-to-image: 1.11.13
@@ -6877,9 +6878,8 @@ snapshots:
       seroval-plugins: 1.6.0(seroval@1.6.0)
       shiki: 4.3.1
       solid-js: 1.9.15
-      source-map-js: 1.2.1
       srvx: 0.12.4
-      terracotta: 1.1.1(solid-js@1.9.15)
+      terracotta: 1.2.4(solid-js@1.9.15)
       vite: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0)
       vite-plugin-solid: 2.11.14(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@4.1.11))(solid-js@1.9.15)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.0))
     optionalDependencies:
@@ -7915,9 +7915,7 @@ snapshots:
 
   error-stack-parser-es@1.0.5: {}
 
-  error-stack-parser@2.1.4:
-    dependencies:
-      stackframe: 1.3.4
+  error-stack-parser-es@2.0.1: {}
 
   es-abstract@1.24.2:
     dependencies:
@@ -9817,8 +9815,6 @@ snapshots:
 
   stackback@0.0.2: {}
 
-  stackframe@1.3.4: {}
-
   standard-as-callback@2.1.0: {}
 
   statuses@2.0.2: {}
@@ -9958,7 +9954,7 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
-  terracotta@1.1.1(solid-js@1.9.15):
+  terracotta@1.2.4(solid-js@1.9.15):
     dependencies:
       solid-js: 1.9.15
       solid-use: 0.9.1(solid-js@1.9.15)
