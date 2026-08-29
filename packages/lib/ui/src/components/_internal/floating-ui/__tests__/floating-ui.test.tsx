@@ -51,7 +51,7 @@ describe('FloatingBody', () => {
 describe('FloatingContainer', () => {
   it('renders the body children', () => {
     const { container } = render(() => (
-      <FloatingContainer>content</FloatingContainer>
+      <FloatingContainer tether={{}}>content</FloatingContainer>
     ));
 
     expect(container).toHaveTextContent('content');
@@ -59,7 +59,7 @@ describe('FloatingContainer', () => {
 
   it('defaults to binding centered below the anchor', () => {
     const { container } = render(() => (
-      <FloatingContainer>content</FloatingContainer>
+      <FloatingContainer tether={{}}>content</FloatingContainer>
     ));
     const shell = container.querySelector('[data-side]');
 
@@ -68,13 +68,17 @@ describe('FloatingContainer', () => {
   });
 
   it('forwards its radius to the body surface', () => {
-    const plain = render(() => <FloatingContainer>content</FloatingContainer>);
+    const plain = render(() => (
+      <FloatingContainer tether={{}}>content</FloatingContainer>
+    ));
     const plainBody =
       plain.container.querySelector('[data-side]')!.lastElementChild!.className;
     plain.unmount();
 
     const { container } = render(() => (
-      <FloatingContainer radius={4}>content</FloatingContainer>
+      <FloatingContainer radius={4} tether={{}}>
+        content
+      </FloatingContainer>
     ));
     const body =
       container.querySelector('[data-side]')!.lastElementChild!.className;
@@ -83,13 +87,15 @@ describe('FloatingContainer', () => {
   });
 
   it('forwards body props (test id, padding) onto the body surface', () => {
-    const plain = render(() => <FloatingContainer>content</FloatingContainer>);
+    const plain = render(() => (
+      <FloatingContainer tether={{}}>content</FloatingContainer>
+    ));
     const plainBody =
       plain.container.querySelector('[data-side]')!.lastElementChild!.className;
     plain.unmount();
 
     const { container } = render(() => (
-      <FloatingContainer testId="surface" p={4}>
+      <FloatingContainer testId="surface" p={4} tether={{}}>
         content
       </FloatingContainer>
     ));
@@ -107,7 +113,9 @@ describe('FloatingContainer', () => {
 
   it('forwards a consumer class onto the body surface', () => {
     const { container } = render(() => (
-      <FloatingContainer class="surface">content</FloatingContainer>
+      <FloatingContainer class="surface" tether={{}}>
+        content
+      </FloatingContainer>
     ));
     const body = container.querySelector('[data-side]')!.lastElementChild;
 
@@ -118,7 +126,7 @@ describe('FloatingContainer', () => {
 
   it('reflects side and align into data attributes', () => {
     const { container } = render(() => (
-      <FloatingContainer side="right" align="end">
+      <FloatingContainer side="right" align="end" tether={{}}>
         content
       </FloatingContainer>
     ));
@@ -130,7 +138,7 @@ describe('FloatingContainer', () => {
 
   it('omits the arrow by default', () => {
     const { container } = render(() => (
-      <FloatingContainer>content</FloatingContainer>
+      <FloatingContainer tether={{}}>content</FloatingContainer>
     ));
 
     expect(container.querySelector('svg')).toBeNull();
@@ -138,7 +146,9 @@ describe('FloatingContainer', () => {
 
   it('renders the arrow before the body when visible', () => {
     const { container } = render(() => (
-      <FloatingContainer arrow={{ visible: true }}>content</FloatingContainer>
+      <FloatingContainer arrow={{ visible: true }} tether={{}}>
+        content
+      </FloatingContainer>
     ));
     const shell = container.querySelector('[data-side]');
 
@@ -154,7 +164,7 @@ describe('FloatingContainer', () => {
 
     for (const { side, width, height } of cases) {
       const { container } = render(() => (
-        <FloatingContainer side={side} arrow={{ visible: true }}>
+        <FloatingContainer side={side} arrow={{ visible: true }} tether={{}}>
           content
         </FloatingContainer>
       ));
@@ -168,7 +178,7 @@ describe('FloatingContainer', () => {
 
   it('passes the arrow alignment through to the arrow', () => {
     const { container } = render(() => (
-      <FloatingContainer arrow={{ visible: true, align: 'end' }}>
+      <FloatingContainer arrow={{ visible: true, align: 'end' }} tether={{}}>
         content
       </FloatingContainer>
     ));
@@ -177,7 +187,9 @@ describe('FloatingContainer', () => {
   });
 
   it('assigns offsets as inline vars only when provided', () => {
-    const plain = render(() => <FloatingContainer>content</FloatingContainer>);
+    const plain = render(() => (
+      <FloatingContainer tether={{}}>content</FloatingContainer>
+    ));
     const plainShell =
       plain.container.querySelector<HTMLElement>('[data-side]')!;
 
@@ -189,7 +201,7 @@ describe('FloatingContainer', () => {
     plain.unmount();
 
     const { container } = render(() => (
-      <FloatingContainer sideOffset={8} alignOffset={-4}>
+      <FloatingContainer sideOffset={8} alignOffset={-4} tether={{}}>
         content
       </FloatingContainer>
     ));
@@ -200,14 +212,21 @@ describe('FloatingContainer', () => {
   });
 
   it('enters point mode only when a point is provided', () => {
-    const plain = render(() => <FloatingContainer>content</FloatingContainer>);
+    const plain = render(() => (
+      <FloatingContainer tether={{}}>content</FloatingContainer>
+    ));
     expect(plain.container.querySelector('[data-side]')).not.toHaveAttribute(
       'data-point',
     );
     plain.unmount();
 
     const { container } = render(() => (
-      <FloatingContainer point={{ x: 12, y: 34 }} side="right" align="start">
+      <FloatingContainer
+        point={{ x: 12, y: 34 }}
+        side="right"
+        align="start"
+        tether={{}}
+      >
         content
       </FloatingContainer>
     ));
@@ -248,7 +267,9 @@ describe('FloatingContainer', () => {
 
     for (const side of sides) {
       const { container } = render(() => (
-        <FloatingContainer side={side}>content</FloatingContainer>
+        <FloatingContainer side={side} tether={{}}>
+          content
+        </FloatingContainer>
       ));
       const shell = container.querySelector('[data-side]');
 

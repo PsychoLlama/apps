@@ -78,14 +78,18 @@ const renderTethered = async (
   };
 };
 
-/** Render a surface bound to a fixed 100×100 anchor on a quiet stage. */
+/**
+ * Render a surface bound to a fixed 100×100 anchor on a quiet stage. No
+ * `anchor` prop, so the tether stays dormant and these cases measure the
+ * pure-CSS placement — the pre-hydration state the tether enhances.
+ */
 const renderFloating = (
-  props: Omit<FloatingContainerProps, 'children' | 'class'> = {},
+  props: Omit<FloatingContainerProps, 'children' | 'class' | 'tether'> = {},
 ) => {
   const { container } = render(() => (
     <div class={fixture.stage}>
       <div class={`${anchor} ${fixture.anchorBox}`} data-testid="anchor">
-        <FloatingContainer class={fixture.surface} {...props}>
+        <FloatingContainer class={fixture.surface} tether={{}} {...props}>
           content
         </FloatingContainer>
       </div>

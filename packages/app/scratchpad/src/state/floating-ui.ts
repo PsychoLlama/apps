@@ -47,8 +47,6 @@ export interface FloatingControlsState {
    * Anchor-relative point the window binds to. `null` keeps edge mode.
    */
   point: FloatingPoint | null;
-  /** Whether the collision-avoidance tether is active. */
-  tether: boolean;
   /** Boundary clearance the tether maintains, in px. */
   tetherPadding: number;
   /** Which collision behaviors the tether runs. */
@@ -76,7 +74,6 @@ export const floatingControls = defineStore<FloatingControlsState>(
     sideOffset: 0,
     alignOffset: 0,
     point: null,
-    tether: false,
     tetherPadding: 8,
     features: {
       shift: true,
@@ -158,12 +155,6 @@ defineFold(alignOffsetChanged, [floatingControls], (controls, alignOffset) => {
 export const pointChanged = defineTopic<FloatingPoint | null>();
 defineFold(pointChanged, [floatingControls], (controls, point) => {
   controls.point = point;
-});
-
-/** The collision-avoidance tether was toggled. */
-export const tetherToggled = defineTopic<boolean>();
-defineFold(tetherToggled, [floatingControls], (controls, tether) => {
-  controls.tether = tether;
 });
 
 /** The viewport clearance the tether maintains changed. */

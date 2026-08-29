@@ -43,7 +43,6 @@ import {
   sideChanged,
   sideOffsetChanged,
   tetherPaddingChanged,
-  tetherToggled,
   type FlipMode,
   type TetherFeature,
 } from '../state/floating-ui';
@@ -148,7 +147,6 @@ const FloatingUiScratchpad = () => {
     commit(alignOffsetChanged(offset));
   const choosePoint = (point: FloatingPoint | null) =>
     commit(pointChanged(point));
-  const chooseTether = (tether: boolean) => commit(tetherToggled(tether));
   const chooseTetherPadding = (padding: number) =>
     commit(tetherPaddingChanged(padding));
   const toggleFeature = (toggle: {
@@ -316,21 +314,6 @@ const FloatingUiScratchpad = () => {
             </Text>
           </Flex>
 
-          <Flex as="div" direction="column" gap={2}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Tether
-            </Text>
-            <Switch
-              testId="control-tether"
-              checked={controls().tether}
-              onCheckedChange={chooseTether}
-              aria-label="Tether"
-            />
-            <Text as="p" size={1} selectable={false}>
-              Dodges the viewport edges. Resize the window to see it flip.
-            </Text>
-          </Flex>
-
           <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
             <Text as="p" size={2} weight="medium" selectable={false}>
               Tether padding ({controls().tetherPadding}px)
@@ -389,7 +372,7 @@ const FloatingUiScratchpad = () => {
               sideOffset={controls().sideOffset}
               alignOffset={controls().alignOffset}
               point={controls().point ?? undefined}
-              tether={controls().tether ? tetherOptions() : undefined}
+              tether={tetherOptions()}
               direction="column"
               gap={1}
               py={3}
