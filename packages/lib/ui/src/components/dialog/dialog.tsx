@@ -64,7 +64,7 @@ import {
 import type { JSX, ParentComponent } from 'solid-js';
 import Heading from '../heading/heading';
 import Text from '../text/text';
-import { createPresence } from '../_internal/floating-ui/presence';
+import { createPresence } from './presence';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import * as css from './dialog.css';
 
