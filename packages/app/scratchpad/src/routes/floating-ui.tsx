@@ -131,6 +131,20 @@ const ControlGroup = (props: { label: string; children: JSX.Element }) => (
   </Flex>
 );
 
+/**
+ * A titled run nested inside a {@link ControlGroup} — a cluster of
+ * controls that all configure one part, where repeating that part's name
+ * in every label ("Arrow align", "Arrow base") would be noise.
+ */
+const ControlSubgroup = (props: { label: string; children: JSX.Element }) => (
+  <Flex as="section" direction="column" gap={5}>
+    <Heading as="h3" size={2} selectable={false}>
+      {props.label}
+    </Heading>
+    {props.children}
+  </Flex>
+);
+
 /** The label (and optional note) every control shares. */
 const ControlLabel = (props: { label: string; hint?: string }) => (
   <>
@@ -152,6 +166,8 @@ const ControlLabel = (props: { label: string; hint?: string }) => (
  */
 const ChoiceControl = <Value extends string>(props: {
   label: string;
+  /** Accessible name, when the visible label leans on a subheading. */
+  ariaLabel?: string;
   name: string;
   value: Value;
   options: readonly Value[];
@@ -165,7 +181,7 @@ const ChoiceControl = <Value extends string>(props: {
         name={props.name}
         value={props.value}
         onValueChange={(value) => props.onValueChange(value as Value)}
-        aria-label={props.label}
+        aria-label={props.ariaLabel ?? props.label}
       >
         <For each={props.options}>
           {(option) => (
@@ -225,6 +241,8 @@ const RadiusControl = (props: {
  */
 const NumberControl = (props: {
   label: string;
+  /** Accessible name, when the visible label leans on a subheading. */
+  ariaLabel?: string;
   name: string;
   value: number;
   /** Floor, where one is real. Omit where the control takes negatives. */
@@ -249,7 +267,7 @@ const NumberControl = (props: {
           px
         </Text>
       }
-      aria-label={props.label}
+      aria-label={props.ariaLabel ?? props.label}
       autocomplete="off"
       autocapitalize={undefined}
       enterkeyhint={undefined}
@@ -260,6 +278,8 @@ const NumberControl = (props: {
 /** A labeled switch binding one boolean control to the store. */
 const ToggleControl = (props: {
   label: string;
+  /** Accessible name, when the visible label leans on a subheading. */
+  ariaLabel?: string;
   name: string;
   hint?: string;
   checked: boolean;
@@ -271,7 +291,7 @@ const ToggleControl = (props: {
       testId={`control-${props.name}`}
       checked={props.checked}
       onCheckedChange={props.onCheckedChange}
-      aria-label={props.label}
+      aria-label={props.ariaLabel ?? props.label}
     />
   </Flex>
 );
@@ -458,33 +478,39 @@ const FloatingUiScratchpad = () => {
                   choosePoint(checked ? { x: 96, y: 64 } : null)
                 }
               />
-              <ToggleControl
-                label="Arrow"
-                name="arrow"
-                checked={controls().arrowVisible}
-                onCheckedChange={chooseArrowVisible}
-              />
-              <ChoiceControl
-                label="Arrow align"
-                name="arrow-align"
-                value={controls().arrowAlign}
-                options={ARROW_ALIGNMENTS}
-                onValueChange={chooseArrowAlign}
-              />
-              <NumberControl
-                label="Arrow base"
-                name="arrow-base"
-                value={controls().arrowBase}
-                min={0}
-                onValueChange={chooseArrowBase}
-              />
-              <NumberControl
-                label="Arrow depth"
-                name="arrow-depth"
-                value={controls().arrowDepth}
-                min={0}
-                onValueChange={chooseArrowDepth}
-              />
+              <ControlSubgroup label="Arrow">
+                <ToggleControl
+                  label="Visible"
+                  ariaLabel="Arrow visible"
+                  name="arrow"
+                  checked={controls().arrowVisible}
+                  onCheckedChange={chooseArrowVisible}
+                />
+                <ChoiceControl
+                  label="Align"
+                  ariaLabel="Arrow align"
+                  name="arrow-align"
+                  value={controls().arrowAlign}
+                  options={ARROW_ALIGNMENTS}
+                  onValueChange={chooseArrowAlign}
+                />
+                <NumberControl
+                  label="Base"
+                  ariaLabel="Arrow base"
+                  name="arrow-base"
+                  value={controls().arrowBase}
+                  min={0}
+                  onValueChange={chooseArrowBase}
+                />
+                <NumberControl
+                  label="Depth"
+                  ariaLabel="Arrow depth"
+                  name="arrow-depth"
+                  value={controls().arrowDepth}
+                  min={0}
+                  onValueChange={chooseArrowDepth}
+                />
+              </ControlSubgroup>
             </ControlGroup>
 
             <ControlGroup label="Tether config">
