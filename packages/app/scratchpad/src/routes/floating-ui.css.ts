@@ -1,15 +1,51 @@
 import { fallbackVar, style } from '@vanilla-extract/css';
-import { background, neutral, radius, shadow, text } from '@lib/design';
+import {
+  background,
+  breakpoint,
+  neutral,
+  radius,
+  shadow,
+  space,
+  text,
+} from '@lib/design';
 import {
   availableHeight,
   availableWidth,
 } from '@lib/ui/_internal/floating-ui.css';
 
-/** Caps the page's single column so long control labels stay readable. */
+/**
+ * Caps the page's single column so long control labels stay readable,
+ * then lets it out once {@link configs} has the room to run two abreast.
+ */
 export const column = style({
   width: '100%',
   maxWidth: '32rem',
   alignSelf: 'center',
+  '@media': {
+    [breakpoint.md]: {
+      maxWidth: '64rem',
+    },
+  },
+});
+
+/**
+ * The two config groups. A grid rather than a `Flex` with a responsive
+ * `direction`: the axis flips inside a media query, and a bare class
+ * can't reliably outrank the component's own `direction` variant.
+ *
+ * `align-items: start` keeps the shorter group from stretching to match
+ * the taller one, which would strand its controls in dead space.
+ */
+export const configs = style({
+  display: 'grid',
+  alignItems: 'start',
+  gap: space[7],
+  '@media': {
+    [breakpoint.md]: {
+      gridTemplateColumns: '1fr 1fr',
+      gap: space[8],
+    },
+  },
 });
 
 /**
@@ -29,6 +65,7 @@ export const column = style({
  * transparent nested scroller can't take the compositor's fast path.
  */
 export const stage = style({
+  alignSelf: 'center',
   width: 'min(100%, 60dvh)',
   aspectRatio: '1',
   overflow: 'auto',
@@ -45,6 +82,10 @@ export const stage = style({
  * worth of travel in every direction.
  */
 export const canvas = style({
+  // `flex-shrink` is load-bearing, not a guard: the canvas is a flex item
+  // of the port, so the default `1` lets the inline axis collapse straight
+  // back to 100% and the port only ever scrolls vertically.
+  flexShrink: 0,
   width: '300%',
   height: '300%',
 });
@@ -72,9 +113,14 @@ export const pointArmed = style({
   cursor: 'crosshair',
 });
 
-/** Caps a slider so its track never outruns a comfortable reading width. */
-export const sliderControl = style({
-  maxWidth: '20rem',
+/** Keeps a number field to roughly the digits it will ever hold. */
+export const numberControl = style({
+  maxWidth: '10rem',
+});
+
+/** Keeps the reset button to its label instead of spanning the column. */
+export const reset = style({
+  alignSelf: 'start',
 });
 
 /** Sets a control's explanatory note back from its label. */
