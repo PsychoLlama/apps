@@ -42,6 +42,7 @@ import {
   scratchpadScope,
   sideChanged,
   sideOffsetChanged,
+  tetherDisabled,
   tetherPaddingChanged,
   type FlipMode,
   type TetherFeature,
@@ -147,6 +148,8 @@ const FloatingUiScratchpad = () => {
     commit(alignOffsetChanged(offset));
   const choosePoint = (point: FloatingPoint | null) =>
     commit(pointChanged(point));
+  const chooseTetherDisabled = (disabled: boolean) =>
+    commit(tetherDisabled(disabled));
   const chooseTetherPadding = (padding: number) =>
     commit(tetherPaddingChanged(padding));
   const toggleFeature = (toggle: {
@@ -314,6 +317,22 @@ const FloatingUiScratchpad = () => {
             </Text>
           </Flex>
 
+          <Flex as="div" direction="column" gap={2}>
+            <Text as="p" size={2} weight="medium" selectable={false}>
+              Disable tether
+            </Text>
+            <Switch
+              testId="control-tether-disabled"
+              checked={controls().tetherDisabled}
+              onCheckedChange={chooseTetherDisabled}
+              aria-label="Disable tether"
+            />
+            <Text as="p" size={1} selectable={false}>
+              Withholds the anchor, so the tether has nothing to measure — the
+              pre-hydration state, where placement comes from CSS alone.
+            </Text>
+          </Flex>
+
           <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
             <Text as="p" size={2} weight="medium" selectable={false}>
               Tether padding ({controls().tetherPadding}px)
@@ -365,7 +384,11 @@ const FloatingUiScratchpad = () => {
             onClick={placePoint}
           >
             <FloatingContainer
-              anchor={anchorEl() ?? undefined}
+              anchor={
+                controls().tetherDisabled
+                  ? undefined
+                  : (anchorEl() ?? undefined)
+              }
               side={controls().side}
               align={controls().align}
               radius={controls().radius}
