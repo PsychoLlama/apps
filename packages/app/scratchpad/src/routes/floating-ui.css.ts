@@ -118,9 +118,13 @@ export const numberControl = style({
   maxWidth: '10rem',
 });
 
-/** Keeps the reset button to its label instead of spanning the column. */
+/**
+ * Runs the reset button across the full width of {@link configs}. It
+ * clears both groups, so it belongs to neither column — parking it under
+ * one would read as resetting only that half.
+ */
 export const reset = style({
-  alignSelf: 'start',
+  gridColumn: '1 / -1',
 });
 
 /** Sets a control's explanatory note back from its label. */

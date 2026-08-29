@@ -581,17 +581,17 @@ const FloatingUiScratchpad = () => {
                 </CheckboxCardsRoot>
               </Flex>
             </ControlGroup>
-          </Grid>
 
-          <Button
-            testId="control-reset"
-            variant="soft"
-            color="neutral"
-            class={css.reset}
-            onClick={resetControls}
-          >
-            Reset controls
-          </Button>
+            <Button
+              testId="control-reset"
+              variant="soft"
+              color="neutral"
+              class={css.reset}
+              onClick={resetControls}
+            >
+              Reset controls
+            </Button>
+          </Grid>
         </Flex>
       </FrameBody>
     </>
