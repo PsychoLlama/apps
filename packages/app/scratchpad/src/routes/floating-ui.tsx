@@ -1,4 +1,4 @@
-import { For } from 'solid-js';
+import { For, type JSX } from 'solid-js';
 import type { RadiusScale } from '@lib/design';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import {
@@ -92,8 +92,32 @@ const flipFor = (mode: FlipMode): TetherPass<TetherFlipOptions> => {
   }
 };
 
-/** A labeled radio group binding one placement axis to the controls store. */
-const PlacementControl = <Value extends string>(props: {
+/** A titled run of related controls, stacked one per row. */
+const ControlGroup = (props: { label: string; children: JSX.Element }) => (
+  <Flex as="section" direction="column" gap={5}>
+    <Heading as="h2" size={4} selectable={false}>
+      {props.label}
+    </Heading>
+    {props.children}
+  </Flex>
+);
+
+/** The label (and optional note) every control shares. */
+const ControlLabel = (props: { label: string; hint?: string }) => (
+  <>
+    <Text as="p" size={2} weight="medium" selectable={false}>
+      {props.label}
+    </Text>
+    {props.hint && (
+      <Text as="p" size={1} selectable={false} class={css.hint}>
+        {props.hint}
+      </Text>
+    )}
+  </>
+);
+
+/** A labeled radio group binding one enumerated control to the store. */
+const ChoiceControl = <Value extends string>(props: {
   label: string;
   name: string;
   value: Value;
@@ -102,9 +126,7 @@ const PlacementControl = <Value extends string>(props: {
 }) => {
   return (
     <Flex as="div" direction="column" gap={2}>
-      <Text as="p" size={2} weight="medium" selectable={false}>
-        {props.label}
-      </Text>
+      <ControlLabel label={props.label} />
       <RadioGroupRoot
         testId={`control-${props.name}`}
         name={props.name}
@@ -125,11 +147,66 @@ const PlacementControl = <Value extends string>(props: {
   );
 };
 
+/** A labeled slider binding one pixel-valued control to the store. */
+const SliderControl = (props: {
+  label: string;
+  name: string;
+  value: number;
+  min: number;
+  max: number;
+  onValueChange: (value: number) => void;
+}) => (
+  <Flex as="div" direction="column" gap={2} class={css.sliderControl}>
+    <ControlLabel label={`${props.label} (${props.value}px)`} />
+    <Slider
+      testId={`control-${props.name}`}
+      value={[props.value]}
+      onValueChange={([value = props.value]) => props.onValueChange(value)}
+      min={props.min}
+      max={props.max}
+      aria-label={props.label}
+    />
+  </Flex>
+);
+
+/** A labeled switch binding one boolean control to the store. */
+const ToggleControl = (props: {
+  label: string;
+  name: string;
+  hint?: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) => (
+  <Flex as="div" direction="column" gap={2}>
+    <ControlLabel label={props.label} hint={props.hint} />
+    <Switch
+      testId={`control-${props.name}`}
+      checked={props.checked}
+      onCheckedChange={props.onCheckedChange}
+      aria-label={props.label}
+    />
+  </Flex>
+);
+
+/**
+ * Parks a fresh scrollport in the middle of its canvas so the target —
+ * centered there — starts in view, with a full port's worth of travel in
+ * every direction. Deferred a frame because a `ref` fires before the
+ * browser has laid the canvas out, when the scroll extent is still zero.
+ */
+const centerScroll = (element: HTMLElement) => {
+  requestAnimationFrame(() => {
+    element.scrollLeft = (element.scrollWidth - element.clientWidth) / 2;
+    element.scrollTop = (element.scrollHeight - element.clientHeight) / 2;
+  });
+};
+
 /**
  * The floating-UI experiment at `/scratchpad/floating-ui`: a hatched
- * target with a floating window bound to it, plus controls for every
- * placement input the container takes. Change one and watch the window
- * re-place live.
+ * target with a floating window bound to it, sitting in a scrolling
+ * viewport so the anchor can be dragged toward a clipping edge, plus
+ * controls for every placement input the container takes. Change one and
+ * watch the window re-place live.
  */
 const FloatingUiScratchpad = () => {
   useAnchor(scratchpadScope);
@@ -193,233 +270,187 @@ const FloatingUiScratchpad = () => {
         ]}
       />
       <FrameBody>
-        <Flex as="section" direction="row" wrap="wrap" gap={6}>
-          <PlacementControl
-            label="Side"
-            name="side"
-            value={controls().side}
-            options={SIDES}
-            onValueChange={chooseSide}
-          />
-          <PlacementControl
-            label="Align"
-            name="align"
-            value={controls().align}
-            options={ALIGNMENTS}
-            onValueChange={chooseAlign}
-          />
-          <PlacementControl
-            label="Arrow align"
-            name="arrow-align"
-            value={controls().arrowAlign}
-            options={ARROW_ALIGNMENTS}
-            onValueChange={chooseArrowAlign}
-          />
-          <PlacementControl
-            label="Flip"
-            name="flip"
-            value={controls().flipMode}
-            options={FLIP_MODES}
-            onValueChange={chooseFlipMode}
-          />
-          <PlacementControl
-            label="Radius"
-            name="radius"
-            value={String(controls().radius)}
-            options={RADII}
-            onValueChange={(value) =>
-              chooseRadius(Number(value) as RadiusScale)
-            }
-          />
-
-          <Flex as="div" direction="column" gap={2}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Arrow
-            </Text>
-            <Switch
-              testId="control-arrow"
-              checked={controls().arrowVisible}
-              onCheckedChange={chooseArrowVisible}
-              aria-label="Arrow"
-            />
+        <Flex as="div" direction="column" gap={7} class={css.column}>
+          <Flex as="div" ref={centerScroll} class={css.stage}>
+            <Flex as="div" align="center" justify="center" class={css.canvas}>
+              <Flex
+                as="section"
+                ref={captureAnchor}
+                class={[css.target, anchor, controls().point && css.pointArmed]
+                  .filter(Boolean)
+                  .join(' ')}
+                onClick={placePoint}
+              >
+                <FloatingContainer
+                  anchor={
+                    controls().tetherDisabled
+                      ? undefined
+                      : (anchorEl() ?? undefined)
+                  }
+                  side={controls().side}
+                  align={controls().align}
+                  radius={controls().radius}
+                  sideOffset={controls().sideOffset}
+                  alignOffset={controls().alignOffset}
+                  point={controls().point ?? undefined}
+                  tether={tetherOptions()}
+                  direction="column"
+                  gap={1}
+                  py={3}
+                  px={4}
+                  class={[
+                    css.surface,
+                    controls().clampToAvailable && css.clamped,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  arrow={{
+                    visible: controls().arrowVisible,
+                    base: controls().arrowBase,
+                    depth: controls().arrowDepth,
+                    align: controls().arrowAlign,
+                    class: css.arrow,
+                  }}
+                >
+                  <Heading as="h3" size={3} selectable={false}>
+                    Floating Window
+                  </Heading>
+                  <Text as="p" size={2} selectable={false}>
+                    A taller surface so the arrow has room to sit mid-height
+                    when the window binds to the left or right edge.
+                  </Text>
+                </FloatingContainer>
+              </Flex>
+            </Flex>
           </Flex>
 
-          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Arrow base ({controls().arrowBase}px)
-            </Text>
-            <Slider
-              testId="control-arrow-base"
-              value={[controls().arrowBase]}
-              onValueChange={([value = 16]) => chooseArrowBase(value)}
-              min={8}
-              max={32}
-              aria-label="Arrow base"
+          <ControlGroup label="Container props">
+            <ChoiceControl
+              label="Side"
+              name="side"
+              value={controls().side}
+              options={SIDES}
+              onValueChange={chooseSide}
             />
-          </Flex>
-
-          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Arrow depth ({controls().arrowDepth}px)
-            </Text>
-            <Slider
-              testId="control-arrow-depth"
-              value={[controls().arrowDepth]}
-              onValueChange={([value = 8]) => chooseArrowDepth(value)}
-              min={4}
-              max={24}
-              aria-label="Arrow depth"
+            <ChoiceControl
+              label="Align"
+              name="align"
+              value={controls().align}
+              options={ALIGNMENTS}
+              onValueChange={chooseAlign}
             />
-          </Flex>
-
-          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Side offset ({controls().sideOffset}px)
-            </Text>
-            <Slider
-              testId="control-side-offset"
-              value={[controls().sideOffset]}
-              onValueChange={([value = 0]) => chooseSideOffset(value)}
+            <ChoiceControl
+              label="Radius"
+              name="radius"
+              value={String(controls().radius)}
+              options={RADII}
+              onValueChange={(value) =>
+                chooseRadius(Number(value) as RadiusScale)
+              }
+            />
+            <SliderControl
+              label="Side offset"
+              name="side-offset"
+              value={controls().sideOffset}
               min={0}
               max={32}
-              aria-label="Side offset"
+              onValueChange={chooseSideOffset}
             />
-          </Flex>
-
-          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Align offset ({controls().alignOffset}px)
-            </Text>
-            <Slider
-              testId="control-align-offset"
-              value={[controls().alignOffset]}
-              onValueChange={([value = 0]) => chooseAlignOffset(value)}
+            <SliderControl
+              label="Align offset"
+              name="align-offset"
+              value={controls().alignOffset}
               min={-32}
               max={32}
-              aria-label="Align offset"
+              onValueChange={chooseAlignOffset}
             />
-          </Flex>
-
-          <Flex as="div" direction="column" gap={2}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Point mode
-            </Text>
-            <Switch
-              testId="control-point"
+            <ToggleControl
+              label="Point mode"
+              name="point"
+              hint="Click the target to move the point."
               checked={controls().point !== null}
               onCheckedChange={(checked) =>
                 choosePoint(checked ? { x: 96, y: 64 } : null)
               }
-              aria-label="Point mode"
             />
-            <Text as="p" size={1} selectable={false}>
-              Click the target to move the point.
-            </Text>
-          </Flex>
+            <ToggleControl
+              label="Arrow"
+              name="arrow"
+              checked={controls().arrowVisible}
+              onCheckedChange={chooseArrowVisible}
+            />
+            <ChoiceControl
+              label="Arrow align"
+              name="arrow-align"
+              value={controls().arrowAlign}
+              options={ARROW_ALIGNMENTS}
+              onValueChange={chooseArrowAlign}
+            />
+            <SliderControl
+              label="Arrow base"
+              name="arrow-base"
+              value={controls().arrowBase}
+              min={8}
+              max={32}
+              onValueChange={chooseArrowBase}
+            />
+            <SliderControl
+              label="Arrow depth"
+              name="arrow-depth"
+              value={controls().arrowDepth}
+              min={4}
+              max={24}
+              onValueChange={chooseArrowDepth}
+            />
+          </ControlGroup>
 
-          <Flex as="div" direction="column" gap={2}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Disable tether
-            </Text>
-            <Switch
-              testId="control-tether-disabled"
+          <ControlGroup label="Tether config">
+            <ToggleControl
+              label="Disable tether"
+              name="tether-disabled"
+              hint="Withholds the anchor, so the tether has nothing to measure — the pre-hydration state, where placement comes from CSS alone."
               checked={controls().tetherDisabled}
               onCheckedChange={chooseTetherDisabled}
-              aria-label="Disable tether"
             />
-            <Text as="p" size={1} selectable={false}>
-              Withholds the anchor, so the tether has nothing to measure — the
-              pre-hydration state, where placement comes from CSS alone.
-            </Text>
-          </Flex>
-
-          <Flex as="div" direction="column" gap={2} class={css.offsetControl}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Tether padding ({controls().tetherPadding}px)
-            </Text>
-            <Slider
-              testId="control-tether-padding"
-              value={[controls().tetherPadding]}
-              onValueChange={([value = 8]) => chooseTetherPadding(value)}
+            <SliderControl
+              label="Tether padding"
+              name="tether-padding"
+              value={controls().tetherPadding}
               min={0}
               max={48}
-              aria-label="Tether padding"
+              onValueChange={chooseTetherPadding}
             />
-          </Flex>
-
-          <Flex as="div" direction="column" gap={2}>
-            <Text as="p" size={2} weight="medium" selectable={false}>
-              Tether behaviors
-            </Text>
-            <For each={TETHER_FEATURES}>
-              {(feature) => (
-                <Checkbox
-                  testId={`control-feature-${feature}`}
-                  checked={controls().features[feature]}
-                  onCheckedChange={(enabled) =>
-                    toggleFeature({ feature, enabled })
-                  }
-                >
-                  {feature}
-                </Checkbox>
-              )}
-            </For>
-            <Checkbox
-              testId="control-clamp"
-              checked={controls().clampToAvailable}
-              onCheckedChange={chooseClamp}
-            >
-              clamp to available
-            </Checkbox>
-          </Flex>
-        </Flex>
-
-        <Flex as="div" grow align="center" justify="center" class={css.stage}>
-          <Flex
-            as="section"
-            ref={captureAnchor}
-            class={[css.target, anchor, controls().point && css.pointArmed]
-              .filter(Boolean)
-              .join(' ')}
-            onClick={placePoint}
-          >
-            <FloatingContainer
-              anchor={
-                controls().tetherDisabled
-                  ? undefined
-                  : (anchorEl() ?? undefined)
-              }
-              side={controls().side}
-              align={controls().align}
-              radius={controls().radius}
-              sideOffset={controls().sideOffset}
-              alignOffset={controls().alignOffset}
-              point={controls().point ?? undefined}
-              tether={tetherOptions()}
-              direction="column"
-              gap={1}
-              py={3}
-              px={4}
-              class={[css.surface, controls().clampToAvailable && css.clamped]
-                .filter(Boolean)
-                .join(' ')}
-              arrow={{
-                visible: controls().arrowVisible,
-                base: controls().arrowBase,
-                depth: controls().arrowDepth,
-                align: controls().arrowAlign,
-                class: css.arrow,
-              }}
-            >
-              <Heading as="h2" size={3} selectable={false}>
-                Floating Window
-              </Heading>
-              <Text as="p" size={2} selectable={false}>
-                A taller surface so the arrow has room to sit mid-height when
-                the window binds to the left or right edge.
-              </Text>
-            </FloatingContainer>
-          </Flex>
+            <ChoiceControl
+              label="Flip"
+              name="flip"
+              value={controls().flipMode}
+              options={FLIP_MODES}
+              onValueChange={chooseFlipMode}
+            />
+            <Flex as="div" direction="column" gap={2}>
+              <ControlLabel label="Tether behaviors" />
+              <For each={TETHER_FEATURES}>
+                {(feature) => (
+                  <Checkbox
+                    testId={`control-feature-${feature}`}
+                    checked={controls().features[feature]}
+                    onCheckedChange={(enabled) =>
+                      toggleFeature({ feature, enabled })
+                    }
+                  >
+                    {feature}
+                  </Checkbox>
+                )}
+              </For>
+              <Checkbox
+                testId="control-clamp"
+                checked={controls().clampToAvailable}
+                onCheckedChange={chooseClamp}
+              >
+                clamp to available
+              </Checkbox>
+            </Flex>
+          </ControlGroup>
         </Flex>
       </FrameBody>
     </>
