@@ -197,8 +197,13 @@ export interface FloatingContainerProps
    * clipping them, and re-resolve the placement to dodge collisions.
    * Requires {@link anchor}. Without JavaScript — or before hydration —
    * the pure-CSS placement stands.
+   *
+   * Required: a floating surface that can't dodge what clips it is
+   * broken, not configured, so there's no way to opt out. `{}` takes
+   * every pass at its default; the individual passes tune or disable
+   * themselves from there.
    */
-  tether?: TetherOptions;
+  tether: TetherOptions;
   /**
    * Border radius of the surface, from the design token scale. Also
    * keeps a start/end-aligned arrow clear of the rounded corner.
@@ -245,7 +250,9 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
   const tether = createTether(() => {
     const floating = floatingElement();
     const anchorElement = container.anchor;
-    if (!floating || !anchorElement || !container.tether) return null;
+    // Dormant until there's an anchor to measure against — that gap is
+    // the progressive-enhancement window the pure-CSS placement covers.
+    if (!floating || !anchorElement) return null;
 
     return {
       floating,
