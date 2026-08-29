@@ -1,178 +1,186 @@
-import { createEffect, createSignal, onCleanup, type Accessor } from 'solid-js';
-import type { TetherPlacement, TetherRect } from './geometry';
+import { createEffect, onCleanup, type Accessor } from 'solid-js';
+import { createStore, reconcile } from 'solid-js/store';
 import {
-  runTether,
-  type TetherDecisions,
-  type TetherPlugin,
-  type TetherState,
-} from './pipeline';
+  autoUpdate,
+  computePosition,
+  type ReferenceElement,
+} from '@floating-ui/dom';
+import {
+  buildMiddleware,
+  type TetherConfig,
+  type TetherData,
+} from './middleware';
+import { snapToPixel } from './pixels';
+import {
+  fromPlacement,
+  toPlacement,
+  type FloatingPlacement,
+  type FloatingPoint,
+} from './placement';
 
 /**
- * The tether's reactive shell: watch the boxes that placement depends
- * on, run the decision pipeline when any of them move, and expose the
- * result as a signal. It never touches the DOM beyond measuring the
- * elements it was handed — the container merges decisions over its own
- * props, keeping a single writer.
+ * The tether: the progressive-enhancement half of the floating
+ * primitive. The pure-CSS placement gets the floating element onto the
+ * right side of its anchor with no JavaScript at all; the tether
+ * watches the boxes involved and, once it can measure them, reports a
+ * resolved placement that dodges whatever is clipping them.
  *
- * Observation: `ResizeObserver` catches the boxes changing size, and a
- * capture-phase passive scroll listener catches any scroll container
- * in the ancestry carrying the anchor. Both funnel into one
- * rAF-batched measure, so a per-pixel scroll stream costs at most one
- * pipeline run per frame. In environments without `ResizeObserver`
- * (jsdom, pre-hydration) the signal stays `null` and the pure-CSS
- * placement stands, which is the progressive-enhancement contract.
+ * This module owns only the reactive glue — keep `@floating-ui/dom`
+ * fed by `autoUpdate` and stream its answers into a store. It never
+ * touches the DOM beyond measuring, so the container stays the single
+ * writer.
+ *
+ * Coordinates come back relative to the floating element's offset
+ * parent — the anchor, since the container is absolutely positioned
+ * inside it. That is exactly the space the CSS placement already works in, so
+ * the tether's answer slots straight into a `translate` without a
+ * second frame of reference.
  */
-
-/** Consumer-facing tuning knobs for a tethered container. */
-export interface TetherOptions {
-  /**
-   * Clearance to keep between the surface and the viewport edge when
-   * resolving placement, in px. Defaults to `0`.
-   */
-  padding?: number;
-  /**
-   * The decision pipeline, folded left. There are no defaults — pass
-   * exactly the plugins the surface cares about.
-   */
-  plugins: readonly TetherPlugin[];
-}
-
-/** Everything a tether run needs; `null` disables the tether. */
-export interface TetherConfig extends TetherOptions {
-  /** The floating container element (the positioning shell). */
-  popup: HTMLElement;
-  /** The anchor element the placement resolves against. */
-  anchor: HTMLElement;
-  /** Requested placement before any collision decisions. */
-  placement: TetherPlacement;
-}
 
 /**
- * The viewport in the coordinate space `getBoundingClientRect` reports
- * (the layout viewport). `visualViewport` narrows it to what's really
- * visible — pinch zoom and on-screen keyboards. Display cutouts need
- * no handling here: the layout viewport only extends under them when a
- * page opts into `viewport-fit=cover`, which this design never does.
+ * A resolved placement, streamed field by field. Every group is `null`
+ * until the pass that fills it runs, and `placement === null` is the
+ * whole progressive-enhancement contract: nothing has been measured, so
+ * the pure-CSS placement stands.
  */
-const measureViewport = (): TetherRect => {
-  const visual = window.visualViewport;
+export interface TetherState {
+  /** Resolved placement after collision handling. */
+  placement: FloatingPlacement | null;
+  /** Where to move the floating element, in px from the anchor's box. */
+  translate: FloatingPoint | null;
+  /** `transform-origin` aimed back at the anchor, for scale animations. */
+  transformOrigin: string | null;
+  /** The anchor's measured box, for size matching. */
+  anchor: { width: number; height: number } | null;
+  /** Arrow seating. `null` when no arrow is being positioned. */
+  arrow: {
+    /**
+     * Offset from the floating element's leading edge, along the edge
+     * the arrow sits on, in px.
+     */
+    offset: number;
+    /** Whether the arrow can no longer reach the anchor's center. */
+    hidden: boolean;
+  } | null;
+  /** Room the floating element has inside the boundary, in px. */
+  available: { width: number; height: number } | null;
+}
 
-  return visual
-    ? {
-        x: visual.offsetLeft,
-        y: visual.offsetTop,
-        width: visual.width,
-        height: visual.height,
-      }
-    : {
-        x: 0,
-        y: 0,
-        width: document.documentElement.clientWidth,
-        height: document.documentElement.clientHeight,
-      };
+/** Nothing measured: the pure-CSS placement is in charge. */
+const IDLE: TetherState = {
+  placement: null,
+  translate: null,
+  transformOrigin: null,
+  anchor: null,
+  arrow: null,
+  available: null,
 };
 
-const toRect = (rect: DOMRect): TetherRect => ({
-  x: rect.x,
-  y: rect.y,
-  width: rect.width,
-  height: rect.height,
+/**
+ * A zero-size anchor pinned to a point inside the real one. Sizing it
+ * to nothing is what keeps point-mode semantics identical to edge mode:
+ * `start` puts the floating element's leading edge on the point, `end`
+ * its trailing edge, `center` straddles it.
+ */
+const pointReference = (
+  anchor: HTMLElement,
+  point: FloatingPoint,
+): ReferenceElement => ({
+  contextElement: anchor,
+  getBoundingClientRect: () => {
+    const box = anchor.getBoundingClientRect();
+    const left = box.left + point.x;
+    const top = box.top + point.y;
+
+    return {
+      x: left,
+      y: top,
+      width: 0,
+      height: 0,
+      top,
+      left,
+      right: left,
+      bottom: top,
+    };
+  },
 });
 
-/**
- * Value equality for the decisions signal. Every pipeline run builds a
- * fresh record from pure plugins, so subscriber stability comes from
- * the signal comparing by value rather than reference.
- */
-const sameDecisions = (
-  before: TetherDecisions | null,
-  after: TetherDecisions | null,
-): boolean =>
-  before === after ||
-  (before !== null &&
-    after !== null &&
-    (Object.keys(after) as (keyof TetherDecisions)[]).every(
-      (key) => before[key] === after[key],
-    ));
+/** The element (or virtual element) the placement resolves against. */
+const referenceFor = (config: TetherConfig): ReferenceElement =>
+  config.point ? pointReference(config.anchor, config.point) : config.anchor;
+
+/** Run one placement pass and flatten it into state. */
+const resolve = async (config: TetherConfig): Promise<TetherState> => {
+  const { x, y, placement, middlewareData } = await computePosition(
+    referenceFor(config),
+    config.floating,
+    {
+      strategy: 'absolute',
+      placement: toPlacement(config.placement),
+      middleware: buildMiddleware(config),
+    },
+  );
+
+  const data: TetherData = middlewareData;
+  const seat = data.arrow;
+
+  return {
+    placement: fromPlacement(placement),
+    translate: { x: snapToPixel(x), y: snapToPixel(y) },
+    transformOrigin: data.transformOrigin?.origin ?? null,
+    anchor: data.anchorSize ?? null,
+    arrow: seat
+      ? {
+          offset: snapToPixel(seat.x ?? seat.y ?? 0),
+          hidden: seat.centerOffset !== 0,
+        }
+      : null,
+    available: data.availableSpace ?? null,
+  };
+};
 
 /**
- * Watch a floating container and stream placement decisions for it.
- * Every element involved rides in through the config — the tether
- * never queries the DOM for structure.
+ * Watch a floating element and stream resolved placements for it. Every
+ * element involved rides in through the config — the tether never
+ * queries the DOM for structure.
  *
- * Returns `null` until a run completes (or forever, where observers
- * don't exist); `null` means "the pure-CSS placement stands".
+ * The returned store is idle ({@link IDLE}) until the first pass lands,
+ * and stays idle for as long as the config is `null`.
  */
 export const createTether = (
   config: Accessor<TetherConfig | null>,
-): Accessor<TetherDecisions | null> => {
-  const [decisions, setDecisions] = createSignal<TetherDecisions | null>(null, {
-    equals: sameDecisions,
-  });
+): TetherState => {
+  const [state, setState] = createStore<TetherState>({ ...IDLE });
 
   createEffect(() => {
     const current = config();
+
     if (!current) {
-      setDecisions(null);
+      setState(reconcile(IDLE));
       return;
     }
 
-    // No observers, no enhancement: the base CSS placement stands.
-    if (typeof ResizeObserver === 'undefined') return;
+    // A pass is async, so answers can land out of order — or after the
+    // config they were measured for is gone. Only the newest run may
+    // write, and cleanup parks the counter somewhere no run can match.
+    let latest = 0;
 
-    const { popup, anchor } = current;
+    const update = () => {
+      const run = ++latest;
 
-    let frame = 0;
-    const schedule = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(measure);
+      void resolve(current).then((next) => {
+        if (run === latest) setState(reconcile(next));
+      });
     };
 
-    const measure = () => {
-      const state: TetherState = {
-        placement: current.placement,
-        rects: {
-          anchor: toRect(anchor.getBoundingClientRect()),
-          popup: toRect(popup.getBoundingClientRect()),
-          viewport: measureViewport(),
-        },
-        padding: current.padding ?? 0,
-      };
-
-      setDecisions(runTether(state, current.plugins));
-    };
-
-    const resizes = new ResizeObserver(schedule);
-    resizes.observe(popup);
-    resizes.observe(anchor);
-
-    // Scroll anywhere in the ancestry moves the anchor relative to the
-    // viewport. Capture sees every scroll container without naming
-    // them; passive keeps the listener off the scroll critical path.
-    document.addEventListener('scroll', schedule, {
-      capture: true,
-      passive: true,
-    });
-
-    // Viewport changes invalidate the collision box: the window
-    // itself, and the visual viewport moving independently (pinch
-    // zoom, on-screen keyboards).
-    window.addEventListener('resize', schedule);
-    window.visualViewport?.addEventListener('resize', schedule);
-    window.visualViewport?.addEventListener('scroll', schedule);
-
-    schedule();
+    const stop = autoUpdate(referenceFor(current), current.floating, update);
 
     onCleanup(() => {
-      cancelAnimationFrame(frame);
-      resizes.disconnect();
-      document.removeEventListener('scroll', schedule, { capture: true });
-      window.removeEventListener('resize', schedule);
-      window.visualViewport?.removeEventListener('resize', schedule);
-      window.visualViewport?.removeEventListener('scroll', schedule);
-      setDecisions(null);
+      latest = -1;
+      stop();
+      setState(reconcile(IDLE));
     });
   });
 
-  return decisions;
+  return state;
 };

@@ -14,11 +14,14 @@ import {
 import {
   FloatingContainer,
   anchor,
-  tetherPlugins,
   type ArrowAlign,
   type FloatingAlignment,
   type FloatingPoint,
   type FloatingSide,
+  type TetherFallback,
+  type TetherFlipOptions,
+  type TetherOptions,
+  type TetherPass,
 } from '@lib/ui/_internal/floating-ui';
 import { useAnchor, useCommit, useValue } from '@lib/state';
 import {
@@ -30,8 +33,10 @@ import {
   arrowBaseChanged,
   arrowDepthChanged,
   arrowVisibilityChanged,
+  clampToggled,
+  flipModeChanged,
+  featureToggled,
   floatingControls,
-  pluginToggled,
   pointChanged,
   radiusChanged,
   scratchpadScope,
@@ -39,17 +44,10 @@ import {
   sideOffsetChanged,
   tetherPaddingChanged,
   tetherToggled,
-  type TetherPluginName,
+  type FlipMode,
+  type TetherFeature,
 } from '../state/floating-ui';
 import * as css from './floating-ui.css';
-
-/** The flip fallback offered to the position-try plugin. */
-const OPPOSITE_SIDE: Record<FloatingSide, FloatingSide> = {
-  top: 'bottom',
-  bottom: 'top',
-  left: 'right',
-  right: 'left',
-};
 
 const SIDES = [
   'top',
@@ -68,7 +66,31 @@ const ARROW_ALIGNMENTS = [
   'end',
 ] as const satisfies ArrowAlign[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
-const PLUGIN_NAMES = ['positionTry'] as const satisfies TetherPluginName[];
+const TETHER_FEATURES = ['shift', 'size'] as const satisfies TetherFeature[];
+const FLIP_MODES = ['auto', 'off', 'chain'] as const satisfies FlipMode[];
+
+/**
+ * The chain the `chain` mode walks — a deliberately odd order so it's
+ * obvious the tether follows the list rather than flipping to the
+ * opposite side on its own.
+ */
+const FALLBACK_CHAIN = [
+  { side: 'right' },
+  { side: 'left' },
+  { side: 'top' },
+] as const satisfies TetherFallback[];
+
+/** The flip pass a mode stands for. */
+const flipFor = (mode: FlipMode): TetherPass<TetherFlipOptions> => {
+  switch (mode) {
+    case 'auto':
+      return true;
+    case 'off':
+      return false;
+    case 'chain':
+      return { fallbacks: FALLBACK_CHAIN };
+  }
+};
 
 /** A labeled radio group binding one placement axis to the controls store. */
 const PlacementControl = <Value extends string>(props: {
@@ -129,10 +151,12 @@ const FloatingUiScratchpad = () => {
   const chooseTether = (tether: boolean) => commit(tetherToggled(tether));
   const chooseTetherPadding = (padding: number) =>
     commit(tetherPaddingChanged(padding));
-  const togglePlugin = (toggle: {
-    plugin: TetherPluginName;
+  const toggleFeature = (toggle: {
+    feature: TetherFeature;
     enabled: boolean;
-  }) => commit(pluginToggled(toggle));
+  }) => commit(featureToggled(toggle));
+  const chooseFlipMode = (mode: FlipMode) => commit(flipModeChanged(mode));
+  const chooseClamp = (clamp: boolean) => commit(clampToggled(clamp));
   const chooseArrowVisible = (visible: boolean) =>
     commit(arrowVisibilityChanged(visible));
   const chooseArrowBase = (base: number) => commit(arrowBaseChanged(base));
@@ -140,23 +164,12 @@ const FloatingUiScratchpad = () => {
   const captureAnchor = (element: HTMLElement) =>
     commit(anchorCaptured(element));
 
-  /** The enabled pipeline stages, in fold order. */
-  const tetherOptions = () => {
-    const active = controls().plugins;
-
-    return {
-      padding: controls().tetherPadding,
-      plugins: [
-        ...(active.positionTry
-          ? [
-              tetherPlugins.positionTry([
-                { side: OPPOSITE_SIDE[controls().side] },
-              ]),
-            ]
-          : []),
-      ],
-    };
-  };
+  /** The collision passes the tether runs, as it takes them. */
+  const tetherOptions = (): TetherOptions => ({
+    padding: controls().tetherPadding,
+    flip: flipFor(controls().flipMode),
+    ...controls().features,
+  });
 
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
@@ -200,6 +213,13 @@ const FloatingUiScratchpad = () => {
             value={controls().arrowAlign}
             options={ARROW_ALIGNMENTS}
             onValueChange={chooseArrowAlign}
+          />
+          <PlacementControl
+            label="Flip"
+            name="flip"
+            value={controls().flipMode}
+            options={FLIP_MODES}
+            onValueChange={chooseFlipMode}
           />
           <PlacementControl
             label="Radius"
@@ -327,21 +347,28 @@ const FloatingUiScratchpad = () => {
 
           <Flex as="div" direction="column" gap={2}>
             <Text as="p" size={2} weight="medium" selectable={false}>
-              Tether plugins
+              Tether behaviors
             </Text>
-            <For each={PLUGIN_NAMES}>
-              {(plugin) => (
+            <For each={TETHER_FEATURES}>
+              {(feature) => (
                 <Checkbox
-                  testId={`control-plugin-${plugin}`}
-                  checked={controls().plugins[plugin]}
+                  testId={`control-feature-${feature}`}
+                  checked={controls().features[feature]}
                   onCheckedChange={(enabled) =>
-                    togglePlugin({ plugin, enabled })
+                    toggleFeature({ feature, enabled })
                   }
                 >
-                  {plugin}
+                  {feature}
                 </Checkbox>
               )}
             </For>
+            <Checkbox
+              testId="control-clamp"
+              checked={controls().clampToAvailable}
+              onCheckedChange={chooseClamp}
+            >
+              clamp to available
+            </Checkbox>
           </Flex>
         </Flex>
 
@@ -367,7 +394,9 @@ const FloatingUiScratchpad = () => {
               gap={1}
               py={3}
               px={4}
-              class={css.surface}
+              class={[css.surface, controls().clampToAvailable && css.clamped]
+                .filter(Boolean)
+                .join(' ')}
               arrow={{
                 visible: controls().arrowVisible,
                 base: controls().arrowBase,

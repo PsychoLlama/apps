@@ -12,6 +12,7 @@
     ".": "./src/index.ts",
     "./gallery": "./src/gallery/manifest.ts",
     "./_internal/floating-ui": "./src/components/_internal/floating-ui/floating-ui.tsx",
+    "./_internal/floating-ui.css": "./src/components/_internal/floating-ui/floating-ui.css.ts",
     "./props/*": "./src/props/*.ts",
     "./package.json": "./package.json"
   },
@@ -24,6 +25,7 @@
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.8.0",
     "@lib/design": "workspace:*",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/dynamic": "catalog:"

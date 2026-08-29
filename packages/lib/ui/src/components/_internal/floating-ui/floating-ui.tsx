@@ -1,7 +1,13 @@
 import { Show, createSignal, splitProps, type JSX } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
-import { type RadiusScale } from '@lib/design';
-import { createTether, type TetherOptions } from './tether/create-tether';
+import { radius as radiusTokens, type RadiusScale } from '@lib/design';
+import { createTether } from './tether/create-tether';
+import type { TetherOptions } from './tether/middleware';
+import type {
+  FloatingAlignment,
+  FloatingPoint,
+  FloatingSide,
+} from './tether/placement';
 import {
   flexPropKeys,
   resolveFlexClasses,
@@ -14,6 +20,7 @@ import {
 } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
 import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
+import * as arrowCss from './arrow.css';
 import * as css from './floating-ui.css';
 
 export { anchor } from './floating-ui.css';
@@ -23,14 +30,19 @@ export {
   type ArrowDirection,
   type ArrowProps,
 } from './arrow';
-export { type TetherOptions } from './tether/create-tether';
 export {
-  type TetherDecisions,
-  type TetherPlugin,
-  type TetherState,
-} from './tether/pipeline';
-export * as tetherPlugins from './tether/plugins';
-export { type PositionTryFallback } from './tether/plugins/position-try';
+  type FloatingAlignment,
+  type FloatingPlacement,
+  type FloatingPoint,
+  type FloatingSide,
+} from './tether/placement';
+export { type TetherState } from './tether/create-tether';
+export {
+  type TetherFallback,
+  type TetherFlipOptions,
+  type TetherOptions,
+  type TetherPass,
+} from './tether/middleware';
 
 /**
  * Internal primitive for positioned floating UI — tooltips, dropdowns,
@@ -46,13 +58,20 @@ export { type PositionTryFallback } from './tether/plugins/position-try';
  *   body.
  * - `FloatingBody` — the visual surface. It lays out and pads its
  *   children and is the node consumers style and target in tests.
+ *
+ * Placement is pure CSS: the surface is a sibling of the anchor, so it
+ * lands on the right side with no JavaScript and no measurement. The
+ * tether (see `./tether/create-tether`) is the progressive enhancement
+ * on top — once it can measure the page, `@floating-ui/dom` resolves a
+ * placement that dodges whatever is clipping the surface, and its answer
+ * merges over the requested one here, in props space. The tether never
+ * touches the DOM, so this component stays the container's only writer.
  */
 
-// Deliberately hand-rolled and short-lived. Most (likely all) of this
-// exists only because the CSS `anchor-positioning` primitives and the
+// The CSS placement is deliberately hand-rolled and short-lived. It
+// exists because the CSS `anchor-positioning` primitives and the
 // `popover` attribute aren't baseline-available yet. Once they are, the
-// anchoring/layering plumbing collapses into a few CSS properties and
-// this module can be deleted rather than grown.
+// anchoring/layering plumbing collapses into a few CSS properties.
 //
 // The pieces are named and shaped after their anchor-positioning
 // successors so the migration stays mechanical:
@@ -60,7 +79,7 @@ export { type PositionTryFallback } from './tether/plugins/position-try';
 // - `data-side` + `data-align`  → `position-area` (side/align pairs map
 //   onto its two-keyword grid values: bottom/center → `bottom`,
 //   bottom/start → `bottom span-right`, …)
-// - tether `positionTry` plugin → `position-try-fallbacks`
+// - tether `fallbacks`          → `position-try-fallbacks`
 // - `--anchor-width/height`     → `anchor-size(width)` / `(height)`
 // - `--available-width/height`  → the sizing the `position-area`
 //   region's containing block provides natively
@@ -102,31 +121,9 @@ export const FloatingBody = (props: FloatingBodyProps) => {
   );
 };
 
-/** Which edge of the anchor a floating surface binds to. */
-export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
-
-/**
- * A coordinate inside the anchor box, in px from its top-left corner.
- * Binds the surface to a point instead of an edge — context menus
- * anchor to the pointer, item-aligned selects to a measured item.
- */
-export interface FloatingPoint {
-  /** Horizontal distance from the anchor's left edge, in px. */
-  x: number;
-  /** Vertical distance from the anchor's top edge, in px. */
-  y: number;
-}
-
-/**
- * Placement of the surface along the anchor edge it binds to. `start`
- * hugs the top (left/right sides) or left (top/bottom sides); `end` the
- * opposite; `center` splits the difference.
- */
-export type FloatingAlignment = 'start' | 'center' | 'end';
-
 /**
  * Arrow configuration for a floating primitive. `direction` is omitted —
- * the container derives it from {@link FloatingContainerProps.side}.
+ * the container derives it from the resolved side.
  */
 export interface FloatingArrowProps extends Omit<ArrowProps, 'direction'> {
   /** Whether to render the arrow. Defaults to `false`. */
@@ -134,9 +131,9 @@ export interface FloatingArrowProps extends Omit<ArrowProps, 'direction'> {
 }
 
 /**
- * Direction the arrow points so it faces the anchor, keyed by
- * {@link FloatingSide}. The container's `flex-direction` (driven from CSS
- * by `data-side`) seats the DOM-first arrow on the anchor-facing edge.
+ * Direction the arrow points so it faces the anchor, keyed by the
+ * resolved side. The container's `flex-direction` (driven from CSS by
+ * `data-side`) seats the DOM-first arrow on the anchor-facing edge.
  */
 const ARROW_DIRECTION_BY_SIDE: Record<FloatingSide, ArrowDirection> = {
   top: 'down',
@@ -146,12 +143,21 @@ const ARROW_DIRECTION_BY_SIDE: Record<FloatingSide, ArrowDirection> = {
 };
 
 /**
+ * The arrow's clearance from the surface's corners: one border radius,
+ * where the straight run of the rounded edge begins. `full` resolves to
+ * a pill radius the tether clamps down to whatever the surface can
+ * actually give.
+ */
+const arrowPaddingFor = (scale: RadiusScale | undefined) =>
+  scale === undefined ? 0 : parseFloat(radiusTokens[scale]);
+
+/**
  * Props for the floating primitive entry point.
  *
- * The flex, padding, and test-id groups aren't the shell's own — they
+ * The flex, padding, and test-id groups aren't the container's own — they
  * pass straight through to the {@link FloatingBody} surface, the node
  * that lays out and pads the content. So does {@link class} and
- * {@link radius}. The shell keeps only what positions the surface:
+ * {@link radius}. The container keeps only what positions the surface:
  * {@link side}, {@link align}, and the {@link arrow}.
  */
 export interface FloatingContainerProps
@@ -187,23 +193,21 @@ export interface FloatingContainerProps
    */
   point?: FloatingPoint;
   /**
-   * Progressive enhancement: watch the anchor, surface, and viewport
-   * and override the placement to dodge collisions. The decision
-   * pipeline is exactly the plugins passed here — there are no
-   * defaults. Requires {@link anchor}. Without observer support (or
-   * JavaScript at all) the pure-CSS placement stands. Edge mode only
-   * for now; ignored while {@link point} is set.
+   * Progressive enhancement: watch the anchor, surface, and everything
+   * clipping them, and re-resolve the placement to dodge collisions.
+   * Requires {@link anchor}. Without JavaScript — or before hydration —
+   * the pure-CSS placement stands.
    */
   tether?: TetherOptions;
   /**
    * Border radius of the surface, from the design token scale. Also
-   * offsets a start/end-aligned arrow so it clears the rounded corner.
+   * keeps a start/end-aligned arrow clear of the rounded corner.
    */
   radius?: RadiusScale;
   /**
    * Class merged onto the {@link FloatingBody} surface — the node that
    * carries the background, padding, and other chrome. Applies to the
-   * body, not the positioning shell.
+   * body, not the positioning container.
    */
   class?: string;
   /** Pointer arrow tying the surface to its anchor. Hidden by default. */
@@ -213,23 +217,18 @@ export interface FloatingContainerProps
 }
 
 /**
- * Entry point for a floating primitive. Owns the positioning shell —
+ * Entry point for a floating primitive. Owns the positioning container —
  * placing the surface outside a side of the anchor and aligning it along
  * that edge — and wraps the {@link FloatingBody} surface. Further
  * plumbing (layering) will land here as the primitive grows.
- *
- * With {@link FloatingContainerProps.tether} enabled, the tether's
- * decisions merge over the requested placement here, in props space —
- * the tether itself never touches the DOM, so this component stays the
- * shell's only writer.
  *
  * The arrow renders before the body so, once both are stacked, the body
  * paints over the arrow's shadow seam without needing a `z-index`.
  */
 export const FloatingContainer = (props: FloatingContainerProps) => {
-  // Keep the shell's positioning props; forward everything else (flex,
+  // Keep the container's own positioning props; forward everything else (flex,
   // padding, test-id, radius, class, children) onto the body surface.
-  const [shell, body] = splitProps(props, [
+  const [container, body] = splitProps(props, [
     'anchor',
     'side',
     'align',
@@ -240,27 +239,32 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
     'tether',
   ]);
 
-  const [shellElement, setShellElement] = createSignal<HTMLDivElement>();
-  const decisions = createTether(() => {
-    const popup = shellElement();
-    const anchorElement = shell.anchor;
-    if (!popup || !anchorElement || !shell.tether || shell.point) return null;
+  const [floatingElement, setFloatingElement] = createSignal<HTMLDivElement>();
+  const [arrowElement, setArrowElement] = createSignal<SVGSVGElement>();
+
+  const tether = createTether(() => {
+    const floating = floatingElement();
+    const anchorElement = container.anchor;
+    if (!floating || !anchorElement || !container.tether) return null;
 
     return {
-      popup,
+      floating,
       anchor: anchorElement,
       placement: {
-        side: shell.side ?? 'bottom',
-        align: shell.align ?? 'center',
-        sideOffset: shell.sideOffset ?? 0,
-        alignOffset: shell.alignOffset ?? 0,
+        side: container.side ?? 'bottom',
+        align: container.align ?? 'center',
       },
-      ...shell.tether,
+      sideOffset: container.sideOffset ?? 0,
+      alignOffset: container.alignOffset ?? 0,
+      arrowPadding: arrowPaddingFor(body.radius),
+      ...(container.point && { point: container.point }),
+      ...(container.arrow?.visible && { arrow: arrowElement() }),
+      ...container.tether,
     };
   });
 
-  const side = () => decisions()?.side ?? shell.side ?? 'bottom';
-  const align = () => decisions()?.align ?? shell.align ?? 'center';
+  const side = () => tether.placement?.side ?? container.side ?? 'bottom';
+  const align = () => tether.placement?.align ?? container.align ?? 'center';
 
   const className = () =>
     [css.container, body.radius && css.arrowRadiusOffset[body.radius]]
@@ -268,38 +272,59 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
       .join(' ');
 
   // Continuous pixel inputs ride in as inline vars; the static rules
-  // fold them into the placement math. The tether's own decisions ride
-  // in through the `data-side`/`data-align` attributes instead.
+  // fold them into the placement math. The tether's own answer rides in
+  // the same way, plus the `data-side`/`data-align` attributes.
   const inlineVars = () =>
     assignInlineVars({
-      ...(shell.sideOffset !== undefined && {
-        [css.sideOffset]: `${shell.sideOffset}px`,
+      ...(container.sideOffset !== undefined && {
+        [css.sideOffset]: `${container.sideOffset}px`,
       }),
-      ...(shell.alignOffset !== undefined && {
-        [css.alignOffset]: `${shell.alignOffset}px`,
+      ...(container.alignOffset !== undefined && {
+        [css.alignOffset]: `${container.alignOffset}px`,
       }),
-      ...(shell.point && {
-        [css.pointX]: `${shell.point.x}px`,
-        [css.pointY]: `${shell.point.y}px`,
+      ...(container.point && {
+        [css.pointX]: `${container.point.x}px`,
+        [css.pointY]: `${container.point.y}px`,
+      }),
+      ...(tether.translate && {
+        [css.tetherX]: `${tether.translate.x}px`,
+        [css.tetherY]: `${tether.translate.y}px`,
+      }),
+      ...(tether.transformOrigin && {
+        [css.transformOrigin]: tether.transformOrigin,
+      }),
+      ...(tether.anchor && {
+        [css.anchorWidth]: `${tether.anchor.width}px`,
+        [css.anchorHeight]: `${tether.anchor.height}px`,
+      }),
+      ...(tether.available && {
+        [css.availableWidth]: `${tether.available.width}px`,
+        [css.availableHeight]: `${tether.available.height}px`,
+      }),
+      ...(tether.arrow && {
+        [arrowCss.tetherOffset]: `${tether.arrow.offset}px`,
       }),
     });
 
   return (
     <div
-      ref={setShellElement}
+      ref={setFloatingElement}
       class={className()}
       style={inlineVars()}
       data-side={side()}
       data-align={align()}
-      data-point={shell.point ? '' : undefined}
+      data-point={container.point ? '' : undefined}
+      data-tethered={tether.placement ? '' : undefined}
     >
-      <Show when={shell.arrow?.visible}>
+      <Show when={container.arrow?.visible}>
         <Arrow
-          base={shell.arrow?.base}
-          depth={shell.arrow?.depth}
+          ref={setArrowElement}
+          base={container.arrow?.base}
+          depth={container.arrow?.depth}
           direction={ARROW_DIRECTION_BY_SIDE[side()]}
-          align={shell.arrow?.align}
-          class={shell.arrow?.class}
+          align={container.arrow?.align}
+          hidden={container.arrow?.hidden ?? tether.arrow?.hidden}
+          class={container.arrow?.class}
         />
       </Show>
       <FloatingBody {...body} />

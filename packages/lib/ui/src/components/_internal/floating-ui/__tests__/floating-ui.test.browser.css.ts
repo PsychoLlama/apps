@@ -50,3 +50,20 @@ export const runway = style({
   display: 'grid',
   placeItems: 'center',
 });
+
+/** Pins an anchor flush against the viewport's left edge. */
+export const pinLeft = style({
+  position: 'fixed',
+  left: 0,
+  top: '200px',
+});
+
+/**
+ * A surface far wider than its anchor, so a centered placement hangs
+ * off both ends of a viewport-edge anchor and the tether has to slide
+ * it back.
+ */
+export const wideSurface = style({
+  width: '300px',
+  height: '40px',
+});

@@ -1,5 +1,9 @@
-import { style } from '@vanilla-extract/css';
+import { fallbackVar, style } from '@vanilla-extract/css';
 import { neutral, radius, shadow } from '@lib/design';
+import {
+  availableHeight,
+  availableWidth,
+} from '@lib/ui/_internal/floating-ui.css';
 
 /**
  * The play area the target sits in, centered in the space the controls
@@ -63,4 +67,19 @@ export const surface = style({
  */
 export const arrow = style({
   color: neutral.solid[12],
+});
+
+/**
+ * Opts the surface into the room the tether measured. The vars are only
+ * set once the tether has run, so untethered (and pre-hydration) the
+ * caps fall back to `none` and the surface sizes to its content.
+ *
+ * This is the "size matching" half of the primitive: the same channel a
+ * scrolling menu would use to cap its height at whatever the viewport
+ * left it.
+ */
+export const clamped = style({
+  maxWidth: fallbackVar(availableWidth, 'none'),
+  maxHeight: fallbackVar(availableHeight, 'none'),
+  overflow: 'auto',
 });
