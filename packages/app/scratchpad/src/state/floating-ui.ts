@@ -16,6 +16,19 @@ import type {
 /** One toggleable collision behavior the tether can run. */
 export type TetherFeature = 'shift' | 'size';
 
+/** Every collision behavior, in the order the scratchpad lists them. */
+export const TETHER_FEATURES = [
+  'shift',
+  'size',
+] as const satisfies TetherFeature[];
+
+/**
+ * One card in the tether-behaviors group. `clamp` isn't a pass the
+ * tether runs — it's the surface opting into what the `size` pass
+ * measured — but it toggles the same way, so it rides in the same group.
+ */
+export type TetherBehavior = TetherFeature | 'clamp';
+
 /**
  * How the tether's flip pass is configured: the library's computed
  * fallback, the pass turned off, or a hand-written `position-try`-style
@@ -66,29 +79,32 @@ export interface FloatingControlsState {
 /** Owns the scratchpad's floating-window controls and anchor handle. */
 export const scratchpadScope = defineScope();
 
+/** Every control at rest — the state the reset button restores. */
+const defaults = (): FloatingControlsState => ({
+  side: 'bottom',
+  align: 'center',
+  arrowVisible: true,
+  arrowAlign: 'center',
+  arrowBase: 16,
+  arrowDepth: 8,
+  radius: 4,
+  sideOffset: 0,
+  alignOffset: 0,
+  point: null,
+  tetherDisabled: false,
+  tetherPadding: 8,
+  features: {
+    shift: true,
+    size: true,
+  },
+  flipMode: 'auto',
+  clampToAvailable: false,
+});
+
 /** Live, readonly view of the floating-window placement controls. */
 export const floatingControls = defineStore<FloatingControlsState>(
   scratchpadScope,
-  () => ({
-    side: 'bottom',
-    align: 'center',
-    arrowVisible: true,
-    arrowAlign: 'center',
-    arrowBase: 16,
-    arrowDepth: 8,
-    radius: 4,
-    sideOffset: 0,
-    alignOffset: 0,
-    point: null,
-    tetherDisabled: false,
-    tetherPadding: 8,
-    features: {
-      shift: true,
-      size: true,
-    },
-    flipMode: 'auto',
-    clampToAvailable: false,
-  }),
+  defaults,
 );
 
 /**
@@ -180,13 +196,18 @@ defineFold(
   },
 );
 
-/** One of the tether's collision behaviors was enabled or disabled. */
-export const featureToggled = defineTopic<{
-  feature: TetherFeature;
-  enabled: boolean;
-}>();
-defineFold(featureToggled, [floatingControls], (controls, toggle) => {
-  controls.features[toggle.feature] = toggle.enabled;
+/**
+ * The tether-behavior group changed. Carries the whole selection rather
+ * than one flag: the cards report their new set as a unit, and folding
+ * it wholesale keeps the group and the store from drifting apart.
+ */
+export const behaviorsChanged = defineTopic<readonly TetherBehavior[]>();
+defineFold(behaviorsChanged, [floatingControls], (controls, behaviors) => {
+  for (const feature of TETHER_FEATURES) {
+    controls.features[feature] = behaviors.includes(feature);
+  }
+
+  controls.clampToAvailable = behaviors.includes('clamp');
 });
 
 /** How the tether's flip pass is configured changed. */
@@ -195,10 +216,14 @@ defineFold(flipModeChanged, [floatingControls], (controls, mode) => {
   controls.flipMode = mode;
 });
 
-/** Clamping the surface to the tether's reported room was toggled. */
-export const clampToggled = defineTopic<boolean>();
-defineFold(clampToggled, [floatingControls], (controls, clamp) => {
-  controls.clampToAvailable = clamp;
+/**
+ * Every control put back to its default. Only the controls — the
+ * captured anchor is a live DOM node the page still owns, not an
+ * override to undo.
+ */
+export const controlsReset = defineTopic();
+defineFold(controlsReset, [floatingControls], (controls) => {
+  Object.assign(controls, defaults());
 });
 
 /** The target element was captured so the tether can measure against it. */
