@@ -1,10 +1,5 @@
-import {
-  defineCell,
-  defineFold,
-  defineScope,
-  defineStore,
-  defineTopic,
-} from '@lib/state';
+import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
+import { environment } from '@lib/runtime-config';
 import type { RadiusScale } from '@lib/design';
 import type {
   ArrowAlign,
@@ -12,6 +7,8 @@ import type {
   FloatingPoint,
   FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
+import { tetherDisabled as tetherDisabledOption } from '../../config';
+import { scratchpadScope } from './scope';
 
 /** One toggleable collision behavior the tether can run. */
 export type TetherFeature = 'shift' | 'size';
@@ -64,6 +61,10 @@ export interface FloatingControlsState {
    * Whether to withhold the anchor, leaving the tether nothing to
    * measure against. That's the pre-hydration state, where the pure-CSS
    * placement stands on its own.
+   *
+   * The one control that outlives the page. It persists through
+   * `@lib/runtime-config`, so `trackTetherConfigSaga` is its only writer
+   * here — the checkbox writes to OPFS and the change comes back around.
    */
   tetherDisabled: boolean;
   /** Boundary clearance the tether maintains, in px. */
@@ -76,10 +77,12 @@ export interface FloatingControlsState {
   clampToAvailable: boolean;
 }
 
-/** Owns the scratchpad's floating-window controls and anchor handle. */
-export const scratchpadScope = defineScope();
-
-/** Every control at rest — the state the reset button restores. */
+/**
+ * Every control at rest — the state the reset button restores. The
+ * persisted one seeds from its option's per-environment default so
+ * prerender and the client's first paint agree (no hydration flash), and
+ * so a reset lands on the same value clearing the override reverts to.
+ */
 const defaults = (): FloatingControlsState => ({
   side: 'bottom',
   align: 'center',
@@ -91,7 +94,7 @@ const defaults = (): FloatingControlsState => ({
   sideOffset: 0,
   alignOffset: 0,
   point: null,
-  tetherDisabled: false,
+  tetherDisabled: tetherDisabledOption.defaults[environment].disabled,
   tetherPadding: 8,
   features: {
     shift: true,
@@ -180,9 +183,16 @@ defineFold(pointChanged, [floatingControls], (controls, point) => {
   controls.point = point;
 });
 
-/** Withholding the anchor from the tether was toggled. */
-export const tetherDisabled = defineTopic<boolean>();
-defineFold(tetherDisabled, [floatingControls], (controls, disabled) => {
+/**
+ * Withholding the anchor from the tether resolved to a new value.
+ *
+ * Published by the runtime-config subscription, never by the checkbox
+ * that triggered a change: the toggle persists through
+ * `@lib/runtime-config` and the change comes back around here, so a
+ * same-tab write lands exactly the way a sibling tab's would.
+ */
+export const tetherDisabledChanged = defineTopic<boolean>();
+defineFold(tetherDisabledChanged, [floatingControls], (controls, disabled) => {
   controls.tetherDisabled = disabled;
 });
 
@@ -220,6 +230,10 @@ defineFold(flipModeChanged, [floatingControls], (controls, mode) => {
  * Every control put back to its default. Only the controls — the
  * captured anchor is a live DOM node the page still owns, not an
  * override to undo.
+ *
+ * `tetherDisabled` is restored here too, but the durable copy is cleared
+ * separately by `resetControlsSaga`; both land on the same value, so the
+ * echo that follows confirms what the fold already wrote.
  */
 export const controlsReset = defineTopic();
 defineFold(controlsReset, [floatingControls], (controls) => {

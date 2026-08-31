@@ -427,6 +427,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../../lib/runtime-config
