@@ -1,4 +1,5 @@
-import { For, type JSX } from 'solid-js';
+import { For, onMount, type JSX } from 'solid-js';
+import { createLogger, toError } from '@lib/observability';
 import type { RadiusScale } from '@lib/design';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import {
@@ -29,7 +30,8 @@ import {
   type TetherOptions,
   type TetherPass,
 } from '@lib/ui/_internal/floating-ui';
-import { useAnchor, useCommit, useValue } from '@lib/state';
+import { AbortError, useAnchor, useCommit, useRun, useValue } from '@lib/state';
+import { AppearanceToggle } from '@lib/theme/appearance-toggle';
 import {
   alignChanged,
   alignOffsetChanged,
@@ -40,21 +42,24 @@ import {
   arrowDepthChanged,
   arrowVisibilityChanged,
   behaviorsChanged,
-  controlsReset,
+  commitTetherDisabledSaga,
   flipModeChanged,
   floatingControls,
   pointChanged,
   radiusChanged,
+  resetControlsSaga,
   scratchpadScope,
   sideChanged,
   sideOffsetChanged,
-  tetherDisabled,
   tetherPaddingChanged,
+  trackTetherConfigSaga,
   TETHER_FEATURES,
   type FlipMode,
   type TetherBehavior,
 } from '../state/floating-ui';
 import * as css from './floating-ui.css';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 const SIDES = [
   'top',
@@ -321,6 +326,27 @@ const FloatingUiScratchpad = () => {
   const controls = useValue(floatingControls);
   const anchorEl = useValue(anchorElement);
   const commit = useCommit();
+  const track = useRun(trackTetherConfigSaga);
+  const commitTetherDisabled = useRun(commitTetherDisabledSaga);
+  const resetControls = useRun(resetControlsSaga);
+
+  // `tetherDisabled` is seeded with the build-environment default, so
+  // first paint (and prerender) match without a flash. OPFS is
+  // client-only — unavailable during SSG — so the tracking saga starts on
+  // mount: it subscribes, reconciles with any persisted override, then
+  // runs for as long as the page is mounted. Writes echo back through the
+  // subscription, making it the single source of truth.
+  onMount(() => {
+    void track().catch((error: unknown) => {
+      // Releasing the anchor on cleanup aborts the saga. That's ordinary
+      // teardown, and nothing to report.
+      if (error instanceof AbortError) return;
+
+      logger.error('The floating-UI tether config tracker failed.', {
+        error: toError(error),
+      });
+    });
+  });
 
   const chooseSide = (side: FloatingSide) => commit(sideChanged(side));
   const chooseAlign = (align: FloatingAlignment) => commit(alignChanged(align));
@@ -334,13 +360,12 @@ const FloatingUiScratchpad = () => {
   const choosePoint = (point: FloatingPoint | null) =>
     commit(pointChanged(point));
   const chooseTetherDisabled = (disabled: boolean) =>
-    commit(tetherDisabled(disabled));
+    void commitTetherDisabled(disabled);
   const chooseTetherPadding = (padding: number) =>
     commit(tetherPaddingChanged(padding));
   const chooseBehaviors = (behaviors: readonly string[]) =>
     commit(behaviorsChanged(behaviors as readonly TetherBehavior[]));
   const chooseFlipMode = (mode: FlipMode) => commit(flipModeChanged(mode));
-  const resetControls = () => commit(controlsReset());
   const chooseArrowVisible = (visible: boolean) =>
     commit(arrowVisibilityChanged(visible));
   const chooseArrowBase = (base: number) => commit(arrowBaseChanged(base));
@@ -380,6 +405,7 @@ const FloatingUiScratchpad = () => {
           { label: 'Scratchpad', href: '/scratchpad' },
           { label: 'Floating UI' },
         ]}
+        actions={<AppearanceToggle />}
       />
       <FrameBody>
         <Flex as="div" direction="column" gap={7} class={css.column}>
@@ -587,7 +613,7 @@ const FloatingUiScratchpad = () => {
               variant="soft"
               color="neutral"
               class={css.reset}
-              onClick={resetControls}
+              onClick={() => void resetControls()}
             >
               Reset controls
             </Button>
