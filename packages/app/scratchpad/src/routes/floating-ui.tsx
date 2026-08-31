@@ -31,6 +31,7 @@ import {
   type TetherPass,
 } from '@lib/ui/_internal/floating-ui';
 import { AbortError, useAnchor, useCommit, useRun, useValue } from '@lib/state';
+import { AppearanceToggle } from '@lib/theme/appearance-toggle';
 import {
   alignChanged,
   alignOffsetChanged,
@@ -404,6 +405,7 @@ const FloatingUiScratchpad = () => {
           { label: 'Scratchpad', href: '/scratchpad' },
           { label: 'Floating UI' },
         ]}
+        actions={<AppearanceToggle />}
       />
       <FrameBody>
         <Flex as="div" direction="column" gap={7} class={css.column}>

@@ -439,6 +439,9 @@ importers:
       '@lib/state':
         specifier: workspace:*
         version: link:../../lib/state
+      '@lib/theme':
+        specifier: workspace:*
+        version: link:../../lib/theme
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
