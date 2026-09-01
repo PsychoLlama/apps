@@ -1,7 +1,6 @@
 /**
  * State for the floating-UI experiment: every placement input the
- * floating window takes, plus the anchor handle the tether measures
- * against.
+ * floating window takes.
  *
  * All of it is page-local and dies with the route — except
  * `tetherDisabled`, which `@lib/runtime-config` persists to OPFS and fans
@@ -12,8 +11,6 @@
 export {
   alignChanged,
   alignOffsetChanged,
-  anchorCaptured,
-  anchorElement,
   arrowAlignChanged,
   arrowBaseChanged,
   arrowDepthChanged,

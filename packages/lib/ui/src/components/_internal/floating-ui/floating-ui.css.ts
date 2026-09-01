@@ -8,12 +8,37 @@ import { radius } from '@lib/design';
 import { offset } from './arrow.css';
 
 /**
- * Anchor target — establishes the positioning context an absolutely
- * positioned floating surface resolves against. Apply to whatever
- * element a floating primitive should anchor to.
+ * Anchor wrapper — the box a floating surface positions against.
+ *
+ * Deliberately featureless, and that's the whole point. An absolutely
+ * positioned child resolves its percentages against the nearest
+ * positioned ancestor's *padding* box, while `getBoundingClientRect()`
+ * — what the tether measures — returns the *border* box. Put the
+ * positioning context on an element that carries a border and the two
+ * disagree by that border's width, so the surface shifts the moment the
+ * tether takes over. A wrapper with no border of its own collapses the
+ * two boxes onto each other and the disagreement can't arise.
+ *
+ * Consumers style the element they wrap, never this one.
  */
-export const anchor = style({
+const anchorBase = style({
   position: 'relative',
+});
+
+/**
+ * How the anchor wrapper sits in the surrounding flow. Both modes
+ * shrink-wrap: a stretched wrapper would put its own edges where the
+ * anchored element's should be, and `left: 100%` would bind the surface
+ * to the wrong box — the same class of error the border-box collapse
+ * above exists to prevent, only wider.
+ *
+ * Shrink-wrapping is also why the wrapper takes a `class`: it can size
+ * itself to its content but can't infer that an anchor was meant to
+ * stretch. That case sizes the wrapper, which now *is* the anchor's box.
+ */
+export const anchor = styleVariants({
+  block: [anchorBase, { display: 'block', width: 'fit-content' }],
+  inline: [anchorBase, { display: 'inline-block' }],
 });
 
 /**
