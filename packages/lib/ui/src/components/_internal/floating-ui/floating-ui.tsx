@@ -227,8 +227,11 @@ export interface FloatingContainerProps
  * that edge — and wraps the {@link FloatingBody} surface. Further
  * plumbing (layering) will land here as the primitive grows.
  *
- * The arrow renders before the body so, once both are stacked, the body
- * paints over the arrow's shadow seam without needing a `z-index`.
+ * The arrow renders before the body because the container's
+ * `flex-direction` seats it from that end — DOM order here is layout, not
+ * paint order. The arrow always paints above the surface; it carries a
+ * stacking context so the surface's shadow can't bleed onto it (see
+ * `arrow.css`).
  */
 export const FloatingContainer = (props: FloatingContainerProps) => {
   // Keep the container's own positioning props; forward everything else (flex,
