@@ -2,7 +2,7 @@ import { createVar, fallbackVar, style } from '@vanilla-extract/css';
 
 /**
  * Distance an edge-aligned arrow is pushed off the surface's rounded
- * corner. The container assigns it from its `radius` (see
+ * corner. The window assigns it from its `radius` (see
  * `arrowRadiusOffset`); an unset var falls back to `0`.
  */
 export const offset = createVar();
@@ -10,14 +10,14 @@ export const offset = createVar();
 /**
  * The tether's resolved arrow position, in px from the surface's
  * leading edge along the edge the arrow sits on. Only meaningful while
- * the container is tethered, where it replaces `align-self` seating
+ * the window is tethered, where it replaces `align-self` seating
  * outright rather than adjusting it.
  */
 export const tetherOffset = createVar();
 
 /**
  * Seats the arrow along the anchor edge via `align-self` — the cross axis
- * of the container's arrow/body stack. `data-align` maps to the same
+ * of the window's arrow/body stack. `data-align` maps to the same
  * endpoints as the surface's own alignment: `start` hugs the top
  * (left/right sides) or left (top/bottom sides), `end` the opposite.
  *
@@ -26,7 +26,7 @@ export const tetherOffset = createVar();
  * nudge lands on whichever axis the arrow stacks against — inline for
  * up/down arrows (horizontal edge), block for left/right (vertical edge).
  *
- * Under a tethered container the arrow is measured against the anchor
+ * Under a tethered window the arrow is measured against the anchor
  * instead: it collapses to the start of the edge and rides out to the
  * offset `@floating-ui/dom` centers it on, so it keeps pointing at the
  * anchor after the surface has flipped or slid.

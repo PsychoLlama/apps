@@ -20,10 +20,15 @@ import {
 } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
 import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
+import { useAnchorElement } from './root';
 import * as arrowCss from './arrow.css';
 import * as css from './floating-ui.css';
 
-export { anchor } from './floating-ui.css';
+export {
+  FloatingRoot,
+  type FloatingRootDisplay,
+  type FloatingRootProps,
+} from './root';
 export {
   Arrow,
   type ArrowAlign,
@@ -52,20 +57,24 @@ export {
  * feature, built to own the anchoring, layering, and surface chrome that
  * every floating component reaches for.
  *
- * The primitive splits into two layers:
- * - `FloatingContainer` — the outer entry point. It will grow to own the
+ * The primitive splits into three layers:
+ * - `FloatingRoot` — the box everything positions against. It wraps the
+ *   anchored element and publishes it through context, so a window is
+ *   never handed an element by hand.
+ * - `FloatingWindow` — the positioned box. It will grow to own the
  *   plumbing floating surfaces share (anchoring, layering) and wraps the
  *   body.
  * - `FloatingBody` — the visual surface. It lays out and pads its
  *   children and is the node consumers style and target in tests.
  *
- * Placement is pure CSS: the surface is a sibling of the anchor, so it
- * lands on the right side with no JavaScript and no measurement. The
+ * Placement is pure CSS: the window is a sibling of the anchored element
+ * inside the root, so it lands on the right side with no JavaScript and
+ * no measurement. The
  * tether (see `./tether/create-tether`) is the progressive enhancement
  * on top — once it can measure the page, `@floating-ui/dom` resolves a
  * placement that dodges whatever is clipping the surface, and its answer
  * merges over the requested one here, in props space. The tether never
- * touches the DOM, so this component stays the container's only writer.
+ * touches the DOM, so this component stays the window's only writer.
  */
 
 // The CSS placement is deliberately hand-rolled and short-lived. It
@@ -75,7 +84,7 @@ export {
 //
 // The pieces are named and shaped after their anchor-positioning
 // successors so the migration stays mechanical:
-// - `anchor` class              → `anchor-name`
+// - `<FloatingRoot>`            → `anchor-name`
 // - `data-side` + `data-align`  → `position-area` (side/align pairs map
 //   onto its two-keyword grid values: bottom/center → `bottom`,
 //   bottom/start → `bottom span-right`, …)
@@ -123,7 +132,7 @@ export const FloatingBody = (props: FloatingBodyProps) => {
 
 /**
  * Arrow configuration for a floating primitive. `direction` is omitted —
- * the container derives it from the resolved side.
+ * the window derives it from the resolved side.
  */
 export interface FloatingArrowProps extends Omit<ArrowProps, 'direction'> {
   /** Whether to render the arrow. Defaults to `false`. */
@@ -132,7 +141,7 @@ export interface FloatingArrowProps extends Omit<ArrowProps, 'direction'> {
 
 /**
  * Direction the arrow points so it faces the anchor, keyed by the
- * resolved side. The container's `flex-direction` (driven from CSS by
+ * resolved side. The window's `flex-direction` (driven from CSS by
  * `data-side`) seats the DOM-first arrow on the anchor-facing edge.
  */
 const ARROW_DIRECTION_BY_SIDE: Record<FloatingSide, ArrowDirection> = {
@@ -154,56 +163,50 @@ const arrowPaddingFor = (scale: RadiusScale | undefined) =>
 /**
  * Props for the floating primitive entry point.
  *
- * The flex, padding, and test-id groups aren't the container's own — they
+ * The flex, padding, and test-id groups aren't the window's own — they
  * pass straight through to the {@link FloatingBody} surface, the node
  * that lays out and pads the content. So does {@link class} and
- * {@link radius}. The container keeps only what positions the surface:
+ * {@link radius}. The window keeps only what positions itself:
  * {@link side}, {@link align}, and the {@link arrow}.
  */
-export interface FloatingContainerProps
+export interface FloatingWindowProps
   extends FlexProps, PaddingProps, TestIdProps {
-  /**
-   * The anchor element the surface positions against — the same node
-   * carrying the `anchor` class. The pure-CSS placement resolves it
-   * structurally and doesn't need this; the tether can't, so it stays
-   * dormant until the element is provided.
-   */
-  anchor?: HTMLElement;
   /** Edge of the anchor the surface binds to. Defaults to `'bottom'`. */
   side?: FloatingSide;
   /** Placement along that edge. Defaults to `'center'`. */
   align?: FloatingAlignment;
   /**
-   * Gap between the anchor edge and the surface, in px. In point mode,
-   * the gap opens between the point and the surface instead. Defaults
+   * Gap between the anchor edge and the window, in px. In point mode,
+   * the gap opens between the point and the window instead. Defaults
    * to `0`.
    */
   sideOffset?: number;
   /**
    * Nudge along the bound edge, in px. Positive values push a
-   * `start`-aligned surface toward `end`, an `end`-aligned surface
-   * toward `start`, and a centered surface toward `end` — flipping
+   * `start`-aligned window toward `end`, an `end`-aligned window
+   * toward `start`, and a centered window toward `end` — flipping
    * alignment never flips the sign. Defaults to `0`.
    */
   alignOffset?: number;
   /**
-   * Bind the surface to a point inside the anchor box instead of an
+   * Bind the window to a point inside the anchor box instead of an
    * edge. {@link side} and {@link align} then describe which way the
-   * surface grows from that point.
+   * window grows from that point.
    */
   point?: FloatingPoint;
   /**
    * Progressive enhancement: watch the anchor, surface, and everything
    * clipping them, and re-resolve the placement to dodge collisions.
-   * Requires {@link anchor}. Without JavaScript — or before hydration —
-   * the pure-CSS placement stands.
+   * Without JavaScript — or before hydration — the pure-CSS placement
+   * stands on its own.
    *
-   * Required: a floating surface that can't dodge what clips it is
-   * broken, not configured, so there's no way to opt out. `{}` takes
-   * every pass at its default; the individual passes tune or disable
-   * themselves from there.
+   * Required, because a floating window that can't dodge what clips it
+   * is broken rather than configured — the call has to be made, not
+   * defaulted into. `{}` takes every pass at its default and the passes
+   * tune themselves from there; `false` stands the tether down for good,
+   * pinning the window to the pure-CSS placement.
    */
-  tether: TetherOptions;
+  tether: TetherOptions | false;
   /**
    * Border radius of the surface, from the design token scale. Also
    * keeps a start/end-aligned arrow clear of the rounded corner.
@@ -212,7 +215,7 @@ export interface FloatingContainerProps
   /**
    * Class merged onto the {@link FloatingBody} surface — the node that
    * carries the background, padding, and other chrome. Applies to the
-   * body, not the positioning container.
+   * body, not the positioned box.
    */
   class?: string;
   /** Pointer arrow tying the surface to its anchor. Hidden by default. */
@@ -222,22 +225,24 @@ export interface FloatingContainerProps
 }
 
 /**
- * Entry point for a floating primitive. Owns the positioning container —
- * placing the surface outside a side of the anchor and aligning it along
- * that edge — and wraps the {@link FloatingBody} surface. Further
- * plumbing (layering) will land here as the primitive grows.
+ * Entry point for a floating primitive. Owns the positioned box —
+ * placing itself outside a side of the anchor and aligning along that
+ * edge — and wraps the {@link FloatingBody} surface. Further plumbing
+ * (layering) will land here as the primitive grows.
  *
- * The arrow renders before the body because the container's
+ * Must render inside a {@link FloatingRoot}, which supplies the box it
+ * positions against.
+ *
+ * The arrow renders before the body because the window's
  * `flex-direction` seats it from that end — DOM order here is layout, not
  * paint order. The arrow always paints above the surface; it carries a
  * stacking context so the surface's shadow can't bleed onto it (see
  * `arrow.css`).
  */
-export const FloatingContainer = (props: FloatingContainerProps) => {
-  // Keep the container's own positioning props; forward everything else (flex,
+export const FloatingWindow = (props: FloatingWindowProps) => {
+  // Keep the window's own positioning props; forward everything else (flex,
   // padding, test-id, radius, class, children) onto the body surface.
-  const [container, body] = splitProps(props, [
-    'anchor',
+  const [own, body] = splitProps(props, [
     'side',
     'align',
     'arrow',
@@ -247,37 +252,41 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
     'tether',
   ]);
 
+  const anchorElement = useAnchorElement();
   const [floatingElement, setFloatingElement] = createSignal<HTMLDivElement>();
   const [arrowElement, setArrowElement] = createSignal<SVGSVGElement>();
 
   const tether = createTether(() => {
     const floating = floatingElement();
-    const anchorElement = container.anchor;
-    // Dormant until there's an anchor to measure against — that gap is
-    // the progressive-enhancement window the pure-CSS placement covers.
-    if (!floating || !anchorElement) return null;
+    const anchor = anchorElement();
+    const options = own.tether;
+
+    // Dormant until both boxes exist to measure — that gap is the
+    // progressive-enhancement window the pure-CSS placement covers, and
+    // `tether={false}` holds it open for good.
+    if (!floating || !anchor || options === false) return null;
 
     return {
       floating,
-      anchor: anchorElement,
+      anchor,
       placement: {
-        side: container.side ?? 'bottom',
-        align: container.align ?? 'center',
+        side: own.side ?? 'bottom',
+        align: own.align ?? 'center',
       },
-      sideOffset: container.sideOffset ?? 0,
-      alignOffset: container.alignOffset ?? 0,
+      sideOffset: own.sideOffset ?? 0,
+      alignOffset: own.alignOffset ?? 0,
       arrowPadding: arrowPaddingFor(body.radius),
-      ...(container.point && { point: container.point }),
-      ...(container.arrow?.visible && { arrow: arrowElement() }),
-      ...container.tether,
+      ...(own.point && { point: own.point }),
+      ...(own.arrow?.visible && { arrow: arrowElement() }),
+      ...options,
     };
   });
 
-  const side = () => tether.placement?.side ?? container.side ?? 'bottom';
-  const align = () => tether.placement?.align ?? container.align ?? 'center';
+  const side = () => tether.placement?.side ?? own.side ?? 'bottom';
+  const align = () => tether.placement?.align ?? own.align ?? 'center';
 
   const className = () =>
-    [css.container, body.radius && css.arrowRadiusOffset[body.radius]]
+    [css.window, body.radius && css.arrowRadiusOffset[body.radius]]
       .filter(Boolean)
       .join(' ');
 
@@ -286,15 +295,15 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
   // the same way, plus the `data-side`/`data-align` attributes.
   const inlineVars = () =>
     assignInlineVars({
-      ...(container.sideOffset !== undefined && {
-        [css.sideOffset]: `${container.sideOffset}px`,
+      ...(own.sideOffset !== undefined && {
+        [css.sideOffset]: `${own.sideOffset}px`,
       }),
-      ...(container.alignOffset !== undefined && {
-        [css.alignOffset]: `${container.alignOffset}px`,
+      ...(own.alignOffset !== undefined && {
+        [css.alignOffset]: `${own.alignOffset}px`,
       }),
-      ...(container.point && {
-        [css.pointX]: `${container.point.x}px`,
-        [css.pointY]: `${container.point.y}px`,
+      ...(own.point && {
+        [css.pointX]: `${own.point.x}px`,
+        [css.pointY]: `${own.point.y}px`,
       }),
       ...(tether.translate && {
         [css.tetherX]: `${tether.translate.x}px`,
@@ -323,18 +332,18 @@ export const FloatingContainer = (props: FloatingContainerProps) => {
       style={inlineVars()}
       data-side={side()}
       data-align={align()}
-      data-point={container.point ? '' : undefined}
+      data-point={own.point ? '' : undefined}
       data-tethered={tether.placement ? '' : undefined}
     >
-      <Show when={container.arrow?.visible}>
+      <Show when={own.arrow?.visible}>
         <Arrow
           ref={setArrowElement}
-          base={container.arrow?.base}
-          depth={container.arrow?.depth}
+          base={own.arrow?.base}
+          depth={own.arrow?.depth}
           direction={ARROW_DIRECTION_BY_SIDE[side()]}
-          align={container.arrow?.align}
-          hidden={container.arrow?.hidden ?? tether.arrow?.hidden}
-          class={container.arrow?.class}
+          align={own.arrow?.align}
+          hidden={own.arrow?.hidden ?? tether.arrow?.hidden}
+          class={own.arrow?.class}
         />
       </Show>
       <FloatingBody {...body} />

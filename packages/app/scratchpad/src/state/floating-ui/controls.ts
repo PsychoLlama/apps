@@ -1,4 +1,4 @@
-import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
+import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { environment } from '@lib/runtime-config';
 import type { RadiusScale } from '@lib/design';
 import type {
@@ -58,9 +58,9 @@ export interface FloatingControlsState {
    */
   point: FloatingPoint | null;
   /**
-   * Whether to withhold the anchor, leaving the tether nothing to
-   * measure against. That's the pre-hydration state, where the pure-CSS
-   * placement stands on its own.
+   * Whether to stand the tether down (`tether={false}`), leaving the
+   * pure-CSS placement in sole charge — the pre-hydration state, held
+   * open indefinitely.
    *
    * The one control that outlives the page. It persists through
    * `@lib/runtime-config`, so `trackTetherConfigSaga` is its only writer
@@ -108,15 +108,6 @@ const defaults = (): FloatingControlsState => ({
 export const floatingControls = defineStore<FloatingControlsState>(
   scratchpadScope,
   defaults,
-);
-
-/**
- * The hatched target element the floating window anchors against. A cell,
- * not store state — it holds a live DOM node that must never be proxied.
- */
-export const anchorElement = defineCell<HTMLElement | null>(
-  scratchpadScope,
-  () => null,
 );
 
 /** The window bound to a different edge of the anchor. */
@@ -184,7 +175,7 @@ defineFold(pointChanged, [floatingControls], (controls, point) => {
 });
 
 /**
- * Withholding the anchor from the tether resolved to a new value.
+ * Standing the tether down resolved to a new value.
  *
  * Published by the runtime-config subscription, never by the checkbox
  * that triggered a change: the toggle persists through
@@ -227,9 +218,7 @@ defineFold(flipModeChanged, [floatingControls], (controls, mode) => {
 });
 
 /**
- * Every control put back to its default. Only the controls — the
- * captured anchor is a live DOM node the page still owns, not an
- * override to undo.
+ * Every control put back to its default.
  *
  * `tetherDisabled` is restored here too, but the durable copy is cleared
  * separately by `resetControlsSaga`; both land on the same value, so the
@@ -238,10 +227,4 @@ defineFold(flipModeChanged, [floatingControls], (controls, mode) => {
 export const controlsReset = defineTopic();
 defineFold(controlsReset, [floatingControls], (controls) => {
   Object.assign(controls, defaults());
-});
-
-/** The target element was captured so the tether can measure against it. */
-export const anchorCaptured = defineTopic<HTMLElement>();
-defineFold(anchorCaptured, [anchorElement], (anchor, element) => {
-  anchor.current = element;
 });

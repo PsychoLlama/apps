@@ -104,7 +104,7 @@ export interface TetherOptions {
 export interface TetherConfig extends TetherOptions {
   /** The anchor element the placement resolves against. */
   anchor: HTMLElement;
-  /** The floating element being placed — the positioning container. */
+  /** The floating element being placed — the positioned window. */
   floating: HTMLElement;
   /** The arrow element, when one is rendered. */
   arrow?: SVGSVGElement;

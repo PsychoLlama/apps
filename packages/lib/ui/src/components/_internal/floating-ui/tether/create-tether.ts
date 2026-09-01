@@ -27,11 +27,11 @@ import {
  *
  * This module owns only the reactive glue — keep `@floating-ui/dom`
  * fed by `autoUpdate` and stream its answers into a store. It never
- * touches the DOM beyond measuring, so the container stays the single
+ * touches the DOM beyond measuring, so the window stays the single
  * writer.
  *
  * Coordinates come back relative to the floating element's offset
- * parent — the anchor, since the container is absolutely positioned
+ * parent — the anchor, since the window is absolutely positioned
  * inside it. That is exactly the space the CSS placement already works in, so
  * the tether's answer slots straight into a `translate` without a
  * second frame of reference.

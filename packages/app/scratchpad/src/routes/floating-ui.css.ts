@@ -91,12 +91,27 @@ export const canvas = style({
 });
 
 /**
+ * The `FloatingRoot` wrapper's slot in the canvas.
+ *
+ * `flex-shrink` is the only thing the wrapper needs from the page: it's
+ * the flex item now, and the default `1` would let the canvas squeeze it
+ * narrower than the target it wraps. Everything else about its box comes
+ * from shrink-wrapping the target.
+ */
+export const anchorSlot = style({
+  flexShrink: 0,
+});
+
+/**
  * The shrunk box the floating window anchors against. Kept small and
  * centered in its canvas so the window stays visible whichever side it
  * binds to. Diagonal hatching makes the box's bounds obvious.
+ *
+ * The dashed border is what makes this the interesting case: the
+ * `FloatingRoot` wrapper exists so the tether and the CSS placement
+ * agree on where this box's edges are despite it.
  */
 export const target = style({
-  flexShrink: 0,
   width: '12rem',
   height: '8rem',
   borderRadius: radius[4],

@@ -19,8 +19,8 @@ import {
   TextField,
 } from '@lib/ui';
 import {
-  FloatingContainer,
-  anchor,
+  FloatingRoot,
+  FloatingWindow,
   type ArrowAlign,
   type FloatingAlignment,
   type FloatingPoint,
@@ -35,8 +35,6 @@ import { AppearanceToggle } from '@lib/theme/appearance-toggle';
 import {
   alignChanged,
   alignOffsetChanged,
-  anchorCaptured,
-  anchorElement,
   arrowAlignChanged,
   arrowBaseChanged,
   arrowDepthChanged,
@@ -324,7 +322,6 @@ const centerScroll = (element: HTMLElement) => {
 const FloatingUiScratchpad = () => {
   useAnchor(scratchpadScope);
   const controls = useValue(floatingControls);
-  const anchorEl = useValue(anchorElement);
   const commit = useCommit();
   const track = useRun(trackTetherConfigSaga);
   const commitTetherDisabled = useRun(commitTetherDisabledSaga);
@@ -370,8 +367,6 @@ const FloatingUiScratchpad = () => {
     commit(arrowVisibilityChanged(visible));
   const chooseArrowBase = (base: number) => commit(arrowBaseChanged(base));
   const chooseArrowDepth = (depth: number) => commit(arrowDepthChanged(depth));
-  const captureAnchor = (element: HTMLElement) =>
-    commit(anchorCaptured(element));
 
   /** The behavior cards currently checked, as the group reads them. */
   const behaviors = (): TetherBehavior[] => [
@@ -388,9 +383,11 @@ const FloatingUiScratchpad = () => {
 
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
-    // Ignore clicks that bubble out of the floating window itself.
-    if (!controls().point || event.target !== event.currentTarget) return;
+    if (!controls().point) return;
 
+    // Measured against the target's border box, which is exactly the
+    // box `FloatingRoot` wraps — so the coordinates the window places
+    // against are the ones read here.
     const bounds = event.currentTarget.getBoundingClientRect();
     choosePoint({
       x: event.clientX - bounds.left,
@@ -411,27 +408,22 @@ const FloatingUiScratchpad = () => {
         <Flex as="div" direction="column" gap={7} class={css.column}>
           <Flex as="div" ref={centerScroll} class={css.stage}>
             <Flex as="div" align="center" justify="center" class={css.canvas}>
-              <Flex
-                as="section"
-                ref={captureAnchor}
-                class={[css.target, anchor, controls().point && css.pointArmed]
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={placePoint}
-              >
-                <FloatingContainer
-                  anchor={
-                    controls().tetherDisabled
-                      ? undefined
-                      : (anchorEl() ?? undefined)
-                  }
+              <FloatingRoot display="block" class={css.anchorSlot}>
+                <Flex
+                  as="section"
+                  class={[css.target, controls().point && css.pointArmed]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={placePoint}
+                />
+                <FloatingWindow
                   side={controls().side}
                   align={controls().align}
                   radius={controls().radius}
                   sideOffset={controls().sideOffset}
                   alignOffset={controls().alignOffset}
                   point={controls().point ?? undefined}
-                  tether={tetherOptions()}
+                  tether={controls().tetherDisabled ? false : tetherOptions()}
                   direction="column"
                   gap={1}
                   py={3}
@@ -457,13 +449,13 @@ const FloatingUiScratchpad = () => {
                     A taller surface so the arrow has room to sit mid-height
                     when the window binds to the left or right edge.
                   </Text>
-                </FloatingContainer>
-              </Flex>
+                </FloatingWindow>
+              </FloatingRoot>
             </Flex>
           </Flex>
 
           <Grid as="div" class={css.configs}>
-            <ControlGroup label="Container props">
+            <ControlGroup label="Window props">
               <ChoiceControl
                 label="Side"
                 name="side"
@@ -549,8 +541,8 @@ const FloatingUiScratchpad = () => {
                   Disable tether
                 </Checkbox>
                 <Text as="p" size={1} selectable={false} class={css.hint}>
-                  Withholds the anchor, so the tether has nothing to measure —
-                  the pre-hydration state, where placement comes from CSS alone.
+                  Stands the tether down, so nothing gets measured — the
+                  pre-hydration state, where placement comes from CSS alone.
                 </Text>
               </Flex>
               <NumberControl

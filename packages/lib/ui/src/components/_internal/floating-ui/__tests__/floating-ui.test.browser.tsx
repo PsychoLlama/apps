@@ -7,11 +7,10 @@
  */
 
 import { render, waitFor } from '@solidjs/testing-library';
-import { createSignal } from 'solid-js';
 import {
-  FloatingContainer,
-  anchor,
-  type FloatingContainerProps,
+  FloatingRoot,
+  FloatingWindow,
+  type FloatingWindowProps,
   type TetherOptions,
 } from '../floating-ui';
 import * as css from '../floating-ui.css';
@@ -31,37 +30,25 @@ const expectNear = (actual: number, expected: number) =>
 /** A flip-only tether: no sliding, no size measurement. */
 const flipTether: TetherOptions = { shift: false, size: false };
 
-/** A tethered surface bound to a fixed 100×100 anchor. */
+/** A tethered window bound to a fixed 100×100 anchor. */
 const Tethered = (
-  props: Omit<FloatingContainerProps, 'children' | 'class' | 'anchor'> & {
+  props: Omit<FloatingWindowProps, 'children' | 'class'> & {
     stage: string;
     surface?: string;
   },
-) => {
-  const [anchorElement, setAnchorElement] = createSignal<HTMLElement>();
+) => (
+  <div class={props.stage}>
+    <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
+      <FloatingWindow {...props} class={props.surface ?? fixture.surface}>
+        content
+      </FloatingWindow>
+    </FloatingRoot>
+  </div>
+);
 
-  return (
-    <div class={props.stage}>
-      <div
-        ref={setAnchorElement}
-        class={`${anchor} ${fixture.anchorBox}`}
-        data-testid="anchor"
-      >
-        <FloatingContainer
-          {...props}
-          anchor={anchorElement()}
-          class={props.surface ?? fixture.surface}
-        >
-          content
-        </FloatingContainer>
-      </div>
-    </div>
-  );
-};
-
-/** Render a tethered surface and wait for the first placement to land. */
+/** Render a tethered window and wait for the first placement to land. */
 const renderTethered = async (
-  props: Omit<FloatingContainerProps, 'children' | 'class' | 'anchor'> & {
+  props: Omit<FloatingWindowProps, 'children' | 'class'> & {
     stage: string;
     surface?: string;
   },
@@ -79,20 +66,21 @@ const renderTethered = async (
 };
 
 /**
- * Render a surface bound to a fixed 100×100 anchor on a quiet stage. No
- * `anchor` prop, so the tether stays dormant and these cases measure the
- * pure-CSS placement — the pre-hydration state the tether enhances.
+ * Render a window bound to a fixed 100×100 anchor on a quiet stage.
+ * `tether={false}` keeps the tether standing down, so these cases
+ * measure the pure-CSS placement — the pre-hydration state the tether
+ * enhances.
  */
 const renderFloating = (
-  props: Omit<FloatingContainerProps, 'children' | 'class' | 'tether'> = {},
+  props: Omit<FloatingWindowProps, 'children' | 'class' | 'tether'> = {},
 ) => {
   const { container } = render(() => (
     <div class={fixture.stage}>
-      <div class={`${anchor} ${fixture.anchorBox}`} data-testid="anchor">
-        <FloatingContainer class={fixture.surface} tether={{}} {...props}>
+      <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
+        <FloatingWindow class={fixture.surface} tether={false} {...props}>
           content
-        </FloatingContainer>
-      </div>
+        </FloatingWindow>
+      </FloatingRoot>
     </div>
   ));
 
@@ -106,7 +94,64 @@ const renderFloating = (
   return { anchorRect, floatingRect };
 };
 
-describe('FloatingContainer geometry', () => {
+/**
+ * A window bound to a bordered anchor, with the tether either running or
+ * standing down. The anchored element sits inside the root rather than
+ * being it, which is what the border is here to exercise.
+ */
+const renderBordered = (tether: TetherOptions | false) => {
+  const { container } = render(() => (
+    <div class={fixture.stage}>
+      <FloatingRoot display="block" testId="anchor">
+        <div class={fixture.borderedAnchorBox} />
+        <FloatingWindow
+          class={fixture.surface}
+          side="bottom"
+          align="start"
+          tether={tether}
+        >
+          content
+        </FloatingWindow>
+      </FloatingRoot>
+    </div>
+  ));
+
+  return {
+    anchorBox: container.querySelector<HTMLElement>('[data-testid="anchor"]')!,
+    floating: container.querySelector<HTMLElement>('[data-side]')!,
+  };
+};
+
+describe('FloatingWindow geometry', () => {
+  it('agrees with the tether across a bordered anchor', async () => {
+    // Both paths have to name the same rectangle, or hydration shifts
+    // the window by the anchor's border width. The root is what makes
+    // them agree: it carries no border, so the padding box the CSS
+    // resolves against and the border box the tether measures coincide.
+    const css = renderBordered(false);
+    const cssOffset = {
+      x:
+        css.floating.getBoundingClientRect().left -
+        css.anchorBox.getBoundingClientRect().left,
+      y:
+        css.floating.getBoundingClientRect().top -
+        css.anchorBox.getBoundingClientRect().top,
+    };
+
+    const tethered = renderBordered({});
+    await waitFor(() =>
+      expect(tethered.floating).toHaveAttribute('data-tethered'),
+    );
+
+    const anchorRect = tethered.anchorBox.getBoundingClientRect();
+    const floatingRect = tethered.floating.getBoundingClientRect();
+
+    // The anchored element's border stays inside the box both paths see.
+    expect(anchorRect.width).toBeCloseTo(100);
+    expectNear(floatingRect.left - anchorRect.left, cssOffset.x);
+    expectNear(floatingRect.top - anchorRect.top, cssOffset.y);
+  });
+
   it('rests fully outside the bound edge', () => {
     const bottom = renderFloating({ side: 'bottom' });
     expect(bottom.floatingRect.top).toBeCloseTo(bottom.anchorRect.bottom);

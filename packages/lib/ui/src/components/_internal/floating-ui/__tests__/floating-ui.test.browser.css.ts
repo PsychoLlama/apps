@@ -24,6 +24,19 @@ export const anchorBox = style({
   height: '100px',
 });
 
+/**
+ * A bordered anchor. The border is the entire point of the fixture: it's
+ * what used to drive the CSS placement (which resolves against its
+ * ancestor's padding box) and the tether (which measures a border box)
+ * apart, so the window jumped the moment the tether took over.
+ */
+export const borderedAnchorBox = style({
+  width: '100px',
+  height: '100px',
+  boxSizing: 'border-box',
+  border: '4px solid',
+});
+
 /** Fixed-size surface so expected positions are exact. */
 export const surface = style({
   width: '80px',
