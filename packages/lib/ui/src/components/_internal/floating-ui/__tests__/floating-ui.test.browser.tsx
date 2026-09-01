@@ -8,9 +8,9 @@
 
 import { render, waitFor } from '@solidjs/testing-library';
 import {
-  FloatingAnchor,
-  FloatingContainer,
-  type FloatingContainerProps,
+  FloatingRoot,
+  FloatingWindow,
+  type FloatingWindowProps,
   type TetherOptions,
 } from '../floating-ui';
 import * as css from '../floating-ui.css';
@@ -30,25 +30,25 @@ const expectNear = (actual: number, expected: number) =>
 /** A flip-only tether: no sliding, no size measurement. */
 const flipTether: TetherOptions = { shift: false, size: false };
 
-/** A tethered surface bound to a fixed 100×100 anchor. */
+/** A tethered window bound to a fixed 100×100 anchor. */
 const Tethered = (
-  props: Omit<FloatingContainerProps, 'children' | 'class'> & {
+  props: Omit<FloatingWindowProps, 'children' | 'class'> & {
     stage: string;
     surface?: string;
   },
 ) => (
   <div class={props.stage}>
-    <FloatingAnchor display="block" class={fixture.anchorBox} testId="anchor">
-      <FloatingContainer {...props} class={props.surface ?? fixture.surface}>
+    <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
+      <FloatingWindow {...props} class={props.surface ?? fixture.surface}>
         content
-      </FloatingContainer>
-    </FloatingAnchor>
+      </FloatingWindow>
+    </FloatingRoot>
   </div>
 );
 
-/** Render a tethered surface and wait for the first placement to land. */
+/** Render a tethered window and wait for the first placement to land. */
 const renderTethered = async (
-  props: Omit<FloatingContainerProps, 'children' | 'class'> & {
+  props: Omit<FloatingWindowProps, 'children' | 'class'> & {
     stage: string;
     surface?: string;
   },
@@ -66,21 +66,21 @@ const renderTethered = async (
 };
 
 /**
- * Render a surface bound to a fixed 100×100 anchor on a quiet stage.
+ * Render a window bound to a fixed 100×100 anchor on a quiet stage.
  * `tether={false}` keeps the tether standing down, so these cases
  * measure the pure-CSS placement — the pre-hydration state the tether
  * enhances.
  */
 const renderFloating = (
-  props: Omit<FloatingContainerProps, 'children' | 'class' | 'tether'> = {},
+  props: Omit<FloatingWindowProps, 'children' | 'class' | 'tether'> = {},
 ) => {
   const { container } = render(() => (
     <div class={fixture.stage}>
-      <FloatingAnchor display="block" class={fixture.anchorBox} testId="anchor">
-        <FloatingContainer class={fixture.surface} tether={false} {...props}>
+      <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
+        <FloatingWindow class={fixture.surface} tether={false} {...props}>
           content
-        </FloatingContainer>
-      </FloatingAnchor>
+        </FloatingWindow>
+      </FloatingRoot>
     </div>
   ));
 
@@ -95,24 +95,24 @@ const renderFloating = (
 };
 
 /**
- * A surface bound to a bordered anchor, with the tether either running
- * or standing down. The anchored element sits inside the wrapper rather
- * than being it, which is what the border is here to exercise.
+ * A window bound to a bordered anchor, with the tether either running or
+ * standing down. The anchored element sits inside the root rather than
+ * being it, which is what the border is here to exercise.
  */
 const renderBordered = (tether: TetherOptions | false) => {
   const { container } = render(() => (
     <div class={fixture.stage}>
-      <FloatingAnchor display="block" testId="anchor">
+      <FloatingRoot display="block" testId="anchor">
         <div class={fixture.borderedAnchorBox} />
-        <FloatingContainer
+        <FloatingWindow
           class={fixture.surface}
           side="bottom"
           align="start"
           tether={tether}
         >
           content
-        </FloatingContainer>
-      </FloatingAnchor>
+        </FloatingWindow>
+      </FloatingRoot>
     </div>
   ));
 
@@ -122,11 +122,11 @@ const renderBordered = (tether: TetherOptions | false) => {
   };
 };
 
-describe('FloatingContainer geometry', () => {
+describe('FloatingWindow geometry', () => {
   it('agrees with the tether across a bordered anchor', async () => {
     // Both paths have to name the same rectangle, or hydration shifts
-    // the surface by the anchor's border width. The wrapper is what
-    // makes them agree: it carries no border, so the padding box the CSS
+    // the window by the anchor's border width. The root is what makes
+    // them agree: it carries no border, so the padding box the CSS
     // resolves against and the border box the tether measures coincide.
     const css = renderBordered(false);
     const cssOffset = {

@@ -3,7 +3,7 @@ import * as css from './arrow.css';
 /**
  * Pointer arrow for the floating-ui primitive — the decorative triangle
  * that ties a floating surface back to its anchor. Kept a sibling of the
- * container so the surface chrome and its pointer stay independently
+ * window so the surface chrome and its pointer stay independently
  * legible.
  */
 
@@ -31,7 +31,7 @@ export interface ArrowProps {
   depth?: number;
   /**
    * Placement along the anchor edge, applied as `align-self` within the
-   * container's arrow/body stack. Defaults to `'center'`.
+   * window's arrow/body stack. Defaults to `'center'`.
    */
   align?: ArrowAlign;
   /**

@@ -91,7 +91,7 @@ export const canvas = style({
 });
 
 /**
- * The `FloatingAnchor` wrapper's slot in the canvas.
+ * The `FloatingRoot` wrapper's slot in the canvas.
  *
  * `flex-shrink` is the only thing the wrapper needs from the page: it's
  * the flex item now, and the default `1` would let the canvas squeeze it
@@ -108,7 +108,7 @@ export const anchorSlot = style({
  * binds to. Diagonal hatching makes the box's bounds obvious.
  *
  * The dashed border is what makes this the interesting case: the
- * `FloatingAnchor` wrapper exists so the tether and the CSS placement
+ * `FloatingRoot` wrapper exists so the tether and the CSS placement
  * agree on where this box's edges are despite it.
  */
 export const target = style({

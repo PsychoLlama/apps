@@ -19,8 +19,8 @@ import {
   TextField,
 } from '@lib/ui';
 import {
-  FloatingAnchor,
-  FloatingContainer,
+  FloatingRoot,
+  FloatingWindow,
   type ArrowAlign,
   type FloatingAlignment,
   type FloatingPoint,
@@ -386,8 +386,8 @@ const FloatingUiScratchpad = () => {
     if (!controls().point) return;
 
     // Measured against the target's border box, which is exactly the
-    // box `FloatingAnchor` wraps — so the coordinates the container
-    // places against are the ones read here.
+    // box `FloatingRoot` wraps — so the coordinates the window places
+    // against are the ones read here.
     const bounds = event.currentTarget.getBoundingClientRect();
     choosePoint({
       x: event.clientX - bounds.left,
@@ -408,7 +408,7 @@ const FloatingUiScratchpad = () => {
         <Flex as="div" direction="column" gap={7} class={css.column}>
           <Flex as="div" ref={centerScroll} class={css.stage}>
             <Flex as="div" align="center" justify="center" class={css.canvas}>
-              <FloatingAnchor display="block" class={css.anchorSlot}>
+              <FloatingRoot display="block" class={css.anchorSlot}>
                 <Flex
                   as="section"
                   class={[css.target, controls().point && css.pointArmed]
@@ -416,7 +416,7 @@ const FloatingUiScratchpad = () => {
                     .join(' ')}
                   onClick={placePoint}
                 />
-                <FloatingContainer
+                <FloatingWindow
                   side={controls().side}
                   align={controls().align}
                   radius={controls().radius}
@@ -449,13 +449,13 @@ const FloatingUiScratchpad = () => {
                     A taller surface so the arrow has room to sit mid-height
                     when the window binds to the left or right edge.
                   </Text>
-                </FloatingContainer>
-              </FloatingAnchor>
+                </FloatingWindow>
+              </FloatingRoot>
             </Flex>
           </Flex>
 
           <Grid as="div" class={css.configs}>
-            <ControlGroup label="Container props">
+            <ControlGroup label="Window props">
               <ChoiceControl
                 label="Side"
                 name="side"

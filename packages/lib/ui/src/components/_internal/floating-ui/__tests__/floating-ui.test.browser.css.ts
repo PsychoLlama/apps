@@ -28,7 +28,7 @@ export const anchorBox = style({
  * A bordered anchor. The border is the entire point of the fixture: it's
  * what used to drive the CSS placement (which resolves against its
  * ancestor's padding box) and the tether (which measures a border box)
- * apart, so the surface jumped the moment the tether took over.
+ * apart, so the window jumped the moment the tether took over.
  */
 export const borderedAnchorBox = style({
   width: '100px',

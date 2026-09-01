@@ -1,17 +1,17 @@
 /**
  * Wiring tests for the floating-ui primitive.
  *
- * Covers what the three layers promise today: the anchor wraps what a
- * surface binds to and publishes it, the container wraps the body, and
- * the body renders and styles its children.
+ * Covers what the three layers promise today: the root wraps what a
+ * window binds to and publishes it, the window wraps the body, and the
+ * body renders and styles its children.
  */
 
 import { render, screen } from '@solidjs/testing-library';
 import {
-  FloatingAnchor,
+  FloatingRoot,
   FloatingBody,
-  FloatingContainer,
-  type FloatingContainerProps,
+  FloatingWindow,
+  type FloatingWindowProps,
 } from '../floating-ui';
 import * as css from '../floating-ui.css';
 
@@ -19,55 +19,55 @@ import * as css from '../floating-ui.css';
 const varName = (reference: string) => reference.slice(4, -1);
 
 /**
- * A container under the anchor the primitive requires above it.
+ * A window under the root the primitive requires above it.
  *
  * These are wiring tests, so the tether stands down throughout — JSDOM
  * runs no layout, and every case here is about what the container
  * renders rather than where a measured placement lands.
  */
-const Anchored = (props: Omit<FloatingContainerProps, 'tether'>) => (
-  <FloatingAnchor display="block">
-    <FloatingContainer {...props} tether={false} />
-  </FloatingAnchor>
+const Rooted = (props: Omit<FloatingWindowProps, 'tether'>) => (
+  <FloatingRoot display="block">
+    <FloatingWindow {...props} tether={false} />
+  </FloatingRoot>
 );
 
-describe('FloatingAnchor', () => {
+describe('FloatingRoot', () => {
   it('renders the element its display mode calls for', () => {
     const block = render(() => (
-      <FloatingAnchor display="block" testId="block">
+      <FloatingRoot display="block" testId="block">
         content
-      </FloatingAnchor>
+      </FloatingRoot>
     ));
     expect(screen.getByTestId('block').tagName.toLowerCase()).toBe('div');
     block.unmount();
 
     render(() => (
-      <FloatingAnchor display="inline" testId="inline">
+      <FloatingRoot display="inline" testId="inline">
         content
-      </FloatingAnchor>
+      </FloatingRoot>
     ));
     expect(screen.getByTestId('inline').tagName.toLowerCase()).toBe('span');
   });
 
   it('merges a consumer class onto the wrapper', () => {
     render(() => (
-      <FloatingAnchor display="block" testId="anchor" class="sized">
+      <FloatingRoot display="block" testId="anchor" class="sized">
         content
-      </FloatingAnchor>
+      </FloatingRoot>
     ));
 
     expect(screen.getByTestId('anchor')).toHaveClass('sized');
   });
 
-  it('keeps the surface a sibling of what it anchors to', () => {
-    // The container hanging off the anchored element is what let the
-    // anchor's own border, overflow, and stacking context reach the
-    // surface. Siblings under the wrapper is the shape that fixes it.
+  it('keeps the window a sibling of what it anchors to', () => {
+    // A window hanging off the anchored element is what let the anchor's
+    // own border, overflow, and stacking context reach the surface.
+    // Siblings under the root is the shape that fixes it.
     render(() => (
-      <FloatingAnchor display="block" testId="anchor">
+      <FloatingRoot display="block" testId="anchor">
         <button type="button">trigger</button>
-        <FloatingContainer tether={false}>content</FloatingContainer>
-      </FloatingAnchor>
+        <FloatingWindow tether={false}>content</FloatingWindow>
+      </FloatingRoot>
     ));
     const wrapper = screen.getByTestId('anchor');
 
@@ -76,14 +76,12 @@ describe('FloatingAnchor', () => {
     expect(wrapper.lastElementChild).toHaveAttribute('data-side');
   });
 
-  it('refuses a surface with nothing to anchor to', () => {
+  it('refuses a window with nothing to anchor to', () => {
     // Structural, not conditional: the same failure on the server and in
     // the browser beats silently placing against the viewport.
     expect(() =>
-      render(() => (
-        <FloatingContainer tether={false}>content</FloatingContainer>
-      )),
-    ).toThrow(/outside of <FloatingAnchor>/);
+      render(() => <FloatingWindow tether={false}>content</FloatingWindow>),
+    ).toThrow(/outside of <FloatingRoot>/);
   });
 });
 
@@ -123,15 +121,15 @@ describe('FloatingBody', () => {
   });
 });
 
-describe('FloatingContainer', () => {
+describe('FloatingWindow', () => {
   it('renders the body children', () => {
-    const { container } = render(() => <Anchored>content</Anchored>);
+    const { container } = render(() => <Rooted>content</Rooted>);
 
     expect(container).toHaveTextContent('content');
   });
 
   it('defaults to binding centered below the anchor', () => {
-    const { container } = render(() => <Anchored>content</Anchored>);
+    const { container } = render(() => <Rooted>content</Rooted>);
     const shell = container.querySelector('[data-side]');
 
     expect(shell).toHaveAttribute('data-side', 'bottom');
@@ -139,12 +137,12 @@ describe('FloatingContainer', () => {
   });
 
   it('forwards its radius to the body surface', () => {
-    const plain = render(() => <Anchored>content</Anchored>);
+    const plain = render(() => <Rooted>content</Rooted>);
     const plainBody =
       plain.container.querySelector('[data-side]')!.lastElementChild!.className;
     plain.unmount();
 
-    const { container } = render(() => <Anchored radius={4}>content</Anchored>);
+    const { container } = render(() => <Rooted radius={4}>content</Rooted>);
     const body =
       container.querySelector('[data-side]')!.lastElementChild!.className;
 
@@ -152,15 +150,15 @@ describe('FloatingContainer', () => {
   });
 
   it('forwards body props (test id, padding) onto the body surface', () => {
-    const plain = render(() => <Anchored>content</Anchored>);
+    const plain = render(() => <Rooted>content</Rooted>);
     const plainBody =
       plain.container.querySelector('[data-side]')!.lastElementChild!.className;
     plain.unmount();
 
     const { container } = render(() => (
-      <Anchored testId="surface" p={4}>
+      <Rooted testId="surface" p={4}>
         content
-      </Anchored>
+      </Rooted>
     ));
     const body = screen.getByTestId('surface');
 
@@ -176,7 +174,7 @@ describe('FloatingContainer', () => {
 
   it('forwards a consumer class onto the body surface', () => {
     const { container } = render(() => (
-      <Anchored class="surface">content</Anchored>
+      <Rooted class="surface">content</Rooted>
     ));
     const body = container.querySelector('[data-side]')!.lastElementChild;
 
@@ -187,9 +185,9 @@ describe('FloatingContainer', () => {
 
   it('reflects side and align into data attributes', () => {
     const { container } = render(() => (
-      <Anchored side="right" align="end">
+      <Rooted side="right" align="end">
         content
-      </Anchored>
+      </Rooted>
     ));
     const shell = container.querySelector('[data-side]');
 
@@ -198,14 +196,14 @@ describe('FloatingContainer', () => {
   });
 
   it('omits the arrow by default', () => {
-    const { container } = render(() => <Anchored>content</Anchored>);
+    const { container } = render(() => <Rooted>content</Rooted>);
 
     expect(container.querySelector('svg')).toBeNull();
   });
 
   it('renders the arrow before the body when visible', () => {
     const { container } = render(() => (
-      <Anchored arrow={{ visible: true }}>content</Anchored>
+      <Rooted arrow={{ visible: true }}>content</Rooted>
     ));
     const shell = container.querySelector('[data-side]');
 
@@ -221,9 +219,9 @@ describe('FloatingContainer', () => {
 
     for (const { side, width, height } of cases) {
       const { container } = render(() => (
-        <Anchored side={side} arrow={{ visible: true }}>
+        <Rooted side={side} arrow={{ visible: true }}>
           content
-        </Anchored>
+        </Rooted>
       ));
       const svg = container.querySelector('svg');
 
@@ -235,14 +233,14 @@ describe('FloatingContainer', () => {
 
   it('passes the arrow alignment through to the arrow', () => {
     const { container } = render(() => (
-      <Anchored arrow={{ visible: true, align: 'end' }}>content</Anchored>
+      <Rooted arrow={{ visible: true, align: 'end' }}>content</Rooted>
     ));
 
     expect(container.querySelector('svg')).toHaveAttribute('data-align', 'end');
   });
 
   it('assigns offsets as inline vars only when provided', () => {
-    const plain = render(() => <Anchored>content</Anchored>);
+    const plain = render(() => <Rooted>content</Rooted>);
     const plainShell =
       plain.container.querySelector<HTMLElement>('[data-side]')!;
 
@@ -254,9 +252,9 @@ describe('FloatingContainer', () => {
     plain.unmount();
 
     const { container } = render(() => (
-      <Anchored sideOffset={8} alignOffset={-4}>
+      <Rooted sideOffset={8} alignOffset={-4}>
         content
-      </Anchored>
+      </Rooted>
     ));
     const shell = container.querySelector<HTMLElement>('[data-side]')!;
 
@@ -265,16 +263,16 @@ describe('FloatingContainer', () => {
   });
 
   it('enters point mode only when a point is provided', () => {
-    const plain = render(() => <Anchored>content</Anchored>);
+    const plain = render(() => <Rooted>content</Rooted>);
     expect(plain.container.querySelector('[data-side]')).not.toHaveAttribute(
       'data-point',
     );
     plain.unmount();
 
     const { container } = render(() => (
-      <Anchored point={{ x: 12, y: 34 }} side="right" align="start">
+      <Rooted point={{ x: 12, y: 34 }} side="right" align="start">
         content
-      </Anchored>
+      </Rooted>
     ));
     const shell = container.querySelector<HTMLElement>('[data-side]')!;
 
@@ -291,11 +289,11 @@ describe('FloatingContainer', () => {
     // `tether={false}` is the pre-hydration state held open: however the
     // passes were configured, nothing measures and nothing moves.
     const { container } = render(() => (
-      <FloatingAnchor display="block">
-        <FloatingContainer side="top" align="end" tether={false}>
+      <FloatingRoot display="block">
+        <FloatingWindow side="top" align="end" tether={false}>
           content
-        </FloatingContainer>
-      </FloatingAnchor>
+        </FloatingWindow>
+      </FloatingRoot>
     ));
     const floating = container.querySelector('[data-side]');
 
@@ -310,9 +308,7 @@ describe('FloatingContainer', () => {
     const sides = ['top', 'right', 'bottom', 'left'] as const;
 
     for (const side of sides) {
-      const { container } = render(() => (
-        <Anchored side={side}>content</Anchored>
-      ));
+      const { container } = render(() => <Rooted side={side}>content</Rooted>);
       const shell = container.querySelector('[data-side]');
 
       expect(shell).toHaveAttribute('data-side', side);
