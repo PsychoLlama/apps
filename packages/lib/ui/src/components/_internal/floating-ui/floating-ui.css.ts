@@ -71,41 +71,73 @@ export const availableHeight = createVar();
 export const anchorWidth = createVar();
 export const anchorHeight = createVar();
 
-// Composition channels for the side/align-derived transform origin.
-// Side rules assign the axis facing the anchor; align rules assign the
-// axis running along the edge; unset halves resolve to center.
+// The corner of the surface that faces whatever it's bound to, as a
+// percentage of its own size. Doubles as the `transform-origin` — the
+// point a scale animation should grow out of is the same corner.
+// Unset halves resolve to center.
 const originX = createVar();
 const originY = createVar();
 
-// Point-mode translation, composed from side (anchor-facing axis,
-// including the side offset) and align (edge axis, including the align
-// offset) by the selectors below.
-const pointShiftX = createVar();
-const pointShiftY = createVar();
+// Which way the surface grows along each axis: `-1` back toward the
+// negative end (up/left), `1` forward. Only the backward placements
+// assign it; unset means forward.
+const signX = createVar();
+const signY = createVar();
+
+// How far the surface travels along each axis before the sign is
+// applied. Assigned by `data-side`, which is what decides whether a
+// given axis is the one facing the anchor or the one running along its
+// edge.
+const distanceX = createVar();
+const distanceY = createVar();
 
 const gap = fallbackVar(sideOffset, '0px');
 const nudge = fallbackVar(alignOffset, '0px');
 
 /**
+ * Displacement along one axis: pull the surface back by the corner
+ * facing its binding, then travel `distance` in the growth direction.
+ *
+ * Everything the placement does reduces to this. The rules below bind
+ * an edge of the surface to an edge of the anchor (or to a point) with
+ * a plain percentage inset, and this expression walks it from there —
+ * so a rule only has to name its corner, its direction, and how far.
+ */
+const shift = (origin: string, sign: string, distance: string) =>
+  `calc(-1 * ${fallbackVar(origin, '50%')} + ${fallbackVar(distance, '0px')} * ${fallbackVar(sign, '1')})`;
+
+/**
  * Positioning container for the floating surface.
  *
- * Edge mode (default): `data-side` places it fully outside the chosen
- * edge of the anchor and `data-align` positions it along that edge —
- * `start` hugs the top/left, `end` the bottom/right. {@link sideOffset}
- * opens a gap off the edge; {@link alignOffset} nudges along it.
+ * Placement is one unconditional translation. `data-side` and
+ * `data-align` never position the surface themselves — each binds one
+ * axis by pinning `top`/`left` to a percentage of the anchor box, then
+ * declares the three inputs {@link shift} needs for that axis. `side`
+ * owns the axis facing the anchor, `align` the axis running along the
+ * edge, so between them both axes are always fully described.
+ *
+ * Edge mode (default): `data-side` places the surface fully outside the
+ * chosen edge of the anchor and `data-align` positions it along that
+ * edge — `start` hugs the top/left, `end` the bottom/right.
+ * {@link sideOffset} opens a gap off the edge; {@link alignOffset}
+ * nudges along it.
  *
  * Point mode (`data-point`): the surface binds to a coordinate inside
- * the anchor box instead of an edge. `data-side`/`data-align` then
- * describe which way the surface grows from that point, and the offsets
- * displace it from the point the same way they displace it from an edge.
+ * the anchor box instead of an edge, so only the pins change — the
+ * translation already describes which way the surface grows and how far
+ * the offsets displace it.
  *
  * Tethered (`data-tethered`): once `@floating-ui/dom` has measured the
- * page, its answer supersedes both — every inset, margin, and transform
- * the placement rules set is cleared and the surface rides on a single
- * translation. The rules above remain the pre-JS (and no-JS) placement,
- * and `data-side`/`data-align` keep reflecting the resolved placement so
+ * page, its answer supersedes both — the pins collapse to the anchor's
+ * corner and the surface rides on the tether's own translation instead.
+ * The rules above remain the pre-JS (and no-JS) placement, and
+ * `data-side`/`data-align` keep reflecting the resolved placement so
  * everything keyed off them — the arrow's edge, the transform origin,
  * consumer animations — still follows the surface.
+ *
+ * Placement rides on `translate` rather than `transform`, which leaves
+ * `transform` entirely to consumers: a scale-in animation composes with
+ * the placement instead of overwriting it.
  *
  * A flexbox lays out the arrow and body. Each side sets its own
  * `flex-direction`, which seats the DOM-first arrow onto the edge facing
@@ -113,7 +145,7 @@ const nudge = fallbackVar(alignOffset, '0px');
  *
  * Every selector is wrapped in `:where(...)` so all rules hold equal
  * specificity and the cascade resolves by source order — the point-mode
- * and tethered blocks sit last so they can override the edge-mode rules.
+ * and tethered pins sit last so they can override the edge-mode ones.
  */
 export const container = style({
   position: 'absolute',
@@ -123,31 +155,38 @@ export const container = style({
     transformOrigin,
     `${fallbackVar(originX, '50%')} ${fallbackVar(originY, '50%')}`,
   ),
+  translate: `${shift(originX, signX, distanceX)} ${shift(originY, signY, distanceY)}`,
   selectors: {
-    // Push fully outside the chosen edge, and orient the arrow-first
-    // axis so the arrow lands on the anchor-facing edge. The margin
-    // opens the side-offset gap; the origin faces back at the anchor.
+    // Which offset runs along which axis. The side offset always travels
+    // on the axis facing the anchor, the align offset on the axis
+    // running along the edge — `data-side` is what says which is which.
+    '&:where([data-side="top"], [data-side="bottom"])': {
+      vars: { [distanceX]: nudge, [distanceY]: gap },
+    },
+    '&:where([data-side="left"], [data-side="right"])': {
+      vars: { [distanceX]: gap, [distanceY]: nudge },
+    },
+
+    // Pin the surface's anchor-facing edge to the anchor edge it sits
+    // outside of, and orient the arrow-first axis so the arrow lands on
+    // that same edge.
     '&:where([data-side="top"])': {
-      bottom: '100%',
-      marginBottom: gap,
+      top: 0,
       flexDirection: 'column-reverse',
-      vars: { [originY]: '100%' },
+      vars: { [originY]: '100%', [signY]: '-1' },
     },
     '&:where([data-side="bottom"])': {
       top: '100%',
-      marginTop: gap,
       flexDirection: 'column',
       vars: { [originY]: '0%' },
     },
     '&:where([data-side="left"])': {
-      right: '100%',
-      marginRight: gap,
+      left: 0,
       flexDirection: 'row-reverse',
-      vars: { [originX]: '100%' },
+      vars: { [originX]: '100%', [signX]: '-1' },
     },
     '&:where([data-side="right"])': {
       left: '100%',
-      marginLeft: gap,
       flexDirection: 'row',
       vars: { [originX]: '0%' },
     },
@@ -156,112 +195,53 @@ export const container = style({
     '&:where([data-side="top"][data-align="start"], [data-side="bottom"][data-align="start"])':
       {
         left: 0,
-        marginLeft: nudge,
         vars: { [originX]: '0%' },
       },
 
     '&:where([data-side="top"][data-align="center"], [data-side="bottom"][data-align="center"])':
       {
         left: '50%',
-        transform: `translateX(calc(-50% + ${nudge}))`,
       },
 
     '&:where([data-side="top"][data-align="end"], [data-side="bottom"][data-align="end"])':
       {
-        right: 0,
-        marginRight: nudge,
-        vars: { [originX]: '100%' },
+        left: '100%',
+        vars: { [originX]: '100%', [signX]: '-1' },
       },
 
     // Align along a vertical edge (left/right): start=top … end=bottom.
     '&:where([data-side="left"][data-align="start"], [data-side="right"][data-align="start"])':
       {
         top: 0,
-        marginTop: nudge,
         vars: { [originY]: '0%' },
       },
 
     '&:where([data-side="left"][data-align="center"], [data-side="right"][data-align="center"])':
       {
         top: '50%',
-        transform: `translateY(calc(-50% + ${nudge}))`,
       },
 
     '&:where([data-side="left"][data-align="end"], [data-side="right"][data-align="end"])':
       {
-        bottom: 0,
-        marginBottom: nudge,
-        vars: { [originY]: '100%' },
+        top: '100%',
+        vars: { [originY]: '100%', [signY]: '-1' },
       },
 
     // --- Point mode ---
-    // Bind the surface's reference corner to the point, then translate
-    // it so side/align describe the growth direction. Margins can't
-    // displace a top/left-bound box, so the offsets fold into the
-    // translation instead. Declared after the edge rules so it wins on
-    // source order.
+    // Repin both axes to the point. Declared after the edge rules so it
+    // wins on source order; the translation needs no adjustment.
     '&:where([data-point])': {
       top: fallbackVar(pointY, '0px'),
       left: fallbackVar(pointX, '0px'),
-      right: 'auto',
-      bottom: 'auto',
-      margin: 0,
-      transform: `translate(${fallbackVar(pointShiftX, '0px')}, ${fallbackVar(pointShiftY, '0px')})`,
     },
-
-    // Growth away from the point on the side axis, gap included.
-    '&:where([data-point][data-side="top"])': {
-      vars: { [pointShiftY]: `calc(-100% - ${gap})` },
-    },
-    '&:where([data-point][data-side="bottom"])': {
-      vars: { [pointShiftY]: gap },
-    },
-    '&:where([data-point][data-side="left"])': {
-      vars: { [pointShiftX]: `calc(-100% - ${gap})` },
-    },
-    '&:where([data-point][data-side="right"])': {
-      vars: { [pointShiftX]: gap },
-    },
-
-    // Alignment relative to the point on the edge axis, nudge included.
-    '&:where([data-point][data-side="top"][data-align="start"], [data-point][data-side="bottom"][data-align="start"])':
-      {
-        vars: { [pointShiftX]: nudge },
-      },
-    '&:where([data-point][data-side="top"][data-align="center"], [data-point][data-side="bottom"][data-align="center"])':
-      {
-        vars: { [pointShiftX]: `calc(-50% + ${nudge})` },
-      },
-    '&:where([data-point][data-side="top"][data-align="end"], [data-point][data-side="bottom"][data-align="end"])':
-      {
-        vars: { [pointShiftX]: `calc(-100% - ${nudge})` },
-      },
-
-    '&:where([data-point][data-side="left"][data-align="start"], [data-point][data-side="right"][data-align="start"])':
-      {
-        vars: { [pointShiftY]: nudge },
-      },
-    '&:where([data-point][data-side="left"][data-align="center"], [data-point][data-side="right"][data-align="center"])':
-      {
-        vars: { [pointShiftY]: `calc(-50% + ${nudge})` },
-      },
-    '&:where([data-point][data-side="left"][data-align="end"], [data-point][data-side="right"][data-align="end"])':
-      {
-        vars: { [pointShiftY]: `calc(-100% - ${nudge})` },
-      },
 
     // --- Tethered ---
-    // The tether resolves position in the anchor's own coordinate
-    // space, so pinning the container to the anchor's top-left corner and
-    // translating by its answer lands the surface exactly. Everything
-    // the placement rules above set has to be cleared first, or their
-    // insets and margins would compound with the translation.
+    // The tether resolves position in the anchor's own coordinate space,
+    // so pinning the container to the anchor's top-left corner and
+    // translating by its answer lands the surface exactly.
     '&:where([data-tethered])': {
-      inset: 'auto',
       top: 0,
       left: 0,
-      margin: 0,
-      transform: 'none',
       translate: `${fallbackVar(tetherX, '0px')} ${fallbackVar(tetherY, '0px')}`,
     },
   },

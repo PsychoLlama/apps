@@ -50,19 +50,27 @@ export const arrow = style({
     '&[data-direction="left"][data-align="end"], &[data-direction="right"][data-align="end"]':
       { marginBlockEnd: fallbackVar(offset, '0px') },
 
+    // The tether's seat, on whichever axis the arrow rides along. Held
+    // unconditionally — untethered the offset is `0`, so the translation
+    // is an identity, but it still lifts the arrow into its own stacking
+    // context. That's load-bearing: without it the surface's box-shadow
+    // composites over the arrow, and among static flex siblings DOM order
+    // won't reorder it (only a stacking context will). Declaring it here
+    // rather than under `[data-tethered]` keeps both states painting the
+    // same, instead of leaving the untethered one to bleed.
+    '&:where([data-direction="up"], [data-direction="down"])': {
+      translate: `${fallbackVar(tetherOffset, '0px')} 0`,
+    },
+    '&:where([data-direction="left"], [data-direction="right"])': {
+      translate: `0 ${fallbackVar(tetherOffset, '0px')}`,
+    },
+
     // Tethered: `flex-start` puts the arrow's leading edge at the
     // surface's, which is the origin the tether's offset is measured
-    // from, so a plain translation seats it.
+    // from, so the translation above seats it.
     '[data-tethered] &': {
       alignSelf: 'flex-start',
       margin: 0,
     },
-    '[data-tethered] &:where([data-direction="up"], [data-direction="down"])': {
-      translate: `${fallbackVar(tetherOffset, '0px')} 0`,
-    },
-    '[data-tethered] &:where([data-direction="left"], [data-direction="right"])':
-      {
-        translate: `0 ${fallbackVar(tetherOffset, '0px')}`,
-      },
   },
 });
