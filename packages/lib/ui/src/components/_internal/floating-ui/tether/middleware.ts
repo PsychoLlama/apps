@@ -5,6 +5,7 @@ import {
   shift,
   size,
   type Boundary,
+  type ComputePositionConfig,
   type DetectOverflowOptions,
   type Dimensions,
   type FlipOptions,
@@ -242,12 +243,6 @@ const pass = <Options extends DetectOverflowOptions>(
 };
 
 /**
- * The shape `computePosition` takes: a skipped pass may stay in the
- * list as a falsy hole rather than being spliced out.
- */
-type MiddlewareList = Array<Middleware | false | null | undefined>;
-
-/**
  * Translate the options map into a middleware list, in the order
  * `@floating-ui/dom` prescribes: displace, choose a placement, slide,
  * measure the room, seat the arrow. Our own reporting middleware run
@@ -256,7 +251,9 @@ type MiddlewareList = Array<Middleware | false | null | undefined>;
  * Disabled passes are left in place as `false`; the library skips them,
  * which keeps the list read as the pipeline in source order.
  */
-export const buildMiddleware = (config: TetherConfig): MiddlewareList => {
+export const buildMiddleware = (
+  config: TetherConfig,
+): ComputePositionConfig['middleware'] => {
   const overflow: DetectOverflowOptions = {
     padding: config.padding ?? 0,
     ...(config.boundary && { boundary: config.boundary }),
