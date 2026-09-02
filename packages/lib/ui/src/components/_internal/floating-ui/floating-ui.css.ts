@@ -13,11 +13,12 @@ import { offset } from './arrow.css';
  * Deliberately featureless, and that's the whole point. An absolutely
  * positioned child resolves its percentages against the nearest
  * positioned ancestor's *padding* box, while `getBoundingClientRect()`
- * — what the tether measures — returns the *border* box. Put the
+ * — what a measured placement reads — returns the *border* box. Put the
  * positioning context on an element that carries a border and the two
- * disagree by that border's width, so the window shifts the moment the
- * tether takes over. A wrapper with no border of its own collapses the
- * two boxes onto each other and the disagreement can't arise.
+ * disagree by that border's width, so the window shifts the moment a
+ * measured placement takes over. A wrapper with no border of its own
+ * collapses the two boxes onto each other and the disagreement can't
+ * arise.
  *
  * Consumers style the element they wrap, never this one.
  */
@@ -64,37 +65,15 @@ export const pointX = createVar();
 export const pointY = createVar();
 
 /**
- * Override slot for the window's `transform-origin`. Unset, the
- * origin derives from `data-side`/`data-align` so scale animations grow
- * out of the anchor-facing edge. The tether assigns this var to aim the
- * origin at the anchor's exact position after collision handling.
- */
-export const transformOrigin = createVar();
-
-/**
- * The tether's resolved position, in px from the anchor's padding box.
- * Only meaningful under {@link tethered}, where they replace the CSS
- * placement outright rather than adjusting it.
+ * A measured placement's resolved position, in px from the anchor's
+ * padding box. Only meaningful under `[data-tethered]`, where it
+ * replaces the CSS placement outright rather than adjusting it.
+ *
+ * Nothing assigns these today — collision handling was torn out to be
+ * rebuilt piecemeal, and this is the seam it plugs back into.
  */
 export const tetherX = createVar();
 export const tetherY = createVar();
-
-/**
- * Room the window has inside its clipping boundary, published by the
- * tether's size pass. Surfaces that should scroll rather than overflow
- * read these — `max-height: var(--available-height)` on the body — and
- * they're simply unset without JavaScript.
- */
-export const availableWidth = createVar();
-export const availableHeight = createVar();
-
-/**
- * The anchor's measured box, published by the tether. Size-matched
- * surfaces (a select's listbox) read these to track the trigger's
- * width.
- */
-export const anchorWidth = createVar();
-export const anchorHeight = createVar();
 
 // The corner of the window that faces whatever it's bound to, as a
 // percentage of its own size. Doubles as the `transform-origin` — the
@@ -152,13 +131,11 @@ const shift = (origin: string, sign: string, distance: string) =>
  * translation already describes which way the window grows and how far
  * the offsets displace it.
  *
- * Tethered (`data-tethered`): once `@floating-ui/dom` has measured the
- * page, its answer supersedes both — the pins collapse to the anchor's
- * corner and the window rides on the tether's own translation instead.
- * The rules above remain the pre-JS (and no-JS) placement, and
- * `data-side`/`data-align` keep reflecting the resolved placement so
- * everything keyed off them — the arrow's edge, the transform origin,
- * consumer animations — still follows the window.
+ * Tethered (`data-tethered`): the seam a measured placement overrides
+ * both through — the pins collapse to the anchor's corner and the window
+ * rides on {@link tetherX}/{@link tetherY} instead, leaving the rules
+ * above as the pre-JS (and no-JS) placement. Nothing sets the attribute
+ * today; collision handling is being rebuilt.
  *
  * Placement rides on `translate` rather than `transform`, which leaves
  * `transform` entirely to consumers: a scale-in animation composes with
@@ -176,10 +153,7 @@ export const window = style({
   position: 'absolute',
   display: 'flex',
   alignItems: 'center',
-  transformOrigin: fallbackVar(
-    transformOrigin,
-    `${fallbackVar(originX, '50%')} ${fallbackVar(originY, '50%')}`,
-  ),
+  transformOrigin: `${fallbackVar(originX, '50%')} ${fallbackVar(originY, '50%')}`,
   translate: `${shift(originX, signX, distanceX)} ${shift(originY, signY, distanceY)}`,
   selectors: {
     // Which offset runs along which axis. The side offset always travels
@@ -261,9 +235,9 @@ export const window = style({
     },
 
     // --- Tethered ---
-    // The tether resolves position in the anchor's own coordinate space,
-    // so pinning the window to the anchor's top-left corner and
-    // translating by its answer lands it exactly.
+    // A measured placement resolves position in the anchor's own
+    // coordinate space, so pinning the window to the anchor's top-left
+    // corner and translating by that answer lands it exactly.
     '&:where([data-tethered])': {
       top: 0,
       left: 0,

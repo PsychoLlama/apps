@@ -25,10 +25,6 @@ import {
   type FloatingAlignment,
   type FloatingPoint,
   type FloatingSide,
-  type TetherFallback,
-  type TetherFlipOptions,
-  type TetherOptions,
-  type TetherPass,
 } from '@lib/ui/_internal/floating-ui';
 import { AbortError, useAnchor, useCommit, useRun, useValue } from '@lib/state';
 import { AppearanceToggle } from '@lib/theme/appearance-toggle';
@@ -100,29 +96,6 @@ const TETHER_BEHAVIORS = [
     hint: 'Caps the surface to the room `size` reported, and scrolls the overflow.',
   },
 ] as const satisfies { value: TetherBehavior; label: string; hint: string }[];
-
-/**
- * The chain the `chain` mode walks — a deliberately odd order so it's
- * obvious the tether follows the list rather than flipping to the
- * opposite side on its own.
- */
-const FALLBACK_CHAIN = [
-  { side: 'right' },
-  { side: 'left' },
-  { side: 'top' },
-] as const satisfies TetherFallback[];
-
-/** The flip pass a mode stands for. */
-const flipFor = (mode: FlipMode): TetherPass<TetherFlipOptions> => {
-  switch (mode) {
-    case 'auto':
-      return true;
-    case 'off':
-      return false;
-    case 'chain':
-      return { fallbacks: FALLBACK_CHAIN };
-  }
-};
 
 /** A titled run of related controls, stacked one per row. */
 const ControlGroup = (props: { label: string; children: JSX.Element }) => (
@@ -374,13 +347,6 @@ const FloatingUiScratchpad = () => {
     ...(controls().clampToAvailable ? (['clamp'] as const) : []),
   ];
 
-  /** The collision passes the tether runs, as it takes them. */
-  const tetherOptions = (): TetherOptions => ({
-    padding: controls().tetherPadding,
-    flip: flipFor(controls().flipMode),
-    ...controls().features,
-  });
-
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
     if (!controls().point) return;
@@ -423,17 +389,11 @@ const FloatingUiScratchpad = () => {
                   sideOffset={controls().sideOffset}
                   alignOffset={controls().alignOffset}
                   point={controls().point ?? undefined}
-                  tether={controls().tetherDisabled ? false : tetherOptions()}
                   direction="column"
                   gap={1}
                   py={3}
                   px={4}
-                  class={[
-                    css.surface,
-                    controls().clampToAvailable && css.clamped,
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
+                  class={css.surface}
                   arrow={{
                     visible: controls().arrowVisible,
                     base: controls().arrowBase,

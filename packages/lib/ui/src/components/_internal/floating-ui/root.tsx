@@ -14,7 +14,7 @@ import * as css from './floating-ui.css';
  * positions against.
  *
  * An accessor rather than the element itself: a `ref` lands after the
- * first render, and the tether has to wake up when it does.
+ * first render, and a measured placement has to wake up when it does.
  */
 const AnchorContext = createContext<Accessor<HTMLElement | undefined>>();
 
@@ -73,7 +73,7 @@ export interface FloatingRootProps extends TestIdProps {
  *
  * The wrapper exists so the two placement paths agree on where the
  * anchor's edges are. The pure-CSS placement resolves against this
- * element's padding box; the tether measures a border box. Owning an
+ * element's padding box; a measured one reads a border box. Owning an
  * unstyled element of our own is what makes those the same rectangle,
  * whatever border the anchored element carries (see `root` in
  * `floating-ui.css`).
@@ -86,7 +86,7 @@ export interface FloatingRootProps extends TestIdProps {
  * ```tsx
  * <FloatingRoot display="block">
  *   <button>Open</button>
- *   <FloatingWindow tether={{}}>…</FloatingWindow>
+ *   <FloatingWindow>…</FloatingWindow>
  * </FloatingRoot>
  * ```
  */

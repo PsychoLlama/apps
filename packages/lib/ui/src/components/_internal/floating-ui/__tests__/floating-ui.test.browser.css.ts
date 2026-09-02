@@ -26,9 +26,9 @@ export const anchorBox = style({
 
 /**
  * A bordered anchor. The border is the entire point of the fixture: it's
- * what used to drive the CSS placement (which resolves against its
- * ancestor's padding box) and the tether (which measures a border box)
- * apart, so the window jumped the moment the tether took over.
+ * what drives the box the CSS placement resolves against (its ancestor's
+ * padding box) and the border box a measured placement reads apart,
+ * unless the root collapses the two onto each other.
  */
 export const borderedAnchorBox = style({
   width: '100px',
@@ -40,43 +40,5 @@ export const borderedAnchorBox = style({
 /** Fixed-size surface so expected positions are exact. */
 export const surface = style({
   width: '80px',
-  height: '40px',
-});
-
-/** Pins an anchor flush against the viewport's bottom edge. */
-export const pinBottom = style({
-  position: 'fixed',
-  bottom: 0,
-  left: '200px',
-});
-
-/** Scrollable stage for exercising scroll-driven tether updates. */
-export const scrollStage = style({
-  position: 'fixed',
-  inset: 0,
-  overflow: 'auto',
-});
-
-/** Tall runway centering the anchor with generous room either side. */
-export const runway = style({
-  height: '300vh',
-  display: 'grid',
-  placeItems: 'center',
-});
-
-/** Pins an anchor flush against the viewport's left edge. */
-export const pinLeft = style({
-  position: 'fixed',
-  left: 0,
-  top: '200px',
-});
-
-/**
- * A surface far wider than its anchor, so a centered placement hangs
- * off both ends of a viewport-edge anchor and the tether has to slide
- * it back.
- */
-export const wideSurface = style({
-  width: '300px',
   height: '40px',
 });

@@ -1,4 +1,4 @@
-/** Shared pixel math for the tether's geometry. */
+/** Shared pixel math for the primitive's geometry. */
 
 /** Clamp `value` into the inclusive `[min, max]` range. */
 export const clamp = (value: number, min: number, max: number) =>
