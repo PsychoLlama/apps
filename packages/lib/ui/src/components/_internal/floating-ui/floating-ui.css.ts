@@ -217,36 +217,36 @@ export const window = style({
     },
 
     // Align along a horizontal edge (top/bottom): start=left … end=right.
-    '&:where([data-side="top"][data-align="start"], [data-side="bottom"][data-align="start"])':
+    '&:where([data-align="start"]):where([data-side="top"], [data-side="bottom"])':
       {
         left: 0,
         vars: { [originX]: '0%' },
       },
 
-    '&:where([data-side="top"][data-align="center"], [data-side="bottom"][data-align="center"])':
+    '&:where([data-align="center"]):where([data-side="top"], [data-side="bottom"])':
       {
         left: '50%',
       },
 
-    '&:where([data-side="top"][data-align="end"], [data-side="bottom"][data-align="end"])':
+    '&:where([data-align="end"]):where([data-side="top"], [data-side="bottom"])':
       {
         left: '100%',
         vars: { [originX]: '100%', [signX]: '-1' },
       },
 
     // Align along a vertical edge (left/right): start=top … end=bottom.
-    '&:where([data-side="left"][data-align="start"], [data-side="right"][data-align="start"])':
+    '&:where([data-align="start"]):where([data-side="left"], [data-side="right"])':
       {
         top: 0,
         vars: { [originY]: '0%' },
       },
 
-    '&:where([data-side="left"][data-align="center"], [data-side="right"][data-align="center"])':
+    '&:where([data-align="center"]):where([data-side="left"], [data-side="right"])':
       {
         top: '50%',
       },
 
-    '&:where([data-side="left"][data-align="end"], [data-side="right"][data-align="end"])':
+    '&:where([data-align="end"]):where([data-side="left"], [data-side="right"])':
       {
         top: '100%',
         vars: { [originY]: '100%', [signY]: '-1' },
