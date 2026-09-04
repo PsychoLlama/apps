@@ -6,78 +6,22 @@
  * pixel positions can be asserted — JSDOM doesn't run layout.
  */
 
-import { render, waitFor } from '@solidjs/testing-library';
+import { render } from '@solidjs/testing-library';
 import {
   FloatingRoot,
   FloatingWindow,
   type FloatingWindowProps,
-  type TetherOptions,
 } from '../floating-ui';
-import * as css from '../floating-ui.css';
 import * as fixture from './floating-ui.test.browser.css';
 
-/** Unwrap a `createVar()` reference (`var(--x)`) to its property name. */
-const varName = (reference: string) => reference.slice(4, -1);
-
-/**
- * Pixel-grid comparison. Tethered coordinates are snapped to whole
- * device pixels, so exact equality with a fractional layout is wrong by
- * up to half a pixel by design.
- */
-const expectNear = (actual: number, expected: number) =>
-  expect(Math.abs(actual - expected)).toBeLessThanOrEqual(1);
-
-/** A flip-only tether: no sliding, no size measurement. */
-const flipTether: TetherOptions = { shift: false, size: false };
-
-/** A tethered window bound to a fixed 100×100 anchor. */
-const Tethered = (
-  props: Omit<FloatingWindowProps, 'children' | 'class'> & {
-    stage: string;
-    surface?: string;
-  },
-) => (
-  <div class={props.stage}>
-    <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
-      <FloatingWindow {...props} class={props.surface ?? fixture.surface}>
-        content
-      </FloatingWindow>
-    </FloatingRoot>
-  </div>
-);
-
-/** Render a tethered window and wait for the first placement to land. */
-const renderTethered = async (
-  props: Omit<FloatingWindowProps, 'children' | 'class'> & {
-    stage: string;
-    surface?: string;
-  },
-) => {
-  const { container } = render(() => <Tethered {...props} />);
-  const floating = container.querySelector<HTMLElement>('[data-side]')!;
-
-  await waitFor(() => expect(floating).toHaveAttribute('data-tethered'));
-
-  return {
-    floating,
-    anchorBox: container.querySelector('[data-testid="anchor"]')!,
-    arrow: container.querySelector('svg'),
-  };
-};
-
-/**
- * Render a window bound to a fixed 100×100 anchor on a quiet stage.
- * `tether={false}` keeps the tether standing down, so these cases
- * measure the pure-CSS placement — the pre-hydration state the tether
- * enhances.
- */
+/** Render a window bound to a fixed 100×100 anchor on a quiet stage. */
 const renderFloating = (
-  props: Omit<FloatingWindowProps, 'children' | 'class' | 'tether'> = {},
+  props: Omit<FloatingWindowProps, 'children' | 'class'> = {},
 ) => {
   const { container } = render(() => (
     <div class={fixture.stage}>
       <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
-        <FloatingWindow class={fixture.surface} tether={false} {...props}>
+        <FloatingWindow class={fixture.surface} {...props}>
           content
         </FloatingWindow>
       </FloatingRoot>
@@ -94,62 +38,34 @@ const renderFloating = (
   return { anchorRect, floatingRect };
 };
 
-/**
- * A window bound to a bordered anchor, with the tether either running or
- * standing down. The anchored element sits inside the root rather than
- * being it, which is what the border is here to exercise.
- */
-const renderBordered = (tether: TetherOptions | false) => {
-  const { container } = render(() => (
-    <div class={fixture.stage}>
-      <FloatingRoot display="block" testId="anchor">
-        <div class={fixture.borderedAnchorBox} />
-        <FloatingWindow
-          class={fixture.surface}
-          side="bottom"
-          align="start"
-          tether={tether}
-        >
-          content
-        </FloatingWindow>
-      </FloatingRoot>
-    </div>
-  ));
-
-  return {
-    anchorBox: container.querySelector<HTMLElement>('[data-testid="anchor"]')!,
-    floating: container.querySelector<HTMLElement>('[data-side]')!,
-  };
-};
-
 describe('FloatingWindow geometry', () => {
-  it('agrees with the tether across a bordered anchor', async () => {
-    // Both paths have to name the same rectangle, or hydration shifts
-    // the window by the anchor's border width. The root is what makes
-    // them agree: it carries no border, so the padding box the CSS
-    // resolves against and the border box the tether measures coincide.
-    const css = renderBordered(false);
-    const cssOffset = {
-      x:
-        css.floating.getBoundingClientRect().left -
-        css.anchorBox.getBoundingClientRect().left,
-      y:
-        css.floating.getBoundingClientRect().top -
-        css.anchorBox.getBoundingClientRect().top,
-    };
+  it('positions against the root, not the bordered element inside it', () => {
+    // The root is what keeps the box the window resolves against and the
+    // anchor's outer edge as one rectangle: it carries no border of its
+    // own, so an anchored element's border stays inside both. Bind to the
+    // wrong one and the window sits a border-width off.
+    const { container } = render(() => (
+      <div class={fixture.stage}>
+        <FloatingRoot display="block" testId="anchor">
+          <div class={fixture.borderedAnchorBox} />
+          <FloatingWindow class={fixture.surface} side="bottom" align="start">
+            content
+          </FloatingWindow>
+        </FloatingRoot>
+      </div>
+    ));
 
-    const tethered = renderBordered({});
-    await waitFor(() =>
-      expect(tethered.floating).toHaveAttribute('data-tethered'),
-    );
+    const anchorRect = container
+      .querySelector('[data-testid="anchor"]')!
+      .getBoundingClientRect();
+    const floatingRect = container
+      .querySelector('[data-side]')!
+      .getBoundingClientRect();
 
-    const anchorRect = tethered.anchorBox.getBoundingClientRect();
-    const floatingRect = tethered.floating.getBoundingClientRect();
-
-    // The anchored element's border stays inside the box both paths see.
+    // The anchored element's border stays inside the box the root names.
     expect(anchorRect.width).toBeCloseTo(100);
-    expectNear(floatingRect.left - anchorRect.left, cssOffset.x);
-    expectNear(floatingRect.top - anchorRect.top, cssOffset.y);
+    expect(floatingRect.top).toBeCloseTo(anchorRect.bottom);
+    expect(floatingRect.left).toBeCloseTo(anchorRect.left);
   });
 
   it('rests fully outside the bound edge', () => {
@@ -268,92 +184,6 @@ describe('FloatingWindow geometry', () => {
     );
   });
 
-  it('flips to the roomier side when tethered against a viewport edge', async () => {
-    // Anchor flush with the viewport's bottom edge: a below-surface
-    // has no room, so the tether flips it above.
-    const { container } = render(() => (
-      <Tethered stage={fixture.pinBottom} side="bottom" tether={flipTether} />
-    ));
-    const floating = container.querySelector('[data-side]')!;
-
-    await waitFor(() => expect(floating).toHaveAttribute('data-side', 'top'));
-
-    const anchorRect = container
-      .querySelector('[data-testid="anchor"]')!
-      .getBoundingClientRect();
-    expect(floating.getBoundingClientRect().bottom).toBeCloseTo(anchorRect.top);
-  });
-
-  it('walks the fallback chain in order', async () => {
-    // `position-try-fallbacks` semantics: the chain replaces the
-    // opposite-side default, so an anchor with no room below lands on
-    // the first listed placement that fits rather than flipping up.
-    const { floating } = await renderTethered({
-      stage: fixture.pinBottom,
-      side: 'bottom',
-      tether: {
-        ...flipTether,
-        flip: { fallbacks: [{ side: 'right' }, { side: 'top' }] },
-      },
-    });
-
-    await waitFor(() => expect(floating).toHaveAttribute('data-side', 'right'));
-  });
-
-  it('pins the placement when the flip pass is off', async () => {
-    // Nowhere to go: the surface overflows rather than moving, the way
-    // an element with no `position-try-fallbacks` would.
-    const { floating } = await renderTethered({
-      stage: fixture.pinBottom,
-      side: 'bottom',
-      tether: { ...flipTether, flip: false },
-    });
-
-    expect(floating).toHaveAttribute('data-side', 'bottom');
-  });
-
-  it('re-resolves placement across a scroll round-trip', async () => {
-    // Scroll the anchor to the viewport's bottom edge (the surface
-    // flips above), then back to the middle where both sides fit: with
-    // no memory, the surface snaps home to the requested side.
-    const { container } = render(() => (
-      <div class={fixture.scrollStage} data-testid="scroller">
-        <div class={fixture.runway}>
-          <Tethered stage="" side="bottom" tether={flipTether} />
-        </div>
-      </div>
-    ));
-    const scroller = container.querySelector<HTMLElement>(
-      '[data-testid="scroller"]',
-    )!;
-    const anchorBox = container.querySelector('[data-testid="anchor"]')!;
-    const floating = container.querySelector('[data-side]')!;
-    const viewportHeight = document.documentElement.clientHeight;
-
-    // Center the anchor: both sides fit, the requested side stands.
-    const centerAnchor = () => {
-      const rect = anchorBox.getBoundingClientRect();
-      scroller.scrollTop += rect.top + rect.height / 2 - viewportHeight / 2;
-    };
-
-    centerAnchor();
-    await waitFor(() =>
-      expect(floating).toHaveAttribute('data-side', 'bottom'),
-    );
-
-    // Carry the anchor down to the bottom edge (scrolling up moves
-    // content down): 10px of room left below, the surface flips above.
-    scroller.scrollTop -=
-      viewportHeight - anchorBox.getBoundingClientRect().bottom - 10;
-    await waitFor(() => expect(floating).toHaveAttribute('data-side', 'top'));
-
-    // Back to the middle: both sides fit again, so it snaps home.
-    centerAnchor();
-    await waitFor(() =>
-      expect(floating).toHaveAttribute('data-side', 'bottom'),
-    );
-  });
-
   it('applies offsets from the point in point mode', () => {
     const point = { x: 30, y: 70 };
 
@@ -381,92 +211,5 @@ describe('FloatingWindow geometry', () => {
     expect(upward.floatingRect.bottom).toBeCloseTo(
       upward.anchorRect.top + 70 - 10,
     );
-  });
-
-  it('reproduces the CSS placement when nothing collides', async () => {
-    // The tether takes positioning over outright rather than nudging
-    // it, so an uncontested placement has to land in the same spot the
-    // pure-CSS rules would have put it.
-    const { floating, anchorBox } = await renderTethered({
-      stage: fixture.stage,
-      side: 'bottom',
-      sideOffset: 10,
-      tether: {},
-    });
-
-    const anchorRect = anchorBox.getBoundingClientRect();
-    const floatingRect = floating.getBoundingClientRect();
-
-    expectNear(floatingRect.top, anchorRect.bottom + 10);
-    expectNear(
-      floatingRect.left + floatingRect.width / 2,
-      anchorRect.left + anchorRect.width / 2,
-    );
-  });
-
-  it('slides the surface back inside the padded viewport', async () => {
-    // A 300px surface centered on a 100px anchor flush against the left
-    // edge would start at -100. Sliding along the edge is the only way
-    // to keep it visible — flipping sides wouldn't help.
-    const { floating, anchorBox } = await renderTethered({
-      stage: fixture.pinLeft,
-      surface: fixture.wideSurface,
-      side: 'bottom',
-      tether: { padding: 8 },
-    });
-
-    expect(anchorBox.getBoundingClientRect().left).toBeCloseTo(0);
-    expectNear(floating.getBoundingClientRect().left, 8);
-  });
-
-  it('keeps the arrow over the anchor after sliding', async () => {
-    const { anchorBox, arrow } = await renderTethered({
-      stage: fixture.pinLeft,
-      surface: fixture.wideSurface,
-      side: 'bottom',
-      arrow: { visible: true },
-      tether: { padding: 8 },
-    });
-
-    const anchorRect = anchorBox.getBoundingClientRect();
-    const arrowRect = arrow!.getBoundingClientRect();
-
-    expectNear(
-      arrowRect.left + arrowRect.width / 2,
-      anchorRect.left + anchorRect.width / 2,
-    );
-  });
-
-  it('publishes the anchor box and the room left for the surface', async () => {
-    const { floating } = await renderTethered({
-      stage: fixture.stage,
-      side: 'bottom',
-      tether: {},
-    });
-
-    // Size matching reads these; without JavaScript they stay unset and
-    // the surface falls back to hugging its content.
-    expect(floating.style.getPropertyValue(varName(css.anchorWidth))).toBe(
-      '100px',
-    );
-    expect(floating.style.getPropertyValue(varName(css.anchorHeight))).toBe(
-      '100px',
-    );
-    expect(
-      floating.style.getPropertyValue(varName(css.availableHeight)),
-    ).toMatch(/^\d+(\.\d+)?px$/);
-  });
-
-  it('resolves collisions in point mode too', async () => {
-    // The point becomes a zero-size anchor, so every placement decision
-    // works exactly as it does off an edge.
-    const { floating } = await renderTethered({
-      stage: fixture.pinBottom,
-      point: { x: 50, y: 100 },
-      side: 'bottom',
-      tether: { size: false },
-    });
-
-    await waitFor(() => expect(floating).toHaveAttribute('data-side', 'top'));
   });
 });

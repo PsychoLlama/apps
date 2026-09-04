@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*",
-    "@lib/observability": "workspace:*",
     "@lib/runtime-config": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",

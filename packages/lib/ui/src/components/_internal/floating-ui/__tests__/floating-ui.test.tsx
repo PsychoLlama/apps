@@ -21,13 +21,13 @@ const varName = (reference: string) => reference.slice(4, -1);
 /**
  * A window under the root the primitive requires above it.
  *
- * These are wiring tests, so the tether stands down throughout — JSDOM
- * runs no layout, and every case here is about what the container
- * renders rather than where a measured placement lands.
+ * These are wiring tests: JSDOM runs no layout, and every case here is
+ * about what the container renders rather than where the placement
+ * visually lands.
  */
-const Rooted = (props: Omit<FloatingWindowProps, 'tether'>) => (
+const Rooted = (props: FloatingWindowProps) => (
   <FloatingRoot display="block">
-    <FloatingWindow {...props} tether={false} />
+    <FloatingWindow {...props} />
   </FloatingRoot>
 );
 
@@ -66,7 +66,7 @@ describe('FloatingRoot', () => {
     render(() => (
       <FloatingRoot display="block" testId="anchor">
         <button type="button">trigger</button>
-        <FloatingWindow tether={false}>content</FloatingWindow>
+        <FloatingWindow>content</FloatingWindow>
       </FloatingRoot>
     ));
     const wrapper = screen.getByTestId('anchor');
@@ -80,7 +80,7 @@ describe('FloatingRoot', () => {
     // Structural, not conditional: the same failure on the server and in
     // the browser beats silently placing against the viewport.
     expect(() =>
-      render(() => <FloatingWindow tether={false}>content</FloatingWindow>),
+      render(() => <FloatingWindow>content</FloatingWindow>),
     ).toThrow(/outside of <FloatingRoot>/);
   });
 });
@@ -285,12 +285,13 @@ describe('FloatingWindow', () => {
     expect(shell).toHaveAttribute('data-align', 'start');
   });
 
-  it('leaves the CSS placement in charge while the tether stands down', () => {
-    // `tether={false}` is the pre-hydration state held open: however the
-    // passes were configured, nothing measures and nothing moves.
+  it('reflects the resolved placement into data attributes', () => {
+    // Nothing measures the page, so the requested placement is always
+    // the resolved one — the attributes the CSS keys off say exactly
+    // what the caller asked for.
     const { container } = render(() => (
       <FloatingRoot display="block">
-        <FloatingWindow side="top" align="end" tether={false}>
+        <FloatingWindow side="top" align="end">
           content
         </FloatingWindow>
       </FloatingRoot>
@@ -299,7 +300,6 @@ describe('FloatingWindow', () => {
 
     expect(floating).toHaveAttribute('data-side', 'top');
     expect(floating).toHaveAttribute('data-align', 'end');
-    expect(floating).not.toHaveAttribute('data-tethered');
   });
 
   it('reflects every side into the data attribute the CSS keys off', () => {
