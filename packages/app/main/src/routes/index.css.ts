@@ -38,3 +38,12 @@ export const chevron = style({
 export const footer = style({
   marginBlockStart: space[6],
 });
+
+/**
+ * The divider's rules flank a label, so they can't take a fixed width.
+ * `flex-grow` splits whatever the label leaves over between them,
+ * keeping the text centred at any container width.
+ */
+export const rule = style({
+  flexGrow: 1,
+});
