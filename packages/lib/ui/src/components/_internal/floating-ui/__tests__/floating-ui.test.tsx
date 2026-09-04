@@ -12,7 +12,7 @@ import {
   FloatingBody,
   FloatingWindow,
   type FloatingWindowProps,
-} from '../floating-ui';
+} from '..';
 import * as css from '../floating-ui.css';
 
 /** Unwrap a `createVar()` reference (`var(--x)`) to its property name. */
