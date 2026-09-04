@@ -2,7 +2,15 @@ import { For, Show, onMount } from 'solid-js';
 import type { Component } from 'solid-js';
 import { AbortError, useAnchor, useRun, useValue } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
-import { Card, Container, Flex, Heading, LinkButton, Text } from '@lib/ui';
+import {
+  Card,
+  Container,
+  Flex,
+  Heading,
+  LinkButton,
+  Separator,
+  Text,
+} from '@lib/ui';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconPalette from 'virtual:icons/mdi/palette-outline';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
@@ -58,6 +66,14 @@ const APPS: ReadonlyArray<AppEntry> = [
     description: 'Encrypted sharing between devices.',
     Icon: IconSend,
   },
+];
+
+/**
+ * Tools for working *on* the suite rather than with it. They render
+ * below a labelled divider so the launcher leads with the apps someone
+ * actually came for.
+ */
+const DEV_APPS: ReadonlyArray<AppEntry> = [
   {
     id: 'logs',
     name: 'Logs',
@@ -76,8 +92,8 @@ const APPS: ReadonlyArray<AppEntry> = [
 ];
 
 /**
- * The scratchpad app. Kept out of {@link APPS} because it's gated on the
- * `scratchpad` runtime flag rather than always shown: the launcher
+ * The scratchpad app. Kept out of {@link DEV_APPS} because it's gated on
+ * the `scratchpad` runtime flag rather than always shown: the launcher
  * reveals it reactively (see {@link scratchpadFlag}), in lockstep with
  * the service worker's runtime route gate.
  */
@@ -195,17 +211,40 @@ const Launcher = () => {
           </Flex>
 
           <Container as="div" size={2}>
-            <Flex
-              as="ul"
-              direction="column"
-              gap={3}
-              class={css.list}
-              aria-label="Apps"
-            >
-              <For each={APPS}>{(app) => <AppCard app={app} />}</For>
-              <Show when={flags().scratchpadEnabled}>
-                <AppCard app={SCRATCHPAD_APP} />
-              </Show>
+            <Flex as="div" direction="column" gap={5}>
+              <Flex
+                as="ul"
+                direction="column"
+                gap={3}
+                class={css.list}
+                aria-label="Apps"
+              >
+                <For each={APPS}>{(app) => <AppCard app={app} />}</For>
+              </Flex>
+
+              {/* The label names the list below it, which carries the
+                  same name via `aria-label`. Announcing it twice adds
+                  nothing, so the divider stays decorative. */}
+              <Flex as="div" align="center" gap={3} aria-hidden="true">
+                <Separator decorative class={css.rule} />
+                <Text as="span" size={1} color="lowContrast" selectable={false}>
+                  Development Tools
+                </Text>
+                <Separator decorative class={css.rule} />
+              </Flex>
+
+              <Flex
+                as="ul"
+                direction="column"
+                gap={3}
+                class={css.list}
+                aria-label="Development Tools"
+              >
+                <For each={DEV_APPS}>{(app) => <AppCard app={app} />}</For>
+                <Show when={flags().scratchpadEnabled}>
+                  <AppCard app={SCRATCHPAD_APP} />
+                </Show>
+              </Flex>
             </Flex>
           </Container>
         </Flex>
