@@ -300,8 +300,8 @@ fn push_timestamp(rows: &mut Vec<Detail>, label: &str, seconds: i64, all_day: bo
 /// which folds this conversion in.
 fn rgba_to_luma(rgba: &[u8]) -> Vec<u8> {
     let mut luma = Vec::with_capacity(rgba.len() / 4);
-    for px in rgba.chunks_exact(4) {
-        let (r, g, b, a) = (px[0] as u32, px[1] as u32, px[2] as u32, px[3]);
+    for &[r, g, b, a] in rgba.as_chunks::<4>().0 {
+        let (r, g, b) = (r as u32, g as u32, b as u32);
         luma.push(if a == 0 {
             0xFF
         } else {
