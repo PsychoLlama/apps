@@ -124,10 +124,7 @@ export const FloatingBody = (props: FloatingBodyProps) => {
  * Arrow configuration for a floating primitive. `direction` is omitted —
  * the window derives it from the resolved side.
  */
-export interface FloatingArrowProps extends Omit<ArrowProps, 'direction'> {
-  /** Whether to render the arrow. Defaults to `false`. */
-  visible?: boolean;
-}
+export type FloatingArrowProps = Omit<ArrowProps, 'direction'>;
 
 /**
  * Direction the arrow points so it faces the anchor, keyed by the
@@ -186,7 +183,10 @@ export interface FloatingWindowProps
    * body, not the positioned box.
    */
   class?: string;
-  /** Pointer arrow tying the surface to its anchor. Hidden by default. */
+  /**
+   * Pointer arrow tying the surface to its anchor. Omit the config to
+   * render without an arrow.
+   */
   arrow?: FloatingArrowProps;
   /** Floating content to render. */
   children: JSX.Element;
@@ -256,15 +256,17 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
       data-align={align()}
       data-point={own.point ? '' : undefined}
     >
-      <Show when={own.arrow?.visible}>
-        <Arrow
-          base={own.arrow?.base}
-          depth={own.arrow?.depth}
-          direction={ARROW_DIRECTION_BY_SIDE[side()]}
-          align={own.arrow?.align}
-          hidden={own.arrow?.hidden}
-          class={own.arrow?.class}
-        />
+      <Show when={own.arrow}>
+        {(arrow) => (
+          <Arrow
+            base={arrow().base}
+            depth={arrow().depth}
+            direction={ARROW_DIRECTION_BY_SIDE[side()]}
+            align={arrow().align}
+            hidden={arrow().hidden}
+            class={arrow().class}
+          />
+        )}
       </Show>
       <FloatingBody {...body} />
     </div>

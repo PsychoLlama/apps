@@ -321,13 +321,16 @@ const FloatingUiScratchpad = () => {
                   py={3}
                   px={4}
                   class={css.surface}
-                  arrow={{
-                    visible: controls().arrowVisible,
-                    base: controls().arrowBase,
-                    depth: controls().arrowDepth,
-                    align: controls().arrowAlign,
-                    class: css.arrow,
-                  }}
+                  arrow={
+                    controls().arrowVisible
+                      ? {
+                          base: controls().arrowBase,
+                          depth: controls().arrowDepth,
+                          align: controls().arrowAlign,
+                          class: css.arrow,
+                        }
+                      : undefined
+                  }
                 >
                   <Heading as="h3" size={3} selectable={false}>
                     Floating Window
