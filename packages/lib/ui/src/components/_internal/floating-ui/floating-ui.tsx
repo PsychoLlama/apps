@@ -5,7 +5,7 @@ import type {
   FloatingAlignment,
   FloatingPoint,
   FloatingSide,
-} from './tether/placement';
+} from './placement';
 import {
   flexPropKeys,
   resolveFlexClasses,
@@ -37,7 +37,7 @@ export {
   type FloatingPlacement,
   type FloatingPoint,
   type FloatingSide,
-} from './tether/placement';
+} from './placement';
 
 /**
  * Internal primitive for positioned floating UI — tooltips, dropdowns,
@@ -63,11 +63,12 @@ export {
  *
  * Collision handling — measuring the page and re-resolving the placement
  * to dodge whatever clips the surface — is the progressive enhancement
- * this is built to carry, and it is deliberately absent. The first
- * attempt was torn out to be rebuilt a piece at a time; what remains is
- * the landing pad it plugs back into: the `data-tethered` escape hatch
- * and its translation vars in `floating-ui.css`, and the anchor element
- * `FloatingRoot` publishes.
+ * this is built to carry, and it is deliberately absent. A first attempt
+ * was torn out wholesale rather than rescued, to be rebuilt a piece at a
+ * time. Nothing of it is left in place: no vars, no escape-hatch
+ * attribute, no measurement. The one thing the rebuild will need that
+ * already exists is the anchor element `FloatingRoot` publishes, which
+ * is here for the pure-CSS placement's own sake anyway.
  */
 
 // The CSS placement is deliberately hand-rolled and short-lived. It
@@ -220,8 +221,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
 
   // Read for the structural assertion it carries: a window outside a root
   // has nothing to position against, and that should fail loudly rather
-  // than render into whatever box happens to be nearest. It's also the
-  // handle collision handling takes when it's rebuilt.
+  // than render into whatever box happens to be nearest.
   useAnchorElement();
 
   const side = () => own.side ?? 'bottom';

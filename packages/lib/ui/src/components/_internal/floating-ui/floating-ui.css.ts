@@ -12,13 +12,11 @@ import { offset } from './arrow.css';
  *
  * Deliberately featureless, and that's the whole point. An absolutely
  * positioned child resolves its percentages against the nearest
- * positioned ancestor's *padding* box, while `getBoundingClientRect()`
- * — what a measured placement reads — returns the *border* box. Put the
- * positioning context on an element that carries a border and the two
- * disagree by that border's width, so the window shifts the moment a
- * measured placement takes over. A wrapper with no border of its own
- * collapses the two boxes onto each other and the disagreement can't
- * arise.
+ * positioned ancestor's *padding* box, so putting the positioning
+ * context on the anchored element itself would place the window against
+ * the inside of its border rather than its outer edge. A wrapper with no
+ * border or padding of its own has one box, and it's the one consumers
+ * mean when they point at the anchor.
  *
  * Consumers style the element they wrap, never this one.
  */
@@ -63,17 +61,6 @@ export const alignOffset = createVar();
  */
 export const pointX = createVar();
 export const pointY = createVar();
-
-/**
- * A measured placement's resolved position, in px from the anchor's
- * padding box. Only meaningful under `[data-tethered]`, where it
- * replaces the CSS placement outright rather than adjusting it.
- *
- * Nothing assigns these today — collision handling was torn out to be
- * rebuilt piecemeal, and this is the seam it plugs back into.
- */
-export const tetherX = createVar();
-export const tetherY = createVar();
 
 // The corner of the window that faces whatever it's bound to, as a
 // percentage of its own size. Doubles as the `transform-origin` — the
@@ -131,12 +118,6 @@ const shift = (origin: string, sign: string, distance: string) =>
  * translation already describes which way the window grows and how far
  * the offsets displace it.
  *
- * Tethered (`data-tethered`): the seam a measured placement overrides
- * both through — the pins collapse to the anchor's corner and the window
- * rides on {@link tetherX}/{@link tetherY} instead, leaving the rules
- * above as the pre-JS (and no-JS) placement. Nothing sets the attribute
- * today; collision handling is being rebuilt.
- *
  * Placement rides on `translate` rather than `transform`, which leaves
  * `transform` entirely to consumers: a scale-in animation composes with
  * the placement instead of overwriting it.
@@ -147,7 +128,7 @@ const shift = (origin: string, sign: string, distance: string) =>
  *
  * Every selector is wrapped in `:where(...)` so all rules hold equal
  * specificity and the cascade resolves by source order — the point-mode
- * and tethered pins sit last so they can override the edge-mode ones.
+ * pins sit last so they can override the edge-mode ones.
  */
 export const window = style({
   position: 'absolute',
@@ -232,16 +213,6 @@ export const window = style({
     '&:where([data-point])': {
       top: fallbackVar(pointY, '0px'),
       left: fallbackVar(pointX, '0px'),
-    },
-
-    // --- Tethered ---
-    // A measured placement resolves position in the anchor's own
-    // coordinate space, so pinning the window to the anchor's top-left
-    // corner and translating by that answer lands it exactly.
-    '&:where([data-tethered])': {
-      top: 0,
-      left: 0,
-      translate: `${fallbackVar(tetherX, '0px')} ${fallbackVar(tetherY, '0px')}`,
     },
   },
 });

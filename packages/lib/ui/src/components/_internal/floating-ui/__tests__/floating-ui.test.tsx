@@ -285,9 +285,10 @@ describe('FloatingWindow', () => {
     expect(shell).toHaveAttribute('data-align', 'start');
   });
 
-  it('leaves the CSS placement in sole charge', () => {
-    // Nothing measures the page, so the requested placement is the
-    // resolved one and the measured-placement escape hatch stays shut.
+  it('reflects the resolved placement into data attributes', () => {
+    // Nothing measures the page, so the requested placement is always
+    // the resolved one — the attributes the CSS keys off say exactly
+    // what the caller asked for.
     const { container } = render(() => (
       <FloatingRoot display="block">
         <FloatingWindow side="top" align="end">
@@ -299,7 +300,6 @@ describe('FloatingWindow', () => {
 
     expect(floating).toHaveAttribute('data-side', 'top');
     expect(floating).toHaveAttribute('data-align', 'end');
-    expect(floating).not.toHaveAttribute('data-tethered');
   });
 
   it('reflects every side into the data attribute the CSS keys off', () => {

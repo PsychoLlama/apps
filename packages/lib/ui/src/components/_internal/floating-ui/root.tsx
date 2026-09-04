@@ -14,7 +14,8 @@ import * as css from './floating-ui.css';
  * positions against.
  *
  * An accessor rather than the element itself: a `ref` lands after the
- * first render, and a measured placement has to wake up when it does.
+ * first render, and anything reading the element has to wake up when it
+ * does.
  */
 const AnchorContext = createContext<Accessor<HTMLElement | undefined>>();
 
@@ -71,12 +72,12 @@ export interface FloatingRootProps extends TestIdProps {
  * The root of a floating primitive: it wraps the element being anchored
  * to and publishes that box to every {@link FloatingWindow} inside.
  *
- * The wrapper exists so the two placement paths agree on where the
- * anchor's edges are. The pure-CSS placement resolves against this
- * element's padding box; a measured one reads a border box. Owning an
- * unstyled element of our own is what makes those the same rectangle,
- * whatever border the anchored element carries (see `root` in
- * `floating-ui.css`).
+ * The wrapper exists so the placement resolves against the anchor's
+ * outer edge. Percentages resolve against the positioning ancestor's
+ * padding box, so anchoring to the element itself would place the window
+ * inside its border. Owning an unstyled element of our own keeps the two
+ * the same rectangle, whatever border the anchored element carries (see
+ * `root` in `floating-ui.css`).
  *
  * Windows are siblings of the anchored element rather than children of
  * it, which also keeps the anchor's own `overflow` from clipping its

@@ -26,9 +26,9 @@ export const anchorBox = style({
 
 /**
  * A bordered anchor. The border is the entire point of the fixture: it's
- * what drives the box the CSS placement resolves against (its ancestor's
- * padding box) and the border box a measured placement reads apart,
- * unless the root collapses the two onto each other.
+ * what would drive the box the placement resolves against (its
+ * ancestor's padding box) inside the anchor's outer edge, unless the root
+ * keeps the two the same rectangle.
  */
 export const borderedAnchorBox = style({
   width: '100px',

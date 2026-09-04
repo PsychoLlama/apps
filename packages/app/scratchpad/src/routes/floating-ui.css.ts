@@ -1,54 +1,18 @@
 import { style } from '@vanilla-extract/css';
-import {
-  background,
-  breakpoint,
-  neutral,
-  radius,
-  shadow,
-  space,
-  text,
-} from '@lib/design';
+import { background, neutral, radius, shadow, text } from '@lib/design';
 
-/**
- * Caps the page's single column so long control labels stay readable,
- * then lets it out once {@link configs} has the room to run two abreast.
- */
+/** Caps the page's column so long control labels stay readable. */
 export const column = style({
   width: '100%',
   maxWidth: '32rem',
   alignSelf: 'center',
-  '@media': {
-    [breakpoint.md]: {
-      maxWidth: '64rem',
-    },
-  },
-});
-
-/**
- * The two config groups. A grid rather than a `Flex` with a responsive
- * `direction`: the axis flips inside a media query, and a bare class
- * can't reliably outrank the component's own `direction` variant.
- *
- * `align-items: start` keeps the shorter group from stretching to match
- * the taller one, which would strand its controls in dead space.
- */
-export const configs = style({
-  display: 'grid',
-  alignItems: 'start',
-  gap: space[7],
-  '@media': {
-    [breakpoint.md]: {
-      gridTemplateColumns: '1fr 1fr',
-      gap: space[8],
-    },
-  },
 });
 
 /**
  * The scrollport the target sits in — a small square window onto a much
  * larger {@link canvas}. Deliberately shrunk: a scrolling clip boundary
- * is the interesting case for the tether, and one that fits on screen
- * lets you drag the anchor to an edge and watch the window re-place.
+ * is the interesting case for collision handling, so the stage is here
+ * ready for it — today the window rides off the edge with the anchor.
  *
  * Sized from `min()` on the inline axis with the block axis derived from
  * `aspect-ratio`, so it stays square under every cap. A `maxHeight`
@@ -104,8 +68,8 @@ export const anchorSlot = style({
  * binds to. Diagonal hatching makes the box's bounds obvious.
  *
  * The dashed border is what makes this the interesting case: the
- * `FloatingRoot` wrapper exists so the tether and the CSS placement
- * agree on where this box's edges are despite it.
+ * `FloatingRoot` wrapper exists so the placement resolves against this
+ * box's outer edge despite it.
  */
 export const target = style({
   width: '12rem',
@@ -127,15 +91,6 @@ export const pointArmed = style({
 /** Keeps a number field to roughly the digits it will ever hold. */
 export const numberControl = style({
   maxWidth: '10rem',
-});
-
-/**
- * Runs the reset button across the full width of {@link configs}. It
- * clears both groups, so it belongs to neither column — parking it under
- * one would read as resetting only that half.
- */
-export const reset = style({
-  gridColumn: '1 / -1',
 });
 
 /** Sets a control's explanatory note back from its label. */

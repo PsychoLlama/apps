@@ -1,5 +1,4 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
-import { environment } from '@lib/runtime-config';
 import type { RadiusScale } from '@lib/design';
 import type {
   ArrowAlign,
@@ -7,31 +6,7 @@ import type {
   FloatingPoint,
   FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
-import { tetherDisabled as tetherDisabledOption } from '../../config';
 import { scratchpadScope } from './scope';
-
-/** One toggleable collision behavior the tether can run. */
-export type TetherFeature = 'shift' | 'size';
-
-/** Every collision behavior, in the order the scratchpad lists them. */
-export const TETHER_FEATURES = [
-  'shift',
-  'size',
-] as const satisfies TetherFeature[];
-
-/**
- * One card in the tether-behaviors group. `clamp` isn't a pass the
- * tether runs — it's the surface opting into what the `size` pass
- * measured — but it toggles the same way, so it rides in the same group.
- */
-export type TetherBehavior = TetherFeature | 'clamp';
-
-/**
- * How the tether's flip pass is configured: the library's computed
- * fallback, the pass turned off, or a hand-written `position-try`-style
- * chain.
- */
-export type FlipMode = 'auto' | 'off' | 'chain';
 
 /** Placement inputs driving the floating window in the scratchpad. */
 export interface FloatingControlsState {
@@ -57,32 +32,9 @@ export interface FloatingControlsState {
    * Anchor-relative point the window binds to. `null` keeps edge mode.
    */
   point: FloatingPoint | null;
-  /**
-   * Whether to stand the tether down (`tether={false}`), leaving the
-   * pure-CSS placement in sole charge — the pre-hydration state, held
-   * open indefinitely.
-   *
-   * The one control that outlives the page. It persists through
-   * `@lib/runtime-config`, so `trackTetherConfigSaga` is its only writer
-   * here — the checkbox writes to OPFS and the change comes back around.
-   */
-  tetherDisabled: boolean;
-  /** Boundary clearance the tether maintains, in px. */
-  tetherPadding: number;
-  /** Which collision behaviors the tether runs. */
-  features: Record<TetherFeature, boolean>;
-  /** How the tether's flip pass is configured. */
-  flipMode: FlipMode;
-  /** Whether the surface clamps itself to the room the tether reports. */
-  clampToAvailable: boolean;
 }
 
-/**
- * Every control at rest — the state the reset button restores. The
- * persisted one seeds from its option's per-environment default so
- * prerender and the client's first paint agree (no hydration flash), and
- * so a reset lands on the same value clearing the override reverts to.
- */
+/** Every control at rest — the state the reset button restores. */
 const defaults = (): FloatingControlsState => ({
   side: 'bottom',
   align: 'center',
@@ -94,14 +46,6 @@ const defaults = (): FloatingControlsState => ({
   sideOffset: 0,
   alignOffset: 0,
   point: null,
-  tetherDisabled: tetherDisabledOption.defaults[environment].disabled,
-  tetherPadding: 8,
-  features: {
-    shift: true,
-    size: true,
-  },
-  flipMode: 'auto',
-  clampToAvailable: false,
 });
 
 /** Live, readonly view of the floating-window placement controls. */
@@ -174,56 +118,7 @@ defineFold(pointChanged, [floatingControls], (controls, point) => {
   controls.point = point;
 });
 
-/**
- * Standing the tether down resolved to a new value.
- *
- * Published by the runtime-config subscription, never by the checkbox
- * that triggered a change: the toggle persists through
- * `@lib/runtime-config` and the change comes back around here, so a
- * same-tab write lands exactly the way a sibling tab's would.
- */
-export const tetherDisabledChanged = defineTopic<boolean>();
-defineFold(tetherDisabledChanged, [floatingControls], (controls, disabled) => {
-  controls.tetherDisabled = disabled;
-});
-
-/** The viewport clearance the tether maintains changed. */
-export const tetherPaddingChanged = defineTopic<number>();
-defineFold(
-  tetherPaddingChanged,
-  [floatingControls],
-  (controls, tetherPadding) => {
-    controls.tetherPadding = tetherPadding;
-  },
-);
-
-/**
- * The tether-behavior group changed. Carries the whole selection rather
- * than one flag: the cards report their new set as a unit, and folding
- * it wholesale keeps the group and the store from drifting apart.
- */
-export const behaviorsChanged = defineTopic<readonly TetherBehavior[]>();
-defineFold(behaviorsChanged, [floatingControls], (controls, behaviors) => {
-  for (const feature of TETHER_FEATURES) {
-    controls.features[feature] = behaviors.includes(feature);
-  }
-
-  controls.clampToAvailable = behaviors.includes('clamp');
-});
-
-/** How the tether's flip pass is configured changed. */
-export const flipModeChanged = defineTopic<FlipMode>();
-defineFold(flipModeChanged, [floatingControls], (controls, mode) => {
-  controls.flipMode = mode;
-});
-
-/**
- * Every control put back to its default.
- *
- * `tetherDisabled` is restored here too, but the durable copy is cleared
- * separately by `resetControlsSaga`; both land on the same value, so the
- * echo that follows confirms what the fold already wrote.
- */
+/** Every control put back to its default. */
 export const controlsReset = defineTopic();
 defineFold(controlsReset, [floatingControls], (controls) => {
   Object.assign(controls, defaults());

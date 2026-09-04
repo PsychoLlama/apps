@@ -43,14 +43,5 @@ export const arrow = style({
       { marginBlockStart: fallbackVar(offset, '0px') },
     '&[data-direction="left"][data-align="end"], &[data-direction="right"][data-align="end"]':
       { marginBlockEnd: fallbackVar(offset, '0px') },
-
-    // Tethered: `flex-start` puts the arrow's leading edge at the
-    // surface's, which is the origin a measured seat offset would be
-    // taken from. Nothing sets the attribute today — collision handling
-    // is being rebuilt — so this is the seam that seating plugs into.
-    '[data-tethered] &': {
-      alignSelf: 'flex-start',
-      margin: 0,
-    },
   },
 });

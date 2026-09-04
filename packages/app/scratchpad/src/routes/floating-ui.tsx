@@ -1,14 +1,9 @@
-import { For, onMount, type JSX } from 'solid-js';
-import { createLogger, toError } from '@lib/observability';
+import { For, type JSX } from 'solid-js';
 import type { RadiusScale } from '@lib/design';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import {
   Button,
-  Checkbox,
-  CheckboxCardsItem,
-  CheckboxCardsRoot,
   Flex,
-  Grid,
   Heading,
   RadioGroupItem,
   RadioGroupRoot,
@@ -26,7 +21,7 @@ import {
   type FloatingPoint,
   type FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
-import { AbortError, useAnchor, useCommit, useRun, useValue } from '@lib/state';
+import { useAnchor, useCommit, useValue } from '@lib/state';
 import { AppearanceToggle } from '@lib/theme/appearance-toggle';
 import {
   alignChanged,
@@ -35,25 +30,15 @@ import {
   arrowBaseChanged,
   arrowDepthChanged,
   arrowVisibilityChanged,
-  behaviorsChanged,
-  commitTetherDisabledSaga,
-  flipModeChanged,
+  controlsReset,
   floatingControls,
   pointChanged,
   radiusChanged,
-  resetControlsSaga,
   scratchpadScope,
   sideChanged,
   sideOffsetChanged,
-  tetherPaddingChanged,
-  trackTetherConfigSaga,
-  TETHER_FEATURES,
-  type FlipMode,
-  type TetherBehavior,
 } from '../state/floating-ui';
 import * as css from './floating-ui.css';
-
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 const SIDES = [
   'top',
@@ -72,30 +57,6 @@ const ARROW_ALIGNMENTS = [
   'end',
 ] as const satisfies ArrowAlign[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
-const FLIP_MODES = ['auto', 'off', 'chain'] as const satisfies FlipMode[];
-
-/**
- * The tether-behavior cards. Cards over bare checkboxes because each of
- * these needs a sentence to be meaningful — the label alone ("size")
- * says nothing about what turning it off costs.
- */
-const TETHER_BEHAVIORS = [
-  {
-    value: 'shift',
-    label: 'shift',
-    hint: 'Slides the window along its bound edge to keep it inside the boundary.',
-  },
-  {
-    value: 'size',
-    label: 'size',
-    hint: 'Measures the room left over and publishes it as CSS vars.',
-  },
-  {
-    value: 'clamp',
-    label: 'clamp to available',
-    hint: 'Caps the surface to the room `size` reported, and scrolls the overflow.',
-  },
-] as const satisfies { value: TetherBehavior; label: string; hint: string }[];
 
 /** A titled run of related controls, stacked one per row. */
 const ControlGroup = (props: { label: string; children: JSX.Element }) => (
@@ -296,27 +257,6 @@ const FloatingUiScratchpad = () => {
   useAnchor(scratchpadScope);
   const controls = useValue(floatingControls);
   const commit = useCommit();
-  const track = useRun(trackTetherConfigSaga);
-  const commitTetherDisabled = useRun(commitTetherDisabledSaga);
-  const resetControls = useRun(resetControlsSaga);
-
-  // `tetherDisabled` is seeded with the build-environment default, so
-  // first paint (and prerender) match without a flash. OPFS is
-  // client-only — unavailable during SSG — so the tracking saga starts on
-  // mount: it subscribes, reconciles with any persisted override, then
-  // runs for as long as the page is mounted. Writes echo back through the
-  // subscription, making it the single source of truth.
-  onMount(() => {
-    void track().catch((error: unknown) => {
-      // Releasing the anchor on cleanup aborts the saga. That's ordinary
-      // teardown, and nothing to report.
-      if (error instanceof AbortError) return;
-
-      logger.error('The floating-UI tether config tracker failed.', {
-        error: toError(error),
-      });
-    });
-  });
 
   const chooseSide = (side: FloatingSide) => commit(sideChanged(side));
   const chooseAlign = (align: FloatingAlignment) => commit(alignChanged(align));
@@ -329,23 +269,10 @@ const FloatingUiScratchpad = () => {
     commit(alignOffsetChanged(offset));
   const choosePoint = (point: FloatingPoint | null) =>
     commit(pointChanged(point));
-  const chooseTetherDisabled = (disabled: boolean) =>
-    void commitTetherDisabled(disabled);
-  const chooseTetherPadding = (padding: number) =>
-    commit(tetherPaddingChanged(padding));
-  const chooseBehaviors = (behaviors: readonly string[]) =>
-    commit(behaviorsChanged(behaviors as readonly TetherBehavior[]));
-  const chooseFlipMode = (mode: FlipMode) => commit(flipModeChanged(mode));
   const chooseArrowVisible = (visible: boolean) =>
     commit(arrowVisibilityChanged(visible));
   const chooseArrowBase = (base: number) => commit(arrowBaseChanged(base));
   const chooseArrowDepth = (depth: number) => commit(arrowDepthChanged(depth));
-
-  /** The behavior cards currently checked, as the group reads them. */
-  const behaviors = (): TetherBehavior[] => [
-    ...TETHER_FEATURES.filter((feature) => controls().features[feature]),
-    ...(controls().clampToAvailable ? (['clamp'] as const) : []),
-  ];
 
   /** Re-place the bound point wherever the target box is clicked. */
   const placePoint = (event: MouseEvent & { currentTarget: HTMLElement }) => {
@@ -414,7 +341,7 @@ const FloatingUiScratchpad = () => {
             </Flex>
           </Flex>
 
-          <Grid as="div" class={css.configs}>
+          <Flex as="div" direction="column" gap={7}>
             <ControlGroup label="Window props">
               <ChoiceControl
                 label="Side"
@@ -491,85 +418,15 @@ const FloatingUiScratchpad = () => {
               </ControlSubgroup>
             </ControlGroup>
 
-            <ControlGroup label="Tether config">
-              <Flex as="div" direction="column" gap={2}>
-                <Checkbox
-                  testId="control-tether-disabled"
-                  checked={controls().tetherDisabled}
-                  onCheckedChange={chooseTetherDisabled}
-                >
-                  Disable tether
-                </Checkbox>
-                <Text as="p" size={1} selectable={false} class={css.hint}>
-                  Stands the tether down, so nothing gets measured — the
-                  pre-hydration state, where placement comes from CSS alone.
-                </Text>
-              </Flex>
-              <NumberControl
-                label="Tether padding"
-                name="tether-padding"
-                value={controls().tetherPadding}
-                min={0}
-                onValueChange={chooseTetherPadding}
-              />
-              <ChoiceControl
-                label="Flip"
-                name="flip"
-                value={controls().flipMode}
-                options={FLIP_MODES}
-                onValueChange={chooseFlipMode}
-              />
-              <Flex as="div" direction="column" gap={2}>
-                <ControlLabel label="Tether behaviors" />
-                <CheckboxCardsRoot
-                  testId="control-behaviors"
-                  name="behaviors"
-                  columns={1}
-                  gap={2}
-                  value={behaviors()}
-                  onValueChange={chooseBehaviors}
-                >
-                  <For each={TETHER_BEHAVIORS}>
-                    {(behavior) => (
-                      <CheckboxCardsItem
-                        testId={`behavior-${behavior.value}`}
-                        value={behavior.value}
-                      >
-                        <Flex as="div" direction="column" gap={1}>
-                          <Text
-                            as="p"
-                            size={2}
-                            weight="medium"
-                            selectable={false}
-                          >
-                            {behavior.label}
-                          </Text>
-                          <Text
-                            as="p"
-                            size={1}
-                            selectable={false}
-                            class={css.hint}
-                          >
-                            {behavior.hint}
-                          </Text>
-                        </Flex>
-                      </CheckboxCardsItem>
-                    )}
-                  </For>
-                </CheckboxCardsRoot>
-              </Flex>
-            </ControlGroup>
-
             <Button
               testId="control-reset"
               variant="soft"
               color="neutral"
-              class={css.reset}
-              onClick={() => void resetControls()}
+              onClick={() => commit(controlsReset())}
             >
               Reset controls
             </Button>
-          </Grid>
+          </Flex>
         </Flex>
       </FrameBody>
     </>

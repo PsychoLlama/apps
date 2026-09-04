@@ -41,9 +41,9 @@ const renderFloating = (
 describe('FloatingWindow geometry', () => {
   it('positions against the root, not the bordered element inside it', () => {
     // The root is what keeps the box the window resolves against and the
-    // box a measured placement would read as one rectangle: it carries no
-    // border of its own, so an anchored element's border stays inside
-    // both. Bind to the wrong one and the window sits a border-width off.
+    // anchor's outer edge as one rectangle: it carries no border of its
+    // own, so an anchored element's border stays inside both. Bind to the
+    // wrong one and the window sits a border-width off.
     const { container } = render(() => (
       <div class={fixture.stage}>
         <FloatingRoot display="block" testId="anchor">
