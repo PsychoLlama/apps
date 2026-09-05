@@ -229,9 +229,11 @@ describe('FloatingWindow', () => {
     }
   });
 
-  it('passes the arrow alignment through to the arrow', () => {
+  it("seats the arrow with the window's own alignment", () => {
     const { container } = render(() => (
-      <Rooted arrow={{ align: 'end' }}>content</Rooted>
+      <Rooted align="end" arrow={{}}>
+        content
+      </Rooted>
     ));
 
     expect(container.querySelector('svg')).toHaveAttribute('data-align', 'end');

@@ -17,7 +17,6 @@ import {
 import {
   FloatingRoot,
   FloatingWindow,
-  type ArrowAlign,
   type FloatingAlignment,
   type FloatingPoint,
   type FloatingSide,
@@ -27,7 +26,6 @@ import { AppearanceToggle } from '@lib/theme/appearance-toggle';
 import {
   alignChanged,
   alignOffsetChanged,
-  arrowAlignChanged,
   arrowBaseChanged,
   arrowDepthChanged,
   arrowVisibilityChanged,
@@ -52,11 +50,6 @@ const ALIGNMENTS = [
   'center',
   'end',
 ] as const satisfies FloatingAlignment[];
-const ARROW_ALIGNMENTS = [
-  'start',
-  'center',
-  'end',
-] as const satisfies ArrowAlign[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
 
 /** A titled run of related controls, stacked one per row. */
@@ -72,7 +65,7 @@ const ControlGroup = (props: { label: string; children: JSX.Element }) => (
 /**
  * A titled run nested inside a {@link ControlGroup} — a cluster of
  * controls that all configure one part, where repeating that part's name
- * in every label ("Arrow align", "Arrow base") would be noise.
+ * in every label ("Arrow base", "Arrow depth") would be noise.
  */
 const ControlSubgroup = (props: { label: string; children: JSX.Element }) => (
   <Flex as="section" direction="column" gap={5}>
@@ -104,8 +97,6 @@ const ControlLabel = (props: { label: string; hint?: string }) => (
  */
 const ChoiceControl = <Value extends string>(props: {
   label: string;
-  /** Accessible name, when the visible label leans on a subheading. */
-  ariaLabel?: string;
   name: string;
   value: Value;
   options: readonly Value[];
@@ -119,7 +110,7 @@ const ChoiceControl = <Value extends string>(props: {
         name={props.name}
         value={props.value}
         onValueChange={(value) => props.onValueChange(value as Value)}
-        aria-label={props.ariaLabel ?? props.label}
+        aria-label={props.label}
       >
         <For each={props.options}>
           {(option) => (
@@ -261,8 +252,6 @@ const FloatingUiScratchpad = () => {
 
   const chooseSide = (side: FloatingSide) => commit(sideChanged(side));
   const chooseAlign = (align: FloatingAlignment) => commit(alignChanged(align));
-  const chooseArrowAlign = (align: ArrowAlign) =>
-    commit(arrowAlignChanged(align));
   const chooseRadius = (radius: RadiusScale) => commit(radiusChanged(radius));
   const chooseSideOffset = (offset: number) =>
     commit(sideOffsetChanged(offset));
@@ -325,7 +314,6 @@ const FloatingUiScratchpad = () => {
                       ? {
                           base: controls().arrowBase,
                           depth: controls().arrowDepth,
-                          align: controls().arrowAlign,
                           class: css.arrow,
                         }
                       : undefined
@@ -392,14 +380,6 @@ const FloatingUiScratchpad = () => {
                   name="arrow"
                   checked={controls().arrowVisible}
                   onCheckedChange={chooseArrowVisible}
-                />
-                <ChoiceControl
-                  label="Align"
-                  ariaLabel="Arrow align"
-                  name="arrow-align"
-                  value={controls().arrowAlign}
-                  options={ARROW_ALIGNMENTS}
-                  onValueChange={chooseArrowAlign}
                 />
                 <NumberControl
                   label="Base"

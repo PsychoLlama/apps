@@ -36,10 +36,11 @@ export interface FloatingPoint {
 }
 
 /**
- * Arrow configuration for a floating primitive. `direction` is omitted —
- * the window derives it from the resolved side.
+ * Arrow configuration for a floating primitive. `direction` and `align`
+ * are omitted — the window derives both from its own placement, which is
+ * what aims the arrow back at whatever the surface is bound to.
  */
-export type FloatingArrowProps = Omit<ArrowProps, 'direction'>;
+export type FloatingArrowProps = Omit<ArrowProps, 'direction' | 'align'>;
 
 /**
  * Direction the arrow points so it faces the anchor, keyed by the
@@ -175,7 +176,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
             base={arrow().base}
             depth={arrow().depth}
             direction={ARROW_DIRECTION_BY_SIDE[side()]}
-            align={arrow().align}
+            align={align()}
             hidden={arrow().hidden}
             class={arrow().class}
           />
