@@ -7,11 +7,7 @@
  */
 
 import { render } from '@solidjs/testing-library';
-import {
-  FloatingRoot,
-  FloatingWindow,
-  type FloatingWindowProps,
-} from '../floating-ui';
+import { FloatingRoot, FloatingWindow, type FloatingWindowProps } from '..';
 import * as fixture from './floating-ui.test.browser.css';
 
 /** Render a window bound to a fixed 100×100 anchor on a quiet stage. */

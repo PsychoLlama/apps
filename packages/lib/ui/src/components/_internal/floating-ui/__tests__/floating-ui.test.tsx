@@ -12,8 +12,8 @@ import {
   FloatingBody,
   FloatingWindow,
   type FloatingWindowProps,
-} from '../floating-ui';
-import * as css from '../floating-ui.css';
+} from '..';
+import * as css from '../window.css';
 
 /** Unwrap a `createVar()` reference (`var(--x)`) to its property name. */
 const varName = (reference: string) => reference.slice(4, -1);
@@ -195,16 +195,14 @@ describe('FloatingWindow', () => {
     expect(shell).toHaveAttribute('data-align', 'end');
   });
 
-  it('omits the arrow by default', () => {
+  it('omits the arrow when unconfigured', () => {
     const { container } = render(() => <Rooted>content</Rooted>);
 
     expect(container.querySelector('svg')).toBeNull();
   });
 
-  it('renders the arrow before the body when visible', () => {
-    const { container } = render(() => (
-      <Rooted arrow={{ visible: true }}>content</Rooted>
-    ));
+  it('renders the arrow before the body when configured', () => {
+    const { container } = render(() => <Rooted arrow={{}}>content</Rooted>);
     const shell = container.querySelector('[data-side]');
 
     // Arrow first so the body paints over its shadow seam.
@@ -219,7 +217,7 @@ describe('FloatingWindow', () => {
 
     for (const { side, width, height } of cases) {
       const { container } = render(() => (
-        <Rooted side={side} arrow={{ visible: true }}>
+        <Rooted side={side} arrow={{}}>
           content
         </Rooted>
       ));
@@ -233,7 +231,7 @@ describe('FloatingWindow', () => {
 
   it('passes the arrow alignment through to the arrow', () => {
     const { container } = render(() => (
-      <Rooted arrow={{ visible: true, align: 'end' }}>content</Rooted>
+      <Rooted arrow={{ align: 'end' }}>content</Rooted>
     ));
 
     expect(container.querySelector('svg')).toHaveAttribute('data-align', 'end');
