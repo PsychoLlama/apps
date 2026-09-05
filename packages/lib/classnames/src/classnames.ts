@@ -15,24 +15,22 @@ type Falsy = false | 0 | null | undefined;
 type ClassName = string | Falsy;
 
 /**
- * A conditional map. Keys are class names, and each is emitted only if its
- * value is truthy — handy when the condition reads better than the class:
- * `{ [css.active]: isActive() }`.
- */
-type ClassMap = Record<string, true | Falsy>;
-
-/**
  * Anything `clx` knows how to fold into a class string. Arrays hold plain
  * class names and do not nest; pass a list of lists by spreading it.
+ *
+ * There is deliberately no conditional-map form (`{ [cls]: cond }`). Solid
+ * already has `classList` for that shape, and it toggles each class on the
+ * element instead of rebuilding the whole attribute — offering a second,
+ * worse spelling here would only pull call sites away from it. Where
+ * `classList` isn't available, `cond && cls` covers the same ground.
  */
-export type ClassValue = ClassName | ClassMap | readonly ClassName[];
+export type ClassValue = ClassName | readonly ClassName[];
 
 /**
  * Joins class names into a single string, skipping anything falsy.
  *
  * ```ts
  * clx(css.base, isActive() && css.active, props.class);
- * clx(css.base, { [css.active]: isActive() });
  * ```
  */
 export const clx = (value: ClassValue, ...rest: ClassValue[]): string =>
@@ -45,17 +43,10 @@ const append = (result: string, value: ClassValue): string => {
 
   if (typeof value === 'string') return join(result, value);
 
-  // `Array.isArray` widens a `readonly T[]` to `any[]`, losing the element
-  // type, so the branches recover it by assertion.
-  if (Array.isArray(value)) {
-    return (value as readonly ClassName[]).reduce<string>(
-      (names, name) => (name ? join(names, name) : names),
-      result,
-    );
-  }
-
-  return Object.entries(value as ClassMap).reduce<string>(
-    (names, [name, enabled]) => (enabled ? join(names, name) : names),
+  // Everything falsy and every string is already handled, so the remainder
+  // is the array form.
+  return value.reduce<string>(
+    (names, name) => (name ? join(names, name) : names),
     result,
   );
 };
