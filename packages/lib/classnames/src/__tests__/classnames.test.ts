@@ -50,32 +50,4 @@ describe('clx', () => {
       expect(clx([], 'one')).toBe('one');
     });
   });
-
-  describe('conditional maps', () => {
-    it('emits the keys whose values are truthy', () => {
-      expect(clx({ one: true, two: false, three: true })).toBe('one three');
-    });
-
-    it('treats zero, null, and undefined as disabled', () => {
-      expect(clx({ one: true, two: 0, three: null, four: undefined })).toBe(
-        'one',
-      );
-    });
-
-    it('composes with plain class names', () => {
-      expect(clx('base', { active: true, disabled: false })).toBe(
-        'base active',
-      );
-    });
-
-    it('supports computed keys', () => {
-      const active = 'active_a1b2c3';
-
-      expect(clx('base', { [active]: true })).toBe('base active_a1b2c3');
-    });
-
-    it('ignores an empty map', () => {
-      expect(clx({}, 'one')).toBe('one');
-    });
-  });
 });

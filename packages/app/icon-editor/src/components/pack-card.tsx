@@ -4,6 +4,7 @@
 
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
+import clx from '@lib/classnames';
 import { Badge, Card, Flex, Text } from '@lib/ui';
 import type { IconPackSummary } from '../icons';
 import * as css from './pack-card.css';
@@ -63,7 +64,7 @@ export const PackCard: Component<PackCardProps> = (props) => {
       variant="surface"
       skeleton={loading()}
       testId={props.testId}
-      class={`${css.packCard}${props.active ? ` ${css.packCardActive}` : ''}`}
+      class={clx(css.packCard, props.active && css.packCardActive)}
       aria-pressed={props.active}
       aria-label={props['aria-label']}
       ref={props.ref}

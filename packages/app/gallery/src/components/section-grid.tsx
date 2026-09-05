@@ -1,4 +1,5 @@
 import { For, Match, Switch } from 'solid-js';
+import clx from '@lib/classnames';
 import { Grid, Text } from '@lib/ui';
 import type { GalleryListing, GallerySection } from '@lib/gallery';
 import * as css from './section-grid.css';
@@ -11,10 +12,6 @@ type Section = GallerySection<unknown>;
 // tracks. Sized for the widest axis we render: the color scale's 12 steps plus
 // a header column.
 const MAX_TRACKS = 13;
-
-// Joins class names, dropping the unset ones.
-const cx = (...names: Array<string | undefined>): string =>
-  names.filter(Boolean).join(' ');
 
 /** Axis title shown above a column or beside a row. */
 const AxisHeader = (props: { title: string; class?: string }) => (
@@ -56,15 +53,12 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
   // section tightens its `gap`, pad back out from the cells. Default sections
   // leave the gutter unset and look unchanged.
   const columnClass = () =>
-    cx(
+    clx(
       css.columnHeader,
-      props.section.gap === undefined ? undefined : css.columnHeaderGutter,
+      props.section.gap !== undefined && css.columnHeaderGutter,
     );
   const rowClass = () =>
-    cx(
-      css.rowHeader,
-      props.section.gap === undefined ? undefined : css.rowHeaderGutter,
-    );
+    clx(css.rowHeader, props.section.gap !== undefined && css.rowHeaderGutter);
   const tracks = () =>
     Math.min(
       trackCount(props.section),
@@ -78,7 +72,7 @@ export const SectionGrid = (props: { listing: Listing; section: Section }) => {
       justify={props.section.align?.columns ?? 'start'}
       gapX={props.section.gap ?? 5}
       gapY={props.section.gap ?? 4}
-      class={`${css.grid} ${css.templateColumns[tracks()]}`}
+      class={clx(css.grid, css.templateColumns[tracks()])}
     >
       <Switch>
         <Match when={columns().length > 0 && rows().length > 0}>

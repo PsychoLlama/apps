@@ -1,5 +1,6 @@
 import { For, type JSX } from 'solid-js';
 import type { RadiusScale } from '@lib/design';
+import clx from '@lib/classnames';
 import { FrameBody, SiteHeader } from '@lib/shell';
 import {
   Button,
@@ -304,9 +305,7 @@ const FloatingUiScratchpad = () => {
               <FloatingRoot display="block" class={css.anchorSlot}>
                 <Flex
                   as="section"
-                  class={[css.target, controls().point && css.pointArmed]
-                    .filter(Boolean)
-                    .join(' ')}
+                  class={clx(css.target, controls().point && css.pointArmed)}
                   onClick={placePoint}
                 />
                 <FloatingWindow

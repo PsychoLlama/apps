@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@lib/gallery": "workspace:*",
+    "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",

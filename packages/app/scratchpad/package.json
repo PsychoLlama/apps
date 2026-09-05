@@ -16,6 +16,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/runtime-config": "workspace:*",
     "@lib/shell": "workspace:*",

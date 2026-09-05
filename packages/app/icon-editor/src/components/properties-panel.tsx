@@ -4,6 +4,7 @@
 
 import { Show } from 'solid-js';
 import type { Component } from 'solid-js';
+import clx from '@lib/classnames';
 import { Badge, Button, Flex, ScrollArea, Separator, Text } from '@lib/ui';
 import IconPlaceholder from 'virtual:icons/mdi/image-outline';
 import IconReset from 'virtual:icons/mdi/restart';
@@ -60,7 +61,7 @@ const IconChooser: Component<{
           {/* eslint-disable-next-line custom/require-ui-primitives */}
           <button
             type="button"
-            class={`${css.thumbButton} ${css.thumbButtonEmpty}`}
+            class={clx(css.thumbButton, css.thumbButtonEmpty)}
             aria-label="Choose an icon"
             onClick={props.onClick}
           >
