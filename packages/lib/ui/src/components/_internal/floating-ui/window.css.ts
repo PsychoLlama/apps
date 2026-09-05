@@ -93,6 +93,11 @@ const shift = (origin: string, sign: string, distance: string) =>
  * `flex-direction`, which seats the DOM-first arrow onto the edge facing
  * the anchor (reversed for top/left).
  *
+ * The box itself is transparent to the pointer: it spans the arrow's
+ * whole row, most of which is empty, and it sits over the anchor
+ * outright in point mode. Only the body takes pointer events back (see
+ * `body.css`).
+ *
  * Every selector is wrapped in `:where(...)` so all rules hold equal
  * specificity and the cascade resolves by source order — the point-mode
  * pins sit last so they can override the edge-mode ones.
@@ -101,6 +106,7 @@ export const window = style({
   position: 'absolute',
   display: 'flex',
   alignItems: 'center',
+  pointerEvents: 'none',
   transformOrigin: `${fallbackVar(originX, '50%')} ${fallbackVar(originY, '50%')}`,
   translate: `${shift(originX, signX, distanceX)} ${shift(originY, signY, distanceY)}`,
   selectors: {
