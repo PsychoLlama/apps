@@ -25,6 +25,7 @@
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.8.0",
     "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
     "@vanilla-extract/css": "catalog:",
