@@ -49,7 +49,10 @@ export {
 } from './root';
 export {
   FloatingWindow,
+  type FloatingAlignment,
   type FloatingArrowProps,
+  type FloatingPoint,
+  type FloatingSide,
   type FloatingWindowProps,
 } from './window';
 export { FloatingBody, type FloatingBodyProps } from './body';
@@ -59,9 +62,3 @@ export {
   type ArrowDirection,
   type ArrowProps,
 } from './arrow';
-export {
-  type FloatingAlignment,
-  type FloatingPlacement,
-  type FloatingPoint,
-  type FloatingSide,
-} from './placement';
