@@ -205,6 +205,9 @@ importers:
 
   packages/app/gallery:
     dependencies:
+      '@lib/classnames':
+        specifier: workspace:*
+        version: link:../../lib/classnames
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -232,6 +235,9 @@ importers:
 
   packages/app/icon-editor:
     dependencies:
+      '@lib/classnames':
+        specifier: workspace:*
+        version: link:../../lib/classnames
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -424,6 +430,9 @@ importers:
 
   packages/app/scratchpad:
     dependencies:
+      '@lib/classnames':
+        specifier: workspace:*
+        version: link:../../lib/classnames
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -479,6 +488,9 @@ importers:
       '@app/scratchpad':
         specifier: workspace:*
         version: link:../scratchpad
+      '@lib/classnames':
+        specifier: workspace:*
+        version: link:../../lib/classnames
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design

@@ -1,4 +1,5 @@
 import { For } from 'solid-js';
+import clx from '@lib/classnames';
 import { useRun, useValue } from '@lib/state';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
 import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
@@ -43,7 +44,7 @@ export const ThemePicker = () => {
           <RadioCardsItem
             testId={`theme-picker-${entry.id}`}
             value={entry.id}
-            class={`${css.swatchBase} ${css.swatchTint[entry.id]}`}
+            class={clx(css.swatchBase, css.swatchTint[entry.id])}
           >
             {entry.label}
           </RadioCardsItem>
