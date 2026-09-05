@@ -1,6 +1,7 @@
 import { Show, splitProps, type JSX } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import { type RadiusScale } from '@lib/design';
+import clx from '@lib/classnames';
 import { type FlexProps } from '../../../props/flex';
 import { type PaddingProps } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
@@ -142,9 +143,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
   const align = () => own.align ?? 'center';
 
   const className = () =>
-    [css.window, body.radius && css.arrowRadiusOffset[body.radius]]
-      .filter(Boolean)
-      .join(' ');
+    clx(css.window, body.radius && css.arrowRadiusOffset[body.radius]);
 
   // Continuous pixel inputs ride in as inline vars; the static rules fold
   // them into the placement math.

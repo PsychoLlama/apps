@@ -22,6 +22,7 @@
 
 import { mergeProps, Show, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -133,8 +134,8 @@ const Switch: Component<SwitchProps> = (rawProps) => {
   };
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.color[local.color],
@@ -142,9 +143,7 @@ const Switch: Component<SwitchProps> = (rawProps) => {
       css.radiusVariant[local.radius],
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <>

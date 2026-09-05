@@ -14,6 +14,7 @@
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -56,15 +57,13 @@ const Section: Component<SectionProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.base,
       css.size[local.size],
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <section class={className()} data-testid={tid.testId} {...skeletonProps}>

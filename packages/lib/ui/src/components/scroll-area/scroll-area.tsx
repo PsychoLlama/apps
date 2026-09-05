@@ -72,6 +72,7 @@ import {
 } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -765,15 +766,13 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   };
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.radiusVariant[local.radius],
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <div

@@ -11,6 +11,7 @@
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -134,8 +135,8 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
   };
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.variant[local.variant],
@@ -143,9 +144,7 @@ const TextArea: Component<TextAreaProps> = (rawProps) => {
       css.resize[local.resize],
       resolveSkeletonClass(local),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   const wrapperAttrs = () => resolveSkeletonAttrs(local);
 

@@ -28,6 +28,7 @@
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -96,21 +97,17 @@ export const TableRoot: ParentComponent<TableRootProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.variant[local.variant],
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   const tableClassName = () =>
-    [css.table, local.layout && css.layout[local.layout]]
-      .filter(Boolean)
-      .join(' ');
+    clx(css.table, local.layout && css.layout[local.layout]);
 
   return (
     <div class={className()} data-testid={tid.testId} {...skeletonProps}>
@@ -129,7 +126,7 @@ export const TableHeader: ParentComponent<TableHeaderProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(rawProps, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, ['class', 'children']);
 
-  const className = () => [css.header, local.class].filter(Boolean).join(' ');
+  const className = () => clx(css.header, local.class);
 
   return (
     <thead {...rest} class={className()} data-testid={tid.testId}>
@@ -146,7 +143,7 @@ export const TableBody: ParentComponent<TableBodyProps> = (rawProps) => {
   const [tid, withoutTid] = splitProps(rawProps, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, ['class', 'children']);
 
-  const className = () => [css.body, local.class].filter(Boolean).join(' ');
+  const className = () => clx(css.body, local.class);
 
   return (
     <tbody {...rest} class={className()} data-testid={tid.testId}>
@@ -167,9 +164,7 @@ export const TableRow: ParentComponent<TableRowProps> = (rawProps) => {
   const [local, rest] = splitProps(withoutTid, ['align', 'class', 'children']);
 
   const className = () =>
-    [css.row, local.align && css.align[local.align], local.class]
-      .filter(Boolean)
-      .join(' ');
+    clx(css.row, local.align && css.align[local.align], local.class);
 
   return (
     <tr {...rest} class={className()} data-testid={tid.testId}>
@@ -198,14 +193,12 @@ export const TableCell: ParentComponent<TableCellProps> = (rawProps) => {
   ]);
 
   const className = () =>
-    [
+    clx(
       css.cell,
       local.justify && css.justify[local.justify],
       resolveSelectableClass(local),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <td {...rest} class={className()} data-testid={tid.testId}>
@@ -236,15 +229,13 @@ export const TableColumnHeaderCell: ParentComponent<
   ]);
 
   const className = () =>
-    [
+    clx(
       css.cell,
       css.columnHeaderCell,
       local.justify && css.justify[local.justify],
       resolveSelectableClass(local),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <th {...rest} class={className()} data-testid={tid.testId} scope="col">
@@ -275,15 +266,13 @@ export const TableRowHeaderCell: ParentComponent<TableRowHeaderCellProps> = (
   ]);
 
   const className = () =>
-    [
+    clx(
       css.cell,
       css.rowHeaderCell,
       local.justify && css.justify[local.justify],
       resolveSelectableClass(local),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <th {...rest} class={className()} data-testid={tid.testId} scope="row">

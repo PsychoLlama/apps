@@ -2,6 +2,7 @@ import { Dynamic } from 'solid-js/web';
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { TypeScale, FontWeight, TextColor } from '@lib/design';
+import clx from '@lib/classnames';
 import {
   type HtmlHeadingTag,
   type PolymorphicProps,
@@ -102,7 +103,7 @@ function Heading(
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
+    clx(
       css.base,
       css.size[local.size],
       css.weight[local.weight],
@@ -113,11 +114,9 @@ function Heading(
       resolveTruncateClass(local),
       resolveSelectableClass(local),
       skeletonClass(),
-      ...resolveMarginClasses(local),
+      resolveMarginClasses(local),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <Dynamic

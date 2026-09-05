@@ -32,6 +32,7 @@ import {
   splitProps,
 } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import { type MarginProps } from '../../props/margin';
 import {
   type SelectableProps,
@@ -61,9 +62,7 @@ const resolveRadioClasses = (
   variant: RadioVariant,
   color: RadioColor,
 ): string => {
-  return [css.root, css.size[size], css.color[color], css.variant[variant]]
-    .filter(Boolean)
-    .join(' ');
+  return clx(css.root, css.size[size], css.color[color], css.variant[variant]);
 };
 
 /**
@@ -280,15 +279,13 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
   };
 
   const inputClassName = () =>
-    [
+    clx(
       resolveRadioClasses(ctx.size(), ctx.variant(), ctx.color()),
       // When no children are present, the consumer's `class` lands on
       // the input itself; otherwise it lands on the wrapping label
       // (set in the JSX below).
       local.children === undefined && local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   const renderInput = () => (
     <input
@@ -323,7 +320,7 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
         // so dragging across the disc never starts a selection — only the
         // label text does, and only when `selectable` is set.
         selectable={local.selectable ?? false}
-        class={[css.item, local.class].filter(Boolean).join(' ')}
+        class={clx(css.item, local.class)}
         style={local.style}
       >
         {renderInput()}

@@ -21,6 +21,7 @@
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -95,20 +96,16 @@ export const TabNavRoot: ParentComponent<TabNavRootProps> = (rawProps) => {
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
   const navClassName = () =>
-    [...resolveMarginClasses(margin), skeletonClass(), local.class]
-      .filter(Boolean)
-      .join(' ');
+    clx(resolveMarginClasses(margin), skeletonClass(), local.class);
 
   const listClassName = () =>
-    [
+    clx(
       shared.list,
       shared.size[local.size],
       shared.justify[local.justify],
       shared.wrap[local.wrap],
       shared.color[local.color][contrast()],
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <nav {...skeletonProps} class={navClassName()} data-testid={tid.testId}>
@@ -154,8 +151,7 @@ export const TabNavLink: ParentComponent<TabNavLinkProps> = (rawProps) => {
     'onKeyDown',
   ]);
 
-  const className = () =>
-    [shared.trigger, local.class].filter(Boolean).join(' ');
+  const className = () => clx(shared.trigger, local.class);
 
   const onKeyDown: JSX.EventHandler<HTMLAnchorElement, KeyboardEvent> = (
     event,

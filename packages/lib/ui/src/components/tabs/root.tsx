@@ -5,6 +5,7 @@ import {
   type JSX,
   type ParentComponent,
 } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -75,9 +76,7 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
   };
 
   const className = () =>
-    [...resolveMarginClasses(margin), skeletonClass(), local.class]
-      .filter(Boolean)
-      .join(' ');
+    clx(resolveMarginClasses(margin), skeletonClass(), local.class);
 
   return (
     <TabsContext.Provider value={ctx}>

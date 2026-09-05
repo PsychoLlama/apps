@@ -18,6 +18,7 @@
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -74,9 +75,9 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
-      ...resolveIconButtonStyleClasses(
+    clx(
+      resolveMarginClasses(margin),
+      resolveIconButtonStyleClasses(
         local.size,
         local.variant,
         local.color,
@@ -84,9 +85,7 @@ const IconButton: ParentComponent<IconButtonProps> = (rawProps) => {
       ),
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <button class={className()} data-testid={tid.testId} {...skeletonProps}>

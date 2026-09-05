@@ -2,6 +2,7 @@ import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { SpaceScale } from '@lib/design';
+import clx from '@lib/classnames';
 import {
   boxPropKeys,
   resolveBoxClasses,
@@ -60,8 +61,8 @@ function Grid(
   const [skeletonClass, skeletonProps] = useSkeleton(box, rest);
 
   const className = () =>
-    [
-      ...resolveBoxClasses(box),
+    clx(
+      resolveBoxClasses(box),
       css.base,
       local.columns && css.columns[local.columns],
       local.rows && css.rows[local.rows],
@@ -72,9 +73,7 @@ function Grid(
       local.gapY && css.gapY[local.gapY],
       skeletonClass(),
       box.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <Dynamic

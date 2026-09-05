@@ -16,6 +16,7 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import type { FontWeight, TypeScale } from '@lib/design';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -82,8 +83,8 @@ const Blockquote: ParentComponent<BlockquoteProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.base,
       local.size && css.size[local.size],
       local.weight && css.weight[local.weight],
@@ -93,9 +94,7 @@ const Blockquote: ParentComponent<BlockquoteProps> = (rawProps) => {
       resolveSelectableClass(local),
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <blockquote class={className()} data-testid={tid.testId} {...skeletonProps}>

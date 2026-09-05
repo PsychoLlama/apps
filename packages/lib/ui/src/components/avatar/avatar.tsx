@@ -38,6 +38,7 @@ import {
   untrack,
 } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -201,19 +202,17 @@ const Avatar: Component<AvatarProps> = (rawProps) => {
   });
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.cornerRadius[local.radius],
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   const fallbackClass = () =>
-    [css.fallback, css.variantColor[local.variant][local.color]].join(' ');
+    clx(css.fallback, css.variantColor[local.variant][local.color]);
 
   // The root carries the accessible name so it stays stable across the
   // image/fallback swap. The inner `<img>` is decorative (`alt=""`) and

@@ -6,6 +6,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import clx from '@lib/classnames';
 import { type TestIdProps } from '../../../props/test-id';
 import * as css from './root.css';
 
@@ -94,8 +95,7 @@ export interface FloatingRootProps extends TestIdProps {
 export const FloatingRoot = (props: FloatingRootProps) => {
   const [element, setElement] = createSignal<HTMLElement>();
 
-  const className = () =>
-    [css.root[props.display], props.class].filter(Boolean).join(' ');
+  const className = () => clx(css.root[props.display], props.class);
 
   return (
     <AnchorContext.Provider value={element}>

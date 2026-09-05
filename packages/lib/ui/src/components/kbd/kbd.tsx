@@ -12,6 +12,7 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import type { TypeScale } from '@lib/design';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -70,17 +71,15 @@ const Kbd: ParentComponent<KbdProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.base,
       css.variant[local.variant],
       local.size && css.size[local.size],
       resolveSelectableClass(local),
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <kbd class={className()} data-testid={tid.testId} {...skeletonProps}>

@@ -6,6 +6,7 @@ import {
   type JSX,
   type ParentComponent,
 } from 'solid-js';
+import clx from '@lib/classnames';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import {
   useTabsContext,
@@ -133,8 +134,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
     record?.el.focus();
   };
 
-  const className = () =>
-    [shared.trigger, local.class].filter(Boolean).join(' ');
+  const className = () => clx(shared.trigger, local.class);
 
   return (
     <button

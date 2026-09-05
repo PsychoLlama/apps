@@ -11,6 +11,7 @@
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -79,17 +80,15 @@ const Badge: ParentComponent<BadgeProps> = (rawProps) => {
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.base,
       css.size[local.size],
       local.radius && css.cornerRadius[local.radius],
       css.variantColor[local.variant][local.color][contrast()],
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <span class={className()} data-testid={tid.testId} {...skeletonProps}>
