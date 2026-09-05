@@ -12,7 +12,7 @@ import { type TestIdProps } from '../../../props/test-id';
 import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
 import { FloatingBody } from './body';
 import { useAnchorElement } from './root';
-import * as css from './floating-ui.css';
+import * as css from './window.css';
 
 /**
  * Arrow configuration for a floating primitive. `direction` is omitted —

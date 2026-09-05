@@ -7,7 +7,7 @@ import {
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { type TestIdProps } from '../../../props/test-id';
-import * as css from './floating-ui.css';
+import * as css from './root.css';
 
 /**
  * The anchor element every floating surface below a {@link FloatingRoot}
@@ -77,7 +77,7 @@ export interface FloatingRootProps extends TestIdProps {
  * padding box, so anchoring to the element itself would place the window
  * inside its border. Owning an unstyled element of our own keeps the two
  * the same rectangle, whatever border the anchored element carries (see
- * `root` in `floating-ui.css`).
+ * `root` in `root.css`).
  *
  * Windows are siblings of the anchored element rather than children of
  * it, which also keeps the anchor's own `overflow` from clipping its

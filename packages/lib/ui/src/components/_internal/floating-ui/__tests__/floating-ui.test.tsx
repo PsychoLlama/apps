@@ -13,7 +13,7 @@ import {
   FloatingWindow,
   type FloatingWindowProps,
 } from '..';
-import * as css from '../floating-ui.css';
+import * as css from '../window.css';
 
 /** Unwrap a `createVar()` reference (`var(--x)`) to its property name. */
 const varName = (reference: string) => reference.slice(4, -1);

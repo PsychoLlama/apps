@@ -11,7 +11,7 @@ import {
   type PaddingProps,
 } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
-import * as css from './floating-ui.css';
+import * as css from './body.css';
 
 /** Props for the floating content surface. */
 export interface FloatingBodyProps
