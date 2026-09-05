@@ -24,6 +24,9 @@ catalogs:
     '@testing-library/jest-dom':
       specifier: ^7.0.0
       version: 7.0.1
+    '@testing-library/user-event':
+      specifier: ^14.6.1
+      version: 14.6.7
     '@vanilla-extract/css':
       specifier: ^1.20.1
       version: 1.21.2
@@ -751,6 +754,9 @@ importers:
 
   packages/lib/ui:
     dependencies:
+      '@lib/classnames':
+        specifier: workspace:*
+        version: link:../classnames
       '@lib/design':
         specifier: workspace:*
         version: link:../design

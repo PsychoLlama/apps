@@ -1,6 +1,7 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -53,9 +54,9 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
-      ...resolveButtonStyleClasses(
+    clx(
+      resolveMarginClasses(margin),
+      resolveButtonStyleClasses(
         local.size,
         local.variant,
         local.color,
@@ -63,9 +64,7 @@ const Button: ParentComponent<ButtonProps> = (rawProps) => {
       ),
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <Dynamic

@@ -14,6 +14,7 @@
 
 import { splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -60,16 +61,14 @@ const Strong: ParentComponent<StrongProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.base,
       resolveWrapClass(local),
       resolveSelectableClass(local),
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <strong class={className()} data-testid={tid.testId} {...skeletonProps}>

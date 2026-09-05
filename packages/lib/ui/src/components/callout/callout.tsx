@@ -10,6 +10,7 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import IconInformation from 'virtual:icons/mdi/information-outline';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -72,14 +73,12 @@ const Callout: ParentComponent<CalloutProps> = (rawProps) => {
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.size[local.size],
       css.variantColor[local.variant][local.color][contrast()],
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <Flex

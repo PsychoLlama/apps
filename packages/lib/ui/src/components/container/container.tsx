@@ -16,6 +16,7 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import clx from '@lib/classnames';
 import {
   boxPropKeys,
   resolveBoxClasses,
@@ -78,15 +79,13 @@ function Container(
   const [skeletonClass, skeletonProps] = useSkeleton(box, rest);
 
   const className = () =>
-    [
-      ...resolveBoxClasses(box),
+    clx(
+      resolveBoxClasses(box),
       css.base,
       css.align[local.align],
       skeletonClass(),
       box.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <Dynamic
@@ -95,7 +94,7 @@ function Container(
       data-testid={box.testId}
       {...skeletonProps}
     >
-      <div class={`${css.inner} ${css.size[local.size]}`}>{box.children}</div>
+      <div class={clx(css.inner, css.size[local.size])}>{box.children}</div>
     </Dynamic>
   );
 }

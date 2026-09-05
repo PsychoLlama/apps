@@ -14,6 +14,7 @@
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -68,16 +69,14 @@ const Separator: Component<SeparatorProps> = (rawProps) => {
   ]);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.base,
       css.orientation[local.orientation],
       css.size[local.orientation][local.size],
       css.color[local.color],
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <hr

@@ -15,6 +15,7 @@ import { mergeProps, splitProps } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import type { ParentComponent } from 'solid-js';
 import type { FontWeight, TypeScale } from '@lib/design';
+import clx from '@lib/classnames';
 import {
   type MarginProps,
   marginPropKeys,
@@ -123,8 +124,8 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
     (local.highContrast || local.color === 'neutral');
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.base,
       local.size && css.size[local.size],
       local.weight && css.weight[local.weight],
@@ -137,9 +138,7 @@ const Link: ParentComponent<LinkProps> = (rawProps) => {
       resolveSelectableClass(local),
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <Dynamic

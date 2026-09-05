@@ -37,6 +37,7 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import type { SpaceScale } from '@lib/design';
+import clx from '@lib/classnames';
 import type {
   CardsColor,
   CardsColumns,
@@ -175,16 +176,14 @@ export const CheckboxCardsRoot: ParentComponent<CheckboxCardsRootProps> = (
   };
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       local.columns && css.columns[local.columns],
       css.gap[local.gap],
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <CheckboxCardsContext.Provider value={ctx}>
@@ -258,15 +257,13 @@ export const CheckboxCardsItem: ParentComponent<CheckboxCardsItemProps> = (
   };
 
   const labelClassName = () =>
-    [
+    clx(
       css.item,
       css.size[ctx.size()],
       css.variant[ctx.variant()],
       css.color[ctx.color()],
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <label class={labelClassName()} style={local.style}>

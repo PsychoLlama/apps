@@ -1,4 +1,5 @@
 import { splitProps, type JSX, type ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { useTabsContext } from './context';
 import * as css from './tabs.css';
@@ -25,7 +26,7 @@ export const TabsContent: ParentComponent<TabsContentProps> = (rawProps) => {
 
   const isActive = () => ctx.value() === local.value;
 
-  const className = () => [css.content, local.class].filter(Boolean).join(' ');
+  const className = () => clx(css.content, local.class);
 
   return (
     <div

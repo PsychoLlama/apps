@@ -9,6 +9,7 @@ import { A, type AnchorProps } from '@solidjs/router';
 import { mergeProps, splitProps } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import type { ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   buttonStyleDefaults,
   buttonStylePropKeys,
@@ -58,9 +59,9 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
   const native = () => resolveNative(local.native, props.href);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
-      ...resolveButtonStyleClasses(
+    clx(
+      resolveMarginClasses(margin),
+      resolveButtonStyleClasses(
         local.size,
         local.variant,
         local.color,
@@ -68,9 +69,7 @@ const LinkButton: ParentComponent<LinkButtonProps> = (rawProps) => {
       ),
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <Dynamic

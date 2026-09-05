@@ -62,6 +62,7 @@ import {
   splitProps,
 } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import Heading from '../heading/heading';
 import Text from '../text/text';
 import { createPresence } from './presence';
@@ -259,8 +260,7 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
     local.onOpenChange(false);
   };
 
-  const panelClass = () =>
-    [css.panel, css.size[local.size], local.class].filter(Boolean).join(' ');
+  const panelClass = () => clx(css.panel, css.size[local.size], local.class);
 
   return (
     <dialog
@@ -282,7 +282,7 @@ const Dialog: ParentComponent<DialogProps> = (rawProps) => {
     >
       <Show when={presence.mounted()}>
         <div class={css.scroll}>
-          <div class={`${css.scrollPadding} ${css.align[local.align]}`}>
+          <div class={clx(css.scrollPadding, css.align[local.align])}>
             <div
               {...rest}
               ref={(el) => {

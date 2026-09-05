@@ -29,6 +29,7 @@
 
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -92,16 +93,14 @@ export const DataListRoot: ParentComponent<DataListRootProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.orientation[local.orientation],
       css.size[local.size],
       resolveTrimClass(local),
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <dl class={className()} data-testid={tid.testId} {...skeletonProps}>
@@ -125,9 +124,7 @@ export const DataListItem: ParentComponent<DataListItemProps> = (rawProps) => {
   const [local, rest] = splitProps(withoutTid, ['align', 'class', 'children']);
 
   const className = () =>
-    [css.item, local.align && css.align[local.align], local.class]
-      .filter(Boolean)
-      .join(' ');
+    clx(css.item, local.align && css.align[local.align], local.class);
 
   return (
     <div {...rest} class={className()} data-testid={tid.testId}>
@@ -150,9 +147,7 @@ export const DataListLabel: ParentComponent<DataListLabelProps> = (
   const [local, rest] = splitProps(withoutTid, ['color', 'class', 'children']);
 
   const className = () =>
-    [css.label, local.color && css.labelColor[local.color], local.class]
-      .filter(Boolean)
-      .join(' ');
+    clx(css.label, local.color && css.labelColor[local.color], local.class);
 
   return (
     <dt {...rest} class={className()} data-testid={tid.testId}>
@@ -171,7 +166,7 @@ export const DataListValue: ParentComponent<DataListValueProps> = (
   const [tid, withoutTid] = splitProps(rawProps, [...testIdPropKeys]);
   const [local, rest] = splitProps(withoutTid, ['class', 'children']);
 
-  const className = () => [css.value, local.class].filter(Boolean).join(' ');
+  const className = () => clx(css.value, local.class);
 
   return (
     <dd {...rest} class={className()} data-testid={tid.testId}>

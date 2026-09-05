@@ -1,5 +1,6 @@
 import { splitProps, type JSX } from 'solid-js';
 import { type RadiusScale } from '@lib/design';
+import clx from '@lib/classnames';
 import {
   flexPropKeys,
   resolveFlexClasses,
@@ -33,15 +34,13 @@ export const FloatingBody = (props: FloatingBodyProps) => {
   const [padding, local] = splitProps(afterFlex, paddingPropKeys);
 
   const className = () =>
-    [
+    clx(
       css.body,
       local.radius && css.bodyRadius[local.radius],
-      ...resolveFlexClasses(flex),
-      ...resolvePaddingClasses(padding),
+      resolveFlexClasses(flex),
+      resolvePaddingClasses(padding),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <div class={className()} data-testid={local.testId}>

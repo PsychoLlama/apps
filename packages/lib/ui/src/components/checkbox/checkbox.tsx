@@ -38,6 +38,7 @@
 
 import { mergeProps, Show, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -226,22 +227,18 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
   const hasLabel = () => local.children !== undefined;
 
   const inputClassName = () =>
-    [
-      ...(hasLabel() ? [] : resolveMarginClasses(margin)),
+    clx(
+      !hasLabel() && resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.color[local.color],
       css.variant[local.variant],
       skeletonClass(),
-      hasLabel() ? false : local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+      !hasLabel() && local.class,
+    );
 
   const labelClassName = () =>
-    [...resolveMarginClasses(margin), css.item, local.class]
-      .filter(Boolean)
-      .join(' ');
+    clx(resolveMarginClasses(margin), css.item, local.class);
 
   const renderInput = () => (
     <input

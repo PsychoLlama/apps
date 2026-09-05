@@ -1,3 +1,4 @@
+import clx from '@lib/classnames';
 import * as css from './arrow.css';
 
 /**
@@ -81,7 +82,7 @@ export const Arrow = (props: ArrowProps) => {
     }
   };
 
-  const className = () => [css.arrow, props.class].filter(Boolean).join(' ');
+  const className = () => clx(css.arrow, props.class);
 
   return (
     <svg

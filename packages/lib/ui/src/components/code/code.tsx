@@ -16,6 +16,7 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
 import type { FontWeight, TypeScale } from '@lib/design';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -89,8 +90,8 @@ const Code: ParentComponent<CodeProps> = (rawProps) => {
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.base,
       local.size && css.size[local.size],
       css.variantColor[local.variant][local.color],
@@ -100,9 +101,7 @@ const Code: ParentComponent<CodeProps> = (rawProps) => {
       resolveSelectableClass(local),
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <code class={className()} data-testid={tid.testId} {...skeletonProps}>

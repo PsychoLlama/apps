@@ -34,6 +34,7 @@
 
 import { createEffect, Index, mergeProps, Show, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -381,8 +382,8 @@ const Slider: Component<SliderProps> = (rawProps) => {
   };
 
   const className = (): string =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.color[local.color],
@@ -390,9 +391,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
       css.radiusVariant[local.radius],
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   const percent = (value: number): number =>
     convertValueToPercentage(value, local.min, local.max);

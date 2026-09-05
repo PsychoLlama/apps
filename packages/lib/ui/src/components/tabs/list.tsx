@@ -5,6 +5,7 @@ import {
   type JSX,
   type ParentComponent,
 } from 'solid-js';
+import clx from '@lib/classnames';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import {
   TabsListContext,
@@ -67,16 +68,14 @@ export const TabsList: ParentComponent<TabsListProps> = (rawProps) => {
   const contrast = () => (local.highContrast ? 'high' : 'normal');
 
   const className = () =>
-    [
+    clx(
       shared.list,
       shared.size[local.size],
       shared.justify[local.justify],
       shared.wrap[local.wrap],
       shared.color[local.color][contrast()],
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   const triggers = new Map<string, TabsTriggerRecord>();
   const [version, setVersion] = createSignal(0);

@@ -25,6 +25,7 @@
 import { mergeProps, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -169,8 +170,8 @@ const Progress: Component<ProgressProps> = (rawProps) => {
   };
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.color[local.color],
@@ -178,17 +179,15 @@ const Progress: Component<ProgressProps> = (rawProps) => {
       css.radius[local.radius],
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   const indicatorClass = () =>
-    [
+    clx(
       css.indicator,
       isDeterminate()
         ? css.indicatorState.determinate
         : css.indicatorState.indeterminate,
-    ].join(' ');
+    );
 
   // Determinate: drive scaleX from value/max. Indeterminate: hand
   // `progressDuration` to the keyframe schedule and let the animation

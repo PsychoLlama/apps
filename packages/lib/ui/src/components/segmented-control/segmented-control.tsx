@@ -40,6 +40,7 @@
 
 import { createEffect, createSignal, mergeProps, splitProps } from 'solid-js';
 import type { JSX, ParentComponent } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -161,17 +162,15 @@ export const SegmentedControlRoot: ParentComponent<
   };
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.variant[local.variant],
       local.radius && css.radiusVariant[local.radius],
       skeletonClass(),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <SegmentedControlContext.Provider value={ctx}>
@@ -292,8 +291,7 @@ export const SegmentedControlItem: ParentComponent<
     if (event.key === 'Enter') event.preventDefault();
   };
 
-  const labelClassName = () =>
-    [css.item, local.class].filter(Boolean).join(' ');
+  const labelClassName = () => clx(css.item, local.class);
 
   return (
     <label class={labelClassName()} style={local.style}>

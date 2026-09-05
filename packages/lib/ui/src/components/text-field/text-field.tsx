@@ -13,6 +13,7 @@
 
 import { children, mergeProps, Show, splitProps } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   marginPropKeys,
   resolveMarginClasses,
@@ -174,17 +175,15 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
     value !== null && value !== undefined && value !== false;
 
   const className = () =>
-    [
-      ...resolveMarginClasses(margin),
+    clx(
+      resolveMarginClasses(margin),
       css.root,
       css.size[local.size],
       css.variant[local.variant],
       css.radiusVariant[local.radius],
       resolveSkeletonClass(local),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   const wrapperAttrs = () => resolveSkeletonAttrs(local);
 
@@ -196,7 +195,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
       {...wrapperAttrs()}
     >
       <Show when={isRenderable(left())}>
-        <span class={`${css.slot} ${css.slotLeft}`}>{left()}</span>
+        <span class={clx(css.slot, css.slotLeft)}>{left()}</span>
       </Show>
       {/* Wrapper `inert` hides the input from the user, but the
        * input still submits, validates, and contributes to FormData
@@ -209,7 +208,7 @@ const TextField: Component<TextFieldProps> = (rawProps) => {
         disabled={local.skeleton ? true : rest.disabled}
       />
       <Show when={isRenderable(right())}>
-        <span class={`${css.slot} ${css.slotRight}`}>{right()}</span>
+        <span class={clx(css.slot, css.slotRight)}>{right()}</span>
       </Show>
     </div>
   );

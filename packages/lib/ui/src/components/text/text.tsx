@@ -2,6 +2,7 @@ import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { TypeScale, FontWeight, TextColor } from '@lib/design';
+import clx from '@lib/classnames';
 import {
   type HtmlTextTag,
   type PolymorphicProps,
@@ -100,7 +101,7 @@ function Text(
   const [skeletonClass, skeletonProps] = useSkeleton(local, rest);
 
   const className = () =>
-    [
+    clx(
       css.base,
       local.size && css.size[local.size],
       local.weight && css.weight[local.weight],
@@ -111,11 +112,9 @@ function Text(
       resolveTruncateClass(local),
       resolveSelectableClass(local),
       skeletonClass(),
-      ...resolveMarginClasses(local),
+      resolveMarginClasses(local),
       local.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <Dynamic

@@ -1,6 +1,7 @@
 import { Dynamic } from 'solid-js/web';
 import { splitProps } from 'solid-js';
 import type { JSX } from 'solid-js';
+import clx from '@lib/classnames';
 import {
   boxPropKeys,
   resolveBoxClasses,
@@ -35,14 +36,12 @@ function Flex(
   const [skeletonClass, skeletonProps] = useSkeleton(box, rest);
 
   const className = () =>
-    [
-      ...resolveBoxClasses(box),
-      ...resolveFlexClasses(local),
+    clx(
+      resolveBoxClasses(box),
+      resolveFlexClasses(local),
       skeletonClass(),
       box.class,
-    ]
-      .filter(Boolean)
-      .join(' ');
+    );
 
   return (
     <Dynamic
