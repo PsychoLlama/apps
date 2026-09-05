@@ -1,0 +1,13 @@
+{
+  "name": "@lib/classnames",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Join class names into a single string.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}
