@@ -55,6 +55,19 @@ const ARROW_DIRECTION_BY_SIDE: Record<FloatingSide, ArrowDirection> = {
 };
 
 /**
+ * Axis the window travels on to clear the anchor, keyed by the resolved
+ * side. Rides along as `data-axis` because most placement rules turn on
+ * the axis alone, and naming it beats spelling out a side pair in every
+ * selector.
+ */
+const AXIS_BY_SIDE: Record<FloatingSide, 'x' | 'y'> = {
+  top: 'y',
+  bottom: 'y',
+  left: 'x',
+  right: 'x',
+};
+
+/**
  * Props for the floating primitive entry point.
  *
  * The flex, padding, and test-id groups aren't the window's own — they
@@ -167,6 +180,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
       class={className()}
       style={inlineVars()}
       data-side={side()}
+      data-axis={AXIS_BY_SIDE[side()]}
       data-align={align()}
       data-point={own.point ? '' : undefined}
     >

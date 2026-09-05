@@ -43,7 +43,7 @@ const signX = createVar();
 const signY = createVar();
 
 // How far the window travels along each axis before the sign is
-// applied. Assigned by `data-side`, which is what decides whether a
+// applied. Assigned by `data-axis`, which is what decides whether a
 // given axis is the one facing the anchor or the one running along its
 // edge.
 const distanceX = createVar();
@@ -73,6 +73,11 @@ const shift = (origin: string, sign: string, distance: string) =>
  * declares the three inputs {@link shift} needs for that axis. `side`
  * owns the axis facing the anchor, `align` the axis running along the
  * edge, so between them both axes are always fully described.
+ *
+ * `data-axis` names the axis `side` owns — `y` for top/bottom, `x` for
+ * left/right. Most rules here care only about that, not about which of
+ * the two sides it is, and selecting on the axis says so outright
+ * instead of pairing sides up in every selector.
  *
  * Edge mode (default): `data-side` places the window fully outside the
  * chosen edge of the anchor and `data-align` positions it along that
@@ -112,11 +117,11 @@ export const window = style({
   selectors: {
     // Which offset runs along which axis. The side offset always travels
     // on the axis facing the anchor, the align offset on the axis
-    // running along the edge — `data-side` is what says which is which.
-    '&:where([data-side="top"], [data-side="bottom"])': {
+    // running along the edge — `data-axis` names the former.
+    '&:where([data-axis="y"])': {
       vars: { [distanceX]: nudge, [distanceY]: gap },
     },
-    '&:where([data-side="left"], [data-side="right"])': {
+    '&:where([data-axis="x"])': {
       vars: { [distanceX]: gap, [distanceY]: nudge },
     },
 
@@ -144,41 +149,31 @@ export const window = style({
       vars: { [originX]: '0%' },
     },
 
-    // Align along a horizontal edge (top/bottom): start=left … end=right.
-    '&:where([data-align="start"]):where([data-side="top"], [data-side="bottom"])':
-      {
-        left: 0,
-        vars: { [originX]: '0%' },
-      },
+    // Align across a horizontal edge: start=left … end=right.
+    '&:where([data-axis="y"][data-align="start"])': {
+      left: 0,
+      vars: { [originX]: '0%' },
+    },
+    '&:where([data-axis="y"][data-align="center"])': {
+      left: '50%',
+    },
+    '&:where([data-axis="y"][data-align="end"])': {
+      left: '100%',
+      vars: { [originX]: '100%', [signX]: '-1' },
+    },
 
-    '&:where([data-align="center"]):where([data-side="top"], [data-side="bottom"])':
-      {
-        left: '50%',
-      },
-
-    '&:where([data-align="end"]):where([data-side="top"], [data-side="bottom"])':
-      {
-        left: '100%',
-        vars: { [originX]: '100%', [signX]: '-1' },
-      },
-
-    // Align along a vertical edge (left/right): start=top … end=bottom.
-    '&:where([data-align="start"]):where([data-side="left"], [data-side="right"])':
-      {
-        top: 0,
-        vars: { [originY]: '0%' },
-      },
-
-    '&:where([data-align="center"]):where([data-side="left"], [data-side="right"])':
-      {
-        top: '50%',
-      },
-
-    '&:where([data-align="end"]):where([data-side="left"], [data-side="right"])':
-      {
-        top: '100%',
-        vars: { [originY]: '100%', [signY]: '-1' },
-      },
+    // Align across a vertical edge: start=top … end=bottom.
+    '&:where([data-axis="x"][data-align="start"])': {
+      top: 0,
+      vars: { [originY]: '0%' },
+    },
+    '&:where([data-axis="x"][data-align="center"])': {
+      top: '50%',
+    },
+    '&:where([data-axis="x"][data-align="end"])': {
+      top: '100%',
+      vars: { [originY]: '100%', [signY]: '-1' },
+    },
 
     // --- Point mode ---
     // Repin both axes to the point. Declared after the edge rules so it
