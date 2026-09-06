@@ -47,12 +47,11 @@ export {
   type FloatingRootDisplay,
   type FloatingRootProps,
 } from './root';
+export { type FloatingAlignment, type FloatingSide } from './types';
 export {
   FloatingWindow,
-  type FloatingAlignment,
   type FloatingArrowProps,
   type FloatingPoint,
-  type FloatingSide,
   type FloatingWindowProps,
 } from './window';
 export { FloatingBody, type FloatingBodyProps } from './body';

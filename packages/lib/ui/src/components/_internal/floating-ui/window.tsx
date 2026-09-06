@@ -5,23 +5,11 @@ import clx from '@lib/classnames';
 import { type FlexProps } from '../../../props/flex';
 import { type PaddingProps } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
+import { type FloatingAlignment, type FloatingSide } from './types';
 import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
 import { FloatingBody } from './body';
 import { useAnchorElement } from './root';
 import * as css from './window.css';
-
-/**
- * Which edge of the anchor a window binds to. Maps to `data-side`, and
- * to `position-area` once anchor positioning is baseline.
- */
-export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
-
-/**
- * Placement of the window along the anchor edge it binds to. `start`
- * hugs the top (left/right sides) or left (top/bottom sides); `end` the
- * opposite; `center` splits the difference.
- */
-export type FloatingAlignment = 'start' | 'center' | 'end';
 
 /**
  * A coordinate inside the anchor box, in px from its top-left corner.
