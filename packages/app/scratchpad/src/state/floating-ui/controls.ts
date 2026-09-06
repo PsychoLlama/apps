@@ -1,7 +1,6 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
 import type { RadiusScale } from '@lib/design';
 import type {
-  ArrowAlign,
   FloatingAlignment,
   FloatingPoint,
   FloatingSide,
@@ -16,8 +15,6 @@ export interface FloatingControlsState {
   align: FloatingAlignment;
   /** Whether the pointer arrow renders at all. */
   arrowVisible: boolean;
-  /** Placement of the arrow along that edge. */
-  arrowAlign: ArrowAlign;
   /** Length of the arrow's base edge, in px. */
   arrowBase: number;
   /** Depth the arrow protrudes toward the anchor, in px. */
@@ -39,7 +36,6 @@ const defaults = (): FloatingControlsState => ({
   side: 'bottom',
   align: 'center',
   arrowVisible: true,
-  arrowAlign: 'center',
   arrowBase: 16,
   arrowDepth: 8,
   radius: 4,
@@ -75,12 +71,6 @@ defineFold(
     controls.arrowVisible = arrowVisible;
   },
 );
-
-/** The arrow's placement along the bound edge changed. */
-export const arrowAlignChanged = defineTopic<ArrowAlign>();
-defineFold(arrowAlignChanged, [floatingControls], (controls, arrowAlign) => {
-  controls.arrowAlign = arrowAlign;
-});
 
 /** The length of the arrow's base edge changed. */
 export const arrowBaseChanged = defineTopic<number>();

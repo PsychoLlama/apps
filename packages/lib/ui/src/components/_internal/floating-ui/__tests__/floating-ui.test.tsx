@@ -195,6 +195,21 @@ describe('FloatingWindow', () => {
     expect(shell).toHaveAttribute('data-align', 'end');
   });
 
+  it('derives the axis the side travels on', () => {
+    const vertical = render(() => <Rooted side="top">content</Rooted>);
+    expect(vertical.container.querySelector('[data-side]')).toHaveAttribute(
+      'data-axis',
+      'y',
+    );
+    vertical.unmount();
+
+    const { container } = render(() => <Rooted side="left">content</Rooted>);
+    expect(container.querySelector('[data-side]')).toHaveAttribute(
+      'data-axis',
+      'x',
+    );
+  });
+
   it('omits the arrow when unconfigured', () => {
     const { container } = render(() => <Rooted>content</Rooted>);
 
@@ -229,9 +244,11 @@ describe('FloatingWindow', () => {
     }
   });
 
-  it('passes the arrow alignment through to the arrow', () => {
+  it("seats the arrow with the window's own alignment", () => {
     const { container } = render(() => (
-      <Rooted arrow={{ align: 'end' }}>content</Rooted>
+      <Rooted align="end" arrow={{}}>
+        content
+      </Rooted>
     ));
 
     expect(container.querySelector('svg')).toHaveAttribute('data-align', 'end');

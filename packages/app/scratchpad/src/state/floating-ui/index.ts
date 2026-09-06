@@ -8,7 +8,6 @@
 export {
   alignChanged,
   alignOffsetChanged,
-  arrowAlignChanged,
   arrowBaseChanged,
   arrowDepthChanged,
   arrowVisibilityChanged,

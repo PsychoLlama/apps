@@ -36,10 +36,11 @@ export interface FloatingPoint {
 }
 
 /**
- * Arrow configuration for a floating primitive. `direction` is omitted —
- * the window derives it from the resolved side.
+ * Arrow configuration for a floating primitive. `direction` and `align`
+ * are omitted — the window derives both from its own placement, which is
+ * what aims the arrow back at whatever the surface is bound to.
  */
-export type FloatingArrowProps = Omit<ArrowProps, 'direction'>;
+export type FloatingArrowProps = Omit<ArrowProps, 'direction' | 'align'>;
 
 /**
  * Direction the arrow points so it faces the anchor, keyed by the
@@ -51,6 +52,19 @@ const ARROW_DIRECTION_BY_SIDE: Record<FloatingSide, ArrowDirection> = {
   bottom: 'up',
   left: 'right',
   right: 'left',
+};
+
+/**
+ * Axis the window travels on to clear the anchor, keyed by the resolved
+ * side. Rides along as `data-axis` because most placement rules turn on
+ * the axis alone, and naming it beats spelling out a side pair in every
+ * selector.
+ */
+const AXIS_BY_SIDE: Record<FloatingSide, 'x' | 'y'> = {
+  top: 'y',
+  bottom: 'y',
+  left: 'x',
+  right: 'x',
 };
 
 /**
@@ -166,6 +180,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
       class={className()}
       style={inlineVars()}
       data-side={side()}
+      data-axis={AXIS_BY_SIDE[side()]}
       data-align={align()}
       data-point={own.point ? '' : undefined}
     >
@@ -175,7 +190,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
             base={arrow().base}
             depth={arrow().depth}
             direction={ARROW_DIRECTION_BY_SIDE[side()]}
-            align={arrow().align}
+            align={align()}
             hidden={arrow().hidden}
             class={arrow().class}
           />
