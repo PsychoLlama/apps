@@ -6,7 +6,7 @@ import {
   type ReferenceElement,
 } from '@floating-ui/dom';
 import { type FloatingAlignment, type FloatingSide } from '../types';
-import { fromPlacement, toPlacement } from './utils';
+import { fromPlacement, toPlacement } from './placement';
 
 /**
  * Inputs to {@link useComputePosition}.
