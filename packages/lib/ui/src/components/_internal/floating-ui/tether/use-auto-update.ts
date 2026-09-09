@@ -1,7 +1,6 @@
 import { createEffect, onCleanup, type Accessor } from 'solid-js';
 import {
   autoUpdate,
-  type AutoUpdateOptions,
   type FloatingElement,
   type ReferenceElement,
 } from '@floating-ui/dom';
@@ -12,8 +11,7 @@ import {
  * The two elements are accessors rather than elements: a `ref` lands
  * after the first render, and the subject may unmount and remount while
  * the hook stays alive, so the subscription has to wake up when either
- * changes. {@link behavior} is an accessor for the same reason — the
- * listeners it configures are torn down and rebuilt when it changes.
+ * changes.
  */
 export interface AutoUpdateInputs {
   /** The anchor being positioned against. */
@@ -27,13 +25,6 @@ export interface AutoUpdateInputs {
    * stale closure and never retears the listeners on its own.
    */
   onUpdate: () => void;
-
-  /**
-   * Which changes retrigger an update — ancestor scroll/resize, element
-   * resize, layout shift, or every animation frame. Passed straight
-   * through to `autoUpdate`; see its docs for the defaults.
-   */
-  behavior?: Accessor<AutoUpdateOptions>;
 }
 
 /**
@@ -41,11 +32,13 @@ export interface AutoUpdateInputs {
  * that can move the two apart and calls {@link AutoUpdateInputs.onUpdate}
  * when it happens.
  *
- * A thin reactive wrapper over `autoUpdate` from `@floating-ui/dom`. The
- * subscription is torn down and rebuilt whenever an input changes, and
- * cleaned up with the owning scope. Nothing is subscribed until both
- * elements exist — the hook is safe to call before either ref lands, and
- * it's inert on the server.
+ * A thin reactive wrapper over `autoUpdate` from `@floating-ui/dom` with
+ * its default triggers: ancestor scroll and resize, element resize, and
+ * layout shift. There's no per-frame mode; no ported component exposes
+ * one. The subscription is torn down and rebuilt whenever an element
+ * changes, and cleaned up with the owning scope. Nothing is subscribed
+ * until both elements exist — the hook is safe to call before either ref
+ * lands, and it's inert on the server.
  *
  * ```ts
  * useAutoUpdate({
@@ -62,8 +55,6 @@ export const useAutoUpdate = (inputs: AutoUpdateInputs): void => {
 
     if (!anchor || !subject) return;
 
-    onCleanup(
-      autoUpdate(anchor, subject, () => inputs.onUpdate(), inputs.behavior?.()),
-    );
+    onCleanup(autoUpdate(anchor, subject, () => inputs.onUpdate()));
   });
 };
