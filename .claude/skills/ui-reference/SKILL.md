@@ -39,6 +39,7 @@ description: Reference docs for `@lib/ui` components — props, descriptions, an
 - [Dialog](./reference/dialog.md): Modal window overlaid on the page, blocking it until dismissed.
 - [IconButton](./reference/icon-button.md): Square button for a single icon.
 - [Kbd](./reference/kbd.md): Inline keyboard input.
+- [NoScript](./reference/no-script.md): Content shown only when scripting is unavailable.
 - [LinkButton](./reference/link-button.md): Anchor styled as a button for navigation actions.
 - [Progress](./reference/progress.md): Linear progress bar.
 - [RadioCards](./reference/radio-cards.md): Group of radio options rendered as selectable cards.

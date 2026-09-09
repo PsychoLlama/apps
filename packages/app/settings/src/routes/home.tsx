@@ -1,7 +1,6 @@
 import { onMount } from 'solid-js';
-import { NoHydration } from 'solid-js/web';
 import { useAnchor, useRun } from '@lib/state';
-import { Callout, Container, Flex, Heading, Text } from '@lib/ui';
+import { Callout, Container, Flex, Heading, NoScript, Text } from '@lib/ui';
 import { appearanceScope, hydrateAppearanceSaga } from '@lib/theme/runtime';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import IconAlert from 'virtual:icons/mdi/alert-outline';
@@ -58,16 +57,14 @@ const Settings = () => {
               </Text>
             </Flex>
 
-            <NoHydration>
-              <noscript>
-                <Callout color="warning" icon={<IconAlert />}>
-                  <Text as="span" size={2} selectable={false}>
-                    These controls need JavaScript. Enable it to change any of
-                    the settings on this page.
-                  </Text>
-                </Callout>
-              </noscript>
-            </NoHydration>
+            <NoScript>
+              <Callout color="warning" icon={<IconAlert />}>
+                <Text as="span" size={2} selectable={false}>
+                  These controls need JavaScript. Enable it to change any of the
+                  settings on this page.
+                </Text>
+              </Callout>
+            </NoScript>
 
             <Flex as="section" direction="column" gap={3}>
               <Flex as="header" direction="column" gap={2}>
