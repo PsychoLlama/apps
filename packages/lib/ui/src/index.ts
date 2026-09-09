@@ -234,3 +234,7 @@ export {
   default as AlertDialog,
   type AlertDialogProps,
 } from './components/alert-dialog/alert-dialog';
+export {
+  default as NoScript,
+  type NoScriptProps,
+} from './components/no-script/no-script';
