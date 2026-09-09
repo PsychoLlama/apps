@@ -32,7 +32,7 @@ export interface MiddlewareInputs {
    * `size`, and `hide`. Never `offset` or `arrow`; see
    * {@link useMiddleware}.
    */
-  middlewares: Accessor<readonly Middleware[]>;
+  middleware: Accessor<readonly Middleware[]>;
 }
 
 /**
@@ -57,7 +57,7 @@ export interface MiddlewareInputs {
  *   sideOffset: () => props.sideOffset ?? 0,
  *   alignOffset: () => props.alignOffset ?? 0,
  *   arrow: () => arrowElement() && { element: arrowElement(), padding },
- *   middlewares: () => props.tether.middleware,
+ *   middleware: () => props.tether.middleware,
  * });
  * ```
  */
@@ -72,7 +72,7 @@ export const useMiddleware = (
         mainAxis: inputs.sideOffset(),
         alignmentAxis: inputs.alignOffset(),
       }),
-      ...inputs.middlewares(),
+      ...inputs.middleware(),
       ...(arrowInput ? [arrow(arrowInput)] : []),
     ];
   });
