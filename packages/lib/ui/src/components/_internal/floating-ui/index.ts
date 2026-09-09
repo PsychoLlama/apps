@@ -14,7 +14,11 @@
  *   plumbing floating surfaces share (anchoring, layering) and wraps the
  *   body.
  * - `FloatingBody` — the visual surface. It lays out and pads its
- *   children and is the node consumers style and target in tests.
+ *   children and is the node consumers style and target in tests. It is
+ *   also the node a component gives semantics to: the base carries no
+ *   role or ARIA of its own, but forwards every native attribute and
+ *   handler so a port can label, focus, and listen on it exactly as
+ *   Radix does on its content node.
  *
  * Placement is pure CSS, and today that is the whole of it: the window is
  * a sibling of the anchored element inside the root, so it lands on the

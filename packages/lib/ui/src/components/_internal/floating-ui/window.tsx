@@ -58,14 +58,20 @@ const AXIS_BY_SIDE: Record<FloatingSide, 'x' | 'y'> = {
 /**
  * Props for the floating primitive entry point.
  *
- * The flex, padding, and test-id groups aren't the window's own — they
- * pass straight through to the {@link FloatingBody} surface, the node
- * that lays out and pads the content. So does {@link class} and
- * {@link radius}. The window keeps only what positions itself:
- * {@link side}, {@link align}, and the {@link arrow}.
+ * The flex, padding, and test-id groups aren't the window's own, and
+ * neither is any native attribute or handler — they pass straight
+ * through to the {@link FloatingBody} surface, the node that lays out
+ * and pads the content and that a component labels, focuses, and
+ * listens on. So does {@link class} and {@link radius}. The window keeps
+ * only what positions itself: {@link side}, {@link align}, and the
+ * {@link arrow}.
  */
 export interface FloatingWindowProps
-  extends FlexProps, PaddingProps, TestIdProps {
+  extends
+    FlexProps,
+    PaddingProps,
+    TestIdProps,
+    JSX.HTMLAttributes<HTMLDivElement> {
   /** Edge of the anchor the surface binds to. Defaults to `'bottom'`. */
   side?: FloatingSide;
   /** Placement along that edge. Defaults to `'center'`. */
