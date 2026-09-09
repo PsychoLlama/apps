@@ -31,6 +31,7 @@ export const bannedElements = new Set<HtmlTag>([
   'h4',
   'h5',
   'h6',
+  'noscript',
 ]);
 
 const createRule = ESLintUtils.RuleCreator.withoutDocs;
