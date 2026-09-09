@@ -1,0 +1,13 @@
+{
+  "name": "@lib/assert",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Assert an invariant holds, narrowing the value's type.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}
