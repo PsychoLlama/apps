@@ -206,92 +206,103 @@ describe('FloatingWindow geometry', () => {
         center.floatingRect.left + center.floatingRect.width / 2,
       ).toBeCloseTo(center.anchorRect.left + center.anchorRect.width / 2);
     });
-  });
 
-  // Point mode is CSS-only until the tether learns to bind to a point.
-  it('binds to an anchor-relative point instead of an edge', async () => {
-    const point = { x: 30, y: 70 };
+    it('binds to an anchor-relative point instead of an edge', async () => {
+      const point = { x: 30, y: 70 };
 
-    // Growing down-right: the surface's top-left corner sits on the point.
-    const downRight = await renderFloating('css', {
-      point,
-      side: 'bottom',
-      align: 'start',
+      // Growing down-right: the surface's top-left corner sits on the point.
+      const downRight = await renderFloating(mode, {
+        point,
+        side: 'bottom',
+        align: 'start',
+      });
+      expect(downRight.floatingRect.left).toBeCloseTo(
+        downRight.anchorRect.left + 30,
+      );
+      expect(downRight.floatingRect.top).toBeCloseTo(
+        downRight.anchorRect.top + 70,
+      );
+
+      // Growing up: the surface's bottom edge sits on the point.
+      const up = await renderFloating(mode, {
+        point,
+        side: 'top',
+        align: 'start',
+      });
+      expect(up.floatingRect.bottom).toBeCloseTo(up.anchorRect.top + 70);
+
+      // End alignment: the far edge sits on the point.
+      const end = await renderFloating(mode, {
+        point,
+        side: 'bottom',
+        align: 'end',
+      });
+      expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.left + 30);
+
+      // Centered growth splits the surface across the point.
+      const centered = await renderFloating(mode, {
+        point,
+        side: 'bottom',
+        align: 'center',
+      });
+      expect(
+        centered.floatingRect.left + centered.floatingRect.width / 2,
+      ).toBeCloseTo(centered.anchorRect.left + 30);
+
+      // Sideways growth: the surface's left edge sits on the point.
+      const rightward = await renderFloating(mode, {
+        point,
+        side: 'right',
+        align: 'start',
+      });
+      expect(rightward.floatingRect.left).toBeCloseTo(
+        rightward.anchorRect.left + 30,
+      );
+      expect(rightward.floatingRect.top).toBeCloseTo(
+        rightward.anchorRect.top + 70,
+      );
     });
-    expect(downRight.floatingRect.left).toBeCloseTo(
-      downRight.anchorRect.left + 30,
-    );
-    expect(downRight.floatingRect.top).toBeCloseTo(
-      downRight.anchorRect.top + 70,
-    );
 
-    // Growing up: the surface's bottom edge sits on the point.
-    const up = await renderFloating('css', {
-      point,
-      side: 'top',
-      align: 'start',
+    it('applies offsets from the point in point mode', async () => {
+      const point = { x: 30, y: 70 };
+
+      const gapped = await renderFloating(mode, {
+        point,
+        side: 'bottom',
+        align: 'start',
+        sideOffset: 10,
+        alignOffset: 6,
+      });
+      expect(gapped.floatingRect.top).toBeCloseTo(
+        gapped.anchorRect.top + 70 + 10,
+      );
+      expect(gapped.floatingRect.left).toBeCloseTo(
+        gapped.anchorRect.left + 30 + 6,
+      );
+
+      // Growing up, the gap opens above the point.
+      const upward = await renderFloating(mode, {
+        point,
+        side: 'top',
+        align: 'start',
+        sideOffset: 10,
+      });
+      expect(upward.floatingRect.bottom).toBeCloseTo(
+        upward.anchorRect.top + 70 - 10,
+      );
     });
-    expect(up.floatingRect.bottom).toBeCloseTo(up.anchorRect.top + 70);
 
-    // End alignment: the far edge sits on the point.
-    const end = await renderFloating('css', {
-      point,
-      side: 'bottom',
-      align: 'end',
+    it('clamps the point to the anchor box', async () => {
+      // A point taken before the anchor shrank would otherwise leave the
+      // window hanging off a spot outside it.
+      const beyond = await renderFloating(mode, {
+        point: { x: 150, y: -20 },
+        side: 'bottom',
+        align: 'start',
+      });
+      expect(beyond.floatingRect.left).toBeCloseTo(beyond.anchorRect.right);
+      expect(beyond.floatingRect.top).toBeCloseTo(beyond.anchorRect.top);
     });
-    expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.left + 30);
-
-    // Centered growth splits the surface across the point.
-    const centered = await renderFloating('css', {
-      point,
-      side: 'bottom',
-      align: 'center',
-    });
-    expect(
-      centered.floatingRect.left + centered.floatingRect.width / 2,
-    ).toBeCloseTo(centered.anchorRect.left + 30);
-
-    // Sideways growth: the surface's left edge sits on the point.
-    const rightward = await renderFloating('css', {
-      point,
-      side: 'right',
-      align: 'start',
-    });
-    expect(rightward.floatingRect.left).toBeCloseTo(
-      rightward.anchorRect.left + 30,
-    );
-    expect(rightward.floatingRect.top).toBeCloseTo(
-      rightward.anchorRect.top + 70,
-    );
-  });
-
-  it('applies offsets from the point in point mode', async () => {
-    const point = { x: 30, y: 70 };
-
-    const gapped = await renderFloating('css', {
-      point,
-      side: 'bottom',
-      align: 'start',
-      sideOffset: 10,
-      alignOffset: 6,
-    });
-    expect(gapped.floatingRect.top).toBeCloseTo(
-      gapped.anchorRect.top + 70 + 10,
-    );
-    expect(gapped.floatingRect.left).toBeCloseTo(
-      gapped.anchorRect.left + 30 + 6,
-    );
-
-    // Growing up, the gap opens above the point.
-    const upward = await renderFloating('css', {
-      point,
-      side: 'top',
-      align: 'start',
-      sideOffset: 10,
-    });
-    expect(upward.floatingRect.bottom).toBeCloseTo(
-      upward.anchorRect.top + 70 - 10,
-    );
   });
 });
 

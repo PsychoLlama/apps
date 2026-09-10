@@ -7,6 +7,7 @@ import { type PaddingProps } from '../../../props/padding';
 import { type TestIdProps } from '../../../props/test-id';
 import {
   type FloatingAlignment,
+  type FloatingPoint,
   type FloatingSide,
   type FloatingTether,
 } from './types';
@@ -14,22 +15,10 @@ import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
 import { FloatingBody } from './body';
 import { useAnchorElement } from './root';
 import { roundByDevicePixel } from './tether/pixel-ratio';
+import { useReference } from './tether/use-reference';
 import { useTether } from './tether/use-tether';
 import { translateX as arrowX, translateY as arrowY } from './arrow.css';
 import * as css from './window.css';
-
-/**
- * A coordinate inside the anchor box, in px from its top-left corner.
- * Binds the window to a point instead of an edge — context menus anchor
- * to the pointer, item-aligned selects to a measured item.
- */
-export interface FloatingPoint {
-  /** Horizontal distance from the anchor's left edge, in px. */
-  x: number;
-
-  /** Vertical distance from the anchor's top edge, in px. */
-  y: number;
-}
 
 /**
  * Arrow configuration for a floating primitive. `direction` and `align`
@@ -115,9 +104,8 @@ export interface FloatingWindowProps
 
   /**
    * Measure the page and re-resolve the placement as things move. Omit
-   * for pure-CSS placement. Not yet honored alongside {@link point};
-   * a pointed window stays on CSS placement until the tether learns to
-   * bind to a point.
+   * for pure-CSS placement. Composes with {@link point}: a pointed
+   * window measures against the point.
    */
   tether?: FloatingTether;
 
@@ -186,16 +174,14 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
   const anchor = useAnchorElement();
 
   const { side, align, measurement } = useTether({
-    anchor,
+    anchor: useReference({ anchor, point: () => own.point }),
     side: () => own.side ?? 'bottom',
     align: () => own.align ?? 'center',
     sideOffset: () => own.sideOffset ?? 0,
     alignOffset: () => own.alignOffset ?? 0,
 
-    // Withholding the subject is the tether's off switch. Point mode is
-    // withheld too, for now: the tether measures against the root, and a
-    // pointed window would land on the wrong spot.
-    subject: () => (own.tether && !own.point ? subject() : undefined),
+    // Withholding the subject is the tether's off switch.
+    subject: () => (own.tether ? subject() : undefined),
 
     // The corner radius is the arrow's padding, so a shifted arrow stops
     // where the straight edge does instead of riding onto the curve.

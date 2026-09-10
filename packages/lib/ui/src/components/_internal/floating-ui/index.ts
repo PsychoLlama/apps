@@ -52,13 +52,13 @@ export {
 } from './root';
 export {
   type FloatingAlignment,
+  type FloatingPoint,
   type FloatingSide,
   type FloatingTether,
 } from './types';
 export {
   FloatingWindow,
   type FloatingArrowProps,
-  type FloatingPoint,
   type FloatingWindowProps,
 } from './window';
 export { FloatingBody, type FloatingBodyProps } from './body';
