@@ -120,10 +120,10 @@ export const arrow: typeof upstream = (options) => ({
     const seat = SEAT_BY_ALIGN[align](subjectLength, arrowLength, pad);
     const shortfall = Math.max(0, min - max);
     const data: ArrowData = {
+      centerOffset: shortfall,
       [axis]: shortfall
         ? clamp(subjectMin, seat, subjectMax)
         : clamp(min, seat, max),
-      centerOffset: shortfall,
     };
 
     return { data };

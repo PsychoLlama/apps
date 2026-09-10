@@ -257,12 +257,9 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
             align={align()}
             class={arrow().class}
 
-            // Interim: floating-ui's `arrow` middleware centers the arrow
-            // on the anchor and reports a nonzero centerOffset when it
-            // can't. That's Radix's rule, not ours — the arrow is due to
-            // keep its alignment seat and slide only as far as the
-            // anchor demands, hiding when the anchor's span can't hold
-            // it. Lands after point mode; see the plan doc, §4.5.
+            // Nonzero when the anchor's span can't hold the arrow's base
+            // — slid clear, or narrower than the arrow — so there's
+            // nothing to point at.
             hidden={(arrowData()?.centerOffset ?? 0) !== 0}
           />
         )}
