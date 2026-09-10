@@ -14,20 +14,23 @@
  *   plumbing floating surfaces share (anchoring, layering) and wraps the
  *   body.
  * - `FloatingBody` — the visual surface. It lays out and pads its
- *   children and is the node consumers style and target in tests.
+ *   children and is the node consumers style and target in tests. It is
+ *   also the node a component gives semantics to: the base carries no
+ *   role or ARIA of its own, but forwards every native attribute and
+ *   handler so a port can label, focus, and listen on it exactly as
+ *   Radix does on its content node.
  *
- * Placement is pure CSS, and today that is the whole of it: the window is
- * a sibling of the anchored element inside the root, so it lands on the
- * right side with no JavaScript and no measurement.
+ * Placement is pure CSS by default: the window is a sibling of the
+ * anchored element inside the root, so it lands on the right side with
+ * no JavaScript and no measurement.
  *
- * Collision handling — measuring the page and re-resolving the placement
- * to dodge whatever clips the surface — is the progressive enhancement
- * this is built to carry, and it is deliberately absent. A first attempt
- * was torn out wholesale rather than rescued, to be rebuilt a piece at a
- * time. Nothing of it is left in place: no vars, no escape-hatch
- * attribute, no measurement. The one thing the rebuild will need that
- * already exists is the anchor element `FloatingRoot` publishes, which
- * is here for the pure-CSS placement's own sake anyway.
+ * A `tether` on the window is the progressive enhancement on top. It
+ * measures the page with `@floating-ui/dom` and re-resolves the
+ * placement as things move, running whatever middleware the component
+ * supplies between the window's own `offset` and `arrow`. Given room,
+ * the measured placement is the CSS one to the pixel, so the handoff is
+ * invisible; the tether only shows its hand when something has to give.
+ * The hooks behind it live under `tether/` and aren't exported.
  */
 
 // The CSS placement is deliberately hand-rolled and short-lived. It
@@ -47,7 +50,11 @@ export {
   type FloatingRootDisplay,
   type FloatingRootProps,
 } from './root';
-export { type FloatingAlignment, type FloatingSide } from './types';
+export {
+  type FloatingAlignment,
+  type FloatingSide,
+  type FloatingTether,
+} from './types';
 export {
   FloatingWindow,
   type FloatingArrowProps,

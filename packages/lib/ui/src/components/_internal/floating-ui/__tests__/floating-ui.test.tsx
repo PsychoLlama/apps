@@ -6,7 +6,7 @@
  * body renders and styles its children.
  */
 
-import { render, screen } from '@solidjs/testing-library';
+import { fireEvent, render, screen } from '@solidjs/testing-library';
 import {
   FloatingRoot,
   FloatingBody,
@@ -328,5 +328,78 @@ describe('FloatingWindow', () => {
 
       expect(shell).toHaveAttribute('data-side', side);
     }
+  });
+});
+
+describe('FloatingBody passthrough', () => {
+  it('forwards identity and ARIA attributes to the surface', () => {
+    render(() => (
+      <Rooted
+        testId="surface"
+        id="popup"
+        role="menu"
+        tabIndex={-1}
+        aria-label="Actions"
+        aria-labelledby="trigger"
+        aria-describedby="hint"
+        aria-orientation="vertical"
+      >
+        content
+      </Rooted>
+    ));
+
+    const surface = screen.getByTestId('surface');
+    expect(surface.id).toBe('popup');
+    expect(surface).toHaveAttribute('role', 'menu');
+    expect(surface.tabIndex).toBe(-1);
+    expect(surface).toHaveAttribute('aria-label', 'Actions');
+    expect(surface).toHaveAttribute('aria-labelledby', 'trigger');
+    expect(surface).toHaveAttribute('aria-describedby', 'hint');
+    expect(surface).toHaveAttribute('aria-orientation', 'vertical');
+  });
+
+  it('attaches no semantics of its own', () => {
+    render(() => <Rooted testId="surface">content</Rooted>);
+
+    const surface = screen.getByTestId('surface');
+    expect(surface).not.toHaveAttribute('role');
+    expect(surface).not.toHaveAttribute('tabindex');
+    expect(surface).not.toHaveAttribute('id');
+  });
+
+  it('hands the surface element to `ref`', () => {
+    let element: HTMLDivElement | undefined;
+    render(() => (
+      <Rooted testId="surface" ref={(el: HTMLDivElement) => (element = el)}>
+        content
+      </Rooted>
+    ));
+
+    expect(element).toBe(screen.getByTestId('surface'));
+  });
+
+  it('forwards event handlers to the surface', () => {
+    const onKeyDown = vi.fn();
+    const onFocusIn = vi.fn();
+    const onPointerMove = vi.fn();
+    render(() => (
+      <Rooted
+        testId="surface"
+        onKeyDown={onKeyDown}
+        onFocusIn={onFocusIn}
+        onPointerMove={onPointerMove}
+      >
+        content
+      </Rooted>
+    ));
+
+    const surface = screen.getByTestId('surface');
+    fireEvent.keyDown(surface, { key: 'ArrowDown' });
+    fireEvent.focusIn(surface);
+    fireEvent.pointerMove(surface);
+
+    expect(onKeyDown).toHaveBeenCalledOnce();
+    expect(onFocusIn).toHaveBeenCalledOnce();
+    expect(onPointerMove).toHaveBeenCalledOnce();
   });
 });

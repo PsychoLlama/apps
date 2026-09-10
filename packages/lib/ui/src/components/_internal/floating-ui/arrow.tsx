@@ -1,4 +1,5 @@
 import clx from '@lib/classnames';
+import { type TestIdProps } from '../../../props/test-id';
 import * as css from './arrow.css';
 
 /**
@@ -15,7 +16,7 @@ export type ArrowDirection = 'up' | 'down' | 'left' | 'right';
 export type ArrowAlign = 'start' | 'center' | 'end';
 
 /** Props for the floating primitive's pointer arrow. */
-export interface ArrowProps {
+export interface ArrowProps extends TestIdProps {
   /** Ref to the underlying SVG element. */
   ref?: (element: SVGSVGElement) => void;
   /** Direction the point faces. */
@@ -94,6 +95,7 @@ export const Arrow = (props: ArrowProps) => {
       data-direction={props.direction}
       data-align={props.align ?? 'center'}
       data-hidden={props.hidden ? '' : undefined}
+      data-testid={props.testId}
       aria-hidden="true"
     >
       <polygon points={points()} fill="currentColor" />

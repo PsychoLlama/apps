@@ -8,6 +8,16 @@ import { createVar, fallbackVar, style } from '@vanilla-extract/css';
 export const offset = createVar();
 
 /**
+ * Translation of the arrow along each axis, in px. Mirrors the tether's
+ * `middlewareData.arrow.x`/`.y`: the window assigns whichever axis runs
+ * along the anchor edge from its measurement and leaves the other at
+ * zero. The window's base style zeroes both, so an untethered arrow —
+ * or one nested inside another float — never inherits a neighbor's.
+ */
+export const translateX = createVar();
+export const translateY = createVar();
+
+/**
  * Seats the arrow along the anchor edge via `align-self` — the cross axis
  * of the window's arrow/body stack. `data-align` maps to the same
  * endpoints as the surface's own alignment: `start` hugs the top
@@ -18,30 +28,48 @@ export const offset = createVar();
  * nudge lands on whichever axis the arrow stacks against — inline for
  * up/down arrows (horizontal edge), block for left/right (vertical edge).
  *
- * The arrow carries a stacking context of its own, which is
- * load-bearing rather than cosmetic: without one the surface's
- * `box-shadow` composites over the arrow, and among static flex siblings
- * DOM order alone won't reorder it. `isolation` says exactly that and
- * nothing else, so it can't be mistaken for layout.
+ * Under a tethered window the seat is measured rather than aligned: the
+ * arrow parks at the start of the edge with alignment and the corner
+ * nudge zeroed, and the translation by {@link translateX} /
+ * {@link translateY} is the whole seat.
+ *
+ * The translation is always in effect, if only by zero, and that is
+ * load-bearing in both modes: it gives the arrow a stacking context of
+ * its own, so it paints over the surface's `box-shadow`. Among static
+ * flex siblings DOM order alone won't — the body comes later and would
+ * composite its shadow over the arrow.
+ *
+ * Every selector is wrapped in `:where(...)` so the rules hold equal
+ * specificity and the cascade resolves by source order — the tethered
+ * reset sits last so it overrides the alignment rules.
  */
 export const arrow = style({
-  isolation: 'isolate',
+  translate: `${translateX} ${translateY}`,
   selectors: {
     // Hidden, not unmounted: the arrow keeps its box, so a measured seat
     // stays measurable while it waits offscreen of the anchor.
-    '&[data-hidden]': { visibility: 'hidden' },
+    '&:where([data-hidden])': { visibility: 'hidden' },
 
-    '&[data-align="start"]': { alignSelf: 'flex-start' },
-    '&[data-align="center"]': { alignSelf: 'center' },
-    '&[data-align="end"]': { alignSelf: 'flex-end' },
+    '&:where([data-align="start"])': { alignSelf: 'flex-start' },
+    '&:where([data-align="center"])': { alignSelf: 'center' },
+    '&:where([data-align="end"])': { alignSelf: 'flex-end' },
 
-    '&[data-direction="up"][data-align="start"], &[data-direction="down"][data-align="start"]':
+    // Up/down arrows sit on a horizontal edge, so the nudge is inline;
+    // left/right on a vertical edge, so it's block.
+    '&:where([data-direction="up"], [data-direction="down"]):where([data-align="start"])':
       { marginInlineStart: fallbackVar(offset, '0px') },
-    '&[data-direction="up"][data-align="end"], &[data-direction="down"][data-align="end"]':
+    '&:where([data-direction="up"], [data-direction="down"]):where([data-align="end"])':
       { marginInlineEnd: fallbackVar(offset, '0px') },
-    '&[data-direction="left"][data-align="start"], &[data-direction="right"][data-align="start"]':
+    '&:where([data-direction="left"], [data-direction="right"]):where([data-align="start"])':
       { marginBlockStart: fallbackVar(offset, '0px') },
-    '&[data-direction="left"][data-align="end"], &[data-direction="right"][data-align="end"]':
+    '&:where([data-direction="left"], [data-direction="right"]):where([data-align="end"])':
       { marginBlockEnd: fallbackVar(offset, '0px') },
+
+    // Tethered: alignment and the corner nudge are moot; the translation
+    // above is the whole seat.
+    ':where([data-tethered]) > &': {
+      alignSelf: 'flex-start',
+      margin: 0,
+    },
   },
 });

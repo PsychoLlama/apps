@@ -1,12 +1,13 @@
 import { createMemo, createSignal, onCleanup, type Accessor } from 'solid-js';
 import {
   computePosition,
+  type ComputePositionReturn,
   type FloatingElement,
-  type Placement,
+  type Middleware,
   type ReferenceElement,
 } from '@floating-ui/dom';
 import { type FloatingAlignment, type FloatingSide } from '../types';
-import { fromPlacement, toPlacement } from './utils';
+import { fromPlacement, toPlacement } from './placement';
 
 /**
  * Inputs to {@link useComputePosition}.
@@ -29,6 +30,13 @@ export interface ComputePositionInputs {
 
   /** Placement along that edge the subject is asking for. */
   align: Accessor<FloatingAlignment>;
+
+  /**
+   * Middleware for the measurement, in order. This is what turns a
+   * measurement into a decision: with none, the result is the requested
+   * placement flush against the anchor. Assembled by `useMiddleware`.
+   */
+  middleware: Accessor<Middleware[]>;
 }
 
 /**
@@ -44,6 +52,13 @@ export interface ComputePositionResult {
 
   /** Placement along that edge. Drives `data-align`. */
   align: Accessor<FloatingAlignment>;
+
+  /**
+   * The latest measurement in full — the subject's `x`/`y` and every
+   * middleware's `middlewareData` — or `undefined` until one lands. The
+   * window reads its coordinates and the arrow's seat from here.
+   */
+  measurement: Accessor<ComputePositionReturn | undefined>;
 
   /**
    * Measure and re-resolve the placement. Wire it to `onUpdate` on
@@ -62,25 +77,25 @@ export interface ComputePositionResult {
  * pair with `useAutoUpdate` without either hook knowing about the other.
  *
  * ```ts
- * const { side, align, compute } = useComputePosition({
+ * const { side, align, measurement, compute } = useComputePosition({
  *   anchor,
  *   subject,
  *   side: () => props.side ?? 'bottom',
  *   align: () => props.align ?? 'center',
+ *   middleware,
  * });
  *
  * useAutoUpdate({ anchor, subject, onUpdate: compute });
  * ```
  *
- * Note this resolves to the requested placement and nothing else until
- * middleware arrives — `computePosition` only moves a placement when a
- * middleware tells it to. The hook is the seam collision handling plugs
- * into, not the collision handling itself.
+ * The hook is the seam, not the policy. `computePosition` only moves a
+ * placement when a middleware tells it to, so which constraints apply —
+ * flipping, shifting, sizing — is entirely the middleware list's call.
  */
 export const useComputePosition = (
   inputs: ComputePositionInputs,
 ): ComputePositionResult => {
-  const [measured, setMeasured] = createSignal<Placement>();
+  const [measurement, setMeasurement] = createSignal<ComputePositionReturn>();
 
   // Stamps each measurement so a slow one that resolves after a newer one
   // — or after the scope is gone — drops its result instead of clobbering
@@ -96,20 +111,25 @@ export const useComputePosition = (
     if (!anchor || !subject) return;
 
     const pending = ++generation;
-    const { placement } = await computePosition(anchor, subject, {
+    const result = await computePosition(anchor, subject, {
       placement: toPlacement(inputs.side(), inputs.align()),
+      middleware: inputs.middleware(),
     });
 
-    if (pending === generation) setMeasured(placement);
+    if (pending === generation) setMeasurement(result);
   };
 
-  const resolved = createMemo(() =>
-    fromPlacement(measured() ?? toPlacement(inputs.side(), inputs.align())),
+  // The requested placement stands in until a measurement lands.
+  const placement = createMemo(() =>
+    fromPlacement(
+      measurement()?.placement ?? toPlacement(inputs.side(), inputs.align()),
+    ),
   );
 
   return {
-    side: () => resolved().side,
-    align: () => resolved().align,
+    side: () => placement().side,
+    align: () => placement().align,
+    measurement,
     compute,
   };
 };
