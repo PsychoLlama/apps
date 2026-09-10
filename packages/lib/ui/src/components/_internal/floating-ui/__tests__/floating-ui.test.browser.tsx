@@ -11,6 +11,7 @@
  * are that claim.
  */
 
+import { createSignal } from 'solid-js';
 import { type Middleware } from '@floating-ui/dom';
 import { render, waitFor, within } from '@solidjs/testing-library';
 import { radius } from '@lib/design';
@@ -381,6 +382,48 @@ describe('FloatingWindow tether', () => {
 
     expect(window.getAttribute('data-side')).toBe('top');
     expect(floatingRect.bottom).toBeCloseTo(anchorRect.top);
+  });
+
+  it('stands down when the tether is withdrawn', async () => {
+    const flipToTop: Middleware = {
+      name: 'test-flip',
+      fn: ({ placement }) =>
+        placement === 'top' ? {} : { reset: { placement: 'top' } },
+    };
+
+    const [tether, setTether] = createSignal<FloatingTether | undefined>({
+      middleware: [flipToTop],
+    });
+
+    const { container } = render(() => (
+      <div class={fixture.stage}>
+        <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
+          <FloatingWindow
+            class={fixture.surface}
+            side="bottom"
+            tether={tether()}
+          >
+            content
+          </FloatingWindow>
+        </FloatingRoot>
+      </div>
+    ));
+
+    const window = container.querySelector('[data-side]')!;
+    await settled(window);
+    expect(window.getAttribute('data-side')).toBe('top');
+
+    // Withdrawn, the window forgets the measurement along with the flip
+    // it asked for: back to the requested placement, painted by CSS.
+    setTether(undefined);
+
+    const anchorRect = within(container)
+      .getByTestId('anchor')
+      .getBoundingClientRect();
+
+    expect(window).not.toHaveAttribute('data-tethered');
+    expect(window.getAttribute('data-side')).toBe('bottom');
+    expect(window.getBoundingClientRect().top).toBeCloseTo(anchorRect.bottom);
   });
 
   /** A middleware that drags the subject along the x axis, as `shift` would. */

@@ -38,6 +38,7 @@ overrides:
   vite: 'catalog:'
 
 catalog:
+  '@floating-ui/dom': ^1.8.0
   '@holz/core': 0.9.0
   '@holz/log-collector': 0.9.0
   '@holz/pattern-filter': 0.9.0

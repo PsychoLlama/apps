@@ -1,4 +1,10 @@
-import { createMemo, createSignal, onCleanup, type Accessor } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  type Accessor,
+} from 'solid-js';
 import {
   computePosition,
   type ComputePositionReturn,
@@ -103,6 +109,18 @@ export const useComputePosition = (
   let generation = 0;
 
   onCleanup(() => void generation++);
+
+  // A measurement only stands while both elements do. Withhold either and
+  // it's gone — the placement falls back to the requested one, as if
+  // nothing had ever been measured — rather than pinning the subject
+  // wherever a dead measurement left it. Bumping the generation drops a
+  // measurement still in flight for the same reason.
+  createEffect(() => {
+    if (inputs.anchor() && inputs.subject()) return;
+
+    generation++;
+    setMeasurement(undefined);
+  });
 
   const compute = async () => {
     const anchor = inputs.anchor();

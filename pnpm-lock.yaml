@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@floating-ui/dom':
+      specifier: ^1.8.0
+      version: 1.8.0
     '@holz/core':
       specifier: 0.9.0
       version: 0.9.0
@@ -430,12 +433,18 @@ importers:
 
   packages/app/scratchpad:
     dependencies:
+      '@floating-ui/dom':
+        specifier: 'catalog:'
+        version: 1.8.0
       '@lib/classnames':
         specifier: workspace:*
         version: link:../../lib/classnames
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../../lib/observability
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../../lib/runtime-config
@@ -769,7 +778,7 @@ importers:
   packages/lib/ui:
     dependencies:
       '@floating-ui/dom':
-        specifier: ^1.8.0
+        specifier: 'catalog:'
         version: 1.8.0
       '@lib/classnames':
         specifier: workspace:*
