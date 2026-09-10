@@ -1,12 +1,5 @@
 import { For, onMount, type JSX } from 'solid-js';
-import { assignInlineVars } from '@vanilla-extract/dynamic';
-import {
-  flip,
-  shift,
-  size,
-  type Middleware,
-  type Placement,
-} from '@floating-ui/dom';
+import { flip, shift, type Middleware, type Placement } from '@floating-ui/dom';
 import { createLogger, toError } from '@lib/observability';
 import type { RadiusScale } from '@lib/design';
 import clx from '@lib/classnames';
@@ -43,23 +36,20 @@ import {
   arrowBaseChanged,
   arrowDepthChanged,
   arrowVisibilityChanged,
-  availableRoomChanged,
-  behaviorsChanged,
+  middlewareChanged,
   commitTetherDisabledSaga,
   flipModeChanged,
   floatingControls,
-  floatingMeasurement,
   pointChanged,
   radiusChanged,
   resetControlsSaga,
   scratchpadScope,
   sideChanged,
   sideOffsetChanged,
-  tetherPaddingChanged,
   trackTetherConfigSaga,
-  TETHER_FEATURES,
+  TETHER_MIDDLEWARE,
   type FlipMode,
-  type TetherBehavior,
+  type TetherMiddleware,
 } from '../state/floating-ui';
 import * as css from './floating-ui.css';
 
@@ -77,7 +67,7 @@ const ALIGNMENTS = [
   'end',
 ] as const satisfies FloatingAlignment[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
-const FLIP_MODES = ['auto', 'off', 'chain'] as const satisfies FlipMode[];
+const FLIP_MODES = ['auto', 'chain'] as const satisfies FlipMode[];
 
 /**
  * The chain the `chain` mode walks — a deliberately odd order so it's
@@ -87,37 +77,30 @@ const FLIP_MODES = ['auto', 'off', 'chain'] as const satisfies FlipMode[];
 const FALLBACK_CHAIN = ['right', 'left', 'top'] as const satisfies Placement[];
 
 /**
- * The tether-behavior cards. Cards over bare checkboxes because each of
- * these needs a sentence to be meaningful — the label alone ("size")
- * says nothing about what turning it off costs.
+ * The middleware cards. Cards over bare checkboxes because each needs a
+ * sentence to be meaningful — the label alone ("shift") says nothing
+ * about what turning it off costs.
  */
-const TETHER_BEHAVIORS = [
+const TETHER_MIDDLEWARE_CARDS = [
+  {
+    value: 'flip',
+    label: 'flip',
+    hint: 'Moves the window to another side when its own would overflow the boundary.',
+  },
   {
     value: 'shift',
     label: 'shift',
     hint: 'Slides the window along its bound edge to keep it inside the boundary.',
   },
-  {
-    value: 'size',
-    label: 'size',
-    hint: 'Measures the room left over and publishes it as CSS vars.',
-  },
-  {
-    value: 'clamp',
-    label: 'clamp to available',
-    hint: 'Caps the surface to the room `size` reported, and scrolls the overflow.',
-  },
-] as const satisfies { value: TetherBehavior; label: string; hint: string }[];
+] as const satisfies { value: TetherMiddleware; label: string; hint: string }[];
 
-/** The `flip` middleware a mode stands for, or nothing for `off`. */
-const flipFor = (mode: FlipMode, padding: number): Middleware | undefined => {
+/** The `flip` middleware a mode stands for. */
+const flipFor = (mode: FlipMode): Middleware => {
   switch (mode) {
     case 'auto':
-      return flip({ padding });
-    case 'off':
-      return undefined;
+      return flip();
     case 'chain':
-      return flip({ padding, fallbackPlacements: [...FALLBACK_CHAIN] });
+      return flip({ fallbackPlacements: [...FALLBACK_CHAIN] });
   }
 };
 
@@ -317,7 +300,6 @@ const centerScroll = (element: HTMLElement) => {
 const FloatingUiScratchpad = () => {
   useAnchor(scratchpadScope);
   const controls = useValue(floatingControls);
-  const measurement = useValue(floatingMeasurement);
   const commit = useCommit();
   const track = useRun(trackTetherConfigSaga);
   const commitTetherDisabled = useRun(commitTetherDisabledSaga);
@@ -352,69 +334,34 @@ const FloatingUiScratchpad = () => {
     commit(pointChanged(point));
   const chooseTetherDisabled = (disabled: boolean) =>
     void commitTetherDisabled(disabled);
-  const chooseTetherPadding = (padding: number) =>
-    commit(tetherPaddingChanged(padding));
-  const chooseBehaviors = (behaviors: readonly string[]) =>
-    commit(behaviorsChanged(behaviors as readonly TetherBehavior[]));
+  const chooseMiddleware = (enabled: readonly string[]) =>
+    commit(middlewareChanged(enabled as readonly TetherMiddleware[]));
   const chooseFlipMode = (mode: FlipMode) => commit(flipModeChanged(mode));
   const chooseArrowVisible = (visible: boolean) =>
     commit(arrowVisibilityChanged(visible));
   const chooseArrowBase = (base: number) => commit(arrowBaseChanged(base));
   const chooseArrowDepth = (depth: number) => commit(arrowDepthChanged(depth));
 
-  /** The behavior cards currently checked, as the group reads them. */
-  const behaviors = (): TetherBehavior[] => [
-    ...TETHER_FEATURES.filter((feature) => controls().features[feature]),
-    ...(controls().clampToAvailable ? (['clamp'] as const) : []),
-  ];
+  /** The middleware cards currently checked, as the group reads them. */
+  const enabledMiddleware = (): TetherMiddleware[] =>
+    TETHER_MIDDLEWARE.filter((name) => controls().middleware[name]);
 
   /**
    * The tether as the controls configure it, or nothing while it's stood
-   * down. Each behavior is one `@floating-ui/dom` middleware; `size`
-   * reports into the store rather than styling the surface itself, so
-   * the clamp stays a class the surface opts into.
+   * down. Each card is one `@floating-ui/dom` middleware, in the order
+   * the library recommends: `flip` decides the side, then `shift` slides
+   * along it.
    */
   const tether = (): FloatingTether | undefined => {
     if (controls().tetherDisabled) return undefined;
 
-    const { tetherPadding: padding, flipMode, features } = controls();
-    const middleware: (Middleware | undefined)[] = [
-      flipFor(flipMode, padding),
-      features.shift ? shift({ padding }) : undefined,
-      features.size
-        ? size({
-            padding,
-            apply: ({ availableWidth, availableHeight }) => {
-              commit(
-                availableRoomChanged({
-                  width: availableWidth,
-                  height: availableHeight,
-                }),
-              );
-            },
-          })
-        : undefined,
+    const { flipMode, middleware } = controls();
+    const passes: (Middleware | undefined)[] = [
+      middleware.flip ? flipFor(flipMode) : undefined,
+      middleware.shift ? shift() : undefined,
     ];
 
-    return { middleware: middleware.filter((pass) => pass !== undefined) };
-  };
-
-  /**
-   * The room `size` reported, as vars on the surface for {@link css.clamped}
-   * to read. Unset whenever `size` isn't running, so the clamp falls back
-   * to the surface's natural size rather than the last measurement.
-   */
-  const surfaceVars = () => {
-    const room = measurement().available;
-    const measuring = !controls().tetherDisabled && controls().features.size;
-
-    return assignInlineVars({
-      ...(measuring &&
-        room && {
-          [css.availableWidth]: `${room.width}px`,
-          [css.availableHeight]: `${room.height}px`,
-        }),
-    });
+    return { middleware: passes.filter((pass) => pass !== undefined) };
   };
 
   /** Re-place the bound point wherever the target box is clicked. */
@@ -462,11 +409,7 @@ const FloatingUiScratchpad = () => {
                   gap={1}
                   py={3}
                   px={4}
-                  class={clx(
-                    css.surface,
-                    controls().clampToAvailable && css.clamped,
-                  )}
-                  style={surfaceVars()}
+                  class={css.surface}
                   arrow={
                     controls().arrowVisible
                       ? {
@@ -572,35 +515,21 @@ const FloatingUiScratchpad = () => {
                   pre-hydration state, where placement comes from CSS alone.
                 </Text>
               </Flex>
-              <NumberControl
-                label="Tether padding"
-                name="tether-padding"
-                value={controls().tetherPadding}
-                min={0}
-                onValueChange={chooseTetherPadding}
-              />
-              <ChoiceControl
-                label="Flip"
-                name="flip"
-                value={controls().flipMode}
-                options={FLIP_MODES}
-                onValueChange={chooseFlipMode}
-              />
               <Flex as="div" direction="column" gap={2}>
-                <ControlLabel label="Tether behaviors" />
+                <ControlLabel label="Tether middleware" />
                 <CheckboxCardsRoot
-                  testId="control-behaviors"
-                  name="behaviors"
+                  testId="control-middleware"
+                  name="middleware"
                   columns={1}
                   gap={2}
-                  value={behaviors()}
-                  onValueChange={chooseBehaviors}
+                  value={enabledMiddleware()}
+                  onValueChange={chooseMiddleware}
                 >
-                  <For each={TETHER_BEHAVIORS}>
-                    {(behavior) => (
+                  <For each={TETHER_MIDDLEWARE_CARDS}>
+                    {(card) => (
                       <CheckboxCardsItem
-                        testId={`behavior-${behavior.value}`}
-                        value={behavior.value}
+                        testId={`middleware-${card.value}`}
+                        value={card.value}
                       >
                         <Flex as="div" direction="column" gap={1}>
                           <Text
@@ -609,7 +538,7 @@ const FloatingUiScratchpad = () => {
                             weight="medium"
                             selectable={false}
                           >
-                            {behavior.label}
+                            {card.label}
                           </Text>
                           <Text
                             as="p"
@@ -617,7 +546,7 @@ const FloatingUiScratchpad = () => {
                             selectable={false}
                             class={css.hint}
                           >
-                            {behavior.hint}
+                            {card.hint}
                           </Text>
                         </Flex>
                       </CheckboxCardsItem>
@@ -625,6 +554,13 @@ const FloatingUiScratchpad = () => {
                   </For>
                 </CheckboxCardsRoot>
               </Flex>
+              <ChoiceControl
+                label="Flip fallbacks"
+                name="flip"
+                value={controls().flipMode}
+                options={FLIP_MODES}
+                onValueChange={chooseFlipMode}
+              />
             </ControlGroup>
 
             <Button

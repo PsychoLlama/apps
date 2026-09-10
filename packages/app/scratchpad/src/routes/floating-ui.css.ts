@@ -1,4 +1,4 @@
-import { createVar, fallbackVar, style } from '@vanilla-extract/css';
+import { style } from '@vanilla-extract/css';
 import {
   background,
   breakpoint,
@@ -167,30 +167,4 @@ export const surface = style({
  */
 export const arrow = style({
   color: neutral.solid[12],
-});
-
-/**
- * The room the tether's `size` middleware measured, set on the surface
- * by the route from the middleware's `apply` callback. Scratchpad-owned:
- * the primitive publishes nothing for `size`, it just runs whatever the
- * consumer hands it, so the channel between measurement and surface is
- * the consumer's too.
- */
-export const availableWidth = createVar();
-export const availableHeight = createVar();
-
-/**
- * Opts the surface into the room {@link availableWidth} and
- * {@link availableHeight} report. The vars are only set once `size` has
- * run, so untethered (and pre-hydration) the caps fall back to `none`
- * and the surface sizes to its content.
- *
- * This is the "size matching" half of the tether: the same channel a
- * scrolling menu would use to cap its height at whatever the viewport
- * left it.
- */
-export const clamped = style({
-  maxWidth: fallbackVar(availableWidth, 'none'),
-  maxHeight: fallbackVar(availableHeight, 'none'),
-  overflow: 'auto',
 });

@@ -1,7 +1,6 @@
 /**
  * State for the floating-UI experiment: every placement input the
- * floating window takes, the tether's collision config, and what the
- * tether measured back.
+ * floating window takes, plus the tether's middleware.
  *
  * All of it is page-local and dies with the route — except
  * `tetherDisabled`, which `@lib/runtime-config` persists to OPFS and fans
@@ -15,20 +14,17 @@ export {
   arrowBaseChanged,
   arrowDepthChanged,
   arrowVisibilityChanged,
-  behaviorsChanged,
-  controlsReset,
   flipModeChanged,
   floatingControls,
+  middlewareChanged,
   pointChanged,
   radiusChanged,
   sideChanged,
   sideOffsetChanged,
-  tetherPaddingChanged,
-  TETHER_FEATURES,
+  TETHER_MIDDLEWARE,
   type FlipMode,
-  type TetherBehavior,
+  type TetherMiddleware,
 } from './controls';
-export { availableRoomChanged, floatingMeasurement } from './measurement';
 export {
   commitTetherDisabledSaga,
   resetControlsSaga,

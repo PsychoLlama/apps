@@ -9,28 +9,20 @@ import type {
 import { tetherDisabled as tetherDisabledOption } from '../../config';
 import { scratchpadScope } from './scope';
 
-/** One toggleable collision behavior the tether can run. */
-export type TetherFeature = 'shift' | 'size';
+/** One toggleable middleware the tether can run. */
+export type TetherMiddleware = 'flip' | 'shift';
 
-/** Every collision behavior, in the order the scratchpad lists them. */
-export const TETHER_FEATURES = [
+/** Every middleware, in the order the tether runs them. */
+export const TETHER_MIDDLEWARE = [
+  'flip',
   'shift',
-  'size',
-] as const satisfies TetherFeature[];
+] as const satisfies TetherMiddleware[];
 
 /**
- * One card in the tether-behaviors group. `clamp` isn't middleware the
- * tether runs — it's the surface opting into what `size` measured — but
- * it toggles the same way, so it rides in the same group.
+ * Where `flip` may take the window: the library's computed fallback, or
+ * a hand-written `position-try`-style chain.
  */
-export type TetherBehavior = TetherFeature | 'clamp';
-
-/**
- * How the tether's `flip` middleware is configured: the library's
- * computed fallback, the middleware left out, or a hand-written
- * `position-try`-style chain.
- */
-export type FlipMode = 'auto' | 'off' | 'chain';
+export type FlipMode = 'auto' | 'chain';
 
 /** Placement inputs driving the floating window in the scratchpad. */
 export interface FloatingControlsState {
@@ -64,14 +56,10 @@ export interface FloatingControlsState {
    * here — the checkbox writes to OPFS and the change comes back around.
    */
   tetherDisabled: boolean;
-  /** Boundary clearance the tether's middleware maintains, in px. */
-  tetherPadding: number;
-  /** Which collision behaviors the tether runs. */
-  features: Record<TetherFeature, boolean>;
-  /** How the tether's `flip` middleware is configured. */
+  /** Which middleware the tether runs. */
+  middleware: Record<TetherMiddleware, boolean>;
+  /** Where `flip` may take the window. */
   flipMode: FlipMode;
-  /** Whether the surface clamps itself to the room `size` reports. */
-  clampToAvailable: boolean;
 }
 
 /**
@@ -91,13 +79,11 @@ const defaults = (): FloatingControlsState => ({
   alignOffset: 0,
   point: null,
   tetherDisabled: tetherDisabledOption.defaults[environment].disabled,
-  tetherPadding: 8,
-  features: {
+  middleware: {
+    flip: true,
     shift: true,
-    size: true,
   },
   flipMode: 'auto',
-  clampToAvailable: false,
 });
 
 /** Live, readonly view of the floating-window placement controls. */
@@ -177,31 +163,19 @@ defineFold(tetherDisabledChanged, [floatingControls], (controls, disabled) => {
   controls.tetherDisabled = disabled;
 });
 
-/** The boundary clearance the tether maintains changed. */
-export const tetherPaddingChanged = defineTopic<number>();
-defineFold(
-  tetherPaddingChanged,
-  [floatingControls],
-  (controls, tetherPadding) => {
-    controls.tetherPadding = tetherPadding;
-  },
-);
-
 /**
- * The tether-behavior group changed. Carries the whole selection rather
- * than one flag: the cards report their new set as a unit, and folding
- * it wholesale keeps the group and the store from drifting apart.
+ * The middleware group changed. Carries the whole selection rather than
+ * one flag: the cards report their new set as a unit, and folding it
+ * wholesale keeps the group and the store from drifting apart.
  */
-export const behaviorsChanged = defineTopic<readonly TetherBehavior[]>();
-defineFold(behaviorsChanged, [floatingControls], (controls, behaviors) => {
-  for (const feature of TETHER_FEATURES) {
-    controls.features[feature] = behaviors.includes(feature);
+export const middlewareChanged = defineTopic<readonly TetherMiddleware[]>();
+defineFold(middlewareChanged, [floatingControls], (controls, enabled) => {
+  for (const name of TETHER_MIDDLEWARE) {
+    controls.middleware[name] = enabled.includes(name);
   }
-
-  controls.clampToAvailable = behaviors.includes('clamp');
 });
 
-/** How the tether's `flip` middleware is configured changed. */
+/** Where `flip` may take the window changed. */
 export const flipModeChanged = defineTopic<FlipMode>();
 defineFold(flipModeChanged, [floatingControls], (controls, mode) => {
   controls.flipMode = mode;
