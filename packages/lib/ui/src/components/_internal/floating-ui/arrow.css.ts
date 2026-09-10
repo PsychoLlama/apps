@@ -11,8 +11,8 @@ export const offset = createVar();
  * Translation of the arrow along each axis, in px. Mirrors the tether's
  * `middlewareData.arrow.x`/`.y`: the window assigns whichever axis runs
  * along the anchor edge from its measurement and leaves the other at
- * zero. The window's base style zeroes both, so an untethered arrow —
- * or one nested inside another float — never inherits a neighbor's.
+ * zero. Only read under a tethered window, which zeroes both, so an
+ * arrow nested inside another float never inherits a neighbor's.
  */
 export const translateX = createVar();
 export const translateY = createVar();
@@ -33,18 +33,19 @@ export const translateY = createVar();
  * nudge zeroed, and the translation by {@link translateX} /
  * {@link translateY} is the whole seat.
  *
- * The translation is always in effect, if only by zero, and that is
+ * A translation is always in effect, if only by zero, and that is
  * load-bearing in both modes: it gives the arrow a stacking context of
  * its own, so it paints over the surface's `box-shadow`. Among static
  * flex siblings DOM order alone won't — the body comes later and would
- * composite its shadow over the arrow.
+ * composite its shadow over the arrow. The base zero is a literal, not
+ * the vars, so an untethered arrow never reads a value it wasn't given.
  *
  * Every selector is wrapped in `:where(...)` so the rules hold equal
  * specificity and the cascade resolves by source order — the tethered
  * reset sits last so it overrides the alignment rules.
  */
 export const arrow = style({
-  translate: `${translateX} ${translateY}`,
+  translate: '0px 0px',
   selectors: {
     // Hidden, not unmounted: the arrow keeps its box, so a measured seat
     // stays measurable while it waits offscreen of the anchor.
@@ -70,6 +71,7 @@ export const arrow = style({
     ':where([data-tethered]) > &': {
       alignSelf: 'flex-start',
       margin: 0,
+      translate: `${translateX} ${translateY}`,
     },
   },
 });

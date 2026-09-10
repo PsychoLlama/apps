@@ -28,7 +28,8 @@ export const alignOffset = createVar();
 
 /**
  * Point-mode coordinates, in px from the anchor's top-left corner.
- * Assigned inline by the window from its `point` prop.
+ * Assigned inline by the window from its `point` prop and only read
+ * under `data-point`, which is also where they're zeroed.
  */
 export const pointX = createVar();
 export const pointY = createVar();
@@ -36,8 +37,8 @@ export const pointY = createVar();
 /**
  * Measured position of the window, in px from the root's top-left
  * corner. Assigned inline by the window from the tether's measurement
- * and only read under `data-tethered`. The base style zeroes both so a
- * window nested inside a tethered one never inherits its coordinates.
+ * and only read under `data-tethered`, which is also where they're
+ * zeroed.
  */
 export const tetherX = createVar();
 export const tetherY = createVar();
@@ -103,7 +104,15 @@ const shift = (origin: string, sign: string, distance: string) =>
  * Point mode (`data-point`): the window binds to a coordinate inside the
  * anchor box instead of an edge, so only the pins change — the
  * translation already describes which way the window grows and how far
- * the offsets displace it.
+ * the offsets displace it. The point is clamped to the box, as the
+ * tether's virtual reference clamps it, so an anchor that shrinks under
+ * a point never leaves the window hanging outside.
+ *
+ * Each mode's vars are declared where they're read. Custom properties
+ * inherit, so a var left undeclared on a window would come from the
+ * nearest float above it; declaring the mode's zeros under the mode's
+ * own attribute keeps nested floats independent without a base style
+ * that carries every var on every window.
  *
  * Tethered (`data-tethered`): a measurement has landed, and the window
  * sits exactly where it says. The pins collapse to the root's corner and
@@ -137,14 +146,6 @@ export const window = style({
   pointerEvents: 'none',
   transformOrigin: `${fallbackVar(originX, '50%')} ${fallbackVar(originY, '50%')}`,
   translate: `${shift(originX, signX, distanceX)} ${shift(originY, signY, distanceY)}`,
-  // Measured coordinates start at zero on every window, tethered or
-  // not, so none of them can leak into a float nested inside this one.
-  vars: {
-    [tetherX]: '0px',
-    [tetherY]: '0px',
-    [arrowX]: '0px',
-    [arrowY]: '0px',
-  },
   selectors: {
     // Which offset runs along which axis. The side offset always travels
     // on the axis facing the anchor, the align offset on the axis
@@ -212,14 +213,22 @@ export const window = style({
     // Repin both axes to the point. Declared after the edge rules so it
     // wins on source order; the translation needs no adjustment.
     '&:where([data-point])': {
-      top: fallbackVar(pointY, '0px'),
-      left: fallbackVar(pointX, '0px'),
+      vars: { [pointX]: '0px', [pointY]: '0px' },
+      top: `clamp(0px, ${pointY}, 100%)`,
+      left: `clamp(0px, ${pointX}, 100%)`,
     },
 
     // --- Tethered ---
     // Drop the pins and the calc; the measurement already accounts for
-    // side, alignment, and both offsets.
+    // side, alignment, both offsets, and the point. The arrow's seat is
+    // zeroed here too: the arrow reads it only under this attribute.
     '&:where([data-tethered])': {
+      vars: {
+        [tetherX]: '0px',
+        [tetherY]: '0px',
+        [arrowX]: '0px',
+        [arrowY]: '0px',
+      },
       top: 0,
       left: 0,
       translate: `${tetherX} ${tetherY}`,

@@ -23,6 +23,15 @@ export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
 export type FloatingAlignment = 'start' | 'center' | 'end';
 
 /**
+ * A coordinate inside the anchor box, in px from its top-left corner.
+ * Binds a window to a point instead of an edge — context menus anchor
+ * to the pointer, item-aligned selects to a measured item. The window
+ * renders it as `data-point` and inline vars; the tether measures
+ * against it as a virtual reference.
+ */
+export type FloatingPoint = Pick<DOMPoint, 'x' | 'y'>;
+
+/**
  * Opt a window into measured placement. Present, the window measures
  * the page and re-resolves its placement whenever the anchor moves;
  * absent, placement is pure CSS. Given enough room the two agree to the

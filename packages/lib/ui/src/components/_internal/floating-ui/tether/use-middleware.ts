@@ -1,10 +1,6 @@
 import { createMemo, type Accessor } from 'solid-js';
-import {
-  arrow,
-  offset,
-  type ArrowOptions,
-  type Middleware,
-} from '@floating-ui/dom';
+import { offset, type ArrowOptions, type Middleware } from '@floating-ui/dom';
+import { arrow } from './middleware/arrow';
 
 /**
  * Inputs to {@link useMiddleware}.
@@ -44,13 +40,17 @@ export interface MiddlewareInputs {
  * placement starts from exactly the pixels the CSS placement paints.
  * The consumer's constraints go in the middle, in the order given.
  * `arrow` goes last, because it has to see the position the constraints
- * settled on before it can seat the arrow against the anchor.
+ * settled on before it can seat the arrow against the anchor. It's our
+ * own (`middleware/arrow`), not floating-ui's: same name and shape, but
+ * it keeps the CSS seat instead of centering on the anchor.
  *
  * `offset` and `arrow` are reserved. Nothing enforces it at runtime —
  * the check isn't worth paying for on every rebuild — but a consumer
  * list carrying either is a review-time bug: the window is the only
  * thing that knows the geometry those two encode, and letting a consumer
- * restate it is how the two modes would stop agreeing.
+ * restate it is how the two modes would stop agreeing. A smuggled-in
+ * upstream `arrow` would at least collide on the name rather than run
+ * alongside ours.
  *
  * ```ts
  * const middleware = useMiddleware({

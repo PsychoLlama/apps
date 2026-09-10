@@ -13,6 +13,7 @@
 
 import { type Middleware } from '@floating-ui/dom';
 import { render, waitFor, within } from '@solidjs/testing-library';
+import { radius } from '@lib/design';
 import {
   FloatingRoot,
   FloatingWindow,
@@ -206,92 +207,142 @@ describe('FloatingWindow geometry', () => {
         center.floatingRect.left + center.floatingRect.width / 2,
       ).toBeCloseTo(center.anchorRect.left + center.anchorRect.width / 2);
     });
-  });
 
-  // Point mode is CSS-only until the tether learns to bind to a point.
-  it('binds to an anchor-relative point instead of an edge', async () => {
-    const point = { x: 30, y: 70 };
+    it('binds to an anchor-relative point instead of an edge', async () => {
+      const point = { x: 30, y: 70 };
 
-    // Growing down-right: the surface's top-left corner sits on the point.
-    const downRight = await renderFloating('css', {
-      point,
-      side: 'bottom',
-      align: 'start',
+      // Growing down-right: the surface's top-left corner sits on the point.
+      const downRight = await renderFloating(mode, {
+        point,
+        side: 'bottom',
+        align: 'start',
+      });
+      expect(downRight.floatingRect.left).toBeCloseTo(
+        downRight.anchorRect.left + 30,
+      );
+      expect(downRight.floatingRect.top).toBeCloseTo(
+        downRight.anchorRect.top + 70,
+      );
+
+      // Growing up: the surface's bottom edge sits on the point.
+      const up = await renderFloating(mode, {
+        point,
+        side: 'top',
+        align: 'start',
+      });
+      expect(up.floatingRect.bottom).toBeCloseTo(up.anchorRect.top + 70);
+
+      // End alignment: the far edge sits on the point.
+      const end = await renderFloating(mode, {
+        point,
+        side: 'bottom',
+        align: 'end',
+      });
+      expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.left + 30);
+
+      // Centered growth splits the surface across the point.
+      const centered = await renderFloating(mode, {
+        point,
+        side: 'bottom',
+        align: 'center',
+      });
+      expect(
+        centered.floatingRect.left + centered.floatingRect.width / 2,
+      ).toBeCloseTo(centered.anchorRect.left + 30);
+
+      // Sideways growth: the surface's left edge sits on the point.
+      const rightward = await renderFloating(mode, {
+        point,
+        side: 'right',
+        align: 'start',
+      });
+      expect(rightward.floatingRect.left).toBeCloseTo(
+        rightward.anchorRect.left + 30,
+      );
+      expect(rightward.floatingRect.top).toBeCloseTo(
+        rightward.anchorRect.top + 70,
+      );
     });
-    expect(downRight.floatingRect.left).toBeCloseTo(
-      downRight.anchorRect.left + 30,
-    );
-    expect(downRight.floatingRect.top).toBeCloseTo(
-      downRight.anchorRect.top + 70,
-    );
 
-    // Growing up: the surface's bottom edge sits on the point.
-    const up = await renderFloating('css', {
-      point,
-      side: 'top',
-      align: 'start',
+    it('applies offsets from the point in point mode', async () => {
+      const point = { x: 30, y: 70 };
+
+      const gapped = await renderFloating(mode, {
+        point,
+        side: 'bottom',
+        align: 'start',
+        sideOffset: 10,
+        alignOffset: 6,
+      });
+      expect(gapped.floatingRect.top).toBeCloseTo(
+        gapped.anchorRect.top + 70 + 10,
+      );
+      expect(gapped.floatingRect.left).toBeCloseTo(
+        gapped.anchorRect.left + 30 + 6,
+      );
+
+      // Growing up, the gap opens above the point.
+      const upward = await renderFloating(mode, {
+        point,
+        side: 'top',
+        align: 'start',
+        sideOffset: 10,
+      });
+      expect(upward.floatingRect.bottom).toBeCloseTo(
+        upward.anchorRect.top + 70 - 10,
+      );
     });
-    expect(up.floatingRect.bottom).toBeCloseTo(up.anchorRect.top + 70);
 
-    // End alignment: the far edge sits on the point.
-    const end = await renderFloating('css', {
-      point,
-      side: 'bottom',
-      align: 'end',
+    it('seats the arrow at the alignment corner, clear of the radius', async () => {
+      // The seat is the CSS one in both modes: the corner for start/end,
+      // nudged in by the surface radius; the middle for center. Given
+      // room the tether never moves it, so the modes agree.
+      const nudge = parseFloat(radius[3]);
+
+      const start = await renderFloating(mode, {
+        side: 'bottom',
+        align: 'start',
+        radius: 3,
+        arrow: {},
+      });
+      expect(start.arrowRect!.left).toBeCloseTo(
+        start.floatingRect.left + nudge,
+      );
+      expect(start.arrowRect!.top).toBeCloseTo(start.anchorRect.bottom);
+
+      const center = await renderFloating(mode, {
+        side: 'bottom',
+        align: 'center',
+        radius: 3,
+        arrow: {},
+      });
+      expect(center.arrowRect!.left + center.arrowRect!.width / 2).toBeCloseTo(
+        center.floatingRect.left + center.floatingRect.width / 2,
+      );
+
+      const end = await renderFloating(mode, {
+        side: 'right',
+        align: 'end',
+        radius: 3,
+        arrow: {},
+      });
+      expect(end.arrowRect!.bottom).toBeCloseTo(
+        end.floatingRect.bottom - nudge,
+      );
+      expect(end.arrowRect!.left).toBeCloseTo(end.anchorRect.right);
     });
-    expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.left + 30);
 
-    // Centered growth splits the surface across the point.
-    const centered = await renderFloating('css', {
-      point,
-      side: 'bottom',
-      align: 'center',
+    it('clamps the point to the anchor box', async () => {
+      // A point taken before the anchor shrank would otherwise leave the
+      // window hanging off a spot outside it.
+      const beyond = await renderFloating(mode, {
+        point: { x: 150, y: -20 },
+        side: 'bottom',
+        align: 'start',
+      });
+      expect(beyond.floatingRect.left).toBeCloseTo(beyond.anchorRect.right);
+      expect(beyond.floatingRect.top).toBeCloseTo(beyond.anchorRect.top);
     });
-    expect(
-      centered.floatingRect.left + centered.floatingRect.width / 2,
-    ).toBeCloseTo(centered.anchorRect.left + 30);
-
-    // Sideways growth: the surface's left edge sits on the point.
-    const rightward = await renderFloating('css', {
-      point,
-      side: 'right',
-      align: 'start',
-    });
-    expect(rightward.floatingRect.left).toBeCloseTo(
-      rightward.anchorRect.left + 30,
-    );
-    expect(rightward.floatingRect.top).toBeCloseTo(
-      rightward.anchorRect.top + 70,
-    );
-  });
-
-  it('applies offsets from the point in point mode', async () => {
-    const point = { x: 30, y: 70 };
-
-    const gapped = await renderFloating('css', {
-      point,
-      side: 'bottom',
-      align: 'start',
-      sideOffset: 10,
-      alignOffset: 6,
-    });
-    expect(gapped.floatingRect.top).toBeCloseTo(
-      gapped.anchorRect.top + 70 + 10,
-    );
-    expect(gapped.floatingRect.left).toBeCloseTo(
-      gapped.anchorRect.left + 30 + 6,
-    );
-
-    // Growing up, the gap opens above the point.
-    const upward = await renderFloating('css', {
-      point,
-      side: 'top',
-      align: 'start',
-      sideOffset: 10,
-    });
-    expect(upward.floatingRect.bottom).toBeCloseTo(
-      upward.anchorRect.top + 70 - 10,
-    );
   });
 });
 
@@ -332,21 +383,56 @@ describe('FloatingWindow tether', () => {
     expect(floatingRect.bottom).toBeCloseTo(anchorRect.top);
   });
 
-  it('seats the arrow on the anchor', async () => {
-    // Start-aligned, the surface (80 wide) is narrower than the anchor
-    // (100), so the anchor's center sits inside the surface and the
-    // arrow can point straight at it.
-    const { arrowRect, anchorRect } = await renderFloating('tether', {
-      side: 'bottom',
-      align: 'start',
-      arrow: {},
-    });
+  /** A middleware that drags the subject along the x axis, as `shift` would. */
+  const nudgeX = (by: number): Middleware => ({
+    name: 'test-nudge',
+    fn: ({ x }) => ({ x: x + by }),
+  });
 
-    expect(arrowRect).toBeDefined();
-    expect(arrowRect!.left + arrowRect!.width / 2).toBeCloseTo(
-      anchorRect.left + anchorRect.width / 2,
-    );
-    // The tip is the arrow's top edge, resting on the anchor's bottom.
-    expect(arrowRect!.top).toBeCloseTo(anchorRect.bottom);
+  /** Render a start-aligned, arrowed window dragged `by` px along the edge. */
+  const renderNudged = async (by: number) => {
+    const { container } = render(() => (
+      <div class={fixture.stage}>
+        <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
+          <FloatingWindow
+            class={fixture.surface}
+            testId="surface"
+            side="bottom"
+            align="start"
+            arrow={{}}
+            tether={{ middleware: [nudgeX(by)] }}
+          >
+            content
+          </FloatingWindow>
+        </FloatingRoot>
+      </div>
+    ));
+
+    await settled(container.querySelector('[data-side]')!);
+
+    const anchorRect = within(container)
+      .getByTestId('anchor')
+      .getBoundingClientRect();
+    const arrow = within(container).getByTestId('surface-arrow');
+
+    return { anchorRect, arrow, arrowRect: arrow.getBoundingClientRect() };
+  };
+
+  it('slides the arrow only as far as the anchor demands', async () => {
+    // Dragged 50 left of its start seat, the surface's corner is off the
+    // anchor. The arrow slides forward until its base begins on the
+    // anchor's edge — and no further.
+    const { anchorRect, arrow, arrowRect } = await renderNudged(-50);
+
+    expect(arrowRect.left).toBeCloseTo(anchorRect.left);
+    expect(arrowRect.top).toBeCloseTo(anchorRect.bottom);
+    expect(arrow).not.toHaveAttribute('data-hidden');
+  });
+
+  it('hides the arrow once the anchor cannot hold it', async () => {
+    // Dragged clear of the anchor: nothing to point at.
+    const { arrow } = await renderNudged(200);
+
+    expect(arrow).toHaveAttribute('data-hidden');
   });
 });
