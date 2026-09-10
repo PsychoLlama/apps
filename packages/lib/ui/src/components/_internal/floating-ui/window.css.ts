@@ -5,7 +5,11 @@ import {
   styleVariants,
 } from '@vanilla-extract/css';
 import { radius } from '@lib/design';
-import { offset } from './arrow.css';
+import {
+  offset,
+  translateX as arrowX,
+  translateY as arrowY,
+} from './arrow.css';
 
 /**
  * Gap between the anchor edge and the window, in px. Assigned inline
@@ -16,9 +20,9 @@ export const sideOffset = createVar();
 /**
  * Nudge along the bound edge, in px. Assigned inline by the window
  * from its `alignOffset` prop. Positive values push a `start`-aligned
- * window toward `end`, an `end`-aligned window toward `start`, and a
- * centered window toward `end` — the same logical inversion Radix
- * applies, so flipping alignment never flips the offset's sign.
+ * window toward `end` and an `end`-aligned window toward `start` — the
+ * same logical inversion Radix applies, so flipping alignment never
+ * flips the offset's sign. A centered window ignores it, as Radix does.
  */
 export const alignOffset = createVar();
 
@@ -28,6 +32,15 @@ export const alignOffset = createVar();
  */
 export const pointX = createVar();
 export const pointY = createVar();
+
+/**
+ * Measured position of the window, in px from the root's top-left
+ * corner. Assigned inline by the window from the tether's measurement
+ * and only read under `data-tethered`. The base style zeroes both so a
+ * window nested inside a tethered one never inherits its coordinates.
+ */
+export const tetherX = createVar();
+export const tetherY = createVar();
 
 // The corner of the window that faces whatever it's bound to, as a
 // percentage of its own size. Doubles as the `transform-origin` — the
@@ -83,12 +96,21 @@ const shift = (origin: string, sign: string, distance: string) =>
  * chosen edge of the anchor and `data-align` positions it along that
  * edge — `start` hugs the top/left, `end` the bottom/right.
  * {@link sideOffset} opens a gap off the edge; {@link alignOffset}
- * nudges along it.
+ * nudges along it, except for a centered window, which ignores it. That
+ * last rule is floating-ui's (`offset` applies `alignmentAxis` only to
+ * `start`/`end` placements), adopted so the two modes never disagree.
  *
  * Point mode (`data-point`): the window binds to a coordinate inside the
  * anchor box instead of an edge, so only the pins change — the
  * translation already describes which way the window grows and how far
  * the offsets displace it.
+ *
+ * Tethered (`data-tethered`): a measurement has landed, and the window
+ * sits exactly where it says. The pins collapse to the root's corner and
+ * the translation becomes the measured coordinates verbatim; the
+ * placement rules above still run but only feed `flex-direction` and
+ * `transform-origin`. Given room, the measured coordinates equal what
+ * the pins produce, so flipping the attribute moves nothing.
  *
  * Placement rides on `translate` rather than `transform`, which leaves
  * `transform` entirely to consumers: a scale-in animation composes with
@@ -105,7 +127,8 @@ const shift = (origin: string, sign: string, distance: string) =>
  *
  * Every selector is wrapped in `:where(...)` so all rules hold equal
  * specificity and the cascade resolves by source order — the point-mode
- * pins sit last so they can override the edge-mode ones.
+ * pins override the edge-mode ones, and the tethered rule, last of all,
+ * overrides both.
  */
 export const window = style({
   position: 'absolute',
@@ -114,6 +137,14 @@ export const window = style({
   pointerEvents: 'none',
   transformOrigin: `${fallbackVar(originX, '50%')} ${fallbackVar(originY, '50%')}`,
   translate: `${shift(originX, signX, distanceX)} ${shift(originY, signY, distanceY)}`,
+  // Measured coordinates start at zero on every window, tethered or
+  // not, so none of them can leak into a float nested inside this one.
+  vars: {
+    [tetherX]: '0px',
+    [tetherY]: '0px',
+    [arrowX]: '0px',
+    [arrowY]: '0px',
+  },
   selectors: {
     // Which offset runs along which axis. The side offset always travels
     // on the axis facing the anchor, the align offset on the axis
@@ -156,6 +187,7 @@ export const window = style({
     },
     '&:where([data-axis="y"][data-align="center"])': {
       left: '50%',
+      vars: { [distanceX]: '0px' },
     },
     '&:where([data-axis="y"][data-align="end"])': {
       left: '100%',
@@ -169,6 +201,7 @@ export const window = style({
     },
     '&:where([data-axis="x"][data-align="center"])': {
       top: '50%',
+      vars: { [distanceY]: '0px' },
     },
     '&:where([data-axis="x"][data-align="end"])': {
       top: '100%',
@@ -181,6 +214,15 @@ export const window = style({
     '&:where([data-point])': {
       top: fallbackVar(pointY, '0px'),
       left: fallbackVar(pointX, '0px'),
+    },
+
+    // --- Tethered ---
+    // Drop the pins and the calc; the measurement already accounts for
+    // side, alignment, and both offsets.
+    '&:where([data-tethered])': {
+      top: 0,
+      left: 0,
+      translate: `${tetherX} ${tetherY}`,
     },
   },
 });

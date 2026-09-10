@@ -1,3 +1,5 @@
+import { type Middleware } from '@floating-ui/dom';
+
 /**
  * Vocabulary shared across the floating primitive.
  *
@@ -19,3 +21,21 @@ export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
  * opposite; `center` splits the difference.
  */
 export type FloatingAlignment = 'start' | 'center' | 'end';
+
+/**
+ * Opt a window into measured placement. Present, the window measures
+ * the page and re-resolves its placement whenever the anchor moves;
+ * absent, placement is pure CSS. Given enough room the two agree to the
+ * pixel, so the switch is invisible until something forces a decision.
+ *
+ * Heavily subject to change while the tether is workshopped.
+ */
+export interface FloatingTether {
+  /**
+   * Middleware run between the window's own `offset` and `arrow`, in
+   * order: constraints such as `shift`, `flip`, `size`, and `hide`.
+   * Never `offset` or `arrow` — the window owns those so the measured
+   * placement can't drift from the CSS one.
+   */
+  middleware: Middleware[];
+}
