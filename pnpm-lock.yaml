@@ -168,6 +168,9 @@ importers:
       '@crate/qr-code':
         specifier: workspace:*
         version: link:../../../crates/qr-code
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../../lib/assert
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -238,6 +241,9 @@ importers:
 
   packages/app/icon-editor:
     dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../../lib/assert
       '@lib/classnames':
         specifier: workspace:*
         version: link:../../lib/classnames
@@ -272,6 +278,9 @@ importers:
 
   packages/app/logs:
     dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../../lib/assert
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -400,6 +409,9 @@ importers:
       '@crate/qr-code':
         specifier: workspace:*
         version: link:../../../crates/qr-code
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../../lib/assert
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
@@ -537,6 +549,9 @@ importers:
       '@iconify/json':
         specifier: 'catalog:'
         version: 2.2.522
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../../lib/assert
       '@resvg/resvg-wasm':
         specifier: ^2.6.2
         version: 2.6.2
@@ -652,6 +667,9 @@ importers:
       '@holz/core':
         specifier: 'catalog:'
         version: 0.9.0
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../assert
       '@lib/holz-valve':
         specifier: workspace:*
         version: link:../holz-valve
@@ -753,6 +771,9 @@ importers:
 
   packages/lib/state:
     dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../assert
       solid-js:
         specifier: 1.9.15
         version: 1.9.15
@@ -780,6 +801,9 @@ importers:
       '@floating-ui/dom':
         specifier: 'catalog:'
         version: 1.8.0
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../assert
       '@lib/classnames':
         specifier: workspace:*
         version: link:../classnames
@@ -811,6 +835,9 @@ importers:
 
   packages/lib/vault:
     dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../assert
       idb:
         specifier: 'catalog:'
         version: 8.0.3

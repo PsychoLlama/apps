@@ -6,7 +6,7 @@
   "description": "Assert an invariant holds, narrowing the value's type.",
   "license": "MIT",
   "sideEffects": false,
-  "exports": "./src/index.ts",
+  "exports": "./src/assert.ts",
   "scripts": {
     "typecheck": "tsc"
   }

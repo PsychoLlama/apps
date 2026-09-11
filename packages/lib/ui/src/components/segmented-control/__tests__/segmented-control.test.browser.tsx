@@ -6,6 +6,7 @@
  * correctly in a real engine.
  */
 
+import { assert } from '@lib/assert';
 import { render, screen } from '@solidjs/testing-library';
 import { createSignal } from 'solid-js';
 import { userEvent } from 'vitest/browser';
@@ -19,7 +20,7 @@ const noop = () => {};
 /** The decorative chip. Not exposed to consumers, so reach for it by role. */
 const indicatorOf = (group: HTMLElement): HTMLElement => {
   const chip = group.querySelector<HTMLElement>('[aria-hidden="true"]');
-  if (!chip) throw new Error('indicator not found');
+  assert(chip, 'indicator not found');
   return chip;
 };
 
@@ -31,7 +32,7 @@ const indicatorOf = (group: HTMLElement): HTMLElement => {
  */
 const segmentOf = (testId: string): HTMLElement => {
   const segment = screen.getByTestId(testId).parentElement;
-  if (!segment) throw new Error(`segment not found: ${testId}`);
+  assert(segment, `segment not found: ${testId}`);
   return segment;
 };
 

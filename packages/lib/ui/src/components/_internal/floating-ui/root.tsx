@@ -6,6 +6,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import { assert } from '@lib/assert';
 import clx from '@lib/classnames';
 import { type TestIdProps } from '../../../props/test-id';
 import * as css from './root.css';
@@ -29,9 +30,7 @@ const AnchorContext = createContext<Accessor<HTMLElement | undefined>>();
 export const useAnchorElement = (): Accessor<HTMLElement | undefined> => {
   const anchor = useContext(AnchorContext);
 
-  if (!anchor) {
-    throw new Error('<FloatingWindow> rendered outside of <FloatingRoot>.');
-  }
+  assert(anchor, '<FloatingWindow> rendered outside of <FloatingRoot>.');
 
   return anchor;
 };

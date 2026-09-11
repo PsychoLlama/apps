@@ -1,3 +1,4 @@
+import { assert } from '@lib/assert';
 import { RPC, type RpcMessage } from '@lib/messaging/rpc';
 import {
   MessagePortTransport,
@@ -453,7 +454,7 @@ export const startP2p = async (signal: AbortSignal): Promise<P2pSession> => {
   const live = workerHost();
   await live.ready;
 
-  if (live.dead) throw new Error('The p2p worker is not running.');
+  assert(!live.dead, 'The p2p worker is not running.');
 
   const session = attachSession(live.rpc, (sink) => {
     live.sink = sink;

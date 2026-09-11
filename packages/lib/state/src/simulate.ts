@@ -1,3 +1,4 @@
+import { assert } from '@lib/assert';
 import type { AnyCapability, AnyFact, AnySpaceRef } from './internal';
 import { drive, type DriveContext, type SagaGen } from './saga';
 
@@ -39,17 +40,14 @@ export const simulate = async <Return>(
     sink: (facts) => commits.push(facts),
     call: (signal, fn, args) => {
       const stub = stubs.get(fn);
-      if (!stub) {
-        throw new Error(
-          `simulate: no stub for capability "${fn.name || 'anonymous'}"`,
-        );
-      }
+      assert(
+        stub,
+        `simulate: no stub for capability "${fn.name || 'anonymous'}"`,
+      );
       return (stub as (...rest: unknown[]) => unknown)(signal, ...args);
     },
     read: (ref) => {
-      if (!reads.has(ref)) {
-        throw new Error('simulate: no stubbed value for read');
-      }
+      assert(reads.has(ref), 'simulate: no stubbed value for read');
       return reads.get(ref);
     },
     spawn: (child) => {

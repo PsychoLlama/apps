@@ -84,6 +84,7 @@ export default [
       'custom/no-derived-token-types': 'error',
       'custom/no-log-interpolation': 'error',
       'custom/no-static-style-prop': 'error',
+      'custom/prefer-assert': 'error',
       'custom/prefer-icon-button': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [

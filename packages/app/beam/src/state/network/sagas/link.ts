@@ -1,3 +1,4 @@
+import { assert } from '@lib/assert';
 import { call, commit, defineSaga, read, spawn } from '@lib/state';
 import { createLogger } from '@lib/observability';
 import {
@@ -155,9 +156,7 @@ export const dialPeerSaga = defineSaga(
     if (!isEndpointId(endpointId)) return;
 
     const session = yield* read(sessionCell);
-    if (!session) {
-      throw new Error('Cannot dial a peer before the relay connection is up.');
-    }
+    assert(session, 'Cannot dial a peer before the relay connection is up.');
 
     // Answered off the identity rather than the session. The session is open
     // before the key is settled, so it has no address of its own to compare

@@ -1,5 +1,6 @@
 import type { IDBPDatabase } from 'idb';
 import type { LogProcessor } from '@holz/core';
+import { assert } from '@lib/assert';
 import { createLogValve } from '@lib/holz-valve';
 
 import { createLogInsertedChannel } from './broadcast';
@@ -86,9 +87,7 @@ export const createIdbBackend = (
       // The valve only opens from within `connect`, which sets `db` first, and
       // `open` is the sole caller of `drain` — so a live connection is
       // guaranteed here. Assert it rather than silently dropping the batch.
-      if (db === null) {
-        throw new Error('Cannot drain logs: the database is not connected.');
-      }
+      assert(db !== null, 'Cannot drain logs: the database is not connected.');
 
       // One transaction for the whole batch. `add` is fire-and-forget like the
       // streaming path. Announce once the batch commits — a failed flush drops

@@ -6,6 +6,7 @@
  * the exit animation resolves, which needs a real timeline.
  */
 
+import { assert } from '@lib/assert';
 import { fireEvent, render, waitFor } from '@solidjs/testing-library';
 import { createSignal } from 'solid-js';
 import { userEvent } from 'vitest/browser';
@@ -37,7 +38,7 @@ const setup = (overrides: Overrides = {}) => {
   ));
 
   const overlay = rendered.container.querySelector('dialog');
-  if (!overlay) throw new Error('dialog not found');
+  assert(overlay, 'dialog not found');
 
   return {
     setOpen,
@@ -47,7 +48,7 @@ const setup = (overrides: Overrides = {}) => {
     /** The scroll surface around the panel — the click-outside target. */
     outside: () => {
       const scroll = overlay.firstElementChild;
-      if (!(scroll instanceof HTMLElement)) throw new Error('no scroll layer');
+      assert(scroll instanceof HTMLElement, 'no scroll layer');
       return scroll;
     },
   };
@@ -170,7 +171,7 @@ describe('Dialog', () => {
   it('ignores a click inside the panel', () => {
     const { onOpenChange, panel } = setup();
     const surface = panel();
-    if (!surface) throw new Error('panel not found');
+    assert(surface, 'panel not found');
 
     pressAndRelease(surface, surface);
 
@@ -180,7 +181,7 @@ describe('Dialog', () => {
   it('ignores a press that started inside the panel', () => {
     const { onOpenChange, panel, outside } = setup();
     const surface = panel();
-    if (!surface) throw new Error('panel not found');
+    assert(surface, 'panel not found');
 
     // A text selection dragged out of the panel and released on the
     // backdrop must not dismiss.

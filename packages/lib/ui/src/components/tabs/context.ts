@@ -14,6 +14,7 @@
  *   its own `loop`, and arrow keys never jump between lists.
  */
 
+import { assert } from '@lib/assert';
 import { createContext, useContext, type Accessor } from 'solid-js';
 
 export type TabsActivationMode = 'automatic' | 'manual';
@@ -57,9 +58,7 @@ export const TabsContext = createContext<TabsContextValue>();
 
 export const useTabsContext = (): TabsContextValue => {
   const ctx = useContext(TabsContext);
-  if (!ctx) {
-    throw new Error('Tabs subcomponent rendered outside of <TabsRoot>.');
-  }
+  assert(ctx, 'Tabs subcomponent rendered outside of <TabsRoot>.');
   return ctx;
 };
 
@@ -67,8 +66,6 @@ export const TabsListContext = createContext<TabsListContextValue>();
 
 export const useTabsListContext = (): TabsListContextValue => {
   const ctx = useContext(TabsListContext);
-  if (!ctx) {
-    throw new Error('<TabsTrigger> rendered outside of <TabsList>.');
-  }
+  assert(ctx, '<TabsTrigger> rendered outside of <TabsList>.');
   return ctx;
 };
