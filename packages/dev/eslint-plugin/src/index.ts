@@ -4,6 +4,7 @@ import noLogInterpolation from './rules/no-log-interpolation';
 import noStaticStyleProp from './rules/no-static-style-prop';
 import noUnsafeNodeCast from './rules/no-unsafe-node-cast';
 import noZIndex from './rules/no-z-index';
+import preferAssert from './rules/prefer-assert';
 import preferIconButton from './rules/prefer-icon-button';
 import requireDesignTokens from './rules/require-design-tokens';
 import requireExplicitRouteExport from './rules/require-explicit-route-export';
@@ -22,6 +23,7 @@ const plugin = {
     'no-static-style-prop': noStaticStyleProp,
     'no-unsafe-node-cast': noUnsafeNodeCast,
     'no-z-index': noZIndex,
+    'prefer-assert': preferAssert,
     'prefer-icon-button': preferIconButton,
     'require-design-tokens': requireDesignTokens,
     'require-explicit-route-export': requireExplicitRouteExport,
