@@ -12,7 +12,7 @@ import { type TestIdProps } from '../../../props/test-id';
 import * as css from './root.css';
 
 /**
- * The anchor element every floating surface below a {@link FloatingRoot}
+ * The anchor element every floating window below a {@link FloatingRoot}
  * positions against.
  *
  * An accessor rather than the element itself: a `ref` lands after the
@@ -23,7 +23,7 @@ const AnchorContext = createContext<Accessor<HTMLElement | undefined>>();
 
 /**
  * Read the nearest anchor element. Throws outside a
- * {@link FloatingRoot} — a floating surface with nothing to anchor to is
+ * {@link FloatingRoot} — a floating window with nothing to anchor to is
  * a structural mistake in the tree, not a runtime condition, so it fails
  * the same way on the server and in the browser.
  */
@@ -82,7 +82,7 @@ export interface FloatingRootProps extends TestIdProps {
  * Windows are siblings of the anchored element rather than children of
  * it, which also keeps the anchor's own `overflow` from clipping its
  * popup and its own `transform`/`opacity`/`filter` from trapping the
- * surface in a stacking context it can't escape.
+ * window in a stacking context it can't escape.
  *
  * ```tsx
  * <FloatingRoot display="block">

@@ -20,7 +20,7 @@ export const translateY = createVar();
 /**
  * Seats the arrow along the anchor edge via `align-self` — the cross axis
  * of the window's arrow/body stack. `data-align` maps to the same
- * endpoints as the surface's own alignment: `start` hugs the top
+ * endpoints as the window's own alignment: `start` hugs the top
  * (left/right sides) or left (top/bottom sides), `end` the opposite.
  *
  * A `start`/`end` arrow is nudged in by {@link offset} so its base clears

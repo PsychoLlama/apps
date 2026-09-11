@@ -178,7 +178,7 @@ describe('FloatingWindow geometry', () => {
       });
       expect(start.floatingRect.left).toBeCloseTo(start.anchorRect.left + 6);
 
-      // Positive offsets push an end-aligned surface back toward start.
+      // Positive offsets push an end-aligned window back toward start.
       const end = await renderFloating(mode, {
         side: 'bottom',
         align: 'end',
@@ -212,7 +212,7 @@ describe('FloatingWindow geometry', () => {
     it('binds to an anchor-relative point instead of an edge', async () => {
       const point = { x: 30, y: 70 };
 
-      // Growing down-right: the surface's top-left corner sits on the point.
+      // Growing down-right: the window's top-left corner sits on the point.
       const downRight = await renderFloating(mode, {
         point,
         side: 'bottom',
@@ -225,7 +225,7 @@ describe('FloatingWindow geometry', () => {
         downRight.anchorRect.top + 70,
       );
 
-      // Growing up: the surface's bottom edge sits on the point.
+      // Growing up: the window's bottom edge sits on the point.
       const up = await renderFloating(mode, {
         point,
         side: 'top',
@@ -241,7 +241,7 @@ describe('FloatingWindow geometry', () => {
       });
       expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.left + 30);
 
-      // Centered growth splits the surface across the point.
+      // Centered growth splits the window across the point.
       const centered = await renderFloating(mode, {
         point,
         side: 'bottom',

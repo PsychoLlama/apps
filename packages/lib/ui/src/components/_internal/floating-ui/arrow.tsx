@@ -4,7 +4,7 @@ import * as css from './arrow.css';
 
 /**
  * Pointer arrow for the floating-ui primitive — the decorative triangle
- * that ties a floating surface back to its anchor. Kept a sibling of the
+ * that ties a floating window back to its anchor. Kept a sibling of the
  * window so the surface chrome and its pointer stay independently
  * legible.
  */
@@ -38,7 +38,7 @@ export interface ArrowProps extends TestIdProps {
   align?: ArrowAlign;
   /**
    * Hide the arrow while keeping its box — set when the anchor has
-   * slid out from under the surface and there's nothing to point at.
+   * slid out from under the window and there's nothing to point at.
    * Defaults to `false`.
    */
   hidden?: boolean;
@@ -47,7 +47,7 @@ export interface ArrowProps extends TestIdProps {
 }
 
 /**
- * Decorative triangle that ties a floating surface back to its anchor.
+ * Decorative triangle that ties a floating window back to its anchor.
  * The base spans {@link ArrowProps.base} and the point protrudes
  * {@link ArrowProps.depth} in the given {@link ArrowProps.direction};
  * fills with `currentColor` unless a {@link ArrowProps.class} overrides

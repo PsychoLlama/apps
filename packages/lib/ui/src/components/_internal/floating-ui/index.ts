@@ -11,7 +11,7 @@
  *   anchored element and publishes it through context, so a window is
  *   never handed an element by hand.
  * - `FloatingWindow` — the positioned box. It will grow to own the
- *   plumbing floating surfaces share (anchoring, layering) and wraps the
+ *   plumbing floating components share (anchoring, layering) and wraps the
  *   body.
  * - `FloatingBody` — the visual surface. It lays out and pads its
  *   children and is the node consumers style and target in tests. It is

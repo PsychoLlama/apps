@@ -23,7 +23,7 @@ import * as css from './window.css';
 /**
  * Arrow configuration for a floating primitive. `direction` and `align`
  * are omitted — the window derives both from its own placement, which is
- * what aims the arrow back at whatever the surface is bound to. So are
+ * what aims the arrow back at whatever the window is bound to. So are
  * `hidden`, which the tether decides, and `testId`, which derives from
  * the window's own.
  */
@@ -74,7 +74,7 @@ export interface FloatingWindowProps
     PaddingProps,
     TestIdProps,
     JSX.HTMLAttributes<HTMLDivElement> {
-  /** Edge of the anchor the surface binds to. Defaults to `'bottom'`. */
+  /** Edge of the anchor the window binds to. Defaults to `'bottom'`. */
   side?: FloatingSide;
 
   /** Placement along that edge. Defaults to `'center'`. */
@@ -123,7 +123,7 @@ export interface FloatingWindowProps
   class?: string;
 
   /**
-   * Pointer arrow tying the surface to its anchor. Omit the config to
+   * Pointer arrow tying the window to its anchor. Omit the config to
    * render without an arrow.
    */
   arrow?: FloatingArrowProps;
