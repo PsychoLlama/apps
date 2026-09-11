@@ -18,6 +18,7 @@
   "dependencies": {
     "@crate/p2p": "workspace:*",
     "@crate/qr-code": "workspace:*",
+    "@lib/assert": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/messaging": "workspace:*",
     "@lib/observability": "workspace:*",

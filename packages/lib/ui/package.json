@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@floating-ui/dom": "catalog:",
+    "@lib/assert": "workspace:*",
     "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
     "@vanilla-extract/css": "catalog:",

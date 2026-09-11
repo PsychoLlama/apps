@@ -1,3 +1,4 @@
+import { assert } from '@lib/assert';
 import {
   DATA_STORE,
   KEY_ID,
@@ -97,15 +98,14 @@ export const read = async (id: VaultId): Promise<ArrayBuffer | null> => {
     if (!record) return null;
 
     const key = await db.get(KEY_STORE, KEY_ID);
-    if (!key) {
-      // A value can only be written after its key is generated, so a record
-      // with no key means the key store was cleared or tampered with out from
-      // under it — the ciphertext is unrecoverable, and silently returning
-      // `null` would masquerade as "never written."
-      throw new Error(
-        `Vault holds a value at "${id}" but its encryption key is missing.`,
-      );
-    }
+    // A value can only be written after its key is generated, so a record
+    // with no key means the key store was cleared or tampered with out from
+    // under it — the ciphertext is unrecoverable, and silently returning
+    // `null` would masquerade as "never written."
+    assert(
+      key,
+      `Vault holds a value at "${id}" but its encryption key is missing.`,
+    );
 
     return await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: record.iv, additionalData: bindingFor(id) },

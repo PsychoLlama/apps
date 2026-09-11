@@ -9,6 +9,7 @@
  * other's needs.
  */
 
+import { assert } from '@lib/assert';
 import { createContext, useContext, type Accessor } from 'solid-js';
 import type {
   RadioCardsColor,
@@ -48,8 +49,6 @@ export const RadioCardsContext = createContext<RadioCardsContextValue>();
 
 export const useRadioCardsContext = (): RadioCardsContextValue => {
   const ctx = useContext(RadioCardsContext);
-  if (!ctx) {
-    throw new Error('<RadioCardsItem> rendered outside of <RadioCardsRoot>.');
-  }
+  assert(ctx, '<RadioCardsItem> rendered outside of <RadioCardsRoot>.');
   return ctx;
 };

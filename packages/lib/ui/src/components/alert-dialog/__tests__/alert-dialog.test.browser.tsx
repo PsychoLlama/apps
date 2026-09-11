@@ -5,6 +5,7 @@
  * which jsdom does not do.
  */
 
+import { assert } from '@lib/assert';
 import { fireEvent, render, waitFor } from '@solidjs/testing-library';
 import { createSignal } from 'solid-js';
 import { userEvent } from 'vitest/browser';
@@ -38,11 +39,11 @@ const setup = (overrides: Overrides = {}) => {
   ));
 
   const overlay = rendered.container.querySelector('dialog');
-  if (!overlay) throw new Error('dialog not found');
+  assert(overlay, 'Dialog not found.');
 
   const byTestId = (id: string) => {
     const element = rendered.queryByTestId(id);
-    if (!(element instanceof HTMLElement)) throw new Error(`no ${id}`);
+    assert(element instanceof HTMLElement, `No ${id}.`);
     return element;
   };
 
@@ -56,7 +57,7 @@ const setup = (overrides: Overrides = {}) => {
     /** The scroll surface around the panel — the click-outside target. */
     outside: () => {
       const scroll = overlay.firstElementChild;
-      if (!(scroll instanceof HTMLElement)) throw new Error('no scroll layer');
+      assert(scroll instanceof HTMLElement, 'No scroll layer.');
       return scroll;
     },
   };

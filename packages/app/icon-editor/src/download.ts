@@ -3,6 +3,8 @@
  * trigger a synthetic anchor click — the browser handles the rest.
  */
 
+import { assert } from '@lib/assert';
+
 /** Save an SVG document as a `.svg` file. */
 export const downloadSvg = (svg: string, filename: string): void => {
   triggerDownload(new Blob([svg], { type: 'image/svg+xml' }), filename);
@@ -37,7 +39,7 @@ export const downloadPng = async (
     canvas.width = sizePx;
     canvas.height = sizePx;
     const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas 2D context unavailable');
+    assert(ctx, 'Canvas 2D context unavailable.');
     ctx.drawImage(image, 0, 0, sizePx, sizePx);
     const png = await canvasToBlob(canvas);
     triggerDownload(png, filename);

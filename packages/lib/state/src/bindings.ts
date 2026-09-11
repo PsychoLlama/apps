@@ -1,4 +1,5 @@
 import { onCleanup } from 'solid-js';
+import { assert } from '@lib/assert';
 import { AbortError } from './abort';
 import { commitFacts } from './fold';
 import {
@@ -28,11 +29,10 @@ const runSaga = <Return>(
   invocation: SagaInvocation<Return>,
 ): Promise<Return> => {
   const scopeRef = invocation[SCOPE] as ScopeRef | undefined;
-  if (!scopeRef) {
-    throw new Error(
-      'Not a saga invocation: create one by calling a defined saga',
-    );
-  }
+  assert(
+    scopeRef,
+    'Not a saga invocation: create one by calling a defined saga.',
+  );
 
   const scope = getAliveScope(runtime, scopeRef);
 

@@ -5,6 +5,7 @@
  * each saga published.
  */
 
+import { assert } from '@lib/assert';
 import { createTestRuntime, simulate } from '@lib/state';
 import { loadIdentity, openConnection, startP2p } from '../../platform/iroh';
 import { receiveNext, createInbox } from '../../platform/inbox';
@@ -211,7 +212,7 @@ describe('watchRelaySaga', () => {
         [
           receiveNext,
           () => {
-            if (queued.length === 0) throw new Error('scope released');
+            assert(queued.length > 0, 'Scope released.');
             return queued.shift();
           },
         ],
@@ -220,7 +221,7 @@ describe('watchRelaySaga', () => {
 
     runtime.anchor(beamScope);
     await expect(runtime.run(watchRelaySaga(fakeSession))).rejects.toThrow(
-      'scope released',
+      'Scope released.',
     );
 
     return runtime;

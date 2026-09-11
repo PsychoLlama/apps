@@ -13,6 +13,7 @@
  * that we called it the way we already said we would.
  */
 
+import { assert } from '@lib/assert';
 import { RPC, type RpcMessage } from '@lib/messaging/rpc';
 import {
   MessagePortTransport,
@@ -52,7 +53,7 @@ const setup = (handlers: WorkerHandlers = {}) => {
     <Input>(method: string, handler?: (input: Input) => unknown) =>
     (params: Input) => {
       received.push({ method, params });
-      if (!handler) throw new Error(`No stubbed handler for ${method}.`);
+      assert(handler, `No stubbed handler for ${method}.`);
       return handler(params);
     };
 

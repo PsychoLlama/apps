@@ -30,6 +30,11 @@ export class AssertionError extends Error {
  * failure explains which invariant broke — `assert(x)` alone says less than
  * the stack trace already does.
  *
+ * Punctuate it, and capitalize it unless it opens with a name the code
+ * spells lowercase. These land in logs beside prose from every other
+ * reporter, and an unpunctuated fragment reads as debris next to them.
+ * Terse is fine, though — `'No scroll layer.'` says its piece.
+ *
  * This is a hard failure, not a recoverable one. Reach for it where a falsy
  * value means the program is already wrong (a "can't happen" branch, a
  * precondition the caller owns), and throw a domain error where the

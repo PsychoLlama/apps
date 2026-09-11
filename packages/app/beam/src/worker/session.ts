@@ -1,4 +1,5 @@
 import init, { Endpoint, Identity, type PeerConnection } from '@crate/p2p';
+import { assert } from '@lib/assert';
 import { createLogger, toError } from '@lib/observability';
 import {
   BEAM_PROTOCOL,
@@ -152,13 +153,15 @@ export class WorkerSession {
    * during the handshake is missed.
    */
   async join(): Promise<void> {
-    if (!this.#secretKey) {
-      throw new Error('Cannot join the relay network before an identity.');
-    }
+    assert(
+      this.#secretKey,
+      'Cannot join the relay network before an identity.',
+    );
 
-    if (this.#endpoint) {
-      throw new Error('This worker has already joined the relay network.');
-    }
+    assert(
+      !this.#endpoint,
+      'This worker has already joined the relay network.',
+    );
 
     const endpoint = this.#defineEndpoint(this.#secretKey);
     this.#endpoint = endpoint;
@@ -187,9 +190,7 @@ export class WorkerSession {
   async dial(endpointId: string): Promise<PeerHandle> {
     const endpoint = this.#endpoint;
 
-    if (!endpoint) {
-      throw new Error('Cannot dial a peer before joining the relay network.');
-    }
+    assert(endpoint, 'Cannot dial a peer before joining the relay network.');
 
     try {
       const handle = this.#hold(await endpoint.dial(endpointId, BEAM_PROTOCOL));
@@ -215,7 +216,7 @@ export class WorkerSession {
    */
   async send(peerId: string, message: BeamMessage): Promise<void> {
     const entry = this.#peers.get(peerId);
-    if (!entry) throw new Error(`No live connection for peer ${peerId}.`);
+    assert(entry, `No live connection for peer ${peerId}.`);
 
     await entry.connection.send(encodeMessage(message));
   }

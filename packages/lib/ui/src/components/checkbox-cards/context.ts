@@ -9,6 +9,7 @@
  * multi-select; otherwise the shape matches `RadioCards`.
  */
 
+import { assert } from '@lib/assert';
 import { createContext, useContext, type Accessor } from 'solid-js';
 import type {
   CheckboxCardsColor,
@@ -37,10 +38,6 @@ export const CheckboxCardsContext = createContext<CheckboxCardsContextValue>();
 
 export const useCheckboxCardsContext = (): CheckboxCardsContextValue => {
   const ctx = useContext(CheckboxCardsContext);
-  if (!ctx) {
-    throw new Error(
-      '<CheckboxCardsItem> rendered outside of <CheckboxCardsRoot>.',
-    );
-  }
+  assert(ctx, '<CheckboxCardsItem> rendered outside of <CheckboxCardsRoot>.');
   return ctx;
 };

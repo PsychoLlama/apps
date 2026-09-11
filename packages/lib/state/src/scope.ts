@@ -1,4 +1,5 @@
 import { untrack } from 'solid-js';
+import { assert } from '@lib/assert';
 import { AbortError } from './abort';
 import {
   DROP,
@@ -24,11 +25,10 @@ export const getAliveScope = (
   scope: ScopeRef,
 ): ScopeInstance => {
   const instance = runtime[SCOPES].get(scope);
-  if (!instance) {
-    throw new Error(
-      'Dead scope: anchor it before reading, committing, or running sagas',
-    );
-  }
+  assert(
+    instance,
+    'Dead scope: anchor it before reading, committing, or running sagas.',
+  );
   return instance;
 };
 

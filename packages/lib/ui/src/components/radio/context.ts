@@ -8,6 +8,7 @@
  * declare its own `value` and optional `disabled`.
  */
 
+import { assert } from '@lib/assert';
 import { createContext, useContext, type Accessor } from 'solid-js';
 import type { RadioColor, RadioSize, RadioVariant } from './radio-group';
 
@@ -43,8 +44,6 @@ export const RadioGroupContext = createContext<RadioGroupContextValue>();
 
 export const useRadioGroupContext = (): RadioGroupContextValue => {
   const ctx = useContext(RadioGroupContext);
-  if (!ctx) {
-    throw new Error('<RadioGroupItem> rendered outside of <RadioGroupRoot>.');
-  }
+  assert(ctx, '<RadioGroupItem> rendered outside of <RadioGroupRoot>.');
   return ctx;
 };

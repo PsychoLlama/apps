@@ -15,6 +15,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@lib/assert": "workspace:*",
     "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",

@@ -9,6 +9,7 @@
  * root, and the items read them off the cascade.
  */
 
+import { assert } from '@lib/assert';
 import { createContext, useContext, type Accessor } from 'solid-js';
 
 export interface SegmentedControlContextValue {
@@ -41,10 +42,9 @@ export const SegmentedControlContext =
 
 export const useSegmentedControlContext = (): SegmentedControlContextValue => {
   const ctx = useContext(SegmentedControlContext);
-  if (!ctx) {
-    throw new Error(
-      '<SegmentedControlItem> rendered outside of <SegmentedControlRoot>.',
-    );
-  }
+  assert(
+    ctx,
+    '<SegmentedControlItem> rendered outside of <SegmentedControlRoot>.',
+  );
   return ctx;
 };

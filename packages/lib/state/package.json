@@ -12,6 +12,9 @@
   "scripts": {
     "typecheck": "tsc"
   },
+  "dependencies": {
+    "@lib/assert": "workspace:*"
+  },
   "peerDependencies": {
     "solid-js": "*"
   }

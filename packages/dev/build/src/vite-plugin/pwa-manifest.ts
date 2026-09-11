@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import type { Plugin } from 'vite';
 import type { ImageResource, WebAppManifest } from 'web-app-manifest';
+import { assert } from '@lib/assert';
 import { rasterizeSvg } from './resvg.ts';
 
 const VIRTUAL_ID = 'virtual:pwa-manifest';
@@ -190,11 +191,10 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
         fileName: MANIFEST_NAME,
         source: buildManifestJson((variant, size) => {
           const refId = refIds.get(refKey(variant, size));
-          if (refId === undefined) {
-            throw new Error(
-              `Missing emitted icon for ${variant.stem} @ ${size}`,
-            );
-          }
+          assert(
+            refId !== undefined,
+            `Missing emitted icon for ${variant.stem} @ ${size}.`,
+          );
           return `${base}${this.getFileName(refId)}`;
         }),
       });

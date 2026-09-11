@@ -1,4 +1,5 @@
 import { decode as decodeImage, type Scan } from '@crate/qr-code';
+import { assert } from '@lib/assert';
 import { defineContract } from '@lib/messaging/rpc';
 import type { SendOptions } from '@lib/messaging/message-port';
 import { createLogger, toError } from '@lib/observability';
@@ -28,9 +29,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 // frame, so GPU upload churn is pure overhead.
 const canvas = new OffscreenCanvas(1, 1);
 const context = canvas.getContext('2d', { willReadFrequently: true });
-if (!context) {
-  throw new Error('Decoder worker could not acquire a 2D canvas context.');
-}
+assert(context, 'Decoder worker could not acquire a 2D canvas context.');
 
 const decodeFrame = (bitmap: ImageBitmap): ScanResult | null => {
   const { width, height } = bitmap;

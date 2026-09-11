@@ -1,3 +1,4 @@
+import { assert } from '@lib/assert';
 import { watchAll } from '@lib/runtime-config';
 import { createLogger, toError, type Log } from '@lib/observability';
 import {
@@ -95,9 +96,7 @@ export const readNewLogs = async (
   newestShown: number | undefined,
 ): Promise<Log[]> => {
   try {
-    if (!db) {
-      throw new Error('Cannot refresh logs: no archive connection is held.');
-    }
+    assert(db, 'Cannot refresh logs: no archive connection is held.');
 
     return newestShown === undefined
       ? await readArchiveNewestFirst(db)

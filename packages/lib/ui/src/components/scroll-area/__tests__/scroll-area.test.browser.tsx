@@ -8,6 +8,7 @@
  * slip through silently.
  */
 
+import { assert } from '@lib/assert';
 import { render, screen, waitFor } from '@solidjs/testing-library';
 import type { JSX } from 'solid-js';
 import ScrollArea, { type ScrollAreaProps } from '../scroll-area';
@@ -37,9 +38,7 @@ const renderArea = (props: Omit<ScrollAreaProps, 'children'> = {}) =>
 const getRoot = () => screen.getByTestId('sa');
 const getViewport = () => {
   const child = getRoot().firstElementChild;
-  if (!(child instanceof HTMLDivElement)) {
-    throw new Error('ScrollArea viewport not found');
-  }
+  assert(child instanceof HTMLDivElement, 'ScrollArea viewport not found.');
   return child;
 };
 const getScrollbar = (orientation: 'horizontal' | 'vertical') => {
@@ -265,11 +264,9 @@ describe('ScrollArea', () => {
     await flushMeasurement();
     const viewport = getViewport();
     const track = getScrollbar('vertical');
-    if (!track) throw new Error('vertical track missing');
+    assert(track, 'Vertical track missing.');
     const thumb = track.children[0];
-    if (!(thumb instanceof HTMLDivElement)) {
-      throw new Error('vertical thumb missing');
-    }
+    assert(thumb instanceof HTMLDivElement, 'Vertical thumb missing.');
     const thumbRect = thumb.getBoundingClientRect();
     // Press on the thumb's center, then drag 60px downward. The
     // exact translated scroll distance depends on track/content
@@ -297,11 +294,9 @@ describe('ScrollArea', () => {
     await flushMeasurement();
     const viewport = getViewport();
     const track = getScrollbar('horizontal');
-    if (!track) throw new Error('horizontal track missing');
+    assert(track, 'Horizontal track missing.');
     const thumb = track.children[0];
-    if (!(thumb instanceof HTMLDivElement)) {
-      throw new Error('horizontal thumb missing');
-    }
+    assert(thumb instanceof HTMLDivElement, 'Horizontal thumb missing.');
     const thumbRect = thumb.getBoundingClientRect();
     const startX = thumbRect.left + thumbRect.width / 2;
     const trackRect = track.getBoundingClientRect();
@@ -326,7 +321,7 @@ describe('ScrollArea', () => {
     await flushMeasurement();
     const viewport = getViewport();
     const track = getScrollbar('vertical');
-    if (!track) throw new Error('vertical track missing');
+    assert(track, 'Vertical track missing.');
     const trackRect = track.getBoundingClientRect();
     // Press near the bottom of the empty track. With no thumb under
     // the cursor, `pointerOffset` stays null and the handler centers
@@ -353,11 +348,9 @@ describe('ScrollArea', () => {
     viewport.scrollTop = 200;
     await flushMeasurement();
     const track = getScrollbar('vertical');
-    if (!track) throw new Error('vertical track missing');
+    assert(track, 'Vertical track missing.');
     const thumb = track.children[0];
-    if (!(thumb instanceof HTMLDivElement)) {
-      throw new Error('vertical thumb missing');
-    }
+    assert(thumb instanceof HTMLDivElement, 'Vertical thumb missing.');
     const thumbRect = thumb.getBoundingClientRect();
     const trackRect = track.getBoundingClientRect();
     // Press exactly on the thumb's leading edge — dispatch on the
@@ -389,11 +382,9 @@ describe('ScrollArea', () => {
     // observe whether the drag teardown restored it.
     viewport.style.scrollBehavior = 'smooth';
     const track = getScrollbar('vertical');
-    if (!track) throw new Error('vertical track missing');
+    assert(track, 'Vertical track missing.');
     const thumb = track.children[0];
-    if (!(thumb instanceof HTMLDivElement)) {
-      throw new Error('vertical thumb missing');
-    }
+    assert(thumb instanceof HTMLDivElement, 'Vertical thumb missing.');
     const thumbRect = thumb.getBoundingClientRect();
     const thumbCenterX = thumbRect.left + thumbRect.width / 2;
     const thumbCenterY = thumbRect.top + thumbRect.height / 2;

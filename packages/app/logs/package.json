@@ -13,14 +13,15 @@
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
-    "@vanilla-extract/css": "catalog:",
+    "@lib/assert": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/runtime-config": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
-    "@lib/ui": "workspace:*"
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*"

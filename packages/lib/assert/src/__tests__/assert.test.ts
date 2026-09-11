@@ -1,4 +1,4 @@
-import { assert, AssertionError } from '../index';
+import { assert, AssertionError } from '../assert';
 
 // Runs `fn` and hands back whatever it threw. Beats `expect(...).toThrow()`
 // here because the assertions below inspect four fields of the same error,
