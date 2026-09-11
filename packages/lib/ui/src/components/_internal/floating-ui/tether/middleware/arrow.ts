@@ -114,6 +114,15 @@ export const arrow: typeof upstream = (options) => ({
     const anchorEnd = anchorStart + rects.reference[length];
 
     // Where the whole base is over the anchor and inside the padding.
+    //
+    // Known wrong for small anchors. Demanding the whole base hides the
+    // arrow for any anchor narrower than base + padding — a small icon
+    // button, and every point reference, which is 0×0 — even though the
+    // arrow's tip is a single pixel and could plausibly point at them.
+    // Anchor size alone isn't grounds for hiding; what should matter is
+    // whether any seat still overlaps the anchor, which stops being true
+    // only once it has slid clear of the subject (a point scrolled to the
+    // boundary, or off screen).
     const min = Math.max(subjectMin, anchorStart);
     const max = Math.min(subjectMax, anchorEnd - arrowLength);
 
