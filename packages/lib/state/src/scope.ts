@@ -27,7 +27,7 @@ export const getAliveScope = (
   const instance = runtime[SCOPES].get(scope);
   assert(
     instance,
-    'Dead scope: anchor it before reading, committing, or running sagas',
+    'Dead scope: anchor it before reading, committing, or running sagas.',
   );
   return instance;
 };

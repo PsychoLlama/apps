@@ -42,12 +42,12 @@ export const simulate = async <Return>(
       const stub = stubs.get(fn);
       assert(
         stub,
-        `simulate: no stub for capability "${fn.name || 'anonymous'}"`,
+        `simulate: no stub for capability "${fn.name || 'anonymous'}".`,
       );
       return (stub as (...rest: unknown[]) => unknown)(signal, ...args);
     },
     read: (ref) => {
-      assert(reads.has(ref), 'simulate: no stubbed value for read');
+      assert(reads.has(ref), 'simulate: no stubbed value for read.');
       return reads.get(ref);
     },
     spawn: (child) => {

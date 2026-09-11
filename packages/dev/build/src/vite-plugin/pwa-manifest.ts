@@ -193,7 +193,7 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
           const refId = refIds.get(refKey(variant, size));
           assert(
             refId !== undefined,
-            `Missing emitted icon for ${variant.stem} @ ${size}`,
+            `Missing emitted icon for ${variant.stem} @ ${size}.`,
           );
           return `${base}${this.getFileName(refId)}`;
         }),

@@ -31,7 +31,7 @@ const runSaga = <Return>(
   const scopeRef = invocation[SCOPE] as ScopeRef | undefined;
   assert(
     scopeRef,
-    'Not a saga invocation: create one by calling a defined saga',
+    'Not a saga invocation: create one by calling a defined saga.',
   );
 
   const scope = getAliveScope(runtime, scopeRef);

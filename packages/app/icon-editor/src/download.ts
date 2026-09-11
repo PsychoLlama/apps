@@ -39,7 +39,7 @@ export const downloadPng = async (
     canvas.width = sizePx;
     canvas.height = sizePx;
     const ctx = canvas.getContext('2d');
-    assert(ctx, 'Canvas 2D context unavailable');
+    assert(ctx, 'Canvas 2D context unavailable.');
     ctx.drawImage(image, 0, 0, sizePx, sizePx);
     const png = await canvasToBlob(canvas);
     triggerDownload(png, filename);

@@ -38,7 +38,7 @@ const setup = (overrides: Overrides = {}) => {
   ));
 
   const overlay = rendered.container.querySelector('dialog');
-  assert(overlay, 'dialog not found');
+  assert(overlay, 'Dialog not found.');
 
   return {
     setOpen,
@@ -48,7 +48,7 @@ const setup = (overrides: Overrides = {}) => {
     /** The scroll surface around the panel — the click-outside target. */
     outside: () => {
       const scroll = overlay.firstElementChild;
-      assert(scroll instanceof HTMLElement, 'no scroll layer');
+      assert(scroll instanceof HTMLElement, 'No scroll layer.');
       return scroll;
     },
   };
@@ -171,7 +171,7 @@ describe('Dialog', () => {
   it('ignores a click inside the panel', () => {
     const { onOpenChange, panel } = setup();
     const surface = panel();
-    assert(surface, 'panel not found');
+    assert(surface, 'Panel not found.');
 
     pressAndRelease(surface, surface);
 
@@ -181,7 +181,7 @@ describe('Dialog', () => {
   it('ignores a press that started inside the panel', () => {
     const { onOpenChange, panel, outside } = setup();
     const surface = panel();
-    assert(surface, 'panel not found');
+    assert(surface, 'Panel not found.');
 
     // A text selection dragged out of the panel and released on the
     // backdrop must not dismiss.

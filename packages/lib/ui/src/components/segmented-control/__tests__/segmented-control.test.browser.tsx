@@ -20,7 +20,7 @@ const noop = () => {};
 /** The decorative chip. Not exposed to consumers, so reach for it by role. */
 const indicatorOf = (group: HTMLElement): HTMLElement => {
   const chip = group.querySelector<HTMLElement>('[aria-hidden="true"]');
-  assert(chip, 'indicator not found');
+  assert(chip, 'Indicator not found.');
   return chip;
 };
 
@@ -32,7 +32,7 @@ const indicatorOf = (group: HTMLElement): HTMLElement => {
  */
 const segmentOf = (testId: string): HTMLElement => {
   const segment = screen.getByTestId(testId).parentElement;
-  assert(segment, `segment not found: ${testId}`);
+  assert(segment, `Segment not found: ${testId}.`);
   return segment;
 };
 

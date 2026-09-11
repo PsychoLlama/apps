@@ -212,7 +212,7 @@ describe('watchRelaySaga', () => {
         [
           receiveNext,
           () => {
-            assert(queued.length > 0, 'scope released');
+            assert(queued.length > 0, 'Scope released.');
             return queued.shift();
           },
         ],
@@ -221,7 +221,7 @@ describe('watchRelaySaga', () => {
 
     runtime.anchor(beamScope);
     await expect(runtime.run(watchRelaySaga(fakeSession))).rejects.toThrow(
-      'scope released',
+      'Scope released.',
     );
 
     return runtime;
