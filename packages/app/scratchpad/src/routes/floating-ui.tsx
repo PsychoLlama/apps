@@ -371,10 +371,17 @@ const FloatingUiScratchpad = () => {
     // Measured against the target's border box, which is exactly the
     // box `FloatingRoot` wraps — so the coordinates the window places
     // against are the ones read here.
+    //
+    // Rounded to whole pixels. The target sits at a fractional layout
+    // position, so the raw difference carries its remainder — and the
+    // tether snaps its measurement to the pixel grid while CSS placement
+    // pins the fraction verbatim, so a fractional point shows up as a
+    // 1px jump when the tether toggles. Whole pixels keep the two modes
+    // reading the same number.
     const bounds = event.currentTarget.getBoundingClientRect();
     choosePoint({
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top,
+      x: Math.round(event.clientX - bounds.left),
+      y: Math.round(event.clientY - bounds.top),
     });
   };
 
