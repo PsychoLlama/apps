@@ -69,8 +69,8 @@ export interface FloatingControlsState {
  * so a reset lands on the same value clearing the override reverts to.
  */
 const defaults = (): FloatingControlsState => ({
-  side: 'bottom',
-  align: 'center',
+  side: 'top',
+  align: 'start',
   arrowVisible: true,
   arrowBase: 16,
   arrowDepth: 8,
