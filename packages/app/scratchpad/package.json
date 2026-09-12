@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Scratchpad app \u2014 a wired-up blank canvas for branch-scoped experiments.",
+  "description": "Scratchpad app. An index of work-in-progress experiments.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts"

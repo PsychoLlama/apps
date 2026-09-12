@@ -84,7 +84,7 @@ const DEV_APPS: ReadonlyArray<AppEntry> = [
     id: 'scratchpad',
     name: 'Scratchpad',
     href: '/scratchpad',
-    description: 'Experiments and work-in-progress ideas.',
+    description: 'Experiments and in-progress work.',
     Icon: IconHammerWrench,
   },
 ];
