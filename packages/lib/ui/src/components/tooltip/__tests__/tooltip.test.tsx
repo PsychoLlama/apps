@@ -5,7 +5,8 @@
  */
 
 import { createSignal, Show } from 'solid-js';
-import { cleanup, render, screen } from '@solidjs/testing-library';
+import { cleanup, fireEvent, render, screen } from '@solidjs/testing-library';
+import { assert } from '@lib/assert';
 import Button from '../../button/button';
 import Tooltip, { type TooltipProps } from '../tooltip';
 import * as css from '../tooltip.css';
@@ -31,6 +32,7 @@ const setup = (overrides: Overrides = {}, name = 'tooltip') => {
 
   return {
     trigger: screen.getByTestId(`${name}-trigger`),
+    root: () => screen.getByTestId(`${name}-trigger`).parentElement,
     window: () => screen.queryByTestId(name),
     surface: () => screen.queryByTestId(`${name}-surface`),
     tooltip: () => screen.queryByTestId(`${name}-text`),
@@ -125,6 +127,51 @@ describe('Tooltip', () => {
 
     setSwapped(true);
     expect(screen.getByTestId('after')).toHaveAttribute('aria-describedby', id);
+  });
+
+  // --- Dismissal ---
+  //
+  // Opening is the stylesheet's, reported by an animation on the root;
+  // jsdom runs neither, so the report is dispatched by hand. jsdom has
+  // no `AnimationEvent` either, and a plain event carrying the name is
+  // all the component reads.
+
+  const report = (target: HTMLElement, type: string, name = css.open) => {
+    const event = new Event(type, { bubbles: true });
+    Object.defineProperty(event, 'animationName', { value: name });
+    fireEvent(target, event);
+  };
+
+  it('vetoes an open window on Escape, until it closes', () => {
+    const { root, window } = setup();
+    const wrapper = root();
+    assert(wrapper, 'Root not rendered.');
+
+    report(wrapper, 'animationstart');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(window()).toHaveAttribute('data-dismissed');
+
+    report(wrapper, 'animationcancel');
+    expect(window()).not.toHaveAttribute('data-dismissed');
+  });
+
+  it('ignores Escape while closed', () => {
+    const { window } = setup();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(window()).not.toHaveAttribute('data-dismissed');
+  });
+
+  it('ignores reports from other animations', () => {
+    const { window } = setup();
+    const box = window();
+    assert(box, 'Window not rendered.');
+
+    // Dispatched inside the root, where anything else animating would
+    // report from, and read there because animation events bubble.
+    report(box, 'animationstart', 'other');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(box).not.toHaveAttribute('data-dismissed');
   });
 
   // --- Placement and styling ---

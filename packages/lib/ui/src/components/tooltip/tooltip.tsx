@@ -47,12 +47,12 @@
  *   the stylesheet decides whether it shows. No `data-state` rides on
  *   the window either: nothing reads one, and the state it would name
  *   lives in the stylesheet's selector.
- * - The tether follows the stylesheet. The open window carries an
- *   empty, paused animation; its `animationstart` and `animationcancel`
- *   are the window saying it showed and hid, and the tether engages
- *   between the two. A closed tooltip costs no measurement and no
- *   scroll listener. Upstream's tether runs for as long as the content
- *   is mounted, which is the same span.
+ * - The tether follows the stylesheet. While the stylesheet considers
+ *   the tooltip open it gives the root an empty, paused animation; its
+ *   `animationstart` and `animationcancel` are the stylesheet saying
+ *   so, and the tether engages between the two. A closed tooltip costs
+ *   no measurement and no scroll listener. Upstream's tether runs for
+ *   as long as the content is mounted, which is the same span.
  * - `aria-describedby` is static. Upstream sets it only while open,
  *   because a closed tooltip is unmounted and the id would dangle. Here
  *   the tooltip is always in the DOM, and the accessible description
@@ -60,7 +60,24 @@
  *   described at all times: a screen reader browsing by virtual cursor
  *   or touch, which never focuses the trigger, still gets the text, and
  *   focus can't race the attribute.
- * - Focus only, for now. Hover, dismissal, hoverable content, and
+ * - Dismissal is a veto, not a close. Escape marks the window
+ *   `data-dismissed`, which hides it while the stylesheet still wants
+ *   it open; the veto lifts when the stylesheet stops wanting that,
+ *   i.e. when focus leaves. That the veto can hide the window
+ *   outright, rather than tiptoeing around its own open signal, is why
+ *   the signal sits on the root. Upstream closes and reopens on the
+ *   next focus, which comes to the same thing. Its guard against the
+ *   focus a press brings reopening the tooltip (a flag held until the
+ *   next `pointerup`) has no counterpart here: `:focus-visible`
+ *   already declines that focus.
+ * - Upstream also dismisses on a press outside the window and on a
+ *   scroll that moves the trigger. Neither is here yet. A press
+ *   already closes the tooltip by blurring the trigger, except when
+ *   something prevents the default to keep focus, and scroll wants
+ *   deciding alongside the tether. Both land in a later phase.
+ * - The Escape listener is passive, and attached only while the
+ *   tooltip is open. A page of closed tooltips listens for nothing.
+ * - Focus and Escape only, for now. Hover, hoverable content, and
  *   page-wide coordination are landing in phases.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
@@ -87,6 +104,7 @@ import {
 } from '../_internal/floating-ui';
 import Text from '../text/text';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
+import { useGlobalListener } from './use-global-listener';
 import * as css from './tooltip.css';
 
 /** Edge of the trigger the tooltip binds to. */
@@ -179,10 +197,14 @@ const DEFAULTS = {
   alignOffset: 0,
 } satisfies Partial<TooltipProps>;
 
+/** Listener options for everything the tooltip attaches outside itself. */
+const PASSIVE: AddEventListenerOptions = { passive: true };
+
 /**
  * A short label that floats beside its trigger while keyboard focus
- * rests on it. Announced to assistive tech as the trigger's
- * description, open or not.
+ * rests on it, until Escape dismisses it.
+ * Announced to assistive tech as the trigger's description, open or
+ * not.
  */
 const Tooltip = (rawProps: TooltipProps) => {
   const props = mergeProps(DEFAULTS, rawProps);
@@ -203,24 +225,51 @@ const Tooltip = (rawProps: TooltipProps) => {
   const contentId = createUniqueId();
   const triggerProps: TooltipTriggerProps = { 'aria-describedby': contentId };
 
-  // Whether the stylesheet has the window open, as the window reports
-  // it (see `css.open`). The tether rides on this, so a closed window
-  // is never measured and a page of closed tooltips isn't listening for
-  // scroll. Later motion on the window reports under its own name.
+  // Whether the stylesheet considers the tooltip open, as the root
+  // reports it (see `css.root`). The tether rides on this, so a closed
+  // window is never measured and a page of closed tooltips isn't
+  // listening for anything.
   const [open, setOpen] = createSignal(false);
+
+  // The component's veto on an open window (see `css.window`). Lifted
+  // when the stylesheet stops wanting the window open, so a dismissed
+  // tooltip comes back on the next focus, not before.
+  const [dismissed, setDismissed] = createSignal(false);
+
+  // Heard on the root, so any animation inside it arrives here too —
+  // the trigger's, and later the window's own entrance. Only the open
+  // signal is ours to read.
   const onOpenChange = (event: AnimationEvent) => {
-    if (event.animationName === css.open) {
-      setOpen(event.type === 'animationstart');
-    }
+    if (event.animationName !== css.open) return;
+
+    const opening = event.type === 'animationstart';
+    setOpen(opening);
+    if (!opening) setDismissed(false);
   };
 
+  // Listened for on the document only while open and not yet
+  // dismissed. Escape has no target to speak of: it's aimed at whatever
+  // is on screen, and the tooltip is.
+  useGlobalListener(
+    () => (open() && !dismissed() ? document : undefined),
+    'keydown',
+    PASSIVE,
+    (event) => {
+      if (event.key === 'Escape') setDismissed(true);
+    },
+  );
+
   return (
-    <FloatingRoot display={local.display}>
+    <FloatingRoot
+      display={local.display}
+      class={css.root}
+      onAnimationStart={onOpenChange}
+      onAnimationCancel={onOpenChange}
+    >
       {local.children(triggerProps)}
 
       <FloatingWindow
-        onAnimationStart={onOpenChange}
-        onAnimationCancel={onOpenChange}
+        data-dismissed={dismissed() ? '' : undefined}
         side={local.side}
         align={local.align}
         sideOffset={local.sideOffset}
@@ -229,7 +278,7 @@ const Tooltip = (rawProps: TooltipProps) => {
         arrow={{}}
         class={css.window}
         testId={tid.testId}
-        tether={open() ? TETHER : undefined}
+        tether={open() && !dismissed() ? TETHER : undefined}
       >
         <FloatingBody
           {...rest}

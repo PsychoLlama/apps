@@ -2,7 +2,8 @@
  * Behavior tests for Tooltip: what shows it and what hides it. Showing
  * is the stylesheet's call off `:focus-visible`, so only a real browser
  * with real input can tell keyboard focus from a pointer press — and
- * only one running layout can show the tether engaging on the box.
+ * only one running layout can show the tether engaging on the box, or
+ * the dismissal that rides on the root reporting itself open.
  */
 
 import { render, screen, waitFor } from '@solidjs/testing-library';
@@ -69,5 +70,57 @@ describe('Tooltip', () => {
 
     await userEvent.tab();
     await waitFor(() => expect(window).not.toHaveAttribute('data-tethered'));
+  });
+
+  // --- Dismissal ---
+
+  /** Tab to the trigger and wait for the window to report itself open. */
+  const opened = async (window: HTMLElement) => {
+    await userEvent.tab();
+    await waitFor(() => expect(window).toHaveAttribute('data-tethered'));
+  };
+
+  it('dismisses on Escape and stays put until focus leaves', async () => {
+    const { trigger, window } = setup();
+    await opened(window);
+
+    await userEvent.keyboard('{Escape}');
+    expect(window).not.toBeVisible();
+    expect(trigger).toHaveFocus();
+
+    // Not a close: focus is still resting on the trigger, so a second
+    // Escape has nothing to do and the tooltip doesn't come back.
+    await userEvent.keyboard('{Escape}');
+    expect(window).not.toBeVisible();
+
+    await userEvent.tab();
+    await userEvent.tab({ shift: true });
+    expect(trigger).toHaveFocus();
+    expect(window).toBeVisible();
+  });
+
+  it('lets the tether go while dismissed', async () => {
+    const { window } = setup();
+    await opened(window);
+
+    // A dismissed window is out of layout; there's nothing to measure
+    // and nowhere to put the answer.
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(window).not.toHaveAttribute('data-tethered'));
+
+    await userEvent.tab();
+    await userEvent.tab({ shift: true });
+    await waitFor(() => expect(window).toHaveAttribute('data-tethered'));
+  });
+
+  it('listens for nothing while closed', async () => {
+    const { window } = setup();
+
+    // Dismissing a closed tooltip would leave the veto set, and the
+    // next focus would find it hidden.
+    await userEvent.keyboard('{Escape}');
+
+    await opened(window);
+    expect(window).toBeVisible();
   });
 });

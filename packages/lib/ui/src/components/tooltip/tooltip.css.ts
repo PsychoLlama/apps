@@ -39,9 +39,9 @@ export const text = style({
 });
 
 /**
- * Not motion: an empty animation the open window carries so the
- * stylesheet can tell the component when it shows and hides. Starting
- * fires `animationstart`; `display: none` cancels it, which fires
+ * Not motion: an empty animation the root carries while the stylesheet
+ * considers the tooltip open, so it can tell the component so.
+ * Applying it fires `animationstart`; dropping it fires
  * `animationcancel`. Paused, so it never ticks or ends on its own, and
  * its duration is a literal rather than a motion token: the tokens
  * collapse to `0ms` under reduced motion, and a `0ms` animation ends
@@ -52,6 +52,25 @@ export const text = style({
  * `@keyframes` never starts.
  */
 export const open = keyframes({ from: {}, to: {} });
+
+/**
+ * The wrapper around the trigger and its window, carrying the open
+ * signal. The condition is the one below: focus resting visibly inside
+ * the root, which holds the trigger and nothing else focusable.
+ *
+ * The signal lives here rather than on the window because the window
+ * gets hidden — when closed, and again when dismissed — and hiding an
+ * element cancels its animations. On the root it reports the
+ * stylesheet's intent, which is the thing worth reporting, and stays
+ * up while the component hides the window for reasons of its own.
+ */
+export const root = style({
+  selectors: {
+    '&:where(:has(:focus-visible))': {
+      animation: `${open} 1s paused`,
+    },
+  },
+});
 
 /**
  * The positioned box. Always in the DOM, and the stylesheet decides
@@ -66,9 +85,15 @@ export const open = keyframes({ from: {}, to: {} });
  */
 export const window = style({
   color: neutral.solid[12],
-  animation: `${open} 1s paused`,
   selectors: {
-    ':where(:not(:has(:focus-visible))) > &': {
+    [`${root}:where(:not(:has(:focus-visible))) > &`]: {
+      display: 'none',
+    },
+
+    // Dismissed: the component's veto while the stylesheet still wants
+    // the window open. Hiding it doesn't disturb the open signal, which
+    // rides on the root, so the veto can wait there for focus to leave.
+    '&:where([data-dismissed])': {
       display: 'none',
     },
   },
