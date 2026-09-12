@@ -39,6 +39,13 @@
  *   and unmounts it on close; here it renders once, CSS-placed, and
  *   `data-state` on the window decides whether it shows. The tether
  *   engages only while open, so a closed tooltip costs no measurement.
+ * - `aria-describedby` is static. Upstream sets it only while open,
+ *   because a closed tooltip is unmounted and the id would dangle. Here
+ *   the tooltip is always in the DOM, and the accessible description
+ *   reads a referenced node even when it's hidden, so the trigger is
+ *   described at all times: a screen reader browsing by virtual cursor
+ *   or touch, which never focuses the trigger, still gets the text, and
+ *   focus can't race the attribute.
  * - Focus only, for now. Hover, dismissal, hoverable content, and
  *   page-wide coordination are landing in phases.
  *
@@ -86,12 +93,11 @@ export type TooltipState = 'closed' | 'instant-open';
 /**
  * What the tooltip hands its trigger. Spread onto the focusable element
  * as-is: the handlers drive the tooltip, and the description names the
- * tooltip while open. A trigger with a description of its own composes
- * the two.
+ * tooltip. A trigger with a description of its own composes the two.
  */
 export interface TooltipTriggerProps {
-  /** Id of the tooltip while open; unset otherwise. */
-  readonly 'aria-describedby': string | undefined;
+  /** Id of the tooltip. Set whether or not it's open. */
+  readonly 'aria-describedby': string;
 
   /** Opens at once. */
   readonly onFocusIn: () => void;
@@ -197,9 +203,7 @@ const Tooltip = (rawProps: TooltipProps) => {
   const open = () => state() !== 'closed';
 
   const triggerProps: TooltipTriggerProps = {
-    get 'aria-describedby'() {
-      return open() ? contentId : undefined;
-    },
+    'aria-describedby': contentId,
     onFocusIn: () => setState('instant-open'),
     onFocusOut: () => setState('closed'),
   };

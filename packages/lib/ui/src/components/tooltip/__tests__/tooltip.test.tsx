@@ -44,10 +44,9 @@ afterEach(cleanup);
 
 describe('Tooltip', () => {
   it('starts closed', () => {
-    const { trigger, window } = setup();
+    const { window } = setup();
 
     expect(window()).toHaveAttribute('data-state', 'closed');
-    expect(trigger).not.toHaveAttribute('aria-describedby');
   });
 
   it('opens at once on focus and closes on blur', () => {
@@ -63,10 +62,9 @@ describe('Tooltip', () => {
 
   // --- Accessibility ---
 
-  it('describes the trigger by the tooltip while open', () => {
+  it('describes the trigger by the tooltip, open or closed', () => {
     const { trigger, tooltip } = setup();
 
-    fireEvent.focusIn(trigger);
     const label = tooltip();
     expect(label).toHaveRole('tooltip');
     expect(label).toHaveTextContent('Add to library');
@@ -74,8 +72,10 @@ describe('Tooltip', () => {
     expect(trigger).toHaveAttribute('aria-describedby', label?.id);
     expect(trigger).toHaveAccessibleDescription('Add to library');
 
+    fireEvent.focusIn(trigger);
+    expect(trigger).toHaveAttribute('aria-describedby', label?.id);
     fireEvent.focusOut(trigger);
-    expect(trigger).not.toHaveAttribute('aria-describedby');
+    expect(trigger).toHaveAttribute('aria-describedby', label?.id);
   });
 
   it('lets a trigger compose a description of its own', () => {
@@ -86,9 +86,7 @@ describe('Tooltip', () => {
             as="button"
             testId="trigger"
             {...trigger}
-            aria-describedby={['hint', trigger['aria-describedby']]
-              .filter(Boolean)
-              .join(' ')}
+            aria-describedby={`hint ${trigger['aria-describedby']}`}
           >
             Add
           </Button>
@@ -97,12 +95,9 @@ describe('Tooltip', () => {
     ));
     const trigger = screen.getByTestId('trigger');
 
-    fireEvent.focusIn(trigger);
     const id = screen.getByTestId('tooltip-text').id;
     expect(trigger).toHaveAttribute('aria-describedby', `hint ${id}`);
-
-    fireEvent.focusOut(trigger);
-    expect(trigger).toHaveAttribute('aria-describedby', 'hint');
+    expect(trigger).toHaveAccessibleDescription(/Add to library$/);
   });
 
   it('reads aria-label in place of the content', () => {
