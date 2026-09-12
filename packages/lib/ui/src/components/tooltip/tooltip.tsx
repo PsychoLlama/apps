@@ -14,8 +14,9 @@
  *   clip it and a later sibling can paint over it. The top layer is a
  *   planned enhancement.
  * - No `open` / `defaultOpen` / `onOpenChange`. The open state is the
- *   trigger's focus (and, later, hover), which the stylesheet owns end
- *   to end; there is nothing for a call site to drive.
+ *   trigger's focus and hover, which the stylesheet owns end to end;
+ *   there is nothing for a call site to drive. No `delayDuration` or
+ *   `skipDelayDuration` either, until there's a delay to tune.
  * - `display` is required, from the floating root: the wrapper is a
  *   `<span>` or a `<div>`, and only the call site knows which one is
  *   valid where it stands.
@@ -25,6 +26,22 @@
  *   never inspects or writes to an element it didn't render. A trigger
  *   with a description of its own composes the two — nothing is merged
  *   for it. No `data-state` rides on the trigger.
+ * - Hover is CSS too, and so is the decision to ignore a touch. The
+ *   root opens while `:hover` under `@media (hover: hover)`, where
+ *   upstream reads `pointerType` off each pointer event and turns away
+ *   the ones from a touch. The media feature describes the primary
+ *   pointer rather than the one in hand, so on a laptop with a
+ *   touchscreen a tap is let in; `:hover` sticks after that tap, and
+ *   the tooltip stays up until something else is touched.
+ * - Hover has no delay yet, so the tooltip appears the instant the
+ *   pointer lands. Upstream waits 200ms. Landing next.
+ * - Hoverable content arrives early and half-finished. The window sits
+ *   inside the root, so hovering the tooltip itself keeps the root
+ *   hovered and the tooltip open, which is what upstream's
+ *   `disableHoverableContent={false}` buys. What's missing is the
+ *   grace area over the gap between trigger and window: the pointer
+ *   crossing it leaves the root for a moment and the tooltip closes
+ *   under it. There's no `disableHoverableContent` prop yet either.
  * - Focus is CSS. Upstream opens from a `focus` handler unless a
  *   pointer press caused the focus, tracked in a ref. Here the window
  *   shows while the root `:has(:focus-visible)`, and the browser's own
@@ -66,13 +83,13 @@
  *   window, a click on the trigger, or a scroll that moves it all mark
  *   the window `data-dismissed`, which hides it while the stylesheet
  *   still wants it open; the veto lifts when the stylesheet stops
- *   wanting that, i.e. when focus leaves. That the veto can hide the
- *   window outright, rather than tiptoeing around its own open signal,
- *   is why the signal sits on the root. Upstream closes and reopens on
- *   the next focus, which comes to the same thing. Its guard against
- *   the focus a press brings reopening the tooltip (a flag held until
- *   the next `pointerup`) has no counterpart here: `:focus-visible`
- *   already declines that focus.
+ *   wanting that, i.e. when focus and the pointer have both left. That
+ *   the veto can hide the window outright, rather than tiptoeing around
+ *   its own open signal, is why the signal sits on the root. Upstream
+ *   closes and reopens on the next focus, which comes to the same
+ *   thing. Its guard against the focus a press brings reopening the
+ *   tooltip (a flag held until the next `pointerup`) has no counterpart
+ *   here: `:focus-visible` already declines that focus.
  * - Dismissing on a press is mostly redundant and kept anyway. A press
  *   blurs the trigger, which closes the tooltip on its own; what it
  *   covers is the press that holds focus by preventing the default,
@@ -84,8 +101,9 @@
  * - Every document and window listener is passive, and attached only
  *   while the tooltip is open. A page of closed tooltips listens for
  *   nothing.
- * - Focus and dismissal only, for now. Hover, hoverable content, and
- *   page-wide coordination are landing in phases.
+ * - Page-wide coordination is still to come: every tooltip opens on
+ *   its own, so two can be up at once and none of them skip a delay
+ *   that doesn't exist yet.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
@@ -127,7 +145,8 @@ export type TooltipDisplay = FloatingRootDisplay;
  * What the tooltip hands its trigger. Spread onto the focusable element
  * as-is: the description names the tooltip. A trigger with a
  * description of its own composes the two. Showing and hiding is the
- * stylesheet's, off the trigger's focus, so there are no handlers.
+ * stylesheet's, off the trigger's focus and hover, so there are no
+ * handlers.
  */
 export interface TooltipTriggerProps {
   /** Id of the tooltip. Set whether or not it's open. */
@@ -217,9 +236,9 @@ const PASSIVE_CAPTURE: AddEventListenerOptions = {
 };
 
 /**
- * A short label that floats beside its trigger while keyboard focus
- * rests on it, until Escape, a press, or a scroll dismisses it.
- * Announced to assistive tech as the trigger's description, open or
+ * A short label that floats beside its trigger while keyboard focus or
+ * the pointer rests on it, until Escape, a press, or a scroll dismisses
+ * it. Announced to assistive tech as the trigger's description, open or
  * not.
  */
 const Tooltip = (rawProps: TooltipProps) => {

@@ -1,9 +1,10 @@
 /**
  * Behavior tests for Tooltip: what shows it and what hides it. Showing
- * is the stylesheet's call off `:focus-visible`, so only a real browser
- * with real input can tell keyboard focus from a pointer press — and
- * only one running layout can show the tether engaging on the box, or
- * the dismissal that rides on the root reporting itself open.
+ * is the stylesheet's call off `:focus-visible` and `:hover`, so only a
+ * real browser with real input can tell keyboard focus from a pointer
+ * press — and only one running layout can show the tether engaging on
+ * the box, or the dismissal that rides on the root reporting itself
+ * open.
  */
 
 import { render, screen, waitFor } from '@solidjs/testing-library';
@@ -12,10 +13,31 @@ import Button from '../../button/button';
 import Tooltip from '../tooltip';
 import * as fixture from './tooltip.test.browser.css';
 
+/**
+ * Where the pointer waits. Outside the rendered tree, so it survives
+ * the cleanup between tests, and under it, so a tooltip is never what
+ * the pointer lands on.
+ */
+let park: HTMLElement;
+
+beforeAll(() => {
+  park = document.createElement('div');
+  park.className = fixture.park;
+  document.body.prepend(park);
+});
+
+afterAll(() => {
+  park.remove();
+});
+
+// The pointer is real and stays where the last test left it, which is
+// enough to open a tooltip the next test never asked to open.
+beforeEach(() => userEvent.hover(park));
+
 /** A tooltip on a button, after a second button focus can move on to. */
 const setup = () => {
   render(() => (
-    <>
+    <div class={fixture.stage}>
       <Tooltip display="inline" content="Add to library" testId="tooltip">
         {(trigger) => (
           <Button as="button" testId="trigger" {...trigger}>
@@ -26,7 +48,7 @@ const setup = () => {
       <Button as="button" testId="next">
         Next
       </Button>
-    </>
+    </div>
   ));
 
   return {
@@ -55,14 +77,6 @@ describe('Tooltip', () => {
     expect(window).not.toBeVisible();
   });
 
-  it('stays hidden when a pointer press focuses the trigger', async () => {
-    const { trigger, window } = setup();
-
-    await userEvent.click(trigger);
-    expect(trigger).toHaveFocus();
-    expect(window).not.toBeVisible();
-  });
-
   it('engages the tether while shown and lets go when hidden', async () => {
     const { window } = setup();
 
@@ -71,6 +85,52 @@ describe('Tooltip', () => {
 
     await userEvent.tab();
     await waitFor(() => expect(window).not.toHaveAttribute('data-tethered'));
+  });
+
+  // --- Hover ---
+
+  it('shows while the pointer rests on the trigger', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    expect(window).toBeVisible();
+
+    await userEvent.hover(park);
+    expect(window).not.toBeVisible();
+  });
+
+  it('opens on hover without focusing the trigger', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    expect(trigger).not.toHaveFocus();
+    expect(window).toBeVisible();
+  });
+
+  it('stays open while the pointer rests on the window itself', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    // The window sits inside the root, so it's still the root under the
+    // pointer. Crossing the gap between the two isn't covered — that
+    // wants a grace area.
+    await userEvent.hover(window);
+    expect(window).toBeVisible();
+
+    await userEvent.hover(park);
+    expect(window).not.toBeVisible();
+  });
+
+  it('stays hidden once a pointer press has moved on', async () => {
+    const { trigger, window } = setup();
+
+    // The press leaves focus on the trigger. `:focus-visible` declines
+    // it, so with the pointer gone there's nothing holding it open.
+    await userEvent.click(trigger);
+    await userEvent.hover(park);
+
+    expect(trigger).toHaveFocus();
+    expect(window).not.toBeVisible();
   });
 
   // --- Dismissal ---
@@ -97,6 +157,40 @@ describe('Tooltip', () => {
     await userEvent.tab();
     await userEvent.tab({ shift: true });
     expect(trigger).toHaveFocus();
+    expect(window).toBeVisible();
+  });
+
+  it('holds a hover dismissal until the pointer leaves', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    await waitFor(() => expect(window).toHaveAttribute('data-tethered'));
+
+    await userEvent.keyboard('{Escape}');
+    expect(window).not.toBeVisible();
+
+    // Still under the pointer, so the stylesheet still wants it open
+    // and the veto is what's hiding it. Leaving lifts the veto.
+    await userEvent.hover(park);
+    await userEvent.hover(trigger);
+    expect(window).toBeVisible();
+  });
+
+  it('dismisses on a press on the hovered trigger', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    await waitFor(() => expect(window).toHaveAttribute('data-tethered'));
+
+    // Waiting for the tether is also waiting for the open signal to
+    // land, which is what arms the press listener. A press inside the
+    // same frame as the pointer arriving would slip past it; a hand
+    // can't move that fast, and this is the behavior a hand gets.
+    await userEvent.click(trigger);
+    expect(window).not.toBeVisible();
+
+    await userEvent.hover(park);
+    await userEvent.hover(trigger);
     expect(window).toBeVisible();
   });
 
@@ -127,7 +221,7 @@ describe('Tooltip', () => {
     const { window } = setup();
     await opened(window);
 
-    await userEvent.click(document.body);
+    await userEvent.click(park);
     expect(window).not.toBeVisible();
   });
 
@@ -138,14 +232,17 @@ describe('Tooltip', () => {
     // menu or a toolbar does.
     render(() => (
       <>
-        <Tooltip display="inline" content="Add to library" testId="tooltip">
-          {(trigger) => (
-            <Button as="button" testId="trigger" {...trigger}>
-              Add
-            </Button>
-          )}
-        </Tooltip>
+        <div class={fixture.stage}>
+          <Tooltip display="inline" content="Add to library" testId="tooltip">
+            {(trigger) => (
+              <Button as="button" testId="trigger" {...trigger}>
+                Add
+              </Button>
+            )}
+          </Tooltip>
+        </div>
         <div
+          class={fixture.outside}
           data-testid="guard"
           onPointerDown={(event) => event.preventDefault()}
           onMouseDown={(event) => event.preventDefault()}
@@ -164,15 +261,17 @@ describe('Tooltip', () => {
 
   it('dismisses when the trigger scrolls', async () => {
     render(() => (
-      <div class={fixture.scroller} data-testid="scroller">
-        <Tooltip display="inline" content="Add to library" testId="tooltip">
-          {(trigger) => (
-            <Button as="button" testId="trigger" {...trigger}>
-              Add
-            </Button>
-          )}
-        </Tooltip>
-        <div class={fixture.filler} />
+      <div class={fixture.stage}>
+        <div class={fixture.scroller} data-testid="scroller">
+          <Tooltip display="inline" content="Add to library" testId="tooltip">
+            {(trigger) => (
+              <Button as="button" testId="trigger" {...trigger}>
+                Add
+              </Button>
+            )}
+          </Tooltip>
+          <div class={fixture.filler} />
+        </div>
       </div>
     ));
     const window = screen.getByTestId('tooltip');
@@ -190,7 +289,7 @@ describe('Tooltip', () => {
     // Dismissing a closed tooltip would leave the veto set, and the
     // next focus would find it hidden.
     await userEvent.keyboard('{Escape}');
-    await userEvent.click(document.body);
+    await userEvent.click(park);
 
     await opened(window);
     expect(window).toBeVisible();
