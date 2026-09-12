@@ -37,7 +37,7 @@ import {
   arrowDepthChanged,
   arrowVisibilityChanged,
   middlewareChanged,
-  commitTetherDisabledSaga,
+  commitTetherEnabledSaga,
   flipModeChanged,
   floatingControls,
   pointChanged,
@@ -302,10 +302,10 @@ const FloatingUiScratchpad = () => {
   const controls = useValue(floatingControls);
   const commit = useCommit();
   const track = useRun(trackTetherConfigSaga);
-  const commitTetherDisabled = useRun(commitTetherDisabledSaga);
+  const commitTetherEnabled = useRun(commitTetherEnabledSaga);
   const resetControls = useRun(resetControlsSaga);
 
-  // `tetherDisabled` is seeded with the build-environment default, so
+  // `tetherEnabled` is seeded with the build-environment default, so
   // first paint (and prerender) match without a flash. OPFS is
   // client-only — unavailable during SSG — so the tracking saga starts on
   // mount: it subscribes, reconciles with any persisted override, then
@@ -332,8 +332,8 @@ const FloatingUiScratchpad = () => {
     commit(alignOffsetChanged(offset));
   const choosePoint = (point: FloatingPoint | null) =>
     commit(pointChanged(point));
-  const chooseTetherDisabled = (disabled: boolean) =>
-    void commitTetherDisabled(disabled);
+  const chooseTetherEnabled = (enabled: boolean) =>
+    void commitTetherEnabled(enabled);
   const chooseMiddleware = (enabled: readonly string[]) =>
     commit(middlewareChanged(enabled as readonly TetherMiddleware[]));
   const chooseFlipMode = (mode: FlipMode) => commit(flipModeChanged(mode));
@@ -353,7 +353,7 @@ const FloatingUiScratchpad = () => {
    * along it.
    */
   const tether = (): FloatingTether | undefined => {
-    if (controls().tetherDisabled) return undefined;
+    if (!controls().tetherEnabled) return undefined;
 
     const { flipMode, middleware } = controls();
     const passes: (Middleware | undefined)[] = [
@@ -511,15 +511,15 @@ const FloatingUiScratchpad = () => {
             <ControlGroup label="Tether config">
               <Flex as="div" direction="column" gap={2}>
                 <Checkbox
-                  testId="control-tether-disabled"
-                  checked={controls().tetherDisabled}
-                  onCheckedChange={chooseTetherDisabled}
+                  testId="control-tether-enabled"
+                  checked={controls().tetherEnabled}
+                  onCheckedChange={chooseTetherEnabled}
                 >
-                  Disable tether
+                  Enable tether
                 </Checkbox>
                 <Text as="p" size={1} selectable={false} class={css.hint}>
-                  Stands the tether down, so nothing gets measured — the
-                  pre-hydration state, where placement comes from CSS alone.
+                  Unchecking stands the tether down, so nothing gets measured —
+                  the pre-hydration state, where placement comes from CSS alone.
                 </Text>
               </Flex>
               <Flex as="div" direction="column" gap={2}>

@@ -7,35 +7,35 @@ import {
   watchAll,
   type Override,
 } from '@lib/runtime-config';
-import { tetherDisabled as tetherDisabledOption } from '../../config';
+import { tetherEnabled as tetherEnabledOption } from '../../config';
 
 /**
- * Resolve whether the tether is withheld for the active environment,
+ * Resolve whether the tether is in charge for the active environment,
  * layering any persisted OPFS override over the built-in default.
  */
-export const readTetherDisabled = async (): Promise<boolean> => {
-  const { disabled } = await readEnvironment(tetherDisabledOption);
-  return disabled;
+export const readTetherEnabled = async (): Promise<boolean> => {
+  const { enabled } = await readEnvironment(tetherEnabledOption);
+  return enabled;
 };
 
 /** Persist the tether toggle as the active environment's override. */
-export const writeTetherDisabled = async (
+export const writeTetherEnabled = async (
   _signal: AbortSignal,
-  disabled: boolean,
+  enabled: boolean,
 ): Promise<void> => {
-  const patch: Override<{ disabled: boolean }> = {
-    [environment]: { disabled },
+  const patch: Override<{ enabled: boolean }> = {
+    [environment]: { enabled },
   };
 
-  await updateConfig(tetherDisabledOption, patch);
+  await updateConfig(tetherEnabledOption, patch);
 };
 
 /**
  * Clear the tether override for the active environment only, reverting it
  * to the built-in default. Other environments keep their overrides.
  */
-export const resetTetherDisabled = (): Promise<void> =>
-  reset(tetherDisabledOption, [environment]);
+export const resetTetherEnabled = (): Promise<void> =>
+  reset(tetherEnabledOption, [environment]);
 
 /**
  * Watch the tether toggle, reporting each resolved value as it lands.
@@ -46,9 +46,9 @@ export const resetTetherDisabled = (): Promise<void> =>
  * See {@link watchAll} for the buffering and teardown guarantees the
  * stream carries.
  */
-export const watchTetherDisabled = (
+export const watchTetherEnabled = (
   signal: AbortSignal,
 ): AsyncGenerator<boolean> =>
   watchAll(signal, (push) => [
-    subscribe(tetherDisabledOption, ({ disabled }) => push(disabled)),
+    subscribe(tetherEnabledOption, ({ enabled }) => push(enabled)),
   ]);

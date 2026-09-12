@@ -6,7 +6,7 @@ import {
   type Option,
 } from '@lib/runtime-config';
 import { filter as consoleLogFilter } from '@lib/observability/config';
-import { tetherDisabled as scratchpadTetherDisabled } from '@app/scratchpad/config';
+import { tetherEnabled as scratchpadTetherEnabled } from '@app/scratchpad/config';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -22,7 +22,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  */
 const KNOWN_OPTIONS: readonly Option<JsonValue>[] = [
   consoleLogFilter,
-  scratchpadTetherDisabled,
+  scratchpadTetherEnabled,
 ];
 
 /**
