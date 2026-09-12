@@ -10,6 +10,7 @@ import { render, screen, waitFor } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import Button from '../../button/button';
 import Tooltip from '../tooltip';
+import * as fixture from './tooltip.test.browser.css';
 
 /** A tooltip on a button, after a second button focus can move on to. */
 const setup = () => {
@@ -113,12 +114,83 @@ describe('Tooltip', () => {
     await waitFor(() => expect(window).toHaveAttribute('data-tethered'));
   });
 
+  it('dismisses when the trigger is activated', async () => {
+    const { window } = setup();
+    await opened(window);
+
+    // Enter on a focused button arrives as a click on it.
+    await userEvent.keyboard('{Enter}');
+    expect(window).not.toBeVisible();
+  });
+
+  it('dismisses on a press outside the window', async () => {
+    const { window } = setup();
+    await opened(window);
+
+    await userEvent.click(document.body);
+    expect(window).not.toBeVisible();
+  });
+
+  it('dismisses on a press that holds focus', async () => {
+    // The press above dismisses either way, because it blurs the
+    // trigger. This is the one the listener is actually for: a target
+    // that prevents the default to keep focus where it is, the way a
+    // menu or a toolbar does.
+    render(() => (
+      <>
+        <Tooltip display="inline" content="Add to library" testId="tooltip">
+          {(trigger) => (
+            <Button as="button" testId="trigger" {...trigger}>
+              Add
+            </Button>
+          )}
+        </Tooltip>
+        <div
+          data-testid="guard"
+          onPointerDown={(event) => event.preventDefault()}
+          onMouseDown={(event) => event.preventDefault()}
+        >
+          holds focus
+        </div>
+      </>
+    ));
+    const window = screen.getByTestId('tooltip');
+    await opened(window);
+
+    await userEvent.click(screen.getByTestId('guard'));
+    expect(screen.getByTestId('trigger')).toHaveFocus();
+    expect(window).not.toBeVisible();
+  });
+
+  it('dismisses when the trigger scrolls', async () => {
+    render(() => (
+      <div class={fixture.scroller} data-testid="scroller">
+        <Tooltip display="inline" content="Add to library" testId="tooltip">
+          {(trigger) => (
+            <Button as="button" testId="trigger" {...trigger}>
+              Add
+            </Button>
+          )}
+        </Tooltip>
+        <div class={fixture.filler} />
+      </div>
+    ));
+    const window = screen.getByTestId('tooltip');
+    await opened(window);
+
+    // Assigning `scrollTop` raises the same event a wheel would, which
+    // is what the listener reads; it doesn't exercise the gesture.
+    screen.getByTestId('scroller').scrollTop = 20;
+    await waitFor(() => expect(window).not.toBeVisible());
+  });
+
   it('listens for nothing while closed', async () => {
     const { window } = setup();
 
     // Dismissing a closed tooltip would leave the veto set, and the
     // next focus would find it hidden.
     await userEvent.keyboard('{Escape}');
+    await userEvent.click(document.body);
 
     await opened(window);
     expect(window).toBeVisible();
