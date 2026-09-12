@@ -10,6 +10,7 @@ import {
   translateX as arrowX,
   translateY as arrowY,
 } from './arrow.css';
+import { borderRadius } from './body.css';
 
 /**
  * Gap between the anchor edge and the window, in px. Assigned inline
@@ -237,14 +238,16 @@ export const window = style({
 });
 
 /**
- * Maps the surface radius to the arrow's corner offset. The straight run
- * of a rounded edge begins exactly one radius in from the corner, so a
+ * Per-step corner radius, keyed by the design scale. Sets two vars from
+ * the one value: the surface's own `border-radius`, inherited down to
+ * the body, and the arrow's corner offset. The straight run of a
+ * rounded edge begins exactly one radius in from the corner, so a
  * start/end-aligned arrow clears the curve when nudged by that same
- * distance — the offset is the radius value verbatim.
+ * distance.
  *
- * Lands on the window rather than the body: the arrow is the window's
- * child, so the var has to be set on an ancestor it can read.
+ * Lands on the window rather than the body: both readers are the
+ * window's children, so the vars have to be set on an ancestor.
  */
-export const arrowRadiusOffset = styleVariants(radius, (value) => ({
-  vars: { [offset]: value },
+export const radiusVariants = styleVariants(radius, (value) => ({
+  vars: { [offset]: value, [borderRadius]: value },
 }));

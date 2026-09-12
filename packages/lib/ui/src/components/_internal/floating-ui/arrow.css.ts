@@ -3,7 +3,7 @@ import { createVar, fallbackVar, style } from '@vanilla-extract/css';
 /**
  * Distance an edge-aligned arrow is pushed off the surface's rounded
  * corner. The window assigns it from its `radius` (see
- * `arrowRadiusOffset`); an unset var falls back to `0`.
+ * `radiusVariants`); an unset var falls back to `0`.
  */
 export const offset = createVar();
 
@@ -20,7 +20,7 @@ export const translateY = createVar();
 /**
  * Seats the arrow along the anchor edge via `align-self` — the cross axis
  * of the window's arrow/body stack. `data-align` maps to the same
- * endpoints as the surface's own alignment: `start` hugs the top
+ * endpoints as the window's own alignment: `start` hugs the top
  * (left/right sides) or left (top/bottom sides), `end` the opposite.
  *
  * A `start`/`end` arrow is nudged in by {@link offset} so its base clears

@@ -23,6 +23,7 @@ import {
   TextField,
 } from '@lib/ui';
 import {
+  FloatingBody,
   FloatingRoot,
   FloatingWindow,
   type FloatingAlignment,
@@ -425,6 +426,7 @@ const FloatingUiScratchpad = () => {
                   onClick={placePoint}
                 />
                 <FloatingWindow
+                  testId="window"
                   side={controls().side}
                   align={controls().align}
                   radius={controls().radius}
@@ -432,11 +434,6 @@ const FloatingUiScratchpad = () => {
                   alignOffset={controls().alignOffset}
                   point={controls().point ?? undefined}
                   tether={tether()}
-                  direction="column"
-                  gap={1}
-                  py={3}
-                  px={4}
-                  class={css.surface}
                   arrow={
                     controls().arrowVisible
                       ? {
@@ -447,13 +444,22 @@ const FloatingUiScratchpad = () => {
                       : undefined
                   }
                 >
-                  <Heading as="h3" size={3} selectable={false}>
-                    Floating Window
-                  </Heading>
-                  <Text as="p" size={2} selectable={false}>
-                    A taller surface so the arrow has room to sit mid-height
-                    when the window binds to the left or right edge.
-                  </Text>
+                  <FloatingBody
+                    testId="surface"
+                    direction="column"
+                    gap={1}
+                    py={3}
+                    px={4}
+                    class={css.surface}
+                  >
+                    <Heading as="h3" size={3} selectable={false}>
+                      Floating Window
+                    </Heading>
+                    <Text as="p" size={2} selectable={false}>
+                      A taller surface so the arrow has room to sit mid-height
+                      when the window binds to the left or right edge.
+                    </Text>
+                  </FloatingBody>
                 </FloatingWindow>
               </FloatingRoot>
             </Flex>

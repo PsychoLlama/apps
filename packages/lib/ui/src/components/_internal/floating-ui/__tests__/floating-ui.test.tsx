@@ -2,8 +2,8 @@
  * Wiring tests for the floating-ui primitive.
  *
  * Covers what the three layers promise today: the root wraps what a
- * window binds to and publishes it, the window wraps the body, and the
- * body renders and styles its children.
+ * window binds to and publishes it, the window positions whatever it's
+ * given, and the body renders and styles its children.
  */
 
 import { fireEvent, render, screen } from '@solidjs/testing-library';
@@ -25,9 +25,11 @@ const varName = (reference: string) => reference.slice(4, -1);
  * about what the container renders rather than where the placement
  * visually lands.
  */
-const Rooted = (props: FloatingWindowProps) => (
+const Rooted = (
+  props: Omit<FloatingWindowProps, 'testId'> & Partial<FloatingWindowProps>,
+) => (
   <FloatingRoot display="block">
-    <FloatingWindow {...props} />
+    <FloatingWindow testId="box" {...props} />
   </FloatingRoot>
 );
 
@@ -66,7 +68,7 @@ describe('FloatingRoot', () => {
     render(() => (
       <FloatingRoot display="block" testId="anchor">
         <button type="button">trigger</button>
-        <FloatingWindow>content</FloatingWindow>
+        <FloatingWindow testId="box">content</FloatingWindow>
       </FloatingRoot>
     ));
     const wrapper = screen.getByTestId('anchor');
@@ -80,7 +82,7 @@ describe('FloatingRoot', () => {
     // Structural, not conditional: the same failure on the server and in
     // the browser beats silently placing against the viewport.
     expect(() =>
-      render(() => <FloatingWindow>content</FloatingWindow>),
+      render(() => <FloatingWindow testId="box">content</FloatingWindow>),
     ).toThrow(/outside of <FloatingRoot>/);
   });
 });
@@ -101,28 +103,10 @@ describe('FloatingBody', () => {
 
     expect(screen.getByTestId('body')).toHaveClass('custom');
   });
-
-  it('adds a radius class only when a radius is set', () => {
-    const { unmount } = render(() => (
-      <FloatingBody testId="plain">content</FloatingBody>
-    ));
-    const plain = screen.getByTestId('plain').className;
-    unmount();
-
-    render(() => (
-      <FloatingBody testId="rounded" radius={4}>
-        content
-      </FloatingBody>
-    ));
-    const rounded = screen.getByTestId('rounded').className;
-
-    // The radius step contributes exactly one extra class.
-    expect(rounded.split(' ').length).toBe(plain.split(' ').length + 1);
-  });
 });
 
 describe('FloatingWindow', () => {
-  it('renders the body children', () => {
+  it('renders its children', () => {
     const { container } = render(() => <Rooted>content</Rooted>);
 
     expect(container).toHaveTextContent('content');
@@ -136,51 +120,45 @@ describe('FloatingWindow', () => {
     expect(shell).toHaveAttribute('data-align', 'center');
   });
 
-  it('forwards its radius to the body surface', () => {
+  it('adds a radius class to the box only when a radius is set', () => {
+    // The radius is one class on the box: it sets the vars the surface
+    // and the arrow read, so neither carries a class of its own.
     const plain = render(() => <Rooted>content</Rooted>);
-    const plainBody =
-      plain.container.querySelector('[data-side]')!.lastElementChild!.className;
+    const plainBox = plain.container.querySelector('[data-side]')!.className;
     plain.unmount();
 
     const { container } = render(() => <Rooted radius={4}>content</Rooted>);
-    const body =
-      container.querySelector('[data-side]')!.lastElementChild!.className;
+    const box = container.querySelector('[data-side]')!.className;
 
-    expect(body.split(' ').length).toBe(plainBody.split(' ').length + 1);
+    expect(box.split(' ').length).toBe(plainBox.split(' ').length + 1);
   });
 
-  it('forwards body props (test id, padding) onto the body surface', () => {
-    const plain = render(() => <Rooted>content</Rooted>);
-    const plainBody =
-      plain.container.querySelector('[data-side]')!.lastElementChild!.className;
-    plain.unmount();
-
-    const { container } = render(() => (
-      <Rooted testId="surface" p={4}>
+  it('puts the test id and class on the box', () => {
+    render(() => (
+      <Rooted testId="box" class="custom">
         content
       </Rooted>
     ));
-    const body = screen.getByTestId('surface');
+    const box = screen.getByTestId('box');
 
-    // The test id lands on the body, and padding contributes its class.
-    expect(container.querySelector('[data-side]')).not.toHaveAttribute(
-      'data-testid',
-    );
-    expect(body).toBe(container.querySelector('[data-side]')!.lastElementChild);
-    expect(body.className.split(' ').length).toBe(
-      plainBody.split(' ').length + 1,
-    );
+    expect(box).toHaveAttribute('data-side');
+    expect(box).toHaveClass('custom');
   });
 
-  it('forwards a consumer class onto the body surface', () => {
-    const { container } = render(() => (
-      <Rooted class="surface">content</Rooted>
+  it('wraps the surface it is given', () => {
+    render(() => (
+      <Rooted testId="box">
+        <FloatingBody testId="surface" class="custom">
+          content
+        </FloatingBody>
+      </Rooted>
     ));
-    const body = container.querySelector('[data-side]')!.lastElementChild;
+    const box = screen.getByTestId('box');
+    const surface = screen.getByTestId('surface');
 
-    // The class lands on the body, not the positioning shell.
-    expect(container.querySelector('[data-side]')).not.toHaveClass('surface');
-    expect(body).toHaveClass('surface');
+    expect(box.lastElementChild).toBe(surface);
+    expect(box).not.toHaveClass('custom');
+    expect(surface).toHaveClass('custom');
   });
 
   it('reflects side and align into data attributes', () => {
@@ -216,11 +194,11 @@ describe('FloatingWindow', () => {
     expect(container.querySelector('svg')).toBeNull();
   });
 
-  it('renders the arrow before the body when configured', () => {
+  it('renders the arrow before its children when configured', () => {
     const { container } = render(() => <Rooted arrow={{}}>content</Rooted>);
     const shell = container.querySelector('[data-side]');
 
-    // Arrow first so the body paints over its shadow seam.
+    // Arrow first so the surface paints over its shadow seam.
     expect(shell?.firstElementChild?.tagName.toLowerCase()).toBe('svg');
   });
 
@@ -306,7 +284,7 @@ describe('FloatingWindow', () => {
     // what the caller asked for.
     const { container } = render(() => (
       <FloatingRoot display="block">
-        <FloatingWindow side="top" align="end">
+        <FloatingWindow testId="box" side="top" align="end">
           content
         </FloatingWindow>
       </FloatingRoot>
@@ -331,10 +309,54 @@ describe('FloatingWindow', () => {
   });
 });
 
+describe('FloatingWindow passthrough', () => {
+  it('forwards native attributes and handlers to the box', () => {
+    const onPointerEnter = vi.fn();
+    render(() => (
+      <Rooted testId="box" data-state="open" onPointerEnter={onPointerEnter}>
+        content
+      </Rooted>
+    ));
+
+    const box = screen.getByTestId('box');
+    expect(box).toHaveAttribute('data-state', 'open');
+    fireEvent.pointerEnter(box);
+    expect(onPointerEnter).toHaveBeenCalledOnce();
+  });
+
+  it('merges consumer styles under its own placement vars', () => {
+    // A runtime value, as the prop is for; a static one belongs in a class.
+    const consumer = { color: 'red', [varName(css.sideOffset)]: '1px' };
+    render(() => (
+      <Rooted testId="box" sideOffset={8} style={consumer}>
+        content
+      </Rooted>
+    ));
+    const box = screen.getByTestId('box');
+
+    expect(box.style.color).toBe('red');
+    // The window's own var wins over a consumer's attempt at it.
+    expect(box.style.getPropertyValue(varName(css.sideOffset))).toBe('8px');
+  });
+
+  it('hands the box element to `ref`', () => {
+    // The window keeps a ref of its own on the same node; a consumer's
+    // composes with it rather than replacing it.
+    let element: HTMLDivElement | undefined;
+    render(() => (
+      <Rooted testId="box" ref={(el: HTMLDivElement) => (element = el)}>
+        content
+      </Rooted>
+    ));
+
+    expect(element).toBe(screen.getByTestId('box'));
+  });
+});
+
 describe('FloatingBody passthrough', () => {
   it('forwards identity and ARIA attributes to the surface', () => {
     render(() => (
-      <Rooted
+      <FloatingBody
         testId="surface"
         id="popup"
         role="menu"
@@ -345,7 +367,7 @@ describe('FloatingBody passthrough', () => {
         aria-orientation="vertical"
       >
         content
-      </Rooted>
+      </FloatingBody>
     ));
 
     const surface = screen.getByTestId('surface');
@@ -359,7 +381,7 @@ describe('FloatingBody passthrough', () => {
   });
 
   it('attaches no semantics of its own', () => {
-    render(() => <Rooted testId="surface">content</Rooted>);
+    render(() => <FloatingBody testId="surface">content</FloatingBody>);
 
     const surface = screen.getByTestId('surface');
     expect(surface).not.toHaveAttribute('role');
@@ -370,9 +392,12 @@ describe('FloatingBody passthrough', () => {
   it('hands the surface element to `ref`', () => {
     let element: HTMLDivElement | undefined;
     render(() => (
-      <Rooted testId="surface" ref={(el: HTMLDivElement) => (element = el)}>
+      <FloatingBody
+        testId="surface"
+        ref={(el: HTMLDivElement) => (element = el)}
+      >
         content
-      </Rooted>
+      </FloatingBody>
     ));
 
     expect(element).toBe(screen.getByTestId('surface'));
@@ -383,14 +408,14 @@ describe('FloatingBody passthrough', () => {
     const onFocusIn = vi.fn();
     const onPointerMove = vi.fn();
     render(() => (
-      <Rooted
+      <FloatingBody
         testId="surface"
         onKeyDown={onKeyDown}
         onFocusIn={onFocusIn}
         onPointerMove={onPointerMove}
       >
         content
-      </Rooted>
+      </FloatingBody>
     ));
 
     const surface = screen.getByTestId('surface');

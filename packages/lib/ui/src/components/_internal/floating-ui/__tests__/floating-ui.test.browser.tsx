@@ -16,6 +16,7 @@ import { type Middleware } from '@floating-ui/dom';
 import { render, waitFor, within } from '@solidjs/testing-library';
 import { radius } from '@lib/design';
 import {
+  FloatingBody,
   FloatingRoot,
   FloatingWindow,
   type FloatingTether,
@@ -46,26 +47,25 @@ const settled = async (window: Element) => {
  */
 const renderFloating = async (
   mode: Mode,
-  props: Omit<FloatingWindowProps, 'children' | 'class' | 'tether'> = {},
+  props: Omit<FloatingWindowProps, 'children' | 'tether' | 'testId'> = {},
 ) => {
   const { container } = render(() => (
     <div class={fixture.stage}>
       <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
         <FloatingWindow
-          class={fixture.surface}
-          testId="surface"
+          testId="window"
           tether={TETHER_BY_MODE[mode]}
           {...props}
         >
-          content
+          <FloatingBody testId="surface" class={fixture.surface}>
+            content
+          </FloatingBody>
         </FloatingWindow>
       </FloatingRoot>
     </div>
   ));
 
-  // The positioned box carries no test id — `testId` lands on the body —
-  // so its placement attribute is the handle.
-  const window = container.querySelector('[data-side]')!;
+  const window = within(container).getByTestId('window');
   if (mode === 'tether') await settled(window);
 
   const anchorRect = within(container)
@@ -73,7 +73,7 @@ const renderFloating = async (
     .getBoundingClientRect();
   const floatingRect = window.getBoundingClientRect();
   const arrowRect = within(container)
-    .queryByTestId('surface-arrow')
+    .queryByTestId('window-arrow')
     ?.getBoundingClientRect();
 
   return { container, window, anchorRect, floatingRect, arrowRect };
@@ -89,8 +89,10 @@ describe('FloatingWindow geometry', () => {
       <div class={fixture.stage}>
         <FloatingRoot display="block" testId="anchor">
           <div class={fixture.borderedAnchorBox} />
-          <FloatingWindow class={fixture.surface} side="bottom" align="start">
-            content
+          <FloatingWindow testId="window" side="bottom" align="start">
+            <FloatingBody testId="surface" class={fixture.surface}>
+              content
+            </FloatingBody>
           </FloatingWindow>
         </FloatingRoot>
       </div>
@@ -178,7 +180,7 @@ describe('FloatingWindow geometry', () => {
       });
       expect(start.floatingRect.left).toBeCloseTo(start.anchorRect.left + 6);
 
-      // Positive offsets push an end-aligned surface back toward start.
+      // Positive offsets push an end-aligned window back toward start.
       const end = await renderFloating(mode, {
         side: 'bottom',
         align: 'end',
@@ -212,7 +214,7 @@ describe('FloatingWindow geometry', () => {
     it('binds to an anchor-relative point instead of an edge', async () => {
       const point = { x: 30, y: 70 };
 
-      // Growing down-right: the surface's top-left corner sits on the point.
+      // Growing down-right: the window's top-left corner sits on the point.
       const downRight = await renderFloating(mode, {
         point,
         side: 'bottom',
@@ -225,7 +227,7 @@ describe('FloatingWindow geometry', () => {
         downRight.anchorRect.top + 70,
       );
 
-      // Growing up: the surface's bottom edge sits on the point.
+      // Growing up: the window's bottom edge sits on the point.
       const up = await renderFloating(mode, {
         point,
         side: 'top',
@@ -241,7 +243,7 @@ describe('FloatingWindow geometry', () => {
       });
       expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.left + 30);
 
-      // Centered growth splits the surface across the point.
+      // Centered growth splits the window across the point.
       const centered = await renderFloating(mode, {
         point,
         side: 'bottom',
@@ -362,11 +364,13 @@ describe('FloatingWindow tether', () => {
       <div class={fixture.stage}>
         <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
           <FloatingWindow
-            class={fixture.surface}
+            testId="window"
             side="bottom"
             tether={{ middleware: [flipToTop] }}
           >
-            content
+            <FloatingBody testId="surface" class={fixture.surface}>
+              content
+            </FloatingBody>
           </FloatingWindow>
         </FloatingRoot>
       </div>
@@ -398,12 +402,10 @@ describe('FloatingWindow tether', () => {
     const { container } = render(() => (
       <div class={fixture.stage}>
         <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
-          <FloatingWindow
-            class={fixture.surface}
-            side="bottom"
-            tether={tether()}
-          >
-            content
+          <FloatingWindow testId="window" side="bottom" tether={tether()}>
+            <FloatingBody testId="surface" class={fixture.surface}>
+              content
+            </FloatingBody>
           </FloatingWindow>
         </FloatingRoot>
       </div>
@@ -438,14 +440,15 @@ describe('FloatingWindow tether', () => {
       <div class={fixture.stage}>
         <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
           <FloatingWindow
-            class={fixture.surface}
-            testId="surface"
+            testId="window"
             side="bottom"
             align="start"
             arrow={{}}
             tether={{ middleware: [nudgeX(by)] }}
           >
-            content
+            <FloatingBody testId="surface" class={fixture.surface}>
+              content
+            </FloatingBody>
           </FloatingWindow>
         </FloatingRoot>
       </div>
@@ -456,7 +459,7 @@ describe('FloatingWindow tether', () => {
     const anchorRect = within(container)
       .getByTestId('anchor')
       .getBoundingClientRect();
-    const arrow = within(container).getByTestId('surface-arrow');
+    const arrow = within(container).getByTestId('window-arrow');
 
     return { anchorRect, arrow, arrowRect: arrow.getBoundingClientRect() };
   };

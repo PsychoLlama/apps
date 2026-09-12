@@ -2,9 +2,7 @@ import { createSignal, Show, splitProps, type JSX } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import { radius, type RadiusScale } from '@lib/design';
 import clx from '@lib/classnames';
-import { type FlexProps } from '../../../props/flex';
-import { type PaddingProps } from '../../../props/padding';
-import { type TestIdProps } from '../../../props/test-id';
+import { type RequiredTestIdProps } from '../../../props/test-id';
 import {
   type FloatingAlignment,
   type FloatingPoint,
@@ -12,7 +10,6 @@ import {
   type FloatingTether,
 } from './types';
 import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
-import { FloatingBody } from './body';
 import { useAnchorElement } from './root';
 import { roundByDevicePixel } from './tether/pixel-ratio';
 import { useReference } from './tether/use-reference';
@@ -23,7 +20,7 @@ import * as css from './window.css';
 /**
  * Arrow configuration for a floating primitive. `direction` and `align`
  * are omitted — the window derives both from its own placement, which is
- * what aims the arrow back at whatever the surface is bound to. So are
+ * what aims the arrow back at whatever the window is bound to. So are
  * `hidden`, which the tether decides, and `testId`, which derives from
  * the window's own.
  */
@@ -60,21 +57,21 @@ const AXIS_BY_SIDE: Record<FloatingSide, 'x' | 'y'> = {
 /**
  * Props for the floating primitive entry point.
  *
- * The flex, padding, and test-id groups aren't the window's own, and
- * neither is any native attribute or handler — they pass straight
- * through to the {@link FloatingBody} surface, the node that lays out
- * and pads the content and that a component labels, focuses, and
- * listens on. So does {@link class} and {@link radius}. The window keeps
- * only what positions itself: {@link side}, {@link align}, the
- * {@link arrow}, and the {@link tether}.
+ * Every native attribute and handler lands on the positioned box, the
+ * node that carries the placement and its `data-side`/`data-align`.
+ * The surface is a separate node the consumer renders as a child (a
+ * `FloatingBody`, usually), so what belongs on the surface is spread
+ * there.
+ *
+ * A test id is required: the box is where placement and open state
+ * show up, so every floating component's tests need a handle on it.
+ * The arrow's id derives from it.
  */
 export interface FloatingWindowProps
   extends
-    FlexProps,
-    PaddingProps,
-    TestIdProps,
-    JSX.HTMLAttributes<HTMLDivElement> {
-  /** Edge of the anchor the surface binds to. Defaults to `'bottom'`. */
+    RequiredTestIdProps,
+    Omit<JSX.HTMLAttributes<HTMLDivElement>, 'style'> {
+  /** Edge of the anchor the window binds to. Defaults to `'bottom'`. */
   side?: FloatingSide;
 
   /** Placement along that edge. Defaults to `'center'`. */
@@ -110,32 +107,47 @@ export interface FloatingWindowProps
   tether?: FloatingTether;
 
   /**
-   * Border radius of the surface, from the design token scale. Also
-   * keeps a start/end-aligned arrow clear of the rounded corner.
+   * Corner radius, from the design token scale. Inherited by the
+   * surface as its `border-radius`, and what keeps a start/end-aligned
+   * arrow clear of the rounded corner.
    */
   radius?: RadiusScale;
 
   /**
-   * Class merged onto the {@link FloatingBody} surface — the node that
-   * carries the background, padding, and other chrome. Applies to the
-   * body, not the positioned box.
+   * Class merged onto the positioned box — the node that carries the
+   * placement, the resolved `data-side`/`data-align`, and the
+   * `transform-origin` facing the anchor. The box's `transform` is
+   * free (placement rides on `translate`), so this is where an enter
+   * animation goes: it scales the arrow and the surface together, out
+   * of the corner that faces the anchor.
    */
   class?: string;
 
   /**
-   * Pointer arrow tying the surface to its anchor. Omit the config to
+   * Inline styles merged onto the positioned box, under the window's
+   * own placement vars. For values only the call site knows at
+   * runtime, such as a var it assigns from a prop; static styling
+   * belongs in {@link class}.
+   */
+  style?: JSX.CSSProperties;
+
+  /**
+   * Pointer arrow tying the window to its anchor. Omit the config to
    * render without an arrow.
    */
   arrow?: FloatingArrowProps;
 
-  /** Floating content to render. */
+  /**
+   * The surface to float: a `FloatingBody`, which lays out and pads the
+   * content and is the node to give semantics to.
+   */
   children: JSX.Element;
 }
 
 /**
  * Entry point for a floating primitive. Owns the positioned box —
  * placing itself outside a side of the anchor and aligning along that
- * edge — and wraps the {@link FloatingBody} surface.
+ * edge — around the surface it's given.
  *
  * Must render inside a `FloatingRoot`, which supplies the box it
  * positions against.
@@ -149,16 +161,16 @@ export interface FloatingWindowProps
  * statically rendered one paints at its CSS placement and adjusts once
  * the tether wakes up.
  *
- * The arrow renders before the body because the window's
+ * The arrow renders before the surface because the window's
  * `flex-direction` seats it from that end — DOM order here is layout, not
  * paint order. The arrow always paints above the surface; it carries a
  * stacking context so the surface's shadow can't bleed onto it (see
  * `arrow.css`).
  */
 export const FloatingWindow = (props: FloatingWindowProps) => {
-  // Keep the window's own positioning props; forward everything else (flex,
-  // padding, test-id, radius, class, children) onto the body surface.
-  const [own, body] = splitProps(props, [
+  // Keep what positions the box and what it renders; every other
+  // attribute is the consumer's and spreads onto the box.
+  const [own, box] = splitProps(props, [
     'side',
     'align',
     'arrow',
@@ -166,6 +178,11 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
     'alignOffset',
     'point',
     'tether',
+    'radius',
+    'class',
+    'style',
+    'testId',
+    'children',
   ]);
 
   const [subject, setSubject] = createSignal<HTMLDivElement>();
@@ -187,7 +204,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
     // where the straight edge does instead of riding onto the curve.
     arrow: () => {
       const element = own.arrow && arrowElement();
-      const padding = body.radius ? parseFloat(radius[body.radius]) : 0;
+      const padding = own.radius ? parseFloat(radius[own.radius]) : 0;
       return element && { element, padding };
     },
 
@@ -197,11 +214,14 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
   const arrowData = () => measurement()?.middlewareData.arrow;
 
   const className = () =>
-    clx(css.window, body.radius && css.arrowRadiusOffset[body.radius]);
+    clx(css.window, own.radius && css.radiusVariants[own.radius], own.class);
 
   // Continuous pixel inputs ride in as inline vars; the static rules fold
   // them into the placement math. The measured coordinates join them once
-  // a measurement lands.
+  // a measurement lands. The consumer's styles go under all of it: the
+  // placement vars are the window's to set.
+  const inlineStyle = () => ({ ...own.style, ...inlineVars() });
+
   const inlineVars = () => {
     const subject = measurement();
     const arrow = arrowData();
@@ -237,9 +257,11 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
 
   return (
     <div
+      {...box}
       ref={setSubject}
       class={className()}
-      style={inlineVars()}
+      style={inlineStyle()}
+      data-testid={own.testId}
       data-side={side()}
       data-axis={AXIS_BY_SIDE[side()]}
       data-align={align()}
@@ -250,7 +272,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
         {(arrow) => (
           <Arrow
             ref={setArrowElement}
-            testId={body.testId && `${body.testId}-arrow`}
+            testId={`${own.testId}-arrow`}
             base={arrow().base}
             depth={arrow().depth}
             direction={ARROW_DIRECTION_BY_SIDE[side()]}
@@ -264,7 +286,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
           />
         )}
       </Show>
-      <FloatingBody {...body} />
+      {own.children}
     </div>
   );
 };

@@ -5,7 +5,7 @@
  */
 
 export { root } from './root.css';
-export { window, arrowRadiusOffset } from './window.css';
+export { window, radiusVariants } from './window.css';
 export { sideOffset, alignOffset, pointX, pointY } from './window.css';
-export { body, bodyRadius } from './body.css';
+export { body, borderRadius } from './body.css';
 export { arrow, offset } from './arrow.css';
