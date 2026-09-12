@@ -3,7 +3,7 @@ import { createVar, fallbackVar, style } from '@vanilla-extract/css';
 /**
  * Distance an edge-aligned arrow is pushed off the surface's rounded
  * corner. The window assigns it from its `radius` (see
- * `arrowRadiusOffset`); an unset var falls back to `0`.
+ * `radiusVariants`); an unset var falls back to `0`.
  */
 export const offset = createVar();
 

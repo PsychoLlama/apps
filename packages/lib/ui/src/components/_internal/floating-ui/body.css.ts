@@ -1,5 +1,11 @@
-import { style, styleVariants } from '@vanilla-extract/css';
-import { radius } from '@lib/design';
+import { createVar, fallbackVar, style } from '@vanilla-extract/css';
+
+/**
+ * Border radius of the surface. Assigned by the window from its `radius`
+ * prop and inherited down to the body, so the one value also seats the
+ * arrow clear of the rounded corner. Unset falls back to square.
+ */
+export const borderRadius = createVar();
 
 /**
  * The visual surface. Sizes to its content so a window hugs what it
@@ -13,9 +19,5 @@ export const body = style({
   width: 'max-content',
   height: 'max-content',
   pointerEvents: 'auto',
+  borderRadius: fallbackVar(borderRadius, '0px'),
 });
-
-/** Per-step border radius for the surface, keyed by the design scale. */
-export const bodyRadius = styleVariants(radius, (value) => ({
-  borderRadius: value,
-}));
