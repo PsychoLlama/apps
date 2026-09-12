@@ -37,7 +37,7 @@
  *   `forceMount`, `container`, `width`, or `minWidth`.
  * - The window is always in the DOM. Upstream mounts its content on open
  *   and unmounts it on close; here it renders once, CSS-placed, and
- *   `data-state` on the surface decides whether it shows. The tether
+ *   `data-state` on the window decides whether it shows. The tether
  *   engages only while open, so a closed tooltip costs no measurement.
  * - Focus only, for now. Hover, dismissal, hoverable content, and
  *   page-wide coordination are landing in phases.
@@ -56,6 +56,7 @@ import { assignInlineVars } from '@vanilla-extract/dynamic';
 import { flip, limitShift, shift } from '@floating-ui/dom';
 import clx from '@lib/classnames';
 import {
+  FloatingBody,
   FloatingRoot,
   FloatingWindow,
   type FloatingAlignment,
@@ -64,7 +65,7 @@ import {
   type FloatingTether,
 } from '../_internal/floating-ui';
 import Text from '../text/text';
-import { testIdPropKeys, type TestIdProps } from '../../props/test-id';
+import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import * as css from './tooltip.css';
 
 /** Edge of the trigger the tooltip binds to. */
@@ -78,7 +79,7 @@ export type TooltipDisplay = FloatingRootDisplay;
 
 /**
  * Whether the tooltip is showing, and how it got there. Rides on the
- * surface as `data-state`, which is what shows and hides the window.
+ * window as `data-state`, which is what shows and hides it.
  */
 export type TooltipState = 'closed' | 'instant-open';
 
@@ -105,7 +106,7 @@ export interface TooltipTriggerProps {
  */
 export interface TooltipProps
   extends
-    TestIdProps,
+    RequiredTestIdProps,
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'role' | 'style' | 'children'> {
   /**
    * How the wrapper around the trigger sits in the surrounding flow:
@@ -208,41 +209,45 @@ const Tooltip = (rawProps: TooltipProps) => {
       {local.children(triggerProps)}
 
       <FloatingWindow
-        {...rest}
         side={local.side}
         align={local.align}
         sideOffset={local.sideOffset}
         alignOffset={local.alignOffset}
         radius={2}
         arrow={{}}
-        outerClass={css.window}
-        innerClass={clx(css.content, local.class)}
-        py={1}
-        px={2}
+        class={css.window}
         data-state={state()}
         testId={tid.testId}
-        style={assignInlineVars({
-          ...(local.maxWidth !== undefined && {
-            [css.maxWidth]: local.maxWidth,
-          }),
-        })}
 
         // Withheld while closed: a hidden window has nothing to measure,
         // and a page of closed tooltips shouldn't be listening for scroll.
         tether={open() ? TETHER : undefined}
       >
-        <Text
-          as="p"
-          role="tooltip"
-          id={contentId}
-          aria-label={local['aria-label']}
-          testId={tid.testId && `${tid.testId}-text`}
-          size={1}
-          selectable={false}
-          class={css.text}
+        <FloatingBody
+          {...rest}
+          testId={`${tid.testId}-surface`}
+          py={1}
+          px={2}
+          class={clx(css.content, local.class)}
+          style={assignInlineVars({
+            ...(local.maxWidth !== undefined && {
+              [css.maxWidth]: local.maxWidth,
+            }),
+          })}
         >
-          {local.content}
-        </Text>
+          <Text
+            as="p"
+            role="tooltip"
+            id={contentId}
+            aria-label={local['aria-label']}
+            testId={`${tid.testId}-text`}
+            size={1}
+            selectable={false}
+            class={css.text}
+          >
+            {local.content}
+          </Text>
+        </FloatingBody>
       </FloatingWindow>
     </FloatingRoot>
   );

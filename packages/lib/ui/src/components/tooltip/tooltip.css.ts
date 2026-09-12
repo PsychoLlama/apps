@@ -39,9 +39,8 @@ export const text = style({
 });
 
 /**
- * The positioned box. Always in the DOM; shown by the surface's
- * `data-state`, which the window reads through `:has()` since the
- * attribute rides on the body inside it.
+ * The positioned box. Always in the DOM; its own `data-state` decides
+ * whether it shows.
  *
  * Carries the surface color as `color` so the arrow, which fills with
  * `currentColor`, matches the surface without a class of its own. The
@@ -50,7 +49,7 @@ export const text = style({
 export const window = style({
   color: neutral.solid[12],
   selectors: {
-    '&:where(:has(> [data-state="closed"]))': {
+    '&:where([data-state="closed"])': {
       display: 'none',
     },
   },

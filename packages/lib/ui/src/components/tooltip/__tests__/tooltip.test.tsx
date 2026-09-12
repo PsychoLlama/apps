@@ -12,9 +12,9 @@ import * as css from '../tooltip.css';
 type Overrides = Partial<Omit<TooltipProps, 'children'>>;
 
 /**
- * Render a tooltip around a button. The surface's `data-state` is the
- * handle for "is it open" — the window is always in the DOM, and CSS
- * shows it from that attribute; the trigger's test id is for driving it.
+ * Render a tooltip around a button. The window's `data-state` is the
+ * handle for "is it open" — it's always in the DOM, and CSS shows it
+ * from that attribute; the trigger's test id is for driving it.
  */
 const setup = (overrides: Overrides = {}, name = 'tooltip') => {
   render(() => (
@@ -34,7 +34,8 @@ const setup = (overrides: Overrides = {}, name = 'tooltip') => {
 
   return {
     trigger: screen.getByTestId(`${name}-trigger`),
-    surface: () => screen.queryByTestId(name),
+    window: () => screen.queryByTestId(name),
+    surface: () => screen.queryByTestId(`${name}-surface`),
     tooltip: () => screen.queryByTestId(`${name}-text`),
   };
 };
@@ -43,21 +44,21 @@ afterEach(cleanup);
 
 describe('Tooltip', () => {
   it('starts closed', () => {
-    const { trigger, surface } = setup();
+    const { trigger, window } = setup();
 
-    expect(surface()).toHaveAttribute('data-state', 'closed');
+    expect(window()).toHaveAttribute('data-state', 'closed');
     expect(trigger).not.toHaveAttribute('aria-describedby');
   });
 
   it('opens at once on focus and closes on blur', () => {
-    const { trigger, surface } = setup();
+    const { trigger, window } = setup();
 
     fireEvent.focusIn(trigger);
-    expect(surface()).toHaveAttribute('data-state', 'instant-open');
-    expect(surface()).toHaveTextContent('Add to library');
+    expect(window()).toHaveAttribute('data-state', 'instant-open');
+    expect(window()).toHaveTextContent('Add to library');
 
     fireEvent.focusOut(trigger);
-    expect(surface()).toHaveAttribute('data-state', 'closed');
+    expect(window()).toHaveAttribute('data-state', 'closed');
   });
 
   // --- Accessibility ---
@@ -136,27 +137,26 @@ describe('Tooltip', () => {
       </Tooltip>
     ));
 
-    const surface = screen.getByTestId('tooltip');
+    const window = screen.getByTestId('tooltip');
 
     fireEvent.focusIn(screen.getByTestId('before'));
-    expect(surface).toHaveAttribute('data-state', 'instant-open');
+    expect(window).toHaveAttribute('data-state', 'instant-open');
     fireEvent.focusOut(screen.getByTestId('before'));
-    expect(surface).toHaveAttribute('data-state', 'closed');
+    expect(window).toHaveAttribute('data-state', 'closed');
 
     setSwapped(true);
     fireEvent.focusIn(screen.getByTestId('after'));
-    expect(surface).toHaveAttribute('data-state', 'instant-open');
+    expect(window).toHaveAttribute('data-state', 'instant-open');
     expect(screen.getByTestId('after')).toHaveAttribute('aria-describedby');
   });
 
   // --- Placement and styling ---
 
   it('forwards side and align to the window', () => {
-    const { surface } = setup({ side: 'right', align: 'end' });
+    const { window } = setup({ side: 'right', align: 'end' });
 
-    const box = surface()!.parentElement;
-    expect(box).toHaveAttribute('data-side', 'right');
-    expect(box).toHaveAttribute('data-align', 'end');
+    expect(window()).toHaveAttribute('data-side', 'right');
+    expect(window()).toHaveAttribute('data-align', 'end');
   });
 
   it('forwards class and max width to the surface', () => {
