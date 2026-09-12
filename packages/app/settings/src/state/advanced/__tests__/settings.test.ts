@@ -11,7 +11,6 @@ import {
   advancedSettingsRestoredTopic,
   advancedSettingsStore,
   logFilterChangedTopic,
-  scratchpadChangedTopic,
   type AdvancedSettingsState,
 } from '../settings';
 
@@ -24,7 +23,6 @@ const setup = () => {
 /** Every option flipped away from whatever the environment defaults to. */
 const inverted: AdvancedSettingsState = {
   logFilter: `${advancedDefaults.logFilter}:changed`,
-  scratchpadEnabled: !advancedDefaults.scratchpadEnabled,
 };
 
 describe('advancedSettingsStore', () => {
@@ -43,24 +41,6 @@ describe('advancedSettingsStore', () => {
   });
 
   it('takes a resolved log filter pattern', () => {
-    const { commit, peek } = setup();
-
-    commit(logFilterChangedTopic('app:*'));
-
-    expect(peek(advancedSettingsStore).logFilter).toBe('app:*');
-  });
-
-  it('takes a resolved scratchpad flag', () => {
-    const { commit, peek } = setup();
-
-    commit(scratchpadChangedTopic(!advancedDefaults.scratchpadEnabled));
-
-    expect(peek(advancedSettingsStore).scratchpadEnabled).toBe(
-      !advancedDefaults.scratchpadEnabled,
-    );
-  });
-
-  it('leaves the other options alone when one changes', () => {
     const { commit, peek } = setup();
 
     commit(logFilterChangedTopic('app:*'));

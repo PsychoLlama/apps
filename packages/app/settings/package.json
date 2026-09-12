@@ -15,7 +15,6 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@app/scratchpad": "workspace:*",
     "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",

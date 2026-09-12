@@ -6,9 +6,7 @@
  * construct outside a real service worker.
  */
 
-import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import { createLogger } from '@lib/observability';
-import { readEnvironment } from '@lib/runtime-config';
 
 import { CACHE_NAMES, openCache } from './caches';
 import { streamLogArchive } from './logs-export';
@@ -79,71 +77,7 @@ export const handleFetch = (event: FetchEvent): void => {
     // at build time, so this branch is dead-code-eliminated in prod.
     if (import.meta.env.DEV) return;
 
-    // The scratchpad app ships in every build now that its gate is a
-    // runtime flag rather than a build-time constant. The SW is where
-    // that flag turns into a real 404, hiding the route in environments
-    // where it's disabled.
-    if (isScratchpadRoute(url)) {
-      event.respondWith(handleScratchpadNavigation(event));
-      return;
-    }
-
     event.respondWith(handleNavigation(event));
-  }
-};
-
-/**
- * The scratchpad surface: its landing page and every experiment nested
- * under it, matched with or without a trailing slash. The whole subtree
- * rides on one flag, so a disabled scratchpad hides its experiments too
- * — otherwise the gate would leak every route added beneath it.
- */
-const isScratchpadRoute = (url: URL): boolean =>
-  url.pathname === '/scratchpad' || url.pathname.startsWith('/scratchpad/');
-
-/**
- * Clean URL of the prerendered 404 shell. Cloudflare serves the
- * `404.html` asset at this extensionless path (and 307s the `.html` form
- * to it), per `not_found_handling` in `wrangler.jsonc`.
- */
-const NOT_FOUND_PATH = '/404';
-
-/**
- * Gates the scratchpad app behind its runtime flag. When the flag is off
- * for the active environment the navigation gets the site's 404 page;
- * when on it flows through the normal offline-aware strategy. The flag
- * resolves from OPFS — shared with the page, so an in-app toggle takes
- * effect on the next navigation — falling back to the option's
- * per-environment default.
- */
-const handleScratchpadNavigation = async (
-  event: FetchEvent,
-): Promise<Response> => {
-  const { enabled } = await readEnvironment(scratchpadAppEnabled);
-  if (enabled) return handleNavigation(event);
-
-  logger.info('Scratchpad app disabled; serving the 404 page.', {
-    url: new URL(event.request.url).pathname,
-  });
-  return notFoundResponse();
-};
-
-/**
- * The prerendered 404 shell, served with a real 404 status so a disabled
- * route is indistinguishable from one that never existed. Re-wraps the
- * fetched body because a `Response`'s status is immutable. Falls back to
- * an empty 404 when the page can't be fetched (e.g. offline).
- */
-const notFoundResponse = async (): Promise<Response> => {
-  try {
-    const page = await fetch(NOT_FOUND_PATH);
-    return new Response(page.body, {
-      status: 404,
-      statusText: 'Not Found',
-      headers: page.headers,
-    });
-  } catch {
-    return new Response(null, { status: 404 });
   }
 };
 

@@ -12,17 +12,13 @@ import { createTestRuntime, simulate } from '@lib/state';
 import {
   readAdvancedSettings,
   resetLogFilter,
-  resetScratchpadEnabled,
   watchAdvancedSettings,
   writeLogFilter,
-  writeScratchpadEnabled,
   type AdvancedSettingChange,
 } from '../capabilities';
 import {
   commitLogFilterSaga,
-  commitScratchpadSaga,
   resetLogFilterSaga,
-  resetScratchpadSaga,
   trackAdvancedSettingsSaga,
 } from '../sagas';
 import { advancedSettingsScope } from '../scope';
@@ -31,13 +27,11 @@ import {
   advancedSettingsRestoredTopic,
   advancedSettingsStore,
   logFilterChangedTopic,
-  scratchpadChangedTopic,
   type AdvancedSettingsState,
 } from '../settings';
 
 const persisted: AdvancedSettingsState = {
   logFilter: 'app:*',
-  scratchpadEnabled: !advancedDefaults.scratchpadEnabled,
 };
 
 /** A finite stand-in for the live subscription. */
@@ -100,20 +94,13 @@ describe('trackAdvancedSettingsSaga', () => {
       calls: [
         [
           watchAdvancedSettings,
-          () =>
-            streamOf([
-              { option: 'logFilter', pattern: 'app:*' },
-              { option: 'scratchpad', enabled: false },
-            ]),
+          () => streamOf([{ option: 'logFilter', pattern: 'app:*' }]),
         ],
         [readAdvancedSettings, () => ({ ...advancedDefaults })],
       ],
     });
 
-    expect(trace.commits.slice(1)).toEqual([
-      [logFilterChangedTopic('app:*')],
-      [scratchpadChangedTopic(false)],
-    ]);
+    expect(trace.commits.slice(1)).toEqual([[logFilterChangedTopic('app:*')]]);
   });
 
   it('reconciles the seeded defaults with what OPFS had', async () => {
@@ -135,11 +122,7 @@ describe('trackAdvancedSettingsSaga', () => {
       calls: [
         [
           watchAdvancedSettings,
-          () =>
-            streamOf([
-              { option: 'logFilter', pattern: 'app:*' },
-              { option: 'scratchpad', enabled: true },
-            ]),
+          () => streamOf([{ option: 'logFilter', pattern: 'app:*' }]),
         ],
         [readAdvancedSettings, () => ({ ...advancedDefaults })],
       ],
@@ -150,7 +133,6 @@ describe('trackAdvancedSettingsSaga', () => {
 
     expect(runtime.peek(advancedSettingsStore)).toEqual({
       logFilter: 'app:*',
-      scratchpadEnabled: true,
     });
   });
 
@@ -178,49 +160,27 @@ describe('trackAdvancedSettingsSaga', () => {
 });
 
 describe('write sagas', () => {
-  it.each([
-    [
-      'commitLogFilterSaga',
-      commitLogFilterSaga('app:*'),
-      writeLogFilter,
-      'app:*',
-    ],
-    [
-      'commitScratchpadSaga',
-      commitScratchpadSaga(false),
-      writeScratchpadEnabled,
-      false,
-    ],
-  ] as const)(
-    '%s persists its value and commits nothing',
-    async (_name, invocation, capability, value) => {
-      const write = vi.fn();
+  it('commitLogFilterSaga persists its value and commits nothing', async () => {
+    const write = vi.fn();
 
-      const trace = await simulate(invocation, {
-        calls: [[capability, write]],
-      });
+    const trace = await simulate(commitLogFilterSaga('app:*'), {
+      calls: [[writeLogFilter, write]],
+    });
 
-      // Nothing is published here on purpose: the write echoes back through
-      // the subscription, which is the store's only writer.
-      expect(trace.commits).toEqual([]);
-      expect(write).toHaveBeenCalledWith(expect.anything(), value);
-    },
-  );
+    // Nothing is published here on purpose: the write echoes back through
+    // the subscription, which is the store's only writer.
+    expect(trace.commits).toEqual([]);
+    expect(write).toHaveBeenCalledWith(expect.anything(), 'app:*');
+  });
 
-  it.each([
-    ['resetLogFilterSaga', resetLogFilterSaga(), resetLogFilter],
-    ['resetScratchpadSaga', resetScratchpadSaga(), resetScratchpadEnabled],
-  ] as const)(
-    '%s clears its override and commits nothing',
-    async (_name, invocation, capability) => {
-      const clear = vi.fn();
+  it('resetLogFilterSaga clears its override and commits nothing', async () => {
+    const clear = vi.fn();
 
-      const trace = await simulate(invocation, {
-        calls: [[capability, clear]],
-      });
+    const trace = await simulate(resetLogFilterSaga(), {
+      calls: [[resetLogFilter, clear]],
+    });
 
-      expect(trace.commits).toEqual([]);
-      expect(clear).toHaveBeenCalledTimes(1);
-    },
-  );
+    expect(trace.commits).toEqual([]);
+    expect(clear).toHaveBeenCalledTimes(1);
+  });
 });

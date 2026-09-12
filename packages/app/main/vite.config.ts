@@ -90,15 +90,11 @@ export default defineConfig({
         // Manual entries for routes the crawler can't reach from `/`:
         //   - `/404`: rendered via Cloudflare's `not_found_handling`,
         //     not linked from any page.
-        //   - the `/scratchpad/*` and `/beam/*` routes: flag-gated apps,
-        //     unlisted from the launcher whenever their flag is off.
-        //     The scratchpad's experiments are listed one by one because
-        //     its landing page is a blank canvas that links to none of
-        //     them — nothing for the crawler to follow.
-        //     Their shells ship in every build; the service worker gates
-        //     access at runtime via the per-app flag (see
-        //     `@lib/runtime-config`), so there's nothing to decide at
-        //     build time here. Beam's inner pages are listed rather than
+        //   - the `/scratchpad/*` and `/beam/*` routes: neither landing
+        //     page links to its own children, so the crawler has nothing
+        //     to follow past the launcher's card. The scratchpad's
+        //     experiments are listed one by one because its landing page
+        //     is a blank canvas; beam's inner pages are listed rather than
         //     left to the crawler so the set doesn't hinge on which links
         //     the beam home happens to render.
         //   - `/beam/share/__id`: a representative shell for the dynamic

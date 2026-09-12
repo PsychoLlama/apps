@@ -1,7 +1,5 @@
-import { For, Show, onMount } from 'solid-js';
+import { For } from 'solid-js';
 import type { Component } from 'solid-js';
-import { AbortError, useAnchor, useRun, useValue } from '@lib/state';
-import { createLogger, toError } from '@lib/observability';
 import {
   Card,
   Container,
@@ -21,14 +19,7 @@ import IconSend from 'virtual:icons/mdi/send';
 import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import IconGithub from 'virtual:icons/mdi/github';
-import {
-  launcherFlagsStore,
-  launcherScope,
-  trackLauncherFlagsSaga,
-} from '../state';
 import * as css from './index.css';
-
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 interface AppEntry {
   id: string;
@@ -89,21 +80,14 @@ const DEV_APPS: ReadonlyArray<AppEntry> = [
     description: 'Browse the component library and design system.',
     Icon: IconGallery,
   },
+  {
+    id: 'scratchpad',
+    name: 'Scratchpad',
+    href: '/scratchpad',
+    description: 'Experiments and work-in-progress ideas.',
+    Icon: IconHammerWrench,
+  },
 ];
-
-/**
- * The scratchpad app. Kept out of {@link DEV_APPS} because it's gated on
- * the `scratchpad` runtime flag rather than always shown: the launcher
- * reveals it reactively (see {@link scratchpadFlag}), in lockstep with
- * the service worker's runtime route gate.
- */
-const SCRATCHPAD_APP: AppEntry = {
-  id: 'scratchpad',
-  name: 'Scratchpad',
-  href: '/scratchpad',
-  description: 'Experiments and work-in-progress ideas.',
-  Icon: IconHammerWrench,
-};
 
 /** A single launcher entry — a card linking to one app. */
 const AppCard: Component<{ app: AppEntry }> = (props) => (
@@ -155,116 +139,90 @@ const AppCard: Component<{ app: AppEntry }> = (props) => (
  * they'd read as app-specific anywhere else) and the source link lives
  * in the footer.
  */
-const Launcher = () => {
-  useAnchor(launcherScope);
-  const flags = useValue(launcherFlagsStore);
-  const track = useRun(trackLauncherFlagsSaga);
+const Launcher = () => (
+  <Frame>
+    <SiteHeader
+      actions={
+        <LinkButton
+          testId="settings"
+          href="/settings"
+          aria-label="Settings"
+          variant="ghost"
+          color="neutral"
+        >
+          <IconCog width="24" height="24" />
+        </LinkButton>
+      }
+    />
 
-  // The store is seeded with the build-environment default, so first
-  // paint (and prerender) match without a flash. OPFS is client-only —
-  // unavailable during SSG — so the tracking saga starts on mount: it
-  // subscribes, reconciles with any persisted override, then runs for as
-  // long as the launcher is mounted.
-  onMount(() => {
-    void track().catch((error: unknown) => {
-      // Releasing the anchor on cleanup aborts the saga. That's ordinary
-      // teardown, and nothing to report.
-      if (error instanceof AbortError) return;
-
-      logger.error('The launcher flag tracker failed.', {
-        error: toError(error),
-      });
-    });
-  });
-
-  return (
-    <Frame>
-      <SiteHeader
-        actions={
-          <LinkButton
-            testId="settings"
-            href="/settings"
-            aria-label="Settings"
-            variant="ghost"
-            color="neutral"
+    <FrameBody as="section">
+      <Flex as="div" direction="column" align="center" gap={6} grow>
+        <Flex as="hgroup" direction="column" align="center" gap={3}>
+          <Heading as="h1" size={8} trim="start" selectable={false}>
+            Apps
+          </Heading>
+          <Text
+            as="p"
+            size={3}
+            color="lowContrast"
+            trim="end"
+            selectable={false}
           >
-            <IconCog width="24" height="24" />
-          </LinkButton>
-        }
-      />
+            A handful of small, single-purpose tools.
+          </Text>
+        </Flex>
 
-      <FrameBody as="section">
-        <Flex as="div" direction="column" align="center" gap={6} grow>
-          <Flex as="hgroup" direction="column" align="center" gap={3}>
-            <Heading as="h1" size={8} trim="start" selectable={false}>
-              Apps
-            </Heading>
-            <Text
-              as="p"
-              size={3}
-              color="lowContrast"
-              trim="end"
-              selectable={false}
+        <Container as="div" size={2}>
+          <Flex as="div" direction="column" gap={5}>
+            <Flex
+              as="ul"
+              direction="column"
+              gap={3}
+              class={css.list}
+              aria-label="Apps"
             >
-              A handful of small, single-purpose tools.
-            </Text>
-          </Flex>
-
-          <Container as="div" size={2}>
-            <Flex as="div" direction="column" gap={5}>
-              <Flex
-                as="ul"
-                direction="column"
-                gap={3}
-                class={css.list}
-                aria-label="Apps"
-              >
-                <For each={APPS}>{(app) => <AppCard app={app} />}</For>
-              </Flex>
-
-              {/* The label names the list below it, which carries the
-                  same name via `aria-label`. Announcing it twice adds
-                  nothing, so the divider stays decorative. */}
-              <Flex as="div" align="center" gap={3} aria-hidden="true">
-                <Separator decorative class={css.rule} />
-                <Text as="span" size={1} color="lowContrast" selectable={false}>
-                  Development Tools
-                </Text>
-                <Separator decorative class={css.rule} />
-              </Flex>
-
-              <Flex
-                as="ul"
-                direction="column"
-                gap={3}
-                class={css.list}
-                aria-label="Development Tools"
-              >
-                <For each={DEV_APPS}>{(app) => <AppCard app={app} />}</For>
-                <Show when={flags().scratchpadEnabled}>
-                  <AppCard app={SCRATCHPAD_APP} />
-                </Show>
-              </Flex>
+              <For each={APPS}>{(app) => <AppCard app={app} />}</For>
             </Flex>
-          </Container>
-        </Flex>
 
-        <Flex as="footer" justify="end" class={css.footer}>
-          <LinkButton
-            testId="github"
-            href="https://github.com/PsychoLlama/apps"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Source on GitHub"
-            variant="ghost"
-            color="neutral"
-          >
-            <IconGithub width="20" height="20" />
-          </LinkButton>
-        </Flex>
-      </FrameBody>
-    </Frame>
-  );
-};
+            {/* The label names the list below it, which carries the
+                same name via `aria-label`. Announcing it twice adds
+                nothing, so the divider stays decorative. */}
+            <Flex as="div" align="center" gap={3} aria-hidden="true">
+              <Separator decorative class={css.rule} />
+              <Text as="span" size={1} color="lowContrast" selectable={false}>
+                Development Tools
+              </Text>
+              <Separator decorative class={css.rule} />
+            </Flex>
+
+            <Flex
+              as="ul"
+              direction="column"
+              gap={3}
+              class={css.list}
+              aria-label="Development Tools"
+            >
+              <For each={DEV_APPS}>{(app) => <AppCard app={app} />}</For>
+            </Flex>
+          </Flex>
+        </Container>
+      </Flex>
+
+      <Flex as="footer" justify="end" class={css.footer}>
+        <LinkButton
+          testId="github"
+          href="https://github.com/PsychoLlama/apps"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Source on GitHub"
+          variant="ghost"
+          color="neutral"
+        >
+          <IconGithub width="20" height="20" />
+        </LinkButton>
+      </Flex>
+    </FrameBody>
+  </Frame>
+);
 
 export default Launcher;

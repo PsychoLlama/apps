@@ -2,16 +2,13 @@ import { call, commit, defineSaga } from '@lib/state';
 import {
   readAdvancedSettings,
   resetLogFilter,
-  resetScratchpadEnabled,
   watchAdvancedSettings,
   writeLogFilter,
-  writeScratchpadEnabled,
 } from './capabilities';
 import { advancedSettingsScope } from './scope';
 import {
   advancedSettingsRestoredTopic,
   logFilterChangedTopic,
-  scratchpadChangedTopic,
 } from './settings';
 
 /**
@@ -45,9 +42,6 @@ export const trackAdvancedSettingsSaga = defineSaga(
         case 'logFilter':
           yield commit(logFilterChangedTopic(change.pattern));
           break;
-        case 'scratchpad':
-          yield commit(scratchpadChangedTopic(change.enabled));
-          break;
       }
     }
   },
@@ -72,21 +66,5 @@ export const resetLogFilterSaga = defineSaga(
   advancedSettingsScope,
   async function* () {
     yield* call(resetLogFilter);
-  },
-);
-
-/** Persist the scratchpad flag. Echoes back like {@link commitLogFilterSaga}. */
-export const commitScratchpadSaga = defineSaga(
-  advancedSettingsScope,
-  async function* (enabled: boolean) {
-    yield* call(writeScratchpadEnabled, enabled);
-  },
-);
-
-/** Revert the scratchpad flag to its default for the active environment. */
-export const resetScratchpadSaga = defineSaga(
-  advancedSettingsScope,
-  async function* () {
-    yield* call(resetScratchpadEnabled);
   },
 );
