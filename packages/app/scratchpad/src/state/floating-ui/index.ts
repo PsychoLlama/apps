@@ -3,7 +3,7 @@
  * floating window takes, plus the tether's middleware.
  *
  * All of it is page-local and dies with the route — except
- * `tetherDisabled`, which `@lib/runtime-config` persists to OPFS and fans
+ * `tetherEnabled`, which `@lib/runtime-config` persists to OPFS and fans
  * out to every browsing context. `trackTetherConfigSaga` subscribes to
  * that fan-out, making it that field's only writer.
  */
@@ -26,7 +26,7 @@ export {
   type TetherMiddleware,
 } from './controls';
 export {
-  commitTetherDisabledSaga,
+  commitTetherEnabledSaga,
   resetControlsSaga,
   trackTetherConfigSaga,
 } from './sagas';

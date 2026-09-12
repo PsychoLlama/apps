@@ -1,7 +1,6 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { environment } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
-import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import { advancedSettingsScope } from './scope';
 
 /** Live values backing the settings page's Advanced section. */
@@ -14,13 +13,6 @@ export interface AdvancedSettingsState {
    * OPFS override.
    */
   logFilter: string;
-
-  /**
-   * Whether the scratchpad app is enabled for the active environment.
-   * Seeded from the option default, then reconciled on mount like
-   * `logFilter`.
-   */
-  scratchpadEnabled: boolean;
 }
 
 /**
@@ -31,7 +23,6 @@ export interface AdvancedSettingsState {
  */
 export const advancedDefaults: AdvancedSettingsState = {
   logFilter: filter.defaults[environment].pattern,
-  scratchpadEnabled: scratchpadAppEnabled.defaults[environment].enabled,
 };
 
 /**
@@ -58,7 +49,6 @@ defineFold(
   [advancedSettingsStore],
   (advanced, values) => {
     advanced.logFilter = values.logFilter;
-    advanced.scratchpadEnabled = values.scratchpadEnabled;
   },
 );
 
@@ -69,15 +59,5 @@ defineFold(
   [advancedSettingsStore],
   (advanced, pattern) => {
     advanced.logFilter = pattern;
-  },
-);
-
-/** The scratchpad app flag resolved to a new value. */
-export const scratchpadChangedTopic = defineTopic<boolean>();
-defineFold(
-  scratchpadChangedTopic,
-  [advancedSettingsStore],
-  (advanced, enabled) => {
-    advanced.scratchpadEnabled = enabled;
   },
 );

@@ -7,8 +7,8 @@ import { Frame } from '@lib/shell';
  * breadcrumb can name the experiment in view without the layout
  * reverse-engineering the active route.
  *
- * Beneath it, `./home` is the empty canvas at `/scratchpad` and each
- * sibling file is one branch-scoped experiment on its own route.
+ * Beneath it, `./home` is the index at `/scratchpad` and each sibling
+ * file is one work-in-progress experiment on its own route.
  */
 const ScratchpadLayout = (props: { children?: JSX.Element }) => (
   <Frame>{props.children}</Frame>

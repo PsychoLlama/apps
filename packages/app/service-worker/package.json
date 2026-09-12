@@ -13,10 +13,8 @@
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
-    "@app/scratchpad": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
-    "@lib/observability": "workspace:*",
-    "@lib/runtime-config": "workspace:*"
+    "@lib/observability": "workspace:*"
   },
   "devDependencies": {
     "@dev/build": "workspace:*",

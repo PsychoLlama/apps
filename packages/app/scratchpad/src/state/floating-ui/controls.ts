@@ -6,7 +6,7 @@ import type {
   FloatingPoint,
   FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
-import { tetherDisabled as tetherDisabledOption } from '../../config';
+import { tetherEnabled as tetherEnabledOption } from '../../config';
 import { scratchpadScope } from './scope';
 
 /** One toggleable middleware the tether can run. */
@@ -47,15 +47,15 @@ export interface FloatingControlsState {
    */
   point: FloatingPoint | null;
   /**
-   * Whether to stand the tether down (no `tether` prop), leaving the
-   * pure-CSS placement in sole charge — the pre-hydration state, held
-   * open indefinitely.
+   * Whether the window gets a `tether` prop at all. Unchecking it stands
+   * the tether down, leaving the pure-CSS placement in sole charge — the
+   * pre-hydration state, held open indefinitely.
    *
    * The one control that outlives the page. It persists through
    * `@lib/runtime-config`, so `trackTetherConfigSaga` is its only writer
    * here — the checkbox writes to OPFS and the change comes back around.
    */
-  tetherDisabled: boolean;
+  tetherEnabled: boolean;
   /** Which middleware the tether runs. */
   middleware: Record<TetherMiddleware, boolean>;
   /** Where `flip` may take the window. */
@@ -69,8 +69,8 @@ export interface FloatingControlsState {
  * so a reset lands on the same value clearing the override reverts to.
  */
 const defaults = (): FloatingControlsState => ({
-  side: 'bottom',
-  align: 'center',
+  side: 'top',
+  align: 'start',
   arrowVisible: true,
   arrowBase: 16,
   arrowDepth: 8,
@@ -78,7 +78,7 @@ const defaults = (): FloatingControlsState => ({
   sideOffset: 0,
   alignOffset: 0,
   point: null,
-  tetherDisabled: tetherDisabledOption.defaults[environment].disabled,
+  tetherEnabled: tetherEnabledOption.defaults[environment].enabled,
   middleware: {
     flip: true,
     shift: true,
@@ -151,16 +151,16 @@ defineFold(pointChanged, [floatingControls], (controls, point) => {
 });
 
 /**
- * Standing the tether down resolved to a new value.
+ * Whether the tether is in charge resolved to a new value.
  *
  * Published by the runtime-config subscription, never by the checkbox
  * that triggered a change: the toggle persists through
  * `@lib/runtime-config` and the change comes back around here, so a
  * same-tab write lands exactly the way a sibling tab's would.
  */
-export const tetherDisabledChanged = defineTopic<boolean>();
-defineFold(tetherDisabledChanged, [floatingControls], (controls, disabled) => {
-  controls.tetherDisabled = disabled;
+export const tetherEnabledChanged = defineTopic<boolean>();
+defineFold(tetherEnabledChanged, [floatingControls], (controls, enabled) => {
+  controls.tetherEnabled = enabled;
 });
 
 /**
@@ -184,7 +184,7 @@ defineFold(flipModeChanged, [floatingControls], (controls, mode) => {
 /**
  * Every control put back to its default.
  *
- * `tetherDisabled` is restored here too, but the durable copy is cleared
+ * `tetherEnabled` is restored here too, but the durable copy is cleared
  * separately by `resetControlsSaga`; both land on the same value, so the
  * echo that follows confirms what the fold already wrote.
  */

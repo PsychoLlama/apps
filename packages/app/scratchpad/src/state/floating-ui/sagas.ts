@@ -1,18 +1,18 @@
 import { call, commit, defineSaga } from '@lib/state';
 import {
-  readTetherDisabled,
-  resetTetherDisabled,
-  watchTetherDisabled,
-  writeTetherDisabled,
+  readTetherEnabled,
+  resetTetherEnabled,
+  watchTetherEnabled,
+  writeTetherEnabled,
 } from './capabilities';
-import { controlsReset, tetherDisabledChanged } from './controls';
+import { controlsReset, tetherEnabledChanged } from './controls';
 import { scratchpadScope } from './scope';
 
 /**
  * Bring the persisted tether toggle to life and keep it there. Opens the
  * change subscription, reconciles the seeded default with whatever OPFS
  * has persisted, then publishes every later change for as long as the
- * scope lives. This is the only writer of `tetherDisabled`: the sagas
+ * scope lives. This is the only writer of `tetherEnabled`: the sagas
  * below persist through `@lib/runtime-config`, and the change comes back
  * around here.
  *
@@ -29,13 +29,13 @@ import { scratchpadScope } from './scope';
 export const trackTetherConfigSaga = defineSaga(
   scratchpadScope,
   async function* () {
-    const changes = yield* call(watchTetherDisabled);
+    const changes = yield* call(watchTetherEnabled);
 
-    const disabled = yield* call(readTetherDisabled);
-    yield commit(tetherDisabledChanged(disabled));
+    const enabled = yield* call(readTetherEnabled);
+    yield commit(tetherEnabledChanged(enabled));
 
     for await (const change of changes) {
-      yield commit(tetherDisabledChanged(change));
+      yield commit(tetherEnabledChanged(change));
     }
   },
 );
@@ -44,10 +44,10 @@ export const trackTetherConfigSaga = defineSaga(
  * Persist the tether toggle. Publishes nothing: the write echoes back
  * through the subscription, which is what updates the store.
  */
-export const commitTetherDisabledSaga = defineSaga(
+export const commitTetherEnabledSaga = defineSaga(
   scratchpadScope,
-  async function* (disabled: boolean) {
-    yield* call(writeTetherDisabled, disabled);
+  async function* (enabled: boolean) {
+    yield* call(writeTetherEnabled, enabled);
   },
 );
 
@@ -63,6 +63,6 @@ export const resetControlsSaga = defineSaga(
   scratchpadScope,
   async function* () {
     yield commit(controlsReset());
-    yield* call(resetTetherDisabled);
+    yield* call(resetTetherEnabled);
   },
 );

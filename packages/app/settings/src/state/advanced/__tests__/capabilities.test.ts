@@ -1,5 +1,5 @@
 /**
- * Tests for `watchAdvancedSettings` — the bridge from two
+ * Tests for `watchAdvancedSettings` — the bridge from the
  * `@lib/runtime-config` subscriptions to one async stream. The rest of the
  * capabilities are thin wrappers over `@lib/runtime-config` and are
  * covered there.
@@ -8,7 +8,6 @@
 import { subscribe } from '@lib/runtime-config';
 import type * as RuntimeConfig from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
-import { enabled as scratchpadAppEnabled } from '@app/scratchpad/config';
 import {
   watchAdvancedSettings,
   type AdvancedSettingChange,
@@ -22,17 +21,15 @@ vi.mock('@lib/runtime-config', async (importOriginal) => ({
 /** The listener each option's subscription was registered with. */
 type Listeners = {
   logFilter: (value: { pattern: string }) => void;
-  scratchpad: (value: { enabled: boolean }) => void;
 };
 
 const setup = () => {
-  const unsubscribes = [vi.fn(), vi.fn()];
+  const unsubscribes = [vi.fn()];
   const listeners: Partial<Listeners> = {};
   let index = 0;
 
   vi.mocked(subscribe).mockImplementation((option, listener) => {
     if (option === filter) listeners.logFilter = listener;
-    if (option === scratchpadAppEnabled) listeners.scratchpad = listener;
     return unsubscribes[index++] ?? vi.fn();
   });
 
@@ -55,26 +52,22 @@ describe('watchAdvancedSettings', () => {
   it('subscribes to every option up front, before anything drains it', () => {
     const { listeners } = setup();
 
-    expect(subscribe).toHaveBeenCalledTimes(2);
-    expect(Object.keys(listeners).sort()).toEqual(['logFilter', 'scratchpad']);
+    expect(subscribe).toHaveBeenCalledTimes(1);
+    expect(Object.keys(listeners).sort()).toEqual(['logFilter']);
   });
 
   it('reports each option under its own tag', async () => {
     const { changes, listeners } = setup();
 
     listeners.logFilter({ pattern: 'app:*' });
-    listeners.scratchpad({ enabled: false });
 
     const seen: AdvancedSettingChange[] = [];
     for await (const change of changes) {
       seen.push(change);
-      if (seen.length === 2) break;
+      break;
     }
 
-    expect(seen).toEqual([
-      { option: 'logFilter', pattern: 'app:*' },
-      { option: 'scratchpad', enabled: false },
-    ]);
+    expect(seen).toEqual([{ option: 'logFilter', pattern: 'app:*' }]);
   });
 
   it('buffers a burst rather than collapsing it to the last change', async () => {
@@ -122,10 +115,10 @@ describe('watchAdvancedSettings', () => {
 
   it('unsubscribes when the consumer stops draining early', async () => {
     const { changes, listeners, unsubscribes } = setup();
-    listeners.scratchpad({ enabled: true });
+    listeners.logFilter({ pattern: 'app:*' });
 
     for await (const change of changes) {
-      expect(change).toEqual({ option: 'scratchpad', enabled: true });
+      expect(change).toEqual({ option: 'logFilter', pattern: 'app:*' });
       break;
     }
 

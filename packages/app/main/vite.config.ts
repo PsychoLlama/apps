@@ -90,17 +90,11 @@ export default defineConfig({
         // Manual entries for routes the crawler can't reach from `/`:
         //   - `/404`: rendered via Cloudflare's `not_found_handling`,
         //     not linked from any page.
-        //   - the `/scratchpad/*` and `/beam/*` routes: flag-gated apps,
-        //     unlisted from the launcher whenever their flag is off.
-        //     The scratchpad's experiments are listed one by one because
-        //     its landing page is a blank canvas that links to none of
-        //     them — nothing for the crawler to follow.
-        //     Their shells ship in every build; the service worker gates
-        //     access at runtime via the per-app flag (see
-        //     `@lib/runtime-config`), so there's nothing to decide at
-        //     build time here. Beam's inner pages are listed rather than
-        //     left to the crawler so the set doesn't hinge on which links
-        //     the beam home happens to render.
+        //   - the `/beam/*` routes: beam's inner pages are listed rather
+        //     than left to the crawler so the set doesn't hinge on which
+        //     links the beam home happens to render. The scratchpad needs
+        //     no such entries — its landing page indexes every experiment,
+        //     so the crawler walks the whole subtree from the launcher.
         //   - `/beam/share/__id`: a representative shell for the dynamic
         //     `/beam/share/:id` route. The id names a peer endpoint, which
         //     only exists client-side (it's a live relay handle), so the route
@@ -115,13 +109,7 @@ export default defineConfig({
         //     dynamic path onto that shell so a cold load hydrates against a
         //     beam-shaped shell instead of the 404 page (which would mismatch
         //     and throw).
-        routes: [
-          '/404',
-          '/scratchpad',
-          '/scratchpad/floating-ui',
-          '/beam',
-          '/beam/share/__id',
-        ],
+        routes: ['/404', '/beam', '/beam/share/__id'],
       },
       hooks: {
         // Cloudflare's `not_found_handling = "404-page"` looks for a file

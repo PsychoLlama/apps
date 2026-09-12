@@ -12,12 +12,12 @@ description: Reference for `@lib/runtime-config` — per-environment feature fla
 ## Defining
 
 - One `config.ts` per owning package, exported as `@<scope>/<name>/config`.
-- IDs are stable and namespaced: `@app/scratchpad`, `@app/logs:export`.
+- IDs are stable and namespaced: `@app/scratchpad:tether-disabled`, `@app/logs:export`.
 - Every environment needs a value. Defaults ship in the bundle, so they're the only value available during prerender.
 
 ```ts
 // Defaults to `{ enabled: boolean }`.
-export const enabled = defineConfig('@app/scratchpad', {
+export const enabled = defineConfig('@app/example', {
   development: { enabled: true },
   staging: { enabled: true },
   production: { enabled: false },
