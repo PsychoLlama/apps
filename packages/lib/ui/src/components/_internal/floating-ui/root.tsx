@@ -1,6 +1,7 @@
 import {
   createContext,
   createSignal,
+  splitProps,
   useContext,
   type Accessor,
   type JSX,
@@ -44,8 +45,17 @@ const TAG_BY_DISPLAY: Record<FloatingRootDisplay, 'div' | 'span'> = {
   inline: 'span',
 };
 
-/** Props for the root of a floating primitive. */
-export interface FloatingRootProps extends TestIdProps {
+/**
+ * Props for the root of a floating primitive.
+ *
+ * Every native attribute and handler passes through to the wrapper.
+ * It's the one element that contains both the anchored element and the
+ * windows bound to it, so it's where a floating component listens for
+ * focus and pointer crossing between the two, and the element it hands
+ * to anything that needs "the trigger and its popup" as one box.
+ */
+export interface FloatingRootProps
+  extends TestIdProps, JSX.HTMLAttributes<HTMLElement> {
   /**
    * How the wrapper sits in the surrounding flow: `block` renders a
    * `<div>`, `inline` a `<span>`. Required rather than defaulted —
@@ -92,19 +102,35 @@ export interface FloatingRootProps extends TestIdProps {
  * ```
  */
 export const FloatingRoot = (props: FloatingRootProps) => {
-  const [element, setElement] = createSignal<HTMLElement>();
+  const [local, passthrough] = splitProps(props, [
+    'display',
+    'class',
+    'ref',
+    'testId',
+    'children',
+  ]);
 
-  const className = () => clx(css.root[props.display], props.class);
+  const [element, setElement] = createSignal<HTMLElement>();
+  const className = () => clx(css.root[local.display], local.class);
+
+  // The root keeps a ref of its own on the wrapper, for the anchor
+  // context; a consumer's composes with it. Solid hands a component a
+  // function whichever form the consumer wrote.
+  const setAnchor = (wrapper: HTMLElement) => {
+    setElement(wrapper);
+    if (typeof local.ref === 'function') local.ref(wrapper);
+  };
 
   return (
     <AnchorContext.Provider value={element}>
       <Dynamic
-        component={TAG_BY_DISPLAY[props.display]}
-        ref={setElement}
+        component={TAG_BY_DISPLAY[local.display]}
+        {...passthrough}
+        ref={setAnchor}
         class={className()}
-        data-testid={props.testId}
+        data-testid={local.testId}
       >
-        {props.children}
+        {local.children}
       </Dynamic>
     </AnchorContext.Provider>
   );

@@ -9,7 +9,10 @@
  * The primitive splits into three layers:
  * - `FloatingRoot` — the box everything positions against. It wraps the
  *   anchored element and publishes it through context, so a window is
- *   never handed an element by hand.
+ *   never handed an element by hand. Its native attributes land on the
+ *   wrapper, the one element holding both the anchored element and its
+ *   windows, so a component listens there for focus and pointer moving
+ *   between the two.
  * - `FloatingWindow` — the positioned box. It will grow to own the
  *   plumbing floating components share (anchoring, layering). Its
  *   native attributes land on the box, which is where a component's

@@ -238,3 +238,11 @@ export {
   default as NoScript,
   type NoScriptProps,
 } from './components/no-script/no-script';
+export {
+  default as Tooltip,
+  type TooltipProps,
+  type TooltipSide,
+  type TooltipAlign,
+  type TooltipDisplay,
+  type TooltipTriggerProps,
+} from './components/tooltip/tooltip';

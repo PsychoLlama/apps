@@ -61,6 +61,43 @@ describe('FloatingRoot', () => {
     expect(screen.getByTestId('anchor')).toHaveClass('sized');
   });
 
+  it('forwards native attributes and handlers to the wrapper', () => {
+    const onFocusOut = vi.fn();
+    render(() => (
+      <FloatingRoot
+        display="block"
+        testId="anchor"
+        data-state="open"
+        onFocusOut={onFocusOut}
+      >
+        <button>focusable</button>
+      </FloatingRoot>
+    ));
+
+    expect(screen.getByTestId('anchor')).toHaveAttribute('data-state', 'open');
+    fireEvent.focusOut(screen.getByRole('button'));
+    expect(onFocusOut).toHaveBeenCalledOnce();
+  });
+
+  it('hands the wrapper to `ref` and still anchors its windows', () => {
+    // The root keeps a ref of its own on the same node; a consumer's
+    // composes with it rather than replacing it.
+    let element: HTMLElement | undefined;
+    render(() => (
+      <FloatingRoot
+        display="block"
+        testId="anchor"
+        ref={(el: HTMLElement) => (element = el)}
+      >
+        <button>anchored</button>
+        <FloatingWindow testId="window">content</FloatingWindow>
+      </FloatingRoot>
+    ));
+
+    expect(element).toBe(screen.getByTestId('anchor'));
+    expect(screen.getByTestId('window').parentElement).toBe(element);
+  });
+
   it('keeps the window a sibling of what it anchors to', () => {
     // A window hanging off the anchored element is what let the anchor's
     // own border, overflow, and stacking context reach the surface.
