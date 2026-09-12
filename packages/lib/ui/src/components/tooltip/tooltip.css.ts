@@ -14,7 +14,7 @@
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
 
-import { createVar, fallbackVar, style } from '@vanilla-extract/css';
+import { createVar, fallbackVar, keyframes, style } from '@vanilla-extract/css';
 import { neutral } from '@lib/design';
 
 /**
@@ -39,8 +39,26 @@ export const text = style({
 });
 
 /**
- * The positioned box. Always in the DOM; its own `data-state` decides
- * whether it shows.
+ * Not motion: an empty animation the open window carries so the
+ * stylesheet can tell the component when it shows and hides. Starting
+ * fires `animationstart`; `display: none` cancels it, which fires
+ * `animationcancel`. Paused, so it never ticks or ends on its own, and
+ * its duration is a literal rather than a motion token: the tokens
+ * collapse to `0ms` under reduced motion, and a `0ms` animation ends
+ * the instant it starts, leaving nothing to cancel.
+ *
+ * Two empty stops rather than no stops: Vanilla Extract emits nothing
+ * for an empty keyframes object, and an animation naming a missing
+ * `@keyframes` never starts.
+ */
+export const open = keyframes({ from: {}, to: {} });
+
+/**
+ * The positioned box. Always in the DOM, and the stylesheet decides
+ * whether it shows: hidden unless focus rests visibly inside the
+ * floating root, which holds the trigger and nothing else focusable.
+ * `:focus-visible` is the browser's own call on whether the focus came
+ * from the keyboard, so a pointer press on the trigger never opens it.
  *
  * Carries the surface color as `color` so the arrow, which fills with
  * `currentColor`, matches the surface without a class of its own. The
@@ -48,8 +66,9 @@ export const text = style({
  */
 export const window = style({
   color: neutral.solid[12],
+  animation: `${open} 1s paused`,
   selectors: {
-    '&:where([data-state="closed"])': {
+    ':where(:not(:has(:focus-visible))) > &': {
       display: 'none',
     },
   },

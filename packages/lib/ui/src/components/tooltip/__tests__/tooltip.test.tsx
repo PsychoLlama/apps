@@ -1,21 +1,18 @@
 /**
- * Behavior tests for Tooltip: what opens it, what closes it, and what
- * it tells assistive tech. Runs in jsdom — none of this needs layout.
+ * Tests for what Tooltip renders and what it tells assistive tech.
+ * Runs in jsdom, which doesn't evaluate the stylesheet — showing and
+ * hiding is CSS, so that's in the browser tests.
  */
 
 import { createSignal, Show } from 'solid-js';
-import { cleanup, fireEvent, render, screen } from '@solidjs/testing-library';
+import { cleanup, render, screen } from '@solidjs/testing-library';
 import Button from '../../button/button';
 import Tooltip, { type TooltipProps } from '../tooltip';
 import * as css from '../tooltip.css';
 
 type Overrides = Partial<Omit<TooltipProps, 'children'>>;
 
-/**
- * Render a tooltip around a button. The window's `data-state` is the
- * handle for "is it open" — it's always in the DOM, and CSS shows it
- * from that attribute; the trigger's test id is for driving it.
- */
+/** Render a tooltip around a button. The window is always in the DOM. */
 const setup = (overrides: Overrides = {}, name = 'tooltip') => {
   render(() => (
     <Tooltip
@@ -43,26 +40,16 @@ const setup = (overrides: Overrides = {}, name = 'tooltip') => {
 afterEach(cleanup);
 
 describe('Tooltip', () => {
-  it('starts closed', () => {
-    const { window } = setup();
-
-    expect(window()).toHaveAttribute('data-state', 'closed');
-  });
-
-  it('opens at once on focus and closes on blur', () => {
+  it('renders the window beside the trigger', () => {
     const { trigger, window } = setup();
 
-    fireEvent.focusIn(trigger);
-    expect(window()).toHaveAttribute('data-state', 'instant-open');
     expect(window()).toHaveTextContent('Add to library');
-
-    fireEvent.focusOut(trigger);
-    expect(window()).toHaveAttribute('data-state', 'closed');
+    expect(window()?.parentElement).toBe(trigger.parentElement);
   });
 
   // --- Accessibility ---
 
-  it('describes the trigger by the tooltip, open or closed', () => {
+  it('describes the trigger by the tooltip', () => {
     const { trigger, tooltip } = setup();
 
     const label = tooltip();
@@ -71,11 +58,6 @@ describe('Tooltip', () => {
     expect(label).not.toHaveAttribute('aria-label');
     expect(trigger).toHaveAttribute('aria-describedby', label?.id);
     expect(trigger).toHaveAccessibleDescription('Add to library');
-
-    fireEvent.focusIn(trigger);
-    expect(trigger).toHaveAttribute('aria-describedby', label?.id);
-    fireEvent.focusOut(trigger);
-    expect(trigger).toHaveAttribute('aria-describedby', label?.id);
   });
 
   it('lets a trigger compose a description of its own', () => {
@@ -106,9 +88,12 @@ describe('Tooltip', () => {
       'aria-label': 'Command palette',
     });
 
-    fireEvent.focusIn(trigger);
     expect(tooltip()).toHaveTextContent('⌘K');
     expect(tooltip()).toHaveAccessibleName('Command palette');
+    // Chrome carries the label through to the trigger's description.
+    // jsdom's accname reads the spec's "if computing a name" literally
+    // and gives the text instead, so that end isn't asserted here.
+    expect(trigger).toHaveAttribute('aria-describedby', tooltip()?.id);
   });
 
   it('follows a trigger swapped out under it', () => {
@@ -132,17 +117,14 @@ describe('Tooltip', () => {
       </Tooltip>
     ));
 
-    const window = screen.getByTestId('tooltip');
-
-    fireEvent.focusIn(screen.getByTestId('before'));
-    expect(window).toHaveAttribute('data-state', 'instant-open');
-    fireEvent.focusOut(screen.getByTestId('before'));
-    expect(window).toHaveAttribute('data-state', 'closed');
+    const id = screen.getByTestId('tooltip-text').id;
+    expect(screen.getByTestId('before')).toHaveAttribute(
+      'aria-describedby',
+      id,
+    );
 
     setSwapped(true);
-    fireEvent.focusIn(screen.getByTestId('after'));
-    expect(window).toHaveAttribute('data-state', 'instant-open');
-    expect(screen.getByTestId('after')).toHaveAttribute('aria-describedby');
+    expect(screen.getByTestId('after')).toHaveAttribute('aria-describedby', id);
   });
 
   // --- Placement and styling ---

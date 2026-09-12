@@ -12,7 +12,7 @@
  *   clip it and a later sibling can paint over it. The top layer is a
  *   planned enhancement.
  * - No `open` / `defaultOpen` / `onOpenChange`. The open state is the
- *   trigger's focus (and, later, hover), which the component owns end
+ *   trigger's focus (and, later, hover), which the stylesheet owns end
  *   to end; there is nothing for a call site to drive.
  * - `display` is required, from the floating root: the wrapper is a
  *   `<span>` or a `<div>`, and only the call site knows which one is
@@ -23,8 +23,15 @@
  *   never inspects or writes to an element it didn't render. A trigger
  *   with a description of its own composes the two — nothing is merged
  *   for it. No `data-state` rides on the trigger.
- * - Focus arrives as `focusin` / `focusout`, the bubbling pair Solid
- *   delegates, rather than upstream's `focus` / `blur`.
+ * - Focus is CSS. Upstream opens from a `focus` handler unless a
+ *   pointer press caused the focus, tracked in a ref. Here the window
+ *   shows while the root `:has(:focus-visible)`, and the browser's own
+ *   heuristic makes the press call. The two differ at the edges:
+ *   programmatic `.focus()` after a pointer interaction doesn't show
+ *   (upstream would); a pointer press into a text-input trigger does
+ *   (upstream wouldn't); and a keypress on a pointer-focused trigger
+ *   shows it (upstream waits for a refocus). No `focus` handlers, no
+ *   open signal, no attribute written on the way in or out.
  * - `content` renders once. Upstream renders it twice — visibly, and
  *   again in a visually-hidden `role="tooltip"` copy the trigger is
  *   described by — so its content can be anything and its `aria-label`
@@ -37,8 +44,15 @@
  *   `forceMount`, `container`, `width`, or `minWidth`.
  * - The window is always in the DOM. Upstream mounts its content on open
  *   and unmounts it on close; here it renders once, CSS-placed, and
- *   `data-state` on the window decides whether it shows. The tether
- *   engages only while open, so a closed tooltip costs no measurement.
+ *   the stylesheet decides whether it shows. No `data-state` rides on
+ *   the window either: nothing reads one, and the state it would name
+ *   lives in the stylesheet's selector.
+ * - The tether follows the stylesheet. The open window carries an
+ *   empty, paused animation; its `animationstart` and `animationcancel`
+ *   are the window saying it showed and hid, and the tether engages
+ *   between the two. A closed tooltip costs no measurement and no
+ *   scroll listener. Upstream's tether runs for as long as the content
+ *   is mounted, which is the same span.
  * - `aria-describedby` is static. Upstream sets it only while open,
  *   because a closed tooltip is unmounted and the id would dangle. Here
  *   the tooltip is always in the DOM, and the accessible description
@@ -85,25 +99,14 @@ export type TooltipAlign = FloatingAlignment;
 export type TooltipDisplay = FloatingRootDisplay;
 
 /**
- * Whether the tooltip is showing, and how it got there. Rides on the
- * window as `data-state`, which is what shows and hides it.
- */
-export type TooltipState = 'closed' | 'instant-open';
-
-/**
  * What the tooltip hands its trigger. Spread onto the focusable element
- * as-is: the handlers drive the tooltip, and the description names the
- * tooltip. A trigger with a description of its own composes the two.
+ * as-is: the description names the tooltip. A trigger with a
+ * description of its own composes the two. Showing and hiding is the
+ * stylesheet's, off the trigger's focus, so there are no handlers.
  */
 export interface TooltipTriggerProps {
   /** Id of the tooltip. Set whether or not it's open. */
   readonly 'aria-describedby': string;
-
-  /** Opens at once. */
-  readonly onFocusIn: () => void;
-
-  /** Closes. */
-  readonly onFocusOut: () => void;
 }
 
 /**
@@ -179,7 +182,7 @@ const DEFAULTS = {
 /**
  * A short label that floats beside its trigger while keyboard focus
  * rests on it. Announced to assistive tech as the trigger's
- * description.
+ * description, open or not.
  */
 const Tooltip = (rawProps: TooltipProps) => {
   const props = mergeProps(DEFAULTS, rawProps);
@@ -197,15 +200,18 @@ const Tooltip = (rawProps: TooltipProps) => {
     'children',
   ]);
 
-  const [state, setState] = createSignal<TooltipState>('closed');
   const contentId = createUniqueId();
+  const triggerProps: TooltipTriggerProps = { 'aria-describedby': contentId };
 
-  const open = () => state() !== 'closed';
-
-  const triggerProps: TooltipTriggerProps = {
-    'aria-describedby': contentId,
-    onFocusIn: () => setState('instant-open'),
-    onFocusOut: () => setState('closed'),
+  // Whether the stylesheet has the window open, as the window reports
+  // it (see `css.open`). The tether rides on this, so a closed window
+  // is never measured and a page of closed tooltips isn't listening for
+  // scroll. Later motion on the window reports under its own name.
+  const [open, setOpen] = createSignal(false);
+  const onOpenChange = (event: AnimationEvent) => {
+    if (event.animationName === css.open) {
+      setOpen(event.type === 'animationstart');
+    }
   };
 
   return (
@@ -213,6 +219,8 @@ const Tooltip = (rawProps: TooltipProps) => {
       {local.children(triggerProps)}
 
       <FloatingWindow
+        onAnimationStart={onOpenChange}
+        onAnimationCancel={onOpenChange}
         side={local.side}
         align={local.align}
         sideOffset={local.sideOffset}
@@ -220,11 +228,7 @@ const Tooltip = (rawProps: TooltipProps) => {
         radius={2}
         arrow={{}}
         class={css.window}
-        data-state={state()}
         testId={tid.testId}
-
-        // Withheld while closed: a hidden window has nothing to measure,
-        // and a page of closed tooltips shouldn't be listening for scroll.
         tether={open() ? TETHER : undefined}
       >
         <FloatingBody

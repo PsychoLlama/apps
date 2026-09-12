@@ -244,6 +244,5 @@ export {
   type TooltipSide,
   type TooltipAlign,
   type TooltipDisplay,
-  type TooltipState,
   type TooltipTriggerProps,
 } from './components/tooltip/tooltip';
