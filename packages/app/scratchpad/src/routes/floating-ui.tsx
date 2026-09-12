@@ -624,8 +624,8 @@ const FloatingUiScratchpad = () => {
 
             <Button
               testId="control-reset"
-              variant="soft"
-              color="neutral"
+              color="danger"
+              variant="outline"
               class={css.reset}
               onClick={() => void resetControls()}
             >
