@@ -12,6 +12,8 @@ import {
   Flex,
   Grid,
   Heading,
+  RadioCardsItem,
+  RadioCardsRoot,
   RadioGroupItem,
   RadioGroupRoot,
   SegmentedControlItem,
@@ -67,7 +69,6 @@ const ALIGNMENTS = [
   'end',
 ] as const satisfies FloatingAlignment[];
 const RADII = ['1', '2', '3', '4', '5', '6'] as const;
-const FLIP_MODES = ['auto', 'chain'] as const satisfies FlipMode[];
 
 /**
  * The chain the `chain` mode walks — a deliberately odd order so it's
@@ -75,6 +76,25 @@ const FLIP_MODES = ['auto', 'chain'] as const satisfies FlipMode[];
  * opposite side on its own.
  */
 const FALLBACK_CHAIN = ['right', 'left', 'top'] as const satisfies Placement[];
+
+/**
+ * The flip-mode cards. Cards over a segmented control because the mode
+ * names are bare words borrowed from the library's vocabulary — `auto`
+ * and `chain` say nothing on their own, and the sentence explaining the
+ * difference has to sit with the option rather than beneath the group.
+ */
+const FLIP_MODE_CARDS = [
+  {
+    value: 'auto',
+    label: 'auto',
+    hint: 'Try the opposite side first, then whatever else fits.',
+  },
+  {
+    value: 'chain',
+    label: 'chain',
+    hint: `Walk a fixed list in order: ${FALLBACK_CHAIN.join(', ')}.`,
+  },
+] as const satisfies { value: FlipMode; label: string; hint: string }[];
 
 /**
  * The middleware cards. Cards over bare checkboxes because each needs a
@@ -85,12 +105,12 @@ const TETHER_MIDDLEWARE_CARDS = [
   {
     value: 'flip',
     label: 'flip',
-    hint: 'Moves the window to another side when its own would overflow the boundary.',
+    hint: 'Move the window to another side when its own would overflow the boundary.',
   },
   {
     value: 'shift',
     label: 'shift',
-    hint: 'Slides the window along its bound edge to keep it inside the boundary.',
+    hint: 'Slide the window along its bound edge to keep it inside the boundary.',
   },
 ] as const satisfies { value: TetherMiddleware; label: string; hint: string }[];
 
@@ -518,8 +538,7 @@ const FloatingUiScratchpad = () => {
                   Enable tether
                 </Checkbox>
                 <Text as="p" size={1} selectable={false} class={css.hint}>
-                  Unchecking stands the tether down, so nothing gets measured —
-                  the pre-hydration state, where placement comes from CSS alone.
+                  Take over CSS-based positioning to avoid overflow clipping.
                 </Text>
               </Flex>
               <Flex as="div" direction="column" gap={2}>
@@ -561,13 +580,46 @@ const FloatingUiScratchpad = () => {
                   </For>
                 </CheckboxCardsRoot>
               </Flex>
-              <ChoiceControl
-                label="Flip fallbacks"
-                name="flip"
-                value={controls().flipMode}
-                options={FLIP_MODES}
-                onValueChange={chooseFlipMode}
-              />
+              <Flex as="div" direction="column" gap={2}>
+                <ControlLabel label="Flip fallbacks" />
+                <RadioCardsRoot
+                  testId="control-flip"
+                  name="flip"
+                  columns={1}
+                  gap={2}
+                  value={controls().flipMode}
+                  onValueChange={(mode) => chooseFlipMode(mode as FlipMode)}
+                  aria-label="Flip fallbacks"
+                >
+                  <For each={FLIP_MODE_CARDS}>
+                    {(card) => (
+                      <RadioCardsItem
+                        testId={`flip-${card.value}`}
+                        value={card.value}
+                      >
+                        <Flex as="div" direction="column" gap={1} grow>
+                          <Text
+                            as="p"
+                            size={2}
+                            weight="medium"
+                            selectable={false}
+                          >
+                            {card.label}
+                          </Text>
+                          <Text
+                            as="p"
+                            size={1}
+                            selectable={false}
+                            class={css.hint}
+                          >
+                            {card.hint}
+                          </Text>
+                        </Flex>
+                      </RadioCardsItem>
+                    )}
+                  </For>
+                </RadioCardsRoot>
+              </Flex>
             </ControlGroup>
 
             <Button
