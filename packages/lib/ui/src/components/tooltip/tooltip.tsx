@@ -1,6 +1,8 @@
 /**
  * Tooltip component.
  *
+ * UNDER DEVELOPMENT — DO NOT USE
+ *
  * Ported from Radix UI Themes Tooltip, on the internal floating-ui
  * primitive. The first consumer of the tether: the window measures
  * against its trigger and flips or shifts to stay on screen.
