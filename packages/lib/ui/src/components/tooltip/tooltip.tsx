@@ -15,8 +15,7 @@
  *   planned enhancement.
  * - No `open` / `defaultOpen` / `onOpenChange`. The open state is the
  *   trigger's focus and hover, which the stylesheet owns end to end;
- *   there is nothing for a call site to drive. No `delayDuration` or
- *   `skipDelayDuration` either, until there's a delay to tune.
+ *   there is nothing for a call site to drive.
  * - `display` is required, from the floating root: the wrapper is a
  *   `<span>` or a `<div>`, and only the call site knows which one is
  *   valid where it stands.
@@ -33,8 +32,19 @@
  *   pointer rather than the one in hand, so on a laptop with a
  *   touchscreen a tap is let in; `:hover` sticks after that tap, and
  *   the tooltip stays up until something else is touched.
- * - Hover has no delay yet, so the tooltip appears the instant the
- *   pointer lands. Upstream waits 200ms. Landing next.
+ * - The delay is CSS as well, and it is not a timer. The window carries
+ *   an instant animation whose `animation-delay` is the wait, holding
+ *   itself hidden through a `backwards` fill and coming out the other
+ *   side. So a visit that ends early leaves nothing behind to cancel, a
+ *   pointer that keeps moving over the trigger can't re-arm anything,
+ *   and the wait happens before hydration the same as after. Upstream
+ *   runs a timer per tooltip and a shared one per page.
+ * - The wait is fixed at 200ms, upstream's default. No `delayDuration`
+ *   prop, on the same grounds as the collision settings: the number is
+ *   a property of the page's feel, not of one call site.
+ * - Focus never waits, and focus arriving on a trigger the pointer is
+ *   already resting on doesn't race the wait — it shortens it to
+ *   nothing, and the window shows from wherever the wait had got to.
  * - Hoverable content arrives early and half-finished. The window sits
  *   inside the root, so hovering the tooltip itself keeps the root
  *   hovered and the tooltip open, which is what upstream's
@@ -69,9 +79,12 @@
  * - The tether follows the stylesheet. While the stylesheet considers
  *   the tooltip open it gives the root an empty, paused animation; its
  *   `animationstart` and `animationcancel` are the stylesheet saying
- *   so, and the tether engages between the two. A closed tooltip costs
- *   no measurement and no scroll listener. Upstream's tether runs for
- *   as long as the content is mounted, which is the same span.
+ *   so, and the tether engages between the two. That includes the wait
+ *   before a hovered tooltip appears, on purpose: the window is
+ *   measured and placed while it's still hidden, so it doesn't turn up
+ *   in the wrong spot and jump. A closed tooltip costs no measurement
+ *   and no scroll listener. Upstream's tether runs for as long as the
+ *   content is mounted, which is the same span.
  * - `aria-describedby` is static. Upstream sets it only while open,
  *   because a closed tooltip is unmounted and the id would dangle. Here
  *   the tooltip is always in the DOM, and the accessible description
@@ -102,8 +115,10 @@
  *   while the tooltip is open. A page of closed tooltips listens for
  *   nothing.
  * - Page-wide coordination is still to come: every tooltip opens on
- *   its own, so two can be up at once and none of them skip a delay
- *   that doesn't exist yet.
+ *   its own, so two can be up at once, and every one of them makes you
+ *   wait the full 200ms however recently the last one was up. No
+ *   `skipDelayDuration`; that arrives with the coordination it belongs
+ *   to, as a value written over the delay the stylesheet already has.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */

@@ -12,9 +12,13 @@
  *   handler reading `pointerType`. The media feature describes the
  *   primary pointer, so a touch on a device that also has a mouse is
  *   let in where upstream would turn it away.
- * - No delay yet. Hover opens the tooltip the moment the pointer lands.
+ * - The hover delay is CSS, and it's an `animation-delay` on the window
+ *   rather than a timer. Nothing about it needs the component to be
+ *   running, so it works before hydration.
+ * - The delay is fixed at 200ms, upstream's default, and not exposed as
+ *   `delayDuration` — the same call as the collision settings.
  * - No entrance animation yet. Upstream slides and fades a delayed open
- *   in; that lands with the hover delay.
+ *   in; it'll compose onto the window beside the delay, sharing it.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
@@ -81,6 +85,30 @@ const CONDITION = {
 };
 
 /**
+ * How long the window holds back before it shows. Zero unless hover is
+ * what opened it. A later phase drops it back to zero while another
+ * tooltip is already up, so the second one doesn't make you wait twice.
+ */
+export const delay = createVar();
+
+/**
+ * Not motion either: the window wears this for as long as {@link delay}
+ * says, and comes out the other side. The `backwards` fill is what
+ * makes it work — the animation itself takes no time at all, and
+ * everything it does happens before it starts, while the delay runs
+ * down.
+ *
+ * Hidden rather than transparent because a transparent window still
+ * takes the pointer: a press over one would land on a tooltip nobody
+ * can see, and the component would read it as a press inside the window
+ * and decline to dismiss.
+ */
+const hold = keyframes({
+  from: { visibility: 'hidden' },
+  to: { visibility: 'hidden' },
+});
+
+/**
  * The wrapper around the trigger and its window, carrying the open
  * signal. The condition is the one above: focus resting visibly inside
  * the root, or — where there's a pointer to do it with — the pointer
@@ -93,6 +121,7 @@ const CONDITION = {
  * up while the component hides the window for reasons of its own.
  */
 export const root = style({
+  vars: { [delay]: '0s' },
   '@media': {
     '(hover: none)': {
       selectors: {
@@ -103,6 +132,18 @@ export const root = style({
     '(hover: hover)': {
       selectors: {
         [`&:where(${CONDITION.WITH_HOVER})`]: INERT_ANIMATION,
+
+        // Only a hover waits. The two don't overlap, so focus arriving
+        // on a trigger the pointer is already resting on shortens the
+        // delay instead of racing it: the duration drops to zero and
+        // the window shows on the spot, wherever the wait had got to.
+        //
+        // A literal rather than a motion token: waiting isn't motion,
+        // and the tokens collapse to zero under reduced motion, which
+        // would delete the wait rather than shorten it.
+        '&:where(:hover:not(:has(:focus-visible)))': {
+          vars: { [delay]: '200ms' },
+        },
       },
     },
   },
@@ -120,12 +161,18 @@ export const root = style({
  * without closing it. It can't cross the gap between them, which is
  * what a grace area is for.
  *
+ * Between the stylesheet deciding to open and the window turning up
+ * sits {@link hold}, for as long as {@link delay} says. Hiding cancels
+ * it, which is how a visit that ends early leaves nothing behind: the
+ * next one starts its wait from the beginning.
+ *
  * Carries the surface color as `color` so the arrow, which fills with
  * `currentColor`, matches the surface without a class of its own. The
  * text sets its own color back.
  */
 export const window = style({
   color: neutral.solid[12],
+  animation: `${hold} 0s ${delay} backwards`,
   '@media': {
     '(hover: none)': {
       selectors: {

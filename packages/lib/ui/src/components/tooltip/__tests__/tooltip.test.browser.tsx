@@ -89,11 +89,16 @@ describe('Tooltip', () => {
 
   // --- Hover ---
 
+  /** Rest the pointer on something and wait out the delay. */
+  const hover = async (target: HTMLElement, window: HTMLElement) => {
+    await userEvent.hover(target);
+    await waitFor(() => expect(window).toBeVisible());
+  };
+
   it('shows while the pointer rests on the trigger', async () => {
     const { trigger, window } = setup();
 
-    await userEvent.hover(trigger);
-    expect(window).toBeVisible();
+    await hover(trigger, window);
 
     await userEvent.hover(park);
     expect(window).not.toBeVisible();
@@ -102,15 +107,14 @@ describe('Tooltip', () => {
   it('opens on hover without focusing the trigger', async () => {
     const { trigger, window } = setup();
 
-    await userEvent.hover(trigger);
+    await hover(trigger, window);
     expect(trigger).not.toHaveFocus();
-    expect(window).toBeVisible();
   });
 
   it('stays open while the pointer rests on the window itself', async () => {
     const { trigger, window } = setup();
 
-    await userEvent.hover(trigger);
+    await hover(trigger, window);
     // The window sits inside the root, so it's still the root under the
     // pointer. Crossing the gap between the two isn't covered — that
     // wants a grace area.
@@ -119,6 +123,64 @@ describe('Tooltip', () => {
 
     await userEvent.hover(park);
     expect(window).not.toBeVisible();
+  });
+
+  // --- Delay ---
+
+  it('makes a hover wait before showing anything', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    // The pointer has landed and the stylesheet has already decided the
+    // tooltip is open — the window is just holding itself back.
+    expect(window).not.toBeVisible();
+
+    await waitFor(() => expect(window).toBeVisible());
+  });
+
+  it('abandons the wait when the pointer leaves first', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    await userEvent.hover(park);
+
+    // Nothing is left running to fire late.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(window).not.toBeVisible();
+  });
+
+  it('starts the wait over on the next visit', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    await userEvent.hover(park);
+
+    await userEvent.hover(trigger);
+    expect(window).not.toBeVisible();
+    await waitFor(() => expect(window).toBeVisible());
+  });
+
+  it('shows a focus open without waiting', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.tab();
+    // No `waitFor`: the assertion is that there was nothing to wait for.
+    expect(trigger).toHaveFocus();
+    expect(window).toBeVisible();
+  });
+
+  it('cuts the wait short when focus lands mid-wait', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    expect(window).not.toBeVisible();
+
+    // Assumes tabbing is quicker than the wait, which it is by orders
+    // of magnitude. Asserting that with the clock would only make the
+    // test flaky.
+    await userEvent.tab();
+    expect(trigger).toHaveFocus();
+    expect(window).toBeVisible();
   });
 
   it('stays hidden once a pointer press has moved on', async () => {
@@ -162,9 +224,7 @@ describe('Tooltip', () => {
 
   it('holds a hover dismissal until the pointer leaves', async () => {
     const { trigger, window } = setup();
-
-    await userEvent.hover(trigger);
-    await waitFor(() => expect(window).toHaveAttribute('data-tethered'));
+    await hover(trigger, window);
 
     await userEvent.keyboard('{Escape}');
     expect(window).not.toBeVisible();
@@ -172,26 +232,18 @@ describe('Tooltip', () => {
     // Still under the pointer, so the stylesheet still wants it open
     // and the veto is what's hiding it. Leaving lifts the veto.
     await userEvent.hover(park);
-    await userEvent.hover(trigger);
-    expect(window).toBeVisible();
+    await hover(trigger, window);
   });
 
   it('dismisses on a press on the hovered trigger', async () => {
     const { trigger, window } = setup();
+    await hover(trigger, window);
 
-    await userEvent.hover(trigger);
-    await waitFor(() => expect(window).toHaveAttribute('data-tethered'));
-
-    // Waiting for the tether is also waiting for the open signal to
-    // land, which is what arms the press listener. A press inside the
-    // same frame as the pointer arriving would slip past it; a hand
-    // can't move that fast, and this is the behavior a hand gets.
     await userEvent.click(trigger);
     expect(window).not.toBeVisible();
 
     await userEvent.hover(park);
-    await userEvent.hover(trigger);
-    expect(window).toBeVisible();
+    await hover(trigger, window);
   });
 
   it('lets the tether go while dismissed', async () => {
