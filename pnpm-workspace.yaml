@@ -39,9 +39,9 @@ overrides:
 
 catalog:
   '@floating-ui/dom': ^1.8.0
-  '@holz/core': 0.9.0
-  '@holz/log-collector': 0.9.0
-  '@holz/pattern-filter': 0.9.0
+  '@holz/core': 0.9.1
+  '@holz/log-collector': 0.9.1
+  '@holz/pattern-filter': 0.9.1
   '@iconify/json': ^2.2.470
   '@solidjs/meta': ^0.29.4
   '@solidjs/router': ^1.0.0
