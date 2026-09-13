@@ -10,7 +10,7 @@
 import { render, screen, waitFor } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import Button from '../../button/button';
-import Tooltip from '../tooltip';
+import Tooltip, { type TooltipSide } from '../tooltip';
 import * as fixture from './tooltip.test.browser.css';
 
 /**
@@ -35,10 +35,15 @@ afterAll(() => {
 beforeEach(() => userEvent.hover(park));
 
 /** A tooltip on a button, after a second button focus can move on to. */
-const setup = () => {
+const setup = (side?: TooltipSide) => {
   render(() => (
     <div class={fixture.stage}>
-      <Tooltip display="inline" content="Add to library" testId="tooltip">
+      <Tooltip
+        display="inline"
+        side={side}
+        content="Add to library"
+        testId="tooltip"
+      >
         {(trigger) => (
           <Button as="button" testId="trigger" {...trigger}>
             Add
@@ -193,6 +198,45 @@ describe('Tooltip', () => {
 
     expect(trigger).toHaveFocus();
     expect(window).not.toBeVisible();
+  });
+
+  // --- Entrance ---
+
+  /** The animations on an element that take any time to run. */
+  const motionOn = (element: HTMLElement) =>
+    element
+      .getAnimations()
+      .filter(
+        (animation) => Number(animation.effect?.getTiming().duration) > 0,
+      );
+
+  it('animates a hovered tooltip in', async () => {
+    const { trigger, window } = setup();
+
+    await userEvent.hover(trigger);
+    expect(motionOn(window)).not.toHaveLength(0);
+  });
+
+  it('shows a focused tooltip without animating it in', async () => {
+    const { window } = setup();
+
+    await userEvent.tab();
+    expect(motionOn(window)).toHaveLength(0);
+  });
+
+  it('slides in out of the side facing the trigger', async () => {
+    // Bound below the trigger, in a corner with room to stay there, so
+    // the side the animation reads is the side that was asked for.
+    const { trigger, window } = setup('bottom');
+
+    await userEvent.hover(trigger);
+    expect(window).toHaveAttribute('data-side', 'bottom');
+
+    // The `backwards` fill holds the opening frame for as long as the
+    // wait runs, so this reads a still image and not a moving one. The
+    // trigger is above, and that's where the window comes from.
+    const { m42 } = new DOMMatrix(getComputedStyle(window).transform);
+    expect(m42).toBeLessThan(0);
   });
 
   // --- Dismissal ---

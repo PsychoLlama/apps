@@ -33,18 +33,27 @@
  *   touchscreen a tap is let in; `:hover` sticks after that tap, and
  *   the tooltip stays up until something else is touched.
  * - The delay is CSS as well, and it is not a timer. The window carries
- *   an instant animation whose `animation-delay` is the wait, holding
- *   itself hidden through a `backwards` fill and coming out the other
- *   side. So a visit that ends early leaves nothing behind to cancel, a
- *   pointer that keeps moving over the trigger can't re-arm anything,
- *   and the wait happens before hydration the same as after. Upstream
- *   runs a timer per tooltip and a shared one per page.
+ *   one animation whose `animation-delay` is the wait: a `backwards`
+ *   fill holds it hidden until the delay is up, and what runs after is
+ *   the entrance. So a visit that ends early leaves nothing behind to
+ *   cancel, a pointer that keeps moving over the trigger can't re-arm
+ *   anything, and the wait happens before hydration the same as after.
+ *   Upstream runs a timer per tooltip and a shared one per page.
  * - The wait is fixed at 200ms, upstream's default. No `delayDuration`
  *   prop, on the same grounds as the collision settings: the number is
  *   a property of the page's feel, not of one call site.
  * - Focus never waits, and focus arriving on a trigger the pointer is
  *   already resting on doesn't race the wait — it shortens it to
  *   nothing, and the window shows from wherever the wait had got to.
+ * - Only a hovered tooltip animates in — a slide and fade out of the
+ *   trigger's edge — and nothing animates out. Upstream agrees on both
+ *   counts but arrives at the first differently: it hangs the entrance
+ *   on `data-state="delayed-open"`, where here the entrance lasts as
+ *   long as the wait warranted. One variable sets both, so an open that
+ *   didn't wait doesn't animate, and when the coordination lands and
+ *   drops the wait, the entrance goes with it the way upstream's
+ *   `instant-open` does. Focus landing mid-entrance ends it on the
+ *   spot, for the same reason it ends the wait.
  * - Hoverable content arrives early and half-finished. The window sits
  *   inside the root, so hovering the tooltip itself keeps the root
  *   hovered and the tooltip open, which is what upstream's
@@ -287,8 +296,8 @@ const Tooltip = (rawProps: TooltipProps) => {
   const [dismissed, setDismissed] = createSignal(false);
 
   // Heard on the root, so any animation inside it arrives here too —
-  // the trigger's, and later the window's own entrance. Only the open
-  // signal is ours to read.
+  // the trigger's, and the window's own arrival. Only the open signal
+  // is ours to read.
   const onOpenChange = (event: AnimationEvent) => {
     if (event.animationName !== css.open) return;
 

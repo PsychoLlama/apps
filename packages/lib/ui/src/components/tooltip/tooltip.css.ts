@@ -17,14 +17,22 @@
  *   running, so it works before hydration.
  * - The delay is fixed at 200ms, upstream's default, and not exposed as
  *   `delayDuration` — the same call as the collision settings.
- * - No entrance animation yet. Upstream slides and fades a delayed open
- *   in; it'll compose onto the window beside the delay, sharing it.
+ * - The wait and the entrance are one animation, so the window can't
+ *   show up without arriving. Upstream gates its entrance on
+ *   `data-state="delayed-open"`; here the entrance lasts as long as the
+ *   wait warranted, which is nothing whenever the wait was.
+ * - Motion rides the scale: `moderate[1]` (upstream 140ms) with
+ *   `entrance.productive`, against upstream's own `cubic-bezier(0.16,
+ *   1, 0.3, 1)` — a harder deceleration than ours. Reduced motion needs
+ *   no media query here; the duration token collapses on its own.
+ * - The slide is `space[1]` rather than a literal 4px, so it scales with
+ *   the reader's font size. Same distance at the default.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
 
 import { createVar, fallbackVar, keyframes, style } from '@vanilla-extract/css';
-import { neutral } from '@lib/design';
+import { entrance, moderate, neutral, space } from '@lib/design';
 
 /**
  * Any CSS width the surface wraps at. Assigned inline from the
@@ -92,20 +100,44 @@ const CONDITION = {
 export const delay = createVar();
 
 /**
- * Not motion either: the window wears this for as long as {@link delay}
- * says, and comes out the other side. The `backwards` fill is what
- * makes it work — the animation itself takes no time at all, and
- * everything it does happens before it starts, while the delay runs
- * down.
- *
- * Hidden rather than transparent because a transparent window still
- * takes the pointer: a press over one would land on a tooltip nobody
- * can see, and the component would read it as a press inside the window
- * and decline to dismiss.
+ * How long the window takes to arrive once the wait is over. Zero
+ * wherever {@link delay} is, which is how only a hovered tooltip
+ * animates in: one that was already there in spirit — focused, or
+ * following another that was just up — shouldn't make an entrance.
  */
-const hold = keyframes({
-  from: { visibility: 'hidden' },
-  to: { visibility: 'hidden' },
+export const duration = createVar();
+
+// Which way the window travels on the way in, per axis: out of the
+// trigger, so the motion reads as coming from the thing described.
+// Both stay at zero until `data-side` says which axis faces it.
+const slideX = createVar();
+const slideY = createVar();
+
+/**
+ * The window arriving: everything between the stylesheet deciding to
+ * open and the tooltip being there. {@link delay} of nothing at all,
+ * then {@link duration} of slide and fade.
+ *
+ * The `backwards` fill is what makes the first half work — the window
+ * wears this opening frame for as long as the delay runs, before the
+ * animation has started. That frame hides with `visibility` rather than
+ * `opacity` because a transparent window still takes the pointer: a
+ * press over one would land on a tooltip nobody can see, and the
+ * component would read it as a press inside the window and decline to
+ * dismiss. Once running, `visibility` flips on the first frame and the
+ * fade is `opacity`'s.
+ */
+const enter = keyframes({
+  from: {
+    visibility: 'hidden',
+    opacity: 0,
+    transform: `translate(${slideX}, ${slideY}) scale(0.97)`,
+  },
+  to: {
+    visibility: 'visible',
+    opacity: 1,
+    transform: 'translate(0, 0) scale(1)',
+  },
 });
 
 /**
@@ -121,7 +153,7 @@ const hold = keyframes({
  * up while the component hides the window for reasons of its own.
  */
 export const root = style({
-  vars: { [delay]: '0s' },
+  vars: { [delay]: '0s', [duration]: '0s' },
   '@media': {
     '(hover: none)': {
       selectors: {
@@ -133,16 +165,18 @@ export const root = style({
       selectors: {
         [`&:where(${CONDITION.WITH_HOVER})`]: INERT_ANIMATION,
 
-        // Only a hover waits. The two don't overlap, so focus arriving
-        // on a trigger the pointer is already resting on shortens the
-        // delay instead of racing it: the duration drops to zero and
-        // the window shows on the spot, wherever the wait had got to.
+        // Only a hover waits, and only a hover animates in. The two
+        // conditions don't overlap, so focus arriving on a trigger the
+        // pointer is already resting on shortens the wait instead of
+        // racing it: both values drop to zero and the window is simply
+        // there, from wherever the arrival had got to.
         //
-        // A literal rather than a motion token: waiting isn't motion,
-        // and the tokens collapse to zero under reduced motion, which
-        // would delete the wait rather than shorten it.
+        // The wait is a literal rather than a motion token: waiting
+        // isn't motion, and the tokens collapse to zero under reduced
+        // motion, which would delete the wait rather than shorten it.
+        // The entrance is motion, and collapsing is what it should do.
         '&:where(:hover:not(:has(:focus-visible)))': {
-          vars: { [delay]: '200ms' },
+          vars: { [delay]: '200ms', [duration]: moderate[1] },
         },
       },
     },
@@ -161,10 +195,14 @@ export const root = style({
  * without closing it. It can't cross the gap between them, which is
  * what a grace area is for.
  *
- * Between the stylesheet deciding to open and the window turning up
- * sits {@link hold}, for as long as {@link delay} says. Hiding cancels
- * it, which is how a visit that ends early leaves nothing behind: the
- * next one starts its wait from the beginning.
+ * Between the stylesheet deciding to open and the tooltip being there
+ * sits {@link enter}. Hiding cancels it, which is how a visit that ends
+ * early leaves nothing behind: the next one starts over from the top.
+ *
+ * The arrival travels on `transform`, which the floating primitive
+ * leaves to consumers — placement rides on `translate` — out of the
+ * `transform-origin` it already points at the anchor. So the arrow and
+ * the surface arrive together, growing out of the trigger's edge.
  *
  * Carries the surface color as `color` so the arrow, which fills with
  * `currentColor`, matches the surface without a class of its own. The
@@ -172,7 +210,8 @@ export const root = style({
  */
 export const window = style({
   color: neutral.solid[12],
-  animation: `${hold} 0s ${delay} backwards`,
+  vars: { [slideX]: '0px', [slideY]: '0px' },
+  animation: `${enter} ${duration} ${delay} ${entrance.productive} backwards`,
   '@media': {
     '(hover: none)': {
       selectors: {
@@ -191,6 +230,18 @@ export const window = style({
     },
   },
   selectors: {
+    // Which way is "out of the trigger". `data-side` is the resolved
+    // side, so a window that flipped to dodge an edge slides out of the
+    // side it actually landed on.
+    '&:where([data-side="top"])': { vars: { [slideY]: space[1] } },
+    '&:where([data-side="bottom"])': {
+      vars: { [slideY]: `calc(-1 * ${space[1]})` },
+    },
+    '&:where([data-side="left"])': { vars: { [slideX]: space[1] } },
+    '&:where([data-side="right"])': {
+      vars: { [slideX]: `calc(-1 * ${space[1]})` },
+    },
+
     // Dismissed: the component's veto while the stylesheet still wants
     // the window open. Hiding it doesn't disturb the open signal, which
     // rides on the root, so the veto can wait there for the pointer and
