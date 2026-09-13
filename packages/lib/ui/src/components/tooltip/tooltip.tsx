@@ -14,8 +14,8 @@
  *   clip it and a later sibling can paint over it. The top layer is a
  *   planned enhancement.
  * - No `open` / `defaultOpen` / `onOpenChange`. The open state is the
- *   trigger's focus (and, later, hover), which the stylesheet owns end
- *   to end; there is nothing for a call site to drive.
+ *   trigger's focus and hover, which the stylesheet owns end to end;
+ *   there is nothing for a call site to drive.
  * - `display` is required, from the floating root: the wrapper is a
  *   `<span>` or a `<div>`, and only the call site knows which one is
  *   valid where it stands.
@@ -25,6 +25,33 @@
  *   never inspects or writes to an element it didn't render. A trigger
  *   with a description of its own composes the two — nothing is merged
  *   for it. No `data-state` rides on the trigger.
+ * - Hover is CSS too, and so is the decision to ignore a touch. The
+ *   root opens while `:hover` under `@media (hover: hover)`, where
+ *   upstream reads `pointerType` off each pointer event and turns away
+ *   the ones from a touch. The media feature describes the primary
+ *   pointer rather than the one in hand, so on a laptop with a
+ *   touchscreen a tap is let in; `:hover` sticks after that tap, and
+ *   the tooltip stays up until something else is touched.
+ * - The delay is CSS as well, and it is not a timer. The window carries
+ *   an instant animation whose `animation-delay` is the wait, holding
+ *   itself hidden through a `backwards` fill and coming out the other
+ *   side. So a visit that ends early leaves nothing behind to cancel, a
+ *   pointer that keeps moving over the trigger can't re-arm anything,
+ *   and the wait happens before hydration the same as after. Upstream
+ *   runs a timer per tooltip and a shared one per page.
+ * - The wait is fixed at 200ms, upstream's default. No `delayDuration`
+ *   prop, on the same grounds as the collision settings: the number is
+ *   a property of the page's feel, not of one call site.
+ * - Focus never waits, and focus arriving on a trigger the pointer is
+ *   already resting on doesn't race the wait — it shortens it to
+ *   nothing, and the window shows from wherever the wait had got to.
+ * - Hoverable content arrives early and half-finished. The window sits
+ *   inside the root, so hovering the tooltip itself keeps the root
+ *   hovered and the tooltip open, which is what upstream's
+ *   `disableHoverableContent={false}` buys. What's missing is the
+ *   grace area over the gap between trigger and window: the pointer
+ *   crossing it leaves the root for a moment and the tooltip closes
+ *   under it. There's no `disableHoverableContent` prop yet either.
  * - Focus is CSS. Upstream opens from a `focus` handler unless a
  *   pointer press caused the focus, tracked in a ref. Here the window
  *   shows while the root `:has(:focus-visible)`, and the browser's own
@@ -52,9 +79,12 @@
  * - The tether follows the stylesheet. While the stylesheet considers
  *   the tooltip open it gives the root an empty, paused animation; its
  *   `animationstart` and `animationcancel` are the stylesheet saying
- *   so, and the tether engages between the two. A closed tooltip costs
- *   no measurement and no scroll listener. Upstream's tether runs for
- *   as long as the content is mounted, which is the same span.
+ *   so, and the tether engages between the two. That includes the wait
+ *   before a hovered tooltip appears, on purpose: the window is
+ *   measured and placed while it's still hidden, so it doesn't turn up
+ *   in the wrong spot and jump. A closed tooltip costs no measurement
+ *   and no scroll listener. Upstream's tether runs for as long as the
+ *   content is mounted, which is the same span.
  * - `aria-describedby` is static. Upstream sets it only while open,
  *   because a closed tooltip is unmounted and the id would dangle. Here
  *   the tooltip is always in the DOM, and the accessible description
@@ -62,25 +92,33 @@
  *   described at all times: a screen reader browsing by virtual cursor
  *   or touch, which never focuses the trigger, still gets the text, and
  *   focus can't race the attribute.
- * - Dismissal is a veto, not a close. Escape marks the window
- *   `data-dismissed`, which hides it while the stylesheet still wants
- *   it open; the veto lifts when the stylesheet stops wanting that,
- *   i.e. when focus leaves. That the veto can hide the window
- *   outright, rather than tiptoeing around its own open signal, is why
- *   the signal sits on the root. Upstream closes and reopens on the
- *   next focus, which comes to the same thing. Its guard against the
- *   focus a press brings reopening the tooltip (a flag held until the
- *   next `pointerup`) has no counterpart here: `:focus-visible`
- *   already declines that focus.
- * - Upstream also dismisses on a press outside the window and on a
- *   scroll that moves the trigger. Neither is here yet. A press
- *   already closes the tooltip by blurring the trigger, except when
- *   something prevents the default to keep focus, and scroll wants
- *   deciding alongside the tether. Both land in a later phase.
- * - The Escape listener is passive, and attached only while the
- *   tooltip is open. A page of closed tooltips listens for nothing.
- * - Focus and Escape only, for now. Hover, hoverable content, and
- *   page-wide coordination are landing in phases.
+ * - Dismissal is a veto, not a close. Escape, a press outside the
+ *   window, a click on the trigger, or a scroll that moves it all mark
+ *   the window `data-dismissed`, which hides it while the stylesheet
+ *   still wants it open; the veto lifts when the stylesheet stops
+ *   wanting that, i.e. when focus and the pointer have both left. That
+ *   the veto can hide the window outright, rather than tiptoeing around
+ *   its own open signal, is why the signal sits on the root. Upstream
+ *   closes and reopens on the next focus, which comes to the same
+ *   thing. Its guard against the focus a press brings reopening the
+ *   tooltip (a flag held until the next `pointerup`) has no counterpart
+ *   here: `:focus-visible` already declines that focus.
+ * - Dismissing on a press is mostly redundant and kept anyway. A press
+ *   blurs the trigger, which closes the tooltip on its own; what it
+ *   covers is the press that holds focus by preventing the default,
+ *   and the right-click that never moves focus at all.
+ * - The click that dismisses is any click inside the floating root and
+ *   outside the window, which is the trigger without the tooltip
+ *   having to know which element that is. It's heard on the root, the
+ *   one element the tooltip renders around both.
+ * - Every document and window listener is passive, and attached only
+ *   while the tooltip is open. A page of closed tooltips listens for
+ *   nothing.
+ * - Page-wide coordination is still to come: every tooltip opens on
+ *   its own, so two can be up at once, and every one of them makes you
+ *   wait the full 200ms however recently the last one was up. No
+ *   `skipDelayDuration`; that arrives with the coordination it belongs
+ *   to, as a value written over the delay the stylesheet already has.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
@@ -122,7 +160,8 @@ export type TooltipDisplay = FloatingRootDisplay;
  * What the tooltip hands its trigger. Spread onto the focusable element
  * as-is: the description names the tooltip. A trigger with a
  * description of its own composes the two. Showing and hiding is the
- * stylesheet's, off the trigger's focus, so there are no handlers.
+ * stylesheet's, off the trigger's focus and hover, so there are no
+ * handlers.
  */
 export interface TooltipTriggerProps {
   /** Id of the tooltip. Set whether or not it's open. */
@@ -203,9 +242,18 @@ const DEFAULTS = {
 const PASSIVE: AddEventListenerOptions = { passive: true };
 
 /**
- * A short label that floats beside its trigger while keyboard focus
- * rests on it, until Escape dismisses it.
- * Announced to assistive tech as the trigger's description, open or
+ * Scroll doesn't bubble, so it's heard on the way down instead. Any
+ * element can scroll, and the one that matters is an ancestor.
+ */
+const PASSIVE_CAPTURE: AddEventListenerOptions = {
+  passive: true,
+  capture: true,
+};
+
+/**
+ * A short label that floats beside its trigger while keyboard focus or
+ * the pointer rests on it, until Escape, a press, or a scroll dismisses
+ * it. Announced to assistive tech as the trigger's description, open or
  * not.
  */
 const Tooltip = (rawProps: TooltipProps) => {
@@ -246,27 +294,72 @@ const Tooltip = (rawProps: TooltipProps) => {
 
     const opening = event.type === 'animationstart';
     setOpen(opening);
+
     if (!opening) setDismissed(false);
   };
 
-  // Listened for on the document only while open and not yet
-  // dismissed. Escape has no target to speak of: it's aimed at whatever
-  // is on screen, and the tooltip is.
+  // What the dismissals measure against. The tooltip inspects only what
+  // it rendered: the root, holding the trigger and the window, and the
+  // window itself.
+  let root: HTMLElement | undefined;
+  let subject: HTMLDivElement | undefined;
+
+  const outsideWindow = (event: Event) =>
+    !(event.target instanceof Node && subject?.contains(event.target));
+
+  const scrollsRoot = (event: Event) =>
+    root !== undefined &&
+    event.target instanceof Node &&
+    event.target.contains(root);
+
+  // Listened for only while open and not yet dismissed, so a page of
+  // closed tooltips listens for nothing.
+  const listening = () => (open() && !dismissed() ? document : undefined);
+
+  // Escape has no target to speak of: it's aimed at whatever is on
+  // screen, and the tooltip is.
+  useGlobalListener(listening, 'keydown', PASSIVE, (event) => {
+    if (event.key === 'Escape') setDismissed(true);
+  });
+
+  // A press anywhere but the tooltip itself. Most of these would close
+  // it anyway by blurring the trigger; this one also covers the presses
+  // that hold focus by preventing the default, and lands before the
+  // blur either way.
+  useGlobalListener(listening, 'pointerdown', PASSIVE, (event) => {
+    if (outsideWindow(event)) setDismissed(true);
+  });
+
+  // Anything scrolling the trigger out from under its window. Heard on
+  // `window`, which sees the capture phase for every scroller on the
+  // page.
   useGlobalListener(
-    () => (open() && !dismissed() ? document : undefined),
-    'keydown',
-    PASSIVE,
+    () => (open() && !dismissed() ? window : undefined),
+    'scroll',
+    PASSIVE_CAPTURE,
     (event) => {
-      if (event.key === 'Escape') setDismissed(true);
+      if (scrollsRoot(event)) setDismissed(true);
     },
   );
+
+  // A click inside the root but outside the window is a click on the
+  // trigger. A pointer's was preceded by a press that already
+  // dismissed, so this is for the keyboard's: Enter and Space arrive as
+  // a click on the focused element.
+  const onRootClick = (event: MouseEvent) => {
+    if (open() && outsideWindow(event)) setDismissed(true);
+  };
 
   return (
     <FloatingRoot
       display={local.display}
       class={css.root}
+      onClick={onRootClick}
       onAnimationStart={onOpenChange}
       onAnimationCancel={onOpenChange}
+      ref={(ref) => {
+        root = ref;
+      }}
     >
       {local.children(triggerProps)}
 
@@ -281,6 +374,9 @@ const Tooltip = (rawProps: TooltipProps) => {
         class={css.window}
         testId={tid.testId}
         tether={open() && !dismissed() ? TETHER : undefined}
+        ref={(ref) => {
+          subject = ref;
+        }}
       >
         <FloatingBody
           {...rest}
