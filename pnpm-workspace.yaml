@@ -66,7 +66,7 @@ catalog:
   'solid-js': 1.9.15
   turbo: ^2.5.8
   typescript: ^6.0.3
-  'unplugin-icons': ^23.0.1
+  'unplugin-icons': ^24.0.0
   vite: ^8.0.0
   vitest: ^4.1.5
 
