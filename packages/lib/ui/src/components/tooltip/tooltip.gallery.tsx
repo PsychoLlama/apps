@@ -65,5 +65,12 @@ export default {
         },
       ],
     },
+    {
+      title: 'Hoverable',
+      columns: [
+        { title: 'Reachable', props: {} },
+        { title: 'Pass-through', props: { hoverable: false } },
+      ],
+    },
   ],
 } satisfies Listing<TooltipProps>;

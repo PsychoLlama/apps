@@ -1,4 +1,4 @@
-import { splitProps, type JSX } from 'solid-js';
+import { mergeProps, splitProps, type JSX } from 'solid-js';
 import clx from '@lib/classnames';
 import {
   flexPropKeys,
@@ -33,6 +33,12 @@ export interface FloatingBodyProps
     PaddingProps,
     RequiredTestIdProps,
     JSX.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Whether the surface catches the pointer. A non-interactive surface
+   * is see-through to it: presses and hover land on whatever is beneath.
+   * @default true
+   */
+  interactive?: boolean;
   /** Extra class names merged onto the surface element. */
   class?: string;
   /** Floating content to render. */
@@ -45,10 +51,12 @@ export interface FloatingBodyProps
  * node they label, focus, and listen on. Renders as the child of a
  * `FloatingWindow`.
  */
-export const FloatingBody = (props: FloatingBodyProps) => {
+export const FloatingBody = (rawProps: FloatingBodyProps) => {
+  const props = mergeProps({ interactive: true }, rawProps);
   const [flex, afterFlex] = splitProps(props, flexPropKeys);
   const [padding, afterPadding] = splitProps(afterFlex, paddingPropKeys);
   const [local, passthrough] = splitProps(afterPadding, [
+    'interactive',
     'class',
     'children',
     'testId',
@@ -63,7 +71,12 @@ export const FloatingBody = (props: FloatingBodyProps) => {
     );
 
   return (
-    <div {...passthrough} class={className()} data-testid={local.testId}>
+    <div
+      {...passthrough}
+      class={className()}
+      data-interactive={String(local.interactive)}
+      data-testid={local.testId}
+    >
       {local.children}
     </div>
   );

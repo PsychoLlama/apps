@@ -11,13 +11,19 @@ export const borderRadius = createVar();
  * The visual surface. Sizes to its content so a window hugs what it
  * holds instead of wrapping or stretching to fill the positioned box.
  *
- * Takes pointer events back from the window, which passes them through
- * (see `window.css`). The surface is the only part of a floating window
- * that should catch a click.
+ * An interactive surface takes pointer events back from the window,
+ * which passes them through (see `window.css`); it's the only part of a
+ * floating window that should catch a click. A non-interactive one
+ * inherits the window's `none`, so the pointer goes straight through to
+ * the page underneath.
  */
 export const body = style({
   width: 'max-content',
   height: 'max-content',
-  pointerEvents: 'auto',
   borderRadius: fallbackVar(borderRadius, '0px'),
+  selectors: {
+    '&:where([data-interactive="true"])': {
+      pointerEvents: 'auto',
+    },
+  },
 });

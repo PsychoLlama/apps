@@ -10,7 +10,7 @@
 import { render, screen, waitFor } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import Button from '../../button/button';
-import Tooltip, { type TooltipSide } from '../tooltip';
+import Tooltip, { type TooltipProps } from '../tooltip';
 import * as fixture from './tooltip.test.browser.css';
 
 /**
@@ -35,12 +35,12 @@ afterAll(() => {
 beforeEach(() => userEvent.hover(park));
 
 /** A tooltip on a button, after a second button focus can move on to. */
-const setup = (side?: TooltipSide) => {
+const setup = (options: Partial<TooltipProps> = {}) => {
   render(() => (
     <div class={fixture.stage}>
       <Tooltip
+        {...options}
         display="inline"
-        side={side}
         content="Add to library"
         testId="tooltip"
       >
@@ -128,6 +128,26 @@ describe('Tooltip', () => {
 
     await userEvent.hover(park);
     expect(window).not.toBeVisible();
+  });
+
+  it('lets the pointer through an unhoverable tooltip', async () => {
+    const { trigger, window } = setup({ hoverable: false });
+
+    await hover(trigger, window);
+
+    // Asserted by hit test rather than by moving the pointer there:
+    // the driver won't hover something that doesn't take pointer
+    // events, which is the very thing under test. The test above is
+    // the same machinery pointing the other way — it moves the pointer
+    // onto a hoverable window and the driver allows it — so between
+    // them both directions are covered.
+    const box = screen.getByTestId('tooltip-surface').getBoundingClientRect();
+    const beneath = document.elementFromPoint(
+      box.left + box.width / 2,
+      box.top + box.height / 2,
+    );
+
+    expect(window.contains(beneath)).toBe(false);
   });
 
   // --- Delay ---
@@ -227,7 +247,7 @@ describe('Tooltip', () => {
   it('slides in out of the side facing the trigger', async () => {
     // Bound below the trigger, in a corner with room to stay there, so
     // the side the animation reads is the side that was asked for.
-    const { trigger, window } = setup('bottom');
+    const { trigger, window } = setup({ side: 'bottom' });
 
     await userEvent.hover(trigger);
     expect(window).toHaveAttribute('data-side', 'bottom');
