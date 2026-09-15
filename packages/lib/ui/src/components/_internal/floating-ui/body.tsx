@@ -39,8 +39,10 @@ export interface FloatingBodyProps
    * @default true
    */
   interactive?: boolean;
+
   /** Extra class names merged onto the surface element. */
   class?: string;
+
   /** Floating content to render. */
   children: JSX.Element;
 }
