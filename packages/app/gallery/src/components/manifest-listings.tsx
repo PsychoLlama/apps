@@ -1,7 +1,6 @@
 import { For, Show } from 'solid-js';
-import { Button, Callout, Flex, Heading } from '@lib/ui';
+import { Callout, Flex, Heading, Link } from '@lib/ui';
 import type { GalleryGroup, GalleryListing } from '@lib/gallery';
-import IconChevron from 'virtual:icons/mdi/chevron-right';
 import { ListingView } from './listing-view';
 import * as css from './manifest-listings.css';
 
@@ -40,43 +39,36 @@ const ListingColumn = (props: { listings: Listing[] }) => (
 );
 
 /**
- * A collapsible group: its `label` heads a `<summary>` toggle that closes over
- * the group's listing column. Expanded by default — every group opens on load.
+ * A group: its `label` as an anchor-linked heading over the group's listing
+ * column. The heading's `id` is the raw label, matching listing anchors.
  */
 const ListingGroup = (props: { group: GalleryGroup; listings: Listing[] }) => (
-  <Flex as="details" direction="column" gap={5} open class={css.group}>
-    <Button
-      as="summary"
-      variant="ghost"
-      color="neutral"
-      class={css.summary}
-      testId={`gallery-group-${props.group.id}`}
+  <Flex as="section" direction="column" gap={5} class={css.group}>
+    <Heading
+      as="h2"
+      id={props.group.label}
+      size={6}
+      weight="bold"
+      selectable={false}
     >
-      <Heading
-        as="h2"
-        size={6}
-        weight="bold"
-        color="highContrast"
-        selectable={false}
+      <Link
+        href={`#${encodeURIComponent(props.group.label)}`}
+        color="neutral"
+        highContrast
+        underline="hover"
+        testId={`gallery-group-${props.group.id}`}
       >
         {props.group.label}
-      </Heading>
-      <IconChevron
-        width="20"
-        height="20"
-        aria-hidden="true"
-        class={css.chevron}
-      />
-    </Button>
+      </Link>
+    </Heading>
     <ListingColumn listings={props.listings} />
   </Flex>
 );
 
 /**
  * A manifest's listings, sorted by title. A package with no declared groups
- * renders one flat column; a package with groups buckets its listings into a
- * collapsible disclosure per group, ordered by the manifest's group
- * declaration.
+ * renders one flat column; a package with groups buckets its listings under a
+ * heading per group, ordered by the manifest's group declaration.
  */
 export const ManifestListings = (props: {
   listings: Listing[];
