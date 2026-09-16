@@ -36,6 +36,7 @@
 
 import { createVar, fallbackVar, keyframes, style } from '@vanilla-extract/css';
 import { entrance, moderate, neutral, space } from '@lib/design';
+import * as floating from '../_internal/floating-ui/index.css';
 
 /**
  * Any CSS width the surface wraps at. Assigned inline from the
@@ -157,6 +158,13 @@ const enter = keyframes({
  */
 export const root = style({
   vars: { [delay]: '0s', [duration]: '0s' },
+  selectors: {
+    // Unhoverable: the surface stops catching the pointer, so there's
+    // nothing inside the root to rest on but the trigger.
+    '&:where([data-hoverable="false"])': {
+      vars: { [floating.pointerEvents]: 'none' },
+    },
+  },
   '@media': {
     '(hover: none)': {
       selectors: {
@@ -196,8 +204,8 @@ export const root = style({
  * The hover half reaches the window too, since the window sits inside
  * the root: the pointer can travel from the trigger onto the tooltip
  * without closing it. It can't cross the gap between them, which is
- * what a grace area is for — and it can't do any of it when the surface
- * isn't interactive, where the pointer goes straight through.
+ * what a grace area is for — and it can't do any of it when the tooltip
+ * isn't hoverable, where the pointer goes straight through.
  *
  * Between the stylesheet deciding to open and the tooltip being there
  * sits {@link enter}. Hiding cancels it, which is how a visit that ends

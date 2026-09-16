@@ -65,7 +65,7 @@
  *   `disableHoverableContent`. Positive and defaulted true, matching
  *   `Text`'s `selectable`, and it works the opposite way round: upstream
  *   has to hear the pointer leave the trigger and close, where here the
- *   surface is made non-interactive, so the pointer goes through it and
+ *   surface stops catching the pointer, so the pointer goes through it and
  *   there's nothing inside the root to hover but the trigger. No second
  *   open condition to keep in step with the first.
  *   Perceptible difference: upstream's content still blocks what's
@@ -383,6 +383,7 @@ const Tooltip = (rawProps: TooltipProps) => {
     <FloatingRoot
       display={local.display}
       class={css.root}
+      data-hoverable={String(local.hoverable)}
       onClick={onRootClick}
       onAnimationStart={onOpenChange}
       onAnimationCancel={onOpenChange}
@@ -410,7 +411,6 @@ const Tooltip = (rawProps: TooltipProps) => {
         <FloatingBody
           {...rest}
           testId={`${tid.testId}-surface`}
-          interactive={local.hoverable}
           py={1}
           px={2}
           class={clx(css.content, local.class)}

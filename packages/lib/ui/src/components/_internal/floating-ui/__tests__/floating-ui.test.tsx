@@ -140,26 +140,6 @@ describe('FloatingBody', () => {
 
     expect(screen.getByTestId('body')).toHaveClass('custom');
   });
-
-  it('reflects whether it catches the pointer, defaulting to yes', () => {
-    render(() => (
-      <>
-        <FloatingBody testId="default">content</FloatingBody>
-        <FloatingBody testId="inert" interactive={false}>
-          content
-        </FloatingBody>
-      </>
-    ));
-
-    expect(screen.getByTestId('default')).toHaveAttribute(
-      'data-interactive',
-      'true',
-    );
-    expect(screen.getByTestId('inert')).toHaveAttribute(
-      'data-interactive',
-      'false',
-    );
-  });
 });
 
 describe('FloatingWindow', () => {

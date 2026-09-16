@@ -8,22 +8,23 @@ import { createVar, fallbackVar, style } from '@vanilla-extract/css';
 export const borderRadius = createVar();
 
 /**
+ * Whether the surface catches the pointer. The root defaults it to
+ * `auto`, at zero specificity, so a component overrides it anywhere
+ * from the root down; `none` lets presses and hover through to the
+ * page beneath. No fallback: a body outside a root inherits instead.
+ */
+export const pointerEvents = createVar();
+
+/**
  * The visual surface. Sizes to its content so a window hugs what it
  * holds instead of wrapping or stretching to fill the positioned box.
  *
- * An interactive surface takes pointer events back from the window,
- * which passes them through (see `window.css`); it's the only part of a
- * floating window that should catch a click. A non-interactive one
- * inherits the window's `none`, so the pointer goes straight through to
- * the page underneath.
+ * Takes pointer events back from the window, which passes them through
+ * (see `window.css`), as {@link pointerEvents} says to.
  */
 export const body = style({
   width: 'max-content',
   height: 'max-content',
   borderRadius: fallbackVar(borderRadius, '0px'),
-  selectors: {
-    '&:where([data-interactive="true"])': {
-      pointerEvents: 'auto',
-    },
-  },
+  pointerEvents,
 });
