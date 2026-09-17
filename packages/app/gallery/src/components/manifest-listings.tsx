@@ -40,19 +40,20 @@ const ListingColumn = (props: { listings: Listing[]; level?: 'h2' | 'h3' }) => (
 
 /**
  * A group: its `label` as an anchor-linked heading over the group's listing
- * column. The heading's `id` is the raw label, matching listing anchors.
+ * column. The anchor is the group's `id` suffixed with `-group`, keeping it
+ * distinct from listing anchors (those use the raw listing title).
  */
 const ListingGroup = (props: { group: GalleryGroup; listings: Listing[] }) => (
   <Flex as="section" direction="column" gap={5} class={css.group}>
     <Heading
       as="h2"
-      id={props.group.label}
+      id={`${props.group.id}-group`}
       size={6}
       weight="bold"
       selectable={false}
     >
       <Link
-        href={`#${encodeURIComponent(props.group.label)}`}
+        href={`#${props.group.id}-group`}
         color="neutral"
         highContrast
         underline="hover"
