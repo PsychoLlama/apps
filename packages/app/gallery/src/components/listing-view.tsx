@@ -18,12 +18,16 @@ const NoVariant = (props: { listing: Listing }) => (
  * become a tab strip; a single section renders its grid directly (no tab nav
  * for one option); a listing with no sections renders `render` once.
  */
-export const ListingView = (props: { listing: Listing }) => {
+export const ListingView = (props: {
+  listing: Listing;
+  /** Title heading level. `h3` when nested under a group heading. */
+  level?: 'h2' | 'h3';
+}) => {
   const sections = () => props.listing.sections ?? [];
   return (
     <Flex as="section" direction="column" gap={3}>
       <Heading
-        as="h2"
+        as={props.level ?? 'h2'}
         id={props.listing.title}
         size={5}
         weight="medium"

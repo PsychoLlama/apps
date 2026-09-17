@@ -30,10 +30,10 @@ const groupListings = (
     .filter((bucket) => bucket.listings.length > 0);
 
 /** A column of `ListingView`s, sorted by title. */
-const ListingColumn = (props: { listings: Listing[] }) => (
+const ListingColumn = (props: { listings: Listing[]; level?: 'h2' | 'h3' }) => (
   <Flex as="div" direction="column" gap={8}>
     <For each={props.listings}>
-      {(listing) => <ListingView listing={listing} />}
+      {(listing) => <ListingView listing={listing} level={props.level} />}
     </For>
   </Flex>
 );
@@ -61,7 +61,7 @@ const ListingGroup = (props: { group: GalleryGroup; listings: Listing[] }) => (
         {props.group.label}
       </Link>
     </Heading>
-    <ListingColumn listings={props.listings} />
+    <ListingColumn listings={props.listings} level="h3" />
   </Flex>
 );
 
