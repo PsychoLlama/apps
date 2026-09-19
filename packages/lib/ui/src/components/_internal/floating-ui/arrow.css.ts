@@ -1,9 +1,9 @@
-import { createVar, fallbackVar, style } from '@vanilla-extract/css';
+import { createVar, style } from '@vanilla-extract/css';
 
 /**
  * Distance an edge-aligned arrow is pushed off the surface's rounded
  * corner. The window assigns it from its `radius` (see
- * `radiusVariants`); an unset var falls back to `0`.
+ * `radiusVariants`) and defaults it to `0`.
  */
 export const offset = createVar();
 
@@ -58,13 +58,13 @@ export const arrow = style({
     // Up/down arrows sit on a horizontal edge, so the nudge is inline;
     // left/right on a vertical edge, so it's block.
     '&:where([data-direction="up"], [data-direction="down"]):where([data-align="start"])':
-      { marginInlineStart: fallbackVar(offset, '0px') },
+      { marginInlineStart: offset },
     '&:where([data-direction="up"], [data-direction="down"]):where([data-align="end"])':
-      { marginInlineEnd: fallbackVar(offset, '0px') },
+      { marginInlineEnd: offset },
     '&:where([data-direction="left"], [data-direction="right"]):where([data-align="start"])':
-      { marginBlockStart: fallbackVar(offset, '0px') },
+      { marginBlockStart: offset },
     '&:where([data-direction="left"], [data-direction="right"]):where([data-align="end"])':
-      { marginBlockEnd: fallbackVar(offset, '0px') },
+      { marginBlockEnd: offset },
 
     // Tethered: alignment and the corner nudge are moot; the translation
     // above is the whole seat.

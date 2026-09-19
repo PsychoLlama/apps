@@ -1,9 +1,9 @@
-import { createVar, fallbackVar, style } from '@vanilla-extract/css';
+import { createVar, style } from '@vanilla-extract/css';
 
 /**
  * Border radius of the surface. Assigned by the window from its `radius`
  * prop and inherited down to the body, so the one value also seats the
- * arrow clear of the rounded corner. Unset falls back to square.
+ * arrow clear of the rounded corner. The window defaults it to square.
  */
 export const borderRadius = createVar();
 
@@ -25,6 +25,6 @@ export const pointerEvents = createVar();
 export const body = style({
   width: 'max-content',
   height: 'max-content',
-  borderRadius: fallbackVar(borderRadius, '0px'),
+  borderRadius,
   pointerEvents,
 });

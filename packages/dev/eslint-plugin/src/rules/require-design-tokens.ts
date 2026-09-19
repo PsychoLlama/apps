@@ -141,6 +141,10 @@ const rule = createRule({
   create(context) {
     return {
       Property(node) {
+        // A computed key is a value, not a property name: `[borderRadius]`
+        // in a `vars` block names whatever var `borderRadius` holds.
+        if (node.computed) return;
+
         const name = getPropertyName(node.key);
         if (!name) return;
 

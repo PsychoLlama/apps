@@ -274,7 +274,7 @@ describe('FloatingWindow', () => {
     const plainShell =
       plain.container.querySelector<HTMLElement>('[data-side]')!;
 
-    // Unset props leave the vars unset so the CSS fallbacks apply.
+    // Unset props leave the vars unset so the stylesheet's defaults apply.
     expect(plainShell.style.getPropertyValue(varName(css.sideOffset))).toBe('');
     expect(plainShell.style.getPropertyValue(varName(css.alignOffset))).toBe(
       '',
