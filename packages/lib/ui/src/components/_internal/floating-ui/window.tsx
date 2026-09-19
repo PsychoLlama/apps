@@ -14,7 +14,12 @@ import { useAnchorElement } from './root';
 import { roundByDevicePixel } from './tether/pixel-ratio';
 import { useReference } from './tether/use-reference';
 import { useTether } from './tether/use-tether';
-import { translateX as arrowX, translateY as arrowY } from './arrow.css';
+import {
+  base as arrowBase,
+  depth as arrowDepth,
+  translateX as arrowX,
+  translateY as arrowY,
+} from './arrow.css';
 import * as css from './window.css';
 
 /**
@@ -22,12 +27,25 @@ import * as css from './window.css';
  * are omitted — the window derives both from its own placement, which is
  * what aims the arrow back at whatever the window is bound to. So are
  * `hidden`, which the tether decides, and `testId`, which derives from
- * the window's own.
+ * the window's own. The size is optional here, where its default lives.
  */
-export type FloatingArrowProps = Omit<
+export interface FloatingArrowProps extends Omit<
   ArrowProps,
-  'direction' | 'align' | 'hidden' | 'testId'
->;
+  'direction' | 'align' | 'hidden' | 'testId' | 'base' | 'depth'
+> {
+  /**
+   * Length of the triangle's base — the edge that runs along the anchor.
+   * In px.
+   * @default 12
+   */
+  base?: number;
+
+  /**
+   * Depth the point protrudes from the base toward the anchor, in px.
+   * @default 6
+   */
+  depth?: number;
+}
 
 /**
  * Direction the arrow points so it faces the anchor, keyed by the
@@ -213,6 +231,14 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
 
   const arrowData = () => measurement()?.middlewareData.arrow;
 
+  // The one place the arrow's size gets its default: the vars and the
+  // drawing both read it from here.
+  const arrowSize = () =>
+    own.arrow && {
+      base: own.arrow.base ?? 12,
+      depth: own.arrow.depth ?? 6,
+    };
+
   const className = () =>
     clx(css.window, own.radius && css.radiusVariants[own.radius], own.class);
 
@@ -225,6 +251,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
   const inlineVars = () => {
     const subject = measurement();
     const arrow = arrowData();
+    const size = arrowSize();
 
     return assignInlineVars({
       ...(own.sideOffset !== undefined && {
@@ -236,6 +263,13 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
       ...(subject && {
         [css.tetherX]: `${roundByDevicePixel(subject.x)}px`,
         [css.tetherY]: `${roundByDevicePixel(subject.y)}px`,
+      }),
+
+      // The arrow's size, set here rather than on the arrow so the whole
+      // window can read it.
+      ...(size && {
+        [arrowBase]: `${size.base}px`,
+        [arrowDepth]: `${size.depth}px`,
       }),
 
       // Only in point mode.
@@ -268,16 +302,16 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
       data-point={own.point ? '' : undefined}
       data-tethered={measurement() ? '' : undefined}
     >
-      <Show when={own.arrow}>
-        {(arrow) => (
+      <Show when={arrowSize()}>
+        {(size) => (
           <Arrow
             ref={setArrowElement}
             testId={`${own.testId}-arrow`}
-            base={arrow().base}
-            depth={arrow().depth}
+            base={size().base}
+            depth={size().depth}
             direction={ARROW_DIRECTION_BY_SIDE[side()]}
             align={align()}
-            class={arrow().class}
+            class={own.arrow?.class}
 
             // Nonzero when the anchor's span can't hold the arrow's base
             // — slid clear, or narrower than the arrow — so there's

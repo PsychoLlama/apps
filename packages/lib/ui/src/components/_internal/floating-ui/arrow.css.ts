@@ -8,6 +8,15 @@ import { createVar, style } from '@vanilla-extract/css';
 export const offset = createVar();
 
 /**
+ * The arrow's size, in px: `base` runs along the anchor edge, `depth`
+ * reaches toward the anchor. The window assigns both from its `arrow`
+ * prop, which makes them readable anywhere in the window whichever way
+ * the arrow points, and defaults them to `0` without one.
+ */
+export const base = createVar();
+export const depth = createVar();
+
+/**
  * Translation of the arrow along each axis, in px. Mirrors the tether's
  * `middlewareData.arrow.x`/`.y`: the window assigns whichever axis runs
  * along the anchor edge from its measurement and leaves the other at
@@ -50,6 +59,17 @@ export const arrow = style({
     // Hidden, not unmounted: the arrow keeps its box, so a measured seat
     // stays measurable while it waits offscreen of the anchor.
     '&:where([data-hidden])': { visibility: 'hidden' },
+
+    // The box, in place of `width`/`height` attributes. Up/down arrows
+    // lie along a horizontal edge; left/right stand the base on its end.
+    '&:where([data-direction="up"], [data-direction="down"])': {
+      width: base,
+      height: depth,
+    },
+    '&:where([data-direction="left"], [data-direction="right"])': {
+      width: depth,
+      height: base,
+    },
 
     '&:where([data-align="start"])': { alignSelf: 'flex-start' },
     '&:where([data-align="center"])': { alignSelf: 'center' },

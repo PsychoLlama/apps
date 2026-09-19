@@ -4,24 +4,14 @@
  * Covers what the arrow promises: it draws a correctly-sized triangle for
  * each direction — without a rotation transform, so the SVG box matches
  * the shape — seats itself along the edge, and merges a consumer class.
+ * The box's rendered size comes from the window's stylesheet, so it's
+ * covered in the window's browser tests instead.
  */
 
 import { render } from '@solidjs/testing-library';
 import { Arrow } from '../arrow';
 
 describe('Arrow', () => {
-  it('defaults to a 12×6 up-pointing triangle', () => {
-    const { container } = render(() => <Arrow direction="up" />);
-    const svg = container.querySelector('svg');
-
-    expect(svg).toHaveAttribute('width', '12');
-    expect(svg).toHaveAttribute('height', '6');
-    expect(svg?.querySelector('polygon')).toHaveAttribute(
-      'points',
-      '0,6 12,6 6,0',
-    );
-  });
-
   it('draws each direction and swaps its box when horizontal', () => {
     // Base 12, depth 6. Vertical arrows measure 12×6; horizontal ones
     // stand the base on its end and measure 6×12 — no transform.
@@ -38,8 +28,7 @@ describe('Arrow', () => {
       ));
       const svg = container.querySelector('svg');
 
-      expect(svg).toHaveAttribute('width', String(width));
-      expect(svg).toHaveAttribute('height', String(height));
+      expect(svg).toHaveAttribute('viewBox', `0 0 ${width} ${height}`);
       expect(svg?.querySelector('polygon')).toHaveAttribute('points', points);
       expect(svg?.style.transform).toBe('');
     }
@@ -47,7 +36,7 @@ describe('Arrow', () => {
 
   it('reflects its alignment into the data attribute', () => {
     const { container } = render(() => (
-      <Arrow direction="left" align="start" />
+      <Arrow base={12} depth={6} direction="left" align="start" />
     ));
 
     expect(container.querySelector('svg')).toHaveAttribute(
@@ -57,7 +46,9 @@ describe('Arrow', () => {
   });
 
   it('defaults its alignment to center', () => {
-    const { container } = render(() => <Arrow direction="up" />);
+    const { container } = render(() => (
+      <Arrow base={12} depth={6} direction="up" />
+    ));
 
     expect(container.querySelector('svg')).toHaveAttribute(
       'data-align',
@@ -66,7 +57,9 @@ describe('Arrow', () => {
   });
 
   it('reflects its direction into the data attribute the offset keys off', () => {
-    const { container } = render(() => <Arrow direction="right" />);
+    const { container } = render(() => (
+      <Arrow base={12} depth={6} direction="right" />
+    ));
 
     expect(container.querySelector('svg')).toHaveAttribute(
       'data-direction',
@@ -75,7 +68,9 @@ describe('Arrow', () => {
   });
 
   it('merges a consumer class', () => {
-    const { container } = render(() => <Arrow direction="up" class="fill" />);
+    const { container } = render(() => (
+      <Arrow base={12} depth={6} direction="up" class="fill" />
+    ));
 
     expect(container.querySelector('svg')).toHaveClass('fill');
   });

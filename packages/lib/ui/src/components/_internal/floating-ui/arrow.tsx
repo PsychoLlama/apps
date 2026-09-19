@@ -25,15 +25,12 @@ export interface ArrowProps extends TestIdProps {
 
   /**
    * Length of the triangle's base — the edge that runs along the anchor.
-   * In px. Defaults to `12`.
+   * In px.
    */
-  base?: number;
+  base: number;
 
-  /**
-   * Depth the point protrudes from the base toward the anchor, in px.
-   * Defaults to `6`.
-   */
-  depth?: number;
+  /** Depth the point protrudes from the base toward the anchor, in px. */
+  depth: number;
 
   /**
    * Placement along the anchor edge, applied as `align-self` within the
@@ -60,18 +57,19 @@ export interface ArrowProps extends TestIdProps {
  * it.
  *
  * The triangle is drawn directly for each direction rather than rotated,
- * so the SVG's intrinsic box always matches the shape — a left/right
- * arrow measures `depth × base`, not `base × depth` turned on its side.
+ * so the SVG's box always matches the shape — a left/right arrow
+ * measures `depth × base`, not `base × depth` turned on its side.
+ *
+ * The box itself is sized in CSS, from vars the window assigns, so it
+ * only has a size inside a window. The props draw the triangle.
  */
 export const Arrow = (props: ArrowProps) => {
-  const base = () => props.base ?? 12;
-  const depth = () => props.depth ?? 6;
   const horizontal = () =>
     props.direction === 'left' || props.direction === 'right';
 
   // Horizontal arrows stand the base on its end, so the box swaps.
-  const boxWidth = () => (horizontal() ? depth() : base());
-  const boxHeight = () => (horizontal() ? base() : depth());
+  const boxWidth = () => (horizontal() ? props.depth : props.base);
+  const boxHeight = () => (horizontal() ? props.base : props.depth);
 
   const points = () => {
     const bw = boxWidth();
@@ -94,8 +92,6 @@ export const Arrow = (props: ArrowProps) => {
   return (
     <svg
       ref={props.ref}
-      width={boxWidth()}
-      height={boxHeight()}
       viewBox={`0 0 ${boxWidth()} ${boxHeight()}`}
       class={className()}
       data-direction={props.direction}

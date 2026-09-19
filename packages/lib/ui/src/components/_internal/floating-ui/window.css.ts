@@ -1,6 +1,8 @@
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import { radius } from '@lib/design';
 import {
+  base as arrowBase,
+  depth as arrowDepth,
   offset,
   translateX as arrowX,
   translateY as arrowY,
@@ -145,6 +147,8 @@ export const window = style({
     [distanceY]: '0px',
     [offset]: '0px',
     [borderRadius]: '0px',
+    [arrowBase]: '0px',
+    [arrowDepth]: '0px',
   },
 
   position: 'absolute',

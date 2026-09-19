@@ -13,6 +13,7 @@ import {
   FloatingWindow,
   type FloatingWindowProps,
 } from '..';
+import * as arrowCss from '../arrow.css';
 import * as css from '../window.css';
 
 /** Unwrap a `createVar()` reference (`var(--x)`) to its property name. */
@@ -241,11 +242,11 @@ describe('FloatingWindow', () => {
 
   it('points the arrow toward the anchor per side', () => {
     const cases = [
-      { side: 'bottom', width: '12', height: '6' },
-      { side: 'left', width: '6', height: '12' },
+      { side: 'bottom', direction: 'up', viewBox: '0 0 12 6' },
+      { side: 'left', direction: 'right', viewBox: '0 0 6 12' },
     ] as const;
 
-    for (const { side, width, height } of cases) {
+    for (const { side, direction, viewBox } of cases) {
       const { container } = render(() => (
         <Rooted side={side} arrow={{}}>
           content
@@ -254,9 +255,20 @@ describe('FloatingWindow', () => {
       const svg = container.querySelector('svg');
 
       // A horizontal side stands the arrow's box on its end.
-      expect(svg).toHaveAttribute('width', width);
-      expect(svg).toHaveAttribute('height', height);
+      expect(svg).toHaveAttribute('data-direction', direction);
+      expect(svg).toHaveAttribute('viewBox', viewBox);
     }
+  });
+
+  it("assigns the arrow's size as inline vars on the window", () => {
+    const { container } = render(() => (
+      <Rooted arrow={{ base: 16 }}>content</Rooted>
+    ));
+    const shell = container.querySelector<HTMLElement>('[data-side]')!;
+
+    // Given, and the arrow's own default where not.
+    expect(shell.style.getPropertyValue(varName(arrowCss.base))).toBe('16px');
+    expect(shell.style.getPropertyValue(varName(arrowCss.depth))).toBe('6px');
   });
 
   it("seats the arrow with the window's own alignment", () => {

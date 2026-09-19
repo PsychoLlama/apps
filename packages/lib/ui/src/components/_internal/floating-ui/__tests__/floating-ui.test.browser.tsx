@@ -335,6 +335,30 @@ describe('FloatingWindow geometry', () => {
       expect(end.arrowRect!.left).toBeCloseTo(end.anchorRect.right);
     });
 
+    it('sizes the arrow from its config, turned to face the anchor', async () => {
+      const below = await renderFloating(mode, {
+        side: 'bottom',
+        arrow: { base: 16, depth: 8 },
+      });
+      expect(below.arrowRect!.width).toBeCloseTo(16);
+      expect(below.arrowRect!.height).toBeCloseTo(8);
+
+      // Beside the anchor, the base stands on its end.
+      const beside = await renderFloating(mode, {
+        side: 'right',
+        arrow: { base: 16, depth: 8 },
+      });
+      expect(beside.arrowRect!.width).toBeCloseTo(8);
+      expect(beside.arrowRect!.height).toBeCloseTo(16);
+
+      const fallback = await renderFloating(mode, {
+        side: 'bottom',
+        arrow: {},
+      });
+      expect(fallback.arrowRect!.width).toBeCloseTo(12);
+      expect(fallback.arrowRect!.height).toBeCloseTo(6);
+    });
+
     it('clamps the point to the anchor box', async () => {
       // A point taken before the anchor shrank would otherwise leave the
       // window hanging off a spot outside it.
