@@ -388,6 +388,11 @@ const Tooltip = (rawProps: TooltipProps) => {
       display={local.display}
       class={css.root}
       data-hoverable={String(local.hoverable)}
+      style={assignInlineVars({
+        ...(local.maxWidth !== undefined && {
+          [css.maxWidth]: local.maxWidth,
+        }),
+      })}
       onClick={onRootClick}
       onAnimationStart={onOpenChange}
       onAnimationCancel={onOpenChange}
@@ -418,11 +423,6 @@ const Tooltip = (rawProps: TooltipProps) => {
           py={1}
           px={2}
           class={clx(css.content, local.class)}
-          style={assignInlineVars({
-            ...(local.maxWidth !== undefined && {
-              [css.maxWidth]: local.maxWidth,
-            }),
-          })}
         >
           <Text
             as="p"

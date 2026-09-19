@@ -183,14 +183,14 @@ describe('Tooltip', () => {
     expect(window()).toHaveAttribute('data-align', 'end');
   });
 
-  it('forwards class and max width to the surface', () => {
-    const { surface } = setup({
+  it('forwards class to the surface and max width to the root', () => {
+    const { surface, root } = setup({
       class: 'custom',
       maxWidth: '200px',
     });
 
     expect(surface()).toHaveClass('custom');
     // The width rides in as the stylesheet's var; `var(--x)` → `--x`.
-    expect(surface()).toHaveStyle(`${css.maxWidth.slice(4, -1)}: 200px`);
+    expect(root()).toHaveStyle(`${css.maxWidth.slice(4, -1)}: 200px`);
   });
 });
