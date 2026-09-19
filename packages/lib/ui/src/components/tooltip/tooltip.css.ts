@@ -161,7 +161,13 @@ export const root = style({
   selectors: {
     // Unhoverable: the surface stops catching the pointer, so there's
     // nothing inside the root to rest on but the trigger.
-    '&:where([data-hoverable="false"])': {
+    //
+    // Unless focus is what holds it open. Then the pointer can be over
+    // the tooltip without having closed it, and a press there would
+    // fall through to whatever is underneath. Caught instead, the press
+    // blurs the trigger, which takes the pointer events back off and
+    // closes the tooltip.
+    '&:where([data-hoverable="false"]:not(:has(:focus-visible)))': {
       vars: { [floating.pointerEvents]: 'none' },
     },
   },
@@ -205,7 +211,8 @@ export const root = style({
  * the root: the pointer can travel from the trigger onto the tooltip
  * without closing it. It can't cross the gap between them, which is
  * what a grace area is for — and it can't do any of it when the tooltip
- * isn't hoverable, where the pointer goes straight through.
+ * isn't hoverable, where the pointer goes straight through, except
+ * while focus holds it open.
  *
  * Between the stylesheet deciding to open and the tooltip being there
  * sits {@link enter}. Hiding cancels it, which is how a visit that ends
