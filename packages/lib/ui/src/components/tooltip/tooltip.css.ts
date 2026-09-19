@@ -27,12 +27,16 @@
  *   no media query here; the duration token collapses on its own.
  * - The slide is `space[1]` rather than a literal 4px, so it scales with
  *   the reader's font size. Same distance at the default.
+ * - A tooltip that shouldn't be hovered is see-through to the pointer
+ *   rather than closing on the way out. Upstream's content is still
+ *   solid under `disableHoverableContent`; ours lets the page through.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
 
 import { createVar, fallbackVar, keyframes, style } from '@vanilla-extract/css';
 import { entrance, moderate, neutral, space } from '@lib/design';
+import * as floating from '../_internal/floating-ui/index.css';
 
 /**
  * Any CSS width the surface wraps at. Assigned inline from the
@@ -154,6 +158,13 @@ const enter = keyframes({
  */
 export const root = style({
   vars: { [delay]: '0s', [duration]: '0s' },
+  selectors: {
+    // Unhoverable: the surface stops catching the pointer, so there's
+    // nothing inside the root to rest on but the trigger.
+    '&:where([data-hoverable="false"])': {
+      vars: { [floating.pointerEvents]: 'none' },
+    },
+  },
   '@media': {
     '(hover: none)': {
       selectors: {
@@ -193,7 +204,8 @@ export const root = style({
  * The hover half reaches the window too, since the window sits inside
  * the root: the pointer can travel from the trigger onto the tooltip
  * without closing it. It can't cross the gap between them, which is
- * what a grace area is for.
+ * what a grace area is for — and it can't do any of it when the tooltip
+ * isn't hoverable, where the pointer goes straight through.
  *
  * Between the stylesheet deciding to open and the tooltip being there
  * sits {@link enter}. Hiding cancels it, which is how a visit that ends

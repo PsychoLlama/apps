@@ -35,6 +35,7 @@ export interface FloatingBodyProps
     JSX.HTMLAttributes<HTMLDivElement> {
   /** Extra class names merged onto the surface element. */
   class?: string;
+
   /** Floating content to render. */
   children: JSX.Element;
 }

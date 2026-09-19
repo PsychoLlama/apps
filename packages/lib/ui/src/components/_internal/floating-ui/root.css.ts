@@ -1,8 +1,16 @@
 import { style, styleVariants } from '@vanilla-extract/css';
+import { pointerEvents } from './body.css';
 
-/** The positioning context every window below the root places against. */
+/**
+ * The positioning context every window below the root places against.
+ *
+ * Also defaults the vars a component overrides. A component's own rule
+ * wins from anywhere below the root, and on the root itself by source
+ * order: every stylesheet that overrides one imports this one.
+ */
 const rootBase = style({
   position: 'relative',
+  vars: { [pointerEvents]: 'auto' },
 });
 
 /**

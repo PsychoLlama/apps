@@ -39,9 +39,11 @@ interface Scene {
   anchor?: Rect;
   subject?: Dimensions;
   arrow?: Dimensions;
+  padding?: Padding;
+
   /** The clipping boundary `shift` keeps the subject inside. */
   boundary?: Rect;
-  padding?: Padding;
+
   /** Middleware to run before the arrow, e.g. `offset` or `shift`. */
   before?: Middleware[];
 }

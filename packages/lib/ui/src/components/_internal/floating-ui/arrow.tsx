@@ -19,29 +19,35 @@ export type ArrowAlign = 'start' | 'center' | 'end';
 export interface ArrowProps extends TestIdProps {
   /** Ref to the underlying SVG element. */
   ref?: (element: SVGSVGElement) => void;
+
   /** Direction the point faces. */
   direction: ArrowDirection;
+
   /**
    * Length of the triangle's base — the edge that runs along the anchor.
    * In px. Defaults to `12`.
    */
   base?: number;
+
   /**
    * Depth the point protrudes from the base toward the anchor, in px.
    * Defaults to `6`.
    */
   depth?: number;
+
   /**
    * Placement along the anchor edge, applied as `align-self` within the
    * window's arrow/body stack. Defaults to `'center'`.
    */
   align?: ArrowAlign;
+
   /**
    * Hide the arrow while keeping its box — set when the anchor has
    * slid out from under the window and there's nothing to point at.
    * Defaults to `false`.
    */
   hidden?: boolean;
+
   /** Class merged onto the arrow — e.g. a fill or shadow. */
   class?: string;
 }

@@ -64,12 +64,14 @@ export interface FloatingRootProps
    * component can detect for you.
    */
   display: FloatingRootDisplay;
+
   /**
    * Class merged onto the wrapper. The escape hatch for the sizing the
    * wrapper can't infer: it shrink-wraps to its content, so an anchor
    * meant to stretch is sized here instead of on the element inside.
    */
   class?: string;
+
   /**
    * The element being anchored to, alongside the
    * {@link FloatingWindow}s bound to it — siblings of that element, not

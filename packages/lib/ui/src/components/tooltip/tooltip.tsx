@@ -54,13 +54,23 @@
  *   drops the wait, the entrance goes with it the way upstream's
  *   `instant-open` does. Focus landing mid-entrance ends it on the
  *   spot, for the same reason it ends the wait.
- * - Hoverable content arrives early and half-finished. The window sits
- *   inside the root, so hovering the tooltip itself keeps the root
+ * - Hoverable content is the default and comes for free: the window
+ *   sits inside the root, so resting on the tooltip keeps the root
  *   hovered and the tooltip open, which is what upstream's
- *   `disableHoverableContent={false}` buys. What's missing is the
- *   grace area over the gap between trigger and window: the pointer
- *   crossing it leaves the root for a moment and the tooltip closes
- *   under it. There's no `disableHoverableContent` prop yet either.
+ *   `disableHoverableContent={false}` buys. Still half-finished — what's
+ *   missing is the grace area over the gap between trigger and window,
+ *   so the pointer crossing it leaves the root for a moment and the
+ *   tooltip closes under it.
+ * - Turning that off is `hoverable={false}`, not upstream's
+ *   `disableHoverableContent`. Positive and defaulted true, matching
+ *   `Text`'s `selectable`, and it works the opposite way round: upstream
+ *   has to hear the pointer leave the trigger and close, where here the
+ *   surface stops catching the pointer, so the pointer goes through it and
+ *   there's nothing inside the root to hover but the trigger. No second
+ *   open condition to keep in step with the first.
+ *   Perceptible difference: upstream's content still blocks what's
+ *   under it, and an unhoverable tooltip here doesn't — a button
+ *   beneath one stays clickable while it's up.
  * - Focus is CSS. Upstream opens from a `focus` handler unless a
  *   pointer press caused the focus, tracked in a ref. Here the window
  *   shows while the root `:has(:focus-visible)`, and the browser's own
@@ -221,6 +231,14 @@ export interface TooltipProps
   /** Any CSS width the surface wraps at. @default '360px' */
   maxWidth?: string;
 
+  /**
+   * Whether the pointer can rest on the tooltip itself. Hoverable text
+   * stays put while it's being read; unhoverable text is chrome, and
+   * the pointer passes through it to the page underneath.
+   * @default true
+   */
+  hoverable?: boolean;
+
   /** Class merged onto the surface. */
   class?: string;
 
@@ -245,6 +263,7 @@ const DEFAULTS = {
   align: 'center',
   sideOffset: 4,
   alignOffset: 0,
+  hoverable: true,
 } satisfies Partial<TooltipProps>;
 
 /** Listener options for everything the tooltip attaches outside itself. */
@@ -277,6 +296,7 @@ const Tooltip = (rawProps: TooltipProps) => {
     'sideOffset',
     'alignOffset',
     'maxWidth',
+    'hoverable',
     'class',
     'children',
   ]);
@@ -363,6 +383,7 @@ const Tooltip = (rawProps: TooltipProps) => {
     <FloatingRoot
       display={local.display}
       class={css.root}
+      data-hoverable={String(local.hoverable)}
       onClick={onRootClick}
       onAnimationStart={onOpenChange}
       onAnimationCancel={onOpenChange}
