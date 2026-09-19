@@ -1,11 +1,20 @@
-import { createVar, fallbackVar, style } from '@vanilla-extract/css';
+import { createVar, style } from '@vanilla-extract/css';
 
 /**
  * Distance an edge-aligned arrow is pushed off the surface's rounded
  * corner. The window assigns it from its `radius` (see
- * `radiusVariants`); an unset var falls back to `0`.
+ * `radiusVariants`) and defaults it to `0`.
  */
 export const offset = createVar();
+
+/**
+ * The arrow's size, in px: `base` runs along the anchor edge, `depth`
+ * reaches toward the anchor. The window assigns both from its `arrow`
+ * prop, which makes them readable anywhere in the window whichever way
+ * the arrow points, and defaults them to `0` without one.
+ */
+export const base = createVar();
+export const depth = createVar();
 
 /**
  * Translation of the arrow along each axis, in px. Mirrors the tether's
@@ -25,8 +34,8 @@ export const translateY = createVar();
  *
  * A `start`/`end` arrow is nudged in by {@link offset} so its base clears
  * the surface's rounded corner instead of riding up onto the curve. The
- * nudge lands on whichever axis the arrow stacks against — inline for
- * up/down arrows (horizontal edge), block for left/right (vertical edge).
+ * nudge lands on whichever axis the arrow stacks against — inline for a
+ * `data-axis="y"` arrow (horizontal edge), block for `x` (vertical edge).
  *
  * Under a tethered window the seat is measured rather than aligned: the
  * arrow parks at the start of the edge with alignment and the corner
@@ -51,20 +60,30 @@ export const arrow = style({
     // stays measurable while it waits offscreen of the anchor.
     '&:where([data-hidden])': { visibility: 'hidden' },
 
+    // The box, in place of `width`/`height` attributes. A `y` arrow
+    // (up/down) lies along a horizontal edge; an `x` arrow (left/right)
+    // stands the base on its end.
+    '&:where([data-axis="x"])': { width: depth, height: base },
+    '&:where([data-axis="y"])': { width: base, height: depth },
+
     '&:where([data-align="start"])': { alignSelf: 'flex-start' },
     '&:where([data-align="center"])': { alignSelf: 'center' },
     '&:where([data-align="end"])': { alignSelf: 'flex-end' },
 
-    // Up/down arrows sit on a horizontal edge, so the nudge is inline;
-    // left/right on a vertical edge, so it's block.
-    '&:where([data-direction="up"], [data-direction="down"]):where([data-align="start"])':
-      { marginInlineStart: fallbackVar(offset, '0px') },
-    '&:where([data-direction="up"], [data-direction="down"]):where([data-align="end"])':
-      { marginInlineEnd: fallbackVar(offset, '0px') },
-    '&:where([data-direction="left"], [data-direction="right"]):where([data-align="start"])':
-      { marginBlockStart: fallbackVar(offset, '0px') },
-    '&:where([data-direction="left"], [data-direction="right"]):where([data-align="end"])':
-      { marginBlockEnd: fallbackVar(offset, '0px') },
+    // A `y` arrow sits on a horizontal edge, so the nudge is inline; an
+    // `x` arrow on a vertical edge, so it's block.
+    '&:where([data-axis="y"][data-align="start"])': {
+      marginInlineStart: offset,
+    },
+    '&:where([data-axis="y"][data-align="end"])': {
+      marginInlineEnd: offset,
+    },
+    '&:where([data-axis="x"][data-align="start"])': {
+      marginBlockStart: offset,
+    },
+    '&:where([data-axis="x"][data-align="end"])': {
+      marginBlockEnd: offset,
+    },
 
     // Tethered: alignment and the corner nudge are moot; the translation
     // above is the whole seat.

@@ -150,6 +150,27 @@ describe('Tooltip', () => {
     expect(window.contains(beneath)).toBe(false);
   });
 
+  it('catches a press on an unhoverable tooltip focus holds open', async () => {
+    const { trigger, window } = setup({ hoverable: false });
+
+    await userEvent.tab();
+    await waitFor(() => expect(window).toBeVisible());
+
+    // `park` is what lies under the tooltip, so it's where a press that
+    // fell through would land.
+    const fellThrough = vi.fn();
+    park.addEventListener('click', fellThrough);
+    try {
+      await userEvent.click(screen.getByTestId('tooltip-surface'));
+    } finally {
+      park.removeEventListener('click', fellThrough);
+    }
+
+    expect(fellThrough).not.toHaveBeenCalled();
+    expect(trigger).not.toHaveFocus();
+    expect(window).not.toBeVisible();
+  });
+
   // --- Delay ---
 
   it('makes a hover wait before showing anything', async () => {

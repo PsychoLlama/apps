@@ -68,9 +68,12 @@
  *   surface stops catching the pointer, so the pointer goes through it and
  *   there's nothing inside the root to hover but the trigger. No second
  *   open condition to keep in step with the first.
- *   Perceptible difference: upstream's content still blocks what's
- *   under it, and an unhoverable tooltip here doesn't — a button
- *   beneath one stays clickable while it's up.
+ *   Upstream's content still blocks what's under it, and ours doesn't
+ *   while hover alone holds it open. That's hard to perceive, since the
+ *   pointer can't be over the tooltip then without having closed it.
+ *   While focus holds it open, ours catches the pointer like upstream's,
+ *   so a press on it blurs the trigger and closes it instead of reaching
+ *   the page underneath.
  * - Focus is CSS. Upstream opens from a `focus` handler unless a
  *   pointer press caused the focus, tracked in a ref. Here the window
  *   shows while the root `:has(:focus-visible)`, and the browser's own
@@ -234,7 +237,8 @@ export interface TooltipProps
   /**
    * Whether the pointer can rest on the tooltip itself. Hoverable text
    * stays put while it's being read; unhoverable text is chrome, and
-   * the pointer passes through it to the page underneath.
+   * the pointer passes through it to the page underneath, except while
+   * keyboard focus holds it open.
    * @default true
    */
   hoverable?: boolean;
@@ -384,6 +388,11 @@ const Tooltip = (rawProps: TooltipProps) => {
       display={local.display}
       class={css.root}
       data-hoverable={String(local.hoverable)}
+      style={assignInlineVars({
+        ...(local.maxWidth !== undefined && {
+          [css.maxWidth]: local.maxWidth,
+        }),
+      })}
       onClick={onRootClick}
       onAnimationStart={onOpenChange}
       onAnimationCancel={onOpenChange}
@@ -414,11 +423,6 @@ const Tooltip = (rawProps: TooltipProps) => {
           py={1}
           px={2}
           class={clx(css.content, local.class)}
-          style={assignInlineVars({
-            ...(local.maxWidth !== undefined && {
-              [css.maxWidth]: local.maxWidth,
-            }),
-          })}
         >
           <Text
             as="p"

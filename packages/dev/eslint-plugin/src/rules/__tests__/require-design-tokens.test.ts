@@ -16,6 +16,10 @@ tester.run('require-design-tokens', rule, {
     // Identifiers (variables) are fine.
     { code: 'const x = { padding: myVar }' },
 
+    // Computed keys are vars, not properties, even when the var's
+    // binding shares a property's name.
+    { code: 'const x = { vars: { [borderRadius]: "0" } }' },
+
     // Function calls are fine.
     { code: 'const x = { color: darken(accent[9]) }' },
 

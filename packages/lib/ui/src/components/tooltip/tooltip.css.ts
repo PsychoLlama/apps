@@ -34,20 +34,20 @@
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
 
-import { createVar, fallbackVar, keyframes, style } from '@vanilla-extract/css';
+import { createVar, keyframes, style } from '@vanilla-extract/css';
 import { entrance, moderate, neutral, space } from '@lib/design';
 import * as floating from '../_internal/floating-ui/index.css';
 
 /**
- * Any CSS width the surface wraps at. Assigned inline from the
- * `maxWidth` prop; unset falls back to Themes' 360px.
+ * Any CSS width the surface wraps at. Assigned inline on the root from
+ * the `maxWidth` prop; the root defaults it to Themes' 360px.
  */
 export const maxWidth = createVar();
 
 /** The surface. Padding and radius are props. */
 export const content = style({
   backgroundColor: neutral.solid[12],
-  maxWidth: fallbackVar(maxWidth, '360px'),
+  maxWidth,
 });
 
 /**
@@ -157,11 +157,21 @@ const enter = keyframes({
  * up while the component hides the window for reasons of its own.
  */
 export const root = style({
-  vars: { [delay]: '0s', [duration]: '0s' },
+  vars: {
+    [maxWidth]: '360px',
+    [delay]: '0s',
+    [duration]: '0s',
+  },
   selectors: {
     // Unhoverable: the surface stops catching the pointer, so there's
     // nothing inside the root to rest on but the trigger.
-    '&:where([data-hoverable="false"])': {
+    //
+    // Unless focus is what holds it open. Then the pointer can be over
+    // the tooltip without having closed it, and a press there would
+    // fall through to whatever is underneath. Caught instead, the press
+    // blurs the trigger, which takes the pointer events back off and
+    // closes the tooltip.
+    '&:where([data-hoverable="false"]:not(:has(:focus-visible)))': {
       vars: { [floating.pointerEvents]: 'none' },
     },
   },
@@ -205,7 +215,8 @@ export const root = style({
  * the root: the pointer can travel from the trigger onto the tooltip
  * without closing it. It can't cross the gap between them, which is
  * what a grace area is for — and it can't do any of it when the tooltip
- * isn't hoverable, where the pointer goes straight through.
+ * isn't hoverable, where the pointer goes straight through, except
+ * while focus holds it open.
  *
  * Between the stylesheet deciding to open and the tooltip being there
  * sits {@link enter}. Hiding cancels it, which is how a visit that ends

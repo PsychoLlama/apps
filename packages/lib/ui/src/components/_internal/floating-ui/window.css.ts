@@ -1,11 +1,8 @@
-import {
-  createVar,
-  fallbackVar,
-  style,
-  styleVariants,
-} from '@vanilla-extract/css';
+import { createVar, style, styleVariants } from '@vanilla-extract/css';
 import { radius } from '@lib/design';
 import {
+  base as arrowBase,
+  depth as arrowDepth,
   offset,
   translateX as arrowX,
   translateY as arrowY,
@@ -14,7 +11,7 @@ import { borderRadius } from './body.css';
 
 /**
  * Gap between the anchor edge and the window, in px. Assigned inline
- * by the window from its `sideOffset` prop; unset falls back to `0`.
+ * by the window from its `sideOffset` prop; defaults to `0`.
  */
 export const sideOffset = createVar();
 
@@ -24,6 +21,7 @@ export const sideOffset = createVar();
  * window toward `end` and an `end`-aligned window toward `start` — the
  * same logical inversion Radix applies, so flipping alignment never
  * flips the offset's sign. A centered window ignores it, as Radix does.
+ * Defaults to `0`.
  */
 export const alignOffset = createVar();
 
@@ -47,13 +45,13 @@ export const tetherY = createVar();
 // The corner of the window that faces whatever it's bound to, as a
 // percentage of its own size. Doubles as the `transform-origin` — the
 // point a scale animation should grow out of is the same corner.
-// Unset halves resolve to center.
+// Defaults to center.
 const originX = createVar();
 const originY = createVar();
 
 // Which way the window grows along each axis: `-1` back toward the
 // negative end (up/left), `1` forward. Only the backward placements
-// assign it; unset means forward.
+// assign it; defaults to forward.
 const signX = createVar();
 const signY = createVar();
 
@@ -63,9 +61,6 @@ const signY = createVar();
 // edge.
 const distanceX = createVar();
 const distanceY = createVar();
-
-const gap = fallbackVar(sideOffset, '0px');
-const nudge = fallbackVar(alignOffset, '0px');
 
 /**
  * Displacement along one axis: pull the window back by the corner
@@ -77,7 +72,7 @@ const nudge = fallbackVar(alignOffset, '0px');
  * so a rule only has to name its corner, its direction, and how far.
  */
 const shift = (origin: string, sign: string, distance: string) =>
-  `calc(-1 * ${fallbackVar(origin, '50%')} + ${fallbackVar(distance, '0px')} * ${fallbackVar(sign, '1')})`;
+  `calc(-1 * ${origin} + ${distance} * ${sign})`;
 
 /**
  * The positioned floating window.
@@ -109,11 +104,11 @@ const shift = (origin: string, sign: string, distance: string) =>
  * tether's virtual reference clamps it, so an anchor that shrinks under
  * a point never leaves the window hanging outside.
  *
- * Each mode's vars are declared where they're read. Custom properties
+ * Every var is declared on the window that reads it. Custom properties
  * inherit, so a var left undeclared on a window would come from the
- * nearest float above it; declaring the mode's zeros under the mode's
- * own attribute keeps nested floats independent without a base style
- * that carries every var on every window.
+ * nearest float above it. The vars every window reads get their
+ * defaults in the base style; each mode's own vars are zeroed under
+ * the mode's attribute, since only that mode reads them.
  *
  * Tethered (`data-tethered`): a measurement has landed, and the window
  * sits exactly where it says. The pins collapse to the root's corner and
@@ -141,21 +136,36 @@ const shift = (origin: string, sign: string, distance: string) =>
  * overrides both.
  */
 export const window = style({
+  vars: {
+    [sideOffset]: '0px',
+    [alignOffset]: '0px',
+    [originX]: '50%',
+    [originY]: '50%',
+    [signX]: '1',
+    [signY]: '1',
+    [distanceX]: '0px',
+    [distanceY]: '0px',
+    [offset]: '0px',
+    [borderRadius]: '0px',
+    [arrowBase]: '0px',
+    [arrowDepth]: '0px',
+  },
+
   position: 'absolute',
   display: 'flex',
   alignItems: 'center',
   pointerEvents: 'none',
-  transformOrigin: `${fallbackVar(originX, '50%')} ${fallbackVar(originY, '50%')}`,
+  transformOrigin: `${originX} ${originY}`,
   translate: `${shift(originX, signX, distanceX)} ${shift(originY, signY, distanceY)}`,
   selectors: {
     // Which offset runs along which axis. The side offset always travels
     // on the axis facing the anchor, the align offset on the axis
     // running along the edge — `data-axis` names the former.
     '&:where([data-axis="y"])': {
-      vars: { [distanceX]: nudge, [distanceY]: gap },
+      vars: { [distanceX]: alignOffset, [distanceY]: sideOffset },
     },
     '&:where([data-axis="x"])': {
-      vars: { [distanceX]: gap, [distanceY]: nudge },
+      vars: { [distanceX]: sideOffset, [distanceY]: alignOffset },
     },
 
     // Pin the window's anchor-facing edge to the anchor edge it sits

@@ -1,5 +1,6 @@
 import clx from '@lib/classnames';
 import { type TestIdProps } from '../../../props/test-id';
+import { type FloatingAxis } from './types';
 import * as css from './arrow.css';
 
 /**
@@ -24,22 +25,26 @@ export interface ArrowProps extends TestIdProps {
   direction: ArrowDirection;
 
   /**
-   * Length of the triangle's base — the edge that runs along the anchor.
-   * In px. Defaults to `12`.
+   * Axis the point faces along: `y` for up/down, `x` for left/right.
+   * Given alongside {@link direction} so the styles can key off the axis
+   * alone.
    */
-  base?: number;
+  axis: FloatingAxis;
 
   /**
-   * Depth the point protrudes from the base toward the anchor, in px.
-   * Defaults to `6`.
+   * Length of the triangle's base — the edge that runs along the anchor.
+   * In px.
    */
-  depth?: number;
+  base: number;
+
+  /** Depth the point protrudes from the base toward the anchor, in px. */
+  depth: number;
 
   /**
    * Placement along the anchor edge, applied as `align-self` within the
-   * window's arrow/body stack. Defaults to `'center'`.
+   * window's arrow/body stack.
    */
-  align?: ArrowAlign;
+  align: ArrowAlign;
 
   /**
    * Hide the arrow while keeping its box — set when the anchor has
@@ -60,18 +65,16 @@ export interface ArrowProps extends TestIdProps {
  * it.
  *
  * The triangle is drawn directly for each direction rather than rotated,
- * so the SVG's intrinsic box always matches the shape — a left/right
- * arrow measures `depth × base`, not `base × depth` turned on its side.
+ * so the SVG's box always matches the shape — a left/right arrow
+ * measures `depth × base`, not `base × depth` turned on its side.
+ *
+ * The box itself is sized in CSS, from vars the window assigns, so it
+ * only has a size inside a window. The props draw the triangle.
  */
 export const Arrow = (props: ArrowProps) => {
-  const base = () => props.base ?? 12;
-  const depth = () => props.depth ?? 6;
-  const horizontal = () =>
-    props.direction === 'left' || props.direction === 'right';
-
   // Horizontal arrows stand the base on its end, so the box swaps.
-  const boxWidth = () => (horizontal() ? depth() : base());
-  const boxHeight = () => (horizontal() ? base() : depth());
+  const boxWidth = () => (props.axis === 'x' ? props.depth : props.base);
+  const boxHeight = () => (props.axis === 'x' ? props.base : props.depth);
 
   const points = () => {
     const bw = boxWidth();
@@ -94,12 +97,11 @@ export const Arrow = (props: ArrowProps) => {
   return (
     <svg
       ref={props.ref}
-      width={boxWidth()}
-      height={boxHeight()}
       viewBox={`0 0 ${boxWidth()} ${boxHeight()}`}
       class={className()}
       data-direction={props.direction}
-      data-align={props.align ?? 'center'}
+      data-axis={props.axis}
+      data-align={props.align}
       data-hidden={props.hidden ? '' : undefined}
       data-testid={props.testId}
       aria-hidden="true"
