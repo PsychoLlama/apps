@@ -42,9 +42,9 @@ export interface ArrowProps extends TestIdProps {
 
   /**
    * Placement along the anchor edge, applied as `align-self` within the
-   * window's arrow/body stack. Defaults to `'center'`.
+   * window's arrow/body stack.
    */
-  align?: ArrowAlign;
+  align: ArrowAlign;
 
   /**
    * Hide the arrow while keeping its box — set when the anchor has
@@ -101,7 +101,7 @@ export const Arrow = (props: ArrowProps) => {
       class={className()}
       data-direction={props.direction}
       data-axis={props.axis}
-      data-align={props.align ?? 'center'}
+      data-align={props.align}
       data-hidden={props.hidden ? '' : undefined}
       data-testid={props.testId}
       aria-hidden="true"

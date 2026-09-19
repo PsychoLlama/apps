@@ -48,7 +48,13 @@ describe('Arrow', () => {
 
     for (const { direction, axis, width, height, points } of cases) {
       const { container } = render(() => (
-        <Arrow base={12} depth={6} direction={direction} axis={axis} />
+        <Arrow
+          base={12}
+          depth={6}
+          direction={direction}
+          axis={axis}
+          align="center"
+        />
       ));
       const svg = container.querySelector('svg');
 
@@ -69,20 +75,9 @@ describe('Arrow', () => {
     );
   });
 
-  it('defaults its alignment to center', () => {
-    const { container } = render(() => (
-      <Arrow base={12} depth={6} direction="up" axis="y" />
-    ));
-
-    expect(container.querySelector('svg')).toHaveAttribute(
-      'data-align',
-      'center',
-    );
-  });
-
   it('reflects its direction and axis into data attributes', () => {
     const { container } = render(() => (
-      <Arrow base={12} depth={6} direction="right" axis="x" />
+      <Arrow base={12} depth={6} direction="right" axis="x" align="center" />
     ));
     const svg = container.querySelector('svg');
 
@@ -92,7 +87,14 @@ describe('Arrow', () => {
 
   it('merges a consumer class', () => {
     const { container } = render(() => (
-      <Arrow base={12} depth={6} direction="up" axis="y" class="fill" />
+      <Arrow
+        base={12}
+        depth={6}
+        direction="up"
+        axis="y"
+        align="center"
+        class="fill"
+      />
     ));
 
     expect(container.querySelector('svg')).toHaveClass('fill');
