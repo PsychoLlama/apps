@@ -23,6 +23,12 @@ export type FloatingSide = 'top' | 'right' | 'bottom' | 'left';
 export type FloatingAlignment = 'start' | 'center' | 'end';
 
 /**
+ * Axis a window travels on to clear the anchor: `y` for the top and
+ * bottom sides, `x` for left and right. Maps to `data-axis`.
+ */
+export type FloatingAxis = 'x' | 'y';
+
+/**
  * A coordinate inside the anchor box, in px from its top-left corner.
  * Binds a window to a point instead of an edge — context menus anchor
  * to the pointer, item-aligned selects to a measured item. The window

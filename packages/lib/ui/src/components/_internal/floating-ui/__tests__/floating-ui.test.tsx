@@ -242,11 +242,11 @@ describe('FloatingWindow', () => {
 
   it('points the arrow toward the anchor per side', () => {
     const cases = [
-      { side: 'bottom', direction: 'up', viewBox: '0 0 12 6' },
-      { side: 'left', direction: 'right', viewBox: '0 0 6 12' },
+      { side: 'bottom', direction: 'up', axis: 'y', viewBox: '0 0 12 6' },
+      { side: 'left', direction: 'right', axis: 'x', viewBox: '0 0 6 12' },
     ] as const;
 
-    for (const { side, direction, viewBox } of cases) {
+    for (const { side, direction, axis, viewBox } of cases) {
       const { container } = render(() => (
         <Rooted side={side} arrow={{}}>
           content
@@ -256,6 +256,7 @@ describe('FloatingWindow', () => {
 
       // A horizontal side stands the arrow's box on its end.
       expect(svg).toHaveAttribute('data-direction', direction);
+      expect(svg).toHaveAttribute('data-axis', axis);
       expect(svg).toHaveAttribute('viewBox', viewBox);
     }
   });

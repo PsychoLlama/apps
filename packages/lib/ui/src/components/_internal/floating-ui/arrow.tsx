@@ -1,5 +1,6 @@
 import clx from '@lib/classnames';
 import { type TestIdProps } from '../../../props/test-id';
+import { type FloatingAxis } from './types';
 import * as css from './arrow.css';
 
 /**
@@ -22,6 +23,13 @@ export interface ArrowProps extends TestIdProps {
 
   /** Direction the point faces. */
   direction: ArrowDirection;
+
+  /**
+   * Axis the point faces along: `y` for up/down, `x` for left/right.
+   * Given alongside {@link direction} so the styles can key off the axis
+   * alone.
+   */
+  axis: FloatingAxis;
 
   /**
    * Length of the triangle's base — the edge that runs along the anchor.
@@ -64,12 +72,9 @@ export interface ArrowProps extends TestIdProps {
  * only has a size inside a window. The props draw the triangle.
  */
 export const Arrow = (props: ArrowProps) => {
-  const horizontal = () =>
-    props.direction === 'left' || props.direction === 'right';
-
   // Horizontal arrows stand the base on its end, so the box swaps.
-  const boxWidth = () => (horizontal() ? props.depth : props.base);
-  const boxHeight = () => (horizontal() ? props.base : props.depth);
+  const boxWidth = () => (props.axis === 'x' ? props.depth : props.base);
+  const boxHeight = () => (props.axis === 'x' ? props.base : props.depth);
 
   const points = () => {
     const bw = boxWidth();
@@ -95,6 +100,7 @@ export const Arrow = (props: ArrowProps) => {
       viewBox={`0 0 ${boxWidth()} ${boxHeight()}`}
       class={className()}
       data-direction={props.direction}
+      data-axis={props.axis}
       data-align={props.align ?? 'center'}
       data-hidden={props.hidden ? '' : undefined}
       data-testid={props.testId}

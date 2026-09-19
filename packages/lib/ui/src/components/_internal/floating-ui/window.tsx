@@ -5,6 +5,7 @@ import clx from '@lib/classnames';
 import { type RequiredTestIdProps } from '../../../props/test-id';
 import {
   type FloatingAlignment,
+  type FloatingAxis,
   type FloatingPoint,
   type FloatingSide,
   type FloatingTether,
@@ -23,15 +24,16 @@ import {
 import * as css from './window.css';
 
 /**
- * Arrow configuration for a floating primitive. `direction` and `align`
- * are omitted — the window derives both from its own placement, which is
- * what aims the arrow back at whatever the window is bound to. So are
- * `hidden`, which the tether decides, and `testId`, which derives from
- * the window's own. The size is optional here, where its default lives.
+ * Arrow configuration for a floating primitive. `direction`, `axis`, and
+ * `align` are omitted — the window derives them from its own placement,
+ * which is what aims the arrow back at whatever the window is bound to.
+ * So are `hidden`, which the tether decides, and `testId`, which derives
+ * from the window's own. The size is optional here, where its default
+ * lives.
  */
 export interface FloatingArrowProps extends Omit<
   ArrowProps,
-  'direction' | 'align' | 'hidden' | 'testId' | 'base' | 'depth'
+  'direction' | 'axis' | 'align' | 'hidden' | 'testId' | 'base' | 'depth'
 > {
   /**
    * Length of the triangle's base — the edge that runs along the anchor.
@@ -65,7 +67,7 @@ const ARROW_DIRECTION_BY_SIDE: Record<FloatingSide, ArrowDirection> = {
  * the axis alone, and naming it beats spelling out a side pair in every
  * selector.
  */
-const AXIS_BY_SIDE: Record<FloatingSide, 'x' | 'y'> = {
+const AXIS_BY_SIDE: Record<FloatingSide, FloatingAxis> = {
   top: 'y',
   bottom: 'y',
   left: 'x',
@@ -230,6 +232,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
   });
 
   const arrowData = () => measurement()?.middlewareData.arrow;
+  const axis = (): FloatingAxis => AXIS_BY_SIDE[side()];
 
   // The one place the arrow's size gets its default: the vars and the
   // drawing both read it from here.
@@ -297,7 +300,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
       style={inlineStyle()}
       data-testid={own.testId}
       data-side={side()}
-      data-axis={AXIS_BY_SIDE[side()]}
+      data-axis={axis()}
       data-align={align()}
       data-point={own.point ? '' : undefined}
       data-tethered={measurement() ? '' : undefined}
@@ -310,6 +313,7 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
             base={size().base}
             depth={size().depth}
             direction={ARROW_DIRECTION_BY_SIDE[side()]}
+            axis={axis()}
             align={align()}
             class={own.arrow?.class}
 
