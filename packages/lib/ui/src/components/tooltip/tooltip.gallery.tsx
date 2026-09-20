@@ -4,7 +4,7 @@ import IconPlus from 'virtual:icons/mdi/plus';
 import clx from '@lib/classnames';
 import IconButton from '../icon-button/icon-button';
 import Tooltip, { type TooltipProps } from './tooltip';
-import { showGraceArea } from './tooltip.css';
+import { showGraceArea } from './grace-area.css';
 import * as css from './tooltip.gallery.css';
 
 /**

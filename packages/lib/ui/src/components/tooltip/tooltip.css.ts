@@ -35,8 +35,9 @@
  */
 
 import { createVar, keyframes, style } from '@vanilla-extract/css';
-import { accent, entrance, moderate, neutral, space } from '@lib/design';
+import { entrance, moderate, neutral, space } from '@lib/design';
 import * as floating from '../_internal/floating-ui/index.css';
+import * as grace from './grace-area.css';
 
 /**
  * Any CSS width the surface wraps at. Assigned inline on the root from
@@ -161,8 +162,24 @@ export const root = style({
     [maxWidth]: '360px',
     [delay]: '0s',
     [duration]: '0s',
+
+    // No bridge by default; the rule below builds one for a tooltip
+    // that can be reached. Declared here rather than on the window so
+    // it sits beside the `data-hoverable` that decides it, and so a
+    // tooltip nested inside another window answers for itself.
+    [grace.enabled]: 'none',
+
+    // The bridge stays inert until the window has finished arriving,
+    // which is the wait and the entrance together.
+    [grace.armDelay]: `calc(${delay} + ${duration})`,
   },
   selectors: {
+    // Hoverable: the pointer is allowed to travel from the trigger onto
+    // the tooltip, so there's a bridge to travel over.
+    '&:where([data-hoverable="true"])': {
+      vars: { [grace.enabled]: '""' },
+    },
+
     // Unhoverable: the surface stops catching the pointer, so there's
     // nothing inside the root to rest on but the trigger.
     //
@@ -204,199 +221,6 @@ export const root = style({
   },
 });
 
-// How far the grace area reaches past the surface: across the arrow's
-// row, then the gap the window opens off the trigger. Both are the
-// window's, assigned from its props.
-const REACH = `calc(${floating.arrowDepth} + ${floating.sideOffset})`;
-
-// The strip is a trapezoid: one end on the window, one on the anchor,
-// and the four vars below say where each end begins and how far it
-// runs. They're measured along the edge the strip spans, from the
-// strip's own start, which leaves them free of which side the window
-// landed on — that's the two edge vars' job, further down.
-//
-// All six are declared and assigned on the window, where the placement
-// and the arrow's seat are both known, and read by the strip.
-
-/**
- * Where the end against the trigger begins. The arrow's leading corner:
- * the end runs from here for {@link anchorSpan}, so the taper comes
- * down on the arrow wherever the arrow was seated.
- */
-const anchorStart = createVar();
-
-/**
- * How far that end runs. The arrow's base today — the taper lands on
- * the arrow and nothing else. A later phase widens it to the trigger.
- */
-const anchorSpan = createVar();
-
-/** Where the end against the surface begins. The window's start. */
-const windowStart = createVar();
-
-/** How far that end runs. The window, edge to edge. */
-const windowSpan = createVar();
-
-// The far corner of each end, for the polygon below.
-const anchorEnd = `calc(${anchorStart} + ${anchorSpan})`;
-const windowEnd = `calc(${windowStart} + ${windowSpan})`;
-
-/**
- * Which side of the strip each end sits on, as a percentage across the
- * strip's thickness. The whole of what the resolved side decides:
- * either the window is at the near edge and the trigger at the far one,
- * or the reverse.
- */
-const anchorEdge = createVar();
-const windowEdge = createVar();
-
-/**
- * Arms the grace area, once the window has finished arriving. A
- * zero-length animation whose delay is the whole of the wait and the
- * entrance: the `backwards` fill holds the opening frame — inert —
- * until then, and when the animation ends the base rule's `auto` takes
- * over.
- *
- * What it's for is the entrance itself. The strip is a pseudo-element
- * of the window, so the window's `transform` carries it along, and on
- * the way in that slides it over the trigger's edge — where it would
- * swallow the press it's sitting on. Waiting costs nothing: the pointer
- * is on the trigger for the whole entrance, which is what opened it,
- * and the strip is only ever crossed on the way out.
- *
- * Two stops rather than one for the same reason {@link open} has two:
- * Vanilla Extract emits nothing for an empty keyframes object.
- */
-const arm = keyframes({
-  from: { pointerEvents: 'none' },
-  to: { pointerEvents: 'none' },
-});
-
-/**
- * Paints the grace area so it can be seen. Gallery only — composed onto
- * an ancestor of the tooltip, never by the component itself.
- *
- * TODO: Delete this with the gallery's grace area listing.
- */
-export const showGraceArea = style({});
-
-/**
- * The strip between the surface and the trigger: the arrow's row plus
- * the gap. Real, it lets the pointer cross from one to the other
- * without leaving the root. Composed onto the window as a
- * pseudo-element of it, so resting on it is hovering the window, it
- * shows and hides with the window, and the window's own
- * `pointer-events: none` is all it has to take back. The rules below
- * read the window's placement attributes and its arrow's vars, which is
- * why it can only be worn by the window.
- *
- * Only a hoverable tooltip has one. An unhoverable one has nothing to
- * cross to, and without the `content` the rest of this is inert.
- */
-const graceArea = style({
-  vars: {
-    // A centered arrow, the seat the window defaults to. The leftover
-    // space halved, rather than the middle less half a base, so it
-    // reads as the arrow's leading corner like the alignment rules
-    // below.
-    [anchorStart]: `calc((100% - ${floating.arrowBase}) / 2)`,
-    [anchorSpan]: floating.arrowBase,
-
-    // The window, edge to edge.
-    [windowStart]: '0%',
-    [windowSpan]: '100%',
-
-    // Every side assigns both; these are only here so the polygon has
-    // something to resolve against if none does.
-    [windowEdge]: '0%',
-    [anchorEdge]: '100%',
-  },
-
-  selectors: {
-    [`${root}:where([data-hoverable="true"]) > &::before`]: {
-      content: '""',
-      position: 'absolute',
-      pointerEvents: 'auto',
-      animation: `${arm} 0s calc(${delay} + ${duration}) backwards`,
-    },
-
-    // The box and the shape, per axis. The box spans the window edge to
-    // edge, so there's no seam at either end to fall through, and it's
-    // as thick as it reaches. `data-axis` names the axis it reaches
-    // along, which is the one the thickness lands on.
-    //
-    // The shape is the same four points either way — an end on the
-    // window, an end on the trigger — and the axis only decides which
-    // coordinate each var lands in, which is why the two lists are
-    // each other with the pairs swapped.
-    '&:where([data-axis="y"])::before': {
-      insetInline: 0,
-      height: REACH,
-      clipPath: `polygon(${windowStart} ${windowEdge}, ${windowEnd} ${windowEdge}, ${anchorEnd} ${anchorEdge}, ${anchorStart} ${anchorEdge})`,
-    },
-    '&:where([data-axis="x"])::before': {
-      insetBlock: 0,
-      width: REACH,
-      clipPath: `polygon(${windowEdge} ${windowStart}, ${windowEdge} ${windowEnd}, ${anchorEdge} ${anchorEnd}, ${anchorEdge} ${anchorStart})`,
-    },
-
-    // Where the arrow is seated along that edge, which is where the
-    // taper has to come down. Untethered, `align-self` seats it and a
-    // start/end arrow is nudged in by the surface's corner radius so its
-    // base clears the curve; these two mirror that nudge from either
-    // end. A centered arrow is the default above.
-    '&:where([data-align="start"])': {
-      vars: { [anchorStart]: floating.offset },
-    },
-    '&:where([data-align="end"])': {
-      vars: {
-        [anchorStart]: `calc(100% - ${floating.offset} - ${floating.arrowBase})`,
-      },
-    },
-
-    // Tethered, the seat is measured instead: the arrow parks at the
-    // start of the edge and its translation along that edge is the whole
-    // of it. `data-axis` names the axis facing the anchor, so the edge
-    // runs on the other one. Last, so it overrides the alignment rules
-    // on source order — the same order the arrow's own rules run in.
-    '&:where([data-tethered][data-axis="y"])': {
-      vars: { [anchorStart]: floating.arrowX },
-    },
-    '&:where([data-tethered][data-axis="x"])': {
-      vars: { [anchorStart]: floating.arrowY },
-    },
-
-    // Which edge it hangs off, and which way round it sits. The edge is
-    // the one facing the trigger, pushed out by the gap so the strip
-    // meets the trigger and goes no further; the two vars then put the
-    // wide end against the surface and the narrow one against the
-    // trigger, so a pointer heading for the tooltip is inside the strip
-    // and one wandering off isn't.
-    '&:where([data-side="top"])::before': {
-      bottom: `calc(-1 * ${floating.sideOffset})`,
-      vars: { [windowEdge]: '0%', [anchorEdge]: '100%' },
-    },
-    '&:where([data-side="bottom"])::before': {
-      top: `calc(-1 * ${floating.sideOffset})`,
-      vars: { [windowEdge]: '100%', [anchorEdge]: '0%' },
-    },
-    '&:where([data-side="left"])::before': {
-      right: `calc(-1 * ${floating.sideOffset})`,
-      vars: { [windowEdge]: '0%', [anchorEdge]: '100%' },
-    },
-    '&:where([data-side="right"])::before': {
-      left: `calc(-1 * ${floating.sideOffset})`,
-      vars: { [windowEdge]: '100%', [anchorEdge]: '0%' },
-    },
-
-    // Gallery only: the strip is invisible, and this is how it's seen.
-    // TODO: Delete this with the gallery's grace area listing.
-    [`${showGraceArea} &::before`]: {
-      backgroundColor: accent.alpha[6],
-    },
-  },
-});
-
 /**
  * The positioned box. Always in the DOM, and the stylesheet decides
  * whether it shows: hidden unless the root is open by the condition
@@ -425,7 +249,7 @@ const graceArea = style({
  * text sets its own color back.
  */
 export const window = style([
-  graceArea,
+  grace.graceArea,
   {
     color: neutral.solid[12],
     vars: { [slideX]: '0px', [slideY]: '0px' },
