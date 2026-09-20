@@ -37,6 +37,7 @@
 import { createVar, keyframes, style } from '@vanilla-extract/css';
 import { entrance, moderate, neutral, space } from '@lib/design';
 import * as floating from '../_internal/floating-ui/index.css';
+import * as grace from './grace-area.css';
 
 /**
  * Any CSS width the surface wraps at. Assigned inline on the root from
@@ -161,8 +162,24 @@ export const root = style({
     [maxWidth]: '360px',
     [delay]: '0s',
     [duration]: '0s',
+
+    // No bridge by default; the rule below builds one for a tooltip
+    // that can be reached. Declared here rather than on the window so
+    // it sits beside the `data-hoverable` that decides it, and so a
+    // tooltip nested inside another window answers for itself.
+    [grace.enabled]: 'none',
+
+    // The bridge stays inert until the window has finished arriving,
+    // which is the wait and the entrance together.
+    [grace.armDelay]: `calc(${delay} + ${duration})`,
   },
   selectors: {
+    // Hoverable: the pointer is allowed to travel from the trigger onto
+    // the tooltip, so there's a bridge to travel over.
+    '&:where([data-hoverable="true"])': {
+      vars: { [grace.enabled]: '""' },
+    },
+
     // Unhoverable: the surface stops catching the pointer, so there's
     // nothing inside the root to rest on but the trigger.
     //
@@ -213,9 +230,9 @@ export const root = style({
  *
  * The hover half reaches the window too, since the window sits inside
  * the root: the pointer can travel from the trigger onto the tooltip
- * without closing it. It can't cross the gap between them, which is
- * what a grace area is for — and it can't do any of it when the tooltip
- * isn't hoverable, where the pointer goes straight through, except
+ * without closing it, over the grace area and then the surface. None
+ * of it happens when the tooltip isn't hoverable, where there's no
+ * grace area and the pointer goes straight through the surface, except
  * while focus holds it open.
  *
  * Between the stylesheet deciding to open and the tooltip being there
@@ -231,46 +248,49 @@ export const root = style({
  * `currentColor`, matches the surface without a class of its own. The
  * text sets its own color back.
  */
-export const window = style({
-  color: neutral.solid[12],
-  vars: { [slideX]: '0px', [slideY]: '0px' },
-  animation: `${enter} ${duration} ${delay} ${entrance.productive} backwards`,
-  '@media': {
-    '(hover: none)': {
-      selectors: {
-        [`${root}:where(:not(${CONDITION.WITHOUT_HOVER})) > &`]: {
-          display: 'none',
+export const window = style([
+  grace.graceArea,
+  {
+    color: neutral.solid[12],
+    vars: { [slideX]: '0px', [slideY]: '0px' },
+    animation: `${enter} ${duration} ${delay} ${entrance.productive} backwards`,
+    '@media': {
+      '(hover: none)': {
+        selectors: {
+          [`${root}:where(:not(${CONDITION.WITHOUT_HOVER})) > &`]: {
+            display: 'none',
+          },
+        },
+      },
+
+      '(hover: hover)': {
+        selectors: {
+          [`${root}:where(:not(${CONDITION.WITH_HOVER})) > &`]: {
+            display: 'none',
+          },
         },
       },
     },
+    selectors: {
+      // Which way is "out of the trigger". `data-side` is the resolved
+      // side, so a window that flipped to dodge an edge slides out of the
+      // side it actually landed on.
+      '&:where([data-side="top"])': { vars: { [slideY]: space[1] } },
+      '&:where([data-side="bottom"])': {
+        vars: { [slideY]: `calc(-1 * ${space[1]})` },
+      },
+      '&:where([data-side="left"])': { vars: { [slideX]: space[1] } },
+      '&:where([data-side="right"])': {
+        vars: { [slideX]: `calc(-1 * ${space[1]})` },
+      },
 
-    '(hover: hover)': {
-      selectors: {
-        [`${root}:where(:not(${CONDITION.WITH_HOVER})) > &`]: {
-          display: 'none',
-        },
+      // Dismissed: the component's veto while the stylesheet still wants
+      // the window open. Hiding it doesn't disturb the open signal, which
+      // rides on the root, so the veto can wait there for the pointer and
+      // focus to leave.
+      '&:where([data-dismissed])': {
+        display: 'none',
       },
     },
   },
-  selectors: {
-    // Which way is "out of the trigger". `data-side` is the resolved
-    // side, so a window that flipped to dodge an edge slides out of the
-    // side it actually landed on.
-    '&:where([data-side="top"])': { vars: { [slideY]: space[1] } },
-    '&:where([data-side="bottom"])': {
-      vars: { [slideY]: `calc(-1 * ${space[1]})` },
-    },
-    '&:where([data-side="left"])': { vars: { [slideX]: space[1] } },
-    '&:where([data-side="right"])': {
-      vars: { [slideX]: `calc(-1 * ${space[1]})` },
-    },
-
-    // Dismissed: the component's veto while the stylesheet still wants
-    // the window open. Hiding it doesn't disturb the open signal, which
-    // rides on the root, so the veto can wait there for the pointer and
-    // focus to leave.
-    '&:where([data-dismissed])': {
-      display: 'none',
-    },
-  },
-});
+]);
