@@ -15,7 +15,6 @@
  */
 
 import { createVar, keyframes, style } from '@vanilla-extract/css';
-import { accent } from '@lib/design';
 import * as floating from '../_internal/floating-ui/index.css';
 
 /**
@@ -105,14 +104,6 @@ const arm = keyframes({
   from: { pointerEvents: 'none' },
   to: { pointerEvents: 'none' },
 });
-
-/**
- * Paints the strip so it can be seen. Gallery only — composed onto an
- * ancestor of the tooltip, never by the component itself.
- *
- * TODO: Delete this with the gallery's grace area listing.
- */
-export const showGraceArea = style({});
 
 /** The strip itself. Compose onto a floating window. */
 export const graceArea = style({
@@ -209,12 +200,6 @@ export const graceArea = style({
     '&:where([data-side="right"])::before': {
       left: `calc(-1 * ${floating.sideOffset})`,
       vars: { [windowEdge]: '100%', [anchorEdge]: '0%' },
-    },
-
-    // Gallery only: the strip is invisible, and this is how it's seen.
-    // TODO: Delete this with the gallery's grace area listing.
-    [`${showGraceArea} &::before`]: {
-      backgroundColor: accent.alpha[6],
     },
   },
 });
