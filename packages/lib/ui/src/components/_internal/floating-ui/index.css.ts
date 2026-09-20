@@ -13,4 +13,6 @@ export {
   offset,
   base as arrowBase,
   depth as arrowDepth,
+  translateX as arrowX,
+  translateY as arrowY,
 } from './arrow.css';

@@ -93,6 +93,9 @@ export default {
       rows: [
         { title: 'Default offset', props: {} },
         { title: 'Wide offset', props: { sideOffset: 16 } },
+        { title: 'Start-aligned', props: { align: 'start' } },
+        { title: 'End-aligned', props: { align: 'end' } },
+        { title: 'Nudged along', props: { align: 'start', alignOffset: 24 } },
         { title: 'Pass-through', props: { hoverable: false } },
       ],
     },
