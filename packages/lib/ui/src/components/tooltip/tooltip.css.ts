@@ -35,7 +35,7 @@
  */
 
 import { createVar, keyframes, style } from '@vanilla-extract/css';
-import { entrance, moderate, neutral, space } from '@lib/design';
+import { accent, entrance, moderate, neutral, space } from '@lib/design';
 import * as floating from '../_internal/floating-ui/index.css';
 
 /**
@@ -204,6 +204,23 @@ export const root = style({
   },
 });
 
+// Half the arrow's base: the narrow end of the grace area spans the
+// arrow, centered on it. The window assigns the base.
+const HALF_BASE = `calc(${floating.arrowBase} / 2)`;
+
+// How far the grace area reaches past the surface: across the arrow's
+// row, then the gap the window opens off the trigger. Both are the
+// window's, assigned from its props.
+const REACH = `calc(${floating.arrowDepth} + ${floating.sideOffset})`;
+
+/**
+ * Paints the grace area so it can be seen. Gallery only — composed onto
+ * an ancestor of the tooltip, never by the component itself.
+ *
+ * TODO: Delete this with the gallery's grace area listing.
+ */
+export const showGraceArea = style({});
+
 /**
  * The positioned box. Always in the DOM, and the stylesheet decides
  * whether it shows: hidden unless the root is open by the condition
@@ -213,9 +230,9 @@ export const root = style({
  *
  * The hover half reaches the window too, since the window sits inside
  * the root: the pointer can travel from the trigger onto the tooltip
- * without closing it. It can't cross the gap between them, which is
- * what a grace area is for — and it can't do any of it when the tooltip
- * isn't hoverable, where the pointer goes straight through, except
+ * without closing it, over the grace area and then the surface. None
+ * of it happens when the tooltip isn't hoverable, where there's no
+ * grace area and the pointer goes straight through the surface, except
  * while focus holds it open.
  *
  * Between the stylesheet deciding to open and the tooltip being there
@@ -271,6 +288,68 @@ export const window = style({
     // focus to leave.
     '&:where([data-dismissed])': {
       display: 'none',
+    },
+
+    // --- The grace area ---
+    //
+    // The strip between the surface and the trigger: the arrow's row
+    // plus the gap. Real, it lets the pointer cross from one to the
+    // other without leaving the root. A pseudo-element of the window, so
+    // resting on it is hovering the window, it shows and hides with the
+    // window, and the window's own `pointer-events: none` is all it has
+    // to take back.
+    //
+    // Only a hoverable tooltip has one. An unhoverable one has nothing
+    // to cross to.
+    [`${root}:where([data-hoverable="true"]) > &::before`]: {
+      content: '""',
+      position: 'absolute',
+      pointerEvents: 'auto',
+    },
+
+    // The strip's box, per axis: it spans the window edge to edge, so
+    // there's no seam at either end to fall through, and it's as thick
+    // as it reaches. `data-axis` names the axis it reaches along, which
+    // is the one the thickness lands on.
+    '&:where([data-axis="y"])::before': {
+      insetInline: 0,
+      height: REACH,
+    },
+    '&:where([data-axis="x"])::before': {
+      insetBlock: 0,
+      width: REACH,
+    },
+
+    // Which edge it hangs off, and which way it tapers. The edge is the
+    // one facing the trigger, pushed out by the gap so the strip meets
+    // the trigger and goes no further. The taper runs from the window's
+    // full span at the surface down to the arrow's base at the trigger,
+    // so a pointer heading for the tooltip is inside the strip and one
+    // wandering off isn't. All of it inert without the `content` above.
+    //
+    // The narrow end sits at the middle for now, whatever the
+    // alignment.
+    '&:where([data-side="top"])::before': {
+      bottom: `calc(-1 * ${floating.sideOffset})`,
+      clipPath: `polygon(0 0, 100% 0, calc(50% + ${HALF_BASE}) 100%, calc(50% - ${HALF_BASE}) 100%)`,
+    },
+    '&:where([data-side="bottom"])::before': {
+      top: `calc(-1 * ${floating.sideOffset})`,
+      clipPath: `polygon(calc(50% - ${HALF_BASE}) 0, calc(50% + ${HALF_BASE}) 0, 100% 100%, 0 100%)`,
+    },
+    '&:where([data-side="left"])::before': {
+      right: `calc(-1 * ${floating.sideOffset})`,
+      clipPath: `polygon(0 0, 100% calc(50% - ${HALF_BASE}), 100% calc(50% + ${HALF_BASE}), 0 100%)`,
+    },
+    '&:where([data-side="right"])::before': {
+      left: `calc(-1 * ${floating.sideOffset})`,
+      clipPath: `polygon(100% 0, 100% 100%, 0 calc(50% + ${HALF_BASE}), 0 calc(50% - ${HALF_BASE}))`,
+    },
+
+    // Gallery only: the strip is invisible, and this is how it's seen.
+    // TODO: Delete this with the gallery's grace area listing.
+    [`${showGraceArea} &::before`]: {
+      backgroundColor: accent.alpha[6],
     },
   },
 });

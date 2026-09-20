@@ -57,10 +57,13 @@
  * - Hoverable content is the default and comes for free: the window
  *   sits inside the root, so resting on the tooltip keeps the root
  *   hovered and the tooltip open, which is what upstream's
- *   `disableHoverableContent={false}` buys. Still half-finished — what's
- *   missing is the grace area over the gap between trigger and window,
- *   so the pointer crossing it leaves the root for a moment and the
- *   tooltip closes under it.
+ *   `disableHoverableContent={false}` buys. The gap between trigger and
+ *   window is bridged by a grace area, a pseudo-element of the window,
+ *   where upstream tracks the pointer's exit and builds a polygon from
+ *   it in JS. Ours is a fixed trapezoid, the arrow's row plus the gap,
+ *   narrowing from the window's width to the arrow's base. Its narrow
+ *   end is centered for now, so it misses a start/end-aligned or
+ *   shifted arrow.
  * - Turning that off is `hoverable={false}`, not upstream's
  *   `disableHoverableContent`. Positive and defaulted true, matching
  *   `Text`'s `selectable`, and it works the opposite way round: upstream
