@@ -36,6 +36,7 @@
 
 import { createVar, keyframes, style } from '@vanilla-extract/css';
 import { accent, entrance, moderate, neutral, space } from '@lib/design';
+import { type FloatingSide } from '../_internal/floating-ui/types';
 import * as floating from '../_internal/floating-ui/index.css';
 
 /**
@@ -204,14 +205,36 @@ export const root = style({
   },
 });
 
-// Half the arrow's base: the narrow end of the grace area spans the
-// arrow, centered on it. The window assigns the base.
-const HALF_BASE = `calc(${floating.arrowBase} / 2)`;
-
 // How far the grace area reaches past the surface: across the arrow's
 // row, then the gap the window opens off the trigger. Both are the
 // window's, assigned from its props.
 const REACH = `calc(${floating.arrowDepth} + ${floating.sideOffset})`;
+
+/**
+ * The grace area's shape for a side, as a `clip-path` polygon. Wide end
+ * against the surface, narrow end against the trigger, spanning the
+ * arrow there.
+ *
+ * Points run clockwise from the top-left of the box, which is why each
+ * side lists them in its own order: the wide end is whichever edge
+ * faces away from the trigger, and that edge moves.
+ */
+const trapezoid = (side: FloatingSide) => {
+  const halfArrowBase = `calc(${floating.arrowBase} / 2)`;
+  const apexStart = `calc(50% - ${halfArrowBase})`;
+  const apexEnd = `calc(50% + ${halfArrowBase})`;
+
+  switch (side) {
+    case 'top':
+      return `polygon(0 0, 100% 0, ${apexEnd} 100%, ${apexStart} 100%)`;
+    case 'bottom':
+      return `polygon(${apexStart} 0, ${apexEnd} 0, 100% 100%, 0 100%)`;
+    case 'left':
+      return `polygon(0 0, 100% ${apexStart}, 100% ${apexEnd}, 0 100%)`;
+    case 'right':
+      return `polygon(100% 0, 100% 100%, 0 ${apexEnd}, 0 ${apexStart})`;
+  }
+};
 
 /**
  * Arms the grace area, once the window has finished arriving. A
@@ -284,24 +307,21 @@ const graceArea = style({
     // full span at the surface down to the arrow's base at the trigger,
     // so a pointer heading for the tooltip is inside the strip and one
     // wandering off isn't.
-    //
-    // The narrow end sits at the middle for now, whatever the
-    // alignment.
     '&:where([data-side="top"])::before': {
       bottom: `calc(-1 * ${floating.sideOffset})`,
-      clipPath: `polygon(0 0, 100% 0, calc(50% + ${HALF_BASE}) 100%, calc(50% - ${HALF_BASE}) 100%)`,
+      clipPath: trapezoid('top'),
     },
     '&:where([data-side="bottom"])::before': {
       top: `calc(-1 * ${floating.sideOffset})`,
-      clipPath: `polygon(calc(50% - ${HALF_BASE}) 0, calc(50% + ${HALF_BASE}) 0, 100% 100%, 0 100%)`,
+      clipPath: trapezoid('bottom'),
     },
     '&:where([data-side="left"])::before': {
       right: `calc(-1 * ${floating.sideOffset})`,
-      clipPath: `polygon(0 0, 100% calc(50% - ${HALF_BASE}), 100% calc(50% + ${HALF_BASE}), 0 100%)`,
+      clipPath: trapezoid('left'),
     },
     '&:where([data-side="right"])::before': {
       left: `calc(-1 * ${floating.sideOffset})`,
-      clipPath: `polygon(100% 0, 100% 100%, 0 calc(50% + ${HALF_BASE}), 0 calc(50% - ${HALF_BASE}))`,
+      clipPath: trapezoid('right'),
     },
 
     // Gallery only: the strip is invisible, and this is how it's seen.
