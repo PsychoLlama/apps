@@ -64,6 +64,13 @@
  *   narrowing from the window's width to the arrow's base. Its narrow
  *   end is centered for now, so it misses a start/end-aligned or
  *   shifted arrow.
+ * - The grace area doesn't take the pointer until the window has
+ *   finished arriving. It's part of the window, so the entrance carries
+ *   it over the trigger's edge, where it would swallow the press it's
+ *   sitting on. Upstream has no such window — its grace area is built
+ *   on the way out, from wherever the pointer left — so a pointer that
+ *   leaves the trigger during our entrance finds nothing to cross and
+ *   the tooltip closes, where upstream's would hold.
  * - Turning that off is `hoverable={false}`, not upstream's
  *   `disableHoverableContent`. Positive and defaulted true, matching
  *   `Text`'s `selectable`, and it works the opposite way round: upstream

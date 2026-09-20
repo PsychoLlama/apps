@@ -214,12 +214,103 @@ const HALF_BASE = `calc(${floating.arrowBase} / 2)`;
 const REACH = `calc(${floating.arrowDepth} + ${floating.sideOffset})`;
 
 /**
+ * Arms the grace area, once the window has finished arriving. A
+ * zero-length animation whose delay is the whole of the wait and the
+ * entrance: the `backwards` fill holds the opening frame — inert —
+ * until then, and when the animation ends the base rule's `auto` takes
+ * over.
+ *
+ * What it's for is the entrance itself. The strip is a pseudo-element
+ * of the window, so the window's `transform` carries it along, and on
+ * the way in that slides it over the trigger's edge — where it would
+ * swallow the press it's sitting on. Waiting costs nothing: the pointer
+ * is on the trigger for the whole entrance, which is what opened it,
+ * and the strip is only ever crossed on the way out.
+ *
+ * Two stops rather than one for the same reason {@link open} has two:
+ * Vanilla Extract emits nothing for an empty keyframes object.
+ */
+const arm = keyframes({
+  from: { pointerEvents: 'none' },
+  to: { pointerEvents: 'none' },
+});
+
+/**
  * Paints the grace area so it can be seen. Gallery only — composed onto
  * an ancestor of the tooltip, never by the component itself.
  *
  * TODO: Delete this with the gallery's grace area listing.
  */
 export const showGraceArea = style({});
+
+/**
+ * The strip between the surface and the trigger: the arrow's row plus
+ * the gap. Real, it lets the pointer cross from one to the other
+ * without leaving the root. Composed onto the window as a
+ * pseudo-element of it, so resting on it is hovering the window, it
+ * shows and hides with the window, and the window's own
+ * `pointer-events: none` is all it has to take back. The rules below
+ * read the window's `data-axis` and `data-side`, which is why it can
+ * only be worn by the window.
+ *
+ * Only a hoverable tooltip has one. An unhoverable one has nothing to
+ * cross to, and without the `content` the rest of this is inert.
+ */
+const graceArea = style({
+  selectors: {
+    [`${root}:where([data-hoverable="true"]) > &::before`]: {
+      content: '""',
+      position: 'absolute',
+      pointerEvents: 'auto',
+      animation: `${arm} 0s calc(${delay} + ${duration}) backwards`,
+    },
+
+    // The box, per axis: it spans the window edge to edge, so there's
+    // no seam at either end to fall through, and it's as thick as it
+    // reaches. `data-axis` names the axis it reaches along, which is
+    // the one the thickness lands on.
+    '&:where([data-axis="y"])::before': {
+      insetInline: 0,
+      height: REACH,
+    },
+    '&:where([data-axis="x"])::before': {
+      insetBlock: 0,
+      width: REACH,
+    },
+
+    // Which edge it hangs off, and which way it tapers. The edge is the
+    // one facing the trigger, pushed out by the gap so the strip meets
+    // the trigger and goes no further. The taper runs from the window's
+    // full span at the surface down to the arrow's base at the trigger,
+    // so a pointer heading for the tooltip is inside the strip and one
+    // wandering off isn't.
+    //
+    // The narrow end sits at the middle for now, whatever the
+    // alignment.
+    '&:where([data-side="top"])::before': {
+      bottom: `calc(-1 * ${floating.sideOffset})`,
+      clipPath: `polygon(0 0, 100% 0, calc(50% + ${HALF_BASE}) 100%, calc(50% - ${HALF_BASE}) 100%)`,
+    },
+    '&:where([data-side="bottom"])::before': {
+      top: `calc(-1 * ${floating.sideOffset})`,
+      clipPath: `polygon(calc(50% - ${HALF_BASE}) 0, calc(50% + ${HALF_BASE}) 0, 100% 100%, 0 100%)`,
+    },
+    '&:where([data-side="left"])::before': {
+      right: `calc(-1 * ${floating.sideOffset})`,
+      clipPath: `polygon(0 0, 100% calc(50% - ${HALF_BASE}), 100% calc(50% + ${HALF_BASE}), 0 100%)`,
+    },
+    '&:where([data-side="right"])::before': {
+      left: `calc(-1 * ${floating.sideOffset})`,
+      clipPath: `polygon(100% 0, 100% 100%, 0 calc(50% + ${HALF_BASE}), 0 calc(50% - ${HALF_BASE}))`,
+    },
+
+    // Gallery only: the strip is invisible, and this is how it's seen.
+    // TODO: Delete this with the gallery's grace area listing.
+    [`${showGraceArea} &::before`]: {
+      backgroundColor: accent.alpha[6],
+    },
+  },
+});
 
 /**
  * The positioned box. Always in the DOM, and the stylesheet decides
@@ -248,108 +339,49 @@ export const showGraceArea = style({});
  * `currentColor`, matches the surface without a class of its own. The
  * text sets its own color back.
  */
-export const window = style({
-  color: neutral.solid[12],
-  vars: { [slideX]: '0px', [slideY]: '0px' },
-  animation: `${enter} ${duration} ${delay} ${entrance.productive} backwards`,
-  '@media': {
-    '(hover: none)': {
-      selectors: {
-        [`${root}:where(:not(${CONDITION.WITHOUT_HOVER})) > &`]: {
-          display: 'none',
+export const window = style([
+  graceArea,
+  {
+    color: neutral.solid[12],
+    vars: { [slideX]: '0px', [slideY]: '0px' },
+    animation: `${enter} ${duration} ${delay} ${entrance.productive} backwards`,
+    '@media': {
+      '(hover: none)': {
+        selectors: {
+          [`${root}:where(:not(${CONDITION.WITHOUT_HOVER})) > &`]: {
+            display: 'none',
+          },
+        },
+      },
+
+      '(hover: hover)': {
+        selectors: {
+          [`${root}:where(:not(${CONDITION.WITH_HOVER})) > &`]: {
+            display: 'none',
+          },
         },
       },
     },
+    selectors: {
+      // Which way is "out of the trigger". `data-side` is the resolved
+      // side, so a window that flipped to dodge an edge slides out of the
+      // side it actually landed on.
+      '&:where([data-side="top"])': { vars: { [slideY]: space[1] } },
+      '&:where([data-side="bottom"])': {
+        vars: { [slideY]: `calc(-1 * ${space[1]})` },
+      },
+      '&:where([data-side="left"])': { vars: { [slideX]: space[1] } },
+      '&:where([data-side="right"])': {
+        vars: { [slideX]: `calc(-1 * ${space[1]})` },
+      },
 
-    '(hover: hover)': {
-      selectors: {
-        [`${root}:where(:not(${CONDITION.WITH_HOVER})) > &`]: {
-          display: 'none',
-        },
+      // Dismissed: the component's veto while the stylesheet still wants
+      // the window open. Hiding it doesn't disturb the open signal, which
+      // rides on the root, so the veto can wait there for the pointer and
+      // focus to leave.
+      '&:where([data-dismissed])': {
+        display: 'none',
       },
     },
   },
-  selectors: {
-    // Which way is "out of the trigger". `data-side` is the resolved
-    // side, so a window that flipped to dodge an edge slides out of the
-    // side it actually landed on.
-    '&:where([data-side="top"])': { vars: { [slideY]: space[1] } },
-    '&:where([data-side="bottom"])': {
-      vars: { [slideY]: `calc(-1 * ${space[1]})` },
-    },
-    '&:where([data-side="left"])': { vars: { [slideX]: space[1] } },
-    '&:where([data-side="right"])': {
-      vars: { [slideX]: `calc(-1 * ${space[1]})` },
-    },
-
-    // Dismissed: the component's veto while the stylesheet still wants
-    // the window open. Hiding it doesn't disturb the open signal, which
-    // rides on the root, so the veto can wait there for the pointer and
-    // focus to leave.
-    '&:where([data-dismissed])': {
-      display: 'none',
-    },
-
-    // --- The grace area ---
-    //
-    // The strip between the surface and the trigger: the arrow's row
-    // plus the gap. Real, it lets the pointer cross from one to the
-    // other without leaving the root. A pseudo-element of the window, so
-    // resting on it is hovering the window, it shows and hides with the
-    // window, and the window's own `pointer-events: none` is all it has
-    // to take back.
-    //
-    // Only a hoverable tooltip has one. An unhoverable one has nothing
-    // to cross to.
-    [`${root}:where([data-hoverable="true"]) > &::before`]: {
-      content: '""',
-      position: 'absolute',
-      pointerEvents: 'auto',
-    },
-
-    // The strip's box, per axis: it spans the window edge to edge, so
-    // there's no seam at either end to fall through, and it's as thick
-    // as it reaches. `data-axis` names the axis it reaches along, which
-    // is the one the thickness lands on.
-    '&:where([data-axis="y"])::before': {
-      insetInline: 0,
-      height: REACH,
-    },
-    '&:where([data-axis="x"])::before': {
-      insetBlock: 0,
-      width: REACH,
-    },
-
-    // Which edge it hangs off, and which way it tapers. The edge is the
-    // one facing the trigger, pushed out by the gap so the strip meets
-    // the trigger and goes no further. The taper runs from the window's
-    // full span at the surface down to the arrow's base at the trigger,
-    // so a pointer heading for the tooltip is inside the strip and one
-    // wandering off isn't. All of it inert without the `content` above.
-    //
-    // The narrow end sits at the middle for now, whatever the
-    // alignment.
-    '&:where([data-side="top"])::before': {
-      bottom: `calc(-1 * ${floating.sideOffset})`,
-      clipPath: `polygon(0 0, 100% 0, calc(50% + ${HALF_BASE}) 100%, calc(50% - ${HALF_BASE}) 100%)`,
-    },
-    '&:where([data-side="bottom"])::before': {
-      top: `calc(-1 * ${floating.sideOffset})`,
-      clipPath: `polygon(calc(50% - ${HALF_BASE}) 0, calc(50% + ${HALF_BASE}) 0, 100% 100%, 0 100%)`,
-    },
-    '&:where([data-side="left"])::before': {
-      right: `calc(-1 * ${floating.sideOffset})`,
-      clipPath: `polygon(0 0, 100% calc(50% - ${HALF_BASE}), 100% calc(50% + ${HALF_BASE}), 0 100%)`,
-    },
-    '&:where([data-side="right"])::before': {
-      left: `calc(-1 * ${floating.sideOffset})`,
-      clipPath: `polygon(100% 0, 100% 100%, 0 calc(50% + ${HALF_BASE}), 0 calc(50% - ${HALF_BASE}))`,
-    },
-
-    // Gallery only: the strip is invisible, and this is how it's seen.
-    // TODO: Delete this with the gallery's grace area listing.
-    [`${showGraceArea} &::before`]: {
-      backgroundColor: accent.alpha[6],
-    },
-  },
-});
+]);
