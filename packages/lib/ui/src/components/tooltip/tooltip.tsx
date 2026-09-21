@@ -72,6 +72,17 @@
  *   on the way out, from wherever the pointer left — so a pointer that
  *   leaves the trigger during our entrance finds nothing to cross and
  *   the tooltip closes, where upstream's would hold.
+ * - The grace area is told which path it has to serve, as `data-path`
+ *   on the window: `initial` until a pointer turns up on the trigger,
+ *   `enter` from then until it reaches the window, `leave` once it has
+ *   and the only path left is the way back, then `enter` again for the
+ *   next visit. `initial` is therefore the unenhanced strip — what the
+ *   SSG markup ships, and what a tooltip no pointer has ever visited
+ *   keeps wearing, which is every tooltip on a page driven by the
+ *   keyboard. Upstream needs none of this: it has no standing
+ *   grace area to reshape, and builds one from the pointer's exit each
+ *   time instead. All three draw the same strip today; the attribute is
+ *   the seam the enhanced shapes hang off.
  * - Turning that off is `hoverable={false}`, not upstream's
  *   `disableHoverableContent`. Positive and defaulted true, matching
  *   `Text`'s `selectable`, and it works the opposite way round: upstream
@@ -192,13 +203,20 @@ export type TooltipDisplay = FloatingRootDisplay;
 /**
  * What the tooltip hands its trigger. Spread onto the focusable element
  * as-is: the description names the tooltip. A trigger with a
- * description of its own composes the two. Showing and hiding is the
- * stylesheet's, off the trigger's focus and hover, so there are no
- * handlers.
+ * description of its own composes the two. Showing and hiding is still
+ * the stylesheet's, off the trigger's focus and hover, so the one
+ * handler here has nothing to do with that.
  */
 export interface TooltipTriggerProps {
   /** Id of the tooltip. Set whether or not it's open. */
   readonly 'aria-describedby': string;
+
+  /**
+   * Tells the tooltip a pointer has turned up, which is all the grace
+   * area needs to know to shape itself for the crossing ahead. A
+   * trigger with a pointer handler of its own has to call both.
+   */
+  readonly onPointerEnter: (event: PointerEvent) => void;
 }
 
 /**
@@ -294,6 +312,18 @@ const PASSIVE_CAPTURE: AddEventListenerOptions = {
 };
 
 /**
+ * The path across the grace area the strip has to serve, which is what
+ * shapes it. Rides on the window as `data-path`.
+ *
+ * `initial` is no path yet: no script to watch a pointer with, or no
+ * pointer that has turned up to watch, so the strip has to hold
+ * whichever way anyone travels. The other two are a pointer the
+ * component can see — `enter` while it's still on its way over,
+ * `leave` once it has arrived and the only path left is the way back.
+ */
+type TooltipPath = 'initial' | 'enter' | 'leave';
+
+/**
  * A short label that floats beside its trigger while keyboard focus or
  * the pointer rests on it, until Escape, a press, or a scroll dismisses
  * it. Announced to assistive tech as the trigger's description, open or
@@ -317,7 +347,6 @@ const Tooltip = (rawProps: TooltipProps) => {
   ]);
 
   const contentId = createUniqueId();
-  const triggerProps: TooltipTriggerProps = { 'aria-describedby': contentId };
 
   // Whether the stylesheet considers the tooltip open, as the root
   // reports it (see `css.root`). The tether rides on this, so a closed
@@ -330,6 +359,28 @@ const Tooltip = (rawProps: TooltipProps) => {
   // tooltip comes back on the next focus, not before.
   const [dismissed, setDismissed] = createSignal(false);
 
+  // The path across the grace area the strip has to serve. `initial`
+  // until a pointer turns up and says otherwise, which is the whole of
+  // the progressive enhancement: with no script there's nobody to
+  // watch a pointer, and with no pointer there's nothing to watch, so
+  // the strip has to hold whichever way anyone is travelling.
+  const [path, setPath] = createSignal<TooltipPath>('initial');
+
+  // The pointer arriving at the trigger. That's the start of a
+  // hover-opened tooltip's life, and it's also the end of a return
+  // trip back across the grace area; either way the crossing ahead is
+  // the one out to the window.
+  const triggerProps: TooltipTriggerProps = {
+    'aria-describedby': contentId,
+    onPointerEnter: () => setPath('enter'),
+  };
+
+  // The pointer having crossed and arrived. Heard on the surface
+  // rather than the window because the strip is a pseudo-element of
+  // the window and answers to it as its event target, so the window's
+  // own boundary is the start of the crossing rather than the end.
+  const onSurfaceEnter = () => setPath('leave');
+
   // Heard on the root, so any animation inside it arrives here too —
   // the trigger's, and the window's own arrival. Only the open signal
   // is ours to read.
@@ -339,7 +390,15 @@ const Tooltip = (rawProps: TooltipProps) => {
     const opening = event.type === 'animationstart';
     setOpen(opening);
 
-    if (!opening) setDismissed(false);
+    if (!opening) {
+      setDismissed(false);
+
+      // Nobody is standing on a closed tooltip, so whatever path the
+      // next visit takes, it starts at the trigger. Not back to
+      // `initial`: that's the strip nothing has happened to yet, and
+      // by the time a handler is running, something has.
+      setPath('enter');
+    }
   };
 
   // What the dismissals measure against. The tooltip inspects only what
@@ -415,6 +474,7 @@ const Tooltip = (rawProps: TooltipProps) => {
 
       <FloatingWindow
         data-dismissed={dismissed() ? '' : undefined}
+        data-path={path()}
         side={local.side}
         align={local.align}
         sideOffset={local.sideOffset}
@@ -430,6 +490,7 @@ const Tooltip = (rawProps: TooltipProps) => {
       >
         <FloatingBody
           {...rest}
+          onPointerEnter={onSurfaceEnter}
           testId={`${tid.testId}-surface`}
           py={1}
           px={2}
