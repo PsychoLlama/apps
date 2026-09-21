@@ -34,7 +34,11 @@
  * supplies between the window's own `offset` and `arrow`. Given room,
  * the measured placement is the CSS one to the pixel, so the handoff is
  * invisible; the tether only shows its hand when something has to give.
- * The hooks behind it live under `tether/` and aren't exported.
+ * The hooks behind it live under `tether/`. One of them is exported:
+ * `useTetherState` reads where the window under a root landed, for a
+ * component that has to do something about it rather than only style
+ * it. The window publishes there and reads it back the same way, so
+ * there's one answer and everyone under the root gets it.
  */
 
 // The CSS placement is deliberately hand-rolled and short-lived. It
@@ -67,6 +71,7 @@ export {
   type FloatingWindowProps,
 } from './window';
 export { FloatingBody, type FloatingBodyProps } from './body';
+export { useTetherState, type TetherState } from './tether/use-tether';
 export {
   Arrow,
   type ArrowAlign,

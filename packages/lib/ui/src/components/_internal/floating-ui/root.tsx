@@ -10,6 +10,7 @@ import { Dynamic } from 'solid-js/web';
 import { assert } from '@lib/assert';
 import clx from '@lib/classnames';
 import { type TestIdProps } from '../../../props/test-id';
+import { TetherContext, type TetherState } from './tether/use-tether';
 import * as css from './root.css';
 
 /**
@@ -74,15 +75,25 @@ export interface FloatingRootProps
 
   /**
    * The element being anchored to, alongside the
-   * {@link FloatingWindow}s bound to it — siblings of that element, not
-   * children of it.
+   * {@link FloatingWindow} bound to it — a sibling of that element, not
+   * a child of it.
+   *
+   * One window per root. The root holds a single slot for where that
+   * window landed, so a second one has nowhere to report and throws.
+   * Two popups off one trigger means two roots.
    */
   children: JSX.Element;
 }
 
 /**
  * The root of a floating primitive: it wraps the element being anchored
- * to and publishes that box to every {@link FloatingWindow} inside.
+ * to and publishes that box to the {@link FloatingWindow} inside.
+ *
+ * It's also where that window publishes back. The root holds the slot
+ * for the resolved placement, so anything between the two — the
+ * component that rendered them, the trigger beside the window — can
+ * read where the window landed through `useTetherState` without being
+ * handed it.
  *
  * The wrapper exists so the placement resolves against the anchor's
  * outer edge. Percentages resolve against the positioning ancestor's
@@ -115,6 +126,11 @@ export const FloatingRoot = (props: FloatingRootProps) => {
   const [element, setElement] = createSignal<HTMLElement>();
   const className = () => clx(css.root[local.display], local.class);
 
+  // The slot the window inside publishes its placement into. Empty
+  // until it does, and the root never looks at it — it only holds it
+  // open for the two ends to find each other.
+  const [placement, setPlacement] = createSignal<TetherState>();
+
   // The root keeps a ref of its own on the wrapper, for the anchor
   // context; a consumer's composes with it. Solid hands a component a
   // function whichever form the consumer wrote.
@@ -125,15 +141,17 @@ export const FloatingRoot = (props: FloatingRootProps) => {
 
   return (
     <AnchorContext.Provider value={element}>
-      <Dynamic
-        component={TAG_BY_DISPLAY[local.display]}
-        {...passthrough}
-        ref={setAnchor}
-        class={className()}
-        data-testid={local.testId}
-      >
-        {local.children}
-      </Dynamic>
+      <TetherContext.Provider value={[placement, setPlacement]}>
+        <Dynamic
+          component={TAG_BY_DISPLAY[local.display]}
+          {...passthrough}
+          ref={setAnchor}
+          class={className()}
+          data-testid={local.testId}
+        >
+          {local.children}
+        </Dynamic>
+      </TetherContext.Provider>
     </AnchorContext.Provider>
   );
 };

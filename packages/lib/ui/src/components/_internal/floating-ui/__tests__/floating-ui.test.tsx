@@ -11,6 +11,7 @@ import {
   FloatingRoot,
   FloatingBody,
   FloatingWindow,
+  useTetherState,
   type FloatingWindowProps,
 } from '..';
 import * as arrowCss from '../arrow.css';
@@ -122,6 +123,92 @@ describe('FloatingRoot', () => {
     expect(() =>
       render(() => <FloatingWindow testId="box">content</FloatingWindow>),
     ).toThrow(/outside of <FloatingRoot>/);
+  });
+
+  it('refuses a second window in the same root', () => {
+    // One slot, so the second window has nowhere to report where it
+    // landed — and the first would start reading the second's placement
+    // as its own. Loud beats a popup quietly wearing the wrong side.
+    expect(() =>
+      render(() => (
+        <FloatingRoot display="block">
+          <FloatingWindow testId="first">first</FloatingWindow>
+          <FloatingWindow testId="second">second</FloatingWindow>
+        </FloatingRoot>
+      )),
+    ).toThrow(/at most one <FloatingWindow>/);
+  });
+});
+
+describe('useTetherState', () => {
+  it('reports the placement the window resolved', () => {
+    // Read from beside the window rather than inside it: this is the
+    // seam a component uses to answer the placement in markup of its
+    // own, without the window handing it over.
+    const Readout = () => {
+      const state = useTetherState();
+
+      return (
+        <span data-testid="readout" data-tethered={!!state()?.measurement()}>
+          {state()?.side()}/{state()?.align()}
+        </span>
+      );
+    };
+
+    render(() => (
+      <FloatingRoot display="block">
+        <Readout />
+        <FloatingWindow testId="box" side="left" align="end">
+          content
+        </FloatingWindow>
+      </FloatingRoot>
+    ));
+
+    expect(screen.getByTestId('readout')).toHaveTextContent('left/end');
+    expect(screen.getByTestId('readout')).toHaveAttribute(
+      'data-tethered',
+      'false',
+    );
+  });
+
+  it('reports nothing until a window publishes', () => {
+    // Deliberately not a default placement. A reader that runs before
+    // the window — a preceding sibling, or a root that never gets one —
+    // would otherwise be handed `bottom` and have no way to tell it
+    // apart from a window that really did land there, which is how it
+    // would go on believing `bottom` after a `left` window published.
+    const seen: (string | undefined)[] = [];
+
+    const Readout = () => {
+      const state = useTetherState();
+
+      seen.push(state()?.side());
+
+      return <span data-testid="readout">{state()?.side() ?? 'nothing'}</span>;
+    };
+
+    render(() => (
+      <FloatingRoot display="block">
+        <Readout />
+        <FloatingWindow testId="box" side="left">
+          content
+        </FloatingWindow>
+      </FloatingRoot>
+    ));
+
+    expect(seen).toEqual([undefined]);
+    expect(screen.getByTestId('readout')).toHaveTextContent('left');
+  });
+
+  it('refuses a read with no root above it', () => {
+    // Throws rather than handing back an accessor that answers
+    // `undefined` forever — which is the same thing a root with no
+    // window says, and would pass for it.
+    const Readout = () => <span>{useTetherState()()?.side()}</span>;
+
+    expect(() => render(() => <Readout />)).toThrow(
+      /outside of <FloatingRoot>/,
+    );
   });
 });
 

@@ -14,7 +14,8 @@ import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
 import { useAnchorElement } from './root';
 import { roundByDevicePixel } from './tether/pixel-ratio';
 import { useReference } from './tether/use-reference';
-import { useTether } from './tether/use-tether';
+import { DEFAULT_ALIGN, DEFAULT_SIDE } from './tether/placement';
+import { useTether, useTetherState } from './tether/use-tether';
 import {
   base as arrowBase,
   depth as arrowDepth,
@@ -210,10 +211,16 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
 
   const anchor = useAnchorElement();
 
-  const { side, align, measurement } = useTether({
+  // The placement the window is asking for. Handed to the tether as its
+  // starting point and used as the fallback below, so the answer before
+  // a measurement lands is the same one the CSS is painting.
+  const requestedSide = () => own.side ?? DEFAULT_SIDE;
+  const requestedAlign = () => own.align ?? DEFAULT_ALIGN;
+
+  useTether({
     anchor: useReference({ anchor, point: () => own.point }),
-    side: () => own.side ?? 'bottom',
-    align: () => own.align ?? 'center',
+    side: requestedSide,
+    align: requestedAlign,
     sideOffset: () => own.sideOffset ?? 0,
     alignOffset: () => own.alignOffset ?? 0,
 
@@ -230,6 +237,15 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
 
     middleware: () => own.tether?.middleware ?? [],
   });
+
+  // Read back from the root's slot rather than from the call above,
+  // which publishes there and returns nothing. Everything under the
+  // root sees the same placement this way, the window included.
+  const published = useTetherState();
+
+  const side = () => published()?.side() ?? requestedSide();
+  const align = () => published()?.align() ?? requestedAlign();
+  const measurement = () => published()?.measurement();
 
   const arrowData = () => measurement()?.middlewareData.arrow;
   const axis = (): FloatingAxis => AXIS_BY_SIDE[side()];
