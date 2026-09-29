@@ -394,6 +394,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   // the horizontal bar.
   createEffect(() => {
     if (local.type !== 'scroll') return;
+    // eslint-disable-next-line solid/reactivity -- false positive: the listener is torn down when the effect re-runs
     const viewport = viewportEl();
     if (!viewport) return;
     let scrollEndTimerX = 0;
@@ -551,6 +552,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   // scroll-linked layout work, mirroring Radix's "unlinked scroll
   // listener" trick.
   createEffect(() => {
+    // eslint-disable-next-line solid/reactivity -- false positive: the listener is torn down when the effect re-runs
     const viewport = viewportEl();
     if (!viewport) return;
     let rAF = 0;
@@ -652,6 +654,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const startDrag = (axis: 'x' | 'y', event: PointerEvent) => {
     if (event.button !== 0) return;
     const target = event.currentTarget as HTMLDivElement;
+    // eslint-disable-next-line solid/reactivity -- false positive: the drag intentionally binds to the viewport it started on
     const viewport = viewportEl();
     if (!viewport) return;
     target.setPointerCapture(event.pointerId);
