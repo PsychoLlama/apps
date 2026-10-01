@@ -60,11 +60,16 @@
  *   `disableHoverableContent={false}` buys. The gap between trigger and
  *   window is bridged by a grace area, a pseudo-element of the window,
  *   where upstream tracks the pointer's exit and builds a polygon from
- *   it in JS. Ours is a fixed trapezoid, the arrow's row plus the gap,
- *   narrowing from the window's width onto the arrow — wherever the
- *   arrow was seated, aligned or measured. So it covers the crossing
- *   the arrow points at, where upstream covers the one the pointer
- *   actually took.
+ *   it in JS. Ours is a standing trapezoid, the arrow's row plus the
+ *   gap, narrowing from the window's width onto the pointer — tuned as
+ *   the pointer moves over the trigger rather than built when it
+ *   leaves, which is what it takes for a strip that has to be right
+ *   before the crossing starts. Three things still differ: the narrow
+ *   end is the arrow's base wide where upstream's is a point; it's
+ *   clamped to the window's width, so a pointer leaving from beyond the
+ *   window's edge gets the nearest corner where upstream's hull spans
+ *   the trigger; and with no pointer yet seen it falls back to the
+ *   arrow's seat, aligned or measured.
  * - The grace area doesn't take the pointer until the window has
  *   finished arriving. It's part of the window, so the entrance carries
  *   it over the trigger's edge, where it would swallow the press it's
@@ -81,8 +86,10 @@
  *   keeps wearing, which is every tooltip on a page driven by the
  *   keyboard. Upstream needs none of this: it has no standing
  *   grace area to reshape, and builds one from the pointer's exit each
- *   time instead. All three draw the same strip today; the attribute is
- *   the seam the enhanced shapes hang off.
+ *   time instead. `enter` is the only one that follows the pointer; the
+ *   other two draw the arrow-seated strip, which is the right one for a
+ *   crossing nobody is making and for the way back, where the strip is
+ *   already window-wide at the end the pointer is standing on.
  * - Turning that off is `hoverable={false}`, not upstream's
  *   `disableHoverableContent`. Positive and defaulted true, matching
  *   `Text`'s `selectable`, and it works the opposite way round: upstream
@@ -175,20 +182,18 @@ import {
   type JSX,
 } from 'solid-js';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
-import { flip, limitShift, shift } from '@floating-ui/dom';
-import clx from '@lib/classnames';
 import {
-  FloatingBody,
   FloatingRoot,
-  FloatingWindow,
   type FloatingAlignment,
   type FloatingRootDisplay,
   type FloatingSide,
-  type FloatingTether,
 } from '../_internal/floating-ui';
-import Text from '../text/text';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { useGlobalListener } from './use-global-listener';
+import TooltipWindow, {
+  type TooltipPath,
+  type TooltipPointer,
+} from './tooltip-window';
+import { useDismissal } from './use-dismissal';
 import * as css from './tooltip.css';
 
 /** Edge of the trigger the tooltip binds to. */
@@ -217,6 +222,13 @@ export interface TooltipTriggerProps {
    * trigger with a pointer handler of its own has to call both.
    */
   readonly onPointerEnter: (event: PointerEvent) => void;
+
+  /**
+   * Tells the tooltip where that pointer is, so the grace area can aim
+   * at the crossing it's about to make rather than the one the arrow
+   * points at. Composes the same way.
+   */
+  readonly onPointerMove: (event: PointerEvent) => void;
 }
 
 /**
@@ -282,14 +294,6 @@ export interface TooltipProps
   children: (trigger: TooltipTriggerProps) => JSX.Element;
 }
 
-/** Themes' collision settings, resolved once for every tooltip. */
-const TETHER: FloatingTether = {
-  middleware: [
-    shift({ padding: 10, limiter: limitShift() }),
-    flip({ padding: 10 }),
-  ],
-};
-
 /** The props every tooltip fills in unless told otherwise. */
 const DEFAULTS = {
   side: 'top',
@@ -298,30 +302,6 @@ const DEFAULTS = {
   alignOffset: 0,
   hoverable: true,
 } satisfies Partial<TooltipProps>;
-
-/** Listener options for everything the tooltip attaches outside itself. */
-const PASSIVE: AddEventListenerOptions = { passive: true };
-
-/**
- * Scroll doesn't bubble, so it's heard on the way down instead. Any
- * element can scroll, and the one that matters is an ancestor.
- */
-const PASSIVE_CAPTURE: AddEventListenerOptions = {
-  passive: true,
-  capture: true,
-};
-
-/**
- * The path across the grace area the strip has to serve, which is what
- * shapes it. Rides on the window as `data-path`.
- *
- * `initial` is no path yet: no script to watch a pointer with, or no
- * pointer that has turned up to watch, so the strip has to hold
- * whichever way anyone travels. The other two are a pointer the
- * component can see — `enter` while it's still on its way over,
- * `leave` once it has arrived and the only path left is the way back.
- */
-type TooltipPath = 'initial' | 'enter' | 'leave';
 
 /**
  * A short label that floats beside its trigger while keyboard focus or
@@ -348,16 +328,20 @@ const Tooltip = (rawProps: TooltipProps) => {
 
   const contentId = createUniqueId();
 
+  // What the dismissals measure against. The tooltip inspects only what
+  // it rendered: the root, holding the trigger and the window, and the
+  // window itself.
+  const [root, setRoot] = createSignal<HTMLElement>();
+  const [subject, setSubject] = createSignal<HTMLDivElement>();
+
   // Whether the stylesheet considers the tooltip open, as the root
   // reports it (see `css.root`). The tether rides on this, so a closed
   // window is never measured and a page of closed tooltips isn't
   // listening for anything.
   const [open, setOpen] = createSignal(false);
 
-  // The component's veto on an open window (see `css.window`). Lifted
-  // when the stylesheet stops wanting the window open, so a dismissed
-  // tooltip comes back on the next focus, not before.
-  const [dismissed, setDismissed] = createSignal(false);
+  // The component's veto on an open window (see `css.window`).
+  const dismissal = useDismissal({ open, root, subject });
 
   // The path across the grace area the strip has to serve. `initial`
   // until a pointer turns up and says otherwise, which is the whole of
@@ -366,6 +350,12 @@ const Tooltip = (rawProps: TooltipProps) => {
   // the strip has to hold whichever way anyone is travelling.
   const [path, setPath] = createSignal<TooltipPath>('initial');
 
+  // Where the pointer last was, and which end of the grace area it was
+  // over. Client coordinates, untranslated: the window is the end that
+  // knows where it landed and which edge the strip spans, so turning
+  // them into an offset along that edge is its job, not the trigger's.
+  const [pointer, setPointer] = createSignal<TooltipPointer>();
+
   // The pointer arriving at the trigger. That's the start of a
   // hover-opened tooltip's life, and it's also the end of a return
   // trip back across the grace area; either way the crossing ahead is
@@ -373,13 +363,16 @@ const Tooltip = (rawProps: TooltipProps) => {
   const triggerProps: TooltipTriggerProps = {
     'aria-describedby': contentId,
     onPointerEnter: () => setPath('enter'),
-  };
 
-  // The pointer having crossed and arrived. Heard on the surface
-  // rather than the window because the strip is a pseudo-element of
-  // the window and answers to it as its event target, so the window's
-  // own boundary is the start of the crossing rather than the end.
-  const onSurfaceEnter = () => setPath('leave');
+    // Only while there's a window wanting the pointer: nothing reads
+    // the position otherwise, and a page of closed tooltips shouldn't
+    // be writing signals on every move across a trigger.
+    onPointerMove: (event: PointerEvent) => {
+      if (!open()) return;
+
+      setPointer({ target: 'anchor', x: event.clientX, y: event.clientY });
+    },
+  };
 
   // Heard on the root, so any animation inside it arrives here too —
   // the trigger's, and the window's own arrival. Only the open signal
@@ -391,7 +384,7 @@ const Tooltip = (rawProps: TooltipProps) => {
     setOpen(opening);
 
     if (!opening) {
-      setDismissed(false);
+      dismissal.clear();
 
       // Nobody is standing on a closed tooltip, so whatever path the
       // next visit takes, it starts at the trigger. Not back to
@@ -399,58 +392,6 @@ const Tooltip = (rawProps: TooltipProps) => {
       // by the time a handler is running, something has.
       setPath('enter');
     }
-  };
-
-  // What the dismissals measure against. The tooltip inspects only what
-  // it rendered: the root, holding the trigger and the window, and the
-  // window itself.
-  let root: HTMLElement | undefined;
-  let subject: HTMLDivElement | undefined;
-
-  const outsideWindow = (event: Event) =>
-    !(event.target instanceof Node && subject?.contains(event.target));
-
-  const scrollsRoot = (event: Event) =>
-    root !== undefined &&
-    event.target instanceof Node &&
-    event.target.contains(root);
-
-  // Listened for only while open and not yet dismissed, so a page of
-  // closed tooltips listens for nothing.
-  const listening = () => (open() && !dismissed() ? document : undefined);
-
-  // Escape has no target to speak of: it's aimed at whatever is on
-  // screen, and the tooltip is.
-  useGlobalListener(listening, 'keydown', PASSIVE, (event) => {
-    if (event.key === 'Escape') setDismissed(true);
-  });
-
-  // A press anywhere but the tooltip itself. Most of these would close
-  // it anyway by blurring the trigger; this one also covers the presses
-  // that hold focus by preventing the default, and lands before the
-  // blur either way.
-  useGlobalListener(listening, 'pointerdown', PASSIVE, (event) => {
-    if (outsideWindow(event)) setDismissed(true);
-  });
-
-  // Anything scrolling the trigger out from under its window. Heard on
-  // `window`, which sees the capture phase for every scroller on the
-  // page.
-  useGlobalListener(
-    () => (open() && !dismissed() ? window : undefined),
-    'scroll',
-    PASSIVE_CAPTURE,
-    (event) => {
-      if (scrollsRoot(event)) setDismissed(true);
-    },
-  );
-
-  // A click inside the root but outside the window is a click on the
-  // trigger. A pointer's was preceded by a press that already
-  // dismissed, so this is for the keyboard's: Enter and Space arrive as
-  // a click on the focused element.
-  const onRootClick = (event: MouseEvent) => {
-    if (open() && outsideWindow(event)) setDismissed(true);
   };
 
   return (
@@ -463,53 +404,37 @@ const Tooltip = (rawProps: TooltipProps) => {
           [css.maxWidth]: local.maxWidth,
         }),
       })}
-      onClick={onRootClick}
+      onClick={dismissal.onRootClick}
       onAnimationStart={onOpenChange}
       onAnimationCancel={onOpenChange}
-      ref={(ref) => {
-        root = ref;
-      }}
+      ref={setRoot}
     >
       {local.children(triggerProps)}
 
-      <FloatingWindow
-        data-dismissed={dismissed() ? '' : undefined}
-        data-path={path()}
+      <TooltipWindow
+        {...rest}
+        contentId={contentId}
+        content={local.content}
+        aria-label={local['aria-label']}
         side={local.side}
         align={local.align}
         sideOffset={local.sideOffset}
         alignOffset={local.alignOffset}
-        radius={2}
-        arrow={{}}
-        class={css.window}
+        tethered={open() && !dismissal.dismissed()}
+        dismissed={dismissal.dismissed()}
+        path={path()}
+        pointer={pointer}
+        setPointer={setPointer}
+        // The pointer having crossed and arrived. Lands on the surface
+        // rather than the window because the strip is a pseudo-element
+        // of the window and answers to it as its event target, so the
+        // window's own boundary is the start of the crossing rather
+        // than the end.
+        onPointerEnter={() => setPath('leave')}
+        class={local.class}
         testId={tid.testId}
-        tether={open() && !dismissed() ? TETHER : undefined}
-        ref={(ref) => {
-          subject = ref;
-        }}
-      >
-        <FloatingBody
-          {...rest}
-          onPointerEnter={onSurfaceEnter}
-          testId={`${tid.testId}-surface`}
-          py={1}
-          px={2}
-          class={clx(css.content, local.class)}
-        >
-          <Text
-            as="p"
-            role="tooltip"
-            id={contentId}
-            aria-label={local['aria-label']}
-            testId={`${tid.testId}-text`}
-            size={1}
-            selectable={false}
-            class={css.text}
-          >
-            {local.content}
-          </Text>
-        </FloatingBody>
-      </FloatingWindow>
+        ref={setSubject}
+      />
     </FloatingRoot>
   );
 };

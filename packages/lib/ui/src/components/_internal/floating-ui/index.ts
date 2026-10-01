@@ -38,7 +38,9 @@
  * `useTetherState` reads where the window under a root landed, for a
  * component that has to do something about it rather than only style
  * it. The window publishes there and reads it back the same way, so
- * there's one answer and everyone under the root gets it.
+ * there's one answer and everyone under the root gets it. `AXIS_BY_SIDE`
+ * comes with it, for turning that side into the axis most rules and
+ * coordinates actually turn on.
  */
 
 // The CSS placement is deliberately hand-rolled and short-lived. It
@@ -66,6 +68,7 @@ export {
   type FloatingTether,
 } from './types';
 export {
+  AXIS_BY_SIDE,
   FloatingWindow,
   type FloatingArrowProps,
   type FloatingWindowProps,

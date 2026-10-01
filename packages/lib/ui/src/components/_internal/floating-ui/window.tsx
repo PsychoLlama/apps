@@ -66,9 +66,10 @@ const ARROW_DIRECTION_BY_SIDE: Record<FloatingSide, ArrowDirection> = {
  * Axis the window travels on to clear the anchor, keyed by the resolved
  * side. Rides along as `data-axis` because most placement rules turn on
  * the axis alone, and naming it beats spelling out a side pair in every
- * selector.
+ * selector; the same goes for a consumer picking which of a pointer's
+ * two coordinates runs along the edge the window spans.
  */
-const AXIS_BY_SIDE: Record<FloatingSide, FloatingAxis> = {
+export const AXIS_BY_SIDE: Record<FloatingSide, FloatingAxis> = {
   top: 'y',
   bottom: 'y',
   left: 'x',

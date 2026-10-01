@@ -9,9 +9,10 @@
  * rules below read the window's placement attributes and its arrow's
  * vars, so the window is the only thing that can wear it.
  *
- * What it doesn't know is why it's there. Whether to draw it at all, and
- * how long to hold it inert, are the consumer's to say; the two vars
- * exported here are the whole of that conversation.
+ * What it doesn't know is why it's there. Whether to draw it at all, how
+ * long to hold it inert, and where the pointer was last seen are the
+ * consumer's to say; the three vars exported here are the whole of that
+ * conversation.
  */
 
 import { createVar, keyframes, style } from '@vanilla-extract/css';
@@ -44,6 +45,20 @@ export const enabled = createVar();
  */
 export const armDelay = createVar();
 
+/**
+ * Where the pointer was last seen on the trigger, as a length along the
+ * edge the strip spans, measured from the strip's start. The taper's
+ * narrow end comes down there while the pointer is still on its way
+ * over, so the strip covers the crossing being made rather than the one
+ * the arrow points at.
+ *
+ * The consumer's to assign, since only it hears the pointer, and only
+ * while the crossing is ahead — the strip reads it under
+ * `data-path="enter"` and nowhere else. Defaults to the middle of the
+ * window, which is roughly where a centered arrow already was.
+ */
+export const cursor = createVar();
+
 // How far the strip reaches past the surface: across the arrow's row,
 // then the gap the window opens off the trigger. Both are the window's,
 // assigned from its props.
@@ -59,9 +74,10 @@ const REACH = `calc(${floating.arrowDepth} + ${floating.sideOffset})`;
 // and the arrow's seat are both known, and read by the strip.
 
 /**
- * Where the end against the trigger begins. The arrow's leading corner:
- * the end runs from here for {@link anchorSpan}, so the taper comes
- * down on the arrow wherever the arrow was seated.
+ * Where the end against the trigger begins. The end runs from here for
+ * {@link anchorSpan}, so the taper comes down on the arrow wherever the
+ * arrow was seated — or on the pointer, once {@link cursor} says where
+ * the pointer is crossing.
  */
 const anchorStart = createVar();
 
@@ -114,6 +130,10 @@ export const graceArea = style({
     // below.
     [anchorStart]: `calc((100% - ${floating.arrowBase}) / 2)`,
     [anchorSpan]: floating.arrowBase,
+
+    // The middle of the window, for the strip of a tooltip no pointer
+    // has turned up on — or one on a page with no script to hear it.
+    [cursor]: '50%',
 
     // The window, edge to edge.
     [windowStart]: '0%',
@@ -177,6 +197,21 @@ export const graceArea = style({
     },
     '&:where([data-tethered][data-axis="x"])': {
       vars: { [anchorStart]: floating.arrowY },
+    },
+
+    // The crossing the pointer is actually making, which beats the one
+    // the arrow points at. While the pointer is still on its way over,
+    // the taper comes down on where it left the trigger instead of on
+    // the arrow's seat, so a diagonal approach is inside the strip.
+    //
+    // Clamped to the strip, which is as wide as the window: a pointer
+    // that left from beyond the window's edge gets the nearest corner,
+    // the closest the strip can come to it. Last of the seat rules, so
+    // it overrides both the alignment and the measured arrow.
+    '&:where([data-path="enter"])': {
+      vars: {
+        [anchorStart]: `clamp(0px, calc(${cursor} - ${floating.arrowBase} / 2), calc(100% - ${floating.arrowBase}))`,
+      },
     },
 
     // Which edge it hangs off, and which way round it sits. The edge is
