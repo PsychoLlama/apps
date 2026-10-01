@@ -7,12 +7,12 @@ import {
 } from 'solid-js';
 import {
   computePosition,
-  type ComputePositionReturn,
   type FloatingElement,
   type Middleware,
   type ReferenceElement,
 } from '@floating-ui/dom';
 import { type FloatingAlignment, type FloatingSide } from '../types';
+import { type FloatingMeasurement } from './middleware/boxes';
 import { fromPlacement, toPlacement } from './placement';
 
 /**
@@ -62,9 +62,10 @@ export interface ComputePositionResult {
   /**
    * The latest measurement in full — the subject's `x`/`y` and every
    * middleware's `middlewareData` — or `undefined` until one lands. The
-   * window reads its coordinates and the arrow's seat from here.
+   * window reads its coordinates and the arrow's seat from here, and a
+   * component the measured boxes (`middlewareData.boxes`).
    */
-  measurement: Accessor<ComputePositionReturn | undefined>;
+  measurement: Accessor<FloatingMeasurement | undefined>;
 
   /**
    * Measure and re-resolve the placement. Wire it to `onUpdate` on
@@ -101,7 +102,7 @@ export interface ComputePositionResult {
 export const useComputePosition = (
   inputs: ComputePositionInputs,
 ): ComputePositionResult => {
-  const [measurement, setMeasurement] = createSignal<ComputePositionReturn>();
+  const [measurement, setMeasurement] = createSignal<FloatingMeasurement>();
 
   // Stamps each measurement so a slow one that resolves after a newer one
   // — or after the scope is gone — drops its result instead of clobbering

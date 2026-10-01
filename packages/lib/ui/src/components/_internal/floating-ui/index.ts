@@ -40,7 +40,10 @@
  * it. The window publishes there and reads it back the same way, so
  * there's one answer and everyone under the root gets it. `AXIS_BY_SIDE`
  * comes with it, for turning that side into the axis most rules and
- * coordinates actually turn on.
+ * coordinates actually turn on. The measurement carries the boxes it was
+ * taken from, under `middlewareData.boxes`, so a component that needs the
+ * anchor's extent reads what the tether already measured instead of
+ * measuring again.
  */
 
 // The CSS placement is deliberately hand-rolled and short-lived. It
@@ -75,6 +78,13 @@ export {
 } from './window';
 export { FloatingBody, type FloatingBodyProps } from './body';
 export { useTetherState, type TetherState } from './tether/use-tether';
+export {
+  type FloatingBox,
+  type FloatingBoxes,
+  type FloatingMeasurement,
+  type FloatingMiddlewareData,
+  type FloatingSize,
+} from './tether/middleware/boxes';
 export {
   Arrow,
   type ArrowAlign,
