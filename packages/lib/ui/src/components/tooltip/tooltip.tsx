@@ -60,11 +60,16 @@
  *   `disableHoverableContent={false}` buys. The gap between trigger and
  *   window is bridged by a grace area, a pseudo-element of the window,
  *   where upstream tracks the pointer's exit and builds a polygon from
- *   it in JS. Ours is a fixed trapezoid, the arrow's row plus the gap,
- *   narrowing from the window's width onto the arrow — wherever the
- *   arrow was seated, aligned or measured. So it covers the crossing
- *   the arrow points at, where upstream covers the one the pointer
- *   actually took.
+ *   it in JS. Ours is a standing trapezoid, the arrow's row plus the
+ *   gap, narrowing from the window's width onto the pointer — tuned as
+ *   the pointer moves over the trigger rather than built when it
+ *   leaves, which is what it takes for a strip that has to be right
+ *   before the crossing starts. Three things still differ: the narrow
+ *   end is the arrow's base wide where upstream's is a point; it's
+ *   clamped to the window's width, so a pointer leaving from beyond the
+ *   window's edge gets the nearest corner where upstream's hull spans
+ *   the trigger; and with no pointer yet seen it falls back to the
+ *   arrow's seat, aligned or measured.
  * - The grace area doesn't take the pointer until the window has
  *   finished arriving. It's part of the window, so the entrance carries
  *   it over the trigger's edge, where it would swallow the press it's
@@ -81,8 +86,10 @@
  *   keeps wearing, which is every tooltip on a page driven by the
  *   keyboard. Upstream needs none of this: it has no standing
  *   grace area to reshape, and builds one from the pointer's exit each
- *   time instead. All three draw the same strip today; the attribute is
- *   the seam the enhanced shapes hang off.
+ *   time instead. `enter` is the only one that follows the pointer; the
+ *   other two draw the arrow-seated strip, which is the right one for a
+ *   crossing nobody is making and for the way back, where the strip is
+ *   already window-wide at the end the pointer is standing on.
  * - Turning that off is `hoverable={false}`, not upstream's
  *   `disableHoverableContent`. Positive and defaulted true, matching
  *   `Text`'s `selectable`, and it works the opposite way round: upstream
@@ -182,7 +189,10 @@ import {
   type FloatingSide,
 } from '../_internal/floating-ui';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import TooltipWindow, { type TooltipPath } from './tooltip-window';
+import TooltipWindow, {
+  type TooltipPath,
+  type TooltipPointer,
+} from './tooltip-window';
 import { useDismissal } from './use-dismissal';
 import * as css from './tooltip.css';
 
@@ -212,6 +222,13 @@ export interface TooltipTriggerProps {
    * trigger with a pointer handler of its own has to call both.
    */
   readonly onPointerEnter: (event: PointerEvent) => void;
+
+  /**
+   * Tells the tooltip where that pointer is, so the grace area can aim
+   * at the crossing it's about to make rather than the one the arrow
+   * points at. Composes the same way.
+   */
+  readonly onPointerMove: (event: PointerEvent) => void;
 }
 
 /**
@@ -333,6 +350,12 @@ const Tooltip = (rawProps: TooltipProps) => {
   // the strip has to hold whichever way anyone is travelling.
   const [path, setPath] = createSignal<TooltipPath>('initial');
 
+  // Where the pointer last was, and which end of the grace area it was
+  // over. Client coordinates, untranslated: the window is the end that
+  // knows where it landed and which edge the strip spans, so turning
+  // them into an offset along that edge is its job, not the trigger's.
+  const [pointer, setPointer] = createSignal<TooltipPointer>();
+
   // The pointer arriving at the trigger. That's the start of a
   // hover-opened tooltip's life, and it's also the end of a return
   // trip back across the grace area; either way the crossing ahead is
@@ -340,6 +363,15 @@ const Tooltip = (rawProps: TooltipProps) => {
   const triggerProps: TooltipTriggerProps = {
     'aria-describedby': contentId,
     onPointerEnter: () => setPath('enter'),
+
+    // Only while there's a window wanting the pointer: nothing reads
+    // the position otherwise, and a page of closed tooltips shouldn't
+    // be writing signals on every move across a trigger.
+    onPointerMove: (event: PointerEvent) => {
+      if (!open()) return;
+
+      setPointer({ target: 'anchor', x: event.clientX, y: event.clientY });
+    },
   };
 
   // Heard on the root, so any animation inside it arrives here too —
@@ -391,6 +423,8 @@ const Tooltip = (rawProps: TooltipProps) => {
         tethered={open() && !dismissal.dismissed()}
         dismissed={dismissal.dismissed()}
         path={path()}
+        pointer={pointer}
+        setPointer={setPointer}
         // The pointer having crossed and arrived. Lands on the surface
         // rather than the window because the strip is a pseudo-element
         // of the window and answers to it as its event target, so the
