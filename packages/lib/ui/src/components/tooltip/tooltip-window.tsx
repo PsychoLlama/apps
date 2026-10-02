@@ -98,10 +98,9 @@ export interface TooltipWindowProps
   path: TooltipPath;
 
   /**
-   * Where the pointer last was. Read rather than taken as a value: the
-   * window turns it into an offset along the edge the strip spans,
-   * which is a measurement, and measuring belongs where the reading
-   * happens.
+   * Where the pointer last was. Taken raw rather than as an offset: the
+   * window turns it into one against its own measured box, which only
+   * reaches the root's descendants.
    */
   pointer: Accessor<TooltipPointer | undefined>;
 
@@ -121,6 +120,16 @@ const TETHER: FloatingTether = {
     shift({ padding: 10, limiter: limitShift() }),
     flip({ padding: 10 }),
   ],
+};
+
+/**
+ * The end of the grace area each path leaves from, which is the end the
+ * taper narrows onto. `initial` leaves from nowhere in particular.
+ */
+const PATH_ORIGIN: Record<TooltipPath, TooltipPointer['target'] | undefined> = {
+  initial: undefined,
+  enter: 'anchor',
+  leave: 'window',
 };
 
 /**
@@ -153,44 +162,69 @@ const TooltipWindow = (props: TooltipWindowProps) => {
   const tether = useTetherState();
   const axis = () => AXIS_BY_SIDE[tether()?.side() ?? local.side];
 
-  let surface: HTMLDivElement | undefined;
+  // The anchor's box and the window's, as the tether last measured them.
+  const boxes = () => tether()?.measurement()?.middlewareData.boxes;
+
+  // Whole pixels, for every length handed to the strip. The strip is a
+  // hit region, not a visible edge, so a fraction of one is finer than
+  // anything the pointer can be aimed at, and rounding means a pointer
+  // drifting inside a pixel leaves the var alone instead of restyling
+  // the window and repainting the clip path for every move. Not the
+  // tether's device-pixel snap: that one is there to keep visible edges
+  // off the half-pixel.
+  const px = (length: number) => `${Math.round(length)}px`;
 
   // The pointer's place along the edge the strip spans, measured from
-  // the strip's start, as the length the taper's narrow end comes down
-  // on. Only while the pointer is at the anchor end, which is the only
-  // crossing the taper can be aimed at: once it's on the surface the
-  // way back is served by the window-wide end of the strip, and a
-  // pointer nobody has seen leaves the strip on its arrow-seated
-  // shape.
+  // the window's start, as the length the taper's narrow end comes down
+  // on. Only while the pointer is at the end the path leaves from —
+  // the anchor on the way over, the window on the way back — since
+  // that's the end the taper narrows onto. A pointer nobody has seen
+  // leaves the strip on its arrow-seated shape.
   const cursor = () => {
     const pointer = local.pointer();
+    const from = PATH_ORIGIN[local.path];
 
-    if (pointer?.target !== 'anchor') return undefined;
+    if (!from || pointer?.target !== from) return undefined;
 
-    // TODO: take the rect off the tether instead. Its middleware
-    // measures this box every time it runs, so reading it again here is
-    // a second layout measurement of the same thing, on the pointer's
-    // path. Exposing the measured rects from the tether retires this.
-    const box = surface?.getBoundingClientRect();
+    // The window's box in the viewport's space, which is the one the
+    // pointer was seen in. The window rather than the surface because
+    // the strip is drawn on the window, and the two share the leading
+    // edge along the axis that matters.
+    const box = boxes()?.subject;
 
     if (!box) return undefined;
 
-    const offset = axis() === 'y' ? pointer.x - box.left : pointer.y - box.top;
+    return px(
+      axis() === 'y' ? pointer.x - box.clientX : pointer.y - box.clientY,
+    );
+  };
 
-    // Whole pixels. The strip is a hit region, not a visible edge, so a
-    // fraction of one is finer than anything the pointer can be aimed
-    // at, and rounding means a pointer drifting inside a pixel leaves
-    // the var alone instead of restyling the window and repainting the
-    // clip path for every move. Not the tether's device-pixel snap:
-    // that one is there to keep visible edges off the half-pixel.
-    return `${Math.round(offset)}px`;
+  // How far inside the window's ends the anchor's sit, along the same
+  // edge, for the end of the strip that spans the anchor on the way
+  // back. In the measurement's own space rather than the viewport's:
+  // both boxes are in it, and nothing here is compared with a pointer.
+  const insets = () => {
+    const measured = boxes();
+
+    if (!measured) return {};
+
+    const { anchor, subject } = measured;
+    const [start, size] =
+      axis() === 'y' ? (['x', 'width'] as const) : (['y', 'height'] as const);
+
+    return {
+      [grace.anchorInsetStart]: px(anchor[start] - subject[start]),
+      [grace.anchorInsetEnd]: px(
+        subject[start] + subject[size] - (anchor[start] + anchor[size]),
+      ),
+    };
   };
 
   return (
     <FloatingWindow
       data-dismissed={local.dismissed ? '' : undefined}
       data-path={local.path}
-      style={assignInlineVars({ [grace.cursor]: cursor() })}
+      style={assignInlineVars({ [grace.cursor]: cursor(), ...insets() })}
       side={local.side}
       align={local.align}
       sideOffset={local.sideOffset}
@@ -218,7 +252,6 @@ const TooltipWindow = (props: TooltipWindowProps) => {
             y: event.clientY,
           });
         }}
-        ref={(node: HTMLDivElement) => (surface = node)}
         testId={`${local.testId}-surface`}
         py={1}
         px={2}

@@ -61,15 +61,20 @@
  *   window is bridged by a grace area, a pseudo-element of the window,
  *   where upstream tracks the pointer's exit and builds a polygon from
  *   it in JS. Ours is a standing trapezoid, the arrow's row plus the
- *   gap, narrowing from the window's width onto the pointer — tuned as
- *   the pointer moves over the trigger rather than built when it
- *   leaves, which is what it takes for a strip that has to be right
- *   before the crossing starts. Three things still differ: the narrow
- *   end is the arrow's base wide where upstream's is a point; it's
- *   clamped to the window's width, so a pointer leaving from beyond the
- *   window's edge gets the nearest corner where upstream's hull spans
- *   the trigger; and with no pointer yet seen it falls back to the
- *   arrow's seat, aligned or measured.
+ *   gap, narrowing onto the pointer from the far end's full width: the
+ *   window's on the way over, the trigger's on the way back. It's tuned
+ *   as the pointer moves rather than built when it leaves, which is
+ *   what it takes for a strip that has to be right before the crossing
+ *   starts. Four things still differ: the end at the pointer is the
+ *   arrow's base wide where upstream's is a point; on the way back it's
+ *   wider still — the trigger's width, within the arrow's base and the
+ *   window's — so leaving from the window's corner for a small trigger
+ *   is a band the trigger's width rather than a sliver, which is more
+ *   forgiving than upstream's hull; it's centered on the pointer's last
+ *   move over the surface rather than the point it left from, so a fast
+ *   exit angled off to one side can cross the edge outside it and close
+ *   the tooltip where upstream's would hold; and with no pointer yet
+ *   seen it falls back to the arrow's seat, aligned or measured.
  * - The grace area doesn't take the pointer until the window has
  *   finished arriving. It's part of the window, so the entrance carries
  *   it over the trigger's edge, where it would swallow the press it's
@@ -86,10 +91,9 @@
  *   keeps wearing, which is every tooltip on a page driven by the
  *   keyboard. Upstream needs none of this: it has no standing
  *   grace area to reshape, and builds one from the pointer's exit each
- *   time instead. `enter` is the only one that follows the pointer; the
- *   other two draw the arrow-seated strip, which is the right one for a
- *   crossing nobody is making and for the way back, where the strip is
- *   already window-wide at the end the pointer is standing on.
+ *   time instead. `enter` and `leave` both follow the pointer, from
+ *   opposite ends; `initial` draws the arrow-seated strip, which is the
+ *   right one for a crossing nobody is making.
  * - Turning that off is `hoverable={false}`, not upstream's
  *   `disableHoverableContent`. Positive and defaulted true, matching
  *   `Text`'s `selectable`, and it works the opposite way round: upstream

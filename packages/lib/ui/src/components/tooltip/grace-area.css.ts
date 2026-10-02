@@ -10,9 +10,9 @@
  * vars, so the window is the only thing that can wear it.
  *
  * What it doesn't know is why it's there. Whether to draw it at all, how
- * long to hold it inert, and where the pointer was last seen are the
- * consumer's to say; the three vars exported here are the whole of that
- * conversation.
+ * long to hold it inert, where the pointer was last seen, and where the
+ * trigger is are the consumer's to say; the vars exported here are the
+ * whole of that conversation.
  */
 
 import { createVar, keyframes, style } from '@vanilla-extract/css';
@@ -46,32 +46,74 @@ export const enabled = createVar();
 export const armDelay = createVar();
 
 /**
- * Where the pointer was last seen on the trigger, as a length along the
- * edge the strip spans, measured from the strip's start. The taper's
- * narrow end comes down there while the pointer is still on its way
- * over, so the strip covers the crossing being made rather than the one
- * the arrow points at.
+ * Where the pointer was last seen, as a length along the edge the strip
+ * spans, measured from the window's start. The strip's end on that side
+ * centers there, so it covers the crossing being made rather than the one
+ * the arrow points at: under `data-path="enter"` that's the end on the
+ * trigger, where the pointer is leaving from, and under
+ * `data-path="leave"` the end on the window, for the same reason.
  *
  * The consumer's to assign, since only it hears the pointer, and only
- * while the crossing is ahead — the strip reads it under
- * `data-path="enter"` and nowhere else. Defaults to the middle of the
+ * for the end the pointer is standing on. Defaults to the middle of the
  * window, which is roughly where a centered arrow already was.
  */
 export const cursor = createVar();
+
+/**
+ * How far inside the window's start the trigger begins, along the edge
+ * the strip spans; negative where the trigger starts first. With
+ * {@link anchorInsetEnd}, it's what the strip's end on the trigger
+ * spans on the way back, and what the strip's box stretches over when
+ * the trigger is the wider of the two.
+ *
+ * The consumer's to assign from a measurement. Defaults to `0px`, a
+ * trigger flush with the window, which is the most the strip can claim
+ * without one.
+ */
+export const anchorInsetStart = createVar();
+
+/**
+ * How far inside the window's end the trigger stops; negative where it
+ * runs past it. The other half of {@link anchorInsetStart}.
+ */
+export const anchorInsetEnd = createVar();
 
 // How far the strip reaches past the surface: across the arrow's row,
 // then the gap the window opens off the trigger. Both are the window's,
 // assigned from its props.
 const REACH = `calc(${floating.arrowDepth} + ${floating.sideOffset})`;
 
+// How far the trigger overhangs the window at either end, which is how
+// far the strip's box has to stretch past the window's. A pointer can
+// only hit the box, whatever the clip path draws, so a box the window's
+// width would drop a pointer heading for the far corner of a wider
+// trigger.
+const overhangStart = `max(0px, -1 * ${anchorInsetStart})`;
+const overhangEnd = `max(0px, -1 * ${anchorInsetEnd})`;
+
+// The window's length along the edge, in the strip's own terms. Inside
+// the clip path `100%` is the box, which is the window plus whatever
+// the trigger overhangs it by.
+const WINDOW = `(100% - ${overhangStart} - ${overhangEnd})`;
+
+// The trigger's length along the same edge.
+const ANCHOR = `(${WINDOW} - ${anchorInsetStart} - ${anchorInsetEnd})`;
+
+// How wide the way back leaves the window: as wide as the trigger it's
+// heading for, so there's a clear path onto it from anywhere along the
+// window — no narrower than the arrow, for a trigger smaller than that,
+// and no wider than the window, for one bigger.
+const EXIT = `clamp(${floating.arrowBase}, ${ANCHOR}, ${WINDOW})`;
+
 // The strip is a trapezoid: one end on the window, one on the anchor,
 // and the four vars below say where each end begins and how far it
 // runs. They're measured along the edge the strip spans, from the
-// strip's own start, which leaves them free of which side the window
-// landed on — that's the two edge vars' job, further down.
+// window's start, which leaves them free of which side the window
+// landed on — that's the two edge vars' job, further down — and of how
+// far the box stretches, which is the polygon's.
 //
-// All six are declared and assigned on the window, where the placement
-// and the arrow's seat are both known, and read by the strip.
+// All of them are declared and assigned on the window, where the
+// placement and the arrow's seat are both known, and read by the strip.
 
 /**
  * Where the end against the trigger begins. The end runs from here for
@@ -82,20 +124,30 @@ const REACH = `calc(${floating.arrowDepth} + ${floating.sideOffset})`;
 const anchorStart = createVar();
 
 /**
- * How far that end runs. The arrow's base today — the taper lands on
- * the arrow and nothing else. A later phase widens it to the trigger.
+ * How far that end runs. The arrow's base, unless the crossing is the
+ * way back, where it's the whole trigger.
  */
 const anchorSpan = createVar();
 
-/** Where the end against the surface begins. The window's start. */
+/**
+ * Where the end against the surface begins. The window's start, unless
+ * the crossing is the way back.
+ */
 const windowStart = createVar();
 
-/** How far that end runs. The window, edge to edge. */
+/**
+ * How far that end runs. The window, edge to edge, unless the crossing
+ * is the way back, where it's the trigger's width.
+ */
 const windowSpan = createVar();
 
-// The far corner of each end, for the polygon below.
-const anchorEnd = `calc(${anchorStart} + ${anchorSpan})`;
-const windowEnd = `calc(${windowStart} + ${windowSpan})`;
+// Each end's two corners, moved from the window's terms into the box's
+// for the polygon below.
+const inBox = (length: string) => `calc(${overhangStart} + ${length})`;
+const anchorFrom = inBox(anchorStart);
+const anchorTo = inBox(`${anchorStart} + ${anchorSpan}`);
+const windowFrom = inBox(windowStart);
+const windowTo = inBox(`${windowStart} + ${windowSpan}`);
 
 /**
  * Which side of the strip each end sits on, as a percentage across the
@@ -128,16 +180,20 @@ export const graceArea = style({
     // space halved, rather than the middle less half a base, so it
     // reads as the arrow's leading corner like the alignment rules
     // below.
-    [anchorStart]: `calc((100% - ${floating.arrowBase}) / 2)`,
+    [anchorStart]: `calc((${WINDOW} - ${floating.arrowBase}) / 2)`,
     [anchorSpan]: floating.arrowBase,
 
     // The middle of the window, for the strip of a tooltip no pointer
     // has turned up on — or one on a page with no script to hear it.
-    [cursor]: '50%',
+    [cursor]: `calc(${WINDOW} / 2)`,
+
+    // A trigger flush with the window, until someone measures it.
+    [anchorInsetStart]: '0px',
+    [anchorInsetEnd]: '0px',
 
     // The window, edge to edge.
-    [windowStart]: '0%',
-    [windowSpan]: '100%',
+    [windowStart]: '0px',
+    [windowSpan]: `calc(${WINDOW})`,
 
     // Every side assigns both; these are only here so the polygon has
     // something to resolve against if none does.
@@ -154,23 +210,27 @@ export const graceArea = style({
     },
 
     // The box and the shape, per axis. The box spans the window edge to
-    // edge, so there's no seam at either end to fall through, and it's
-    // as thick as it reaches. `data-axis` names the axis it reaches
-    // along, which is the one the thickness lands on.
+    // edge, plus however far the trigger overhangs either end, so
+    // there's no seam to fall through; it's as thick as it reaches.
+    // `data-axis` names the axis it reaches along, which is the one the
+    // thickness lands on. Physical insets rather than logical ones,
+    // since the overhangs are measured on the page.
     //
     // The shape is the same four points either way — an end on the
     // window, an end on the trigger — and the axis only decides which
     // coordinate each var lands in, which is why the two lists are
     // each other with the pairs swapped.
     '&:where([data-axis="y"])::before': {
-      insetInline: 0,
+      left: `calc(-1 * ${overhangStart})`,
+      right: `calc(-1 * ${overhangEnd})`,
       height: REACH,
-      clipPath: `polygon(${windowStart} ${windowEdge}, ${windowEnd} ${windowEdge}, ${anchorEnd} ${anchorEdge}, ${anchorStart} ${anchorEdge})`,
+      clipPath: `polygon(${windowFrom} ${windowEdge}, ${windowTo} ${windowEdge}, ${anchorTo} ${anchorEdge}, ${anchorFrom} ${anchorEdge})`,
     },
     '&:where([data-axis="x"])::before': {
-      insetBlock: 0,
+      top: `calc(-1 * ${overhangStart})`,
+      bottom: `calc(-1 * ${overhangEnd})`,
       width: REACH,
-      clipPath: `polygon(${windowEdge} ${windowStart}, ${windowEdge} ${windowEnd}, ${anchorEdge} ${anchorEnd}, ${anchorEdge} ${anchorStart})`,
+      clipPath: `polygon(${windowEdge} ${windowFrom}, ${windowEdge} ${windowTo}, ${anchorEdge} ${anchorTo}, ${anchorEdge} ${anchorFrom})`,
     },
 
     // Where the arrow is seated along that edge, which is where the
@@ -183,7 +243,7 @@ export const graceArea = style({
     },
     '&:where([data-align="end"])': {
       vars: {
-        [anchorStart]: `calc(100% - ${floating.offset} - ${floating.arrowBase})`,
+        [anchorStart]: `calc(${WINDOW} - ${floating.offset} - ${floating.arrowBase})`,
       },
     },
 
@@ -204,22 +264,38 @@ export const graceArea = style({
     // the taper comes down on where it left the trigger instead of on
     // the arrow's seat, so a diagonal approach is inside the strip.
     //
-    // Clamped to the strip, which is as wide as the window: a pointer
-    // that left from beyond the window's edge gets the nearest corner,
-    // the closest the strip can come to it. Last of the seat rules, so
-    // it overrides both the alignment and the measured arrow.
+    // Clamped to the trigger, which is where the pointer is. Last of
+    // the seat rules, so it overrides both the alignment and the
+    // measured arrow.
     '&:where([data-path="enter"])': {
       vars: {
-        [anchorStart]: `clamp(0px, calc(${cursor} - ${floating.arrowBase} / 2), calc(100% - ${floating.arrowBase}))`,
+        [anchorStart]: `clamp(${anchorInsetStart}, calc(${cursor} - ${floating.arrowBase} / 2), calc(${WINDOW} - ${anchorInsetEnd} - ${floating.arrowBase}))`,
+      },
+    },
+
+    // The way back, which is the same strip turned around: the end on
+    // the window comes down on where the pointer left the surface, and
+    // the end on the trigger widens to the whole of it, so a pointer
+    // heading for any part of the trigger arrives. Not a taper onto the
+    // pointer as on the way over, but a band the trigger's width: a
+    // narrow end in the window's corner over a small trigger skews the
+    // strip into a sliver nobody could follow. Clamped to the window,
+    // which is where the pointer is.
+    '&:where([data-path="leave"])': {
+      vars: {
+        [windowStart]: `clamp(0px, calc(${cursor} - ${EXIT} / 2), calc(${WINDOW} - ${EXIT}))`,
+        [windowSpan]: EXIT,
+        [anchorStart]: anchorInsetStart,
+        [anchorSpan]: `calc(${ANCHOR})`,
       },
     },
 
     // Which edge it hangs off, and which way round it sits. The edge is
     // the one facing the trigger, pushed out by the gap so the strip
     // meets the trigger and goes no further; the two vars then put the
-    // wide end against the surface and the narrow one against the
-    // trigger, so a pointer heading for the tooltip is inside the strip
-    // and one wandering off isn't.
+    // window's end against the surface and the trigger's against the
+    // trigger, so a pointer making the crossing is inside the strip and
+    // one wandering off isn't.
     '&:where([data-side="top"])::before': {
       bottom: `calc(-1 * ${floating.sideOffset})`,
       vars: { [windowEdge]: '0%', [anchorEdge]: '100%' },

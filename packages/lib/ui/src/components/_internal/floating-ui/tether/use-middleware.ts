@@ -1,6 +1,7 @@
 import { createMemo, type Accessor } from 'solid-js';
 import { offset, type ArrowOptions, type Middleware } from '@floating-ui/dom';
 import { arrow } from './middleware/arrow';
+import { boxes } from './middleware/boxes';
 
 /**
  * Inputs to {@link useMiddleware}.
@@ -25,7 +26,7 @@ export interface MiddlewareInputs {
 
   /**
    * The consumer's middleware — constraints such as `shift`, `flip`,
-   * `size`, and `hide`. Never `offset` or `arrow`; see
+   * `size`, and `hide`. Never `offset`, `arrow`, or `boxes`; see
    * {@link useMiddleware}.
    */
   middleware: Accessor<readonly Middleware[]>;
@@ -39,18 +40,25 @@ export interface MiddlewareInputs {
  * `sideOffset`/`alignOffset` the stylesheet reads, so the measured
  * placement starts from exactly the pixels the CSS placement paints.
  * The consumer's constraints go in the middle, in the order given.
- * `arrow` goes last, because it has to see the position the constraints
- * settled on before it can seat the arrow against the anchor. It's our
- * own (`middleware/arrow`), not floating-ui's: same name and shape, but
- * it keeps the CSS seat instead of centering on the anchor.
+ * `arrow` goes next to last, because it has to see the position the
+ * constraints settled on before it can seat the arrow against the
+ * anchor. It's our own (`middleware/arrow`), not floating-ui's: same
+ * name and shape, but it keeps the CSS seat instead of centering on the
+ * anchor. `boxes` closes the list, reporting the geometry everything else
+ * was measured against; it decides nothing, so it goes where it can see
+ * the most.
  *
- * `offset` and `arrow` are reserved. Nothing enforces it at runtime —
- * the check isn't worth paying for on every rebuild — but a consumer
- * list carrying either is a review-time bug: the window is the only
- * thing that knows the geometry those two encode, and letting a consumer
- * restate it is how the two modes would stop agreeing. A smuggled-in
- * upstream `arrow` would at least collide on the name rather than run
- * alongside ours.
+ * `offset`, `arrow`, and `boxes` are reserved. Nothing enforces it at
+ * runtime — the check isn't worth paying for on every rebuild — but a
+ * consumer list carrying one of them is a review-time bug: the window is
+ * the only thing that knows the geometry they encode, and letting a
+ * consumer restate it is how the two modes would stop agreeing. A
+ * smuggled-in upstream `arrow` would at least collide on the name rather
+ * than run alongside ours, and a second `boxes` would overwrite the
+ * report the tether publishes.
+ *
+ * `arrow` is the one piece that's conditional, on there being an arrow to
+ * seat. `offset` and `boxes` run for every measurement.
  *
  * ```ts
  * const middleware = useMiddleware({
@@ -74,6 +82,7 @@ export const useMiddleware = (
       }),
       ...inputs.middleware(),
       ...(arrowInput ? [arrow(arrowInput)] : []),
+      boxes(),
     ];
   });
 

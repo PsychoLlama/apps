@@ -57,7 +57,9 @@ export const TetherContext = createContext<Signal<TetherState | undefined>>();
  *
  * `measurement()` is the tethered flag as much as the data: `undefined`
  * means the placement is the one that was asked for rather than one
- * that was measured.
+ * that was measured. The boxes it was taken from come with it, under
+ * `measurement()?.middlewareData.boxes`, for a reader that needs the
+ * anchor's extent rather than only the side it landed on.
  *
  * Throws outside a floating root, for the reason `useAnchorElement`
  * does: there's no floating anything to report on.
