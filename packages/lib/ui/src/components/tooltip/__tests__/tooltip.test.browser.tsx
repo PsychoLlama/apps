@@ -34,8 +34,11 @@ afterAll(() => {
 // enough to open a tooltip the next test never asked to open.
 beforeEach(() => userEvent.hover(park));
 
-/** A tooltip on a button, after a second button focus can move on to. */
-const setup = (options: Partial<TooltipProps> = {}) => {
+/**
+ * A tooltip on a button, after a second button focus can move on to.
+ * `triggerClass` styles the button.
+ */
+const setup = (options: Partial<TooltipProps> = {}, triggerClass?: string) => {
   render(() => (
     <div class={fixture.stage}>
       <Tooltip
@@ -45,7 +48,12 @@ const setup = (options: Partial<TooltipProps> = {}) => {
         testId="tooltip"
       >
         {(trigger) => (
-          <Button as="button" testId="trigger" {...trigger}>
+          <Button
+            as="button"
+            testId="trigger"
+            class={triggerClass}
+            {...trigger}
+          >
             Add
           </Button>
         )}
@@ -130,6 +138,150 @@ describe('Tooltip', () => {
     expect(window).not.toBeVisible();
   });
 
+  // --- Grace area ---
+
+  /**
+   * Whether a point lands on the window, which is what the grace area
+   * is: a pseudo-element hit-tests as the element wearing it. Read by
+   * hit test so the shape can be probed without moving the pointer,
+   * since moving it is what reshapes the strip.
+   */
+  const onWindow = (window: HTMLElement, left: number, top: number) => {
+    const hit = document.elementFromPoint(left, top);
+
+    return hit !== null && window.contains(hit);
+  };
+
+  /**
+   * The gap the strip spans, for a window bound below its trigger, and
+   * a way to probe it: `across(from, to)` is where a pointer crossing
+   * from one point along the edge to another is halfway over, which is
+   * what the strip has to hold.
+   *
+   * Halfway rather than at either end, because the strip's sides are
+   * the straight paths between its ends' corners: probing a corner
+   * itself lands on the line, and a pixel off it, in the part a
+   * trapezoid cuts away.
+   */
+  const gap = (trigger: HTMLElement) => {
+    const anchor = trigger.getBoundingClientRect();
+    const surface = screen
+      .getByTestId('tooltip-surface')
+      .getBoundingClientRect();
+
+    const across = (from: number, to: number) => ({
+      left: (from + to) / 2,
+      top: (anchor.bottom + surface.top) / 2,
+    });
+
+    return {
+      anchor,
+      surface,
+      across,
+      center: surface.left + surface.width / 2,
+    };
+  };
+
+  /**
+   * Wait out the window's arrival. It travels on `transform`, so the
+   * surface measures short until it has landed, and the strip takes no
+   * pointer until then either.
+   */
+  const arrived = async (window: HTMLElement) => {
+    await waitFor(() => expect(window).toHaveAttribute('data-tethered'));
+    await Promise.all(
+      window
+        .getAnimations({ subtree: true })
+        .map((animation) => animation.finished),
+    );
+  };
+
+  /** How far in from the trigger's ends the probes aim. */
+  const INSET = 24;
+
+  it('aims the strip at the pointer on the way over', async () => {
+    const { trigger, window } = setup({ side: 'bottom' }, fixture.wide);
+
+    // Out past the window's start, which a strip no wider than the
+    // window couldn't reach. Moves are only heard once the tooltip is
+    // open, so the pointer settles there after it opens, the way one
+    // starting across would.
+    await userEvent.hover(trigger, { position: { x: INSET, y: 4 } });
+    await arrived(window);
+    await userEvent.hover(trigger, { position: { x: INSET, y: 8 } });
+
+    const { anchor, surface, across, center } = gap(trigger);
+    const crossing = across(anchor.left + INSET, center);
+    expect(crossing.left).toBeLessThan(surface.left);
+
+    await waitFor(() =>
+      expect(onWindow(window, crossing.left, crossing.top)).toBe(true),
+    );
+
+    // Narrowed onto the pointer, so a crossing from the trigger's other
+    // end is off it.
+    const elsewhere = across(anchor.right - INSET, center);
+    expect(onWindow(window, elsewhere.left, elsewhere.top)).toBe(false);
+  });
+
+  it('widens the strip onto the whole trigger on the way back', async () => {
+    const { trigger, window } = setup({ side: 'bottom' }, fixture.wide);
+
+    await hover(trigger, window);
+    await arrived(window);
+    await userEvent.hover(screen.getByTestId('tooltip-surface'));
+    expect(window).toHaveAttribute('data-path', 'leave');
+
+    // The pointer is leaving from the surface's middle, and can head for
+    // either end of the trigger, though each overhangs the window.
+    const { anchor, surface, across, center } = gap(trigger);
+    const toStart = across(center, anchor.left + INSET);
+    const toEnd = across(center, anchor.right - INSET);
+    expect(toStart.left).toBeLessThan(surface.left);
+    expect(toEnd.left).toBeGreaterThan(surface.right);
+
+    await waitFor(() =>
+      expect(onWindow(window, toStart.left, toStart.top)).toBe(true),
+    );
+    expect(onWindow(window, toEnd.left, toEnd.top)).toBe(true);
+
+    // The way back leaves as wide as the trigger, which here is wider
+    // than the window, so it leaves from all of the window.
+    const nearWindow = surface.top - 1;
+    expect(onWindow(window, surface.left + 2, nearWindow)).toBe(true);
+    expect(onWindow(window, surface.right - 2, nearWindow)).toBe(true);
+  });
+
+  it('leaves the window as wide as a smaller trigger', async () => {
+    const { trigger, window } = setup({ side: 'bottom' });
+
+    await hover(trigger, window);
+    await arrived(window);
+
+    // From the surface's corner, the hard case: a narrow end there would
+    // skew the strip into a sliver on its way over to the trigger.
+    await userEvent.hover(screen.getByTestId('tooltip-surface'), {
+      position: { x: 2, y: 2 },
+    });
+    expect(window).toHaveAttribute('data-path', 'leave');
+
+    const { anchor, surface } = gap(trigger);
+    expect(anchor.width + 8).toBeLessThan(surface.width);
+
+    // Against the window, a band the trigger's width from where the
+    // pointer is, and nothing past it.
+    const nearWindow = surface.top - 1;
+    await waitFor(() =>
+      expect(onWindow(window, surface.left + 6, nearWindow)).toBe(true),
+    );
+    expect(onWindow(window, surface.left + anchor.width - 4, nearWindow)).toBe(
+      true,
+    );
+    expect(onWindow(window, surface.left + anchor.width + 4, nearWindow)).toBe(
+      false,
+    );
+  });
+
   it('lets the pointer through an unhoverable tooltip', async () => {
     const { trigger, window } = setup({ hoverable: false });
 
@@ -137,10 +289,10 @@ describe('Tooltip', () => {
 
     // Asserted by hit test rather than by moving the pointer there:
     // the driver won't hover something that doesn't take pointer
-    // events, which is the very thing under test. The test above is
-    // the same machinery pointing the other way — it moves the pointer
-    // onto a hoverable window and the driver allows it — so between
-    // them both directions are covered.
+    // events, which is the very thing under test. Resting on the
+    // window, further up, is the same machinery pointing the other way
+    // — it moves the pointer onto a hoverable window and the driver
+    // allows it — so between them both directions are covered.
     const box = screen.getByTestId('tooltip-surface').getBoundingClientRect();
     const beneath = document.elementFromPoint(
       box.left + box.width / 2,

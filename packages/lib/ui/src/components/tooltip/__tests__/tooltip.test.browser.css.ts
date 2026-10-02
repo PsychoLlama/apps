@@ -49,3 +49,11 @@ export const scroller = style({
 export const filler = style({
   height: '400px',
 });
+
+/**
+ * A trigger wider than the tooltip it opens, so the trigger overhangs
+ * the window at both ends.
+ */
+export const wide = style({
+  width: '320px',
+});
