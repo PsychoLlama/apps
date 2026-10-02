@@ -179,6 +179,7 @@
  */
 
 import {
+  createMemo,
   createSignal,
   createUniqueId,
   mergeProps,
@@ -347,6 +348,12 @@ const Tooltip = (rawProps: TooltipProps) => {
   // The component's veto on an open window (see `css.window`).
   const dismissal = useDismissal({ open, root, subject });
 
+  // An open window nobody has vetoed: the one worth measuring. Named
+  // rather than written inline on the prop, where Solid would compile
+  // the `&&` into a getter that builds a memo on every read — and the
+  // window reads it from event handlers, where nothing would own it.
+  const tethered = createMemo(() => open() && !dismissal.dismissed());
+
   // The path across the grace area the strip has to serve. `initial`
   // until a pointer turns up and says otherwise, which is the whole of
   // the progressive enhancement: with no script there's nobody to
@@ -424,7 +431,7 @@ const Tooltip = (rawProps: TooltipProps) => {
         align={local.align}
         sideOffset={local.sideOffset}
         alignOffset={local.alignOffset}
-        tethered={open() && !dismissal.dismissed()}
+        tethered={tethered()}
         dismissed={dismissal.dismissed()}
         path={path()}
         pointer={pointer}
