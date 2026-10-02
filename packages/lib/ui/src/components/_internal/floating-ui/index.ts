@@ -43,7 +43,9 @@
  * coordinates actually turn on. The measurement carries the boxes it was
  * taken from, under `middlewareData.boxes`, so a component that needs the
  * anchor's extent reads what the tether already measured instead of
- * measuring again.
+ * measuring again. Each box comes in viewport coordinates as well as the
+ * measurement's own, which is what a component comparing one against a
+ * pointer event needs and the only part it couldn't work out for itself.
  */
 
 // The CSS placement is deliberately hand-rolled and short-lived. It
@@ -83,7 +85,6 @@ export {
   type FloatingBoxes,
   type FloatingMeasurement,
   type FloatingMiddlewareData,
-  type FloatingSize,
 } from './tether/middleware/boxes';
 export {
   Arrow,
