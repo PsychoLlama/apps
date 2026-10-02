@@ -131,8 +131,11 @@ const slideY = createVar();
  * component would read it as a press inside the window and decline to
  * dismiss. Once running, `visibility` flips on the first frame and the
  * fade is `opacity`'s.
+ *
+ * Its start, with the wait behind it, is the moment the tooltip shows,
+ * which the component listens for to claim the page.
  */
-const enter = keyframes({
+export const enter = keyframes({
   from: {
     visibility: 'hidden',
     opacity: 0,

@@ -169,11 +169,15 @@
  * - Every document and window listener is passive, and attached only
  *   while the tooltip is open. A page of closed tooltips listens for
  *   nothing.
- * - Page-wide coordination is still to come: every tooltip opens on
- *   its own, so two can be up at once, and every one of them makes you
- *   wait the full 200ms however recently the last one was up. No
- *   `skipDelayDuration`; that arrives with the coordination it belongs
- *   to, as a value written over the delay the stylesheet already has.
+ * - One tooltip shows at a time, as upstream, but only with script: a
+ *   tooltip showing supersedes whichever was up, which takes the same
+ *   veto as a dismissal and keeps it until it closes. Without script,
+ *   focus on one trigger and the pointer on another show both. The
+ *   hand-off happens when the new tooltip shows, after its wait, so
+ *   the old one stays up until then.
+ * - Every tooltip still makes you wait the full 200ms however recently
+ *   the last one was up. No `skipDelayDuration` yet; it arrives as a
+ *   value written over the delay the stylesheet already has.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
@@ -199,6 +203,7 @@ import TooltipWindow, {
   type TooltipPointer,
 } from './tooltip-window';
 import { useDismissal } from './use-dismissal';
+import { useExclusive } from './use-exclusive';
 import * as css from './tooltip.css';
 
 /** Edge of the trigger the tooltip binds to. */
@@ -354,6 +359,20 @@ const Tooltip = (rawProps: TooltipProps) => {
   // window reads it from event handlers, where nothing would own it.
   const tethered = createMemo(() => open() && !dismissal.dismissed());
 
+  // Whether the window has shown since the tooltip opened: its entrance
+  // has started, with the wait behind it. Not `open()`, which turns true
+  // as the wait begins, before there's anything on screen.
+  const [entered, setEntered] = createSignal(false);
+
+  // One tooltip on the page at a time. Showing claims the page, and
+  // losing it to another is a dismissal like any other: the veto holds
+  // until the tooltip closes and lifts on its next open.
+  useExclusive({
+    id: contentId,
+    showing: () => entered() && !dismissal.dismissed(),
+    onSuperseded: dismissal.dismiss,
+  });
+
   // The path across the grace area the strip has to serve. `initial`
   // until a pointer turns up and says otherwise, which is the whole of
   // the progressive enhancement: with no script there's nobody to
@@ -389,12 +408,17 @@ const Tooltip = (rawProps: TooltipProps) => {
   // the trigger's, and the window's own arrival. Only the open signal
   // is ours to read.
   const onOpenChange = (event: AnimationEvent) => {
+    if (event.animationName === css.enter && event.type === 'animationstart') {
+      setEntered(true);
+    }
+
     if (event.animationName !== css.open) return;
 
     const opening = event.type === 'animationstart';
     setOpen(opening);
 
     if (!opening) {
+      setEntered(false);
       dismissal.clear();
 
       // Nobody is standing on a closed tooltip, so whatever path the

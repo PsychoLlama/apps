@@ -7,6 +7,7 @@
  * open.
  */
 
+import { For } from 'solid-js';
 import { render, screen, waitFor } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import Button from '../../button/button';
@@ -582,5 +583,63 @@ describe('Tooltip', () => {
 
     await opened(window);
     expect(window).toBeVisible();
+  });
+
+  // --- One at a time ---
+
+  /** Two tooltips side by side, `first` ahead of `second` in tab order. */
+  const setupPair = () => {
+    render(() => (
+      <div class={fixture.stage}>
+        <For each={['first', 'second']}>
+          {(name) => (
+            <Tooltip display="inline" content={name} testId={name}>
+              {(trigger) => (
+                <Button as="button" testId={`${name}-trigger`} {...trigger}>
+                  {name}
+                </Button>
+              )}
+            </Tooltip>
+          )}
+        </For>
+      </div>
+    ));
+
+    return {
+      first: screen.getByTestId('first'),
+      second: screen.getByTestId('second'),
+      secondTrigger: screen.getByTestId('second-trigger'),
+    };
+  };
+
+  it('hides a focused tooltip once a hovered one shows', async () => {
+    const { first, second, secondTrigger } = setupPair();
+
+    await userEvent.tab();
+    expect(first).toBeVisible();
+
+    // The hand-off waits for the newcomer to show, so both are up while
+    // its delay runs.
+    await hover(secondTrigger, second);
+    expect(first).not.toBeVisible();
+    expect(first).toHaveAttribute('data-dismissed');
+
+    // Losing the page doesn't take the newcomer down with it.
+    expect(second).toBeVisible();
+  });
+
+  it('brings a superseded tooltip back on its next open', async () => {
+    const { first, second, secondTrigger } = setupPair();
+
+    await userEvent.tab();
+    await hover(secondTrigger, second);
+
+    // Still focused, so the veto holds after the pointer moves on.
+    await userEvent.hover(park);
+    expect(first).not.toBeVisible();
+
+    await userEvent.tab({ shift: true });
+    await userEvent.tab();
+    expect(first).toBeVisible();
   });
 });

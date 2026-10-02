@@ -18,6 +18,9 @@ export interface Dismissal {
   /** Whether the open window has been vetoed. */
   dismissed: Accessor<boolean>;
 
+  /** Veto the open window, for a reason the tooltip has of its own. */
+  dismiss: () => void;
+
   /**
    * Clear the veto. Called when the stylesheet stops wanting the window
    * open, so a dismissed tooltip comes back on the next focus, not
@@ -113,6 +116,7 @@ export const useDismissal = (inputs: DismissalInputs): Dismissal => {
 
   return {
     dismissed,
+    dismiss: () => setDismissed(true),
     clear: () => setDismissed(false),
     onRootClick,
   };
