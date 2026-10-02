@@ -98,10 +98,9 @@ export interface TooltipWindowProps
   path: TooltipPath;
 
   /**
-   * Where the pointer last was. Read rather than taken as a value: the
-   * window turns it into an offset along the edge the strip spans,
-   * which is a measurement, and measuring belongs where the reading
-   * happens.
+   * Where the pointer last was. Taken raw rather than as an offset: the
+   * window turns it into one against its own measured box, which only
+   * reaches the root's descendants.
    */
   pointer: Accessor<TooltipPointer | undefined>;
 
@@ -153,8 +152,6 @@ const TooltipWindow = (props: TooltipWindowProps) => {
   const tether = useTetherState();
   const axis = () => AXIS_BY_SIDE[tether()?.side() ?? local.side];
 
-  let surface: HTMLDivElement | undefined;
-
   // The pointer's place along the edge the strip spans, measured from
   // the strip's start, as the length the taper's narrow end comes down
   // on. Only while the pointer is at the anchor end, which is the only
@@ -167,15 +164,16 @@ const TooltipWindow = (props: TooltipWindowProps) => {
 
     if (pointer?.target !== 'anchor') return undefined;
 
-    // TODO: take the rect off the tether instead. Its middleware
-    // measures this box every time it runs, so reading it again here is
-    // a second layout measurement of the same thing, on the pointer's
-    // path. Exposing the measured rects from the tether retires this.
-    const box = surface?.getBoundingClientRect();
+    // The window's box as the tether last measured it, in the viewport's
+    // space, which is the one the pointer was seen in. The window rather
+    // than the surface because the strip is drawn on the window, and the
+    // two share the leading edge along the axis that matters.
+    const box = tether()?.measurement()?.middlewareData.boxes?.subject;
 
     if (!box) return undefined;
 
-    const offset = axis() === 'y' ? pointer.x - box.left : pointer.y - box.top;
+    const offset =
+      axis() === 'y' ? pointer.x - box.clientX : pointer.y - box.clientY;
 
     // Whole pixels. The strip is a hit region, not a visible edge, so a
     // fraction of one is finer than anything the pointer can be aimed
@@ -218,7 +216,6 @@ const TooltipWindow = (props: TooltipWindowProps) => {
             y: event.clientY,
           });
         }}
-        ref={(node: HTMLDivElement) => (surface = node)}
         testId={`${local.testId}-surface`}
         py={1}
         px={2}
