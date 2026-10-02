@@ -123,16 +123,36 @@ export const useComputePosition = (
     setMeasurement(undefined);
   });
 
-  const compute = async () => {
+  // Everything a measurement reads, read here rather than in `compute`.
+  // `compute` runs from floating-ui's listeners, outside any reactive
+  // scope, and an input that builds a computation when it's read — which
+  // is how Solid compiles a conditional prop — would build one there
+  // that nothing ever disposes. Read under this memo, it belongs to the
+  // memo and goes when the inputs next change.
+  const measurementInputs = createMemo(() => {
     const anchor = inputs.anchor();
     const subject = inputs.subject();
 
-    if (!anchor || !subject) return;
+    return (
+      anchor &&
+      subject && {
+        anchor,
+        subject,
+        placement: toPlacement(inputs.side(), inputs.align()),
+        middleware: inputs.middleware(),
+      }
+    );
+  });
+
+  const compute = async () => {
+    const current = measurementInputs();
+
+    if (!current) return;
 
     const pending = ++generation;
-    const result = await computePosition(anchor, subject, {
-      placement: toPlacement(inputs.side(), inputs.align()),
-      middleware: inputs.middleware(),
+    const result = await computePosition(current.anchor, current.subject, {
+      placement: current.placement,
+      middleware: current.middleware,
     });
 
     if (pending === generation) setMeasurement(result);
