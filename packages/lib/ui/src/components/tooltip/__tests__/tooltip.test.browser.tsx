@@ -361,6 +361,11 @@ describe('Tooltip', () => {
     await userEvent.hover(trigger);
     await userEvent.hover(park);
 
+    // A slow enough visit outlasts the wait and shows, which warms the
+    // page and rightly spares the next visit. Cool it so the next visit
+    // waits however long this one took.
+    __testingFlushCooling();
+
     await userEvent.hover(trigger);
     expect(window).not.toBeVisible();
     await waitFor(() => expect(window).toBeVisible());
@@ -652,8 +657,12 @@ describe('Tooltip', () => {
     await userEvent.hover(park);
     expect(first).not.toBeVisible();
 
-    await userEvent.tab({ shift: true });
+    // Away and back within the stage. `first` is the first thing on the
+    // page that takes focus, so stepping back off it would leave the
+    // page, and whether the next step finds its way back in is the
+    // browser's business, not ours.
     await userEvent.tab();
+    await userEvent.tab({ shift: true });
     expect(first).toBeVisible();
   });
 
