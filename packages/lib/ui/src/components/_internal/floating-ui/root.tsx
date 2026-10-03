@@ -1,41 +1,17 @@
-import {
-  createContext,
-  createSignal,
-  splitProps,
-  useContext,
-  type Accessor,
-  type JSX,
-} from 'solid-js';
+import { createSignal, splitProps, type Accessor, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { assert } from '@lib/assert';
 import clx from '@lib/classnames';
 import { type TestIdProps } from '../../../props/test-id';
-import { TetherContext, type TetherState } from './tether/use-tether';
+import { FloatingContext, useFloatingContext } from './context';
+import { type TetherState } from './tether/use-tether';
 import * as css from './root.css';
 
 /**
- * The anchor element every floating window below a {@link FloatingRoot}
- * positions against.
- *
- * An accessor rather than the element itself: a `ref` lands after the
- * first render, and anything reading the element has to wake up when it
- * does.
+ * Read the anchor element every floating window below the nearest
+ * {@link FloatingRoot} positions against. Throws outside a root.
  */
-const AnchorContext = createContext<Accessor<HTMLElement | undefined>>();
-
-/**
- * Read the nearest anchor element. Throws outside a
- * {@link FloatingRoot} — a floating window with nothing to anchor to is
- * a structural mistake in the tree, not a runtime condition, so it fails
- * the same way on the server and in the browser.
- */
-export const useAnchorElement = (): Accessor<HTMLElement | undefined> => {
-  const anchor = useContext(AnchorContext);
-
-  assert(anchor, '<FloatingWindow> rendered outside of <FloatingRoot>.');
-
-  return anchor;
-};
+export const useAnchorElement = (): Accessor<HTMLElement | undefined> =>
+  useFloatingContext().anchor;
 
 /** How the root wrapper participates in the surrounding flow. */
 export type FloatingRootDisplay = 'block' | 'inline';
@@ -126,13 +102,13 @@ export const FloatingRoot = (props: FloatingRootProps) => {
   const [element, setElement] = createSignal<HTMLElement>();
   const className = () => clx(css.root[local.display], local.class);
 
-  // The slot the window inside publishes its placement into. Empty
+  // The slot the window inside publishes its tether state into. Empty
   // until it does, and the root never looks at it — it only holds it
   // open for the two ends to find each other.
-  const [placement, setPlacement] = createSignal<TetherState>();
+  const [tether, setTether] = createSignal<TetherState>();
 
-  // The root keeps a ref of its own on the wrapper, for the anchor
-  // context; a consumer's composes with it. Solid hands a component a
+  // The root keeps a ref of its own on the wrapper, for the anchor in
+  // its context; a consumer's composes with it. Solid hands a component a
   // function whichever form the consumer wrote.
   const setAnchor = (wrapper: HTMLElement) => {
     setElement(wrapper);
@@ -140,18 +116,18 @@ export const FloatingRoot = (props: FloatingRootProps) => {
   };
 
   return (
-    <AnchorContext.Provider value={element}>
-      <TetherContext.Provider value={[placement, setPlacement]}>
-        <Dynamic
-          component={TAG_BY_DISPLAY[local.display]}
-          {...passthrough}
-          ref={setAnchor}
-          class={className()}
-          data-testid={local.testId}
-        >
-          {local.children}
-        </Dynamic>
-      </TetherContext.Provider>
-    </AnchorContext.Provider>
+    <FloatingContext.Provider
+      value={{ anchor: element, tether: [tether, setTether] }}
+    >
+      <Dynamic
+        component={TAG_BY_DISPLAY[local.display]}
+        {...passthrough}
+        ref={setAnchor}
+        class={className()}
+        data-testid={local.testId}
+      >
+        {local.children}
+      </Dynamic>
+    </FloatingContext.Provider>
   );
 };
