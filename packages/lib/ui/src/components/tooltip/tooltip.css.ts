@@ -7,7 +7,6 @@
  *
  * Deviations from Radix:
  * - `gray-12` / `gray-1` map onto `neutral.solid[12]` / `neutral.solid[1]`.
- * - Skips `highContrast` (deferred deviation).
  * - Hover is `:hover` under `@media (hover: hover)`, not a pointer
  *   handler reading `pointerType`. The media feature describes the
  *   primary pointer, so a touch on a device that also has a mouse is
