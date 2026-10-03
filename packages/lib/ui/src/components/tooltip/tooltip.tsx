@@ -163,9 +163,15 @@
  *   outside the window, which is the trigger without the tooltip
  *   having to know which element that is. It's heard on the root, the
  *   one element the tooltip renders around both.
- * - Every document and window listener is passive, and attached only
- *   while the tooltip is open. A page of closed tooltips listens for
- *   nothing.
+ * - Every document and window listener is attached only while the
+ *   tooltip is open, so a page of closed tooltips listens for nothing,
+ *   and all but one are passive.
+ * - That one is Escape. A showing tooltip cancels the Escape that
+ *   dismisses it, so a dialog around the trigger closes on the next
+ *   press rather than the same one, as upstream's layer stack has it.
+ *   Upstream only hears Escape once the tooltip has opened; ours hears
+ *   it during the wait too, and dismisses without cancelling, since
+ *   there's nothing on screen yet to have claimed it.
  * - One tooltip shows at a time, as upstream, but only with script: a
  *   tooltip showing supersedes whichever was up, which takes the same
  *   veto as a dismissal and keeps it until it closes. Without script,
@@ -350,19 +356,19 @@ const Tooltip = (rawProps: TooltipProps) => {
   // listening for anything.
   const [open, setOpen] = createSignal(false);
 
+  // Whether the window has shown since the tooltip opened: its entrance
+  // has started, with the wait behind it. Not `open()`, which turns true
+  // as the wait begins, before there's anything on screen.
+  const [entered, setEntered] = createSignal(false);
+
   // The component's veto on an open window (see `css.window`).
-  const dismissal = useDismissal({ open, root, subject });
+  const dismissal = useDismissal({ open, entered, root, subject });
 
   // An open window nobody has vetoed: the one worth measuring. Named
   // rather than written inline on the prop, where Solid would compile
   // the `&&` into a getter that builds a memo on every read — and the
   // window reads it from event handlers, where nothing would own it.
   const tethered = createMemo(() => open() && !dismissal.dismissed());
-
-  // Whether the window has shown since the tooltip opened: its entrance
-  // has started, with the wait behind it. Not `open()`, which turns true
-  // as the wait begins, before there's anything on screen.
-  const [entered, setEntered] = createSignal(false);
 
   // One tooltip on the page at a time. Showing claims the page, and
   // losing it to another is a dismissal like any other: the veto holds

@@ -6,6 +6,9 @@ export interface DismissalInputs {
   /** Whether the stylesheet considers the tooltip open. */
   open: Accessor<boolean>;
 
+  /** Whether the window is on screen now, past any wait. */
+  entered: Accessor<boolean>;
+
   /** The floating root, holding the trigger and the window. */
   root: Accessor<HTMLElement | undefined>;
 
@@ -47,8 +50,8 @@ const PASSIVE_CAPTURE: AddEventListenerOptions = {
 /**
  * The tooltip's veto on an open window: Escape, a press outside the
  * window, a click on the trigger, or a scroll that moves it. Everything
- * it attaches outside the tooltip is passive, and attached only while
- * the tooltip is open and not yet dismissed.
+ * it attaches outside the tooltip is passive but the Escape listener,
+ * and attached only while the tooltip is open and not yet dismissed.
  */
 export const useDismissal = (inputs: DismissalInputs): Dismissal => {
   const [dismissed, setDismissed] = createSignal(false);
@@ -71,13 +74,20 @@ export const useDismissal = (inputs: DismissalInputs): Dismissal => {
   const listening = () => inputs.open() && !dismissed();
 
   // Escape has no target to speak of: it's aimed at whatever is on
-  // screen, and the tooltip is.
+  // screen. Once the window has entered, that's the tooltip, and the key
+  // stops here: cancelled, so a dialog around the trigger doesn't take
+  // the same press as its own close. The one listener here that isn't
+  // passive. During the wait there's nothing on screen to claim it, so
+  // it dismisses and carries on.
   useGlobalListener(
     () => (listening() ? document : undefined),
     'keydown',
-    PASSIVE,
+    {},
     (event) => {
-      if (event.key === 'Escape') setDismissed(true);
+      if (event.key !== 'Escape') return;
+
+      if (inputs.entered()) event.preventDefault();
+      setDismissed(true);
     },
   );
 

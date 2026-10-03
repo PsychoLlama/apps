@@ -11,6 +11,7 @@ import { For } from 'solid-js';
 import { render, screen, waitFor } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import Button from '../../button/button';
+import Dialog from '../../dialog/dialog';
 import Tooltip, { type TooltipProps } from '../tooltip';
 import { __testingFlushCooling } from '../use-exclusive';
 import * as fixture from './tooltip.test.browser.css';
@@ -475,6 +476,48 @@ describe('Tooltip', () => {
     await userEvent.tab({ shift: true });
     expect(trigger).toHaveFocus();
     expect(window).toBeVisible();
+  });
+
+  it('keeps the Escape that dismisses it from whatever is underneath', async () => {
+    const onOpenChange = vi.fn();
+    render(() => (
+      <Dialog
+        title="Edit profile"
+        testId="dialog"
+        open
+        onOpenChange={onOpenChange}
+      >
+        <Tooltip display="inline" content="Saves" testId="tooltip">
+          {(trigger) => (
+            <Button as="button" testId="trigger" {...trigger}>
+              Save
+            </Button>
+          )}
+        </Tooltip>
+        <Button as="button" testId="cancel">
+          Cancel
+        </Button>
+      </Dialog>
+    ));
+
+    // The dialog puts focus on the trigger as it opens, but whether that
+    // counts as visible is the browser's call. Away and back is the
+    // keyboard's for certain.
+    const trigger = screen.getByTestId('trigger');
+    const window = screen.getByTestId('tooltip');
+    await waitFor(() => expect(trigger).toHaveFocus());
+    await userEvent.tab();
+    await userEvent.tab({ shift: true });
+    expect(trigger).toHaveFocus();
+    await waitFor(() => expect(window).toBeVisible());
+
+    await userEvent.keyboard('{Escape}');
+    expect(window).not.toBeVisible();
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    // With the tooltip gone, the next one is the dialog's.
+    await userEvent.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it('holds a hover dismissal until the pointer leaves', async () => {
