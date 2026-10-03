@@ -12,6 +12,7 @@ import { render, screen, waitFor } from '@solidjs/testing-library';
 import { userEvent } from 'vitest/browser';
 import Button from '../../button/button';
 import Tooltip, { type TooltipProps } from '../tooltip';
+import { __testingFlushCooling } from '../use-exclusive';
 import * as fixture from './tooltip.test.browser.css';
 
 /**
@@ -32,8 +33,14 @@ afterAll(() => {
 });
 
 // The pointer is real and stays where the last test left it, which is
-// enough to open a tooltip the next test never asked to open.
-beforeEach(() => userEvent.hover(park));
+// enough to open a tooltip the next test never asked to open. And the
+// page is one page: a tooltip the last test showed leaves it warm for
+// a moment, which would spare the next test's tooltip its wait, so
+// it's cooled on the spot.
+beforeEach(async () => {
+  await userEvent.hover(park);
+  __testingFlushCooling();
+});
 
 /**
  * A tooltip on a button, after a second button focus can move on to.
@@ -344,7 +351,7 @@ describe('Tooltip', () => {
     await userEvent.hover(park);
 
     // Nothing is left running to fire late.
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(window.getAnimations()).toHaveLength(0);
     expect(window).not.toBeVisible();
   });
 
@@ -408,6 +415,11 @@ describe('Tooltip', () => {
     const { trigger, window } = setup();
 
     await userEvent.hover(trigger);
+    expect(motionOn(window)).not.toHaveLength(0);
+
+    // Still arriving once it shows: showing warms the page, which
+    // mustn't spare this tooltip the rest of its own entrance.
+    await waitFor(() => expect(window).toBeVisible());
     expect(motionOn(window)).not.toHaveLength(0);
   });
 
@@ -587,11 +599,11 @@ describe('Tooltip', () => {
 
   // --- One at a time ---
 
-  /** Two tooltips side by side, `first` ahead of `second` in tab order. */
+  /** Three tooltips side by side, in tab order. */
   const setupPair = () => {
     render(() => (
       <div class={fixture.stage}>
-        <For each={['first', 'second']}>
+        <For each={['first', 'second', 'third']}>
           {(name) => (
             <Tooltip display="inline" content={name} testId={name}>
               {(trigger) => (
@@ -609,6 +621,8 @@ describe('Tooltip', () => {
       first: screen.getByTestId('first'),
       second: screen.getByTestId('second'),
       secondTrigger: screen.getByTestId('second-trigger'),
+      third: screen.getByTestId('third'),
+      thirdTrigger: screen.getByTestId('third-trigger'),
     };
   };
 
@@ -618,8 +632,8 @@ describe('Tooltip', () => {
     await userEvent.tab();
     expect(first).toBeVisible();
 
-    // The hand-off waits for the newcomer to show, so both are up while
-    // its delay runs.
+    // The hand-off waits for the newcomer to show, which is at once: the
+    // focused one has the page warm.
     await hover(secondTrigger, second);
     expect(first).not.toBeVisible();
     expect(first).toHaveAttribute('data-dismissed');
@@ -641,5 +655,73 @@ describe('Tooltip', () => {
     await userEvent.tab({ shift: true });
     await userEvent.tab();
     expect(first).toBeVisible();
+  });
+
+  // --- Skip delay ---
+
+  /** Hover `first` until it has shown. */
+  const warmUp = (first: HTMLElement) =>
+    hover(screen.getByTestId('first-trigger'), first);
+
+  it('skips the wait for one that follows another', async () => {
+    const { first, second, secondTrigger } = setupPair();
+    await warmUp(first);
+
+    // By way of somewhere else, briefly: the page stays warm a moment.
+    await userEvent.hover(park);
+    await userEvent.hover(secondTrigger);
+    expect(second).toBeVisible();
+  });
+
+  it('waits again once the page has cooled', async () => {
+    const { first, second, secondTrigger } = setupPair();
+    await warmUp(first);
+
+    await userEvent.hover(park);
+    __testingFlushCooling();
+    await userEvent.hover(secondTrigger);
+    expect(second).not.toBeVisible();
+    await waitFor(() => expect(second).toBeVisible());
+  });
+
+  it('skips the wait while a focused one is showing', async () => {
+    const { second, secondTrigger } = setupPair();
+
+    await userEvent.tab();
+    await userEvent.hover(secondTrigger);
+    expect(second).toBeVisible();
+  });
+
+  it('stays warm through a hand-off for as long as one is up', async () => {
+    const { second, secondTrigger, third, thirdTrigger } = setupPair();
+
+    // The focused one gives way to the hovered one, and hiding doesn't
+    // start the page cooling while its successor is still showing.
+    await userEvent.tab();
+    await hover(secondTrigger, second);
+    __testingFlushCooling();
+
+    await userEvent.hover(thirdTrigger);
+    expect(third).toBeVisible();
+  });
+
+  it("doesn't warm from a pointer passing over", async () => {
+    const { second, secondTrigger } = setupPair();
+
+    await userEvent.hover(screen.getByTestId('first-trigger'));
+    await userEvent.hover(secondTrigger);
+    expect(second).not.toBeVisible();
+  });
+
+  it("doesn't warm from a dismissed one", async () => {
+    const { first, second, secondTrigger } = setupPair();
+
+    await userEvent.tab();
+    await userEvent.keyboard('{Escape}');
+    expect(first).not.toBeVisible();
+
+    __testingFlushCooling();
+    await userEvent.hover(secondTrigger);
+    expect(second).not.toBeVisible();
   });
 });

@@ -50,10 +50,10 @@
  *   counts but arrives at the first differently: it hangs the entrance
  *   on `data-state="delayed-open"`, where here the entrance lasts as
  *   long as the wait warranted. One variable sets both, so an open that
- *   didn't wait doesn't animate, and when the coordination lands and
- *   drops the wait, the entrance goes with it the way upstream's
- *   `instant-open` does. Focus landing mid-entrance ends it on the
- *   spot, for the same reason it ends the wait.
+ *   didn't wait doesn't animate, and when the skip delay drops the
+ *   wait, the entrance goes with it the way upstream's `instant-open`
+ *   does. Focus landing mid-entrance ends it on the spot, for the same
+ *   reason it ends the wait.
  * - Hoverable content is the default and comes for free: the window
  *   sits inside the root, so resting on the tooltip keeps the root
  *   hovered and the tooltip open, which is what upstream's
@@ -172,12 +172,15 @@
  * - One tooltip shows at a time, as upstream, but only with script: a
  *   tooltip showing supersedes whichever was up, which takes the same
  *   veto as a dismissal and keeps it until it closes. Without script,
- *   focus on one trigger and the pointer on another show both. The
- *   hand-off happens when the new tooltip shows, after its wait, so
- *   the old one stays up until then.
- * - Every tooltip still makes you wait the full 200ms however recently
- *   the last one was up. No `skipDelayDuration` yet; it arrives as a
- *   value written over the delay the stylesheet already has.
+ *   focus on one trigger and the pointer on another show both.
+ * - The skip delay is script too, fixed at upstream's 300ms default
+ *   with no `skipDelayDuration` prop: while a tooltip is up, and for
+ *   300ms after the last one goes, the rest show with no wait and no
+ *   entrance (`data-skip-delay` on the root). CSS can't do it: the only
+ *   memory it has is a transition, and a transitioning custom property
+ *   is barred from `animation-*` values, which is where the wait lives.
+ *   Without script, every hover waits, and the hand-off from a focused
+ *   tooltip to a hovered one comes after the newcomer's wait.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
@@ -366,12 +369,22 @@ const Tooltip = (rawProps: TooltipProps) => {
 
   // One tooltip on the page at a time. Showing claims the page, and
   // losing it to another is a dismissal like any other: the veto holds
-  // until the tooltip closes and lifts on its next open.
-  useExclusive({
+  // until the tooltip closes and lifts on its next open. Shortly after
+  // one shows, the rest skip their wait.
+  const exclusive = useExclusive({
     id: contentId,
     showing: () => entered() && !dismissal.dismissed(),
     onSuperseded: dismissal.dismiss,
   });
+
+  // Whether this tooltip skips its wait. Settled when it opens and kept
+  // until it closes: its own showing warms the page, and following that
+  // would cut its entrance short. While closed it tracks the page, so
+  // the stylesheet already has the answer when the pointer lands.
+  const [skippedOnOpen, setSkippedOnOpen] = createSignal(false);
+  const skipDelay = createMemo(() =>
+    open() ? skippedOnOpen() : exclusive.warm(),
+  );
 
   // The path across the grace area the strip has to serve. `initial`
   // until a pointer turns up and says otherwise, which is the whole of
@@ -415,6 +428,7 @@ const Tooltip = (rawProps: TooltipProps) => {
     if (event.animationName !== css.open) return;
 
     const opening = event.type === 'animationstart';
+    if (opening) setSkippedOnOpen(exclusive.warm());
     setOpen(opening);
 
     if (!opening) {
@@ -434,6 +448,7 @@ const Tooltip = (rawProps: TooltipProps) => {
       display={local.display}
       class={css.root}
       data-hoverable={String(local.hoverable)}
+      data-skip-delay={skipDelay() ? '' : undefined}
       style={assignInlineVars({
         ...(local.maxWidth !== undefined && {
           [css.maxWidth]: local.maxWidth,
