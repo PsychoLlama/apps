@@ -22,5 +22,6 @@ crates/*/dist
 .turbo
 
 # vitest screenshot/attachment artifacts
-.vitest-attachments
+.vitest/
+.vitest-attachments/
 **/__screenshots__
