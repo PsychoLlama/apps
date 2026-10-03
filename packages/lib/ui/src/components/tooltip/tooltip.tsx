@@ -1,8 +1,6 @@
 /**
  * Tooltip component.
  *
- * UNDER DEVELOPMENT — DO NOT USE
- *
  * Ported from Radix UI Themes Tooltip, on the internal floating-ui
  * primitive. The first consumer of the tether: the window measures
  * against its trigger and flips or shifts to stay on screen.
@@ -11,8 +9,7 @@
  * - One component. Themes' `Tooltip` is already one; here so are the
  *   primitive's `Provider` and `Portal`. There's no portal: the window
  *   renders next to its trigger, inline, so an `overflow` ancestor can
- *   clip it and a later sibling can paint over it. The top layer is a
- *   planned enhancement.
+ *   clip it and a later sibling can paint over it.
  * - No `open` / `defaultOpen` / `onOpenChange`. The open state is the
  *   trigger's focus and hover, which the stylesheet owns end to end;
  *   there is nothing for a call site to drive.
@@ -246,7 +243,7 @@ export interface TooltipTriggerProps {
 
 /**
  * `Tooltip` props. Wraps its trigger and floats a short label next to
- * it on focus.
+ * it on focus or hover.
  */
 export interface TooltipProps
   extends

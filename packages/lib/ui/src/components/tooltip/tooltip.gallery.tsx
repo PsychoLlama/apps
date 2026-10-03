@@ -5,8 +5,8 @@ import Tooltip, { type TooltipProps } from './tooltip';
 import * as css from './tooltip.gallery.css';
 
 /**
- * Gallery listing for `Tooltip`. Every cell is a trigger — focus it to
- * see the window.
+ * Gallery listing for `Tooltip`. Every cell is a trigger — hover or
+ * focus it to see the window.
  */
 export default {
   title: 'Tooltip',
