@@ -99,8 +99,8 @@ const CONDITION = {
 
 /**
  * How long the window holds back before it shows. Zero unless hover is
- * what opened it. A later phase drops it back to zero while another
- * tooltip is already up, so the second one doesn't make you wait twice.
+ * what opened it, and back to zero under `data-skip-delay`, so the
+ * second tooltip doesn't make you wait twice.
  */
 export const delay = createVar();
 
@@ -131,8 +131,11 @@ const slideY = createVar();
  * component would read it as a press inside the window and decline to
  * dismiss. Once running, `visibility` flips on the first frame and the
  * fade is `opacity`'s.
+ *
+ * Its start, with the wait behind it, is the moment the tooltip shows,
+ * which the component listens for to claim the page.
  */
-const enter = keyframes({
+export const enter = keyframes({
   from: {
     visibility: 'hidden',
     opacity: 0,
@@ -215,6 +218,13 @@ export const root = style({
         // The entrance is motion, and collapsing is what it should do.
         '&:where(:hover:not(:has(:focus-visible)))': {
           vars: { [delay]: '200ms', [duration]: moderate[1] },
+        },
+
+        // Another tooltip was up a moment ago, so the reader is already
+        // looking: no wait, and no entrance. The component's call, so
+        // without script every hover waits.
+        '&:where([data-skip-delay])': {
+          vars: { [delay]: '0s', [duration]: '0s' },
         },
       },
     },

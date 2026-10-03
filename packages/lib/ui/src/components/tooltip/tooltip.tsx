@@ -50,10 +50,10 @@
  *   counts but arrives at the first differently: it hangs the entrance
  *   on `data-state="delayed-open"`, where here the entrance lasts as
  *   long as the wait warranted. One variable sets both, so an open that
- *   didn't wait doesn't animate, and when the coordination lands and
- *   drops the wait, the entrance goes with it the way upstream's
- *   `instant-open` does. Focus landing mid-entrance ends it on the
- *   spot, for the same reason it ends the wait.
+ *   didn't wait doesn't animate, and when the skip delay drops the
+ *   wait, the entrance goes with it the way upstream's `instant-open`
+ *   does. Focus landing mid-entrance ends it on the spot, for the same
+ *   reason it ends the wait.
  * - Hoverable content is the default and comes for free: the window
  *   sits inside the root, so resting on the tooltip keeps the root
  *   hovered and the tooltip open, which is what upstream's
@@ -169,16 +169,24 @@
  * - Every document and window listener is passive, and attached only
  *   while the tooltip is open. A page of closed tooltips listens for
  *   nothing.
- * - Page-wide coordination is still to come: every tooltip opens on
- *   its own, so two can be up at once, and every one of them makes you
- *   wait the full 200ms however recently the last one was up. No
- *   `skipDelayDuration`; that arrives with the coordination it belongs
- *   to, as a value written over the delay the stylesheet already has.
+ * - One tooltip shows at a time, as upstream, but only with script: a
+ *   tooltip showing supersedes whichever was up, which takes the same
+ *   veto as a dismissal and keeps it until it closes. Without script,
+ *   focus on one trigger and the pointer on another show both.
+ * - The skip delay is script too, fixed at upstream's 300ms default
+ *   with no `skipDelayDuration` prop: while a tooltip is up, and for
+ *   300ms after the last one goes, the rest show with no wait and no
+ *   entrance (`data-skip-delay` on the root). CSS can't do it: the only
+ *   memory it has is a transition, and a transitioning custom property
+ *   is barred from `animation-*` values, which is where the wait lives.
+ *   Without script, every hover waits, and the hand-off from a focused
+ *   tooltip to a hovered one comes after the newcomer's wait.
  *
  * @see https://www.radix-ui.com/themes/docs/components/tooltip
  */
 
 import {
+  createMemo,
   createSignal,
   createUniqueId,
   mergeProps,
@@ -198,6 +206,7 @@ import TooltipWindow, {
   type TooltipPointer,
 } from './tooltip-window';
 import { useDismissal } from './use-dismissal';
+import { useExclusive } from './use-exclusive';
 import * as css from './tooltip.css';
 
 /** Edge of the trigger the tooltip binds to. */
@@ -347,6 +356,36 @@ const Tooltip = (rawProps: TooltipProps) => {
   // The component's veto on an open window (see `css.window`).
   const dismissal = useDismissal({ open, root, subject });
 
+  // An open window nobody has vetoed: the one worth measuring. Named
+  // rather than written inline on the prop, where Solid would compile
+  // the `&&` into a getter that builds a memo on every read — and the
+  // window reads it from event handlers, where nothing would own it.
+  const tethered = createMemo(() => open() && !dismissal.dismissed());
+
+  // Whether the window has shown since the tooltip opened: its entrance
+  // has started, with the wait behind it. Not `open()`, which turns true
+  // as the wait begins, before there's anything on screen.
+  const [entered, setEntered] = createSignal(false);
+
+  // One tooltip on the page at a time. Showing claims the page, and
+  // losing it to another is a dismissal like any other: the veto holds
+  // until the tooltip closes and lifts on its next open. Shortly after
+  // one shows, the rest skip their wait.
+  const exclusive = useExclusive({
+    id: contentId,
+    showing: () => entered() && !dismissal.dismissed(),
+    onSuperseded: dismissal.dismiss,
+  });
+
+  // Whether this tooltip skips its wait. Settled when it opens and kept
+  // until it closes: its own showing warms the page, and following that
+  // would cut its entrance short. While closed it tracks the page, so
+  // the stylesheet already has the answer when the pointer lands.
+  const [skippedOnOpen, setSkippedOnOpen] = createSignal(false);
+  const skipDelay = createMemo(() =>
+    open() ? skippedOnOpen() : exclusive.warm(),
+  );
+
   // The path across the grace area the strip has to serve. `initial`
   // until a pointer turns up and says otherwise, which is the whole of
   // the progressive enhancement: with no script there's nobody to
@@ -382,12 +421,18 @@ const Tooltip = (rawProps: TooltipProps) => {
   // the trigger's, and the window's own arrival. Only the open signal
   // is ours to read.
   const onOpenChange = (event: AnimationEvent) => {
+    if (event.animationName === css.enter && event.type === 'animationstart') {
+      setEntered(true);
+    }
+
     if (event.animationName !== css.open) return;
 
     const opening = event.type === 'animationstart';
+    if (opening) setSkippedOnOpen(exclusive.warm());
     setOpen(opening);
 
     if (!opening) {
+      setEntered(false);
       dismissal.clear();
 
       // Nobody is standing on a closed tooltip, so whatever path the
@@ -403,6 +448,7 @@ const Tooltip = (rawProps: TooltipProps) => {
       display={local.display}
       class={css.root}
       data-hoverable={String(local.hoverable)}
+      data-skip-delay={skipDelay() ? '' : undefined}
       style={assignInlineVars({
         ...(local.maxWidth !== undefined && {
           [css.maxWidth]: local.maxWidth,
@@ -424,7 +470,7 @@ const Tooltip = (rawProps: TooltipProps) => {
         align={local.align}
         sideOffset={local.sideOffset}
         alignOffset={local.alignOffset}
-        tethered={open() && !dismissal.dismissed()}
+        tethered={tethered()}
         dismissed={dismissal.dismissed()}
         path={path()}
         pointer={pointer}
