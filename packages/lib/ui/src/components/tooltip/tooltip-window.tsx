@@ -16,6 +16,7 @@ import {
   AXIS_BY_SIDE,
   FloatingBody,
   FloatingWindow,
+  useFloatingTag,
   useTetherState,
   type FloatingAlignment,
   type FloatingElement,
@@ -161,6 +162,12 @@ const TooltipWindow = (props: TooltipWindowProps) => {
   // this is the same answer in JavaScript, for picking which of the
   // pointer's two coordinates runs along the edge the strip spans.
   const tether = useTetherState();
+
+  // A paragraph in a block tooltip, as upstream has it; a `<span>` in an
+  // inline one, where a paragraph can't go. The surface is a flexbox, so
+  // either one lays out as a block.
+  const tag = useFloatingTag();
+  const textTag = () => (tag() === 'span' ? 'span' : 'p');
   const axis = () => AXIS_BY_SIDE[tether()?.side() ?? local.side];
 
   // The anchor's box and the window's, as the tether last measured them.
@@ -259,7 +266,7 @@ const TooltipWindow = (props: TooltipWindowProps) => {
         class={clx(css.content, local.class)}
       >
         <Text
-          as="p"
+          as={textTag()}
           role="tooltip"
           id={local.contentId}
           aria-label={local['aria-label']}

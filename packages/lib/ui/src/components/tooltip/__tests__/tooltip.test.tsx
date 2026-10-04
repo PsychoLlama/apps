@@ -49,6 +49,20 @@ describe('Tooltip', () => {
     expect(window()?.parentElement).toBe(trigger.parentElement);
   });
 
+  it('survives being parsed inside a paragraph when inline', () => {
+    const { root } = setup();
+
+    // What a statically rendered page goes through: the parser closes a
+    // paragraph on anything that can't sit in one, and hydration then
+    // finds a different tree from the one it rendered.
+    const html = root()?.outerHTML;
+    assert(html, 'Expected the tooltip to render a root.');
+    const page = new DOMParser().parseFromString(`<p>${html}</p>`, 'text/html');
+
+    expect(page.body.children).toHaveLength(1);
+    expect(page.querySelector('p [data-testid="tooltip-text"]')).not.toBeNull();
+  });
+
   // --- Accessibility ---
 
   it('describes the trigger by the tooltip', () => {
