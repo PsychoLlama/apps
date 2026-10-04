@@ -1,4 +1,4 @@
-import { For, onMount, type JSX } from 'solid-js';
+import { For, onMount, Show, type JSX } from 'solid-js';
 import { flip, shift, type Middleware, type Placement } from '@floating-ui/dom';
 import { createLogger, toError } from '@lib/observability';
 import type { RadiusScale } from '@lib/design';
@@ -28,6 +28,7 @@ import {
   FloatingWindow,
   type FloatingAlignment,
   type FloatingPoint,
+  type FloatingRootDisplay,
   type FloatingSide,
   type FloatingTether,
 } from '@lib/ui/_internal/floating-ui';
@@ -41,6 +42,7 @@ import {
   arrowVisibilityChanged,
   middlewareChanged,
   commitTetherEnabledSaga,
+  displayChanged,
   flipModeChanged,
   floatingControls,
   pointChanged,
@@ -58,6 +60,7 @@ import * as css from './floating-ui.css';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
+const DISPLAYS = ['block', 'inline'] as const satisfies FloatingRootDisplay[];
 const SIDES = [
   'top',
   'right',
@@ -313,7 +316,8 @@ const centerScroll = (element: HTMLElement) => {
 
 /**
  * The floating-UI experiment at `/scratchpad/floating-ui`: a hatched
- * target with a floating window bound to it, sitting in a scrolling
+ * target (or, inline, a word in a paragraph) with a floating window
+ * bound to it, sitting in a scrolling
  * viewport so the anchor can be dragged toward a clipping edge, plus
  * controls for every placement input the container takes. Change one and
  * watch the window re-place live.
@@ -344,6 +348,8 @@ const FloatingUiScratchpad = () => {
     });
   });
 
+  const chooseDisplay = (display: FloatingRootDisplay) =>
+    commit(displayChanged(display));
   const chooseSide = (side: FloatingSide) => commit(sideChanged(side));
   const chooseAlign = (align: FloatingAlignment) => commit(alignChanged(align));
   const chooseRadius = (radius: RadiusScale) => commit(radiusChanged(radius));
@@ -406,6 +412,49 @@ const FloatingUiScratchpad = () => {
     });
   };
 
+  /**
+   * The window under test. A render function rather than an element,
+   * since each anchor's root needs a window of its own.
+   */
+  const floatingWindow = () => (
+    <FloatingWindow
+      testId="window"
+      side={controls().side}
+      align={controls().align}
+      radius={controls().radius}
+      sideOffset={controls().sideOffset}
+      alignOffset={controls().alignOffset}
+      point={controls().point ?? undefined}
+      tether={tether()}
+      arrow={
+        controls().arrowVisible
+          ? {
+              base: controls().arrowBase,
+              depth: controls().arrowDepth,
+              class: css.arrow,
+            }
+          : undefined
+      }
+    >
+      <FloatingBody
+        testId="surface"
+        direction="column"
+        gap={1}
+        py={3}
+        px={4}
+        class={css.surface}
+      >
+        <Heading as="h3" size={3} selectable={false}>
+          Floating Window
+        </Heading>
+        <Text as="p" size={2} selectable={false}>
+          A taller surface so the arrow has room to sit mid-height when the
+          window binds to the left or right edge.
+        </Text>
+      </FloatingBody>
+    </FloatingWindow>
+  );
+
   return (
     <>
       <SiteHeader
@@ -419,54 +468,51 @@ const FloatingUiScratchpad = () => {
         <Flex as="div" direction="column" gap={7} class={css.column}>
           <Flex as="div" ref={centerScroll} class={css.stage}>
             <Flex as="div" align="center" justify="center" class={css.canvas}>
-              <FloatingRoot display="block" class={css.anchorSlot}>
-                <Flex
-                  as="section"
-                  class={clx(css.target, controls().point && css.pointArmed)}
-                  onClick={placePoint}
-                />
-                <FloatingWindow
-                  testId="window"
-                  side={controls().side}
-                  align={controls().align}
-                  radius={controls().radius}
-                  sideOffset={controls().sideOffset}
-                  alignOffset={controls().alignOffset}
-                  point={controls().point ?? undefined}
-                  tether={tether()}
-                  arrow={
-                    controls().arrowVisible
-                      ? {
-                          base: controls().arrowBase,
-                          depth: controls().arrowDepth,
-                          class: css.arrow,
-                        }
-                      : undefined
-                  }
-                >
-                  <FloatingBody
-                    testId="surface"
-                    direction="column"
-                    gap={1}
-                    py={3}
-                    px={4}
-                    class={css.surface}
-                  >
-                    <Heading as="h3" size={3} selectable={false}>
-                      Floating Window
-                    </Heading>
-                    <Text as="p" size={2} selectable={false}>
-                      A taller surface so the arrow has room to sit mid-height
-                      when the window binds to the left or right edge.
+              <Show
+                when={controls().display === 'inline'}
+                fallback={
+                  <FloatingRoot display="block" class={css.anchorSlot}>
+                    <Flex
+                      as="section"
+                      class={clx(
+                        css.target,
+                        controls().point && css.pointArmed,
+                      )}
+                      onClick={placePoint}
+                    />
+                    {floatingWindow()}
+                  </FloatingRoot>
+                }
+              >
+                <Text as="p" size={3} selectable={false} class={css.copy}>
+                  A floating window can bind to a single{' '}
+                  <FloatingRoot display="inline">
+                    <Text
+                      as="span"
+                      selectable={false}
+                      class={clx(css.word, controls().point && css.pointArmed)}
+                      onClick={placePoint}
+                    >
+                      word
                     </Text>
-                  </FloatingBody>
-                </FloatingWindow>
-              </FloatingRoot>
+                    {floatingWindow()}
+                  </FloatingRoot>{' '}
+                  in a run of copy, the way a tooltip on a term or a link would,
+                  with the lines around it wrapping as usual.
+                </Text>
+              </Show>
             </Flex>
           </Flex>
 
           <Grid as="div" class={css.configs}>
             <ControlGroup label="Window props">
+              <ChoiceControl
+                label="Display"
+                name="display"
+                value={controls().display}
+                options={DISPLAYS}
+                onValueChange={chooseDisplay}
+              />
               <ChoiceControl
                 label="Side"
                 name="side"

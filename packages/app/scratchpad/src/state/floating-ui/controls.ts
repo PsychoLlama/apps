@@ -4,6 +4,7 @@ import { environment } from '@lib/runtime-config';
 import type {
   FloatingAlignment,
   FloatingPoint,
+  FloatingRootDisplay,
   FloatingSide,
 } from '@lib/ui/_internal/floating-ui';
 import { tetherEnabled as tetherEnabledOption } from '../../config';
@@ -26,6 +27,11 @@ export type FlipMode = 'auto' | 'chain';
 
 /** Placement inputs driving the floating window in the scratchpad. */
 export interface FloatingControlsState {
+  /**
+   * How the root sits in the flow: `block` anchors to the hatched box,
+   * `inline` to a word in a paragraph.
+   */
+  display: FloatingRootDisplay;
   /** Anchor edge the window binds to. */
   side: FloatingSide;
   /** Placement along that edge. */
@@ -69,6 +75,7 @@ export interface FloatingControlsState {
  * so a reset lands on the same value clearing the override reverts to.
  */
 const defaults = (): FloatingControlsState => ({
+  display: 'block',
   side: 'top',
   align: 'start',
   arrowVisible: true,
@@ -91,6 +98,12 @@ export const floatingControls = defineStore<FloatingControlsState>(
   scratchpadScope,
   defaults,
 );
+
+/** The anchor swapped between the block box and the inline word. */
+export const displayChanged = defineTopic<FloatingRootDisplay>();
+defineFold(displayChanged, [floatingControls], (controls, display) => {
+  controls.display = display;
+});
 
 /** The window bound to a different edge of the anchor. */
 export const sideChanged = defineTopic<FloatingSide>();

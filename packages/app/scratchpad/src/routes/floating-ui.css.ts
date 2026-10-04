@@ -117,6 +117,26 @@ export const target = style({
 });
 
 /**
+ * The paragraph the inline anchor sits in. Narrow enough to wrap over a
+ * few lines, so the anchored word lands mid-flow rather than at an edge.
+ */
+export const copy = style({
+  maxWidth: '20rem',
+});
+
+/**
+ * The word the floating window anchors against in inline mode: the
+ * {@link target} hatching and dashed border, scaled down to a run of
+ * text so its bounds are as obvious as the box's.
+ */
+export const word = style({
+  borderRadius: radius[1],
+  border: `1px dashed ${neutral.solid[7]}`,
+  backgroundColor: neutral.solid[2],
+  backgroundImage: `repeating-linear-gradient(-45deg, ${neutral.alpha[4]} 0, ${neutral.alpha[4]} 1px, transparent 1px, transparent 6px)`,
+});
+
+/**
  * Signals that a click on the target will re-place the bound point.
  * Applied alongside {@link target} while point mode is armed.
  */

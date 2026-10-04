@@ -1,11 +1,6 @@
-import {
-  createContext,
-  onCleanup,
-  useContext,
-  type Accessor,
-  type Signal,
-} from 'solid-js';
+import { onCleanup, type Accessor } from 'solid-js';
 import { assert } from '@lib/assert';
+import { useFloatingContext } from '../context';
 import { useAutoUpdate } from './use-auto-update';
 import {
   useComputePosition,
@@ -31,17 +26,6 @@ export interface TetherInputs
 export type TetherState = Omit<ComputePositionResult, 'compute'>;
 
 /**
- * The slot a floating root holds for its window's placement — a plain
- * signal, read by everything under the root and written by the window
- * alone.
- *
- * The write half never leaves this module, so a root can't be told a
- * placement by anything that isn't the thing being placed. What escapes
- * is {@link useTetherState}, which hands back the getter.
- */
-export const TetherContext = createContext<Signal<TetherState | undefined>>();
-
-/**
  * Read where the floating window under the nearest floating root
  * landed: the side and alignment it resolved to, and the measurement
  * behind them.
@@ -65,11 +49,7 @@ export const TetherContext = createContext<Signal<TetherState | undefined>>();
  * does: there's no floating anything to report on.
  */
 export const useTetherState = (): Accessor<TetherState | undefined> => {
-  const tether = useContext(TetherContext);
-
-  assert(tether, 'Tether state read outside of <FloatingRoot>.');
-
-  const [state] = tether;
+  const [state] = useFloatingContext().tether;
 
   return state;
 };
@@ -115,12 +95,12 @@ export const useTetherState = (): Accessor<TetherState | undefined> => {
  * ```
  */
 export const useTether = (inputs: TetherInputs): void => {
-  const tether = useContext(TetherContext);
+  // The tether state's write half. It's in the root's context, but this
+  // is the only reader of it, so a root can't be told a placement by
+  // anything that isn't the thing being placed. Everyone else gets the
+  // getter through `useTetherState`.
+  const [published, publish] = useFloatingContext().tether;
   const middleware = useMiddleware(inputs);
-
-  assert(tether, '<FloatingWindow> rendered outside of <FloatingRoot>.');
-
-  const [published, publish] = tether;
 
   const computePosition = useComputePosition({
     anchor: inputs.anchor,

@@ -6,12 +6,14 @@
  * given, and the body renders and styles its children.
  */
 
+import { type JSX } from 'solid-js';
 import { fireEvent, render, screen } from '@solidjs/testing-library';
 import {
   FloatingRoot,
   FloatingBody,
   FloatingWindow,
   useTetherState,
+  type FloatingElement,
   type FloatingWindowProps,
 } from '..';
 import * as arrowCss from '../arrow.css';
@@ -51,6 +53,29 @@ describe('FloatingRoot', () => {
       </FloatingRoot>
     ));
     expect(screen.getByTestId('inline').tagName.toLowerCase()).toBe('span');
+  });
+
+  it('renders every part inside as the same element', () => {
+    const block = render(() => (
+      <FloatingRoot display="block">
+        <FloatingWindow testId="window">
+          <FloatingBody testId="body">content</FloatingBody>
+        </FloatingWindow>
+      </FloatingRoot>
+    ));
+    expect(screen.getByTestId('window').tagName.toLowerCase()).toBe('div');
+    expect(screen.getByTestId('body').tagName.toLowerCase()).toBe('div');
+    block.unmount();
+
+    render(() => (
+      <FloatingRoot display="inline">
+        <FloatingWindow testId="window">
+          <FloatingBody testId="body">content</FloatingBody>
+        </FloatingWindow>
+      </FloatingRoot>
+    ));
+    expect(screen.getByTestId('window').tagName.toLowerCase()).toBe('span');
+    expect(screen.getByTestId('body').tagName.toLowerCase()).toBe('span');
   });
 
   it('merges a consumer class onto the wrapper', () => {
@@ -212,19 +237,29 @@ describe('useTetherState', () => {
   });
 });
 
+/** A surface on its own, under the root every part requires. */
+const IN_ROOT = {
+  wrapper: (props: { children: JSX.Element }) => (
+    <FloatingRoot display="block">{props.children}</FloatingRoot>
+  ),
+};
+
 describe('FloatingBody', () => {
   it('renders its children', () => {
-    render(() => <FloatingBody testId="body">content</FloatingBody>);
+    render(() => <FloatingBody testId="body">content</FloatingBody>, IN_ROOT);
 
     expect(screen.getByTestId('body')).toHaveTextContent('content');
   });
 
   it('merges a consumer class onto the surface', () => {
-    render(() => (
-      <FloatingBody testId="body" class="custom">
-        content
-      </FloatingBody>
-    ));
+    render(
+      () => (
+        <FloatingBody testId="body" class="custom">
+          content
+        </FloatingBody>
+      ),
+      IN_ROOT,
+    );
 
     expect(screen.getByTestId('body')).toHaveClass('custom');
   });
@@ -479,9 +514,9 @@ describe('FloatingWindow passthrough', () => {
   it('hands the box element to `ref`', () => {
     // The window keeps a ref of its own on the same node; a consumer's
     // composes with it rather than replacing it.
-    let element: HTMLDivElement | undefined;
+    let element: FloatingElement | undefined;
     render(() => (
-      <Rooted testId="box" ref={(el: HTMLDivElement) => (element = el)}>
+      <Rooted testId="box" ref={(el: FloatingElement) => (element = el)}>
         content
       </Rooted>
     ));
@@ -492,20 +527,23 @@ describe('FloatingWindow passthrough', () => {
 
 describe('FloatingBody passthrough', () => {
   it('forwards identity and ARIA attributes to the surface', () => {
-    render(() => (
-      <FloatingBody
-        testId="surface"
-        id="popup"
-        role="menu"
-        tabIndex={-1}
-        aria-label="Actions"
-        aria-labelledby="trigger"
-        aria-describedby="hint"
-        aria-orientation="vertical"
-      >
-        content
-      </FloatingBody>
-    ));
+    render(
+      () => (
+        <FloatingBody
+          testId="surface"
+          id="popup"
+          role="menu"
+          tabIndex={-1}
+          aria-label="Actions"
+          aria-labelledby="trigger"
+          aria-describedby="hint"
+          aria-orientation="vertical"
+        >
+          content
+        </FloatingBody>
+      ),
+      IN_ROOT,
+    );
 
     const surface = screen.getByTestId('surface');
     expect(surface.id).toBe('popup');
@@ -518,7 +556,10 @@ describe('FloatingBody passthrough', () => {
   });
 
   it('attaches no semantics of its own', () => {
-    render(() => <FloatingBody testId="surface">content</FloatingBody>);
+    render(
+      () => <FloatingBody testId="surface">content</FloatingBody>,
+      IN_ROOT,
+    );
 
     const surface = screen.getByTestId('surface');
     expect(surface).not.toHaveAttribute('role');
@@ -527,15 +568,18 @@ describe('FloatingBody passthrough', () => {
   });
 
   it('hands the surface element to `ref`', () => {
-    let element: HTMLDivElement | undefined;
-    render(() => (
-      <FloatingBody
-        testId="surface"
-        ref={(el: HTMLDivElement) => (element = el)}
-      >
-        content
-      </FloatingBody>
-    ));
+    let element: FloatingElement | undefined;
+    render(
+      () => (
+        <FloatingBody
+          testId="surface"
+          ref={(el: FloatingElement) => (element = el)}
+        >
+          content
+        </FloatingBody>
+      ),
+      IN_ROOT,
+    );
 
     expect(element).toBe(screen.getByTestId('surface'));
   });
@@ -544,16 +588,19 @@ describe('FloatingBody passthrough', () => {
     const onKeyDown = vi.fn();
     const onFocusIn = vi.fn();
     const onPointerMove = vi.fn();
-    render(() => (
-      <FloatingBody
-        testId="surface"
-        onKeyDown={onKeyDown}
-        onFocusIn={onFocusIn}
-        onPointerMove={onPointerMove}
-      >
-        content
-      </FloatingBody>
-    ));
+    render(
+      () => (
+        <FloatingBody
+          testId="surface"
+          onKeyDown={onKeyDown}
+          onFocusIn={onFocusIn}
+          onPointerMove={onPointerMove}
+        >
+          content
+        </FloatingBody>
+      ),
+      IN_ROOT,
+    );
 
     const surface = screen.getByTestId('surface');
     fireEvent.keyDown(surface, { key: 'ArrowDown' });

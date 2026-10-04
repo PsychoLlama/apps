@@ -18,6 +18,7 @@ import {
   FloatingWindow,
   useTetherState,
   type FloatingAlignment,
+  type FloatingElement,
   type FloatingSide,
   type FloatingTether,
 } from '../_internal/floating-ui';
@@ -64,7 +65,7 @@ export interface TooltipWindowProps
   extends
     RequiredTestIdProps,
     Omit<
-      JSX.HTMLAttributes<HTMLDivElement>,
+      JSX.HTMLAttributes<FloatingElement>,
       'role' | 'style' | 'children' | 'ref'
     > {
   /** Id of the tooltip, which the trigger is described by. */
@@ -111,7 +112,7 @@ export interface TooltipWindowProps
   class?: string;
 
   /** Receives the window element. */
-  ref: (element: HTMLDivElement) => void;
+  ref: (element: FloatingElement) => void;
 }
 
 /** Themes' collision settings, resolved once for every tooltip. */

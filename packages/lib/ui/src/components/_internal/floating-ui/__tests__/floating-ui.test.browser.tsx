@@ -8,7 +8,9 @@
  *
  * Every edge-mode case runs in both modes. The point of the tether is
  * that, given room, it paints the same pixels the CSS does; these tests
- * are that claim.
+ * are that claim. They run under both root displays as well: an inline
+ * root renders every part as a `<span>`, and has to land the same
+ * pixels a block one does.
  */
 
 import { createSignal } from 'solid-js';
@@ -19,6 +21,7 @@ import {
   FloatingBody,
   FloatingRoot,
   FloatingWindow,
+  type FloatingRootDisplay,
   type FloatingTether,
   type FloatingWindowProps,
 } from '..';
@@ -31,8 +34,19 @@ const TETHER_BY_MODE: Record<Mode, FloatingTether | undefined> = {
   tether: { middleware: [] },
 };
 
-/** Both placement modes, for `it.each` over the cases they must agree on. */
-const MODES: Mode[] = ['css', 'tether'];
+/** A placement mode under a root display. */
+interface Layout {
+  mode: Mode;
+  display: FloatingRootDisplay;
+}
+
+/**
+ * Both placement modes under both root displays, for `describe.each`
+ * over the cases they must all agree on.
+ */
+const LAYOUTS: Layout[] = (['css', 'tether'] as const).flatMap((mode) =>
+  (['block', 'inline'] as const).map((display) => ({ mode, display })),
+);
 
 /** Wait for the first measurement to land on a tethered window. */
 const settled = async (window: Element) => {
@@ -43,15 +57,15 @@ const settled = async (window: Element) => {
 
 /**
  * Render a window bound to a fixed 100×100 anchor on a quiet stage, in
- * the given mode, and measure both once placement has settled.
+ * the given layout, and measure both once placement has settled.
  */
 const renderFloating = async (
-  mode: Mode,
+  { mode, display }: Layout,
   props: Omit<FloatingWindowProps, 'children' | 'tether' | 'testId'> = {},
 ) => {
   const { container } = render(() => (
     <div class={fixture.stage}>
-      <FloatingRoot display="block" class={fixture.anchorBox} testId="anchor">
+      <FloatingRoot display={display} class={fixture.anchorBox} testId="anchor">
         <FloatingWindow
           testId="window"
           tether={TETHER_BY_MODE[mode]}
@@ -111,29 +125,29 @@ describe('FloatingWindow geometry', () => {
     expect(floatingRect.left).toBeCloseTo(anchorRect.left);
   });
 
-  describe.each(MODES)('in %s mode', (mode) => {
+  describe.each(LAYOUTS)('in $mode mode, $display', (layout) => {
     it('rests fully outside the bound edge', async () => {
-      const bottom = await renderFloating(mode, { side: 'bottom' });
+      const bottom = await renderFloating(layout, { side: 'bottom' });
       expect(bottom.floatingRect.top).toBeCloseTo(bottom.anchorRect.bottom);
 
-      const top = await renderFloating(mode, { side: 'top' });
+      const top = await renderFloating(layout, { side: 'top' });
       expect(top.floatingRect.bottom).toBeCloseTo(top.anchorRect.top);
 
-      const left = await renderFloating(mode, { side: 'left' });
+      const left = await renderFloating(layout, { side: 'left' });
       expect(left.floatingRect.right).toBeCloseTo(left.anchorRect.left);
 
-      const right = await renderFloating(mode, { side: 'right' });
+      const right = await renderFloating(layout, { side: 'right' });
       expect(right.floatingRect.left).toBeCloseTo(right.anchorRect.right);
     });
 
     it('aligns along the bound edge', async () => {
-      const start = await renderFloating(mode, {
+      const start = await renderFloating(layout, {
         side: 'bottom',
         align: 'start',
       });
       expect(start.floatingRect.left).toBeCloseTo(start.anchorRect.left);
 
-      const center = await renderFloating(mode, {
+      const center = await renderFloating(layout, {
         side: 'bottom',
         align: 'center',
       });
@@ -141,10 +155,13 @@ describe('FloatingWindow geometry', () => {
         center.floatingRect.left + center.floatingRect.width / 2,
       ).toBeCloseTo(center.anchorRect.left + center.anchorRect.width / 2);
 
-      const end = await renderFloating(mode, { side: 'bottom', align: 'end' });
+      const end = await renderFloating(layout, {
+        side: 'bottom',
+        align: 'end',
+      });
       expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.right);
 
-      const vertical = await renderFloating(mode, {
+      const vertical = await renderFloating(layout, {
         side: 'right',
         align: 'end',
       });
@@ -154,7 +171,7 @@ describe('FloatingWindow geometry', () => {
     });
 
     it('opens a gap off the edge with sideOffset', async () => {
-      const bottom = await renderFloating(mode, {
+      const bottom = await renderFloating(layout, {
         side: 'bottom',
         sideOffset: 10,
       });
@@ -162,10 +179,10 @@ describe('FloatingWindow geometry', () => {
         bottom.anchorRect.bottom + 10,
       );
 
-      const top = await renderFloating(mode, { side: 'top', sideOffset: 10 });
+      const top = await renderFloating(layout, { side: 'top', sideOffset: 10 });
       expect(top.floatingRect.bottom).toBeCloseTo(top.anchorRect.top - 10);
 
-      const left = await renderFloating(mode, {
+      const left = await renderFloating(layout, {
         side: 'left',
         sideOffset: 10,
       });
@@ -173,7 +190,7 @@ describe('FloatingWindow geometry', () => {
     });
 
     it('nudges along the edge with alignOffset, inverting for end', async () => {
-      const start = await renderFloating(mode, {
+      const start = await renderFloating(layout, {
         side: 'bottom',
         align: 'start',
         alignOffset: 6,
@@ -181,14 +198,14 @@ describe('FloatingWindow geometry', () => {
       expect(start.floatingRect.left).toBeCloseTo(start.anchorRect.left + 6);
 
       // Positive offsets push an end-aligned window back toward start.
-      const end = await renderFloating(mode, {
+      const end = await renderFloating(layout, {
         side: 'bottom',
         align: 'end',
         alignOffset: 6,
       });
       expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.right - 6);
 
-      const vertical = await renderFloating(mode, {
+      const vertical = await renderFloating(layout, {
         side: 'right',
         align: 'start',
         alignOffset: 6,
@@ -201,7 +218,7 @@ describe('FloatingWindow geometry', () => {
     it('ignores alignOffset when centered', async () => {
       // floating-ui's `offset` applies the alignment axis only to
       // start/end placements; the CSS follows suit so the two agree.
-      const center = await renderFloating(mode, {
+      const center = await renderFloating(layout, {
         side: 'bottom',
         align: 'center',
         alignOffset: 6,
@@ -215,7 +232,7 @@ describe('FloatingWindow geometry', () => {
       const point = { x: 30, y: 70 };
 
       // Growing down-right: the window's top-left corner sits on the point.
-      const downRight = await renderFloating(mode, {
+      const downRight = await renderFloating(layout, {
         point,
         side: 'bottom',
         align: 'start',
@@ -228,7 +245,7 @@ describe('FloatingWindow geometry', () => {
       );
 
       // Growing up: the window's bottom edge sits on the point.
-      const up = await renderFloating(mode, {
+      const up = await renderFloating(layout, {
         point,
         side: 'top',
         align: 'start',
@@ -236,7 +253,7 @@ describe('FloatingWindow geometry', () => {
       expect(up.floatingRect.bottom).toBeCloseTo(up.anchorRect.top + 70);
 
       // End alignment: the far edge sits on the point.
-      const end = await renderFloating(mode, {
+      const end = await renderFloating(layout, {
         point,
         side: 'bottom',
         align: 'end',
@@ -244,7 +261,7 @@ describe('FloatingWindow geometry', () => {
       expect(end.floatingRect.right).toBeCloseTo(end.anchorRect.left + 30);
 
       // Centered growth splits the window across the point.
-      const centered = await renderFloating(mode, {
+      const centered = await renderFloating(layout, {
         point,
         side: 'bottom',
         align: 'center',
@@ -254,7 +271,7 @@ describe('FloatingWindow geometry', () => {
       ).toBeCloseTo(centered.anchorRect.left + 30);
 
       // Sideways growth: the surface's left edge sits on the point.
-      const rightward = await renderFloating(mode, {
+      const rightward = await renderFloating(layout, {
         point,
         side: 'right',
         align: 'start',
@@ -270,7 +287,7 @@ describe('FloatingWindow geometry', () => {
     it('applies offsets from the point in point mode', async () => {
       const point = { x: 30, y: 70 };
 
-      const gapped = await renderFloating(mode, {
+      const gapped = await renderFloating(layout, {
         point,
         side: 'bottom',
         align: 'start',
@@ -285,7 +302,7 @@ describe('FloatingWindow geometry', () => {
       );
 
       // Growing up, the gap opens above the point.
-      const upward = await renderFloating(mode, {
+      const upward = await renderFloating(layout, {
         point,
         side: 'top',
         align: 'start',
@@ -302,7 +319,7 @@ describe('FloatingWindow geometry', () => {
       // room the tether never moves it, so the modes agree.
       const nudge = parseFloat(radius[3]);
 
-      const start = await renderFloating(mode, {
+      const start = await renderFloating(layout, {
         side: 'bottom',
         align: 'start',
         radius: 3,
@@ -313,7 +330,7 @@ describe('FloatingWindow geometry', () => {
       );
       expect(start.arrowRect!.top).toBeCloseTo(start.anchorRect.bottom);
 
-      const center = await renderFloating(mode, {
+      const center = await renderFloating(layout, {
         side: 'bottom',
         align: 'center',
         radius: 3,
@@ -323,7 +340,7 @@ describe('FloatingWindow geometry', () => {
         center.floatingRect.left + center.floatingRect.width / 2,
       );
 
-      const end = await renderFloating(mode, {
+      const end = await renderFloating(layout, {
         side: 'right',
         align: 'end',
         radius: 3,
@@ -336,7 +353,7 @@ describe('FloatingWindow geometry', () => {
     });
 
     it('sizes the arrow from its config, turned to face the anchor', async () => {
-      const below = await renderFloating(mode, {
+      const below = await renderFloating(layout, {
         side: 'bottom',
         arrow: { base: 16, depth: 8 },
       });
@@ -344,14 +361,14 @@ describe('FloatingWindow geometry', () => {
       expect(below.arrowRect!.height).toBeCloseTo(8);
 
       // Beside the anchor, the base stands on its end.
-      const beside = await renderFloating(mode, {
+      const beside = await renderFloating(layout, {
         side: 'right',
         arrow: { base: 16, depth: 8 },
       });
       expect(beside.arrowRect!.width).toBeCloseTo(8);
       expect(beside.arrowRect!.height).toBeCloseTo(16);
 
-      const fallback = await renderFloating(mode, {
+      const fallback = await renderFloating(layout, {
         side: 'bottom',
         arrow: {},
       });
@@ -362,7 +379,7 @@ describe('FloatingWindow geometry', () => {
     it('clamps the point to the anchor box', async () => {
       // A point taken before the anchor shrank would otherwise leave the
       // window hanging off a spot outside it.
-      const beyond = await renderFloating(mode, {
+      const beyond = await renderFloating(layout, {
         point: { x: 150, y: -20 },
         side: 'bottom',
         align: 'start',

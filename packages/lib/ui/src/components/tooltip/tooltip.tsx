@@ -200,6 +200,7 @@ import { assignInlineVars } from '@vanilla-extract/dynamic';
 import {
   FloatingRoot,
   type FloatingAlignment,
+  type FloatingElement,
   type FloatingRootDisplay,
   type FloatingSide,
 } from '../_internal/floating-ui';
@@ -254,7 +255,7 @@ export interface TooltipTriggerProps {
 export interface TooltipProps
   extends
     RequiredTestIdProps,
-    Omit<JSX.HTMLAttributes<HTMLDivElement>, 'role' | 'style' | 'children'> {
+    Omit<JSX.HTMLAttributes<FloatingElement>, 'role' | 'style' | 'children'> {
   /**
    * How the wrapper around the trigger sits in the surrounding flow:
    * `inline` renders a `<span>`, `block` a `<div>`. Required — the
@@ -348,7 +349,7 @@ const Tooltip = (rawProps: TooltipProps) => {
   // it rendered: the root, holding the trigger and the window, and the
   // window itself.
   const [root, setRoot] = createSignal<HTMLElement>();
-  const [subject, setSubject] = createSignal<HTMLDivElement>();
+  const [subject, setSubject] = createSignal<FloatingElement>();
 
   // Whether the stylesheet considers the tooltip open, as the root
   // reports it (see `css.root`). The tether rides on this, so a closed

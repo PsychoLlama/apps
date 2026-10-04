@@ -14,6 +14,7 @@ export {
   arrowBaseChanged,
   arrowDepthChanged,
   arrowVisibilityChanged,
+  displayChanged,
   flipModeChanged,
   floatingControls,
   middlewareChanged,

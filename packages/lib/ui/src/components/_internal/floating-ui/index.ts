@@ -63,8 +63,11 @@
 export {
   FloatingRoot,
   useAnchorElement,
+  useFloatingTag,
   type FloatingRootDisplay,
+  type FloatingElement,
   type FloatingRootProps,
+  type FloatingTag,
 } from './root';
 export {
   type FloatingAlignment,
