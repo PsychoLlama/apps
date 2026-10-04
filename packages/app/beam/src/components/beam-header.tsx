@@ -2,7 +2,7 @@ import { Show } from 'solid-js';
 import { useLocation } from '@solidjs/router';
 import { useCommit, useValue } from '@lib/state';
 import { SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
-import { Button, Text } from '@lib/ui';
+import { Button, Text, Tooltip } from '@lib/ui';
 import { deviceNameFormula } from '../state/identity';
 import { renameOpenedTopic } from '../state/view';
 import { RenameDialog } from './rename-dialog';
@@ -84,30 +84,52 @@ export const BeamHeader = (props: {
               <Show
                 when={props.renameable}
                 fallback={
-                  <Text
-                    as="span"
-                    size={2}
-                    color="lowContrast"
-                    title={TOOLTIP}
-                    selectable
+                  <Tooltip
+                    display="inline"
+                    content={TOOLTIP}
+                    side="bottom"
+                    align="end"
+                    testId="beam-self-name-tooltip"
                   >
-                    {label()}
-                  </Text>
+                    {(trigger) => (
+                      <Text
+                        {...trigger}
+                        as="span"
+                        size={2}
+                        color="lowContrast"
+                        selectable
+                      >
+                        {label()}
+                      </Text>
+                    )}
+                  </Tooltip>
                 }
               >
                 {/* Named for what it does rather than for what it says. The
                     visible text is a name, and a button announced as one is a
                     button whose purpose nobody has said. */}
-                <Button
-                  testId="beam-rename-self"
-                  aria-label={`Rename this device, currently ${label()}`}
-                  title={TOOLTIP}
-                  variant="ghost"
-                  color="neutral"
-                  onClick={() => commit(renameOpenedTopic({ kind: 'self' }))}
+                <Tooltip
+                  display="inline"
+                  content={TOOLTIP}
+                  side="bottom"
+                  align="end"
+                  testId="beam-rename-self-tooltip"
                 >
-                  {label()}
-                </Button>
+                  {(trigger) => (
+                    <Button
+                      {...trigger}
+                      testId="beam-rename-self"
+                      aria-label={`Rename this device, currently ${label()}`}
+                      variant="ghost"
+                      color="neutral"
+                      onClick={() =>
+                        commit(renameOpenedTopic({ kind: 'self' }))
+                      }
+                    >
+                      {label()}
+                    </Button>
+                  )}
+                </Tooltip>
               </Show>
             )}
           </Show>

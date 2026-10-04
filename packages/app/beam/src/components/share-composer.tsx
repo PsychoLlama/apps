@@ -1,5 +1,5 @@
 import { useCommit, useRun, useValue } from '@lib/state';
-import { Flex, IconButton, TextField } from '@lib/ui';
+import { Flex, IconButton, TextField, Tooltip } from '@lib/ui';
 import IconSend from 'virtual:icons/mdi/send-outline';
 import { reportSagaFailure } from '../state/failure';
 import { shareTextSaga } from '../state/network';
@@ -99,17 +99,27 @@ export const ShareComposer = (props: {
         autocapitalize="sentences"
         enterkeyhint="send"
         right={
-          <IconButton
-            testId="beam-share-send"
-            type="submit"
-            aria-label={action()}
-            title={action()}
-            variant="ghost"
-            color="neutral"
-            disabled={empty()}
+          <Tooltip
+            display="inline"
+            content={action()}
+            side="top"
+            testId="beam-share-send-tooltip"
           >
-            <IconSend aria-hidden="true" />
-          </IconButton>
+            {({ 'aria-describedby': label, ...trigger }) => (
+              <IconButton
+                {...trigger}
+                // The tooltip is the name, so it labels rather than describes.
+                aria-labelledby={label}
+                testId="beam-share-send"
+                type="submit"
+                variant="ghost"
+                color="neutral"
+                disabled={empty()}
+              >
+                <IconSend aria-hidden="true" />
+              </IconButton>
+            )}
+          </Tooltip>
         }
       />
     </Flex>
