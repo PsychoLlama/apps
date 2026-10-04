@@ -1,5 +1,5 @@
 import { useValue } from '@lib/state';
-import { Flex, Text } from '@lib/ui';
+import { Flex, Text, Tooltip } from '@lib/ui';
 import { connectionStore, type ConnectionStatus } from '../state/network';
 import * as styles from './status-bar.css';
 
@@ -30,25 +30,41 @@ const describeRelay = (status: ConnectionStatus): string => {
  *
  * An `<output>`, which is an implicit `status` live region, so the reading is
  * announced as it changes rather than sitting there for someone to go and
- * find. Its title is which server is holding the connection.
+ * find. Its tooltip is which server is holding the connection.
  */
 export const StatusBar = () => {
   const connection = useValue(connectionStore);
 
   return (
     <Flex as="footer" direction="row" align="center" gap={3} class={styles.bar}>
-      <output
-        data-testid="beam-relay-status"
-        class={styles.status}
-        title={connection().homeRelay ?? undefined}
+      {/* Mounted whether or not there's a relay to name: the relay turns up
+          at the same moment the status flips to connected, and swapping the
+          live region out then would swallow the announcement.
+
+          Pinned to the foot of the page and its left edge, so the tooltip
+          opens up and runs right. */}
+      <Tooltip
+        display="inline"
+        content={connection().homeRelay ?? 'No relay yet'}
+        side="top"
+        align="start"
+        testId="beam-relay-tooltip"
       >
-        <Text as="span" size={1} color="lowContrast" selectable={false}>
-          Relay:
-        </Text>
-        <Text as="span" size={1} weight="medium" selectable={false}>
-          {describeRelay(connection().status)}
-        </Text>
-      </output>
+        {(trigger) => (
+          <output
+            {...trigger}
+            data-testid="beam-relay-status"
+            class={styles.status}
+          >
+            <Text as="span" size={1} color="lowContrast" selectable={false}>
+              Relay:
+            </Text>
+            <Text as="span" size={1} weight="medium" selectable={false}>
+              {describeRelay(connection().status)}
+            </Text>
+          </output>
+        )}
+      </Tooltip>
     </Flex>
   );
 };
