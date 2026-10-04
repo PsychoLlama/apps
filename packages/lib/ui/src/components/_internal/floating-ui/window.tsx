@@ -1,4 +1,5 @@
 import { createSignal, Show, splitProps, type JSX } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import { radius, type RadiusScale } from '@lib/design';
 import clx from '@lib/classnames';
@@ -11,7 +12,7 @@ import {
   type FloatingTether,
 } from './types';
 import { Arrow, type ArrowDirection, type ArrowProps } from './arrow';
-import { useAnchorElement } from './root';
+import { useAnchorElement, useFloatingTag, type FloatingElement } from './root';
 import { roundByDevicePixel } from './tether/pixel-ratio';
 import { useReference } from './tether/use-reference';
 import { DEFAULT_ALIGN, DEFAULT_SIDE } from './tether/placement';
@@ -92,7 +93,7 @@ export const AXIS_BY_SIDE: Record<FloatingSide, FloatingAxis> = {
 export interface FloatingWindowProps
   extends
     RequiredTestIdProps,
-    Omit<JSX.HTMLAttributes<HTMLDivElement>, 'style'> {
+    Omit<JSX.HTMLAttributes<FloatingElement>, 'style'> {
   /** Edge of the anchor the window binds to. Defaults to `'bottom'`. */
   side?: FloatingSide;
 
@@ -204,13 +205,23 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
     'class',
     'style',
     'testId',
+    'ref',
     'children',
   ]);
 
-  const [subject, setSubject] = createSignal<HTMLDivElement>();
+  const [subject, setSubject] = createSignal<FloatingElement>();
+
+  // The window keeps a ref of its own on the box, for the tether; a
+  // consumer's composes with it. Solid hands a component a function
+  // whichever form the consumer wrote.
+  const setBox = (element: FloatingElement) => {
+    setSubject(element);
+    if (typeof own.ref === 'function') own.ref(element);
+  };
   const [arrowElement, setArrowElement] = createSignal<SVGSVGElement>();
 
   const anchor = useAnchorElement();
+  const tag = useFloatingTag();
 
   // The placement the window is asking for. Handed to the tether as its
   // starting point and used as the fallback below, so the answer before
@@ -310,9 +321,10 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
   };
 
   return (
-    <div
+    <Dynamic
+      component={tag()}
       {...box}
-      ref={setSubject}
+      ref={setBox}
       class={className()}
       style={inlineStyle()}
       data-testid={own.testId}
@@ -342,6 +354,6 @@ export const FloatingWindow = (props: FloatingWindowProps) => {
         )}
       </Show>
       {own.children}
-    </div>
+    </Dynamic>
   );
 };

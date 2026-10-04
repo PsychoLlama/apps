@@ -1,4 +1,10 @@
-import { createSignal, splitProps, type Accessor, type JSX } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  splitProps,
+  type Accessor,
+  type JSX,
+} from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import clx from '@lib/classnames';
 import { type TestIdProps } from '../../../props/test-id';
@@ -16,10 +22,29 @@ export const useAnchorElement = (): Accessor<HTMLElement | undefined> =>
 /** How the root wrapper participates in the surrounding flow. */
 export type FloatingRootDisplay = 'block' | 'inline';
 
+/** The element a part of the primitive renders as. */
+export type FloatingTag = 'div' | 'span';
+
+/** The DOM element behind a {@link FloatingTag}. */
+export type FloatingElement = HTMLElementTagNameMap[FloatingTag];
+
 /** The element each display mode renders as. */
-const TAG_BY_DISPLAY: Record<FloatingRootDisplay, 'div' | 'span'> = {
+const TAG_BY_DISPLAY: Record<FloatingRootDisplay, FloatingTag> = {
   block: 'div',
   inline: 'span',
+};
+
+/**
+ * Read the element the nearest {@link FloatingRoot} renders as, for a
+ * part inside it to render as the same. An inline root's content is
+ * phrasing content, so everything under it is a `<span>`: a `<div>` in
+ * a paragraph is closed out of it by the parser, which breaks
+ * hydration. Throws outside a root.
+ */
+export const useFloatingTag = (): Accessor<FloatingTag> => {
+  const { display } = useFloatingContext();
+
+  return () => TAG_BY_DISPLAY[display()];
 };
 
 /**
@@ -35,7 +60,8 @@ export interface FloatingRootProps
   extends TestIdProps, JSX.HTMLAttributes<HTMLElement> {
   /**
    * How the wrapper sits in the surrounding flow: `block` renders a
-   * `<div>`, `inline` a `<span>`. Required rather than defaulted —
+   * `<div>`, `inline` a `<span>`, and every part inside follows suit.
+   * Required rather than defaulted —
    * the wrong choice is either invalid markup inside a paragraph or a
    * stray baseline gap under a layout box, and neither is a failure the
    * component can detect for you.
@@ -100,7 +126,8 @@ export const FloatingRoot = (props: FloatingRootProps) => {
   ]);
 
   const [element, setElement] = createSignal<HTMLElement>();
-  const className = () => clx(css.root[local.display], local.class);
+  const display = createMemo(() => local.display);
+  const className = () => clx(css.root[display()], local.class);
 
   // The slot the window inside publishes its tether state into. Empty
   // until it does, and the root never looks at it — it only holds it
@@ -117,10 +144,10 @@ export const FloatingRoot = (props: FloatingRootProps) => {
 
   return (
     <FloatingContext.Provider
-      value={{ anchor: element, tether: [tether, setTether] }}
+      value={{ anchor: element, tether: [tether, setTether], display }}
     >
       <Dynamic
-        component={TAG_BY_DISPLAY[local.display]}
+        component={TAG_BY_DISPLAY[display()]}
         {...passthrough}
         ref={setAnchor}
         class={className()}

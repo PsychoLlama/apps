@@ -1,4 +1,5 @@
 import { splitProps, type JSX } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import clx from '@lib/classnames';
 import {
   flexPropKeys,
@@ -11,6 +12,7 @@ import {
   type PaddingProps,
 } from '../../../props/padding';
 import { type RequiredTestIdProps } from '../../../props/test-id';
+import { useFloatingTag, type FloatingElement } from './root';
 import * as css from './body.css';
 
 /**
@@ -32,7 +34,7 @@ export interface FloatingBodyProps
     FlexProps,
     PaddingProps,
     RequiredTestIdProps,
-    JSX.HTMLAttributes<HTMLDivElement> {
+    JSX.HTMLAttributes<FloatingElement> {
   /** Extra class names merged onto the surface element. */
   class?: string;
 
@@ -55,6 +57,8 @@ export const FloatingBody = (props: FloatingBodyProps) => {
     'testId',
   ]);
 
+  const tag = useFloatingTag();
+
   const className = () =>
     clx(
       css.body,
@@ -64,8 +68,13 @@ export const FloatingBody = (props: FloatingBodyProps) => {
     );
 
   return (
-    <div {...passthrough} class={className()} data-testid={local.testId}>
+    <Dynamic
+      component={tag()}
+      {...passthrough}
+      class={className()}
+      data-testid={local.testId}
+    >
       {local.children}
-    </div>
+    </Dynamic>
   );
 };

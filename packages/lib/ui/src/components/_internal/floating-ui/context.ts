@@ -5,7 +5,8 @@
  * Everything in it lives and dies with the root, and nothing under a
  * root can work without it, so one provider carries the lot. Each
  * concern still reads through a hook of its own — `useAnchorElement`,
- * `useTetherState`, `useTether` — which picks out its field.
+ * `useTetherState`, `useTether`, `useFloatingTag` — which picks out its
+ * field.
  *
  * Not exported from the floating-ui index. The tether state's write
  * half lives here, and only the window's tether may hold it.
@@ -18,6 +19,7 @@ import {
   type Signal,
 } from 'solid-js';
 import { assert } from '@lib/assert';
+import type { FloatingRootDisplay } from './root';
 import type { TetherState } from './tether/use-tether';
 
 /** What a floating root publishes to its descendants. */
@@ -36,6 +38,9 @@ export interface FloatingContextValue {
    * root, written by the window's tether alone.
    */
   tether: Signal<TetherState | undefined>;
+
+  /** How the root sits in the flow, which every part inside follows. */
+  display: Accessor<FloatingRootDisplay>;
 }
 
 export const FloatingContext = createContext<FloatingContextValue>();
