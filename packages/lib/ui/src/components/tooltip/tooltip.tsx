@@ -9,13 +9,17 @@
  * - One component. Themes' `Tooltip` is already one; here so are the
  *   primitive's `Provider` and `Portal`. There's no portal: the window
  *   renders next to its trigger, inline, so an `overflow` ancestor can
- *   clip it and a later sibling can paint over it.
+ *   clip it and a later sibling can paint over it. It would inherit
+ *   from there too, so the floating window puts back the text styles a
+ *   run of copy might set — weight, style, alignment, wrapping, and the
+ *   rest.
  * - No `open` / `defaultOpen` / `onOpenChange`. The open state is the
  *   trigger's focus and hover, which the stylesheet owns end to end;
  *   there is nothing for a call site to drive.
- * - `display` is required, from the floating root: the wrapper is a
- *   `<span>` or a `<div>`, and only the call site knows which one is
- *   valid where it stands.
+ * - `display` is required, from the floating root: the wrapper and
+ *   everything in it are `<span>`s or block elements, and only the
+ *   call site knows which one is valid where it stands. Inline, the
+ *   label is a `<span>` where upstream's is a `<p>`.
  * - `children` is a render function. Upstream merges its handlers and
  *   `aria-describedby` into the child via `asChild`; here the trigger
  *   is handed them as props and spreads them itself, so the tooltip
@@ -258,7 +262,8 @@ export interface TooltipProps
     Omit<JSX.HTMLAttributes<FloatingElement>, 'role' | 'style' | 'children'> {
   /**
    * How the wrapper around the trigger sits in the surrounding flow:
-   * `inline` renders a `<span>`, `block` a `<div>`. Required — the
+   * `inline` renders it and the tooltip as `<span>`s, `block` as a
+   * `<div>` and block elements. Required — the
    * wrong one is invalid markup inside a paragraph or a stray baseline
    * gap under a layout box, and the component can't tell which it's
    * in.

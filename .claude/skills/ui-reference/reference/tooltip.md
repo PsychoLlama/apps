@@ -7,7 +7,7 @@ Short label floated beside its trigger on hover (after 200ms) or keyboard focus.
 Base: `<div>` attributes on the surface (except `role`, `style`, `children`).
 
 - `testId` (required): Test identifier rendered as `data-testid` on the window.
-- `display` (required): Wrapper around the trigger. `'inline'` (`<span>`) | `'block'` (`<div>`).
+- `display` (required): Markup for the wrapper and tooltip. `'inline'` (`<span>`s, valid in a paragraph) | `'block'` (`<div>`).
 - `content` (required): The label. Short, plain, not interactive.
 - `children` (required): `(trigger) => JSX.Element`. Spread `trigger` onto one focusable element.
 - `aria-label`: Read in place of `content`.
