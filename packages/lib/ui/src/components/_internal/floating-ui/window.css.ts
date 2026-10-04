@@ -1,5 +1,5 @@
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
-import { radius } from '@lib/design';
+import { fontWeight, radius } from '@lib/design';
 import {
   base as arrowBase,
   depth as arrowDepth,
@@ -130,6 +130,12 @@ const shift = (origin: string, sign: string, distance: string) =>
  * outright in point mode. Only the body takes pointer events back (see
  * `body.css`).
  *
+ * Text starts over. There's no portal, so the window inherits from
+ * wherever its anchor stands, and a window in bold, centered, unwrapping
+ * copy would come out bold, centered and unwrapping. `Text` sets family,
+ * size, line height and tracking itself; the rest of the inherited text
+ * properties go back to their initial values here.
+ *
  * Every selector is wrapped in `:where(...)` so all rules hold equal
  * specificity and the cascade resolves by source order — the point-mode
  * pins override the edge-mode ones, and the tethered rule, last of all,
@@ -155,6 +161,15 @@ export const window = style({
   display: 'flex',
   alignItems: 'center',
   pointerEvents: 'none',
+  fontWeight: fontWeight.regular,
+  fontStyle: 'normal',
+  fontVariant: 'normal',
+  textAlign: 'start',
+  textIndent: 0,
+  textShadow: 'none',
+  textTransform: 'none',
+  whiteSpace: 'normal',
+  wordSpacing: 'normal',
   transformOrigin: `${originX} ${originY}`,
   translate: `${shift(originX, signX, distanceX)} ${shift(originY, signY, distanceY)}`,
   selectors: {
