@@ -1,5 +1,6 @@
 import { For } from 'solid-js';
 import type { Component } from 'solid-js';
+import { Tooltip } from '@lib/ui';
 import { PALETTES, type PaletteName } from '../palette';
 import * as css from './palette-picker.css';
 
@@ -21,20 +22,31 @@ export const PalettePicker: Component<PalettePickerProps> = (props) => {
         {(option) => {
           const selected = () => props.value === option.name;
           return (
-            // Custom-styled swatch chip — Button's variant matrix doesn't
-            // express a tiny color-only target.
-            // eslint-disable-next-line custom/require-ui-primitives
-            <button
-              type="button"
-              role="radio"
-              aria-checked={selected()}
-              aria-label={option.name}
-              title={option.name}
-              class={css.swatch}
-              classList={{ [css.swatchActive]: selected() }}
-              style={{ 'background-color': option.bg }}
-              onClick={() => props.onChange(option.name)}
-            />
+            <Tooltip
+              display="block"
+              content={option.name}
+              side="top"
+              hoverable={false}
+              testId="palette-swatch-tooltip"
+            >
+              {({ 'aria-describedby': label, ...trigger }) => (
+                // Custom-styled swatch chip — Button's variant matrix doesn't
+                // express a tiny color-only target.
+                // eslint-disable-next-line custom/require-ui-primitives
+                <button
+                  {...trigger}
+                  // The tooltip is the name, so it labels rather than describes.
+                  aria-labelledby={label}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected()}
+                  class={css.swatch}
+                  classList={{ [css.swatchActive]: selected() }}
+                  style={{ 'background-color': option.bg }}
+                  onClick={() => props.onChange(option.name)}
+                />
+              )}
+            </Tooltip>
           );
         }}
       </For>

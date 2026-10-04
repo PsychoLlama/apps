@@ -1,15 +1,17 @@
 import { style } from '@vanilla-extract/css';
 import { accent, fast, neutral, radius, space, standard } from '@lib/design';
 
+const SWATCH_MIN_WIDTH = '28px';
+
 export const grid = style({
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(28px, 1fr))',
+  gridTemplateColumns: `repeat(auto-fill, minmax(${SWATCH_MIN_WIDTH}, 1fr))`,
   gap: space[1],
 });
 
 export const swatch = style({
   aspectRatio: '1 / 1',
-  width: '100%',
+  minWidth: SWATCH_MIN_WIDTH,
   borderRadius: radius[2],
   border: `1px solid ${neutral.alpha[6]}`,
   cursor: 'pointer',
