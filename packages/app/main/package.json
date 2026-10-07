@@ -48,6 +48,6 @@
     "@vanilla-extract/vite-plugin": "^5.2.2",
     "typescript": "catalog:",
     "unplugin-icons": "catalog:",
-    "wrangler": "^4.65.0"
+    "wrangler": "catalog:"
   }
 }
