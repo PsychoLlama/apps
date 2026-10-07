@@ -33,6 +33,23 @@
       "persistent": true,
       "dependsOn": ["build"]
     },
+    // Deploys are cached like any other task. The hash follows the build
+    // hash, so `turbo run deploy` only ships apps whose build inputs
+    // changed. An evicted cache just means a harmless redeploy; a manual
+    // `wrangler rollback` sticks until the app's next real change.
+    "deploy": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    // Uploads a preview version aliased to the PR. `PR_NUMBER` is hashed:
+    // a different PR is a different deploy target. The output keeps
+    // wrangler's ND-JSON report so a cache hit still restores the preview
+    // URL for CI to record.
+    "deploy:preview": {
+      "dependsOn": ["build"],
+      "env": ["PR_NUMBER"],
+      "outputs": [".wrangler/deploy/**"]
+    },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": [],

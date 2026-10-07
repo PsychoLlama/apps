@@ -16,6 +16,15 @@ jobs:
       # treefmt that follow the BSD convention.
       FORCE_COLOR: '3'
       CLICOLOR_FORCE: '1'
+      # `BUILD_MODE` picks each app's Vite build mode, which
+      # `@lib/runtime-config` reads as the deploy environment. Pull
+      # requests build `staging`; main and local builds fall through to
+      # Vite's default `production`. Vite's mode is a CLI flag resolved
+      # before vite.config loads, so it can't be branched on `GITHUB_REF`
+      # in config — hence selecting it here. It's job-wide because it's
+      # part of the build hash: the deploy steps must see the same value
+      # as `pnpm check` to reuse its cached build instead of rebuilding.
+      BUILD_MODE: ${{ github.event_name == 'pull_request' && 'staging' || '' }}
     # Run every shell step inside the flake's devShell so CI stays in
     # sync with local dev (single source of truth in flake.nix).
     defaults:
@@ -89,72 +98,68 @@ jobs:
             ${{ runner.os }}-cargo-
       # `pnpm check` fans out every workspace check (lint, typecheck,
       # tests, knip, fmt, workspace validators, build) through turbo.
-      # Cache hits skip work entirely. The build is part of `check`,
-      # so `.output` is populated for the wrangler deploy step below.
-      #
-      # `BUILD_MODE` picks `@app/main`'s Vite build mode, which
-      # `@lib/runtime-config` reads as the deploy environment. Pull
-      # requests build `staging` (the preview upload below reuses this
-      # `.output`); main and local builds fall through to Vite's default
-      # `production`. Vite's mode is a CLI flag resolved before
-      # vite.config loads, so it can't be branched on `GITHUB_REF` in
-      # config — hence selecting it here, on the single shared build.
+      # Cache hits skip work entirely. The build is part of `check`, so
+      # the deploy tasks below reuse its `.output` from turbo's cache.
       - run: pnpm check
-        env:
-          BUILD_MODE: ${{ github.event_name == 'pull_request' && 'staging' || '' }}
 
+      # Each app with a `deploy` script ships to its own worker. Deploys
+      # are cached turbo tasks keyed on the build, so apps whose build
+      # didn't change since the last deploy are skipped.
+      #
       # Single-step `wrangler deploy` works but bypasses the version
       # model. Splitting into `wrangler versions upload` +
       # `wrangler versions deploy` would unlock `wrangler rollback` and
-      # gradual rollouts — worth doing if this app ever needs a safety
+      # gradual rollouts — worth doing if an app ever needs a safety
       # net beyond "redeploy the previous commit".
       - name: Deploy to production
         if: github.ref == 'refs/heads/main'
-        working-directory: packages/app/main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-        run: pnpm exec wrangler deploy
+        run: pnpm turbo run deploy
 
-      # Uploads a preview version on same-repo pull requests without
-      # promoting to production. The `--preview-alias` pins the URL to
-      # the PR number so reviewers get a stable link across pushes.
-      # Reuses the `staging`-mode `.output` from `pnpm check` above.
-      - name: Upload preview version
+      # Uploads a preview version of each app on same-repo pull requests
+      # without promoting to production. The `--preview-alias` pins each
+      # URL to the PR number so reviewers get stable links across pushes.
+      # Each app writes wrangler's ND-JSON report under
+      # `.wrangler/deploy/`, which turbo restores on a cache hit.
+      - name: Upload preview versions
         id: preview
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        working-directory: packages/app/main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          SUBDOMAIN: ${{ vars.WORKERS_DEV_SUBDOMAIN }}
-        run: |
-          pnpm exec wrangler versions upload --preview-alias "pr-$PR_NUMBER"
-          echo "url=https://pr-$PR_NUMBER-apps.$SUBDOMAIN.workers.dev" >> "$GITHUB_OUTPUT"
+        run: pnpm turbo run deploy:preview
 
-      # Records a GitHub Deployment so the PR sidebar shows a "preview"
-      # tile linking to the workers.dev URL.
-      - name: Record preview deployment
-        if: steps.preview.outputs.url
+      # Records one GitHub Deployment per app so the PR sidebar shows a
+      # `preview-<worker>` tile linking to its workers.dev URL.
+      - name: Record preview deployments
+        if: steps.preview.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.event.pull_request.head.sha }}
-          URL: ${{ steps.preview.outputs.url }}
         run: |
-          # `required_contexts[]` (no value) sends an empty JSON
-          # array — without it GitHub enforces commit status checks
-          # against the PR's still-running CI run and 409s.
-          deployment_id=$(gh api "repos/$REPO/deployments" \
-            -f ref="$SHA" \
-            -f environment=preview \
-            -F auto_merge=false \
-            -f required_contexts[] \
-            -F transient_environment=true \
-            -F production_environment=false \
-            --jq .id)
-          gh api "repos/$REPO/deployments/$deployment_id/statuses" \
-            -f state=success \
-            -f environment_url="$URL" \
-            -f log_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          shopt -s nullglob
+          for report in packages/*/*/.wrangler/deploy/preview.ndjson; do
+            jq -r 'select(.type == "version-upload" and .preview_alias_url != null)
+              | [.worker_name, .preview_alias_url] | @tsv' "$report" |
+            while IFS=$'\t' read -r worker url; do
+              # `required_contexts[]` (no value) sends an empty JSON
+              # array — without it GitHub enforces commit status checks
+              # against the PR's still-running CI run and 409s.
+              deployment_id=$(gh api "repos/$REPO/deployments" \
+                -f ref="$SHA" \
+                -f environment="preview-$worker" \
+                -F auto_merge=false \
+                -f 'required_contexts[]' \
+                -F transient_environment=true \
+                -F production_environment=false \
+                --jq .id)
+              gh api "repos/$REPO/deployments/$deployment_id/statuses" \
+                -f state=success \
+                -f environment_url="$url" \
+                -f log_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            done
+          done
