@@ -22,8 +22,6 @@
     "knip:production": "knip --production",
     "lint": "eslint --color --cache --cache-location node_modules/.cache/eslint/",
     "preview": "turbo run preview --filter=@app/main",
-    "test": "vitest run --project unit",
-    "test:browser": "vitest run --project browser",
     "typecheck": "tsc",
     "workspace-check": "node packages/dev/workspace-cli/src/cli.ts check"
   },
@@ -34,14 +32,12 @@
   "devDependencies": {
     "@dev/build": "workspace:*",
     "@dev/eslint-plugin": "workspace:*",
-    "@dev/vitest-config": "workspace:*",
     "@dev/workspace-cli": "workspace:*",
     "@eslint/config-helpers": "^0.7.0",
     "@eslint/js": "^10.0.0",
     "@iconify/json": "^2.2.460",
     "@testing-library/jest-dom": "catalog:",
     "@vanilla-extract/css": "catalog:",
-    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "catalog:",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-solid": "^0.18.0",

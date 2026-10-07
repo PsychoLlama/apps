@@ -13,9 +13,13 @@
     "./broadcast-channel": "./src/transport/broadcast-channel.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@lib/polyfill": "workspace:*"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

@@ -62,7 +62,7 @@ describe('ErrorBoundaryFallback', () => {
       "Cannot read properties of undefined (reading 'x')",
     );
     expect(screen.getByText('Stack').nextElementSibling).toHaveTextContent(
-      /at thing \(file\.ts:1:1\)/,
+      'at thing (file.ts:1:1)',
     );
   });
 

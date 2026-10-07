@@ -17,7 +17,8 @@
     }
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@holz/ansi-terminal-backend": "0.9.1",
@@ -29,5 +30,8 @@
     "@lib/holz-config-filter": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/runtime-config": "workspace:*"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

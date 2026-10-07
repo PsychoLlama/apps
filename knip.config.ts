@@ -6,6 +6,14 @@ const config: KnipConfig = {
   // s6-setlock), not pnpm. The per-package `test:browser` scripts wrap vitest
   // in it to serialize Chromium.
   ignoreBinaries: ['chromium-lock'],
+  // Each package runs its own suites from `vitest.{unit,browser}.config.ts`
+  // (re-exporting the `@dev/vitest-config` presets). Packages don't list
+  // `vitest` themselves (its binary comes from the root), so the plugin
+  // must be enabled explicitly to credit the configs and test files.
+  vitest: {
+    config: ['vitest.{unit,browser}.config.ts'],
+    entry: ['src/**/*.test.{ts,tsx}', 'src/**/*.test.browser.{ts,tsx}'],
+  },
   workspaces: {
     '.': {
       entry: ['*.ts'],
@@ -35,7 +43,6 @@ const config: KnipConfig = {
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
         'src/**/*.css.ts!',
-        'src/**/*.test.{ts,tsx}',
         'vite.config.ts',
       ],
       // Project files need the production marker too: without it,
@@ -61,12 +68,7 @@ const config: KnipConfig = {
       vite: false,
     },
     'packages/lib/ui': {
-      // Co-located behavior tests run against a real browser via the
-      // per-package `vitest.browser.config.ts`. The default knip
-      // detection only picks up `*.test.{ts,tsx}` files.
       entry: [
-        'vitest.browser.config.ts',
-        'src/**/__tests__/*.test.browser.{ts,tsx}',
         // `_internal/*` primitives (e.g. floating-ui and its behavior
         // utilities) are a deliberate private API: fully built and
         // tested, but not yet wired to a public consumer
@@ -90,61 +92,11 @@ const config: KnipConfig = {
       // generate JS glue; it's provided by the nix devShell, not pnpm.
       ignoreBinaries: ['wasm-bindgen'],
     },
-    'packages/app/service-worker': {
-      // Cache Storage + `FetchEvent` only exist in a real browser, so
-      // the SW behavior tests live under `*.test.browser.ts`.
-      entry: [
-        'vitest.browser.config.ts',
-        'src/**/__tests__/*.test.browser.{ts,tsx}',
-      ],
-    },
-    'packages/app/beam': {
-      // The address book persists to real IndexedDB, so its behavior tests
-      // live under `*.test.browser.ts`.
-      entry: [
-        'vitest.browser.config.ts',
-        'src/**/__tests__/*.test.browser.{ts,tsx}',
-      ],
-    },
-    'packages/app/logs': {
-      // The viewer's archive read drives real IndexedDB, so its behavior
-      // tests live under `*.test.browser.ts`.
-      entry: [
-        'vitest.browser.config.ts',
-        'src/**/__tests__/*.test.browser.{ts,tsx}',
-      ],
-    },
-    'packages/lib/holz-idb-backend': {
-      // IndexedDB is only real in a browser, so the backend's behavior
-      // tests live under `*.test.browser.ts`, run via the per-package
-      // browser config.
-      entry: [
-        'vitest.browser.config.ts',
-        'src/**/__tests__/*.test.browser.{ts,tsx}',
-      ],
-    },
-    'packages/lib/vault': {
-      // Web Crypto and IndexedDB are only real in a browser, so the
-      // encryption round-trip tests live under `*.test.browser.ts`, run via
-      // the per-package browser config.
-      entry: [
-        'vitest.browser.config.ts',
-        'src/**/__tests__/*.test.browser.{ts,tsx}',
-      ],
-    },
     'packages/dev/vitest-config': {
       // Deps the shared preset pulls in by side effect rather than by a
       // named import, so knip can't see them: the browser-mode runtime and
       // the icon data `unplugin-icons` resolves at runtime.
       ignoreDependencies: ['@vitest/browser', '@iconify/json'],
-    },
-    'packages/lib/runtime-config': {
-      // OPFS is only real in a browser, so the persistence round-trip
-      // tests live under `*.test.browser.ts`.
-      entry: [
-        'vitest.browser.config.ts',
-        'src/**/__tests__/*.test.browser.{ts,tsx}',
-      ],
     },
   },
 };

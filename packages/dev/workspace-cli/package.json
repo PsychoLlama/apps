@@ -9,11 +9,15 @@
     "workspace": "./src/cli.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@pnpm/workspace.read-manifest": "^1000.3.1",
     "citty": "catalog:",
     "tinyexec": "^1.1.2"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

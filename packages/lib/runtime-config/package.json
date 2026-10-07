@@ -11,6 +11,7 @@
   },
   "scripts": {
     "typecheck": "tsc",
+    "test": "vitest run --config vitest.unit.config.ts",
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {

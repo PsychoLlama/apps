@@ -8,6 +8,7 @@
   "sideEffects": false,
   "exports": "./src/assert.ts",
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run --config vitest.unit.config.ts"
   }
 }

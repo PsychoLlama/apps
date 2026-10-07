@@ -12,7 +12,8 @@
     "./routes/*": "./src/routes/*.tsx"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@lib/classnames": "workspace:*",
@@ -27,5 +28,8 @@
   },
   "peerDependencies": {
     "solid-js": "*"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

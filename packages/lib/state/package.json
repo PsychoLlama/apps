@@ -10,12 +10,17 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@lib/assert": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": "*"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*",
+    "@vitest/coverage-v8": "^5.0.0"
   }
 }

@@ -20,7 +20,8 @@
     "./vite-plugin/svg-to-png-types": "./src/vite-plugin/svg-to-png-types.d.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run --config vitest.unit.config.ts"
   },
   "peerDependencies": {
     "vite": "*"

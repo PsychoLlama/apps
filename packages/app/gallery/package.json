@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Design system gallery \u2014 browse components and tokens.",
+  "description": "Design system gallery — browse components and tokens.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts"
@@ -12,7 +12,8 @@
     "./routes/*": "./src/routes/*.tsx"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@lib/gallery": "workspace:*",
@@ -26,5 +27,8 @@
   },
   "peerDependencies": {
     "solid-js": "*"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }
