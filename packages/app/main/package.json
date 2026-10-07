@@ -17,7 +17,7 @@
     "start": "vite start",
     "preview": "wrangler dev",
     "typecheck": "tsc",
-    "test": "vitest run --config vitest.unit.config.ts"
+    "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@app/scratchpad": "workspace:*",

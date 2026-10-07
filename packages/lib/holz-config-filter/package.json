@@ -9,7 +9,7 @@
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc",
-    "test": "vitest run --config vitest.unit.config.ts"
+    "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@holz/core": "catalog:",
