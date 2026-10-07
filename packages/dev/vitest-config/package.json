@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Shared Vitest building blocks: the common Vite plugin pipeline plus the per-package browser-test preset.",
+  "description": "Shared Vitest building blocks: the common Vite plugin pipeline plus the per-package unit and browser-test presets.",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
-    "./browser": "./src/browser.ts"
+    "./browser": "./src/browser.ts",
+    "./unit": "./src/unit.ts"
   },
   "scripts": {
     "typecheck": "tsc"
