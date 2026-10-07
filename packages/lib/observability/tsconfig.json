@@ -1,5 +1,6 @@
 {
   "extends": "../../../tsconfig.web.json",
+  "include": ["src", "*.ts"],
   "compilerOptions": {
     "types": ["node", "vite/client", "vitest/globals"]
   }

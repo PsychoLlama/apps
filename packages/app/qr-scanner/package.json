@@ -9,7 +9,8 @@
     "./routes/*": "./src/routes/*.tsx"
   },
   "scripts": {
-    "typecheck": "tsc && tsc -p src/worker/tsconfig.json"
+    "typecheck": "tsc && tsc -p src/worker/tsconfig.json",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@crate/qr-code": "workspace:*",
@@ -26,5 +27,8 @@
   "peerDependencies": {
     "@solidjs/router": "*",
     "solid-js": "*"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

@@ -1,3 +1,6 @@
+// The root tsconfig doubles as every package's base, so it can't set
+// `types: ["node"]` without leaking Node globals into web packages.
+/// <reference types="node" />
 import { includeIgnoreFile } from '@eslint/config-helpers';
 import eslint from '@eslint/js';
 import importPlugin from 'eslint-plugin-import';

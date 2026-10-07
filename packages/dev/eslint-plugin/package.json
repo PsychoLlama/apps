@@ -10,12 +10,14 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@typescript-eslint/utils": "^8.59.0"
   },
   "devDependencies": {
+    "@dev/vitest-config": "workspace:*",
     "@typescript-eslint/rule-tester": "^8.59.0"
   },
   "peerDependencies": {

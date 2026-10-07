@@ -39,7 +39,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
-      # Needed for the browser test project (`pnpm test:browser`). Local
+      # Needed for the per-package `test:browser` tasks. Local
       # dev uses the nix-provided chromium via `CHROMIUM_PATH`; CI uses
       # playwright's own binary.
       # Browser binaries are pinned to the playwright version, not the

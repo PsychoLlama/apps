@@ -18,7 +18,8 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@lib/design": "workspace:*",
@@ -28,5 +29,8 @@
   },
   "peerDependencies": {
     "solid-js": "*"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

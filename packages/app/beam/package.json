@@ -13,6 +13,7 @@
   },
   "scripts": {
     "typecheck": "tsc && tsc -p src/worker/tsconfig.json",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {

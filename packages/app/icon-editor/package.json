@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Icon editor app \u2014 pick, restyle, and export icons from the iconify catalog.",
+  "description": "Icon editor app — pick, restyle, and export icons from the iconify catalog.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts"
@@ -12,7 +12,8 @@
     "./routes/*": "./src/routes/*.tsx"
   },
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@lib/assert": "workspace:*",
@@ -25,7 +26,8 @@
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
-    "@dev/build": "workspace:*"
+    "@dev/build": "workspace:*",
+    "@dev/vitest-config": "workspace:*"
   },
   "peerDependencies": {
     "@solidjs/router": "*",

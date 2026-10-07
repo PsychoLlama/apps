@@ -8,9 +8,13 @@
   "sideEffects": false,
   "exports": "./src/index.ts",
   "scripts": {
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
     "@holz/core": "catalog:"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
   }
 }

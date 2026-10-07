@@ -1,13 +1,12 @@
 /**
  * Shared Vitest building blocks for the workspace's test suites.
  *
- * The unit suite runs centrally from the root `vitest.config.ts`; the browser
- * suite is split per package (each package owns a `vitest.browser.config.ts`
- * that re-exports `@dev/vitest-config/browser`, run under `chromium-lock`) so
- * turbo caches and reruns browser tests per package instead of booting Chromium
- * for the whole monorepo on every change. Both suites must transform source
- * through the *same* Vite plugin pipeline, so it lives here as the single
- * source of truth.
+ * Both suites are split per package: each package owns a `vitest.unit.config.ts`
+ * and/or `vitest.browser.config.ts` re-exporting `@dev/vitest-config/unit` or
+ * `@dev/vitest-config/browser` (the latter run under `chromium-lock`), so turbo
+ * caches and reruns tests per package instead of the whole monorepo on every
+ * change. Both suites must transform source through the *same* Vite plugin
+ * pipeline, so it lives here as the single source of truth.
  */
 
 import solid from 'vite-plugin-solid';
