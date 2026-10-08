@@ -1,4 +1,8 @@
 {
+  "$schema": "http://json.schemastore.org/tsconfig",
   "extends": "../../../tsconfig.web.json",
-  "include": ["src", "*.ts"]
+  "include": ["src", "*.ts"],
+  // The service worker is typed for its own global scope, not the DOM —
+  // see `src/service-worker/tsconfig.json`.
+  "exclude": ["src/service-worker"]
 }

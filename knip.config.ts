@@ -42,6 +42,9 @@ const config: KnipConfig = {
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
+        // Imported as `./service-worker?worker&url`; the query suffix
+        // hides the specifier from knip's resolver.
+        'src/service-worker/index.ts!',
         'src/**/*.css.ts!',
         'vite.config.ts',
       ],
@@ -52,9 +55,6 @@ const config: KnipConfig = {
       project: ['src/**/*.{ts,tsx}!'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
-        // Imported as `@app/service-worker?worker&url`; the query
-        // suffix hides the specifier from knip's resolver.
-        '@app/service-worker',
         // Listed directly so Vite's dep scanner picks it up at
         // startup; without it, the transitive import (via
         // `@vanilla-extract/css` from `@lib/ui`) is discovered

@@ -1,10 +1,10 @@
 /**
- * Browser service worker shipped by @app/main. Activates immediately
- * on install/upgrade and wires the `fetch` listener through
- * `fetch-handler.ts`. Everything beyond lifecycle lives there.
+ * Browser service worker. Activates immediately on install/upgrade and
+ * wires the `fetch` listener through `fetch-handler.ts`. Everything
+ * beyond lifecycle lives there.
  *
- * Consumed by `@app/main` via Vite's `?worker&url` import — the host
- * bundles this module and registers the resulting URL.
+ * `entry-client.tsx` imports this module via Vite's `?worker&url`,
+ * which bundles it separately and registers the resulting URL.
  */
 
 import { purgeStaleCaches } from './caches';

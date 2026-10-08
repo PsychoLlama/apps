@@ -438,9 +438,6 @@ importers:
       '@app/scratchpad':
         specifier: workspace:*
         version: link:../scratchpad
-      '@app/service-worker':
-        specifier: workspace:*
-        version: link:../service-worker
       '@app/settings':
         specifier: workspace:*
         version: link:../settings
@@ -605,25 +602,6 @@ importers:
       solid-js:
         specifier: 1.9.15
         version: 1.9.15
-
-  packages/app/service-worker:
-    dependencies:
-      '@lib/holz-idb-backend':
-        specifier: workspace:*
-        version: link:../../lib/holz-idb-backend
-      '@lib/observability':
-        specifier: workspace:*
-        version: link:../../lib/observability
-    devDependencies:
-      '@dev/vite-plugin-instrumentation-scope':
-        specifier: workspace:*
-        version: link:../../dev/vite-plugin-instrumentation-scope
-      '@dev/vitest-config':
-        specifier: workspace:*
-        version: link:../../dev/vitest-config
-      vite:
-        specifier: ^8.0.0
-        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
 
   packages/app/settings:
     dependencies:
