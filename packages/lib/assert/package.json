@@ -10,8 +10,5 @@
   "scripts": {
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts"
-  },
-  "devDependencies": {
-    "@dev/vitest-config": "workspace:*"
   }
 }

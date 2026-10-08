@@ -18,15 +18,10 @@
     "vitest": "*"
   },
   "devDependencies": {
-    "@dev/babel-plugin-erase-overload-signatures": "workspace:*",
-    "@dev/vite-plugin-gitignore": "workspace:*",
-    "@dev/vite-plugin-instrumentation-scope": "workspace:*",
+    "@dev/vite-plugin-substrate": "workspace:*",
     "@iconify/json": "catalog:",
-    "@vanilla-extract/vite-plugin": "catalog:",
     "@vitest/browser": "catalog:",
     "@vitest/browser-playwright": "catalog:",
-    "playwright": "catalog:",
-    "unplugin-icons": "catalog:",
-    "vite-plugin-solid": "catalog:"
+    "playwright": "catalog:"
   }
 }

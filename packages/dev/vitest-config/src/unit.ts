@@ -8,15 +8,15 @@
  */
 
 import { defineConfig } from 'vitest/config';
-import { gitignore } from '@dev/vite-plugin-gitignore';
+import { substrate } from '@dev/vite-plugin-substrate';
 
 // Self-reference through the package's own export map rather than a relative
 // path: this file is loaded by vitest's node-ESM config loader (not the
 // bundler), where an extensionless `./index` won't resolve.
-import { sharedPlugins, sharedServerDeps } from '@dev/vitest-config';
+import { sharedServerDeps } from '@dev/vitest-config';
 
 export default defineConfig({
-  plugins: [...sharedPlugins(), gitignore()],
+  plugins: substrate(),
   test: {
     name: 'unit',
     environment: 'jsdom',
