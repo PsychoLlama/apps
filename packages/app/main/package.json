@@ -45,6 +45,7 @@
     "vite": "catalog:"
   },
   "devDependencies": {
+    "@dev/babel-plugin-erase-overload-signatures": "workspace:*",
     "@dev/build": "workspace:*",
     "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",

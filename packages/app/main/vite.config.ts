@@ -6,7 +6,7 @@ import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
-import { eraseOverloadSignatures } from '@dev/build/babel-plugin/erase-overload-signatures';
+import { eraseOverloadSignatures } from '@dev/babel-plugin-erase-overload-signatures';
 import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets';
 import { iconPacks } from '@dev/vite-plugin-icon-packs';
 import { inlineScript } from '@dev/build/vite-plugin/inline-script';

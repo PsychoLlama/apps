@@ -1,0 +1,14 @@
+{
+  "name": "@dev/babel-plugin-erase-overload-signatures",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Babel plugin that drops TypeScript overload signatures ahead of `solid-refresh`.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}
