@@ -46,10 +46,6 @@ export default defineConfig({
       // `public/_headers`.
       'Service-Worker-Allowed': '/',
     },
-    allowedHosts: [
-      // Cloudflare Tunnel occasionally used for testing on mobile.
-      'apps.jessegibson.dev',
-    ],
   },
   plugins: [
     instrumentationScope(),
