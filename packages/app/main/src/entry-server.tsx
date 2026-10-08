@@ -1,5 +1,5 @@
 // @refresh reload
-/// <reference types="@dev/build/vite-plugin/pwa-manifest-types" />
+/// <reference types="@dev/vite-plugin-pwa/client" />
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
 import {
@@ -47,7 +47,7 @@ export default createHandler(() => (
             media="(prefers-color-scheme: dark)"
             content={defaultColors.dark}
           />
-          {/* Stable, revalidating URL — see the `pwa-manifest` plugin. */}
+          {/* Stable, revalidating URL — see `@dev/vite-plugin-pwa`. */}
           <link rel="manifest" href={manifestUrl} />
           {/* Render-blocking head script: restamps `data-theme` from
               the persisted preference before paint, falling through to

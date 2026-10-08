@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import type { Plugin } from 'vite';
 import type { ImageResource, WebAppManifest } from 'web-app-manifest';
 import { assert } from '@lib/assert';
-import { rasterizeSvg } from './resvg.ts';
+import { rasterizeSvg } from '@dev/vite-plugin-svg-to-png/rasterize';
 
 const VIRTUAL_ID = 'virtual:pwa-manifest';
 const RESOLVED_ID = '\0virtual:pwa-manifest';
@@ -102,7 +102,7 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
     });
 
   return {
-    name: '@dev/build:pwa-manifest',
+    name: '@dev/vite-plugin-pwa',
     enforce: 'pre',
 
     configResolved(resolved) {

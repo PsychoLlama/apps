@@ -11,8 +11,8 @@ import { assertHashedAssets } from '@dev/vite-plugin-assert-hashed-assets';
 import { iconPacks } from '@dev/vite-plugin-icon-packs';
 import { inlineScript } from '@dev/vite-plugin-inline-script';
 import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
-import { pwaManifest } from '@dev/build/vite-plugin/pwa-manifest';
-import { svgToPng } from '@dev/build/vite-plugin/svg-to-png';
+import { pwaManifest } from '@dev/vite-plugin-pwa';
+import { svgToPng } from '@dev/vite-plugin-svg-to-png';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');

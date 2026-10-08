@@ -404,6 +404,12 @@ importers:
       '@dev/vite-plugin-instrumentation-scope':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-instrumentation-scope
+      '@dev/vite-plugin-pwa':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-pwa
+      '@dev/vite-plugin-svg-to-png':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-svg-to-png
       '@solidjs/vite-plugin-nitro-2':
         specifier: 0.3.2
         version: 0.3.2(oxc-parser@0.150.0)(rolldown@1.1.5)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
@@ -557,21 +563,7 @@ importers:
 
   packages/dev/babel-plugin-erase-overload-signatures: {}
 
-  packages/dev/build:
-    dependencies:
-      vite:
-        specifier: ^8.0.0
-        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
-    devDependencies:
-      '@lib/assert':
-        specifier: workspace:*
-        version: link:../../lib/assert
-      '@resvg/resvg-wasm':
-        specifier: ^2.6.2
-        version: 2.6.2
-      '@types/web-app-manifest':
-        specifier: ^1.0.9
-        version: 1.0.9
+  packages/dev/build: {}
 
   packages/dev/eslint-plugin:
     dependencies:
@@ -624,6 +616,32 @@ importers:
       vite:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+
+  packages/dev/vite-plugin-pwa:
+    dependencies:
+      vite:
+        specifier: ^8.0.0
+        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+    devDependencies:
+      '@dev/vite-plugin-svg-to-png':
+        specifier: workspace:*
+        version: link:../vite-plugin-svg-to-png
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../../lib/assert
+      '@types/web-app-manifest':
+        specifier: ^1.0.9
+        version: 1.0.9
+
+  packages/dev/vite-plugin-svg-to-png:
+    dependencies:
+      vite:
+        specifier: ^8.0.0
+        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+    devDependencies:
+      '@resvg/resvg-wasm':
+        specifier: ^2.6.2
+        version: 2.6.2
 
   packages/dev/vitest-config:
     dependencies:

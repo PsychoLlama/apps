@@ -1,0 +1,23 @@
+{
+  "name": "@dev/vite-plugin-pwa",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Vite plugin that emits a web app manifest and its raster icons behind `virtual:pwa-manifest`.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.d.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  },
+  "devDependencies": {
+    "@dev/vite-plugin-svg-to-png": "workspace:*",
+    "@lib/assert": "workspace:*",
+    "@types/web-app-manifest": "^1.0.9"
+  }
+}

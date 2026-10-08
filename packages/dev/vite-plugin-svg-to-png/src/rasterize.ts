@@ -12,9 +12,11 @@ let wasmReady: Promise<void> | undefined;
 
 /**
  * Initialize the resvg WASM module exactly once per process. Both
- * `svg-to-png` and `pwa-manifest` rasterize through the same WASM,
- * and `initWasm` throws on the second call — share the init promise
- * so concurrent plugins coexist.
+ * this plugin and `@dev/vite-plugin-pwa` rasterize through the same
+ * WASM, and `initWasm` throws on the second call — share the init
+ * promise so concurrent plugins coexist. That only holds while both
+ * import this one module: copying it into another package would
+ * reintroduce the double init.
  */
 export const ensureResvgWasm = (): Promise<void> => {
   wasmReady ??= readFile(WASM_PATH).then(initWasm);

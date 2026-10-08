@@ -51,6 +51,8 @@
     "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-inline-script": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
+    "@dev/vite-plugin-pwa": "workspace:*",
+    "@dev/vite-plugin-svg-to-png": "workspace:*",
     "@solidjs/vite-plugin-nitro-2": "0.3.2",
     "@vanilla-extract/vite-plugin": "^5.2.2",
     "typescript": "catalog:",
