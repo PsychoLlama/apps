@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@dev/build": "workspace:*",
+    "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@solidjs/vite-plugin-nitro-2": "0.3.2",
     "@vanilla-extract/vite-plugin": "^5.2.2",

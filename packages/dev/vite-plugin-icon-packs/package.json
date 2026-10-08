@@ -1,0 +1,22 @@
+{
+  "name": "@dev/vite-plugin-icon-packs",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Vite plugin that serves paginated Iconify pack data behind `virtual:icon-packs`.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.d.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  },
+  "devDependencies": {
+    "@iconify/json": "catalog:"
+  }
+}

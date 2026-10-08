@@ -9,8 +9,6 @@
     "./babel-plugin/erase-overload-signatures": "./src/babel-plugin/erase-overload-signatures.ts",
     "./ignore": "./src/ignore.ts",
     "./vite-plugin/assert-hashed-assets": "./src/vite-plugin/assert-hashed-assets.ts",
-    "./vite-plugin/icon-packs": "./src/vite-plugin/icon-packs/index.ts",
-    "./vite-plugin/icon-packs-types": "./src/vite-plugin/icon-packs-types.d.ts",
     "./vite-plugin/inline-script": "./src/vite-plugin/inline-script.ts",
     "./vite-plugin/pwa-manifest": "./src/vite-plugin/pwa-manifest.ts",
     "./vite-plugin/pwa-manifest-types": "./src/vite-plugin/pwa-manifest-types.d.ts",
@@ -25,7 +23,6 @@
     "vite": "*"
   },
   "devDependencies": {
-    "@iconify/json": "catalog:",
     "@lib/assert": "workspace:*",
     "@resvg/resvg-wasm": "^2.6.2",
     "@types/web-app-manifest": "^1.0.9",

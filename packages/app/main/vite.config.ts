@@ -8,7 +8,7 @@ import Icons from 'unplugin-icons/vite';
 import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
 import { eraseOverloadSignatures } from '@dev/build/babel-plugin/erase-overload-signatures';
 import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets';
-import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
+import { iconPacks } from '@dev/vite-plugin-icon-packs';
 import { inlineScript } from '@dev/build/vite-plugin/inline-script';
 import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
 import { pwaManifest } from '@dev/build/vite-plugin/pwa-manifest';

@@ -13,7 +13,7 @@ import solid from 'vite-plugin-solid';
 import Icons from 'unplugin-icons/vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
-import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
+import { iconPacks } from '@dev/vite-plugin-icon-packs';
 import { eraseOverloadSignatures } from '@dev/build/babel-plugin/erase-overload-signatures';
 
 /**

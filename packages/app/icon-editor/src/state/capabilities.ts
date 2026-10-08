@@ -6,7 +6,7 @@
  * down instead of leaving it to settle unwanted.
  */
 
-/// <reference types="@dev/build/vite-plugin/icon-packs-types" />
+/// <reference types="@dev/vite-plugin-icon-packs/client" />
 
 import { createLogger, toError } from '@lib/observability';
 import indexUrl from 'virtual:icon-packs';
