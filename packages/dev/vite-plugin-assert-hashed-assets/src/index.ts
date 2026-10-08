@@ -10,11 +10,12 @@ import type { Plugin } from 'vite';
  * Verifies the resolved templates rather than the produced filenames
  * because "is this string a hash?" has no reliable answer.
  *
- * Skips SSR environments — server bundles aren't browser-cached.
+ * Skips SSR environments — server bundles aren't browser-cached — and
+ * test mode, which never ships what it builds.
  */
 export const assertHashedAssets = (): Plugin => ({
   name: '@dev/vite-plugin-assert-hashed-assets',
-  apply: 'build',
+  apply: (_config, { command, mode }) => command === 'build' && mode !== 'test',
 
   // Vite 6+ environment API: filter at registration so the plugin
   // only attaches to non-SSR environments. Closure-captured
@@ -33,13 +34,13 @@ export const assertHashedAssets = (): Plugin => ({
 
     for (const [key, value] of Object.entries(templates)) {
       if (typeof value === 'function') {
-        this.error(
+        return this.error(
           `${key} is a function — cannot statically verify it produces hashed filenames. Use a string template containing [hash], or remove this plugin if you've verified the function is safe.`,
         );
       }
 
       if (!value.includes('[hash]')) {
-        this.error(
+        return this.error(
           `${key} = "${value}" must contain [hash]. Long-cache headers on these assets would otherwise serve stale content under reused names.`,
         );
       }

@@ -21,6 +21,11 @@ const callRenderStart = (
   hook.call(fakeContext, templates);
 };
 
+const callApply = (plugin: Plugin, command: string, mode: string) => {
+  const hook = plugin.apply as (config: unknown, env: unknown) => boolean;
+  return hook({}, { command, mode });
+};
+
 const callApplyToEnvironment = (plugin: Plugin, ssr: boolean) => {
   const hook = plugin.applyToEnvironment as (env: unknown) => boolean;
   return hook.call(fakeContext, { config: { build: { ssr } } });
@@ -75,6 +80,15 @@ describe('assertHashedAssets', () => {
         entryFileNames: () => 'assets/safe-[hash].js',
       }),
     ).toThrow(/function/);
+  });
+
+  it('only applies to non-test builds', () => {
+    const plugin = assertHashedAssets();
+
+    expect(callApply(plugin, 'build', 'production')).toBe(true);
+    expect(callApply(plugin, 'build', 'test')).toBe(false);
+    expect(callApply(plugin, 'serve', 'development')).toBe(false);
+    expect(callApply(plugin, 'serve', 'test')).toBe(false);
   });
 
   it('declines to attach to SSR environments', () => {
