@@ -1,0 +1,18 @@
+{
+  "name": "@dev/gitignore",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Reads git's ignore rules (repo, local excludes, global) so dev tooling can skip the same files git does.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
+  },
+  "dependencies": {
+    "tinyexec": "catalog:"
+  }
+}

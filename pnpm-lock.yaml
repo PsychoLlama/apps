@@ -161,6 +161,9 @@ catalogs:
     playwright:
       specifier: ^1.59.1
       version: 1.63.0
+    tinyexec:
+      specifier: ^1.1.2
+      version: 1.3.1
     turbo:
       specifier: ^2.5.8
       version: 2.11.5
@@ -658,6 +661,12 @@ importers:
         specifier: ^8.59.0
         version: 8.71.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
 
+  packages/dev/gitignore:
+    dependencies:
+      tinyexec:
+        specifier: 'catalog:'
+        version: 1.3.1
+
   packages/dev/vite-plugin-assert-hashed-assets:
     dependencies:
       vite:
@@ -769,7 +778,7 @@ importers:
         specifier: 'catalog:'
         version: 0.2.2
       tinyexec:
-        specifier: ^1.1.2
+        specifier: 'catalog:'
         version: 1.3.1
     devDependencies:
       '@dev/vitest-config':
