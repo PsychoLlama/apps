@@ -25,19 +25,15 @@ export interface AppOptions {
    */
   solidStart?: SolidStartOverrides | false;
 
-  /**
-   * Emit a web app manifest with raster icons. Also enables
-   * `?to-png=<size>` SVG imports, which apps use for the icons the
-   * manifest doesn't cover (favicons, apple-touch-icon).
-   */
+  /** Emit a web app manifest with raster icons. */
   pwa?: PwaManifestConfig;
 }
 
 /**
  * The plugin pipeline every app builds with: git-aware file watching,
- * instrumentation scopes, vanilla-extract, icon components, and
- * SolidStart, plus opt-in PWA support. App-specific plugins go
- * alongside it in the app's own config.
+ * instrumentation scopes, vanilla-extract, icon components,
+ * `?to-png=<size>` SVG imports, and SolidStart, plus opt-in PWA
+ * support. App-specific plugins go alongside it in the app's own config.
  */
 export const app = (options: AppOptions = {}): PluginOption[] => {
   const { solidStart: startOptions = {}, pwa } = options;
@@ -59,7 +55,8 @@ export const app = (options: AppOptions = {}): PluginOption[] => {
           babel: { plugins: [eraseOverloadSignatures()] },
         },
       }),
-    pwa && [svgToPng(), pwaManifest(pwa)],
+    svgToPng(),
+    pwa && pwaManifest(pwa),
     vanillaExtractPlugin(),
     Icons({ compiler: 'solid' }),
     assertHashedAssets(),
