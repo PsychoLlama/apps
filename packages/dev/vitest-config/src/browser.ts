@@ -8,43 +8,33 @@
  */
 
 import { playwright } from '@vitest/browser-playwright';
-import { defineConfig } from 'vitest/config';
-import { substrate } from '@dev/vite-plugin-substrate';
-import { sharedServerDeps } from './shared.ts';
+import { defineConfig, mergeConfig } from 'vitest/config';
+import { sharedConfig } from './shared.ts';
 
-export default defineConfig({
-  plugins: substrate(),
-  test: {
-    name: 'browser',
-    globals: true,
-    // Pin the suite to UTC so anything touching `Date`/`Intl` behaves
-    // identically across dev machines and CI, independent of the host's
-    // local timezone.
-    env: { TZ: 'UTC' },
-    // Default is 15s. Tighter budget surfaces accidental slowness (e.g.
-    // tests waiting on Playwright actionability checks against an
-    // unactionable element) before it racks up wall-clock.
-    testTimeout: 5_000,
-    include: ['src/**/*.test.browser.{ts,tsx}'],
-    server: { deps: sharedServerDeps },
-    typecheck: { enabled: true },
-    browser: {
-      enabled: true,
-      provider: playwright({
-        launchOptions: {
-          executablePath: process.env.CHROMIUM_PATH,
-        },
-        // Cap Playwright's auto-wait loop. Default is 30s, which means an
-        // action against an unactionable element (disabled, off-screen,
-        // covered) silently retries until it eats the test budget. 2s is a
-        // multiple of any legitimate render/animation we trigger, but tight
-        // enough that a misuse fails fast with Playwright's own diagnostic
-        // ("element is not enabled", etc.) rather than as a generic vitest
-        // timeout.
-        actionTimeout: 2_000,
-      }),
-      headless: true,
-      instances: [{ browser: 'chromium' }],
+export default mergeConfig(
+  sharedConfig,
+  defineConfig({
+    test: {
+      name: 'browser',
+      include: ['src/**/*.test.browser.{ts,tsx}'],
+      browser: {
+        enabled: true,
+        provider: playwright({
+          launchOptions: {
+            executablePath: process.env.CHROMIUM_PATH,
+          },
+          // Cap Playwright's auto-wait loop. Default is 30s, which means an
+          // action against an unactionable element (disabled, off-screen,
+          // covered) silently retries until it eats the test budget. 2s is a
+          // multiple of any legitimate render/animation we trigger, but tight
+          // enough that a misuse fails fast with Playwright's own diagnostic
+          // ("element is not enabled", etc.) rather than as a generic vitest
+          // timeout.
+          actionTimeout: 2_000,
+        }),
+        headless: true,
+        instances: [{ browser: 'chromium' }],
+      },
     },
-  },
-});
+  }),
+);

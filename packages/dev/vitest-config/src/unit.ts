@@ -7,28 +7,16 @@
  * monorepo on every change.
  */
 
-import { defineConfig } from 'vitest/config';
-import { substrate } from '@dev/vite-plugin-substrate';
-import { sharedServerDeps } from './shared.ts';
+import { defineConfig, mergeConfig } from 'vitest/config';
+import { sharedConfig } from './shared.ts';
 
-export default defineConfig({
-  plugins: substrate(),
-  test: {
-    name: 'unit',
-    environment: 'jsdom',
-    globals: true,
-    // Pin the suite to UTC so anything touching `Date`/`Intl` behaves
-    // identically across dev machines and CI, independent of the host's
-    // local timezone.
-    env: { TZ: 'UTC' },
-    // Default is 15s. Tighter budget surfaces accidental slowness (e.g.
-    // tests waiting on Playwright actionability checks against an
-    // unactionable element) before it racks up wall-clock. The slowest
-    // legitimate test is well under 1s; 5s leaves an order of magnitude
-    // of headroom.
-    testTimeout: 5_000,
-    include: ['src/**/*.test.{ts,tsx}'],
-    server: { deps: sharedServerDeps },
-    typecheck: { enabled: true },
-  },
-});
+export default mergeConfig(
+  sharedConfig,
+  defineConfig({
+    test: {
+      name: 'unit',
+      environment: 'jsdom',
+      include: ['src/**/*.test.{ts,tsx}'],
+    },
+  }),
+);
