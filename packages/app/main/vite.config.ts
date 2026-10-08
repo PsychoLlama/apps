@@ -2,17 +2,9 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
-import { solidStart } from '@solidjs/start/config';
-import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
-import Icons from 'unplugin-icons/vite';
-import { eraseOverloadSignatures } from '@dev/babel-plugin-erase-overload-signatures';
-import { assertHashedAssets } from '@dev/vite-plugin-assert-hashed-assets';
-import { gitignore } from '@dev/vite-plugin-gitignore';
+import { substrate } from '@dev/vite-plugin-substrate';
 import { iconPacks } from '@dev/vite-plugin-icon-packs';
 import { inlineScript } from '@dev/vite-plugin-inline-script';
-import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
-import { pwaManifest } from '@dev/vite-plugin-pwa';
-import { svgToPng } from '@dev/vite-plugin-svg-to-png';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 
 // Manifest theme bakes in at build time — the spec has no light/dark
@@ -42,8 +34,31 @@ export default defineConfig({
     },
   },
   plugins: [
-    gitignore(),
-    instrumentationScope(),
+    substrate({
+      solidStart: true,
+      pwa: {
+        icon: {
+          src: resolve(import.meta.dirname, 'src/branding/brandmark.svg'),
+          maskable: resolve(
+            import.meta.dirname,
+            'src/branding/brandmark-maskable.svg',
+          ),
+          sizes: [192, 512],
+        },
+        manifest: {
+          id: '/',
+          // `short_name` would only matter if it differed from `name`.
+          // Browsers fall back to `name` when it's absent.
+          name: 'Apps',
+          description: 'A collection of personal apps.',
+          start_url: '/',
+          scope: '/',
+          display: 'standalone',
+          theme_color: manifestThemeColor,
+          background_color: manifestThemeColor,
+        },
+      },
+    }),
     inlineScript({
       id: 'virtual:theme-prelude',
       // `import.meta.resolve` walks pnpm's symlinks the same way as a
@@ -55,15 +70,6 @@ export default defineConfig({
       // import that pulls a `.css.ts` module's runtime registration
       // into the head script.
       maxBytes: 2048,
-    }),
-    solidStart({
-      solid: { babel: { plugins: [eraseOverloadSignatures()] } },
-      // Suppresses the dev toolbar added in 2.0.0-rc.2, which otherwise
-      // pins a persistent overlay to every dev page. Turning it off swaps
-      // `<DevToolbar>` back out for the plain error boundary, so uncaught
-      // errors still surface — just as the 500 fallback plus a console
-      // trace instead of the toolbar's error viewer.
-      devOverlay: false,
     }),
     nitro({
       preset: 'static',
@@ -119,33 +125,5 @@ export default defineConfig({
       },
     }),
     iconPacks(),
-    svgToPng(),
-    pwaManifest({
-      icon: {
-        src: resolve(import.meta.dirname, 'src/branding/brandmark.svg'),
-        maskable: resolve(
-          import.meta.dirname,
-          'src/branding/brandmark-maskable.svg',
-        ),
-        sizes: [192, 512],
-      },
-      manifest: {
-        id: '/',
-        // `short_name` would only matter if it differed from `name`.
-        // Browsers fall back to `name` when it's absent.
-        name: 'Apps',
-        description: 'A collection of personal apps.',
-        start_url: '/',
-        scope: '/',
-        display: 'standalone',
-        theme_color: manifestThemeColor,
-        background_color: manifestThemeColor,
-      },
-    }),
-    vanillaExtractPlugin(),
-    Icons({
-      compiler: 'solid',
-    }),
-    assertHashedAssets(),
   ],
 });

@@ -122,6 +122,9 @@ catalogs:
     '@iconify/json':
       specifier: ^2.2.470
       version: 2.2.535
+    '@solidjs/start':
+      specifier: 2.0.5
+      version: 2.0.5
     '@solidjs/testing-library':
       specifier: ^0.8.10
       version: 0.8.10
@@ -137,6 +140,9 @@ catalogs:
     '@vanilla-extract/dynamic':
       specifier: ^2.1.5
       version: 2.1.5
+    '@vanilla-extract/vite-plugin':
+      specifier: ^5.2.2
+      version: 5.2.6
     '@vitest/browser':
       specifier: ^5.0.0
       version: 5.0.2
@@ -170,6 +176,9 @@ catalogs:
     unplugin-icons:
       specifier: ^24.0.0
       version: 24.0.0
+    vite-plugin-solid:
+      specifier: ^2.11.11
+      version: 2.11.14
     vitest:
       specifier: ^5.0.0
       version: 5.0.2
@@ -469,7 +478,7 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0(solid-js@1.9.15)
       '@solidjs/start':
-        specifier: 2.0.5
+        specifier: 'catalog:'
         version: 2.0.5(@solidjs/router@1.0.0(solid-js@1.9.15))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.0.2))(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       '@vanilla-extract/css':
         specifier: 'catalog:'
@@ -484,15 +493,6 @@ importers:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
     devDependencies:
-      '@dev/babel-plugin-erase-overload-signatures':
-        specifier: workspace:*
-        version: link:../../dev/babel-plugin-erase-overload-signatures
-      '@dev/vite-plugin-assert-hashed-assets':
-        specifier: workspace:*
-        version: link:../../dev/vite-plugin-assert-hashed-assets
-      '@dev/vite-plugin-gitignore':
-        specifier: workspace:*
-        version: link:../../dev/vite-plugin-gitignore
       '@dev/vite-plugin-icon-packs':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-icon-packs
@@ -505,6 +505,9 @@ importers:
       '@dev/vite-plugin-pwa':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-pwa
+      '@dev/vite-plugin-substrate':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-substrate
       '@dev/vite-plugin-svg-to-png':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-svg-to-png
@@ -514,9 +517,6 @@ importers:
       '@solidjs/vite-plugin-nitro-2':
         specifier: 0.3.2
         version: 0.3.2(oxc-parser@0.150.0)(rolldown@1.1.5)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
-      '@vanilla-extract/vite-plugin':
-        specifier: ^5.2.2
-        version: 5.2.6(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(supports-color@10.2.2)(terser@5.48.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))(yaml@2.9.1)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -672,10 +672,6 @@ importers:
       vite:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
-    devDependencies:
-      '@dev/vitest-config':
-        specifier: workspace:*
-        version: link:../vitest-config
 
   packages/dev/vite-plugin-gitignore:
     dependencies:
@@ -728,6 +724,42 @@ importers:
         specifier: ^1.0.9
         version: 1.0.9
 
+  packages/dev/vite-plugin-substrate:
+    dependencies:
+      '@dev/babel-plugin-erase-overload-signatures':
+        specifier: workspace:*
+        version: link:../babel-plugin-erase-overload-signatures
+      '@dev/vite-plugin-assert-hashed-assets':
+        specifier: workspace:*
+        version: link:../vite-plugin-assert-hashed-assets
+      '@dev/vite-plugin-gitignore':
+        specifier: workspace:*
+        version: link:../vite-plugin-gitignore
+      '@dev/vite-plugin-instrumentation-scope':
+        specifier: workspace:*
+        version: link:../vite-plugin-instrumentation-scope
+      '@dev/vite-plugin-pwa':
+        specifier: workspace:*
+        version: link:../vite-plugin-pwa
+      '@dev/vite-plugin-svg-to-png':
+        specifier: workspace:*
+        version: link:../vite-plugin-svg-to-png
+      '@solidjs/start':
+        specifier: 'catalog:'
+        version: 2.0.5(@solidjs/router@1.0.0(solid-js@1.9.15))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.0.2))(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+      '@vanilla-extract/vite-plugin':
+        specifier: 'catalog:'
+        version: 5.2.6(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(supports-color@10.2.2)(terser@5.48.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))(yaml@2.9.1)
+      unplugin-icons:
+        specifier: 'catalog:'
+        version: 24.0.0(esbuild@0.28.2)(rolldown@1.1.5)(rollup@4.62.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+      vite:
+        specifier: ^8.0.0
+        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+      vite-plugin-solid:
+        specifier: 'catalog:'
+        version: 2.11.14(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.0.2))(solid-js@1.9.15)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
+
   packages/dev/vite-plugin-svg-to-png:
     dependencies:
       vite:
@@ -747,24 +779,12 @@ importers:
         specifier: '*'
         version: 5.0.2(@types/node@26.1.2)(@vitest/browser-playwright@5.0.2)(@vitest/coverage-v8@5.0.2)(@vitest/ui@5.0.2)(jsdom@30.1.1)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
     devDependencies:
-      '@dev/babel-plugin-erase-overload-signatures':
+      '@dev/vite-plugin-substrate':
         specifier: workspace:*
-        version: link:../babel-plugin-erase-overload-signatures
-      '@dev/vite-plugin-gitignore':
-        specifier: workspace:*
-        version: link:../vite-plugin-gitignore
-      '@dev/vite-plugin-icon-packs':
-        specifier: workspace:*
-        version: link:../vite-plugin-icon-packs
-      '@dev/vite-plugin-instrumentation-scope':
-        specifier: workspace:*
-        version: link:../vite-plugin-instrumentation-scope
+        version: link:../vite-plugin-substrate
       '@iconify/json':
         specifier: 'catalog:'
         version: 2.2.535
-      '@vanilla-extract/vite-plugin':
-        specifier: ^5.2.2
-        version: 5.2.6(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(supports-color@10.2.2)(terser@5.48.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))(yaml@2.9.1)
       '@vitest/browser':
         specifier: 'catalog:'
         version: 5.0.2(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))(vitest@5.0.2)
@@ -774,12 +794,6 @@ importers:
       playwright:
         specifier: 'catalog:'
         version: 1.63.0
-      unplugin-icons:
-        specifier: 'catalog:'
-        version: 24.0.0(esbuild@0.28.2)(rolldown@1.1.5)(rollup@4.62.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
-      vite-plugin-solid:
-        specifier: ^2.11.11
-        version: 2.11.14(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.0.2))(solid-js@1.9.15)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
 
   packages/dev/workspace-cli:
     dependencies:
@@ -797,11 +811,7 @@ importers:
         specifier: workspace:*
         version: link:../vitest-config
 
-  packages/lib/assert:
-    devDependencies:
-      '@dev/vitest-config':
-        specifier: workspace:*
-        version: link:../../dev/vitest-config
+  packages/lib/assert: {}
 
   packages/lib/classnames:
     devDependencies:

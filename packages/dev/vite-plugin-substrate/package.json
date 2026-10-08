@@ -1,0 +1,29 @@
+{
+  "name": "@dev/vite-plugin-substrate",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Vite plugin bundling the shared plugin pipeline every app builds with.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@dev/babel-plugin-erase-overload-signatures": "workspace:*",
+    "@dev/vite-plugin-assert-hashed-assets": "workspace:*",
+    "@dev/vite-plugin-gitignore": "workspace:*",
+    "@dev/vite-plugin-instrumentation-scope": "workspace:*",
+    "@dev/vite-plugin-pwa": "workspace:*",
+    "@dev/vite-plugin-svg-to-png": "workspace:*",
+    "@solidjs/start": "catalog:",
+    "@vanilla-extract/vite-plugin": "catalog:",
+    "unplugin-icons": "catalog:",
+    "vite-plugin-solid": "catalog:"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  }
+}
