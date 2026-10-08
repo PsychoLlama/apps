@@ -5,7 +5,7 @@ import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
-import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
+import { generatedArtifacts, scratchDir } from '@dev/vitest-config/ignore';
 import { eraseOverloadSignatures } from '@dev/babel-plugin-erase-overload-signatures';
 import { assertHashedAssets } from '@dev/vite-plugin-assert-hashed-assets';
 import { iconPacks } from '@dev/vite-plugin-icon-packs';

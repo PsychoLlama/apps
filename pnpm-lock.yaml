@@ -389,9 +389,6 @@ importers:
       '@dev/babel-plugin-erase-overload-signatures':
         specifier: workspace:*
         version: link:../../dev/babel-plugin-erase-overload-signatures
-      '@dev/build':
-        specifier: workspace:*
-        version: link:../../dev/build
       '@dev/vite-plugin-assert-hashed-assets':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-assert-hashed-assets
@@ -410,6 +407,9 @@ importers:
       '@dev/vite-plugin-svg-to-png':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-svg-to-png
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
       '@solidjs/vite-plugin-nitro-2':
         specifier: 0.3.2
         version: 0.3.2(oxc-parser@0.150.0)(rolldown@1.1.5)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
@@ -563,8 +563,6 @@ importers:
 
   packages/dev/babel-plugin-erase-overload-signatures: {}
 
-  packages/dev/build: {}
-
   packages/dev/eslint-plugin:
     dependencies:
       '@typescript-eslint/utils':
@@ -655,9 +653,6 @@ importers:
       '@dev/babel-plugin-erase-overload-signatures':
         specifier: workspace:*
         version: link:../babel-plugin-erase-overload-signatures
-      '@dev/build':
-        specifier: workspace:*
-        version: link:../build
       '@dev/vite-plugin-icon-packs':
         specifier: workspace:*
         version: link:../vite-plugin-icon-packs
@@ -702,7 +697,11 @@ importers:
         specifier: workspace:*
         version: link:../vitest-config
 
-  packages/lib/assert: {}
+  packages/lib/assert:
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
 
   packages/lib/classnames:
     devDependencies:

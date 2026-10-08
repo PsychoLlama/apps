@@ -3,12 +3,13 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Shared Vitest building blocks: the common Vite plugin pipeline plus the per-package unit and browser-test presets.",
+  "description": "Shared Vitest building blocks: the common Vite plugin pipeline, the per-package unit and browser-test presets, and the watcher ignore globs Vite configs share.",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
     "./browser": "./src/browser.ts",
-    "./unit": "./src/unit.ts"
+    "./unit": "./src/unit.ts",
+    "./ignore": "./src/ignore.ts"
   },
   "scripts": {
     "typecheck": "tsc"
@@ -19,7 +20,6 @@
   },
   "devDependencies": {
     "@dev/babel-plugin-erase-overload-signatures": "workspace:*",
-    "@dev/build": "workspace:*",
     "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@iconify/json": "catalog:",
