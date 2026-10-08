@@ -13,7 +13,6 @@ import solid from 'vite-plugin-solid';
 import Icons from 'unplugin-icons/vite';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
-import { iconPacks } from '@dev/vite-plugin-icon-packs';
 import { eraseOverloadSignatures } from '@dev/babel-plugin-erase-overload-signatures';
 
 /**
@@ -26,7 +25,6 @@ export const sharedPlugins = () => [
   instrumentationScope(),
   solid({ babel: { plugins: [eraseOverloadSignatures()] } }),
   Icons({ compiler: 'solid' }),
-  iconPacks(),
   vanillaExtractPlugin(),
 ];
 

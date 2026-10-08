@@ -789,9 +789,6 @@ importers:
       '@dev/vite-plugin-gitignore':
         specifier: workspace:*
         version: link:../vite-plugin-gitignore
-      '@dev/vite-plugin-icon-packs':
-        specifier: workspace:*
-        version: link:../vite-plugin-icon-packs
       '@dev/vite-plugin-instrumentation-scope':
         specifier: workspace:*
         version: link:../vite-plugin-instrumentation-scope

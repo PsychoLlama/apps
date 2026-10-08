@@ -20,7 +20,6 @@
   "devDependencies": {
     "@dev/babel-plugin-erase-overload-signatures": "workspace:*",
     "@dev/vite-plugin-gitignore": "workspace:*",
-    "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@iconify/json": "catalog:",
     "@vanilla-extract/vite-plugin": "catalog:",
