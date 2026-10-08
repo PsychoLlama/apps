@@ -45,11 +45,11 @@
     "vite": "catalog:"
   },
   "devDependencies": {
-    "@dev/vite-plugin-app": "workspace:*",
     "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-inline-script": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@dev/vite-plugin-pwa": "workspace:*",
+    "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/vite-plugin-svg-to-png": "workspace:*",
     "@dev/vitest-config": "workspace:*",
     "@solidjs/vite-plugin-nitro-2": "0.3.2",

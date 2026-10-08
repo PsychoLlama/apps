@@ -15,7 +15,7 @@ export type {
   SolidStartPluginOptions,
 } from './solid.ts';
 
-export interface AppOptions extends SolidFrameworkOptions {
+export interface SubstrateOptions extends SolidFrameworkOptions {
   /** Emit a web app manifest with raster icons. */
   pwa?: PwaManifestConfig;
 }
@@ -26,7 +26,7 @@ export interface AppOptions extends SolidFrameworkOptions {
  * vanilla-extract, icon components and `?to-png=<size>` SVG imports,
  * plus opt-in PWA support. Package-specific plugins go alongside it.
  */
-export const app = (options: AppOptions = {}): PluginOption[] => [
+export const substrate = (options: SubstrateOptions = {}): PluginOption[] => [
   gitignore(),
   instrumentationScope(),
   solidOrSolidStart(options),

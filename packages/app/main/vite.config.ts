@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
-import { app } from '@dev/vite-plugin-app';
+import { substrate } from '@dev/vite-plugin-substrate';
 import { iconPacks } from '@dev/vite-plugin-icon-packs';
 import { inlineScript } from '@dev/vite-plugin-inline-script';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
@@ -34,7 +34,7 @@ export default defineConfig({
     },
   },
   plugins: [
-    app({
+    substrate({
       solidStart: true,
       pwa: {
         icon: {
