@@ -10,4 +10,5 @@ export {
   type IgnoreFileLocation,
   type IgnoreSource,
 } from './discover-ignore-files.ts';
+export { loadGitignore } from './load-gitignore.ts';
 export { readIgnoreFiles, type IgnoreFile } from './read-ignore-files.ts';

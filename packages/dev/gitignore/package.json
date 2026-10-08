@@ -13,6 +13,7 @@
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
+    "ignore": "^7.0.12",
     "tinyexec": "catalog:"
   }
 }
