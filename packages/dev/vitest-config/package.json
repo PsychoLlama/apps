@@ -23,7 +23,7 @@
     "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@iconify/json": "catalog:",
-    "@vanilla-extract/vite-plugin": "^5.2.2",
+    "@vanilla-extract/vite-plugin": "catalog:",
     "@vitest/browser": "catalog:",
     "@vitest/browser-playwright": "catalog:",
     "playwright": "catalog:",

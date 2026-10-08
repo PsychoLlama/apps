@@ -26,7 +26,7 @@ interface IconConfig {
   maskable?: string;
 }
 
-interface PwaManifestConfig {
+export interface PwaManifestConfig {
   icon: IconConfig;
   /**
    * Manifest fields. `icons` is synthesized from `icon.sizes` and

@@ -38,16 +38,14 @@
     "@lib/ui": "workspace:*",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
-    "@solidjs/start": "2.0.5",
+    "@solidjs/start": "catalog:",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/dynamic": "catalog:",
     "solid-js": "catalog:",
     "vite": "catalog:"
   },
   "devDependencies": {
-    "@dev/babel-plugin-erase-overload-signatures": "workspace:*",
-    "@dev/vite-plugin-assert-hashed-assets": "workspace:*",
-    "@dev/vite-plugin-gitignore": "workspace:*",
+    "@dev/vite-plugin-app": "workspace:*",
     "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-inline-script": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
@@ -55,7 +53,6 @@
     "@dev/vite-plugin-svg-to-png": "workspace:*",
     "@dev/vitest-config": "workspace:*",
     "@solidjs/vite-plugin-nitro-2": "0.3.2",
-    "@vanilla-extract/vite-plugin": "^5.2.2",
     "typescript": "catalog:",
     "unplugin-icons": "catalog:",
     "wrangler": "catalog:"
