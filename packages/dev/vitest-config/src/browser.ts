@@ -10,10 +10,7 @@
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
 import { substrate } from '@dev/vite-plugin-substrate';
-// Self-reference through the package's own export map rather than a relative
-// path: this file is loaded by vitest's node-ESM config loader (not the
-// bundler), where an extensionless `./index` won't resolve.
-import { sharedServerDeps } from '@dev/vitest-config';
+import { sharedServerDeps } from './shared.ts';
 
 export default defineConfig({
   plugins: substrate(),
