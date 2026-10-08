@@ -73,14 +73,16 @@
             shellHook = ''
               export CC_wasm32_unknown_unknown="${pkgs.llvmPackages.clang-unwrapped}/bin/clang"
               export AR_wasm32_unknown_unknown="${pkgs.llvmPackages.bintools-unwrapped}/bin/llvm-ar"
+              export NIX_PNPM_VERSION="${pkgs.pnpm.version}"
             '';
 
             packages = [
               pkgs.nodejs
-              # Source of truth for the pnpm version. Keep package.json's
-              # `packageManager` major in sync: turbo reads it to select the
-              # lockfile parser (pnpm9). See `managePackageManagerVersions`
-              # in pnpm-workspace.yaml.
+              # Source of truth for the pnpm version. package.json's
+              # `packageManager` must match exactly: pnpm (and Renovate) use
+              # it to pick the binary that writes the lockfile. Exported as
+              # `NIX_PNPM_VERSION` in the shellHook, which
+              # `workspace check package-manager` compares against.
               pkgs.pnpm
               pkgs.treefmt
               # Rust toolchain via fenix, assembled with `withComponents` so

@@ -130,7 +130,9 @@
       "outputLogs": "errors-only"
     },
     "//#workspace-check": {
+      "env": ["NIX_PNPM_VERSION"],
       "inputs": [
+        "package.json",
         "packages/dev/workspace-cli/src/**",
         "packages/*/*/package.json",
         "pnpm-workspace.yaml",
