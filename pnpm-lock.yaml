@@ -86,12 +86,12 @@ importers:
 
   .:
     devDependencies:
-      '@dev/build':
-        specifier: workspace:*
-        version: link:packages/dev/build
       '@dev/eslint-plugin':
         specifier: workspace:*
         version: link:packages/dev/eslint-plugin
+      '@dev/vite-plugin-instrumentation-scope':
+        specifier: workspace:*
+        version: link:packages/dev/vite-plugin-instrumentation-scope
       '@dev/workspace-cli':
         specifier: workspace:*
         version: link:packages/dev/workspace-cli
@@ -389,6 +389,9 @@ importers:
       '@dev/build':
         specifier: workspace:*
         version: link:../../dev/build
+      '@dev/vite-plugin-instrumentation-scope':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-instrumentation-scope
       '@solidjs/vite-plugin-nitro-2':
         specifier: 0.3.2
         version: 0.3.2(oxc-parser@0.150.0)(rolldown@1.1.5)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
@@ -493,9 +496,9 @@ importers:
         specifier: workspace:*
         version: link:../../lib/observability
     devDependencies:
-      '@dev/build':
+      '@dev/vite-plugin-instrumentation-scope':
         specifier: workspace:*
-        version: link:../../dev/build
+        version: link:../../dev/vite-plugin-instrumentation-scope
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
@@ -578,6 +581,12 @@ importers:
         specifier: ^8.59.0
         version: 8.71.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
 
+  packages/dev/vite-plugin-instrumentation-scope:
+    dependencies:
+      vite:
+        specifier: ^8.0.0
+        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+
   packages/dev/vitest-config:
     dependencies:
       vite:
@@ -590,6 +599,9 @@ importers:
       '@dev/build':
         specifier: workspace:*
         version: link:../build
+      '@dev/vite-plugin-instrumentation-scope':
+        specifier: workspace:*
+        version: link:../vite-plugin-instrumentation-scope
       '@iconify/json':
         specifier: 'catalog:'
         version: 2.2.535

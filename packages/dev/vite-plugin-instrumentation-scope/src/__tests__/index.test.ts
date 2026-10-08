@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Plugin } from 'vite';
-import { instrumentationScope } from '../vite-plugin/instrumentation-scope.ts';
+import { instrumentationScope } from '../index.ts';
 
 // Assemble the marker at runtime so this source file itself doesn't
 // contain the literal token. The Vite plugin we're testing rewrites

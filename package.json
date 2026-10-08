@@ -30,8 +30,8 @@
     "trailingComma": "all"
   },
   "devDependencies": {
-    "@dev/build": "workspace:*",
     "@dev/eslint-plugin": "workspace:*",
+    "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@dev/workspace-cli": "workspace:*",
     "@eslint/config-helpers": "^0.7.0",
     "@eslint/js": "^10.0.0",

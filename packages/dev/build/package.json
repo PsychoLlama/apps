@@ -12,8 +12,6 @@
     "./vite-plugin/icon-packs": "./src/vite-plugin/icon-packs/index.ts",
     "./vite-plugin/icon-packs-types": "./src/vite-plugin/icon-packs-types.d.ts",
     "./vite-plugin/inline-script": "./src/vite-plugin/inline-script.ts",
-    "./vite-plugin/instrumentation-scope": "./src/vite-plugin/instrumentation-scope.ts",
-    "./vite-plugin/instrumentation-scope-types": "./src/vite-plugin/instrumentation-scope-types.d.ts",
     "./vite-plugin/pwa-manifest": "./src/vite-plugin/pwa-manifest.ts",
     "./vite-plugin/pwa-manifest-types": "./src/vite-plugin/pwa-manifest-types.d.ts",
     "./vite-plugin/svg-to-png": "./src/vite-plugin/svg-to-png.ts",

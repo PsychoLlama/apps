@@ -1,0 +1,19 @@
+{
+  "name": "@dev/vite-plugin-instrumentation-scope",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Vite plugin that stamps `import.meta.INSTRUMENTATION_SCOPE` with the importing module's package and path.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.d.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  }
+}

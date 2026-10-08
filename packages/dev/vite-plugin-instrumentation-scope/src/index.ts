@@ -82,7 +82,7 @@ export const instrumentationScope = (): Plugin => {
   };
 
   return {
-    name: '@dev/build:instrumentation-scope',
+    name: '@dev/vite-plugin-instrumentation-scope',
     enforce: 'pre',
 
     // Vite bundles `?worker` imports through a separate pipeline that
