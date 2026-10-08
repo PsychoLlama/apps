@@ -12,3 +12,4 @@ export {
 } from './query-ignore-files.ts';
 export { readIgnoreFiles, type LoadedIgnoreFile } from './read-ignore-files.ts';
 export { load } from './load.ts';
+export { queryWorktreeRoot } from './query-worktree-root.ts';
