@@ -35,6 +35,7 @@ export default defineConfig({
   },
   plugins: [
     app({
+      solidStart: true,
       pwa: {
         icon: {
           src: resolve(import.meta.dirname, 'src/branding/brandmark.svg'),

@@ -20,7 +20,8 @@
     "@dev/vite-plugin-svg-to-png": "workspace:*",
     "@solidjs/start": "catalog:",
     "@vanilla-extract/vite-plugin": "catalog:",
-    "unplugin-icons": "catalog:"
+    "unplugin-icons": "catalog:",
+    "vite-plugin-solid": "catalog:"
   },
   "peerDependencies": {
     "vite": "*"
