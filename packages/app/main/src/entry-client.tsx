@@ -1,7 +1,7 @@
 // @refresh reload
 import { mount, StartClient } from '@solidjs/start/client';
 import { createLogger, toError } from '@lib/observability';
-import workerUrl from '@app/service-worker?worker&url';
+import workerUrl from './service-worker?worker&url';
 
 mount(() => <StartClient />, document.getElementById('app')!);
 

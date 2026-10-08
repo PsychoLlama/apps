@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json.schemastore.org/tsconfig",
+  // The service worker runs in a `ServiceWorkerGlobalScope`, not the DOM.
+  // Nested here so the editor and ESLint's project service resolve these
+  // files to the `WebWorker` lib automatically; the package `tsconfig.json`
+  // excludes `src/service-worker` so they don't double-check under the DOM
+  // lib.
+  "extends": "../../../../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "WebWorker"],
+    "customConditions": ["browser"],
+    "types": [
+      "vite/client",
+      "vitest/globals",
+      "@dev/vite-plugin-instrumentation-scope/types"
+    ]
+  },
+  "include": ["."]
+}
