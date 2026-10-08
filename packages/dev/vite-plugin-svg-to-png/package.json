@@ -7,7 +7,7 @@
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
-    "./client": "./src/client.d.ts",
+    "./types": "./src/types.d.ts",
     "./rasterize": "./src/rasterize.ts"
   },
   "scripts": {

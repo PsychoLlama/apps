@@ -10,7 +10,7 @@
   "compilerOptions": {
     "lib": ["ESNext", "WebWorker", "ES2025.Intl"],
     "customConditions": ["browser"],
-    "types": ["vite/client", "@dev/vite-plugin-instrumentation-scope/client"]
+    "types": ["vite/client", "@dev/vite-plugin-instrumentation-scope/types"]
   },
   "include": ["."]
 }

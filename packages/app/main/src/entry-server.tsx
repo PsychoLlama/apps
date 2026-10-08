@@ -1,5 +1,5 @@
 // @refresh reload
-/// <reference types="@dev/vite-plugin-pwa/client" />
+/// <reference types="@dev/vite-plugin-pwa/types" />
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
 import {
