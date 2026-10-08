@@ -47,7 +47,9 @@
   "devDependencies": {
     "@dev/babel-plugin-erase-overload-signatures": "workspace:*",
     "@dev/build": "workspace:*",
+    "@dev/vite-plugin-assert-hashed-assets": "workspace:*",
     "@dev/vite-plugin-icon-packs": "workspace:*",
+    "@dev/vite-plugin-inline-script": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@solidjs/vite-plugin-nitro-2": "0.3.2",
     "@vanilla-extract/vite-plugin": "^5.2.2",

@@ -7,16 +7,13 @@
   "license": "MIT",
   "exports": {
     "./ignore": "./src/ignore.ts",
-    "./vite-plugin/assert-hashed-assets": "./src/vite-plugin/assert-hashed-assets.ts",
-    "./vite-plugin/inline-script": "./src/vite-plugin/inline-script.ts",
     "./vite-plugin/pwa-manifest": "./src/vite-plugin/pwa-manifest.ts",
     "./vite-plugin/pwa-manifest-types": "./src/vite-plugin/pwa-manifest-types.d.ts",
     "./vite-plugin/svg-to-png": "./src/vite-plugin/svg-to-png.ts",
     "./vite-plugin/svg-to-png-types": "./src/vite-plugin/svg-to-png-types.d.ts"
   },
   "scripts": {
-    "typecheck": "tsc",
-    "test:unit": "vitest run --config vitest.unit.config.ts"
+    "typecheck": "tsc"
   },
   "peerDependencies": {
     "vite": "*"
@@ -24,7 +21,6 @@
   "devDependencies": {
     "@lib/assert": "workspace:*",
     "@resvg/resvg-wasm": "^2.6.2",
-    "@types/web-app-manifest": "^1.0.9",
-    "esbuild": "catalog:"
+    "@types/web-app-manifest": "^1.0.9"
   }
 }

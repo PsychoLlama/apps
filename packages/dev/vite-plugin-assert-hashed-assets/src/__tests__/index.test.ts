@@ -1,5 +1,5 @@
 import type { Plugin } from 'vite';
-import { assertHashedAssets } from '../vite-plugin/assert-hashed-assets.ts';
+import { assertHashedAssets } from '../index.ts';
 
 const goodTemplates = {
   entryFileNames: 'assets/[name]-[hash].js',

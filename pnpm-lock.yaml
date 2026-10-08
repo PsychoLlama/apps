@@ -392,9 +392,15 @@ importers:
       '@dev/build':
         specifier: workspace:*
         version: link:../../dev/build
+      '@dev/vite-plugin-assert-hashed-assets':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-assert-hashed-assets
       '@dev/vite-plugin-icon-packs':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-icon-packs
+      '@dev/vite-plugin-inline-script':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-inline-script
       '@dev/vite-plugin-instrumentation-scope':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-instrumentation-scope
@@ -566,9 +572,6 @@ importers:
       '@types/web-app-manifest':
         specifier: ^1.0.9
         version: 1.0.9
-      esbuild:
-        specifier: 'catalog:'
-        version: 0.28.2
 
   packages/dev/eslint-plugin:
     dependencies:
@@ -586,6 +589,16 @@ importers:
         specifier: ^8.59.0
         version: 8.71.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
 
+  packages/dev/vite-plugin-assert-hashed-assets:
+    dependencies:
+      vite:
+        specifier: ^8.0.0
+        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../vitest-config
+
   packages/dev/vite-plugin-icon-packs:
     dependencies:
       vite:
@@ -595,6 +608,16 @@ importers:
       '@iconify/json':
         specifier: 'catalog:'
         version: 2.2.535
+
+  packages/dev/vite-plugin-inline-script:
+    dependencies:
+      vite:
+        specifier: ^8.0.0
+        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+    devDependencies:
+      esbuild:
+        specifier: 'catalog:'
+        version: 0.28.2
 
   packages/dev/vite-plugin-instrumentation-scope:
     dependencies:

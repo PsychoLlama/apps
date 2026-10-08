@@ -110,7 +110,7 @@ export const inlineScript = (options: InlineScriptOptions): Plugin => {
   };
 
   return {
-    name: '@dev/build:inline-script',
+    name: '@dev/vite-plugin-inline-script',
 
     configResolved(config) {
       viteTarget = config.build.target;
