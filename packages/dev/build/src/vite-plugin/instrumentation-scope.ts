@@ -85,6 +85,16 @@ export const instrumentationScope = (): Plugin => {
     name: '@dev/build:instrumentation-scope',
     enforce: 'pre',
 
+    // Vite bundles `?worker` imports through a separate pipeline that
+    // doesn't inherit the top-level `plugins`. Register a fresh instance
+    // there too, or the marker survives into worker bundles and collapses
+    // to `undefined` at runtime. Vite's config merge composes
+    // `worker.plugins` functions rather than replacing them, so any
+    // user-supplied worker plugins still apply.
+    config: () => ({
+      worker: { plugins: () => [instrumentationScope()] },
+    }),
+
     async transform(code, id) {
       if (!code.includes(MARKER)) return undefined;
 
@@ -96,14 +106,14 @@ export const instrumentationScope = (): Plugin => {
 
       const pkg = await resolvePackage(dirname(file));
       if (!pkg) {
-        this.error(
+        return this.error(
           `${MARKER} used in ${id}, but no package.json was found above it.`,
         );
       }
 
       const rel = relative(pkg.srcDir, file);
       if (rel.startsWith('..') || rel.startsWith(sep) || rel === '') {
-        this.error(
+        return this.error(
           `${MARKER} used in ${id}, which is not under ${pkg.srcDir}.`,
         );
       }
