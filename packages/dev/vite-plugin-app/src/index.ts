@@ -25,9 +25,6 @@ export interface AppOptions {
    */
   solidStart?: SolidStartOverrides | false;
 
-  /** Fail builds whose asset filenames aren't hashed. Default `true`. */
-  assertHashedAssets?: boolean;
-
   /**
    * Emit a web app manifest with raster icons. Also enables
    * `?to-png=<size>` SVG imports, which apps use for the icons the
@@ -43,11 +40,7 @@ export interface AppOptions {
  * alongside it in the app's own config.
  */
 export const app = (options: AppOptions = {}): PluginOption[] => {
-  const {
-    solidStart: startOptions = {},
-    assertHashedAssets: assertHashed = true,
-    pwa,
-  } = options;
+  const { solidStart: startOptions = {}, pwa } = options;
 
   return [
     gitignore(),
@@ -69,10 +62,6 @@ export const app = (options: AppOptions = {}): PluginOption[] => {
     pwa && [svgToPng(), pwaManifest(pwa)],
     vanillaExtractPlugin(),
     Icons({ compiler: 'solid' }),
-    assertHashed && {
-      ...assertHashedAssets(),
-      // Test runs build nothing that ships, so nothing to cache.
-      apply: (_config, env) => env.command === 'build' && env.mode !== 'test',
-    },
+    assertHashedAssets(),
   ];
 };
