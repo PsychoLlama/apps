@@ -1,30 +1,26 @@
 import { readFile } from 'node:fs/promises';
 
-import type {
-  IgnoreFileLocation,
-  IgnoreSource,
-} from './discover-ignore-files.ts';
+import type { IgnoreFile } from './query-ignore-files.ts';
 
-/** The raw contents of one ignore file. */
-export interface IgnoreFile {
-  source: IgnoreSource;
-  fileContents: string;
+/** An ignore file along with its raw contents. */
+export interface LoadedIgnoreFile extends IgnoreFile {
+  contents: string;
 }
 
 /**
- * Reads ignore files in parallel, typically from `discoverIgnoreFiles`.
+ * Reads ignore files in parallel, typically from `queryIgnoreFiles`.
  * Files that are missing or unreadable are skipped; the rest keep their
  * input order, so precedence carries through.
  */
 export const readIgnoreFiles = async (
-  locations: readonly IgnoreFileLocation[],
-): Promise<IgnoreFile[]> => {
-  const files = await Promise.all(
-    locations.map(async ({ source, path }) => {
-      const fileContents = await readFile(path, 'utf8').catch(() => null);
-      return fileContents === null ? null : { source, fileContents };
+  files: readonly IgnoreFile[],
+): Promise<LoadedIgnoreFile[]> => {
+  const loaded = await Promise.all(
+    files.map(async (file) => {
+      const contents = await readFile(file.path, 'utf8').catch(() => null);
+      return contents === null ? null : { ...file, contents };
     }),
   );
 
-  return files.filter((file) => file !== null);
+  return loaded.filter((file) => file !== null);
 };

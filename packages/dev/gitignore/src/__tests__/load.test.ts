@@ -1,22 +1,22 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
-import { loadGitignore } from '../load-gitignore.ts';
+import { load } from '../load.ts';
 import { createGitSandbox } from './git-sandbox.ts';
 
-describe('loadGitignore', () => {
+describe('load', () => {
   const writeGlobalIgnore = async (path: string, contents: string) => {
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, contents);
   };
 
-  it('combines rules from every source', async () => {
+  it('combines rules from every scope', async () => {
     await using sandbox = await createGitSandbox();
     await writeGlobalIgnore(sandbox.globalIgnorePath, '.direnv/\n');
     await writeFile(join(sandbox.repo, '.git/info/exclude'), 'scratch/\n');
     await writeFile(join(sandbox.repo, '.gitignore'), '# build\ndist\n');
 
-    const ig = await loadGitignore(sandbox.repo);
+    const ig = await load(sandbox.repo);
 
     expect(ig.ignores('.direnv/')).toBe(true);
     expect(ig.ignores('scratch/notes.md')).toBe(true);
@@ -29,7 +29,7 @@ describe('loadGitignore', () => {
     await writeGlobalIgnore(sandbox.globalIgnorePath, '*.log\n');
     await writeFile(join(sandbox.repo, '.gitignore'), '!keep.log\n');
 
-    const ig = await loadGitignore(sandbox.repo);
+    const ig = await load(sandbox.repo);
 
     expect(ig.ignores('debug.log')).toBe(true);
     expect(ig.ignores('keep.log')).toBe(false);
@@ -38,7 +38,7 @@ describe('loadGitignore', () => {
   it('ignores nothing when no files exist', async () => {
     await using sandbox = await createGitSandbox();
 
-    const ig = await loadGitignore(sandbox.repo);
+    const ig = await load(sandbox.repo);
 
     expect(ig.ignores('anything.txt')).toBe(false);
   });

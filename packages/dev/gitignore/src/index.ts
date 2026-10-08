@@ -6,9 +6,9 @@
  */
 
 export {
-  discoverIgnoreFiles,
-  type IgnoreFileLocation,
-  type IgnoreSource,
-} from './discover-ignore-files.ts';
-export { loadGitignore } from './load-gitignore.ts';
-export { readIgnoreFiles, type IgnoreFile } from './read-ignore-files.ts';
+  queryIgnoreFiles,
+  type IgnoreFile,
+  type IgnoreScope,
+} from './query-ignore-files.ts';
+export { readIgnoreFiles, type LoadedIgnoreFile } from './read-ignore-files.ts';
+export { load } from './load.ts';

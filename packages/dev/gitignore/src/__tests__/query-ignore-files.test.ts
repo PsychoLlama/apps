@@ -1,18 +1,18 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { discoverIgnoreFiles } from '../discover-ignore-files.ts';
+import { queryIgnoreFiles } from '../query-ignore-files.ts';
 import { git } from '../git.ts';
 import { createGitSandbox } from './git-sandbox.ts';
 
-describe('discoverIgnoreFiles', () => {
-  it('finds every source, lowest precedence first', async () => {
+describe('queryIgnoreFiles', () => {
+  it('finds every scope, lowest precedence first', async () => {
     await using sandbox = await createGitSandbox();
 
-    await expect(discoverIgnoreFiles(sandbox.repo)).resolves.toEqual([
-      { source: 'global', path: sandbox.globalIgnorePath },
-      { source: 'local', path: join(sandbox.repo, '.git/info/exclude') },
-      { source: 'repo', path: join(sandbox.repo, '.gitignore') },
+    await expect(queryIgnoreFiles(sandbox.repo)).resolves.toEqual([
+      { scope: 'global', path: sandbox.globalIgnorePath },
+      { scope: 'local', path: join(sandbox.repo, '.git/info/exclude') },
+      { scope: 'repo', path: join(sandbox.repo, '.gitignore') },
     ]);
   });
 
@@ -20,10 +20,10 @@ describe('discoverIgnoreFiles', () => {
     await using sandbox = await createGitSandbox();
     await mkdir(join(sandbox.repo, 'packages'));
 
-    const files = await discoverIgnoreFiles(join(sandbox.repo, 'packages'));
+    const files = await queryIgnoreFiles(join(sandbox.repo, 'packages'));
 
     expect(files).toContainEqual({
-      source: 'repo',
+      scope: 'repo',
       path: join(sandbox.repo, '.gitignore'),
     });
   });
@@ -38,10 +38,10 @@ describe('discoverIgnoreFiles', () => {
       '~/custom-ignore',
     );
 
-    const files = await discoverIgnoreFiles(sandbox.repo);
+    const files = await queryIgnoreFiles(sandbox.repo);
 
     expect(files).toContainEqual({
-      source: 'global',
+      scope: 'global',
       path: join(sandbox.home, 'custom-ignore'),
     });
   });
@@ -51,8 +51,8 @@ describe('discoverIgnoreFiles', () => {
     const outside = join(sandbox.root, 'outside');
     await mkdir(outside);
 
-    await expect(discoverIgnoreFiles(outside)).resolves.toEqual([
-      { source: 'global', path: sandbox.globalIgnorePath },
+    await expect(queryIgnoreFiles(outside)).resolves.toEqual([
+      { scope: 'global', path: sandbox.globalIgnorePath },
     ]);
   });
 
@@ -74,14 +74,14 @@ describe('discoverIgnoreFiles', () => {
     const worktree = join(sandbox.root, 'worktree');
     await git(sandbox.repo, 'worktree', 'add', '--quiet', worktree);
 
-    const files = await discoverIgnoreFiles(worktree);
+    const files = await queryIgnoreFiles(worktree);
 
     expect(files).toContainEqual({
-      source: 'local',
+      scope: 'local',
       path: join(sandbox.repo, '.git/info/exclude'),
     });
     expect(files).toContainEqual({
-      source: 'repo',
+      scope: 'repo',
       path: join(worktree, '.gitignore'),
     });
   });

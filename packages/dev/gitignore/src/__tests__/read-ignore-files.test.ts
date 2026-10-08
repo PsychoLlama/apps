@@ -17,31 +17,29 @@ describe('readIgnoreFiles', () => {
 
   it('reads each file, keeping input order', async () => {
     await using sandbox = await createSandbox();
-    await writeFile(join(sandbox.root, 'global'), '.direnv/\n');
-    await writeFile(join(sandbox.root, 'repo'), 'dist\n');
+    const global = { scope: 'global' as const, path: join(sandbox.root, 'g') };
+    const repo = { scope: 'repo' as const, path: join(sandbox.root, 'r') };
+    await writeFile(global.path, '.direnv/\n');
+    await writeFile(repo.path, 'dist\n');
 
-    const files = await readIgnoreFiles([
-      { source: 'global', path: join(sandbox.root, 'global') },
-      { source: 'repo', path: join(sandbox.root, 'repo') },
-    ]);
-
-    expect(files).toEqual([
-      { source: 'global', fileContents: '.direnv/\n' },
-      { source: 'repo', fileContents: 'dist\n' },
+    await expect(readIgnoreFiles([global, repo])).resolves.toEqual([
+      { ...global, contents: '.direnv/\n' },
+      { ...repo, contents: 'dist\n' },
     ]);
   });
 
   it('skips files that cannot be read', async () => {
     await using sandbox = await createSandbox();
-    await writeFile(join(sandbox.root, 'repo'), 'dist\n');
+    const repo = { scope: 'repo' as const, path: join(sandbox.root, 'r') };
+    await writeFile(repo.path, 'dist\n');
 
     const files = await readIgnoreFiles([
-      { source: 'global', path: join(sandbox.root, 'missing') },
+      { scope: 'global', path: join(sandbox.root, 'missing') },
       // A directory: exists, but can't be read as a file.
-      { source: 'local', path: sandbox.root },
-      { source: 'repo', path: join(sandbox.root, 'repo') },
+      { scope: 'local', path: sandbox.root },
+      repo,
     ]);
 
-    expect(files).toEqual([{ source: 'repo', fileContents: 'dist\n' }]);
+    expect(files).toEqual([{ ...repo, contents: 'dist\n' }]);
   });
 });
