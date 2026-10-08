@@ -490,6 +490,9 @@ importers:
       '@dev/vite-plugin-assert-hashed-assets':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-assert-hashed-assets
+      '@dev/vite-plugin-gitignore':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-gitignore
       '@dev/vite-plugin-icon-packs':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-icon-packs
@@ -674,6 +677,15 @@ importers:
         specifier: workspace:*
         version: link:../vitest-config
 
+  packages/dev/vite-plugin-gitignore:
+    dependencies:
+      '@dev/gitignore':
+        specifier: workspace:*
+        version: link:../gitignore
+      vite:
+        specifier: ^8.0.0
+        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+
   packages/dev/vite-plugin-icon-packs:
     dependencies:
       vite:
@@ -738,6 +750,9 @@ importers:
       '@dev/babel-plugin-erase-overload-signatures':
         specifier: workspace:*
         version: link:../babel-plugin-erase-overload-signatures
+      '@dev/vite-plugin-gitignore':
+        specifier: workspace:*
+        version: link:../vite-plugin-gitignore
       '@dev/vite-plugin-icon-packs':
         specifier: workspace:*
         version: link:../vite-plugin-icon-packs

@@ -8,7 +8,7 @@
  */
 
 import { defineConfig } from 'vitest/config';
-import { generatedArtifacts } from '@dev/vitest-config/ignore';
+import { gitignore } from '@dev/vite-plugin-gitignore';
 
 // Self-reference through the package's own export map rather than a relative
 // path: this file is loaded by vitest's node-ESM config loader (not the
@@ -16,11 +16,7 @@ import { generatedArtifacts } from '@dev/vitest-config/ignore';
 import { sharedPlugins, sharedServerDeps } from '@dev/vitest-config';
 
 export default defineConfig({
-  plugins: sharedPlugins(),
-  server: {
-    // Vite's chokidar watcher doesn't respect .gitignore.
-    watch: { ignored: [...generatedArtifacts] },
-  },
+  plugins: [...sharedPlugins(), gitignore()],
   test: {
     name: 'unit',
     environment: 'jsdom',
