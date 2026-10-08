@@ -1,0 +1,22 @@
+{
+  "name": "@dev/vite-plugin-svg-to-png",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Vite plugin that rasterizes `*.svg?to-png=<size>` imports to hashed PNG assets.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.d.ts",
+    "./rasterize": "./src/rasterize.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  },
+  "devDependencies": {
+    "@resvg/resvg-wasm": "^2.6.2"
+  }
+}

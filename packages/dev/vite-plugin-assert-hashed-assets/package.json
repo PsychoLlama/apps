@@ -1,15 +1,19 @@
 {
-  "name": "@lib/assert",
+  "name": "@dev/vite-plugin-assert-hashed-assets",
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Assert an invariant holds, narrowing the value's type.",
+  "description": "Vite plugin that fails the build when an output filename template lacks `[hash]`.",
   "license": "MIT",
-  "sideEffects": false,
-  "exports": "./src/assert.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts"
+  },
+  "peerDependencies": {
+    "vite": "*"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*"

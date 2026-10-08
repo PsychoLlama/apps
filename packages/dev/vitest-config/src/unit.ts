@@ -8,7 +8,7 @@
  */
 
 import { defineConfig } from 'vitest/config';
-import { generatedArtifacts } from '@dev/build/ignore';
+import { generatedArtifacts } from '@dev/vitest-config/ignore';
 
 // Self-reference through the package's own export map rather than a relative
 // path: this file is loaded by vitest's node-ESM config loader (not the

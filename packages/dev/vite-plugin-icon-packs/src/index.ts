@@ -110,7 +110,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
   };
 
   return {
-    name: '@dev/build:icon-packs',
+    name: '@dev/vite-plugin-icon-packs',
     enforce: 'pre',
 
     configResolved(config) {

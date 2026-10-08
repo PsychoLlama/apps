@@ -14,7 +14,7 @@ import {
   type ThemeId,
 } from './constants';
 
-// Compiled to a minified IIFE by `@dev/build/vite-plugin/inline-script`
+// Compiled to a minified IIFE by `@dev/vite-plugin-inline-script`
 // and inlined as a head script by `entry-server`. Runs before paint to
 // restamp `<html data-theme>`, `<html data-color-scheme>`, and
 // `<html data-reduced-motion>` with the persisted selections — the SSG

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Plugin, ViteDevServer } from 'vite';
-import { rasterizeSvg } from './resvg.ts';
+import { rasterizeSvg } from './rasterize.ts';
 
 // `?to-png=<size>`. Plain `?png` was too generic; the verb-y form
 // reads as "import as png at <size>" and matches Vite's `?url` /
@@ -84,7 +84,7 @@ export const svgToPng = (): Plugin => {
   };
 
   return {
-    name: '@dev/build:svg-to-png',
+    name: '@dev/vite-plugin-svg-to-png',
     enforce: 'pre',
 
     configResolved(config) {

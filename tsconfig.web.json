@@ -8,7 +8,7 @@
       "vitest/globals",
       "unplugin-icons/types/solid",
       "@testing-library/jest-dom/vitest",
-      "@dev/build/vite-plugin/instrumentation-scope-types"
+      "@dev/vite-plugin-instrumentation-scope/types"
     ]
   },
   "include": ["${configDir}/src"]

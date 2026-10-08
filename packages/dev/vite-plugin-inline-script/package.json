@@ -1,0 +1,20 @@
+{
+  "name": "@dev/vite-plugin-inline-script",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Vite plugin that compiles an entry to a minified IIFE string, exposed as a virtual module for inlining.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  },
+  "devDependencies": {
+    "esbuild": "catalog:"
+  }
+}

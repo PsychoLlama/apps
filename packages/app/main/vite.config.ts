@@ -5,14 +5,14 @@ import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
-import { generatedArtifacts, scratchDir } from '@dev/build/ignore';
-import { eraseOverloadSignatures } from '@dev/build/babel-plugin/erase-overload-signatures';
-import { assertHashedAssets } from '@dev/build/vite-plugin/assert-hashed-assets';
-import { iconPacks } from '@dev/build/vite-plugin/icon-packs';
-import { inlineScript } from '@dev/build/vite-plugin/inline-script';
-import { instrumentationScope } from '@dev/build/vite-plugin/instrumentation-scope';
-import { pwaManifest } from '@dev/build/vite-plugin/pwa-manifest';
-import { svgToPng } from '@dev/build/vite-plugin/svg-to-png';
+import { generatedArtifacts, scratchDir } from '@dev/vitest-config/ignore';
+import { eraseOverloadSignatures } from '@dev/babel-plugin-erase-overload-signatures';
+import { assertHashedAssets } from '@dev/vite-plugin-assert-hashed-assets';
+import { iconPacks } from '@dev/vite-plugin-icon-packs';
+import { inlineScript } from '@dev/vite-plugin-inline-script';
+import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
+import { pwaManifest } from '@dev/vite-plugin-pwa';
+import { svgToPng } from '@dev/vite-plugin-svg-to-png';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
@@ -46,19 +46,6 @@ export default defineConfig({
       // `public/_headers`.
       'Service-Worker-Allowed': '/',
     },
-    allowedHosts: [
-      // Cloudflare Tunnel occasionally used for testing on mobile.
-      'apps.jessegibson.dev',
-    ],
-  },
-  worker: {
-    // Vite runs `?worker` bundles through a separate plugin pipeline
-    // that does NOT inherit the top-level `plugins` array. The SW
-    // uses `import.meta.INSTRUMENTATION_SCOPE`, so the substitution
-    // plugin has to be registered here too — otherwise the marker
-    // collapses to `undefined` and `createLogger` throws at module
-    // load time, killing the worker before any listener attaches.
-    plugins: () => [instrumentationScope()],
   },
   plugins: [
     instrumentationScope(),
