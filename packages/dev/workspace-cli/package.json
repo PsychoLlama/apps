@@ -15,7 +15,7 @@
   "dependencies": {
     "@pnpm/workspace.read-manifest": "^1000.3.1",
     "citty": "catalog:",
-    "tinyexec": "catalog:"
+    "tinyexec": "^1.1.2"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*"
