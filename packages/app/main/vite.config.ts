@@ -5,17 +5,15 @@ import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { solidStart } from '@solidjs/start/config';
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin';
 import Icons from 'unplugin-icons/vite';
-import { generatedArtifacts, scratchDir } from '@dev/vitest-config/ignore';
 import { eraseOverloadSignatures } from '@dev/babel-plugin-erase-overload-signatures';
 import { assertHashedAssets } from '@dev/vite-plugin-assert-hashed-assets';
+import { gitignore } from '@dev/vite-plugin-gitignore';
 import { iconPacks } from '@dev/vite-plugin-icon-packs';
 import { inlineScript } from '@dev/vite-plugin-inline-script';
 import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
 import { pwaManifest } from '@dev/vite-plugin-pwa';
 import { svgToPng } from '@dev/vite-plugin-svg-to-png';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
-
-const workspaceRoot = resolve(import.meta.dirname, '../../..');
 
 // Manifest theme bakes in at build time — the spec has no light/dark
 // variants, and browsers ignore `<meta name="theme-color">` for the
@@ -34,10 +32,6 @@ export default defineConfig({
     include: ['@vanilla-extract/dynamic'],
   },
   server: {
-    watch: {
-      // Vite's chokidar watcher doesn't respect .gitignore.
-      ignored: [...generatedArtifacts, scratchDir(workspaceRoot)],
-    },
     headers: {
       // The bundled service worker lives under `/_build/`, so its default
       // scope would be limited to that prefix. The dev server needs this
@@ -48,6 +42,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    gitignore(),
     instrumentationScope(),
     inlineScript({
       id: 'virtual:theme-prelude',

@@ -92,6 +92,11 @@ const config: KnipConfig = {
       // generate JS glue; it's provided by the nix devShell, not pnpm.
       ignoreBinaries: ['wasm-bindgen'],
     },
+    'packages/dev/gitignore': {
+      // Shared test fixtures live beside the tests. They aren't named
+      // `*.test.ts`, so exclude them from production analysis explicitly.
+      project: ['src/**/*.ts!', '!src/__tests__/**!'],
+    },
     'packages/dev/vitest-config': {
       // Deps the shared preset pulls in by side effect rather than by a
       // named import, so knip can't see them: the browser-mode runtime and
