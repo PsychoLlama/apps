@@ -9,10 +9,7 @@
   "compilerOptions": {
     "lib": ["ESNext", "WebWorker"],
     "customConditions": ["browser"],
-    "types": [
-      "@dev/vite-plugin-substrate/types",
-      "vitest/globals"
-    ]
+    "types": ["@dev/vite-plugin-substrate/types", "vitest/globals"]
   },
   "include": ["."]
 }
