@@ -4,11 +4,9 @@
   "compilerOptions": {
     "customConditions": ["browser"],
     "types": [
-      "vite/client",
+      "@dev/vite-plugin-substrate/types",
       "vitest/globals",
-      "unplugin-icons/types/solid",
-      "@testing-library/jest-dom/vitest",
-      "@dev/vite-plugin-instrumentation-scope/types"
+      "@testing-library/jest-dom/vitest"
     ]
   },
   "include": ["${configDir}/src"]

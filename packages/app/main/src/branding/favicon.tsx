@@ -1,4 +1,3 @@
-/// <reference types="@dev/vite-plugin-svg-to-png/types" />
 import { Link, Meta } from '@solidjs/meta';
 import brandmarkSvg from './brandmark.svg?url';
 import appleTouchIcon from './brandmark.svg?to-png=180';

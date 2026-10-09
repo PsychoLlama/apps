@@ -32,7 +32,6 @@
     "solid-js": "*"
   },
   "devDependencies": {
-    "@dev/vite-plugin-inline-script": "workspace:*",
     "@dev/vitest-config": "workspace:*"
   }
 }

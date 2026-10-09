@@ -1,4 +1,3 @@
-/// <reference types="@dev/vite-plugin-inline-script/types" />
 import {
   DEFAULT_THEME_ID,
   THEME_COLOR_META_ID,

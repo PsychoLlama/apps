@@ -6,7 +6,8 @@
   "description": "Vite plugin bundling the shared plugin pipeline every app builds with.",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./types": "./src/types.d.ts"
   },
   "scripts": {
     "typecheck": "tsc"

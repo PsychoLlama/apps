@@ -10,9 +10,8 @@
     "lib": ["ESNext", "WebWorker"],
     "customConditions": ["browser"],
     "types": [
-      "vite/client",
-      "vitest/globals",
-      "@dev/vite-plugin-instrumentation-scope/types"
+      "@dev/vite-plugin-substrate/types",
+      "vitest/globals"
     ]
   },
   "include": ["."]
