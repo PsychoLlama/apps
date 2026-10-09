@@ -995,6 +995,9 @@ importers:
 
   packages/lib/shell:
     dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../assert
       '@lib/design':
         specifier: workspace:*
         version: link:../design

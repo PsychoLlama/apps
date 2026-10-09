@@ -1,4 +1,5 @@
 import { Link, Meta } from '@solidjs/meta';
+import { useAppConfig } from '@lib/shell/context';
 import brandmarkSvg from './brandmark.svg?url';
 import appleTouchIcon from './brandmark.svg?to-png=180';
 
@@ -33,16 +34,20 @@ import appleTouchIcon from './brandmark.svg?to-png=180';
  * wins; serving an `.ico` only matters for tab icons in browsers
  * that pre-date 2020.
  */
-export const Favicon = () => (
-  <>
-    <Link rel="icon" type="image/svg+xml" href={brandmarkSvg} />
-    <Link rel="apple-touch-icon" href={appleTouchIcon} />
-    <Meta name="mobile-web-app-capable" content="yes" />
-    <Meta name="apple-mobile-web-app-capable" content="yes" />
-    <Meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <Meta name="apple-mobile-web-app-title" content="Apps" />
-  </>
-);
+export const Favicon = () => {
+  const app = useAppConfig();
+
+  return (
+    <>
+      <Link rel="icon" type="image/svg+xml" href={brandmarkSvg} />
+      <Link rel="apple-touch-icon" href={appleTouchIcon} />
+      <Meta name="mobile-web-app-capable" content="yes" />
+      <Meta name="apple-mobile-web-app-capable" content="yes" />
+      <Meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent"
+      />
+      <Meta name="apple-mobile-web-app-title" content={app.name} />
+    </>
+  );
+};

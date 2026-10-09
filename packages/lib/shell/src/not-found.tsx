@@ -2,6 +2,7 @@ import { onMount } from 'solid-js';
 import { useLocation } from '@solidjs/router';
 import { createLogger } from '@lib/observability';
 import { Container, Flex, Heading, Link, Text } from '@lib/ui';
+import { useAppConfig } from './context';
 import { Frame, FrameBody } from './frame';
 import SiteHeader from './site-header';
 import * as css from './not-found.css';
@@ -15,6 +16,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  */
 export default function NotFound() {
   const location = useLocation();
+  const app = useAppConfig();
 
   // Report the miss once the fallback mounts. The full requested URL
   // is what lets us spot dead links and stale bookmarks in the logs.
@@ -62,7 +64,7 @@ export default function NotFound() {
               color="neutral"
               underline="hover"
             >
-              Back to Apps
+              Back to {app.name}
             </Link>
           </Flex>
         </Container>

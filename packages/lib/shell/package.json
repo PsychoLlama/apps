@@ -10,13 +10,15 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./frame.css": "./src/frame.css.ts"
+    "./frame.css": "./src/frame.css.ts",
+    "./context": "./src/context.ts"
   },
   "scripts": {
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
+    "@lib/assert": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/ui": "workspace:*",

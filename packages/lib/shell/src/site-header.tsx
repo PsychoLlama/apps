@@ -4,6 +4,7 @@ import { Title } from '@solidjs/meta';
 import { Flex, Link, LinkButton, Text } from '@lib/ui';
 import IconApps from 'virtual:icons/mdi/apps';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
+import { useAppConfig } from './context';
 import * as css from './site-header.css';
 
 /**
@@ -20,8 +21,8 @@ export interface SiteHeaderCrumb {
 
 /**
  * Persistent top-of-page chrome shared by every route. Renders a
- * breadcrumb rooted at the launcher: app pages read `Apps › <page>`
- * with the root linking home, while the launcher itself (no `title`
+ * breadcrumb rooted at the app's home: pages read `<app> › <page>`
+ * with the root linking home, while the home page itself (no `title`
  * or `trail`) shows the root as a static wordmark — never a link to
  * the page you're already on.
  *
@@ -49,6 +50,7 @@ export default function SiteHeader(props: {
   // fresh element on every access — reading `props.actions` more than
   // once would create duplicate elements and corrupt SSR hydration.
   const actions = children(() => props.actions);
+  const app = useAppConfig();
 
   const crumbs = (): SiteHeaderCrumb[] => {
     if (props.trail && props.trail.length > 0) return props.trail;
@@ -58,10 +60,10 @@ export default function SiteHeader(props: {
 
   // Document title mirrors the current page, reading specific-to-general
   // so the active page leads (`@lib/ui | Gallery`). Falls back to the
-  // launcher's bare wordmark when no breadcrumb is active.
+  // app's bare wordmark when no breadcrumb is active.
   const documentTitle = (): string => {
     const list = crumbs();
-    if (list.length === 0) return 'Apps';
+    if (list.length === 0) return app.name;
     return list
       .map((crumb) => crumb.label)
       .reverse()
@@ -97,14 +99,14 @@ export default function SiteHeader(props: {
                 color="lowContrast"
                 selectable={false}
               >
-                Apps
+                {app.name}
               </Text>
             </Flex>
           }
         >
           <LinkButton testId="home" href="/" variant="ghost" color="neutral">
             <IconApps width="18" height="18" />
-            Apps
+            {app.name}
           </LinkButton>
         </Show>
 
