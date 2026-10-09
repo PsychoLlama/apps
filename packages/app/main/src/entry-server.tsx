@@ -2,15 +2,8 @@
 /// <reference types="@dev/vite-plugin-pwa/types" />
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
-import {
-  DEFAULT_THEME_ID,
-  THEME_COLOR_META_ID,
-  THEME_COLORS,
-} from '@lib/theme';
-import themePrelude from 'virtual:theme-prelude';
+import { DEFAULT_THEME_ID, ThemeMeta } from '@lib/theme/meta';
 import manifestUrl from 'virtual:pwa-manifest';
-
-const defaultColors = THEME_COLORS[DEFAULT_THEME_ID];
 
 export default createHandler(() => (
   <StartServer
@@ -18,49 +11,15 @@ export default createHandler(() => (
       <html lang="en" data-theme={DEFAULT_THEME_ID}>
         <head>
           <meta charset="utf-8" />
-          {/* `interactive-widget=resizes-content` shrinks the layout
-              viewport when the on-screen keyboard opens, not just the
-              visual one. Without it a `position: fixed` surface still
-              spans the full screen and centers itself against space the
-              keyboard is covering — a centered `<Dialog>` can land
-              behind it. Chromium honors this; iOS Safari still behaves
-              as `resizes-visual`. */}
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content"
-          />
-          {/* Paired `theme-color` meta tags drive the browser-chrome
-              color per OS scheme. SSG-seeded with the `DEFAULT_THEME_ID`
-              variant's page background; the prelude (below) swaps both
-              `content` attributes to the active theme before paint via
-              the `id` lookup. Must render before the prelude so
-              `getElementById` finds them. */}
-          <meta
-            id={THEME_COLOR_META_ID.light}
-            name="theme-color"
-            media="(prefers-color-scheme: light)"
-            content={defaultColors.light}
-          />
-          <meta
-            id={THEME_COLOR_META_ID.dark}
-            name="theme-color"
-            media="(prefers-color-scheme: dark)"
-            content={defaultColors.dark}
-          />
+
+          <ThemeMeta />
+
           {/* Stable, revalidating URL — see `@dev/vite-plugin-pwa`. */}
           <link rel="manifest" href={manifestUrl} />
-          {/* Render-blocking head script: restamps `data-theme` from
-              the persisted preference before paint, falling through to
-              the SSG-stamped `DEFAULT_THEME_ID` on missing/invalid
-              storage or when JS is disabled. Inlined (no extra fetch)
-              and compiled from `./theme-prelude.ts` so the typing
-              story is intact end-to-end. `themePrelude` is a
-              compile-time string produced by `inline-script` from our
-              own source — not untrusted input. */}
-          {/* eslint-disable-next-line solid/no-innerhtml */}
-          <script innerHTML={themePrelude} />
+
           {assets}
         </head>
+
         <body>
           <Flex as="div" id="app" direction="column" grow>
             {children}

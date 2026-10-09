@@ -256,9 +256,9 @@ importers:
       '@dev/eslint-plugin':
         specifier: workspace:*
         version: link:packages/dev/eslint-plugin
-      '@dev/vite-plugin-instrumentation-scope':
+      '@dev/vite-plugin-substrate':
         specifier: workspace:*
-        version: link:packages/dev/vite-plugin-instrumentation-scope
+        version: link:packages/dev/vite-plugin-substrate
       '@dev/workspace-cli':
         specifier: workspace:*
         version: link:packages/dev/workspace-cli
@@ -310,9 +310,6 @@ importers:
       typescript-eslint:
         specifier: ^8.59.0
         version: 8.71.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
-      unplugin-icons:
-        specifier: 'catalog:'
-        version: 24.0.0(esbuild@0.28.2)(rolldown@1.1.5)(rollup@4.62.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       vite:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
@@ -553,21 +550,12 @@ importers:
       '@dev/vite-plugin-icon-packs':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-icon-packs
-      '@dev/vite-plugin-inline-script':
-        specifier: workspace:*
-        version: link:../../dev/vite-plugin-inline-script
-      '@dev/vite-plugin-instrumentation-scope':
-        specifier: workspace:*
-        version: link:../../dev/vite-plugin-instrumentation-scope
       '@dev/vite-plugin-pwa':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-pwa
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate
-      '@dev/vite-plugin-svg-to-png':
-        specifier: workspace:*
-        version: link:../../dev/vite-plugin-svg-to-png
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
@@ -577,9 +565,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
-      unplugin-icons:
-        specifier: 'catalog:'
-        version: 24.0.0(esbuild@0.28.2)(rolldown@1.1.5)(rollup@4.62.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       wrangler:
         specifier: 'catalog:'
         version: 4.147.0(@types/node@26.1.2)
@@ -792,6 +777,9 @@ importers:
       '@dev/vite-plugin-gitignore':
         specifier: workspace:*
         version: link:../vite-plugin-gitignore
+      '@dev/vite-plugin-inline-script':
+        specifier: workspace:*
+        version: link:../vite-plugin-inline-script
       '@dev/vite-plugin-instrumentation-scope':
         specifier: workspace:*
         version: link:../vite-plugin-instrumentation-scope
@@ -1007,6 +995,9 @@ importers:
 
   packages/lib/shell:
     dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../assert
       '@lib/design':
         specifier: workspace:*
         version: link:../design

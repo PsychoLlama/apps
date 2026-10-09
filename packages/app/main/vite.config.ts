@@ -1,10 +1,8 @@
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { substrate } from '@dev/vite-plugin-substrate';
 import { iconPacks } from '@dev/vite-plugin-icon-packs';
-import { inlineScript } from '@dev/vite-plugin-inline-script';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 
 // Manifest theme bakes in at build time — the spec has no light/dark
@@ -58,18 +56,6 @@ export default defineConfig({
           background_color: manifestThemeColor,
         },
       },
-    }),
-    inlineScript({
-      id: 'virtual:theme-prelude',
-      // `import.meta.resolve` walks pnpm's symlinks the same way as a
-      // normal import would, returning a `file://` URL string that
-      // esbuild gets as an absolute path.
-      entry: fileURLToPath(import.meta.resolve('@lib/theme/prelude')),
-      // Render-blocking budget. Today's IIFE sits well under this;
-      // the ceiling is a tripwire for accidental bloat — e.g. an
-      // import that pulls a `.css.ts` module's runtime registration
-      // into the head script.
-      maxBytes: 2048,
     }),
     nitro({
       preset: 'static',

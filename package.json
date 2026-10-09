@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@dev/eslint-plugin": "workspace:*",
-    "@dev/vite-plugin-instrumentation-scope": "workspace:*",
+    "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/workspace-cli": "workspace:*",
     "@eslint/config-helpers": "^0.7.0",
     "@eslint/js": "^10.0.0",
@@ -49,7 +49,6 @@
     "turbo": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "^8.59.0",
-    "unplugin-icons": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
   }

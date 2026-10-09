@@ -1,25 +1,13 @@
 import { build, type BuildResult } from 'esbuild';
 import type { Plugin, ResolvedConfig } from 'vite';
 
-interface InlineScriptOptions {
-  /**
-   * Virtual module id consumers import. The default export is the
-   * compiled IIFE as a string, ready to drop into `<script>{…}</script>`.
-   */
-  id: string;
+// `?inline-script`, in the style of Vite's `?raw` / `?url`: the import
+// site names the entry, so the module that renders the `<script>` owns
+// its source and apps don't wire up one plugin instance per script.
+const QUERY = '?inline-script';
+const VIRTUAL_PREFIX = '\0inline-script:';
 
-  /**
-   * Absolute filesystem path to the TS entry point that compiles
-   * into the inline script. Callers holding a `file://` URL from
-   * `import.meta.resolve` should convert via `fileURLToPath` before
-   * passing it in.
-   *
-   * Must be self-contained: bundled by esbuild outside Vite's plugin
-   * chain, so it can't use Vite-only imports (`virtual:*`, `?url`,
-   * `*.css`, etc).
-   */
-  entry: string;
-
+export interface InlineScriptOptions {
   /**
    * esbuild `target` for the compiled output. When omitted, inherits
    * Vite's resolved `build.target` so the inlined script transpiles
@@ -28,7 +16,7 @@ interface InlineScriptOptions {
   target?: string | string[];
 
   /**
-   * Hard ceiling on the compiled IIFE's byte length. The output is
+   * Hard ceiling on each compiled IIFE's byte length. The output is
    * inlined render-blocking in `<head>`, so silent bloat (e.g. an
    * import that drags in a CSS-in-JS runtime) is a regression worth
    * failing the build for. Omit to disable the check.
@@ -36,23 +24,32 @@ interface InlineScriptOptions {
   maxBytes?: number;
 }
 
+interface Compiled {
+  code: string;
+  inputs: ReadonlySet<string>;
+}
+
 /**
- * Expose a TypeScript file as an inlinable IIFE string via a virtual
- * module. Compiles the entry with esbuild (bundle + minify + iife) and
- * caches the result for the build/dev session; HMR invalidates on any
- * file in the compiled graph.
+ * Compile `./entry.ts?inline-script` imports to an inlinable IIFE
+ * string: the default export is ready to drop into
+ * `<script>{…}</script>`. esbuild bundles and minifies the entry, the
+ * result is cached for the build/dev session, and HMR invalidates on
+ * any file in the compiled graph.
  *
  * Designed for head-script preludes that must run before paint and
  * need to import shared constants without a separate HTTP fetch —
  * inlining keeps the typing story intact and avoids a render-blocking
  * round trip.
+ *
+ * The entry is bundled outside Vite's plugin chain, so it must be
+ * self-contained: no Vite-only imports (`virtual:*`, `?url`, `*.css`,
+ * etc).
  */
-export const inlineScript = (options: InlineScriptOptions): Plugin => {
-  const resolved = `\0${options.id}`;
-  let cached: { code: string; inputs: ReadonlySet<string> } | null = null;
+export const inlineScript = (options: InlineScriptOptions = {}): Plugin => {
+  const cache = new Map<string, Compiled>();
   let viteTarget: ResolvedConfig['build']['target'] | undefined;
 
-  const compile = async () => {
+  const compile = async (entry: string): Promise<Compiled> => {
     // Vite resolves `'baseline-widely-available'` and friends into
     // explicit browser strings before `configResolved` fires, so we
     // can hand the value straight to esbuild. `false` means "no
@@ -61,7 +58,7 @@ export const inlineScript = (options: InlineScriptOptions): Plugin => {
     const target = options.target ?? inheritedTarget ?? 'es2020';
 
     const result: BuildResult = await build({
-      entryPoints: [options.entry],
+      entryPoints: [entry],
       bundle: true,
       minify: true,
       format: 'iife',
@@ -79,7 +76,7 @@ export const inlineScript = (options: InlineScriptOptions): Plugin => {
       // be silently dropped here and produce a broken inlined script.
       const paths = outputs.map((file) => file.path).join(', ');
       throw new Error(
-        `[inline-script:${options.id}] expected exactly one output file, got ${outputs.length}: ${paths}`,
+        `[inline-script] expected exactly one output file, got ${outputs.length}: ${paths}`,
       );
     }
 
@@ -91,8 +88,9 @@ export const inlineScript = (options: InlineScriptOptions): Plugin => {
         .slice(0, 5)
         .map(({ path, bytes }) => `  ${bytes}B  ${path}`)
         .join('\n');
+
       throw new Error(
-        `[inline-script:${options.id}] compiled output is ${code.length}B, exceeds limit of ${options.maxBytes}B. Largest inputs:\n${inputs}`,
+        `[inline-script] ${entry} compiled to ${code.length}B, exceeds limit of ${options.maxBytes}B. Largest inputs:\n${inputs}`,
       );
     }
 
@@ -111,30 +109,53 @@ export const inlineScript = (options: InlineScriptOptions): Plugin => {
 
   return {
     name: '@dev/vite-plugin-inline-script',
+    enforce: 'pre',
 
     configResolved(config) {
       viteTarget = config.build.target;
     },
 
-    resolveId(id) {
-      if (id === options.id) return resolved;
+    async resolveId(source, importer) {
+      if (!source.endsWith(QUERY)) return undefined;
+
+      // Delegate path resolution to Vite so relative paths, aliases and
+      // package exports behave the same as for any other import.
+      const resolved = await this.resolve(
+        source.slice(0, -QUERY.length),
+        importer,
+        { skipSelf: true },
+      );
+
+      if (!resolved) return undefined;
+      return `${VIRTUAL_PREFIX}${resolved.id}`;
     },
 
     async load(id) {
-      if (id !== resolved) return;
+      if (!id.startsWith(VIRTUAL_PREFIX)) return undefined;
 
-      cached ??= await compile();
-      for (const input of cached.inputs) this.addWatchFile(input);
+      let compiled = cache.get(id);
+      if (!compiled) {
+        compiled = await compile(id.slice(VIRTUAL_PREFIX.length));
+        cache.set(id, compiled);
+      }
 
-      return `export default ${JSON.stringify(cached.code)};`;
+      for (const input of compiled.inputs) this.addWatchFile(input);
+
+      return `export default ${JSON.stringify(compiled.code)};`;
     },
 
     handleHotUpdate(ctx) {
-      if (!cached?.inputs.has(ctx.file)) return;
+      const stale = [];
+      for (const [id, compiled] of cache) {
+        if (!compiled.inputs.has(ctx.file)) continue;
+        cache.delete(id);
+        const mod = ctx.server.moduleGraph.getModuleById(id);
+        if (mod) stale.push(mod);
+      }
 
-      cached = null;
-      const mod = ctx.server.moduleGraph.getModuleById(resolved);
-      return mod ? [mod] : undefined;
+      // Keep the file's own importers in the update: the prelude's
+      // inputs (e.g. shared constants) are often app modules too.
+      return stale.length > 0 ? [...ctx.modules, ...stale] : undefined;
     },
   };
 };
