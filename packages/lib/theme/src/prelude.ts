@@ -15,7 +15,7 @@ import {
 } from './constants';
 
 // Compiled to a minified IIFE by `@dev/vite-plugin-inline-script`
-// and inlined as a head script by `entry-server`. Runs before paint to
+// and inlined as a head script by `<ThemeMeta>`. Runs before paint to
 // restamp `<html data-theme>`, `<html data-color-scheme>`, and
 // `<html data-reduced-motion>` with the persisted selections — the SSG
 // output already carries `DEFAULT_THEME_ID` and no color-scheme or

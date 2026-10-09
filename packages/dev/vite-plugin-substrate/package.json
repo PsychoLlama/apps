@@ -15,6 +15,7 @@
     "@dev/babel-plugin-erase-overload-signatures": "workspace:*",
     "@dev/vite-plugin-assert-hashed-assets": "workspace:*",
     "@dev/vite-plugin-gitignore": "workspace:*",
+    "@dev/vite-plugin-inline-script": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@dev/vite-plugin-pwa": "workspace:*",
     "@dev/vite-plugin-svg-to-png": "workspace:*",

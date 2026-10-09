@@ -46,7 +46,6 @@
   },
   "devDependencies": {
     "@dev/vite-plugin-icon-packs": "workspace:*",
-    "@dev/vite-plugin-inline-script": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@dev/vite-plugin-pwa": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",

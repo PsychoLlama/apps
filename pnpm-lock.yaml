@@ -553,9 +553,6 @@ importers:
       '@dev/vite-plugin-icon-packs':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-icon-packs
-      '@dev/vite-plugin-inline-script':
-        specifier: workspace:*
-        version: link:../../dev/vite-plugin-inline-script
       '@dev/vite-plugin-instrumentation-scope':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-instrumentation-scope
@@ -792,6 +789,9 @@ importers:
       '@dev/vite-plugin-gitignore':
         specifier: workspace:*
         version: link:../vite-plugin-gitignore
+      '@dev/vite-plugin-inline-script':
+        specifier: workspace:*
+        version: link:../vite-plugin-inline-script
       '@dev/vite-plugin-instrumentation-scope':
         specifier: workspace:*
         version: link:../vite-plugin-instrumentation-scope
@@ -1073,6 +1073,9 @@ importers:
         specifier: 1.9.15
         version: 1.9.15
     devDependencies:
+      '@dev/vite-plugin-inline-script':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-inline-script
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config

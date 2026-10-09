@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Vite plugin that compiles an entry to a minified IIFE string, exposed as a virtual module for inlining.",
+  "description": "Vite plugin that compiles `*?inline-script` imports to a minified IIFE string for inlining.",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./types": "./src/types.d.ts"
   },
   "scripts": {
     "typecheck": "tsc"
