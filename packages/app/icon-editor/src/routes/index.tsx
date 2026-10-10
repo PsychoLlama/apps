@@ -30,7 +30,7 @@ import {
   pickerViewChangedTopic,
 } from '../state/picker';
 import type { IconRef } from '../icons';
-import * as css from './home.css';
+import * as css from './index.css';
 
 /** Recognized search-param keys backing a shareable icon URL. */
 type IconSearchParamKey = 'icon' | 'palette' | 'shape' | 'pad';
