@@ -11,7 +11,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./frame.css": "./src/frame.css.ts",
-    "./context": "./src/context.ts"
+    "./context": "./src/context.ts",
+    "./branding": "./src/branding.tsx"
   },
   "scripts": {
     "typecheck": "tsc",
