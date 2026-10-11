@@ -59,8 +59,8 @@ export const handleFetch = (event: FetchEvent): void => {
   }
 
   // HTML payloads are mutable (Cloudflare revalidates them per
-  // request — see `_headers`), so the SW is the only layer that can
-  // survive offline reloads. Subresources under `/_build/*` are
+  // request — see `docs/asset-caching.md`), so the SW is the only
+  // layer that can survive offline reloads. Subresources under `/_build/*` are
   // immutable and stay in the HTTP cache; non-GET navigations like
   // form posts must not be replayed from cache. Everything else
   // falls through to the network unchanged.
