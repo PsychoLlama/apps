@@ -120,7 +120,7 @@ const IconEditor = () => {
 
   return (
     <Frame>
-      <SiteHeader title="Icon Editor" />
+      <SiteHeader />
 
       <Flex as="div" direction="column" class={css.workspace}>
         <Flex as="div" class={css.body}>
