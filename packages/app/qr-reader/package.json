@@ -1,5 +1,5 @@
 {
-  "name": "@app/qr-scanner",
+  "name": "@app/qr-reader",
   "private": true,
   "type": "module",
   "version": "0.0.0",

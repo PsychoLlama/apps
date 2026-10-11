@@ -626,7 +626,7 @@ importers:
         specifier: 'catalog:'
         version: 4.149.0(@types/node@26.1.2)
 
-  packages/app/qr-scanner:
+  packages/app/qr-reader:
     dependencies:
       '@crate/qr-code':
         specifier: workspace:*

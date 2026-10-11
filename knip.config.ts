@@ -100,7 +100,7 @@ const config: KnipConfig = {
       ignoreDependencies: ['@vanilla-extract/dynamic'],
       vite: false,
     },
-    'packages/app/qr-scanner': {
+    'packages/app/qr-reader': {
       // Same shape as the icon editor, plus the decoder worker.
       entry: [
         'src/routes/**/*.tsx!',
