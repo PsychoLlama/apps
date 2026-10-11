@@ -6,6 +6,7 @@ import { FileRoutes } from '@solidjs/start/router';
 import { ErrorBoundary, onMount, Suspense } from 'solid-js';
 import { ErrorBoundaryFallback } from '@lib/shell';
 import { Branding } from '@lib/shell/branding';
+import { PwaMeta } from '@lib/shell/pwa';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
 import { runStartupTasks } from './startup-tasks';
 
@@ -26,7 +27,8 @@ export default function App() {
         return (
           <AppProvider value={config}>
             <MetaProvider>
-              <Branding svg={brandmarkSvg} touchIcon={touchIcon} pwa={true} />
+              <Branding svg={brandmarkSvg} touchIcon={touchIcon} />
+              <PwaMeta />
 
               <ErrorBoundary
                 fallback={(error: unknown, reset) => (
