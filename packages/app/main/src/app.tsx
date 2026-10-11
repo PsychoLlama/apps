@@ -10,6 +10,7 @@ import { PwaMeta } from '@lib/shell/pwa';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
 import IconApps from 'virtual:icons/mdi/apps';
 import { NavigationLogger } from './navigation-logger';
+import { name } from './constants';
 import { runStartupTasks } from './startup-tasks';
 
 // Sources:
@@ -18,7 +19,7 @@ import { runStartupTasks } from './startup-tasks';
 import brandmarkSvg from './branding/brandmark.svg?url';
 import touchIcon from './branding/brandmark.svg?to-png=180';
 
-const config: AppConfig = { name: 'Apps', icon: IconApps };
+const config: AppConfig = { name, icon: IconApps };
 
 export default function App() {
   return (

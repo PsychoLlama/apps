@@ -8,6 +8,7 @@ import { ErrorBoundaryFallback } from '@lib/shell';
 import { Branding } from '@lib/shell/branding';
 import { PwaMeta } from '@lib/shell/pwa';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
+import { name } from './constants';
 import { runStartupTasks } from './startup-tasks';
 
 // Sources:
@@ -16,7 +17,7 @@ import { runStartupTasks } from './startup-tasks';
 import brandmarkSvg from './branding/brandmark.svg?url';
 import touchIcon from './branding/brandmark.svg?to-png=180';
 
-const config: AppConfig = { name: 'Icon Editor' };
+const config: AppConfig = { name };
 
 export default function App() {
   return (

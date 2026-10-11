@@ -4,6 +4,7 @@ import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { substrate } from '@dev/vite-plugin-substrate';
 import { iconPacks } from '@dev/vite-plugin-icon-packs';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
+import * as app from './src/constants';
 
 // Manifest theme bakes in at build time — the spec has no light/dark
 // variants, and browsers ignore `<meta name="theme-color">` for the
@@ -34,9 +35,8 @@ export default defineConfig({
         },
         manifest: {
           id: '/',
-          name: 'Icon Editor',
-          description:
-            'Create app icons, favicons, and logos for non-commercial projects.',
+          name: app.name,
+          description: app.description,
           start_url: '/',
           scope: '/',
           display: 'standalone',
