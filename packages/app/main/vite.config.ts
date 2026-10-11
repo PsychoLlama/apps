@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { substrate } from '@dev/vite-plugin-substrate';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
+import * as app from './src/constants';
 
 // Manifest theme bakes in at build time — the spec has no light/dark
 // variants, and browsers ignore `<meta name="theme-color">` for the
@@ -46,8 +47,8 @@ export default defineConfig({
           id: '/',
           // `short_name` would only matter if it differed from `name`.
           // Browsers fall back to `name` when it's absent.
-          name: 'Apps',
-          description: 'A collection of personal apps.',
+          name: app.name,
+          description: app.description,
           start_url: '/',
           scope: '/',
           display: 'standalone',

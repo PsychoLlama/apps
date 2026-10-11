@@ -12,7 +12,8 @@
     ".": "./src/index.ts",
     "./frame.css": "./src/frame.css.ts",
     "./context": "./src/context.ts",
-    "./branding": "./src/branding.tsx"
+    "./branding": "./src/branding.tsx",
+    "./pwa": "./src/pwa.tsx"
   },
   "scripts": {
     "typecheck": "tsc",
@@ -26,6 +27,7 @@
     "@vanilla-extract/css": "catalog:"
   },
   "devDependencies": {
+    "@dev/vite-plugin-pwa": "workspace:*",
     "@dev/vitest-config": "workspace:*",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
