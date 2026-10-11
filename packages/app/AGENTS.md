@@ -28,3 +28,9 @@ Guidelines for each `@app/*` package.
 - Under `src/config.ts`.
 - Exports `@lib/runtime-config` flags and settings.
 - Package export: `./config`.
+
+# Constants
+
+- Under `src/constants.ts`.
+- Exports plain data.
+- Package export: `./constants`.
