@@ -22,7 +22,6 @@ import IconGithub from 'virtual:icons/mdi/github';
 import * as css from './index.css';
 
 interface AppEntry {
-  id: string;
   name: string;
   href: string;
   description: string;
@@ -35,7 +34,6 @@ interface AppEntry {
  */
 const APPS: ReadonlyArray<AppEntry> = [
   {
-    id: 'icon-editor',
     name: 'Icon Editor',
     href: 'https://icon-editor.psychollama.io/',
     description:
@@ -43,7 +41,6 @@ const APPS: ReadonlyArray<AppEntry> = [
     Icon: IconPalette,
   },
   {
-    id: 'qr-reader',
     name: 'QR Reader',
     href: 'https://qr.psychollama.io/',
     description:
@@ -51,7 +48,6 @@ const APPS: ReadonlyArray<AppEntry> = [
     Icon: IconQrcodeScan,
   },
   {
-    id: 'beam',
     name: 'Beam',
     href: '/beam',
     description: 'Encrypted sharing between devices.',
@@ -66,7 +62,6 @@ const APPS: ReadonlyArray<AppEntry> = [
  */
 const DEV_APPS: ReadonlyArray<AppEntry> = [
   {
-    id: 'logs',
     name: 'Logs',
     href: '/logs',
     description:
@@ -74,14 +69,12 @@ const DEV_APPS: ReadonlyArray<AppEntry> = [
     Icon: IconTextBox,
   },
   {
-    id: 'gallery',
     name: 'Gallery',
     href: 'https://gallery.psychollama.io/',
     description: 'Browse the component library and design system.',
     Icon: IconGallery,
   },
   {
-    id: 'scratchpad',
     name: 'Scratchpad',
     href: '/scratchpad',
     description: 'Experiments and in-progress work.',
