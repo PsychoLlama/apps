@@ -23,3 +23,11 @@
 # source can't match, so the stripped form never renormalizes into the source
 # and trips loop detection.
 /beam/share/:id  /beam/__share  200
+
+# The icon editor moved to its own worker. Forward old links there; the query
+# string carries the editor state (`?icon=…`) and passes through untouched.
+# Prod-only: `_redirects` can't match or rewrite by host, so previews and
+# staging forward to prod too. The bare path needs its own rule: the splat
+# doesn't match `/icon-editor` without a trailing slash.
+/icon-editor    https://icon-editor.psychollama.io/        301
+/icon-editor/*  https://icon-editor.psychollama.io/:splat  301
