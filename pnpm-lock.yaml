@@ -193,7 +193,7 @@ catalogs:
       version: 14.6.7
     '@vanilla-extract/css':
       specifier: ^1.20.1
-      version: 1.21.2
+      version: 1.21.3
     '@vanilla-extract/dynamic':
       specifier: ^2.1.5
       version: 2.1.5
@@ -276,7 +276,7 @@ importers:
         version: 7.0.1(@testing-library/dom@10.4.1)(vitest@5.0.3)
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       eslint:
         specifier: 'catalog:'
         version: 10.12.0(jiti@2.7.0)(supports-color@10.2.2)
@@ -358,7 +358,7 @@ importers:
         version: 1.0.0(solid-js@1.9.16)
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       idb:
         specifier: 'catalog:'
         version: 8.0.4
@@ -395,7 +395,7 @@ importers:
         version: link:../../lib/ui
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       solid-js:
         specifier: 1.9.16
         version: 1.9.16
@@ -432,7 +432,7 @@ importers:
         version: 1.0.0(solid-js@1.9.16)
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       solid-js:
         specifier: 1.9.16
         version: 1.9.16
@@ -472,7 +472,7 @@ importers:
         version: link:../../lib/ui
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       solid-js:
         specifier: 1.9.16
         version: 1.9.16
@@ -536,7 +536,7 @@ importers:
         version: 2.0.6(@solidjs/router@1.0.0(solid-js@1.9.16))(@testing-library/jest-dom@7.0.1(@testing-library/dom@10.4.1)(vitest@5.0.3))(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       '@vanilla-extract/dynamic':
         specifier: 'catalog:'
         version: 2.1.5
@@ -600,7 +600,7 @@ importers:
         version: 1.0.0(solid-js@1.9.16)
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       media-devices:
         specifier: ^0.5.0
         version: 0.5.0
@@ -643,7 +643,7 @@ importers:
         version: link:../../lib/ui
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       solid-js:
         specifier: 1.9.16
         version: 1.9.16
@@ -676,7 +676,7 @@ importers:
         version: link:../../lib/ui
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       solid-js:
         specifier: 1.9.16
         version: 1.9.16
@@ -868,7 +868,7 @@ importers:
     dependencies:
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
     devDependencies:
       '@lib/gallery':
         specifier: workspace:*
@@ -1009,7 +1009,7 @@ importers:
         version: link:../ui
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
     devDependencies:
       '@dev/vitest-config':
         specifier: workspace:*
@@ -1084,7 +1084,7 @@ importers:
         version: link:../design
       '@vanilla-extract/css':
         specifier: 'catalog:'
-        version: 1.21.2
+        version: 1.21.3
       '@vanilla-extract/dynamic':
         specifier: 'catalog:'
         version: 2.1.5
@@ -3116,8 +3116,8 @@ packages:
   '@vanilla-extract/compiler@0.7.2':
     resolution: {integrity: sha512-VslwMJ01taDhJmMo0+A0SWn2dloMnYi0+BbvLuXXlqK4ufVRwXsq/U/Fp8ANkw3jevmQXy+JL7VtIQdjEtylDQ==}
 
-  '@vanilla-extract/css@1.21.2':
-    resolution: {integrity: sha512-ehF/tmv2MxQwOJB1DicALUqnjZTnmY9Y7J2ccKB578JzZpYeL6sLAUqbaXo1taw1Erp0qBq0I4Kejs0uU/pBfg==}
+  '@vanilla-extract/css@1.21.3':
+    resolution: {integrity: sha512-h7wXxEowNLjhGfTHqReoSBWjAzxDADM8yUuUL/enDWXQVwy50JnY8xFNaie04XHTmrBPKJjwcwRNuTGlFIJLSA==}
 
   '@vanilla-extract/dynamic@2.1.5':
     resolution: {integrity: sha512-QGIFGb1qyXQkbzx6X6i3+3LMc/iv/ZMBttMBL+Wm/DetQd36KsKsFg5CtH3qy+1hCA/5w93mEIIAiL4fkM8ycw==}
@@ -3679,6 +3679,10 @@ packages:
 
   deep-object-diff@1.1.9:
     resolution: {integrity: sha512-Rn+RuwkmkDwCi2/oXOFS9Gsr5lJZu/yTGpK7wAaAIE75CC+LCGEZHpY6VQJa/RoJcrmaA/docWJZvYohlNkWPA==}
+
+  deepmerge-ts@8.0.2:
+    resolution: {integrity: sha512-uqbvqLUMrc6p0MO+WBRtTxY55hmyh94WRwI5a++PZe54X+bfVh59FSN7uWCBCW1CCVjzjnrwzfI8zidE2obMMw==}
+    engines: {node: '>=16.9.0'}
 
   deepmerge@4.3.1:
     resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
@@ -4707,8 +4711,8 @@ packages:
   mlly@1.8.2:
     resolution: {integrity: sha512-d+ObxMQFmbt10sretNDytwt85VrbkhhUA/JBGm1MPaWJ65Cl4wOgLaB1NYvJSZ0Ef03MMEU/0xpPMXUIQ29UfA==}
 
-  modern-ahocorasick@1.1.0:
-    resolution: {integrity: sha512-sEKPVl2rM+MNVkGQt3ChdmD8YsigmXdn5NifZn6jiwn9LRJpWm8F3guhaqrJT/JOat6pwpbXEk6kv+b9DMIjsQ==}
+  modern-ahocorasick@3.3.0:
+    resolution: {integrity: sha512-OEuPxzKD4fG8Zx2dUX8jDP7ArNhRdlHhjLA00k+ZmtXe49Qb6+E/M/ViDYnXOZ9A3uRbRIb1eTKPesQGKd0USA==}
 
   mrmime@2.0.1:
     resolution: {integrity: sha512-Y3wQdFg2Va6etvQ5I82yUhGdsKrcYox6p7FfL1LbK2J4V01F9TGlepTIhnK24t7koZibmg82KGglhA1XK5IsLQ==}
@@ -7660,7 +7664,7 @@ snapshots:
 
   '@vanilla-extract/compiler@0.7.2(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(supports-color@10.2.2)(terser@5.48.0)(yaml@2.9.1)':
     dependencies:
-      '@vanilla-extract/css': 1.21.2
+      '@vanilla-extract/css': 1.21.3
       '@vanilla-extract/integration': 8.0.10(supports-color@10.2.2)
       vite: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
       vite-node: 6.0.0(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
@@ -7680,7 +7684,7 @@ snapshots:
       - tsx
       - yaml
 
-  '@vanilla-extract/css@1.21.2':
+  '@vanilla-extract/css@1.21.3':
     dependencies:
       '@emotion/hash': 0.9.2
       '@vanilla-extract/private': 1.0.9
@@ -7688,10 +7692,10 @@ snapshots:
       csstype: 3.2.3
       dedent: 1.7.2
       deep-object-diff: 1.1.9
-      deepmerge: 4.3.1
+      deepmerge-ts: 8.0.2
       lru-cache: 10.4.3
       media-query-parser: 2.0.2
-      modern-ahocorasick: 1.1.0
+      modern-ahocorasick: 3.3.0
       picocolors: 1.1.1
     transitivePeerDependencies:
       - babel-plugin-macros
@@ -7705,7 +7709,7 @@ snapshots:
       '@babel/core': 7.29.7(supports-color@10.2.2)
       '@babel/plugin-syntax-typescript': 7.29.7(@babel/core@7.29.7(supports-color@10.2.2))
       '@vanilla-extract/babel-plugin-debug-ids': 1.2.2(supports-color@10.2.2)
-      '@vanilla-extract/css': 1.21.2
+      '@vanilla-extract/css': 1.21.3
       dedent: 1.7.2
       esbuild: 0.28.2
       eval: 0.1.8
@@ -8359,6 +8363,8 @@ snapshots:
   deep-is@0.1.4: {}
 
   deep-object-diff@1.1.9: {}
+
+  deepmerge-ts@8.0.2: {}
 
   deepmerge@4.3.1: {}
 
@@ -9515,7 +9521,7 @@ snapshots:
       pkg-types: 1.3.1
       ufo: 1.6.4
 
-  modern-ahocorasick@1.1.0: {}
+  modern-ahocorasick@3.3.0: {}
 
   mrmime@2.0.1: {}
 
