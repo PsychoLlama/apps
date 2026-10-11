@@ -20,9 +20,9 @@ import * as styles from './home.css';
  * page to ask: which of them are reachable right now, and whether anything
  * is still waiting to reach one.
  *
- * Scanning is delegated wholesale to `@app/qr-scanner`: a beam link is a
- * same-origin URL, which the scanner already resolves to an in-app route, so
- * the tap lands back here at `/beam/share/:id`.
+ * Scanning is delegated wholesale to the QR app on its own origin. A scanned
+ * beam link is cross-origin there, so it opens `/beam/share/:id` in a new tab
+ * rather than continuing this session in place.
  */
 const BeamHome = () => {
   const book = useValue(contactsStore);
@@ -66,7 +66,7 @@ const BeamHome = () => {
             </Button>
             <LinkButton
               testId="beam-scan"
-              href="/scanner"
+              href="https://qr.psychollama.io/"
               size={3}
               variant="soft"
             >

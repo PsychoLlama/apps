@@ -100,6 +100,22 @@ const config: KnipConfig = {
       ignoreDependencies: ['@vanilla-extract/dynamic'],
       vite: false,
     },
+    'packages/app/qr-scanner': {
+      // Same shape as the icon editor, plus the decoder worker.
+      entry: [
+        'src/routes/**/*.tsx!',
+        'src/app.tsx!',
+        'src/entry-{client,server}.tsx!',
+        // Imported as `./worker/index?worker`; the query suffix hides the
+        // specifier from knip's resolver.
+        'src/worker/index.ts!',
+        'src/**/*.css.ts!',
+        'vite.config.ts',
+      ],
+      project: ['src/**/*.{ts,tsx}!'],
+      ignoreDependencies: ['@vanilla-extract/dynamic'],
+      vite: false,
+    },
     'packages/lib/ui': {
       entry: [
         // `_internal/*` primitives (e.g. floating-ui and its behavior

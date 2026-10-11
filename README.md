@@ -26,6 +26,6 @@ Slap together images for favicons, app icons, readme images, or anything that ne
 > [!NOTE]
 > Assumes non-commercial use. See license linked in each icon pack.
 
-### QR Scanner - [App](https://apps.psychollama.io/scanner)
+### QR Scanner - [App](https://qr.psychollama.io/)
 
 Cross-platform QR code scanner and format parser.

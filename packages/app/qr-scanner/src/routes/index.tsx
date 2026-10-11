@@ -63,7 +63,7 @@ const QrScanner = () => {
       when={camera().status === 'streaming' && stream()}
       fallback={
         <Frame>
-          <SiteHeader title="Scanner" />
+          <SiteHeader />
 
           <FrameBody>
             <Container as="div" size={1}>

@@ -45,7 +45,7 @@ const APPS: ReadonlyArray<AppEntry> = [
   {
     id: 'scanner',
     name: 'Scanner',
-    href: '/scanner',
+    href: 'https://qr.psychollama.io/',
     description:
       'Scan QR codes with your camera. Decoding runs entirely on your device.',
     Icon: IconQrcodeScan,
