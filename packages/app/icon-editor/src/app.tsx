@@ -9,7 +9,7 @@ import { Branding } from '@lib/shell/branding';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
 import { runStartupTasks } from './startup-tasks';
 
-// Source: https://icon-editor.psychollama.io/?icon=mdi%3Apalette
+// Source: https://icon-editor.psychollama.io/?icon=mdi%3Apalette&pad=5
 import brandmarkSvg from './branding/brandmark.svg?url';
 import touchIcon from './branding/brandmark.svg?to-png=180';
 
