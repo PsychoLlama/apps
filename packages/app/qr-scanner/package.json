@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "QR code scanner. Reads codes from the device camera.",
+  "description": "QR Reader. Scans QR codes with the device camera.",
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts"

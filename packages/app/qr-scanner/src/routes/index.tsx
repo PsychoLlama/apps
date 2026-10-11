@@ -19,7 +19,7 @@ import {
 } from '../state';
 
 /**
- * Scanner app. Drives a camera session: the landing page opens the feed,
+ * QR Reader home. Drives a camera session: the landing page opens the feed,
  * which then takes over the viewport full-bleed with a cancel control.
  * Errors swap the landing copy for a recovery message. On a recognized
  * code the result surface replaces the feed, showing the raw payload with

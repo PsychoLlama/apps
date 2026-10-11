@@ -1,5 +1,5 @@
 /** Display name: the shell's root crumb and the installed app's name. */
-export const name = 'Scanner';
+export const name = 'QR Reader';
 
 /** One-line summary for the web app manifest. */
 export const description =
