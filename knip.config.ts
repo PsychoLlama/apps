@@ -86,6 +86,20 @@ const config: KnipConfig = {
       // workspace root when knip runs holistically.
       vite: false,
     },
+    'packages/app/gallery': {
+      // Same shape as the icon editor: SolidStart's file routes, app root
+      // and entries are production entries.
+      entry: [
+        'src/routes/**/*.tsx!',
+        'src/app.tsx!',
+        'src/entry-{client,server}.tsx!',
+        'src/**/*.css.ts!',
+        'vite.config.ts',
+      ],
+      project: ['src/**/*.{ts,tsx}!'],
+      ignoreDependencies: ['@vanilla-extract/dynamic'],
+      vite: false,
+    },
     'packages/lib/ui': {
       entry: [
         // `_internal/*` primitives (e.g. floating-ui and its behavior

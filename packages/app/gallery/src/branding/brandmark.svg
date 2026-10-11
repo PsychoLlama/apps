@@ -1,0 +1,49 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  width="512"
+  height="512"
+>
+  <metadata>
+    <rdf:RDF
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns:dc="http://purl.org/dc/elements/1.1/"
+      xmlns:cc="http://creativecommons.org/ns#"
+    >
+      <cc:Work rdf:about="">
+        <dc:title>mdi:brush-variant</dc:title>
+        <dc:identifier>mdi:brush-variant</dc:identifier>
+        <dc:creator>
+          <cc:Agent rdf:about="https://github.com/Templarian/MaterialDesign">
+            <dc:title>Pictogrammers</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:source rdf:resource="https://github.com/Templarian/MaterialDesign" />
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Apache 2.0</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <cc:license rdf:resource="https://github.com/Templarian/MaterialDesign/blob/master/LICENSE" />
+        <dc:rightsHolder>SPDX:Apache-2.0</dc:rightsHolder>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs>
+    <clipPath id="icon-clip-icon">
+      <rect width="512" height="512" rx="92.16" ry="92.16" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#icon-clip-icon)">
+    <rect width="512" height="512" fill="#0090ff" />
+    <g
+      transform="translate(25.60000000000003 25.60000000000003) scale(19.2)"
+      style="color: #ffffff"
+    >
+      <path
+        fill="currentColor"
+        d="M8 3C5.79 3 4 4.79 4 7v7c0 1.1.9 2 2 2h3v4c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2v-4h3c1.1 0 2-.9 2-2V3zm0 2h4v2h2V5h1v4h2V5h1v5H6V7c0-1.1.9-2 2-2m-2 9v-2h12v2z"
+      />
+    </g>
+  </g>
+</svg>

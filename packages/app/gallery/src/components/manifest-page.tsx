@@ -1,12 +1,12 @@
 import { Flex, Heading, Text } from '@lib/ui';
 import type { GalleryGroup, GalleryListing } from '@lib/gallery';
-import { ManifestListings } from '../components/manifest-listings';
-import { GalleryView } from '../components/gallery-view';
+import { ManifestListings } from './manifest-listings';
+import { GalleryView } from './gallery-view';
 
 /**
  * Collect an eager `import.meta.glob` of a package's `*.gallery.tsx` modules
  * into a listing array — each module's default export is its listing. A
- * package's dedicated `/gallery/<slug>` route hands its glob here so every
+ * package's dedicated `/<slug>` route hands its glob here so every
  * listing renders together on one page.
  */
 const collectListings = (
@@ -15,16 +15,16 @@ const collectListings = (
   Object.values(modules).map((module) => module.default);
 
 /**
- * A manifest's page, rendered by its dedicated `/gallery/<slug>` route. The
+ * A manifest's page, rendered by its dedicated `/<slug>` route. The
  * route hands over its package's name, description, and an eager
  * `import.meta.glob` of that package's `*.gallery.tsx` files; this collects them
- * into listings (sorted by title) under a `Gallery › <manifest>` breadcrumb.
+ * into listings (sorted by title) under a `<manifest>` breadcrumb.
  *
  * The glob is eager on purpose: the listings compile into the route's own chunk,
  * so SolidStart preloads them alongside the route and the page paints complete —
  * no flash while a deferred listings import streams in after navigation.
  */
-const ManifestRoute = (props: {
+export const ManifestPage = (props: {
   /** Manifest title, conventionally the package name (`@lib/ui`). */
   title: string;
   /** One-line summary, conventionally the package's `description`. */
@@ -44,9 +44,7 @@ const ManifestRoute = (props: {
     );
 
   return (
-    <GalleryView
-      trail={[{ label: 'Gallery', href: '/gallery' }, { label: props.title }]}
-    >
+    <GalleryView trail={[{ label: props.title }]}>
       <Flex as="div" direction="column" gap={6}>
         <Flex as="div" direction="column" gap={2}>
           <Heading as="h1" size={7} weight="bold" selectable={false}>
@@ -62,5 +60,3 @@ const ManifestRoute = (props: {
     </GalleryView>
   );
 };
-
-export default ManifestRoute;
