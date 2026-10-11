@@ -1,0 +1,57 @@
+{
+  "name": "@app/qr-reader",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "QR Reader. Scans QR codes with the device camera.",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css.ts"
+  ],
+  "exports": {
+    "./constants": "./src/constants.ts"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build ${BUILD_MODE:+--mode $BUILD_MODE}",
+    "start": "vite start",
+    "preview": "wrangler dev",
+    "typecheck": "tsc && tsc -p src/worker/tsconfig.json",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "deploy": "wrangler deploy",
+    "deploy:preview": "rm -f .wrangler/deploy/preview.ndjson && WRANGLER_OUTPUT_FILE_PATH=.wrangler/deploy/preview.ndjson wrangler versions upload --preview-alias \"pr-${PR_NUMBER:?}\""
+  },
+  "dependencies": {
+    "@crate/qr-code": "workspace:*",
+    "@lib/assert": "workspace:*",
+    "@lib/design": "workspace:*",
+    "@lib/holz-idb-backend": "workspace:*",
+    "@lib/messaging": "workspace:*",
+    "@lib/observability": "workspace:*",
+    "@lib/runtime-config": "workspace:*",
+    "@lib/shell": "workspace:*",
+    "@lib/state": "workspace:*",
+    "@lib/theme": "workspace:*",
+    "@lib/ui": "workspace:*",
+    "@vanilla-extract/css": "catalog:",
+    "media-devices": "^0.5.0",
+    "vite": "catalog:"
+  },
+  "peerDependencies": {
+    "@solidjs/meta": "*",
+    "@solidjs/router": "*",
+    "solid-js": "*"
+  },
+  "devDependencies": {
+    "@dev/vite-plugin-substrate": "workspace:*",
+    "@dev/vitest-config": "workspace:*",
+    "@solidjs/meta": "catalog:",
+    "@solidjs/router": "catalog:",
+    "@solidjs/start": "catalog:",
+    "@solidjs/vite-plugin-nitro-2": "catalog:",
+    "@vanilla-extract/dynamic": "catalog:",
+    "solid-js": "catalog:",
+    "typescript": "catalog:",
+    "wrangler": "catalog:"
+  }
+}

@@ -1,8 +1,8 @@
 import { defineScope } from '@lib/state';
 
 /**
- * Owns everything a scanner session holds: the live camera stream, the
- * decoder worker, and the sagas driving them. `QrScanner` anchors it for the
+ * Owns everything a reader session holds: the live camera stream, the
+ * decoder worker, and the sagas driving them. `QrReader` anchors it for the
  * lifetime of the page, so a camera session and the worker that serves it
  * share one lifetime.
  *
@@ -11,4 +11,4 @@ import { defineScope } from '@lib/state';
  * stream's tracks stop, and the worker is terminated — each by the drop hook
  * on the cell that holds it.
  */
-export const scannerScope = defineScope();
+export const readerScope = defineScope();

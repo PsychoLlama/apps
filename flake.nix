@@ -111,7 +111,7 @@
               # the crates are `cdylib`-only (no doctests), so nothing is lost.
               pkgs.cargo-nextest
               # Generates the JS bindings for wasm crates that use
-              # `wasm-bindgen` (e.g. `@crate/qr-scanner`). The CLI refuses
+              # `wasm-bindgen` (e.g. `@crate/qr-code`). The CLI refuses
               # modules built against a mismatched `wasm-bindgen` crate,
               # so the crates pin `wasm-bindgen = "=0.2.126"` to match.
               # Pinned to the versioned attribute rather than the

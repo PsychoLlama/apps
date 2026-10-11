@@ -24,9 +24,9 @@ declare global {
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
- * Constraints for the scanner feed: rear-facing camera (`environment`)
+ * Constraints for the reader feed: rear-facing camera (`environment`)
  * since you point the back of the phone at the code, and no audio — a
- * QR scanner has no use for the microphone.
+ * QR reader has no use for the microphone.
  *
  * Resolution is requested, not required (`ideal`): left unconstrained,
  * phones hand back a low default (e.g. 480×640) that smears small or
@@ -162,7 +162,7 @@ export const releaseCamera = (
 
 /**
  * Whether the user has already granted camera permission, via the
- * Permissions API. Lets the scanner skip the landing pitch and open the
+ * Permissions API. Lets the reader skip the landing pitch and open the
  * feed straight away on a return visit where the grant still stands.
  *
  * The query itself is wrapped because not every engine recognizes the

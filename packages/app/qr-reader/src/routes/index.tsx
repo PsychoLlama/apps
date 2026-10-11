@@ -4,14 +4,14 @@ import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import { Container } from '@lib/ui';
 import { CameraView } from '../components/camera-view';
 import { Landing } from '../components/landing';
-import { ScannerError } from '../components/scanner-error';
+import { ReaderError } from '../components/reader-error';
 import { ScanResult } from '../components/scan-result';
 import {
   autoStartScanSaga,
   cameraStore,
   preloadDecoderSaga,
   reportSagaFailure,
-  scannerScope,
+  readerScope,
   startScanSaga,
   stopScanSaga,
   streamCell,
@@ -19,7 +19,7 @@ import {
 } from '../state';
 
 /**
- * Scanner app. Drives a camera session: the landing page opens the feed,
+ * QR Reader home. Drives a camera session: the landing page opens the feed,
  * which then takes over the viewport full-bleed with a cancel control.
  * Errors swap the landing copy for a recovery message. On a recognized
  * code the result surface replaces the feed, showing the raw payload with
@@ -29,8 +29,8 @@ import {
  * stops the stream, terminates the decoder worker, and supersedes a request
  * still waiting on its permission prompt.
  */
-const QrScanner = () => {
-  useAnchor(scannerScope);
+const QrReader = () => {
+  useAnchor(readerScope);
   const camera = useValue(cameraStore);
   const stream = useValue(streamCell);
   const startScan = useRun(startScanSaga);
@@ -47,7 +47,7 @@ const QrScanner = () => {
     // start once the client mounts. They're independent: the feed is usable
     // whether or not the decoder has landed, and vice versa.
     //
-    // The worker is preloaded across the whole scanner page so its wasm is
+    // The worker is preloaded across the whole reader page so its wasm is
     // warm by the time the camera goes live; it outlives individual camera
     // sessions and is torn down only with the scope.
     void preloadDecoder().catch(
@@ -63,7 +63,7 @@ const QrScanner = () => {
       when={camera().status === 'streaming' && stream()}
       fallback={
         <Frame>
-          <SiteHeader title="Scanner" />
+          <SiteHeader />
 
           <FrameBody>
             <Container as="div" size={1}>
@@ -79,7 +79,7 @@ const QrScanner = () => {
                   )}
                 </Match>
                 <Match when={camera().status === 'error' && camera().error}>
-                  {(kind) => <ScannerError kind={kind()} onRetry={start} />}
+                  {(kind) => <ReaderError kind={kind()} onRetry={start} />}
                 </Match>
                 <Match when={true}>
                   <Landing
@@ -114,4 +114,4 @@ const QrScanner = () => {
   );
 };
 
-export default QrScanner;
+export default QrReader;

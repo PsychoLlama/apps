@@ -1,5 +1,5 @@
 /**
- * Unit tests for the scanner's sagas. These run under `simulate`, so there's
+ * Unit tests for the reader's sagas. These run under `simulate`, so there's
  * no runtime and no state — every capability is stubbed and the assertions
  * are about what the saga published and which side effects it reached for.
  */

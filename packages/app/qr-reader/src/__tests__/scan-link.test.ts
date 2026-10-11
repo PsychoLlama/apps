@@ -212,9 +212,7 @@ describe('internalPath', () => {
   });
 
   it('carries the query and hash into the path', () => {
-    expect(internalPath(`${origin}/scanner?q=1#frag`)).toBe(
-      '/scanner?q=1#frag',
-    );
+    expect(internalPath(`${origin}/reader?q=1#frag`)).toBe('/reader?q=1#frag');
   });
 
   it('rejects a foreign origin — a lookalike stays external', () => {

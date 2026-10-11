@@ -17,7 +17,7 @@ const notTest = import.meta.env.MODE !== 'test';
 // plus origin-shared IndexedDB persistence. A global collector
 // (`setGlobalLogCollector`) still intercepts upstream. Both halves run
 // anywhere — `createIdbBackend` and the OPFS-backed pattern read work on the
-// main thread and in workers (service, QR scanner, …) alike — so there's no
+// main thread and in workers (service, QR reader, …) alike — so there's no
 // realm-specific branch and, unlike the `localStorage` env filter, workers
 // get the same filtering knob as the page.
 export const processor: LogProcessor = createLogCollector({

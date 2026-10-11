@@ -7,7 +7,7 @@
 
 import { createTestRuntime } from '@lib/state';
 import { decoderCell, decoderReadyTopic } from '../decoder';
-import { scannerScope } from '../scope';
+import { readerScope } from '../scope';
 import type { DecoderConnection } from '../../decoder';
 
 /** A connection stand-in whose teardown calls are observable. */
@@ -19,7 +19,7 @@ const fakeConnection = (
 
 const setup = () => {
   const runtime = createTestRuntime();
-  const release = runtime.anchor(scannerScope);
+  const release = runtime.anchor(readerScope);
   return { ...runtime, release };
 };
 
@@ -43,7 +43,7 @@ describe('decoderReadyTopic', () => {
   });
 });
 
-describe('scannerScope', () => {
+describe('readerScope', () => {
   it('terminates the worker when the last anchor is released', () => {
     const close = vi.fn();
     const terminate = vi.fn();

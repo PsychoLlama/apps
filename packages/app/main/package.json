@@ -27,7 +27,6 @@
   "dependencies": {
     "@app/beam": "workspace:*",
     "@app/logs": "workspace:*",
-    "@app/qr-scanner": "workspace:*",
     "@app/scratchpad": "workspace:*",
     "@app/settings": "workspace:*",
     "@lib/design": "workspace:*",

@@ -21,7 +21,7 @@ import {
   vibrate,
 } from './capabilities';
 import { decoderCell, decoderReadyTopic } from './decoder';
-import { scannerScope } from './scope';
+import { readerScope } from './scope';
 import { createDecoder } from '../decoder';
 import type { ScanResult } from '../worker/rpc';
 
@@ -56,7 +56,7 @@ const SCAN_HAPTIC_MS = 40;
  * `catch` here only ever sees a genuine camera failure; the orphaned stream
  * is stopped by {@link openCamera} itself.
  */
-export const startScanSaga = defineSaga(scannerScope, async function* () {
+export const startScanSaga = defineSaga(readerScope, async function* () {
   const { status } = yield* read(cameraStore);
   if (status === 'requesting' || status === 'streaming') return;
 
@@ -74,14 +74,14 @@ export const startScanSaga = defineSaga(scannerScope, async function* () {
 /**
  * Open the feed unprompted on a return visit where camera permission already
  * stands, skipping the landing pitch. Client-only — the Permissions API
- * can't run during SSG — so `QrScanner` starts it from `onMount`.
+ * can't run during SSG — so `QrReader` starts it from `onMount`.
  *
  * The probe resolves async, so the session is re-read afterwards: a user who
  * started, cancelled, or scanned in the meantime has moved the session on,
  * and reopening the camera under them would be an unasked-for surprise. Only
  * a still-pristine session auto-starts.
  */
-export const autoStartScanSaga = defineSaga(scannerScope, async function* () {
+export const autoStartScanSaga = defineSaga(readerScope, async function* () {
   const granted = yield* call(cameraPermissionGranted);
   if (!granted) return;
 
@@ -96,7 +96,7 @@ export const autoStartScanSaga = defineSaga(scannerScope, async function* () {
  * the commit that drops the stream — the reverse order would leave nothing
  * to stop, and the hardware running.
  */
-export const stopScanSaga = defineSaga(scannerScope, async function* () {
+export const stopScanSaga = defineSaga(readerScope, async function* () {
   const stream = yield* read(streamCell);
 
   yield* call(releaseCamera, stream);
@@ -114,7 +114,7 @@ export const stopScanSaga = defineSaga(scannerScope, async function* () {
  * degraded nicety, not an error worth surfacing.
  */
 export const toggleTorchSaga = defineSaga(
-  scannerScope,
+  readerScope,
   async function* (on: boolean) {
     const stream = yield* read(streamCell);
 
@@ -136,7 +136,7 @@ export const toggleTorchSaga = defineSaga(
  * Guarded on an empty cell so a second run can't spawn a second worker,
  * which the cell would silently drop unterminated.
  */
-export const preloadDecoderSaga = defineSaga(scannerScope, async function* () {
+export const preloadDecoderSaga = defineSaga(readerScope, async function* () {
   if (yield* read(decoderCell)) return;
 
   const connection = yield* call(createDecoder);
@@ -173,7 +173,7 @@ export interface ScanHit {
  * contents stay off every diagnostic surface.
  */
 export const finishScanSaga = defineSaga(
-  scannerScope,
+  readerScope,
   async function* ({ result, navigate }: ScanHit) {
     const stream = yield* read(streamCell);
 

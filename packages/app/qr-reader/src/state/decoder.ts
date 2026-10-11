@@ -1,6 +1,6 @@
 import { defineCell, defineFold, defineTopic } from '@lib/state';
 import { terminateDecoder, type DecoderConnection } from '../decoder';
-import { scannerScope } from './scope';
+import { readerScope } from './scope';
 
 /**
  * The decoder worker and its RPC binding once spawned and the wasm module is
@@ -13,7 +13,7 @@ import { scannerScope } from './scope';
  * reclaims the thread, so no worker outlives the page that spawned it.
  */
 export const decoderCell = defineCell<DecoderConnection | null>(
-  scannerScope,
+  readerScope,
   () => null,
   { drop: terminateDecoder },
 );
