@@ -12,7 +12,7 @@ const ERROR_MESSAGES: Record<CameraErrorKind, string> = {
   unknown: 'Something went wrong starting the camera. Try again.',
 };
 
-interface ScannerErrorProps {
+interface ReaderErrorProps {
   /** The failure mode that determines the displayed copy. */
   kind: CameraErrorKind;
   /** Retries the camera request. */
@@ -20,7 +20,7 @@ interface ScannerErrorProps {
 }
 
 /** Failure surface — swaps in for the landing pitch when a request fails. */
-export const ScannerError: Component<ScannerErrorProps> = (props) => (
+export const ReaderError: Component<ReaderErrorProps> = (props) => (
   <Flex as="div" direction="column" align="center" gap={5}>
     <Flex as="header" direction="column" align="center" gap={2}>
       <Heading

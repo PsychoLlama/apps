@@ -113,7 +113,7 @@ export const CameraView: Component<CameraViewProps> = (props) => {
         <Flex as="div" class={css.corners.bottomRight} />
       </Flex>
 
-      <Flex as="div" testId="scanner-controls" class={css.controls}>
+      <Flex as="div" testId="reader-controls" class={css.controls}>
         <IconButton
           testId="cancel-scanning"
           aria-label="Cancel"

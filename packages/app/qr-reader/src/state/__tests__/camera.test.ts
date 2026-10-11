@@ -16,7 +16,7 @@ import {
   streamCell,
   torchToggledTopic,
 } from '../camera';
-import { scannerScope } from '../scope';
+import { readerScope } from '../scope';
 import type { ScanResult } from '../../worker/rpc';
 
 /** A stand-in stream. Only `getTracks` is called, and only on teardown. */
@@ -32,7 +32,7 @@ const result: ScanResult = {
 
 const setup = () => {
   const runtime = createTestRuntime();
-  const release = runtime.anchor(scannerScope);
+  const release = runtime.anchor(readerScope);
   return { ...runtime, release };
 };
 
@@ -165,7 +165,7 @@ describe('codeRecognizedTopic', () => {
   });
 });
 
-describe('scannerScope', () => {
+describe('readerScope', () => {
   it('stops the live stream when the last anchor is released', () => {
     const stop = vi.fn();
     const { commit, release } = setup();

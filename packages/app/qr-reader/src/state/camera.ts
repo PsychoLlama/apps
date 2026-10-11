@@ -1,10 +1,10 @@
 import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
 import { stopStream } from './capabilities';
-import { scannerScope } from './scope';
+import { readerScope } from './scope';
 import type { ScanResult } from '../worker/rpc';
 
 /**
- * Lifecycle of the camera session backing the scanner.
+ * Lifecycle of the camera session backing the reader.
  *
  * - `idle` — no stream; the landing page invites the user to start, or the
  *   result surface shows what the last session recognized.
@@ -13,7 +13,7 @@ import type { ScanResult } from '../worker/rpc';
  * - `streaming` — a live stream is attached and rendered full-viewport.
  * - `error` — the request failed; `error` carries the reason.
  */
-export type ScannerStatus = 'idle' | 'requesting' | 'streaming' | 'error';
+export type ReaderStatus = 'idle' | 'requesting' | 'streaming' | 'error';
 
 /**
  * Why a camera request failed, normalized from the browser's grab-bag
@@ -42,10 +42,10 @@ export interface TorchState {
   on: boolean;
 }
 
-/** Camera session state for the scanner. */
+/** Camera session state for the reader. */
 export interface CameraState {
   /** Where the session sits in its lifecycle. */
-  status: ScannerStatus;
+  status: ReaderStatus;
   /** Failure reason while `status === 'error'`, else `null`. */
   error: CameraErrorKind | null;
   /** Torch availability and state for the live stream. */
@@ -60,8 +60,8 @@ export interface CameraState {
 /** A fresh torch state. Each session gets its own — the store mutates it. */
 const idleTorch = (): TorchState => ({ supported: false, on: false });
 
-/** Lifecycle of the scanner's camera session. */
-export const cameraStore = defineStore<CameraState>(scannerScope, () => ({
+/** Lifecycle of the reader's camera session. */
+export const cameraStore = defineStore<CameraState>(readerScope, () => ({
   status: 'idle',
   error: null,
   torch: idleTorch(),
@@ -77,7 +77,7 @@ export const cameraStore = defineStore<CameraState>(scannerScope, () => ({
  * recording indicator) when the last anchor goes away.
  */
 export const streamCell = defineCell<MediaStream | null>(
-  scannerScope,
+  readerScope,
   () => null,
   { drop: stopStream },
 );
