@@ -25,7 +25,6 @@
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
-    "@app/beam": "workspace:*",
     "@app/logs": "workspace:*",
     "@app/scratchpad": "workspace:*",
     "@app/settings": "workspace:*",

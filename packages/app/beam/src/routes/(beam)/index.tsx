@@ -4,15 +4,15 @@ import { FrameBody } from '@lib/shell';
 import { Button, Callout, Flex, LinkButton, Text } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
-import { BeamIntro } from '../components/beam-intro';
-import { ContactDirectory } from '../components/contact-directory';
-import { InviteDialog } from '../components/invite-dialog';
-import { contactsStore } from '../state/contacts';
-import { inviteOpenedTopic } from '../state/view';
-import * as styles from './home.css';
+import { BeamIntro } from '../../components/beam-intro';
+import { ContactDirectory } from '../../components/contact-directory';
+import { InviteDialog } from '../../components/invite-dialog';
+import { contactsStore } from '../../state/contacts';
+import { inviteOpenedTopic } from '../../state/view';
+import * as styles from './index.css';
 
 /**
- * The Beam home at `/beam` — the address book, and the app's entry point. It
+ * The Beam home at `/` — the address book, and the app's entry point. It
  * lists the peers this device has paired with and offers the two ways to add
  * another: show an invite for someone else to scan, or scan theirs.
  *
@@ -21,7 +21,7 @@ import * as styles from './home.css';
  * is still waiting to reach one.
  *
  * Scanning is delegated wholesale to the QR app on its own origin. A scanned
- * beam link is cross-origin there, so it opens `/beam/share/:id` in a new tab
+ * beam link is cross-origin there, so it opens `/share/:id` in a new tab
  * rather than continuing this session in place.
  */
 const BeamHome = () => {

@@ -3,7 +3,7 @@ import { background, neutral, space } from '@lib/design';
 
 /**
  * The bar itself, pinned under the frame's scrolling body rather than inside
- * it: it reports on the session, which outlives any one `/beam/*` route, and
+ * it: it reports on the session, which outlives any one route, and
  * a status that moved with the content would be somewhere different on every
  * page. The top border and opaque surface separate it from the content
  * scrolling past behind it, the same way the pairing tray above it does.

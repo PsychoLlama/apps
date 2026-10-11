@@ -12,7 +12,7 @@ import { beamScope } from '../scope';
  * finishes, which is a dependency that only points one way: the address book
  * doesn't know a rename form exists, and shouldn't.
  *
- * None of it is persisted. Walking away from `/beam` releases the scope and
+ * None of it is persisted. Leaving the app releases the scope and
  * takes every open dialog with it, rather than stranding one over a page
  * nobody is looking at.
  */

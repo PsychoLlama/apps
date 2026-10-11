@@ -49,7 +49,7 @@ const APPS: ReadonlyArray<AppEntry> = [
   },
   {
     name: 'Beam',
-    href: '/beam',
+    href: 'https://beam.psychollama.io/',
     description: 'Encrypted sharing between devices.',
     Icon: IconSend,
   },

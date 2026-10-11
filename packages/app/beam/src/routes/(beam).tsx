@@ -13,15 +13,16 @@ import { connectRelaySaga } from '../state/network';
 import { restoreOnboardingSaga } from '../state/onboarding';
 import { beamScope } from '../state/scope';
 import { beamSurfaceFormula, surfaceForRoute } from '../state/view';
-import * as styles from './layout.css';
+import * as styles from './(beam).css';
 
 /**
- * The Beam layout: the `<main>` frame for every `/beam/*` route. It anchors
- * the session scope for the whole surface, so the relay connection and the
- * loaded address book survive navigation between the invite view and a peer's
- * share view without re-dialling or re-reading. Each route renders its own
- * header and body inside: `./home` is the address book at `/beam`, `./share`
- * is one peer at `/beam/share/:id`.
+ * The Beam layout: the `<main>` frame for every route in the `(beam)` group,
+ * which is all of them but the 404 page. It anchors the session scope for the
+ * whole surface, so the relay connection and the loaded address book survive
+ * navigation between the invite view and a peer's share view without
+ * re-dialling or re-reading. Each route renders its body inside:
+ * `(beam)/index` is the address book at `/`, `(beam)/share/[id]` is one peer
+ * at `/share/:id`.
  *
  * The status bar hangs off the frame rather than any one route: it reports on
  * the session, which no single route owns.

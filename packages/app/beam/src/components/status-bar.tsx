@@ -16,7 +16,7 @@ const describeRelay = (status: ConnectionStatus): string => {
 };
 
 /**
- * The session's status bar along the foot of every `/beam/*` route. Reports
+ * The session's status bar along the foot of every route. Reports
  * the relay connection in words rather than the glyph the header used to
  * carry: the state is a sentence — connecting, connected, gone — and a small
  * icon in a corner asks the reader to have learned it.

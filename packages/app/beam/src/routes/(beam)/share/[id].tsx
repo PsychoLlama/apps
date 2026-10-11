@@ -3,28 +3,28 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { useCommit, useRun, useValue } from '@lib/state';
 import { FrameBody } from '@lib/shell';
 import { AlertDialog, Button, Callout, Flex, Heading, Text } from '@lib/ui';
-import { RenameDialog } from '../components/rename-dialog';
-import { ShareComposer } from '../components/share-composer';
-import { ShareLog } from '../components/share-log';
-import { addressBookFormula, forgetContactSaga } from '../state/contacts';
-import { isEndpointId } from '../state/endpoint';
-import { reportSagaFailure } from '../state/failure';
-import { identityStore } from '../state/identity';
-import { generateLabel } from '../state/labels';
+import { RenameDialog } from '../../../components/rename-dialog';
+import { ShareComposer } from '../../../components/share-composer';
+import { ShareLog } from '../../../components/share-log';
+import { addressBookFormula, forgetContactSaga } from '../../../state/contacts';
+import { isEndpointId } from '../../../state/endpoint';
+import { reportSagaFailure } from '../../../state/failure';
+import { identityStore } from '../../../state/identity';
+import { generateLabel } from '../../../state/labels';
 import {
   connectionStore,
   dialPeerSaga,
   disconnectPeerSaga,
   peerStatesFormula,
   type PeerState,
-} from '../state/network';
-import { sharesByPeerFormula } from '../state/shares';
+} from '../../../state/network';
+import { sharesByPeerFormula } from '../../../state/shares';
 import {
   removalClosedTopic,
   removalOpenedTopic,
   removalStore,
   renameOpenedTopic,
-} from '../state/view';
+} from '../../../state/view';
 import * as styles from './share.css';
 
 /**
@@ -40,7 +40,7 @@ const formatDate = (epochMilliseconds: number): string =>
   );
 
 /**
- * The peer view at `/beam/share/:id` — where a beam link lands, and the only
+ * The peer view at `/share/:id` — where a beam link lands, and the only
  * page there is about another device. It dials the endpoint named in the URL
  * over the endpoint connection the layout holds open, introduces this device,
  * and carries the composer and the session's log of what has passed between
@@ -87,7 +87,7 @@ const BeamShare = () => {
    * key landed, or the wasm load failed and never will.
    *
    * This is the gate on everything below, and the reason is the prerender.
-   * `/beam/share/:id` is served from one shell built against the `__id`
+   * `/share/:id` is served from one shell built against the `__id`
    * sentinel, so the shell's `:id` is a placeholder — every conclusion drawn
    * from it is drawn about the wrong string. Rather than audit each one, the
    * body simply doesn't exist until the client is answering: the frame is
@@ -127,7 +127,7 @@ const BeamShare = () => {
   // longer in the book, its name already reverted to a key prefix.
   const handleForget = () => {
     void forget(params.id)
-      .then(() => navigate('/beam'))
+      .then(() => navigate('/'))
       .catch(reportSagaFailure('The contact forget saga failed.'));
   };
 

@@ -123,7 +123,7 @@ export default [
     // in route sources. `_`-prefixed files are ignored by the router, so
     // the rule doesn't apply there.
     files: [
-      'packages/app/{main,icon-editor,gallery,qr-reader}/src/routes/**/*.tsx',
+      'packages/app/{main,icon-editor,gallery,qr-reader,beam}/src/routes/**/*.tsx',
     ],
     ignores: [
       'packages/app/*/src/routes/**/_*.tsx',

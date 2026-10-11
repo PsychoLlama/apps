@@ -27,7 +27,7 @@ import * as styles from './contact-list.css';
 const ContactRow = (props: { contact: ContactView; active: boolean }) => {
   const location = useLocation();
 
-  const href = () => `/beam/share/${props.contact.endpointId}`;
+  const href = () => `/share/${props.contact.endpointId}`;
 
   /** Whether this row's peer is the one the pane is showing. */
   const current = () => location.pathname === href();

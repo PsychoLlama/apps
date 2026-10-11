@@ -170,7 +170,7 @@ describe('beamScope', () => {
 
     release();
 
-    // Navigating between `/beam/*` routes must not tear the session down.
+    // Navigating between routes must not tear the session down.
     expect(dispose).not.toHaveBeenCalled();
 
     second();
