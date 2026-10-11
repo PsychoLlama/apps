@@ -15,7 +15,7 @@ import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconTextBox from 'virtual:icons/mdi/text-box-outline';
 import IconGallery from 'virtual:icons/mdi/brush-variant';
 import IconHammerWrench from 'virtual:icons/mdi/hammer-wrench';
-import IconSend from 'virtual:icons/mdi/send';
+import IconSwapHorizontal from 'virtual:icons/mdi/swap-horizontal';
 import IconCog from 'virtual:icons/mdi/cog-outline';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import IconGithub from 'virtual:icons/mdi/github';
@@ -51,7 +51,7 @@ const APPS: ReadonlyArray<AppEntry> = [
     name: 'Beam',
     href: 'https://beam.psychollama.io/',
     description: 'Encrypted sharing between devices.',
-    Icon: IconSend,
+    Icon: IconSwapHorizontal,
   },
 ];
 
