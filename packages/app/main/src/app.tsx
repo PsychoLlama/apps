@@ -15,7 +15,7 @@ import { runStartupTasks } from './startup-tasks';
 // - Favicon: https://icon-editor.psychollama.io/?icon=mdi%3Aflask&pad=10
 // - Maskable: https://icon-editor.psychollama.io/?icon=mdi%3Aflask&shape=square&pad=15
 import brandmarkSvg from './branding/brandmark.svg?url';
-import appleTouchIcon from './branding/brandmark.svg?to-png=180';
+import touchIcon from './branding/brandmark.svg?to-png=180';
 
 const config: AppConfig = { name: 'Apps', icon: IconApps };
 
@@ -29,11 +29,7 @@ export default function App() {
           <AppProvider value={config}>
             <MetaProvider>
               <NavigationLogger />
-              <Branding
-                svg={brandmarkSvg}
-                touchIcon={appleTouchIcon}
-                pwa={true}
-              />
+              <Branding svg={brandmarkSvg} touchIcon={touchIcon} pwa={true} />
 
               <ErrorBoundary
                 fallback={(error: unknown, reset) => (

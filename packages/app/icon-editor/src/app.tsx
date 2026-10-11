@@ -5,8 +5,13 @@ import { Router } from '@solidjs/router';
 import { FileRoutes } from '@solidjs/start/router';
 import { ErrorBoundary, onMount, Suspense } from 'solid-js';
 import { ErrorBoundaryFallback } from '@lib/shell';
+import { Branding } from '@lib/shell/branding';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
 import { runStartupTasks } from './startup-tasks';
+
+// Source: https://icon-editor.psychollama.io/?icon=mdi%3Apalette
+import brandmarkSvg from './branding/brandmark.svg?url';
+import touchIcon from './branding/brandmark.svg?to-png=180';
 
 const config: AppConfig = { name: 'Icon Editor' };
 
@@ -19,6 +24,8 @@ export default function App() {
         return (
           <AppProvider value={config}>
             <MetaProvider>
+              <Branding svg={brandmarkSvg} touchIcon={touchIcon} pwa={false} />
+
               <ErrorBoundary
                 fallback={(error: unknown, reset) => (
                   <ErrorBoundaryFallback error={error} reset={reset} />
