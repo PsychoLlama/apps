@@ -13,14 +13,14 @@
     "prepare": "workspace patch-workerd",
     "cargo:clippy": "cargo clippy --workspace --all-targets -- -D warnings",
     "cargo:test": "cargo nextest run --workspace",
-    "check": "turbo run lint cargo:clippy typecheck test:unit cargo:test test:browser knip:dev knip:production fmt-check workspace-check build",
+    "check": "turbo run lint cargo:clippy typecheck test:unit cargo:test test:browser knip:dev knip:production fmt-check workspace:check build",
     "fmt": "treefmt",
     "fmt-check": "treefmt --ci",
     "knip:dev": "knip",
     "knip:production": "knip --production",
     "lint": "eslint --color --cache --cache-location node_modules/.cache/eslint/",
     "typecheck": "tsc",
-    "workspace-check": "node packages/dev/workspace-cli/src/cli.ts check"
+    "workspace:check": "workspace check"
   },
   "prettier": {
     "singleQuote": true,

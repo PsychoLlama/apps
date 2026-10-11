@@ -129,7 +129,7 @@
       "outputs": [],
       "outputLogs": "errors-only"
     },
-    "//#workspace-check": {
+    "//#workspace:check": {
       "env": ["NIX_PNPM_VERSION"],
       "inputs": [
         "package.json",
