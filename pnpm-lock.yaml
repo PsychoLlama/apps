@@ -449,6 +449,9 @@ importers:
       '@dev/vite-plugin-icon-packs':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-icon-packs
+      '@dev/vite-plugin-pwa':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-pwa
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate

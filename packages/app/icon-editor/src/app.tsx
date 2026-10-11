@@ -9,7 +9,9 @@ import { Branding } from '@lib/shell/branding';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
 import { runStartupTasks } from './startup-tasks';
 
-// Source: https://icon-editor.psychollama.io/?icon=mdi%3Apalette&pad=5
+// Sources:
+// - Favicon: https://icon-editor.psychollama.io/?icon=mdi%3Apalette&pad=5
+// - Maskable: https://icon-editor.psychollama.io/?shape=square&pad=15&icon=mdi%3Apalette
 import brandmarkSvg from './branding/brandmark.svg?url';
 import touchIcon from './branding/brandmark.svg?to-png=180';
 
@@ -24,7 +26,7 @@ export default function App() {
         return (
           <AppProvider value={config}>
             <MetaProvider>
-              <Branding svg={brandmarkSvg} touchIcon={touchIcon} pwa={false} />
+              <Branding svg={brandmarkSvg} touchIcon={touchIcon} pwa={true} />
 
               <ErrorBoundary
                 fallback={(error: unknown, reset) => (

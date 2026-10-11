@@ -1,7 +1,9 @@
 // @refresh reload
+/// <reference types="@dev/vite-plugin-pwa/types" />
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
 import { DEFAULT_THEME_ID, ThemeMeta } from '@lib/theme/meta';
+import manifestUrl from 'virtual:pwa-manifest';
 
 export default createHandler(() => (
   <StartServer
@@ -10,6 +12,9 @@ export default createHandler(() => (
         <head>
           <meta charset="utf-8" />
           <ThemeMeta />
+
+          {/* Stable, revalidating URL — see `@dev/vite-plugin-pwa`. */}
+          <link rel="manifest" href={manifestUrl} />
 
           {assets}
         </head>
