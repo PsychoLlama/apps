@@ -13,7 +13,7 @@ import { beamScope } from '../scope';
  *
  * Nothing here is written to disk. A share is a hand-off between two devices
  * you already have, not a message history, so the log lives for as long as
- * the beam surface is open and walking away from `/beam` takes it with you.
+ * the beam surface is open and leaving the app takes it with you.
  */
 
 /**

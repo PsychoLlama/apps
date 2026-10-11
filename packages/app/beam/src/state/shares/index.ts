@@ -4,8 +4,8 @@
  *
  * State only. Everything here lives for as long as the beam surface is open
  * and no longer — a share is a hand-off between two devices you already have,
- * not a message history — so nothing is written to disk and walking away from
- * `/beam` takes the log with it.
+ * not a message history — so nothing is written to disk and leaving
+ * the app takes the log with it.
  *
  * Getting a share onto the wire, and taking one off it, belongs to
  * `state/network`: that's where the links are, and delivery is a property of

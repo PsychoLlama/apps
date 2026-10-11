@@ -1,5 +1,5 @@
 /**
- * What's on screen: which surface `/beam/*` is showing, and which modal is
+ * What's on screen: which surface the app is showing, and which modal is
  * open over it.
  *
  * Its own layer because none of it belongs to a domain. A rename form spans

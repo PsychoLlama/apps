@@ -3,7 +3,7 @@ import { ContactDirectory } from './contact-directory';
 import * as styles from './contact-sidebar.css';
 
 /**
- * The address book as a persistent rail down the left of every `/beam/*`
+ * The address book as a persistent rail down the left of every
  * route, on screens with the width to spare.
  *
  * Sharing is a back-and-forth between devices, and on a phone that costs a

@@ -15,25 +15,18 @@ import { RenameDialog } from './rename-dialog';
 const TOOLTIP = 'The name other devices see you by';
 
 /**
- * The breadcrumb for a `/beam/*` path. Matched on the prefix, never on the
- * id: the dynamic route is served from one prerendered shell for every id, so
- * anything derived from the id would ship the `__id` build sentinel in the
- * markup — and Solid hydrates by adopting the server's DOM rather than
- * rewriting it, which would leave it stuck there. The prefix is the same for
- * every id, so it survives that.
+ * The breadcrumb for a path, below the app's own root crumb. Matched on the
+ * prefix, never on the id: the dynamic route is served from one prerendered
+ * shell for every id, so anything derived from the id would ship the `__id`
+ * build sentinel in the markup — and Solid hydrates by adopting the server's
+ * DOM rather than rewriting it, which would leave it stuck there. The prefix
+ * is the same for every id, so it survives that.
  */
-const trailFor = (pathname: string): SiteHeaderCrumb[] => {
-  const beam = { label: 'Beam', href: '/beam' };
-
-  if (pathname.startsWith('/beam/share/')) return [beam, { label: 'Share' }];
-
-  // The root of the section links nowhere — never a link to the page you're
-  // already on.
-  return [{ label: 'Beam' }];
-};
+const trailFor = (pathname: string): SiteHeaderCrumb[] =>
+  pathname.startsWith('/share/') ? [{ label: 'Share' }] : [];
 
 /**
- * The header for every `/beam/*` route, rendered once by the layout rather
+ * The header for every route, rendered once by the layout rather
  * than by each view.
  *
  * It's the layout's because of what sits under it: the contacts rail spans

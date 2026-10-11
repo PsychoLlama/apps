@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "beam",
+  "compatibility_date": "2026-04-01",
+  "preview_urls": true,
+  "assets": {
+    "directory": ".output/public",
+    // Unmatched paths fall back to the prerendered 404 shell.
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    {
+      "pattern": "beam.psychollama.io",
+      "custom_domain": true
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

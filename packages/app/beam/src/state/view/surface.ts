@@ -11,7 +11,7 @@ import { defineFormula } from '@lib/state';
 import { onboardingStore } from '../onboarding';
 
 /**
- * The screen `/beam/*` should be showing.
+ * The screen the app should be showing.
  *
  * - `unknown` — the disk hasn't answered yet, so no screen is the right one.
  *   Prerender and first paint land here.
@@ -60,6 +60,4 @@ export const surfaceForRoute = (
   surface: BeamSurface,
   pathname: string,
 ): BeamSurface =>
-  surface === 'pairing' && pathname.startsWith('/beam/share/')
-    ? 'session'
-    : surface;
+  surface === 'pairing' && pathname.startsWith('/share/') ? 'session' : surface;

@@ -38,10 +38,10 @@ export const isEndpointId = (value: string): boolean =>
   ENDPOINT_ID_PATTERN.test(value);
 
 /**
- * The beam link to an endpoint — the `/beam/share/:id` URL a peer opens to
+ * The beam link to an endpoint — the `/share/:id` URL a peer opens to
  * dial it. Only ever built client-side (this device's own id is `null` until
  * the client-only key load lands), so `window.location.origin` is safe to
  * read.
  */
 export const beamLink = (endpointId: string): string =>
-  new URL(`/beam/share/${endpointId}`, window.location.origin).href;
+  new URL(`/share/${endpointId}`, window.location.origin).href;

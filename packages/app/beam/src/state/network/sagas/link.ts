@@ -139,7 +139,7 @@ export const greetPeerSaga = defineSaga(
  * An id that isn't an address is dropped before any of that. The book is
  * written before the dial — deliberately, so a contact survives the reload
  * the dial might not — which means a peer that's merely asleep is worth
- * recording, and one that could never exist is not. `/beam/share/bacon` is a
+ * recording, and one that could never exist is not. `/share/bacon` is a
  * URL anybody can type, and without this it leaves a contact behind forever.
  *
  * Opening your own beam link is a no-op rather than an error — it's what

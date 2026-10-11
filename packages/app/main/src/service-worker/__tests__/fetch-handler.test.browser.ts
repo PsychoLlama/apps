@@ -266,7 +266,7 @@ describe('handleFetch', () => {
     // `mode: 'navigate'` is reserved for the browser — the `Request`
     // constructor refuses it. Override the getter post-hoc so dispatch
     // sees the shape a real navigation has.
-    const request = new Request(sameOrigin('/beam'));
+    const request = new Request(sameOrigin('/settings'));
     Object.defineProperty(request, 'mode', { value: 'navigate' });
     fetchSpy.mockResolvedValue(new Response('<html/>', { status: 200 }));
 
@@ -289,7 +289,7 @@ describe('handleFetch', () => {
     // SolidJS hydration error. So in dev the SW stays out of the way.
     vi.stubEnv('DEV', true);
 
-    const request = new Request(sameOrigin('/beam'));
+    const request = new Request(sameOrigin('/settings'));
     Object.defineProperty(request, 'mode', { value: 'navigate' });
 
     const event = syntheticEvent(request);

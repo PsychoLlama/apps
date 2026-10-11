@@ -394,7 +394,7 @@ describe('dialPeerSaga', () => {
       calls: [...wiring(), [dialEndpoint, dial]],
     });
 
-    // `/beam/share/bacon` is a URL anybody can type. The book is written
+    // `/share/bacon` is a URL anybody can type. The book is written
     // before the dial, so without the guard a typo leaves a contact behind
     // for a device that could never have existed.
     expect(dial).not.toHaveBeenCalled();
