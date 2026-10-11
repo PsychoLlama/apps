@@ -37,7 +37,7 @@ const APPS: ReadonlyArray<AppEntry> = [
   {
     id: 'icon-editor',
     name: 'Icon Editor',
-    href: '/icon-editor',
+    href: 'https://icon-editor.psychollama.io/',
     description:
       'Create app icons, favicons, and logos for non-commercial projects.',
     Icon: IconPalette,

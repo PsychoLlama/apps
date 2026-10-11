@@ -19,7 +19,7 @@ Some parts are scavenged from other tools:
 - Animation tokens pulled from [IBM Carbon](https://carbondesignsystem.com/).
 - UA reset adapted from [The New CSS Reset](https://elad2412.github.io/the-new-css-reset/).
 
-### Icon Editor - [App](https://apps.psychollama.io/icon-editor)
+### Icon Editor - [App](https://icon-editor.psychollama.io/)
 
 Slap together images for favicons, app icons, readme images, or anything that needs an abstract picture representing a project.
 

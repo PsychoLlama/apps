@@ -5,8 +5,8 @@ import appleTouchIcon from './brandmark.svg?to-png=180';
 
 /**
  * Sources:
- * - Favicon: https://apps.psychollama.io/icon-editor/?icon=mdi%3Aflask&pad=10
- * - Maskable: https://apps.psychollama.io/icon-editor/?icon=mdi%3Aflask&shape=square&pad=15
+ * - Favicon: https://icon-editor.psychollama.io/?icon=mdi%3Aflask&pad=10
+ * - Maskable: https://icon-editor.psychollama.io/?icon=mdi%3Aflask&shape=square&pad=15
  *
  * Favicon links and iOS PWA meta tags hoisted into `<head>` via
  * `@solidjs/meta`.
