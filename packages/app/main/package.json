@@ -24,7 +24,6 @@
   "dependencies": {
     "@app/beam": "workspace:*",
     "@app/gallery": "workspace:*",
-    "@app/icon-editor": "workspace:*",
     "@app/logs": "workspace:*",
     "@app/qr-scanner": "workspace:*",
     "@app/scratchpad": "workspace:*",
@@ -45,11 +44,10 @@
     "vite": "catalog:"
   },
   "devDependencies": {
-    "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-pwa": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/vitest-config": "workspace:*",
-    "@solidjs/vite-plugin-nitro-2": "0.3.2",
+    "@solidjs/vite-plugin-nitro-2": "catalog:",
     "typescript": "catalog:",
     "wrangler": "catalog:"
   }

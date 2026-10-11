@@ -67,6 +67,25 @@ const config: KnipConfig = {
       // auto-discovery; the entry list above is the source of truth.
       vite: false,
     },
+    'packages/app/icon-editor': {
+      // SolidStart's file routes, app root and entries are production
+      // entries. `.css.ts` files are credited directly so the design
+      // tokens they pull in count as used.
+      entry: [
+        'src/routes/**/*.tsx!',
+        'src/app.tsx!',
+        'src/entry-{client,server}.tsx!',
+        'src/**/*.css.ts!',
+        'vite.config.ts',
+      ],
+      project: ['src/**/*.{ts,tsx}!'],
+      // Listed directly as a hint for Vite's dep scanner, which misses
+      // the transitive import from generated `.css.ts` modules.
+      ignoreDependencies: ['@vanilla-extract/dynamic'],
+      // `@solidjs/start` reads app.tsx from cwd, which points at the
+      // workspace root when knip runs holistically.
+      vite: false,
+    },
     'packages/lib/ui': {
       entry: [
         // `_internal/*` primitives (e.g. floating-ui and its behavior

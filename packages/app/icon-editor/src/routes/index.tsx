@@ -30,7 +30,7 @@ import {
   pickerViewChangedTopic,
 } from '../state/picker';
 import type { IconRef } from '../icons';
-import * as css from './home.css';
+import * as css from './index.css';
 
 /** Recognized search-param keys backing a shareable icon URL. */
 type IconSearchParamKey = 'icon' | 'palette' | 'shape' | 'pad';
@@ -120,7 +120,7 @@ const IconEditor = () => {
 
   return (
     <Frame>
-      <SiteHeader title="Icon Editor" />
+      <SiteHeader />
 
       <Flex as="div" direction="column" class={css.workspace}>
         <Flex as="div" class={css.body}>
