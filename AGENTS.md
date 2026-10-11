@@ -20,8 +20,8 @@
 ## Dev
 
 - `pnpm check` to validate. Must pass before committing.
-- Tasks are defined in `turbo.json` and dispatch to package.json scripts at the root and under `packages/**`.
-- All routes are file-based: `packages/app/main/src/routes/**/*.tsx`.
+- Tasks are defined in `turbo.json` and dispatch to `package.json` scripts at the root and under `packages/**`.
+- Apps use file-based routing (`src/routes/**`).
 
 ## Dependencies
 

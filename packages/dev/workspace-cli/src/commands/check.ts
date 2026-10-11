@@ -6,7 +6,7 @@
  * flake's exact pnpm version.
  *
  * Bare `check` (no subcommand) runs every subcheck in parallel. Wired
- * up to the `workspace-check` turbo task; runs once per workspace and
+ * up to the `workspace:check` turbo task; runs once per workspace and
  * is cheap to cache.
  */
 

@@ -18,7 +18,7 @@ first paint is param-independent.
 One prerendered shell, served for every value via a **200 rewrite** (not a
 redirect — keeps the value in the URL for the client router).
 
-Three coupled pieces, all in `packages/app/main`:
+Three coupled pieces, all in the deployed app that serves the route:
 
 1. **Prerender the shell** — `vite.config.ts`, nitro `prerender.routes`: add a
    manual entry `/<app>/subroute/__<param>`. `__<param>` is a sentinel value; the
