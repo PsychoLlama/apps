@@ -6,11 +6,12 @@ import { FileRoutes } from '@solidjs/start/router';
 import { ErrorBoundary, onMount, Suspense } from 'solid-js';
 import { ErrorBoundaryFallback } from '@lib/shell';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
+import IconApps from 'virtual:icons/mdi/apps';
 import { Favicon } from './branding/favicon';
 import { NavigationLogger } from './navigation-logger';
 import { runStartupTasks } from './startup-tasks';
 
-const config: AppConfig = { name: 'Apps' };
+const config: AppConfig = { name: 'Apps', icon: IconApps };
 
 export default function App() {
   return (

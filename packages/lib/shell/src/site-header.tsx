@@ -2,7 +2,6 @@ import { children, For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { Title } from '@solidjs/meta';
 import { Flex, Link, LinkButton, Text } from '@lib/ui';
-import IconApps from 'virtual:icons/mdi/apps';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import { useAppConfig } from './context';
 import * as css from './site-header.css';
@@ -91,7 +90,9 @@ export default function SiteHeader(props: {
               aria-current="page"
               class={css.brand}
             >
-              <IconApps width="18" height="18" aria-hidden="true" />
+              {app.icon && (
+                <app.icon width="18" height="18" aria-hidden="true" />
+              )}
               <Text
                 as="span"
                 size={2}
@@ -105,7 +106,7 @@ export default function SiteHeader(props: {
           }
         >
           <LinkButton testId="home" href="/" variant="ghost" color="neutral">
-            <IconApps width="18" height="18" />
+            {app.icon && <app.icon width="18" height="18" />}
             {app.name}
           </LinkButton>
         </Show>
