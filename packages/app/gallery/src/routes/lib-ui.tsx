@@ -1,10 +1,10 @@
 import gallery, { listings } from '@lib/ui/gallery';
-import ManifestRoute from '@app/gallery/routes/manifest';
+import { ManifestPage } from '../components/manifest-page';
 
 /** `@lib/ui`'s gallery page. Listings come pre-globbed from the manifest. */
 export default function LibUiGallery() {
   return (
-    <ManifestRoute
+    <ManifestPage
       title={gallery.name}
       description={gallery.description}
       groups={gallery.groups}

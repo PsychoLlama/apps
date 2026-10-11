@@ -75,17 +75,17 @@ export default {
 
 ## API: `@app/gallery`
 
-- `Gallery` — layout wrapping every `/gallery/*` route.
-- `GalleryHome` — landing page listing the manifests.
-- `ManifestRoute` — renders one package's listings on `/gallery/<slug>`. Props: `title`, `description`, `listings: Record<string, { default: GalleryListing<unknown> }>` (an eager glob).
-- Re-exports `GalleryListing` type from `@lib/gallery`.
+- Deployed on its own at `gallery.psychollama.io`. Routes live at the root.
+- `src/routes/index.tsx` — landing page listing the manifests.
+- `ManifestPage` (`src/components/manifest-page.tsx`) — renders one package's listings on `/<slug>`. Props: `title`, `description`, `groups`, `listings: Record<string, { default: GalleryListing<unknown> }>` (an eager glob).
 
 ## Adding a package to the gallery
 
 1. Write `*.gallery.tsx` listings co-located in the package.
-2. Add a route at `app/main/src/routes/gallery/<slug>.tsx` that renders `ManifestRoute`, feeding it an eager `import.meta.glob<{ default: GalleryListing<unknown> }>('…/**/*.gallery.tsx', { eager: true })`. Eager so SolidStart preloads listings with the route (no flash).
-3. Register a `manifest(name, description)` entry in `app/gallery/src/manifests.ts`. Add the route file and the manifest entry together — the slug must match.
-4. Slug rule (`manifestSlug`): drop leading `@`, swap `/` for `-` (`@lib/ui` → `lib-ui`).
+2. Export a `defineGallery` manifest plus an eager `listings` glob (`import.meta.glob('…/**/*.gallery.tsx', { eager: true })`) as the package's `./gallery` entry. Eager so SolidStart preloads listings with the route (no flash).
+3. Add a route at `app/gallery/src/routes/<slug>.tsx` that renders `ManifestPage` with that manifest and its `listings`.
+4. Register a `manifest(name, description)` entry in `app/gallery/src/manifests.ts`. Add the route file and the manifest entry together — the slug must match.
+5. Slug rule (`manifestSlug`): drop leading `@`, swap `/` for `-` (`@lib/ui` → `lib-ui`).
 
 ## Authoring Rules
 

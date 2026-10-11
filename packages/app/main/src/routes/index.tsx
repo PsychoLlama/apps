@@ -76,7 +76,7 @@ const DEV_APPS: ReadonlyArray<AppEntry> = [
   {
     id: 'gallery',
     name: 'Gallery',
-    href: '/gallery',
+    href: 'https://gallery.psychollama.io/',
     description: 'Browse the component library and design system.',
     Icon: IconGallery,
   },

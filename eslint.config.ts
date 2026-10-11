@@ -122,7 +122,7 @@ export default [
     // SolidStart's lazy loader needs a literal `import` and `export default`
     // in route sources. `_`-prefixed files are ignored by the router, so
     // the rule doesn't apply there.
-    files: ['packages/app/{main,icon-editor}/src/routes/**/*.tsx'],
+    files: ['packages/app/{main,icon-editor,gallery}/src/routes/**/*.tsx'],
     ignores: [
       'packages/app/*/src/routes/**/_*.tsx',
       'packages/app/*/src/routes/**/_*/**',

@@ -1,10 +1,10 @@
 import gallery, { listings } from '@lib/design/gallery';
-import ManifestRoute from '@app/gallery/routes/manifest';
+import { ManifestPage } from '../components/manifest-page';
 
 /** `@lib/design`'s gallery page. Listings come pre-globbed from the manifest. */
 export default function LibDesignGallery() {
   return (
-    <ManifestRoute
+    <ManifestPage
       title={gallery.name}
       description={gallery.description}
       groups={gallery.groups}
