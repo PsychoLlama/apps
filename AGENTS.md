@@ -23,18 +23,6 @@
 - Tasks are defined in `turbo.json` and dispatch to `package.json` scripts at the root and under `packages/**`.
 - Apps use file-based routing (`src/routes/**`).
 
-### Servers
-
-- Start a vite dev server with `turbo run dev --filter @app/example`.
-- Production builds use `turbo run preview --filter @app/example`.
-- Servers choose an open port. Read output to find binding.
-- First run can be slow depending on cache.
-
-## Deployments
-
-- See `app/*/wrangler.jsonc` for prod domain.
-- Previews deploy to: `https://pr-{number}-{app}.gibson.workers.dev`.
-
 ## Dependencies
 
 - Cross-package refs use `"workspace:*"`.
