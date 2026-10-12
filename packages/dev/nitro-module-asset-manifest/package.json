@@ -1,0 +1,14 @@
+{
+  "name": "@dev/nitro-module-asset-manifest",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Nitro module that emits a precache manifest with SRI hashes for the built app.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}
