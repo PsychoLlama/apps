@@ -16,7 +16,7 @@
     "build": "vite build ${BUILD_MODE:+--mode $BUILD_MODE}",
     "start": "vite start",
     "preview": "wrangler dev",
-    "typecheck": "tsc && tsc -p src/worker/tsconfig.json",
+    "typecheck": "tsc && tsc -p src/worker/tsconfig.json && tsc -p src/service-worker/tsconfig.json",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "deploy": "wrangler deploy",
     "deploy:preview": "rm -f .wrangler/deploy/preview.ndjson && WRANGLER_OUTPUT_FILE_PATH=.wrangler/deploy/preview.ndjson wrangler versions upload --preview-alias \"pr-${PR_NUMBER:?}\""
