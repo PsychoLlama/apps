@@ -46,6 +46,9 @@ export default defineConfig({
     }),
     nitro({
       preset: 'static',
+      // Cloudflare compresses on the fly and never serves precompressed
+      // siblings, so `.br`/`.gz` copies would only upload as stray files.
+      compressPublicAssets: false,
       prerender: {
         crawlLinks: true,
         // Manual entries for routes the crawler can't reach from `/`:
