@@ -1,0 +1,17 @@
+{
+  "name": "@dev/nitro-module-substrate",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Nitro module with the static-build defaults every deployed app shares.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "nitropack": "*"
+  }
+}

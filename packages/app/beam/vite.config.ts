@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { substrate } from '@dev/vite-plugin-substrate';
+import { substrate as nitroSubstrate } from '@dev/nitro-module-substrate';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 import * as app from './src/constants';
 
@@ -46,27 +47,16 @@ export default defineConfig({
     }),
     nitro({
       preset: 'static',
+      modules: [nitroSubstrate()],
       prerender: {
-        crawlLinks: true,
-        // Manual entries for routes the crawler can't reach from `/`:
-        //   - `/404`: rendered via Cloudflare's `not_found_handling`, not
-        //     linked from any page.
-        //   - `/share/__id`: one shell for every `/share/:id`. The id is a
-        //     live relay handle that only exists client-side, and the page's
-        //     first paint is independent of it. See
-        //     `docs/dynamic-prerendered-shells.md`.
-        routes: ['/404', '/share/__id'],
+        // One shell for every `/share/:id`, which the crawler can't reach
+        // from `/`. The id is a live relay handle that only exists
+        // client-side, and the page's first paint is independent of it.
+        // See `docs/dynamic-prerendered-shells.md`.
+        routes: ['/share/__id'],
       },
       hooks: {
         'prerender:generate'(route) {
-          // Cloudflare's `not_found_handling = "404-page"` looks for a file
-          // literally named `404.html` at the assets root. Nitro's default
-          // autoSubfolderIndex would emit `/404/index.html`; rename just
-          // this one route so the rest of the site keeps pretty URLs.
-          if (route.route === '/404') {
-            route.fileName = '/404.html';
-          }
-
           // Flatten the share shell out of `/share/`, so the
           // `public/_redirects` rewrite target sits above its source and
           // Cloudflare's loop check doesn't reject the rule.
