@@ -1,1 +1,6 @@
-export { assetManifest } from './asset-manifest.ts';
+export {
+  assetManifest,
+  MANIFEST_FILE,
+  type AssetManifest,
+  type AssetManifestConfig,
+} from './asset-manifest.ts';
