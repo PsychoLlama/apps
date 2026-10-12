@@ -713,6 +713,9 @@ importers:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
     devDependencies:
+      '@dev/nitro-module-asset-manifest':
+        specifier: workspace:*
+        version: link:../../dev/nitro-module-asset-manifest
       '@dev/nitro-module-substrate':
         specifier: workspace:*
         version: link:../../dev/nitro-module-substrate
@@ -843,6 +846,12 @@ importers:
       ignore:
         specifier: ^7.0.12
         version: 7.0.12
+
+  packages/dev/nitro-module-asset-manifest:
+    dependencies:
+      nitropack:
+        specifier: '*'
+        version: 2.13.4(oxc-parser@0.153.0)(rolldown@1.1.5)(supports-color@10.2.2)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))
 
   packages/dev/nitro-module-substrate:
     dependencies:
