@@ -36,6 +36,7 @@
     "vite": "catalog:"
   },
   "devDependencies": {
+    "@dev/nitro-module-substrate": "workspace:*",
     "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/vitest-config": "workspace:*",
