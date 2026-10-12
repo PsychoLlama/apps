@@ -1,0 +1,13 @@
+{
+  "name": "@lib/service-worker",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Tools for building service workers.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}
