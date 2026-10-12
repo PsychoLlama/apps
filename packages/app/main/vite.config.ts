@@ -61,11 +61,6 @@ export default defineConfig({
     nitro({
       preset: 'static',
       modules: [nitroSubstrate()],
-      prerender: {
-        // The scratchpad's landing page indexes every experiment, so the
-        // crawler walks that subtree from the launcher.
-        crawlLinks: true,
-      },
     }),
   ],
 });

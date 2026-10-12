@@ -49,9 +49,6 @@ export default defineConfig({
     nitro({
       preset: 'static',
       modules: [nitroSubstrate()],
-      prerender: {
-        crawlLinks: true,
-      },
     }),
     iconPacks(),
   ],

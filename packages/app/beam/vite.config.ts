@@ -49,7 +49,6 @@ export default defineConfig({
       preset: 'static',
       modules: [nitroSubstrate()],
       prerender: {
-        crawlLinks: true,
         // One shell for every `/share/:id`, which the crawler can't reach
         // from `/`. The id is a live relay handle that only exists
         // client-side, and the page's first paint is independent of it.

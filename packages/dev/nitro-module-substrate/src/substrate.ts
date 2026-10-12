@@ -22,6 +22,10 @@ export const substrate = (config: SubstrateConfig = {}): NitroModule => ({
     // siblings, so `.br`/`.gz` copies would only upload as stray files.
     nitro.options.compressPublicAssets = false;
 
+    // Prerender every page reachable by links, so apps only list the
+    // routes nothing links to.
+    nitro.options.prerender.crawlLinks = true;
+
     if (config.pageNotFound?.enable ?? true) {
       pageNotFound(nitro);
     }
