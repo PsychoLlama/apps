@@ -47,7 +47,7 @@ export default defineConfig({
         // from `/`. The id is a live relay handle that only exists
         // client-side, and the page's first paint is independent of it.
         // See `docs/dynamic-prerendered-shells.md`.
-        config.prerender = { routes: ['/share/__id'] };
+        config.prerender.routes = ['/share/__id'];
         config.hooks = {
           'prerender:generate'(route) {
             // Flatten the share shell out of `/share/`, so the

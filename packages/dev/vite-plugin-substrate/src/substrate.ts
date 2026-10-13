@@ -11,7 +11,7 @@ import {
   type ServiceWorkerConfig,
 } from '@dev/vite-plugin-service-worker';
 import { svgToPng } from '@dev/vite-plugin-svg-to-png';
-import { nitro, type NitroOptions } from './nitro.ts';
+import { nitro, type NitroModuleOptions, type NitroOptions } from './nitro.ts';
 import {
   solid,
   solidStart,
@@ -35,7 +35,7 @@ export interface PackageOptions extends CommonOptions {
 }
 
 /** A deployed app, built with SolidStart and prerendered by Nitro. */
-export interface AppOptions extends CommonOptions {
+export interface AppOptions extends CommonOptions, NitroModuleOptions {
   type: 'app';
 
   /**
@@ -46,8 +46,8 @@ export interface AppOptions extends CommonOptions {
   solidStart?: Configure<SolidStartPluginOptions>;
 
   /**
-   * Edits Nitro options, after the house defaults (static preset,
-   * `@dev/nitro-module-substrate`).
+   * Edits Nitro options, after the house defaults (static preset, link
+   * crawling, no precompression, `pageNotFound`).
    */
   nitro?: Configure<NitroOptions>;
 
@@ -85,6 +85,6 @@ export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
     vanillaExtractPlugin(),
     Icons({ compiler: 'solid' }),
     assertHashedAssets(),
-    app && nitro(app.nitro),
+    app && nitro(app.nitro, app),
   ];
 };

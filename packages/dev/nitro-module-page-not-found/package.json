@@ -1,9 +1,9 @@
 {
-  "name": "@dev/nitro-module-substrate",
+  "name": "@dev/nitro-module-page-not-found",
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Nitro module with the static-build defaults every deployed app shares.",
+  "description": "Nitro module that emits `/404.html` for Cloudflare's 404 handling.",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts"

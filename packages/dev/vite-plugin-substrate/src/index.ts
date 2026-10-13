@@ -4,7 +4,7 @@ export {
   type PackageOptions,
   type SubstrateOptions,
 } from './substrate.ts';
-export type { NitroOptions } from './nitro.ts';
+export type { NitroModuleOptions, NitroOptions } from './nitro.ts';
 export type {
   Configure,
   SolidPluginOptions,

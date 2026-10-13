@@ -833,7 +833,7 @@ importers:
         specifier: 'catalog:'
         version: 3.0.260903-beta
 
-  packages/dev/nitro-module-substrate:
+  packages/dev/nitro-module-page-not-found:
     devDependencies:
       nitro:
         specifier: 'catalog:'
@@ -907,9 +907,9 @@ importers:
       '@dev/babel-plugin-erase-overload-signatures':
         specifier: workspace:*
         version: link:../babel-plugin-erase-overload-signatures
-      '@dev/nitro-module-substrate':
+      '@dev/nitro-module-page-not-found':
         specifier: workspace:*
-        version: link:../nitro-module-substrate
+        version: link:../nitro-module-page-not-found
       '@dev/vite-plugin-assert-hashed-assets':
         specifier: workspace:*
         version: link:../vite-plugin-assert-hashed-assets

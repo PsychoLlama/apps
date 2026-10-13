@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@dev/babel-plugin-erase-overload-signatures": "workspace:*",
-    "@dev/nitro-module-substrate": "workspace:*",
+    "@dev/nitro-module-page-not-found": "workspace:*",
     "@dev/vite-plugin-assert-hashed-assets": "workspace:*",
     "@dev/vite-plugin-gitignore": "workspace:*",
     "@dev/vite-plugin-inline-script": "workspace:*",
