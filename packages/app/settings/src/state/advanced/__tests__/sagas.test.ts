@@ -10,6 +10,7 @@
 
 import { createTestRuntime, simulate } from '@lib/state';
 import {
+  deleteLogs,
   readAdvancedSettings,
   resetLogFilter,
   watchAdvancedSettings,
@@ -18,9 +19,11 @@ import {
 } from '../capabilities';
 import {
   commitLogFilterSaga,
+  deleteLogsSaga,
   resetLogFilterSaga,
   trackAdvancedSettingsSaga,
 } from '../sagas';
+import { logsDeletedTopic } from '../log-storage';
 import { advancedSettingsScope } from '../scope';
 import {
   advancedDefaults,
@@ -181,6 +184,17 @@ describe('write sagas', () => {
     });
 
     expect(trace.commits).toEqual([]);
+    expect(clear).toHaveBeenCalledTimes(1);
+  });
+
+  it('deleteLogsSaga deletes the logs, then announces it', async () => {
+    const clear = vi.fn();
+
+    const trace = await simulate(deleteLogsSaga(), {
+      calls: [[deleteLogs, clear]],
+    });
+
+    expect(trace.commits).toEqual([[logsDeletedTopic()]]);
     expect(clear).toHaveBeenCalledTimes(1);
   });
 });

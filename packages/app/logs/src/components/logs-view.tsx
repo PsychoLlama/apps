@@ -1,16 +1,13 @@
-import { Show, onMount, type JSX } from 'solid-js';
+import { Show, type JSX } from 'solid-js';
 import { useAnchor, useRun, useValue } from '@lib/state';
 import { FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
-import { Button, Flex, LinkButton } from '@lib/ui';
-import IconDownload from 'virtual:icons/mdi/download-outline';
+import { Button } from '@lib/ui';
 import IconRefresh from 'virtual:icons/mdi/refresh';
 import {
   archiveStore,
-  exportAvailableFormula,
   logsScope,
   refreshArchiveSaga,
   reportSagaFailure,
-  trackExportGateSaga,
 } from '../state';
 
 /**
@@ -23,33 +20,10 @@ export const LogsView = (props: {
   children?: JSX.Element;
 }) => {
   useAnchor(logsScope);
-  const exportAvailable = useValue(exportAvailableFormula);
-  const track = useRun(trackExportGateSaga);
-
-  // Both gating conditions are seeded, so first paint (and prerender) match
-  // without a flash. OPFS and the service worker are client-only —
-  // unavailable during SSG — so the tracker starts on mount: it subscribes,
-  // reconciles the seeds against what's actually persisted and controlling,
-  // then follows every later change for as long as the view is on screen.
-  onMount(() => {
-    void track().catch(
-      reportSagaFailure('The logs export gate tracker failed.'),
-    );
-  });
 
   return (
     <>
-      <SiteHeader
-        trail={props.trail}
-        actions={
-          <Flex as="div" align="center" gap={4}>
-            <RefreshButton />
-            <Show when={exportAvailable()}>
-              <ExportButton />
-            </Show>
-          </Flex>
-        }
-      />
+      <SiteHeader trail={props.trail} actions={<RefreshButton />} />
       <FrameBody>{props.children}</FrameBody>
     </>
   );
@@ -83,28 +57,3 @@ const RefreshButton = () => {
     </Show>
   );
 };
-
-/**
- * Export action pinned to the logs header tray. Downloads the whole log archive
- * as an `.ndjson` file from the service worker's `/api/local/logs` route, which
- * streams every persisted log oldest-first. `native` keeps the router out of
- * the way — the route is a service-worker resource, not an in-app page.
- *
- * `target="_self"` (rather than `download`) is load-bearing: a `download`
- * anchor bypasses the service worker with a native fetch, missing the stream
- * and landing on the 404 page. Navigating instead lets the worker answer and
- * its `Content-Disposition` header drive the download.
- */
-const ExportButton = () => (
-  <LinkButton
-    testId="export-logs"
-    variant="ghost"
-    color="neutral"
-    native
-    href="/api/local/logs"
-    target="_self"
-  >
-    <IconDownload aria-hidden="true" />
-    Export
-  </LinkButton>
-);

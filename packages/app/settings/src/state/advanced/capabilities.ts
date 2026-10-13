@@ -7,8 +7,12 @@ import {
   watchAll,
   type Override,
 } from '@lib/runtime-config';
+import { clearLogs } from '@lib/holz-idb-backend';
+import { createLogger } from '@lib/observability';
 import { filter } from '@lib/observability/config';
 import { type AdvancedSettingsState } from './settings';
+
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /**
  * Resolve every Advanced setting for the active environment in one pass,
@@ -35,6 +39,15 @@ export const writeLogFilter = async (
  * it to the built-in default. Other environments keep their overrides.
  */
 export const resetLogFilter = (): Promise<void> => reset(filter, [environment]);
+
+/**
+ * Delete every log persisted on this origin. Logs still buffered in a
+ * backend land afterward, so the archive is rarely empty for long.
+ */
+export const deleteLogs = async (): Promise<void> => {
+  await clearLogs();
+  logger.info('Logs deleted.');
+};
 
 /** One Advanced option settling on a new resolved value. */
 export type AdvancedSettingChange = { option: 'logFilter'; pattern: string };

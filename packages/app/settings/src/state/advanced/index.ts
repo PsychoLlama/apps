@@ -10,8 +10,10 @@
  */
 export { advancedDefaults, advancedSettingsStore } from './settings';
 export { advancedSettingsScope } from './scope';
+export { logStorageStore, logsDeletedNoticeClosedTopic } from './log-storage';
 export {
   commitLogFilterSaga,
+  deleteLogsSaga,
   resetLogFilterSaga,
   trackAdvancedSettingsSaga,
 } from './sagas';
