@@ -54,7 +54,6 @@ export const handleFetch = (event: FetchEvent): void => {
   }
 
   if (url.pathname === '/api/local/logs') {
-    logger.info('Exporting logs.', { url: url.pathname });
     event.respondWith(exportLogs());
     return;
   }

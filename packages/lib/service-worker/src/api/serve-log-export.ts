@@ -46,14 +46,17 @@ const streamLogsFromIdb = async (
     // creates an empty database that later migrations skip past.
     db = await connectToLogDatabase();
     const index = db.transaction(STORE_NAME).store.index(TIMESTAMP_INDEX);
+    let count = 0;
 
     // Enqueue eagerly instead of waiting on backpressure. IndexedDB commits
     // a transaction as soon as it goes idle, which would cut the read short.
     for await (const cursor of index.iterate()) {
       controller.enqueue(encoder.encode(`${JSON.stringify(cursor.value)}\n`));
+      count += 1;
     }
 
     controller.close();
+    logger.info('Logs exported to file.', { count });
   } catch (error) {
     logger.error('Failed to export logs.', { error: toError(error) });
     controller.error(error);
