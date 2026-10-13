@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { glob, open } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { assert } from '@lib/assert';
 import type { AssetManifest } from './types.d.ts';
 
@@ -12,10 +12,13 @@ export const generateManifest = async (
   publicDir: string,
   exclude: Array<string>,
 ): Promise<AssetManifest> => {
-  const files = await listFiles(publicDir, exclude);
+  // Nitro may hand over the dir with a trailing slash. Without one, every
+  // file is a plain prefix away from its `/`-led key.
+  const root = resolve(publicDir);
+  const files = await listFiles(root, exclude);
   const hashes = await Promise.all(files.map(integrity));
   const assets = Object.fromEntries(
-    files.map((file, index) => [file.slice(publicDir.length), hashes[index]]),
+    files.map((file, index) => [file.slice(root.length), hashes[index]]),
   );
 
   assert(

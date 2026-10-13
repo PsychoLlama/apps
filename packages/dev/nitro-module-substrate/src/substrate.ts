@@ -1,4 +1,4 @@
-import type { NitroModule } from 'nitropack/types';
+import type { NitroModule } from 'nitro/types';
 import { pageNotFound } from './page-not-found.ts';
 
 /** Options for {@link substrate}. Every feature is on by default. */

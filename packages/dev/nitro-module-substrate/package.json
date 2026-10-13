@@ -11,7 +11,7 @@
   "scripts": {
     "typecheck": "tsc"
   },
-  "peerDependencies": {
-    "nitropack": "*"
+  "devDependencies": {
+    "nitro": "catalog:"
   }
 }

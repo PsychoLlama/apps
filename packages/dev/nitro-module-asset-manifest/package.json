@@ -12,10 +12,10 @@
   "scripts": {
     "typecheck": "tsc"
   },
-  "peerDependencies": {
-    "nitropack": "*"
-  },
   "dependencies": {
     "@lib/assert": "workspace:*"
+  },
+  "devDependencies": {
+    "nitro": "catalog:"
   }
 }
