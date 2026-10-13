@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
-import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
+import { nitro } from 'nitro/vite';
 import { substrate } from '@dev/vite-plugin-substrate';
 import { substrate as nitroSubstrate } from '@dev/nitro-module-substrate';
 import { iconPacks } from '@dev/vite-plugin-icon-packs';

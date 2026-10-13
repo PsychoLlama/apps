@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import type { NitroModule } from 'nitropack/types';
+import type { NitroModule } from 'nitro/types';
 import { injectManifest } from './inject.ts';
 import { generateManifest } from './manifest.ts';
 

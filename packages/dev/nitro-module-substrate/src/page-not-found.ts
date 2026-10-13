@@ -1,4 +1,4 @@
-import type { Nitro } from 'nitropack/types';
+import type { Nitro } from 'nitro/types';
 
 /**
  * Prerenders the `/404` route as `/404.html` at the assets root, for

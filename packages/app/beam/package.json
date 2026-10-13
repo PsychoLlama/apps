@@ -52,8 +52,8 @@
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
     "@solidjs/start": "catalog:",
-    "@solidjs/vite-plugin-nitro-2": "catalog:",
     "@vanilla-extract/dynamic": "catalog:",
+    "nitro": "catalog:",
     "solid-js": "catalog:",
     "typescript": "catalog:",
     "wrangler": "catalog:"
