@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Nitro module that emits an asset manifest with SRI hashes for the built app.",
+  "description": "Nitro module that injects an asset manifest with SRI hashes into the service worker.",
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
