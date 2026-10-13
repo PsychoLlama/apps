@@ -14,5 +14,8 @@
   },
   "peerDependencies": {
     "nitropack": "*"
+  },
+  "dependencies": {
+    "@lib/assert": "workspace:*"
   }
 }
