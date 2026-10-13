@@ -1,6 +1,8 @@
 import { onMount } from 'solid-js';
 import { createLogger, toError } from '@lib/observability';
 
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+
 /**
  * Registers the app's service worker once the calling component mounts.
  * Call it from the app root.
@@ -20,5 +22,3 @@ export const installServiceWorker = () => {
       });
   });
 };
-
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);

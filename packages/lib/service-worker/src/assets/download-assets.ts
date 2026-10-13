@@ -71,7 +71,10 @@ const findMissing = async (cache: Cache, assets: Map<string, string>) => {
  */
 const downloadAsset = async (path: string, integrityHash: string) => {
   const response = await fetch(
-    new Request(path, { integrity: integrityHash, cache: 'no-cache' }),
+    new Request(path, {
+      integrity: integrityHash,
+      cache: 'no-cache',
+    }),
   );
 
   assert(response.ok, `Asset download got ${response.status} for ${path}.`);

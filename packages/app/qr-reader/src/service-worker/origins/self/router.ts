@@ -10,5 +10,11 @@ import { serveLocalApi } from './api/local';
  */
 export type Router = IttyRouterType<IRequest, [], Response>;
 
-export const createSelfRouter = (): Router =>
-  IttyRouter().all('/api/local/*', serveLocalApi()).all('*', serveAssets());
+export const createSelfRouter = (): Router => {
+  const router = IttyRouter();
+
+  router.all('/api/local/*', serveLocalApi());
+  router.all('*', serveAssets());
+
+  return router;
+};
