@@ -1159,6 +1159,13 @@ importers:
         version: link:../../dev/vitest-config
 
   packages/lib/service-worker:
+    dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../assert
+      '@lib/observability':
+        specifier: workspace:*
+        version: link:../observability
     devDependencies:
       '@dev/nitro-module-asset-manifest':
         specifier: workspace:*

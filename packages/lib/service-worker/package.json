@@ -12,5 +12,9 @@
   },
   "devDependencies": {
     "@dev/nitro-module-asset-manifest": "workspace:*"
+  },
+  "dependencies": {
+    "@lib/assert": "workspace:*",
+    "@lib/observability": "workspace:*"
   }
 }
