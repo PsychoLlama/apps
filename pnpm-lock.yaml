@@ -709,6 +709,9 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
+      itty-router:
+        specifier: ^5.0.24
+        version: 5.0.24
       media-devices:
         specifier: ^0.5.0
         version: 0.5.0
@@ -4433,6 +4436,9 @@ packages:
 
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
+
+  itty-router@5.0.24:
+    resolution: {integrity: sha512-PXij1qGKtE6jg3dLgrTRdh/Frovl5Wc4Av67sD2xfhDPrgNt4u79++/il8/c/OfZGkhD/8uYJub8tjo+H165rA==}
 
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
@@ -9119,6 +9125,8 @@ snapshots:
   isarray@2.0.5: {}
 
   isexe@2.0.0: {}
+
+  itty-router@5.0.24: {}
 
   jackspeak@3.4.3:
     dependencies:
