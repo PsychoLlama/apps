@@ -5,7 +5,7 @@
   "compilerOptions": {
     "lib": ["ESNext", "WebWorker"],
     "customConditions": ["browser"],
-    "types": ["@dev/vite-plugin-substrate/types"]
+    "types": ["@dev/vite-plugin-substrate/types", "vitest/globals"]
   },
-  "include": ["src"]
+  "include": ["src", "*.ts"]
 }

@@ -1,11 +1,9 @@
 import type { AssetManifest } from '@dev/nitro-module-asset-manifest/types';
 import { assert } from '@lib/assert';
 import { createLogger, toError } from '@lib/observability';
+import { CACHE_NAME, cacheKey } from './cache';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
-
-/** Bump the version when the meaning of cached entries changes. */
-const CACHE_NAME = 'assets:1';
 
 /**
  * Downloads every asset in the manifest that isn't cached yet. Call it from
@@ -83,10 +81,3 @@ const downloadAsset = async (path: string, integrityHash: string) => {
   // a copy without the flag.
   return response.redirected ? new Response(response.body, response) : response;
 };
-
-/**
- * The Cache API only takes request URLs as keys, so the hash becomes one.
- * Nothing ever fetches it.
- */
-const cacheKey = (integrityHash: string) =>
-  new URL(`/${encodeURIComponent(integrityHash)}`, self.location.origin).href;

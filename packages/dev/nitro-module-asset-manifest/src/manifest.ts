@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { glob, open } from 'node:fs/promises';
 import { join } from 'node:path';
+import { assert } from '@lib/assert';
 import type { AssetManifest } from './types.d.ts';
 
 /**
@@ -13,13 +14,24 @@ export const generateManifest = async (
 ): Promise<AssetManifest> => {
   const files = await listFiles(publicDir, exclude);
   const hashes = await Promise.all(files.map(integrity));
+  const assets = Object.fromEntries(
+    files.map((file, index) => [file.slice(publicDir.length), hashes[index]]),
+  );
 
-  return {
-    assets: Object.fromEntries(
-      files.map((file, index) => [file.slice(publicDir.length), hashes[index]]),
-    ),
-  };
+  assert(
+    hasNotFoundPage(assets),
+    `The build has no ${NOT_FOUND_PAGE}. The service worker serves it for unknown paths.`,
+  );
+
+  return { assets };
 };
+
+/** Served for unknown paths, by Cloudflare and the service worker alike. */
+const NOT_FOUND_PAGE = '/404.html';
+
+const hasNotFoundPage = (
+  assets: Record<string, string>,
+): assets is AssetManifest['assets'] => Object.hasOwn(assets, NOT_FOUND_PAGE);
 
 /** Every file in the public dir as a sorted absolute path. */
 const listFiles = async (publicDir: string, exclude: Array<string>) => {

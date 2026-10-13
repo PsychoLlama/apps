@@ -1173,6 +1173,9 @@ importers:
       '@dev/nitro-module-asset-manifest':
         specifier: workspace:*
         version: link:../../dev/nitro-module-asset-manifest
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
 
   packages/lib/shell:
     dependencies:

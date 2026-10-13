@@ -3,10 +3,11 @@
 
 /**
  * Every deployed file, keyed by its path from the public dir root, with an
- * SRI token (`sha256-…`) for `new Request(url, { integrity })`.
+ * SRI token (`sha256-…`) for `new Request(url, { integrity })`. Always
+ * includes the 404 page, so the worker can serve it for unknown paths.
  */
 export interface AssetManifest {
-  assets: Record<string, string>;
+  assets: Record<string, string> & { '/404.html': string };
 }
 
 declare global {
