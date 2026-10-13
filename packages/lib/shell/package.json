@@ -13,7 +13,8 @@
     "./frame.css": "./src/frame.css.ts",
     "./context": "./src/context.ts",
     "./branding": "./src/branding.tsx",
-    "./pwa": "./src/pwa.tsx"
+    "./pwa": "./src/pwa.tsx",
+    "./service-worker": "./src/service-worker.ts"
   },
   "scripts": {
     "typecheck": "tsc",
