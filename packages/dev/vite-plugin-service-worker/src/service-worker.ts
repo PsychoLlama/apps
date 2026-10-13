@@ -1,6 +1,10 @@
 import { relative, resolve } from 'node:path';
 import type { NitroModule } from 'nitro/types';
 import { normalizePath, type Plugin } from 'vite';
+import {
+  SERVICE_WORKER_FILE_NAME,
+  SERVICE_WORKER_FILE_PATH,
+} from './constants.ts';
 import { assetManifest } from './nitro-module/asset-manifest.ts';
 
 /** Options for {@link serviceWorker}. */
@@ -13,11 +17,6 @@ export interface ServiceWorkerConfig {
  * Vite plugin that serves and builds a service worker at a stable
  * `/service-worker.js`. Register it as a module worker
  * (`type: 'module'`).
- *
- * The URL can't be content-hashed. Browsers find updates by refetching
- * the registered URL, and a hashed one would only be learned from new
- * HTML. Once the worker serves HTML from its cache, that HTML keeps
- * registering the old URL and the app never updates.
  *
  * Under Nitro, it also injects an asset manifest into the built worker.
  */
@@ -32,7 +31,7 @@ export const serviceWorker = (
 
     // Nitro installs modules from every Vite plugin that carries one. The
     // manifest needs the final public dir, which only Nitro knows.
-    nitro: assetManifest(FILE_NAME),
+    nitro: assetManifest(),
 
     // The worker ships with the browser bundle. Server environments never
     // see it.
@@ -48,7 +47,7 @@ export const serviceWorker = (
     // let Vite transform it like any other.
     configureServer(server) {
       server.middlewares.use((req, _res, next) => {
-        if (req.url === `/${FILE_NAME}`) req.url = devUrl;
+        if (req.url === SERVICE_WORKER_FILE_PATH) req.url = devUrl;
         next();
       });
     },
@@ -59,9 +58,11 @@ export const serviceWorker = (
     buildStart() {
       if (this.environment.mode !== 'build') return;
 
-      this.emitFile({ type: 'chunk', id: entry, fileName: FILE_NAME });
+      this.emitFile({
+        type: 'chunk',
+        id: entry,
+        fileName: SERVICE_WORKER_FILE_NAME,
+      });
     },
   };
 };
-
-const FILE_NAME = 'service-worker.js';

@@ -1,13 +1,14 @@
 import { join } from 'node:path';
 import type { NitroModule } from 'nitro/types';
+import { SERVICE_WORKER_FILE_NAME } from '../constants.ts';
 import { injectManifest } from './inject.ts';
 import { generateManifest } from './manifest.ts';
 
 /**
  * Nitro module that builds an asset manifest with SRI hashes and injects
- * it into the service worker at `workerFile`, relative to the public dir.
+ * it into the built service worker.
  */
-export const assetManifest = (workerFile: string): NitroModule => ({
+export const assetManifest = (): NitroModule => ({
   name: 'asset-manifest',
   setup(nitro) {
     // Prerendering spins up a second nitro instance from the same config,
@@ -20,7 +21,7 @@ export const assetManifest = (workerFile: string): NitroModule => ({
       '_redirects',
 
       // Injection changes its bytes, and the browser updates it on its own.
-      workerFile,
+      SERVICE_WORKER_FILE_NAME,
     ];
 
     // `close` fires once the public dir is final: after prerendering, and
@@ -31,7 +32,7 @@ export const assetManifest = (workerFile: string): NitroModule => ({
       const { publicDir } = nitro.options.output;
       const manifest = await generateManifest(publicDir, exclude);
 
-      await injectManifest(join(publicDir, workerFile), manifest);
+      await injectManifest(join(publicDir, SERVICE_WORKER_FILE_NAME), manifest);
     });
   },
 });

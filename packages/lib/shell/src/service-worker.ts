@@ -1,4 +1,5 @@
 import { onMount } from 'solid-js';
+import { SERVICE_WORKER_FILE_PATH } from '@dev/vite-plugin-service-worker/constants';
 import { createLogger, toError } from '@lib/observability';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -15,8 +16,7 @@ export const installServiceWorker = () => {
     if (!('serviceWorker' in navigator)) return;
 
     navigator.serviceWorker
-      // Served at a stable URL by `@dev/vite-plugin-service-worker`.
-      .register('/service-worker.js', { type: 'module', scope: '/' })
+      .register(SERVICE_WORKER_FILE_PATH, { type: 'module', scope: '/' })
       .catch((error: unknown) => {
         logger.error('Registration failed.', { error: toError(error) });
       });

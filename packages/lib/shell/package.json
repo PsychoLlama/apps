@@ -22,6 +22,7 @@
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
+    "@dev/vite-plugin-service-worker": "workspace:*",
     "@lib/assert": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",

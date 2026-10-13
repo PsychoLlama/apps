@@ -1150,6 +1150,9 @@ importers:
 
   packages/lib/shell:
     dependencies:
+      '@dev/vite-plugin-service-worker':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-service-worker
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
