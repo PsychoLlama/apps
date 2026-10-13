@@ -1,6 +1,9 @@
-import { solidStart, type SolidStartOptions } from '@solidjs/start/config';
+import {
+  solidStart as solidStartPlugin,
+  type SolidStartOptions,
+} from '@solidjs/start/config';
 import type { PluginOption } from 'vite';
-import solid, { type Options as SolidOptions } from 'vite-plugin-solid';
+import solidPlugin, { type Options as SolidOptions } from 'vite-plugin-solid';
 import { eraseOverloadSignatures } from '@dev/babel-plugin-erase-overload-signatures';
 
 /**
@@ -32,24 +35,6 @@ export interface SolidStartPluginOptions extends Omit<
   solid?: SolidPluginOptions;
 }
 
-export interface SolidFrameworkOptions {
-  /**
-   * Options for `vite-plugin-solid`. The house babel plugins are added
-   * to whatever `babel` holds. With `solidStart`, these become its
-   * `solid` options (its own `solid` wins per key), though SolidStart
-   * overrides `ssr` and `extensions`.
-   */
-  solid?: Configure<SolidPluginOptions>;
-
-  /**
-   * Build with SolidStart instead of plain Solid. Only apps need it:
-   * its file router and server environments expect an `src/app.tsx`,
-   * and don't run under vitest. Pass `true` for the defaults (dev
-   * overlay off).
-   */
-  solidStart?: true | Configure<SolidStartPluginOptions>;
-}
-
 const resolve = <Options extends object>(
   custom: Configure<Options> | undefined,
 ): Options => {
@@ -67,26 +52,28 @@ const applySolidDefaults = (options: SolidPluginOptions) => {
   plugins.push(eraseOverloadSignatures());
 };
 
-/**
- * Returns SolidStart when `solidStart` is set, plain `vite-plugin-solid`
- * otherwise, with the house defaults applied to either. The two are
- * mutually exclusive: SolidStart wraps its own copy of the Solid plugin.
- */
-export const solidOrSolidStart = (
-  options: SolidFrameworkOptions,
+/** Plain `vite-plugin-solid` with the house defaults, for packages. */
+export const solid = (
+  custom: Configure<SolidPluginOptions> | undefined,
 ): PluginOption => {
-  const solidOptions = resolve(options.solid);
+  const options = resolve(custom);
+  applySolidDefaults(options);
 
-  if (!options.solidStart) {
-    applySolidDefaults(solidOptions);
-    return solid(solidOptions);
-  }
+  return solidPlugin(options);
+};
 
-  const startOptions = resolve(
-    options.solidStart === true ? undefined : options.solidStart,
-  );
+/**
+ * SolidStart with the house defaults, for apps. It wraps its own copy of
+ * the Solid plugin, which gets `solid` as its options (its own `solid`
+ * wins per key).
+ */
+export const solidStart = (
+  solidCustom: Configure<SolidPluginOptions> | undefined,
+  startCustom: Configure<SolidStartPluginOptions> | undefined,
+): PluginOption => {
+  const startOptions = resolve(startCustom);
 
-  startOptions.solid = { ...solidOptions, ...startOptions.solid };
+  startOptions.solid = { ...resolve(solidCustom), ...startOptions.solid };
   applySolidDefaults(startOptions.solid);
 
   // Suppresses the dev toolbar added in 2.0.0-rc.2, which otherwise
@@ -96,5 +83,5 @@ export const solidOrSolidStart = (
   // trace instead of the toolbar's error viewer.
   startOptions.devOverlay ??= false;
 
-  return solidStart(startOptions);
+  return solidStartPlugin(startOptions);
 };

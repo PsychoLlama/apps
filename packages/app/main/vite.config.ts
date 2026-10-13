@@ -34,7 +34,7 @@ export default defineConfig({
   },
   plugins: [
     substrate({
-      solidStart: true,
+      type: 'app',
       pwa: {
         icon: {
           src: resolve(import.meta.dirname, 'src/branding/brandmark.svg'),

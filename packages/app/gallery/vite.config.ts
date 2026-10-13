@@ -12,7 +12,9 @@ export default defineConfig({
     include: ['@vanilla-extract/dynamic'],
   },
   plugins: [
-    substrate({ solidStart: true }),
+    substrate({
+      type: 'app',
+    }),
     nitro({
       preset: 'static',
       modules: [nitroSubstrate()],
