@@ -691,6 +691,9 @@ importers:
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../../lib/runtime-config
+      '@lib/service-worker':
+        specifier: workspace:*
+        version: link:../../lib/service-worker
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
@@ -1152,7 +1155,11 @@ importers:
         specifier: workspace:*
         version: link:../../dev/vitest-config
 
-  packages/lib/service-worker: {}
+  packages/lib/service-worker:
+    devDependencies:
+      '@dev/nitro-module-asset-manifest':
+        specifier: workspace:*
+        version: link:../../dev/nitro-module-asset-manifest
 
   packages/lib/shell:
     dependencies:

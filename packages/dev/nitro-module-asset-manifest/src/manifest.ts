@@ -1,14 +1,7 @@
 import { createHash } from 'node:crypto';
 import { glob, open } from 'node:fs/promises';
 import { join } from 'node:path';
-
-/**
- * Every deployed file, keyed by its path from the public dir root, with an
- * SRI token (`sha256-…`) for `new Request(url, { integrity })`.
- */
-export interface AssetManifest {
-  assets: Record<string, string>;
-}
+import type { AssetManifest } from './types.d.ts';
 
 /**
  * Hashes every file under `publicDir`, skipping glob patterns in `exclude`

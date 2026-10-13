@@ -6,7 +6,8 @@
   "description": "QR Reader. Scans QR codes with the device camera.",
   "license": "MIT",
   "sideEffects": [
-    "**/*.css.ts"
+    "**/*.css.ts",
+    "src/service-worker/index.ts"
   ],
   "exports": {
     "./constants": "./src/constants.ts"
@@ -29,6 +30,7 @@
     "@lib/messaging": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/runtime-config": "workspace:*",
+    "@lib/service-worker": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/theme": "workspace:*",

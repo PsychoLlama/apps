@@ -6,7 +6,8 @@
   "description": "Nitro module that emits a precache manifest with SRI hashes for the built app.",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./types": "./src/types.d.ts"
   },
   "scripts": {
     "typecheck": "tsc"
