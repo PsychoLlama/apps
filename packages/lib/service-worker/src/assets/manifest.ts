@@ -1,4 +1,4 @@
-import type { AssetManifest } from '@dev/nitro-module-asset-manifest/types';
+import type { AssetManifest } from '@dev/vite-plugin-service-worker/types';
 
 /**
  * The asset manifest for this build, or `undefined` when there isn't

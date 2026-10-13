@@ -3,13 +3,21 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Vite plugin that serves and builds the app's service worker.",
+  "description": "Vite plugin that serves and builds the app's service worker, plus the Nitro module that injects its asset manifest.",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./nitro-module": "./src/nitro-module/index.ts",
+    "./types": "./src/types.d.ts"
   },
   "scripts": {
     "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@lib/assert": "workspace:*"
+  },
+  "devDependencies": {
+    "nitro": "catalog:"
   },
   "peerDependencies": {
     "vite": "*"

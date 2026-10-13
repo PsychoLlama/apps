@@ -51,5 +51,5 @@ export const assetManifest = (
   },
 });
 
-/** Where `@dev/vite-plugin-service-worker` emits the worker. */
+/** Where the vite plugin emits the worker. */
 const SERVICE_WORKER_FILE = 'service-worker.js';

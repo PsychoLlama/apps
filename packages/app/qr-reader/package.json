@@ -47,7 +47,7 @@
     "solid-js": "*"
   },
   "devDependencies": {
-    "@dev/nitro-module-asset-manifest": "workspace:*",
+    "@dev/vite-plugin-service-worker": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/vitest-config": "workspace:*",
     "@solidjs/meta": "catalog:",

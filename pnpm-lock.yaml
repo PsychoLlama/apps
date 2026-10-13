@@ -695,9 +695,9 @@ importers:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
     devDependencies:
-      '@dev/nitro-module-asset-manifest':
+      '@dev/vite-plugin-service-worker':
         specifier: workspace:*
-        version: link:../../dev/nitro-module-asset-manifest
+        version: link:../../dev/vite-plugin-service-worker
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate
@@ -823,16 +823,6 @@ importers:
         specifier: ^7.0.12
         version: 7.0.12
 
-  packages/dev/nitro-module-asset-manifest:
-    dependencies:
-      '@lib/assert':
-        specifier: workspace:*
-        version: link:../../lib/assert
-    devDependencies:
-      nitro:
-        specifier: 'catalog:'
-        version: 3.0.260903-beta
-
   packages/dev/nitro-module-page-not-found:
     devDependencies:
       nitro:
@@ -898,9 +888,16 @@ importers:
 
   packages/dev/vite-plugin-service-worker:
     dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../../lib/assert
       vite:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+    devDependencies:
+      nitro:
+        specifier: 'catalog:'
+        version: 3.0.260903-beta
 
   packages/dev/vite-plugin-substrate:
     dependencies:
@@ -1147,9 +1144,9 @@ importers:
         specifier: workspace:*
         version: link:../observability
     devDependencies:
-      '@dev/nitro-module-asset-manifest':
+      '@dev/vite-plugin-service-worker':
         specifier: workspace:*
-        version: link:../../dev/nitro-module-asset-manifest
+        version: link:../../dev/vite-plugin-service-worker
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
