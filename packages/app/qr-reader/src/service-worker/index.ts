@@ -1,22 +1,14 @@
-import { createLogger } from '@lib/observability';
-import * as assets from '@lib/service-worker/assets';
-
+import * as lifecycle from './lifecycle';
 import { routers } from './routers';
 
 declare const self: ServiceWorkerGlobalScope;
 
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
-
 self.addEventListener('install', (event) => {
-  logger.info('Installing.', {
-    serveFrom: assets.getManifest() === undefined ? 'network' : 'cache',
-  });
-
-  event.waitUntil(assets.download());
+  event.waitUntil(lifecycle.install());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(assets.prune());
+  event.waitUntil(lifecycle.activate());
 });
 
 self.addEventListener('fetch', (event) => {
