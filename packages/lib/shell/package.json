@@ -14,8 +14,7 @@
     "./context": "./src/context.ts",
     "./branding": "./src/branding.tsx",
     "./pwa": "./src/pwa.tsx",
-    "./rum": "./src/rum.tsx",
-    "./service-worker": "./src/service-worker.ts"
+    "./rum": "./src/rum.tsx"
   },
   "scripts": {
     "typecheck": "tsc",

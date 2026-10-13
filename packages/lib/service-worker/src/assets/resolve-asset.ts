@@ -1,4 +1,4 @@
-import type { AssetManifest } from '@dev/nitro-module-asset-manifest/types';
+import type { AssetManifest } from '@dev/vite-plugin-service-worker/types';
 
 /**
  * Finds the manifest path for a URL path the way Cloudflare does by default

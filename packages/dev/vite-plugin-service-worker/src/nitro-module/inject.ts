@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { assert } from '@lib/assert';
-import type { AssetManifest } from './types.d.ts';
+import type { AssetManifest } from '../types.d.ts';
 
 /**
  * Swaps the manifest into the built service worker, if there is one. Fails

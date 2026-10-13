@@ -11,9 +11,46 @@ import {
   type ServiceWorkerConfig,
 } from '@dev/vite-plugin-service-worker';
 import { svgToPng } from '@dev/vite-plugin-svg-to-png';
-import { solidOrSolidStart, type SolidFrameworkOptions } from './solid.ts';
+import { nitro, type NitroModuleOptions, type NitroOptions } from './nitro.ts';
+import {
+  solid,
+  solidStart,
+  type Configure,
+  type SolidPluginOptions,
+  type SolidStartPluginOptions,
+} from './solid.ts';
 
-export interface SubstrateOptions extends SolidFrameworkOptions {
+interface CommonOptions {
+  /**
+   * Edits `vite-plugin-solid` options, after the house defaults. In apps,
+   * these are SolidStart's `solid` options, edited before `solidStart`
+   * runs, though SolidStart overrides `ssr` and `extensions`.
+   */
+  solid?: Configure<SolidPluginOptions>;
+}
+
+/** A library, built with plain Solid. Also what vitest runs under. */
+export interface PackageOptions extends CommonOptions {
+  type?: 'package';
+}
+
+/** A deployed app, built with SolidStart and prerendered by Nitro. */
+export interface AppOptions extends CommonOptions, NitroModuleOptions {
+  type: 'app';
+
+  /**
+   * Edits SolidStart options, after the house defaults (dev overlay off).
+   * Its file router and server environments expect an `src/app.tsx`, and
+   * don't run under vitest.
+   */
+  solidStart?: Configure<SolidStartPluginOptions>;
+
+  /**
+   * Edits Nitro options, after the house defaults (static preset, link
+   * crawling, no precompression, `pageNotFound`).
+   */
+  nitro?: Configure<NitroOptions>;
+
   /** Emit a web app manifest with raster icons. */
   pwa?: PwaManifestConfig;
 
@@ -21,26 +58,33 @@ export interface SubstrateOptions extends SolidFrameworkOptions {
   serviceWorker?: ServiceWorkerConfig;
 }
 
+export type SubstrateOptions = PackageOptions | AppOptions;
+
 /**
  * The plugin pipeline every package builds with: git-aware file
- * watching, instrumentation scopes, Solid (or SolidStart, for apps),
- * vanilla-extract, icon components, `?to-png=<size>` SVG imports and
- * `?inline-script` head scripts, plus opt-in PWA and service worker
- * support.
+ * watching, instrumentation scopes, Solid, vanilla-extract, icon
+ * components, `?to-png=<size>` SVG imports and `?inline-script` head
+ * scripts. Apps swap Solid for SolidStart, add Nitro, and can opt into a
+ * PWA manifest and service worker.
  * Package-specific plugins go alongside it.
  */
-export const substrate = (options: SubstrateOptions = {}): PluginOption[] => [
-  gitignore(),
-  instrumentationScope(),
-  solidOrSolidStart(options),
-  svgToPng(),
-  // Render-blocking budget per inlined script. The ceiling is a tripwire
-  // for accidental bloat, e.g. an import that pulls a `.css.ts` module's
-  // runtime registration into a head script.
-  inlineScript({ maxBytes: 2048 }),
-  options.pwa && pwaManifest(options.pwa),
-  options.serviceWorker && serviceWorker(options.serviceWorker),
-  vanillaExtractPlugin(),
-  Icons({ compiler: 'solid' }),
-  assertHashedAssets(),
-];
+export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
+  const app = options.type === 'app' ? options : undefined;
+
+  return [
+    gitignore(),
+    instrumentationScope(),
+    app ? solidStart(app.solid, app.solidStart) : solid(options.solid),
+    svgToPng(),
+    // Render-blocking budget per inlined script. The ceiling is a tripwire
+    // for accidental bloat, e.g. an import that pulls a `.css.ts` module's
+    // runtime registration into a head script.
+    inlineScript({ maxBytes: 2048 }),
+    app?.pwa && pwaManifest(app.pwa),
+    app?.serviceWorker && serviceWorker(app.serviceWorker),
+    vanillaExtractPlugin(),
+    Icons({ compiler: 'solid' }),
+    assertHashedAssets(),
+    app && nitro(app.nitro, app),
+  ];
+};

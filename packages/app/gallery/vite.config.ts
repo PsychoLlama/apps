@@ -1,7 +1,5 @@
 import { defineConfig } from 'vite';
-import { nitro } from 'nitro/vite';
 import { substrate } from '@dev/vite-plugin-substrate';
-import { substrate as nitroSubstrate } from '@dev/nitro-module-substrate';
 
 export default defineConfig({
   // Pulled in transitively by generated `.css.ts` modules, so Vite's
@@ -12,10 +10,8 @@ export default defineConfig({
     include: ['@vanilla-extract/dynamic'],
   },
   plugins: [
-    substrate({ solidStart: true }),
-    nitro({
-      preset: 'static',
-      modules: [nitroSubstrate()],
+    substrate({
+      type: 'app',
     }),
   ],
 });

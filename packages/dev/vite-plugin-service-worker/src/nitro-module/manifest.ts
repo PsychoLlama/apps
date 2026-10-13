@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { glob, open } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { assert } from '@lib/assert';
-import type { AssetManifest } from './types.d.ts';
+import type { AssetManifest } from '../types.d.ts';
 
 /**
  * Hashes every file under `publicDir`, skipping glob patterns in `exclude`

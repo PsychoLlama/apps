@@ -1,4 +1,4 @@
-import type { AssetManifest } from '@dev/nitro-module-asset-manifest/types';
+import type { AssetManifest } from '@dev/vite-plugin-service-worker/types';
 import { createLogger } from '@lib/observability';
 import { CACHE_NAME, cacheKey } from './cache';
 import { getManifest } from './manifest';
