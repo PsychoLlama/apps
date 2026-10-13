@@ -253,7 +253,7 @@ describe('handleFetch', () => {
     expect(await response.json()).toEqual({ status: 'online' });
   });
 
-  it('streams the local log archive as ndjson', () => {
+  it('exports local logs as ndjson', () => {
     const event = syntheticEvent(new Request(sameOrigin('/api/local/logs')));
     handleFetch(event as unknown as FetchEvent);
 

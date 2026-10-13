@@ -7,11 +7,12 @@
  */
 
 import { createLogger } from '@lib/observability';
+import { serveLogExport } from '@lib/service-worker/api';
 
 import { CACHE_NAMES, openCache } from './caches';
-import { streamLogArchive } from './logs-export';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+const exportLogs = serveLogExport({ filename: 'logs' });
 
 /**
  * Ceiling on how long we'll wait for the network before serving from
@@ -53,8 +54,8 @@ export const handleFetch = (event: FetchEvent): void => {
   }
 
   if (url.pathname === '/api/local/logs') {
-    logger.info('Streaming the log archive as ndjson.', { url: url.pathname });
-    event.respondWith(streamLogArchive());
+    logger.info('Exporting logs.', { url: url.pathname });
+    event.respondWith(exportLogs());
     return;
   }
 

@@ -600,6 +600,9 @@ importers:
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../../lib/runtime-config
+      '@lib/service-worker':
+        specifier: workspace:*
+        version: link:../../lib/service-worker
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell
