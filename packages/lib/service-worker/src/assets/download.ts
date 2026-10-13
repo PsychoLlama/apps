@@ -13,7 +13,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  * Entries are keyed by content hash, not path. Assets that didn't change
  * between builds are already cached and cost nothing.
  */
-export const downloadAssets = async (manifest: AssetManifest) => {
+export const download = async (manifest: AssetManifest) => {
   const cache = await caches.open(CACHE_NAME);
   const assets = byIntegrityHash(manifest);
   const missing = await findMissing(cache, assets);

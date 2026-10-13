@@ -1,7 +1,7 @@
 import type { AssetManifest } from '@dev/nitro-module-asset-manifest/types';
 import { createLogger } from '@lib/observability';
 import { CACHE_NAME, cacheKey } from './cache';
-import { getAssetManifest } from './asset-manifest';
+import { getManifest } from './manifest';
 import { resolveAsset } from './resolve-asset';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -19,9 +19,7 @@ const NOT_FOUND_PAGE = '/404.html';
  * Without a manifest (dev), there's nothing cached, so every request goes to
  * the network.
  */
-export const serveAssets = (
-  manifest: AssetManifest | undefined = getAssetManifest(),
-) => {
+export const serve = (manifest: AssetManifest | undefined = getManifest()) => {
   if (manifest === undefined) return serveFromNetwork;
 
   return serveFromCache(manifest);

@@ -9,7 +9,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  * earlier builds. Call it from the `activate` event through `waitUntil`,
  * once no page runs the old build.
  */
-export const deleteStaleAssets = async (manifest: AssetManifest) => {
+export const prune = async (manifest: AssetManifest) => {
   const cache = await caches.open(CACHE_NAME);
   const current = new Set(Object.values(manifest.assets).map(cacheKey));
   const stale = (await cache.keys()).filter(

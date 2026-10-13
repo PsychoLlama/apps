@@ -6,7 +6,10 @@
   "description": "Tools for building service workers.",
   "license": "MIT",
   "sideEffects": false,
-  "exports": "./src/index.ts",
+  "exports": {
+    "./api": "./src/api/index.ts",
+    "./assets": "./src/assets/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts"
