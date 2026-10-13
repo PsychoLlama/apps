@@ -47,7 +47,6 @@
     "solid-js": "*"
   },
   "devDependencies": {
-    "@dev/vite-plugin-service-worker": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/vitest-config": "workspace:*",
     "@solidjs/meta": "catalog:",

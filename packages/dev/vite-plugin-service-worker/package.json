@@ -7,7 +7,6 @@
   "license": "MIT",
   "exports": {
     ".": "./src/index.ts",
-    "./nitro-module": "./src/nitro-module/index.ts",
     "./types": "./src/types.d.ts"
   },
   "scripts": {
