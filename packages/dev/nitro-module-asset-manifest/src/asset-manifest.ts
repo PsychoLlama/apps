@@ -15,7 +15,7 @@ export interface AssetManifestConfig {
 }
 
 /**
- * Nitro module that emits a precache manifest with SRI hashes and injects
+ * Nitro module that emits an asset manifest with SRI hashes and injects
  * it into the service worker. Add it to `modules` in the app's nitro
  * config.
  */

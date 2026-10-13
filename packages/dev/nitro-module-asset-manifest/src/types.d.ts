@@ -11,7 +11,7 @@ export interface AssetManifest {
 
 declare global {
   /**
-   * The precache manifest, injected into the service worker at build time.
+   * The asset manifest, injected into the service worker at build time.
    * `undefined` in dev.
    */
   var __ASSET_MANIFEST__: AssetManifest | undefined;
