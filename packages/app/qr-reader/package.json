@@ -7,7 +7,8 @@
   "license": "MIT",
   "sideEffects": [
     "**/*.css.ts",
-    "src/service-worker/index.ts"
+    "src/service-worker/index.ts",
+    "src/worker/index.ts"
   ],
   "exports": {
     "./constants": "./src/constants.ts"
