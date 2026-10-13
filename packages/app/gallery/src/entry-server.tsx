@@ -2,6 +2,7 @@
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
 import { DEFAULT_THEME_ID, ThemeMeta } from '@lib/theme/meta';
+import { RealUserMeasurements } from '@lib/shell/rum';
 
 export default createHandler(() => (
   <StartServer
@@ -20,6 +21,7 @@ export default createHandler(() => (
           </Flex>
 
           {scripts}
+          <RealUserMeasurements domain="psychollama.io" />
         </body>
       </html>
     )}
