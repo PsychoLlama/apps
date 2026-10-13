@@ -1,8 +1,8 @@
 import type { AssetManifest } from '@dev/nitro-module-asset-manifest/types';
 import { createLogger } from '@lib/observability';
-import { CACHE_NAME, cacheKey } from './assets/cache';
-import { getAssetManifest } from './assets/asset-manifest';
-import { resolveAsset } from './assets/resolve-asset';
+import { CACHE_NAME, cacheKey } from './cache';
+import { getAssetManifest } from './asset-manifest';
+import { resolveAsset } from './resolve-asset';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
