@@ -1,2 +1,2 @@
-export { getAssetManifest } from './asset-manifest';
-export { downloadAssets } from './download-assets';
+export { getAssetManifest } from './assets/asset-manifest';
+export { downloadAssets } from './assets/download-assets';
