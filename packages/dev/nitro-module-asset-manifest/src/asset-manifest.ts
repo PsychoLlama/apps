@@ -8,8 +8,8 @@ import { generateManifest } from './manifest.ts';
 export interface AssetManifestConfig {
   /**
    * Glob patterns for files to leave out, relative to the public dir
-   * (`fonts/*`). Adds to the defaults: `_headers`, `_redirects`,
-   * `manifest.webmanifest` and the service worker.
+   * (`fonts/*`). Adds to the defaults: `_headers`, `_redirects`, the
+   * asset manifest and the service worker.
    */
   exclude?: Array<string>;
 }
@@ -32,9 +32,6 @@ export const assetManifest = (
       // Cloudflare reads these as config; they're never served.
       '_headers',
       '_redirects',
-
-      // The web app manifest.
-      'manifest.webmanifest',
 
       // The manifest can't list its own hash.
       MANIFEST_FILE,
