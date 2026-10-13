@@ -21,10 +21,9 @@ import {
 
 interface CommonOptions {
   /**
-   * Options for `vite-plugin-solid`. The house babel plugins are added
-   * to whatever `babel` holds. In apps, these become SolidStart's
-   * `solid` options (its own `solid` wins per key), though SolidStart
-   * overrides `ssr` and `extensions`.
+   * Edits `vite-plugin-solid` options, after the house defaults. In apps,
+   * these are SolidStart's `solid` options, edited before `solidStart`
+   * runs, though SolidStart overrides `ssr` and `extensions`.
    */
   solid?: Configure<SolidPluginOptions>;
 }
@@ -39,9 +38,9 @@ export interface AppOptions extends CommonOptions {
   type: 'app';
 
   /**
-   * SolidStart options. Its file router and server environments expect
-   * an `src/app.tsx`, and don't run under vitest. Defaults turn the dev
-   * overlay off.
+   * Edits SolidStart options, after the house defaults (dev overlay off).
+   * Its file router and server environments expect an `src/app.tsx`, and
+   * don't run under vitest.
    */
   solidStart?: Configure<SolidStartPluginOptions>;
 
