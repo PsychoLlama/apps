@@ -14,15 +14,13 @@
     "./context": "./src/context.ts",
     "./branding": "./src/branding.tsx",
     "./pwa": "./src/pwa.tsx",
-    "./rum": "./src/rum.tsx",
-    "./service-worker": "./src/service-worker.ts"
+    "./rum": "./src/rum.tsx"
   },
   "scripts": {
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
-    "@dev/vite-plugin-service-worker": "workspace:*",
     "@lib/assert": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",

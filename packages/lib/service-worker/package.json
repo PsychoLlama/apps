@@ -8,17 +8,18 @@
   "sideEffects": false,
   "exports": {
     "./api": "./src/api/index.ts",
-    "./assets": "./src/assets/index.ts"
+    "./assets": "./src/assets/index.ts",
+    "./client": "./src/client/index.ts"
   },
   "scripts": {
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "devDependencies": {
-    "@dev/vite-plugin-service-worker": "workspace:*",
     "@dev/vitest-config": "workspace:*"
   },
   "dependencies": {
+    "@dev/vite-plugin-service-worker": "workspace:*",
     "@lib/assert": "workspace:*",
     "@lib/observability": "workspace:*"
   }
