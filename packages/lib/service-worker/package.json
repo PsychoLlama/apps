@@ -13,7 +13,8 @@
   },
   "scripts": {
     "typecheck": "tsc",
-    "test:unit": "vitest run --config vitest.unit.config.ts"
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*"
@@ -21,6 +22,7 @@
   "dependencies": {
     "@dev/vite-plugin-service-worker": "workspace:*",
     "@lib/assert": "workspace:*",
+    "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*"
   }
 }

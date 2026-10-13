@@ -1140,6 +1140,9 @@ importers:
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
+      '@lib/holz-idb-backend':
+        specifier: workspace:*
+        version: link:../holz-idb-backend
       '@lib/observability':
         specifier: workspace:*
         version: link:../observability
