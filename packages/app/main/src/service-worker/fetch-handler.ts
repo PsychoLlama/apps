@@ -12,7 +12,7 @@ import { serveLogExport } from '@lib/service-worker/api';
 import { CACHE_NAMES, openCache } from './caches';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
-const exportLogs = serveLogExport({ filename: 'logs' });
+const exportLogs = serveLogExport();
 
 /**
  * Ceiling on how long we'll wait for the network before serving from

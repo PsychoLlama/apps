@@ -83,7 +83,12 @@ describe('serveLogExport', () => {
   });
 
   it('exports an empty body before the database exists', async () => {
-    await expect(exportLogs().text()).resolves.toBe('');
+    const response = serveLogExport()();
+    expect(response.headers.get('Content-Disposition')).toBe(
+      'attachment; filename="logs.ndjson"',
+    );
+
+    await expect(response.text()).resolves.toBe('');
 
     // The export must not leave behind a schema that migrations skip.
     await using handle = await setup();

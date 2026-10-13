@@ -13,14 +13,14 @@ export const CONTENT_TYPE = 'application/x-ndjson';
 
 export interface LogExportConfig {
   /** Download filename, without the `.ndjson` extension. */
-  filename: string;
+  filename?: string;
 }
 
 /**
  * Responds with every log persisted by `@lib/holz-idb-backend` as an ndjson
  * file download, oldest first.
  */
-export const serveLogExport = ({ filename }: LogExportConfig) => {
+export const serveLogExport = ({ filename = 'logs' }: LogExportConfig = {}) => {
   return () => {
     const stream = new ReadableStream<Uint8Array>({
       start: streamLogsFromIdb,
