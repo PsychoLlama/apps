@@ -11,6 +11,7 @@ import {
   type ServiceWorkerConfig,
 } from '@dev/vite-plugin-service-worker';
 import { svgToPng } from '@dev/vite-plugin-svg-to-png';
+import { nitro, type NitroOptions } from './nitro.ts';
 import {
   solid,
   solidStart,
@@ -33,7 +34,7 @@ export interface PackageOptions extends CommonOptions {
   type?: 'package';
 }
 
-/** A deployed app, built with SolidStart. */
+/** A deployed app, built with SolidStart and prerendered by Nitro. */
 export interface AppOptions extends CommonOptions {
   type: 'app';
 
@@ -43,6 +44,12 @@ export interface AppOptions extends CommonOptions {
    * don't run under vitest.
    */
   solidStart?: Configure<SolidStartPluginOptions>;
+
+  /**
+   * Edits Nitro options, after the house defaults (static preset,
+   * `@dev/nitro-module-substrate`).
+   */
+  nitro?: Configure<NitroOptions>;
 
   /** Emit a web app manifest with raster icons. */
   pwa?: PwaManifestConfig;
@@ -57,8 +64,8 @@ export type SubstrateOptions = PackageOptions | AppOptions;
  * The plugin pipeline every package builds with: git-aware file
  * watching, instrumentation scopes, Solid, vanilla-extract, icon
  * components, `?to-png=<size>` SVG imports and `?inline-script` head
- * scripts. Apps swap Solid for SolidStart, and can opt into a PWA
- * manifest and service worker.
+ * scripts. Apps swap Solid for SolidStart, add Nitro, and can opt into a
+ * PWA manifest and service worker.
  * Package-specific plugins go alongside it.
  */
 export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
@@ -78,5 +85,6 @@ export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
     vanillaExtractPlugin(),
     Icons({ compiler: 'solid' }),
     assertHashedAssets(),
+    app && nitro(app.nitro),
   ];
 };

@@ -1,8 +1,6 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
-import { nitro } from 'nitro/vite';
 import { substrate } from '@dev/vite-plugin-substrate';
-import { substrate as nitroSubstrate } from '@dev/nitro-module-substrate';
 import { assetManifest } from '@dev/nitro-module-asset-manifest';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 import * as app from './src/constants';
@@ -48,10 +46,9 @@ export default defineConfig({
       serviceWorker: {
         path: 'src/service-worker/index.ts',
       },
-    }),
-    nitro({
-      preset: 'static',
-      modules: [nitroSubstrate(), assetManifest()],
+      nitro: (config) => {
+        config.modules.push(assetManifest());
+      },
     }),
   ],
 });

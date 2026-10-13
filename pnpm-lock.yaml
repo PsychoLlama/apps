@@ -375,9 +375,6 @@ importers:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
     devDependencies:
-      '@dev/nitro-module-substrate':
-        specifier: workspace:*
-        version: link:../../dev/nitro-module-substrate
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate
@@ -396,9 +393,6 @@ importers:
       '@vanilla-extract/dynamic':
         specifier: 'catalog:'
         version: 2.1.5
-      nitro:
-        specifier: 'catalog:'
-        version: 3.0.260903-beta
       solid-js:
         specifier: 1.9.17
         version: 1.9.17
@@ -448,9 +442,6 @@ importers:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
     devDependencies:
-      '@dev/nitro-module-substrate':
-        specifier: workspace:*
-        version: link:../../dev/nitro-module-substrate
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate
@@ -469,9 +460,6 @@ importers:
       '@vanilla-extract/dynamic':
         specifier: 'catalog:'
         version: 2.1.5
-      nitro:
-        specifier: 'catalog:'
-        version: 3.0.260903-beta
       solid-js:
         specifier: 1.9.17
         version: 1.9.17
@@ -521,9 +509,6 @@ importers:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
     devDependencies:
-      '@dev/nitro-module-substrate':
-        specifier: workspace:*
-        version: link:../../dev/nitro-module-substrate
       '@dev/vite-plugin-icon-packs':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-icon-packs
@@ -545,9 +530,6 @@ importers:
       '@vanilla-extract/dynamic':
         specifier: 'catalog:'
         version: 2.1.5
-      nitro:
-        specifier: 'catalog:'
-        version: 3.0.260903-beta
       solid-js:
         specifier: 1.9.17
         version: 1.9.17
@@ -649,18 +631,12 @@ importers:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
     devDependencies:
-      '@dev/nitro-module-substrate':
-        specifier: workspace:*
-        version: link:../../dev/nitro-module-substrate
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
-      nitro:
-        specifier: 'catalog:'
-        version: 3.0.260903-beta
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -722,9 +698,6 @@ importers:
       '@dev/nitro-module-asset-manifest':
         specifier: workspace:*
         version: link:../../dev/nitro-module-asset-manifest
-      '@dev/nitro-module-substrate':
-        specifier: workspace:*
-        version: link:../../dev/nitro-module-substrate
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate
@@ -743,9 +716,6 @@ importers:
       '@vanilla-extract/dynamic':
         specifier: 'catalog:'
         version: 2.1.5
-      nitro:
-        specifier: 'catalog:'
-        version: 3.0.260903-beta
       solid-js:
         specifier: 1.9.17
         version: 1.9.17
@@ -937,6 +907,9 @@ importers:
       '@dev/babel-plugin-erase-overload-signatures':
         specifier: workspace:*
         version: link:../babel-plugin-erase-overload-signatures
+      '@dev/nitro-module-substrate':
+        specifier: workspace:*
+        version: link:../nitro-module-substrate
       '@dev/vite-plugin-assert-hashed-assets':
         specifier: workspace:*
         version: link:../vite-plugin-assert-hashed-assets
@@ -964,6 +937,9 @@ importers:
       '@vanilla-extract/vite-plugin':
         specifier: 'catalog:'
         version: 5.2.6(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(supports-color@10.2.2)(terser@5.48.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))(yaml@2.9.1)
+      nitro:
+        specifier: 'catalog:'
+        version: 3.0.260903-beta
       unplugin-icons:
         specifier: 'catalog:'
         version: 24.0.0(esbuild@0.28.2)(rolldown@1.1.5)(rollup@4.62.0)(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))

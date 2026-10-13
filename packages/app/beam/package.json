@@ -46,14 +46,12 @@
     "solid-js": "*"
   },
   "devDependencies": {
-    "@dev/nitro-module-substrate": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/vitest-config": "workspace:*",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
     "@solidjs/start": "catalog:",
     "@vanilla-extract/dynamic": "catalog:",
-    "nitro": "catalog:",
     "solid-js": "catalog:",
     "typescript": "catalog:",
     "wrangler": "catalog:"

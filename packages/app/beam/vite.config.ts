@@ -1,8 +1,6 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
-import { nitro } from 'nitro/vite';
 import { substrate } from '@dev/vite-plugin-substrate';
-import { substrate as nitroSubstrate } from '@dev/nitro-module-substrate';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 import * as app from './src/constants';
 
@@ -44,26 +42,22 @@ export default defineConfig({
           background_color: manifestThemeColor,
         },
       },
-    }),
-    nitro({
-      preset: 'static',
-      modules: [nitroSubstrate()],
-      prerender: {
+      nitro: (config) => {
         // One shell for every `/share/:id`, which the crawler can't reach
         // from `/`. The id is a live relay handle that only exists
         // client-side, and the page's first paint is independent of it.
         // See `docs/dynamic-prerendered-shells.md`.
-        routes: ['/share/__id'],
-      },
-      hooks: {
-        'prerender:generate'(route) {
-          // Flatten the share shell out of `/share/`, so the
-          // `public/_redirects` rewrite target sits above its source and
-          // Cloudflare's loop check doesn't reject the rule.
-          if (route.route === '/share/__id') {
-            route.fileName = '/__share.html';
-          }
-        },
+        config.prerender = { routes: ['/share/__id'] };
+        config.hooks = {
+          'prerender:generate'(route) {
+            // Flatten the share shell out of `/share/`, so the
+            // `public/_redirects` rewrite target sits above its source and
+            // Cloudflare's loop check doesn't reject the rule.
+            if (route.route === '/share/__id') {
+              route.fileName = '/__share.html';
+            }
+          },
+        };
       },
     }),
   ],
