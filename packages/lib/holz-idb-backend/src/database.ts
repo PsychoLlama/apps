@@ -1,4 +1,4 @@
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Log } from '@holz/core';
 
 /**
@@ -139,6 +139,12 @@ export const openLogDatabase = (
     blocking: relinquish,
     terminated: relinquish,
   });
+
+/**
+ * Delete the holz log database outright, schema and all. For tests that need a
+ * fresh origin. Waits for open connections to close before resolving.
+ */
+export const deleteLogDatabase = (): Promise<void> => deleteDB(DATABASE_NAME);
 
 /**
  * A versioned open rejects with a `VersionError` when the database already
