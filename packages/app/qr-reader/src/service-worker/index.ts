@@ -1,5 +1,9 @@
 import { createLogger } from '@lib/observability';
-import { getAssetManifest, downloadAssets } from '@lib/service-worker';
+import {
+  getAssetManifest,
+  deleteStaleAssets,
+  downloadAssets,
+} from '@lib/service-worker';
 
 import { routers } from './routers';
 
@@ -17,6 +21,13 @@ self.addEventListener('install', (event) => {
   if (manifest === undefined) return;
 
   event.waitUntil(downloadAssets(manifest));
+});
+
+self.addEventListener('activate', (event) => {
+  // Nothing cached to clean up.
+  if (manifest === undefined) return;
+
+  event.waitUntil(deleteStaleAssets(manifest));
 });
 
 self.addEventListener('fetch', (event) => {
