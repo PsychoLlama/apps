@@ -1,33 +1,22 @@
 import { createLogger } from '@lib/observability';
-import {
-  getAssetManifest,
-  deleteStaleAssets,
-  downloadAssets,
-} from '@lib/service-worker';
+import * as assets from '@lib/service-worker/assets';
 
 import { routers } from './routers';
 
 declare const self: ServiceWorkerGlobalScope;
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
-const manifest = getAssetManifest();
 
 self.addEventListener('install', (event) => {
   logger.info('Installing.', {
-    serveFrom: manifest === undefined ? 'network' : 'cache',
+    serveFrom: assets.getManifest() === undefined ? 'network' : 'cache',
   });
 
-  // Nothing to install.
-  if (manifest === undefined) return;
-
-  event.waitUntil(downloadAssets(manifest));
+  event.waitUntil(assets.download());
 });
 
 self.addEventListener('activate', (event) => {
-  // Nothing cached to clean up.
-  if (manifest === undefined) return;
-
-  event.waitUntil(deleteStaleAssets(manifest));
+  event.waitUntil(assets.prune());
 });
 
 self.addEventListener('fetch', (event) => {

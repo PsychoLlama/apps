@@ -1,4 +1,4 @@
-import { serveAssets } from '@lib/service-worker';
+import * as assets from '@lib/service-worker/assets';
 import type { IRequest, IttyRouterType } from 'itty-router';
 import { IttyRouter } from 'itty-router/IttyRouter';
 
@@ -14,7 +14,7 @@ export const createSelfRouter = (): Router => {
   const router = IttyRouter();
 
   router.all('/api/local/*', serveLocalApi());
-  router.all('*', serveAssets());
+  router.all('*', assets.serve());
 
   return router;
 };

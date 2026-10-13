@@ -1,4 +1,4 @@
-import { serveAssetManifest } from '@lib/service-worker';
+import { serveAssetManifest } from '@lib/service-worker/api';
 import { IttyRouter } from 'itty-router/IttyRouter';
 
 /** Answers `/api/local/*`, the endpoints only the service worker serves. */

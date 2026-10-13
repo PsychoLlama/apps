@@ -2,6 +2,7 @@ import type { AssetManifest } from '@dev/nitro-module-asset-manifest/types';
 import { assert } from '@lib/assert';
 import { createLogger, toError } from '@lib/observability';
 import { CACHE_NAME, cacheKey } from './cache';
+import { getManifest } from './manifest';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -12,8 +13,15 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  *
  * Entries are keyed by content hash, not path. Assets that didn't change
  * between builds are already cached and cost nothing.
+ *
+ * Without a manifest (dev), the worker serves from the network, so there's
+ * nothing to download.
  */
-export const downloadAssets = async (manifest: AssetManifest) => {
+export const download = async (
+  manifest: AssetManifest | undefined = getManifest(),
+) => {
+  if (manifest === undefined) return;
+
   const cache = await caches.open(CACHE_NAME);
   const assets = byIntegrityHash(manifest);
   const missing = await findMissing(cache, assets);
