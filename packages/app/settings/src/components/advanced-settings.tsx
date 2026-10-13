@@ -3,6 +3,7 @@ import { AbortError, useAnchor, useRun, useValue } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
 import { Button, Code, Flex, Heading, Link, Text, TextField } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
+import { LogStorage } from './log-storage';
 import { ResetButton } from './reset-button';
 import {
   advancedDefaults,
@@ -77,58 +78,64 @@ export const AdvancedSettings = () => {
         />
       </Button>
 
-      <Flex as="section" direction="column" gap={3}>
-        <Flex as="header" direction="column" gap={2}>
-          <Flex
-            as="div"
-            direction="row"
-            justify="between"
-            align="center"
-            gap={3}
-          >
-            <Heading
-              as="h3"
-              id={logFilterHeadingId}
-              size={4}
-              weight="medium"
-              selectable={false}
+      {/* `details` lays out its content as one slotted box, so its own
+          gap never reaches the sections. This column spaces them. */}
+      <Flex as="div" direction="column" gap={5}>
+        <Flex as="section" direction="column" gap={3}>
+          <Flex as="header" direction="column" gap={2}>
+            <Flex
+              as="div"
+              direction="row"
+              justify="between"
+              align="center"
+              gap={3}
             >
-              Log filter
-            </Heading>
-            <ResetButton
-              testId="advanced-log-filter-reset"
-              label="Reset log filter"
-              disabled={advanced().logFilter === advancedDefaults.logFilter}
-              onReset={() => void resetFilter()}
-            />
+              <Heading
+                as="h3"
+                id={logFilterHeadingId}
+                size={4}
+                weight="medium"
+                selectable={false}
+              >
+                Log filter
+              </Heading>
+              <ResetButton
+                testId="advanced-log-filter-reset"
+                label="Reset log filter"
+                disabled={advanced().logFilter === advancedDefaults.logFilter}
+                onReset={() => void resetFilter()}
+              />
+            </Flex>
+            <Text as="p" size={2} color="lowContrast" selectable={false}>
+              Control what's logged to the console. Use <Code>*</Code> to show
+              all logs. See{' '}
+              <Link
+                testId="holz-readme"
+                href="https://github.com/PsychoLlama/holz/blob/main/packages/holz-pattern-filter/README.md"
+                target="_blank"
+              >
+                @holz/pattern-filter
+              </Link>{' '}
+              for the syntax guide.
+            </Text>
           </Flex>
-          <Text as="p" size={2} color="lowContrast" selectable={false}>
-            Control what's logged to the console. Use <Code>*</Code> to show all
-            logs. See{' '}
-            <Link
-              testId="holz-readme"
-              href="https://github.com/PsychoLlama/holz/blob/main/packages/holz-pattern-filter/README.md"
-              target="_blank"
-            >
-              @holz/pattern-filter
-            </Link>{' '}
-            for the syntax guide.
-          </Text>
+          <TextField
+            testId="advanced-log-filter"
+            aria-labelledby={logFilterHeadingId}
+            value={advanced().logFilter}
+            placeholder="*"
+            autocomplete="off"
+            autocapitalize="off"
+            enterkeyhint="done"
+            spellcheck={false}
+            onBlur={(event) => {
+              const next = event.currentTarget.value;
+              if (next !== advanced().logFilter) void commitFilter(next);
+            }}
+          />
         </Flex>
-        <TextField
-          testId="advanced-log-filter"
-          aria-labelledby={logFilterHeadingId}
-          value={advanced().logFilter}
-          placeholder="*"
-          autocomplete="off"
-          autocapitalize="off"
-          enterkeyhint="done"
-          spellcheck={false}
-          onBlur={(event) => {
-            const next = event.currentTarget.value;
-            if (next !== advanced().logFilter) void commitFilter(next);
-          }}
-        />
+
+        <LogStorage />
       </Flex>
     </Flex>
   );
