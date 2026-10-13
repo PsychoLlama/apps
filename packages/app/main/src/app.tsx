@@ -8,6 +8,7 @@ import { ErrorBoundaryFallback } from '@lib/shell';
 import { Branding } from '@lib/shell/branding';
 import { PwaMeta } from '@lib/shell/pwa';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
+import { installServiceWorker } from '@lib/service-worker/client';
 import IconApps from 'virtual:icons/mdi/apps';
 import { NavigationLogger } from './navigation-logger';
 import { name } from './constants';
@@ -26,6 +27,7 @@ export default function App() {
     <Router
       root={(props) => {
         onMount(runStartupTasks);
+        onMount(installServiceWorker);
 
         return (
           <AppProvider value={config}>

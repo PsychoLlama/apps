@@ -15,20 +15,9 @@ export default defineConfig({
   // Pulled in transitively by generated `.css.ts` modules, so Vite's
   // entry scanner misses it. Without this hint, the first cold load
   // re-optimizes deps mid-flight and 504s any in-flight requests
-  // racing the version bump — including the service worker fetch,
-  // whose registration silently dies until the page reloads.
+  // racing the version bump.
   optimizeDeps: {
     include: ['@vanilla-extract/dynamic'],
-  },
-  server: {
-    headers: {
-      // The bundled service worker lives under `/_build/`, so its default
-      // scope would be limited to that prefix. The dev server needs this
-      // header to honor the `scope: '/'` registration; production (and the
-      // wrangler-based `preview` script) set the same header via
-      // `public/_headers`.
-      'Service-Worker-Allowed': '/',
-    },
   },
   plugins: [
     substrate({
@@ -54,6 +43,9 @@ export default defineConfig({
           theme_color: manifestThemeColor,
           background_color: manifestThemeColor,
         },
+      },
+      serviceWorker: {
+        path: 'src/service-worker/index.ts',
       },
     }),
   ],

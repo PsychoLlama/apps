@@ -1,38 +1,47 @@
 /**
- * Browser service worker. Activates immediately on install/upgrade and
- * wires the `fetch` listener through `fetch-handler.ts`. Everything
- * beyond lifecycle lives there.
- *
- * `entry-client.tsx` imports this module via Vite's `?worker&url`,
- * which bundles it separately and registers the resulting URL.
+ * Browser service worker. Wires lifecycle events to the cached build and
+ * `fetch` through `fetch-handler.ts`.
  */
 
-import { purgeStaleCaches } from './caches';
+import { createLogger } from '@lib/observability';
+import * as assets from '@lib/service-worker/assets';
 import { handleFetch } from './fetch-handler';
 
 declare const self: ServiceWorkerGlobalScope;
 
-self.addEventListener('install', () => {
-  // The app holds no SW-version-coupled state (no precaches keyed to
-  // a build, no in-flight IndexedDB migrations), so a new SW can
-  // displace its predecessor without waiting for old tabs to close.
-  // Revisit this once we cache anything stateful.
-  void self.skipWaiting();
+const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+
+/**
+ * The legacy worker's network-first HTML cache. Nothing reads it anymore.
+ * Safe to drop once most installs have activated this worker.
+ */
+const LEGACY_HTML_CACHE = 'html:1';
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    (async () => {
+      const manifest = assets.getManifest();
+
+      // Without a manifest (dev), the worker stays on the network.
+      if (manifest !== undefined) await assets.download(manifest);
+
+      logger.info('Service worker installed.', {
+        serveFrom: manifest === undefined ? 'network' : 'cache',
+      });
+    })(),
+  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      // Navigation preload only feeds the prod navigation handler; in
-      // dev we never intercept navigations (see `fetch-handler.ts`), so
-      // enabling it just orphans a preload request the browser then
-      // cancels, logging a warning on every dev navigation. The guard
-      // is dead-code-eliminated in prod.
-      if (!import.meta.env.DEV) {
-        await self.registration.navigationPreload.enable();
-      }
-      await self.clients.claim();
-      await purgeStaleCaches();
+      const manifest = assets.getManifest();
+
+      // Nothing cached to clean up.
+      if (manifest !== undefined) await assets.prune(manifest);
+      await caches.delete(LEGACY_HTML_CACHE);
+
+      logger.info('Service worker activated.');
     })(),
   );
 });
