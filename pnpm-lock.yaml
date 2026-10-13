@@ -1188,6 +1188,9 @@ importers:
       '@lib/observability':
         specifier: workspace:*
         version: link:../observability
+      '@lib/runtime-config':
+        specifier: workspace:*
+        version: link:../runtime-config
       '@lib/ui':
         specifier: workspace:*
         version: link:../ui
