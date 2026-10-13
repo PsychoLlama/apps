@@ -1,0 +1,22 @@
+{
+  "name": "@lib/service-worker",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Tools for building service workers.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
+  },
+  "devDependencies": {
+    "@dev/nitro-module-asset-manifest": "workspace:*",
+    "@dev/vitest-config": "workspace:*"
+  },
+  "dependencies": {
+    "@lib/assert": "workspace:*",
+    "@lib/observability": "workspace:*"
+  }
+}

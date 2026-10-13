@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import { nitroV2Plugin as nitro } from '@solidjs/vite-plugin-nitro-2';
 import { substrate } from '@dev/vite-plugin-substrate';
 import { substrate as nitroSubstrate } from '@dev/nitro-module-substrate';
+import { assetManifest } from '@dev/nitro-module-asset-manifest';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 import * as app from './src/constants';
 
@@ -44,10 +45,13 @@ export default defineConfig({
           background_color: manifestThemeColor,
         },
       },
+      serviceWorker: {
+        path: 'src/service-worker/index.ts',
+      },
     }),
     nitro({
       preset: 'static',
-      modules: [nitroSubstrate()],
+      modules: [nitroSubstrate(), assetManifest()],
     }),
   ],
 });

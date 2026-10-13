@@ -19,6 +19,7 @@
     "@dev/vite-plugin-inline-script": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@dev/vite-plugin-pwa": "workspace:*",
+    "@dev/vite-plugin-service-worker": "workspace:*",
     "@dev/vite-plugin-svg-to-png": "workspace:*",
     "@solidjs/start": "catalog:",
     "@vanilla-extract/vite-plugin": "catalog:",

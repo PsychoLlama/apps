@@ -1,0 +1,17 @@
+{
+  "name": "@dev/vite-plugin-service-worker",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Vite plugin that serves and builds the app's service worker.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  }
+}

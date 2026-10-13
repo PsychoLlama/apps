@@ -6,19 +6,27 @@ import { gitignore } from '@dev/vite-plugin-gitignore';
 import { inlineScript } from '@dev/vite-plugin-inline-script';
 import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
 import { pwaManifest, type PwaManifestConfig } from '@dev/vite-plugin-pwa';
+import {
+  serviceWorker,
+  type ServiceWorkerConfig,
+} from '@dev/vite-plugin-service-worker';
 import { svgToPng } from '@dev/vite-plugin-svg-to-png';
 import { solidOrSolidStart, type SolidFrameworkOptions } from './solid.ts';
 
 export interface SubstrateOptions extends SolidFrameworkOptions {
   /** Emit a web app manifest with raster icons. */
   pwa?: PwaManifestConfig;
+
+  /** Serve and build a service worker at `/service-worker.js`. */
+  serviceWorker?: ServiceWorkerConfig;
 }
 
 /**
  * The plugin pipeline every package builds with: git-aware file
  * watching, instrumentation scopes, Solid (or SolidStart, for apps),
  * vanilla-extract, icon components, `?to-png=<size>` SVG imports and
- * `?inline-script` head scripts, plus opt-in PWA support.
+ * `?inline-script` head scripts, plus opt-in PWA and service worker
+ * support.
  * Package-specific plugins go alongside it.
  */
 export const substrate = (options: SubstrateOptions = {}): PluginOption[] => [
@@ -31,6 +39,7 @@ export const substrate = (options: SubstrateOptions = {}): PluginOption[] => [
   // runtime registration into a head script.
   inlineScript({ maxBytes: 2048 }),
   options.pwa && pwaManifest(options.pwa),
+  options.serviceWorker && serviceWorker(options.serviceWorker),
   vanillaExtractPlugin(),
   Icons({ compiler: 'solid' }),
   assertHashedAssets(),

@@ -1,8 +1,9 @@
 {
   "extends": "../../../tsconfig.web.json",
   "include": ["src", "*.ts"],
-  // Worker entrypoints are typed for the worker global scope, not the DOM —
-  // see `src/worker/tsconfig.json`. They're excluded here so `self` resolves as
-  // a `DedicatedWorkerGlobalScope` there instead of a `Window` here.
-  "exclude": ["src/worker"]
+  // Worker entrypoints are typed for their own global scope, not the DOM —
+  // see `src/worker/tsconfig.json` and `src/service-worker/tsconfig.json`.
+  // They're excluded here so `self` resolves to the worker's global scope
+  // there instead of a `Window` here.
+  "exclude": ["src/worker", "src/service-worker"]
 }

@@ -101,7 +101,7 @@ const config: KnipConfig = {
       vite: false,
     },
     'packages/app/qr-reader': {
-      // Same shape as the icon editor, plus the decoder worker.
+      // Same shape as the icon editor, plus the decoder and service workers.
       entry: [
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
@@ -109,6 +109,8 @@ const config: KnipConfig = {
         // Imported as `./worker/index?worker`; the query suffix hides the
         // specifier from knip's resolver.
         'src/worker/index.ts!',
+        // Its own bundle, built and registered separately from the app.
+        'src/service-worker/index.ts!',
         'src/**/*.css.ts!',
         'vite.config.ts',
       ],

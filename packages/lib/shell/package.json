@@ -13,7 +13,9 @@
     "./frame.css": "./src/frame.css.ts",
     "./context": "./src/context.ts",
     "./branding": "./src/branding.tsx",
-    "./pwa": "./src/pwa.tsx"
+    "./pwa": "./src/pwa.tsx",
+    "./rum": "./src/rum.tsx",
+    "./service-worker": "./src/service-worker.ts"
   },
   "scripts": {
     "typecheck": "tsc",
@@ -23,6 +25,7 @@
     "@lib/assert": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/observability": "workspace:*",
+    "@lib/runtime-config": "workspace:*",
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:"
   },

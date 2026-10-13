@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json.schemastore.org/tsconfig",
+  // Runs in a `ServiceWorkerGlobalScope`, not the DOM.
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "WebWorker"],
+    "customConditions": ["browser"],
+    "types": ["@dev/vite-plugin-substrate/types", "vitest/globals"]
+  },
+  "include": ["src", "*.ts"]
+}
