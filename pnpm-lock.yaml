@@ -719,9 +719,6 @@ importers:
       '@dev/nitro-module-substrate':
         specifier: workspace:*
         version: link:../../dev/nitro-module-substrate
-      '@dev/vite-plugin-service-worker':
-        specifier: workspace:*
-        version: link:../../dev/vite-plugin-service-worker
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate
@@ -945,6 +942,9 @@ importers:
       '@dev/vite-plugin-pwa':
         specifier: workspace:*
         version: link:../vite-plugin-pwa
+      '@dev/vite-plugin-service-worker':
+        specifier: workspace:*
+        version: link:../vite-plugin-service-worker
       '@dev/vite-plugin-svg-to-png':
         specifier: workspace:*
         version: link:../vite-plugin-svg-to-png
