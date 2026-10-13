@@ -5,16 +5,22 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 /** Handles `install`. Pass to `waitUntil`: a rejection fails the install. */
 export const install = async () => {
-  await assets.download();
+  const manifest = assets.getManifest();
+
+  // Without a manifest (dev), the worker stays on the network.
+  if (manifest !== undefined) await assets.download(manifest);
 
   logger.info('Service worker installed.', {
-    serveFrom: assets.getManifest() === undefined ? 'network' : 'cache',
+    serveFrom: manifest === undefined ? 'network' : 'cache',
   });
 };
 
 /** Handles `activate`. Pass to `waitUntil`. */
 export const activate = async () => {
-  await assets.prune();
+  const manifest = assets.getManifest();
+
+  // Nothing cached to clean up.
+  if (manifest !== undefined) await assets.prune(manifest);
 
   logger.info('Service worker activated.');
 };
