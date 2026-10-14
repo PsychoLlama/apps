@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import type { NitroModule } from 'nitro/types';
+import type { RedirectRule } from '@dev/vite-plugin-redirects/api';
 import { SERVICE_WORKER_FILE_NAME } from '../constants.ts';
 import type { OfflineManifest } from '../types.d.ts';
 import { injectManifest } from './inject.ts';
@@ -11,7 +12,7 @@ import { generateAssets } from './assets.ts';
  * is done.
  */
 export const offlineManifest = (
-  getRedirects: () => string[],
+  getRedirects: () => RedirectRule[],
 ): NitroModule => ({
   name: 'offline-manifest',
   setup(nitro) {

@@ -1,11 +1,11 @@
 import type { Plugin } from 'vite';
 import { PLUGIN_NAME } from './constants.ts';
-import type { RedirectsApi } from './api/index.ts';
+import type { RedirectRule, RedirectsApi } from './api/index.ts';
 
 /** Options for {@link redirects}. */
 export interface RedirectsConfig {
-  /** Lines of Cloudflare's `_redirects`: `<from> <to> [status]`. */
-  rules: string[];
+  /** In match order: Cloudflare applies the first that matches. */
+  rules: RedirectRule[];
 }
 
 /**
@@ -30,8 +30,10 @@ export const redirects = (config: RedirectsConfig): Plugin<RedirectsApi> => {
       this.emitFile({
         type: 'asset',
         fileName: '_redirects',
-        source: `${api.getRules().join('\n')}\n`,
+        source: api.getRules().map(formatRule).join(''),
       });
     },
   };
 };
+
+const formatRule = (rule: RedirectRule) => `${rule.join(' ')}\n`;

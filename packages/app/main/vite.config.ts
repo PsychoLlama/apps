@@ -59,7 +59,11 @@ export default defineConfig({
           // gallery's dynamic import). The `:hash` placeholder matches any
           // non-`/` run — hyphenated hashes included — while the trailing
           // literal keeps it scoped to the old manifest asset.
-          '/_build/assets/manifest-:hash.webmanifest  /manifest.webmanifest  301',
+          [
+            '/_build/assets/manifest-:hash.webmanifest',
+            '/manifest.webmanifest',
+            301,
+          ],
 
           // The icon editor moved to its own worker. Forward old links there;
           // the query string carries the editor state (`?icon=…`) and passes
@@ -67,25 +71,25 @@ export default defineConfig({
           // by host, so previews and staging forward to prod too. The bare
           // path needs its own rule: the splat doesn't match `/icon-editor`
           // without a trailing slash.
-          '/icon-editor    https://icon-editor.psychollama.io/        301',
-          '/icon-editor/*  https://icon-editor.psychollama.io/:splat  301',
+          ['/icon-editor', 'https://icon-editor.psychollama.io/', 301],
+          ['/icon-editor/*', 'https://icon-editor.psychollama.io/:splat', 301],
 
           // The gallery moved to its own worker, with manifest pages at the
           // root (`/gallery/lib-ui` → `/lib-ui`). Prod-only for the same
           // reason as above.
-          '/gallery    https://gallery.psychollama.io/        301',
-          '/gallery/*  https://gallery.psychollama.io/:splat  301',
+          ['/gallery', 'https://gallery.psychollama.io/', 301],
+          ['/gallery/*', 'https://gallery.psychollama.io/:splat', 301],
 
           // The QR reader moved to its own worker, served from the root.
           // Prod-only for the same reason as above.
-          '/scanner    https://qr.psychollama.io/        301',
-          '/scanner/*  https://qr.psychollama.io/:splat  301',
+          ['/scanner', 'https://qr.psychollama.io/', 301],
+          ['/scanner/*', 'https://qr.psychollama.io/:splat', 301],
 
           // Beam moved to its own worker, served from the root. Old invite
           // links (`/beam/share/<id>`) land on `/share/<id>` there. Prod-only
           // for the same reason as above.
-          '/beam    https://beam.psychollama.io/        301',
-          '/beam/*  https://beam.psychollama.io/:splat  301',
+          ['/beam', 'https://beam.psychollama.io/', 301],
+          ['/beam/*', 'https://beam.psychollama.io/:splat', 301],
         ],
       },
     }),

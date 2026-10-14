@@ -29,7 +29,7 @@ Three coupled pieces, all in the deployed app that serves the route:
    rename `<base>/subroute/__<param>` → `<base>/__<param>.html` (up one level, out
    of `<base>/subroute/`).
 3. **Rewrite** — same file, substrate's `redirects.rules`:
-   `<base>/subroute/:<param>  <base>/__<param>  200`.
+   `['<base>/subroute/:<param>', '<base>/__<param>', 200]`.
 
 ## The circular-redirect pitfall
 
@@ -50,4 +50,5 @@ All three, keeping the target one level above its rewrite source:
 
 - nitro `prerender.routes`: add `<base>/subroute/__<param>`
 - `prerender:generate` hook: rename it to `<base>/__<param>.html`
-- `redirects.rules`: `<base>/subroute/:<param>  <base>/__<param>  200`
+- `redirects.rules`: rewrite `<base>/subroute/:<param>` to `<base>/__<param>`
+  with code `200`

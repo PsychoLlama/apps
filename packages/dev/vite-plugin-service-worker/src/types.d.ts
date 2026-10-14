@@ -1,6 +1,8 @@
 // Types for the service worker side. Kept free of Node imports so worker
 // code can load them.
 
+import type { RedirectRule } from '@dev/vite-plugin-redirects/api';
+
 /**
  * Every deployed file, keyed by its path from the public dir root, with an
  * SRI token (`sha256-…`) for `new Request(url, { integrity })`. Always
@@ -9,8 +11,8 @@
 export interface OfflineManifest {
   assets: Record<string, string> & { '/404.html': string };
 
-  /** The app's Cloudflare `_redirects` lines, verbatim and in match order. */
-  redirects: string[];
+  /** The app's Cloudflare `_redirects` rules, in match order. */
+  redirects: RedirectRule[];
 }
 
 declare global {

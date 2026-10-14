@@ -2,12 +2,28 @@ import type { Plugin } from 'vite';
 import { PLUGIN_NAME } from '../constants.ts';
 
 /**
+ * One line of Cloudflare's `_redirects`.
+ *
+ * - `source`: path to match. Supports `:placeholder` and a trailing `*`
+ *   splat.
+ * - `destination`: path or URL to send it to. Can use the source's
+ *   placeholders and `:splat`.
+ * - `statusCode`: defaults to Cloudflare's `302`. `200` is a rewrite: it
+ *   serves the destination without changing the URL.
+ */
+export type RedirectRule = [
+  source: string,
+  destination: string,
+  statusCode?: number,
+];
+
+/**
  * What the plugin exposes to other plugins. Find it with
  * {@link getRedirectsApi}.
  */
 export interface RedirectsApi {
   /** A copy of the rules, in `_redirects` order (also match order). */
-  getRules(): string[];
+  getRules(): RedirectRule[];
 }
 
 /**
