@@ -1,19 +1,19 @@
 import { join } from 'node:path';
 import type { NitroModule } from 'nitro/types';
 import { SERVICE_WORKER_FILE_NAME } from '../constants.ts';
-import type { AssetManifest } from '../types.d.ts';
+import type { OfflineManifest } from '../types.d.ts';
 import { injectManifest } from './inject.ts';
 import { generateAssets } from './assets.ts';
 
 /**
- * Nitro module that builds an asset manifest with SRI hashes and injects
+ * Nitro module that builds an offline manifest with SRI hashes and injects
  * it into the built service worker. `getRedirects` is read once the build
  * is done.
  */
-export const assetManifest = (
+export const offlineManifest = (
   getRedirects: () => readonly string[],
 ): NitroModule => ({
-  name: 'asset-manifest',
+  name: 'offline-manifest',
   setup(nitro) {
     // Prerendering spins up a second nitro instance from the same config,
     // so this runs twice. Only the outer build writes the output.
@@ -34,7 +34,7 @@ export const assetManifest = (
       if (nitro.options.dev) return;
 
       const { publicDir } = nitro.options.output;
-      const manifest: AssetManifest = {
+      const manifest: OfflineManifest = {
         assets: await generateAssets(publicDir, exclude),
         redirects: [...getRedirects()],
       };

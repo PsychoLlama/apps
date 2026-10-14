@@ -1,11 +1,11 @@
-import type { AssetManifest } from '@dev/vite-plugin-service-worker/types';
+import type { OfflineManifest } from '@dev/vite-plugin-service-worker/types';
 
 /**
  * Finds the manifest path for a URL path the way Cloudflare does by default
  * (`auto-trailing-slash`): `/about` serves `/about.html`, and `/docs/`
  * serves `/docs/index.html`. Returns `undefined` when nothing matches.
  */
-export const resolveAsset = (manifest: AssetManifest, pathname: string) => {
+export const resolveAsset = (manifest: OfflineManifest, pathname: string) => {
   const path = decodePath(pathname);
   if (path === undefined) return undefined;
 

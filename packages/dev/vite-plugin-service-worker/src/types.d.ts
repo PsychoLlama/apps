@@ -6,7 +6,7 @@
  * SRI token (`sha256-…`) for `new Request(url, { integrity })`. Always
  * includes the 404 page, so the worker can serve it for unknown paths.
  */
-export interface AssetManifest {
+export interface OfflineManifest {
   assets: Record<string, string> & { '/404.html': string };
 
   /** The app's Cloudflare `_redirects` lines, verbatim and in match order. */
@@ -19,9 +19,9 @@ declare global {
     readonly SERVICE_WORKER_PATH: string;
 
     /**
-     * The asset manifest, injected into the service worker at build time.
+     * The offline manifest, injected into the service worker at build time.
      * `undefined` in dev.
      */
-    readonly ASSET_MANIFEST: AssetManifest | undefined;
+    readonly OFFLINE_MANIFEST: OfflineManifest | undefined;
   }
 }

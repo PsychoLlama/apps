@@ -1,4 +1,4 @@
-import type { AssetManifest } from '@dev/vite-plugin-service-worker/types';
+import type { OfflineManifest } from '@dev/vite-plugin-service-worker/types';
 import { createLogger } from '@lib/observability';
 import { CACHE_NAME, cacheKey } from './cache';
 import { getManifest } from './manifest';
@@ -19,7 +19,9 @@ const NOT_FOUND_PAGE = '/404.html';
  * Without a manifest (dev), there's nothing cached, so every request goes to
  * the network.
  */
-export const serve = (manifest: AssetManifest | undefined = getManifest()) => {
+export const serve = (
+  manifest: OfflineManifest | undefined = getManifest(),
+) => {
   if (manifest === undefined) return serveFromNetwork;
 
   return serveFromCache(manifest);
@@ -31,7 +33,7 @@ const serveFromNetwork = (request: Request) => fetch(request);
  * Answers from the cache alone. The install downloaded every asset, so
  * anything the manifest doesn't list is a real 404, offline or not.
  */
-const serveFromCache = (manifest: AssetManifest) => {
+const serveFromCache = (manifest: OfflineManifest) => {
   return async (request: Request) => {
     const path = resolveAsset(manifest, new URL(request.url).pathname);
 

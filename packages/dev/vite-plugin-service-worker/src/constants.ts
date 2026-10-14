@@ -15,9 +15,9 @@ export const SERVICE_WORKER_FILE_NAME = 'service-worker.js';
 export const SERVICE_WORKER_FILE_PATH = `/${SERVICE_WORKER_FILE_NAME}`;
 
 /**
- * What `import.meta.env.ASSET_MANIFEST` compiles to in a build, until the
+ * What `import.meta.env.OFFLINE_MANIFEST` compiles to in a build, until the
  * Nitro module swaps in the manifest. It must appear exactly once in the
  * built worker. If the swap never happens, it still evaluates to
  * `undefined`.
  */
-export const ASSET_MANIFEST_SENTINEL = 'globalThis.__ASSET_MANIFEST__';
+export const OFFLINE_MANIFEST_SENTINEL = 'globalThis.__OFFLINE_MANIFEST__';
