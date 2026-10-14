@@ -1,12 +1,12 @@
-import type { VarNames } from './infer.ts';
+import type { VarIdents } from './infer.ts';
 
 /** A parsed Cloudflare URL pattern. Create one with {@link parse}. */
-export interface Pattern<Name extends string = string> {
+export interface Pattern<Ident extends string = string> {
   /** The pattern as written. */
   readonly source: string;
 
   /** Vars a successful match always binds. A splat is `splat`. */
-  readonly vars: ReadonlySet<Name>;
+  readonly vars: ReadonlySet<Ident>;
 }
 
 /**
@@ -15,6 +15,6 @@ export interface Pattern<Name extends string = string> {
  */
 export const parse = <const Source extends string>(
   source: Source,
-): Pattern<VarNames<Source>> => {
+): Pattern<VarIdents<Source>> => {
   throw new Error(`Not implemented: ${source}`);
 };

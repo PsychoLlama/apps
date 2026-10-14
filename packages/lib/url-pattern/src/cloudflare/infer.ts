@@ -1,22 +1,22 @@
 /**
- * Var names in a literal pattern, or `string` when the pattern isn't
- * known statically. Only extracts names: patterns `parse` rejects aren't
+ * Var identifiers in a literal pattern, or `string` when the pattern isn't
+ * known statically. Only extracts identifiers: patterns `parse` rejects aren't
  * caught here.
  */
-export type VarNames<Source extends string> = string extends Source
+export type VarIdents<Source extends string> = string extends Source
   ? string
-  : | PlaceholderNames<Source>
+  : | PlaceholderIdents<Source>
     | (Source extends `${string}*${string}` ? 'splat' : never);
 
 // A placeholder is `:`, a letter, then word characters. Any other `:` is
 // a literal.
-type PlaceholderNames<Source extends string> =
+type PlaceholderIdents<Source extends string> =
   Source extends `${string}:${infer Rest}`
     ? Rest extends `${Letter}${string}`
-      ? TakeWord<Rest> extends [infer Name, infer Tail extends string]
-        ? Name | PlaceholderNames<Tail>
+      ? TakeWord<Rest> extends [infer Ident, infer Tail extends string]
+        ? Ident | PlaceholderIdents<Tail>
         : never
-      : PlaceholderNames<Rest>
+      : PlaceholderIdents<Rest>
     : never;
 
 // Splits leading word characters off a string: `[word, rest]`.
