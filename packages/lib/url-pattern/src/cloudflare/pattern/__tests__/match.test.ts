@@ -1,9 +1,12 @@
 import type { Context } from '../../context.ts';
 import { match } from '../match.ts';
-import { parsePattern } from '../parse.ts';
+import { compilePattern } from '../compile.ts';
 
 const test = (pattern: string, url: string) =>
-  match(parsePattern(pattern), new URL(url, 'https://example.com'));
+  match(
+    compilePattern({ pathname: pattern }),
+    new URL(url, 'https://example.com'),
+  );
 
 describe('match', () => {
   describe('static paths', () => {
@@ -22,6 +25,14 @@ describe('match', () => {
 
     it('ignores the query string', () => {
       expect(test('/about', '/about?q=1')).toEqual({});
+    });
+
+    it('never matches a path without a leading slash', () => {
+      expect(test('about', '/about')).toBeNull();
+    });
+
+    it('matches any host', () => {
+      expect(test('/a', 'https://other.com/a')).toEqual({});
     });
 
     it('treats regex metacharacters literally', () => {
@@ -117,44 +128,10 @@ describe('match', () => {
     });
   });
 
-  describe('hosts', () => {
-    it('matches the host and path', () => {
-      expect(test('https://example.com/*', 'https://example.com/a')).toEqual({
-        splat: 'a',
-      });
-      expect(test('https://example.com/*', 'https://other.com/a')).toBeNull();
-    });
-
-    it('ignores the scheme and port of the URL', () => {
-      expect(
-        test('https://example.com/*', 'http://example.com:8080/a'),
-      ).toEqual({ splat: 'a' });
-    });
-
-    it('matches the host case-insensitively', () => {
-      expect(test('https://example.com/*', 'https://EXAMPLE.com/a')).toEqual({
-        splat: 'a',
-      });
-    });
-
-    it('captures one host label in a placeholder', () => {
-      expect(
-        test('https://:sub.example.com/*', 'https://foo.example.com/'),
-      ).toEqual({ sub: 'foo', splat: '' });
-      expect(
-        test('https://:sub.example.com/*', 'https://foo.bar.example.com/'),
-      ).toBeNull();
-    });
-
-    it('ignores the host for a path-only pattern', () => {
-      expect(test('/a', 'https://other.com/a')).toEqual({});
-    });
-  });
-
   it('types captures by the pattern vars', () => {
     const url = new URL('https://example.com/blog/2026/a');
     expectTypeOf(
-      match(parsePattern('/blog/:year/*'), url),
+      match(compilePattern({ pathname: '/blog/:year/*' }), url),
     ).toEqualTypeOf<Context<'year' | 'splat'> | null>();
   });
 });

@@ -1,10 +1,7 @@
-import type { Pattern } from '../pattern/parse.ts';
+import type { Pattern, PatternInit } from '../pattern/compile.ts';
 import type { TemplateIdents } from './infer.ts';
 
-/**
- * A parsed template: a redirect destination or header value. Create one
- * with {@link parseTemplate}.
- */
+/** A parsed template: a redirect destination or header value. */
 export interface Template<Ident extends string = string> {
   /** The template as written. */
   readonly source: string;
@@ -28,9 +25,9 @@ export const parseTemplate = <
   Ident extends string = string,
 >(
   source: Source,
-  scope?: Pattern<Ident> & InScope<Source, Ident>,
+  scope?: Pattern<PatternInit, Ident> & InScope<Source, Ident>,
 ): Template<TemplateIdents<Source> & Ident> => {
-  throw new Error(`Not implemented: ${source} ${scope?.source}`);
+  throw new Error(`Not implemented: ${source} ${scope?.[0].pathname}`);
 };
 
 // Fails to typecheck when a literal template references vars a literal

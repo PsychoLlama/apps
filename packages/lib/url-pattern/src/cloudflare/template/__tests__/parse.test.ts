@@ -1,4 +1,4 @@
-import { parsePattern } from '../../pattern/parse.ts';
+import { compilePattern } from '../../pattern/compile.ts';
 import { parseTemplate, type Template } from '../parse.ts';
 
 describe('parseTemplate', () => {
@@ -42,7 +42,7 @@ describe('parseTemplate', () => {
 
   describe('in a scope', () => {
     const test = (template: string, pattern: string) => () =>
-      parseTemplate(template, parsePattern(pattern));
+      parseTemplate(template, compilePattern({ pathname: pattern }));
 
     it('accepts references to bound vars', () => {
       expect(test('/archive/:year/:splat', '/blog/:year/*')).not.toThrow();
@@ -65,16 +65,16 @@ describe('parseTemplate', () => {
     // order, so `:id` also rewrites the front of `:identity`. That's never
     // what the author meant, so the template is rejected instead.
     it('rejects a reference that starts with a shorter var', () => {
-      expect(test('/:identity', '/:id/:identity')).toThrow();
+      expect(test('/:identity', '/:identity/:id')).toThrow();
     });
 
     it('allows a reference that is a prefix of a longer var', () => {
-      expect(test('/:id', '/:id/:identity')).not.toThrow();
+      expect(test('/:id', '/:identity/:id')).not.toThrow();
     });
 
     describe('types', () => {
       it('rejects references the pattern does not bind', () => {
-        const pattern = parsePattern('/:id');
+        const pattern = compilePattern({ pathname: '/:id' });
         const illegal = () => {
           // @ts-expect-error — the pattern doesn't bind `missing`
           parseTemplate('/:missing', pattern);
@@ -83,14 +83,14 @@ describe('parseTemplate', () => {
       });
 
       it('infers the referenced vars', () => {
-        const pattern = parsePattern('/:a/:b');
+        const pattern = compilePattern({ pathname: '/:a/:b' });
         const legal = () => parseTemplate('/:b', pattern);
         expectTypeOf(legal).returns.toEqualTypeOf<Template<'b'>>();
       });
 
       it('narrows a template not known statically to the pattern vars', () => {
         const source: string = '/:a';
-        const pattern = parsePattern('/:a/:b');
+        const pattern = compilePattern({ pathname: '/:a/:b' });
         const legal = () => parseTemplate(source, pattern);
         expectTypeOf(legal).returns.toEqualTypeOf<Template<'a' | 'b'>>();
       });
