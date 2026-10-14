@@ -16,9 +16,7 @@ export interface Template<Ident extends string = string> {
  * is literal.
  *
  * Pass the rule's pattern as `scope` to resolve references against the
- * vars it binds. Throws if a reference is unbound, or starts with a
- * shorter var's identifier, like `:identity` alongside `:id`, which
- * Cloudflare fills ambiguously.
+ * vars it binds. Throws if a reference is unbound.
  */
 export const parseTemplate = <
   const Source extends string,

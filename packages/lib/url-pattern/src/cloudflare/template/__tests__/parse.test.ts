@@ -61,15 +61,15 @@ describe('parseTemplate', () => {
       expect(test('/:splat', '/about')).toThrow();
     });
 
-    // Cloudflare fills each var with a plain string replace, in capture
-    // order, so `:id` also rewrites the front of `:identity`. That's never
-    // what the author meant, so the template is rejected instead.
-    it('rejects a reference that starts with a shorter var', () => {
-      expect(test('/:identity', '/:identity/:id')).toThrow();
+    // Cloudflare would fill `:id` here and leave `<id>x`.
+    it('rejects a reference that only starts with a bound var', () => {
+      expect(test('/:idx', '/:id')).toThrow();
     });
 
-    it('allows a reference that is a prefix of a longer var', () => {
-      expect(test('/:id', '/:identity/:id')).not.toThrow();
+    // Patterns always bind the longer var first, so Cloudflare fills
+    // `:identity` before `:id` can rewrite its front.
+    it('accepts references to vars that prefix each other', () => {
+      expect(test('/:identity/:id', '/:identity/:id')).not.toThrow();
     });
 
     describe('types', () => {
