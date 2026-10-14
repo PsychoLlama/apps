@@ -1,5 +1,7 @@
 import type { HeadersRule } from './headers.ts';
 
+const ONE_YEAR = 60 * 60 * 24 * 365; // seconds
+
 /** Rules every build gets, ahead of the configured ones. */
 export const DEFAULT_RULES: readonly HeadersRule[] = [
   // Cache policy: files under `/_build/` are immutable and cached
@@ -10,6 +12,8 @@ export const DEFAULT_RULES: readonly HeadersRule[] = [
   // if anything under `/_build/` emits without a content hash.
   {
     pattern: '/_build/*',
-    headers: { 'Cache-Control': 'public, immutable, max-age=31536000' },
+    headers: {
+      'Cache-Control': `public, immutable, max-age=${ONE_YEAR}`,
+    },
   },
 ];
