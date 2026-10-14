@@ -892,6 +892,8 @@ importers:
         specifier: ^1.0.9
         version: 1.0.9
 
+  packages/dev/vite-plugin-redirects: {}
+
   packages/dev/vite-plugin-service-worker:
     dependencies:
       '@lib/assert':
