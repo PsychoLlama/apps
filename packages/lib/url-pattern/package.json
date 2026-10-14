@@ -1,0 +1,19 @@
+{
+  "name": "@lib/url-pattern",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Work with URL patterns across different formats",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    "./cloudflare": "./src/cloudflare/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
+  }
+}

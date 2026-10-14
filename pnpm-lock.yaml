@@ -1299,6 +1299,12 @@ importers:
         specifier: 1.9.17
         version: 1.9.17
 
+  packages/lib/url-pattern:
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
+
   packages/lib/vault:
     dependencies:
       '@lib/assert':
