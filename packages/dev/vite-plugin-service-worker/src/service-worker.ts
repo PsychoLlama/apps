@@ -2,6 +2,10 @@ import { relative, resolve } from 'node:path';
 import type { NitroModule } from 'nitro/types';
 import { normalizePath, type Plugin } from 'vite';
 import {
+  getRedirectsApi,
+  type RedirectsApi,
+} from '@dev/vite-plugin-redirects/api';
+import {
   ASSET_MANIFEST_SENTINEL,
   SERVICE_WORKER_FILE_NAME,
   SERVICE_WORKER_FILE_PATH,
@@ -26,13 +30,14 @@ export const serviceWorker = (
 ): Plugin & { nitro: NitroModule } => {
   let entry: string;
   let devUrl: string;
+  let redirects: RedirectsApi | undefined;
 
   return {
     name: '@dev/vite-plugin-service-worker',
 
     // Nitro installs modules from every Vite plugin that carries one. The
     // manifest needs the final public dir, which only Nitro knows.
-    nitro: assetManifest(),
+    nitro: assetManifest(() => redirects?.getRules() ?? []),
 
     // The worker ships with the browser bundle. Server environments never
     // see it.
@@ -54,9 +59,10 @@ export const serviceWorker = (
       },
     }),
 
-    configResolved({ root }) {
+    configResolved({ root, plugins }) {
       entry = resolve(root, config.path);
       devUrl = `/${normalizePath(relative(root, entry))}`;
+      redirects = getRedirectsApi(plugins);
     },
 
     // Dev has no bundle, so point the stable URL at the source module and

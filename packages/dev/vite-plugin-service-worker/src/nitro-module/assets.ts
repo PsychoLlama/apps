@@ -8,10 +8,10 @@ import type { AssetManifest } from '../types.d.ts';
  * Hashes every file under `publicDir`, skipping glob patterns in `exclude`
  * (relative to `publicDir`).
  */
-export const generateManifest = async (
+export const generateAssets = async (
   publicDir: string,
   exclude: Array<string>,
-): Promise<AssetManifest> => {
+): Promise<AssetManifest['assets']> => {
   // Nitro may hand over the dir with a trailing slash. Without one, every
   // file is a plain prefix away from its `/`-led key.
   const root = resolve(publicDir);
@@ -26,7 +26,7 @@ export const generateManifest = async (
     `The build has no ${NOT_FOUND_PAGE}. The service worker serves it for unknown paths.`,
   );
 
-  return { assets };
+  return assets;
 };
 
 /** Served for unknown paths, by Cloudflare and the service worker alike. */

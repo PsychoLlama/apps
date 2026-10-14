@@ -8,6 +8,9 @@
  */
 export interface AssetManifest {
   assets: Record<string, string> & { '/404.html': string };
+
+  /** The app's Cloudflare `_redirects` lines, verbatim and in match order. */
+  redirects: string[];
 }
 
 declare global {

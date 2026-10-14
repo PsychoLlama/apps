@@ -1,14 +1,18 @@
 import { join } from 'node:path';
 import type { NitroModule } from 'nitro/types';
 import { SERVICE_WORKER_FILE_NAME } from '../constants.ts';
+import type { AssetManifest } from '../types.d.ts';
 import { injectManifest } from './inject.ts';
-import { generateManifest } from './manifest.ts';
+import { generateAssets } from './assets.ts';
 
 /**
  * Nitro module that builds an asset manifest with SRI hashes and injects
- * it into the built service worker.
+ * it into the built service worker. `getRedirects` is read once the build
+ * is done.
  */
-export const assetManifest = (): NitroModule => ({
+export const assetManifest = (
+  getRedirects: () => readonly string[],
+): NitroModule => ({
   name: 'asset-manifest',
   setup(nitro) {
     // Prerendering spins up a second nitro instance from the same config,
@@ -30,7 +34,10 @@ export const assetManifest = (): NitroModule => ({
       if (nitro.options.dev) return;
 
       const { publicDir } = nitro.options.output;
-      const manifest = await generateManifest(publicDir, exclude);
+      const manifest: AssetManifest = {
+        assets: await generateAssets(publicDir, exclude),
+        redirects: [...getRedirects()],
+      };
 
       await injectManifest(join(publicDir, SERVICE_WORKER_FILE_NAME), manifest);
     });

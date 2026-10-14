@@ -906,6 +906,9 @@ importers:
 
   packages/dev/vite-plugin-service-worker:
     dependencies:
+      '@dev/vite-plugin-redirects':
+        specifier: workspace:*
+        version: link:../vite-plugin-redirects
       '@lib/assert':
         specifier: workspace:*
         version: link:../../lib/assert

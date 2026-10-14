@@ -5,6 +5,7 @@ const manifest = {
     '/index.html': 'sha256-index',
     '/404.html': 'sha256-404',
   },
+  redirects: [],
 };
 
 describe('serveAssetManifest', () => {
