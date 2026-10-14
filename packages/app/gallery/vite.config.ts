@@ -13,12 +13,15 @@ export default defineConfig({
     substrate({
       type: 'app',
       headers: {
-        rules: {
+        rules: [
           // Cache policy: docs/asset-caching.md
-          '/_build/*': {
-            'Cache-Control': 'public, max-age=31536000, immutable',
+          {
+            pattern: '/_build/*',
+            headers: {
+              'Cache-Control': 'public, max-age=31536000, immutable',
+            },
           },
-        },
+        ],
       },
     }),
   ],

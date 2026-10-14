@@ -1,1 +1,1 @@
-export { headers, type HeadersConfig } from './headers.ts';
+export { headers, type HeadersConfig, type HeadersRule } from './headers.ts';

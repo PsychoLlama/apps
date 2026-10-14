@@ -89,12 +89,15 @@ export default defineConfig({
         ],
       },
       headers: {
-        rules: {
+        rules: [
           // Cache policy: docs/asset-caching.md
-          '/_build/*': {
-            'Cache-Control': 'public, max-age=31536000, immutable',
+          {
+            pattern: '/_build/*',
+            headers: {
+              'Cache-Control': 'public, max-age=31536000, immutable',
+            },
           },
-        },
+        ],
       },
     }),
   ],

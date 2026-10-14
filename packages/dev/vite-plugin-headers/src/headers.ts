@@ -1,12 +1,22 @@
 import type { Plugin } from 'vite';
+import { formatHeaders } from './format.ts';
+
+/** Response headers for every path matching a pattern. */
+export interface HeadersRule {
+  /** A path pattern in `_headers` syntax: `:name` placeholders and `*` splats. */
+  pattern: string;
+
+  /** Header names to values. */
+  headers: Record<string, string>;
+}
 
 /** Options for {@link headers}. */
 export interface HeadersConfig {
   /**
-   * Response headers to attach, keyed by the path pattern they apply to.
-   * Patterns use `_headers` syntax: `:name` placeholders and `*` splats.
+   * Rules sharing a pattern merge into one block, placed where the
+   * pattern first appears. Cloudflare applies headers in file order.
    */
-  rules: Record<string, Record<string, string>>;
+  rules: HeadersRule[];
 }
 
 /**
@@ -21,17 +31,10 @@ export const headers = (config: HeadersConfig): Plugin => ({
   applyToEnvironment: (environment) => environment.config.consumer === 'client',
 
   generateBundle() {
-    const blocks = Object.entries(config.rules).map(([path, fields]) =>
-      [
-        path,
-        ...Object.entries(fields).map(([name, value]) => `  ${name}: ${value}`),
-      ].join('\n'),
-    );
-
     this.emitFile({
       type: 'asset',
       fileName: '_headers',
-      source: `${blocks.join('\n\n')}\n`,
+      source: formatHeaders(config.rules),
     });
   },
 });
