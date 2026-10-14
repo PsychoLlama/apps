@@ -43,6 +43,14 @@ export default defineConfig({
           background_color: manifestThemeColor,
         },
       },
+      headers: {
+        rules: {
+          // Cache policy: docs/asset-caching.md
+          '/_build/*': {
+            'Cache-Control': 'public, max-age=31536000, immutable',
+          },
+        },
+      },
     }),
     iconPacks(),
   ],

@@ -1,6 +1,6 @@
 # Asset Caching
 
-How deployed apps cache their static assets on Cloudflare. Each app's `public/_headers` applies this policy.
+How deployed apps cache their static assets on Cloudflare. Each app applies this policy through substrate's `headers` option.
 
 ## Policy
 

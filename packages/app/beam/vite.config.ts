@@ -68,6 +68,14 @@ export default defineConfig({
           '/share/:id  /__share  200',
         ],
       },
+      headers: {
+        rules: {
+          // Cache policy: docs/asset-caching.md
+          '/_build/*': {
+            'Cache-Control': 'public, max-age=31536000, immutable',
+          },
+        },
+      },
     }),
   ],
 });

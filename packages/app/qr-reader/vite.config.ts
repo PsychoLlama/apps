@@ -45,6 +45,14 @@ export default defineConfig({
       serviceWorker: {
         path: 'src/service-worker/index.ts',
       },
+      headers: {
+        rules: {
+          // Cache policy: docs/asset-caching.md
+          '/_build/*': {
+            'Cache-Control': 'public, max-age=31536000, immutable',
+          },
+        },
+      },
     }),
   ],
 });

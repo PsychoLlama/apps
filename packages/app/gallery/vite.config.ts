@@ -12,6 +12,14 @@ export default defineConfig({
   plugins: [
     substrate({
       type: 'app',
+      headers: {
+        rules: {
+          // Cache policy: docs/asset-caching.md
+          '/_build/*': {
+            'Cache-Control': 'public, max-age=31536000, immutable',
+          },
+        },
+      },
     }),
   ],
 });
