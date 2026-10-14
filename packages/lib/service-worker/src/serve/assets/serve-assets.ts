@@ -1,9 +1,10 @@
 import type { OfflineManifest } from '@dev/vite-plugin-service-worker/types';
 import { createLogger } from '@lib/observability';
+import { IttyRouter } from 'itty-router/IttyRouter';
 import { CACHE_NAME, cacheKey } from '../../assets/cache';
 import { getManifest } from '../../assets/manifest';
 import { resolveAsset } from './resolve-asset';
-import { resolveRedirect } from './resolve-redirect';
+import { withRedirects, type AssetRequest } from './with-redirects';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -25,7 +26,10 @@ export const serveAssets = (
 ) => {
   if (manifest === undefined) return serveFromNetwork;
 
-  return serveFromCache(manifest);
+  const router = IttyRouter<AssetRequest, [], Response>();
+  router.all('*', withRedirects(manifest), serveFromCache(manifest));
+
+  return router.fetch;
 };
 
 const serveFromNetwork = (request: Request) => fetch(request);
@@ -33,21 +37,10 @@ const serveFromNetwork = (request: Request) => fetch(request);
 /**
  * Answers from the cache alone. The install downloaded every asset, so
  * anything the manifest doesn't list is a real 404, offline or not.
- *
- * `_redirects` rules apply first, like on Cloudflare, so a redirect wins
- * even over an asset at the same path.
  */
 const serveFromCache = (manifest: OfflineManifest) => {
-  return async (request: Request) => {
-    const url = new URL(request.url);
-    const redirect = resolveRedirect(manifest.redirects, url);
-
-    if (redirect?.type === 'redirect') {
-      return Response.redirect(redirect.location, redirect.status);
-    }
-
-    const pathname = redirect?.pathname ?? url.pathname;
-    const path = resolveAsset(manifest, pathname);
+  return async (request: AssetRequest) => {
+    const path = resolveAsset(manifest, request.asset.path);
 
     if (path === undefined) {
       const page = await readAsset(

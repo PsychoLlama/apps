@@ -1182,6 +1182,9 @@ importers:
       '@lib/url-pattern':
         specifier: workspace:*
         version: link:../url-pattern
+      itty-router:
+        specifier: 'catalog:'
+        version: 5.0.24
     devDependencies:
       '@dev/vite-plugin-service-worker':
         specifier: workspace:*
