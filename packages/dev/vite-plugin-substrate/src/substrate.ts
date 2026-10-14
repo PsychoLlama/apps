@@ -3,9 +3,11 @@ import Icons from 'unplugin-icons/vite';
 import type { PluginOption } from 'vite';
 import { assertHashedAssets } from '@dev/vite-plugin-assert-hashed-assets';
 import { gitignore } from '@dev/vite-plugin-gitignore';
+import { headers, type HeadersConfig } from '@dev/vite-plugin-headers';
 import { inlineScript } from '@dev/vite-plugin-inline-script';
 import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
 import { pwaManifest, type PwaManifestConfig } from '@dev/vite-plugin-pwa';
+import { redirects, type RedirectsConfig } from '@dev/vite-plugin-redirects';
 import {
   serviceWorker,
   type ServiceWorkerConfig,
@@ -56,6 +58,15 @@ export interface AppOptions extends CommonOptions, NitroModuleOptions {
 
   /** Serve and build a service worker at `/service-worker.js`. */
   serviceWorker?: ServiceWorkerConfig;
+
+  /** Generate Cloudflare's `_redirects`. Builds only. */
+  redirects?: RedirectsConfig;
+
+  /**
+   * More rules for Cloudflare's `_headers`, after the headers plugin's
+   * defaults (immutable `/_build/*`). Builds only.
+   */
+  headers?: HeadersConfig;
 }
 
 export type SubstrateOptions = PackageOptions | AppOptions;
@@ -65,7 +76,8 @@ export type SubstrateOptions = PackageOptions | AppOptions;
  * watching, instrumentation scopes, Solid, vanilla-extract, icon
  * components, `?to-png=<size>` SVG imports and `?inline-script` head
  * scripts. Apps swap Solid for SolidStart, add Nitro, and can opt into a
- * PWA manifest and service worker.
+ * PWA manifest, service worker and redirects. Apps always get `_headers`
+ * with the house cache policy.
  * Package-specific plugins go alongside it.
  */
 export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
@@ -82,6 +94,8 @@ export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
     inlineScript({ maxBytes: 2048 }),
     app?.pwa && pwaManifest(app.pwa),
     app?.serviceWorker && serviceWorker(app.serviceWorker),
+    app?.redirects && redirects(app.redirects),
+    app && headers(app.headers),
     vanillaExtractPlugin(),
     Icons({ compiler: 'solid' }),
     assertHashedAssets(),

@@ -1,0 +1,17 @@
+{
+  "name": "@dev/vite-plugin-redirects",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Vite plugin that generates Cloudflare's `_redirects` file from config.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  }
+}
