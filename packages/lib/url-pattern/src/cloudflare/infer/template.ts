@@ -1,4 +1,4 @@
-import type { PlaceholderIdents } from '../ident.ts';
+import type { PlaceholderIdents } from './ident.ts';
 
 /**
  * Vars a literal template references, or `string` when the template isn't

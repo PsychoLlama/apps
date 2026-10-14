@@ -1,4 +1,4 @@
-import type { PlaceholderIdents } from '../ident.ts';
+import type { PlaceholderIdents } from './ident.ts';
 
 /**
  * Vars a literal pattern binds, or `string` when the pattern isn't known

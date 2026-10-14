@@ -1,4 +1,4 @@
-// Keep in sync with `PlaceholderIdents` in `ident.ts`.
+// Keep in sync with `PlaceholderIdents` in `infer/ident.ts`.
 const IDENT = /:[A-Za-z]\w*/g;
 const IDENT_OR_SPLAT = /:[A-Za-z]\w*|\*/g;
 

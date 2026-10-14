@@ -1,5 +1,5 @@
 import type { Pattern, PatternInit } from '../pattern/compile.ts';
-import type { TemplateIdents } from './infer.ts';
+import type { TemplateIdents } from '../infer/template.ts';
 
 /** A parsed template: a redirect destination or header value. */
 export interface Template<Ident extends string = string> {
