@@ -1143,9 +1143,6 @@ importers:
 
   packages/lib/service-worker:
     dependencies:
-      '@dev/vite-plugin-service-worker':
-        specifier: workspace:*
-        version: link:../../dev/vite-plugin-service-worker
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
@@ -1156,6 +1153,9 @@ importers:
         specifier: workspace:*
         version: link:../observability
     devDependencies:
+      '@dev/vite-plugin-service-worker':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-service-worker
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config

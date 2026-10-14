@@ -8,5 +8,8 @@
  */
 export const SERVICE_WORKER_FILE_NAME = 'service-worker.js';
 
-/** The service worker's URL path. Register it with this. */
+/**
+ * The service worker's URL path. Pages read it as
+ * `import.meta.env.SERVICE_WORKER_PATH`.
+ */
 export const SERVICE_WORKER_FILE_PATH = `/${SERVICE_WORKER_FILE_NAME}`;

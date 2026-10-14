@@ -17,10 +17,10 @@
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "devDependencies": {
+    "@dev/vite-plugin-service-worker": "workspace:*",
     "@dev/vitest-config": "workspace:*"
   },
   "dependencies": {
-    "@dev/vite-plugin-service-worker": "workspace:*",
     "@lib/assert": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*"

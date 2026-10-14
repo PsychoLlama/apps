@@ -38,6 +38,16 @@ export const serviceWorker = (
     applyToEnvironment: (environment) =>
       environment.config.consumer === 'client',
 
+    // A build-time constant, so pages can register the worker without a
+    // runtime import of this plugin.
+    config: () => ({
+      define: {
+        'import.meta.env.SERVICE_WORKER_PATH': JSON.stringify(
+          SERVICE_WORKER_FILE_PATH,
+        ),
+      },
+    }),
+
     configResolved({ root }) {
       entry = resolve(root, config.path);
       devUrl = `/${normalizePath(relative(root, entry))}`;

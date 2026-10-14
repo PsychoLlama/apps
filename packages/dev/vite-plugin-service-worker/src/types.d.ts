@@ -11,6 +11,11 @@ export interface AssetManifest {
 }
 
 declare global {
+  interface ImportMetaEnv {
+    /** The service worker's URL path. Register it with this. */
+    readonly SERVICE_WORKER_PATH: string;
+  }
+
   /**
    * The asset manifest, injected into the service worker at build time.
    * `undefined` in dev.
