@@ -1,5 +1,5 @@
 import type { Context } from '../context.ts';
-import type { Template } from './parse.ts';
+import type { Template } from './compile.ts';
 
 /**
  * Fills a template's references from a context, in one pass. Throws if
@@ -10,6 +10,6 @@ export const format = <Ident extends string>(
   context: Context<NoInfer<Ident>>,
 ): string => {
   throw new Error(
-    `Not implemented: ${template.source} ${JSON.stringify(context)}`,
+    `Not implemented: ${template.length} ${JSON.stringify(context)}`,
   );
 };

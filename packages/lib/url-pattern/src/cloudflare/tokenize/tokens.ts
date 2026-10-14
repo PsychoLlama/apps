@@ -5,9 +5,9 @@ export interface LiteralToken {
 }
 
 /** A `:name` placeholder. */
-export interface IdentToken {
+export interface IdentToken<Name extends string = string> {
   type: 'ident';
-  name: string;
+  name: Name;
 }
 
 /** A `*`, bound as `splat`. */

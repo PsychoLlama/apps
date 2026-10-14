@@ -1,9 +1,9 @@
 import type { Context } from '../../context.ts';
 import { format } from '../format.ts';
-import { parseTemplate } from '../parse.ts';
+import { compileTemplate } from '../compile.ts';
 
 const test = (template: string, context: Context) =>
-  format(parseTemplate(template), context);
+  format(compileTemplate(template)[0], context);
 
 describe('format', () => {
   it('returns a template without references as-is', () => {
@@ -57,7 +57,7 @@ describe('format', () => {
 
   describe('types', () => {
     it('types the context by the template vars', () => {
-      const template = parseTemplate('/:id/:splat');
+      const [template] = compileTemplate('/:id/:splat');
       expectTypeOf(format<'id' | 'splat'>)
         .parameter(1)
         .toEqualTypeOf<Context<'id' | 'splat'>>();
@@ -72,7 +72,7 @@ describe('format', () => {
     // A `match` result usually binds more than the template references.
     it('accepts a context with extra vars', () => {
       const context: Context<'id' | 'splat'> = { id: 'x', splat: 'y' };
-      const legal = () => format(parseTemplate('/:id'), context);
+      const legal = () => format(compileTemplate('/:id')[0], context);
       void legal;
     });
   });
