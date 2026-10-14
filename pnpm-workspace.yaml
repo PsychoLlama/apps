@@ -49,6 +49,7 @@ catalog:
   esbuild: ^0.28.0
   eslint: ^10.0.0
   idb: ^8.0.3
+  itty-router: ^5.0.24
   knip: ^6.13.1
   # Pinned exact: v3 is still in beta, and betas may break between builds.
   nitro: 3.0.260903-beta

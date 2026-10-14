@@ -1,40 +1,22 @@
-/**
- * Browser service worker. Activates immediately on install/upgrade and
- * wires the `fetch` listener through `fetch-handler.ts`. Everything
- * beyond lifecycle lives there.
- *
- * `entry-client.tsx` imports this module via Vite's `?worker&url`,
- * which bundles it separately and registers the resulting URL.
- */
-
-import { purgeStaleCaches } from './caches';
-import { handleFetch } from './fetch-handler';
+import * as lifecycle from './lifecycle';
+import { routers } from './routers';
 
 declare const self: ServiceWorkerGlobalScope;
 
-self.addEventListener('install', () => {
-  // The app holds no SW-version-coupled state (no precaches keyed to
-  // a build, no in-flight IndexedDB migrations), so a new SW can
-  // displace its predecessor without waiting for old tabs to close.
-  // Revisit this once we cache anything stateful.
-  void self.skipWaiting();
+self.addEventListener('install', (event) => {
+  event.waitUntil(lifecycle.install());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    (async () => {
-      // Navigation preload only feeds the prod navigation handler; in
-      // dev we never intercept navigations (see `fetch-handler.ts`), so
-      // enabling it just orphans a preload request the browser then
-      // cancels, logging a warning on every dev navigation. The guard
-      // is dead-code-eliminated in prod.
-      if (!import.meta.env.DEV) {
-        await self.registration.navigationPreload.enable();
-      }
-      await self.clients.claim();
-      await purgeStaleCaches();
-    })(),
-  );
+  event.waitUntil(lifecycle.activate());
 });
 
-self.addEventListener('fetch', handleFetch);
+self.addEventListener('fetch', (event) => {
+  const { origin } = new URL(event.request.url);
+  const router = routers[origin];
+
+  // Not an origin we serve.
+  if (router === undefined) return;
+
+  event.respondWith(router.fetch(event.request));
+});

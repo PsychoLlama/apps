@@ -218,6 +218,9 @@ catalogs:
     idb:
       specifier: ^8.0.3
       version: 8.0.4
+    itty-router:
+      specifier: ^5.0.24
+      version: 5.0.24
     knip:
       specifier: ^6.13.1
       version: 6.41.0
@@ -627,6 +630,9 @@ importers:
       '@vanilla-extract/dynamic':
         specifier: 'catalog:'
         version: 2.1.5
+      itty-router:
+        specifier: 'catalog:'
+        version: 5.0.24
       solid-js:
         specifier: 1.9.17
         version: 1.9.17
@@ -637,9 +643,6 @@ importers:
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate
-      '@dev/vitest-config':
-        specifier: workspace:*
-        version: link:../../dev/vitest-config
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -689,7 +692,7 @@ importers:
         specifier: 'catalog:'
         version: 1.21.3
       itty-router:
-        specifier: ^5.0.24
+        specifier: 'catalog:'
         version: 5.0.24
       media-devices:
         specifier: ^0.5.0

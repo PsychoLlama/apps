@@ -42,8 +42,6 @@ const config: KnipConfig = {
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
-        // Imported as `./service-worker?worker&url`; the query suffix
-        // hides the specifier from knip's resolver.
         'src/service-worker/index.ts!',
         'src/**/*.css.ts!',
         'vite.config.ts',
@@ -59,7 +57,7 @@ const config: KnipConfig = {
         // startup; without it, the transitive import (via
         // `@vanilla-extract/css` from `@lib/ui`) is discovered
         // mid-load and triggers a re-optimize that 504s in-flight
-        // requests — most visibly killing the service worker fetch.
+        // requests.
         '@vanilla-extract/dynamic',
       ],
       // `@solidjs/start` reads app.tsx from cwd, which points at the
