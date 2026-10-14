@@ -6,5 +6,9 @@ export const match = <Ident extends string>(
   [regexes]: Matcher<MatcherInit, Ident>,
   url: URL,
 ): Context<Ident> | null => {
-  throw new Error(`Not implemented: ${regexes.pathname} ${url.href}`);
+  const result = new RegExp(regexes.pathname).exec(url.pathname);
+
+  // The regex has a named group per var, so `groups` holds exactly the
+  // matcher's vars, or `undefined` for a literal comparison.
+  return result && ({ ...result.groups } as Context<Ident>);
 };
