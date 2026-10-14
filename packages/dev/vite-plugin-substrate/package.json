@@ -17,6 +17,7 @@
     "@dev/nitro-module-page-not-found": "workspace:*",
     "@dev/vite-plugin-assert-hashed-assets": "workspace:*",
     "@dev/vite-plugin-gitignore": "workspace:*",
+    "@dev/vite-plugin-headers": "workspace:*",
     "@dev/vite-plugin-inline-script": "workspace:*",
     "@dev/vite-plugin-instrumentation-scope": "workspace:*",
     "@dev/vite-plugin-pwa": "workspace:*",

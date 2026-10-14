@@ -3,6 +3,7 @@ import Icons from 'unplugin-icons/vite';
 import type { PluginOption } from 'vite';
 import { assertHashedAssets } from '@dev/vite-plugin-assert-hashed-assets';
 import { gitignore } from '@dev/vite-plugin-gitignore';
+import { headers, type HeadersConfig } from '@dev/vite-plugin-headers';
 import { inlineScript } from '@dev/vite-plugin-inline-script';
 import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
 import { pwaManifest, type PwaManifestConfig } from '@dev/vite-plugin-pwa';
@@ -60,6 +61,9 @@ export interface AppOptions extends CommonOptions, NitroModuleOptions {
 
   /** Generate Cloudflare's `_redirects`. Builds only. */
   redirect?: RedirectConfig;
+
+  /** Generate Cloudflare's `_headers`. Builds only. */
+  headers?: HeadersConfig;
 }
 
 export type SubstrateOptions = PackageOptions | AppOptions;
@@ -69,8 +73,7 @@ export type SubstrateOptions = PackageOptions | AppOptions;
  * watching, instrumentation scopes, Solid, vanilla-extract, icon
  * components, `?to-png=<size>` SVG imports and `?inline-script` head
  * scripts. Apps swap Solid for SolidStart, add Nitro, and can opt into a
- * PWA manifest, service worker and
- * redirects.
+ * PWA manifest, service worker, redirects and headers.
  * Package-specific plugins go alongside it.
  */
 export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
@@ -88,6 +91,7 @@ export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
     app?.pwa && pwaManifest(app.pwa),
     app?.serviceWorker && serviceWorker(app.serviceWorker),
     app?.redirect && redirect(app.redirect),
+    app?.headers && headers(app.headers),
     vanillaExtractPlugin(),
     Icons({ compiler: 'solid' }),
     assertHashedAssets(),
