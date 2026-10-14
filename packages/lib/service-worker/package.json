@@ -8,6 +8,7 @@
   "sideEffects": false,
   "exports": {
     "./serve/api": "./src/serve/api/index.ts",
+    "./serve/assets": "./src/serve/assets/index.ts",
     "./assets": "./src/assets/index.ts",
     "./client": "./src/client/index.ts"
   },

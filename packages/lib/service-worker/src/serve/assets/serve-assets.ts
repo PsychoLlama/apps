@@ -1,7 +1,7 @@
 import type { OfflineManifest } from '@dev/vite-plugin-service-worker/types';
 import { createLogger } from '@lib/observability';
-import { CACHE_NAME, cacheKey } from './cache';
-import { getManifest } from './manifest';
+import { CACHE_NAME, cacheKey } from '../../assets/cache';
+import { getManifest } from '../../assets/manifest';
 import { resolveAsset } from './resolve-asset';
 import { resolveRedirect } from './resolve-redirect';
 
@@ -20,7 +20,7 @@ const NOT_FOUND_PAGE = '/404.html';
  * Without a manifest (dev), there's nothing cached, so every request goes to
  * the network.
  */
-export const serve = (
+export const serveAssets = (
   manifest: OfflineManifest | undefined = getManifest(),
 ) => {
   if (manifest === undefined) return serveFromNetwork;
