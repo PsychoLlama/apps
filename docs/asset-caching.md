@@ -1,6 +1,6 @@
 # Asset Caching
 
-How deployed apps cache their static assets on Cloudflare. Each app applies this policy through substrate's `headers` option.
+How deployed apps cache their static assets on Cloudflare. `@dev/vite-plugin-headers` applies this policy through `_headers` by default, and substrate includes it in every app.
 
 ## Policy
 

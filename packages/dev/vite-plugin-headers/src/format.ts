@@ -4,7 +4,7 @@ import type { HeadersRule } from './headers.ts';
  * Renders rules as the contents of Cloudflare's `_headers`. Rules sharing
  * a pattern merge into one block, placed where the pattern first appears.
  */
-export const formatHeaders = (rules: HeadersRule[]): string => {
+export const formatHeaders = (rules: readonly HeadersRule[]): string => {
   const groups = new Map<string, string[]>();
 
   for (const rule of rules) {

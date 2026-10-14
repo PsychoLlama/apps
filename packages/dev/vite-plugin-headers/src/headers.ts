@@ -1,4 +1,5 @@
 import type { Plugin } from 'vite';
+import { DEFAULT_RULES } from './defaults.ts';
 import { formatHeaders } from './format.ts';
 
 /** Response headers for every path matching a pattern. */
@@ -13,17 +14,18 @@ export interface HeadersRule {
 /** Options for {@link headers}. */
 export interface HeadersConfig {
   /**
-   * Rules sharing a pattern merge into one block, placed where the
-   * pattern first appears. Cloudflare applies headers in file order.
+   * Rules to add after {@link DEFAULT_RULES}. Rules sharing a pattern
+   * merge into one block, placed where the pattern first appears.
+   * Cloudflare applies headers in file order.
    */
   rules: HeadersRule[];
 }
 
 /**
- * Vite plugin that writes Cloudflare's `_headers` into the build output.
- * Dev serves none of them.
+ * Vite plugin that writes Cloudflare's `_headers` into the build output,
+ * starting with {@link DEFAULT_RULES}. Dev serves none of them.
  */
-export const headers = (config: HeadersConfig): Plugin => ({
+export const headers = (config?: HeadersConfig): Plugin => ({
   name: '@dev/vite-plugin-headers',
   apply: 'build',
 
@@ -34,7 +36,7 @@ export const headers = (config: HeadersConfig): Plugin => ({
     this.emitFile({
       type: 'asset',
       fileName: '_headers',
-      source: formatHeaders(config.rules),
+      source: formatHeaders([...DEFAULT_RULES, ...(config?.rules ?? [])]),
     });
   },
 });

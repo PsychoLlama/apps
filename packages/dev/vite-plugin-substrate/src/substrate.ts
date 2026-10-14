@@ -62,7 +62,10 @@ export interface AppOptions extends CommonOptions, NitroModuleOptions {
   /** Generate Cloudflare's `_redirects`. Builds only. */
   redirect?: RedirectConfig;
 
-  /** Generate Cloudflare's `_headers`. Builds only. */
+  /**
+   * More rules for Cloudflare's `_headers`, after the headers plugin's
+   * defaults (immutable `/_build/*`). Builds only.
+   */
   headers?: HeadersConfig;
 }
 
@@ -73,7 +76,8 @@ export type SubstrateOptions = PackageOptions | AppOptions;
  * watching, instrumentation scopes, Solid, vanilla-extract, icon
  * components, `?to-png=<size>` SVG imports and `?inline-script` head
  * scripts. Apps swap Solid for SolidStart, add Nitro, and can opt into a
- * PWA manifest, service worker, redirects and headers.
+ * PWA manifest, service worker and redirects. Apps always get `_headers`
+ * with the house cache policy.
  * Package-specific plugins go alongside it.
  */
 export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
@@ -91,7 +95,7 @@ export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
     app?.pwa && pwaManifest(app.pwa),
     app?.serviceWorker && serviceWorker(app.serviceWorker),
     app?.redirect && redirect(app.redirect),
-    app?.headers && headers(app.headers),
+    app && headers(app.headers),
     vanillaExtractPlugin(),
     Icons({ compiler: 'solid' }),
     assertHashedAssets(),
