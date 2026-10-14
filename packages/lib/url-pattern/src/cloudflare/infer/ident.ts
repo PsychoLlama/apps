@@ -1,5 +1,5 @@
 /**
- * Identifiers of the `:name` placeholders in a literal string. Patterns
+ * Identifiers of the `:name` placeholders in a literal string. Matchers
  * and templates share this syntax: `:`, a letter, then word characters.
  * Any other `:` is a literal.
  */

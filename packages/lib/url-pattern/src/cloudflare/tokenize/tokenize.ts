@@ -19,7 +19,7 @@ const IDENT_OR_SPLAT = /:[A-Za-z]\w*|\*/g;
 export const tokenize = (source: string): Array<LiteralToken | IdentToken> =>
   scan(source, IDENT, toIdent);
 
-/** Like `tokenize`, but each `*` is a splat. For match patterns. */
+/** Like `tokenize`, but each `*` is a splat. For matchers. */
 export const tokenizeWithSplats = (source: string): Token[] =>
   scan(source, IDENT_OR_SPLAT, (text) =>
     text === '*' ? splat() : toIdent(text),

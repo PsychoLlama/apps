@@ -1,8 +1,8 @@
-import { compilePattern, PatternError } from '../compile.ts';
+import { compileMatcher, MatcherError } from '../compile.ts';
 
-const compile = (pathname: string) => compilePattern({ pathname });
+const compile = (pathname: string) => compileMatcher({ pathname });
 
-describe('compilePattern', () => {
+describe('compileMatcher', () => {
   // Cloudflare's engine compiles anything as an anchored path, even text
   // that can never match one.
   it('accepts a pathname without a leading slash', () => {
@@ -13,23 +13,23 @@ describe('compilePattern', () => {
   // can't coexist, so `_headers` rejects the rule and `_redirects` drops
   // it at runtime.
   it('rejects more than one splat', () => {
-    expect(() => compile('/a/*/*')).toThrow(PatternError);
+    expect(() => compile('/a/*/*')).toThrow(MatcherError);
   });
 
   it('rejects a splat combined with a `:splat` placeholder', () => {
-    expect(() => compile('/a/*/:splat')).toThrow(PatternError);
-    expect(() => compile('/:splat/*')).toThrow(PatternError);
+    expect(() => compile('/a/*/:splat')).toThrow(MatcherError);
+    expect(() => compile('/:splat/*')).toThrow(MatcherError);
   });
 
   it('rejects a repeated placeholder', () => {
-    expect(() => compile('/:id/:id')).toThrow(PatternError);
+    expect(() => compile('/:id/:id')).toThrow(MatcherError);
   });
 
   // Cloudflare replaces each placeholder in order with a plain string
   // replace, so `:id` also rewrites the front of a later `:identity` and
   // leaves two `id` groups. The other order compiles fine.
   it('rejects a placeholder that a shorter, earlier one prefixes', () => {
-    expect(() => compile('/:id/:identity')).toThrow(PatternError);
+    expect(() => compile('/:id/:identity')).toThrow(MatcherError);
     expect(compile('/:identity/:id')[1]).toEqual(new Set(['identity', 'id']));
   });
 
@@ -67,43 +67,43 @@ describe('compilePattern', () => {
     });
   });
 
-  it('mirrors the init in its matcher types', () => {
-    expectTypeOf(compilePattern({ pathname: '/:id' })[0]).toEqualTypeOf<{
+  it('mirrors the init in its regex types', () => {
+    expectTypeOf(compileMatcher({ pathname: '/:id' })[0]).toEqualTypeOf<{
       readonly pathname: string;
     }>();
   });
 
   describe('var types', () => {
     it('infers no vars for a static path', () => {
-      expectTypeOf(compilePattern({ pathname: '/about' })[1]).toEqualTypeOf<
+      expectTypeOf(compileMatcher({ pathname: '/about' })[1]).toEqualTypeOf<
         ReadonlySet<never>
       >();
     });
 
     it('infers placeholders and the splat', () => {
       expectTypeOf(
-        compilePattern({ pathname: '/blog/:year/*' })[1],
+        compileMatcher({ pathname: '/blog/:year/*' })[1],
       ).toEqualTypeOf<ReadonlySet<'year' | 'splat'>>();
     });
 
     it('ends a name at the first non-word character', () => {
       expectTypeOf(
-        compilePattern({ pathname: '/pre-:name.ext' })[1],
+        compileMatcher({ pathname: '/pre-:name.ext' })[1],
       ).toEqualTypeOf<ReadonlySet<'name'>>();
-      expectTypeOf(compilePattern({ pathname: '/:a_1/:B2+' })[1]).toEqualTypeOf<
+      expectTypeOf(compileMatcher({ pathname: '/:a_1/:B2+' })[1]).toEqualTypeOf<
         ReadonlySet<'a_1' | 'B2'>
       >();
     });
 
     it('ignores a colon without a leading letter', () => {
-      expectTypeOf(compilePattern({ pathname: '/:1a' })[1]).toEqualTypeOf<
+      expectTypeOf(compileMatcher({ pathname: '/:1a' })[1]).toEqualTypeOf<
         ReadonlySet<never>
       >();
     });
 
     it('falls back to `string` for a pattern not known statically', () => {
       const pathname: string = '/:id';
-      expectTypeOf(compilePattern({ pathname })[1]).toEqualTypeOf<
+      expectTypeOf(compileMatcher({ pathname })[1]).toEqualTypeOf<
         ReadonlySet<string>
       >();
     });

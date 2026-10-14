@@ -1,29 +1,29 @@
 import { tokenizeWithSplats } from '../tokenize/tokenize.ts';
 import type { Token } from '../tokenize/tokens.ts';
-import type { PatternIdents } from '../infer/pattern.ts';
+import type { MatcherIdents } from '../infer/matcher.ts';
 
-/** The parts of a URL a pattern matches. */
-export interface PatternInit {
+/** The parts of a URL a matcher matches. */
+export interface MatcherInit {
   /** Matches the URL's pathname, like `/blog/:year/*`. */
   pathname: string;
 }
 
 /**
- * A compiled match pattern: a `_redirects` source or `_headers` path.
+ * A compiled matcher: a `_redirects` source or `_headers` path.
  *
- * - `matchers` mirrors the init: an anchored regex source per part, with
+ * - `regexes` mirrors the init: an anchored regex source per part, with
  *   a named group per var.
  * - `vars` lists what a successful match always binds. A splat is
  *   `splat`.
  */
-export type Pattern<
-  Init extends PatternInit = PatternInit,
+export type Matcher<
+  Init extends MatcherInit = MatcherInit,
   Ident extends string = string,
-> = readonly [matchers: Matchers<Init>, vars: ReadonlySet<Ident>];
+> = readonly [regexes: Regexes<Init>, vars: ReadonlySet<Ident>];
 
-/** Regex sources for each part of the URL a pattern matches. */
-export type Matchers<Init extends PatternInit = PatternInit> = {
-  readonly [Part in keyof Init & keyof PatternInit]: string;
+/** Regex sources for each part of the URL a matcher matches. */
+export type Regexes<Init extends MatcherInit = MatcherInit> = {
+  readonly [Part in keyof Init & keyof MatcherInit]: string;
 };
 
 /**
@@ -32,26 +32,26 @@ export type Matchers<Init extends PatternInit = PatternInit> = {
  *
  * Needs `RegExp.escape`, so compile in the build and ship the result.
  */
-export const compilePattern = <const Init extends PatternInit>(
+export const compileMatcher = <const Init extends MatcherInit>(
   init: Init,
-): Pattern<Init, PatternIdents<Init['pathname']>> => {
+): Matcher<Init, MatcherIdents<Init['pathname']>> => {
   const tokens = tokenizeWithSplats(init.pathname);
   const vars = bind(init.pathname, tokens);
 
   return [
     { pathname: `^${tokens.map(toRegex).join('')}$` },
-    vars as Set<PatternIdents<Init['pathname']>>,
+    vars as Set<MatcherIdents<Init['pathname']>>,
   ];
 };
 
 /** Raised for a pattern Cloudflare would drop. */
-export class PatternError extends Error {
+export class MatcherError extends Error {
   /** The pattern as written. */
   readonly source: string;
 
   constructor(message: string, source: string) {
     super(`${message}: ${source}`);
-    this.name = 'PatternError';
+    this.name = 'MatcherError';
     this.source = source;
   }
 }
@@ -66,7 +66,7 @@ const bind = (source: string, tokens: Token[]) => {
     const ident = token.type === 'splat' ? 'splat' : token.name;
 
     if (vars.has(ident)) {
-      throw new PatternError(
+      throw new MatcherError(
         ident === 'splat'
           ? 'Pattern binds more than one splat'
           : `Pattern binds :${ident} more than once`,
@@ -78,7 +78,7 @@ const bind = (source: string, tokens: Token[]) => {
     // so an earlier `:id` also rewrites the front of a later `:identity`.
     for (const earlier of vars) {
       if (token.type === 'ident' && ident.startsWith(earlier)) {
-        throw new PatternError(
+        throw new MatcherError(
           `Pattern binds :${ident} after :${earlier}, which Cloudflare reads as :${earlier} again`,
           source,
         );

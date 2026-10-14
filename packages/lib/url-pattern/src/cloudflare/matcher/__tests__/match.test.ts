@@ -1,12 +1,9 @@
 import type { Context } from '../../context.ts';
 import { match } from '../match.ts';
-import { compilePattern } from '../compile.ts';
+import { compileMatcher } from '../compile.ts';
 
-const test = (pattern: string, url: string) =>
-  match(
-    compilePattern({ pathname: pattern }),
-    new URL(url, 'https://example.com'),
-  );
+const test = (pathname: string, url: string) =>
+  match(compileMatcher({ pathname }), new URL(url, 'https://example.com'));
 
 describe('match', () => {
   describe('static paths', () => {
@@ -128,10 +125,10 @@ describe('match', () => {
     });
   });
 
-  it('types captures by the pattern vars', () => {
+  it('types captures by the matcher vars', () => {
     const url = new URL('https://example.com/blog/2026/a');
     expectTypeOf(
-      match(compilePattern({ pathname: '/blog/:year/*' }), url),
+      match(compileMatcher({ pathname: '/blog/:year/*' }), url),
     ).toEqualTypeOf<Context<'year' | 'splat'> | null>();
   });
 });

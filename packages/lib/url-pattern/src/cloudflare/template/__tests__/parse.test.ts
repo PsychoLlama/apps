@@ -1,4 +1,4 @@
-import { compilePattern } from '../../pattern/compile.ts';
+import { compileMatcher } from '../../matcher/compile.ts';
 import { parseTemplate, type Template } from '../parse.ts';
 
 describe('parseTemplate', () => {
@@ -41,8 +41,8 @@ describe('parseTemplate', () => {
   });
 
   describe('in a scope', () => {
-    const test = (template: string, pattern: string) => () =>
-      parseTemplate(template, compilePattern({ pathname: pattern }));
+    const test = (template: string, pathname: string) => () =>
+      parseTemplate(template, compileMatcher({ pathname }));
 
     it('accepts references to bound vars', () => {
       expect(test('/archive/:year/:splat', '/blog/:year/*')).not.toThrow();
@@ -56,7 +56,7 @@ describe('parseTemplate', () => {
       expect(test('/:b', '/:a/:b')).not.toThrow();
     });
 
-    it('rejects a reference the pattern does not bind', () => {
+    it('rejects a reference the matcher does not bind', () => {
       expect(test('/:missing', '/:id')).toThrow();
       expect(test('/:splat', '/about')).toThrow();
     });
@@ -66,32 +66,32 @@ describe('parseTemplate', () => {
       expect(test('/:idx', '/:id')).toThrow();
     });
 
-    // Patterns always bind the longer var first, so Cloudflare fills
+    // Matchers always bind the longer var first, so Cloudflare fills
     // `:identity` before `:id` can rewrite its front.
     it('accepts references to vars that prefix each other', () => {
       expect(test('/:identity/:id', '/:identity/:id')).not.toThrow();
     });
 
     describe('types', () => {
-      it('rejects references the pattern does not bind', () => {
-        const pattern = compilePattern({ pathname: '/:id' });
+      it('rejects references the matcher does not bind', () => {
+        const matcher = compileMatcher({ pathname: '/:id' });
         const illegal = () => {
-          // @ts-expect-error — the pattern doesn't bind `missing`
-          parseTemplate('/:missing', pattern);
+          // @ts-expect-error — the matcher doesn't bind `missing`
+          parseTemplate('/:missing', matcher);
         };
         void illegal;
       });
 
       it('infers the referenced vars', () => {
-        const pattern = compilePattern({ pathname: '/:a/:b' });
-        const legal = () => parseTemplate('/:b', pattern);
+        const matcher = compileMatcher({ pathname: '/:a/:b' });
+        const legal = () => parseTemplate('/:b', matcher);
         expectTypeOf(legal).returns.toEqualTypeOf<Template<'b'>>();
       });
 
-      it('narrows a template not known statically to the pattern vars', () => {
+      it('narrows a template not known statically to the matcher vars', () => {
         const source: string = '/:a';
-        const pattern = compilePattern({ pathname: '/:a/:b' });
-        const legal = () => parseTemplate(source, pattern);
+        const matcher = compileMatcher({ pathname: '/:a/:b' });
+        const legal = () => parseTemplate(source, matcher);
         expectTypeOf(legal).returns.toEqualTypeOf<Template<'a' | 'b'>>();
       });
     });
