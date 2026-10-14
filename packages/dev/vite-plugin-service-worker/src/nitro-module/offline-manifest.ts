@@ -11,7 +11,7 @@ import { generateAssets } from './assets.ts';
  * is done.
  */
 export const offlineManifest = (
-  getRedirects: () => readonly string[],
+  getRedirects: () => string[],
 ): NitroModule => ({
   name: 'offline-manifest',
   setup(nitro) {
@@ -36,7 +36,7 @@ export const offlineManifest = (
       const { publicDir } = nitro.options.output;
       const manifest: OfflineManifest = {
         assets: await generateAssets(publicDir, exclude),
-        redirects: [...getRedirects()],
+        redirects: getRedirects(),
       };
 
       await injectManifest(join(publicDir, SERVICE_WORKER_FILE_NAME), manifest);

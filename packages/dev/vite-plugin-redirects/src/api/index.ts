@@ -6,8 +6,8 @@ import { PLUGIN_NAME } from '../constants.ts';
  * {@link getRedirectsApi}.
  */
 export interface RedirectsApi {
-  /** Rules in `_redirects` order, which is also match order. */
-  getRules(): readonly string[];
+  /** A copy of the rules, in `_redirects` order (also match order). */
+  getRules(): string[];
 }
 
 /**

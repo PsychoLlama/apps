@@ -14,7 +14,7 @@ export interface RedirectsConfig {
  */
 export const redirects = (config: RedirectsConfig): Plugin<RedirectsApi> => {
   const api: RedirectsApi = {
-    getRules: () => config.rules,
+    getRules: () => structuredClone(config.rules),
   };
 
   return {
