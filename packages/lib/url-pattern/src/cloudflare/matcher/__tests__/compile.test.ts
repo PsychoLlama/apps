@@ -1,4 +1,9 @@
-import { compileMatcher, MatcherError } from '../compile.ts';
+import {
+  compileMatcher,
+  MatcherError,
+  type MatcherInit,
+  type Regexes,
+} from '../compile.ts';
 
 const compile = (pathname: string) => compileMatcher({ pathname });
 
@@ -68,9 +73,9 @@ describe('compileMatcher', () => {
   });
 
   it('mirrors the init in its regex types', () => {
-    expectTypeOf(compileMatcher({ pathname: '/:id' })[0]).toEqualTypeOf<{
-      readonly pathname: string;
-    }>();
+    expectTypeOf(compileMatcher({ pathname: '/:id' })[0]).toEqualTypeOf<
+      Regexes<MatcherInit, 'id'>
+    >();
   });
 
   describe('var types', () => {

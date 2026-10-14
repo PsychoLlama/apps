@@ -19,12 +19,23 @@ export interface MatcherInit {
 export type Matcher<
   Init extends MatcherInit = MatcherInit,
   Ident extends string = string,
-> = readonly [regexes: Regexes<Init>, vars: ReadonlySet<Ident>];
+> = readonly [regexes: Regexes<Init, Ident>, vars: ReadonlySet<Ident>];
 
-/** Regex sources for each part of the URL a matcher matches. */
-export type Regexes<Init extends MatcherInit = MatcherInit> = {
+/**
+ * Regex sources for each part of the URL a matcher matches. This is what
+ * `match` runs, so it's what ships.
+ *
+ * `Ident` types the vars a match binds. It exists only in the type, so
+ * plain data, like `{ pathname }` from a manifest, binds `string`.
+ */
+export type Regexes<
+  Init extends MatcherInit = MatcherInit,
+  Ident extends string = string,
+> = {
   readonly [Part in keyof Init & keyof MatcherInit]: string;
-};
+} & { readonly [phantomIdent]?: Ident };
+
+declare const phantomIdent: unique symbol;
 
 /**
  * Compiles a `_redirects` source or `_headers` path. Throws on patterns

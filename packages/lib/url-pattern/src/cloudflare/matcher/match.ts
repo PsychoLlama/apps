@@ -1,9 +1,9 @@
 import type { Context } from '../context.ts';
-import type { Matcher, MatcherInit } from './compile.ts';
+import type { MatcherInit, Regexes } from './compile.ts';
 
-/** Matches a URL against a matcher. `null` when it doesn't match. */
+/** Matches a URL against a matcher's regexes. `null` when it doesn't match. */
 export const match = <Ident extends string>(
-  [regexes]: Matcher<MatcherInit, Ident>,
+  regexes: Regexes<MatcherInit, Ident>,
   url: URL,
 ): Context<Ident> | null => {
   const result = new RegExp(regexes.pathname).exec(url.pathname);

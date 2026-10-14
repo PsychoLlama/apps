@@ -3,7 +3,7 @@ import { match } from '../match.ts';
 import { compileMatcher } from '../compile.ts';
 
 const test = (pathname: string, url: string) =>
-  match(compileMatcher({ pathname }), new URL(url, 'https://example.com'));
+  match(compileMatcher({ pathname })[0], new URL(url, 'https://example.com'));
 
 describe('match', () => {
   describe('static paths', () => {
@@ -125,10 +125,19 @@ describe('match', () => {
     });
   });
 
-  it('types captures by the matcher vars', () => {
+  describe('types', () => {
     const url = new URL('https://example.com/blog/2026/a');
-    expectTypeOf(
-      match(compileMatcher({ pathname: '/blog/:year/*' }), url),
-    ).toEqualTypeOf<Context<'year' | 'splat'> | null>();
+
+    it('types captures by the matcher vars', () => {
+      const [regexes] = compileMatcher({ pathname: '/blog/:year/*' });
+      expectTypeOf(match(regexes, url)).toEqualTypeOf<Context<
+        'year' | 'splat'
+      > | null>();
+    });
+
+    it('accepts plain regexes, binding any var', () => {
+      const regexes = { pathname: '^/blog/(?<year>[^/]+)$' };
+      expectTypeOf(match(regexes, url)).toEqualTypeOf<Context | null>();
+    });
   });
 });
