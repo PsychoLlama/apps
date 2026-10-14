@@ -1,6 +1,6 @@
 import type { Plugin } from 'vite';
 import { PLUGIN_NAME } from './constants.ts';
-import type { RedirectsApi } from './external-api.ts';
+import type { RedirectsApi } from './api/index.ts';
 
 /** Options for {@link redirects}. */
 export interface RedirectsConfig {
