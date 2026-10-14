@@ -16,4 +16,4 @@ export {
   type CompiledTemplate,
   type Template,
 } from './template/compile.ts';
-export { format } from './template/format.ts';
+export { format, FormatError } from './template/format.ts';

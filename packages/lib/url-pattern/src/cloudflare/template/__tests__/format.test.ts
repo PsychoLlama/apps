@@ -1,5 +1,5 @@
 import type { Context } from '../../context.ts';
-import { format } from '../format.ts';
+import { format, FormatError } from '../format.ts';
 import { compileTemplate } from '../compile.ts';
 
 const test = (template: string, context: Context) =>
@@ -52,7 +52,12 @@ describe('format', () => {
   });
 
   it('throws when the context is missing a referenced var', () => {
-    expect(() => test('/:id', {})).toThrow();
+    expect(() => test('/:id', {})).toThrow(FormatError);
+    expect(() => test('/:id', {})).toThrow(':id');
+  });
+
+  it('does not fill references from inherited keys', () => {
+    expect(() => test('/:constructor', {})).toThrow(FormatError);
   });
 
   describe('types', () => {
