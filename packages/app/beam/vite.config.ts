@@ -50,14 +50,23 @@ export default defineConfig({
         config.prerender.routes = ['/share/__id'];
         config.hooks = {
           'prerender:generate'(route) {
-            // Flatten the share shell out of `/share/`, so the
-            // `public/_redirects` rewrite target sits above its source and
-            // Cloudflare's loop check doesn't reject the rule.
+            // Flatten the share shell out of `/share/`, so the rewrite
+            // target sits above its source and Cloudflare's loop check
+            // doesn't reject the rule.
             if (route.route === '/share/__id') {
               route.fileName = '/__share.html';
             }
           },
         };
+      },
+      redirect: {
+        rules: [
+          // Serve the flattened share shell for every endpoint id. A 200
+          // rewrite keeps the id in the URL for the client router. The
+          // target is extensionless and sits above its source; see
+          // `docs/dynamic-prerendered-shells.md`.
+          '/share/:id  /__share  200',
+        ],
       },
     }),
   ],
