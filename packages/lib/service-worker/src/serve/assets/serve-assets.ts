@@ -1,10 +1,12 @@
 import type { OfflineManifest } from '@dev/vite-plugin-service-worker/types';
 import { createLogger } from '@lib/observability';
+import type { IRequestStrict } from 'itty-router';
 import { IttyRouter } from 'itty-router/IttyRouter';
 import { CACHE_NAME, cacheKey } from '../../assets/cache';
 import { getManifest } from '../../assets/manifest';
+import type { ServerContext } from './context';
 import { resolveAsset } from './resolve-asset';
-import { withRedirects, type AssetRequest } from './with-redirects';
+import { withRedirects } from './with-redirects';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -26,10 +28,14 @@ export const serveAssets = (
 ) => {
   if (manifest === undefined) return serveFromNetwork;
 
-  const router = IttyRouter<AssetRequest, [], Response>();
-  router.all('*', withRedirects(manifest), serveFromCache(manifest));
+  const router = IttyRouter<IRequestStrict, [ServerContext], Response>();
+  router.all('*', withRedirects, serveFromCache);
 
-  return router.fetch;
+  return (request: Request) =>
+    router.fetch(request, {
+      manifest,
+      asset: { path: new URL(request.url).pathname },
+    });
 };
 
 const serveFromNetwork = (request: Request) => fetch(request);
@@ -38,23 +44,24 @@ const serveFromNetwork = (request: Request) => fetch(request);
  * Answers from the cache alone. The install downloaded every asset, so
  * anything the manifest doesn't list is a real 404, offline or not.
  */
-const serveFromCache = (manifest: OfflineManifest) => {
-  return async (request: AssetRequest) => {
-    const path = resolveAsset(manifest, request.asset.path);
+const serveFromCache = async (
+  _request: Request,
+  { manifest, asset }: ServerContext,
+) => {
+  const path = resolveAsset(manifest, asset.path);
 
-    if (path === undefined) {
-      const page = await readAsset(
-        NOT_FOUND_PAGE,
-        manifest.assets[NOT_FOUND_PAGE],
-      );
+  if (path === undefined) {
+    const page = await readAsset(
+      NOT_FOUND_PAGE,
+      manifest.assets[NOT_FOUND_PAGE],
+    );
 
-      if (page.type === 'error') return page;
+    if (page.type === 'error') return page;
 
-      return new Response(page.body, { status: 404, headers: page.headers });
-    }
+    return new Response(page.body, { status: 404, headers: page.headers });
+  }
 
-    return readAsset(path, manifest.assets[path]);
-  };
+  return readAsset(path, manifest.assets[path]);
 };
 
 /**
