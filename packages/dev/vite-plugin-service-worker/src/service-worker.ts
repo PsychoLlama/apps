@@ -2,6 +2,7 @@ import { relative, resolve } from 'node:path';
 import type { NitroModule } from 'nitro/types';
 import { normalizePath, type Plugin } from 'vite';
 import {
+  ASSET_MANIFEST_SENTINEL,
   SERVICE_WORKER_FILE_NAME,
   SERVICE_WORKER_FILE_PATH,
 } from './constants.ts';
@@ -37,6 +38,21 @@ export const serviceWorker = (
     // see it.
     applyToEnvironment: (environment) =>
       environment.config.consumer === 'client',
+
+    // Build-time constants, so code can read them without a runtime import
+    // of this plugin.
+    config: (_config, { command }) => ({
+      define: {
+        'import.meta.env.SERVICE_WORKER_PATH': JSON.stringify(
+          SERVICE_WORKER_FILE_PATH,
+        ),
+
+        // Builds leave a sentinel for the Nitro module to swap the manifest
+        // into. Dev has no manifest.
+        'import.meta.env.ASSET_MANIFEST':
+          command === 'build' ? ASSET_MANIFEST_SENTINEL : 'undefined',
+      },
+    }),
 
     configResolved({ root }) {
       entry = resolve(root, config.path);

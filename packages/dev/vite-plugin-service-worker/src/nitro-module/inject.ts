@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { assert } from '@lib/assert';
+import { ASSET_MANIFEST_SENTINEL } from '../constants.ts';
 import type { AssetManifest } from '../types.d.ts';
 
 /**
@@ -14,10 +15,10 @@ export const injectManifest = async (
   const source = await readWorker(workerPath);
   if (source === null) return;
 
-  const parts = source.split(SENTINEL);
+  const parts = source.split(ASSET_MANIFEST_SENTINEL);
   assert(
     parts.length === 2,
-    `Expected one "${SENTINEL}" in ${workerPath}, found ${parts.length - 1}.`,
+    `Expected one "${ASSET_MANIFEST_SENTINEL}" in ${workerPath}, found ${parts.length - 1}.`,
   );
 
   // Parenthesized so it stays an expression where a `{` would open a block,
@@ -34,6 +35,3 @@ const readWorker = async (workerPath: string) => {
     throw error;
   }
 };
-
-/** Read by `@lib/service-worker`. See `types.d.ts`. */
-const SENTINEL = 'globalThis.__ASSET_MANIFEST__';

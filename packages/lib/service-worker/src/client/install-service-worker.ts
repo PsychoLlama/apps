@@ -1,4 +1,5 @@
-import { SERVICE_WORKER_FILE_PATH } from '@dev/vite-plugin-service-worker/constants';
+/// <reference types="@dev/vite-plugin-service-worker/types" />
+
 import { createLogger, toError } from '@lib/observability';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -14,7 +15,10 @@ export const installServiceWorker = () => {
   if (!('serviceWorker' in navigator)) return;
 
   navigator.serviceWorker
-    .register(SERVICE_WORKER_FILE_PATH, { type: 'module', scope: '/' })
+    .register(import.meta.env.SERVICE_WORKER_PATH, {
+      type: 'module',
+      scope: '/',
+    })
     .catch((error: unknown) => {
       logger.error('Registration failed.', { error: toError(error) });
     });

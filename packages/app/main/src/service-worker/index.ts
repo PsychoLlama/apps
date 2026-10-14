@@ -13,7 +13,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { origin } = new URL(event.request.url);
-  const router = routers[origin];
+  const router = routers.get(origin);
 
   // Not an origin we serve.
   if (router === undefined) return;
