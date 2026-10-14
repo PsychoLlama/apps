@@ -1,10 +1,5 @@
-import {
-  ident,
-  literal,
-  splat,
-  tokenize,
-  tokenizeWithSplats,
-} from '../tokenize.ts';
+import { tokenize, tokenizeWithSplats } from '../tokenize.ts';
+import { ident, literal, splat } from '../tokens.ts';
 
 describe('tokenize', () => {
   it('returns nothing for empty text', () => {

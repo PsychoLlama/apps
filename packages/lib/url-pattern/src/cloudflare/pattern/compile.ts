@@ -1,4 +1,5 @@
-import { tokenizeWithSplats, type Token } from '../tokenize.ts';
+import { tokenizeWithSplats } from '../tokenize/tokenize.ts';
+import type { Token } from '../tokenize/tokens.ts';
 import type { PatternIdents } from '../infer/pattern.ts';
 
 /** The parts of a URL a pattern matches. */

@@ -1,35 +1,15 @@
+import {
+  ident,
+  literal,
+  splat,
+  type IdentToken,
+  type LiteralToken,
+  type Token,
+} from './tokens.ts';
+
 // Keep in sync with `PlaceholderIdents` in `infer/ident.ts`.
 const IDENT = /:[A-Za-z]\w*/g;
 const IDENT_OR_SPLAT = /:[A-Za-z]\w*|\*/g;
-
-/** Text between vars, taken as-is. */
-export interface LiteralToken {
-  type: 'literal';
-  text: string;
-}
-
-/** A `:name` placeholder. */
-export interface IdentToken {
-  type: 'ident';
-  name: string;
-}
-
-/** A `*`, bound as `splat`. */
-export interface SplatToken {
-  type: 'splat';
-}
-
-export type Token = LiteralToken | IdentToken | SplatToken;
-
-export const literal = (text: string): LiteralToken => ({
-  type: 'literal',
-  text,
-});
-
-/** `name` excludes the leading `:`. */
-export const ident = (name: string): IdentToken => ({ type: 'ident', name });
-
-export const splat = (): SplatToken => ({ type: 'splat' });
 
 /**
  * Splits text into literals and `:name` placeholders: `:`, a letter, then
