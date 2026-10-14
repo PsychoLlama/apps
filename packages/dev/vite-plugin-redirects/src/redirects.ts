@@ -1,7 +1,7 @@
 import type { Plugin } from 'vite';
 
-/** Options for {@link redirect}. */
-export interface RedirectConfig {
+/** Options for {@link redirects}. */
+export interface RedirectsConfig {
   /** Lines of Cloudflare's `_redirects`: `<from> <to> [status]`. */
   rules: string[];
 }
@@ -10,7 +10,7 @@ export interface RedirectConfig {
  * Vite plugin that writes Cloudflare's `_redirects` into the build
  * output. Dev serves no redirects.
  */
-export const redirect = (config: RedirectConfig): Plugin => ({
+export const redirects = (config: RedirectsConfig): Plugin => ({
   name: '@dev/vite-plugin-redirects',
   apply: 'build',
 

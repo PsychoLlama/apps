@@ -1,1 +1,1 @@
-export { redirect, type RedirectConfig } from './redirect.ts';
+export { redirects, type RedirectsConfig } from './redirects.ts';

@@ -47,7 +47,7 @@ export default defineConfig({
       serviceWorker: {
         path: 'src/service-worker/index.ts',
       },
-      redirect: {
+      redirects: {
         rules: [
           // Forward PWAs still re-fetching the old hashed manifest URL (now
           // gone) to the stable path. `_redirects` fire even when no asset

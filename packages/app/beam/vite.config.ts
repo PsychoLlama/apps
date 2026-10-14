@@ -59,7 +59,7 @@ export default defineConfig({
           },
         };
       },
-      redirect: {
+      redirects: {
         rules: [
           // Serve the flattened share shell for every endpoint id. A 200
           // rewrite keeps the id in the URL for the client router. The

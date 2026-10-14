@@ -7,7 +7,7 @@ import { headers, type HeadersConfig } from '@dev/vite-plugin-headers';
 import { inlineScript } from '@dev/vite-plugin-inline-script';
 import { instrumentationScope } from '@dev/vite-plugin-instrumentation-scope';
 import { pwaManifest, type PwaManifestConfig } from '@dev/vite-plugin-pwa';
-import { redirect, type RedirectConfig } from '@dev/vite-plugin-redirects';
+import { redirects, type RedirectsConfig } from '@dev/vite-plugin-redirects';
 import {
   serviceWorker,
   type ServiceWorkerConfig,
@@ -60,7 +60,7 @@ export interface AppOptions extends CommonOptions, NitroModuleOptions {
   serviceWorker?: ServiceWorkerConfig;
 
   /** Generate Cloudflare's `_redirects`. Builds only. */
-  redirect?: RedirectConfig;
+  redirects?: RedirectsConfig;
 
   /**
    * More rules for Cloudflare's `_headers`, after the headers plugin's
@@ -94,7 +94,7 @@ export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
     inlineScript({ maxBytes: 2048 }),
     app?.pwa && pwaManifest(app.pwa),
     app?.serviceWorker && serviceWorker(app.serviceWorker),
-    app?.redirect && redirect(app.redirect),
+    app?.redirects && redirects(app.redirects),
     app && headers(app.headers),
     vanillaExtractPlugin(),
     Icons({ compiler: 'solid' }),
