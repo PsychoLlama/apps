@@ -1,3 +1,5 @@
-export { parse, type Pattern } from './parse.ts';
-export { match, type Context } from './match.ts';
-export { format } from './format.ts';
+export type { Context } from './context.ts';
+export { parsePattern, type Pattern } from './pattern/parse.ts';
+export { match } from './pattern/match.ts';
+export { parseTemplate, type Template } from './template/parse.ts';
+export { format } from './template/format.ts';

@@ -1,8 +1,9 @@
-import { match, type Context } from '../match.ts';
-import { parse } from '../parse.ts';
+import type { Context } from '../../context.ts';
+import { match } from '../match.ts';
+import { parsePattern } from '../parse.ts';
 
 const test = (pattern: string, url: string) =>
-  match(parse(pattern), new URL(url, 'https://example.com'));
+  match(parsePattern(pattern), new URL(url, 'https://example.com'));
 
 describe('match', () => {
   describe('static paths', () => {
@@ -152,8 +153,8 @@ describe('match', () => {
 
   it('types captures by the pattern vars', () => {
     const url = new URL('https://example.com/blog/2026/a');
-    expectTypeOf(match(parse('/blog/:year/*'), url)).toEqualTypeOf<Context<
-      'year' | 'splat'
-    > | null>();
+    expectTypeOf(
+      match(parsePattern('/blog/:year/*'), url),
+    ).toEqualTypeOf<Context<'year' | 'splat'> | null>();
   });
 });

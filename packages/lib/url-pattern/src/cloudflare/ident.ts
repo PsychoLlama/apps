@@ -1,16 +1,9 @@
 /**
- * Var identifiers in a literal pattern, or `string` when the pattern isn't
- * known statically. Only extracts identifiers: patterns `parse` rejects aren't
- * caught here.
+ * Identifiers of the `:name` placeholders in a literal string. Patterns
+ * and templates share this syntax: `:`, a letter, then word characters.
+ * Any other `:` is a literal.
  */
-export type VarIdents<Source extends string> = string extends Source
-  ? string
-  : | PlaceholderIdents<Source>
-    | (Source extends `${string}*${string}` ? 'splat' : never);
-
-// A placeholder is `:`, a letter, then word characters. Any other `:` is
-// a literal.
-type PlaceholderIdents<Source extends string> =
+export type PlaceholderIdents<Source extends string> =
   Source extends `${string}:${infer Rest}`
     ? Rest extends `${Letter}${string}`
       ? TakeWord<Rest> extends [infer Ident, infer Tail extends string]
