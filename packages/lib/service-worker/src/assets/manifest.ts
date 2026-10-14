@@ -5,6 +5,6 @@ import type { AssetManifest } from '@dev/vite-plugin-service-worker/types';
  * one (dev). Without it, the worker should stay on the network.
  */
 export const getManifest = (): AssetManifest | undefined =>
-  // The build replaces this exact text with the manifest, so it must appear
-  // verbatim, and only here.
-  globalThis.__ASSET_MANIFEST__;
+  // The build expands this to an object every time it's referenced.
+  // Only reference it once, only here.
+  import.meta.env.ASSET_MANIFEST;
