@@ -23,6 +23,7 @@
   "dependencies": {
     "@lib/assert": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
-    "@lib/observability": "workspace:*"
+    "@lib/observability": "workspace:*",
+    "@lib/url-pattern": "workspace:*"
   }
 }

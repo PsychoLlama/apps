@@ -1179,6 +1179,9 @@ importers:
       '@lib/observability':
         specifier: workspace:*
         version: link:../observability
+      '@lib/url-pattern':
+        specifier: workspace:*
+        version: link:../url-pattern
     devDependencies:
       '@dev/vite-plugin-service-worker':
         specifier: workspace:*
