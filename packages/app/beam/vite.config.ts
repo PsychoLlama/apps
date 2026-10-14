@@ -65,7 +65,7 @@ export default defineConfig({
           // rewrite keeps the id in the URL for the client router. The
           // target is extensionless and sits above its source; see
           // `docs/dynamic-prerendered-shells.md`.
-          '/share/:id  /__share  200',
+          ['/share/:id', '/__share', 200],
         ],
       },
     }),

@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { assert } from '@lib/assert';
-import { ASSET_MANIFEST_SENTINEL } from '../constants.ts';
-import type { AssetManifest } from '../types.d.ts';
+import { OFFLINE_MANIFEST_SENTINEL } from '../constants.ts';
+import type { OfflineManifest } from '../types.d.ts';
 
 /**
  * Swaps the manifest into the built service worker, if there is one. Fails
@@ -10,15 +10,15 @@ import type { AssetManifest } from '../types.d.ts';
  */
 export const injectManifest = async (
   workerPath: string,
-  manifest: AssetManifest,
+  manifest: OfflineManifest,
 ) => {
   const source = await readWorker(workerPath);
   if (source === null) return;
 
-  const parts = source.split(ASSET_MANIFEST_SENTINEL);
+  const parts = source.split(OFFLINE_MANIFEST_SENTINEL);
   assert(
     parts.length === 2,
-    `Expected one "${ASSET_MANIFEST_SENTINEL}" in ${workerPath}, found ${parts.length - 1}.`,
+    `Expected one "${OFFLINE_MANIFEST_SENTINEL}" in ${workerPath}, found ${parts.length - 1}.`,
   );
 
   // Parenthesized so it stays an expression where a `{` would open a block,

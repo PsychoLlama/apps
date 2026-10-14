@@ -2,11 +2,15 @@ import { relative, resolve } from 'node:path';
 import type { NitroModule } from 'nitro/types';
 import { normalizePath, type Plugin } from 'vite';
 import {
-  ASSET_MANIFEST_SENTINEL,
+  getRedirectsApi,
+  type RedirectsApi,
+} from '@dev/vite-plugin-redirects/api';
+import {
+  OFFLINE_MANIFEST_SENTINEL,
   SERVICE_WORKER_FILE_NAME,
   SERVICE_WORKER_FILE_PATH,
 } from './constants.ts';
-import { assetManifest } from './nitro-module/asset-manifest.ts';
+import { offlineManifest } from './nitro-module/offline-manifest.ts';
 
 /** Options for {@link serviceWorker}. */
 export interface ServiceWorkerConfig {
@@ -19,20 +23,21 @@ export interface ServiceWorkerConfig {
  * `/service-worker.js`. Register it as a module worker
  * (`type: 'module'`).
  *
- * Under Nitro, it also injects an asset manifest into the built worker.
+ * Under Nitro, it also injects an offline manifest into the built worker.
  */
 export const serviceWorker = (
   config: ServiceWorkerConfig,
 ): Plugin & { nitro: NitroModule } => {
   let entry: string;
   let devUrl: string;
+  let redirects: RedirectsApi | undefined;
 
   return {
     name: '@dev/vite-plugin-service-worker',
 
     // Nitro installs modules from every Vite plugin that carries one. The
     // manifest needs the final public dir, which only Nitro knows.
-    nitro: assetManifest(),
+    nitro: offlineManifest(() => redirects?.getRules() ?? []),
 
     // The worker ships with the browser bundle. Server environments never
     // see it.
@@ -49,14 +54,15 @@ export const serviceWorker = (
 
         // Builds leave a sentinel for the Nitro module to swap the manifest
         // into. Dev has no manifest.
-        'import.meta.env.ASSET_MANIFEST':
-          command === 'build' ? ASSET_MANIFEST_SENTINEL : 'undefined',
+        'import.meta.env.OFFLINE_MANIFEST':
+          command === 'build' ? OFFLINE_MANIFEST_SENTINEL : 'undefined',
       },
     }),
 
-    configResolved({ root }) {
+    configResolved({ root, plugins }) {
       entry = resolve(root, config.path);
       devUrl = `/${normalizePath(relative(root, entry))}`;
+      redirects = getRedirectsApi(plugins);
     },
 
     // Dev has no bundle, so point the stable URL at the source module and

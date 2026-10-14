@@ -6,7 +6,8 @@
   "description": "Vite plugin that generates Cloudflare's `_redirects` file from config.",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./api": "./src/api/index.ts"
   },
   "scripts": {
     "typecheck": "tsc"

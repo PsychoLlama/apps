@@ -1,4 +1,4 @@
-import type { AssetManifest } from '@dev/vite-plugin-service-worker/types';
+import type { OfflineManifest } from '@dev/vite-plugin-service-worker/types';
 import { assert } from '@lib/assert';
 import { createLogger, toError } from '@lib/observability';
 import { CACHE_NAME, cacheKey } from './cache';
@@ -13,7 +13,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
  * Entries are keyed by content hash, not path. Assets that didn't change
  * between builds are already cached and cost nothing.
  */
-export const download = async (manifest: AssetManifest) => {
+export const download = async (manifest: OfflineManifest) => {
   const cache = await caches.open(CACHE_NAME);
   const assets = byIntegrityHash(manifest);
   const missing = await findMissing(cache, assets);
@@ -44,7 +44,7 @@ export const download = async (manifest: AssetManifest) => {
  * One path per integrity hash. Files with identical content share an entry,
  * so any one of their paths will do.
  */
-const byIntegrityHash = (manifest: AssetManifest) =>
+const byIntegrityHash = (manifest: OfflineManifest) =>
   new Map(
     Object.entries(manifest.assets).map(([path, integrityHash]) => [
       integrityHash,

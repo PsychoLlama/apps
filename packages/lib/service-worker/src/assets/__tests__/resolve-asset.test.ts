@@ -9,6 +9,7 @@ const manifest = {
     '/assets/app.js': 'sha256-app',
     '/fonts/two words.woff2': 'sha256-font',
   },
+  redirects: [],
 };
 
 describe('resolveAsset', () => {
