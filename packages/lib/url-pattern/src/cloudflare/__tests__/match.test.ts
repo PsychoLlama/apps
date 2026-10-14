@@ -1,4 +1,4 @@
-import { match } from '../match.ts';
+import { match, type Context } from '../match.ts';
 import { parse } from '../parse.ts';
 
 const test = (pattern: string, url: string) =>
@@ -148,5 +148,12 @@ describe('match', () => {
     it('ignores the host for a path-only pattern', () => {
       expect(test('/a', 'https://other.com/a')).toEqual({});
     });
+  });
+
+  it('types captures by the pattern vars', () => {
+    const url = new URL('https://example.com/blog/2026/a');
+    expectTypeOf(match(parse('/blog/:year/*'), url)).toEqualTypeOf<Context<
+      'year' | 'splat'
+    > | null>();
   });
 });

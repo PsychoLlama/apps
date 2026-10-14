@@ -34,4 +34,40 @@ describe('parse', () => {
   it('rejects a repeated placeholder', () => {
     expect(() => parse('/:id/:id')).toThrow();
   });
+
+  describe('var types', () => {
+    it('infers no vars for a static path', () => {
+      expectTypeOf(parse('/about').vars).toEqualTypeOf<ReadonlySet<never>>();
+    });
+
+    it('infers placeholders and the splat', () => {
+      expectTypeOf(parse('/blog/:year/*').vars).toEqualTypeOf<
+        ReadonlySet<'year' | 'splat'>
+      >();
+    });
+
+    it('ends a name at the first non-word character', () => {
+      expectTypeOf(parse('/pre-:name.ext').vars).toEqualTypeOf<
+        ReadonlySet<'name'>
+      >();
+      expectTypeOf(parse('/:a_1/:B2+').vars).toEqualTypeOf<
+        ReadonlySet<'a_1' | 'B2'>
+      >();
+    });
+
+    it('ignores a colon without a leading letter', () => {
+      expectTypeOf(parse('/:1a').vars).toEqualTypeOf<ReadonlySet<never>>();
+    });
+
+    it('infers host placeholders', () => {
+      expectTypeOf(parse('https://:sub.example.com/*').vars).toEqualTypeOf<
+        ReadonlySet<'sub' | 'splat'>
+      >();
+    });
+
+    it('falls back to `string` for a pattern not known statically', () => {
+      const source: string = '/:id';
+      expectTypeOf(parse(source).vars).toEqualTypeOf<ReadonlySet<string>>();
+    });
+  });
 });
