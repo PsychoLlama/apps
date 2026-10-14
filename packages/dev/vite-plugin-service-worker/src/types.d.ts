@@ -1,7 +1,7 @@
 // Types for the service worker side. Kept free of Node imports so worker
 // code can load them.
 
-import type { RedirectRule } from '@dev/vite-plugin-redirects/api';
+import type { Template } from '@lib/url-pattern/cloudflare';
 
 /**
  * Every deployed file, keyed by its path from the public dir root, with an
@@ -11,9 +11,20 @@ import type { RedirectRule } from '@dev/vite-plugin-redirects/api';
 export interface OfflineManifest {
   assets: Record<string, string> & { '/404.html': string };
 
-  /** The app's Cloudflare `_redirects` rules, in match order. */
-  redirects: RedirectRule[];
+  /** The app's Cloudflare `_redirects` rules, compiled, in match order. */
+  redirects: OfflineRedirectRule[];
 }
+
+/**
+ * A compiled `_redirects` rule. Redirects only match the pathname, so the
+ * regex ships bare: match with `match({ pathname }, url)`, fill with
+ * `format(template, context)`.
+ */
+export type OfflineRedirectRule = [
+  pathname: string,
+  template: Template,
+  statusCode: number,
+];
 
 declare global {
   interface ImportMetaEnv {

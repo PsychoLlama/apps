@@ -1,8 +1,8 @@
 import { join } from 'node:path';
 import type { NitroModule } from 'nitro/types';
-import type { RedirectRule } from '@dev/vite-plugin-redirects/api';
+import type { CompiledRedirectRule } from '@dev/vite-plugin-redirects/api';
 import { SERVICE_WORKER_FILE_NAME } from '../constants.ts';
-import type { OfflineManifest } from '../types.d.ts';
+import type { OfflineManifest, OfflineRedirectRule } from '../types.d.ts';
 import { injectManifest } from './inject.ts';
 import { generateAssets } from './assets.ts';
 
@@ -12,7 +12,7 @@ import { generateAssets } from './assets.ts';
  * is done.
  */
 export const offlineManifest = (
-  getRedirects: () => RedirectRule[],
+  getRedirects: () => CompiledRedirectRule[],
 ): NitroModule => ({
   name: 'offline-manifest',
   setup(nitro) {
@@ -37,10 +37,15 @@ export const offlineManifest = (
       const { publicDir } = nitro.options.output;
       const manifest: OfflineManifest = {
         assets: await generateAssets(publicDir, exclude),
-        redirects: getRedirects(),
+        redirects: getRedirects().map(toOfflineRule),
       };
 
       await injectManifest(join(publicDir, SERVICE_WORKER_FILE_NAME), manifest);
     });
   },
 });
+
+const toOfflineRule = ([
+  regexes,
+  ...rest
+]: CompiledRedirectRule): OfflineRedirectRule => [regexes.pathname, ...rest];
