@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
+import { headers } from '@dev/vite-plugin-headers';
 import { substrate } from '@dev/vite-plugin-substrate';
 import { DEFAULT_THEME_ID, THEME_COLORS } from '@lib/theme/constants';
 import * as app from './src/constants';
@@ -87,6 +88,14 @@ export default defineConfig({
           '/beam    https://beam.psychollama.io/        301',
           '/beam/*  https://beam.psychollama.io/:splat  301',
         ],
+      },
+    }),
+    headers({
+      rules: {
+        // Cache policy: docs/asset-caching.md
+        '/_build/*': {
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        },
       },
     }),
   ],

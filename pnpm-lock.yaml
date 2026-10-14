@@ -640,6 +640,9 @@ importers:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
     devDependencies:
+      '@dev/vite-plugin-headers':
+        specifier: workspace:*
+        version: link:../../dev/vite-plugin-headers
       '@dev/vite-plugin-substrate':
         specifier: workspace:*
         version: link:../../dev/vite-plugin-substrate
@@ -846,6 +849,12 @@ importers:
       '@dev/gitignore':
         specifier: workspace:*
         version: link:../gitignore
+      vite:
+        specifier: ^8.0.0
+        version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
+
+  packages/dev/vite-plugin-headers:
+    dependencies:
       vite:
         specifier: ^8.0.0
         version: 8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1)
