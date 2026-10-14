@@ -46,6 +46,7 @@
     "vite": "catalog:"
   },
   "devDependencies": {
+    "@dev/vite-plugin-redirects": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",
     "typescript": "catalog:",
     "wrangler": "catalog:"

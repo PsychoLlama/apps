@@ -63,7 +63,8 @@ const collectVariants = (icon: IconConfig): Variant[] => {
  * persist this URL and re-fetch it directly (never re-reading the
  * `<link>`), so it must stay constant across deploys and revalidate —
  * hence unhashed and off the `immutable` `/_build/` prefix. See
- * `_redirects` for the 301 that rescues installs on the old hash.
+ * `@app/main`'s redirects for the 301 that rescues installs on the old
+ * hash.
  */
 const manifestPath = '/manifest.webmanifest';
 const devIconPath = (variant: Variant, size: number): string =>

@@ -7,7 +7,7 @@
     "directory": ".output/public",
     // Unmatched paths fall back to the prerendered 404 shell. Dynamic
     // client routes that need a route-shaped shell instead get
-    // per-pattern rewrites in `public/_redirects`.
+    // per-pattern rewrites in `vite.config.ts`.
     "not_found_handling": "404-page"
   },
   "routes": [
