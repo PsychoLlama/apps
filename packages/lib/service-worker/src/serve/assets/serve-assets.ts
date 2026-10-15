@@ -21,6 +21,10 @@ const NOT_FOUND_PAGE = '/404.html';
  * A request handler that serves the build's assets from the cache. Mount it
  * as the catch-all route for the app's own origin.
  *
+ * Only `GET`s are served. Other methods get a `405` rather than the
+ * network, so anything offline can't answer breaks loudly instead of
+ * working only while online.
+ *
  * Without a manifest (dev), there's nothing cached, so every request goes to
  * the network.
  */
@@ -30,7 +34,8 @@ export const serveAssets = (
   if (manifest === undefined) return serveFromNetwork;
 
   const router = IttyRouter<IRequestStrict, [ServerContext], Response>();
-  router.all('*', withRedirects, serveFromCache, serveNotFound);
+  router.get('*', withRedirects, serveFromCache, serveNotFound);
+  router.all('*', rejectMethod);
 
   return (request: Request) =>
     router.fetch(request, {
@@ -40,6 +45,9 @@ export const serveAssets = (
 };
 
 const serveFromNetwork = (request: Request) => fetch(request);
+
+const rejectMethod = () =>
+  new Response(null, { status: 405, headers: { Allow: 'GET' } });
 
 /**
  * Answers from the cache alone. Passes when the manifest doesn't list the
