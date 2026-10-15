@@ -42,6 +42,9 @@ export default defineConfig({
           background_color: manifestThemeColor,
         },
       },
+      serviceWorker: {
+        path: 'src/service-worker/index.ts',
+      },
       nitro: (config) => {
         // One shell for every `/share/:id`, which the crawler can't reach
         // from `/`. The id is a live relay handle that only exists

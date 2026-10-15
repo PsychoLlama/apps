@@ -6,7 +6,8 @@
   "description": "Encrypted, peer-to-peer sharing of links and files over iroh.",
   "license": "MIT",
   "sideEffects": [
-    "**/*.css.ts"
+    "**/*.css.ts",
+    "src/service-worker/index.ts"
   ],
   "exports": {
     "./constants": "./src/constants.ts"
@@ -16,7 +17,7 @@
     "build": "vite build ${BUILD_MODE:+--mode $BUILD_MODE}",
     "start": "vite start",
     "preview": "wrangler dev",
-    "typecheck": "tsc && tsc -p src/worker/tsconfig.json",
+    "typecheck": "tsc && tsc -p src/worker/tsconfig.json && tsc -p src/service-worker/tsconfig.json",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts",
     "deploy": "wrangler deploy",
@@ -31,6 +32,7 @@
     "@lib/messaging": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/runtime-config": "workspace:*",
+    "@lib/service-worker": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/theme": "workspace:*",
@@ -38,6 +40,7 @@
     "@lib/vault": "workspace:*",
     "@vanilla-extract/css": "catalog:",
     "idb": "catalog:",
+    "itty-router": "catalog:",
     "vite": "catalog:"
   },
   "peerDependencies": {
