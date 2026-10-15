@@ -178,7 +178,7 @@ catalogs:
       version: 0.9.1
     '@iconify/json':
       specifier: ^2.2.470
-      version: 2.2.541
+      version: 2.2.542
     '@solidjs/start':
       specifier: 2.0.6
       version: 2.0.6
@@ -276,7 +276,7 @@ importers:
         version: 10.0.1(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))
       '@iconify/json':
         specifier: ^2.2.460
-        version: 2.2.541
+        version: 2.2.542
       '@testing-library/jest-dom':
         specifier: 'catalog:'
         version: 7.0.1(@testing-library/dom@10.4.1)(vitest@5.0.3)
@@ -864,7 +864,7 @@ importers:
     devDependencies:
       '@iconify/json':
         specifier: 'catalog:'
-        version: 2.2.541
+        version: 2.2.542
 
   packages/dev/vite-plugin-inline-script:
     dependencies:
@@ -1004,7 +1004,7 @@ importers:
         version: link:../vite-plugin-substrate
       '@iconify/json':
         specifier: 'catalog:'
-        version: 2.2.541
+        version: 2.2.542
       '@vitest/browser':
         specifier: 'catalog:'
         version: 5.0.3(vite@8.1.5(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.48.0)(yaml@2.9.1))(vitest@5.0.2)
@@ -1823,8 +1823,8 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@iconify/json@2.2.541':
-    resolution: {integrity: sha512-s89hthisPkDuwrhPPvYdDKczNAvW7y3OI19L0NXdlVFzmoFi4uO02P8UvHT02hSrQ22ZmPLhInf5K+Knn9TPew==}
+  '@iconify/json@2.2.542':
+    resolution: {integrity: sha512-OHlj+amYL+dfR2yyp4YeW/QtqmGIFmaQHSqkFFiL3Dq6YISM4K3sR1sYZzvDgfoXh77bM9LegWEzE1FEgryJ6A==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -5585,7 +5585,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@iconify/json@2.2.541':
+  '@iconify/json@2.2.542':
     dependencies:
       '@iconify/types': 2.0.0
       pathe: 2.0.3
