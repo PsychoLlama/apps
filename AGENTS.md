@@ -19,7 +19,7 @@
 
 ## Dev
 
-- `pnpm check` to validate. Must pass before committing.
+- Validate with `pnpm check:affected`.
 - Tasks are defined in `turbo.json` and dispatch to `package.json` scripts at the root and under `packages/**`.
 - Apps use file-based routing (`src/routes/**`).
 

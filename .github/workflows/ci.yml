@@ -23,7 +23,7 @@ jobs:
       # before vite.config loads, so it can't be branched on `GITHUB_REF`
       # in config — hence selecting it here. It's job-wide because it's
       # part of the build hash: the deploy steps must see the same value
-      # as `pnpm check` to reuse its cached build instead of rebuilding.
+      # as `pnpm check:all` to reuse its cached build instead of rebuilding.
       BUILD_MODE: ${{ github.event_name == 'pull_request' && 'staging' || '' }}
     # Run every shell step inside the flake's devShell so CI stays in
     # sync with local dev (single source of truth in flake.nix).
@@ -79,7 +79,7 @@ jobs:
           key: ${{ runner.os }}-turbo-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-turbo-
-      # `pnpm check` runs `cargo clippy` and `cargo test` over the Rust
+      # `pnpm check:all` runs `cargo clippy` and `cargo test` over the Rust
       # workspace, but turbo's cache doesn't capture Rust artifacts (those
       # tasks emit no outputs). Cache the cargo registry/git checkouts and
       # the build `target/` so compilation is incremental across runs.
@@ -96,11 +96,11 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      # `pnpm check` fans out every workspace check (lint, typecheck,
+      # `pnpm check:all` fans out every workspace check (lint, typecheck,
       # tests, knip, fmt, workspace validators, build) through turbo.
       # Cache hits skip work entirely. The build is part of `check`, so
       # the deploy tasks below reuse its `.output` from turbo's cache.
-      - run: pnpm check
+      - run: pnpm check:all
 
       # Each app with a `deploy` script ships to its own worker. Deploys
       # are cached turbo tasks keyed on the build, so apps whose build
