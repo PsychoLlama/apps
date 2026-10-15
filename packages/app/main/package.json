@@ -41,7 +41,6 @@
     "@solidjs/start": "catalog:",
     "@vanilla-extract/css": "catalog:",
     "@vanilla-extract/dynamic": "catalog:",
-    "itty-router": "catalog:",
     "solid-js": "catalog:",
     "vite": "catalog:"
   },

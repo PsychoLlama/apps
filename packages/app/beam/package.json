@@ -40,7 +40,6 @@
     "@lib/vault": "workspace:*",
     "@vanilla-extract/css": "catalog:",
     "idb": "catalog:",
-    "itty-router": "catalog:",
     "vite": "catalog:"
   },
   "peerDependencies": {
