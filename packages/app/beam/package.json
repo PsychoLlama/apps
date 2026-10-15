@@ -38,23 +38,18 @@
     "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
     "@lib/vault": "workspace:*",
+    "@solidjs/meta": "catalog:",
+    "@solidjs/router": "catalog:",
+    "@solidjs/start": "catalog:",
     "@vanilla-extract/css": "catalog:",
     "idb": "catalog:",
+    "solid-js": "catalog:",
     "vite": "catalog:"
-  },
-  "peerDependencies": {
-    "@solidjs/meta": "*",
-    "@solidjs/router": "*",
-    "solid-js": "*"
   },
   "devDependencies": {
     "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/vitest-config": "workspace:*",
-    "@solidjs/meta": "catalog:",
-    "@solidjs/router": "catalog:",
-    "@solidjs/start": "catalog:",
     "@vanilla-extract/dynamic": "catalog:",
-    "solid-js": "catalog:",
     "typescript": "catalog:",
     "wrangler": "catalog:"
   }

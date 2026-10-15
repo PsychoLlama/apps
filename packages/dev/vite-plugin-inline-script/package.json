@@ -13,7 +13,7 @@
     "typecheck": "tsc"
   },
   "peerDependencies": {
-    "vite": "*"
+    "vite": "catalog:"
   },
   "devDependencies": {
     "esbuild": "catalog:"

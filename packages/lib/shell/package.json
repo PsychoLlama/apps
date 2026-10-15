@@ -38,7 +38,7 @@
     "solid-js": "catalog:"
   },
   "peerDependencies": {
-    "@solidjs/meta": "*",
-    "solid-js": "*"
+    "@solidjs/meta": "catalog:",
+    "solid-js": "catalog:"
   }
 }

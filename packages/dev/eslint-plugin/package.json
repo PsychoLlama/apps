@@ -21,6 +21,6 @@
     "@typescript-eslint/rule-tester": "^8.59.0"
   },
   "peerDependencies": {
-    "eslint": "*"
+    "eslint": "catalog:"
   }
 }

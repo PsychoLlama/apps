@@ -28,6 +28,6 @@
     "@dev/vitest-config": "workspace:*"
   },
   "peerDependencies": {
-    "solid-js": "*"
+    "solid-js": "catalog:"
   }
 }

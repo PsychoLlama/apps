@@ -16,6 +16,6 @@
     "@lib/url-pattern": "workspace:*"
   },
   "peerDependencies": {
-    "vite": "*"
+    "vite": "catalog:"
   }
 }

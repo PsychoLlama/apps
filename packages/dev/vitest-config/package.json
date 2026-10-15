@@ -13,8 +13,8 @@
     "typecheck": "tsc"
   },
   "peerDependencies": {
-    "vite": "*",
-    "vitest": "*"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "devDependencies": {
     "@dev/vite-plugin-substrate": "workspace:*",
