@@ -74,9 +74,9 @@ describe('checkCatalogUsage', () => {
     expect(checkCatalogUsage(catalogs, packages)).toEqual([]);
   });
 
-  it('checks devDependencies and optionalDependencies too', () => {
+  it('checks devDependencies, optionalDependencies, and peerDependencies too', () => {
     const catalogs: Catalogs = {
-      default: { vitest: '^4.1.5', idb: '^8.0.3' },
+      default: { vitest: '^4.1.5', idb: '^8.0.3', 'solid-js': '^1.9.5' },
     };
     const packages: PackageManifest[] = [
       {
@@ -84,31 +84,13 @@ describe('checkCatalogUsage', () => {
         path: 'packages/lib/x/package.json',
         devDependencies: { vitest: '^4.0.0' },
         optionalDependencies: { idb: '^7.0.0' },
+        peerDependencies: { 'solid-js': '*' },
       },
     ];
 
     expect(
       checkCatalogUsage(catalogs, packages).map((issue) => issue.bucket),
-    ).toEqual(['devDependencies', 'optionalDependencies']);
-  });
-
-  it('skips peerDependencies — runtime singletons use `*` by convention', () => {
-    const catalogs: Catalogs = {
-      default: { 'solid-js': '^1.9.5' },
-    };
-    const packages: PackageManifest[] = [
-      {
-        name: '@lib/ui',
-        path: 'packages/lib/ui/package.json',
-        // peerDependencies is intentionally absent from the
-        // PackageManifest type, so a literal cast keeps this honest:
-        // the field exists in real package.json files but the
-        // checker shouldn't read it.
-        ...({ peerDependencies: { 'solid-js': '*' } } as object),
-      },
-    ];
-
-    expect(checkCatalogUsage(catalogs, packages)).toEqual([]);
+    ).toEqual(['devDependencies', 'optionalDependencies', 'peerDependencies']);
   });
 
   it("ignores deps that aren't in any catalog", () => {

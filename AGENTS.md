@@ -27,7 +27,6 @@
 
 - Cross-package refs use `"workspace:*"`.
 - Versions for deps used by more than one package live in the `catalog:` block of `pnpm-workspace.yaml`. Reference them as `"catalog:"`.
-- Runtime singletons (`solid-js`, `@solidjs/router`) go as `"peerDependencies"` with a `"*"` range in `@lib/*` and `@app/*` packages — the host supplies the actual version via `catalog:`.
 
 ## UI Components
 
