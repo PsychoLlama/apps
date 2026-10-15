@@ -41,7 +41,7 @@
     "solid-js": "catalog:"
   },
   "peerDependencies": {
-    "@solidjs/router": "*",
-    "solid-js": "*"
+    "@solidjs/router": "catalog:",
+    "solid-js": "catalog:"
   }
 }

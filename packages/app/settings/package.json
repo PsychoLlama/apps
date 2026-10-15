@@ -28,7 +28,7 @@
     "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {
-    "solid-js": "*"
+    "solid-js": "catalog:"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*"

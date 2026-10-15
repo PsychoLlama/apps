@@ -28,6 +28,6 @@
     "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {
-    "solid-js": "*"
+    "solid-js": "catalog:"
   }
 }

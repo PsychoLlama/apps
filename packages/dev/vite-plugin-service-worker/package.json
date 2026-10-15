@@ -21,6 +21,6 @@
     "nitro": "catalog:"
   },
   "peerDependencies": {
-    "vite": "*"
+    "vite": "catalog:"
   }
 }

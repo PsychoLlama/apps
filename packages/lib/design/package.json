@@ -32,6 +32,6 @@
     "solid-js": "catalog:"
   },
   "peerDependencies": {
-    "solid-js": "*"
+    "solid-js": "catalog:"
   }
 }

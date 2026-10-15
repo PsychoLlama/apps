@@ -15,6 +15,6 @@
     "@dev/gitignore": "workspace:*"
   },
   "peerDependencies": {
-    "vite": "*"
+    "vite": "catalog:"
   }
 }

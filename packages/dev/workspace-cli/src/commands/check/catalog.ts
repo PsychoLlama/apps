@@ -38,6 +38,7 @@ export interface PackageManifest {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
 }
 
 /** A single non-catalog dep finding surfaced to the user. */
@@ -47,7 +48,7 @@ export interface Issue {
   /** Workspace-relative path to the offending manifest. */
   path: string;
   /** Which dep bucket the violation is in. */
-  bucket: 'dependencies' | 'devDependencies' | 'optionalDependencies';
+  bucket: (typeof DEP_BUCKETS)[number];
   /** Dep name. */
   name: string;
   /** The current (non-`catalog:`) version range. */
@@ -62,6 +63,7 @@ const DEP_BUCKETS = [
   'dependencies',
   'devDependencies',
   'optionalDependencies',
+  'peerDependencies',
 ] as const;
 
 /**
@@ -85,13 +87,7 @@ const indexCatalogs = (catalogs: Catalogs): Map<string, string> => {
   return index;
 };
 
-/**
- * Pure validator. `peerDependencies` are intentionally excluded:
- * the convention in this monorepo (see AGENTS.md) is to declare
- * runtime singletons like `solid-js` as peers with a `"*"` range
- * so the host supplies the actual version via `catalog:`. Flagging
- * those would be a stream of false positives.
- */
+/** Pure validator. */
 export const checkCatalogUsage = (
   catalogs: Catalogs,
   packages: PackageManifest[],

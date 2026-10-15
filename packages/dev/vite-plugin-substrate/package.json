@@ -31,6 +31,6 @@
     "vite-plugin-solid": "catalog:"
   },
   "peerDependencies": {
-    "vite": "*"
+    "vite": "catalog:"
   }
 }

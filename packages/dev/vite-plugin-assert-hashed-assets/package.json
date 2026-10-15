@@ -13,6 +13,6 @@
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "peerDependencies": {
-    "vite": "*"
+    "vite": "catalog:"
   }
 }
