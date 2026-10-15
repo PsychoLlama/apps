@@ -13,7 +13,7 @@ description: Open, iterate on, and merge PRs for this repo. Load when asked to o
 
 ## Process
 
-1. `pnpm check` must pass before opening a PR.
+1. `pnpm check:affected` must pass before opening a PR.
 2. Start the PR as draft.
 3. Tell me `PR: <url>` as soon as it's open.
 4. Iterate against CI using `gh`. Watch in a background task.

@@ -17,6 +17,27 @@
     "CLICOLOR_FORCE"
   ],
   "tasks": {
+    // Validates one package. No package defines a `check` script, so it
+    // only fans out to its dependencies.
+    "check": {
+      "dependsOn": ["typecheck", "test:unit", "test:browser", "build"]
+    },
+    // Repo-wide checks that don't belong to any one package. Turbo only
+    // counts the root as changed when files outside `packages/` change, so
+    // `--affected` alone would skip these; `check:affected` filters `//` in
+    // explicitly.
+    "//#check": {
+      "dependsOn": [
+        "//#typecheck",
+        "//#lint",
+        "//#knip:dev",
+        "//#knip:production",
+        "//#fmt-check",
+        "//#workspace:check",
+        "//#cargo:clippy",
+        "//#cargo:test"
+      ]
+    },
     "build": {
       "dependsOn": ["^typecheck", "^build"],
       "outputs": [".output/**"],
