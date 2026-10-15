@@ -7,6 +7,7 @@
   "license": "MIT",
   "sideEffects": false,
   "exports": {
+    "./serve": "./src/serve/index.ts",
     "./serve/api": "./src/serve/api/index.ts",
     "./serve/assets": "./src/serve/assets/index.ts",
     "./assets": "./src/assets/index.ts",

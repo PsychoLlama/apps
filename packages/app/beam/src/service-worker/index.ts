@@ -1,5 +1,5 @@
 import * as lifecycle from './lifecycle';
-import { routers } from './routers';
+import { servers } from './servers';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -13,10 +13,10 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { origin } = new URL(event.request.url);
-  const router = routers.get(origin);
+  const serve = servers.get(origin);
 
   // Not an origin we serve.
-  if (router === undefined) return;
+  if (serve === undefined) return;
 
-  event.respondWith(router.fetch(event.request));
+  event.respondWith(serve(event.request));
 });
