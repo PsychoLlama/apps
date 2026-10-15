@@ -37,7 +37,6 @@
     "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:",
-    "itty-router": "catalog:",
     "media-devices": "^0.5.0",
     "vite": "catalog:"
   },

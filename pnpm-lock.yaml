@@ -633,9 +633,6 @@ importers:
       '@vanilla-extract/dynamic':
         specifier: 'catalog:'
         version: 2.1.5
-      itty-router:
-        specifier: 'catalog:'
-        version: 5.0.24
       solid-js:
         specifier: 1.9.17
         version: 1.9.17
@@ -694,9 +691,6 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
-      itty-router:
-        specifier: 'catalog:'
-        version: 5.0.24
       media-devices:
         specifier: ^0.5.0
         version: 0.5.0
