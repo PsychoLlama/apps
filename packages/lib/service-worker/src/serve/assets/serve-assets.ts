@@ -1,4 +1,5 @@
 import type { OfflineManifest } from '@dev/vite-plugin-service-worker/types';
+import { assert } from '@lib/assert';
 import { createLogger } from '@lib/observability';
 import type { IRequestStrict } from 'itty-router';
 import { IttyRouter } from 'itty-router/IttyRouter';
@@ -29,7 +30,7 @@ export const serveAssets = (
   if (manifest === undefined) return serveFromNetwork;
 
   const router = IttyRouter<IRequestStrict, [ServerContext], Response>();
-  router.all('*', withRedirects, serveFromCache);
+  router.all('*', withRedirects, serveFromCache, serveNotFound);
 
   return (request: Request) =>
     router.fetch(request, {
@@ -41,35 +42,18 @@ export const serveAssets = (
 const serveFromNetwork = (request: Request) => fetch(request);
 
 /**
- * Answers from the cache alone. The install downloaded every asset, so
- * anything the manifest doesn't list is a real 404, offline or not.
+ * Answers from the cache alone. Passes when the manifest doesn't list the
+ * path, and fails a listed asset that's missing from the cache: that means
+ * eviction or a broken install, so don't paper over it with the network.
  */
 const serveFromCache = async (
   _request: Request,
   { manifest, asset }: ServerContext,
 ) => {
   const path = resolveAsset(manifest, asset.path);
+  if (path === undefined) return undefined;
 
-  if (path === undefined) {
-    const page = await readAsset(
-      NOT_FOUND_PAGE,
-      manifest.assets[NOT_FOUND_PAGE],
-    );
-
-    if (page.type === 'error') return page;
-
-    return new Response(page.body, { status: 404, headers: page.headers });
-  }
-
-  return readAsset(path, manifest.assets[path]);
-};
-
-/**
- * Reads an asset by its integrity hash. A miss means the cache was evicted
- * or the install is broken, so fail the request rather than paper over it
- * with the network.
- */
-const readAsset = async (path: string, integrityHash: string) => {
+  const integrityHash = manifest.assets[path];
   const response = await caches.match(cacheKey(integrityHash), {
     cacheName: CACHE_NAME,
   });
@@ -80,4 +64,18 @@ const readAsset = async (path: string, integrityHash: string) => {
   }
 
   return response;
+};
+
+/**
+ * Serves the 404 page. The install downloaded every asset, so anything
+ * the manifest doesn't list is a real 404, offline or not.
+ */
+const serveNotFound = async (request: Request, context: ServerContext) => {
+  context.asset.path = NOT_FOUND_PAGE;
+  const page = await serveFromCache(request, context);
+  assert(page !== undefined, 'The manifest is missing the 404 page.');
+
+  if (page.type === 'error') return page;
+
+  return new Response(page.body, { status: 404, headers: page.headers });
 };
