@@ -11,11 +11,14 @@
   "exports": {
     "./constants": "./src/constants.ts"
   },
+  "config": {
+    "localhost": "gallery.localhost"
+  },
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite dev --host ${npm_package_config_localhost:?}",
     "build": "vite build ${BUILD_MODE:+--mode $BUILD_MODE}",
     "start": "vite start",
-    "preview": "wrangler dev",
+    "preview": "wrangler dev --ip ${npm_package_config_localhost:?}",
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "deploy": "wrangler deploy",

@@ -8,6 +8,11 @@ description: Run and share app previews — vite dev servers, local static build
 - Other agents/worktrees may run servers. Avoid disrupting them; only stop your own.
 - Launches can be slow depending on cache.
 
+## Context
+
+- `APP_NAME`: `name` field from `packages/app/*/wrangler.jsonc`.
+- `<pkg>`: package name, e.g. `@app/example`.
+
 # Initiator Rules
 
 A preview is user-initiated if the user asked for a preview, agent otherwise.
@@ -23,33 +28,40 @@ A preview is user-initiated if the user asked for a preview, agent otherwise.
 - Default: static server.
 - Stop server when finished.
 
-# Dev Server
+# Localhost URLs
+
+Always prefix `APP_NAME` in the localhost URL. Example: `example.localhost:3000`.
+
+This keeps origin state and service workers isolated between apps in localdev.
+
+# Preview Types
+
+## Dev Server
 
 - Vite dev server. Automatically reloads on change.
 - NOTE: stale artifacts possible after aggressive refactors, especially CSS.
 
-## Runbook
+Steps:
 
 1. Start with `turbo run dev --filter <pkg>`.
 2. Poll server until it's ready.
 
-# Static Server
+## Static Server
 
 - Serves a static production build.
 
-## Runbook
+Steps:
 
 1. Start with `turbo run preview --filter <pkg>`.
 2. Poll server until it's ready.
 3. Use `turbo run build --filter <pkg>` to update.
 
-# Deployment Preview
+## Deployment Preview
 
 - PRs automatically deploy to preview URLs.
 - Each app deploys to `https://pr-{NUMBER}-{APP_NAME}.gibson.workers.dev/`.
 
-## Runbook
+Steps:
 
 1. In background, wait for CI.
-2. Get the PR number.
-3. Find `APP_NAME` via `packages/app/*/wrangler.jsonc`. Field is `name`.
+2. Get the PR number and find `APP_NAME`.
