@@ -1,4 +1,7 @@
-import { serveOfflineManifest, serveLogExport } from '@lib/service-worker/api';
+import {
+  serveOfflineManifest,
+  serveLogExport,
+} from '@lib/service-worker/serve/api';
 import { IttyRouter } from 'itty-router/IttyRouter';
 
 /** Answers `/api/local/*`, the endpoints only the service worker serves. */

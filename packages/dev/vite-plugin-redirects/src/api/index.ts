@@ -1,3 +1,4 @@
+import type { Regexes, Template } from '@lib/url-pattern/cloudflare';
 import type { Plugin } from 'vite';
 import { PLUGIN_NAME } from '../constants.ts';
 
@@ -14,7 +15,22 @@ import { PLUGIN_NAME } from '../constants.ts';
 export type RedirectRule = [
   source: string,
   destination: string,
-  statusCode?: number,
+  statusCode: number,
+];
+
+/**
+ * A `RedirectRule` compiled for matching outside Cloudflare, like in a
+ * service worker. Plain data, so it survives `JSON.stringify`.
+ *
+ * - `regexes`: match the source with `match` from
+ *   `@lib/url-pattern/cloudflare`.
+ * - `template`: fill the destination with `format`.
+ * - `statusCode`: resolved to Cloudflare's `302` when the rule omits it.
+ */
+export type CompiledRedirectRule = [
+  regexes: Regexes,
+  template: Template,
+  statusCode: number,
 ];
 
 /**
@@ -24,6 +40,9 @@ export type RedirectRule = [
 export interface RedirectsApi {
   /** A copy of the rules, in `_redirects` order (also match order). */
   getRules(): RedirectRule[];
+
+  /** A copy of the rules, compiled, in the same order. */
+  getCompiledRules(): CompiledRedirectRule[];
 }
 
 /**

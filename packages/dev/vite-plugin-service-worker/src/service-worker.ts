@@ -37,7 +37,7 @@ export const serviceWorker = (
 
     // Nitro installs modules from every Vite plugin that carries one. The
     // manifest needs the final public dir, which only Nitro knows.
-    nitro: offlineManifest(() => redirects?.getRules() ?? []),
+    nitro: offlineManifest(() => redirects?.getCompiledRules() ?? []),
 
     // The worker ships with the browser bundle. Server environments never
     // see it.

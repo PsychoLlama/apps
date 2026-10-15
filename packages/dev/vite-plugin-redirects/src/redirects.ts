@@ -1,6 +1,15 @@
+import {
+  assertCompatible,
+  compileMatcher,
+  compileTemplate,
+} from '@lib/url-pattern/cloudflare';
 import type { Plugin } from 'vite';
 import { PLUGIN_NAME } from './constants.ts';
-import type { RedirectRule, RedirectsApi } from './api/index.ts';
+import type {
+  CompiledRedirectRule,
+  RedirectRule,
+  RedirectsApi,
+} from './api/index.ts';
 
 /** Options for {@link redirects}. */
 export interface RedirectsConfig {
@@ -13,8 +22,11 @@ export interface RedirectsConfig {
  * output. Dev serves no redirects.
  */
 export const redirects = (config: RedirectsConfig): Plugin<RedirectsApi> => {
+  const compiledRules = config.rules.map(compileRule);
+
   const api: RedirectsApi = {
     getRules: () => structuredClone(config.rules),
+    getCompiledRules: () => structuredClone(compiledRules),
   };
 
   return {
@@ -37,3 +49,19 @@ export const redirects = (config: RedirectsConfig): Plugin<RedirectsApi> => {
 };
 
 const formatRule = (rule: RedirectRule) => `${rule.join(' ')}\n`;
+
+// Fails the config on rules Cloudflare would drop or fill wrong, naming
+// the rule, since the underlying errors only see one half of it.
+const compileRule = (rule: RedirectRule): CompiledRedirectRule => {
+  const [source, destination, statusCode = 302] = rule;
+
+  try {
+    const matcher = compileMatcher({ pathname: source });
+    const template = compileTemplate(destination);
+    assertCompatible(matcher, template);
+
+    return [matcher[0], template[0], statusCode];
+  } catch (error) {
+    throw new Error(`Invalid redirect: ${rule.join(' ')}`, { cause: error });
+  }
+};

@@ -1,5 +1,5 @@
 import type { OfflineManifest } from '@dev/vite-plugin-service-worker/types';
-import { getManifest } from '../assets/manifest';
+import { getManifest } from '../../assets/manifest';
 
 /**
  * Responds with the offline manifest baked into this worker, for inspecting

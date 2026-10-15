@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@dev/vite-plugin-redirects": "workspace:*",
-    "@lib/assert": "workspace:*"
+    "@lib/assert": "workspace:*",
+    "@lib/url-pattern": "workspace:*"
   },
   "devDependencies": {
     "nitro": "catalog:"
