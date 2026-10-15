@@ -15,11 +15,14 @@
   "exports": {
     "./constants": "./src/constants.ts"
   },
+  "config": {
+    "localhost": "apps.localhost"
+  },
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite dev --host ${npm_package_config_localhost:?}",
     "build": "vite build ${BUILD_MODE:+--mode $BUILD_MODE}",
     "start": "vite start",
-    "preview": "wrangler dev",
+    "preview": "wrangler dev --ip ${npm_package_config_localhost:?}",
     "typecheck": "tsc && tsc -p src/service-worker/tsconfig.json",
     "deploy": "wrangler deploy",
     "deploy:preview": "rm -f .wrangler/deploy/preview.ndjson && WRANGLER_OUTPUT_FILE_PATH=.wrangler/deploy/preview.ndjson wrangler versions upload --preview-alias \"pr-${PR_NUMBER:?}\""
