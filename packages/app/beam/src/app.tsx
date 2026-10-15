@@ -8,6 +8,7 @@ import { ErrorBoundaryFallback } from '@lib/shell';
 import { Branding } from '@lib/shell/branding';
 import { PwaMeta } from '@lib/shell/pwa';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
+import { installServiceWorker } from '@lib/service-worker/client';
 import { name } from './constants';
 import { runStartupTasks } from './startup-tasks';
 
@@ -24,6 +25,7 @@ export default function App() {
     <Router
       root={(props) => {
         onMount(runStartupTasks);
+        onMount(installServiceWorker);
 
         return (
           <AppProvider value={config}>

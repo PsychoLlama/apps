@@ -42,30 +42,33 @@ export default defineConfig({
           background_color: manifestThemeColor,
         },
       },
+      serviceWorker: {
+        path: 'src/service-worker/index.ts',
+      },
       nitro: (config) => {
         // One shell for every `/share/:id`, which the crawler can't reach
         // from `/`. The id is a live relay handle that only exists
         // client-side, and the page's first paint is independent of it.
         // See `docs/dynamic-prerendered-shells.md`.
-        config.prerender.routes = ['/share/__id'];
+        config.prerender.routes = ['/share/[id]'];
         config.hooks = {
           'prerender:generate'(route) {
-            // Flatten the share shell out of `/share/`, so the rewrite
-            // target sits above its source and Cloudflare's loop check
+            // Move the share shell under `/_dynamic/`, so the rewrite
+            // target can't match its source and Cloudflare's loop check
             // doesn't reject the rule.
-            if (route.route === '/share/__id') {
-              route.fileName = '/__share.html';
+            if (route.route === '/share/[id]') {
+              route.fileName = '/_dynamic/share/[id].html';
             }
           },
         };
       },
       redirects: {
         rules: [
-          // Serve the flattened share shell for every endpoint id. A 200
-          // rewrite keeps the id in the URL for the client router. The
-          // target is extensionless and sits above its source; see
-          // `docs/dynamic-prerendered-shells.md`.
-          ['/share/:id', '/__share', 200],
+          // Serve the share shell for every endpoint id. A 200 rewrite
+          // keeps the id in the URL for the client router. The target is
+          // extensionless, percent-encoded, and can't match its source;
+          // see `docs/dynamic-prerendered-shells.md`.
+          ['/share/:id', encodeURI('/_dynamic/share/[id]'), 200],
         ],
       },
     }),
