@@ -1,6 +1,8 @@
-import { collect, concurrent, pipe } from '../combinators';
-import type { Flow } from '../flow';
-import { resource } from '../resource';
+import type { Flow } from '../../flow';
+import { resource } from '../../task';
+import { collect } from '../collect';
+import { concurrent } from '../concurrent';
+import { pipe } from '../pipe';
 
 const constraints = () => ({ audio: true, video: true });
 const getStream = async (opts: { audio: boolean; video: boolean }) =>
