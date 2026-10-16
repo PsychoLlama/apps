@@ -1052,6 +1052,8 @@ importers:
         specifier: 1.9.17
         version: 1.9.17
 
+  packages/lib/effects: {}
+
   packages/lib/gallery:
     devDependencies:
       solid-js:

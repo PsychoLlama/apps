@@ -1,0 +1,13 @@
+{
+  "name": "@lib/effects",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Compose tasks into cached, ref-counted effect graphs.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}
