@@ -1,3 +1,4 @@
+export type { Entry } from './entry';
 export {
   acquire,
   bound,
@@ -9,11 +10,4 @@ export {
   type Handle,
   type Manager,
 } from './manager';
-export type { Entry } from './entry';
-export type {
-  ComputingState,
-  FailedState,
-  NodeState,
-  PendingState,
-  SucceededState,
-} from './state';
+export type * as Node from './node';

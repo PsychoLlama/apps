@@ -1,20 +1,19 @@
 import { assert } from '@lib/assert';
+import { createController, type Controller } from '../controller/controller';
 import type { Flow } from '../flow';
-import {
-  acquire,
-  compute,
-  createManager,
-  inspect,
-  release,
-  setSource,
-  type Manager,
-} from '../manager';
+import { createManager, release, type Manager } from '../manager';
 import type { Source } from '../source';
 
 /** Drives flows against a fresh manager and tears them down after. */
 export interface TestController extends AsyncDisposable {
   /** The manager under test, for assertions that need to look inside. */
   readonly manager: Manager;
+
+  /**
+   * A controller over the same manager, for bindings that take one: give
+   * it to a Solid tree through `ControllerContext`.
+   */
+  readonly controller: Controller;
 
   /**
    * Acquire the flow, compute it, and return its output values. The
@@ -35,18 +34,20 @@ export interface TestController extends AsyncDisposable {
  */
 export const createTestController = (): TestController => {
   const manager = createManager();
+  const controller = createController(manager);
 
   return {
     manager,
+    controller,
 
     run: async <Outputs extends readonly unknown[]>(
       flow: Flow<[], Outputs>,
     ): Promise<Outputs> => {
-      const handle = acquire(flow);
-      await compute(manager, handle);
+      const handle = controller.acquire(flow);
+      await controller.compute(handle);
 
       const values: readonly unknown[] = handle.outputs.map((node) => {
-        const state = inspect(handle, node);
+        const state = controller.inspect(handle, node);
         assert(state.step === 'succeeded', 'Output did not succeed.');
 
         return state.value;
@@ -56,7 +57,7 @@ export const createTestController = (): TestController => {
       return values as Outputs;
     },
 
-    setSource: (src, value) => setSource(manager, src, value),
+    setSource: controller.setSource,
 
     [Symbol.asyncDispose]: async () => {
       const results = await Promise.allSettled(

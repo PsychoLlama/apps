@@ -1,9 +1,9 @@
-import { pipe } from '../combinators';
+import { pipe } from '../../combinators';
+import { createManager } from '../../manager';
+import { source } from '../../source';
 import { createController } from '../controller';
-import { createManager } from '../manager';
-import { source } from '../source';
 
-describe('controller', () => {
+describe('createController', () => {
   it('binds the manager operations to one manager', async () => {
     const manager = createManager();
     const controller = createController(manager);
@@ -21,6 +21,9 @@ describe('controller', () => {
     await controller.setSource(count, 2);
     expect(controller.inspect(handle, handle.outputs[0])).toMatchObject({
       value: 4,
+    });
+    expect(controller.bound(handle, handle.outputs[0])()).toMatchObject({
+      inputs: [2],
     });
 
     await controller.release(handle);

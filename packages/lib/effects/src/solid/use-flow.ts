@@ -1,15 +1,9 @@
 import { createResource, onCleanup, onMount, type Resource } from 'solid-js';
 import { assert } from '@lib/assert';
+import type { Controller } from '../controller/controller';
 import type { Flow, FlowNode } from '../flow';
-import {
-  acquire,
-  bound,
-  compute,
-  release,
-  type Entry,
-  type Handle,
-} from '../manager';
-import { useManager } from './context';
+import type { Entry, Handle } from '../manager';
+import { useController } from './context';
 
 /** One Solid resource per output of a flow. */
 export type FlowOutputs<Outputs extends readonly unknown[]> = {
@@ -31,8 +25,12 @@ const outcome = async (entry: Entry): Promise<unknown> => {
  * unbound reads as unresolved, a fresh binding fetches, and a rebind after
  * a source change refreshes while `latest` keeps the previous value.
  */
-const toResource = (handle: Handle, node: FlowNode): Resource<unknown> => {
-  const [resource] = createResource(bound(handle, node), outcome);
+const toResource = (
+  controller: Controller,
+  handle: Handle,
+  node: FlowNode,
+): Resource<unknown> => {
+  const [resource] = createResource(controller.bound(handle, node), outcome);
   return resource;
 };
 
@@ -46,22 +44,22 @@ const toResource = (handle: Handle, node: FlowNode): Resource<unknown> => {
 export const useFlow = <Outputs extends readonly unknown[]>(
   flow: Flow<[], Outputs>,
 ): FlowOutputs<Outputs> => {
-  const manager = useManager();
-  const handle = acquire(flow);
+  const controller = useController();
+  const handle = controller.acquire(flow);
 
   onMount(() => {
     // Every failure is already a node state; the rejection only repeats them.
-    void compute(manager, handle).catch(() => {});
+    void controller.compute(handle).catch(() => {});
   });
 
   onCleanup(() => {
     // A cleanup that throws has no component left to tell, so the
     // rejection goes unhandled on purpose: loud, as a bug should be.
-    void release(manager, handle);
+    void controller.release(handle);
   });
 
   const outputs: readonly Resource<unknown>[] = handle.outputs.map((node) =>
-    toResource(handle, node),
+    toResource(controller, handle, node),
   );
 
   // The graph is untyped at runtime; the flow's signature vouches.

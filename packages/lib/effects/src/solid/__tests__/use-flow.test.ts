@@ -5,22 +5,23 @@ import {
   type Resource,
 } from 'solid-js';
 import { concurrent, pipe } from '../../combinators';
-import type { Manager } from '../../manager';
 import { source } from '../../source';
 import { resource } from '../../task';
 import { createTestController } from '../../testing';
-import { ManagerContext, useController, useManager } from '../context';
+import type { Controller } from '../../controller/controller';
+import { DEFAULT_CONTROLLER } from '../../controller/default';
+import { ControllerContext, useController } from '../context';
 import { useFlow } from '../use-flow';
 
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-/** Run `setup` as if inside a component under the given manager. */
-const mount = <Result>(manager: Manager, setup: () => Result) =>
+/** Run `setup` as if inside a component under the given controller. */
+const mount = <Result>(controller: Controller, setup: () => Result) =>
   createRoot((dispose) => {
     let result!: Result;
-    createComponent(ManagerContext.Provider, {
-      value: manager,
+    createComponent(ControllerContext.Provider, {
+      value: controller,
       get children() {
         result = setup();
         return null;
@@ -38,7 +39,7 @@ describe('useFlow', () => {
     const two = () => 'two';
     const states: string[] = [];
 
-    const { result, dispose } = mount(controller.manager, () => {
+    const { result, dispose } = mount(controller.controller, () => {
       const outputs = useFlow(concurrent([one, two]));
       createEffect(() => {
         states.push(outputs[0].state);
@@ -68,7 +69,7 @@ describe('useFlow', () => {
     const dispose = vi.fn();
     const open = () => resource('stream', dispose);
 
-    const owner = mount(controller.manager, () => useFlow(pipe([open])));
+    const owner = mount(controller.controller, () => useFlow(pipe([open])));
     await settle();
     expect(dispose).not.toHaveBeenCalled();
 
@@ -83,7 +84,7 @@ describe('useFlow', () => {
     await using controller = createTestController();
     const fail = () => Promise.reject(new Error('nope'));
 
-    const { result, dispose } = mount(controller.manager, () =>
+    const { result, dispose } = mount(controller.controller, () =>
       useFlow(pipe([fail])),
     );
     await settle();
@@ -102,7 +103,7 @@ describe('useFlow', () => {
       return value * 2;
     };
 
-    const { result, dispose } = mount(controller.manager, () => ({
+    const { result, dispose } = mount(controller.controller, () => ({
       outputs: useFlow(pipe([count, double])),
       controller: useController(),
     }));
@@ -127,8 +128,8 @@ describe('useFlow', () => {
     const open = vi.fn(() => 1);
 
     createRoot((dispose) => {
-      createComponent(ManagerContext.Provider, {
-        value: controller.manager,
+      createComponent(ControllerContext.Provider, {
+        value: controller.controller,
         get children() {
           useFlow(pipe([open]));
           dispose();
@@ -143,15 +144,15 @@ describe('useFlow', () => {
   });
 });
 
-describe('useManager', () => {
-  it('falls back to the default manager', () => {
+describe('useController', () => {
+  it('falls back to the default controller', () => {
     const [provided, fallback] = createRoot(() => {
-      const outer = useManager();
-      let inner!: Manager;
-      createComponent(ManagerContext.Provider, {
-        value: createTestController().manager,
+      const outer = useController();
+      let inner!: Controller;
+      createComponent(ControllerContext.Provider, {
+        value: createTestController().controller,
         get children() {
-          inner = useManager();
+          inner = useController();
           return null;
         },
       });
@@ -160,6 +161,6 @@ describe('useManager', () => {
     });
 
     expect(provided).not.toBe(fallback);
-    expect(fallback).toBe(createRoot(useManager));
+    expect(fallback).toBe(DEFAULT_CONTROLLER);
   });
 });

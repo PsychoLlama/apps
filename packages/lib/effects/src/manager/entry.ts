@@ -1,9 +1,9 @@
 import { createSignal, type Accessor, type Setter } from 'solid-js';
 import { isResource, type Dispose, type Task } from '../task';
-import type { ComputingState, FailedState, SucceededState } from './state';
+import type * as Node from './node';
 
 /** Where a started computation stands. */
-export type EntryState = ComputingState | SucceededState | FailedState;
+export type EntryState = Node.Computing | Node.Succeeded | Node.Failed;
 
 /** One computation: a task applied to one exact input tuple. */
 export interface Entry {

@@ -5,7 +5,7 @@ import { isSourceTask, SOURCE, type Source, type SourceTask } from '../source';
 import type { Task } from '../task';
 import { createCache, insert, lookup, remove, type Cache } from './cache';
 import { spawn, type Entry } from './entry';
-import type { NodeState } from './state';
+import type * as Node from './node';
 
 /** A flow acquired on a manager, and what the manager tracks for it. */
 export interface Handle {
@@ -312,5 +312,5 @@ export const bound = (
 };
 
 /** The current state of one of the handle's nodes. Reactive, as `bound`. */
-export const inspect = (handle: Handle, node: FlowNode): NodeState =>
+export const inspect = (handle: Handle, node: FlowNode): Node.State =>
   bound(handle, node)()?.state() ?? { step: 'pending' };

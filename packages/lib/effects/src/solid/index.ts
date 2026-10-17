@@ -1,7 +1,2 @@
-export {
-  DEFAULT_MANAGER,
-  ManagerContext,
-  useController,
-  useManager,
-} from './context';
+export { ControllerContext, useController } from './context';
 export { useFlow, type FlowOutputs } from './use-flow';

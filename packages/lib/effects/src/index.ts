@@ -1,30 +1,7 @@
 export { collect, concurrent, pipe } from './combinators';
-export { createController, type Controller } from './controller';
 export type { Flow, FlowNode } from './flow';
-export {
-  DEFAULT_MANAGER,
-  ManagerContext,
-  useController,
-  useFlow,
-  useManager,
-  type FlowOutputs,
-} from './solid';
+export type { Node } from './manager';
 export { source, type Source } from './source';
-export {
-  acquire,
-  compute,
-  createManager,
-  inspect,
-  release,
-  setSource,
-  type ComputingState,
-  type FailedState,
-  type Handle,
-  type Manager,
-  type NodeState,
-  type PendingState,
-  type SucceededState,
-} from './manager';
 export {
   resource,
   type Dispose,

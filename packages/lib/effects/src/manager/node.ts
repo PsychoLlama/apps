@@ -1,10 +1,15 @@
+/**
+ * Where a node of an acquired flow stands. Imported as a namespace:
+ * `Node.State`, `Node.Succeeded`, and so on.
+ */
+
 /** The node's inputs aren't known yet, or an upstream node failed. */
-export interface PendingState {
+export interface Pending {
   readonly step: 'pending';
 }
 
 /** The task is running. */
-export interface ComputingState {
+export interface Computing {
   readonly step: 'computing';
 
   /** The exact values the task was called with. */
@@ -12,7 +17,7 @@ export interface ComputingState {
 }
 
 /** The task threw. The error stays cached alongside the inputs. */
-export interface FailedState {
+export interface Failed {
   readonly step: 'failed';
 
   /** The exact values the task was called with. */
@@ -23,7 +28,7 @@ export interface FailedState {
 }
 
 /** The task finished. */
-export interface SucceededState<Value = unknown> {
+export interface Succeeded<Value = unknown> {
   readonly step: 'succeeded';
 
   /** The exact values the task was called with. */
@@ -33,6 +38,6 @@ export interface SucceededState<Value = unknown> {
   readonly value: Value;
 }
 
-/** Where a node stands. Snapshots are immutable; transitions replace them. */
-export type NodeState<Value = unknown> =
-  PendingState | ComputingState | FailedState | SucceededState<Value>;
+/** Snapshots are immutable; transitions replace them. */
+export type State<Value = unknown> =
+  Pending | Computing | Failed | Succeeded<Value>;

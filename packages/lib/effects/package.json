@@ -8,6 +8,8 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
+    "./controller": "./src/controller/index.ts",
+    "./solid": "./src/solid/index.ts",
     "./testing": "./src/testing/index.ts"
   },
   "scripts": {
