@@ -1,6 +1,7 @@
 import { assert } from '@lib/assert';
 import { createSignal, type Signal } from 'solid-js';
 import { FLOW, type Flow, type FlowNode } from '../flow';
+import { isSourceTask, SOURCE, type Source, type SourceTask } from '../source';
 import type { Task } from '../task';
 import { createCache, insert, lookup, remove, type Cache } from './cache';
 import { spawn, type Entry } from './entry';
@@ -23,15 +24,28 @@ export interface Handle {
   /** Per node, the entry it's bound to and so holds a reference on. */
   readonly held: ReadonlyMap<FlowNode, Signal<Entry | undefined>>;
 
+  /** Serializes the jobs that rebind nodes: source changes and release. */
+  queue: Promise<unknown>;
+
   released: boolean;
 }
 
 /** Computations shared by every handle acquired through it. */
 export interface Manager {
   readonly cache: Cache<Entry>;
+
+  /** Each source's current value, once set. Unset sources read their initial. */
+  readonly sources: Map<Task, unknown>;
+
+  /** Live handles, so a source change can reach every node that reads it. */
+  readonly handles: Set<Handle>;
 }
 
-export const createManager = (): Manager => ({ cache: createCache() });
+export const createManager = (): Manager => ({
+  cache: createCache(),
+  sources: new Map(),
+  handles: new Set(),
+});
 
 /** The live entry for a key, spawning one if its last life has ended. */
 const claim = async (
@@ -70,6 +84,16 @@ const retire = (manager: Manager, entry: Entry): Promise<void> => {
   return entry.retired;
 };
 
+const held = (handle: Handle, node: FlowNode) => {
+  const signal = handle.held.get(node);
+  assert(signal, 'Node is not part of this handle.');
+
+  return signal;
+};
+
+const current = (manager: Manager, task: SourceTask<unknown>) =>
+  manager.sources.has(task) ? manager.sources.get(task) : task[SOURCE];
+
 /** Bind a node once every upstream value is known, then let it settle. */
 const bind = (
   manager: Manager,
@@ -81,6 +105,10 @@ const bind = (
 
   binding = (async () => {
     const inputs: unknown[] = [];
+    if (isSourceTask(node.task)) {
+      inputs.push(current(manager, node.task));
+    }
+
     for (const input of node.inputs) {
       const upstream = await bind(manager, handle, input);
       const state = upstream?.state();
@@ -99,17 +127,85 @@ const bind = (
   return binding;
 };
 
-const held = (handle: Handle, node: FlowNode) => {
-  const signal = handle.held.get(node);
-  assert(signal, 'Node is not part of this handle.');
+/** Forget a node's binding and let go of its entry. Expects it settled. */
+const unbind = async (manager: Manager, handle: Handle, node: FlowNode) => {
+  if (!handle.bindings.delete(node)) return;
 
-  return signal;
+  const [entry, setEntry] = held(handle, node);
+  const bound = entry();
+  if (!bound) return;
+
+  setEntry(undefined);
+  bound.refs -= 1;
+  if (bound.refs === 0) await retire(manager, bound);
 };
 
-/** Build the flow's graph. Nothing runs until it's computed. */
-export const acquire = (flow: Flow<[]>): Handle => {
+/** Bind the nodes and collect every distinct failure among them. */
+const bringUp = async (
+  manager: Manager,
+  handle: Handle,
+  nodes: readonly FlowNode[],
+): Promise<unknown[]> => {
+  const entries = await Promise.all(
+    nodes.map((node) => bind(manager, handle, node)),
+  );
+
+  const failures = new Set<unknown>();
+  for (const entry of entries) {
+    const state = entry?.state();
+    if (state?.step === 'failed') failures.add(state.error);
+  }
+
+  return [...failures];
+};
+
+/** Unbind the nodes downstream first and collect every cleanup failure. */
+const tearDown = async (
+  manager: Manager,
+  handle: Handle,
+  nodes: readonly FlowNode[],
+): Promise<unknown[]> => {
+  // Let in-flight bindings land, or the entries they bind would leak.
+  await Promise.all(nodes.flatMap((node) => handle.bindings.get(node) ?? []));
+
+  const failures: unknown[] = [];
+  for (const node of nodes.toReversed()) {
+    try {
+      await unbind(manager, handle, node);
+    } catch (error) {
+      failures.push(error);
+    }
+  }
+
+  return failures;
+};
+
+/** The nodes reading a source task, and everything downstream of them. */
+const dependents = (handle: Handle, task: Task): FlowNode[] => {
+  const affected = new Set<FlowNode>();
+  for (const node of handle.nodes) {
+    if (
+      node.task === task ||
+      node.inputs.some((input) => affected.has(input))
+    ) {
+      affected.add(node);
+    }
+  }
+
+  return [...affected];
+};
+
+/** Run the job after every job queued on the handle before it. */
+const enqueue = <Result>(handle: Handle, job: () => Promise<Result>) => {
+  const run = handle.queue.then(job);
+  handle.queue = run.catch(() => {});
+  return run;
+};
+
+/** Build the flow's graph and register it. Nothing runs until computed. */
+export const acquire = (manager: Manager, flow: Flow<[]>): Handle => {
   const graph = flow[FLOW]([]);
-  return {
+  const handle: Handle = {
     nodes: graph.nodes,
     outputs: graph.outputs,
     bindings: new Map(),
@@ -120,8 +216,12 @@ export const acquire = (flow: Flow<[]>): Handle => {
         createSignal<Entry | undefined>(),
       ]),
     ),
+    queue: Promise.resolve(),
     released: false,
   };
+
+  manager.handles.add(handle);
+  return handle;
 };
 
 /**
@@ -135,18 +235,9 @@ export const compute = async (
 ): Promise<void> => {
   assert(!handle.released, 'Handle was already released.');
 
-  const entries = await Promise.all(
-    handle.nodes.map((node) => bind(manager, handle, node)),
-  );
-
-  const failures = new Set<unknown>();
-  for (const entry of entries) {
-    const state = entry?.state();
-    if (state?.step === 'failed') failures.add(state.error);
-  }
-
-  if (failures.size > 0) {
-    throw new AggregateError([...failures], 'Flow failed.');
+  const failures = await bringUp(manager, handle, handle.nodes);
+  if (failures.length > 0) {
+    throw new AggregateError(failures, 'Flow failed.');
   }
 };
 
@@ -161,28 +252,51 @@ export const release = async (
 ): Promise<void> => {
   assert(!handle.released, 'Handle was already released.');
   handle.released = true;
+  manager.handles.delete(handle);
 
-  // Let in-flight bindings land, or the entries they bind would leak.
-  await Promise.all(handle.bindings.values());
-
-  const failures: unknown[] = [];
-  for (const node of handle.nodes.toReversed()) {
-    const [bound] = held(handle, node);
-    const entry = bound();
-    if (!entry) continue;
-
-    entry.refs -= 1;
-    if (entry.refs > 0) continue;
-
-    try {
-      await retire(manager, entry);
-    } catch (error) {
-      failures.push(error);
+  await enqueue(handle, async () => {
+    const failures = await tearDown(manager, handle, handle.nodes);
+    if (failures.length > 0) {
+      throw new AggregateError(failures, 'Cleanup failed.');
     }
-  }
+  });
+};
 
+/**
+ * Change a source's value. Every node downstream of it, in every live
+ * handle, lets go of its entry (downstream first) and binds again against
+ * the new value. Resolves once they all settle; rejects with an
+ * `AggregateError` of every cleanup and compute failure.
+ */
+export const setSource = async <Value>(
+  manager: Manager,
+  src: Source<Value>,
+  value: Value,
+): Promise<void> => {
+  const task = src[SOURCE];
+  if (Object.is(current(manager, task), value)) return;
+  manager.sources.set(task, value);
+
+  const refreshed = await Promise.all(
+    [...manager.handles].map((handle) =>
+      enqueue(handle, async () => {
+        // A later change supersedes this one; its job will do the work.
+        if (!Object.is(current(manager, task), value)) return [];
+
+        const nodes = dependents(handle, task);
+        if (handle.released || nodes.length === 0) return [];
+
+        return [
+          ...(await tearDown(manager, handle, nodes)),
+          ...(await bringUp(manager, handle, nodes)),
+        ];
+      }),
+    ),
+  );
+
+  const failures = refreshed.flat();
   if (failures.length > 0) {
-    throw new AggregateError(failures, 'Cleanup failed.');
+    throw new AggregateError(failures, 'Source change failed.');
   }
 };
 
