@@ -1,4 +1,5 @@
 import { assert } from '@lib/assert';
+import { createSignal, type Signal } from 'solid-js';
 import { FLOW, type Flow, type FlowNode } from '../flow';
 import type { Task } from '../task';
 import { createCache, insert, lookup, remove, type Cache } from './cache';
@@ -19,8 +20,8 @@ export interface Handle {
    */
   readonly bindings: Map<FlowNode, Promise<Entry | undefined>>;
 
-  /** Entries this handle is bound to, and so holds a reference on. */
-  readonly held: Map<FlowNode, Entry>;
+  /** Per node, the entry it's bound to and so holds a reference on. */
+  readonly held: ReadonlyMap<FlowNode, Signal<Entry | undefined>>;
 
   released: boolean;
 }
@@ -82,18 +83,27 @@ const bind = (
     const inputs: unknown[] = [];
     for (const input of node.inputs) {
       const upstream = await bind(manager, handle, input);
-      if (upstream?.state.step !== 'succeeded') return undefined;
-      inputs.push(upstream.state.value);
+      const state = upstream?.state();
+      if (state?.step !== 'succeeded') return undefined;
+      inputs.push(state.value);
     }
 
     const entry = await claim(manager, node.task, inputs);
-    handle.held.set(node, entry);
+    const [, setEntry] = held(handle, node);
+    setEntry(entry);
     await entry.settled;
     return entry;
   })();
 
   handle.bindings.set(node, binding);
   return binding;
+};
+
+const held = (handle: Handle, node: FlowNode) => {
+  const signal = handle.held.get(node);
+  assert(signal, 'Node is not part of this handle.');
+
+  return signal;
 };
 
 /** Build the flow's graph. Nothing runs until it's computed. */
@@ -103,7 +113,13 @@ export const acquire = (flow: Flow<[]>): Handle => {
     nodes: graph.nodes,
     outputs: graph.outputs,
     bindings: new Map(),
-    held: new Map(),
+    held: new Map(
+      graph.nodes.map((node) => [
+        node,
+        // eslint-disable-next-line solid/reactivity -- Stored whole.
+        createSignal<Entry | undefined>(),
+      ]),
+    ),
     released: false,
   };
 };
@@ -125,7 +141,8 @@ export const compute = async (
 
   const failures = new Set<unknown>();
   for (const entry of entries) {
-    if (entry?.state.step === 'failed') failures.add(entry.state.error);
+    const state = entry?.state();
+    if (state?.step === 'failed') failures.add(state.error);
   }
 
   if (failures.size > 0) {
@@ -150,7 +167,8 @@ export const release = async (
 
   const failures: unknown[] = [];
   for (const node of handle.nodes.toReversed()) {
-    const entry = handle.held.get(node);
+    const [bound] = held(handle, node);
+    const entry = bound();
     if (!entry) continue;
 
     entry.refs -= 1;
@@ -168,6 +186,11 @@ export const release = async (
   }
 };
 
-/** The current state of one of the handle's nodes. */
-export const inspect = (handle: Handle, node: FlowNode): NodeState =>
-  handle.held.get(node)?.state ?? { step: 'pending' };
+/**
+ * The current state of one of the handle's nodes. Reactive: tracks under
+ * a Solid computation, reads plainly outside one.
+ */
+export const inspect = (handle: Handle, node: FlowNode): NodeState => {
+  const [entry] = held(handle, node);
+  return entry()?.state() ?? { step: 'pending' };
+};

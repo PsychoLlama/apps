@@ -1,3 +1,4 @@
+import { createEffect, createRoot } from 'solid-js';
 import { collect, concurrent, pipe } from '../../combinators';
 import { resource } from '../../task';
 import {
@@ -86,6 +87,39 @@ describe('manager', () => {
 
       await expect(compute(manager, handle)).rejects.toThrow(/released/);
       await expect(release(manager, handle)).rejects.toThrow(/released/);
+    });
+  });
+
+  describe('inspect', () => {
+    it('tracks node state under a Solid computation', async () => {
+      const manager = createManager();
+      const gate = Promise.withResolvers<string>();
+      const open = () => gate.promise;
+      const handle = acquire(pipe([open]));
+      const steps: string[] = [];
+
+      const dispose = createRoot((dispose) => {
+        createEffect(() => {
+          steps.push(inspect(handle, handle.nodes[0]).step);
+        });
+        return dispose;
+      });
+
+      expect(steps).toEqual(['pending']);
+
+      const computing = compute(manager, handle);
+      gate.resolve('stream');
+      await computing;
+
+      expect(steps).toEqual(['pending', 'computing', 'succeeded']);
+      dispose();
+    });
+
+    it('refuses a node from another flow', () => {
+      const handle = acquire(pipe([() => 1]));
+      const other = acquire(pipe([() => 2]));
+
+      expect(() => inspect(handle, other.nodes[0])).toThrow(/not part/);
     });
   });
 

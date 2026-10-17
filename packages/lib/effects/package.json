@@ -16,6 +16,9 @@
   "dependencies": {
     "@lib/assert": "workspace:*"
   },
+  "peerDependencies": {
+    "solid-js": "catalog:"
+  },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*",
     "@vitest/coverage-v8": "^5.0.0"

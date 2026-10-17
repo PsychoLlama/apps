@@ -1057,6 +1057,9 @@ importers:
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
+      solid-js:
+        specifier: 1.9.17
+        version: 1.9.17
     devDependencies:
       '@dev/vitest-config':
         specifier: workspace:*
