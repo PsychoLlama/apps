@@ -1,4 +1,5 @@
 export { collect, concurrent, pipe } from './combinators';
+export { createController, type Controller } from './controller';
 export type { Flow, FlowNode } from './flow';
 export { source, type Source } from './source';
 export {
