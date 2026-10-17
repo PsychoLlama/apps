@@ -1052,6 +1052,22 @@ importers:
         specifier: 1.9.17
         version: 1.9.17
 
+  packages/lib/effects:
+    dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../assert
+      solid-js:
+        specifier: 1.9.17
+        version: 1.9.17
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
+      '@vitest/coverage-v8':
+        specifier: ^5.0.0
+        version: 5.0.4(@vitest/browser@5.0.4)(vitest@5.0.4)
+
   packages/lib/gallery:
     devDependencies:
       solid-js:

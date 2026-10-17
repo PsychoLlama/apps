@@ -1,0 +1,29 @@
+{
+  "name": "@lib/effects",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Compose tasks into cached, ref-counted effect graphs.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./controller": "./src/controller/index.ts",
+    "./solid": "./src/solid/index.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
+  },
+  "dependencies": {
+    "@lib/assert": "workspace:*"
+  },
+  "peerDependencies": {
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*",
+    "@vitest/coverage-v8": "^5.0.0"
+  }
+}
