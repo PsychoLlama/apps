@@ -1053,6 +1053,10 @@ importers:
         version: 1.9.17
 
   packages/lib/effects:
+    dependencies:
+      '@lib/assert':
+        specifier: workspace:*
+        version: link:../assert
     devDependencies:
       '@dev/vitest-config':
         specifier: workspace:*

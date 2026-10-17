@@ -13,6 +13,9 @@
     "typecheck": "tsc",
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
+  "dependencies": {
+    "@lib/assert": "workspace:*"
+  },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*",
     "@vitest/coverage-v8": "^5.0.0"

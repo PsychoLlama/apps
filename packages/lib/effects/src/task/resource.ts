@@ -25,3 +25,7 @@ export const resource = <T>(value: T, dispose: Dispose): Resource<T> => ({
   value,
   dispose,
 });
+
+/** Whether a task output carries a cleanup. */
+export const isResource = (output: unknown): output is Resource<unknown> =>
+  typeof output === 'object' && output !== null && RESOURCE in output;
