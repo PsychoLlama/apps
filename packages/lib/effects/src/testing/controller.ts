@@ -42,7 +42,7 @@ export const createTestController = (): TestController => {
     run: async <Outputs extends readonly unknown[]>(
       flow: Flow<[], Outputs>,
     ): Promise<Outputs> => {
-      const handle = acquire(manager, flow);
+      const handle = acquire(flow);
       await compute(manager, handle);
 
       const values: readonly unknown[] = handle.outputs.map((node) => {

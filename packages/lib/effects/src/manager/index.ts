@@ -1,5 +1,6 @@
 export {
   acquire,
+  bound,
   compute,
   createManager,
   inspect,
@@ -8,6 +9,7 @@ export {
   type Handle,
   type Manager,
 } from './manager';
+export type { Entry } from './entry';
 export type {
   ComputingState,
   FailedState,

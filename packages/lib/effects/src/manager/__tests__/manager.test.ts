@@ -27,7 +27,7 @@ describe('manager', () => {
       const manager = createManager();
       const one = () => 1;
       const double = (value: number) => value * 2;
-      const handle = acquire(manager, pipe([one, double]));
+      const handle = acquire(pipe([one, double]));
 
       expect(inspect(handle, handle.nodes[0])).toEqual({
         step: 'pending',
@@ -52,8 +52,8 @@ describe('manager', () => {
       const one = () => 1;
       const two = () => 2;
       const add = (left: number, right: number) => left + right;
-      const sum = acquire(manager, pipe([concurrent([one, two]), add]));
-      const boxed = acquire(manager, collect([one, two]));
+      const sum = acquire(pipe([concurrent([one, two]), add]));
+      const boxed = acquire(collect([one, two]));
 
       await Promise.all([compute(manager, sum), compute(manager, boxed)]);
 
@@ -64,7 +64,7 @@ describe('manager', () => {
     it('awaits async tasks and unwraps resources', async () => {
       const manager = createManager();
       const open = async () => resource('stream', () => {});
-      const handle = acquire(manager, pipe([open]));
+      const handle = acquire(pipe([open]));
 
       await compute(manager, handle);
 
@@ -74,7 +74,7 @@ describe('manager', () => {
     it('is idempotent', async () => {
       const manager = createManager();
       const one = vi.fn(() => 1);
-      const handle = acquire(manager, pipe([one]));
+      const handle = acquire(pipe([one]));
 
       await compute(manager, handle);
       await compute(manager, handle);
@@ -84,7 +84,7 @@ describe('manager', () => {
 
     it('refuses a released handle', async () => {
       const manager = createManager();
-      const handle = acquire(manager, pipe([() => 1]));
+      const handle = acquire(pipe([() => 1]));
       await release(manager, handle);
 
       await expect(compute(manager, handle)).rejects.toThrow(/released/);
@@ -97,7 +97,7 @@ describe('manager', () => {
       const manager = createManager();
       const gate = Promise.withResolvers<string>();
       const open = () => gate.promise;
-      const handle = acquire(manager, pipe([open]));
+      const handle = acquire(pipe([open]));
       const steps: string[] = [];
 
       const dispose = createRoot((dispose) => {
@@ -118,9 +118,8 @@ describe('manager', () => {
     });
 
     it('refuses a node from another flow', () => {
-      const manager = createManager();
-      const handle = acquire(manager, pipe([() => 1]));
-      const other = acquire(manager, pipe([() => 2]));
+      const handle = acquire(pipe([() => 1]));
+      const other = acquire(pipe([() => 2]));
 
       expect(() => inspect(handle, other.nodes[0])).toThrow(/not part/);
     });
@@ -132,8 +131,8 @@ describe('manager', () => {
       const config = { video: true };
       const getConfig = () => config;
       const open = vi.fn((options: { video: boolean }) => options.video);
-      const first = acquire(manager, pipe([getConfig, open]));
-      const second = acquire(manager, pipe([getConfig, open]));
+      const first = acquire(pipe([getConfig, open]));
+      const second = acquire(pipe([getConfig, open]));
 
       await compute(manager, first);
       await compute(manager, second);
@@ -145,8 +144,8 @@ describe('manager', () => {
     it('keeps separate entries for inputs that differ by identity', async () => {
       const manager = createManager();
       const open = vi.fn((options: { video: boolean }) => options.video);
-      const first = acquire(manager, pipe([() => ({ video: true }), open]));
-      const second = acquire(manager, pipe([() => ({ video: true }), open]));
+      const first = acquire(pipe([() => ({ video: true }), open]));
+      const second = acquire(pipe([() => ({ video: true }), open]));
 
       await compute(manager, first);
       await compute(manager, second);
@@ -158,8 +157,8 @@ describe('manager', () => {
       const manager = createManager();
       const gate = Promise.withResolvers<string>();
       const open = vi.fn(() => gate.promise);
-      const first = acquire(manager, pipe([open]));
-      const second = acquire(manager, pipe([open]));
+      const first = acquire(pipe([open]));
+      const second = acquire(pipe([open]));
 
       const computing = Promise.all([
         compute(manager, first),
@@ -184,10 +183,7 @@ describe('manager', () => {
       const one = vi.fn(() => 1);
       const double = (value: number) => value * 2;
       const add = (left: number, right: number) => left + right;
-      const handle = acquire(
-        manager,
-        pipe([one, concurrent([double, double]), add]),
-      );
+      const handle = acquire(pipe([one, concurrent([double, double]), add]));
 
       await compute(manager, handle);
 
@@ -204,11 +200,8 @@ describe('manager', () => {
         throw error;
       });
       const observe = vi.fn((stream: never) => stream);
-      const first = acquire(
-        manager,
-        pipe([open, concurrent([observe, observe])]),
-      );
-      const second = acquire(manager, pipe([open]));
+      const first = acquire(pipe([open, concurrent([observe, observe])]));
+      const second = acquire(pipe([open]));
 
       await expect(compute(manager, first)).rejects.toSatisfy(
         (failure: AggregateError) => {
@@ -236,7 +229,7 @@ describe('manager', () => {
       const manager = createManager();
       const left = () => Promise.reject(new Error('left'));
       const right = () => Promise.reject(new Error('right'));
-      const handle = acquire(manager, concurrent([left, right]));
+      const handle = acquire(concurrent([left, right]));
 
       await expect(compute(manager, handle)).rejects.toSatisfy(
         (failure: AggregateError) => {
@@ -255,8 +248,8 @@ describe('manager', () => {
       const manager = createManager();
       const dispose = vi.fn();
       const open = () => resource('stream', dispose);
-      const first = acquire(manager, pipe([open]));
-      const second = acquire(manager, pipe([open]));
+      const first = acquire(pipe([open]));
+      const second = acquire(pipe([open]));
 
       await Promise.all([compute(manager, first), compute(manager, second)]);
       await release(manager, first);
@@ -280,7 +273,7 @@ describe('manager', () => {
           await downstreamGate.promise;
           order.push('observer:end');
         });
-      const handle = acquire(manager, pipe([open, observe]));
+      const handle = acquire(pipe([open, observe]));
 
       await compute(manager, handle);
       const releasing = release(manager, handle);
@@ -297,11 +290,11 @@ describe('manager', () => {
     it('recomputes after a full release', async () => {
       const manager = createManager();
       const open = vi.fn(() => resource('stream', () => {}));
-      const first = acquire(manager, pipe([open]));
+      const first = acquire(pipe([open]));
       await compute(manager, first);
       await release(manager, first);
 
-      const second = acquire(manager, pipe([open]));
+      const second = acquire(pipe([open]));
       await compute(manager, second);
 
       expect(open).toHaveBeenCalledTimes(2);
@@ -320,13 +313,13 @@ describe('manager', () => {
         });
       });
 
-      const first = acquire(manager, pipe([open]));
+      const first = acquire(pipe([open]));
       await compute(manager, first);
       const releasing = release(manager, first);
       await settle();
       expect(order).toEqual(['open', 'dispose:start']);
 
-      const second = acquire(manager, pipe([open]));
+      const second = acquire(pipe([open]));
       const computing = compute(manager, second);
       await settle();
 
@@ -344,7 +337,7 @@ describe('manager', () => {
       const gate = Promise.withResolvers<string>();
       const dispose = vi.fn();
       const open = () => gate.promise.then((value) => resource(value, dispose));
-      const handle = acquire(manager, pipe([open]));
+      const handle = acquire(pipe([open]));
 
       void compute(manager, handle);
       await settle();
@@ -366,7 +359,7 @@ describe('manager', () => {
       const observe = () => {
         throw new Error('observer');
       };
-      const handle = acquire(manager, pipe([open, observe]));
+      const handle = acquire(pipe([open, observe]));
 
       await expect(compute(manager, handle)).rejects.toBeInstanceOf(
         AggregateError,
@@ -386,7 +379,7 @@ describe('manager', () => {
     it('does nothing for a handle that never computed', async () => {
       const manager = createManager();
       const open = vi.fn(() => 1);
-      const handle = acquire(manager, pipe([open]));
+      const handle = acquire(pipe([open]));
 
       await release(manager, handle);
 
@@ -401,7 +394,7 @@ describe('manager', () => {
         resource(stream, () => {
           throw new Error('observer');
         });
-      const handle = acquire(manager, pipe([open, observe]));
+      const handle = acquire(pipe([open, observe]));
 
       await compute(manager, handle);
 
@@ -421,7 +414,7 @@ describe('manager', () => {
       const manager = createManager();
       const count = source(1);
       const double = vi.fn((value: number) => value * 2);
-      const handle = acquire(manager, pipe([count, double]));
+      const handle = acquire(pipe([count, double]));
 
       await compute(manager, handle);
       expect(inspect(handle, handle.nodes[0])).toEqual({
@@ -440,7 +433,7 @@ describe('manager', () => {
     it('applies before the first compute', async () => {
       const manager = createManager();
       const count = source(1);
-      const handle = acquire(manager, pipe([count]));
+      const handle = acquire(pipe([count]));
 
       await setSource(manager, count, 2);
       await compute(manager, handle);
@@ -452,7 +445,7 @@ describe('manager', () => {
       const manager = createManager();
       const count = source(1);
       const double = vi.fn((value: number) => value * 2);
-      const handle = acquire(manager, pipe([count, double]));
+      const handle = acquire(pipe([count, double]));
 
       await compute(manager, handle);
       await setSource(manager, count, 1);
@@ -474,7 +467,7 @@ describe('manager', () => {
         resource(id.length, () => {
           order.push(`unobserve:${id}`);
         });
-      const handle = acquire(manager, pipe([device, open, observe]));
+      const handle = acquire(pipe([device, open, observe]));
 
       await compute(manager, handle);
       await setSource(manager, device, 'back');
@@ -493,9 +486,9 @@ describe('manager', () => {
       const count = source(1);
       const double = vi.fn((value: number) => value * 2);
       const one = vi.fn(() => 1);
-      const first = acquire(manager, pipe([count, double]));
-      const second = acquire(manager, pipe([count, double]));
-      const unrelated = acquire(manager, pipe([one]));
+      const first = acquire(pipe([count, double]));
+      const second = acquire(pipe([count, double]));
+      const unrelated = acquire(pipe([one]));
 
       await Promise.all(
         [first, second, unrelated].map((handle) => compute(manager, handle)),
@@ -513,7 +506,7 @@ describe('manager', () => {
       const count = source(1);
       const dispose = vi.fn();
       const open = vi.fn((value: number) => resource(value, dispose));
-      const handle = acquire(manager, pipe([count, open]));
+      const handle = acquire(pipe([count, open]));
 
       await compute(manager, handle);
       const changing = setSource(manager, count, 2);
@@ -532,7 +525,7 @@ describe('manager', () => {
         seen.push(value);
         return resource(value, () => {});
       };
-      const handle = acquire(manager, pipe([count, open]));
+      const handle = acquire(pipe([count, open]));
 
       await compute(manager, handle);
       await Promise.all([
@@ -550,7 +543,7 @@ describe('manager', () => {
       const check = (value: number) =>
         value > 1 ? Promise.reject(new Error('too big')) : value;
       const double = vi.fn((value: number) => value * 2);
-      const handle = acquire(manager, pipe([count, check, double]));
+      const handle = acquire(pipe([count, check, double]));
 
       await compute(manager, handle);
 

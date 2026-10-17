@@ -1,5 +1,5 @@
 import { assert } from '@lib/assert';
-import { createSignal, type Signal } from 'solid-js';
+import { createSignal, type Accessor, type Signal } from 'solid-js';
 import { FLOW, type Flow, type FlowNode } from '../flow';
 import { isSourceTask, SOURCE, type Source, type SourceTask } from '../source';
 import type { Task } from '../task';
@@ -37,7 +37,7 @@ export interface Manager {
   /** Each source's current value, once set. Unset sources read their initial. */
   readonly sources: Map<Task, unknown>;
 
-  /** Live handles, so a source change can reach every node that reads it. */
+  /** Handles that have computed, so a source change can reach their nodes. */
   readonly handles: Set<Handle>;
 }
 
@@ -202,10 +202,10 @@ const enqueue = <Result>(handle: Handle, job: () => Promise<Result>) => {
   return run;
 };
 
-/** Build the flow's graph and register it. Nothing runs until computed. */
-export const acquire = (manager: Manager, flow: Flow<[]>): Handle => {
+/** Build the flow's graph. Pure: nothing runs, and no manager is involved. */
+export const acquire = (flow: Flow<[]>): Handle => {
   const graph = flow[FLOW]([]);
-  const handle: Handle = {
+  return {
     nodes: graph.nodes,
     outputs: graph.outputs,
     bindings: new Map(),
@@ -219,9 +219,6 @@ export const acquire = (manager: Manager, flow: Flow<[]>): Handle => {
     queue: Promise.resolve(),
     released: false,
   };
-
-  manager.handles.add(handle);
-  return handle;
 };
 
 /**
@@ -234,6 +231,7 @@ export const compute = async (
   handle: Handle,
 ): Promise<void> => {
   assert(!handle.released, 'Handle was already released.');
+  manager.handles.add(handle);
 
   const failures = await bringUp(manager, handle, handle.nodes);
   if (failures.length > 0) {
@@ -301,10 +299,18 @@ export const setSource = async <Value>(
 };
 
 /**
- * The current state of one of the handle's nodes. Reactive: tracks under
- * a Solid computation, reads plainly outside one.
+ * The entry one of the handle's nodes is bound to, or `undefined` while
+ * the node is pending. Reactive: tracks under a Solid computation, reads
+ * plainly outside one.
  */
-export const inspect = (handle: Handle, node: FlowNode): NodeState => {
+export const bound = (
+  handle: Handle,
+  node: FlowNode,
+): Accessor<Entry | undefined> => {
   const [entry] = held(handle, node);
-  return entry()?.state() ?? { step: 'pending' };
+  return entry;
 };
+
+/** The current state of one of the handle's nodes. Reactive, as `bound`. */
+export const inspect = (handle: Handle, node: FlowNode): NodeState =>
+  bound(handle, node)()?.state() ?? { step: 'pending' };

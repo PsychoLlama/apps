@@ -36,7 +36,7 @@ export interface Controller {
 }
 
 export const createController = (manager: Manager): Controller => ({
-  acquire: (flow) => acquire(manager, flow),
+  acquire,
   compute: (handle) => compute(manager, handle),
   release: (handle) => release(manager, handle),
   inspect,

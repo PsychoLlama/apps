@@ -11,9 +11,8 @@ describe('controller', () => {
     const double = (value: number) => value * 2;
     const handle = controller.acquire(pipe([count, double]));
 
-    expect(manager.handles.has(handle)).toBe(true);
-
     await controller.compute(handle);
+    expect(manager.handles.has(handle)).toBe(true);
     expect(controller.inspect(handle, handle.outputs[0])).toMatchObject({
       step: 'succeeded',
       value: 2,

@@ -1,6 +1,14 @@
 export { collect, concurrent, pipe } from './combinators';
 export { createController, type Controller } from './controller';
 export type { Flow, FlowNode } from './flow';
+export {
+  DEFAULT_MANAGER,
+  ManagerContext,
+  useController,
+  useFlow,
+  useManager,
+  type FlowOutputs,
+} from './solid';
 export { source, type Source } from './source';
 export {
   acquire,

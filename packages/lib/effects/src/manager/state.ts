@@ -23,16 +23,16 @@ export interface FailedState {
 }
 
 /** The task finished. */
-export interface SucceededState {
+export interface SucceededState<Value = unknown> {
   readonly step: 'succeeded';
 
   /** The exact values the task was called with. */
   readonly inputs: readonly unknown[];
 
   /** The task's output, with any resource wrapper removed. */
-  readonly value: unknown;
+  readonly value: Value;
 }
 
 /** Where a node stands. Snapshots are immutable; transitions replace them. */
-export type NodeState =
-  PendingState | ComputingState | FailedState | SucceededState;
+export type NodeState<Value = unknown> =
+  PendingState | ComputingState | FailedState | SucceededState<Value>;
