@@ -1,6 +1,5 @@
 import { createEffect, createRoot } from 'solid-js';
 import { collect, concurrent, pipe } from '../../combinators';
-import { source } from '../../source';
 import { resource } from '../../task';
 import {
   acquire,
@@ -8,7 +7,6 @@ import {
   createManager,
   inspect,
   release,
-  setSource,
   type Handle,
 } from '../manager';
 
@@ -407,159 +405,6 @@ describe('manager', () => {
         },
       );
       expect(upstream).toHaveBeenCalledTimes(1);
-    });
-  });
-  describe('sources', () => {
-    it('reads the initial value and rebinds downstream on change', async () => {
-      const manager = createManager();
-      const count = source(1);
-      const double = vi.fn((value: number) => value * 2);
-      const handle = acquire(pipe([count, double]));
-
-      await compute(manager, handle);
-      expect(inspect(handle, handle.nodes[0])).toEqual({
-        step: 'succeeded',
-        inputs: [1],
-        value: 1,
-      });
-      expect(output(handle)).toEqual([2]);
-
-      await setSource(manager, count, 3);
-
-      expect(output(handle)).toEqual([6]);
-      expect(double).toHaveBeenCalledTimes(2);
-    });
-
-    it('applies before the first compute', async () => {
-      const manager = createManager();
-      const count = source(1);
-      const handle = acquire(pipe([count]));
-
-      await setSource(manager, count, 2);
-      await compute(manager, handle);
-
-      expect(output(handle)).toEqual([2]);
-    });
-
-    it('ignores a change to the same value', async () => {
-      const manager = createManager();
-      const count = source(1);
-      const double = vi.fn((value: number) => value * 2);
-      const handle = acquire(pipe([count, double]));
-
-      await compute(manager, handle);
-      await setSource(manager, count, 1);
-
-      expect(double).toHaveBeenCalledTimes(1);
-    });
-
-    it('tears down the old branch before building the new one', async () => {
-      const manager = createManager();
-      const device = source('front');
-      const order: string[] = [];
-      const open = (id: string) => {
-        order.push(`open:${id}`);
-        return resource(id, () => {
-          order.push(`close:${id}`);
-        });
-      };
-      const observe = (id: string) =>
-        resource(id.length, () => {
-          order.push(`unobserve:${id}`);
-        });
-      const handle = acquire(pipe([device, open, observe]));
-
-      await compute(manager, handle);
-      await setSource(manager, device, 'back');
-
-      expect(order).toEqual([
-        'open:front',
-        'unobserve:front',
-        'close:front',
-        'open:back',
-      ]);
-      expect(output(handle)).toEqual([4]);
-    });
-
-    it('reaches every live handle and leaves the rest alone', async () => {
-      const manager = createManager();
-      const count = source(1);
-      const double = vi.fn((value: number) => value * 2);
-      const one = vi.fn(() => 1);
-      const first = acquire(pipe([count, double]));
-      const second = acquire(pipe([count, double]));
-      const unrelated = acquire(pipe([one]));
-
-      await Promise.all(
-        [first, second, unrelated].map((handle) => compute(manager, handle)),
-      );
-      await setSource(manager, count, 2);
-
-      expect(output(first)).toEqual([4]);
-      expect(output(second)).toEqual([4]);
-      expect(double).toHaveBeenCalledTimes(2);
-      expect(one).toHaveBeenCalledTimes(1);
-    });
-
-    it('skips a handle released mid-change', async () => {
-      const manager = createManager();
-      const count = source(1);
-      const dispose = vi.fn();
-      const open = vi.fn((value: number) => resource(value, dispose));
-      const handle = acquire(pipe([count, open]));
-
-      await compute(manager, handle);
-      const changing = setSource(manager, count, 2);
-      const releasing = release(manager, handle);
-      await Promise.all([changing, releasing]);
-
-      expect(open).toHaveBeenCalledTimes(1);
-      expect(dispose).toHaveBeenCalledTimes(1);
-    });
-
-    it('coalesces overlapping changes', async () => {
-      const manager = createManager();
-      const count = source(1);
-      const seen: number[] = [];
-      const open = (value: number) => {
-        seen.push(value);
-        return resource(value, () => {});
-      };
-      const handle = acquire(pipe([count, open]));
-
-      await compute(manager, handle);
-      await Promise.all([
-        setSource(manager, count, 2),
-        setSource(manager, count, 3),
-      ]);
-
-      expect(seen).toEqual([1, 3]);
-      expect(output(handle)).toEqual([3]);
-    });
-
-    it('reports failures from the new value', async () => {
-      const manager = createManager();
-      const count = source(1);
-      const check = (value: number) =>
-        value > 1 ? Promise.reject(new Error('too big')) : value;
-      const double = vi.fn((value: number) => value * 2);
-      const handle = acquire(pipe([count, check, double]));
-
-      await compute(manager, handle);
-
-      await expect(setSource(manager, count, 2)).rejects.toSatisfy(
-        (failure: AggregateError) => {
-          expect(failure.message).toBe('Source change failed.');
-          expect(failure.errors).toEqual([new Error('too big')]);
-          return true;
-        },
-      );
-      expect(inspect(handle, handle.nodes[2])).toEqual({ step: 'pending' });
-
-      await setSource(manager, count, 0);
-
-      expect(output(handle)).toEqual([0]);
-      expect(double).toHaveBeenCalledTimes(2);
     });
   });
 });

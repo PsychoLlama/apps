@@ -6,13 +6,11 @@ import {
   compute,
   inspect,
   release,
-  setSource,
   type Entry,
   type Handle,
   type Manager,
   type Node,
 } from '../manager';
-import type { Source } from '../source';
 
 /**
  * The manager's operations, bound to one manager. Plain functions, so
@@ -37,12 +35,6 @@ export interface Controller {
   /** The current state of one of the handle's nodes. Reactive. */
   readonly inspect: (handle: Handle, node: FlowNode) => Node.State;
 
-  /** Change a source's value and rebind everything downstream of it. */
-  readonly setSource: <Value>(
-    src: Source<Value>,
-    value: Value,
-  ) => Promise<void>;
-
   /**
    * The entry a node is bound to, `undefined` while pending. Reactive.
    * For bindings that follow a node's life rather than its value.
@@ -58,6 +50,5 @@ export const createController = (manager: Manager): Controller => ({
   compute: (handle) => compute(manager, handle),
   release: (handle) => release(manager, handle),
   inspect,
-  setSource: (src, value) => setSource(manager, src, value),
   bound,
 });

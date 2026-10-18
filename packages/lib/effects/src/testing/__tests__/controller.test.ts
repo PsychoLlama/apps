@@ -1,5 +1,4 @@
 import { concurrent, pipe } from '../../combinators';
-import { source } from '../../source';
 import { resource } from '../../task';
 import { createTestController } from '../controller';
 
@@ -36,17 +35,6 @@ describe('createTestController', () => {
     }
 
     expect(dispose).toHaveBeenCalledTimes(1);
-  });
-
-  it('changes sources on its own manager', async () => {
-    await using controller = createTestController();
-    const count = source(1);
-    const double = (value: number) => value * 2;
-    const flow = pipe([count, double]);
-
-    expect(await controller.run(flow)).toEqual([2]);
-    await controller.setSource(count, 3);
-    expect(await controller.run(flow)).toEqual([6]);
   });
 
   it('reports cleanups that threw on dispose', async () => {

@@ -2,7 +2,6 @@ import { assert } from '@lib/assert';
 import { createController, type Controller } from '../controller/controller';
 import type { Flow } from '../flow';
 import { createManager, release, type Manager } from '../manager';
-import type { Source } from '../source';
 
 /** Drives flows against a fresh manager and tears them down after. */
 export interface TestController extends AsyncDisposable {
@@ -22,9 +21,6 @@ export interface TestController extends AsyncDisposable {
   run<Outputs extends readonly unknown[]>(
     flow: Flow<[], Outputs>,
   ): Promise<Outputs>;
-
-  /** Change a source's value and wait for every flow reading it. */
-  setSource<Value>(src: Source<Value>, value: Value): Promise<void>;
 }
 
 /**
@@ -56,8 +52,6 @@ export const createTestController = (): TestController => {
       // The graph is untyped at runtime; the flow's signature vouches.
       return values as Outputs;
     },
-
-    setSource: controller.setSource,
 
     [Symbol.asyncDispose]: async () => {
       const results = await Promise.allSettled(

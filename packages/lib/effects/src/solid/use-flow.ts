@@ -22,8 +22,7 @@ const outcome = async (entry: Entry): Promise<unknown> => {
 
 /**
  * A node as a Solid resource. The node's binding is the resource's source:
- * unbound reads as unresolved, a fresh binding fetches, and a rebind after
- * a source change refreshes while `latest` keeps the previous value.
+ * unbound reads as unresolved, and a fresh binding fetches.
  */
 const toResource = (
   controller: Controller,

@@ -5,7 +5,6 @@ import {
   type Resource,
 } from 'solid-js';
 import { concurrent, pipe } from '../../combinators';
-import { source } from '../../source';
 import { resource } from '../../task';
 import { createTestController } from '../../testing';
 import type { Controller } from '../../controller/controller';
@@ -91,35 +90,6 @@ describe('useFlow', () => {
 
     expect(result[0].state).toBe('errored');
     expect(result[0].error).toEqual(new Error('nope'));
-    dispose();
-  });
-
-  it('refreshes on a source change, keeping the latest value', async () => {
-    await using controller = createTestController();
-    const count = source(1);
-    const gate = Promise.withResolvers<void>();
-    const double = async (value: number) => {
-      if (value > 1) await gate.promise;
-      return value * 2;
-    };
-
-    const { result, dispose } = mount(controller.controller, () => ({
-      outputs: useFlow(pipe([count, double])),
-      controller: useController(),
-    }));
-    await settle();
-    expect(result.outputs[0]()).toBe(2);
-
-    const changing = result.controller.setSource(count, 3);
-    await settle();
-    expect(result.outputs[0].state).toBe('refreshing');
-    expect(result.outputs[0].latest).toBe(2);
-
-    gate.resolve();
-    await changing;
-    await settle();
-
-    expect(result.outputs[0]()).toBe(6);
     dispose();
   });
 
