@@ -1,57 +1,11 @@
 import { call, commit, defineSaga } from '@lib/state';
-import {
-  deleteLogs,
-  readAdvancedSettings,
-  resetLogFilter,
-  watchAdvancedSettings,
-  writeLogFilter,
-} from './capabilities';
+import { deleteLogs, resetLogFilter, writeLogFilter } from './capabilities';
 import { logsDeletedTopic } from './log-storage';
 import { advancedSettingsScope } from './scope';
-import {
-  advancedSettingsRestoredTopic,
-  logFilterChangedTopic,
-} from './settings';
-
-/**
- * Bring the Advanced section to life and keep it there. Opens the change
- * subscription, reconciles the seeded defaults with whatever OPFS has
- * persisted, then publishes every later change for as long as the scope
- * lives. This is the store's only writer: the commit and reset sagas
- * below persist through `@lib/runtime-config`, and the change comes back
- * around here.
- *
- * `AdvancedSettings` runs it once as the section mounts — OPFS is
- * client-only, so it can't run during SSG.
- *
- * Order matters. Subscribing before the read means a change landing
- * mid-read is buffered rather than lost; draining after the restore means
- * it's replayed on top of the snapshot instead of being clobbered by it.
- *
- * It never ends on its own. Releasing the last anchor aborts it, which
- * drops the subscriptions.
- */
-export const trackAdvancedSettingsSaga = defineSaga(
-  advancedSettingsScope,
-  async function* () {
-    const changes = yield* call(watchAdvancedSettings);
-
-    const values = yield* call(readAdvancedSettings);
-    yield commit(advancedSettingsRestoredTopic(values));
-
-    for await (const change of changes) {
-      switch (change.option) {
-        case 'logFilter':
-          yield commit(logFilterChangedTopic(change.pattern));
-          break;
-      }
-    }
-  },
-);
 
 /**
  * Persist a new log filter pattern. Publishes nothing: the write echoes
- * back through the subscription, which is what updates the store.
+ * back through the subscription `observeLogFilter` holds.
  */
 export const commitLogFilterSaga = defineSaga(
   advancedSettingsScope,
@@ -62,7 +16,7 @@ export const commitLogFilterSaga = defineSaga(
 
 /**
  * Revert the log filter to its default for the active environment. The
- * reset echoes back through the subscription, which updates the store.
+ * reset echoes back through the subscription `observeLogFilter` holds.
  */
 export const resetLogFilterSaga = defineSaga(
   advancedSettingsScope,
