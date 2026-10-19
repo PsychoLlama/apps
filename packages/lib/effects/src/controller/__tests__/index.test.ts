@@ -9,12 +9,12 @@ describe('controller entry point', () => {
     const handle = acquire(pipe([one, double]));
 
     await compute(handle);
-    expect(inspect(handle, handle.outputs[0])).toMatchObject({ value: 2 });
-    expect(DEFAULT_CONTROLLER.inspect(handle, handle.outputs[0])).toBe(
-      inspect(handle, handle.outputs[0]),
+    expect(inspect(handle, handle.output)).toMatchObject({ outputs: [2] });
+    expect(DEFAULT_CONTROLLER.inspect(handle, handle.output)).toBe(
+      inspect(handle, handle.output),
     );
 
     await release(handle);
-    expect(inspect(handle, handle.outputs[0])).toEqual({ step: 'pending' });
+    expect(inspect(handle, handle.output)).toEqual({ step: 'pending' });
   });
 });

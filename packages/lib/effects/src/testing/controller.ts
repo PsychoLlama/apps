@@ -42,15 +42,11 @@ export const createTestController = (): TestController => {
       const handle = controller.acquire(flow);
       await controller.compute(handle);
 
-      const values: readonly unknown[] = handle.outputs.map((node) => {
-        const state = controller.inspect(handle, node);
-        assert(state.step === 'succeeded', 'Output did not succeed.');
-
-        return state.value;
-      });
+      const state = controller.inspect(handle, handle.output);
+      assert(state.step === 'succeeded', 'Output did not succeed.');
 
       // The graph is untyped at runtime; the flow's signature vouches.
-      return values as Outputs;
+      return state.outputs as Outputs;
     },
 
     [Symbol.asyncDispose]: async () => {

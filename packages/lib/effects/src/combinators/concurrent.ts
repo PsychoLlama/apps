@@ -31,16 +31,22 @@ export type Branches<S extends Steps> = {
  */
 export const concurrent = <const S extends Steps>(
   branches: Branches<S>,
-): Flow<InputsOf<S[0]>, ConcatOutputs<S>> =>
-  defineFlow((inputs) => {
+): Flow<InputsOf<S[0]>, ConcatOutputs<S>> => {
+  const flow = defineFlow((input) => {
     const nodes: FlowNode[] = [];
     const outputs: FlowNode[] = [];
 
     for (const branch of branches as Steps) {
-      const graph = toBuild(branch)(inputs);
+      const graph = toBuild(branch)(input);
       nodes.push(...graph.nodes);
-      outputs.push(...graph.outputs);
+      outputs.push(graph.output);
     }
 
-    return { nodes, outputs };
+    const join: FlowNode = { kind: 'join', flow, branches: outputs };
+    nodes.push(join);
+
+    return { nodes, output: join };
   });
+
+  return flow;
+};

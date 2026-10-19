@@ -19,11 +19,10 @@ import {
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-const output = (handle: Handle) =>
-  handle.outputs.map((node) => {
-    const state = inspect(handle, node);
-    return state.step === 'succeeded' ? state.value : state;
-  });
+const output = (handle: Handle) => {
+  const state = inspect(handle, handle.output);
+  return state.step === 'succeeded' ? state.outputs : state;
+};
 
 describe('manager', () => {
   describe('compute', () => {
@@ -42,12 +41,12 @@ describe('manager', () => {
       expect(inspect(handle, handle.nodes[0])).toEqual({
         step: 'succeeded',
         inputs: [],
-        value: 1,
+        outputs: [1],
       });
       expect(inspect(handle, handle.nodes[1])).toEqual({
         step: 'succeeded',
         inputs: [1],
-        value: 2,
+        outputs: [2],
       });
     });
 
@@ -89,7 +88,7 @@ describe('manager', () => {
       await compute(manager, handle);
       const state = inspect(handle, handle.nodes[0]);
       assert(state.step === 'succeeded');
-      const muted = state.value as Accessor<boolean>;
+      const muted = state.outputs[0] as Accessor<boolean>;
 
       setMuted(true);
       expect(muted()).toBe(true);
@@ -202,6 +201,53 @@ describe('manager', () => {
       await computing;
 
       expect(output(second)).toEqual(['stream']);
+    });
+
+    it('shares one output tuple across handles', async () => {
+      const manager = createManager();
+      const one = () => 1;
+      const first = acquire(pipe([one]));
+      const second = acquire(pipe([one]));
+
+      await compute(manager, first);
+      await compute(manager, second);
+
+      expect(output(first)).toEqual([1]);
+      expect(output(second)).toBe(output(first));
+    });
+
+    it('keys a task on its upstream tuple, not equal values', async () => {
+      const manager = createManager();
+      const double = vi.fn((value: number) => value * 2);
+      const first = acquire(pipe([() => 1, double]));
+      const second = acquire(pipe([() => 1, double]));
+
+      await compute(manager, first);
+      await compute(manager, second);
+
+      expect(double).toHaveBeenCalledTimes(2);
+    });
+
+    it('shares a join and everything downstream of it', async () => {
+      const manager = createManager();
+      const one = () => 1;
+      const two = () => 2;
+      const add = vi.fn((left: number, right: number) => left + right);
+      const both = concurrent([one, two]);
+      const first = acquire(pipe([both, add]));
+      const second = acquire(pipe([both, add]));
+
+      await compute(manager, first);
+      await compute(manager, second);
+
+      const joined = inspect(first, first.nodes[2]);
+      expect(joined).toEqual({
+        step: 'succeeded',
+        inputs: [[1], [2]],
+        outputs: [1, 2],
+      });
+      expect(inspect(second, second.nodes[2])).toBe(joined);
+      expect(add).toHaveBeenCalledOnce();
     });
 
     it('resolves a diamond once per handle', async () => {

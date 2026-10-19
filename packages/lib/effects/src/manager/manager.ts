@@ -1,9 +1,8 @@
 import { assert } from '@lib/assert';
 import { createSignal, type Accessor, type Signal } from 'solid-js';
 import { FLOW, type Flow, type FlowNode } from '../flow';
-import type { Task } from '../task';
 import { createCache, insert, lookup, remove, type Cache } from './cache';
-import { spawn, type Entry } from './entry';
+import { keyOf, ROOT, spawn, type Entry, type Tuple } from './entry';
 import type * as Node from './node';
 
 /** A flow acquired on a manager, and what the manager tracks for it. */
@@ -11,8 +10,8 @@ export interface Handle {
   /** Every node in the flow, topologically ordered. */
   readonly nodes: readonly FlowNode[];
 
-  /** The nodes forming the flow's output tuple. */
-  readonly outputs: readonly FlowNode[];
+  /** The node whose output tuple is the flow's output. */
+  readonly output: FlowNode;
 
   /**
    * Each node's binding, memoized so diamonds resolve once. Absent when an
@@ -42,20 +41,21 @@ export const createManager = (): Manager => ({
 /** The live entry for a key, spawning one if its last life has ended. */
 const claim = async (
   manager: Manager,
-  task: Task,
-  inputs: readonly unknown[],
+  node: FlowNode,
+  sources: readonly Tuple[],
 ): Promise<Entry> => {
-  let entry = lookup(manager.cache, task, inputs);
+  const key = keyOf(node);
+  let entry = lookup(manager.cache, key, sources);
 
   // Never overlap with a previous life of the same key.
   while (entry?.retired) {
     await entry.retired.catch(() => {});
-    entry = lookup(manager.cache, task, inputs);
+    entry = lookup(manager.cache, key, sources);
   }
 
   if (!entry) {
-    entry = spawn(task, inputs);
-    insert(manager.cache, task, inputs, entry);
+    entry = spawn(node, sources);
+    insert(manager.cache, key, sources, entry);
   }
 
   entry.refs += 1;
@@ -69,7 +69,7 @@ const retire = (manager: Manager, entry: Entry): Promise<void> => {
       await entry.settled;
       await entry.dispose?.();
     } finally {
-      remove(manager.cache, entry.task, entry.inputs);
+      remove(manager.cache, entry.key, entry.sources);
     }
   })();
 
@@ -83,7 +83,13 @@ const held = (handle: Handle, node: FlowNode) => {
   return signal;
 };
 
-/** Bind a node once every upstream value is known, then let it settle. */
+/** The nodes whose output tuples feed this one. */
+const upstream = (node: FlowNode): readonly FlowNode[] => {
+  if (node.kind === 'join') return node.branches;
+  return node.input ? [node.input] : [];
+};
+
+/** Bind a node once every upstream tuple is known, then let it settle. */
 const bind = (
   manager: Manager,
   handle: Handle,
@@ -93,15 +99,18 @@ const bind = (
   if (binding) return binding;
 
   binding = (async () => {
-    const inputs: unknown[] = [];
-    for (const input of node.inputs) {
-      const upstream = await bind(manager, handle, input);
-      const state = upstream?.state();
+    const sources: Tuple[] = [];
+    for (const source of upstream(node)) {
+      const entry = await bind(manager, handle, source);
+      const state = entry?.state();
       if (state?.step !== 'succeeded') return undefined;
-      inputs.push(state.value);
+      sources.push(state.outputs);
     }
 
-    const entry = await claim(manager, node.task, inputs);
+    // A root task still keys on a tuple, so every node keys the same way.
+    if (node.kind === 'task' && !node.input) sources.push(ROOT);
+
+    const entry = await claim(manager, node, sources);
     const [, setEntry] = held(handle, node);
     setEntry(entry);
     await entry.settled;
@@ -167,10 +176,10 @@ const tearDown = async (
 
 /** Build the flow's graph. Pure: nothing runs, and no manager is involved. */
 export const acquire = (flow: Flow<[]>): Handle => {
-  const graph = flow[FLOW]([]);
+  const graph = flow[FLOW]();
   return {
     nodes: graph.nodes,
-    outputs: graph.outputs,
+    output: graph.output,
     bindings: new Map(),
     held: new Map(
       graph.nodes.map((node) => [

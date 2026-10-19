@@ -1,16 +1,16 @@
 import { FLOW, type Flow, type FlowNode, type Graph } from '../../flow';
 
-/** Wire a flow against placeholder upstream nodes. */
-export const build = (
-  flow: Flow<never>,
-  inputs: readonly FlowNode[] = [],
-): Graph => flow[FLOW](inputs);
+/** Wire a flow against a placeholder upstream node. */
+export const build = (flow: Flow<never>, input?: FlowNode): Graph =>
+  flow[FLOW](input);
 
-/** Readable shape: task names wired to the names of their inputs. */
+/** Readable shape: task names wired to their upstream, joins as tuples. */
 const describeNode = (node: FlowNode): string =>
-  `${node.task.name}(${node.inputs.map(describeNode).join(', ')})`;
+  node.kind === 'join'
+    ? `[${node.branches.map(describeNode).join(', ')}]`
+    : `${node.task.name}(${node.input ? describeNode(node.input) : ''})`;
 
 export const shape = (graph: Graph) => ({
   nodes: graph.nodes.map(describeNode),
-  outputs: graph.outputs.map(describeNode),
+  output: describeNode(graph.output),
 });

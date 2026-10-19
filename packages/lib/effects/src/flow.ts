@@ -22,27 +22,48 @@ export interface Flow<
   readonly [SIGNATURE]?: (...inputs: Inputs) => Outputs;
 }
 
-/** One task position in a built graph, wired to the nodes that feed it. */
-export interface FlowNode {
+/**
+ * Runs a task over its upstream's output tuple, spread as arguments. A
+ * node without one is a root and gets no arguments.
+ */
+export interface TaskNode {
+  readonly kind: 'task';
   readonly task: Task;
-  readonly inputs: readonly FlowNode[];
+  readonly input?: FlowNode;
 }
+
+/**
+ * Concatenates its branches' output tuples. Built by `concurrent`, whose
+ * flow keys the join's cached work.
+ */
+export interface JoinNode {
+  readonly kind: 'join';
+  readonly flow: Flow<never>;
+  readonly branches: readonly FlowNode[];
+}
+
+/**
+ * One position in a built graph. Every node produces an output tuple: a
+ * task's holds its one value, and a join's holds its branches' end to end.
+ */
+export type FlowNode = TaskNode | JoinNode;
 
 /**
  * A fully-wired computation graph. `nodes` lists every node in
- * topological order; `outputs` are the nodes forming the flow's output
- * tuple.
+ * topological order; `output` is the node whose tuple is the flow's
+ * output.
  */
 export interface Graph {
   readonly nodes: readonly FlowNode[];
-  readonly outputs: readonly FlowNode[];
+  readonly output: FlowNode;
 }
 
 /**
- * Wires a flow against concrete upstream nodes. Flows stay abstract until
- * composed, so a sub-flow's inputs are only known once it's placed.
+ * Wires a flow against a concrete upstream node, whose output tuple is
+ * the flow's input. Flows stay abstract until composed, so a sub-flow's
+ * input is only known once it's placed.
  */
-export type Build = (inputs: readonly FlowNode[]) => Graph;
+export type Build = (input?: FlowNode) => Graph;
 
 /** Anything that can sit in a flow: a task or another flow. */
 export type Step = Task | Flow<never>;
@@ -73,9 +94,9 @@ export type OutputsOf<S> =
 /** The builder for any step. A task becomes a single node. */
 export const toBuild = (step: Step): Build =>
   typeof step === 'function'
-    ? (inputs) => {
-        const node: FlowNode = { task: step, inputs };
-        return { nodes: [node], outputs: [node] };
+    ? (input) => {
+        const node: FlowNode = { kind: 'task', task: step, input };
+        return { nodes: [node], output: node };
       }
     : step[FLOW];
 
