@@ -600,6 +600,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/effects':
+        specifier: workspace:*
+        version: link:../../lib/effects
       '@lib/holz-idb-backend':
         specifier: workspace:*
         version: link:../../lib/holz-idb-backend
@@ -773,6 +776,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
+      '@lib/effects':
+        specifier: workspace:*
+        version: link:../../lib/effects
       '@lib/holz-idb-backend':
         specifier: workspace:*
         version: link:../../lib/holz-idb-backend

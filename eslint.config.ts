@@ -207,9 +207,12 @@ export default [
   {
     // @lib/state and @lib/effects internals may use Solid's raw state
     // primitives directly — they implement the sanctioned surfaces.
+    // App effects hand signals out through `reactive`, so they hold raw
+    // state too.
     files: [
       'packages/lib/state/src/**/*.ts',
       'packages/lib/effects/src/**/*.{ts,tsx}',
+      'packages/app/*/src/effects/**/*.ts',
     ],
     rules: {
       'no-restricted-imports': [

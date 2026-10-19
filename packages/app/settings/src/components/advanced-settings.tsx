@@ -1,21 +1,16 @@
-import { onMount } from 'solid-js';
-import { AbortError, useAnchor, useRun, useValue } from '@lib/state';
-import { createLogger, toError } from '@lib/observability';
+import { Suspense, useFlow } from '@lib/effects/solid';
+import { useAnchor, useRun } from '@lib/state';
 import { Button, Code, Flex, Heading, Link, Text, TextField } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import { LogStorage } from './log-storage';
 import { ResetButton } from './reset-button';
 import {
-  advancedDefaults,
   advancedSettingsScope,
-  advancedSettingsStore,
   commitLogFilterSaga,
   resetLogFilterSaga,
-  trackAdvancedSettingsSaga,
 } from '../state/advanced';
+import { defaultLogFilter, observeLogFilter } from '../effects/log-filter';
 import * as css from './advanced-settings.css';
-
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 const advancedHeadingId = 'settings-advanced-heading';
 const logFilterHeadingId = 'settings-log-filter-heading';
@@ -29,28 +24,10 @@ const logFilterHeadingId = 'settings-log-filter-heading';
  */
 export const AdvancedSettings = () => {
   useAnchor(advancedSettingsScope);
-  const advanced = useValue(advancedSettingsStore);
-  const track = useRun(trackAdvancedSettingsSaga);
   const commitFilter = useRun(commitLogFilterSaga);
   const resetFilter = useRun(resetLogFilterSaga);
 
-  // The store is seeded with the build-environment default, so first
-  // paint (and prerender) match without a flash. OPFS is client-only —
-  // unavailable during SSG — so the tracking saga starts on mount: it
-  // subscribes, reconciles with any persisted override, then runs for as
-  // long as the section is mounted. Writes echo back through the
-  // subscription, making it the single source of truth.
-  onMount(() => {
-    void track().catch((error: unknown) => {
-      // Releasing the anchor on cleanup aborts the saga. That's ordinary
-      // teardown, and nothing to report.
-      if (error instanceof AbortError) return;
-
-      logger.error('The Advanced settings tracker failed.', {
-        error: toError(error),
-      });
-    });
-  });
+  const logFilter = useFlow(observeLogFilter);
 
   return (
     <Flex as="details" direction="column" gap={5}>
@@ -99,12 +76,14 @@ export const AdvancedSettings = () => {
               >
                 Log filter
               </Heading>
-              <ResetButton
-                testId="advanced-log-filter-reset"
-                label="Reset log filter"
-                disabled={advanced().logFilter === advancedDefaults.logFilter}
-                onReset={() => void resetFilter()}
-              />
+              <Suspense>
+                <ResetButton
+                  testId="advanced-log-filter-reset"
+                  label="Reset log filter"
+                  disabled={logFilter()?.pattern === defaultLogFilter}
+                  onReset={() => void resetFilter()}
+                />
+              </Suspense>
             </Flex>
             <Text as="p" size={2} color="lowContrast" selectable={false}>
               Control what's logged to the console. Use <Code>*</Code> to show
@@ -119,20 +98,34 @@ export const AdvancedSettings = () => {
               for the syntax guide.
             </Text>
           </Flex>
-          <TextField
-            testId="advanced-log-filter"
-            aria-labelledby={logFilterHeadingId}
-            value={advanced().logFilter}
-            placeholder="*"
-            autocomplete="off"
-            autocapitalize="off"
-            enterkeyhint="done"
-            spellcheck={false}
-            onBlur={(event) => {
-              const next = event.currentTarget.value;
-              if (next !== advanced().logFilter) void commitFilter(next);
-            }}
-          />
+          <Suspense
+            fallback={
+              <TextField
+                testId="advanced-log-filter"
+                aria-labelledby={logFilterHeadingId}
+                skeleton
+                placeholder="*"
+                autocomplete="off"
+                autocapitalize="off"
+                enterkeyhint="done"
+              />
+            }
+          >
+            <TextField
+              testId="advanced-log-filter"
+              aria-labelledby={logFilterHeadingId}
+              value={logFilter()?.pattern}
+              placeholder="*"
+              autocomplete="off"
+              autocapitalize="off"
+              enterkeyhint="done"
+              spellcheck={false}
+              onBlur={(event) => {
+                const next = event.currentTarget.value;
+                if (next !== logFilter()?.pattern) void commitFilter(next);
+              }}
+            />
+          </Suspense>
         </Flex>
 
         <LogStorage />

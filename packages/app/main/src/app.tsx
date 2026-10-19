@@ -4,6 +4,7 @@ import { MetaProvider } from '@solidjs/meta';
 import { Router } from '@solidjs/router';
 import { FileRoutes } from '@solidjs/start/router';
 import { ErrorBoundary, onMount, Suspense } from 'solid-js';
+import { EffectsRoot } from '@lib/effects/solid';
 import { ErrorBoundaryFallback } from '@lib/shell';
 import { Branding } from '@lib/shell/branding';
 import { PwaMeta } from '@lib/shell/pwa';
@@ -29,22 +30,26 @@ export default function App() {
         onMount(runStartupTasks);
         onMount(installServiceWorker);
 
+        // `EffectsRoot` sits above every `Suspense`, so a suspended
+        // boundary can't hold back its mount.
         return (
-          <AppProvider value={config}>
-            <MetaProvider>
-              <NavigationLogger />
-              <Branding svg={brandmarkSvg} touchIcon={touchIcon} />
-              <PwaMeta />
+          <EffectsRoot>
+            <AppProvider value={config}>
+              <MetaProvider>
+                <NavigationLogger />
+                <Branding svg={brandmarkSvg} touchIcon={touchIcon} />
+                <PwaMeta />
 
-              <ErrorBoundary
-                fallback={(error: unknown, reset) => (
-                  <ErrorBoundaryFallback error={error} reset={reset} />
-                )}
-              >
-                <Suspense>{props.children}</Suspense>
-              </ErrorBoundary>
-            </MetaProvider>
-          </AppProvider>
+                <ErrorBoundary
+                  fallback={(error: unknown, reset) => (
+                    <ErrorBoundaryFallback error={error} reset={reset} />
+                  )}
+                >
+                  <Suspense>{props.children}</Suspense>
+                </ErrorBoundary>
+              </MetaProvider>
+            </AppProvider>
+          </EffectsRoot>
         );
       }}
     >

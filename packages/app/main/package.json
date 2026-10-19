@@ -32,6 +32,7 @@
     "@app/scratchpad": "workspace:*",
     "@app/settings": "workspace:*",
     "@lib/design": "workspace:*",
+    "@lib/effects": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/runtime-config": "workspace:*",
