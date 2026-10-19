@@ -80,7 +80,7 @@ export const AdvancedSettings = () => {
                 <ResetButton
                   testId="advanced-log-filter-reset"
                   label="Reset log filter"
-                  disabled={logFilter() === defaultLogFilter}
+                  disabled={logFilter()?.pattern === defaultLogFilter}
                   onReset={() => void resetFilter()}
                 />
               </Suspense>
@@ -114,7 +114,7 @@ export const AdvancedSettings = () => {
             <TextField
               testId="advanced-log-filter"
               aria-labelledby={logFilterHeadingId}
-              value={logFilter()}
+              value={logFilter()?.pattern}
               placeholder="*"
               autocomplete="off"
               autocapitalize="off"
@@ -122,7 +122,7 @@ export const AdvancedSettings = () => {
               spellcheck={false}
               onBlur={(event) => {
                 const next = event.currentTarget.value;
-                if (next !== logFilter()) void commitFilter(next);
+                if (next !== logFilter()?.pattern) void commitFilter(next);
               }}
             />
           </Suspense>

@@ -45,9 +45,9 @@ describe('observeLogFilter', () => {
     vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
     await using effects = createTestController();
 
-    const [pattern] = await effects.run(observeLogFilter);
+    const [logFilter] = await effects.run(observeLogFilter);
 
-    expect(pattern()).toBe('app:*');
+    expect(logFilter().pattern).toBe('app:*');
     expect(readEnvironment).toHaveBeenCalledWith(filter);
   });
 
@@ -56,10 +56,10 @@ describe('observeLogFilter', () => {
     vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
     await using effects = createTestController();
 
-    const [pattern] = await effects.run(observeLogFilter);
+    const [logFilter] = await effects.run(observeLogFilter);
     push('*');
 
-    expect(pattern()).toBe('*');
+    expect(logFilter().pattern).toBe('*');
   });
 
   it('keeps a change that lands mid-read', async () => {
@@ -70,9 +70,9 @@ describe('observeLogFilter', () => {
     });
     await using effects = createTestController();
 
-    const [pattern] = await effects.run(observeLogFilter);
+    const [logFilter] = await effects.run(observeLogFilter);
 
-    expect(pattern()).toBe('*');
+    expect(logFilter().pattern).toBe('*');
   });
 
   it('unsubscribes when released', async () => {
