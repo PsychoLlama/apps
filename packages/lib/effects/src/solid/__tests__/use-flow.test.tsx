@@ -3,6 +3,7 @@ import {
   createEffect,
   createSignal,
   ErrorBoundary,
+  Show,
   type Component,
   type Resource,
 } from 'solid-js';
@@ -144,6 +145,45 @@ describe('useFlow', () => {
 
     expect(dispose).toHaveBeenCalledOnce();
     expect(controller.manager.handles.size).toBe(0);
+  });
+
+  it('throws cleanup failures to the error boundary that outlives it', async () => {
+    await using controller = createTestController();
+    const failure = new Error('stuck');
+    const open = () =>
+      resource('stream', () => {
+        throw failure;
+      });
+    const [shown, setShown] = createSignal(true);
+    const caught = vi.fn();
+
+    const tree = renderUnmounted(
+      controller.controller,
+      () => useFlow(pipe([open])),
+      (Probe) => (
+        // Solid only passes the error to a fallback that declares it.
+        <ErrorBoundary
+          fallback={(error: unknown) => {
+            caught(error);
+            return <p>failed</p>;
+          }}
+        >
+          <Show when={shown()}>
+            <Probe />
+          </Show>
+        </ErrorBoundary>
+      ),
+    );
+
+    tree.mount();
+    await settle();
+    setShown(false);
+
+    expect(await screen.findByText('failed')).toBeInTheDocument();
+    expect(caught).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ errors: [failure] }),
+    );
+    tree.unmount();
   });
 
   it('never runs when cleaned up before mount', async () => {
