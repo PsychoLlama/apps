@@ -1,4 +1,4 @@
-import { type Task, type Yield } from './task';
+import type { Task } from './task';
 
 /** Marks a flow and carries its graph builder. */
 export const FLOW: unique symbol = Symbol('flow');
@@ -9,7 +9,8 @@ declare const SIGNATURE: unique symbol;
 /**
  * A computation graph from an input tuple to an output tuple. Tasks and
  * flows compose freely; a flow with `Inputs = []` is complete and can be
- * acquired.
+ * acquired. `Outputs` are raw: `resource`, `reactive`, and `collect`
+ * wrappers stay visible, so bindings can tell the kinds apart.
  *
  * `Inputs` is contravariant and `Outputs` covariant, so `Flow<never>` is
  * the top of all flows: every concrete flow is assignable to it.
@@ -88,12 +89,16 @@ export type InputsOf<S> =
       ? Inputs
       : never;
 
-/** The output tuple a step produces. A task yields a 1-tuple. */
+/**
+ * The raw output tuple a step produces, wrappers included. A task's is a
+ * 1-tuple of what it returns, settled. Downstream tasks receive its
+ * `YieldAll`.
+ */
 export type OutputsOf<S> =
   S extends Flow<never, infer Outputs>
     ? Outputs
     : S extends (...inputs: never) => infer Returned
-      ? [Yield<Returned>]
+      ? [Awaited<Returned>]
       : never;
 
 /** The builder for any step. A task becomes a single node. */

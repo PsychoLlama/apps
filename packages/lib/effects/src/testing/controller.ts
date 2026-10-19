@@ -2,6 +2,7 @@ import { assert } from '@lib/assert';
 import { createController, type Controller } from '../controller/controller';
 import type { Flow } from '../flow';
 import { createManager, release, type Manager } from '../manager';
+import { yieldOf, type YieldAll } from '../task';
 
 /** Drives flows against a fresh manager and tears them down after. */
 export interface TestController extends AsyncDisposable {
@@ -20,7 +21,7 @@ export interface TestController extends AsyncDisposable {
    */
   run<Outputs extends readonly unknown[]>(
     flow: Flow<[], Outputs>,
-  ): Promise<Outputs>;
+  ): Promise<YieldAll<Outputs>>;
 }
 
 /**
@@ -38,7 +39,7 @@ export const createTestController = (): TestController => {
 
     run: async <Outputs extends readonly unknown[]>(
       flow: Flow<[], Outputs>,
-    ): Promise<Outputs> => {
+    ): Promise<YieldAll<Outputs>> => {
       const handle = controller.acquire(flow);
       await controller.compute(handle);
 
@@ -46,7 +47,7 @@ export const createTestController = (): TestController => {
       assert(state.step === 'succeeded', 'Output did not succeed.');
 
       // The graph is untyped at runtime; the flow's signature vouches.
-      return state.outputs as Outputs;
+      return state.outputs.map(yieldOf) as unknown as YieldAll<Outputs>;
     },
 
     [Symbol.asyncDispose]: async () => {

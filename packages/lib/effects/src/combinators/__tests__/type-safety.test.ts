@@ -1,6 +1,12 @@
 import type { Accessor } from 'solid-js';
 import type { Flow } from '../../flow';
-import { reactive, resource } from '../../task';
+import {
+  reactive,
+  resource,
+  type Collected,
+  type Reactive,
+  type Resource,
+} from '../../task';
 import { collect } from '../collect';
 import { concurrent } from '../concurrent';
 import { pipe } from '../pipe';
@@ -15,12 +21,14 @@ const observe = (track: string) => resource(track.length, () => {});
 describe('type safety', () => {
   it('infers a pipeline from its first and last steps', () => {
     const flow = pipe([constraints, getStream, getTrack('audio'), observe]);
-    expectTypeOf(flow).toEqualTypeOf<Flow<[], [number]>>();
+    expectTypeOf(flow).toEqualTypeOf<Flow<[], [Resource<number>]>>();
   });
 
   it('keeps the first step’s parameters as the flow’s inputs', () => {
     const flow = pipe([getTrack('audio'), observe]);
-    expectTypeOf(flow).toEqualTypeOf<Flow<[stream: string], [number]>>();
+    expectTypeOf(flow).toEqualTypeOf<
+      Flow<[stream: string], [Resource<number>]>
+    >();
   });
 
   it('unwraps promises and resources between steps', () => {
@@ -34,7 +42,7 @@ describe('type safety', () => {
     const muted = (track: string) => reactive(() => track.length > 0);
     const flow = pipe([getTrack('audio'), muted]);
     expectTypeOf(flow).toEqualTypeOf<
-      Flow<[stream: string], [Accessor<boolean>]>
+      Flow<[stream: string], [Reactive<boolean>]>
     >();
 
     pipe([muted, (state: Accessor<boolean>) => state()]);
@@ -77,7 +85,7 @@ describe('type safety', () => {
     ]);
 
     expectTypeOf(grouped).toEqualTypeOf<
-      Flow<[], [[number, number], [string, string]]>
+      Flow<[], [Collected<[number, number]>, Collected<[string, string]>]>
     >();
 
     const flow = pipe([
@@ -93,7 +101,24 @@ describe('type safety', () => {
   it('accepts flows anywhere a task fits', () => {
     const inner = pipe([getTrack('audio'), observe]);
     const flow = pipe([() => 'stream', concurrent([inner, inner])]);
-    expectTypeOf(flow).toEqualTypeOf<Flow<[], [number, number]>>();
+    expectTypeOf(flow).toEqualTypeOf<
+      Flow<[], [Resource<number>, Resource<number>]>
+    >();
+  });
+
+  it('keeps wrappers inside collected outputs, and yields through them', () => {
+    const muted = () => reactive(() => true);
+    const both = collect([observe, muted]);
+    expectTypeOf(both).toEqualTypeOf<
+      Flow<[track: string], [Collected<[Resource<number>, Reactive<boolean>]>]>
+    >();
+
+    pipe([both, (values: [number, Accessor<boolean>]) => values]);
+    const illegal = () => {
+      // @ts-expect-error — downstream gets yielded values, not wrappers
+      pipe([both, (values: [Resource<number>, boolean]) => values]);
+    };
+    void illegal;
   });
 
   it('rejects mismatched steps', () => {

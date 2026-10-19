@@ -6,7 +6,8 @@ import {
   type Setter,
 } from 'solid-js';
 import { collect, concurrent, pipe } from '../../combinators';
-import { reactive, resource } from '../../task';
+import { reactive, resource, yieldOf } from '../../task';
+import { isWrapped } from '../../task/output';
 import {
   acquire,
   compute,
@@ -19,9 +20,17 @@ import {
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+/** The raw output tuple, wrappers included. */
+const raw = (handle: Handle) => {
+  const state = inspect(handle, handle.output);
+  assert(state.step === 'succeeded');
+  return state.outputs;
+};
+
+/** The output as downstream tasks receive it. */
 const output = (handle: Handle) => {
   const state = inspect(handle, handle.output);
-  return state.step === 'succeeded' ? state.outputs : state;
+  return state.step === 'succeeded' ? state.outputs.map(yieldOf) : state;
 };
 
 describe('manager', () => {
@@ -62,16 +71,31 @@ describe('manager', () => {
 
       expect(output(sum)).toEqual([3]);
       expect(output(boxed)).toEqual([[1, 2]]);
+      expect(isWrapped(raw(boxed)[0], 'collected')).toBe(true);
     });
 
-    it('awaits async tasks and unwraps resources', async () => {
+    it('awaits async tasks and keeps resources whole', async () => {
       const manager = createManager();
-      const open = async () => resource('stream', () => {});
+      const stream = resource('stream', () => {});
+      const open = async () => stream;
       const handle = acquire(pipe([open]));
 
       await compute(manager, handle);
 
+      expect(raw(handle)).toEqual([stream]);
       expect(output(handle)).toEqual(['stream']);
+    });
+
+    it('passes downstream the values inside wrappers', async () => {
+      const manager = createManager();
+      const open = () => resource('stream', () => {});
+      const both = collect([open, () => 1]);
+      const seen = vi.fn((values: [string, number]) => values);
+      const handle = acquire(pipe([both, seen]));
+
+      await compute(manager, handle);
+
+      expect(seen).toHaveBeenCalledWith(['stream', 1]);
     });
 
     it('passes a reactive output downstream as its accessor', async () => {
@@ -88,7 +112,8 @@ describe('manager', () => {
       await compute(manager, handle);
       const state = inspect(handle, handle.nodes[0]);
       assert(state.step === 'succeeded');
-      const muted = state.outputs[0] as Accessor<boolean>;
+      expect(isWrapped(state.outputs[0], 'reactive')).toBe(true);
+      const muted = yieldOf(state.outputs[0]) as Accessor<boolean>;
 
       setMuted(true);
       expect(muted()).toBe(true);
@@ -213,7 +238,7 @@ describe('manager', () => {
       await compute(manager, second);
 
       expect(output(first)).toEqual([1]);
-      expect(output(second)).toBe(output(first));
+      expect(raw(second)).toBe(raw(first));
     });
 
     it('shares downstream work across tasks with equal outputs', async () => {
@@ -226,7 +251,7 @@ describe('manager', () => {
       await compute(manager, second);
 
       expect(double).toHaveBeenCalledOnce();
-      expect(output(second)).toBe(output(first));
+      expect(raw(second)).toBe(raw(first));
     });
 
     it('keeps an equal output shared while any task still holds it', async () => {
@@ -242,7 +267,7 @@ describe('manager', () => {
       await compute(manager, third);
 
       expect(double).toHaveBeenCalledOnce();
-      expect(output(third)).toBe(output(second));
+      expect(raw(third)).toBe(raw(second));
     });
 
     it('frees an output once no task holds it', async () => {
@@ -500,7 +525,8 @@ describe('manager', () => {
     it('releases a failed flow and resets its nodes', async () => {
       const manager = createManager();
       const dispose = vi.fn();
-      const open = () => resource('stream', dispose);
+      const stream = resource('stream', dispose);
+      const open = () => stream;
       const observe = () => {
         throw new Error('observer');
       };
@@ -511,7 +537,7 @@ describe('manager', () => {
       );
       expect(inspect(handle, handle.nodes[1])).toEqual({
         step: 'failed',
-        inputs: ['stream'],
+        inputs: [stream],
         error: new Error('observer'),
       });
 
