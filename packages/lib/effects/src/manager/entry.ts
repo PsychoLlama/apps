@@ -1,20 +1,23 @@
 import { createSignal, type Accessor, type Setter } from 'solid-js';
 import type { FlowNode } from '../flow';
 import { isReactive, isResource, type Dispose, type Task } from '../task';
+import type { Tuple } from './cache';
 import type * as Node from './node';
 
 /** Where a started computation stands. */
 export type EntryState = Node.Computing | Node.Succeeded | Node.Failed;
 
-/** An output tuple, compared by identity when it feeds another node. */
-export type Tuple = readonly unknown[];
-
-/** One computation: a node applied to one exact set of upstream tuples. */
+/** One computation: a node applied to one exact input tuple. */
 export interface Entry {
+  readonly kind: FlowNode['kind'];
+
   /** The node's identity: its task, or the flow that built its join. */
   readonly key: object;
 
-  /** The upstream output tuples: one for a task, one per join branch. */
+  /** The upstream output tuple the node is keyed on. */
+  readonly inputs: Tuple;
+
+  /** A join's branch tuples, which it concatenates. Empty for a task. */
   readonly sources: readonly Tuple[];
 
   /** Reactive. Tracks under a Solid computation, reads plainly outside. */
@@ -33,7 +36,7 @@ export interface Entry {
   retired?: Promise<void>;
 }
 
-/** What a root task reads as its upstream tuple. Shared, so roots key alike. */
+/** What a root node reads as its input. Shared, so roots key alike. */
 export const ROOT: Tuple = [];
 
 /** The identity a node's entries are cached under. */
@@ -55,19 +58,13 @@ const unwrap = (output: unknown): { value: unknown; dispose?: Dispose } => {
   return { value: output };
 };
 
-/** What the node was computed from, as its state reports it. */
-const inputsOf = (node: FlowNode, sources: readonly Tuple[]): Tuple =>
-  node.kind === 'task' ? (sources[0] ?? ROOT) : sources;
-
 const evaluate = async (
   node: FlowNode,
-  sources: readonly Tuple[],
+  entry: Entry,
 ): Promise<{ outputs: Tuple; dispose?: Dispose }> => {
-  if (node.kind === 'join') return { outputs: sources.flat() };
+  if (node.kind === 'join') return { outputs: entry.sources.flat() };
 
-  const { value, dispose } = unwrap(
-    await invoke(node.task, inputsOf(node, sources)),
-  );
+  const { value, dispose } = unwrap(await invoke(node.task, entry.inputs));
 
   // Tasks return one value, since JS has no multiple returns. Boxing it
   // here gives the tuple its one identity for downstream keys.
@@ -79,10 +76,10 @@ const run = async (
   node: FlowNode,
   setState: Setter<EntryState>,
 ) => {
-  const inputs = inputsOf(node, entry.sources);
+  const { inputs } = entry;
 
   try {
-    const { outputs, dispose } = await evaluate(node, entry.sources);
+    const { outputs, dispose } = await evaluate(node, entry);
     entry.dispose = dispose;
     setState({ step: 'succeeded', inputs, outputs });
   } catch (error) {
@@ -91,14 +88,20 @@ const run = async (
 };
 
 /** Start the node and track its outcome. */
-export const spawn = (node: FlowNode, sources: readonly Tuple[]): Entry => {
+export const spawn = (
+  node: FlowNode,
+  inputs: Tuple,
+  sources: readonly Tuple[],
+): Entry => {
   const [state, setState] = createSignal<EntryState>({
     step: 'computing',
-    inputs: inputsOf(node, sources),
+    inputs,
   });
 
   const entry: Entry = {
+    kind: node.kind,
     key: keyOf(node),
+    inputs,
     sources,
     state,
     refs: 0,

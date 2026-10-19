@@ -42,7 +42,7 @@ export const concurrent = <const S extends Steps>(
       outputs.push(graph.output);
     }
 
-    const join: FlowNode = { kind: 'join', flow, branches: outputs };
+    const join: FlowNode = { kind: 'join', flow, input, branches: outputs };
     nodes.push(join);
 
     return { nodes, output: join };

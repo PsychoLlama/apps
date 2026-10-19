@@ -12,7 +12,7 @@ export interface Pending {
 export interface Computing {
   readonly step: 'computing';
 
-  /** A task's exact arguments, or a join's branch tuples. */
+  /** The upstream output tuple: a task's arguments, a join's shared input. */
   readonly inputs: readonly unknown[];
 }
 
@@ -20,7 +20,7 @@ export interface Computing {
 export interface Failed {
   readonly step: 'failed';
 
-  /** A task's exact arguments, or a join's branch tuples. */
+  /** The upstream output tuple: a task's arguments, a join's shared input. */
   readonly inputs: readonly unknown[];
 
   /** Whatever the task threw or rejected with. */
@@ -33,7 +33,7 @@ export interface Succeeded<
 > {
   readonly step: 'succeeded';
 
-  /** A task's exact arguments, or a join's branch tuples. */
+  /** The upstream output tuple: a task's arguments, a join's shared input. */
   readonly inputs: readonly unknown[];
 
   /**

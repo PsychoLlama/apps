@@ -243,11 +243,26 @@ describe('manager', () => {
       const joined = inspect(first, first.nodes[2]);
       expect(joined).toEqual({
         step: 'succeeded',
-        inputs: [[1], [2]],
+        inputs: [],
         outputs: [1, 2],
       });
       expect(inspect(second, second.nodes[2])).toBe(joined);
       expect(add).toHaveBeenCalledOnce();
+    });
+
+    it('keeps a join per input tuple', async () => {
+      const manager = createManager();
+      const double = (value: number) => value * 2;
+      const both = concurrent([double, double]);
+      const first = acquire(pipe([() => 1, both]));
+      const second = acquire(pipe([() => 2, both]));
+
+      await compute(manager, first);
+      await compute(manager, second);
+
+      expect(output(first)).toEqual([2, 2]);
+      expect(output(second)).toEqual([4, 4]);
+      expect(manager.caches.join.get(both)?.size).toBe(2);
     });
 
     it('resolves a diamond once per handle', async () => {

@@ -1,95 +1,46 @@
+/** An output tuple, compared by identity when it feeds another node. */
+export type Tuple = readonly unknown[];
+
 /**
- * A map keyed by a node's identity (its task, or the flow that built a
- * join), then by each input in order. Inputs compare by identity (`Map`
- * semantics), so two calls share a value only when every argument is the
- * very same reference.
+ * Values by node, then by input tuple. A node's inputs are one upstream
+ * node's output tuple, created once and shared, so the tuple itself is
+ * the key: two flat levels, with no composite key to build.
+ *
+ * Keyed by identity (`Map` semantics). Nodes key by their task, or by the
+ * flow that built them.
  */
-export interface Cache<Value> {
-  readonly roots: Map<object, Branch<Value>>;
-}
+export type Cache<Value> = Map<object, Map<Tuple, Value>>;
 
-// Implemented as a trie: one `Map` level per input. That's what a composite
-// identity key costs in JS — there's no way to hash a tuple by the
-// identity of its members.
-interface Branch<Value> {
-  readonly children: Map<unknown, Branch<Value>>;
-  value?: Value;
-}
+export const createCache = <Value>(): Cache<Value> => new Map();
 
-export const createCache = <Value>(): Cache<Value> => ({ roots: new Map() });
-
-const branch = <Value>(): Branch<Value> => ({ children: new Map() });
-
-/** Every branch along the path, root first. Short when the path ends. */
-const trace = <Value>(
-  cache: Cache<Value>,
-  key: object,
-  inputs: readonly unknown[],
-) => {
-  const path: Branch<Value>[] = [];
-  let node = cache.roots.get(key);
-
-  for (const input of inputs) {
-    if (!node) break;
-    path.push(node);
-    node = node.children.get(input);
-  }
-
-  if (node) path.push(node);
-  return path;
-};
-
-/** The value for this exact call, if one is set. */
+/** The value for this node and input tuple, if one is set. */
 export const lookup = <Value>(
   cache: Cache<Value>,
   key: object,
-  inputs: readonly unknown[],
-): Value | undefined => {
-  const path = trace(cache, key, inputs);
-  return path.length === inputs.length + 1 ? path.at(-1)?.value : undefined;
-};
+  inputs: Tuple,
+): Value | undefined => cache.get(key)?.get(inputs);
 
-/** Set the value for this exact call. */
+/** Set the value for this node and input tuple. */
 export const insert = <Value>(
   cache: Cache<Value>,
   key: object,
-  inputs: readonly unknown[],
+  inputs: Tuple,
   value: Value,
 ): void => {
-  // Re-setting an existing branch is a no-op, which keeps the
-  // get-or-create a single expression per level.
-  let node = cache.roots.get(key) ?? branch<Value>();
-  cache.roots.set(key, node);
-
-  for (const input of inputs) {
-    const child = node.children.get(input) ?? branch<Value>();
-    node.children.set(input, child);
-    node = child;
-  }
-
-  node.value = value;
+  const byInputs = cache.get(key) ?? new Map<Tuple, Value>();
+  cache.set(key, byInputs);
+  byInputs.set(inputs, value);
 };
 
-/** Remove the value, pruning any branches left empty. */
+/** Remove the value, dropping the node's map once it's empty. */
 export const remove = <Value>(
   cache: Cache<Value>,
   key: object,
-  inputs: readonly unknown[],
+  inputs: Tuple,
 ): void => {
-  const path = trace(cache, key, inputs);
-  if (path.length !== inputs.length + 1) return;
+  const byInputs = cache.get(key);
+  if (!byInputs) return;
 
-  delete path[path.length - 1].value;
-
-  // Unlink empty branches bottom-up.
-  for (let depth = path.length - 1; depth > 0; depth -= 1) {
-    const node = path[depth];
-    if (node.value || node.children.size > 0) return;
-    path[depth - 1].children.delete(inputs[depth - 1]);
-  }
-
-  const root = path[0];
-  if (!root.value && root.children.size === 0) {
-    cache.roots.delete(key);
-  }
+  byInputs.delete(inputs);
+  if (byInputs.size === 0) cache.delete(key);
 };

@@ -17,7 +17,7 @@ describe('createController', () => {
       outputs: [2],
     });
     expect(controller.bound(handle, handle.output)()).toMatchObject({
-      sources: [[1]],
+      inputs: [1],
     });
 
     await controller.release(handle);

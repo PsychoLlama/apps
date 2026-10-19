@@ -1,8 +1,15 @@
 import { assert } from '@lib/assert';
 import { createSignal, type Accessor, type Signal } from 'solid-js';
 import { FLOW, type Flow, type FlowNode } from '../flow';
-import { createCache, insert, lookup, remove, type Cache } from './cache';
-import { keyOf, ROOT, spawn, type Entry, type Tuple } from './entry';
+import {
+  createCache,
+  insert,
+  lookup,
+  remove,
+  type Cache,
+  type Tuple,
+} from './cache';
+import { keyOf, ROOT, spawn, type Entry } from './entry';
 import type * as Node from './node';
 
 /** A flow acquired on a manager, and what the manager tracks for it. */
@@ -27,36 +34,48 @@ export interface Handle {
 
 /** Computations shared by every handle acquired through it. */
 export interface Manager {
-  readonly cache: Cache<Entry>;
+  /** Entries by node kind, each keyed by node, then input tuple. */
+  readonly caches: Readonly<Record<FlowNode['kind'], Cache<Entry>>>;
 
   /** Handles that have computed and not yet been released. */
   readonly handles: Set<Handle>;
 }
 
 export const createManager = (): Manager => ({
-  cache: createCache(),
+  caches: { task: createCache(), join: createCache() },
   handles: new Set(),
 });
+
+const same = (left: readonly Tuple[], right: readonly Tuple[]) =>
+  left.length === right.length &&
+  left.every((tuple, index) => tuple === right[index]);
 
 /** The live entry for a key, spawning one if its last life has ended. */
 const claim = async (
   manager: Manager,
   node: FlowNode,
+  inputs: Tuple,
   sources: readonly Tuple[],
 ): Promise<Entry> => {
+  const cache = manager.caches[node.kind];
   const key = keyOf(node);
-  let entry = lookup(manager.cache, key, sources);
+  let entry = lookup(cache, key, inputs);
 
   // Never overlap with a previous life of the same key.
   while (entry?.retired) {
     await entry.retired.catch(() => {});
-    entry = lookup(manager.cache, key, sources);
+    entry = lookup(cache, key, inputs);
   }
 
   if (!entry) {
-    entry = spawn(node, sources);
-    insert(manager.cache, key, sources, entry);
+    entry = spawn(node, inputs, sources);
+    insert(cache, key, inputs, entry);
   }
+
+  // A join's output is only as stable as its branches. Whoever holds a
+  // join holds its branches too, so they can't be recomputed while it
+  // lives, and every claimant arrives with the same tuples.
+  assert(same(entry.sources, sources), 'Join claimed with stale branches.');
 
   entry.refs += 1;
   return entry;
@@ -69,7 +88,7 @@ const retire = (manager: Manager, entry: Entry): Promise<void> => {
       await entry.settled;
       await entry.dispose?.();
     } finally {
-      remove(manager.cache, entry.key, entry.sources);
+      remove(manager.caches[entry.kind], entry.key, entry.inputs);
     }
   })();
 
@@ -83,10 +102,14 @@ const held = (handle: Handle, node: FlowNode) => {
   return signal;
 };
 
-/** The nodes whose output tuples feed this one. */
-const upstream = (node: FlowNode): readonly FlowNode[] => {
-  if (node.kind === 'join') return node.branches;
-  return node.input ? [node.input] : [];
+/** A bound node's output tuple, or `undefined` if it didn't succeed. */
+const outputOf = async (
+  manager: Manager,
+  handle: Handle,
+  node: FlowNode,
+): Promise<Tuple | undefined> => {
+  const state = (await bind(manager, handle, node))?.state();
+  return state?.step === 'succeeded' ? state.outputs : undefined;
 };
 
 /** Bind a node once every upstream tuple is known, then let it settle. */
@@ -99,18 +122,20 @@ const bind = (
   if (binding) return binding;
 
   binding = (async () => {
+    // Roots skip the await, so they start in the same tick as `compute`.
+    const inputs = node.input
+      ? await outputOf(manager, handle, node.input)
+      : ROOT;
+    if (!inputs) return undefined;
+
     const sources: Tuple[] = [];
-    for (const source of upstream(node)) {
-      const entry = await bind(manager, handle, source);
-      const state = entry?.state();
-      if (state?.step !== 'succeeded') return undefined;
-      sources.push(state.outputs);
+    for (const branch of node.kind === 'join' ? node.branches : []) {
+      const outputs = await outputOf(manager, handle, branch);
+      if (!outputs) return undefined;
+      sources.push(outputs);
     }
 
-    // A root task still keys on a tuple, so every node keys the same way.
-    if (node.kind === 'task' && !node.input) sources.push(ROOT);
-
-    const entry = await claim(manager, node, sources);
+    const entry = await claim(manager, node, inputs, sources);
     const [, setEntry] = held(handle, node);
     setEntry(entry);
     await entry.settled;
