@@ -238,6 +238,14 @@ export default [
     },
   },
   {
+    // @lib/effects is headless infrastructure with no UI of its own, and
+    // it sits below @lib/ui. Its tests render bare elements as probes.
+    files: ['packages/lib/effects/**/*.tsx'],
+    rules: {
+      'custom/require-ui-primitives': 'off',
+    },
+  },
+  {
     // @lib/ui and @lib/design are foundation libraries, not application
     // surfaces. The state-management framework is heavyweight and exists
     // for application state — the wrong fit for primitive components'

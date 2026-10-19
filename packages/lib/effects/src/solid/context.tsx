@@ -11,7 +11,7 @@ import type { Controller } from '../controller/controller';
 import { DEFAULT_CONTROLLER } from '../controller/default';
 
 /** What `EffectsRoot` provides to the tree beneath it. */
-interface Effects {
+export interface Effects {
   /** Runs every flow acquired under the root. */
   readonly controller: Controller;
 
@@ -23,7 +23,9 @@ interface Effects {
   readonly mounted: Accessor<boolean>;
 }
 
-const EffectsContext = createContext<Effects>();
+// Internal to the package: apps go through `EffectsRoot`. Tests provide
+// it directly to drive `mounted` by hand.
+export const EffectsContext = createContext<Effects>();
 
 /** Props for {@link EffectsRoot}. */
 export interface EffectsRootProps extends ParentProps {
