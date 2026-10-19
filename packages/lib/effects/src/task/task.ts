@@ -1,7 +1,5 @@
 import type { Accessor } from 'solid-js';
-import { isCollected } from './collected';
-import { isReactive, type Reactive } from './reactive';
-import { isResource, type Dispose, type Resource } from './resource';
+import type { Reactive, Resource } from './output';
 
 /**
  * A task is a plain function. Its parameters are positional inputs from
@@ -26,15 +24,3 @@ type Unwrap<Value> =
     : Value extends Reactive<infer Inner>
       ? Accessor<Inner>
       : Value;
-
-/** What downstream receives from an output, as `Yield` types it. */
-export const yieldOf = (output: unknown): unknown => {
-  if (isResource(output) || isCollected(output)) return output.value;
-  if (isReactive(output)) return output.state;
-
-  return output;
-};
-
-/** The cleanup an output carries, if any. */
-export const disposeOf = (output: unknown): Dispose | undefined =>
-  isResource(output) || isReactive(output) ? output.dispose : undefined;

@@ -64,7 +64,7 @@ const evaluate = async (
 ): Promise<{ outputs: Tuple; dispose?: Dispose }> => {
   if (node.kind === 'join') {
     const joined = entry.sources.flat();
-    return { outputs: node.collect ? [collected(joined, yieldOf)] : joined };
+    return { outputs: node.collect ? [collected(joined)] : joined };
   }
 
   // Outputs keep what the task returned, wrappers and all, so bindings

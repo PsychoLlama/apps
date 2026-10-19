@@ -7,8 +7,7 @@ import {
 } from 'solid-js';
 import { collect, concurrent, pipe } from '../../combinators';
 import { reactive, resource, yieldOf } from '../../task';
-import { isCollected } from '../../task/collected';
-import { isReactive } from '../../task/reactive';
+import { isWrapped } from '../../task/output';
 import {
   acquire,
   compute,
@@ -72,7 +71,7 @@ describe('manager', () => {
 
       expect(output(sum)).toEqual([3]);
       expect(output(boxed)).toEqual([[1, 2]]);
-      expect(isCollected(raw(boxed)[0])).toBe(true);
+      expect(isWrapped(raw(boxed)[0], 'collected')).toBe(true);
     });
 
     it('awaits async tasks and keeps resources whole', async () => {
@@ -113,7 +112,7 @@ describe('manager', () => {
       await compute(manager, handle);
       const state = inspect(handle, handle.nodes[0]);
       assert(state.step === 'succeeded');
-      expect(isReactive(state.outputs[0])).toBe(true);
+      expect(isWrapped(state.outputs[0], 'reactive')).toBe(true);
       const muted = yieldOf(state.outputs[0]) as Accessor<boolean>;
 
       setMuted(true);
