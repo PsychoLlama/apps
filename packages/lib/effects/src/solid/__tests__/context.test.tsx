@@ -1,6 +1,9 @@
 import { render } from '@solidjs/testing-library';
 import { createEffect } from 'solid-js';
-import { EffectsRoot, useMounted } from '../effects-root';
+import type { Controller } from '../../controller/controller';
+import { DEFAULT_CONTROLLER } from '../../controller/default';
+import { createTestController } from '../../testing';
+import { EffectsRoot, useController, useMounted } from '../context';
 
 describe('EffectsRoot', () => {
   it('reads unmounted during setup, then mounted', () => {
@@ -27,9 +30,31 @@ describe('EffectsRoot', () => {
     expect(container).toHaveTextContent('mounted');
   });
 
-  it('demands a provider above the hook', () => {
+  it('provides the default controller unless given another', () => {
+    const seen: Controller[] = [];
+    const Probe = () => {
+      seen.push(useController());
+      return null;
+    };
+    const { controller } = createTestController();
+
+    render(() => (
+      <>
+        <EffectsRoot>
+          <Probe />
+        </EffectsRoot>
+        <EffectsRoot controller={controller}>
+          <Probe />
+        </EffectsRoot>
+      </>
+    ));
+
+    expect(seen).toEqual([DEFAULT_CONTROLLER, controller]);
+  });
+
+  it.each([useMounted, useController])('demands a root above %o', (hook) => {
     const Orphan = () => {
-      useMounted();
+      hook();
       return null;
     };
 

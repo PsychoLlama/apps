@@ -1,34 +1,31 @@
-import {
-  createComponent,
-  createEffect,
-  createRoot,
-  type Resource,
-} from 'solid-js';
+import { render } from '@solidjs/testing-library';
+import { createEffect, createRoot, type Resource } from 'solid-js';
 import { concurrent, pipe } from '../../combinators';
 import { resource } from '../../task';
 import { createTestController } from '../../testing';
 import type { Controller } from '../../controller/controller';
-import { DEFAULT_CONTROLLER } from '../../controller/default';
-import { ControllerContext, useController } from '../context';
+import { EffectsRoot } from '../context';
 import { useFlow } from '../use-flow';
 
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-/** Run `setup` as if inside a component under the given controller. */
-const mount = <Result>(controller: Controller, setup: () => Result) =>
-  createRoot((dispose) => {
-    let result!: Result;
-    createComponent(ControllerContext.Provider, {
-      value: controller,
-      get children() {
-        result = setup();
-        return null;
-      },
-    });
+/** Run `setup` as a component's body under the given controller. */
+const mount = <Result,>(controller: Controller, setup: () => Result) => {
+  let result!: Result;
+  const Probe = () => {
+    result = setup();
+    return null;
+  };
 
-    return { result, dispose };
-  });
+  const { unmount } = render(() => (
+    <EffectsRoot controller={controller}>
+      <Probe />
+    </EffectsRoot>
+  ));
+
+  return { result, dispose: unmount };
+};
 
 describe('useFlow', () => {
   it('reads unresolved until mounted, then tracks the computation', async () => {
@@ -98,39 +95,21 @@ describe('useFlow', () => {
     const open = vi.fn(() => 1);
 
     createRoot((dispose) => {
-      createComponent(ControllerContext.Provider, {
-        value: controller.controller,
-        get children() {
-          useFlow(pipe([open]));
-          dispose();
-          return null;
-        },
-      });
+      const Probe = () => {
+        useFlow(pipe([open]));
+        dispose();
+        return null;
+      };
+
+      return (
+        <EffectsRoot controller={controller.controller}>
+          <Probe />
+        </EffectsRoot>
+      );
     });
 
     await settle();
 
     expect(open).not.toHaveBeenCalled();
-  });
-});
-
-describe('useController', () => {
-  it('falls back to the default controller', () => {
-    const [provided, fallback] = createRoot(() => {
-      const outer = useController();
-      let inner!: Controller;
-      createComponent(ControllerContext.Provider, {
-        value: createTestController().controller,
-        get children() {
-          inner = useController();
-          return null;
-        },
-      });
-
-      return [inner, outer];
-    });
-
-    expect(provided).not.toBe(fallback);
-    expect(fallback).toBe(DEFAULT_CONTROLLER);
   });
 });

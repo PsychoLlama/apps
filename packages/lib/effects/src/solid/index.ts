@@ -1,3 +1,7 @@
-export { ControllerContext, useController } from './context';
-export { EffectsRoot, useMounted } from './effects-root';
+export {
+  EffectsRoot,
+  useController,
+  useMounted,
+  type EffectsRootProps,
+} from './context';
 export { useFlow, type FlowOutputs } from './use-flow';

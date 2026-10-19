@@ -10,7 +10,7 @@ export interface TestController extends AsyncDisposable {
 
   /**
    * A controller over the same manager, for bindings that take one: give
-   * it to a Solid tree through `ControllerContext`.
+   * it to a Solid tree through `EffectsRoot`.
    */
   readonly controller: Controller;
 
