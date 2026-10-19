@@ -1,5 +1,5 @@
 import { createSignal, type Accessor, type Setter } from 'solid-js';
-import { isResource, type Dispose, type Task } from '../task';
+import { isReactive, isResource, type Dispose, type Task } from '../task';
 import type * as Node from './node';
 
 /** Where a started computation stands. */
@@ -31,17 +31,23 @@ const invoke = (task: Task, inputs: readonly unknown[]) =>
   // flow was composed; here they're whatever upstream produced.
   (task as Task<readonly unknown[]>)(...inputs);
 
+/** Split a task's output into what downstream receives and its cleanup. */
+const unwrap = (output: unknown): { value: unknown; dispose?: Dispose } => {
+  if (isResource(output)) return output;
+  if (isReactive(output)) {
+    return { value: output.state, dispose: output.dispose };
+  }
+
+  return { value: output };
+};
+
 const run = async (entry: Entry, setState: Setter<EntryState>) => {
   const { task, inputs } = entry;
 
   try {
-    const output: unknown = await invoke(task, inputs);
-    if (isResource(output)) {
-      entry.dispose = output.dispose;
-      setState({ step: 'succeeded', inputs, value: output.value });
-    } else {
-      setState({ step: 'succeeded', inputs, value: output });
-    }
+    const { value, dispose } = unwrap(await invoke(task, inputs));
+    entry.dispose = dispose;
+    setState({ step: 'succeeded', inputs, value });
   } catch (error) {
     setState({ step: 'failed', inputs, error });
   }

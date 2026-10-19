@@ -34,7 +34,10 @@ export interface Succeeded<Value = unknown> {
   /** The exact values the task was called with. */
   readonly inputs: readonly unknown[];
 
-  /** The task's output, with any resource wrapper removed. */
+  /**
+   * The task's output, with any resource wrapper removed. A reactive
+   * output leaves its accessor.
+   */
   readonly value: Value;
 }
 

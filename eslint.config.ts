@@ -54,7 +54,13 @@ export default [
     },
     rules: {
       'solid/components-return-once': 'error',
-      'solid/reactivity': 'error',
+      'solid/reactivity': [
+        'error',
+        {
+          // `@lib/effects` tasks hand signals to the graph through it.
+          customReactiveFunctions: ['reactive'],
+        },
+      ],
       'solid/event-handlers': 'error',
       'solid/imports': 'error',
       'solid/style-prop': 'error',

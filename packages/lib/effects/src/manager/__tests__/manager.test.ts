@@ -1,6 +1,12 @@
-import { createEffect, createRoot } from 'solid-js';
+import {
+  createEffect,
+  createRoot,
+  createSignal,
+  type Accessor,
+  type Setter,
+} from 'solid-js';
 import { collect, concurrent, pipe } from '../../combinators';
-import { resource } from '../../task';
+import { reactive, resource } from '../../task';
 import {
   acquire,
   compute,
@@ -67,6 +73,28 @@ describe('manager', () => {
       await compute(manager, handle);
 
       expect(output(handle)).toEqual(['stream']);
+    });
+
+    it('passes a reactive output downstream as its accessor', async () => {
+      const manager = createManager();
+      let setMuted!: Setter<boolean>;
+      const observe = async () => {
+        const [muted, set] = createSignal(false);
+        setMuted = set;
+        return reactive(muted);
+      };
+      const seen = vi.fn((state: Accessor<boolean>) => state());
+      const handle = acquire(pipe([observe, seen]));
+
+      await compute(manager, handle);
+      const state = inspect(handle, handle.nodes[0]);
+      assert(state.step === 'succeeded');
+      const muted = state.value as Accessor<boolean>;
+
+      setMuted(true);
+      expect(muted()).toBe(true);
+      expect(output(handle)).toEqual([false]);
+      expect(seen).toHaveBeenCalledOnce();
     });
 
     it('is idempotent', async () => {
@@ -255,6 +283,19 @@ describe('manager', () => {
 
       await release(manager, second);
       expect(dispose).toHaveBeenCalledTimes(1);
+    });
+
+    it('disposes reactive outputs, cleanup or not', async () => {
+      const manager = createManager();
+      const dispose = vi.fn();
+      const observe = () => reactive(() => true, dispose);
+      const bare = () => reactive(() => true);
+      const handle = acquire(concurrent([observe, bare]));
+
+      await compute(manager, handle);
+      await release(manager, handle);
+
+      expect(dispose).toHaveBeenCalledOnce();
     });
 
     it('tears down downstream before upstream', async () => {
