@@ -216,7 +216,7 @@ describe('manager', () => {
       expect(output(second)).toBe(output(first));
     });
 
-    it('keys a task on its upstream tuple, not equal values', async () => {
+    it('shares downstream work across tasks with equal outputs', async () => {
       const manager = createManager();
       const double = vi.fn((value: number) => value * 2);
       const first = acquire(pipe([() => 1, double]));
@@ -225,7 +225,35 @@ describe('manager', () => {
       await compute(manager, first);
       await compute(manager, second);
 
-      expect(double).toHaveBeenCalledTimes(2);
+      expect(double).toHaveBeenCalledOnce();
+      expect(output(second)).toBe(output(first));
+    });
+
+    it('keeps an equal output shared while any task still holds it', async () => {
+      const manager = createManager();
+      const double = vi.fn((value: number) => value * 2);
+      const first = acquire(pipe([() => 1, double]));
+      const second = acquire(pipe([() => 1, double]));
+      await compute(manager, first);
+      await compute(manager, second);
+
+      await release(manager, first);
+      const third = acquire(pipe([() => 1, double]));
+      await compute(manager, third);
+
+      expect(double).toHaveBeenCalledOnce();
+      expect(output(third)).toBe(output(second));
+    });
+
+    it('frees an output once no task holds it', async () => {
+      const manager = createManager();
+      const one = () => 1;
+      const first = acquire(pipe([one]));
+      await compute(manager, first);
+
+      await release(manager, first);
+
+      expect(manager.cache.interned.size).toBe(0);
     });
 
     it('shares a join and everything downstream of it', async () => {
@@ -279,7 +307,7 @@ describe('manager', () => {
 
       expect(output(first)).toEqual([2, 2]);
       expect(output(second)).toEqual([4, 4]);
-      expect(manager.caches.join.get(both)?.size).toBe(2);
+      expect(manager.cache.entries.join.get(both)?.size).toBe(2);
     });
 
     it('resolves a diamond once per handle', async () => {

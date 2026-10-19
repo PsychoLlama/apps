@@ -36,6 +36,9 @@ export interface Entry {
   retired?: Promise<void>;
 }
 
+/** Boxes a task's value as its output tuple, one identity per value. */
+export type Intern = (value: unknown) => Tuple;
+
 /** What a root node reads as its input. Shared, so roots key alike. */
 export const ROOT: Tuple = [];
 
@@ -61,6 +64,7 @@ const unwrap = (output: unknown): { value: unknown; dispose?: Dispose } => {
 const evaluate = async (
   node: FlowNode,
   entry: Entry,
+  intern: Intern,
 ): Promise<{ outputs: Tuple; dispose?: Dispose }> => {
   if (node.kind === 'join') {
     const joined = entry.sources.flat();
@@ -69,20 +73,21 @@ const evaluate = async (
 
   const { value, dispose } = unwrap(await invoke(node.task, entry.inputs));
 
-  // Tasks return one value, since JS has no multiple returns. Boxing it
-  // here gives the tuple its one identity for downstream keys.
-  return { outputs: [value], dispose };
+  // Tasks return one value, since JS has no multiple returns. Interning
+  // the box gives equal values one identity for downstream keys.
+  return { outputs: intern(value), dispose };
 };
 
 const run = async (
   entry: Entry,
   node: FlowNode,
+  intern: Intern,
   setState: Setter<EntryState>,
 ) => {
   const { inputs } = entry;
 
   try {
-    const { outputs, dispose } = await evaluate(node, entry);
+    const { outputs, dispose } = await evaluate(node, entry, intern);
     entry.dispose = dispose;
     setState({ step: 'succeeded', inputs, outputs });
   } catch (error) {
@@ -95,6 +100,7 @@ export const spawn = (
   node: FlowNode,
   inputs: Tuple,
   sources: readonly Tuple[],
+  intern: Intern,
 ): Entry => {
   const [state, setState] = createSignal<EntryState>({
     step: 'computing',
@@ -111,6 +117,6 @@ export const spawn = (
     settled: Promise.resolve(),
   };
 
-  entry.settled = run(entry, node, setState);
+  entry.settled = run(entry, node, intern, setState);
   return entry;
 };

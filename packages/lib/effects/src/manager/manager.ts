@@ -3,7 +3,9 @@ import { createSignal, type Accessor, type Signal } from 'solid-js';
 import { FLOW, type Flow, type FlowNode } from '../flow';
 import {
   createCache,
+  drop,
   insert,
+  intern,
   lookup,
   remove,
   type Cache,
@@ -34,15 +36,15 @@ export interface Handle {
 
 /** Computations shared by every handle acquired through it. */
 export interface Manager {
-  /** Entries by node kind, each keyed by node, then input tuple. */
-  readonly caches: Readonly<Record<FlowNode['kind'], Cache<Entry>>>;
+  /** Entries and interned output tuples. The manager alone operates on it. */
+  readonly cache: Cache<Entry>;
 
   /** Handles that have computed and not yet been released. */
   readonly handles: Set<Handle>;
 }
 
 export const createManager = (): Manager => ({
-  caches: { task: createCache(), join: createCache() },
+  cache: createCache(),
   handles: new Set(),
 });
 
@@ -57,19 +59,19 @@ const claim = async (
   inputs: Tuple,
   sources: readonly Tuple[],
 ): Promise<Entry> => {
-  const cache = manager.caches[node.kind];
+  const { cache } = manager;
   const key = keyOf(node);
-  let entry = lookup(cache, key, inputs);
+  let entry = lookup(cache, node.kind, key, inputs);
 
   // Never overlap with a previous life of the same key.
   while (entry?.retired) {
     await entry.retired.catch(() => {});
-    entry = lookup(cache, key, inputs);
+    entry = lookup(cache, node.kind, key, inputs);
   }
 
   if (!entry) {
-    entry = spawn(node, inputs, sources);
-    insert(cache, key, inputs, entry);
+    entry = spawn(node, inputs, sources, (value) => intern(cache, value));
+    insert(cache, node.kind, key, inputs, entry);
   }
 
   // A join's output is only as stable as its branches. Whoever holds a
@@ -88,7 +90,14 @@ const retire = (manager: Manager, entry: Entry): Promise<void> => {
       await entry.settled;
       await entry.dispose?.();
     } finally {
-      remove(manager.caches[entry.kind], entry.key, entry.inputs);
+      remove(manager.cache, entry.kind, entry.key, entry.inputs);
+
+      // Only after cleanup, so an equal value can't reuse the tuple while
+      // anything keyed on it is still tearing down.
+      const state = entry.state();
+      if (entry.kind === 'task' && state.step === 'succeeded') {
+        drop(manager.cache, state.outputs[0]);
+      }
     }
   })();
 
