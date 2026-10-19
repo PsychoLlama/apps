@@ -206,6 +206,9 @@ catalogs:
     '@vitest/browser-playwright':
       specifier: ^5.0.0
       version: 5.0.5
+    '@vitest/coverage-v8':
+      specifier: ^5.0.0
+      version: 5.0.5
     citty:
       specifier: ^0.2.2
       version: 0.2.2
@@ -1064,8 +1067,11 @@ importers:
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
+      '@solidjs/testing-library':
+        specifier: 'catalog:'
+        version: 0.8.10(@solidjs/router@1.0.0(solid-js@1.9.17))(solid-js@1.9.17)
       '@vitest/coverage-v8':
-        specifier: ^5.0.0
+        specifier: 'catalog:'
         version: 5.0.5(@vitest/browser@5.0.5)(vitest@5.0.5)
 
   packages/lib/gallery:
@@ -1262,7 +1268,7 @@ importers:
         specifier: workspace:*
         version: link:../../dev/vitest-config
       '@vitest/coverage-v8':
-        specifier: ^5.0.0
+        specifier: 'catalog:'
         version: 5.0.5(@vitest/browser@5.0.5)(vitest@5.0.5)
 
   packages/lib/theme:

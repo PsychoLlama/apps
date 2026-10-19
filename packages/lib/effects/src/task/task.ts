@@ -1,9 +1,11 @@
+import type { Accessor } from 'solid-js';
+import type { Reactive } from './reactive';
 import type { Resource } from './resource';
 
 /**
  * A task is a plain function. Its parameters are positional inputs from
  * upstream nodes; its return value (possibly a promise, possibly a
- * resource) is the node's single output.
+ * resource or reactive) is the node's single output.
  *
  * The default `Inputs = never` makes bare `Task` the top of all tasks:
  * every concrete task is assignable to it, and nothing can call it without
@@ -15,7 +17,11 @@ export type Task<
 > = (...inputs: Inputs) => Output;
 
 /** What a downstream task actually receives from a task's return value. */
-export type Yield<Returned> = UnwrapResource<Awaited<Returned>>;
+export type Yield<Returned> = Unwrap<Awaited<Returned>>;
 
-type UnwrapResource<Value> =
-  Value extends Resource<infer Inner> ? Inner : Value;
+type Unwrap<Value> =
+  Value extends Resource<infer Inner>
+    ? Inner
+    : Value extends Reactive<infer Inner>
+      ? Accessor<Inner>
+      : Value;

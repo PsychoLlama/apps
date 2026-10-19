@@ -54,7 +54,13 @@ export default [
     },
     rules: {
       'solid/components-return-once': 'error',
-      'solid/reactivity': 'error',
+      'solid/reactivity': [
+        'error',
+        {
+          // `@lib/effects` tasks hand signals to the graph through it.
+          customReactiveFunctions: ['reactive'],
+        },
+      ],
       'solid/event-handlers': 'error',
       'solid/imports': 'error',
       'solid/style-prop': 'error',
@@ -203,7 +209,7 @@ export default [
     // primitives directly — they implement the sanctioned surfaces.
     files: [
       'packages/lib/state/src/**/*.ts',
-      'packages/lib/effects/src/**/*.ts',
+      'packages/lib/effects/src/**/*.{ts,tsx}',
     ],
     rules: {
       'no-restricted-imports': [
@@ -227,6 +233,14 @@ export default [
     // import the primitives the rule redirects toward without forming a
     // cycle. Its gallery/demo files render raw elements instead.
     files: ['packages/lib/design/**/*.tsx'],
+    rules: {
+      'custom/require-ui-primitives': 'off',
+    },
+  },
+  {
+    // @lib/effects is headless infrastructure with no UI of its own, and
+    // it sits below @lib/ui. Its tests render bare elements as probes.
+    files: ['packages/lib/effects/**/*.tsx'],
     rules: {
       'custom/require-ui-primitives': 'off',
     },

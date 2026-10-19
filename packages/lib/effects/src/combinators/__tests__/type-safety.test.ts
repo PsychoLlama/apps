@@ -1,5 +1,6 @@
+import type { Accessor } from 'solid-js';
 import type { Flow } from '../../flow';
-import { resource } from '../../task';
+import { reactive, resource } from '../../task';
 import { collect } from '../collect';
 import { concurrent } from '../concurrent';
 import { pipe } from '../pipe';
@@ -27,6 +28,21 @@ describe('type safety', () => {
     expectTypeOf(flow).toEqualTypeOf<
       Flow<[opts: { audio: boolean; video: boolean }], [number]>
     >();
+  });
+
+  it('passes reactive outputs as accessors', () => {
+    const muted = (track: string) => reactive(() => track.length > 0);
+    const flow = pipe([getTrack('audio'), muted]);
+    expectTypeOf(flow).toEqualTypeOf<
+      Flow<[stream: string], [Accessor<boolean>]>
+    >();
+
+    pipe([muted, (state: Accessor<boolean>) => state()]);
+    const illegal = () => {
+      // @ts-expect-error — downstream gets the accessor, not the value
+      pipe([muted, (state: boolean) => state]);
+    };
+    void illegal;
   });
 
   it('spreads concurrent outputs positionally', () => {

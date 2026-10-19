@@ -6,7 +6,6 @@ export {
   createManager,
   inspect,
   release,
-  setSource,
   type Handle,
   type Manager,
 } from './manager';

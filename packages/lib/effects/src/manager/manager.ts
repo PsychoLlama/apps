@@ -1,7 +1,6 @@
 import { assert } from '@lib/assert';
 import { createSignal, type Accessor, type Signal } from 'solid-js';
 import { FLOW, type Flow, type FlowNode } from '../flow';
-import { isSourceTask, SOURCE, type Source, type SourceTask } from '../source';
 import type { Task } from '../task';
 import { createCache, insert, lookup, remove, type Cache } from './cache';
 import { spawn, type Entry } from './entry';
@@ -24,9 +23,6 @@ export interface Handle {
   /** Per node, the entry it's bound to and so holds a reference on. */
   readonly held: ReadonlyMap<FlowNode, Signal<Entry | undefined>>;
 
-  /** Serializes the jobs that rebind nodes: source changes and release. */
-  queue: Promise<unknown>;
-
   released: boolean;
 }
 
@@ -34,16 +30,12 @@ export interface Handle {
 export interface Manager {
   readonly cache: Cache<Entry>;
 
-  /** Each source's current value, once set. Unset sources read their initial. */
-  readonly sources: Map<Task, unknown>;
-
-  /** Handles that have computed, so a source change can reach their nodes. */
+  /** Handles that have computed and not yet been released. */
   readonly handles: Set<Handle>;
 }
 
 export const createManager = (): Manager => ({
   cache: createCache(),
-  sources: new Map(),
   handles: new Set(),
 });
 
@@ -91,9 +83,6 @@ const held = (handle: Handle, node: FlowNode) => {
   return signal;
 };
 
-const current = (manager: Manager, task: SourceTask<unknown>) =>
-  manager.sources.has(task) ? manager.sources.get(task) : task[SOURCE];
-
 /** Bind a node once every upstream value is known, then let it settle. */
 const bind = (
   manager: Manager,
@@ -105,10 +94,6 @@ const bind = (
 
   binding = (async () => {
     const inputs: unknown[] = [];
-    if (isSourceTask(node.task)) {
-      inputs.push(current(manager, node.task));
-    }
-
     for (const input of node.inputs) {
       const upstream = await bind(manager, handle, input);
       const state = upstream?.state();
@@ -180,28 +165,6 @@ const tearDown = async (
   return failures;
 };
 
-/** The nodes reading a source task, and everything downstream of them. */
-const dependents = (handle: Handle, task: Task): FlowNode[] => {
-  const affected = new Set<FlowNode>();
-  for (const node of handle.nodes) {
-    if (
-      node.task === task ||
-      node.inputs.some((input) => affected.has(input))
-    ) {
-      affected.add(node);
-    }
-  }
-
-  return [...affected];
-};
-
-/** Run the job after every job queued on the handle before it. */
-const enqueue = <Result>(handle: Handle, job: () => Promise<Result>) => {
-  const run = handle.queue.then(job);
-  handle.queue = run.catch(() => {});
-  return run;
-};
-
 /** Build the flow's graph. Pure: nothing runs, and no manager is involved. */
 export const acquire = (flow: Flow<[]>): Handle => {
   const graph = flow[FLOW]([]);
@@ -216,7 +179,6 @@ export const acquire = (flow: Flow<[]>): Handle => {
         createSignal<Entry | undefined>(),
       ]),
     ),
-    queue: Promise.resolve(),
     released: false,
   };
 };
@@ -252,49 +214,9 @@ export const release = async (
   handle.released = true;
   manager.handles.delete(handle);
 
-  await enqueue(handle, async () => {
-    const failures = await tearDown(manager, handle, handle.nodes);
-    if (failures.length > 0) {
-      throw new AggregateError(failures, 'Cleanup failed.');
-    }
-  });
-};
-
-/**
- * Change a source's value. Every node downstream of it, in every live
- * handle, lets go of its entry (downstream first) and binds again against
- * the new value. Resolves once they all settle; rejects with an
- * `AggregateError` of every cleanup and compute failure.
- */
-export const setSource = async <Value>(
-  manager: Manager,
-  src: Source<Value>,
-  value: Value,
-): Promise<void> => {
-  const task = src[SOURCE];
-  if (Object.is(current(manager, task), value)) return;
-  manager.sources.set(task, value);
-
-  const refreshed = await Promise.all(
-    [...manager.handles].map((handle) =>
-      enqueue(handle, async () => {
-        // A later change supersedes this one; its job will do the work.
-        if (!Object.is(current(manager, task), value)) return [];
-
-        const nodes = dependents(handle, task);
-        if (handle.released || nodes.length === 0) return [];
-
-        return [
-          ...(await tearDown(manager, handle, nodes)),
-          ...(await bringUp(manager, handle, nodes)),
-        ];
-      }),
-    ),
-  );
-
-  const failures = refreshed.flat();
+  const failures = await tearDown(manager, handle, handle.nodes);
   if (failures.length > 0) {
-    throw new AggregateError(failures, 'Source change failed.');
+    throw new AggregateError(failures, 'Cleanup failed.');
   }
 };
 
