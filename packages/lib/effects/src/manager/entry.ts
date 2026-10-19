@@ -62,7 +62,10 @@ const evaluate = async (
   node: FlowNode,
   entry: Entry,
 ): Promise<{ outputs: Tuple; dispose?: Dispose }> => {
-  if (node.kind === 'join') return { outputs: entry.sources.flat() };
+  if (node.kind === 'join') {
+    const joined = entry.sources.flat();
+    return { outputs: node.collect ? [joined] : joined };
+  }
 
   const { value, dispose } = unwrap(await invoke(node.task, entry.inputs));
 

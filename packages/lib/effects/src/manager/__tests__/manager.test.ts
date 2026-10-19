@@ -250,6 +250,23 @@ describe('manager', () => {
       expect(add).toHaveBeenCalledOnce();
     });
 
+    it('shares one collected array while its branches live', async () => {
+      const manager = createManager();
+      const one = () => 1;
+      const two = () => 2;
+      const both = collect([one, two]);
+      const first = acquire(both);
+      const second = acquire(both);
+
+      await compute(manager, first);
+      await compute(manager, second);
+      const [collected] = output(first) as [number[]];
+
+      expect(collected).toEqual([1, 2]);
+      expect(output(second)).toEqual([collected]);
+      expect((output(second) as [number[]])[0]).toBe(collected);
+    });
+
     it('keeps a join per input tuple', async () => {
       const manager = createManager();
       const double = (value: number) => value * 2;

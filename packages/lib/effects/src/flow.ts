@@ -33,14 +33,18 @@ export interface TaskNode {
 }
 
 /**
- * Concatenates its branches' output tuples. Built by `concurrent`: the
- * join is cached by that flow and the input its branches share.
+ * Concatenates its branches' output tuples. Built by `concurrent` and
+ * `collect`: the join is cached by that flow and the input its branches
+ * share.
  */
 export interface JoinNode {
   readonly kind: 'join';
   readonly flow: Flow<never>;
   readonly input?: FlowNode;
   readonly branches: readonly FlowNode[];
+
+  /** Box the concatenated tuple as one value, as `collect` does. */
+  readonly collect: boolean;
 }
 
 /**
