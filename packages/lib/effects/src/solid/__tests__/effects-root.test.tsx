@@ -1,0 +1,40 @@
+import { render } from '@solidjs/testing-library';
+import { createEffect } from 'solid-js';
+import { EffectsRoot, useMounted } from '../effects-root';
+
+describe('EffectsRoot', () => {
+  it('reads unmounted during setup, then mounted', () => {
+    const setups: boolean[] = [];
+    const effects: boolean[] = [];
+
+    const Probe = () => {
+      const mounted = useMounted();
+      setups.push(mounted());
+      createEffect(() => effects.push(mounted()));
+
+      return <>{mounted() ? 'mounted' : 'pending'}</>;
+    };
+
+    const { container } = render(() => (
+      <EffectsRoot>
+        <Probe />
+      </EffectsRoot>
+    ));
+
+    // Set up once, before mount; mounting doesn't rebuild the subtree.
+    expect(setups).toEqual([false]);
+    expect(effects.at(-1)).toBe(true);
+    expect(container).toHaveTextContent('mounted');
+  });
+
+  it('demands a provider above the hook', () => {
+    const Orphan = () => {
+      useMounted();
+      return null;
+    };
+
+    expect(() => render(() => <Orphan />)).toThrow(
+      '<EffectsRoot> required but not provided.',
+    );
+  });
+});

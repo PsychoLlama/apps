@@ -21,6 +21,6 @@
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*",
-    "@vitest/coverage-v8": "^5.0.0"
+    "@vitest/coverage-v8": "catalog:"
   }
 }

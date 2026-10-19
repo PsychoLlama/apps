@@ -209,7 +209,7 @@ export default [
     // primitives directly — they implement the sanctioned surfaces.
     files: [
       'packages/lib/state/src/**/*.ts',
-      'packages/lib/effects/src/**/*.ts',
+      'packages/lib/effects/src/**/*.{ts,tsx}',
     ],
     rules: {
       'no-restricted-imports': [
