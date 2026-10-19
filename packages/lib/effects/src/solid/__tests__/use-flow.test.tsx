@@ -8,7 +8,7 @@ import {
   type Resource,
 } from 'solid-js';
 import { collect, concurrent, pipe } from '../../combinators';
-import { resource } from '../../task';
+import { reactive, resource } from '../../task';
 import { createTestController } from '../../testing';
 import type { Controller } from '../../controller/controller';
 import { EffectsContext } from '../context';
@@ -89,6 +89,87 @@ describe('useFlow', () => {
 
     expectTypeOf(tree.result).toEqualTypeOf<Resource<[number, string]>>();
     expect(tree.result()).toEqual([1, 'two']);
+    tree.unmount();
+  });
+
+  it('reads a resource as its value', async () => {
+    await using controller = createTestController();
+    const open = () => resource('stream', () => {});
+
+    const tree = renderUnmounted(controller.controller, () =>
+      useFlow(pipe([open])),
+    );
+
+    tree.mount();
+    await settle();
+
+    expectTypeOf(tree.result).toEqualTypeOf<Resource<string>>();
+    expect(tree.result()).toBe('stream');
+    expect(tree.result.latest).toBe('stream');
+    expect(tree.result.loading).toBe(false);
+    expect(tree.result.error).toBeUndefined();
+    tree.unmount();
+  });
+
+  it('reads reactive state through, tracked', async () => {
+    await using controller = createTestController();
+    const [muted, setMuted] = createSignal(false);
+    const observe = () => reactive(muted);
+    const seen = vi.fn();
+
+    const tree = renderUnmounted(controller.controller, () => {
+      const output = useFlow(pipe([observe]));
+      createEffect(() => {
+        seen(output());
+      });
+      return output;
+    });
+
+    tree.mount();
+    await settle();
+
+    expectTypeOf(tree.result).toEqualTypeOf<Resource<boolean>>();
+    expect(tree.result()).toBe(false);
+
+    setMuted(true);
+
+    expect(tree.result()).toBe(true);
+    expect(seen).toHaveBeenLastCalledWith(true);
+    tree.unmount();
+  });
+
+  it('reduces every item of a collected output', async () => {
+    await using controller = createTestController();
+    const [muted] = createSignal(true);
+    const open = () => resource('stream', () => {});
+    const observe = () => reactive(muted);
+
+    const tree = renderUnmounted(controller.controller, () =>
+      useFlow(collect([open, observe, collect([() => 1, observe])])),
+    );
+
+    tree.mount();
+    await settle();
+
+    expectTypeOf(tree.result).toEqualTypeOf<
+      Resource<[string, boolean, [number, boolean]]>
+    >();
+    expect(tree.result()).toEqual(['stream', true, [1, true]]);
+    tree.unmount();
+  });
+
+  it('leaves functions returned by tasks alone', async () => {
+    await using controller = createTestController();
+    const format = (value: number) => `#${value}`;
+
+    const tree = renderUnmounted(controller.controller, () =>
+      useFlow(pipe([() => format])),
+    );
+
+    tree.mount();
+    await settle();
+
+    expect(tree.result()).toBe(format);
     tree.unmount();
   });
 

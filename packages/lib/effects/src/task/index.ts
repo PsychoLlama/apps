@@ -1,6 +1,7 @@
 export {
   collected,
   disposeOf,
+  isWrapped,
   reactive,
   resource,
   yieldOf,
