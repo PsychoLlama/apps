@@ -12,7 +12,7 @@ export interface Pending {
 export interface Computing {
   readonly step: 'computing';
 
-  /** The exact values the task was called with. */
+  /** The upstream output tuple: a task's arguments, a join's shared input. */
   readonly inputs: readonly unknown[];
 }
 
@@ -20,27 +20,31 @@ export interface Computing {
 export interface Failed {
   readonly step: 'failed';
 
-  /** The exact values the task was called with. */
+  /** The upstream output tuple: a task's arguments, a join's shared input. */
   readonly inputs: readonly unknown[];
 
   /** Whatever the task threw or rejected with. */
   readonly error: unknown;
 }
 
-/** The task finished. */
-export interface Succeeded<Value = unknown> {
+/** The node finished. */
+export interface Succeeded<
+  Outputs extends readonly unknown[] = readonly unknown[],
+> {
   readonly step: 'succeeded';
 
-  /** The exact values the task was called with. */
+  /** The upstream output tuple: a task's arguments, a join's shared input. */
   readonly inputs: readonly unknown[];
 
   /**
-   * The task's output, with any resource wrapper removed. A reactive
-   * output leaves its accessor.
+   * The node's output tuple, created once and shared with every handle,
+   * so downstream nodes can key on its identity. A task's holds its one
+   * value with any resource wrapper removed; a reactive output leaves its
+   * accessor.
    */
-  readonly value: Value;
+  readonly outputs: Outputs;
 }
 
 /** Snapshots are immutable; transitions replace them. */
-export type State<Value = unknown> =
-  Pending | Computing | Failed | Succeeded<Value>;
+export type State<Outputs extends readonly unknown[] = readonly unknown[]> =
+  Pending | Computing | Failed | Succeeded<Outputs>;

@@ -52,15 +52,17 @@ type Pipeline<S extends Steps> = {
 export const pipe = <const S extends Steps>(
   steps: Pipeline<S>,
 ): Flow<InputsOf<S[0]>, OutputsOf<LastOf<S>>> =>
-  defineFlow((inputs) => {
-    const nodes: FlowNode[] = [];
-    let outputs = inputs;
+  defineFlow((input) => {
+    const [first, ...rest] = steps as Steps;
+    const head = toBuild(first)(input);
+    const nodes: FlowNode[] = [...head.nodes];
+    let output = head.output;
 
-    for (const step of steps as Steps) {
-      const graph = toBuild(step)(outputs);
+    for (const step of rest) {
+      const graph = toBuild(step)(output);
       nodes.push(...graph.nodes);
-      outputs = graph.outputs;
+      output = graph.output;
     }
 
-    return { nodes, outputs };
+    return { nodes, output };
   });

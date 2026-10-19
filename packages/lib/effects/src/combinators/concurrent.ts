@@ -26,21 +26,39 @@ export type Branches<S extends Steps> = {
 };
 
 /**
+ * A flow that runs the branches over its input and joins their tuples.
+ * The flow keys every join it builds.
+ */
+export const defineJoin = (branches: Steps, collect: boolean) => {
+  const flow = defineFlow((input) => {
+    const nodes: FlowNode[] = [];
+    const outputs: FlowNode[] = [];
+
+    for (const branch of branches) {
+      const graph = toBuild(branch)(input);
+      nodes.push(...graph.nodes);
+      outputs.push(graph.output);
+    }
+
+    const join: FlowNode = {
+      kind: 'join',
+      flow,
+      input,
+      branches: outputs,
+      collect,
+    };
+
+    nodes.push(join);
+    return { nodes, output: join };
+  });
+
+  return flow;
+};
+
+/**
  * Run branches side by side over the same inputs. Outputs concatenate into
  * one tuple, so the next step sees every branch's result positionally.
  */
 export const concurrent = <const S extends Steps>(
   branches: Branches<S>,
-): Flow<InputsOf<S[0]>, ConcatOutputs<S>> =>
-  defineFlow((inputs) => {
-    const nodes: FlowNode[] = [];
-    const outputs: FlowNode[] = [];
-
-    for (const branch of branches as Steps) {
-      const graph = toBuild(branch)(inputs);
-      nodes.push(...graph.nodes);
-      outputs.push(...graph.outputs);
-    }
-
-    return { nodes, outputs };
-  });
+): Flow<InputsOf<S[0]>, ConcatOutputs<S>> => defineJoin(branches, false);

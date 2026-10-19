@@ -1,58 +1,90 @@
-import { createCache, insert, lookup, remove } from '../cache';
+import { createCache, drop, insert, intern, lookup, remove } from '../cache';
 
 const task = () => 1;
 const other = () => 2;
 
 describe('cache', () => {
-  it('stores and retrieves by task and inputs', () => {
-    const cache = createCache<string>();
-    const key = {};
+  describe('entries', () => {
+    it('stores and retrieves by kind, node, and input tuple', () => {
+      const cache = createCache<string>();
+      const inputs = [1];
 
-    expect(lookup(cache, task, [key, 1])).toBeUndefined();
-    insert(cache, task, [key, 1], 'value');
-    expect(lookup(cache, task, [key, 1])).toBe('value');
-    expect(lookup(cache, task, [key])).toBeUndefined();
-    expect(lookup(cache, task, [key, 1, 2])).toBeUndefined();
+      expect(lookup(cache, 'task', task, inputs)).toBeUndefined();
+      insert(cache, 'task', task, inputs, 'value');
+
+      expect(lookup(cache, 'task', task, inputs)).toBe('value');
+      expect(lookup(cache, 'task', other, inputs)).toBeUndefined();
+      expect(lookup(cache, 'join', task, inputs)).toBeUndefined();
+    });
+
+    it('keys by tuple identity, not contents', () => {
+      const cache = createCache<string>();
+      insert(cache, 'task', task, [1], 'first');
+
+      expect(lookup(cache, 'task', task, [1])).toBeUndefined();
+    });
+
+    it('drops a node once its last value is removed', () => {
+      const cache = createCache<string>();
+      const first = [1];
+      const second = [2];
+      insert(cache, 'task', task, first, 'first');
+      insert(cache, 'task', task, second, 'second');
+
+      remove(cache, 'task', task, first);
+      expect(lookup(cache, 'task', task, first)).toBeUndefined();
+      expect(lookup(cache, 'task', task, second)).toBe('second');
+
+      remove(cache, 'task', task, second);
+      expect(cache.entries.task.has(task)).toBe(false);
+    });
+
+    it('tolerates removing values that do not exist', () => {
+      const cache = createCache<string>();
+      const inputs = [1];
+      insert(cache, 'task', task, inputs, 'value');
+
+      expect(() => remove(cache, 'task', other, inputs)).not.toThrow();
+      expect(() => remove(cache, 'task', task, [1])).not.toThrow();
+      expect(lookup(cache, 'task', task, inputs)).toBe('value');
+    });
   });
 
-  it('keys by input identity', () => {
-    const cache = createCache<string>();
-    insert(cache, task, [{ video: true }], 'first');
+  describe('interned', () => {
+    it('shares one tuple across equal values', () => {
+      const cache = createCache();
+      const tuple = intern(cache, 1);
 
-    expect(lookup(cache, task, [{ video: true }])).toBeUndefined();
-    expect(lookup(cache, other, [])).toBeUndefined();
-  });
+      expect(tuple).toEqual([1]);
+      expect(intern(cache, 1)).toBe(tuple);
+      expect(intern(cache, 2)).not.toBe(tuple);
+    });
 
-  it('deletes values and the branches left empty', () => {
-    const cache = createCache<string>();
-    insert(cache, task, ['a'], 'shared');
-    insert(cache, task, ['a', 'b', 'c'], 'deep');
+    it('compares with SameValueZero', () => {
+      const cache = createCache();
 
-    remove(cache, task, ['a', 'b', 'c']);
-    expect(lookup(cache, task, ['a', 'b', 'c'])).toBeUndefined();
-    expect(lookup(cache, task, ['a'])).toBe('shared');
+      expect(intern(cache, Number.NaN)).toBe(intern(cache, Number.NaN));
+      expect(intern(cache, { a: 1 })).not.toBe(intern(cache, { a: 1 }));
+    });
 
-    remove(cache, task, ['a']);
-    expect(lookup(cache, task, ['a'])).toBeUndefined();
-  });
+    it('keeps the tuple until its last reference is dropped', () => {
+      const cache = createCache();
+      const tuple = intern(cache, 1);
+      intern(cache, 1);
 
-  it('keeps the root while its zero-input value is alive', () => {
-    const cache = createCache<string>();
-    insert(cache, task, [], 'bare');
-    insert(cache, task, ['a'], 'deep');
+      drop(cache, 1);
+      expect(intern(cache, 1)).toBe(tuple);
 
-    remove(cache, task, ['a']);
+      drop(cache, 1);
+      drop(cache, 1);
+      expect(cache.interned.has(1)).toBe(false);
+      expect(intern(cache, 1)).not.toBe(tuple);
+    });
 
-    expect(lookup(cache, task, [])).toBe('bare');
-  });
+    it('tolerates dropping values never interned', () => {
+      const cache = createCache();
 
-  it('tolerates deleting paths that do not exist', () => {
-    const cache = createCache<string>();
-    insert(cache, task, ['a'], 'value');
-
-    expect(() => remove(cache, other, [])).not.toThrow();
-    expect(() => remove(cache, task, ['z'])).not.toThrow();
-    expect(() => remove(cache, task, ['a', 'z'])).not.toThrow();
-    expect(lookup(cache, task, ['a'])).toBe('value');
+      expect(() => drop(cache, 1)).not.toThrow();
+    });
   });
 });

@@ -6,24 +6,24 @@ const one = () => 1;
 const double = (value: number) => value * 2;
 
 describe('pipe', () => {
-  it('wires each step to the previous outputs', () => {
+  it('wires each step to the previous output', () => {
     const graph = build(pipe([one, double, double]));
 
     expect(shape(graph)).toEqual({
       nodes: ['one()', 'double(one())', 'double(double(one()))'],
-      outputs: ['double(double(one()))'],
+      output: 'double(double(one()))',
     });
   });
 
-  it('feeds flow inputs into the first step', () => {
-    const upstream: FlowNode = { task: one, inputs: [] };
-    const graph = build(pipe([double]), [upstream]);
+  it('feeds the flow input into the first step', () => {
+    const upstream: FlowNode = { kind: 'task', task: one };
+    const graph = build(pipe([double]), upstream);
 
     expect(shape(graph)).toEqual({
       nodes: ['double(one())'],
-      outputs: ['double(one())'],
+      output: 'double(one())',
     });
-    expect(graph.nodes[0]?.inputs[0]).toBe(upstream);
+    expect(graph.output).toMatchObject({ input: upstream });
   });
 
   it('splices sub-flows in place', () => {

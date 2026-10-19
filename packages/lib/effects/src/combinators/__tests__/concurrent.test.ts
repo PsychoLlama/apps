@@ -8,7 +8,7 @@ const add = (left: number, right: number) => left + right;
 const double = (value: number) => value * 2;
 
 describe('concurrent', () => {
-  it('shares inputs across branches and concatenates outputs', () => {
+  it('shares the input across branches and joins their outputs', () => {
     const graph = build(pipe([one, concurrent([double, double]), add]));
 
     expect(shape(graph)).toEqual({
@@ -16,25 +16,38 @@ describe('concurrent', () => {
         'one()',
         'double(one())',
         'double(one())',
-        'add(double(one()), double(one()))',
+        '[double(one()), double(one())]',
+        'add([double(one()), double(one())])',
       ],
-      outputs: ['add(double(one()), double(one()))'],
+      output: 'add([double(one()), double(one())])',
     });
   });
 
-  it('flattens nested fan-outs', () => {
+  it('nests joins as branches', () => {
     const graph = build(
       concurrent([concurrent([one, two]), concurrent([one, two])]),
     );
 
-    expect(shape(graph).outputs).toEqual(['one()', 'two()', 'one()', 'two()']);
+    expect(shape(graph).output).toBe('[[one(), two()], [one(), two()]]');
+  });
+
+  it('keys every join by the flow that built it', () => {
+    const flow = concurrent([one, two]);
+    const first = build(flow).output;
+    const second = build(flow).output;
+
+    expect(first).not.toBe(second);
+    expect(first).toMatchObject({ kind: 'join', flow });
+    expect(second).toMatchObject({ kind: 'join', flow });
   });
 
   it('builds fresh nodes for every placement of the same task', () => {
     const graph = build(concurrent([one, one]));
-    const [first, second] = graph.outputs;
+    assert(graph.output.kind === 'join');
+    const [first, second] = graph.output.branches;
 
     expect(first).not.toBe(second);
-    expect(first?.task).toBe(second?.task);
+    expect(first).toMatchObject({ task: one });
+    expect(second).toMatchObject({ task: one });
   });
 });

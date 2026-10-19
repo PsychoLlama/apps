@@ -39,12 +39,11 @@ export const useFlow = <Output>(flow: Flow<[], [Output]>): Resource<Output> => {
   const [output] = createResource(useMounted(), async () => {
     await controller.compute(handle);
 
-    const [node] = handle.outputs;
-    const state = controller.inspect(handle, node);
+    const state = controller.inspect(handle, handle.output);
     assert(state.step === 'succeeded', 'Flow computed without an output.');
 
     // The graph is untyped at runtime; the flow's signature vouches.
-    return state.value as Output;
+    return state.outputs[0] as Output;
   });
 
   return output;
