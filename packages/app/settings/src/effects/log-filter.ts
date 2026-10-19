@@ -1,39 +1,51 @@
-import { createSignal } from 'solid-js';
+import { type Accessor, createSignal } from 'solid-js';
 import { pipe, reactive, type Reactive } from '@lib/effects';
 import {
   getDefaultValue,
+  type JsonValue,
+  type Option,
   readEnvironment,
   subscribe,
 } from '@lib/runtime-config';
-import { filter } from '@lib/observability/config';
+import { filter, type Filter } from '@lib/observability/config';
 
 /** The active environment's built-in log filter: what a reset reverts to. */
 export const defaultLogFilter = getDefaultValue(filter).pattern;
 
-const read = async (): Promise<string> => {
-  const { pattern } = await readEnvironment(filter);
-  return pattern;
-};
+// Subscribes before reading. A change landing mid-read is at least as
+// fresh as the read, so the read only lands if nothing changed. The
+// default never shows: the task resolves after the read.
+const observeOption = async <Value extends JsonValue>(
+  option: Option<Value>,
+): Promise<Reactive<Value>> => {
+  const [value, setValue] = createSignal(getDefaultValue(option));
+  const unsubscribe = subscribe(option, setValue);
 
-// A change landing between the read and the subscription is missed. The
-// gap is one OPFS read wide, and the next change corrects it.
-const observe = (initial: string): Reactive<string> => {
-  const [pattern, setPattern] = createSignal(initial);
-  const unsubscribe = subscribe(filter, (next) => setPattern(next.pattern));
+  let stale = false;
+  const stopStaleWatcher = subscribe(option, () => (stale = true));
 
-  return reactive(pattern, unsubscribe);
+  try {
+    const read = await readEnvironment(option);
+    if (!stale) setValue(() => read);
+  } catch (error) {
+    unsubscribe();
+    throw error;
+  } finally {
+    stopStaleWatcher();
+  }
+
+  return reactive(value, unsubscribe);
 };
 
 /**
- * The console log filter pattern for the active environment, with any
- * persisted OPFS override layered over the default. A one-off read; reach
- * for {@link observeLogFilter} to follow later changes.
+ * The console log filter pattern for the active environment as a live
+ * accessor, with any persisted OPFS override layered over the default.
+ * Changes from any browsing context land here, this tab's own writes
+ * included. Releasing the flow drops the subscription.
  */
-export const readLogFilter = pipe([read]);
+export const observeLogFilter = pipe([
+  () => observeOption(filter),
 
-/**
- * The console log filter pattern as a live accessor, starting from
- * {@link readLogFilter}. Changes from any browsing context land here, this
- * tab's own writes included. Releasing the flow drops the subscription.
- */
-export const observeLogFilter = pipe([readLogFilter, observe]);
+  (filter: Accessor<Filter>): Reactive<string> =>
+    reactive(() => filter().pattern),
+]);

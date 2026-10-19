@@ -2,7 +2,7 @@ import { createTestController } from '@lib/effects/testing';
 import { readEnvironment, subscribe } from '@lib/runtime-config';
 import type * as RuntimeConfig from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
-import { observeLogFilter, readLogFilter } from '../log-filter';
+import { observeLogFilter } from '../log-filter';
 
 vi.mock('@lib/runtime-config', async (importOriginal) => ({
   ...(await importOriginal<typeof RuntimeConfig>()),
@@ -12,40 +12,31 @@ vi.mock('@lib/runtime-config', async (importOriginal) => ({
 
 type Listener = (value: { pattern: string }) => void;
 
-/** Captures the subscription so tests can push changes through it. */
+/**
+ * Tracks live subscriptions so tests can push changes through them and
+ * check that none outlive the flow.
+ */
 const setup = () => {
-  const unsubscribe = vi.fn();
-  let listener: Listener | undefined;
+  const listeners = new Set<Listener>();
 
   vi.mocked(subscribe).mockImplementation((option, callback) => {
     expect(option).toBe(filter);
-    listener = callback;
-    return unsubscribe;
+    const listener: Listener = (value) => callback(value);
+    listeners.add(listener);
+    return () => listeners.delete(listener);
   });
 
   const push = (pattern: string) => {
-    expect(listener).toBeDefined();
-    listener?.({ pattern });
+    expect(listeners.size).toBeGreaterThan(0);
+    for (const listener of listeners) listener({ pattern });
   };
 
-  return { push, unsubscribe };
+  return { push, listeners };
 };
 
 beforeEach(() => {
   vi.mocked(readEnvironment).mockReset();
   vi.mocked(subscribe).mockReset();
-});
-
-describe('readLogFilter', () => {
-  it('resolves the pattern for the active environment', async () => {
-    vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
-    await using effects = createTestController();
-
-    const [pattern] = await effects.run(readLogFilter);
-
-    expect(pattern).toBe('app:*');
-    expect(readEnvironment).toHaveBeenCalledWith(filter);
-  });
 });
 
 describe('observeLogFilter', () => {
@@ -57,6 +48,7 @@ describe('observeLogFilter', () => {
     const [pattern] = await effects.run(observeLogFilter);
 
     expect(pattern()).toBe('app:*');
+    expect(readEnvironment).toHaveBeenCalledWith(filter);
   });
 
   it('follows later changes', async () => {
@@ -70,35 +62,37 @@ describe('observeLogFilter', () => {
     expect(pattern()).toBe('*');
   });
 
-  it('shares the read with readLogFilter', async () => {
-    setup();
-    vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
+  it('keeps a change that lands mid-read', async () => {
+    const { push } = setup();
+    vi.mocked(readEnvironment).mockImplementation(async () => {
+      push('*');
+      return { pattern: 'app:*' };
+    });
     await using effects = createTestController();
 
-    await effects.run(readLogFilter);
-    await effects.run(observeLogFilter);
+    const [pattern] = await effects.run(observeLogFilter);
 
-    expect(readEnvironment).toHaveBeenCalledOnce();
+    expect(pattern()).toBe('*');
   });
 
   it('unsubscribes when released', async () => {
-    const { unsubscribe } = setup();
+    const { listeners } = setup();
     vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
     const effects = createTestController();
 
     await effects.run(observeLogFilter);
-    expect(unsubscribe).not.toHaveBeenCalled();
+    expect(listeners.size).toBe(1);
 
     await effects[Symbol.asyncDispose]();
-    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(listeners.size).toBe(0);
   });
 
-  it('never subscribes if the read fails', async () => {
-    setup();
+  it('unsubscribes if the read fails', async () => {
+    const { listeners } = setup();
     vi.mocked(readEnvironment).mockRejectedValue(new Error('No OPFS.'));
     await using effects = createTestController();
 
     await expect(effects.run(observeLogFilter)).rejects.toThrow();
-    expect(subscribe).not.toHaveBeenCalled();
+    expect(listeners.size).toBe(0);
   });
 });
