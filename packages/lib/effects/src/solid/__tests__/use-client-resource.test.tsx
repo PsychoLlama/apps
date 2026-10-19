@@ -12,7 +12,7 @@ import { reactive, resource } from '../../task';
 import { createTestController } from '../../testing';
 import type { Controller } from '../../controller/controller';
 import { EffectsContext } from '../context';
-import { useFlow } from '../use-flow';
+import { useClientResource } from '../use-client-resource';
 
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -45,7 +45,7 @@ const renderUnmounted = <Result,>(
   return { result, mount: () => setMounted(true), unmount };
 };
 
-describe('useFlow', () => {
+describe('useClientResource', () => {
   it('computes on mount and resolves to the final output', async () => {
     await using controller = createTestController();
     const gate = Promise.withResolvers<number>();
@@ -53,7 +53,7 @@ describe('useFlow', () => {
     const double = (value: number) => value * 2;
 
     const tree = renderUnmounted(controller.controller, () =>
-      useFlow(pipe([load, double])),
+      useClientResource(pipe([load, double])),
     );
 
     expectTypeOf(tree.result).toEqualTypeOf<Resource<number>>();
@@ -80,8 +80,8 @@ describe('useFlow', () => {
 
     const tree = renderUnmounted(controller.controller, () => {
       // @ts-expect-error -- Two outputs.
-      useFlow(concurrent([one, two]));
-      return useFlow(collect([one, two]));
+      useClientResource(concurrent([one, two]));
+      return useClientResource(collect([one, two]));
     });
 
     tree.mount();
@@ -97,7 +97,7 @@ describe('useFlow', () => {
     const open = () => resource('stream', () => {});
 
     const tree = renderUnmounted(controller.controller, () =>
-      useFlow(pipe([open])),
+      useClientResource(pipe([open])),
     );
 
     tree.mount();
@@ -118,7 +118,7 @@ describe('useFlow', () => {
     const seen = vi.fn();
 
     const tree = renderUnmounted(controller.controller, () => {
-      const output = useFlow(pipe([observe]));
+      const output = useClientResource(pipe([observe]));
       createEffect(() => {
         seen(output());
       });
@@ -145,7 +145,7 @@ describe('useFlow', () => {
     const observe = () => reactive(muted);
 
     const tree = renderUnmounted(controller.controller, () =>
-      useFlow(collect([open, observe, collect([() => 1, observe])])),
+      useClientResource(collect([open, observe, collect([() => 1, observe])])),
     );
 
     tree.mount();
@@ -163,7 +163,7 @@ describe('useFlow', () => {
     const format = (value: number) => `#${value}`;
 
     const tree = renderUnmounted(controller.controller, () =>
-      useFlow(pipe([() => format])),
+      useClientResource(pipe([() => format])),
     );
 
     tree.mount();
@@ -182,7 +182,7 @@ describe('useFlow', () => {
     const tree = renderUnmounted(
       controller.controller,
       () => {
-        const output = useFlow(pipe([fail]));
+        const output = useClientResource(pipe([fail]));
         // Read it so the failure has somewhere to throw.
         createEffect(output);
       },
@@ -214,7 +214,7 @@ describe('useFlow', () => {
     const open = () => resource('stream', dispose);
 
     const tree = renderUnmounted(controller.controller, () =>
-      useFlow(pipe([open])),
+      useClientResource(pipe([open])),
     );
 
     tree.mount();
@@ -240,7 +240,7 @@ describe('useFlow', () => {
 
     const tree = renderUnmounted(
       controller.controller,
-      () => useFlow(pipe([open])),
+      () => useClientResource(pipe([open])),
       (Probe) => (
         // Solid only passes the error to a fallback that declares it.
         <ErrorBoundary
@@ -272,7 +272,7 @@ describe('useFlow', () => {
     const open = vi.fn(() => 1);
 
     const tree = renderUnmounted(controller.controller, () =>
-      useFlow(pipe([open])),
+      useClientResource(pipe([open])),
     );
 
     tree.unmount();

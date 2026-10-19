@@ -1,4 +1,4 @@
-import { Suspense, useFlow } from '@lib/effects/solid';
+import { Suspense, useClientResource } from '@lib/effects/solid';
 import { useAnchor, useRun } from '@lib/state';
 import { Button, Code, Flex, Heading, Link, Text, TextField } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
@@ -27,7 +27,7 @@ export const AdvancedSettings = () => {
   const commitFilter = useRun(commitLogFilterSaga);
   const resetFilter = useRun(resetLogFilterSaga);
 
-  const logFilter = useFlow(observeLogFilter);
+  const logFilter = useClientResource(observeLogFilter);
 
   return (
     <Flex as="details" direction="column" gap={5}>

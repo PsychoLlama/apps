@@ -5,4 +5,4 @@ export {
   type EffectsRootProps,
 } from './context';
 export { Suspense, type SuspenseProps } from './suspense';
-export { useFlow } from './use-flow';
+export { useClientResource } from './use-client-resource';
