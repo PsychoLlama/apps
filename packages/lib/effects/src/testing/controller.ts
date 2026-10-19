@@ -2,6 +2,7 @@ import { assert } from '@lib/assert';
 import { createController, type Controller } from '../controller/controller';
 import type { Flow } from '../flow';
 import { createManager, release, type Manager } from '../manager';
+import { yieldOf } from '../task';
 
 /** Drives flows against a fresh manager and tears them down after. */
 export interface TestController extends AsyncDisposable {
@@ -46,7 +47,7 @@ export const createTestController = (): TestController => {
       assert(state.step === 'succeeded', 'Output did not succeed.');
 
       // The graph is untyped at runtime; the flow's signature vouches.
-      return state.outputs as Outputs;
+      return state.outputs.map(yieldOf) as unknown as Outputs;
     },
 
     [Symbol.asyncDispose]: async () => {

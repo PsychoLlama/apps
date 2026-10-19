@@ -1,6 +1,12 @@
 import { createSignal, type Accessor, type Setter } from 'solid-js';
 import type { FlowNode } from '../flow';
-import { isReactive, isResource, type Dispose, type Task } from '../task';
+import {
+  collected,
+  disposeOf,
+  yieldOf,
+  type Dispose,
+  type Task,
+} from '../task';
 import type { Tuple } from './cache';
 import type * as Node from './node';
 
@@ -36,7 +42,7 @@ export interface Entry {
   retired?: Promise<void>;
 }
 
-/** Boxes a task's value as its output tuple, one identity per value. */
+/** Boxes a task's output as its output tuple, one identity per value. */
 export type Intern = (value: unknown) => Tuple;
 
 /** What a root node reads as its input. Shared, so roots key alike. */
@@ -48,18 +54,8 @@ export const keyOf = (node: FlowNode): object =>
 
 const invoke = (task: Task, inputs: Tuple) =>
   // The one place a task runs. Its real inputs were checked when the
-  // flow was composed; here they're whatever upstream produced.
-  (task as Task<Tuple>)(...inputs);
-
-/** Split a task's output into what downstream receives and its cleanup. */
-const unwrap = (output: unknown): { value: unknown; dispose?: Dispose } => {
-  if (isResource(output)) return output;
-  if (isReactive(output)) {
-    return { value: output.state, dispose: output.dispose };
-  }
-
-  return { value: output };
-};
+  // flow was composed; here they're whatever upstream yields.
+  (task as Task<unknown[]>)(...inputs.map(yieldOf));
 
 const evaluate = async (
   node: FlowNode,
@@ -68,14 +64,16 @@ const evaluate = async (
 ): Promise<{ outputs: Tuple; dispose?: Dispose }> => {
   if (node.kind === 'join') {
     const joined = entry.sources.flat();
-    return { outputs: node.collect ? [joined] : joined };
+    return { outputs: node.collect ? [collected(joined, yieldOf)] : joined };
   }
 
-  const { value, dispose } = unwrap(await invoke(node.task, entry.inputs));
+  // Outputs keep what the task returned, wrappers and all, so bindings
+  // can tell what kind it is. Downstream tasks receive its `yieldOf`.
+  const output: unknown = await invoke(node.task, entry.inputs);
 
   // Tasks return one value, since JS has no multiple returns. Interning
   // the box gives equal values one identity for downstream keys.
-  return { outputs: intern(value), dispose };
+  return { outputs: intern(output), dispose: disposeOf(output) };
 };
 
 const run = async (

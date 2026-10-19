@@ -7,6 +7,7 @@ import {
 } from 'solid-js';
 import { assert } from '@lib/assert';
 import type { Flow } from '../flow';
+import { yieldOf } from '../task';
 import { useController, useMounted } from './context';
 
 /**
@@ -43,7 +44,7 @@ export const useFlow = <Output>(flow: Flow<[], [Output]>): Resource<Output> => {
     assert(state.step === 'succeeded', 'Flow computed without an output.');
 
     // The graph is untyped at runtime; the flow's signature vouches.
-    return state.outputs[0] as Output;
+    return yieldOf(state.outputs[0]) as Output;
   });
 
   return output;

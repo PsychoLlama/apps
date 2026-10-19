@@ -39,8 +39,8 @@ export interface Succeeded<
   /**
    * The node's output tuple, created once and shared with every handle,
    * so downstream nodes can key on its identity. A task's holds its one
-   * value with any resource wrapper removed; a reactive output leaves its
-   * accessor.
+   * output as returned, `resource` or `reactive` wrapper included; a
+   * collecting join's holds a `Collected`.
    */
   readonly outputs: Outputs;
 }
