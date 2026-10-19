@@ -7,7 +7,7 @@ import {
 } from 'solid-js';
 import { assert } from '@lib/assert';
 import type { Flow } from '../flow';
-import { yieldOf } from '../task';
+import { yieldOf, type Yield } from '../task';
 import { useController, useMounted } from './context';
 
 /**
@@ -20,7 +20,9 @@ import { useController, useMounted } from './context';
  *
  * Takes a flow with one output. Join several with `collect`.
  */
-export const useFlow = <Output>(flow: Flow<[], [Output]>): Resource<Output> => {
+export const useFlow = <Output>(
+  flow: Flow<[], [Output]>,
+): Resource<Yield<Output>> => {
   const owner = getOwner();
   const controller = useController();
   const handle = controller.acquire(flow);
@@ -44,7 +46,7 @@ export const useFlow = <Output>(flow: Flow<[], [Output]>): Resource<Output> => {
     assert(state.step === 'succeeded', 'Flow computed without an output.');
 
     // The graph is untyped at runtime; the flow's signature vouches.
-    return yieldOf(state.outputs[0]) as Output;
+    return yieldOf(state.outputs[0]) as Yield<Output>;
   });
 
   return output;

@@ -33,16 +33,37 @@ export interface Reactive<T> {
  * and all. Downstream tasks receive the unwrapped `value`. Built by the
  * runtime, never by tasks.
  */
-export interface Collected<T extends readonly unknown[]> {
+export interface Collected<Items extends readonly unknown[]> {
   readonly [BRAND]: 'collected';
-  readonly value: T;
-  readonly items: readonly unknown[];
+  readonly value: YieldAll<Items>;
+  readonly items: Items;
   readonly dispose?: undefined;
 }
 
 /** Any wrapped output, discriminated by its brand. */
 export type Wrapped =
   Resource<unknown> | Reactive<unknown> | Collected<readonly unknown[]>;
+
+/**
+ * What a downstream task receives from an output: promises settled and
+ * wrappers removed. Flows carry raw outputs; this applies where one step
+ * feeds the next.
+ */
+export type Yield<Output> = Unwrap<Awaited<Output>>;
+
+/** `Yield` over every position of an output tuple. */
+export type YieldAll<Outputs extends readonly unknown[]> = {
+  [Index in keyof Outputs]: Yield<Outputs[Index]>;
+};
+
+type Unwrap<Value> =
+  Value extends Resource<infer Inner>
+    ? Inner
+    : Value extends Reactive<infer Inner>
+      ? Accessor<Inner>
+      : Value extends Collected<infer Items>
+        ? YieldAll<Items>
+        : Value;
 
 type Kind = Wrapped[typeof BRAND];
 

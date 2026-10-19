@@ -8,6 +8,7 @@ import {
   type StepAccepting,
   type Steps,
 } from '../flow';
+import type { YieldAll } from '../task';
 
 type LastOf<Tuple extends readonly unknown[]> = Tuple extends readonly [
   ...unknown[],
@@ -18,13 +19,13 @@ type LastOf<Tuple extends readonly unknown[]> = Tuple extends readonly [
 
 /**
  * The input tuple each pipeline step receives, position by position: the
- * first step's own parameters, then each previous step's outputs.
+ * first step's own parameters, then what each previous step yields.
  */
 type PipelineInputs<
   S extends readonly unknown[],
   Inputs extends readonly unknown[],
 > = S extends readonly [infer Head, ...infer Rest]
-  ? [Inputs, ...PipelineInputs<Rest, OutputsOf<Head>>]
+  ? [Inputs, ...PipelineInputs<Rest, YieldAll<OutputsOf<Head>>>]
   : [];
 
 type InputsAt<S extends Steps, Index> = Extract<

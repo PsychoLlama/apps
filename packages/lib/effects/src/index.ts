@@ -4,6 +4,7 @@ export type { Node } from './manager';
 export {
   reactive,
   resource,
+  type Collected,
   type Dispose,
   type Reactive,
   type Resource,
