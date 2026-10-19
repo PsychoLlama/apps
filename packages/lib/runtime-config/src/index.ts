@@ -26,6 +26,7 @@ export {
   type Override,
 } from './define-config';
 export {
+  getDefaultValue,
   readAllEnvironments,
   readEnvironment,
   reset,

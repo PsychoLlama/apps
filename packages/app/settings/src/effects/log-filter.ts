@@ -1,10 +1,14 @@
 import { createSignal } from 'solid-js';
 import { pipe, reactive, type Reactive } from '@lib/effects';
-import { environment, readEnvironment, subscribe } from '@lib/runtime-config';
+import {
+  getDefaultValue,
+  readEnvironment,
+  subscribe,
+} from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 
 /** The active environment's built-in log filter: what a reset reverts to. */
-export const defaultLogFilter = filter.defaults[environment].pattern;
+export const defaultLogFilter = getDefaultValue(filter).pattern;
 
 const read = async (): Promise<string> => {
   const { pattern } = await readEnvironment(filter);

@@ -1,5 +1,9 @@
 import { defineConfig } from '../define-config';
-import { readAllEnvironments, readEnvironment } from '../config';
+import {
+  getDefaultValue,
+  readAllEnvironments,
+  readEnvironment,
+} from '../config';
 
 // jsdom has no OPFS, so the reads resolve to the bare defaults here. The
 // persistence round-trip and cross-context `subscribe` behavior — both of
@@ -31,6 +35,18 @@ describe('readEnvironment', () => {
 
   it('reads the value for an explicit environment', async () => {
     expect(await readEnvironment(flag('read-explicit'), 'production')).toEqual({
+      enabled: false,
+    });
+  });
+});
+
+describe('getDefaultValue', () => {
+  it('defaults to the current environment (development under vitest)', () => {
+    expect(getDefaultValue(flag('default-current'))).toEqual({ enabled: true });
+  });
+
+  it('reads the default for an explicit environment', () => {
+    expect(getDefaultValue(flag('default-explicit'), 'production')).toEqual({
       enabled: false,
     });
   });

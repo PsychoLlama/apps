@@ -99,6 +99,16 @@ export const readEnvironment = async <Value extends JsonValue>(
 ): Promise<Value> => (await readAllEnvironments(option))[env];
 
 /**
+ * Read an option's built-in default for a single environment — the current
+ * {@link environment} by default. Ignores persisted overrides, so it's
+ * synchronous: what a reset reverts to, not what the option is set to.
+ */
+export const getDefaultValue = <Value extends JsonValue>(
+  option: Option<Value>,
+  env: Environment = environment,
+): Value => option.defaults[env];
+
+/**
  * Subscribe to an option's changes, reporting its resolved value for the
  * current {@link environment}. Returns an unsubscribe.
  *
