@@ -14,10 +14,8 @@ describe('createController', () => {
     expect(manager.handles.has(handle)).toBe(true);
     expect(controller.inspect(handle, handle.output)).toMatchObject({
       step: 'succeeded',
-      outputs: [2],
-    });
-    expect(controller.bound(handle, handle.output)()).toMatchObject({
       inputs: [1],
+      outputs: [2],
     });
 
     await controller.release(handle);

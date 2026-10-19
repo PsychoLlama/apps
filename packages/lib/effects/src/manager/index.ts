@@ -1,7 +1,5 @@
-export type { Entry } from './entry';
 export {
   acquire,
-  bound,
   compute,
   createManager,
   inspect,

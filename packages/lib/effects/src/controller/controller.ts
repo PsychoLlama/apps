@@ -1,12 +1,9 @@
-import type { Accessor } from 'solid-js';
 import type { Flow, FlowNode } from '../flow';
 import {
   acquire,
-  bound,
   compute,
   inspect,
   release,
-  type Entry,
   type Handle,
   type Manager,
   type Node,
@@ -34,15 +31,6 @@ export interface Controller {
 
   /** The current state of one of the handle's nodes. Reactive. */
   readonly inspect: (handle: Handle, node: FlowNode) => Node.State;
-
-  /**
-   * The entry a node is bound to, `undefined` while pending. Reactive.
-   * For bindings that follow a node's life rather than its value.
-   */
-  readonly bound: (
-    handle: Handle,
-    node: FlowNode,
-  ) => Accessor<Entry | undefined>;
 }
 
 export const createController = (manager: Manager): Controller => ({
@@ -50,5 +38,4 @@ export const createController = (manager: Manager): Controller => ({
   compute: (handle) => compute(manager, handle),
   release: (handle) => release(manager, handle),
   inspect,
-  bound,
 });

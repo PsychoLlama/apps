@@ -1,5 +1,5 @@
 import { assert } from '@lib/assert';
-import { createSignal, type Accessor, type Signal } from 'solid-js';
+import { createSignal, type Signal } from 'solid-js';
 import { FLOW, type Flow, type FlowNode } from '../flow';
 import {
   createCache,
@@ -264,18 +264,10 @@ export const release = async (
 };
 
 /**
- * The entry one of the handle's nodes is bound to, or `undefined` while
- * the node is pending. Reactive: tracks under a Solid computation, reads
- * plainly outside one.
+ * The current state of one of the handle's nodes. Reactive: tracks under
+ * a Solid computation, reads plainly outside one.
  */
-export const bound = (
-  handle: Handle,
-  node: FlowNode,
-): Accessor<Entry | undefined> => {
+export const inspect = (handle: Handle, node: FlowNode): Node.State => {
   const [entry] = held(handle, node);
-  return entry;
+  return entry()?.state() ?? { step: 'pending' };
 };
-
-/** The current state of one of the handle's nodes. Reactive, as `bound`. */
-export const inspect = (handle: Handle, node: FlowNode): Node.State =>
-  bound(handle, node)()?.state() ?? { step: 'pending' };
