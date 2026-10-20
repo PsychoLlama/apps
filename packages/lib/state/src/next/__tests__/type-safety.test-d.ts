@@ -1,4 +1,10 @@
-import { collect, pipe, type Plan, type Reactive } from '@lib/effects';
+import {
+  collect,
+  pipe,
+  type Plan,
+  type Reactive,
+  type Resource,
+} from '@lib/effects';
 import type { Accessor, Signal } from 'solid-js';
 import { defineAction } from '../action';
 import { defineCell, type Cell } from '../cell';
@@ -103,7 +109,9 @@ describe('type safety', () => {
       };
     });
 
-    expectTypeOf($change).toEqualTypeOf<Plan<[], [void], 'sync'>>();
+    expectTypeOf($change).toEqualTypeOf<
+      Plan<[], [Resource<void, 'sync'>], 'sync'>
+    >();
   });
 
   it('carries async targets into the change', () => {
@@ -114,7 +122,7 @@ describe('type safety', () => {
     ]);
 
     expectTypeOf(defineChange($send, [$store], () => () => {})).toEqualTypeOf<
-      Plan<[], [void], 'async'>
+      Plan<[], [Resource<void, 'sync'>], 'async'>
     >();
   });
 

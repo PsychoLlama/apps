@@ -1,9 +1,14 @@
-import type { Mode, Plan } from '@lib/effects';
-import type { Signal } from 'solid-js';
-import type { Cell } from './cell';
+import type { Accessor, Signal } from 'solid-js';
+import {
+  concurrent,
+  pipe,
+  type Mode,
+  type Plan,
+  type Resource,
+} from '@lib/effects';
+import { writable, type Cell } from './cell';
 import type { Store } from './store';
-import type { Topic } from './topic';
-import { unimplemented } from './unimplemented';
+import { subscribe, type Publish, type Topic } from './topic';
 
 /** A plan a change can write to: a complete store or cell plan. */
 export type Target = Plan<[], readonly [Store<object> | Cell<unknown>]>;
@@ -57,5 +62,28 @@ export const defineChange = <
   topic: Topic<Args, M>,
   targets: Targets,
   commit: Commit<Args, Targets>,
-): Plan<[], [void], ModeOfPlans<[Topic<Args, M>, ...Targets]>> =>
-  unimplemented(topic, targets, commit);
+): Plan<
+  [],
+  [Resource<void, 'sync'>],
+  ModeOfPlans<[Topic<Args, M>, ...Targets]>
+> =>
+  // Generic steps defeat `pipe` inference. The signature vouches.
+  pipe([
+    concurrent([topic, ...targets] as [Branch, ...Branch[]]) as unknown as Plan<
+      [],
+      [Publish<Args>, ...unknown[]]
+    >,
+    subscribe((...yields: unknown[]) =>
+      commit(...(yields.map(toWritable) as Writables<Targets>)),
+    ),
+  ]) as unknown as Plan<
+    [],
+    [Resource<void, 'sync'>],
+    ModeOfPlans<[Topic<Args, M>, ...Targets]>
+  >;
+
+type Branch = Plan<[], readonly unknown[]>;
+
+// Stores yield their proxy, cells their accessor.
+const toWritable = (target: unknown) =>
+  typeof target === 'function' ? writable(target as Accessor<unknown>) : target;
