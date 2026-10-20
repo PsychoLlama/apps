@@ -61,7 +61,8 @@ export const defineChange = <
 >(
   topic: Topic<Args, M>,
   targets: Targets,
-  commit: Commit<Args, Targets>,
+  // Args come from the topic. A commit that ignores them mustn't narrow it.
+  commit: Commit<NoInfer<Args>, Targets>,
 ): Plan<
   [],
   [Resource<void, 'sync'>],

@@ -114,6 +114,15 @@ describe('type safety', () => {
     >();
   });
 
+  it('lets commits ignore the event arguments', () => {
+    const $send = defineTopic<[message: string]>();
+    const $cell = defineCell(() => 0);
+
+    defineChange($send, [$cell], ([, setCount]) => () => {
+      setCount((count) => count + 1);
+    });
+  });
+
   it('carries async targets into the change', () => {
     const $send = defineTopic<[]>();
     const $store = pipe([

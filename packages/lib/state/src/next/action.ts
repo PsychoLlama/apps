@@ -1,6 +1,11 @@
-import type { Commit, Target, ModeOfPlans } from './change';
-import type { Topic } from './topic';
-import { unimplemented } from './unimplemented';
+import { concurrent, pipe, type Plan } from '@lib/effects';
+import {
+  defineChange,
+  type Commit,
+  type ModeOfPlans,
+  type Target,
+} from './change';
+import { defineTopic, type Publish, type Topic } from './topic';
 
 /**
  * Define a topic with a change already subscribed. The plan yields the
@@ -13,4 +18,16 @@ export const defineAction = <
 >(
   targets: Targets,
   commit: Commit<Args, Targets>,
-): Topic<Args, ModeOfPlans<Targets>> => unimplemented(targets, commit);
+): Topic<Args, ModeOfPlans<Targets>> => {
+  const $topic = defineTopic<Args>();
+
+  // Holding the publisher holds the change, so its commit is always
+  // subscribed first. Generic steps defeat `pipe` inference; the
+  // signature vouches.
+  const $change: Plan<[], unknown[]> = defineChange($topic, targets, commit);
+
+  return pipe([
+    concurrent([$topic, $change]),
+    (publish: Publish<Args>) => publish,
+  ]) as unknown as Topic<Args, ModeOfPlans<Targets>>;
+};
