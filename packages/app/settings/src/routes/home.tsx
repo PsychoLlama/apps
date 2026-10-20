@@ -23,9 +23,10 @@ import { AdvancedSettings } from '../components/advanced-settings';
 
 /**
  * The settings page. Anchors the appearance scope for the whole surface:
- * the theme, appearance, and motion sections each read and write it, and
- * one anchor at the root keeps every picker and its reset button looking
- * at the same live state.
+ * the theme and motion sections each read and write it, and one anchor at
+ * the root keeps every picker and its reset button looking at the same
+ * live state. The appearance section reads the color scheme through
+ * `$colorScheme` instead.
  *
  * The Advanced section owns its own scope — it holds a subscription with a
  * lifetime of its own.
@@ -37,8 +38,8 @@ const Settings = () => {
   // The site is SSG'd, so the server can't know the persisted
   // preferences. The store starts unhydrated and every picker renders as
   // a skeleton — which beats flashing the wrong selection. Hydrating once
-  // here, rather than per-picker, means all three sections come alive in
-  // the same transition.
+  // here, rather than per-picker, means both sections come alive in the
+  // same transition.
   onMount(() => void hydrateAppearance());
 
   return (

@@ -3,9 +3,10 @@
 // themes at runtime is a `data-theme` flip on `<html>` — no extra
 // CSS fetch.
 //
-// Build-time / styling-only API. The runtime stores + sagas live at
-// `@lib/theme/runtime` so `.css.ts` consumers don't drag `@lib/state`
-// and `@lib/observability` through Vanilla Extract's child compiler.
+// Build-time / styling-only API. The runtime stores, sagas, and plans
+// live at `@lib/theme/runtime` so `.css.ts` consumers don't drag
+// `@lib/state`, `@lib/effects`, and `@lib/observability` through
+// Vanilla Extract's child compiler.
 export { SWATCHES, THEMES } from './bundles.css';
 export {
   COLOR_SCHEME_ATTRIBUTE,

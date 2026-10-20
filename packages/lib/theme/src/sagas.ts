@@ -1,16 +1,14 @@
 import { call, commit, defineSaga } from '@lib/state';
 import {
-  applyColorScheme,
   applyMotion,
   applyTheme,
   readActiveAppearance,
   resetTheme,
 } from './capabilities';
-import type { ColorSchemeOption, MotionOption, ThemeId } from './constants';
+import type { MotionOption, ThemeId } from './constants';
 import { appearanceScope } from './scope';
 import {
   appearanceRestoredTopic,
-  colorSchemeSelectedTopic,
   motionSelectedTopic,
   themeResetTopic,
   themeSelectedTopic,
@@ -21,9 +19,9 @@ import {
  * per surface on mount — the prelude is the canonical pre-paint setter, so
  * the store just learns what's already on screen.
  *
- * All three preferences hydrate together in a single transition. Reading
- * them is three dataset lookups, and one commit means a picker set can't
- * render with some controls live and others still skeletons.
+ * Both preferences hydrate together in a single transition. Reading them
+ * is two dataset lookups, and one commit means a picker set can't render
+ * with some controls live and others still skeletons.
  */
 export const hydrateAppearanceSaga = defineSaga(
   appearanceScope,
@@ -56,20 +54,6 @@ export const resetThemeSaga = defineSaga(appearanceScope, async function* () {
   yield commit(themeResetTopic());
   yield* call(resetTheme);
 });
-
-/**
- * Switch the active color-scheme override. Commits first so the UI reacts
- * synchronously, then flips `<html data-color-scheme>` (or drops it, for
- * `'system'`) and updates localStorage so the prelude can restore the
- * choice before paint on the next load.
- */
-export const selectColorSchemeSaga = defineSaga(
-  appearanceScope,
-  async function* (option: ColorSchemeOption) {
-    yield commit(colorSchemeSelectedTopic(option));
-    yield* call(applyColorScheme, option);
-  },
-);
 
 /**
  * Switch the active motion override. Commits first so the UI reacts

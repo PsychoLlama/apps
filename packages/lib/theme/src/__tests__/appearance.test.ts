@@ -9,7 +9,6 @@ import { createTestRuntime } from '@lib/state';
 import {
   appearanceRestoredTopic,
   appearanceStore,
-  colorSchemeSelectedTopic,
   motionSelectedTopic,
   themeResetTopic,
   themeSelectedTopic,
@@ -29,7 +28,6 @@ describe('appearanceStore', () => {
 
     expect(peek(appearanceStore)).toEqual({
       theme: null,
-      colorScheme: null,
       motion: null,
     });
   });
@@ -37,19 +35,9 @@ describe('appearanceStore', () => {
   it('takes every preference the prelude stamped on <html> at once', () => {
     const { commit, peek } = setup();
 
-    commit(
-      appearanceRestoredTopic({
-        theme: 'pink',
-        colorScheme: 'dark',
-        motion: 'reduce',
-      }),
-    );
+    commit(appearanceRestoredTopic({ theme: 'pink', motion: 'reduce' }));
 
-    expect(peek(appearanceStore)).toEqual({
-      theme: 'pink',
-      colorScheme: 'dark',
-      motion: 'reduce',
-    });
+    expect(peek(appearanceStore)).toEqual({ theme: 'pink', motion: 'reduce' });
   });
 
   it('takes a fresh theme selection', () => {
@@ -69,14 +57,6 @@ describe('appearanceStore', () => {
     expect(peek(appearanceStore).theme).toBe(DEFAULT_THEME_ID);
   });
 
-  it('takes a fresh color-scheme selection', () => {
-    const { commit, peek } = setup();
-
-    commit(colorSchemeSelectedTopic('light'));
-
-    expect(peek(appearanceStore).colorScheme).toBe('light');
-  });
-
   it('takes a fresh motion selection', () => {
     const { commit, peek } = setup();
 
@@ -88,28 +68,17 @@ describe('appearanceStore', () => {
   it("holds 'system' as a real selection rather than an absent one", () => {
     const { commit, peek } = setup();
 
-    commit(colorSchemeSelectedTopic('system'), motionSelectedTopic('system'));
+    commit(motionSelectedTopic('system'));
 
-    expect(peek(appearanceStore).colorScheme).toBe('system');
     expect(peek(appearanceStore).motion).toBe('system');
   });
 
   it('leaves the other preferences alone when one changes', () => {
     const { commit, peek } = setup();
-    commit(
-      appearanceRestoredTopic({
-        theme: 'teal',
-        colorScheme: 'dark',
-        motion: 'reduce',
-      }),
-    );
+    commit(appearanceRestoredTopic({ theme: 'teal', motion: 'reduce' }));
 
     commit(themeSelectedTopic('plum'));
 
-    expect(peek(appearanceStore)).toEqual({
-      theme: 'plum',
-      colorScheme: 'dark',
-      motion: 'reduce',
-    });
+    expect(peek(appearanceStore)).toEqual({ theme: 'plum', motion: 'reduce' });
   });
 });

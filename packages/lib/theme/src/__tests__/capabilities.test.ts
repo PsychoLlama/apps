@@ -20,9 +20,10 @@ import {
   resetTheme,
 } from '../capabilities';
 
-// The apply capabilities take the scope's abort signal as their first
-// argument and ignore it — the DOM and localStorage writes are synchronous
-// and have nothing to unwind. One inert signal serves the whole suite.
+// The saga-driven capabilities take the scope's abort signal as their
+// first argument and ignore it — the DOM and localStorage writes are
+// synchronous and have nothing to unwind. One inert signal serves the
+// whole suite.
 const signal = new AbortController().signal;
 
 const mountMetaTag = (id: string): HTMLMetaElement => {
@@ -202,7 +203,7 @@ describe('readActiveColorScheme', () => {
 
 describe('applyColorScheme', () => {
   it('flips <html data-color-scheme> to the requested override', () => {
-    applyColorScheme(signal, 'dark');
+    applyColorScheme('dark');
 
     expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
       'dark',
@@ -210,7 +211,7 @@ describe('applyColorScheme', () => {
   });
 
   it('persists the override to localStorage', () => {
-    applyColorScheme(signal, 'light');
+    applyColorScheme('light');
 
     expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBe('light');
   });
@@ -218,7 +219,7 @@ describe('applyColorScheme', () => {
   it("drops the attribute when set to 'system'", () => {
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
 
-    applyColorScheme(signal, 'system');
+    applyColorScheme('system');
 
     expect(
       document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE],
@@ -228,7 +229,7 @@ describe('applyColorScheme', () => {
   it("clears the persisted preference when set to 'system'", () => {
     localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, 'dark');
 
-    applyColorScheme(signal, 'system');
+    applyColorScheme('system');
 
     expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBeNull();
   });
@@ -240,7 +241,7 @@ describe('applyColorScheme', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyColorScheme(signal, 'dark')).not.toThrow();
+    expect(() => applyColorScheme('dark')).not.toThrow();
     expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
       'dark',
     );
@@ -251,7 +252,7 @@ describe('applyColorScheme', () => {
   it("collapses both theme-color meta tags onto the active theme's dark variant when forced dark", () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
 
-    applyColorScheme(signal, 'dark');
+    applyColorScheme('dark');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -262,7 +263,7 @@ describe('applyColorScheme', () => {
   it("collapses both theme-color meta tags onto the active theme's light variant when forced light", () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
 
-    applyColorScheme(signal, 'light');
+    applyColorScheme('light');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -280,7 +281,7 @@ describe('applyColorScheme', () => {
       .getElementById(THEME_COLOR_META_ID.dark)
       ?.setAttribute('content', THEME_COLORS.jade.dark);
 
-    applyColorScheme(signal, 'system');
+    applyColorScheme('system');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -296,7 +297,7 @@ describe('applyColorScheme', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyColorScheme(signal, 'system')).not.toThrow();
+    expect(() => applyColorScheme('system')).not.toThrow();
     expect(
       document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE],
     ).toBeUndefined();
@@ -381,14 +382,12 @@ describe('applyMotion', () => {
 });
 
 describe('readActiveAppearance', () => {
-  it('gathers all three preferences off <html>', () => {
+  it('gathers the theme and motion preferences off <html>', () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
-    document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
 
     expect(readActiveAppearance()).toEqual({
       theme: 'jade',
-      colorScheme: 'dark',
       motion: 'reduce',
     });
   });
@@ -396,7 +395,6 @@ describe('readActiveAppearance', () => {
   it('falls back per field when the attributes are missing', () => {
     expect(readActiveAppearance()).toEqual({
       theme: DEFAULT_THEME_ID,
-      colorScheme: 'system',
       motion: 'system',
     });
   });

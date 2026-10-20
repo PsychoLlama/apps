@@ -12,13 +12,11 @@ import { createTestRuntime, simulate } from '@lib/state';
 import {
   appearanceRestoredTopic,
   appearanceStore,
-  colorSchemeSelectedTopic,
   motionSelectedTopic,
   themeResetTopic,
   themeSelectedTopic,
 } from '../appearance';
 import {
-  applyColorScheme,
   applyMotion,
   applyTheme,
   readActiveAppearance,
@@ -28,7 +26,6 @@ import { DEFAULT_THEME_ID } from '../constants';
 import {
   hydrateAppearanceSaga,
   resetThemeSaga,
-  selectColorSchemeSaga,
   selectMotionSaga,
   selectThemeSaga,
 } from '../sagas';
@@ -38,7 +35,6 @@ describe('hydrateAppearanceSaga', () => {
   it('publishes every preference it read off the DOM in one commit', async () => {
     const selection = {
       theme: 'pink',
-      colorScheme: 'dark',
       motion: 'reduce',
     } as const;
 
@@ -107,48 +103,6 @@ describe('resetThemeSaga', () => {
 
     expect(observed).toEqual([DEFAULT_THEME_ID]);
     expect(runtime.peek(appearanceStore).theme).toBe(DEFAULT_THEME_ID);
-  });
-});
-
-describe('selectColorSchemeSaga', () => {
-  it('publishes the selection and writes it through', async () => {
-    const apply = vi.fn();
-
-    const trace = await simulate(selectColorSchemeSaga('light'), {
-      calls: [[applyColorScheme, apply]],
-    });
-
-    expect(trace.commits).toEqual([[colorSchemeSelectedTopic('light')]]);
-    expect(apply).toHaveBeenCalledWith(expect.anything(), 'light');
-  });
-
-  it("carries 'system' through as a regular selection", async () => {
-    const apply = vi.fn();
-
-    const trace = await simulate(selectColorSchemeSaga('system'), {
-      calls: [[applyColorScheme, apply]],
-    });
-
-    expect(trace.commits).toEqual([[colorSchemeSelectedTopic('system')]]);
-    expect(apply).toHaveBeenCalledWith(expect.anything(), 'system');
-  });
-
-  it('updates state before the side effect runs', async () => {
-    const observed: Array<string | null> = [];
-    const runtime = createTestRuntime({
-      calls: [
-        [
-          applyColorScheme,
-          () => observed.push(runtime.peek(appearanceStore).colorScheme),
-        ],
-      ],
-    });
-    runtime.anchor(appearanceScope);
-
-    await runtime.run(selectColorSchemeSaga('dark'));
-
-    expect(observed).toEqual(['dark']);
-    expect(runtime.peek(appearanceStore).colorScheme).toBe('dark');
   });
 });
 

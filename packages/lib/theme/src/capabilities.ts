@@ -133,10 +133,7 @@ export const readActiveColorScheme = (): ColorSchemeOption => {
  * DOM write happens first so the visual switch survives a localStorage
  * failure.
  */
-export const applyColorScheme = (
-  _signal: AbortSignal,
-  option: ColorSchemeOption,
-): void => {
+export const applyColorScheme = (option: ColorSchemeOption): void => {
   if (option === 'system') {
     delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
     syncThemeColorMeta(readActiveTheme(), 'system');
@@ -190,13 +187,12 @@ export const applyMotion = (
 };
 
 /**
- * Read all three appearance preferences off `<html>` in one pass. The
+ * Read the theme and motion preferences off `<html>` in one pass. The
  * prelude stamps them before paint, so this is the canonical
  * post-prelude snapshot — and reading them together is what lets
  * hydration land as a single transition.
  */
 export const readActiveAppearance = (): AppearanceSelection => ({
   theme: readActiveTheme(),
-  colorScheme: readActiveColorScheme(),
   motion: readActiveMotion(),
 });

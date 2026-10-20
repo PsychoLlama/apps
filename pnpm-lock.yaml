@@ -1285,6 +1285,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../design
+      '@lib/effects':
+        specifier: workspace:*
+        version: link:../effects
       '@lib/observability':
         specifier: workspace:*
         version: link:../observability
