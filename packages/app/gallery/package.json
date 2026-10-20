@@ -27,6 +27,7 @@
   "dependencies": {
     "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
+    "@lib/effects": "workspace:*",
     "@lib/gallery": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*",
