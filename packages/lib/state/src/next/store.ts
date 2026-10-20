@@ -7,7 +7,7 @@ declare const STORE: unique symbol;
  * Readonly all the way down. Functions pass through untouched; arrays
  * become readonly arrays of readonly items.
  */
-export type DeepReadonly<T> = T extends (...args: never[]) => unknown
+type DeepReadonly<T> = T extends (...args: never[]) => unknown
   ? T
   : T extends readonly (infer Item)[]
     ? readonly DeepReadonly<Item>[]

@@ -27,7 +27,11 @@ export type Topic<
   M extends Mode = Mode,
 > = Plan<[], [Publish<Args>], M>;
 
-/** The arguments a topic's events carry, e.g. `TopicValues<typeof $send>`. */
+/**
+ * The arguments a topic's events carry, e.g. `TopicValues<typeof $send>`.
+ *
+ * @internal
+ */
 export type TopicValues<P> =
   P extends Plan<never, readonly [Publish<infer Args>]> ? Args : never;
 

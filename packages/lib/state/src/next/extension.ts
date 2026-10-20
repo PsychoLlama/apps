@@ -14,7 +14,7 @@ import { subscribe, type Publish, type Topic } from './topic';
 export type Target = Plan<[], readonly [Store<object> | Cell<unknown>]>;
 
 /** How a commit sees each target: stores as drafts, cells as signals. */
-export type Writables<Targets extends readonly Target[]> = {
+type Writables<Targets extends readonly Target[]> = {
   [Index in keyof Targets]: Writable<Targets[Index]>;
 };
 
