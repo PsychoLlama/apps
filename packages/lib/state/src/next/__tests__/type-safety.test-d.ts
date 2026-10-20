@@ -94,12 +94,12 @@ describe('type safety', () => {
     const $store = defineStore<State>(() => ({ message: '', tags: [] }));
     const $cell = defineCell(() => 0);
 
-    const $change = defineChange($send, [$store, $cell], (message) => {
-      expectTypeOf(message).toEqualTypeOf<string>();
+    const $change = defineChange($send, [$store, $cell], (store, cell) => {
+      expectTypeOf(store).toEqualTypeOf<State>();
+      expectTypeOf(cell).toEqualTypeOf<Signal<number>>();
 
-      return (store, cell) => {
-        expectTypeOf(store).toEqualTypeOf<State>();
-        expectTypeOf(cell).toEqualTypeOf<Signal<number>>();
+      return (message) => {
+        expectTypeOf(message).toEqualTypeOf<string>();
       };
     });
 
@@ -123,7 +123,7 @@ describe('type safety', () => {
 
     const $sendMessage = defineAction(
       [$store],
-      (message: string) => (store) => {
+      (store) => (message: string) => {
         expectTypeOf(store).toEqualTypeOf<State>();
         store.message = message;
       },
@@ -139,12 +139,12 @@ describe('type safety', () => {
     const $cell = defineCell(() => 0);
     const $sendMessage = defineAction(
       [$store],
-      (message: string) => (store) => {
+      (store) => (message: string) => {
         store.message = message;
       },
     );
 
-    defineChange($sendMessage, [$cell], (message) => ([, setCount]) => {
+    defineChange($sendMessage, [$cell], ([, setCount]) => (message) => {
       expectTypeOf(message).toEqualTypeOf<string>();
       setCount((count) => count + 1);
     });

@@ -14,13 +14,13 @@ export type Writables<Targets extends readonly Target[]> = {
 };
 
 /**
- * Responds to one event: takes the event's arguments, then the writable
- * targets.
+ * Takes the writable targets once per subscription, and returns what
+ * responds to each event's arguments.
  */
 export type Commit<
   Args extends readonly unknown[],
   Targets extends readonly Target[],
-> = (...args: Args) => (...writables: Writables<Targets>) => void;
+> = (...writables: Writables<Targets>) => (...args: Args) => void;
 
 // TODO: Move into `@lib/effects`. It's useful well beyond changes.
 /** The combined mode of several plans: `async` if any of them is. */

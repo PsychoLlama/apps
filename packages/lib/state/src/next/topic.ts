@@ -1,5 +1,12 @@
-import type { Mode, Plan } from '@lib/effects';
-import { unimplemented } from './unimplemented';
+import { batch } from 'solid-js';
+import { assert } from '@lib/assert';
+import {
+  pipe,
+  resource,
+  type Mode,
+  type Plan,
+  type Resource,
+} from '@lib/effects';
 
 declare const TOPIC: unique symbol;
 
@@ -24,6 +31,11 @@ export type Topic<
 export type TopicValues<P> =
   P extends Plan<never, readonly [Publish<infer Args>]> ? Args : never;
 
+type Subscriber = (...args: readonly unknown[]) => void;
+
+// The bus. Each live topic owns its subscribers, keyed by its publisher.
+const channels = new WeakMap<object, Set<Subscriber>>();
+
 /**
  * Define a topic. Holding the plan binds it to the message bus; changes
  * subscribe to it with `defineChange`.
@@ -31,4 +43,41 @@ export type TopicValues<P> =
 export const defineTopic = <Args extends readonly unknown[]>(): Topic<
   Args,
   'sync'
-> => unimplemented();
+> =>
+  pipe([
+    () => {
+      const subscribers = new Set<Subscriber>();
+
+      // One batch per event, so every change it triggers lands together.
+      const publish = (...args: Args) =>
+        batch(() => subscribers.forEach((notify) => notify(...args)));
+
+      channels.set(publish, subscribers);
+      return publish as Publish<Args>;
+    },
+  ]);
+
+/**
+ * A task subscribing `commit` to the publisher upstream, for as long as
+ * the task lives. `commit` takes whatever else upstream yields, once, and
+ * returns the event handler, e.g.
+ * `pipe([concurrent([$topic, $store]), subscribe(commit)])`.
+ *
+ * @internal
+ */
+export const subscribe =
+  <Args extends readonly unknown[], Rest extends readonly unknown[]>(
+    commit: (...rest: Rest) => (...args: Args) => void,
+  ) =>
+  (publish: Publish<Args>, ...rest: Rest): Resource<void, 'sync'> => {
+    const subscribers = channels.get(publish);
+    assert(subscribers, 'Not a topic publisher.');
+
+    // Only ever called with this publisher's arguments.
+    const notify = commit(...rest) as Subscriber;
+    subscribers.add(notify);
+
+    return resource(undefined, () => {
+      subscribers.delete(notify);
+    });
+  };
