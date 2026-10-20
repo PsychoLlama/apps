@@ -1,5 +1,5 @@
 import { getOwner, onCleanup, runWithOwner, type Resource } from 'solid-js';
-import { assert } from '@lib/assert';
+import { toPromise } from '../eventual';
 import type { Plan } from '../plan';
 import type { Handle } from '../manager';
 import {
@@ -79,12 +79,8 @@ export const holdPlan = (plan: Plan<[], [unknown]>) => {
   onCleanup(release);
 
   return async (): Promise<unknown> => {
-    await controller.compute(handle);
-
-    const state = controller.inspect(handle, handle.output);
-    assert(state.step === 'succeeded', 'Plan computed without an output.');
-
-    return state.outputs[0];
+    const [output] = await toPromise(controller.compute(handle));
+    return output;
   };
 };
 

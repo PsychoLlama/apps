@@ -1,5 +1,5 @@
-import { assert } from '@lib/assert';
 import { createController, type Controller } from '../controller/controller';
+import { toPromise } from '../eventual';
 import type { Plan } from '../plan';
 import { createManager, release, type Manager } from '../manager';
 import { yieldOf, type YieldAll } from '../task';
@@ -41,13 +41,10 @@ export const createTestController = (): TestController => {
       plan: Plan<[], Outputs>,
     ): Promise<YieldAll<Outputs>> => {
       const handle = controller.acquire(plan);
-      await controller.compute(handle);
+      const outputs = await toPromise(controller.compute(handle));
 
-      const state = controller.inspect(handle, handle.output);
-      assert(state.step === 'succeeded', 'Output did not succeed.');
-
-      // The graph is untyped at runtime; the plan's signature vouches.
-      return state.outputs.map(yieldOf) as unknown as YieldAll<Outputs>;
+      // `yieldOf` is untyped; the plan's signature vouches.
+      return outputs.map(yieldOf) as unknown as YieldAll<Outputs>;
     },
 
     [Symbol.asyncDispose]: async () => {

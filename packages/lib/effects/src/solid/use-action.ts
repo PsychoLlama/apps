@@ -1,5 +1,4 @@
-import { batch, createSignal, onCleanup, untrack } from 'solid-js';
-import { assert } from '@lib/assert';
+import { batch, createSignal, onCleanup } from 'solid-js';
 import type { Plan } from '../plan';
 import { yieldOf, type Yield } from '../task';
 import { useController } from './context';
@@ -78,21 +77,17 @@ export const useAction = <
   const hold = refCount(release);
   onCleanup(hold());
 
-  const output = () => controller.inspect(handle, handle.output);
-
   const run = async (...args: unknown[]) => {
     const done = hold();
 
     try {
-      let state = untrack(output);
-      if (state.step !== 'succeeded') {
-        await controller.compute(handle);
-        state = output();
-        assert(state.step === 'succeeded', 'Plan computed without an output.');
-      }
+      // Calls straight through when it's here, before any await.
+      const computed = controller.compute(handle);
+      const [output] =
+        computed.type === 'sync' ? computed.value : await computed.value;
 
       // Untyped at runtime, as above.
-      const call = yieldOf(state.outputs[0]) as (...rest: unknown[]) => unknown;
+      const call = yieldOf(output) as (...rest: unknown[]) => unknown;
       return await call(...args);
     } finally {
       done();

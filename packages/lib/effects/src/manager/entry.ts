@@ -7,6 +7,7 @@ import {
   type Dispose,
   type Task,
 } from '../task';
+import { chain, from, later, now, toPromise, type Eventual } from '../eventual';
 import type { Tuple } from './cache';
 import type * as Node from './node';
 
@@ -35,11 +36,17 @@ export interface Entry {
   /** Cleanup for the resource the task produced, if it produced one. */
   dispose?: Dispose;
 
-  /** Resolves when the node settles, whichever way. Never rejects. */
+  /**
+   * Resolves when the node settles, whichever way. Never rejects. Read
+   * `state` first: a node that didn't wait has already settled.
+   */
   settled: Promise<void>;
 
-  /** Set once retired. Resolves when the key is free for a new life. */
-  retired?: Promise<void>;
+  /**
+   * Set if retiring has to wait. Settles when the key is free for a new
+   * life. A retirement that doesn't wait frees the key right away.
+   */
+  retired?: Promise<unknown>;
 }
 
 /** Boxes a task's output as its output tuple, one identity per value. */
@@ -57,40 +64,62 @@ const invoke = (task: Task, inputs: Tuple) =>
   // plan was composed; here they're whatever upstream yields.
   (task as Task<unknown[]>)(...inputs.map(yieldOf));
 
-const evaluate = async (
+interface Evaluated {
+  readonly outputs: Tuple;
+  readonly dispose?: Dispose;
+}
+
+const evaluate = (
   node: PlanNode,
   entry: Entry,
   intern: Intern,
-): Promise<{ outputs: Tuple; dispose?: Dispose }> => {
+): Eventual<Evaluated> => {
   if (node.kind === 'join') {
     const joined = entry.sources.flat();
-    return { outputs: node.collect ? [collected(joined)] : joined };
+    return now({ outputs: node.collect ? [collected(joined)] : joined });
   }
 
   // Outputs keep what the task returned, wrappers and all, so bindings
   // can tell what kind it is. Downstream tasks receive its `yieldOf`.
-  const output: unknown = await invoke(node.task, entry.inputs);
+  // Only a promise makes the node wait.
+  const output = from<unknown>(invoke(node.task, entry.inputs));
 
   // Tasks return one value, since JS has no multiple returns. Interning
   // the box gives equal values one identity for downstream keys.
-  return { outputs: intern(output), dispose: disposeOf(output) };
+  return chain(output, (value) =>
+    now({ outputs: intern(value), dispose: disposeOf(value) }),
+  );
 };
 
-const run = async (
+const run = (
   entry: Entry,
   node: PlanNode,
   intern: Intern,
   setState: Setter<EntryState>,
-) => {
+): Eventual<void> => {
   const { inputs } = entry;
-
-  try {
-    const { outputs, dispose } = await evaluate(node, entry, intern);
+  const succeed = ({ outputs, dispose }: Evaluated) => {
     entry.dispose = dispose;
     setState({ step: 'succeeded', inputs, outputs });
-  } catch (error) {
+  };
+  const fail = (error: unknown) => {
     setState({ step: 'failed', inputs, error });
+  };
+
+  let evaluated;
+  try {
+    evaluated = evaluate(node, entry, intern);
+  } catch (error) {
+    fail(error);
+    return now(undefined);
   }
+
+  if (evaluated.type === 'sync') {
+    succeed(evaluated.value);
+    return now(undefined);
+  }
+
+  return later(evaluated.value.then(succeed, fail));
 };
 
 /** Start the node and track its outcome. */
@@ -115,6 +144,6 @@ export const spawn = (
     settled: Promise.resolve(),
   };
 
-  entry.settled = run(entry, node, intern, setState);
+  entry.settled = toPromise(run(entry, node, intern, setState));
   return entry;
 };

@@ -78,7 +78,8 @@ describe('observed', () => {
 
     const store = acquire(observed(counter));
     const cell = acquire(observed(label));
-    await Promise.all([compute(store), compute(cell)]);
+    compute(store);
+    compute(cell);
 
     await release(store);
     expect(peek(counter).count).toBe(0);
