@@ -9,7 +9,7 @@ export default mergeConfig(
         include: ['src/**/*.ts'],
         // Stubs: typed APIs ahead of their runtime.
         exclude: [
-          'src/next/{action,cell,change,store,unimplemented}.ts',
+          'src/next/{action,change,unimplemented}.ts',
           'src/next/index.ts',
           'src/**/*.test-d.ts',
         ],

@@ -1,5 +1,5 @@
-import type { Plan } from '@lib/effects';
-import { unimplemented } from './unimplemented';
+import { createMutable } from 'solid-js/store';
+import { pipe, type Plan } from '@lib/effects';
 
 declare const STORE: unique symbol;
 
@@ -35,4 +35,11 @@ export const defineStore = <
   Inputs extends readonly unknown[] = [],
 >(
   init: (...inputs: Inputs) => State,
-): Plan<Inputs, [Store<State>], 'sync'> => unimplemented(init);
+): Plan<Inputs, [Store<State>], 'sync'> =>
+  // The proxy is both views: readers get it typed read-only, changes
+  // write through the same object. Generic steps defeat `pipe`
+  // inference, so the signature vouches.
+  pipe([
+    (...inputs: readonly unknown[]) =>
+      createMutable(init(...(inputs as Inputs))),
+  ]) as unknown as Plan<Inputs, [Store<State>], 'sync'>;
