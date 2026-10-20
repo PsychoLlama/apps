@@ -7,6 +7,8 @@ export default mergeConfig(
     test: {
       coverage: {
         include: ['src/**/*.ts'],
+        // Stubs: typed APIs ahead of their runtime.
+        exclude: ['src/next/**'],
         thresholds: {
           lines: 100,
           functions: 100,

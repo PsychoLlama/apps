@@ -12,7 +12,11 @@ const config: KnipConfig = {
   // must be enabled explicitly to credit the configs and test files.
   vitest: {
     config: ['vitest.{unit,browser}.config.ts'],
-    entry: ['src/**/*.test.{ts,tsx}', 'src/**/*.test.browser.{ts,tsx}'],
+    entry: [
+      'src/**/*.test.{ts,tsx}',
+      'src/**/*.test-d.ts',
+      'src/**/*.test.browser.{ts,tsx}',
+    ],
   },
   workspaces: {
     '.': {
