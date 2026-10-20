@@ -1266,6 +1266,9 @@ importers:
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
+      '@lib/effects':
+        specifier: workspace:*
+        version: link:../effects
       solid-js:
         specifier: 1.9.17
         version: 1.9.17

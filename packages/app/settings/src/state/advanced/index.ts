@@ -8,7 +8,7 @@
  * about its own writes exactly the way a sibling tab does.
  */
 export { advancedSettingsScope } from './scope';
-export { logStorageStore, logsDeletedNoticeClosedTopic } from './log-storage';
+export { logsDeletedNoticeClosedTopic, observeLogStorage } from './log-storage';
 export {
   commitLogFilterSaga,
   deleteLogsSaga,

@@ -1,4 +1,4 @@
-import { defineFold, defineStore, defineTopic } from '@lib/state';
+import { defineFold, defineStore, defineTopic, observed } from '@lib/state';
 import { advancedSettingsScope } from './scope';
 
 /** UI state for the Log storage controls. */
@@ -7,10 +7,13 @@ export interface LogStorageState {
   deletedNoticeOpen: boolean;
 }
 
-export const logStorageStore = defineStore<LogStorageState>(
+const logStorageStore = defineStore<LogStorageState>(
   advancedSettingsScope,
   () => ({ deletedNoticeOpen: false }),
 );
+
+/** The Log storage UI state, live. */
+export const observeLogStorage = observed(logStorageStore);
 
 /** Every persisted log was deleted. */
 export const logsDeletedTopic = defineTopic();
