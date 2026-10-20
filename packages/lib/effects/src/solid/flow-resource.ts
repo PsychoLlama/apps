@@ -33,22 +33,32 @@ export const reduce = (output: unknown): unknown => {
 };
 
 /**
+ * An error handler that rethrows under the current owner, so failures
+ * that land later find its nearest error boundary, even once it's
+ * disposed. Without one, the handler throws.
+ */
+export const useThrowToBoundary = () => {
+  const owner = getOwner();
+
+  return (error: unknown): void => {
+    runWithOwner(owner, () => {
+      throw error;
+    });
+  };
+};
+
+/**
  * Acquire a flow on the nearest controller. Release it once: failures
- * rethrow under the current owner, so they find its nearest error
- * boundary even after it's disposed. Without one, they're rethrown as
- * an unhandled rejection.
+ * reach the current owner's error boundary, or else surface as an
+ * unhandled rejection.
  */
 export const acquire = (flow: Flow<[]>): [Handle, release: () => void] => {
-  const owner = getOwner();
   const controller = useController();
+  const throwToBoundary = useThrowToBoundary();
   const handle = controller.acquire(flow);
 
   const release = () => {
-    controller.release(handle).catch((error: unknown) => {
-      runWithOwner(owner, () => {
-        throw error;
-      });
-    });
+    controller.release(handle).catch(throwToBoundary);
   };
 
   return [handle, release];

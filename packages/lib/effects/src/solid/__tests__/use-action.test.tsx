@@ -1,5 +1,5 @@
 import { render } from '@solidjs/testing-library';
-import { createSignal } from 'solid-js';
+import { createSignal, ErrorBoundary } from 'solid-js';
 import { pipe } from '../../combinators';
 import { reactive, resource } from '../../task';
 import { createTestController } from '../../testing';
@@ -10,9 +10,13 @@ import { useAction } from '../use-action';
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-/** Run `setup` as a component's body and hand back what it returned. */
+/**
+ * Run `setup` as a component's body and hand back what it returned, with
+ * whatever its error boundary caught.
+ */
 const renderHook = <Result,>(controller: Controller, setup: () => Result) => {
   const [mounted] = createSignal(true);
+  const errors: unknown[] = [];
 
   let result!: Result;
   const Probe = () => {
@@ -22,11 +26,18 @@ const renderHook = <Result,>(controller: Controller, setup: () => Result) => {
 
   const { unmount } = render(() => (
     <EffectsContext.Provider value={{ controller, mounted }}>
-      <Probe />
+      <ErrorBoundary
+        fallback={(error) => {
+          errors.push(error);
+          return null;
+        }}
+      >
+        <Probe />
+      </ErrorBoundary>
     </EffectsContext.Provider>
   ));
 
-  return { result, unmount };
+  return { result, errors, unmount };
 };
 
 describe('useAction', () => {
@@ -116,12 +127,34 @@ describe('useAction', () => {
       throw failure;
     };
 
-    const { result: action, unmount } = renderHook(controller.controller, () =>
-      useAction(pipe([fail])),
-    );
+    const {
+      result: action,
+      errors,
+      unmount,
+    } = renderHook(controller.controller, () => useAction(pipe([fail])));
 
     await expect(action()).rejects.toBe(failure);
-    await expect(action()).rejects.toBe(failure);
+    expect(errors).toEqual([failure]);
+    unmount();
+  });
+
+  it('reaches the error boundary when not awaited', async () => {
+    await using controller = createTestController();
+    const failure = new Error('nope');
+    const fail = () => async () => {
+      throw failure;
+    };
+
+    const {
+      result: action,
+      errors,
+      unmount,
+    } = renderHook(controller.controller, () => useAction(pipe([fail])));
+
+    void action();
+    await settle();
+
+    expect(errors).toEqual([failure]);
     unmount();
   });
 
@@ -132,11 +165,14 @@ describe('useAction', () => {
       throw failure;
     };
 
-    const { result: action, unmount } = renderHook(controller.controller, () =>
-      useAction(pipe([fail])),
-    );
+    const {
+      result: action,
+      errors,
+      unmount,
+    } = renderHook(controller.controller, () => useAction(pipe([fail])));
 
     await expect(action()).rejects.toThrow();
+    expect(errors).toHaveLength(1);
     unmount();
   });
 

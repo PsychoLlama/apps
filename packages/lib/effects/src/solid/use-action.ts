@@ -3,7 +3,7 @@ import { assert } from '@lib/assert';
 import type { Flow } from '../flow';
 import { yieldOf, type Yield } from '../task';
 import { useController } from './context';
-import { acquire } from './flow-resource';
+import { acquire, useThrowToBoundary } from './flow-resource';
 
 type AnyFunction = (...args: never[]) => unknown;
 
@@ -41,6 +41,9 @@ const refCount = (idle: () => void) => {
  * that need a user gesture working. The flow is held from render until
  * the component unmounts and every call has settled.
  *
+ * A failed call rejects, and its error also reaches the nearest error
+ * boundary.
+ *
  * Takes a flow with one output: the function, as a downstream task would
  * receive it.
  */
@@ -54,13 +57,14 @@ export const useAction = <
   flow: Flow<[], Outputs>,
 ): Action<Outputs[0]> => {
   const controller = useController();
+  const throwToBoundary = useThrowToBoundary();
   const [handle, release] = acquire(flow);
   const hold = refCount(release);
   onCleanup(hold());
 
   const output = () => controller.inspect(handle, handle.output);
 
-  const action = async (...args: unknown[]) => {
+  const run = async (...args: unknown[]) => {
     const done = hold();
 
     try {
@@ -77,6 +81,16 @@ export const useAction = <
     } finally {
       done();
     }
+  };
+
+  // Failures reach the error boundary whether or not the caller awaits.
+  // The handler also marks the rejection handled, so a caller that
+  // doesn't await leaves no unhandled rejection behind.
+  const action = (...args: unknown[]) => {
+    const result = run(...args);
+    result.catch(throwToBoundary);
+
+    return result;
   };
 
   return action as Action<Outputs[0]>;
