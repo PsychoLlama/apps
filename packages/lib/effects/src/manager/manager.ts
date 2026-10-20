@@ -16,9 +16,7 @@ import type { Mode } from '../mode';
 import { PLAN, type Plan, type PlanNode } from '../plan';
 import {
   createCache,
-  drop,
   insert,
-  intern,
   lookup,
   remove,
   type Cache,
@@ -58,7 +56,7 @@ export interface Handle<
 
 /** Computations shared by every handle acquired through it. */
 export interface Manager {
-  /** Entries and interned output tuples. The manager alone operates on it. */
+  /** Entries by node and input. The manager alone operates on it. */
   readonly cache: Cache<Entry>;
 
   /** Handles that have computed and not yet been released. */
@@ -70,9 +68,9 @@ export const createManager = (): Manager => ({
   handles: new Set(),
 });
 
-const same = (left: readonly Tuple[], right: readonly Tuple[]) =>
+const same = (left: readonly unknown[], right: readonly unknown[]) =>
   left.length === right.length &&
-  left.every((tuple, index) => tuple === right[index]);
+  left.every((value, index) => Object.is(value, right[index]));
 
 /** The entry once it settles. Waits only if it's still computing. */
 const settled = (entry: Entry): Eventual<Entry> =>
@@ -84,12 +82,12 @@ const settled = (entry: Entry): Eventual<Entry> =>
 const claim = (
   manager: Manager,
   node: PlanNode,
-  inputs: Tuple,
-  sources: readonly Tuple[],
+  input: unknown,
+  sources: readonly unknown[],
 ): Eventual<Entry> => {
   const { cache } = manager;
   const key = keyOf(node);
-  let entry = lookup(cache, node.kind, key, inputs);
+  let entry = lookup(cache, node.kind, key, input);
 
   // Never overlap with a previous life of the same key. Only a life that
   // had to wait to retire is still here.
@@ -97,18 +95,18 @@ const claim = (
     return later(
       entry.retired
         .catch(() => {})
-        .then(() => toPromise(claim(manager, node, inputs, sources))),
+        .then(() => toPromise(claim(manager, node, input, sources))),
     );
   }
 
   if (!entry) {
-    entry = spawn(node, inputs, sources, (value) => intern(cache, value));
-    insert(cache, node.kind, key, inputs, entry);
+    entry = spawn(node, input, sources);
+    insert(cache, node.kind, key, input, entry);
   }
 
   // A join's output is only as stable as its branches. Whoever holds a
   // join holds its branches too, so they can't be recomputed while it
-  // lives, and every claimant arrives with the same tuples.
+  // lives, and every claimant arrives with the same outputs.
   assert(same(entry.sources, sources), 'Join claimed with stale branches.');
 
   entry.refs += 1;
@@ -120,20 +118,16 @@ const retire = (manager: Manager, entry: Entry): Eventual<unknown> => {
   const retired = lastly(
     () => chain(settled(entry), () => from(entry.dispose?.())),
     () => {
-      remove(manager.cache, entry.kind, entry.key, entry.inputs);
-
-      // Only after cleanup, so an equal value can't reuse the tuple while
-      // anything keyed on it is still tearing down.
-      const state = entry.state();
-      if (state.step === 'succeeded') {
-        drop(manager.cache, state.outputs[0]);
-      }
+      remove(manager.cache, entry.kind, entry.key, entry.input);
     },
   );
 
   if (retired.type === 'async') entry.retired = retired.value;
   return retired;
 };
+
+// What a root binds to, as though some upstream output it.
+const ROOTED: Tuple = [ROOT];
 
 const held = (handle: Handle, node: PlanNode) => {
   const signal = handle.held.get(node);
@@ -158,7 +152,7 @@ const attach = (
   manager: Manager,
   handle: Handle,
   node: PlanNode,
-  inputs: Tuple,
+  input: unknown,
 ): Eventual<Entry | undefined> => {
   const branches = node.kind === 'join' ? node.branches : [];
   const sources = all(
@@ -166,9 +160,13 @@ const attach = (
   );
 
   return chain(sources, (sources) => {
-    if (!sources.every(Boolean)) return now(undefined);
+    const outputs: unknown[] = [];
+    for (const source of sources) {
+      if (!source) return now(undefined);
+      outputs.push(source[0]);
+    }
 
-    const claimed = claim(manager, node, inputs, sources as Tuple[]);
+    const claimed = claim(manager, node, input, outputs);
     return chain(claimed, (entry) => {
       const [, setEntry] = held(handle, node);
       setEntry(entry);
@@ -186,9 +184,11 @@ const bind = (
   const bound = handle.bindings.get(node);
   if (bound) return bound;
 
-  const inputs = node.input ? outputOf(manager, handle, node.input) : now(ROOT);
-  const binding = chain(inputs, (inputs) =>
-    inputs ? attach(manager, handle, node, inputs) : now(undefined),
+  const upstream = node.input
+    ? outputOf(manager, handle, node.input)
+    : now(ROOTED);
+  const binding = chain(upstream, (outputs) =>
+    outputs ? attach(manager, handle, node, outputs[0]) : now(undefined),
   );
 
   handle.bindings.set(node, binding);

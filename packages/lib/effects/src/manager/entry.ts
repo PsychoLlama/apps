@@ -8,18 +8,18 @@ import type * as Node from './node';
 /** Where a started computation stands. */
 export type EntryState = Node.Computing | Node.Succeeded | Node.Failed;
 
-/** One computation: a node applied to one exact input tuple. */
+/** One computation: a node applied to one exact input. */
 export interface Entry {
   readonly kind: PlanNode['kind'];
 
   /** The node's identity: its task, or the plan that built its join. */
   readonly key: object;
 
-  /** The upstream output tuple the node is keyed on. */
-  readonly inputs: Tuple;
+  /** The upstream output the node is keyed on, or `ROOT`. */
+  readonly input: unknown;
 
-  /** A join's branch tuples, which it joins. Empty for a task. */
-  readonly sources: readonly Tuple[];
+  /** A join's branch outputs, which it joins. Empty for a task. */
+  readonly sources: readonly unknown[];
 
   /** Reactive. Tracks under a Solid computation, reads plainly outside. */
   readonly state: Accessor<EntryState>;
@@ -43,11 +43,8 @@ export interface Entry {
   retired?: Promise<unknown>;
 }
 
-/** Boxes a task's output as its output tuple, one identity per value. */
-export type Intern = (value: unknown) => Tuple;
-
 /** What a root node reads as its input. Shared, so roots key alike. */
-export const ROOT: Tuple = [];
+export const ROOT: unique symbol = Symbol('root');
 
 // TODO: Keying joins by plan splits equal `collect(branches, fn)` calls
 // into separate entries, running `fn` once for each. See `collect`.
@@ -56,44 +53,40 @@ export const ROOT: Tuple = [];
 export const keyOf = (node: PlanNode): object =>
   node.kind === 'task' ? node.task : node.plan;
 
-const invoke = (task: Task, inputs: Tuple) =>
+const invoke = (task: Task, inputs: readonly unknown[]) =>
   // The one place a task runs. Its real inputs were checked when the
   // plan was composed; here they're whatever upstream yields.
   (task as Task<unknown[]>)(...inputs.map(yieldOf));
+
+/** What a node's state reports as its inputs: none for a root. */
+const inputsOf = (input: unknown): Tuple => (input === ROOT ? [] : [input]);
 
 interface Evaluated {
   readonly outputs: Tuple;
   readonly dispose?: Dispose;
 }
 
-const evaluate = (
-  node: PlanNode,
-  entry: Entry,
-  intern: Intern,
-): Eventual<Evaluated> => {
+const evaluate = (node: PlanNode, entry: Entry): Eventual<Evaluated> => {
   // A join's `fn` runs like a task, over its branches.
   const task = node.kind === 'task' ? node.task : node.fn;
-  const inputs = node.kind === 'task' ? entry.inputs : entry.sources.flat();
+  const inputs = node.kind === 'task' ? inputsOf(entry.input) : entry.sources;
 
   // Outputs keep what the task returned, wrappers and all, so bindings
   // can tell what kind it is. Downstream tasks receive its `yieldOf`.
   // Only a promise makes the node wait.
   const output = from<unknown>(invoke(task, inputs));
 
-  // Tasks return one value, since JS has no multiple returns. Interning
-  // the box gives equal values one identity for downstream keys.
   return chain(output, (value) =>
-    now({ outputs: intern(value), dispose: disposeOf(value) }),
+    now({ outputs: [value], dispose: disposeOf(value) }),
   );
 };
 
 const run = (
   entry: Entry,
   node: PlanNode,
-  intern: Intern,
   setState: Setter<EntryState>,
 ): Eventual<void> => {
-  const { inputs } = entry;
+  const inputs = inputsOf(entry.input);
   const succeed = ({ outputs, dispose }: Evaluated) => {
     entry.dispose = dispose;
     setState({ step: 'succeeded', inputs, outputs });
@@ -104,7 +97,7 @@ const run = (
 
   let evaluated;
   try {
-    evaluated = evaluate(node, entry, intern);
+    evaluated = evaluate(node, entry);
   } catch (error) {
     fail(error);
     return now(undefined);
@@ -121,25 +114,24 @@ const run = (
 /** Start the node and track its outcome. */
 export const spawn = (
   node: PlanNode,
-  inputs: Tuple,
-  sources: readonly Tuple[],
-  intern: Intern,
+  input: unknown,
+  sources: readonly unknown[],
 ): Entry => {
   const [state, setState] = createSignal<EntryState>({
     step: 'computing',
-    inputs,
+    inputs: inputsOf(input),
   });
 
   const entry: Entry = {
     kind: node.kind,
     key: keyOf(node),
-    inputs,
+    input,
     sources,
     state,
     refs: 0,
     settled: Promise.resolve(),
   };
 
-  entry.settled = toPromise(run(entry, node, intern, setState));
+  entry.settled = toPromise(run(entry, node, setState));
   return entry;
 };

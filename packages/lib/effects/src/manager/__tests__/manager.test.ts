@@ -306,7 +306,19 @@ describe('manager', () => {
       expect(raw(third)).toBe(raw(second));
     });
 
-    it('frees an output once no task holds it', async () => {
+    it('feeds empty outputs downstream like any other', async () => {
+      const manager = createManager();
+      const nothing = () => undefined;
+      const seen = vi.fn((value: undefined) => value === undefined);
+      const handle = acquire(pipe([nothing, collect([seen])]));
+
+      await computed(manager, handle);
+
+      expect(seen).toHaveBeenCalledExactlyOnceWith(undefined);
+      expect(output(handle)).toEqual([[true]]);
+    });
+
+    it('frees entries once no handle holds them', async () => {
       const manager = createManager();
       const one = () => 1;
       const first = acquire(pipe([one]));
@@ -314,7 +326,7 @@ describe('manager', () => {
 
       await release(manager, first);
 
-      expect(manager.cache.interned.size).toBe(0);
+      expect(manager.cache.entries.task.size).toBe(0);
     });
 
     it('shares a join and everything downstream of it', async () => {
@@ -531,7 +543,7 @@ describe('manager', () => {
 
       // Separate plans, so separate entries. See the TODO on `collect`.
       expect(order).toEqual(['observer', 'observer', 'stream']);
-      expect(manager.cache.interned.size).toBe(0);
+      expect(manager.cache.entries.task.size).toBe(0);
     });
 
     it('disposes reactive outputs, cleanup or not', async () => {
