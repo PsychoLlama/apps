@@ -1,11 +1,13 @@
-import { useCommit, useRun, useValue } from '@lib/state';
+import { useResource } from '@lib/effects/solid';
+import { useAnchor, useCommit, useRun } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
 import { Button, Dialog, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import IconDelete from 'virtual:icons/mdi/delete-outline';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import {
+  advancedSettingsScope,
   deleteLogsSaga,
-  logStorageStore,
+  observeLogStorage,
   logsDeletedNoticeClosedTopic,
 } from '../state/advanced';
 
@@ -13,12 +15,10 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 const logStorageHeadingId = 'settings-log-storage-heading';
 
-/**
- * Export or delete the logs persisted on this device. Rendered inside
- * `AdvancedSettings`, which anchors the scope its state lives in.
- */
+/** Export or delete the logs persisted on this device. */
 export const LogStorage = () => {
-  const storage = useValue(logStorageStore);
+  useAnchor(advancedSettingsScope);
+  const storage = useResource(observeLogStorage);
   const deleteLogs = useRun(deleteLogsSaga);
   const commit = useCommit();
   const closeNotice = () => commit(logsDeletedNoticeClosedTopic());
@@ -75,7 +75,7 @@ export const LogStorage = () => {
       {/* No toasts yet, so a small dialog stands in for "it worked". */}
       <Dialog
         testId="advanced-log-deleted-notice"
-        open={storage().deletedNoticeOpen}
+        open={storage()?.deletedNoticeOpen ?? false}
         onOpenChange={closeNotice}
         title="Logs deleted"
         description="Every log stored on this device was removed."

@@ -1,9 +1,7 @@
 import { defineScope } from '@lib/state';
 
 /**
- * Owns the Advanced section's write sagas and Log storage UI state.
- * `AdvancedSettings` anchors it while the section is on screen.
- *
- * Nothing durable dies with it. OPFS holds the overrides.
+ * Owns the Log storage controls' UI state and delete saga. `LogStorage`
+ * anchors it while it's on screen.
  */
 export const advancedSettingsScope = defineScope();

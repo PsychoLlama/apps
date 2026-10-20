@@ -1,8 +1,10 @@
 export { AbortError } from './abort';
 export {
   anchor,
+  anchored,
   bindRuntime,
   createTestRuntime,
+  observed,
   peek,
   run,
   useAnchor,
@@ -13,6 +15,7 @@ export {
   type TestRuntime,
   type TestRuntimeOptions,
 } from './bindings';
+export type { RuntimeEffects } from './effects';
 export { defineFold } from './fold';
 export type { AnyFact } from './internal';
 export { createRuntime, type Runtime } from './runtime';

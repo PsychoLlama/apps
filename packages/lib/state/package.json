@@ -14,7 +14,8 @@
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
-    "@lib/assert": "workspace:*"
+    "@lib/assert": "workspace:*",
+    "@lib/effects": "workspace:*"
   },
   "peerDependencies": {
     "solid-js": "catalog:"

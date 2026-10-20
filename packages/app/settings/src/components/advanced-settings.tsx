@@ -1,15 +1,14 @@
-import { Suspense, useFlow } from '@lib/effects/solid';
-import { useAnchor, useRun } from '@lib/state';
+import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { Button, Code, Flex, Heading, Link, Text, TextField } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import { LogStorage } from './log-storage';
 import { ResetButton } from './reset-button';
 import {
-  advancedSettingsScope,
-  commitLogFilterSaga,
-  resetLogFilterSaga,
-} from '../state/advanced';
-import { defaultLogFilter, observeLogFilter } from '../effects/log-filter';
+  defaultLogFilter,
+  observeLogFilter,
+  resetLogFilter,
+  writeLogFilter,
+} from '../effects/log-filter';
 import * as css from './advanced-settings.css';
 
 const advancedHeadingId = 'settings-advanced-heading';
@@ -23,11 +22,10 @@ const logFilterHeadingId = 'settings-log-filter-heading';
  * out to every browsing context (sibling tabs and workers included).
  */
 export const AdvancedSettings = () => {
-  useAnchor(advancedSettingsScope);
-  const commitFilter = useRun(commitLogFilterSaga);
-  const resetFilter = useRun(resetLogFilterSaga);
+  const commitFilter = useAction(writeLogFilter);
+  const resetFilter = useAction(resetLogFilter);
 
-  const logFilter = useFlow(observeLogFilter);
+  const logFilter = useClientResource(observeLogFilter);
 
   return (
     <Flex as="details" direction="column" gap={5}>
@@ -80,8 +78,11 @@ export const AdvancedSettings = () => {
                 <ResetButton
                   testId="advanced-log-filter-reset"
                   label="Reset log filter"
-                  disabled={logFilter()?.pattern === defaultLogFilter}
-                  onReset={() => void resetFilter()}
+                  disabled={
+                    resetFilter.pending ||
+                    logFilter()?.pattern === defaultLogFilter
+                  }
+                  onReset={resetFilter}
                 />
               </Suspense>
             </Flex>
@@ -122,7 +123,7 @@ export const AdvancedSettings = () => {
               spellcheck={false}
               onBlur={(event) => {
                 const next = event.currentTarget.value;
-                if (next !== logFilter()?.pattern) void commitFilter(next);
+                if (next !== logFilter()?.pattern) commitFilter(next);
               }}
             />
           </Suspense>

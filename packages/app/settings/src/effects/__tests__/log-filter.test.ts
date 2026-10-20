@@ -1,13 +1,25 @@
 import { createTestController } from '@lib/effects/testing';
-import { readEnvironment, subscribe } from '@lib/runtime-config';
+import {
+  environment,
+  readEnvironment,
+  reset,
+  subscribe,
+  updateConfig,
+} from '@lib/runtime-config';
 import type * as RuntimeConfig from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
-import { observeLogFilter } from '../log-filter';
+import {
+  observeLogFilter,
+  resetLogFilter,
+  writeLogFilter,
+} from '../log-filter';
 
 vi.mock('@lib/runtime-config', async (importOriginal) => ({
   ...(await importOriginal<typeof RuntimeConfig>()),
   readEnvironment: vi.fn(),
+  reset: vi.fn(),
   subscribe: vi.fn(),
+  updateConfig: vi.fn(),
 }));
 
 type Listener = (value: { pattern: string }) => void;
@@ -36,7 +48,9 @@ const setup = () => {
 
 beforeEach(() => {
   vi.mocked(readEnvironment).mockReset();
+  vi.mocked(reset).mockReset();
   vi.mocked(subscribe).mockReset();
+  vi.mocked(updateConfig).mockReset();
 });
 
 describe('observeLogFilter', () => {
@@ -94,5 +108,29 @@ describe('observeLogFilter', () => {
 
     await expect(effects.run(observeLogFilter)).rejects.toThrow();
     expect(listeners.size).toBe(0);
+  });
+});
+
+describe('writeLogFilter', () => {
+  it("overrides the active environment's pattern", async () => {
+    await using effects = createTestController();
+
+    const [write] = await effects.run(writeLogFilter);
+    await write('app:*');
+
+    expect(updateConfig).toHaveBeenCalledWith(filter, {
+      [environment]: { pattern: 'app:*' },
+    });
+  });
+});
+
+describe('resetLogFilter', () => {
+  it("clears only the active environment's override", async () => {
+    await using effects = createTestController();
+
+    const [clear] = await effects.run(resetLogFilter);
+    await clear();
+
+    expect(reset).toHaveBeenCalledWith(filter, [environment]);
   });
 });
