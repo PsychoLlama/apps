@@ -75,7 +75,7 @@ export const LogStorage = () => {
       {/* No toasts yet, so a small dialog stands in for "it worked". */}
       <Dialog
         testId="advanced-log-deleted-notice"
-        open={logStorage()?.deletedNoticeOpen ?? false}
+        open={logStorage().deletedNoticeOpen}
         onOpenChange={closeNotice}
         title="Logs deleted"
         description="Every log stored on this device was removed."

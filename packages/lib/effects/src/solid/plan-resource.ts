@@ -1,5 +1,6 @@
 import { getOwner, onCleanup, runWithOwner, type Resource } from 'solid-js';
 import { toPromise } from '../eventual';
+import type { Mode } from '../mode';
 import type { Plan } from '../plan';
 import type { Handle } from '../manager';
 import {
@@ -52,7 +53,9 @@ export const useThrowToBoundary = () => {
  * reach the current owner's error boundary, or else surface as an
  * unhandled rejection.
  */
-export const acquire = (plan: Plan<[]>): [Handle, release: () => void] => {
+export const acquire = <Outputs extends readonly unknown[], M extends Mode>(
+  plan: Plan<[], Outputs, M>,
+): [Handle<Outputs, M>, release: () => void] => {
   const controller = useController();
   const throwToBoundary = useThrowToBoundary();
   const handle = controller.acquire(plan);
@@ -71,11 +74,6 @@ export const acquire = (plan: Plan<[]>): [Handle, release: () => void] => {
 export const holdPlan = (plan: Plan<[], [unknown]>) => {
   const controller = useController();
   const [handle, release] = acquire(plan);
-
-  // TODO: Server renders share the default controller, so cached state
-  // carries from one render into the next, and nothing releases it:
-  // cleanup doesn't reliably run on the server. Give each server render
-  // its own controller.
   onCleanup(release);
 
   return async (): Promise<unknown> => {

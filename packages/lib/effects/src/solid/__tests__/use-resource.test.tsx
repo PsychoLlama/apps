@@ -1,9 +1,9 @@
 import { render, screen } from '@solidjs/testing-library';
 import {
   createSignal,
-  Suspense,
+  ErrorBoundary,
+  type Accessor,
   type Component,
-  type Resource,
 } from 'solid-js';
 import { collect, pipe } from '../../combinators';
 import { reactive, resource } from '../../task';
@@ -12,168 +12,138 @@ import type { Controller } from '../../controller/controller';
 import { EffectsContext } from '../context';
 import { useResource } from '../use-resource';
 
-// An interface, not a type alias: those get no implicit index signature.
-interface Profile {
-  readonly name: string;
-}
-
-const profile: Profile = { name: 'stream' };
-
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 /**
- * Run `setup` as a component's body under a context whose `mounted` flag
- * the test flips by hand, so anything that resolves before `mount` did
- * so without waiting for it. `wrap` places the probe, which it must
- * render itself so the probe is owned by whatever it's placed in.
+ * Run `setup` as a component's body and hand back what it returned, with
+ * whatever its error boundary caught. `view` renders from the result.
  */
-const renderUnmounted = <Result,>(
+const renderHook = <Result,>(
   controller: Controller,
   setup: () => Result,
-  wrap = (Probe: Component) => <Probe />,
+  View: Component<{ result: Result }> = () => null,
 ) => {
-  const [mounted, setMounted] = createSignal(false);
+  const [mounted] = createSignal(true);
+  const errors: unknown[] = [];
 
   let result!: Result;
   const Probe = () => {
     result = setup();
-    return null;
+    return <View result={result} />;
   };
 
   const { unmount } = render(() => (
     <EffectsContext.Provider value={{ controller, mounted }}>
-      {wrap(Probe)}
+      <ErrorBoundary
+        fallback={(error) => {
+          errors.push(error);
+          return null;
+        }}
+      >
+        <Probe />
+      </ErrorBoundary>
     </EffectsContext.Provider>
   ));
 
-  return { result, mount: () => setMounted(true), unmount };
+  return { result, errors, unmount };
 };
 
 describe('useResource', () => {
-  it('computes without waiting for mount', async () => {
+  it('computes during render', async () => {
     await using controller = createTestController();
-    const gate = Promise.withResolvers<number>();
-    const load = vi.fn(() => gate.promise);
+    const load = vi.fn(() => 1);
     const double = (value: number) => value * 2;
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderHook(controller.controller, () =>
       useResource(pipe([load, double])),
     );
 
-    expectTypeOf(tree.result).toEqualTypeOf<Resource<number>>();
-    expect(tree.result.state).toBe('pending');
-    expect(load).toHaveBeenCalledOnce();
-
-    gate.resolve(1);
-    await settle();
-
-    expect(tree.result.state).toBe('ready');
+    expectTypeOf(tree.result).toEqualTypeOf<Accessor<number>>();
     expect(tree.result()).toBe(2);
+    expect(load).toHaveBeenCalledOnce();
     tree.unmount();
   });
 
   it('reads reactive state through, tracked', async () => {
     await using controller = createTestController();
-    const [muted, setMuted] = createSignal(false);
-    const observe = () => reactive(muted);
-
-    const tree = renderUnmounted(controller.controller, () =>
-      useResource(pipe([observe])),
-    );
-
-    await settle();
-    expect(tree.result()).toBe(false);
-
-    setMuted(true);
-
-    expect(tree.result()).toBe(true);
-    tree.unmount();
-  });
-
-  it('takes only serializable outputs', async () => {
-    await using controller = createTestController();
-    const data = () => ({
-      name: 'stream',
-      tags: new Set(['live']),
-      at: new Date(0),
-    });
-    const action = () => () => 'done';
-    const nested = () => ({ items: [{ run: () => {} }] });
-    const branded = () => ({ [Symbol.iterator]: 1 });
-    const live = () => reactive(() => ({ count: 1 }));
-    const held = () => resource(profile, () => {});
-    const both = collect([data, live]);
-    const mixed = collect([data, action]);
-
-    const tree = renderUnmounted(controller.controller, () => {
-      // @ts-expect-error -- A function.
-      useResource(pipe([action]));
-      // @ts-expect-error -- A function, nested.
-      useResource(pipe([nested]));
-      // @ts-expect-error -- A symbol key.
-      useResource(pipe([branded]));
-      // @ts-expect-error -- A function, collected.
-      useResource(mixed);
-      // Wrapped outputs are judged by what they read as.
-      useResource(pipe([live]));
-      useResource(pipe([held]));
-      useResource(both);
-      return useResource(pipe([data]));
-    });
-
-    await settle();
-    expect(tree.result()?.name).toBe('stream');
-    tree.unmount();
-  });
-
-  it('computes again on mount without suspending', async () => {
-    await using controller = createTestController();
     const [count, setCount] = createSignal(1);
-    const observe = vi.fn(() => reactive(count));
-    const Count = (props: { read: () => number | undefined }) => (
-      <p>count {props.read()}</p>
-    );
+    const observe = () => reactive(count);
 
-    let read!: Resource<number>;
-    const tree = renderUnmounted(
+    const tree = renderHook(
       controller.controller,
-      () => (read = useResource(pipe([observe]))),
-      (Probe) => (
-        <Suspense fallback={<p>loading</p>}>
-          <Probe />
-          <Count read={() => read()} />
-        </Suspense>
-      ),
+      () => useResource(pipe([observe])),
+      (props) => <p>count {props.result()}</p>,
     );
 
-    await settle();
     expect(screen.getByText('count 1')).toBeInTheDocument();
 
-    tree.mount();
-
-    expect(tree.result.state).toBe('refreshing');
-    expect(screen.queryByText('loading')).not.toBeInTheDocument();
-    expect(screen.getByText('count 1')).toBeInTheDocument();
-
-    await settle();
     setCount(2);
 
-    expect(tree.result.state).toBe('ready');
     expect(screen.getByText('count 2')).toBeInTheDocument();
+    tree.unmount();
+  });
+
+  it('reads resources and collected outputs through', async () => {
+    await using controller = createTestController();
+    const open = () => resource('stream', () => {});
+    const live = () => reactive(() => true);
+
+    const tree = renderHook(controller.controller, () =>
+      useResource(collect([open, live])),
+    );
+
+    expectTypeOf(tree.result).toEqualTypeOf<Accessor<[string, boolean]>>();
+    expect(tree.result()).toEqual(['stream', true]);
+    tree.unmount();
+  });
+
+  it('takes only synchronous plans', async () => {
+    await using controller = createTestController();
+    const later = async () => 1;
+    const closing = () => resource(1, async () => {});
+
+    const tree = renderHook(controller.controller, () => {
+      // @ts-expect-error -- Returns a promise.
+      expect(() => useResource(pipe([later]))).toThrow(/synchronous/);
+      const illegal = () => {
+        // @ts-expect-error -- Cleans up asynchronously.
+        useResource(pipe([closing]));
+      };
+      void illegal;
+      return useResource(pipe([() => 1]));
+    });
+
+    expect(tree.result()).toBe(1);
+    tree.unmount();
+    await settle();
+  });
+
+  it('throws failures to the error boundary', async () => {
+    await using controller = createTestController();
+    const failure = new Error('nope');
+    const fail = (): number => {
+      throw failure;
+    };
+
+    const tree = renderHook(controller.controller, () =>
+      useResource(pipe([fail])),
+    );
+
+    expect(tree.errors).toHaveLength(1);
+    expect((tree.errors[0] as AggregateError).errors).toEqual([failure]);
     tree.unmount();
   });
 
   it('releases the plan on cleanup', async () => {
     await using controller = createTestController();
-    const dispose = vi.fn();
+    const dispose = vi.fn<() => void>();
     const open = () => resource('stream', dispose);
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderHook(controller.controller, () =>
       useResource(pipe([open])),
     );
 
-    await settle();
     tree.unmount();
     await settle();
 
