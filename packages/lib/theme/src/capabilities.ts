@@ -12,7 +12,6 @@ import {
   THEME_COLORS,
   THEME_IDS,
   THEME_STORAGE_KEY,
-  type AppearanceSelection,
   type ColorSchemeId,
   type ColorSchemeOption,
   type MotionId,
@@ -91,7 +90,7 @@ const syncThemeColorMeta = (id: ThemeId, scheme: ColorSchemeOption): void => {
  * DOM write happens first so the visual switch survives a localStorage
  * failure.
  */
-export const applyTheme = (_signal: AbortSignal, id: ThemeId): void => {
+export const applyTheme = (id: ThemeId): void => {
   document.documentElement.dataset[THEME_ATTRIBUTE] = id;
   syncThemeColorMeta(id, readActiveColorScheme());
   guardStorageWrite('persist', () => {
@@ -182,12 +181,3 @@ export const applyMotion = (option: MotionOption): void => {
     localStorage.setItem(MOTION_STORAGE_KEY, option);
   });
 };
-
-/**
- * Read the theme preference off `<html>`. The prelude stamps it before
- * paint, so this is the canonical post-prelude snapshot hydration
- * carries into the store.
- */
-export const readActiveAppearance = (): AppearanceSelection => ({
-  theme: readActiveTheme(),
-});

@@ -13,18 +13,11 @@ import {
   applyColorScheme,
   applyMotion,
   applyTheme,
-  readActiveAppearance,
   readActiveColorScheme,
   readActiveMotion,
   readActiveTheme,
   resetTheme,
 } from '../capabilities';
-
-// The saga-driven capabilities take the scope's abort signal as their
-// first argument and ignore it — the DOM and localStorage writes are
-// synchronous and have nothing to unwind. One inert signal serves the
-// whole suite.
-const signal = new AbortController().signal;
 
 const mountMetaTag = (id: string): HTMLMetaElement => {
   const meta = document.createElement('meta');
@@ -64,19 +57,19 @@ describe('readActiveTheme', () => {
 
 describe('applyTheme', () => {
   it('flips <html data-theme> to the requested variant', () => {
-    applyTheme(signal, 'purple');
+    applyTheme('purple');
 
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('purple');
   });
 
   it('persists the choice to localStorage', () => {
-    applyTheme(signal, 'teal');
+    applyTheme('teal');
 
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('teal');
   });
 
   it("syncs the paired theme-color meta tags to the variant's colors", () => {
-    applyTheme(signal, 'jade');
+    applyTheme('jade');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -87,7 +80,7 @@ describe('applyTheme', () => {
   it('collapses both theme-color meta tags onto the dark variant when forced dark', () => {
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
 
-    applyTheme(signal, 'jade');
+    applyTheme('jade');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -98,7 +91,7 @@ describe('applyTheme', () => {
   it('collapses both theme-color meta tags onto the light variant when forced light', () => {
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'light';
 
-    applyTheme(signal, 'jade');
+    applyTheme('jade');
 
     const light = document.getElementById(THEME_COLOR_META_ID.light);
     const dark = document.getElementById(THEME_COLOR_META_ID.dark);
@@ -113,7 +106,7 @@ describe('applyTheme', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyTheme(signal, 'pink')).not.toThrow();
+    expect(() => applyTheme('pink')).not.toThrow();
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('pink');
 
     setItem.mockRestore();
@@ -126,7 +119,7 @@ describe('applyTheme', () => {
         throw new Error('quota');
       });
 
-    expect(() => applyTheme(signal, 'orange')).not.toThrow();
+    expect(() => applyTheme('orange')).not.toThrow();
     expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('orange');
 
     setItem.mockRestore();
@@ -378,17 +371,5 @@ describe('applyMotion', () => {
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
 
     removeItem.mockRestore();
-  });
-});
-
-describe('readActiveAppearance', () => {
-  it('reads the theme off <html>', () => {
-    document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
-
-    expect(readActiveAppearance()).toEqual({ theme: 'jade' });
-  });
-
-  it('falls back to the default theme when the attribute is missing', () => {
-    expect(readActiveAppearance()).toEqual({ theme: DEFAULT_THEME_ID });
   });
 });

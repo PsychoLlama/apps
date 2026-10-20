@@ -22,7 +22,7 @@ const observeMotion = (): Reactive<MotionOption, 'sync'> => {
  * prelude stamps it before paint, and every change writes it first.
  * Client-only; it reads `document`.
  */
-export const $motion = pipe([() => observeMotion()]);
+export const $motion = pipe([observeMotion]);
 
 /**
  * Switch the motion override, or hand control back to the system with

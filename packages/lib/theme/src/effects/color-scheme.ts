@@ -24,7 +24,7 @@ const observeColorScheme = (): Reactive<ColorSchemeOption, 'sync'> => {
  * prelude stamps it before paint, and every change writes it first.
  * Client-only; it reads `document`.
  */
-export const $colorScheme = pipe([() => observeColorScheme()]);
+export const $colorScheme = pipe([observeColorScheme]);
 
 /**
  * Switch the color-scheme override, or hand control back to the system
