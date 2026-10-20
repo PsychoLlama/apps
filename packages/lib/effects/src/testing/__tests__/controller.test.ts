@@ -3,7 +3,7 @@ import { resource } from '../../task';
 import { createTestController } from '../controller';
 
 describe('createTestController', () => {
-  it('runs a flow and returns its typed outputs', async () => {
+  it('runs a plan and returns its typed outputs', async () => {
     await using controller = createTestController();
     const one = () => 1;
     const two = () => 'two';
@@ -14,7 +14,7 @@ describe('createTestController', () => {
     expect(outputs).toEqual([1, 'two']);
   });
 
-  it('rejects when the flow fails', async () => {
+  it('rejects when the plan fails', async () => {
     await using controller = createTestController();
     const fail = () => Promise.reject(new Error('nope'));
 

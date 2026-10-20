@@ -1,13 +1,14 @@
 import {
-  defineFlow,
+  definePlan,
   toBuild,
-  type Flow,
-  type FlowNode,
+  type Plan,
+  type PlanNode,
   type InputsOf,
+  type ModeOfSteps,
   type OutputsOf,
   type StepAccepting,
   type Steps,
-} from '../flow';
+} from '../plan';
 import type { YieldAll } from '../task';
 
 type LastOf<Tuple extends readonly unknown[]> = Tuple extends readonly [
@@ -52,11 +53,11 @@ type Pipeline<S extends Steps> = {
  */
 export const pipe = <const S extends Steps>(
   steps: Pipeline<S>,
-): Flow<InputsOf<S[0]>, OutputsOf<LastOf<S>>> =>
-  defineFlow((input) => {
+): Plan<InputsOf<S[0]>, OutputsOf<LastOf<S>>, ModeOfSteps<S>> =>
+  definePlan((input) => {
     const [first, ...rest] = steps as Steps;
     const head = toBuild(first)(input);
-    const nodes: FlowNode[] = [...head.nodes];
+    const nodes: PlanNode[] = [...head.nodes];
     let output = head.output;
 
     for (const step of rest) {

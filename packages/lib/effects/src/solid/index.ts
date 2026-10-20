@@ -7,4 +7,4 @@ export {
 export { Suspense, type SuspenseProps } from './suspense';
 export { useAction, type Action } from './use-action';
 export { useClientResource } from './use-client-resource';
-export { useResource } from './use-resource';
+export { useValue } from './use-value';

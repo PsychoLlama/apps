@@ -1,13 +1,14 @@
 import {
-  defineFlow,
+  definePlan,
   toBuild,
-  type Flow,
-  type FlowNode,
+  type Plan,
+  type PlanNode,
   type InputsOf,
+  type ModeOfSteps,
   type OutputsOf,
   type StepAccepting,
   type Steps,
-} from '../flow';
+} from '../plan';
 
 /** Every step's outputs, concatenated into one tuple. */
 export type ConcatOutputs<S extends readonly unknown[]> = S extends readonly [
@@ -26,13 +27,13 @@ export type Branches<S extends Steps> = {
 };
 
 /**
- * A flow that runs the branches over its input and joins their tuples.
- * The flow keys every join it builds.
+ * A plan that runs the branches over its input and joins their tuples.
+ * The plan keys every join it builds.
  */
 export const defineJoin = (branches: Steps, collect: boolean) => {
-  const flow = defineFlow((input) => {
-    const nodes: FlowNode[] = [];
-    const outputs: FlowNode[] = [];
+  const plan = definePlan((input) => {
+    const nodes: PlanNode[] = [];
+    const outputs: PlanNode[] = [];
 
     for (const branch of branches) {
       const graph = toBuild(branch)(input);
@@ -40,9 +41,9 @@ export const defineJoin = (branches: Steps, collect: boolean) => {
       outputs.push(graph.output);
     }
 
-    const join: FlowNode = {
+    const join: PlanNode = {
       kind: 'join',
-      flow,
+      plan,
       input,
       branches: outputs,
       collect,
@@ -52,7 +53,7 @@ export const defineJoin = (branches: Steps, collect: boolean) => {
     return { nodes, output: join };
   });
 
-  return flow;
+  return plan;
 };
 
 /**
@@ -61,4 +62,5 @@ export const defineJoin = (branches: Steps, collect: boolean) => {
  */
 export const concurrent = <const S extends Steps>(
   branches: Branches<S>,
-): Flow<InputsOf<S[0]>, ConcatOutputs<S>> => defineJoin(branches, false);
+): Plan<InputsOf<S[0]>, ConcatOutputs<S>, ModeOfSteps<S>> =>
+  defineJoin(branches, false);

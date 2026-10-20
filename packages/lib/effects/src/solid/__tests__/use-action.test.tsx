@@ -154,7 +154,7 @@ describe('useAction', () => {
     unmount();
   });
 
-  it('reports when the flow fails', async () => {
+  it('reports when the plan fails', async () => {
     await using controller = createTestController();
     const fail = (): (() => void) => {
       throw new Error('nope');
@@ -219,7 +219,7 @@ describe('useAction', () => {
     expect(send).not.toHaveBeenCalledWith('unmounted');
   });
 
-  it('holds the flow until calls settle', async () => {
+  it('holds the plan until calls settle', async () => {
     await using controller = createTestController();
     const dispose = vi.fn();
     const gate = Promise.withResolvers<string>();
@@ -242,7 +242,7 @@ describe('useAction', () => {
     expect(controller.manager.handles.size).toBe(0);
   });
 
-  it('releases the flow on cleanup', async () => {
+  it('releases the plan on cleanup', async () => {
     await using controller = createTestController();
     const dispose = vi.fn();
     const open = () => resource(() => {}, dispose);

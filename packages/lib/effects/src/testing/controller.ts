@@ -1,10 +1,10 @@
-import { assert } from '@lib/assert';
 import { createController, type Controller } from '../controller/controller';
-import type { Flow } from '../flow';
+import { toPromise } from '../eventual';
+import type { Plan } from '../plan';
 import { createManager, release, type Manager } from '../manager';
 import { yieldOf, type YieldAll } from '../task';
 
-/** Drives flows against a fresh manager and tears them down after. */
+/** Drives plans against a fresh manager and tears them down after. */
 export interface TestController extends AsyncDisposable {
   /** The manager under test, for assertions that need to look inside. */
   readonly manager: Manager;
@@ -16,11 +16,11 @@ export interface TestController extends AsyncDisposable {
   readonly controller: Controller;
 
   /**
-   * Acquire the flow, compute it, and return its output values. The
+   * Acquire the plan, compute it, and return its output values. The
    * handle stays live until the controller is disposed.
    */
   run<Outputs extends readonly unknown[]>(
-    flow: Flow<[], Outputs>,
+    plan: Plan<[], Outputs>,
   ): Promise<YieldAll<Outputs>>;
 }
 
@@ -38,16 +38,13 @@ export const createTestController = (): TestController => {
     controller,
 
     run: async <Outputs extends readonly unknown[]>(
-      flow: Flow<[], Outputs>,
+      plan: Plan<[], Outputs>,
     ): Promise<YieldAll<Outputs>> => {
-      const handle = controller.acquire(flow);
-      await controller.compute(handle);
+      const handle = controller.acquire(plan);
+      const outputs = await toPromise(controller.compute(handle));
 
-      const state = controller.inspect(handle, handle.output);
-      assert(state.step === 'succeeded', 'Output did not succeed.');
-
-      // The graph is untyped at runtime; the flow's signature vouches.
-      return state.outputs.map(yieldOf) as unknown as YieldAll<Outputs>;
+      // `yieldOf` is untyped; the plan's signature vouches.
+      return outputs.map(yieldOf) as unknown as YieldAll<Outputs>;
     },
 
     [Symbol.asyncDispose]: async () => {

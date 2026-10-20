@@ -1,9 +1,8 @@
-import { batch, createSignal, onCleanup, untrack } from 'solid-js';
-import { assert } from '@lib/assert';
-import type { Flow } from '../flow';
+import { batch, createSignal, onCleanup } from 'solid-js';
+import type { Plan } from '../plan';
 import { yieldOf, type Yield } from '../task';
 import { useController } from './context';
-import { acquire, useThrowToBoundary } from './flow-resource';
+import { acquire, useThrowToBoundary } from './plan-resource';
 
 type AnyFunction = (...args: never[]) => unknown;
 
@@ -51,16 +50,16 @@ const refCount = (idle: () => void) => {
 };
 
 /**
- * Call a flow's output as a function from event handlers. The flow
+ * Call a plan's output as a function from event handlers. The plan
  * computes on the first call, so its dependencies resolve then. Once
  * computed, calls go straight through, synchronously, which keeps APIs
- * that need a user gesture working. The flow is held from render until
+ * that need a user gesture working. The plan is held from render until
  * the component unmounts and every call has settled.
  *
  * Calls return nothing: read `pending`, `latest`, and `error` instead.
  * A failed call's error also reaches the nearest error boundary.
  *
- * Takes a flow with one output: the function, as a downstream task would
+ * Takes a plan with one output: the function, as a downstream task would
  * receive it.
  */
 export const useAction = <
@@ -70,29 +69,25 @@ export const useAction = <
       : never;
   },
 >(
-  flow: Flow<[], Outputs>,
+  plan: Plan<[], Outputs>,
 ): ActionOf<Outputs[0]> => {
   const controller = useController();
   const throwToBoundary = useThrowToBoundary();
-  const [handle, release] = acquire(flow);
+  const [handle, release] = acquire(plan);
   const hold = refCount(release);
   onCleanup(hold());
-
-  const output = () => controller.inspect(handle, handle.output);
 
   const run = async (...args: unknown[]) => {
     const done = hold();
 
     try {
-      let state = untrack(output);
-      if (state.step !== 'succeeded') {
-        await controller.compute(handle);
-        state = output();
-        assert(state.step === 'succeeded', 'Flow computed without an output.');
-      }
+      // Calls straight through when it's here, before any await.
+      const computed = controller.compute(handle);
+      const [output] =
+        computed.type === 'sync' ? computed.value : await computed.value;
 
       // Untyped at runtime, as above.
-      const call = yieldOf(state.outputs[0]) as (...rest: unknown[]) => unknown;
+      const call = yieldOf(output) as (...rest: unknown[]) => unknown;
       return await call(...args);
     } finally {
       done();
@@ -133,6 +128,6 @@ export const useAction = <
     error: { get: error },
   });
 
-  // The graph is untyped at runtime; the flow's signature vouches.
+  // The graph is untyped at runtime; the plan's signature vouches.
   return action as unknown as ActionOf<Outputs[0]>;
 };

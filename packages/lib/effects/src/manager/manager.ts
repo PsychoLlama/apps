@@ -1,6 +1,19 @@
 import { assert } from '@lib/assert';
-import { createSignal, type Signal } from 'solid-js';
-import { FLOW, type Flow, type FlowNode } from '../flow';
+import { createSignal, untrack, type Signal } from 'solid-js';
+import {
+  all,
+  chain,
+  from,
+  lastly,
+  later,
+  now,
+  rescue,
+  sequence,
+  toPromise,
+  type Eventual,
+} from '../eventual';
+import type { Mode } from '../mode';
+import { PLAN, type Plan, type PlanNode } from '../plan';
 import {
   createCache,
   drop,
@@ -14,22 +27,31 @@ import {
 import { keyOf, ROOT, spawn, type Entry } from './entry';
 import type * as Node from './node';
 
-/** A flow acquired on a manager, and what the manager tracks for it. */
-export interface Handle {
-  /** Every node in the flow, topologically ordered. */
-  readonly nodes: readonly FlowNode[];
+/** Phantom slot pinning a handle's output tuple and mode. */
+declare const SIGNATURE: unique symbol;
 
-  /** The node whose output tuple is the flow's output. */
-  readonly output: FlowNode;
+/** A plan acquired on a manager, and what the manager tracks for it. */
+export interface Handle<
+  out Outputs extends readonly unknown[] = readonly unknown[],
+  out M extends Mode = Mode,
+> {
+  readonly [SIGNATURE]?: { readonly outputs: Outputs; readonly mode: M };
+
+  /** Every node in the plan, topologically ordered. */
+  readonly nodes: readonly PlanNode[];
+
+  /** The node whose output tuple is the plan's output. */
+  readonly output: PlanNode;
 
   /**
    * Each node's binding, memoized so diamonds resolve once. Absent when an
-   * upstream node failed.
+   * upstream node failed. A binding that had to wait is swapped for its
+   * value once it lands, so computing again doesn't.
    */
-  readonly bindings: Map<FlowNode, Promise<Entry | undefined>>;
+  readonly bindings: Map<PlanNode, Eventual<Entry | undefined>>;
 
   /** Per node, the entry it's bound to and so holds a reference on. */
-  readonly held: ReadonlyMap<FlowNode, Signal<Entry | undefined>>;
+  readonly held: ReadonlyMap<PlanNode, Signal<Entry | undefined>>;
 
   released: boolean;
 }
@@ -52,21 +74,31 @@ const same = (left: readonly Tuple[], right: readonly Tuple[]) =>
   left.length === right.length &&
   left.every((tuple, index) => tuple === right[index]);
 
+/** The entry once it settles. Waits only if it's still computing. */
+const settled = (entry: Entry): Eventual<Entry> =>
+  entry.state().step === 'computing'
+    ? later(entry.settled.then(() => entry))
+    : now(entry);
+
 /** The live entry for a key, spawning one if its last life has ended. */
-const claim = async (
+const claim = (
   manager: Manager,
-  node: FlowNode,
+  node: PlanNode,
   inputs: Tuple,
   sources: readonly Tuple[],
-): Promise<Entry> => {
+): Eventual<Entry> => {
   const { cache } = manager;
   const key = keyOf(node);
   let entry = lookup(cache, node.kind, key, inputs);
 
-  // Never overlap with a previous life of the same key.
-  while (entry?.retired) {
-    await entry.retired.catch(() => {});
-    entry = lookup(cache, node.kind, key, inputs);
+  // Never overlap with a previous life of the same key. Only a life that
+  // had to wait to retire is still here.
+  if (entry?.retired) {
+    return later(
+      entry.retired
+        .catch(() => {})
+        .then(() => toPromise(claim(manager, node, inputs, sources))),
+    );
   }
 
   if (!entry) {
@@ -80,16 +112,14 @@ const claim = async (
   assert(same(entry.sources, sources), 'Join claimed with stale branches.');
 
   entry.refs += 1;
-  return entry;
+  return now(entry);
 };
 
 /** Settle the entry, run its cleanup, and free its key. */
-const retire = (manager: Manager, entry: Entry): Promise<void> => {
-  entry.retired = (async () => {
-    try {
-      await entry.settled;
-      await entry.dispose?.();
-    } finally {
+const retire = (manager: Manager, entry: Entry): Eventual<unknown> => {
+  const retired = lastly(
+    () => chain(settled(entry), () => from(entry.dispose?.())),
+    () => {
       remove(manager.cache, entry.kind, entry.key, entry.inputs);
 
       // Only after cleanup, so an equal value can't reuse the tuple while
@@ -98,13 +128,14 @@ const retire = (manager: Manager, entry: Entry): Promise<void> => {
       if (entry.kind === 'task' && state.step === 'succeeded') {
         drop(manager.cache, state.outputs[0]);
       }
-    }
-  })();
+    },
+  );
 
-  return entry.retired;
+  if (retired.type === 'async') entry.retired = retired.value;
+  return retired;
 };
 
-const held = (handle: Handle, node: FlowNode) => {
+const held = (handle: Handle, node: PlanNode) => {
   const signal = handle.held.get(node);
   assert(signal, 'Node is not part of this handle.');
 
@@ -112,105 +143,132 @@ const held = (handle: Handle, node: FlowNode) => {
 };
 
 /** A bound node's output tuple, or `undefined` if it didn't succeed. */
-const outputOf = async (
+const outputOf = (
   manager: Manager,
   handle: Handle,
-  node: FlowNode,
-): Promise<Tuple | undefined> => {
-  const state = (await bind(manager, handle, node))?.state();
-  return state?.step === 'succeeded' ? state.outputs : undefined;
+  node: PlanNode,
+): Eventual<Tuple | undefined> =>
+  chain(bind(manager, handle, node), (entry) => {
+    const state = entry?.state();
+    return now(state?.step === 'succeeded' ? state.outputs : undefined);
+  });
+
+/** Claim the node's entry once its branches are known, and hold it. */
+const attach = (
+  manager: Manager,
+  handle: Handle,
+  node: PlanNode,
+  inputs: Tuple,
+): Eventual<Entry | undefined> => {
+  const branches = node.kind === 'join' ? node.branches : [];
+  const sources = all(
+    branches.map((branch) => outputOf(manager, handle, branch)),
+  );
+
+  return chain(sources, (sources) => {
+    if (!sources.every(Boolean)) return now(undefined);
+
+    const claimed = claim(manager, node, inputs, sources as Tuple[]);
+    return chain(claimed, (entry) => {
+      const [, setEntry] = held(handle, node);
+      setEntry(entry);
+      return settled(entry);
+    });
+  });
 };
 
 /** Bind a node once every upstream tuple is known, then let it settle. */
 const bind = (
   manager: Manager,
   handle: Handle,
-  node: FlowNode,
-): Promise<Entry | undefined> => {
-  let binding = handle.bindings.get(node);
-  if (binding) return binding;
+  node: PlanNode,
+): Eventual<Entry | undefined> => {
+  const bound = handle.bindings.get(node);
+  if (bound) return bound;
 
-  binding = (async () => {
-    // Roots skip the await, so they start in the same tick as `compute`.
-    const inputs = node.input
-      ? await outputOf(manager, handle, node.input)
-      : ROOT;
-    if (!inputs) return undefined;
-
-    const sources: Tuple[] = [];
-    for (const branch of node.kind === 'join' ? node.branches : []) {
-      const outputs = await outputOf(manager, handle, branch);
-      if (!outputs) return undefined;
-      sources.push(outputs);
-    }
-
-    const entry = await claim(manager, node, inputs, sources);
-    const [, setEntry] = held(handle, node);
-    setEntry(entry);
-    await entry.settled;
-    return entry;
-  })();
+  const inputs = node.input ? outputOf(manager, handle, node.input) : now(ROOT);
+  const binding = chain(inputs, (inputs) =>
+    inputs ? attach(manager, handle, node, inputs) : now(undefined),
+  );
 
   handle.bindings.set(node, binding);
+  if (binding.type === 'async') {
+    binding.value.then(
+      (entry) => {
+        // Unless it was unbound meanwhile.
+        if (handle.bindings.get(node) === binding) {
+          handle.bindings.set(node, now(entry));
+        }
+      },
+      () => {},
+    );
+  }
+
   return binding;
 };
 
 /** Forget a node's binding and let go of its entry. Expects it settled. */
-const unbind = async (manager: Manager, handle: Handle, node: FlowNode) => {
-  if (!handle.bindings.delete(node)) return;
+const unbind = (
+  manager: Manager,
+  handle: Handle,
+  node: PlanNode,
+): Eventual<unknown> => {
+  if (!handle.bindings.delete(node)) return now(undefined);
 
   const [entry, setEntry] = held(handle, node);
   const bound = entry();
-  if (!bound) return;
+  if (!bound) return now(undefined);
 
   setEntry(undefined);
   bound.refs -= 1;
-  if (bound.refs === 0) await retire(manager, bound);
+  return bound.refs === 0 ? retire(manager, bound) : now(undefined);
 };
 
 /** Bind the nodes and collect every distinct failure among them. */
-const bringUp = async (
+const bringUp = (
   manager: Manager,
   handle: Handle,
-  nodes: readonly FlowNode[],
-): Promise<unknown[]> => {
-  const entries = await Promise.all(
-    nodes.map((node) => bind(manager, handle, node)),
-  );
+  nodes: readonly PlanNode[],
+): Eventual<unknown[]> =>
+  chain(all(nodes.map((node) => bind(manager, handle, node))), (entries) => {
+    const failures = new Set<unknown>();
+    for (const entry of entries) {
+      const state = entry?.state();
+      if (state?.step === 'failed') failures.add(state.error);
+    }
 
-  const failures = new Set<unknown>();
-  for (const entry of entries) {
-    const state = entry?.state();
-    if (state?.step === 'failed') failures.add(state.error);
-  }
-
-  return [...failures];
-};
+    return now([...failures]);
+  });
 
 /** Unbind the nodes downstream first and collect every cleanup failure. */
-const tearDown = async (
+const tearDown = (
   manager: Manager,
   handle: Handle,
-  nodes: readonly FlowNode[],
-): Promise<unknown[]> => {
+  nodes: readonly PlanNode[],
+): Eventual<unknown[]> => {
   // Let in-flight bindings land, or the entries they bind would leak.
-  await Promise.all(nodes.flatMap((node) => handle.bindings.get(node) ?? []));
+  const inFlight = all(
+    nodes.flatMap((node) => handle.bindings.get(node) ?? []),
+  );
 
-  const failures: unknown[] = [];
-  for (const node of nodes.toReversed()) {
-    try {
-      await unbind(manager, handle, node);
-    } catch (error) {
-      failures.push(error);
-    }
-  }
+  return chain(inFlight, () => {
+    const failures: unknown[] = [];
+    const unbound = sequence(nodes.toReversed(), (node) =>
+      rescue(
+        () => unbind(manager, handle, node),
+        (error) => failures.push(error),
+      ),
+    );
 
-  return failures;
+    return chain(unbound, () => now(failures));
+  });
 };
 
-/** Build the flow's graph. Pure: nothing runs, and no manager is involved. */
-export const acquire = (flow: Flow<[]>): Handle => {
-  const graph = flow[FLOW]();
+/** Build the plan's graph. Pure: nothing runs, and no manager is involved. */
+export const acquire = <Outputs extends readonly unknown[], M extends Mode>(
+  plan: Plan<[], Outputs, M>,
+): Handle<Outputs, M> => {
+  const graph = plan[PLAN]();
   return {
     nodes: graph.nodes,
     output: graph.output,
@@ -227,27 +285,45 @@ export const acquire = (flow: Flow<[]>): Handle => {
 };
 
 /**
- * Run every node, sharing cached work with other handles. Resolves once
- * all nodes settle; rejects with an `AggregateError` of every failure.
- * Safe to call repeatedly.
+ * Run every node, sharing cached work with other handles, and return the
+ * plan's raw output tuple. It's here right away unless a node has to
+ * wait: a `sync` plan's always is, and so is any plan's once it has
+ * settled. Fails with an `AggregateError` of every failure, thrown now or
+ * rejected later. Safe to call repeatedly.
  */
-export const compute = async (
+export const compute = <Outputs extends readonly unknown[], M extends Mode>(
   manager: Manager,
-  handle: Handle,
-): Promise<void> => {
-  assert(!handle.released, 'Handle was already released.');
-  manager.handles.add(handle);
+  handle: Handle<Outputs, M>,
+): Eventual<Outputs, M> =>
+  // Bindings call this from render. Nothing it reads is a dependency.
+  untrack(() => {
+    assert(!handle.released, 'Handle was already released.');
+    manager.handles.add(handle);
 
-  const failures = await bringUp(manager, handle, handle.nodes);
-  if (failures.length > 0) {
-    throw new AggregateError(failures, 'Flow failed.');
-  }
-};
+    const failures = bringUp(manager, handle, handle.nodes);
+    const outputs = chain(failures, (failures) => {
+      if (failures.length > 0) {
+        throw new AggregateError(failures, 'Plan failed.');
+      }
+
+      // Its outputs may already be disposed.
+      assert(!handle.released, 'Handle was released while computing.');
+
+      const state = inspect(handle, handle.output);
+      assert(state.step === 'succeeded', 'Plan computed without an output.');
+      return now(state.outputs);
+    });
+
+    // The graph is untyped at runtime; the plan's signature vouches, and
+    // a `sync` plan never waits.
+    return outputs as Eventual<Outputs, M>;
+  });
 
 /**
  * Drop the handle's references and tear down whatever nothing else
- * holds, downstream first. Rejects with an `AggregateError` if any
- * cleanup throws, after all cleanups have run.
+ * holds, downstream first. Whatever doesn't wait is torn down before
+ * this returns, all of a `sync` plan included. Rejects with an
+ * `AggregateError` if any cleanup throws, after all cleanups have run.
  */
 export const release = async (
   manager: Manager,
@@ -257,7 +333,10 @@ export const release = async (
   handle.released = true;
   manager.handles.delete(handle);
 
-  const failures = await tearDown(manager, handle, handle.nodes);
+  // No awaits before this, so the synchronous part runs in this call.
+  const torn = untrack(() => tearDown(manager, handle, handle.nodes));
+  const failures = await toPromise(torn);
+
   if (failures.length > 0) {
     throw new AggregateError(failures, 'Cleanup failed.');
   }
@@ -267,7 +346,7 @@ export const release = async (
  * The current state of one of the handle's nodes. Reactive: tracks under
  * a Solid computation, reads plainly outside one.
  */
-export const inspect = (handle: Handle, node: FlowNode): Node.State => {
+export const inspect = (handle: Handle, node: PlanNode): Node.State => {
   const [entry] = held(handle, node);
   return entry()?.state() ?? { step: 'pending' };
 };

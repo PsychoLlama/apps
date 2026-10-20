@@ -1,7 +1,11 @@
 import type { Accessor } from 'solid-js';
+import type { Mode, ModeOf } from '../mode';
 
 /** Marks a wrapped output. Its value names the kind. */
 const BRAND: unique symbol = Symbol('output');
+
+/** Phantom slot pinning the mode of a wrapper's cleanup. */
+declare const DISPOSE_MODE: unique symbol;
 
 /** Releases whatever a resource holds. May be async. */
 export type Dispose = () => void | PromiseLike<unknown>;
@@ -9,10 +13,11 @@ export type Dispose = () => void | PromiseLike<unknown>;
 /**
  * A task output paired with its cleanup. Downstream tasks receive the bare
  * `value`; the runtime keeps `dispose` and runs it when the node is
- * released.
+ * released. `M` is the cleanup's {@link Mode}.
  */
-export interface Resource<T> {
+export interface Resource<T, out M extends Mode = Mode> {
   readonly [BRAND]: 'resource';
+  readonly [DISPOSE_MODE]?: M;
   readonly value: T;
   readonly dispose: Dispose;
 }
@@ -20,10 +25,12 @@ export interface Resource<T> {
 /**
  * A task output that changes over time, paired with an optional cleanup.
  * Downstream tasks receive the bare accessor; the runtime keeps `dispose`
- * and runs it when the node is released.
+ * and runs it when the node is released. `M` is the cleanup's
+ * {@link Mode}.
  */
-export interface Reactive<T> {
+export interface Reactive<T, out M extends Mode = Mode> {
   readonly [BRAND]: 'reactive';
+  readonly [DISPOSE_MODE]?: M;
   readonly value: Accessor<T>;
   readonly dispose?: Dispose;
 }
@@ -46,7 +53,7 @@ export type Wrapped =
 
 /**
  * What a downstream task receives from an output: promises settled and
- * wrappers removed. Flows carry raw outputs; this applies where one step
+ * wrappers removed. Plans carry raw outputs; this applies where one step
  * feeds the next.
  */
 export type Yield<Output> = Unwrap<Awaited<Output>>;
@@ -55,6 +62,17 @@ export type Yield<Output> = Unwrap<Awaited<Output>>;
 export type YieldAll<Outputs extends readonly unknown[]> = {
   [Index in keyof Outputs]: Yield<Outputs[Index]>;
 };
+
+/**
+ * The mode of an output's cleanup: `async` if it's a wrapper whose
+ * `dispose` may return a promise.
+ */
+export type DisposeModeOf<Output> =
+  Output extends Resource<unknown, infer M>
+    ? M
+    : Output extends Reactive<unknown, infer M>
+      ? M
+      : 'sync';
 
 type Unwrap<Value> =
   Value extends Resource<infer Inner>
@@ -90,10 +108,14 @@ export const disposeOf = (output: unknown): Dispose | undefined =>
  * the function that tears it down. Return it from a task; the graph owns
  * the lifetime from there.
  */
-export const resource = <T>(value: T, dispose: Dispose): Resource<T> => ({
+export const resource = <T, Disposed>(
+  value: T,
+  dispose: () => Disposed,
+): Resource<T, ModeOf<Disposed>> => ({
   [BRAND]: 'resource',
   value,
-  dispose,
+  // Typed loosely so its result can pin the mode. The runtime awaits it.
+  dispose: dispose as Dispose,
 });
 
 /**
@@ -102,13 +124,14 @@ export const resource = <T>(value: T, dispose: Dispose): Resource<T> => ({
  * accessor but run once; reading it there is a snapshot, not a
  * subscription.
  */
-export const reactive = <T>(
+export const reactive = <T, Disposed = void>(
   value: Accessor<T>,
-  dispose?: Dispose,
-): Reactive<T> => ({
+  dispose?: () => Disposed,
+): Reactive<T, ModeOf<Disposed>> => ({
   [BRAND]: 'reactive',
   value,
-  dispose,
+  // As in `resource`.
+  dispose: dispose as Dispose | undefined,
 });
 
 /** Box branch outputs, unwrapped once so `value` keeps one identity. */

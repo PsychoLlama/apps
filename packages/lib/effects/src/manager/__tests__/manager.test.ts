@@ -6,6 +6,7 @@ import {
   type Setter,
 } from 'solid-js';
 import { collect, concurrent, pipe } from '../../combinators';
+import { toPromise, type Async, type Sync } from '../../eventual';
 import { reactive, resource, yieldOf } from '../../task';
 import { isWrapped } from '../../task/output';
 import {
@@ -15,10 +16,15 @@ import {
   inspect,
   release,
   type Handle,
+  type Manager,
 } from '../manager';
 
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/** Compute as a promise, whether or not the plan waits. */
+const computed = async (manager: Manager, handle: Handle) =>
+  toPromise(compute(manager, handle));
 
 /** The raw output tuple, wrappers included. */
 const raw = (handle: Handle) => {
@@ -45,7 +51,7 @@ describe('manager', () => {
         step: 'pending',
       });
 
-      await compute(manager, handle);
+      await computed(manager, handle);
 
       expect(inspect(handle, handle.nodes[0])).toEqual({
         step: 'succeeded',
@@ -67,7 +73,7 @@ describe('manager', () => {
       const sum = acquire(pipe([concurrent([one, two]), add]));
       const boxed = acquire(collect([one, two]));
 
-      await Promise.all([compute(manager, sum), compute(manager, boxed)]);
+      await Promise.all([computed(manager, sum), computed(manager, boxed)]);
 
       expect(output(sum)).toEqual([3]);
       expect(output(boxed)).toEqual([[1, 2]]);
@@ -80,7 +86,7 @@ describe('manager', () => {
       const open = async () => stream;
       const handle = acquire(pipe([open]));
 
-      await compute(manager, handle);
+      await computed(manager, handle);
 
       expect(raw(handle)).toEqual([stream]);
       expect(output(handle)).toEqual(['stream']);
@@ -93,7 +99,7 @@ describe('manager', () => {
       const seen = vi.fn((values: [string, number]) => values);
       const handle = acquire(pipe([both, seen]));
 
-      await compute(manager, handle);
+      await computed(manager, handle);
 
       expect(seen).toHaveBeenCalledWith(['stream', 1]);
     });
@@ -109,7 +115,7 @@ describe('manager', () => {
       const seen = vi.fn((state: Accessor<boolean>) => state());
       const handle = acquire(pipe([observe, seen]));
 
-      await compute(manager, handle);
+      await computed(manager, handle);
       const state = inspect(handle, handle.nodes[0]);
       assert(state.step === 'succeeded');
       expect(isWrapped(state.outputs[0], 'reactive')).toBe(true);
@@ -126,10 +132,44 @@ describe('manager', () => {
       const one = vi.fn(() => 1);
       const handle = acquire(pipe([one]));
 
-      await compute(manager, handle);
-      await compute(manager, handle);
+      await computed(manager, handle);
+      await computed(manager, handle);
 
       expect(one).toHaveBeenCalledTimes(1);
+    });
+
+    it("returns a synchronous plan's outputs right away", () => {
+      const manager = createManager();
+      const open = () => resource('stream', () => {});
+      const handle = acquire(pipe([open, (stream: string) => stream.length]));
+
+      const result = compute(manager, handle);
+
+      expectTypeOf(result).toEqualTypeOf<Sync<[number]>>();
+      expect(result).toEqual({ type: 'sync', value: [6] });
+    });
+
+    it('waits for an asynchronous plan, then not once it settles', async () => {
+      const manager = createManager();
+      const handle = acquire(pipe([async () => 1]));
+
+      const first = compute(manager, handle);
+      expectTypeOf(first).toEqualTypeOf<Sync<[number]> | Async<[number]>>();
+      assert(first.type === 'async');
+      await expect(first.value).resolves.toEqual([1]);
+
+      expect(compute(manager, handle)).toEqual({ type: 'sync', value: [1] });
+    });
+
+    it('throws right away when a synchronous plan fails', () => {
+      const manager = createManager();
+      const fail = (): number => {
+        throw new Error('nope');
+      };
+
+      expect(() => compute(manager, acquire(pipe([fail])))).toThrow(
+        AggregateError,
+      );
     });
 
     it('refuses a released handle', async () => {
@@ -137,7 +177,7 @@ describe('manager', () => {
       const handle = acquire(pipe([() => 1]));
       await release(manager, handle);
 
-      await expect(compute(manager, handle)).rejects.toThrow(/released/);
+      expect(() => compute(manager, handle)).toThrow(/released/);
       await expect(release(manager, handle)).rejects.toThrow(/released/);
     });
   });
@@ -159,7 +199,7 @@ describe('manager', () => {
 
       expect(steps).toEqual(['pending']);
 
-      const computing = compute(manager, handle);
+      const computing = computed(manager, handle);
       gate.resolve('stream');
       await computing;
 
@@ -167,7 +207,7 @@ describe('manager', () => {
       dispose();
     });
 
-    it('refuses a node from another flow', () => {
+    it('refuses a node from another plan', () => {
       const handle = acquire(pipe([() => 1]));
       const other = acquire(pipe([() => 2]));
 
@@ -184,8 +224,8 @@ describe('manager', () => {
       const first = acquire(pipe([getConfig, open]));
       const second = acquire(pipe([getConfig, open]));
 
-      await compute(manager, first);
-      await compute(manager, second);
+      await computed(manager, first);
+      await computed(manager, second);
 
       expect(open).toHaveBeenCalledTimes(1);
       expect(output(second)).toEqual([true]);
@@ -197,8 +237,8 @@ describe('manager', () => {
       const first = acquire(pipe([() => ({ video: true }), open]));
       const second = acquire(pipe([() => ({ video: true }), open]));
 
-      await compute(manager, first);
-      await compute(manager, second);
+      await computed(manager, first);
+      await computed(manager, second);
 
       expect(open).toHaveBeenCalledTimes(2);
     });
@@ -211,8 +251,8 @@ describe('manager', () => {
       const second = acquire(pipe([open]));
 
       const computing = Promise.all([
-        compute(manager, first),
-        compute(manager, second),
+        computed(manager, first),
+        computed(manager, second),
       ]);
       await settle();
 
@@ -234,8 +274,8 @@ describe('manager', () => {
       const first = acquire(pipe([one]));
       const second = acquire(pipe([one]));
 
-      await compute(manager, first);
-      await compute(manager, second);
+      await computed(manager, first);
+      await computed(manager, second);
 
       expect(output(first)).toEqual([1]);
       expect(raw(second)).toBe(raw(first));
@@ -247,8 +287,8 @@ describe('manager', () => {
       const first = acquire(pipe([() => 1, double]));
       const second = acquire(pipe([() => 1, double]));
 
-      await compute(manager, first);
-      await compute(manager, second);
+      await computed(manager, first);
+      await computed(manager, second);
 
       expect(double).toHaveBeenCalledOnce();
       expect(raw(second)).toBe(raw(first));
@@ -259,12 +299,12 @@ describe('manager', () => {
       const double = vi.fn((value: number) => value * 2);
       const first = acquire(pipe([() => 1, double]));
       const second = acquire(pipe([() => 1, double]));
-      await compute(manager, first);
-      await compute(manager, second);
+      await computed(manager, first);
+      await computed(manager, second);
 
       await release(manager, first);
       const third = acquire(pipe([() => 1, double]));
-      await compute(manager, third);
+      await computed(manager, third);
 
       expect(double).toHaveBeenCalledOnce();
       expect(raw(third)).toBe(raw(second));
@@ -274,7 +314,7 @@ describe('manager', () => {
       const manager = createManager();
       const one = () => 1;
       const first = acquire(pipe([one]));
-      await compute(manager, first);
+      await computed(manager, first);
 
       await release(manager, first);
 
@@ -290,8 +330,8 @@ describe('manager', () => {
       const first = acquire(pipe([both, add]));
       const second = acquire(pipe([both, add]));
 
-      await compute(manager, first);
-      await compute(manager, second);
+      await computed(manager, first);
+      await computed(manager, second);
 
       const joined = inspect(first, first.nodes[2]);
       expect(joined).toEqual({
@@ -311,8 +351,8 @@ describe('manager', () => {
       const first = acquire(both);
       const second = acquire(both);
 
-      await compute(manager, first);
-      await compute(manager, second);
+      await computed(manager, first);
+      await computed(manager, second);
       const [collected] = output(first) as [number[]];
 
       expect(collected).toEqual([1, 2]);
@@ -327,8 +367,8 @@ describe('manager', () => {
       const first = acquire(pipe([() => 1, both]));
       const second = acquire(pipe([() => 2, both]));
 
-      await compute(manager, first);
-      await compute(manager, second);
+      await computed(manager, first);
+      await computed(manager, second);
 
       expect(output(first)).toEqual([2, 2]);
       expect(output(second)).toEqual([4, 4]);
@@ -342,7 +382,7 @@ describe('manager', () => {
       const add = (left: number, right: number) => left + right;
       const handle = acquire(pipe([one, concurrent([double, double]), add]));
 
-      await compute(manager, handle);
+      await computed(manager, handle);
 
       expect(one).toHaveBeenCalledTimes(1);
       expect(output(handle)).toEqual([4]);
@@ -360,13 +400,13 @@ describe('manager', () => {
       const first = acquire(pipe([open, concurrent([observe, observe])]));
       const second = acquire(pipe([open]));
 
-      await expect(compute(manager, first)).rejects.toSatisfy(
+      await expect(computed(manager, first)).rejects.toSatisfy(
         (failure: AggregateError) => {
           expect(failure.errors).toEqual([error]);
           return true;
         },
       );
-      await expect(compute(manager, second)).rejects.toBeInstanceOf(
+      await expect(computed(manager, second)).rejects.toBeInstanceOf(
         AggregateError,
       );
 
@@ -388,7 +428,7 @@ describe('manager', () => {
       const right = () => Promise.reject(new Error('right'));
       const handle = acquire(concurrent([left, right]));
 
-      await expect(compute(manager, handle)).rejects.toSatisfy(
+      await expect(computed(manager, handle)).rejects.toSatisfy(
         (failure: AggregateError) => {
           expect(failure.errors.map((error: Error) => error.message)).toEqual([
             'left',
@@ -408,7 +448,7 @@ describe('manager', () => {
       const first = acquire(pipe([open]));
       const second = acquire(pipe([open]));
 
-      await Promise.all([compute(manager, first), compute(manager, second)]);
+      await Promise.all([computed(manager, first), computed(manager, second)]);
       await release(manager, first);
       expect(dispose).not.toHaveBeenCalled();
 
@@ -423,7 +463,7 @@ describe('manager', () => {
       const bare = () => reactive(() => true);
       const handle = acquire(concurrent([observe, bare]));
 
-      await compute(manager, handle);
+      await computed(manager, handle);
       await release(manager, handle);
 
       expect(dispose).toHaveBeenCalledOnce();
@@ -445,7 +485,7 @@ describe('manager', () => {
         });
       const handle = acquire(pipe([open, observe]));
 
-      await compute(manager, handle);
+      await computed(manager, handle);
       const releasing = release(manager, handle);
       await settle();
 
@@ -457,15 +497,40 @@ describe('manager', () => {
       expect(order).toEqual(['observer:start', 'observer:end', 'stream']);
     });
 
+    it('tears down a synchronous plan before returning', () => {
+      const manager = createManager();
+      const dispose = vi.fn();
+      const handle = acquire(pipe([() => resource('stream', dispose)]));
+      compute(manager, handle);
+
+      void release(manager, handle);
+
+      expect(dispose).toHaveBeenCalledOnce();
+      expect(manager.cache.entries.task.size).toBe(0);
+    });
+
+    it('restarts a released synchronous plan right away', () => {
+      const manager = createManager();
+      const open = vi.fn(() => resource('stream', () => {}));
+      const first = acquire(pipe([open]));
+      compute(manager, first);
+      void release(manager, first);
+
+      const result = compute(manager, acquire(pipe([open])));
+
+      expect(result.type).toBe('sync');
+      expect(open).toHaveBeenCalledTimes(2);
+    });
+
     it('recomputes after a full release', async () => {
       const manager = createManager();
       const open = vi.fn(() => resource('stream', () => {}));
       const first = acquire(pipe([open]));
-      await compute(manager, first);
+      await computed(manager, first);
       await release(manager, first);
 
       const second = acquire(pipe([open]));
-      await compute(manager, second);
+      await computed(manager, second);
 
       expect(open).toHaveBeenCalledTimes(2);
     });
@@ -484,13 +549,13 @@ describe('manager', () => {
       });
 
       const first = acquire(pipe([open]));
-      await compute(manager, first);
+      await computed(manager, first);
       const releasing = release(manager, first);
       await settle();
       expect(order).toEqual(['open', 'dispose:start']);
 
       const second = acquire(pipe([open]));
-      const computing = compute(manager, second);
+      const computing = computed(manager, second);
       await settle();
 
       expect(order).toEqual(['open', 'dispose:start']);
@@ -509,7 +574,7 @@ describe('manager', () => {
       const open = () => gate.promise.then((value) => resource(value, dispose));
       const handle = acquire(pipe([open]));
 
-      void compute(manager, handle);
+      const computing = computed(manager, handle);
       await settle();
       const releasing = release(manager, handle);
       await settle();
@@ -518,11 +583,12 @@ describe('manager', () => {
 
       gate.resolve('stream');
       await releasing;
+      await expect(computing).rejects.toThrow(/released while computing/);
 
       expect(dispose).toHaveBeenCalledTimes(1);
     });
 
-    it('releases a failed flow and resets its nodes', async () => {
+    it('releases a failed plan and resets its nodes', async () => {
       const manager = createManager();
       const dispose = vi.fn();
       const stream = resource('stream', dispose);
@@ -532,7 +598,7 @@ describe('manager', () => {
       };
       const handle = acquire(pipe([open, observe]));
 
-      await expect(compute(manager, handle)).rejects.toBeInstanceOf(
+      await expect(computed(manager, handle)).rejects.toBeInstanceOf(
         AggregateError,
       );
       expect(inspect(handle, handle.nodes[1])).toEqual({
@@ -567,7 +633,7 @@ describe('manager', () => {
         });
       const handle = acquire(pipe([open, observe]));
 
-      await compute(manager, handle);
+      await computed(manager, handle);
 
       await expect(release(manager, handle)).rejects.toSatisfy(
         (failure: AggregateError) => {

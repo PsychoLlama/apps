@@ -1,4 +1,4 @@
-import type { Flow, InputsOf, Steps } from '../flow';
+import type { InputsOf, ModeOfSteps, Plan, Steps } from '../plan';
 import type { Collected } from '../task';
 import { defineJoin, type Branches, type ConcatOutputs } from './concurrent';
 
@@ -10,5 +10,5 @@ import { defineJoin, type Branches, type ConcatOutputs } from './concurrent';
  */
 export const collect = <const S extends Steps>(
   branches: Branches<S>,
-): Flow<InputsOf<S[0]>, [Collected<ConcatOutputs<S>>]> =>
+): Plan<InputsOf<S[0]>, [Collected<ConcatOutputs<S>>], ModeOfSteps<S>> =>
   defineJoin(branches, true);

@@ -15,12 +15,12 @@ describe('collect', () => {
     });
   });
 
-  it('keys every join by the flow that built it', () => {
-    const flow = collect([one, two]);
+  it('keys every join by the plan that built it', () => {
+    const plan = collect([one, two]);
 
-    expect(build(flow).output).toMatchObject({
+    expect(build(plan).output).toMatchObject({
       kind: 'join',
-      flow,
+      plan,
       collect: true,
     });
   });

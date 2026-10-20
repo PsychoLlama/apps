@@ -5,9 +5,9 @@ import { LogStorage } from './log-storage';
 import { ResetButton } from './reset-button';
 import {
   defaultLogFilter,
-  observeLogFilter,
-  resetLogFilter,
-  writeLogFilter,
+  $logFilter,
+  $resetFilter,
+  $updateFilter,
 } from '../effects/log-filter';
 import * as css from './advanced-settings.css';
 
@@ -22,10 +22,9 @@ const logFilterHeadingId = 'settings-log-filter-heading';
  * out to every browsing context (sibling tabs and workers included).
  */
 export const AdvancedSettings = () => {
-  const commitFilter = useAction(writeLogFilter);
-  const resetFilter = useAction(resetLogFilter);
-
-  const logFilter = useClientResource(observeLogFilter);
+  const updateFilter = useAction($updateFilter);
+  const resetFilter = useAction($resetFilter);
+  const logFilter = useClientResource($logFilter);
 
   return (
     <Flex as="details" direction="column" gap={5}>
@@ -123,7 +122,7 @@ export const AdvancedSettings = () => {
               spellcheck={false}
               onBlur={(event) => {
                 const next = event.currentTarget.value;
-                if (next !== logFilter()?.pattern) commitFilter(next);
+                if (next !== logFilter()?.pattern) updateFilter(next);
               }}
             />
           </Suspense>

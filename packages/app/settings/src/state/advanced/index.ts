@@ -4,5 +4,5 @@
  * `@lib/runtime-config` directly.
  */
 export { advancedSettingsScope } from './scope';
-export { logsDeletedNoticeClosedTopic, observeLogStorage } from './log-storage';
+export { logsDeletedNoticeClosedTopic, $logStorage } from './log-storage';
 export { deleteLogsSaga } from './sagas';

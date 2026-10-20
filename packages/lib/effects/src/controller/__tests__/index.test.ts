@@ -8,7 +8,7 @@ describe('controller entry point', () => {
     const double = (value: number) => value * 2;
     const handle = acquire(pipe([one, double]));
 
-    await compute(handle);
+    expect(compute(handle)).toEqual({ type: 'sync', value: [2] });
     expect(inspect(handle, handle.output)).toMatchObject({ outputs: [2] });
     expect(DEFAULT_CONTROLLER.inspect(handle, handle.output)).toBe(
       inspect(handle, handle.output),
