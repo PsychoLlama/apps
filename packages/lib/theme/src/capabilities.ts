@@ -168,10 +168,7 @@ export const readActiveMotion = (): MotionOption => {
  * state, and a missing key means the prelude won't restamp on reload.
  * DOM write happens first so the switch survives a localStorage failure.
  */
-export const applyMotion = (
-  _signal: AbortSignal,
-  option: MotionOption,
-): void => {
+export const applyMotion = (option: MotionOption): void => {
   if (option === 'system') {
     delete document.documentElement.dataset[MOTION_ATTRIBUTE];
     guardStorageWrite('clear', () => {
@@ -187,12 +184,10 @@ export const applyMotion = (
 };
 
 /**
- * Read the theme and motion preferences off `<html>` in one pass. The
- * prelude stamps them before paint, so this is the canonical
- * post-prelude snapshot — and reading them together is what lets
- * hydration land as a single transition.
+ * Read the theme preference off `<html>`. The prelude stamps it before
+ * paint, so this is the canonical post-prelude snapshot hydration
+ * carries into the store.
  */
 export const readActiveAppearance = (): AppearanceSelection => ({
   theme: readActiveTheme(),
-  motion: readActiveMotion(),
 });

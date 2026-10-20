@@ -139,17 +139,13 @@ export type MotionOption = MotionId | 'system';
 export const MOTION_STORAGE_KEY = 'preferences.appearance.motion';
 
 /**
- * The theme and motion preferences as one resolved selection: every
- * field a concrete choice, with `'system'` meaning "no override" rather
- * than "not yet known". This is what `<html>` yields once the prelude
- * has run — the shape hydration carries into the store.
+ * The theme preference as a resolved selection. This is what `<html>`
+ * yields once the prelude has run — the shape hydration carries into the
+ * store.
  */
 export interface AppearanceSelection {
   /** Active theme variant. */
   theme: ThemeId;
-
-  /** Active motion override, or `'system'` to defer to the OS. */
-  motion: MotionOption;
 }
 
 /**

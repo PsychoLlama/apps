@@ -9,7 +9,6 @@ import { createTestRuntime } from '@lib/state';
 import {
   appearanceRestoredTopic,
   appearanceStore,
-  motionSelectedTopic,
   themeResetTopic,
   themeSelectedTopic,
 } from '../appearance';
@@ -28,16 +27,15 @@ describe('appearanceStore', () => {
 
     expect(peek(appearanceStore)).toEqual({
       theme: null,
-      motion: null,
     });
   });
 
-  it('takes every preference the prelude stamped on <html> at once', () => {
+  it('takes the theme the prelude stamped on <html>', () => {
     const { commit, peek } = setup();
 
-    commit(appearanceRestoredTopic({ theme: 'pink', motion: 'reduce' }));
+    commit(appearanceRestoredTopic({ theme: 'pink' }));
 
-    expect(peek(appearanceStore)).toEqual({ theme: 'pink', motion: 'reduce' });
+    expect(peek(appearanceStore)).toEqual({ theme: 'pink' });
   });
 
   it('takes a fresh theme selection', () => {
@@ -55,30 +53,5 @@ describe('appearanceStore', () => {
     commit(themeResetTopic());
 
     expect(peek(appearanceStore).theme).toBe(DEFAULT_THEME_ID);
-  });
-
-  it('takes a fresh motion selection', () => {
-    const { commit, peek } = setup();
-
-    commit(motionSelectedTopic('no-preference'));
-
-    expect(peek(appearanceStore).motion).toBe('no-preference');
-  });
-
-  it("holds 'system' as a real selection rather than an absent one", () => {
-    const { commit, peek } = setup();
-
-    commit(motionSelectedTopic('system'));
-
-    expect(peek(appearanceStore).motion).toBe('system');
-  });
-
-  it('leaves the other preferences alone when one changes', () => {
-    const { commit, peek } = setup();
-    commit(appearanceRestoredTopic({ theme: 'teal', motion: 'reduce' }));
-
-    commit(themeSelectedTopic('plum'));
-
-    expect(peek(appearanceStore)).toEqual({ theme: 'plum', motion: 'reduce' });
   });
 });

@@ -1,27 +1,17 @@
 import { call, commit, defineSaga } from '@lib/state';
-import {
-  applyMotion,
-  applyTheme,
-  readActiveAppearance,
-  resetTheme,
-} from './capabilities';
-import type { MotionOption, ThemeId } from './constants';
+import { applyTheme, readActiveAppearance, resetTheme } from './capabilities';
+import type { ThemeId } from './constants';
 import { appearanceScope } from './scope';
 import {
   appearanceRestoredTopic,
-  motionSelectedTopic,
   themeResetTopic,
   themeSelectedTopic,
 } from './appearance';
 
 /**
- * Mirror the prelude-stamped `<html>` attributes into the store. Run once
+ * Mirror the prelude-stamped `<html data-theme>` into the store. Run once
  * per surface on mount — the prelude is the canonical pre-paint setter, so
  * the store just learns what's already on screen.
- *
- * Both preferences hydrate together in a single transition. Reading them
- * is two dataset lookups, and one commit means a picker set can't render
- * with some controls live and others still skeletons.
  */
 export const hydrateAppearanceSaga = defineSaga(
   appearanceScope,
@@ -54,17 +44,3 @@ export const resetThemeSaga = defineSaga(appearanceScope, async function* () {
   yield commit(themeResetTopic());
   yield* call(resetTheme);
 });
-
-/**
- * Switch the active motion override. Commits first so the UI reacts
- * synchronously, then flips `<html data-reduced-motion>` (or drops it, for
- * `'system'`) and updates localStorage so the prelude can restore the
- * choice before paint on the next load.
- */
-export const selectMotionSaga = defineSaga(
-  appearanceScope,
-  async function* (option: MotionOption) {
-    yield commit(motionSelectedTopic(option));
-    yield* call(applyMotion, option);
-  },
-);

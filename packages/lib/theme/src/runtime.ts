@@ -5,21 +5,22 @@
  * `@lib/effects`, and `@lib/observability` into Vanilla Extract's child
  * compiler.
  *
- * Theme and motion read through {@link appearanceStore} and change
- * through the sagas. Anchor {@link appearanceScope} for as long as a
- * surface shows either — the DOM attributes stay the canonical record, so
- * a released scope loses nothing a mount-time hydrate can't recover.
+ * The theme reads through {@link appearanceStore} and changes through
+ * the sagas. Anchor {@link appearanceScope} for as long as a surface
+ * shows it — the DOM attribute stays the canonical record, so a released
+ * scope loses nothing a mount-time hydrate can't recover.
  *
- * The color scheme is a plan: read {@link $colorScheme}, change it with
- * {@link $selectColorScheme}.
+ * The color scheme and motion are plans: read {@link $colorScheme} and
+ * {@link $motion}, change them with {@link $selectColorScheme} and
+ * {@link $selectMotion}.
  */
 export { $colorScheme, $selectColorScheme } from './effects/color-scheme';
+export { $motion, $selectMotion } from './effects/motion';
 export { appearanceScope } from './scope';
 export { appearanceStore, type AppearanceState } from './appearance';
 export { readActiveColorScheme, readActiveMotion } from './capabilities';
 export {
   hydrateAppearanceSaga,
   resetThemeSaga,
-  selectMotionSaga,
   selectThemeSaga,
 } from './sagas';

@@ -1,14 +1,11 @@
 import { defineFold, defineStore, defineTopic } from '@lib/state';
 import { DEFAULT_THEME_ID } from './constants';
-import type { AppearanceSelection, MotionOption, ThemeId } from './constants';
+import type { AppearanceSelection, ThemeId } from './constants';
 import { appearanceScope } from './scope';
 
 /**
- * The appearance preferences mirrored onto `<html>`: theme and motion.
- * One record rather than two because they share everything that
- * matters — the same lifetime, the same source (attributes the prelude
- * stamps before paint), and the same surface. The color scheme lives in
- * `$colorScheme` instead.
+ * The theme preference mirrored onto `<html>`. The color scheme and
+ * motion live in `$colorScheme` and `$motion` instead.
  *
  * Each field is `null` until the client hydrates. The site is SSG'd, so
  * the server can't know the persisted preferences; leaving them unset
@@ -18,12 +15,6 @@ import { appearanceScope } from './scope';
 export interface AppearanceState {
   /** Identifier of the currently-applied theme variant. */
   theme: ThemeId | null;
-
-  /**
-   * Selected motion option. `'system'` is a real selection — it means
-   * "no override", not "not yet known".
-   */
-  motion: MotionOption | null;
 }
 
 /**
@@ -33,14 +24,12 @@ export interface AppearanceState {
  */
 export const appearanceStore = defineStore<AppearanceState>(
   appearanceScope,
-  () => ({ theme: null, motion: null }),
+  () => ({ theme: null }),
 );
 
 /**
  * The client read the appearance the prelude had already stamped on
- * `<html>`. One fact for both preferences: they're read in a single pass
- * and land in a single transition, so no surface ever renders a
- * half-hydrated picker set.
+ * `<html>`.
  */
 export const appearanceRestoredTopic = defineTopic<AppearanceSelection>();
 defineFold(
@@ -48,7 +37,6 @@ defineFold(
   [appearanceStore],
   (appearance, selection) => {
     appearance.theme = selection.theme;
-    appearance.motion = selection.motion;
   },
 );
 
@@ -62,10 +50,4 @@ defineFold(themeSelectedTopic, [appearanceStore], (appearance, id) => {
 export const themeResetTopic = defineTopic();
 defineFold(themeResetTopic, [appearanceStore], (appearance) => {
   appearance.theme = DEFAULT_THEME_ID;
-});
-
-/** Someone picked a motion preference. */
-export const motionSelectedTopic = defineTopic<MotionOption>();
-defineFold(motionSelectedTopic, [appearanceStore], (appearance, id) => {
-  appearance.motion = id;
 });

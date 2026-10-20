@@ -326,13 +326,13 @@ describe('readActiveMotion', () => {
 
 describe('applyMotion', () => {
   it('flips <html data-reduced-motion> to the requested override', () => {
-    applyMotion(signal, 'reduce');
+    applyMotion('reduce');
 
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
   });
 
   it('persists the override to localStorage', () => {
-    applyMotion(signal, 'no-preference');
+    applyMotion('no-preference');
 
     expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBe('no-preference');
   });
@@ -340,7 +340,7 @@ describe('applyMotion', () => {
   it("drops the attribute when set to 'system'", () => {
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
 
-    applyMotion(signal, 'system');
+    applyMotion('system');
 
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
   });
@@ -348,7 +348,7 @@ describe('applyMotion', () => {
   it("clears the persisted preference when set to 'system'", () => {
     localStorage.setItem(MOTION_STORAGE_KEY, 'reduce');
 
-    applyMotion(signal, 'system');
+    applyMotion('system');
 
     expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBeNull();
   });
@@ -360,7 +360,7 @@ describe('applyMotion', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyMotion(signal, 'reduce')).not.toThrow();
+    expect(() => applyMotion('reduce')).not.toThrow();
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
 
     setItem.mockRestore();
@@ -374,7 +374,7 @@ describe('applyMotion', () => {
         throw new DOMException('blocked', 'SecurityError');
       });
 
-    expect(() => applyMotion(signal, 'system')).not.toThrow();
+    expect(() => applyMotion('system')).not.toThrow();
     expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
 
     removeItem.mockRestore();
@@ -382,20 +382,13 @@ describe('applyMotion', () => {
 });
 
 describe('readActiveAppearance', () => {
-  it('gathers the theme and motion preferences off <html>', () => {
+  it('reads the theme off <html>', () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
-    document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
 
-    expect(readActiveAppearance()).toEqual({
-      theme: 'jade',
-      motion: 'reduce',
-    });
+    expect(readActiveAppearance()).toEqual({ theme: 'jade' });
   });
 
-  it('falls back per field when the attributes are missing', () => {
-    expect(readActiveAppearance()).toEqual({
-      theme: DEFAULT_THEME_ID,
-      motion: 'system',
-    });
+  it('falls back to the default theme when the attribute is missing', () => {
+    expect(readActiveAppearance()).toEqual({ theme: DEFAULT_THEME_ID });
   });
 });

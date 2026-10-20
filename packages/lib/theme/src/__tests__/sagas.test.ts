@@ -12,21 +12,14 @@ import { createTestRuntime, simulate } from '@lib/state';
 import {
   appearanceRestoredTopic,
   appearanceStore,
-  motionSelectedTopic,
   themeResetTopic,
   themeSelectedTopic,
 } from '../appearance';
-import {
-  applyMotion,
-  applyTheme,
-  readActiveAppearance,
-  resetTheme,
-} from '../capabilities';
+import { applyTheme, readActiveAppearance, resetTheme } from '../capabilities';
 import { DEFAULT_THEME_ID } from '../constants';
 import {
   hydrateAppearanceSaga,
   resetThemeSaga,
-  selectMotionSaga,
   selectThemeSaga,
 } from '../sagas';
 import { appearanceScope } from '../scope';
@@ -35,7 +28,6 @@ describe('hydrateAppearanceSaga', () => {
   it('publishes every preference it read off the DOM in one commit', async () => {
     const selection = {
       theme: 'pink',
-      motion: 'reduce',
     } as const;
 
     const trace = await simulate(hydrateAppearanceSaga(), {
@@ -103,47 +95,5 @@ describe('resetThemeSaga', () => {
 
     expect(observed).toEqual([DEFAULT_THEME_ID]);
     expect(runtime.peek(appearanceStore).theme).toBe(DEFAULT_THEME_ID);
-  });
-});
-
-describe('selectMotionSaga', () => {
-  it('publishes the selection and writes it through', async () => {
-    const apply = vi.fn();
-
-    const trace = await simulate(selectMotionSaga('no-preference'), {
-      calls: [[applyMotion, apply]],
-    });
-
-    expect(trace.commits).toEqual([[motionSelectedTopic('no-preference')]]);
-    expect(apply).toHaveBeenCalledWith(expect.anything(), 'no-preference');
-  });
-
-  it("carries 'system' through as a regular selection", async () => {
-    const apply = vi.fn();
-
-    const trace = await simulate(selectMotionSaga('system'), {
-      calls: [[applyMotion, apply]],
-    });
-
-    expect(trace.commits).toEqual([[motionSelectedTopic('system')]]);
-    expect(apply).toHaveBeenCalledWith(expect.anything(), 'system');
-  });
-
-  it('updates state before the side effect runs', async () => {
-    const observed: Array<string | null> = [];
-    const runtime = createTestRuntime({
-      calls: [
-        [
-          applyMotion,
-          () => observed.push(runtime.peek(appearanceStore).motion),
-        ],
-      ],
-    });
-    runtime.anchor(appearanceScope);
-
-    await runtime.run(selectMotionSaga('reduce'));
-
-    expect(observed).toEqual(['reduce']);
-    expect(runtime.peek(appearanceStore).motion).toBe('reduce');
   });
 });
