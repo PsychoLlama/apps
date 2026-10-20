@@ -46,23 +46,23 @@ const observeOption = async <Value extends JsonValue>(
  * any browsing context land here, this tab's own writes included.
  * Releasing the plan drops the subscription.
  */
-export const observeLogFilter = pipe([() => observeOption(filter)]);
+export const $logFilter = pipe([() => observeOption(filter)]);
 
-const writeOverride = async (pattern: string): Promise<void> => {
+const updateFilter = async (pattern: string): Promise<void> => {
   await updateConfig(filter, { [environment]: { pattern } });
 };
 
-const clearOverride = (): Promise<void> => reset(filter, [environment]);
+const resetFilter = (): Promise<void> => reset(filter, [environment]);
 
 /**
  * Persist a new log filter pattern as the active environment's override.
- * The write echoes back through the subscription `observeLogFilter` holds.
+ * The write echoes back through the subscription `$logFilter` holds.
  */
-export const writeLogFilter = pipe([() => writeOverride]);
+export const $updateFilter = pipe([() => updateFilter]);
 
 /**
  * Clear the log filter override for the active environment only, reverting
  * it to the built-in default. Other environments keep their overrides. The
- * reset echoes back through the subscription `observeLogFilter` holds.
+ * reset echoes back through the subscription `$logFilter` holds.
  */
-export const resetLogFilter = pipe([() => clearOverride]);
+export const $resetFilter = pipe([() => resetFilter]);

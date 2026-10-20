@@ -13,7 +13,7 @@ const logStorageStore = defineStore<LogStorageState>(
 );
 
 /** The Log storage UI state, live. */
-export const observeLogStorage = observed(logStorageStore);
+export const $logStorage = observed(logStorageStore);
 
 /** Every persisted log was deleted. */
 export const logsDeletedTopic = defineTopic();

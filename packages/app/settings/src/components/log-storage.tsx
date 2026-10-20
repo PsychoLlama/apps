@@ -7,7 +7,7 @@ import IconDownload from 'virtual:icons/mdi/download-outline';
 import {
   advancedSettingsScope,
   deleteLogsSaga,
-  observeLogStorage,
+  $logStorage,
   logsDeletedNoticeClosedTopic,
 } from '../state/advanced';
 
@@ -18,7 +18,7 @@ const logStorageHeadingId = 'settings-log-storage-heading';
 /** Export or delete the logs persisted on this device. */
 export const LogStorage = () => {
   useAnchor(advancedSettingsScope);
-  const storage = useResource(observeLogStorage);
+  const logStorage = useResource($logStorage);
   const deleteLogs = useRun(deleteLogsSaga);
   const commit = useCommit();
   const closeNotice = () => commit(logsDeletedNoticeClosedTopic());
@@ -75,7 +75,7 @@ export const LogStorage = () => {
       {/* No toasts yet, so a small dialog stands in for "it worked". */}
       <Dialog
         testId="advanced-log-deleted-notice"
-        open={storage()?.deletedNoticeOpen ?? false}
+        open={logStorage()?.deletedNoticeOpen ?? false}
         onOpenChange={closeNotice}
         title="Logs deleted"
         description="Every log stored on this device was removed."

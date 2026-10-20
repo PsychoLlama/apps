@@ -8,11 +8,7 @@ import {
 } from '@lib/runtime-config';
 import type * as RuntimeConfig from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
-import {
-  observeLogFilter,
-  resetLogFilter,
-  writeLogFilter,
-} from '../log-filter';
+import { $logFilter, $resetFilter, $updateFilter } from '../log-filter';
 
 vi.mock('@lib/runtime-config', async (importOriginal) => ({
   ...(await importOriginal<typeof RuntimeConfig>()),
@@ -53,13 +49,13 @@ beforeEach(() => {
   vi.mocked(updateConfig).mockReset();
 });
 
-describe('observeLogFilter', () => {
+describe('$logFilter', () => {
   it('starts from the persisted pattern', async () => {
     setup();
     vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
     await using effects = createTestController();
 
-    const [logFilter] = await effects.run(observeLogFilter);
+    const [logFilter] = await effects.run($logFilter);
 
     expect(logFilter().pattern).toBe('app:*');
     expect(readEnvironment).toHaveBeenCalledWith(filter);
@@ -70,7 +66,7 @@ describe('observeLogFilter', () => {
     vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
     await using effects = createTestController();
 
-    const [logFilter] = await effects.run(observeLogFilter);
+    const [logFilter] = await effects.run($logFilter);
     push('*');
 
     expect(logFilter().pattern).toBe('*');
@@ -84,7 +80,7 @@ describe('observeLogFilter', () => {
     });
     await using effects = createTestController();
 
-    const [logFilter] = await effects.run(observeLogFilter);
+    const [logFilter] = await effects.run($logFilter);
 
     expect(logFilter().pattern).toBe('*');
   });
@@ -94,7 +90,7 @@ describe('observeLogFilter', () => {
     vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
     const effects = createTestController();
 
-    await effects.run(observeLogFilter);
+    await effects.run($logFilter);
     expect(listeners.size).toBe(1);
 
     await effects[Symbol.asyncDispose]();
@@ -106,17 +102,17 @@ describe('observeLogFilter', () => {
     vi.mocked(readEnvironment).mockRejectedValue(new Error('No OPFS.'));
     await using effects = createTestController();
 
-    await expect(effects.run(observeLogFilter)).rejects.toThrow();
+    await expect(effects.run($logFilter)).rejects.toThrow();
     expect(listeners.size).toBe(0);
   });
 });
 
-describe('writeLogFilter', () => {
+describe('$updateFilter', () => {
   it("overrides the active environment's pattern", async () => {
     await using effects = createTestController();
 
-    const [write] = await effects.run(writeLogFilter);
-    await write('app:*');
+    const [updateFilter] = await effects.run($updateFilter);
+    await updateFilter('app:*');
 
     expect(updateConfig).toHaveBeenCalledWith(filter, {
       [environment]: { pattern: 'app:*' },
@@ -124,12 +120,12 @@ describe('writeLogFilter', () => {
   });
 });
 
-describe('resetLogFilter', () => {
+describe('$resetFilter', () => {
   it("clears only the active environment's override", async () => {
     await using effects = createTestController();
 
-    const [clear] = await effects.run(resetLogFilter);
-    await clear();
+    const [resetFilter] = await effects.run($resetFilter);
+    await resetFilter();
 
     expect(reset).toHaveBeenCalledWith(filter, [environment]);
   });
