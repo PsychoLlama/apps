@@ -1,8 +1,8 @@
 import { For } from 'solid-js';
-import { useRun, useValue } from '@lib/state';
+import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { MotionOption } from '@lib/theme';
-import { appearanceStore, selectMotionSaga } from '@lib/theme/runtime';
+import { $motion, $selectMotion } from '@lib/theme/runtime';
 import { ResetButton } from './reset-button';
 import * as css from './motion-picker.css';
 
@@ -33,16 +33,16 @@ const OPTIONS: ReadonlyArray<MotionPickerOption> = [
  * and persists the choice to localStorage.
  */
 export const MotionPicker = () => {
-  const appearance = useValue(appearanceStore);
-  const selectMotion = useRun(selectMotionSaga);
+  const motion = useClientResource($motion);
+  const selectMotion = useAction($selectMotion);
 
-  return (
+  const picker = (skeleton: boolean) => (
     <SegmentedControlRoot
       testId="motion-picker"
       name="motion"
-      value={appearance().motion}
-      skeleton={appearance().motion === null}
-      onValueChange={(next) => void selectMotion(next as MotionOption)}
+      value={skeleton ? null : (motion() ?? null)}
+      skeleton={skeleton}
+      onValueChange={(next) => selectMotion(next as MotionOption)}
       class={css.control}
       aria-labelledby={motionHeadingId}
     >
@@ -58,27 +58,31 @@ export const MotionPicker = () => {
       </For>
     </SegmentedControlRoot>
   );
+
+  // The server can't know the persisted preference. A skeleton beats
+  // flashing the wrong selection.
+  return <Suspense fallback={picker(true)}>{picker(false)}</Suspense>;
 };
 
 /**
  * Inline action that hands motion back to `'system'` — the no-override
  * default that drops the persisted key and lets
  * `@media (prefers-reduced-motion)` take over. Disabled while already on
- * `'system'` — or still unhydrated (`null`) — matching the reset
- * affordances elsewhere on the settings page.
+ * `'system'`. Hidden until the preference is read off `<html>`, like the
+ * log filter's reset.
  */
 export const MotionResetButton = () => {
-  const appearance = useValue(appearanceStore);
-  const selectMotion = useRun(selectMotionSaga);
+  const motion = useClientResource($motion);
+  const selectMotion = useAction($selectMotion);
 
   return (
-    <ResetButton
-      testId="motion-picker-reset"
-      label="Reset motion"
-      disabled={
-        appearance().motion === null || appearance().motion === 'system'
-      }
-      onReset={() => void selectMotion('system')}
-    />
+    <Suspense>
+      <ResetButton
+        testId="motion-picker-reset"
+        label="Reset motion"
+        disabled={motion() === 'system'}
+        onReset={() => selectMotion('system')}
+      />
+    </Suspense>
   );
 };

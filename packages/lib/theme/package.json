@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@lib/design": "workspace:*",
+    "@lib/effects": "workspace:*",
     "@lib/observability": "workspace:*",
-    "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*"
   },
   "peerDependencies": {

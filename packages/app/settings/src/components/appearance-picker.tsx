@@ -1,8 +1,8 @@
 import { For } from 'solid-js';
-import { useRun, useValue } from '@lib/state';
+import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { ColorSchemeOption } from '@lib/theme';
-import { appearanceStore, selectColorSchemeSaga } from '@lib/theme/runtime';
+import { $colorScheme, $selectColorScheme } from '@lib/theme/runtime';
 import { ResetButton } from './reset-button';
 import * as css from './appearance-picker.css';
 
@@ -32,16 +32,16 @@ const OPTIONS: ReadonlyArray<AppearanceOption> = [
  * and persists the choice to localStorage.
  */
 export const AppearancePicker = () => {
-  const appearance = useValue(appearanceStore);
-  const selectScheme = useRun(selectColorSchemeSaga);
+  const colorScheme = useClientResource($colorScheme);
+  const selectColorScheme = useAction($selectColorScheme);
 
-  return (
+  const picker = (skeleton: boolean) => (
     <SegmentedControlRoot
       testId="appearance-picker"
       name="appearance"
-      value={appearance().colorScheme}
-      skeleton={appearance().colorScheme === null}
-      onValueChange={(next) => void selectScheme(next as ColorSchemeOption)}
+      value={skeleton ? null : (colorScheme() ?? null)}
+      skeleton={skeleton}
+      onValueChange={(next) => selectColorScheme(next as ColorSchemeOption)}
       class={css.control}
       aria-labelledby={appearanceHeadingId}
     >
@@ -57,28 +57,31 @@ export const AppearancePicker = () => {
       </For>
     </SegmentedControlRoot>
   );
+
+  // The server can't know the persisted preference. A skeleton beats
+  // flashing the wrong selection.
+  return <Suspense fallback={picker(true)}>{picker(false)}</Suspense>;
 };
 
 /**
  * Inline action that hands the color scheme back to `'system'` — the
  * no-override default that drops the persisted key and lets
  * `@media (prefers-color-scheme)` take over. Disabled while already on
- * `'system'` — or still unhydrated (`null`) — matching the reset
- * affordances elsewhere on the settings page.
+ * `'system'`. Hidden until the preference is read off `<html>`, like the
+ * log filter's reset.
  */
 export const AppearanceResetButton = () => {
-  const appearance = useValue(appearanceStore);
-  const selectScheme = useRun(selectColorSchemeSaga);
+  const colorScheme = useClientResource($colorScheme);
+  const selectColorScheme = useAction($selectColorScheme);
 
   return (
-    <ResetButton
-      testId="appearance-picker-reset"
-      label="Reset appearance"
-      disabled={
-        appearance().colorScheme === null ||
-        appearance().colorScheme === 'system'
-      }
-      onReset={() => void selectScheme('system')}
-    />
+    <Suspense>
+      <ResetButton
+        testId="appearance-picker-reset"
+        label="Reset appearance"
+        disabled={colorScheme() === 'system'}
+        onReset={() => selectColorScheme('system')}
+      />
+    </Suspense>
   );
 };
