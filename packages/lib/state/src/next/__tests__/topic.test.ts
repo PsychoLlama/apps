@@ -90,6 +90,28 @@ describe('defineTopic', () => {
     ]);
   });
 
+  it('keeps subscriber reads out of the emitter’s scope', async () => {
+    const $send = defineTopic<[]>();
+    const [count, setCount] = createSignal(0);
+    await using effects = createTestController();
+    const [send] = await effects.run($send);
+    await effects.run(pipe([$send, subscribe(() => () => count())]));
+
+    let runs = 0;
+    const dispose = createRoot((dispose) => {
+      createComputed(() => {
+        runs += 1;
+        send();
+      });
+      return dispose;
+    });
+
+    setCount(1);
+    dispose();
+
+    expect(runs).toBe(1);
+  });
+
   it('shares one publisher per controller', async () => {
     const $send = defineTopic<[]>();
     await using effects = createTestController();

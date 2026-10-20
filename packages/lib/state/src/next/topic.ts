@@ -1,4 +1,4 @@
-import { batch } from 'solid-js';
+import { batch, untrack } from 'solid-js';
 import { assert } from '@lib/assert';
 import {
   pipe,
@@ -49,8 +49,12 @@ export const defineTopic = <Args extends readonly unknown[]>(): Topic<
       const subscribers = new Set<Subscriber>();
 
       // One batch per event, so every change it triggers lands together.
+      // Untracked, so what subscribers read never leaks into an emitter's
+      // reactive scope.
       const publish = (...args: Args) =>
-        batch(() => subscribers.forEach((notify) => notify(...args)));
+        batch(() =>
+          untrack(() => subscribers.forEach((notify) => notify(...args))),
+        );
 
       channels.set(publish, subscribers);
       return publish as Publish<Args>;
