@@ -5,7 +5,7 @@ import { reactive, resource } from '../../task';
 import { createTestController } from '../../testing';
 import type { Controller } from '../../controller/controller';
 import { EffectsContext } from '../context';
-import { useAction } from '../use-action';
+import { useAction, type Action } from '../use-action';
 
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -49,11 +49,14 @@ describe('useAction', () => {
       useAction(pipe([load])),
     );
 
-    expectTypeOf(measure).toEqualTypeOf<(name: string) => Promise<number>>();
+    expectTypeOf(measure).toEqualTypeOf<Action<[name: string], number>>();
     expect(load).not.toHaveBeenCalled();
 
-    await expect(measure('stream')).resolves.toBe(6);
+    measure('stream');
+    await settle();
+
     expect(load).toHaveBeenCalledOnce();
+    expect(measure.latest).toBe(6);
     unmount();
   });
 
@@ -65,15 +68,16 @@ describe('useAction', () => {
       useAction(pipe([() => send])),
     );
 
-    await action('first');
-    const second = action('second');
+    action('first');
+    await settle();
+    action('second');
 
     expect(send).toHaveBeenLastCalledWith('second');
-    await second;
+    await settle();
     unmount();
   });
 
-  it('waits on async dependencies', async () => {
+  it('is pending until its calls settle', async () => {
     await using controller = createTestController();
     const gate = Promise.withResolvers<number>();
     const scale = (factor: number) => (value: number) => value * factor;
@@ -82,10 +86,15 @@ describe('useAction', () => {
       useAction(pipe([() => gate.promise, scale])),
     );
 
-    const pending = action(2);
-    gate.resolve(3);
+    expect(action.pending).toBe(false);
+    action(2);
+    expect(action.pending).toBe(true);
 
-    await expect(pending).resolves.toBe(6);
+    gate.resolve(3);
+    await settle();
+
+    expect(action.pending).toBe(false);
+    expect(action.latest).toBe(6);
     unmount();
   });
 
@@ -101,7 +110,10 @@ describe('useAction', () => {
       useAction(pipe([open])),
     );
 
-    await expect(action('loud')).resolves.toBe('LOUD');
+    action('loud');
+    await settle();
+
+    expect(action.latest).toBe('LOUD');
     unmount();
   });
 
@@ -120,25 +132,7 @@ describe('useAction', () => {
     unmount();
   });
 
-  it('rejects with what the action throws', async () => {
-    await using controller = createTestController();
-    const failure = new Error('nope');
-    const fail = () => () => {
-      throw failure;
-    };
-
-    const {
-      result: action,
-      errors,
-      unmount,
-    } = renderHook(controller.controller, () => useAction(pipe([fail])));
-
-    await expect(action()).rejects.toBe(failure);
-    expect(errors).toEqual([failure]);
-    unmount();
-  });
-
-  it('reaches the error boundary when not awaited', async () => {
+  it('reports what the action throws', async () => {
     await using controller = createTestController();
     const failure = new Error('nope');
     const fail = () => async () => {
@@ -151,18 +145,19 @@ describe('useAction', () => {
       unmount,
     } = renderHook(controller.controller, () => useAction(pipe([fail])));
 
-    void action();
+    action();
     await settle();
 
+    expect(action.error).toBe(failure);
+    expect(action.pending).toBe(false);
     expect(errors).toEqual([failure]);
     unmount();
   });
 
-  it('rejects when the flow fails', async () => {
+  it('reports when the flow fails', async () => {
     await using controller = createTestController();
-    const failure = new Error('nope');
     const fail = (): (() => void) => {
-      throw failure;
+      throw new Error('nope');
     };
 
     const {
@@ -171,12 +166,39 @@ describe('useAction', () => {
       unmount,
     } = renderHook(controller.controller, () => useAction(pipe([fail])));
 
-    await expect(action()).rejects.toThrow();
-    expect(errors).toHaveLength(1);
+    action();
+    await settle();
+
+    expect(action.error).toBeInstanceOf(Error);
+    expect(errors).toEqual([action.error]);
     unmount();
   });
 
-  it('rejects after unmount', async () => {
+  it('keeps the latest value through a failure', async () => {
+    await using controller = createTestController();
+    const failure = new Error('nope');
+    const check = () => (ok: boolean) => {
+      if (!ok) throw failure;
+      return ok;
+    };
+
+    const { result: action, unmount } = renderHook(controller.controller, () =>
+      useAction(pipe([check])),
+    );
+
+    action(true);
+    await settle();
+    expect(action.latest).toBe(true);
+    expect(action.error).toBeUndefined();
+
+    action(false);
+    await settle();
+    expect(action.error).toBe(failure);
+    expect(action.latest).toBe(true);
+    unmount();
+  });
+
+  it('refuses calls after unmount', async () => {
     await using controller = createTestController();
     const send = vi.fn();
 
@@ -184,11 +206,16 @@ describe('useAction', () => {
       useAction(pipe([() => send])),
     );
 
-    await action('mounted');
+    action('mounted');
+    await settle();
     unmount();
     await settle();
 
-    await expect(action('unmounted')).rejects.toThrow(/released/);
+    action('unmounted');
+    await settle();
+
+    expect(action.error).toBeInstanceOf(Error);
+    expect(String(action.error)).toMatch(/released/);
     expect(send).not.toHaveBeenCalledWith('unmounted');
   });
 
@@ -202,15 +229,15 @@ describe('useAction', () => {
       useAction(pipe([open])),
     );
 
-    const pending = action();
+    action();
     unmount();
     await settle();
     expect(dispose).not.toHaveBeenCalled();
 
     gate.resolve('done');
-    await expect(pending).resolves.toBe('done');
     await settle();
 
+    expect(action.latest).toBe('done');
     expect(dispose).toHaveBeenCalledOnce();
     expect(controller.manager.handles.size).toBe(0);
   });
@@ -224,7 +251,8 @@ describe('useAction', () => {
       useAction(pipe([open])),
     );
 
-    await action();
+    action();
+    await settle();
     unmount();
     await settle();
 

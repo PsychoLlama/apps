@@ -1,4 +1,4 @@
-import { onCleanup, untrack } from 'solid-js';
+import { batch, createSignal, onCleanup, untrack } from 'solid-js';
 import { assert } from '@lib/assert';
 import type { Flow } from '../flow';
 import { yieldOf, type Yield } from '../task';
@@ -7,10 +7,26 @@ import { acquire, useThrowToBoundary } from './flow-resource';
 
 type AnyFunction = (...args: never[]) => unknown;
 
-/** The wrapper `useAction` returns for a flow whose output is a function. */
-export type Action<Output> =
+/**
+ * A function to call from event handlers, with reactive fields that
+ * follow its calls.
+ */
+export interface Action<Args extends unknown[], Result> {
+  (...args: Args): void;
+
+  /** Whether any call is in flight. */
+  readonly pending: boolean;
+
+  /** What the most recent call to succeed returned. */
+  readonly latest: Result | undefined;
+
+  /** Why the most recent call to settle failed, if it did. */
+  readonly error: unknown;
+}
+
+type ActionOf<Output> =
   Yield<Output> extends (...args: infer Args) => infer Result
-    ? (...args: Args) => Promise<Awaited<Result>>
+    ? Action<Args, Awaited<Result>>
     : never;
 
 /**
@@ -41,8 +57,8 @@ const refCount = (idle: () => void) => {
  * that need a user gesture working. The flow is held from render until
  * the component unmounts and every call has settled.
  *
- * A failed call rejects, and its error also reaches the nearest error
- * boundary.
+ * Calls return nothing: read `pending`, `latest`, and `error` instead.
+ * A failed call's error also reaches the nearest error boundary.
  *
  * Takes a flow with one output: the function, as a downstream task would
  * receive it.
@@ -55,7 +71,7 @@ export const useAction = <
   },
 >(
   flow: Flow<[], Outputs>,
-): Action<Outputs[0]> => {
+): ActionOf<Outputs[0]> => {
   const controller = useController();
   const throwToBoundary = useThrowToBoundary();
   const [handle, release] = acquire(flow);
@@ -75,7 +91,7 @@ export const useAction = <
         assert(state.step === 'succeeded', 'Flow computed without an output.');
       }
 
-      // The graph is untyped at runtime; the flow's signature vouches.
+      // Untyped at runtime, as above.
       const call = yieldOf(state.outputs[0]) as (...rest: unknown[]) => unknown;
       return await call(...args);
     } finally {
@@ -83,15 +99,40 @@ export const useAction = <
     }
   };
 
-  // Failures reach the error boundary whether or not the caller awaits.
-  // The handler also marks the rejection handled, so a caller that
-  // doesn't await leaves no unhandled rejection behind.
-  const action = (...args: unknown[]) => {
-    const result = run(...args);
-    result.catch(throwToBoundary);
+  const [calls, setCalls] = createSignal(0);
+  const [latest, setLatest] = createSignal<unknown>();
+  const [error, setError] = createSignal<unknown>();
 
-    return result;
+  const action = (...args: unknown[]) => {
+    setCalls((count) => count + 1);
+
+    // Without an error boundary, the rethrow surfaces as an unhandled
+    // rejection from here.
+    void run(...args).then(
+      (value) => {
+        batch(() => {
+          setCalls((count) => count - 1);
+          setLatest(() => value);
+          setError(undefined);
+        });
+      },
+      (failure: unknown) => {
+        batch(() => {
+          setCalls((count) => count - 1);
+          setError(() => failure);
+        });
+
+        throwToBoundary(failure);
+      },
+    );
   };
 
-  return action as Action<Outputs[0]>;
+  Object.defineProperties(action, {
+    pending: { get: () => calls() > 0 },
+    latest: { get: latest },
+    error: { get: error },
+  });
+
+  // The graph is untyped at runtime; the flow's signature vouches.
+  return action as unknown as ActionOf<Outputs[0]>;
 };

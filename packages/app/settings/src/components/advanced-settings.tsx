@@ -78,8 +78,11 @@ export const AdvancedSettings = () => {
                 <ResetButton
                   testId="advanced-log-filter-reset"
                   label="Reset log filter"
-                  disabled={logFilter()?.pattern === defaultLogFilter}
-                  onReset={() => void resetFilter()}
+                  disabled={
+                    resetFilter.pending ||
+                    logFilter()?.pattern === defaultLogFilter
+                  }
+                  onReset={resetFilter}
                 />
               </Suspense>
             </Flex>
@@ -120,7 +123,7 @@ export const AdvancedSettings = () => {
               spellcheck={false}
               onBlur={(event) => {
                 const next = event.currentTarget.value;
-                if (next !== logFilter()?.pattern) void commitFilter(next);
+                if (next !== logFilter()?.pattern) commitFilter(next);
               }}
             />
           </Suspense>
