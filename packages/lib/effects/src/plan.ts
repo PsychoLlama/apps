@@ -1,4 +1,5 @@
-import type { Task } from './task';
+import type { Combine, Mode, ModeOf } from './mode';
+import type { DisposeModeOf, Task } from './task';
 
 /** Marks a plan and carries its graph builder. */
 export const PLAN: unique symbol = Symbol('plan');
@@ -6,21 +7,29 @@ export const PLAN: unique symbol = Symbol('plan');
 /** Phantom slot pinning a plan's input and output tuples. */
 declare const SIGNATURE: unique symbol;
 
+/** Phantom slot pinning a plan's mode. */
+declare const MODE: unique symbol;
+
 /**
  * A computation graph from an input tuple to an output tuple. Tasks and
  * plans compose freely; a plan with `Inputs = []` is complete and can be
  * acquired. `Outputs` are raw: `resource`, `reactive`, and `collect`
  * wrappers stay visible, so bindings can tell the kinds apart.
  *
- * `Inputs` is contravariant and `Outputs` covariant, so `Plan<never>` is
- * the top of all plans: every concrete plan is assignable to it.
+ * `M` is the plan's {@link Mode}: `sync` when every task returns without
+ * a promise and cleans up without one.
+ *
+ * `Inputs` is contravariant, `Outputs` and `M` covariant, so `Plan<never>`
+ * is the top of all plans: every concrete plan is assignable to it.
  */
 export interface Plan<
   in Inputs extends readonly unknown[] = readonly unknown[],
   out Outputs extends readonly unknown[] = readonly unknown[],
+  out M extends Mode = Mode,
 > {
   readonly [PLAN]: Build;
   readonly [SIGNATURE]?: (...inputs: Inputs) => Outputs;
+  readonly [MODE]?: M;
 }
 
 /**
@@ -100,6 +109,22 @@ export type OutputsOf<S> =
     : S extends (...inputs: never) => infer Returned
       ? [Awaited<Returned>]
       : never;
+
+/**
+ * A step's mode. A task is `async` if it may return a promise, or a
+ * wrapper whose cleanup may.
+ */
+export type ModeOfStep<S> =
+  S extends Plan<never, readonly unknown[], infer M>
+    ? M
+    : S extends (...inputs: never) => infer Returned
+      ? Combine<ModeOf<Returned> | DisposeModeOf<Awaited<Returned>>>
+      : never;
+
+/** The mode of several steps together: `async` if any of them is. */
+export type ModeOfSteps<S extends readonly unknown[]> = Combine<
+  { [Index in keyof S]: ModeOfStep<S[Index]> }[number]
+>;
 
 /** The builder for any step. A task becomes a single node. */
 export const toBuild = (step: Step): Build =>

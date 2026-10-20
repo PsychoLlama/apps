@@ -4,6 +4,7 @@ import {
   type Plan,
   type PlanNode,
   type InputsOf,
+  type ModeOfSteps,
   type OutputsOf,
   type StepAccepting,
   type Steps,
@@ -61,4 +62,5 @@ export const defineJoin = (branches: Steps, collect: boolean) => {
  */
 export const concurrent = <const S extends Steps>(
   branches: Branches<S>,
-): Plan<InputsOf<S[0]>, ConcatOutputs<S>> => defineJoin(branches, false);
+): Plan<InputsOf<S[0]>, ConcatOutputs<S>, ModeOfSteps<S>> =>
+  defineJoin(branches, false);
