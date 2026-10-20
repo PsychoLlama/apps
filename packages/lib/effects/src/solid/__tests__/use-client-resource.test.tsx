@@ -7,7 +7,7 @@ import {
   type Component,
   type Resource,
 } from 'solid-js';
-import { collect, concurrent, pipe } from '../../combinators';
+import { collect, pipe } from '../../combinators';
 import { reactive, resource } from '../../task';
 import { createTestController } from '../../testing';
 import type { Controller } from '../../controller/controller';
@@ -73,16 +73,14 @@ describe('useClientResource', () => {
     tree.unmount();
   });
 
-  it('takes one output; several join through `collect`', async () => {
+  it('reads collected outputs as one array', async () => {
     await using controller = createTestController();
     const one = () => 1;
     const two = () => 'two';
 
-    const tree = renderUnmounted(controller.controller, () => {
-      // @ts-expect-error -- Two outputs.
-      useClientResource(concurrent([one, two]));
-      return useClientResource(collect([one, two]));
-    });
+    const tree = renderUnmounted(controller.controller, () =>
+      useClientResource(collect([one, two])),
+    );
 
     tree.mount();
     await settle();

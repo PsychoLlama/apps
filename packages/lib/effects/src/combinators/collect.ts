@@ -1,21 +1,47 @@
-import type { Combine } from '../mode';
-import type {
-  InputsOf,
-  ModeOfStep,
-  ModeOfSteps,
-  OutputsOf,
-  Plan,
-  Step,
-  Steps,
+import {
+  definePlan,
+  toBuild,
+  type InputsOf,
+  type ModeOfStep,
+  type ModeOfSteps,
+  type OutputsOf,
+  type Plan,
+  type PlanNode,
+  type Step,
+  type StepAccepting,
+  type Steps,
 } from '../plan';
 import type { Collected, Task, YieldAll } from '../task';
-import { defineJoin, type Branches, type ConcatOutputs } from './concurrent';
+
+// Every step has one output now, so branches map to outputs position by
+// position. A mapped type rather than recursion, so it stays transparent
+// over generic tuples like `[Head, ...Rest]`.
+
+/** Each step's one output, raw. */
+type OutputsOfEach<S extends readonly unknown[]> = {
+  -readonly [Index in keyof S]: OutputsOf<S[Index]> extends readonly [
+    infer Output,
+  ]
+    ? Output
+    : never;
+};
+
+// An array constraint rather than a mapped one like `Pipeline`'s, so it
+// holds for generic tuples too: `[Head, ...Rest]` checks against it when
+// `Rest` is only known by its own constraint.
+
+/** Steps that all accept the same inputs as the first one. */
+type Branches<S extends Steps> = S & readonly StepAccepting<InputsOf<S[0]>>[];
+
+// Phrased so that a known `sync` function leaves exactly the branches'
+// mode, which a generic caller can then match by name.
+
+/** The mode of a join through a function returning `Output`. */
+type ModeOfJoin<S extends Steps, Output> =
+  ModeOfStep<() => Output> extends 'sync' ? ModeOfSteps<S> : 'async';
 
 /** What `fn` receives: every branch's yields, in order. */
-type Joined<S extends Steps> = Extract<
-  YieldAll<ConcatOutputs<S>>,
-  readonly unknown[]
->;
+type Joined<S extends Steps> = YieldAll<OutputsOfEach<S>>;
 
 interface Collect {
   /**
@@ -27,21 +53,16 @@ interface Collect {
   <const S extends Steps, Output>(
     branches: Branches<S>,
     fn: (...values: Joined<S>) => Output,
-  ): Plan<
-    InputsOf<S[0]>,
-    OutputsOf<() => Output>,
-    Combine<ModeOfSteps<S> | ModeOfStep<() => Output>>
-  >;
+  ): Plan<InputsOf<S[0]>, OutputsOf<() => Output>, ModeOfJoin<S, Output>>;
 
   /**
-   * Like {@link concurrent}, but the branch outputs land in a single array
-   * instead of spreading. Use it when the next step wants one value, or to
-   * nest fan-outs without flattening. The array keeps its identity for as
-   * long as the branches' outputs do.
+   * Run branches side by side over the same inputs and land their outputs
+   * in a single array. The array keeps its identity for as long as the
+   * branches' outputs do.
    */
   <const S extends Steps>(
     branches: Branches<S>,
-  ): Plan<InputsOf<S[0]>, [Collected<ConcatOutputs<S>>], ModeOfSteps<S>>;
+  ): Plan<InputsOf<S[0]>, [Collected<OutputsOfEach<S>>], ModeOfSteps<S>>;
 }
 
 // TODO: Two `collect` calls with the same branches and `fn` are separate
@@ -49,5 +70,22 @@ interface Collect {
 // them needs a key beyond the plan's identity, e.g. interning plans by
 // `fn` and branches as they're defined. Solve it before much depends on
 // the duplication.
-export const collect: Collect = (branches: readonly Step[], fn?: Task) =>
-  defineJoin(branches, fn === undefined, fn);
+export const collect: Collect = (branches: readonly Step[], fn?: Task) => {
+  const plan = definePlan((input) => {
+    const nodes: PlanNode[] = [];
+    const outputs: PlanNode[] = [];
+
+    for (const branch of branches) {
+      const graph = toBuild(branch)(input);
+      nodes.push(...graph.nodes);
+      outputs.push(graph.output);
+    }
+
+    // The plan keys every join it builds.
+    const join: PlanNode = { kind: 'join', plan, input, branches: outputs, fn };
+    nodes.push(join);
+    return { nodes, output: join };
+  });
+
+  return plan;
+};

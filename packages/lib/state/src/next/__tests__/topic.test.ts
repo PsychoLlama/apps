@@ -1,7 +1,10 @@
 import { createComputed, createRoot, createSignal } from 'solid-js';
-import { concurrent, pipe } from '@lib/effects';
+import { collect, pipe } from '@lib/effects';
 import { createTestController } from '@lib/effects/testing';
 import { defineTopic, subscribe, type Publish } from '../topic';
+
+// Subscriptions that yield nothing.
+const none = () => {};
 
 describe('defineTopic', () => {
   it('delivers events to every subscriber', async () => {
@@ -13,13 +16,13 @@ describe('defineTopic', () => {
     await effects.run(
       pipe([
         $send,
-        subscribe(() => (num: number, str: string) => first(num, str)),
+        subscribe(() => (num: number, str: string) => first(num, str), none),
       ]),
     );
     await effects.run(
       pipe([
         $send,
-        subscribe(() => (num: number, str: string) => second(num, str)),
+        subscribe(() => (num: number, str: string) => second(num, str), none),
       ]),
     );
 
@@ -36,12 +39,15 @@ describe('defineTopic', () => {
     await using effects = createTestController();
     const [send] = await effects.run($send);
     await effects.run(
-      pipe([
-        concurrent([$send, $label]),
-        subscribe((label: string) => (value: number) => {
-          subscriber(value, label);
-        }),
-      ]),
+      collect(
+        [$send, $label],
+        subscribe(
+          (label: string) => (value: number) => {
+            subscriber(value, label);
+          },
+          none,
+        ),
+      ),
     );
 
     send(1);
@@ -54,12 +60,39 @@ describe('defineTopic', () => {
     const subscriber = vi.fn();
     const effects = createTestController();
     const [send] = await effects.run($send);
-    await effects.run(pipe([$send, subscribe(() => subscriber)]));
+    await effects.run(pipe([$send, subscribe(() => subscriber, none)]));
 
     await effects[Symbol.asyncDispose]();
     send();
 
     expect(subscriber).not.toHaveBeenCalled();
+  });
+
+  it('yields what the subscription selects', async () => {
+    const $send = defineTopic<[]>();
+    await using effects = createTestController();
+    const [send] = await effects.run($send);
+    const [selected] = await effects.run(
+      pipe([
+        $send,
+        subscribe(
+          () => () => {},
+          (publish) => publish,
+        ),
+      ]),
+    );
+
+    expect(selected).toBe(send);
+  });
+
+  it('closes the channel once released', async () => {
+    const effects = createTestController();
+    const [send] = await effects.run(defineTopic<[]>());
+    await effects[Symbol.asyncDispose]();
+
+    expect(() => subscribe(() => () => {}, none)(send)).toThrow(
+      'Not a topic publisher.',
+    );
   });
 
   it('batches every subscriber into one update', async () => {
@@ -69,10 +102,10 @@ describe('defineTopic', () => {
     await using effects = createTestController();
     const [send] = await effects.run($send);
     await effects.run(
-      pipe([$send, subscribe(() => (value: number) => setFirst(value))]),
+      pipe([$send, subscribe(() => (value: number) => setFirst(value), none)]),
     );
     await effects.run(
-      pipe([$send, subscribe(() => (value: number) => setSecond(value))]),
+      pipe([$send, subscribe(() => (value: number) => setSecond(value), none)]),
     );
 
     const seen: number[][] = [];
@@ -95,7 +128,7 @@ describe('defineTopic', () => {
     const [count, setCount] = createSignal(0);
     await using effects = createTestController();
     const [send] = await effects.run($send);
-    await effects.run(pipe([$send, subscribe(() => () => count())]));
+    await effects.run(pipe([$send, subscribe(() => () => count(), none)]));
 
     let runs = 0;
     const dispose = createRoot((dispose) => {
@@ -131,7 +164,7 @@ describe('defineTopic', () => {
     const subscriber = vi.fn();
     await using effects = createTestController();
     const [second] = await effects.run($second);
-    await effects.run(pipe([$first, subscribe(() => subscriber)]));
+    await effects.run(pipe([$first, subscribe(() => subscriber, none)]));
 
     second();
 
@@ -141,7 +174,7 @@ describe('defineTopic', () => {
   it('refuses functions that are not publishers', () => {
     const impostor = (() => {}) as Publish<[]>;
 
-    expect(() => subscribe(() => () => {})(impostor)).toThrow(
+    expect(() => subscribe(() => () => {}, none)(impostor)).toThrow(
       'Not a topic publisher.',
     );
   });

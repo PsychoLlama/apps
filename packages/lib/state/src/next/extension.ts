@@ -1,14 +1,14 @@
 import type { Accessor, Signal } from 'solid-js';
 import {
-  concurrent,
-  pipe,
+  collect,
   type Mode,
+  type ModeOfSteps,
   type Plan,
   type Resource,
 } from '@lib/effects';
 import { writable, type Cell } from './cell';
 import type { Store } from './store';
-import { subscribe, type Publish, type Topic } from './topic';
+import { subscribe, type Topic } from './topic';
 
 /** A plan a commit can write to: a complete store or cell plan. */
 export type Target = Plan<[], readonly [Store<object> | Cell<unknown>]>;
@@ -26,20 +26,6 @@ export type Commit<
   Args extends readonly unknown[],
   Targets extends readonly Target[],
 > = (...writables: Writables<Targets>) => (...args: Args) => void;
-
-// TODO: Move into `@lib/effects`. It's useful well beyond extensions.
-/** The combined mode of several plans: `async` if any of them is. */
-export type ModeOfPlans<Plans extends readonly unknown[]> = 'async' extends {
-  [Index in keyof Plans]: Plans[Index] extends Plan<
-    never,
-    readonly unknown[],
-    infer M
-  >
-    ? M
-    : never;
-}[number]
-  ? 'async'
-  : 'sync';
 
 // Cells first: a cell is an object, so it would otherwise read as a store.
 type Writable<P> =
@@ -68,25 +54,29 @@ export const defineExtension = <
 ): Plan<
   [],
   [Resource<void, 'sync'>],
-  ModeOfPlans<[Topic<Args, M>, ...Targets]>
+  ModeOfSteps<readonly [Topic<Args, M>, ...Targets]>
 > =>
-  // Generic steps defeat `pipe` inference. The signature vouches.
-  pipe([
-    concurrent([topic, ...targets] as [Branch, ...Branch[]]) as unknown as Plan<
-      [],
-      [Publish<Args>, ...unknown[]]
-    >,
-    subscribe((...yields: unknown[]) =>
-      commit(...(yields.map(toWritable) as Writables<Targets>)),
+  collect(
+    [topic, ...targets],
+    subscribe(
+      (...yields) => commit(...writables<Targets>(yields)),
+      () => {},
     ),
-  ]) as unknown as Plan<
-    [],
-    [Resource<void, 'sync'>],
-    ModeOfPlans<[Topic<Args, M>, ...Targets]>
-  >;
+  );
 
-type Branch = Plan<[], readonly unknown[]>;
-
-// Stores yield their proxy, cells their accessor.
-const toWritable = (target: unknown) =>
-  typeof target === 'function' ? writable(target as Accessor<unknown>) : target;
+/**
+ * How a commit sees what its targets yield. Stores yield their proxy,
+ * cells their accessor.
+ *
+ * @internal
+ */
+export const writables = <Targets extends readonly Target[]>(
+  yields: readonly unknown[],
+) =>
+  // Position by position, which `map` can't type. Cells are the only
+  // targets yielding functions, and `writable` checks the rest.
+  yields.map((target) =>
+    typeof target === 'function'
+      ? writable(target as Accessor<unknown>)
+      : target,
+  ) as Writables<Targets>;

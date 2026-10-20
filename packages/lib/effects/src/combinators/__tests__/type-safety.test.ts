@@ -8,7 +8,6 @@ import {
   type Resource,
 } from '../../task';
 import { collect } from '../collect';
-import { concurrent } from '../concurrent';
 import { pipe } from '../pipe';
 
 const constraints = () => ({ audio: true, video: true });
@@ -55,35 +54,8 @@ describe('type safety', () => {
     void illegal;
   });
 
-  it('spreads concurrent outputs positionally', () => {
-    const fan = concurrent([getTrack('audio'), getTrack('video')]);
-    expectTypeOf(fan).toEqualTypeOf<
-      Plan<[stream: string], [string, string], 'sync'>
-    >();
-
-    const plan = pipe([
-      () => 'stream',
-      fan,
-      (audio: string, video: string) => ({ audio, video }),
-    ]);
-    expectTypeOf(plan).toEqualTypeOf<
-      Plan<[], [{ audio: string; video: string }], 'sync'>
-    >();
-  });
-
-  it('flattens nested concurrent outputs', () => {
-    const nested = concurrent([
-      concurrent([() => 0, () => 1]),
-      concurrent([() => 'a', () => 'b']),
-    ]);
-
-    expectTypeOf(nested).toEqualTypeOf<
-      Plan<[], [number, number, string, string], 'sync'>
-    >();
-  });
-
   it('collects branches into one array', () => {
-    const grouped = concurrent([
+    const grouped = collect([
       collect([() => 0, () => 1]),
       collect([() => 'a', () => 'b']),
     ]);
@@ -91,14 +63,14 @@ describe('type safety', () => {
     expectTypeOf(grouped).toEqualTypeOf<
       Plan<
         [],
-        [Collected<[number, number]>, Collected<[string, string]>],
+        [Collected<[Collected<[number, number]>, Collected<[string, string]>]>],
         'sync'
       >
     >();
 
     const plan = pipe([
       grouped,
-      (numbers: [number, number], strings: [string, string]) =>
+      ([numbers, strings]: [[number, number], [string, string]]) =>
         [...numbers, ...strings] as const,
     ]);
     expectTypeOf(plan).toEqualTypeOf<
@@ -108,9 +80,13 @@ describe('type safety', () => {
 
   it('accepts plans anywhere a task fits', () => {
     const inner = pipe([getTrack('audio'), observe]);
-    const plan = pipe([() => 'stream', concurrent([inner, inner])]);
+    const plan = pipe([() => 'stream', collect([inner, inner])]);
     expectTypeOf(plan).toEqualTypeOf<
-      Plan<[], [Resource<number, 'sync'>, Resource<number, 'sync'>], 'sync'>
+      Plan<
+        [],
+        [Collected<[Resource<number, 'sync'>, Resource<number, 'sync'>]>],
+        'sync'
+      >
     >();
   });
 
@@ -242,9 +218,9 @@ describe('type safety', () => {
   it('carries an asynchronous step through every combinator', () => {
     const later = pipe([async () => 1]);
 
-    expectTypeOf(concurrent([() => 0, later])).toEqualTypeOf<
-      Plan<[], [number, number], 'async'>
-    >();
+    expectTypeOf(
+      collect([() => 0, later], (zero, one) => zero + one),
+    ).toEqualTypeOf<Plan<[], [number], 'async'>>();
     expectTypeOf(
       pipe([() => 0, pipe([(count: number) => count])]),
     ).toEqualTypeOf<Plan<[], [number], 'sync'>>();
@@ -274,7 +250,7 @@ describe('type safety', () => {
       pipe([() => 1, pipe([getTrack('audio')])]);
 
       // @ts-expect-error — branches must accept the same inputs
-      concurrent([getTrack('audio'), (count: number) => count]);
+      collect([getTrack('audio'), (count: number) => count]);
 
       // @ts-expect-error — pipelines can't be empty
       pipe([]);

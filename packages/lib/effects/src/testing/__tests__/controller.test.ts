@@ -1,4 +1,4 @@
-import { concurrent, pipe } from '../../combinators';
+import { collect, pipe } from '../../combinators';
 import { resource } from '../../task';
 import { createTestController } from '../controller';
 
@@ -8,10 +8,10 @@ describe('createTestController', () => {
     const one = () => 1;
     const two = () => 'two';
 
-    const outputs = await controller.run(concurrent([one, two]));
+    const outputs = await controller.run(collect([one, two]));
 
-    expectTypeOf(outputs).toEqualTypeOf<[number, string]>();
-    expect(outputs).toEqual([1, 'two']);
+    expectTypeOf(outputs).toEqualTypeOf<[[number, string]]>();
+    expect(outputs).toEqual([[1, 'two']]);
   });
 
   it('rejects when the plan fails', async () => {

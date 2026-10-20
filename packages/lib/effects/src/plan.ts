@@ -43,18 +43,15 @@ export interface TaskNode {
 }
 
 /**
- * Concatenates its branches' output tuples, or runs `fn` over them. Built
- * by `concurrent` and `collect`: the join is cached by that plan and the
- * input its branches share.
+ * Boxes its branches' outputs as one `Collected`, or runs `fn` over them.
+ * Built by `collect`: the join is cached by that plan and the input its
+ * branches share.
  */
 export interface JoinNode {
   readonly kind: 'join';
   readonly plan: Plan<never>;
   readonly input?: PlanNode;
   readonly branches: readonly PlanNode[];
-
-  /** Box the concatenated tuple as one value, as `collect` does. */
-  readonly collect: boolean;
 
   /**
    * Runs once over the branches' yields, spread as arguments. Its result
@@ -64,8 +61,8 @@ export interface JoinNode {
 }
 
 /**
- * One position in a built graph. Every node produces an output tuple: a
- * task's holds its one value, and a join's holds its branches' end to end.
+ * One position in a built graph. Every node produces a 1-tuple of its
+ * output.
  */
 export type PlanNode = TaskNode | JoinNode;
 
@@ -96,36 +93,35 @@ export type Steps = readonly [Step, ...Step[]];
 export type StepAccepting<Inputs extends readonly unknown[]> =
   Task<Inputs> | Plan<Inputs>;
 
+// Every slot inferred at once. Matching `Plan<infer Inputs>` leaves the
+// mode at `Mode`, and a generic one can't be checked against that until
+// it's known, so a plan like `Plan<[], Outputs, M>` would stay deferred.
+type PlanSlots<S> =
+  S extends Plan<infer Inputs, infer Outputs, infer M>
+    ? { inputs: Inputs; outputs: Outputs; mode: M }
+    : never;
+
 /** The input tuple a step accepts. */
-export type InputsOf<S> =
-  S extends Plan<infer Inputs>
-    ? Inputs
-    : S extends (...inputs: infer Inputs) => unknown
-      ? Inputs
-      : never;
+export type InputsOf<S> = S extends (...inputs: infer Inputs) => unknown
+  ? Inputs
+  : PlanSlots<S>['inputs'];
 
 /**
  * The raw output tuple a step produces, wrappers included. A task's is a
  * 1-tuple of what it returns, settled. Downstream tasks receive its
  * `YieldAll`.
  */
-export type OutputsOf<S> =
-  S extends Plan<never, infer Outputs>
-    ? Outputs
-    : S extends (...inputs: never) => infer Returned
-      ? [Awaited<Returned>]
-      : never;
+export type OutputsOf<S> = S extends (...inputs: never) => infer Returned
+  ? [Awaited<Returned>]
+  : PlanSlots<S>['outputs'];
 
 /**
  * A step's mode. A task is `async` if it may return a promise, or a
  * wrapper whose cleanup may.
  */
-export type ModeOfStep<S> =
-  S extends Plan<never, readonly unknown[], infer M>
-    ? M
-    : S extends (...inputs: never) => infer Returned
-      ? Combine<ModeOf<Returned> | DisposeModeOf<Awaited<Returned>>>
-      : never;
+export type ModeOfStep<S> = S extends (...inputs: never) => infer Returned
+  ? Combine<ModeOf<Returned> | DisposeModeOf<Awaited<Returned>>>
+  : PlanSlots<S>['mode'];
 
 /** The mode of several steps together: `async` if any of them is. */
 export type ModeOfSteps<S extends readonly unknown[]> = Combine<

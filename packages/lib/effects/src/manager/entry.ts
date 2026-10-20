@@ -24,7 +24,7 @@ export interface Entry {
   /** The upstream output tuple the node is keyed on. */
   readonly inputs: Tuple;
 
-  /** A join's branch tuples, which it concatenates. Empty for a task. */
+  /** A join's branch tuples, which it joins. Empty for a task. */
   readonly sources: readonly Tuple[];
 
   /** Whether a success interns its output, as tasks and `fn` joins do. */
@@ -84,12 +84,8 @@ const evaluate = (
   const task = node.kind === 'task' ? node.task : node.fn;
   const inputs = node.kind === 'task' ? entry.inputs : entry.sources.flat();
 
-  if (!task) {
-    return now({
-      outputs:
-        node.kind === 'join' && node.collect ? [collected(inputs)] : inputs,
-    });
-  }
+  // Without one, the join boxes its branches.
+  if (!task) return now({ outputs: [collected(inputs)] });
 
   // Outputs keep what the task returned, wrappers and all, so bindings
   // can tell what kind it is. Downstream tasks receive its `yieldOf`.

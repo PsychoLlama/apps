@@ -5,7 +5,7 @@ import {
   type Accessor,
   type Setter,
 } from 'solid-js';
-import { collect, concurrent, pipe } from '../../combinators';
+import { collect, pipe } from '../../combinators';
 import { toPromise, type Async, type Sync } from '../../eventual';
 import { reactive, resource, yieldOf } from '../../task';
 import { isWrapped } from '../../task/output';
@@ -65,17 +65,14 @@ describe('manager', () => {
       });
     });
 
-    it('spreads concurrent outputs and boxes collected ones', async () => {
+    it('boxes collected outputs', async () => {
       const manager = createManager();
       const one = () => 1;
       const two = () => 2;
-      const add = (left: number, right: number) => left + right;
-      const sum = acquire(pipe([concurrent([one, two]), add]));
       const boxed = acquire(collect([one, two]));
 
-      await Promise.all([computed(manager, sum), computed(manager, boxed)]);
+      await computed(manager, boxed);
 
-      expect(output(sum)).toEqual([3]);
       expect(output(boxed)).toEqual([[1, 2]]);
       expect(isWrapped(raw(boxed)[0], 'collected')).toBe(true);
     });
@@ -325,10 +322,11 @@ describe('manager', () => {
       const manager = createManager();
       const one = () => 1;
       const two = () => 2;
-      const add = vi.fn((left: number, right: number) => left + right);
-      const both = concurrent([one, two]);
-      const first = acquire(pipe([both, add]));
-      const second = acquire(pipe([both, add]));
+      const add = (left: number, right: number) => left + right;
+      const double = vi.fn((value: number) => value * 2);
+      const both = collect([one, two], add);
+      const first = acquire(pipe([both, double]));
+      const second = acquire(pipe([both, double]));
 
       await computed(manager, first);
       await computed(manager, second);
@@ -337,10 +335,10 @@ describe('manager', () => {
       expect(joined).toEqual({
         step: 'succeeded',
         inputs: [],
-        outputs: [1, 2],
+        outputs: [3],
       });
       expect(inspect(second, second.nodes[2])).toBe(joined);
-      expect(add).toHaveBeenCalledOnce();
+      expect(double).toHaveBeenCalledOnce();
     });
 
     it('shares one collected array while its branches live', async () => {
@@ -394,15 +392,16 @@ describe('manager', () => {
     it('keeps a join per input tuple', async () => {
       const manager = createManager();
       const double = (value: number) => value * 2;
-      const both = concurrent([double, double]);
+      const add = (left: number, right: number) => left + right;
+      const both = collect([double, double], add);
       const first = acquire(pipe([() => 1, both]));
       const second = acquire(pipe([() => 2, both]));
 
       await computed(manager, first);
       await computed(manager, second);
 
-      expect(output(first)).toEqual([2, 2]);
-      expect(output(second)).toEqual([4, 4]);
+      expect(output(first)).toEqual([4]);
+      expect(output(second)).toEqual([8]);
       expect(manager.cache.entries.join.get(both)?.size).toBe(2);
     });
 
@@ -411,7 +410,7 @@ describe('manager', () => {
       const one = vi.fn(() => 1);
       const double = (value: number) => value * 2;
       const add = (left: number, right: number) => left + right;
-      const handle = acquire(pipe([one, concurrent([double, double]), add]));
+      const handle = acquire(pipe([one, collect([double, double], add)]));
 
       await computed(manager, handle);
 
@@ -428,7 +427,7 @@ describe('manager', () => {
         throw error;
       });
       const observe = vi.fn((stream: never) => stream);
-      const first = acquire(pipe([open, concurrent([observe, observe])]));
+      const first = acquire(pipe([open, collect([observe, observe])]));
       const second = acquire(pipe([open]));
 
       await expect(computed(manager, first)).rejects.toSatisfy(
@@ -482,7 +481,7 @@ describe('manager', () => {
       const manager = createManager();
       const left = () => Promise.reject(new Error('left'));
       const right = () => Promise.reject(new Error('right'));
-      const handle = acquire(concurrent([left, right]));
+      const handle = acquire(collect([left, right]));
 
       await expect(computed(manager, handle)).rejects.toSatisfy(
         (failure: AggregateError) => {
@@ -541,7 +540,7 @@ describe('manager', () => {
       const dispose = vi.fn();
       const observe = () => reactive(() => true, dispose);
       const bare = () => reactive(() => true);
-      const handle = acquire(concurrent([observe, bare]));
+      const handle = acquire(collect([observe, bare]));
 
       await computed(manager, handle);
       await release(manager, handle);

@@ -1,11 +1,6 @@
-import { concurrent, pipe, type Plan } from '@lib/effects';
-import {
-  defineExtension,
-  type Commit,
-  type ModeOfPlans,
-  type Target,
-} from './extension';
-import { defineTopic, type Publish, type Topic } from './topic';
+import { collect, type ModeOfSteps } from '@lib/effects';
+import { writables, type Commit, type Target } from './extension';
+import { defineTopic, subscribe, type Topic } from './topic';
 
 /**
  * Define a command: a topic that owns its commit. The plan yields the
@@ -18,20 +13,13 @@ export const defineCommand = <
 >(
   targets: Targets,
   commit: Commit<Args, Targets>,
-): Topic<Args, ModeOfPlans<Targets>> => {
-  const $topic = defineTopic<Args>();
-
-  // Holding the publisher holds the extension, so its commit is always
-  // subscribed first. Generic steps defeat `pipe` inference; the
-  // signature vouches.
-  const $extension: Plan<[], unknown[]> = defineExtension(
-    $topic,
-    targets,
-    commit,
+): Topic<Args, ModeOfSteps<readonly [Topic<Args, 'sync'>, ...Targets]>> =>
+  // The commit subscribes in the node that yields the publisher, so it's
+  // always subscribed before any extension downstream.
+  collect(
+    [defineTopic<Args>(), ...targets],
+    subscribe(
+      (...yields) => commit(...writables<Targets>(yields)),
+      (publish) => publish,
+    ),
   );
-
-  return pipe([
-    concurrent([$topic, $extension]),
-    (publish: Publish<Args>) => publish,
-  ]) as unknown as Topic<Args, ModeOfPlans<Targets>>;
-};
