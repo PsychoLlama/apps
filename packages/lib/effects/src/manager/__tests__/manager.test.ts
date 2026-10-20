@@ -360,6 +360,37 @@ describe('manager', () => {
       expect((output(second) as [number[]])[0]).toBe(collected);
     });
 
+    it('collects through a function once while its branches live', async () => {
+      const manager = createManager();
+      const open = () => resource('stream', () => {});
+      const add = vi.fn((stream: string, count: number) => stream + count);
+      const both = collect([open, () => 1], add);
+      const first = acquire(both);
+      const second = acquire(both);
+
+      await computed(manager, first);
+      await computed(manager, second);
+
+      expect(add).toHaveBeenCalledExactlyOnceWith('stream', 1);
+      expect(raw(first)).toEqual(['stream1']);
+      expect(raw(second)).toBe(raw(first));
+    });
+
+    it('shares downstream work by the value a collecting function returns', async () => {
+      const manager = createManager();
+      const double = vi.fn((value: number) => value * 2);
+      const first = acquire(
+        pipe([collect([() => 1], (one) => one + 1), double]),
+      );
+      const second = acquire(pipe([collect([() => 2], (two) => two), double]));
+
+      await computed(manager, first);
+      await computed(manager, second);
+
+      expect(double).toHaveBeenCalledOnce();
+      expect(output(second)).toEqual([4]);
+    });
+
     it('keeps a join per input tuple', async () => {
       const manager = createManager();
       const double = (value: number) => value * 2;
@@ -422,6 +453,31 @@ describe('manager', () => {
       });
     });
 
+    it('caches what a collecting function throws', async () => {
+      const manager = createManager();
+      const error = new Error('denied');
+      const fail = vi.fn((): never => {
+        throw error;
+      });
+      const plan = collect([() => 1], fail);
+      const first = acquire(plan);
+      const second = acquire(plan);
+
+      await expect(computed(manager, first)).rejects.toBeInstanceOf(
+        AggregateError,
+      );
+      await expect(computed(manager, second)).rejects.toBeInstanceOf(
+        AggregateError,
+      );
+
+      expect(fail).toHaveBeenCalledOnce();
+      expect(inspect(first, first.output)).toEqual({
+        step: 'failed',
+        inputs: [],
+        error,
+      });
+    });
+
     it('reports every independent failure', async () => {
       const manager = createManager();
       const left = () => Promise.reject(new Error('left'));
@@ -454,6 +510,30 @@ describe('manager', () => {
 
       await release(manager, second);
       expect(dispose).toHaveBeenCalledTimes(1);
+    });
+
+    it('disposes what a collecting function returns before its branches', async () => {
+      const manager = createManager();
+      const order: string[] = [];
+      const open = () =>
+        resource('stream', () => {
+          order.push('stream');
+        });
+      const observe = (stream: string) =>
+        resource(stream.length, () => {
+          order.push('observer');
+        });
+      const first = acquire(collect([open], observe));
+      const second = acquire(collect([open], observe));
+
+      await computed(manager, first);
+      await computed(manager, second);
+      await release(manager, first);
+      await release(manager, second);
+
+      // Separate plans, so separate entries. See the TODO on `collect`.
+      expect(order).toEqual(['observer', 'observer', 'stream']);
+      expect(manager.cache.interned.size).toBe(0);
     });
 
     it('disposes reactive outputs, cleanup or not', async () => {

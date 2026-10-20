@@ -27,6 +27,9 @@ export interface Entry {
   /** A join's branch tuples, which it concatenates. Empty for a task. */
   readonly sources: readonly Tuple[];
 
+  /** Whether a success interns its output, as tasks and `fn` joins do. */
+  readonly interns: boolean;
+
   /** Reactive. Tracks under a Solid computation, reads plainly outside. */
   readonly state: Accessor<EntryState>;
 
@@ -55,6 +58,9 @@ export type Intern = (value: unknown) => Tuple;
 /** What a root node reads as its input. Shared, so roots key alike. */
 export const ROOT: Tuple = [];
 
+// TODO: Keying joins by plan splits equal `collect(branches, fn)` calls
+// into separate entries, running `fn` once for each. See `collect`.
+
 /** The identity a node's entries are cached under. */
 export const keyOf = (node: PlanNode): object =>
   node.kind === 'task' ? node.task : node.plan;
@@ -74,15 +80,21 @@ const evaluate = (
   entry: Entry,
   intern: Intern,
 ): Eventual<Evaluated> => {
-  if (node.kind === 'join') {
-    const joined = entry.sources.flat();
-    return now({ outputs: node.collect ? [collected(joined)] : joined });
+  // A join's `fn` runs like a task, over its branches.
+  const task = node.kind === 'task' ? node.task : node.fn;
+  const inputs = node.kind === 'task' ? entry.inputs : entry.sources.flat();
+
+  if (!task) {
+    return now({
+      outputs:
+        node.kind === 'join' && node.collect ? [collected(inputs)] : inputs,
+    });
   }
 
   // Outputs keep what the task returned, wrappers and all, so bindings
   // can tell what kind it is. Downstream tasks receive its `yieldOf`.
   // Only a promise makes the node wait.
-  const output = from<unknown>(invoke(node.task, entry.inputs));
+  const output = from<unknown>(invoke(task, inputs));
 
   // Tasks return one value, since JS has no multiple returns. Interning
   // the box gives equal values one identity for downstream keys.
@@ -139,6 +151,7 @@ export const spawn = (
     key: keyOf(node),
     inputs,
     sources,
+    interns: node.kind === 'task' || node.fn !== undefined,
     state,
     refs: 0,
     settled: Promise.resolve(),

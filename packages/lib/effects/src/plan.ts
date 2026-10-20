@@ -43,9 +43,9 @@ export interface TaskNode {
 }
 
 /**
- * Concatenates its branches' output tuples. Built by `concurrent` and
- * `collect`: the join is cached by that plan and the input its branches
- * share.
+ * Concatenates its branches' output tuples, or runs `fn` over them. Built
+ * by `concurrent` and `collect`: the join is cached by that plan and the
+ * input its branches share.
  */
 export interface JoinNode {
   readonly kind: 'join';
@@ -55,6 +55,12 @@ export interface JoinNode {
 
   /** Box the concatenated tuple as one value, as `collect` does. */
   readonly collect: boolean;
+
+  /**
+   * Runs once over the branches' yields, spread as arguments. Its result
+   * is the join's one output, as a task's would be.
+   */
+  readonly fn?: Task;
 }
 
 /**

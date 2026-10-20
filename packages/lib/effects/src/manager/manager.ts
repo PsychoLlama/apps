@@ -125,7 +125,7 @@ const retire = (manager: Manager, entry: Entry): Eventual<unknown> => {
       // Only after cleanup, so an equal value can't reuse the tuple while
       // anything keyed on it is still tearing down.
       const state = entry.state();
-      if (entry.kind === 'task' && state.step === 'succeeded') {
+      if (entry.interns && state.step === 'succeeded') {
         drop(manager.cache, state.outputs[0]);
       }
     },

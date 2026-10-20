@@ -133,6 +133,66 @@ describe('type safety', () => {
     void illegal;
   });
 
+  it('types a collecting function from its branches', () => {
+    const plan = collect(
+      [getTrack('audio'), getTrack('video'), observe],
+      (audio, video, length) => {
+        expectTypeOf(audio).toEqualTypeOf<string>();
+        expectTypeOf(video).toEqualTypeOf<string>();
+        expectTypeOf(length).toEqualTypeOf<number>();
+        return { audio, video, length };
+      },
+    );
+
+    expectTypeOf(plan).toEqualTypeOf<
+      Plan<
+        [stream: string],
+        [{ audio: string; video: string; length: number }],
+        'sync'
+      >
+    >();
+  });
+
+  it('yields through wrappers on both sides of a collecting function', () => {
+    const muted = () => reactive(() => true);
+    const plan = collect([() => 'stream', muted], (stream, state) => {
+      expectTypeOf(state).toEqualTypeOf<Accessor<boolean>>();
+      return resource(stream.length, () => {});
+    });
+
+    expectTypeOf(plan).toEqualTypeOf<
+      Plan<[], [Resource<number, 'sync'>], 'sync'>
+    >();
+    expectTypeOf(pipe([plan, (length: number) => length])).toEqualTypeOf<
+      Plan<[], [number], 'sync'>
+    >();
+  });
+
+  it('takes the mode of a collecting function', () => {
+    const later = pipe([async () => 1]);
+
+    expectTypeOf(collect([() => 0], async (count) => count)).toEqualTypeOf<
+      Plan<[], [number], 'async'>
+    >();
+    expectTypeOf(
+      collect([() => 0], (count) => resource(count, async () => {})),
+    ).toEqualTypeOf<Plan<[], [Resource<number, 'async'>], 'async'>>();
+    expectTypeOf(collect([later], (count) => count)).toEqualTypeOf<
+      Plan<[], [number], 'async'>
+    >();
+  });
+
+  it('rejects collecting functions that disagree with the branches', () => {
+    const illegal = () => {
+      // @ts-expect-error — the branch yields a string
+      collect([() => 'a'], (count: number) => count);
+
+      // @ts-expect-error — more parameters than branches
+      collect([() => 'a'], (left: string, right: string) => left + right);
+    };
+    void illegal;
+  });
+
   it('is synchronous when every step is', () => {
     const plan = pipe([() => 1, (count: number) => resource(count, () => {})]);
     expectTypeOf(plan).toEqualTypeOf<

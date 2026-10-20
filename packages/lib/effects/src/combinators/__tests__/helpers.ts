@@ -6,7 +6,8 @@ export const build = (plan: Plan<never>, input?: PlanNode): Graph =>
 
 /**
  * Readable shape: task names wired to their upstream, joins as `[...]`
- * when spread and `{...}` when collected.
+ * when spread, `{...}` when collected, and `fn(...)` when collected
+ * through a function.
  */
 const describeNode = (node: PlanNode): string => {
   if (node.kind === 'task') {
@@ -14,6 +15,7 @@ const describeNode = (node: PlanNode): string => {
   }
 
   const branches = node.branches.map(describeNode).join(', ');
+  if (node.fn) return `${node.fn.name}(${branches})`;
   return node.collect ? `{${branches}}` : `[${branches}]`;
 };
 

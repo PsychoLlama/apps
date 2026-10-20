@@ -25,6 +25,18 @@ describe('collect', () => {
     });
   });
 
+  it('joins the branches through a function', () => {
+    const add = (left: number, right: number) => left + right;
+    const plan = collect([one, two], add);
+    const graph = build(plan);
+
+    expect(shape(graph)).toEqual({
+      nodes: ['one()', 'two()', 'add(one(), two())'],
+      output: 'add(one(), two())',
+    });
+    expect(graph.output).toMatchObject({ kind: 'join', plan, fn: add });
+  });
+
   it('nests without flattening', () => {
     const graph = build(concurrent([collect([one, two]), collect([one, two])]));
 

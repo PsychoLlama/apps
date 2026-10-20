@@ -1,3 +1,4 @@
+import type { Task } from '../task';
 import {
   definePlan,
   toBuild,
@@ -6,6 +7,7 @@ import {
   type InputsOf,
   type ModeOfSteps,
   type OutputsOf,
+  type Step,
   type StepAccepting,
   type Steps,
 } from '../plan';
@@ -27,10 +29,14 @@ export type Branches<S extends Steps> = {
 };
 
 /**
- * A plan that runs the branches over its input and joins their tuples.
- * The plan keys every join it builds.
+ * A plan that runs the branches over its input and joins their tuples,
+ * through `fn` if given. The plan keys every join it builds.
  */
-export const defineJoin = (branches: Steps, collect: boolean) => {
+export const defineJoin = (
+  branches: readonly Step[],
+  collect: boolean,
+  fn?: Task,
+) => {
   const plan = definePlan((input) => {
     const nodes: PlanNode[] = [];
     const outputs: PlanNode[] = [];
@@ -47,6 +53,7 @@ export const defineJoin = (branches: Steps, collect: boolean) => {
       input,
       branches: outputs,
       collect,
+      fn,
     };
 
     nodes.push(join);
