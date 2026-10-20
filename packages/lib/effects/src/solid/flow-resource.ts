@@ -1,6 +1,7 @@
 import { getOwner, onCleanup, runWithOwner, type Resource } from 'solid-js';
 import { assert } from '@lib/assert';
 import type { Flow } from '../flow';
+import type { Handle } from '../manager';
 import {
   isWrapped,
   yieldOf,
@@ -32,30 +33,40 @@ export const reduce = (output: unknown): unknown => {
 };
 
 /**
- * Hold a flow for the owner's lifetime. Returns a fetcher that computes
- * it and resolves to its raw output.
+ * Acquire a flow on the nearest controller. Release it once: failures
+ * rethrow under the current owner, so they find its nearest error
+ * boundary even after it's disposed. Without one, they're rethrown as
+ * an unhandled rejection.
  */
-export const holdFlow = (flow: Flow<[], [unknown]>) => {
+export const acquire = (flow: Flow<[]>): [Handle, release: () => void] => {
   const owner = getOwner();
   const controller = useController();
   const handle = controller.acquire(flow);
 
-  // TODO: Server renders share the default controller, so cached state
-  // carries from one render into the next, and nothing releases it:
-  // cleanup doesn't reliably run on the server. Give each server render
-  // its own controller.
-  //
-  // Cleanup finishes after the component is disposed. A disposed owner
-  // keeps its context, so failures still find the nearest error
-  // boundary through it. Without one, they're rethrown as an unhandled
-  // rejection.
-  onCleanup(() => {
+  const release = () => {
     controller.release(handle).catch((error: unknown) => {
       runWithOwner(owner, () => {
         throw error;
       });
     });
-  });
+  };
+
+  return [handle, release];
+};
+
+/**
+ * Hold a flow for the owner's lifetime. Returns a fetcher that computes
+ * it and resolves to its raw output.
+ */
+export const holdFlow = (flow: Flow<[], [unknown]>) => {
+  const controller = useController();
+  const [handle, release] = acquire(flow);
+
+  // TODO: Server renders share the default controller, so cached state
+  // carries from one render into the next, and nothing releases it:
+  // cleanup doesn't reliably run on the server. Give each server render
+  // its own controller.
+  onCleanup(release);
 
   return async (): Promise<unknown> => {
     await controller.compute(handle);
