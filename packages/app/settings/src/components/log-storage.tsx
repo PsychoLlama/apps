@@ -1,10 +1,11 @@
 import { useResource } from '@lib/effects/solid';
-import { useCommit, useRun } from '@lib/state';
+import { useAnchor, useCommit, useRun } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
 import { Button, Dialog, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import IconDelete from 'virtual:icons/mdi/delete-outline';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import {
+  advancedSettingsScope,
   deleteLogsSaga,
   observeLogStorage,
   logsDeletedNoticeClosedTopic,
@@ -14,11 +15,9 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 const logStorageHeadingId = 'settings-log-storage-heading';
 
-/**
- * Export or delete the logs persisted on this device. Rendered inside
- * `AdvancedSettings`, which anchors the scope its state lives in.
- */
+/** Export or delete the logs persisted on this device. */
 export const LogStorage = () => {
+  useAnchor(advancedSettingsScope);
   const storage = useResource(observeLogStorage);
   const deleteLogs = useRun(deleteLogsSaga);
   const commit = useCommit();

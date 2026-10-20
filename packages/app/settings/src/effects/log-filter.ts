@@ -1,11 +1,14 @@
 import { createSignal } from 'solid-js';
 import { pipe, reactive, type Reactive } from '@lib/effects';
 import {
+  environment,
   getDefaultValue,
   type JsonValue,
   type Option,
   readEnvironment,
+  reset,
   subscribe,
+  updateConfig,
 } from '@lib/runtime-config';
 import { filter } from '@lib/observability/config';
 
@@ -44,3 +47,22 @@ const observeOption = async <Value extends JsonValue>(
  * Releasing the flow drops the subscription.
  */
 export const observeLogFilter = pipe([() => observeOption(filter)]);
+
+const writeOverride = async (pattern: string): Promise<void> => {
+  await updateConfig(filter, { [environment]: { pattern } });
+};
+
+const clearOverride = (): Promise<void> => reset(filter, [environment]);
+
+/**
+ * Persist a new log filter pattern as the active environment's override.
+ * The write echoes back through the subscription `observeLogFilter` holds.
+ */
+export const writeLogFilter = pipe([() => writeOverride]);
+
+/**
+ * Clear the log filter override for the active environment only, reverting
+ * it to the built-in default. Other environments keep their overrides. The
+ * reset echoes back through the subscription `observeLogFilter` holds.
+ */
+export const resetLogFilter = pipe([() => clearOverride]);

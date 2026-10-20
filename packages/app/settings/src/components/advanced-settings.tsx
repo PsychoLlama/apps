@@ -1,15 +1,14 @@
-import { Suspense, useClientResource } from '@lib/effects/solid';
-import { useAnchor, useRun } from '@lib/state';
+import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { Button, Code, Flex, Heading, Link, Text, TextField } from '@lib/ui';
 import IconChevron from 'virtual:icons/mdi/chevron-right';
 import { LogStorage } from './log-storage';
 import { ResetButton } from './reset-button';
 import {
-  advancedSettingsScope,
-  commitLogFilterSaga,
-  resetLogFilterSaga,
-} from '../state/advanced';
-import { defaultLogFilter, observeLogFilter } from '../effects/log-filter';
+  defaultLogFilter,
+  observeLogFilter,
+  resetLogFilter,
+  writeLogFilter,
+} from '../effects/log-filter';
 import * as css from './advanced-settings.css';
 
 const advancedHeadingId = 'settings-advanced-heading';
@@ -23,9 +22,8 @@ const logFilterHeadingId = 'settings-log-filter-heading';
  * out to every browsing context (sibling tabs and workers included).
  */
 export const AdvancedSettings = () => {
-  useAnchor(advancedSettingsScope);
-  const commitFilter = useRun(commitLogFilterSaga);
-  const resetFilter = useRun(resetLogFilterSaga);
+  const commitFilter = useAction(writeLogFilter);
+  const resetFilter = useAction(resetLogFilter);
 
   const logFilter = useClientResource(observeLogFilter);
 
