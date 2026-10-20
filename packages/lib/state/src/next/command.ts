@@ -1,18 +1,18 @@
 import { concurrent, pipe, type Plan } from '@lib/effects';
 import {
-  defineChange,
+  defineExtension,
   type Commit,
   type ModeOfPlans,
   type Target,
-} from './change';
+} from './extension';
 import { defineTopic, type Publish, type Topic } from './topic';
 
 /**
- * Define a topic with a change already subscribed. The plan yields the
- * publisher, so anything holding it can emit, and other changes can
+ * Define a command: a topic that owns its commit. The plan yields the
+ * publisher, so anything holding it can emit, and extensions can
  * subscribe to it like any topic.
  */
-export const defineAction = <
+export const defineCommand = <
   const Targets extends readonly Target[],
   Args extends readonly unknown[],
 >(
@@ -21,13 +21,17 @@ export const defineAction = <
 ): Topic<Args, ModeOfPlans<Targets>> => {
   const $topic = defineTopic<Args>();
 
-  // Holding the publisher holds the change, so its commit is always
+  // Holding the publisher holds the extension, so its commit is always
   // subscribed first. Generic steps defeat `pipe` inference; the
   // signature vouches.
-  const $change: Plan<[], unknown[]> = defineChange($topic, targets, commit);
+  const $extension: Plan<[], unknown[]> = defineExtension(
+    $topic,
+    targets,
+    commit,
+  );
 
   return pipe([
-    concurrent([$topic, $change]),
+    concurrent([$topic, $extension]),
     (publish: Publish<Args>) => publish,
   ]) as unknown as Topic<Args, ModeOfPlans<Targets>>;
 };

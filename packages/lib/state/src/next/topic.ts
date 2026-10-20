@@ -11,7 +11,7 @@ import {
 declare const TOPIC: unique symbol;
 
 /**
- * Emits an event to every change subscribed to its topic. The function's
+ * Emits an event to every commit subscribed to its topic. The function's
  * identity is the topic.
  */
 export interface Publish<Args extends readonly unknown[]> {
@@ -21,7 +21,7 @@ export interface Publish<Args extends readonly unknown[]> {
   readonly [TOPIC]: Args;
 }
 
-/** A plan yielding a publisher: a topic, or an action. */
+/** A plan yielding a publisher: a topic, or a command. */
 export type Topic<
   Args extends readonly unknown[],
   M extends Mode = Mode,
@@ -37,8 +37,8 @@ type Subscriber = (...args: readonly unknown[]) => void;
 const channels = new WeakMap<object, Set<Subscriber>>();
 
 /**
- * Define a topic. Holding the plan binds it to the message bus; changes
- * subscribe to it with `defineChange`.
+ * Define a topic. Holding the plan binds it to the message bus;
+ * extensions subscribe to it with `defineExtension`.
  */
 export const defineTopic = <Args extends readonly unknown[]>(): Topic<
   Args,
@@ -48,7 +48,7 @@ export const defineTopic = <Args extends readonly unknown[]>(): Topic<
     () => {
       const subscribers = new Set<Subscriber>();
 
-      // One batch per event, so every change it triggers lands together.
+      // One batch per event, so every commit it triggers lands together.
       // Untracked, so what subscribers read never leaks into an emitter's
       // reactive scope.
       const publish = (...args: Args) =>

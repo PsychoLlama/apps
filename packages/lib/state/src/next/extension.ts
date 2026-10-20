@@ -10,10 +10,10 @@ import { writable, type Cell } from './cell';
 import type { Store } from './store';
 import { subscribe, type Publish, type Topic } from './topic';
 
-/** A plan a change can write to: a complete store or cell plan. */
+/** A plan a commit can write to: a complete store or cell plan. */
 export type Target = Plan<[], readonly [Store<object> | Cell<unknown>]>;
 
-/** How a change sees each target: stores as drafts, cells as signals. */
+/** How a commit sees each target: stores as drafts, cells as signals. */
 export type Writables<Targets extends readonly Target[]> = {
   [Index in keyof Targets]: Writable<Targets[Index]>;
 };
@@ -27,7 +27,7 @@ export type Commit<
   Targets extends readonly Target[],
 > = (...writables: Writables<Targets>) => (...args: Args) => void;
 
-// TODO: Move into `@lib/effects`. It's useful well beyond changes.
+// TODO: Move into `@lib/effects`. It's useful well beyond extensions.
 /** The combined mode of several plans: `async` if any of them is. */
 export type ModeOfPlans<Plans extends readonly unknown[]> = 'async' extends {
   [Index in keyof Plans]: Plans[Index] extends Plan<
@@ -50,11 +50,13 @@ type Writable<P> =
       : never;
 
 /**
- * Subscribe to a topic, writing to stores and cells for each event.
- * Holding the plan holds the subscription and its targets. Every
- * change an event triggers runs in one batch.
+ * Attach a commit to a topic defined elsewhere, writing your own stores
+ * and cells for each of its events. Reach for it to react to another
+ * feature's events, e.g. across a lazy-loading boundary. Holding the plan
+ * holds the subscription and its targets. Every commit an event triggers
+ * runs in one batch.
  */
-export const defineChange = <
+export const defineExtension = <
   Args extends readonly unknown[],
   const Targets extends readonly Target[],
   M extends Mode = 'sync',

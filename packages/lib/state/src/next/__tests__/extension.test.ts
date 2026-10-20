@@ -1,7 +1,7 @@
 import { pipe } from '@lib/effects';
 import { createTestController } from '@lib/effects/testing';
 import { defineCell } from '../cell';
-import { defineChange } from '../change';
+import { defineExtension } from '../extension';
 import { defineStore } from '../store';
 import { defineTopic } from '../topic';
 
@@ -9,12 +9,12 @@ interface State {
   messages: string[];
 }
 
-describe('defineChange', () => {
+describe('defineExtension', () => {
   it('writes stores and cells for each event', async () => {
     const $send = defineTopic<[message: string]>();
     const $store = defineStore<State>(() => ({ messages: [] }));
     const $count = defineCell(() => 0);
-    const $change = defineChange(
+    const $extension = defineExtension(
       $send,
       [$store, $count],
       (store, [, setCount]) =>
@@ -24,7 +24,7 @@ describe('defineChange', () => {
         },
     );
     await using effects = createTestController();
-    await effects.run($change);
+    await effects.run($extension);
     const [send] = await effects.run($send);
     const [store] = await effects.run($store);
     const [count] = await effects.run($count);
@@ -41,7 +41,7 @@ describe('defineChange', () => {
     const $count = defineCell(() => 0);
     const commit = vi.fn(() => () => {});
     await using effects = createTestController();
-    await effects.run(defineChange($send, [$count], commit));
+    await effects.run(defineExtension($send, [$count], commit));
     const [send] = await effects.run($send);
 
     send();
@@ -53,15 +53,20 @@ describe('defineChange', () => {
   it('drops events while not held', async () => {
     const $send = defineTopic<[]>();
     const $count = defineCell(() => 0);
-    const $change = defineChange($send, [$count], ([, setCount]) => () => {
-      setCount((count) => count + 1);
-    });
+    const $extension = defineExtension(
+      $send,
+      [$count],
+      ([, setCount]) =>
+        () => {
+          setCount((count) => count + 1);
+        },
+    );
     await using effects = createTestController();
     const [send] = await effects.run($send);
     const [count] = await effects.run($count);
 
     send();
-    const handle = effects.controller.acquire($change);
+    const handle = effects.controller.acquire($extension);
     effects.controller.compute(handle);
     send();
     await effects.controller.release(handle);
@@ -76,11 +81,15 @@ describe('defineChange', () => {
       async () => ['seed'],
       defineStore((messages: string[]) => ({ messages })),
     ]);
-    const $change = defineChange($send, [$store], (store) => (message) => {
-      store.messages.push(message);
-    });
+    const $extension = defineExtension(
+      $send,
+      [$store],
+      (store) => (message) => {
+        store.messages.push(message);
+      },
+    );
     await using effects = createTestController();
-    await effects.run($change);
+    await effects.run($extension);
     const [send] = await effects.run($send);
     const [store] = await effects.run($store);
 

@@ -16,11 +16,11 @@ export type DeepReadonly<T> = T extends (...args: never[]) => unknown
       : T;
 
 /**
- * A reactive object, read-only to everyone but a change. Read it like any
- * Solid store; write it from `defineChange` or `defineAction`.
+ * A reactive object, read-only to everyone but a commit. Read it like any
+ * Solid store; write it from `defineCommand` or `defineExtension`.
  */
 export type Store<State extends object> = DeepReadonly<State> & {
-  // Phantom. Recovers the writable shape for changes, and keeps arbitrary
+  // Phantom. Recovers the writable shape for commits, and keeps arbitrary
   // objects from passing as stores.
   readonly [STORE]: State;
 };
@@ -36,7 +36,7 @@ export const defineStore = <
 >(
   init: (...inputs: Inputs) => State,
 ): Plan<Inputs, [Store<State>], 'sync'> =>
-  // The proxy is both views: readers get it typed read-only, changes
+  // The proxy is both views: readers get it typed read-only, commits
   // write through the same object. Generic steps defeat `pipe`
   // inference, so the signature vouches.
   pipe([

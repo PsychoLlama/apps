@@ -1,17 +1,17 @@
 import { createTestController } from '@lib/effects/testing';
-import { defineAction } from '../action';
+import { defineCommand } from '../command';
 import { defineCell } from '../cell';
-import { defineChange } from '../change';
+import { defineExtension } from '../extension';
 import { defineStore } from '../store';
 
 interface State {
   messages: string[];
 }
 
-describe('defineAction', () => {
+describe('defineCommand', () => {
   it('commits each event to its targets', async () => {
     const $store = defineStore<State>(() => ({ messages: [] }));
-    const $send = defineAction([$store], (store) => (message: string) => {
+    const $send = defineCommand([$store], (store) => (message: string) => {
       store.messages.push(message);
     });
     await using effects = createTestController();
@@ -25,7 +25,7 @@ describe('defineAction', () => {
 
   it('shares one publisher per controller', async () => {
     const $count = defineCell(() => 0);
-    const $increment = defineAction([$count], ([, setCount]) => () => {
+    const $increment = defineCommand([$count], ([, setCount]) => () => {
       setCount((count) => count + 1);
     });
     await using effects = createTestController();
@@ -38,13 +38,13 @@ describe('defineAction', () => {
     expect((await effects.run($count))[0]()).toBe(1);
   });
 
-  it('commits before other changes subscribed to it', async () => {
+  it('commits before extensions subscribed to it', async () => {
     const $store = defineStore<State>(() => ({ messages: [] }));
     const $seen = defineCell((): readonly string[] => []);
-    const $send = defineAction([$store], (store) => (message: string) => {
+    const $send = defineCommand([$store], (store) => (message: string) => {
       store.messages.push(message);
     });
-    const $echo = defineChange(
+    const $echo = defineExtension(
       $send,
       [$store, $seen],
       (store, [, setSeen]) =>

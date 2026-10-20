@@ -1,11 +1,11 @@
-export { defineAction } from './action';
 export { defineCell, type Cell } from './cell';
+export { defineCommand } from './command';
 export {
-  defineChange,
+  defineExtension,
   type Commit,
   type Target,
   type Writables,
-} from './change';
+} from './extension';
 export { defineStore, type DeepReadonly, type Store } from './store';
 export {
   defineTopic,

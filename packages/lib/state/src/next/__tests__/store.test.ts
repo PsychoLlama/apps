@@ -54,7 +54,7 @@ describe('defineStore', () => {
       return dispose;
     });
 
-    // Changes write through the same proxy, typed writable.
+    // Commits write through the same proxy, typed writable.
     (store as State).count = 1;
     dispose();
 

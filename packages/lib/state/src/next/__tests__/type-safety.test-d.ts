@@ -6,9 +6,9 @@ import {
   type Resource,
 } from '@lib/effects';
 import type { Accessor, Signal } from 'solid-js';
-import { defineAction } from '../action';
+import { defineCommand } from '../command';
 import { defineCell, type Cell } from '../cell';
-import { defineChange } from '../change';
+import { defineExtension } from '../extension';
 import { defineStore, type Store } from '../store';
 import {
   defineTopic,
@@ -34,7 +34,7 @@ describe('type safety', () => {
     >();
 
     const read = (store: Store<State>) => {
-      // @ts-expect-error — stores are read-only outside changes
+      // @ts-expect-error — stores are read-only outside commits
       store.message = 'nope';
       // @ts-expect-error — all the way down
       store.tags[0] = 'nope';
@@ -72,9 +72,9 @@ describe('type safety', () => {
 
     const illegal = () => {
       // @ts-expect-error — not a store
-      defineChange($topic, [$object], () => () => {});
+      defineExtension($topic, [$object], () => () => {});
       // @ts-expect-error — not a cell
-      defineChange($topic, [$reactive], () => () => {});
+      defineExtension($topic, [$reactive], () => () => {});
     };
     void illegal;
   });
@@ -95,21 +95,25 @@ describe('type safety', () => {
     void illegal;
   });
 
-  it('hands changes the topic arguments and writable targets', () => {
+  it('hands extensions the topic arguments and writable targets', () => {
     const $send = defineTopic<[message: string]>();
     const $store = defineStore<State>(() => ({ message: '', tags: [] }));
     const $cell = defineCell(() => 0);
 
-    const $change = defineChange($send, [$store, $cell], (store, cell) => {
-      expectTypeOf(store).toEqualTypeOf<State>();
-      expectTypeOf(cell).toEqualTypeOf<Signal<number>>();
+    const $extension = defineExtension(
+      $send,
+      [$store, $cell],
+      (store, cell) => {
+        expectTypeOf(store).toEqualTypeOf<State>();
+        expectTypeOf(cell).toEqualTypeOf<Signal<number>>();
 
-      return (message) => {
-        expectTypeOf(message).toEqualTypeOf<string>();
-      };
-    });
+        return (message) => {
+          expectTypeOf(message).toEqualTypeOf<string>();
+        };
+      },
+    );
 
-    expectTypeOf($change).toEqualTypeOf<
+    expectTypeOf($extension).toEqualTypeOf<
       Plan<[], [Resource<void, 'sync'>], 'sync'>
     >();
   });
@@ -118,27 +122,27 @@ describe('type safety', () => {
     const $send = defineTopic<[message: string]>();
     const $cell = defineCell(() => 0);
 
-    defineChange($send, [$cell], ([, setCount]) => () => {
+    defineExtension($send, [$cell], ([, setCount]) => () => {
       setCount((count) => count + 1);
     });
   });
 
-  it('carries async targets into the change', () => {
+  it('carries async targets into the extension', () => {
     const $send = defineTopic<[]>();
     const $store = pipe([
       async () => 'seed',
       defineStore((message: string) => ({ message })),
     ]);
 
-    expectTypeOf(defineChange($send, [$store], () => () => {})).toEqualTypeOf<
-      Plan<[], [Resource<void, 'sync'>], 'async'>
-    >();
+    expectTypeOf(
+      defineExtension($send, [$store], () => () => {}),
+    ).toEqualTypeOf<Plan<[], [Resource<void, 'sync'>], 'async'>>();
   });
 
-  it('infers action arguments from the commit', () => {
+  it('infers command arguments from the commit', () => {
     const $store = defineStore<State>(() => ({ message: '', tags: [] }));
 
-    const $sendMessage = defineAction(
+    const $sendMessage = defineCommand(
       [$store],
       (store) => (message: string) => {
         expectTypeOf(store).toEqualTypeOf<State>();
@@ -151,17 +155,17 @@ describe('type safety', () => {
     >();
   });
 
-  it('subscribes changes to actions like any topic', () => {
+  it('subscribes extensions to commands like any topic', () => {
     const $store = defineStore<State>(() => ({ message: '', tags: [] }));
     const $cell = defineCell(() => 0);
-    const $sendMessage = defineAction(
+    const $sendMessage = defineCommand(
       [$store],
       (store) => (message: string) => {
         store.message = message;
       },
     );
 
-    defineChange($sendMessage, [$cell], ([, setCount]) => (message) => {
+    defineExtension($sendMessage, [$cell], ([, setCount]) => (message) => {
       expectTypeOf(message).toEqualTypeOf<string>();
       setCount((count) => count + 1);
     });

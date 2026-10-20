@@ -6,14 +6,14 @@ declare const CELL: unique symbol;
 
 /**
  * A reactive value, for state that isn't an object. Read it like any
- * signal; write it from `defineChange` or `defineAction`.
+ * signal; write it from `defineCommand` or `defineExtension`.
  */
 export type Cell<T> = Reactive<T, 'sync'> & {
   // Phantom. Keeps arbitrary reactive values from passing as cells.
   readonly [CELL]: T;
 };
 
-// Each live cell's signal, keyed by the accessor readers get. Only changes
+// Each live cell's signal, keyed by the accessor readers get. Only commits
 // recover the setter.
 const signals = new WeakMap<Accessor<unknown>, Signal<unknown>>();
 
@@ -39,7 +39,7 @@ export const defineCell = <T, Inputs extends readonly unknown[] = []>(
   ]) as unknown as Plan<Inputs, [Cell<T>], 'sync'>;
 
 /**
- * The signal behind a cell's accessor, for changes to write through.
+ * The signal behind a cell's accessor, for commits to write through.
  *
  * @internal
  */
