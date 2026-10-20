@@ -1,4 +1,4 @@
-import { useResource } from '@lib/effects/solid';
+import { useValue } from '@lib/effects/solid';
 import { useAnchor, useCommit, useRun } from '@lib/state';
 import { createLogger, toError } from '@lib/observability';
 import { Button, Dialog, Flex, Heading, LinkButton, Text } from '@lib/ui';
@@ -18,7 +18,7 @@ const logStorageHeadingId = 'settings-log-storage-heading';
 /** Export or delete the logs persisted on this device. */
 export const LogStorage = () => {
   useAnchor(advancedSettingsScope);
-  const logStorage = useResource($logStorage);
+  const logStorage = useValue($logStorage);
   const deleteLogs = useRun(deleteLogsSaga);
   const commit = useCommit();
   const closeNotice = () => commit(logsDeletedNoticeClosedTopic());

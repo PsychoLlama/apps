@@ -10,7 +10,7 @@ import { reactive, resource } from '../../task';
 import { createTestController } from '../../testing';
 import type { Controller } from '../../controller/controller';
 import { EffectsContext } from '../context';
-import { useResource } from '../use-resource';
+import { useValue } from '../use-value';
 
 /** Let queued microtasks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -49,14 +49,14 @@ const renderHook = <Result,>(
   return { result, errors, unmount };
 };
 
-describe('useResource', () => {
+describe('useValue', () => {
   it('computes during render', async () => {
     await using controller = createTestController();
     const load = vi.fn(() => 1);
     const double = (value: number) => value * 2;
 
     const tree = renderHook(controller.controller, () =>
-      useResource(pipe([load, double])),
+      useValue(pipe([load, double])),
     );
 
     expectTypeOf(tree.result).toEqualTypeOf<Accessor<number>>();
@@ -72,7 +72,7 @@ describe('useResource', () => {
 
     const tree = renderHook(
       controller.controller,
-      () => useResource(pipe([observe])),
+      () => useValue(pipe([observe])),
       (props) => <p>count {props.result()}</p>,
     );
 
@@ -90,7 +90,7 @@ describe('useResource', () => {
     const live = () => reactive(() => true);
 
     const tree = renderHook(controller.controller, () =>
-      useResource(collect([open, live])),
+      useValue(collect([open, live])),
     );
 
     expectTypeOf(tree.result).toEqualTypeOf<Accessor<[string, boolean]>>();
@@ -105,13 +105,13 @@ describe('useResource', () => {
 
     const tree = renderHook(controller.controller, () => {
       // @ts-expect-error -- Returns a promise.
-      expect(() => useResource(pipe([later]))).toThrow(/synchronous/);
+      expect(() => useValue(pipe([later]))).toThrow(/synchronous/);
       const illegal = () => {
         // @ts-expect-error -- Cleans up asynchronously.
-        useResource(pipe([closing]));
+        useValue(pipe([closing]));
       };
       void illegal;
-      return useResource(pipe([() => 1]));
+      return useValue(pipe([() => 1]));
     });
 
     expect(tree.result()).toBe(1);
@@ -127,7 +127,7 @@ describe('useResource', () => {
     };
 
     const tree = renderHook(controller.controller, () =>
-      useResource(pipe([fail])),
+      useValue(pipe([fail])),
     );
 
     expect(tree.errors).toHaveLength(1);
@@ -141,7 +141,7 @@ describe('useResource', () => {
     const open = () => resource('stream', dispose);
 
     const tree = renderHook(controller.controller, () =>
-      useResource(pipe([open])),
+      useValue(pipe([open])),
     );
 
     tree.unmount();
