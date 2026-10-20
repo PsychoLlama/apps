@@ -1,12 +1,10 @@
 export {
-  collected,
   disposeOf,
   type DisposeModeOf,
   isWrapped,
   reactive,
   resource,
   yieldOf,
-  type Collected,
   type Dispose,
   type Reactive,
   type Resource,

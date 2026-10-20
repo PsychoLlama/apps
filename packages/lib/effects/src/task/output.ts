@@ -35,21 +35,8 @@ export interface Reactive<T, out M extends Mode = Mode> {
   readonly dispose?: Dispose;
 }
 
-/**
- * The output of `collect`: its branches' outputs as returned, wrappers
- * and all. Downstream tasks receive the unwrapped `value`. Built by the
- * runtime, never by tasks.
- */
-export interface Collected<Items extends readonly unknown[]> {
-  readonly [BRAND]: 'collected';
-  readonly value: YieldAll<Items>;
-  readonly items: Items;
-  readonly dispose?: undefined;
-}
-
 /** Any wrapped output, discriminated by its brand. */
-export type Wrapped =
-  Resource<unknown> | Reactive<unknown> | Collected<readonly unknown[]>;
+export type Wrapped = Resource<unknown> | Reactive<unknown>;
 
 /**
  * What a downstream task receives from an output: promises settled and
@@ -79,9 +66,7 @@ type Unwrap<Value> =
     ? Inner
     : Value extends Reactive<infer Inner>
       ? Accessor<Inner>
-      : Value extends Collected<infer Items>
-        ? YieldAll<Items>
-        : Value;
+      : Value;
 
 type Kind = Wrapped[typeof BRAND];
 
@@ -132,13 +117,4 @@ export const reactive = <T, Disposed = void>(
   value,
   // As in `resource`.
   dispose: dispose as Dispose | undefined,
-});
-
-/** Box branch outputs, unwrapped once so `value` keeps one identity. */
-export const collected = (
-  items: readonly unknown[],
-): Collected<readonly unknown[]> => ({
-  [BRAND]: 'collected',
-  value: items.map(yieldOf),
-  items,
 });

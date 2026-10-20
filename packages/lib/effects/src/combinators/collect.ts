@@ -11,7 +11,7 @@ import {
   type StepAccepting,
   type Steps,
 } from '../plan';
-import type { Collected, Task, YieldAll } from '../task';
+import type { Task, YieldAll } from '../task';
 
 // Every step has one output now, so branches map to outputs position by
 // position. A mapped type rather than recursion, so it stays transparent
@@ -56,21 +56,30 @@ interface Collect {
   ): Plan<InputsOf<S[0]>, OutputsOf<() => Output>, ModeOfJoin<S, Output>>;
 
   /**
-   * Run branches side by side over the same inputs and land their outputs
+   * Run branches side by side over the same inputs and land their yields
    * in a single array. The array keeps its identity for as long as the
-   * branches' outputs do.
+   * branches' outputs do. Wrappers stay behind: a reactive branch lands
+   * as its accessor, so return `reactive` from `fn` to read several
+   * reactively.
    */
   <const S extends Steps>(
     branches: Branches<S>,
-  ): Plan<InputsOf<S[0]>, [Collected<OutputsOfEach<S>>], ModeOfSteps<S>>;
+  ): Plan<InputsOf<S[0]>, [Joined<S>], ModeOfSteps<S>>;
 }
+
+// What a join without its own `fn` runs. One array per entry, so it keeps
+// its identity while the branches live.
+const array = (...values: readonly unknown[]) => values;
 
 // TODO: Two `collect` calls with the same branches and `fn` are separate
 // plans, so they cache separately and `fn` runs once for each. Sharing
 // them needs a key beyond the plan's identity, e.g. interning plans by
 // `fn` and branches as they're defined. Solve it before much depends on
 // the duplication.
-export const collect: Collect = (branches: readonly Step[], fn?: Task) => {
+export const collect: Collect = (
+  branches: readonly Step[],
+  fn: Task = array,
+) => {
   const plan = definePlan((input) => {
     const nodes: PlanNode[] = [];
     const outputs: PlanNode[] = [];

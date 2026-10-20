@@ -6,7 +6,6 @@ import type { Handle } from '../manager';
 import {
   isWrapped,
   yieldOf,
-  type Collected,
   type Reactive,
   type Resource as Owned,
 } from '../task';
@@ -14,24 +13,18 @@ import { useController } from './context';
 
 /**
  * What a component reads from an output: wrappers removed, reactive state
- * read through, collected items reduced one by one.
+ * read through.
  */
 export type Reduce<Output> =
   Output extends Owned<infer Inner>
     ? Inner
     : Output extends Reactive<infer Inner>
       ? Inner
-      : Output extends Collected<infer Items>
-        ? { [Index in keyof Items]: Reduce<Items[Index]> }
-        : Output;
+      : Output;
 
 /** Read an output the way {@link Reduce} types it. */
-export const reduce = (output: unknown): unknown => {
-  if (isWrapped(output, 'reactive')) return output.value();
-  if (isWrapped(output, 'collected')) return output.items.map(reduce);
-
-  return yieldOf(output);
-};
+export const reduce = (output: unknown): unknown =>
+  isWrapped(output, 'reactive') ? output.value() : yieldOf(output);
 
 /**
  * An error handler that rethrows under the current owner, so failures

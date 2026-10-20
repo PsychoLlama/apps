@@ -136,23 +136,31 @@ describe('useClientResource', () => {
     tree.unmount();
   });
 
-  it('reduces every item of a collected output', async () => {
+  it('reads several reactive outputs through a reactive join', async () => {
     await using controller = createTestController();
-    const [muted] = createSignal(true);
+    const [muted, setMuted] = createSignal(true);
     const open = () => resource('stream', () => {});
     const observe = () => reactive(muted);
 
     const tree = renderUnmounted(controller.controller, () =>
-      useClientResource(collect([open, observe, collect([() => 1, observe])])),
+      useClientResource(
+        collect([open, observe], (stream, state) =>
+          reactive(() => [stream, state()] as const),
+        ),
+      ),
     );
 
     tree.mount();
     await settle();
 
     expectTypeOf(tree.result).toEqualTypeOf<
-      Resource<[string, boolean, [number, boolean]]>
+      Resource<readonly [string, boolean]>
     >();
-    expect(tree.result()).toEqual(['stream', true, [1, true]]);
+    expect(tree.result()).toEqual(['stream', true]);
+
+    setMuted(false);
+
+    expect(tree.result()).toEqual(['stream', false]);
     tree.unmount();
   });
 

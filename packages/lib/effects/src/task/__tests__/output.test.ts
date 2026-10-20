@@ -1,11 +1,4 @@
-import {
-  collected,
-  disposeOf,
-  isWrapped,
-  reactive,
-  resource,
-  yieldOf,
-} from '../output';
+import { disposeOf, isWrapped, reactive, resource, yieldOf } from '../output';
 
 describe('output', () => {
   describe('resource', () => {
@@ -35,24 +28,10 @@ describe('output', () => {
     });
   });
 
-  describe('collected', () => {
-    it('unwraps its items once, to one stable array', () => {
-      const state = () => true;
-      const items = [resource('stream', () => {}), reactive(state), 1];
-      const output = collected(items);
-
-      expect(isWrapped(output, 'collected')).toBe(true);
-      expect(output.items).toBe(items);
-      expect(output.value).toEqual(['stream', state, 1]);
-      expect(yieldOf(output)).toBe(output.value);
-    });
-  });
-
   describe('isWrapped', () => {
     it('tells wrapped outputs apart from plain values', () => {
       expect(isWrapped(resource('stream', () => {}))).toBe(true);
       expect(isWrapped(reactive(() => true))).toBe(true);
-      expect(isWrapped(collected([]))).toBe(true);
       expect(isWrapped(() => true)).toBe(false);
       expect(isWrapped({ value: 1 })).toBe(false);
       expect(isWrapped(null)).toBe(false);
@@ -88,7 +67,6 @@ describe('output', () => {
 
     it('finds none elsewhere', () => {
       expect(disposeOf(reactive(() => true))).toBeUndefined();
-      expect(disposeOf(collected([resource('s', () => {})]))).toBeUndefined();
       expect(disposeOf(1)).toBeUndefined();
     });
   });

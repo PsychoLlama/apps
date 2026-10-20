@@ -1,12 +1,6 @@
 import type { Accessor } from 'solid-js';
 import type { Plan } from '../../plan';
-import {
-  reactive,
-  resource,
-  type Collected,
-  type Reactive,
-  type Resource,
-} from '../../task';
+import { reactive, resource, type Reactive, type Resource } from '../../task';
 import { collect } from '../collect';
 import { pipe } from '../pipe';
 
@@ -61,11 +55,7 @@ describe('type safety', () => {
     ]);
 
     expectTypeOf(grouped).toEqualTypeOf<
-      Plan<
-        [],
-        [Collected<[Collected<[number, number]>, Collected<[string, string]>]>],
-        'sync'
-      >
+      Plan<[], [[[number, number], [string, string]]], 'sync'>
     >();
 
     const plan = pipe([
@@ -81,24 +71,14 @@ describe('type safety', () => {
   it('accepts plans anywhere a task fits', () => {
     const inner = pipe([getTrack('audio'), observe]);
     const plan = pipe([() => 'stream', collect([inner, inner])]);
-    expectTypeOf(plan).toEqualTypeOf<
-      Plan<
-        [],
-        [Collected<[Resource<number, 'sync'>, Resource<number, 'sync'>]>],
-        'sync'
-      >
-    >();
+    expectTypeOf(plan).toEqualTypeOf<Plan<[], [[number, number]], 'sync'>>();
   });
 
-  it('keeps wrappers inside collected outputs, and yields through them', () => {
+  it('collects what branches yield, not their wrappers', () => {
     const muted = () => reactive(() => true);
     const both = collect([observe, muted]);
     expectTypeOf(both).toEqualTypeOf<
-      Plan<
-        [track: string],
-        [Collected<[Resource<number, 'sync'>, Reactive<boolean, 'sync'>]>],
-        'sync'
-      >
+      Plan<[track: string], [[number, Accessor<boolean>]], 'sync'>
     >();
 
     pipe([both, (values: [number, Accessor<boolean>]) => values]);
@@ -228,7 +208,7 @@ describe('type safety', () => {
       Plan<[], [number], 'async'>
     >();
     expectTypeOf(collect([() => 0, later])).toEqualTypeOf<
-      Plan<[], [Collected<[number, number]>], 'async'>
+      Plan<[], [[number, number]], 'async'>
     >();
   });
 

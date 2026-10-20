@@ -8,12 +8,12 @@ const add = (left: number, right: number) => left + right;
 const double = (value: number) => value * 2;
 
 describe('collect', () => {
-  it('joins the branches into one boxed node', () => {
+  it('joins the branches into an array by default', () => {
     const graph = build(collect([one, two]));
 
     expect(shape(graph)).toEqual({
-      nodes: ['one()', 'two()', '{one(), two()}'],
-      output: '{one(), two()}',
+      nodes: ['one()', 'two()', 'array(one(), two())'],
+      output: 'array(one(), two())',
     });
   });
 
@@ -35,7 +35,9 @@ describe('collect', () => {
   it('nests joins as branches', () => {
     const graph = build(collect([collect([one, two]), collect([one, two])]));
 
-    expect(shape(graph).output).toBe('{{one(), two()}, {one(), two()}}');
+    expect(shape(graph).output).toBe(
+      'array(array(one(), two()), array(one(), two()))',
+    );
   });
 
   it('keys every join by the plan that built it', () => {

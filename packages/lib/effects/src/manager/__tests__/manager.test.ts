@@ -65,7 +65,7 @@ describe('manager', () => {
       });
     });
 
-    it('boxes collected outputs', async () => {
+    it('collects outputs into an array', async () => {
       const manager = createManager();
       const one = () => 1;
       const two = () => 2;
@@ -74,7 +74,6 @@ describe('manager', () => {
       await computed(manager, boxed);
 
       expect(output(boxed)).toEqual([[1, 2]]);
-      expect(isWrapped(raw(boxed)[0], 'collected')).toBe(true);
     });
 
     it('awaits async tasks and keeps resources whole', async () => {

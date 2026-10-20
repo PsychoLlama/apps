@@ -43,9 +43,8 @@ export interface TaskNode {
 }
 
 /**
- * Boxes its branches' outputs as one `Collected`, or runs `fn` over them.
- * Built by `collect`: the join is cached by that plan and the input its
- * branches share.
+ * Runs `fn` over its branches' outputs. Built by `collect`: the join is
+ * cached by that plan and the input its branches share.
  */
 export interface JoinNode {
   readonly kind: 'join';
@@ -57,7 +56,7 @@ export interface JoinNode {
    * Runs once over the branches' yields, spread as arguments. Its result
    * is the join's one output, as a task's would be.
    */
-  readonly fn?: Task;
+  readonly fn: Task;
 }
 
 /**

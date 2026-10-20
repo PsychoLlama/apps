@@ -38,9 +38,8 @@ export interface Succeeded<
 
   /**
    * The node's output tuple, created once and shared with every handle,
-   * so downstream nodes can key on its identity. A task's holds its one
-   * output as returned, `resource` or `reactive` wrapper included; a
-   * collecting join's holds a `Collected`.
+   * so downstream nodes can key on its identity. It holds the node's one
+   * output as returned, `resource` or `reactive` wrapper included.
    */
   readonly outputs: Outputs;
 }

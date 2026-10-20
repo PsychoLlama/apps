@@ -1,12 +1,6 @@
 import { createSignal, type Accessor, type Setter } from 'solid-js';
 import type { PlanNode } from '../plan';
-import {
-  collected,
-  disposeOf,
-  yieldOf,
-  type Dispose,
-  type Task,
-} from '../task';
+import { disposeOf, yieldOf, type Dispose, type Task } from '../task';
 import { chain, from, later, now, toPromise, type Eventual } from '../eventual';
 import type { Tuple } from './cache';
 import type * as Node from './node';
@@ -26,9 +20,6 @@ export interface Entry {
 
   /** A join's branch tuples, which it joins. Empty for a task. */
   readonly sources: readonly Tuple[];
-
-  /** Whether a success interns its output, as tasks and `fn` joins do. */
-  readonly interns: boolean;
 
   /** Reactive. Tracks under a Solid computation, reads plainly outside. */
   readonly state: Accessor<EntryState>;
@@ -83,9 +74,6 @@ const evaluate = (
   // A join's `fn` runs like a task, over its branches.
   const task = node.kind === 'task' ? node.task : node.fn;
   const inputs = node.kind === 'task' ? entry.inputs : entry.sources.flat();
-
-  // Without one, the join boxes its branches.
-  if (!task) return now({ outputs: [collected(inputs)] });
 
   // Outputs keep what the task returned, wrappers and all, so bindings
   // can tell what kind it is. Downstream tasks receive its `yieldOf`.
@@ -147,7 +135,6 @@ export const spawn = (
     key: keyOf(node),
     inputs,
     sources,
-    interns: node.kind === 'task' || node.fn !== undefined,
     state,
     refs: 0,
     settled: Promise.resolve(),
