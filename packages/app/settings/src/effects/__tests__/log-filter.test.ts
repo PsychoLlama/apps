@@ -26,7 +26,7 @@ type Listener = (value: { pattern: string }) => void;
 
 /**
  * Tracks live subscriptions so tests can push changes through them and
- * check that none outlive the flow.
+ * check that none outlive the plan.
  */
 const setup = () => {
   const listeners = new Set<Listener>();

@@ -208,7 +208,7 @@ describe('useClientResource', () => {
     tree.unmount();
   });
 
-  it('releases the flow on cleanup', async () => {
+  it('releases the plan on cleanup', async () => {
     await using controller = createTestController();
     const dispose = vi.fn();
     const open = () => resource('stream', dispose);

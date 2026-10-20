@@ -1,6 +1,6 @@
 import { assert } from '@lib/assert';
 import { createSignal, type Signal } from 'solid-js';
-import { FLOW, type Flow, type FlowNode } from '../flow';
+import { PLAN, type Plan, type PlanNode } from '../plan';
 import {
   createCache,
   drop,
@@ -14,22 +14,22 @@ import {
 import { keyOf, ROOT, spawn, type Entry } from './entry';
 import type * as Node from './node';
 
-/** A flow acquired on a manager, and what the manager tracks for it. */
+/** A plan acquired on a manager, and what the manager tracks for it. */
 export interface Handle {
-  /** Every node in the flow, topologically ordered. */
-  readonly nodes: readonly FlowNode[];
+  /** Every node in the plan, topologically ordered. */
+  readonly nodes: readonly PlanNode[];
 
-  /** The node whose output tuple is the flow's output. */
-  readonly output: FlowNode;
+  /** The node whose output tuple is the plan's output. */
+  readonly output: PlanNode;
 
   /**
    * Each node's binding, memoized so diamonds resolve once. Absent when an
    * upstream node failed.
    */
-  readonly bindings: Map<FlowNode, Promise<Entry | undefined>>;
+  readonly bindings: Map<PlanNode, Promise<Entry | undefined>>;
 
   /** Per node, the entry it's bound to and so holds a reference on. */
-  readonly held: ReadonlyMap<FlowNode, Signal<Entry | undefined>>;
+  readonly held: ReadonlyMap<PlanNode, Signal<Entry | undefined>>;
 
   released: boolean;
 }
@@ -55,7 +55,7 @@ const same = (left: readonly Tuple[], right: readonly Tuple[]) =>
 /** The live entry for a key, spawning one if its last life has ended. */
 const claim = async (
   manager: Manager,
-  node: FlowNode,
+  node: PlanNode,
   inputs: Tuple,
   sources: readonly Tuple[],
 ): Promise<Entry> => {
@@ -104,7 +104,7 @@ const retire = (manager: Manager, entry: Entry): Promise<void> => {
   return entry.retired;
 };
 
-const held = (handle: Handle, node: FlowNode) => {
+const held = (handle: Handle, node: PlanNode) => {
   const signal = handle.held.get(node);
   assert(signal, 'Node is not part of this handle.');
 
@@ -115,7 +115,7 @@ const held = (handle: Handle, node: FlowNode) => {
 const outputOf = async (
   manager: Manager,
   handle: Handle,
-  node: FlowNode,
+  node: PlanNode,
 ): Promise<Tuple | undefined> => {
   const state = (await bind(manager, handle, node))?.state();
   return state?.step === 'succeeded' ? state.outputs : undefined;
@@ -125,7 +125,7 @@ const outputOf = async (
 const bind = (
   manager: Manager,
   handle: Handle,
-  node: FlowNode,
+  node: PlanNode,
 ): Promise<Entry | undefined> => {
   let binding = handle.bindings.get(node);
   if (binding) return binding;
@@ -156,7 +156,7 @@ const bind = (
 };
 
 /** Forget a node's binding and let go of its entry. Expects it settled. */
-const unbind = async (manager: Manager, handle: Handle, node: FlowNode) => {
+const unbind = async (manager: Manager, handle: Handle, node: PlanNode) => {
   if (!handle.bindings.delete(node)) return;
 
   const [entry, setEntry] = held(handle, node);
@@ -172,7 +172,7 @@ const unbind = async (manager: Manager, handle: Handle, node: FlowNode) => {
 const bringUp = async (
   manager: Manager,
   handle: Handle,
-  nodes: readonly FlowNode[],
+  nodes: readonly PlanNode[],
 ): Promise<unknown[]> => {
   const entries = await Promise.all(
     nodes.map((node) => bind(manager, handle, node)),
@@ -191,7 +191,7 @@ const bringUp = async (
 const tearDown = async (
   manager: Manager,
   handle: Handle,
-  nodes: readonly FlowNode[],
+  nodes: readonly PlanNode[],
 ): Promise<unknown[]> => {
   // Let in-flight bindings land, or the entries they bind would leak.
   await Promise.all(nodes.flatMap((node) => handle.bindings.get(node) ?? []));
@@ -208,9 +208,9 @@ const tearDown = async (
   return failures;
 };
 
-/** Build the flow's graph. Pure: nothing runs, and no manager is involved. */
-export const acquire = (flow: Flow<[]>): Handle => {
-  const graph = flow[FLOW]();
+/** Build the plan's graph. Pure: nothing runs, and no manager is involved. */
+export const acquire = (plan: Plan<[]>): Handle => {
+  const graph = plan[PLAN]();
   return {
     nodes: graph.nodes,
     output: graph.output,
@@ -240,7 +240,7 @@ export const compute = async (
 
   const failures = await bringUp(manager, handle, handle.nodes);
   if (failures.length > 0) {
-    throw new AggregateError(failures, 'Flow failed.');
+    throw new AggregateError(failures, 'Plan failed.');
   }
 };
 
@@ -267,7 +267,7 @@ export const release = async (
  * The current state of one of the handle's nodes. Reactive: tracks under
  * a Solid computation, reads plainly outside one.
  */
-export const inspect = (handle: Handle, node: FlowNode): Node.State => {
+export const inspect = (handle: Handle, node: PlanNode): Node.State => {
   const [entry] = held(handle, node);
   return entry()?.state() ?? { step: 'pending' };
 };

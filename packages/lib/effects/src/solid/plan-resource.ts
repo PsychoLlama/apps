@@ -1,6 +1,6 @@
 import { getOwner, onCleanup, runWithOwner, type Resource } from 'solid-js';
 import { assert } from '@lib/assert';
-import type { Flow } from '../flow';
+import type { Plan } from '../plan';
 import type { Handle } from '../manager';
 import {
   isWrapped,
@@ -48,14 +48,14 @@ export const useThrowToBoundary = () => {
 };
 
 /**
- * Acquire a flow on the nearest controller. Release it once: failures
+ * Acquire a plan on the nearest controller. Release it once: failures
  * reach the current owner's error boundary, or else surface as an
  * unhandled rejection.
  */
-export const acquire = (flow: Flow<[]>): [Handle, release: () => void] => {
+export const acquire = (plan: Plan<[]>): [Handle, release: () => void] => {
   const controller = useController();
   const throwToBoundary = useThrowToBoundary();
-  const handle = controller.acquire(flow);
+  const handle = controller.acquire(plan);
 
   const release = () => {
     controller.release(handle).catch(throwToBoundary);
@@ -65,12 +65,12 @@ export const acquire = (flow: Flow<[]>): [Handle, release: () => void] => {
 };
 
 /**
- * Hold a flow for the owner's lifetime. Returns a fetcher that computes
+ * Hold a plan for the owner's lifetime. Returns a fetcher that computes
  * it and resolves to its raw output.
  */
-export const holdFlow = (flow: Flow<[], [unknown]>) => {
+export const holdPlan = (plan: Plan<[], [unknown]>) => {
   const controller = useController();
-  const [handle, release] = acquire(flow);
+  const [handle, release] = acquire(plan);
 
   // TODO: Server renders share the default controller, so cached state
   // carries from one render into the next, and nothing releases it:
@@ -82,7 +82,7 @@ export const holdFlow = (flow: Flow<[], [unknown]>) => {
     await controller.compute(handle);
 
     const state = controller.inspect(handle, handle.output);
-    assert(state.step === 'succeeded', 'Flow computed without an output.');
+    assert(state.step === 'succeeded', 'Plan computed without an output.');
 
     return state.outputs[0];
   };
@@ -103,6 +103,6 @@ export const forwardResource = <Value>(
     latest: { get: () => reduce(output.latest) },
   });
 
-  // The graph is untyped at runtime; the flow's signature vouches.
+  // The graph is untyped at runtime; the plan's signature vouches.
   return read as Resource<Value>;
 };

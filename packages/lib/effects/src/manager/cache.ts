@@ -1,9 +1,9 @@
-import type { FlowNode } from '../flow';
+import type { PlanNode } from '../plan';
 
 /** An output tuple, compared by identity when it feeds another node. */
 export type Tuple = readonly unknown[];
 
-type Kind = FlowNode['kind'];
+type Kind = PlanNode['kind'];
 
 /** Everything a manager caches. One per manager; operate on it below. */
 export interface Cache<Value> {
@@ -13,7 +13,7 @@ export interface Cache<Value> {
    * itself is the key: flat levels, with no composite key to build.
    *
    * Keyed by identity (`Map` semantics). Nodes key by their task, or by
-   * the flow that built them.
+   * the plan that built them.
    */
   readonly entries: Readonly<Record<Kind, Map<object, Map<Tuple, Value>>>>;
 

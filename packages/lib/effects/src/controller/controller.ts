@@ -1,4 +1,4 @@
-import type { Flow, FlowNode } from '../flow';
+import type { Plan, PlanNode } from '../plan';
 import {
   acquire,
   compute,
@@ -14,8 +14,8 @@ import {
  * they can be pulled off and passed around.
  */
 export interface Controller {
-  /** Build the flow's graph. Nothing runs until computed. */
-  readonly acquire: (flow: Flow<[]>) => Handle;
+  /** Build the plan's graph. Nothing runs until computed. */
+  readonly acquire: (plan: Plan<[]>) => Handle;
 
   /**
    * Run every node, sharing cached work with other handles. Resolves once
@@ -30,7 +30,7 @@ export interface Controller {
   readonly release: (handle: Handle) => Promise<void>;
 
   /** The current state of one of the handle's nodes. Reactive. */
-  readonly inspect: (handle: Handle, node: FlowNode) => Node.State;
+  readonly inspect: (handle: Handle, node: PlanNode) => Node.State;
 }
 
 export const createController = (manager: Manager): Controller => ({

@@ -1,4 +1,4 @@
-import type { FlowNode } from '../../flow';
+import type { PlanNode } from '../../plan';
 import { pipe } from '../pipe';
 import { build, shape } from './helpers';
 
@@ -15,8 +15,8 @@ describe('pipe', () => {
     });
   });
 
-  it('feeds the flow input into the first step', () => {
-    const upstream: FlowNode = { kind: 'task', task: one };
+  it('feeds the plan input into the first step', () => {
+    const upstream: PlanNode = { kind: 'task', task: one };
     const graph = build(pipe([double]), upstream);
 
     expect(shape(graph)).toEqual({
@@ -26,7 +26,7 @@ describe('pipe', () => {
     expect(graph.output).toMatchObject({ input: upstream });
   });
 
-  it('splices sub-flows in place', () => {
+  it('splices sub-plans in place', () => {
     const inner = pipe([double, double]);
     const graph = build(pipe([one, inner, double]));
 

@@ -167,7 +167,7 @@ describe('manager', () => {
       dispose();
     });
 
-    it('refuses a node from another flow', () => {
+    it('refuses a node from another plan', () => {
       const handle = acquire(pipe([() => 1]));
       const other = acquire(pipe([() => 2]));
 
@@ -522,7 +522,7 @@ describe('manager', () => {
       expect(dispose).toHaveBeenCalledTimes(1);
     });
 
-    it('releases a failed flow and resets its nodes', async () => {
+    it('releases a failed plan and resets its nodes', async () => {
       const manager = createManager();
       const dispose = vi.fn();
       const stream = resource('stream', dispose);

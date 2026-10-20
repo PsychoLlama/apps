@@ -1,5 +1,5 @@
 import { createSignal, type Accessor, type Setter } from 'solid-js';
-import type { FlowNode } from '../flow';
+import type { PlanNode } from '../plan';
 import {
   collected,
   disposeOf,
@@ -15,9 +15,9 @@ export type EntryState = Node.Computing | Node.Succeeded | Node.Failed;
 
 /** One computation: a node applied to one exact input tuple. */
 export interface Entry {
-  readonly kind: FlowNode['kind'];
+  readonly kind: PlanNode['kind'];
 
-  /** The node's identity: its task, or the flow that built its join. */
+  /** The node's identity: its task, or the plan that built its join. */
   readonly key: object;
 
   /** The upstream output tuple the node is keyed on. */
@@ -49,16 +49,16 @@ export type Intern = (value: unknown) => Tuple;
 export const ROOT: Tuple = [];
 
 /** The identity a node's entries are cached under. */
-export const keyOf = (node: FlowNode): object =>
-  node.kind === 'task' ? node.task : node.flow;
+export const keyOf = (node: PlanNode): object =>
+  node.kind === 'task' ? node.task : node.plan;
 
 const invoke = (task: Task, inputs: Tuple) =>
   // The one place a task runs. Its real inputs were checked when the
-  // flow was composed; here they're whatever upstream yields.
+  // plan was composed; here they're whatever upstream yields.
   (task as Task<unknown[]>)(...inputs.map(yieldOf));
 
 const evaluate = async (
-  node: FlowNode,
+  node: PlanNode,
   entry: Entry,
   intern: Intern,
 ): Promise<{ outputs: Tuple; dispose?: Dispose }> => {
@@ -78,7 +78,7 @@ const evaluate = async (
 
 const run = async (
   entry: Entry,
-  node: FlowNode,
+  node: PlanNode,
   intern: Intern,
   setState: Setter<EntryState>,
 ) => {
@@ -95,7 +95,7 @@ const run = async (
 
 /** Start the node and track its outcome. */
 export const spawn = (
-  node: FlowNode,
+  node: PlanNode,
   inputs: Tuple,
   sources: readonly Tuple[],
   intern: Intern,

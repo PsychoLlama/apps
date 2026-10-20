@@ -29,7 +29,7 @@ export type Serializable<Value> = Value extends Primitive | Date
           : never;
 
 /**
- * A flow output that reads as {@link Serializable} data: plain data, or
+ * A plan output that reads as {@link Serializable} data: plain data, or
  * wrappers around it. Bound like `Serializable`.
  */
 export type SerializableOutput<Output> =

@@ -1,25 +1,25 @@
 import type { Task } from './task';
 
-/** Marks a flow and carries its graph builder. */
-export const FLOW: unique symbol = Symbol('flow');
+/** Marks a plan and carries its graph builder. */
+export const PLAN: unique symbol = Symbol('plan');
 
-/** Phantom slot pinning a flow's input and output tuples. */
+/** Phantom slot pinning a plan's input and output tuples. */
 declare const SIGNATURE: unique symbol;
 
 /**
  * A computation graph from an input tuple to an output tuple. Tasks and
- * flows compose freely; a flow with `Inputs = []` is complete and can be
+ * plans compose freely; a plan with `Inputs = []` is complete and can be
  * acquired. `Outputs` are raw: `resource`, `reactive`, and `collect`
  * wrappers stay visible, so bindings can tell the kinds apart.
  *
- * `Inputs` is contravariant and `Outputs` covariant, so `Flow<never>` is
- * the top of all flows: every concrete flow is assignable to it.
+ * `Inputs` is contravariant and `Outputs` covariant, so `Plan<never>` is
+ * the top of all plans: every concrete plan is assignable to it.
  */
-export interface Flow<
+export interface Plan<
   in Inputs extends readonly unknown[] = readonly unknown[],
   out Outputs extends readonly unknown[] = readonly unknown[],
 > {
-  readonly [FLOW]: Build;
+  readonly [PLAN]: Build;
   readonly [SIGNATURE]?: (...inputs: Inputs) => Outputs;
 }
 
@@ -30,19 +30,19 @@ export interface Flow<
 export interface TaskNode {
   readonly kind: 'task';
   readonly task: Task;
-  readonly input?: FlowNode;
+  readonly input?: PlanNode;
 }
 
 /**
  * Concatenates its branches' output tuples. Built by `concurrent` and
- * `collect`: the join is cached by that flow and the input its branches
+ * `collect`: the join is cached by that plan and the input its branches
  * share.
  */
 export interface JoinNode {
   readonly kind: 'join';
-  readonly flow: Flow<never>;
-  readonly input?: FlowNode;
-  readonly branches: readonly FlowNode[];
+  readonly plan: Plan<never>;
+  readonly input?: PlanNode;
+  readonly branches: readonly PlanNode[];
 
   /** Box the concatenated tuple as one value, as `collect` does. */
   readonly collect: boolean;
@@ -52,38 +52,38 @@ export interface JoinNode {
  * One position in a built graph. Every node produces an output tuple: a
  * task's holds its one value, and a join's holds its branches' end to end.
  */
-export type FlowNode = TaskNode | JoinNode;
+export type PlanNode = TaskNode | JoinNode;
 
 /**
  * A fully-wired computation graph. `nodes` lists every node in
- * topological order; `output` is the node whose tuple is the flow's
+ * topological order; `output` is the node whose tuple is the plan's
  * output.
  */
 export interface Graph {
-  readonly nodes: readonly FlowNode[];
-  readonly output: FlowNode;
+  readonly nodes: readonly PlanNode[];
+  readonly output: PlanNode;
 }
 
 /**
- * Wires a flow against a concrete upstream node, whose output tuple is
- * the flow's input. Flows stay abstract until composed, so a sub-flow's
+ * Wires a plan against a concrete upstream node, whose output tuple is
+ * the plan's input. Plans stay abstract until composed, so a sub-plan's
  * input is only known once it's placed.
  */
-export type Build = (input?: FlowNode) => Graph;
+export type Build = (input?: PlanNode) => Graph;
 
-/** Anything that can sit in a flow: a task or another flow. */
-export type Step = Task | Flow<never>;
+/** Anything that can sit in a plan: a task or another plan. */
+export type Step = Task | Plan<never>;
 
 /** A non-empty list of steps. */
 export type Steps = readonly [Step, ...Step[]];
 
-/** A task or flow accepting `Inputs`. */
+/** A task or plan accepting `Inputs`. */
 export type StepAccepting<Inputs extends readonly unknown[]> =
-  Task<Inputs> | Flow<Inputs>;
+  Task<Inputs> | Plan<Inputs>;
 
 /** The input tuple a step accepts. */
 export type InputsOf<S> =
-  S extends Flow<infer Inputs>
+  S extends Plan<infer Inputs>
     ? Inputs
     : S extends (...inputs: infer Inputs) => unknown
       ? Inputs
@@ -95,7 +95,7 @@ export type InputsOf<S> =
  * `YieldAll`.
  */
 export type OutputsOf<S> =
-  S extends Flow<never, infer Outputs>
+  S extends Plan<never, infer Outputs>
     ? Outputs
     : S extends (...inputs: never) => infer Returned
       ? [Awaited<Returned>]
@@ -105,17 +105,17 @@ export type OutputsOf<S> =
 export const toBuild = (step: Step): Build =>
   typeof step === 'function'
     ? (input) => {
-        const node: FlowNode = { kind: 'task', task: step, input };
+        const node: PlanNode = { kind: 'task', task: step, input };
         return { nodes: [node], output: node };
       }
-    : step[FLOW];
+    : step[PLAN];
 
 /**
- * Wrap a builder as a flow. Returns the bare builder slot rather than a
- * typed `Flow`: combinators declare the real `Inputs`/`Outputs` on their
+ * Wrap a builder as a plan. Returns the bare builder slot rather than a
+ * typed `Plan`: combinators declare the real `Inputs`/`Outputs` on their
  * own signatures, and leaving the phantom unset is what lets one value
  * satisfy any of them.
  */
-export const defineFlow = (build: Build): Pick<Flow, typeof FLOW> => ({
-  [FLOW]: build,
+export const definePlan = (build: Build): Pick<Plan, typeof PLAN> => ({
+  [PLAN]: build,
 });

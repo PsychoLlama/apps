@@ -2,7 +2,7 @@ import {
   pipe,
   reactive,
   resource,
-  type Flow,
+  type Plan,
   type Reactive,
   type Resource,
 } from '@lib/effects';
@@ -23,7 +23,7 @@ import { resolveValue, type Snapshot } from './space';
  */
 export interface RuntimeEffects {
   /** An effect that holds a scope alive while it's held. */
-  readonly anchored: (scope: ScopeRef) => Flow<[], [Resource<undefined>]>;
+  readonly anchored: (scope: ScopeRef) => Plan<[], [Resource<undefined>]>;
 
   /**
    * An effect that reads a store or cell, holding its scope alive while
@@ -31,7 +31,7 @@ export interface RuntimeEffects {
    */
   readonly observed: <Ref extends AnyWritableRef>(
     ref: Ref,
-  ) => Flow<[], [Reactive<Snapshot<Ref>>]>;
+  ) => Plan<[], [Reactive<Snapshot<Ref>>]>;
 }
 
 /** Build the effects for a runtime. */

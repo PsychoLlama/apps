@@ -12,7 +12,7 @@ import { DEFAULT_CONTROLLER } from '../controller/default';
 
 /** What `EffectsRoot` provides to the tree beneath it. */
 export interface Effects {
-  /** Runs every flow acquired under the root. */
+  /** Runs every plan acquired under the root. */
   readonly controller: Controller;
 
   /**
@@ -30,7 +30,7 @@ export const EffectsContext = createContext<Effects>();
 /** Props for {@link EffectsRoot}. */
 export interface EffectsRootProps extends ParentProps {
   /**
-   * Runs the flows beneath the root. Read once. Defaults to the shared
+   * Runs the plans beneath the root. Read once. Defaults to the shared
    * controller; tests pass a test controller's so nothing leaks into it.
    */
   readonly controller?: Controller;
@@ -38,7 +38,7 @@ export interface EffectsRootProps extends ParentProps {
 
 /**
  * Wraps the app once, at its root, above any `Suspense`. Provides the
- * controller flows run on, and tracks whether the tree has mounted:
+ * controller plans run on, and tracks whether the tree has mounted:
  * pre-rendered HTML and the hydration pass both read `false`, so they
  * agree; it turns `true` once the client takes over, which is what
  * initializes client-side resources under suspense.

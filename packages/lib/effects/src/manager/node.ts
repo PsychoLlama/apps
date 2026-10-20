@@ -1,5 +1,5 @@
 /**
- * Where a node of an acquired flow stands. Imported as a namespace:
+ * Where a node of an acquired plan stands. Imported as a namespace:
  * `Node.State`, `Node.Succeeded`, and so on.
  */
 

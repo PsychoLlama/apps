@@ -44,7 +44,7 @@ const observeOption = async <Value extends JsonValue>(
  * The console log filter for the active environment as a live accessor,
  * with any persisted OPFS override layered over the default. Changes from
  * any browsing context land here, this tab's own writes included.
- * Releasing the flow drops the subscription.
+ * Releasing the plan drops the subscription.
  */
 export const observeLogFilter = pipe([() => observeOption(filter)]);
 

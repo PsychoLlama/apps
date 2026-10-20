@@ -31,14 +31,14 @@ describe('concurrent', () => {
     expect(shape(graph).output).toBe('[[one(), two()], [one(), two()]]');
   });
 
-  it('keys every join by the flow that built it', () => {
-    const flow = concurrent([one, two]);
-    const first = build(flow).output;
-    const second = build(flow).output;
+  it('keys every join by the plan that built it', () => {
+    const plan = concurrent([one, two]);
+    const first = build(plan).output;
+    const second = build(plan).output;
 
     expect(first).not.toBe(second);
-    expect(first).toMatchObject({ kind: 'join', flow });
-    expect(second).toMatchObject({ kind: 'join', flow });
+    expect(first).toMatchObject({ kind: 'join', plan });
+    expect(second).toMatchObject({ kind: 'join', plan });
   });
 
   it('builds fresh nodes for every placement of the same task', () => {

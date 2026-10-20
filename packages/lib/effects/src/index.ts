@@ -1,5 +1,5 @@
 export { collect, concurrent, pipe } from './combinators';
-export type { Flow, FlowNode } from './flow';
+export type { Plan, PlanNode } from './plan';
 export type { Node } from './manager';
 export {
   reactive,

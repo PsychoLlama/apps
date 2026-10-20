@@ -46,7 +46,7 @@ export type Wrapped =
 
 /**
  * What a downstream task receives from an output: promises settled and
- * wrappers removed. Flows carry raw outputs; this applies where one step
+ * wrappers removed. Plans carry raw outputs; this applies where one step
  * feeds the next.
  */
 export type Yield<Output> = Unwrap<Awaited<Output>>;

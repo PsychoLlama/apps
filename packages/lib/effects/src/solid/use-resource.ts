@@ -1,21 +1,21 @@
 import { createResource, type Resource } from 'solid-js';
 import { isServer } from 'solid-js/web';
-import type { Flow } from '../flow';
+import type { Plan } from '../plan';
 import { useMounted } from './context';
 import {
   forwardResource,
-  holdFlow,
+  holdPlan,
   reduce,
   type Reduce,
-} from './flow-resource';
+} from './plan-resource';
 import type { SerializableOutput } from './serializable';
 
 /**
- * Read a flow's output as a Solid resource on the server and the client
- * alike, holding the flow for the component's lifetime. The server
+ * Read a plan's output as a Solid resource on the server and the client
+ * alike, holding the plan for the component's lifetime. The server
  * computes it into pre-rendered HTML and hands its value to hydration;
  * the client computes it again once mounted, so the value goes live.
- * For flows the server can run, like store reads. Reach for
+ * For plans the server can run, like store reads. Reach for
  * `useClientResource` when only the client can.
  *
  * The output must read as serializable data: no functions or symbols.
@@ -27,14 +27,14 @@ export const useResource = <
     [Index in keyof Outputs]: SerializableOutput<Outputs[Index]>;
   },
 >(
-  flow: Flow<[], Outputs>,
+  plan: Plan<[], Outputs>,
 ): Resource<Reduce<Outputs[0]>> => {
-  const compute = holdFlow(flow);
+  const compute = holdPlan(plan);
   const mounted = useMounted();
 
   // Hydration reuses the server's value for the `initial` key and skips
   // the fetcher. Mounting changes the key, so the client computes the
-  // flow for itself and the value goes live.
+  // plan for itself and the value goes live.
   const [output] = createResource(
     () => (mounted() ? 'hydrated' : 'initial'),
     () =>
