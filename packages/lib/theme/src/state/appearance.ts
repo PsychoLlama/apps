@@ -1,4 +1,4 @@
-import { defineCommand, defineStore } from '@lib/state/next';
+import { defineCommand, defineStore } from '@lib/state';
 import { PREFERENCES, type Appearance } from '../constants';
 
 // A missing or unrecognized attribute reads as its fallback.

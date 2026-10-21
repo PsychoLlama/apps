@@ -1,4 +1,4 @@
-import { defineCommand, defineStore } from '@lib/state/next';
+import { defineCommand, defineStore } from '@lib/state';
 
 /** The gallery's per-listing view state. */
 export interface GalleryState {

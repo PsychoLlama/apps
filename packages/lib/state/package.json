@@ -3,12 +3,11 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Transactional state runtime: topics, folds, scopes, and sagas (space/time/life).",
+  "description": "Stores, cells, and commands as `@lib/effects` plans.",
   "license": "MIT",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts",
-    "./next": "./src/next/index.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "typecheck": "tsc",

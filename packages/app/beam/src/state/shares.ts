@@ -1,4 +1,4 @@
-import { defineCommand, defineStore } from '@lib/state/next';
+import { defineCommand, defineStore } from '@lib/state';
 import { normalizeShare } from './share-body';
 
 /**

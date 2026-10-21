@@ -1,4 +1,4 @@
-import { defineCommand, defineStore } from '@lib/state/next';
+import { defineCommand, defineStore } from '@lib/state';
 
 /**
  * Where the browser's relay connection sits in its lifecycle.

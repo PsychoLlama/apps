@@ -1,4 +1,4 @@
-import { defineCommand, defineStore } from '@lib/state/next';
+import { defineCommand, defineStore } from '@lib/state';
 
 /**
  * Which of beam's three modals is open, and over what.

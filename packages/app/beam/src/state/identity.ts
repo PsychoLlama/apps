@@ -1,4 +1,4 @@
-import { defineCell, defineCommand, defineStore } from '@lib/state/next';
+import { defineCell, defineCommand, defineStore } from '@lib/state';
 import type { SelfContact } from '../platform/database';
 import type { QrGrid } from '../platform/qr-code';
 import { $rename } from './dialogs';
