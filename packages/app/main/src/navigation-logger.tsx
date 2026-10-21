@@ -3,7 +3,7 @@ import { useLocation } from '@solidjs/router';
 import { useClientResource } from '@lib/effects/solid';
 import { createLogger } from '@lib/observability';
 import type { Appearance } from '@lib/theme';
-import { $appearance } from '@lib/theme/runtime';
+import { $appearance } from '@lib/theme/state';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 

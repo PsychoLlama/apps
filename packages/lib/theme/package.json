@@ -11,12 +11,13 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./appearance-toggle": "./src/appearance-toggle.tsx",
+    "./appearance-toggle": "./src/components/appearance-toggle.tsx",
     "./constants": "./src/constants.ts",
     "./prelude": "./src/prelude.ts",
-    "./runtime": "./src/runtime.ts",
+    "./effects": "./src/effects/index.ts",
+    "./state": "./src/state/index.ts",
     "./package.json": "./package.json",
-    "./meta": "./src/meta.tsx"
+    "./meta": "./src/components/meta.tsx"
   },
   "scripts": {
     "typecheck": "tsc",

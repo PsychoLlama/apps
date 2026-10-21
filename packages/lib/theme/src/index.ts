@@ -4,8 +4,9 @@
 // CSS fetch.
 //
 // Build-time / styling-only API. The runtime plans live at
-// `@lib/theme/runtime` so `.css.ts` consumers don't drag `@lib/effects`
-// and `@lib/state` through Vanilla Extract's child compiler.
+// `@lib/theme/state` and `@lib/theme/effects` so `.css.ts` consumers
+// don't drag `@lib/state` and `@lib/effects` through Vanilla Extract's
+// child compiler.
 export { SWATCHES, THEMES } from './bundles.css';
 export {
   COLOR_SCHEME_ATTRIBUTE,

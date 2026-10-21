@@ -2,7 +2,8 @@ import { For } from 'solid-js';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { ColorSchemeOption } from '@lib/theme';
-import { $appearance, $setAppearance } from '@lib/theme/runtime';
+import { $setAppearance } from '@lib/theme/effects';
+import { $appearance } from '@lib/theme/state';
 import { ResetButton } from './reset-button';
 import * as css from './appearance-picker.css';
 

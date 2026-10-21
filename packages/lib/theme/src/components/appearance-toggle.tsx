@@ -2,9 +2,9 @@ import type { Component, JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { Button } from '@lib/ui';
-import type { ColorSchemeOption } from './constants';
-import { $setAppearance } from './effects/appearance';
-import { $appearance } from './state/appearance';
+import type { ColorSchemeOption } from '../constants';
+import { $setAppearance } from '../effects/appearance';
+import { $appearance } from '../state/appearance';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
 import IconSystem from 'virtual:icons/mdi/theme-light-dark';
@@ -28,8 +28,8 @@ const CYCLE: ReadonlyArray<SchemeStep> = [
 ];
 
 /**
- * Light/dark/system toggle. Reads and writes through the theme
- * runtime: pressing it cycles the color-scheme override, flipping
+ * Light/dark/system toggle. Reads and writes through the theme state
+ * and effects: pressing it cycles the color-scheme override, flipping
  * `<html data-color-scheme>` and persisting the choice — the single-button
  * counterpart to the settings page's three-card `AppearancePicker`. Drop
  * it anywhere a header or toolbar wants quick appearance control.

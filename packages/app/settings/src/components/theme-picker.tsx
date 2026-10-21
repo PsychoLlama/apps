@@ -3,7 +3,8 @@ import clx from '@lib/classnames';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
 import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
-import { $appearance, $setAppearance } from '@lib/theme/runtime';
+import { $setAppearance } from '@lib/theme/effects';
+import { $appearance } from '@lib/theme/state';
 import { ResetButton } from './reset-button';
 import * as css from './theme-picker.css';
 
