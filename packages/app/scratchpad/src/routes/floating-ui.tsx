@@ -349,7 +349,8 @@ const FloatingUiScratchpad = () => {
     persistedTether.state === 'pending';
   // Typed as possibly undefined, which only happens while loading.
   const tetherEnabled = () =>
-    (tetherLoading() ? undefined : persistedTether()) ?? defaultTetherEnabled;
+    (tetherLoading() ? undefined : persistedTether()?.enabled) ??
+    defaultTetherEnabled;
 
   /** The middleware cards currently checked, as the group reads them. */
   const enabledMiddleware = (): TetherMiddleware[] =>

@@ -1,13 +1,11 @@
-import { createSignal } from 'solid-js';
-import { collect, pipe, reactive } from '@lib/effects';
+import { collect, pipe } from '@lib/effects';
 import {
   environment,
   getDefaultValue,
-  readEnvironment,
   reset,
-  subscribe,
   updateConfig,
 } from '@lib/runtime-config';
+import { observeOption } from '@lib/runtime-config/effects';
 import { tetherEnabled } from '../config';
 import { $controlsReset } from '../state/floating-ui';
 
@@ -18,36 +16,12 @@ import { $controlsReset } from '../state/floating-ui';
 export const defaultTetherEnabled = getDefaultValue(tetherEnabled).enabled;
 
 /**
- * Whether the tether is enabled for the active environment, as a live
- * accessor, with any persisted OPFS override layered over the default.
- * Changes from any browsing context land here, this tab's own writes
- * included. Releasing the plan drops the subscription.
+ * The tether option for the active environment, as a live accessor, with
+ * any persisted OPFS override layered over the default. Changes from any
+ * browsing context land here, this tab's own writes included. Releasing
+ * the plan drops the subscription.
  */
-export const $tetherEnabled = pipe([
-  async () => {
-    const [enabled, setEnabled] = createSignal(defaultTetherEnabled);
-    const unsubscribe = subscribe(tetherEnabled, (value) =>
-      setEnabled(value.enabled),
-    );
-
-    // Subscribed before reading. A change landing mid-read is at least as
-    // fresh as the read, so the read only lands if nothing changed.
-    let stale = false;
-    const stopStaleWatcher = subscribe(tetherEnabled, () => (stale = true));
-
-    try {
-      const read = await readEnvironment(tetherEnabled);
-      if (!stale) setEnabled(read.enabled);
-    } catch (error) {
-      unsubscribe();
-      throw error;
-    } finally {
-      stopStaleWatcher();
-    }
-
-    return reactive(enabled, unsubscribe);
-  },
-]);
+export const $tetherEnabled = pipe([() => observeOption(tetherEnabled)]);
 
 /**
  * Persist the tether toggle as the active environment's override. The
