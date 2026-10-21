@@ -19,7 +19,7 @@
     "@floating-ui/dom": "catalog:",
     "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
-    "@lib/observability": "workspace:*",
+    "@lib/effects": "workspace:*",
     "@lib/runtime-config": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",

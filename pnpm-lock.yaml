@@ -752,9 +752,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
-      '@lib/observability':
+      '@lib/effects':
         specifier: workspace:*
-        version: link:../../lib/observability
+        version: link:../../lib/effects
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../../lib/runtime-config

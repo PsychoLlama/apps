@@ -1,6 +1,6 @@
-import { For, onMount, Show, type JSX } from 'solid-js';
+import { For, Show, type JSX } from 'solid-js';
 import { flip, shift, type Middleware, type Placement } from '@floating-ui/dom';
-import { createLogger, toError } from '@lib/observability';
+import { useAction, useClientResource, useValue } from '@lib/effects/solid';
 import type { RadiusScale } from '@lib/design';
 import clx from '@lib/classnames';
 import { FrameBody, SiteHeader } from '@lib/shell';
@@ -27,38 +27,36 @@ import {
   FloatingRoot,
   FloatingWindow,
   type FloatingAlignment,
-  type FloatingPoint,
   type FloatingRootDisplay,
   type FloatingSide,
   type FloatingTether,
 } from '@lib/ui/_internal/floating-ui';
-import { AbortError, useAnchor, useCommit, useRun, useValue } from '@lib/state';
 import { AppearanceToggle } from '@lib/theme/appearance-toggle';
 import {
-  alignChanged,
-  alignOffsetChanged,
-  arrowBaseChanged,
-  arrowDepthChanged,
-  arrowVisibilityChanged,
-  middlewareChanged,
-  commitTetherEnabledSaga,
-  displayChanged,
-  flipModeChanged,
-  floatingControls,
-  pointChanged,
-  radiusChanged,
-  resetControlsSaga,
-  scratchpadScope,
-  sideChanged,
-  sideOffsetChanged,
-  trackTetherConfigSaga,
+  $resetControls,
+  $setTetherEnabled,
+  $tetherEnabled,
+  defaultTetherEnabled,
+} from '../effects/floating-ui';
+import {
+  $alignChanged,
+  $alignOffsetChanged,
+  $arrowBaseChanged,
+  $arrowDepthChanged,
+  $arrowVisibilityChanged,
+  $displayChanged,
+  $flipModeChanged,
+  $floatingControls,
+  $middlewareChanged,
+  $pointChanged,
+  $radiusChanged,
+  $sideChanged,
+  $sideOffsetChanged,
   TETHER_MIDDLEWARE,
   type FlipMode,
   type TetherMiddleware,
 } from '../state/floating-ui';
 import * as css from './floating-ui.css';
-
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
 const DISPLAYS = ['block', 'inline'] as const satisfies FloatingRootDisplay[];
 const SIDES = [
@@ -323,51 +321,32 @@ const centerScroll = (element: HTMLElement) => {
  * watch the window re-place live.
  */
 const FloatingUiScratchpad = () => {
-  useAnchor(scratchpadScope);
-  const controls = useValue(floatingControls);
-  const commit = useCommit();
-  const track = useRun(trackTetherConfigSaga);
-  const commitTetherEnabled = useRun(commitTetherEnabledSaga);
-  const resetControls = useRun(resetControlsSaga);
+  const controls = useValue($floatingControls);
+  const chooseDisplay = useAction($displayChanged);
+  const chooseSide = useAction($sideChanged);
+  const chooseAlign = useAction($alignChanged);
+  const chooseRadius = useAction($radiusChanged);
+  const chooseSideOffset = useAction($sideOffsetChanged);
+  const chooseAlignOffset = useAction($alignOffsetChanged);
+  const choosePoint = useAction($pointChanged);
+  const chooseTetherEnabled = useAction($setTetherEnabled);
+  const chooseMiddleware = useAction($middlewareChanged);
+  const chooseFlipMode = useAction($flipModeChanged);
+  const chooseArrowVisible = useAction($arrowVisibilityChanged);
+  const chooseArrowBase = useAction($arrowBaseChanged);
+  const chooseArrowDepth = useAction($arrowDepthChanged);
+  const resetControls = useAction($resetControls);
 
-  // `tetherEnabled` is seeded with the build-environment default, so
-  // first paint (and prerender) match without a flash. OPFS is
-  // client-only — unavailable during SSG — so the tracking saga starts on
-  // mount: it subscribes, reconciles with any persisted override, then
-  // runs for as long as the page is mounted. Writes echo back through the
-  // subscription, making it the single source of truth.
-  onMount(() => {
-    void track().catch((error: unknown) => {
-      // Releasing the anchor on cleanup aborts the saga. That's ordinary
-      // teardown, and nothing to report.
-      if (error instanceof AbortError) return;
-
-      logger.error('The floating-UI tether config tracker failed.', {
-        error: toError(error),
-      });
-    });
-  });
-
-  const chooseDisplay = (display: FloatingRootDisplay) =>
-    commit(displayChanged(display));
-  const chooseSide = (side: FloatingSide) => commit(sideChanged(side));
-  const chooseAlign = (align: FloatingAlignment) => commit(alignChanged(align));
-  const chooseRadius = (radius: RadiusScale) => commit(radiusChanged(radius));
-  const chooseSideOffset = (offset: number) =>
-    commit(sideOffsetChanged(offset));
-  const chooseAlignOffset = (offset: number) =>
-    commit(alignOffsetChanged(offset));
-  const choosePoint = (point: FloatingPoint | null) =>
-    commit(pointChanged(point));
-  const chooseTetherEnabled = (enabled: boolean) =>
-    void commitTetherEnabled(enabled);
-  const chooseMiddleware = (enabled: readonly string[]) =>
-    commit(middlewareChanged(enabled as readonly TetherMiddleware[]));
-  const chooseFlipMode = (mode: FlipMode) => commit(flipModeChanged(mode));
-  const chooseArrowVisible = (visible: boolean) =>
-    commit(arrowVisibilityChanged(visible));
-  const chooseArrowBase = (base: number) => commit(arrowBaseChanged(base));
-  const chooseArrowDepth = (depth: number) => commit(arrowDepthChanged(depth));
+  // OPFS is client-only, so the persisted toggle loads after mount. Until
+  // then the build-environment default stands in, so prerender and first
+  // paint agree without a flash or a suspended page. Writes echo back
+  // through the subscription, making it the single source of truth. A
+  // failed read reaches the error boundary.
+  const persistedTether = useClientResource($tetherEnabled);
+  const tetherEnabled = () =>
+    persistedTether.state === 'ready' || persistedTether.state === 'errored'
+      ? persistedTether()
+      : defaultTetherEnabled;
 
   /** The middleware cards currently checked, as the group reads them. */
   const enabledMiddleware = (): TetherMiddleware[] =>
@@ -380,7 +359,7 @@ const FloatingUiScratchpad = () => {
    * along it.
    */
   const tether = (): FloatingTether | undefined => {
-    if (!controls().tetherEnabled) return undefined;
+    if (!tetherEnabled()) return undefined;
 
     const { flipMode, middleware } = controls();
     const passes: (Middleware | undefined)[] = [
@@ -584,7 +563,7 @@ const FloatingUiScratchpad = () => {
               <Flex as="div" direction="column" gap={2}>
                 <Checkbox
                   testId="control-tether-enabled"
-                  checked={controls().tetherEnabled}
+                  checked={tetherEnabled()}
                   onCheckedChange={chooseTetherEnabled}
                 >
                   Enable tether
@@ -601,7 +580,9 @@ const FloatingUiScratchpad = () => {
                   columns={1}
                   gap={2}
                   value={enabledMiddleware()}
-                  onValueChange={chooseMiddleware}
+                  onValueChange={(enabled) =>
+                    chooseMiddleware(enabled as readonly TetherMiddleware[])
+                  }
                 >
                   <For each={TETHER_MIDDLEWARE_CARDS}>
                     {(card) => (
@@ -679,7 +660,7 @@ const FloatingUiScratchpad = () => {
               color="danger"
               variant="outline"
               class={css.reset}
-              onClick={() => void resetControls()}
+              onClick={() => resetControls()}
             >
               Reset controls
             </Button>
