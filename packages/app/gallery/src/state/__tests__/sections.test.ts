@@ -1,61 +1,46 @@
-/**
- * Fold tests for the gallery's tab selection: commit a fact, assert the
- * state it lands. No components in play — `SectionTabs` only reads this
- * store and commits to it.
- */
+import { createTestController } from '@lib/effects/testing';
+import { $gallery, $sectionSelected, FIRST_SECTION } from '../sections';
 
-import { createTestRuntime } from '@lib/state';
-import {
-  FIRST_SECTION,
-  galleryScope,
-  galleryStore,
-  sectionSelectedTopic,
-} from '../sections';
+describe('$gallery', () => {
+  it('starts empty so every listing falls back to its first section', async () => {
+    await using effects = createTestController();
+    const gallery = await effects.run($gallery);
 
-const setup = () => {
-  const runtime = createTestRuntime();
-  runtime.anchor(galleryScope);
-  return runtime;
-};
+    expect(gallery.activeSections).toEqual({});
+    expect(gallery.activeSections.Button ?? FIRST_SECTION).toBe(FIRST_SECTION);
+  });
+});
 
-describe('galleryStore', () => {
-  it('starts empty so every listing falls back to its first section', () => {
-    const { peek } = setup();
+describe('$sectionSelected', () => {
+  it('takes a selected section for a listing', async () => {
+    await using effects = createTestController();
+    const gallery = await effects.run($gallery);
+    const sectionSelected = await effects.run($sectionSelected);
 
-    expect(peek(galleryStore).activeSections).toEqual({});
-    expect(peek(galleryStore).activeSections.Button ?? FIRST_SECTION).toBe(
-      FIRST_SECTION,
-    );
+    sectionSelected('Button', '2');
+
+    expect(gallery.activeSections.Button).toBe('2');
   });
 
-  it('takes a selected section for a listing', () => {
-    const { commit, peek } = setup();
+  it("replaces a listing's previous selection", async () => {
+    await using effects = createTestController();
+    const gallery = await effects.run($gallery);
+    const sectionSelected = await effects.run($sectionSelected);
 
-    commit(sectionSelectedTopic({ listing: 'Button', section: '2' }));
+    sectionSelected('Button', '2');
+    sectionSelected('Button', '1');
 
-    expect(peek(galleryStore).activeSections.Button).toBe('2');
+    expect(gallery.activeSections.Button).toBe('1');
   });
 
-  it("replaces a listing's previous selection", () => {
-    const { commit, peek } = setup();
+  it('tracks each listing separately', async () => {
+    await using effects = createTestController();
+    const gallery = await effects.run($gallery);
+    const sectionSelected = await effects.run($sectionSelected);
 
-    commit(sectionSelectedTopic({ listing: 'Button', section: '2' }));
-    commit(sectionSelectedTopic({ listing: 'Button', section: '1' }));
+    sectionSelected('Button', '2');
+    sectionSelected('Callout', '1');
 
-    expect(peek(galleryStore).activeSections.Button).toBe('1');
-  });
-
-  it('tracks each listing separately', () => {
-    const { commit, peek } = setup();
-
-    commit(
-      sectionSelectedTopic({ listing: 'Button', section: '2' }),
-      sectionSelectedTopic({ listing: 'Callout', section: '1' }),
-    );
-
-    expect(peek(galleryStore).activeSections).toEqual({
-      Button: '2',
-      Callout: '1',
-    });
+    expect(gallery.activeSections).toEqual({ Button: '2', Callout: '1' });
   });
 });
