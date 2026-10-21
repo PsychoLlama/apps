@@ -1,30 +1,29 @@
-import { createEffect, on, onCleanup, Show } from 'solid-js';
+import { createEffect, createMemo, on, onCleanup, Show } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { useCommit, useRun, useValue } from '@lib/state';
+import { useAction, useValue } from '@lib/effects/solid';
 import { FrameBody } from '@lib/shell';
 import { AlertDialog, Button, Callout, Flex, Heading, Text } from '@lib/ui';
 import { RenameDialog } from '../../../components/rename-dialog';
 import { ShareComposer } from '../../../components/share-composer';
 import { ShareLog } from '../../../components/share-log';
-import { addressBookFormula, forgetContactSaga } from '../../../state/contacts';
-import { isEndpointId } from '../../../state/endpoint';
-import { reportSagaFailure } from '../../../state/failure';
-import { identityStore } from '../../../state/identity';
-import { generateLabel } from '../../../state/labels';
+import { $dialPeer, $disconnectPeer, $forgetContact } from '../../../effects';
 import {
-  connectionStore,
-  dialPeerSaga,
-  disconnectPeerSaga,
-  peerStatesFormula,
+  $connection,
+  $contacts,
+  $identity,
+  $peerLinks,
+  $removal,
+  $removalClosed,
+  $removalOpened,
+  $renameOpened,
+  $shareLog,
+  addressBookOf,
+  generateLabel,
+  isEndpointId,
+  peerStateOf,
+  sharesByPeerOf,
   type PeerState,
-} from '../../../state/network';
-import { sharesByPeerFormula } from '../../../state/shares';
-import {
-  removalClosedTopic,
-  removalOpenedTopic,
-  removalStore,
-  renameOpenedTopic,
-} from '../../../state/view';
+} from '../../../state';
 import * as styles from './share.css';
 
 /**
@@ -62,17 +61,22 @@ const BeamShare = () => {
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const connection = useValue(connectionStore);
-  const self = useValue(identityStore);
-  const contacts = useValue(addressBookFormula);
-  const states = useValue(peerStatesFormula);
-  const shares = useValue(sharesByPeerFormula);
-  const removal = useValue(removalStore);
+  const connection = useValue($connection);
+  const self = useValue($identity);
+  const book = useValue($contacts);
+  const links = useValue($peerLinks);
+  const log = useValue($shareLog);
+  const removal = useValue($removal);
 
-  const dial = useRun(dialPeerSaga);
-  const disconnect = useRun(disconnectPeerSaga);
-  const forget = useRun(forgetContactSaga);
-  const commit = useCommit();
+  const dial = useAction($dialPeer);
+  const disconnect = useAction($disconnectPeer);
+  const forget = useAction($forgetContact);
+  const openRename = useAction($renameOpened);
+  const openRemoval = useAction($removalOpened);
+  const closeRemoval = useAction($removalClosed);
+
+  const contacts = createMemo(() => addressBookOf(book()));
+  const shares = createMemo(() => sharesByPeerOf(log()));
 
   /**
    * Whether the route names an address at all. Format only — it says the id
@@ -120,30 +124,27 @@ const BeamShare = () => {
   const name = () => contact()?.name ?? generateLabel(params.id);
 
   /** Where the pairing stands. Nothing attempted yet reads as `preparing`. */
-  const state = (): PeerState => states()[params.id] ?? 'preparing';
+  const state = (): PeerState => peerStateOf(links(), params.id);
 
   // Forgetting a peer leaves this page behind: it's the record's page as much
   // as the connection's, and staying on it would show a device that is no
   // longer in the book, its name already reverted to a key prefix.
   const handleForget = () => {
-    void forget(params.id)
-      .then(() => navigate('/'))
-      .catch(reportSagaFailure('The contact forget saga failed.'));
+    forget(params.id);
+    navigate('/');
   };
 
   // The dial needs the live endpoint, so hold off until the relay connection
   // lands. Keyed on the peer too, since one share view serves every id: a
   // relay that cycles back to `connected`, or a different peer, both mean
-  // dial. The saga itself ignores a peer already dialled or in flight.
+  // dial. The effect itself ignores a peer already dialled or in flight.
   createEffect(
     on(
       () => [params.id, connection().status] as const,
       ([endpointId, status]) => {
         if (status !== 'connected') return;
         if (!dialable()) return;
-        void dial(endpointId).catch(
-          reportSagaFailure('The beam dial saga failed.'),
-        );
+        dial(endpointId);
       },
     ),
   );
@@ -161,11 +162,7 @@ const BeamShare = () => {
     on(
       () => params.id,
       (endpointId) => {
-        onCleanup(() => {
-          void disconnect(endpointId).catch(
-            reportSagaFailure('The peer disconnect saga failed.'),
-          );
-        });
+        onCleanup(() => disconnect(endpointId));
       },
     ),
   );
@@ -269,12 +266,10 @@ const BeamShare = () => {
                         variant="soft"
                         color="neutral"
                         onClick={() =>
-                          commit(
-                            renameOpenedTopic({
-                              kind: 'peer',
-                              endpointId: view().endpointId,
-                            }),
-                          )
+                          openRename({
+                            kind: 'peer',
+                            endpointId: view().endpointId,
+                          })
                         }
                       >
                         Rename
@@ -284,9 +279,7 @@ const BeamShare = () => {
                         testId="beam-share-forget"
                         variant="soft"
                         color="danger"
-                        onClick={() =>
-                          commit(removalOpenedTopic(view().endpointId))
-                        }
+                        onClick={() => openRemoval(view().endpointId)}
                       >
                         Forget
                       </Button>
@@ -328,7 +321,7 @@ const BeamShare = () => {
                     <AlertDialog
                       testId="beam-share-forget-dialog"
                       open={removal().endpointId === view().endpointId}
-                      onOpenChange={() => commit(removalClosedTopic())}
+                      onOpenChange={() => closeRemoval()}
                       title="Forget this contact?"
                       description={`${view().name} drops out of your address book. They can still reach this device if they have its link.`}
                       actionText="Forget"

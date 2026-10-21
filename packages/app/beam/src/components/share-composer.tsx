@@ -1,10 +1,8 @@
-import { useCommit, useRun, useValue } from '@lib/state';
+import { useAction, useValue } from '@lib/effects/solid';
 import { Flex, IconButton, TextField, Tooltip } from '@lib/ui';
 import IconSend from 'virtual:icons/mdi/send-outline';
-import { reportSagaFailure } from '../state/failure';
-import { shareTextSaga } from '../state/network';
-import { SHARE_MAX_LENGTH } from '../state/share-body';
-import { draftChangedTopic, draftsStore } from '../state/shares';
+import { $shareText } from '../effects';
+import { $draftChanged, $drafts, SHARE_MAX_LENGTH } from '../state';
 
 /**
  * Where text and links are written, at the head of a peer's share view.
@@ -22,7 +20,7 @@ import { draftChangedTopic, draftsStore } from '../state/shares';
  * empty space. It also asked to be aimed at: a box that size reads as
  * somewhere to compose, and this is somewhere to paste.
  *
- * The draft lives in the scope rather than the field, so wandering off to
+ * The draft lives in a store rather than the field, so wandering off to
  * another peer and back doesn't quietly discard a half-written note.
  *
  * A real `<form>`, so sending goes through the one path the browser already
@@ -37,9 +35,9 @@ export const ShareComposer = (props: {
   /** Whether the peer can receive it right now. */
   connected: boolean;
 }) => {
-  const drafts = useValue(draftsStore);
-  const commit = useCommit();
-  const share = useRun(shareTextSaga);
+  const drafts = useValue($drafts);
+  const changeDraft = useAction($draftChanged);
+  const share = useAction($shareText);
 
   const body = () => drafts().bodies[props.endpointId] ?? '';
 
@@ -50,18 +48,16 @@ export const ShareComposer = (props: {
   const action = () => (props.connected ? 'Send' : 'Queue');
 
   /**
-   * Sent from the draft rather than from `FormData`. The scope already holds
+   * Sent from the draft rather than from `FormData`. The store already holds
    * what was typed — it has to, so the note survives navigating away — and
    * reading the field back would make a second source of truth out of the
-   * one the saga is about to clear.
+   * one the share is about to clear.
    */
   const handleSubmit = (event: SubmitEvent) => {
     event.preventDefault();
     if (empty()) return;
 
-    void share({ endpointId: props.endpointId, body: body() }).catch(
-      reportSagaFailure('The share saga failed.'),
-    );
+    share(props.endpointId, body());
   };
 
   return (
@@ -87,12 +83,7 @@ export const ShareComposer = (props: {
         size={3}
         value={body()}
         onInput={(event) =>
-          commit(
-            draftChangedTopic({
-              endpointId: props.endpointId,
-              body: event.currentTarget.value,
-            }),
-          )
+          changeDraft(props.endpointId, event.currentTarget.value)
         }
         maxlength={SHARE_MAX_LENGTH}
         autocomplete={undefined}

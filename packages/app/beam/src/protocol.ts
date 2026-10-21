@@ -6,7 +6,7 @@ import { SHARE_MAX_LENGTH } from './state/share-body';
  *
  * At the top of the package rather than under `state/` because it is not
  * state: it is the wire, and both sides of the worker boundary need it. The
- * p2p worker encodes and decodes with it, and the state layer builds the
+ * p2p worker encodes and decodes with it, and the effects build the
  * messages it sends. Nothing here imports anything but the two length limits
  * it enforces, so it costs a worker bundle nothing to pull in.
  */

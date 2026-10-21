@@ -1,6 +1,6 @@
-import { useValue } from '@lib/state';
+import { useValue } from '@lib/effects/solid';
 import { Flex, Text, Tooltip } from '@lib/ui';
-import { connectionStore, type ConnectionStatus } from '../state/network';
+import { $connection, type ConnectionStatus } from '../state';
 import * as styles from './status-bar.css';
 
 /** Where the relay connection stands, in the word a reader would use. */
@@ -33,7 +33,7 @@ const describeRelay = (status: ConnectionStatus): string => {
  * find. Its tooltip is which server is holding the connection.
  */
 export const StatusBar = () => {
-  const connection = useValue(connectionStore);
+  const connection = useValue($connection);
 
   return (
     <Flex as="footer" direction="row" align="center" gap={3} class={styles.bar}>

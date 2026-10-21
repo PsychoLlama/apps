@@ -1,19 +1,16 @@
-import { useCommit, useRun, useValue } from '@lib/state';
+import { useAction, useValue } from '@lib/effects/solid';
 import { Button, Dialog, Flex, Text, TextField } from '@lib/ui';
+import { $renameContact, $renameDevice } from '../effects';
 import {
-  contactsStore,
+  $contacts,
+  $identity,
+  $rename,
+  $renameClosed,
+  LABEL_MAX_LENGTH,
+  deviceFallbackOf,
   fallbackName,
-  renameContactSaga,
-} from '../state/contacts';
-import { reportSagaFailure } from '../state/failure';
-import { deviceFallbackFormula, identityStore } from '../state/identity';
-import { LABEL_MAX_LENGTH } from '../state/labels';
-import { renameDeviceSaga } from '../state/network';
-import {
-  renameClosedTopic,
-  renameStore,
   type RenameTarget,
-} from '../state/view';
+} from '../state';
 
 /** Ties the field to its label. Only one rename form is ever mounted. */
 const NAME_FIELD_ID = 'beam-rename-name';
@@ -39,13 +36,12 @@ export const RenameDialog = (props: {
   /** The record this form renames. */
   target: RenameTarget;
 }) => {
-  const rename = useValue(renameStore);
-  const book = useValue(contactsStore);
-  const self = useValue(identityStore);
-  const deviceFallback = useValue(deviceFallbackFormula);
-  const runContactRename = useRun(renameContactSaga);
-  const runDeviceRename = useRun(renameDeviceSaga);
-  const commit = useCommit();
+  const rename = useValue($rename);
+  const book = useValue($contacts);
+  const self = useValue($identity);
+  const renameContact = useAction($renameContact);
+  const renameDevice = useAction($renameDevice);
+  const close = useAction($renameClosed);
 
   /** Whether the open form is this one's. */
   const open = () => {
@@ -70,7 +66,7 @@ export const RenameDialog = (props: {
    */
   const placeholder = () => {
     const mine = props.target;
-    if (mine.kind === 'self') return deviceFallback();
+    if (mine.kind === 'self') return deviceFallbackOf(self());
 
     const stored = book().entries[mine.endpointId];
     return stored ? fallbackName(stored) : '';
@@ -87,28 +83,19 @@ export const RenameDialog = (props: {
     const typed = typeof entry === 'string' ? entry : '';
     const mine = props.target;
 
-    // Handed over as typed. The fold normalizes it — trimming, capping, and
+    // Handed over as typed. The command normalizes it — trimming, capping, and
     // reading an emptied field as a request to clear the local name — so
     // there's one place that decides what a name may be, rather than one
     // rule here and another wherever the next name comes from.
-    if (mine.kind === 'self') {
-      void runDeviceRename(typed).catch(
-        reportSagaFailure('The device rename saga failed.'),
-      );
-
-      return;
-    }
-
-    void runContactRename({ endpointId: mine.endpointId, label: typed }).catch(
-      reportSagaFailure('The contact rename saga failed.'),
-    );
+    if (mine.kind === 'self') renameDevice(typed);
+    else renameContact(mine.endpointId, typed);
   };
 
   return (
     <Dialog
       testId="beam-rename-dialog"
       open={open()}
-      onOpenChange={() => commit(renameClosedTopic())}
+      onOpenChange={() => close()}
       title={
         props.target.kind === 'self' ? 'Rename this device' : 'Rename contact'
       }
@@ -131,7 +118,7 @@ export const RenameDialog = (props: {
             Name
           </Text>
           {/* The cap is the same one a peer's advertised name is held to.
-              Enforcing it here as well as in the fold isn't belt-and-braces:
+              Enforcing it here as well as in the command isn't belt-and-braces:
               it's the only place the reader can see the limit, rather than
               discovering it when the name they typed comes back shorter. */}
           <TextField
@@ -154,7 +141,7 @@ export const RenameDialog = (props: {
             type="button"
             variant="soft"
             color="neutral"
-            onClick={() => commit(renameClosedTopic())}
+            onClick={() => close()}
           >
             Cancel
           </Button>

@@ -1,24 +1,26 @@
-import { Match, Switch, onMount, type JSX } from 'solid-js';
+import { Match, Show, Switch, createMemo, type JSX } from 'solid-js';
 import { useLocation } from '@solidjs/router';
-import { useAnchor, useRun, useValue } from '@lib/state';
+import { Suspense, useClientResource, useValue } from '@lib/effects/solid';
 import { Frame } from '@lib/shell';
 import { Flex } from '@lib/ui';
 import { BeamHeader } from '../components/beam-header';
 import { BeamOnboarding } from '../components/beam-onboarding';
 import { ContactSidebar } from '../components/contact-sidebar';
 import { StatusBar } from '../components/status-bar';
-import { restoreContactsSaga } from '../state/contacts';
-import { reportSagaFailure } from '../state/failure';
-import { connectRelaySaga } from '../state/network';
-import { restoreOnboardingSaga } from '../state/onboarding';
-import { beamScope } from '../state/scope';
-import { beamSurfaceFormula, surfaceForRoute } from '../state/view';
+import { $connect, $restoreFromDisk } from '../effects';
+import {
+  $beamLifetime,
+  $onboarding,
+  surfaceForRoute,
+  surfaceOf,
+} from '../state';
 import * as styles from './(beam).css';
 
 /**
  * The Beam layout: the `<main>` frame for every route in the `(beam)` group,
- * which is all of them but the 404 page. It anchors the session scope for the
- * whole surface, so the relay connection and the loaded address book survive
+ * which is all of them but the 404 page. It holds the session's stores and
+ * connection for the whole surface, so the relay connection and the loaded
+ * address book survive
  * navigation between the invite view and a peer's share view without
  * re-dialling or re-reading. Each route renders its body inside:
  * `(beam)/index` is the address book at `/`, `(beam)/share/[id]` is one peer
@@ -38,34 +40,26 @@ import * as styles from './(beam).css';
  * neither, because picking a surface and swapping it a moment later is a
  * flash of the wrong app.
  *
- * The anchor is the only lifecycle wiring here: releasing it on cleanup
- * aborts the connect and frees the endpoint.
+ * Holding the plans is the only lifecycle wiring here: releasing them on
+ * cleanup ends the session and frees the endpoint.
  */
 const BeamLayout = (props: { children?: JSX.Element }) => {
-  useAnchor(beamScope);
+  useValue($beamLifetime);
+
+  // Neither the wasm, the handshake, nor IndexedDB can run during SSG, so
+  // both start once the client mounts. They're independent, and the disk
+  // answers long before the relay does. The connection is never read: it
+  // reports through `$connection`.
+  const restored = useClientResource($restoreFromDisk);
+  useClientResource($connect);
+
   const location = useLocation();
-  const derived = useValue(beamSurfaceFormula);
-  const connect = useRun(connectRelaySaga);
-  const restoreContacts = useRun(restoreContactsSaga);
-  const restoreOnboarding = useRun(restoreOnboardingSaga);
+  const onboarding = useValue($onboarding);
 
   /** Which screen to show — the derived one, unless the route outranks it. */
-  const surface = () => surfaceForRoute(derived(), location.pathname);
-
-  onMount(() => {
-    // Neither the wasm, the handshake, nor IndexedDB can run during SSG, so
-    // all three start once the client mounts. They're independent, and the
-    // disk answers long before the relay does: the contact store — this
-    // device's own row included — and how far its setup has got are both
-    // readable whether or not the endpoint ever comes up.
-    void connect().catch(reportSagaFailure('The beam connect saga failed.'));
-    void restoreContacts().catch(
-      reportSagaFailure('The address book restore saga failed.'),
-    );
-    void restoreOnboarding().catch(
-      reportSagaFailure('The setup progress restore saga failed.'),
-    );
-  });
+  const surface = createMemo(() =>
+    surfaceForRoute(surfaceOf(onboarding()), location.pathname),
+  );
 
   return (
     <Frame>
@@ -76,31 +70,36 @@ const BeamLayout = (props: { children?: JSX.Element }) => {
         renameable={surface() === 'pairing' || surface() === 'session'}
       />
 
-      {/* `unknown` matches nothing on purpose: it's the state where no screen
-          is the right one, and the frame's header is all there is to show. */}
-      <Switch>
-        <Match when={surface() === 'naming'}>
-          <BeamOnboarding step="naming" />
-        </Match>
+      {/* Nothing until the disk has answered: no screen is the right one
+          yet, and the frame's header is all there is to show. A failed read
+          reaches the error boundary. */}
+      <Suspense>
+        <Show when={restored()}>
+          <Switch>
+            <Match when={surface() === 'naming'}>
+              <BeamOnboarding step="naming" />
+            </Match>
 
-        <Match when={surface() === 'pairing'}>
-          <BeamOnboarding step="pairing" />
-        </Match>
+            <Match when={surface() === 'pairing'}>
+              <BeamOnboarding step="pairing" />
+            </Match>
 
-        <Match when={surface() === 'session'}>
-          <Flex as="div" direction="row" class={styles.split}>
-            <ContactSidebar />
+            <Match when={surface() === 'session'}>
+              <Flex as="div" direction="row" class={styles.split}>
+                <ContactSidebar />
 
-            {/* The route's own column, filling what the rail leaves. Each
+                {/* The route's own column, filling what the rail leaves. Each
                 route renders its body into it. */}
-            <Flex as="div" direction="column" class={styles.pane}>
-              {props.children}
-            </Flex>
-          </Flex>
+                <Flex as="div" direction="column" class={styles.pane}>
+                  {props.children}
+                </Flex>
+              </Flex>
 
-          <StatusBar />
-        </Match>
-      </Switch>
+              <StatusBar />
+            </Match>
+          </Switch>
+        </Show>
+      </Suspense>
     </Frame>
   );
 };

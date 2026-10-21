@@ -1,7 +1,7 @@
 import { For, Show } from 'solid-js';
 import { useLocation } from '@solidjs/router';
 import { Badge, Flex, LinkButton, Text } from '@lib/ui';
-import type { ContactView } from '../state/contacts';
+import type { ContactView } from '../state';
 import * as styles from './contact-list.css';
 
 /**

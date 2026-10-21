@@ -2,8 +2,7 @@ import { For, Show } from 'solid-js';
 import { Badge, Flex, Heading, Link, Text } from '@lib/ui';
 import IconArrowDown from 'virtual:icons/mdi/arrow-down';
 import IconArrowUp from 'virtual:icons/mdi/arrow-up';
-import { shareLink } from '../state/share-body';
-import { type Share } from '../state/shares';
+import { shareLink, type Share } from '../state';
 import * as styles from './share-log.css';
 
 /** Times read as times. Follows the reader's locale. */

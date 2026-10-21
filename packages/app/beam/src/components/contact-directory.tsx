@@ -1,9 +1,8 @@
-import { Show } from 'solid-js';
-import { useValue } from '@lib/state';
+import { Show, createMemo } from 'solid-js';
+import { useValue } from '@lib/effects/solid';
 import { Flex, Heading, Text } from '@lib/ui';
 import { ContactList } from './contact-list';
-import { addressBookFormula, contactsStore } from '../state/contacts';
-import { activePeersFormula } from '../state/network';
+import { $contacts, $peerLinks, activePeersOf, addressBookOf } from '../state';
 import * as styles from './contact-directory.css';
 
 /**
@@ -26,9 +25,10 @@ import * as styles from './contact-directory.css';
  * the DOM at once and a test reaching for a row needs to say which it meant.
  */
 export const ContactDirectory = (props: { testId: string }) => {
-  const book = useValue(contactsStore);
-  const contacts = useValue(addressBookFormula);
-  const active = useValue(activePeersFormula);
+  const book = useValue($contacts);
+  const links = useValue($peerLinks);
+  const contacts = createMemo(() => addressBookOf(book()));
+  const active = createMemo(() => activePeersOf(links()));
 
   return (
     <Flex as="div" direction="column" gap={3} grow>
@@ -42,16 +42,12 @@ export const ContactDirectory = (props: { testId: string }) => {
         Contacts
       </Heading>
 
-      {/* Only claim there's nothing paired once the book has actually been
-          read. Between mount and the IndexedDB read landing there's no answer
-          yet, and "no contacts" is the wrong one.
-
-          It fills whatever room the list would have had and centers in it, so
+      {/* It fills whatever room the list would have had and centers in it, so
           in the rail it sits in the empty middle rather than hanging under
           the heading. Plain, and quietly — it's a statement of fact, not a
           line worth stressing, and it says nothing about what to do because
           the invite and scan buttons are already on the page saying that. */}
-      <Show when={book().status === 'ready' && contacts().length === 0}>
+      <Show when={contacts().length === 0}>
         <Flex as="div" direction="column" justify="center" align="center" grow>
           <Text as="p" size={2} color="lowContrast" selectable={false}>
             No contacts

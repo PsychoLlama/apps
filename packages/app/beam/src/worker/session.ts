@@ -333,7 +333,7 @@ export class WorkerSession {
    *
    * Anything that doesn't decode is dropped here rather than forwarded: the
    * bytes came from a stranger, and a frame we can't read is not an event
-   * worth waking a saga on another thread for. Decoding on this side is the
+   * worth waking an effect on another thread for. Decoding on this side is the
    * point — what reaches the page is a message this code vouched for, never
    * a stranger's bytes.
    */
