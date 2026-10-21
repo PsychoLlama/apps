@@ -1,4 +1,4 @@
-import { defineCell, defineCommand } from '@lib/state/next';
+import { defineCell, defineCommand } from '@lib/state';
 
 /**
  * Whether the notice confirming a delete is showing, live while anything

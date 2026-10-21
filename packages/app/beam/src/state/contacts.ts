@@ -1,4 +1,4 @@
-import { defineCommand, defineStore } from '@lib/state/next';
+import { defineCommand, defineStore } from '@lib/state';
 import type { Contact, ContactRecord } from '../platform/database';
 import { $invite, $rename } from './dialogs';
 import { $identity } from './identity';

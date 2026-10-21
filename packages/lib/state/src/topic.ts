@@ -1,29 +1,98 @@
+import { batch, untrack } from 'solid-js';
+import { assert } from '@lib/assert';
 import {
-  SUBSCRIBERS,
-  type Fact,
-  type Fold,
-  type PayloadArgs,
-  type Topic,
-} from './internal';
+  pipe,
+  resource,
+  type Mode,
+  type Plan,
+  type Resource,
+} from '@lib/effects';
 
-export type { Fact, Topic };
+declare const TOPIC: unique symbol;
 
 /**
- * Define a topic — an identity for facts. Calling the topic wraps a
- * payload into an inert `[topic, payload]` fact; nothing happens until
- * the fact is committed. Facts are the only interface between the effect
- * world and the state world. Exporting a topic is a deliberate API act:
- * it becomes the feature's outbound contract.
+ * Emits an event to every commit subscribed to its topic. The function's
+ * identity is the topic.
  */
-export const defineTopic = <Payload = void>(): Topic<Payload> => {
-  const topic = (...args: PayloadArgs<Payload>): Fact<Payload> => [
-    wired,
-    args[0] as Payload,
-  ];
+export interface Publish<Args extends readonly unknown[]> {
+  (...args: Args): void;
 
-  const wired: Topic<Payload> = Object.assign(topic, {
-    [SUBSCRIBERS]: [] as Fold[],
-  });
+  // Phantom. Keeps arbitrary functions from passing as topics.
+  readonly [TOPIC]: Args;
+}
 
-  return wired;
-};
+/**
+ * A plan yielding a publisher: a topic, or a command. The publisher's
+ * channel closes with the plan.
+ */
+export type Topic<
+  Args extends readonly unknown[],
+  M extends Mode = Mode,
+> = Plan<void, Resource<Publish<Args>, 'sync'>, M>;
+
+/**
+ * The arguments a topic's events carry, e.g. `TopicValues<typeof $send>`.
+ *
+ * @internal
+ */
+export type TopicValues<P> =
+  P extends Plan<never, Resource<Publish<infer Args>>> ? Args : never;
+
+type Subscriber = (...args: readonly unknown[]) => void;
+
+// The bus. Each live topic owns its subscribers, keyed by its publisher.
+const channels = new WeakMap<object, Set<Subscriber>>();
+
+/**
+ * Define a topic. Holding the plan binds it to the message bus;
+ * extensions subscribe to it with `defineExtension`.
+ */
+export const defineTopic = <Args extends readonly unknown[]>(): Topic<
+  Args,
+  'sync'
+> =>
+  pipe([
+    () => {
+      const subscribers = new Set<Subscriber>();
+
+      // One batch per event, so every commit it triggers lands together.
+      // Untracked, so what subscribers read never leaks into an emitter's
+      // reactive scope.
+      const publish = (...args: Args) =>
+        batch(() =>
+          untrack(() => subscribers.forEach((notify) => notify(...args))),
+        );
+
+      channels.set(publish, subscribers);
+      return resource(publish as Publish<Args>, () => {
+        channels.delete(publish);
+      });
+    },
+  ]);
+
+/**
+ * A task subscribing `commit` to the publisher upstream, for as long as
+ * the task lives. `commit` takes whatever else upstream yields, once, and
+ * returns the event handler, e.g.
+ * `collect([$topic, $store], subscribe(commit, () => {}))`. The task
+ * yields what `select` picks from the publisher.
+ *
+ * @internal
+ */
+export const subscribe =
+  <Args extends readonly unknown[], Rest extends readonly unknown[], T>(
+    commit: (...rest: Rest) => (...args: Args) => void,
+    select: (publish: Publish<Args>) => T,
+  ) =>
+  (publish: Publish<Args>, ...rest: Rest): Resource<T, 'sync'> => {
+    const subscribers = channels.get(publish);
+    assert(subscribers, 'Not a topic publisher.');
+
+    // Only ever called with this publisher's arguments.
+    const notify = commit(...rest) as Subscriber;
+    subscribers.add(notify);
+
+    return resource(select(publish), () => {
+      subscribers.delete(notify);
+    });
+  };

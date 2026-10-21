@@ -6,7 +6,7 @@
  * `$tetherEnabled` instead.
  */
 
-import { defineCommand, defineStore } from '@lib/state/next';
+import { defineCommand, defineStore } from '@lib/state';
 import type { RadiusScale } from '@lib/design';
 import type {
   FloatingAlignment,

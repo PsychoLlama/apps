@@ -1,4 +1,4 @@
-import { defineCommand, defineStore } from '@lib/state/next';
+import { defineCommand, defineStore } from '@lib/state';
 import type { Log } from '@lib/observability';
 import type { PruneRecord } from '@lib/holz-idb-backend/database';
 

@@ -1,4 +1,4 @@
-import { defineCell, defineCommand, defineStore } from '@lib/state/next';
+import { defineCell, defineCommand, defineStore } from '@lib/state';
 import type {
   IconEntry,
   IconPackManifest,

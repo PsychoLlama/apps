@@ -1,4 +1,4 @@
-import { defineCommand, defineStore } from '@lib/state/next';
+import { defineCommand, defineStore } from '@lib/state';
 import type { IconRef } from '../icons';
 
 /** File formats the editor exports. */
