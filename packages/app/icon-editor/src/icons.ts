@@ -3,7 +3,7 @@
  * lookups that read it. The build emits the full `@iconify/json` corpus
  * as paginated JSON assets; this module knows what those assets contain
  * and nothing about how they arrive — fetching lives in
- * `capabilities.ts`, and the results live in state.
+ * `effects/packs.ts`, and the results live in state.
  */
 
 /**
