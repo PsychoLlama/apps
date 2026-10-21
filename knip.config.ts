@@ -128,7 +128,7 @@ const config: KnipConfig = {
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
-        // Imported as `../../worker/index?worker`; the query suffix hides
+        // Imported as `../worker/index?worker`; the query suffix hides
         // the specifier from knip's resolver.
         'src/worker/index.ts!',
         // Its own bundle, built and registered separately from the app.
@@ -136,7 +136,8 @@ const config: KnipConfig = {
         'src/**/*.css.ts!',
         'vite.config.ts',
       ],
-      project: ['src/**/*.{ts,tsx}!'],
+      // Shared fixtures beside the tests, as in `@lib/effects`.
+      project: ['src/**/*.{ts,tsx}!', '!src/**/__tests__/**!'],
       ignoreDependencies: ['@vanilla-extract/dynamic'],
       vite: false,
     },

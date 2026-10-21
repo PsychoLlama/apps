@@ -1,5 +1,5 @@
 import { Match, Switch } from 'solid-js';
-import { useCommit, useRun, useValue } from '@lib/state';
+import { useAction, useValue } from '@lib/effects/solid';
 import { FrameBody } from '@lib/shell';
 import {
   Button,
@@ -13,15 +13,15 @@ import {
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
 import { BeamIntro } from './beam-intro';
 import { InviteDialog } from './invite-dialog';
-import { reportSagaFailure } from '../state/failure';
-import { LABEL_MAX_LENGTH, normalizeLabel } from '../state/labels';
-import { inviteOpenedTopic } from '../state/view';
+import { $finishNaming } from '../effects';
+import type { OnboardingStep } from '../platform/database';
 import {
-  finishNamingSaga,
-  setupDraftStore,
-  setupNameChangedTopic,
-} from '../state/onboarding';
-import type { OnboardingStep } from '../state/platform/database';
+  $inviteOpened,
+  $setupDraft,
+  $setupNameChanged,
+  LABEL_MAX_LENGTH,
+  normalizeLabel,
+} from '../state';
 import * as styles from './beam-onboarding.css';
 
 /**
@@ -44,7 +44,7 @@ const STEP_NUMBER: Record<SetupStep, number> = {
 const NAME_FIELD_ID = 'beam-device-name';
 
 /** The form control's name. Autofill and the platform read it; nothing here
- * does — the submit takes what was typed from the scope. */
+ * does — the submit takes what was typed from the store. */
 const NAME_FIELD = 'label';
 
 /**
@@ -56,7 +56,7 @@ const NAME_FIELD = 'label';
  * neither is the kind of thing to do on a visitor's behalf while they're
  * still reading the page.
  *
- * The step is a prop rather than state of its own. It's read from the scope
+ * The step is a prop rather than state of its own. It's read from the store
  * one level up, where it's persisted, so a step finished here is a step
  * finished for good and there's no way to be looking at step two on a device
  * that never got through step one.
@@ -66,22 +66,23 @@ const NAME_FIELD = 'label';
  * gets pressed past.
  */
 export const BeamOnboarding = (props: { step: SetupStep }) => {
-  const draft = useValue(setupDraftStore);
-  const finishNaming = useRun(finishNamingSaga);
-  const commit = useCommit();
+  const draft = useValue($setupDraft);
+  const finishNaming = useAction($finishNaming);
+  const changeName = useAction($setupNameChanged);
+  const openInvite = useAction($inviteOpened);
 
-  /** The name as typed, held in the scope so a stumble doesn't lose it. */
+  /** The name as typed, held in a store so a stumble doesn't lose it. */
   const name = () => draft().name;
 
   /**
    * Whether there's a name to save. Measured with the rule that will actually
-   * decide, so the button can't offer to submit something the saga would turn
+   * decide, so the button can't offer to submit something the effect would turn
    * away — a field holding two spaces looks filled in and isn't.
    */
   const named = () => normalizeLabel(name()) !== null;
 
   /**
-   * Sent from the draft rather than from `FormData`. The scope already holds
+   * Sent from the draft rather than from `FormData`. The store already holds
    * what was typed, and reading the field back would make a second source of
    * truth out of the one the button is enabled from.
    */
@@ -92,9 +93,7 @@ export const BeamOnboarding = (props: { step: SetupStep }) => {
     // so the requirement is enforced here too rather than only on the button.
     if (!named()) return;
 
-    void finishNaming(name()).catch(
-      reportSagaFailure('The device naming saga failed.'),
-    );
+    finishNaming(name());
   };
 
   return (
@@ -186,9 +185,7 @@ export const BeamOnboarding = (props: { step: SetupStep }) => {
                         placeholder="Carol’s Phone"
                         value={name()}
                         onInput={(event) =>
-                          commit(
-                            setupNameChangedTopic(event.currentTarget.value),
-                          )
+                          changeName(event.currentTarget.value)
                         }
                         maxlength={LABEL_MAX_LENGTH}
                         autofocus
@@ -234,7 +231,7 @@ export const BeamOnboarding = (props: { step: SetupStep }) => {
                   <Flex as="div" direction="row">
                     <Button
                       testId="beam-onboarding-invite"
-                      onClick={() => commit(inviteOpenedTopic())}
+                      onClick={() => openInvite()}
                     >
                       <IconShareVariant
                         width="20"

@@ -1,14 +1,12 @@
-import { Show } from 'solid-js';
-import { useCommit, useValue } from '@lib/state';
+import { useAction } from '@lib/effects/solid';
 import { FrameBody } from '@lib/shell';
-import { Button, Callout, Flex, LinkButton, Text } from '@lib/ui';
+import { Button, Flex, LinkButton } from '@lib/ui';
 import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 import IconShareVariant from 'virtual:icons/mdi/share-variant-outline';
 import { BeamIntro } from '../../components/beam-intro';
 import { ContactDirectory } from '../../components/contact-directory';
 import { InviteDialog } from '../../components/invite-dialog';
-import { contactsStore } from '../../state/contacts';
-import { inviteOpenedTopic } from '../../state/view';
+import { $inviteOpened } from '../../state';
 import * as styles from './index.css';
 
 /**
@@ -25,8 +23,7 @@ import * as styles from './index.css';
  * rather than continuing this session in place.
  */
 const BeamHome = () => {
-  const book = useValue(contactsStore);
-  const commit = useCommit();
+  const openInvite = useAction($inviteOpened);
 
   return (
     <>
@@ -38,15 +35,6 @@ const BeamHome = () => {
         <Flex as="div" direction="column" gap={6}>
           <BeamIntro />
 
-          <Show when={book().status === 'failed'}>
-            <Callout color="warning">
-              <Text as="span" size={2} selectable={false}>
-                Your contacts couldn’t be loaded. Pairing still works, but
-                nothing will be remembered.
-              </Text>
-            </Callout>
-          </Show>
-
           {/* The book, inline — but only while there's no rail to hold it.
               Above `md` the frame's sidebar carries the same directory
               beside this page, and repeating it here would be the same
@@ -56,11 +44,7 @@ const BeamHome = () => {
           </Flex>
 
           <Flex as="div" gap={3} class={styles.actions}>
-            <Button
-              testId="beam-invite"
-              size={3}
-              onClick={() => commit(inviteOpenedTopic())}
-            >
+            <Button testId="beam-invite" size={3} onClick={() => openInvite()}>
               <IconShareVariant width="20" height="20" aria-hidden="true" />
               Share an invite
             </Button>

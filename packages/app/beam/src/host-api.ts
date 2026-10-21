@@ -15,7 +15,7 @@ import type { BeamMessage } from './protocol';
 
 /**
  * Where a worker event lands. Implemented by the host client, which routes each
- * one into the queue a saga is pulling from.
+ * one into the queue an effect is pulling from.
  *
  * A parameter rather than a fixed set of handlers because the worker outlives
  * any one visit to beam: each visit attaches its own sink, and events arriving

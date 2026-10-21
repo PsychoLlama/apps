@@ -1,10 +1,9 @@
 import { Show } from 'solid-js';
 import { useLocation } from '@solidjs/router';
-import { useCommit, useValue } from '@lib/state';
+import { useAction, useValue } from '@lib/effects/solid';
 import { SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 import { Button, Text, Tooltip } from '@lib/ui';
-import { deviceNameFormula } from '../state/identity';
-import { renameOpenedTopic } from '../state/view';
+import { $identity, $renameOpened, deviceNameOf } from '../state';
 import { RenameDialog } from './rename-dialog';
 
 /**
@@ -64,8 +63,9 @@ export const BeamHeader = (props: {
   renameable: boolean;
 }) => {
   const location = useLocation();
-  const deviceName = useValue(deviceNameFormula);
-  const commit = useCommit();
+  const self = useValue($identity);
+  const openRename = useAction($renameOpened);
+  const deviceName = () => deviceNameOf(self());
 
   return (
     <>
@@ -115,9 +115,7 @@ export const BeamHeader = (props: {
                       aria-label={`Rename this device, currently ${label()}`}
                       variant="ghost"
                       color="neutral"
-                      onClick={() =>
-                        commit(renameOpenedTopic({ kind: 'self' }))
-                      }
+                      onClick={() => openRename({ kind: 'self' })}
                     >
                       {label()}
                     </Button>
