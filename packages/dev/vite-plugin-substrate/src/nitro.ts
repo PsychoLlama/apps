@@ -34,8 +34,9 @@ export const nitro = (
     compressPublicAssets: false,
 
     // Prerender every page reachable by links, so apps only list the
-    // routes nothing links to.
-    prerender: { crawlLinks: true },
+    // routes nothing links to. Fail on any non-OK page, like one that
+    // rendered the error boundary.
+    prerender: { crawlLinks: true, failOnError: true },
 
     modules: [],
   };

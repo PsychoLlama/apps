@@ -1,14 +1,10 @@
 import { Show, type JSX } from 'solid-js';
-import { useAnchor, useRun, useValue } from '@lib/state';
+import { useAction, useValue } from '@lib/effects/solid';
 import { FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 import { Button } from '@lib/ui';
 import IconRefresh from 'virtual:icons/mdi/refresh';
-import {
-  archiveStore,
-  logsScope,
-  refreshArchiveSaga,
-  reportSagaFailure,
-} from '../state';
+import { $refreshArchive } from '../effects';
+import { $archive } from '../state';
 
 /**
  * A logs view: the breadcrumb header over the scrollable content region. Each
@@ -19,8 +15,6 @@ export const LogsView = (props: {
   trail: SiteHeaderCrumb[];
   children?: JSX.Element;
 }) => {
-  useAnchor(logsScope);
-
   return (
     <>
       <SiteHeader trail={props.trail} actions={<RefreshButton />} />
@@ -37,8 +31,8 @@ export const LogsView = (props: {
  * the already-open connection.
  */
 const RefreshButton = () => {
-  const archive = useValue(archiveStore);
-  const refresh = useRun(refreshArchiveSaga);
+  const archive = useValue($archive);
+  const refresh = useAction($refreshArchive);
 
   return (
     <Show when={archive().freshness !== 'initial'}>
@@ -47,9 +41,7 @@ const RefreshButton = () => {
         variant="ghost"
         color="neutral"
         disabled={archive().freshness !== 'stale'}
-        onClick={() => {
-          void refresh().catch(reportSagaFailure('The logs refresh failed.'));
-        }}
+        onClick={refresh}
       >
         <IconRefresh aria-hidden="true" />
         Refresh

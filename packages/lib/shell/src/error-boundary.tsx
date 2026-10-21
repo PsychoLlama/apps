@@ -1,5 +1,6 @@
 import { onMount, Show } from 'solid-js';
 import { useLocation } from '@solidjs/router';
+import { HttpStatusCode } from '@solidjs/start';
 import { createLogger, toError } from '@lib/observability';
 import {
   Button,
@@ -75,6 +76,8 @@ export default function ErrorBoundaryFallback(
 
   return (
     <Frame>
+      {/* Fails the prerender, so a page that errors never ships. */}
+      <HttpStatusCode code={500} />
       <SiteHeader title="Error" />
 
       <FrameBody as="section">

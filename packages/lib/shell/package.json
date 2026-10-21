@@ -33,12 +33,14 @@
     "@dev/vitest-config": "workspace:*",
     "@solidjs/meta": "catalog:",
     "@solidjs/router": "catalog:",
+    "@solidjs/start": "catalog:",
     "@solidjs/testing-library": "catalog:",
     "@testing-library/user-event": "catalog:",
     "solid-js": "catalog:"
   },
   "peerDependencies": {
     "@solidjs/meta": "catalog:",
+    "@solidjs/start": "catalog:",
     "solid-js": "catalog:"
   }
 }

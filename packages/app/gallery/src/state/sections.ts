@@ -1,14 +1,4 @@
-import { defineFold, defineScope, defineStore, defineTopic } from '@lib/state';
-
-/**
- * Owns the gallery's view state: which permutation tab each listing is
- * showing. Anchored by the tab strips themselves rather than by a route, so
- * the selections live exactly as long as a manifest page has tabs on screen.
- *
- * Nothing durable dies with it. A fresh visit opens every listing on its
- * first section, which is where a listing sits before it's touched anyway.
- */
-export const galleryScope = defineScope();
+import { defineCommand, defineStore } from '@lib/state/next';
 
 /** The gallery's per-listing view state. */
 export interface GalleryState {
@@ -27,22 +17,23 @@ export interface GalleryState {
  */
 export const FIRST_SECTION = '0';
 
-/** Live, readonly view of the gallery's tab selections. */
-export const galleryStore = defineStore<GalleryState>(galleryScope, () => ({
+/**
+ * Which permutation tab each listing is showing, live while any tab strip
+ * holds it. Leaving a manifest page releases it, so a fresh visit opens
+ * every listing on its first section.
+ */
+export const $gallery = defineStore<GalleryState>(() => ({
   activeSections: {},
 }));
 
 /**
  * A listing's tab strip moved to a different section. Keyed by title
  * because that's a listing's identity — titles are unique within the
- * manifest a page renders, and the scope doesn't outlive that page.
+ * manifest a page renders.
  */
-export const sectionSelectedTopic = defineTopic<{
-  /** Title of the listing whose tab strip moved. */
-  listing: string;
-  /** The newly active section, as a `TabsRoot` value. */
-  section: string;
-}>();
-defineFold(sectionSelectedTopic, [galleryStore], (gallery, selection) => {
-  gallery.activeSections[selection.listing] = selection.section;
-});
+export const $sectionSelected = defineCommand(
+  [$gallery],
+  (gallery) => (listing: string, section: string) => {
+    gallery.activeSections[listing] = section;
+  },
+);

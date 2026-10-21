@@ -1,13 +1,8 @@
 import { For } from 'solid-js';
-import { useAnchor, useCommit, useValue } from '@lib/state';
+import { useAction, useValue } from '@lib/effects/solid';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@lib/ui';
 import type { GalleryListing, GallerySection } from '@lib/gallery';
-import {
-  FIRST_SECTION,
-  galleryScope,
-  galleryStore,
-  sectionSelectedTopic,
-} from '../state';
+import { $gallery, $sectionSelected, FIRST_SECTION } from '../state';
 import { SectionGrid } from './section-grid';
 import { slugify } from './slugify';
 
@@ -17,17 +12,16 @@ type Section = GallerySection<unknown>;
 
 /**
  * A listing's sections as a tab strip, each panel holding its permutation
- * grid. Selection lives in `galleryStore`, keyed by listing title — every
- * strip on the page shares one anchor, and the scope releases when the last
- * one unmounts, so leaving the manifest resets the page to its first tabs.
+ * grid. Selection lives in `$gallery`, keyed by listing title — every strip
+ * on the page shares it, and it releases when the last one unmounts, so
+ * leaving the manifest resets the page to its first tabs.
  */
 export const SectionTabs = (props: {
   listing: Listing;
   sections: readonly Section[];
 }) => {
-  useAnchor(galleryScope);
-  const gallery = useValue(galleryStore);
-  const commit = useCommit();
+  const gallery = useValue($gallery);
+  const selectSection = useAction($sectionSelected);
   const slug = () => slugify(props.listing.title);
   const active = () =>
     gallery().activeSections[props.listing.title] ?? FIRST_SECTION;
@@ -35,9 +29,7 @@ export const SectionTabs = (props: {
   return (
     <TabsRoot
       value={active()}
-      onValueChange={(section) =>
-        commit(sectionSelectedTopic({ listing: props.listing.title, section }))
-      }
+      onValueChange={(section) => selectSection(props.listing.title, section)}
       testId={`gallery-tabs-${slug()}`}
     >
       <TabsList testId={`gallery-tabs-list-${slug()}`}>
