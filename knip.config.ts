@@ -80,7 +80,8 @@ const config: KnipConfig = {
         'src/**/*.css.ts!',
         'vite.config.ts',
       ],
-      project: ['src/**/*.{ts,tsx}!'],
+      // Shared fixtures beside the tests, as in `@lib/effects`.
+      project: ['src/**/*.{ts,tsx}!', '!src/**/__tests__/**!'],
       // Listed directly as a hint for Vite's dep scanner, which misses
       // the transitive import from generated `.css.ts` modules.
       ignoreDependencies: ['@vanilla-extract/dynamic'],

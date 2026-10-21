@@ -1,35 +1,39 @@
-import { Match, Switch, createEffect, on, onCleanup } from 'solid-js';
+import {
+  Match,
+  Switch,
+  createEffect,
+  createMemo,
+  on,
+  onCleanup,
+  untrack,
+} from 'solid-js';
 import { useSearchParams } from '@solidjs/router';
-import { useAnchor, useCommit, useRun, useValue } from '@lib/state';
+import { useAction, useValue } from '@lib/effects/solid';
 import { Frame, SiteHeader } from '@lib/shell';
 import { Flex } from '@lib/ui';
 import { IconGrid } from '../components/icon-grid';
 import { Preview } from '../components/preview';
 import { PropertiesPanel } from '../components/properties-panel';
+import { $randomizeIcon, $resolveIconParam } from '../effects';
+import { resolveStyleHydration } from '../hydration';
 import {
-  editorResetTopic,
-  hydrateFromUrlSaga,
-  iconEditorScope,
-  iconEditorStore,
-  iconPickedTopic,
-  loadingStore,
-  paddingChangedTopic,
-  paletteChangedTopic,
-  pickerClosedTopic,
-  pickerOpenedTopic,
-  railStore,
-  randomizeIconSaga,
-  selectPackSaga,
-  shapeChangedTopic,
-  shareParamsFormula,
-  type IconEditorUrlParams,
-} from '../state/editor';
-import {
-  activePackFormula,
-  pickerScope,
-  pickerViewChangedTopic,
-} from '../state/picker';
-import type { IconRef } from '../icons';
+  $editor,
+  $editorLifetime,
+  $editorReset,
+  $iconPicked,
+  $loading,
+  $packChosen,
+  $paddingChanged,
+  $paletteChanged,
+  $picker,
+  $pickerClosed,
+  $pickerOpened,
+  $rail,
+  $shapeChanged,
+  $urlHydrated,
+  activePackOf,
+  shareParamsOf,
+} from '../state';
 import * as css from './index.css';
 
 /** Recognized search-param keys backing a shareable icon URL. */
@@ -43,19 +47,24 @@ type IconSearchParams = Partial<Record<IconSearchParamKey, string>> &
 const URL_DEBOUNCE_MS = 200;
 
 const IconEditor = () => {
-  useAnchor(iconEditorScope);
-  useAnchor(pickerScope);
+  useValue($editorLifetime);
 
-  const editor = useValue(iconEditorStore);
-  const load = useValue(loadingStore);
-  const rail = useValue(railStore);
-  const pack = useValue(activePackFormula);
-  const params = useValue(shareParamsFormula);
+  const editor = useValue($editor);
+  const load = useValue($loading);
+  const rail = useValue($rail);
+  const picker = useValue($picker);
 
-  const commit = useCommit();
-  const hydrate = useRun(hydrateFromUrlSaga);
-  const randomize = useRun(randomizeIconSaga);
-  const choosePack = useRun(selectPackSaga);
+  const urlHydrated = useAction($urlHydrated);
+  const resolveIconParam = useAction($resolveIconParam);
+  const randomize = useAction($randomizeIcon);
+  const pickIcon = useAction($iconPicked);
+  const choosePack = useAction($packChosen);
+  const openPicker = useAction($pickerOpened);
+  const closePicker = useAction($pickerClosed);
+  const changePalette = useAction($paletteChanged);
+  const changeShape = useAction($shapeChanged);
+  const changePadding = useAction($paddingChanged);
+  const reset = useAction($editorReset);
 
   const [searchParams, setSearchParams] = useSearchParams<IconSearchParams>();
 
@@ -64,29 +73,35 @@ const IconEditor = () => {
   // The router is the one thing outside the state system that both
   // produces events and consumes state, so it gets two adapters. Every
   // decision in between — validating params, superseding stale fetches,
-  // choosing which keys the URL should carry — lives in `sagas.ts` and
-  // `store.ts`; these two effects only move values across the boundary.
+  // choosing which keys the URL should carry — lives in `state/` and
+  // `effects/`; these two effects only move values across the boundary.
 
   const readParam = (key: IconSearchParamKey): string | undefined => {
     const value = searchParams[key];
     return typeof value === 'string' ? value : undefined;
   };
 
-  // URL → facts, on mount and on every navigation.
+  // URL → state, on mount and on every navigation. Untracked, so only the
+  // params re-run it, never what the handlers read.
   createEffect(() => {
+    const icon = readParam('icon');
     const padParam = readParam('pad');
-    const next: IconEditorUrlParams = {
-      icon: readParam('icon'),
+    const style = resolveStyleHydration({
       palette: readParam('palette'),
       shape: readParam('shape'),
       padding: padParam !== undefined ? Number(padParam) : undefined,
-    };
-    void hydrate(next);
+    });
+
+    untrack(() => {
+      urlHydrated(style, icon);
+      resolveIconParam(icon);
+    });
   });
 
   // State → URL, debounced so a padding drag doesn't write a history
   // entry per frame. `defer: true` skips the post-hydrate flush, where
   // the URL already matches what we just read from it.
+  const params = createMemo(() => shareParamsOf(editor(), load()));
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   createEffect(
     on(
@@ -103,20 +118,6 @@ const IconEditor = () => {
   onCleanup(() => {
     if (timeoutId !== undefined) clearTimeout(timeoutId);
   });
-
-  // "Choose pack" opens the pack list; "Choose icon" jumps straight to
-  // the active pack's grid. Each lands as one transition across both
-  // the rail and the picker.
-  const handleChoosePack = () =>
-    commit(pickerViewChangedTopic('packs'), pickerOpenedTopic());
-
-  const handleChooseIcon = () =>
-    commit(pickerViewChangedTopic('pack-detail'), pickerOpenedTopic());
-
-  // Committing a pick returns the rail to the properties inspector so
-  // the chosen icon, its style, and export land back in one view.
-  const handlePick = (icon: IconRef) =>
-    commit(iconPickedTopic(icon), pickerClosedTopic());
 
   return (
     <Frame>
@@ -141,25 +142,25 @@ const IconEditor = () => {
             aria-label="Editor panel"
           >
             <Switch>
-              <Match when={rail().view === 'properties'}>
+              <Match when={rail() === 'properties'}>
                 <PropertiesPanel
                   state={editor()}
-                  activePack={pack()}
-                  onPalette={(name) => commit(paletteChangedTopic(name))}
-                  onShape={(shape) => commit(shapeChangedTopic(shape))}
-                  onPadding={(value) => commit(paddingChangedTopic(value))}
-                  onChoosePack={handleChoosePack}
-                  onChooseIcon={handleChooseIcon}
-                  onRandomize={() => void randomize()}
-                  onReset={() => commit(editorResetTopic())}
+                  activePack={activePackOf(picker())}
+                  onPalette={changePalette}
+                  onShape={changeShape}
+                  onPadding={changePadding}
+                  onChoosePack={() => openPicker('packs')}
+                  onChooseIcon={() => openPicker('pack-detail')}
+                  onRandomize={() => randomize()}
+                  onReset={() => reset()}
                 />
               </Match>
-              <Match when={rail().view === 'picker'}>
+              <Match when={rail() === 'picker'}>
                 <IconGrid
                   selected={editor().icon}
-                  onSelect={handlePick}
-                  onSelectPack={(packId) => void choosePack(packId)}
-                  onClose={() => commit(pickerClosedTopic())}
+                  onSelect={pickIcon}
+                  onSelectPack={choosePack}
+                  onClose={() => closePicker()}
                 />
               </Match>
             </Switch>

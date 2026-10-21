@@ -9,10 +9,11 @@ import {
   Switch,
   createEffect,
   createMemo,
+  on,
   onMount,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useCommit, useRun, useValue } from '@lib/state';
+import { useAction, useValue } from '@lib/effects/solid';
 import {
   Badge,
   Code,
@@ -40,19 +41,19 @@ import {
   type IconPackSummary,
   type IconRef,
 } from '../../icons';
+import { $loadMissingPackData } from '../../effects';
 import {
-  activePackFormula,
+  $iconEntries,
+  $packSearchChanged,
+  $pageChanged,
+  $picker,
+  $pickerViewChanged,
+  $searchChanged,
+  activePackOf,
   entryKey,
-  iconEntryCacheFormula,
-  loadMissingPackDataSaga,
-  missingPackDataFormula,
-  packSearchChangedTopic,
-  pageChangedTopic,
-  pageViewFormula,
-  pickerStore,
-  pickerViewChangedTopic,
-  searchChangedTopic,
-} from '../../state/picker';
+  missingPackDataOf,
+  pageViewOf,
+} from '../../state';
 import { PackCard } from '../pack-card';
 import * as css from './icon-grid.css';
 
@@ -85,39 +86,48 @@ interface IconGridProps {
  * matching the search.
  */
 export const IconGrid: Component<IconGridProps> = (props) => {
-  const picker = useValue(pickerStore);
-  const pack = useValue(activePackFormula);
-  const missing = useValue(missingPackDataFormula);
-  const commit = useCommit();
-  const loadMissing = useRun(loadMissingPackDataSaga);
+  const picker = useValue($picker);
+  const iconEntries = useValue($iconEntries);
+  const changeView = useAction($pickerViewChanged);
+  const changeSearch = useAction($searchChanged);
+  const changePackSearch = useAction($packSearchChanged);
+  const changePage = useAction($pageChanged);
+  const loadMissing = useAction($loadMissingPackData);
 
-  // The editor fetches the pack catalog and folds every icon write into
+  // The editor fetches the pack catalog and lands every icon write in
   // the active pack, so both are already arranged by the time the grid
-  // mounts. Pagination, the filter, and the entry cache are derived in
-  // `store.ts` — this component only memoizes them for render.
+  // mounts.
+
+  const pack = () => activePackOf(picker());
 
   /**
    * The current slice. One memo over the whole derivation so a search
    * keystroke walks the (proxied) name array once, not once per field
    * the render reads.
    */
-  const view = createMemo(useValue(pageViewFormula));
+  const view = createMemo(() => pageViewOf(picker()));
 
   /**
-   * The entry cache. `equals: false` because the `Map` reference is
-   * stable across chunk arrivals — the version counter inside the
-   * formula is what actually changed. Tiles walk the `Map` directly,
-   * with no tracking node per `pack:name` key.
+   * The entry cache, re-read when a chunk lands. `equals: false` because
+   * the `Map` reference is stable across arrivals — the version counter
+   * is what actually changed. Tiles walk the `Map` directly, with no
+   * tracking node per `pack:name` key.
    */
-  const entries = createMemo(useValue(iconEntryCacheFormula), undefined, {
-    equals: false,
-  });
+  const entries = createMemo(
+    () => {
+      void picker().entriesVersion;
+      return iconEntries();
+    },
+    undefined,
+    { equals: false },
+  );
 
   // The picker's only fetch trigger: whatever the current view needs
   // and state doesn't hold. Every path that moves the pack, the filter,
   // or the page converges here, so none of them has to remember to
   // start its own request.
-  createEffect(() => void loadMissing(missing()));
+  const missing = createMemo(() => missingPackDataOf(picker(), view()));
+  createEffect(on(missing, (next) => loadMissing(next)));
 
   const getEntry = (packId: string, name: string): IconEntry | undefined =>
     entries().get(entryKey(packId, name));
@@ -148,7 +158,7 @@ export const IconGrid: Component<IconGridProps> = (props) => {
             packs={picker().packs}
             activePackId={picker().activePackId}
             search={picker().packSearch}
-            onSearch={(query) => commit(packSearchChangedTopic(query))}
+            onSearch={(query) => changePackSearch(query)}
             onPick={props.onSelectPack}
             onClose={props.onClose}
           />
@@ -159,23 +169,23 @@ export const IconGrid: Component<IconGridProps> = (props) => {
             manifest={view().manifest}
             getEntry={getEntry}
             search={picker().search}
-            onSearch={(query) => commit(searchChangedTopic(query))}
+            onSearch={(query) => changeSearch(query)}
             visible={view().names}
             pageStart={view().start}
             total={view().total}
             currentPage={view().page}
             pageCount={view().pageCount}
-            onPageChange={(page) => commit(pageChangedTopic(page))}
+            onPageChange={(page) => changePage(page)}
             selected={props.selected}
             onPickIcon={handlePickIcon}
             onClose={props.onClose}
-            onShowInfo={() => commit(pickerViewChangedTopic('pack-info'))}
+            onShowInfo={() => changeView('pack-info')}
           />
         </Match>
         <Match when={picker().view === 'pack-info'}>
           <PackInfoView
             pack={pack()}
-            onShowIcons={() => commit(pickerViewChangedTopic('pack-detail'))}
+            onShowIcons={() => changeView('pack-detail')}
           />
         </Match>
       </Switch>
