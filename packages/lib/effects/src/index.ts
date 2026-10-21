@@ -1,12 +1,11 @@
-export { collect, concurrent, pipe } from './combinators';
+export { collect, pipe } from './combinators';
 export type { Async, Eventual, Sync } from './eventual';
 export type { Mode } from './mode';
-export type { Plan, PlanNode } from './plan';
+export type { ModeOfSteps, Plan, PlanNode } from './plan';
 export type { Node } from './manager';
 export {
   reactive,
   resource,
-  type Collected,
   type Dispose,
   type Reactive,
   type Resource,

@@ -5,7 +5,7 @@ import {
   type Accessor,
   type Setter,
 } from 'solid-js';
-import { collect, concurrent, pipe } from '../../combinators';
+import { collect, pipe } from '../../combinators';
 import { toPromise, type Async, type Sync } from '../../eventual';
 import { reactive, resource, yieldOf } from '../../task';
 import { isWrapped } from '../../task/output';
@@ -26,17 +26,17 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 const computed = async (manager: Manager, handle: Handle) =>
   toPromise(compute(manager, handle));
 
-/** The raw output tuple, wrappers included. */
+/** The raw output, wrappers included. */
 const raw = (handle: Handle) => {
   const state = inspect(handle, handle.output);
   assert(state.step === 'succeeded');
-  return state.outputs;
+  return state.output;
 };
 
 /** The output as downstream tasks receive it. */
 const output = (handle: Handle) => {
   const state = inspect(handle, handle.output);
-  return state.step === 'succeeded' ? state.outputs.map(yieldOf) : state;
+  return state.step === 'succeeded' ? yieldOf(state.output) : state;
 };
 
 describe('manager', () => {
@@ -55,29 +55,25 @@ describe('manager', () => {
 
       expect(inspect(handle, handle.nodes[0])).toEqual({
         step: 'succeeded',
-        inputs: [],
-        outputs: [1],
+        input: undefined,
+        output: 1,
       });
       expect(inspect(handle, handle.nodes[1])).toEqual({
         step: 'succeeded',
-        inputs: [1],
-        outputs: [2],
+        input: 1,
+        output: 2,
       });
     });
 
-    it('spreads concurrent outputs and boxes collected ones', async () => {
+    it('collects outputs into an array', async () => {
       const manager = createManager();
       const one = () => 1;
       const two = () => 2;
-      const add = (left: number, right: number) => left + right;
-      const sum = acquire(pipe([concurrent([one, two]), add]));
       const boxed = acquire(collect([one, two]));
 
-      await Promise.all([computed(manager, sum), computed(manager, boxed)]);
+      await computed(manager, boxed);
 
-      expect(output(sum)).toEqual([3]);
-      expect(output(boxed)).toEqual([[1, 2]]);
-      expect(isWrapped(raw(boxed)[0], 'collected')).toBe(true);
+      expect(output(boxed)).toEqual([1, 2]);
     });
 
     it('awaits async tasks and keeps resources whole', async () => {
@@ -88,8 +84,8 @@ describe('manager', () => {
 
       await computed(manager, handle);
 
-      expect(raw(handle)).toEqual([stream]);
-      expect(output(handle)).toEqual(['stream']);
+      expect(raw(handle)).toEqual(stream);
+      expect(output(handle)).toEqual('stream');
     });
 
     it('passes downstream the values inside wrappers', async () => {
@@ -118,12 +114,12 @@ describe('manager', () => {
       await computed(manager, handle);
       const state = inspect(handle, handle.nodes[0]);
       assert(state.step === 'succeeded');
-      expect(isWrapped(state.outputs[0], 'reactive')).toBe(true);
-      const muted = yieldOf(state.outputs[0]) as Accessor<boolean>;
+      expect(isWrapped(state.output, 'reactive')).toBe(true);
+      const muted = yieldOf(state.output) as Accessor<boolean>;
 
       setMuted(true);
       expect(muted()).toBe(true);
-      expect(output(handle)).toEqual([false]);
+      expect(output(handle)).toEqual(false);
       expect(seen).toHaveBeenCalledOnce();
     });
 
@@ -138,15 +134,15 @@ describe('manager', () => {
       expect(one).toHaveBeenCalledTimes(1);
     });
 
-    it("returns a synchronous plan's outputs right away", () => {
+    it("returns a synchronous plan's output right away", () => {
       const manager = createManager();
       const open = () => resource('stream', () => {});
       const handle = acquire(pipe([open, (stream: string) => stream.length]));
 
       const result = compute(manager, handle);
 
-      expectTypeOf(result).toEqualTypeOf<Sync<[number]>>();
-      expect(result).toEqual({ type: 'sync', value: [6] });
+      expectTypeOf(result).toEqualTypeOf<Sync<number>>();
+      expect(result).toEqual({ type: 'sync', value: 6 });
     });
 
     it('waits for an asynchronous plan, then not once it settles', async () => {
@@ -154,11 +150,11 @@ describe('manager', () => {
       const handle = acquire(pipe([async () => 1]));
 
       const first = compute(manager, handle);
-      expectTypeOf(first).toEqualTypeOf<Sync<[number]> | Async<[number]>>();
+      expectTypeOf(first).toEqualTypeOf<Sync<number> | Async<number>>();
       assert(first.type === 'async');
-      await expect(first.value).resolves.toEqual([1]);
+      await expect(first.value).resolves.toEqual(1);
 
-      expect(compute(manager, handle)).toEqual({ type: 'sync', value: [1] });
+      expect(compute(manager, handle)).toEqual({ type: 'sync', value: 1 });
     });
 
     it('throws right away when a synchronous plan fails', () => {
@@ -228,7 +224,7 @@ describe('manager', () => {
       await computed(manager, second);
 
       expect(open).toHaveBeenCalledTimes(1);
-      expect(output(second)).toEqual([true]);
+      expect(output(second)).toEqual(true);
     });
 
     it('keeps separate entries for inputs that differ by identity', async () => {
@@ -259,13 +255,13 @@ describe('manager', () => {
       expect(open).toHaveBeenCalledTimes(1);
       expect(inspect(second, second.nodes[0])).toEqual({
         step: 'computing',
-        inputs: [],
+        input: undefined,
       });
 
       gate.resolve('stream');
       await computing;
 
-      expect(output(second)).toEqual(['stream']);
+      expect(output(second)).toEqual('stream');
     });
 
     it('shares one output tuple across handles', async () => {
@@ -277,7 +273,7 @@ describe('manager', () => {
       await computed(manager, first);
       await computed(manager, second);
 
-      expect(output(first)).toEqual([1]);
+      expect(output(first)).toEqual(1);
       expect(raw(second)).toBe(raw(first));
     });
 
@@ -310,7 +306,19 @@ describe('manager', () => {
       expect(raw(third)).toBe(raw(second));
     });
 
-    it('frees an output once no task holds it', async () => {
+    it('feeds empty outputs downstream like any other', async () => {
+      const manager = createManager();
+      const nothing = () => undefined;
+      const seen = vi.fn((value: undefined) => value === undefined);
+      const handle = acquire(pipe([nothing, collect([seen])]));
+
+      await computed(manager, handle);
+
+      expect(seen).toHaveBeenCalledExactlyOnceWith(undefined);
+      expect(output(handle)).toEqual([true]);
+    });
+
+    it('frees entries once no handle holds them', async () => {
       const manager = createManager();
       const one = () => 1;
       const first = acquire(pipe([one]));
@@ -318,17 +326,18 @@ describe('manager', () => {
 
       await release(manager, first);
 
-      expect(manager.cache.interned.size).toBe(0);
+      expect(manager.cache.entries.task.size).toBe(0);
     });
 
     it('shares a join and everything downstream of it', async () => {
       const manager = createManager();
       const one = () => 1;
       const two = () => 2;
-      const add = vi.fn((left: number, right: number) => left + right);
-      const both = concurrent([one, two]);
-      const first = acquire(pipe([both, add]));
-      const second = acquire(pipe([both, add]));
+      const add = (left: number, right: number) => left + right;
+      const double = vi.fn((value: number) => value * 2);
+      const both = collect([one, two], add);
+      const first = acquire(pipe([both, double]));
+      const second = acquire(pipe([both, double]));
 
       await computed(manager, first);
       await computed(manager, second);
@@ -336,11 +345,11 @@ describe('manager', () => {
       const joined = inspect(first, first.nodes[2]);
       expect(joined).toEqual({
         step: 'succeeded',
-        inputs: [],
-        outputs: [1, 2],
+        input: undefined,
+        output: 3,
       });
       expect(inspect(second, second.nodes[2])).toBe(joined);
-      expect(add).toHaveBeenCalledOnce();
+      expect(double).toHaveBeenCalledOnce();
     });
 
     it('shares one collected array while its branches live', async () => {
@@ -353,25 +362,56 @@ describe('manager', () => {
 
       await computed(manager, first);
       await computed(manager, second);
-      const [collected] = output(first) as [number[]];
+      const collected = output(first);
 
       expect(collected).toEqual([1, 2]);
-      expect(output(second)).toEqual([collected]);
-      expect((output(second) as [number[]])[0]).toBe(collected);
+      expect(output(second)).toBe(collected);
+    });
+
+    it('collects through a function once while its branches live', async () => {
+      const manager = createManager();
+      const open = () => resource('stream', () => {});
+      const add = vi.fn((stream: string, count: number) => stream + count);
+      const both = collect([open, () => 1], add);
+      const first = acquire(both);
+      const second = acquire(both);
+
+      await computed(manager, first);
+      await computed(manager, second);
+
+      expect(add).toHaveBeenCalledExactlyOnceWith('stream', 1);
+      expect(raw(first)).toEqual('stream1');
+      expect(raw(second)).toBe(raw(first));
+    });
+
+    it('shares downstream work by the value a collecting function returns', async () => {
+      const manager = createManager();
+      const double = vi.fn((value: number) => value * 2);
+      const first = acquire(
+        pipe([collect([() => 1], (one) => one + 1), double]),
+      );
+      const second = acquire(pipe([collect([() => 2], (two) => two), double]));
+
+      await computed(manager, first);
+      await computed(manager, second);
+
+      expect(double).toHaveBeenCalledOnce();
+      expect(output(second)).toEqual(4);
     });
 
     it('keeps a join per input tuple', async () => {
       const manager = createManager();
       const double = (value: number) => value * 2;
-      const both = concurrent([double, double]);
+      const add = (left: number, right: number) => left + right;
+      const both = collect([double, double], add);
       const first = acquire(pipe([() => 1, both]));
       const second = acquire(pipe([() => 2, both]));
 
       await computed(manager, first);
       await computed(manager, second);
 
-      expect(output(first)).toEqual([2, 2]);
-      expect(output(second)).toEqual([4, 4]);
+      expect(output(first)).toEqual(4);
+      expect(output(second)).toEqual(8);
       expect(manager.cache.entries.join.get(both)?.size).toBe(2);
     });
 
@@ -380,12 +420,12 @@ describe('manager', () => {
       const one = vi.fn(() => 1);
       const double = (value: number) => value * 2;
       const add = (left: number, right: number) => left + right;
-      const handle = acquire(pipe([one, concurrent([double, double]), add]));
+      const handle = acquire(pipe([one, collect([double, double], add)]));
 
       await computed(manager, handle);
 
       expect(one).toHaveBeenCalledTimes(1);
-      expect(output(handle)).toEqual([4]);
+      expect(output(handle)).toEqual(4);
     });
   });
 
@@ -397,7 +437,7 @@ describe('manager', () => {
         throw error;
       });
       const observe = vi.fn((stream: never) => stream);
-      const first = acquire(pipe([open, concurrent([observe, observe])]));
+      const first = acquire(pipe([open, collect([observe, observe])]));
       const second = acquire(pipe([open]));
 
       await expect(computed(manager, first)).rejects.toSatisfy(
@@ -414,7 +454,7 @@ describe('manager', () => {
       expect(observe).not.toHaveBeenCalled();
       expect(inspect(first, first.nodes[0])).toEqual({
         step: 'failed',
-        inputs: [],
+        input: undefined,
         error,
       });
       expect(inspect(first, first.nodes[1])).toEqual({
@@ -422,11 +462,36 @@ describe('manager', () => {
       });
     });
 
+    it('caches what a collecting function throws', async () => {
+      const manager = createManager();
+      const error = new Error('denied');
+      const fail = vi.fn((): never => {
+        throw error;
+      });
+      const plan = collect([() => 1], fail);
+      const first = acquire(plan);
+      const second = acquire(plan);
+
+      await expect(computed(manager, first)).rejects.toBeInstanceOf(
+        AggregateError,
+      );
+      await expect(computed(manager, second)).rejects.toBeInstanceOf(
+        AggregateError,
+      );
+
+      expect(fail).toHaveBeenCalledOnce();
+      expect(inspect(first, first.output)).toEqual({
+        step: 'failed',
+        input: undefined,
+        error,
+      });
+    });
+
     it('reports every independent failure', async () => {
       const manager = createManager();
       const left = () => Promise.reject(new Error('left'));
       const right = () => Promise.reject(new Error('right'));
-      const handle = acquire(concurrent([left, right]));
+      const handle = acquire(collect([left, right]));
 
       await expect(computed(manager, handle)).rejects.toSatisfy(
         (failure: AggregateError) => {
@@ -456,12 +521,36 @@ describe('manager', () => {
       expect(dispose).toHaveBeenCalledTimes(1);
     });
 
+    it('disposes what a collecting function returns before its branches', async () => {
+      const manager = createManager();
+      const order: string[] = [];
+      const open = () =>
+        resource('stream', () => {
+          order.push('stream');
+        });
+      const observe = (stream: string) =>
+        resource(stream.length, () => {
+          order.push('observer');
+        });
+      const first = acquire(collect([open], observe));
+      const second = acquire(collect([open], observe));
+
+      await computed(manager, first);
+      await computed(manager, second);
+      await release(manager, first);
+      await release(manager, second);
+
+      // Separate plans, so separate entries. See the TODO on `collect`.
+      expect(order).toEqual(['observer', 'observer', 'stream']);
+      expect(manager.cache.entries.task.size).toBe(0);
+    });
+
     it('disposes reactive outputs, cleanup or not', async () => {
       const manager = createManager();
       const dispose = vi.fn();
       const observe = () => reactive(() => true, dispose);
       const bare = () => reactive(() => true);
-      const handle = acquire(concurrent([observe, bare]));
+      const handle = acquire(collect([observe, bare]));
 
       await computed(manager, handle);
       await release(manager, handle);
@@ -564,7 +653,7 @@ describe('manager', () => {
       await Promise.all([releasing, computing]);
 
       expect(order).toEqual(['open', 'dispose:start', 'dispose:end', 'open']);
-      expect(output(second)).toEqual(['stream']);
+      expect(output(second)).toEqual('stream');
     });
 
     it('lets in-flight work settle before disposing it', async () => {
@@ -603,7 +692,7 @@ describe('manager', () => {
       );
       expect(inspect(handle, handle.nodes[1])).toEqual({
         step: 'failed',
-        inputs: [stream],
+        input: stream,
         error: new Error('observer'),
       });
 

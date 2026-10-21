@@ -27,19 +27,16 @@ export type Store<State extends object> = DeepReadonly<State> & {
 
 /**
  * Define a store. `init` runs when the plan is first held and seeds the
- * state from whatever earlier steps yield. Each live plan owns one store,
- * and the state ends with it.
+ * state from whatever the earlier step yields. Each live plan owns one
+ * store, and the state ends with it.
  */
-export const defineStore = <
-  State extends object,
-  Inputs extends readonly unknown[] = [],
->(
-  init: (...inputs: Inputs) => State,
-): Plan<Inputs, [Store<State>], 'sync'> =>
-  // The proxy is both views: readers get it typed read-only, commits
-  // write through the same object. Generic steps defeat `pipe`
-  // inference, so the signature vouches.
+export const defineStore = <State extends object, Input = void>(
+  init: (input: Input) => State,
+): Plan<Input, Store<State>, 'sync'> =>
+  // Only the mode needs vouching: a generic `State` might be a promise as
+  // far as TypeScript knows.
   pipe([
-    (...inputs: readonly unknown[]) =>
-      createMutable(init(...(inputs as Inputs))),
-  ]) as unknown as Plan<Inputs, [Store<State>], 'sync'>;
+    // The proxy is both views: readers get it typed read-only, commits
+    // write through the same object.
+    (input: Input) => createMutable(init(input)) as Store<State>,
+  ]) as Plan<Input, Store<State>, 'sync'>;

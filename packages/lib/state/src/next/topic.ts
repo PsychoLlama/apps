@@ -21,11 +21,14 @@ export interface Publish<Args extends readonly unknown[]> {
   readonly [TOPIC]: Args;
 }
 
-/** A plan yielding a publisher: a topic, or a command. */
+/**
+ * A plan yielding a publisher: a topic, or a command. The publisher's
+ * channel closes with the plan.
+ */
 export type Topic<
   Args extends readonly unknown[],
   M extends Mode = Mode,
-> = Plan<[], [Publish<Args>], M>;
+> = Plan<void, Resource<Publish<Args>, 'sync'>, M>;
 
 /**
  * The arguments a topic's events carry, e.g. `TopicValues<typeof $send>`.
@@ -33,7 +36,7 @@ export type Topic<
  * @internal
  */
 export type TopicValues<P> =
-  P extends Plan<never, readonly [Publish<infer Args>]> ? Args : never;
+  P extends Plan<never, Resource<Publish<infer Args>>> ? Args : never;
 
 type Subscriber = (...args: readonly unknown[]) => void;
 
@@ -61,7 +64,9 @@ export const defineTopic = <Args extends readonly unknown[]>(): Topic<
         );
 
       channels.set(publish, subscribers);
-      return publish as Publish<Args>;
+      return resource(publish as Publish<Args>, () => {
+        channels.delete(publish);
+      });
     },
   ]);
 
@@ -69,15 +74,17 @@ export const defineTopic = <Args extends readonly unknown[]>(): Topic<
  * A task subscribing `commit` to the publisher upstream, for as long as
  * the task lives. `commit` takes whatever else upstream yields, once, and
  * returns the event handler, e.g.
- * `pipe([concurrent([$topic, $store]), subscribe(commit)])`.
+ * `collect([$topic, $store], subscribe(commit, () => {}))`. The task
+ * yields what `select` picks from the publisher.
  *
  * @internal
  */
 export const subscribe =
-  <Args extends readonly unknown[], Rest extends readonly unknown[]>(
+  <Args extends readonly unknown[], Rest extends readonly unknown[], T>(
     commit: (...rest: Rest) => (...args: Args) => void,
+    select: (publish: Publish<Args>) => T,
   ) =>
-  (publish: Publish<Args>, ...rest: Rest): Resource<void, 'sync'> => {
+  (publish: Publish<Args>, ...rest: Rest): Resource<T, 'sync'> => {
     const subscribers = channels.get(publish);
     assert(subscribers, 'Not a topic publisher.');
 
@@ -85,7 +92,7 @@ export const subscribe =
     const notify = commit(...rest) as Subscriber;
     subscribers.add(notify);
 
-    return resource(undefined, () => {
+    return resource(select(publish), () => {
       subscribers.delete(notify);
     });
   };

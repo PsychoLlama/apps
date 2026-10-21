@@ -19,24 +19,24 @@ const signals = new WeakMap<Accessor<unknown>, Signal<unknown>>();
 
 /**
  * Define a cell. `init` runs when the plan is first held and seeds the
- * value from whatever earlier steps yield. Each live plan owns one cell,
- * and the value ends with it.
+ * value from whatever the earlier step yields. Each live plan owns one
+ * cell, and the value ends with it.
  */
-export const defineCell = <T, Inputs extends readonly unknown[] = []>(
-  init: (...inputs: Inputs) => T,
-): Plan<Inputs, [Cell<T>], 'sync'> =>
-  // Generic steps defeat `pipe` inference. The signature vouches.
+export const defineCell = <T, Input = void>(
+  init: (input: Input) => T,
+): Plan<Input, Cell<T>, 'sync'> =>
   pipe([
-    (...inputs: readonly unknown[]) => {
+    (input: Input) => {
       // eslint-disable-next-line solid/reactivity -- Stored whole.
-      const signal = createSignal(init(...(inputs as Inputs)));
+      const signal = createSignal(init(input));
 
       const [read] = signal;
       signals.set(read, signal as Signal<unknown>);
 
-      return reactive(read);
+      // Branded: only `defineCell` makes cells.
+      return reactive(read) as Cell<T>;
     },
-  ]) as unknown as Plan<Inputs, [Cell<T>], 'sync'>;
+  ]);
 
 /**
  * The signal behind a cell's accessor, for commits to write through.

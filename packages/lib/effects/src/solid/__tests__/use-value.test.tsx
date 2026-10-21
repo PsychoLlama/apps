@@ -90,10 +90,10 @@ describe('useValue', () => {
     const live = () => reactive(() => true);
 
     const tree = renderHook(controller.controller, () =>
-      useValue(collect([open, live])),
+      useValue(collect([open, live], (stream, state) => [stream, state()])),
     );
 
-    expectTypeOf(tree.result).toEqualTypeOf<Accessor<[string, boolean]>>();
+    expectTypeOf(tree.result).toEqualTypeOf<Accessor<(string | boolean)[]>>();
     expect(tree.result()).toEqual(['stream', true]);
     tree.unmount();
   });

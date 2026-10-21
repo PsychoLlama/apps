@@ -25,9 +25,9 @@ describe('defineExtension', () => {
     );
     await using effects = createTestController();
     await effects.run($extension);
-    const [send] = await effects.run($send);
-    const [store] = await effects.run($store);
-    const [count] = await effects.run($count);
+    const send = await effects.run($send);
+    const store = await effects.run($store);
+    const count = await effects.run($count);
 
     send('hello');
     send('world');
@@ -42,7 +42,7 @@ describe('defineExtension', () => {
     const commit = vi.fn(() => () => {});
     await using effects = createTestController();
     await effects.run(defineExtension($send, [$count], commit));
-    const [send] = await effects.run($send);
+    const send = await effects.run($send);
 
     send();
     send();
@@ -62,8 +62,8 @@ describe('defineExtension', () => {
         },
     );
     await using effects = createTestController();
-    const [send] = await effects.run($send);
-    const [count] = await effects.run($count);
+    const send = await effects.run($send);
+    const count = await effects.run($count);
 
     send();
     const handle = effects.controller.acquire($extension);
@@ -90,8 +90,8 @@ describe('defineExtension', () => {
     );
     await using effects = createTestController();
     await effects.run($extension);
-    const [send] = await effects.run($send);
-    const [store] = await effects.run($store);
+    const send = await effects.run($send);
+    const store = await effects.run($store);
 
     send('hello');
 

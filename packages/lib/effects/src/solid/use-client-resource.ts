@@ -17,13 +17,12 @@ import {
  * `ErrorBoundary`, whether in computing or in cleanup.
  *
  * Reads through the output's kind: a resource reads as its value, and a
- * reactive output as its current state, tracked. A collected output reads
- * as a fresh array of its reduced items.
+ * reactive output as its current state, tracked.
  *
- * Takes a plan with one output. Join several with `collect`.
+ * Join several plans with `collect`.
  */
 export const useClientResource = <Output>(
-  plan: Plan<[], [Output]>,
+  plan: Plan<void, Output>,
 ): Resource<Reduce<Output>> => {
   const [output] = createResource(useMounted(), holdPlan(plan));
 

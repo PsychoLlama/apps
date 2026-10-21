@@ -10,12 +10,12 @@ describe('createController', () => {
     const double = (value: number) => value * 2;
     const handle = controller.acquire(pipe([one, double]));
 
-    expect(controller.compute(handle)).toEqual({ type: 'sync', value: [2] });
+    expect(controller.compute(handle)).toEqual({ type: 'sync', value: 2 });
     expect(manager.handles.has(handle)).toBe(true);
     expect(controller.inspect(handle, handle.output)).toMatchObject({
       step: 'succeeded',
-      inputs: [1],
-      outputs: [2],
+      input: 1,
+      output: 2,
     });
 
     await controller.release(handle);

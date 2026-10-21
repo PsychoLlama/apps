@@ -42,7 +42,7 @@ describe('observed', () => {
     const { counter, added, observed, commit } = setup();
     await using controller = createTestController();
 
-    const [read] = await controller.run(observed(counter));
+    const read = await controller.run(observed(counter));
     expectTypeOf(read().count).toEqualTypeOf<number>();
     expect(read().count).toBe(0);
 
@@ -55,7 +55,7 @@ describe('observed', () => {
     const { label, observed } = setup();
     await using controller = createTestController();
 
-    const [read] = await controller.run(observed(label));
+    const read = await controller.run(observed(label));
 
     expect(read()).toBe('initial');
   });

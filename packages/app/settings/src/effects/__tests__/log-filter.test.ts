@@ -55,7 +55,7 @@ describe('$logFilter', () => {
     vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
     await using effects = createTestController();
 
-    const [logFilter] = await effects.run($logFilter);
+    const logFilter = await effects.run($logFilter);
 
     expect(logFilter().pattern).toBe('app:*');
     expect(readEnvironment).toHaveBeenCalledWith(filter);
@@ -66,7 +66,7 @@ describe('$logFilter', () => {
     vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
     await using effects = createTestController();
 
-    const [logFilter] = await effects.run($logFilter);
+    const logFilter = await effects.run($logFilter);
     push('*');
 
     expect(logFilter().pattern).toBe('*');
@@ -80,7 +80,7 @@ describe('$logFilter', () => {
     });
     await using effects = createTestController();
 
-    const [logFilter] = await effects.run($logFilter);
+    const logFilter = await effects.run($logFilter);
 
     expect(logFilter().pattern).toBe('*');
   });
@@ -111,7 +111,7 @@ describe('$updateFilter', () => {
   it("overrides the active environment's pattern", async () => {
     await using effects = createTestController();
 
-    const [updateFilter] = await effects.run($updateFilter);
+    const updateFilter = await effects.run($updateFilter);
     await updateFilter('app:*');
 
     expect(updateConfig).toHaveBeenCalledWith(filter, {
@@ -124,7 +124,7 @@ describe('$resetFilter', () => {
   it("clears only the active environment's override", async () => {
     await using effects = createTestController();
 
-    const [resetFilter] = await effects.run($resetFilter);
+    const resetFilter = await effects.run($resetFilter);
     await resetFilter();
 
     expect(reset).toHaveBeenCalledWith(filter, [environment]);

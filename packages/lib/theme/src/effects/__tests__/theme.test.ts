@@ -19,7 +19,7 @@ describe('$theme', () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
     await using effects = createTestController();
 
-    const [theme] = await effects.run($theme);
+    const theme = await effects.run($theme);
 
     expect(theme()).toBe('jade');
   });
@@ -27,14 +27,14 @@ describe('$theme', () => {
   it('reads the default when the attribute is missing', async () => {
     await using effects = createTestController();
 
-    const [theme] = await effects.run($theme);
+    const theme = await effects.run($theme);
 
     expect(theme()).toBe(DEFAULT_THEME_ID);
   });
 
   it('follows later changes to the attribute', async () => {
     await using effects = createTestController();
-    const [theme] = await effects.run($theme);
+    const theme = await effects.run($theme);
 
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'plum';
     await flush();
@@ -44,7 +44,7 @@ describe('$theme', () => {
 
   it('stops following once released', async () => {
     const effects = createTestController();
-    const [theme] = await effects.run($theme);
+    const theme = await effects.run($theme);
     await effects[Symbol.asyncDispose]();
 
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'plum';
@@ -57,8 +57,8 @@ describe('$theme', () => {
 describe('$selectTheme', () => {
   it('writes the theme through, echoing into $theme', async () => {
     await using effects = createTestController();
-    const [theme] = await effects.run($theme);
-    const [selectTheme] = await effects.run($selectTheme);
+    const theme = await effects.run($theme);
+    const selectTheme = await effects.run($selectTheme);
 
     selectTheme('teal');
     await flush();
@@ -71,9 +71,9 @@ describe('$selectTheme', () => {
 describe('$resetTheme', () => {
   it('forgets the preference, echoing the default into $theme', async () => {
     await using effects = createTestController();
-    const [theme] = await effects.run($theme);
-    const [selectTheme] = await effects.run($selectTheme);
-    const [resetTheme] = await effects.run($resetTheme);
+    const theme = await effects.run($theme);
+    const selectTheme = await effects.run($selectTheme);
+    const resetTheme = await effects.run($resetTheme);
     selectTheme('teal');
 
     resetTheme();

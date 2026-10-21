@@ -2,7 +2,7 @@ import { createController, type Controller } from '../controller/controller';
 import { toPromise } from '../eventual';
 import type { Plan } from '../plan';
 import { createManager, release, type Manager } from '../manager';
-import { yieldOf, type YieldAll } from '../task';
+import { yieldOf, type Yield } from '../task';
 
 /** Drives plans against a fresh manager and tears them down after. */
 export interface TestController extends AsyncDisposable {
@@ -16,12 +16,10 @@ export interface TestController extends AsyncDisposable {
   readonly controller: Controller;
 
   /**
-   * Acquire the plan, compute it, and return its output values. The
+   * Acquire the plan, compute it, and return what it yields. The
    * handle stays live until the controller is disposed.
    */
-  run<Outputs extends readonly unknown[]>(
-    plan: Plan<[], Outputs>,
-  ): Promise<YieldAll<Outputs>>;
+  run<Output>(plan: Plan<void, Output>): Promise<Yield<Output>>;
 }
 
 /**
@@ -37,14 +35,12 @@ export const createTestController = (): TestController => {
     manager,
     controller,
 
-    run: async <Outputs extends readonly unknown[]>(
-      plan: Plan<[], Outputs>,
-    ): Promise<YieldAll<Outputs>> => {
+    run: async <Output>(plan: Plan<void, Output>): Promise<Yield<Output>> => {
       const handle = controller.acquire(plan);
-      const outputs = await toPromise(controller.compute(handle));
+      const output = await toPromise(controller.compute(handle));
 
       // `yieldOf` is untyped; the plan's signature vouches.
-      return outputs.map(yieldOf) as unknown as YieldAll<Outputs>;
+      return yieldOf(output) as Yield<Output>;
     },
 
     [Symbol.asyncDispose]: async () => {

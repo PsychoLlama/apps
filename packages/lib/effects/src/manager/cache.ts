@@ -1,61 +1,48 @@
 import type { PlanNode } from '../plan';
 
-/** An output tuple, compared by identity when it feeds another node. */
-export type Tuple = readonly unknown[];
-
 type Kind = PlanNode['kind'];
 
 /** Everything a manager caches. One per manager; operate on it below. */
 export interface Cache<Value> {
   /**
-   * Values by node kind, node, then input tuple. A node's inputs are one
-   * upstream node's output tuple, created once and shared, so the tuple
-   * itself is the key: flat levels, with no composite key to build.
+   * Values by node kind, node, then input. A node's input is one upstream
+   * node's output, so the value itself is the key: flat levels, with no
+   * composite key to build.
    *
-   * Keyed by identity (`Map` semantics). Nodes key by their task, or by
-   * the plan that built them.
+   * Keyed by value (`Map` semantics: SameValueZero). Equal outputs share
+   * downstream work, whichever node or input produced them. Nodes key by
+   * their task, or by the plan that built them.
    */
-  readonly entries: Readonly<Record<Kind, Map<object, Map<Tuple, Value>>>>;
-
-  /**
-   * Task output tuples, interned by value. Equal values share one
-   * `[value]` tuple, so downstream keys on it alike, whichever task or
-   * input produced it.
-   *
-   * Keyed by value (`Map` semantics: SameValueZero). Refcounted, since
-   * primitives can't be weakly held.
-   */
-  readonly interned: Map<unknown, { readonly tuple: Tuple; refs: number }>;
+  readonly entries: Readonly<Record<Kind, Map<object, Map<unknown, Value>>>>;
 }
 
 export const createCache = <Value>(): Cache<Value> => ({
-  interned: new Map(),
   entries: {
     task: new Map(),
     join: new Map(),
   },
 });
 
-/** The value for this node and input tuple, if one is set. */
+/** The value for this node and input, if one is set. */
 export const lookup = <Value>(
   cache: Cache<Value>,
   kind: Kind,
   key: object,
-  inputs: Tuple,
-): Value | undefined => cache.entries[kind].get(key)?.get(inputs);
+  input: unknown,
+): Value | undefined => cache.entries[kind].get(key)?.get(input);
 
-/** Set the value for this node and input tuple. */
+/** Set the value for this node and input. */
 export const insert = <Value>(
   cache: Cache<Value>,
   kind: Kind,
   key: object,
-  inputs: Tuple,
+  input: unknown,
   value: Value,
 ): void => {
   const byKey = cache.entries[kind];
-  const byInputs = byKey.get(key) ?? new Map<Tuple, Value>();
-  byKey.set(key, byInputs);
-  byInputs.set(inputs, value);
+  const byInput = byKey.get(key) ?? new Map<unknown, Value>();
+  byKey.set(key, byInput);
+  byInput.set(input, value);
 };
 
 /** Remove the value, dropping the node's map once it's empty. */
@@ -63,30 +50,12 @@ export const remove = <Value>(
   cache: Cache<Value>,
   kind: Kind,
   key: object,
-  inputs: Tuple,
+  input: unknown,
 ): void => {
   const byKey = cache.entries[kind];
-  const byInputs = byKey.get(key);
-  if (!byInputs) return;
+  const byInput = byKey.get(key);
+  if (!byInput) return;
 
-  byInputs.delete(inputs);
-  if (byInputs.size === 0) byKey.delete(key);
-};
-
-/** The shared `[value]` tuple, holding a reference on it. */
-export const intern = <Value>(cache: Cache<Value>, value: unknown): Tuple => {
-  const boxed = cache.interned.get(value) ?? { tuple: [value], refs: 0 };
-  cache.interned.set(value, boxed);
-  boxed.refs += 1;
-
-  return boxed.tuple;
-};
-
-/** Let go of a reference taken by `intern`, freeing the tuple at zero. */
-export const drop = <Value>(cache: Cache<Value>, value: unknown): void => {
-  const boxed = cache.interned.get(value);
-  if (!boxed) return;
-
-  boxed.refs -= 1;
-  if (boxed.refs === 0) cache.interned.delete(value);
+  byInput.delete(input);
+  if (byInput.size === 0) byKey.delete(key);
 };

@@ -14,33 +14,21 @@ import {
 } from '../eventual';
 import type { Mode } from '../mode';
 import { PLAN, type Plan, type PlanNode } from '../plan';
-import {
-  createCache,
-  drop,
-  insert,
-  intern,
-  lookup,
-  remove,
-  type Cache,
-  type Tuple,
-} from './cache';
+import { createCache, insert, lookup, remove, type Cache } from './cache';
 import { keyOf, ROOT, spawn, type Entry } from './entry';
 import type * as Node from './node';
 
-/** Phantom slot pinning a handle's output tuple and mode. */
+/** Phantom slot pinning a handle's output and mode. */
 declare const SIGNATURE: unique symbol;
 
 /** A plan acquired on a manager, and what the manager tracks for it. */
-export interface Handle<
-  out Outputs extends readonly unknown[] = readonly unknown[],
-  out M extends Mode = Mode,
-> {
-  readonly [SIGNATURE]?: { readonly outputs: Outputs; readonly mode: M };
+export interface Handle<out Output = unknown, out M extends Mode = Mode> {
+  readonly [SIGNATURE]?: { readonly output: Output; readonly mode: M };
 
   /** Every node in the plan, topologically ordered. */
   readonly nodes: readonly PlanNode[];
 
-  /** The node whose output tuple is the plan's output. */
+  /** The node whose output is the plan's output. */
   readonly output: PlanNode;
 
   /**
@@ -58,7 +46,7 @@ export interface Handle<
 
 /** Computations shared by every handle acquired through it. */
 export interface Manager {
-  /** Entries and interned output tuples. The manager alone operates on it. */
+  /** Entries by node and input. The manager alone operates on it. */
   readonly cache: Cache<Entry>;
 
   /** Handles that have computed and not yet been released. */
@@ -70,9 +58,9 @@ export const createManager = (): Manager => ({
   handles: new Set(),
 });
 
-const same = (left: readonly Tuple[], right: readonly Tuple[]) =>
+const same = (left: readonly unknown[], right: readonly unknown[]) =>
   left.length === right.length &&
-  left.every((tuple, index) => tuple === right[index]);
+  left.every((value, index) => Object.is(value, right[index]));
 
 /** The entry once it settles. Waits only if it's still computing. */
 const settled = (entry: Entry): Eventual<Entry> =>
@@ -84,12 +72,12 @@ const settled = (entry: Entry): Eventual<Entry> =>
 const claim = (
   manager: Manager,
   node: PlanNode,
-  inputs: Tuple,
-  sources: readonly Tuple[],
+  input: unknown,
+  sources: readonly unknown[],
 ): Eventual<Entry> => {
   const { cache } = manager;
   const key = keyOf(node);
-  let entry = lookup(cache, node.kind, key, inputs);
+  let entry = lookup(cache, node.kind, key, input);
 
   // Never overlap with a previous life of the same key. Only a life that
   // had to wait to retire is still here.
@@ -97,18 +85,18 @@ const claim = (
     return later(
       entry.retired
         .catch(() => {})
-        .then(() => toPromise(claim(manager, node, inputs, sources))),
+        .then(() => toPromise(claim(manager, node, input, sources))),
     );
   }
 
   if (!entry) {
-    entry = spawn(node, inputs, sources, (value) => intern(cache, value));
-    insert(cache, node.kind, key, inputs, entry);
+    entry = spawn(node, input, sources);
+    insert(cache, node.kind, key, input, entry);
   }
 
   // A join's output is only as stable as its branches. Whoever holds a
   // join holds its branches too, so they can't be recomputed while it
-  // lives, and every claimant arrives with the same tuples.
+  // lives, and every claimant arrives with the same outputs.
   assert(same(entry.sources, sources), 'Join claimed with stale branches.');
 
   entry.refs += 1;
@@ -120,20 +108,21 @@ const retire = (manager: Manager, entry: Entry): Eventual<unknown> => {
   const retired = lastly(
     () => chain(settled(entry), () => from(entry.dispose?.())),
     () => {
-      remove(manager.cache, entry.kind, entry.key, entry.inputs);
-
-      // Only after cleanup, so an equal value can't reuse the tuple while
-      // anything keyed on it is still tearing down.
-      const state = entry.state();
-      if (entry.kind === 'task' && state.step === 'succeeded') {
-        drop(manager.cache, state.outputs[0]);
-      }
+      remove(manager.cache, entry.kind, entry.key, entry.input);
     },
   );
 
   if (retired.type === 'async') entry.retired = retired.value;
   return retired;
 };
+
+/** A node's output, once it's known. */
+interface Known {
+  readonly output: unknown;
+}
+
+// What a root binds to, as though some upstream output it.
+const ROOTED: Known = { output: ROOT };
 
 const held = (handle: Handle, node: PlanNode) => {
   const signal = handle.held.get(node);
@@ -142,15 +131,15 @@ const held = (handle: Handle, node: PlanNode) => {
   return signal;
 };
 
-/** A bound node's output tuple, or `undefined` if it didn't succeed. */
+/** A bound node's output, or `undefined` if it didn't succeed. */
 const outputOf = (
   manager: Manager,
   handle: Handle,
   node: PlanNode,
-): Eventual<Tuple | undefined> =>
+): Eventual<Known | undefined> =>
   chain(bind(manager, handle, node), (entry) => {
     const state = entry?.state();
-    return now(state?.step === 'succeeded' ? state.outputs : undefined);
+    return now(state?.step === 'succeeded' ? state : undefined);
   });
 
 /** Claim the node's entry once its branches are known, and hold it. */
@@ -158,7 +147,7 @@ const attach = (
   manager: Manager,
   handle: Handle,
   node: PlanNode,
-  inputs: Tuple,
+  input: unknown,
 ): Eventual<Entry | undefined> => {
   const branches = node.kind === 'join' ? node.branches : [];
   const sources = all(
@@ -166,9 +155,13 @@ const attach = (
   );
 
   return chain(sources, (sources) => {
-    if (!sources.every(Boolean)) return now(undefined);
+    const outputs: unknown[] = [];
+    for (const source of sources) {
+      if (!source) return now(undefined);
+      outputs.push(source.output);
+    }
 
-    const claimed = claim(manager, node, inputs, sources as Tuple[]);
+    const claimed = claim(manager, node, input, outputs);
     return chain(claimed, (entry) => {
       const [, setEntry] = held(handle, node);
       setEntry(entry);
@@ -177,7 +170,7 @@ const attach = (
   });
 };
 
-/** Bind a node once every upstream tuple is known, then let it settle. */
+/** Bind a node once its upstream output is known, then let it settle. */
 const bind = (
   manager: Manager,
   handle: Handle,
@@ -186,9 +179,11 @@ const bind = (
   const bound = handle.bindings.get(node);
   if (bound) return bound;
 
-  const inputs = node.input ? outputOf(manager, handle, node.input) : now(ROOT);
-  const binding = chain(inputs, (inputs) =>
-    inputs ? attach(manager, handle, node, inputs) : now(undefined),
+  const upstream = node.input
+    ? outputOf(manager, handle, node.input)
+    : now(ROOTED);
+  const binding = chain(upstream, (known) =>
+    known ? attach(manager, handle, node, known.output) : now(undefined),
   );
 
   handle.bindings.set(node, binding);
@@ -265,9 +260,9 @@ const tearDown = (
 };
 
 /** Build the plan's graph. Pure: nothing runs, and no manager is involved. */
-export const acquire = <Outputs extends readonly unknown[], M extends Mode>(
-  plan: Plan<[], Outputs, M>,
-): Handle<Outputs, M> => {
+export const acquire = <Output, M extends Mode>(
+  plan: Plan<void, Output, M>,
+): Handle<Output, M> => {
   const graph = plan[PLAN]();
   return {
     nodes: graph.nodes,
@@ -286,37 +281,37 @@ export const acquire = <Outputs extends readonly unknown[], M extends Mode>(
 
 /**
  * Run every node, sharing cached work with other handles, and return the
- * plan's raw output tuple. It's here right away unless a node has to
+ * plan's raw output. It's here right away unless a node has to
  * wait: a `sync` plan's always is, and so is any plan's once it has
  * settled. Fails with an `AggregateError` of every failure, thrown now or
  * rejected later. Safe to call repeatedly.
  */
-export const compute = <Outputs extends readonly unknown[], M extends Mode>(
+export const compute = <Output, M extends Mode>(
   manager: Manager,
-  handle: Handle<Outputs, M>,
-): Eventual<Outputs, M> =>
+  handle: Handle<Output, M>,
+): Eventual<Output, M> =>
   // Bindings call this from render. Nothing it reads is a dependency.
   untrack(() => {
     assert(!handle.released, 'Handle was already released.');
     manager.handles.add(handle);
 
     const failures = bringUp(manager, handle, handle.nodes);
-    const outputs = chain(failures, (failures) => {
+    const output = chain(failures, (failures) => {
       if (failures.length > 0) {
         throw new AggregateError(failures, 'Plan failed.');
       }
 
-      // Its outputs may already be disposed.
+      // Its output may already be disposed.
       assert(!handle.released, 'Handle was released while computing.');
 
       const state = inspect(handle, handle.output);
       assert(state.step === 'succeeded', 'Plan computed without an output.');
-      return now(state.outputs);
+      return now(state.output);
     });
 
     // The graph is untyped at runtime; the plan's signature vouches, and
     // a `sync` plan never waits.
-    return outputs as Eventual<Outputs, M>;
+    return output as Eventual<Output, M>;
   });
 
 /**

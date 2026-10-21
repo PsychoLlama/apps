@@ -25,7 +25,7 @@ export interface RuntimeEffects {
   /** An effect that holds a scope alive while it's held. */
   readonly anchored: (
     scope: ScopeRef,
-  ) => Plan<[], [Resource<undefined, 'sync'>], 'sync'>;
+  ) => Plan<void, Resource<undefined, 'sync'>, 'sync'>;
 
   /**
    * An effect that reads a store or cell, holding its scope alive while
@@ -33,7 +33,7 @@ export interface RuntimeEffects {
    */
   readonly observed: <Ref extends AnyWritableRef>(
     ref: Ref,
-  ) => Plan<[], [Reactive<Snapshot<Ref>, 'sync'>], 'sync'>;
+  ) => Plan<void, Reactive<Snapshot<Ref>, 'sync'>, 'sync'>;
 }
 
 /** Build the effects for a runtime. */
