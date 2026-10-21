@@ -1,6 +1,4 @@
-import { defineCell, defineFold, defineStore, defineTopic } from '@lib/state';
-import { stopStream } from './capabilities';
-import { readerScope } from './scope';
+import { defineCommand, defineStore } from '@lib/state/next';
 import type { ScanResult } from '../worker/rpc';
 
 /**
@@ -61,7 +59,7 @@ export interface CameraState {
 const idleTorch = (): TorchState => ({ supported: false, on: false });
 
 /** Lifecycle of the reader's camera session. */
-export const cameraStore = defineStore<CameraState>(readerScope, () => ({
+export const $camera = defineStore<CameraState>(() => ({
   status: 'idle',
   error: null,
   torch: idleTorch(),
@@ -69,62 +67,46 @@ export const cameraStore = defineStore<CameraState>(readerScope, () => ({
 }));
 
 /**
- * The live camera stream while `status === 'streaming'`, else `null`. A
- * cell, not store state — the `<video>` element needs the real
- * `MediaStream`, and a reactive store would hand it a proxy.
- *
- * Dropping it stops every track, which is what releases the camera (and its
- * recording indicator) when the last anchor goes away.
+ * Whether the session wants the camera: a request is under way or the feed
+ * is live. Whoever holds the stream holds it for exactly this long.
  */
-export const streamCell = defineCell<MediaStream | null>(
-  readerScope,
-  () => null,
-  { drop: stopStream },
-);
-
-/** A live feed, paired with what its camera turned out to be capable of. */
-export interface LiveCamera {
-  /** The live stream to render and sample frames from. */
-  stream: MediaStream;
-  /** Whether the stream's camera exposes a controllable torch. */
-  torch: boolean;
-}
+export const wantsCamera = (camera: { readonly status: ReaderStatus }) =>
+  camera.status === 'requesting' || camera.status === 'streaming';
 
 /**
  * A camera request got under way. Clears the prior error and result so
- * "scan again" and "try again" both start from a clean slate.
+ * "scan again" and "try again" both start from a clean slate. Ignored while
+ * the camera is already wanted, so a second tap can't restart a live feed.
  */
-export const scanRequestedTopic = defineTopic();
-defineFold(scanRequestedTopic, [cameraStore], (camera) => {
+export const $scanRequested = defineCommand([$camera], (camera) => () => {
+  if (wantsCamera(camera)) return;
+
   camera.status = 'requesting';
   camera.error = null;
   camera.result = null;
 });
 
-/** The camera opened; the feed is live and its torch support is known. */
-export const cameraOpenedTopic = defineTopic<LiveCamera>();
-defineFold(
-  cameraOpenedTopic,
-  [cameraStore, streamCell],
-  (camera, held, live) => {
+/**
+ * The camera opened; the feed is live, and `torch` says whether its camera
+ * has one to control.
+ */
+export const $cameraOpened = defineCommand(
+  [$camera],
+  (camera) => (torch: boolean) => {
     camera.status = 'streaming';
     camera.error = null;
-    camera.torch = { supported: live.torch, on: false };
-    held.current = live.stream;
+    camera.torch = { supported: torch, on: false };
   },
 );
 
 /** The camera request failed, with the cause normalized for the UI. */
-export const cameraFailedTopic = defineTopic<CameraErrorKind>();
-defineFold(
-  cameraFailedTopic,
-  [cameraStore, streamCell],
-  (camera, held, kind) => {
+export const $cameraFailed = defineCommand(
+  [$camera],
+  (camera) => (kind: CameraErrorKind) => {
     camera.status = 'error';
     camera.error = kind;
     camera.torch = idleTorch();
     camera.result = null;
-    held.current = null;
   },
 );
 
@@ -133,37 +115,33 @@ defineFold(
  * `applyConstraints` resolves, so a rejected toggle leaves the button
  * reflecting reality.
  */
-export const torchToggledTopic = defineTopic<boolean>();
-defineFold(torchToggledTopic, [cameraStore], (camera, on) => {
-  camera.torch.on = on;
-});
+export const $torchToggled = defineCommand(
+  [$camera],
+  (camera) => (on: boolean) => {
+    camera.torch.on = on;
+  },
+);
 
 /**
- * The feed was dismissed and the camera released. Back to the landing
- * state, with no result to park on.
+ * The feed was dismissed. Back to the landing state, with no result to park
+ * on; the camera is released along with the session's want of it.
  */
-export const scanStoppedTopic = defineTopic();
-defineFold(scanStoppedTopic, [cameraStore, streamCell], (camera, held) => {
+export const $scanStopped = defineCommand([$camera], (camera) => () => {
   camera.status = 'idle';
   camera.error = null;
   camera.torch = idleTorch();
   camera.result = null;
-  held.current = null;
 });
 
 /**
- * A code was recognized. The stream is already stopped by the time this
- * lands, so the session drops it and returns to idle *keeping* the result —
- * which is what swaps the result surface in for the feed.
+ * A code was recognized. The session returns to idle *keeping* the result,
+ * which swaps the result surface in for the feed and releases the camera.
  */
-export const codeRecognizedTopic = defineTopic<ScanResult>();
-defineFold(
-  codeRecognizedTopic,
-  [cameraStore, streamCell],
-  (camera, held, result) => {
+export const $codeRecognized = defineCommand(
+  [$camera],
+  (camera) => (result: ScanResult) => {
     camera.status = 'idle';
     camera.torch = idleTorch();
     camera.result = result;
-    held.current = null;
   },
 );

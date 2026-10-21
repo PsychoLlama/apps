@@ -8,7 +8,6 @@
  * sensitive, so a declared URL still has to clear {@link webLinkHref}.
  */
 
-import type { DeepReadonly } from '@lib/state';
 import type { ParsedDetail, ParsedLinkDetail } from '@crate/qr-code';
 import type { ScanResult } from './worker/rpc';
 
@@ -105,9 +104,7 @@ export const linkFor = (
  * clear the same {@link linkFor} `link` safety check used to render it —
  * so a `javascript:`/`data:`/deceptive-userinfo payload is never launched.
  */
-export const autoOpenHref = (
-  result: DeepReadonly<ScanResult>,
-): string | undefined => {
+export const autoOpenHref = (result: ScanResult): string | undefined => {
   if (result.kind !== 'url') return undefined;
   const link = result.details.find(
     (detail): detail is ParsedLinkDetail => detail.type === 'link',
@@ -154,7 +151,7 @@ export const internalPath = (href: string): string | undefined => {
  * `internal` router navigation, anything else an `external` new tab.
  */
 export const resolveScanTarget = (
-  result: DeepReadonly<ScanResult>,
+  result: ScanResult,
 ): ScanTarget | undefined => {
   const href = autoOpenHref(result);
   if (href === undefined) return undefined;

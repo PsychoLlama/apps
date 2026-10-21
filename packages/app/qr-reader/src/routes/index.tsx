@@ -1,22 +1,13 @@
-import { Match, onMount, Show, Switch } from 'solid-js';
-import { useAnchor, useRun, useValue } from '@lib/state';
+import { Match, Show, Switch } from 'solid-js';
+import { useAction, useClientResource, useValue } from '@lib/effects/solid';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import { Container } from '@lib/ui';
-import { CameraView } from '../components/camera-view';
+import { CameraSession } from '../components/camera-session';
 import { Landing } from '../components/landing';
 import { ReaderError } from '../components/reader-error';
 import { ScanResult } from '../components/scan-result';
-import {
-  autoStartScanSaga,
-  cameraStore,
-  preloadDecoderSaga,
-  reportSagaFailure,
-  readerScope,
-  startScanSaga,
-  stopScanSaga,
-  streamCell,
-  toggleTorchSaga,
-} from '../state';
+import { $autoStartScan, $decoder } from '../effects';
+import { $camera, $scanRequested, wantsCamera } from '../state';
 
 /**
  * QR Reader home. Drives a camera session: the landing page opens the feed,
@@ -25,43 +16,28 @@ import {
  * code the result surface replaces the feed, showing the raw payload with
  * a control to scan again.
  *
- * The anchor is the only lifecycle wiring here: releasing it on cleanup
- * stops the stream, terminates the decoder worker, and supersedes a request
- * still waiting on its permission prompt.
+ * Holding the plans is the only lifecycle wiring here: the camera is held
+ * while the session wants it, and the decoder worker for the whole page.
+ * Releasing them stops the stream and terminates the worker.
  */
 const QrReader = () => {
-  useAnchor(readerScope);
-  const camera = useValue(cameraStore);
-  const stream = useValue(streamCell);
-  const startScan = useRun(startScanSaga);
-  const autoStart = useRun(autoStartScanSaga);
-  const stopScan = useRun(stopScanSaga);
-  const toggleTorch = useRun(toggleTorchSaga);
-  const preloadDecoder = useRun(preloadDecoderSaga);
+  const camera = useValue($camera);
+  const start = useAction($scanRequested);
 
-  const start = () =>
-    void startScan().catch(reportSagaFailure('The camera start saga failed.'));
-
-  onMount(() => {
-    // Neither the worker nor the Permissions API can run during SSG, so both
-    // start once the client mounts. They're independent: the feed is usable
-    // whether or not the decoder has landed, and vice versa.
-    //
-    // The worker is preloaded across the whole reader page so its wasm is
-    // warm by the time the camera goes live; it outlives individual camera
-    // sessions and is torn down only with the scope.
-    void preloadDecoder().catch(
-      reportSagaFailure('The decoder preload saga failed.'),
-    );
-    void autoStart().catch(
-      reportSagaFailure('The camera auto-start saga failed.'),
-    );
-  });
+  // Neither the worker nor the Permissions API can run during SSG, so both
+  // start once the client mounts. They're independent: the feed is usable
+  // whether or not the decoder has landed, and vice versa. The worker is
+  // warm by the time the camera goes live, and outlives camera sessions.
+  useClientResource($decoder);
+  useClientResource($autoStartScan);
 
   return (
-    <Show
-      when={camera().status === 'streaming' && stream()}
-      fallback={
+    <>
+      <Show when={wantsCamera(camera())}>
+        <CameraSession />
+      </Show>
+
+      <Show when={camera().status !== 'streaming'}>
         <Frame>
           <SiteHeader />
 
@@ -91,26 +67,8 @@ const QrReader = () => {
             </Container>
           </FrameBody>
         </Frame>
-      }
-    >
-      {(live) => (
-        <CameraView
-          stream={live()}
-          onCancel={() =>
-            void stopScan().catch(
-              reportSagaFailure('The camera stop saga failed.'),
-            )
-          }
-          torchSupported={camera().torch.supported}
-          torchOn={camera().torch.on}
-          onToggleTorch={() =>
-            void toggleTorch(!camera().torch.on).catch(
-              reportSagaFailure('The torch toggle saga failed.'),
-            )
-          }
-        />
-      )}
-    </Show>
+      </Show>
+    </>
   );
 };
 

@@ -28,6 +28,9 @@ afterEach(() => {
   vi.mocked(requestDecode).mockReset();
 });
 
+/** The decoder stand-in. `requestDecode` is stubbed, so it's never read. */
+const decoder = {} as DecoderConnection;
+
 /** A fresh, live signal — the common case where the loop hasn't torn down. */
 const liveSignal = () => new AbortController().signal;
 
@@ -38,7 +41,7 @@ describe('createFrameSampler', () => {
     const onHit = vi.fn();
     const sample = createFrameSampler(
       fakeVideo,
-      () => ({}) as DecoderConnection,
+      decoder,
       onResult,
       onHit,
       liveSignal(),
@@ -56,7 +59,7 @@ describe('createFrameSampler', () => {
     const onHit = vi.fn();
     const sample = createFrameSampler(
       fakeVideo,
-      () => ({}) as DecoderConnection,
+      decoder,
       onResult,
       onHit,
       liveSignal(),
@@ -77,7 +80,7 @@ describe('createFrameSampler', () => {
     );
     const sample = createFrameSampler(
       fakeVideo,
-      () => ({}) as DecoderConnection,
+      decoder,
       vi.fn(),
       vi.fn(),
       liveSignal(),
@@ -91,32 +94,11 @@ describe('createFrameSampler', () => {
     await pending;
   });
 
-  it('skips sampling until a decoder is available', async () => {
-    const slot: { decoder: DecoderConnection | null } = { decoder: null };
-    const sample = createFrameSampler(
-      fakeVideo,
-      () => slot.decoder,
-      vi.fn(),
-      vi.fn(),
-      liveSignal(),
-    );
-
-    // Decoder still preloading — the frame is taken but nothing is sent.
-    await sample();
-    expect(requestDecode).not.toHaveBeenCalled();
-
-    // Worker lands; the next sample decodes against it.
-    slot.decoder = {} as DecoderConnection;
-    vi.mocked(requestDecode).mockResolvedValue(null);
-    await sample();
-    expect(requestDecode).toHaveBeenCalledWith(slot.decoder, expect.anything());
-  });
-
   it('swallows a failed decode and frees the slot for the next sample', async () => {
     vi.mocked(requestDecode).mockRejectedValueOnce(new Error('grab failed'));
     const sample = createFrameSampler(
       fakeVideo,
-      () => ({}) as DecoderConnection,
+      decoder,
       vi.fn(),
       vi.fn(),
       liveSignal(),
@@ -135,7 +117,7 @@ describe('createFrameSampler', () => {
     controller.abort();
     const sample = createFrameSampler(
       fakeVideo,
-      () => ({}) as DecoderConnection,
+      decoder,
       vi.fn(),
       vi.fn(),
       controller.signal,
@@ -158,7 +140,7 @@ describe('createFrameSampler', () => {
     const controller = new AbortController();
     const sample = createFrameSampler(
       fakeVideo,
-      () => ({}) as DecoderConnection,
+      decoder,
       onResult,
       onHit,
       controller.signal,
@@ -198,7 +180,7 @@ describe('startCaptureLoop', () => {
     const onResult = vi.fn();
     const { video, fire } = rvfcVideo();
 
-    startCaptureLoop(video, () => ({}) as DecoderConnection, onResult);
+    startCaptureLoop(video, decoder, onResult);
     fire(0);
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(result));
 
@@ -211,11 +193,7 @@ describe('startCaptureLoop', () => {
   it('stops sampling once unsubscribed', () => {
     const { video, fire } = rvfcVideo();
 
-    const unsubscribe = startCaptureLoop(
-      video,
-      () => ({}) as DecoderConnection,
-      vi.fn(),
-    );
+    const unsubscribe = startCaptureLoop(video, decoder, vi.fn());
     unsubscribe();
     fire(0);
 
@@ -234,11 +212,7 @@ describe('startCaptureLoop', () => {
     const onResult = vi.fn();
     const { video, fire } = rvfcVideo();
 
-    const unsubscribe = startCaptureLoop(
-      video,
-      () => ({}) as DecoderConnection,
-      onResult,
-    );
+    const unsubscribe = startCaptureLoop(video, decoder, onResult);
     fire(0); // a frame enters flight
     await vi.waitFor(() => expect(requestDecode).toHaveBeenCalledOnce());
 
