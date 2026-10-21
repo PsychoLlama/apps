@@ -1,10 +1,11 @@
+import { createTestController } from '@lib/effects/testing';
 import {
   COLOR_SCHEME_ATTRIBUTE,
   DEFAULT_THEME_ID,
   MOTION_ATTRIBUTE,
   THEME_ATTRIBUTE,
 } from '../constants';
-import { readAppearance } from '../dom';
+import { $hydrateAppearance } from '../dom';
 
 beforeEach(() => {
   delete document.documentElement.dataset[THEME_ATTRIBUTE];
@@ -12,33 +13,39 @@ beforeEach(() => {
   delete document.documentElement.dataset[MOTION_ATTRIBUTE];
 });
 
-describe('readAppearance', () => {
-  it('reads every preference stamped on <html>', () => {
+describe('$hydrateAppearance', () => {
+  it('reads every preference stamped on <html>', async () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
 
-    expect(readAppearance()).toEqual({
+    await using effects = createTestController();
+
+    expect(await effects.run($hydrateAppearance)).toEqual({
       theme: 'jade',
       colorScheme: 'dark',
       motion: 'reduce',
     });
   });
 
-  it('falls back when the attributes are missing', () => {
-    expect(readAppearance()).toEqual({
+  it('falls back when the attributes are missing', async () => {
+    await using effects = createTestController();
+
+    expect(await effects.run($hydrateAppearance)).toEqual({
       theme: DEFAULT_THEME_ID,
       colorScheme: 'system',
       motion: 'system',
     });
   });
 
-  it('falls back when the attributes are unrecognized', () => {
+  it('falls back when the attributes are unrecognized', async () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'not-a-theme';
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'sepia';
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'jerky';
 
-    expect(readAppearance()).toEqual({
+    await using effects = createTestController();
+
+    expect(await effects.run($hydrateAppearance)).toEqual({
       theme: DEFAULT_THEME_ID,
       colorScheme: 'system',
       motion: 'system',

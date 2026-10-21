@@ -1,3 +1,4 @@
+import { pipe } from '@lib/effects';
 import {
   COLOR_SCHEME_ATTRIBUTE,
   COLOR_SCHEME_IDS,
@@ -69,14 +70,16 @@ const readPreference = <Key extends keyof Appearance>(
 };
 
 /**
- * Read every preference stamped onto `<html>`. A missing or unrecognized
- * attribute reads as its fallback.
+ * Every preference stamped onto `<html>`. A missing or unrecognized
+ * attribute reads as its fallback. Client-only; it reads `document`.
  */
-export const readAppearance = (): Appearance => ({
-  theme: readPreference('theme'),
-  colorScheme: readPreference('colorScheme'),
-  motion: readPreference('motion'),
-});
+export const $hydrateAppearance = pipe([
+  (): Appearance => ({
+    theme: readPreference('theme'),
+    colorScheme: readPreference('colorScheme'),
+    motion: readPreference('motion'),
+  }),
+]);
 
 /**
  * Mirror the active theme's page-background colors into the paired

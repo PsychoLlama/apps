@@ -5,9 +5,8 @@
  * and `@lib/state` into Vanilla Extract's child compiler.
  *
  * Read every preference from {@link $appearance}, and change one by
- * name with {@link $setAppearance}. The
- * `<html>` attributes the prelude stamps carry them between page loads.
+ * name with {@link $setAppearance}. The `<html>` attributes the prelude
+ * stamps carry them between page loads.
  */
-export { readAppearance } from './dom';
 export { $setAppearance } from './effects/appearance';
 export { $appearance } from './state/appearance';

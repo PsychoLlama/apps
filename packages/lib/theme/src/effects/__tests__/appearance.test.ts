@@ -20,23 +20,20 @@ const mountMetaTag = (id: string): HTMLMetaElement => {
   return meta;
 };
 
-// A page with the theme-color meta tags, and the action bound to it.
-// Disposing it restores a blank `<html>` and storage.
-const setup = async () => {
+// The theme-color meta tags on a blank `<html>`. Disposing it restores
+// the page and storage.
+const setup = () => {
   const light = mountMetaTag(THEME_COLOR_META_ID.light);
   const dark = mountMetaTag(THEME_COLOR_META_ID.dark);
-  const effects = createTestController();
 
   return {
-    appearance: await effects.run($appearance),
-    setAppearance: await effects.run($setAppearance),
+    dataset: document.documentElement.dataset,
     metaColors: () => ({
       light: light.getAttribute('content'),
       dark: dark.getAttribute('content'),
     }),
 
-    async [Symbol.asyncDispose]() {
-      await effects[Symbol.asyncDispose]();
+    [Symbol.dispose]() {
       light.remove();
       dark.remove();
       delete document.documentElement.dataset[THEME_ATTRIBUTE];
@@ -49,26 +46,30 @@ const setup = async () => {
 
 describe('$setAppearance', () => {
   it('writes the attribute, the store, and storage', async () => {
-    await using page = await setup();
+    using page = setup();
+    await using effects = createTestController();
+    const appearance = await effects.run($appearance);
+    const setAppearance = await effects.run($setAppearance);
 
-    page.setAppearance('theme', 'teal');
+    setAppearance('theme', 'teal');
 
-    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('teal');
-    expect(page.appearance.theme).toBe('teal');
+    expect(page.dataset[THEME_ATTRIBUTE]).toBe('teal');
+    expect(appearance.theme).toBe('teal');
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('teal');
   });
 
   it('handles each preference by its own attribute and key', async () => {
-    await using page = await setup();
+    using page = setup();
+    await using effects = createTestController();
+    const appearance = await effects.run($appearance);
+    const setAppearance = await effects.run($setAppearance);
 
-    page.setAppearance('colorScheme', 'dark');
-    page.setAppearance('motion', 'reduce');
+    setAppearance('colorScheme', 'dark');
+    setAppearance('motion', 'reduce');
 
-    expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
-      'dark',
-    );
-    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
-    expect(page.appearance).toMatchObject({
+    expect(page.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe('dark');
+    expect(page.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
+    expect(appearance).toMatchObject({
       colorScheme: 'dark',
       motion: 'reduce',
     });
@@ -77,59 +78,70 @@ describe('$setAppearance', () => {
   });
 
   it("drops the attribute and the stored value for 'system'", async () => {
-    await using page = await setup();
-    page.setAppearance('motion', 'reduce');
+    using page = setup();
+    await using effects = createTestController();
+    const appearance = await effects.run($appearance);
+    const setAppearance = await effects.run($setAppearance);
+    setAppearance('motion', 'reduce');
 
-    page.setAppearance('motion', 'system');
+    setAppearance('motion', 'system');
 
-    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
-    expect(page.appearance.motion).toBe('system');
+    expect(page.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
+    expect(appearance.motion).toBe('system');
     expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBeNull();
   });
 
   it('stamps the default theme but forgets the stored one', async () => {
-    await using page = await setup();
-    page.setAppearance('theme', 'jade');
+    using page = setup();
+    await using effects = createTestController();
+    const appearance = await effects.run($appearance);
+    const setAppearance = await effects.run($setAppearance);
+    setAppearance('theme', 'jade');
 
-    page.setAppearance('theme', DEFAULT_THEME_ID);
+    setAppearance('theme', DEFAULT_THEME_ID);
 
-    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe(
-      DEFAULT_THEME_ID,
-    );
-    expect(page.appearance.theme).toBe(DEFAULT_THEME_ID);
+    expect(page.dataset[THEME_ATTRIBUTE]).toBe(DEFAULT_THEME_ID);
+    expect(appearance.theme).toBe(DEFAULT_THEME_ID);
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
   });
 
   it("syncs the theme-color meta tags to the theme's colors", async () => {
-    await using page = await setup();
+    using page = setup();
+    await using effects = createTestController();
+    const setAppearance = await effects.run($setAppearance);
 
-    page.setAppearance('theme', 'jade');
+    setAppearance('theme', 'jade');
 
     expect(page.metaColors()).toEqual(THEME_COLORS.jade);
   });
 
   it('collapses the theme-color meta tags onto a forced scheme', async () => {
-    await using page = await setup();
-    page.setAppearance('theme', 'jade');
+    using page = setup();
+    await using effects = createTestController();
+    const setAppearance = await effects.run($setAppearance);
+    setAppearance('theme', 'jade');
 
-    page.setAppearance('colorScheme', 'dark');
+    setAppearance('colorScheme', 'dark');
     expect(page.metaColors()).toEqual({
       light: THEME_COLORS.jade.dark,
       dark: THEME_COLORS.jade.dark,
     });
 
-    page.setAppearance('colorScheme', 'light');
+    setAppearance('colorScheme', 'light');
     expect(page.metaColors()).toEqual({
       light: THEME_COLORS.jade.light,
       dark: THEME_COLORS.jade.light,
     });
 
-    page.setAppearance('colorScheme', 'system');
+    setAppearance('colorScheme', 'system');
     expect(page.metaColors()).toEqual(THEME_COLORS.jade);
   });
 
   it('switches before a storage failure throws', async () => {
-    await using page = await setup();
+    using page = setup();
+    await using effects = createTestController();
+    const appearance = await effects.run($appearance);
+    const setAppearance = await effects.run($setAppearance);
     const error = new DOMException('blocked', 'SecurityError');
     using setItem = vi
       .spyOn(Storage.prototype, 'setItem')
@@ -137,9 +149,9 @@ describe('$setAppearance', () => {
         throw error;
       });
 
-    expect(() => page.setAppearance('theme', 'pink')).toThrow(error);
+    expect(() => setAppearance('theme', 'pink')).toThrow(error);
     expect(setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, 'pink');
-    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('pink');
-    expect(page.appearance.theme).toBe('pink');
+    expect(page.dataset[THEME_ATTRIBUTE]).toBe('pink');
+    expect(appearance.theme).toBe('pink');
   });
 });
