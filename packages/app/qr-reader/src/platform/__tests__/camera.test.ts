@@ -1,14 +1,13 @@
-import MediaDevices from 'media-devices';
+import MediaDevices, { supportsMediaDevices } from 'media-devices';
 import {
   CameraError,
   cameraPermissionGranted,
   classifyCameraError,
   openCamera,
-  releaseCamera,
   setTorch,
   stopStream,
   supportsTorch,
-} from '../capabilities';
+} from '../camera';
 
 vi.mock('media-devices', () => ({
   default: { getUserMedia: vi.fn() },
@@ -34,9 +33,6 @@ const namedError = (name: string): Error => {
   error.name = name;
   return error;
 };
-
-/** A signal that is never aborted — the ordinary path. */
-const live = (): AbortSignal => new AbortController().signal;
 
 describe('classifyCameraError', () => {
   it('maps permission rejections to permission-denied', () => {
@@ -117,25 +113,6 @@ describe('stopStream', () => {
     expect(tracks[0].stop).toHaveBeenCalledOnce();
     expect(tracks[1].stop).toHaveBeenCalledOnce();
   });
-
-  it('is a no-op when no stream is open', () => {
-    // The cell's drop hook hands it whatever the cell held, `null` included.
-    expect(() => stopStream(null)).not.toThrow();
-  });
-});
-
-describe('releaseCamera', () => {
-  it('stops the stream it is handed', () => {
-    const tracks = [{ stop: vi.fn() }];
-
-    releaseCamera(live(), fakeStream(tracks));
-
-    expect(tracks[0].stop).toHaveBeenCalledOnce();
-  });
-
-  it('is a no-op when nothing is streaming', () => {
-    expect(() => releaseCamera(live(), null)).not.toThrow();
-  });
 });
 
 describe('openCamera', () => {
@@ -145,22 +122,13 @@ describe('openCamera', () => {
     });
     vi.mocked(MediaDevices.getUserMedia).mockResolvedValueOnce(stream);
 
-    await expect(openCamera(live())).resolves.toEqual({ stream, torch: true });
+    await expect(openCamera()).resolves.toEqual({ stream, torch: true });
   });
 
-  it('stops the stream and throws when superseded mid-prompt', async () => {
-    const tracks = [{ stop: vi.fn() }];
-    const controller = new AbortController();
-    vi.mocked(MediaDevices.getUserMedia).mockImplementationOnce(async () => {
-      // The page went away while the permission prompt was still open.
-      controller.abort();
-      return fakeStream(tracks);
-    });
+  it('rejects when the browser has no camera API', async () => {
+    vi.mocked(supportsMediaDevices).mockReturnValueOnce(false);
 
-    await expect(openCamera(controller.signal)).rejects.toThrow();
-    // `getUserMedia` can't be cancelled, so the orphan is stopped here or
-    // the camera stays live with nothing holding it.
-    expect(tracks[0].stop).toHaveBeenCalledOnce();
+    await expect(openCamera()).rejects.toThrow(CameraError);
   });
 });
 
@@ -193,14 +161,15 @@ describe('setTorch', () => {
     const applyConstraints = vi.fn().mockResolvedValue(undefined);
     const stream = streamWithVideoTrack({ applyConstraints });
 
-    await expect(setTorch(live(), stream, true)).resolves.toBe(true);
+    await expect(setTorch(stream, true)).resolves.toBe(true);
     expect(applyConstraints).toHaveBeenCalledWith({
       advanced: [{ torch: true }],
     });
   });
 
-  it('is a no-op resolving with the request when no stream is open', async () => {
-    await expect(setTorch(live(), null, true)).resolves.toBe(true);
+  it('is a no-op resolving with the request when there is no video track', async () => {
+    const stream = { getVideoTracks: () => [] } as unknown as MediaStream;
+    await expect(setTorch(stream, true)).resolves.toBe(true);
   });
 
   it('rejects when the hardware refuses the constraint', async () => {
@@ -208,6 +177,6 @@ describe('setTorch', () => {
       applyConstraints: vi.fn().mockRejectedValue(new Error('nope')),
     });
 
-    await expect(setTorch(live(), stream, true)).rejects.toThrow('nope');
+    await expect(setTorch(stream, true)).rejects.toThrow('nope');
   });
 });

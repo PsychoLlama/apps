@@ -1,13 +1,13 @@
-import { onCleanup, onMount, Show, type Component } from 'solid-js';
+import { onMount, Show, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { useRun, useValue } from '@lib/state';
+import { Suspense, useAction } from '@lib/effects/solid';
 import { Flex, IconButton } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
 import IconFlashlight from 'virtual:icons/mdi/flashlight';
 import IconFlashlightOff from 'virtual:icons/mdi/flashlight-off';
-import { startCaptureLoop } from '../capture-loop';
-import { decoderCell, finishScanSaga, reportSagaFailure } from '../state';
+import { $finishScan } from '../effects';
 import * as css from './camera-view.css';
+import { DecodeLoop } from './decode-loop';
 import { createLogger, toError } from '@lib/observability';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
@@ -27,36 +27,22 @@ interface CameraViewProps {
 
 /**
  * Full-viewport live camera feed with an overlaid cancel control. Runs
- * the decode loop: each sampled frame is grabbed as an `ImageBitmap` and
- * handed to the decoder worker, one in flight at a time. On the first hit
- * it finalizes the scan — recording the result and releasing the camera —
- * which swaps the result surface in for the feed.
+ * the decode loop once the decoder is live: each sampled frame is grabbed
+ * as an `ImageBitmap` and handed to the decoder worker, one in flight at a
+ * time. On the first hit it finalizes the scan — recording the result and
+ * releasing the camera — which swaps the result surface in for the feed.
  */
 export const CameraView: Component<CameraViewProps> = (props) => {
-  const finishScan = useRun(finishScanSaga);
-  const decoder = useValue(decoderCell);
+  const finishScan = useAction($finishScan);
   const navigate = useNavigate();
-  let videoEl: HTMLVideoElement | undefined;
+  // Assigned by the ref, before anything below reads it.
+  let videoEl!: HTMLVideoElement;
 
   onMount(() => {
-    const video = videoEl;
-    if (!video) return;
-
     // Attach the stream here, not in the ref: WebKit drops `srcObject` set
     // on a detached element, leaving the feed with no source and play()
     // rejecting. Setting it once the element is connected makes it stick.
-    video.srcObject = props.stream;
-
-    // Start sampling immediately; the loop reads the decoder per frame, so
-    // it tolerates the worker preload still being in flight and begins
-    // decoding the moment it attaches.
-    onCleanup(
-      startCaptureLoop(video, decoder, (result) => {
-        void finishScan({ result, navigate }).catch(
-          reportSagaFailure('The scan finalize saga failed.'),
-        );
-      }),
-    );
+    videoEl.srcObject = props.stream;
   });
 
   return (
@@ -112,6 +98,15 @@ export const CameraView: Component<CameraViewProps> = (props) => {
         <Flex as="div" class={css.corners.bottomLeft} />
         <Flex as="div" class={css.corners.bottomRight} />
       </Flex>
+
+      {/* The feed shows while the decoder is still warming up; sampling
+          starts the moment it's live. */}
+      <Suspense>
+        <DecodeLoop
+          video={videoEl}
+          onHit={(result) => finishScan(result, navigate)}
+        />
+      </Suspense>
 
       <Flex as="div" testId="reader-controls" class={css.controls}>
         <IconButton

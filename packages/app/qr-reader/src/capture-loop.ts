@@ -3,17 +3,12 @@ import type { ScanResult } from './worker/rpc';
 import { onVideoFrame } from './video-frames';
 
 /**
- * Build a sampler bound to one `<video>` and decoder source. Each call
- * grabs the current frame, decodes it, and on a hit reports the result and
- * fires `onHit` (used to halt the loop). The returned promise settles when
- * the frame does — and resolves immediately when the frame is skipped (no
- * decoder yet, one already in flight, or the loop aborted) — giving callers
- * a definite point to await.
- *
- * The decoder is resolved per call via `getDecoder` rather than captured up
- * front: the worker preloads asynchronously, so it may not be ready when
- * sampling starts. Frames taken before it lands are skipped; decoding
- * begins on the first frame after the worker attaches.
+ * Build a sampler bound to one `<video>` and decoder. Each call grabs the
+ * current frame, decodes it, and on a hit reports the result and fires
+ * `onHit` (used to halt the loop). The returned promise settles when the
+ * frame does — and resolves immediately when the frame is skipped (one
+ * already in flight, or the loop aborted) — giving callers a definite point
+ * to await.
  *
  * `signal` is the loop's liveness token: a decode can't be cancelled once
  * on the wire, only ignored, so an aborted signal makes the sampler drop
@@ -21,7 +16,7 @@ import { onVideoFrame } from './video-frames';
  */
 export const createFrameSampler = (
   video: HTMLVideoElement,
-  getDecoder: () => DecoderConnection | null,
+  decoder: DecoderConnection,
   onResult: (result: ScanResult) => void,
   onHit: () => void,
   signal: AbortSignal,
@@ -32,8 +27,7 @@ export const createFrameSampler = (
   let inFlight = false;
 
   return async () => {
-    const decoder = getDecoder();
-    if (inFlight || !decoder || signal.aborted) return;
+    if (inFlight || signal.aborted) return;
     inFlight = true;
     try {
       const result = await requestDecode(
@@ -77,7 +71,7 @@ export const createFrameSampler = (
  */
 export const startCaptureLoop = (
   video: HTMLVideoElement,
-  getDecoder: () => DecoderConnection | null,
+  decoder: DecoderConnection,
   onResult: (result: ScanResult) => void,
 ): (() => void) => {
   const controller = new AbortController();
@@ -90,7 +84,7 @@ export const startCaptureLoop = (
   };
   const sample = createFrameSampler(
     video,
-    getDecoder,
+    decoder,
     onResult,
     stop,
     controller.signal,

@@ -11,7 +11,9 @@
     "src/worker/index.ts"
   ],
   "exports": {
-    "./constants": "./src/constants.ts"
+    "./constants": "./src/constants.ts",
+    "./effects": "./src/effects/index.ts",
+    "./state": "./src/state/index.ts"
   },
   "config": {
     "localhost": "qr.localhost"
@@ -30,6 +32,7 @@
     "@crate/qr-code": "workspace:*",
     "@lib/assert": "workspace:*",
     "@lib/design": "workspace:*",
+    "@lib/effects": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/messaging": "workspace:*",
     "@lib/observability": "workspace:*",

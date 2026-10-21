@@ -1,27 +1,17 @@
-/**
- * Unit tests for the camera session's folds — the state transitions a scan
- * publishes, plus the lifetime guarantee the page hangs off: the stream is
- * stopped when the last anchor is released. Nothing here dereferences a real
- * stream, so the tests stand in fakes.
- */
+/** Unit tests for the camera session's state transitions. */
 
-import { createTestRuntime } from '@lib/state';
+import { createTestController } from '@lib/effects/testing';
 import {
-  cameraFailedTopic,
-  cameraOpenedTopic,
-  cameraStore,
-  codeRecognizedTopic,
-  scanRequestedTopic,
-  scanStoppedTopic,
-  streamCell,
-  torchToggledTopic,
+  $camera,
+  $cameraFailed,
+  $cameraOpened,
+  $codeRecognized,
+  $scanRequested,
+  $scanStopped,
+  $torchToggled,
+  wantsCamera,
 } from '../camera';
-import { readerScope } from '../scope';
 import type { ScanResult } from '../../worker/rpc';
-
-/** A stand-in stream. Only `getTracks` is called, and only on teardown. */
-const fakeStream = (stop: () => void = () => undefined): MediaStream =>
-  ({ getTracks: () => [{ stop }] }) as unknown as MediaStream;
 
 const result: ScanResult = {
   text: 'https://example.com',
@@ -30,157 +20,168 @@ const result: ScanResult = {
   details: [],
 };
 
-const setup = () => {
-  const runtime = createTestRuntime();
-  const release = runtime.anchor(readerScope);
-  return { ...runtime, release };
-};
+/** The session store and every command over it. */
+const setup = async (effects: ReturnType<typeof createTestController>) => ({
+  camera: await effects.run($camera),
+  scanRequested: await effects.run($scanRequested),
+  cameraOpened: await effects.run($cameraOpened),
+  cameraFailed: await effects.run($cameraFailed),
+  torchToggled: await effects.run($torchToggled),
+  scanStopped: await effects.run($scanStopped),
+  codeRecognized: await effects.run($codeRecognized),
+});
 
-describe('cameraStore', () => {
-  it('seeds an idle session with no stream', () => {
-    const { peek } = setup();
+describe('$camera', () => {
+  it('seeds an idle session', async () => {
+    await using effects = createTestController();
+    const camera = await effects.run($camera);
 
-    expect(peek(cameraStore)).toEqual({
+    expect(camera).toEqual({
       status: 'idle',
       error: null,
       torch: { supported: false, on: false },
       result: null,
     });
-    expect(peek(streamCell)).toBeNull();
   });
 });
 
-describe('scanRequestedTopic', () => {
-  it('marks the request under way', () => {
-    const { commit, peek } = setup();
-
-    commit(scanRequestedTopic());
-
-    expect(peek(cameraStore).status).toBe('requesting');
-  });
-
-  it('clears a prior error so "try again" starts clean', () => {
-    const { commit, peek } = setup();
-    commit(cameraFailedTopic('no-camera'));
-
-    commit(scanRequestedTopic());
-
-    expect(peek(cameraStore).error).toBeNull();
-  });
-
-  it('clears a prior result so "scan again" starts clean', () => {
-    const { commit, peek } = setup();
-    commit(codeRecognizedTopic(result));
-
-    commit(scanRequestedTopic());
-
-    expect(peek(cameraStore).result).toBeNull();
+describe('wantsCamera', () => {
+  it.each([
+    ['idle', false],
+    ['requesting', true],
+    ['streaming', true],
+    ['error', false],
+  ] as const)('is %s → %s', (status, expected) => {
+    expect(wantsCamera({ status })).toBe(expected);
   });
 });
 
-describe('cameraOpenedTopic', () => {
-  it('goes live, holding the stream itself', () => {
-    const { commit, peek } = setup();
-    const stream = fakeStream();
+describe('$scanRequested', () => {
+  it('marks the request under way', async () => {
+    await using effects = createTestController();
+    const { camera, scanRequested } = await setup(effects);
 
-    commit(cameraOpenedTopic({ stream, torch: false }));
+    scanRequested();
 
-    expect(peek(cameraStore).status).toBe('streaming');
-    // Identity, not deep equality: a store would hand back a proxy, and the
-    // `<video>` element needs the real `MediaStream`.
-    expect(peek(streamCell)).toBe(stream);
+    expect(camera.status).toBe('requesting');
   });
 
-  it('records the torch the camera turned out to have, defaulting it off', () => {
-    const { commit, peek } = setup();
+  it('clears a prior error so "try again" starts clean', async () => {
+    await using effects = createTestController();
+    const { camera, scanRequested, cameraFailed } = await setup(effects);
+    cameraFailed('no-camera');
 
-    commit(cameraOpenedTopic({ stream: fakeStream(), torch: true }));
+    scanRequested();
 
-    expect(peek(cameraStore).torch).toEqual({ supported: true, on: false });
+    expect(camera).toMatchObject({ status: 'requesting', error: null });
   });
 
-  it('leaves the torch unsupported when the camera has none', () => {
-    const { commit, peek } = setup();
+  it('clears a prior result so "scan again" starts clean', async () => {
+    await using effects = createTestController();
+    const { camera, scanRequested, codeRecognized } = await setup(effects);
+    codeRecognized(result);
 
-    commit(cameraOpenedTopic({ stream: fakeStream(), torch: false }));
+    scanRequested();
 
-    expect(peek(cameraStore).torch).toEqual({ supported: false, on: false });
+    expect(camera).toMatchObject({ status: 'requesting', result: null });
   });
-});
 
-describe('torchToggledTopic', () => {
-  it('records the confirmed torch state', () => {
-    const { commit, peek } = setup();
-    commit(cameraOpenedTopic({ stream: fakeStream(), torch: true }));
+  it('leaves a live feed alone', async () => {
+    await using effects = createTestController();
+    const { camera, scanRequested, cameraOpened } = await setup(effects);
+    scanRequested();
+    cameraOpened(true);
 
-    commit(torchToggledTopic(true));
+    scanRequested();
 
-    expect(peek(cameraStore).torch).toEqual({ supported: true, on: true });
-  });
-});
-
-describe('cameraFailedTopic', () => {
-  it('records the failure and drops the stream', () => {
-    const { commit, peek } = setup();
-    commit(cameraOpenedTopic({ stream: fakeStream(), torch: true }));
-
-    commit(cameraFailedTopic('permission-denied'));
-
-    expect(peek(cameraStore).status).toBe('error');
-    expect(peek(cameraStore).error).toBe('permission-denied');
-    expect(peek(cameraStore).torch).toEqual({ supported: false, on: false });
-    expect(peek(streamCell)).toBeNull();
+    expect(camera.status).toBe('streaming');
   });
 });
 
-describe('scanStoppedTopic', () => {
-  it('returns to a clean idle state', () => {
-    const { commit, peek } = setup();
-    commit(cameraOpenedTopic({ stream: fakeStream(), torch: true }));
-    commit(torchToggledTopic(true));
+describe('$cameraOpened', () => {
+  it('goes live, recording the torch and defaulting it off', async () => {
+    await using effects = createTestController();
+    const { camera, cameraOpened } = await setup(effects);
 
-    commit(scanStoppedTopic());
+    cameraOpened(true);
 
-    expect(peek(cameraStore)).toEqual({
+    expect(camera).toMatchObject({
+      status: 'streaming',
+      torch: { supported: true, on: false },
+    });
+  });
+
+  it('leaves the torch unsupported when the camera has none', async () => {
+    await using effects = createTestController();
+    const { camera, cameraOpened } = await setup(effects);
+
+    cameraOpened(false);
+
+    expect(camera.torch.supported).toBe(false);
+  });
+});
+
+describe('$torchToggled', () => {
+  it('records the confirmed torch state', async () => {
+    await using effects = createTestController();
+    const { camera, cameraOpened, torchToggled } = await setup(effects);
+    cameraOpened(true);
+
+    torchToggled(true);
+
+    expect(camera.torch.on).toBe(true);
+  });
+});
+
+describe('$cameraFailed', () => {
+  it('records the failure and resets the torch', async () => {
+    await using effects = createTestController();
+    const { camera, cameraOpened, cameraFailed } = await setup(effects);
+    cameraOpened(true);
+
+    cameraFailed('permission-denied');
+
+    expect(camera).toEqual({
+      status: 'error',
+      error: 'permission-denied',
+      torch: { supported: false, on: false },
+      result: null,
+    });
+  });
+});
+
+describe('$scanStopped', () => {
+  it('returns to a clean idle state', async () => {
+    await using effects = createTestController();
+    const { camera, cameraOpened, torchToggled, scanStopped } =
+      await setup(effects);
+    cameraOpened(true);
+    torchToggled(true);
+
+    scanStopped();
+
+    expect(camera).toEqual({
       status: 'idle',
       error: null,
       torch: { supported: false, on: false },
       result: null,
     });
-    expect(peek(streamCell)).toBeNull();
   });
 });
 
-describe('codeRecognizedTopic', () => {
-  it('parks on the result: drops the stream and returns to idle', () => {
-    const { commit, peek } = setup();
-    commit(cameraOpenedTopic({ stream: fakeStream(), torch: true }));
+describe('$codeRecognized', () => {
+  it('parks on the result and returns to idle', async () => {
+    await using effects = createTestController();
+    const { camera, cameraOpened, codeRecognized } = await setup(effects);
+    cameraOpened(true);
 
-    commit(codeRecognizedTopic(result));
+    codeRecognized(result);
 
-    expect(peek(cameraStore).result).toEqual(result);
-    expect(peek(cameraStore).status).toBe('idle');
-    expect(peek(cameraStore).torch).toEqual({ supported: false, on: false });
-    expect(peek(streamCell)).toBeNull();
-  });
-});
-
-describe('readerScope', () => {
-  it('stops the live stream when the last anchor is released', () => {
-    const stop = vi.fn();
-    const { commit, release } = setup();
-    commit(cameraOpenedTopic({ stream: fakeStream(stop), torch: false }));
-
-    release();
-
-    expect(stop).toHaveBeenCalledOnce();
-  });
-
-  it('has nothing to stop when no stream was ever open', () => {
-    const { peek, release } = setup();
-    // Touch the cell so it materializes and its drop hook actually runs.
-    expect(peek(streamCell)).toBeNull();
-
-    expect(release).not.toThrow();
+    expect(camera).toMatchObject({
+      status: 'idle',
+      torch: { supported: false, on: false },
+      result,
+    });
+    expect(wantsCamera(camera)).toBe(false);
   });
 });
