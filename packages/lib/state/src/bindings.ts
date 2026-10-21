@@ -1,7 +1,6 @@
 import { onCleanup } from 'solid-js';
 import { assert } from '@lib/assert';
 import { AbortError } from './abort';
-import { bindEffects, type RuntimeEffects } from './effects';
 import { commitFacts } from './fold';
 import {
   FAILURES,
@@ -76,7 +75,7 @@ const reportFailure = (runtime: Runtime, error: unknown): void => {
 };
 
 /** Runtime-scoped API returned by {@link bindRuntime}. */
-export interface RuntimeBindings extends RuntimeEffects {
+export interface RuntimeBindings {
   /** Pin a scope alive. Returns an idempotent release function. */
   readonly anchor: (scope: ScopeRef) => () => void;
   /** Pin a scope for the lifetime of the current reactive owner. */
@@ -103,8 +102,6 @@ export interface RuntimeBindings extends RuntimeEffects {
  * exports bound to the global runtime.
  */
 export const bindRuntime = (runtime: Runtime): RuntimeBindings => ({
-  ...bindEffects(runtime),
-
   anchor: (scope) => anchorScope(runtime, scope),
 
   useAnchor(scope) {
@@ -174,14 +171,5 @@ export const createTestRuntime = (
 };
 
 /** Helpers bound to the global runtime. */
-export const {
-  anchor,
-  anchored,
-  observed,
-  useAnchor,
-  useValue,
-  useCommit,
-  peek,
-  run,
-  useRun,
-} = bindRuntime(GLOBAL_RUNTIME);
+export const { anchor, useAnchor, useValue, useCommit, peek, run, useRun } =
+  bindRuntime(GLOBAL_RUNTIME);
