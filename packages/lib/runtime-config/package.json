@@ -7,7 +7,8 @@
   "license": "MIT",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./effects": "./src/effects/index.ts"
   },
   "scripts": {
     "typecheck": "tsc",
@@ -15,7 +16,11 @@
     "test:browser": "chromium-lock vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
-    "@lib/messaging": "workspace:*"
+    "@lib/messaging": "workspace:*",
+    "@lib/effects": "workspace:*"
+  },
+  "peerDependencies": {
+    "solid-js": "catalog:"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*"

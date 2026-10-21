@@ -752,9 +752,9 @@ importers:
       '@lib/design':
         specifier: workspace:*
         version: link:../../lib/design
-      '@lib/observability':
+      '@lib/effects':
         specifier: workspace:*
-        version: link:../../lib/observability
+        version: link:../../lib/effects
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../../lib/runtime-config
@@ -1194,9 +1194,15 @@ importers:
 
   packages/lib/runtime-config:
     dependencies:
+      '@lib/effects':
+        specifier: workspace:*
+        version: link:../effects
       '@lib/messaging':
         specifier: workspace:*
         version: link:../messaging
+      solid-js:
+        specifier: 1.9.17
+        version: 1.9.17
     devDependencies:
       '@dev/vitest-config':
         specifier: workspace:*

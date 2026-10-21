@@ -12,6 +12,9 @@
  * several options merged into one buffered async stream, for consumers
  * that would rather drain changes than register callbacks.
  *
+ * For `@lib/effects` plans, `@lib/runtime-config/effects` holds an option
+ * as a live accessor instead.
+ *
  * {@link pruneOverrides} is the housekeeping call: hand it every option the
  * origin declares and it clears the persisted remains of options that no
  * longer exist.
