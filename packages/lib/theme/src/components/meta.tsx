@@ -2,8 +2,8 @@ import {
   DEFAULT_THEME_ID,
   THEME_COLOR_META_ID,
   THEME_COLORS,
-} from './constants';
-import prelude from './prelude.ts?inline-script';
+} from '../constants';
+import prelude from '../prelude.ts?inline-script';
 
 // For stamping `<html data-theme>` alongside `<ThemeMeta />`.
 export { DEFAULT_THEME_ID };

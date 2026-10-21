@@ -1,33 +1,17 @@
-import { useValue } from '@lib/effects/solid';
-import { useAnchor, useCommit, useRun } from '@lib/state';
-import { createLogger, toError } from '@lib/observability';
+import { useAction, useValue } from '@lib/effects/solid';
 import { Button, Dialog, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import IconDelete from 'virtual:icons/mdi/delete-outline';
 import IconDownload from 'virtual:icons/mdi/download-outline';
-import {
-  advancedSettingsScope,
-  deleteLogsSaga,
-  $logStorage,
-  logsDeletedNoticeClosedTopic,
-} from '../state/advanced';
-
-const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
+import { $deleteLogs } from '../effects/log-storage';
+import { $closeDeletedNotice, $deletedNoticeOpen } from '../state/log-storage';
 
 const logStorageHeadingId = 'settings-log-storage-heading';
 
 /** Export or delete the logs persisted on this device. */
 export const LogStorage = () => {
-  useAnchor(advancedSettingsScope);
-  const logStorage = useValue($logStorage);
-  const deleteLogs = useRun(deleteLogsSaga);
-  const commit = useCommit();
-  const closeNotice = () => commit(logsDeletedNoticeClosedTopic());
-
-  const onDelete = () => {
-    void deleteLogs().catch((error: unknown) => {
-      logger.error('Failed to delete logs.', { error: toError(error) });
-    });
-  };
+  const deletedNoticeOpen = useValue($deletedNoticeOpen);
+  const deleteLogs = useAction($deleteLogs);
+  const closeNotice = useAction($closeDeletedNotice);
 
   return (
     <Flex as="section" direction="column" gap={3}>
@@ -65,7 +49,7 @@ export const LogStorage = () => {
           testId="advanced-log-delete"
           variant="soft"
           color="neutral"
-          onClick={onDelete}
+          onClick={deleteLogs}
         >
           <IconDelete aria-hidden="true" />
           Delete all
@@ -75,7 +59,7 @@ export const LogStorage = () => {
       {/* No toasts yet, so a small dialog stands in for "it worked". */}
       <Dialog
         testId="advanced-log-deleted-notice"
-        open={logStorage().deletedNoticeOpen}
+        open={deletedNoticeOpen()}
         onOpenChange={closeNotice}
         title="Logs deleted"
         description="Every log stored on this device was removed."

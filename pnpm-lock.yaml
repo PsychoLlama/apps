@@ -1291,9 +1291,9 @@ importers:
       '@lib/effects':
         specifier: workspace:*
         version: link:../effects
-      '@lib/observability':
+      '@lib/state':
         specifier: workspace:*
-        version: link:../observability
+        version: link:../state
       '@lib/ui':
         specifier: workspace:*
         version: link:../ui

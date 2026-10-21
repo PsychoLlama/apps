@@ -48,21 +48,21 @@ const observeOption = async <Value extends JsonValue>(
  */
 export const $logFilter = pipe([() => observeOption(filter)]);
 
-const updateFilter = async (pattern: string): Promise<void> => {
-  await updateConfig(filter, { [environment]: { pattern } });
-};
-
-const resetFilter = (): Promise<void> => reset(filter, [environment]);
-
 /**
  * Persist a new log filter pattern as the active environment's override.
  * The write echoes back through the subscription `$logFilter` holds.
  */
-export const $updateFilter = pipe([() => updateFilter]);
+export const $updateFilter = pipe([
+  () =>
+    (pattern: string): Promise<void> =>
+      updateConfig(filter, { [environment]: { pattern } }),
+]);
 
 /**
  * Clear the log filter override for the active environment only, reverting
  * it to the built-in default. Other environments keep their overrides. The
  * reset echoes back through the subscription `$logFilter` holds.
  */
-export const $resetFilter = pipe([() => resetFilter]);
+export const $resetFilter = pipe([
+  () => (): Promise<void> => reset(filter, [environment]),
+]);
