@@ -1,17 +1,11 @@
-import { For, Match, Show, Switch, onMount } from 'solid-js';
-import { useAnchor, useRun, useValue } from '@lib/state';
+import { For, Match, Show, Switch } from 'solid-js';
+import { Suspense, useClientResource } from '@lib/effects/solid';
 import { Badge, Callout, Flex, Text } from '@lib/ui';
 import type { PruneRecord } from '@lib/holz-idb-backend/database';
-import IconAlert from 'virtual:icons/mdi/alert-outline';
 import { LogsView } from '../components/logs-view';
 import { LogPanel } from '../components/log-panel';
 import { describePrune } from '../components/describe-prune';
-import {
-  archiveStore,
-  logsScope,
-  reportSagaFailure,
-  trackArchiveSaga,
-} from '../state';
+import { $trackedArchive } from '../effects';
 
 /** How many placeholder rows the loading skeleton stands up. */
 const SKELETON_ROWS = [0, 1, 2, 3, 4];
@@ -20,46 +14,29 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4];
  * The log archive at `/logs`. Reads this device's persisted sessions from
  * IndexedDB on mount (client-only — the store is empty at SSG prerender) and
  * renders the matching state: a skeleton while the read is in flight, an
- * empty-state callout when the archive is genuinely empty, an error callout if
- * the read fails, otherwise the {@link LogPanel} — with a {@link PruneNotice}
- * beneath it whenever the archive has been trimmed.
+ * empty-state callout when the archive is genuinely empty, otherwise the
+ * {@link LogPanel} — with a {@link PruneNotice} beneath it whenever the archive
+ * has been trimmed. A failed read reaches the error boundary.
  */
 const LogList = () => {
-  useAnchor(logsScope);
-  const archive = useValue(archiveStore);
-  const track = useRun(trackArchiveSaga);
-
-  // IndexedDB and `BroadcastChannel` are client-only — neither exists during
-  // SSG — so the tracker starts on mount. It listens for the backend's insert
-  // pings, reads the archive through its own connection, then flags the view
-  // stale whenever more logs land. The connection is closed by the scope, so
-  // there's nothing to release here.
-  onMount(() => {
-    void track().catch(reportSagaFailure('The log archive tracker failed.'));
-  });
+  const archive = useClientResource($trackedArchive);
 
   return (
     <LogsView trail={[{ label: 'Logs' }]}>
-      <Switch>
-        <Match when={archive().status === 'loading'}>
-          <LoadingState />
-        </Match>
-        <Match when={archive().status === 'error'}>
-          <ErrorState />
-        </Match>
-        <Match
-          when={archive().status === 'ready' && archive().entries.length === 0}
-        >
-          <EmptyState />
-        </Match>
-        <Match when={archive().status === 'ready'}>
-          <LogPanel logs={archive().entries} />
-        </Match>
-      </Switch>
+      <Suspense fallback={<LoadingState />}>
+        <Switch>
+          <Match when={archive()?.entries.length === 0}>
+            <EmptyState />
+          </Match>
+          <Match when={archive()}>
+            {(loaded) => <LogPanel logs={loaded().entries} />}
+          </Match>
+        </Switch>
 
-      <Show when={archive().pruned}>
-        {(record) => <PruneNotice record={record()} />}
-      </Show>
+        <Show when={archive()?.pruned}>
+          {(record) => <PruneNotice record={record()} />}
+        </Show>
+      </Suspense>
     </LogsView>
   );
 };
@@ -111,15 +88,6 @@ const PruneNotice = (props: { record: PruneRecord }) => (
   >
     {describePrune(props.record)}
   </Text>
-);
-
-/** Shown when the archive read failed outright. */
-const ErrorState = () => (
-  <Callout color="danger" icon={<IconAlert />}>
-    <Text as="span" size={2} selectable={false}>
-      Couldn't read the log archive.
-    </Text>
-  </Callout>
 );
 
 export default LogList;
