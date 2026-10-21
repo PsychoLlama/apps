@@ -15,7 +15,7 @@ describe('$motion', () => {
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
     await using effects = createTestController();
 
-    const [motion] = await effects.run($motion);
+    const motion = await effects.run($motion);
 
     expect(motion()).toBe('reduce');
   });
@@ -23,14 +23,14 @@ describe('$motion', () => {
   it("reads 'system' when there's no override", async () => {
     await using effects = createTestController();
 
-    const [motion] = await effects.run($motion);
+    const motion = await effects.run($motion);
 
     expect(motion()).toBe('system');
   });
 
   it('follows later changes to the attribute', async () => {
     await using effects = createTestController();
-    const [motion] = await effects.run($motion);
+    const motion = await effects.run($motion);
 
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'no-preference';
     await flush();
@@ -43,7 +43,7 @@ describe('$motion', () => {
 
   it('stops following once released', async () => {
     const effects = createTestController();
-    const [motion] = await effects.run($motion);
+    const motion = await effects.run($motion);
     await effects[Symbol.asyncDispose]();
 
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
@@ -56,8 +56,8 @@ describe('$motion', () => {
 describe('$selectMotion', () => {
   it('writes the override through, echoing into $motion', async () => {
     await using effects = createTestController();
-    const [motion] = await effects.run($motion);
-    const [selectMotion] = await effects.run($selectMotion);
+    const motion = await effects.run($motion);
+    const selectMotion = await effects.run($selectMotion);
 
     selectMotion('reduce');
     await flush();

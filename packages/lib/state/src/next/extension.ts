@@ -11,7 +11,7 @@ import type { Store } from './store';
 import { subscribe, type Topic } from './topic';
 
 /** A plan a commit can write to: a complete store or cell plan. */
-export type Target = Plan<[], readonly [Store<object> | Cell<unknown>]>;
+export type Target = Plan<void, Store<object> | Cell<unknown>>;
 
 /** How a commit sees each target: stores as drafts, cells as signals. */
 type Writables<Targets extends readonly Target[]> = {
@@ -29,9 +29,9 @@ export type Commit<
 
 // Cells first: a cell is an object, so it would otherwise read as a store.
 type Writable<P> =
-  P extends Plan<never, readonly [Cell<infer T>]>
+  P extends Plan<never, Cell<infer T>>
     ? Signal<T>
-    : P extends Plan<never, readonly [Store<infer State>]>
+    : P extends Plan<never, Store<infer State>>
       ? State
       : never;
 
@@ -52,8 +52,8 @@ export const defineExtension = <
   // Args come from the topic. A commit that ignores them mustn't narrow it.
   commit: Commit<NoInfer<Args>, Targets>,
 ): Plan<
-  [],
-  [Resource<void, 'sync'>],
+  void,
+  Resource<void, 'sync'>,
   ModeOfSteps<readonly [Topic<Args, M>, ...Targets]>
 > =>
   collect(

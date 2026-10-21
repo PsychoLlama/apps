@@ -8,7 +8,7 @@ describe('defineCell', () => {
     const $cell = defineCell(() => 1);
     await using effects = createTestController();
 
-    const [count] = await effects.run($cell);
+    const count = await effects.run($cell);
 
     expect(count()).toBe(1);
   });
@@ -17,9 +17,9 @@ describe('defineCell', () => {
     const $cell = defineCell((count: number) => count);
     await using effects = createTestController();
 
-    const [first] = await effects.run(pipe([() => 1, $cell]));
-    const [again] = await effects.run(pipe([() => 1, $cell]));
-    const [other] = await effects.run(pipe([() => 2, $cell]));
+    const first = await effects.run(pipe([() => 1, $cell]));
+    const again = await effects.run(pipe([() => 1, $cell]));
+    const other = await effects.run(pipe([() => 2, $cell]));
 
     expect(again).toBe(first);
     expect(other).not.toBe(first);
@@ -43,7 +43,7 @@ describe('defineCell', () => {
     const $cell = defineCell(() => 0);
     await using effects = createTestController();
 
-    const [count] = await effects.run($cell);
+    const count = await effects.run($cell);
 
     expect(count).toBeTypeOf('function');
     expect(count).toHaveLength(0);
@@ -52,7 +52,7 @@ describe('defineCell', () => {
   it('notifies readers of writes through its signal', async () => {
     const $cell = defineCell(() => 0);
     await using effects = createTestController();
-    const [count] = await effects.run($cell);
+    const count = await effects.run($cell);
     const [read, write] = writable(count);
 
     const seen: number[] = [];

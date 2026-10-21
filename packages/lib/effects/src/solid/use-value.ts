@@ -19,7 +19,7 @@ import { acquire, reduce, type Reduce } from './plan-resource';
  * Reads through the output's kind, like `useClientResource`.
  */
 export const useValue = <Output>(
-  plan: Plan<[], [Output], 'sync'>,
+  plan: Plan<void, Output, 'sync'>,
 ): Accessor<Reduce<Output>> => {
   const controller = useController();
   const [handle, release] = acquire(plan);
@@ -32,10 +32,10 @@ export const useValue = <Output>(
 
   // The type vouches for this, unless a task's type lies. Then nothing
   // reads the deferred result, so drop its eventual failure.
-  const computed = controller.compute<[Output], Mode>(handle);
+  const computed = controller.compute<Output, Mode>(handle);
   if (computed.type === 'async') computed.value.catch(() => {});
   assert(computed.type === 'sync', 'useValue takes synchronous plans.');
-  const [output] = computed.value;
+  const output = computed.value;
 
   // The graph is untyped at runtime; the plan's signature vouches.
   return () => reduce(output) as Reduce<Output>;

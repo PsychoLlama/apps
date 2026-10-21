@@ -18,7 +18,7 @@ describe('$colorScheme', () => {
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
     await using effects = createTestController();
 
-    const [colorScheme] = await effects.run($colorScheme);
+    const colorScheme = await effects.run($colorScheme);
 
     expect(colorScheme()).toBe('dark');
   });
@@ -26,14 +26,14 @@ describe('$colorScheme', () => {
   it("reads 'system' when there's no override", async () => {
     await using effects = createTestController();
 
-    const [colorScheme] = await effects.run($colorScheme);
+    const colorScheme = await effects.run($colorScheme);
 
     expect(colorScheme()).toBe('system');
   });
 
   it('follows later changes to the attribute', async () => {
     await using effects = createTestController();
-    const [colorScheme] = await effects.run($colorScheme);
+    const colorScheme = await effects.run($colorScheme);
 
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'light';
     await flush();
@@ -46,7 +46,7 @@ describe('$colorScheme', () => {
 
   it('stops following once released', async () => {
     const effects = createTestController();
-    const [colorScheme] = await effects.run($colorScheme);
+    const colorScheme = await effects.run($colorScheme);
     await effects[Symbol.asyncDispose]();
 
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
@@ -59,8 +59,8 @@ describe('$colorScheme', () => {
 describe('$selectColorScheme', () => {
   it('writes the override through, echoing into $colorScheme', async () => {
     await using effects = createTestController();
-    const [colorScheme] = await effects.run($colorScheme);
-    const [selectColorScheme] = await effects.run($selectColorScheme);
+    const colorScheme = await effects.run($colorScheme);
+    const selectColorScheme = await effects.run($selectColorScheme);
 
     selectColorScheme('dark');
     await flush();

@@ -17,19 +17,19 @@ import {
  */
 export interface Controller {
   /** Build the plan's graph. Nothing runs until computed. */
-  readonly acquire: <Outputs extends readonly unknown[], M extends Mode>(
-    plan: Plan<[], Outputs, M>,
-  ) => Handle<Outputs, M>;
+  readonly acquire: <Output, M extends Mode>(
+    plan: Plan<void, Output, M>,
+  ) => Handle<Output, M>;
 
   /**
    * Run every node, sharing cached work with other handles, and return
-   * the plan's raw output tuple: right away for a `sync` plan, or for
+   * the plan's raw output: right away for a `sync` plan, or for
    * any plan that has settled. Fails with an `AggregateError` of every
    * failure, thrown now or rejected later.
    */
-  readonly compute: <Outputs extends readonly unknown[], M extends Mode>(
-    handle: Handle<Outputs, M>,
-  ) => Eventual<Outputs, M>;
+  readonly compute: <Output, M extends Mode>(
+    handle: Handle<Output, M>,
+  ) => Eventual<Output, M>;
 
   /**
    * Drop the handle's references and tear down whatever nothing else

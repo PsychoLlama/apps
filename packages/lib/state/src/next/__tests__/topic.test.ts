@@ -12,7 +12,7 @@ describe('defineTopic', () => {
     const first = vi.fn<(num: number, str: string) => void>();
     const second = vi.fn<(num: number, str: string) => void>();
     await using effects = createTestController();
-    const [send] = await effects.run($send);
+    const send = await effects.run($send);
     await effects.run(
       pipe([
         $send,
@@ -37,7 +37,7 @@ describe('defineTopic', () => {
     const $label = pipe([() => 'label']);
     const subscriber = vi.fn();
     await using effects = createTestController();
-    const [send] = await effects.run($send);
+    const send = await effects.run($send);
     await effects.run(
       collect(
         [$send, $label],
@@ -59,7 +59,7 @@ describe('defineTopic', () => {
     const $send = defineTopic<[]>();
     const subscriber = vi.fn();
     const effects = createTestController();
-    const [send] = await effects.run($send);
+    const send = await effects.run($send);
     await effects.run(pipe([$send, subscribe(() => subscriber, none)]));
 
     await effects[Symbol.asyncDispose]();
@@ -71,8 +71,8 @@ describe('defineTopic', () => {
   it('yields what the subscription selects', async () => {
     const $send = defineTopic<[]>();
     await using effects = createTestController();
-    const [send] = await effects.run($send);
-    const [selected] = await effects.run(
+    const send = await effects.run($send);
+    const selected = await effects.run(
       pipe([
         $send,
         subscribe(
@@ -87,7 +87,7 @@ describe('defineTopic', () => {
 
   it('closes the channel once released', async () => {
     const effects = createTestController();
-    const [send] = await effects.run(defineTopic<[]>());
+    const send = await effects.run(defineTopic<[]>());
     await effects[Symbol.asyncDispose]();
 
     expect(() => subscribe(() => () => {}, none)(send)).toThrow(
@@ -100,7 +100,7 @@ describe('defineTopic', () => {
     const [first, setFirst] = createSignal(0);
     const [second, setSecond] = createSignal(0);
     await using effects = createTestController();
-    const [send] = await effects.run($send);
+    const send = await effects.run($send);
     await effects.run(
       pipe([$send, subscribe(() => (value: number) => setFirst(value), none)]),
     );
@@ -127,7 +127,7 @@ describe('defineTopic', () => {
     const $send = defineTopic<[]>();
     const [count, setCount] = createSignal(0);
     await using effects = createTestController();
-    const [send] = await effects.run($send);
+    const send = await effects.run($send);
     await effects.run(pipe([$send, subscribe(() => () => count(), none)]));
 
     let runs = 0;
@@ -150,9 +150,9 @@ describe('defineTopic', () => {
     await using effects = createTestController();
     await using other = createTestController();
 
-    const [send] = await effects.run($send);
-    const [again] = await effects.run($send);
-    const [elsewhere] = await other.run($send);
+    const send = await effects.run($send);
+    const again = await effects.run($send);
+    const elsewhere = await other.run($send);
 
     expect(again).toBe(send);
     expect(elsewhere).not.toBe(send);
@@ -163,7 +163,7 @@ describe('defineTopic', () => {
     const $second = defineTopic<[]>();
     const subscriber = vi.fn();
     await using effects = createTestController();
-    const [second] = await effects.run($second);
+    const second = await effects.run($second);
     await effects.run(pipe([$first, subscribe(() => subscriber, none)]));
 
     second();

@@ -45,11 +45,6 @@ export type Wrapped = Resource<unknown> | Reactive<unknown>;
  */
 export type Yield<Output> = Unwrap<Awaited<Output>>;
 
-/** `Yield` over every position of an output tuple. */
-export type YieldAll<Outputs extends readonly unknown[]> = {
-  [Index in keyof Outputs]: Yield<Outputs[Index]>;
-};
-
 /**
  * The mode of an output's cleanup: `async` if it's a wrapper whose
  * `dispose` may return a promise.

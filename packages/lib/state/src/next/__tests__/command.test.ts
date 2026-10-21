@@ -15,8 +15,8 @@ describe('defineCommand', () => {
       store.messages.push(message);
     });
     await using effects = createTestController();
-    const [send] = await effects.run($send);
-    const [store] = await effects.run($store);
+    const send = await effects.run($send);
+    const store = await effects.run($store);
 
     send('hello');
 
@@ -30,12 +30,12 @@ describe('defineCommand', () => {
     });
     await using effects = createTestController();
 
-    const [first] = await effects.run($increment);
-    const [again] = await effects.run($increment);
+    const first = await effects.run($increment);
+    const again = await effects.run($increment);
     first();
 
     expect(again).toBe(first);
-    expect((await effects.run($count))[0]()).toBe(1);
+    expect((await effects.run($count))()).toBe(1);
   });
 
   it('commits before extensions subscribed to it', async () => {
@@ -53,8 +53,8 @@ describe('defineCommand', () => {
     );
     await using effects = createTestController();
     await effects.run($echo);
-    const [send] = await effects.run($send);
-    const [seen] = await effects.run($seen);
+    const send = await effects.run($send);
+    const seen = await effects.run($seen);
 
     send('hello');
 

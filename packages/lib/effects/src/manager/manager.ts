@@ -14,31 +14,21 @@ import {
 } from '../eventual';
 import type { Mode } from '../mode';
 import { PLAN, type Plan, type PlanNode } from '../plan';
-import {
-  createCache,
-  insert,
-  lookup,
-  remove,
-  type Cache,
-  type Tuple,
-} from './cache';
+import { createCache, insert, lookup, remove, type Cache } from './cache';
 import { keyOf, ROOT, spawn, type Entry } from './entry';
 import type * as Node from './node';
 
-/** Phantom slot pinning a handle's output tuple and mode. */
+/** Phantom slot pinning a handle's output and mode. */
 declare const SIGNATURE: unique symbol;
 
 /** A plan acquired on a manager, and what the manager tracks for it. */
-export interface Handle<
-  out Outputs extends readonly unknown[] = readonly unknown[],
-  out M extends Mode = Mode,
-> {
-  readonly [SIGNATURE]?: { readonly outputs: Outputs; readonly mode: M };
+export interface Handle<out Output = unknown, out M extends Mode = Mode> {
+  readonly [SIGNATURE]?: { readonly output: Output; readonly mode: M };
 
   /** Every node in the plan, topologically ordered. */
   readonly nodes: readonly PlanNode[];
 
-  /** The node whose output tuple is the plan's output. */
+  /** The node whose output is the plan's output. */
   readonly output: PlanNode;
 
   /**
@@ -126,8 +116,13 @@ const retire = (manager: Manager, entry: Entry): Eventual<unknown> => {
   return retired;
 };
 
+/** A node's output, once it's known. */
+interface Known {
+  readonly output: unknown;
+}
+
 // What a root binds to, as though some upstream output it.
-const ROOTED: Tuple = [ROOT];
+const ROOTED: Known = { output: ROOT };
 
 const held = (handle: Handle, node: PlanNode) => {
   const signal = handle.held.get(node);
@@ -136,15 +131,15 @@ const held = (handle: Handle, node: PlanNode) => {
   return signal;
 };
 
-/** A bound node's output tuple, or `undefined` if it didn't succeed. */
+/** A bound node's output, or `undefined` if it didn't succeed. */
 const outputOf = (
   manager: Manager,
   handle: Handle,
   node: PlanNode,
-): Eventual<Tuple | undefined> =>
+): Eventual<Known | undefined> =>
   chain(bind(manager, handle, node), (entry) => {
     const state = entry?.state();
-    return now(state?.step === 'succeeded' ? state.outputs : undefined);
+    return now(state?.step === 'succeeded' ? state : undefined);
   });
 
 /** Claim the node's entry once its branches are known, and hold it. */
@@ -163,7 +158,7 @@ const attach = (
     const outputs: unknown[] = [];
     for (const source of sources) {
       if (!source) return now(undefined);
-      outputs.push(source[0]);
+      outputs.push(source.output);
     }
 
     const claimed = claim(manager, node, input, outputs);
@@ -175,7 +170,7 @@ const attach = (
   });
 };
 
-/** Bind a node once every upstream tuple is known, then let it settle. */
+/** Bind a node once its upstream output is known, then let it settle. */
 const bind = (
   manager: Manager,
   handle: Handle,
@@ -187,8 +182,8 @@ const bind = (
   const upstream = node.input
     ? outputOf(manager, handle, node.input)
     : now(ROOTED);
-  const binding = chain(upstream, (outputs) =>
-    outputs ? attach(manager, handle, node, outputs[0]) : now(undefined),
+  const binding = chain(upstream, (known) =>
+    known ? attach(manager, handle, node, known.output) : now(undefined),
   );
 
   handle.bindings.set(node, binding);
@@ -265,9 +260,9 @@ const tearDown = (
 };
 
 /** Build the plan's graph. Pure: nothing runs, and no manager is involved. */
-export const acquire = <Outputs extends readonly unknown[], M extends Mode>(
-  plan: Plan<[], Outputs, M>,
-): Handle<Outputs, M> => {
+export const acquire = <Output, M extends Mode>(
+  plan: Plan<void, Output, M>,
+): Handle<Output, M> => {
   const graph = plan[PLAN]();
   return {
     nodes: graph.nodes,
@@ -286,37 +281,37 @@ export const acquire = <Outputs extends readonly unknown[], M extends Mode>(
 
 /**
  * Run every node, sharing cached work with other handles, and return the
- * plan's raw output tuple. It's here right away unless a node has to
+ * plan's raw output. It's here right away unless a node has to
  * wait: a `sync` plan's always is, and so is any plan's once it has
  * settled. Fails with an `AggregateError` of every failure, thrown now or
  * rejected later. Safe to call repeatedly.
  */
-export const compute = <Outputs extends readonly unknown[], M extends Mode>(
+export const compute = <Output, M extends Mode>(
   manager: Manager,
-  handle: Handle<Outputs, M>,
-): Eventual<Outputs, M> =>
+  handle: Handle<Output, M>,
+): Eventual<Output, M> =>
   // Bindings call this from render. Nothing it reads is a dependency.
   untrack(() => {
     assert(!handle.released, 'Handle was already released.');
     manager.handles.add(handle);
 
     const failures = bringUp(manager, handle, handle.nodes);
-    const outputs = chain(failures, (failures) => {
+    const output = chain(failures, (failures) => {
       if (failures.length > 0) {
         throw new AggregateError(failures, 'Plan failed.');
       }
 
-      // Its outputs may already be disposed.
+      // Its output may already be disposed.
       assert(!handle.released, 'Handle was released while computing.');
 
       const state = inspect(handle, handle.output);
       assert(state.step === 'succeeded', 'Plan computed without an output.');
-      return now(state.outputs);
+      return now(state.output);
     });
 
     // The graph is untyped at runtime; the plan's signature vouches, and
     // a `sync` plan never waits.
-    return outputs as Eventual<Outputs, M>;
+    return output as Eventual<Output, M>;
   });
 
 /**

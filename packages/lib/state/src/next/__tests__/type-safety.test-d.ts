@@ -30,7 +30,7 @@ const never = <T>(): T => {
 describe('type safety', () => {
   it('defines stores from their initial state', () => {
     expectTypeOf(defineStore<State>).returns.toEqualTypeOf<
-      Plan<[], [Store<State>], 'sync'>
+      Plan<void, Store<State>, 'sync'>
     >();
 
     const read = (store: Store<State>) => {
@@ -43,8 +43,8 @@ describe('type safety', () => {
   });
 
   it('seeds stores from earlier steps', () => {
-    const $theme = never<Plan<[], [Reactive<string, 'sync'>], 'sync'>>();
-    const $motion = never<Plan<[], [Promise<boolean>], 'async'>>();
+    const $theme = never<Plan<void, Reactive<string, 'sync'>, 'sync'>>();
+    const $motion = never<Plan<void, Promise<boolean>, 'async'>>();
 
     const $store = pipe([
       collect([$theme, $motion]),
@@ -55,20 +55,20 @@ describe('type safety', () => {
     ]);
 
     expectTypeOf($store).toEqualTypeOf<
-      Plan<[], [Store<{ theme: string; motion: boolean }>], 'async'>
+      Plan<void, Store<{ theme: string; motion: boolean }>, 'async'>
     >();
   });
 
   it('defines cells for primitives', () => {
     expectTypeOf(defineCell(() => 0)).toEqualTypeOf<
-      Plan<[], [Cell<number>], 'sync'>
+      Plan<void, Cell<number>, 'sync'>
     >();
   });
 
   it('rejects plain objects and reactives as targets', () => {
     const $topic = defineTopic<[]>();
-    const $object = never<Plan<[], [State], 'sync'>>();
-    const $reactive = never<Plan<[], [Reactive<number, 'sync'>], 'sync'>>();
+    const $object = never<Plan<void, State, 'sync'>>();
+    const $reactive = never<Plan<void, Reactive<number, 'sync'>, 'sync'>>();
 
     const illegal = () => {
       // @ts-expect-error — not a store
@@ -114,7 +114,7 @@ describe('type safety', () => {
     );
 
     expectTypeOf($extension).toEqualTypeOf<
-      Plan<[], [Resource<void, 'sync'>], 'sync'>
+      Plan<void, Resource<void, 'sync'>, 'sync'>
     >();
   });
 
@@ -136,7 +136,7 @@ describe('type safety', () => {
 
     expectTypeOf(
       defineExtension($send, [$store], () => () => {}),
-    ).toEqualTypeOf<Plan<[], [Resource<void, 'sync'>], 'async'>>();
+    ).toEqualTypeOf<Plan<void, Resource<void, 'sync'>, 'async'>>();
   });
 
   it('infers command arguments from the commit', () => {

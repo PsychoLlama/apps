@@ -28,7 +28,7 @@ export interface Publish<Args extends readonly unknown[]> {
 export type Topic<
   Args extends readonly unknown[],
   M extends Mode = Mode,
-> = Plan<[], [Resource<Publish<Args>, 'sync'>], M>;
+> = Plan<void, Resource<Publish<Args>, 'sync'>, M>;
 
 /**
  * The arguments a topic's events carry, e.g. `TopicValues<typeof $send>`.
@@ -36,9 +36,7 @@ export type Topic<
  * @internal
  */
 export type TopicValues<P> =
-  P extends Plan<never, readonly [Resource<Publish<infer Args>>]>
-    ? Args
-    : never;
+  P extends Plan<never, Resource<Publish<infer Args>>> ? Args : never;
 
 type Subscriber = (...args: readonly unknown[]) => void;
 

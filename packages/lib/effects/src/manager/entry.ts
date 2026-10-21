@@ -1,8 +1,7 @@
 import { createSignal, type Accessor, type Setter } from 'solid-js';
-import type { PlanNode } from '../plan';
+import type { Join, PlanNode } from '../plan';
 import { disposeOf, yieldOf, type Dispose, type Task } from '../task';
 import { chain, from, later, now, toPromise, type Eventual } from '../eventual';
-import type { Tuple } from './cache';
 import type * as Node from './node';
 
 /** Where a started computation stands. */
@@ -53,31 +52,37 @@ export const ROOT: unique symbol = Symbol('root');
 export const keyOf = (node: PlanNode): object =>
   node.kind === 'task' ? node.task : node.plan;
 
-const invoke = (task: Task, inputs: readonly unknown[]) =>
-  // The one place a task runs. Its real inputs were checked when the
-  // plan was composed; here they're whatever upstream yields.
-  (task as Task<unknown[]>)(...inputs.map(yieldOf));
+const invoke = (fn: Task | Join, args: readonly unknown[]) =>
+  // The one place a task runs. Its real input was checked when the plan
+  // was composed; here it's whatever upstream yields.
+  (fn as (...yields: unknown[]) => unknown)(...args.map(yieldOf));
 
-/** What a node's state reports as its inputs: none for a root. */
-const inputsOf = (input: unknown): Tuple => (input === ROOT ? [] : [input]);
+/** What a node's state reports as its input: nothing for a root. */
+const reported = (input: unknown) => (input === ROOT ? undefined : input);
 
 interface Evaluated {
-  readonly outputs: Tuple;
+  readonly output: unknown;
   readonly dispose?: Dispose;
 }
 
 const evaluate = (node: PlanNode, entry: Entry): Eventual<Evaluated> => {
-  // A join's `fn` runs like a task, over its branches.
-  const task = node.kind === 'task' ? node.task : node.fn;
-  const inputs = node.kind === 'task' ? inputsOf(entry.input) : entry.sources;
+  // A join's `fn` runs like a task, over its branches. A root task gets
+  // no argument.
+  const fn = node.kind === 'task' ? node.task : node.fn;
+  const args =
+    node.kind === 'join'
+      ? entry.sources
+      : entry.input === ROOT
+        ? []
+        : [entry.input];
 
-  // Outputs keep what the task returned, wrappers and all, so bindings
+  // The output keeps what the task returned, wrapper and all, so bindings
   // can tell what kind it is. Downstream tasks receive its `yieldOf`.
   // Only a promise makes the node wait.
-  const output = from<unknown>(invoke(task, inputs));
+  const output = from<unknown>(invoke(fn, args));
 
   return chain(output, (value) =>
-    now({ outputs: [value], dispose: disposeOf(value) }),
+    now({ output: value, dispose: disposeOf(value) }),
   );
 };
 
@@ -86,13 +91,13 @@ const run = (
   node: PlanNode,
   setState: Setter<EntryState>,
 ): Eventual<void> => {
-  const inputs = inputsOf(entry.input);
-  const succeed = ({ outputs, dispose }: Evaluated) => {
+  const input = reported(entry.input);
+  const succeed = ({ output, dispose }: Evaluated) => {
     entry.dispose = dispose;
-    setState({ step: 'succeeded', inputs, outputs });
+    setState({ step: 'succeeded', input, output });
   };
   const fail = (error: unknown) => {
-    setState({ step: 'failed', inputs, error });
+    setState({ step: 'failed', input, error });
   };
 
   let evaluated;
@@ -119,7 +124,7 @@ export const spawn = (
 ): Entry => {
   const [state, setState] = createSignal<EntryState>({
     step: 'computing',
-    inputs: inputsOf(input),
+    input: reported(input),
   });
 
   const entry: Entry = {

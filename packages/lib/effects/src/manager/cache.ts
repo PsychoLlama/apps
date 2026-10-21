@@ -1,8 +1,5 @@
 import type { PlanNode } from '../plan';
 
-/** An output tuple, as node states report it. */
-export type Tuple = readonly unknown[];
-
 type Kind = PlanNode['kind'];
 
 /** Everything a manager caches. One per manager; operate on it below. */

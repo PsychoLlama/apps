@@ -1,37 +1,33 @@
 import {
   definePlan,
   toBuild,
-  type InputsOf,
+  type InputOf,
+  type Join,
   type ModeOfStep,
   type ModeOfSteps,
-  type OutputsOf,
+  type OutputOf,
   type Plan,
   type PlanNode,
   type Step,
   type StepAccepting,
   type Steps,
 } from '../plan';
-import type { Task, YieldAll } from '../task';
+import type { Yield } from '../task';
 
-// Every step has one output now, so branches map to outputs position by
-// position. A mapped type rather than recursion, so it stays transparent
-// over generic tuples like `[Head, ...Rest]`.
+// A mapped type rather than recursion, so it stays transparent over
+// generic tuples like `[Head, ...Rest]`.
 
-/** Each step's one output, raw. */
-type OutputsOfEach<S extends readonly unknown[]> = {
-  -readonly [Index in keyof S]: OutputsOf<S[Index]> extends readonly [
-    infer Output,
-  ]
-    ? Output
-    : never;
+/** What each branch yields, in order. */
+type Joined<S extends readonly unknown[]> = {
+  -readonly [Index in keyof S]: Yield<OutputOf<S[Index]>>;
 };
 
 // An array constraint rather than a mapped one like `Pipeline`'s, so it
 // holds for generic tuples too: `[Head, ...Rest]` checks against it when
 // `Rest` is only known by its own constraint.
 
-/** Steps that all accept the same inputs as the first one. */
-type Branches<S extends Steps> = S & readonly StepAccepting<InputsOf<S[0]>>[];
+/** Steps that all accept the same input as the first one. */
+type Branches<S extends Steps> = S & readonly StepAccepting<InputOf<S[0]>>[];
 
 // Phrased so that a known `sync` function leaves exactly the branches'
 // mode, which a generic caller can then match by name.
@@ -40,12 +36,9 @@ type Branches<S extends Steps> = S & readonly StepAccepting<InputsOf<S[0]>>[];
 type ModeOfJoin<S extends Steps, Output> =
   ModeOfStep<() => Output> extends 'sync' ? ModeOfSteps<S> : 'async';
 
-/** What `fn` receives: every branch's yields, in order. */
-type Joined<S extends Steps> = YieldAll<OutputsOfEach<S>>;
-
 interface Collect {
   /**
-   * Run branches side by side over the same inputs and hand their yields
+   * Run branches side by side over the same input and hand their yields
    * to `fn`, spread in order. Its result is the plan's one output, cached
    * like a task's: it runs once for as long as the branches' outputs
    * live, and a `resource` it returns is disposed with them.
@@ -53,10 +46,10 @@ interface Collect {
   <const S extends Steps, Output>(
     branches: Branches<S>,
     fn: (...values: Joined<S>) => Output,
-  ): Plan<InputsOf<S[0]>, OutputsOf<() => Output>, ModeOfJoin<S, Output>>;
+  ): Plan<InputOf<S[0]>, Awaited<Output>, ModeOfJoin<S, Output>>;
 
   /**
-   * Run branches side by side over the same inputs and land their yields
+   * Run branches side by side over the same input and land their yields
    * in a single array. The array keeps its identity for as long as the
    * branches' outputs do. Wrappers stay behind: a reactive branch lands
    * as its accessor, so return `reactive` from `fn` to read several
@@ -64,7 +57,7 @@ interface Collect {
    */
   <const S extends Steps>(
     branches: Branches<S>,
-  ): Plan<InputsOf<S[0]>, [Joined<S>], ModeOfSteps<S>>;
+  ): Plan<InputOf<S[0]>, Joined<S>, ModeOfSteps<S>>;
 }
 
 // What a join without its own `fn` runs. One array per entry, so it keeps
@@ -78,7 +71,7 @@ const array = (...values: readonly unknown[]) => values;
 // the duplication.
 export const collect: Collect = (
   branches: readonly Step[],
-  fn: Task = array,
+  fn: Join = array,
 ) => {
   const plan = definePlan((input) => {
     const nodes: PlanNode[] = [];

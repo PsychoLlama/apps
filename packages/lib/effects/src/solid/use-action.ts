@@ -59,18 +59,14 @@ const refCount = (idle: () => void) => {
  * Calls return nothing: read `pending`, `latest`, and `error` instead.
  * A failed call's error also reaches the nearest error boundary.
  *
- * Takes a plan with one output: the function, as a downstream task would
+ * Takes a plan whose output is the function, as a downstream task would
  * receive it.
  */
 export const useAction = <
-  Outputs extends [unknown] & {
-    [Index in keyof Outputs]: Yield<Outputs[Index]> extends AnyFunction
-      ? Outputs[Index]
-      : never;
-  },
+  Output extends (Yield<Output> extends AnyFunction ? unknown : never),
 >(
-  plan: Plan<[], Outputs>,
-): ActionOf<Outputs[0]> => {
+  plan: Plan<void, Output>,
+): ActionOf<Output> => {
   const controller = useController();
   const throwToBoundary = useThrowToBoundary();
   const [handle, release] = acquire(plan);
@@ -83,7 +79,7 @@ export const useAction = <
     try {
       // Calls straight through when it's here, before any await.
       const computed = controller.compute(handle);
-      const [output] =
+      const output =
         computed.type === 'sync' ? computed.value : await computed.value;
 
       // Untyped at runtime, as above.
@@ -129,5 +125,5 @@ export const useAction = <
   });
 
   // The graph is untyped at runtime; the plan's signature vouches.
-  return action as unknown as ActionOf<Outputs[0]>;
+  return action as unknown as ActionOf<Output>;
 };

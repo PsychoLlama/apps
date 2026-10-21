@@ -46,9 +46,9 @@ export const useThrowToBoundary = () => {
  * reach the current owner's error boundary, or else surface as an
  * unhandled rejection.
  */
-export const acquire = <Outputs extends readonly unknown[], M extends Mode>(
-  plan: Plan<[], Outputs, M>,
-): [Handle<Outputs, M>, release: () => void] => {
+export const acquire = <Output, M extends Mode>(
+  plan: Plan<void, Output, M>,
+): [Handle<Output, M>, release: () => void] => {
   const controller = useController();
   const throwToBoundary = useThrowToBoundary();
   const handle = controller.acquire(plan);
@@ -64,15 +64,12 @@ export const acquire = <Outputs extends readonly unknown[], M extends Mode>(
  * Hold a plan for the owner's lifetime. Returns a fetcher that computes
  * it and resolves to its raw output.
  */
-export const holdPlan = (plan: Plan<[], [unknown]>) => {
+export const holdPlan = (plan: Plan<void>) => {
   const controller = useController();
   const [handle, release] = acquire(plan);
   onCleanup(release);
 
-  return async (): Promise<unknown> => {
-    const [output] = await toPromise(controller.compute(handle));
-    return output;
-  };
+  return async (): Promise<unknown> => toPromise(controller.compute(handle));
 };
 
 /**

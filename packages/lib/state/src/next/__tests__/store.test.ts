@@ -12,7 +12,7 @@ describe('defineStore', () => {
     const $store = defineStore<State>(() => ({ count: 1 }));
     await using effects = createTestController();
 
-    const [store] = await effects.run($store);
+    const store = await effects.run($store);
 
     expect(store.count).toBe(1);
   });
@@ -21,9 +21,9 @@ describe('defineStore', () => {
     const $store = defineStore((count: number) => ({ count }));
     await using effects = createTestController();
 
-    const [first] = await effects.run(pipe([() => 1, $store]));
-    const [again] = await effects.run(pipe([() => 1, $store]));
-    const [other] = await effects.run(pipe([() => 2, $store]));
+    const first = await effects.run(pipe([() => 1, $store]));
+    const again = await effects.run(pipe([() => 1, $store]));
+    const other = await effects.run(pipe([() => 2, $store]));
 
     expect(again).toBe(first);
     expect(other).not.toBe(first);
@@ -46,7 +46,7 @@ describe('defineStore', () => {
   it('notifies readers of writes', async () => {
     const $store = defineStore<State>(() => ({ count: 0 }));
     await using effects = createTestController();
-    const [store] = await effects.run($store);
+    const store = await effects.run($store);
 
     const seen: number[] = [];
     const dispose = createRoot((dispose) => {
