@@ -338,15 +338,18 @@ const FloatingUiScratchpad = () => {
   const resetControls = useAction($resetControls);
 
   // OPFS is client-only, so the persisted toggle loads after mount. Until
-  // then the build-environment default stands in, so prerender and first
-  // paint agree without a flash or a suspended page. Writes echo back
+  // then the build-environment default places the window, so prerender and
+  // first paint agree without a suspended page, and the checkbox shows as
+  // a skeleton rather than claiming a value it doesn't have. Writes echo back
   // through the subscription, making it the single source of truth. A
   // failed read reaches the error boundary.
   const persistedTether = useClientResource($tetherEnabled);
+  const tetherLoading = () =>
+    persistedTether.state === 'unresolved' ||
+    persistedTether.state === 'pending';
+  // Typed as possibly undefined, which only happens while loading.
   const tetherEnabled = () =>
-    persistedTether.state === 'ready' || persistedTether.state === 'errored'
-      ? persistedTether()
-      : defaultTetherEnabled;
+    (tetherLoading() ? undefined : persistedTether()) ?? defaultTetherEnabled;
 
   /** The middleware cards currently checked, as the group reads them. */
   const enabledMiddleware = (): TetherMiddleware[] =>
@@ -564,6 +567,7 @@ const FloatingUiScratchpad = () => {
                 <Checkbox
                   testId="control-tether-enabled"
                   checked={tetherEnabled()}
+                  skeleton={tetherLoading()}
                   onCheckedChange={chooseTetherEnabled}
                 >
                   Enable tether
