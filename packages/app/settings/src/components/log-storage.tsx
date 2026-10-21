@@ -1,8 +1,10 @@
+import { Show } from 'solid-js';
 import { useAction, useValue } from '@lib/effects/solid';
 import { Button, Dialog, Flex, Heading, LinkButton, Text } from '@lib/ui';
 import IconDelete from 'virtual:icons/mdi/delete-outline';
 import IconDownload from 'virtual:icons/mdi/download-outline';
 import { $deleteLogs } from '../effects/log-storage';
+import { $serviceWorkerActive } from '../effects/service-worker';
 import { $closeDeletedNotice, $deletedNoticeOpen } from '../state/log-storage';
 
 const logStorageHeadingId = 'settings-log-storage-heading';
@@ -12,6 +14,7 @@ export const LogStorage = () => {
   const deletedNoticeOpen = useValue($deletedNoticeOpen);
   const deleteLogs = useAction($deleteLogs);
   const closeNotice = useAction($closeDeletedNotice);
+  const serviceWorkerActive = useValue($serviceWorkerActive);
 
   return (
     <Flex as="section" direction="column" gap={3}>
@@ -31,19 +34,38 @@ export const LogStorage = () => {
       </Flex>
 
       <Flex as="div" direction="row" gap={3} wrap="wrap">
-        {/* `target="_self"` rather than `download`: a `download` anchor
-            skips the service worker that serves the export. */}
-        <LinkButton
-          testId="advanced-log-export"
-          variant="soft"
-          color="neutral"
-          native
-          href="/api/local/logs"
-          target="_self"
+        {/* The service worker serves the export, so there's nothing to
+            link to until it's active. Anchors can't be disabled, so a
+            disabled button stands in. */}
+        <Show
+          when={serviceWorkerActive()}
+          fallback={
+            <Button
+              as="button"
+              testId="advanced-log-export"
+              variant="soft"
+              color="neutral"
+              disabled
+            >
+              <IconDownload aria-hidden="true" />
+              Export
+            </Button>
+          }
         >
-          <IconDownload aria-hidden="true" />
-          Export
-        </LinkButton>
+          {/* `target="_self"` rather than `download`: a `download` anchor
+              skips the service worker that serves the export. */}
+          <LinkButton
+            testId="advanced-log-export"
+            variant="soft"
+            color="neutral"
+            native
+            href="/api/local/logs"
+            target="_self"
+          >
+            <IconDownload aria-hidden="true" />
+            Export
+          </LinkButton>
+        </Show>
         <Button
           as="button"
           testId="advanced-log-delete"
