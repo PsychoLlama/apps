@@ -138,6 +138,18 @@ export type MotionOption = MotionId | 'system';
  */
 export const MOTION_STORAGE_KEY = 'preferences.appearance.motion';
 
+/** Every appearance preference. */
+export interface Appearance {
+  /** The active theme. */
+  theme: ThemeId;
+
+  /** The color-scheme override, or `'system'` for none. */
+  colorScheme: ColorSchemeOption;
+
+  /** The motion override, or `'system'` for none. */
+  motion: MotionOption;
+}
+
 /**
  * `id` attribute on the per-scheme `theme-color` meta tags. The prelude
  * looks these up to swap `content` to the active theme's page background

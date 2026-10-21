@@ -3,7 +3,7 @@ import clx from '@lib/classnames';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
 import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
-import { $resetTheme, $selectTheme, $theme } from '@lib/theme/runtime';
+import { $appearance, $setAppearance } from '@lib/theme/runtime';
 import { ResetButton } from './reset-button';
 import * as css from './theme-picker.css';
 
@@ -21,16 +21,16 @@ export const themeHeadingId = 'settings-theme-heading';
  * localStorage.
  */
 export const ThemePicker = () => {
-  const theme = useClientResource($theme);
-  const selectTheme = useAction($selectTheme);
+  const appearance = useClientResource($appearance);
+  const setAppearance = useAction($setAppearance);
 
   const picker = (skeleton: boolean) => (
     <RadioCardsRoot
       testId="theme-picker"
       name="theme"
-      value={skeleton ? null : (theme() ?? null)}
+      value={skeleton ? null : (appearance()?.theme ?? null)}
       skeleton={skeleton}
-      onValueChange={(next) => selectTheme(next as ThemeId)}
+      onValueChange={(next) => setAppearance('theme', next as ThemeId)}
       gap={3}
       class={css.root}
       aria-labelledby={themeHeadingId}
@@ -60,16 +60,16 @@ export const ThemePicker = () => {
  * off `<html>`, like the other resets on the page.
  */
 export const ThemeResetButton = () => {
-  const theme = useClientResource($theme);
-  const resetTheme = useAction($resetTheme);
+  const appearance = useClientResource($appearance);
+  const setAppearance = useAction($setAppearance);
 
   return (
     <Suspense>
       <ResetButton
         testId="theme-picker-reset"
         label="Reset theme"
-        disabled={theme() === DEFAULT_THEME_ID}
-        onReset={resetTheme}
+        disabled={appearance()?.theme === DEFAULT_THEME_ID}
+        onReset={() => setAppearance('theme', DEFAULT_THEME_ID)}
       />
     </Suspense>
   );

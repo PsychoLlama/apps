@@ -3,7 +3,8 @@ import { Dynamic } from 'solid-js/web';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { Button } from '@lib/ui';
 import type { ColorSchemeOption } from './constants';
-import { $colorScheme, $selectColorScheme } from './effects/color-scheme';
+import { $setAppearance } from './effects/appearance';
+import { $appearance } from './state/appearance';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
 import IconSystem from 'virtual:icons/mdi/theme-light-dark';
@@ -34,11 +35,12 @@ const CYCLE: ReadonlyArray<SchemeStep> = [
  * it anywhere a header or toolbar wants quick appearance control.
  */
 export const AppearanceToggle = () => {
-  const colorScheme = useClientResource($colorScheme);
-  const selectColorScheme = useAction($selectColorScheme);
+  const appearance = useClientResource($appearance);
+  const setAppearance = useAction($setAppearance);
 
   const index = (): number =>
-    CYCLE.findIndex((step) => step.id === colorScheme());
+    CYCLE.findIndex((step) => step.id === appearance()?.colorScheme);
+
   const active = (): SchemeStep => CYCLE[index()] ?? CYCLE[0];
   const next = (): SchemeStep => CYCLE[(index() + 1) % CYCLE.length];
 
@@ -62,7 +64,7 @@ export const AppearanceToggle = () => {
         testId="appearance-toggle"
         variant="ghost"
         color="neutral"
-        onClick={() => selectColorScheme(next().id)}
+        onClick={() => setAppearance('colorScheme', next().id)}
       >
         <Dynamic component={active().icon} aria-hidden="true" />
         {active().label}

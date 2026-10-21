@@ -2,7 +2,7 @@ import { For } from 'solid-js';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { MotionOption } from '@lib/theme';
-import { $motion, $selectMotion } from '@lib/theme/runtime';
+import { $appearance, $setAppearance } from '@lib/theme/runtime';
 import { ResetButton } from './reset-button';
 import * as css from './motion-picker.css';
 
@@ -33,16 +33,16 @@ const OPTIONS: ReadonlyArray<MotionPickerOption> = [
  * and persists the choice to localStorage.
  */
 export const MotionPicker = () => {
-  const motion = useClientResource($motion);
-  const selectMotion = useAction($selectMotion);
+  const appearance = useClientResource($appearance);
+  const setAppearance = useAction($setAppearance);
 
   const picker = (skeleton: boolean) => (
     <SegmentedControlRoot
       testId="motion-picker"
       name="motion"
-      value={skeleton ? null : (motion() ?? null)}
+      value={skeleton ? null : (appearance()?.motion ?? null)}
       skeleton={skeleton}
-      onValueChange={(next) => selectMotion(next as MotionOption)}
+      onValueChange={(next) => setAppearance('motion', next as MotionOption)}
       class={css.control}
       aria-labelledby={motionHeadingId}
     >
@@ -72,16 +72,16 @@ export const MotionPicker = () => {
  * log filter's reset.
  */
 export const MotionResetButton = () => {
-  const motion = useClientResource($motion);
-  const selectMotion = useAction($selectMotion);
+  const appearance = useClientResource($appearance);
+  const setAppearance = useAction($setAppearance);
 
   return (
     <Suspense>
       <ResetButton
         testId="motion-picker-reset"
         label="Reset motion"
-        disabled={motion() === 'system'}
-        onReset={() => selectMotion('system')}
+        disabled={appearance()?.motion === 'system'}
+        onReset={() => setAppearance('motion', 'system')}
       />
     </Suspense>
   );

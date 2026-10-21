@@ -1,7 +1,7 @@
 import { createEffect, on } from 'solid-js';
 import { useLocation } from '@solidjs/router';
 import { createLogger } from '@lib/observability';
-import { readActiveColorScheme } from '@lib/theme/runtime';
+import { readAppearance } from '@lib/theme/runtime';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -27,7 +27,7 @@ const readPageContext = () => {
     platform: ua?.platform,
     mobile: ua?.mobile,
     brands: ua?.brands,
-    colorScheme: readActiveColorScheme(),
+    colorScheme: readAppearance().colorScheme,
     reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
     viewport: { width: innerWidth, height: innerHeight },
     screen: { width: screen.width, height: screen.height },
