@@ -797,9 +797,6 @@ importers:
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../../lib/runtime-config
-      '@lib/shell':
-        specifier: workspace:*
-        version: link:../../lib/shell
       '@lib/state':
         specifier: workspace:*
         version: link:../../lib/state

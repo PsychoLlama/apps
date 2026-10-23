@@ -9,8 +9,11 @@ import { $closeDeletedNotice, $deletedNoticeOpen } from '../state/log-storage';
 
 const logStorageHeadingId = 'settings-log-storage-heading';
 
-/** Export or delete the logs persisted on this device. */
-export const LogStorage = () => {
+/**
+ * The Log storage group: export or delete the logs persisted on this
+ * device. Uses an `h3`, since it sits under an "Advanced" heading.
+ */
+export const LogStorageSettings = () => {
   const deletedNoticeOpen = useValue($deletedNoticeOpen);
   const deleteLogs = useAction($deleteLogs);
   const closeNotice = useAction($closeDeletedNotice);
