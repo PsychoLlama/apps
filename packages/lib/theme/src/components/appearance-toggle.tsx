@@ -91,7 +91,8 @@ export const AppearanceToggle = () => {
                   ref={(button) => buttons.push(button)}
                   onClick={(event) => flip(state, event.currentTarget)}
                 >
-                  {effective(state) === 'dark' ? (
+                  {/* The icon shows where a press goes, like the label. */}
+                  {target(state) === 'dark' ? (
                     <IconMoon width="24" height="24" aria-hidden="true" />
                   ) : (
                     <IconSun width="24" height="24" aria-hidden="true" />
