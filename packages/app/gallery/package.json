@@ -25,6 +25,7 @@
     "deploy:preview": "rm -f .wrangler/deploy/preview.ndjson && WRANGLER_OUTPUT_FILE_PATH=.wrangler/deploy/preview.ndjson wrangler versions upload --preview-alias \"pr-${PR_NUMBER:?}\""
   },
   "dependencies": {
+    "@app/settings": "workspace:^0.0.0",
     "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
     "@lib/effects": "workspace:*",
