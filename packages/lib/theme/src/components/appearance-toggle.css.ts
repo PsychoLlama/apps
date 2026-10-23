@@ -21,8 +21,9 @@ const opposite: Record<ColorSchemeId, ColorSchemeId> = {
 type PermutationKey = `${ColorSchemeOption}-${ColorSchemeId}`;
 
 // Hide a permutation unless both the configured scheme and the OS scheme
-// match it. Every rule only ever hides, so there's no `display` value to
-// restore and the button keeps its own. `:root` lifts the media rule's
+// match it, and hide every permutation without JS, where a click does
+// nothing. Every rule only ever hides, so there's no `display` value to
+// restore and the button keeps its own. `:root` lifts the media rules'
 // specificity over the button's display class.
 const hideUnless = (configured: ColorSchemeOption, system: ColorSchemeId) => {
   const otherConfigured = (
@@ -38,6 +39,9 @@ const hideUnless = (configured: ColorSchemeOption, system: ColorSchemeId) => {
     ),
     '@media': {
       [`(prefers-color-scheme: ${opposite[system]})`]: {
+        selectors: { ':root &': { display: 'none' } },
+      },
+      '(scripting: none)': {
         selectors: { ':root &': { display: 'none' } },
       },
     },
