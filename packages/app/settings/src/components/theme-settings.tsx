@@ -6,22 +6,29 @@ import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
 import { $setAppearance } from '@lib/theme/effects';
 import { $appearance } from '@lib/theme/state';
 import { ResetButton } from './reset-button';
-import * as css from './theme-picker.css';
+import { SettingsSection } from './settings-section';
+import * as css from './theme-settings.css';
+
+const headingId = 'settings-theme-heading';
 
 /**
- * `id` of the heading the picker is labelled by. Shared between the
- * heading element and the radio group's `aria-labelledby` so the two
- * stay in sync.
+ * The Theme section: sets the app's primary color. Reads/writes the
+ * active theme through `@lib/theme` — selecting a card flips
+ * `<html data-theme>` and persists the choice to localStorage.
  */
-export const themeHeadingId = 'settings-theme-heading';
+export const ThemeSettings = () => (
+  <SettingsSection
+    title="Theme"
+    headingId={headingId}
+    description="Sets the app's primary color."
+    action={<ResetTheme />}
+  >
+    <ThemePicker />
+  </SettingsSection>
+);
 
-/**
- * Theme picker. Renders a `RadioCards` group with one card per built-in
- * theme. Reads/writes the active theme through `@lib/theme` — selecting
- * a card flips `<html data-theme>` and persists the choice to
- * localStorage.
- */
-export const ThemePicker = () => {
+// One `RadioCards` card per built-in theme.
+const ThemePicker = () => {
   const appearance = useClientResource($appearance);
   const setAppearance = useAction($setAppearance);
 
@@ -34,7 +41,7 @@ export const ThemePicker = () => {
       onValueChange={(next) => setAppearance('theme', next as ThemeId)}
       gap={3}
       class={css.root}
-      aria-labelledby={themeHeadingId}
+      aria-labelledby={headingId}
     >
       <For each={THEMES}>
         {(entry) => (
@@ -55,12 +62,10 @@ export const ThemePicker = () => {
   return <Suspense fallback={picker(true)}>{picker(false)}</Suspense>;
 };
 
-/**
- * Inline action that snaps the theme back to `DEFAULT_THEME_ID`. Disabled
- * while the theme is already default. Hidden until the preference is read
- * off `<html>`, like the other resets on the page.
- */
-export const ThemeResetButton = () => {
+// Snaps the theme back to `DEFAULT_THEME_ID`. Disabled while the theme
+// is already default. Hidden until the preference is read off `<html>`,
+// like the other resets on the page.
+const ResetTheme = () => {
   const appearance = useClientResource($appearance);
   const setAppearance = useAction($setAppearance);
 

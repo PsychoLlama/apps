@@ -5,14 +5,10 @@ import type { MotionOption } from '@lib/theme';
 import { $setAppearance } from '@lib/theme/effects';
 import { $appearance } from '@lib/theme/state';
 import { ResetButton } from './reset-button';
-import * as css from './motion-picker.css';
+import { SettingsSection } from './settings-section';
+import * as css from './motion-settings.css';
 
-/**
- * `id` of the heading the picker is labelled by. Shared between the
- * heading element and the radio group's `aria-labelledby` so the two
- * stay in sync.
- */
-export const motionHeadingId = 'settings-motion-heading';
+const headingId = 'settings-motion-heading';
 
 interface MotionPickerOption {
   id: MotionOption;
@@ -28,12 +24,24 @@ const OPTIONS: ReadonlyArray<MotionPickerOption> = [
 ];
 
 /**
- * Full/reduced/system picker for the `prefers-reduced-motion` overrides
- * in `@lib/design`. Reads/writes through `@lib/theme` — selecting a
- * segment flips `<html data-reduced-motion>` (or drops it, for "System")
- * and persists the choice to localStorage.
+ * The Motion section: full/reduced/system, driving the
+ * `prefers-reduced-motion` overrides in `@lib/design`. Reads/writes
+ * through `@lib/theme` — selecting a segment flips
+ * `<html data-reduced-motion>` (or drops it, for "System") and persists
+ * the choice to localStorage.
  */
-export const MotionPicker = () => {
+export const MotionSettings = () => (
+  <SettingsSection
+    title="Motion"
+    headingId={headingId}
+    description="Controls animations and transitions."
+    action={<ResetMotion />}
+  >
+    <MotionPicker />
+  </SettingsSection>
+);
+
+const MotionPicker = () => {
   const appearance = useClientResource($appearance);
   const setAppearance = useAction($setAppearance);
 
@@ -45,7 +53,7 @@ export const MotionPicker = () => {
       skeleton={skeleton}
       onValueChange={(next) => setAppearance('motion', next as MotionOption)}
       class={css.control}
-      aria-labelledby={motionHeadingId}
+      aria-labelledby={headingId}
     >
       <For each={OPTIONS}>
         {(entry) => (
@@ -65,14 +73,11 @@ export const MotionPicker = () => {
   return <Suspense fallback={picker(true)}>{picker(false)}</Suspense>;
 };
 
-/**
- * Inline action that hands motion back to `'system'` — the no-override
- * default that drops the persisted key and lets
- * `@media (prefers-reduced-motion)` take over. Disabled while already on
- * `'system'`. Hidden until the preference is read off `<html>`, like the
- * log filter's reset.
- */
-export const MotionResetButton = () => {
+// Hands motion back to `'system'` — the no-override default that drops
+// the persisted key and lets `@media (prefers-reduced-motion)` take
+// over. Disabled while already on `'system'`. Hidden until the
+// preference is read off `<html>`, like the log filter's reset.
+const ResetMotion = () => {
   const appearance = useClientResource($appearance);
   const setAppearance = useAction($setAppearance);
 

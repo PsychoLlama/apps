@@ -5,14 +5,10 @@ import type { ColorSchemeOption } from '@lib/theme';
 import { $setAppearance } from '@lib/theme/effects';
 import { $appearance } from '@lib/theme/state';
 import { ResetButton } from './reset-button';
-import * as css from './appearance-picker.css';
+import { SettingsSection } from './settings-section';
+import * as css from './appearance-settings.css';
 
-/**
- * `id` of the heading the picker is labelled by. Shared between the
- * heading element and the radio group's `aria-labelledby` so the two
- * stay in sync.
- */
-export const appearanceHeadingId = 'settings-appearance-heading';
+const headingId = 'settings-appearance-heading';
 
 interface AppearanceOption {
   id: ColorSchemeOption;
@@ -28,11 +24,22 @@ const OPTIONS: ReadonlyArray<AppearanceOption> = [
 ];
 
 /**
- * Light/dark/system picker. Reads/writes through `@lib/theme` — selecting
- * a segment flips `<html data-color-scheme>` (or drops it, for "System")
- * and persists the choice to localStorage.
+ * The Appearance section: light/dark/system. Reads/writes through
+ * `@lib/theme` — selecting a segment flips `<html data-color-scheme>`
+ * (or drops it, for "System") and persists the choice to localStorage.
  */
-export const AppearancePicker = () => {
+export const AppearanceSettings = () => (
+  <SettingsSection
+    title="Appearance"
+    headingId={headingId}
+    description="Sets the app's color scheme."
+    action={<ResetAppearance />}
+  >
+    <AppearancePicker />
+  </SettingsSection>
+);
+
+const AppearancePicker = () => {
   const appearance = useClientResource($appearance);
   const setAppearance = useAction($setAppearance);
 
@@ -46,7 +53,7 @@ export const AppearancePicker = () => {
         setAppearance('colorScheme', next as ColorSchemeOption)
       }
       class={css.control}
-      aria-labelledby={appearanceHeadingId}
+      aria-labelledby={headingId}
     >
       <For each={OPTIONS}>
         {(entry) => (
@@ -66,14 +73,11 @@ export const AppearancePicker = () => {
   return <Suspense fallback={picker(true)}>{picker(false)}</Suspense>;
 };
 
-/**
- * Inline action that hands the color scheme back to `'system'` — the
- * no-override default that drops the persisted key and lets
- * `@media (prefers-color-scheme)` take over. Disabled while already on
- * `'system'`. Hidden until the preference is read off `<html>`, like the
- * log filter's reset.
- */
-export const AppearanceResetButton = () => {
+// Hands the color scheme back to `'system'` — the no-override default
+// that drops the persisted key and lets `@media (prefers-color-scheme)`
+// take over. Disabled while already on `'system'`. Hidden until the
+// preference is read off `<html>`, like the log filter's reset.
+const ResetAppearance = () => {
   const appearance = useClientResource($appearance);
   const setAppearance = useAction($setAppearance);
 
