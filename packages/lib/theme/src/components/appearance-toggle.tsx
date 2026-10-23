@@ -62,9 +62,9 @@ export const AppearanceToggle = () => {
           onClick={() => setAppearance('colorScheme', nextStep(state))}
         >
           {effective(state) === 'dark' ? (
-            <IconMoon aria-hidden="true" />
+            <IconMoon width="24" height="24" aria-hidden="true" />
           ) : (
-            <IconSun aria-hidden="true" />
+            <IconSun width="24" height="24" aria-hidden="true" />
           )}
         </IconButton>
       )}
