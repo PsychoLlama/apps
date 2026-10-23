@@ -417,6 +417,9 @@ importers:
 
   packages/app/gallery:
     dependencies:
+      '@app/settings':
+        specifier: workspace:^0.0.0
+        version: link:../settings
       '@lib/classnames':
         specifier: workspace:*
         version: link:../../lib/classnames

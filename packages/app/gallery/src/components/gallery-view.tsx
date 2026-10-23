@@ -1,6 +1,8 @@
 import { type JSX } from 'solid-js';
 import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
 import { AppearanceToggle } from '@lib/theme/appearance-toggle';
+import { LinkButton } from '@lib/ui';
+import IconCog from 'virtual:icons/mdi/cog-outline';
 
 /**
  * A gallery view: a `<main>` frame with a breadcrumb header over the
@@ -13,7 +15,23 @@ export const GalleryView = (props: {
   children?: JSX.Element;
 }) => (
   <Frame>
-    <SiteHeader trail={props.trail} actions={<AppearanceToggle />} />
+    <SiteHeader
+      trail={props.trail}
+      actions={
+        <>
+          <AppearanceToggle />
+          <LinkButton
+            testId="settings"
+            href="/settings"
+            aria-label="Settings"
+            variant="ghost"
+            color="neutral"
+          >
+            <IconCog width="24" height="24" />
+          </LinkButton>
+        </>
+      }
+    />
     <FrameBody as="article">{props.children}</FrameBody>
   </Frame>
 );

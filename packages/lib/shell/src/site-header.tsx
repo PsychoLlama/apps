@@ -141,7 +141,9 @@ export default function SiteHeader(props: {
       </Flex>
 
       <Show when={actions()}>
-        <Flex as="div" align="center" gap={2} class={css.trailing}>
+        {/* Ghost buttons retract their padding with negative margins,
+            which eats into the gap. This leaves room between hover areas. */}
+        <Flex as="div" align="center" gap={5} class={css.trailing}>
           {actions()}
         </Flex>
       </Show>
