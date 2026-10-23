@@ -21,13 +21,6 @@ export const nav = style({
   minHeight: space[6],
 });
 
-// The launcher's wordmark glyph. Same quiet color as everything else
-// in the bar — location is signaled by weight and the absence of a
-// trail, never by contrast.
-export const brand = style({
-  color: text.lowContrast,
-});
-
 export const separator = style({
   color: text.lowContrast,
   flexShrink: 0,

@@ -1,7 +1,7 @@
 import { children, For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { Title } from '@solidjs/meta';
-import { Flex, Link, LinkButton, Text } from '@lib/ui';
+import { Flex, Link, Text } from '@lib/ui';
 import IconChevronRight from 'virtual:icons/mdi/chevron-right';
 import { useAppConfig } from './context';
 import * as css from './site-header.css';
@@ -28,10 +28,9 @@ export interface SiteHeaderCrumb {
  * The whole bar is uniformly low-contrast at rest — it's chrome, not
  * content. Each signal gets its own channel: weight marks location
  * (the current segment is medium, plus `aria-current`), and affordance
- * comes from the design system's interactive treatments — the root is
- * a ghost button (hit-area plus hover fill), and ancestor crumbs keep
- * the persistent neutral-link underline. Contrast deliberately encodes
- * nothing.
+ * comes from the design system's interactive treatment — every
+ * ancestor crumb, root included, is a neutral link with its persistent
+ * underline. Contrast deliberately encodes nothing.
  */
 export default function SiteHeader(props: {
   /** Single-page label. Shorthand for `trail={[{ label: title }]}`. */
@@ -83,32 +82,21 @@ export default function SiteHeader(props: {
         <Show
           when={crumbs().length > 0}
           fallback={
-            <Flex
-              as="div"
-              align="center"
-              gap={1}
+            <Text
+              as="span"
+              size={2}
+              weight="medium"
+              color="lowContrast"
               aria-current="page"
-              class={css.brand}
+              selectable={false}
             >
-              {app.icon && (
-                <app.icon width="18" height="18" aria-hidden="true" />
-              )}
-              <Text
-                as="span"
-                size={2}
-                weight="medium"
-                color="lowContrast"
-                selectable={false}
-              >
-                {app.name}
-              </Text>
-            </Flex>
+              {app.name}
+            </Text>
           }
         >
-          <LinkButton testId="home" href="/" variant="ghost" color="neutral">
-            {app.icon && <app.icon width="18" height="18" />}
+          <Link testId="home" href="/" size={2} color="neutral">
             {app.name}
-          </LinkButton>
+          </Link>
         </Show>
 
         <For each={crumbs()}>

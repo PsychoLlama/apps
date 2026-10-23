@@ -6,18 +6,11 @@
 
 import { assert } from '@lib/assert';
 import { createContext, useContext } from 'solid-js';
-import type { ComponentProps, JSX } from 'solid-js';
 
 /** Standard fields every app hands the shell. */
 export interface AppConfig {
   /** Display name: the header's root crumb and the fallback page title. */
   name: string;
-
-  /**
-   * Icon beside the header's root crumb, e.g. a `virtual:icons/*` import.
-   * Omit it to show the name alone.
-   */
-  icon?: (props: ComponentProps<'svg'>) => JSX.Element;
 }
 
 const AppContext = createContext<AppConfig>();
