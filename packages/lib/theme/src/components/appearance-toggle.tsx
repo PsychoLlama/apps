@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
 import { useAction } from '@lib/effects/solid';
-import { IconButton } from '@lib/ui';
+import { Flex, IconButton, Tooltip } from '@lib/ui';
 import type { ColorSchemeId, ColorSchemeOption } from '../constants';
 import { $setAppearance } from '../effects/appearance';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
@@ -23,20 +23,19 @@ const PERMUTATIONS: ReadonlyArray<Permutation> = (
 const effective = (state: Permutation): ColorSchemeId =>
   state.configured === 'system' ? state.system : state.configured;
 
+const target = (state: Permutation): ColorSchemeId =>
+  effective(state) === 'dark' ? 'light' : 'dark';
+
 // Flip the visible scheme. Landing on the OS preference clears the
 // override instead of pinning it, so the toggle never stores a value
 // that matches the system.
-const nextStep = (state: Permutation): ColorSchemeOption => {
-  const target = effective(state) === 'dark' ? 'light' : 'dark';
-  return target === state.system ? 'system' : target;
-};
+const nextStep = (state: Permutation): ColorSchemeOption =>
+  target(state) === state.system ? 'system' : target(state);
 
-const label = (state: Permutation): string => {
-  const next = nextStep(state);
-  return next === 'system'
-    ? `Switch to system theme (${state.system})`
-    : `Switch to ${next} theme`;
-};
+// Names the scheme you'll see, even when the stored value becomes
+// `'system'`. Close enough, and simpler than explaining the fallback.
+const label = (state: Permutation): string =>
+  `Switch to ${target(state)} theme`;
 
 /**
  * Light/dark toggle. Flips whichever scheme is showing, falling back to
@@ -52,22 +51,44 @@ export const AppearanceToggle = () => {
 
   return (
     <For each={PERMUTATIONS}>
-      {(state) => (
-        <IconButton
-          testId={`appearance-toggle-${state.configured}-${state.system}`}
-          aria-label={label(state)}
-          variant="ghost"
-          color="neutral"
-          class={css.permutation[`${state.configured}-${state.system}`]}
-          onClick={() => setAppearance('colorScheme', nextStep(state))}
-        >
-          {effective(state) === 'dark' ? (
-            <IconMoon width="24" height="24" aria-hidden="true" />
-          ) : (
-            <IconSun width="24" height="24" aria-hidden="true" />
-          )}
-        </IconButton>
-      )}
+      {(state) => {
+        const key = `${state.configured}-${state.system}` as const;
+
+        // The tooltip wraps its trigger, so hiding the button alone would
+        // leave an empty wrapper taking up a slot in the parent's layout.
+        // The permutation class hides the whole thing instead.
+        return (
+          <Flex as="div" class={css.permutation[key]}>
+            <Tooltip
+              display="block"
+              content={label(state)}
+              side="bottom"
+              align="end"
+              hoverable={false}
+              testId={`appearance-toggle-${key}-tooltip`}
+            >
+              {({ 'aria-describedby': labelId, ...trigger }) => (
+                <IconButton
+                  {...trigger}
+                  // The tooltip is the name, so it labels rather than
+                  // describes.
+                  aria-labelledby={labelId}
+                  testId={`appearance-toggle-${key}`}
+                  variant="ghost"
+                  color="neutral"
+                  onClick={() => setAppearance('colorScheme', nextStep(state))}
+                >
+                  {effective(state) === 'dark' ? (
+                    <IconMoon width="24" height="24" aria-hidden="true" />
+                  ) : (
+                    <IconSun width="24" height="24" aria-hidden="true" />
+                  )}
+                </IconButton>
+              )}
+            </Tooltip>
+          </Flex>
+        );
+      }}
     </For>
   );
 };
