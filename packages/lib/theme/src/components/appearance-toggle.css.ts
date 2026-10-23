@@ -38,10 +38,7 @@ const hideUnless = (configured: ColorSchemeOption, system: ColorSchemeId) => {
       ]),
     ),
     '@media': {
-      [`(prefers-color-scheme: ${opposite[system]})`]: {
-        selectors: { ':root &': { display: 'none' } },
-      },
-      '(scripting: none)': {
+      [`(prefers-color-scheme: ${opposite[system]}), (scripting: none)`]: {
         selectors: { ':root &': { display: 'none' } },
       },
     },
