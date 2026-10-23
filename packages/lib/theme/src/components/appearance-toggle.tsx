@@ -48,6 +48,18 @@ const label = (state: Permutation): string =>
  */
 export const AppearanceToggle = () => {
   const setAppearance = useAction($setAppearance);
+  const buttons: HTMLButtonElement[] = [];
+
+  const flip = (state: Permutation, button: HTMLButtonElement) => {
+    const hadFocus = document.activeElement === button;
+    setAppearance('colorScheme', nextStep(state));
+
+    // The flip hides this button and reveals a sibling, and focus on a
+    // hidden element falls back to the page. Hand it over so keyboard
+    // users can keep toggling. A mouse press that never focused the
+    // button (Safari) is left alone.
+    if (hadFocus) buttons.find((other) => other.checkVisibility())?.focus();
+  };
 
   return (
     <For each={PERMUTATIONS}>
@@ -76,7 +88,8 @@ export const AppearanceToggle = () => {
                   testId={`appearance-toggle-${key}`}
                   variant="ghost"
                   color="neutral"
-                  onClick={() => setAppearance('colorScheme', nextStep(state))}
+                  ref={(button) => buttons.push(button)}
+                  onClick={(event) => flip(state, event.currentTarget)}
                 >
                   {effective(state) === 'dark' ? (
                     <IconMoon width="24" height="24" aria-hidden="true" />
