@@ -1,6 +1,5 @@
 import { Container, Flex, Heading, Text } from '@lib/ui';
 import {
-  AppearanceSettings,
   LogFilterSettings,
   MotionSettings,
   ThemeSettings,
@@ -22,7 +21,6 @@ const GallerySettings = () => (
         </Flex>
 
         <ThemeSettings />
-        <AppearanceSettings />
         <MotionSettings />
 
         <Flex as="section" direction="column" gap={5}>
