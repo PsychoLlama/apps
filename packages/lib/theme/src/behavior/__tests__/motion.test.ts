@@ -1,6 +1,6 @@
 import { createTestController } from '@lib/effects/testing';
-import { MOTION_STORAGE_KEY } from '../../constants';
-import { $motion, $motionChanged } from '../motion';
+import { MOTION_ATTRIBUTE, MOTION_STORAGE_KEY } from '../../constants';
+import { $motion, $motionChanged, $setMotion } from '../motion';
 
 // What another tab's write looks like from here.
 const storageEvent = (init: StorageEventInit) =>
@@ -10,6 +10,7 @@ const storageEvent = (init: StorageEventInit) =>
 
 beforeEach(() => {
   localStorage.clear();
+  delete document.documentElement.dataset[MOTION_ATTRIBUTE];
 });
 
 describe('$motion', () => {
@@ -59,6 +60,67 @@ describe('$motionChanged', () => {
 
     motionChanged('reduce');
 
+    expect(motion()).toBe('reduce');
+  });
+});
+
+describe('$setMotion', () => {
+  it('writes the attribute, the cell, and storage', async () => {
+    await using effects = createTestController();
+    const motion = await effects.run($motion);
+    const setMotion = await effects.run($setMotion);
+
+    setMotion('reduce');
+
+    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
+    expect(motion()).toBe('reduce');
+    expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBe('reduce');
+  });
+
+  it("drops the attribute and the stored value for 'system'", async () => {
+    await using effects = createTestController();
+    const motion = await effects.run($motion);
+    const setMotion = await effects.run($setMotion);
+    setMotion('reduce');
+
+    setMotion('system');
+
+    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
+    expect(motion()).toBe('system');
+    expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBeNull();
+  });
+
+  it('switches when storage refuses access', async () => {
+    await using effects = createTestController();
+    const motion = await effects.run($motion);
+    const setMotion = await effects.run($setMotion);
+    using setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+
+    setMotion('reduce');
+
+    expect(setItem).toHaveBeenCalledWith(MOTION_STORAGE_KEY, 'reduce');
+    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
+    expect(motion()).toBe('reduce');
+  });
+
+  it('switches before a storage failure throws', async () => {
+    await using effects = createTestController();
+    const motion = await effects.run($motion);
+    const setMotion = await effects.run($setMotion);
+    const error = new Error('Broken.');
+    using setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw error;
+      });
+
+    expect(() => setMotion('reduce')).toThrow(error);
+    expect(setItem).toHaveBeenCalledWith(MOTION_STORAGE_KEY, 'reduce');
+    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
     expect(motion()).toBe('reduce');
   });
 });

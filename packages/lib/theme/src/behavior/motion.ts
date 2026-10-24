@@ -1,11 +1,12 @@
 import { collect, pipe, reactive } from '@lib/effects';
 import { defineCell, defineCommand } from '@lib/state';
 import {
+  MOTION_ATTRIBUTE,
   MOTION_IDS,
   MOTION_STORAGE_KEY,
   type MotionOption,
 } from '../constants';
-import { watchStorage } from './local-storage';
+import { removeItem, setItem, watchStorage } from './local-storage';
 
 // An unset or unrecognized value reads as `'system'`.
 const parse = (stored: string | null): MotionOption =>
@@ -36,4 +37,26 @@ const $motionSync = pipe([
  */
 export const $motion = collect([$motionCell, $motionSync], (motion) =>
   reactive(motion),
+);
+
+/**
+ * Switch the motion preference: the cell, the `<html>` attribute, then
+ * storage. `'system'` drops the attribute so media queries take over,
+ * and clears storage. Storage that refuses access is skipped. Storage
+ * goes last: if it fails otherwise, the switch still shows.
+ */
+export const $setMotion = collect(
+  [$motionChanged],
+  (motionChanged) => (motion: MotionOption) => {
+    motionChanged(motion);
+
+    const { dataset } = document.documentElement;
+    if (motion === 'system') {
+      delete dataset[MOTION_ATTRIBUTE];
+      removeItem(MOTION_STORAGE_KEY);
+    } else {
+      dataset[MOTION_ATTRIBUTE] = motion;
+      setItem(MOTION_STORAGE_KEY, motion);
+    }
+  },
 );
