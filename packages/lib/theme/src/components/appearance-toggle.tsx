@@ -7,7 +7,7 @@ import {
   type ColorSchemeOption,
 } from '../constants';
 import { $setPreferences } from '../effects/preferences';
-import { $systemColorScheme } from '../effects/system-color-scheme';
+import { $systemColorScheme } from '../behavior/system-color-scheme';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
 import * as css from './appearance-toggle.css';

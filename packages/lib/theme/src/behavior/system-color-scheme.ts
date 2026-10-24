@@ -6,7 +6,7 @@ const query = '(prefers-color-scheme: dark)';
 
 /**
  * The OS color-scheme preference, as a live accessor. Ignores the app's
- * override; pair it with `$preferences` for the scheme on screen.
+ * override; pair it with `$appearance` for the scheme on screen.
  * Client-only; it reads `matchMedia`.
  */
 export const $systemColorScheme = pipe([
