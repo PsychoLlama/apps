@@ -1,10 +1,11 @@
-import { collect, reactive, resource } from '@lib/effects';
+import { collect, pipe, reactive } from '@lib/effects';
 import { defineCell, defineCommand } from '@lib/state';
 import {
   COLOR_SCHEME_IDS,
   COLOR_SCHEME_STORAGE_KEY,
   type ColorSchemeOption,
 } from '../constants';
+import { watchStorage } from './local-storage';
 
 // An unset or unrecognized value reads as `'system'`.
 const parse = (stored: string | null): ColorSchemeOption =>
@@ -24,22 +25,10 @@ export const $appearanceChanged = defineCommand(
       setAppearance(appearance),
 );
 
-// Follows what other tabs store. `storage` events never fire in the tab
-// that wrote the value.
-const $appearanceSync = collect([$appearanceChanged], (appearanceChanged) => {
-  const sync = (event: StorageEvent) => {
-    if (event.storageArea !== localStorage) return;
-
-    // A `null` key means storage was cleared.
-    if (event.key === COLOR_SCHEME_STORAGE_KEY || event.key === null) {
-      appearanceChanged(parse(event.newValue));
-    }
-  };
-
-  addEventListener('storage', sync);
-
-  return resource(undefined, () => removeEventListener('storage', sync));
-});
+const $appearanceSync = pipe([
+  $appearanceChanged,
+  watchStorage(COLOR_SCHEME_STORAGE_KEY, parse),
+]);
 
 /**
  * The light/dark/system appearance, hydrated from storage and kept in
