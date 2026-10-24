@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { useAction } from '@lib/effects/solid';
+import { useAction, useClientResource } from '@lib/effects/solid';
 import { Flex, IconButton, Tooltip } from '@lib/ui';
 import {
   COLOR_SCHEME_IDS,
@@ -7,6 +7,7 @@ import {
   type ColorSchemeOption,
 } from '../constants';
 import { $setAppearance } from '../effects/appearance';
+import { $systemColorScheme } from '../effects/system-color-scheme';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
 import * as css from './appearance-toggle.css';
@@ -16,15 +17,12 @@ const target = (showing: ColorSchemeId): ColorSchemeId =>
 
 // Flip the visible scheme. Landing on the OS preference clears the
 // override instead of pinning it, so the toggle never stores a value
-// that matches the system. Read at click time, so the prerender never
-// needs to know it.
-const nextStep = (showing: ColorSchemeId): ColorSchemeOption => {
-  const system = matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
-
-  return target(showing) === system ? 'system' : target(showing);
-};
+// that matches the system.
+const nextStep = (
+  showing: ColorSchemeId,
+  system: ColorSchemeId,
+): ColorSchemeOption =>
+  target(showing) === system ? 'system' : target(showing);
 
 // Names the scheme you'll see, even when the stored value becomes
 // `'system'`. Close enough, and simpler than explaining the fallback.
@@ -42,11 +40,16 @@ const label = (showing: ColorSchemeId): string =>
  */
 export const AppearanceToggle = () => {
   const setAppearance = useAction($setAppearance);
+  const systemColorScheme = useClientResource($systemColorScheme);
   const buttons: Partial<Record<ColorSchemeId, HTMLButtonElement>> = {};
 
   const flip = (showing: ColorSchemeId, button: HTMLButtonElement) => {
     const hadFocus = document.activeElement === button;
-    setAppearance('colorScheme', nextStep(showing));
+
+    // Settles on mount, ahead of any press. Light is what CSS assumes
+    // without a preference.
+    const system = systemColorScheme() ?? 'light';
+    setAppearance('colorScheme', nextStep(showing, system));
 
     // The flip hides this button and reveals its sibling, and focus on a
     // hidden element falls back to the page. Hand it over so keyboard
