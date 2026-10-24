@@ -2,8 +2,8 @@ import { For } from 'solid-js';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { MotionOption } from '@lib/theme';
-import { $setAppearance } from '@lib/theme/effects';
-import { $appearance } from '@lib/theme/state';
+import { $setPreferences } from '@lib/theme/effects';
+import { $preferences } from '@lib/theme/state';
 import { ResetButton } from './reset-button';
 import { SettingsSection } from './settings-section';
 import * as css from './motion-settings.css';
@@ -42,16 +42,16 @@ export const MotionSettings = () => (
 );
 
 const MotionPicker = () => {
-  const appearance = useClientResource($appearance);
-  const setAppearance = useAction($setAppearance);
+  const preferences = useClientResource($preferences);
+  const setPreferences = useAction($setPreferences);
 
   const picker = (skeleton: boolean) => (
     <SegmentedControlRoot
       testId="motion-picker"
       name="motion"
-      value={skeleton ? null : (appearance()?.motion ?? null)}
+      value={skeleton ? null : (preferences()?.motion ?? null)}
       skeleton={skeleton}
-      onValueChange={(next) => setAppearance('motion', next as MotionOption)}
+      onValueChange={(next) => setPreferences('motion', next as MotionOption)}
       class={css.control}
       aria-labelledby={headingId}
     >
@@ -78,16 +78,16 @@ const MotionPicker = () => {
 // over. Disabled while already on `'system'`. Hidden until the
 // preference is read off `<html>`, like the log filter's reset.
 const ResetMotion = () => {
-  const appearance = useClientResource($appearance);
-  const setAppearance = useAction($setAppearance);
+  const preferences = useClientResource($preferences);
+  const setPreferences = useAction($setPreferences);
 
   return (
     <Suspense>
       <ResetButton
         testId="motion-picker-reset"
         label="Reset motion"
-        disabled={appearance()?.motion === 'system'}
-        onReset={() => setAppearance('motion', 'system')}
+        disabled={preferences()?.motion === 'system'}
+        onReset={() => setPreferences('motion', 'system')}
       />
     </Suspense>
   );

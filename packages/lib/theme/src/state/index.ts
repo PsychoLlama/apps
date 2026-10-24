@@ -1,1 +1,1 @@
-export { $appearance } from './appearance';
+export { $preferences } from './preferences';

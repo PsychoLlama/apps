@@ -2,8 +2,8 @@ import { For } from 'solid-js';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { ColorSchemeOption } from '@lib/theme';
-import { $setAppearance } from '@lib/theme/effects';
-import { $appearance } from '@lib/theme/state';
+import { $setPreferences } from '@lib/theme/effects';
+import { $preferences } from '@lib/theme/state';
 import { ResetButton } from './reset-button';
 import { SettingsSection } from './settings-section';
 import * as css from './appearance-settings.css';
@@ -40,17 +40,17 @@ export const AppearanceSettings = () => (
 );
 
 const AppearancePicker = () => {
-  const appearance = useClientResource($appearance);
-  const setAppearance = useAction($setAppearance);
+  const preferences = useClientResource($preferences);
+  const setPreferences = useAction($setPreferences);
 
   const picker = (skeleton: boolean) => (
     <SegmentedControlRoot
       testId="appearance-picker"
       name="appearance"
-      value={skeleton ? null : (appearance()?.colorScheme ?? null)}
+      value={skeleton ? null : (preferences()?.colorScheme ?? null)}
       skeleton={skeleton}
       onValueChange={(next) =>
-        setAppearance('colorScheme', next as ColorSchemeOption)
+        setPreferences('colorScheme', next as ColorSchemeOption)
       }
       class={css.control}
       aria-labelledby={headingId}
@@ -78,16 +78,16 @@ const AppearancePicker = () => {
 // take over. Disabled while already on `'system'`. Hidden until the
 // preference is read off `<html>`, like the log filter's reset.
 const ResetAppearance = () => {
-  const appearance = useClientResource($appearance);
-  const setAppearance = useAction($setAppearance);
+  const preferences = useClientResource($preferences);
+  const setPreferences = useAction($setPreferences);
 
   return (
     <Suspense>
       <ResetButton
         testId="appearance-picker-reset"
         label="Reset appearance"
-        disabled={appearance()?.colorScheme === 'system'}
-        onReset={() => setAppearance('colorScheme', 'system')}
+        disabled={preferences()?.colorScheme === 'system'}
+        onReset={() => setPreferences('colorScheme', 'system')}
       />
     </Suspense>
   );

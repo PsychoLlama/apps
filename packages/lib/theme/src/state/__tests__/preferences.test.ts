@@ -5,7 +5,7 @@ import {
   MOTION_ATTRIBUTE,
   THEME_ATTRIBUTE,
 } from '../../constants';
-import { $appearance, $appearanceChanged } from '../appearance';
+import { $preferences, $preferencesChanged } from '../preferences';
 
 beforeEach(() => {
   delete document.documentElement.dataset[THEME_ATTRIBUTE];
@@ -13,16 +13,16 @@ beforeEach(() => {
   delete document.documentElement.dataset[MOTION_ATTRIBUTE];
 });
 
-describe('$appearance', () => {
+describe('$preferences', () => {
   it('hydrates every preference stamped on <html>', async () => {
     document.documentElement.dataset[THEME_ATTRIBUTE] = 'jade';
     document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE] = 'dark';
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'reduce';
     await using effects = createTestController();
 
-    const appearance = await effects.run($appearance);
+    const preferences = await effects.run($preferences);
 
-    expect(appearance).toEqual({
+    expect(preferences).toEqual({
       theme: 'jade',
       colorScheme: 'dark',
       motion: 'reduce',
@@ -32,9 +32,9 @@ describe('$appearance', () => {
   it('falls back when the attributes are missing', async () => {
     await using effects = createTestController();
 
-    const appearance = await effects.run($appearance);
+    const preferences = await effects.run($preferences);
 
-    expect(appearance).toEqual({
+    expect(preferences).toEqual({
       theme: DEFAULT_THEME_ID,
       colorScheme: 'system',
       motion: 'system',
@@ -47,9 +47,9 @@ describe('$appearance', () => {
     document.documentElement.dataset[MOTION_ATTRIBUTE] = 'jerky';
     await using effects = createTestController();
 
-    const appearance = await effects.run($appearance);
+    const preferences = await effects.run($preferences);
 
-    expect(appearance).toEqual({
+    expect(preferences).toEqual({
       theme: DEFAULT_THEME_ID,
       colorScheme: 'system',
       motion: 'system',
@@ -57,14 +57,14 @@ describe('$appearance', () => {
   });
 });
 
-describe('$appearanceChanged', () => {
+describe('$preferencesChanged', () => {
   it('updates one preference', async () => {
     await using effects = createTestController();
-    const appearance = await effects.run($appearance);
-    const appearanceChanged = await effects.run($appearanceChanged);
+    const preferences = await effects.run($preferences);
+    const preferencesChanged = await effects.run($preferencesChanged);
 
-    appearanceChanged('colorScheme', 'dark');
+    preferencesChanged('colorScheme', 'dark');
 
-    expect(appearance.colorScheme).toBe('dark');
+    expect(preferences.colorScheme).toBe('dark');
   });
 });

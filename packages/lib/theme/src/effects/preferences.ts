@@ -3,11 +3,11 @@ import {
   PREFERENCES,
   THEME_COLOR_META_ID,
   THEME_COLORS,
-  type Appearance,
+  type Preferences,
   type ColorSchemeOption,
   type ThemeId,
 } from '../constants';
-import { $appearance, $appearanceChanged } from '../state/appearance';
+import { $preferences, $preferencesChanged } from '../state/preferences';
 
 // Mirror the active theme's page-background colors into the paired
 // `<meta name="theme-color">` tags. The prelude does the same on first
@@ -34,20 +34,23 @@ const syncThemeColorMeta = (id: ThemeId, scheme: ColorSchemeOption): void => {
  * Set one preference by name. `'system'` drops the attribute so
  * media queries take over, and a preference's fallback clears its stored
  * value so the next load follows whatever default ships. Storage goes
- * last: if it rejects, the switch still shows and `$appearance` still
+ * last: if it rejects, the switch still shows and `$preferences` still
  * matches.
  */
-export const $setAppearance = collect(
-  [$appearance, $appearanceChanged],
-  (appearance, appearanceChanged) =>
-    <Key extends keyof Appearance>(key: Key, value: Appearance[Key]): void => {
+export const $setPreferences = collect(
+  [$preferences, $preferencesChanged],
+  (preferences, preferencesChanged) =>
+    <Key extends keyof Preferences>(
+      key: Key,
+      value: Preferences[Key],
+    ): void => {
       const { attribute, fallback, storageKey } = PREFERENCES[key];
       const { dataset } = document.documentElement;
       if (value === 'system') delete dataset[attribute];
       else dataset[attribute] = value;
 
-      appearanceChanged(key, value);
-      syncThemeColorMeta(appearance.theme, appearance.colorScheme);
+      preferencesChanged(key, value);
+      syncThemeColorMeta(preferences.theme, preferences.colorScheme);
 
       if (value === fallback) localStorage.removeItem(storageKey);
       else localStorage.setItem(storageKey, value);

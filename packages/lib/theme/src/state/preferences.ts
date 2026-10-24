@@ -1,8 +1,8 @@
 import { defineCommand, defineStore } from '@lib/state';
-import { PREFERENCES, type Appearance } from '../constants';
+import { PREFERENCES, type Preferences } from '../constants';
 
 // A missing or unrecognized attribute reads as its fallback.
-const hydrate = <Key extends keyof Appearance>(key: Key): Appearance[Key] => {
+const hydrate = <Key extends keyof Preferences>(key: Key): Preferences[Key] => {
   const { attribute, ids, fallback } = PREFERENCES[key];
   const value = document.documentElement.dataset[attribute];
 
@@ -10,20 +10,20 @@ const hydrate = <Key extends keyof Appearance>(key: Key): Appearance[Key] => {
 };
 
 /**
- * Every appearance preference, hydrated from the `<html>` attributes the
+ * Every preference, hydrated from the `<html>` attributes the
  * prelude stamped. Client-only; it reads `document`.
  */
-export const $appearance = defineStore<Appearance>(() => ({
+export const $preferences = defineStore<Preferences>(() => ({
   theme: hydrate('theme'),
   colorScheme: hydrate('colorScheme'),
   motion: hydrate('motion'),
 }));
 
 /** A preference changed. Effects write the DOM and storage. */
-export const $appearanceChanged = defineCommand(
-  [$appearance],
-  (appearance) =>
-    <Key extends keyof Appearance>(key: Key, value: Appearance[Key]) => {
-      appearance[key] = value;
+export const $preferencesChanged = defineCommand(
+  [$preferences],
+  (preferences) =>
+    <Key extends keyof Preferences>(key: Key, value: Preferences[Key]) => {
+      preferences[key] = value;
     },
 );

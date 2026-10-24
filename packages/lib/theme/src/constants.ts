@@ -138,8 +138,8 @@ export type MotionOption = MotionId | 'system';
  */
 export const MOTION_STORAGE_KEY = 'preferences.appearance.motion';
 
-/** Every appearance preference. */
-export interface Appearance {
+/** Every preference. */
+export interface Preferences {
   /** The active theme. */
   theme: ThemeId;
 
@@ -200,9 +200,9 @@ export interface Preference<Value> {
   readonly storageKey: string;
 }
 
-/** Each appearance preference by name. */
+/** Each preference by name. */
 export const PREFERENCES: {
-  readonly [Key in keyof Appearance]: Preference<Appearance[Key]>;
+  readonly [Key in keyof Preferences]: Preference<Preferences[Key]>;
 } = {
   theme: {
     attribute: THEME_ATTRIBUTE,

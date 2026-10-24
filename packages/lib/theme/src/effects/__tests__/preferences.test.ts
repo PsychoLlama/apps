@@ -10,8 +10,8 @@ import {
   THEME_COLORS,
   THEME_STORAGE_KEY,
 } from '../../constants';
-import { $appearance } from '../../state/appearance';
-import { $setAppearance } from '../appearance';
+import { $preferences } from '../../state/preferences';
+import { $setPreferences } from '../preferences';
 
 const mountMetaTag = (id: string): HTMLMetaElement => {
   const meta = document.createElement('meta');
@@ -44,32 +44,32 @@ const setup = () => {
   };
 };
 
-describe('$setAppearance', () => {
+describe('$setPreferences', () => {
   it('writes the attribute, the store, and storage', async () => {
     using page = setup();
     await using effects = createTestController();
-    const appearance = await effects.run($appearance);
-    const setAppearance = await effects.run($setAppearance);
+    const preferences = await effects.run($preferences);
+    const setPreferences = await effects.run($setPreferences);
 
-    setAppearance('theme', 'teal');
+    setPreferences('theme', 'teal');
 
     expect(page.dataset[THEME_ATTRIBUTE]).toBe('teal');
-    expect(appearance.theme).toBe('teal');
+    expect(preferences.theme).toBe('teal');
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('teal');
   });
 
   it('handles each preference by its own attribute and key', async () => {
     using page = setup();
     await using effects = createTestController();
-    const appearance = await effects.run($appearance);
-    const setAppearance = await effects.run($setAppearance);
+    const preferences = await effects.run($preferences);
+    const setPreferences = await effects.run($setPreferences);
 
-    setAppearance('colorScheme', 'dark');
-    setAppearance('motion', 'reduce');
+    setPreferences('colorScheme', 'dark');
+    setPreferences('motion', 'reduce');
 
     expect(page.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe('dark');
     expect(page.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
-    expect(appearance).toMatchObject({
+    expect(preferences).toMatchObject({
       colorScheme: 'dark',
       motion: 'reduce',
     });
@@ -80,37 +80,37 @@ describe('$setAppearance', () => {
   it("drops the attribute and the stored value for 'system'", async () => {
     using page = setup();
     await using effects = createTestController();
-    const appearance = await effects.run($appearance);
-    const setAppearance = await effects.run($setAppearance);
-    setAppearance('motion', 'reduce');
+    const preferences = await effects.run($preferences);
+    const setPreferences = await effects.run($setPreferences);
+    setPreferences('motion', 'reduce');
 
-    setAppearance('motion', 'system');
+    setPreferences('motion', 'system');
 
     expect(page.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
-    expect(appearance.motion).toBe('system');
+    expect(preferences.motion).toBe('system');
     expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBeNull();
   });
 
   it('stamps the default theme but forgets the stored one', async () => {
     using page = setup();
     await using effects = createTestController();
-    const appearance = await effects.run($appearance);
-    const setAppearance = await effects.run($setAppearance);
-    setAppearance('theme', 'jade');
+    const preferences = await effects.run($preferences);
+    const setPreferences = await effects.run($setPreferences);
+    setPreferences('theme', 'jade');
 
-    setAppearance('theme', DEFAULT_THEME_ID);
+    setPreferences('theme', DEFAULT_THEME_ID);
 
     expect(page.dataset[THEME_ATTRIBUTE]).toBe(DEFAULT_THEME_ID);
-    expect(appearance.theme).toBe(DEFAULT_THEME_ID);
+    expect(preferences.theme).toBe(DEFAULT_THEME_ID);
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
   });
 
   it("syncs the theme-color meta tags to the theme's colors", async () => {
     using page = setup();
     await using effects = createTestController();
-    const setAppearance = await effects.run($setAppearance);
+    const setPreferences = await effects.run($setPreferences);
 
-    setAppearance('theme', 'jade');
+    setPreferences('theme', 'jade');
 
     expect(page.metaColors()).toEqual(THEME_COLORS.jade);
   });
@@ -118,30 +118,30 @@ describe('$setAppearance', () => {
   it('collapses the theme-color meta tags onto a forced scheme', async () => {
     using page = setup();
     await using effects = createTestController();
-    const setAppearance = await effects.run($setAppearance);
-    setAppearance('theme', 'jade');
+    const setPreferences = await effects.run($setPreferences);
+    setPreferences('theme', 'jade');
 
-    setAppearance('colorScheme', 'dark');
+    setPreferences('colorScheme', 'dark');
     expect(page.metaColors()).toEqual({
       light: THEME_COLORS.jade.dark,
       dark: THEME_COLORS.jade.dark,
     });
 
-    setAppearance('colorScheme', 'light');
+    setPreferences('colorScheme', 'light');
     expect(page.metaColors()).toEqual({
       light: THEME_COLORS.jade.light,
       dark: THEME_COLORS.jade.light,
     });
 
-    setAppearance('colorScheme', 'system');
+    setPreferences('colorScheme', 'system');
     expect(page.metaColors()).toEqual(THEME_COLORS.jade);
   });
 
   it('switches before a storage failure throws', async () => {
     using page = setup();
     await using effects = createTestController();
-    const appearance = await effects.run($appearance);
-    const setAppearance = await effects.run($setAppearance);
+    const preferences = await effects.run($preferences);
+    const setPreferences = await effects.run($setPreferences);
     const error = new DOMException('blocked', 'SecurityError');
     using setItem = vi
       .spyOn(Storage.prototype, 'setItem')
@@ -149,9 +149,9 @@ describe('$setAppearance', () => {
         throw error;
       });
 
-    expect(() => setAppearance('theme', 'pink')).toThrow(error);
+    expect(() => setPreferences('theme', 'pink')).toThrow(error);
     expect(setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, 'pink');
     expect(page.dataset[THEME_ATTRIBUTE]).toBe('pink');
-    expect(appearance.theme).toBe('pink');
+    expect(preferences.theme).toBe('pink');
   });
 });

@@ -48,7 +48,7 @@ export const ThemeMeta = () => (
     />
 
     {/* Render-blocking and inlined (no extra fetch): restamps the
-        `<html>` appearance attributes from the persisted preferences,
+        `<html>` preference attributes from their persisted values,
         falling through to the SSG defaults on missing/invalid storage or
         when JS is disabled. `prelude` is compiled at build time from our
         own source — not untrusted input. */}

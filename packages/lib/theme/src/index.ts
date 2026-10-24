@@ -21,7 +21,7 @@ export {
   THEME_COLORS,
   THEME_IDS,
   THEME_STORAGE_KEY,
-  type Appearance,
+  type Preferences,
   type ColorSchemeId,
   type ColorSchemeOption,
   type MotionId,
