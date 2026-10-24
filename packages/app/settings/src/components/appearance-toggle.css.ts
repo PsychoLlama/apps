@@ -4,7 +4,7 @@ import {
   lightSelector,
   systemSelector,
 } from '@lib/design/color-scheme';
-import type { ColorSchemeId } from '../constants';
+import type { ColorSchemeId } from '@lib/theme/constants';
 
 const forcedSelectors: Record<ColorSchemeId, string> = {
   light: lightSelector,

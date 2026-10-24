@@ -5,9 +5,8 @@ import {
   COLOR_SCHEME_IDS,
   type ColorSchemeId,
   type ColorSchemeOption,
-} from '../constants';
-import { $setAppearance } from '../behavior/appearance';
-import { $systemColorScheme } from '../behavior/system-color-scheme';
+} from '@lib/theme/constants';
+import { $setAppearance, $systemColorScheme } from '@lib/theme/behavior';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
 import * as css from './appearance-toggle.css';

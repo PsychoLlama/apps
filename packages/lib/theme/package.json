@@ -11,7 +11,6 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./appearance-toggle": "./src/components/appearance-toggle.tsx",
     "./behavior": "./src/behavior/index.ts",
     "./constants": "./src/constants.ts",
     "./prelude": "./src/prelude.ts",
@@ -26,7 +25,6 @@
     "@lib/design": "workspace:*",
     "@lib/effects": "workspace:*",
     "@lib/state": "workspace:*",
-    "@lib/ui": "workspace:*",
     "@solidjs/meta": "catalog:",
     "@vanilla-extract/css": "catalog:"
   },

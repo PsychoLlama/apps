@@ -746,6 +746,9 @@ importers:
 
   packages/app/scratchpad:
     dependencies:
+      '@app/settings':
+        specifier: workspace:*
+        version: link:../settings
       '@floating-ui/dom':
         specifier: 'catalog:'
         version: 1.8.0
@@ -767,9 +770,6 @@ importers:
       '@lib/state':
         specifier: workspace:*
         version: link:../../lib/state
-      '@lib/theme':
-        specifier: workspace:*
-        version: link:../../lib/theme
       '@lib/ui':
         specifier: workspace:*
         version: link:../../lib/ui
@@ -1309,9 +1309,6 @@ importers:
       '@lib/state':
         specifier: workspace:*
         version: link:../state
-      '@lib/ui':
-        specifier: workspace:*
-        version: link:../ui
       '@solidjs/meta':
         specifier: ^0.29.4
         version: 0.29.4(solid-js@1.9.17)
