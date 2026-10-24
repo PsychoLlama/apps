@@ -1,1 +1,1 @@
-export { $appearance } from './appearance';
+export { $appearance, $appearanceChanged } from './appearance';
