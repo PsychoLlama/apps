@@ -29,6 +29,7 @@
     "@lib/effects": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",
+    "@solidjs/meta": "catalog:",
     "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {
