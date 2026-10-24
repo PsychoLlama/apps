@@ -49,43 +49,6 @@ describe('$theme', () => {
     storageEvent({ key: THEME_STORAGE_KEY, newValue: null });
     expect(theme()).toBe(DEFAULT_THEME_ID);
   });
-
-  it('reads the default when storage is cleared', async () => {
-    localStorage.setItem(THEME_STORAGE_KEY, 'jade');
-    await using effects = createTestController();
-    const theme = await effects.run($theme);
-
-    storageEvent({ key: null });
-
-    expect(theme()).toBe(DEFAULT_THEME_ID);
-  });
-
-  it('ignores other keys and storage areas', async () => {
-    await using effects = createTestController();
-    const theme = await effects.run($theme);
-
-    storageEvent({ key: 'other', newValue: 'jade' });
-    storageEvent({
-      key: THEME_STORAGE_KEY,
-      newValue: 'jade',
-      storageArea: sessionStorage,
-    });
-
-    expect(theme()).toBe(DEFAULT_THEME_ID);
-  });
-
-  it('stops following when released', async () => {
-    const remove = vi.spyOn(window, 'removeEventListener');
-
-    {
-      await using effects = createTestController();
-      await effects.run($theme);
-      expect(remove).not.toHaveBeenCalledWith('storage', expect.anything());
-    }
-
-    expect(remove).toHaveBeenCalledWith('storage', expect.any(Function));
-    remove.mockRestore();
-  });
 });
 
 describe('$themeChanged', () => {

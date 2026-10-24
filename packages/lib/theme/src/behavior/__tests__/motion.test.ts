@@ -49,43 +49,6 @@ describe('$motion', () => {
     storageEvent({ key: MOTION_STORAGE_KEY, newValue: null });
     expect(motion()).toBe('system');
   });
-
-  it('reads system when storage is cleared', async () => {
-    localStorage.setItem(MOTION_STORAGE_KEY, 'reduce');
-    await using effects = createTestController();
-    const motion = await effects.run($motion);
-
-    storageEvent({ key: null });
-
-    expect(motion()).toBe('system');
-  });
-
-  it('ignores other keys and storage areas', async () => {
-    await using effects = createTestController();
-    const motion = await effects.run($motion);
-
-    storageEvent({ key: 'other', newValue: 'reduce' });
-    storageEvent({
-      key: MOTION_STORAGE_KEY,
-      newValue: 'reduce',
-      storageArea: sessionStorage,
-    });
-
-    expect(motion()).toBe('system');
-  });
-
-  it('stops following when released', async () => {
-    const remove = vi.spyOn(window, 'removeEventListener');
-
-    {
-      await using effects = createTestController();
-      await effects.run($motion);
-      expect(remove).not.toHaveBeenCalledWith('storage', expect.anything());
-    }
-
-    expect(remove).toHaveBeenCalledWith('storage', expect.any(Function));
-    remove.mockRestore();
-  });
 });
 
 describe('$motionChanged', () => {

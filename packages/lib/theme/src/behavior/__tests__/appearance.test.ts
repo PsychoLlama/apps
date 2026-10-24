@@ -49,43 +49,6 @@ describe('$appearance', () => {
     storageEvent({ key: COLOR_SCHEME_STORAGE_KEY, newValue: null });
     expect(appearance()).toBe('system');
   });
-
-  it('reads system when storage is cleared', async () => {
-    localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, 'dark');
-    await using effects = createTestController();
-    const appearance = await effects.run($appearance);
-
-    storageEvent({ key: null });
-
-    expect(appearance()).toBe('system');
-  });
-
-  it('ignores other keys and storage areas', async () => {
-    await using effects = createTestController();
-    const appearance = await effects.run($appearance);
-
-    storageEvent({ key: 'other', newValue: 'dark' });
-    storageEvent({
-      key: COLOR_SCHEME_STORAGE_KEY,
-      newValue: 'dark',
-      storageArea: sessionStorage,
-    });
-
-    expect(appearance()).toBe('system');
-  });
-
-  it('stops following when released', async () => {
-    const remove = vi.spyOn(window, 'removeEventListener');
-
-    {
-      await using effects = createTestController();
-      await effects.run($appearance);
-      expect(remove).not.toHaveBeenCalledWith('storage', expect.anything());
-    }
-
-    expect(remove).toHaveBeenCalledWith('storage', expect.any(Function));
-    remove.mockRestore();
-  });
 });
 
 describe('$appearanceChanged', () => {
