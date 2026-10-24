@@ -88,8 +88,8 @@ export type ColorSchemeId = (typeof COLOR_SCHEME_IDS)[number];
 
 /**
  * Selectable value in the appearance picker. `'system'` is the
- * no-override state — the store and picker share this shape so the
- * radio group can bind directly without translation.
+ * no-override state — `$appearance` and the picker share this shape so
+ * the radio group can bind directly without translation.
  */
 export type ColorSchemeOption = ColorSchemeId | 'system';
 
@@ -125,8 +125,8 @@ export type MotionId = (typeof MOTION_IDS)[number];
 /**
  * Selectable value in the motion picker. `'no-preference'` forces full
  * motion, `'reduce'` forces collapsed (instant) motion, and `'system'`
- * is the no-override state — the store and picker share this shape so
- * the radio group can bind directly without translation.
+ * is the no-override state — `$motion` and the picker share this shape
+ * so the radio group can bind directly without translation.
  */
 export type MotionOption = MotionId | 'system';
 
@@ -141,7 +141,7 @@ export const MOTION_STORAGE_KEY = 'preferences.appearance.motion';
 /**
  * `id` attribute on the per-scheme `theme-color` meta tags. The prelude
  * looks these up to swap `content` to the active theme's page background
- * before paint. Kept here so the server stamp and prelude can't drift.
+ * before paint. Kept here so the rendered tags and prelude can't drift.
  */
 export const THEME_COLOR_META_ID = {
   light: 'theme-color-light',

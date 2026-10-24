@@ -6,7 +6,7 @@ export const header = style({
   flexShrink: 0,
   // Reserve the iOS status-bar / notch region above the bar: the
   // background and border bleed under it while content stays clear.
-  // `viewport-fit=cover` (entry-server) makes the inset non-zero on
+  // `viewport-fit=cover` (`<ThemeMeta>`) makes the inset non-zero on
   // notched devices; it resolves to 0 everywhere else. Vertical padding
   // lives here rather than the Flex `py` prop so the top inset composes
   // onto the base value without a cascade-order fight.
