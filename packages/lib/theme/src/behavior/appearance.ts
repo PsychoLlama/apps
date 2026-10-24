@@ -1,8 +1,10 @@
+import { createSignal } from 'solid-js';
 import { collect, pipe, reactive } from '@lib/effects';
 import { defineCell, defineCommand } from '@lib/state';
 import {
   COLOR_SCHEME_IDS,
   COLOR_SCHEME_STORAGE_KEY,
+  type ColorSchemeId,
   type ColorSchemeOption,
 } from '../constants';
 import { removeItem, setItem, watchStorage } from './local-storage';
@@ -53,3 +55,23 @@ export const $setAppearance = collect(
     else setItem(COLOR_SCHEME_STORAGE_KEY, appearance);
   },
 );
+
+/**
+ * The OS color-scheme preference, as a live accessor. Ignores the app's
+ * override; pair it with `$appearance` for the scheme on screen.
+ * Client-only; it reads `matchMedia`.
+ */
+export const $systemColorScheme = pipe([
+  () => {
+    const media = matchMedia('(prefers-color-scheme: dark)');
+    const read = (matches: boolean): ColorSchemeId =>
+      matches ? 'dark' : 'light';
+
+    const [scheme, setScheme] = createSignal(read(media.matches));
+    const update = (event: MediaQueryListEvent) =>
+      setScheme(read(event.matches));
+
+    media.addEventListener('change', update);
+    return reactive(scheme, () => media.removeEventListener('change', update));
+  },
+]);

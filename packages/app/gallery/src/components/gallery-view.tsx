@@ -1,6 +1,6 @@
 import { type JSX } from 'solid-js';
+import { AppearanceToggle } from '@app/settings/components';
 import { Frame, FrameBody, SiteHeader, type SiteHeaderCrumb } from '@lib/shell';
-import { AppearanceToggle } from '@lib/theme/appearance-toggle';
 import { LinkButton } from '@lib/ui';
 import IconCog from 'virtual:icons/mdi/cog-outline';
 

@@ -31,7 +31,7 @@ import {
   type FloatingSide,
   type FloatingTether,
 } from '@lib/ui/_internal/floating-ui';
-import { AppearanceToggle } from '@lib/theme/appearance-toggle';
+import { AppearanceToggle } from '@app/settings/components';
 import {
   $resetControls,
   $setTetherEnabled,

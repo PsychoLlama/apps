@@ -16,6 +16,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@app/settings": "workspace:*",
     "@floating-ui/dom": "catalog:",
     "@lib/classnames": "workspace:*",
     "@lib/design": "workspace:*",
@@ -23,7 +24,6 @@
     "@lib/runtime-config": "workspace:*",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
-    "@lib/theme": "workspace:*",
     "@lib/ui": "workspace:*",
     "@vanilla-extract/css": "catalog:"
   },
