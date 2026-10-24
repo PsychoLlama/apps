@@ -6,7 +6,7 @@ import {
   type ColorSchemeId,
   type ColorSchemeOption,
 } from '../constants';
-import { $setPreferences } from '../effects/preferences';
+import { $setAppearance } from '../behavior/appearance';
 import { $systemColorScheme } from '../behavior/system-color-scheme';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
@@ -39,7 +39,7 @@ const label = (showing: ColorSchemeId): string =>
  * prerender — no skeleton, no hydration flash.
  */
 export const AppearanceToggle = () => {
-  const setPreferences = useAction($setPreferences);
+  const setAppearance = useAction($setAppearance);
   const systemColorScheme = useClientResource($systemColorScheme);
   const buttons: Partial<Record<ColorSchemeId, HTMLButtonElement>> = {};
 
@@ -49,7 +49,7 @@ export const AppearanceToggle = () => {
     // Settles on mount, ahead of any press. Light is what CSS assumes
     // without a preference.
     const system = systemColorScheme() ?? 'light';
-    setPreferences('colorScheme', nextStep(showing, system));
+    setAppearance(nextStep(showing, system));
 
     // The flip hides this button and reveals its sibling, and focus on a
     // hidden element falls back to the page. Hand it over so keyboard
