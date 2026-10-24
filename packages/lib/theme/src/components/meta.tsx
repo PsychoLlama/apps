@@ -1,5 +1,5 @@
 import { Meta, useHead } from '@solidjs/meta';
-import { createUniqueId } from 'solid-js';
+import { createEffect, createUniqueId } from 'solid-js';
 import { useClientResource } from '@lib/effects/solid';
 import { $appearance } from '../behavior/appearance';
 import { $theme } from '../behavior/theme';
@@ -14,6 +14,8 @@ import prelude from '../prelude.ts?inline-script';
 // For stamping `<html data-theme>` alongside `<ThemeMeta />`.
 export { DEFAULT_THEME_ID };
 
+const defaultColors = THEME_COLORS[DEFAULT_THEME_ID];
+
 /**
  * Head tags that set up the page's appearance before first paint: the
  * viewport, browser-chrome colors, and the persisted theme. Render under
@@ -21,18 +23,30 @@ export { DEFAULT_THEME_ID };
  * `data-theme={DEFAULT_THEME_ID}`.
  */
 export const ThemeMeta = () => {
-  // Unresolved until mount, so pre-rendering falls back to the defaults.
+  // Unresolved until mount, so pre-rendering keeps the defaults.
   const theme = useClientResource($theme);
   const appearance = useClientResource($appearance);
 
-  // The theme's page background for one tag's scheme. A forced
+  // Keep one tag on the theme's page background for its scheme. A forced
   // appearance collapses both tags onto its color; otherwise each tag's
-  // `prefers-color-scheme` media query would pick the wrong one.
-  const themeColor = (scheme: ColorSchemeId) => {
-    const colors = THEME_COLORS[theme() ?? DEFAULT_THEME_ID];
-    const forced = appearance();
+  // `prefers-color-scheme` media query would pick the wrong one. Until
+  // both resolve, the prelude's colors stand.
+  //
+  // Written to the element, not through props: `@solidjs/meta` (0.29.4)
+  // files tags under a key that includes `content`, re-derives it on
+  // removal, and loses track of a tag whose `content` changes.
+  const followTheme = (scheme: ColorSchemeId) => (tag: HTMLMetaElement) => {
+    createEffect(() => {
+      const current = theme();
+      const forced = appearance();
+      if (current === undefined || forced === undefined) return;
 
-    return colors[forced && forced !== 'system' ? forced : scheme];
+      const colors = THEME_COLORS[current];
+      tag.setAttribute(
+        'content',
+        colors[forced === 'system' ? scheme : forced],
+      );
+    });
   };
 
   return (
@@ -54,16 +68,18 @@ export const ThemeMeta = () => {
           before paint via the `id` lookup, then they follow the theme and
           appearance once mounted. */}
       <Meta
+        ref={followTheme('light')}
         id={THEME_COLOR_META_ID.light}
         name="theme-color"
         media="(prefers-color-scheme: light)"
-        content={themeColor('light')}
+        content={defaultColors.light}
       />
       <Meta
+        ref={followTheme('dark')}
         id={THEME_COLOR_META_ID.dark}
         name="theme-color"
         media="(prefers-color-scheme: dark)"
-        content={themeColor('dark')}
+        content={defaultColors.dark}
       />
 
       <Prelude />
