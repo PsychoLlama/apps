@@ -16,7 +16,7 @@
     "./constants": "./src/constants.ts",
     "./prelude": "./src/prelude.ts",
     "./package.json": "./package.json",
-    "./meta": "./src/components/meta.tsx"
+    "./meta": "./src/components/meta/index.tsx"
   },
   "scripts": {
     "typecheck": "tsc",
