@@ -3,8 +3,7 @@ import clx from '@lib/classnames';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
 import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
-import { $setAppearance } from '@lib/theme/effects';
-import { $appearance } from '@lib/theme/state';
+import { $setTheme, $theme } from '@lib/theme/behavior';
 import { ResetButton } from './reset-button';
 import { SettingsSection } from './settings-section';
 import * as css from './theme-settings.css';
@@ -29,16 +28,16 @@ export const ThemeSettings = () => (
 
 // One `RadioCards` card per built-in theme.
 const ThemePicker = () => {
-  const appearance = useClientResource($appearance);
-  const setAppearance = useAction($setAppearance);
+  const theme = useClientResource($theme);
+  const setTheme = useAction($setTheme);
 
   const picker = (skeleton: boolean) => (
     <RadioCardsRoot
       testId="theme-picker"
       name="theme"
-      value={skeleton ? null : (appearance()?.theme ?? null)}
+      value={skeleton ? null : (theme() ?? null)}
       skeleton={skeleton}
-      onValueChange={(next) => setAppearance('theme', next as ThemeId)}
+      onValueChange={(next) => setTheme(next as ThemeId)}
       gap={3}
       class={css.root}
       aria-labelledby={headingId}
@@ -66,16 +65,16 @@ const ThemePicker = () => {
 // is already default. Hidden until the preference is read off `<html>`,
 // like the other resets on the page.
 const ResetTheme = () => {
-  const appearance = useClientResource($appearance);
-  const setAppearance = useAction($setAppearance);
+  const theme = useClientResource($theme);
+  const setTheme = useAction($setTheme);
 
   return (
     <Suspense>
       <ResetButton
         testId="theme-picker-reset"
         label="Reset theme"
-        disabled={appearance()?.theme === DEFAULT_THEME_ID}
-        onReset={() => setAppearance('theme', DEFAULT_THEME_ID)}
+        disabled={theme() === DEFAULT_THEME_ID}
+        onReset={() => setTheme(DEFAULT_THEME_ID)}
       />
     </Suspense>
   );

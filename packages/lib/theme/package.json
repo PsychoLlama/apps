@@ -12,12 +12,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./appearance-toggle": "./src/components/appearance-toggle.tsx",
+    "./behavior": "./src/behavior/index.ts",
     "./constants": "./src/constants.ts",
     "./prelude": "./src/prelude.ts",
-    "./effects": "./src/effects/index.ts",
-    "./state": "./src/state/index.ts",
     "./package.json": "./package.json",
-    "./meta": "./src/components/meta.tsx"
+    "./meta": "./src/components/meta/index.tsx"
   },
   "scripts": {
     "typecheck": "tsc",
@@ -28,12 +27,14 @@
     "@lib/effects": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/ui": "workspace:*",
+    "@solidjs/meta": "catalog:",
     "@vanilla-extract/css": "catalog:"
   },
   "peerDependencies": {
     "solid-js": "catalog:"
   },
   "devDependencies": {
-    "@dev/vitest-config": "workspace:*"
+    "@dev/vitest-config": "workspace:*",
+    "@solidjs/testing-library": "catalog:"
   }
 }

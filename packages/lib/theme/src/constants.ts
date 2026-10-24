@@ -88,8 +88,8 @@ export type ColorSchemeId = (typeof COLOR_SCHEME_IDS)[number];
 
 /**
  * Selectable value in the appearance picker. `'system'` is the
- * no-override state — the store and picker share this shape so the
- * radio group can bind directly without translation.
+ * no-override state — `$appearance` and the picker share this shape so
+ * the radio group can bind directly without translation.
  */
 export type ColorSchemeOption = ColorSchemeId | 'system';
 
@@ -125,8 +125,8 @@ export type MotionId = (typeof MOTION_IDS)[number];
 /**
  * Selectable value in the motion picker. `'no-preference'` forces full
  * motion, `'reduce'` forces collapsed (instant) motion, and `'system'`
- * is the no-override state — the store and picker share this shape so
- * the radio group can bind directly without translation.
+ * is the no-override state — `$motion` and the picker share this shape
+ * so the radio group can bind directly without translation.
  */
 export type MotionOption = MotionId | 'system';
 
@@ -138,22 +138,10 @@ export type MotionOption = MotionId | 'system';
  */
 export const MOTION_STORAGE_KEY = 'preferences.appearance.motion';
 
-/** Every appearance preference. */
-export interface Appearance {
-  /** The active theme. */
-  theme: ThemeId;
-
-  /** The color-scheme override, or `'system'` for none. */
-  colorScheme: ColorSchemeOption;
-
-  /** The motion override, or `'system'` for none. */
-  motion: MotionOption;
-}
-
 /**
  * `id` attribute on the per-scheme `theme-color` meta tags. The prelude
  * looks these up to swap `content` to the active theme's page background
- * before paint. Kept here so the server stamp and prelude can't drift.
+ * before paint. Kept here so the rendered tags and prelude can't drift.
  */
 export const THEME_COLOR_META_ID = {
   light: 'theme-color-light',
@@ -183,43 +171,4 @@ export const THEME_COLORS: Record<ThemeId, { light: string; dark: string }> = {
   sky: { light: slateLight, dark: slateDark },
   teal: { light: sageLight, dark: sageDark },
   violet: { light: mauveLight, dark: mauveDark },
-};
-
-/** Where a preference lives, and what it reads as when it isn't set. */
-export interface Preference<Value> {
-  /** The `dataset` key on `<html>` carrying it. */
-  readonly attribute: string;
-
-  /** Every value the attribute may carry. */
-  readonly ids: readonly Value[];
-
-  /** The value when nothing is stored. Selecting it clears storage. */
-  readonly fallback: Value;
-
-  /** Where the prelude finds the preference on the next load. */
-  readonly storageKey: string;
-}
-
-/** Each appearance preference by name. */
-export const PREFERENCES: {
-  readonly [Key in keyof Appearance]: Preference<Appearance[Key]>;
-} = {
-  theme: {
-    attribute: THEME_ATTRIBUTE,
-    ids: THEME_IDS,
-    fallback: DEFAULT_THEME_ID,
-    storageKey: THEME_STORAGE_KEY,
-  },
-  colorScheme: {
-    attribute: COLOR_SCHEME_ATTRIBUTE,
-    ids: COLOR_SCHEME_IDS,
-    fallback: 'system',
-    storageKey: COLOR_SCHEME_STORAGE_KEY,
-  },
-  motion: {
-    attribute: MOTION_ATTRIBUTE,
-    ids: MOTION_IDS,
-    fallback: 'system',
-    storageKey: MOTION_STORAGE_KEY,
-  },
 };

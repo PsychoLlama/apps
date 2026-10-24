@@ -1312,6 +1312,9 @@ importers:
       '@lib/ui':
         specifier: workspace:*
         version: link:../ui
+      '@solidjs/meta':
+        specifier: ^0.29.4
+        version: 0.29.4(solid-js@1.9.17)
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
@@ -1322,6 +1325,9 @@ importers:
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
+      '@solidjs/testing-library':
+        specifier: 'catalog:'
+        version: 0.8.10(@solidjs/router@1.0.0(solid-js@1.9.17))(solid-js@1.9.17)
 
   packages/lib/ui:
     dependencies:

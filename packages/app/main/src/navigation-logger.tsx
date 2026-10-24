@@ -2,8 +2,8 @@ import { createEffect, on } from 'solid-js';
 import { useLocation } from '@solidjs/router';
 import { useClientResource } from '@lib/effects/solid';
 import { createLogger } from '@lib/observability';
-import type { Appearance } from '@lib/theme';
-import { $appearance } from '@lib/theme/state';
+import type { ColorSchemeOption } from '@lib/theme';
+import { $appearance } from '@lib/theme/behavior';
 
 const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 
@@ -21,7 +21,7 @@ interface UserAgentData {
  * etc). UA client hints are best-effort — absent on Firefox/Safari and any
  * non-secure context, so each collapses to `undefined`.
  */
-const readPageContext = (appearance: Appearance) => {
+const readPageContext = (colorScheme: ColorSchemeOption) => {
   const ua = (navigator as Navigator & { userAgentData?: UserAgentData })
     .userAgentData;
 
@@ -29,7 +29,7 @@ const readPageContext = (appearance: Appearance) => {
     platform: ua?.platform,
     mobile: ua?.mobile,
     brands: ua?.brands,
-    colorScheme: appearance.colorScheme,
+    colorScheme,
     reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
     viewport: { width: innerWidth, height: innerHeight },
     screen: { width: screen.width, height: screen.height },
@@ -49,16 +49,21 @@ export const NavigationLogger = () => {
   const location = useLocation();
   const appearance = useClientResource($appearance);
 
-  // The appearance resolves once, after mount, so this fires once.
+  // Keyed on the resource's state, which settles once after mount, not
+  // its value: switching appearance isn't a page load.
   createEffect(
-    on(appearance, (snapshot) => {
-      if (snapshot === undefined) return;
+    on(
+      () => appearance.state,
+      () => {
+        const colorScheme = appearance();
+        if (colorScheme === undefined) return;
 
-      logger.info('Page loaded.', {
-        path: location.pathname,
-        ...readPageContext(snapshot),
-      });
-    }),
+        logger.info('Page loaded.', {
+          path: location.pathname,
+          ...readPageContext(colorScheme),
+        });
+      },
+    ),
   );
 
   createEffect(

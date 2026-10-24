@@ -2,8 +2,7 @@ import { For } from 'solid-js';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { MotionOption } from '@lib/theme';
-import { $setAppearance } from '@lib/theme/effects';
-import { $appearance } from '@lib/theme/state';
+import { $motion, $setMotion } from '@lib/theme/behavior';
 import { ResetButton } from './reset-button';
 import { SettingsSection } from './settings-section';
 import * as css from './motion-settings.css';
@@ -42,16 +41,16 @@ export const MotionSettings = () => (
 );
 
 const MotionPicker = () => {
-  const appearance = useClientResource($appearance);
-  const setAppearance = useAction($setAppearance);
+  const motion = useClientResource($motion);
+  const setMotion = useAction($setMotion);
 
   const picker = (skeleton: boolean) => (
     <SegmentedControlRoot
       testId="motion-picker"
       name="motion"
-      value={skeleton ? null : (appearance()?.motion ?? null)}
+      value={skeleton ? null : (motion() ?? null)}
       skeleton={skeleton}
-      onValueChange={(next) => setAppearance('motion', next as MotionOption)}
+      onValueChange={(next) => setMotion(next as MotionOption)}
       class={css.control}
       aria-labelledby={headingId}
     >
@@ -78,16 +77,16 @@ const MotionPicker = () => {
 // over. Disabled while already on `'system'`. Hidden until the
 // preference is read off `<html>`, like the log filter's reset.
 const ResetMotion = () => {
-  const appearance = useClientResource($appearance);
-  const setAppearance = useAction($setAppearance);
+  const motion = useClientResource($motion);
+  const setMotion = useAction($setMotion);
 
   return (
     <Suspense>
       <ResetButton
         testId="motion-picker-reset"
         label="Reset motion"
-        disabled={appearance()?.motion === 'system'}
-        onReset={() => setAppearance('motion', 'system')}
+        disabled={motion() === 'system'}
+        onReset={() => setMotion('system')}
       />
     </Suspense>
   );

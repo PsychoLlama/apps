@@ -1,1 +1,0 @@
-export { $appearance } from './appearance';

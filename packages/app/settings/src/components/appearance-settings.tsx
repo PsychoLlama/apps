@@ -2,8 +2,7 @@ import { For } from 'solid-js';
 import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { ColorSchemeOption } from '@lib/theme';
-import { $setAppearance } from '@lib/theme/effects';
-import { $appearance } from '@lib/theme/state';
+import { $appearance, $setAppearance } from '@lib/theme/behavior';
 import { ResetButton } from './reset-button';
 import { SettingsSection } from './settings-section';
 import * as css from './appearance-settings.css';
@@ -47,11 +46,9 @@ const AppearancePicker = () => {
     <SegmentedControlRoot
       testId="appearance-picker"
       name="appearance"
-      value={skeleton ? null : (appearance()?.colorScheme ?? null)}
+      value={skeleton ? null : (appearance() ?? null)}
       skeleton={skeleton}
-      onValueChange={(next) =>
-        setAppearance('colorScheme', next as ColorSchemeOption)
-      }
+      onValueChange={(next) => setAppearance(next as ColorSchemeOption)}
       class={css.control}
       aria-labelledby={headingId}
     >
@@ -86,8 +83,8 @@ const ResetAppearance = () => {
       <ResetButton
         testId="appearance-picker-reset"
         label="Reset appearance"
-        disabled={appearance()?.colorScheme === 'system'}
-        onReset={() => setAppearance('colorScheme', 'system')}
+        disabled={appearance() === 'system'}
+        onReset={() => setAppearance('system')}
       />
     </Suspense>
   );
