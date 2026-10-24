@@ -1,6 +1,10 @@
 import { createTestController } from '@lib/effects/testing';
-import { DEFAULT_THEME_ID, THEME_STORAGE_KEY } from '../../constants';
-import { $theme, $themeChanged } from '../theme';
+import {
+  DEFAULT_THEME_ID,
+  THEME_ATTRIBUTE,
+  THEME_STORAGE_KEY,
+} from '../../constants';
+import { $setTheme, $theme, $themeChanged } from '../theme';
 
 // What another tab's write looks like from here.
 const storageEvent = (init: StorageEventInit) =>
@@ -10,6 +14,7 @@ const storageEvent = (init: StorageEventInit) =>
 
 beforeEach(() => {
   localStorage.clear();
+  delete document.documentElement.dataset[THEME_ATTRIBUTE];
 });
 
 describe('$theme', () => {
@@ -59,6 +64,69 @@ describe('$themeChanged', () => {
 
     themeChanged('jade');
 
+    expect(theme()).toBe('jade');
+  });
+});
+
+describe('$setTheme', () => {
+  it('writes the attribute, the cell, and storage', async () => {
+    await using effects = createTestController();
+    const theme = await effects.run($theme);
+    const setTheme = await effects.run($setTheme);
+
+    setTheme('jade');
+
+    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('jade');
+    expect(theme()).toBe('jade');
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('jade');
+  });
+
+  it('clears the stored value for the default theme', async () => {
+    await using effects = createTestController();
+    const theme = await effects.run($theme);
+    const setTheme = await effects.run($setTheme);
+    setTheme('jade');
+
+    setTheme(DEFAULT_THEME_ID);
+
+    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe(
+      DEFAULT_THEME_ID,
+    );
+    expect(theme()).toBe(DEFAULT_THEME_ID);
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+  });
+
+  it('switches when storage refuses access', async () => {
+    await using effects = createTestController();
+    const theme = await effects.run($theme);
+    const setTheme = await effects.run($setTheme);
+    using setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+
+    setTheme('jade');
+
+    expect(setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, 'jade');
+    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('jade');
+    expect(theme()).toBe('jade');
+  });
+
+  it('switches before a storage failure throws', async () => {
+    await using effects = createTestController();
+    const theme = await effects.run($theme);
+    const setTheme = await effects.run($setTheme);
+    const error = new Error('Broken.');
+    using setItem = vi
+      .spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => {
+        throw error;
+      });
+
+    expect(() => setTheme('jade')).toThrow(error);
+    expect(setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, 'jade');
+    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('jade');
     expect(theme()).toBe('jade');
   });
 });
