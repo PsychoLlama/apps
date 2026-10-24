@@ -1,13 +1,12 @@
-import { styleVariants } from '@vanilla-extract/css';
+import { styleVariants, type StyleRule } from '@vanilla-extract/css';
 import {
   darkSelector,
   lightSelector,
   systemSelector,
 } from '@lib/design/color-scheme';
-import type { ColorSchemeId, ColorSchemeOption } from '../constants';
+import type { ColorSchemeId } from '../constants';
 
-const configuredSelectors: Record<ColorSchemeOption, string> = {
-  system: systemSelector,
+const forcedSelectors: Record<ColorSchemeId, string> = {
   light: lightSelector,
   dark: darkSelector,
 };
@@ -17,44 +16,31 @@ const opposite: Record<ColorSchemeId, ColorSchemeId> = {
   dark: 'light',
 };
 
-/** Key for one permutation: `<configured>-<system>`. */
-type PermutationKey = `${ColorSchemeOption}-${ColorSchemeId}`;
-
-// Hide a permutation unless both the configured scheme and the OS scheme
-// match it, and hide every permutation without JS, where a click does
-// nothing. Every rule only ever hides, so there's no `display` value to
-// restore and the button keeps its own. `:root` lifts the media rules'
-// specificity over the button's display class.
-const hideUnless = (configured: ColorSchemeOption, system: ColorSchemeId) => {
-  const otherConfigured = (
-    Object.keys(configuredSelectors) as ColorSchemeOption[]
-  ).filter((key) => key !== configured);
-
-  return {
-    selectors: Object.fromEntries(
-      otherConfigured.map((key) => [
-        `${configuredSelectors[key]} &`,
-        { display: 'none' },
-      ]),
-    ),
-    '@media': {
-      [`(prefers-color-scheme: ${opposite[system]}), (scripting: none)`]: {
-        selectors: { ':root &': { display: 'none' } },
-      },
+// Hide a toggle unless its scheme is the one on screen, whether forced
+// or inherited from the OS, and hide both without JS, where a click
+// does nothing. Every rule only ever hides, so there's no `display`
+// value to restore and the button keeps its own. `:root` lifts the
+// no-JS rule's specificity over the button's display class.
+const hideUnless = (scheme: ColorSchemeId): StyleRule => ({
+  selectors: {
+    [`${forcedSelectors[opposite[scheme]]} &`]: { display: 'none' },
+  },
+  '@media': {
+    [`(prefers-color-scheme: ${opposite[scheme]})`]: {
+      selectors: { [`${systemSelector} &`]: { display: 'none' } },
     },
-  };
-};
+    '(scripting: none)': {
+      selectors: { ':root &': { display: 'none' } },
+    },
+  },
+});
 
 /**
- * One class per permutation. Exactly one toggle is visible at a time,
- * decided before hydration by `<html data-color-scheme>` (stamped by the
- * prelude) and the OS preference.
+ * One class per scheme on screen. Exactly one toggle is visible at a
+ * time, decided before hydration by `<html data-color-scheme>` (stamped
+ * by the prelude) and the OS preference.
  */
-export const permutation = styleVariants({
-  'system-light': hideUnless('system', 'light'),
-  'system-dark': hideUnless('system', 'dark'),
-  'light-light': hideUnless('light', 'light'),
-  'light-dark': hideUnless('light', 'dark'),
-  'dark-light': hideUnless('dark', 'light'),
-  'dark-dark': hideUnless('dark', 'dark'),
-} satisfies Record<PermutationKey, unknown>);
+export const showing = styleVariants({
+  light: hideUnless('light'),
+  dark: hideUnless('dark'),
+} satisfies Record<ColorSchemeId, unknown>);
