@@ -1,4 +1,4 @@
-import { styleVariants, type StyleRule } from '@vanilla-extract/css';
+import { style, styleVariants, type StyleRule } from '@vanilla-extract/css';
 import {
   darkSelector,
   lightSelector,
@@ -16,11 +16,9 @@ const opposite: Record<ColorSchemeId, ColorSchemeId> = {
   dark: 'light',
 };
 
-// Hide a toggle unless its scheme is the one on screen, whether forced
-// or inherited from the OS, and hide both without JS, where a click
-// does nothing. Every rule only ever hides, so there's no `display`
-// value to restore and the button keeps its own. `:root` lifts the
-// no-JS rule's specificity over the button's display class.
+// Hide an element unless its scheme is the one on screen, whether
+// forced or inherited from the OS. Every rule only ever hides, so
+// there's no `display` value to restore and the element keeps its own.
 const hideUnless = (scheme: ColorSchemeId): StyleRule => ({
   selectors: {
     [`${forcedSelectors[opposite[scheme]]} &`]: { display: 'none' },
@@ -29,18 +27,28 @@ const hideUnless = (scheme: ColorSchemeId): StyleRule => ({
     [`(prefers-color-scheme: ${opposite[scheme]})`]: {
       selectors: { [`${systemSelector} &`]: { display: 'none' } },
     },
-    '(scripting: none)': {
-      selectors: { ':root &': { display: 'none' } },
-    },
   },
 });
 
 /**
- * One class per scheme on screen. Exactly one toggle is visible at a
- * time, decided before hydration by `<html data-color-scheme>` (stamped
- * by the prelude) and the OS preference.
+ * One class per scheme on screen, for the icon and label that go with
+ * it. Exactly one of each is visible at a time, decided before
+ * hydration by `<html data-color-scheme>` (stamped by the prelude) and
+ * the OS preference.
  */
 export const showing = styleVariants({
   light: hideUnless('light'),
   dark: hideUnless('dark'),
 } satisfies Record<ColorSchemeId, unknown>);
+
+/**
+ * Hides the whole toggle without JS, where a click does nothing. `:root`
+ * lifts the rule's specificity over the element's display class.
+ */
+export const toggle = style({
+  '@media': {
+    '(scripting: none)': {
+      selectors: { ':root &': { display: 'none' } },
+    },
+  },
+});

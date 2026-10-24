@@ -1,12 +1,11 @@
-import { For } from 'solid-js';
 import { useAction, useClientResource } from '@lib/effects/solid';
-import { Flex, IconButton, Tooltip } from '@lib/ui';
+import { Flex, IconButton, Text, Tooltip } from '@lib/ui';
+import type { ColorSchemeId, ColorSchemeOption } from '@lib/theme/constants';
 import {
-  COLOR_SCHEME_IDS,
-  type ColorSchemeId,
-  type ColorSchemeOption,
-} from '@lib/theme/constants';
-import { $setAppearance, $systemColorScheme } from '@lib/theme/behavior';
+  $appearance,
+  $setAppearance,
+  $systemColorScheme,
+} from '@lib/theme/behavior';
 import IconSun from 'virtual:icons/mdi/weather-sunny';
 import IconMoon from 'virtual:icons/mdi/weather-night';
 import * as css from './appearance-toggle.css';
@@ -33,68 +32,88 @@ const label = (showing: ColorSchemeId): string =>
  * `'system'` when the flip lands on the OS preference. Pinning a scheme
  * that matches the OS is left to the settings page's `AppearancePicker`.
  *
- * One button per scheme is rendered up front, and CSS shows the one
- * that matches the screen. The right icon and label paint from the
+ * The label and icon render for both schemes up front, and CSS shows
+ * the pair that matches the screen. They paint right from the
  * prerender — no skeleton, no hydration flash.
  */
 export const AppearanceToggle = () => {
   const setAppearance = useAction($setAppearance);
+  const appearance = useClientResource($appearance);
   const systemColorScheme = useClientResource($systemColorScheme);
-  const buttons: Partial<Record<ColorSchemeId, HTMLButtonElement>> = {};
 
-  const flip = (showing: ColorSchemeId, button: HTMLButtonElement) => {
-    const hadFocus = document.activeElement === button;
+  // The scheme on screen, once both settle on mount.
+  const showing = (): ColorSchemeId | undefined => {
+    const system = systemColorScheme();
+    const forced = appearance();
+    if (system === undefined || forced === undefined) return undefined;
 
-    // Settles on mount, ahead of any press. Light is what CSS assumes
-    // without a preference.
-    const system = systemColorScheme() ?? 'light';
-    setAppearance(nextStep(showing, system));
+    return forced === 'system' ? system : forced;
+  };
 
-    // The flip hides this button and reveals its sibling, and focus on a
-    // hidden element falls back to the page. Hand it over so keyboard
-    // users can keep toggling. A mouse press that never focused the
-    // button (Safari) is left alone.
-    if (hadFocus) buttons[target(showing)]?.focus();
+  // Settles ahead of any press. Light is what CSS assumes without a
+  // preference.
+  const flip = () =>
+    setAppearance(
+      nextStep(showing() ?? 'light', systemColorScheme() ?? 'light'),
+    );
+
+  // A hidden tooltip lends the button its whole text, hidden half
+  // included, so name the half on screen outright. Until mount a press
+  // does nothing, and the name says no more than that.
+  const name = () => {
+    const current = showing();
+    return current === undefined ? 'Switch theme' : label(current);
   };
 
   return (
-    <For each={COLOR_SCHEME_IDS}>
-      {(showing) => (
-        // The tooltip wraps its trigger, so hiding the button alone would
-        // leave an empty wrapper taking up a slot in the parent's layout.
-        // The scheme class hides the whole thing instead.
-        <Flex as="div" class={css.showing[showing]}>
-          <Tooltip
-            display="block"
-            content={label(showing)}
-            side="bottom"
-            align="end"
-            hoverable={false}
-            testId={`appearance-toggle-${showing}-tooltip`}
+    // The tooltip wraps its trigger, so hiding the button alone would
+    // leave an empty wrapper taking up a slot in the parent's layout.
+    <Flex as="div" class={css.toggle}>
+      <Tooltip
+        display="block"
+        content={
+          <>
+            <Text as="span" selectable={false} class={css.showing.light}>
+              {label('light')}
+            </Text>
+            <Text as="span" selectable={false} class={css.showing.dark}>
+              {label('dark')}
+            </Text>
+          </>
+        }
+        aria-label={name()}
+        side="bottom"
+        align="end"
+        hoverable={false}
+        testId="appearance-toggle-tooltip"
+      >
+        {({ 'aria-describedby': labelId, ...trigger }) => (
+          <IconButton
+            {...trigger}
+            // The tooltip is the name, so it labels rather than
+            // describes.
+            aria-labelledby={labelId}
+            testId="appearance-toggle"
+            variant="ghost"
+            color="neutral"
+            onClick={flip}
           >
-            {({ 'aria-describedby': labelId, ...trigger }) => (
-              <IconButton
-                {...trigger}
-                // The tooltip is the name, so it labels rather than
-                // describes.
-                aria-labelledby={labelId}
-                testId={`appearance-toggle-${showing}`}
-                variant="ghost"
-                color="neutral"
-                ref={(button) => (buttons[showing] = button)}
-                onClick={(event) => flip(showing, event.currentTarget)}
-              >
-                {/* The icon shows where a press goes, like the label. */}
-                {target(showing) === 'dark' ? (
-                  <IconMoon width="24" height="24" aria-hidden="true" />
-                ) : (
-                  <IconSun width="24" height="24" aria-hidden="true" />
-                )}
-              </IconButton>
-            )}
-          </Tooltip>
-        </Flex>
-      )}
-    </For>
+            {/* The icon shows where a press goes, like the label. */}
+            <IconMoon
+              class={css.showing.light}
+              width="24"
+              height="24"
+              aria-hidden="true"
+            />
+            <IconSun
+              class={css.showing.dark}
+              width="24"
+              height="24"
+              aria-hidden="true"
+            />
+          </IconButton>
+        )}
+      </Tooltip>
+    </Flex>
   );
 };
