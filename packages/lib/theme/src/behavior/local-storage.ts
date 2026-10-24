@@ -25,3 +25,31 @@ export const watchStorage =
 
     return resource(undefined, () => removeEventListener('storage', notify));
   };
+
+// Run a storage write, shrugging off storage that refuses access
+// (sandboxed iframes, blocked cookies). Anything else still throws.
+const tryStorage = (write: () => void): void => {
+  try {
+    write();
+  } catch (error) {
+    if (!(error instanceof DOMException) || error.name !== 'SecurityError') {
+      throw error;
+    }
+  }
+};
+
+/**
+ * `localStorage.setItem`, skipped when storage refuses access.
+ *
+ * @internal
+ */
+export const setItem = (key: string, value: string): void =>
+  tryStorage(() => localStorage.setItem(key, value));
+
+/**
+ * `localStorage.removeItem`, skipped when storage refuses access.
+ *
+ * @internal
+ */
+export const removeItem = (key: string): void =>
+  tryStorage(() => localStorage.removeItem(key));
