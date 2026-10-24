@@ -1,7 +1,7 @@
 // @refresh reload
 import { createHandler, StartServer } from '@solidjs/start/server';
 import { Flex } from '@lib/ui';
-import { DEFAULT_THEME_ID, ThemeMeta } from '@lib/theme/meta';
+import { DEFAULT_THEME_ID } from '@lib/theme/meta';
 import { RealUserMeasurements } from '@lib/shell/rum';
 
 export default createHandler(() => (
@@ -10,8 +10,6 @@ export default createHandler(() => (
       <html lang="en" data-theme={DEFAULT_THEME_ID}>
         <head>
           <meta charset="utf-8" />
-          <ThemeMeta />
-
           {assets}
         </head>
 

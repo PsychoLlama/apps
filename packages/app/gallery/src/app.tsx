@@ -7,6 +7,7 @@ import { ErrorBoundary, onMount, Suspense } from 'solid-js';
 import { EffectsRoot } from '@lib/effects/solid';
 import { ErrorBoundaryFallback } from '@lib/shell';
 import { Branding } from '@lib/shell/branding';
+import { ThemeMeta } from '@lib/theme/meta';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
 import { name } from './constants';
 import { runStartupTasks } from './startup-tasks';
@@ -29,6 +30,7 @@ export default function App() {
             <AppProvider value={config}>
               <MetaProvider>
                 <Branding svg={brandmarkSvg} touchIcon={touchIcon} />
+                <ThemeMeta />
 
                 <ErrorBoundary
                   fallback={(error: unknown, reset) => (

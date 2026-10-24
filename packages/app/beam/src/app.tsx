@@ -7,6 +7,7 @@ import { ErrorBoundary, onMount, Suspense } from 'solid-js';
 import { EffectsRoot } from '@lib/effects/solid';
 import { ErrorBoundaryFallback } from '@lib/shell';
 import { Branding } from '@lib/shell/branding';
+import { ThemeMeta } from '@lib/theme/meta';
 import { PwaMeta } from '@lib/shell/pwa';
 import { AppProvider, type AppConfig } from '@lib/shell/context';
 import { installServiceWorker } from '@lib/service-worker/client';
@@ -33,6 +34,7 @@ export default function App() {
             <AppProvider value={config}>
               <MetaProvider>
                 <Branding svg={brandmarkSvg} touchIcon={touchIcon} />
+                <ThemeMeta />
                 <PwaMeta />
 
                 <ErrorBoundary
