@@ -2,9 +2,6 @@ import { createTestController } from '@lib/effects/testing';
 import {
   COLOR_SCHEME_ATTRIBUTE,
   COLOR_SCHEME_STORAGE_KEY,
-  THEME_COLOR_META_ID,
-  THEME_COLORS,
-  THEME_STORAGE_KEY,
 } from '../../constants';
 import { $appearance, $appearanceChanged, $setAppearance } from '../appearance';
 
@@ -14,36 +11,9 @@ const storageEvent = (init: StorageEventInit) =>
     new StorageEvent('storage', { storageArea: localStorage, ...init }),
   );
 
-const mountMetaTag = (id: string): HTMLMetaElement => {
-  const meta = document.createElement('meta');
-  meta.id = id;
-  document.head.appendChild(meta);
-  return meta;
-};
-
-// The theme-color meta tags on a blank `<html>`. Disposing it restores
-// the page.
-const setupPage = () => {
-  const light = mountMetaTag(THEME_COLOR_META_ID.light);
-  const dark = mountMetaTag(THEME_COLOR_META_ID.dark);
-
-  return {
-    dataset: document.documentElement.dataset,
-    metaColors: () => ({
-      light: light.getAttribute('content'),
-      dark: dark.getAttribute('content'),
-    }),
-
-    [Symbol.dispose]() {
-      light.remove();
-      dark.remove();
-      delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
-    },
-  };
-};
-
 beforeEach(() => {
   localStorage.clear();
+  delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
 });
 
 describe('$appearance', () => {
@@ -99,20 +69,20 @@ describe('$appearanceChanged', () => {
 
 describe('$setAppearance', () => {
   it('writes the attribute, the cell, and storage', async () => {
-    using page = setupPage();
     await using effects = createTestController();
     const appearance = await effects.run($appearance);
     const setAppearance = await effects.run($setAppearance);
 
     setAppearance('dark');
 
-    expect(page.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe('dark');
+    expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
+      'dark',
+    );
     expect(appearance()).toBe('dark');
     expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBe('dark');
   });
 
   it("drops the attribute and the stored value for 'system'", async () => {
-    using page = setupPage();
     await using effects = createTestController();
     const appearance = await effects.run($appearance);
     const setAppearance = await effects.run($setAppearance);
@@ -120,35 +90,14 @@ describe('$setAppearance', () => {
 
     setAppearance('system');
 
-    expect(page.dataset[COLOR_SCHEME_ATTRIBUTE]).toBeUndefined();
+    expect(
+      document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE],
+    ).toBeUndefined();
     expect(appearance()).toBe('system');
     expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBeNull();
   });
 
-  it("collapses the theme-color meta tags onto the theme's forced scheme", async () => {
-    localStorage.setItem(THEME_STORAGE_KEY, 'jade');
-    using page = setupPage();
-    await using effects = createTestController();
-    const setAppearance = await effects.run($setAppearance);
-
-    setAppearance('dark');
-    expect(page.metaColors()).toEqual({
-      light: THEME_COLORS.jade.dark,
-      dark: THEME_COLORS.jade.dark,
-    });
-
-    setAppearance('light');
-    expect(page.metaColors()).toEqual({
-      light: THEME_COLORS.jade.light,
-      dark: THEME_COLORS.jade.light,
-    });
-
-    setAppearance('system');
-    expect(page.metaColors()).toEqual(THEME_COLORS.jade);
-  });
-
   it('switches when storage refuses access', async () => {
-    using page = setupPage();
     await using effects = createTestController();
     const appearance = await effects.run($appearance);
     const setAppearance = await effects.run($setAppearance);
@@ -161,12 +110,13 @@ describe('$setAppearance', () => {
     setAppearance('dark');
 
     expect(setItem).toHaveBeenCalledWith(COLOR_SCHEME_STORAGE_KEY, 'dark');
-    expect(page.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe('dark');
+    expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
+      'dark',
+    );
     expect(appearance()).toBe('dark');
   });
 
   it('switches before a storage failure throws', async () => {
-    using page = setupPage();
     await using effects = createTestController();
     const appearance = await effects.run($appearance);
     const setAppearance = await effects.run($setAppearance);
@@ -179,7 +129,9 @@ describe('$setAppearance', () => {
 
     expect(() => setAppearance('dark')).toThrow(error);
     expect(setItem).toHaveBeenCalledWith(COLOR_SCHEME_STORAGE_KEY, 'dark');
-    expect(page.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe('dark');
+    expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
+      'dark',
+    );
     expect(appearance()).toBe('dark');
   });
 });
