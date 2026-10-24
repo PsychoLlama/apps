@@ -1,1 +1,0 @@
-export { $preferences } from './preferences';

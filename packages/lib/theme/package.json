@@ -15,8 +15,6 @@
     "./behavior": "./src/behavior/index.ts",
     "./constants": "./src/constants.ts",
     "./prelude": "./src/prelude.ts",
-    "./effects": "./src/effects/index.ts",
-    "./state": "./src/state/index.ts",
     "./package.json": "./package.json",
     "./meta": "./src/components/meta.tsx"
   },
