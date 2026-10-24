@@ -12,6 +12,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./appearance-toggle": "./src/components/appearance-toggle.tsx",
+    "./behavior": "./src/behavior/index.ts",
     "./constants": "./src/constants.ts",
     "./prelude": "./src/prelude.ts",
     "./effects": "./src/effects/index.ts",
