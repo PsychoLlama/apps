@@ -1,8 +1,5 @@
 import { createTestController } from '@lib/effects/testing';
-import {
-  COLOR_SCHEME_ATTRIBUTE,
-  COLOR_SCHEME_STORAGE_KEY,
-} from '../../constants';
+import { COLOR_SCHEME_STORAGE_KEY } from '../../constants';
 import { $appearance, $appearanceChanged, $setAppearance } from '../appearance';
 
 // What another tab's write looks like from here.
@@ -13,7 +10,6 @@ const storageEvent = (init: StorageEventInit) =>
 
 beforeEach(() => {
   localStorage.clear();
-  delete document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE];
 });
 
 describe('$appearance', () => {
@@ -68,21 +64,18 @@ describe('$appearanceChanged', () => {
 });
 
 describe('$setAppearance', () => {
-  it('writes the attribute, the cell, and storage', async () => {
+  it('writes the cell and storage', async () => {
     await using effects = createTestController();
     const appearance = await effects.run($appearance);
     const setAppearance = await effects.run($setAppearance);
 
     setAppearance('dark');
 
-    expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
-      'dark',
-    );
     expect(appearance()).toBe('dark');
     expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBe('dark');
   });
 
-  it("drops the attribute and the stored value for 'system'", async () => {
+  it("clears the stored value for 'system'", async () => {
     await using effects = createTestController();
     const appearance = await effects.run($appearance);
     const setAppearance = await effects.run($setAppearance);
@@ -90,9 +83,6 @@ describe('$setAppearance', () => {
 
     setAppearance('system');
 
-    expect(
-      document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE],
-    ).toBeUndefined();
     expect(appearance()).toBe('system');
     expect(localStorage.getItem(COLOR_SCHEME_STORAGE_KEY)).toBeNull();
   });
@@ -110,9 +100,6 @@ describe('$setAppearance', () => {
     setAppearance('dark');
 
     expect(setItem).toHaveBeenCalledWith(COLOR_SCHEME_STORAGE_KEY, 'dark');
-    expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
-      'dark',
-    );
     expect(appearance()).toBe('dark');
   });
 
@@ -129,9 +116,6 @@ describe('$setAppearance', () => {
 
     expect(() => setAppearance('dark')).toThrow(error);
     expect(setItem).toHaveBeenCalledWith(COLOR_SCHEME_STORAGE_KEY, 'dark');
-    expect(document.documentElement.dataset[COLOR_SCHEME_ATTRIBUTE]).toBe(
-      'dark',
-    );
     expect(appearance()).toBe('dark');
   });
 });

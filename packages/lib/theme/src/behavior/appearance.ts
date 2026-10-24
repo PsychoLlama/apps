@@ -1,7 +1,6 @@
 import { collect, pipe, reactive } from '@lib/effects';
 import { defineCell, defineCommand } from '@lib/state';
 import {
-  COLOR_SCHEME_ATTRIBUTE,
   COLOR_SCHEME_IDS,
   COLOR_SCHEME_STORAGE_KEY,
   type ColorSchemeOption,
@@ -41,23 +40,16 @@ export const $appearance = collect(
 );
 
 /**
- * Switch the appearance: the cell, the `<html>` attribute, then storage.
- * `'system'` drops the attribute so media queries take over, and clears
- * storage. Storage that refuses access is skipped. Storage goes last: if
- * it fails otherwise, the switch still shows.
+ * Switch the appearance, then persist it. `'system'` clears storage.
+ * Storage that refuses access is skipped. Storage goes last: if it fails
+ * otherwise, the switch still shows.
  */
 export const $setAppearance = collect(
   [$appearanceChanged],
   (appearanceChanged) => (appearance: ColorSchemeOption) => {
     appearanceChanged(appearance);
 
-    const { dataset } = document.documentElement;
-    if (appearance === 'system') {
-      delete dataset[COLOR_SCHEME_ATTRIBUTE];
-      removeItem(COLOR_SCHEME_STORAGE_KEY);
-    } else {
-      dataset[COLOR_SCHEME_ATTRIBUTE] = appearance;
-      setItem(COLOR_SCHEME_STORAGE_KEY, appearance);
-    }
+    if (appearance === 'system') removeItem(COLOR_SCHEME_STORAGE_KEY);
+    else setItem(COLOR_SCHEME_STORAGE_KEY, appearance);
   },
 );

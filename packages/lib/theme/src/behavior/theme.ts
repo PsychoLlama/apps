@@ -2,7 +2,6 @@ import { collect, pipe, reactive } from '@lib/effects';
 import { defineCell, defineCommand } from '@lib/state';
 import {
   DEFAULT_THEME_ID,
-  THEME_ATTRIBUTE,
   THEME_IDS,
   THEME_STORAGE_KEY,
   type ThemeId,
@@ -41,17 +40,16 @@ export const $theme = collect([$themeCell, $themeSync], (theme) =>
 );
 
 /**
- * Switch the theme: the cell, the `<html>` attribute, then storage. The
- * default theme clears storage, so later loads follow whatever default
- * ships. Storage that refuses access is skipped. Storage goes last: if
- * it fails otherwise, the switch still shows.
+ * Switch the theme, then persist it. The default theme clears storage,
+ * so later loads follow whatever default ships. Storage that refuses
+ * access is skipped. Storage goes last: if it fails otherwise, the
+ * switch still shows.
  */
 export const $setTheme = collect(
   [$themeChanged],
   (themeChanged) => (theme: ThemeId) => {
     themeChanged(theme);
 
-    document.documentElement.dataset[THEME_ATTRIBUTE] = theme;
     if (theme === DEFAULT_THEME_ID) removeItem(THEME_STORAGE_KEY);
     else setItem(THEME_STORAGE_KEY, theme);
   },

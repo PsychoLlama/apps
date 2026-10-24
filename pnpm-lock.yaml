@@ -1325,6 +1325,9 @@ importers:
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
+      '@solidjs/testing-library':
+        specifier: 'catalog:'
+        version: 0.8.10(@solidjs/router@1.0.0(solid-js@1.9.17))(solid-js@1.9.17)
 
   packages/lib/ui:
     dependencies:

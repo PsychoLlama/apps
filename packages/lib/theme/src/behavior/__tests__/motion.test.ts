@@ -1,5 +1,5 @@
 import { createTestController } from '@lib/effects/testing';
-import { MOTION_ATTRIBUTE, MOTION_STORAGE_KEY } from '../../constants';
+import { MOTION_STORAGE_KEY } from '../../constants';
 import { $motion, $motionChanged, $setMotion } from '../motion';
 
 // What another tab's write looks like from here.
@@ -10,7 +10,6 @@ const storageEvent = (init: StorageEventInit) =>
 
 beforeEach(() => {
   localStorage.clear();
-  delete document.documentElement.dataset[MOTION_ATTRIBUTE];
 });
 
 describe('$motion', () => {
@@ -65,19 +64,18 @@ describe('$motionChanged', () => {
 });
 
 describe('$setMotion', () => {
-  it('writes the attribute, the cell, and storage', async () => {
+  it('writes the cell and storage', async () => {
     await using effects = createTestController();
     const motion = await effects.run($motion);
     const setMotion = await effects.run($setMotion);
 
     setMotion('reduce');
 
-    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
     expect(motion()).toBe('reduce');
     expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBe('reduce');
   });
 
-  it("drops the attribute and the stored value for 'system'", async () => {
+  it("clears the stored value for 'system'", async () => {
     await using effects = createTestController();
     const motion = await effects.run($motion);
     const setMotion = await effects.run($setMotion);
@@ -85,7 +83,6 @@ describe('$setMotion', () => {
 
     setMotion('system');
 
-    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBeUndefined();
     expect(motion()).toBe('system');
     expect(localStorage.getItem(MOTION_STORAGE_KEY)).toBeNull();
   });
@@ -103,7 +100,6 @@ describe('$setMotion', () => {
     setMotion('reduce');
 
     expect(setItem).toHaveBeenCalledWith(MOTION_STORAGE_KEY, 'reduce');
-    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
     expect(motion()).toBe('reduce');
   });
 
@@ -120,7 +116,6 @@ describe('$setMotion', () => {
 
     expect(() => setMotion('reduce')).toThrow(error);
     expect(setItem).toHaveBeenCalledWith(MOTION_STORAGE_KEY, 'reduce');
-    expect(document.documentElement.dataset[MOTION_ATTRIBUTE]).toBe('reduce');
     expect(motion()).toBe('reduce');
   });
 });

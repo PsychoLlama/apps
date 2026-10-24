@@ -1,9 +1,5 @@
 import { createTestController } from '@lib/effects/testing';
-import {
-  DEFAULT_THEME_ID,
-  THEME_ATTRIBUTE,
-  THEME_STORAGE_KEY,
-} from '../../constants';
+import { DEFAULT_THEME_ID, THEME_STORAGE_KEY } from '../../constants';
 import { $setTheme, $theme, $themeChanged } from '../theme';
 
 // What another tab's write looks like from here.
@@ -14,7 +10,6 @@ const storageEvent = (init: StorageEventInit) =>
 
 beforeEach(() => {
   localStorage.clear();
-  delete document.documentElement.dataset[THEME_ATTRIBUTE];
 });
 
 describe('$theme', () => {
@@ -69,14 +64,13 @@ describe('$themeChanged', () => {
 });
 
 describe('$setTheme', () => {
-  it('writes the attribute, the cell, and storage', async () => {
+  it('writes the cell and storage', async () => {
     await using effects = createTestController();
     const theme = await effects.run($theme);
     const setTheme = await effects.run($setTheme);
 
     setTheme('jade');
 
-    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('jade');
     expect(theme()).toBe('jade');
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('jade');
   });
@@ -89,9 +83,6 @@ describe('$setTheme', () => {
 
     setTheme(DEFAULT_THEME_ID);
 
-    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe(
-      DEFAULT_THEME_ID,
-    );
     expect(theme()).toBe(DEFAULT_THEME_ID);
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
   });
@@ -109,7 +100,6 @@ describe('$setTheme', () => {
     setTheme('jade');
 
     expect(setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, 'jade');
-    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('jade');
     expect(theme()).toBe('jade');
   });
 
@@ -126,7 +116,6 @@ describe('$setTheme', () => {
 
     expect(() => setTheme('jade')).toThrow(error);
     expect(setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, 'jade');
-    expect(document.documentElement.dataset[THEME_ATTRIBUTE]).toBe('jade');
     expect(theme()).toBe('jade');
   });
 });

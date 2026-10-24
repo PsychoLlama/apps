@@ -2,6 +2,7 @@ import { Meta } from '@solidjs/meta';
 import { DEFAULT_THEME_ID } from '../../constants';
 import { Appearance } from './appearance';
 import { Prelude } from './prelude';
+import { RootAttributes } from './root-attributes';
 
 // For stamping `<html data-theme>` alongside `<ThemeMeta />`.
 export { DEFAULT_THEME_ID };
@@ -26,6 +27,7 @@ export const ThemeMeta = () => (
     />
 
     <Appearance />
+    <RootAttributes />
 
     {/* After `<Appearance>`: it swaps those tags by `id`. */}
     <Prelude />
