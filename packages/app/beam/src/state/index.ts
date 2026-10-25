@@ -19,18 +19,15 @@ export {
   type ContactView,
 } from './contacts';
 export {
-  $invite,
   $inviteClosed,
+  $inviteOpen,
   $inviteOpened,
-  $removal,
   $removalClosed,
   $removalOpened,
-  $rename,
+  $removalTarget,
   $renameClosed,
   $renameOpened,
-  type Invite,
-  type Removal,
-  type Rename,
+  $renameTarget,
   type RenameTarget,
 } from './dialogs';
 export { beamLink, isEndpointId } from './endpoint';

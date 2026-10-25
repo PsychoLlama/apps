@@ -11,7 +11,7 @@ import {
   $draftChanged,
   $drafts,
   $identity,
-  $invite,
+  $inviteOpen,
   $inviteOpened,
 } from '../../state';
 import {
@@ -109,12 +109,12 @@ describe('$recordPeer', () => {
     await using effects = createTestController();
     const inviteOpened = await effects.run($inviteOpened);
     const recordPeer = await effects.run($recordPeer);
-    const invite = await effects.run($invite);
+    const inviteOpen = await effects.run($inviteOpen);
     inviteOpened();
 
     await recordPeer(PEER_ID);
 
-    expect(invite.open).toBe(false);
+    expect(inviteOpen()).toBe(false);
   });
 
   it('fails when the write does', async () => {

@@ -16,7 +16,12 @@ import {
   fallbackName,
   type ContactBook,
 } from '../contacts';
-import { $invite, $inviteOpened, $rename, $renameOpened } from '../dialogs';
+import {
+  $inviteOpen,
+  $inviteOpened,
+  $renameTarget,
+  $renameOpened,
+} from '../dialogs';
 import { $identity } from '../identity';
 import { LABEL_MAX_LENGTH } from '../labels';
 import { $draftChanged, $drafts, $shareLog, $shareReceived } from '../shares';
@@ -114,27 +119,27 @@ describe('$contactSeen', () => {
 
   it('closes the invite, whose errand is done', async () => {
     await using effects = createTestController();
-    const invite = await effects.run($invite);
+    const inviteOpen = await effects.run($inviteOpen);
     const contactSeen = await effects.run($contactSeen);
     const inviteOpened = await effects.run($inviteOpened);
     inviteOpened();
 
     contactSeen('ep-1', 5);
 
-    expect(invite.open).toBe(false);
+    expect(inviteOpen()).toBe(false);
   });
 });
 
 describe('$contactRenamed', () => {
   const setup = async (effects: ReturnType<typeof createTestController>) => {
     const book = await effects.run($contacts);
-    const rename = await effects.run($rename);
+    const renameTarget = await effects.run($renameTarget);
     const renameOpened = await effects.run($renameOpened);
     const contactSeen = await effects.run($contactSeen);
     const contactRenamed = await effects.run($contactRenamed);
     contactSeen('ep-1', 1);
 
-    return { book, rename, renameOpened, contactRenamed };
+    return { book, renameTarget, renameOpened, contactRenamed };
   };
 
   it('records the local name', async () => {
@@ -186,32 +191,32 @@ describe('$contactRenamed', () => {
 
   it('closes a rename form open over that contact', async () => {
     await using effects = createTestController();
-    const { rename, renameOpened, contactRenamed } = await setup(effects);
+    const { renameTarget, renameOpened, contactRenamed } = await setup(effects);
     renameOpened({ kind: 'peer', endpointId: 'ep-1' });
 
     contactRenamed('ep-1', 'Work phone');
 
-    expect(rename.target).toBeNull();
+    expect(renameTarget()).toBeNull();
   });
 
   it('leaves a form open over another contact', async () => {
     await using effects = createTestController();
-    const { rename, renameOpened, contactRenamed } = await setup(effects);
+    const { renameTarget, renameOpened, contactRenamed } = await setup(effects);
     renameOpened({ kind: 'peer', endpointId: 'ep-2' });
 
     contactRenamed('ep-1', 'Work phone');
 
-    expect(rename.target).toEqual({ kind: 'peer', endpointId: 'ep-2' });
+    expect(renameTarget()).toEqual({ kind: 'peer', endpointId: 'ep-2' });
   });
 
   it('leaves this device’s form open', async () => {
     await using effects = createTestController();
-    const { rename, renameOpened, contactRenamed } = await setup(effects);
+    const { renameTarget, renameOpened, contactRenamed } = await setup(effects);
     renameOpened({ kind: 'self' });
 
     contactRenamed('ep-1', 'Work phone');
 
-    expect(rename.target).toEqual({ kind: 'self' });
+    expect(renameTarget()).toEqual({ kind: 'self' });
   });
 });
 

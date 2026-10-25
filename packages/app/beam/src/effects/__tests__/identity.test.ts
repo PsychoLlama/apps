@@ -3,7 +3,7 @@ import { removeContact, saveContact } from '../../platform/database';
 import {
   $identity,
   $identityResolved,
-  $rename,
+  $renameTarget,
   $renameOpened,
   $setupDraft,
   $setupNameChanged,
@@ -57,7 +57,7 @@ describe('$nameDevice', () => {
     const renameOpened = await effects.run($renameOpened);
     const nameDevice = await effects.run($nameDevice);
     const draft = await effects.run($setupDraft);
-    const rename = await effects.run($rename);
+    const renameTarget = await effects.run($renameTarget);
     identityResolved(SELF_ID);
     setupNameChanged('Laptop');
     renameOpened({ kind: 'self' });
@@ -65,7 +65,7 @@ describe('$nameDevice', () => {
     await nameDevice('Laptop');
 
     expect(draft.name).toBe('');
-    expect(rename.target).toBeNull();
+    expect(renameTarget()).toBeNull();
   });
 
   it('keeps the original date across renames', async () => {

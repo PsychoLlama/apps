@@ -4,8 +4,8 @@ import { $renameContact, $renameDevice } from '../effects';
 import {
   $contacts,
   $identity,
-  $rename,
   $renameClosed,
+  $renameTarget,
   LABEL_MAX_LENGTH,
   deviceFallbackOf,
   fallbackName,
@@ -23,7 +23,7 @@ const NAME_FIELD = 'label';
  * occasional — it isn't part of reading the record — so it opens on request
  * instead of sitting on the page as a field to be edited by accident.
  *
- * Bound to a target rather than to whatever is on screen: the store holds the
+ * Bound to a target rather than to whatever is on screen: the cell holds the
  * record the form was opened over, so it can't end up aimed at a different
  * one.
  *
@@ -36,7 +36,7 @@ export const RenameDialog = (props: {
   /** The record this form renames. */
   target: RenameTarget;
 }) => {
-  const rename = useValue($rename);
+  const renameTarget = useValue($renameTarget);
   const book = useValue($contacts);
   const self = useValue($identity);
   const renameContact = useAction($renameContact);
@@ -45,7 +45,7 @@ export const RenameDialog = (props: {
 
   /** Whether the open form is this one's. */
   const open = () => {
-    const active = rename().target;
+    const active = renameTarget();
     const mine = props.target;
     if (!active) return false;
     if (mine.kind === 'self') return active.kind === 'self';

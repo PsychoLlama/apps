@@ -2,7 +2,13 @@ import { Show } from 'solid-js';
 import { useAction, useValue } from '@lib/effects/solid';
 import { Dialog, Flex, Text, TextField } from '@lib/ui';
 import { QrCode } from './qr-code';
-import { $identity, $invite, $inviteClosed, $qrCode, beamLink } from '../state';
+import {
+  $identity,
+  $inviteClosed,
+  $inviteOpen,
+  $qrCode,
+  beamLink,
+} from '../state';
 
 /**
  * This device's beam link, as a modal. Two ways to hand the same URL over: a
@@ -19,7 +25,7 @@ import { $identity, $invite, $inviteClosed, $qrCode, beamLink } from '../state';
  * the address book away while you were reading a link out loud.
  */
 export const InviteDialog = () => {
-  const invite = useValue($invite);
+  const open = useValue($inviteOpen);
   const self = useValue($identity);
   const grid = useValue($qrCode);
   const close = useAction($inviteClosed);
@@ -27,7 +33,7 @@ export const InviteDialog = () => {
   return (
     <Dialog
       testId="beam-invite-dialog"
-      open={invite().open}
+      open={open()}
       onOpenChange={() => close()}
       title="Beam link"
       description="Open this link on another device, or scan the code."

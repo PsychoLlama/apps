@@ -1,6 +1,6 @@
 import { defineCommand, defineStore } from '@lib/state';
 import type { Contact, ContactRecord } from '../platform/database';
-import { $invite, $rename } from './dialogs';
+import { $inviteOpen, $renameTarget } from './dialogs';
 import { $identity } from './identity';
 import { generateLabel, normalizeLabel } from './labels';
 import { $drafts, $shareLog } from './shares';
@@ -82,25 +82,26 @@ export const $contactsRestored = defineCommand(
  * over and somebody used it, so the dialog holding it up closes.
  */
 export const $contactSeen = defineCommand(
-  [$contacts, $invite],
-  (book, invite) => (endpointId: string, seenAt: number) => {
-    invite.open = false;
+  [$contacts, $inviteOpen],
+  (book, [, setInviteOpen]) =>
+    (endpointId: string, seenAt: number) => {
+      setInviteOpen(false);
 
-    const existing = book.entries[endpointId];
-    if (existing) {
-      existing.lastSeenAt = seenAt;
-      return;
-    }
+      const existing = book.entries[endpointId];
+      if (existing) {
+        existing.lastSeenAt = seenAt;
+        return;
+      }
 
-    book.entries[endpointId] = {
-      kind: 'peer',
-      endpointId,
-      label: null,
-      suggestedLabel: null,
-      createdAt: seenAt,
-      lastSeenAt: seenAt,
-    };
-  },
+      book.entries[endpointId] = {
+        kind: 'peer',
+        endpointId,
+        label: null,
+        suggestedLabel: null,
+        createdAt: seenAt,
+        lastSeenAt: seenAt,
+      };
+    },
 );
 
 /**
@@ -110,16 +111,19 @@ export const $contactSeen = defineCommand(
  * name. A rename form open over this contact closes with it.
  */
 export const $contactRenamed = defineCommand(
-  [$contacts, $rename],
-  (book, rename) => (endpointId: string, label: string | null) => {
-    const contact = book.entries[endpointId];
-    if (contact) contact.label = label === null ? null : normalizeLabel(label);
+  [$contacts, $renameTarget],
+  (book, [renameTarget, setRenameTarget]) =>
+    (endpointId: string, label: string | null) => {
+      const contact = book.entries[endpointId];
+      if (contact) {
+        contact.label = label === null ? null : normalizeLabel(label);
+      }
 
-    const target = rename.target;
-    if (target?.kind === 'peer' && target.endpointId === endpointId) {
-      rename.target = null;
-    }
-  },
+      const target = renameTarget();
+      if (target?.kind === 'peer' && target.endpointId === endpointId) {
+        setRenameTarget(null);
+      }
+    },
 );
 
 /**
