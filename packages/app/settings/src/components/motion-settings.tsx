@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
+import { useAction, useClientValue } from '@lib/effects/solid';
 import { SegmentedControlItem, SegmentedControlRoot } from '@lib/ui';
 import type { MotionOption } from '@lib/theme';
 import { $motion, $setMotion } from '@lib/theme/behavior';
@@ -41,15 +41,17 @@ export const MotionSettings = () => (
 );
 
 const MotionPicker = () => {
-  const motion = useClientResource($motion);
+  const motion = useClientValue($motion, { initial: null });
   const setMotion = useAction($setMotion);
 
-  const picker = (skeleton: boolean) => (
+  // The server can't know the persisted preference. A skeleton beats
+  // flashing the wrong selection.
+  return (
     <SegmentedControlRoot
       testId="motion-picker"
       name="motion"
-      value={skeleton ? null : (motion() ?? null)}
-      skeleton={skeleton}
+      value={motion()}
+      skeleton={!motion.ready}
       onValueChange={(next) => setMotion(next as MotionOption)}
       class={css.control}
       aria-labelledby={headingId}
@@ -66,10 +68,6 @@ const MotionPicker = () => {
       </For>
     </SegmentedControlRoot>
   );
-
-  // The server can't know the persisted preference. A skeleton beats
-  // flashing the wrong selection.
-  return <Suspense fallback={picker(true)}>{picker(false)}</Suspense>;
 };
 
 // Hands motion back to `'system'` — the no-override default that drops
@@ -77,17 +75,16 @@ const MotionPicker = () => {
 // over. Disabled while already on `'system'`. Hidden until the
 // preference is read off `<html>`, like the log filter's reset.
 const ResetMotion = () => {
-  const motion = useClientResource($motion);
+  const motion = useClientValue($motion);
   const setMotion = useAction($setMotion);
 
   return (
-    <Suspense>
-      <ResetButton
-        testId="motion-picker-reset"
-        label="Reset motion"
-        disabled={motion() === 'system'}
-        onReset={() => setMotion('system')}
-      />
-    </Suspense>
+    <ResetButton
+      testId="motion-picker-reset"
+      label="Reset motion"
+      ready={motion.ready}
+      disabled={motion() === 'system'}
+      onReset={() => setMotion('system')}
+    />
   );
 };

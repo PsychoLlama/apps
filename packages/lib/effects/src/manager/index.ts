@@ -1,4 +1,5 @@
 export {
+  AbandonedError,
   acquire,
   compute,
   createManager,

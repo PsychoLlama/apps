@@ -1,6 +1,6 @@
 import { Meta } from '@solidjs/meta';
 import { createEffect } from 'solid-js';
-import { useClientResource } from '@lib/effects/solid';
+import { useClientValue } from '@lib/effects/solid';
 import { $appearance } from '../../behavior/appearance';
 import { $theme } from '../../behavior/theme';
 import {
@@ -20,9 +20,9 @@ const defaultColors = THEME_COLORS[DEFAULT_THEME_ID];
  * mounted.
  */
 export const Appearance = () => {
-  // Unresolved until mount, so pre-rendering keeps the defaults.
-  const theme = useClientResource($theme);
-  const appearance = useClientResource($appearance);
+  // Undefined until mount, so pre-rendering keeps the defaults.
+  const theme = useClientValue($theme);
+  const appearance = useClientValue($appearance);
 
   // Keep one tag on the theme's page background for its scheme. A forced
   // appearance collapses both tags onto its color; otherwise each tag's

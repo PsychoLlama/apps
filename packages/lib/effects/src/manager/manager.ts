@@ -53,6 +53,19 @@ export interface Manager {
   readonly handles: Set<Handle>;
 }
 
+/**
+ * Why a computation stopped short: its handle was released before the
+ * output landed. Not a failure. Nodes that hadn't started are skipped,
+ * and whatever was in flight is torn down once it lands.
+ */
+export class AbandonedError extends Error {
+  override readonly name = 'AbandonedError';
+
+  constructor() {
+    super('Handle was released while computing.');
+  }
+}
+
 export const createManager = (): Manager => ({
   cache: createCache(),
   handles: new Set(),
@@ -155,6 +168,9 @@ const attach = (
   );
 
   return chain(sources, (sources) => {
+    // Released while upstream was in flight: nothing wants this node.
+    if (handle.released) return now(undefined);
+
     const outputs: unknown[] = [];
     for (const source of sources) {
       if (!source) return now(undefined);
@@ -284,7 +300,9 @@ export const acquire = <Output, M extends Mode>(
  * plan's raw output. It's here right away unless a node has to
  * wait: a `sync` plan's always is, and so is any plan's once it has
  * settled. Fails with an `AggregateError` of every failure, thrown now or
- * rejected later. Safe to call repeatedly.
+ * rejected later. Released before it lands, it rejects with an
+ * {@link AbandonedError} instead, unless something had already failed.
+ * Safe to call repeatedly.
  */
 export const compute = <Output, M extends Mode>(
   manager: Manager,
@@ -301,8 +319,8 @@ export const compute = <Output, M extends Mode>(
         throw new AggregateError(failures, 'Plan failed.');
       }
 
-      // Its output may already be disposed.
-      assert(!handle.released, 'Handle was released while computing.');
+      // Its output may already be disposed, or never have started.
+      if (handle.released) throw new AbandonedError();
 
       const state = inspect(handle, handle.output);
       assert(state.step === 'succeeded', 'Plan computed without an output.');

@@ -13,10 +13,10 @@ import { acquire, reduce, type Reduce } from './plan-resource';
  * the nearest `ErrorBoundary`, whether in computing or in cleanup.
  *
  * Takes only `sync` plans: anything that has to wait belongs in
- * `useClientResource`. The server runs these tasks too, so one that reads
+ * `useClientValue`. The server runs these tasks too, so one that reads
  * browser-only state fails the build, not hydration.
  *
- * Reads through the output's kind, like `useClientResource`.
+ * Reads through the output's kind, like `useClientValue`.
  */
 export const useValue = <Output>(
   plan: Plan<void, Output, 'sync'>,

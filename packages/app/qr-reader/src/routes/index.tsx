@@ -1,5 +1,5 @@
 import { Match, Show, Switch } from 'solid-js';
-import { useAction, useClientResource, useValue } from '@lib/effects/solid';
+import { useAction, useClientValue, useValue } from '@lib/effects/solid';
 import { Frame, FrameBody, SiteHeader } from '@lib/shell';
 import { Container } from '@lib/ui';
 import { CameraSession } from '../components/camera-session';
@@ -28,8 +28,8 @@ const QrReader = () => {
   // start once the client mounts. They're independent: the feed is usable
   // whether or not the decoder has landed, and vice versa. The worker is
   // warm by the time the camera goes live, and outlives camera sessions.
-  useClientResource($decoder);
-  useClientResource($autoStartScan);
+  useClientValue($decoder);
+  useClientValue($autoStartScan);
 
   return (
     <>

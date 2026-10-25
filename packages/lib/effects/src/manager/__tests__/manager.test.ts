@@ -10,6 +10,7 @@ import { toPromise, type Async, type Sync } from '../../eventual';
 import { reactive, resource, yieldOf } from '../../task';
 import { isWrapped } from '../../task/output';
 import {
+  AbandonedError,
   acquire,
   compute,
   createManager,
@@ -672,9 +673,39 @@ describe('manager', () => {
 
       gate.resolve('stream');
       await releasing;
-      await expect(computing).rejects.toThrow(/released while computing/);
+      await expect(computing).rejects.toBeInstanceOf(AbandonedError);
 
       expect(dispose).toHaveBeenCalledTimes(1);
+    });
+
+    it('skips what in-flight work would have fed', async () => {
+      const manager = createManager();
+      const gate = Promise.withResolvers<number>();
+      const next = vi.fn((value: number) => value);
+      const handle = acquire(pipe([() => gate.promise, next]));
+
+      const computing = computed(manager, handle);
+      const releasing = release(manager, handle);
+      gate.resolve(1);
+      await releasing;
+
+      await expect(computing).rejects.toBeInstanceOf(AbandonedError);
+      expect(next).not.toHaveBeenCalled();
+      expect(manager.cache.entries.task.size).toBe(0);
+    });
+
+    it('reports failures that land before the abandonment does', async () => {
+      const manager = createManager();
+      const gate = Promise.withResolvers<number>();
+      const failure = new Error('nope');
+      const handle = acquire(pipe([() => gate.promise]));
+
+      const computing = computed(manager, handle);
+      const releasing = release(manager, handle);
+      gate.reject(failure);
+      await releasing;
+
+      await expect(computing).rejects.toMatchObject({ errors: [failure] });
     });
 
     it('releases a failed plan and resets its nodes', async () => {

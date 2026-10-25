@@ -1,6 +1,6 @@
 import { createEffect, on } from 'solid-js';
 import { useLocation } from '@solidjs/router';
-import { useClientResource } from '@lib/effects/solid';
+import { useClientValue } from '@lib/effects/solid';
 import { createLogger } from '@lib/observability';
 import type { ColorSchemeOption } from '@lib/theme';
 import { $appearance } from '@lib/theme/behavior';
@@ -47,13 +47,13 @@ const readPageContext = (colorScheme: ColorSchemeOption) => {
  */
 export const NavigationLogger = () => {
   const location = useLocation();
-  const appearance = useClientResource($appearance);
+  const appearance = useClientValue($appearance);
 
-  // Keyed on the resource's state, which settles once after mount, not
-  // its value: switching appearance isn't a page load.
+  // Keyed on readiness, which flips once after mount, not the value:
+  // switching appearance isn't a page load.
   createEffect(
     on(
-      () => appearance.state,
+      () => appearance.ready,
       () => {
         const colorScheme = appearance();
         if (colorScheme === undefined) return;

@@ -25,7 +25,8 @@ export interface Controller {
    * Run every node, sharing cached work with other handles, and return
    * the plan's raw output: right away for a `sync` plan, or for
    * any plan that has settled. Fails with an `AggregateError` of every
-   * failure, thrown now or rejected later.
+   * failure, thrown now or rejected later. Released before it lands, it
+   * rejects with an `AbandonedError` instead.
    */
   readonly compute: <Output, M extends Mode>(
     handle: Handle<Output, M>,

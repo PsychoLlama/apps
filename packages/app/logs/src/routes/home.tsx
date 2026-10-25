@@ -1,5 +1,5 @@
 import { For, Match, Show, Switch } from 'solid-js';
-import { Suspense, useClientResource } from '@lib/effects/solid';
+import { useClientValue } from '@lib/effects/solid';
 import { Badge, Callout, Flex, Text } from '@lib/ui';
 import type { PruneRecord } from '@lib/holz-idb-backend/database';
 import { LogsView } from '../components/logs-view';
@@ -19,11 +19,11 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4];
  * has been trimmed. A failed read reaches the error boundary.
  */
 const LogList = () => {
-  const archive = useClientResource($trackedArchive);
+  const archive = useClientValue($trackedArchive);
 
   return (
     <LogsView trail={[{ label: 'Logs' }]}>
-      <Suspense fallback={<LoadingState />}>
+      <Show when={archive.ready} fallback={<LoadingState />}>
         <Switch>
           <Match when={archive()?.entries.length === 0}>
             <EmptyState />
@@ -36,7 +36,7 @@ const LogList = () => {
         <Show when={archive()?.pruned}>
           {(record) => <PruneNotice record={record()} />}
         </Show>
-      </Suspense>
+      </Show>
     </LogsView>
   );
 };

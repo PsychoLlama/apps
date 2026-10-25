@@ -1,6 +1,6 @@
 import { For } from 'solid-js';
 import clx from '@lib/classnames';
-import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
+import { useAction, useClientValue } from '@lib/effects/solid';
 import { RadioCardsItem, RadioCardsRoot } from '@lib/ui';
 import { DEFAULT_THEME_ID, THEMES, type ThemeId } from '@lib/theme';
 import { $setTheme, $theme } from '@lib/theme/behavior';
@@ -28,15 +28,17 @@ export const ThemeSettings = () => (
 
 // One `RadioCards` card per built-in theme.
 const ThemePicker = () => {
-  const theme = useClientResource($theme);
+  const theme = useClientValue($theme, { initial: null });
   const setTheme = useAction($setTheme);
 
-  const picker = (skeleton: boolean) => (
+  // The server can't know the persisted preference. A skeleton beats
+  // flashing the wrong selection.
+  return (
     <RadioCardsRoot
       testId="theme-picker"
       name="theme"
-      value={skeleton ? null : (theme() ?? null)}
-      skeleton={skeleton}
+      value={theme()}
+      skeleton={!theme.ready}
       onValueChange={(next) => setTheme(next as ThemeId)}
       gap={3}
       class={css.root}
@@ -55,27 +57,22 @@ const ThemePicker = () => {
       </For>
     </RadioCardsRoot>
   );
-
-  // The server can't know the persisted preference. A skeleton beats
-  // flashing the wrong selection.
-  return <Suspense fallback={picker(true)}>{picker(false)}</Suspense>;
 };
 
 // Snaps the theme back to `DEFAULT_THEME_ID`. Disabled while the theme
 // is already default. Hidden until the preference is read off `<html>`,
 // like the other resets on the page.
 const ResetTheme = () => {
-  const theme = useClientResource($theme);
+  const theme = useClientValue($theme);
   const setTheme = useAction($setTheme);
 
   return (
-    <Suspense>
-      <ResetButton
-        testId="theme-picker-reset"
-        label="Reset theme"
-        disabled={theme() === DEFAULT_THEME_ID}
-        onReset={() => setTheme(DEFAULT_THEME_ID)}
-      />
-    </Suspense>
+    <ResetButton
+      testId="theme-picker-reset"
+      label="Reset theme"
+      ready={theme.ready}
+      disabled={theme() === DEFAULT_THEME_ID}
+      onReset={() => setTheme(DEFAULT_THEME_ID)}
+    />
   );
 };
