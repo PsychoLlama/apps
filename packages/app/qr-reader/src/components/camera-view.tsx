@@ -1,6 +1,6 @@
 import { onMount, Show, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
-import { Suspense, useAction } from '@lib/effects/solid';
+import { useAction } from '@lib/effects/solid';
 import { Flex, IconButton } from '@lib/ui';
 import IconClose from 'virtual:icons/mdi/close';
 import IconFlashlight from 'virtual:icons/mdi/flashlight';
@@ -101,12 +101,10 @@ export const CameraView: Component<CameraViewProps> = (props) => {
 
       {/* The feed shows while the decoder is still warming up; sampling
           starts the moment it's live. */}
-      <Suspense>
-        <DecodeLoop
-          video={videoEl}
-          onHit={(result) => finishScan(result, navigate)}
-        />
-      </Suspense>
+      <DecodeLoop
+        video={videoEl}
+        onHit={(result) => finishScan(result, navigate)}
+      />
 
       <Flex as="div" testId="reader-controls" class={css.controls}>
         <IconButton
