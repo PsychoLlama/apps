@@ -299,15 +299,16 @@ describe('useClientValue', () => {
     tree.unmount();
   });
 
-  it('holds the plan until a computation cut short by cleanup settles', async () => {
+  it('abandons a computation cut short by cleanup, quietly', async () => {
     await using controller = createTestController();
     const gate = Promise.withResolvers<number>();
+    const next = vi.fn((value: number) => value);
     const [shown, setShown] = createSignal(true);
     const caught = vi.fn();
 
     const tree = renderUnmounted(
       controller.controller,
-      () => useClientValue(pipe([() => gate.promise])),
+      () => useClientValue(pipe([() => gate.promise, next])),
       (Probe) =>
         catchInto(caught, () => (
           <Show when={shown()}>
@@ -318,13 +319,12 @@ describe('useClientValue', () => {
 
     tree.mount();
     setShown(false);
-    await settle();
-    expect(controller.manager.handles.size).toBe(1);
+    expect(controller.manager.handles.size).toBe(0);
 
     gate.resolve(1);
     await settle();
 
-    expect(controller.manager.handles.size).toBe(0);
+    expect(next).not.toHaveBeenCalled();
     expect(caught).not.toHaveBeenCalled();
     tree.unmount();
   });

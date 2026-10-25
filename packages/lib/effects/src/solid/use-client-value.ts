@@ -1,11 +1,10 @@
 import { createEffect, createSignal, on, onCleanup } from 'solid-js';
-import { chain, lastly, now, rescue } from '../eventual';
+import { chain, now, rescue } from '../eventual';
 import type { Plan } from '../plan';
 import { useController, useMounted } from './context';
 import {
   acquire,
   reduce,
-  refCount,
   useThrowToBoundary,
   type Reduce,
 } from './plan-resource';
@@ -44,9 +43,9 @@ type Progress<Initial> =
  * lifetime. Nothing runs until the component tree mounts, so the value
  * reads `initial` through pre-render and hydration, then computes on
  * mount. It never suspends: gate on `ready` instead. The plan is released
- * once the component unmounts and the computation has settled. Failures
- * reach the nearest `ErrorBoundary`, whether in computing or in cleanup,
- * and whether or not anything reads the value.
+ * on cleanup, abandoning whatever it hadn't finished. Failures reach the
+ * nearest `ErrorBoundary`, whether in computing or in cleanup, and
+ * whether or not anything reads the value.
  *
  * Reads through the output's kind, like `useClientResource`. Options are
  * read once.
@@ -58,8 +57,7 @@ export const useClientValue = <Output, Initial = undefined>(
   const controller = useController();
   const throwToBoundary = useThrowToBoundary();
   const [handle, release] = acquire(plan);
-  const hold = refCount(release);
-  onCleanup(hold());
+  onCleanup(release);
 
   const [progress, setProgress] = createSignal<Progress<Initial>>({
     state: 'waiting',
@@ -75,22 +73,16 @@ export const useClientValue = <Output, Initial = undefined>(
     on(useMounted(), (mounted) => {
       if (!mounted) return;
 
-      // Held until it settles: releasing it mid-compute would fail it.
-      const done = hold();
-
       // Settles in place when the output is already here, so a `sync`
-      // plan is ready before anything reads it. Without an error
+      // plan is ready before anything reads it. Unmounting abandons the
+      // rest, which nobody's left to hear about. Without an error
       // boundary, the rethrow surfaces as an unhandled rejection.
-      lastly(
+      rescue(
         () =>
-          rescue(
-            () =>
-              chain(controller.compute(handle), (output) =>
-                now(setProgress({ state: 'ready', output })),
-              ),
-            throwToBoundary,
+          chain(controller.compute(handle), (output) =>
+            now(setProgress({ state: 'ready', output })),
           ),
-        done,
+        throwToBoundary,
       );
     }),
   );

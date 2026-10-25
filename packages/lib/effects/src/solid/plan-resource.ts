@@ -2,7 +2,7 @@ import { getOwner, onCleanup, runWithOwner, type Resource } from 'solid-js';
 import { toPromise } from '../eventual';
 import type { Mode } from '../mode';
 import type { Plan } from '../plan';
-import type { Handle } from '../manager';
+import { AbandonedError, type Handle } from '../manager';
 import {
   isWrapped,
   yieldOf,
@@ -29,12 +29,15 @@ export const reduce = (output: unknown): unknown =>
 /**
  * An error handler that rethrows under the current owner, so failures
  * that land later find its nearest error boundary, even once it's
- * disposed. Without one, the handler throws.
+ * disposed. Without one, the handler throws. Abandoned work isn't a
+ * failure, so it's dropped.
  */
 export const useThrowToBoundary = () => {
   const owner = getOwner();
 
   return (error: unknown): void => {
+    if (error instanceof AbandonedError) return;
+
     runWithOwner(owner, () => {
       throw error;
     });
@@ -58,27 +61,6 @@ export const acquire = <Output, M extends Mode>(
   };
 
   return [handle, release];
-};
-
-/**
- * Count holds, running `idle` once when the last one is released. Holds
- * taken after that count for nothing. Each hold returns its release.
- */
-export const refCount = (idle: () => void) => {
-  let holds = 0;
-  let done = false;
-
-  return () => {
-    holds += 1;
-
-    return () => {
-      holds -= 1;
-      if (holds > 0 || done) return;
-
-      done = true;
-      idle();
-    };
-  };
 };
 
 /**
