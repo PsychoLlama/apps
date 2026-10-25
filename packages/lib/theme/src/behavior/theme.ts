@@ -1,5 +1,5 @@
 import { collect, pipe, reactive } from '@lib/effects';
-import { defineCell, defineCommand } from '@lib/state';
+import { createCell, defineCommand } from '@lib/state';
 import {
   DEFAULT_THEME_ID,
   THEME_IDS,
@@ -12,31 +12,26 @@ import { removeItem, setItem, watchStorage } from './local-storage';
 const parse = (stored: string | null): ThemeId =>
   THEME_IDS.find((id) => id === stored) ?? DEFAULT_THEME_ID;
 
-// Hydrated from storage. Never hold it bare, or it never hears from
-// other tabs.
-const $themeCell = defineCell(() =>
-  parse(localStorage.getItem(THEME_STORAGE_KEY)),
-);
-
-/** The theme changed. */
-export const $themeChanged = defineCommand(
-  [$themeCell],
-  ([, setTheme]) =>
-    (theme: ThemeId) =>
-      setTheme(theme),
-);
-
-const $themeSync = pipe([
-  $themeChanged,
-  watchStorage(THEME_STORAGE_KEY, parse),
-]);
-
 /**
  * The active theme, hydrated from storage and kept in step with other
  * tabs. Client-only; it reads `localStorage`.
  */
-export const $theme = collect([$themeCell, $themeSync], (theme) =>
-  reactive(theme),
+export const $theme = pipe([
+  () => {
+    const [theme, setTheme] = createCell(
+      parse(localStorage.getItem(THEME_STORAGE_KEY)),
+    );
+
+    return reactive(theme, watchStorage(THEME_STORAGE_KEY, parse, setTheme));
+  },
+]);
+
+/** The theme changed. */
+export const $themeChanged = defineCommand(
+  [$theme],
+  ([, setTheme]) =>
+    (theme: ThemeId) =>
+      setTheme(theme),
 );
 
 /**

@@ -1,5 +1,3 @@
-import { pipe } from '@lib/effects';
-import { createTestController } from '@lib/effects/testing';
 import { removeItem, setItem, watchStorage } from '../local-storage';
 
 // What another tab's write looks like from here.
@@ -8,52 +6,41 @@ const storageEvent = (init: StorageEventInit) =>
     new StorageEvent('storage', { storageArea: localStorage, ...init }),
   );
 
-// A watch on `key` publishing to a spy.
+// A watch on `key` notifying a spy.
 const setup = () => {
-  const publish = vi.fn<(value: string) => void>();
-  const $watch = pipe([
-    () => publish,
-    watchStorage('key', (stored) => `parsed:${stored}`),
-  ]);
+  const notify = vi.fn<(value: string) => void>();
+  const stop = watchStorage('key', (stored) => `parsed:${stored}`, notify);
 
-  return { publish, $watch };
+  return { notify, [Symbol.dispose]: stop };
 };
 
 describe('watchStorage', () => {
-  it('publishes parsed writes to its key', async () => {
-    const { publish, $watch } = setup();
-    await using effects = createTestController();
-    await effects.run($watch);
+  it('passes on parsed writes to its key', () => {
+    using watch = setup();
 
     storageEvent({ key: 'key', newValue: 'value' });
 
-    expect(publish).toHaveBeenCalledWith('parsed:value');
+    expect(watch.notify).toHaveBeenCalledWith('parsed:value');
   });
 
-  it('publishes null when the key is removed', async () => {
-    const { publish, $watch } = setup();
-    await using effects = createTestController();
-    await effects.run($watch);
+  it('passes null when the key is removed', () => {
+    using watch = setup();
 
     storageEvent({ key: 'key', newValue: null });
 
-    expect(publish).toHaveBeenCalledWith('parsed:null');
+    expect(watch.notify).toHaveBeenCalledWith('parsed:null');
   });
 
-  it('publishes null when storage is cleared', async () => {
-    const { publish, $watch } = setup();
-    await using effects = createTestController();
-    await effects.run($watch);
+  it('passes null when storage is cleared', () => {
+    using watch = setup();
 
     storageEvent({ key: null });
 
-    expect(publish).toHaveBeenCalledWith('parsed:null');
+    expect(watch.notify).toHaveBeenCalledWith('parsed:null');
   });
 
-  it('ignores other keys and storage areas', async () => {
-    const { publish, $watch } = setup();
-    await using effects = createTestController();
-    await effects.run($watch);
+  it('ignores other keys and storage areas', () => {
+    using watch = setup();
 
     storageEvent({ key: 'other', newValue: 'value' });
     storageEvent({
@@ -62,19 +49,15 @@ describe('watchStorage', () => {
       storageArea: sessionStorage,
     });
 
-    expect(publish).not.toHaveBeenCalled();
+    expect(watch.notify).not.toHaveBeenCalled();
   });
 
-  it('stops watching when released', async () => {
-    const { publish, $watch } = setup();
-
-    {
-      await using effects = createTestController();
-      await effects.run($watch);
-    }
+  it('stops watching when stopped', () => {
+    const watch = setup();
+    watch[Symbol.dispose]();
 
     storageEvent({ key: 'key', newValue: 'value' });
-    expect(publish).not.toHaveBeenCalled();
+    expect(watch.notify).not.toHaveBeenCalled();
   });
 });
 
