@@ -33,7 +33,7 @@ declare global {
 
     /**
      * The offline manifest, injected into the service worker at build time.
-     * `undefined` in dev.
+     * `undefined` in dev, or with `offline` turned off.
      */
     readonly OFFLINE_MANIFEST: OfflineManifest | undefined;
   }
