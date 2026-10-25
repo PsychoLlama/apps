@@ -1,6 +1,7 @@
 import { Container, Flex, Heading, Text } from '@lib/ui';
 import {
   LogFilterSettings,
+  LogStorageSettings,
   MotionSettings,
   ThemeSettings,
 } from '@app/settings/components';
@@ -29,9 +30,7 @@ const GallerySettings = () => (
           </Heading>
 
           <LogFilterSettings />
-
-          {/* TODO: Add `LogStorageSettings` once the gallery installs a
-              service worker. Its export is served by one. */}
+          <LogStorageSettings />
         </Flex>
       </Flex>
     </Container>
