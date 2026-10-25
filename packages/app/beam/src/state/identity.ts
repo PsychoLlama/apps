@@ -1,7 +1,7 @@
 import { defineCell, defineCommand, defineStore } from '@lib/state';
 import type { SelfContact } from '../platform/database';
 import type { QrGrid } from '../platform/qr-code';
-import { $rename } from './dialogs';
+import { $renameTarget } from './dialogs';
 import { generateLabel, normalizeLabel } from './labels';
 import { $setupDraft } from './onboarding';
 
@@ -79,8 +79,8 @@ export const $identityResolved = defineCommand(
  * rename form for this device has done its job, so both close here.
  */
 export const $deviceNamed = defineCommand(
-  [$identity, $setupDraft, $rename],
-  (self, draft, rename) =>
+  [$identity, $setupDraft, $renameTarget],
+  (self, draft, [renameTarget, setRenameTarget]) =>
     (endpointId: string, label: string | null, at: number) => {
       self.record = {
         kind: 'self',
@@ -90,7 +90,7 @@ export const $deviceNamed = defineCommand(
       };
 
       draft.name = '';
-      if (rename.target?.kind === 'self') rename.target = null;
+      if (renameTarget()?.kind === 'self') setRenameTarget(null);
     },
 );
 

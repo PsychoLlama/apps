@@ -1,13 +1,14 @@
 import {
   collect,
   pipe,
+  reactive,
   type Plan,
   type Reactive,
   type Resource,
 } from '@lib/effects';
-import type { Accessor, Signal } from 'solid-js';
+import type { Accessor, Setter, Signal } from 'solid-js';
 import { defineCommand } from '../command';
-import { defineCell, type Cell } from '../cell';
+import { createCell, defineCell, type Cell } from '../cell';
 import { defineExtension } from '../extension';
 import { defineStore, type Store } from '../store';
 import {
@@ -61,8 +62,35 @@ describe('type safety', () => {
 
   it('defines cells for primitives', () => {
     expectTypeOf(defineCell(() => 0)).toEqualTypeOf<
-      Plan<void, Cell<number>, 'sync'>
+      Plan<void, Reactive<number, 'sync', Cell<number>>, 'sync'>
     >();
+  });
+
+  it('targets plans that create their own cells', () => {
+    const $send = defineTopic<[]>();
+    const $cell = pipe([
+      async () => 'seed',
+      (seed: string) => {
+        const [read] = createCell(seed.length);
+        return reactive(read, () => {});
+      },
+    ]);
+
+    const $extension = defineExtension($send, [$cell], (cell) => {
+      expectTypeOf(cell).toEqualTypeOf<Signal<number>>();
+      return () => {};
+    });
+
+    expectTypeOf($extension).toEqualTypeOf<
+      Plan<void, Resource<void, 'sync'>, 'async'>
+    >();
+  });
+
+  it('hands the creating step a writable view', () => {
+    const [count, setCount] = createCell(0);
+
+    expectTypeOf(count).toEqualTypeOf<Cell<number>>();
+    expectTypeOf(setCount).toEqualTypeOf<Setter<number>>();
   });
 
   it('rejects plain objects and reactives as targets', () => {

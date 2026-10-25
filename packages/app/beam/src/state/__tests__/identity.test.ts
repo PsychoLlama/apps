@@ -5,7 +5,7 @@
 
 import { createTestController } from '@lib/effects/testing';
 import type { QrGrid } from '../../platform/qr-code';
-import { $rename, $renameOpened } from '../dialogs';
+import { $renameTarget, $renameOpened } from '../dialogs';
 import {
   $codeEncoded,
   $deviceNamed,
@@ -115,26 +115,26 @@ describe('$deviceNamed', () => {
 
   it('closes this device’s rename form', async () => {
     await using effects = createTestController();
-    const rename = await effects.run($rename);
+    const renameTarget = await effects.run($renameTarget);
     const deviceNamed = await effects.run($deviceNamed);
     const renameOpened = await effects.run($renameOpened);
     renameOpened({ kind: 'self' });
 
     deviceNamed(KEY, 'Laptop', 5);
 
-    expect(rename.target).toBeNull();
+    expect(renameTarget()).toBeNull();
   });
 
   it('leaves a contact’s rename form open', async () => {
     await using effects = createTestController();
-    const rename = await effects.run($rename);
+    const renameTarget = await effects.run($renameTarget);
     const deviceNamed = await effects.run($deviceNamed);
     const renameOpened = await effects.run($renameOpened);
     renameOpened({ kind: 'peer', endpointId: 'ep-1' });
 
     deviceNamed(KEY, 'Laptop', 5);
 
-    expect(rename.target).toEqual({ kind: 'peer', endpointId: 'ep-1' });
+    expect(renameTarget()).toEqual({ kind: 'peer', endpointId: 'ep-1' });
   });
 });
 

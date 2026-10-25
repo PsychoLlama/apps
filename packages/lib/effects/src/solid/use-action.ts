@@ -2,7 +2,7 @@ import { batch, createSignal, onCleanup } from 'solid-js';
 import type { Plan } from '../plan';
 import { yieldOf, type Yield } from '../task';
 import { useController } from './context';
-import { acquire, useThrowToBoundary } from './plan-resource';
+import { acquire, useThrowToBoundary } from './plan-hooks';
 
 type AnyFunction = (...args: never[]) => unknown;
 

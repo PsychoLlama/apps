@@ -2,12 +2,7 @@ import { createEffect, createSignal, on, onCleanup } from 'solid-js';
 import { chain, now, rescue } from '../eventual';
 import type { Plan } from '../plan';
 import { useController, useMounted } from './context';
-import {
-  acquire,
-  reduce,
-  useThrowToBoundary,
-  type Reduce,
-} from './plan-resource';
+import { acquire, reduce, useThrowToBoundary, type Reduce } from './plan-hooks';
 
 /**
  * A client-only plan's output, read without suspending. Call it for the
@@ -45,7 +40,8 @@ type Progress<Initial> =
  * mount. It never suspends: gate on `ready` instead. The plan is released
  * on cleanup, abandoning whatever it hadn't finished. Failures reach the
  * nearest `ErrorBoundary`, whether in computing or in cleanup, and
- * whether or not anything reads the value.
+ * whether or not anything reads the value, so it holds a plan run only
+ * for its lifetime just as well.
  *
  * Reads through the output's kind, like `useValue`. Options are
  * read once.
@@ -64,9 +60,6 @@ export const useClientValue = <Output, Initial = undefined>(
     value: options?.initial,
   });
 
-  // TODO: Some callers hold a plan for its lifetime and never read the
-  // output. Give them a primitive of their own that says so.
-  //
   // Untracked: tasks may read signals as they compute, and those belong
   // to the output, not to when it starts.
   createEffect(

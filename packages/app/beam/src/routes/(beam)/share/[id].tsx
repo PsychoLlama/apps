@@ -12,9 +12,9 @@ import {
   $contacts,
   $identity,
   $peerLinks,
-  $removal,
   $removalClosed,
   $removalOpened,
+  $removalTarget,
   $renameOpened,
   $shareLog,
   addressBookOf,
@@ -66,7 +66,7 @@ const BeamShare = () => {
   const book = useValue($contacts);
   const links = useValue($peerLinks);
   const log = useValue($shareLog);
-  const removal = useValue($removal);
+  const removalTarget = useValue($removalTarget);
 
   const dial = useAction($dialPeer);
   const disconnect = useAction($disconnectPeer);
@@ -320,7 +320,7 @@ const BeamShare = () => {
                         says who this was. */}
                     <AlertDialog
                       testId="beam-share-forget-dialog"
-                      open={removal().endpointId === view().endpointId}
+                      open={removalTarget() === view().endpointId}
                       onOpenChange={() => closeRemoval()}
                       title="Forget this contact?"
                       description={`${view().name} drops out of your address book. They can still reach this device if they have its link.`}

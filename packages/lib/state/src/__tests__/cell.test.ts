@@ -1,7 +1,7 @@
 import { createComputed, createRoot } from 'solid-js';
 import { pipe } from '@lib/effects';
 import { createTestController } from '@lib/effects/testing';
-import { defineCell, writable } from '../cell';
+import { createCell, defineCell, writable } from '../cell';
 
 describe('defineCell', () => {
   it('seeds the value from init', async () => {
@@ -70,5 +70,18 @@ describe('defineCell', () => {
 
   it('refuses accessors that are not cells', () => {
     expect(() => writable(() => 0)).toThrow('Not a cell.');
+  });
+});
+
+describe('createCell', () => {
+  it('writes through the same signal commits recover', () => {
+    const [count, setCount] = createCell(0);
+    const [read, write] = writable(count);
+
+    setCount(1);
+    expect(read()).toBe(1);
+
+    write(2);
+    expect(count()).toBe(2);
   });
 });

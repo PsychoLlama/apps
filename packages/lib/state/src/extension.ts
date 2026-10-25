@@ -4,14 +4,21 @@ import {
   type Mode,
   type ModeOfSteps,
   type Plan,
+  type Reactive,
   type Resource,
 } from '@lib/effects';
 import { writable, type Cell } from './cell';
 import type { Store } from './store';
 import { subscribe, type Topic } from './topic';
 
-/** A plan a commit can write to: a complete store or cell plan. */
-export type Target = Plan<void, Store<object> | Cell<unknown>>;
+/**
+ * A plan a commit can write to: a complete plan yielding a store, or a
+ * cell through `reactive(...)`.
+ */
+export type Target = Plan<
+  void,
+  Store<object> | Reactive<unknown, Mode, Cell<unknown>>
+>;
 
 /** How a commit sees each target: stores as drafts, cells as signals. */
 type Writables<Targets extends readonly Target[]> = {
@@ -27,13 +34,14 @@ export type Commit<
   Targets extends readonly Target[],
 > = (...writables: Writables<Targets>) => (...args: Args) => void;
 
-// Cells first: a cell is an object, so it would otherwise read as a store.
 type Writable<P> =
-  P extends Plan<never, Cell<infer T>>
-    ? Signal<T>
-    : P extends Plan<never, Store<infer State>>
-      ? State
-      : never;
+  P extends Plan<never, infer Output>
+    ? Output extends Reactive<unknown, Mode, Cell<infer T>>
+      ? Signal<T>
+      : Output extends Store<infer State>
+        ? State
+        : never
+    : never;
 
 /**
  * Attach a commit to a topic defined elsewhere, writing your own stores

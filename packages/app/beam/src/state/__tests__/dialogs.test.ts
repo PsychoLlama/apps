@@ -5,100 +5,100 @@
 
 import { createTestController } from '@lib/effects/testing';
 import {
-  $invite,
+  $inviteOpen,
   $inviteClosed,
   $inviteOpened,
-  $removal,
+  $removalTarget,
   $removalClosed,
   $removalOpened,
-  $rename,
+  $renameTarget,
   $renameClosed,
   $renameOpened,
 } from '../dialogs';
 
-describe('$invite', () => {
+describe('$inviteOpen', () => {
   it('starts out of the way', async () => {
     await using effects = createTestController();
-    const invite = await effects.run($invite);
+    const inviteOpen = await effects.run($inviteOpen);
 
-    expect(invite.open).toBe(false);
+    expect(inviteOpen()).toBe(false);
   });
 
   it('opens on request and closes on dismissal', async () => {
     await using effects = createTestController();
-    const invite = await effects.run($invite);
+    const inviteOpen = await effects.run($inviteOpen);
     const inviteOpened = await effects.run($inviteOpened);
     const inviteClosed = await effects.run($inviteClosed);
 
     inviteOpened();
-    expect(invite.open).toBe(true);
+    expect(inviteOpen()).toBe(true);
 
     inviteClosed();
-    expect(invite.open).toBe(false);
+    expect(inviteOpen()).toBe(false);
   });
 });
 
-describe('$rename', () => {
+describe('$renameTarget', () => {
   it('starts shut', async () => {
     await using effects = createTestController();
-    const rename = await effects.run($rename);
+    const renameTarget = await effects.run($renameTarget);
 
-    expect(rename.target).toBeNull();
+    expect(renameTarget()).toBeNull();
   });
 
   it('opens over the record it was asked for', async () => {
     await using effects = createTestController();
-    const rename = await effects.run($rename);
+    const renameTarget = await effects.run($renameTarget);
     const renameOpened = await effects.run($renameOpened);
 
     renameOpened({ kind: 'peer', endpointId: 'ep-1' });
-    expect(rename.target).toEqual({ kind: 'peer', endpointId: 'ep-1' });
+    expect(renameTarget()).toEqual({ kind: 'peer', endpointId: 'ep-1' });
 
     renameOpened({ kind: 'self' });
-    expect(rename.target).toEqual({ kind: 'self' });
+    expect(renameTarget()).toEqual({ kind: 'self' });
   });
 
   it('closes on dismissal', async () => {
     await using effects = createTestController();
-    const rename = await effects.run($rename);
+    const renameTarget = await effects.run($renameTarget);
     const renameOpened = await effects.run($renameOpened);
     const renameClosed = await effects.run($renameClosed);
 
     renameOpened({ kind: 'self' });
     renameClosed();
 
-    expect(rename.target).toBeNull();
+    expect(renameTarget()).toBeNull();
   });
 });
 
-describe('$removal', () => {
+describe('$removalTarget', () => {
   it('starts shut', async () => {
     await using effects = createTestController();
-    const removal = await effects.run($removal);
+    const removalTarget = await effects.run($removalTarget);
 
-    expect(removal.endpointId).toBeNull();
+    expect(removalTarget()).toBeNull();
   });
 
   it('re-aims at the contact most recently asked about', async () => {
     await using effects = createTestController();
-    const removal = await effects.run($removal);
+    const removalTarget = await effects.run($removalTarget);
     const removalOpened = await effects.run($removalOpened);
 
     removalOpened('ep-1');
     removalOpened('ep-2');
 
-    expect(removal.endpointId).toBe('ep-2');
+    expect(removalTarget()).toBe('ep-2');
   });
 
   it('closes on an answer', async () => {
     await using effects = createTestController();
-    const removal = await effects.run($removal);
+    const removalTarget = await effects.run($removalTarget);
     const removalOpened = await effects.run($removalOpened);
     const removalClosed = await effects.run($removalClosed);
 
     removalOpened('ep-1');
     removalClosed();
 
-    expect(removal.endpointId).toBeNull();
+    expect(removalTarget()).toBeNull();
   });
 });

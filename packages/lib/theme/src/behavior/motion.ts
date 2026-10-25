@@ -1,5 +1,5 @@
 import { collect, pipe, reactive } from '@lib/effects';
-import { defineCell, defineCommand } from '@lib/state';
+import { createCell, defineCommand } from '@lib/state';
 import {
   MOTION_IDS,
   MOTION_STORAGE_KEY,
@@ -11,31 +11,26 @@ import { removeItem, setItem, watchStorage } from './local-storage';
 const parse = (stored: string | null): MotionOption =>
   MOTION_IDS.find((id) => id === stored) ?? 'system';
 
-// Hydrated from storage. Never hold it bare, or it never hears from
-// other tabs.
-const $motionCell = defineCell(() =>
-  parse(localStorage.getItem(MOTION_STORAGE_KEY)),
-);
-
-/** The motion preference changed. */
-export const $motionChanged = defineCommand(
-  [$motionCell],
-  ([, setMotion]) =>
-    (motion: MotionOption) =>
-      setMotion(motion),
-);
-
-const $motionSync = pipe([
-  $motionChanged,
-  watchStorage(MOTION_STORAGE_KEY, parse),
-]);
-
 /**
  * The full/reduced/system motion preference, hydrated from storage and
  * kept in step with other tabs. Client-only; it reads `localStorage`.
  */
-export const $motion = collect([$motionCell, $motionSync], (motion) =>
-  reactive(motion),
+export const $motion = pipe([
+  () => {
+    const [motion, setMotion] = createCell(
+      parse(localStorage.getItem(MOTION_STORAGE_KEY)),
+    );
+
+    return reactive(motion, watchStorage(MOTION_STORAGE_KEY, parse, setMotion));
+  },
+]);
+
+/** The motion preference changed. */
+export const $motionChanged = defineCommand(
+  [$motion],
+  ([, setMotion]) =>
+    (motion: MotionOption) =>
+      setMotion(motion),
 );
 
 /**
