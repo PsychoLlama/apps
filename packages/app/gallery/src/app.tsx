@@ -5,6 +5,7 @@ import { Router } from '@solidjs/router';
 import { FileRoutes } from '@solidjs/start/router';
 import { ErrorBoundary, onMount, Suspense } from 'solid-js';
 import { EffectsRoot } from '@lib/effects/solid';
+import { installServiceWorker } from '@lib/service-worker/client';
 import { ErrorBoundaryFallback } from '@lib/shell';
 import { Branding } from '@lib/shell/branding';
 import { ThemeMeta } from '@lib/theme/meta';
@@ -24,6 +25,7 @@ export default function App() {
     <Router
       root={(props) => {
         onMount(runStartupTasks);
+        onMount(installServiceWorker);
 
         return (
           <EffectsRoot>
