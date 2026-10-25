@@ -2,7 +2,6 @@ import {
   collect,
   pipe,
   reactive,
-  resource,
   type Plan,
   type Reactive,
   type Resource,
@@ -11,7 +10,7 @@ import type { Accessor, Setter, Signal } from 'solid-js';
 import { defineCommand } from '../command';
 import { createCell, defineCell, type Cell } from '../cell';
 import { defineExtension } from '../extension';
-import { createStore, defineStore, type Store } from '../store';
+import { defineStore, type Store } from '../store';
 import {
   defineTopic,
   type Publish,
@@ -67,7 +66,7 @@ describe('type safety', () => {
     >();
   });
 
-  it('targets plans that create their own cells and stores', () => {
+  it('targets plans that create their own cells', () => {
     const $send = defineTopic<[]>();
     const $cell = pipe([
       async () => 'seed',
@@ -76,20 +75,11 @@ describe('type safety', () => {
         return reactive(read, () => {});
       },
     ]);
-    const $store = pipe([
-      () =>
-        resource(createStore<State>({ message: '', tags: [] })[0], () => {}),
-    ]);
 
-    const $extension = defineExtension(
-      $send,
-      [$cell, $store],
-      (cell, store) => {
-        expectTypeOf(cell).toEqualTypeOf<Signal<number>>();
-        expectTypeOf(store).toEqualTypeOf<State>();
-        return () => {};
-      },
-    );
+    const $extension = defineExtension($send, [$cell], (cell) => {
+      expectTypeOf(cell).toEqualTypeOf<Signal<number>>();
+      return () => {};
+    });
 
     expectTypeOf($extension).toEqualTypeOf<
       Plan<void, Resource<void, 'sync'>, 'async'>
@@ -98,12 +88,9 @@ describe('type safety', () => {
 
   it('hands the creating step a writable view', () => {
     const [count, setCount] = createCell(0);
-    const [store, state] = createStore<State>({ message: '', tags: [] });
 
     expectTypeOf(count).toEqualTypeOf<Cell<number>>();
     expectTypeOf(setCount).toEqualTypeOf<Setter<number>>();
-    expectTypeOf(store).toEqualTypeOf<Store<State>>();
-    expectTypeOf(state).toEqualTypeOf<State>();
   });
 
   it('rejects plain objects and reactives as targets', () => {

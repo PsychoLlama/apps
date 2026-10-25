@@ -12,14 +12,12 @@ import type { Store } from './store';
 import { subscribe, type Topic } from './topic';
 
 /**
- * A plan a commit can write to: a complete plan yielding a store, bare or
- * through `resource(...)`, or a cell through `reactive(...)`.
+ * A plan a commit can write to: a complete plan yielding a store, or a
+ * cell through `reactive(...)`.
  */
 export type Target = Plan<
   void,
-  | Store<object>
-  | Resource<Store<object>>
-  | Reactive<unknown, Mode, Cell<unknown>>
+  Store<object> | Reactive<unknown, Mode, Cell<unknown>>
 >;
 
 /** How a commit sees each target: stores as drafts, cells as signals. */
@@ -40,7 +38,7 @@ type Writable<P> =
   P extends Plan<never, infer Output>
     ? Output extends Reactive<unknown, Mode, Cell<infer T>>
       ? Signal<T>
-      : Output extends Resource<Store<infer State>> | Store<infer State>
+      : Output extends Store<infer State>
         ? State
         : never
     : never;
