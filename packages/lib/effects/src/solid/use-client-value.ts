@@ -1,5 +1,5 @@
 import { createEffect, createSignal, on, onCleanup } from 'solid-js';
-import { toPromise } from '../eventual';
+import { chain, lastly, now, rescue } from '../eventual';
 import type { Plan } from '../plan';
 import { useController, useMounted } from './context';
 import {
@@ -78,13 +78,20 @@ export const useClientValue = <Output, Initial = undefined>(
       // Held until it settles: releasing it mid-compute would fail it.
       const done = hold();
 
-      // Without an error boundary, the rethrow surfaces as an unhandled
-      // rejection from here.
-      void toPromise(controller.compute(handle))
-        .then((output) => {
-          setProgress({ state: 'ready', output });
-        }, throwToBoundary)
-        .finally(done);
+      // Settles in place when the output is already here, so a `sync`
+      // plan is ready before anything reads it. Without an error
+      // boundary, the rethrow surfaces as an unhandled rejection.
+      lastly(
+        () =>
+          rescue(
+            () =>
+              chain(controller.compute(handle), (output) =>
+                now(setProgress({ state: 'ready', output })),
+              ),
+            throwToBoundary,
+          ),
+        done,
+      );
     }),
   );
 

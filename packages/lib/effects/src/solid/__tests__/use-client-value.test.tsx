@@ -88,6 +88,20 @@ describe('useClientValue', () => {
     tree.unmount();
   });
 
+  it('is ready on mount when the output is already here', async () => {
+    await using controller = createTestController();
+
+    const tree = renderUnmounted(controller.controller, () =>
+      useClientValue(pipe([() => 1])),
+    );
+
+    tree.mount();
+
+    expect(tree.result.ready).toBe(true);
+    expect(tree.result()).toBe(1);
+    tree.unmount();
+  });
+
   it('reads the initial value until the plan resolves', async () => {
     await using controller = createTestController();
     const gate = Promise.withResolvers<number>();
