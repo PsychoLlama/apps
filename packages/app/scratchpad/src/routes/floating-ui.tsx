@@ -1,6 +1,6 @@
 import { For, Show, type JSX } from 'solid-js';
 import { flip, shift, type Middleware, type Placement } from '@floating-ui/dom';
-import { useAction, useClientResource, useValue } from '@lib/effects/solid';
+import { useAction, useClientValue, useValue } from '@lib/effects/solid';
 import type { RadiusScale } from '@lib/design';
 import clx from '@lib/classnames';
 import { FrameBody, SiteHeader } from '@lib/shell';
@@ -343,14 +343,10 @@ const FloatingUiScratchpad = () => {
   // a skeleton rather than claiming a value it doesn't have. Writes echo back
   // through the subscription, making it the single source of truth. A
   // failed read reaches the error boundary.
-  const persistedTether = useClientResource($tetherEnabled);
-  const tetherLoading = () =>
-    persistedTether.state === 'unresolved' ||
-    persistedTether.state === 'pending';
-  // Typed as possibly undefined, which only happens while loading.
-  const tetherEnabled = () =>
-    (tetherLoading() ? undefined : persistedTether()?.enabled) ??
-    defaultTetherEnabled;
+  const persistedTether = useClientValue($tetherEnabled, {
+    initial: { enabled: defaultTetherEnabled },
+  });
+  const tetherEnabled = () => persistedTether().enabled;
 
   /** The middleware cards currently checked, as the group reads them. */
   const enabledMiddleware = (): TetherMiddleware[] =>
@@ -568,7 +564,7 @@ const FloatingUiScratchpad = () => {
                 <Checkbox
                   testId="control-tether-enabled"
                   checked={tetherEnabled()}
-                  skeleton={tetherLoading()}
+                  skeleton={!persistedTether.ready}
                   onCheckedChange={chooseTetherEnabled}
                 >
                   Enable tether

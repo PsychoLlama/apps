@@ -1,5 +1,5 @@
 import { createEffect } from 'solid-js';
-import { useClientResource } from '@lib/effects/solid';
+import { useClientValue } from '@lib/effects/solid';
 import { $appearance } from '../../behavior/appearance';
 import { $motion } from '../../behavior/motion';
 import { $theme } from '../../behavior/theme';
@@ -15,10 +15,10 @@ import {
  * them before paint; this takes over once mounted.
  */
 export const RootAttributes = () => {
-  // Unresolved until mount, so the prelude's stamp stands until then.
-  const theme = useClientResource($theme);
-  const appearance = useClientResource($appearance);
-  const motion = useClientResource($motion);
+  // Undefined until mount, so the prelude's stamp stands until then.
+  const theme = useClientValue($theme);
+  const appearance = useClientValue($appearance);
+  const motion = useClientValue($motion);
 
   // `'system'` drops the attribute so media queries take over.
   const follow = (key: string, value: () => string | undefined) => {
