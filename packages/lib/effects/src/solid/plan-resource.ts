@@ -61,6 +61,27 @@ export const acquire = <Output, M extends Mode>(
 };
 
 /**
+ * Count holds, running `idle` once when the last one is released. Holds
+ * taken after that count for nothing. Each hold returns its release.
+ */
+export const refCount = (idle: () => void) => {
+  let holds = 0;
+  let done = false;
+
+  return () => {
+    holds += 1;
+
+    return () => {
+      holds -= 1;
+      if (holds > 0 || done) return;
+
+      done = true;
+      idle();
+    };
+  };
+};
+
+/**
  * Hold a plan for the owner's lifetime. Returns a fetcher that computes
  * it and resolves to its raw output.
  */

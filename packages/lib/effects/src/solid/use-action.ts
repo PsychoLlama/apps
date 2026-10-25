@@ -2,7 +2,7 @@ import { batch, createSignal, onCleanup } from 'solid-js';
 import type { Plan } from '../plan';
 import { yieldOf, type Yield } from '../task';
 import { useController } from './context';
-import { acquire, useThrowToBoundary } from './plan-resource';
+import { acquire, refCount, useThrowToBoundary } from './plan-resource';
 
 type AnyFunction = (...args: never[]) => unknown;
 
@@ -27,27 +27,6 @@ type ActionOf<Output> =
   Yield<Output> extends (...args: infer Args) => infer Result
     ? Action<Args, Awaited<Result>>
     : never;
-
-/**
- * Count holds, running `idle` once when the last one is released. Holds
- * taken after that count for nothing. Each hold returns its release.
- */
-const refCount = (idle: () => void) => {
-  let holds = 0;
-  let done = false;
-
-  return () => {
-    holds += 1;
-
-    return () => {
-      holds -= 1;
-      if (holds > 0 || done) return;
-
-      done = true;
-      idle();
-    };
-  };
-};
 
 /**
  * Call a plan's output as a function from event handlers. The plan
