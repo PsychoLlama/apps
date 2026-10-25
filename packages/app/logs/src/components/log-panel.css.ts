@@ -1,5 +1,7 @@
 import { style } from '@vanilla-extract/css';
 import { neutral, space, typeScale } from '@lib/design';
+import { cyan } from '@lib/design/palette/cyan';
+import { violet } from '@lib/design/palette/violet';
 import { inset } from '@lib/shell/frame.css';
 
 /**
@@ -100,15 +102,29 @@ export const attributeKey = style({
   width: '1%',
 });
 
-/** String values keep their line breaks and wrap anywhere. */
-export const stringValue = style({
-  whiteSpace: 'pre-wrap',
-  overflowWrap: 'anywhere',
+/**
+ * Strings in cyan, after Chrome DevTools' inspected values. `&&` outranks
+ * the `Code` color class.
+ */
+export const string = style({
+  selectors: {
+    '&&': { color: cyan.alpha[11] },
+  },
 });
 
 /** JSON literals wrap anywhere, so a long array can't widen the table. */
 export const literal = style({
   overflowWrap: 'anywhere',
+});
+
+/**
+ * Numbers and booleans share one violet, after Chrome DevTools' inspected
+ * values. `&&` outranks the `Code` color class.
+ */
+export const primitive = style({
+  selectors: {
+    '&&': { color: violet.alpha[11] },
+  },
 });
 
 /**

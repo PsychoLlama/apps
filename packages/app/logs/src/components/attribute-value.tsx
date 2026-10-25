@@ -5,26 +5,20 @@ import * as css from './log-panel.css';
 
 /**
  * One attribute value, styled by its JSON type so a glance tells `"3"`
- * from `3`: strings as plain text, numbers and booleans as colored
- * literals, `null` muted, arrays and empty objects as compact JSON. An
- * empty string has no text to show, so it falls through to `""`.
+ * from `3`, colored the way Chrome DevTools colors inspected values:
+ * strings as cyan JSON literals, quoted and escaped so their bounds are
+ * unambiguous, numbers and booleans as violet literals, `null` muted,
+ * arrays and empty objects as compact JSON.
  */
 export const AttributeValue = (props: { value: Value }) => (
-  <Switch
-    fallback={<Literal color="neutral">{JSON.stringify(props.value)}</Literal>}
-  >
-    <Match when={typeof props.value === 'string' && props.value}>
-      {(text) => (
-        <Text as="span" size={1} selectable class={css.stringValue}>
-          {text()}
-        </Text>
-      )}
+  <Switch fallback={<Literal>{JSON.stringify(props.value)}</Literal>}>
+    <Match when={typeof props.value === 'string'}>
+      <Literal class={css.string}>{JSON.stringify(props.value)}</Literal>
     </Match>
-    <Match when={typeof props.value === 'number'}>
-      <Literal color="accent">{JSON.stringify(props.value)}</Literal>
-    </Match>
-    <Match when={typeof props.value === 'boolean'}>
-      <Literal color="warning">{JSON.stringify(props.value)}</Literal>
+    <Match
+      when={typeof props.value === 'number' || typeof props.value === 'boolean'}
+    >
+      <Literal class={css.primitive}>{JSON.stringify(props.value)}</Literal>
     </Match>
     <Match when={props.value === null}>
       <Text as="span" size={1} color="lowContrast" selectable>
@@ -34,11 +28,13 @@ export const AttributeValue = (props: { value: Value }) => (
   </Switch>
 );
 
-const Literal = (props: {
-  color: 'accent' | 'neutral' | 'warning';
-  children: string;
-}) => (
-  <Code size={1} variant="ghost" color={props.color} class={css.literal}>
+const Literal = (props: { class?: string; children: string }) => (
+  <Code
+    size={1}
+    variant="ghost"
+    color="neutral"
+    class={props.class ? `${css.literal} ${props.class}` : css.literal}
+  >
     {props.children}
   </Code>
 );
