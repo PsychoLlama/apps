@@ -1,3 +1,4 @@
+import { Show } from 'solid-js';
 import { Button } from '@lib/ui';
 
 /** Props for {@link ResetButton}. */
@@ -10,6 +11,11 @@ export interface ResetButtonProps {
    * "Reset log filter" vs. "Reset theme").
    */
   label: string;
+  /**
+   * Whether the setting has been read. Until then the button stays
+   * hidden, since it can't yet say whether there's anything to reset.
+   */
+  ready: boolean;
   /**
    * Whether the setting already matches its default. A reset is a no-op in
    * that state, so the button disables itself rather than disappearing —
@@ -27,14 +33,16 @@ export interface ResetButtonProps {
  * default so every reset across the page looks and behaves identically.
  */
 export const ResetButton = (props: ResetButtonProps) => (
-  <Button
-    testId={props.testId}
-    aria-label={props.label}
-    variant="ghost"
-    color="neutral"
-    disabled={props.disabled}
-    onClick={() => props.onReset()}
-  >
-    Reset
-  </Button>
+  <Show when={props.ready}>
+    <Button
+      testId={props.testId}
+      aria-label={props.label}
+      variant="ghost"
+      color="neutral"
+      disabled={props.disabled}
+      onClick={() => props.onReset()}
+    >
+      Reset
+    </Button>
+  </Show>
 );

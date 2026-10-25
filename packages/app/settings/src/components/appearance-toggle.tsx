@@ -1,4 +1,4 @@
-import { useAction, useClientResource } from '@lib/effects/solid';
+import { useAction, useClientValue } from '@lib/effects/solid';
 import { Flex, IconButton, Text, Tooltip } from '@lib/ui';
 import type { ColorSchemeId, ColorSchemeOption } from '@lib/theme/constants';
 import {
@@ -38,8 +38,8 @@ const label = (showing: ColorSchemeId): string =>
  */
 export const AppearanceToggle = () => {
   const setAppearance = useAction($setAppearance);
-  const appearance = useClientResource($appearance);
-  const systemColorScheme = useClientResource($systemColorScheme);
+  const appearance = useClientValue($appearance);
+  const systemColorScheme = useClientValue($systemColorScheme);
 
   // The scheme on screen, once both settle on mount.
   const showing = (): ColorSchemeId | undefined => {

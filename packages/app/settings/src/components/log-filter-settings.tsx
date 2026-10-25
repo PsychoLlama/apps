@@ -1,4 +1,4 @@
-import { Suspense, useAction, useClientResource } from '@lib/effects/solid';
+import { useAction, useClientValue } from '@lib/effects/solid';
 import { Code, Flex, Heading, Link, Text, TextField } from '@lib/ui';
 import { ResetButton } from './reset-button';
 import {
@@ -20,7 +20,7 @@ const headingId = 'settings-log-filter-heading';
 export const LogFilterSettings = () => {
   const updateFilter = useAction($updateFilter);
   const resetFilter = useAction($resetFilter);
-  const logFilter = useClientResource($logFilter);
+  const logFilter = useClientValue($logFilter);
 
   return (
     <Flex as="section" direction="column" gap={3}>
@@ -35,16 +35,15 @@ export const LogFilterSettings = () => {
           >
             Log filter
           </Heading>
-          <Suspense>
-            <ResetButton
-              testId="advanced-log-filter-reset"
-              label="Reset log filter"
-              disabled={
-                resetFilter.pending || logFilter()?.pattern === defaultLogFilter
-              }
-              onReset={resetFilter}
-            />
-          </Suspense>
+          <ResetButton
+            testId="advanced-log-filter-reset"
+            label="Reset log filter"
+            ready={logFilter.ready}
+            disabled={
+              resetFilter.pending || logFilter()?.pattern === defaultLogFilter
+            }
+            onReset={resetFilter}
+          />
         </Flex>
         <Text as="p" size={2} color="lowContrast" selectable={false}>
           Control what's logged to the console. Use <Code>*</Code> to show all
@@ -59,34 +58,21 @@ export const LogFilterSettings = () => {
           for the syntax guide.
         </Text>
       </Flex>
-      <Suspense
-        fallback={
-          <TextField
-            testId="advanced-log-filter"
-            aria-labelledby={headingId}
-            skeleton
-            placeholder="*"
-            autocomplete="off"
-            autocapitalize="off"
-            enterkeyhint="done"
-          />
-        }
-      >
-        <TextField
-          testId="advanced-log-filter"
-          aria-labelledby={headingId}
-          value={logFilter()?.pattern}
-          placeholder="*"
-          autocomplete="off"
-          autocapitalize="off"
-          enterkeyhint="done"
-          spellcheck={false}
-          onBlur={(event) => {
-            const next = event.currentTarget.value;
-            if (next !== logFilter()?.pattern) updateFilter(next);
-          }}
-        />
-      </Suspense>
+      <TextField
+        testId="advanced-log-filter"
+        aria-labelledby={headingId}
+        value={logFilter()?.pattern}
+        skeleton={!logFilter.ready}
+        placeholder="*"
+        autocomplete="off"
+        autocapitalize="off"
+        enterkeyhint="done"
+        spellcheck={false}
+        onBlur={(event) => {
+          const next = event.currentTarget.value;
+          if (next !== logFilter()?.pattern) updateFilter(next);
+        }}
+      />
     </Flex>
   );
 };
