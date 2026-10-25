@@ -47,10 +47,9 @@ export {
   $onboarding,
   $onboardingAdvanced,
   $onboardingRestored,
-  $setupDraft,
+  $setupName,
   $setupNameChanged,
   type OnboardingProgress,
-  type SetupDraft,
 } from './onboarding';
 export {
   $peerClosed,

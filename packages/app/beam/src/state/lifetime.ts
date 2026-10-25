@@ -3,7 +3,7 @@ import { $connection } from './connection';
 import { $contacts } from './contacts';
 import { $inviteOpen, $removalTarget, $renameTarget } from './dialogs';
 import { $identity, $qrCode } from './identity';
-import { $onboarding, $setupDraft } from './onboarding';
+import { $onboarding, $setupName } from './onboarding';
 import { $peerHandles, $peerLinks } from './peers';
 import { $drafts, $shareLog } from './shares';
 
@@ -24,6 +24,6 @@ export const $beamLifetime = collect([
   $qrCode,
   $removalTarget,
   $renameTarget,
-  $setupDraft,
+  $setupName,
   $shareLog,
 ]);

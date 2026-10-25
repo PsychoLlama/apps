@@ -3,7 +3,7 @@ import type { SelfContact } from '../platform/database';
 import type { QrGrid } from '../platform/qr-code';
 import { $renameTarget } from './dialogs';
 import { generateLabel, normalizeLabel } from './labels';
-import { $setupDraft } from './onboarding';
+import { $setupName } from './onboarding';
 
 /**
  * Who this device is: the address it answers on, and the name it goes by.
@@ -79,8 +79,8 @@ export const $identityResolved = defineCommand(
  * rename form for this device has done its job, so both close here.
  */
 export const $deviceNamed = defineCommand(
-  [$identity, $setupDraft, $renameTarget],
-  (self, draft, [renameTarget, setRenameTarget]) =>
+  [$identity, $setupName, $renameTarget],
+  (self, [, setSetupName], [renameTarget, setRenameTarget]) =>
     (endpointId: string, label: string | null, at: number) => {
       self.record = {
         kind: 'self',
@@ -89,7 +89,7 @@ export const $deviceNamed = defineCommand(
         createdAt: self.record?.createdAt ?? at,
       };
 
-      draft.name = '';
+      setSetupName('');
       if (renameTarget()?.kind === 'self') setRenameTarget(null);
     },
 );
