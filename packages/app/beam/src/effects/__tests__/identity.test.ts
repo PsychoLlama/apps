@@ -5,7 +5,7 @@ import {
   $identityResolved,
   $renameTarget,
   $renameOpened,
-  $setupDraft,
+  $setupName,
   $setupNameChanged,
 } from '../../state';
 import { $nameDevice } from '../identity';
@@ -56,7 +56,7 @@ describe('$nameDevice', () => {
     const setupNameChanged = await effects.run($setupNameChanged);
     const renameOpened = await effects.run($renameOpened);
     const nameDevice = await effects.run($nameDevice);
-    const draft = await effects.run($setupDraft);
+    const setupName = await effects.run($setupName);
     const renameTarget = await effects.run($renameTarget);
     identityResolved(SELF_ID);
     setupNameChanged('Laptop');
@@ -64,7 +64,7 @@ describe('$nameDevice', () => {
 
     await nameDevice('Laptop');
 
-    expect(draft.name).toBe('');
+    expect(setupName()).toBe('');
     expect(renameTarget()).toBeNull();
   });
 

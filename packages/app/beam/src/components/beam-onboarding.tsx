@@ -17,7 +17,7 @@ import { $finishNaming } from '../effects';
 import type { OnboardingStep } from '../platform/database';
 import {
   $inviteOpened,
-  $setupDraft,
+  $setupName,
   $setupNameChanged,
   LABEL_MAX_LENGTH,
   normalizeLabel,
@@ -66,13 +66,11 @@ const NAME_FIELD = 'label';
  * gets pressed past.
  */
 export const BeamOnboarding = (props: { step: SetupStep }) => {
-  const draft = useValue($setupDraft);
+  /** The name as typed, held in a cell so a stumble doesn't lose it. */
+  const name = useValue($setupName);
   const finishNaming = useAction($finishNaming);
   const changeName = useAction($setupNameChanged);
   const openInvite = useAction($inviteOpened);
-
-  /** The name as typed, held in a store so a stumble doesn't lose it. */
-  const name = () => draft().name;
 
   /**
    * Whether there's a name to save. Measured with the rule that will actually
@@ -82,7 +80,7 @@ export const BeamOnboarding = (props: { step: SetupStep }) => {
   const named = () => normalizeLabel(name()) !== null;
 
   /**
-   * Sent from the draft rather than from `FormData`. The store already holds
+   * Sent from the cell rather than from `FormData`. The cell already holds
    * what was typed, and reading the field back would make a second source of
    * truth out of the one the button is enabled from.
    */

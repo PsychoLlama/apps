@@ -15,7 +15,7 @@ import {
   deviceFallbackOf,
   deviceNameOf,
 } from '../identity';
-import { $setupDraft, $setupNameChanged } from '../onboarding';
+import { $setupName, $setupNameChanged } from '../onboarding';
 
 const KEY = 'abcdef0123456789';
 
@@ -103,14 +103,14 @@ describe('$deviceNamed', () => {
 
   it('clears the setup draft once the name lands', async () => {
     await using effects = createTestController();
-    const draft = await effects.run($setupDraft);
+    const setupName = await effects.run($setupName);
     const deviceNamed = await effects.run($deviceNamed);
     const setupNameChanged = await effects.run($setupNameChanged);
     setupNameChanged('Laptop');
 
     deviceNamed(KEY, 'Laptop', 5);
 
-    expect(draft.name).toBe('');
+    expect(setupName()).toBe('');
   });
 
   it('closes this device’s rename form', async () => {

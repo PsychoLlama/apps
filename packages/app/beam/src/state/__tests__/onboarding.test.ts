@@ -5,7 +5,7 @@ import {
   $onboarding,
   $onboardingAdvanced,
   $onboardingRestored,
-  $setupDraft,
+  $setupName,
   $setupNameChanged,
 } from '../onboarding';
 
@@ -55,11 +55,11 @@ describe('$onboardingAdvanced', () => {
 describe('$setupNameChanged', () => {
   it('holds the name exactly as typed', async () => {
     await using effects = createTestController();
-    const draft = await effects.run($setupDraft);
+    const setupName = await effects.run($setupName);
     const setupNameChanged = await effects.run($setupNameChanged);
 
     setupNameChanged('  Carol’s ');
 
-    expect(draft.name).toBe('  Carol’s ');
+    expect(setupName()).toBe('  Carol’s ');
   });
 });

@@ -1,4 +1,4 @@
-import { defineCommand, defineStore } from '@lib/state';
+import { defineCell, defineCommand, defineStore } from '@lib/state';
 import type { OnboardingRecord, OnboardingStep } from '../platform/database';
 
 /**
@@ -31,20 +31,6 @@ export interface OnboardingProgress {
 }
 
 /**
- * The half-filled setup form. Held here rather than in the field because the
- * form is torn down and rebuilt around it: leaving the step and coming back,
- * or a save that didn't land, should still have the name typed a moment ago.
- */
-export interface SetupDraft {
-  /**
-   * The name typed into the setup form, exactly as typed. Unnormalized —
-   * trimming under the caret would fight whoever is typing, and the rule that
-   * decides what a name may be runs when the name is used.
-   */
-  name: string;
-}
-
-/**
  * How far setting this device up has got. IndexedDB is the durable copy; this
  * is the working one, loaded once per session and written through on every
  * change.
@@ -54,8 +40,16 @@ export const $onboarding = defineStore<OnboardingProgress>(() => ({
   updatedAt: null,
 }));
 
-/** What the setup form holds. */
-export const $setupDraft = defineStore<SetupDraft>(() => ({ name: '' }));
+/**
+ * The name typed into the setup form, exactly as typed. Held here rather than
+ * in the field because the form is torn down and rebuilt around it: leaving
+ * the step and coming back, or a save that didn't land, should still have the
+ * name typed a moment ago.
+ *
+ * Unnormalized — trimming under the caret would fight whoever is typing, and
+ * the rule that decides what a name may be runs when the name is used.
+ */
+export const $setupName = defineCell(() => '');
 
 /**
  * The persisted progress was read back — `null` where nothing was stored,
@@ -84,8 +78,6 @@ export const $onboardingAdvanced = defineCommand(
 
 /** The reader typed into the setup form. */
 export const $setupNameChanged = defineCommand(
-  [$setupDraft],
-  (draft) => (name: string) => {
-    draft.name = name;
-  },
+  [$setupName],
+  ([, setName]) => setName,
 );
