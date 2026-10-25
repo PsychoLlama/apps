@@ -23,11 +23,6 @@ export const useValue = <Output>(
 ): Accessor<Reduce<Output>> => {
   const controller = useController();
   const [handle, release] = acquire(plan);
-
-  // TODO: Server renders share the default controller, so cached state
-  // carries from one render into the next, and nothing releases it:
-  // cleanup doesn't reliably run on the server. Give each server render
-  // its own controller.
   onCleanup(release);
 
   // The type vouches for this, unless a task's type lies. Then nothing
