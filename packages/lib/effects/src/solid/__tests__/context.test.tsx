@@ -1,7 +1,6 @@
 import { render } from '@solidjs/testing-library';
 import { createEffect } from 'solid-js';
 import type { Controller } from '../../controller/controller';
-import { createTestController } from '../../testing';
 import { EffectsRoot, useController, useMounted } from '../context';
 
 describe('EffectsRoot', () => {
@@ -29,13 +28,12 @@ describe('EffectsRoot', () => {
     expect(container).toHaveTextContent('mounted');
   });
 
-  it('provides a controller of its own unless given another', () => {
+  it('provides a controller of its own', () => {
     const seen: Controller[] = [];
     const Probe = () => {
       seen.push(useController());
       return null;
     };
-    const { controller } = createTestController();
 
     render(() => (
       <>
@@ -45,16 +43,12 @@ describe('EffectsRoot', () => {
         <EffectsRoot>
           <Probe />
         </EffectsRoot>
-        <EffectsRoot controller={controller}>
-          <Probe />
-        </EffectsRoot>
       </>
     ));
 
-    // Roots without one never share, so no state carries between them.
-    const [first, second, given] = seen;
+    // Roots never share, so no state carries between them.
+    const [first, second] = seen;
     expect(first).not.toBe(second);
-    expect(given).toBe(controller);
   });
 
   it.each([useMounted, useController])('demands a root above %o', (hook) => {

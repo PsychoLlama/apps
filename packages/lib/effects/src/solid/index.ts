@@ -1,9 +1,4 @@
-export {
-  EffectsRoot,
-  useController,
-  useMounted,
-  type EffectsRootProps,
-} from './context';
+export { EffectsRoot, useMounted } from './context';
 export { useAction, type Action } from './use-action';
 export {
   useClientValue,

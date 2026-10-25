@@ -10,9 +10,8 @@ import {
 } from 'solid-js';
 import { collect, pipe } from '../../combinators';
 import { reactive, resource } from '../../task';
-import { createTestController } from '../../testing';
-import type { Controller } from '../../controller/controller';
-import { EffectsContext } from '../context';
+import { createTestController, type TestController } from '../../testing';
+
 import { useClientValue, type ClientValue } from '../use-client-value';
 
 /** Let queued microtasks run. */
@@ -24,12 +23,12 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
  * itself so the probe is owned by whatever it's placed in.
  */
 const renderUnmounted = <Result,>(
-  controller: Controller,
+  controller: TestController,
   setup: () => Result,
   wrap = (Probe: Component) => <Probe />,
 ) => {
   const [mounted, setMounted] = createSignal(false);
-  const effects = { controller, mounted };
+  const Effects = controller.createRenderContext({ mounted });
 
   let result!: Result;
   const Probe = () => {
@@ -37,11 +36,7 @@ const renderUnmounted = <Result,>(
     return null;
   };
 
-  const { unmount } = render(() => (
-    <EffectsContext.Provider value={effects}>
-      {wrap(Probe)}
-    </EffectsContext.Provider>
-  ));
+  const { unmount } = render(() => <Effects>{wrap(Probe)}</Effects>);
 
   return { result, mount: () => setMounted(true), unmount };
 };
@@ -66,7 +61,7 @@ describe('useClientValue', () => {
     const load = vi.fn(() => gate.promise);
     const double = (value: number) => value * 2;
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(pipe([load, double])),
     );
 
@@ -91,7 +86,7 @@ describe('useClientValue', () => {
   it('is ready on mount when the output is already here', async () => {
     await using controller = createTestController();
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(pipe([() => 1])),
     );
 
@@ -106,7 +101,7 @@ describe('useClientValue', () => {
     await using controller = createTestController();
     const gate = Promise.withResolvers<number>();
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(pipe([() => gate.promise]), { initial: 'none' }),
     );
 
@@ -126,7 +121,7 @@ describe('useClientValue', () => {
   it('defaults the initial value to `undefined`', async () => {
     await using controller = createTestController();
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(pipe([() => 1]), {}),
     );
 
@@ -138,7 +133,7 @@ describe('useClientValue', () => {
   it('counts an output of `undefined` as resolved', async () => {
     await using controller = createTestController();
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(pipe([() => undefined]), { initial: 'none' }),
     );
 
@@ -154,7 +149,7 @@ describe('useClientValue', () => {
     await using controller = createTestController();
     const seen = vi.fn();
 
-    const tree = renderUnmounted(controller.controller, () => {
+    const tree = renderUnmounted(controller, () => {
       const output = useClientValue(pipe([() => 1]), { initial: 0 });
       createEffect(() => {
         seen(output.ready, output());
@@ -177,7 +172,7 @@ describe('useClientValue', () => {
     const gate = Promise.withResolvers<number>();
 
     const tree = renderUnmounted(
-      controller.controller,
+      controller,
       () => {
         const output = useClientValue(pipe([() => gate.promise]));
         // A render-phase read, which would suspend a resource.
@@ -206,7 +201,7 @@ describe('useClientValue', () => {
     const one = () => 1;
     const two = () => 'two';
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(collect([one, two])),
     );
 
@@ -224,7 +219,7 @@ describe('useClientValue', () => {
     await using controller = createTestController();
     const open = () => resource('stream', () => {});
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(pipe([open])),
     );
 
@@ -242,7 +237,7 @@ describe('useClientValue', () => {
     const observe = () => reactive(muted);
     const seen = vi.fn();
 
-    const tree = renderUnmounted(controller.controller, () => {
+    const tree = renderUnmounted(controller, () => {
       const output = useClientValue(pipe([observe]));
       createEffect(() => {
         seen(output());
@@ -267,7 +262,7 @@ describe('useClientValue', () => {
     await using controller = createTestController();
     const format = (value: number) => `#${value}`;
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(pipe([() => format])),
     );
 
@@ -285,7 +280,7 @@ describe('useClientValue', () => {
     const caught = vi.fn();
 
     const tree = renderUnmounted(
-      controller.controller,
+      controller,
       () => useClientValue(pipe([fail])),
       (Probe) => catchInto(caught, Probe),
     );
@@ -307,7 +302,7 @@ describe('useClientValue', () => {
     const caught = vi.fn();
 
     const tree = renderUnmounted(
-      controller.controller,
+      controller,
       () => useClientValue(pipe([() => gate.promise, next])),
       (Probe) =>
         catchInto(caught, () => (
@@ -319,7 +314,7 @@ describe('useClientValue', () => {
 
     tree.mount();
     setShown(false);
-    expect(controller.manager.handles.size).toBe(0);
+    expect(controller.holds).toBe(0);
 
     gate.resolve(1);
     await settle();
@@ -337,7 +332,7 @@ describe('useClientValue', () => {
     const caught = vi.fn();
 
     const tree = renderUnmounted(
-      controller.controller,
+      controller,
       () => useClientValue(pipe([() => gate.promise])),
       (Probe) =>
         catchInto(caught, () => (
@@ -363,7 +358,7 @@ describe('useClientValue', () => {
     const dispose = vi.fn();
     const open = () => resource('stream', dispose);
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(pipe([open])),
     );
 
@@ -375,7 +370,7 @@ describe('useClientValue', () => {
     await settle();
 
     expect(dispose).toHaveBeenCalledOnce();
-    expect(controller.manager.handles.size).toBe(0);
+    expect(controller.holds).toBe(0);
   });
 
   it('throws cleanup failures to the error boundary that outlives it', async () => {
@@ -389,7 +384,7 @@ describe('useClientValue', () => {
     const caught = vi.fn();
 
     const tree = renderUnmounted(
-      controller.controller,
+      controller,
       () => useClientValue(pipe([open])),
       (Probe) =>
         catchInto(caught, () => (
@@ -414,7 +409,7 @@ describe('useClientValue', () => {
     await using controller = createTestController();
     const open = vi.fn(() => 1);
 
-    const tree = renderUnmounted(controller.controller, () =>
+    const tree = renderUnmounted(controller, () =>
       useClientValue(pipe([open])),
     );
 

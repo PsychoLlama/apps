@@ -7,9 +7,8 @@ import {
 } from 'solid-js';
 import { collect, pipe } from '../../combinators';
 import { reactive, resource } from '../../task';
-import { createTestController } from '../../testing';
-import type { Controller } from '../../controller/controller';
-import { EffectsContext } from '../context';
+import { createTestController, type TestController } from '../../testing';
+
 import { useValue } from '../use-value';
 
 /** Let queued microtasks run. */
@@ -20,11 +19,12 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
  * whatever its error boundary caught. `view` renders from the result.
  */
 const renderHook = <Result,>(
-  controller: Controller,
+  controller: TestController,
   setup: () => Result,
   View: Component<{ result: Result }> = () => null,
 ) => {
   const [mounted] = createSignal(true);
+  const Effects = controller.createRenderContext({ mounted });
   const errors: unknown[] = [];
 
   let result!: Result;
@@ -34,7 +34,7 @@ const renderHook = <Result,>(
   };
 
   const { unmount } = render(() => (
-    <EffectsContext.Provider value={{ controller, mounted }}>
+    <Effects>
       <ErrorBoundary
         fallback={(error) => {
           errors.push(error);
@@ -43,7 +43,7 @@ const renderHook = <Result,>(
       >
         <Probe />
       </ErrorBoundary>
-    </EffectsContext.Provider>
+    </Effects>
   ));
 
   return { result, errors, unmount };
@@ -55,9 +55,7 @@ describe('useValue', () => {
     const load = vi.fn(() => 1);
     const double = (value: number) => value * 2;
 
-    const tree = renderHook(controller.controller, () =>
-      useValue(pipe([load, double])),
-    );
+    const tree = renderHook(controller, () => useValue(pipe([load, double])));
 
     expectTypeOf(tree.result).toEqualTypeOf<Accessor<number>>();
     expect(tree.result()).toBe(2);
@@ -71,7 +69,7 @@ describe('useValue', () => {
     const observe = () => reactive(count);
 
     const tree = renderHook(
-      controller.controller,
+      controller,
       () => useValue(pipe([observe])),
       (props) => <p>count {props.result()}</p>,
     );
@@ -89,7 +87,7 @@ describe('useValue', () => {
     const open = () => resource('stream', () => {});
     const live = () => reactive(() => true);
 
-    const tree = renderHook(controller.controller, () =>
+    const tree = renderHook(controller, () =>
       useValue(collect([open, live], (stream, state) => [stream, state()])),
     );
 
@@ -103,7 +101,7 @@ describe('useValue', () => {
     const later = async () => 1;
     const closing = () => resource(1, async () => {});
 
-    const tree = renderHook(controller.controller, () => {
+    const tree = renderHook(controller, () => {
       // @ts-expect-error -- Returns a promise.
       expect(() => useValue(pipe([later]))).toThrow(/synchronous/);
       const illegal = () => {
@@ -126,9 +124,7 @@ describe('useValue', () => {
       throw failure;
     };
 
-    const tree = renderHook(controller.controller, () =>
-      useValue(pipe([fail])),
-    );
+    const tree = renderHook(controller, () => useValue(pipe([fail])));
 
     expect(tree.errors).toHaveLength(1);
     expect((tree.errors[0] as AggregateError).errors).toEqual([failure]);
@@ -140,14 +136,12 @@ describe('useValue', () => {
     const dispose = vi.fn<() => void>();
     const open = () => resource('stream', dispose);
 
-    const tree = renderHook(controller.controller, () =>
-      useValue(pipe([open])),
-    );
+    const tree = renderHook(controller, () => useValue(pipe([open])));
 
     tree.unmount();
     await settle();
 
     expect(dispose).toHaveBeenCalledOnce();
-    expect(controller.manager.handles.size).toBe(0);
+    expect(controller.holds).toBe(0);
   });
 });

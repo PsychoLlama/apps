@@ -66,10 +66,11 @@ describe('defineExtension', () => {
     const count = await effects.run($count);
 
     send();
-    const handle = effects.controller.acquire($extension);
-    effects.controller.compute(handle);
-    send();
-    await effects.controller.release(handle);
+    {
+      await using compute = effects.use($extension);
+      await compute();
+      send();
+    }
     send();
 
     expect(count()).toBe(1);

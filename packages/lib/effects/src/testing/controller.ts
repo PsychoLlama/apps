@@ -1,25 +1,57 @@
-import { createController, type Controller } from '../controller/controller';
+import type { Accessor, Component, ParentProps } from 'solid-js';
+import { createController } from '../controller/controller';
 import { toPromise } from '../eventual';
 import type { Plan } from '../plan';
-import { createManager, release, type Manager } from '../manager';
+import {
+  acquire,
+  compute,
+  createManager,
+  release,
+  type Handle,
+} from '../manager';
 import { yieldOf, type Yield } from '../task';
+import { createRenderContext } from './render-context';
+
+/**
+ * One hold on a plan, for tests that control its lifetime. Call it to
+ * compute the plan and get what it yields; safe to call repeatedly. Bind
+ * it with `await using`; leaving the scope releases the hold.
+ */
+export interface Hold<Output> extends AsyncDisposable {
+  (): Promise<Yield<Output>>;
+}
+
+/** Options for {@link TestController.createRenderContext}. */
+export interface RenderContextOptions {
+  /**
+   * Stands in for the root's mount tracking, for tests that flip it by
+   * hand. Defaults to tracking the mount like `EffectsRoot`.
+   */
+  readonly mounted?: Accessor<boolean>;
+}
 
 /** Drives plans against a fresh manager and tears them down after. */
 export interface TestController extends AsyncDisposable {
-  /** The manager under test, for assertions that need to look inside. */
-  readonly manager: Manager;
+  /** How many holds are live: every plan computed and not yet released. */
+  readonly holds: number;
 
   /**
-   * A controller over the same manager, for bindings that take one: give
-   * it to a Solid tree through `EffectsRoot`.
-   */
-  readonly controller: Controller;
-
-  /**
-   * Acquire the plan, compute it, and return what it yields. The
-   * handle stays live until the controller is disposed.
+   * Hold the plan, compute it, and return what it yields. The hold lasts
+   * until the controller is disposed.
    */
   run<Output>(plan: Plan<void, Output>): Promise<Yield<Output>>;
+
+  /**
+   * Hold the plan for the scope it's bound to, for tests that control its
+   * lifetime. Nothing runs until it's called.
+   */
+  use<Output>(plan: Plan<void, Output>): Hold<Output>;
+
+  /**
+   * A root for rendering components against this controller, in place of
+   * `EffectsRoot`.
+   */
+  createRenderContext(options?: RenderContextOptions): Component<ParentProps>;
 }
 
 /**
@@ -29,24 +61,51 @@ export interface TestController extends AsyncDisposable {
  */
 export const createTestController = (): TestController => {
   const manager = createManager();
-  const controller = createController(manager);
+
+  // `yieldOf` is untyped; the plan's signature vouches.
+  const settle = async <Output>(
+    handle: Handle<Output>,
+  ): Promise<Yield<Output>> =>
+    yieldOf(await toPromise(compute(manager, handle))) as Yield<Output>;
+
+  // Releases a hold's scope let go of without waiting for.
+  const deferred: Promise<void>[] = [];
 
   return {
-    manager,
-    controller,
-
-    run: async <Output>(plan: Plan<void, Output>): Promise<Yield<Output>> => {
-      const handle = controller.acquire(plan);
-      const output = await toPromise(controller.compute(handle));
-
-      // `yieldOf` is untyped; the plan's signature vouches.
-      return yieldOf(output) as Yield<Output>;
+    get holds() {
+      return manager.handles.size;
     },
 
+    run: (plan) => settle(acquire(plan)),
+
+    use: <Output>(plan: Plan<void, Output>): Hold<Output> => {
+      const handle = acquire(plan);
+
+      return Object.assign(async () => settle(handle), {
+        [Symbol.asyncDispose]: async () => {
+          const inFlight = [...handle.bindings.values()].some(
+            (binding) => binding.type === 'async',
+          );
+          const released = release(manager, handle);
+          if (!inFlight) return released;
+
+          // The release waits for work in flight to land, and that may
+          // wait on the test moving past this scope. Leave it to the
+          // controller's disposal, which reports its failures.
+          released.catch(() => {});
+          deferred.push(released);
+        },
+      });
+    },
+
+    createRenderContext: (options) =>
+      createRenderContext(createController(manager), options),
+
     [Symbol.asyncDispose]: async () => {
-      const results = await Promise.allSettled(
-        [...manager.handles].map((handle) => release(manager, handle)),
-      );
+      const results = await Promise.allSettled([
+        ...deferred,
+        ...[...manager.handles].map((handle) => release(manager, handle)),
+      ]);
 
       const failures = results.flatMap((result): unknown[] => {
         if (result.status === 'fulfilled') return [];

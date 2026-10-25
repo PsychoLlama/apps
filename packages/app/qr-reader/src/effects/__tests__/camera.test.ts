@@ -66,15 +66,17 @@ describe('$liveCamera', () => {
     const { promise, resolve } = Promise.withResolvers<LiveCamera>();
     vi.mocked(openCamera).mockReturnValue(promise);
     await using effects = createTestController();
-    const handle = effects.controller.acquire($liveCamera);
-    const computed = effects.controller.compute(handle);
+    let computed;
+    {
+      await using compute = effects.use($liveCamera);
+      computed = compute();
+    }
+
+    resolve(live);
 
     // The page went away while the permission prompt was still open. Its
     // compute rejects, since nothing holds it any more.
-    const released = effects.controller.release(handle);
-    resolve(live);
-    await expect(computed.value).rejects.toThrow('released');
-    await released;
+    await expect(computed).rejects.toThrow('released');
 
     expect(stopStream).toHaveBeenCalledWith(stream);
   });
