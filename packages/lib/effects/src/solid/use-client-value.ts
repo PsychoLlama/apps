@@ -2,12 +2,7 @@ import { createEffect, createSignal, on, onCleanup } from 'solid-js';
 import { chain, now, rescue } from '../eventual';
 import type { Plan } from '../plan';
 import { useController, useMounted } from './context';
-import {
-  acquire,
-  reduce,
-  useThrowToBoundary,
-  type Reduce,
-} from './plan-resource';
+import { acquire, reduce, useThrowToBoundary, type Reduce } from './plan-hooks';
 
 /**
  * A client-only plan's output, read without suspending. Call it for the

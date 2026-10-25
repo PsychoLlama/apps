@@ -3,7 +3,7 @@ import { assert } from '@lib/assert';
 import type { Mode } from '../mode';
 import type { Plan } from '../plan';
 import { useController } from './context';
-import { acquire, reduce, type Reduce } from './plan-resource';
+import { acquire, reduce, type Reduce } from './plan-hooks';
 
 /**
  * Read a synchronous plan's output, holding the plan for the component's
