@@ -13,8 +13,9 @@ description: Reference docs for `@lib/state` — the codebase's sanctioned state
 - `defineCell(init)`: A plan holding one reactive value. `init` seeds it from whatever the earlier step yields. Readers get the accessor.
 - `defineStore<State>(init)`: A plan holding a deeply reactive object. Readers get a deeply read-only view.
 - `createCell(initial)`: Make a cell inside your own plan step. Returns `[cell, setter]`; return the cell through `reactive(cell, cleanup?)`.
+- Prefer cells. Reach for a store only when its fields are genuinely coupled, i.e. they change together and are read as one.
 - Reach for `createCell` when one step owns the value and whatever hydrates or watches it, e.g. reading storage then following other tabs. The step keeps the setter; everyone else writes through commands.
-- Stores have no equivalent: only commits write them. Seed one from earlier steps with `pipe([..., defineStore(init)])`.
+- Stores have no equivalent to `createCell`: only commits write them. Seed one from earlier steps with `pipe([..., defineStore(init)])`.
 - Any plan yielding a cell or store is a target for commands and extensions, async plans included.
 - Every store-state interface and every field gets a doc comment describing its role.
 
