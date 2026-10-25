@@ -47,7 +47,7 @@ type Progress<Initial> =
  * nearest `ErrorBoundary`, whether in computing or in cleanup, and
  * whether or not anything reads the value.
  *
- * Reads through the output's kind, like `useClientResource`. Options are
+ * Reads through the output's kind, like `useValue`. Options are
  * read once.
  */
 export const useClientValue = <Output, Initial = undefined>(
