@@ -14,13 +14,19 @@ import type { PruneRecord } from '@lib/holz-idb-backend/database';
  */
 export type ArchiveFreshness = 'initial' | 'current' | 'stale';
 
+/** A persisted log, tagged with the key IndexedDB stores it under. */
+export interface ArchivedLog extends Log {
+  /** The log's IndexedDB key. Unique, so it names the entry across reads. */
+  id: number;
+}
+
 /** The on-device log archive, as read back from IndexedDB. */
 export interface ArchiveState {
   /** How `entries` relates to what's persisted — drives the refresh action. */
   freshness: ArchiveFreshness;
 
   /** Persisted logs, newest-first. Empty until a read resolves. */
-  entries: Log[];
+  entries: ArchivedLog[];
 
   /**
    * The last pruning pass, or `null` when nothing has ever been pruned. Dates
@@ -46,7 +52,7 @@ export const $archive = defineStore<ArchiveState>(() => ({
  */
 export const $archiveLoaded = defineCommand(
   [$archive],
-  (archive) => (entries: Log[], pruned: PruneRecord | null) => {
+  (archive) => (entries: ArchivedLog[], pruned: PruneRecord | null) => {
     archive.freshness = 'current';
     archive.entries = entries;
     archive.pruned = pruned;
@@ -69,7 +75,7 @@ export const $logsInserted = defineCommand([$archive], (archive) => () => {
  */
 export const $archiveRefreshed = defineCommand(
   [$archive],
-  (archive) => (added: Log[]) => {
+  (archive) => (added: ArchivedLog[]) => {
     archive.freshness = 'current';
     if (added.length > 0) archive.entries = [...added, ...archive.entries];
   },
