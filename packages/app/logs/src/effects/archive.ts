@@ -1,5 +1,4 @@
 import { collect, pipe, resource } from '@lib/effects';
-import type { Log } from '@lib/observability';
 import {
   PRUNE_RECORD_KEY,
   PRUNE_STORE_NAME,
@@ -15,6 +14,7 @@ import {
   $archiveLoaded,
   $archiveRefreshed,
   $logsInserted,
+  type ArchivedLog,
 } from '../state';
 
 // Walks the timestamp index back-to-front, so chronology falls out of the
@@ -23,12 +23,12 @@ import {
 const readNewestFirst = async (
   db: LogConnection,
   range: IDBKeyRange | null = null,
-): Promise<Log[]> => {
-  const entries: Log[] = [];
+): Promise<ArchivedLog[]> => {
+  const entries: ArchivedLog[] = [];
   const index = db.transaction(STORE_NAME).store.index(TIMESTAMP_INDEX);
 
   for await (const cursor of index.iterate(range, 'prev')) {
-    entries.push(cursor.value);
+    entries.push({ ...cursor.value, id: cursor.primaryKey });
   }
 
   return entries;

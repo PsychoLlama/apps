@@ -4,11 +4,11 @@ import { errorChain, type ErrorFrame } from './error-chain';
 import * as css from './log-panel.css';
 
 /**
- * An entry's third line, present only when the log carries a `context.error`.
- * A danger callout rendering the error and its `cause` chain as preformatted
- * text, outermost first, with each deeper cause prefixed "caused by" so a
- * hydrated chain reads top-down. The monospace face and danger tint come from
- * the inner `Code`; the `pre` preserves the chain's line breaks.
+ * An error attribute under the entry's message: a danger callout rendering
+ * the error and its `cause` chain as preformatted text, outermost first,
+ * with each deeper cause prefixed "caused by" so a hydrated chain reads
+ * top-down. The monospace face and danger tint come from the inner `Code`;
+ * the `pre` preserves the chain's line breaks.
  */
 export const ErrorDetails = (props: { error: Error }) => (
   <Callout
@@ -16,6 +16,9 @@ export const ErrorDetails = (props: { error: Error }) => (
     color="danger"
     icon={<IconAlert />}
     class={css.errorCallout}
+    // Inside an entry's `<summary>`, a click would toggle the entry. Keep
+    // it for selecting the error text instead.
+    onClick={(event) => event.preventDefault()}
   >
     <Text as="pre" size={1} selectable class={css.errorOutput}>
       <Code size={1} variant="ghost" color="danger">

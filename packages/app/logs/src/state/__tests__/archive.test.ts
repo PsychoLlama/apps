@@ -1,14 +1,16 @@
 import { createTestController } from '@lib/effects/testing';
-import { level, type Log } from '@lib/observability';
+import { level } from '@lib/observability';
 import {
   $archive,
   $archiveLoaded,
   $archiveRefreshed,
   $logsInserted,
+  type ArchivedLog,
 } from '../archive';
 
-/** A complete `Log`, with only the fields a test cares about overridden. */
-const makeLog = (overrides: Partial<Log>): Log => ({
+/** A complete `ArchivedLog`, with only the fields a test cares about overridden. */
+const makeLog = (overrides: Partial<ArchivedLog>): ArchivedLog => ({
+  id: 0,
   timestamp: 0,
   message: '',
   level: level.info,

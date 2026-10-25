@@ -1,13 +1,13 @@
 import type { Log } from '@lib/observability';
 
 /** A single day's worth of logs, with a localized heading for the day. */
-export interface LogDayGroup {
+export interface LogDayGroup<T extends Log = Log> {
   /** Stable key for the day — the local calendar date as `YYYY-M-D`. */
   key: string;
   /** Localized day heading, e.g. `Monday, June 29, 2026`. */
   heading: string;
   /** Entries that fell on this day, in the order they were given. */
-  logs: Log[];
+  logs: T[];
 }
 
 /**
@@ -27,10 +27,12 @@ const dayKey = (date: Date): string =>
  * newest entry first inside it. Days are keyed by the *local* calendar date, so
  * a group's heading matches the wall-clock day the reader sees on its entries.
  */
-export const groupLogsByDay = (logs: readonly Log[]): LogDayGroup[] => {
+export const groupLogsByDay = <T extends Log>(
+  logs: readonly T[],
+): LogDayGroup<T>[] => {
   // Keyed by day so out-of-order input still collapses to one group per day;
   // a Map keeps first-seen day order, which for a sorted list is the sort.
-  const groups = new Map<string, LogDayGroup>();
+  const groups = new Map<string, LogDayGroup<T>>();
 
   for (const log of logs) {
     const date = new Date(log.timestamp);
