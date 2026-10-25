@@ -1,6 +1,6 @@
-import { Match, Show, Switch, createMemo, type JSX } from 'solid-js';
+import { Match, Show, Suspense, Switch, createMemo, type JSX } from 'solid-js';
 import { useLocation } from '@solidjs/router';
-import { Suspense, useClientResource, useValue } from '@lib/effects/solid';
+import { useClientValue, useValue } from '@lib/effects/solid';
 import { Frame } from '@lib/shell';
 import { Flex } from '@lib/ui';
 import { BeamHeader } from '../components/beam-header';
@@ -50,8 +50,8 @@ const BeamLayout = (props: { children?: JSX.Element }) => {
   // both start once the client mounts. They're independent, and the disk
   // answers long before the relay does. The connection is never read: it
   // reports through `$connection`.
-  const restored = useClientResource($restoreFromDisk);
-  useClientResource($connect);
+  const restored = useClientValue($restoreFromDisk);
+  useClientValue($connect);
 
   const location = useLocation();
   const onboarding = useValue($onboarding);
@@ -72,9 +72,10 @@ const BeamLayout = (props: { children?: JSX.Element }) => {
 
       {/* Nothing until the disk has answered: no screen is the right one
           yet, and the frame's header is all there is to show. A failed read
-          reaches the error boundary. */}
+          reaches the error boundary. Anything the route suspends on, like
+          its lazy chunk, stays in here instead of blanking the header. */}
       <Suspense>
-        <Show when={restored()}>
+        <Show when={restored.ready}>
           <Switch>
             <Match when={surface() === 'naming'}>
               <BeamOnboarding step="naming" />
