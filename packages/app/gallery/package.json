@@ -33,6 +33,7 @@
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*",
     "@lib/runtime-config": "workspace:*",
+    "@lib/service-worker": "workspace:^0.0.0",
     "@lib/shell": "workspace:*",
     "@lib/state": "workspace:*",
     "@lib/theme": "workspace:*",

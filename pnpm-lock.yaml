@@ -441,6 +441,9 @@ importers:
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../../lib/runtime-config
+      '@lib/service-worker':
+        specifier: workspace:^0.0.0
+        version: link:../../lib/service-worker
       '@lib/shell':
         specifier: workspace:*
         version: link:../../lib/shell

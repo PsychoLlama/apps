@@ -16,6 +16,13 @@ import { offlineManifest } from './nitro-module/offline-manifest.ts';
 export interface ServiceWorkerConfig {
   /** The service worker's entry module, relative to the Vite root. */
   path: string;
+
+  /**
+   * Whether builds inject an offline manifest. Defaults to `true`. Turn it
+   * off for apps that don't serve offline: the worker sees no manifest, as
+   * in dev.
+   */
+  offline?: boolean;
 }
 
 /**
@@ -23,11 +30,13 @@ export interface ServiceWorkerConfig {
  * `/service-worker.js`. Register it as a module worker
  * (`type: 'module'`).
  *
- * Under Nitro, it also injects an offline manifest into the built worker.
+ * Under Nitro, it also injects an offline manifest into the built worker,
+ * unless `offline` is off.
  */
 export const serviceWorker = (
   config: ServiceWorkerConfig,
-): Plugin & { nitro: NitroModule } => {
+): Plugin & { nitro?: NitroModule } => {
+  const offline = config.offline ?? true;
   let entry: string;
   let devUrl: string;
   let redirects: RedirectsApi | undefined;
@@ -37,7 +46,9 @@ export const serviceWorker = (
 
     // Nitro installs modules from every Vite plugin that carries one. The
     // manifest needs the final public dir, which only Nitro knows.
-    nitro: offlineManifest(() => redirects?.getCompiledRules() ?? []),
+    nitro: offline
+      ? offlineManifest(() => redirects?.getCompiledRules() ?? [])
+      : undefined,
 
     // The worker ships with the browser bundle. Server environments never
     // see it.
@@ -53,9 +64,11 @@ export const serviceWorker = (
         ),
 
         // Builds leave a sentinel for the Nitro module to swap the manifest
-        // into. Dev has no manifest.
+        // into. Dev, and apps that don't serve offline, have no manifest.
         'import.meta.env.OFFLINE_MANIFEST':
-          command === 'build' ? OFFLINE_MANIFEST_SENTINEL : 'undefined',
+          offline && command === 'build'
+            ? OFFLINE_MANIFEST_SENTINEL
+            : 'undefined',
       },
     }),
 

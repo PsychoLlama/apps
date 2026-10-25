@@ -90,12 +90,13 @@ const config: KnipConfig = {
       vite: false,
     },
     'packages/app/gallery': {
-      // Same shape as the icon editor: SolidStart's file routes, app root
-      // and entries are production entries.
+      // Same shape as the icon editor, plus the service worker.
       entry: [
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
+        // Its own bundle, built and registered separately from the app.
+        'src/service-worker/index.ts!',
         'src/**/*.css.ts!',
         'vite.config.ts',
       ],

@@ -16,9 +16,8 @@ export interface Effects {
   readonly controller: Controller;
 
   /**
-   * Whether the tree has mounted. Reactive. Client-side resources key on
-   * it so they start on mount, and suspense boundaries hold their
-   * fallback until those resources resolve.
+   * Whether the tree has mounted. Reactive. Client-only plans key on it
+   * so they start on mount.
    */
   readonly mounted: Accessor<boolean>;
 }
@@ -41,7 +40,8 @@ export interface EffectsRootProps extends ParentProps {
  * controller plans run on, and tracks whether the tree has mounted:
  * pre-rendered HTML and the hydration pass both read `false`, so they
  * agree; it turns `true` once the client takes over, which is what
- * initializes client-side resources under suspense.
+ * starts client-only plans. Above `Suspense`, a pending boundary can't
+ * hold back the mount.
  */
 export const EffectsRoot = (props: EffectsRootProps) => {
   const [mounted, setMounted] = createSignal(false);
@@ -72,8 +72,8 @@ export const useController = (): Controller => useEffects().controller;
 
 /**
  * Whether the tree under `EffectsRoot` has mounted. Reactive. Key
- * client-side resources on it: they stay idle through pre-render and
+ * client-only work on it: it stays idle through pre-render and
  * hydration, so the server and the first client render match, then
- * start on mount while suspense shows the fallback.
+ * starts on mount.
  */
 export const useMounted = (): Accessor<boolean> => useEffects().mounted;
