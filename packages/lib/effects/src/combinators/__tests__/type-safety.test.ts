@@ -48,6 +48,18 @@ describe('type safety', () => {
     void illegal;
   });
 
+  it('keeps a branded accessor branded', () => {
+    type Branded = Accessor<number> & { readonly brand: true };
+    const branded = (() => 0) as Branded;
+
+    const plan = pipe([() => reactive(branded)]);
+    expectTypeOf(plan).toEqualTypeOf<
+      Plan<void, Reactive<number, 'sync', Branded>, 'sync'>
+    >();
+
+    pipe([plan, (state: Branded) => state()]);
+  });
+
   it('collects branches into one array', () => {
     const grouped = collect([
       collect([() => 0, () => 1]),

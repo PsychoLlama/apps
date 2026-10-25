@@ -26,12 +26,17 @@ export interface Resource<T, out M extends Mode = Mode> {
  * A task output that changes over time, paired with an optional cleanup.
  * Downstream tasks receive the bare accessor; the runtime keeps `dispose`
  * and runs it when the node is released. `M` is the cleanup's
- * {@link Mode}.
+ * {@link Mode}. `A` is the accessor's own type, so a branded accessor
+ * stays branded.
  */
-export interface Reactive<T, out M extends Mode = Mode> {
+export interface Reactive<
+  T,
+  out M extends Mode = Mode,
+  out A extends Accessor<T> = Accessor<T>,
+> {
   readonly [BRAND]: 'reactive';
   readonly [DISPOSE_MODE]?: M;
-  readonly value: Accessor<T>;
+  readonly value: A;
   readonly dispose?: Dispose;
 }
 
@@ -59,8 +64,8 @@ export type DisposeModeOf<Output> =
 type Unwrap<Value> =
   Value extends Resource<infer Inner>
     ? Inner
-    : Value extends Reactive<infer Inner>
-      ? Accessor<Inner>
+    : Value extends Reactive<unknown, Mode, infer A>
+      ? A
       : Value;
 
 type Kind = Wrapped[typeof BRAND];
@@ -104,10 +109,11 @@ export const resource = <T, Disposed>(
  * accessor but run once; reading it there is a snapshot, not a
  * subscription.
  */
-export const reactive = <T, Disposed = void>(
-  value: Accessor<T>,
+export const reactive = <T, A extends Accessor<T>, Disposed = void>(
+  // Both, so `T` infers alongside the accessor's own type.
+  value: A & Accessor<T>,
   dispose?: () => Disposed,
-): Reactive<T, ModeOf<Disposed>> => ({
+): Reactive<T, ModeOf<Disposed>, A> => ({
   [BRAND]: 'reactive',
   value,
   // As in `resource`.
