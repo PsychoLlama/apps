@@ -1,7 +1,7 @@
 import { createComputed, createRoot } from 'solid-js';
 import { pipe } from '@lib/effects';
 import { createTestController } from '@lib/effects/testing';
-import { defineStore } from '../store';
+import { createStore, defineStore } from '../store';
 
 interface State {
   count: number;
@@ -58,6 +58,24 @@ describe('defineStore', () => {
     (store as State).count = 1;
     dispose();
 
+    expect(seen).toEqual([0, 1]);
+  });
+});
+
+describe('createStore', () => {
+  it('hands back one proxy as both views', () => {
+    const [store, state] = createStore<State>({ count: 0 });
+
+    const seen: number[] = [];
+    const dispose = createRoot((dispose) => {
+      createComputed(() => seen.push(store.count));
+      return dispose;
+    });
+
+    state.count = 1;
+    dispose();
+
+    expect(store).toBe(state);
     expect(seen).toEqual([0, 1]);
   });
 });

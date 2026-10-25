@@ -26,6 +26,21 @@ export type Store<State extends object> = DeepReadonly<State> & {
 };
 
 /**
+ * Create a store in a plan step that owns its state, e.g. one that also
+ * hydrates or watches it. Return the store, bare or through
+ * `resource(...)`, and the plan becomes a target for commands and
+ * extensions. The writable view stays with the step.
+ */
+export const createStore = <State extends object>(
+  initial: State,
+): [Store<State>, State] => {
+  // The proxy is both views: readers get it typed read-only, writers
+  // write through the same object.
+  const state = createMutable(initial);
+  return [state as Store<State>, state];
+};
+
+/**
  * Define a store. `init` runs when the plan is first held and seeds the
  * state from whatever the earlier step yields. Each live plan owns one
  * store, and the state ends with it.
@@ -35,8 +50,8 @@ export const defineStore = <State extends object, Input = void>(
 ): Plan<Input, Store<State>, 'sync'> =>
   // Only the mode needs vouching: a generic `State` might be a promise as
   // far as TypeScript knows.
-  pipe([
-    // The proxy is both views: readers get it typed read-only, commits
-    // write through the same object.
-    (input: Input) => createMutable(init(input)) as Store<State>,
-  ]) as Plan<Input, Store<State>, 'sync'>;
+  pipe([(input: Input) => createStore(init(input))[0]]) as Plan<
+    Input,
+    Store<State>,
+    'sync'
+  >;

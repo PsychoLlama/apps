@@ -1,15 +1,17 @@
 import {
   collect,
   pipe,
+  reactive,
+  resource,
   type Plan,
   type Reactive,
   type Resource,
 } from '@lib/effects';
-import type { Accessor, Signal } from 'solid-js';
+import type { Accessor, Setter, Signal } from 'solid-js';
 import { defineCommand } from '../command';
-import { defineCell, type Cell } from '../cell';
+import { createCell, defineCell, type Cell } from '../cell';
 import { defineExtension } from '../extension';
-import { defineStore, type Store } from '../store';
+import { createStore, defineStore, type Store } from '../store';
 import {
   defineTopic,
   type Publish,
@@ -61,8 +63,47 @@ describe('type safety', () => {
 
   it('defines cells for primitives', () => {
     expectTypeOf(defineCell(() => 0)).toEqualTypeOf<
-      Plan<void, Cell<number>, 'sync'>
+      Plan<void, Reactive<number, 'sync', Cell<number>>, 'sync'>
     >();
+  });
+
+  it('targets plans that create their own cells and stores', () => {
+    const $send = defineTopic<[]>();
+    const $cell = pipe([
+      async () => 'seed',
+      (seed: string) => {
+        const [read] = createCell(seed.length);
+        return reactive(read, () => {});
+      },
+    ]);
+    const $store = pipe([
+      () =>
+        resource(createStore<State>({ message: '', tags: [] })[0], () => {}),
+    ]);
+
+    const $extension = defineExtension(
+      $send,
+      [$cell, $store],
+      (cell, store) => {
+        expectTypeOf(cell).toEqualTypeOf<Signal<number>>();
+        expectTypeOf(store).toEqualTypeOf<State>();
+        return () => {};
+      },
+    );
+
+    expectTypeOf($extension).toEqualTypeOf<
+      Plan<void, Resource<void, 'sync'>, 'async'>
+    >();
+  });
+
+  it('hands the creating step a writable view', () => {
+    const [count, setCount] = createCell(0);
+    const [store, state] = createStore<State>({ message: '', tags: [] });
+
+    expectTypeOf(count).toEqualTypeOf<Cell<number>>();
+    expectTypeOf(setCount).toEqualTypeOf<Setter<number>>();
+    expectTypeOf(store).toEqualTypeOf<Store<State>>();
+    expectTypeOf(state).toEqualTypeOf<State>();
   });
 
   it('rejects plain objects and reactives as targets', () => {
