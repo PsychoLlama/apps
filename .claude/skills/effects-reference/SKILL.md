@@ -30,7 +30,7 @@ description: Reference docs for `@lib/effects` — plans composed from plain-fun
 
 ## Solid
 
-- `<EffectsRoot>`: Wrap the app once at its root. Tests pass `controller` to isolate it.
+- `<EffectsRoot>`: Wrap the app once at its root. Each root is an isolated cache of plans.
 - `useValue($plan)`: Read a `sync` plan during render, on the server and client alike. Returns an accessor.
 - `useClientValue($plan, options?)`: Read a plan once the client mounts, without suspending. Returns an accessor reading `options.initial` (default `undefined`) until then; gate on `.ready`.
 - `useAction($plan)`: Call a plan's output as a function from event handlers. Returns a callable with reactive `pending`, `latest`, and `error`.

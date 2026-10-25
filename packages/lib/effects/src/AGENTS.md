@@ -1,6 +1,6 @@
 ## Guidance
 
-- Entry points are the public API: `index.ts`, `solid/index.ts`, `testing/index.ts`, and `controller/index.ts`. All exports go through them.
+- Entry points are the public API: `index.ts`, `solid/index.ts`, and `testing/index.ts`. All exports go through them.
 - Layers, bottom up: `plan` builds pure graphs, `manager` caches and ref-counts their entries, `controller` binds a manager's operations, and `solid` and `testing` drive a controller. Lower layers never import higher ones.
 - An entry is one life of a node over one exact input, keyed by plan and upstream output identity. It never recomputes; a new life starts only after the old one retires.
 - Modes are type-only. Keep `sync` paths synchronous at runtime: compose with the `Eventual` helpers (`now`, `chain`, `all`, `rescue`, ...) instead of `async`/`await`.

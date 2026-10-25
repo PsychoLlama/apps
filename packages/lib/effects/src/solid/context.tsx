@@ -7,8 +7,8 @@ import {
   type ParentProps,
 } from 'solid-js';
 import { assert } from '@lib/assert';
-import type { Controller } from '../controller/controller';
-import { DEFAULT_CONTROLLER } from '../controller/default';
+import { createController, type Controller } from '../controller/controller';
+import { createManager } from '../manager';
 
 /** What `EffectsRoot` provides to the tree beneath it. */
 export interface Effects {
@@ -29,15 +29,18 @@ export const EffectsContext = createContext<Effects>();
 /** Props for {@link EffectsRoot}. */
 export interface EffectsRootProps extends ParentProps {
   /**
-   * Runs the plans beneath the root. Read once. Defaults to the shared
-   * controller; tests pass a test controller's so nothing leaks into it.
+   * Runs the plans beneath the root. Read once. Defaults to a fresh
+   * controller of the root's own; tests pass a test controller's to
+   * inspect and tear down what the tree held.
    */
   readonly controller?: Controller;
 }
 
 /**
  * Wraps the app once, at its root, above any `Suspense`. Provides the
- * controller plans run on, and tracks whether the tree has mounted:
+ * controller plans run on, one per root, so each server render caches
+ * its own plans and none of them carries into the next. It also tracks
+ * whether the tree has mounted:
  * pre-rendered HTML and the hydration pass both read `false`, so they
  * agree; it turns `true` once the client takes over, which is what
  * starts client-only plans. Above `Suspense`, a pending boundary can't
@@ -49,7 +52,7 @@ export const EffectsRoot = (props: EffectsRootProps) => {
 
   const effects: Effects = {
     // eslint-disable-next-line solid/reactivity -- The controller is fixed for the root's life.
-    controller: props.controller ?? DEFAULT_CONTROLLER,
+    controller: props.controller ?? createController(createManager()),
     mounted,
   };
 

@@ -1,7 +1,6 @@
 import { render } from '@solidjs/testing-library';
 import { createEffect } from 'solid-js';
 import type { Controller } from '../../controller/controller';
-import { DEFAULT_CONTROLLER } from '../../controller/default';
 import { createTestController } from '../../testing';
 import { EffectsRoot, useController, useMounted } from '../context';
 
@@ -30,7 +29,7 @@ describe('EffectsRoot', () => {
     expect(container).toHaveTextContent('mounted');
   });
 
-  it('provides the default controller unless given another', () => {
+  it('provides a controller of its own unless given another', () => {
     const seen: Controller[] = [];
     const Probe = () => {
       seen.push(useController());
@@ -43,13 +42,19 @@ describe('EffectsRoot', () => {
         <EffectsRoot>
           <Probe />
         </EffectsRoot>
+        <EffectsRoot>
+          <Probe />
+        </EffectsRoot>
         <EffectsRoot controller={controller}>
           <Probe />
         </EffectsRoot>
       </>
     ));
 
-    expect(seen).toEqual([DEFAULT_CONTROLLER, controller]);
+    // Roots without one never share, so no state carries between them.
+    const [first, second, given] = seen;
+    expect(first).not.toBe(second);
+    expect(given).toBe(controller);
   });
 
   it.each([useMounted, useController])('demands a root above %o', (hook) => {
