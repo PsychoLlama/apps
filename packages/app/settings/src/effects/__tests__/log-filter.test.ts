@@ -30,14 +30,16 @@ describe('$logFilter', () => {
     vi.mocked(observeOption).mockResolvedValue(
       reactive(() => ({ pattern: 'app:*' }), unsubscribe),
     );
-    const effects = createTestController();
+    await using effects = createTestController();
 
-    const logFilter = await effects.run($logFilter);
+    {
+      await using compute = effects.use($logFilter);
+      const logFilter = await compute();
 
-    expect(logFilter()).toEqual({ pattern: 'app:*' });
-    expect(observeOption).toHaveBeenCalledWith(filter);
+      expect(logFilter()).toEqual({ pattern: 'app:*' });
+      expect(observeOption).toHaveBeenCalledWith(filter);
+    }
 
-    await effects[Symbol.asyncDispose]();
     expect(unsubscribe).toHaveBeenCalled();
   });
 });

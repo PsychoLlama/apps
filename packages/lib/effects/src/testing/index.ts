@@ -1,1 +1,6 @@
-export { createTestController, type TestController } from './controller';
+export {
+  createTestController,
+  type Hold,
+  type RenderContextOptions,
+  type TestController,
+} from './controller';

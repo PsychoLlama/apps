@@ -87,12 +87,14 @@ describe('observeOption', () => {
   it('unsubscribes when released', async () => {
     const { listeners } = setup();
     vi.mocked(readEnvironment).mockResolvedValue({ pattern: 'app:*' });
-    const effects = createTestController();
+    await using effects = createTestController();
 
-    await effects.run($filter);
-    expect(listeners.size).toBe(1);
+    {
+      await using compute = effects.use($filter);
+      await compute();
+      expect(listeners.size).toBe(1);
+    }
 
-    await effects[Symbol.asyncDispose]();
     expect(listeners.size).toBe(0);
   });
 

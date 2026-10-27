@@ -2,9 +2,8 @@ import { render } from '@solidjs/testing-library';
 import { createSignal, ErrorBoundary } from 'solid-js';
 import { pipe } from '../../combinators';
 import { reactive, resource } from '../../task';
-import { createTestController } from '../../testing';
-import type { Controller } from '../../controller/controller';
-import { EffectsContext } from '../context';
+import { createTestController, type TestController } from '../../testing';
+
 import { useAction, type Action } from '../use-action';
 
 /** Let queued microtasks run. */
@@ -14,8 +13,12 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
  * Run `setup` as a component's body and hand back what it returned, with
  * whatever its error boundary caught.
  */
-const renderHook = <Result,>(controller: Controller, setup: () => Result) => {
+const renderHook = <Result,>(
+  controller: TestController,
+  setup: () => Result,
+) => {
   const [mounted] = createSignal(true);
+  const Effects = controller.createRenderContext({ mounted });
   const errors: unknown[] = [];
 
   let result!: Result;
@@ -25,7 +28,7 @@ const renderHook = <Result,>(controller: Controller, setup: () => Result) => {
   };
 
   const { unmount } = render(() => (
-    <EffectsContext.Provider value={{ controller, mounted }}>
+    <Effects>
       <ErrorBoundary
         fallback={(error) => {
           errors.push(error);
@@ -34,7 +37,7 @@ const renderHook = <Result,>(controller: Controller, setup: () => Result) => {
       >
         <Probe />
       </ErrorBoundary>
-    </EffectsContext.Provider>
+    </Effects>
   ));
 
   return { result, errors, unmount };
@@ -45,7 +48,7 @@ describe('useAction', () => {
     await using controller = createTestController();
     const load = vi.fn(() => (name: string) => name.length);
 
-    const { result: measure, unmount } = renderHook(controller.controller, () =>
+    const { result: measure, unmount } = renderHook(controller, () =>
       useAction(pipe([load])),
     );
 
@@ -64,7 +67,7 @@ describe('useAction', () => {
     await using controller = createTestController();
     const send = vi.fn();
 
-    const { result: action, unmount } = renderHook(controller.controller, () =>
+    const { result: action, unmount } = renderHook(controller, () =>
       useAction(pipe([() => send])),
     );
 
@@ -82,7 +85,7 @@ describe('useAction', () => {
     const gate = Promise.withResolvers<number>();
     const scale = (factor: number) => (value: number) => value * factor;
 
-    const { result: action, unmount } = renderHook(controller.controller, () =>
+    const { result: action, unmount } = renderHook(controller, () =>
       useAction(pipe([() => gate.promise, scale])),
     );
 
@@ -106,7 +109,7 @@ describe('useAction', () => {
         () => {},
       );
 
-    const { result: action, unmount } = renderHook(controller.controller, () =>
+    const { result: action, unmount } = renderHook(controller, () =>
       useAction(pipe([open])),
     );
 
@@ -122,7 +125,7 @@ describe('useAction', () => {
     const data = () => ({ name: 'stream' });
     const live = () => reactive(() => 1);
 
-    const { unmount } = renderHook(controller.controller, () => {
+    const { unmount } = renderHook(controller, () => {
       // @ts-expect-error -- Not a function.
       useAction(pipe([data]));
       // Downstream tasks receive a reactive output as its accessor.
@@ -143,7 +146,7 @@ describe('useAction', () => {
       result: action,
       errors,
       unmount,
-    } = renderHook(controller.controller, () => useAction(pipe([fail])));
+    } = renderHook(controller, () => useAction(pipe([fail])));
 
     action();
     await settle();
@@ -164,7 +167,7 @@ describe('useAction', () => {
       result: action,
       errors,
       unmount,
-    } = renderHook(controller.controller, () => useAction(pipe([fail])));
+    } = renderHook(controller, () => useAction(pipe([fail])));
 
     action();
     await settle();
@@ -182,7 +185,7 @@ describe('useAction', () => {
       return ok;
     };
 
-    const { result: action, unmount } = renderHook(controller.controller, () =>
+    const { result: action, unmount } = renderHook(controller, () =>
       useAction(pipe([check])),
     );
 
@@ -202,7 +205,7 @@ describe('useAction', () => {
     await using controller = createTestController();
     const send = vi.fn();
 
-    const { result: action, unmount } = renderHook(controller.controller, () =>
+    const { result: action, unmount } = renderHook(controller, () =>
       useAction(pipe([() => send])),
     );
 
@@ -225,7 +228,7 @@ describe('useAction', () => {
     const gate = Promise.withResolvers<string>();
     const open = () => resource(() => gate.promise, dispose);
 
-    const { result: action, unmount } = renderHook(controller.controller, () =>
+    const { result: action, unmount } = renderHook(controller, () =>
       useAction(pipe([open])),
     );
 
@@ -239,7 +242,7 @@ describe('useAction', () => {
 
     expect(action.latest).toBe('done');
     expect(dispose).toHaveBeenCalledOnce();
-    expect(controller.manager.handles.size).toBe(0);
+    expect(controller.holds).toBe(0);
   });
 
   it('releases the plan on cleanup', async () => {
@@ -247,7 +250,7 @@ describe('useAction', () => {
     const dispose = vi.fn();
     const open = () => resource(() => {}, dispose);
 
-    const { result: action, unmount } = renderHook(controller.controller, () =>
+    const { result: action, unmount } = renderHook(controller, () =>
       useAction(pipe([open])),
     );
 
@@ -257,6 +260,6 @@ describe('useAction', () => {
     await settle();
 
     expect(dispose).toHaveBeenCalledOnce();
-    expect(controller.manager.handles.size).toBe(0);
+    expect(controller.holds).toBe(0);
   });
 });

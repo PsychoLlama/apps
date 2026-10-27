@@ -33,10 +33,11 @@ describe('defineStore', () => {
   it('starts fresh once released', async () => {
     const init = vi.fn(() => ({ count: 0 }));
     const $store = defineStore<State>(init);
-    const effects = createTestController();
-    await effects.run($store);
+    {
+      await using effects = createTestController();
+      await effects.run($store);
+    }
 
-    await effects[Symbol.asyncDispose]();
     await using again = createTestController();
     await again.run($store);
 

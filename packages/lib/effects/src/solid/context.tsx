@@ -22,38 +22,33 @@ export interface Effects {
   readonly mounted: Accessor<boolean>;
 }
 
-// Internal to the package: apps go through `EffectsRoot`. Tests provide
-// it directly to drive `mounted` by hand.
-export const EffectsContext = createContext<Effects>();
+const EffectsContext = createContext<Effects>();
 
-/** Props for {@link EffectsRoot}. */
-export interface EffectsRootProps extends ParentProps {
+/** Props for {@link ControlledRoot}. */
+export interface ControlledRootProps extends ParentProps {
+  /** Runs the plans beneath the root. Read once. */
+  readonly controller: Controller;
+
   /**
-   * Runs the plans beneath the root. Read once. Defaults to a fresh
-   * controller of the root's own; tests pass a test controller's to
-   * inspect and tear down what the tree held.
+   * Stands in for the root's own mount tracking, for tests that flip it
+   * by hand. Read once.
    */
-  readonly controller?: Controller;
+  readonly mounted?: Accessor<boolean>;
 }
 
 /**
- * Wraps the app once, at its root, above any `Suspense`. Provides the
- * controller plans run on, one per root, so each server render caches
- * its own plans and none of them carries into the next. It also tracks
- * whether the tree has mounted:
- * pre-rendered HTML and the hydration pass both read `false`, so they
- * agree; it turns `true` once the client takes over, which is what
- * starts client-only plans. Above `Suspense`, a pending boundary can't
- * hold back the mount.
+ * `EffectsRoot` over a given controller. Internal to the package: test
+ * render contexts build on it.
  */
-export const EffectsRoot = (props: EffectsRootProps) => {
+export const ControlledRoot = (props: ControlledRootProps) => {
   const [mounted, setMounted] = createSignal(false);
   onMount(() => setMounted(true));
 
   const effects: Effects = {
-    // eslint-disable-next-line solid/reactivity -- The controller is fixed for the root's life.
-    controller: props.controller ?? createController(createManager()),
-    mounted,
+    // eslint-disable-next-line solid/reactivity -- Fixed for the root's life.
+    controller: props.controller,
+    // eslint-disable-next-line solid/reactivity -- Fixed for the root's life.
+    mounted: props.mounted ?? mounted,
   };
 
   return (
@@ -63,6 +58,21 @@ export const EffectsRoot = (props: EffectsRootProps) => {
   );
 };
 
+/**
+ * Wraps the app once, at its root, above any `Suspense`. Provides the
+ * controller plans run on, one per root, so each server render caches
+ * its own plans and none of them carries into the next. It also tracks
+ * whether the tree has mounted: pre-rendered HTML and the hydration pass
+ * both read `false`, so they agree; it turns `true` once the client
+ * takes over, which is what starts client-only plans. Above `Suspense`,
+ * a pending boundary can't hold back the mount.
+ */
+export const EffectsRoot = (props: ParentProps) => (
+  <ControlledRoot controller={createController(createManager())}>
+    {props.children}
+  </ControlledRoot>
+);
+
 const useEffects = (): Effects => {
   const effects = useContext(EffectsContext);
   assert(effects, '<EffectsRoot> required but not provided.');
@@ -70,7 +80,7 @@ const useEffects = (): Effects => {
   return effects;
 };
 
-/** The controller from the nearest `EffectsRoot`. */
+/** The controller from the nearest root. */
 export const useController = (): Controller => useEffects().controller;
 
 /**

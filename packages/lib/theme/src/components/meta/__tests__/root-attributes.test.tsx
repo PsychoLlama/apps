@@ -1,5 +1,4 @@
 import { render } from '@solidjs/testing-library';
-import { EffectsRoot } from '@lib/effects/solid';
 import {
   createTestController,
   type TestController,
@@ -29,10 +28,11 @@ const storageEvent = (init: StorageEventInit) =>
 
 // Mount under the controller and let the resources resolve.
 const renderRoot = async (effects: TestController) => {
+  const Effects = effects.createRenderContext();
   const tree = render(() => (
-    <EffectsRoot controller={effects.controller}>
+    <Effects>
       <RootAttributes />
-    </EffectsRoot>
+    </Effects>
   ));
   await settle();
 

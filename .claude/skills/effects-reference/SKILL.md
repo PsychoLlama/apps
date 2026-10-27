@@ -41,4 +41,6 @@ description: Reference docs for `@lib/effects` — plans composed from plain-fun
 
 - `createTestController()`: A fresh, isolated cache. Bind it with `await using` to release everything it held.
 - `await effects.run($plan)`: Hold the plan and return what it yields.
-- `effects.controller`: Pass it to `<EffectsRoot controller={...}>` to test components.
+- `await using compute = effects.use($plan)`: Hold a plan for the enclosing scope. `await compute()` returns what it yields.
+- `effects.createRenderContext(options?)`: A root component to render under in place of `<EffectsRoot>`. Pass `mounted` to flip mount state by hand.
+- `effects.holds`: Number of holds retaining the plan. Low-level, rarely needed.
