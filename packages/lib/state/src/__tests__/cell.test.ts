@@ -29,10 +29,11 @@ describe('defineCell', () => {
   it('starts fresh once released', async () => {
     const init = vi.fn(() => 0);
     const $cell = defineCell(init);
-    const effects = createTestController();
-    await effects.run($cell);
+    {
+      await using effects = createTestController();
+      await effects.run($cell);
+    }
 
-    await effects[Symbol.asyncDispose]();
     await using again = createTestController();
     await again.run($cell);
 

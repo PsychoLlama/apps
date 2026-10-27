@@ -73,17 +73,18 @@ describe('$connect', () => {
   it('lands as failed when the join does, and still releases the session', async () => {
     const session = setup();
     session.join.mockRejectedValue(new Error('no relay'));
-    const effects = createTestController();
 
-    const connected = await effects.run($connect);
-    const connection = await effects.run($connection);
-    const self = await effects.run($identity);
+    {
+      await using effects = createTestController();
+      const connected = await effects.run($connect);
+      const connection = await effects.run($connection);
+      const self = await effects.run($identity);
 
-    expect(connected).toBeNull();
-    expect(connection.status).toBe('failed');
-    expect(self.endpointId).toBe(SELF_ID);
+      expect(connected).toBeNull();
+      expect(connection.status).toBe('failed');
+      expect(self.endpointId).toBe(SELF_ID);
+    }
 
-    await effects[Symbol.asyncDispose]();
     expect(session.release).toHaveBeenCalled();
   });
 
@@ -122,11 +123,14 @@ describe('$connect', () => {
 
   it('ends its loops and releases the session when let go', async () => {
     const session = setup();
-    const effects = createTestController();
-    const connected = await effects.run($connect);
-    const book = await effects.run($contacts);
+    let connected;
+    let book;
+    {
+      await using effects = createTestController();
+      connected = await effects.run($connect);
+      book = await effects.run($contacts);
+    }
 
-    await effects[Symbol.asyncDispose]();
     session.peers.push(fakeLink());
     await flush();
 

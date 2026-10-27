@@ -27,11 +27,13 @@ describe('$decoder', () => {
   });
 
   it('terminates the worker on release', async () => {
-    const effects = createTestController();
-    await effects.run($decoder);
-    expect(terminateDecoder).not.toHaveBeenCalled();
+    await using effects = createTestController();
 
-    await effects[Symbol.asyncDispose]();
+    {
+      await using compute = effects.use($decoder);
+      await compute();
+      expect(terminateDecoder).not.toHaveBeenCalled();
+    }
 
     expect(terminateDecoder).toHaveBeenCalledWith(connection);
   });

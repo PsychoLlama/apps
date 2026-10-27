@@ -53,11 +53,13 @@ describe('$liveCamera', () => {
 
   it('stops the stream on release', async () => {
     vi.mocked(openCamera).mockResolvedValue(live);
-    const effects = createTestController();
-    await effects.run($liveCamera);
-    expect(stopStream).not.toHaveBeenCalled();
+    await using effects = createTestController();
 
-    await effects[Symbol.asyncDispose]();
+    {
+      await using compute = effects.use($liveCamera);
+      await compute();
+      expect(stopStream).not.toHaveBeenCalled();
+    }
 
     expect(stopStream).toHaveBeenCalledWith(stream);
   });

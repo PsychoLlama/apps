@@ -53,11 +53,14 @@ describe('watchStorage', () => {
   });
 
   it('stops watching when stopped', () => {
-    const watch = setup();
-    watch[Symbol.dispose]();
+    let notify;
+    {
+      using watch = setup();
+      notify = watch.notify;
+    }
 
     storageEvent({ key: 'key', newValue: 'value' });
-    expect(watch.notify).not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
   });
 });
 

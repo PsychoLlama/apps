@@ -58,11 +58,13 @@ describe('defineTopic', () => {
   it('stops delivering once released', async () => {
     const $send = defineTopic<[]>();
     const subscriber = vi.fn();
-    const effects = createTestController();
-    const send = await effects.run($send);
-    await effects.run(pipe([$send, subscribe(() => subscriber, none)]));
+    let send;
+    {
+      await using effects = createTestController();
+      send = await effects.run($send);
+      await effects.run(pipe([$send, subscribe(() => subscriber, none)]));
+    }
 
-    await effects[Symbol.asyncDispose]();
     send();
 
     expect(subscriber).not.toHaveBeenCalled();
@@ -86,9 +88,11 @@ describe('defineTopic', () => {
   });
 
   it('closes the channel once released', async () => {
-    const effects = createTestController();
-    const send = await effects.run(defineTopic<[]>());
-    await effects[Symbol.asyncDispose]();
+    let send;
+    {
+      await using effects = createTestController();
+      send = await effects.run(defineTopic<[]>());
+    }
 
     expect(() => subscribe(() => () => {}, none)(send)).toThrow(
       'Not a topic publisher.',
