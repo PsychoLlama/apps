@@ -17,6 +17,7 @@ includes = [
   "*.yml",
   "*.css",
   "*.html",
+  "*.svg",
 ]
 
 [formatter.rustfmt]

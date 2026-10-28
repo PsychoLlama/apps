@@ -23,10 +23,6 @@
     "typecheck": "tsc",
     "workspace:check": "workspace check"
   },
-  "prettier": {
-    "singleQuote": true,
-    "trailingComma": "all"
-  },
   "devDependencies": {
     "@dev/eslint-plugin": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",
