@@ -7,9 +7,13 @@ import { SWATCHES } from '@lib/theme';
  * size so theme cards stay compact, but keeps the `1fr` upper bound so
  * every visible column shares the row width equally and the gallery
  * reflows cleanly across breakpoints.
+ *
+ * `&&` outranks the base rule, whose stylesheet may load later in prod.
  */
 export const root = style({
-  gridTemplateColumns: 'repeat(auto-fit, minmax(7.5rem, 1fr))',
+  selectors: {
+    '&&': { gridTemplateColumns: 'repeat(auto-fit, minmax(7.5rem, 1fr))' },
+  },
 });
 
 /**
@@ -19,8 +23,8 @@ export const root = style({
  * element — no extra DOM nodes inside the `<label>`.
  */
 export const swatchBase = style({
-  justifyContent: 'flex-start',
   selectors: {
+    '&&': { justifyContent: 'flex-start' },
     '&::before': {
       content: '""',
       width: space[4],
