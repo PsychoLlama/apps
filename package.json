@@ -23,18 +23,6 @@
     "typecheck": "tsc",
     "workspace:check": "workspace check"
   },
-  "prettier": {
-    "singleQuote": true,
-    "trailingComma": "all",
-    "overrides": [
-      {
-        "files": "*.svg",
-        "options": {
-          "parser": "html"
-        }
-      }
-    ]
-  },
   "devDependencies": {
     "@dev/eslint-plugin": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",
