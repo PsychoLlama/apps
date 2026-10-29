@@ -23,6 +23,7 @@
     "@dev/vitest-config": "workspace:*"
   },
   "dependencies": {
+    "@holz/json-backend": "0.10.0",
     "@lib/assert": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/observability": "workspace:*",

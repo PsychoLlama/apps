@@ -1,3 +1,4 @@
+import { toJSON } from '@holz/json-backend/marshal';
 import {
   STORE_NAME,
   TIMESTAMP_INDEX,
@@ -18,7 +19,9 @@ export interface LogExportConfig {
 
 /**
  * Responds with every log persisted by `@lib/holz-idb-backend` as an ndjson
- * file download, oldest first.
+ * file download, oldest first. Each line is marshalled with
+ * `@holz/json-backend`, matching its labelled levels, ISO timestamps, and
+ * serialized errors.
  */
 export const serveLogExport = ({ filename = 'logs' }: LogExportConfig = {}) => {
   return () => {
@@ -51,7 +54,9 @@ const streamLogsFromIdb = async (
     // Enqueue eagerly instead of waiting on backpressure. IndexedDB commits
     // a transaction as soon as it goes idle, which would cut the read short.
     for await (const cursor of index.iterate()) {
-      controller.enqueue(encoder.encode(`${JSON.stringify(cursor.value)}\n`));
+      controller.enqueue(
+        encoder.encode(`${JSON.stringify(toJSON(cursor.value))}\n`),
+      );
       count += 1;
     }
 

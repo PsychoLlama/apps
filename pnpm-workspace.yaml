@@ -30,9 +30,9 @@ overrides:
 
 catalog:
   '@floating-ui/dom': ^1.8.0
-  '@holz/core': 0.9.1
-  '@holz/log-collector': 0.9.1
-  '@holz/pattern-filter': 0.9.1
+  '@holz/core': 0.10.0
+  '@holz/log-collector': 0.10.0
+  '@holz/pattern-filter': 0.10.0
   '@iconify/json': ^2.2.470
   '@solidjs/meta': ^0.29.4
   '@solidjs/router': ^1.0.0
@@ -71,13 +71,6 @@ catalog:
   vitest: ^5.0.0
   wrangler: ^4.65.0
 
+# My own logging tools. Published independently.
 minimumReleaseAgeExclude:
-  - '@holz/ansi-terminal-backend@0.9.0'
-  - '@holz/console-backend@0.9.0'
-  - '@holz/core@0.9.0'
-  - '@holz/env-filter@0.9.0'
-  - '@holz/log-collector@0.9.0'
-  - '@holz/pattern-filter@0.9.0'
-  - '@holz/stream-backend@0.9.0'
-  - '@holz/log-collector@0.9.0'
-  - '@holz/pattern-filter@0.9.0'
+  - '@holz/*'
