@@ -175,7 +175,7 @@ export const variant = styleVariants({
   },
 });
 
-// --- Radius (matches TextField's scale) ---
+// --- Radius (TextField's scale minus `full`) ---
 
 export const radiusVariant = styleVariants({
   // Reset already zeroes border-radius; `none` is the cascade default.
@@ -183,7 +183,6 @@ export const radiusVariant = styleVariants({
   small: { borderRadius: radius[1] },
   medium: { borderRadius: radius[2] },
   large: { borderRadius: radius[3] },
-  full: { borderRadius: radius.full },
 });
 
 // --- Resize ---

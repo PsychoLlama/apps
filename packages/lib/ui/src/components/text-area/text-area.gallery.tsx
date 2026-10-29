@@ -40,7 +40,6 @@ export default {
         { title: 'Small', props: { radius: 'small' } },
         { title: 'Medium', props: { radius: 'medium' } },
         { title: 'Large', props: { radius: 'large' } },
-        { title: 'Full', props: { radius: 'full' } },
       ],
     },
     {
