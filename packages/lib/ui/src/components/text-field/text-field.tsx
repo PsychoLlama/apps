@@ -2,8 +2,8 @@
  * TextField component.
  *
  * Ported from Radix UI Themes TextField. Deviations:
- * - No `color` prop. `soft` styles against the configured `accent`,
- *   `surface`/`classic` against `neutral`.
+ * - No `color` prop. `soft` matches Radix's `color="gray"` rather than
+ *   the theme accent.
  * - Slot subcomponent replaced by `left` / `right` props (single render
  *   path, simpler API; per-slot padding/gap overrides not exposed).
  * - Locks to `<input>`. Wrap in `<label>` / form for interactive context.

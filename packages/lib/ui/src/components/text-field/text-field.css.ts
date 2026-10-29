@@ -2,8 +2,8 @@
  * TextField styles.
  *
  * Ported from Radix UI Themes TextField. Deviations:
- * - No `color` prop; `soft` styles against the configured `accent`,
- *   `surface`/`classic` against `neutral`.
+ * - No `color` prop. Every variant styles against `neutral`; `soft`
+ *   matches Radix's `color="gray"` rather than the theme accent.
  * - Slot positioning is render-time (left/right props) rather than the
  *   `data-side` sibling-selector ordering Radix uses for compound `Slot`
  *   children.
@@ -223,15 +223,10 @@ export const variant = styleVariants({
     ...autofillOverlay(background.surface),
   },
   soft: {
-    backgroundColor: accent.alpha[3],
+    backgroundColor: neutral.alpha[3],
     selectors: {
       '&:has(input:focus-visible)': {
-        outlineColor: accent.solid[8],
-      },
-      // Drop the accent tint when the field can't be edited so the
-      // disabled/readonly state reads as inert rather than highlighted.
-      '&:has(input:where(:disabled, :read-only))': {
-        backgroundColor: neutral.alpha[3],
+        outlineColor: neutral.solid[8],
       },
     },
   },

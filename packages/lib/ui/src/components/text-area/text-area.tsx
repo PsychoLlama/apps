@@ -2,7 +2,9 @@
  * TextArea component.
  *
  * Ported from Radix UI Themes TextArea. Deviations:
- * - No `color` prop. `soft` styles against the configured `accent`.
+ * - No `color` prop. `soft` matches Radix's `color="gray"` rather than
+ *   the theme accent.
+ * - No `full` radius. A pill-shaped multi-line box clips its content.
  * - Locks to `<textarea>`. The wrapping `<div>` carries padding and
  *   the resize handle; the textarea itself has `resize: none`.
  *
@@ -32,7 +34,7 @@ export type TextAreaSize = 1 | 2 | 3;
 /** Visual treatment. */
 export type TextAreaVariant = 'classic' | 'surface' | 'soft';
 /** Corner rounding. */
-export type TextAreaRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+export type TextAreaRadius = 'none' | 'small' | 'medium' | 'large';
 /** Resize handle behavior. */
 export type TextAreaResize = 'none' | 'vertical' | 'horizontal' | 'both';
 
