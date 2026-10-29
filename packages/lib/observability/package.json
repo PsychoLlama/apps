@@ -21,12 +21,12 @@
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
-    "@holz/ansi-terminal-backend": "0.9.1",
-    "@holz/console-backend": "0.9.1",
+    "@holz/ansi-terminal-backend": "0.10.0",
+    "@holz/console-backend": "0.10.0",
     "@holz/core": "catalog:",
-    "@holz/env-filter": "0.9.1",
+    "@holz/env-filter": "0.10.0",
     "@holz/log-collector": "catalog:",
-    "@holz/stream-backend": "0.9.1",
+    "@holz/stream-backend": "0.10.0",
     "@lib/holz-config-filter": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
     "@lib/runtime-config": "workspace:*"
