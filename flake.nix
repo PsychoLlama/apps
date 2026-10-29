@@ -66,6 +66,7 @@
             ];
           };
         in
+
         rec {
           default = pkgs.mkShell {
             # `ring` (pulled in by iroh's TLS backend in `@crate/p2p`)
@@ -96,13 +97,15 @@
 
             packages = [
               pkgs.nodejs
+              pkgs.treefmt
+
               # Source of truth for the pnpm version. package.json's
               # `packageManager` must match exactly: pnpm (and Renovate) use
               # it to pick the binary that writes the lockfile. Exported as
               # `NIX_PNPM_VERSION` in the shellHook, which
               # `workspace check package-manager` compares against.
               pkgs.pnpm
-              pkgs.treefmt
+
               # Rust toolchain via fenix, assembled with `withComponents` so
               # every piece is cut from one stable channel snapshot — no
               # version skew between rustc and rust-analyzer's proc-macro
@@ -113,6 +116,7 @@
               # builds and the higher shells (`coding`, `nixos`) all inherit
               # it — including rust-analyzer — through `inputsFrom`.
               (pkgs.fenix.combine [
+                pkgs.fenix.targets.wasm32-unknown-unknown.stable.rust-std
                 (pkgs.fenix.stable.withComponents [
                   "cargo"
                   "clippy"
@@ -121,13 +125,14 @@
                   "rustc"
                   "rustfmt"
                 ])
-                pkgs.fenix.targets.wasm32-unknown-unknown.stable.rust-std
               ])
+
               # Test runner for the native crate tests (`cargo:test` →
               # `cargo nextest run`). Lives in `default` so CI, which only
               # enters this shell, has it. nextest doesn't run doctests, but
               # the crates are `cdylib`-only (no doctests), so nothing is lost.
               pkgs.cargo-nextest
+
               # Generates the JS bindings for wasm crates that use
               # `wasm-bindgen` (e.g. `@crate/qr-code`). The CLI refuses
               # modules built against a mismatched `wasm-bindgen` crate,
@@ -137,6 +142,7 @@
               # at 0.2.121) so renovate's crate bumps can be matched here
               # without waiting on the nixpkgs default to move.
               pkgs.wasm-bindgen-cli_0_2_126
+
               # Serializes Chromium across the per-package `test:browser`
               # scripts (see the wrapper's definition above). Lives in
               # `default` so CI (which only enters this shell) has it.
@@ -158,6 +164,7 @@
               # few hundred ms instead of paying Node startup + config
               # evaluation each time.
               pkgs.eslint_d
+
               # `jq` parses Claude's PostToolUse JSON payload from
               # stdin and emits the structured `additionalContext`
               # response back out.
