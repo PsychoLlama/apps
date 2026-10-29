@@ -1213,6 +1213,9 @@ importers:
 
   packages/lib/service-worker:
     dependencies:
+      '@holz/json-backend':
+        specifier: 0.10.0
+        version: 0.10.0(@holz/core@0.10.0)
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
@@ -1842,6 +1845,11 @@ packages:
     resolution: {integrity: sha512-AWUnprhr9cBrv8Vxkv4IeGNa2/5ROttQtnkDBBsIGmV1eOuLMYE11BAgpDWNZ/cugUZvrRWwIvabygZfEf0Uzw==}
     peerDependencies:
       '@holz/core': ^0.8.0 || ^0.9.0 || ^0.10.0
+
+  '@holz/json-backend@0.10.0':
+    resolution: {integrity: sha512-ww5masSQeYfHMVtnsIcFxIwWuuMCsgozR5E9sMMTHpnJEHwf5XDQS0KyfZfsvFEXYo110fvP1zD9PVFTJUzStQ==}
+    peerDependencies:
+      '@holz/core': ^0.9.0 || ^0.10.0
 
   '@holz/log-collector@0.10.0':
     resolution: {integrity: sha512-bUc7HohTY0HldArpIELobU7W6vctWVIiZocciIWsF5q4zcfpyuDgrfhvzDS60UUBBmcYFqZHPpYlwq2ns0tpYA==}
@@ -5523,6 +5531,10 @@ snapshots:
     dependencies:
       '@holz/core': 0.10.0
       '@holz/pattern-filter': 0.10.0(@holz/core@0.10.0)
+
+  '@holz/json-backend@0.10.0(@holz/core@0.10.0)':
+    dependencies:
+      '@holz/core': 0.10.0
 
   '@holz/log-collector@0.10.0(@holz/core@0.10.0)':
     dependencies:
