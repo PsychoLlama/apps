@@ -2,7 +2,8 @@
  * TextArea component.
  *
  * Ported from Radix UI Themes TextArea. Deviations:
- * - No `color` prop. `soft` styles against the configured `accent`.
+ * - No `color` prop. `soft` matches Radix's `color="gray"` rather than
+ *   the theme accent.
  * - Locks to `<textarea>`. The wrapping `<div>` carries padding and
  *   the resize handle; the textarea itself has `resize: none`.
  *

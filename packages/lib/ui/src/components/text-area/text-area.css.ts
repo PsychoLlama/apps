@@ -2,7 +2,8 @@
  * TextArea styles.
  *
  * Ported from Radix UI Themes TextArea. Deviations:
- * - No `color` prop; `soft` uses the configured `accent`.
+ * - No `color` prop. Every variant styles against `neutral`; `soft`
+ *   matches Radix's `color="gray"` rather than the theme accent.
  * - Resize is applied to the wrapping `<div>` (with `overflow: hidden`)
  *   so consumers grab the entire visual surface, including padding.
  *   Matches Radix.
@@ -165,12 +166,10 @@ export const variant = styleVariants({
     ...autofillOverlay(background.surface),
   },
   soft: {
-    backgroundColor: accent.alpha[3],
+    backgroundColor: neutral.alpha[3],
     selectors: {
-      // Drop the accent tint when the field can't be edited so the
-      // disabled/readonly state reads as inert rather than highlighted.
-      '&:has(textarea:where(:disabled, :read-only))': {
-        backgroundColor: neutral.alpha[3],
+      '&:has(textarea:focus-visible)': {
+        outlineColor: neutral.solid[8],
       },
     },
   },
