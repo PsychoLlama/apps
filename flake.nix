@@ -37,6 +37,7 @@
     {
       devShells = eachSystem (
         system: pkgs:
+
         let
           # `chromium-lock <cmd…>` runs a command under an exclusive,
           # machine-wide lock so only one browser suite drives Chromium at a
@@ -192,10 +193,7 @@
           # Pulls in the coding shell so local development gets the
           # agent tooling automatically.
           nixos = pkgs.mkShell {
-            inputsFrom = [
-              default
-              coding
-            ];
+            inputsFrom = [ coding ];
 
             packages = [
               pkgs.patchelf
