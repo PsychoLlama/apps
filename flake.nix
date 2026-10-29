@@ -56,6 +56,15 @@
           chromium-lock = pkgs.writers.writeDashBin "chromium-lock" ''
             exec ${pkgs.s6}/bin/s6-setlock -t "''${TEST_SUITE_TIMEOUT:-300000}" /tmp/psychollama-apps.chromium.lock "$@"
           '';
+
+          # nixpkgs' CA bundle with a few roots we don't want to trust.
+          # Stopgap: drop the override once upstream cacert removes them.
+          cacert = pkgs.cacert.override {
+            blacklist = [
+              "Comodo AAA Services root"
+              "emSign ECC Root CA - G3"
+            ];
+          };
         in
         rec {
           default = pkgs.mkShell {
@@ -70,10 +79,19 @@
             # builds rely on. In the shellHook rather than as plain env
             # attrs because only the hook (not arbitrary attrs) propagates
             # to `coding`/`nixos` through `inputsFrom`.
+            #
+            # `SSL_CERT_FILE` points everything that reads OpenSSL-style
+            # trust (curl, git, workerd's BoringSSL, and nixpkgs' Node, which
+            # is built with `--openssl-use-def-ca-store`) at the filtered
+            # bundle above, independent of whether `/etc/ssl/...` is
+            # populated. Exported here because stdenv unsets `SSL_CERT_FILE`
+            # on shell entry, so an mkShell attribute would be wiped.
+            # https://github.com/cloudflare/workers-sdk/issues/3264
             shellHook = ''
               export CC_wasm32_unknown_unknown="${pkgs.llvmPackages.clang-unwrapped}/bin/clang"
               export AR_wasm32_unknown_unknown="${pkgs.llvmPackages.bintools-unwrapped}/bin/llvm-ar"
               export NIX_PNPM_VERSION="${pkgs.pnpm.version}"
+              export SSL_CERT_FILE="${cacert}/etc/ssl/certs/ca-bundle.crt"
             '';
 
             packages = [
@@ -188,18 +206,6 @@
             # below.
             WORKERD_DYNAMIC_LOADER = "${pkgs.glibc}/lib/ld-linux-x86-64.so.2";
             WORKERD_BINARY_LIBS = lib.makeLibraryPath [ pkgs.glibc ];
-
-            # workerd's BoringSSL doesn't read NixOS's system CA store, so any
-            # `fetch()` from inside `wrangler dev` fails with "TLS peer's
-            # certificate is not trusted". Pointing `SSL_CERT_FILE` at the
-            # nixpkgs cacert bundle restores trust without depending on
-            # `/etc/ssl/...` being populated. Set via `shellHook` because
-            # stdenv unsets `SSL_CERT_FILE` on entry to keep builds from
-            # trusting host certs — an mkShell attribute would be wiped.
-            # https://github.com/cloudflare/workers-sdk/issues/3264
-            shellHook = ''
-              export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-            '';
           };
         }
       );
