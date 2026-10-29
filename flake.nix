@@ -37,6 +37,7 @@
     {
       devShells = eachSystem (
         system: pkgs:
+
         let
           # `chromium-lock <cmd…>` runs a command under an exclusive,
           # machine-wide lock so only one browser suite drives Chromium at a
@@ -56,7 +57,17 @@
           chromium-lock = pkgs.writers.writeDashBin "chromium-lock" ''
             exec ${pkgs.s6}/bin/s6-setlock -t "''${TEST_SUITE_TIMEOUT:-300000}" /tmp/psychollama-apps.chromium.lock "$@"
           '';
+
+          # nixpkgs' CA bundle with a few roots we don't want to trust.
+          # Stopgap: drop the override once upstream cacert removes them.
+          cacert = pkgs.cacert.override {
+            blacklist = [
+              "Comodo AAA Services root"
+              "emSign ECC Root CA - G3"
+            ];
+          };
         in
+
         rec {
           default = pkgs.mkShell {
             # `ring` (pulled in by iroh's TLS backend in `@crate/p2p`)
@@ -70,21 +81,32 @@
             # builds rely on. In the shellHook rather than as plain env
             # attrs because only the hook (not arbitrary attrs) propagates
             # to `coding`/`nixos` through `inputsFrom`.
+            #
+            # `SSL_CERT_FILE` points everything that reads OpenSSL-style
+            # trust (curl, git, workerd's BoringSSL, and nixpkgs' Node, which
+            # is built with `--openssl-use-def-ca-store`) at the filtered
+            # bundle above, independent of whether `/etc/ssl/...` is
+            # populated. Exported here because stdenv unsets `SSL_CERT_FILE`
+            # on shell entry, so an mkShell attribute would be wiped.
+            # https://github.com/cloudflare/workers-sdk/issues/3264
             shellHook = ''
               export CC_wasm32_unknown_unknown="${pkgs.llvmPackages.clang-unwrapped}/bin/clang"
               export AR_wasm32_unknown_unknown="${pkgs.llvmPackages.bintools-unwrapped}/bin/llvm-ar"
               export NIX_PNPM_VERSION="${pkgs.pnpm.version}"
+              export SSL_CERT_FILE="${cacert}/etc/ssl/certs/ca-bundle.crt"
             '';
 
             packages = [
               pkgs.nodejs
+              pkgs.treefmt
+
               # Source of truth for the pnpm version. package.json's
               # `packageManager` must match exactly: pnpm (and Renovate) use
               # it to pick the binary that writes the lockfile. Exported as
               # `NIX_PNPM_VERSION` in the shellHook, which
               # `workspace check package-manager` compares against.
               pkgs.pnpm
-              pkgs.treefmt
+
               # Rust toolchain via fenix, assembled with `withComponents` so
               # every piece is cut from one stable channel snapshot — no
               # version skew between rustc and rust-analyzer's proc-macro
@@ -95,6 +117,7 @@
               # builds and the higher shells (`coding`, `nixos`) all inherit
               # it — including rust-analyzer — through `inputsFrom`.
               (pkgs.fenix.combine [
+                pkgs.fenix.targets.wasm32-unknown-unknown.stable.rust-std
                 (pkgs.fenix.stable.withComponents [
                   "cargo"
                   "clippy"
@@ -103,13 +126,14 @@
                   "rustc"
                   "rustfmt"
                 ])
-                pkgs.fenix.targets.wasm32-unknown-unknown.stable.rust-std
               ])
+
               # Test runner for the native crate tests (`cargo:test` →
               # `cargo nextest run`). Lives in `default` so CI, which only
               # enters this shell, has it. nextest doesn't run doctests, but
               # the crates are `cdylib`-only (no doctests), so nothing is lost.
               pkgs.cargo-nextest
+
               # Generates the JS bindings for wasm crates that use
               # `wasm-bindgen` (e.g. `@crate/qr-code`). The CLI refuses
               # modules built against a mismatched `wasm-bindgen` crate,
@@ -119,6 +143,7 @@
               # at 0.2.121) so renovate's crate bumps can be matched here
               # without waiting on the nixpkgs default to move.
               pkgs.wasm-bindgen-cli_0_2_126
+
               # Serializes Chromium across the per-package `test:browser`
               # scripts (see the wrapper's definition above). Lives in
               # `default` so CI (which only enters this shell) has it.
@@ -140,6 +165,7 @@
               # few hundred ms instead of paying Node startup + config
               # evaluation each time.
               pkgs.eslint_d
+
               # `jq` parses Claude's PostToolUse JSON payload from
               # stdin and emits the structured `additionalContext`
               # response back out.
@@ -167,10 +193,7 @@
           # Pulls in the coding shell so local development gets the
           # agent tooling automatically.
           nixos = pkgs.mkShell {
-            inputsFrom = [
-              default
-              coding
-            ];
+            inputsFrom = [ coding ];
 
             packages = [
               pkgs.patchelf
@@ -188,18 +211,6 @@
             # below.
             WORKERD_DYNAMIC_LOADER = "${pkgs.glibc}/lib/ld-linux-x86-64.so.2";
             WORKERD_BINARY_LIBS = lib.makeLibraryPath [ pkgs.glibc ];
-
-            # workerd's BoringSSL doesn't read NixOS's system CA store, so any
-            # `fetch()` from inside `wrangler dev` fails with "TLS peer's
-            # certificate is not trusted". Pointing `SSL_CERT_FILE` at the
-            # nixpkgs cacert bundle restores trust without depending on
-            # `/etc/ssl/...` being populated. Set via `shellHook` because
-            # stdenv unsets `SSL_CERT_FILE` on entry to keep builds from
-            # trusting host certs — an mkShell attribute would be wiped.
-            # https://github.com/cloudflare/workers-sdk/issues/3264
-            shellHook = ''
-              export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-            '';
           };
         }
       );
