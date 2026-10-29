@@ -178,8 +178,9 @@ export const variant = styleVariants({
 // --- Radius (TextField's scale minus `full`) ---
 
 export const radiusVariant = styleVariants({
-  // Reset already zeroes border-radius; `none` is the cascade default.
-  none: {},
+  // Explicit zero: the size variants set their own radius.
+  // eslint-disable-next-line custom/require-design-tokens -- intentional zero radius; Radix exposes "none" as a theme-level preset, not a token in the scale.
+  none: { borderRadius: 0 },
   small: { borderRadius: radius[1] },
   medium: { borderRadius: radius[2] },
   large: { borderRadius: radius[3] },
