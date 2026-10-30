@@ -239,6 +239,15 @@ export {
   type NoScriptProps,
 } from './components/no-script/no-script';
 export {
+  default as Popover,
+  type PopoverProps,
+  type PopoverSide,
+  type PopoverAlign,
+  type PopoverDisplay,
+  type PopoverSize,
+  type PopoverTriggerProps,
+} from './components/popover/popover';
+export {
   default as Tooltip,
   type TooltipProps,
   type TooltipSide,
