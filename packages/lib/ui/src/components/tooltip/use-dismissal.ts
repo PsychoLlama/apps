@@ -1,5 +1,5 @@
 import { createSignal, type Accessor } from 'solid-js';
-import { useGlobalListener } from './use-global-listener';
+import { useGlobalListener } from '../_internal/use-global-listener';
 
 /** Inputs to {@link useDismissal}. */
 export interface DismissalInputs {

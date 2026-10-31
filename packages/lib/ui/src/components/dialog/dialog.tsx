@@ -65,7 +65,7 @@ import type { JSX, ParentComponent } from 'solid-js';
 import clx from '@lib/classnames';
 import Heading from '../heading/heading';
 import Text from '../text/text';
-import { createPresence } from './presence';
+import { createPresence } from '../_internal/presence';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import * as css from './dialog.css';
 
