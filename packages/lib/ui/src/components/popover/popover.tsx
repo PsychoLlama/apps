@@ -33,8 +33,14 @@
  * - `size` is a plain scale, not a responsive object.
  * - `width`, `minWidth`, and the height props aren't exposed; `maxWidth`
  *   is.
- * - Deferred: dismissal (Escape, outside press, focus outside), focus
- *   management on open and close, and the enter/exit animation.
+ * - Dismissal isn't configurable. Escape, a press outside, and focus
+ *   moving outside always close; there's no `onEscapeKeyDown`,
+ *   `onPointerDownOutside`, `onFocusOutside`, or `onInteractOutside`.
+ * - No layer stack. Escape goes to whatever claims it nearest the focus
+ *   first, and the popover only takes it if nothing has, so popovers
+ *   nested in popovers aren't ordered.
+ * - Deferred: focus management on open and close, and the enter/exit
+ *   animation.
  * - Deferred: `highContrast` styling.
  *
  * @see https://www.radix-ui.com/themes/docs/components/popover
@@ -42,6 +48,7 @@
 
 import {
   Show,
+  createSignal,
   createUniqueId,
   mergeProps,
   splitProps,
@@ -62,6 +69,7 @@ import {
   type FloatingTether,
 } from '../_internal/floating-ui';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
+import { useDismissal } from './use-dismissal';
 import * as css from './popover.css';
 
 /** Edge of the trigger the popover binds to. */
@@ -109,7 +117,10 @@ export interface PopoverProps
   /** Whether the popover is showing. */
   open: boolean;
 
-  /** Fires when the trigger asks to open or close. */
+  /**
+   * Fires when the trigger asks to open or close, and with `false` on
+   * Escape, a press outside, or focus moving outside.
+   */
   onOpenChange: (open: boolean) => void;
 
   /**
@@ -205,6 +216,7 @@ const Popover = (rawProps: PopoverProps) => {
     'children',
   ]);
 
+  const [root, setRoot] = createSignal<HTMLElement>();
   const contentId = createUniqueId();
   const surface = () => SURFACE_BY_SIZE[local.size];
 
@@ -219,8 +231,15 @@ const Popover = (rawProps: PopoverProps) => {
     onClick: () => local.onOpenChange(!local.open),
   };
 
+  useDismissal({
+    open: () => local.open,
+    root,
+    dismiss: () => local.onOpenChange(false),
+  });
+
   return (
     <FloatingRoot
+      ref={setRoot}
       display={local.display}
       class={css.root}
       style={assignInlineVars({
