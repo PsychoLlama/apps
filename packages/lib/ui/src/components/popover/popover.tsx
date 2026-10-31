@@ -39,8 +39,11 @@
  * - No layer stack. Escape goes to whatever claims it nearest the focus
  *   first, and the popover only takes it if nothing has, so popovers
  *   nested in popovers aren't ordered.
- * - Deferred: focus management on open and close, and the enter/exit
- *   animation.
+ * - Opening focuses the first `autofocus` descendant, else the first
+ *   tabbable one that isn't a link, else the surface. Upstream skips
+ *   `autofocus`; honoring it matches `Dialog`. Text isn't selected on
+ *   the way in, and there's no `onOpenAutoFocus` / `onCloseAutoFocus`.
+ * - Deferred: the enter/exit animation.
  * - Deferred: `highContrast` styling.
  *
  * @see https://www.radix-ui.com/themes/docs/components/popover
@@ -48,7 +51,9 @@
 
 import {
   Show,
+  createEffect,
   createSignal,
+  on,
   createUniqueId,
   mergeProps,
   splitProps,
@@ -69,7 +74,8 @@ import {
   type FloatingTether,
 } from '../_internal/floating-ui';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { useDismissal } from './use-dismissal';
+import { focusInto, NO_SCROLL } from './focus';
+import { useDismissal, type DismissalReason } from './use-dismissal';
 import * as css from './popover.css';
 
 /** Edge of the trigger the popover binds to. */
@@ -101,6 +107,9 @@ export interface PopoverTriggerProps {
 
   /** Toggles the popover through `onOpenChange`. */
   readonly onClick: (event: MouseEvent) => void;
+
+  /** Where focus returns when the popover closes. */
+  readonly ref: (element: HTMLElement) => void;
 }
 
 /**
@@ -217,6 +226,8 @@ const Popover = (rawProps: PopoverProps) => {
   ]);
 
   const [root, setRoot] = createSignal<HTMLElement>();
+  const [trigger, setTrigger] = createSignal<HTMLElement>();
+  const [surfaceElement, setSurfaceElement] = createSignal<HTMLElement>();
   const contentId = createUniqueId();
   const surface = () => SURFACE_BY_SIZE[local.size];
 
@@ -229,13 +240,36 @@ const Popover = (rawProps: PopoverProps) => {
       return local.open ? contentId : undefined;
     },
     onClick: () => local.onOpenChange(!local.open),
+    ref: setTrigger,
   };
+
+  // Focus goes back to the trigger on close, unless the user has already
+  // put it somewhere else by pressing or focusing outside.
+  let returnFocus = true;
 
   useDismissal({
     open: () => local.open,
     root,
-    dismiss: () => local.onOpenChange(false),
+    dismiss: (reason: DismissalReason) => {
+      if (reason === 'outside') returnFocus = false;
+      local.onOpenChange(false);
+    },
   });
+
+  createEffect(
+    on(
+      () => local.open,
+      (open, wasOpen) => {
+        if (open) {
+          returnFocus = true;
+          const surface = surfaceElement();
+          if (surface) focusInto(surface);
+        } else if (wasOpen && returnFocus) {
+          trigger()?.focus(NO_SCROLL);
+        }
+      },
+    ),
+  );
 
   return (
     <FloatingRoot
@@ -262,8 +296,10 @@ const Popover = (rawProps: PopoverProps) => {
         >
           <FloatingBody
             {...rest}
+            ref={setSurfaceElement}
             role="dialog"
             id={contentId}
+            tabindex={-1}
             p={surface().padding}
             class={clx(css.content, local.class)}
             testId={`${tid.testId}-surface`}

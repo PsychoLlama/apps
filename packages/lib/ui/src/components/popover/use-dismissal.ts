@@ -1,6 +1,12 @@
 import { type Accessor } from 'solid-js';
 import { useGlobalListener } from '../_internal/use-global-listener';
 
+/**
+ * What closed the popover. Escape is aimed at the popover itself; an
+ * outside press or focus has put the user somewhere else.
+ */
+export type DismissalReason = 'escape' | 'outside';
+
 /** Inputs to {@link useDismissal}. */
 export interface DismissalInputs {
   /** Whether the popover is open. */
@@ -10,7 +16,7 @@ export interface DismissalInputs {
   root: Accessor<HTMLElement | undefined>;
 
   /** Asks the owner to close. */
-  dismiss: () => void;
+  dismiss: (reason: DismissalReason) => void;
 }
 
 /** Listener options for the presses heard outside the popover. */
@@ -50,7 +56,7 @@ export const useDismissal = (inputs: DismissalInputs): void => {
       if (event.key !== 'Escape' || event.defaultPrevented) return;
 
       event.preventDefault();
-      inputs.dismiss();
+      inputs.dismiss('escape');
     },
   );
 
@@ -68,7 +74,7 @@ export const useDismissal = (inputs: DismissalInputs): void => {
       if (!outside(event)) return;
 
       if (event.pointerType === 'touch') pendingTap = true;
-      else inputs.dismiss();
+      else inputs.dismiss('outside');
     },
   );
 
@@ -80,7 +86,7 @@ export const useDismissal = (inputs: DismissalInputs): void => {
       if (!pendingTap) return;
 
       pendingTap = false;
-      if (outside(event)) inputs.dismiss();
+      if (outside(event)) inputs.dismiss('outside');
     },
   );
 
@@ -91,7 +97,7 @@ export const useDismissal = (inputs: DismissalInputs): void => {
     'focusin',
     PASSIVE,
     (event) => {
-      if (outside(event)) inputs.dismiss();
+      if (outside(event)) inputs.dismiss('outside');
     },
   );
 };

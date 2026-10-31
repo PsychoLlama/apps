@@ -38,5 +38,6 @@ export const content = style({
   backgroundColor: background.panelSolid,
   boxShadow: shadow[5],
   maxWidth: maxWidth,
+  outline: 'none',
   overflow: 'auto',
 });
