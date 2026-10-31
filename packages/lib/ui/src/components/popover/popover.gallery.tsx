@@ -22,7 +22,7 @@ const Demo = (props: DemoProps) => {
   const headingId = createUniqueId();
 
   return (
-    <div class={css.stage}>
+    <div class={props.side ? css.seated[props.side] : css.stage}>
       <Popover
         display="block"
         testId="popover"

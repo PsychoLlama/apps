@@ -198,8 +198,8 @@ const SURFACE_BY_SIZE: Record<
 /** Themes' collision settings, resolved once for every popover. */
 const TETHER: FloatingTether = {
   middleware: [
-    shift({ padding: 10, limiter: limitShift() }),
-    flip({ padding: 10 }),
+    shift({ padding: css.COLLISION_PADDING, limiter: limitShift() }),
+    flip({ padding: css.COLLISION_PADDING }),
   ],
 };
 
