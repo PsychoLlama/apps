@@ -75,7 +75,8 @@ import {
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { createPresence } from '../_internal/presence';
 import { focusInto, NO_SCROLL } from './focus';
-import { useDismissal, type DismissalReason } from './use-dismissal';
+import { useDismissal, type DismissalReason } from '../_internal/use-dismissal';
+import * as motion from '../_internal/window-motion.css';
 import * as css from './popover.css';
 
 /** Edge of the trigger the popover binds to. */
@@ -299,7 +300,7 @@ const Popover = (rawProps: PopoverProps) => {
         <FloatingWindow
           {...presence.props}
           ref={setWindowElement}
-          class={css.window}
+          class={motion.window}
           side={local.side}
           align={local.align}
           sideOffset={local.sideOffset}
