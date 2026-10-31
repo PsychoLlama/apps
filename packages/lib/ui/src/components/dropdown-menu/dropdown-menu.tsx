@@ -41,7 +41,8 @@
  * - An indeterminate checkbox item shows a dash. Upstream shows the
  *   check.
  * - `size` is a plain scale, not a responsive object.
- * - `color` accepts every semantic palette, on the menu and its items.
+ * - The menu's `color` takes only `accent` or `neutral`. Items take every
+ *   semantic palette, since the others only make sense on one action.
  * - Deferred: `highContrast` styling.
  *
  * @see https://www.radix-ui.com/themes/docs/components/dropdown-menu

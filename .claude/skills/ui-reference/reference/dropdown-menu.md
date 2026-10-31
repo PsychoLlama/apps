@@ -17,7 +17,7 @@ Base: `<div>` attributes on the surface (except `role`, `style`, `children`, `co
 - `alignOffset` (=`0`): Nudge along the edge, in px.
 - `size` (=`2`): Item metrics and type. `1 | 2`.
 - `variant` (=`'solid'`): Focused item paint. `'solid' | 'soft'`.
-- `color` (=`'accent'`): Highlight palette. `'accent' | 'neutral' | 'danger' | 'warning' | 'success'`.
+- `color` (=`'accent'`): Highlight palette. `'accent' | 'neutral'`.
 - `class`: Class merged onto the surface.
 
 ## DropdownMenuItem
@@ -28,7 +28,7 @@ Base: `<div>` attributes (except `role`, `children`, `color`, `onSelect`), test 
 - `onSelect`: `(event: Event) => void`. Call `event.preventDefault()` to keep the menu open.
 - `disabled` (=`false`): Skipped for focus, selection, and typeahead.
 - `shortcut`: Shortcut text shown at the end. Display only.
-- `color`: Item text and highlight palette. Defaults to the menu's.
+- `color`: Item text and highlight palette, e.g. `'danger'` for a destructive action. `'accent' | 'neutral' | 'danger' | 'warning' | 'success'`. Defaults to the menu's.
 - `textValue`: Typeahead text. Defaults to the text content.
 - `class`: Class merged onto the item.
 

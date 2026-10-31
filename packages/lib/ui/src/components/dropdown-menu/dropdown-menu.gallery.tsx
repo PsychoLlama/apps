@@ -134,9 +134,6 @@ export default {
       columns: [
         { title: 'Accent', props: { color: 'accent' } },
         { title: 'Neutral', props: { color: 'neutral' } },
-        { title: 'Danger', props: { color: 'danger' } },
-        { title: 'Warning', props: { color: 'warning' } },
-        { title: 'Success', props: { color: 'success' } },
       ],
     },
     {

@@ -61,7 +61,8 @@ const highlightSolid = createVar();
 const highlightContrast = createVar();
 const highlightSoft = createVar();
 
-const COLORS = { accent, neutral, danger, warning, success } as const;
+const ITEM_COLORS = { accent, neutral, danger, warning, success } as const;
+const SURFACE_COLORS = { accent, neutral } as const;
 
 /** The highlight vars a palette supplies. */
 const highlightVars = (palette: ColorPalette) => ({
@@ -110,7 +111,7 @@ export const item = style({
 export const checkable = style({});
 
 /** An item's `color`, which tints its text and its highlight. */
-export const itemColor = styleVariants(COLORS, (palette) => ({
+export const itemColor = styleVariants(ITEM_COLORS, (palette) => ({
   color: palette.alpha[11],
   vars: highlightVars(palette),
 }));
@@ -232,6 +233,6 @@ export const size = styleVariants({
 });
 
 /** The surface's `color`, which every item highlights in by default. */
-export const color = styleVariants(COLORS, (palette) => ({
+export const color = styleVariants(SURFACE_COLORS, (palette) => ({
   vars: highlightVars(palette),
 }));

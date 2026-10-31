@@ -31,9 +31,12 @@ import {
 import { NO_SCROLL } from './navigation';
 import * as css from './dropdown-menu.css';
 
-/** Semantic color palette for an item or a menu's highlight. */
-export type DropdownMenuColor =
-  'accent' | 'neutral' | 'danger' | 'warning' | 'success';
+/** Palette a menu highlights its items in. */
+export type DropdownMenuColor = 'accent' | 'neutral';
+
+/** Semantic palette for a single item, e.g. `'danger'` for a destructive action. */
+export type DropdownMenuItemColor =
+  DropdownMenuColor | 'danger' | 'warning' | 'success';
 
 /** Tri-state value of a checkbox item. */
 export type DropdownMenuChecked = boolean | 'indeterminate';
@@ -84,7 +87,7 @@ interface ItemOwnProps
 /** What the shared item needs on top of a part's props. */
 interface ItemImplProps extends ItemOwnProps {
   role: 'menuitem' | 'menuitemcheckbox' | 'menuitemradio';
-  color?: DropdownMenuColor;
+  color?: DropdownMenuItemColor;
   checkable?: boolean;
   shortcut?: string;
   onSelect?: (event: Event) => void;
@@ -226,7 +229,7 @@ export interface DropdownMenuItemProps extends ItemOwnProps {
   shortcut?: string;
 
   /** Tints the item's text and highlight. Defaults to the menu's. */
-  color?: DropdownMenuColor;
+  color?: DropdownMenuItemColor;
 }
 
 /** An action in a menu. */
@@ -253,7 +256,7 @@ export interface DropdownMenuCheckboxItemProps extends ItemOwnProps {
   shortcut?: string;
 
   /** Tints the item's text and highlight. Defaults to the menu's. */
-  color?: DropdownMenuColor;
+  color?: DropdownMenuItemColor;
 }
 
 /** A menu item that toggles a setting on and off. */
@@ -339,7 +342,7 @@ export interface DropdownMenuRadioItemProps extends ItemOwnProps {
   onSelect?: (event: Event) => void;
 
   /** Tints the item's text and highlight. Defaults to the menu's. */
-  color?: DropdownMenuColor;
+  color?: DropdownMenuItemColor;
 }
 
 /** One choice in a `DropdownMenuRadioGroup`. */

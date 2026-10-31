@@ -258,6 +258,7 @@ export {
   DropdownMenuSeparator,
   DropdownMenuTriggerIcon,
   type DropdownMenuColor,
+  type DropdownMenuItemColor,
   type DropdownMenuChecked,
   type DropdownMenuItemProps,
   type DropdownMenuCheckboxItemProps,
