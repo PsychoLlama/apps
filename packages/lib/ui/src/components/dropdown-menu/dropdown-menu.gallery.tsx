@@ -116,10 +116,10 @@ export default {
   render: (props) => <Demo {...props} />,
   sections: [
     {
-      title: 'Size',
+      title: 'Color',
       columns: [
-        { title: '1', props: { size: 1 } },
-        { title: '2', props: { size: 2 } },
+        { title: 'Accent', props: { color: 'accent' } },
+        { title: 'Neutral', props: { color: 'neutral' } },
       ],
     },
     {
@@ -130,10 +130,10 @@ export default {
       ],
     },
     {
-      title: 'Color',
+      title: 'Size',
       columns: [
-        { title: 'Accent', props: { color: 'accent' } },
-        { title: 'Neutral', props: { color: 'neutral' } },
+        { title: '1', props: { size: 1 } },
+        { title: '2', props: { size: 2 } },
       ],
     },
     {
