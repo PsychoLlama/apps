@@ -41,6 +41,7 @@ description: Reference docs for `@lib/ui` components — props, descriptions, an
 - [Kbd](./reference/kbd.md): Inline keyboard input.
 - [NoScript](./reference/no-script.md): Content shown only when scripting is unavailable.
 - [LinkButton](./reference/link-button.md): Anchor styled as a button for navigation actions.
+- [Popover](./reference/popover.md): Non-modal panel floated beside its trigger while open.
 - [Progress](./reference/progress.md): Linear progress bar.
 - [RadioCards](./reference/radio-cards.md): Group of radio options rendered as selectable cards.
 - [RadioGroup](./reference/radio-group.md): Group of radios sharing a single value.
