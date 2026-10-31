@@ -239,6 +239,36 @@ export {
   type NoScriptProps,
 } from './components/no-script/no-script';
 export {
+  default as DropdownMenu,
+  type DropdownMenuProps,
+  type DropdownMenuSide,
+  type DropdownMenuAlign,
+  type DropdownMenuDisplay,
+  type DropdownMenuSize,
+  type DropdownMenuVariant,
+  type DropdownMenuTriggerProps,
+} from './components/dropdown-menu/dropdown-menu';
+export {
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTriggerIcon,
+  type DropdownMenuColor,
+  type DropdownMenuChecked,
+  type DropdownMenuItemProps,
+  type DropdownMenuCheckboxItemProps,
+  type DropdownMenuRadioGroupProps,
+  type DropdownMenuRadioItemProps,
+  type DropdownMenuGroupProps,
+  type DropdownMenuLabelProps,
+  type DropdownMenuSeparatorProps,
+  type DropdownMenuTriggerIconProps,
+} from './components/dropdown-menu/parts';
+export {
   default as Popover,
   type PopoverProps,
   type PopoverSide,
