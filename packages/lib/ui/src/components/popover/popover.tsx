@@ -43,7 +43,6 @@
  *   tabbable one that isn't a link, else the surface. Upstream skips
  *   `autofocus`; honoring it matches `Dialog`. Text isn't selected on
  *   the way in, and there's no `onOpenAutoFocus` / `onCloseAutoFocus`.
- * - Deferred: the enter/exit animation.
  * - Deferred: `highContrast` styling.
  *
  * @see https://www.radix-ui.com/themes/docs/components/popover
@@ -74,6 +73,7 @@ import {
   type FloatingTether,
 } from '../_internal/floating-ui';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
+import { createPresence } from '../_internal/presence';
 import { focusInto, NO_SCROLL } from './focus';
 import { useDismissal, type DismissalReason } from './use-dismissal';
 import * as css from './popover.css';
@@ -228,6 +228,13 @@ const Popover = (rawProps: PopoverProps) => {
   const [root, setRoot] = createSignal<HTMLElement>();
   const [trigger, setTrigger] = createSignal<HTMLElement>();
   const [surfaceElement, setSurfaceElement] = createSignal<HTMLElement>();
+  const [windowElement, setWindowElement] = createSignal<HTMLElement>();
+
+  // Holds the window mounted while its exit plays.
+  const presence = createPresence({
+    open: () => local.open,
+    element: windowElement,
+  });
   const contentId = createUniqueId();
   const surface = () => SURFACE_BY_SIZE[local.size];
 
@@ -260,15 +267,19 @@ const Popover = (rawProps: PopoverProps) => {
     on(
       () => local.open,
       (open, wasOpen) => {
-        if (open) {
-          returnFocus = true;
-          const surface = surfaceElement();
-          if (surface) focusInto(surface);
-        } else if (wasOpen && returnFocus) {
-          trigger()?.focus(NO_SCROLL);
-        }
+        if (open) returnFocus = true;
+        else if (wasOpen && returnFocus) trigger()?.focus(NO_SCROLL);
       },
     ),
+  );
+
+  // Into the surface once it's on the page: a fresh one once presence
+  // mounts it, or the same one on a reopen that caught it mid-exit. A
+  // surface left over from an earlier open is detached, and skipped.
+  createEffect(
+    on([() => local.open, surfaceElement], ([open, surface]) => {
+      if (open && surface?.isConnected) focusInto(surface);
+    }),
   );
 
   return (
@@ -284,8 +295,11 @@ const Popover = (rawProps: PopoverProps) => {
     >
       {local.children(triggerProps)}
 
-      <Show when={local.open}>
+      <Show when={presence.mounted()}>
         <FloatingWindow
+          {...presence.props}
+          ref={setWindowElement}
+          class={css.window}
           side={local.side}
           align={local.align}
           sideOffset={local.sideOffset}
