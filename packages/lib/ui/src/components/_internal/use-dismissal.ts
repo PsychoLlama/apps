@@ -1,15 +1,15 @@
 import { type Accessor } from 'solid-js';
-import { useGlobalListener } from '../_internal/use-global-listener';
+import { useGlobalListener } from './use-global-listener';
 
 /**
- * What closed the popover. Escape is aimed at the popover itself; an
+ * What closed the window. Escape is aimed at the window itself; an
  * outside press or focus has put the user somewhere else.
  */
 export type DismissalReason = 'escape' | 'outside';
 
 /** Inputs to {@link useDismissal}. */
 export interface DismissalInputs {
-  /** Whether the popover is open. */
+  /** Whether the window is open. */
   open: Accessor<boolean>;
 
   /** The floating root, holding the trigger and the window. */
@@ -19,15 +19,15 @@ export interface DismissalInputs {
   dismiss: (reason: DismissalReason) => void;
 }
 
-/** Listener options for the presses heard outside the popover. */
+/** Listener options for the presses heard outside the window. */
 const PASSIVE: AddEventListenerOptions = { passive: true };
 
 /**
- * Closes an open popover on Escape, a press outside it, or focus moving
- * outside it. "Outside" is outside the root, so the trigger counts as
- * inside: its own click is what toggles.
+ * Closes an open floating window on Escape, a press outside it, or focus
+ * moving outside it. "Outside" is outside the root, so the trigger
+ * counts as inside: its own handler is what toggles.
  *
- * Attached only while open, so a page of closed popovers listens for
+ * Attached only while open, so a page of closed windows listens for
  * nothing.
  */
 export const useDismissal = (inputs: DismissalInputs): void => {
@@ -46,7 +46,7 @@ export const useDismissal = (inputs: DismissalInputs): void => {
 
   // Heard on `window`, the last stop on the way up, so anything nearer
   // the focus that claims the key first — a tooltip, a combobox — keeps
-  // it. Once taken here it's cancelled, so a dialog around the popover
+  // it. Once taken here it's cancelled, so a dialog around the window
   // doesn't close on the same press.
   useGlobalListener(
     () => whileOpen(window),
@@ -90,7 +90,7 @@ export const useDismissal = (inputs: DismissalInputs): void => {
     },
   );
 
-  // Tabbing away, or anything else that moves focus off the popover and
+  // Tabbing away, or anything else that moves focus off the window and
   // its trigger.
   useGlobalListener(
     () => whileOpen(document),
