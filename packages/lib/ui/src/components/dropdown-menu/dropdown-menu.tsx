@@ -49,43 +49,31 @@
  */
 
 import {
-  Show,
   createEffect,
   createSignal,
   createUniqueId,
   mergeProps,
   on,
-  onCleanup,
   splitProps,
   type JSX,
 } from 'solid-js';
-import { flip, limitShift, shift } from '@floating-ui/dom';
-import clx from '@lib/classnames';
-import type { RadiusScale, SpaceScale } from '@lib/design';
 import {
-  FloatingBody,
   FloatingRoot,
-  FloatingWindow,
   type FloatingAlignment,
   type FloatingElement,
   type FloatingRootDisplay,
   type FloatingSide,
-  type FloatingTether,
 } from '../_internal/floating-ui';
-import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
-import { createPresence } from '../_internal/presence';
-import { useDismissal, type DismissalReason } from '../_internal/use-dismissal';
-import * as motion from '../_internal/window-motion.css';
-import { MenuContext } from '../_internal/menu/context';
 import {
-  NAVIGATION_KEYS,
-  NO_SCROLL,
-  enabledItems,
-  navigationTarget,
-  nextTypeaheadMatch,
-} from '../_internal/menu/navigation';
+  MenuContent,
+  type MenuEntry,
+  type MenuSize,
+  type MenuVariant,
+} from '../_internal/menu/content';
+import { NO_SCROLL } from '../_internal/menu/navigation';
+import { type RequiredTestIdProps } from '../../props/test-id';
+import { useDismissal, type DismissalReason } from '../_internal/use-dismissal';
 import { type DropdownMenuColor } from './parts';
-import * as css from '../_internal/menu/menu.css';
 
 /** Edge of the trigger the menu binds to. */
 export type DropdownMenuSide = FloatingSide;
@@ -97,10 +85,10 @@ export type DropdownMenuAlign = FloatingAlignment;
 export type DropdownMenuDisplay = FloatingRootDisplay;
 
 /** Item metrics and type on a 1–2 scale. */
-export type DropdownMenuSize = 1 | 2;
+export type DropdownMenuSize = MenuSize;
 
 /** How the focused item is painted. */
-export type DropdownMenuVariant = 'solid' | 'soft';
+export type DropdownMenuVariant = MenuVariant;
 
 /**
  * What the menu hands its trigger. Spread onto the button as-is: the
@@ -212,72 +200,31 @@ const DEFAULTS = {
   color: 'accent',
 } satisfies Partial<DropdownMenuProps>;
 
-/** Themes' padding and radius for each size. */
-const SURFACE_BY_SIZE: Record<
-  DropdownMenuSize,
-  { padding: SpaceScale; radius: RadiusScale }
-> = {
-  1: { padding: 1, radius: 3 },
-  2: { padding: 2, radius: 4 },
-};
-
-/** Themes' collision settings, resolved once for every menu. */
-const TETHER: FloatingTether = {
-  middleware: [
-    shift({ padding: css.COLLISION_PADDING, limiter: limitShift() }),
-    flip({ padding: css.COLLISION_PADDING }),
-  ],
-};
-
-/** How long a typeahead search waits for the next key, in ms. */
-const TYPEAHEAD_TIMEOUT = 1000;
-
-/** How the menu was last asked to open, which decides where focus lands. */
-type Opener = 'keyboard' | 'pointer';
-
 /**
  * A menu of actions that floats beside its trigger while open. Choosing
  * an item closes it.
  */
 const DropdownMenu = (rawProps: DropdownMenuProps) => {
   const props = mergeProps(DEFAULTS, rawProps);
-  const [tid, withoutTid] = splitProps(props, [...testIdPropKeys]);
-  const [local, rest] = splitProps(withoutTid, [
+  const [local, rest] = splitProps(props, [
     'open',
     'onOpenChange',
     'display',
     'content',
-    'side',
-    'align',
-    'sideOffset',
-    'alignOffset',
-    'size',
-    'variant',
-    'color',
-    'class',
     'children',
   ]);
 
   const [root, setRoot] = createSignal<HTMLElement>();
   const [trigger, setTrigger] = createSignal<HTMLElement>();
-  const [surfaceElement, setSurfaceElement] = createSignal<HTMLElement>();
-  const [windowElement, setWindowElement] = createSignal<HTMLElement>();
-
-  // Holds the window mounted while its exit plays.
-  const presence = createPresence({
-    open: () => local.open,
-    element: windowElement,
-  });
   const triggerId = createUniqueId();
   const contentId = createUniqueId();
-  const surface = () => SURFACE_BY_SIZE[local.size];
 
   // A keyboard open lands on the first item; a press lands on the
   // surface, so the pointer decides what's highlighted.
-  let opener: Opener = 'pointer';
+  let entry: MenuEntry = 'surface';
 
-  const toggle = (by: Opener) => {
-    opener = by;
+  const toggle = (by: MenuEntry) => {
+    entry = by;
     local.onOpenChange(!local.open);
   };
 
@@ -299,12 +246,12 @@ const DropdownMenu = (rawProps: DropdownMenuProps) => {
 
       // Keeps focus off the trigger, so the surface takes it unopposed.
       if (!local.open) event.preventDefault();
-      toggle('pointer');
+      toggle('surface');
     },
     onKeyDown: (event) => {
-      if (event.key === 'Enter' || event.key === ' ') toggle('keyboard');
+      if (event.key === 'Enter' || event.key === ' ') toggle('item');
       else if (event.key === 'ArrowDown') {
-        opener = 'keyboard';
+        entry = 'item';
         local.onOpenChange(true);
       } else return;
 
@@ -333,136 +280,29 @@ const DropdownMenu = (rawProps: DropdownMenuProps) => {
       () => local.open,
       (open, wasOpen) => {
         if (open) returnFocus = true;
-        else if (wasOpen && returnFocus) trigger()?.focus(NO_SCROLL);
+        else {
+          // An open the trigger didn't ask for lands on the surface.
+          entry = 'surface';
+          if (wasOpen && returnFocus) trigger()?.focus(NO_SCROLL);
+        }
       },
     ),
   );
-
-  // Into the menu once it's on the page, as on `Popover`. A surface left
-  // over from an earlier open is detached, and skipped.
-  createEffect(
-    on([() => local.open, surfaceElement], ([open, element]) => {
-      if (!open || !element?.isConnected) return;
-
-      const first = opener === 'keyboard' ? enabledItems(element)[0] : null;
-      (first ?? element).focus(NO_SCROLL);
-      opener = 'pointer';
-    }),
-  );
-
-  // --- Typeahead ---
-
-  const [search, setSearch] = createSignal('');
-  let searchTimer: ReturnType<typeof setTimeout> | undefined;
-  onCleanup(() => clearTimeout(searchTimer));
-
-  // Forgets the search a second after the last key.
-  const updateSearch = (value: string) => {
-    setSearch(value);
-    clearTimeout(searchTimer);
-    if (value !== '') {
-      searchTimer = setTimeout(() => updateSearch(''), TYPEAHEAD_TIMEOUT);
-    }
-  };
-
-  const textValues = new WeakMap<Element, { readonly textValue?: string }>();
-  const textOf = (item: HTMLElement) =>
-    textValues.get(item)?.textValue ?? item.textContent.trim();
-
-  const typeahead = (element: HTMLElement, key: string) => {
-    const query = search() + key;
-    updateSearch(query);
-
-    const items = enabledItems(element);
-    const current = items.findIndex((item) => item === document.activeElement);
-    const match = nextTypeaheadMatch(items.map(textOf), query, current);
-
-    if (match !== undefined) items[match].focus(NO_SCROLL);
-  };
-
-  // --- Keyboard ---
-
-  const onKeyDown = (event: KeyboardEvent) => {
-    const element = event.currentTarget as HTMLElement;
-
-    // Menus aren't navigated with Tab.
-    if (event.key === 'Tab') {
-      event.preventDefault();
-      return;
-    }
-
-    const modified = event.ctrlKey || event.altKey || event.metaKey;
-    if (!modified && event.key.length === 1) {
-      typeahead(element, event.key);
-      if (event.key === ' ') event.preventDefault();
-      return;
-    }
-
-    if (!NAVIGATION_KEYS.has(event.key)) return;
-
-    event.preventDefault();
-    const from = event.target === element ? null : (event.target as Element);
-    navigationTarget(enabledItems(element), from, event.key)?.focus(NO_SCROLL);
-  };
-
-  // Leaving the menu drops a search in progress.
-  const onFocusOut = (event: FocusEvent) => {
-    const element = event.currentTarget as HTMLElement;
-    if (!element.contains(event.relatedTarget as Node | null)) {
-      updateSearch('');
-    }
-  };
 
   return (
     <FloatingRoot ref={setRoot} display={local.display}>
       {local.children(triggerProps)}
 
-      <Show when={presence.mounted()}>
-        <FloatingWindow
-          {...presence.props}
-          ref={setWindowElement}
-          class={motion.window}
-          side={local.side}
-          align={local.align}
-          sideOffset={local.sideOffset}
-          alignOffset={local.alignOffset}
-          radius={surface().radius}
-          tether={TETHER}
-          testId={tid.testId}
-        >
-          <MenuContext.Provider
-            value={{
-              close: () => local.onOpenChange(false),
-              surface: surfaceElement,
-              typingAhead: () => search() !== '',
-              textValues,
-            }}
-          >
-            <FloatingBody
-              {...rest}
-              ref={setSurfaceElement}
-              role="menu"
-              aria-orientation="vertical"
-              aria-labelledby={triggerId}
-              id={contentId}
-              tabindex={-1}
-              p={surface().padding}
-              class={clx(
-                css.content,
-                css.size[local.size],
-                css.color[local.color],
-                css.variant[local.variant],
-                local.class,
-              )}
-              onKeyDown={onKeyDown}
-              onFocusOut={onFocusOut}
-              testId={`${tid.testId}-surface`}
-            >
-              {local.content}
-            </FloatingBody>
-          </MenuContext.Provider>
-        </FloatingWindow>
-      </Show>
+      <MenuContent
+        {...rest}
+        open={local.open}
+        onClose={() => local.onOpenChange(false)}
+        entry={() => entry}
+        aria-labelledby={triggerId}
+        id={contentId}
+      >
+        {local.content}
+      </MenuContent>
     </FloatingRoot>
   );
 };
