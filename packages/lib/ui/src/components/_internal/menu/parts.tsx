@@ -18,18 +18,18 @@ import IconCheck from 'virtual:icons/mdi/check-bold';
 import IconChevronDown from 'virtual:icons/mdi/chevron-down';
 import IconMinus from 'virtual:icons/mdi/minus-thick';
 import clx from '@lib/classnames';
-import { useFloatingTag, type FloatingElement } from '../_internal/floating-ui';
+import { useFloatingTag, type FloatingElement } from '../floating-ui';
 import {
   type RequiredTestIdProps,
   type TestIdProps,
-} from '../../props/test-id';
+} from '../../../props/test-id';
 import {
   DropdownMenuRadioContext,
   useDropdownMenuContext,
   useDropdownMenuRadioContext,
 } from './context';
 import { NO_SCROLL } from './navigation';
-import * as css from './dropdown-menu.css';
+import * as css from './menu.css';
 
 /** Palette a menu highlights its items in. */
 export type DropdownMenuColor = 'accent' | 'neutral';

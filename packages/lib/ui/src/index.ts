@@ -268,7 +268,7 @@ export {
   type DropdownMenuLabelProps,
   type DropdownMenuSeparatorProps,
   type DropdownMenuTriggerIconProps,
-} from './components/dropdown-menu/parts';
+} from './components/_internal/menu/parts';
 export {
   default as Popover,
   type PopoverProps,

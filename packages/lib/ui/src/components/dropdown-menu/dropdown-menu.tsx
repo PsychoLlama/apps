@@ -76,16 +76,16 @@ import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { createPresence } from '../_internal/presence';
 import { useDismissal, type DismissalReason } from '../_internal/use-dismissal';
 import * as motion from '../_internal/window-motion.css';
-import { DropdownMenuContext } from './context';
+import { DropdownMenuContext } from '../_internal/menu/context';
 import {
   NAVIGATION_KEYS,
   NO_SCROLL,
   enabledItems,
   navigationTarget,
   nextTypeaheadMatch,
-} from './navigation';
-import { type DropdownMenuColor } from './parts';
-import * as css from './dropdown-menu.css';
+} from '../_internal/menu/navigation';
+import { type DropdownMenuColor } from '../_internal/menu/parts';
+import * as css from '../_internal/menu/menu.css';
 
 /** Edge of the trigger the menu binds to. */
 export type DropdownMenuSide = FloatingSide;

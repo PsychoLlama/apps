@@ -18,7 +18,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   type DropdownMenuChecked,
-} from '../parts';
+} from '../../_internal/menu/parts';
 import * as fixture from './dropdown-menu.test.browser.css';
 
 /** Options for {@link setup}. */
