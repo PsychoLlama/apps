@@ -76,7 +76,7 @@ import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
 import { createPresence } from '../_internal/presence';
 import { useDismissal, type DismissalReason } from '../_internal/use-dismissal';
 import * as motion from '../_internal/window-motion.css';
-import { DropdownMenuContext } from '../_internal/menu/context';
+import { MenuContext } from '../_internal/menu/context';
 import {
   NAVIGATION_KEYS,
   NO_SCROLL,
@@ -84,7 +84,7 @@ import {
   navigationTarget,
   nextTypeaheadMatch,
 } from '../_internal/menu/navigation';
-import { type DropdownMenuColor } from '../_internal/menu/parts';
+import { type DropdownMenuColor } from './parts';
 import * as css from '../_internal/menu/menu.css';
 
 /** Edge of the trigger the menu binds to. */
@@ -430,7 +430,7 @@ const DropdownMenu = (rawProps: DropdownMenuProps) => {
           tether={TETHER}
           testId={tid.testId}
         >
-          <DropdownMenuContext.Provider
+          <MenuContext.Provider
             value={{
               close: () => local.onOpenChange(false),
               surface: surfaceElement,
@@ -460,7 +460,7 @@ const DropdownMenu = (rawProps: DropdownMenuProps) => {
             >
               {local.content}
             </FloatingBody>
-          </DropdownMenuContext.Provider>
+          </MenuContext.Provider>
         </FloatingWindow>
       </Show>
     </FloatingRoot>

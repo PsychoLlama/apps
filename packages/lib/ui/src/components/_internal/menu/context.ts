@@ -1,5 +1,5 @@
 /**
- * Internal contexts shared between `DropdownMenu` and its parts. Not
+ * Internal contexts shared between a menu's content and its parts. Not
  * exported from `@lib/ui`: callers own the state the parts read.
  */
 
@@ -7,7 +7,7 @@ import { assert } from '@lib/assert';
 import { createContext, useContext, type Accessor } from 'solid-js';
 
 /** What every part inside an open menu can reach. */
-export interface DropdownMenuContextValue {
+export interface MenuContextValue {
   /** Closes the menu, as a selection does. */
   close: () => void;
 
@@ -24,29 +24,24 @@ export interface DropdownMenuContextValue {
   textValues: WeakMap<Element, { readonly textValue?: string }>;
 }
 
-export const DropdownMenuContext = createContext<DropdownMenuContextValue>();
+export const MenuContext = createContext<MenuContextValue>();
 
-export const useDropdownMenuContext = (): DropdownMenuContextValue => {
-  const ctx = useContext(DropdownMenuContext);
-  assert(ctx, 'DropdownMenu part rendered outside of <DropdownMenu>.');
+export const useMenuContext = (): MenuContextValue => {
+  const ctx = useContext(MenuContext);
+  assert(ctx, 'Menu part rendered outside of a menu.');
   return ctx;
 };
 
 /** The selection a radio group's items read and write. */
-export interface DropdownMenuRadioContextValue {
+export interface MenuRadioContextValue {
   value: Accessor<string>;
   onValueChange: (value: string) => void;
 }
 
-export const DropdownMenuRadioContext =
-  createContext<DropdownMenuRadioContextValue>();
+export const MenuRadioContext = createContext<MenuRadioContextValue>();
 
-export const useDropdownMenuRadioContext =
-  (): DropdownMenuRadioContextValue => {
-    const ctx = useContext(DropdownMenuRadioContext);
-    assert(
-      ctx,
-      '<DropdownMenuRadioItem> rendered outside of <DropdownMenuRadioGroup>.',
-    );
-    return ctx;
-  };
+export const useMenuRadioContext = (): MenuRadioContextValue => {
+  const ctx = useContext(MenuRadioContext);
+  assert(ctx, 'Menu radio item rendered outside of a radio group.');
+  return ctx;
+};

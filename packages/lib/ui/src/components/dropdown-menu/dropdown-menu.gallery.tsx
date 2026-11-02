@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTriggerIcon,
   type DropdownMenuChecked,
-} from '../_internal/menu/parts';
+} from './parts';
 import * as css from './dropdown-menu.gallery.css';
 
 /** What a cell can vary. The state and the trigger are the demo's. */

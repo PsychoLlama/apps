@@ -1,21 +1,16 @@
 /**
- * DropdownMenu parts: the items, groups, labels, and separators a menu's
- * `content` is built from. Deviations are recorded on `DropdownMenu`.
+ * Menu parts: the items, groups, labels, and separators a menu's
+ * `content` is built from. Shared by `DropdownMenu` and `ContextMenu`,
+ * which export them under their own prefixes. Deviations are recorded
+ * on each menu.
  *
  * @see https://www.radix-ui.com/themes/docs/components/dropdown-menu
+ * @see https://www.radix-ui.com/themes/docs/components/context-menu
  */
 
-import {
-  Match,
-  Show,
-  Switch,
-  mergeProps,
-  splitProps,
-  type JSX,
-} from 'solid-js';
+import { Match, Show, Switch, splitProps, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import IconCheck from 'virtual:icons/mdi/check-bold';
-import IconChevronDown from 'virtual:icons/mdi/chevron-down';
 import IconMinus from 'virtual:icons/mdi/minus-thick';
 import clx from '@lib/classnames';
 import { useFloatingTag, type FloatingElement } from '../floating-ui';
@@ -24,22 +19,21 @@ import {
   type TestIdProps,
 } from '../../../props/test-id';
 import {
-  DropdownMenuRadioContext,
-  useDropdownMenuContext,
-  useDropdownMenuRadioContext,
+  MenuRadioContext,
+  useMenuContext,
+  useMenuRadioContext,
 } from './context';
 import { NO_SCROLL } from './navigation';
 import * as css from './menu.css';
 
 /** Palette a menu highlights its items in. */
-export type DropdownMenuColor = 'accent' | 'neutral';
+export type MenuColor = 'accent' | 'neutral';
 
 /** Semantic palette for a single item, e.g. `'danger'` for a destructive action. */
-export type DropdownMenuItemColor =
-  DropdownMenuColor | 'danger' | 'warning' | 'success';
+export type MenuItemColor = MenuColor | 'danger' | 'warning' | 'success';
 
 /** Tri-state value of a checkbox item. */
-export type DropdownMenuChecked = boolean | 'indeterminate';
+export type MenuChecked = boolean | 'indeterminate';
 
 /** Native attributes a part passes through, less the ones it owns. */
 type PartAttributes = Omit<
@@ -87,7 +81,7 @@ interface ItemOwnProps
 /** What the shared item needs on top of a part's props. */
 interface ItemImplProps extends ItemOwnProps {
   role: 'menuitem' | 'menuitemcheckbox' | 'menuitemradio';
-  color?: DropdownMenuItemColor;
+  color?: MenuItemColor;
   checkable?: boolean;
   shortcut?: string;
   onSelect?: (event: Event) => void;
@@ -114,7 +108,7 @@ const ItemImpl = (props: ItemImplProps) => {
     'testId',
   ]);
 
-  const menu = useDropdownMenuContext();
+  const menu = useMenuContext();
   const tag = useFloatingTag();
 
   // Whether the press began on this item. One that began elsewhere —
@@ -198,7 +192,7 @@ const ItemImpl = (props: ItemImplProps) => {
 };
 
 /** The check gutter, filled while the item is on. */
-const Indicator = (props: { checked: DropdownMenuChecked }) => {
+const Indicator = (props: { checked: MenuChecked }) => {
   const tag = useFloatingTag();
 
   return (
@@ -217,8 +211,8 @@ const Indicator = (props: { checked: DropdownMenuChecked }) => {
   );
 };
 
-/** `DropdownMenuItem` props. */
-export interface DropdownMenuItemProps extends ItemOwnProps {
+/** `MenuItem` props. */
+export interface MenuItemProps extends ItemOwnProps {
   /**
    * Fires when the item is chosen. The menu closes afterward unless the
    * handler calls `event.preventDefault()`.
@@ -229,18 +223,18 @@ export interface DropdownMenuItemProps extends ItemOwnProps {
   shortcut?: string;
 
   /** Tints the item's text and highlight. Defaults to the menu's. */
-  color?: DropdownMenuItemColor;
+  color?: MenuItemColor;
 }
 
 /** An action in a menu. */
-export const DropdownMenuItem = (props: DropdownMenuItemProps) => (
+export const MenuItem = (props: MenuItemProps) => (
   <ItemImpl {...props} role="menuitem" />
 );
 
-/** `DropdownMenuCheckboxItem` props. */
-export interface DropdownMenuCheckboxItemProps extends ItemOwnProps {
+/** `MenuCheckboxItem` props. */
+export interface MenuCheckboxItemProps extends ItemOwnProps {
   /** Whether the item is on. `'indeterminate'` shows a dash. */
-  checked: DropdownMenuChecked;
+  checked: MenuChecked;
 
   /**
    * Fires with the next state when the item is chosen: the opposite of
@@ -256,13 +250,11 @@ export interface DropdownMenuCheckboxItemProps extends ItemOwnProps {
   shortcut?: string;
 
   /** Tints the item's text and highlight. Defaults to the menu's. */
-  color?: DropdownMenuItemColor;
+  color?: MenuItemColor;
 }
 
 /** A menu item that toggles a setting on and off. */
-export const DropdownMenuCheckboxItem = (
-  props: DropdownMenuCheckboxItemProps,
-) => {
+export const MenuCheckboxItem = (props: MenuCheckboxItemProps) => {
   const [local, rest] = splitProps(props, [
     'checked',
     'onCheckedChange',
@@ -286,9 +278,8 @@ export const DropdownMenuCheckboxItem = (
   );
 };
 
-/** `DropdownMenuRadioGroup` props. */
-export interface DropdownMenuRadioGroupProps
-  extends TestIdProps, PartAttributes {
+/** `MenuRadioGroup` props. */
+export interface MenuRadioGroupProps extends TestIdProps, PartAttributes {
   /** Value of the chosen item. */
   value: string;
 
@@ -298,12 +289,12 @@ export interface DropdownMenuRadioGroupProps
   /** Class merged onto the group. */
   class?: string;
 
-  /** The group's `DropdownMenuRadioItem`s, and anything between them. */
+  /** The group's radio items, and anything between them. */
   children: JSX.Element;
 }
 
 /** A set of radio items, one of which is chosen. */
-export const DropdownMenuRadioGroup = (props: DropdownMenuRadioGroupProps) => {
+export const MenuRadioGroup = (props: MenuRadioGroupProps) => {
   const [local, rest] = splitProps(props, [
     'value',
     'onValueChange',
@@ -314,7 +305,7 @@ export const DropdownMenuRadioGroup = (props: DropdownMenuRadioGroupProps) => {
   const tag = useFloatingTag();
 
   return (
-    <DropdownMenuRadioContext.Provider
+    <MenuRadioContext.Provider
       value={{
         value: () => local.value,
         onValueChange: (value) => local.onValueChange(value),
@@ -329,12 +320,12 @@ export const DropdownMenuRadioGroup = (props: DropdownMenuRadioGroupProps) => {
       >
         {local.children}
       </Dynamic>
-    </DropdownMenuRadioContext.Provider>
+    </MenuRadioContext.Provider>
   );
 };
 
-/** `DropdownMenuRadioItem` props. */
-export interface DropdownMenuRadioItemProps extends ItemOwnProps {
+/** `MenuRadioItem` props. */
+export interface MenuRadioItemProps extends ItemOwnProps {
   /** The value the group takes when this item is chosen. */
   value: string;
 
@@ -342,13 +333,13 @@ export interface DropdownMenuRadioItemProps extends ItemOwnProps {
   onSelect?: (event: Event) => void;
 
   /** Tints the item's text and highlight. Defaults to the menu's. */
-  color?: DropdownMenuItemColor;
+  color?: MenuItemColor;
 }
 
-/** One choice in a `DropdownMenuRadioGroup`. */
-export const DropdownMenuRadioItem = (props: DropdownMenuRadioItemProps) => {
+/** One choice in a radio group. */
+export const MenuRadioItem = (props: MenuRadioItemProps) => {
   const [local, rest] = splitProps(props, ['value', 'onSelect']);
-  const group = useDropdownMenuRadioContext();
+  const group = useMenuRadioContext();
   const checked = () => group.value() === local.value;
 
   return (
@@ -366,8 +357,8 @@ export const DropdownMenuRadioItem = (props: DropdownMenuRadioItemProps) => {
   );
 };
 
-/** `DropdownMenuGroup` props. */
-export interface DropdownMenuGroupProps extends TestIdProps, PartAttributes {
+/** `MenuGroup` props. */
+export interface MenuGroupProps extends TestIdProps, PartAttributes {
   /** Class merged onto the group. */
   class?: string;
 
@@ -377,9 +368,9 @@ export interface DropdownMenuGroupProps extends TestIdProps, PartAttributes {
 
 /**
  * A run of related items. Name it with `aria-labelledby` pointing at a
- * `DropdownMenuLabel`, or with `aria-label`.
+ * menu label, or with `aria-label`.
  */
-export const DropdownMenuGroup = (props: DropdownMenuGroupProps) => {
+export const MenuGroup = (props: MenuGroupProps) => {
   const [local, rest] = splitProps(props, ['class', 'testId', 'children']);
   const tag = useFloatingTag();
 
@@ -396,8 +387,8 @@ export const DropdownMenuGroup = (props: DropdownMenuGroupProps) => {
   );
 };
 
-/** `DropdownMenuLabel` props. */
-export interface DropdownMenuLabelProps extends TestIdProps, PartAttributes {
+/** `MenuLabel` props. */
+export interface MenuLabelProps extends TestIdProps, PartAttributes {
   /** Class merged onto the label. */
   class?: string;
 
@@ -406,7 +397,7 @@ export interface DropdownMenuLabelProps extends TestIdProps, PartAttributes {
 }
 
 /** A heading over a run of items. Not focusable or selectable. */
-export const DropdownMenuLabel = (props: DropdownMenuLabelProps) => {
+export const MenuLabel = (props: MenuLabelProps) => {
   const [local, rest] = splitProps(props, ['class', 'testId', 'children']);
   const tag = useFloatingTag();
 
@@ -422,15 +413,15 @@ export const DropdownMenuLabel = (props: DropdownMenuLabelProps) => {
   );
 };
 
-/** `DropdownMenuSeparator` props. */
-export interface DropdownMenuSeparatorProps
+/** `MenuSeparator` props. */
+export interface MenuSeparatorProps
   extends TestIdProps, Omit<PartAttributes, 'aria-orientation'> {
   /** Class merged onto the separator. */
   class?: string;
 }
 
 /** A rule between groups of items. */
-export const DropdownMenuSeparator = (props: DropdownMenuSeparatorProps) => {
+export const MenuSeparator = (props: MenuSeparatorProps) => {
   const [local, rest] = splitProps(props, ['class', 'testId']);
   const tag = useFloatingTag();
 
@@ -444,16 +435,4 @@ export const DropdownMenuSeparator = (props: DropdownMenuSeparatorProps) => {
       data-testid={local.testId}
     />
   );
-};
-
-/** `DropdownMenuTriggerIcon` props. */
-export type DropdownMenuTriggerIconProps = JSX.SvgSVGAttributes<SVGSVGElement>;
-
-/** The chevron a trigger shows to say it opens a menu. */
-export const DropdownMenuTriggerIcon = (
-  rawProps: DropdownMenuTriggerIconProps,
-) => {
-  const props = mergeProps({ 'aria-hidden': true } as const, rawProps);
-
-  return <IconChevronDown {...props} />;
 };
