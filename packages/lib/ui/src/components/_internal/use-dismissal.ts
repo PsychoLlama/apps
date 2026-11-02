@@ -12,7 +12,11 @@ export interface DismissalInputs {
   /** Whether the window is open. */
   open: Accessor<boolean>;
 
-  /** The floating root, holding the trigger and the window. */
+  /**
+   * What counts as inside: usually the floating root, holding the
+   * trigger and the window. A window whose trigger should dismiss it,
+   * such as a context menu's area, passes the window alone.
+   */
   root: Accessor<HTMLElement | undefined>;
 
   /** Asks the owner to close. */
@@ -24,8 +28,9 @@ const PASSIVE: AddEventListenerOptions = { passive: true };
 
 /**
  * Closes an open floating window on Escape, a press outside it, or focus
- * moving outside it. "Outside" is outside the root, so the trigger
- * counts as inside: its own handler is what toggles.
+ * moving outside it. "Outside" is outside the root, so given the
+ * floating root the trigger counts as inside: its own handler is what
+ * toggles.
  *
  * Attached only while open, so a page of closed windows listens for
  * nothing.

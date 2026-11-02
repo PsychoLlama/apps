@@ -270,6 +270,32 @@ export {
   type DropdownMenuTriggerIconProps,
 } from './components/dropdown-menu/parts';
 export {
+  default as ContextMenu,
+  type ContextMenuProps,
+  type ContextMenuDisplay,
+  type ContextMenuSize,
+  type ContextMenuVariant,
+} from './components/context-menu/context-menu';
+export {
+  ContextMenuItem,
+  ContextMenuCheckboxItem,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuGroup,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  type ContextMenuColor,
+  type ContextMenuItemColor,
+  type ContextMenuChecked,
+  type ContextMenuItemProps,
+  type ContextMenuCheckboxItemProps,
+  type ContextMenuRadioGroupProps,
+  type ContextMenuRadioItemProps,
+  type ContextMenuGroupProps,
+  type ContextMenuLabelProps,
+  type ContextMenuSeparatorProps,
+} from './components/context-menu/parts';
+export {
   default as Popover,
   type PopoverProps,
   type PopoverSide,
