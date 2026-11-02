@@ -1,7 +1,8 @@
 /**
  * Enter and exit motion for a floating window that opens off a trigger,
- * shared by `Popover` and `DropdownMenu`. Mirrors Radix Themes' shared
- * popper animation; the deviations are recorded on `Popover`.
+ * shared by `Popover`, `DropdownMenu`, and `ContextMenu`. Mirrors Radix
+ * Themes' shared popper animation; the deviations are recorded on
+ * `Popover`.
  */
 
 import { createVar, keyframes, style } from '@vanilla-extract/css';
