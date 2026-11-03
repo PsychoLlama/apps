@@ -1,9 +1,9 @@
 /**
- * DropdownMenu styles.
+ * Menu styles, shared by `DropdownMenu` and `ContextMenu`.
  *
- * Ported from Radix UI Themes BaseMenu, the styles DropdownMenu and
- * ContextMenu share. The surface is the floating primitive's body, so
- * its padding and radius arrive as props there.
+ * Ported from Radix UI Themes BaseMenu, the styles both menus share.
+ * The surface is the floating primitive's body, so its padding and
+ * radius arrive as props there.
  *
  * Deviations from Radix:
  * - The highlight follows `:focus` rather than a `data-highlighted`
@@ -18,13 +18,12 @@
  *   surface caps itself at the viewport, less the collision padding,
  *   and scrolls natively. Deferred: the tether doesn't measure the
  *   space left on its side.
- * - No `min-width: var(--radix-dropdown-menu-trigger-width)`. Deferred,
- *   as on `Popover`.
+ * - No `min-width` from the trigger's width. Deferred, as on `Popover`.
  * - Motion is `Popover`'s, which mirrors upstream's shared popper
  *   animation.
  * - Deferred: `highContrast` styling.
  *
- * @see https://www.radix-ui.com/themes/docs/components/dropdown-menu
+ * @see https://github.com/radix-ui/themes/blob/main/packages/radix-ui-themes/src/components/_internal/base-menu.css
  */
 
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
