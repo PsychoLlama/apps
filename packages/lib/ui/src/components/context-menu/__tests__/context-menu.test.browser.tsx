@@ -190,6 +190,18 @@ describe('ContextMenu', () => {
     expect(surfaceOffset(area).y).toBeCloseTo(92, 0);
   });
 
+  it('stays open when a long press also fires contextmenu', async () => {
+    const { area, onOpenChange } = setup();
+
+    touch(area, 'pointerdown', { x: 40, y: 40 });
+    await opened();
+    contextMenuAt(area, { x: 40, y: 40 });
+    await settled();
+
+    expect(onOpenChange.mock.calls).toEqual([[true]]);
+    expect(screen.getByTestId('menu-surface')).toHaveFocus();
+  });
+
   it('closes on a long press elsewhere in the area', async () => {
     const { area, onOpenChange } = setup();
 

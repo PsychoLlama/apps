@@ -214,9 +214,10 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
 
   // --- Secondary press ---
 
-  // A right click, or a macOS ctrl-click, in the area while open: the
-  // press dismisses the menu, so the `contextmenu` that follows mustn't
-  // open it again.
+  // Whether the press in progress is already handled, so the
+  // `contextmenu` that follows it is ignored. A right click, or a macOS
+  // ctrl-click, in the area while open dismisses the menu on the press;
+  // a long press acts when its wait runs out. Every press resets it.
   let swallowNext = false;
 
   const isSecondary = (event: MouseEvent) =>
@@ -255,7 +256,13 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
 
     // A second touch point restarts the wait.
     clearLongPress();
-    longPressTimer = setTimeout(() => request(event), LONG_PRESS_DELAY);
+    longPressTimer = setTimeout(() => {
+      request(event);
+
+      // The press is handled. A platform that also turns it into
+      // `contextmenu` mustn't undo it.
+      swallowNext = true;
+    }, LONG_PRESS_DELAY);
   };
 
   const onPointerRelease = (event: PointerEvent) => {
