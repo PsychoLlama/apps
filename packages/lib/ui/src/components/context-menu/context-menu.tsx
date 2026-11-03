@@ -20,6 +20,10 @@
  * - Non-modal only. No `modal` prop: nothing outside is made inert,
  *   scroll isn't locked, and the rest of the page isn't hidden from
  *   assistive tech.
+ * - A right click or long press elsewhere in the area closes the open
+ *   menu, and the next one opens it again, as the platform's own menus
+ *   do. Upstream's modal overlay catches the press instead, leaving the
+ *   menu where it is.
  * - Fully controlled: `open` / `onOpenChange`, where upstream keeps the
  *   open state itself and only reports it. The point stays internal.
  * - The area is a `FloatingRoot` wrapper rather than a `<span>` merged
@@ -178,6 +182,10 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
   // Where focus was before the menu took it, to hand it back on close.
   let previousFocus: HTMLElement | null = null;
 
+  // Focus goes back where it was on close, unless the user has already
+  // put it somewhere else by pressing or focusing outside.
+  let returnFocus = true;
+
   const openAt = (event: MouseEvent) => {
     const area = root();
     if (!area) return;
@@ -191,8 +199,28 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
       previousFocus = active;
     }
 
-    if (!local.open) local.onOpenChange(true);
+    local.onOpenChange(true);
   };
+
+  // A menu request elsewhere in the area while open closes it, as the
+  // platform's own menus do; the next one opens it again.
+  const request = (event: MouseEvent) => {
+    if (!local.open) openAt(event);
+    else {
+      returnFocus = false;
+      local.onOpenChange(false);
+    }
+  };
+
+  // --- Secondary press ---
+
+  // A right click, or a macOS ctrl-click, in the area while open: the
+  // press dismisses the menu, so the `contextmenu` that follows mustn't
+  // open it again.
+  let swallowNext = false;
+
+  const isSecondary = (event: MouseEvent) =>
+    event.button === 2 || (event.button === 0 && event.ctrlKey);
 
   // --- Long press ---
 
@@ -214,15 +242,20 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
 
     // Some platforms turn a long press into `contextmenu` themselves.
     clearLongPress();
-    openAt(event);
+
+    if (swallowNext) swallowNext = false;
+    else request(event);
   };
 
   const onPointerDown = (event: PointerEvent) => {
-    if (local.disabled || !isTouchOrPen(event) || fromMenu(event)) return;
+    if (local.disabled || fromMenu(event)) return;
+
+    swallowNext = local.open && isSecondary(event);
+    if (!isTouchOrPen(event)) return;
 
     // A second touch point restarts the wait.
     clearLongPress();
-    longPressTimer = setTimeout(() => openAt(event), LONG_PRESS_DELAY);
+    longPressTimer = setTimeout(() => request(event), LONG_PRESS_DELAY);
   };
 
   const onPointerRelease = (event: PointerEvent) => {
@@ -231,12 +264,8 @@ const ContextMenu = (rawProps: ContextMenuProps) => {
 
   // --- Closing ---
 
-  // Focus goes back where it was on close, unless the user has already
-  // put it somewhere else by pressing or focusing outside.
-  let returnFocus = true;
-
   // Bounded by the menu alone: a press anywhere else in the area closes
-  // it too, as a right click there moves it.
+  // it too.
   useDismissal({
     open: () => local.open,
     root: windowElement,

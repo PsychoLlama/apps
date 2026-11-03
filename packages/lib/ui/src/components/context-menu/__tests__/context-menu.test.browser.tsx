@@ -119,6 +119,10 @@ const opened = () =>
 const closed = () =>
   waitFor(() => expect(screen.queryByTestId('menu')).toBeNull());
 
+/** Wait out the enter motion, which moves the surface while it plays. */
+const settled = () =>
+  Promise.all(document.getAnimations().map((animation) => animation.finished));
+
 /** Where the surface sits, in px from the area's top-left corner. */
 const surfaceOffset = (area: HTMLElement) => {
   const surface = screen.getByTestId('menu-surface').getBoundingClientRect();
@@ -166,19 +170,37 @@ describe('ContextMenu', () => {
     });
   });
 
-  it('moves on a right click elsewhere in the area', async () => {
-    const { area } = setup();
+  it('closes on a right click elsewhere in the area, reopening on the next', async () => {
+    const { area, onOpenChange } = setup();
 
     await rightClick(area, { x: 20, y: 20 });
     await opened();
+    onOpenChange.mockClear();
+
+    await rightClick(area, { x: 200, y: 200 });
+    expect(onOpenChange.mock.calls).toEqual([[false]]);
+    await closed();
+
     await rightClick(area, { x: 120, y: 100 });
     await opened();
+    expect(onOpenChange).toHaveBeenLastCalledWith(true);
 
-    await waitFor(() => {
-      const offset = surfaceOffset(area);
-      expect(offset.x).toBeCloseTo(122, 0);
-      expect(offset.y).toBeCloseTo(92, 0);
-    });
+    await settled();
+    expect(surfaceOffset(area).x).toBeCloseTo(122, 0);
+    expect(surfaceOffset(area).y).toBeCloseTo(92, 0);
+  });
+
+  it('closes on a long press elsewhere in the area', async () => {
+    const { area, onOpenChange } = setup();
+
+    contextMenuAt(area, { x: 20, y: 20 });
+    await opened();
+    onOpenChange.mockClear();
+
+    touch(area, 'pointerdown', { x: 200, y: 200 });
+    await closed();
+
+    expect(onOpenChange.mock.calls).toEqual([[false]]);
   });
 
   it('ignores a right click inside the open menu', async () => {
@@ -186,6 +208,7 @@ describe('ContextMenu', () => {
 
     contextMenuAt(area, { x: 40, y: 40 });
     await opened();
+    await settled();
     const before = surfaceOffset(area);
     onOpenChange.mockClear();
 
