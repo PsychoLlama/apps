@@ -63,7 +63,6 @@
           cacert = pkgs.cacert.override {
             blacklist = [
               "Comodo AAA Services root"
-              "emSign ECC Root CA - G3"
             ];
           };
         in
