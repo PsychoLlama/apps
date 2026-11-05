@@ -32,6 +32,8 @@ import {
   type FloatingTether,
 } from '../_internal/floating-ui';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
+import { useDismissal } from '../_internal/use-dismissal';
+import { useGlobalListener } from '../_internal/use-global-listener';
 import { createVisibility } from '../_internal/visibility';
 import * as motion from '../_internal/window-motion.css';
 import * as css from './hover-card.css';
@@ -126,6 +128,21 @@ const SURFACE_BY_SIZE: Record<
 const OPEN_DELAY = 200;
 const CLOSE_DELAY = 150;
 
+/** Listener options for the document-wide events the card hears. */
+const PASSIVE: AddEventListenerOptions = { passive: true };
+
+/** Whether the page's selection reaches into the element at all. */
+const selectionWithin = (element: HTMLElement | undefined) => {
+  const selection = document.getSelection();
+
+  return (
+    element !== undefined &&
+    selection !== null &&
+    !selection.isCollapsed &&
+    selection.containsNode(element, true)
+  );
+};
+
 /** Themes' collision settings, resolved once for every hover card. */
 const TETHER: FloatingTether = {
   middleware: [
@@ -157,7 +174,11 @@ const HoverCard = (rawProps: HoverCardProps) => {
   const [open, setOpen] = createSignal(false);
   const [hovered, setHovered] = createSignal(false);
   const [focused, setFocused] = createSignal(false);
+  const [pressed, setPressed] = createSignal(false);
+  const [selected, setSelected] = createSignal(false);
+  const [root, setRoot] = createSignal<HTMLElement>();
   const [windowElement, setWindowElement] = createSignal<HTMLElement>();
+  const [surfaceElement, setSurfaceElement] = createSignal<HTMLElement>();
 
   // The window stays mounted; this says when it's on screen, exit
   // included, which is as long as the tether has anything to do.
@@ -166,8 +187,10 @@ const HoverCard = (rawProps: HoverCardProps) => {
 
   // Anything holding the card up. Settling on a change waits out the
   // delay, and a change back before then cancels it — which is what
-  // carries the pointer across the gap between trigger and card.
-  const wanted = () => hovered() || focused();
+  // carries the pointer across the gap between trigger and card. A
+  // press on the card, or a selection reaching into it, holds it up
+  // while the pointer wanders off to finish the drag or copy the text.
+  const wanted = () => hovered() || focused() || pressed() || selected();
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   createEffect(
@@ -187,6 +210,36 @@ const HoverCard = (rawProps: HoverCardProps) => {
   );
 
   onCleanup(() => clearTimeout(timer));
+
+  // Closes on the spot, no delay, and stays closed while whatever held
+  // it up still does: the next visit is what reopens it. Focus moving
+  // outside isn't one of these — the pointer may still be resting on
+  // the card, and losing focus already counts as leaving.
+  useDismissal({
+    open,
+    root,
+    focusOutside: false,
+    dismiss: () => {
+      clearTimeout(timer);
+      setPressed(false);
+      setSelected(false);
+      setOpen(false);
+    },
+  });
+
+  // A press anywhere lets go of the card, even off the page's edge.
+  const release = () => setPressed(false);
+  const whilePressed = () => (pressed() ? document : undefined);
+  useGlobalListener(whilePressed, 'pointerup', PASSIVE, release);
+  useGlobalListener(whilePressed, 'pointercancel', PASSIVE, release);
+
+  // Only an open card cares where the selection is.
+  useGlobalListener(
+    () => (open() ? document : undefined),
+    'selectionchange',
+    PASSIVE,
+    () => setSelected(selectionWithin(surfaceElement())),
+  );
 
   // The root holds the trigger and the card, so entering either is
   // entering it. A touch has no hover to rest with; it's left out.
@@ -217,6 +270,7 @@ const HoverCard = (rawProps: HoverCardProps) => {
 
   return (
     <FloatingRoot
+      ref={setRoot}
       display={local.display}
       class={css.root}
       style={assignInlineVars({
@@ -235,6 +289,7 @@ const HoverCard = (rawProps: HoverCardProps) => {
         {...visibility.props}
         ref={setWindowElement}
         class={clx(motion.window, css.window)}
+        onPointerDown={() => setPressed(true)}
         side={local.side}
         align={local.align}
         sideOffset={local.sideOffset}
@@ -245,6 +300,7 @@ const HoverCard = (rawProps: HoverCardProps) => {
       >
         <FloatingBody
           {...rest}
+          ref={setSurfaceElement}
           p={surface().padding}
           class={clx(css.content, local.class)}
           testId={`${tid.testId}-surface`}
