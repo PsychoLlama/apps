@@ -55,6 +55,7 @@ import {
   type SkeletonProps,
 } from '../../props/skeleton';
 import { testIdPropKeys, type RequiredTestIdProps } from '../../props/test-id';
+import { bindMultiSelectItem } from '../_internal/checkbox-multi-select';
 import Checkbox from '../checkbox/checkbox';
 import {
   CheckboxCardsContext,
@@ -242,20 +243,6 @@ export const CheckboxCardsItem: ParentComponent<CheckboxCardsItemProps> = (
   const ctx = useCheckboxCardsContext();
   const [tid, local] = splitProps(rawProps, [...testIdPropKeys]);
 
-  const isChecked = () => ctx.value().includes(local.value);
-  const isDisabled = () => ctx.disabled() || local.disabled === true;
-  const isRequired = () => local.required ?? ctx.required();
-
-  const onCheckedChange = (next: boolean) => {
-    if (next) {
-      ctx.onValueChange([...ctx.value(), local.value]);
-    } else {
-      ctx.onValueChange(
-        ctx.value().filter((existing) => existing !== local.value),
-      );
-    }
-  };
-
   const labelClassName = () =>
     clx(
       css.item,
@@ -277,12 +264,7 @@ export const CheckboxCardsItem: ParentComponent<CheckboxCardsItemProps> = (
         variant="surface"
         size={ctx.size()}
         color={ctx.color()}
-        checked={isChecked()}
-        onCheckedChange={onCheckedChange}
-        name={ctx.name}
-        value={local.value}
-        disabled={isDisabled()}
-        required={isRequired()}
+        {...bindMultiSelectItem(ctx, local)}
         class={css.checkbox}
       />
     </label>

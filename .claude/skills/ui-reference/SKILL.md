@@ -35,6 +35,7 @@ description: Reference docs for `@lib/ui` components — props, descriptions, an
 - [Card](./reference/card.md): Surface container.
 - [Checkbox](./reference/checkbox.md): Tri-state checkbox with optional inline label.
 - [CheckboxCards](./reference/checkbox-cards.md): Group of checkbox options rendered as selectable cards.
+- [CheckboxGroup](./reference/checkbox-group.md): Vertical list of checkbox options bound to one `string[]`.
 - [ContextMenu](./reference/context-menu.md): Non-modal menu of actions opened at the pointer by a right click or long press.
 - [DataList](./reference/data-list.md): Description list for label–value pairs.
 - [Dialog](./reference/dialog.md): Modal window overlaid on the page, blocking it until dismissed.
