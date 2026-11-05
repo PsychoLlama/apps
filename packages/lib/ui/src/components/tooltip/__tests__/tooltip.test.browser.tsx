@@ -13,6 +13,7 @@ import { userEvent } from 'vitest/browser';
 import Button from '../../button/button';
 import Dialog from '../../dialog/dialog';
 import Tooltip, { type TooltipProps } from '../tooltip';
+import * as css from '../tooltip.css';
 import { __testingFlushCooling } from '../use-exclusive';
 import * as fixture from './tooltip.test.browser.css';
 
@@ -111,9 +112,42 @@ describe('Tooltip', () => {
 
   // --- Hover ---
 
-  /** Rest the pointer on something and wait out the delay. */
+  /**
+   * End a hover's wait now rather than on the clock (see `WAIT_MS`).
+   * Everything under the root still holding for its delay moves ahead
+   * by what's left of the window's, so what's timed off the wait — the
+   * grace area arming — keeps its place behind it. Nothing to do if
+   * the window isn't waiting.
+   */
+  const elapse = (window: HTMLElement) => {
+    const arrival = window
+      .getAnimations()
+      .find(
+        (animation) => (animation as CSSAnimation).animationName === css.enter,
+      );
+
+    if (!arrival) return;
+
+    const waiting = (animation: Animation) =>
+      Number(animation.effect?.getComputedTiming().delay) -
+      Number(animation.currentTime);
+
+    const remaining = waiting(arrival);
+    if (remaining <= 0) return;
+
+    for (const animation of window.parentElement!.getAnimations({
+      subtree: true,
+    })) {
+      if (waiting(animation) > 0) {
+        animation.currentTime = Number(animation.currentTime) + remaining;
+      }
+    }
+  };
+
+  /** Rest the pointer on something and see the delay out. */
   const hover = async (target: HTMLElement, window: HTMLElement) => {
     await userEvent.hover(target);
+    elapse(window);
     await waitFor(() => expect(window).toBeVisible());
   };
 
@@ -198,6 +232,7 @@ describe('Tooltip', () => {
    */
   const arrived = async (window: HTMLElement) => {
     await waitFor(() => expect(window).toHaveAttribute('data-tethered'));
+    elapse(window);
     await Promise.all(
       window
         .getAnimations({ subtree: true })
@@ -342,6 +377,7 @@ describe('Tooltip', () => {
     // tooltip is open — the window is just holding itself back.
     expect(window).not.toBeVisible();
 
+    elapse(window);
     await waitFor(() => expect(window).toBeVisible());
   });
 
@@ -362,13 +398,9 @@ describe('Tooltip', () => {
     await userEvent.hover(trigger);
     await userEvent.hover(park);
 
-    // A slow enough visit outlasts the wait and shows, which warms the
-    // page and rightly spares the next visit. Cool it so the next visit
-    // waits however long this one took.
-    __testingFlushCooling();
-
     await userEvent.hover(trigger);
     expect(window).not.toBeVisible();
+    elapse(window);
     await waitFor(() => expect(window).toBeVisible());
   });
 
@@ -425,6 +457,7 @@ describe('Tooltip', () => {
 
     // Still arriving once it shows: showing warms the page, which
     // mustn't spare this tooltip the rest of its own entrance.
+    elapse(window);
     await waitFor(() => expect(window).toBeVisible());
     expect(motionOn(window)).not.toHaveLength(0);
   });
@@ -733,6 +766,7 @@ describe('Tooltip', () => {
     __testingFlushCooling();
     await userEvent.hover(secondTrigger);
     expect(second).not.toBeVisible();
+    elapse(second);
     await waitFor(() => expect(second).toBeVisible());
   });
 

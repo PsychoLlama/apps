@@ -5,7 +5,8 @@
  * `stage` keeps the fixtures out of its way.
  */
 
-import { style } from '@vanilla-extract/css';
+import { globalStyle, style } from '@vanilla-extract/css';
+import * as tooltip from '../tooltip.css';
 
 /**
  * Fills the viewport, under everything. Hovering it puts the pointer in
@@ -27,6 +28,27 @@ export const stage = style({
   position: 'fixed',
   top: 0,
   right: 0,
+});
+
+/**
+ * How long a hover waits on the stage: longer than any test will run,
+ * so the wait never ends on the clock. The real 200ms is shorter than a
+ * couple of round trips to the driver on a slow runner, which left
+ * every "still waiting" assertion racing it; here a test that wants
+ * the wait over ends it itself.
+ */
+export const WAIT_MS = 60_000;
+
+globalStyle(
+  `${stage} ${tooltip.root}:where(:hover:not(:has(:focus-visible)))`,
+  {
+    vars: { [tooltip.delay]: `${WAIT_MS}ms` },
+  },
+);
+
+// Declared after, at the same specificity, so skipping still skips.
+globalStyle(`${stage} ${tooltip.root}:where([data-skip-delay])`, {
+  vars: { [tooltip.delay]: '0s' },
 });
 
 /**
