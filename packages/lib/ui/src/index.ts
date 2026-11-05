@@ -317,6 +317,7 @@ export {
   type HoverCardAlign,
   type HoverCardDisplay,
   type HoverCardSize,
+  type HoverCardTriggerProps,
 } from './components/hover-card/hover-card';
 export {
   default as Tooltip,

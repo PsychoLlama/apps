@@ -11,6 +11,7 @@
 import {
   createEffect,
   createSignal,
+  createUniqueId,
   mergeProps,
   on,
   onCleanup,
@@ -49,6 +50,19 @@ export type HoverCardDisplay = FloatingRootDisplay;
 
 /** Surface padding and rounding on a 1–3 scale. */
 export type HoverCardSize = 1 | 2 | 3;
+
+/**
+ * What the hover card hands its trigger. Spread onto the focusable
+ * element as-is.
+ */
+export interface HoverCardTriggerProps {
+  /**
+   * Id of the card while it's on screen, pointing assistive tech at the
+   * richer content it holds. Absent while hidden, when there'd be
+   * nothing to go to.
+   */
+  readonly 'aria-details': string | undefined;
+}
 
 /**
  * `HoverCard` props. Wraps its trigger and floats a card of content next
@@ -100,8 +114,11 @@ export interface HoverCardProps
   /** Class merged onto the surface. */
   class?: string;
 
-  /** The trigger: a single focusable element, usually a link. */
-  children: JSX.Element;
+  /**
+   * Renders the trigger: a single focusable element, usually a link,
+   * with the given props spread onto it.
+   */
+  children: (trigger: HoverCardTriggerProps) => JSX.Element;
 }
 
 /** The props every hover card fills in unless told otherwise. */
@@ -184,6 +201,13 @@ const HoverCard = (rawProps: HoverCardProps) => {
   // included, which is as long as the tether has anything to do.
   const visibility = createVisibility({ open, element: windowElement });
   const surface = () => SURFACE_BY_SIZE[local.size];
+  const contentId = createUniqueId();
+
+  const triggerProps: HoverCardTriggerProps = {
+    get 'aria-details'() {
+      return visibility.visible() ? contentId : undefined;
+    },
+  };
 
   // Anything holding the card up. Settling on a change waits out the
   // delay, and a change back before then cancels it — which is what
@@ -283,7 +307,7 @@ const HoverCard = (rawProps: HoverCardProps) => {
       onFocusIn={onFocusIn}
       onFocusOut={onFocusOut}
     >
-      {local.children}
+      {local.children(triggerProps)}
 
       <FloatingWindow
         {...visibility.props}
@@ -301,6 +325,7 @@ const HoverCard = (rawProps: HoverCardProps) => {
         <FloatingBody
           {...rest}
           ref={setSurfaceElement}
+          id={contentId}
           p={surface().padding}
           class={clx(css.content, local.class)}
           testId={`${tid.testId}-surface`}

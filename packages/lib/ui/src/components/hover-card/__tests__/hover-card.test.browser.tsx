@@ -34,9 +34,11 @@ const setup = () => {
           </a>
         }
       >
-        <a href="#user" data-testid="trigger">
-          @user
-        </a>
+        {(trigger) => (
+          <a href="#user" data-testid="trigger" {...trigger}>
+            @user
+          </a>
+        )}
       </HoverCard>
     </>
   ));
@@ -83,6 +85,20 @@ describe('HoverCard', () => {
     expect(surface).not.toBeVisible();
     expect(window).not.toHaveAttribute('data-state');
     expect(window).not.toHaveAttribute('data-tethered');
+  });
+
+  // --- Accessibility ---
+
+  it('points the trigger at the card only while it shows', async () => {
+    const { trigger, outside, surface } = setup();
+    expect(trigger).not.toHaveAttribute('aria-details');
+
+    await openByHover({ trigger, surface });
+    expect(trigger).toHaveAttribute('aria-details', surface.id);
+
+    await userEvent.hover(outside);
+    await hidden(surface);
+    await waitFor(() => expect(trigger).not.toHaveAttribute('aria-details'));
   });
 
   // --- Pointer ---
