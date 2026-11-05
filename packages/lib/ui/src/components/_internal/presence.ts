@@ -1,4 +1,9 @@
 import { createEffect, createSignal, onCleanup, type Accessor } from 'solid-js';
+import {
+  settleExitMotion,
+  snapshotOpenMotion,
+  type OpenMotion,
+} from './exit-motion';
 
 /**
  * Presence: keep a closing surface mounted until its CSS exit motion
@@ -54,10 +59,6 @@ export interface Presence {
   props: { readonly 'data-state': 'open' | 'closed' };
 }
 
-/** The element's running motion, or none where WAAPI doesn't exist. */
-const motionOf = (element: HTMLElement): readonly Animation[] =>
-  typeof element.getAnimations === 'function' ? element.getAnimations() : [];
-
 /**
  * Track whether a surface should be in the DOM, holding the mount
  * open while the close's exit motion settles.
@@ -68,14 +69,14 @@ export const createPresence = (config: PresenceConfig): Presence => {
   // Motion running while open — the entrance, ambient loops. Anything
   // still in this set at close time wasn't spawned by closing, so it
   // can't be exit motion.
-  let openMotion: ReadonlySet<Animation> = new Set();
+  let openMotion: OpenMotion = new Set();
 
   createEffect(() => {
     const element = config.element();
 
     if (config.open()) {
       setMounted(true);
-      openMotion = new Set(element ? motionOf(element) : []);
+      openMotion = element ? snapshotOpenMotion(element) : new Set();
       return;
     }
 
@@ -84,16 +85,10 @@ export const createPresence = (config: PresenceConfig): Presence => {
       return;
     }
 
-    // The `data-state` flip has rendered by the time effects run, and
-    // `getAnimations` forces style resolution, so motion the closed
-    // state triggers is already visible here.
-    const settling = motionOf(element).filter(
-      (animation) =>
-        !openMotion.has(animation) &&
-        animation.effect?.getTiming().iterations !== Infinity,
-    );
+    // The `data-state` flip has rendered by the time effects run.
+    const settled = settleExitMotion(element, openMotion);
 
-    if (settling.length === 0) {
+    if (!settled) {
       setMounted(false);
       return;
     }
@@ -103,11 +98,8 @@ export const createPresence = (config: PresenceConfig): Presence => {
       cancelled = true;
     });
 
-    // Settled covers every ending: finished, canceled mid-flight, or
-    // removed — reopening flips `cancelled` first either way.
-    void Promise.allSettled(
-      settling.map((animation) => animation.finished),
-    ).then(() => {
+    // Reopening flips `cancelled` before the exit settles.
+    void settled.then(() => {
       if (!cancelled) setMounted(false);
     });
   });
