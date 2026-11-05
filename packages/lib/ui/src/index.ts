@@ -311,6 +311,14 @@ export {
   type PopoverTriggerProps,
 } from './components/popover/popover';
 export {
+  default as HoverCard,
+  type HoverCardProps,
+  type HoverCardSide,
+  type HoverCardAlign,
+  type HoverCardDisplay,
+  type HoverCardSize,
+} from './components/hover-card/hover-card';
+export {
   default as Tooltip,
   type TooltipProps,
   type TooltipSide,
