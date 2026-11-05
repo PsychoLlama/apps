@@ -40,6 +40,7 @@ description: Reference docs for `@lib/ui` components — props, descriptions, an
 - [DataList](./reference/data-list.md): Description list for label–value pairs.
 - [Dialog](./reference/dialog.md): Modal window overlaid on the page, blocking it until dismissed.
 - [DropdownMenu](./reference/dropdown-menu.md): Non-modal menu of actions floated beside its trigger while open.
+- [HoverCard](./reference/hover-card.md): Preview of supplementary content floated beside its trigger on hover or keyboard focus.
 - [IconButton](./reference/icon-button.md): Square button for a single icon.
 - [Kbd](./reference/kbd.md): Inline keyboard input.
 - [NoScript](./reference/no-script.md): Content shown only when scripting is unavailable.

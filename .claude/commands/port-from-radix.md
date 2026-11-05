@@ -54,8 +54,7 @@ If the user hasn't said where they're cloned, stop and ask. Don't search the fil
 
 ## Final checks
 
-1. Run the `codex-review` skill.
-2. QA the component in `@app/gallery`.
-3. Mark the PR ready for review.
+1. QA the component in `@app/gallery`.
+2. Mark the PR ready for review.
 
 If the user explicitly asks for a deep parity review, spawn a subagent to diff our implementation against the Radix source and surface any unintentional differences.

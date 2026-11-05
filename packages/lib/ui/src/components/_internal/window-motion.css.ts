@@ -1,8 +1,8 @@
 /**
  * Enter and exit motion for a floating window that opens off a trigger,
- * shared by `Popover`, `DropdownMenu`, and `ContextMenu`. Mirrors Radix
- * Themes' shared popper animation; the deviations are recorded on
- * `Popover`.
+ * shared by `Popover`, `HoverCard`, `DropdownMenu`, and `ContextMenu`.
+ * Mirrors Radix Themes' shared popper animation; the deviations are
+ * recorded on `Popover`.
  */
 
 import { createVar, keyframes, style } from '@vanilla-extract/css';
@@ -27,7 +27,8 @@ const leave = keyframes({ to: TUCKED });
  * The positioned box, which carries the motion so the surface and its
  * shadow travel together, out of the `transform-origin` the window
  * already points at the trigger. `data-state` comes from presence,
- * which holds the box mounted until the exit settles.
+ * which holds the box mounted until the exit settles, or from
+ * visibility, which holds a resident box visible until it does.
  */
 export const window = style({
   vars: { [slideX]: '0px', [slideY]: '0px' },

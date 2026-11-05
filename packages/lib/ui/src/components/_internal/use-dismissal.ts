@@ -21,16 +21,24 @@ export interface DismissalInputs {
 
   /** Asks the owner to close. */
   dismiss: (reason: DismissalReason) => void;
+
+  /**
+   * Whether focus moving outside dismisses. Off for a window held up by
+   * something focus doesn't speak for, such as the pointer resting on
+   * it. A press outside still dismisses either way.
+   * @default true
+   */
+  focusOutside?: boolean;
 }
 
 /** Listener options for the presses heard outside the window. */
 const PASSIVE: AddEventListenerOptions = { passive: true };
 
 /**
- * Closes an open floating window on Escape, a press outside it, or focus
- * moving outside it. "Outside" is outside the root, so given the
- * floating root the trigger counts as inside: its own handler is what
- * toggles.
+ * Closes an open floating window on Escape, a press outside it, or
+ * (unless opted out) focus moving outside it. "Outside" is outside the
+ * root, so given the floating root the trigger counts as inside: its
+ * own handler is what toggles.
  *
  * Attached only while open, so a page of closed windows listens for
  * nothing.
@@ -98,7 +106,7 @@ export const useDismissal = (inputs: DismissalInputs): void => {
   // Tabbing away, or anything else that moves focus off the window and
   // its trigger.
   useGlobalListener(
-    () => whileOpen(document),
+    () => (inputs.focusOutside === false ? undefined : whileOpen(document)),
     'focusin',
     PASSIVE,
     (event) => {
