@@ -5,6 +5,19 @@
  * primitive's body, so padding and radius arrive as props there; what's
  * left here is the paint, and hiding the window at rest.
  *
+ * Deviations from Radix:
+ * - `--color-panel-solid` / `--shadow-4` map onto `background.panelSolid`
+ *   / `shadow[4]`.
+ * - Motion is the shared floating-window motion, with `Popover`'s
+ *   deviations: durations and easing ride the scale, and reduced motion
+ *   collapses them with no media query.
+ * - At rest the window is hidden with `visibility` rather than
+ *   unmounted, which also takes it out of the tab order and the
+ *   accessibility tree.
+ * - The surface never outgrows the viewport, less the collision padding
+ *   on each side. Upstream only caps it at `maxWidth`.
+ * - No `--inset-padding-*` vars. Deferred: `Inset` only reads `Card`'s.
+ *
  * @see https://www.radix-ui.com/themes/docs/components/hover-card
  */
 

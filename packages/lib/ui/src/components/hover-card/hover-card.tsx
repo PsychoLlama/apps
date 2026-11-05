@@ -5,7 +5,70 @@
  * primitive. A card of supplementary content that floats beside its
  * trigger while the pointer or keyboard focus rests there.
  *
+ * Deviations from Radix:
+ * - One component. Upstream's `Root` / `Trigger` / `Portal` / `Content`
+ *   collapse into `HoverCard`: the trigger is the render function's
+ *   element and the content is a prop.
+ * - No portal. The window renders next to its trigger, inline, so an
+ *   `overflow` ancestor can clip it and a later sibling can paint over
+ *   it. Same trade as `Tooltip` and `Popover`.
+ * - No `open` / `defaultOpen` / `onOpenChange`. Opening and closing
+ *   are the card's own business, as on `Tooltip`; there's nothing for a
+ *   call site to drive.
+ * - `openDelay` / `closeDelay` are fixed at Themes' 200ms / 150ms and
+ *   not exposed: they're a property of the page's feel, not one call
+ *   site. They're timers rather than motion tokens, so reduced motion
+ *   keeps them.
+ * - `display` is required, from the floating root, as on `Tooltip`. An
+ *   inline card's content must be phrasing content.
+ * - `children` is a render function. Upstream merges its handlers and
+ *   `data-state` into the child via `asChild`; here the trigger is
+ *   handed `aria-details` and spreads it itself. The handlers live on
+ *   the floating root instead, which holds both trigger and card, so
+ *   entering either counts once and no handler is merged.
+ * - The window is always in the DOM, hidden at rest. Upstream mounts
+ *   its content on open. The tether only runs while the card is on
+ *   screen, exit included, so a closed card costs no measurement.
+ * - Hover is the root's `pointerenter` / `pointerleave` with touch
+ *   ignored, matching upstream's `excludeTouch`. Upstream also cancels
+ *   `touchstart` on the trigger to keep a tap from focusing it; here
+ *   that focus isn't `:focus-visible`, so it opens nothing.
+ * - Focus only counts when it's `:focus-visible`, and anywhere inside
+ *   the root, the card included. Upstream opens on any focus of the
+ *   trigger, so a pointer press focusing it opens it too, and focus
+ *   moving into the card closes it.
+ * - The card is reachable by keyboard. Upstream sets `tabindex=-1` on
+ *   every tabbable inside it, leaving it to sighted pointer users; here
+ *   Tab walks from the trigger into the card, and focus there holds it
+ *   open.
+ * - `aria-details` points the trigger at the card while it's on
+ *   screen. Upstream sets no ARIA at all. Nothing else describes it
+ *   honestly: `aria-describedby` would flatten the card into a string,
+ *   and `aria-haspopup` / `aria-expanded` promise that activating the
+ *   trigger toggles something.
+ * - A selection holds the card open only while it reaches into the
+ *   card, tracked through `selectionchange`, keyboard selection
+ *   included. Upstream sets a flag on `pointerup` when the page has any
+ *   selection, and keeps it until the next press inside the card.
+ * - No selection containment. Upstream swaps `user-select` on the body
+ *   while a press inside the card is held, so a drag can't select past
+ *   its edge. Not left out for a reason: it didn't make a strong enough
+ *   case in the first implementation, and drags looked fine without it.
+ * - Dismissal isn't configurable: Escape and a press outside always
+ *   close, with no `onEscapeKeyDown`, `onPointerDownOutside`,
+ *   `onFocusOutside`, or `onInteractOutside`. Focus moving outside
+ *   doesn't dismiss, as upstream; it counts as leaving, with the delay.
+ * - Collision handling is fixed at Themes' values (`collisionPadding`
+ *   10, `sticky="partial"`, collisions avoided) and not exposed. Nor
+ *   are `arrowPadding`, `collisionBoundary`, `hideWhenDetached`,
+ *   `forceMount`, or `container`. No arrow, as Themes.
+ * - `size` is a plain scale, not a responsive object.
+ * - `width`, `minWidth`, and the height props aren't exposed;
+ *   `maxWidth` is.
+ * - Deferred: `highContrast` styling.
+ *
  * @see https://www.radix-ui.com/themes/docs/components/hover-card
+ * @see https://www.radix-ui.com/primitives/docs/components/hover-card
  */
 
 import {
