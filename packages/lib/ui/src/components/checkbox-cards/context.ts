@@ -3,35 +3,24 @@
  * `CheckboxCardsItem`.
  *
  * Mirrors the `RadioCards` context — items pull visual config (size,
- * variant, color) plus group wiring (name, value, disabled, required)
- * so each item only declares its own `value` and optional `disabled`.
- * The `value` here is a `string[]` because checkbox groups are
- * multi-select; otherwise the shape matches `RadioCards`.
+ * variant, color) plus the shared multi-select wiring
+ * (`MultiSelectState`) so each item only declares its own `value`
+ * and optional `disabled`.
  */
 
 import { assert } from '@lib/assert';
 import { createContext, useContext, type Accessor } from 'solid-js';
+import type { MultiSelectState } from '../_internal/checkbox-multi-select';
 import type {
   CheckboxCardsColor,
   CheckboxCardsSize,
   CheckboxCardsVariant,
 } from './checkbox-cards';
 
-export interface CheckboxCardsContextValue {
-  /** Shared `name` applied to every input. */
-  name: string;
+export interface CheckboxCardsContextValue extends MultiSelectState {
   size: Accessor<CheckboxCardsSize>;
   variant: Accessor<CheckboxCardsVariant>;
   color: Accessor<CheckboxCardsColor>;
-  value: Accessor<readonly string[]>;
-  disabled: Accessor<boolean>;
-  required: Accessor<boolean>;
-  /**
-   * Records the user's selection. The item passes the next array
-   * (existing values plus or minus its own) and the root forwards it
-   * to the consumer's `onValueChange`.
-   */
-  onValueChange: (value: string[]) => void;
 }
 
 export const CheckboxCardsContext = createContext<CheckboxCardsContextValue>();

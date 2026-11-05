@@ -186,6 +186,12 @@ export {
   type CheckboxCardsColumns,
 } from './components/checkbox-cards/checkbox-cards';
 export {
+  CheckboxGroupRoot,
+  CheckboxGroupItem,
+  type CheckboxGroupRootProps,
+  type CheckboxGroupItemProps,
+} from './components/checkbox-group/checkbox-group';
+export {
   default as ScrollArea,
   type ScrollAreaProps,
   type ScrollAreaType,
