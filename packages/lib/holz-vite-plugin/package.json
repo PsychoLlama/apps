@@ -1,0 +1,18 @@
+{
+  "name": "@lib/holz-vite-plugin",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Vite plugin that streams holz logs from the browser to the dev server.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc"
+  },
+  "peerDependencies": {
+    "vite": "catalog:"
+  }
+}
