@@ -53,7 +53,6 @@
   "devDependencies": {
     "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/vitest-config": "workspace:*",
-    "@vanilla-extract/dynamic": "catalog:",
     "typescript": "catalog:",
     "wrangler": "catalog:"
   }

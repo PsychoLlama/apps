@@ -13,13 +13,6 @@ import * as app from './src/constants';
 const manifestThemeColor = THEME_COLORS[DEFAULT_THEME_ID].dark;
 
 export default defineConfig({
-  // Pulled in transitively by generated `.css.ts` modules, so Vite's
-  // entry scanner misses it. Without this hint, the first cold load
-  // re-optimizes deps mid-flight and 504s any in-flight requests
-  // racing the version bump.
-  optimizeDeps: {
-    include: ['@vanilla-extract/dynamic'],
-  },
   plugins: [
     substrate({
       type: 'app',

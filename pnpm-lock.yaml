@@ -247,7 +247,7 @@ catalogs:
       version: 2.11.15
     vitest:
       specifier: ^5.0.0
-      version: 5.0.5
+      version: 5.1.0
     wrangler:
       specifier: ^4.65.0
       version: 4.157.0
@@ -405,9 +405,6 @@ importers:
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
-      '@vanilla-extract/dynamic':
-        specifier: 'catalog:'
-        version: 2.1.5
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -481,9 +478,6 @@ importers:
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
-      '@vanilla-extract/dynamic':
-        specifier: 'catalog:'
-        version: 2.1.5
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -554,9 +548,6 @@ importers:
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
-      '@vanilla-extract/dynamic':
-        specifier: 'catalog:'
-        version: 2.1.5
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -648,9 +639,6 @@ importers:
       '@vanilla-extract/css':
         specifier: 'catalog:'
         version: 1.21.3
-      '@vanilla-extract/dynamic':
-        specifier: 'catalog:'
-        version: 2.1.5
       solid-js:
         specifier: 1.9.18
         version: 1.9.18
@@ -737,9 +725,6 @@ importers:
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
-      '@vanilla-extract/dynamic':
-        specifier: 'catalog:'
-        version: 2.1.5
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
