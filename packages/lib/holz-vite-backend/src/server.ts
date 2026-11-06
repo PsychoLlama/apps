@@ -1,8 +1,8 @@
 import { inspect } from 'node:util';
 import type { LogProcessor } from '@holz/core';
 import type { Plugin } from 'vite';
-import { LOG_EVENT } from './protocol/events';
-import { deserializeLog } from './protocol/serialization';
+import { LOG_EVENT } from './protocol/events.ts';
+import { deserializeLog } from './protocol/serialization.ts';
 
 const PLUGIN_NAME = '@holz/vite-backend';
 
@@ -23,12 +23,15 @@ export interface HolzConfig {
  * server's socket and hands them to the configured processor. Dev server
  * only; builds ignore it.
  *
- * `getConfig` runs once, while Vite resolves its config, so it can lazily
- * import server-only backends without burdening builds. If it throws, the
+ * Pass the config directly, or an async function that resolves it. The
+ * function runs once, while Vite resolves its config, so it can lazily
+ * import server-only backends without burdening builds. If it rejects, the
  * dev server fails to start.
+ *
+ * Disables Vite's `server.forwardConsole` unless the app sets it explicitly.
  */
 export const holz = (
-  getConfig: () => HolzConfig | Promise<HolzConfig>,
+  options: HolzConfig | (() => Promise<HolzConfig>),
 ): Plugin => {
   // Assigned in `config`, which Vite awaits before `configureServer`.
   let processor: LogProcessor;
@@ -37,8 +40,17 @@ export const holz = (
     name: PLUGIN_NAME,
     apply: 'serve',
 
-    async config() {
-      ({ processor } = await getConfig());
+    async config(config) {
+      ({ processor } =
+        typeof options === 'function' ? await options() : options);
+
+      // Vite's console forwarding sends browser console output to the same
+      // terminal, flattened to strings, and duplicates whatever the browser
+      // backends also print to the console. It's on by default under coding
+      // agents. Turn it off unless the app opted in explicitly.
+      if (config.server?.forwardConsole === undefined) {
+        return { server: { forwardConsole: false } };
+      }
     },
 
     configureServer(server) {
