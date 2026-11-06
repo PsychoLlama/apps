@@ -29,6 +29,7 @@
     "@dev/workspace-cli": "workspace:*",
     "@eslint/config-helpers": "^0.7.0",
     "@eslint/js": "^10.0.0",
+    "@eslint/json": "catalog:",
     "@iconify/json": "^2.2.460",
     "@testing-library/jest-dom": "catalog:",
     "@vanilla-extract/css": "catalog:",

@@ -164,6 +164,9 @@ settings:
 
 catalogs:
   default:
+    '@eslint/json':
+      specifier: ^2.1.1
+      version: 2.1.1
     '@floating-ui/dom':
       specifier: ^1.8.0
       version: 1.8.0
@@ -247,7 +250,7 @@ catalogs:
       version: 2.11.15
     vitest:
       specifier: ^5.0.0
-      version: 5.1.0
+      version: 5.0.5
     wrangler:
       specifier: ^4.65.0
       version: 4.157.0
@@ -277,6 +280,9 @@ importers:
       '@eslint/js':
         specifier: ^10.0.0
         version: 10.0.1(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))
+      '@eslint/json':
+        specifier: 'catalog:'
+        version: 2.1.1
       '@iconify/json':
         specifier: ^2.2.460
         version: 2.2.550
@@ -822,6 +828,9 @@ importers:
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
+      '@eslint/json':
+        specifier: 'catalog:'
+        version: 2.1.1
       '@typescript-eslint/rule-tester':
         specifier: ^8.59.0
         version: 8.71.2(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
@@ -1787,6 +1796,10 @@ packages:
       eslint:
         optional: true
 
+  '@eslint/json@2.1.1':
+    resolution: {integrity: sha512-ffVzPZALaJzxuo46ggBtJ9c8YBWKLMh/R35aFBHk/dRobmFNortJlHJfBWbHGuydoFeVZbvPy0PLX2wvCI9T9w==}
+    engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
   '@eslint/object-schema@3.0.5':
     resolution: {integrity: sha512-vqTaUEgxzm+YDSdElad6PiRoX4t8VGDjCtt05zn4nU810UIx/uNEV7/lZJ6KwFThKZOzOxzXy48da+No7HZaMw==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
@@ -1866,6 +1879,10 @@ packages:
   '@humanwhocodes/module-importer@1.0.1':
     resolution: {integrity: sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA==}
     engines: {node: '>=12.22'}
+
+  '@humanwhocodes/momoa@3.3.13':
+    resolution: {integrity: sha512-AbKq3EW41+HY6pNMJgAOrz68iyiTTf0Nr1JRHHfuG5zwniJ9Dw8J3U7oa1I2ptpqYwmEf1sXKOGK6lbdZ9eqmg==}
+    engines: {node: '>=18'}
 
   '@humanwhocodes/retry@0.4.3':
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
@@ -5559,6 +5576,13 @@ snapshots:
     optionalDependencies:
       eslint: 10.14.0(jiti@2.7.0)(supports-color@10.2.2)
 
+  '@eslint/json@2.1.1':
+    dependencies:
+      '@eslint/core': 1.2.1
+      '@eslint/plugin-kit': 0.7.3
+      '@humanwhocodes/momoa': 3.3.13
+      natural-compare: 1.4.0
+
   '@eslint/object-schema@3.0.5': {}
 
   '@eslint/plugin-kit@0.7.3':
@@ -5623,6 +5647,8 @@ snapshots:
   '@humanfs/types@0.15.0': {}
 
   '@humanwhocodes/module-importer@1.0.1': {}
+
+  '@humanwhocodes/momoa@3.3.13': {}
 
   '@humanwhocodes/retry@0.4.3': {}
 

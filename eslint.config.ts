@@ -3,6 +3,7 @@
 /// <reference types="node" />
 import { includeIgnoreFile } from '@eslint/config-helpers';
 import eslint from '@eslint/js';
+import json from '@eslint/json';
 import importPlugin from 'eslint-plugin-import';
 import solid from 'eslint-plugin-solid/configs/typescript';
 import tseslint from 'typescript-eslint';
@@ -31,13 +32,26 @@ const restrictedStatePaths = [
   },
 ];
 
+// The shared JS/TS configs below don't set `files`, so they'd otherwise
+// also match `package.json` and crash on the JSON AST. Configs that
+// already scope themselves keep their own `files`.
+const CODE_FILES = ['**/*.{ts,tsx,js,jsx,mjs,cjs}'];
+
+const codeOnly = <T extends object>(config: T) => ({
+  files: CODE_FILES,
+  ...config,
+});
+
 export default [
   includeIgnoreFile(import.meta.dirname + '/.gitignore'),
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  solid,
+  ...[
+    eslint.configs.recommended,
+    ...tseslint.configs.recommended,
+    ...tseslint.configs.recommendedTypeChecked,
+    solid,
+  ].map(codeOnly),
   {
+    files: CODE_FILES,
     linterOptions: {
       reportUnusedDisableDirectives: 'error',
     },
@@ -287,6 +301,16 @@ export default [
           patterns: restrictedImportPatterns,
         },
       ],
+    },
+  },
+  {
+    // Dependencies must come from the catalog or the workspace, so
+    // versions can't drift between packages.
+    files: ['**/package.json'],
+    plugins: { json, custom: customRules },
+    language: 'json/json',
+    rules: {
+      'custom/require-catalog': 'error',
     },
   },
 ];
