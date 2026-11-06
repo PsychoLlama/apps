@@ -29,6 +29,7 @@
     "@holz/stream-backend": "catalog:",
     "@lib/holz-config-filter": "workspace:*",
     "@lib/holz-idb-backend": "workspace:*",
+    "@lib/holz-vite-plugin": "workspace:*",
     "@lib/runtime-config": "workspace:*"
   },
   "devDependencies": {
