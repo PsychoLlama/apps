@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "citty": "catalog:",
-    "tinyexec": "^1.1.2"
+    "tinyexec": "catalog:"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*"

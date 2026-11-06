@@ -14,12 +14,12 @@
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
-    "@typescript-eslint/utils": "^8.59.0"
+    "@typescript-eslint/utils": "catalog:"
   },
   "devDependencies": {
     "@dev/vitest-config": "workspace:*",
     "@eslint/json": "catalog:",
-    "@typescript-eslint/rule-tester": "^8.59.0"
+    "@typescript-eslint/rule-tester": "catalog:"
   },
   "peerDependencies": {
     "eslint": "catalog:"

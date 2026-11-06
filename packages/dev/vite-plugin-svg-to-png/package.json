@@ -17,6 +17,6 @@
     "vite": "catalog:"
   },
   "devDependencies": {
-    "@resvg/resvg-wasm": "^2.6.2"
+    "@resvg/resvg-wasm": "catalog:"
   }
 }
