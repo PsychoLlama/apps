@@ -157,8 +157,6 @@
       "inputs": [
         "package.json",
         "packages/dev/workspace-cli/src/**",
-        "packages/*/*/package.json",
-        "pnpm-workspace.yaml",
         "turbo.json"
       ],
       "outputs": [],
