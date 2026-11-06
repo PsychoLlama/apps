@@ -1,5 +1,5 @@
 ---
-description: Reference docs for `@lib/design` tokens — colors, typography, space, radius, shadow, motion, breakpoints. Load when authoring or reviewing styling that consumes `@lib/design`, picking a token, or looking up token names.
+description: Reference docs for `@lib/design` tokens — colors, typography, space, radius, shadow, layer, motion, breakpoints. Load when authoring or reviewing styling that consumes `@lib/design`, picking a token, or looking up token names.
 ---
 
 # Design System
@@ -47,6 +47,10 @@ description: Reference docs for `@lib/design` tokens — colors, typography, spa
 ## Shadow
 
 - `shadow[1-6]`: Elevation scale. 1 inset (inputs), 2–3 raised surfaces, 4–5 floating layers, 6 modals.
+
+## Layer
+
+- `layer.floating`: `z-index` escape hatch for catastrophic scenarios. **Do not use without explicit approval.**
 
 ## Motion
 
