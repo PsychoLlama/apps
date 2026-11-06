@@ -8,7 +8,7 @@
   "sideEffects": false,
   "exports": {
     "./server": "./src/server.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client/index.ts"
   },
   "scripts": {
     "typecheck": "tsc",
