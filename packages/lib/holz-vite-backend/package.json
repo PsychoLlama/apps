@@ -1,0 +1,27 @@
+{
+  "name": "@lib/holz-vite-backend",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Holz backend that streams browser logs to the Vite dev server.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc",
+    "test:unit": "vitest run --config vitest.unit.config.ts"
+  },
+  "dependencies": {
+    "@holz/core": "catalog:",
+    "serialize-error": "catalog:"
+  },
+  "peerDependencies": {
+    "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@dev/vitest-config": "workspace:*"
+  }
+}
