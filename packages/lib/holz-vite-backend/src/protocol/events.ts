@@ -1,4 +1,4 @@
-import type { SerializedLog } from './serialization';
+import type { SerializedLog } from './serialization.ts';
 
 /**
  * Custom HMR event a browser sends over the Vite socket, carrying one

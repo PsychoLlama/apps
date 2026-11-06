@@ -3,7 +3,7 @@ import {
   type SerializedLog,
   deserializeLog,
   serializeLog,
-} from '../serialization';
+} from '../serialization.ts';
 
 // Logs are produced by a real holz logger so the tests see the same shapes
 // the client backend does.

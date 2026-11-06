@@ -1,8 +1,8 @@
 import { type Log, type LogProcessor, createLogger } from '@holz/core';
 import type { ViteDevServer } from 'vite';
-import { LOG_EVENT } from '../protocol/events';
-import { type SerializedLog, serializeLog } from '../protocol/serialization';
-import { type HolzConfig, holz } from '../server';
+import { LOG_EVENT } from '../protocol/events.ts';
+import { type SerializedLog, serializeLog } from '../protocol/serialization.ts';
+import { type HolzConfig, holz } from '../server.ts';
 
 type Listener = (log: SerializedLog) => void;
 

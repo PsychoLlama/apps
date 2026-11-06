@@ -1,8 +1,8 @@
 import { inspect } from 'node:util';
 import type { LogProcessor } from '@holz/core';
 import type { Plugin } from 'vite';
-import { LOG_EVENT } from './protocol/events';
-import { deserializeLog } from './protocol/serialization';
+import { LOG_EVENT } from './protocol/events.ts';
+import { deserializeLog } from './protocol/serialization.ts';
 
 const PLUGIN_NAME = '@holz/vite-backend';
 
