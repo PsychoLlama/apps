@@ -23,14 +23,15 @@ export interface HolzConfig {
  * server's socket and hands them to the configured processor. Dev server
  * only; builds ignore it.
  *
- * `getConfig` runs once, while Vite resolves its config, so it can lazily
- * import server-only backends without burdening builds. If it throws, the
+ * Pass the config directly, or an async function that resolves it. The
+ * function runs once, while Vite resolves its config, so it can lazily
+ * import server-only backends without burdening builds. If it rejects, the
  * dev server fails to start.
  *
  * Disables Vite's `server.forwardConsole` unless the app sets it explicitly.
  */
 export const holz = (
-  getConfig: () => HolzConfig | Promise<HolzConfig>,
+  options: HolzConfig | (() => Promise<HolzConfig>),
 ): Plugin => {
   // Assigned in `config`, which Vite awaits before `configureServer`.
   let processor: LogProcessor;
@@ -40,7 +41,8 @@ export const holz = (
     apply: 'serve',
 
     async config(config) {
-      ({ processor } = await getConfig());
+      ({ processor } =
+        typeof options === 'function' ? await options() : options);
 
       // Vite's console forwarding sends browser console output to the same
       // terminal, flattened to strings, and duplicates whatever the browser

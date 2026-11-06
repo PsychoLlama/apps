@@ -11,7 +11,7 @@ type Hook = (...args: unknown[]) => unknown;
 // Stands in for the dev server: runs the hooks in Vite's order against just
 // enough surface, with a hook to play messages arriving from the browser.
 const startServer = async (
-  getConfig: () => HolzConfig | Promise<HolzConfig>,
+  options: HolzConfig | (() => Promise<HolzConfig>),
 ) => {
   const listeners = new Map<string, Listener>();
   const logger = {
@@ -26,7 +26,7 @@ const startServer = async (
     },
   } as unknown as ViteDevServer;
 
-  const plugin = holz(getConfig);
+  const plugin = holz(options);
   await (plugin.config as Hook)({}, { command: 'serve', mode: 'development' });
   (plugin.configureServer as Hook)(server);
 
@@ -47,11 +47,11 @@ class ProcessorFailure extends Error {}
 
 describe('holz', () => {
   it('only applies to the dev server', () => {
-    expect(holz(() => ({ processor: () => {} })).apply).toBe('serve');
+    expect(holz({ processor: () => {} }).apply).toBe('serve');
   });
 
   it('disables console forwarding by default', async () => {
-    const plugin = holz(() => ({ processor: () => {} }));
+    const plugin = holz({ processor: () => {} });
     const result = await (plugin.config as Hook)(
       {},
       { command: 'serve', mode: 'development' },
@@ -61,7 +61,7 @@ describe('holz', () => {
   });
 
   it('respects an explicit console forwarding setting', async () => {
-    const plugin = holz(() => ({ processor: () => {} }));
+    const plugin = holz({ processor: () => {} });
     const result = await (plugin.config as Hook)(
       { server: { forwardConsole: true } },
       { command: 'serve', mode: 'development' },
@@ -72,7 +72,7 @@ describe('holz', () => {
 
   it('hands hydrated logs to the processor', async () => {
     const processor = vi.fn<LogProcessor>();
-    const { receive } = await startServer(() => ({ processor }));
+    const { receive } = await startServer({ processor });
     const error = new TypeError('boom');
 
     receive(capture((logger) => logger.error('failed', { error })));
@@ -83,7 +83,7 @@ describe('holz', () => {
   });
 
   it('loads the config once, before the server starts', async () => {
-    const getConfig = vi.fn(() => ({ processor: () => {} }));
+    const getConfig = vi.fn(async () => ({ processor: () => {} }));
     const { receive } = await startServer(getConfig);
 
     receive(capture((logger) => logger.info('one')));
@@ -104,22 +104,25 @@ describe('holz', () => {
     expect(processor).toHaveBeenCalledOnce();
   });
 
+  it('requires a config function to be async', () => {
+    // @ts-expect-error A config function must return a promise.
+    holz(() => ({ processor: () => {} }));
+  });
+
   it('fails to start when the config fails to load', async () => {
     await expect(
-      startServer(() => {
-        throw new ConfigFailure();
-      }),
+      startServer(() => Promise.reject(new ConfigFailure())),
     ).rejects.toBeInstanceOf(ConfigFailure);
   });
 
   it('reports a processor that throws and keeps going', async () => {
     const messages: string[] = [];
-    const { logger, receive } = await startServer(() => ({
+    const { logger, receive } = await startServer({
       processor: (log) => {
         if (log.message === 'bad') throw new ProcessorFailure('cannot cope');
         messages.push(log.message);
       },
-    }));
+    });
 
     receive(capture((logger) => logger.info('bad')));
     receive(capture((logger) => logger.info('good')));
