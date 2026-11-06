@@ -8,6 +8,11 @@ saveWorkspaceProtocol: true
 # Upgrades are automated; skip pnpm's "update available" check and banner.
 updateNotifier: false
 
+# Make `pnpm add` write `catalog:`, adding new deps to the catalog and
+# rejecting ranges that conflict with an existing entry. This only
+# covers `pnpm add`; `custom/require-catalog` catches hand edits.
+catalogMode: strict
+
 # Publicly hoist `@types/*` so workspace packages with no framework
 # devDeps (e.g. `@dev/workspace-cli`, a plain node CLI) can still reach
 # the `@types/node` that Vite and SolidStart already pull in. Every
