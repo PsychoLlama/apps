@@ -81,6 +81,7 @@ catalog:
   nitro: 3.0.260903-beta
   playwright: ^1.59.1
   prettier: ^3.8.1
+  serialize-error: ^13.1.0
   # Pinned exact, not a caret range: the `overrides` above force every
   # solid-js (runtime and transitive) to this catalog entry, but a caret
   # still lets pnpm pick different patches per peer context — which lands
