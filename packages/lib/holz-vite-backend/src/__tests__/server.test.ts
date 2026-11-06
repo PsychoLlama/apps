@@ -1,8 +1,8 @@
 import { type Log, type LogProcessor, createLogger } from '@holz/core';
 import type { ViteDevServer } from 'vite';
-import { LOG_EVENT } from '../../protocol/events';
-import { type SerializedLog, serializeLog } from '../../protocol/serialization';
-import { type HolzConfig, holz } from '../index';
+import { LOG_EVENT } from '../protocol/events';
+import { type SerializedLog, serializeLog } from '../protocol/serialization';
+import { type HolzConfig, holz } from '../server';
 
 type Listener = (log: SerializedLog) => void;
 
@@ -110,7 +110,7 @@ describe('holz', () => {
 
     // Vite only prints the message, so the error must be inlined into it.
     expect(message).toContain('cannot cope');
-    expect(message).toContain('index.test.ts');
+    expect(message).toContain('server.test.ts');
     expect(options?.error).toBeInstanceOf(ProcessorFailure);
     expect(messages).toEqual(['good']);
   });

@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import type { LogProcessor } from '@holz/core';
-import { LOG_EVENT } from '../protocol/events';
-import { serializeLog } from '../protocol/serialization';
+import { LOG_EVENT } from './protocol/events';
+import { serializeLog } from './protocol/serialization';
 
 /**
  * Create a holz backend that forwards browser logs to the Vite dev server.

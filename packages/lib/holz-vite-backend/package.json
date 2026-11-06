@@ -7,8 +7,8 @@
   "license": "MIT",
   "sideEffects": false,
   "exports": {
-    "./server": "./src/server/index.ts",
-    "./client": "./src/client/index.ts"
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts"
   },
   "scripts": {
     "typecheck": "tsc",
