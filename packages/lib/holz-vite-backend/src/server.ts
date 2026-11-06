@@ -26,6 +26,8 @@ export interface HolzConfig {
  * `getConfig` runs once, while Vite resolves its config, so it can lazily
  * import server-only backends without burdening builds. If it throws, the
  * dev server fails to start.
+ *
+ * Disables Vite's `server.forwardConsole` unless the app sets it explicitly.
  */
 export const holz = (
   getConfig: () => HolzConfig | Promise<HolzConfig>,
@@ -37,8 +39,16 @@ export const holz = (
     name: PLUGIN_NAME,
     apply: 'serve',
 
-    async config() {
+    async config(config) {
       ({ processor } = await getConfig());
+
+      // Vite's console forwarding sends browser console output to the same
+      // terminal, flattened to strings, and duplicates whatever the browser
+      // backends also print to the console. It's on by default under coding
+      // agents. Turn it off unless the app opted in explicitly.
+      if (config.server?.forwardConsole === undefined) {
+        return { server: { forwardConsole: false } };
+      }
     },
 
     configureServer(server) {

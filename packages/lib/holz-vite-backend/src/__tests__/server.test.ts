@@ -50,6 +50,26 @@ describe('holz', () => {
     expect(holz(() => ({ processor: () => {} })).apply).toBe('serve');
   });
 
+  it('disables console forwarding by default', async () => {
+    const plugin = holz(() => ({ processor: () => {} }));
+    const result = await (plugin.config as Hook)(
+      {},
+      { command: 'serve', mode: 'development' },
+    );
+
+    expect(result).toEqual({ server: { forwardConsole: false } });
+  });
+
+  it('respects an explicit console forwarding setting', async () => {
+    const plugin = holz(() => ({ processor: () => {} }));
+    const result = await (plugin.config as Hook)(
+      { server: { forwardConsole: true } },
+      { command: 'serve', mode: 'development' },
+    );
+
+    expect(result).toBeUndefined();
+  });
+
   it('hands hydrated logs to the processor', async () => {
     const processor = vi.fn<LogProcessor>();
     const { receive } = await startServer(() => ({ processor }));
