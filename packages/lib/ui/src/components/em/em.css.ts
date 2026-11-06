@@ -19,12 +19,14 @@ import { letterSpacing } from '../../vars/typography.css';
 /* eslint-disable custom/require-design-tokens -- the 1em scaler, italic-tightening offset, and 1.25 line-height mirror Radix's per-style typography knobs */
 export const base = style({
   fontFamily: fontFamily.em,
+
   // Times italic looks ~18% smaller than the body sans at the same
   // declared font-size; bump it back up. Mirrors Radix's
   // `font-size: calc(var(--em-font-size-adjust) * 1em)`.
   fontSize: `calc(${fontSizeAdjust.em} * 1em)`,
   fontStyle: 'italic',
   lineHeight: 1.25,
+
   // Compose the italic tracking nudge with the surrounding tracking so
   // an `<Em>` inside `<Text size={7}>` lands at
   // `letterSpacingOffset.em + typeScale[7].letterSpacing`.

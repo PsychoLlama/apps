@@ -26,6 +26,7 @@ export default defineConfig({
         },
         manifest: {
           id: '/',
+
           // `short_name` would only matter if it differed from `name`.
           // Browsers fall back to `name` when it's absent.
           name: app.name,

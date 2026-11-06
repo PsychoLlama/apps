@@ -5,6 +5,7 @@ import * as css from './inline-field.css';
 interface InlineFieldProps {
   /** Label text rendered to the left of the control. */
   label: string;
+
   /** Optional ID to associate the label with a control. */
   for?: string;
 }

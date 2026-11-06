@@ -244,10 +244,12 @@ const RadiusControl = (props: {
  */
 const NumberControl = (props: {
   label: string;
+
   /** Accessible name, when the visible label leans on a subheading. */
   ariaLabel?: string;
   name: string;
   value: number;
+
   /** Floor, where one is real. Omit where the control takes negatives. */
   min?: number;
   onValueChange: (value: number) => void;
@@ -281,6 +283,7 @@ const NumberControl = (props: {
 /** A labeled switch binding one boolean control to the store. */
 const ToggleControl = (props: {
   label: string;
+
   /** Accessible name, when the visible label leans on a subheading. */
   ariaLabel?: string;
   name: string;

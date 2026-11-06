@@ -79,6 +79,7 @@ export const viewport = style({
   height: '100%',
   scrollbarWidth: 'none',
   msOverflowStyle: 'none',
+
   // Restore iOS Safari momentum scrolling. Hiding the native bar
   // suppresses the default; this property reinstates it. Deprecated
   // but harmless on browsers that ignore it.
@@ -139,6 +140,7 @@ export const content = style({
 export const scrollbar = style({
   position: 'absolute',
   display: 'flex',
+
   // Disable browser pan/zoom gestures so a finger drag scrolls
   // instead of scrolling the page. (`user-select: none` already
   // ships from the global reset.)

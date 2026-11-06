@@ -36,12 +36,16 @@ export interface CalloutProps
     JSX.HTMLAttributes<HTMLDivElement> {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: Size;
+
   /** Visual treatment. @default 'soft' */
   variant?: Variant;
+
   /** Semantic color. @default 'accent' */
   color?: Color;
+
   /** Use high-contrast text for stronger emphasis. @default false */
   highContrast?: boolean;
+
   /** Icon element displayed before the text. @default info icon */
   icon?: JSX.Element;
 }

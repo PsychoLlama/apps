@@ -88,6 +88,7 @@ export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
     instrumentationScope(),
     app ? solidStart(app.solid, app.solidStart) : solid(options.solid),
     svgToPng(),
+
     // Render-blocking budget per inlined script. The ceiling is a tripwire
     // for accidental bloat, e.g. an import that pulls a `.css.ts` module's
     // runtime registration into a head script.

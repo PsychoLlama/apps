@@ -50,13 +50,17 @@ import * as css from './slider.css';
 
 /** Visual size on a 1–3 scale. */
 export type SliderSize = 1 | 2 | 3;
+
 /** Visual treatment. */
 export type SliderVariant = 'classic' | 'surface' | 'soft';
+
 /** Corner rounding. */
 export type SliderRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+
 /** Semantic palette for the filled range. */
 export type SliderColor =
   'accent' | 'neutral' | 'danger' | 'warning' | 'success';
+
 /** Layout axis. */
 export type SliderOrientation = 'horizontal' | 'vertical';
 
@@ -78,44 +82,59 @@ export interface SliderProps
     Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'color' | 'children'> {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: SliderSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: SliderVariant;
+
   /** Corner rounding. @default 'full' */
   radius?: SliderRadius;
+
   /** Semantic palette for the filled range. @default 'accent' */
   color?: SliderColor;
+
   /** Layout axis. @default 'horizontal' */
   orientation?: SliderOrientation;
+
   /** Reverse the slide axis. @default false */
   inverted?: boolean;
+
   /** Disables interaction and focus. @default false */
   disabled?: boolean;
+
   /** Lower bound of the slider's range. @default 0 */
   min?: number;
+
   /** Upper bound of the slider's range. @default 100 */
   max?: number;
+
   /** Smallest value increment. @default 1 */
   step?: number;
+
   /**
    * Minimum number of `step`s required between any two thumbs.
    * Useful for range sliders that must keep handles apart.
    * @default 0
    */
   minStepsBetweenThumbs?: number;
+
   /**
    * Controlled value(s). Length determines the thumb count:
    * one thumb for a single value, multiple for a range.
    */
   value: number[];
+
   /** Fires every time the value changes (drag, keyboard, click). */
   onValueChange: (value: number[]) => void;
+
   /** Fires once after a slide gesture or keystroke commits. */
   onValueCommit?: (value: number[]) => void;
+
   /**
    * Form field name. Renders one hidden input per thumb when set.
    * Multi-thumb sliders append `[]` so `FormData` parses as a list.
    */
   name?: string;
+
   /** Associates the hidden inputs with a form by id. */
   form?: string;
 }
@@ -224,6 +243,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
     }
     const slidingFromBottom = !local.inverted;
     const input: [number, number] = [0, rect.height];
+
     // Pointer Y grows downward, so the not-inverted (`from-bottom`)
     // mapping flips to `[max, min]` to keep the bottom of the rail
     // aligned with the minimum value.
@@ -261,6 +281,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
 
     local.onValueChange(nextValues);
     if (commit) local.onValueCommit?.(nextValues);
+
     // Refocus after the parent renders the sorted array — keeps focus
     // on the thumb the user is dragging even when sort order changes.
     // The `isConnected` guard skips the call if the parent rejected
@@ -280,6 +301,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
 
     const target = event.target as HTMLElement;
     target.setPointerCapture(event.pointerId);
+
     // Suppress the browser's own focus pass — we focus the moved
     // thumb manually after the value updates.
     event.preventDefault();
@@ -288,6 +310,7 @@ const Slider: Component<SliderProps> = (rawProps) => {
 
     if (thumbRefs.includes(target)) {
       target.focus();
+
       // Pin the change index so a subsequent move slides the thumb the
       // user actually grabbed, even before any value lands.
       const grabbedIndex = thumbRefs.indexOf(target);

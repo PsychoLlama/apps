@@ -287,6 +287,7 @@ export const acquire = <Output, M extends Mode>(
     held: new Map(
       graph.nodes.map((node) => [
         node,
+
         // eslint-disable-next-line solid/reactivity -- Stored whole.
         createSignal<Entry | undefined>(),
       ]),

@@ -108,6 +108,7 @@ globalStyle(':where([contenteditable]:not([contenteditable="false"]))', {
   MozUserModify: 'read-write',
   WebkitUserModify: 'read-write',
   overflowWrap: 'break-word',
+
   // @ts-expect-error -- no Vanilla Extract type for -webkit-line-break
   WebkitLineBreak: 'after-white-space',
   WebkitUserSelect: 'auto',

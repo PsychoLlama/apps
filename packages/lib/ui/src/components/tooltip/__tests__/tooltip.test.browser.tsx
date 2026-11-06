@@ -171,6 +171,7 @@ describe('Tooltip', () => {
     const { trigger, window } = setup();
 
     await hover(trigger, window);
+
     // The window sits inside the root, so it's still the root under the
     // pointer. Crossing the gap between the two isn't covered — that
     // wants a grace area.
@@ -373,6 +374,7 @@ describe('Tooltip', () => {
     const { trigger, window } = setup();
 
     await userEvent.hover(trigger);
+
     // The pointer has landed and the stylesheet has already decided the
     // tooltip is open — the window is just holding itself back.
     expect(window).not.toBeVisible();
@@ -408,6 +410,7 @@ describe('Tooltip', () => {
     const { trigger, window } = setup();
 
     await userEvent.tab();
+
     // No `waitFor`: the assertion is that there was nothing to wait for.
     expect(trigger).toHaveFocus();
     expect(window).toBeVisible();

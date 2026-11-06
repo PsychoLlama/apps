@@ -20,6 +20,7 @@ type DemoBody = 'none' | 'detail' | 'confirm';
 type DemoProps = Partial<AlertDialogProps> & {
   /** Seeds the demo's test ids. Each cell needs its own. */
   name: string;
+
   /** Which body to render. @default 'none' */
   body?: DemoBody;
 };

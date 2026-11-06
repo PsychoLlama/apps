@@ -37,12 +37,16 @@ import {
 
 /** Set on the list element by the `color` variants; read by the trigger's active `::before`. */
 export const activeIndicator = createVar();
+
 /** Set on the list element by the `size` variants; read by `trigger`. */
 export const outerPaddingX = createVar();
+
 /** Set on the list element by the `size` variants; read by `triggerInner`. */
 export const innerPaddingX = createVar();
+
 /** Set on the list element by the `size` variants; read by `triggerInner`. */
 export const innerPaddingY = createVar();
+
 /** Set on the list element by the `size` variants; read by `triggerInner`. */
 export const innerBorderRadius = createVar();
 
@@ -84,6 +88,7 @@ export const trigger = style({
       color: neutral.alpha[8],
       cursor: 'not-allowed',
     },
+
     // Active text color and the underline indicator. Keyed off the
     // attributes the wrappers emit (`data-state` on TabsTrigger,
     // `data-active` on TabNavLink) so a single rule pair drives both —
@@ -196,6 +201,7 @@ export const triggerInnerHidden = style({
 const sizeStyle = (config: {
   outerPx: SpaceScale;
   innerPx: SpaceScale;
+
   /** CSS value (token or calc); size 1's inner-py is half of `space[1]`. */
   innerPy: string;
   innerRadius: RadiusScale;

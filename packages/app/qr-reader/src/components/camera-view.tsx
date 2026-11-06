@@ -15,12 +15,16 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 interface CameraViewProps {
   /** The live stream to render. Stable for the life of the session. */
   stream: MediaStream;
+
   /** Invoked when the user dismisses the feed. */
   onCancel: () => void;
+
   /** Whether the device exposes a torch — gates the control's visibility. */
   torchSupported: boolean;
+
   /** Whether the torch is currently lit. */
   torchOn: boolean;
+
   /** Toggle the torch on or off. */
   onToggleTorch: () => void;
 }
@@ -35,6 +39,7 @@ interface CameraViewProps {
 export const CameraView: Component<CameraViewProps> = (props) => {
   const finishScan = useAction($finishScan);
   const navigate = useNavigate();
+
   // Assigned by the ref, before anything below reads it.
   let videoEl!: HTMLVideoElement;
 
@@ -77,11 +82,13 @@ export const CameraView: Component<CameraViewProps> = (props) => {
         }}
         ref={(video) => {
           videoEl = video;
+
           // Set as DOM properties, before insertion: the `muted` attribute
           // is ignored by autoplay gating (iOS Safari especially) — only
           // the property mutes — and both flags must be in place before the
           // element goes live to keep unattended autoplay allowed.
           video.muted = true;
+
           // srcObject and play() wait for onMount, once the element is
           // attached — WebKit drops srcObject set on a detached element.
         }}

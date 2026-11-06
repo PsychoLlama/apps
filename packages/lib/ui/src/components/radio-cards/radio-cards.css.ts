@@ -57,10 +57,12 @@ const itemPaddingY = createVar();
 const itemBorderRadius = createVar();
 const colorIndicator = createVar();
 const colorFocus = createVar();
+
 // Tint painted under content when the checked card is also focused —
 // matches Radix's `--focus-a3` overlay so the focused-checked state
 // reads as distinct from the non-focused-checked state.
 const colorFocusTint = createVar();
+
 // Stronger outline color used on the focused-checked combination.
 // Matches Radix's `--focus-10`.
 const colorFocusStrong = createVar();
@@ -94,11 +96,13 @@ export const item = style({
   paddingBlock: itemPaddingY,
   paddingInline: itemPaddingX,
   borderRadius: itemBorderRadius,
+
   // Clip overflowing content (images, long labels) to the card's
   // rounded corners so consumers don't have to wrap their content in
   // an `<Inset>` to keep things tidy. Matches upstream BaseCard.
   overflow: 'hidden',
   cursor: 'pointer',
+
   // Labels proxy clicks to their input — selecting label text would
   // defeat the affordance. `user-select: none` covers selection that
   // runs across the card.
@@ -157,6 +161,7 @@ export const item = style({
       color: neutral.alpha[9],
       backgroundImage: `linear-gradient(${neutral.alpha[2]}, ${neutral.alpha[2]})`,
     },
+
     // Mute the selection highlight on disabled cards. `::selection`
     // on the label propagates to its subtree by spec, so a consumer
     // that opts inner content back into selection picks up the
@@ -182,14 +187,17 @@ export const item = style({
 interface SizeStyle {
   /** Padding token used on the inline (X) axis. */
   padX: SpaceScale;
+
   /**
    * Padding-y multiplier expression interpolated into a `calc()`. We
    * keep this as a string so it tracks upstream's exact math
    * (`space-3 / 1.2`, `space-4 * 0.875`, `space-5 / 1.2`).
    */
   padY: string;
+
   /** Border-radius token. */
   rad: RadiusScale;
+
   /** Type scale step the card's text should render at. */
   font: TypeScale;
 }
@@ -251,6 +259,7 @@ export const variant = styleVariants({
       },
     },
   },
+
   // Classic is the only variant that animates state changes — matches
   // upstream. The transition shorthand is interpolated as a string so
   // the `::after` rule's `transition: inherit` picks up the same
@@ -296,6 +305,7 @@ export const color = styleVariants({
   neutral: {
     vars: {
       [colorIndicator]: neutral.indicator,
+
       // Neutral cards fall back to accent for the focus outline so the
       // cue stays distinct against gray ink — same exception
       // `RadioGroup` codifies for its neutral palette.

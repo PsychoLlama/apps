@@ -128,6 +128,7 @@ describe('defineContract', () => {
           options.transfer = [];
           return info.id;
         },
+
         // ...and a zero-payload request whose only argument is the bag.
         mint: (_params: void, options) => {
           const buffer = new ArrayBuffer(8);

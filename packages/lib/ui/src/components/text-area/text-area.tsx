@@ -31,10 +31,13 @@ import * as css from './text-area.css';
 
 /** Visual size on a 1–3 scale. */
 export type TextAreaSize = 1 | 2 | 3;
+
 /** Visual treatment. */
 export type TextAreaVariant = 'classic' | 'surface' | 'soft';
+
 /** Corner rounding. */
 export type TextAreaRadius = 'none' | 'small' | 'medium' | 'large';
+
 /** Resize handle behavior. */
 export type TextAreaResize = 'none' | 'vertical' | 'horizontal' | 'both';
 
@@ -65,16 +68,20 @@ export interface TextAreaProps
     > {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: TextAreaSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: TextAreaVariant;
+
   /** Corner rounding. @default 'medium' */
   radius?: TextAreaRadius;
+
   /**
    * Resize handle behavior. Defaults to `'none'` (matching Radix);
    * pass another value to opt back into a resize handle.
    * @default 'none'
    */
   resize?: TextAreaResize;
+
   /**
    * Fires for pointerdown anywhere on the wrapper (including the
    * padding around the textarea). Call `preventDefault()` to skip

@@ -63,10 +63,13 @@ import * as css from './radio-cards.css';
 
 /** Visual size on a 1–3 scale. */
 export type RadioCardsSize = CardsSize;
+
 /** Visual treatment. */
 export type RadioCardsVariant = CardsVariant;
+
 /** Semantic color palette for the checked outline. */
 export type RadioCardsColor = CardsColor;
+
 /** Fixed column count — overrides the auto-fit default. */
 export type RadioCardsColumns = CardsColumns;
 
@@ -83,20 +86,25 @@ export interface RadioCardsRootProps
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange' | 'role'> {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: RadioCardsSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: RadioCardsVariant;
+
   /**
    * Semantic palette for the checked outline and focus ring.
    * @default 'accent'
    */
   color?: RadioCardsColor;
+
   /**
    * Fixed column count. When omitted, the grid auto-fits items into
    * `minmax(160px, 1fr)` tracks for a responsive default.
    */
   columns?: RadioCardsColumns;
+
   /** Spacing between cards. @default 4 */
   gap?: SpaceScale;
+
   /**
    * Layout axis surfaced to assistive technology as
    * `aria-orientation`. The visual layout is independent (driven by
@@ -104,13 +112,16 @@ export interface RadioCardsRootProps
    * presents semantically. @default 'vertical'
    */
   orientation?: 'horizontal' | 'vertical';
+
   /**
    * Form-submit name applied to every item. Also groups the inputs
    * for native arrow-key navigation in the browser.
    */
   name: string;
+
   /** Disable every item in the group. @default false */
   disabled?: boolean;
+
   /**
    * Mark the group as required for assistive technology. Surfaces as
    * `aria-required="true"` on the radiogroup and as the native
@@ -118,11 +129,13 @@ export interface RadioCardsRootProps
    * @default false
    */
   required?: boolean;
+
   /**
    * Currently selected value. Pass `null` to render the group with no
    * card selected.
    */
   value: string | null;
+
   /** Fires when the user selects a different card. */
   onValueChange: (value: string) => void;
 }
@@ -163,6 +176,7 @@ export const RadioCardsRoot: ParentComponent<RadioCardsRootProps> = (
     'class',
     'children',
   ]);
+
   // `useSkeleton` returns the visual class plus a `mergeProps` proxy
   // that adds `inert` / `aria-hidden` / `tabindex={-1}` while skeleton
   // is on. `inert` propagates through the subtree, so the hidden radio
@@ -245,8 +259,10 @@ export interface RadioCardsItemProps
     > {
   /** Value submitted when this card is selected, and matched against the group's `value`. */
   value: string;
+
   /** Disable just this card. Combines with the group's `disabled`. */
   disabled?: boolean;
+
   /**
    * Override the group's `required` for this card. When omitted, the
    * card inherits the group's value. Pass `false` to opt this card
@@ -254,15 +270,18 @@ export interface RadioCardsItemProps
    * the group required.
    */
   required?: boolean;
+
   /**
    * `class` lands on the wrapping `<label>` (the visible card), not
    * the hidden input.
    */
   class?: string;
+
   /**
    * Inline style applied to the wrapping `<label>` (the visible card).
    */
   style?: JSX.CSSProperties | string;
+
   /** Card content. Rendered inside the wrapping `<label>`. */
   children?: JSX.Element;
 }
@@ -309,6 +328,7 @@ export const RadioCardsItem: ParentComponent<RadioCardsItemProps> = (
   ) => {
     if (typeof local.onKeyDown === 'function') local.onKeyDown(event);
     if (event.defaultPrevented) return;
+
     // Match RadioGroup: WAI-ARIA radio activation uses Space, not
     // Enter. Suppress Enter so a focused card doesn't accidentally
     // submit a wrapping form mid-selection.

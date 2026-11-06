@@ -7,6 +7,7 @@ type BadgeColor = 'accent' | 'neutral' | 'danger' | 'warning' | 'success';
 export interface LevelDisplay {
   /** Uppercase short name, e.g. `WARN`. */
   label: string;
+
   /** Badge color carrying the severity at a glance. */
   color: BadgeColor;
 }

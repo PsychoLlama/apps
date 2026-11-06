@@ -27,10 +27,13 @@ type EasingWeight = 'productive' | 'expressive';
 interface Motion {
   /** Durations column: the duration family. */
   durationFamily: DurationFamily;
+
   /** Durations row: the scale step within the family. */
   step: DurationStep;
+
   /** Easings column: the easing family. */
   easingFamily: EasingFamily;
+
   /** Easings row: productive vs. expressive weight. */
   weight: EasingWeight;
 }

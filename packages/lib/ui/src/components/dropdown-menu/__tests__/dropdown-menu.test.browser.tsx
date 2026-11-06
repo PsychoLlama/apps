@@ -195,6 +195,7 @@ describe('DropdownMenu', () => {
       const { trigger, item } = setup();
 
       await keyboard(trigger, key);
+
       // The key that opened the menu doesn't choose the item.
       expect(item('edit')).toHaveFocus();
 
@@ -315,6 +316,7 @@ describe('DropdownMenu', () => {
 
     await press(trigger);
     onOpenChange.mockClear();
+
     // Forced: Playwright won't press an `aria-disabled` element.
     await userEvent.click(item('archive'), { force: true });
 
@@ -369,6 +371,7 @@ describe('DropdownMenu', () => {
     const { trigger, item, onEdit } = setup();
 
     await press(trigger);
+
     // The press began on the trigger, so only the release reaches the item.
     item('edit').dispatchEvent(
       new PointerEvent('pointerup', { bubbles: true, pointerType: 'mouse' }),

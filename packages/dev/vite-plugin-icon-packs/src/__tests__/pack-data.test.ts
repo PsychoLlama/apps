@@ -53,6 +53,7 @@ describe('buildPackData', () => {
       },
       animateMotion: { body: '<g><animateMotion path="M0 0L1 1"/></g>' },
       set: { body: '<g><set attributeName="opacity" to="0"/></g>' },
+
       // Attribute values that mention the word `animate` shouldn't
       // trip the regex — only tag openers are animations.
       mentionsAnimate: { body: '<g class="animate-spin"/>' },

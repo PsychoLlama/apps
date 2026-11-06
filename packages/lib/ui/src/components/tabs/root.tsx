@@ -32,8 +32,10 @@ export interface TabsRootProps
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** The active tab value. */
   value: string;
+
   /** Called when the user activates a different tab. */
   onValueChange: (value: string) => void;
+
   /**
    * `'automatic'` activates the tab on focus; `'manual'` requires Space or
    * Enter. @default 'automatic'
@@ -67,6 +69,7 @@ export const TabsRoot: ParentComponent<TabsRootProps> = (rawProps) => {
     value: () => local.value,
     setValue: (next) => local.onValueChange(next),
     activationMode: () => local.activationMode,
+
     // `value` is consumer-supplied and may contain whitespace or other
     // characters that aren't valid in space-separated IDREF lists like
     // `aria-controls`. Percent-encode to keep IDs deterministic on both

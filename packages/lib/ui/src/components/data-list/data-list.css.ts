@@ -30,6 +30,7 @@ import {
 const rootBase = style({
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.regular,
+
   // Stay upright if a DataList is rendered inside an italic context.
   fontStyle: 'normal',
   textAlign: 'start',
@@ -56,6 +57,7 @@ export const item = style({
     },
     [`:where(${orientation.horizontal}) > &`]: {
       display: 'grid',
+
       // Subgrid keeps every row's label column in the same track.
       gridTemplateColumns: 'subgrid',
       gap: 'inherit',
@@ -106,6 +108,7 @@ export const labelColor = styleVariants({
 
 export const value = style({
   display: 'flex',
+
   // Allow the value to truncate when the row constrains it.
   minWidth: 0,
   ...baselineAnchor,

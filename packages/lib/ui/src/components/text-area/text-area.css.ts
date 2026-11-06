@@ -35,9 +35,11 @@ export const root = style({
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.regular,
   textAlign: 'start',
+
   // Wrapping the `resize` handle requires `overflow: hidden`, otherwise
   // the textarea pokes out of the wrapper while the user drags.
   overflow: 'hidden',
+
   // Padding is applied here (not on the inner textarea) so dragging
   // the resize handle reshapes the entire visual surface and the
   // wrapper's onPointerDown handler can delegate clicks on the
@@ -66,6 +68,7 @@ export const input = style({
   font: 'inherit',
   letterSpacing: 'inherit',
   color: text.highContrast,
+
   // Resize is owned by the wrapper.
   resize: 'none',
   width: '100%',

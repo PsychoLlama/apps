@@ -51,6 +51,7 @@ describe('createVisibility (animated)', () => {
     const { setOpen, visible, surface } = renderHarness(fixture.animated, true);
 
     setOpen(false);
+
     // Still visible: the 100ms exit animation is running.
     expect(visible()).toBe(true);
     expect(surface()).toHaveAttribute('data-state', 'closed');
@@ -63,6 +64,7 @@ describe('createVisibility (animated)', () => {
     const { setOpen, visible } = renderHarness(fixture.transitioned, true);
 
     setOpen(false);
+
     // Still visible: the 100ms opacity transition is running.
     expect(visible()).toBe(true);
 

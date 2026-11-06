@@ -38,10 +38,13 @@ import * as css from './switch.css';
 
 /** Visual size on a 1–3 scale. */
 export type SwitchSize = 1 | 2 | 3;
+
 /** Visual treatment. */
 export type SwitchVariant = 'classic' | 'surface' | 'soft';
+
 /** Corner rounding. */
 export type SwitchRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+
 /** Semantic color palette for the checked track. */
 export type SwitchColor =
   'accent' | 'neutral' | 'danger' | 'warning' | 'success';
@@ -64,12 +67,16 @@ export interface SwitchProps
     > {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: SwitchSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: SwitchVariant;
+
   /** Corner rounding. @default 'full' */
   radius?: SwitchRadius;
+
   /** Semantic color palette for the checked track. @default 'accent' */
   color?: SwitchColor;
+
   /**
    * Marks the switch as required for assistive technology. Surfaces as
    * `aria-required="true"` on the button. Native HTML5 form validation
@@ -78,10 +85,13 @@ export interface SwitchProps
    * @default false
    */
   required?: boolean;
+
   /** Controlled checked state. */
   checked: boolean;
+
   /** Fires after the user toggles the switch with the next state. */
   onCheckedChange: (checked: boolean) => void;
+
   /**
    * Value submitted with the form when checked. When unchecked, the
    * field is omitted from FormData entirely (matches `<input

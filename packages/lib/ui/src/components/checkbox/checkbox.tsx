@@ -72,8 +72,10 @@ declare module 'solid-js' {
 
 /** Visual size on a 1–3 scale. */
 export type CheckboxSize = 1 | 2 | 3;
+
 /** Visual treatment. */
 export type CheckboxVariant = 'classic' | 'surface' | 'soft';
+
 /** Semantic color palette for the checked indicator. */
 export type CheckboxColor =
   'accent' | 'neutral' | 'danger' | 'warning' | 'success';
@@ -111,45 +113,54 @@ export interface CheckboxProps
     > {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: CheckboxSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: CheckboxVariant;
+
   /** Semantic color palette for the checked indicator. @default 'accent' */
   color?: CheckboxColor;
+
   /**
    * Controlled checked state. `'indeterminate'` paints the divider
    * glyph; clicking from indeterminate moves to `true` (matching
    * Radix and native browser behavior).
    */
   checked: CheckboxChecked;
+
   /**
    * Fires after the user toggles the checkbox with the next state.
    * `'indeterminate'` is never emitted — it can only be entered by
    * the consumer setting `checked` directly.
    */
   onCheckedChange: (checked: boolean) => void;
+
   /**
    * Form-submit name. When checked, the browser includes the field
    * in `FormData`; when unchecked or indeterminate, it's omitted —
    * matches native `<input type="checkbox">` semantics.
    */
   name?: string;
+
   /**
    * Form-submit value when checked. Mirrors the native `value`
    * attribute on `<input type="checkbox">`.
    * @default 'on'
    */
   value?: string;
+
   /**
    * Mark the checkbox as required for assistive technology. Surfaces
    * as the native `required` attribute on the input.
    * @default false
    */
   required?: boolean;
+
   /**
    * Allow the reader to select the label text. The indicator never
    * participates in selection. @default false
    */
   selectable?: boolean;
+
   /** Inline label rendered to the right of the checkbox. */
   children?: JSX.Element;
 }
@@ -196,6 +207,7 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
     // a binary toggle.
     const next = local.checked === 'indeterminate' ? true : !local.checked;
     local.onCheckedChange(next);
+
     // The change event is not cancelable, so a consumer ignoring
     // `onCheckedChange` is the only mechanism for suppressing the
     // visual update. After a no-op consumer, reconcile the DOM back
@@ -213,6 +225,7 @@ const Checkbox: Component<CheckboxProps> = (rawProps) => {
   ) => {
     if (typeof local.onKeyDown === 'function') local.onKeyDown(event);
     if (event.defaultPrevented) return;
+
     // WAI-ARIA: Enter does not activate checkboxes — only Space does.
     // Native checkboxes already ignore Enter for activation, but inside
     // a `<form>` Enter still bubbles up and submits. Suppress it so a

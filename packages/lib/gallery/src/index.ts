@@ -12,6 +12,7 @@ import type { JSX } from 'solid-js';
 export interface GalleryAxis<P> {
   /** Header shown for this column or row (e.g. `Primary`, `Classic`). */
   title: string;
+
   /** Props merged into each cell along this axis. */
   props: Partial<P>;
 }
@@ -40,12 +41,14 @@ export type SectionAlign = 'start' | 'center' | 'end' | 'stretch';
  */
 export type GallerySection<P> = {
   title: string;
+
   /**
    * Overrides the grid gap between cells on both axes. Defaults to the
    * gallery's standard spacing — set a tighter step for dense cells like color
    * swatches.
    */
   gap?: SectionGap;
+
   /**
    * Aligns each cell within its track. `rows` runs the block (vertical) axis,
    * `columns` the inline (horizontal) axis; both default to `start`. Set
@@ -143,6 +146,7 @@ type GalleryGroupField<GroupIds extends string> = [GroupIds] extends [never]
 export interface GalleryGroup {
   /** Stable reference key, used by a listing's `group` (e.g. `typography`). */
   id: string;
+
   /** Human-facing heading rendered for the group (e.g. `Typography`). */
   label: string;
 }
@@ -157,8 +161,10 @@ export interface GalleryManifest<
 > {
   /** Manifest title, conventionally the package name (`@lib/ui`). */
   name: string;
+
   /** One-line summary of the package, shown on the manifest's card. */
   description: string;
+
   /** The groups this package's listings may belong to. Empty for none. */
   groups: G;
 }

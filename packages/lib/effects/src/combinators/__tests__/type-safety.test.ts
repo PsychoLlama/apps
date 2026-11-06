@@ -194,6 +194,7 @@ describe('type safety', () => {
 
   it('treats untyped results as asynchronous', () => {
     const untyped = (): unknown => 1;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Under test.
     const loose = (): any => 1;
 

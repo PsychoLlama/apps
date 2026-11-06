@@ -313,6 +313,7 @@ export class WorkerSession {
           logger.debug('Peer connected.', { endpointId: handle.endpointId });
           this.#events.peerConnected(handle);
         },
+
         // `undefined` and `null` mean the same thing here — nothing is
         // carrying us — and one shape is easier to fold than two.
         onConnectionChange: (homeRelay) => {

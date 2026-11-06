@@ -27,10 +27,13 @@ const ICON_OPTIONS = [
  */
 type DemoProps = Partial<SegmentedControlRootProps> & {
   name?: string;
+
   /** Render an icon beside each label. */
   icons?: boolean;
+
   /** Render only the first two options, to show a two-column track. */
   pair?: boolean;
+
   /** Start with nothing selected. */
   empty?: boolean;
 };

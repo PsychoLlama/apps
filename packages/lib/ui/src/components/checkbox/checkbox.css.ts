@@ -43,6 +43,7 @@ import {
   white,
 } from '@lib/design';
 import { lineHeight } from '../../vars/typography.css';
+
 // Vite's `?inline` suffix returns the asset as a base64 data URI string,
 // which is exactly the form `mask-image: url(...)` wants. Keeps the SVG
 // paths in their own files (greppable, syntax-highlightable) instead of
@@ -78,6 +79,7 @@ export const root = style({
   flexShrink: 0,
   verticalAlign: 'top',
   width: checkboxSize,
+
   // Track the surrounding text's line-height when present so the
   // checkbox sits flush against the first line of a wrapping label
   // rather than drifting to the geometric center of the wrapped block.
@@ -93,6 +95,7 @@ export const root = style({
   // same opportunity but doesn't take it.
   height: `max(${fallbackVar(lineHeight, checkboxSize)}, ${checkboxSize})`,
   cursor: 'pointer',
+
   // The indicator is an affordance — keep it out of label text selection.
   userSelect: 'none',
 
@@ -197,6 +200,7 @@ export const color = styleVariants({
       [colorContrast]: neutral.contrast,
       [colorAlpha5]: neutral.alpha[5],
       [colorAlpha11]: neutral.alpha[11],
+
       // Focus outline falls back to accent on the neutral palette so
       // the cue stays distinct against a gray checkbox — same exception
       // Radix's `--focus-8` codifies.
@@ -304,6 +308,7 @@ export const variant = styleVariants({
 
 export const item = style({
   display: 'flex',
+
   // Default `align-items: stretch` is intentional. Combined with the
   // input's `height: var(--lineHeight, ...)`, it lets the checkbox
   // stay pinned to the first line of a wrapping label — the input
@@ -317,6 +322,7 @@ export const item = style({
   // across our 1/2/3 size range.
   // eslint-disable-next-line custom/require-design-tokens -- text-relative gap is the design intent here
   gap: '0.5em',
+
   // Trim the click target to the label's own width so whitespace to
   // the right of the text is not clickable.
   width: 'fit-content',

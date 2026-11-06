@@ -41,10 +41,13 @@ import * as css from './progress.css';
 
 /** Visual size on a 1–3 scale. */
 export type ProgressSize = 1 | 2 | 3;
+
 /** Visual treatment. */
 export type ProgressVariant = 'classic' | 'surface' | 'soft';
+
 /** Corner rounding. */
 export type ProgressRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+
 /** Semantic color palette for the indicator. */
 export type ProgressColor =
   'accent' | 'neutral' | 'danger' | 'warning' | 'success';
@@ -74,24 +77,31 @@ export interface ProgressProps
    * `[0, max]` (or non-finite) collapse to indeterminate. @default null
    */
   value?: number | null;
+
   /**
    * Maximum value. Non-positive or non-finite inputs fall back to
    * `100`. @default 100
    */
   max?: number;
+
   /**
    * Format the `aria-valuetext` announcement. Receives the current
    * value and max. @default `${Math.round(value / max * 100)}%`
    */
   getValueLabel?: (value: number, max: number) => string;
+
   /** Visual size on a 1–3 scale. @default 2 */
   size?: ProgressSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: ProgressVariant;
+
   /** Corner rounding. @default 'full' */
   radius?: ProgressRadius;
+
   /** Semantic color palette for the indicator. @default 'accent' */
   color?: ProgressColor;
+
   /**
    * Length of the indeterminate "grow" phase before the bar settles
    * into a pulse. Ignored when `value` is a number. @default '5s'

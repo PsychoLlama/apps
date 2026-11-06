@@ -71,15 +71,18 @@ export const item = style({
   gap: space[2],
   paddingBlock: itemPaddingY,
   paddingLeft: itemPaddingX,
+
   // Padding-right reserves space for the absolutely-positioned
   // checkbox so card content doesn't slide under it.
   paddingRight: itemPaddingRight,
   borderRadius: itemBorderRadius,
+
   // Clip overflowing content (images, long labels) to the card's
   // rounded corners so consumers don't have to wrap their content in
   // an `<Inset>` to keep things tidy. Matches upstream BaseCard.
   overflow: 'hidden',
   cursor: 'pointer',
+
   // Labels proxy clicks to their input — selecting label text would
   // defeat the affordance. `user-select: none` covers selection that
   // runs across the card.
@@ -188,20 +191,24 @@ export const checkbox = style({
 interface SizeStyle {
   /** Padding token used on the inline (X) axis. */
   padX: SpaceScale;
+
   /**
    * Padding-y multiplier expression interpolated into a `calc()`. We
    * keep this as a string so it tracks upstream's exact math
    * (`space-3 / 1.2`, `space-4 * 0.875`, `space-5 / 1.2`).
    */
   padY: string;
+
   /**
    * Visible checkbox size for this card size. Matches the `Checkbox`
    * size variant we forward in the TSX — so right-side padding
    * reserves the right amount of space.
    */
   checkboxSize: string;
+
   /** Border-radius token. */
   rad: RadiusScale;
+
   /** Type scale step the card's text should render at. */
   font: TypeScale;
 }
@@ -281,6 +288,7 @@ export const variant = styleVariants({
       },
     },
   },
+
   // Classic is the only variant that animates state changes — matches
   // upstream. The transition shorthand is interpolated as a string so
   // the `::after` rule's `transition: inherit` picks up the same
@@ -320,6 +328,7 @@ export const variant = styleVariants({
 
 export const color = styleVariants({
   accent: { vars: { [colorFocus]: accent.solid[8] } },
+
   // Neutral cards fall back to accent for the focus outline so the
   // cue stays distinct against gray ink — same exception RadioCards
   // and Checkbox codify for their neutral palette.

@@ -153,6 +153,7 @@ describe('Slider', () => {
     const [, high] = screen.getAllByRole('slider');
     high.focus();
     await userEvent.keyboard('{Home}');
+
     // High (80) was focused; Home moves it to min, then sort gives
     // [0, 20]. Radix's hardcoded `index = 0` would have left high at
     // 80 and moved low to 0 — we follow the W3C pattern instead.
@@ -179,6 +180,7 @@ describe('Slider', () => {
     render(() => (
       <Slider testId="sl" inverted value={[50]} onValueChange={() => {}} />
     ));
+
     // ArrowRight should now move backward — confirm via onValueChange.
     const handler = vi.fn();
     render(() => (
@@ -198,6 +200,7 @@ describe('Slider', () => {
       <Slider testId="sl" disabled value={[50]} onValueChange={handler} />
     ));
     const thumb = screen.getByRole('slider');
+
     // Disabled thumb is fully removed from focus order — no `tabindex`
     // attribute, so a `<span>` is wholly inert (matches Radix).
     expect(thumb).not.toHaveAttribute('tabindex');
@@ -233,6 +236,7 @@ describe('Slider', () => {
     render(() => <Multi />);
     const [low] = screen.getAllByRole('slider');
     low.focus();
+
     // Drag low past high via shift+arrow (10 per tap).
     await userEvent.keyboard(
       '{Shift>}{ArrowRight}{ArrowRight}{ArrowRight}{/Shift}',
@@ -283,6 +287,7 @@ describe('Slider', () => {
     if (handler.mock.calls.length > 0) {
       expect(handler).toHaveBeenCalledWith([21]);
     }
+
     // The previously-focused detached thumb must not appear in the DOM.
     expect(document.body.contains(high)).toBe(false);
   });
@@ -306,6 +311,7 @@ describe('Slider', () => {
     render(() => <Multi />);
     const [, high] = screen.getAllByRole('slider');
     high.focus();
+
     // Initial gap is 20. Each ArrowLeft narrows it by 1; the rule
     // requires ≥16 between thumbs, so the 5th move (gap → 15) is
     // rejected.

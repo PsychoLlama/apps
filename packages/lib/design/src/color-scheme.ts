@@ -179,14 +179,19 @@ export const createColorVar = (light: string, dark?: string): string => {
 export interface ColorPalette {
   /** Opaque 12-step scale. */
   solid: ColorContract;
+
   /** Translucent 12-step companion. */
   alpha: ColorContract;
+
   /** Legible text color paired with `solid[9]`. */
   contrast: string;
+
   /** Translucent panel-ish background, distinct from `solid[2]`. */
   surface: string;
+
   /** Form-control fill marker. Usually aliases `solid[9]`. */
   indicator: string;
+
   /** Form-control filled-track portion. Usually aliases `solid[9]`. */
   track: string;
 }

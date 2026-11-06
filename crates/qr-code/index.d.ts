@@ -52,6 +52,7 @@ export type ParsedDetail =
 interface LabeledValueDetail {
   /** Human-readable field name, e.g. `'Password'`. */
   label: string;
+
   /** The field's value. */
   value: string;
 }
@@ -95,10 +96,13 @@ export interface ParsedGeoDetail extends LabeledValueDetail {
  */
 export interface ParsedDateTimeDetail {
   type: 'dateTime';
+
   /** Human-readable field name, e.g. `'Starts'`. */
   label: string;
+
   /** Epoch milliseconds, UTC. */
   epochMillis: number;
+
   /** Date-only event — format without a clock time. */
   allDay: boolean;
 }
@@ -107,15 +111,19 @@ export interface ParsedDateTimeDetail {
 export class Scan {
   private constructor();
   free(): void;
+
   /** The decoded payload as text (UTF-8, charset-decoded by rxing). */
   readonly text: string;
+
   /** The symbology rxing matched, e.g. `"QR_CODE"`. */
   readonly format: string;
+
   /**
    * The kind of payload rxing's result parser recognized — drives how the
    * host labels and presents {@link Scan.details}.
    */
   readonly kind: ScanKind;
+
   /**
    * The parsed payload as an ordered list of {@link ParsedDetail} rows.
    * Empty for opaque text (`kind === 'text'`).
@@ -146,8 +154,10 @@ export function decode(
 export class QrCode {
   private constructor();
   free(): void;
+
   /** Modules per side, quiet zone included. Grid is `size × size`. */
   readonly size: number;
+
   /** Row-major grid, one byte per module: 1 = dark, 0 = light. */
   readonly modules: Uint8Array;
 }

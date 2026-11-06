@@ -30,6 +30,7 @@ export const video = style({
  */
 export const reticle = style({
   position: 'absolute',
+
   // Center within the *safe* area, not the raw viewport: a notch or
   // home indicator makes the usable region asymmetric, so plain 50%
   // would drift the window toward the intruded edge. Shifting the
@@ -38,6 +39,7 @@ export const reticle = style({
   top: 'calc(50% + (env(safe-area-inset-top) - env(safe-area-inset-bottom)) / 2)',
   left: 'calc(50% + (env(safe-area-inset-left) - env(safe-area-inset-right)) / 2)',
   transform: 'translate(-50%, -50%)',
+
   // Small-viewport units (`svw`/`svh`), not `vw`/`vh`: the legacy units
   // measure against the viewport with mobile browser chrome retracted,
   // so the window could overshoot while the URL bar is showing. `dvh`
@@ -46,6 +48,7 @@ export const reticle = style({
   width: 'min(70svw, 60svh)',
   aspectRatio: '1',
   boxShadow: `0 0 0 100vmax ${black.step7}`,
+
   // Click-through so the window never steals taps from the controls.
   pointerEvents: 'none',
 });
@@ -137,6 +140,7 @@ export const controls = style({
       insetBlock: 0,
       right: `calc(${space[6]} + env(safe-area-inset-right))`,
       flexDirection: 'column',
+
       // Gap follows the axis: zero the inline gap, space the column rows.
       columnGap: 0,
       rowGap: space[5],

@@ -86,6 +86,7 @@ describe('SegmentedControl', () => {
         </SegmentedControlItem>
       </SegmentedControlRoot>
     ));
+
     // The label renders its children twice to cross-fade between
     // weights; the duplicate is `aria-hidden`, so the accessible name
     // must not read "List List".
@@ -283,6 +284,7 @@ describe('SegmentedControl', () => {
 
     expect(chip.getBoundingClientRect().width).toBeCloseTo(column, 0);
     expect(getComputedStyle(chip).display).toBe('block');
+
     // Resting at the first column.
     expect(chip.getBoundingClientRect().left).toBeCloseTo(
       group.getBoundingClientRect().left,

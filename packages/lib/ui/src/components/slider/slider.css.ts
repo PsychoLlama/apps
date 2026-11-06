@@ -109,8 +109,10 @@ export const root = style({
   alignItems: 'center',
   flexGrow: 1,
   borderRadius: trackBorderRadius,
+
   // Block accidental selection during a drag.
   userSelect: 'none',
+
   // Disable the browser's panning/zooming gestures so a finger drag
   // moves the slider rather than scrolling the page.
   touchAction: 'none',
@@ -259,6 +261,7 @@ export const thumb = style({
   position: 'absolute',
   width: thumbSize,
   height: thumbSize,
+
   // Safari paints a default focus ring otherwise.
   outline: 0,
   cursor: 'grab',
@@ -360,6 +363,7 @@ export const color = styleVariants({
       [colorAlpha5]: neutral.alpha[5],
       [colorSolid3]: neutral.solid[3],
       [colorSolid6]: neutral.solid[6],
+
       // Outer focus ring falls back to accent for the neutral
       // palette so the focus cue stays distinct against a gray
       // slider — same exception Radix's `--focus-8` codifies.

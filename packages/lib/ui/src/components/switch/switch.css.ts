@@ -92,6 +92,7 @@ export const root = style({
   flexShrink: 0,
   verticalAlign: 'top',
   width: trackWidth,
+
   // Track the surrounding text's line-height when present so a switch
   // wrapped in `<Text as="label">` with multi-line copy stays aligned
   // with the first line of text rather than drifting to the geometric
@@ -110,6 +111,7 @@ export const root = style({
   height: `max(${fallbackVar(lineHeight, trackHeight)}, ${trackHeight})`,
   borderRadius: trackBorderRadius,
   cursor: 'pointer',
+
   // The track is an affordance, not text.
   userSelect: 'none',
 
@@ -188,6 +190,7 @@ export const color = styleVariants({
       [colorTrack]: neutral.track,
       [colorAlpha3]: neutral.alpha[3],
       [colorAlpha4]: neutral.alpha[4],
+
       // Focus outline falls back to accent for the neutral palette
       // so the focus cue stays distinct against a gray switch —
       // same exception Radix's `--focus-8` codifies.
@@ -337,6 +340,7 @@ export const thumb = style({
   left: THUMB_INSET,
   width: thumbSize,
   height: thumbSize,
+
   // Thumb radius scales with the track radius minus the inset, so a
   // pill track gets a circular thumb and a square track gets a square
   // thumb with matching corners.

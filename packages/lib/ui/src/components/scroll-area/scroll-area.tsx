@@ -90,10 +90,13 @@ import * as css from './scroll-area.css';
 
 /** Scrollbar visibility behavior. */
 export type ScrollAreaType = 'auto' | 'always' | 'hover' | 'scroll';
+
 /** Visual size on a 1–3 scale. */
 export type ScrollAreaSize = 1 | 2 | 3;
+
 /** Corner rounding for the scrollbar track. */
 export type ScrollAreaRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+
 /** Which axes can scroll. */
 export type ScrollAreaScrollbars = 'vertical' | 'horizontal' | 'both';
 
@@ -128,6 +131,7 @@ export interface ScrollAreaProps
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'dir'> {
   /** Visibility behavior. @default 'hover' */
   type?: ScrollAreaType;
+
   /**
    * Hide delay in milliseconds. Used by `type='hover'` (delay before
    * fade-out on pointerleave) and `type='scroll'` (delay before
@@ -135,10 +139,13 @@ export interface ScrollAreaProps
    * `type='scroll'` and `0` otherwise.
    */
   scrollHideDelay?: number;
+
   /** Visual size on a 1–3 scale. @default 1 */
   size?: ScrollAreaSize;
+
   /** Corner rounding for the scrollbar track. @default 'full' */
   radius?: ScrollAreaRadius;
+
   /** Which axes can scroll. @default 'both' */
   scrollbars?: ScrollAreaScrollbars;
 }
@@ -146,20 +153,26 @@ export interface ScrollAreaProps
 /** Per-scrollbar wiring shared between the X and Y axes. */
 interface ScrollbarProps {
   axis: 'x' | 'y';
+
   /** Whether the track should fade in. */
   visible: boolean;
+
   /** Whether content overflows enough to justify a thumb. */
   hasThumb: boolean;
+
   /** Thumb length along the scroll axis in pixels. */
   thumbSize: number;
+
   /** Cross-axis clearance for the perpendicular scrollbar (px). */
   cornerSize: number;
+
   /**
    * Hand the track element back to the parent for measurement. The
    * cleanup pass nulls the signal so the parent's ResizeObserver
    * effect re-runs and detaches when this scrollbar unmounts.
    */
   ref: (el: HTMLDivElement | null) => void;
+
   /** Hand the thumb element back to the parent for transform writes. */
   thumbRef: (el: HTMLDivElement | undefined) => void;
   onPointerDown: (event: PointerEvent) => void;
@@ -240,6 +253,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
 
   const [margin, withoutMargin] = splitProps(props, [...marginPropKeys]);
   const [tid, withoutTid] = splitProps(withoutMargin, [...testIdPropKeys]);
+
   // Wrapper-only props (`class`, `style`) stay on the root so margin
   // classes and consumer-supplied wrapper styles compose correctly.
   // Everything else — `aria-*`, `role`, `tabIndex`, `id`, native
@@ -275,10 +289,12 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const [sizesY, setSizesY] = createSignal<Sizes>(ZERO_SIZES);
 
   const [hoverVisible, setHoverVisible] = createSignal(false);
+
   // Tracks whether a scrollbar is being dragged so hover/scroll
   // visibility timers don't fade out the bar the user is grabbing
   // when their pointer drifts off the root.
   const [isDragging, setIsDragging] = createSignal(false);
+
   // Single timer for the hover-hide flow. Hoisted out of the hover
   // effect so the post-drag cleanup can also schedule and the next
   // pointerenter can cancel a pending hide.
@@ -293,6 +309,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const cancelHoverHide = () => {
     window.clearTimeout(hoverHideTimer);
   };
+
   // Per-axis scroll-state machines. A vertical scroll must not light
   // up the horizontal bar (and vice versa), so each axis owns its own
   // state, SCROLL_END timer, and POINTER_* handling — mirroring
@@ -394,6 +411,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   // the horizontal bar.
   createEffect(() => {
     if (local.type !== 'scroll') return;
+
     // eslint-disable-next-line solid/reactivity -- false positive: the listener is torn down when the effect re-runs
     const viewport = viewportEl();
     if (!viewport) return;
@@ -451,6 +469,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const measureSizes = () => {
     const viewport = viewportEl();
     if (!viewport) return;
+
     // Hoist DOM reads ahead of signal writes. The thumb-priming
     // effect subscribes to both `sizesX` and `sizesY` and writes
     // `transform` on the thumb — so an interleaved
@@ -592,6 +611,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   createEffect(() => {
     const viewport = viewportEl();
     if (!viewport) return;
+
     // Read both scroll positions before writing either transform —
     // interleaving forces a second sync layout flush each time
     // sizes change.
@@ -654,6 +674,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
   const startDrag = (axis: 'x' | 'y', event: PointerEvent) => {
     if (event.button !== 0) return;
     const target = event.currentTarget as HTMLDivElement;
+
     // eslint-disable-next-line solid/reactivity -- false positive: the drag intentionally binds to the viewport it started on
     const viewport = viewportEl();
     if (!viewport) return;
@@ -732,6 +753,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       target.removeEventListener('lostpointercapture', finish);
       viewport.style.scrollBehavior = prevScrollBehavior;
       setIsDragging(false);
+
       // Pointer capture suppressed `pointerleave` on the root while
       // the drag was active. If the release lands outside the root,
       // schedule a hide via the shared timer so a subsequent
@@ -749,6 +771,7 @@ const ScrollArea: ParentComponent<ScrollAreaProps> = (rawProps) => {
       }
     };
     target.addEventListener('pointermove', onMove);
+
     // Bind every termination event so an interrupted drag (touch
     // cancellation, browser tab switch, lost pointer capture) still
     // restores the body selection state and detaches the listeners.

@@ -37,10 +37,13 @@ export interface SeparatorProps
     > {
   /** Axis along which the separator is drawn. @default 'horizontal' */
   orientation?: Orientation;
+
   /** Length along the major axis. `4` stretches to fill. @default 1 */
   size?: Size;
+
   /** Semantic color drawn at alpha step 6. @default 'neutral' */
   color?: Color;
+
   /**
    * Marks the separator as decorative. Decorative separators are removed
    * from the accessibility tree.

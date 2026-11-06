@@ -92,12 +92,15 @@ export const overlay = style({
   height: '100%',
   maxWidth: 'none',
   maxHeight: 'none',
+
   // eslint-disable-next-line custom/require-design-tokens -- the reset hands modal dialogs back their UA box (`:where(dialog:modal) { all: revert }`), so these undo `margin: auto` / `padding: 1em`, not a reset default.
   margin: 0,
+
   // eslint-disable-next-line custom/require-design-tokens -- see above; unwinds the UA's `padding: 1em`.
   padding: 0,
   border: 'none',
   overflow: 'hidden',
+
   // The UA paints modal dialogs on `canvas`/`canvastext`; the panel owns
   // its own surface, and text inherits from where the consumer wrote the
   // element rather than from the UA.
@@ -117,6 +120,7 @@ export const overlay = style({
         to: { opacity: 1 },
       })} ${moderate[1]} ${entrance.productive}`,
     },
+
     // Presence holds `[open]` — and with it the top-layer slot — until
     // this animation settles, then calls `close()`.
     '&:where([data-state="closed"])': {
@@ -126,6 +130,7 @@ export const overlay = style({
         to: { opacity: 0 },
       })} ${fast[2]} ${exit.productive}`,
     },
+
     // Reopening after a close the UA forced is a fresh mount, which
     // would replay the entrance. The dialog never went anywhere as far
     // as the user is concerned, so it shouldn't animate in again. Same
@@ -167,12 +172,14 @@ export const scroll = style({
 export const scrollPadding = style({
   flexGrow: 1,
   margin: 'auto',
+
   // The page is `viewport-fit=cover` and the dialog is `inset: 0`, so
   // these gutters start at the screen edge — under the notch and the
   // home indicator. Adding the safe-area insets measures the panel's
   // breathing room from the safe area inward instead, matching how
   // `@lib/shell` pads its header. Upstream doesn't handle this at all.
   paddingBlockStart: `calc(${space[6]} + env(safe-area-inset-top))`,
+
   // Leaves the panel visibly off the bottom edge on tall viewports
   // without eating the screen on short ones.
   paddingBlockEnd: `calc(max(${space[6]}, 6vh) + env(safe-area-inset-bottom))`,
@@ -182,6 +189,7 @@ export const scrollPadding = style({
 
 export const align = styleVariants({
   center: { marginBlockStart: 'auto' },
+
   // eslint-disable-next-line custom/require-design-tokens -- cancels the `margin: auto` above so the panel pins to the top of the scroll surface; not a redundant reset.
   start: { marginBlockStart: 0 },
 });
@@ -192,11 +200,13 @@ export const panel = style({
   position: 'relative',
   margin: 'auto',
   width: '100%',
+
   // Overridden inline by the `maxWidth` prop.
   maxWidth: '600px',
   overflow: 'auto',
   backgroundColor: background.panelSolid,
   boxShadow: shadow[6],
+
   // `showModal()` may land focus here when nothing inside is focusable;
   // the dialog's own chrome is the focus indicator.
   outline: 'none',
@@ -214,6 +224,7 @@ export const panel = style({
         to: { transform: `translateY(${LIFT}) scale(0.99)` },
       })} ${fast[2]} ${exit.productive}`,
     },
+
     // See the matching rule on the overlay: a restore is a fresh mount,
     // but not a fresh entrance.
     [`${overlay}:where([data-state="open"][data-restored]) &`]: {

@@ -98,6 +98,7 @@ export const read = async (id: VaultId): Promise<ArrayBuffer | null> => {
     if (!record) return null;
 
     const key = await db.get(KEY_STORE, KEY_ID);
+
     // A value can only be written after its key is generated, so a record
     // with no key means the key store was cleared or tampered with out from
     // under it — the ciphertext is unrecoverable, and silently returning

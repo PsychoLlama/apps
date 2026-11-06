@@ -25,6 +25,7 @@ export const size = styleVariants({
   4: {
     // eslint-disable-next-line custom/require-design-tokens -- size 4 sits above the `space` scale; matches Radix's 80px stop.
     paddingTop: '5rem',
+
     // eslint-disable-next-line custom/require-design-tokens -- size 4 sits above the `space` scale; matches Radix's 80px stop.
     paddingBottom: '5rem',
   },

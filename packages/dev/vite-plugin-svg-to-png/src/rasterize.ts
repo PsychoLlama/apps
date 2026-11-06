@@ -31,6 +31,7 @@ export const rasterizeSvg = async (
   await ensureResvgWasm();
   const renderer = new Resvg(svg, {
     fitTo: { mode: 'width', value: size },
+
     // The brandmark is a flat geometric shape — no fonts to embed,
     // no need to slow down rendering on text quality knobs.
     font: { loadSystemFonts: false },

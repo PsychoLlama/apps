@@ -35,6 +35,7 @@ describe('readIgnoreFiles', () => {
 
     const files = await readIgnoreFiles([
       { scope: 'global', path: join(sandbox.root, 'missing') },
+
       // A directory: exists, but can't be read as a file.
       { scope: 'local', path: sandbox.root },
       repo,

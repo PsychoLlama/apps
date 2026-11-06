@@ -99,6 +99,7 @@ export const resource = <T, Disposed>(
 ): Resource<T, ModeOf<Disposed>> => ({
   [BRAND]: 'resource',
   value,
+
   // Typed loosely so its result can pin the mode. The runtime awaits it.
   dispose: dispose as Dispose,
 });
@@ -116,6 +117,7 @@ export const reactive = <T, A extends Accessor<T>, Disposed = void>(
 ): Reactive<T, ModeOf<Disposed>, A> => ({
   [BRAND]: 'reactive',
   value,
+
   // As in `resource`.
   dispose: dispose as Dispose | undefined,
 });

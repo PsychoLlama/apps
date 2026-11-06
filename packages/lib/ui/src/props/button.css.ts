@@ -40,6 +40,7 @@ export const base = style({
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.medium,
   flexShrink: 0,
+
   // The label is action text, not content — never selectable.
   userSelect: 'none',
   transitionProperty: 'background-color, color, box-shadow, filter',
@@ -235,6 +236,7 @@ const solidStyle = (color: ColorName) => {
           },
         },
       },
+
       // Larger translucent halo on touch :active gives a clear
       // tap-target affordance — no native :hover on coarse pointers.
       '(pointer: coarse)': {
@@ -261,6 +263,7 @@ const softStyle = (color: ColorName) => {
   return style({
     backgroundColor: palette.alpha[3],
     color: palette.alpha[11],
+
     // Soft is the only variant whose focus ring inherits the variant's
     // own color (Radix uses --accent-8 here, --focus-8 elsewhere).
     ':focus-visible': {
@@ -345,6 +348,7 @@ const ghostStyle = (color: ColorName) => {
   return style({
     backgroundColor: 'transparent',
     color: palette.alpha[11],
+
     // Ghost reads as inline text — inherit the surrounding weight
     // rather than forcing the medium weight applied to other variants.
     fontWeight: 'inherit',

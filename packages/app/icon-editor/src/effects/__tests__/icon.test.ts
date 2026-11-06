@@ -41,6 +41,7 @@ describe('$resolveIconParam', () => {
 
     expect(editor.icon).toMatchObject(homeIcon);
     expect(load.pending).toBe(0);
+
     // Only the chunk holding `home`.
     expect(fetch.mock.calls.map(([url]) => url)).not.toContain(PAGE_URLS[1]);
   });

@@ -40,6 +40,7 @@ export type CardTag = HtmlBoxTag | 'a' | 'button' | 'label';
 interface CardOwnProps {
   /** Visual size on a 1–5 scale. @default 1 */
   size?: CardSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: CardVariant;
 }

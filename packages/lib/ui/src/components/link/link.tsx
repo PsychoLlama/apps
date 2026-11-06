@@ -70,14 +70,19 @@ export interface LinkProps
     AnchorProps {
   /** Visual size on a 1–9 scale. Inherits from parent when omitted. */
   size?: TypeScale;
+
   /** Font weight. */
   weight?: FontWeight;
+
   /** Underline behavior. @default 'auto' */
   underline?: Underline;
+
   /** Semantic color. @default 'accent' */
   color?: LinkColor;
+
   /** Use high-contrast text for stronger emphasis. @default false */
   highContrast?: boolean;
+
   /**
    * Allow the reader to select the link text. A link doubles as a click
    * target, so it stays out of selection unless opted in. @default false

@@ -47,6 +47,7 @@ export const ControlledRoot = (props: ControlledRootProps) => {
   const effects: Effects = {
     // eslint-disable-next-line solid/reactivity -- Fixed for the root's life.
     controller: props.controller,
+
     // eslint-disable-next-line solid/reactivity -- Fixed for the root's life.
     mounted: props.mounted ?? mounted,
   };

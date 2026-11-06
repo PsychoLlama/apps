@@ -7,6 +7,7 @@ export default mergeConfig(
     test: {
       coverage: {
         include: ['src/**/*.ts'],
+
         // Type tests compile but never run.
         exclude: ['src/**/*.test-d.ts'],
         thresholds: {

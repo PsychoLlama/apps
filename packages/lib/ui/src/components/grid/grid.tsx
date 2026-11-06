@@ -19,16 +19,22 @@ import * as css from './grid.css';
 interface GridOwnProps {
   /** Number of equal-width columns. */
   columns?: 1 | 2 | 3 | 4 | 5 | 6;
+
   /** Number of equal-height rows. */
   rows?: 1 | 2 | 3 | 4 | 5 | 6;
+
   /** Vertical alignment of grid items within their cells. */
   align?: 'start' | 'center' | 'end' | 'stretch';
+
   /** Horizontal alignment of grid items within their cells. */
   justify?: 'start' | 'center' | 'end' | 'stretch';
+
   /** Uniform spacing between rows and columns. */
   gap?: SpaceScale;
+
   /** Horizontal spacing between columns. Overrides `gap` on the inline axis. */
   gapX?: SpaceScale;
+
   /** Vertical spacing between rows. Overrides `gap` on the block axis. */
   gapY?: SpaceScale;
 }

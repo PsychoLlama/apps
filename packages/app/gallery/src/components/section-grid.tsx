@@ -49,6 +49,7 @@ const trackCount = (section: Section): number => {
 export const SectionGrid = (props: { listing: Listing; section: Section }) => {
   const columns = () => props.section.columns ?? [];
   const rows = () => props.section.rows ?? [];
+
   // Headers pin to their own axis (see `columnHeader`/`rowHeader`) and, when a
   // section tightens its `gap`, pad back out from the cells. Default sections
   // leave the gutter unset and look unchanged.

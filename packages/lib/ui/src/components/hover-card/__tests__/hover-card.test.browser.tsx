@@ -157,6 +157,7 @@ describe('HoverCard', () => {
     await shown(surface);
 
     await userEvent.hover(outside);
+
     // Straight back: waiting for the card to look stable would outlast
     // the delay being tested.
     await userEvent.hover(surface, { force: true });

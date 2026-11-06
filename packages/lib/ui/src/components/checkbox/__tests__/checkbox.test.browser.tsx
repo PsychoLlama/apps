@@ -143,6 +143,7 @@ describe('Checkbox', () => {
         onCheckedChange={handler}
       />
     ));
+
     // Native `HTMLElement.click()` short-circuits on disabled form
     // controls per spec — exactly the behavior under test. Going
     // through `userEvent.click` instead would loop in Playwright's

@@ -129,6 +129,7 @@ describe('createTestController', () => {
         await using controller = createTestController();
         await using compute = controller.use(pipe([open]));
         void compute().catch(() => {});
+
         // Lands after the hold's scope ends, but before the controller's.
         setTimeout(resolve);
       };

@@ -15,6 +15,7 @@ import type { ScanResult } from './worker/rpc';
 export interface DetailLink {
   /** The `href` to navigate to. */
   href: string;
+
   /**
    * Whether to open in a new tab. Web links do (`target="_blank"` +
    * `rel="noopener noreferrer"`); `mailto:`/`tel:`/`sms:` don't, so the

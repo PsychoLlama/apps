@@ -13,8 +13,10 @@ export const DEV_URL_PREFIX = '/@icon-packs/';
 interface DevServerDeps {
   /** Resolve and cache the iconify catalog. */
   getCollections: () => Promise<CollectionsJson>;
+
   /** Resolve and cache one pack's processed data. */
   getPackData: (id: string) => Promise<PackData | undefined>;
+
   /** Icons per page chunk — same as the build path. */
   pageSize: number;
 }
@@ -58,6 +60,7 @@ export const createDevMiddleware = (
             id,
             name: info.name,
             total: info.total ?? 0,
+
             // Placeholder dimensions — overwritten by `data.width`
             // / `data.height` from the actual pack JSON below.
             // `collections.json` only carries `height`, and a few
@@ -69,6 +72,7 @@ export const createDevMiddleware = (
             // misleading on the off chance the override below misses.
             width: 16,
             height: 16,
+
             // Samples and accurate dimensions resolve below; the
             // index itself only needs cheap metadata up front.
             samples: [] as IconEntry[],

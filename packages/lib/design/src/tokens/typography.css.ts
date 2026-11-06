@@ -142,8 +142,10 @@ export const baselineOffset = '0.36em';
 export const letterSpacingOffset = {
   /** Tighten monospace; offsets the wider native tracking. */
   code: '-0.007em',
+
   /** Tighten italic emphasis; offsets the loose ascent of italic glyphs. */
   em: '-0.025em',
+
   /** Tighten italic quotes. Same correction as `em`. */
   quote: '-0.025em',
 } as const;
@@ -159,8 +161,10 @@ export const letterSpacingOffset = {
 export const fontSizeAdjust = {
   /** Times italic looks small at 1em; bump it up. */
   em: '1.18',
+
   /** Same Times italic correction as Em. */
   quote: '1.18',
+
   /** Menlo/Consolas look big at 1em; nudge down. */
   code: '0.95',
 } as const;

@@ -35,6 +35,7 @@ const setup = (
     new MessagePortTransport<RpcMessage, RpcMessage>(channel.port2),
     { requests: { decode: handler } },
   );
+
   // `MessagePort` endpoints stay dormant until started — without this the
   // request would post but never reach the worker side.
   channel.port1.start();
@@ -48,6 +49,7 @@ const setup = (
 describe('requestDecode', () => {
   it('requests a decode, transferring the bitmap, and resolves with a hit', async () => {
     const { connection, decode } = setup(() => result);
+
     // A real transferable so the `{ transfer: [bitmap] }` send doesn't trap —
     // the host's handle neuters once posted, proving the frame moved by
     // reference rather than by copy.

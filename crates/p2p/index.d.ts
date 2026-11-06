@@ -47,6 +47,7 @@ export interface Identity extends Handle {
    * straight away — render a share link before, or without, ever joining.
    */
   readonly endpointId: string;
+
   /**
    * The raw 32 bytes of the secret key, for persisting. Treat it as a
    * secret: anyone holding it can be this endpoint.
@@ -66,6 +67,7 @@ export const Identity: {
    * the page is. {@link init} must resolve before calling this.
    */
   create(): Identity;
+
   /**
    * Restore a previously persisted identity from the raw 32 bytes of
    * {@link Identity.secretKey}. Throws if that isn't what it got.
@@ -159,11 +161,13 @@ export interface Endpoint extends Handle {
    * identity alongside it.
    */
   readonly id: string;
+
   /**
    * The URL of the relay server currently carrying this connection, or
    * `undefined` if none has finished its handshake.
    */
   readonly homeRelay: string | undefined;
+
   /**
    * Bind and join the relay network, resolving once at least one relay
    * handshake completes. This joins the network; it does not connect to a
@@ -174,6 +178,7 @@ export interface Endpoint extends Handle {
    * a second `Endpoint`.
    */
   join(): Promise<void>;
+
   /**
    * Dial the peer named by `endpointId` on `protocol`, resolving with a
    * live {@link PeerConnection} once established.
@@ -185,6 +190,7 @@ export interface Endpoint extends Handle {
    * the dial fails.
    */
   dial(endpointId: string, protocol: string): Promise<PeerConnection>;
+
   /**
    * Leave the relay network, resolving once the endpoint has finished
    * closing. Stops the accept loop and the connection watcher, and closes
@@ -227,8 +233,10 @@ export interface PeerConnection extends Handle {
    * value it advertises as its {@link Identity.endpointId}.
    */
   readonly endpointId: string;
+
   /** The protocol this connection was opened on. */
   readonly protocol: string;
+
   /**
    * Send one message to the peer, resolving once it has been written.
    * Rejects if the connection is gone, or if the message exceeds the
@@ -238,6 +246,7 @@ export interface PeerConnection extends Handle {
    * themselves — two sends can land out of order.
    */
   send(message: Uint8Array): Promise<void>;
+
   /**
    * Where inbound messages go, assigned rather than subscribed — there is
    * one handle per connection, so there is one reader. Assign `null` or
@@ -251,6 +260,7 @@ export interface PeerConnection extends Handle {
    */
   get onmessage(): ((message: Uint8Array) => void) | undefined;
   set onmessage(handler: ((message: Uint8Array) => void) | null | undefined);
+
   /**
    * Close the connection, telling the peer it was deliberate. Returns
    * immediately — QUIC sends the close frame best-effort and there is
@@ -258,6 +268,7 @@ export interface PeerConnection extends Handle {
    * has actually finished.
    */
   close(): void;
+
   /**
    * Resolves when the connection ends, with the reason it ended — whether
    * that's this side calling {@link PeerConnection.close}, the peer doing

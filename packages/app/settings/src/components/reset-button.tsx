@@ -5,23 +5,27 @@ import { Button } from '@lib/ui';
 export interface ResetButtonProps {
   /** Test identifier forwarded to the underlying button. */
   testId: string;
+
   /**
    * Accessible name for the control. The visible text is always "Reset",
    * so this distinguishes one reset from its siblings on the page (e.g.
    * "Reset log filter" vs. "Reset theme").
    */
   label: string;
+
   /**
    * Whether the setting has been read. Until then the button stays
    * hidden, since it can't yet say whether there's anything to reset.
    */
   ready: boolean;
+
   /**
    * Whether the setting already matches its default. A reset is a no-op in
    * that state, so the button disables itself rather than disappearing —
    * the affordance stays put as a hint that a default exists.
    */
   disabled: boolean;
+
   /** Invoked when the user activates the button. */
   onReset: () => void;
 }

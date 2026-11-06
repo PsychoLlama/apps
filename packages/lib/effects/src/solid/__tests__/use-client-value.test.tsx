@@ -175,6 +175,7 @@ describe('useClientValue', () => {
       controller,
       () => {
         const output = useClientValue(pipe([() => gate.promise]));
+
         // A render-phase read, which would suspend a resource.
         createRenderEffect(output);
       },

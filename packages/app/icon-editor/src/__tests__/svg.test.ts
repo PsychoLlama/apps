@@ -121,13 +121,17 @@ describe('renderIconSvg', () => {
     const svg = renderIconSvg(baseState, { metadata: true });
 
     expect(svg).toMatch(/<metadata>/);
+
     // Pack:name as the work's title.
     expect(svg).toMatch(/<dc:title>mdi:home<\/dc:title>/);
+
     // Author and license travel from the IconRef.
     expect(svg).toMatch(/Pictogrammers/);
     expect(svg).toMatch(/Apache 2\.0/);
+
     // License URL is anchored as a `cc:license` resource.
     expect(svg).toMatch(/<cc:license rdf:resource="[^"]*LICENSE/);
+
     // SPDX surfaces under `dc:rightsHolder` for machine consumers.
     expect(svg).toMatch(/SPDX:Apache-2\.0/);
   });
@@ -158,9 +162,11 @@ describe('renderIconSvg', () => {
     // Background fill from the palette still paints, so the empty state
     // previews palette/shape/padding choices meaningfully.
     expect(svg).toMatch(/fill="#0090ff"/);
+
     // Dashed outline + cross marks the missing slot.
     expect(svg).toMatch(/stroke-dasharray=/);
     expect(svg).toMatch(/<line /);
+
     // The icon body group is suppressed.
     expect(svg).not.toMatch(/transform="translate/);
   });

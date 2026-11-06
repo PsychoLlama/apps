@@ -12,6 +12,7 @@ tester.run('require-explicit-route-export', rule, {
     {
       code: "import NotFound from '../not-found/not-found';\nexport default NotFound;",
     },
+
     // Inline default export has the literal substring too.
     { code: 'export default function Route() { return null; }' },
 
@@ -34,16 +35,19 @@ tester.run('require-explicit-route-export', rule, {
       code: "export { default } from '../not-found/not-found';",
       errors: [{ messageId: 'reexport' as const }],
     },
+
     // Aliased re-export — same structural issue.
     {
       code: "export { Button as default } from '../components/button';",
       errors: [{ messageId: 'reexport' as const }],
     },
+
     // Mixed specifiers — the `default` slot is still the problem.
     {
       code: "export { default, Helper } from '../foo';",
       errors: [{ messageId: 'reexport' as const }],
     },
+
     // Local `as default` — also lacks the literal `export default`
     // substring SolidStart scans for.
     {

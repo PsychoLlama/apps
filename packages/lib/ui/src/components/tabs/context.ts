@@ -38,14 +38,17 @@ export interface TabsContextValue {
 
 export interface TabsListContextValue {
   loop: Accessor<boolean>;
+
   /**
    * Registry of mounted triggers, keyed by `value`. Mutated imperatively
    * via `registerTrigger`; consumers that need to react to registration
    * changes must subscribe to `version`.
    */
   triggers: Map<string, TabsTriggerRecord>;
+
   /** Bumps on every register/unregister. */
   version: Accessor<number>;
+
   /**
    * Add `record` under `value`. Returns a teardown that removes the
    * record if it's still the one stored under `value`. Both register and

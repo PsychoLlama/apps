@@ -60,6 +60,7 @@ export const window = style({
 export const content = style({
   backgroundColor: background.panelSolid,
   boxShadow: shadow[4],
+
   // Collisions can move the window but not shrink it, so the viewport
   // caps the width too.
   maxWidth: `min(${maxWidth}, calc(100vw - ${2 * COLLISION_PADDING}px))`,

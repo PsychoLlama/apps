@@ -42,6 +42,7 @@ interface PluginOptions {
  */
 interface PackBuild {
   info: PackInfo;
+
   /** Manifest payload, with placeholders for each page asset's URL. */
   manifestSource: string;
 }
@@ -141,6 +142,7 @@ export const iconPacks = (options: PluginOptions = {}): Plugin => {
       if (!this.environment.config.build.ssr && indexRefId === undefined) {
         const root = findIconifyJsonRoot();
         const collections = withOnlyAllowedPacks(await loadCollections(root));
+
         // Sort once up front; every downstream array
         // (manifestPlaceholders, indexPayload) inherits this order.
         const packIds = sortedPackIds(collections);

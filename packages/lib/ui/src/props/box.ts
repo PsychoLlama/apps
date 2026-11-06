@@ -18,8 +18,10 @@ export interface BoxBaseProps
   extends PaddingProps, MarginProps, SkeletonProps, TestIdProps {
   /** Surface background color from the design token palette. */
   background?: Exclude<BackgroundColor, 'overlay'>;
+
   /** Border radius from the design token scale. */
   radius?: RadiusScale;
+
   /** Box shadow elevation from the design token scale. */
   shadow?: ShadowLevel;
 }

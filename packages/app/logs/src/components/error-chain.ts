@@ -6,6 +6,7 @@ export interface ErrorFrame {
    * error prototype to plain `Error`, but the `name` string survives intact.
    */
   name: string;
+
   /** The error's `message`. May be empty. */
   message: string;
 }

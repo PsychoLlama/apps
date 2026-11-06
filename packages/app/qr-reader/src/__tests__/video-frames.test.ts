@@ -33,6 +33,7 @@ describe('onVideoFrame', () => {
       fire(MIN_FRAME_INTERVAL_MS);
 
       expect(callback).toHaveBeenCalledTimes(2);
+
       // Initial subscribe + a re-subscribe after each delivered frame.
       expect(request).toHaveBeenCalledTimes(3);
     });

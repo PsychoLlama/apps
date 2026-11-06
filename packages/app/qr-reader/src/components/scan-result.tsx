@@ -52,10 +52,13 @@ const formatTimestamp = (detail: ParsedDateTimeDetail): string =>
 interface ScanResultProps {
   /** The raw payload decoded from the recognized code. */
   text: string;
+
   /** Which payload shape rxing recognized — titles the result. */
   kind: ScanKind;
+
   /** Parsed payload as label/value rows; empty for opaque text. */
   details: readonly ParsedDetail[];
+
   /** Discards the result and reopens the camera. */
   onRetry: () => void;
 }

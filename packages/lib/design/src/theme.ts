@@ -22,6 +22,7 @@ export interface ThemeConstants {
   danger: ColorPalette;
   warning: ColorPalette;
   success: ColorPalette;
+
   /** Source for `text.lowContrast` and `text.highContrast` (steps 11–12). */
   text: Pick<ColorPalette['solid'], 11 | 12>;
 }
@@ -30,6 +31,7 @@ export interface ThemeConstants {
 export interface ThemeVariantConfig {
   accent: ColorPalette;
   neutral: ColorPalette;
+
   /** Human-readable name, e.g. for a theme picker. */
   label: string;
 }

@@ -51,8 +51,10 @@ import * as css from './radio-group.css';
 
 /** Visual size on a 1–3 scale. */
 export type RadioSize = 1 | 2 | 3;
+
 /** Visual treatment. */
 export type RadioVariant = 'classic' | 'surface' | 'soft';
+
 /** Semantic color palette for the checked indicator. */
 export type RadioColor =
   'accent' | 'neutral' | 'danger' | 'warning' | 'success';
@@ -77,23 +79,29 @@ export interface RadioGroupRootProps
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange' | 'role'> {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: RadioSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: RadioVariant;
+
   /** Semantic color palette for the checked indicator. @default 'accent' */
   color?: RadioColor;
+
   /**
    * Layout axis. `vertical` stacks items in a column; `horizontal`
    * flows them in a row. Surfaces as `aria-orientation` on the
    * radiogroup. @default 'vertical'
    */
   orientation?: 'horizontal' | 'vertical';
+
   /**
    * Form-submit name applied to every item. Also groups the inputs for
    * native arrow-key navigation in the browser.
    */
   name: string;
+
   /** Disable every item in the group. @default false */
   disabled?: boolean;
+
   /**
    * Mark the group as required for assistive technology. Surfaces as
    * `aria-required="true"` on the radiogroup and as the native
@@ -101,11 +109,13 @@ export interface RadioGroupRootProps
    * @default false
    */
   required?: boolean;
+
   /**
    * Currently selected value. Pass `null` to render the group with no
    * item checked.
    */
   value: string | null;
+
   /** Fires when the user activates a different item. */
   onValueChange: (value: string) => void;
 }
@@ -125,6 +135,7 @@ export const RadioGroupRoot: ParentComponent<RadioGroupRootProps> = (
     },
     rawProps,
   );
+
   // Margin props, skeleton, testId, class, and the rest of the
   // standard HTML attributes pass through to `<Flex>` directly — Flex
   // already owns box props, skeleton plumbing, and class composition.
@@ -208,13 +219,16 @@ export interface RadioGroupItemProps
     > {
   /** Value submitted when this item is checked, and matched against the group's `value`. */
   value: string;
+
   /** Disable just this item. Combines with the group's `disabled`. */
   disabled?: boolean;
+
   /**
    * Allow the reader to select the label text. The indicator never
    * participates in selection. @default false
    */
   selectable?: boolean;
+
   /** Inline label rendered to the right of the radio. */
   children?: JSX.Element;
 }
@@ -270,6 +284,7 @@ export const RadioGroupItem: ParentComponent<RadioGroupItemProps> = (
   ) => {
     if (typeof local.onKeyDown === 'function') local.onKeyDown(event);
     if (event.defaultPrevented) return;
+
     // WAI-ARIA radio group spec: Enter does not activate radios — only
     // Space does. Native `<input type="radio">` agrees on activation,
     // but inside a `<form>` Enter still bubbles up and submits. Suppress

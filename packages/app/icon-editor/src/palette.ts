@@ -68,8 +68,10 @@ const normalize = (value: string): string =>
 export interface PaletteOption {
   /** Stable identifier used for URL serialization and footer display. */
   name: string;
+
   /** Background fill — Radix `solid[9]` from the light scale. */
   bg: string;
+
   /** Legible foreground paired with `bg` — Radix `contrast`. */
   fg: string;
 }

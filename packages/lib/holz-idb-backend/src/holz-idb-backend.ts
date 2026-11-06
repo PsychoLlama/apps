@@ -59,6 +59,7 @@ export const createIdbBackend = (
   // One ping per committed write; coalescing a burst is future work at the
   // IndexedDB layer, not this channel's job.
   const channel = createLogInsertedChannel();
+
   // The send is fallible now, and its failure is swallowed on purpose: this
   // sits on the logging path, where surfacing an error means recursing into
   // the logger. A dropped ping costs a viewer one stale-flag refresh prompt.

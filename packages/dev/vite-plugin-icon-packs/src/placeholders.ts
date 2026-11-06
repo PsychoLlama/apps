@@ -23,6 +23,7 @@ export const REF_PLACEHOLDER_MARKER = REF_PLACEHOLDER_PREFIX;
 export interface PlaceholderTable {
   /** Allocate a placeholder string bound to `refId`. */
   allocate: (refId: string) => string;
+
   /**
    * Replace every allocated placeholder in `text` with the URL
    * `resolveUrl(refId)` returns. No-op when no placeholder prefix

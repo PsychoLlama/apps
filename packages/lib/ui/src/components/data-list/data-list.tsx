@@ -70,6 +70,7 @@ export interface DataListRootProps
     JSX.HTMLAttributes<HTMLDListElement> {
   /** Layout axis. @default 'horizontal' */
   orientation?: DataListOrientation;
+
   /** Visual size. Controls the gap between items. @default 2 */
   size?: DataListSize;
 }

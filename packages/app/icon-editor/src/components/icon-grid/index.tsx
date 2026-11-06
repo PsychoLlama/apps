@@ -66,14 +66,17 @@ interface IconGridProps {
    * default pack so browsing works without a selection.
    */
   selected: IconRef | undefined;
+
   /** Called when the user picks a different icon. */
   onSelect: (icon: IconRef) => void;
+
   /**
    * Called when the user picks a pack from the list. The editor swaps
    * the active pack (clearing the selected icon if it belonged to a
    * different one) and returns to the properties inspector.
    */
   onSelectPack: (packId: string) => void;
+
   /** Leave the picker and return to the properties inspector. */
   onClose: () => void;
 }
@@ -199,6 +202,7 @@ interface PackListViewProps {
   search: string;
   onSearch: (value: string) => void;
   onPick: (id: string) => void;
+
   /** Leave the picker and return to the properties inspector. */
   onClose: () => void;
 }
@@ -322,6 +326,7 @@ const PackListView: Component<PackListViewProps> = (props) => {
 interface PackDetailViewProps {
   pack: IconPackSummary | undefined;
   manifest: IconPackManifest | undefined;
+
   /**
    * Pull the resolved entry for `(pack, name)`. Subscribes to the
    * entries version signal so tiles re-render once when a fetched
@@ -331,23 +336,28 @@ interface PackDetailViewProps {
   search: string;
   onSearch: (value: string) => void;
   visible: ReadonlyArray<string>;
+
   /** First-icon index (0-based) of the current page within the filtered list. */
   pageStart: number;
   total: number;
   currentPage: number;
   pageCount: number;
   onPageChange: (page: number) => void;
+
   /** `undefined` until the user picks an icon — no tile reads as selected. */
   selected: IconRef | undefined;
   onPickIcon: (manifest: IconPackManifest, name: string) => void;
+
   /** Leave the picker and return to the properties inspector. */
   onClose: () => void;
+
   /** Switch to the in-place pack info view (DataList of metadata). */
   onShowInfo: () => void;
 }
 
 interface PackInfoViewProps {
   pack: IconPackSummary | undefined;
+
   /** Return to the icon grid for the same pack — one step up the stack. */
   onShowIcons: () => void;
 }

@@ -25,14 +25,19 @@ export interface TabsListProps
   extends RequiredTestIdProps, JSX.HTMLAttributes<HTMLDivElement> {
   /** Visual size on a 1–2 scale. @default 2 */
   size?: TabsListSize;
+
   /** Indicator and active-text color. @default 'accent' */
   color?: TabsListColor;
+
   /** Use the strongest color step for the active indicator. @default false */
   highContrast?: boolean;
+
   /** Trigger alignment along the list axis. @default 'start' */
   justify?: TabsListJustify;
+
   /** Flex-wrap behavior. @default 'nowrap' */
   wrap?: TabsListWrap;
+
   /** Wrap focus around the ends of the list with arrow keys. @default true */
   loop?: boolean;
 }

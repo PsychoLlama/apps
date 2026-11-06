@@ -36,6 +36,7 @@ import {
 export interface PresenceConfig {
   /** The logical open state. */
   open: Accessor<boolean>;
+
   /**
    * The animated element, once mounted. Presence keeps reading it
    * while closing, so keep returning the element for as long as
@@ -52,6 +53,7 @@ export interface Presence {
    * under `<Show when={mounted()}>`.
    */
   mounted: Accessor<boolean>;
+
   /**
    * Spread onto the animated element. Carries `data-state`
    * (`"open"`/`"closed"`), the attribute exit motion should key off.

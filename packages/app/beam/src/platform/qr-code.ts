@@ -22,6 +22,7 @@ const logger = createLogger(import.meta.INSTRUMENTATION_SCOPE);
 export interface QrGrid {
   /** Modules per side, quiet zone included. The grid is `size × size`. */
   size: number;
+
   /** Row-major grid, one byte per module: 1 = dark, 0 = light. */
   modules: Uint8Array;
 }

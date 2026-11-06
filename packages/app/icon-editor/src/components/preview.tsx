@@ -24,8 +24,10 @@ const SKELETON_RADIUS: Record<IconEditorShape, string> = {
 interface PreviewProps {
   /** Reactive icon state to render. */
   state: IconEditorState;
+
   /** Rendered display size in CSS pixels. */
   size: number;
+
   /**
    * Render a skeleton placeholder in place of the SVG while an icon
    * resolution is in flight (initial URL hydration, randomize). The
@@ -40,6 +42,7 @@ export const Preview: Component<PreviewProps> = (props) => {
   const svg = () =>
     renderIconSvg(props.state, {
       responsive: true,
+
       // The display size is unique per Preview on the page (hero +
       // size strip), so it doubles as a stable id discriminator that
       // keeps each preview's `clip-path` ref pointing at its own clip.

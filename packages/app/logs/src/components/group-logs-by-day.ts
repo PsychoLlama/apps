@@ -4,8 +4,10 @@ import type { Log } from '@lib/observability';
 export interface LogDayGroup<T extends Log = Log> {
   /** Stable key for the day — the local calendar date as `YYYY-M-D`. */
   key: string;
+
   /** Localized day heading, e.g. `Monday, June 29, 2026`. */
   heading: string;
+
   /** Entries that fell on this day, in the order they were given. */
   logs: T[];
 }

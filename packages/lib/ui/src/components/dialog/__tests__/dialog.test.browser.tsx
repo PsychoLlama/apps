@@ -45,6 +45,7 @@ const setup = (overrides: Overrides = {}) => {
     onOpenChange,
     overlay,
     panel: () => rendered.queryByTestId('dialog'),
+
     /** The scroll surface around the panel — the click-outside target. */
     outside: () => {
       const scroll = overlay.firstElementChild;
@@ -147,6 +148,7 @@ describe('Dialog', () => {
     await userEvent.keyboard('{Escape}');
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
+
     // Controlled: the DOM state only follows the `open` prop.
     expect(overlay.open).toBe(true);
   });

@@ -84,6 +84,7 @@ export default [
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-deprecated': 'error',
       '@typescript-eslint/no-namespace': 'off',
+
       // `async` is a signature decision as much as an implementation one.
       // Generators that yield instructions, stubs that satisfy a promise-
       // returning interface, and capabilities kept uniform across a module
@@ -95,6 +96,7 @@ export default [
       'custom/no-static-style-prop': 'error',
       'custom/prefer-assert': 'error',
       'custom/prefer-icon-button': 'error',
+      'custom/require-blank-line-before-comment': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
         'error',
@@ -259,6 +261,7 @@ export default [
       'packages/lib/ui/**/*.{ts,tsx}',
       'packages/lib/design/**/*.{ts,tsx}',
     ],
+
     // `.css.ts` files are governed by the `packages/**/*.css.ts` block
     // above (which carries the globalStyle ban). Without this ignore,
     // this override would clobber that rule and silently drop the ban.
