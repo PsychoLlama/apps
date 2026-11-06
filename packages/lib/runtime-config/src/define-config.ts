@@ -40,6 +40,7 @@ export type Override<Value extends JsonValue> = Partial<
 export interface Option<Value extends JsonValue = { enabled: boolean }> {
   /** Stable identifier, e.g. `@app/beta`. Used as the storage key. */
   readonly id: string;
+
   /** Fallback values indexed by environment. */
   readonly defaults: EnvironmentDefaults<Value>;
 }

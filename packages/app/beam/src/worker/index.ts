@@ -95,6 +95,7 @@ const rpc = RPC.from<P2pApi, HostApi, SendOptions>(
 void WorkerSession.init()
   .then(() => {
     logger.debug('Iroh wasm initialized.');
+
     // Its own catch rather than riding on init's. A lost `ready` leaves the
     // page waiting forever with nothing ever sent, which is worth telling
     // apart from a wasm module that never came up.

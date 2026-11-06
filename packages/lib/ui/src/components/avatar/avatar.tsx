@@ -54,10 +54,13 @@ import * as css from './avatar.css';
 
 /** Visual size on a 1–3 scale. */
 export type AvatarSize = 1 | 2 | 3;
+
 /** Visual treatment for the fallback surface. */
 export type AvatarVariant = 'solid' | 'soft';
+
 /** Corner rounding. */
 export type AvatarRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+
 /** Semantic color palette for the fallback surface. */
 export type AvatarColor =
   'accent' | 'neutral' | 'danger' | 'warning' | 'success';
@@ -77,17 +80,20 @@ export interface AvatarProps
     Omit<JSX.HTMLAttributes<HTMLSpanElement>, 'children'> {
   /** Image URL. When absent, the fallback renders immediately. */
   src?: string;
+
   /**
    * Image description. Required even when `src` is undefined — keeps
    * the accessible name stable while the image resolves and after
    * fallback takes over.
    */
   alt: string;
+
   /**
    * Content shown while the image loads or after it fails. Pass
    * initials, an icon, or any inline node.
    */
   fallback: JSX.Element;
+
   /**
    * Wait this many milliseconds before mounting the fallback. Useful
    * to suppress a flash when the image is likely to load quickly.
@@ -95,16 +101,22 @@ export interface AvatarProps
    * fallback stays mounted until the image resolves successfully.
    */
   delayMs?: number;
+
   /** Visual size on a 1–3 scale. @default 2 */
   size?: AvatarSize;
+
   /** Fallback surface treatment. @default 'soft' */
   variant?: AvatarVariant;
+
   /** Fallback color palette. @default 'accent' */
   color?: AvatarColor;
+
   /** Corner rounding. @default 'full' */
   radius?: AvatarRadius;
+
   /** Forwarded to the inner `<img>`. */
   referrerPolicy?: JSX.ImgHTMLAttributes<HTMLImageElement>['referrerpolicy'];
+
   /** Forwarded to the inner `<img>`. */
   crossOrigin?: JSX.ImgHTMLAttributes<HTMLImageElement>['crossorigin'];
 }

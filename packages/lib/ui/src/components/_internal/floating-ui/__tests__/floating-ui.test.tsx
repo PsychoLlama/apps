@@ -507,6 +507,7 @@ describe('FloatingWindow passthrough', () => {
     const box = screen.getByTestId('box');
 
     expect(box.style.color).toBe('red');
+
     // The window's own var wins over a consumer's attempt at it.
     expect(box.style.getPropertyValue(varName(css.sideOffset))).toBe('8px');
   });

@@ -63,41 +63,53 @@ export interface AlertDialogProps
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'title' | 'style' | 'role'> {
   /** Whether the dialog is showing. */
   open: boolean;
+
   /**
    * Fires when the user asks to close — Escape, Cancel, or straight
    * after a confirm. Only ever called with `false`; opening is the call
    * site's, and so is declining a close that shouldn't land yet.
    */
   onOpenChange: (open: boolean) => void;
+
   /** Heading at the top of the panel. Also the dialog's accessible name. */
   title: JSX.Element;
+
   /**
    * What the choice costs. Required — the `alertdialog` role promises
    * assistive tech there are stakes to read out.
    */
   description: JSX.Element;
+
   /** Label for the confirming button. */
   actionText: JSX.Element;
+
   /**
    * Fires when the user confirms, just before the close request. Do the
    * work here; leave the closing to `onOpenChange`.
    */
   onAction: () => void;
+
   /** Label for the button that backs out. @default 'Cancel' */
   cancelText?: JSX.Element;
+
   /**
    * Semantic color for the confirming button. Reach for `'danger'` when
    * the action destroys something. @default 'accent'
    */
   color?: ButtonColor;
+
   /** Panel padding and rounding on a 1–4 scale. @default 3 */
   size?: DialogSize;
+
   /** Where the panel sits when it's shorter than the viewport. @default 'center' */
   align?: DialogAlign;
+
   /** Any CSS width for the panel. @default '450px' */
   maxWidth?: string;
+
   /** `class` lands on the panel — the visible surface, not the overlay. */
   class?: string;
+
   /**
    * Extra content between the description and the buttons. Opening
    * focus goes to the cancelling button, unless something in here

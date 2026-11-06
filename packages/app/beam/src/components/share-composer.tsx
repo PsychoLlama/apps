@@ -32,6 +32,7 @@ import { $draftChanged, $drafts, SHARE_MAX_LENGTH } from '../state';
 export const ShareComposer = (props: {
   /** The peer this is addressed to. */
   endpointId: string;
+
   /** Whether the peer can receive it right now. */
   connected: boolean;
 }) => {

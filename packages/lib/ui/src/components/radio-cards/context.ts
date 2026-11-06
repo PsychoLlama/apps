@@ -26,6 +26,7 @@ export interface RadioCardsContextValue {
   value: Accessor<string | null>;
   disabled: Accessor<boolean>;
   required: Accessor<boolean>;
+
   /**
    * Bumps on every change event. Items' `checked` bindings subscribe
    * to it so Solid re-applies the controlled `checked` property on
@@ -37,6 +38,7 @@ export interface RadioCardsContextValue {
    * the controlled prop.
    */
   reconcileTick: Accessor<number>;
+
   /**
    * Records the user's selection. Calls the consumer's
    * `onValueChange` and bumps `reconcileTick` so every item's

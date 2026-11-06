@@ -160,6 +160,7 @@ export const slotRight = style({
   paddingLeft: slotGap,
   marginRight: '-1px',
 });
+
 /* eslint-enable custom/require-design-tokens */
 
 // --- Size ---

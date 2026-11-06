@@ -27,14 +27,17 @@ const collectListings = (
 export const ManifestPage = (props: {
   /** Manifest title, conventionally the package name (`@lib/ui`). */
   title: string;
+
   /** One-line summary, conventionally the package's `description`. */
   description: string;
+
   /**
    * The groups this manifest's listings sort into, in declaration order. Empty
    * for a package that opts out of grouping — listings then render as one flat
    * column.
    */
   groups: ReadonlyArray<GalleryGroup>;
+
   /** Eager `import.meta.glob` of the package's `*.gallery.tsx` modules. */
   listings: Record<string, { default: GalleryListing<unknown, string> }>;
 }) => {

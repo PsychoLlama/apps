@@ -46,6 +46,7 @@ describe('createPresence (animated)', () => {
     expect(query()).not.toBeNull();
 
     setOpen(false);
+
     // Still mounted: the 100ms exit animation is running.
     expect(query()).not.toBeNull();
     expect(query()).toHaveAttribute('data-state', 'closed');
@@ -57,6 +58,7 @@ describe('createPresence (animated)', () => {
     const { setOpen, query } = renderHarness(fixture.transitioned);
 
     setOpen(false);
+
     // Still mounted: the 100ms opacity transition is running.
     expect(query()).not.toBeNull();
 
@@ -65,6 +67,7 @@ describe('createPresence (animated)', () => {
 
   it('unmounts immediately when closing applies no motion', async () => {
     const { setOpen, query } = renderHarness(fixture.entranceOnly);
+
     // Let the entrance animation finish so it can't be mistaken for
     // exit motion.
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -87,6 +90,7 @@ describe('createPresence (animated)', () => {
 
     setOpen(false);
     setOpen(true);
+
     // Reopening mid-exit keeps (or restores) the mount.
     expect(query()).not.toBeNull();
     expect(query()).toHaveAttribute('data-state', 'open');

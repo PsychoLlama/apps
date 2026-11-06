@@ -10,6 +10,7 @@ import path from 'node:path';
 /** Author metadata as `@iconify/json` exposes it. */
 export interface PackAuthor {
   name: string;
+
   /** Optional homepage / source URL. */
   url?: string;
 }
@@ -23,8 +24,10 @@ export interface PackAuthor {
 export interface PackLicense {
   /** Human-readable label, e.g. `"MIT"` or `"CC BY 4.0"`. */
   title?: string;
+
   /** SPDX identifier, e.g. `"MIT"` or `"CC-BY-4.0"`. */
   spdx?: string;
+
   /** Link to the upstream license file or canonical URL. */
   url?: string;
 }
@@ -35,6 +38,7 @@ export interface CollectionsJson {
     total?: number;
     height?: number;
     samples?: string[];
+
     /** Iconify's bucket — drives in-app pack ordering. */
     category?: string;
     author?: PackAuthor;

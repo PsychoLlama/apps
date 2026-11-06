@@ -2,10 +2,12 @@ import type { KnipConfig } from 'knip';
 
 const config: KnipConfig = {
   ignoreExportsUsedInFile: true,
+
   // chromium-lock is provided by the nix devShell (a flake wrapper around
   // s6-setlock), not pnpm. The per-package `test:browser` scripts wrap vitest
   // in it to serialize Chromium.
   ignoreBinaries: ['chromium-lock'],
+
   // Each package runs its own suites from `vitest.{unit,browser}.config.ts`
   // (re-exporting the `@dev/vitest-config` presets). Packages don't list
   // `vitest` themselves (its binary comes from the root), so the plugin
@@ -22,12 +24,14 @@ const config: KnipConfig = {
     '.': {
       entry: ['*.ts'],
       project: ['*.ts'],
+
       // treefmt is provided by the nix devShell, not pnpm, but the
       // root `fmt`/`fmt-check` scripts shell out to it.
       ignoreBinaries: ['treefmt'],
       ignoreDependencies: [
         'prettier', // invoked by treefmt
         '@vanilla-extract/css', // referenced by name in eslint.config.ts
+
         // Hoisted here so web packages resolve the icon data
         // `unplugin-icons` pulls in at runtime; not imported by name at
         // the root itself.
@@ -50,6 +54,7 @@ const config: KnipConfig = {
         'src/**/*.css.ts!',
         'vite.config.ts',
       ],
+
       // Project files need the production marker too: without it,
       // non-entry modules reached from production entries (e.g.
       // `branding/`) are skipped by `--production`, and the
@@ -57,6 +62,7 @@ const config: KnipConfig = {
       project: ['src/**/*.{ts,tsx}!'],
       ignoreDependencies: [
         '@iconify/json', // used implicitly by unplugin-icons
+
         // Listed directly so Vite's dep scanner picks it up at
         // startup; without it, the transitive import (via
         // `@vanilla-extract/css` from `@lib/ui`) is discovered
@@ -64,6 +70,7 @@ const config: KnipConfig = {
         // requests.
         '@vanilla-extract/dynamic',
       ],
+
       // `@solidjs/start` reads app.tsx from cwd, which points at the
       // workspace root when knip runs holistically. Skip knip's vite
       // auto-discovery; the entry list above is the source of truth.
@@ -80,11 +87,14 @@ const config: KnipConfig = {
         'src/**/*.css.ts!',
         'vite.config.ts',
       ],
+
       // Shared fixtures beside the tests, as in `@lib/effects`.
       project: ['src/**/*.{ts,tsx}!', '!src/**/__tests__/**!'],
+
       // Listed directly as a hint for Vite's dep scanner, which misses
       // the transitive import from generated `.css.ts` modules.
       ignoreDependencies: ['@vanilla-extract/dynamic'],
+
       // `@solidjs/start` reads app.tsx from cwd, which points at the
       // workspace root when knip runs holistically.
       vite: false,
@@ -95,6 +105,7 @@ const config: KnipConfig = {
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
+
         // Its own bundle, built and registered separately from the app.
         'src/service-worker/index.ts!',
         'src/**/*.css.ts!',
@@ -110,9 +121,11 @@ const config: KnipConfig = {
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
+
         // Imported as `./worker/index?worker`; the query suffix hides the
         // specifier from knip's resolver.
         'src/worker/index.ts!',
+
         // Its own bundle, built and registered separately from the app.
         'src/service-worker/index.ts!',
         'src/**/*.css.ts!',
@@ -129,14 +142,17 @@ const config: KnipConfig = {
         'src/routes/**/*.tsx!',
         'src/app.tsx!',
         'src/entry-{client,server}.tsx!',
+
         // Imported as `../worker/index?worker`; the query suffix hides
         // the specifier from knip's resolver.
         'src/worker/index.ts!',
+
         // Its own bundle, built and registered separately from the app.
         'src/service-worker/index.ts!',
         'src/**/*.css.ts!',
         'vite.config.ts',
       ],
+
       // Shared fixtures beside the tests, as in `@lib/effects`.
       project: ['src/**/*.{ts,tsx}!', '!src/**/__tests__/**!'],
       ignoreDependencies: ['@vanilla-extract/dynamic'],

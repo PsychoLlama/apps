@@ -32,6 +32,7 @@ export const constant = style({
 /** Exit via transition instead of animation. */
 export const transitioned = style({
   opacity: 1,
+
   // Raw, fast fixture motion by design; see the module doc.
   // eslint-disable-next-line custom/require-design-tokens
   transition: 'opacity 100ms linear',

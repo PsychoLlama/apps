@@ -7,6 +7,7 @@ export default mergeConfig(
     test: {
       coverage: {
         include: ['src/**/*.{ts,tsx}'],
+
         // Shared fixtures live beside the tests they serve.
         exclude: ['src/**/__tests__/**'],
         thresholds: {

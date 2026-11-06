@@ -55,14 +55,19 @@ export interface TabNavRootProps
    * tech can disambiguate this nav from any other on the page.
    */
   'aria-label': string;
+
   /** Visual size on a 1–2 scale. @default 2 */
   size?: TabNavSize;
+
   /** Indicator and active-text color. @default 'accent' */
   color?: TabNavColor;
+
   /** Use the strongest color step for the active indicator. @default false */
   highContrast?: boolean;
+
   /** Link alignment along the row. @default 'start' */
   justify?: TabNavJustify;
+
   /** Flex-wrap behavior. @default 'nowrap' */
   wrap?: TabNavWrap;
 }
@@ -131,6 +136,7 @@ export interface TabNavLinkProps
    * Compute from your router (e.g. `useMatch(href)`).
    */
   active: boolean;
+
   /** Destination URL. */
   href: string;
 }

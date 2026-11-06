@@ -58,8 +58,10 @@ export interface BlockquoteProps
     JSX.HTMLAttributes<HTMLQuoteElement> {
   /** Visual size on a 1–9 scale. Inherits from the parent when omitted. */
   size?: TypeScale;
+
   /** Font weight. */
   weight?: FontWeight;
+
   /** Semantic color for the leading rail. @default 'accent' */
   color?: Color;
 }

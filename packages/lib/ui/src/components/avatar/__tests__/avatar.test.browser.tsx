@@ -53,6 +53,7 @@ describe('Avatar', () => {
     });
     const root = screen.getByTestId('av');
     expect(root.querySelector('img')).toHaveAttribute('alt', '');
+
     // No fallback span once the image is in.
     expect(root.querySelector('span[aria-hidden="true"]')).toBeNull();
   });
@@ -82,6 +83,7 @@ describe('Avatar', () => {
         delayMs={150}
       />
     ));
+
     // Synchronous check: fallback is not in the tree yet.
     expect(screen.getByTestId('av').querySelector('span')).toBeNull();
 
@@ -97,6 +99,7 @@ describe('Avatar', () => {
     render(() => (
       <Avatar testId="av" alt="Jane Doe" fallback="JD" delayMs={5000} />
     ));
+
     // No image to wait on — fallback should be visible immediately.
     expect(screen.getByTestId('av')).toHaveTextContent('JD');
   });

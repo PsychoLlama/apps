@@ -91,19 +91,25 @@ export interface DialogProps
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'title' | 'style' | 'role'> {
   /** Whether the dialog is showing. */
   open: boolean;
+
   /**
    * Fires when the user asks to close — Escape, or a click outside the
    * panel. Only ever called with `false`; opening is the call site's.
    */
   onOpenChange: (open: boolean) => void;
+
   /** Heading at the top of the panel. Also the dialog's accessible name. */
   title: JSX.Element;
+
   /** Supporting copy under the title. Describes the dialog to assistive tech. */
   description?: JSX.Element;
+
   /** Panel padding and rounding on a 1–4 scale. @default 3 */
   size?: DialogSize;
+
   /** Where the panel sits when it's shorter than the viewport. @default 'center' */
   align?: DialogAlign;
+
   /**
    * Which gestures ask the dialog to close. `'any'` is Escape and a
    * click outside the panel, `'escape'` leaves an outside click inert,
@@ -111,6 +117,7 @@ export interface DialogProps
    * choice. @default 'any'
    */
   dismissal?: DialogDismissal;
+
   /**
    * ARIA role. `'alertdialog'` marks the dialog an interruption
    * awaiting a decision, which assistive tech announces more
@@ -119,10 +126,13 @@ export interface DialogProps
    * announcement. @default the element's implicit `dialog`
    */
   role?: 'alertdialog';
+
   /** Any CSS width for the panel. @default '600px' */
   maxWidth?: string;
+
   /** `class` lands on the panel — the visible surface, not the overlay. */
   class?: string;
+
   /** Body content, rendered under the title and description. */
   children?: JSX.Element;
 }

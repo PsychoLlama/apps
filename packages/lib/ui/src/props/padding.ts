@@ -4,8 +4,10 @@ import * as css from './padding.css';
 export interface PaddingProps {
   /** Uniform padding on all sides. */
   p?: SpaceScale;
+
   /** Horizontal (inline) padding. */
   px?: SpaceScale;
+
   /** Vertical (block) padding. */
   py?: SpaceScale;
 }

@@ -43,6 +43,7 @@ describe('updateConfig', () => {
     expect(await readEnvironment(option, 'production')).toEqual({
       enabled: true,
     });
+
     // An environment with no override still falls back to its default.
     expect(await readEnvironment(option, 'development')).toEqual({
       enabled: true,
@@ -72,6 +73,7 @@ describe('updateConfig', () => {
     const option = flag('update-to-default');
 
     await updateConfig(option, { production: { enabled: true } });
+
     // Patch production back to its default value — the override now remembers
     // nothing, so the file should be removed rather than rewritten.
     await updateConfig(option, { production: { enabled: false } });

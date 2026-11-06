@@ -49,6 +49,7 @@ export type ContainerTag =
 interface ContainerOwnProps {
   /** Max-width preset for the inner column. @default 4 */
   size?: ContainerSize;
+
   /** Horizontal alignment of the inner column within the container. @default 'center' */
   align?: ContainerAlign;
 }

@@ -11,6 +11,7 @@ const uniqueChannel = () => `broadcast-channel-test-${channels++}`;
 describe('BroadcastChannelTransport', () => {
   it('delivers a posted message to a subscriber on the same channel', async () => {
     const channel = uniqueChannel();
+
     // A publisher and subscriber each hold their own transport, since a channel
     // never delivers to the instance that posted — one shared transport would
     // never hear itself.

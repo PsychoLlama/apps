@@ -37,28 +37,39 @@ export interface FloatingControlsState {
    * `inline` to a word in a paragraph.
    */
   display: FloatingRootDisplay;
+
   /** Anchor edge the window binds to. */
   side: FloatingSide;
+
   /** Placement along that edge. */
   align: FloatingAlignment;
+
   /** Whether the pointer arrow renders at all. */
   arrowVisible: boolean;
+
   /** Length of the arrow's base edge, in px. */
   arrowBase: number;
+
   /** Depth the arrow protrudes toward the anchor, in px. */
   arrowDepth: number;
+
   /** Border radius of the surface. */
   radius: RadiusScale;
+
   /** Gap between the anchor edge (or point) and the window, in px. */
   sideOffset: number;
+
   /** Nudge along the bound edge, in px. */
   alignOffset: number;
+
   /**
    * Anchor-relative point the window binds to. `null` keeps edge mode.
    */
   point: FloatingPoint | null;
+
   /** Which middleware the tether runs. */
   middleware: Record<TetherMiddleware, boolean>;
+
   /** Where `flip` may take the window. */
   flipMode: FlipMode;
 }

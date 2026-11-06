@@ -36,6 +36,7 @@ export type CameraErrorKind =
 export interface TorchState {
   /** Whether the active camera exposes a controllable torch. */
   supported: boolean;
+
   /** Whether the torch is currently lit. */
   on: boolean;
 }
@@ -44,10 +45,13 @@ export interface TorchState {
 export interface CameraState {
   /** Where the session sits in its lifecycle. */
   status: ReaderStatus;
+
   /** Failure reason while `status === 'error'`, else `null`. */
   error: CameraErrorKind | null;
+
   /** Torch availability and state for the live stream. */
   torch: TorchState;
+
   /**
    * The most recently recognized code, or `null` before the first hit.
    * Set once per session — the capture loop stops after recording.

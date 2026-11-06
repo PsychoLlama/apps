@@ -44,10 +44,13 @@ import * as css from './heading.css';
 interface HeadingOwnProps {
   /** Visual size on a 1–9 scale, independent of the heading level. @default 6 */
   size?: TypeScale;
+
   /** Font weight. @default 'bold' */
   weight?: FontWeight;
+
   /** Text alignment. */
   align?: 'left' | 'center' | 'right';
+
   /** Text color emphasis. High contrast for primary content, low for secondary. */
   color?: TextColor;
 }

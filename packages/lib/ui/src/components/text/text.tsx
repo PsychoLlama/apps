@@ -48,10 +48,13 @@ interface TextOwnProps {
    * `<Text as="span">` inside a sized parent.
    */
   size?: TypeScale;
+
   /** Font weight. */
   weight?: FontWeight;
+
   /** Text alignment. */
   align?: 'left' | 'center' | 'right';
+
   /** Text color emphasis. High contrast for primary content, low for secondary. */
   color?: TextColor;
 }

@@ -85,6 +85,7 @@ export const padOff = style({ padding: 'unset' });
 // `padding-box` flattens the per-side rounding above.
 export const clip = styleVariants({
   'border-box': {},
+
   // eslint-disable-next-line custom/require-design-tokens -- flattens the per-corner radii from `side` via the shorthand; intentional zero, no matching token.
   'padding-box': { borderRadius: 0 },
 });

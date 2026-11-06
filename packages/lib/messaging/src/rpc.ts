@@ -334,6 +334,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
     handlers: RpcHandlers<Local, Options>,
   ) {
     this.#transport = transport;
+
     // The public boundary (`RpcHandlers<Local>`) carries the precise per-method
     // types; internally the dispatcher treats every handler uniformly and casts
     // params/results at the call site, so a loose record is enough here. Either
@@ -527,6 +528,7 @@ export class RPC<Local extends RpcApi, Remote extends RpcApi, Options = never> {
 
   async #handleEvent(message: RpcMessage & { type: 'event' }): Promise<void> {
     const handler = findHandler(this.#eventHandlers, message.method);
+
     // Fire-and-forget has no response to report back on, so an unknown event
     // is simply ignored.
     if (!handler) return;

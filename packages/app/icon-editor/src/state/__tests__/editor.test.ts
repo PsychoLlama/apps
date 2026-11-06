@@ -50,6 +50,7 @@ describe('$iconPicked', () => {
     iconPicked(sampleIcon);
 
     expect(editor.icon).toEqual(sampleIcon);
+
     // Zeroed, so the URL mirror sees a settled icon without waiting.
     expect(load).toEqual({ pending: 0, requestId: 2 });
   });

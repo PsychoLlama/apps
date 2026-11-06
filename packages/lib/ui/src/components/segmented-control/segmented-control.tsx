@@ -82,28 +82,35 @@ export interface SegmentedControlRootProps
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange' | 'role'> {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: SegmentedControlSize;
+
   /** Visual treatment of the selected-segment indicator. @default 'surface' */
   variant?: SegmentedControlVariant;
+
   /** Track rounding. Omit to inherit the rounding implied by `size`. */
   radius?: SegmentedControlRadius;
+
   /**
    * Form-submit name applied to every item. Also groups the inputs
    * for native arrow-key navigation in the browser.
    */
   name: string;
+
   /** Disable every segment in the group. @default false */
   disabled?: boolean;
+
   /**
    * Mark the group as required for assistive technology. Surfaces as
    * `aria-required="true"` on the radiogroup and as the native
    * `required` attribute on every item. @default false
    */
   required?: boolean;
+
   /**
    * Currently selected value. Pass `null` to render the track with no
    * segment selected and the indicator hidden.
    */
   value: string | null;
+
   /** Fires when the user selects a different segment. */
   onValueChange: (value: string) => void;
 }
@@ -138,6 +145,7 @@ export const SegmentedControlRoot: ParentComponent<
     'class',
     'children',
   ]);
+
   // `useSkeleton` returns the visual class plus a `mergeProps` proxy
   // that adds `inert` / `aria-hidden` / `tabindex={-1}` while skeleton
   // is on. `inert` propagates through the subtree, so the hidden radio
@@ -223,8 +231,10 @@ export interface SegmentedControlItemProps
     > {
   /** Value submitted when this segment is selected, and matched against the group's `value`. */
   value: string;
+
   /** Disable just this segment. Combines with the group's `disabled`. */
   disabled?: boolean;
+
   /**
    * Override the group's `required` for this segment. When omitted,
    * the segment inherits the group's value. Pass `false` to opt this
@@ -232,13 +242,16 @@ export interface SegmentedControlItemProps
    * of the group required.
    */
   required?: boolean;
+
   /**
    * `class` lands on the wrapping `<label>` (the visible segment), not
    * the hidden input.
    */
   class?: string;
+
   /** Inline style applied to the wrapping `<label>`. */
   style?: JSX.CSSProperties | string;
+
   /** Segment content. Rendered inside the wrapping `<label>`. */
   children?: JSX.Element;
 }
@@ -285,6 +298,7 @@ export const SegmentedControlItem: ParentComponent<
   ) => {
     if (typeof local.onKeyDown === 'function') local.onKeyDown(event);
     if (event.defaultPrevented) return;
+
     // Match RadioGroup: WAI-ARIA radio activation uses Space, not
     // Enter. Suppress Enter so a focused segment doesn't accidentally
     // submit a wrapping form mid-selection.

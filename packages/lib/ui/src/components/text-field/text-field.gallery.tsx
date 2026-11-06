@@ -68,6 +68,7 @@ export default {
           title: 'Right',
           props: {
             left: undefined,
+
             // Getter, not an eager `<ClearButton />`: the listing object is
             // built at module load, outside any reactive root. Deferring
             // creation until the prop is read lets it happen inside

@@ -29,6 +29,7 @@ const rpc = RPC.from<DecoderApi, HostApi, SendOptions>(transport, api);
 void init()
   .then(() => {
     logger.debug('Decoder wasm initialized.');
+
     // `notify` is fallible now, so the announce gets its own catch rather than
     // riding on init's. A lost `ready` leaves the host waiting forever with no
     // frame ever sent, so it's worth a distinct log from an init failure.

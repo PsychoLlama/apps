@@ -15,6 +15,7 @@ const ERROR_MESSAGES: Record<CameraErrorKind, string> = {
 interface ReaderErrorProps {
   /** The failure mode that determines the displayed copy. */
   kind: CameraErrorKind;
+
   /** Retries the camera request. */
   onRetry: () => void;
 }

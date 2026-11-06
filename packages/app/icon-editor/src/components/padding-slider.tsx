@@ -5,8 +5,10 @@ import * as css from './padding-slider.css';
 interface PaddingSliderProps {
   /** Padding value (`0`–`max`) controlling icon-to-canvas breathing room. */
   value: number;
+
   /** Called whenever the user adjusts the slider. */
   onInput: (value: number) => void;
+
   /** Maximum padding percent. @default 40 */
   max?: number;
 }

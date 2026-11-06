@@ -70,10 +70,13 @@ export interface TableRootProps
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children'> {
   /** Visual size. @default 2 */
   size?: TableSize;
+
   /** Visual treatment. @default 'ghost' */
   variant?: TableVariant;
+
   /** Table layout algorithm. */
   layout?: TableLayout;
+
   /** Table content (`<thead>` / `<tbody>` sections). */
   children?: JSX.Element;
 }

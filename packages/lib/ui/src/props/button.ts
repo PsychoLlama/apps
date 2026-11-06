@@ -9,10 +9,13 @@ export type ButtonRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
 export interface ButtonStyleProps {
   /** Visual size on a 1-4 scale. @default 2 */
   size?: ButtonSize;
+
   /** Visual treatment. @default 'solid' */
   variant?: ButtonVariant;
+
   /** Semantic color. @default 'accent' */
   color?: ButtonColor;
+
   /** Corner radius override. Defaults to a size-based radius. */
   radius?: ButtonRadius;
 }

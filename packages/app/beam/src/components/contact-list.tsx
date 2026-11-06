@@ -97,6 +97,7 @@ const ContactRow = (props: { contact: ContactView; active: boolean }) => {
 export const ContactList = (props: {
   contacts: ContactView[];
   testId: string;
+
   /** Peers reachable right now, by endpoint id. */
   active?: Record<string, true>;
 }) => (

@@ -38,16 +38,20 @@ export interface BadgeProps
     JSX.HTMLAttributes<HTMLSpanElement> {
   /** Visual size on a 1–3 scale. @default 1 */
   size?: Size;
+
   /** Visual treatment. @default 'soft' */
   variant?: Variant;
+
   /** Semantic color. @default 'accent' */
   color?: Color;
+
   /**
    * Corner rounding. When unset, sizes pick a sensible default
    * (size-1 → 3px, sizes 2–3 → 4px) — mirroring Radix's Badge under
    * its default `Theme.radius='medium'`. Pass `'full'` for pill-shaped.
    */
   radius?: Radius;
+
   /** High-contrast text for stronger emphasis. @default false */
   highContrast?: boolean;
 }

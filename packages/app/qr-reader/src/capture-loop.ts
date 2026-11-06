@@ -34,6 +34,7 @@ export const createFrameSampler = (
         decoder,
         await createImageBitmap(video),
       );
+
       // A decode outruns its loop: teardown (unmount, cancel, or the hit
       // that halts sampling) can't recall a worker round-trip already in
       // flight, so a verdict can land after the session it belonged to is
@@ -75,6 +76,7 @@ export const startCaptureLoop = (
   onResult: (result: ScanResult) => void,
 ): (() => void) => {
   const controller = new AbortController();
+
   // Stopping both detaches the frame callback (no new samples) and aborts
   // the signal (in-flight verdicts are dropped). Idempotent: the hit that
   // halts the loop and the cleanup on unmount can both fire it.

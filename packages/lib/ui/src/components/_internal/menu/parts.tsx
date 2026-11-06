@@ -162,6 +162,7 @@ const ItemImpl = (props: ItemImplProps) => {
 
         if (event.key === 'Enter' || event.key === ' ') {
           (event.currentTarget as HTMLElement).click();
+
           // Selection only: no page scroll, and no keydown landing on
           // whatever takes focus next.
           event.preventDefault();

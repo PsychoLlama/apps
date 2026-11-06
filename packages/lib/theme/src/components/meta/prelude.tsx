@@ -15,8 +15,10 @@ import prelude from '../../prelude.ts?inline-script';
 export const Prelude = () => {
   useHead({
     tag: 'script',
+
     // Compiled at build time from our own source — not untrusted input.
     props: { children: prelude },
+
     // Escaping would mangle the source.
     setting: { close: true, escape: false },
     id: createUniqueId(),

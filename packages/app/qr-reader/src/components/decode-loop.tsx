@@ -7,6 +7,7 @@ import type { ScanResult } from '../worker/rpc';
 interface DecodeLoopProps {
   /** The playing feed to sample frames from. */
   video: HTMLVideoElement;
+
   /** Invoked once, with the first code recognized. */
   onHit: (result: ScanResult) => void;
 }

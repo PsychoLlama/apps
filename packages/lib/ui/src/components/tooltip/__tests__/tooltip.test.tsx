@@ -106,6 +106,7 @@ describe('Tooltip', () => {
 
     expect(tooltip()).toHaveTextContent('⌘K');
     expect(tooltip()).toHaveAccessibleName('Command palette');
+
     // Chrome carries the label through to the trigger's description.
     // jsdom's accname reads the spec's "if computing a name" literally
     // and gives the text instead, so that end isn't asserted here.
@@ -204,6 +205,7 @@ describe('Tooltip', () => {
     });
 
     expect(surface()).toHaveClass('custom');
+
     // The width rides in as the stylesheet's var; `var(--x)` → `--x`.
     expect(root()).toHaveStyle(`${css.maxWidth.slice(4, -1)}: 200px`);
   });

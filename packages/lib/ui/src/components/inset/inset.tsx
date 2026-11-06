@@ -35,8 +35,10 @@ type InsetClip = 'border-box' | 'padding-box';
 interface InsetOwnProps {
   /** Which sides to break out of. @default 'all' */
   side?: InsetSide;
+
   /** Overflow clipping region. @default 'border-box' */
   clip?: InsetClip;
+
   /**
    * Reserve the parent card's padding on the sides that aren't bled,
    * so following content keeps its rhythm. Set false for media that

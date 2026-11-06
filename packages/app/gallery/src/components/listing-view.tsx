@@ -20,6 +20,7 @@ const NoVariant = (props: { listing: Listing }) => (
  */
 export const ListingView = (props: {
   listing: Listing;
+
   /** Title heading level. `h3` when nested under a group heading. */
   level?: 'h2' | 'h3';
 }) => {

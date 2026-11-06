@@ -31,10 +31,13 @@ import * as css from './text-field.css';
 
 /** Visual size on a 1–3 scale. */
 export type TextFieldSize = 1 | 2 | 3;
+
 /** Visual treatment. */
 export type TextFieldVariant = 'classic' | 'surface' | 'soft';
+
 /** Corner rounding. */
 export type TextFieldRadius = 'none' | 'small' | 'medium' | 'large' | 'full';
+
 /**
  * `<input>` types TextField accepts. Excludes button-like types
  * (`submit`, `button`, `reset`, `image`) and non-text controls
@@ -85,16 +88,22 @@ export interface TextFieldProps
     > {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: TextFieldSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: TextFieldVariant;
+
   /** Corner rounding. @default 'medium' */
   radius?: TextFieldRadius;
+
   /** `<input>` type. Narrowed to text-input types. @default 'text' */
   type?: TextFieldType;
+
   /** Content rendered before the input — typically an icon or prefix. */
   left?: JSX.Element;
+
   /** Content rendered after the input — typically an icon or action button. */
   right?: JSX.Element;
+
   /**
    * Fires for pointerdown on the field's entire visual surface
    * (wrapper, slot padding, input). Call `preventDefault()` to skip

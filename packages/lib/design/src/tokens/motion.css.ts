@@ -113,6 +113,7 @@ export const slow: DurationScale = durationTheme.slow;
 export const standard: EasingCurve = {
   /** Efficient, stays out of the way. Most day-to-day interactions. */
   productive: 'cubic-bezier(0.2, 0, 0.38, 0.9)',
+
   /** Slightly dramatic. Brand moments, primary action emphasis. */
   expressive: 'cubic-bezier(0.4, 0.14, 0.3, 1)',
 } as const;
@@ -125,6 +126,7 @@ export const standard: EasingCurve = {
 export const entrance: EasingCurve = {
   /** Quick, functional entrance. Tooltips, dropdowns, popovers. */
   productive: 'cubic-bezier(0, 0, 0.38, 0.9)',
+
   /** Expressive entrance. Dialogs, drawers, page transitions. */
   expressive: 'cubic-bezier(0, 0, 0.3, 1)',
 } as const;
@@ -138,6 +140,7 @@ export const entrance: EasingCurve = {
 export const exit: EasingCurve = {
   /** Quick, functional exit. Tooltip dismiss, dropdown close. */
   productive: 'cubic-bezier(0.2, 0, 1, 0.9)',
+
   /** Expressive exit. Dialog close, drawer dismiss. */
   expressive: 'cubic-bezier(0.4, 0.14, 1, 1)',
 } as const;

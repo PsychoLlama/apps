@@ -11,8 +11,10 @@ const MANIFEST_NAME = 'manifest.webmanifest';
 interface IconConfig {
   /** Absolute path to the source SVG. */
   src: string;
+
   /** Square pixel sizes to rasterize. */
   sizes: number[];
+
   /**
    * Optional companion SVG designed for Android adaptive-icon
    * masking. Rasterized into the same sizes as `src` and emitted as
@@ -28,6 +30,7 @@ interface IconConfig {
 
 export interface PwaManifestConfig {
   icon: IconConfig;
+
   /**
    * Manifest fields. `icons` is synthesized from `icon.sizes` and
    * merged in last, so it can't be overridden here.
@@ -38,8 +41,10 @@ export interface PwaManifestConfig {
 interface Variant {
   /** Manifest `purpose` value. Omitted from output for `'any'`. */
   purpose: 'any' | 'maskable';
+
   /** Absolute path to the source SVG. */
   src: string;
+
   /** Stem used for dev paths and emitted asset names. */
   stem: string;
 }
@@ -88,6 +93,7 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
         src: iconUrl(variant, size),
         sizes: `${size}x${size}`,
         type: 'image/png',
+
         // Omit `purpose` on the default variant — the spec treats
         // its absence as `"any"`, so adding it just bloats the JSON.
         ...(variant.purpose === 'maskable' && { purpose: 'maskable' }),
@@ -144,6 +150,7 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
 
     handleHotUpdate(ctx) {
       if (!variants.some((variant) => variant.src === ctx.file)) return;
+
       // The manifest + icons are referenced from prerendered HTML.
       // A full reload re-pulls them so SVG edits become visible.
       ctx.server.ws.send({ type: 'full-reload' });
@@ -176,6 +183,7 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
           const png = await rasterizeSvg(svg, size);
           const refId = this.emitFile({
             type: 'asset',
+
             // `name` hashes the icon via `assetFileNames`; it stays
             // immutable and the manifest re-references its hashed path.
             name: `${variant.stem}-${size}.png`,
@@ -187,6 +195,7 @@ export const pwaManifest = (config: PwaManifestConfig): Plugin => {
 
       this.emitFile({
         type: 'asset',
+
         // `fileName` writes the manifest verbatim at the root — see
         // `manifestPath`.
         fileName: MANIFEST_NAME,

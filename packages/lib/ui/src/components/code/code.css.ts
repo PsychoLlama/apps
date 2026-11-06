@@ -50,18 +50,22 @@ const chromeAdjust = `calc(${fontSizeAdjust.code} * 0.95)`;
 /* eslint-disable custom/require-design-tokens */
 export const base = style({
   fontFamily: fontFamily.code,
+
   // No `font-weight` default — let Code inherit weight from the
   // surrounding text so `<Code>` inside `<Strong>` reads bold without
   // an explicit `weight` prop. Mirrors upstream `--code-font-weight: inherit`.
   vars: { [variantAdjust]: chromeAdjust },
+
   // Default size: scale `1em` (inherited from parent text) by the
   // variant adjust. Per-size variants override below with a literal
   // typeScale font-size pre-multiplied by the same adjust.
   fontSize: `calc(${variantAdjust} * 1em)`,
+
   // `line-height` reads the sized-ancestor's metric (set by Text/Heading)
   // and falls back to a tight 1.25 when no Text wraps it. Per-size
   // variants below override the var locally.
   lineHeight: fallbackVar(lineHeight, '1.25'),
+
   // Compose a monospace tightening with the surrounding tracking so a
   // `<Code>` inside `<Text size={7}>` lands at
   // `letterSpacingOffset.code + typeScale[7].letterSpacing`. Mirrors
@@ -79,6 +83,7 @@ export const base = style({
     '& :where(&)': { fontSize: 'inherit' },
   },
 });
+
 /* eslint-enable custom/require-design-tokens */
 
 const steps = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
@@ -143,8 +148,10 @@ const outlineStyle = (color: ColorName) =>
 const ghostStyle = (color: ColorName) =>
   style({
     vars: { [variantAdjust]: fontSizeAdjust.code },
+
     // eslint-disable-next-line custom/require-design-tokens -- explicit reset of base padding for the ghost variant
     paddingBlock: 0,
+
     // eslint-disable-next-line custom/require-design-tokens -- explicit reset of base padding for the ghost variant
     paddingInline: 0,
     color: palettes[color].alpha[11],

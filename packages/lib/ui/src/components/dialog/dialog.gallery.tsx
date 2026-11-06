@@ -107,6 +107,7 @@ type DemoBody = 'confirm' | 'form' | 'table' | 'terms';
 type DemoProps = Partial<DialogProps> & {
   /** Seeds the demo's test ids. Each cell needs its own. */
   name: string;
+
   /** Which body to render. @default 'confirm' */
   body?: DemoBody;
 };

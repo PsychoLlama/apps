@@ -155,8 +155,10 @@ describe('Tabs', () => {
 
       overview.focus();
       await userEvent.keyboard('{ArrowRight}');
+
       // Focus moved...
       expect(settings).toHaveFocus();
+
       // ...but Overview's panel is still the active one.
       expect(screen.getByTestId('tabs-content-overview')).toBeVisible();
 

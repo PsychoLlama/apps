@@ -26,6 +26,7 @@ import * as css from './error-boundary.css';
 export interface ErrorBoundaryFallbackProps {
   /** The error caught by the boundary. */
   error: unknown;
+
   /** Clear the boundary and re-render children. */
   reset?: () => void;
 }

@@ -37,14 +37,19 @@ interface PackCardProps {
    * the properties panel holds this slot open until it lands.
    */
   pack: IconPackSummary | undefined;
+
   /** Highlights the card as the current selection (pack list). */
   active?: boolean;
+
   /** Accessible label — defaults to the pack name. */
   'aria-label'?: string;
+
   /** Forwarded test id. */
   testId?: string;
+
   /** Capture the underlying button (the pack list focuses the active one). */
   ref?: (el: HTMLButtonElement) => void;
+
   /** Activate the card. */
   onClick: () => void;
 }

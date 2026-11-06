@@ -84,12 +84,14 @@ export interface RenderOptions {
    * independent. @default 512
    */
   size?: number;
+
   /**
    * When true, the SVG fills its container via `width="100%" height="100%"`
    * — used for live preview tiles. When false, the SVG carries explicit
    * pixel dimensions so the browser can rasterize it for PNG export.
    */
   responsive?: boolean;
+
   /**
    * Suffix for the SVG-internal `clipPath` id. Inline SVGs share the
    * host document's id namespace, so multiple previews on the same page
@@ -97,6 +99,7 @@ export interface RenderOptions {
    * resolving to a sibling preview's clip. @default 'icon'
    */
   idSuffix?: string;
+
   /**
    * Embed an attribution `<metadata>` block (Dublin Core / Creative
    * Commons RDF) crediting the icon's pack, author, and license.
@@ -123,6 +126,7 @@ const computeFrame = (
   opts: RenderOptions,
 ): CanvasFrame => {
   const size = opts.size ?? 512;
+
   // `findPalette` only ever returns `undefined` for an unknown name —
   // store mutations are guarded by validation, but the `palette` field
   // is typed as a union from a curated set, so the lookup is total at
@@ -168,6 +172,7 @@ export const renderIconSvg = (
   opts: RenderOptions = {},
 ): string => {
   const frame = computeFrame(state, opts);
+
   // `color-scheme: light` pins the SVG's rendering context so the icon
   // looks identical regardless of the host page's color scheme. The
   // fills are already literal hex, but the property forecloses any
@@ -210,11 +215,13 @@ const renderBlueprint = (frame: CanvasFrame): string => {
   const cx = frame.size / 2;
   const cy = frame.size / 2;
   const arm = frame.inner * 0.16;
+
   // Inset by half the stroke so the dashed outline lands inside the
   // padded inner box rather than straddling its edge.
   const insetX = frame.pad + stroke / 2;
   const insetY = frame.pad + stroke / 2;
   const insetSize = frame.inner - stroke;
+
   // Shrink the corner radius proportionally so the dashed rect reads as
   // an inset of the outer shape rather than a contrasting silhouette.
   const innerRx = Math.max(0, frame.rx - frame.pad);

@@ -39,6 +39,7 @@ export const success = createPaletteContract();
 export const text = createThemeContract({
   /** Low-contrast text (neutral step 11). */
   lowContrast: null,
+
   /** High-contrast text (neutral step 12). */
   highContrast: null,
 });
@@ -48,12 +49,16 @@ export type TextColor = keyof typeof text;
 export const background = createThemeContract({
   /** App canvas. The lowest layer, applied to the page body. */
   page: null,
+
   /** Opaque elevated containers: cards, dialogs, popovers, sidebars. */
   panelSolid: null,
+
   /** Semi-transparent elevated containers. Pair with `backdrop-filter: blur(64px)` for frosted glass. */
   panelTranslucent: null,
+
   /** Recessed interactive surfaces: text inputs, selects, unchecked checkboxes/radios. */
   surface: null,
+
   /** Modal scrim behind dialogs and drawers. */
   overlay: null,
 });

@@ -66,10 +66,13 @@ import * as css from './checkbox-cards.css';
 
 /** Visual size on a 1–3 scale. */
 export type CheckboxCardsSize = CardsSize;
+
 /** Visual treatment. */
 export type CheckboxCardsVariant = CardsVariant;
+
 /** Semantic color palette for the card focus outline and checkbox indicator. */
 export type CheckboxCardsColor = CardsColor;
+
 /** Fixed column count — overrides the auto-fit default. */
 export type CheckboxCardsColumns = CardsColumns;
 
@@ -86,28 +89,35 @@ export interface CheckboxCardsRootProps
     Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange' | 'role'> {
   /** Visual size on a 1–3 scale. @default 2 */
   size?: CheckboxCardsSize;
+
   /** Visual treatment. @default 'surface' */
   variant?: CheckboxCardsVariant;
+
   /**
    * Semantic palette for the card focus outline and the inner
    * checkbox indicator. @default 'accent'
    */
   color?: CheckboxCardsColor;
+
   /**
    * Fixed column count. When omitted, the grid auto-fits items into
    * `minmax(160px, 1fr)` tracks for a responsive default.
    */
   columns?: CheckboxCardsColumns;
+
   /** Spacing between cards. @default 4 */
   gap?: SpaceScale;
+
   /**
    * Form-submit name applied to every item. The browser submits one
    * entry per checked item under this name, retrievable as
    * `FormData.getAll(name)`.
    */
   name: string;
+
   /** Disable every item in the group. @default false */
   disabled?: boolean;
+
   /**
    * Mark every item as required for HTML5 form validation. Native
    * checkbox `required` validation expects that specific input to be
@@ -116,8 +126,10 @@ export interface CheckboxCardsRootProps
    * @default false
    */
   required?: boolean;
+
   /** Currently checked values. Pass `[]` for an empty selection. */
   value: readonly string[];
+
   /** Fires when the user toggles any card. */
   onValueChange: (value: string[]) => void;
 }
@@ -156,6 +168,7 @@ export const CheckboxCardsRoot: ParentComponent<CheckboxCardsRootProps> = (
     'class',
     'children',
   ]);
+
   // `useSkeleton` returns the visual class plus a `mergeProps` proxy
   // that adds `inert` / `aria-hidden` / `tabindex={-1}` while skeleton
   // is on. `inert` propagates through the subtree, so the inner
@@ -217,21 +230,26 @@ export const CheckboxCardsRoot: ParentComponent<CheckboxCardsRootProps> = (
 export interface CheckboxCardsItemProps extends RequiredTestIdProps {
   /** Value added to the group's `value` array when the card is checked. */
   value: string;
+
   /** Disable just this card. Combines with the group's `disabled`. */
   disabled?: boolean;
+
   /**
    * Override the group's `required` for this card. When omitted, the
    * card inherits the group's value. Pass `false` to opt this card
    * out of HTML5 form validation while leaving the rest required.
    */
   required?: boolean;
+
   /**
    * `class` lands on the wrapping `<label>` (the visible card), not
    * the inner checkbox.
    */
   class?: string;
+
   /** Inline style applied to the wrapping `<label>` (the visible card). */
   style?: JSX.CSSProperties | string;
+
   /** Card content. Rendered to the left of the inner checkbox. */
   children?: JSX.Element;
 }

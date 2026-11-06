@@ -15,10 +15,13 @@
 export interface IconEntry {
   /** Icon name within its pack (kebab-case). */
   name: string;
+
   /** Inner SVG markup. Always rendered against the pack's viewBox. */
   body: string;
+
   /** Per-icon viewBox width override. */
   width?: number;
+
   /** Per-icon viewBox height override. */
   height?: number;
 }
@@ -33,16 +36,22 @@ export interface IconEntry {
 export interface IconRef {
   /** Pack id (matches `IconPackSummary.id`). */
   pack: string;
+
   /** Icon name within the pack. */
   name: string;
+
   /** Inner SVG markup. */
   body: string;
+
   /** Effective viewBox width — per-icon override or pack default. */
   width: number;
+
   /** Effective viewBox height. */
   height: number;
+
   /** Pack license, when iconify provides one. */
   license?: IconPackLicense;
+
   /** Pack author, when iconify provides one. */
   author?: IconPackAuthor;
 }
@@ -50,6 +59,7 @@ export interface IconRef {
 /** Pack author as iconify exposes it. */
 export interface IconPackAuthor {
   name: string;
+
   /** Optional homepage / source URL. */
   url?: string;
 }
@@ -62,8 +72,10 @@ export interface IconPackAuthor {
 export interface IconPackLicense {
   /** Human-readable label, e.g. `"MIT"`. */
   title?: string;
+
   /** SPDX identifier, e.g. `"MIT"` or `"CC-BY-4.0"`. */
   spdx?: string;
+
   /** Link to the upstream license. */
   url?: string;
 }
@@ -72,20 +84,28 @@ export interface IconPackLicense {
 export interface IconPackSummary {
   /** Stable pack id (e.g. `mdi`, `material-symbols`). */
   id: string;
+
   /** Human-readable pack name. */
   name: string;
+
   /** Total renderable icons in the pack. */
   total: number;
+
   /** Native viewBox width — every icon in the pack shares it. */
   width: number;
+
   /** Native viewBox height. */
   height: number;
+
   /** A handful of icons with bodies, sufficient to render preview tiles. */
   samples: ReadonlyArray<IconEntry>;
+
   /** Pack author, when iconify provides one. */
   author?: IconPackAuthor;
+
   /** Pack license, when iconify provides one. */
   license?: IconPackLicense;
+
   /** URL of the pack's manifest asset — fetched on selection. */
   manifestUrl: string;
 }
@@ -99,15 +119,20 @@ export interface IconPackSummary {
 export interface IconPackManifest {
   id: string;
   name: string;
+
   /** Pack-default viewBox width — overridden per-icon when present. */
   width: number;
+
   /** Pack-default viewBox height. */
   height: number;
   total: number;
+
   /** All icon names in pack order. Powers search + page lookup. */
   names: ReadonlyArray<string>;
+
   /** URLs of page chunks, in order. */
   pages: ReadonlyArray<string>;
+
   /** First-icon index for each page — `pageStart[i]` corresponds to `pages[i]`. */
   pageStart: ReadonlyArray<number>;
 }

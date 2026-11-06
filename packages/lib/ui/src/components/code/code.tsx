@@ -59,10 +59,13 @@ export interface CodeProps
     JSX.HTMLAttributes<HTMLElement> {
   /** Visual size on a 1–9 scale. Inherits font-size from the parent when omitted. */
   size?: TypeScale;
+
   /** Visual treatment. @default 'soft' */
   variant?: Variant;
+
   /** Semantic color. @default 'accent' */
   color?: Color;
+
   /** Font weight. */
   weight?: FontWeight;
 }

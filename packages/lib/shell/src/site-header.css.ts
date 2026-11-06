@@ -4,6 +4,7 @@ import { neutral, space, text } from '@lib/design';
 export const header = style({
   borderBottom: `1px solid ${neutral.solid[6]}`,
   flexShrink: 0,
+
   // Reserve the iOS status-bar / notch region above the bar: the
   // background and border bleed under it while content stays clear.
   // `viewport-fit=cover` (`<ThemeMeta>`) makes the inset non-zero on

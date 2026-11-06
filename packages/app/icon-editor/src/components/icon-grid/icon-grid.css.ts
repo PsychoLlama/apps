@@ -28,6 +28,7 @@ export const grid = style({
   width: '100%',
   paddingBlock: space[1],
   paddingInline: space[1],
+
   // Pack rows to the top instead of stretching them across the full
   // grid height when filtering returns a partial result. Default
   // `align-content: normal` resolves to `stretch` for grid containers.
@@ -48,6 +49,7 @@ export const tile = style({
   transitionProperty: 'background-color, border-color, color, transform',
   transitionDuration: fast[2],
   transitionTimingFunction: standard.productive,
+
   // Hundreds of tiles share this rule; letting the browser skip style
   // and layout for off-screen ones keeps pagination-click cost near
   // constant regardless of how far past the fold the grid extends.

@@ -17,8 +17,10 @@
 export type Sizes = {
   /** Total scrollable extent of the content along the axis. */
   content: number;
+
   /** Visible extent of the viewport along the axis. */
   viewport: number;
+
   /** Scrollbar track metrics along the axis. */
   scrollbar: { size: number; paddingStart: number; paddingEnd: number };
 };
@@ -84,6 +86,7 @@ export const getScrollPositionFromPointer = (
 ): number => {
   const thumbSize = getThumbSize(sizes);
   const thumbCenter = thumbSize / 2;
+
   // `null` distinguishes "no offset captured" (track click — center
   // the thumb on the cursor) from a captured `0` (cursor pressed on
   // the thumb's leading edge — preserve the alignment).

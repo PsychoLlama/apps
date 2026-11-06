@@ -4,8 +4,10 @@ import * as css from './margin.css';
 export interface MarginProps {
   /** Uniform margin on all sides. */
   m?: SpaceScale;
+
   /** Horizontal (inline) margin. */
   mx?: SpaceScale;
+
   /** Vertical (block) margin. */
   my?: SpaceScale;
 }

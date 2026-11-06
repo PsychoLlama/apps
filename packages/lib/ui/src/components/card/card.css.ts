@@ -62,6 +62,7 @@ export const base = style({
       transitionTimingFunction: standard.productive,
     },
   },
+
   // Only animate state changes on hover-capable pointers. On touch,
   // `:active` sticks long enough that a duration reads as input lag.
   '@media': {

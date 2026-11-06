@@ -60,6 +60,7 @@ describe('MessagePortTransport', () => {
 
     const message = await received;
     let counted: number | undefined;
+
     // `count` is only reachable after narrowing on `type`.
     if (message.type === 'tick') counted = message.count;
     expect(counted).toBe(7);
@@ -83,6 +84,7 @@ describe('MessagePortTransport', () => {
 
   it('rejects a send the endpoint refuses', async () => {
     const { sender } = setup();
+
     // A function can't be structured-cloned, so `postMessage` throws a
     // `DataCloneError` synchronously. It must reach the caller as a rejection
     // like any other send failure, not as a synchronous throw.
@@ -115,6 +117,7 @@ describe('MessagePortTransport', () => {
     const seen: Wire[] = [];
     {
       await using receiver = new MessagePortTransport<Wire, Wire>(port2);
+
       // Two handlers, so this covers unwinding the set rather than just the
       // most recent registration.
       receiver.onMessage((message) => seen.push(message));

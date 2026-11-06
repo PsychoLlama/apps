@@ -24,20 +24,28 @@ import * as css from './properties-panel.css';
 interface PropertiesPanelProps {
   /** Reactive icon-under-construction. */
   state: IconEditorState;
+
   /** Currently selected pack — rendered as a pack card. */
   activePack: IconPackSummary | undefined;
+
   /** Apply a palette pick. */
   onPalette: (name: PaletteName) => void;
+
   /** Apply a shape pick. */
   onShape: (shape: IconEditorShape) => void;
+
   /** Apply a padding change. */
   onPadding: (value: number) => void;
+
   /** Open the pack list to choose a different pack. */
   onChoosePack: () => void;
+
   /** Open the active pack's grid to choose an icon. */
   onChooseIcon: () => void;
+
   /** Roll a random icon within the active pack. */
   onRandomize: () => void;
+
   /** Clear the icon + style and return to the default pack. */
   onReset: () => void;
 }

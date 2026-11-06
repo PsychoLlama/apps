@@ -128,6 +128,7 @@ describe('useAction', () => {
     const { unmount } = renderHook(controller, () => {
       // @ts-expect-error -- Not a function.
       useAction(pipe([data]));
+
       // Downstream tasks receive a reactive output as its accessor.
       return useAction(pipe([live]));
     });

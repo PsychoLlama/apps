@@ -15,8 +15,10 @@ import {
 export interface IconEditorStyleHydration {
   /** Palette name from the curated set. */
   palette?: string;
+
   /** Shape mask. */
   shape?: string;
+
   /** Padding percent (`0`–`40`). */
   padding?: number;
 }

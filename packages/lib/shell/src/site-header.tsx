@@ -14,6 +14,7 @@ import * as css from './site-header.css';
 export interface SiteHeaderCrumb {
   label: string;
   href?: string;
+
   /** Override the default crumb test id. */
   testId?: string;
 }
@@ -35,8 +36,10 @@ export interface SiteHeaderCrumb {
 export default function SiteHeader(props: {
   /** Single-page label. Shorthand for `trail={[{ label: title }]}`. */
   title?: string;
+
   /** Multi-segment breadcrumb. Wins over `title` when both are set. */
   trail?: SiteHeaderCrumb[];
+
   /**
    * Controls pinned to the trailing edge. Reserved for suite-level
    * actions — the launcher passes its settings button here; app pages

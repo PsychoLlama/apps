@@ -42,8 +42,10 @@ export interface KbdProps
     JSX.HTMLAttributes<HTMLElement> {
   /** Visual size on a 1–9 scale. Falls back to 0.75× the parent font-size when omitted. */
   size?: TypeScale;
+
   /** Visual treatment. @default 'classic' */
   variant?: Variant;
+
   /**
    * Allow the reader to select the key text. A keycap is UI chrome, not
    * prose, so it stays out of selection even inside selectable copy

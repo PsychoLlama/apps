@@ -22,6 +22,7 @@ tester.run('require-ui-primitives', rule, {
     // Elements without a @lib/ui equivalent are allowed.
     { code: '<input />' },
     { code: '<img />' },
+
     // Document structure is allowed.
     { code: '<html><body></body></html>' },
   ],

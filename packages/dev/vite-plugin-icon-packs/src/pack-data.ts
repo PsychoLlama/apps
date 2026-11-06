@@ -23,10 +23,13 @@ const ANIMATION_TAG_RE =
 export interface IconEntry {
   /** Icon name within the pack (kebab-case). */
   name: string;
+
   /** Inner SVG markup, stripped to a single string. */
   body: string;
+
   /** Per-icon viewBox width override. */
   width?: number;
+
   /** Per-icon viewBox height override. */
   height?: number;
 }
@@ -39,8 +42,10 @@ export interface PackInfo {
   height: number;
   total: number;
   samples: IconEntry[];
+
   /** Pack author, when iconify provides one. */
   author?: PackAuthor;
+
   /** Pack license, when iconify provides one. */
   license?: PackLicense;
 }
@@ -76,6 +81,7 @@ export const buildPackData = (
   for (const [iconName, def] of Object.entries(raw.icons)) {
     if (def.hidden) continue;
     if (!def.body) continue;
+
     // Animations belong to motion design, not favicons — drop bodies
     // that ship SMIL elements. Wholesale-animated packs (line-md,
     // svg-spinners) are kept off the allowlist in `allowed-packs.ts`;

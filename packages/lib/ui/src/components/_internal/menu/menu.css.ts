@@ -91,6 +91,7 @@ export const item = style({
   borderRadius: itemRadius,
   outline: 'none',
   cursor: 'default',
+
   // Upstream's fix for sticky selection highlighting in Firefox.
   userSelect: 'none',
   selectors: {
@@ -187,6 +188,7 @@ export const content = style({
   backgroundColor: background.panelSolid,
   color: text.highContrast,
   boxShadow: shadow[5],
+
   // Collisions can move the window but not shrink it, so the viewport
   // caps it.
   maxWidth: `calc(100vw - ${2 * COLLISION_PADDING}px)`,

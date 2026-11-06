@@ -56,6 +56,7 @@ export const root = style({
     // size variant lands. Mirror size-2.
     [cellPaddingBlock]: space[3],
     [cellPaddingInline]: space[3],
+
     // Radix's 44px (size-2) min-height; sits between `space[7]`
     // (40px) and `space[8]` (48px), no exact token.
     [cellMinHeight]: '2.75rem',
@@ -63,6 +64,7 @@ export const root = style({
     [rowBackground]: 'transparent',
     [rowDivider]: `inset 0 -1px ${neutral.alpha[5]}`,
   },
+
   // Inherit the row text color so children render against the panel.
   color: neutral.solid[12],
 });
@@ -105,6 +107,7 @@ export const table = style({
   boxSizing: 'border-box',
   fontFamily: fontFamily.body,
   fontWeight: fontWeight.regular,
+
   // Lets cell `height: 100%` work — needed when consumers stretch
   // interactive content across the full row.
   height: 0,
@@ -202,6 +205,7 @@ export const cell = style({
   verticalAlign: 'inherit',
   paddingBlock: cellPaddingBlock,
   paddingInline: cellPaddingInline,
+
   // Acts as a min-height for content; `<td>` doesn't honor min-height
   // directly, but the table layout treats `height` as the floor.
   height: cellMinHeight,

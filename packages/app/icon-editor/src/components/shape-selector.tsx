@@ -7,14 +7,17 @@ import * as css from './shape-selector.css';
 interface ShapeSelectorProps {
   /** Currently selected shape mask. */
   value: IconEditorShape;
+
   /** Called when the user selects a different shape. */
   onChange: (shape: IconEditorShape) => void;
 }
 
 interface ShapeOption {
   value: IconEditorShape;
+
   /** Human label exposed via `aria-label`; the swatch shape carries the visual cue. */
   label: string;
+
   /** Border radius applied to the swatch chip, in CSS. */
   swatchRadius: string;
 }

@@ -7,6 +7,7 @@ import * as css from './palette-picker.css';
 interface PalettePickerProps {
   /** Currently selected palette name. */
   value: PaletteName;
+
   /** Called when the user picks a different palette. */
   onChange: (name: PaletteName) => void;
 }

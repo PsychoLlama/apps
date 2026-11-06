@@ -15,6 +15,7 @@ export type IgnoreScope = 'global' | 'local' | 'repo';
 /** An ignore file git would consult. It may not exist. */
 export interface IgnoreFile {
   scope: IgnoreScope;
+
   /** Absolute path. */
   path: string;
 }

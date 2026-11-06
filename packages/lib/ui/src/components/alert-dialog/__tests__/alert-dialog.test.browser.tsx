@@ -54,6 +54,7 @@ const setup = (overrides: Overrides = {}) => {
     overlay,
     cancel: () => byTestId('alert-cancel'),
     action: () => byTestId('alert-action'),
+
     /** The scroll surface around the panel — the click-outside target. */
     outside: () => {
       const scroll = overlay.firstElementChild;
@@ -132,6 +133,7 @@ describe('AlertDialog', () => {
 
     expect(onAction).toHaveBeenCalledOnce();
     expect(onOpenChange).toHaveBeenCalledWith(false);
+
     // The side effect runs first, so a call site that declines the
     // close has already seen the confirmation.
     expect(onAction.mock.invocationCallOrder[0]).toBeLessThan(
@@ -167,6 +169,7 @@ describe('AlertDialog', () => {
     await userEvent.keyboard('{Escape}');
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
+
     // Controlled: the DOM state only follows the `open` prop.
     expect(overlay.open).toBe(true);
   });

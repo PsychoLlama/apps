@@ -60,6 +60,7 @@ export const root = style({
   flexShrink: 0,
   verticalAlign: 'top',
   width: radioSize,
+
   // Track the surrounding text's line-height when present so the radio
   // sits flush against the first line of a wrapping label rather than
   // drifting to the geometric center of the wrapped block. The
@@ -74,6 +75,7 @@ export const root = style({
   // the same opportunity but doesn't take it.
   height: `max(${fallbackVar(lineHeight, radioSize)}, ${radioSize})`,
   cursor: 'pointer',
+
   // The indicator is an affordance — keep it out of label text selection.
   userSelect: 'none',
 
@@ -149,6 +151,7 @@ export const color = styleVariants({
       [colorContrast]: neutral.contrast,
       [colorAlpha4]: neutral.alpha[4],
       [colorAlpha11]: neutral.alpha[11],
+
       // Focus outline falls back to accent on the neutral palette so
       // the cue stays distinct against a gray radio — same exception
       // Radix's `--focus-8` codifies.
@@ -242,6 +245,7 @@ export const variant = styleVariants({
       '&::after': {
         backgroundColor: colorAlpha11,
       },
+
       // The neutral focus exception above keeps the outline accent-tinted
       // on a gray radio; for soft, drop back to the active palette's
       // alpha[8] so the outline blends with the muted ring (matches Radix).
@@ -262,6 +266,7 @@ export const variant = styleVariants({
 
 export const item = style({
   display: 'flex',
+
   // Default `align-items: stretch` is intentional. Combined with the
   // input's `height: var(--lineHeight, ...)`, it lets the radio stay
   // pinned to the first line of a wrapping label — the input keeps
@@ -275,6 +280,7 @@ export const item = style({
   // across our 1/2/3 size range.
   // eslint-disable-next-line custom/require-design-tokens -- text-relative gap is the design intent here
   gap: '0.5em',
+
   // Trim the click target to the label's own width so whitespace to
   // the right of the text is not clickable.
   width: 'fit-content',

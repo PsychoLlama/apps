@@ -37,6 +37,7 @@ describe('type safety', () => {
     const read = (store: Store<State>) => {
       // @ts-expect-error — stores are read-only outside commits
       store.message = 'nope';
+
       // @ts-expect-error — all the way down
       store.tags[0] = 'nope';
     };
@@ -101,6 +102,7 @@ describe('type safety', () => {
     const illegal = () => {
       // @ts-expect-error — not a store
       defineExtension($topic, [$object], () => () => {});
+
       // @ts-expect-error — not a cell
       defineExtension($topic, [$reactive], () => () => {});
     };

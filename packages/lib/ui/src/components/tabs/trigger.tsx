@@ -25,6 +25,7 @@ export interface TabsTriggerProps
   extends RequiredTestIdProps, JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Identifier matched against `TabsRoot`'s `value`. */
   value: string;
+
   /** Disable the trigger. Skipped during keyboard navigation. */
   disabled?: boolean;
 }
@@ -83,6 +84,7 @@ export const TabsTrigger: ParentComponent<TabsTriggerProps> = (rawProps) => {
     if (typeof local.onMouseDown === 'function') local.onMouseDown(event);
     if (event.defaultPrevented) return;
     if (isDisabled()) return;
+
     // Match Radix: only activate on a plain left-click. Right-click and
     // ctrl-click (macOS context menu) preventDefault to avoid stealing
     // focus, which would otherwise activate the tab in `automatic` mode.

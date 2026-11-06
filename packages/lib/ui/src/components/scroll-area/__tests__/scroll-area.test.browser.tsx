@@ -63,6 +63,7 @@ describe('ScrollArea', () => {
   it('renders a viewport that owns the scrollable surface', () => {
     renderArea({ testId: 'sa' });
     const viewport = getViewport();
+
     // Native scrollbars are hidden via CSS; the viewport itself
     // still scrolls.
     expect(getComputedStyle(viewport).overflowX).toBe('scroll');
@@ -109,8 +110,10 @@ describe('ScrollArea', () => {
     ));
     await flushMeasurement();
     const track = getScrollbar('vertical');
+
     // Track is mounted and visible regardless of overflow.
     expect(track).toHaveAttribute('data-state', 'visible');
+
     // But the thumb only renders when content overflows — empty
     // tracks have no thumb child.
     expect(track?.children.length).toBe(0);
@@ -152,15 +155,18 @@ describe('ScrollArea', () => {
   it('reveals only the vertical scrollbar when type="scroll" and the user scrolls vertically', async () => {
     renderArea({ testId: 'sa', type: 'scroll' });
     await flushMeasurement();
+
     // Both scrollbars start hidden under type="scroll".
     expect(getScrollbar('vertical')).toHaveAttribute('data-state', 'hidden');
     expect(getScrollbar('horizontal')).toHaveAttribute('data-state', 'hidden');
     const viewport = getViewport();
     viewport.scrollTop = 50;
+
     // Vertical bar should fade in.
     await waitFor(() => {
       expect(getScrollbar('vertical')).toHaveAttribute('data-state', 'visible');
     });
+
     // Horizontal scroll didn't change, so the horizontal bar must
     // stay hidden — only the axis the user actually touched should
     // light up.
@@ -178,11 +184,13 @@ describe('ScrollArea', () => {
     });
     const root = getRoot();
     const viewport = getViewport();
+
     // Viewport carries the semantic surface — keyboard arrow scroll
     // and screen-reader landmark live there.
     expect(viewport).toHaveAttribute('role', 'region');
     expect(viewport).toHaveAttribute('aria-label', 'Scrolling region');
     expect(viewport).toHaveAttribute('tabindex', '0');
+
     // Root keeps the testId and the wrapper class but stays
     // semantically silent.
     expect(root).not.toHaveAttribute('role');
@@ -219,6 +227,7 @@ describe('ScrollArea', () => {
 
   it('renders the focus-ring overlay as a sibling of the viewport', () => {
     renderArea({ testId: 'sa' });
+
     // Sibling order: viewport, focus ring, scrollbars.
     const focusRing = getRoot().children[1];
     expect(focusRing).toBeTruthy();
@@ -268,6 +277,7 @@ describe('ScrollArea', () => {
     const thumb = track.children[0];
     assert(thumb instanceof HTMLDivElement, 'Vertical thumb missing.');
     const thumbRect = thumb.getBoundingClientRect();
+
     // Press on the thumb's center, then drag 60px downward. The
     // exact translated scroll distance depends on track/content
     // ratios; we only need scrollTop to have moved meaningfully.
@@ -323,6 +333,7 @@ describe('ScrollArea', () => {
     const track = getScrollbar('vertical');
     assert(track, 'Vertical track missing.');
     const trackRect = track.getBoundingClientRect();
+
     // Press near the bottom of the empty track. With no thumb under
     // the cursor, `pointerOffset` stays null and the handler centers
     // the thumb on the click — so scrollTop snaps deep into the
@@ -344,6 +355,7 @@ describe('ScrollArea', () => {
     renderArea({ testId: 'sa', type: 'always' });
     await flushMeasurement();
     const viewport = getViewport();
+
     // Pre-scroll so the thumb sits well below the track's top.
     viewport.scrollTop = 200;
     await flushMeasurement();
@@ -353,6 +365,7 @@ describe('ScrollArea', () => {
     assert(thumb instanceof HTMLDivElement, 'Vertical thumb missing.');
     const thumbRect = thumb.getBoundingClientRect();
     const trackRect = track.getBoundingClientRect();
+
     // Press exactly on the thumb's leading edge — dispatch on the
     // thumb so `event.target` matches the thumb element and the
     // handler records `pointerOffset = 0` (numeric, not the "no
@@ -370,6 +383,7 @@ describe('ScrollArea', () => {
       clientX: trackCenterX,
       clientY: thumbTopY,
     });
+
     // 1px tolerance for sub-pixel scroll positions.
     expect(Math.abs(viewport.scrollTop - before)).toBeLessThan(2);
   });
@@ -378,6 +392,7 @@ describe('ScrollArea', () => {
     renderArea({ testId: 'sa', type: 'always' });
     await flushMeasurement();
     const viewport = getViewport();
+
     // Stamp a sentinel scroll-behavior on the viewport so we can
     // observe whether the drag teardown restored it.
     viewport.style.scrollBehavior = 'smooth';
@@ -392,8 +407,10 @@ describe('ScrollArea', () => {
       clientX: thumbCenterX,
       clientY: thumbCenterY,
     });
+
     // Mid-drag: scrollBehavior is forced to 'auto'.
     expect(viewport.style.scrollBehavior).toBe('auto');
+
     // Cancellation (touch interruption, tab switch) must still
     // restore the prior value — not just `pointerup`.
     dispatchPointer(track, 'pointercancel', {

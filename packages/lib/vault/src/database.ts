@@ -37,6 +37,7 @@ export interface EncryptedRecord {
    * `BufferSource` the Web Crypto decrypt call demands when it's read back.
    */
   iv: Uint8Array<ArrayBuffer>;
+
   /** The AES-GCM ciphertext, with its authentication tag appended. */
   ciphertext: ArrayBuffer;
 }

@@ -30,6 +30,7 @@ const setup = ({
 }): Harness => {
   const forwarded: string[] = [];
   const processor: LogProcessor = (log) => void forwarded.push(log.message);
+
   // The drained batch records into the same sink, in order, so assertions read
   // a single arrival-ordered stream regardless of which path delivered a log.
   const drain = (logs: Log[]) => {
@@ -116,6 +117,7 @@ describe('createLogValve', () => {
     const { forwarded, valve, logger } = setup({ capacity: 3 });
 
     valve.close();
+
     // Push past capacity so the write head wraps and overwrites the oldest.
     for (const message of ['a', 'b', 'c', 'd', 'e']) {
       logger.info(message);

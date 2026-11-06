@@ -47,6 +47,7 @@ export const skeleton = style({
       outline: 'none',
       pointerEvents: 'none',
       userSelect: 'none',
+
       // Repaints the bg-box across line breaks for inline text wrappers.
       boxDecorationBreak: 'clone',
     },

@@ -121,6 +121,7 @@ describe('vault', () => {
 
     const record = await readRecord('secret');
     expect(record).toBeDefined();
+
     // The stored bytes must not contain the plaintext.
     expect(decode(record!.ciphertext)).not.toContain('super secret');
   });
@@ -174,6 +175,7 @@ describe('vault', () => {
     }
 
     await expect(read('destination')).rejects.toThrow();
+
     // The value still decrypts at the id it was actually written under.
     expect(decode((await read('source'))!)).toBe('bound to source');
   });

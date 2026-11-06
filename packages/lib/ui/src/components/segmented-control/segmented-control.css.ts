@@ -91,6 +91,7 @@ type SelectorMap = NonNullable<StyleRule['selectors']>;
 const rootRadius = createVar();
 const contentPaddingX = createVar();
 const contentGap = createVar();
+
 // Set by the root's variant; read by the indicator's `::before`.
 const indicatorShadow = createVar();
 
@@ -129,11 +130,13 @@ export const root = style({
   borderRadius: rootRadius,
   color: neutral.solid[12],
   backgroundColor: background.surface,
+
   // Layered over `background-color` rather than replacing it, so the
   // track reads as a tinted recess on light and dark surfaces alike.
   backgroundImage: `linear-gradient(${neutral.alpha[3]}, ${neutral.alpha[3]})`,
   fontFamily: fontFamily.body,
   textAlign: 'center',
+
   // New stacking context, so the indicator and separators resolve their
   // paint order against this element rather than escaping to whatever
   // ancestor happens to be positioned.
@@ -210,6 +213,7 @@ export const content = style({
     [`${item}:where(:has(input:disabled)) &`]: {
       color: neutral.alpha[8],
     },
+
     // Focus rounds all four corners — including on middle items — so
     // the ring reads as a discrete chip rather than a clipped slab.
     // `outline-offset: -1px` pulls it inside the track's edge, landing
@@ -287,16 +291,19 @@ export const labelUnchecked = style([
 
 export const separator = style({
   width: HAIRLINE,
+
   // Pull back by half the hairline so it straddles the seam between two
   // columns instead of sitting inside one, and so its outer width nets
   // to zero — the content span next to it still fills the whole column.
   marginInline: `calc(${HAIRLINE} / -2)`,
+
   // One space step of breathing room, minus the hairline itself.
   // Resolves to upstream's 3px at the default scale.
   marginBlock: `calc(${space[1]} - ${HAIRLINE})`,
   backgroundColor: neutral.alpha[4],
   transitionProperty: 'opacity',
   transitionDuration: fast[1],
+
   // Slow to disappear, quick to reappear — keeps the seams from
   // flickering as the indicator slides past them.
   transitionTimingFunction: entrance.productive,
@@ -315,6 +322,7 @@ export const separator = style({
       opacity: 0,
       transitionTimingFunction: exit.productive,
     },
+
     // A focus ring appears instantly, so the seams it hides shouldn't
     // linger behind it.
     [`${root}:where(:has(input:focus-visible)) &`]: {
@@ -371,6 +379,7 @@ export const indicator = style({
   '::before': {
     content: '""',
     position: 'absolute',
+
     // Inset by the hairline so the chip never covers the track's own
     // edge; the radius shrinks to match so the corners stay concentric.
     inset: HAIRLINE,
@@ -383,6 +392,7 @@ export const indicator = style({
     [`${root}:where(:has(> ${item} input:checked)) > &`]: {
       display: 'block',
     },
+
     // A disabled selection drops the lift and fills the whole column,
     // so it reads as inert rather than as a raised control.
     [`${root}:where(:has(> ${item} input:checked:disabled)) > &`]: {
@@ -406,12 +416,16 @@ export const indicator = style({
 interface SizeStyle {
   /** Overall track height. */
   height: SpaceScale;
+
   /** Inline padding on the content span. */
   padX: SpaceScale;
+
   /** Space between an icon and its text. */
   iconGap: SpaceScale;
+
   /** Track rounding. Overridden wholesale by the `radius` prop. */
   rad: RadiusScale;
+
   /** Type scale step. */
   font: TypeScale;
 }

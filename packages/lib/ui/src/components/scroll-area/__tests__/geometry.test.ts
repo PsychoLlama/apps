@@ -110,6 +110,7 @@ describe('getThumbSize', () => {
         scrollbar: { size: 200, paddingStart: 10, paddingEnd: 10 },
       }),
     );
+
     // (200 - 20) * 0.2 = 36.
     expect(result).toBe(36);
   });
@@ -138,6 +139,7 @@ describe('getScrollPositionFromPointer', () => {
   it('maps the track midpoint to the content midpoint when pointer offset is null', () => {
     // Track click — the thumb centers under the cursor.
     const subject = sizes(); // thumb = 40, track = 200, maxScroll = 800.
+
     // Mid-pointer = 100; expected scroll = 400.
     expect(getScrollPositionFromPointer(100, null, subject)).toBe(400);
   });
@@ -161,6 +163,7 @@ describe('getScrollPositionFromPointer', () => {
     const subject = sizes({
       scrollbar: { size: 220, paddingStart: 10, paddingEnd: 10 },
     });
+
     // Inner track is still 200, so midpoint (110) maps to maxScroll/2.
     expect(getScrollPositionFromPointer(110, null, subject)).toBe(400);
   });
@@ -174,6 +177,7 @@ describe('getScrollPositionFromPointer', () => {
     const subject = sizes();
     for (const scroll of [0, 100, 400, 799, 800]) {
       const thumbOffset = getThumbOffsetFromScroll(scroll, subject);
+
       // Pointer position is the thumb's leading edge, including the
       // start padding the helpers each contribute.
       const pointer = thumbOffset + subject.scrollbar.paddingStart;
@@ -209,6 +213,7 @@ describe('getThumbOffsetFromScroll', () => {
     // maxScroll === 0 — `linearScale` should hand back output[0].
     const subject = sizes({ content: 200, viewport: 200 });
     expect(getThumbOffsetFromScroll(0, subject)).toBe(0);
+
     // Even if the caller asks for a non-zero scroll, we have nowhere
     // to go.
     expect(getThumbOffsetFromScroll(50, subject)).toBe(0);
@@ -218,6 +223,7 @@ describe('getThumbOffsetFromScroll', () => {
     const subject = sizes({
       scrollbar: { size: 220, paddingStart: 10, paddingEnd: 10 },
     });
+
     // Inner track 200, thumb 40 → maxThumb 160 — same as the
     // unpadded baseline since padding is symmetric.
     expect(getThumbOffsetFromScroll(800, subject)).toBe(160);

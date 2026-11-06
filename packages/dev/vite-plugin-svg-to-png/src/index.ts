@@ -42,6 +42,7 @@ const parseImport = (source: string): SvgToPngMatch | undefined => {
   const sizeStr = source.slice(queryStart + QUERY_PREFIX.length);
   const size = Number.parseInt(sizeStr, 10);
   if (!Number.isFinite(size) || size <= 0) return undefined;
+
   // Reject trailing garbage after the integer (e.g. `?to-png=180x`)
   // so callers can't smuggle extra query params through.
   if (String(size) !== sizeStr) return undefined;
@@ -135,6 +136,7 @@ export const svgToPng = (): Plugin => {
         }
       }
       if (!touched) return;
+
       // PNGs are referenced from `<link>` tags in the prerendered
       // HTML. The browser won't re-fetch them on its own, so trigger
       // a full reload after the SVG changes.
@@ -144,6 +146,7 @@ export const svgToPng = (): Plugin => {
     async resolveId(source, importer) {
       const match = parseImport(source);
       if (!match) return undefined;
+
       // Delegate path resolution to Vite so workspace-relative
       // paths, aliases, and the configured `root` all behave the
       // same as for any other import. If Vite can't resolve the

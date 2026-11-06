@@ -23,6 +23,7 @@ export default mergeConfig(
           launchOptions: {
             executablePath: process.env.CHROMIUM_PATH,
           },
+
           // Cap Playwright's auto-wait loop. Default is 30s, which means an
           // action against an unactionable element (disabled, off-screen,
           // covered) silently retries until it eats the test budget. 2s is a

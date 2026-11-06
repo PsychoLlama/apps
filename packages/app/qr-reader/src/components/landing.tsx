@@ -5,6 +5,7 @@ import IconQrcodeScan from 'virtual:icons/mdi/qrcode-scan';
 interface LandingProps {
   /** Whether a camera request is in flight — disables the start control. */
   requesting: boolean;
+
   /** Opens the camera feed. */
   onStart: () => void;
 }

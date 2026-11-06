@@ -144,6 +144,7 @@ describe('RPC', () => {
 
   it('rejects unknown request methods', async () => {
     const { client } = setup();
+
     // Bypass the type system to call an off-contract method.
     const loose = client as unknown as {
       request(method: string, params: unknown): Promise<unknown>;
@@ -156,6 +157,7 @@ describe('RPC', () => {
 
   it('treats inherited request method names as unknown', async () => {
     const { client } = setup();
+
     // A hostile peer could name a method after an inherited member
     // (`constructor` resolves to a callable `Object`, `toString` to a
     // function, etc). Only own procedures should be reachable.
@@ -291,8 +293,10 @@ describe('RPC', () => {
       sent.find(
         (entry) => entry.message.type === 'response' && entry.message.id === id,
       );
+
     // Bare reply: an empty (but present) options bag.
     expect(reply(1)?.options).toEqual({});
+
     // Populated reply: the handler's transfer list rides along.
     expect(reply(2)?.options).toEqual({ transfer: [expect.any(ArrayBuffer)] });
   });
@@ -375,6 +379,7 @@ describe('RPC', () => {
 
   it('rejects in-flight requests with an RpcClosedError on close', async () => {
     const { client } = setup();
+
     // The response round-trips asynchronously over the port; closing
     // synchronously after the call wins the race, so the request settles as
     // a close rather than a result.
@@ -445,6 +450,7 @@ describe('RPC', () => {
     const serverApi = defineContract<SendOptions>()({
       requests: {
         echo: (value: string) => value,
+
         // A zero-payload request whose handler attaches a transfer.
         mint: (_params: void, options) => {
           const buffer = new ArrayBuffer(8);
@@ -464,6 +470,7 @@ describe('RPC', () => {
       new MessagePortTransport(port1),
       serverApi,
     );
+
     // ...and as the contract the client calls against.
     const client = RPC.from<ClientApi, ServerApi, SendOptions>(
       new MessagePortTransport(port2),
@@ -473,6 +480,7 @@ describe('RPC', () => {
     port2.start();
 
     await expect(client.request('echo', 'hi')).resolves.toBe('hi');
+
     // The options bag a define'd handler sets still rides along with the reply.
     const buffer = await client.request('mint');
     expect(buffer.byteLength).toBe(8);

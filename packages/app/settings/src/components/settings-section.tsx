@@ -5,15 +5,19 @@ import { Flex, Heading, Text } from '@lib/ui';
 export interface SettingsSectionProps {
   /** Visible heading text. */
   title: string;
+
   /**
    * `id` for the heading, so the section's control can point
    * `aria-labelledby` at it.
    */
   headingId: string;
+
   /** One-line summary under the heading. */
   description: string;
+
   /** Inline control beside the heading, usually a `ResetButton`. */
   action?: JSX.Element;
+
   /** The setting's control. */
   children: JSX.Element;
 }

@@ -202,6 +202,7 @@ describe('startCaptureLoop', () => {
 
   it('drops a hit whose decode resolves after teardown', async () => {
     let settle!: (decoded: ScanResult | null) => void;
+
     // Hold the very promise the sampler awaits, so the test can await it
     // too — the sampler's continuation is chained ahead of ours, so once
     // this resolves its hit-or-skip has already run. No timer guesswork.

@@ -4,14 +4,19 @@ import * as css from './flex.css';
 export interface FlexProps {
   /** Main-axis direction of flex children. */
   direction?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
+
   /** Cross-axis alignment of flex children. */
   align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+
   /** Main-axis distribution of flex children. */
   justify?: 'start' | 'center' | 'end' | 'between';
+
   /** Whether flex children wrap onto multiple lines. */
   wrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
+
   /** Spacing between flex children. */
   gap?: SpaceScale;
+
   /** When true, the container expands to fill available space (`flex-grow: 1`). */
   grow?: boolean;
 }

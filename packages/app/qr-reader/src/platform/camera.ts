@@ -44,6 +44,7 @@ const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
 export interface LiveCamera {
   /** The live stream to render and sample frames from. */
   stream: MediaStream;
+
   /** Whether the stream's camera exposes a controllable torch. */
   torch: boolean;
 }

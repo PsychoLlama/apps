@@ -26,6 +26,7 @@ import { x } from 'tinyexec';
 export interface Catalogs {
   /** The unnamed default catalog; referenced by `catalog:` or `catalog:default`. */
   default?: Record<string, string>;
+
   /** Named catalogs; referenced by `catalog:<name>`. */
   named?: Record<string, Record<string, string>>;
 }
@@ -33,6 +34,7 @@ export interface Catalogs {
 /** A single workspace package's manifest, narrowed to the dep buckets we check. */
 export interface PackageManifest {
   name: string;
+
   /** Workspace-relative path to the manifest, used for the issue report. */
   path: string;
   dependencies?: Record<string, string>;
@@ -45,16 +47,22 @@ export interface PackageManifest {
 export interface Issue {
   /** Package name (from manifest), used in the report. */
   pkg: string;
+
   /** Workspace-relative path to the offending manifest. */
   path: string;
+
   /** Which dep bucket the violation is in. */
   bucket: (typeof DEP_BUCKETS)[number];
+
   /** Dep name. */
   name: string;
+
   /** The current (non-`catalog:`) version range. */
   actual: string;
+
   /** Catalog name the dep belongs to (`'default'` or a named catalog). */
   catalog: string;
+
   /** The `catalog:` reference the package should use instead. */
   expected: string;
 }

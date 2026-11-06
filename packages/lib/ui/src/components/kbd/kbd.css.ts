@@ -80,6 +80,7 @@ export const base = style({
 
   color: neutral.solid[12],
 });
+
 /* eslint-enable custom/require-design-tokens */
 
 export const variant = styleVariants({
