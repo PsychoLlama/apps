@@ -46,7 +46,7 @@
     "@solidjs/router": "catalog:",
     "@solidjs/start": "catalog:",
     "@vanilla-extract/css": "catalog:",
-    "media-devices": "^0.5.0",
+    "media-devices": "catalog:",
     "solid-js": "catalog:",
     "vite": "catalog:"
   },

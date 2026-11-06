@@ -18,6 +18,6 @@
   "devDependencies": {
     "@dev/vite-plugin-svg-to-png": "workspace:*",
     "@lib/assert": "workspace:*",
-    "@types/web-app-manifest": "^1.0.9"
+    "@types/web-app-manifest": "catalog:"
   }
 }

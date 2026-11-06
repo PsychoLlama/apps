@@ -111,6 +111,7 @@
     "//#lint": {
       "inputs": [
         "**/*.{ts,tsx,js,jsx,mjs,cjs}",
+        "**/package.json",
         "!**/node_modules/**",
         "!**/.output/**",
         "!**/dist/**",
@@ -156,8 +157,6 @@
       "inputs": [
         "package.json",
         "packages/dev/workspace-cli/src/**",
-        "packages/*/*/package.json",
-        "pnpm-workspace.yaml",
         "turbo.json"
       ],
       "outputs": [],
