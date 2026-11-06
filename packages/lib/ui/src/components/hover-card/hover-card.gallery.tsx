@@ -11,9 +11,8 @@ type DemoProps = Partial<Omit<HoverCardProps, 'children' | 'content'>>;
 
 /**
  * A project summary on a mention of Northwind, the project our other
- * overlay listings act on. The summary is selectable and the link is
- * reachable by Tab, so both holds and keyboard access can be tried from
- * any cell.
+ * overlay listings act on. The summary is selectable, so holds can be
+ * tried from any cell.
  */
 const Demo = (props: DemoProps) => (
   <div class={props.side ? css.seated[props.side] : css.stage}>
@@ -33,9 +32,6 @@ const Demo = (props: DemoProps) => (
           <Text as="p" size={1} color="lowContrast" selectable={false}>
             4 members · Updated 2 hours ago
           </Text>
-          <Link href="#northwind" size={2} testId="open">
-            Open project
-          </Link>
         </Flex>
       }
     >

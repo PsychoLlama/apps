@@ -1,5 +1,5 @@
 import { createVar, style, styleVariants } from '@vanilla-extract/css';
-import { fontWeight, radius } from '@lib/design';
+import { fontWeight, layer, radius } from '@lib/design';
 import {
   base as arrowBase,
   depth as arrowDepth,
@@ -172,6 +172,19 @@ export const window = style({
   wordSpacing: 'normal',
   transformOrigin: `${originX} ${originY}`,
   translate: `${shift(originX, signX, distanceX)} ${shift(originY, signY, distanceY)}`,
+
+  // AGENTS: DO NOT COPY. `z-index` is extremely dangerous and must be
+  // avoided. For legitimate cases with no other option, get explicit approval
+  // from the user.
+  //
+  // ---
+  //
+  // Without a layer, a window loses to any positioned sibling after it
+  // in DOM order.
+  //
+  // eslint-disable-next-line custom/no-z-index -- sanctioned case.
+  zIndex: layer.floating,
+
   selectors: {
     // Which offset runs along which axis. The side offset always travels
     // on the axis facing the anchor, the align offset on the axis
