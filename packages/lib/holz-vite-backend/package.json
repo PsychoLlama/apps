@@ -1,9 +1,9 @@
 {
-  "name": "@lib/holz-vite-plugin",
+  "name": "@lib/holz-vite-backend",
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Vite plugin that streams holz logs from the browser to the dev server.",
+  "description": "Holz backend that streams browser logs to the Vite dev server.",
   "license": "MIT",
   "sideEffects": false,
   "exports": {

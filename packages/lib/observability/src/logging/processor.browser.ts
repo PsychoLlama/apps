@@ -3,7 +3,7 @@ import { type LogProcessor, combine, filter } from '@holz/core';
 import { createLogCollector } from '@holz/log-collector';
 import { createConfigFilter } from '@lib/holz-config-filter';
 import { createIdbBackend } from '@lib/holz-idb-backend';
-import { createViteBackend } from '@lib/holz-vite-plugin/client';
+import { createViteBackend } from '@lib/holz-vite-backend/client';
 
 // Aliased: `filter` (the log-pattern option) collides with `@holz/core`'s
 // `filter` operator imported above.

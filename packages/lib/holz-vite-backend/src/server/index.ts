@@ -4,7 +4,7 @@ import type { Plugin } from 'vite';
 import { LOG_EVENT } from '../protocol/events';
 import { deserializeLog } from '../protocol/serialization';
 
-const PLUGIN_NAME = '@holz/vite-plugin';
+const PLUGIN_NAME = '@holz/vite-backend';
 
 // Vite's logger adds no plugin-name prefix, so we bring our own.
 const LOG_TAG = `[${PLUGIN_NAME}]`;
