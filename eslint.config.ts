@@ -95,6 +95,7 @@ export default [
       'custom/no-static-style-prop': 'error',
       'custom/prefer-assert': 'error',
       'custom/prefer-icon-button': 'error',
+      'custom/require-blank-line-before-comment': 'error',
       'custom/require-ui-primitives': 'error',
       'no-restricted-imports': [
         'error',

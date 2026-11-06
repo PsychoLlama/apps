@@ -6,6 +6,7 @@ import noUnsafeNodeCast from './rules/no-unsafe-node-cast';
 import noZIndex from './rules/no-z-index';
 import preferAssert from './rules/prefer-assert';
 import preferIconButton from './rules/prefer-icon-button';
+import requireBlankLineBeforeComment from './rules/require-blank-line-before-comment';
 import requireDesignTokens from './rules/require-design-tokens';
 import requireExplicitRouteExport from './rules/require-explicit-route-export';
 import requireUiPrimitives from './rules/require-ui-primitives';
@@ -25,6 +26,7 @@ const plugin = {
     'no-z-index': noZIndex,
     'prefer-assert': preferAssert,
     'prefer-icon-button': preferIconButton,
+    'require-blank-line-before-comment': requireBlankLineBeforeComment,
     'require-design-tokens': requireDesignTokens,
     'require-explicit-route-export': requireExplicitRouteExport,
     'require-ui-primitives': requireUiPrimitives,
