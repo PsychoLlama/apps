@@ -49,7 +49,6 @@
     "@dev/vite-plugin-icon-packs": "workspace:*",
     "@dev/vite-plugin-substrate": "workspace:*",
     "@dev/vitest-config": "workspace:*",
-    "@vanilla-extract/dynamic": "catalog:",
     "typescript": "catalog:",
     "wrangler": "catalog:"
   }
