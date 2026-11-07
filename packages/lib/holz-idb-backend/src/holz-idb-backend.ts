@@ -1,7 +1,7 @@
 import type { IDBPDatabase } from 'idb';
 import type { LogProcessor } from '@holz/core';
 import { assert } from '@lib/assert';
-import { createLogValve } from '@lib/holz-valve';
+import { createValve } from '@lib/holz-functions';
 
 import { createLogInsertedChannel } from './broadcast';
 import {
@@ -74,7 +74,7 @@ export const createIdbBackend = (
   // on open drains through a single transaction so a flush — potentially
   // thousands of logs held across a connect or upgrade — is one round trip to
   // the store rather than one per log.
-  const valve = createLogValve({
+  const valve = createValve({
     capacity: bufferCapacity,
     open: false,
     processor: (log) => {

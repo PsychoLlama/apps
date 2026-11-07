@@ -18,7 +18,7 @@
   "dependencies": {
     "@holz/core": "catalog:",
     "@lib/assert": "workspace:*",
-    "@lib/holz-valve": "workspace:*",
+    "@lib/holz-functions": "workspace:*",
     "@lib/messaging": "workspace:*",
     "idb": "catalog:"
   },

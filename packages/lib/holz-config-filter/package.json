@@ -14,7 +14,7 @@
   "dependencies": {
     "@holz/core": "catalog:",
     "@holz/pattern-filter": "catalog:",
-    "@lib/holz-valve": "workspace:*",
+    "@lib/holz-functions": "workspace:*",
     "@lib/runtime-config": "workspace:*"
   },
   "devDependencies": {

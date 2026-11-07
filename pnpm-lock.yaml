@@ -1169,9 +1169,9 @@ importers:
       '@holz/pattern-filter':
         specifier: 'catalog:'
         version: 0.10.0(@holz/core@0.10.0)
-      '@lib/holz-valve':
+      '@lib/holz-functions':
         specifier: workspace:*
-        version: link:../holz-valve
+        version: link:../holz-functions
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../runtime-config
@@ -1198,9 +1198,9 @@ importers:
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
-      '@lib/holz-valve':
+      '@lib/holz-functions':
         specifier: workspace:*
-        version: link:../holz-valve
+        version: link:../holz-functions
       '@lib/messaging':
         specifier: workspace:*
         version: link:../messaging
