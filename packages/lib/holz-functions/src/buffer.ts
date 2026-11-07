@@ -13,7 +13,7 @@ export interface LogBuffer {
 }
 
 /** Options for {@link createBuffer}. */
-export interface CreateBufferOptions {
+export interface LogBufferOptions {
   /**
    * How many logs the buffer retains. Once full, each new log overwrites the
    * oldest. A non-negative integer or `Infinity`; `0` keeps nothing,
@@ -28,7 +28,7 @@ export interface CreateBufferOptions {
  */
 export const createBuffer = ({
   capacity = Infinity,
-}: CreateBufferOptions = {}): LogBuffer => {
+}: LogBufferOptions = {}): LogBuffer => {
   // Ring buffer that grows lazily up to `capacity`, then overwrites in place.
   // Pushing keeps the array packed, and avoids a large up-front allocation
   // when `capacity` is big or Infinity. `oldest` indexes the oldest entry

@@ -1,9 +1,8 @@
-// The package's public surface — small, composable holz log processors.
 export { createBatcher } from './batcher';
-export type { LogBatcher, CreateBatcherOptions } from './batcher';
+export type { LogBatcher, LogBatcherOptions } from './batcher';
 export { createBuffer } from './buffer';
-export type { LogBuffer, CreateBufferOptions } from './buffer';
+export type { LogBuffer, LogBufferOptions } from './buffer';
 export { createRouter } from './router';
 export type { LogRouter } from './router';
 export { createValve } from './valve';
-export type { LogValve, CreateValveOptions } from './valve';
+export type { LogValve, LogValveOptions } from './valve';

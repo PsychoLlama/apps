@@ -17,7 +17,7 @@ export interface LogBatcher {
 }
 
 /** Options for {@link createBatcher}. */
-export interface CreateBatcherOptions {
+export interface LogBatcherOptions {
   /** How many logs make a full batch. */
   size: number;
 
@@ -32,7 +32,7 @@ export interface CreateBatcherOptions {
 export const createBatcher = ({
   size,
   sink,
-}: CreateBatcherOptions): LogBatcher => {
+}: LogBatcherOptions): LogBatcher => {
   let pending: Log[] = [];
 
   const drain = () => {

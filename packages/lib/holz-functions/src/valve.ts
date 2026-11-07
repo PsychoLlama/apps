@@ -24,7 +24,7 @@ export interface LogValve {
 }
 
 /** Options for {@link createValve}. */
-export interface CreateValveOptions {
+export interface LogValveOptions {
   /**
    * How many logs the buffer retains while closed. Once full, each new log
    * overwrites the oldest. Defaults to `Infinity`.
@@ -56,7 +56,7 @@ export const createValve = ({
   drain,
   processor,
   open: startOpen,
-}: CreateValveOptions): LogValve => {
+}: LogValveOptions): LogValve => {
   const buffer = createBuffer({ capacity });
   const router = createRouter(startOpen ? 'open' : 'closed', {
     closed: buffer.processor,
