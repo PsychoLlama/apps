@@ -1,0 +1,13 @@
+{
+  "name": "@lib/tracing",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Structured spans with pluggable behavior.",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc"
+  }
+}
