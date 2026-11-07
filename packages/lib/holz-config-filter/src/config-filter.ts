@@ -1,6 +1,6 @@
 import type { LogProcessor } from '@holz/core';
 import { createPatternFilter } from '@holz/pattern-filter';
-import { createLogValve } from '@lib/holz-valve';
+import { createValve } from '@lib/holz-functions';
 import {
   environment,
   readEnvironment,
@@ -52,7 +52,7 @@ export interface CreateConfigFilterOptions {
  *   in realms the env filter can't reach.
  *
  * Reads are async, so logs emitted before the first read resolves are held in
- * a {@link createLogValve} and drained once the pattern is known.
+ * a {@link createValve} and drained once the pattern is known.
  */
 export const createConfigFilter = ({
   option,
@@ -70,7 +70,7 @@ export const createConfigFilter = ({
 
   // Buffer until we know the pattern. Both the streaming path (per log, while
   // open) and the drain (the buffered batch) route through the current filter.
-  const valve = createLogValve({
+  const valve = createValve({
     open: false,
     capacity,
     processor: (log) => filter(log),

@@ -1,7 +1,7 @@
 import type { IDBPDatabase } from 'idb';
 import type { LogProcessor } from '@holz/core';
 import { assert } from '@lib/assert';
-import { createLogValve } from '@lib/holz-valve';
+import { createValve } from '@lib/holz-functions';
 
 import { createLogInsertedChannel } from './broadcast';
 import {
@@ -74,7 +74,7 @@ export const createIdbBackend = (
   // on open drains through a single transaction so a flush — potentially
   // thousands of logs held across a connect or upgrade — is one round trip to
   // the store rather than one per log.
-  const valve = createLogValve({
+  const valve = createValve({
     capacity: bufferCapacity,
     open: false,
     processor: (log) => {
@@ -93,16 +93,10 @@ export const createIdbBackend = (
       // One transaction for the whole batch. `add` is fire-and-forget like the
       // streaming path. Announce once the batch commits — a failed flush drops
       // rather than surfacing (reporting it would recurse into the logger) and
-      // pings nothing. An open with an empty buffer drains nothing, so only ping
-      // when the batch actually carried logs.
+      // pings nothing.
       const tx = db.transaction(STORE_NAME, 'readwrite');
       for (const log of logs) void tx.store.add(log);
-      tx.done.then(
-        () => {
-          if (logs.length > 0) announce();
-        },
-        () => {},
-      );
+      tx.done.then(announce, () => {});
     },
   });
 

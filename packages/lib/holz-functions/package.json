@@ -1,9 +1,9 @@
 {
-  "name": "@lib/holz-valve",
+  "name": "@lib/holz-functions",
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Suspend and resume a holz log stream behind a bounded buffer.",
+  "description": "Shared functions for holz log pipelines.",
   "license": "MIT",
   "sideEffects": false,
   "exports": "./src/index.ts",
@@ -13,8 +13,5 @@
   },
   "dependencies": {
     "@holz/core": "catalog:"
-  },
-  "devDependencies": {
-    "@dev/vitest-config": "workspace:*"
   }
 }

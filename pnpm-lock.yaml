@@ -1169,9 +1169,9 @@ importers:
       '@holz/pattern-filter':
         specifier: 'catalog:'
         version: 0.10.0(@holz/core@0.10.0)
-      '@lib/holz-valve':
+      '@lib/holz-functions':
         specifier: workspace:*
-        version: link:../holz-valve
+        version: link:../holz-functions
       '@lib/runtime-config':
         specifier: workspace:*
         version: link:../runtime-config
@@ -1179,6 +1179,12 @@ importers:
       '@dev/vitest-config':
         specifier: workspace:*
         version: link:../../dev/vitest-config
+
+  packages/lib/holz-functions:
+    dependencies:
+      '@holz/core':
+        specifier: 'catalog:'
+        version: 0.10.0
 
   packages/lib/holz-idb-backend:
     dependencies:
@@ -1188,9 +1194,9 @@ importers:
       '@lib/assert':
         specifier: workspace:*
         version: link:../assert
-      '@lib/holz-valve':
+      '@lib/holz-functions':
         specifier: workspace:*
-        version: link:../holz-valve
+        version: link:../holz-functions
       '@lib/messaging':
         specifier: workspace:*
         version: link:../messaging
@@ -1202,21 +1208,14 @@ importers:
         specifier: workspace:*
         version: link:../../dev/vitest-config
 
-  packages/lib/holz-valve:
-    dependencies:
-      '@holz/core':
-        specifier: 'catalog:'
-        version: 0.10.0
-    devDependencies:
-      '@dev/vitest-config':
-        specifier: workspace:*
-        version: link:../../dev/vitest-config
-
   packages/lib/holz-vite-backend:
     dependencies:
       '@holz/core':
         specifier: 'catalog:'
         version: 0.10.0
+      '@lib/holz-functions':
+        specifier: workspace:*
+        version: link:../holz-functions
       serialize-error:
         specifier: 'catalog:'
         version: 13.1.0
