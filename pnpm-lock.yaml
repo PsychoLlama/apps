@@ -1212,16 +1212,6 @@ importers:
         specifier: workspace:*
         version: link:../../dev/vitest-config
 
-  packages/lib/holz-valve:
-    dependencies:
-      '@holz/core':
-        specifier: 'catalog:'
-        version: 0.10.0
-    devDependencies:
-      '@dev/vitest-config':
-        specifier: workspace:*
-        version: link:../../dev/vitest-config
-
   packages/lib/holz-vite-backend:
     dependencies:
       '@holz/core':
