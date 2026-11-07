@@ -1,7 +1,7 @@
 import type { IDBPDatabase } from 'idb';
 import type { LogProcessor } from '@holz/core';
 import { assert } from '@lib/assert';
-import { createValve } from '@lib/holz-functions';
+import { createValve } from '@holz/core/functions';
 
 import { createLogInsertedChannel } from './broadcast';
 import {

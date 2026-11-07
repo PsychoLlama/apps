@@ -1,5 +1,5 @@
 import type { LogProcessor } from '@holz/core';
-import { createBuffer, createRouter } from '@lib/holz-functions';
+import { createBuffer, createRouter } from '@holz/core/functions';
 
 import type { DevSocket } from './vite-backend.ts';
 

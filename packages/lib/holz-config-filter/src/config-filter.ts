@@ -1,6 +1,6 @@
 import type { LogProcessor } from '@holz/core';
 import { createPatternFilter } from '@holz/pattern-filter';
-import { createValve } from '@lib/holz-functions';
+import { createValve } from '@holz/core/functions';
 import {
   environment,
   readEnvironment,
