@@ -13,8 +13,5 @@
   },
   "dependencies": {
     "@holz/core": "catalog:"
-  },
-  "devDependencies": {
-    "@dev/vitest-config": "workspace:*"
   }
 }
