@@ -5,3 +5,5 @@ export { createBuffer } from './buffer';
 export type { LogBuffer, CreateBufferOptions } from './buffer';
 export { createRouter } from './router';
 export type { LogRouter } from './router';
+export { createValve } from './valve';
+export type { LogValve, CreateValveOptions } from './valve';
