@@ -1213,6 +1213,9 @@ importers:
       '@holz/core':
         specifier: 'catalog:'
         version: 0.10.0
+      '@lib/holz-functions':
+        specifier: workspace:*
+        version: link:../holz-functions
       serialize-error:
         specifier: 'catalog:'
         version: 13.1.0
