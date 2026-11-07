@@ -13,6 +13,7 @@ import {
   type ServiceWorkerConfig,
 } from '@dev/vite-plugin-service-worker';
 import { svgToPng } from '@dev/vite-plugin-svg-to-png';
+import { browserLogs } from './browser-logs.ts';
 import { nitro, type NitroModuleOptions, type NitroOptions } from './nitro.ts';
 import {
   solid,
@@ -77,7 +78,7 @@ export type SubstrateOptions = PackageOptions | AppOptions;
  * components, `?to-png=<size>` SVG imports and `?inline-script` head
  * scripts. Apps swap Solid for SolidStart, add Nitro, and can opt into a
  * PWA manifest, service worker and redirects. Apps always get `_headers`
- * with the house cache policy.
+ * with the house cache policy, and their dev servers print browser logs.
  * Package-specific plugins go alongside it.
  */
 export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
@@ -101,5 +102,6 @@ export const substrate = (options: SubstrateOptions = {}): PluginOption[] => {
     Icons({ compiler: 'solid' }),
     assertHashedAssets(),
     app && nitro(app.nitro, app),
+    app && browserLogs(),
   ];
 };

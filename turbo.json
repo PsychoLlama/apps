@@ -48,7 +48,8 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["HOLZ_LOG_FILE"]
     },
     "preview": {
       "cache": false,
