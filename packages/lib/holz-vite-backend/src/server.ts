@@ -1,6 +1,6 @@
 import { inspect } from 'node:util';
 import type { LogProcessor } from '@holz/core';
-import type { Plugin } from 'vite';
+import type { Plugin, ResolvedConfig } from 'vite';
 import { LOG_EVENT } from './protocol/events.ts';
 import { deserializeLog } from './protocol/serialization.ts';
 
@@ -23,27 +23,25 @@ export interface HolzConfig {
  * server's socket and hands them to the configured processor. Dev server
  * only; builds ignore it.
  *
- * Pass the config directly, or an async function that resolves it. The
- * function runs once, while Vite resolves its config, so it can lazily
- * import server-only backends without burdening builds. If it rejects, the
- * dev server fails to start.
+ * Pass the config directly, or an async function that resolves it from
+ * Vite's resolved config (e.g. to place files under `root`). The function
+ * runs once, before the server starts, so it can lazily import server-only
+ * backends without burdening builds. If it rejects, the dev server fails to
+ * start.
  *
  * Disables Vite's `server.forwardConsole` unless the app sets it explicitly.
  */
 export const holz = (
-  options: HolzConfig | (() => Promise<HolzConfig>),
+  options: HolzConfig | ((config: ResolvedConfig) => Promise<HolzConfig>),
 ): Plugin => {
-  // Assigned in `config`, which Vite awaits before `configureServer`.
+  // Assigned in `configResolved`, which Vite awaits before `configureServer`.
   let processor: LogProcessor;
 
   return {
     name: PLUGIN_NAME,
     apply: 'serve',
 
-    async config(config) {
-      ({ processor } =
-        typeof options === 'function' ? await options() : options);
-
+    config(config) {
       // Vite's console forwarding sends browser console output to the same
       // terminal, flattened to strings, and duplicates whatever the browser
       // backends also print to the console. It's on by default under coding
@@ -51,6 +49,11 @@ export const holz = (
       if (config.server?.forwardConsole === undefined) {
         return { server: { forwardConsole: false } };
       }
+    },
+
+    async configResolved(config) {
+      ({ processor } =
+        typeof options === 'function' ? await options(config) : options);
     },
 
     configureServer(server) {

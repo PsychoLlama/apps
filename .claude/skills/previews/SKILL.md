@@ -43,8 +43,13 @@ This keeps origin state and service workers isolated between apps in localdev.
 
 Steps:
 
-1. Start with `turbo run dev --filter <pkg>`.
+1. Start with `HOLZ_LOG_FILE=<path> turbo run dev --filter <pkg>`.
 2. Poll server until it's ready.
+
+Logs:
+
+- `HOLZ_LOG_FILE` streams browser logs into NDJSON, truncated on start.
+- Use an absolute path in your scratchpad. Read it when debugging browser behavior.
 
 ## Static Server
 
