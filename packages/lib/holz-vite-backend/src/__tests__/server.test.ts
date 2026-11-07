@@ -1,5 +1,5 @@
 import { type Log, type LogProcessor, createLogger } from '@holz/core';
-import type { ViteDevServer } from 'vite';
+import type { ResolvedConfig, ViteDevServer } from 'vite';
 import { LOG_EVENT } from '../protocol/events.ts';
 import { type SerializedLog, serializeLog } from '../protocol/serialization.ts';
 import { type HolzConfig, holz } from '../server.ts';
@@ -11,14 +11,15 @@ type Hook = (...args: unknown[]) => unknown;
 // Stands in for the dev server: runs the hooks in Vite's order against just
 // enough surface, with a hook to play messages arriving from the browser.
 const startServer = async (
-  options: HolzConfig | (() => Promise<HolzConfig>),
+  options: HolzConfig | ((config: ResolvedConfig) => Promise<HolzConfig>),
 ) => {
   const listeners = new Map<string, Listener>();
   const logger = {
     error: vi.fn<(message: string, options?: { error?: Error }) => void>(),
   };
+  const config = { root: '/app', logger } as unknown as ResolvedConfig;
   const server = {
-    config: { logger },
+    config,
     environments: {
       client: {
         hot: { on: (event: string, fn: Listener) => listeners.set(event, fn) },
@@ -28,6 +29,7 @@ const startServer = async (
 
   const plugin = holz(options);
   await (plugin.config as Hook)({}, { command: 'serve', mode: 'development' });
+  await (plugin.configResolved as Hook)(config);
   (plugin.configureServer as Hook)(server);
 
   const receive = (log: Log) => listeners.get(LOG_EVENT)?.(serializeLog(log));
@@ -90,6 +92,15 @@ describe('holz', () => {
     receive(capture((logger) => logger.info('two')));
 
     expect(getConfig).toHaveBeenCalledOnce();
+  });
+
+  it("passes Vite's resolved config to a config function", async () => {
+    const getConfig = vi.fn<(config: ResolvedConfig) => Promise<HolzConfig>>(
+      async () => ({ processor: () => {} }),
+    );
+    await startServer(getConfig);
+
+    expect(getConfig.mock.calls[0][0].root).toBe('/app');
   });
 
   it('waits for an async config', async () => {
