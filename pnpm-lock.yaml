@@ -1394,6 +1394,12 @@ importers:
         specifier: 'catalog:'
         version: 0.8.10(@solidjs/router@1.0.0(solid-js@1.9.18))(solid-js@1.9.18)
 
+  packages/lib/tracing:
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
+
   packages/lib/ui:
     dependencies:
       '@floating-ui/dom':
