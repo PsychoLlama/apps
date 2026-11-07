@@ -1180,6 +1180,16 @@ importers:
         specifier: workspace:*
         version: link:../../dev/vitest-config
 
+  packages/lib/holz-functions:
+    dependencies:
+      '@holz/core':
+        specifier: 'catalog:'
+        version: 0.10.0
+    devDependencies:
+      '@dev/vitest-config':
+        specifier: workspace:*
+        version: link:../../dev/vitest-config
+
   packages/lib/holz-idb-backend:
     dependencies:
       '@holz/core':
