@@ -12,6 +12,12 @@ export interface TracerOptions {
   clock: Clock;
 }
 
+/** A named unit of work within a trace. */
+export interface Span {
+  /** What this span measures. */
+  readonly name: string;
+}
+
 /**
  * The top-level tracing context. Not a span itself: it has no lifecycle,
  * and is where process-wide concerns are configured.
@@ -19,9 +25,13 @@ export interface TracerOptions {
 export interface Tracer {
   /** The time source spans read from. */
   readonly clock: Clock;
+
+  /** Create a span. */
+  span: (name: string) => Span;
 }
 
 /** Create the top-level {@link Tracer}. Usually called once per realm. */
 export const configure = (options: TracerOptions): Tracer => ({
   clock: options.clock,
+  span: (name) => ({ name }),
 });
