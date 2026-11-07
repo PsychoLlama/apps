@@ -93,16 +93,10 @@ export const createIdbBackend = (
       // One transaction for the whole batch. `add` is fire-and-forget like the
       // streaming path. Announce once the batch commits — a failed flush drops
       // rather than surfacing (reporting it would recurse into the logger) and
-      // pings nothing. An open with an empty buffer drains nothing, so only ping
-      // when the batch actually carried logs.
+      // pings nothing.
       const tx = db.transaction(STORE_NAME, 'readwrite');
       for (const log of logs) void tx.store.add(log);
-      tx.done.then(
-        () => {
-          if (logs.length > 0) announce();
-        },
-        () => {},
-      );
+      tx.done.then(announce, () => {});
     },
   });
 
