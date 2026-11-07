@@ -1,7 +1,7 @@
 import { mkdir, open } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { createAnsiTerminalBackend } from '@holz/ansi-terminal-backend';
-import { combine } from '@holz/core';
+import { createGroup } from '@holz/core/functions';
 import { createJsonBackend } from '@holz/json-backend';
 import { holz } from '@lib/holz-vite-backend/server';
 
@@ -23,7 +23,7 @@ export const browserLogs = () =>
     const file = await open(path, 'w');
 
     return {
-      processor: combine([
+      processor: createGroup([
         terminal,
         createJsonBackend({ stream: file.createWriteStream() }),
       ]),

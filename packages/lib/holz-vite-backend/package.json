@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@holz/core": "catalog:",
-    "@lib/holz-functions": "workspace:*",
     "serialize-error": "catalog:"
   },
   "peerDependencies": {

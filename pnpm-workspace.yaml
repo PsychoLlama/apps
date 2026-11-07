@@ -41,14 +41,14 @@ catalog:
   '@eslint/js': ^10.0.0
   '@eslint/json': ^2.1.1
   '@floating-ui/dom': ^1.8.0
-  '@holz/ansi-terminal-backend': 0.10.0
-  '@holz/console-backend': 0.10.0
-  '@holz/core': 0.10.0
-  '@holz/env-filter': 0.10.0
-  '@holz/json-backend': 0.10.0
-  '@holz/log-collector': 0.10.0
-  '@holz/pattern-filter': 0.10.0
-  '@holz/stream-backend': 0.10.0
+  '@holz/ansi-terminal-backend': 0.11.0
+  '@holz/console-backend': 0.11.0
+  '@holz/core': 0.11.0
+  '@holz/env-filter': 0.11.0
+  '@holz/json-backend': 0.11.0
+  '@holz/log-collector': 0.11.0
+  '@holz/pattern-filter': 0.11.0
+  '@holz/stream-backend': 0.11.0
   '@iconify/json': ^2.2.470
   '@resvg/resvg-wasm': ^2.6.2
   '@solidjs/meta': ^0.29.4

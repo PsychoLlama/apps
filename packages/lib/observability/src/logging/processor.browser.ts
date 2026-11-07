@@ -1,13 +1,12 @@
 import { createConsoleBackend } from '@holz/console-backend';
-import { type LogProcessor, combine, filter } from '@holz/core';
+import type { LogProcessor } from '@holz/core';
+import { createFilter, createGroup } from '@holz/core/functions';
 import { createLogCollector } from '@holz/log-collector';
 import { createConfigFilter } from '@lib/holz-config-filter';
 import { createIdbBackend } from '@lib/holz-idb-backend';
 import { createViteBackend } from '@lib/holz-vite-backend/client';
 
-// Aliased: `filter` (the log-pattern option) collides with `@holz/core`'s
-// `filter` operator imported above.
-import { filter as logFilter } from '../config';
+import { filter } from '../config';
 
 // Under Vitest `import.meta.env.MODE` is `'test'`. Mirror the server
 // processor's `NODE_ENV` guard and stay silent so suites don't spew log
@@ -23,11 +22,11 @@ const notTest = import.meta.env.MODE !== 'test';
 // realm-specific branch and, unlike the `localStorage` env filter, workers
 // get the same filtering knob as the page.
 export const processor: LogProcessor = createLogCollector({
-  fallback: filter(
+  fallback: createFilter(
     () => notTest,
-    combine([
+    createGroup([
       createConfigFilter({
-        option: logFilter,
+        option: filter,
         processor: createConsoleBackend(),
       }),
       createIdbBackend(),
