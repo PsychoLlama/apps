@@ -1,4 +1,4 @@
-import type { EnteredSpan, ExitedSpan, Span } from './span';
+import type { EnteredSpan, ExitedSpan, Span } from './span-data';
 
 /** Something that happened to a span after it was created. */
 export type Action =

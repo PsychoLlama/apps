@@ -1,7 +1,8 @@
 import { createContext, type TracerConfig } from '../config';
 import { SpanAlreadyEnteredError, SpanAlreadyExitedError } from '../errors';
-import type { Action } from '../processor';
-import { createSpan, type Span } from '../span';
+import type { Action } from '../processor/processor';
+import type { Span } from '../processor/span-data';
+import { createSpan } from '../span';
 
 describe('span', () => {
   const traceId = new Uint8Array(16).fill(1);

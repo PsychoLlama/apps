@@ -1,6 +1,6 @@
 import { createLogger, type Logger, type LogProcessor } from '@holz/core';
 
-import type { TraceProcessor } from './processor';
+import type { TraceProcessor } from './processor/processor';
 
 /**
  * A time source. Returns a Unix timestamp in milliseconds, fractional
