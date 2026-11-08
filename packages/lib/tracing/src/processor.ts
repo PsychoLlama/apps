@@ -1,7 +1,10 @@
-import type { Span } from './span';
+import type { EnteredSpan, ExitedSpan, Span } from './span';
 
 /** Something that happened to a span after it was created. */
-export type Action = { type: 'enter' } | { type: 'exit' } | { type: 'update' };
+export type Action =
+  | { type: 'enter'; span: EnteredSpan }
+  | { type: 'exit'; span: ExitedSpan }
+  | { type: 'update' };
 
 /** Called for every {@link Action} applied to a span. */
 export type ActionHandler = (action: Action) => unknown;

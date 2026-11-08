@@ -41,6 +41,25 @@ export type Span = Readonly<{
   attrs: Readonly<Record<string, AttributeValue>>;
 }>;
 
+/** A span whose work has started. */
+export interface EnteredSpan extends Span {
+  /** When the work happened. */
+  readonly time: Readonly<{
+    /** Unix epoch in milliseconds, fractional digits included. */
+    started: number;
+  }>;
+}
+
+/** A span whose work has finished. */
+export interface ExitedSpan extends EnteredSpan {
+  /** When the work happened. */
+  readonly time: EnteredSpan['time'] &
+    Readonly<{
+      /** Unix epoch in milliseconds, fractional digits included. */
+      ended: number;
+    }>;
+}
+
 /** The API for instrumenting a unit of work. */
 export interface SpanHandle {
   /** Logs on behalf of this span. */
@@ -49,11 +68,11 @@ export interface SpanHandle {
   /** Create a span nested under this one. */
   child: (name: string) => SpanHandle;
 
-  /** Mark the start of the work this span measures. */
-  enter: () => void;
-
-  /** Mark the end of the work this span measures. */
-  exit: () => void;
+  /**
+   * Mark the start of the work this span measures. Returns the function that
+   * marks its end.
+   */
+  enter: () => () => void;
 }
 
 /** What a span inherits. Passed from a span to its children. */
@@ -82,10 +101,24 @@ export const createSpan = (name: string, context: SpanContext): SpanHandle => {
       });
     },
     enter: () => {
-      onAction({ type: 'enter' });
-    },
-    exit: () => {
-      onAction({ type: 'exit' });
+      const entered: EnteredSpan = {
+        ...span,
+        time: { started: context.getCurrentTime() },
+      };
+
+      onAction({ type: 'enter', span: entered });
+
+      return () => {
+        const exited: ExitedSpan = {
+          ...entered,
+          time: {
+            started: entered.time.started,
+            ended: context.getCurrentTime(),
+          },
+        };
+
+        onAction({ type: 'exit', span: exited });
+      };
     },
   };
 };

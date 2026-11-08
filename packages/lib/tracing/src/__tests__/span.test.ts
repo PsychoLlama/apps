@@ -1,4 +1,5 @@
 import { createContext, type TracerConfig } from '../config';
+import type { Action } from '../processor';
 import { createSpan, type Span } from '../span';
 
 describe('span', () => {
@@ -6,11 +7,14 @@ describe('span', () => {
 
   const setup = (overrides?: Partial<TracerConfig>) => {
     const spans: Span[] = [];
+    const actions: Action[] = [];
     const context = createContext({
       getCurrentTime: () => 1_000,
       processor: (span) => {
         spans.push(span);
-        return vi.fn();
+        return (action) => {
+          actions.push(action);
+        };
       },
       holz: { processor: vi.fn() },
       ...overrides,
@@ -19,6 +23,7 @@ describe('span', () => {
     return {
       context: { ...context, parent: null, trace: { id: traceId } },
       spans,
+      actions,
     };
   };
 
@@ -43,24 +48,38 @@ describe('span', () => {
   });
 
   describe('enter', () => {
-    it('sends an enter action to the span handler', () => {
-      const handler = vi.fn();
-      const { context } = setup({ processor: () => handler });
+    it('sends only the entered span to the handler', () => {
+      const { context, spans, actions } = setup({
+        getCurrentTime: () => 1_000.5,
+      });
 
       createSpan('load-page', context).enter();
 
-      expect(handler).toHaveBeenCalledExactlyOnceWith({ type: 'enter' });
+      expect(actions).toEqual([
+        { type: 'enter', span: { ...spans[0], time: { started: 1_000.5 } } },
+      ]);
     });
-  });
 
-  describe('exit', () => {
-    it('sends an exit action to the span handler', () => {
-      const handler = vi.fn();
-      const { context } = setup({ processor: () => handler });
+    it('returns a function that exits the span', () => {
+      const getCurrentTime = vi
+        .fn<() => number>()
+        .mockReturnValueOnce(1_000.5)
+        .mockReturnValueOnce(2_000.25);
+      const { context, spans, actions } = setup({ getCurrentTime });
 
-      createSpan('load-page', context).exit();
+      const exit = createSpan('load-page', context).enter();
+      exit();
 
-      expect(handler).toHaveBeenCalledExactlyOnceWith({ type: 'exit' });
+      expect(actions).toEqual([
+        { type: 'enter', span: { ...spans[0], time: { started: 1_000.5 } } },
+        {
+          type: 'exit',
+          span: {
+            ...spans[0],
+            time: { started: 1_000.5, ended: 2_000.25 },
+          },
+        },
+      ]);
     });
   });
 
@@ -75,7 +94,9 @@ describe('span', () => {
       createSpan('parent', context).child('child').enter();
 
       expect(handlers[0]).not.toHaveBeenCalled();
-      expect(handlers[1]).toHaveBeenCalledExactlyOnceWith({ type: 'enter' });
+      expect(handlers[1]).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ type: 'enter' }),
+      );
     });
 
     it('announces each descendant to the processor', () => {
