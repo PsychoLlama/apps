@@ -1,4 +1,5 @@
-import { configure, type TracerConfig } from '../tracer';
+import type { TracerConfig } from '../config';
+import { configure } from '../tracer';
 
 const setup = (overrides?: Partial<TracerConfig>) =>
   configure({
@@ -14,6 +15,17 @@ describe('configure', () => {
     const tracer = setup({ getCurrentTime });
 
     expect(tracer.getCurrentTime).toBe(getCurrentTime);
+  });
+
+  it('exposes the configured getRandomBytes', () => {
+    const getRandomBytes = (count: number) => new Uint8Array(count);
+    const tracer = setup({ getRandomBytes });
+
+    expect(tracer.getRandomBytes).toBe(getRandomBytes);
+  });
+
+  it('defaults getRandomBytes to the requested number of bytes', () => {
+    expect(setup().getRandomBytes(8)).toHaveLength(8);
   });
 });
 

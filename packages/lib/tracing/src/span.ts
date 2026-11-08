@@ -1,6 +1,6 @@
 import type { Logger } from '@holz/core';
 
-import type { TraceProcessor } from './processor';
+import type { Context } from './config';
 
 /** A named unit of work within a trace. */
 export interface Span {
@@ -14,14 +14,8 @@ export interface Span {
   child: (name: string) => Span;
 }
 
-/** What a span inherits from its tracer. */
-interface SpanContext {
-  log: Logger;
-  processor: TraceProcessor;
-}
-
 /** Create a span and announce it to the processor. */
-export const createSpan = (name: string, context: SpanContext): Span => {
+export const createSpan = (name: string, context: Context): Span => {
   const span: Span = {
     name,
     log: context.log,
