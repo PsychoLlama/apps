@@ -34,16 +34,8 @@ export interface SpanHandle {
 /** What a span inherits. Passed from a span to its children. */
 interface SpanContext extends Context, Pick<Span, 'parent' | 'trace'> {}
 
-const getStatus = (failure?: SpanFailure): SpanStatus => {
-  if (!failure) return { code: 'ok' };
-
-  const { name, message, stack } = failure.error;
-
-  return {
-    code: 'error',
-    error: { type: name, message, stack: stack ?? null },
-  };
-};
+const getStatus = (failure?: SpanFailure): SpanStatus =>
+  failure ? { code: 'error', error: failure.error } : { code: 'ok' };
 
 /** Create a span and announce its data to the processor. */
 export const createSpan = (name: string, context: SpanContext): SpanHandle => {

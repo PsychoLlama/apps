@@ -1,5 +1,5 @@
-// Mirrors holz's log context, minus its `error` field. Spans are plain data,
-// and a failure is an outcome of the span rather than a detail describing it.
+// Mirrors holz's log context, minus its `error` field. A failure is an outcome
+// of the span rather than a detail describing it.
 /** A span attribute value. Anything JSON-serializable, nesting included. */
 type AttributeValue =
   | string
@@ -59,18 +59,7 @@ export interface ExitedSpan extends EnteredSpan {
   readonly status: SpanStatus;
 }
 
-/** A failure, reduced to plain data. */
-export type SpanError = Readonly<{
-  /** The kind of failure, taken from the error's name. */
-  type: string;
-
-  /** The error's message. */
-  message: string;
-
-  /** The error's stack trace, if it has one. */
-  stack: null | string;
-}>;
-
 /** How a span's work turned out. */
-export type SpanStatus =
-  Readonly<{ code: 'ok' }> | Readonly<{ code: 'error'; error: SpanError }>;
+export type SpanStatus = Readonly<
+  { code: 'ok' } | { code: 'error'; error: Error }
+>;

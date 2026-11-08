@@ -9,7 +9,6 @@ export type {
   EnteredSpan,
   ExitedSpan,
   Span,
-  SpanError,
   SpanStatus,
 } from './processor/span-data';
 export type { SpanHandle } from './span';
