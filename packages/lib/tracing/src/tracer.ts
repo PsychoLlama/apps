@@ -11,7 +11,7 @@ type Clock = () => number;
 /** Options for {@link configure}. */
 export interface TracerOptions {
   /** Where spans read the time from. */
-  clock: Clock;
+  getCurrentTime: Clock;
 }
 
 /**
@@ -20,7 +20,7 @@ export interface TracerOptions {
  */
 export interface Tracer {
   /** The time source spans read from. */
-  readonly clock: Clock;
+  readonly getCurrentTime: Clock;
 
   /** Create a span. */
   span: (name: string) => Span;
@@ -28,6 +28,6 @@ export interface Tracer {
 
 /** Create the top-level {@link Tracer}. Usually called once per realm. */
 export const configure = (options: TracerOptions): Tracer => ({
-  clock: options.clock,
+  getCurrentTime: options.getCurrentTime,
   span: (name) => ({ name }),
 });
