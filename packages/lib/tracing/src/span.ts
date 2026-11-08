@@ -2,6 +2,18 @@ import type { Logger } from '@holz/core';
 
 import type { Context } from './config';
 
+// Mirrors holz's log context, minus its `error` field. Spans are plain data,
+// and a failure is an outcome of the span rather than a detail describing it.
+/** A span attribute value. Anything JSON-serializable, nesting included. */
+type AttributeValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | ReadonlyArray<AttributeValue>
+  | { readonly [key: string]: AttributeValue };
+
 /** Plain data describing a span. This is what processors receive. */
 export type Span = Readonly<{
   /**
@@ -24,6 +36,9 @@ export type Span = Readonly<{
     /** Identifies the trace. 16 bytes. */
     id: Uint8Array;
   }>;
+
+  /** Key-value details about this span. */
+  attrs: Readonly<Record<string, AttributeValue>>;
 }>;
 
 /** The API for instrumenting a unit of work. */
@@ -45,6 +60,7 @@ export const createSpan = (name: string, context: SpanContext): SpanHandle => {
     id: context.getRandomBytes(8),
     parent: context.parent,
     trace: context.trace,
+    attrs: {},
   };
 
   // The handler goes unused until spans can apply actions.

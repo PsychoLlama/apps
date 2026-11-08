@@ -36,6 +36,7 @@ describe('span', () => {
           id: new Uint8Array(8).fill(8),
           parent: null,
           trace: { id: traceId },
+          attrs: {},
         },
       ]);
     });
