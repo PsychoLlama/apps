@@ -1,6 +1,2 @@
-export {
-  configure,
-  type Span,
-  type Tracer,
-  type TracerOptions,
-} from './tracer';
+export type { Span } from './span';
+export { configure, type Tracer, type TracerOptions } from './tracer';

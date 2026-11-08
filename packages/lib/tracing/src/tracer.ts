@@ -1,3 +1,5 @@
+import type { Span } from './span';
+
 /**
  * A time source. Returns a Unix timestamp in milliseconds, fractional
  * digits included.
@@ -10,12 +12,6 @@ type Clock = () => number;
 export interface TracerOptions {
   /** Where spans read the time from. */
   clock: Clock;
-}
-
-/** A named unit of work within a trace. */
-export interface Span {
-  /** What this span measures. */
-  readonly name: string;
 }
 
 /**
