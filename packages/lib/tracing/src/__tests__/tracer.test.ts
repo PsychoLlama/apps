@@ -1,9 +1,17 @@
-import { configure } from '../tracer';
+import { configure, type TracerConfig } from '../tracer';
+
+const setup = (overrides?: Partial<TracerConfig>) =>
+  configure({
+    getCurrentTime: () => 1_000,
+    processor: vi.fn(),
+    holz: { processor: vi.fn() },
+    ...overrides,
+  });
 
 describe('configure', () => {
   it('exposes the configured getCurrentTime', () => {
     const getCurrentTime = () => 1_000;
-    const tracer = configure({ getCurrentTime, holz: { processor: vi.fn() } });
+    const tracer = setup({ getCurrentTime });
 
     expect(tracer.getCurrentTime).toBe(getCurrentTime);
   });
@@ -11,24 +19,23 @@ describe('configure', () => {
 
 describe('tracer.span', () => {
   it('creates a span with the given name', () => {
-    const tracer = configure({
-      getCurrentTime: () => 1_000,
-      holz: { processor: vi.fn() },
-    });
-
-    expect(tracer.span('load-page').name).toBe('load-page');
+    expect(setup().span('load-page').name).toBe('load-page');
   });
 
-  it('sends span logs to the configured processor', () => {
+  it('passes each new span to the processor', () => {
     const processor = vi.fn();
-    const tracer = configure({
-      getCurrentTime: () => 1_000,
-      holz: { processor },
-    });
+    const span = setup({ processor }).span('load-page');
+
+    expect(processor).toHaveBeenCalledExactlyOnceWith(span);
+  });
+
+  it('sends span logs to the configured log processor', () => {
+    const logProcessor = vi.fn();
+    const tracer = setup({ holz: { processor: logProcessor } });
 
     tracer.span('load-page').log.info('loaded');
 
-    expect(processor).toHaveBeenCalledExactlyOnceWith(
+    expect(logProcessor).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ message: 'loaded' }),
     );
   });
