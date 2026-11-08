@@ -78,9 +78,47 @@ describe('span', () => {
           span: {
             ...spans[0],
             time: { started: 1_000.5, ended: 2_000.25 },
+            status: { code: 'ok' },
           },
         },
       ]);
+    });
+
+    it('reports a failure as plain error data', () => {
+      const { context, spans, actions } = setup();
+      const error = new TypeError('Request failed.');
+
+      const exit = createSpan('load-page', context).enter();
+      exit({ error });
+
+      expect(actions.at(-1)).toEqual({
+        type: 'exit',
+        span: {
+          ...spans[0],
+          time: { started: 1_000, ended: 1_000 },
+          status: {
+            code: 'error',
+            error: {
+              type: 'TypeError',
+              message: 'Request failed.',
+              stack: error.stack,
+            },
+          },
+        },
+      });
+    });
+
+    it('reports a null stack for errors without one', () => {
+      const { context, actions } = setup();
+      const error = new Error('Request failed.');
+      delete error.stack;
+
+      const exit = createSpan('load-page', context).enter();
+      exit({ error });
+
+      expect(actions.at(-1)).toMatchObject({
+        span: { status: { error: { stack: null } } },
+      });
     });
 
     it('throws when entered twice', () => {

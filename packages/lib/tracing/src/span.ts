@@ -59,6 +59,31 @@ export interface ExitedSpan extends EnteredSpan {
       /** Unix epoch in milliseconds, fractional digits included. */
       ended: number;
     }>;
+
+  /** How the work turned out. */
+  readonly status: SpanStatus;
+}
+
+/** A failure, reduced to plain data. */
+export type SpanError = Readonly<{
+  /** The kind of failure, taken from the error's name. */
+  type: string;
+
+  /** The error's message. */
+  message: string;
+
+  /** The error's stack trace, if it has one. */
+  stack: null | string;
+}>;
+
+/** How a span's work turned out. */
+export type SpanStatus =
+  Readonly<{ code: 'ok' }> | Readonly<{ code: 'error'; error: SpanError }>;
+
+/** Marks a span's work as failed. */
+interface SpanFailure {
+  /** Why the work failed. */
+  error: Error;
 }
 
 /** The API for instrumenting a unit of work. */
@@ -71,13 +96,25 @@ export interface SpanHandle {
 
   /**
    * Mark the start of the work this span measures. Returns the function that
-   * marks its end.
+   * marks its end. Pass it `{ error }` if the work failed, whether or not
+   * anything was thrown. Log errors the work recovered from instead.
    */
-  enter: () => () => void;
+  enter: () => (failure?: SpanFailure) => void;
 }
 
 /** What a span inherits. Passed from a span to its children. */
 interface SpanContext extends Context, Pick<Span, 'parent' | 'trace'> {}
+
+const getStatus = (failure?: SpanFailure): SpanStatus => {
+  if (!failure) return { code: 'ok' };
+
+  const { name, message, stack } = failure.error;
+
+  return {
+    code: 'error',
+    error: { type: name, message, stack: stack ?? null },
+  };
+};
 
 /** Create a span and announce its data to the processor. */
 export const createSpan = (name: string, context: SpanContext): SpanHandle => {
@@ -117,12 +154,13 @@ export const createSpan = (name: string, context: SpanContext): SpanHandle => {
 
       onAction({ type: 'enter', span: entered });
 
-      return () => {
+      return (failure) => {
         if (state === 'exited') throw new SpanAlreadyExitedError(name);
         state = 'exited';
 
         const exited: ExitedSpan = {
           ...entered,
+          status: getStatus(failure),
           time: {
             started: entered.time.started,
             ended: context.getCurrentTime(),
