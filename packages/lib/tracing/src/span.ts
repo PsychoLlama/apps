@@ -2,9 +2,6 @@ import type { Logger } from '@holz/core';
 
 import type { Context } from './config';
 
-const TRACE_ID_BYTES = 16;
-const SPAN_ID_BYTES = 8;
-
 /** Plain data describing a span. This is what processors receive. */
 export interface Span {
   /** What this span measures. */
@@ -26,24 +23,25 @@ export interface SpanHandle {
   child: (name: string) => SpanHandle;
 }
 
-/**
- * Create a span and announce its data to the processor. Starts a new trace
- * unless given the `traceId` of an existing one.
- */
-export const createSpan = (
-  name: string,
-  context: Context,
-  traceId = context.getRandomBytes(TRACE_ID_BYTES),
-): SpanHandle => {
-  // The handler goes unused until spans can apply actions.
-  context.processor({
+/** What a span inherits. Passed from a span to its children. */
+interface SpanContext extends Context {
+  /** The trace this span belongs to. */
+  readonly traceId: Uint8Array;
+}
+
+/** Create a span and announce its data to the processor. */
+export const createSpan = (name: string, context: SpanContext): SpanHandle => {
+  const span: Span = {
     name,
-    traceId,
-    spanId: context.getRandomBytes(SPAN_ID_BYTES),
-  });
+    traceId: context.traceId,
+    spanId: context.getRandomBytes(8),
+  };
+
+  // The handler goes unused until spans can apply actions.
+  context.processor(span);
 
   return {
     log: context.log,
-    child: (childName) => createSpan(childName, context, traceId),
+    child: (childName) => createSpan(childName, context),
   };
 };

@@ -2,6 +2,8 @@ import { createContext, type TracerConfig } from '../config';
 import { createSpan, type Span } from '../span';
 
 describe('span', () => {
+  const traceId = new Uint8Array(16).fill(1);
+
   const setup = (overrides?: Partial<TracerConfig>) => {
     const spans: Span[] = [];
     const context = createContext({
@@ -14,7 +16,7 @@ describe('span', () => {
       ...overrides,
     });
 
-    return { context, spans };
+    return { context: { ...context, traceId }, spans };
   };
 
   describe('createSpan', () => {
@@ -28,21 +30,10 @@ describe('span', () => {
       expect(spans).toEqual([
         {
           name: 'load-page',
-          traceId: new Uint8Array(16).fill(16),
+          traceId,
           spanId: new Uint8Array(8).fill(8),
         },
       ]);
-    });
-
-    it('starts a new trace for each root span', () => {
-      const { context, spans } = setup();
-
-      createSpan('first', context);
-      createSpan('second', context);
-
-      const traceIds = spans.map((span) => span.traceId);
-
-      expect(traceIds[1]).not.toEqual(traceIds[0]);
     });
   });
 
@@ -60,10 +51,7 @@ describe('span', () => {
 
       createSpan('parent', context).child('child');
 
-      const traceIds = spans.map((span) => span.traceId);
-
-      expect(traceIds).toHaveLength(2);
-      expect(traceIds[1]).toEqual(traceIds[0]);
+      expect(spans.map((span) => span.traceId)).toEqual([traceId, traceId]);
     });
 
     it('gets its own span ID', () => {
