@@ -1395,6 +1395,10 @@ importers:
         version: 0.8.10(@solidjs/router@1.0.0(solid-js@1.9.18))(solid-js@1.9.18)
 
   packages/lib/tracing:
+    dependencies:
+      '@holz/core':
+        specifier: 'catalog:'
+        version: 0.11.0
     devDependencies:
       '@dev/vitest-config':
         specifier: workspace:*

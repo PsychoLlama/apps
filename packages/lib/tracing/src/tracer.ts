@@ -1,3 +1,5 @@
+import { createLogger, type LogProcessor } from '@holz/core';
+
 import type { Span } from './span';
 
 /**
@@ -12,6 +14,12 @@ type Clock = () => number;
 export interface TracerOptions {
   /** Where spans read the time from. */
   getCurrentTime: Clock;
+
+  /** Logging configuration. */
+  holz: {
+    /** Receives everything logged through `span.log`. */
+    processor: LogProcessor;
+  };
 }
 
 /**
@@ -27,7 +35,11 @@ export interface Tracer {
 }
 
 /** Create the top-level {@link Tracer}. Usually called once per realm. */
-export const configure = (options: TracerOptions): Tracer => ({
-  getCurrentTime: options.getCurrentTime,
-  span: (name) => ({ name }),
-});
+export const configure = (options: TracerOptions): Tracer => {
+  const log = createLogger(options.holz.processor);
+
+  return {
+    getCurrentTime: options.getCurrentTime,
+    span: (name) => ({ name, log }),
+  };
+};
