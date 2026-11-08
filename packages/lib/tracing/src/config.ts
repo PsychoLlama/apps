@@ -5,21 +5,25 @@ import type { TraceProcessor } from './processor';
 /**
  * A time source. Returns a Unix timestamp in milliseconds, fractional
  * digits included.
- *
- * @example () => performance.timeOrigin + performance.now()
  */
 type Clock = () => number;
 
 /** A source of randomness. Returns the requested number of bytes. */
 type RandomSource = (count: number) => Uint8Array;
 
+const createPerformanceClock = (): Clock => {
+  const { timeOrigin } = performance;
+
+  return () => timeOrigin + performance.now();
+};
+
 const getSecureRandomBytes: RandomSource = (count) =>
   crypto.getRandomValues(new Uint8Array(count));
 
 /** Configuration for `configure`. */
 export interface TracerConfig {
-  /** Where spans read the time from. */
-  getCurrentTime: Clock;
+  /** Where spans read the time from. Defaults to the `performance` clock. */
+  getCurrentTime?: Clock;
 
   /** Where random bytes come from. Defaults to `crypto.getRandomValues`. */
   getRandomBytes?: RandomSource;
@@ -51,7 +55,7 @@ export interface Context {
 
 /** Resolve a {@link TracerConfig}, applying defaults. */
 export const createContext = (config: TracerConfig): Context => ({
-  getCurrentTime: config.getCurrentTime,
+  getCurrentTime: config.getCurrentTime ?? createPerformanceClock(),
   getRandomBytes: config.getRandomBytes ?? getSecureRandomBytes,
   processor: config.processor,
   log: createLogger(config.holz.processor),
