@@ -44,7 +44,6 @@ export const createSpan = (name: string, context: SpanContext): SpanHandle => {
     id: context.getRandomBytes(8),
     parent: context.parent,
     trace: context.trace,
-    attrs: {},
   };
 
   let state: 'pending' | 'entered' | 'exited' = 'pending';
