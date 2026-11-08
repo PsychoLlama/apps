@@ -1,57 +1,76 @@
 import { createContext, type TracerConfig } from '../config';
-import { createSpan } from '../span';
+import { createSpan, type Span } from '../span';
 
-const setup = (overrides?: Partial<TracerConfig>) =>
-  createContext({
+const setup = (overrides?: Partial<TracerConfig>) => {
+  const spans: Span[] = [];
+  const context = createContext({
     getCurrentTime: () => 1_000,
-    processor: vi.fn(),
+    processor: (span) => {
+      spans.push(span);
+      return vi.fn();
+    },
     holz: { processor: vi.fn() },
     ...overrides,
   });
 
-describe('createSpan', () => {
-  it('draws OTel-sized IDs from the random source', () => {
-    const getRandomBytes = (count: number) => new Uint8Array(count).fill(count);
-    const span = createSpan('load-page', setup({ getRandomBytes }));
+  return { context, spans };
+};
 
-    expect(span.traceId).toEqual(new Uint8Array(16).fill(16));
-    expect(span.spanId).toEqual(new Uint8Array(8).fill(8));
+describe('createSpan', () => {
+  it('gives the processor only plain span data', () => {
+    const getRandomBytes = (count: number) => new Uint8Array(count).fill(count);
+    const { context, spans } = setup({ getRandomBytes });
+
+    createSpan('load-page', context);
+
+    expect(spans).toEqual([
+      {
+        name: 'load-page',
+        traceId: new Uint8Array(16).fill(16),
+        spanId: new Uint8Array(8).fill(8),
+      },
+    ]);
   });
 
   it('starts a new trace for each root span', () => {
-    const context = setup();
-    const first = createSpan('first', context);
-    const second = createSpan('second', context);
+    const { context, spans } = setup();
 
-    expect(first.traceId).not.toEqual(second.traceId);
+    createSpan('first', context);
+    createSpan('second', context);
+
+    const traceIds = spans.map((span) => span.traceId);
+
+    expect(traceIds[1]).not.toEqual(traceIds[0]);
   });
 });
 
 describe('span.child', () => {
-  it('passes each child to the processor', () => {
-    const context = setup();
-    const child = createSpan('load-page', context).child('fetch-config');
-
-    expect(context.processor).toHaveBeenLastCalledWith(child);
-  });
-
-  it('supports nesting beyond one level', () => {
-    const context = setup();
+  it('announces each descendant to the processor', () => {
+    const { context, spans } = setup();
 
     createSpan('a', context).child('b').child('c');
 
-    expect(context.processor).toHaveBeenCalledTimes(3);
+    expect(spans.map((span) => span.name)).toEqual(['a', 'b', 'c']);
   });
 
   it('inherits the trace ID', () => {
-    const parent = createSpan('parent', setup());
+    const { context, spans } = setup();
 
-    expect(parent.child('child').traceId).toEqual(parent.traceId);
+    createSpan('parent', context).child('child');
+
+    const traceIds = spans.map((span) => span.traceId);
+
+    expect(traceIds).toHaveLength(2);
+    expect(traceIds[1]).toEqual(traceIds[0]);
   });
 
   it('gets its own span ID', () => {
-    const parent = createSpan('parent', setup());
+    const { context, spans } = setup();
 
-    expect(parent.child('child').spanId).not.toEqual(parent.spanId);
+    createSpan('parent', context).child('child');
+
+    const spanIds = spans.map((span) => span.spanId);
+
+    expect(spanIds[1]).not.toEqual(spanIds[0]);
   });
 });

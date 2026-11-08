@@ -11,6 +11,7 @@ export type ActionHandler = (action: Action) => unknown;
  * batching, uploading, persisting, and sampling.
  *
  * Called as soon as a span is constructed, which is before the span is
- * entered. Returns the handler for that span's actions.
+ * entered. Receives plain data only, with no way to alter the span. Returns
+ * the handler for that span's actions.
  */
 export type TraceProcessor = (span: Span) => ActionHandler;

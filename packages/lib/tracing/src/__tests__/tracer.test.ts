@@ -12,9 +12,12 @@ const setup = (overrides?: Partial<TracerConfig>) =>
 describe('tracer.span', () => {
   it('passes each new span to the processor', () => {
     const processor = vi.fn();
-    const span = setup({ processor }).span('load-page');
 
-    expect(processor).toHaveBeenCalledExactlyOnceWith(span);
+    setup({ processor }).span('load-page');
+
+    expect(processor).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ name: 'load-page' }),
+    );
   });
 
   it('sends span logs to the configured log processor', () => {

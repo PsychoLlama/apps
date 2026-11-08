@@ -1,5 +1,5 @@
 import { createContext, type TracerConfig } from './config';
-import { createSpan, type Span } from './span';
+import { createSpan, type SpanHandle } from './span';
 
 /**
  * The top-level tracing context. Not a span itself: it has no lifecycle,
@@ -7,7 +7,7 @@ import { createSpan, type Span } from './span';
  */
 export interface Tracer {
   /** Create a span. */
-  span: (name: string) => Span;
+  span: (name: string) => SpanHandle;
 }
 
 /** Create the top-level {@link Tracer}. Usually called once per realm. */
