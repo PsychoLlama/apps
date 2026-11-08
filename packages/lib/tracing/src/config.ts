@@ -1,6 +1,6 @@
 import { createLogger, type Logger, type LogProcessor } from '@holz/core';
 
-import type { TraceProcessor } from './processor/processor';
+import type { SpanProcessor } from './processor/processor';
 
 /**
  * A time source. Returns a Unix timestamp in milliseconds, fractional
@@ -29,7 +29,7 @@ export interface TracerConfig {
   getRandomBytes?: RandomSource;
 
   /** Receives every span. Provides all tracing behavior. */
-  processor: TraceProcessor;
+  processor: SpanProcessor;
 
   /** Logging configuration. */
   holz: {
@@ -47,7 +47,7 @@ export interface Context {
   readonly getRandomBytes: RandomSource;
 
   /** Receives every span. */
-  readonly processor: TraceProcessor;
+  readonly processor: SpanProcessor;
 
   /** The logger spans write through. */
   readonly log: Logger;

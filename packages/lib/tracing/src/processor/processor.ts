@@ -15,4 +15,4 @@ export type ActionHandler = (action: Action) => unknown;
  * entered. Receives plain data only, with no way to alter the span. Returns
  * the handler for that span's actions.
  */
-export type TraceProcessor = (span: Span) => ActionHandler;
+export type SpanProcessor = (span: Span) => ActionHandler;

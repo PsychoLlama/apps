@@ -3,7 +3,7 @@ export { SpanAlreadyEnteredError, SpanAlreadyExitedError } from './errors';
 export type {
   Action,
   ActionHandler,
-  TraceProcessor,
+  SpanProcessor,
 } from './processor/processor';
 export type {
   EnteredSpan,
