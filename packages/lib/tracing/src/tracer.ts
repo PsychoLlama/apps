@@ -1,7 +1,7 @@
 import { createLogger, type LogProcessor } from '@holz/core';
 
 import type { TraceProcessor } from './processor';
-import type { Span } from './span';
+import { createSpan, type Span } from './span';
 
 /**
  * A time source. Returns a Unix timestamp in milliseconds, fractional
@@ -40,17 +40,13 @@ export interface Tracer {
 
 /** Create the top-level {@link Tracer}. Usually called once per realm. */
 export const configure = (config: TracerConfig): Tracer => {
-  const log = createLogger(config.holz.processor);
+  const context = {
+    log: createLogger(config.holz.processor),
+    processor: config.processor,
+  };
 
   return {
     getCurrentTime: config.getCurrentTime,
-    span: (name) => {
-      const span: Span = { name, log };
-
-      // The handler goes unused until spans can apply actions.
-      config.processor(span);
-
-      return span;
-    },
+    span: (name) => createSpan(name, context),
   };
 };

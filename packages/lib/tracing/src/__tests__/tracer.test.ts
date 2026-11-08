@@ -40,3 +40,24 @@ describe('tracer.span', () => {
     );
   });
 });
+
+describe('span.child', () => {
+  it('creates a span with the given name', () => {
+    const child = setup().span('load-page').child('fetch-config');
+
+    expect(child.name).toBe('fetch-config');
+  });
+
+  it('passes each child to the processor', () => {
+    const processor = vi.fn();
+    const child = setup({ processor }).span('load-page').child('fetch-config');
+
+    expect(processor).toHaveBeenLastCalledWith(child);
+  });
+
+  it('supports nesting beyond one level', () => {
+    const grandchild = setup().span('a').child('b').child('c');
+
+    expect(grandchild.name).toBe('c');
+  });
+});
