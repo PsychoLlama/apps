@@ -16,8 +16,13 @@ export const configure = (config: TracerConfig): Tracer => {
 
   return {
     span: (name) => {
-      const traceId = context.getRandomBytes(16);
-      return createSpan(name, { ...context, traceId });
+      return createSpan(name, {
+        ...context,
+        parent: null,
+        trace: {
+          id: context.getRandomBytes(16),
+        },
+      });
     },
   };
 };

@@ -16,7 +16,10 @@ describe('span', () => {
       ...overrides,
     });
 
-    return { context: { ...context, traceId }, spans };
+    return {
+      context: { ...context, parent: null, trace: { id: traceId } },
+      spans,
+    };
   };
 
   describe('createSpan', () => {
@@ -30,8 +33,9 @@ describe('span', () => {
       expect(spans).toEqual([
         {
           name: 'load-page',
-          traceId,
-          spanId: new Uint8Array(8).fill(8),
+          id: new Uint8Array(8).fill(8),
+          parent: null,
+          trace: { id: traceId },
         },
       ]);
     });
@@ -51,7 +55,7 @@ describe('span', () => {
 
       createSpan('parent', context).child('child');
 
-      expect(spans.map((span) => span.traceId)).toEqual([traceId, traceId]);
+      expect(spans.map((span) => span.trace.id)).toEqual([traceId, traceId]);
     });
 
     it('gets its own span ID', () => {
@@ -59,9 +63,20 @@ describe('span', () => {
 
       createSpan('parent', context).child('child');
 
-      const spanIds = spans.map((span) => span.spanId);
+      const spanIds = spans.map((span) => span.id);
 
       expect(spanIds[1]).not.toEqual(spanIds[0]);
+    });
+
+    it('links each span to its immediate parent', () => {
+      const { context, spans } = setup();
+
+      createSpan('a', context).child('b').child('c');
+
+      const [root, child, grandchild] = spans;
+
+      expect(child?.parent).toEqual({ id: root?.id });
+      expect(grandchild?.parent).toEqual({ id: child?.id });
     });
   });
 });

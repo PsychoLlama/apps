@@ -29,7 +29,17 @@ describe('tracer', () => {
       setup({ processor, getRandomBytes }).span('load-page');
 
       expect(processor).toHaveBeenCalledExactlyOnceWith(
-        expect.objectContaining({ traceId: new Uint8Array(16).fill(16) }),
+        expect.objectContaining({ trace: { id: new Uint8Array(16).fill(16) } }),
+      );
+    });
+
+    it('creates root spans with no parent', () => {
+      const processor = vi.fn();
+
+      setup({ processor }).span('load-page');
+
+      expect(processor).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ parent: null }),
       );
     });
 
@@ -37,7 +47,7 @@ describe('tracer', () => {
       const traceIds: Uint8Array[] = [];
       const tracer = setup({
         processor: (span) => {
-          traceIds.push(span.traceId);
+          traceIds.push(span.trace.id);
           return vi.fn();
         },
       });
