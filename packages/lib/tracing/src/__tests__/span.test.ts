@@ -42,7 +42,42 @@ describe('span', () => {
     });
   });
 
+  describe('enter', () => {
+    it('sends an enter action to the span handler', () => {
+      const handler = vi.fn();
+      const { context } = setup({ processor: () => handler });
+
+      createSpan('load-page', context).enter();
+
+      expect(handler).toHaveBeenCalledExactlyOnceWith({ type: 'enter' });
+    });
+  });
+
+  describe('exit', () => {
+    it('sends an exit action to the span handler', () => {
+      const handler = vi.fn();
+      const { context } = setup({ processor: () => handler });
+
+      createSpan('load-page', context).exit();
+
+      expect(handler).toHaveBeenCalledExactlyOnceWith({ type: 'exit' });
+    });
+  });
+
   describe('child', () => {
+    it('sends actions to its own handler, not its parent', () => {
+      const handlers = [vi.fn(), vi.fn()];
+      const remaining = [...handlers];
+      const { context } = setup({
+        processor: () => remaining.shift() ?? vi.fn(),
+      });
+
+      createSpan('parent', context).child('child').enter();
+
+      expect(handlers[0]).not.toHaveBeenCalled();
+      expect(handlers[1]).toHaveBeenCalledExactlyOnceWith({ type: 'enter' });
+    });
+
     it('announces each descendant to the processor', () => {
       const { context, spans } = setup();
 

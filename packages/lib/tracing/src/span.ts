@@ -48,6 +48,12 @@ export interface SpanHandle {
 
   /** Create a span nested under this one. */
   child: (name: string) => SpanHandle;
+
+  /** Mark the start of the work this span measures. */
+  enter: () => void;
+
+  /** Mark the end of the work this span measures. */
+  exit: () => void;
 }
 
 /** What a span inherits. Passed from a span to its children. */
@@ -63,8 +69,7 @@ export const createSpan = (name: string, context: SpanContext): SpanHandle => {
     attrs: {},
   };
 
-  // The handler goes unused until spans can apply actions.
-  context.processor(span);
+  const onAction = context.processor(span);
 
   return {
     log: context.log,
@@ -75,6 +80,12 @@ export const createSpan = (name: string, context: SpanContext): SpanHandle => {
           id: span.id,
         },
       });
+    },
+    enter: () => {
+      onAction({ type: 'enter' });
+    },
+    exit: () => {
+      onAction({ type: 'exit' });
     },
   };
 };
