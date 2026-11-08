@@ -1,6 +1,7 @@
 import type { Logger } from '@holz/core';
 
 import type { Context } from './config';
+import { SpanAlreadyEnteredError, SpanAlreadyExitedError } from './errors';
 
 // Mirrors holz's log context, minus its `error` field. Spans are plain data,
 // and a failure is an outcome of the span rather than a detail describing it.
@@ -88,10 +89,12 @@ export const createSpan = (name: string, context: SpanContext): SpanHandle => {
     attrs: {},
   };
 
+  let state: 'pending' | 'entered' | 'exited' = 'pending';
   const onAction = context.processor(span);
 
   return {
     log: context.log,
+
     child: (childName) => {
       return createSpan(childName, {
         ...context,
@@ -100,15 +103,24 @@ export const createSpan = (name: string, context: SpanContext): SpanHandle => {
         },
       });
     },
+
     enter: () => {
+      if (state !== 'pending') throw new SpanAlreadyEnteredError(name);
+      state = 'entered';
+
       const entered: EnteredSpan = {
         ...span,
-        time: { started: context.getCurrentTime() },
+        time: {
+          started: context.getCurrentTime(),
+        },
       };
 
       onAction({ type: 'enter', span: entered });
 
       return () => {
+        if (state === 'exited') throw new SpanAlreadyExitedError(name);
+        state = 'exited';
+
         const exited: ExitedSpan = {
           ...entered,
           time: {

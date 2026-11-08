@@ -1,4 +1,5 @@
 import { createContext, type TracerConfig } from '../config';
+import { SpanAlreadyEnteredError, SpanAlreadyExitedError } from '../errors';
 import type { Action } from '../processor';
 import { createSpan, type Span } from '../span';
 
@@ -80,6 +81,26 @@ describe('span', () => {
           },
         },
       ]);
+    });
+
+    it('throws when entered twice', () => {
+      const { context, actions } = setup();
+      const span = createSpan('load-page', context);
+
+      span.enter();
+
+      expect(() => span.enter()).toThrow(SpanAlreadyEnteredError);
+      expect(actions).toHaveLength(1);
+    });
+
+    it('throws when exited twice', () => {
+      const { context, actions } = setup();
+      const exit = createSpan('load-page', context).enter();
+
+      exit();
+
+      expect(exit).toThrow(SpanAlreadyExitedError);
+      expect(actions).toHaveLength(2);
     });
   });
 
