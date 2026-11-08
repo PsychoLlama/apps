@@ -9,12 +9,6 @@ const setup = () =>
   });
 
 describe('span.child', () => {
-  it('creates a span with the given name', () => {
-    const child = createSpan('load-page', setup()).child('fetch-config');
-
-    expect(child.name).toBe('fetch-config');
-  });
-
   it('passes each child to the processor', () => {
     const context = setup();
     const child = createSpan('load-page', context).child('fetch-config');
@@ -23,8 +17,10 @@ describe('span.child', () => {
   });
 
   it('supports nesting beyond one level', () => {
-    const grandchild = createSpan('a', setup()).child('b').child('c');
+    const context = setup();
 
-    expect(grandchild.name).toBe('c');
+    createSpan('a', context).child('b').child('c');
+
+    expect(context.processor).toHaveBeenCalledTimes(3);
   });
 });

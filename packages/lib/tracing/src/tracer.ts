@@ -1,14 +1,11 @@
-import { createContext, type Context, type TracerConfig } from './config';
+import { createContext, type TracerConfig } from './config';
 import { createSpan, type Span } from './span';
 
 /**
  * The top-level tracing context. Not a span itself: it has no lifecycle,
  * and is where process-wide concerns are configured.
  */
-export interface Tracer extends Pick<
-  Context,
-  'getCurrentTime' | 'getRandomBytes'
-> {
+export interface Tracer {
   /** Create a span. */
   span: (name: string) => Span;
 }
@@ -18,8 +15,6 @@ export const configure = (config: TracerConfig): Tracer => {
   const context = createContext(config);
 
   return {
-    getCurrentTime: context.getCurrentTime,
-    getRandomBytes: context.getRandomBytes,
     span: (name) => createSpan(name, context),
   };
 };

@@ -9,31 +9,7 @@ const setup = (overrides?: Partial<TracerConfig>) =>
     ...overrides,
   });
 
-describe('configure', () => {
-  it('exposes the configured getCurrentTime', () => {
-    const getCurrentTime = () => 1_000;
-    const tracer = setup({ getCurrentTime });
-
-    expect(tracer.getCurrentTime).toBe(getCurrentTime);
-  });
-
-  it('exposes the configured getRandomBytes', () => {
-    const getRandomBytes = (count: number) => new Uint8Array(count);
-    const tracer = setup({ getRandomBytes });
-
-    expect(tracer.getRandomBytes).toBe(getRandomBytes);
-  });
-
-  it('defaults getRandomBytes to the requested number of bytes', () => {
-    expect(setup().getRandomBytes(8)).toHaveLength(8);
-  });
-});
-
 describe('tracer.span', () => {
-  it('creates a span with the given name', () => {
-    expect(setup().span('load-page').name).toBe('load-page');
-  });
-
   it('passes each new span to the processor', () => {
     const processor = vi.fn();
     const span = setup({ processor }).span('load-page');

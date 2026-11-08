@@ -4,9 +4,6 @@ import type { Context } from './config';
 
 /** A named unit of work within a trace. */
 export interface Span {
-  /** What this span measures. */
-  readonly name: string;
-
   /** Logs on behalf of this span. */
   readonly log: Logger;
 
@@ -15,9 +12,8 @@ export interface Span {
 }
 
 /** Create a span and announce it to the processor. */
-export const createSpan = (name: string, context: Context): Span => {
+export const createSpan = (_name: string, context: Context): Span => {
   const span: Span = {
-    name,
     log: context.log,
     child: (childName) => createSpan(childName, context),
   };
