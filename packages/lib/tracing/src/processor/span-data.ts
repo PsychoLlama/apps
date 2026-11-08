@@ -1,5 +1,3 @@
-// Mirrors holz's log context, minus its `error` field. A failure is an outcome
-// of the span rather than a detail describing it.
 /** A span attribute value. Anything JSON-serializable, nesting included. */
 type AttributeValue =
   | string
